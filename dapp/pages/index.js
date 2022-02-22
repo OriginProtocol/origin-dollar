@@ -562,7 +562,7 @@ const Home = ({ locale, onLocale }) => {
         h1 {
           margin-top: 28px;
           font-family: Lato;
-          font-size: 2rem;      
+          font-size: 2rem;
         }
 
         .current {
@@ -731,7 +731,7 @@ const Home = ({ locale, onLocale }) => {
         }
 
         .light h3 {
-          max-width: 330px; 
+          max-width: 330px;
         }
 
         .big-text {
@@ -793,7 +793,7 @@ const Home = ({ locale, onLocale }) => {
             width: 380px;
           }
         }
-         
+
         @media (max-width: 992px) {
           header {
             padding-bottom: 0px;

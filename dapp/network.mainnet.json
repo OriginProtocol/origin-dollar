@@ -3,7 +3,7 @@
   "chainId": "1",
   "contracts": {
     "AaveStrategy": {
-      "address": "0xA050eBE34Be464902F7E0F7F451f4B5253d57114",
+      "address": "0x4F424C6f066ae74784f3595A3A84923ad36d5471",
       "abi": [
         {
           "anonymous": false,
@@ -47,6 +47,25 @@
             }
           ],
           "name": "GovernorshipTransferred",
+          "type": "event"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "internalType": "address",
+              "name": "_oldHarvesterAddress",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "internalType": "address",
+              "name": "_newHarvesterAddress",
+              "type": "address"
+            }
+          ],
+          "name": "HarvesterAddressesUpdated",
           "type": "event"
         },
         {
@@ -111,37 +130,18 @@
           "inputs": [
             {
               "indexed": false,
-              "internalType": "uint256",
-              "name": "_oldThreshold",
-              "type": "uint256"
+              "internalType": "address[]",
+              "name": "_oldAddresses",
+              "type": "address[]"
             },
             {
               "indexed": false,
-              "internalType": "uint256",
-              "name": "_newThreshold",
-              "type": "uint256"
+              "internalType": "address[]",
+              "name": "_newAddresses",
+              "type": "address[]"
             }
           ],
-          "name": "RewardLiquidationThresholdUpdated",
-          "type": "event"
-        },
-        {
-          "anonymous": false,
-          "inputs": [
-            {
-              "indexed": false,
-              "internalType": "address",
-              "name": "_oldAddress",
-              "type": "address"
-            },
-            {
-              "indexed": false,
-              "internalType": "address",
-              "name": "_newAddress",
-              "type": "address"
-            }
-          ],
-          "name": "RewardTokenAddressUpdated",
+          "name": "RewardTokenAddressesUpdated",
           "type": "event"
         },
         {
@@ -151,6 +151,12 @@
               "indexed": false,
               "internalType": "address",
               "name": "recipient",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "internalType": "address",
+              "name": "rewardToken",
               "type": "address"
             },
             {
@@ -187,6 +193,32 @@
           ],
           "name": "Withdrawal",
           "type": "event"
+        },
+        {
+          "inputs": [],
+          "name": "_deprecated_rewardLiquidationThreshold",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "_deprecated_rewardTokenAddress",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
         },
         {
           "inputs": [
@@ -235,7 +267,7 @@
         },
         {
           "inputs": [],
-          "name": "collectRewardToken",
+          "name": "collectRewardTokens",
           "outputs": [],
           "stateMutability": "nonpayable",
           "type": "function"
@@ -267,7 +299,33 @@
         },
         {
           "inputs": [],
+          "name": "getRewardTokenAddresses",
+          "outputs": [
+            {
+              "internalType": "address[]",
+              "name": "",
+              "type": "address[]"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
           "name": "governor",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "harvesterAddress",
           "outputs": [
             {
               "internalType": "address",
@@ -304,42 +362,9 @@
               "type": "address"
             },
             {
-              "internalType": "address",
-              "name": "_rewardTokenAddress",
-              "type": "address"
-            },
-            {
               "internalType": "address[]",
-              "name": "_assets",
+              "name": "_rewardTokenAddresses",
               "type": "address[]"
-            },
-            {
-              "internalType": "address[]",
-              "name": "_pTokens",
-              "type": "address[]"
-            }
-          ],
-          "name": "initialize",
-          "outputs": [],
-          "stateMutability": "nonpayable",
-          "type": "function"
-        },
-        {
-          "inputs": [
-            {
-              "internalType": "address",
-              "name": "_platformAddress",
-              "type": "address"
-            },
-            {
-              "internalType": "address",
-              "name": "_vaultAddress",
-              "type": "address"
-            },
-            {
-              "internalType": "address",
-              "name": "_rewardTokenAddress",
-              "type": "address"
             },
             {
               "internalType": "address[]",
@@ -360,6 +385,39 @@
               "internalType": "address",
               "name": "_stkAaveAddress",
               "type": "address"
+            }
+          ],
+          "name": "initialize",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "_platformAddress",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "_vaultAddress",
+              "type": "address"
+            },
+            {
+              "internalType": "address[]",
+              "name": "_rewardTokenAddresses",
+              "type": "address[]"
+            },
+            {
+              "internalType": "address[]",
+              "name": "_assets",
+              "type": "address[]"
+            },
+            {
+              "internalType": "address[]",
+              "name": "_pTokens",
+              "type": "address[]"
             }
           ],
           "name": "initialize",
@@ -407,21 +465,14 @@
           "type": "function"
         },
         {
-          "inputs": [],
-          "name": "rewardLiquidationThreshold",
-          "outputs": [
+          "inputs": [
             {
               "internalType": "uint256",
               "name": "",
               "type": "uint256"
             }
           ],
-          "stateMutability": "view",
-          "type": "function"
-        },
-        {
-          "inputs": [],
-          "name": "rewardTokenAddress",
+          "name": "rewardTokenAddresses",
           "outputs": [
             {
               "internalType": "address",
@@ -435,6 +486,19 @@
         {
           "inputs": [],
           "name": "safeApproveAllTokens",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "_harvesterAddress",
+              "type": "address"
+            }
+          ],
+          "name": "setHarvesterAddress",
           "outputs": [],
           "stateMutability": "nonpayable",
           "type": "function"
@@ -460,25 +524,12 @@
         {
           "inputs": [
             {
-              "internalType": "uint256",
-              "name": "_threshold",
-              "type": "uint256"
+              "internalType": "address[]",
+              "name": "_rewardTokenAddresses",
+              "type": "address[]"
             }
           ],
-          "name": "setRewardLiquidationThreshold",
-          "outputs": [],
-          "stateMutability": "nonpayable",
-          "type": "function"
-        },
-        {
-          "inputs": [
-            {
-              "internalType": "address",
-              "name": "_rewardTokenAddress",
-              "type": "address"
-            }
-          ],
-          "name": "setRewardTokenAddress",
+          "name": "setRewardTokenAddresses",
           "outputs": [],
           "stateMutability": "nonpayable",
           "type": "function"
@@ -1649,7 +1700,7 @@
       ]
     },
     "CompoundStrategy": {
-      "address": "0x47f3eb71b5507dF5Ab6aC7F8660Ef282Ab0E560f",
+      "address": "0xC697Eab7B9F5c5cE2d35B9B69917F96001712Ad5",
       "abi": [
         {
           "anonymous": false,
@@ -1693,6 +1744,25 @@
             }
           ],
           "name": "GovernorshipTransferred",
+          "type": "event"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "internalType": "address",
+              "name": "_oldHarvesterAddress",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "internalType": "address",
+              "name": "_newHarvesterAddress",
+              "type": "address"
+            }
+          ],
+          "name": "HarvesterAddressesUpdated",
           "type": "event"
         },
         {
@@ -1757,37 +1827,18 @@
           "inputs": [
             {
               "indexed": false,
-              "internalType": "uint256",
-              "name": "_oldThreshold",
-              "type": "uint256"
+              "internalType": "address[]",
+              "name": "_oldAddresses",
+              "type": "address[]"
             },
             {
               "indexed": false,
-              "internalType": "uint256",
-              "name": "_newThreshold",
-              "type": "uint256"
+              "internalType": "address[]",
+              "name": "_newAddresses",
+              "type": "address[]"
             }
           ],
-          "name": "RewardLiquidationThresholdUpdated",
-          "type": "event"
-        },
-        {
-          "anonymous": false,
-          "inputs": [
-            {
-              "indexed": false,
-              "internalType": "address",
-              "name": "_oldAddress",
-              "type": "address"
-            },
-            {
-              "indexed": false,
-              "internalType": "address",
-              "name": "_newAddress",
-              "type": "address"
-            }
-          ],
-          "name": "RewardTokenAddressUpdated",
+          "name": "RewardTokenAddressesUpdated",
           "type": "event"
         },
         {
@@ -1797,6 +1848,12 @@
               "indexed": false,
               "internalType": "address",
               "name": "recipient",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "internalType": "address",
+              "name": "rewardToken",
               "type": "address"
             },
             {
@@ -1854,6 +1911,32 @@
           "type": "event"
         },
         {
+          "inputs": [],
+          "name": "_deprecated_rewardLiquidationThreshold",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "_deprecated_rewardTokenAddress",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
           "inputs": [
             {
               "internalType": "address",
@@ -1900,7 +1983,7 @@
         },
         {
           "inputs": [],
-          "name": "collectRewardToken",
+          "name": "collectRewardTokens",
           "outputs": [],
           "stateMutability": "nonpayable",
           "type": "function"
@@ -1932,7 +2015,33 @@
         },
         {
           "inputs": [],
+          "name": "getRewardTokenAddresses",
+          "outputs": [
+            {
+              "internalType": "address[]",
+              "name": "",
+              "type": "address[]"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
           "name": "governor",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "harvesterAddress",
           "outputs": [
             {
               "internalType": "address",
@@ -1956,9 +2065,9 @@
               "type": "address"
             },
             {
-              "internalType": "address",
-              "name": "_rewardTokenAddress",
-              "type": "address"
+              "internalType": "address[]",
+              "name": "_rewardTokenAddresses",
+              "type": "address[]"
             },
             {
               "internalType": "address[]",
@@ -2016,21 +2125,14 @@
           "type": "function"
         },
         {
-          "inputs": [],
-          "name": "rewardLiquidationThreshold",
-          "outputs": [
+          "inputs": [
             {
               "internalType": "uint256",
               "name": "",
               "type": "uint256"
             }
           ],
-          "stateMutability": "view",
-          "type": "function"
-        },
-        {
-          "inputs": [],
-          "name": "rewardTokenAddress",
+          "name": "rewardTokenAddresses",
           "outputs": [
             {
               "internalType": "address",
@@ -2044,6 +2146,19 @@
         {
           "inputs": [],
           "name": "safeApproveAllTokens",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "_harvesterAddress",
+              "type": "address"
+            }
+          ],
+          "name": "setHarvesterAddress",
           "outputs": [],
           "stateMutability": "nonpayable",
           "type": "function"
@@ -2069,25 +2184,12 @@
         {
           "inputs": [
             {
-              "internalType": "uint256",
-              "name": "_threshold",
-              "type": "uint256"
+              "internalType": "address[]",
+              "name": "_rewardTokenAddresses",
+              "type": "address[]"
             }
           ],
-          "name": "setRewardLiquidationThreshold",
-          "outputs": [],
-          "stateMutability": "nonpayable",
-          "type": "function"
-        },
-        {
-          "inputs": [
-            {
-              "internalType": "address",
-              "name": "_rewardTokenAddress",
-              "type": "address"
-            }
-          ],
-          "name": "setRewardTokenAddress",
+          "name": "setRewardTokenAddresses",
           "outputs": [],
           "stateMutability": "nonpayable",
           "type": "function"
@@ -2374,27 +2476,8 @@
       ]
     },
     "ConvexStrategy": {
-      "address": "0x16156a06bD1bd2d80134EA1Ee7e5FaEBDbFa20aa",
+      "address": "0xEe83F8eBB435373f6c231173995cC990697af1B8",
       "abi": [
-        {
-          "anonymous": false,
-          "inputs": [
-            {
-              "indexed": false,
-              "internalType": "address",
-              "name": "_oldAddress",
-              "type": "address"
-            },
-            {
-              "indexed": false,
-              "internalType": "address",
-              "name": "_newAddress",
-              "type": "address"
-            }
-          ],
-          "name": "CvxRewardTokenAddressUpdated",
-          "type": "event"
-        },
         {
           "anonymous": false,
           "inputs": [
@@ -2437,6 +2520,25 @@
             }
           ],
           "name": "GovernorshipTransferred",
+          "type": "event"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "internalType": "address",
+              "name": "_oldHarvesterAddress",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "internalType": "address",
+              "name": "_newHarvesterAddress",
+              "type": "address"
+            }
+          ],
+          "name": "HarvesterAddressesUpdated",
           "type": "event"
         },
         {
@@ -2501,37 +2603,18 @@
           "inputs": [
             {
               "indexed": false,
-              "internalType": "uint256",
-              "name": "_oldThreshold",
-              "type": "uint256"
+              "internalType": "address[]",
+              "name": "_oldAddresses",
+              "type": "address[]"
             },
             {
               "indexed": false,
-              "internalType": "uint256",
-              "name": "_newThreshold",
-              "type": "uint256"
+              "internalType": "address[]",
+              "name": "_newAddresses",
+              "type": "address[]"
             }
           ],
-          "name": "RewardLiquidationThresholdUpdated",
-          "type": "event"
-        },
-        {
-          "anonymous": false,
-          "inputs": [
-            {
-              "indexed": false,
-              "internalType": "address",
-              "name": "_oldAddress",
-              "type": "address"
-            },
-            {
-              "indexed": false,
-              "internalType": "address",
-              "name": "_newAddress",
-              "type": "address"
-            }
-          ],
-          "name": "RewardTokenAddressUpdated",
+          "name": "RewardTokenAddressesUpdated",
           "type": "event"
         },
         {
@@ -2546,26 +2629,7 @@
             {
               "indexed": false,
               "internalType": "address",
-              "name": "token",
-              "type": "address"
-            },
-            {
-              "indexed": false,
-              "internalType": "uint256",
-              "name": "amount",
-              "type": "uint256"
-            }
-          ],
-          "name": "RewardTokenCollected",
-          "type": "event"
-        },
-        {
-          "anonymous": false,
-          "inputs": [
-            {
-              "indexed": false,
-              "internalType": "address",
-              "name": "recipient",
+              "name": "rewardToken",
               "type": "address"
             },
             {
@@ -2602,6 +2666,45 @@
           ],
           "name": "Withdrawal",
           "type": "event"
+        },
+        {
+          "inputs": [],
+          "name": "_deprecated_cvxRewardTokenAddress",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "_deprecated_rewardLiquidationThreshold",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "_deprecated_rewardTokenAddress",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
         },
         {
           "inputs": [
@@ -2650,22 +2753,9 @@
         },
         {
           "inputs": [],
-          "name": "collectRewardToken",
+          "name": "collectRewardTokens",
           "outputs": [],
           "stateMutability": "nonpayable",
-          "type": "function"
-        },
-        {
-          "inputs": [],
-          "name": "cvxRewardTokenAddress",
-          "outputs": [
-            {
-              "internalType": "address",
-              "name": "",
-              "type": "address"
-            }
-          ],
-          "stateMutability": "view",
           "type": "function"
         },
         {
@@ -2695,7 +2785,33 @@
         },
         {
           "inputs": [],
+          "name": "getRewardTokenAddresses",
+          "outputs": [
+            {
+              "internalType": "address[]",
+              "name": "",
+              "type": "address[]"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
           "name": "governor",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "harvesterAddress",
           "outputs": [
             {
               "internalType": "address",
@@ -2719,14 +2835,42 @@
               "type": "address"
             },
             {
+              "internalType": "address[]",
+              "name": "_rewardTokenAddresses",
+              "type": "address[]"
+            },
+            {
+              "internalType": "address[]",
+              "name": "_assets",
+              "type": "address[]"
+            },
+            {
+              "internalType": "address[]",
+              "name": "_pTokens",
+              "type": "address[]"
+            }
+          ],
+          "name": "initialize",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
               "internalType": "address",
-              "name": "_rewardTokenAddress",
+              "name": "_platformAddress",
               "type": "address"
             },
             {
               "internalType": "address",
-              "name": "_cvxRewardTokenAddress",
+              "name": "_vaultAddress",
               "type": "address"
+            },
+            {
+              "internalType": "address[]",
+              "name": "_rewardTokenAddresses",
+              "type": "address[]"
             },
             {
               "internalType": "address[]",
@@ -2752,39 +2896,6 @@
               "internalType": "uint256",
               "name": "_cvxDepositorPTokenId",
               "type": "uint256"
-            }
-          ],
-          "name": "initialize",
-          "outputs": [],
-          "stateMutability": "nonpayable",
-          "type": "function"
-        },
-        {
-          "inputs": [
-            {
-              "internalType": "address",
-              "name": "_platformAddress",
-              "type": "address"
-            },
-            {
-              "internalType": "address",
-              "name": "_vaultAddress",
-              "type": "address"
-            },
-            {
-              "internalType": "address",
-              "name": "_rewardTokenAddress",
-              "type": "address"
-            },
-            {
-              "internalType": "address[]",
-              "name": "_assets",
-              "type": "address[]"
-            },
-            {
-              "internalType": "address[]",
-              "name": "_pTokens",
-              "type": "address[]"
             }
           ],
           "name": "initialize",
@@ -2832,21 +2943,14 @@
           "type": "function"
         },
         {
-          "inputs": [],
-          "name": "rewardLiquidationThreshold",
-          "outputs": [
+          "inputs": [
             {
               "internalType": "uint256",
               "name": "",
               "type": "uint256"
             }
           ],
-          "stateMutability": "view",
-          "type": "function"
-        },
-        {
-          "inputs": [],
-          "name": "rewardTokenAddress",
+          "name": "rewardTokenAddresses",
           "outputs": [
             {
               "internalType": "address",
@@ -2868,11 +2972,11 @@
           "inputs": [
             {
               "internalType": "address",
-              "name": "_cvxRewardTokenAddress",
+              "name": "_harvesterAddress",
               "type": "address"
             }
           ],
-          "name": "setCvxRewardTokenAddress",
+          "name": "setHarvesterAddress",
           "outputs": [],
           "stateMutability": "nonpayable",
           "type": "function"
@@ -2898,25 +3002,12 @@
         {
           "inputs": [
             {
-              "internalType": "uint256",
-              "name": "_threshold",
-              "type": "uint256"
+              "internalType": "address[]",
+              "name": "_rewardTokenAddresses",
+              "type": "address[]"
             }
           ],
-          "name": "setRewardLiquidationThreshold",
-          "outputs": [],
-          "stateMutability": "nonpayable",
-          "type": "function"
-        },
-        {
-          "inputs": [
-            {
-              "internalType": "address",
-              "name": "_rewardTokenAddress",
-              "type": "address"
-            }
-          ],
-          "name": "setRewardTokenAddress",
+          "name": "setRewardTokenAddresses",
           "outputs": [],
           "stateMutability": "nonpayable",
           "type": "function"
@@ -4696,6 +4787,386 @@
         }
       ]
     },
+    "Dripper": {
+      "address": "0xc7068A35F9F5b77471BcFfBdf82D9531D52AFCdc",
+      "abi": [
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "_vault",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "_token",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "constructor"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "previousGovernor",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "newGovernor",
+              "type": "address"
+            }
+          ],
+          "name": "GovernorshipTransferred",
+          "type": "event"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "previousGovernor",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "newGovernor",
+              "type": "address"
+            }
+          ],
+          "name": "PendingGovernorshipTransfer",
+          "type": "event"
+        },
+        {
+          "inputs": [],
+          "name": "availableFunds",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "claimGovernance",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "collect",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "collectAndRebase",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "drip",
+          "outputs": [
+            {
+              "internalType": "uint64",
+              "name": "lastCollect",
+              "type": "uint64"
+            },
+            {
+              "internalType": "uint192",
+              "name": "perBlock",
+              "type": "uint192"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "dripDuration",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "governor",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "isGovernor",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "_durationSeconds",
+              "type": "uint256"
+            }
+          ],
+          "name": "setDripDuration",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "_newGovernor",
+              "type": "address"
+            }
+          ],
+          "name": "transferGovernance",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "_asset",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "_amount",
+              "type": "uint256"
+            }
+          ],
+          "name": "transferToken",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        }
+      ]
+    },
+    "DripperProxy": {
+      "address": "0x80C898ae5e56f888365E235CeB8CEa3EB726CB58",
+      "abi": [
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "previousGovernor",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "newGovernor",
+              "type": "address"
+            }
+          ],
+          "name": "GovernorshipTransferred",
+          "type": "event"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "previousGovernor",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "newGovernor",
+              "type": "address"
+            }
+          ],
+          "name": "PendingGovernorshipTransfer",
+          "type": "event"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "implementation",
+              "type": "address"
+            }
+          ],
+          "name": "Upgraded",
+          "type": "event"
+        },
+        {
+          "stateMutability": "payable",
+          "type": "fallback"
+        },
+        {
+          "inputs": [],
+          "name": "admin",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "claimGovernance",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "governor",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "implementation",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "_logic",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "_initGovernor",
+              "type": "address"
+            },
+            {
+              "internalType": "bytes",
+              "name": "_data",
+              "type": "bytes"
+            }
+          ],
+          "name": "initialize",
+          "outputs": [],
+          "stateMutability": "payable",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "isGovernor",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "_newGovernor",
+              "type": "address"
+            }
+          ],
+          "name": "transferGovernance",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "newImplementation",
+              "type": "address"
+            }
+          ],
+          "name": "upgradeTo",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "newImplementation",
+              "type": "address"
+            },
+            {
+              "internalType": "bytes",
+              "name": "data",
+              "type": "bytes"
+            }
+          ],
+          "name": "upgradeToAndCall",
+          "outputs": [],
+          "stateMutability": "payable",
+          "type": "function"
+        }
+      ]
+    },
     "Flipper": {
       "address": "0xcecaD69d7D4Ed6D52eFcFA028aF8732F27e08F70",
       "abi": [
@@ -5519,6 +5990,634 @@
           "name": "unpauseCapital",
           "outputs": [],
           "stateMutability": "nonpayable",
+          "type": "function"
+        }
+      ]
+    },
+    "Harvester": {
+      "address": "0x5E72EB0ab74B5B4d2766a7956D210746Ceab96E1",
+      "abi": [
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "_vaultAddress",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "_usdtAddress",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "constructor"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "previousGovernor",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "newGovernor",
+              "type": "address"
+            }
+          ],
+          "name": "GovernorshipTransferred",
+          "type": "event"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "previousGovernor",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "newGovernor",
+              "type": "address"
+            }
+          ],
+          "name": "PendingGovernorshipTransfer",
+          "type": "event"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "internalType": "address",
+              "name": "_tokenAddress",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "internalType": "uint16",
+              "name": "_allowedSlippageBps",
+              "type": "uint16"
+            },
+            {
+              "indexed": false,
+              "internalType": "uint16",
+              "name": "_harvestRewardBps",
+              "type": "uint16"
+            },
+            {
+              "indexed": false,
+              "internalType": "address",
+              "name": "_uniswapV2CompatibleAddr",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "internalType": "uint256",
+              "name": "_liquidationLimit",
+              "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "internalType": "bool",
+              "name": "_doSwapRewardToken",
+              "type": "bool"
+            }
+          ],
+          "name": "RewardTokenConfigUpdated",
+          "type": "event"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "internalType": "address",
+              "name": "_address",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "internalType": "bool",
+              "name": "_isSupported",
+              "type": "bool"
+            }
+          ],
+          "name": "SupportedStrategyUpdate",
+          "type": "event"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "internalType": "address",
+              "name": "_address",
+              "type": "address"
+            }
+          ],
+          "name": "UniswapUpdated",
+          "type": "event"
+        },
+        {
+          "inputs": [],
+          "name": "claimGovernance",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "governor",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "_strategyAddr",
+              "type": "address"
+            }
+          ],
+          "name": "harvest",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "harvest",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "harvestAndSwap",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "_strategyAddr",
+              "type": "address"
+            }
+          ],
+          "name": "harvestAndSwap",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "_strategyAddr",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "_rewardTo",
+              "type": "address"
+            }
+          ],
+          "name": "harvestAndSwap",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "isGovernor",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "rewardProceedsAddress",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "name": "rewardTokenConfigs",
+          "outputs": [
+            {
+              "internalType": "uint16",
+              "name": "allowedSlippageBps",
+              "type": "uint16"
+            },
+            {
+              "internalType": "uint16",
+              "name": "harvestRewardBps",
+              "type": "uint16"
+            },
+            {
+              "internalType": "address",
+              "name": "uniswapV2CompatibleAddr",
+              "type": "address"
+            },
+            {
+              "internalType": "bool",
+              "name": "doSwapRewardToken",
+              "type": "bool"
+            },
+            {
+              "internalType": "uint256",
+              "name": "liquidationLimit",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "_tokenAddress",
+              "type": "address"
+            },
+            {
+              "internalType": "uint16",
+              "name": "_allowedSlippageBps",
+              "type": "uint16"
+            },
+            {
+              "internalType": "uint16",
+              "name": "_harvestRewardBps",
+              "type": "uint16"
+            },
+            {
+              "internalType": "address",
+              "name": "_uniswapV2CompatibleAddr",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "_liquidationLimit",
+              "type": "uint256"
+            },
+            {
+              "internalType": "bool",
+              "name": "_doSwapRewardToken",
+              "type": "bool"
+            }
+          ],
+          "name": "setRewardTokenConfig",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "_rewardProceedsAddress",
+              "type": "address"
+            }
+          ],
+          "name": "setRewardsProceedsAddress",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "_strategyAddress",
+              "type": "address"
+            },
+            {
+              "internalType": "bool",
+              "name": "_isSupported",
+              "type": "bool"
+            }
+          ],
+          "name": "setSupportedStrategy",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "name": "supportedStrategies",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "swap",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "_swapToken",
+              "type": "address"
+            }
+          ],
+          "name": "swapRewardToken",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "_newGovernor",
+              "type": "address"
+            }
+          ],
+          "name": "transferGovernance",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "_asset",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "_amount",
+              "type": "uint256"
+            }
+          ],
+          "name": "transferToken",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "usdtAddress",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "vaultAddress",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        }
+      ]
+    },
+    "HarvesterProxy": {
+      "address": "0x21Fb5812D70B3396880D30e90D9e5C1202266c89",
+      "abi": [
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "previousGovernor",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "newGovernor",
+              "type": "address"
+            }
+          ],
+          "name": "GovernorshipTransferred",
+          "type": "event"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "previousGovernor",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "newGovernor",
+              "type": "address"
+            }
+          ],
+          "name": "PendingGovernorshipTransfer",
+          "type": "event"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "implementation",
+              "type": "address"
+            }
+          ],
+          "name": "Upgraded",
+          "type": "event"
+        },
+        {
+          "stateMutability": "payable",
+          "type": "fallback"
+        },
+        {
+          "inputs": [],
+          "name": "admin",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "claimGovernance",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "governor",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "implementation",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "_logic",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "_initGovernor",
+              "type": "address"
+            },
+            {
+              "internalType": "bytes",
+              "name": "_data",
+              "type": "bytes"
+            }
+          ],
+          "name": "initialize",
+          "outputs": [],
+          "stateMutability": "payable",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "isGovernor",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "_newGovernor",
+              "type": "address"
+            }
+          ],
+          "name": "transferGovernance",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "newImplementation",
+              "type": "address"
+            }
+          ],
+          "name": "upgradeTo",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "newImplementation",
+              "type": "address"
+            },
+            {
+              "internalType": "bytes",
+              "name": "data",
+              "type": "bytes"
+            }
+          ],
+          "name": "upgradeToAndCall",
+          "outputs": [],
+          "stateMutability": "payable",
           "type": "function"
         }
       ]
@@ -8831,7 +9930,7 @@
       ]
     },
     "OracleRouter": {
-      "address": "0xa7695eED05094E28AA575CB0cCa3CF17848a7981",
+      "address": "0x7533365d1b0D95380bc4e94D0bdEF5173E43f954",
       "abi": [
         {
           "inputs": [
@@ -11950,7 +13049,7 @@
       ]
     },
     "VaultAdmin": {
-      "address": "0x3EB68D8f4992A0e34aA58cc3dF86A40814078cF6",
+      "address": "0x854867b04987d26c0199197033f7Ce1f3bC01Ac9",
       "abi": [
         {
           "anonymous": false,
@@ -12223,32 +13322,6 @@
               "type": "address"
             }
           ],
-          "name": "SwapTokenAdded",
-          "type": "event"
-        },
-        {
-          "anonymous": false,
-          "inputs": [
-            {
-              "indexed": false,
-              "internalType": "address",
-              "name": "_address",
-              "type": "address"
-            }
-          ],
-          "name": "SwapTokenRemoved",
-          "type": "event"
-        },
-        {
-          "anonymous": false,
-          "inputs": [
-            {
-              "indexed": false,
-              "internalType": "address",
-              "name": "_address",
-              "type": "address"
-            }
-          ],
           "name": "TrusteeAddressChanged",
           "type": "event"
         },
@@ -12263,19 +13336,6 @@
             }
           ],
           "name": "TrusteeFeeBpsChanged",
-          "type": "event"
-        },
-        {
-          "anonymous": false,
-          "inputs": [
-            {
-              "indexed": false,
-              "internalType": "address",
-              "name": "_address",
-              "type": "address"
-            }
-          ],
-          "name": "UniswapUpdated",
           "type": "event"
         },
         {
@@ -12315,19 +13375,6 @@
           ],
           "name": "YieldDistribution",
           "type": "event"
-        },
-        {
-          "inputs": [
-            {
-              "internalType": "address",
-              "name": "_addr",
-              "type": "address"
-            }
-          ],
-          "name": "addSwapToken",
-          "outputs": [],
-          "stateMutability": "nonpayable",
-          "type": "function"
         },
         {
           "inputs": [
@@ -12405,52 +13452,6 @@
             }
           ],
           "stateMutability": "view",
-          "type": "function"
-        },
-        {
-          "inputs": [
-            {
-              "internalType": "address",
-              "name": "_strategyAddr",
-              "type": "address"
-            }
-          ],
-          "name": "harvest",
-          "outputs": [],
-          "stateMutability": "nonpayable",
-          "type": "function"
-        },
-        {
-          "inputs": [],
-          "name": "harvest",
-          "outputs": [],
-          "stateMutability": "nonpayable",
-          "type": "function"
-        },
-        {
-          "inputs": [],
-          "name": "harvestAndSwap",
-          "outputs": [],
-          "stateMutability": "nonpayable",
-          "type": "function"
-        },
-        {
-          "inputs": [
-            {
-              "internalType": "address",
-              "name": "_strategyAddr",
-              "type": "address"
-            }
-          ],
-          "name": "harvestAndSwap",
-          "outputs": [
-            {
-              "internalType": "uint256[]",
-              "name": "",
-              "type": "uint256[]"
-            }
-          ],
-          "stateMutability": "nonpayable",
           "type": "function"
         },
         {
@@ -12628,19 +13629,6 @@
           "inputs": [
             {
               "internalType": "address",
-              "name": "_addr",
-              "type": "address"
-            }
-          ],
-          "name": "removeSwapToken",
-          "outputs": [],
-          "stateMutability": "nonpayable",
-          "type": "function"
-        },
-        {
-          "inputs": [
-            {
-              "internalType": "address",
               "name": "newImpl",
               "type": "address"
             }
@@ -12775,19 +13763,6 @@
         {
           "inputs": [
             {
-              "internalType": "address",
-              "name": "_address",
-              "type": "address"
-            }
-          ],
-          "name": "setUniswapAddr",
-          "outputs": [],
-          "stateMutability": "nonpayable",
-          "type": "function"
-        },
-        {
-          "inputs": [
-            {
               "internalType": "uint256",
               "name": "_vaultBuffer",
               "type": "uint256"
@@ -12822,32 +13797,6 @@
           "name": "supportAsset",
           "outputs": [],
           "stateMutability": "nonpayable",
-          "type": "function"
-        },
-        {
-          "inputs": [],
-          "name": "swap",
-          "outputs": [],
-          "stateMutability": "nonpayable",
-          "type": "function"
-        },
-        {
-          "inputs": [
-            {
-              "internalType": "uint256",
-              "name": "",
-              "type": "uint256"
-            }
-          ],
-          "name": "swapTokens",
-          "outputs": [
-            {
-              "internalType": "address",
-              "name": "",
-              "type": "address"
-            }
-          ],
-          "stateMutability": "view",
           "type": "function"
         },
         {
@@ -12909,19 +13858,6 @@
         },
         {
           "inputs": [],
-          "name": "uniswapAddr",
-          "outputs": [
-            {
-              "internalType": "address",
-              "name": "",
-              "type": "address"
-            }
-          ],
-          "stateMutability": "view",
-          "type": "function"
-        },
-        {
-          "inputs": [],
           "name": "unpauseCapital",
           "outputs": [],
           "stateMutability": "nonpayable",
@@ -12970,7 +13906,7 @@
       ]
     },
     "VaultCore": {
-      "address": "0x226de75867B2f785BA19600e2a7e6eFccD57157B",
+      "address": "0x04E22d448E251d49bf4EE8EC343d0ae1AB5A8Fa2",
       "abi": [
         {
           "anonymous": false,
@@ -13243,32 +14179,6 @@
               "type": "address"
             }
           ],
-          "name": "SwapTokenAdded",
-          "type": "event"
-        },
-        {
-          "anonymous": false,
-          "inputs": [
-            {
-              "indexed": false,
-              "internalType": "address",
-              "name": "_address",
-              "type": "address"
-            }
-          ],
-          "name": "SwapTokenRemoved",
-          "type": "event"
-        },
-        {
-          "anonymous": false,
-          "inputs": [
-            {
-              "indexed": false,
-              "internalType": "address",
-              "name": "_address",
-              "type": "address"
-            }
-          ],
           "name": "TrusteeAddressChanged",
           "type": "event"
         },
@@ -13283,19 +14193,6 @@
             }
           ],
           "name": "TrusteeFeeBpsChanged",
-          "type": "event"
-        },
-        {
-          "anonymous": false,
-          "inputs": [
-            {
-              "indexed": false,
-              "internalType": "address",
-              "name": "_address",
-              "type": "address"
-            }
-          ],
-          "name": "UniswapUpdated",
           "type": "event"
         },
         {
@@ -13452,6 +14349,19 @@
         },
         {
           "inputs": [],
+          "name": "getAllStrategies",
+          "outputs": [
+            {
+              "internalType": "address[]",
+              "name": "",
+              "type": "address[]"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
           "name": "getAssetCount",
           "outputs": [
             {
@@ -13553,29 +14463,6 @@
             }
           ],
           "name": "mint",
-          "outputs": [],
-          "stateMutability": "nonpayable",
-          "type": "function"
-        },
-        {
-          "inputs": [
-            {
-              "internalType": "address[]",
-              "name": "_assets",
-              "type": "address[]"
-            },
-            {
-              "internalType": "uint256[]",
-              "name": "_amounts",
-              "type": "uint256[]"
-            },
-            {
-              "internalType": "uint256",
-              "name": "_minimumOusdAmount",
-              "type": "uint256"
-            }
-          ],
-          "name": "mintMultiple",
           "outputs": [],
           "stateMutability": "nonpayable",
           "type": "function"
@@ -13697,25 +14584,6 @@
           "type": "function"
         },
         {
-          "inputs": [
-            {
-              "internalType": "uint256",
-              "name": "",
-              "type": "uint256"
-            }
-          ],
-          "name": "swapTokens",
-          "outputs": [
-            {
-              "internalType": "address",
-              "name": "",
-              "type": "address"
-            }
-          ],
-          "stateMutability": "view",
-          "type": "function"
-        },
-        {
           "inputs": [],
           "name": "totalValue",
           "outputs": [
@@ -13762,19 +14630,6 @@
               "internalType": "uint256",
               "name": "",
               "type": "uint256"
-            }
-          ],
-          "stateMutability": "view",
-          "type": "function"
-        },
-        {
-          "inputs": [],
-          "name": "uniswapAddr",
-          "outputs": [
-            {
-              "internalType": "address",
-              "name": "",
-              "type": "address"
             }
           ],
           "stateMutability": "view",

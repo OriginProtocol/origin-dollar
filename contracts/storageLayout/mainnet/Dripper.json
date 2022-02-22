@@ -1,0 +1,40 @@
+{
+  "storage": [
+    {
+      "contract": "Dripper",
+      "label": "dripDuration",
+      "type": "t_uint256",
+      "src": "contracts/harvest/Dripper.sol:57"
+    },
+    {
+      "contract": "Dripper",
+      "label": "drip",
+      "type": "t_struct(Drip)4203_storage",
+      "src": "contracts/harvest/Dripper.sol:58"
+    }
+  ],
+  "types": {
+    "t_uint256": {
+      "label": "uint256"
+    },
+    "t_struct(Drip)4203_storage": {
+      "label": "struct Dripper.Drip",
+      "members": [
+        {
+          "label": "lastCollect",
+          "type": "t_uint64"
+        },
+        {
+          "label": "perBlock",
+          "type": "t_uint192"
+        }
+      ]
+    },
+    "t_uint64": {
+      "label": "uint64"
+    },
+    "t_uint192": {
+      "label": "uint192"
+    }
+  }
+}

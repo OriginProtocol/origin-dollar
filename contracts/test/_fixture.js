@@ -36,6 +36,8 @@ async function defaultFixture() {
     "IHarvester",
     harvesterProxy.address
   );
+  const dripperProxy = await ethers.getContract("DripperProxy");
+  const dripper = await ethers.getContractAt("Dripper", dripperProxy.address);
   const governorContract = await ethers.getContract("Governor");
   const CompoundStrategyFactory = await ethers.getContractFactory(
     "CompoundStrategy"
@@ -249,6 +251,7 @@ async function defaultFixture() {
     ousd,
     vault,
     harvester,
+    dripper,
     mockNonRebasing,
     mockNonRebasingTwo,
     // Oracle
