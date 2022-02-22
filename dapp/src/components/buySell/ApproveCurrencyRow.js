@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
+import { useWeb3React } from '@web3-react/core'
 import { useStoreState } from 'pullstate'
 import { ethers } from 'ethers'
 import { get } from 'lodash'
@@ -27,6 +28,8 @@ const ApproveCurrencyRow = ({
   const [contract, setContract] = useState(null)
   const connectorName = useStoreState(AccountStore, (s) => s.connectorName)
   const connectorIcon = getConnectorIcon(connectorName)
+  const web3react = useWeb3React()
+  const { library, account } = web3react
 
   const {
     vault,
@@ -87,10 +90,9 @@ const ApproveCurrencyRow = ({
                 setStage('waiting-user')
                 try {
                   const maximum = ethers.constants.MaxUint256
-                  const result = await contract.approve(
-                    contractMap[contractToApprove].address,
-                    maximum
-                  )
+                  const result = await contract
+                    .connect(library.getSigner(account))
+                    .approve(contractMap[contractToApprove].address, maximum)
                   storeTransaction(result, 'approve', coin)
                   setStage('waiting-network')
 

@@ -246,6 +246,77 @@ async function mint(taskArguments, hre) {
 }
 
 /**
+ * Redeems OUSD on fork for specific account
+ */
+async function redeemFor(taskArguments, hre) {
+  const addresses = require("../utils/addresses");
+  const {
+    ousdUnits,
+    ousdUnitsFormat,
+    daiUnitsFormat,
+    usdcUnitsFormat,
+    usdtUnitsFormat,
+    isFork,
+    isLocalhost,
+  } = require("../test/helpers");
+
+  if (!isFork) {
+    throw new Error("Task can only be used on fork");
+  }
+
+  const ousd = await ethers.getContractAt("OUSD", addresses.mainnet.OUSDProxy);
+  const vault = await ethers.getContractAt(
+    "IVault",
+    addresses.mainnet.VaultProxy
+  );
+  const dai = await hre.ethers.getContractAt(usdtAbi, addresses.mainnet.DAI);
+  const usdc = await hre.ethers.getContractAt(usdtAbi, addresses.mainnet.USDC);
+  const usdt = await hre.ethers.getContractAt(usdtAbi, addresses.mainnet.USDT);
+
+  const address = taskArguments.account;
+
+  const signer = await hre.ethers.getSigner(address);
+  await hre.network.provider.request({
+    method: "hardhat_impersonateAccount",
+    params: [address],
+  });
+
+  const redeemAmount = taskArguments.amount;
+
+  console.log(`Redeeming ${redeemAmount} OUSD for address ${address}`);
+
+  // Show the current balances.
+  let ousdBalance = await ousd.balanceOf(address);
+  let daiBalance = await dai.balanceOf(address);
+  let usdcBalance = await usdc.balanceOf(address);
+  let usdtBalance = await usdt.balanceOf(address);
+  console.log("OUSD balance=", ousdUnitsFormat(ousdBalance, 18));
+  console.log("DAI balance=", daiUnitsFormat(daiBalance, 18));
+  console.log("USDC balance=", usdcUnitsFormat(usdcBalance, 6));
+  console.log("USDT balance=", usdtUnitsFormat(usdtBalance, 6));
+
+  const redeemAmountInt = parseInt(redeemAmount);
+  // Redeem.
+  await vault
+    .connect(signer)
+    .redeem(
+      ousdUnits(redeemAmount),
+      ousdUnits((redeemAmountInt - redeemAmountInt * 0.05).toString()),
+      { gasLimit: 2500000 }
+    );
+
+  // Show the new balances.
+  ousdBalance = await ousd.balanceOf(address);
+  daiBalance = await dai.balanceOf(address);
+  usdcBalance = await usdc.balanceOf(address);
+  usdtBalance = await usdt.balanceOf(address);
+  console.log("New OUSD balance=", ousdUnitsFormat(ousdBalance, 18));
+  console.log("New DAI balance=", daiUnitsFormat(daiBalance, 18));
+  console.log("New USDC balance=", usdcUnitsFormat(usdcBalance, 18));
+  console.log("New USDT balance=", usdtUnitsFormat(usdtBalance, 18));
+}
+
+/**
  * Redeems OUSD on local or fork.
  */
 async function redeem(taskArguments, hre) {
@@ -373,5 +444,6 @@ module.exports = {
   fund,
   mint,
   redeem,
+  redeemFor,
   transfer,
 };

@@ -8,7 +8,14 @@ require("hardhat-contract-sizer");
 require("hardhat-deploy-ethers");
 require("@openzeppelin/hardhat-upgrades");
 
-const { accounts, fund, mint, redeem, transfer } = require("./tasks/account");
+const {
+  accounts,
+  fund,
+  mint,
+  redeem,
+  redeemFor,
+  transfer,
+} = require("./tasks/account");
 const { debug } = require("./tasks/debug");
 const { env } = require("./tasks/env");
 const {
@@ -83,10 +90,14 @@ task("mint", "Mint OUSD on local or fork")
   .addOptionalParam("amount", "Amount of OUSD to mint")
   .setAction(mint);
 task("redeem", "Redeem OUSD on local or fork")
-  .addOptionalParam("num", "Number of accounts to mint for")
+  .addOptionalParam("num", "Number of accounts to redeem for")
   .addOptionalParam("index", "Account start index")
-  .addOptionalParam("amount", "Amount of OUSD to mint")
+  .addOptionalParam("amount", "Amount of OUSD to redeem")
   .setAction(redeem);
+task("redeemFor", "Redeem OUSD on local or fork")
+  .addOptionalParam("account", "Account that calls the redeem")
+  .addOptionalParam("amount", "Amount of OUSD to redeem")
+  .setAction(redeemFor);
 task("transfer", "Transfer OUSD")
   .addParam("index", "Account  index")
   .addParam("amount", "Amount of OUSD to transfer")
