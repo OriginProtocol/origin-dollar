@@ -5,6 +5,7 @@ import { useWeb3React } from '@web3-react/core'
 import { injectedConnector } from 'utils/connectors'
 import { walletConnectConnector } from 'utils/connectors'
 import { myEtherWalletConnector } from 'utils/connectors'
+import { walletlink, resetWalletConnector } from 'utils/connectors'
 
 import AccountStore from 'stores/AccountStore'
 
@@ -59,6 +60,12 @@ const WalletSelectContent = ({}) => {
       connector = myEtherWalletConnector
     } else if (name === 'WalletConnect') {
       connector = walletConnectConnector
+    } else if (name === 'CoinbaseWallet') {
+      connector = walletlink
+    }
+    // fix wallet connect bug: if you click the button and close the modal you wouldn't be able to open it again
+    if (name === 'WalletConnect') {
+      resetWalletConnector(connector)
     }
 
     await activate(
@@ -89,23 +96,30 @@ const WalletSelectContent = ({}) => {
             'Connect a wallet to get started'
           )}
         </h2>
-        {['MetaMask', 'Ledger', 'MyEtherWallet', 'WalletConnect'].map(
-          (name) => {
-            return (
-              <button
-                key={name}
-                className="connector-button d-flex align-items-center"
-                onClick={() => onConnect(name)}
-              >
-                <div className="col-2">
-                  <img src={`/images/${name.toLowerCase()}-icon.svg`} />
-                </div>
-                <div className="col-8">{name}</div>
-                <div className="col-2"></div>
-              </button>
-            )
-          }
-        )}
+        {[
+          'MetaMask',
+          'Ledger',
+          'CoinbaseWallet',
+          'WalletConnect',
+          'MyEtherWallet',
+        ].map((name) => {
+          return (
+            <button
+              key={name}
+              className="connector-button d-flex align-items-center"
+              onClick={() => onConnect(name)}
+            >
+              <div className="col-2">
+                <img
+                  src={`/images/${name
+                    .toLowerCase()}-icon.svg`}
+                />
+              </div>
+              <div className="col-8">{name}</div>
+              <div className="col-2"></div>
+            </button>
+          )
+        })}
         {error && (
           <div className="error d-flex align-items-center justify-content-center">
             {errorMessageMap(error)}

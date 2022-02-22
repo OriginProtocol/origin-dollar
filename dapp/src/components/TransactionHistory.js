@@ -77,17 +77,28 @@ const FilterButton = ({
   )
 }
 
-const FormatCurrencyByImportance = ({ value, isMobile }) => {
+/* If combination of user balance and current APY is so low that users don't get even 1 cent yields
+ * we want to show more decimals. If users have high yields (over $1) we show only 2 decimals
+ */
+const FormatCurrencyByImportance = ({
+  value,
+  isMobile,
+  greaterThanDollarYieldExists,
+  greaterThan10CentYieldExists,
+}) => {
   const negative = value < 0
+  let nrOfDecimals = 4
 
-  value = formatCurrency(Math.abs(value), isMobile ? 2 : 4)
-  let first, last
-  if (isMobile) {
-    first = value
-  } else {
-    first = value.substring(0, value.length - 2)
-    last = value.substring(value.length - 2)
+  if (isMobile || greaterThanDollarYieldExists) {
+    nrOfDecimals = 2
+  } else if (greaterThan10CentYieldExists) {
+    nrOfDecimals = 3
   }
+
+  const nrOfGreyDecimals = nrOfDecimals - 2
+  value = formatCurrency(Math.abs(value), nrOfDecimals)
+  const first = value.substring(0, value.length - nrOfGreyDecimals)
+  const last = value.substring(value.length - nrOfGreyDecimals)
 
   return (
     <>
@@ -238,6 +249,17 @@ const TransactionHistory = ({ isMobile }) => {
     )
   }, [shownHistory, currentPage])
 
+  const greaterThanDollarYieldExists =
+    currentPageHistory &&
+    currentPageHistory.filter(
+      (tx) => tx.type === 'yield' && parseFloat(tx.amount) > 1
+    ).length > 0
+  const greaterThan10CentYieldExists =
+    currentPageHistory &&
+    currentPageHistory.filter(
+      (tx) => tx.type === 'yield' && parseFloat(tx.amount) > 0.1
+    ).length > 0
+
   return (
     <>
       <div className="d-flex holder flex-column justify-content-start">
@@ -337,7 +359,15 @@ const TransactionHistory = ({ isMobile }) => {
                     key={`${tx.tx_hash}-${tx.log_index ? tx.log_index : 0}`}
                     className="d-flex border-bt pb-20 pt-20 history-item"
                   >
-                    <div className="col-3 col-md-2 pl-0">
+                    <div
+                      className="col-3 col-md-2 pl-0"
+                      title={
+                        dateformat(
+                          Date.parse(tx.time),
+                          'mm/dd/yyyy h:MM:ss TT'
+                        ) || ''
+                      }
+                    >
                       {dateformat(
                         Date.parse(tx.time),
                         isMobile ? 'mm/dd/yy' : 'mm/dd/yyyy'
@@ -390,6 +420,12 @@ const TransactionHistory = ({ isMobile }) => {
                         <FormatCurrencyByImportance
                           value={tx.amount}
                           isMobile={isMobile}
+                          greaterThanDollarYieldExists={
+                            greaterThanDollarYieldExists
+                          }
+                          greaterThan10CentYieldExists={
+                            greaterThan10CentYieldExists
+                          }
                         />
                       ) : (
                         '-'
@@ -400,6 +436,12 @@ const TransactionHistory = ({ isMobile }) => {
                         <FormatCurrencyByImportance
                           value={tx.balance}
                           isMobile={isMobile}
+                          greaterThanDollarYieldExists={
+                            greaterThanDollarYieldExists
+                          }
+                          greaterThan10CentYieldExists={
+                            greaterThan10CentYieldExists
+                          }
                         />
                       ) : (
                         '-'

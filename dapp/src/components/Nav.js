@@ -28,9 +28,6 @@ const showExperimentalSoftwareNotice = false
 const DappLinks = ({ dapp, page }) => {
   const ousdBalance = useStoreState(AccountStore, (s) => s.balances['ousd'])
   const lifetimeYield = useStoreState(AccountStore, (s) => s.lifetimeYield)
-  const showHistory =
-    (ousdBalance && parseFloat(ousdBalance) > 0) ||
-    (lifetimeYield && parseFloat(lifetimeYield) > 0)
 
   return (
     <>
@@ -70,17 +67,15 @@ const DappLinks = ({ dapp, page }) => {
               </a>
             </Link>
           )}
-          {showHistory && (
-            <Link href="/history">
-              <a
-                className={`d-flex align-items-center ${
-                  page === 'history' ? 'selected' : ''
-                }`}
-              >
-                {fbt('History', 'History')}
-              </a>
-            </Link>
-          )}
+          <Link href="/history">
+            <a
+              className={`d-flex align-items-center ${
+                page === 'history' ? 'selected' : ''
+              }`}
+            >
+              {fbt('History', 'History')}
+            </a>
+          </Link>
         </div>
       )}
       <style jsx>{`

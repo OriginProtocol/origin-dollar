@@ -44,3 +44,17 @@ contract ThreePoolStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 contract ConvexStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
+
+/**
+ * @notice HarvesterProxy delegates calls to a Harvester implementation
+ */
+contract HarvesterProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
+
+/**
+ * @notice DripperProxy delegates calls to a Dripper implementation
+ */
+contract DripperProxy is InitializeGovernedUpgradeabilityProxy {
+
+}

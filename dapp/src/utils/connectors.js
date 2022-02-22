@@ -1,5 +1,6 @@
 import { InjectedConnector } from '@web3-react/injected-connector'
 import { WalletConnectConnector } from '@web3-react/walletconnect-connector'
+import { WalletLinkConnector } from '@web3-react/walletlink-connector'
 import { MewConnectConnector } from '@myetherwallet/mewconnect-connector'
 import { SafeAppConnector } from '@gnosis.pm/safe-apps-web3-react'
 import { LedgerConnector } from 'utils/LedgerConnector'
@@ -33,6 +34,18 @@ export const walletConnectConnector = new WalletConnectConnector({
   },
   pollingInterval: POLLING_INTERVAL,
 })
+
+//coinbase
+export const walletlink = new WalletLinkConnector({
+  url: RPC_PROVIDER,
+  supportedChainIds: [1, 1337],
+})
+
+export function resetWalletConnector(connector) {
+	if (connector && connector instanceof WalletConnectConnector) {
+		connector.walletConnectProvider = undefined;
+	}
+}
 
 // Clear WalletConnect's state on disconnect
 walletConnectConnector.on('disconnect', () => {

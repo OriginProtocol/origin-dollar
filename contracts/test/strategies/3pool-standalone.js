@@ -14,8 +14,7 @@ describe("3Pool Strategy Standalone", function () {
     tpStandalone,
     usdt,
     usdc,
-    dai,
-    anna;
+    dai;
 
   beforeEach(async function () {
     ({
@@ -27,7 +26,6 @@ describe("3Pool Strategy Standalone", function () {
       usdt,
       usdc,
       dai,
-      anna,
     } = await loadFixture(threepoolFixture));
     threePoolStrategy = tpStandalone.connect(governor);
   });
@@ -128,26 +126,5 @@ describe("3Pool Strategy Standalone", function () {
       threePoolStrategy,
       threePoolGauge
     );
-  });
-
-  it("Should read reward liquidation threshold", async () => {
-    expect(await tpStandalone.rewardLiquidationThreshold()).to.equal("0");
-  });
-
-  it("Should allow Governor to set reward liquidation threshold", async () => {
-    await tpStandalone
-      .connect(governor)
-      .setRewardLiquidationThreshold(utils.parseUnits("1", 18));
-    expect(await tpStandalone.rewardLiquidationThreshold()).to.equal(
-      utils.parseUnits("1", 18)
-    );
-  });
-
-  it("Should not allow non-Governor to set reward liquidation threshold", async () => {
-    await expect(
-      tpStandalone
-        .connect(anna)
-        .setRewardLiquidationThreshold(utils.parseUnits("10", 18))
-    ).to.be.revertedWith("Caller is not the Governor");
   });
 });

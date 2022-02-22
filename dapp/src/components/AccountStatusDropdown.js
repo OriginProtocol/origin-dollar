@@ -21,6 +21,8 @@ const AccountStatusDropdown = ({ className, showLogin, dapp }) => {
   const [open, setOpen] = useState(false)
   const correctNetwork = isCorrectNetwork(chainId)
 
+
+
   return (
     <>
       <Dropdown

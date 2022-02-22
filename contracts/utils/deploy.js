@@ -92,21 +92,15 @@ const impersonateGuardian = async (optGuardianAddr = null) => {
   if (!isFork) {
     throw new Error("impersonateGuardian only works on Fork");
   }
+  const { findBestMainnetTokenHolder } = require("../utils/funding");
 
   // If an address is passed, use that otherwise default to
   // the guardian address from the default hardhat accounts.
   const guardianAddr =
     optGuardianAddr || (await hre.getNamedAccounts()).guardianAddr;
 
-  // Send some ETH to the Guardian account to pay for gas fees.
-  await hre.network.provider.request({
-    method: "hardhat_impersonateAccount",
-    params: [addresses.mainnet.Binance],
-  });
-  const binanceSigner = await hre.ethers.provider.getSigner(
-    addresses.mainnet.Binance
-  );
-  await binanceSigner.sendTransaction({
+  const bestSigner = await findBestMainnetTokenHolder(null, hre);
+  await bestSigner.sendTransaction({
     to: guardianAddr,
     value: utils.parseEther("100"),
   });
@@ -198,10 +192,12 @@ const executeProposalOnFork = async (proposalId, executeGasLimit = null) => {
 
   const governor = await ethers.getContract("Governor");
 
+  console.log("GUARDIAN: ", guardianAddr, governor);
   //First enqueue the proposal, then execute it.
   await withConfirmation(
     governor.connect(sGuardian).queue(proposalId, await getTxOpts())
   );
+
   log(`Proposal ${proposalId} queued`);
 
   log("Advancing time by 48 hours + 1 second for TimeLock delay.");

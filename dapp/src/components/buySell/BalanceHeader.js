@@ -37,6 +37,7 @@ const BalanceHeader = ({
     (s) => s.animatedOusdBalance
   )
   const mintAnimationLimit = 0.5
+  const walletConnected = useStoreState(ContractStore, (s) => s.walletConnected)
 
   const [balanceEmphasised, setBalanceEmphasised] = useState(false)
   const prevOusdBalance = usePrevious(ousdBalance)
@@ -212,7 +213,11 @@ const BalanceHeader = ({
             />
             <Statistic
               title={fbt('Pending yield', 'Pending yield')}
-              value={formatCurrency(animatedExpectedIncrease, 2)}
+              value={
+                walletConnected
+                  ? formatCurrency(animatedExpectedIncrease, 2)
+                  : '--.--'
+              }
               type={'number'}
               marginBottom={true}
             />
@@ -228,7 +233,11 @@ const BalanceHeader = ({
                     }/address/${account.toLowerCase()}`
                   : false
               }
-              value={lifetimeYield ? formatCurrency(lifetimeYield, 2) : '--.--'}
+              value={
+                walletConnected && lifetimeYield
+                  ? formatCurrency(lifetimeYield, 2)
+                  : '--.--'
+              }
               type={'number'}
             />
           </div>

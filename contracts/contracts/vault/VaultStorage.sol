@@ -41,14 +41,11 @@ contract VaultStorage is Initializable, Governable {
     event PriceProviderUpdated(address _priceProvider);
     event AllocateThresholdUpdated(uint256 _threshold);
     event RebaseThresholdUpdated(uint256 _threshold);
-    event UniswapUpdated(address _address);
     event StrategistUpdated(address _address);
     event MaxSupplyDiffChanged(uint256 maxSupplyDiff);
     event YieldDistribution(address _to, uint256 _yield, uint256 _fee);
     event TrusteeFeeBpsChanged(uint256 _basis);
     event TrusteeAddressChanged(address _address);
-    event SwapTokenAdded(address _address);
-    event SwapTokenRemoved(address _address);
 
     // Assets supported by the Vault, i.e. Stablecoins
     struct Asset {
@@ -88,8 +85,9 @@ contract VaultStorage is Initializable, Governable {
     // Address of the contract responsible for post rebase syncs with AMMs
     address private _deprecated_rebaseHooksAddr = address(0);
 
-    // Address of Uniswap
-    address public uniswapAddr = address(0);
+    // Deprecated: Address of Uniswap
+    // slither-disable-next-line constable-states
+    address private _deprecated_uniswapAddr = address(0);
 
     // Address of the Strategist
     address public strategistAddr = address(0);
@@ -106,8 +104,8 @@ contract VaultStorage is Initializable, Governable {
     // Amount of yield collected in basis points
     uint256 public trusteeFeeBps;
 
-    // Tokens that should be swapped for stablecoins
-    address[] public swapTokens;
+    // Deprecated: Tokens that should be swapped for stablecoins
+    address[] private _deprecated_swapTokens;
 
     /**
      * @dev set the implementation for the admin, this needs to be in a base class else we cannot set it
