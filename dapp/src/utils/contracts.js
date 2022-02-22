@@ -446,8 +446,11 @@ export async function setupContracts(account, library, chainId, fetchId) {
 
   callWithDelay()
 
-  const [curveRegistryExchange, curveOUSDMetaPool, curveUnderlyingCoins] =
-    await setupCurve(curveAddressProvider, getContract, chainId)
+  const [
+    curveRegistryExchange,
+    curveOUSDMetaPool,
+    curveUnderlyingCoins,
+  ] = await setupCurve(curveAddressProvider, getContract, chainId)
 
   if (ContractStore.currentState.fetchId > fetchId) {
     console.log('Contracts already setup with newer fetchId. Exiting...')
@@ -622,13 +625,15 @@ const setupPools = async (account, contractsToExport) => {
           contractsToExport[pool.lp_contract_variable_name_ierc20]
 
         if (pool.lp_contract_type === 'uniswap-v2') {
-          ;[coin1Address, coin2Address, poolLpTokenBalance] = await Promise.all(
-            [
-              await lpContract_uniPair.token0(),
-              await lpContract_uniPair.token1(),
-              await lpContract_ierc20.balanceOf(poolContract.address),
-            ]
-          )
+          ;[
+            coin1Address,
+            coin2Address,
+            poolLpTokenBalance,
+          ] = await Promise.all([
+            await lpContract_uniPair.token0(),
+            await lpContract_uniPair.token1(),
+            await lpContract_ierc20.balanceOf(poolContract.address),
+          ])
         }
 
         return {

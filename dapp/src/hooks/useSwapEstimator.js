@@ -44,15 +44,19 @@ const useSwapEstimator = ({
 
   const balances = useStoreState(AccountStore, (s) => s.balances)
 
-  const { contract: coinToSwapContract, decimals: coinToSwapDecimals } =
-    coinInfoList[swapMode === 'mint' ? selectedCoin : 'ousd']
+  const {
+    contract: coinToSwapContract,
+    decimals: coinToSwapDecimals,
+  } = coinInfoList[swapMode === 'mint' ? selectedCoin : 'ousd']
 
   let coinToReceiveContract, coinToReceiveDecimals
 
   // do not enter conditional body when redeeming a mix
   if (!(swapMode === 'redeem' && selectedCoin === 'mix')) {
-    ;({ contract: coinToReceiveContract, decimals: coinToReceiveDecimals } =
-      coinInfoList[swapMode === 'redeem' ? selectedCoin : 'ousd'])
+    ;({
+      contract: coinToReceiveContract,
+      decimals: coinToReceiveDecimals,
+    } = coinInfoList[swapMode === 'redeem' ? selectedCoin : 'ousd'])
   }
 
   const allowances = useStoreState(AccountStore, (s) => s.allowances)
@@ -858,8 +862,7 @@ const useSwapEstimator = ({
     }
 
     try {
-      const priceFeed =
-        await contracts.chainlinkFastGasAggregator.latestRoundData()
+      const priceFeed = await contracts.chainlinkFastGasAggregator.latestRoundData()
 
       if (!isGasPriceUserOverriden) {
         ContractStore.update((s) => {
@@ -927,9 +930,7 @@ const useSwapEstimator = ({
         )
 
         const assets = await Promise.all(
-          (
-            await contracts.vault.getAllAssets()
-          ).map(async (address, index) => {
+          (await contracts.vault.getAllAssets()).map(async (address, index) => {
             const coin = Object.keys(contracts).find(
               (coin) =>
                 contracts[coin] &&

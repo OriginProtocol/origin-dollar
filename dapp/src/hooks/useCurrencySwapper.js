@@ -58,14 +58,17 @@ const useCurrencySwapper = ({
     allowances.usdc &&
     allowances.dai
 
-  const { contract: coinContract, decimals } =
-    coinInfoList[swapMode === 'mint' ? selectedCoin : 'ousd']
+  const { contract: coinContract, decimals } = coinInfoList[
+    swapMode === 'mint' ? selectedCoin : 'ousd'
+  ]
 
   let coinToReceiveDecimals, coinToReceiveContract
   // do not enter conditional body when redeeming a mix
   if (!(swapMode === 'redeem' && selectedCoin === 'mix')) {
-    ;({ contract: coinToReceiveContract, decimals: coinToReceiveDecimals } =
-      coinInfoList[swapMode === 'redeem' ? selectedCoin : 'ousd'])
+    ;({
+      contract: coinToReceiveContract,
+      decimals: coinToReceiveDecimals,
+    } = coinInfoList[swapMode === 'redeem' ? selectedCoin : 'ousd'])
   }
 
   // plain amount as displayed in UI (not in wei format)

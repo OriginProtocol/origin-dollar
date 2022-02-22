@@ -23,8 +23,9 @@ const GetOUSD = ({
   connect,
 }) => {
   const { activate, active } = useWeb3React()
-  const [userAlreadyConnectedWallet, setUserAlreadyConnectedWallet] =
-    useState(false)
+  const [userAlreadyConnectedWallet, setUserAlreadyConnectedWallet] = useState(
+    false
+  )
   const router = useRouter()
   const classList = classnames(
     'btn d-flex align-items-center justify-content-center',

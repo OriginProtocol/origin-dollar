@@ -11,8 +11,9 @@ import ConfirmContractPickModal from 'components/buySell/ConfirmContractPickModa
 
 const ContractsTable = () => {
   const swapEstimations = useStoreState(ContractStore, (s) => s.swapEstimations)
-  const [alternateTxRouteConfirmed, setAlternateTxRouteConfirmed] =
-    useState(false)
+  const [alternateTxRouteConfirmed, setAlternateTxRouteConfirmed] = useState(
+    false
+  )
   const [showAlternateRouteModal, setShowAlternateRouteModal] = useState(false)
   const [
     alternateRouteEstimationSelected,
