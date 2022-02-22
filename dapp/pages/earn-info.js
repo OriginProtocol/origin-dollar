@@ -44,63 +44,85 @@ export default function Earn({ locale, onLocale }) {
                 <div className="circle under">
                   <img
                     className="front"
-                    src={adjustSrcOption("/images/yield-hero-graphic-front-line.svg")}
+                    src={adjustSrcOption(
+                      '/images/yield-hero-graphic-front-line.svg'
+                    )}
                   />
                 </div>
                 <div className="circle over">
                   <img
                     className="back"
-                    src={adjustSrcOption("/images/yield-hero-graphic-back-line.svg")}
+                    src={adjustSrcOption(
+                      '/images/yield-hero-graphic-back-line.svg'
+                    )}
                   />
                 </div>
                 <div className="circle circle2 under">
                   <img
                     className="front"
-                    src={adjustSrcOption("/images/yield-hero-graphic-front-line.svg")}
+                    src={adjustSrcOption(
+                      '/images/yield-hero-graphic-front-line.svg'
+                    )}
                   />
                 </div>
                 <div className="circle circle2 over">
                   <img
                     className="back"
-                    src={adjustSrcOption("/images/yield-hero-graphic-back-line.svg")}
+                    src={adjustSrcOption(
+                      '/images/yield-hero-graphic-back-line.svg'
+                    )}
                   />
                 </div>
                 <div className="circle circle3 under">
                   <img
                     className="front"
-                    src={adjustSrcOption("/images/yield-hero-graphic-front-line.svg")}
+                    src={adjustSrcOption(
+                      '/images/yield-hero-graphic-front-line.svg'
+                    )}
                   />
                 </div>
                 <div className="circle circle3 over">
                   <img
                     className="back"
-                    src={adjustSrcOption("/images/yield-hero-graphic-back-line.svg")}
+                    src={adjustSrcOption(
+                      '/images/yield-hero-graphic-back-line.svg'
+                    )}
                   />
                 </div>
                 <div className="circle circle4 under">
                   <img
                     className="front"
-                    src={adjustSrcOption("/images/yield-hero-graphic-front-line.svg")}
+                    src={adjustSrcOption(
+                      '/images/yield-hero-graphic-front-line.svg'
+                    )}
                   />
                 </div>
                 <div className="circle circle4 over">
                   <img
                     className="back"
-                    src={adjustSrcOption("/images/yield-hero-graphic-back-line.svg")}
+                    src={adjustSrcOption(
+                      '/images/yield-hero-graphic-back-line.svg'
+                    )}
                   />
                 </div>
                 <img
-                  src={adjustSrcOption("/images/yield-hero-graphic-no-lines-background.svg")}
+                  src={adjustSrcOption(
+                    '/images/yield-hero-graphic-no-lines-background.svg'
+                  )}
                   alt="Increasing yield"
                   className="increasing-filler back"
                 />
                 <img
-                  src={adjustSrcOption("/images/yield-hero-graphic-no-lines.svg")}
+                  src={adjustSrcOption(
+                    '/images/yield-hero-graphic-no-lines.svg'
+                  )}
                   alt="Increasing yield"
                   className="increasing-filler front"
                 />
                 <img
-                  src={adjustSrcOption("/images/yield-hero-graphic-no-lines-nothing.svg")}
+                  src={adjustSrcOption(
+                    '/images/yield-hero-graphic-no-lines-nothing.svg'
+                  )}
                   alt="Increasing yield"
                 />
               </div>
@@ -124,14 +146,20 @@ export default function Earn({ locale, onLocale }) {
             </svg>
             <div className="d-flex justify-content-center">
               <div className="source">
-                <img src={adjustSrcOption("/images/yield-1-icon-small.svg")} alt="Lending fees" />
-              </div>
-              <div className="source">
-                <img src={adjustSrcOption("/images/yield-2-icon-small.svg")} alt="Trading fees" />
+                <img
+                  src={adjustSrcOption('/images/yield-1-icon-small.svg')}
+                  alt="Lending fees"
+                />
               </div>
               <div className="source">
                 <img
-                  src={adjustSrcOption("/images/yield-3-icon-small.svg")}
+                  src={adjustSrcOption('/images/yield-2-icon-small.svg')}
+                  alt="Trading fees"
+                />
+              </div>
+              <div className="source">
+                <img
+                  src={adjustSrcOption('/images/yield-3-icon-small.svg')}
                   alt="Liquidity mining rewards"
                 />
               </div>
@@ -153,7 +181,7 @@ export default function Earn({ locale, onLocale }) {
       <section className="bonus">
         <div className="container text-center px-lg-0">
           <img
-            src={adjustSrcOption("/images/yield-4-icon-small.svg")}
+            src={adjustSrcOption('/images/yield-4-icon-small.svg')}
             alt="Origin rewards tokens"
             className="d-block d-lg-inline mb-3 mb-lg-0 mx-auto mr-lg-3"
           />
@@ -171,7 +199,7 @@ export default function Earn({ locale, onLocale }) {
           <div className="row">
             <div className="col-lg-5 text-center order-lg-2 d-flex justify-content-lg-end justify-content-center">
               <img
-                src={adjustSrcOption("/images/yield-1-icon-large.svg")}
+                src={adjustSrcOption('/images/yield-1-icon-large.svg')}
                 alt="Lending fees"
                 className="category w-sd-116 h-sd-116"
               />
@@ -196,7 +224,7 @@ export default function Earn({ locale, onLocale }) {
                     <div className="d-flex justify-content-center">
                       <img
                         className="w-sd-103"
-                        src={adjustSrcOption("/images/compound-logo.svg")}
+                        src={adjustSrcOption('/images/compound-logo.svg')}
                         alt="Compound logo"
                       />
                     </div>
@@ -205,7 +233,7 @@ export default function Earn({ locale, onLocale }) {
                     <div className="d-flex justify-content-center">
                       <img
                         className="w-sd-62"
-                        src={adjustSrcOption("/images/aave-logo.svg")}
+                        src={adjustSrcOption('/images/aave-logo.svg')}
                         alt="Aave logo"
                       />
                     </div>
@@ -214,7 +242,7 @@ export default function Earn({ locale, onLocale }) {
                     <div className="d-flex justify-content-center">
                       <img
                         className="w-sd-66"
-                        src={adjustSrcOption("/images/dydx-logo.svg")}
+                        src={adjustSrcOption('/images/dydx-logo.svg')}
                         alt="dy/dx logo"
                       />
                     </div>
@@ -229,7 +257,7 @@ export default function Earn({ locale, onLocale }) {
           <div className="row">
             <div className="col-lg-6 text-center">
               <img
-                src={adjustSrcOption("/images/yield-2-icon-large.svg")}
+                src={adjustSrcOption('/images/yield-2-icon-large.svg')}
                 alt="Lending fees"
                 className="category w-sd-116 h-sd-116"
               />
@@ -259,7 +287,7 @@ export default function Earn({ locale, onLocale }) {
                     <div className="d-flex justify-content-center">
                       <img
                         className="w-sd-97"
-                        src={adjustSrcOption("/images/uniswap-logo.svg")}
+                        src={adjustSrcOption('/images/uniswap-logo.svg')}
                         alt="Uniswap logo"
                       />
                     </div>
@@ -271,7 +299,7 @@ export default function Earn({ locale, onLocale }) {
                     <div className="d-flex justify-content-center">
                       <img
                         className="w-sd-78"
-                        src={adjustSrcOption("/images/balancer-logo.svg")}
+                        src={adjustSrcOption('/images/balancer-logo.svg')}
                         alt="Balancer logo"
                       />
                     </div>
@@ -283,7 +311,7 @@ export default function Earn({ locale, onLocale }) {
                     <div className="d-flex justify-content-center">
                       <img
                         className="w-sd-71"
-                        src={adjustSrcOption("/images/curve-logo.svg")}
+                        src={adjustSrcOption('/images/curve-logo.svg')}
                         alt="Curve logo"
                       />
                     </div>
@@ -295,7 +323,7 @@ export default function Earn({ locale, onLocale }) {
           <div className="row">
             <div className="col-lg-6 text-center order-lg-2">
               <img
-                src={adjustSrcOption("/images/yield-3-icon-large.svg")}
+                src={adjustSrcOption('/images/yield-3-icon-large.svg')}
                 alt="Liquidity Mining Rewards"
                 className="category w-sd-202 h-sd-140"
               />
@@ -341,12 +369,12 @@ export default function Earn({ locale, onLocale }) {
               )}
             </h5>
             <img
-              src={adjustSrcOption("/images/compound-graph-lg.svg")}
+              src={adjustSrcOption('/images/compound-graph-lg.svg')}
               alt="Compounding graph"
               className="d-none d-lg-block"
             />
             <img
-              src={adjustSrcOption("/images/compound-graph-xs.svg")}
+              src={adjustSrcOption('/images/compound-graph-xs.svg')}
               alt="Compounding graph"
               className="d-lg-none"
             />

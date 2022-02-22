@@ -48,7 +48,7 @@ const ClaimStakeModal = ({
               <h1>{fbt('Claim & Stake OGN', 'Claim & Stake OGN')}</h1>
               <img
                 className="close-x"
-                src={adjustSrcOption("/images/close-button.svg")}
+                src={adjustSrcOption('/images/close-button.svg')}
                 onClick={close}
               />
             </div>

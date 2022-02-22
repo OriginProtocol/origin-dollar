@@ -35,8 +35,14 @@ const CurrentStakeLockup = ({ stake, onDetailsClick, isMobile }) => {
           )}
         </div>
         <button className="d-flex align-items-center justify-content-center arrow-link">
-          <img className="caret-left" src={adjustSrcOption("/images/caret-left.svg")} />
-          <img className="caret-left hover" src={adjustSrcOption("/images/caret-left-blue.svg")} />
+          <img
+            className="caret-left"
+            src={adjustSrcOption('/images/caret-left.svg')}
+          />
+          <img
+            className="caret-left hover"
+            src={adjustSrcOption('/images/caret-left-blue.svg')}
+          />
         </button>
       </div>
       <div className="bottom d-flex align-items-center justify-content-start">

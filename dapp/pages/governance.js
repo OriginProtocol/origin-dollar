@@ -241,7 +241,7 @@ export default function Governance({ locale, onLocale }) {
             <div className="col col-lg-4">
               <div className="image-container">
                 <img
-                  src={adjustSrcOption("/images/convert-icon.svg")}
+                  src={adjustSrcOption('/images/convert-icon.svg')}
                   alt="Token conversion icon"
                 />
               </div>
@@ -255,7 +255,7 @@ export default function Governance({ locale, onLocale }) {
             <div className="col col-lg-4">
               <div className="image-container">
                 <img
-                  src={adjustSrcOption("/images/liquidity-icon.svg")}
+                  src={adjustSrcOption('/images/liquidity-icon.svg')}
                   alt="Liquidity supply icon"
                 />
               </div>
@@ -265,7 +265,10 @@ export default function Governance({ locale, onLocale }) {
             </div>
             <div className="col col-lg-4">
               <div className="image-container">
-                <img src={adjustSrcOption("/images/ogn-icon.svg")} alt="Origin Token (OGN) icon" />
+                <img
+                  src={adjustSrcOption('/images/ogn-icon.svg')}
+                  alt="Origin Token (OGN) icon"
+                />
               </div>
               <div className="action">{fbt('Stake OGN', 'Stake OGN')}</div>
             </div>

@@ -38,7 +38,10 @@ const ApproveCurrencyInProgressModal = ({ show }) => {
           }}
         >
           <div className="body-coins d-flex flex-column">
-            <img className="login-icon" src={adjustSrcOption(`/images/${connectorIcon}`)} />
+            <img
+              className="login-icon"
+              src={adjustSrcOption(`/images/${connectorIcon}`)}
+            />
             <h2>
               {fbt(
                 'Waiting for ' +

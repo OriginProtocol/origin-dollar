@@ -55,7 +55,7 @@ const CoinWithdrawBox = ({
             <div className="d-flex justify-content-center ml-md-auto">
               <img
                 className="spinner rotating"
-                src={adjustSrcOption("/images/spinner-green-small.png")}
+                src={adjustSrcOption('/images/spinner-green-small.png')}
               />
             </div>
           ) : (

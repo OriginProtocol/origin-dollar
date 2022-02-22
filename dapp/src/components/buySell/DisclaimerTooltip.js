@@ -53,7 +53,7 @@ const DisclaimerTooltip = ({
           >
             <img
               className={`question-icon ${smallIcon && 'small-icon'}`}
-              src={adjustSrcOption("/images/question-icon.svg")}
+              src={adjustSrcOption('/images/question-icon.svg')}
               alt="Help icon"
             />
           </a>

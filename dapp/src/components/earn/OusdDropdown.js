@@ -20,7 +20,10 @@ const OusdDropdown = ({}) => {
         content={
           <div className="dropdown-menu show wrapper">
             <div className="balance-holder d-flex flex-column align-items-center justify-content-center">
-              <img className="ousd-icon" src={adjustSrcOption("/images/ousd-token-icon.svg")} />
+              <img
+                className="ousd-icon"
+                src={adjustSrcOption('/images/ousd-token-icon.svg')}
+              />
               <h1 className="balance">{formatCurrency(ousdBalance, 2)}</h1>
             </div>
             <div className="stats-holder">

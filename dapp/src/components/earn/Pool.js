@@ -45,9 +45,14 @@ export default function Pool({ pool }) {
             </div>
             <div className="d-flex align-items-center">
               <UniswapPoolLink isPoolDetails={true} pool={pool} />
-              <Link href={adjustLinkHref(`/pool/${encodeURIComponent(pool.name)}`)}>
+              <Link
+                href={adjustLinkHref(`/pool/${encodeURIComponent(pool.name)}`)}
+              >
                 <a className="d-flex align-items-center justify-content-center pool-link">
-                  <img className="caret-left" src={adjustSrcOption("/images/caret-left.svg")} />
+                  <img
+                    className="caret-left"
+                    src={adjustSrcOption('/images/caret-left.svg')}
+                  />
                 </a>
               </Link>
             </div>
@@ -83,7 +88,9 @@ export default function Pool({ pool }) {
                 <span>{fbt('Your weekly rate', 'Your weekly rate')}</span>
                 <img
                   className="ogn-icon"
-                  src={adjustSrcOption("/images/ogn-icon-clear-blue-white-rim.svg")}
+                  src={adjustSrcOption(
+                    '/images/ogn-icon-clear-blue-white-rim.svg'
+                  )}
                 />
                 <span className="emphasised">
                   {formatCurrency(pool.your_weekly_rate, 2)} OGN

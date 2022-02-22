@@ -79,7 +79,7 @@ const AccountStatusContent = ({ className, onOpen }) => {
                   rel="noopener noreferrer"
                   className="ml-auto etherscan-icon"
                 >
-                  <img src={adjustSrcOption("/images/etherscan-icon.svg")} />
+                  <img src={adjustSrcOption('/images/etherscan-icon.svg')} />
                 </a>
               </div>
             </>

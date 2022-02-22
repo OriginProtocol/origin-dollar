@@ -24,7 +24,10 @@ const OgnDropdown = ({}) => {
           content={
             <div className="dropdown-menu show wrapper">
               <div className="balance-holder d-flex flex-column align-items-center justify-content-center">
-                <img className="ogn-icon" src={adjustSrcOption("/images/ogn-icon-blue.svg")} />
+                <img
+                  className="ogn-icon"
+                  src={adjustSrcOption('/images/ogn-icon-blue.svg')}
+                />
                 <h1 className="balance">{formatCurrency(ognBalance, 2)}</h1>
               </div>
               {/* <div className="stats-holder pt-0"> */}

@@ -64,7 +64,10 @@ const UnstakeModal = ({ pool, onClose, onUserConfirmedStakeTx, onError }) => {
               {formatCurrency(pool.claimable_ogn, 2)}
             </div>
             <div className="d-flex mb-33 align-items-center">
-              <img className="coin-icon" src={adjustSrcOption("/images/ogn-icon-blue.svg")} />
+              <img
+                className="coin-icon"
+                src={adjustSrcOption('/images/ogn-icon-blue.svg')}
+              />
               <div className="grey-text">
                 {fbt('Unclaimed OGN', 'Unclaimed OGN')}
               </div>

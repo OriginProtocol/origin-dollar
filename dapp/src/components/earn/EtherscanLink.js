@@ -19,9 +19,11 @@ export default function EtherscanLink({
       >
         <img
           className="etherscan-icon"
-          src={adjustSrcOption(`/images/${
-            white ? 'etherscan-icon-white.svg' : 'etherscan-icon-earn.svg'
-          }`)}
+          src={adjustSrcOption(
+            `/images/${
+              white ? 'etherscan-icon-white.svg' : 'etherscan-icon-earn.svg'
+            }`
+          )}
         />
         {text}
       </a>

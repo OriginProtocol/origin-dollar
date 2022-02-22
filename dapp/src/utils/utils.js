@@ -39,8 +39,7 @@ export function capitalize([first, ...rest]) {
 }
 
 export function adjustLinkHref(href) {
-  if (process.env.DEPLOY_MODE !== 'ipfs')
-    return href
+  if (process.env.DEPLOY_MODE !== 'ipfs') return href
 
   if (href === '/') {
     return './index.html'

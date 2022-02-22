@@ -268,19 +268,21 @@ const SidePanelTransactionMessage = ({
                       {!transaction.mined && (
                         <img
                           className="waiting-icon rotating"
-                          src={adjustSrcOption("/images/spinner-green-small.png")}
+                          src={adjustSrcOption(
+                            '/images/spinner-green-small.png'
+                          )}
                         />
                       )}
                       {transaction.mined && !transaction.isError && (
                         <img
                           className="waiting-icon"
-                          src={adjustSrcOption("/images/green-checkmark.svg")}
+                          src={adjustSrcOption('/images/green-checkmark.svg')}
                         />
                       )}
                       {transaction.mined && transaction.isError && (
                         <img
                           className="waiting-icon"
-                          src={adjustSrcOption("/images/red-x-filled.svg")}
+                          src={adjustSrcOption('/images/red-x-filled.svg')}
                         />
                       )}
                     </div>
@@ -354,19 +356,21 @@ const SidePanelTransactionMessage = ({
                       {!transaction.mined && (
                         <img
                           className="waiting-icon rotating"
-                          src={adjustSrcOption("/images/spinner-green-small.png")}
+                          src={adjustSrcOption(
+                            '/images/spinner-green-small.png'
+                          )}
                         />
                       )}
                       {transaction.mined && !transaction.isError && (
                         <img
                           className="waiting-icon"
-                          src={adjustSrcOption("/images/green-checkmark.svg")}
+                          src={adjustSrcOption('/images/green-checkmark.svg')}
                         />
                       )}
                       {transaction.mined && transaction.isError && (
                         <img
                           className="waiting-icon"
-                          src={adjustSrcOption("/images/red-x-filled.svg")}
+                          src={adjustSrcOption('/images/red-x-filled.svg')}
                         />
                       )}
                     </div>
@@ -489,7 +493,7 @@ const SidePanelTransactionMessage = ({
                   )}
                 </div>
                 <div className="small-arrow d-flex align-items-center justify-content-center align-self-center">
-                  <img src={adjustSrcOption("/images/small-arrow.svg")} />
+                  <img src={adjustSrcOption('/images/small-arrow.svg')} />
                 </div>
                 <div className="expand-box right d-flex flex-column align-items-center justify-content-center">
                   {redeemDataAvailable && (

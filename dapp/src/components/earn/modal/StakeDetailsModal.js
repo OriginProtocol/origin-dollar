@@ -32,7 +32,7 @@ const StakeDetailsModal = ({ stake, onClose, isMobile }) => {
           }}
         >
           <button onClick={onClose} className="close-button">
-            <img src={adjustSrcOption("/images/close-button.svg")} />
+            <img src={adjustSrcOption('/images/close-button.svg')} />
           </button>
           <div className="header d-flex w-100">
             <CircularProgressMeter

@@ -47,7 +47,10 @@ export default function StakeBoxBig({
           className="d-flex align-items-center justify-content-center arrow-link"
         >
           {!showLoadingWheel && (
-            <img className="caret-left" src={adjustSrcOption("/images/caret-left.svg")} />
+            <img
+              className="caret-left"
+              src={adjustSrcOption('/images/caret-left.svg')}
+            />
           )}
           {showLoadingWheel && (
             <SpinningLoadingCircle backgroundColor="183140" />

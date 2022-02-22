@@ -15,7 +15,9 @@ export default function UniswapPoolLink({ pool, isPoolDetails }) {
       >
         <img
           className="uniswap-icon"
-          src={adjustSrcOption(`/images/uniswap-icon-${isPoolDetails ? 'white' : 'grey'}.svg`)}
+          src={adjustSrcOption(
+            `/images/uniswap-icon-${isPoolDetails ? 'white' : 'grey'}.svg`
+          )}
         />
         {fbt('Uniswap pool', 'Uniswap pool link')}
       </a>

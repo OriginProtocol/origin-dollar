@@ -38,9 +38,18 @@ const AddOUSDModal = ({ onClose, isMobile }) => {
           }}
         >
           <div className="d-flex justify-content-center align-items-center mb-4">
-            <img className="icon" src={adjustSrcOption("/images/ousd-token-icon.svg")} />
-            <img className="icon small" src={adjustSrcOption("/images/arrow-icon-dark.svg")} />
-            <img className="icon" src={adjustSrcOption(`/images/${connectorIcon}`)} />
+            <img
+              className="icon"
+              src={adjustSrcOption('/images/ousd-token-icon.svg')}
+            />
+            <img
+              className="icon small"
+              src={adjustSrcOption('/images/arrow-icon-dark.svg')}
+            />
+            <img
+              className="icon"
+              src={adjustSrcOption(`/images/${connectorIcon}`)}
+            />
           </div>
           {provider === 'metamask' && (
             <>
@@ -102,7 +111,7 @@ const AddOUSDModal = ({ onClose, isMobile }) => {
                       <div className="copy-image d-flex align-items-center justify-content-center">
                         <img
                           className="clipboard-icon"
-                          src={adjustSrcOption("/images/clipboard-icon.svg")}
+                          src={adjustSrcOption('/images/clipboard-icon.svg')}
                         />
                       </div>
                     </div>

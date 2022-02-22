@@ -42,7 +42,10 @@ const SidePanelStakeMessage = () => {
           >
             ×
           </a>
-          <img className="ogn-icon" src={adjustSrcOption("/images/ogn-icon-blue.svg")} />
+          <img
+            className="ogn-icon"
+            src={adjustSrcOption('/images/ogn-icon-blue.svg')}
+          />
           <div>
             {fbt(
               "You're ready to provide liquidity and deposit to earn OGN",

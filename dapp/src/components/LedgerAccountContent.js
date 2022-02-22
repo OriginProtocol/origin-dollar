@@ -77,7 +77,7 @@ const LedgerAccountContent = ({}) => {
         {loading ? (
           <img
             className="waiting-icon rotating mx-auto"
-            src={adjustSrcOption("/images/spinner-green-small.png")}
+            src={adjustSrcOption('/images/spinner-green-small.png')}
           />
         ) : (
           addresses.map((address) => {

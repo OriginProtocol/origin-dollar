@@ -48,7 +48,11 @@ const AccountStatusPopover = ({ className }) => {
           aria-expanded="false"
           aria-label="Toggle popover"
         >
-          <img src={adjustSrcOption("/images/close.svg")} alt="Close icon" loading="lazy" />
+          <img
+            src={adjustSrcOption('/images/close.svg')}
+            alt="Close icon"
+            loading="lazy"
+          />
         </button>
         <Content />
       </div>

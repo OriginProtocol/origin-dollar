@@ -18,7 +18,7 @@ const MissionControl = ({}) => {
           {active && <SwapHomepage />}
           {!active && (
             <div className="empty-placeholder d-flex flex-column align-items-center justify-content-start">
-              <img src={adjustSrcOption("/images/wallet-icons.svg")} />
+              <img src={adjustSrcOption('/images/wallet-icons.svg')} />
               <div className="header-text">
                 {fbt('No wallet connected', 'Disconnected dapp message')}
               </div>

@@ -73,7 +73,10 @@ const ApproveCurrencyRow = ({
           isLast ? 'last' : ''
         }`}
       >
-        <img className="icon" src={adjustSrcOption(`/images/currency/${coin}-icon-small.svg`)} />
+        <img
+          className="icon"
+          src={adjustSrcOption(`/images/currency/${coin}-icon-small.svg`)}
+        />
         {stage === 'approve' && (
           <>
             {fbt(
@@ -152,7 +155,7 @@ const ApproveCurrencyRow = ({
             )}
             <img
               className="waiting-icon rotating ml-auto"
-              src={adjustSrcOption("/images/spinner-green-small.png")}
+              src={adjustSrcOption('/images/spinner-green-small.png')}
             />
           </>
         )}
@@ -164,7 +167,7 @@ const ApproveCurrencyRow = ({
             )}
             <img
               className="waiting-icon ml-auto"
-              src={adjustSrcOption("/images/green-check.svg")}
+              src={adjustSrcOption('/images/green-check.svg')}
             />
           </>
         )}

@@ -87,7 +87,10 @@ const EmailForm = ({ footer }) => {
           className="btn btn-outline-light d-flex align-items-center justify-content-center subscribe ml-sm-4"
         >
           {footer ? (
-            <img src={adjustSrcOption("/images/arrow-icon.svg")} alt="Arrow right" />
+            <img
+              src={adjustSrcOption('/images/arrow-icon.svg')}
+              alt="Arrow right"
+            />
           ) : (
             'Subscribe'
           )}

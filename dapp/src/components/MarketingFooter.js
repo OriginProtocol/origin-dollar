@@ -95,7 +95,7 @@ export default function Footer({ locale }) {
                 >
                   <img
                     className="social-icon"
-                    src={adjustSrcOption("/images/discord.svg")}
+                    src={adjustSrcOption('/images/discord.svg')}
                     alt="Discord logo"
                   />
                 </a>
@@ -109,14 +109,14 @@ export default function Footer({ locale }) {
                 >
                   <img
                     className="social-icon"
-                    src={adjustSrcOption("/images/telegram.svg")}
+                    src={adjustSrcOption('/images/telegram.svg')}
                     alt="Telegram logo"
                   />
                 </a>
                 <a href={wechatURL} target="_blank" rel="noopener noreferrer">
                   <img
                     className="social-icon"
-                    src={adjustSrcOption("/images/wechat.svg")}
+                    src={adjustSrcOption('/images/wechat.svg')}
                     alt="WeChat logo"
                   />
                 </a>
@@ -130,49 +130,49 @@ export default function Footer({ locale }) {
                 >
                   <img
                     className="social-icon"
-                    src={adjustSrcOption("/images/github.svg")}
+                    src={adjustSrcOption('/images/github.svg')}
                     alt="GitHub logo"
                   />
                 </a>
                 <a href={redditURL} target="_blank" rel="noopener noreferrer">
                   <img
                     className="social-icon"
-                    src={adjustSrcOption("/images/reddit.svg")}
+                    src={adjustSrcOption('/images/reddit.svg')}
                     alt="Reddit logo"
                   />
                 </a>
                 <a href={weiboURL} target="_blank" rel="noopener noreferrer">
                   <img
                     className="social-icon"
-                    src={adjustSrcOption("/images/weibo.svg")}
+                    src={adjustSrcOption('/images/weibo.svg')}
                     alt="Weibo logo"
                   />
                 </a>
                 <a href={facebookURL} target="_blank" rel="noopener noreferrer">
                   <img
                     className="social-icon"
-                    src={adjustSrcOption("/images/facebook.svg")}
+                    src={adjustSrcOption('/images/facebook.svg')}
                     alt="Facebook logo"
                   />
                 </a>
                 <a href={twitterURL} target="_blank" rel="noopener noreferrer">
                   <img
                     className="social-icon"
-                    src={adjustSrcOption("/images/twitter.svg")}
+                    src={adjustSrcOption('/images/twitter.svg')}
                     alt="Twitter logo"
                   />
                 </a>
                 <a href={mediumURL} target="_blank" rel="noopener noreferrer">
                   <img
                     className="social-icon"
-                    src={adjustSrcOption("/images/medium.svg")}
+                    src={adjustSrcOption('/images/medium.svg')}
                     alt="Medium logo"
                   />
                 </a>
                 <a href={youtubeURL} target="_blank" rel="noopener noreferrer">
                   <img
                     className="social-icon"
-                    src={adjustSrcOption("/images/youtube.svg")}
+                    src={adjustSrcOption('/images/youtube.svg')}
                     alt="YouTube logo"
                   />
                 </a>
@@ -183,7 +183,7 @@ export default function Footer({ locale }) {
                 >
                   <img
                     className="social-icon"
-                    src={adjustSrcOption("/images/instagram.svg")}
+                    src={adjustSrcOption('/images/instagram.svg')}
                     alt="Instagram logo"
                   />
                 </a>

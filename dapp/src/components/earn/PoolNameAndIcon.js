@@ -10,12 +10,17 @@ export default function PoolNameAndIcon({
 }) {
   return (
     <div className="d-flex align-items-center">
-      <img className="coin-icon one" src={adjustSrcOption(`/images/${pool.coin_one.icon}`)} />
+      <img
+        className="coin-icon one"
+        src={adjustSrcOption(`/images/${pool.coin_one.icon}`)}
+      />
       <img
         className="coin-icon two"
-        src={adjustSrcOption(`/images/${
-          isPoolDetails ? pool.coin_two.pool_details_icon : pool.coin_two.icon
-        }`)}
+        src={adjustSrcOption(
+          `/images/${
+            isPoolDetails ? pool.coin_two.pool_details_icon : pool.coin_two.icon
+          }`
+        )}
       />
       {!hideName && (
         <div className={classnames('name', { smallText, isPoolDetails })}>

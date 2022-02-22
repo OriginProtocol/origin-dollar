@@ -70,7 +70,11 @@ export default function LiquidityWizard({ pool, onHideWizzard }) {
               }}
             >
               <div className="step-number">
-                <img className="checkmark" src={adjustSrcOption("/images/checkmark.svg")} />1
+                <img
+                  className="checkmark"
+                  src={adjustSrcOption('/images/checkmark.svg')}
+                />
+                1
               </div>
               <div>{fbt('Purchase OUSD', 'Purchase OUSD')}</div>
             </div>
@@ -81,7 +85,11 @@ export default function LiquidityWizard({ pool, onHideWizzard }) {
               }}
             >
               <div className="step-number">
-                <img className="checkmark" src={adjustSrcOption("/images/checkmark.svg")} />2
+                <img
+                  className="checkmark"
+                  src={adjustSrcOption('/images/checkmark.svg')}
+                />
+                2
               </div>
               <div>{fbt('Provide liquidity', 'Provide liquidity')}</div>
             </div>
@@ -92,7 +100,11 @@ export default function LiquidityWizard({ pool, onHideWizzard }) {
               }}
             >
               <div className="step-number">
-                <img className="checkmark" src={adjustSrcOption("/images/checkmark.svg")} />3
+                <img
+                  className="checkmark"
+                  src={adjustSrcOption('/images/checkmark.svg')}
+                />
+                3
               </div>
               <div>{fbt('Deposit to earn OGN', 'Deposit to earn OGN')}</div>
             </div>
@@ -108,14 +120,17 @@ export default function LiquidityWizard({ pool, onHideWizzard }) {
           )}
           {activeStep === 1 && (
             <>
-              <img className="ousd-icon" src={adjustSrcOption("/images/ousd-coin.svg")} />
+              <img
+                className="ousd-icon"
+                src={adjustSrcOption('/images/ousd-coin.svg')}
+              />
               <div className="big-title">
                 {fbt(
                   'Get OUSD by minting it or buying it on an exchange',
                   'Wizard purchase OUSD text'
                 )}
               </div>
-              <Link href={adjustLinkHref("/swap")}>
+              <Link href={adjustLinkHref('/swap')}>
                 <a className="btn-blue h-40">{fbt('Swap OUSD', 'Swap OUSD')}</a>
               </Link>
             </>
@@ -124,7 +139,7 @@ export default function LiquidityWizard({ pool, onHideWizzard }) {
             <>
               <img
                 className="uniswap-icon"
-                src={adjustSrcOption("/images/uniswap-icon-white.svg")}
+                src={adjustSrcOption('/images/uniswap-icon-white.svg')}
               />
               <div className="big-title">
                 {fbt(
@@ -153,7 +168,10 @@ export default function LiquidityWizard({ pool, onHideWizzard }) {
           )}
           {activeStep === 3 && (
             <>
-              <img className="ogn-icon" src={adjustSrcOption("/images/ogn-icon-blue.svg")} />
+              <img
+                className="ogn-icon"
+                src={adjustSrcOption('/images/ogn-icon-blue.svg')}
+              />
               <div className="big-title">
                 {fbt(
                   'Deposit your LP tokens and start earning OGN',

@@ -99,7 +99,7 @@ const Layout = ({
       >
         <div className="container d-flex flex-column flex-md-row align-items-center">
           <img
-            src={adjustSrcOption("/images/gnosis-safe-icon.svg")}
+            src={adjustSrcOption('/images/gnosis-safe-icon.svg')}
             className="mb-2 mb-md-0 mr-md-3"
             style={{ width: '50px' }}
           />
@@ -126,7 +126,10 @@ const Layout = ({
         )}
       >
         <div className="container d-flex flex-column flex-md-row align-items-center">
-          <img src={adjustSrcOption("/images/horsey.svg")} className="mb-2 mb-md-0 mr-md-3" />
+          <img
+            src={adjustSrcOption('/images/horsey.svg')}
+            className="mb-2 mb-md-0 mr-md-3"
+          />
           {fbt(
             'Gas fees are high right now. It might be cheaper to buy OUSD on Uniswap.',
             'Uniswap notice'

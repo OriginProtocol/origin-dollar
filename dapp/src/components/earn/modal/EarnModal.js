@@ -55,7 +55,7 @@ const EarnModal = ({
               <div className="title">{title}</div>
               {closeable && (
                 <button onClick={onClose} className="close-button">
-                  <img src={adjustSrcOption("/images/close-button.svg")} />
+                  <img src={adjustSrcOption('/images/close-button.svg')} />
                 </button>
               )}
             </div>

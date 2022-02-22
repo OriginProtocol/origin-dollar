@@ -58,7 +58,7 @@ const PriceToleranceDropdown = ({
           <div>
             <img
               className="tolerance-caret"
-              src={adjustSrcOption("/images/caret-left-grey.svg")}
+              src={adjustSrcOption('/images/caret-left-grey.svg')}
             />
           </div>
         </div>
@@ -169,7 +169,7 @@ const SettingsDropdown = ({
       >
         <img
           className="settings-icon"
-          src={adjustSrcOption("/images/settings-icon.svg")}
+          src={adjustSrcOption('/images/settings-icon.svg')}
           onClick={(e) => {
             const newOpenState = !settingsOpen
             setSettingsOpen(newOpenState)

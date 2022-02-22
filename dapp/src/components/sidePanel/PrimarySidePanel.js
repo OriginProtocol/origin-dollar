@@ -67,7 +67,11 @@ const PrimarySidePanel = () => {
             aria-expanded="false"
             aria-label="Toggle navigation"
           >
-            <img src={adjustSrcOption("/images/close.svg")} alt="Close icon" loading="lazy" />
+            <img
+              src={adjustSrcOption('/images/close.svg')}
+              alt="Close icon"
+              loading="lazy"
+            />
           </button>
           <SidePanelInsuranceMessage />
           <SidePanelStakeMessage />

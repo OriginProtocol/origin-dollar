@@ -352,7 +352,7 @@ const StakeModal = ({
                 </div>
                 <img
                   className="mb-22 green-check"
-                  src={adjustSrcOption("/images/green-check.svg")}
+                  src={adjustSrcOption('/images/green-check.svg')}
                 />
               </div>
             )}

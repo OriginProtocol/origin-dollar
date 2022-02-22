@@ -380,7 +380,9 @@ const TransactionHistory = ({ isMobile }) => {
                     >
                       <img
                         className="mr-2 mr-md-3 type-icon"
-                        src={adjustSrcOption(`/images/history/${txTypeMap[tx.type].imageName}`)}
+                        src={adjustSrcOption(
+                          `/images/history/${txTypeMap[tx.type].imageName}`
+                        )}
                       />
                       {txTypeMap[tx.type].name}
                     </div>
@@ -453,7 +455,10 @@ const TransactionHistory = ({ isMobile }) => {
                           target="_blank"
                           rel="noopener noreferrer"
                         >
-                          <img className="" src={adjustSrcOption("/images/link-icon-grey.svg")} />
+                          <img
+                            className=""
+                            src={adjustSrcOption('/images/link-icon-grey.svg')}
+                          />
                         </a>
                       </div>
                     </div>

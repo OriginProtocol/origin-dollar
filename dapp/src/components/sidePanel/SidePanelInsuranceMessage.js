@@ -26,7 +26,10 @@ const SidePanelInsuranceMessage = () => {
           >
             ×
           </a>
-          <img className="insurance-icon" src={adjustSrcOption("/images/ousd-shield-icon.svg")} />
+          <img
+            className="insurance-icon"
+            src={adjustSrcOption('/images/ousd-shield-icon.svg')}
+          />
           <div>
             {fbt(
               'Get optional smart contract insurance for your OUSD',
