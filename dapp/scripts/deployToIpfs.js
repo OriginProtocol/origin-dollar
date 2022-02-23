@@ -8,6 +8,7 @@ require('dotenv').config({
   path: path.resolve(__dirname, '../local.env'),
 })
 
+/* Might become obsolete if we start using Fleek */
 const main = async () => {
   const pinata = pinataSDK(process.env.PINATA_API_KEY, process.env.PINATA_SECRET_API_KEY);
 
