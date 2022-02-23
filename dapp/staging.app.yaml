@@ -1,4 +1,4 @@
-runtime: nodejs
+runtime: nodejs16
 env: flex
 instance_class: F2
 service: ousd-staging
