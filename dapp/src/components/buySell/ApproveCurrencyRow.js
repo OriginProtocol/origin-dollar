@@ -10,7 +10,7 @@ import withRpcProvider from 'hoc/withRpcProvider'
 import ContractStore from 'stores/ContractStore'
 import analytics from 'utils/analytics'
 import { connectorNameIconMap, getConnectorIcon } from 'utils/connectors'
-import { adjustSrcOption } from 'utils/image'
+import { assetRootPath } from 'utils/image'
 
 const ApproveCurrencyRow = ({
   coin,
@@ -75,7 +75,7 @@ const ApproveCurrencyRow = ({
       >
         <img
           className="icon"
-          src={adjustSrcOption(`/images/currency/${coin}-icon-small.svg`)}
+          src={assetRootPath(`/images/currency/${coin}-icon-small.svg`)}
         />
         {stage === 'approve' && (
           <>
@@ -143,7 +143,7 @@ const ApproveCurrencyRow = ({
             )}
             <img
               className="waiting-icon ml-auto"
-              src={adjustSrcOption(`/images/${connectorIcon}`)}
+              src={assetRootPath(`/images/${connectorIcon}`)}
             />
           </>
         )}
@@ -155,7 +155,7 @@ const ApproveCurrencyRow = ({
             )}
             <img
               className="waiting-icon rotating ml-auto"
-              src={adjustSrcOption('/images/spinner-green-small.png')}
+              src={assetRootPath('/images/spinner-green-small.png')}
             />
           </>
         )}
@@ -167,7 +167,7 @@ const ApproveCurrencyRow = ({
             )}
             <img
               className="waiting-icon ml-auto"
-              src={adjustSrcOption('/images/green-check.svg')}
+              src={assetRootPath('/images/green-check.svg')}
             />
           </>
         )}

@@ -6,7 +6,7 @@ import { isCorrectNetwork } from 'utils/web3'
 import withWalletSelectModal from 'hoc/withWalletSelectModal'
 import GetOUSD from 'components/GetOUSD'
 import Content from './_AccountStatusContent'
-import { adjustSrcOption } from 'utils/image'
+import { assetRootPath } from 'utils/image'
 
 const AccountStatusPopover = ({ className }) => {
   const { active, account, chainId } = useWeb3React()
@@ -49,7 +49,7 @@ const AccountStatusPopover = ({ className }) => {
           aria-label="Toggle popover"
         >
           <img
-            src={adjustSrcOption('/images/close.svg')}
+            src={assetRootPath('/images/close.svg')}
             alt="Close icon"
             loading="lazy"
           />

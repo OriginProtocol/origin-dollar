@@ -24,7 +24,7 @@ import SpinningLoadingCircle from 'components/SpinningLoadingCircle'
 import { refetchUserData, refetchStakingData } from 'utils/account'
 import { addStakeTxHashToWaitingBuffer } from 'utils/stake'
 import StakeDetailEquation from 'components/earn/StakeDetailEquation'
-import { adjustSrcOption } from 'utils/image'
+import { assetRootPath } from 'utils/image'
 
 const StakeUI = ({ rpcProvider, isMobile }) => {
   const { active } = useWeb3React()
@@ -261,7 +261,7 @@ const StakeUI = ({ rpcProvider, isMobile }) => {
               <div className="d-flex align-items-center">
                 <img
                   className="coin-icon"
-                  src={adjustSrcOption('/images/ogn-icon-blue.svg')}
+                  src={assetRootPath('/images/ogn-icon-blue.svg')}
                 />
                 <div className="coin-name">OGN</div>
               </div>
@@ -270,7 +270,7 @@ const StakeUI = ({ rpcProvider, isMobile }) => {
               <div className="d-flex align-items-center">
                 <img
                   className="coin-icon"
-                  src={adjustSrcOption('/images/ogn-icon-blue.svg')}
+                  src={assetRootPath('/images/ogn-icon-blue.svg')}
                 />
               </div>
             }
@@ -382,7 +382,7 @@ const StakeUI = ({ rpcProvider, isMobile }) => {
                 <div className="no-stakes-box d-flex flex-column flex-md-row">
                   <img
                     className="big-ogn-icon"
-                    src={adjustSrcOption('/images/ogn-icon-large.svg')}
+                    src={assetRootPath('/images/ogn-icon-large.svg')}
                   />
                   <div className="d-flex flex-column justify-content-center">
                     <div className="title-text">
@@ -553,7 +553,7 @@ const StakeUI = ({ rpcProvider, isMobile }) => {
                                 <div className="modal-link d-flex align-items-center justify-content-center">
                                   <img
                                     className="caret-left"
-                                    src={adjustSrcOption(
+                                    src={assetRootPath(
                                       '/images/caret-left-grey.svg'
                                     )}
                                   />

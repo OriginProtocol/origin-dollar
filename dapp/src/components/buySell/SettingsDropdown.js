@@ -5,7 +5,7 @@ import { fbt } from 'fbt-runtime'
 import analytics from 'utils/analytics'
 import ContractStore from 'stores/ContractStore'
 import { useStoreState } from 'pullstate'
-import { adjustSrcOption } from 'utils/image'
+import { assetRootPath } from 'utils/image'
 
 const PriceToleranceDropdown = ({
   setPriceToleranceValue,
@@ -58,7 +58,7 @@ const PriceToleranceDropdown = ({
           <div>
             <img
               className="tolerance-caret"
-              src={adjustSrcOption('/images/caret-left-grey.svg')}
+              src={assetRootPath('/images/caret-left-grey.svg')}
             />
           </div>
         </div>
@@ -169,7 +169,7 @@ const SettingsDropdown = ({
       >
         <img
           className="settings-icon"
-          src={adjustSrcOption('/images/settings-icon.svg')}
+          src={assetRootPath('/images/settings-icon.svg')}
           onClick={(e) => {
             const newOpenState = !settingsOpen
             setSettingsOpen(newOpenState)

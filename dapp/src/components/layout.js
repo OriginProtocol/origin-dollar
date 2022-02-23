@@ -14,7 +14,7 @@ import ContractStore from 'stores/ContractStore'
 import withRpcProvider from 'hoc/withRpcProvider'
 import AppFooter from './AppFooter'
 import MarketingFooter from './MarketingFooter'
-import { adjustSrcOption } from 'utils/image'
+import { assetRootPath } from 'utils/image'
 
 const UNISWAP_URL =
   'https://app.uniswap.org/#/swap?inputCurrency=0xdac17f958d2ee523a2206206994597c13d831ec7&outputCurrency=0x2A8e1E676Ec238d8A992307B495b45B3fEAa5e86'
@@ -99,7 +99,7 @@ const Layout = ({
       >
         <div className="container d-flex flex-column flex-md-row align-items-center">
           <img
-            src={adjustSrcOption('/images/gnosis-safe-icon.svg')}
+            src={assetRootPath('/images/gnosis-safe-icon.svg')}
             className="mb-2 mb-md-0 mr-md-3"
             style={{ width: '50px' }}
           />
@@ -127,7 +127,7 @@ const Layout = ({
       >
         <div className="container d-flex flex-column flex-md-row align-items-center">
           <img
-            src={adjustSrcOption('/images/horsey.svg')}
+            src={assetRootPath('/images/horsey.svg')}
             className="mb-2 mb-md-0 mr-md-3"
           />
           {fbt(

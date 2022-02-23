@@ -11,7 +11,7 @@ import ContractStore from 'stores/ContractStore'
 import CoinStore from 'stores/CoinStore'
 import addresses from 'constants/contractAddresses'
 import useCurveStaking from 'hooks/useCurveStaking'
-import { adjustSrcOption } from 'utils/image'
+import { assetRootPath } from 'utils/image'
 
 // Just adding the methods we are using
 const gaugeMiniAbi = [
@@ -262,7 +262,7 @@ const CurveStake = ({ rpcProvider, isMobile }) => {
               <div className="powered-by">
                 {fbt('Powered by', 'Powered by')}
               </div>
-              <img src={adjustSrcOption('/images/curve-logo-smaller.svg')} />
+              <img src={assetRootPath('/images/curve-logo-smaller.svg')} />
             </div>
           </div>
           <div className="crv-body d-flex flex-md-row flex-column">

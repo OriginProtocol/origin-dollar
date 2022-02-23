@@ -6,7 +6,7 @@ import AccountStore from 'stores/AccountStore'
 import SwapHomepage from 'components/buySell/SwapHomepage'
 import ContractsTable from 'components/buySell/ContractsTable'
 import GetOUSD from 'components/GetOUSD'
-import { adjustSrcOption } from 'utils/image'
+import { assetRootPath } from 'utils/image'
 
 const MissionControl = ({}) => {
   const { active } = useWeb3React()
@@ -18,7 +18,7 @@ const MissionControl = ({}) => {
           {active && <SwapHomepage />}
           {!active && (
             <div className="empty-placeholder d-flex flex-column align-items-center justify-content-start">
-              <img src={adjustSrcOption('/images/wallet-icons.svg')} />
+              <img src={assetRootPath('/images/wallet-icons.svg')} />
               <div className="header-text">
                 {fbt('No wallet connected', 'Disconnected dapp message')}
               </div>

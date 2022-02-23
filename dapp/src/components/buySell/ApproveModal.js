@@ -7,7 +7,7 @@ import AccountStore from 'stores/AccountStore'
 import ApproveCurrencyRow from 'components/buySell/ApproveCurrencyRow'
 import analytics from 'utils/analytics'
 import { connectorNameIconMap, getConnectorIcon } from 'utils/connectors'
-import { adjustSrcOption } from 'utils/image'
+import { assetRootPath } from 'utils/image'
 
 const ApproveModal = ({
   swapMetadata,
@@ -84,7 +84,7 @@ const ApproveModal = ({
               <div className="d-flex align-items-center justify-content-center">
                 <img
                   className="waiting-icon"
-                  src={adjustSrcOption(`/images/${connectorIcon}`)}
+                  src={assetRootPath(`/images/${connectorIcon}`)}
                 />
                 {fbt(
                   'Waiting for you to confirm...',

@@ -4,7 +4,7 @@ import { fbt } from 'fbt-runtime'
 import withIsMobile from 'hoc/withIsMobile'
 import { formatCurrencyMinMaxDecimals, formatCurrency } from 'utils/math'
 import CircularProgressMeter from 'components/earn/CircularProgressMeter'
-import { adjustSrcOption } from 'utils/image'
+import { assetRootPath } from 'utils/image'
 
 const CurrentStakeLockup = ({ stake, onDetailsClick, isMobile }) => {
   return (
@@ -37,11 +37,11 @@ const CurrentStakeLockup = ({ stake, onDetailsClick, isMobile }) => {
         <button className="d-flex align-items-center justify-content-center arrow-link">
           <img
             className="caret-left"
-            src={adjustSrcOption('/images/caret-left.svg')}
+            src={assetRootPath('/images/caret-left.svg')}
           />
           <img
             className="caret-left hover"
-            src={adjustSrcOption('/images/caret-left-blue.svg')}
+            src={assetRootPath('/images/caret-left-blue.svg')}
           />
         </button>
       </div>

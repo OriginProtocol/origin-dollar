@@ -12,7 +12,7 @@ import SpinningLoadingCircle from 'components/SpinningLoadingCircle'
 import analytics from 'utils/analytics'
 import { connectorNameIconMap, getConnectorIcon } from 'utils/connectors'
 import { getUserSource } from 'utils/user'
-import { adjustSrcOption } from 'utils/image'
+import { assetRootPath } from 'utils/image'
 
 const StakeModal = ({
   tokenAllowanceSuffiscient,
@@ -316,7 +316,7 @@ const StakeModal = ({
                   )}
                 </div>
                 <div className="grey-icon-holder d-flex align-items-center justify-content-center mb-22">
-                  <img src={adjustSrcOption(`/images/${connectorIcon}`)} />
+                  <img src={assetRootPath(`/images/${connectorIcon}`)} />
                 </div>
               </div>
             )}
@@ -352,7 +352,7 @@ const StakeModal = ({
                 </div>
                 <img
                   className="mb-22 green-check"
-                  src={adjustSrcOption('/images/green-check.svg')}
+                  src={assetRootPath('/images/green-check.svg')}
                 />
               </div>
             )}
@@ -368,7 +368,7 @@ const StakeModal = ({
               <div className="d-flex align-items-center justify-content-center">
                 <img
                   className="big-connector-icon"
-                  src={adjustSrcOption(`/images/${connectorIcon}`)}
+                  src={assetRootPath(`/images/${connectorIcon}`)}
                 />
                 <div className="action-text">
                   {fbt(

@@ -5,7 +5,7 @@ import { get } from 'lodash'
 
 import AccountStore from 'stores/AccountStore'
 import { connectorNameIconMap, getConnectorIcon } from 'utils/connectors'
-import { adjustSrcOption } from 'utils/image'
+import { assetRootPath } from 'utils/image'
 
 const ErrorModal = ({
   error,
@@ -41,7 +41,7 @@ const ErrorModal = ({
             <div className="d-flex align-items-center error">
               <img
                 className="connector-icon"
-                src={adjustSrcOption(`/images/${connectorIcon}`)}
+                src={assetRootPath(`/images/${connectorIcon}`)}
               />
               {reason !== undefined && reason}
               {errorMap && errorTxt()}

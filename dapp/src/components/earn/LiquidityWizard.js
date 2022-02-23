@@ -7,7 +7,7 @@ import { useStoreState } from 'pullstate'
 import AccountStore from 'stores/AccountStore'
 
 import EtherscanLink from 'components/earn/EtherscanLink'
-import { adjustSrcOption } from 'utils/image'
+import { assetRootPath } from 'utils/image'
 import { adjustLinkHref } from 'utils/utils'
 
 export default function LiquidityWizard({ pool, onHideWizzard }) {
@@ -72,7 +72,7 @@ export default function LiquidityWizard({ pool, onHideWizzard }) {
               <div className="step-number">
                 <img
                   className="checkmark"
-                  src={adjustSrcOption('/images/checkmark.svg')}
+                  src={assetRootPath('/images/checkmark.svg')}
                 />
                 1
               </div>
@@ -87,7 +87,7 @@ export default function LiquidityWizard({ pool, onHideWizzard }) {
               <div className="step-number">
                 <img
                   className="checkmark"
-                  src={adjustSrcOption('/images/checkmark.svg')}
+                  src={assetRootPath('/images/checkmark.svg')}
                 />
                 2
               </div>
@@ -102,7 +102,7 @@ export default function LiquidityWizard({ pool, onHideWizzard }) {
               <div className="step-number">
                 <img
                   className="checkmark"
-                  src={adjustSrcOption('/images/checkmark.svg')}
+                  src={assetRootPath('/images/checkmark.svg')}
                 />
                 3
               </div>
@@ -122,7 +122,7 @@ export default function LiquidityWizard({ pool, onHideWizzard }) {
             <>
               <img
                 className="ousd-icon"
-                src={adjustSrcOption('/images/ousd-coin.svg')}
+                src={assetRootPath('/images/ousd-coin.svg')}
               />
               <div className="big-title">
                 {fbt(
@@ -139,7 +139,7 @@ export default function LiquidityWizard({ pool, onHideWizzard }) {
             <>
               <img
                 className="uniswap-icon"
-                src={adjustSrcOption('/images/uniswap-icon-white.svg')}
+                src={assetRootPath('/images/uniswap-icon-white.svg')}
               />
               <div className="big-title">
                 {fbt(
@@ -170,7 +170,7 @@ export default function LiquidityWizard({ pool, onHideWizzard }) {
             <>
               <img
                 className="ogn-icon"
-                src={adjustSrcOption('/images/ogn-icon-blue.svg')}
+                src={assetRootPath('/images/ogn-icon-blue.svg')}
               />
               <div className="big-title">
                 {fbt(

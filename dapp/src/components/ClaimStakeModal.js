@@ -10,7 +10,7 @@ import { formatCurrencyMinMaxDecimals } from 'utils/math'
 import StakeDetailEquation from 'components/earn/StakeDetailEquation'
 import withRpcProvider from 'hoc/withRpcProvider'
 import SpinningLoadingCircle from 'components/SpinningLoadingCircle'
-import { adjustSrcOption } from 'utils/image'
+import { assetRootPath } from 'utils/image'
 
 const ClaimStakeModal = ({
   showModal,
@@ -48,7 +48,7 @@ const ClaimStakeModal = ({
               <h1>{fbt('Claim & Stake OGN', 'Claim & Stake OGN')}</h1>
               <img
                 className="close-x"
-                src={adjustSrcOption('/images/close-button.svg')}
+                src={assetRootPath('/images/close-button.svg')}
                 onClick={close}
               />
             </div>

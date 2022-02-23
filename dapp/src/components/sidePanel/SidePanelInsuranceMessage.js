@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
 import Link from 'next/link'
-import { adjustSrcOption } from 'utils/image'
+import { assetRootPath } from 'utils/image'
 
 const SidePanelInsuranceMessage = () => {
   const [show, setShow] = useState(true)
@@ -28,7 +28,7 @@ const SidePanelInsuranceMessage = () => {
           </a>
           <img
             className="insurance-icon"
-            src={adjustSrcOption('/images/ousd-shield-icon.svg')}
+            src={assetRootPath('/images/ousd-shield-icon.svg')}
           />
           <div>
             {fbt(

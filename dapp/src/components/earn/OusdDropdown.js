@@ -6,7 +6,7 @@ import { fbt } from 'fbt-runtime'
 import AccountStore from 'stores/AccountStore'
 import Dropdown from 'components/Dropdown'
 import { formatCurrency, formatCurrencyAbbreviated } from 'utils/math'
-import { adjustSrcOption } from 'utils/image'
+import { assetRootPath } from 'utils/image'
 
 const OusdDropdown = ({}) => {
   const [open, setOpen] = useState(false)
@@ -22,7 +22,7 @@ const OusdDropdown = ({}) => {
             <div className="balance-holder d-flex flex-column align-items-center justify-content-center">
               <img
                 className="ousd-icon"
-                src={adjustSrcOption('/images/ousd-token-icon.svg')}
+                src={assetRootPath('/images/ousd-token-icon.svg')}
               />
               <h1 className="balance">{formatCurrency(ousdBalance, 2)}</h1>
             </div>

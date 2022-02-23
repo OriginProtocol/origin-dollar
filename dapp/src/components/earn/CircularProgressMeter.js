@@ -1,7 +1,7 @@
 import React from 'react'
 import { fbt } from 'fbt-runtime'
 import { getTimeLeftText } from 'utils/stake'
-import { adjustSrcOption } from 'utils/image'
+import { assetRootPath } from 'utils/image'
 
 export default function CircularProgressMeter({
   rotate,
@@ -34,7 +34,7 @@ export default function CircularProgressMeter({
         {progress === 1 && (
           <img
             className="checkmark"
-            src={adjustSrcOption('/images/checkmark-icon-white.svg')}
+            src={assetRootPath('/images/checkmark-icon-white.svg')}
           />
         )}
         <div className="blue-circle-cover"></div>

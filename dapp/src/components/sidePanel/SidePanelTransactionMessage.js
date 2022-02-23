@@ -7,7 +7,7 @@ import { useStoreState } from 'pullstate'
 import CoinCircleGraphics from 'components/sidePanel/CoinCircleGraphics'
 import TransactionStore from 'stores/TransactionStore'
 import { formatCurrency, formatCurrencyConditional } from 'utils/math'
-import { adjustSrcOption } from 'utils/image'
+import { assetRootPath } from 'utils/image'
 
 const SidePanelTransactionMessage = ({
   transaction,
@@ -268,7 +268,7 @@ const SidePanelTransactionMessage = ({
                       {!transaction.mined && (
                         <img
                           className="waiting-icon rotating"
-                          src={adjustSrcOption(
+                          src={assetRootPath(
                             '/images/spinner-green-small.png'
                           )}
                         />
@@ -276,13 +276,13 @@ const SidePanelTransactionMessage = ({
                       {transaction.mined && !transaction.isError && (
                         <img
                           className="waiting-icon"
-                          src={adjustSrcOption('/images/green-checkmark.svg')}
+                          src={assetRootPath('/images/green-checkmark.svg')}
                         />
                       )}
                       {transaction.mined && transaction.isError && (
                         <img
                           className="waiting-icon"
-                          src={adjustSrcOption('/images/red-x-filled.svg')}
+                          src={assetRootPath('/images/red-x-filled.svg')}
                         />
                       )}
                     </div>
@@ -356,7 +356,7 @@ const SidePanelTransactionMessage = ({
                       {!transaction.mined && (
                         <img
                           className="waiting-icon rotating"
-                          src={adjustSrcOption(
+                          src={assetRootPath(
                             '/images/spinner-green-small.png'
                           )}
                         />
@@ -364,13 +364,13 @@ const SidePanelTransactionMessage = ({
                       {transaction.mined && !transaction.isError && (
                         <img
                           className="waiting-icon"
-                          src={adjustSrcOption('/images/green-checkmark.svg')}
+                          src={assetRootPath('/images/green-checkmark.svg')}
                         />
                       )}
                       {transaction.mined && transaction.isError && (
                         <img
                           className="waiting-icon"
-                          src={adjustSrcOption('/images/red-x-filled.svg')}
+                          src={assetRootPath('/images/red-x-filled.svg')}
                         />
                       )}
                     </div>
@@ -493,7 +493,7 @@ const SidePanelTransactionMessage = ({
                   )}
                 </div>
                 <div className="small-arrow d-flex align-items-center justify-content-center align-self-center">
-                  <img src={adjustSrcOption('/images/small-arrow.svg')} />
+                  <img src={assetRootPath('/images/small-arrow.svg')} />
                 </div>
                 <div className="expand-box right d-flex flex-column align-items-center justify-content-center">
                   {redeemDataAvailable && (

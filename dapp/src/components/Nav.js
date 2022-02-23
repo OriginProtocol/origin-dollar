@@ -23,7 +23,7 @@ import AccountStore from 'stores/AccountStore'
 import Languages from '../constants/Languages'
 import AccountStatusPopover from './AccountStatusPopover'
 import { adjustLinkHref } from 'utils/utils'
-import { adjustSrcOption } from 'utils/image'
+import { assetRootPath } from 'utils/image'
 
 const environment = process.env.NODE_ENV
 const showExperimentalSoftwareNotice = false
@@ -153,7 +153,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
           <Link href={adjustLinkHref('/')}>
             <a className="navbar-brand d-flex flex-column justify-content-center">
               <img
-                src={adjustSrcOption('/images/origin-dollar-logo.svg')}
+                src={assetRootPath('/images/origin-dollar-logo.svg')}
                 className="origin-logo"
                 alt="Origin Dollar logo"
               />
@@ -171,7 +171,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
             >
               <div className="dropdown-marble">
                 <img
-                  src={adjustSrcOption('/images/bell-icon.svg')}
+                  src={assetRootPath('/images/bell-icon.svg')}
                   alt="Activity menu"
                 />
               </div>
@@ -201,7 +201,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
               aria-label="Toggle menu side panel"
             >
               <img
-                src={adjustSrcOption('/images/menu-icon.svg')}
+                src={assetRootPath('/images/menu-icon.svg')}
                 alt="Activity menu"
               />
             </button>
@@ -246,7 +246,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
               aria-label="Toggle language navigation"
             >
               <img
-                src={adjustSrcOption('/images/close.svg')}
+                src={assetRootPath('/images/close.svg')}
                 alt="Close icon"
                 loading="lazy"
               />
@@ -264,7 +264,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
               aria-label="Toggle navigation"
             >
               <img
-                src={adjustSrcOption('/images/close.svg')}
+                src={assetRootPath('/images/close.svg')}
                 alt="Close icon"
                 loading="lazy"
               />

@@ -1,6 +1,6 @@
 import React from 'react'
 import { fbt } from 'fbt-runtime'
-import { adjustSrcOption } from 'utils/image'
+import { assetRootPath } from 'utils/image'
 
 export default function UniswapPoolLink({ pool, isPoolDetails }) {
   return (
@@ -15,7 +15,7 @@ export default function UniswapPoolLink({ pool, isPoolDetails }) {
       >
         <img
           className="uniswap-icon"
-          src={adjustSrcOption(
+          src={assetRootPath(
             `/images/uniswap-icon-${isPoolDetails ? 'white' : 'grey'}.svg`
           )}
         />

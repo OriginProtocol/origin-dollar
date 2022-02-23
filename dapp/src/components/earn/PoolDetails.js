@@ -11,7 +11,7 @@ import LiquidityWizard from 'components/earn/LiquidityWizard'
 import LiquidityMiningWidget from 'components/earn/LiquidityMiningWidget'
 import ApyModal from 'components/earn/modal/ApyModal'
 import GetOUSD from 'components/GetOUSD'
-import { adjustSrcOption } from 'utils/image'
+import { assetRootPath } from 'utils/image'
 import { adjustLinkHref } from 'utils/utils'
 
 export default function PoolDetails({ pool }) {
@@ -67,7 +67,7 @@ export default function PoolDetails({ pool }) {
               setApyModalOpened(true)
             }}
           >
-            <img src={adjustSrcOption('/images/more-icon-off.svg')} />
+            <img src={assetRootPath('/images/more-icon-off.svg')} />
           </div>
         </div>
         <div className="pill">
@@ -87,7 +87,7 @@ export default function PoolDetails({ pool }) {
             }}
           >
             <img
-              src={adjustSrcOption(
+              src={assetRootPath(
                 `/images/${
                   poolDepositIsDollar ? 'usd-toggle.svg' : 'tokens-toggle.svg'
                 }`
@@ -111,7 +111,7 @@ export default function PoolDetails({ pool }) {
             }}
           >
             <img
-              src={adjustSrcOption(
+              src={assetRootPath(
                 `/images/${poolRateIsOgn ? 'ogn-toggle' : 'usd-toggle'}.svg`
               )}
             />
@@ -133,7 +133,7 @@ export default function PoolDetails({ pool }) {
       {!showWizzard && active && <LiquidityMiningWidget pool={pool} />}
       {!active && (
         <div className="disconnected d-flex flex-column align-items-center justify-content-center">
-          <img src={adjustSrcOption('/images/wallet-icon.svg')} />
+          <img src={assetRootPath('/images/wallet-icon.svg')} />
           <div className="header-disconnect">
             {fbt(
               'Start by connecting your wallet',

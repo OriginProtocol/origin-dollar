@@ -1,5 +1,5 @@
 import React from 'react'
-import { adjustSrcOption } from 'utils/image'
+import { assetRootPath } from 'utils/image'
 
 export default function EtherscanLink({
   href,
@@ -19,7 +19,7 @@ export default function EtherscanLink({
       >
         <img
           className="etherscan-icon"
-          src={adjustSrcOption(
+          src={assetRootPath(
             `/images/${
               white ? 'etherscan-icon-white.svg' : 'etherscan-icon-earn.svg'
             }`

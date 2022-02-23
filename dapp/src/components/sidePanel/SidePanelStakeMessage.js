@@ -5,7 +5,7 @@ import Link from 'next/link'
 
 import AccountStore from 'stores/AccountStore'
 import RouterStore from 'stores/RouterStore'
-import { adjustSrcOption } from 'utils/image'
+import { assetRootPath } from 'utils/image'
 import { adjustLinkHref } from 'utils/utils'
 
 const SidePanelStakeMessage = () => {
@@ -44,7 +44,7 @@ const SidePanelStakeMessage = () => {
           </a>
           <img
             className="ogn-icon"
-            src={adjustSrcOption('/images/ogn-icon-blue.svg')}
+            src={assetRootPath('/images/ogn-icon-blue.svg')}
           />
           <div>
             {fbt(

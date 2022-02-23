@@ -1,6 +1,6 @@
 import React from 'react'
 import classnames from 'classnames'
-import { adjustSrcOption } from 'utils/image'
+import { assetRootPath } from 'utils/image'
 
 export default function PoolNameAndIcon({
   pool,
@@ -12,11 +12,11 @@ export default function PoolNameAndIcon({
     <div className="d-flex align-items-center">
       <img
         className="coin-icon one"
-        src={adjustSrcOption(`/images/${pool.coin_one.icon}`)}
+        src={assetRootPath(`/images/${pool.coin_one.icon}`)}
       />
       <img
         className="coin-icon two"
-        src={adjustSrcOption(
+        src={assetRootPath(
           `/images/${
             isPoolDetails ? pool.coin_two.pool_details_icon : pool.coin_two.icon
           }`

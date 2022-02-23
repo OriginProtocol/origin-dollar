@@ -3,7 +3,7 @@ import classnames from 'classnames'
 import { fbt } from 'fbt-runtime'
 import { toast } from 'react-toastify'
 import analytics from 'utils/analytics'
-import { adjustSrcOption } from 'utils/image'
+import { assetRootPath } from 'utils/image'
 
 const EmailForm = ({ footer }) => {
   const [email, setEmail] = useState('')
@@ -88,7 +88,7 @@ const EmailForm = ({ footer }) => {
         >
           {footer ? (
             <img
-              src={adjustSrcOption('/images/arrow-icon.svg')}
+              src={assetRootPath('/images/arrow-icon.svg')}
               alt="Arrow right"
             />
           ) : (

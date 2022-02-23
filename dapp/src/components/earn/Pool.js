@@ -5,7 +5,7 @@ import { formatCurrency } from 'utils/math'
 import PoolNameAndIcon from 'components/earn/PoolNameAndIcon'
 import UniswapPoolLink from 'components/earn/UniswapPoolLink'
 import RewardsBoost from 'components/earn/RewardsBoost'
-import { adjustSrcOption } from 'utils/image'
+import { assetRootPath } from 'utils/image'
 import { adjustLinkHref } from 'utils/utils'
 
 export default function Pool({ pool }) {
@@ -51,7 +51,7 @@ export default function Pool({ pool }) {
                 <a className="d-flex align-items-center justify-content-center pool-link">
                   <img
                     className="caret-left"
-                    src={adjustSrcOption('/images/caret-left.svg')}
+                    src={assetRootPath('/images/caret-left.svg')}
                   />
                 </a>
               </Link>
@@ -88,7 +88,7 @@ export default function Pool({ pool }) {
                 <span>{fbt('Your weekly rate', 'Your weekly rate')}</span>
                 <img
                   className="ogn-icon"
-                  src={adjustSrcOption(
+                  src={assetRootPath(
                     '/images/ogn-icon-clear-blue-white-rim.svg'
                   )}
                 />

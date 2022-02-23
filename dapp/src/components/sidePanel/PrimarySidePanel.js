@@ -8,7 +8,7 @@ import SidePanelInsuranceMessage from 'components/sidePanel/SidePanelInsuranceMe
 import TransactionStore from 'stores/TransactionStore'
 import { usePrevious } from 'utils/hooks'
 import ContractStore from 'stores/ContractStore'
-import { adjustSrcOption } from 'utils/image'
+import { assetRootPath } from 'utils/image'
 
 const PrimarySidePanel = () => {
   const showingAllContracts = useStoreState(
@@ -68,7 +68,7 @@ const PrimarySidePanel = () => {
             aria-label="Toggle navigation"
           >
             <img
-              src={adjustSrcOption('/images/close.svg')}
+              src={assetRootPath('/images/close.svg')}
               alt="Close icon"
               loading="lazy"
             />

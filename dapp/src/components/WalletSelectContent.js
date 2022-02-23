@@ -10,7 +10,7 @@ import { walletlink, resetWalletConnector } from 'utils/connectors'
 import AccountStore from 'stores/AccountStore'
 
 import analytics from 'utils/analytics'
-import { adjustSrcOption } from 'utils/image'
+import { assetRootPath } from 'utils/image'
 
 const WalletSelectContent = ({}) => {
   const { connector, activate, deactivate, active } = useWeb3React()
@@ -112,7 +112,7 @@ const WalletSelectContent = ({}) => {
             >
               <div className="col-2">
                 <img
-                  src={adjustSrcOption(
+                  src={assetRootPath(
                     `/images/${name.toLowerCase()}-icon.svg`
                   )}
                 />
