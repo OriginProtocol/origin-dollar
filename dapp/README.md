@@ -60,7 +60,7 @@ Note: the main testing accounts (0x17BAd8cbCDeC350958dF0Bfe01E284dd8Fec3fcD, 0x3
 Visit the /compensation page and run "Claim & Stake"
 
 ### Environment variables
-- On local use `.env` file
+- On local use `local.env` file (copy initial contents from dev.env)
 - On prod use `prod.env` file. Check DevOps playbook to see how to encrypt/decrypt it.
 
 ## DevOps
@@ -71,3 +71,5 @@ Set the `override_best_tx_route` local storage variable to `true` to enable user
 ```
 localStorage.setItem('override_best_tx_route', 'true')
 ```
+
+

@@ -59,7 +59,7 @@ const config = {
 
     if (!isServer) {
       config.resolve.alias['@sentry/node'] = '@sentry/browser'
-    }
+    }  
 
     return config
   },
@@ -98,6 +98,11 @@ if (process.env.NO_LANDING === 'true') {
       '/': { page: '/mint' },
     }
   }
+}
+
+// Ipfs requires relative paths instead of absolute ones
+if (process.env.DEPLOY_MODE === 'ipfs') {
+  config.assetPrefix = './'
 }
 
 module.exports = config

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
-import Link from 'next/link'
 import { get as _get } from 'lodash'
 import { useWeb3React } from '@web3-react/core'
 import withIsMobile from 'hoc/withIsMobile'
@@ -16,6 +15,7 @@ import DisclaimerTooltip from 'components/buySell/DisclaimerTooltip'
 import LinkIcon from 'components/buySell/_LinkIcon'
 import useExpectedYield from 'utils/useExpectedYield'
 import withRpcProvider from 'hoc/withRpcProvider'
+import { adjustLinkHref } from 'utils/utils'
 
 const BalanceHeader = ({
   storeTransaction,
@@ -115,7 +115,7 @@ const BalanceHeader = ({
           {titleLink && (
             <a
               className={`title link ${type}`}
-              href={titleLink}
+              href={adjustLinkHref(titleLink)}
               rel="noopener noreferrer"
               target="blank"
             >

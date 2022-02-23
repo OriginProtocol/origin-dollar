@@ -3,6 +3,8 @@ import classnames from 'classnames'
 import { fbt } from 'fbt-runtime'
 import { toast } from 'react-toastify'
 import analytics from 'utils/analytics'
+import { assetRootPath } from 'utils/image'
+
 const EmailForm = ({ footer }) => {
   const [email, setEmail] = useState('')
 
@@ -85,7 +87,10 @@ const EmailForm = ({ footer }) => {
           className="btn btn-outline-light d-flex align-items-center justify-content-center subscribe ml-sm-4"
         >
           {footer ? (
-            <img src="/images/arrow-icon.svg" alt="Arrow right" />
+            <img
+              src={assetRootPath('/images/arrow-icon.svg')}
+              alt="Arrow right"
+            />
           ) : (
             'Subscribe'
           )}

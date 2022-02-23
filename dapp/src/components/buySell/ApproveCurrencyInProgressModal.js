@@ -7,6 +7,7 @@ import AccountStore from 'stores/AccountStore'
 import TransactionStore from 'stores/TransactionStore'
 import { currencies } from 'constants/Contract'
 import { connectorNameIconMap, getConnectorIcon } from 'utils/connectors'
+import { assetRootPath } from 'utils/image'
 
 const ApproveCurrencyInProgressModal = ({ show }) => {
   const transactions = useStoreState(TransactionStore, (s) => s.transactions)
@@ -37,7 +38,10 @@ const ApproveCurrencyInProgressModal = ({ show }) => {
           }}
         >
           <div className="body-coins d-flex flex-column">
-            <img className="login-icon" src={`/images/${connectorIcon}`} />
+            <img
+              className="login-icon"
+              src={assetRootPath(`/images/${connectorIcon}`)}
+            />
             <h2>
               {fbt(
                 'Waiting for ' +

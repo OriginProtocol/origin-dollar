@@ -38,6 +38,16 @@ export function capitalize([first, ...rest]) {
   return first.toUpperCase() + rest.join('').toLowerCase()
 }
 
+export function adjustLinkHref(href) {
+  if (process.env.DEPLOY_MODE !== 'ipfs') return href
+
+  if (href === '/') {
+    return './index.html'
+  }
+
+  return `${href.startsWith('/') ? '.' : ''}${href}.html`
+}
+
 export function exportToCsv(filename, rows) {
   var processRow = function (row) {
     var finalVal = ''

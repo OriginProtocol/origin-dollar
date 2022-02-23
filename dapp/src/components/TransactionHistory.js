@@ -9,6 +9,7 @@ import { formatCurrency } from '../utils/math'
 import { shortenAddress } from '../utils/web3'
 import { exportToCsv } from '../utils/utils'
 import withIsMobile from 'hoc/withIsMobile'
+import { assetRootPath } from 'utils/image'
 
 const itemsPerPage = 50
 
@@ -37,7 +38,7 @@ const FilterButton = ({
         <span className="d-none d-md-flex">{filterText}</span>
         <img
           className="d-flex d-md-none"
-          src={`/images/history/${filterImage}`}
+          src={assetRootPath(`/images/history/${filterImage}`)}
         />
       </div>
       <style jsx>{`
@@ -379,7 +380,9 @@ const TransactionHistory = ({ isMobile }) => {
                     >
                       <img
                         className="mr-2 mr-md-3 type-icon"
-                        src={`/images/history/${txTypeMap[tx.type].imageName}`}
+                        src={assetRootPath(
+                          `/images/history/${txTypeMap[tx.type].imageName}`
+                        )}
                       />
                       {txTypeMap[tx.type].name}
                     </div>
@@ -452,7 +455,10 @@ const TransactionHistory = ({ isMobile }) => {
                           target="_blank"
                           rel="noopener noreferrer"
                         >
-                          <img className="" src="/images/link-icon-grey.svg" />
+                          <img
+                            className=""
+                            src={assetRootPath('/images/link-icon-grey.svg')}
+                          />
                         </a>
                       </div>
                     </div>

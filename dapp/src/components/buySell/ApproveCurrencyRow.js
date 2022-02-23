@@ -10,6 +10,7 @@ import withRpcProvider from 'hoc/withRpcProvider'
 import ContractStore from 'stores/ContractStore'
 import analytics from 'utils/analytics'
 import { connectorNameIconMap, getConnectorIcon } from 'utils/connectors'
+import { assetRootPath } from 'utils/image'
 
 const ApproveCurrencyRow = ({
   coin,
@@ -72,7 +73,10 @@ const ApproveCurrencyRow = ({
           isLast ? 'last' : ''
         }`}
       >
-        <img className="icon" src={`/images/currency/${coin}-icon-small.svg`} />
+        <img
+          className="icon"
+          src={assetRootPath(`/images/currency/${coin}-icon-small.svg`)}
+        />
         {stage === 'approve' && (
           <>
             {fbt(
@@ -139,7 +143,7 @@ const ApproveCurrencyRow = ({
             )}
             <img
               className="waiting-icon ml-auto"
-              src={`/images/${connectorIcon}`}
+              src={assetRootPath(`/images/${connectorIcon}`)}
             />
           </>
         )}
@@ -151,7 +155,7 @@ const ApproveCurrencyRow = ({
             )}
             <img
               className="waiting-icon rotating ml-auto"
-              src="/images/spinner-green-small.png"
+              src={assetRootPath('/images/spinner-green-small.png')}
             />
           </>
         )}
@@ -163,7 +167,7 @@ const ApproveCurrencyRow = ({
             )}
             <img
               className="waiting-icon ml-auto"
-              src="/images/green-check.svg"
+              src={assetRootPath('/images/green-check.svg')}
             />
           </>
         )}

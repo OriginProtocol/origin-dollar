@@ -57,6 +57,7 @@ contracts/coverage/
 contracts/coverage.json
 contracts/build/
 dapp/network.json
+dapp/keys/
 dapp/ganache-network.json
 website/network.json
 /playground/public/build/

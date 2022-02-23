@@ -1,10 +1,10 @@
 import React from 'react'
-import Link from 'next/link'
 import { fbt } from 'fbt-runtime'
 
 import withIsMobile from 'hoc/withIsMobile'
 import { formatCurrencyMinMaxDecimals, formatCurrency } from 'utils/math'
 import CircularProgressMeter from 'components/earn/CircularProgressMeter'
+import { assetRootPath } from 'utils/image'
 
 const CurrentStakeLockup = ({ stake, onDetailsClick, isMobile }) => {
   return (
@@ -35,8 +35,14 @@ const CurrentStakeLockup = ({ stake, onDetailsClick, isMobile }) => {
           )}
         </div>
         <button className="d-flex align-items-center justify-content-center arrow-link">
-          <img className="caret-left" src="/images/caret-left.svg" />
-          <img className="caret-left hover" src="/images/caret-left-blue.svg" />
+          <img
+            className="caret-left"
+            src={assetRootPath('/images/caret-left.svg')}
+          />
+          <img
+            className="caret-left hover"
+            src={assetRootPath('/images/caret-left-blue.svg')}
+          />
         </button>
       </div>
       <div className="bottom d-flex align-items-center justify-content-start">

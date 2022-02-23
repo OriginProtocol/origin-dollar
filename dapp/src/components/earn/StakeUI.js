@@ -24,6 +24,7 @@ import SpinningLoadingCircle from 'components/SpinningLoadingCircle'
 import { refetchUserData, refetchStakingData } from 'utils/account'
 import { addStakeTxHashToWaitingBuffer } from 'utils/stake'
 import StakeDetailEquation from 'components/earn/StakeDetailEquation'
+import { assetRootPath } from 'utils/image'
 
 const StakeUI = ({ rpcProvider, isMobile }) => {
   const { active, library } = useWeb3React()
@@ -263,13 +264,19 @@ const StakeUI = ({ rpcProvider, isMobile }) => {
             availableToDepositSymbol="OGN"
             tokenIconAndName={
               <div className="d-flex align-items-center">
-                <img className="coin-icon" src="/images/ogn-icon-blue.svg" />
+                <img
+                  className="coin-icon"
+                  src={assetRootPath('/images/ogn-icon-blue.svg')}
+                />
                 <div className="coin-name">OGN</div>
               </div>
             }
             tokenIcon={
               <div className="d-flex align-items-center">
-                <img className="coin-icon" src="/images/ogn-icon-blue.svg" />
+                <img
+                  className="coin-icon"
+                  src={assetRootPath('/images/ogn-icon-blue.svg')}
+                />
               </div>
             }
             permissionToUseTokensText={fbt(
@@ -380,7 +387,7 @@ const StakeUI = ({ rpcProvider, isMobile }) => {
                 <div className="no-stakes-box d-flex flex-column flex-md-row">
                   <img
                     className="big-ogn-icon"
-                    src="/images/ogn-icon-large.svg"
+                    src={assetRootPath('/images/ogn-icon-large.svg')}
                   />
                   <div className="d-flex flex-column justify-content-center">
                     <div className="title-text">
@@ -551,7 +558,9 @@ const StakeUI = ({ rpcProvider, isMobile }) => {
                                 <div className="modal-link d-flex align-items-center justify-content-center">
                                   <img
                                     className="caret-left"
-                                    src="/images/caret-left-grey.svg"
+                                    src={assetRootPath(
+                                      '/images/caret-left-grey.svg'
+                                    )}
                                   />
                                 </div>
                               </div>

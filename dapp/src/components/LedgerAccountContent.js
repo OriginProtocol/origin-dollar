@@ -6,6 +6,7 @@ import { zipObject } from 'lodash'
 import { ledgerConnector } from 'utils/connectors'
 import { shortenAddress } from 'utils/web3'
 import AccountStore from 'stores/AccountStore'
+import { assetRootPath } from 'utils/image'
 
 const LedgerAccountContent = ({}) => {
   const { activate, provider, connector } = useWeb3React()
@@ -76,7 +77,7 @@ const LedgerAccountContent = ({}) => {
         {loading ? (
           <img
             className="waiting-icon rotating mx-auto"
-            src="/images/spinner-green-small.png"
+            src={assetRootPath('/images/spinner-green-small.png')}
           />
         ) : (
           addresses.map((address) => {

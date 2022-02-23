@@ -6,6 +6,7 @@ import Closing from 'components/Closing'
 import GetOUSD from 'components/GetOUSD'
 import Layout from 'components/layout'
 import Nav from 'components/Nav'
+import { assetRootPathOption } from 'utils/image'
 
 export default function Earn({ locale, onLocale }) {
   return (
@@ -43,63 +44,85 @@ export default function Earn({ locale, onLocale }) {
                 <div className="circle under">
                   <img
                     className="front"
-                    src="/images/yield-hero-graphic-front-line.svg"
+                    src={assetRootPathOption(
+                      '/images/yield-hero-graphic-front-line.svg'
+                    )}
                   />
                 </div>
                 <div className="circle over">
                   <img
                     className="back"
-                    src="/images/yield-hero-graphic-back-line.svg"
+                    src={assetRootPathOption(
+                      '/images/yield-hero-graphic-back-line.svg'
+                    )}
                   />
                 </div>
                 <div className="circle circle2 under">
                   <img
                     className="front"
-                    src="/images/yield-hero-graphic-front-line.svg"
+                    src={assetRootPathOption(
+                      '/images/yield-hero-graphic-front-line.svg'
+                    )}
                   />
                 </div>
                 <div className="circle circle2 over">
                   <img
                     className="back"
-                    src="/images/yield-hero-graphic-back-line.svg"
+                    src={assetRootPathOption(
+                      '/images/yield-hero-graphic-back-line.svg'
+                    )}
                   />
                 </div>
                 <div className="circle circle3 under">
                   <img
                     className="front"
-                    src="/images/yield-hero-graphic-front-line.svg"
+                    src={assetRootPathOption(
+                      '/images/yield-hero-graphic-front-line.svg'
+                    )}
                   />
                 </div>
                 <div className="circle circle3 over">
                   <img
                     className="back"
-                    src="/images/yield-hero-graphic-back-line.svg"
+                    src={assetRootPathOption(
+                      '/images/yield-hero-graphic-back-line.svg'
+                    )}
                   />
                 </div>
                 <div className="circle circle4 under">
                   <img
                     className="front"
-                    src="/images/yield-hero-graphic-front-line.svg"
+                    src={assetRootPathOption(
+                      '/images/yield-hero-graphic-front-line.svg'
+                    )}
                   />
                 </div>
                 <div className="circle circle4 over">
                   <img
                     className="back"
-                    src="/images/yield-hero-graphic-back-line.svg"
+                    src={assetRootPathOption(
+                      '/images/yield-hero-graphic-back-line.svg'
+                    )}
                   />
                 </div>
                 <img
-                  src="/images/yield-hero-graphic-no-lines-background.svg"
+                  src={assetRootPathOption(
+                    '/images/yield-hero-graphic-no-lines-background.svg'
+                  )}
                   alt="Increasing yield"
                   className="increasing-filler back"
                 />
                 <img
-                  src="/images/yield-hero-graphic-no-lines.svg"
+                  src={assetRootPathOption(
+                    '/images/yield-hero-graphic-no-lines.svg'
+                  )}
                   alt="Increasing yield"
                   className="increasing-filler front"
                 />
                 <img
-                  src="/images/yield-hero-graphic-no-lines-nothing.svg"
+                  src={assetRootPathOption(
+                    '/images/yield-hero-graphic-no-lines-nothing.svg'
+                  )}
                   alt="Increasing yield"
                 />
               </div>
@@ -123,14 +146,20 @@ export default function Earn({ locale, onLocale }) {
             </svg>
             <div className="d-flex justify-content-center">
               <div className="source">
-                <img src="/images/yield-1-icon-small.svg" alt="Lending fees" />
-              </div>
-              <div className="source">
-                <img src="/images/yield-2-icon-small.svg" alt="Trading fees" />
+                <img
+                  src={assetRootPathOption('/images/yield-1-icon-small.svg')}
+                  alt="Lending fees"
+                />
               </div>
               <div className="source">
                 <img
-                  src="/images/yield-3-icon-small.svg"
+                  src={assetRootPathOption('/images/yield-2-icon-small.svg')}
+                  alt="Trading fees"
+                />
+              </div>
+              <div className="source">
+                <img
+                  src={assetRootPathOption('/images/yield-3-icon-small.svg')}
                   alt="Liquidity mining rewards"
                 />
               </div>
@@ -152,7 +181,7 @@ export default function Earn({ locale, onLocale }) {
       <section className="bonus">
         <div className="container text-center px-lg-0">
           <img
-            src="/images/yield-4-icon-small.svg"
+            src={assetRootPathOption('/images/yield-4-icon-small.svg')}
             alt="Origin rewards tokens"
             className="d-block d-lg-inline mb-3 mb-lg-0 mx-auto mr-lg-3"
           />
@@ -170,7 +199,7 @@ export default function Earn({ locale, onLocale }) {
           <div className="row">
             <div className="col-lg-5 text-center order-lg-2 d-flex justify-content-lg-end justify-content-center">
               <img
-                src="/images/yield-1-icon-large.svg"
+                src={assetRootPathOption('/images/yield-1-icon-large.svg')}
                 alt="Lending fees"
                 className="category w-sd-116 h-sd-116"
               />
@@ -195,7 +224,7 @@ export default function Earn({ locale, onLocale }) {
                     <div className="d-flex justify-content-center">
                       <img
                         className="w-sd-103"
-                        src="/images/compound-logo.svg"
+                        src={assetRootPathOption('/images/compound-logo.svg')}
                         alt="Compound logo"
                       />
                     </div>
@@ -204,7 +233,7 @@ export default function Earn({ locale, onLocale }) {
                     <div className="d-flex justify-content-center">
                       <img
                         className="w-sd-62"
-                        src="/images/aave-logo.svg"
+                        src={assetRootPathOption('/images/aave-logo.svg')}
                         alt="Aave logo"
                       />
                     </div>
@@ -213,7 +242,7 @@ export default function Earn({ locale, onLocale }) {
                     <div className="d-flex justify-content-center">
                       <img
                         className="w-sd-66"
-                        src="/images/dydx-logo.svg"
+                        src={assetRootPathOption('/images/dydx-logo.svg')}
                         alt="dy/dx logo"
                       />
                     </div>
@@ -228,7 +257,7 @@ export default function Earn({ locale, onLocale }) {
           <div className="row">
             <div className="col-lg-6 text-center">
               <img
-                src="/images/yield-2-icon-large.svg"
+                src={assetRootPathOption('/images/yield-2-icon-large.svg')}
                 alt="Lending fees"
                 className="category w-sd-116 h-sd-116"
               />
@@ -258,7 +287,7 @@ export default function Earn({ locale, onLocale }) {
                     <div className="d-flex justify-content-center">
                       <img
                         className="w-sd-97"
-                        src="/images/uniswap-logo.svg"
+                        src={assetRootPathOption('/images/uniswap-logo.svg')}
                         alt="Uniswap logo"
                       />
                     </div>
@@ -270,7 +299,7 @@ export default function Earn({ locale, onLocale }) {
                     <div className="d-flex justify-content-center">
                       <img
                         className="w-sd-78"
-                        src="/images/balancer-logo.svg"
+                        src={assetRootPathOption('/images/balancer-logo.svg')}
                         alt="Balancer logo"
                       />
                     </div>
@@ -282,7 +311,7 @@ export default function Earn({ locale, onLocale }) {
                     <div className="d-flex justify-content-center">
                       <img
                         className="w-sd-71"
-                        src="/images/curve-logo.svg"
+                        src={assetRootPathOption('/images/curve-logo.svg')}
                         alt="Curve logo"
                       />
                     </div>
@@ -294,7 +323,7 @@ export default function Earn({ locale, onLocale }) {
           <div className="row">
             <div className="col-lg-6 text-center order-lg-2">
               <img
-                src="/images/yield-3-icon-large.svg"
+                src={assetRootPathOption('/images/yield-3-icon-large.svg')}
                 alt="Liquidity Mining Rewards"
                 className="category w-sd-202 h-sd-140"
               />
@@ -340,12 +369,12 @@ export default function Earn({ locale, onLocale }) {
               )}
             </h5>
             <img
-              src="/images/compound-graph-lg.svg"
+              src={assetRootPathOption('/images/compound-graph-lg.svg')}
               alt="Compounding graph"
               className="d-none d-lg-block"
             />
             <img
-              src="/images/compound-graph-xs.svg"
+              src={assetRootPathOption('/images/compound-graph-xs.svg')}
               alt="Compounding graph"
               className="d-lg-none"
             />
