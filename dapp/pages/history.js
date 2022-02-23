@@ -7,7 +7,7 @@ import Nav from 'components/Nav'
 import BalanceHeader from 'components/buySell/BalanceHeader'
 import TransactionHistory from 'components/TransactionHistory'
 import GetOUSD from 'components/GetOUSD'
-import { assetRootPathOption } from 'utils/image'
+import { assetRootPath } from 'utils/image'
 
 export default function History({ locale, onLocale }) {
   const { active } = useWeb3React()
@@ -21,7 +21,7 @@ export default function History({ locale, onLocale }) {
           {active && <TransactionHistory />}
           {!active && (
             <div className="empty-placeholder d-flex flex-column align-items-center justify-content-start">
-              <img src={assetRootPathOption('/images/wallet-icons.svg')} />
+              <img src={assetRootPath('/images/wallet-icons.svg')} />
               <div className="header-text">
                 {fbt('No wallet connected', 'Disconnected dapp message')}
               </div>

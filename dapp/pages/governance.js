@@ -3,7 +3,7 @@ import { fbt } from 'fbt-runtime'
 import Closing from 'components/Closing'
 import Layout from 'components/layout'
 import Nav from 'components/Nav'
-import { assetRootPathOption } from 'utils/image'
+import { assetRootPath } from 'utils/image'
 
 export default function Governance({ locale, onLocale }) {
   return (
@@ -241,7 +241,7 @@ export default function Governance({ locale, onLocale }) {
             <div className="col col-lg-4">
               <div className="image-container">
                 <img
-                  src={assetRootPathOption('/images/convert-icon.svg')}
+                  src={assetRootPath('/images/convert-icon.svg')}
                   alt="Token conversion icon"
                 />
               </div>
@@ -255,7 +255,7 @@ export default function Governance({ locale, onLocale }) {
             <div className="col col-lg-4">
               <div className="image-container">
                 <img
-                  src={assetRootPathOption('/images/liquidity-icon.svg')}
+                  src={assetRootPath('/images/liquidity-icon.svg')}
                   alt="Liquidity supply icon"
                 />
               </div>
@@ -266,7 +266,7 @@ export default function Governance({ locale, onLocale }) {
             <div className="col col-lg-4">
               <div className="image-container">
                 <img
-                  src={assetRootPathOption('/images/ogn-icon.svg')}
+                  src={assetRootPath('/images/ogn-icon.svg')}
                   alt="Origin Token (OGN) icon"
                 />
               </div>

@@ -17,7 +17,7 @@ import useStake from 'hooks/useStake'
 import useCompensation from 'hooks/useCompensation'
 import { formatCurrency } from 'utils/math'
 import { walletLogin } from 'utils/account'
-import { assetRootPathOption } from 'utils/image'
+import { assetRootPath } from 'utils/image'
 
 function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
   const { stakeOptions } = useStake()
@@ -91,7 +91,7 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
                 <div className="not-connected d-flex align-items-center justify-content-center flex-column">
                   <img
                     className="wallet-icons"
-                    src={assetRootPathOption('/images/wallet-icons.svg')}
+                    src={assetRootPath('/images/wallet-icons.svg')}
                   />
                   <h3>
                     {fbt(
@@ -142,7 +142,7 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
             >
               <img
                 className="ousd-coin"
-                src={assetRootPathOption('/images/ousd-coin-big.svg')}
+                src={assetRootPath('/images/ousd-coin-big.svg')}
               />
               <div className="widget-title bold-text">
                 {fbt('OUSD Compensation Amount', 'OUSD Compensation Amount')}
@@ -222,7 +222,7 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
             >
               <img
                 className="ogn-coin"
-                src={assetRootPathOption('/images/ogn-coin-big.svg')}
+                src={assetRootPath('/images/ogn-coin-big.svg')}
               />
               <div className="widget-title bold-text">
                 {fbt('OGN Compensation Amount', 'OGN Compensation Amount')}

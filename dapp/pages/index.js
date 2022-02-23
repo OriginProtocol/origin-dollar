@@ -11,7 +11,7 @@ import ContractStore from 'stores/ContractStore'
 import { formatCurrency } from 'utils/math'
 import { animateValue } from 'utils/animation'
 import { getDocsLink } from 'utils/getDocsLink'
-import { assetRootPathOption } from 'utils/image'
+import { assetRootPath } from 'utils/image'
 
 const discordURL = process.env.DISCORD_URL
 const jobsURL = process.env.JOBS_URL
@@ -49,12 +49,12 @@ const Home = ({ locale, onLocale }) => {
             <div className="circle circle3"></div>
             <div className="circle circle4"></div>
             <img
-              src={assetRootPathOption('/images/coin-waves.svg')}
+              src={assetRootPath('/images/coin-waves.svg')}
               alt="Waves"
               className="waves"
             />
             <img
-              src={assetRootPathOption('/images/ousd-coin.svg')}
+              src={assetRootPath('/images/ousd-coin.svg')}
               alt="OUSD coin"
               className="coin"
             />
@@ -108,7 +108,7 @@ const Home = ({ locale, onLocale }) => {
             </div>
             <div className="col-lg-6 d-flex flex-column align-items-center justify-content-center order-lg-1 px-0 pr-lg-3">
               <img
-                src={assetRootPathOption('/images/3-up-graphic.svg')}
+                src={assetRootPath('/images/3-up-graphic.svg')}
                 alt="Three tokens become one"
               />
             </div>
@@ -136,7 +136,7 @@ const Home = ({ locale, onLocale }) => {
             </div>
             <div className="col-lg-7 d-flex flex-column align-items-center justify-content-center overflowing2">
               <img
-                src={assetRootPathOption('/images/earnings-graphic.svg')}
+                src={assetRootPath('/images/earnings-graphic.svg')}
                 alt="Earnings"
               />
             </div>
@@ -160,7 +160,7 @@ const Home = ({ locale, onLocale }) => {
             </div>
             <div className="col-lg-7 d-flex flex-column align-items-center justify-content-center order-lg-1 overflowing-left">
               <img
-                src={assetRootPathOption('/images/spend-graphic.svg')}
+                src={assetRootPath('/images/spend-graphic.svg')}
                 alt="Spend"
               />
             </div>
@@ -188,7 +188,7 @@ const Home = ({ locale, onLocale }) => {
             </div>
             <div className="col-lg-7 d-flex flex-column align-items-center justify-content-center">
               <img
-                src={assetRootPathOption('/images/ousd-coin.svg')}
+                src={assetRootPath('/images/ousd-coin.svg')}
                 alt="OUSD coin"
                 className="ousd-coin"
               />
@@ -216,7 +216,7 @@ const Home = ({ locale, onLocale }) => {
             <div className="col-lg-7 d-flex flex-column align-items-center align-items-lg-start justify-content-center order-lg-1">
               <img
                 className="ml-lg-5 w-sd-270"
-                src={assetRootPathOption('/images/backed-graphic.svg')}
+                src={assetRootPath('/images/backed-graphic.svg')}
                 alt="Backed"
               />
             </div>
@@ -238,7 +238,7 @@ const Home = ({ locale, onLocale }) => {
             <div className="col-lg-6 d-flex flex-column align-items-center justify-content-center">
               <img
                 className="w-sd-270"
-                src={assetRootPathOption('/images/automatic-graphic.svg')}
+                src={assetRootPath('/images/automatic-graphic.svg')}
                 alt="Automatic"
               />
             </div>
@@ -263,7 +263,7 @@ const Home = ({ locale, onLocale }) => {
             <div className="col-lg-7 d-flex flex-column align-items-center align-items-lg-start justify-content-center order-lg-1">
               <img
                 className="ml-md-4 w-sd-270"
-                src={assetRootPathOption('/images/control-graphic.svg')}
+                src={assetRootPath('/images/control-graphic.svg')}
                 alt="Control"
               />
             </div>
@@ -295,7 +295,7 @@ const Home = ({ locale, onLocale }) => {
             <div className="col-lg-6 d-flex flex-column align-items-center justify-content-center">
               <img
                 className="insurance-img w-sd-270"
-                src={assetRootPathOption('/images/ousd-shield-blue-icon.svg')}
+                src={assetRootPath('/images/ousd-shield-blue-icon.svg')}
                 alt="Automatic"
               />
             </div>
@@ -319,19 +319,19 @@ const Home = ({ locale, onLocale }) => {
             </p>
             <div className="logos d-flex">
               <img
-                src={assetRootPathOption('/images/youtube-logo.svg')}
+                src={assetRootPath('/images/youtube-logo.svg')}
                 alt="YouTube logo"
               />
               <img
-                src={assetRootPathOption('/images/paypal-logo.svg')}
+                src={assetRootPath('/images/paypal-logo.svg')}
                 alt="PayPal logo"
               />
               <img
-                src={assetRootPathOption('/images/google-logo.svg')}
+                src={assetRootPath('/images/google-logo.svg')}
                 alt="Google logo"
               />
               <img
-                src={assetRootPathOption('/images/dropbox-logo.svg')}
+                src={assetRootPath('/images/dropbox-logo.svg')}
                 alt="Dropbox logo"
               />
             </div>
@@ -387,7 +387,7 @@ const Home = ({ locale, onLocale }) => {
             <div className="col-6 col-md-4 ml-auto text-center">
               <div className="image-container">
                 <img
-                  src={assetRootPathOption('/images/savings-icon.svg')}
+                  src={assetRootPath('/images/savings-icon.svg')}
                   alt="Savings icon"
                 />
               </div>
@@ -410,7 +410,7 @@ const Home = ({ locale, onLocale }) => {
             <div className="col-6 col-md-4 offset-md-1 mr-auto text-center">
               <div className="image-container d-flex justify-content-center">
                 <img
-                  src={assetRootPathOption('/images/transfer-icon.svg')}
+                  src={assetRootPath('/images/transfer-icon.svg')}
                   alt="Transfer icon"
                 />
               </div>
@@ -432,7 +432,7 @@ const Home = ({ locale, onLocale }) => {
             <div className="col-6 col-md-4 ml-auto text-center">
               <div className="image-container d-flex justify-content-center">
                 <img
-                  src={assetRootPathOption('/images/remittances-icon.svg')}
+                  src={assetRootPath('/images/remittances-icon.svg')}
                   alt="Remittances icon"
                 />
               </div>
@@ -449,7 +449,7 @@ const Home = ({ locale, onLocale }) => {
             <div className="col-6 col-md-4 offset-md-1 mr-auto text-center">
               <div className="image-container d-flex justify-content-center">
                 <img
-                  src={assetRootPathOption('/images/value-icon.svg')}
+                  src={assetRootPath('/images/value-icon.svg')}
                   alt="Value icon"
                 />
               </div>
@@ -468,7 +468,7 @@ const Home = ({ locale, onLocale }) => {
             <div className="col-6 col-md-4 ml-auto text-center">
               <div className="image-container d-flex justify-content-center">
                 <img
-                  src={assetRootPathOption('/images/use-case-icon.svg')}
+                  src={assetRootPath('/images/use-case-icon.svg')}
                   alt="Use case icon"
                 />
               </div>
@@ -488,7 +488,7 @@ const Home = ({ locale, onLocale }) => {
             <div className="col-6 col-md-4 offset-md-1 mr-auto text-center">
               <div className="image-container d-flex justify-content-center">
                 <img
-                  src={assetRootPathOption('/images/account-icon.svg')}
+                  src={assetRootPath('/images/account-icon.svg')}
                   alt="Account icon"
                 />
               </div>
@@ -516,7 +516,7 @@ const Home = ({ locale, onLocale }) => {
               className="btn btn-outline-light d-flex align-items-center justify-content-center"
             >
               <img
-                src={assetRootPathOption('/images/discord-icon.svg')}
+                src={assetRootPath('/images/discord-icon.svg')}
                 alt="Discord logo"
               />
               &nbsp;{fbt('Join us on Discord', 'Join us on Discord')}
@@ -528,7 +528,7 @@ const Home = ({ locale, onLocale }) => {
               className="btn btn-outline-light d-flex align-items-center justify-content-center"
             >
               <img
-                src={assetRootPathOption('/images/github-icon.svg')}
+                src={assetRootPath('/images/github-icon.svg')}
                 alt="GitHub logo"
               />
               &nbsp;{fbt('Check out our GitHub', 'Check out our GitHub')}
@@ -540,7 +540,7 @@ const Home = ({ locale, onLocale }) => {
               className="btn btn-outline-light d-flex align-items-center justify-content-center"
             >
               <img
-                src={assetRootPathOption('/images/docs-icon.svg')}
+                src={assetRootPath('/images/docs-icon.svg')}
                 alt="Docs icon"
               />
               &nbsp;{fbt('View the documentation', 'View the documentation')}
