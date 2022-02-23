@@ -1,4 +1,4 @@
-runtime: nodejs16
+runtime: nodejs
 env: flex
 instance_class: B2
 manual_scaling:
