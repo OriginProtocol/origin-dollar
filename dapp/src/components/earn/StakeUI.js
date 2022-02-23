@@ -26,7 +26,7 @@ import { addStakeTxHashToWaitingBuffer } from 'utils/stake'
 import StakeDetailEquation from 'components/earn/StakeDetailEquation'
 
 const StakeUI = ({ rpcProvider, isMobile }) => {
-  const { active } = useWeb3React()
+  const { active, library } = useWeb3React()
 
   const [showClaimModal, setShowClaimModal] = useState(false)
   const [ognStakingHidden, setOgnStakingHidden] = useState(false)
@@ -42,6 +42,7 @@ const StakeUI = ({ rpcProvider, isMobile }) => {
   const [waitingForStakeTxDuration, setWaitingForStakeTxDuration] =
     useState(false)
   const { ogn: ognBalance } = useStoreState(AccountStore, (s) => s.balances)
+  const account = useStoreState(AccountStore, (s) => s.address)
   const [stakes, setStakes] = useState(null)
   const [nonClaimedActiveStakes, setNonClaimedActiveStakes] = useState(null)
   const [pastStakes, setPastStakes] = useState(null)
@@ -58,6 +59,10 @@ const StakeUI = ({ rpcProvider, isMobile }) => {
 
   const formatBn = (amount, decimals) => {
     return ethers.utils.formatUnits(amount, decimals)
+  }
+
+  const connSigner = (contract) => {
+    return contract.connect(library.getSigner(account))
   }
 
   const recalculateStakeData = () => {
@@ -232,7 +237,7 @@ const StakeUI = ({ rpcProvider, isMobile }) => {
                 ['uint256', 'uint256'],
                 [stakeAmount, selectedDuration]
               )
-              return ognContract.approveAndCallWithSender(
+              return connSigner(ognContract).approveAndCallWithSender(
                 ognStaking.address,
                 stakeAmount,
                 fnSig,
@@ -317,7 +322,7 @@ const StakeUI = ({ rpcProvider, isMobile }) => {
             onClose={(e) => {
               setShowClaimModal(false)
             }}
-            onClaimContractCall={ognStaking.exit}
+            onClaimContractCall={connSigner(ognStaking).exit}
             ognToClaim={ognToClaim}
             onUserConfirmedClaimTx={async (result) => {
               setWaitingForClaimTx(true)
