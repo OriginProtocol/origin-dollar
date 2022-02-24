@@ -12,6 +12,16 @@ steps:
     - --keyring=origin
     - --key=cloudbuild
 
+- id: 'Set larger timeout'
+  name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  dir: ./dapp
+  entrypoint: gcloud
+  args:
+    - config
+    - set
+    - app/cloud_build_timeout
+    - 3200
+
 - id: 'Install contracts dependencies'
   name: 'node:16'
   dir: ./contracts
