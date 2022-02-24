@@ -6,7 +6,7 @@
   "main": "index.js",
   "author": "Origin Protocol <support@originprotocol.com>",
   "license": "MIT",
-  "scripts": {
+  "scripts": { 
     "dev": "next dev",
     "build": "rm -rf ./build && next build",
     "export": "yarn run build && next export",
