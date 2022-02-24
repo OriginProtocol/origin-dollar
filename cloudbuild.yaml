@@ -13,19 +13,19 @@ steps:
     - --key=cloudbuild
 
 - id: 'Install contracts dependencies'
-  name: 'node'
+  name: 'node:16'
   dir: ./contracts
   entrypoint: yarn
   args: ['install']
 
 - id: 'Generate abis step 2'
-  name: 'node'
+  name: 'node:16'
   dir: ./contracts
   entrypoint: yarn
   args: ['run', 'deploy']
 
 - id: 'Install dapp dependencies'
-  name: 'node'
+  name: 'node:16'
   dir: ./dapp
   entrypoint: yarn
   args: ['install']
@@ -39,5 +39,5 @@ steps:
     - deploy
     - staging.app.yaml
     - --quiet
-    
+
 timeout: "3200s"
