@@ -82,6 +82,10 @@ const config = {
             key: 'Cache-Control',
             value: 'public, max-age=600, stale-while-revalidate=120',
           },
+          {
+            key: 'x-ipfs-path',
+            value: '/ipns/ousd.eth/',
+          },
         ],
       },
     ]
