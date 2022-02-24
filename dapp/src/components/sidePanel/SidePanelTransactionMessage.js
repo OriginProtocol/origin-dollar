@@ -268,9 +268,7 @@ const SidePanelTransactionMessage = ({
                       {!transaction.mined && (
                         <img
                           className="waiting-icon rotating"
-                          src={assetRootPath(
-                            '/images/spinner-green-small.png'
-                          )}
+                          src={assetRootPath('/images/spinner-green-small.png')}
                         />
                       )}
                       {transaction.mined && !transaction.isError && (
@@ -356,9 +354,7 @@ const SidePanelTransactionMessage = ({
                       {!transaction.mined && (
                         <img
                           className="waiting-icon rotating"
-                          src={assetRootPath(
-                            '/images/spinner-green-small.png'
-                          )}
+                          src={assetRootPath('/images/spinner-green-small.png')}
                         />
                       )}
                       {transaction.mined && !transaction.isError && (
