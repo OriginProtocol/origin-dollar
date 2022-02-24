@@ -1,0 +1,43 @@
+steps:
+- id: 'Decrypt secrets required for deployment'
+  name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  dir: ./dapp
+  entrypoint: gcloud
+  args:
+    - kms
+    - decrypt
+    - --ciphertext-file=./staging.secrets.enc
+    - --plaintext-file=./staging.env
+    - --location=global
+    - --keyring=origin
+    - --key=cloudbuild
+
+- id: 'Install contracts dependencies'
+  name: 'node'
+  dir: ./contracts
+  entrypoint: yarn
+  args: ['install']
+
+- id: 'Generate abis step 2'
+  name: 'node'
+  dir: ./contracts
+  entrypoint: yarn
+  args: ['run', 'deploy']
+
+- id: 'Install dapp dependencies'
+  name: 'node'
+  dir: ./dapp
+  entrypoint: yarn
+  args: ['install']
+
+- id: 'Deploy the app'
+  name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  dir: ./dapp
+  entrypoint: gcloud
+  args:
+    - app
+    - deploy
+    - staging.app.yaml
+    - --quiet
+    
+timeout: "3200s"
