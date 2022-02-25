@@ -30,7 +30,7 @@ export default function History({ locale, onLocale }) {
                   'Disconnected dapp subtext'
                 )}
               </div>
-              <GetOUSD primary connect trackSource="Dapp widget body" />
+              <rgaGetOUSD primary connect trackSource="Dapp widget body" />
             </div>
           )}
         </div>

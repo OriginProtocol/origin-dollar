@@ -78,7 +78,7 @@ const ApproveCurrencyRow = ({
             )}
             <a
               className="blue-btn d-flex align-items-center justify-content-center"
-              onClick={async (e) => {
+              onClick={async () => {
                 analytics.track('On Approve Coin', {
                   category: 'swap',
                   label: swapMetadata.coinGiven,
