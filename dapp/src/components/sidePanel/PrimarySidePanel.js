@@ -8,6 +8,7 @@ import SidePanelInsuranceMessage from 'components/sidePanel/SidePanelInsuranceMe
 import TransactionStore from 'stores/TransactionStore'
 import { usePrevious } from 'utils/hooks'
 import ContractStore from 'stores/ContractStore'
+import { assetRootPath } from 'utils/image'
 
 const PrimarySidePanel = () => {
   const showingAllContracts = useStoreState(
@@ -66,7 +67,11 @@ const PrimarySidePanel = () => {
             aria-expanded="false"
             aria-label="Toggle navigation"
           >
-            <img src="/images/close.svg" alt="Close icon" loading="lazy" />
+            <img
+              src={assetRootPath('/images/close.svg')}
+              alt="Close icon"
+              loading="lazy"
+            />
           </button>
           <SidePanelInsuranceMessage />
           <SidePanelStakeMessage />

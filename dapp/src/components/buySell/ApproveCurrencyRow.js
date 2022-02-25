@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
+import { useWeb3React } from '@web3-react/core'
 import { useStoreState } from 'pullstate'
 import { ethers } from 'ethers'
 import { get } from 'lodash'
@@ -9,6 +10,7 @@ import withRpcProvider from 'hoc/withRpcProvider'
 import ContractStore from 'stores/ContractStore'
 import analytics from 'utils/analytics'
 import { connectorNameIconMap, getConnectorIcon } from 'utils/connectors'
+import { assetRootPath } from 'utils/image'
 
 const ApproveCurrencyRow = ({
   coin,
@@ -27,6 +29,8 @@ const ApproveCurrencyRow = ({
   const [contract, setContract] = useState(null)
   const connectorName = useStoreState(AccountStore, (s) => s.connectorName)
   const connectorIcon = getConnectorIcon(connectorName)
+  const web3react = useWeb3React()
+  const { library, account } = web3react
 
   const {
     vault,
@@ -69,7 +73,10 @@ const ApproveCurrencyRow = ({
           isLast ? 'last' : ''
         }`}
       >
-        <img className="icon" src={`/images/currency/${coin}-icon-small.svg`} />
+        <img
+          className="icon"
+          src={assetRootPath(`/images/currency/${coin}-icon-small.svg`)}
+        />
         {stage === 'approve' && (
           <>
             {fbt(
@@ -87,10 +94,9 @@ const ApproveCurrencyRow = ({
                 setStage('waiting-user')
                 try {
                   const maximum = ethers.constants.MaxUint256
-                  const result = await contract.approve(
-                    contractMap[contractToApprove].address,
-                    maximum
-                  )
+                  const result = await contract
+                    .connect(library.getSigner(account))
+                    .approve(contractMap[contractToApprove].address, maximum)
                   storeTransaction(result, 'approve', coin)
                   setStage('waiting-network')
 
@@ -137,7 +143,7 @@ const ApproveCurrencyRow = ({
             )}
             <img
               className="waiting-icon ml-auto"
-              src={`/images/${connectorIcon}`}
+              src={assetRootPath(`/images/${connectorIcon}`)}
             />
           </>
         )}
@@ -149,7 +155,7 @@ const ApproveCurrencyRow = ({
             )}
             <img
               className="waiting-icon rotating ml-auto"
-              src="/images/spinner-green-small.png"
+              src={assetRootPath('/images/spinner-green-small.png')}
             />
           </>
         )}
@@ -161,7 +167,7 @@ const ApproveCurrencyRow = ({
             )}
             <img
               className="waiting-icon ml-auto"
-              src="/images/green-check.svg"
+              src={assetRootPath('/images/green-check.svg')}
             />
           </>
         )}

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
+import { assetRootPath } from 'utils/image'
 
 const CoinCircleGraphics = ({
   transaction,
@@ -34,19 +35,19 @@ const CoinCircleGraphics = ({
                 {!transaction.mined && (
                   <img
                     className="waiting-icon rotating"
-                    src="/images/spinner-green-small.png"
+                    src={assetRootPath('/images/spinner-green-small.png')}
                   />
                 )}
                 {transaction.mined && !transaction.isError && (
                   <img
                     className="waiting-icon"
-                    src="/images/green-checkmark.svg"
+                    src={assetRootPath('/images/green-checkmark.svg')}
                   />
                 )}
                 {transaction.mined && transaction.isError && (
                   <img
                     className="waiting-icon"
-                    src="/images/red-x-filled.svg"
+                    src={assetRootPath('/images/red-x-filled.svg')}
                   />
                 )}
               </div>
@@ -58,25 +59,31 @@ const CoinCircleGraphics = ({
                   className={`coin coin-3-1 ${
                     showInnerContents ? '' : 'hidden'
                   }`}
-                  src={`/images/currency/${
-                    Array.isArray(coin) ? coin[0] : coin
-                  }-icon-small.svg`}
+                  src={assetRootPath(
+                    `/images/currency/${
+                      Array.isArray(coin) ? coin[0] : coin
+                    }-icon-small.svg`
+                  )}
                 />
                 <img
                   className={`coin coin-3-2 ${
                     showInnerContents ? '' : 'hidden'
                   }`}
-                  src={`/images/currency/${
-                    Array.isArray(coin) ? coin[1] : coin
-                  }-icon-small.svg`}
+                  src={assetRootPath(
+                    `/images/currency/${
+                      Array.isArray(coin) ? coin[1] : coin
+                    }-icon-small.svg`
+                  )}
                 />
                 <img
                   className={`coin coin-3-3 ${
                     showInnerContents ? '' : 'hidden'
                   }`}
-                  src={`/images/currency/${
-                    Array.isArray(coin) ? coin[2] : coin
-                  }-icon-small.svg`}
+                  src={assetRootPath(
+                    `/images/currency/${
+                      Array.isArray(coin) ? coin[2] : coin
+                    }-icon-small.svg`
+                  )}
                 />
               </>
             )}
@@ -86,17 +93,21 @@ const CoinCircleGraphics = ({
                   className={`coin medium coin-2-1 ${
                     showInnerContents ? '' : 'hidden'
                   }`}
-                  src={`/images/currency/${
-                    Array.isArray(coin) ? coin[0] : coin
-                  }-icon-small.svg`}
+                  src={assetRootPath(
+                    `/images/currency/${
+                      Array.isArray(coin) ? coin[0] : coin
+                    }-icon-small.svg`
+                  )}
                 />
                 <img
                   className={`coin medium coin-2-2 ${
                     showInnerContents ? '' : 'hidden'
                   }`}
-                  src={`/images/currency/${
-                    Array.isArray(coin) ? coin[1] : coin
-                  }-icon-small.svg`}
+                  src={assetRootPath(
+                    `/images/currency/${
+                      Array.isArray(coin) ? coin[1] : coin
+                    }-icon-small.svg`
+                  )}
                 />
               </>
             )}
@@ -106,9 +117,11 @@ const CoinCircleGraphics = ({
                   className={`coin big coin-1 ${
                     showInnerContents ? '' : 'hidden'
                   }`}
-                  src={`/images/currency/${
-                    Array.isArray(coin) ? coin[0] : coin
-                  }-icon-small.svg`}
+                  src={assetRootPath(
+                    `/images/currency/${
+                      Array.isArray(coin) ? coin[0] : coin
+                    }-icon-small.svg`
+                  )}
                 />
               </>
             )}

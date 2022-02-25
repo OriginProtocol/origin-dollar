@@ -1,5 +1,4 @@
 import { fbt } from 'fbt-runtime'
-import Link from 'next/link'
 
 import analytics from 'utils/analytics'
 import { getDocsLink } from 'utils/getDocsLink'

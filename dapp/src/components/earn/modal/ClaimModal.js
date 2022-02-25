@@ -7,6 +7,7 @@ import { formatCurrency } from 'utils/math'
 import AccountStore from 'stores/AccountStore'
 import { useStoreState } from 'pullstate'
 import { connectorNameIconMap, getConnectorIcon } from 'utils/connectors'
+import { assetRootPath } from 'utils/image'
 
 const ClaimModal = ({
   onClaimContractCall,
@@ -59,7 +60,10 @@ const ClaimModal = ({
             <div
               className={`d-flex align-items-center ${infoText ? 'mb-33' : ''}`}
             >
-              <img className="ogn-icon" src="/images/ogn-icon-blue.svg" />
+              <img
+                className="ogn-icon"
+                src={assetRootPath('/images/ogn-icon-blue.svg')}
+              />
               <div className="grey-text">
                 {fbt('Unclaimed OGN', 'Unclaimed OGN')}
               </div>
@@ -75,7 +79,7 @@ const ClaimModal = ({
               <div className="d-flex align-items-center justify-content-center">
                 <img
                   className="big-connector-icon"
-                  src={`/images/${connectorIcon}`}
+                  src={assetRootPath(`/images/${connectorIcon}`)}
                 />
                 <div className="action-text">
                   {fbt(

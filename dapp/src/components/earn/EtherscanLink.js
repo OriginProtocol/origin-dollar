@@ -1,4 +1,5 @@
 import React from 'react'
+import { assetRootPath } from 'utils/image'
 
 export default function EtherscanLink({
   href,
@@ -18,9 +19,11 @@ export default function EtherscanLink({
       >
         <img
           className="etherscan-icon"
-          src={`/images/${
-            white ? 'etherscan-icon-white.svg' : 'etherscan-icon-earn.svg'
-          }`}
+          src={assetRootPath(
+            `/images/${
+              white ? 'etherscan-icon-white.svg' : 'etherscan-icon-earn.svg'
+            }`
+          )}
         />
         {text}
       </a>

@@ -14,6 +14,7 @@ import {
   removeCommas,
 } from 'utils/math'
 import { currencies } from 'constants/Contract'
+import { assetRootPath } from 'utils/image'
 
 const DownCaret = ({ color = '#608fcf', size = '30' }) => (
   <svg
@@ -36,22 +37,22 @@ const CoinImage = ({ small, coin, isSemiTransparent = false }) => {
       {coin !== 'mix' && (
         <img
           className={`${className} ${small ? 'small' : ''}`}
-          src={`/images/currency/${coin}-icon-small.svg`}
+          src={assetRootPath(`/images/currency/${coin}-icon-small.svg`)}
         />
       )}
       {coin === 'mix' && (
         <div className="d-flex align-items-start">
           <img
             className={`${className} mixed coin-1 ${small ? 'small' : ''}`}
-            src={`/images/currency/dai-icon-small.svg`}
+            src={assetRootPath(`/images/currency/dai-icon-small.svg`)}
           />
           <img
             className={`${className} mixed coin-2 ${small ? 'small' : ''}`}
-            src={`/images/currency/usdt-icon-small.svg`}
+            src={assetRootPath(`/images/currency/usdt-icon-small.svg`)}
           />
           <img
             className={`${className} mixed coin-3 ${small ? 'small' : ''}`}
-            src={`/images/currency/usdc-icon-small.svg`}
+            src={assetRootPath(`/images/currency/usdc-icon-small.svg`)}
           />
         </div>
       )}

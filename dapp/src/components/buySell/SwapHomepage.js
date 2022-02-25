@@ -20,12 +20,21 @@ import AccountStore from 'stores/AccountStore'
 import ContractStore from 'stores/ContractStore'
 import TransactionStore from 'stores/TransactionStore'
 import analytics from 'utils/analytics'
+
 import { getConnectorIcon } from 'utils/connectors'
 import { isMobileMetaMask } from 'utils/device'
 import usePrevious from 'utils/usePrevious'
 import { getUserSource } from 'utils/user'
 import { providerName, providersNotAutoDetectingOUSD } from 'utils/web3'
 import { formatCurrencyMinMaxDecimals, removeCommas } from '../../utils/math'
+
+import {
+  truncateDecimals,
+  formatCurrencyMinMaxDecimals,
+  removeCommas,
+} from '../../utils/math'
+import { assetRootPath } from 'utils/image'
+
 
 let ReactPixel
 if (process.browser) {
@@ -626,7 +635,7 @@ const SwapHomepage = ({
               <div className="d-flex align-items-center justify-content-center">
                 <img
                   className="waiting-icon"
-                  src={`/images/${connectorIcon}`}
+                  src={assetRootPath(`/images/${connectorIcon}`)}
                 />
                 {fbt(
                   'Waiting for you to confirm...',

@@ -76,10 +76,7 @@ const curveMetapoolMiniAbi = [
  * call. We must make sure that previous calls to setupContracts don't override later calls Stores
  */
 export async function setupContracts(account, library, chainId, fetchId) {
-  /* without an account logged in contracts are initialized with JsonRpcProvider and
-   * can operate in a read-only mode.
-   *
-   * Using StaticJsonRpcProvider instead of JsonRpcProvider so it doesn't constantly query
+  /* Using StaticJsonRpcProvider instead of JsonRpcProvider so it doesn't constantly query
    * the network for the current chainId. In case chainId changes, we rerun setupContracts
    * anyway. And StaticJsonRpcProvider also prevents "detected network changed" errors when
    * running node in forked mode.
@@ -91,13 +88,7 @@ export async function setupContracts(account, library, chainId, fetchId) {
 
   let provider = jsonRpcProvider
 
-  let walletConnected = false
-
-  // if web3 account signed in change the dapp's "general provider" with the user's web3 provider
-  if (account && library) {
-    walletConnected = true
-    provider = library.getSigner(account)
-  }
+  let walletConnected = account && library
 
   const getContract = (address, abi, overrideProvider) => {
     try {
@@ -136,7 +127,7 @@ export async function setupContracts(account, library, chainId, fetchId) {
       contracts[key] = new ethers.Contract(
         address,
         network.contracts[key].abi,
-        library ? library.getSigner(account) : null
+        null
       )
     } catch (e) {
       console.error(
@@ -534,7 +525,7 @@ export async function setupContracts(account, library, chainId, fetchId) {
   })
 
   if (process.env.ENABLE_LIQUIDITY_MINING === 'true') {
-    await setupPools(account, contractsToExport)
+    await setupPools(contractsToExport)
   }
 
   await setupStakes(contractsToExport)
@@ -609,7 +600,7 @@ const setupStakes = async (contractsToExport) => {
   }
 }
 
-const setupPools = async (account, contractsToExport) => {
+const setupPools = async (contractsToExport) => {
   try {
     const enrichedPools = await Promise.all(
       pools.map(async (pool) => {

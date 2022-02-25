@@ -8,8 +8,9 @@
   "license": "MIT",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
-    "export": "next export",
+    "build": "rm -rf ./build && next build",
+    "export": "yarn run build && next export",
+    "ipfs-export": "DEPLOY_MODE=ipfs yarn run build && next export",
     "start": "per-env",
     "start:development": "NODE_ENV=development ETHEREUM_RPC_PROVIDER=http://localhost:8545 next dev",
     "start:production": "NODE_ENV=production next start -p 8080",

@@ -59,7 +59,7 @@ const config = {
 
     if (!isServer) {
       config.resolve.alias['@sentry/node'] = '@sentry/browser'
-    }
+    }  
 
     return config
   },
@@ -82,6 +82,10 @@ const config = {
             key: 'Cache-Control',
             value: 'public, max-age=600, stale-while-revalidate=120',
           },
+          {
+            key: 'x-ipfs-path',
+            value: '/ipns/ousd.eth/',
+          },
         ],
       },
     ]
@@ -98,6 +102,11 @@ if (process.env.NO_LANDING === 'true') {
       '/': { page: '/mint' },
     }
   }
+}
+
+// Ipfs requires relative paths instead of absolute ones
+if (process.env.DEPLOY_MODE === 'ipfs') {
+  config.assetPrefix = './'
 }
 
 module.exports = config

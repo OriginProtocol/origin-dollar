@@ -6,7 +6,7 @@ import { useWeb3React } from '@web3-react/core'
 
 import GetOUSD from 'components/GetOUSD'
 import SpinningLoadingCircle from 'components/SpinningLoadingCircle'
-
+import { assetRootPath } from 'utils/image'
 export default function StakeBoxBig({
   percentage,
   duration,
@@ -47,7 +47,10 @@ export default function StakeBoxBig({
           className="d-flex align-items-center justify-content-center arrow-link"
         >
           {!showLoadingWheel && (
-            <img className="caret-left" src="/images/caret-left.svg" />
+            <img
+              className="caret-left"
+              src={assetRootPath('/images/caret-left.svg')}
+            />
           )}
           {showLoadingWheel && (
             <SpinningLoadingCircle backgroundColor="183140" />

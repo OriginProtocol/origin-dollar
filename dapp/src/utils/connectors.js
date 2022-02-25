@@ -42,9 +42,12 @@ export const walletlink = new WalletLinkConnector({
 })
 
 export function resetWalletConnector(connector) {
+
 	if (connector && connector instanceof WalletConnectConnector) {
 		connector.walletConnectProvider = undefined;
 	}
+
+
 }
 
 // Clear WalletConnect's state on disconnect
