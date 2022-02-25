@@ -69,3 +69,7 @@ crytic-export
 contracts/.certora_*
 contracts/.last_confs
 **/*.bak
+
+# Coverage #
+coverage
+coverage.json
