@@ -6,6 +6,7 @@ require("@nomiclabs/hardhat-solhint");
 require("hardhat-deploy");
 require("hardhat-contract-sizer");
 require("hardhat-deploy-ethers");
+require("solidity-coverage");
 require("@openzeppelin/hardhat-upgrades");
 
 const {

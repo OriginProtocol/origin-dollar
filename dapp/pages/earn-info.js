@@ -113,9 +113,7 @@ export default function Earn({ locale, onLocale }) {
                   className="increasing-filler back"
                 />
                 <img
-                  src={assetRootPath(
-                    '/images/yield-hero-graphic-no-lines.svg'
-                  )}
+                  src={assetRootPath('/images/yield-hero-graphic-no-lines.svg')}
                   alt="Increasing yield"
                   className="increasing-filler front"
                 />

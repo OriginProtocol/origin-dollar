@@ -112,9 +112,7 @@ const WalletSelectContent = ({}) => {
             >
               <div className="col-2">
                 <img
-                  src={assetRootPath(
-                    `/images/${name.toLowerCase()}-icon.svg`
-                  )}
+                  src={assetRootPath(`/images/${name.toLowerCase()}-icon.svg`)}
                 />
               </div>
               <div className="col-8">{name}</div>
