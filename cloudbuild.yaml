@@ -6,7 +6,7 @@ steps:
   args:
     - kms
     - decrypt
-    - --ciphertext-file=./staging.secrets.enc
+    - --ciphertext-file=./prod.secrets.enc
     - --plaintext-file=./deploy.env
     - --location=global
     - --keyring=origin
@@ -47,7 +47,7 @@ steps:
   args:
     - app
     - deploy
-    - staging.app.yaml
+    - prod.app.yaml
     - --quiet
 
 timeout: "3200s"
