@@ -20,7 +20,7 @@ steps:
     - config
     - set
     - app/cloud_build_timeout
-    - 3200
+    - "3200"
 
 - id: 'Install contracts dependencies'
   name: 'node:16'
