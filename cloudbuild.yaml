@@ -22,13 +22,13 @@ steps:
     - app/cloud_build_timeout
     - "3200"
 
-- id: 'Install contracts dependencies'
+- id: 'Install contract dependencies'
   name: 'node:16'
   dir: ./contracts
   entrypoint: yarn
   args: ['install']
 
-- id: 'Generate abis step 2'
+- id: 'Generate abis adn copy to dapp folder'
   name: 'node:16'
   dir: ./contracts
   entrypoint: yarn
