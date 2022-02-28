@@ -7,7 +7,7 @@ steps:
     - kms
     - decrypt
     - --ciphertext-file=./staging.secrets.enc
-    - --plaintext-file=./staging.env
+    - --plaintext-file=./deploy.env
     - --location=global
     - --keyring=origin
     - --key=cloudbuild
