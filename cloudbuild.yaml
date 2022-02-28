@@ -1,0 +1,53 @@
+steps:
+- id: 'Decrypt secrets required for deployment'
+  name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  dir: ./dapp
+  entrypoint: gcloud
+  args:
+    - kms
+    - decrypt
+    - --ciphertext-file=./prod.secrets.enc
+    - --plaintext-file=./deploy.env
+    - --location=global
+    - --keyring=origin
+    - --key=cloudbuild
+
+- id: 'Set larger timeout'
+  name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  dir: ./dapp
+  entrypoint: gcloud
+  args:
+    - config
+    - set
+    - app/cloud_build_timeout
+    - "3200"
+
+- id: 'Install contract dependencies'
+  name: 'node:16'
+  dir: ./contracts
+  entrypoint: yarn
+  args: ['install']
+
+- id: 'Generate abis adn copy to dapp folder'
+  name: 'node:16'
+  dir: ./contracts
+  entrypoint: yarn
+  args: ['run', 'deploy']
+
+- id: 'Install dapp dependencies'
+  name: 'node:16'
+  dir: ./dapp
+  entrypoint: yarn
+  args: ['install']
+
+- id: 'Deploy the app'
+  name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  dir: ./dapp
+  entrypoint: gcloud
+  args:
+    - app
+    - deploy
+    - prod.app.yaml
+    - --quiet
+
+timeout: "3200s"
