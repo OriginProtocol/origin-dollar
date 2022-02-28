@@ -17,6 +17,7 @@ import LanguageSelected from 'components/LanguageSelected'
 import LocaleDropdown from 'components/LocaleDropdown'
 import OusdDropdown from 'components/earn/OusdDropdown'
 import OgnDropdown from 'components/earn/OgnDropdown'
+import IPFSDappLink from 'components/IPFSDappLink'
 import ContractStore from 'stores/ContractStore'
 import AccountStore from 'stores/AccountStore'
 
@@ -190,6 +191,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
               <LanguageSelected locale={locale} />
             </div>
           </button>
+          <IPFSDappLink dapp={dapp} css="d-lg-none" />
           {!dapp && (
             <button
               className="navbar-toggler d-lg-none ml-4"
@@ -328,6 +330,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
                   </li>
                 </ul>
               )}
+              <IPFSDappLink dapp={dapp} css="d-none d-lg-block" />
               <div
                 className={`d-flex flex-column ${
                   dapp ? 'flex-lg-row-reverse' : 'flex-lg-row'
