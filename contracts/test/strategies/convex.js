@@ -253,7 +253,7 @@ describe("Convex Strategy", function () {
 
       // prettier-ignore
       await harvester
-        .connect(governor)["harvestAndSwap()"]();
+        .connect(governor)["harvestAndSwap(bool,bytes)"](false, "0x");
 
       // Make sure Vault has 100 USDT balance (the Uniswap mock converts at 1:1)
       await expect(vault).has.a.balanceOf("5", usdt);
@@ -327,7 +327,7 @@ describe("Convex Strategy", function () {
       if (callAsGovernor) {
         // prettier-ignore
         await harvester
-          .connect(anna)["harvestAndSwap(address)"](convexStrategy.address);
+          .connect(anna)["harvestAndSwap(address,bool,bytes)"](convexStrategy.address, false, "0x");
 
         await expect(vault).has.a.balanceOf("2.277", usdt); // (0.8 + 1.5) - 1%
         const balanceAfterAnna = await usdt.balanceOf(anna.address);
@@ -337,7 +337,7 @@ describe("Convex Strategy", function () {
       } else {
         // prettier-ignore
         await harvester
-          .connect(governor)["harvestAndSwap()"]();
+          .connect(governor)["harvestAndSwap(bool,bytes)"](false, "0x");
         await expect(vault).has.a.balanceOf("2.3", usdt); // (0.8 + 1.5)
       }
 

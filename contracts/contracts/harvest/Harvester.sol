@@ -227,17 +227,25 @@ contract Harvester is Governable {
     /**
      * @dev Swap all supported swap tokens for stablecoins via Uniswap.
      */
-    function swap() external onlyGovernor nonReentrant {
-        _swap(rewardProceedsAddress);
+    function swap(bool _useV3, bytes memory _data)
+        external
+        onlyGovernor
+        nonReentrant
+    {
+        _swap(rewardProceedsAddress, _useV3, _data);
     }
 
     /*
      * @dev Collect reward tokens from all strategies and swap for supported
      *      stablecoin via Uniswap
      */
-    function harvestAndSwap() external onlyGovernor nonReentrant {
+    function harvestAndSwap(bool _useV3, bytes memory _data)
+        external
+        onlyGovernor
+        nonReentrant
+    {
         _harvest();
-        _swap(rewardProceedsAddress);
+        _swap(rewardProceedsAddress, _useV3, _data);
     }
 
     /**
@@ -254,9 +262,13 @@ contract Harvester is Governable {
      *      the caller are sent to the caller of this function.
      * @param _strategyAddr Address of the strategy to collect rewards from
      */
-    function harvestAndSwap(address _strategyAddr) external nonReentrant {
+    function harvestAndSwap(
+        address _strategyAddr,
+        bool _useV3,
+        bytes memory _data
+    ) external nonReentrant {
         // Remember _harvest function checks for the validity of _strategyAddr
-        _harvestAndSwap(_strategyAddr, msg.sender);
+        _harvestAndSwap(_strategyAddr, msg.sender, _useV3, _data);
     }
 
     /**
@@ -266,12 +278,14 @@ contract Harvester is Governable {
      * @param _rewardTo Address where to send a share of harvest rewards to as an incentive
      *      for executing this function
      */
-    function harvestAndSwap(address _strategyAddr, address _rewardTo)
-        external
-        nonReentrant
-    {
+    function harvestAndSwap(
+        address _strategyAddr,
+        address _rewardTo,
+        bool _useV3,
+        bytes memory _data
+    ) external nonReentrant {
         // Remember _harvest function checks for the validity of _strategyAddr
-        _harvestAndSwap(_strategyAddr, _rewardTo);
+        _harvestAndSwap(_strategyAddr, _rewardTo, _useV3, _data);
     }
 
     /**
@@ -279,12 +293,12 @@ contract Harvester is Governable {
      *       rewards to the vault.
      * @param _swapToken Address of the token to swap.
      */
-    function swapRewardToken(address _swapToken)
-        external
-        onlyGovernor
-        nonReentrant
-    {
-        _swap(_swapToken, rewardProceedsAddress);
+    function swapRewardToken(
+        address _swapToken,
+        bool _useV3,
+        bytes memory _data
+    ) external onlyGovernor nonReentrant {
+        _swap(_swapToken, rewardProceedsAddress, _useV3, _data);
     }
 
     /**
@@ -305,14 +319,17 @@ contract Harvester is Governable {
      * @param _rewardTo Address where to send a share of harvest rewards to as an incentive
      *      for executing this function
      */
-    function _harvestAndSwap(address _strategyAddr, address _rewardTo)
-        internal
-    {
+    function _harvestAndSwap(
+        address _strategyAddr,
+        address _rewardTo,
+        bool _useV3,
+        bytes memory _data
+    ) internal {
         _harvest(_strategyAddr);
         IStrategy strategy = IStrategy(_strategyAddr);
         address[] memory rewardTokens = strategy.getRewardTokenAddresses();
         for (uint256 i = 0; i < rewardTokens.length; i++) {
-            _swap(rewardTokens[i], _rewardTo);
+            _swap(rewardTokens[i], _rewardTo, _useV3, _data);
         }
     }
 
@@ -340,7 +357,11 @@ contract Harvester is Governable {
      * @param _rewardTo Address where to send a share of harvest rewards to as an incentive
      *      for executing this function
      */
-    function _swap(address _rewardTo) internal {
+    function _swap(
+        address _rewardTo,
+        bool _useV3,
+        bytes memory _data
+    ) internal {
         address[] memory allStrategies = IVault(vaultAddress)
             .getAllStrategies();
 
@@ -350,18 +371,111 @@ contract Harvester is Governable {
                 .getRewardTokenAddresses();
 
             for (uint256 j = 0; j < rewardTokenAddresses.length; j++) {
-                _swap(rewardTokenAddresses[j], _rewardTo);
+                _swap(rewardTokenAddresses[j], _rewardTo, _useV3, _data);
             }
         }
     }
 
+    function _swap(
+        address _swapToken,
+        address _rewardTo,
+        bool _useV3,
+        bytes memory _data
+    ) internal {
+        if (_useV3) {
+            uint256 fee;
+            assembly {
+                fee := mload(add(_data, 0x20))
+            }
+            _swapV3(_swapToken, _rewardTo, fee);
+        } else {
+            _swapV2(_swapToken, _rewardTo);
+        }
+    }
+
     /**
-     * @dev Swap a reward token for stablecoins on Uniswap. The token must have
+     * @dev Swap a reward token for stablecoins on Uniswap(v2). The token must have
      *       a registered price feed with the price provider.
      * @param _swapToken Address of the token to swap.
      * @param _rewardTo Address where to send the share of harvest rewards to
      */
-    function _swap(address _swapToken, address _rewardTo) internal {
+    function _swapV2(address _swapToken, address _rewardTo) internal {
+        RewardTokenConfig memory tokenConfig = rewardTokenConfigs[_swapToken];
+
+        /* This will trigger a return when reward token configuration has not yet been set
+         * or we have temporarily disabled swapping of specific reward token via setting
+         * doSwapRewardToken to false.
+         */
+        if (!tokenConfig.doSwapRewardToken) {
+            return;
+        }
+
+        address priceProvider = IVault(vaultAddress).priceProvider();
+
+        IERC20 swapToken = IERC20(_swapToken);
+        uint256 balance = swapToken.balanceOf(address(this));
+
+        if (balance == 0) {
+            return;
+        }
+
+        uint256 balanceToSwap = Math.min(balance, tokenConfig.liquidationLimit);
+
+        // This'll revert if there is no price feed
+        uint256 oraclePrice = IOracle(priceProvider).price(_swapToken);
+        // Oracle price is 1e8, USDT output is 1e6
+        uint256 minExpected = (balanceToSwap *
+            oraclePrice *
+            (1e4 - tokenConfig.allowedSlippageBps)).scaleBy( // max allowed slippage
+            6,
+            Helpers.getDecimals(_swapToken) + 8
+        ) / 1e4; // fix the max slippage decimal position
+
+        // Uniswap redemption path
+        address[] memory path = new address[](3);
+        path[0] = _swapToken;
+        path[1] = IUniswapV2Router(tokenConfig.uniswapV2CompatibleAddr).WETH();
+        path[2] = usdtAddress;
+
+        // slither-disable-next-line unused-return
+        IUniswapV2Router(tokenConfig.uniswapV2CompatibleAddr)
+            .swapExactTokensForTokens(
+                balanceToSwap,
+                minExpected,
+                path,
+                address(this),
+                block.timestamp
+            );
+
+        IERC20 usdt = IERC20(usdtAddress);
+        uint256 usdtBalance = usdt.balanceOf(address(this));
+
+        uint256 vaultBps = 1e4 - tokenConfig.harvestRewardBps;
+        uint256 rewardsProceedsShare = (usdtBalance * vaultBps) / 1e4;
+
+        require(
+            vaultBps > tokenConfig.harvestRewardBps,
+            "Address receiving harvest incentive is receiving more rewards than the rewards proceeds address"
+        );
+
+        usdt.safeTransfer(rewardProceedsAddress, rewardsProceedsShare);
+        usdt.safeTransfer(
+            _rewardTo,
+            usdtBalance - rewardsProceedsShare // remaining share of the rewards
+        );
+    }
+
+    /**
+     * @dev Swap a reward token for stablecoins on Uniswap(v3). The token must have
+     *       a registered price feed with the price provider.
+     * @param _swapToken Address of the token to swap.
+     * @param _rewardTo Address where to send the share of harvest rewards to
+     */
+    function _swapV3(
+        address _swapToken,
+        address _rewardTo,
+        uint256 _fee
+    ) internal {
         RewardTokenConfig memory tokenConfig = rewardTokenConfigs[_swapToken];
 
         /* This will trigger a return when reward token configuration has not yet been set

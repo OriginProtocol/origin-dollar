@@ -95,7 +95,7 @@ describe("Harvester", function () {
     // prettier-ignore
     await expect(
       harvester
-        .connect(anna)["harvestAndSwap(address)"](mockUniswapRouter.address)
+        .connect(anna)["harvestAndSwap(address,bool,bytes)"](mockUniswapRouter.address, false, "0x")
     ).to.be.revertedWith("Not a valid strategy address");
 
     await expect(
@@ -105,9 +105,11 @@ describe("Harvester", function () {
     // prettier-ignore
     await expect(
       harvester
-        .connect(anna)["harvestAndSwap(address,address)"](
+        .connect(anna)["harvestAndSwap(address,address,bool,bytes)"](
           mockUniswapRouter.address,
-          anna.address
+          anna.address,
+          false,
+          "0x"
         )
     ).to.be.revertedWith("Not a valid strategy address");
   });
@@ -174,7 +176,7 @@ describe("Harvester", function () {
     const balanceBeforeAnna = await usdt.balanceOf(anna.address);
     // prettier-ignore
     await harvester
-      .connect(anna)["harvestAndSwap(address)"](compoundStrategy.address);
+      .connect(anna)["harvestAndSwap(address,bool,bytes)"](compoundStrategy.address, false, "0x");
     const balanceAfterAnna = await usdt.balanceOf(anna.address);
 
     await expect(await comp.balanceOf(compoundStrategy.address)).to.be.equal(
@@ -227,7 +229,7 @@ describe("Harvester", function () {
     const annaBalanceChange = await changeInBalance(
       async () => {
         harvester
-          .connect(anna)["harvestAndSwap(address)"](compoundStrategy.address);
+          .connect(anna)["harvestAndSwap(address,bool,bytes)"](compoundStrategy.address, false, "0x");
       },
       usdt,
       anna.address
@@ -272,7 +274,7 @@ describe("Harvester", function () {
     // prettier-ignore
     await expect(
       harvester
-        .connect(anna)["harvestAndSwap(address)"](compoundStrategy.address)
+        .connect(anna)["harvestAndSwap(address,bool,bytes)"](compoundStrategy.address, false, "0x")
     ).to.be.revertedWith("Slippage error");
   });
 
@@ -311,7 +313,7 @@ describe("Harvester", function () {
     const annaBalanceChange = await changeInBalance(
       async () => {
         harvester
-          .connect(anna)["harvestAndSwap(address)"](compoundStrategy.address);
+          .connect(anna)["harvestAndSwap(address,bool,bytes)"](compoundStrategy.address, false, "0x");
       },
       usdt,
       anna.address
@@ -411,7 +413,7 @@ describe("Harvester", function () {
     const annaBalanceChange = await changeInBalance(
       async () => {
         harvester
-          .connect(anna)["harvestAndSwap(address)"](compoundStrategy.address);
+          .connect(anna)["harvestAndSwap(address,bool,bytes)"](compoundStrategy.address, false, "0x");
       },
       usdt,
       anna.address
@@ -501,7 +503,7 @@ describe("Harvester", function () {
     const annaBalanceChange = await changeInBalance(
       async () => {
         harvester
-          .connect(anna)["harvestAndSwap(address)"](compoundStrategy.address);
+          .connect(anna)["harvestAndSwap(address,bool,bytes)"](compoundStrategy.address, false, "0x");
       },
       usdt,
       anna.address
@@ -530,7 +532,7 @@ describe("Harvester", function () {
     // prettier-ignore
     await expect(
       harvester
-        .connect(anna)["harvestAndSwap(address)"](compoundStrategy.address)
+        .connect(anna)["harvestAndSwap(address,bool,bytes)"](compoundStrategy.address, false, "0x")
     ).to.be.revertedWith("Not a valid strategy address");
   });
 
@@ -573,7 +575,7 @@ describe("Harvester", function () {
         annaBalanceChange = await changeInBalance(
           async () => {
             harvester
-              .connect(anna)["harvestAndSwap(address)"](compoundStrategy.address);
+              .connect(anna)["harvestAndSwap(address,bool,bytes)"](compoundStrategy.address, false, "0x");
           },
           usdt,
           anna.address
@@ -633,7 +635,7 @@ describe("Harvester", function () {
         annaBalanceChange = await changeInBalance(
           async () => {
             harvester
-              .connect(anna)["harvestAndSwap(address,address)"](compoundStrategy.address, anna.address);
+              .connect(anna)["harvestAndSwap(address,address,bool,bytes)"](compoundStrategy.address, anna.address, false, "0x");
           },
           usdt,
           anna.address
@@ -693,7 +695,7 @@ describe("Harvester", function () {
         joshBalanceChange = await changeInBalance(
           async () => {
             harvester
-              .connect(anna)["harvestAndSwap(address,address)"](compoundStrategy.address, josh.address);
+              .connect(anna)["harvestAndSwap(address,address,bool,bytes)"](compoundStrategy.address, josh.address, false, "0x");
           },
           usdt,
           josh.address
@@ -746,7 +748,7 @@ describe("Harvester", function () {
         annaBalanceChange = await changeInBalance(
           async () => {
             harvester
-              .connect(anna)["harvestAndSwap(address)"](compoundStrategy.address);
+              .connect(anna)["harvestAndSwap(address,bool,bytes)"](compoundStrategy.address, false, "0x");
           },
           usdt,
           anna.address
