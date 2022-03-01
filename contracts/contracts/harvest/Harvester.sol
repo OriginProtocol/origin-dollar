@@ -12,6 +12,7 @@ import { IVault } from "../interfaces/IVault.sol";
 import { IOracle } from "../interfaces/IOracle.sol";
 import { IStrategy } from "../interfaces/IStrategy.sol";
 import { IUniswapV2Router } from "../interfaces/uniswap/IUniswapV2Router02.sol";
+import { UniswapV3Router } from "../interfaces/UniswapV3Router.sol";
 import "../utils/Helpers.sol";
 
 contract Harvester is Governable {
@@ -19,13 +20,13 @@ contract Harvester is Governable {
     using SafeMath for uint256;
     using StableMath for uint256;
 
-    event UniswapUpdated(address _address);
     event SupportedStrategyUpdate(address _address, bool _isSupported);
     event RewardTokenConfigUpdated(
         address _tokenAddress,
         uint16 _allowedSlippageBps,
         uint16 _harvestRewardBps,
         address _uniswapV2CompatibleAddr,
+        address _uniswapV3Addr,
         uint256 _liquidationLimit,
         bool _doSwapRewardToken
     );
@@ -39,6 +40,9 @@ contract Harvester is Governable {
         /* Address of Uniswap V2 compatible exchange (Uniswap V2, SushiSwap).
          */
         address uniswapV2CompatibleAddr;
+        /* Address of Uniswap V3 router.
+         */
+        address uniswapV3Addr;
         /* When true the reward token is being swapped. In a need of (temporarily) disabling the swapping of
          * a reward token this needs to be set to false.
          */
@@ -112,7 +116,9 @@ contract Harvester is Governable {
      *        Example: 300 == 3% slippage
      * @param _harvestRewardBps uint16 amount of reward tokens the caller of the function is rewarded.
      *        Example: 100 == 1%
-     * @param _uniswapV2CompatibleAddr Address Address of a UniswapV2 compatible contract to perform
+     * @param _uniswapV2CompatibleAddr Address of a UniswapV2 compatible contract to perform
+     *        the exchange from reward tokens to stablecoin (currently hard-coded to USDT)
+     * @param _uniswapV3Addr Address of a UniswapV3 router to perform
      *        the exchange from reward tokens to stablecoin (currently hard-coded to USDT)
      * @param _liquidationLimit uint256 Maximum amount of token to be sold per one swap function call.
      *        When value is 0 there is no limit.
@@ -124,6 +130,7 @@ contract Harvester is Governable {
         uint16 _allowedSlippageBps,
         uint16 _harvestRewardBps,
         address _uniswapV2CompatibleAddr,
+        address _uniswapV3Addr,
         uint256 _liquidationLimit,
         bool _doSwapRewardToken
     ) external onlyGovernor {
@@ -137,13 +144,18 @@ contract Harvester is Governable {
         );
         require(
             _uniswapV2CompatibleAddr != address(0),
-            "Uniswap compatible address should be non zero address"
+            "Uniswap V2 compatible address should be non zero address"
+        );
+        require(
+            _uniswapV3Addr != address(0),
+            "Uniswap V3 address should be non zero address"
         );
 
         RewardTokenConfig memory tokenConfig = RewardTokenConfig({
             allowedSlippageBps: _allowedSlippageBps,
             harvestRewardBps: _harvestRewardBps,
             uniswapV2CompatibleAddr: _uniswapV2CompatibleAddr,
+            uniswapV3Addr: _uniswapV3Addr,
             doSwapRewardToken: _doSwapRewardToken,
             liquidationLimit: _liquidationLimit
         });
@@ -177,11 +189,30 @@ contract Harvester is Governable {
             token.safeApprove(_uniswapV2CompatibleAddr, type(uint256).max);
         }
 
+        address oldUniswapV3Addr = rewardTokenConfigs[_tokenAddress]
+            .uniswapV3Addr;
+        // if changing token swap provider cancel existing allowance
+        if (
+            /* oldUniswapV3Addr == address(0) when there is no pre-existing
+             * configuration for said rewards token
+             */
+            oldUniswapV3Addr != address(0) && oldUniswapV3Addr != _uniswapV3Addr
+        ) {
+            token.safeApprove(oldUniswapV3Addr, 0);
+        }
+
+        // Give Uniswap infinite approval when needed
+        if (oldUniswapV3Addr != _uniswapV3Addr) {
+            token.safeApprove(_uniswapV3Addr, 0);
+            token.safeApprove(_uniswapV3Addr, type(uint256).max);
+        }
+
         emit RewardTokenConfigUpdated(
             _tokenAddress,
             _allowedSlippageBps,
             _harvestRewardBps,
             _uniswapV2CompatibleAddr,
+            _uniswapV3Addr,
             _liquidationLimit,
             _doSwapRewardToken
         );
@@ -383,7 +414,7 @@ contract Harvester is Governable {
         bytes memory _data
     ) internal {
         if (_useV3) {
-            uint256 fee;
+            uint24 fee;
             assembly {
                 fee := mload(add(_data, 0x20))
             }
@@ -470,11 +501,12 @@ contract Harvester is Governable {
      *       a registered price feed with the price provider.
      * @param _swapToken Address of the token to swap.
      * @param _rewardTo Address where to send the share of harvest rewards to
+     * @param _fee Fee amount of the liquidity pool
      */
     function _swapV3(
         address _swapToken,
         address _rewardTo,
-        uint256 _fee
+        uint24 _fee
     ) internal {
         RewardTokenConfig memory tokenConfig = rewardTokenConfigs[_swapToken];
 
@@ -482,12 +514,11 @@ contract Harvester is Governable {
          * or we have temporarily disabled swapping of specific reward token via setting
          * doSwapRewardToken to false.
          */
-        if (!tokenConfig.doSwapRewardToken) {
-            return;
-        }
+        if (!tokenConfig.doSwapRewardToken) return;
 
         address priceProvider = IVault(vaultAddress).priceProvider();
 
+        address rewardTo = _rewardTo;
         IERC20 swapToken = IERC20(_swapToken);
         uint256 balance = swapToken.balanceOf(address(this));
 
@@ -507,21 +538,31 @@ contract Harvester is Governable {
             Helpers.getDecimals(_swapToken) + 8
         ) / 1e4; // fix the max slippage decimal position
 
-        // Uniswap redemption path
-        address[] memory path = new address[](3);
-        path[0] = _swapToken;
-        path[1] = IUniswapV2Router(tokenConfig.uniswapV2CompatibleAddr).WETH();
-        path[2] = usdtAddress;
+        UniswapV3Router.ExactInputParams memory params = UniswapV3Router
+            .ExactInputParams({
+                path: abi.encodePacked(
+                    _swapToken,
+                    _fee, // Pool fee, swap token -> weth9
+                    IUniswapV2Router(tokenConfig.uniswapV2CompatibleAddr).WETH(),
+                    uint24(3000), // Pool fee, weth9 -> usdt
+                    usdtAddress
+                ),
+                recipient: address(this),
+                deadline: uint256(block.timestamp.add(1000)),
+                amountIn: balanceToSwap,
+                amountOutMinimum: minExpected
+            });
 
-        // slither-disable-next-line unused-return
-        IUniswapV2Router(tokenConfig.uniswapV2CompatibleAddr)
-            .swapExactTokensForTokens(
-                balanceToSwap,
-                minExpected,
-                path,
-                address(this),
-                block.timestamp
-            );
+        // Don't revert everything, even if the buyback fails.
+        // We want the overall transaction to continue regardless.
+        // We don't need to look at the return data, since the amount will
+        // be above the minExpected.
+        (bool success, bytes memory data) = tokenConfig.uniswapV3Addr.call(
+            abi.encodeWithSignature(
+                "exactInput((bytes,address,uint256,uint256,uint256))",
+                params
+            )
+        );
 
         IERC20 usdt = IERC20(usdtAddress);
         uint256 usdtBalance = usdt.balanceOf(address(this));
@@ -536,7 +577,7 @@ contract Harvester is Governable {
 
         usdt.safeTransfer(rewardProceedsAddress, rewardsProceedsShare);
         usdt.safeTransfer(
-            _rewardTo,
+            rewardTo,
             usdtBalance - rewardsProceedsShare // remaining share of the rewards
         );
     }
