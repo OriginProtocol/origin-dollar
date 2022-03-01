@@ -413,24 +413,6 @@ contract Harvester is Governable {
         bool _useV3,
         bytes memory _data
     ) internal {
-        if (_useV3) {
-            uint24 fee;
-            assembly {
-                fee := mload(add(_data, 0x20))
-            }
-            _swapV3(_swapToken, _rewardTo, fee);
-        } else {
-            _swapV2(_swapToken, _rewardTo);
-        }
-    }
-
-    /**
-     * @dev Swap a reward token for stablecoins on Uniswap(v2). The token must have
-     *       a registered price feed with the price provider.
-     * @param _swapToken Address of the token to swap.
-     * @param _rewardTo Address where to send the share of harvest rewards to
-     */
-    function _swapV2(address _swapToken, address _rewardTo) internal {
         RewardTokenConfig memory tokenConfig = rewardTokenConfigs[_swapToken];
 
         /* This will trigger a return when reward token configuration has not yet been set
@@ -462,21 +444,26 @@ contract Harvester is Governable {
             Helpers.getDecimals(_swapToken) + 8
         ) / 1e4; // fix the max slippage decimal position
 
-        // Uniswap redemption path
-        address[] memory path = new address[](3);
-        path[0] = _swapToken;
-        path[1] = IUniswapV2Router(tokenConfig.uniswapV2CompatibleAddr).WETH();
-        path[2] = usdtAddress;
-
-        // slither-disable-next-line unused-return
-        IUniswapV2Router(tokenConfig.uniswapV2CompatibleAddr)
-            .swapExactTokensForTokens(
+        if (_useV3) {
+            uint24 fee;
+            assembly {
+                fee := mload(add(_data, 0x20))
+            }
+            _swapV3(
+                tokenConfig.uniswapV2CompatibleAddr,
+                _swapToken,
+                fee,
                 balanceToSwap,
-                minExpected,
-                path,
-                address(this),
-                block.timestamp
+                minExpected
             );
+        } else {
+            _swapV2(
+                tokenConfig.uniswapV3Addr,
+                _swapToken,
+                balanceToSwap,
+                minExpected
+            );
+        }
 
         IERC20 usdt = IERC20(usdtAddress);
         uint256 usdtBalance = usdt.balanceOf(address(this));
@@ -497,88 +484,70 @@ contract Harvester is Governable {
     }
 
     /**
+     * @dev Swap a reward token for stablecoins on Uniswap(v2). The token must have
+     *       a registered price feed with the price provider.
+     * @param _swapToken Address of the token to swap.
+     */
+    function _swapV2(
+        address _uniswapV2CompatibleAddr,
+        address _swapToken,
+        uint256 _balanceToSwap,
+        uint256 _minExpected
+    ) internal {
+        // Uniswap redemption path
+        address[] memory path = new address[](3);
+        path[0] = _swapToken;
+        path[1] = IUniswapV2Router(_uniswapV2CompatibleAddr).WETH();
+        path[2] = usdtAddress;
+
+        // slither-disable-next-line unused-return
+        IUniswapV2Router(_uniswapV2CompatibleAddr).swapExactTokensForTokens(
+            _balanceToSwap,
+            _minExpected,
+            path,
+            address(this),
+            block.timestamp
+        );
+    }
+
+    /**
      * @dev Swap a reward token for stablecoins on Uniswap(v3). The token must have
      *       a registered price feed with the price provider.
      * @param _swapToken Address of the token to swap.
-     * @param _rewardTo Address where to send the share of harvest rewards to
      * @param _fee Fee amount of the liquidity pool
      */
     function _swapV3(
+        address _uniswapV3Addr,
         address _swapToken,
-        address _rewardTo,
-        uint24 _fee
+        uint24 _fee,
+        uint256 _balanceToSwap,
+        uint256 _minExpected
     ) internal {
-        RewardTokenConfig memory tokenConfig = rewardTokenConfigs[_swapToken];
-
-        /* This will trigger a return when reward token configuration has not yet been set
-         * or we have temporarily disabled swapping of specific reward token via setting
-         * doSwapRewardToken to false.
-         */
-        if (!tokenConfig.doSwapRewardToken) return;
-
-        address priceProvider = IVault(vaultAddress).priceProvider();
-
-        address rewardTo = _rewardTo;
-        IERC20 swapToken = IERC20(_swapToken);
-        uint256 balance = swapToken.balanceOf(address(this));
-
-        if (balance == 0) {
-            return;
-        }
-
-        uint256 balanceToSwap = Math.min(balance, tokenConfig.liquidationLimit);
-
-        // This'll revert if there is no price feed
-        uint256 oraclePrice = IOracle(priceProvider).price(_swapToken);
-        // Oracle price is 1e8, USDT output is 1e6
-        uint256 minExpected = (balanceToSwap *
-            oraclePrice *
-            (1e4 - tokenConfig.allowedSlippageBps)).scaleBy( // max allowed slippage
-            6,
-            Helpers.getDecimals(_swapToken) + 8
-        ) / 1e4; // fix the max slippage decimal position
-
         UniswapV3Router.ExactInputParams memory params = UniswapV3Router
             .ExactInputParams({
                 path: abi.encodePacked(
                     _swapToken,
                     _fee, // Pool fee, swap token -> weth9
-                    IUniswapV2Router(tokenConfig.uniswapV2CompatibleAddr).WETH(),
+                    UniswapV3Router(_uniswapV3Addr).WETH9(),
                     uint24(3000), // Pool fee, weth9 -> usdt
                     usdtAddress
                 ),
                 recipient: address(this),
                 deadline: uint256(block.timestamp.add(1000)),
-                amountIn: balanceToSwap,
-                amountOutMinimum: minExpected
+                amountIn: _balanceToSwap,
+                amountOutMinimum: _minExpected
             });
 
         // Don't revert everything, even if the buyback fails.
         // We want the overall transaction to continue regardless.
         // We don't need to look at the return data, since the amount will
         // be above the minExpected.
-        (bool success, bytes memory data) = tokenConfig.uniswapV3Addr.call(
+        (bool success, bytes memory data) = _uniswapV3Addr.call(
             abi.encodeWithSignature(
                 "exactInput((bytes,address,uint256,uint256,uint256))",
                 params
             )
         );
-
-        IERC20 usdt = IERC20(usdtAddress);
-        uint256 usdtBalance = usdt.balanceOf(address(this));
-
-        uint256 vaultBps = 1e4 - tokenConfig.harvestRewardBps;
-        uint256 rewardsProceedsShare = (usdtBalance * vaultBps) / 1e4;
-
-        require(
-            vaultBps > tokenConfig.harvestRewardBps,
-            "Address receiving harvest incentive is receiving more rewards than the rewards proceeds address"
-        );
-
-        usdt.safeTransfer(rewardProceedsAddress, rewardsProceedsShare);
-        usdt.safeTransfer(
-            rewardTo,
-            usdtBalance - rewardsProceedsShare // remaining share of the rewards
-        );
+        require(success, "Swap failed");
     }
 }

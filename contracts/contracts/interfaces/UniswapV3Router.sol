@@ -3,6 +3,8 @@ pragma solidity ^0.8.0;
 
 // -- Solididy v0.5.x compatible interface
 interface UniswapV3Router {
+    function WETH9() external view returns (address);
+
     struct ExactInputParams {
         bytes path;
         address recipient;
