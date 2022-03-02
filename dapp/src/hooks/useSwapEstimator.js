@@ -795,16 +795,23 @@ const useSwapEstimator = ({
     } catch (e) {
       console.error(`Can not estimate contract call gas used: ${e.message}`)
 
+      const errorIncludes = (errorTxt) => {
+        return (
+          (e.data && e.data.message && e.data.message.includes(errorTxt)) ||
+          e.message.includes(errorTxt)
+        )
+      }
+
       // local node and mainnet return errors in different formats, this handles both cases
-      if (
-        (e.data &&
-          e.data.message &&
-          e.data.message.includes('Redeem amount lower than minimum')) ||
-        e.message.includes('Redeem amount lower than minimum')
-      ) {
+      if (errorIncludes('Redeem amount lower than minimum')) {
         return {
           canDoSwap: false,
           error: 'slippage_too_high',
+        }
+      } else if (errorIncludes('Liquidity error')) {
+        return {
+          canDoSwap: false,
+          error: 'liquidity_error',
         }
       }
 

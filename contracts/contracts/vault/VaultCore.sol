@@ -152,8 +152,14 @@ contract VaultCore is VaultStorage {
             } else {
                 address strategyAddr = assetDefaultStrategies[allAssets[i]];
                 if (strategyAddr != address(0)) {
-                    // Nothing in Vault, but something in Strategy, send from there
                     IStrategy strategy = IStrategy(strategyAddr);
+
+                    if (outputs[i] > strategy.checkBalance(allAssets[i])) {
+                        // Not enough funds in the strategy revert
+                        revert("Liquidity error");
+                    }
+
+                    // Nothing in Vault, but something in Strategy, send from there
                     strategy.withdraw(msg.sender, allAssets[i], outputs[i]);
                 } else {
                     // Cant find funds anywhere
