@@ -1,41 +1,31 @@
-import React, { useState, useEffect, useRef } from 'react'
-import { fbt } from 'fbt-runtime'
-import { useStoreState } from 'pullstate'
-import { ethers, BigNumber } from 'ethers'
-import { get, find } from 'lodash'
-
-import AccountStore from 'stores/AccountStore'
-import TransactionStore from 'stores/TransactionStore'
-import ContractStore from 'stores/ContractStore'
-import ApproveModal from 'components/buySell/ApproveModal'
+import React, { useEffect, useState, useRef } from 'react'
 import AddOUSDModal from 'components/buySell/AddOUSDModal'
-import ErrorModal from 'components/buySell/ErrorModal'
-import DisclaimerTooltip from 'components/buySell/DisclaimerTooltip'
+import ApproveButtonLogic from 'components/buySell/ApproveButtonLogic'
 import ApproveCurrencyInProgressModal from 'components/buySell/ApproveCurrencyInProgressModal'
-import { currencies } from 'constants/Contract'
-import { providersNotAutoDetectingOUSD, providerName } from 'utils/web3'
-import withRpcProvider from 'hoc/withRpcProvider'
-import usePriceTolerance from 'hooks/usePriceTolerance'
-import useCurrencySwapper from 'hooks/useCurrencySwapper'
-import BuySellModal from 'components/buySell/BuySellModal'
+import ApproveModal from 'components/buySell/ApproveModal'
+import ErrorModal from 'components/buySell/ErrorModal'
+import SettingsDropdown from 'components/buySell/SettingsDropdown'
 import SwapCurrencyPill from 'components/buySell/SwapCurrencyPill'
 import PillArrow from 'components/buySell/_PillArrow'
-import SettingsDropdown from 'components/buySell/SettingsDropdown'
-import { isMobileMetaMask } from 'utils/device'
-import useSwapEstimator from 'hooks/useSwapEstimator'
+import { currencies } from 'constants/Contract'
+import { ethers } from 'ethers'
+import { fbt } from 'fbt-runtime'
 import withIsMobile from 'hoc/withIsMobile'
-import { getUserSource } from 'utils/user'
-import usePrevious from 'utils/usePrevious'
-import LinkIcon from 'components/buySell/_LinkIcon'
-import { connectorNameIconMap, getConnectorIcon } from 'utils/connectors'
-
+import withRpcProvider from 'hoc/withRpcProvider'
+import useCurrencySwapper from 'hooks/useCurrencySwapper'
+import usePriceTolerance from 'hooks/usePriceTolerance'
+import useSwapEstimator from 'hooks/useSwapEstimator'
+import { useStoreState } from 'pullstate'
+import AccountStore from 'stores/AccountStore'
+import ContractStore from 'stores/ContractStore'
+import TransactionStore from 'stores/TransactionStore'
 import analytics from 'utils/analytics'
-import {
-  truncateDecimals,
-  formatCurrencyMinMaxDecimals,
-  removeCommas,
-} from '../../utils/math'
-import { assetRootPath } from 'utils/image'
+import { getConnectorIcon } from 'utils/connectors'
+import { isMobileMetaMask } from 'utils/device'
+import usePrevious from 'utils/usePrevious'
+import { getUserSource } from 'utils/user'
+import { providerName, providersNotAutoDetectingOUSD } from 'utils/web3'
+import { formatCurrencyMinMaxDecimals, removeCommas } from '../../utils/math'
 
 let ReactPixel
 if (process.browser) {
@@ -96,17 +86,11 @@ const SwapHomepage = ({
     defaultSelectedCoinValue
   )
 
+  const [allowButtonState, setAllowButtonState] = useState('allow')
   const [selectedBuyCoinAmount, setSelectedBuyCoinAmount] = useState('')
   const [selectedRedeemCoinAmount, setSelectedRedeemCoinAmount] = useState('')
   const [showApproveModal, _setShowApproveModal] = useState(false)
-  const {
-    vault: vaultContract,
-    usdt: usdtContract,
-    dai: daiContract,
-    usdc: usdcContract,
-    ousd: ousdContract,
-    flipper,
-  } = useStoreState(ContractStore, (s) => s.contracts || {})
+  const approveRef = useRef()
 
   const [formError, setFormError] = useState(null)
   const [buyFormWarnings, setBuyFormWarnings] = useState({})
@@ -213,6 +197,10 @@ const SwapHomepage = ({
       }
     }
   }, [swapMode])
+
+  useEffect(() => {
+    setAllowButtonState('allow')
+  }, [selectedBuyCoin])
 
   const userSelectsBuyCoin = (coin) => {
     // treat it as a flip
@@ -390,6 +378,7 @@ const SwapHomepage = ({
       setSelectedRedeemCoinAmount('')
 
       const receipt = await rpcProvider.waitForTransaction(result.hash)
+
       analytics.track('Swap succeeded User source', {
         category: 'swap',
         label: getUserSource(),
@@ -421,6 +410,7 @@ const SwapHomepage = ({
         })
       }
     } catch (e) {
+      setBuyWidgetState(`buy`)
       const metadata = swapMetadata()
       // 4001 code happens when a user rejects the transaction
       if (e.code !== 4001) {
@@ -434,11 +424,10 @@ const SwapHomepage = ({
           category: 'swap',
         })
       }
-
       onMintingError(e)
       console.error('Error swapping ousd! ', e)
     }
-    setBuyWidgetState(`buy`)
+    setTimeout(() => _setShowApproveModal(false), 10000)
   }
 
   // TODO: modify this
@@ -466,9 +455,9 @@ const SwapHomepage = ({
   }
 
   const onBuyNow = async (e) => {
+    e.preventDefault()
     const metadata = swapMetadata()
 
-    e.preventDefault()
     analytics.track(
       swapMode === 'mint'
         ? 'On Approve Swap to OUSD'
@@ -490,6 +479,7 @@ const SwapHomepage = ({
 
     if (needsApproval) {
       setShowApproveModal(needsApproval)
+      await approveRef.current.approve()
     } else {
       await onSwapOusd('')
     }
@@ -516,27 +506,6 @@ const SwapHomepage = ({
             }}
           />
         )}
-        {showApproveModal && (
-          <ApproveModal
-            stableCoinToApprove={swapMode === 'mint' ? selectedBuyCoin : 'ousd'}
-            swapMode={swapMode}
-            swapMetadata={swapMetadata()}
-            contractToApprove={showApproveModal}
-            onClose={(e) => {
-              e.preventDefault()
-              // do not close modal if in network or user waiting state
-              if ('buy' === buyWidgetState) {
-                setShowApproveModal(false)
-              }
-            }}
-            onFinalize={async () => {
-              await onSwapOusd('modal-')
-              setShowApproveModal(false)
-            }}
-            buyWidgetState={buyWidgetState}
-            onMintingError={onMintingError}
-          />
-        )}
         {generalErrorReason && (
           <ErrorModal
             reason={generalErrorReason}
@@ -551,22 +520,6 @@ const SwapHomepage = ({
             onClose={() => {
               setBuyErrorToDisplay(false)
             }}
-          />
-        )}
-        {buyWidgetState === 'waiting-user' && (
-          <BuySellModal
-            content={
-              <div className="d-flex align-items-center justify-content-center">
-                <img
-                  className="waiting-icon"
-                  src={assetRootPath(`/images/${connectorIcon}`)}
-                />
-                {fbt(
-                  'Waiting for you to confirm...',
-                  'Waiting for you to confirm...'
-                )}
-              </div>
-            }
           />
         )}
         <SwapCurrencyPill
@@ -601,27 +554,43 @@ const SwapHomepage = ({
             target="_blank"
             rel="noopener noreferrer"
             className="link-detail"
-          >
-            {/* <span className="pr-2"> */}
-            {/*   {fbt( */}
-            {/*     'Read about costs associated with OUSD', */}
-            {/*     'Read about costs associated with OUSD' */}
-            {/*   )} */}
-            {/* </span> */}
-            {/* <LinkIcon color="1a82ff" /> */}
-          </a>
-          <button
-            //disabled={formHasErrors || buyFormHasWarnings || !totalOUSD}
-            className={`btn-blue buy-button mt-2 mt-md-0 w-100`}
-            disabled={
-              !selectedSwap || formHasErrors || swappingGloballyDisabled
-            }
-            onClick={onBuyNow}
-          >
-            {swappingGloballyDisabled &&
-              process.env.DISABLE_SWAP_BUTTON_MESSAGE}
-            {!swappingGloballyDisabled && fbt('Swap', 'Swap')}
-          </button>
+          ></a>
+          <div className={`flex flex-col w-100`}>
+            {(needsApproval || showApproveModal) && selectedSwap && (
+              <>
+                <ApproveButtonLogic
+                  formHasErrors={formHasErrors}
+                  swappingGloballyDisabled={swappingGloballyDisabled}
+                  needsApproval={needsApproval}
+                  allowButtonState={allowButtonState}
+                  setAllowButtonState={setAllowButtonState}
+                  onBuyNow={onBuyNow}
+                  storeTransaction={storeTransaction}
+                  storeTransactionError={storeTransactionError}
+                  onMintingError={onMintingError}
+                  rpcProvider={rpcProvider}
+                  swapMetadata={swapMetadata}
+                  swapMode={swapMode}
+                  coin={swapMode === 'mint' ? selectedBuyCoin : 'ousd'}
+                  ref={approveRef}
+                />
+              </>
+            )}
+            <button
+              className={`btn-blue buy-button w-100`}
+              disabled={
+                needsApproval ||
+                !selectedSwap ||
+                formHasErrors ||
+                swappingGloballyDisabled
+              }
+              onClick={onBuyNow}
+            >
+              {swappingGloballyDisabled &&
+                process.env.DISABLE_SWAP_BUTTON_MESSAGE}
+              {!swappingGloballyDisabled && fbt('Swap', 'Swap')}
+            </button>
+          </div>
         </div>
       </div>
       <style jsx>{`
