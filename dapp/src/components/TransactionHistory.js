@@ -7,7 +7,7 @@ import { fbt } from 'fbt-runtime'
 import { useWeb3React } from '@web3-react/core'
 import { formatCurrency } from '../utils/math'
 import { shortenAddress } from '../utils/web3'
-import { exportToCsv } from '../utils/utils'
+import { exportToCsv, sleep } from '../utils/utils'
 import withIsMobile from 'hoc/withIsMobile'
 import { assetRootPath } from 'utils/image'
 
@@ -201,6 +201,7 @@ const TransactionHistory = ({ isMobile }) => {
 
   useEffect(() => {
     if (!active && !account) return
+    const fetchAttempts = 5
 
     const fetchHistory = async () => {
       const response = await fetch(
@@ -219,7 +220,26 @@ const TransactionHistory = ({ isMobile }) => {
       }
     }
 
-    fetchHistory()
+    const attemptToFetchHistory = async () => {
+      let success = false
+      let attempts = 0
+
+      while (!success) {
+        try {
+          attempts += 1
+          await fetchHistory()
+          success = true
+        } catch (e) {
+          console.log('Failed fetching history: ', e.message)
+          await sleep(2000)
+          if (attempts >= fetchAttempts) {
+            throw e
+          }
+        }
+      }
+    }
+
+    attemptToFetchHistory()
   }, [account, active])
 
   useEffect(() => {
