@@ -13,13 +13,6 @@ import { assetRootPath } from 'utils/image'
 import { useWeb3React } from '@web3-react/core'
 import Media from 'react-media'
 
-// const GLOBAL_MEDIA_QUERIES = {
-//   small: "(max-width: 599px)",
-//   medium: "(min-width: 600px) and (max-width: 1199px)",
-//   large: "(min-width: 1200px)"
-// };
-// const matches = useMedia({ queries: GLOBAL_MEDIA_QUERIES });
-
 const ApproveButtonLogic = forwardRef(
   (
     {
@@ -121,19 +114,22 @@ const ApproveButtonLogic = forwardRef(
     }))
 
     const contractName = (contract) => {
-      if (contract === 'flipper') return 'the Flipper'
-      if (contract === 'vault') return 'the Origin Vault'
-      if (contract === 'curve') return 'Curve'
-      if (contract === 'sushiswap') return 'SushiSwap'
-      if (contract === 'uniswapV2' || contract === 'uniswap') return 'Uniswap'
+      if (contract === 'flipper') {
+        return fbt('the Flipper', 'the Flipper')
+      }
+      if (contract === 'vault') {
+        return fbt('the Origin Vault', 'the Origin Vault')
+      }
+      if (contract === 'curve') {
+        return fbt('Curve', 'Curve')
+      }
+      if (contract === 'sushiswap') {
+        return fbt('SushiSwap', 'SushiSwap')
+      }
+      if (contract === 'uniswapV2' || contract === 'uniswap') {
+        return fbt('Uniswap', 'Uniswap')
+      }
     }
-
-    let width = window.innerWidth
-    const mql = window.matchMedia('(max-width: 600px)')
-    let mobileView = mql.matches
-    mql.addEventListener('change', (e) => {
-      mobileView = e.matches
-    })
 
     return (
       <button
