@@ -808,12 +808,17 @@ const useSwapEstimator = ({
           canDoSwap: false,
           error: 'slippage_too_high',
         }
-      /* Various error messages strategies emit when too much funds attempt to 
-       * be withdrawn:
-       * - "Redeem failed" -> Compound strategy
-       * - "5" -> Aave
-       */
-      } else if (errorIncludes('Redeem failed') || errorIncludes(`reverted with reason string '5'`)) {
+        /* Various error messages strategies emit when too much funds attempt to
+         * be withdrawn:
+         * - "Redeem failed" -> Compound strategy
+         * - "5" -> Aave
+         * - "Insufficient 3CRV balance" -> Convex
+         */
+      } else if (
+        errorIncludes('Redeem failed') ||
+        errorIncludes(`reverted with reason string '5'`) ||
+        errorIncludes('Insufficient 3CRV balance')
+      ) {
         return {
           canDoSwap: false,
           error: 'liquidity_error',
