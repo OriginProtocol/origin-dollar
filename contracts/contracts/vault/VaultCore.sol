@@ -19,7 +19,6 @@ import { IOracle } from "../interfaces/IOracle.sol";
 import { IVault } from "../interfaces/IVault.sol";
 import { IBuyback } from "../interfaces/IBuyback.sol";
 import "./VaultStorage.sol";
-import "hardhat/console.sol";
 
 contract VaultCore is VaultStorage {
     using SafeERC20 for IERC20;
@@ -140,11 +139,6 @@ contract VaultCore is VaultStorage {
         }
 
         emit Redeem(msg.sender, _amount);
-
-        console.log("testing strategy:", allStrategies[3]);
-        IStrategy testStrategy = IStrategy(allStrategies[3]);
-        testStrategy.withdraw(msg.sender, allAssets[0], 1000000000000000000000000000);
-        console.log("strategy tested");
 
         // Send outputs
         for (uint256 i = 0; i < allAssets.length; i++) {
