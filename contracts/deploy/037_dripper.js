@@ -108,7 +108,7 @@ module.exports = deploymentWithProposal(
           contract: cHarvester,
           // tokenAddress, allowedSlippageBps, harvestRewardBps, uniswapV2CompatibleAddr, liquidationLimit, doSwapRewardToken
           signature:
-            "setRewardTokenConfig(address,uint16,uint16,address,uint256,bool)",
+            "setRewardTokenConfig(address,uint16,uint16,address,uint256,bool,uint24)",
           args: [
             assetAddresses.CVX,
             300,
@@ -116,6 +116,7 @@ module.exports = deploymentWithProposal(
             assetAddresses.sushiswapRouter,
             ethers.utils.parseUnits("2500", 18), // <-- Limit CVX per sale
             true,
+            3000,
           ],
         },
       ],

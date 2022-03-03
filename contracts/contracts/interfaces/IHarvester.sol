@@ -8,7 +8,8 @@ interface IHarvester {
         uint16 _harvestRewardBps,
         address _uniswapV2CompatibleAddr,
         uint256 _liquidationLimit,
-        bool _doSwapRewardToken
+        bool _doSwapRewardToken,
+        uint24 _v3Fee
     );
 
     struct RewardTokenConfig {
@@ -37,21 +38,19 @@ interface IHarvester {
 
     function harvest(address _strategyAddr) external;
 
-    function swap(bool _useV3, bytes memory _data) external;
+    function swap(bool _useV3) external;
 
-    function harvestAndSwap(bool _useV3, bytes memory _data) external;
+    function harvestAndSwap(bool _useV3) external;
 
     function harvestAndSwap(
         address _strategyAddr,
-        bool _useV3,
-        bytes memory _data
+        bool _useV3
     ) external;
 
     function harvestAndSwap(
         address _strategyAddr,
         address _rewardTo,
-        bool _useV3,
-        bytes memory _data
+        bool _useV3
     ) external;
 
     function setSupportedStrategy(address _strategyAddress, bool _isSupported)
@@ -68,6 +67,7 @@ interface IHarvester {
         uint16 _harvestRewardBps,
         address _uniswapV2CompatibleAddr,
         uint256 _liquidationLimit,
-        bool _doSwapRewardToken
+        bool _doSwapRewardToken,
+        uint24 _v3Fee
     ) external;
 }

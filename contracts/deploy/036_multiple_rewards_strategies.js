@@ -119,6 +119,8 @@ module.exports = deploymentWithProposal(
     const dHarvester = await deployWithConfirmation("Harvester", [
       cVaultProxy.address,
       assetAddresses.USDT,
+      assetAddresses.WETH,
+      assetAddresses.uniswapV3Router,
     ]);
 
     await withConfirmation(
@@ -251,7 +253,7 @@ module.exports = deploymentWithProposal(
           contract: cHarvester,
           // tokenAddress, allowedSlippageBps, harvestRewardBps, uniswapV2CompatibleAddr, liquidationLimit, doSwapRewardToken
           signature:
-            "setRewardTokenConfig(address,uint16,uint16,address,uint256,bool)",
+            "setRewardTokenConfig(address,uint16,uint16,address,uint256,bool,uint24)",
           args: [
             assetAddresses.CRV,
             300,
@@ -259,6 +261,7 @@ module.exports = deploymentWithProposal(
             assetAddresses.sushiswapRouter,
             MAX_UINT256,
             true,
+            3000,
           ],
         },
         // 18. Set reward token config
@@ -266,7 +269,7 @@ module.exports = deploymentWithProposal(
           contract: cHarvester,
           // tokenAddress, allowedSlippageBps, harvestRewardBps, uniswapV2CompatibleAddr, liquidationLimit, doSwapRewardToken
           signature:
-            "setRewardTokenConfig(address,uint16,uint16,address,uint256,bool)",
+            "setRewardTokenConfig(address,uint16,uint16,address,uint256,bool,uint24)",
           args: [
             assetAddresses.CVX,
             300,
@@ -274,6 +277,7 @@ module.exports = deploymentWithProposal(
             assetAddresses.sushiswapRouter,
             MAX_UINT256,
             true,
+            3000,
           ],
         },
         // 19. Set reward token config
@@ -281,7 +285,7 @@ module.exports = deploymentWithProposal(
           contract: cHarvester,
           // tokenAddress, allowedSlippageBps, harvestRewardBps, uniswapV2CompatibleAddr, liquidationLimit, doSwapRewardToken
           signature:
-            "setRewardTokenConfig(address,uint16,uint16,address,uint256,bool)",
+            "setRewardTokenConfig(address,uint16,uint16,address,uint256,bool,uint24)",
           args: [
             assetAddresses.COMP,
             300,
@@ -289,6 +293,7 @@ module.exports = deploymentWithProposal(
             assetAddresses.sushiswapRouter,
             MAX_UINT256,
             true,
+            3000,
           ],
         },
         // 20. Set reward token config
@@ -296,7 +301,7 @@ module.exports = deploymentWithProposal(
           contract: cHarvester,
           // tokenAddress, allowedSlippageBps, harvestRewardBps, uniswapV2CompatibleAddr, liquidationLimit, doSwapRewardToken
           signature:
-            "setRewardTokenConfig(address,uint16,uint16,address,uint256,bool)",
+            "setRewardTokenConfig(address,uint16,uint16,address,uint256,bool,uint24)",
           args: [
             assetAddresses.AAVE,
             300,
@@ -304,6 +309,7 @@ module.exports = deploymentWithProposal(
             assetAddresses.sushiswapRouter,
             MAX_UINT256,
             true,
+            3000,
           ],
         },
         // 21. Set vault as rewards address

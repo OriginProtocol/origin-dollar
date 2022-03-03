@@ -342,7 +342,8 @@ describe("Vault with Compound strategy", function () {
       0, // harvest reward bps
       mockUniswapRouter.address,
       MAX_UINT256,
-      true
+      true,
+      3000
     );
 
     // Matt deposits USDC, 6 decimals
@@ -703,7 +704,8 @@ describe("Vault with Compound strategy", function () {
         100,
         mockUniswapRouter.address,
         MAX_UINT256,
-        true
+        true,
+        3000
       );
 
     // Make sure Vault has 0 USDT balance
@@ -727,10 +729,9 @@ describe("Vault with Compound strategy", function () {
     // prettier-ignore
     await harvester
       .connect(anna)
-      ["harvestAndSwap(address,bool,bytes)"](
+      ["harvestAndSwap(address,bool)"](
         compoundStrategy.address,
-        false,
-        "0x"
+        false
       );
 
     const balanceAfterAnna = await usdt.balanceOf(anna.address);
@@ -772,7 +773,8 @@ describe("Vault with Compound strategy", function () {
         100,
         mockUniswapRouter.address,
         MAX_UINT256,
-        true
+        true,
+        3000
       );
 
     // Make sure Vault has 0 USDT balance
@@ -793,7 +795,7 @@ describe("Vault with Compound strategy", function () {
 
     // prettier-ignore
     await expect(harvester
-      .connect(josh)["harvestAndSwap(address,bool,bytes)"](compoundStrategy.address, false, "0x")).to.be.revertedWith("Slippage error");
+      .connect(josh)["harvestAndSwap(address,bool)"](compoundStrategy.address, false)).to.be.revertedWith("Slippage error");
   });
 
   it("Should collect reward tokens and swap as separate calls", async () => {
@@ -816,7 +818,8 @@ describe("Vault with Compound strategy", function () {
         100,
         mockUniswapRouter.address,
         MAX_UINT256,
-        true
+        true,
+        3000
       );
 
     // Make sure Vault has 0 USDT balance
@@ -844,7 +847,7 @@ describe("Vault with Compound strategy", function () {
     );
 
     // Call the swap
-    await harvester.connect(governor)["swap(bool,bytes)"](false, "0x");
+    await harvester.connect(governor)["swap(bool)"](false);
 
     // Make sure Vault has 100 USDT balance (the Uniswap mock converts at 1:1)
     await expect(vault).has.a.balanceOf("100", usdt);

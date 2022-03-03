@@ -258,6 +258,7 @@ const getAssetAddresses = async (deployments) => {
       STKAAVE: addresses.mainnet.STKAAVE,
       OGN: addresses.mainnet.OGN,
       uniswapRouter: addresses.mainnet.uniswapRouter,
+      uniswapV3Router: addresses.mainnet.uniswapV3Router,
       sushiswapRouter: addresses.mainnet.sushiswapRouter,
     };
   } else {
@@ -289,6 +290,7 @@ const getAssetAddresses = async (deployments) => {
         ? addresses.rinkeby.OGN
         : (await deployments.get("MockOGN")).address,
       uniswapRouter: (await deployments.get("MockUniswapRouter")).address,
+      uniswapV3Router: (await deployments.get("MockUniswapRouter")).address,
       sushiswapRouter: (await deployments.get("MockUniswapRouter")).address,
     };
   }

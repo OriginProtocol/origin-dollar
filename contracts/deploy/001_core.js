@@ -360,6 +360,8 @@ const deployHarvester = async () => {
   const dHarvester = await deployWithConfirmation("Harvester", [
     cVaultProxy.address,
     assetAddresses.USDT,
+    assetAddresses.WETH,
+    assetAddresses.uniswapV3Router,
   ]);
   const cHarvester = await ethers.getContractAt(
     "Harvester",

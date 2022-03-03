@@ -152,7 +152,8 @@ describe("Convex Strategy", function () {
             100,
             mockUniswapRouter.address,
             utils.parseUnits("1", 18),
-            true
+            true,
+            3000
           )
       )
         .to.emit(harvester, "RewardTokenConfigUpdated")
@@ -162,7 +163,8 @@ describe("Convex Strategy", function () {
           100,
           mockUniswapRouter.address,
           utils.parseUnits("1", 18),
-          true
+          true,
+          3000
         );
 
       await expect(
@@ -174,7 +176,8 @@ describe("Convex Strategy", function () {
             100,
             mockUniswapRouter.address,
             utils.parseUnits("1.5", 18),
-            true
+            true,
+            3000
           )
       )
         .to.emit(harvester, "RewardTokenConfigUpdated")
@@ -184,7 +187,8 @@ describe("Convex Strategy", function () {
           100,
           mockUniswapRouter.address,
           utils.parseUnits("1.5", 18),
-          true
+          true,
+          3000
         );
 
       // Mint of MockCRVMinter mints a fixed 2e18
@@ -227,7 +231,8 @@ describe("Convex Strategy", function () {
           200,
           mockUniswapRouter.address,
           MAX_UINT256,
-          true
+          true,
+          3000
         );
 
       await harvester
@@ -238,7 +243,8 @@ describe("Convex Strategy", function () {
           200,
           mockUniswapRouter.address,
           MAX_UINT256,
-          true
+          true,
+          3000
         );
 
       // Make sure Vault has 0 USDT balance
@@ -253,7 +259,7 @@ describe("Convex Strategy", function () {
 
       // prettier-ignore
       await harvester
-        .connect(governor)["harvestAndSwap(bool,bytes)"](false, "0x");
+        .connect(governor)["harvestAndSwap(bool)"](false);
 
       // Make sure Vault has 100 USDT balance (the Uniswap mock converts at 1:1)
       await expect(vault).has.a.balanceOf("5", usdt);
@@ -302,7 +308,8 @@ describe("Convex Strategy", function () {
           100,
           mockUniswapRouter.address,
           utils.parseUnits("0.8", 18),
-          true
+          true,
+          3000
         );
 
       await harvester
@@ -313,7 +320,8 @@ describe("Convex Strategy", function () {
           100,
           mockUniswapRouter.address,
           utils.parseUnits("1.5", 18),
-          true
+          true,
+          3000
         );
 
       const crvConfig = await harvester.rewardTokenConfigs(crv.address);
@@ -327,7 +335,7 @@ describe("Convex Strategy", function () {
       if (callAsGovernor) {
         // prettier-ignore
         await harvester
-          .connect(anna)["harvestAndSwap(address,bool,bytes)"](convexStrategy.address, false, "0x");
+          .connect(anna)["harvestAndSwap(address,bool)"](convexStrategy.address, false);
 
         await expect(vault).has.a.balanceOf("2.277", usdt); // (0.8 + 1.5) - 1%
         const balanceAfterAnna = await usdt.balanceOf(anna.address);
@@ -337,7 +345,7 @@ describe("Convex Strategy", function () {
       } else {
         // prettier-ignore
         await harvester
-          .connect(governor)["harvestAndSwap(bool,bytes)"](false, "0x");
+          .connect(governor)["harvestAndSwap(bool)"](false);
         await expect(vault).has.a.balanceOf("2.3", usdt); // (0.8 + 1.5)
       }
 
