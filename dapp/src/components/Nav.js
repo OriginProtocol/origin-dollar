@@ -150,7 +150,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
           { dapp }
         )}
       >
-        <div className="container p-lg-0">
+        <div className="container p-lg-0 flex-nowrap">
           <Link href={adjustLinkHref('/')}>
             <a className="navbar-brand d-flex flex-column justify-content-center">
               <img
