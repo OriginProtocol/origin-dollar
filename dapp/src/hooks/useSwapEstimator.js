@@ -7,6 +7,7 @@ import {
   mintAbsoluteGasLimitBuffer,
   mintPercentGasLimitBuffer,
   redeemPercentGasLimitBuffer,
+  approveCoinGasLimits,
 } from 'utils/constants'
 import { usePrevious } from 'utils/hooks'
 import useCurrencySwapper from 'hooks/useCurrencySwapper'
@@ -46,6 +47,7 @@ const useSwapEstimator = ({
 
   const { contract: coinToSwapContract, decimals: coinToSwapDecimals } =
     coinInfoList[swapMode === 'mint' ? selectedCoin : 'ousd']
+  const coinToSwap = swapMode === 'redeem' ? 'ousd' : selectedCoin
 
   let coinToReceiveContract, coinToReceiveDecimals
 
@@ -171,6 +173,10 @@ const useSwapEstimator = ({
     gasPrice,
   ])
 
+  const gasLimitForApprovingCoin = (coin) => {
+    return approveCoinGasLimits[coin]
+  }
+
   const runEstimations = async (mode, selectedCoin, amount) => {
     ContractStore.update((s) => {
       s.swapEstimations = 'loading'
@@ -241,6 +247,8 @@ const useSwapEstimator = ({
       ethPrice,
       amount
     )
+
+    console.log('estimations', estimations)
 
     ContractStore.update((s) => {
       s.swapEstimations = estimations
@@ -353,9 +361,19 @@ const useSwapEstimator = ({
       }
     }
 
+    const approveAllowanceNeeded =
+      parseFloat(allowances[coinToSwap].flipper) === 0
+    const swapGasUsage = 90000
+    const approveGasUsage = approveAllowanceNeeded
+      ? gasLimitForApprovingCoin(coinToSwap)
+      : 0
     return {
+      // gasLimitForApprovingCoin
       canDoSwap: true,
-      gasUsed: 90000,
+      gasUsed: swapGasUsage + approveGasUsage,
+      swapGasUsage,
+      approveGasUsage,
+      approveAllowanceNeeded,
       amountReceived: amount,
     }
   }
@@ -379,18 +397,22 @@ const useSwapEstimator = ({
         isRedeem ? coinToReceiveDecimals : 18
       )
 
+      const approveAllowanceNeeded =
+        parseFloat(allowances[coinToSwap].curve) === 0
+
       /* Check if Curve router has allowance to spend coin. If not we can not run gas estimation and need
        * to guess the gas usage.
        *
        * We don't check if positive amount is large enough: since we always approve max_int allowance.
        */
       if (
-        parseFloat(allowances[isRedeem ? 'ousd' : selectedCoin].curve) === 0 ||
-        !userHasEnoughStablecoin(
-          isRedeem ? 'ousd' : selectedCoin,
-          parseFloat(inputAmountRaw)
-        )
+        approveAllowanceNeeded ||
+        !userHasEnoughStablecoin(coinToSwap, parseFloat(inputAmountRaw))
       ) {
+        const swapGasUsage = 520000
+        const approveGasUsage = approveAllowanceNeeded
+          ? gasLimitForApprovingCoin(coinToSwap)
+          : 0
         return {
           canDoSwap: true,
           /* This estimate is from the few ones observed on the mainnet:
@@ -400,7 +422,10 @@ const useSwapEstimator = ({
            * https://etherscan.io/tx/0xbce1a2f1e76d4b4f900b3952f34f5f53f8be4a65ccff348661d19b9a3827aa04
            *
            */
-          gasUsed: 520000,
+          gasUsed: swapGasUsage + approveGasUsage,
+          swapGasUsage,
+          approveGasUsage,
+          approveAllowanceNeeded,
           amountReceived,
         }
       }
@@ -473,23 +498,22 @@ const useSwapEstimator = ({
        * We don't check if positive amount is large enough: since we always approve max_int allowance.
        */
       const requiredAllowance =
-        allowances[isRedeem ? 'ousd' : selectedCoin][
-          isSushiSwap ? 'sushiRouter' : 'uniswapV2Router'
-        ]
+        allowances[coinToSwap][isSushiSwap ? 'sushiRouter' : 'uniswapV2Router']
+
       if (requiredAllowance === undefined) {
         throw new Error('Can not find correct allowance for coin')
       }
+
+      const approveAllowanceNeeded = parseFloat(requiredAllowance) === 0
+
       if (
-        parseFloat(
-          allowances[isRedeem ? 'ousd' : selectedCoin][
-            isSushiSwap ? 'sushiRouter' : 'uniswapV2Router'
-          ]
-        ) === 0 ||
-        !userHasEnoughStablecoin(
-          isRedeem ? 'ousd' : selectedCoin,
-          parseFloat(inputAmountRaw)
-        )
+        approveAllowanceNeeded ||
+        !userHasEnoughStablecoin(coinToSwap, parseFloat(inputAmountRaw))
       ) {
+        const swapGasUsage = selectedCoin === 'usdt' ? 175000 : 230000
+        const approveGasUsage = approveAllowanceNeeded
+          ? gasLimitForApprovingCoin(coinToSwap)
+          : 0
         return {
           canDoSwap: true,
           /* Some example Uniswap transactions. When 2 swaps are done:
@@ -514,7 +538,10 @@ const useSwapEstimator = ({
            *
            * Both contracts have very similar gas usage (since they share a lot of the code base)
            */
-          gasUsed: selectedCoin === 'usdt' ? 175000 : 230000,
+          gasUsed: swapGasUsage + approveGasUsage,
+          swapGasUsage,
+          approveGasUsage,
+          approveAllowanceNeeded,
           amountReceived,
         }
       }
@@ -599,14 +626,15 @@ const useSwapEstimator = ({
        * We don't check if positive amount is large enough: since we always approve max_int allowance.
        */
       if (
-        parseFloat(
-          allowances[isRedeem ? 'ousd' : selectedCoin].uniswapV3Router
-        ) === 0 ||
-        !userHasEnoughStablecoin(
-          isRedeem ? 'ousd' : selectedCoin,
-          parseFloat(inputAmountRaw)
-        )
+        parseFloat(allowances[coinToSwap].uniswapV3Router) === 0 ||
+        !userHasEnoughStablecoin(coinToSwap, parseFloat(inputAmountRaw))
       ) {
+        const approveAllowanceNeeded =
+          parseFloat(allowances[coinToSwap].uniswapV3Router) === 0
+        const approveGasUsage = approveAllowanceNeeded
+          ? gasLimitForApprovingCoin(coinToSwap)
+          : 0
+        const swapGasUsage = 165000
         return {
           canDoSwap: true,
           /* This estimate is over the maximum one appearing on mainnet: https://etherscan.io/tx/0x6b1163b012570819e2951fa95a8287ce16be96b8bf18baefb6e738d448188ed5
@@ -615,7 +643,10 @@ const useSwapEstimator = ({
            * Other transactions here: https://etherscan.io/tokentxns?a=0x129360c964e2e13910d603043f6287e5e9383374&p=6
            */
           // TODO: if usdc / dai are selected it will cost more gas
-          gasUsed: 165000,
+          gasUsed: swapGasUsage + approveGasUsage,
+          approveAllowanceNeeded,
+          swapGasUsage,
+          approveGasUsage,
           amountReceived,
         }
       }
@@ -677,9 +708,11 @@ const useSwapEstimator = ({
       const amountReceived =
         amount * parseFloat(ethers.utils.formatUnits(oracleCoinPrice, 18))
 
+      const approveAllowanceNeeded =
+        parseFloat(allowances[coinToSwap].vault) === 0
       // Check if Vault has allowance to spend coin.
       if (
-        parseFloat(allowances[selectedCoin].vault) === 0 ||
+        approveAllowanceNeeded ||
         !userHasEnoughStablecoin(selectedCoin, amount)
       ) {
         const rebaseTreshold = parseFloat(
@@ -689,18 +722,24 @@ const useSwapEstimator = ({
           ethers.utils.formatUnits(vaultAllocateThreshold, 18)
         )
 
-        let gasUsed = 220000
+        let swapGasUsage = 220000
         if (amount > allocateThreshold) {
           // https://etherscan.io/tx/0x267da9abae04ae600d33d2c3e0b5772872e6138eaa074ce715afc8975c7f2deb
-          gasUsed = 2900000
+          swapGasUsage = 2900000
         } else if (amount > rebaseTreshold) {
           // https://etherscan.io/tx/0xc8ac03e33cab4bad9b54a6e6604ef6b8e11126340b93bbca1348167f548ad8fd
-          gasUsed = 520000
+          swapGasUsage = 520000
         }
 
+        const approveGasUsage = approveAllowanceNeeded
+          ? gasLimitForApprovingCoin(coinToSwap)
+          : 0
         return {
           canDoSwap: true,
-          gasUsed,
+          gasUsed: swapGasUsage + approveGasUsage,
+          swapGasUsage,
+          approveGasUsage,
+          approveAllowanceNeeded,
           amountReceived,
         }
       }
