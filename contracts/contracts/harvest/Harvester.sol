@@ -272,10 +272,7 @@ contract Harvester is Governable {
      *      the caller are sent to the caller of this function.
      * @param _strategyAddr Address of the strategy to collect rewards from
      */
-    function harvestAndSwap(address _strategyAddr)
-        external
-        nonReentrant
-    {
+    function harvestAndSwap(address _strategyAddr) external nonReentrant {
         // Remember _harvest function checks for the validity of _strategyAddr
         _harvestAndSwap(_strategyAddr, msg.sender);
     }
@@ -287,10 +284,10 @@ contract Harvester is Governable {
      * @param _rewardTo Address where to send a share of harvest rewards to as an incentive
      *      for executing this function
      */
-    function harvestAndSwap(
-        address _strategyAddr,
-        address _rewardTo
-    ) external nonReentrant {
+    function harvestAndSwap(address _strategyAddr, address _rewardTo)
+        external
+        nonReentrant
+    {
         // Remember _harvest function checks for the validity of _strategyAddr
         _harvestAndSwap(_strategyAddr, _rewardTo);
     }
@@ -326,10 +323,9 @@ contract Harvester is Governable {
      * @param _rewardTo Address where to send a share of harvest rewards to as an incentive
      *      for executing this function
      */
-    function _harvestAndSwap(
-        address _strategyAddr,
-        address _rewardTo
-    ) internal {
+    function _harvestAndSwap(address _strategyAddr, address _rewardTo)
+        internal
+    {
         _harvest(_strategyAddr);
         IStrategy strategy = IStrategy(_strategyAddr);
         address[] memory rewardTokens = strategy.getRewardTokenAddresses();
@@ -377,10 +373,7 @@ contract Harvester is Governable {
         }
     }
 
-    function _swap(
-        address _swapToken,
-        address _rewardTo
-    ) internal {
+    function _swap(address _swapToken, address _rewardTo) internal {
         RewardTokenConfig memory tokenConfig = rewardTokenConfigs[_swapToken];
 
         /* This will trigger a return when reward token configuration has not yet been set
