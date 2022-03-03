@@ -42,10 +42,7 @@ interface IHarvester {
 
     function harvestAndSwap(bool _useV3) external;
 
-    function harvestAndSwap(
-        address _strategyAddr,
-        bool _useV3
-    ) external;
+    function harvestAndSwap(address _strategyAddr, bool _useV3) external;
 
     function harvestAndSwap(
         address _strategyAddr,

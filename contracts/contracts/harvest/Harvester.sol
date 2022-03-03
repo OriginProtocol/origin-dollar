@@ -76,7 +76,12 @@ contract Harvester is Governable {
      * @param _wethAddress Address of WETH
      * @param _uniswapV3Addr Address of Uniswap V3 SwapRouter
      */
-    constructor(address _vaultAddress, address _usdtAddress, address _wethAddress, address _uniswapV3Addr) {
+    constructor(
+        address _vaultAddress,
+        address _usdtAddress,
+        address _wethAddress,
+        address _uniswapV3Addr
+    ) {
         require(_vaultAddress != address(0));
         require(_usdtAddress != address(0));
         require(_wethAddress != address(0));
@@ -154,10 +159,7 @@ contract Harvester is Governable {
             _uniswapV2CompatibleAddr != address(0),
             "Uniswap V2 compatible address should be non zero address"
         );
-        require(
-            _v3Fee > 0,
-            "Uniswap V3 pool fee should be over zero"
-        );
+        require(_v3Fee > 0, "Uniswap V3 pool fee should be over zero");
 
         RewardTokenConfig memory tokenConfig = RewardTokenConfig({
             allowedSlippageBps: _allowedSlippageBps,
@@ -244,11 +246,7 @@ contract Harvester is Governable {
     /**
      * @dev Swap all supported swap tokens for stablecoins via Uniswap.
      */
-    function swap(bool _useV3)
-        external
-        onlyGovernor
-        nonReentrant
-    {
+    function swap(bool _useV3) external onlyGovernor nonReentrant {
         _swap(rewardProceedsAddress, _useV3);
     }
 
@@ -256,11 +254,7 @@ contract Harvester is Governable {
      * @dev Collect reward tokens from all strategies and swap for supported
      *      stablecoin via Uniswap
      */
-    function harvestAndSwap(bool _useV3)
-        external
-        onlyGovernor
-        nonReentrant
-    {
+    function harvestAndSwap(bool _useV3) external onlyGovernor nonReentrant {
         _harvest();
         _swap(rewardProceedsAddress, _useV3);
     }
@@ -279,10 +273,10 @@ contract Harvester is Governable {
      *      the caller are sent to the caller of this function.
      * @param _strategyAddr Address of the strategy to collect rewards from
      */
-    function harvestAndSwap(
-        address _strategyAddr,
-        bool _useV3
-    ) external nonReentrant {
+    function harvestAndSwap(address _strategyAddr, bool _useV3)
+        external
+        nonReentrant
+    {
         // Remember _harvest function checks for the validity of _strategyAddr
         _harvestAndSwap(_strategyAddr, msg.sender, _useV3);
     }
@@ -308,10 +302,11 @@ contract Harvester is Governable {
      *       rewards to the vault.
      * @param _swapToken Address of the token to swap.
      */
-    function swapRewardToken(
-        address _swapToken,
-        bool _useV3
-    ) external onlyGovernor nonReentrant {
+    function swapRewardToken(address _swapToken, bool _useV3)
+        external
+        onlyGovernor
+        nonReentrant
+    {
         _swap(_swapToken, rewardProceedsAddress, _useV3);
     }
 
@@ -370,10 +365,7 @@ contract Harvester is Governable {
      * @param _rewardTo Address where to send a share of harvest rewards to as an incentive
      *      for executing this function
      */
-    function _swap(
-        address _rewardTo,
-        bool _useV3
-    ) internal {
+    function _swap(address _rewardTo, bool _useV3) internal {
         address[] memory allStrategies = IVault(vaultAddress)
             .getAllStrategies();
 
@@ -425,12 +417,7 @@ contract Harvester is Governable {
         ) / 1e4; // fix the max slippage decimal position
 
         if (_useV3)
-            _swapV3(
-                _swapToken,
-                tokenConfig.v3Fee,
-                balanceToSwap,
-                minExpected
-            );
+            _swapV3(_swapToken, tokenConfig.v3Fee, balanceToSwap, minExpected);
         else
             _swapV2(
                 tokenConfig.uniswapV2CompatibleAddr,
