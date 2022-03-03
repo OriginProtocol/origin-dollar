@@ -808,7 +808,12 @@ const useSwapEstimator = ({
           canDoSwap: false,
           error: 'slippage_too_high',
         }
-      } else if (errorIncludes('Liquidity error')) {
+      /* Various error messages strategies emit when too much funds attempt to 
+       * be withdrawn:
+       * - "Redeem failed" -> Compound strategy
+       * - "5" -> Aave
+       */
+      } else if (errorIncludes('Redeem failed') || errorIncludes(`reverted with reason string '5'`)) {
         return {
           canDoSwap: false,
           error: 'liquidity_error',
