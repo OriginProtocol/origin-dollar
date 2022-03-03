@@ -261,7 +261,7 @@ module.exports = deploymentWithProposal(
             assetAddresses.sushiswapRouter,
             MAX_UINT256,
             true,
-            3000,
+            0, // v3 fee
           ],
         },
         // 18. Set reward token config
@@ -277,7 +277,7 @@ module.exports = deploymentWithProposal(
             assetAddresses.sushiswapRouter,
             MAX_UINT256,
             true,
-            3000,
+            0, // v3 fee
           ],
         },
         // 19. Set reward token config
@@ -293,7 +293,7 @@ module.exports = deploymentWithProposal(
             assetAddresses.sushiswapRouter,
             MAX_UINT256,
             true,
-            3000,
+            0, // v3 fee
           ],
         },
         // 20. Set reward token config
@@ -309,7 +309,7 @@ module.exports = deploymentWithProposal(
             assetAddresses.sushiswapRouter,
             MAX_UINT256,
             true,
-            3000,
+            0, // v3 fee
           ],
         },
         // 21. Set vault as rewards address

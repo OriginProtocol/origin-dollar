@@ -343,7 +343,7 @@ describe("Vault with Compound strategy", function () {
       mockUniswapRouter.address,
       MAX_UINT256,
       true,
-      3000
+      0 // v3 fee
     );
 
     // Matt deposits USDC, 6 decimals
@@ -696,17 +696,15 @@ describe("Vault with Compound strategy", function () {
     await comp.connect(governor).mint(compAmount);
     await comp.connect(governor).transfer(compoundStrategy.address, compAmount);
 
-    await harvester
-      .connect(governor)
-      .setRewardTokenConfig(
-        comp.address,
-        300,
-        100,
-        mockUniswapRouter.address,
-        MAX_UINT256,
-        true,
-        3000
-      );
+    await harvester.connect(governor).setRewardTokenConfig(
+      comp.address,
+      300,
+      100,
+      mockUniswapRouter.address,
+      MAX_UINT256,
+      true,
+      0 // v3 fee
+    );
 
     // Make sure Vault has 0 USDT balance
     await expect(vault).has.a.balanceOf("0", usdt);
@@ -728,7 +726,7 @@ describe("Vault with Compound strategy", function () {
 
     // prettier-ignore
     await harvester
-      .connect(anna)["harvestAndSwap(address,bool)"](compoundStrategy.address, false);
+      .connect(anna)["harvestAndSwap(address)"](compoundStrategy.address);
 
     const balanceAfterAnna = await usdt.balanceOf(anna.address);
 
@@ -761,17 +759,15 @@ describe("Vault with Compound strategy", function () {
     await comp.connect(governor).mint(compAmount);
     await comp.connect(governor).transfer(compoundStrategy.address, compAmount);
 
-    await harvester
-      .connect(governor)
-      .setRewardTokenConfig(
-        comp.address,
-        300,
-        100,
-        mockUniswapRouter.address,
-        MAX_UINT256,
-        true,
-        3000
-      );
+    await harvester.connect(governor).setRewardTokenConfig(
+      comp.address,
+      300,
+      100,
+      mockUniswapRouter.address,
+      MAX_UINT256,
+      true,
+      0 // v3 fee
+    );
 
     // Make sure Vault has 0 USDT balance
     await expect(vault).has.a.balanceOf("0", usdt);
@@ -791,7 +787,7 @@ describe("Vault with Compound strategy", function () {
 
     // prettier-ignore
     await expect(harvester
-      .connect(josh)["harvestAndSwap(address,bool)"](compoundStrategy.address, false)).to.be.revertedWith("Slippage error");
+      .connect(josh)["harvestAndSwap(address)"](compoundStrategy.address)).to.be.revertedWith("Slippage error");
   });
 
   it("Should collect reward tokens and swap as separate calls", async () => {
@@ -806,17 +802,15 @@ describe("Vault with Compound strategy", function () {
     await comp.connect(governor).mint(compAmount);
     await comp.connect(governor).transfer(compoundStrategy.address, compAmount);
 
-    await harvester
-      .connect(governor)
-      .setRewardTokenConfig(
-        comp.address,
-        300,
-        100,
-        mockUniswapRouter.address,
-        MAX_UINT256,
-        true,
-        3000
-      );
+    await harvester.connect(governor).setRewardTokenConfig(
+      comp.address,
+      300,
+      100,
+      mockUniswapRouter.address,
+      MAX_UINT256,
+      true,
+      0 // v3 fee
+    );
 
     // Make sure Vault has 0 USDT balance
     await expect(vault).has.a.balanceOf("0", usdt);
@@ -843,7 +837,7 @@ describe("Vault with Compound strategy", function () {
     );
 
     // Call the swap
-    await harvester.connect(governor)["swap(bool)"](false);
+    await harvester.connect(governor)["swap()"]();
 
     // Make sure Vault has 100 USDT balance (the Uniswap mock converts at 1:1)
     await expect(vault).has.a.balanceOf("100", usdt);

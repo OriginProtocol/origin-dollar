@@ -34,17 +34,15 @@ describe("Harvester", function () {
     );
     const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
 
-    await harvester
-      .connect(governor)
-      .setRewardTokenConfig(
-        comp.address,
-        300,
-        100,
-        mockUniswapRouter.address,
-        utils.parseUnits("1.44", 18),
-        true,
-        3000
-      );
+    await harvester.connect(governor).setRewardTokenConfig(
+      comp.address,
+      300,
+      100,
+      mockUniswapRouter.address,
+      utils.parseUnits("1.44", 18),
+      true,
+      0 // v3 fee
+    );
 
     let compConfig = await harvester.rewardTokenConfigs(comp.address);
 
@@ -62,17 +60,15 @@ describe("Harvester", function () {
       await comp.allowance(harvester.address, addresses.mainnet.uniswapV3Router)
     ).to.equal(0);
 
-    await harvester
-      .connect(governor)
-      .setRewardTokenConfig(
-        comp.address,
-        350,
-        120,
-        addresses.mainnet.uniswapV3Router,
-        utils.parseUnits("1.22", 18),
-        true,
-        3000
-      );
+    await harvester.connect(governor).setRewardTokenConfig(
+      comp.address,
+      350,
+      120,
+      addresses.mainnet.uniswapV3Router,
+      utils.parseUnits("1.22", 18),
+      true,
+      0 // v3 fee
+    );
 
     compConfig = await harvester.rewardTokenConfigs(comp.address);
 
@@ -97,7 +93,7 @@ describe("Harvester", function () {
     // prettier-ignore
     await expect(
       harvester
-        .connect(anna)["harvestAndSwap(address,bool)"](mockUniswapRouter.address, false)
+        .connect(anna)["harvestAndSwap(address)"](mockUniswapRouter.address)
     ).to.be.revertedWith("Not a valid strategy address");
 
     await expect(
@@ -107,10 +103,9 @@ describe("Harvester", function () {
     // prettier-ignore
     await expect(
       harvester
-        .connect(anna)["harvestAndSwap(address,address,bool)"](
+        .connect(anna)["harvestAndSwap(address,address)"](
           mockUniswapRouter.address,
           anna.address,
-          false
         )
     ).to.be.revertedWith("Not a valid strategy address");
   });
@@ -119,17 +114,15 @@ describe("Harvester", function () {
     const { harvester, governor } = await loadFixture(compoundVaultFixture);
 
     await expect(
-      harvester
-        .connect(governor)
-        .setRewardTokenConfig(
-          harvester.address,
-          350,
-          120,
-          addresses.mainnet.uniswapV3Router,
-          utils.parseUnits("11", 18),
-          true,
-          3000
-        )
+      harvester.connect(governor).setRewardTokenConfig(
+        harvester.address,
+        350,
+        120,
+        addresses.mainnet.uniswapV3Router,
+        utils.parseUnits("11", 18),
+        true,
+        0 // v3 fee
+      )
     ).to.be.revertedWith("Asset not available");
   });
 
@@ -139,17 +132,15 @@ describe("Harvester", function () {
     await expect(
       // Use the vault address for an address that definitely won't have a price
       // feed
-      harvester
-        .connect(anna)
-        .setRewardTokenConfig(
-          comp.address,
-          350,
-          120,
-          addresses.mainnet.uniswapV3Router,
-          utils.parseUnits("11", 18),
-          true,
-          3000
-        )
+      harvester.connect(anna).setRewardTokenConfig(
+        comp.address,
+        350,
+        120,
+        addresses.mainnet.uniswapV3Router,
+        utils.parseUnits("11", 18),
+        true,
+        0 // v3 fee
+      )
     ).to.be.revertedWith("Caller is not the Governor");
   });
 
@@ -158,17 +149,15 @@ describe("Harvester", function () {
       compoundVaultFixture
     );
 
-    await harvester
-      .connect(governor)
-      .setRewardTokenConfig(
-        comp.address,
-        350,
-        120,
-        addresses.mainnet.uniswapV3Router,
-        utils.parseUnits("11", 18),
-        true,
-        3000
-      );
+    await harvester.connect(governor).setRewardTokenConfig(
+      comp.address,
+      350,
+      120,
+      addresses.mainnet.uniswapV3Router,
+      utils.parseUnits("11", 18),
+      true,
+      0 // v3 fee
+    );
   });
 
   it("Should skip swapping when token configuration is missing and leave harvested funds on harvester", async () => {
@@ -180,7 +169,7 @@ describe("Harvester", function () {
     const balanceBeforeAnna = await usdt.balanceOf(anna.address);
     // prettier-ignore
     await harvester
-      .connect(anna)["harvestAndSwap(address,bool)"](compoundStrategy.address, false);
+      .connect(anna)["harvestAndSwap(address)"](compoundStrategy.address);
     const balanceAfterAnna = await usdt.balanceOf(anna.address);
 
     await expect(await comp.balanceOf(compoundStrategy.address)).to.be.equal(
@@ -218,23 +207,21 @@ describe("Harvester", function () {
 
     await setOracleTokenPriceUsd("COMP", "1.0404"); // 1/1.0404 = 0,9611687812
 
-    await harvester
-      .connect(governor)
-      .setRewardTokenConfig(
-        comp.address,
-        400,
-        100,
-        mockUniswapRouter.address,
-        MAX_UINT256,
-        true,
-        3000
-      );
+    await harvester.connect(governor).setRewardTokenConfig(
+      comp.address,
+      400,
+      100,
+      mockUniswapRouter.address,
+      MAX_UINT256,
+      true,
+      0 // v3 fee
+    );
 
     // prettier-ignore
     const annaBalanceChange = await changeInBalance(
       async () => {
         harvester
-          .connect(anna)["harvestAndSwap(address,bool)"](compoundStrategy.address, false);
+          .connect(anna)["harvestAndSwap(address)"](compoundStrategy.address);
       },
       usdt,
       anna.address
@@ -265,22 +252,20 @@ describe("Harvester", function () {
 
     await setOracleTokenPriceUsd("COMP", "1.042"); // 1/1.042 = 0,95969
 
-    await harvester
-      .connect(governor)
-      .setRewardTokenConfig(
-        comp.address,
-        400,
-        100,
-        mockUniswapRouter.address,
-        MAX_UINT256,
-        true,
-        3000
-      );
+    await harvester.connect(governor).setRewardTokenConfig(
+      comp.address,
+      400,
+      100,
+      mockUniswapRouter.address,
+      MAX_UINT256,
+      true,
+      0 // v3 fee
+    );
 
     // prettier-ignore
     await expect(
       harvester
-        .connect(anna)["harvestAndSwap(address,bool)"](compoundStrategy.address, false)
+        .connect(anna)["harvestAndSwap(address)"](compoundStrategy.address)
     ).to.be.revertedWith("Slippage error");
   });
 
@@ -304,23 +289,20 @@ describe("Harvester", function () {
       .connect(josh)
       .transfer(mockUniswapRouter.address, usdtUnits("100"));
 
-    await harvester
-      .connect(governor)
-      .setRewardTokenConfig(
-        comp.address,
-        300,
-        100,
-        mockUniswapRouter.address,
-        MAX_UINT256,
-        true,
-        3000
-      );
+    await harvester.connect(governor).setRewardTokenConfig(
+      comp.address,
+      300,
+      100,
+      mockUniswapRouter.address,
+      MAX_UINT256,
+      true,
+      0 // v3 fee
+    );
 
     // prettier-ignore
     const annaBalanceChange = await changeInBalance(
       async () => {
-        harvester
-          .connect(anna)["harvestAndSwap(address,bool)"](compoundStrategy.address, false);
+        harvester.connect(anna)["harvestAndSwap(address)"](compoundStrategy.address);
       },
       usdt,
       anna.address
@@ -344,17 +326,15 @@ describe("Harvester", function () {
 
     const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
     await expect(
-      harvester
-        .connect(governor)
-        .setRewardTokenConfig(
-          comp.address,
-          300,
-          1100,
-          mockUniswapRouter.address,
-          MAX_UINT256,
-          true,
-          3000
-        )
+      harvester.connect(governor).setRewardTokenConfig(
+        comp.address,
+        300,
+        1100,
+        mockUniswapRouter.address,
+        MAX_UINT256,
+        true,
+        0 // v3 fee
+      )
     ).to.be.revertedWith("Harvest reward fee should not be over 10%");
   });
 
@@ -366,17 +346,15 @@ describe("Harvester", function () {
     const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
 
     try {
-      await harvester
-        .connect(governor)
-        .setRewardTokenConfig(
-          comp.address,
-          300,
-          -100,
-          mockUniswapRouter.address,
-          MAX_UINT256,
-          true,
-          3000
-        );
+      await harvester.connect(governor).setRewardTokenConfig(
+        comp.address,
+        300,
+        -100,
+        mockUniswapRouter.address,
+        MAX_UINT256,
+        true,
+        0 // v3 fee
+      );
 
       // if no exception fail
       expect.fail(
@@ -407,23 +385,20 @@ describe("Harvester", function () {
       .connect(josh)
       .transfer(mockUniswapRouter.address, usdtUnits("100"));
 
-    await harvester
-      .connect(governor)
-      .setRewardTokenConfig(
-        comp.address,
-        300,
-        900,
-        mockUniswapRouter.address,
-        MAX_UINT256,
-        true,
-        3000
-      );
+    await harvester.connect(governor).setRewardTokenConfig(
+      comp.address,
+      300,
+      900,
+      mockUniswapRouter.address,
+      MAX_UINT256,
+      true,
+      0 // v3 fee
+    );
 
     // prettier-ignore
     const annaBalanceChange = await changeInBalance(
       async () => {
-        harvester
-          .connect(anna)["harvestAndSwap(address,bool)"](compoundStrategy.address, false);
+        harvester.connect(anna)["harvestAndSwap(address)"](compoundStrategy.address);
       },
       usdt,
       anna.address
@@ -496,25 +471,22 @@ describe("Harvester", function () {
       .connect(josh)
       .transfer(mockUniswapRouter.address, usdtUnits("100"));
 
-    await harvester
-      .connect(governor)
-      .setRewardTokenConfig(
-        comp.address,
-        300,
-        100,
-        mockUniswapRouter.address,
-        MAX_UINT256,
-        true,
-        3000
-      );
+    await harvester.connect(governor).setRewardTokenConfig(
+      comp.address,
+      300,
+      100,
+      mockUniswapRouter.address,
+      MAX_UINT256,
+      true,
+      0 // v3 fee
+    );
 
     await vault.connect(governor).removeStrategy(compoundStrategy.address);
 
     // prettier-ignore
     const annaBalanceChange = await changeInBalance(
       async () => {
-        harvester
-          .connect(anna)["harvestAndSwap(address,bool)"](compoundStrategy.address, false);
+        harvester.connect(anna)["harvestAndSwap(address)"](compoundStrategy.address);
       },
       usdt,
       anna.address
@@ -542,8 +514,7 @@ describe("Harvester", function () {
 
     // prettier-ignore
     await expect(
-      harvester
-        .connect(anna)["harvestAndSwap(address,bool)"](compoundStrategy.address, false)
+      harvester.connect(anna)["harvestAndSwap(address)"](compoundStrategy.address)
     ).to.be.revertedWith("Not a valid strategy address");
   });
 
@@ -567,17 +538,15 @@ describe("Harvester", function () {
       .connect(josh)
       .transfer(mockUniswapRouter.address, usdtUnits("100"));
 
-    await harvester
-      .connect(governor)
-      .setRewardTokenConfig(
-        comp.address,
-        300,
-        900,
-        mockUniswapRouter.address,
-        0,
-        true,
-        3000
-      );
+    await harvester.connect(governor).setRewardTokenConfig(
+      comp.address,
+      300,
+      900,
+      mockUniswapRouter.address,
+      0,
+      true,
+      0 // v3 fee
+    );
 
     let annaBalanceChange;
 
@@ -586,8 +555,7 @@ describe("Harvester", function () {
       async () => {
         annaBalanceChange = await changeInBalance(
           async () => {
-            harvester
-              .connect(anna)["harvestAndSwap(address,bool)"](compoundStrategy.address, false);
+            harvester.connect(anna)["harvestAndSwap(address)"](compoundStrategy.address);
           },
           usdt,
           anna.address
@@ -628,17 +596,15 @@ describe("Harvester", function () {
       .connect(josh)
       .transfer(mockUniswapRouter.address, usdtUnits("100"));
 
-    await harvester
-      .connect(governor)
-      .setRewardTokenConfig(
-        comp.address,
-        300,
-        100,
-        mockUniswapRouter.address,
-        utils.parseUnits("3", 18),
-        true,
-        3000
-      );
+    await harvester.connect(governor).setRewardTokenConfig(
+      comp.address,
+      300,
+      100,
+      mockUniswapRouter.address,
+      utils.parseUnits("3", 18),
+      true,
+      0 // v3 fee
+    );
 
     let annaBalanceChange;
 
@@ -647,8 +613,7 @@ describe("Harvester", function () {
       async () => {
         annaBalanceChange = await changeInBalance(
           async () => {
-            harvester
-              .connect(anna)["harvestAndSwap(address,address,bool)"](compoundStrategy.address, anna.address, false);
+            harvester.connect(anna)["harvestAndSwap(address,address)"](compoundStrategy.address, anna.address);
           },
           usdt,
           anna.address
@@ -689,17 +654,15 @@ describe("Harvester", function () {
       .connect(josh)
       .transfer(mockUniswapRouter.address, usdtUnits("100"));
 
-    await harvester
-      .connect(governor)
-      .setRewardTokenConfig(
-        comp.address,
-        300,
-        100,
-        mockUniswapRouter.address,
-        utils.parseUnits("3", 18),
-        true,
-        3000
-      );
+    await harvester.connect(governor).setRewardTokenConfig(
+      comp.address,
+      300,
+      100,
+      mockUniswapRouter.address,
+      utils.parseUnits("3", 18),
+      true,
+      0 // v3 fee
+    );
 
     let joshBalanceChange;
 
@@ -708,8 +671,7 @@ describe("Harvester", function () {
       async () => {
         joshBalanceChange = await changeInBalance(
           async () => {
-            harvester
-              .connect(anna)["harvestAndSwap(address,address,bool)"](compoundStrategy.address, josh.address, false);
+            harvester.connect(anna)["harvestAndSwap(address,address)"](compoundStrategy.address, josh.address);
           },
           usdt,
           josh.address
@@ -742,17 +704,15 @@ describe("Harvester", function () {
       .connect(josh)
       .transfer(mockUniswapRouter.address, usdtUnits("100"));
 
-    await harvester
-      .connect(governor)
-      .setRewardTokenConfig(
-        comp.address,
-        300,
-        100,
-        mockUniswapRouter.address,
-        MAX_UINT256,
-        true,
-        3000
-      );
+    await harvester.connect(governor).setRewardTokenConfig(
+      comp.address,
+      300,
+      100,
+      mockUniswapRouter.address,
+      MAX_UINT256,
+      true,
+      0 // v3 fee
+    );
 
     await harvester.connect(governor).setRewardsProceedsAddress(josh.address);
 
@@ -762,8 +722,7 @@ describe("Harvester", function () {
       async () => {
         annaBalanceChange = await changeInBalance(
           async () => {
-            harvester
-              .connect(anna)["harvestAndSwap(address,bool)"](compoundStrategy.address, false);
+            harvester.connect(anna)["harvestAndSwap(address)"](compoundStrategy.address);
           },
           usdt,
           anna.address

@@ -178,7 +178,7 @@ describe("3Pool Strategy", function () {
         mockUniswapRouter.address,
         MAX_UINT256,
         true,
-        3000
+        0 // v3 fee
       );
 
       // Make sure Vault has 0 USDT balance
@@ -199,7 +199,7 @@ describe("3Pool Strategy", function () {
       const balanceBeforeAnna = await usdt.balanceOf(anna.address);
       // prettier-ignore
       await harvester
-        .connect(anna)["harvestAndSwap(address,bool)"](threePoolStrategy.address, false);
+        .connect(anna)["harvestAndSwap(address)"](threePoolStrategy.address);
 
       const balanceAfterAnna = await usdt.balanceOf(anna.address);
 

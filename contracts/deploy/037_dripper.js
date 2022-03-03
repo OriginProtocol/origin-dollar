@@ -116,7 +116,7 @@ module.exports = deploymentWithProposal(
             assetAddresses.sushiswapRouter,
             ethers.utils.parseUnits("2500", 18), // <-- Limit CVX per sale
             true,
-            3000,
+            0, // v3 fee
           ],
         },
       ],
