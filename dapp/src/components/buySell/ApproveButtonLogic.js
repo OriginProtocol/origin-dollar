@@ -11,6 +11,14 @@ import ContractStore from 'stores/ContractStore'
 import analytics from 'utils/analytics'
 import { assetRootPath } from 'utils/image'
 import { useWeb3React } from '@web3-react/core'
+import Media from 'react-media'
+
+// const GLOBAL_MEDIA_QUERIES = {
+//   small: "(max-width: 599px)",
+//   medium: "(min-width: 600px) and (max-width: 1199px)",
+//   large: "(min-width: 1200px)"
+// };
+// const matches = useMedia({ queries: GLOBAL_MEDIA_QUERIES });
 
 const ApproveButtonLogic = forwardRef(
   (
@@ -112,6 +120,21 @@ const ApproveButtonLogic = forwardRef(
       },
     }))
 
+    const contractName = (contract) => {
+      if (contract === 'flipper') return 'the Flipper'
+      if (contract === 'vault') return 'the Origin Vault'
+      if (contract === 'curve') return 'Curve'
+      if (contract === 'sushiswap') return 'SushiSwap'
+      if (contract === 'uniswapV2' || contract === 'uniswap') return 'Uniswap'
+    }
+
+    let width = window.innerWidth
+    const mql = window.matchMedia('(max-width: 600px)')
+    let mobileView = mql.matches
+    mql.addEventListener('change', (e) => {
+      mobileView = e.matches
+    })
+
     return (
       <button
         className={`btn-blue buy-button mb-2 w-100`}
@@ -123,21 +146,35 @@ const ApproveButtonLogic = forwardRef(
         }
         onClick={onBuyNow}
       >
-        {allowButtonState === 'allow' && (
+        {/* {allowButtonState === 'allow' && (
           <img
             className="icon mr-3"
             src={assetRootPath(`/images/currency/${coin}-icon-small.svg`)}
           />
-        )}
+        )} */}
 
         <span>
           {swappingGloballyDisabled && process.env.DISABLE_SWAP_BUTTON_MESSAGE}
-          {allowButtonState === 'allow' &&
-            fbt(
-              'Allow Origin Dollar to use your ' +
-                fbt.param('coin-name', coin.toUpperCase()),
-              'permission to use coin'
-            )}
+          <Media query={{ minWidth: 570 }}>
+            {(matches) =>
+              matches
+                ? allowButtonState === 'allow' &&
+                  fbt(
+                    'Allow ' +
+                      fbt.param('contract', contractName(needsApproval)) +
+                      ' to use your ' +
+                      fbt.param('coin-name', coin.toUpperCase()),
+                    'permission to use coin'
+                  )
+                : allowButtonState === 'allow' &&
+                  fbt(
+                    'Allow ' +
+                      fbt.param('contract', contractName(needsApproval)),
+                    'permission to use coin'
+                  )
+            }
+          </Media>
+
           {allowButtonState === 'waiting' &&
             fbt('Processing transaction...', 'Processing transaction...')}
           {allowButtonState === 'approved' &&
