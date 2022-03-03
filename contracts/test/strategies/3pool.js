@@ -199,8 +199,7 @@ describe("3Pool Strategy", function () {
       const balanceBeforeAnna = await usdt.balanceOf(anna.address);
       // prettier-ignore
       await harvester
-        .connect(anna)
-        ["harvestAndSwap(address,bool)"](threePoolStrategy.address, false);
+        .connect(anna)["harvestAndSwap(address,bool)"](threePoolStrategy.address, false);
 
       const balanceAfterAnna = await usdt.balanceOf(anna.address);
 

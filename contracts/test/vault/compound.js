@@ -728,11 +728,7 @@ describe("Vault with Compound strategy", function () {
 
     // prettier-ignore
     await harvester
-      .connect(anna)
-      ["harvestAndSwap(address,bool)"](
-        compoundStrategy.address,
-        false
-      );
+      .connect(anna)["harvestAndSwap(address,bool)"](compoundStrategy.address, false);
 
     const balanceAfterAnna = await usdt.balanceOf(anna.address);
 
