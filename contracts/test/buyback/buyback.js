@@ -19,6 +19,21 @@ describe("OGN Buyback", function () {
     ).to.be.revertedWith("Caller is not the Governor");
   });
 
+  it("Should allow Governor to set Uniswap address", async () => {
+    const { buyback, governor, ousd } = await loadFixture(defaultFixture);
+    // Pretend OUSD is a uniswap
+    await buyback.connect(governor).setUniswapAddr(ousd.address);
+    expect(await buyback.uniswapAddr()).to.be.equal(ousd.address)
+  });
+
+  it("Should not allow non-Governor to set Uniswap address", async () => {
+    const { buyback, anna, ousd } = await loadFixture(defaultFixture);
+    // Pretend OUSD is trustee
+    await expect(
+      buyback.connect(anna).setUniswapAddr(ousd.address)
+    ).to.be.revertedWith("Caller is not the Governor");
+  });
+
   it("Should swap OUSD balance for OGN", async () => {
     const fixture = await loadFixture(defaultFixture);
     const { ousd, ogn, governor, buyback, vault } = fixture;
