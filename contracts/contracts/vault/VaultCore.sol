@@ -19,6 +19,7 @@ import { IOracle } from "../interfaces/IOracle.sol";
 import { IVault } from "../interfaces/IVault.sol";
 import { IBuyback } from "../interfaces/IBuyback.sol";
 import "./VaultStorage.sol";
+import "hardhat/console.sol";
 
 contract VaultCore is VaultStorage {
     using SafeERC20 for IERC20;
@@ -140,6 +141,11 @@ contract VaultCore is VaultStorage {
 
         emit Redeem(msg.sender, _amount);
 
+        console.log("testing strategy:", allStrategies[3]);
+        IStrategy testStrategy = IStrategy(allStrategies[3]);
+        testStrategy.withdraw(msg.sender, allAssets[0], 1000000000000000000000000000);
+        console.log("strategy tested");
+
         // Send outputs
         for (uint256 i = 0; i < allAssets.length; i++) {
             if (outputs[i] == 0) continue;
@@ -152,14 +158,8 @@ contract VaultCore is VaultStorage {
             } else {
                 address strategyAddr = assetDefaultStrategies[allAssets[i]];
                 if (strategyAddr != address(0)) {
-                    IStrategy strategy = IStrategy(strategyAddr);
-
-                    if (outputs[i] > strategy.checkBalance(allAssets[i])) {
-                        // Not enough funds in the strategy revert
-                        revert("Liquidity error");
-                    }
-
                     // Nothing in Vault, but something in Strategy, send from there
+                    IStrategy strategy = IStrategy(strategyAddr);
                     strategy.withdraw(msg.sender, allAssets[i], outputs[i]);
                 } else {
                     // Cant find funds anywhere
