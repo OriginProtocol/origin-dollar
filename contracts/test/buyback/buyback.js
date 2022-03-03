@@ -23,7 +23,7 @@ describe("OGN Buyback", function () {
     const { buyback, governor, ousd } = await loadFixture(defaultFixture);
     // Pretend OUSD is a uniswap
     await buyback.connect(governor).setUniswapAddr(ousd.address);
-    expect(await buyback.uniswapAddr()).to.be.equal(ousd.address)
+    expect(await buyback.uniswapAddr()).to.be.equal(ousd.address);
   });
 
   it("Should not allow non-Governor to set Uniswap address", async () => {
