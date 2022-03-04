@@ -121,6 +121,8 @@ yarn run start
 - Open http://localhost:3000 in your browser and connect your `Metamask` account. See [this section](#configure-web3-wallet) for instructions if you have not done that yet.
 - Open http://localhost:3000/swap and verify that you have stablecoins in your account. See [this section](#minting-stablecoins-via-hardhat-task) for instructions if you don't see a balance.
 
+If you see a `Runtime Error: underlying network changed`, then rename `dApp/dev.env` to `.env` and restart `yarn` 
+
 ### Troubleshooting
 When freshly starting a node it is usually necessary to also reset Metamask Account being used:
 - `Metamask` => `Settings` => `Advanced` => `Reset Account`
