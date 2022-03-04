@@ -47,7 +47,7 @@ const ContractsTable = () => {
     unexpected_error: fbt('Error', 'Swap estimations: unexpected_error'),
     not_enough_funds_contract: fbt(
       'Amount too high',
-      'Swap estimations: amount too hight'
+      'Swap estimations: amount too high'
     ),
     not_enough_funds_user: fbt(
       'Insufficient balance',
@@ -55,11 +55,15 @@ const ContractsTable = () => {
     ),
     amount_too_high: fbt(
       'Amount too high',
-      'Swap estimations: amount too hight'
+      'Swap estimations: amount too high'
     ),
     slippage_too_high: fbt(
       'Slippage too high',
-      'Swap estimations: slippage too hight'
+      'Swap estimations: slippage too high'
+    ),
+    liquidity_error: fbt(
+      'Liquidity error',
+      'Swap estimations: liquidity error'
     ),
   }
 
@@ -213,6 +217,8 @@ const ContractsTable = () => {
             const isError = estimation && !estimation.canDoSwap
             const errorReason = isError && estimation.error
             const canDoSwap = estimation && estimation.canDoSwap
+            const approveAllowanceNeeded =
+              (estimation && estimation.approveAllowanceNeeded) || false
 
             let status
             let redStatus = false
@@ -277,10 +283,30 @@ const ContractsTable = () => {
                     ? '-'
                     : formatCurrency(estimation.amountReceived, 2)}
                 </div>
-                <div className="value-cell d-none d-md-block text-right">
+                <div
+                  title={
+                    approveAllowanceNeeded
+                      ? `${fbt(
+                          `Includes 2 transactions Approve($${fbt.param(
+                            'Approve Cost',
+                            formatCurrency(estimation.gasEstimateApprove, 2)
+                          )}) + Swap($${fbt.param(
+                            'Swap Cost',
+                            formatCurrency(estimation.gasEstimateSwap, 2)
+                          )})`,
+                          'Swap & approve transaction gas estimation'
+                        )}`
+                      : ''
+                  }
+                  className={`value-cell d-none d-md-block text-right ${
+                    approveAllowanceNeeded ? 'pointer' : ''
+                  }`}
+                >
                   {loadingOrEmpty || !canDoSwap
                     ? '-'
-                    : `$${formatCurrency(estimation.gasEstimate, 2)}`}
+                    : `$${formatCurrency(estimation.gasEstimate, 2)}${
+                        approveAllowanceNeeded ? '*' : ''
+                      }`}
                 </div>
                 <div className="value-cell text-right">
                   {loadingOrEmpty || !canDoSwap
@@ -386,7 +412,8 @@ const ContractsTable = () => {
             color: #ff0000;
           }
 
-          .clickable {
+          .clickable,
+          .pointer {
             cursor: pointer;
           }
 
