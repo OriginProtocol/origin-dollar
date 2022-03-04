@@ -738,7 +738,7 @@ const useSwapEstimator = ({
           swapGasUsage = 2900000
         } else if (amount > rebaseTreshold) {
           // https://etherscan.io/tx/0xc8ac03e33cab4bad9b54a6e6604ef6b8e11126340b93bbca1348167f548ad8fd
-          swapGasUsage = 520000
+          swapGasUsage = 510000
         }
 
         const approveGasUsage = approveAllowanceNeeded
