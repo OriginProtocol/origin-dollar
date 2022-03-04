@@ -77,7 +77,7 @@ describe("Harvester", function () {
     ).to.equal(constants.MaxUint256);
     expect(
       await comp.allowance(harvester.address, addresses.mainnet.uniswapV3Router)
-    ).to.equal(0);
+    ).to.equal(constants.MaxUint256);
 
     expect(compConfig.liquidationLimit).to.equal(utils.parseUnits("1.22", 18));
     expect(compConfig.allowedSlippageBps).to.equal(350);
