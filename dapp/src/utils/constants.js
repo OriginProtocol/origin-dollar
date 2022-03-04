@@ -8,6 +8,12 @@ const uniswapV2GasLimitBuffer = 0.2
 const sushiswapGasLimitBuffer = 0.2
 const uniswapV3GasLimitBuffer = 0.2
 const curveGasLimitBuffer = 0.1
+const approveCoinGasLimits = {
+  ousd: 52000,
+  dai: 46000,
+  usdt: 48900,
+  usdc: 60700,
+}
 
 module.exports = {
   mintAbsoluteGasLimitBuffer,
@@ -17,4 +23,5 @@ module.exports = {
   sushiswapGasLimitBuffer,
   uniswapV3GasLimitBuffer,
   curveGasLimitBuffer,
+  approveCoinGasLimits,
 }
