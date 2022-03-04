@@ -248,8 +248,6 @@ const useSwapEstimator = ({
       amount
     )
 
-    console.log('estimations', estimations)
-
     ContractStore.update((s) => {
       s.swapEstimations = estimations
     })
@@ -282,6 +280,18 @@ const useSwapEstimator = ({
       const amountReceivedNumber = parseFloat(estimation.amountReceived)
 
       estimation.gasEstimate = gasUsdCost
+      if (estimation.approveAllowanceNeeded) {
+        estimation.gasEstimateSwap = getGasUsdCost(
+          estimation.swapGasUsage,
+          gasPrice,
+          ethPrice
+        )
+        estimation.gasEstimateApprove = getGasUsdCost(
+          estimation.approveGasUsage,
+          gasPrice,
+          ethPrice
+        )
+      }
       estimation.effectivePrice =
         (inputAmount + gasUsdCostNumber) / amountReceivedNumber
     })
