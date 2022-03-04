@@ -156,8 +156,8 @@ contract Harvester is Governable {
             "Harvest reward fee should not be over 10%"
         );
         require(
-            _uniswapV2CompatibleAddr != address(0),
-            "Uniswap V2 compatible address should be non zero address"
+            (_uniswapV2CompatibleAddr != address(0)) == (_v3Fee == 0),
+            "At least one of Uniswap V2 or V3 should be configured"
         );
 
         RewardTokenConfig memory tokenConfig = RewardTokenConfig({
@@ -193,6 +193,12 @@ contract Harvester is Governable {
         }
 
         token.safeApprove(uniswapV3Addr, type(uint256).max);
+
+        // Give Uniswap infinite approval when needed
+        if (oldUniswapAddress != _uniswapV2CompatibleAddr) {
+            token.safeApprove(_uniswapV2CompatibleAddr, 0);
+            token.safeApprove(_uniswapV2CompatibleAddr, type(uint256).max);
+        }
 
         emit RewardTokenConfigUpdated(
             _tokenAddress,
@@ -373,6 +379,12 @@ contract Harvester is Governable {
         }
     }
 
+    /**
+     * @dev Swap a reward token for stablecoins on Uniswap(v2+v3). The token must have
+     *       a registered price feed with the price provider.
+     * @param _swapToken Address of the token to swap.
+     * @param _rewardTo Address where to send the share of harvest rewards to
+     */
     function _swap(address _swapToken, address _rewardTo) internal {
         RewardTokenConfig memory tokenConfig = rewardTokenConfigs[_swapToken];
 
@@ -478,7 +490,7 @@ contract Harvester is Governable {
                     _swapToken,
                     _fee, // Pool fee, swap token -> weth9
                     wethAddress,
-                    uint24(3000), // Pool fee, weth9 -> usdt
+                    uint24(500), // Pool fee, weth9 -> usdt
                     usdtAddress
                 ),
                 recipient: address(this),
