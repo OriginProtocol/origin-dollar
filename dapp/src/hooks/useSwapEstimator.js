@@ -795,16 +795,33 @@ const useSwapEstimator = ({
     } catch (e) {
       console.error(`Can not estimate contract call gas used: ${e.message}`)
 
+      const errorIncludes = (errorTxt) => {
+        return (
+          (e.data && e.data.message && e.data.message.includes(errorTxt)) ||
+          e.message.includes(errorTxt)
+        )
+      }
+
       // local node and mainnet return errors in different formats, this handles both cases
-      if (
-        (e.data &&
-          e.data.message &&
-          e.data.message.includes('Redeem amount lower than minimum')) ||
-        e.message.includes('Redeem amount lower than minimum')
-      ) {
+      if (errorIncludes('Redeem amount lower than minimum')) {
         return {
           canDoSwap: false,
           error: 'slippage_too_high',
+        }
+        /* Various error messages strategies emit when too much funds attempt to
+         * be withdrawn:
+         * - "Redeem failed" -> Compound strategy
+         * - "5" -> Aave
+         * - "Insufficient 3CRV balance" -> Convex
+         */
+      } else if (
+        errorIncludes('Redeem failed') ||
+        errorIncludes(`reverted with reason string '5'`) ||
+        errorIncludes('Insufficient 3CRV balance')
+      ) {
+        return {
+          canDoSwap: false,
+          error: 'liquidity_error',
         }
       }
 
