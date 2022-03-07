@@ -74,7 +74,7 @@ describe("Harvester", function () {
 
     expect(
       await comp.allowance(harvester.address, mockUniswapRouter.address)
-    ).to.equal(constants.MaxUint256);
+    ).to.equal(0);
     expect(
       await comp.allowance(harvester.address, addresses.mainnet.uniswapV3Router)
     ).to.equal(constants.MaxUint256);

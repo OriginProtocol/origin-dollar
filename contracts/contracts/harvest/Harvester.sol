@@ -186,18 +186,20 @@ contract Harvester is Governable {
             /* oldUniswapAddress == address(0) when there is no pre-existing
              * configuration for said rewards token
              */
-            oldUniswapAddress != address(0) &&
-            oldUniswapAddress != _uniswapV2CompatibleAddr
+            _v3Fee > 0 ||
+            (oldUniswapAddress != address(0) &&
+                oldUniswapAddress != _uniswapV2CompatibleAddr)
         ) {
             token.safeApprove(oldUniswapAddress, 0);
         }
 
-        token.safeApprove(uniswapV3Addr, type(uint256).max);
-
         // Give Uniswap infinite approval when needed
-        if (oldUniswapAddress != _uniswapV2CompatibleAddr) {
-            token.safeApprove(_uniswapV2CompatibleAddr, 0);
+        if (oldUniswapAddress != _uniswapV2CompatibleAddr && _v3Fee == 0) {
             token.safeApprove(_uniswapV2CompatibleAddr, type(uint256).max);
+        }
+
+        if (_v3Fee > 0) {
+            token.safeApprove(uniswapV3Addr, type(uint256).max);
         }
 
         emit RewardTokenConfigUpdated(
