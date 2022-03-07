@@ -419,7 +419,7 @@ const useSwapEstimator = ({
         approveAllowanceNeeded ||
         !userHasEnoughStablecoin(coinToSwap, parseFloat(inputAmountRaw))
       ) {
-        const swapGasUsage = 520000
+        const swapGasUsage = 350000
         const approveGasUsage = approveAllowanceNeeded
           ? gasLimitForApprovingCoin(coinToSwap)
           : 0
