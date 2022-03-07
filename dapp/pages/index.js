@@ -279,8 +279,8 @@ const Home = ({ locale, onLocale }) => {
                 </h4>
                 <p>
                   {fbt(
-                    'Protect your OUSD holdings with smart contract insurance. Optional coverage is provided by Nexus Mutual.',
-                    'Protect your OUSD holdings with smart contract insurance. Optional coverage is provided by Nexus Mutual.'
+                    'Protect your OUSD holdings with smart contract insurance. Optional coverage is provided by Nexus Mutual and InsurAce.',
+                    'Protect your OUSD holdings with smart contract insurance. Optional coverage is provided by Nexus Mutual and InsurAce.'
                   )}
                 </p>
                 <a
