@@ -284,7 +284,7 @@ contract Harvester is Governable {
         onlyGovernor
         nonReentrant
     {
-        _swap(_swapToken, rewardProceedsAddress);
+        _swap(_swapToken, rewardProceedsAddress, true);
     }
 
     /**
@@ -311,9 +311,11 @@ contract Harvester is Governable {
         _harvest(_strategyAddr);
         IStrategy strategy = IStrategy(_strategyAddr);
         address[] memory rewardTokens = strategy.getRewardTokenAddresses();
+        uint256 share;
         for (uint256 i = 0; i < rewardTokens.length; i++) {
-            _swap(rewardTokens[i], _rewardTo);
+            share += _swap(rewardTokens[i], _rewardTo, false);
         }
+        _transferReward(_rewardTo, share);
     }
 
     /**
@@ -348,10 +350,11 @@ contract Harvester is Governable {
             IStrategy strategy = IStrategy(allStrategies[i]);
             address[] memory rewardTokenAddresses = strategy
                 .getRewardTokenAddresses();
-
+            uint256 share;
             for (uint256 j = 0; j < rewardTokenAddresses.length; j++) {
-                _swap(rewardTokenAddresses[j], _rewardTo);
+                share += _swap(rewardTokenAddresses[j], _rewardTo, false);
             }
+            _transferReward(_rewardTo, share);
         }
     }
 
@@ -360,8 +363,13 @@ contract Harvester is Governable {
      *       a registered price feed with the price provider.
      * @param _swapToken Address of the token to swap.
      * @param _rewardTo Address where to send the share of harvest rewards to
+     * @param _doTransfer Boolean to determine to do transfer USDT inside or not
      */
-    function _swap(address _swapToken, address _rewardTo) internal {
+    function _swap(
+        address _swapToken,
+        address _rewardTo,
+        bool _doTransfer
+    ) internal returns (uint256 amount) {
         RewardTokenConfig memory tokenConfig = rewardTokenConfigs[_swapToken];
 
         /* This will trigger a return when reward token configuration has not yet been set
@@ -369,7 +377,7 @@ contract Harvester is Governable {
          * doSwapRewardToken to false.
          */
         if (!tokenConfig.doSwapRewardToken) {
-            return;
+            return 0;
         }
 
         address priceProvider = IVault(vaultAddress).priceProvider();
@@ -378,7 +386,7 @@ contract Harvester is Governable {
         uint256 balance = swapToken.balanceOf(address(this));
 
         if (balance == 0) {
-            return;
+            return 0;
         }
 
         uint256 balanceToSwap = Math.min(balance, tokenConfig.liquidationLimit);
@@ -399,6 +407,7 @@ contract Harvester is Governable {
         path[1] = IUniswapV2Router(tokenConfig.uniswapV2CompatibleAddr).WETH();
         path[2] = usdtAddress;
 
+        uint256 usdtTempBalance = IERC20(usdtAddress).balanceOf(address(this));
         // slither-disable-next-line unused-return
         IUniswapV2Router(tokenConfig.uniswapV2CompatibleAddr)
             .swapExactTokensForTokens(
@@ -409,21 +418,35 @@ contract Harvester is Governable {
                 block.timestamp
             );
 
-        IERC20 usdt = IERC20(usdtAddress);
-        uint256 usdtBalance = usdt.balanceOf(address(this));
-
+        uint256 usdtAmount = IERC20(usdtAddress).balanceOf(address(this)) -
+            usdtTempBalance;
         uint256 vaultBps = 1e4 - tokenConfig.harvestRewardBps;
-        uint256 rewardsProceedsShare = (usdtBalance * vaultBps) / 1e4;
+        uint256 rewardsProceedsShare = (usdtAmount * vaultBps) / 1e4;
 
         require(
             vaultBps > tokenConfig.harvestRewardBps,
             "Address receiving harvest incentive is receiving more rewards than the rewards proceeds address"
         );
 
-        usdt.safeTransfer(rewardProceedsAddress, rewardsProceedsShare);
-        usdt.safeTransfer(
-            _rewardTo,
-            usdtBalance - rewardsProceedsShare // remaining share of the rewards
-        );
+        if (_doTransfer) {
+            _transferReward(_rewardTo, rewardsProceedsShare);
+        } else {
+            amount = rewardsProceedsShare;
+        }
+    }
+
+    function _transferReward(address _rewardTo, uint256 share) private {
+        IERC20 usdt = IERC20(usdtAddress);
+        uint256 usdtBalance = usdt.balanceOf(address(this));
+
+        if (rewardProceedsAddress == _rewardTo) {
+            usdt.safeTransfer(rewardProceedsAddress, usdtBalance);
+        } else {
+            usdt.safeTransfer(rewardProceedsAddress, share);
+            usdt.safeTransfer(
+                _rewardTo,
+                usdtBalance - share // remaining share of the rewards
+            );
+        }
     }
 }
