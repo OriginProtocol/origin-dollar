@@ -18,20 +18,20 @@ const jobsURL = process.env.JOBS_URL
 const githubURL = process.env.GITHUB_URL
 
 const Home = ({ locale, onLocale }) => {
-  const ognInitialValue = 13426.953245
-  const [ognValue, setOgnValue] = useState(ognInitialValue)
-  const apy = useStoreState(ContractStore, (s) => s.apy || 0)
+  const ousdInitialValue = 13426.953245
+  const [ousdValue, setOusdValue] = useState(ousdInitialValue)
+  const apy = useStoreState(ContractStore, (s) => s.apy365 || 0)
 
   const goodTempo = 10000
 
   useEffect(() => {
     return animateValue({
-      from: ognInitialValue,
+      from: ousdInitialValue,
       to:
-        parseFloat(ognInitialValue) +
-        (parseFloat(ognInitialValue) * goodTempo) / 8760, // 8760 hours within a calendar year
+        parseFloat(ousdInitialValue) +
+        (parseFloat(ousdInitialValue) * goodTempo) / 8760, // 8760 hours within a calendar year
       callbackValue: (value) => {
-        setOgnValue(formatCurrency(value, 2))
+        setOusdValue(formatCurrency(value, 2))
       },
       duration: 3600 * 1000, // animate for 1 hour
       id: 'hero-index-ousd-animation',
@@ -94,8 +94,8 @@ const Home = ({ locale, onLocale }) => {
                 </div>
                 <div className="timeframe">
                   {fbt(
-                    'Based on a trailing 30-day calculation',
-                    'Based on a trailing 30-day calculation'
+                    'Based on a trailing 365-day calculation',
+                    'Based on a trailing 365-day calculation'
                   )}
                 </div>
                 <h2>
@@ -180,8 +180,8 @@ const Home = ({ locale, onLocale }) => {
                 </h4>
                 <p>
                   {fbt(
-                    'OUSD is pegged to the US Dollar. Returns are distributed as additional units of OUSD. Supply rebasing happens multiple times per day. See your OUSD grow much faster than your USD grows in traditional savings accounts.',
-                    'OUSD is pegged to the US Dollar. Returns are distributed as additional units of OUSD. Supply rebasing happens multiple times per day. See your OUSD grow much faster than your USD grows in traditional savings accounts.'
+                    'OUSD is pegged to the US Dollar. Returns are distributed as additional units of OUSD. See your OUSD grow much faster than your USD grows in traditional savings accounts.',
+                    'OUSD is pegged to the US Dollar. Returns are distributed as additional units of OUSD. See your OUSD grow much faster than your USD grows in traditional savings accounts.'
                   )}
                 </p>
               </div>
@@ -192,7 +192,7 @@ const Home = ({ locale, onLocale }) => {
                 alt="OUSD coin"
                 className="ousd-coin"
               />
-              <div className="big-text">{ognValue.toString()}</div>
+              <div className="big-text">{ousdValue.toString()}</div>
               <div className="big-text mt-1">OUSD</div>
             </div>
           </div>
@@ -302,73 +302,66 @@ const Home = ({ locale, onLocale }) => {
           </div>
         </div>
       </section>
-      <section className="dark pb-100">
+      <section className="dark pb-100 work-in-progress">
         <div className="container">
           <div className="text-container text-center d-flex flex-column align-items-center">
             <h5>
               {fbt(
-                'Created by cryptocurrency and fintech veterans',
-                'Created by cryptocurrency and fintech veterans'
+                'Exchanges and partners',
+                'Exchanges and partners'
               )}
             </h5>
-            <p className="team-summary">
+            <p className="exchanges-summary">
               {fbt(
-                'The Origin Dollar is brought to you by the team at Origin Protocol, which includes serial entrepreneurs, early cryptocurrency investors, early employees at YouTube, engineering managers at Google/Dropbox, and one of the original Paypal co-founders.',
-                'The Origin Dollar is brought to you by the team at Origin Protocol, which includes serial entrepreneurs, early cryptocurrency investors, early employees at YouTube, engineering managers at Google/Dropbox, and one of the original Paypal co-founders.'
+                'Where to get OUSD',
+                'Where to get OUSD'
               )}
             </p>
-            <div className="logos d-flex">
-              <img
-                src={assetRootPath('/images/youtube-logo.svg')}
-                alt="YouTube logo"
-              />
-              <img
-                src={assetRootPath('/images/paypal-logo.svg')}
-                alt="PayPal logo"
-              />
-              <img
-                src={assetRootPath('/images/google-logo.svg')}
-                alt="Google logo"
-              />
-              <img
-                src={assetRootPath('/images/dropbox-logo.svg')}
-                alt="Dropbox logo"
-              />
-            </div>
-            <a
-              href="https://originprotocol.com/team"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn btn-outline-light mx-auto d-flex align-items-center justify-content-center meet-team"
-            >
-              {fbt('Meet the Team', 'Meet the Team')}
-            </a>
-            <div className="hiring">
-              <h5>{fbt(`We're hiring`, `We're hiring`)}</h5>
-              <p>
-                {fbt(
-                  'Are you an experienced Solidity engineer? Join our team and help shape the future of OUSD.',
-                  'Are you an experienced Solidity engineer? Join our team and help shape the future of OUSD.'
-                )}
-              </p>
-              <a
-                href={jobsURL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn btn-outline-light mx-auto d-flex align-items-center justify-content-center view-jobs"
-              >
-                {fbt('View Jobs', 'View Jobs')}
-              </a>
-            </div>
-            <div className="form-container">
-              <h5>{fbt('Stay up to date', 'Stay up to date')}</h5>
-              <p className="email-cta mx-auto">
-                {fbt(
-                  'Be the first to get updates about OUSD, incentive programs and rewards, and our upcoming transition to decentralized governance.',
-                  'Be the first to get updates about OUSD, incentive programs and rewards, and our upcoming transition to decentralized governance.'
-                )}
-              </p>
-              <EmailForm />
+            <div className="d-flex justify-content-center flex-wrap">
+              <div className="d-flex flex-column">
+                <div className="info-box d-flex justify-content-center align-items-center mb-2 mx-3">
+                  {fbt(
+                    'KuCoin image',
+                    'KuCoin image'
+                  )}
+                </div>
+                <div>
+                  {fbt(
+                    'KuCoin',
+                    'KuCoin'
+                  )}
+                </div>
+              </div>
+
+              <div className="d-flex flex-column">
+                <div className="info-box d-flex justify-content-center align-items-center mb-2 mx-3">
+                  {fbt(
+                    'Uniswap image',
+                    'Uniswap image'
+                  )}
+                </div>
+                <div>
+                  {fbt(
+                    'Uniswap',
+                    'Uniswap'
+                  )}
+                </div>
+              </div>
+
+              <div className="d-flex flex-column">
+                <div className="info-box d-flex justify-content-center align-items-center mb-2 mx-3">
+                  {fbt(
+                    'Curve image',
+                    'Curve image'
+                  )}
+                </div>
+                <div>
+                  {fbt(
+                    'Curve',
+                    'Curve'
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -449,45 +442,6 @@ const Home = ({ locale, onLocale }) => {
             <div className="col-6 col-md-4 offset-md-1 mr-auto text-center">
               <div className="image-container d-flex justify-content-center">
                 <img
-                  src={assetRootPath('/images/value-icon.svg')}
-                  alt="Value icon"
-                />
-              </div>
-              <h6>
-                {fbt('A superior store of value', 'A superior store of value')}
-              </h6>
-              <p>
-                {fbt(
-                  'OUSD is an ideal store of value for users in countries with hyperinflationary economies like Venezuela and Argentina.',
-                  'OUSD is an ideal store of value for users in countries with hyperinflationary economies like Venezuela and Argentina.'
-                )}
-              </p>
-            </div>
-          </div>
-          <div className="row">
-            <div className="col-6 col-md-4 ml-auto text-center">
-              <div className="image-container d-flex justify-content-center">
-                <img
-                  src={assetRootPath('/images/use-case-icon.svg')}
-                  alt="Use case icon"
-                />
-              </div>
-              <h6>
-                {fbt(
-                  'DeFi meets decentralized commerce',
-                  'DeFi meets decentralized commerce'
-                )}
-              </h6>
-              <p>
-                {fbt(
-                  'OUSD will be accepted by hundreds of sellers on the Origin Dshop network and peer-to-peer marketplace.',
-                  'OUSD will be accepted by hundreds of sellers on the Origin Dshop network and peer-to-peer marketplace.'
-                )}
-              </p>
-            </div>
-            <div className="col-6 col-md-4 offset-md-1 mr-auto text-center">
-              <div className="image-container d-flex justify-content-center">
-                <img
                   src={assetRootPath('/images/account-icon.svg')}
                   alt="Account icon"
                 />
@@ -501,6 +455,152 @@ const Home = ({ locale, onLocale }) => {
                   'Easily track your DeFi earnings without complicated spreadsheets and custom dashboards.'
                 )}
               </p>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section className="dark pb-100 work-in-progress">
+        <div className="container">
+          <div className="text-container text-center d-flex flex-column align-items-center">
+            <h5>
+              {fbt(
+                'Audited and Verified',
+                'Audited and Verified'
+              )}
+            </h5>
+            <p className="exchanges-summary">
+              {fbt(
+                'OUSD has been audited by multiple, well-respected security firms.',
+                'OUSD has been audited by multiple, well-respected security firms.'
+              )}
+            </p>
+            <div className="d-flex justify-content-center flex-wrap">
+              <div className="d-flex flex-column">
+                <div className="info-box d-flex justify-content-center align-items-center mb-2 mx-3">
+                  {fbt(
+                    'Trail of bits image',
+                    'Trail of bits image'
+                  )}
+                </div>
+                <div>
+                  {fbt(
+                    'Trail of bits',
+                    'Trail of bits'
+                  )}
+                </div>
+              </div>
+
+              <div className="d-flex flex-column">
+                <div className="info-box d-flex justify-content-center align-items-center mb-2 mx-3">
+                  {fbt(
+                    'Solidified image',
+                    'Solidified image'
+                  )}
+                </div>
+                <div>
+                  {fbt(
+                    'Solidified',
+                    'Solidified'
+                  )}
+                </div>
+              </div>
+
+              <div className="d-flex flex-column">
+                <div className="info-box d-flex justify-content-center align-items-center mb-2 mx-3">
+                  {fbt(
+                    'Certora image',
+                    'Certora image'
+                  )}
+                </div>
+                <div>
+                  {fbt(
+                    'Certora',
+                    'Certora'
+                  )}
+                </div>
+              </div>
+
+              <div className="d-flex flex-column">
+                <div className="info-box d-flex justify-content-center align-items-center mb-2 mx-3">
+                  {fbt(
+                    'OpenZeppelin image',
+                    'OpenZeppelin image'
+                  )}
+                </div>
+                <div>
+                  {fbt(
+                    'OpenZeppelin',
+                    'OpenZeppelin'
+                  )}
+                </div>
+              </div>
+            </div>
+            <p className="exchanges-summary top-margin">
+              {fbt(
+                'Protocol security remains top priority',
+                'Protocol security remains top priority'
+              )}
+            </p>
+            <div className="d-flex justify-content-center flex-wrap">
+              <div className="d-flex flex-column align-items-center">
+                <div className="info-box d-flex justify-content-center align-items-center mb-2 mx-3">
+                  {fbt(
+                    'Contract image signature',
+                    'Contract image signature'
+                  )}
+                </div>
+                <div className="info-box-text">
+                  {fbt(
+                    '5 (of 8) signatures required for any admin changes',
+                    '5 (of 8) signatures required for any admin changes'
+                  )}
+                </div>
+              </div>
+
+              <div className="d-flex flex-column align-items-center">
+                <div className="info-box d-flex justify-content-center align-items-center mb-2 mx-3">
+                  {fbt(
+                    'Contract image time',
+                    'Contract image time'
+                  )}
+                </div>
+                <div className="info-box-text">
+                  {fbt(
+                    '48 hour time delay before changes come into affect',
+                    '48 hour time delay before changes come into affect'
+                  )}
+                </div>
+              </div>
+
+              <div className="d-flex flex-column align-items-center">
+                <div className="info-box d-flex justify-content-center align-items-center mb-2 mx-3">
+                  {fbt(
+                    'Nexus mutual image',
+                    'Nexus mutual image'
+                  )}
+                </div>
+                <div className="info-box-text">
+                  {fbt(
+                    'Nexus mutual insurance',
+                    'Nexus mutual insurance'
+                  )}
+                </div>
+              </div>
+
+              <div className="d-flex flex-column align-items-center">
+                <div className="info-box d-flex justify-content-center align-items-center mb-2 mx-3">
+                  {fbt(
+                    'InsurAce image',
+                    'InsurAce image'
+                  )}
+                </div>
+                <div className="info-box-text">
+                  {fbt(
+                    'InsurAce insurance',
+                    'InsurAce insurance'
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -695,8 +795,13 @@ const Home = ({ locale, onLocale }) => {
           line-height: 1.32;
         }
 
-        .team-summary {
+        .exchanges-summary {
           max-width: 740px;
+          margin-bottom: 50px;
+        }
+
+        .exchanges-summary.top-margin {
+          margin-top: 50px;
         }
 
         .logos {
@@ -815,6 +920,19 @@ const Home = ({ locale, onLocale }) => {
         .follow-development {
           padding-top: 80px;
           padding-bottom: 80px;
+        }
+
+        .info-box {
+          background-color: #eeeeee;
+          border-radius: 10px;
+          min-height: 150px;
+          min-width: 150px;
+          color: black;
+        }
+
+        .info-box-text {
+          max-width: 150px;
+          text-align: center;
         }
 
         @media (min-width: 993px) {

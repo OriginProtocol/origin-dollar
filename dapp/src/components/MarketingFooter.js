@@ -26,19 +26,9 @@ export default function Footer({ locale }) {
     <>
       <footer>
         <div className="container">
-          <div className="row">
-            <div className="col-12 col-lg-6 pr-lg-5 mb-5 mb-lg-0">
-              <h5>{fbt('Mailing List', 'Mailing List')}</h5>
-              <p>
-                {fbt(
-                  'Sign up to stay in touch. Your email will be kept private.',
-                  'Sign up to stay in touch. Your email will be kept private.'
-                )}
-              </p>
-              <EmailForm footer />
-            </div>
-            <div className="col-12 col-lg-6">
-              <nav className="nav d-flex">
+          <div className="d-flex align-items-center justify-content-center">
+            <div className="">
+              <nav className="nav d-flex justify-content-center">
                 <a
                   href={analyticsURL}
                   target="_blank"
@@ -78,123 +68,30 @@ export default function Footer({ locale }) {
                   rel="noopener noreferrer"
                   className="nav-link"
                   onClick={() => {
-                    analytics.track('Help Link click')
-                  }}
-                >
-                  {fbt('Help', 'Help link')}
-                </a>
-              </nav>
-              <div className="social-icons">
-                <a
-                  href={discordURL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() => {
                     analytics.track('Discord Link click')
                   }}
                 >
-                  <img
-                    className="social-icon"
-                    src={assetRootPath('/images/discord.svg')}
-                    alt="Discord logo"
-                  />
-                </a>
-                <a
-                  href={telegramURL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() => {
-                    analytics.track('Telegram link click')
-                  }}
-                >
-                  <img
-                    className="social-icon"
-                    src={assetRootPath('/images/telegram.svg')}
-                    alt="Telegram logo"
-                  />
-                </a>
-                <a href={wechatURL} target="_blank" rel="noopener noreferrer">
-                  <img
-                    className="social-icon"
-                    src={assetRootPath('/images/wechat.svg')}
-                    alt="WeChat logo"
-                  />
+                  {fbt('Discord', 'Discord link')}
                 </a>
                 <a
                   href={githubURL}
                   target="_blank"
                   rel="noopener noreferrer"
+                  className="nav-link"
                   onClick={() => {
-                    analytics.track('GitHub Link click')
+                    analytics.track('Github Link click')
                   }}
                 >
-                  <img
-                    className="social-icon"
-                    src={assetRootPath('/images/github.svg')}
-                    alt="GitHub logo"
-                  />
+                  {fbt('Github', 'Github link')}
                 </a>
-                <a href={redditURL} target="_blank" rel="noopener noreferrer">
-                  <img
-                    className="social-icon"
-                    src={assetRootPath('/images/reddit.svg')}
-                    alt="Reddit logo"
-                  />
-                </a>
-                <a href={weiboURL} target="_blank" rel="noopener noreferrer">
-                  <img
-                    className="social-icon"
-                    src={assetRootPath('/images/weibo.svg')}
-                    alt="Weibo logo"
-                  />
-                </a>
-                <a href={facebookURL} target="_blank" rel="noopener noreferrer">
-                  <img
-                    className="social-icon"
-                    src={assetRootPath('/images/facebook.svg')}
-                    alt="Facebook logo"
-                  />
-                </a>
-                <a href={twitterURL} target="_blank" rel="noopener noreferrer">
-                  <img
-                    className="social-icon"
-                    src={assetRootPath('/images/twitter.svg')}
-                    alt="Twitter logo"
-                  />
-                </a>
-                <a href={mediumURL} target="_blank" rel="noopener noreferrer">
-                  <img
-                    className="social-icon"
-                    src={assetRootPath('/images/medium.svg')}
-                    alt="Medium logo"
-                  />
-                </a>
-                <a href={youtubeURL} target="_blank" rel="noopener noreferrer">
-                  <img
-                    className="social-icon"
-                    src={assetRootPath('/images/youtube.svg')}
-                    alt="YouTube logo"
-                  />
-                </a>
-                <a
-                  href={instagramURL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <img
-                    className="social-icon"
-                    src={assetRootPath('/images/instagram.svg')}
-                    alt="Instagram logo"
-                  />
-                </a>
-              </div>
-              <div className="legal">
+              </nav>
+              <div className="legal d-flex flex-column align-items-center">
                 <a
                   href="https://originprotocol.com"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  {fbt('Built by Origin Protocol', 'Built by Origin Protocol')}
+                  {fbt('Originally released by Origin Protocol', 'Originally released by Origin Protocol')}
                 </a>
                 <nav className="nav d-flex">
                   <a
@@ -242,6 +139,11 @@ export default function Footer({ locale }) {
           font-size: 0.875rem;
         }
 
+        .nav,
+        .legal {
+          margin-top: 20px;
+        }
+
         a:hover {
           cursor: pointer;
           opacity: 0.8;
@@ -253,23 +155,6 @@ export default function Footer({ locale }) {
 
         .nav-link:not(:last-of-type) {
           padding-right: 32px;
-        }
-
-        .social-icons {
-          margin: 20px 0 15px;
-        }
-
-        .social-icon {
-          width: 25px;
-          height: 25px;
-        }
-
-        .social-icons a img {
-          margin-bottom: 15px;
-        }
-
-        .social-icons a:not(:last-of-type) img {
-          margin-right: 15px;
         }
 
         .legal,
@@ -287,10 +172,6 @@ export default function Footer({ locale }) {
           .col-12 {
             padding-right: 0px;
             padding-left: 0px;
-          }
-
-          .social-icons {
-            margin-top: 42px;
           }
 
           footer {

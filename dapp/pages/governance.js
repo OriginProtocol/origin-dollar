@@ -13,219 +13,18 @@ export default function Governance({ locale, onLocale }) {
         <div className="container d-flex flex-column align-items-center">
           <h1 className="w-lg-520">
             {fbt(
-              'The OUSD protocol will be governed by its users',
-              'The OUSD protocol will be governed by its users'
+              'Decentralized Governance',
+              'Decentralized Governance'
             )}
           </h1>
           <h2 className="w-lg-520">
             {fbt(
-              'While OUSD’s lead developers and community advocates are currently members of the Origin team, it is our intention to rapidly move towards decentralized governance.',
-              'While OUSD’s lead developers and community advocates are currently members of the Origin team, it is our intention to rapidly move towards decentralized governance.'
+              'The protocol is developed and maintained by Origin Protocol and governed fully by its users',
+              'The protocol is developed and maintained by Origin Protocol and governed fully by its users'
             )}
           </h2>
-          <div className="d-flex mt-4">
-            <div className="left" />
-            <div className="right" />
-          </div>
         </div>
       </header>
-      <section>
-        <div className="number">1</div>
-        <div className="container">
-          <div className="d-flex">
-            <div className="left" />
-            <div className="right" />
-          </div>
-          <h3 className="phase">{fbt('Phase 1', 'Phase 1')}</h3>
-          <div className="events">
-            <div className="left">
-              <div className="event-container pb-5 pb-lg-0">
-                <div className="event">
-                  {fbt(
-                    'Origin team and contributors release initial smart contracts, managed by a 5 of 8 multisig with a timelock',
-                    'Origin team and contributors release initial smart contracts, managed by a 5 of 8 multisig with a timelock'
-                  )}
-                </div>
-                <svg>
-                  <line x1="0%" y1="50%" x2="100%" y2="50%" />
-                  <circle cx="102%" cy="50%" r="3" />
-                </svg>
-              </div>
-              <div className="event-container">
-                <div className="event">
-                  {fbt(
-                    'Initial yield-earning strategies (lending and rewards token collection) are implemented',
-                    'Initial yield-earning strategies (lending and rewards token collection) are implemented'
-                  )}
-                </div>
-                <svg>
-                  <line x1="0%" y1="50%" x2="100%" y2="50%" />
-                  <circle cx="102%" cy="50%" r="3" />
-                </svg>
-              </div>
-            </div>
-            <div className="right">
-              <div className="event-container">
-                <svg>
-                  <circle cx="-1%" cy="50%" r="3" />
-                  <line x1="0%" y1="50%" x2="100%" y2="50%" />
-                </svg>
-                <div className="event">
-                  {fbt(
-                    'Smart contracts are audited and stress tested',
-                    'Smart contracts are audited and stress tested'
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="d-flex">
-            <div className="left" />
-            <div className="right" />
-          </div>
-        </div>
-      </section>
-      <section>
-        <div className="number">2</div>
-        <div className="container">
-          <div className="d-flex">
-            <div className="left" />
-            <div className="right" />
-          </div>
-          <h3 className="phase">{fbt('Phase 2', 'Phase 2')}</h3>
-          <div className="events">
-            <div className="left">
-              <div className="event-container pt-5">
-                <div className="event">
-                  {fbt(
-                    'Initial governance privileges and incentives given to users who create value for OUSD',
-                    'Initial governance privileges and incentives given to users who create value for OUSD'
-                  )}
-                </div>
-                <svg>
-                  <line x1="0%" y1="50%" x2="100%" y2="50%" />
-                  <circle cx="102%" cy="50%" r="3" />
-                </svg>
-              </div>
-            </div>
-            <div className="right">
-              <div className="event-container pb-5">
-                <svg>
-                  <circle cx="-1%" cy="50%" r="3" />
-                  <line x1="0%" y1="50%" x2="100%" y2="50%" />
-                </svg>
-                <div className="event">
-                  {fbt(
-                    'Origin team and contributors add additional yield-earning strategies (e.g. supplying liquidity to automated market makers)',
-                    'Origin team and contributors add additional yield-earning strategies (e.g. supplying liquidity to automated market makers)'
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="d-flex">
-            <div className="left" />
-            <div className="right" />
-          </div>
-        </div>
-      </section>
-      <section>
-        <div className="number">3</div>
-        <div className="container">
-          <div className="d-flex">
-            <div className="left" />
-            <div className="right" />
-          </div>
-          <h3 className="phase">{fbt('Phase 3', 'Phase 3')}</h3>
-          <div className="events">
-            <div className="left">
-              <div className="event-container">
-                <div className="event">
-                  {fbt('Further stress testing', 'Further stress testing')}
-                </div>
-                <svg>
-                  <line x1="0%" y1="50%" x2="100%" y2="50%" />
-                  <circle cx="102%" cy="50%" r="3" />
-                </svg>
-              </div>
-            </div>
-            <div className="right">
-              <div className="event-container pb-2 pb-lg-0">
-                <svg>
-                  <circle cx="-1%" cy="50%" r="3" />
-                  <line x1="0%" y1="50%" x2="100%" y2="50%" />
-                </svg>
-                <div className="event">
-                  {fbt(
-                    'Rollout of audited governance contracts',
-                    'Rollout of audited governance contracts'
-                  )}
-                </div>
-              </div>
-              <div className="event-container">
-                <svg>
-                  <circle cx="-1%" cy="50%" r="3" />
-                  <line x1="0%" y1="50%" x2="100%" y2="50%" />
-                </svg>
-                <div className="event">
-                  {fbt(
-                    'Continued distribution of governance privileges and incentives to OUSD users',
-                    'Continued distribution of governance privileges and incentives to OUSD users'
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="d-flex">
-            <div className="left" />
-            <div className="right" />
-          </div>
-        </div>
-      </section>
-      <section>
-        <div className="number">4</div>
-        <div className="container">
-          <div className="d-flex">
-            <div className="left" />
-            <div className="right" />
-          </div>
-          <h3 className="phase">{fbt('Phase 4', 'Phase 4')}</h3>
-          <div className="events">
-            <div className="left">
-              <div className="event-container pb-5">
-                <div className="event">
-                  {fbt(
-                    'Full decentralized governance',
-                    'Full decentralized governance'
-                  )}
-                </div>
-                <svg>
-                  <line x1="0%" y1="50%" x2="100%" y2="50%" />
-                  <circle cx="102%" cy="50%" r="3" />
-                </svg>
-              </div>
-            </div>
-            <div className="right">
-              <div className="event-container pt-5">
-                <svg>
-                  <circle cx="-1%" cy="50%" r="3" />
-                  <line x1="0%" y1="50%" x2="100%" y2="50%" />
-                </svg>
-                <div className="event">
-                  {
-                    ('Origin renounces ownership of all smart contracts',
-                    'Origin renounces ownership of all smart contracts')
-                  }
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="d-flex">
-            <div className="left" />
-            <div className="right" />
-          </div>
-        </div>
-      </section>
       <section className="incentivizing text-center">
         <div className="container">
           <h3 className="text-white">
@@ -275,6 +74,80 @@ export default function Governance({ locale, onLocale }) {
           </div>
         </div>
       </section>
+      <section className="dark pb-100 work-in-progress">
+        <div className="container">
+          <div className="text-container d-flex flex-column align-items-start">
+            <h5 className="mb-5">
+              {fbt(
+                'Help shape the future of OUSD',
+                'Help shape the future of OUSD'
+              )}
+            </h5>
+            <div className="d-flex justify-content-start">
+              <div className="d-flex flex-column big-info-box col-12 col-md-4 mr-md-4">
+                <div className="inner-info-box d-flex justify-content-center align-items-center">
+                  {fbt(
+                    'Discord image',
+                    'Discord image'
+                  )}
+                </div>
+                <div className="inner-info-box-title">
+                  {fbt(
+                    'Discord',
+                    'Discord'
+                  )}
+                </div>
+                <div className="">
+                  {fbt(
+                    'Join our Discord to share proposals, provide feedback, get pointers on how to contribute, and shape the future of the protocol with OUSD community.',
+                    'Join our Discord to share proposals, provide feedback, get pointers on how to contribute, and shape the future of the protocol with OUSD community.'
+                  )}
+                </div>
+              </div>
+              <div className="d-flex flex-column big-info-box col-12 col-md-4 mr-md-4">
+                <div className="inner-info-box d-flex justify-content-center align-items-center">
+                  {fbt(
+                    'Github image',
+                    'Github image'
+                  )}
+                </div>
+                <div className="inner-info-box-title">
+                  {fbt(
+                    'Github',
+                    'Github'
+                  )}
+                </div>
+                <div className="">
+                  {fbt(
+                    'Explore the source code and inspect in detail how OUSD functions or clone the project if you want to contribute.',
+                    'Explore the source code and inspect in detail how OUSD functions or clone the project if you want to contribute.'
+                  )}
+                </div>
+              </div>
+              <div className="d-flex flex-column big-info-box col-12 col-md-4 mr-md-2">
+                <div className="inner-info-box d-flex justify-content-center align-items-center">
+                  {fbt(
+                    'Snapshot image',
+                    'Snapshot image'
+                  )}
+                </div>
+                <div className="inner-info-box-title">
+                  {fbt(
+                    'Snapshot',
+                    'Snapshot'
+                  )}
+                </div>
+                <div className="">
+                  {fbt(
+                    'Off chain voting interface where users can express their sentiment on various proposals.',
+                    'Off chain voting interface where users can express their sentiment on various proposals.'
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
       <section className="closing">
         <div className="container text-center">
           <Closing primary />
@@ -296,7 +169,7 @@ export default function Governance({ locale, onLocale }) {
           color: white;
           font-size: 1.5rem;
           line-height: 1.25;
-          margin: 40px 0 0;
+          margin: 40px 0 70px;
           text-align: center;
           opacity: 0.8;
         }
@@ -329,6 +202,9 @@ export default function Governance({ locale, onLocale }) {
         }
         section:nth-of-type(even) {
           background-color: #f3f5f8;
+        }
+        section.dark {
+          background-color: #183140 !important;
         }
         .number {
           color: #bbc9da;
@@ -435,6 +311,54 @@ export default function Governance({ locale, onLocale }) {
           position: relative;
           z-index: 2;
         }
+
+        section.dark {
+          padding: 113px 40px 140px 40px;
+        }
+
+        .dark .btn {
+          border-radius: 25px;
+          border: solid 1px #ffffff;
+          font-size: 1.125rem;
+          font-weight: bold;
+        }
+
+        h5 {
+          font-family: Poppins;
+          font-size: 1.75rem;
+          font-weight: 300;
+          line-height: 1.32;
+        }
+
+        .big-info-box {
+          border: 1px solid #FFFFFF22;
+          background-color: #FFFFFF0A;
+          border-radius: 10px;
+          padding: 20px;
+          cursor: pointer;
+        }
+
+        .big-info-box:hover {
+          border: 1px solid #FFFFFF44;
+          background-color: #FFFFFF22;
+        }
+
+        .inner-info-box {
+          background-color: #FFFFFF88;
+          border-radius: 10px;
+          min-height: 150px;
+          height: 150px;
+          min-width: 150px;
+          width: 150px;
+          color: black;
+          margin-bottom: 20px;
+        }
+
+        .inner-info-box-title {
+          margin-bottom: 20px;
+          font-size: 24px;
+        }
+
         @media (max-width: 992px) {
           h1 {
             margin-top: 40px;
@@ -451,7 +375,7 @@ export default function Governance({ locale, onLocale }) {
 
           h2 {
             font-size: 20px;
-            margin-bottom: 0px;
+            margin-bottom: 50px;
           }
 
           h3,

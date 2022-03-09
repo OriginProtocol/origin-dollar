@@ -25,8 +25,8 @@ export default function Earn({ locale, onLocale }) {
                 </h1>
                 <h2 className="main-title">
                   {fbt(
-                    'OUSD enables both sophisticated DeFi experts and novice users to passively earn compelling returns across three strategies.',
-                    'OUSD enables both sophisticated DeFi experts and novice users to passively earn compelling returns across three strategies.'
+                    'OUSD enables both sophisticated DeFi experts and novice users to passively earn compelling returns.',
+                    'OUSD enables both sophisticated DeFi experts and novice users to passively earn compelling returns.'
                   )}
                 </h2>
                 <div className="d-block">
@@ -146,7 +146,7 @@ export default function Earn({ locale, onLocale }) {
               <div className="source">
                 <img
                   src={assetRootPath('/images/yield-1-icon-small.svg')}
-                  alt="Lending fees"
+                  alt="Reward fees"
                 />
               </div>
               <div className="source">
@@ -164,7 +164,7 @@ export default function Earn({ locale, onLocale }) {
             </div>
             <div className="d-flex justify-content-center">
               <div className="source label">
-                {fbt('Lending Fees', 'Lending Fees')}
+                {fbt('Reward Fees', 'Reward Fees')}
               </div>
               <div className="source label">
                 {fbt('AMM Trading Fees', 'AMM Trading Fees')}
@@ -198,23 +198,23 @@ export default function Earn({ locale, onLocale }) {
             <div className="col-lg-5 text-center order-lg-2 d-flex justify-content-lg-end justify-content-center">
               <img
                 src={assetRootPath('/images/yield-1-icon-large.svg')}
-                alt="Lending fees"
+                alt="Reward Fees"
                 className="category w-sd-116 h-sd-116"
               />
             </div>
             <div className="col-lg-7 d-flex align-items-center order-lg-1 justify-content-lg-start justify-content-center">
               <div className="text-container d-flex flex-column align-items-center align-items-lg-start">
-                <h3>{fbt('Lending Fees', 'Lending Fees')}</h3>
+                <h3>{fbt('Reward Fees', 'Reward Fees')}</h3>
                 <div className="description">
                   {fbt(
-                    'We will route your USDT, USDC, and DAI to proven lending protocols to achieve optimal ROI on your capital.',
-                    'We will route your USDT, USDC, and DAI to proven lending protocols to achieve optimal ROI on your capital.'
+                    'The protocol will route your USDT, USDC, and DAI to proven lending and exchange protocols to achieve optimal ROI on your capital.',
+                    'The protocol will route your USDT, USDC, and DAI to proven lending and exchange protocols to achieve optimal ROI on your capital.'
                   )}
                 </div>
                 <div className="elaboration">
                   {fbt(
-                    'Rebalancing occurs often, factoring in lending rates, rewards tokens, and diversification.',
-                    'Rebalancing occurs often, factoring in lending rates, rewards tokens, and diversification.'
+                    'Rebalancing occurs weekly, factoring in lending rates, rewards tokens, and diversification.',
+                    'Rebalancing occurs weekly, factoring in lending rates, rewards tokens, and diversification.'
                   )}
                 </div>
                 <div className="d-flex logos">
@@ -239,13 +239,10 @@ export default function Earn({ locale, onLocale }) {
                   <div className="d-flex flex-column logo align-items-start">
                     <div className="d-flex justify-content-center">
                       <img
-                        className="w-sd-66"
-                        src={assetRootPath('/images/dydx-logo.svg')}
-                        alt="dy/dx logo"
+                        className="w-sd-78 w-140"
+                        src={assetRootPath('/images/convex-color.svg')}
+                        alt="convex logo"
                       />
-                    </div>
-                    <div className="label">
-                      {fbt('Coming Soon', 'Coming Soon')}
                     </div>
                   </div>
                 </div>
@@ -270,8 +267,8 @@ export default function Earn({ locale, onLocale }) {
                 </h3>
                 <div className="description">
                   {fbt(
-                    'Origin will supply stablecoin liquidity to Uniswap and other automated market makers to earn trading fees.',
-                    'Origin will supply stablecoin liquidity to Uniswap and other automated market makers to earn trading fees.'
+                    'Stablecoin liquidity is supplied to Uniswap and other automated market makers to earn trading fees.',
+                    'Stablecoin liquidity is supplied to Uniswap and other automated market makers to earn trading fees.'
                   )}
                 </div>
                 <div className="elaboration">
@@ -289,8 +286,14 @@ export default function Earn({ locale, onLocale }) {
                         alt="Uniswap logo"
                       />
                     </div>
-                    <div className="label">
-                      {fbt('Coming Soon', 'Coming Soon')}
+                  </div>
+                  <div className="d-flex flex-column logo align-items-start">
+                    <div className="d-flex justify-content-center">
+                      <img
+                        className="w-sd-71"
+                        src={assetRootPath('/images/curve-logo.svg')}
+                        alt="Curve logo"
+                      />
                     </div>
                   </div>
                   <div className="d-flex flex-column logo align-items-start">
@@ -303,15 +306,6 @@ export default function Earn({ locale, onLocale }) {
                     </div>
                     <div className="label">
                       {fbt('Coming Soon', 'Coming Soon')}
-                    </div>
-                  </div>
-                  <div className="d-flex flex-column logo align-items-start">
-                    <div className="d-flex justify-content-center">
-                      <img
-                        className="w-sd-71"
-                        src={assetRootPath('/images/curve-logo.svg')}
-                        alt="Curve logo"
-                      />
                     </div>
                   </div>
                 </div>
@@ -333,8 +327,8 @@ export default function Earn({ locale, onLocale }) {
                 </h3>
                 <div className="description">
                   {fbt(
-                    'COMP, BAL, CRV, and other rewards tokens will be accrued and converted to stablecoins for additional yield.',
-                    'COMP, BAL, CRV, and other rewards tokens will be accrued and converted to stablecoins for additional yield.'
+                    'COMP, CRV, CVX and other rewards tokens will be accrued and converted to stablecoins for additional yield.',
+                    'COMP, CRV, CVX and other rewards tokens will be accrued and converted to stablecoins for additional yield.'
                   )}
                 </div>
                 <div className="elaboration">
@@ -650,6 +644,11 @@ export default function Earn({ locale, onLocale }) {
         section.closing {
           padding-top: 90px;
           padding-bottom: 100px;
+        }
+
+        .w-140 {
+          width: 140px;
+          max-width: 140px;  
         }
 
         @media (min-width: 993px) {
