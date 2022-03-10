@@ -2,24 +2,24 @@
 # Mar 4, 2022 Strategist allocation
 # 
 
-from allocations import *
-from ape_safe import ApeSafe
-import time
+# from allocations import *
+# from ape_safe import ApeSafe
+# import time
 
-txs = transactions_for_reallocation([
-        ["AAVE", "DAI",  26.56],
-        ["AAVE", "USDC", 0.0],
-        ["AAVE", "USDT", 14.4],
-        ["COMP", "DAI",  13.1],
-        ["COMP", "USDC", 10.39+29.62],
-        ["COMP", "USDT", 5.87],
-        ["Convex", "*",  0.0],
-    ])
+# txs = transactions_for_reallocation([
+#         ["AAVE", "DAI",  26.56],
+#         ["AAVE", "USDC", 0.0],
+#         ["AAVE", "USDT", 14.4],
+#         ["COMP", "DAI",  13.1],
+#         ["COMP", "USDC", 10.39+29.62],
+#         ["COMP", "USDT", 5.87],
+#         ["Convex", "*",  0.0],
+#     ])
 
-safe = ApeSafe('0xF14BBdf064E3F67f51cd9BD646aE3716aD938FDC')
-safe_tx = safe.multisend_from_receipts(txs)
-safe.sign_with_frame(safe_tx)
-r = safe.post_transaction(safe_tx)
+# safe = ApeSafe('0xF14BBdf064E3F67f51cd9BD646aE3716aD938FDC')
+# safe_tx = safe.multisend_from_receipts(txs)
+# safe.sign_with_frame(safe_tx)
+# r = safe.post_transaction(safe_tx)
 
 
 
