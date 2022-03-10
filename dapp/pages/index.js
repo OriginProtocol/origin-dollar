@@ -305,62 +305,57 @@ const Home = ({ locale, onLocale }) => {
       <section className="dark pb-100 work-in-progress">
         <div className="container">
           <div className="text-container text-center d-flex flex-column align-items-center">
-            <h5>
-              {fbt(
-                'Exchanges and partners',
-                'Exchanges and partners'
-              )}
-            </h5>
+            <h5>{fbt('Exchanges and partners', 'Exchanges and partners')}</h5>
             <p className="exchanges-summary">
-              {fbt(
-                'Where to get OUSD',
-                'Where to get OUSD'
-              )}
+              {fbt('Where to get OUSD', 'Where to get OUSD')}
             </p>
             <div className="d-flex justify-content-center flex-wrap">
-              <div className="d-flex flex-column">
-                <div className="info-box d-flex justify-content-center align-items-center mb-2 mx-3">
-                  {fbt(
-                    'KuCoin image',
-                    'KuCoin image'
-                  )}
+              <div
+                className="info-box-holder d-flex flex-column"
+                onClick={() => {
+                  window.open(
+                    'https://www.kucoin.com/trade/OUSD-USDT',
+                    '_blank',
+                    'noopener'
+                  )
+                }}
+              >
+                <div className="kucoin-box info-box d-flex justify-content-center align-items-center mb-2 mx-3">
+                  <img src={assetRootPath('/images/logos/kucoin-color.svg')} />
                 </div>
-                <div>
-                  {fbt(
-                    'KuCoin',
-                    'KuCoin'
-                  )}
-                </div>
+                <div>{fbt('KuCoin', 'KuCoin')}</div>
               </div>
 
-              <div className="d-flex flex-column">
-                <div className="info-box d-flex justify-content-center align-items-center mb-2 mx-3">
-                  {fbt(
-                    'Uniswap image',
-                    'Uniswap image'
-                  )}
+              <div
+                className="info-box-holder d-flex flex-column"
+                onClick={() => {
+                  window.open(
+                    'https://app.uniswap.org/#/swap?inputCurrency=0x2a8e1e676ec238d8a992307b495b45b3feaa5e86&outputCurrency=0xdac17f958d2ee523a2206206994597c13d831ec7&chain=mainnet',
+                    '_blank',
+                    'noopener'
+                  )
+                }}
+              >
+                <div className="uniswap-box info-box d-flex justify-content-center align-items-center mb-2 mx-3">
+                  <img src={assetRootPath('/images/logos/uniswap-color.png')} />
                 </div>
-                <div>
-                  {fbt(
-                    'Uniswap',
-                    'Uniswap'
-                  )}
-                </div>
+                <div>{fbt('Uniswap', 'Uniswap')}</div>
               </div>
 
-              <div className="d-flex flex-column">
-                <div className="info-box d-flex justify-content-center align-items-center mb-2 mx-3">
-                  {fbt(
-                    'Curve image',
-                    'Curve image'
-                  )}
+              <div
+                className="info-box-holder d-flex flex-column"
+                onClick={() => {
+                  window.open(
+                    'https://curve.fi/factory/9',
+                    '_blank',
+                    'noopener'
+                  )
+                }}
+              >
+                <div className="curve-box info-box d-flex justify-content-center align-items-center mb-2 mx-3">
+                  <img src={assetRootPath('/images/logos/curve-color.png')} />
                 </div>
-                <div>
-                  {fbt(
-                    'Curve',
-                    'Curve'
-                  )}
-                </div>
+                <div>{fbt('Curve', 'Curve')}</div>
               </div>
             </div>
           </div>
@@ -462,12 +457,7 @@ const Home = ({ locale, onLocale }) => {
       <section className="dark pb-100 work-in-progress">
         <div className="container">
           <div className="text-container text-center d-flex flex-column align-items-center">
-            <h5>
-              {fbt(
-                'Audited and Verified',
-                'Audited and Verified'
-              )}
-            </h5>
+            <h5>{fbt('Audited and Verified', 'Audited and Verified')}</h5>
             <p className="exchanges-summary">
               {fbt(
                 'OUSD has been audited by multiple, well-respected security firms.',
@@ -475,64 +465,61 @@ const Home = ({ locale, onLocale }) => {
               )}
             </p>
             <div className="d-flex justify-content-center flex-wrap">
-              <div className="d-flex flex-column">
-                <div className="info-box d-flex justify-content-center align-items-center mb-2 mx-3">
-                  {fbt(
-                    'Trail of bits image',
-                    'Trail of bits image'
-                  )}
+              <div
+                className="info-box-holder d-flex flex-column"
+                onClick={() => {
+                  window.open(
+                    'https://www.trailofbits.com/',
+                    '_blank',
+                    'noopener'
+                  )
+                }}
+              >
+                <div className="trailofbits-box info-box d-flex justify-content-center align-items-center mb-2 mx-3">
+                  <img
+                    src={assetRootPath('/images/logos/trail-of-bits-white.svg')}
+                  />
                 </div>
-                <div>
-                  {fbt(
-                    'Trail of bits',
-                    'Trail of bits'
-                  )}
-                </div>
+                <div>{fbt('Trail of bits', 'Trail of bits')}</div>
               </div>
 
-              <div className="d-flex flex-column">
+              <div
+                className="info-box-holder d-flex flex-column"
+                onClick={() => {
+                  window.open('https://www.certora.com/', '_blank', 'noopener')
+                }}
+              >
                 <div className="info-box d-flex justify-content-center align-items-center mb-2 mx-3">
-                  {fbt(
-                    'Solidified image',
-                    'Solidified image'
-                  )}
+                  <img src={assetRootPath('/images/logos/certora.png')} />
                 </div>
-                <div>
-                  {fbt(
-                    'Solidified',
-                    'Solidified'
-                  )}
-                </div>
+                <div>{fbt('Certora', 'Certora')}</div>
               </div>
 
-              <div className="d-flex flex-column">
-                <div className="info-box d-flex justify-content-center align-items-center mb-2 mx-3">
-                  {fbt(
-                    'Certora image',
-                    'Certora image'
-                  )}
+              <div
+                className="info-box-holder d-flex flex-column"
+                onClick={() => {
+                  window.open('https://solidified.io/', '_blank', 'noopener')
+                }}
+              >
+                <div className="solidified-box info-box d-flex justify-content-center align-items-center mb-2 mx-3">
+                  <img
+                    src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGNsYXNzPSJoLWZ1bGwiIHZpZXdCb3g9IjAgMCAzOCA0OCI+DQogICAgPGRlZnM+DQogICAgICA8bGluZWFyR3JhZGllbnQNCiAgICAgICAgaWQ9Im80anc0bzd2cGEiDQogICAgICAgIHgxPSIxMDAlIg0KICAgICAgICB4Mj0iMTIuMTg0JSINCiAgICAgICAgeTE9IjAlIg0KICAgICAgICB5Mj0iODYuNzc3JSINCiAgICAgID4NCiAgICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzhGQ0Y0QSIgLz4NCiAgICAgICAgPHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjMEFGIiAvPg0KICAgICAgPC9saW5lYXJHcmFkaWVudD4NCiAgICA8L2RlZnM+DQogICAgPGcgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIj4NCiAgICAgIDxwYXRoDQogICAgICAgIGZpbGw9InVybCgjbzRqdzRvN3ZwYSkiDQogICAgICAgIGQ9Ik0yOC41IDI0djQuOGMwIDUuMzAyLTQuMjUzIDkuNi05LjUgOS42cy05LjUtNC4yOTgtOS41LTkuNlY5LjZoMTlWMjR6Ig0KICAgICAgICB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtMTI5MCAtMjYpIHRyYW5zbGF0ZSgxMjkwIDI2KSINCiAgICAgIC8+DQogICAgICA8cGF0aA0KICAgICAgICBmaWxsPSIjRkZGIg0KICAgICAgICBkPSJNMzggMTkuMnY5LjZDMzggMzkuNDA0IDI5LjQ5MyA0OCAxOSA0OCA5LjI4NyA0OCAxLjI3NiA0MC42MzUuMTM4IDMxLjEzTDQuNzUgMjguOHYxLjZoLjAxMkM1LjA3MyAzNy43NjggMTEuMzMgNDMuNjQ4IDE5IDQzLjY0OGM3LjY3MSAwIDEzLjkyNy01Ljg4IDE0LjIzOC0xMy4yNDhoLjAxMlYyNEgwVjBoMzh2MTJsLTQuNzUgMi40VjQuOEg0Ljc1djE0LjRIMzh6Ig0KICAgICAgICB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtMTI5MCAtMjYpIHRyYW5zbGF0ZSgxMjkwIDI2KSINCiAgICAgIC8+DQogICAgPC9nPg0KICA8L3N2Zz4="
+                    alt="Solidified logo"
+                  />
                 </div>
-                <div>
-                  {fbt(
-                    'Certora',
-                    'Certora'
-                  )}
-                </div>
+                <div>{fbt('Solidified', 'Solidified')}</div>
               </div>
 
-              <div className="d-flex flex-column">
+              <div
+                className="info-box-holder d-flex flex-column"
+                onClick={() => {
+                  window.open('https://openzeppelin.com/', '_blank', 'noopener')
+                }}
+              >
                 <div className="info-box d-flex justify-content-center align-items-center mb-2 mx-3">
-                  {fbt(
-                    'OpenZeppelin image',
-                    'OpenZeppelin image'
-                  )}
+                  <img src={assetRootPath('/images/logos/openZepplin.png')} />
                 </div>
-                <div>
-                  {fbt(
-                    'OpenZeppelin',
-                    'OpenZeppelin'
-                  )}
-                </div>
+                <div>{fbt('OpenZeppelin', 'OpenZeppelin')}</div>
               </div>
             </div>
             <p className="exchanges-summary top-margin">
@@ -542,12 +529,18 @@ const Home = ({ locale, onLocale }) => {
               )}
             </p>
             <div className="d-flex justify-content-center flex-wrap">
-              <div className="d-flex flex-column align-items-center">
+              <div
+                className="info-box-holder d-flex flex-column align-items-center"
+                onClick={() => {
+                  window.open(
+                    'https://docs.ousd.com/governance/admin-privileges#admin',
+                    '_blank',
+                    'noopener'
+                  )
+                }}
+              >
                 <div className="info-box d-flex justify-content-center align-items-center mb-2 mx-3">
-                  {fbt(
-                    'Contract image signature',
-                    'Contract image signature'
-                  )}
+                  {fbt('Contract image signature', 'Contract image signature')}
                 </div>
                 <div className="info-box-text">
                   {fbt(
@@ -557,12 +550,18 @@ const Home = ({ locale, onLocale }) => {
                 </div>
               </div>
 
-              <div className="d-flex flex-column align-items-center">
+              <div
+                className="info-box-holder d-flex flex-column align-items-center"
+                onClick={() => {
+                  window.open(
+                    'https://docs.ousd.com/governance/admin-privileges#admin',
+                    '_blank',
+                    'noopener'
+                  )
+                }}
+              >
                 <div className="info-box d-flex justify-content-center align-items-center mb-2 mx-3">
-                  {fbt(
-                    'Contract image time',
-                    'Contract image time'
-                  )}
+                  {fbt('Contract image time', 'Contract image time')}
                 </div>
                 <div className="info-box-text">
                   {fbt(
@@ -572,33 +571,31 @@ const Home = ({ locale, onLocale }) => {
                 </div>
               </div>
 
-              <div className="d-flex flex-column align-items-center">
+              <div
+                className="info-box-holder d-flex flex-column align-items-center"
+                onClick={() => {
+                  window.open('https://nexusmutual.io/', '_blank', 'noopener')
+                }}
+              >
                 <div className="info-box d-flex justify-content-center align-items-center mb-2 mx-3">
-                  {fbt(
-                    'Nexus mutual image',
-                    'Nexus mutual image'
-                  )}
+                  <img src={assetRootPath('/images/logos/nexusMutual.jpeg')} />
                 </div>
                 <div className="info-box-text">
-                  {fbt(
-                    'Nexus mutual insurance',
-                    'Nexus mutual insurance'
-                  )}
+                  {fbt('Nexus mutual insurance', 'Nexus mutual insurance')}
                 </div>
               </div>
 
-              <div className="d-flex flex-column align-items-center">
+              <div
+                className="info-box-holder d-flex flex-column align-items-center"
+                onClick={() => {
+                  window.open('https://www.insurace.io/', '_blank', 'noopener')
+                }}
+              >
                 <div className="info-box d-flex justify-content-center align-items-center mb-2 mx-3">
-                  {fbt(
-                    'InsurAce image',
-                    'InsurAce image'
-                  )}
+                  <img src={assetRootPath('/images/logos/insureAce.png')} />
                 </div>
                 <div className="info-box-text">
-                  {fbt(
-                    'InsurAce insurance',
-                    'InsurAce insurance'
-                  )}
+                  {fbt('InsurAce insurance', 'InsurAce insurance')}
                 </div>
               </div>
             </div>
@@ -925,9 +922,14 @@ const Home = ({ locale, onLocale }) => {
         .info-box {
           background-color: #eeeeee;
           border-radius: 10px;
-          min-height: 150px;
-          min-width: 150px;
+          min-height: 170px;
+          min-width: 170px;
           color: black;
+        }
+
+        .info-box img {
+          max-width: 150px;
+          max-height: 150px;
         }
 
         .info-box-text {
@@ -935,6 +937,38 @@ const Home = ({ locale, onLocale }) => {
           text-align: center;
         }
 
+        .curve-box {
+          background-color: #a5a4ce;
+        }
+
+        .uniswap-box {
+          background-color: #fd0079;
+        }
+
+        .kucoin-box {
+          background-color: #ffffff;
+        }
+
+        .kucoin-box img {
+          margin: 10px;
+        }
+
+        .info-box-holder {
+          cursor: pointer;
+        }
+
+        .info-box-holder:hover {
+          opacity: 0.7;
+        }
+
+        .trailofbits-box {
+          background-color: #1f2023;
+        }
+
+        .solidified-box {
+          background-color: #242739;
+        }
+        
         @media (min-width: 993px) {
           .w-lg-240 {
             max-width: 240px;

@@ -91,7 +91,10 @@ export default function Footer({ locale }) {
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  {fbt('Originally released by Origin Protocol', 'Originally released by Origin Protocol')}
+                  {fbt(
+                    'Originally released by Origin Protocol',
+                    'Originally released by Origin Protocol'
+                  )}
                 </a>
                 <nav className="nav d-flex">
                   <a

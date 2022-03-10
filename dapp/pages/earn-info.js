@@ -281,31 +281,10 @@ export default function Earn({ locale, onLocale }) {
                   <div className="d-flex flex-column logo align-items-start">
                     <div className="d-flex justify-content-center">
                       <img
-                        className="w-sd-97"
-                        src={assetRootPath('/images/uniswap-logo.svg')}
-                        alt="Uniswap logo"
-                      />
-                    </div>
-                  </div>
-                  <div className="d-flex flex-column logo align-items-start">
-                    <div className="d-flex justify-content-center">
-                      <img
                         className="w-sd-71"
                         src={assetRootPath('/images/curve-logo.svg')}
                         alt="Curve logo"
                       />
-                    </div>
-                  </div>
-                  <div className="d-flex flex-column logo align-items-start">
-                    <div className="d-flex justify-content-center">
-                      <img
-                        className="w-sd-78"
-                        src={assetRootPath('/images/balancer-logo.svg')}
-                        alt="Balancer logo"
-                      />
-                    </div>
-                    <div className="label">
-                      {fbt('Coming Soon', 'Coming Soon')}
                     </div>
                   </div>
                 </div>
@@ -648,7 +627,7 @@ export default function Earn({ locale, onLocale }) {
 
         .w-140 {
           width: 140px;
-          max-width: 140px;  
+          max-width: 140px;
         }
 
         @media (min-width: 993px) {

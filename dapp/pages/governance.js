@@ -12,10 +12,7 @@ export default function Governance({ locale, onLocale }) {
         <Nav locale={locale} onLocale={onLocale} />
         <div className="container d-flex flex-column align-items-center">
           <h1 className="w-lg-520">
-            {fbt(
-              'Decentralized Governance',
-              'Decentralized Governance'
-            )}
+            {fbt('Decentralized Governance', 'Decentralized Governance')}
           </h1>
           <h2 className="w-lg-520">
             {fbt(
@@ -84,18 +81,21 @@ export default function Governance({ locale, onLocale }) {
               )}
             </h5>
             <div className="d-flex justify-content-start">
-              <div className="d-flex flex-column big-info-box col-12 col-md-4 mr-md-4">
-                <div className="inner-info-box d-flex justify-content-center align-items-center">
-                  {fbt(
-                    'Discord image',
-                    'Discord image'
-                  )}
+              <div
+                className="d-flex flex-column big-info-box col-12 col-md-4 mr-md-4"
+                onClick={() => {
+                  window.open(
+                    'https://discord.com/invite/jyxpUSe',
+                    '_blank',
+                    'noopener'
+                  )
+                }}
+              >
+                <div className="inner-info-box discord d-flex justify-content-center align-items-center">
+                  <img src={assetRootPath('/images/logos/discord.jpeg')} />
                 </div>
                 <div className="inner-info-box-title">
-                  {fbt(
-                    'Discord',
-                    'Discord'
-                  )}
+                  {fbt('Discord', 'Discord')}
                 </div>
                 <div className="">
                   {fbt(
@@ -104,18 +104,21 @@ export default function Governance({ locale, onLocale }) {
                   )}
                 </div>
               </div>
-              <div className="d-flex flex-column big-info-box col-12 col-md-4 mr-md-4">
-                <div className="inner-info-box d-flex justify-content-center align-items-center">
-                  {fbt(
-                    'Github image',
-                    'Github image'
-                  )}
+              <div
+                className="d-flex flex-column big-info-box col-12 col-md-4 mr-md-4"
+                onClick={() => {
+                  window.open(
+                    'https://github.com/OriginProtocol/origin-dollar',
+                    '_blank',
+                    'noopener'
+                  )
+                }}
+              >
+                <div className="inner-info-box github d-flex justify-content-center align-items-center">
+                  <img src={assetRootPath('/images/logos/github-logo.svg')} />
                 </div>
                 <div className="inner-info-box-title">
-                  {fbt(
-                    'Github',
-                    'Github'
-                  )}
+                  {fbt('Github', 'Github')}
                 </div>
                 <div className="">
                   {fbt(
@@ -124,18 +127,21 @@ export default function Governance({ locale, onLocale }) {
                   )}
                 </div>
               </div>
-              <div className="d-flex flex-column big-info-box col-12 col-md-4 mr-md-2">
-                <div className="inner-info-box d-flex justify-content-center align-items-center">
-                  {fbt(
-                    'Snapshot image',
-                    'Snapshot image'
-                  )}
+              <div
+                className="d-flex flex-column big-info-box col-12 col-md-4 mr-md-2"
+                onClick={() => {
+                  window.open(
+                    'https://snapshot.org/#/origingov.eth',
+                    '_blank',
+                    'noopener'
+                  )
+                }}
+              >
+                <div className="inner-info-box snapshot d-flex justify-content-center align-items-center">
+                  <img src={assetRootPath('/images/logos/snapshot.jpeg')} />
                 </div>
                 <div className="inner-info-box-title">
-                  {fbt(
-                    'Snapshot',
-                    'Snapshot'
-                  )}
+                  {fbt('Snapshot', 'Snapshot')}
                 </div>
                 <div className="">
                   {fbt(
@@ -331,20 +337,20 @@ export default function Governance({ locale, onLocale }) {
         }
 
         .big-info-box {
-          border: 1px solid #FFFFFF22;
-          background-color: #FFFFFF0A;
+          border: 1px solid #ffffff22;
+          background-color: #ffffff0a;
           border-radius: 10px;
           padding: 20px;
           cursor: pointer;
         }
 
         .big-info-box:hover {
-          border: 1px solid #FFFFFF44;
-          background-color: #FFFFFF22;
+          border: 1px solid #ffffff44;
+          background-color: #ffffff22;
         }
 
         .inner-info-box {
-          background-color: #FFFFFF88;
+          background-color: #ffffff88;
           border-radius: 10px;
           min-height: 150px;
           height: 150px;
@@ -352,6 +358,21 @@ export default function Governance({ locale, onLocale }) {
           width: 150px;
           color: black;
           margin-bottom: 20px;
+        }
+
+        .inner-info-box.snapshot,
+        .inner-info-box.discord {
+          background-color: white;
+        }
+
+        .inner-info-box.github {
+          background-color: black;
+        }
+
+        .inner-info-box img {
+          max-width: 150px;
+          max-height: 150px;
+          padding: 10px;
         }
 
         .inner-info-box-title {
