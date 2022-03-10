@@ -120,14 +120,13 @@ def show_vault_holdings():
     print("----------------------------------------")
 
     print("AAVE:  ", end='')
-    print(c18(aave_strat.checkBalance(DAI))+ ' DAI   ', end='')
-    print(c6(0)+ ' USDC  ', end='')
-    print(c6(aave_strat.checkBalance(USDT))+' USDT')
+    print(c18(aave_strat.checkBalance(DAI))+ ' DAI    ', end='')
+    print(c6(aave_strat.checkBalance(USDC))+ ' USDC   ', end='')
+    print(c6(aave_strat.checkBalance(USDT))+ ' USDT   ')
     print("COMP:  ", end='')
-    strat = comp_strat
-    print(c18(strat.checkBalance(DAI)) + ' DAI   ', end='')
-    print(c6(strat.checkBalance(USDC)) + ' USDC  ', end='')
-    print(c6(strat.checkBalance(USDT)) + ' USDT  ')
+    print(c18(comp_strat.checkBalance(DAI)) + ' DAI   ', end='')
+    print(c6(comp_strat.checkBalance(USDC)) + ' USDC  ', end='')
+    print(c6(comp_strat.checkBalance(USDT)) + ' USDT  ')
     print("Convex:", end='')
     convex_total = convex_strat.checkBalance(DAI) + convex_strat.checkBalance(USDC) * 1e12 + convex_strat.checkBalance(USDT) * 1e12
     convex_pct =  float(convex_total) / float(total) * 100
