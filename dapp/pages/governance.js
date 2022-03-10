@@ -71,7 +71,7 @@ export default function Governance({ locale, onLocale }) {
           </div>
         </div>
       </section>
-      <section className="dark pb-100 work-in-progress">
+      <section className="dark pb-100 work-in-progress px-0">
         <div className="container">
           <div className="text-container d-flex flex-column align-items-start">
             <h5 className="mb-5">
@@ -80,7 +80,7 @@ export default function Governance({ locale, onLocale }) {
                 'Help shape the future of OUSD'
               )}
             </h5>
-            <div className="d-flex justify-content-start">
+            <div className="d-flex justify-content-start flex-column flex-md-row">
               <div
                 className="d-flex flex-column big-info-box col-12 col-md-4 mr-md-4"
                 onClick={() => {
@@ -420,6 +420,10 @@ export default function Governance({ locale, onLocale }) {
             justify-content: center;
             height: 56px;
             margin: 30px auto 30px;
+          }
+
+          .big-info-box {
+            margin-bottom: 40px;
           }
         }
 

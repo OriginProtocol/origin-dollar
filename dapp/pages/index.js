@@ -1154,6 +1154,10 @@ const Home = ({ locale, onLocale }) => {
             margin-right: 0px;
             margin-left: 0px;
           }
+
+          .info-box-holder {
+            margin-bottom: 40px;
+          }
         }
 
         @keyframes circle-grow {
