@@ -1,5 +1,4 @@
 import { fbt } from 'fbt-runtime'
-import Link from 'next/link'
 
 import analytics from 'utils/analytics'
 import { getDocsLink } from 'utils/getDocsLink'
@@ -25,7 +24,9 @@ export default function Footer({ onLocale, locale, dapp }) {
                   rel="noopener noreferrer"
                   className="nav-link"
                   onClick={() => {
-                    analytics.track('Analytics Link click')
+                    analytics.track('To Analytics', {
+                      category: 'navigation',
+                    })
                   }}
                 >
                   {fbt('Analytics', 'Analytics link')}
@@ -36,7 +37,9 @@ export default function Footer({ onLocale, locale, dapp }) {
                   rel="noopener noreferrer"
                   className="nav-link"
                   onClick={() => {
-                    analytics.track('Jobs Link click')
+                    analytics.track('To Jobs', {
+                      category: 'navigation',
+                    })
                   }}
                 >
                   {fbt('Jobs', 'Jobs link')}
@@ -47,7 +50,9 @@ export default function Footer({ onLocale, locale, dapp }) {
                   rel="noopener noreferrer"
                   className="nav-link"
                   onClick={() => {
-                    analytics.track('Docs Link click')
+                    analytics.track('To Docs', {
+                      category: 'navigation',
+                    })
                   }}
                 >
                   {fbt('Docs', 'Documentation link')}
@@ -58,7 +63,9 @@ export default function Footer({ onLocale, locale, dapp }) {
                   rel="noopener noreferrer"
                   className="nav-link"
                   onClick={() => {
-                    analytics.track('Terms Link click')
+                    analytics.track('To Terms', {
+                      category: 'navigation',
+                    })
                   }}
                 >
                   {fbt('Terms', 'Terms link')}
@@ -69,7 +76,9 @@ export default function Footer({ onLocale, locale, dapp }) {
                   rel="noopener noreferrer"
                   className="nav-link"
                   onClick={() => {
-                    analytics.track('Privacy Link click')
+                    analytics.track('To Privacy', {
+                      category: 'navigation',
+                    })
                   }}
                 >
                   {fbt('Privacy', 'Privacy link')}
@@ -80,7 +89,9 @@ export default function Footer({ onLocale, locale, dapp }) {
                   rel="noopener noreferrer"
                   className="nav-link"
                   onClick={() => {
-                    analytics.track('Help Link click')
+                    analytics.track('To Help', {
+                      category: 'navigation',
+                    })
                   }}
                 >
                   {fbt('Help', 'Help link')}

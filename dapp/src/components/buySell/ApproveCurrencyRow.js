@@ -1,17 +1,22 @@
 import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
+import { useWeb3React } from '@web3-react/core'
 import { useStoreState } from 'pullstate'
 import { ethers } from 'ethers'
+import { get } from 'lodash'
 
 import AccountStore from 'stores/AccountStore'
 import withRpcProvider from 'hoc/withRpcProvider'
 import ContractStore from 'stores/ContractStore'
-
 import analytics from 'utils/analytics'
+import { connectorNameIconMap, getConnectorIcon } from 'utils/connectors'
+import { assetRootPath } from 'utils/image'
 
 const ApproveCurrencyRow = ({
   coin,
+  contractToApprove,
   isLast,
+  swapMetadata,
   storeTransaction,
   storeTransactionError,
   rpcProvider,
@@ -22,11 +27,32 @@ const ApproveCurrencyRow = ({
   //approve, waiting-user, waiting-network, done
   const [stage, setStage] = useState(isApproved ? 'done' : 'approve')
   const [contract, setContract] = useState(null)
-  const connectorIcon = useStoreState(AccountStore, (s) => s.connectorIcon)
-  const { vault, usdt, dai, usdc } = useStoreState(
-    ContractStore,
-    (s) => s.contracts || {}
-  )
+  const connectorName = useStoreState(AccountStore, (s) => s.connectorName)
+  const connectorIcon = getConnectorIcon(connectorName)
+  const web3react = useWeb3React()
+  const { library, account } = web3react
+
+  const {
+    vault,
+    flipper,
+    uniV3SwapRouter,
+    uniV2Router,
+    sushiRouter,
+    curveOUSDMetaPool,
+    usdt,
+    dai,
+    usdc,
+    ousd,
+  } = useStoreState(ContractStore, (s) => s.contracts || {})
+
+  const contractMap = {
+    vault: vault,
+    flipper: flipper,
+    uniswap: uniV3SwapRouter,
+    curve: curveOUSDMetaPool,
+    uniswapV2: uniV2Router,
+    sushiswap: sushiRouter,
+  }
 
   useEffect(() => {
     if (coin === 'dai') {
@@ -35,6 +61,8 @@ const ApproveCurrencyRow = ({
       setContract(usdt)
     } else if (coin === 'usdc') {
       setContract(usdc)
+    } else if (coin === 'ousd') {
+      setContract(ousd)
     }
   }, [])
 
@@ -45,7 +73,10 @@ const ApproveCurrencyRow = ({
           isLast ? 'last' : ''
         }`}
       >
-        <img className="icon" src={`/images/currency/${coin}-icon-small.svg`} />
+        <img
+          className="icon"
+          src={assetRootPath(`/images/currency/${coin}-icon-small.svg`)}
+        />
         {stage === 'approve' && (
           <>
             {fbt(
@@ -55,21 +86,27 @@ const ApproveCurrencyRow = ({
             <a
               className="blue-btn d-flex align-items-center justify-content-center"
               onClick={async (e) => {
-                analytics.track('Approve clicked', {
-                  coin,
+                analytics.track('On Approve Coin', {
+                  category: 'swap',
+                  label: swapMetadata.coinGiven,
+                  value: parseInt(swapMetadata.swapAmount),
                 })
                 setStage('waiting-user')
                 try {
                   const maximum = ethers.constants.MaxUint256
-                  const result = await contract.approve(vault.address, maximum)
+                  const result = await contract
+                    .connect(library.getSigner(account))
+                    .approve(contractMap[contractToApprove].address, maximum)
                   storeTransaction(result, 'approve', coin)
                   setStage('waiting-network')
 
                   const receipt = await rpcProvider.waitForTransaction(
                     result.hash
                   )
-                  analytics.track('Approval succeeded', {
-                    coin,
+                  analytics.track('Approval Successful', {
+                    category: 'swap',
+                    label: swapMetadata.coinGiven,
+                    value: parseInt(swapMetadata.swapAmount),
                   })
                   if (onApproved) {
                     onApproved()
@@ -77,12 +114,20 @@ const ApproveCurrencyRow = ({
                   setStage('done')
                 } catch (e) {
                   onMintingError(e)
-                  storeTransactionError('approve', coin)
                   console.error('Exception happened: ', e)
                   setStage('approve')
-                  analytics.track('Approval failed', {
-                    coin,
-                  })
+
+                  if (e.code !== 4001) {
+                    await storeTransactionError('approve', coin)
+                    analytics.track(`Approval failed`, {
+                      category: 'swap',
+                      label: e.message,
+                    })
+                  } else {
+                    analytics.track(`Approval canceled`, {
+                      category: 'swap',
+                    })
+                  }
                 }
               }}
             >
@@ -98,7 +143,7 @@ const ApproveCurrencyRow = ({
             )}
             <img
               className="waiting-icon ml-auto"
-              src={`/images/${connectorIcon}`}
+              src={assetRootPath(`/images/${connectorIcon}`)}
             />
           </>
         )}
@@ -110,7 +155,7 @@ const ApproveCurrencyRow = ({
             )}
             <img
               className="waiting-icon rotating ml-auto"
-              src="/images/spinner-green-small.png"
+              src={assetRootPath('/images/spinner-green-small.png')}
             />
           </>
         )}
@@ -122,7 +167,7 @@ const ApproveCurrencyRow = ({
             )}
             <img
               className="waiting-icon ml-auto"
-              src="/images/green-check.svg"
+              src={assetRootPath('/images/green-check.svg')}
             />
           </>
         )}

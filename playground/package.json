@@ -17,8 +17,8 @@
   },
   "dependencies": {
     "@rollup/plugin-json": "^4.1.0",
-    "ethers": "^5.0.8",
-    "sirv-cli": "^1.0.0",
-    "underscore": "^1.10.2"
+    "ethers": "^5.4.7",
+    "sirv-cli": "^1.0.14",
+    "underscore": "^1.12.1"
   }
 }

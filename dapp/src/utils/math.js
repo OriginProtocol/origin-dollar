@@ -26,6 +26,24 @@ export function formatCurrencyConditional(
   })
 }
 
+export function formatCurrencyAbbreviated(num, decimalDigits) {
+  const lookup = [
+    { value: 1, symbol: '' },
+    { value: 1e3, symbol: 'k' },
+    { value: 1e6, symbol: 'M' },
+  ]
+  const rx = /\.0+$|(\.[0-9]*[1-9])0+$/
+  var item = lookup
+    .slice()
+    .reverse()
+    .find(function (item) {
+      return num >= item.value
+    })
+  return item
+    ? (num / item.value).toFixed(decimalDigits).replace(rx, '$1') + item.symbol
+    : '0'
+}
+
 export function formatCurrency(value, decimals, truncate = true) {
   // avoid false formatting of e - notated numbers
   if (value < Math.pow(10, decimals * -1)) {
@@ -97,6 +115,45 @@ export async function displayCurrency(balance, contract) {
   return ethers.utils.formatUnits(balance, await contract.decimals())
 }
 
+export function calculateSwapAmounts(
+  rawInputAmount,
+  decimals,
+  priceToleranceValue
+) {
+  const floatAmount = parseFloat(rawInputAmount)
+  if (Number.isNaN(floatAmount)) {
+    return {}
+  }
+
+  const safeFromUnderflowRawAmount = truncateDecimals(rawInputAmount, decimals)
+
+  const swapAmount = ethers.utils.parseUnits(
+    safeFromUnderflowRawAmount.toString(),
+    decimals
+  )
+
+  const selectedCoinAmountWithTolerance =
+    Math.floor(
+      (floatAmount -
+        floatAmount * (priceToleranceValue ? priceToleranceValue / 100 : 0)) *
+        100
+    ) / 100
+
+  const minSwapAmount = ethers.utils.parseUnits(
+    selectedCoinAmountWithTolerance.toString(),
+    decimals
+  )
+
+  return {
+    swapAmount,
+    minSwapAmount,
+  }
+}
+
+export function removeCommas(value) {
+  return value.toString().replace(/,/g, '')
+}
+
 export function checkValidInputForCoin(amount, coin) {
   if (amount === '') {
     amount = '0.00'
@@ -111,6 +168,9 @@ export function checkValidInputForCoin(amount, coin) {
       break
     case 'usdt':
       decimals = 6
+      break
+    case 'ousd':
+      decimals = 18
       break
     case 'dai':
       decimals = 18

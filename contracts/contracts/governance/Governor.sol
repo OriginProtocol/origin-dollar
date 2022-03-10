@@ -1,5 +1,5 @@
-pragma solidity 0.5.11;
-pragma experimental ABIEncoderV2;
+// SPDX-License-Identifier: agpl-3.0
+pragma solidity ^0.8.0;
 
 import "./../timelock/Timelock.sol";
 
@@ -49,15 +49,17 @@ contract Governor is Timelock {
     // @notice An event emitted when a proposal has been cancelled
     event ProposalCancelled(uint256 id);
 
-    uint256 public constant MAX_OPERATIONS = 16;
+    uint256 public constant MAX_OPERATIONS = 32;
 
     // @notice Possible states that a proposal may be in
-    enum ProposalState { Pending, Queued, Expired, Executed }
+    enum ProposalState {
+        Pending,
+        Queued,
+        Expired,
+        Executed
+    }
 
-    constructor(address admin_, uint256 delay_)
-        public
-        Timelock(admin_, delay_)
-    {}
+    constructor(address admin_, uint256 delay_) Timelock(admin_, delay_) {}
 
     /**
      * @notice Propose Governance call(s)
@@ -120,7 +122,7 @@ contract Governor is Timelock {
             "Governor::queue: proposal can only be queued if it is pending"
         );
         Proposal storage proposal = proposals[proposalId];
-        proposal.eta = block.timestamp.add(delay);
+        proposal.eta = block.timestamp + delay;
 
         for (uint256 i = 0; i < proposal.targets.length; i++) {
             _queueOrRevert(
@@ -149,7 +151,7 @@ contract Governor is Timelock {
             return ProposalState.Executed;
         } else if (proposal.eta == 0) {
             return ProposalState.Pending;
-        } else if (block.timestamp >= proposal.eta.add(GRACE_PERIOD)) {
+        } else if (block.timestamp >= proposal.eta + GRACE_PERIOD) {
             return ProposalState.Expired;
         } else {
             return ProposalState.Queued;
@@ -163,9 +165,9 @@ contract Governor is Timelock {
         uint256 eta
     ) internal {
         require(
-            !queuedTransactions[keccak256(
-                abi.encode(target, signature, keccak256(data), eta)
-            )],
+            !queuedTransactions[
+                keccak256(abi.encode(target, signature, keccak256(data), eta))
+            ],
             "Governor::_queueOrRevert: proposal action already queued at eta"
         );
         require(

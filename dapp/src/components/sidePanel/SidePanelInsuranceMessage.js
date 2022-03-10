@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
 import Link from 'next/link'
+import { assetRootPath } from 'utils/image'
 
 const SidePanelInsuranceMessage = () => {
   const [show, setShow] = useState(true)
@@ -25,7 +26,10 @@ const SidePanelInsuranceMessage = () => {
           >
             ×
           </a>
-          <img className="insurance-icon" src="/images/ousd-shield-icon.svg" />
+          <img
+            className="insurance-icon"
+            src={assetRootPath('/images/ousd-shield-icon.svg')}
+          />
           <div>
             {fbt(
               'Get optional smart contract insurance for your OUSD',

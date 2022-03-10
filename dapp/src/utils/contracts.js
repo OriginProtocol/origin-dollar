@@ -16,31 +16,95 @@ import usdtAbi from 'constants/mainnetAbi/usdt.json'
 import usdcAbi from 'constants/mainnetAbi/cUsdc.json'
 import daiAbi from 'constants/mainnetAbi/dai.json'
 import ognAbi from 'constants/mainnetAbi/ogn.json'
+import flipperAbi from 'constants/mainnetAbi/flipper.json'
 
-export async function setupContracts(account, library, chainId) {
-  // without an account logged in contracts are initialized with JsonRpcProvider and
-  // can operate in a read-only mode
-  const jsonRpcProvider = new ethers.providers.JsonRpcProvider(
+const curveFactoryMiniAbi = [
+  {
+    stateMutability: 'view',
+    type: 'function',
+    name: 'get_underlying_coins',
+    inputs: [
+      {
+        name: '_pool',
+        type: 'address',
+      },
+    ],
+    outputs: [
+      {
+        name: '',
+        type: 'address[8]',
+      },
+    ],
+  },
+]
+
+const curveMetapoolMiniAbi = [
+  {
+    name: 'exchange_underlying',
+    outputs: [
+      {
+        type: 'uint256',
+        name: '',
+      },
+    ],
+    inputs: [
+      {
+        type: 'int128',
+        name: 'i',
+      },
+      {
+        type: 'int128',
+        name: 'j',
+      },
+      {
+        type: 'uint256',
+        name: 'dx',
+      },
+      {
+        type: 'uint256',
+        name: 'min_dy',
+      },
+    ],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+]
+
+/* fetchId - used to prevent race conditions.
+ * Sometimes "setupContracts" is called twice with very little time in between and it can happen
+ * that the call issued first (for example with not yet signed in account) finishes after the second
+ * call. We must make sure that previous calls to setupContracts don't override later calls Stores
+ */
+export async function setupContracts(account, library, chainId, fetchId) {
+  /* Using StaticJsonRpcProvider instead of JsonRpcProvider so it doesn't constantly query
+   * the network for the current chainId. In case chainId changes, we rerun setupContracts
+   * anyway. And StaticJsonRpcProvider also prevents "detected network changed" errors when
+   * running node in forked mode.
+   */
+  const jsonRpcProvider = new ethers.providers.StaticJsonRpcProvider(
     process.env.ETHEREUM_RPC_PROVIDER,
     { chainId: parseInt(process.env.ETHEREUM_RPC_CHAIN_ID) }
   )
 
   let provider = jsonRpcProvider
 
-  let walletConnected = false
-
-  // if web3 account signed in change the dapp's "general provider" with the user's web3 provider
-  if (account && library) {
-    walletConnected = true
-    provider = library.getSigner(account)
-  }
+  let walletConnected = account && library
 
   const getContract = (address, abi, overrideProvider) => {
-    return new ethers.Contract(
-      address,
-      abi,
-      overrideProvider ? overrideProvider : provider
-    )
+    try {
+      return new ethers.Contract(
+        address,
+        abi,
+        overrideProvider ? overrideProvider : provider
+      )
+    } catch (e) {
+      console.error(
+        `Error creating contract in [getContract] with address:${address} abi:${JSON.stringify(
+          abi
+        )}`
+      )
+      throw e
+    }
   }
 
   let network
@@ -59,11 +123,18 @@ export async function setupContracts(account, library, chainId) {
       ? network.contracts[`${key}Proxy`].address
       : network.contracts[key].address
 
-    contracts[key] = new ethers.Contract(
-      address,
-      network.contracts[key].abi,
-      library ? library.getSigner(account) : null
-    )
+    try {
+      contracts[key] = new ethers.Contract(
+        address,
+        network.contracts[key].abi,
+        null
+      )
+    } catch (e) {
+      console.error(
+        `Error creating contract in [setup] with address:${address} name:${key}`
+      )
+      throw e
+    }
   }
 
   const ousdProxy = contracts['OUSDProxy']
@@ -86,6 +157,7 @@ export async function setupContracts(account, library, chainId) {
     ousd,
     vault,
     ogn,
+    flipper,
     uniV2OusdUsdt,
     uniV2OusdUsdt_iErc20,
     uniV2OusdUsdt_iUniPair,
@@ -95,19 +167,38 @@ export async function setupContracts(account, library, chainId) {
     uniV2OusdDai,
     uniV2OusdDai_iErc20,
     uniV2OusdDai_iUniPair,
+    uniV3OusdUsdt,
+    uniV3DaiUsdt,
+    uniV3UsdcUsdt,
+    uniV3NonfungiblePositionManager,
+    uniV3SwapRouter,
+    uniV2Router,
+    sushiRouter,
+    uniV3SwapQuoter,
     liquidityOusdUsdt,
     liquidityOusdUsdc,
     liquidityOusdDai,
     ognStaking,
     ognStakingView,
-    compensation
+    compensation,
+    chainlinkEthAggregator,
+    chainlinkFastGasAggregator,
+    curveAddressProvider
 
   let iVaultJson,
     liquidityRewardJson,
     iErc20Json,
     iUniPairJson,
+    uniV3PoolJson,
+    uniV3FactoryJson,
+    uniV3NonfungiblePositionManagerJson,
+    uniV3SwapRouterJson,
+    uniV2SwapRouterJson,
+    uniV3SwapQuoterJson,
     singleAssetStakingJson,
-    compensationClaimsJson
+    compensationClaimsJson,
+    chainlinkAggregatorV3Json,
+    curveAddressProviderJson
 
   try {
     iVaultJson = require('../../abis/IVault.json')
@@ -116,6 +207,14 @@ export async function setupContracts(account, library, chainId) {
     iUniPairJson = require('../../abis/IUniswapV2Pair.json')
     singleAssetStakingJson = require('../../abis/SingleAssetStaking.json')
     compensationClaimsJson = require('../../abis/CompensationClaims.json')
+    uniV3PoolJson = require('../../abis/UniswapV3Pool.json')
+    uniV3FactoryJson = require('../../abis/UniswapV3Factory.json')
+    uniV3NonfungiblePositionManagerJson = require('../../abis/UniswapV3NonfungiblePositionManager.json')
+    uniV3SwapRouterJson = require('../../abis/UniswapV3SwapRouter.json')
+    uniV2SwapRouterJson = require('../../abis/UniswapV2Router.json')
+    uniV3SwapQuoterJson = require('../../abis/UniswapV3Quoter.json')
+    chainlinkAggregatorV3Json = require('../../abis/ChainlinkAggregatorV3Interface.json')
+    curveAddressProviderJson = require('../../abis/CurveAddressProvider.json')
   } catch (e) {
     console.error(`Can not find contract artifact file: `, e)
   }
@@ -145,34 +244,60 @@ export async function setupContracts(account, library, chainId) {
   )
 
   ousd = getContract(ousdProxy.address, network.contracts['OUSD'].abi)
-  if (chainId == 31337) {
-    usdt = contracts['MockUSDT']
-    usdc = contracts['MockUSDC']
-    dai = contracts['MockDAI']
-    ogn = contracts['MockOGN']
-    uniV2OusdUsdt = contracts['MockUniswapPairOUSD_USDT']
-    uniV2OusdUsdc = contracts['MockUniswapPairOUSD_USDC']
-    uniV2OusdDai = contracts['MockUniswapPairOUSD_DAI']
-    compensation = contracts['CompensationClaims']
-  } else {
-    usdt = getContract(addresses.mainnet.USDT, usdtAbi.abi)
-    usdc = getContract(addresses.mainnet.USDC, usdcAbi.abi)
-    dai = getContract(addresses.mainnet.DAI, daiAbi.abi)
-    ogn = getContract(addresses.mainnet.OGN, ognAbi)
+  usdt = getContract(addresses.mainnet.USDT, usdtAbi.abi)
+  usdc = getContract(addresses.mainnet.USDC, usdcAbi.abi)
+  dai = getContract(addresses.mainnet.DAI, daiAbi.abi)
+  ogn = getContract(addresses.mainnet.OGN, ognAbi)
+  flipper = getContract(addresses.mainnet.Flipper, flipperAbi)
 
-    if (process.env.ENABLE_LIQUIDITY_MINING === 'true') {
-      uniV2OusdUsdt = null
-      uniV2OusdUsdc = null
-      uniV2OusdDai = null
-      throw new Error(
-        'uniV2OusdUsdt, uniV2OusdUsdc, uniV2OusdDai mainnet address is missing'
-      )
-    }
-    compensation = getContract(
-      addresses.mainnet.CompensationClaims,
-      compensationClaimsJson.abi
+  uniV3OusdUsdt = getContract(
+    addresses.mainnet.uniswapV3OUSD_USDT,
+    uniV3PoolJson.abi
+  )
+  uniV3SwapRouter = getContract(
+    addresses.mainnet.uniswapV3Router,
+    uniV3SwapRouterJson.abi
+  )
+  uniV3SwapQuoter = getContract(
+    addresses.mainnet.uniswapV3Quoter,
+    uniV3SwapQuoterJson.abi
+  )
+  uniV2Router = getContract(
+    addresses.mainnet.uniswapV2Router,
+    uniV2SwapRouterJson.abi
+  )
+  sushiRouter = getContract(
+    addresses.mainnet.sushiSwapRouter,
+    uniV2SwapRouterJson.abi
+  )
+  chainlinkEthAggregator = getContract(
+    addresses.mainnet.chainlinkETH_USD,
+    chainlinkAggregatorV3Json.abi
+  )
+
+  chainlinkFastGasAggregator = getContract(
+    addresses.mainnet.chainlinkFAST_GAS,
+    chainlinkAggregatorV3Json.abi
+  )
+
+  curveAddressProvider = getContract(
+    addresses.mainnet.CurveAddressProvider,
+    curveAddressProviderJson.abi
+  )
+
+  if (process.env.ENABLE_LIQUIDITY_MINING === 'true') {
+    uniV2OusdUsdt = null
+    uniV2OusdUsdc = null
+    uniV2OusdDai = null
+    throw new Error(
+      'uniV2OusdUsdt, uniV2OusdUsdc, uniV2OusdDai mainnet address is missing'
     )
   }
+
+  compensation = getContract(
+    addresses.mainnet.CompensationClaims,
+    compensationClaimsJson.abi
+  )
 
   if (process.env.ENABLE_LIQUIDITY_MINING === 'true') {
     uniV2OusdUsdt_iErc20 = getContract(uniV2OusdUsdt.address, iErc20Json.abi)
@@ -250,7 +375,7 @@ export async function setupContracts(account, library, chainId) {
         })
       }
     } catch (err) {
-      console.error('Failed to fetch APY', err)
+      console.error('Failed to fetch OGN token statistics', err)
     }
   }
 
@@ -312,6 +437,14 @@ export async function setupContracts(account, library, chainId) {
 
   callWithDelay()
 
+  const [curveRegistryExchange, curveOUSDMetaPool, curveUnderlyingCoins] =
+    await setupCurve(curveAddressProvider, getContract, chainId)
+
+  if (ContractStore.currentState.fetchId > fetchId) {
+    console.log('Contracts already setup with newer fetchId. Exiting...')
+    return
+  }
+
   if (window.fetchInterval) {
     clearInterval(fetchInterval)
   }
@@ -340,26 +473,90 @@ export async function setupContracts(account, library, chainId) {
     uniV2OusdDai,
     uniV2OusdDai_iErc20,
     uniV2OusdDai_iUniPair,
+    uniV3OusdUsdt,
+    uniV3DaiUsdt,
+    uniV3UsdcUsdt,
+    uniV3SwapRouter,
+    uniV3SwapQuoter,
+    uniV2Router,
+    sushiRouter,
+    uniV3NonfungiblePositionManager,
     liquidityOusdUsdt,
     liquidityOusdUsdc,
     liquidityOusdDai,
     ognStaking,
     ognStakingView,
     compensation,
+    flipper,
+    chainlinkEthAggregator,
+    chainlinkFastGasAggregator,
+    curveAddressProvider,
+    curveRegistryExchange,
+    curveOUSDMetaPool,
+  }
+
+  const coinInfoList = {
+    usdt: {
+      contract: usdt,
+      decimals: 6,
+    },
+    usdc: {
+      contract: usdc,
+      decimals: 6,
+    },
+    dai: {
+      contract: dai,
+      decimals: 18,
+    },
+    ousd: {
+      contract: ousd,
+      decimals: 18,
+    },
   }
 
   ContractStore.update((s) => {
     s.contracts = contractsToExport
+    s.coinInfoList = coinInfoList
+    s.walletConnected = walletConnected
+    s.chainId = chainId
+    s.readOnlyProvider = jsonRpcProvider
+    s.curveMetapoolUnderlyingCoins = curveUnderlyingCoins
+    s.fetchId = fetchId
   })
 
   if (process.env.ENABLE_LIQUIDITY_MINING === 'true') {
-    await setupPools(account, contractsToExport)
+    await setupPools(contractsToExport)
   }
 
   await setupStakes(contractsToExport)
   await afterSetup(contractsToExport)
 
   return contractsToExport
+}
+
+// calls to be executed only once after setup
+const setupCurve = async (curveAddressProvider, getContract, chainId) => {
+  const registryExchangeAddress = await curveAddressProvider.get_address(2)
+  const registryExchangeJson = require('../../abis/CurveRegistryExchange.json')
+
+  const factoryAddress = await curveAddressProvider.get_address(3)
+  const factory = getContract(factoryAddress, curveFactoryMiniAbi)
+  const curveUnderlyingCoins = (
+    await factory.get_underlying_coins(addresses.mainnet.CurveOUSDMetaPool)
+  ).map((address) => address.toLowerCase())
+
+  const curveOUSDMetaPool = getContract(
+    addresses.mainnet.CurveOUSDMetaPool,
+    curveMetapoolMiniAbi
+  )
+
+  return [
+    getContract(registryExchangeAddress, registryExchangeJson.abi),
+    curveOUSDMetaPool,
+    curveUnderlyingCoins,
+  ]
+
+  return []
 }
 
 // calls to be executed only once after setup
@@ -403,7 +600,7 @@ const setupStakes = async (contractsToExport) => {
   }
 }
 
-const setupPools = async (account, contractsToExport) => {
+const setupPools = async (contractsToExport) => {
   try {
     const enrichedPools = await Promise.all(
       pools.map(async (pool) => {
@@ -416,15 +613,13 @@ const setupPools = async (account, contractsToExport) => {
           contractsToExport[pool.lp_contract_variable_name_ierc20]
 
         if (pool.lp_contract_type === 'uniswap-v2') {
-          ;[
-            coin1Address,
-            coin2Address,
-            poolLpTokenBalance,
-          ] = await Promise.all([
-            await lpContract_uniPair.token0(),
-            await lpContract_uniPair.token1(),
-            await lpContract_ierc20.balanceOf(poolContract.address),
-          ])
+          ;[coin1Address, coin2Address, poolLpTokenBalance] = await Promise.all(
+            [
+              await lpContract_uniPair.token0(),
+              await lpContract_uniPair.token1(),
+              await lpContract_ierc20.balanceOf(poolContract.address),
+            ]
+          )
         }
 
         return {

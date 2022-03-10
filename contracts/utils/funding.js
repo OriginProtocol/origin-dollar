@@ -17,6 +17,56 @@ const {
   isFork,
 } = require("../test/helpers");
 
+/* Used for funding accounts in forked mode. Find the holder that has the most ETH or ERC20 token amounts.
+ * param contract: address of ERC20 token. If null the account with the most ETH shall be returned
+ *
+ * returns signer object of the most appropriate token/ETH holder
+ */
+const findBestMainnetTokenHolder = async (contract, hre) => {
+  const binanceAddresses = addresses.mainnet.BinanceAll.split(",");
+  const { isFork } = require("../test/helpers");
+
+  const binanceSigners = await Promise.all(
+    binanceAddresses.map((binanceAddress) => {
+      return hre.ethers.provider.getSigner(binanceAddress);
+    })
+  );
+
+  if (isFork) {
+    await Promise.all(
+      binanceAddresses.map(async (binanceAddress) => {
+        return hre.network.provider.request({
+          method: "hardhat_impersonateAccount",
+          params: [binanceAddress],
+        });
+      })
+    );
+  }
+
+  let balances = await Promise.all(
+    binanceSigners.map(async (binanceSigner) => {
+      if (!contract) {
+        return await hre.ethers.provider.getBalance(binanceSigner._address);
+      }
+
+      return await contract
+        .connect(binanceSigner)
+        .balanceOf(binanceSigner._address);
+    })
+  );
+
+  let largestBalance = balances[0];
+  let largestBalanceIndex = 0;
+  for (let i = 0; i < balances.length; i++) {
+    if (balances[i].gte(largestBalance)) {
+      largestBalance = balances[i];
+      largestBalanceIndex = i;
+    }
+  }
+
+  return binanceSigners[largestBalanceIndex];
+};
+
 const fundAccounts = async () => {
   let usdt, dai, tusd, usdc, nonStandardToken;
   if (isFork) {
@@ -86,4 +136,7 @@ const fundAccounts = async () => {
   }
 };
 
-module.exports = fundAccounts;
+module.exports = {
+  fundAccounts,
+  findBestMainnetTokenHolder,
+};

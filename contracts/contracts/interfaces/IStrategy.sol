@@ -1,4 +1,5 @@
-pragma solidity 0.5.11;
+// SPDX-License-Identifier: agpl-3.0
+pragma solidity ^0.8.0;
 
 /**
  * @title Platform interface to integrate with lending platform like Compound, AAVE etc.
@@ -47,16 +48,10 @@ interface IStrategy {
     /**
      * @dev Collect reward tokens from the Strategy.
      */
-    function collectRewardToken() external;
+    function collectRewardTokens() external;
 
     /**
-     * @dev The address of the reward token for the Strategy.
+     * @dev The address array of the reward tokens for the Strategy.
      */
-    function rewardTokenAddress() external pure returns (address);
-
-    /**
-     * @dev The threshold (denominated in the reward token) over which the
-     * vault will auto harvest on allocate calls.
-     */
-    function rewardLiquidationThreshold() external pure returns (uint256);
+    function getRewardTokenAddresses() external view returns (address[] memory);
 }

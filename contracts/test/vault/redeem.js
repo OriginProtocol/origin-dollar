@@ -1,3 +1,5 @@
+const { BigNumber } = require("ethers");
+
 const { defaultFixture } = require("../_fixture");
 const { expect } = require("chai");
 
@@ -395,16 +397,8 @@ describe("Vault Redeem", function () {
   });
 
   it("Should have redeemAll result in zero balance", async () => {
-    const {
-      ousd,
-      vault,
-      usdc,
-      dai,
-      anna,
-      governor,
-      josh,
-      matt,
-    } = await loadFixture(defaultFixture);
+    const { ousd, vault, usdc, dai, anna, governor, josh, matt } =
+      await loadFixture(defaultFixture);
 
     await expect(anna).has.a.balanceOf("1000", usdc);
     await expect(anna).has.a.balanceOf("1000", dai);
@@ -462,5 +456,33 @@ describe("Vault Redeem", function () {
     await expect(
       vault.connect(anna).redeemAll(ousdUnits("51"))
     ).to.be.revertedWith("Redeem amount lower than minimum");
+  });
+
+  it("Should calculate redeem outputs", async () => {
+    const { vault, anna, usdc, ousd } = await loadFixture(defaultFixture);
+
+    // OUSD total supply is 200 backed by 200 DAI
+    await expect(
+      await vault.calculateRedeemOutputs(ousdUnits("50"))
+    ).to.deep.equal([
+      daiUnits("50"), // DAI
+      BigNumber.from(0), // USDT
+      BigNumber.from(0), // USDC
+      BigNumber.from(0), // TUSD
+    ]);
+
+    // Mint an additional 600 USDC, so OUSD is backed by 600 USDC and 200 DAI
+    // meaning 1/4 of any redeem should come from DAI and 2/3 from USDC
+    await usdc.connect(anna).approve(vault.address, usdcUnits("600"));
+    await vault.connect(anna).mint(usdc.address, usdcUnits("600"), 0);
+    await expect(anna).has.a.balanceOf("600", ousd);
+    await expect(
+      await vault.calculateRedeemOutputs(ousdUnits("100"))
+    ).to.deep.equal([
+      daiUnits("25"), // DAI
+      BigNumber.from(0), // USDT
+      usdcUnits("75"), // USDC
+      BigNumber.from(0), // TUSD
+    ]);
   });
 });

@@ -1,5 +1,31 @@
 const { parseUnits } = require("ethers").utils;
 const { isMainnetOrRinkebyOrFork } = require("../test/helpers");
+const { threeCRVPid } = require("../utils/constants");
+
+const {
+  abi: FACTORY_ABI,
+  bytecode: FACTORY_BYTECODE,
+} = require("@uniswap/v3-core/artifacts/contracts/UniswapV3Factory.sol/UniswapV3Factory.json");
+
+const {
+  abi: ROUTER_ABI,
+  bytecode: ROUTER_BYTECODE,
+} = require("@uniswap/v3-periphery/artifacts/contracts/SwapRouter.sol/SwapRouter.json");
+
+const {
+  abi: MANAGER_ABI,
+  bytecode: MANAGER_BYTECODE,
+} = require("@uniswap/v3-periphery/artifacts/contracts/NonfungiblePositionManager.sol/NonfungiblePositionManager.json");
+
+const {
+  abi: TOKEN_DESCRIPTOR_ABI,
+  bytecode: TOKEN_DESCRIPTOR_BYTECODE,
+} = require("@uniswap/v3-periphery/artifacts/contracts/NonfungibleTokenPositionDescriptor.sol/NonfungibleTokenPositionDescriptor.json");
+
+const {
+  abi: QUOTER_ABI,
+  bytecode: QUOTER_BYTECODE,
+} = require("@uniswap/v3-periphery/artifacts/contracts/lens/Quoter.sol/Quoter.json");
 
 const deployMocks = async ({ getNamedAccounts, deployments }) => {
   const { deploy } = deployments;
@@ -71,8 +97,6 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     from: governorAddr,
   });
 
-  // Deploy mock uniswap pair oracles.
-  const weth = await ethers.getContract("MockWETH");
   const dai = await ethers.getContract("MockDAI");
   const usdc = await ethers.getContract("MockUSDC");
   const usdt = await ethers.getContract("MockUSDT");
@@ -131,10 +155,40 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     contract: "MockChainlinkOracleFeed",
     args: [parseUnits("1", 8).toString(), 18], // 1 TUSD = 1 USD, 8 digits decimal.
   });
+  await deploy("MockChainlinkOracleFeedCOMP", {
+    from: deployerAddr,
+    contract: "MockChainlinkOracleFeed",
+    args: [parseUnits("1", 8).toString(), 18], // 1 COMP = 1 USD, 8 digits decimal.
+  });
+  await deploy("MockChainlinkOracleFeedAAVE", {
+    from: deployerAddr,
+    contract: "MockChainlinkOracleFeed",
+    args: [parseUnits("1", 8).toString(), 18], // 1 AAVE = 1 USD, 8 digits decimal.
+  });
+  await deploy("MockChainlinkOracleFeedCRV", {
+    from: deployerAddr,
+    contract: "MockChainlinkOracleFeed",
+    args: [parseUnits("1", 8).toString(), 18], // 1 CRV = 1 USD, 8 digits decimal.
+  });
+  await deploy("MockChainlinkOracleFeedCVX", {
+    from: deployerAddr,
+    contract: "MockChainlinkOracleFeed",
+    args: [parseUnits("1", 8).toString(), 18], // 1 CVX = 1 USD, 8 digits decimal.
+  });
   await deploy("MockChainlinkOracleFeedNonStandardToken", {
     from: deployerAddr,
     contract: "MockChainlinkOracleFeed",
     args: [parseUnits("1", 8).toString(), 18], // 1 = 1 USD, 8 digits decimal.
+  });
+  await deploy("MockChainlinkOracleFeedETH", {
+    from: deployerAddr,
+    contract: "MockChainlinkOracleFeed",
+    args: [parseUnits("4000", 8).toString(), 8], // 1 ETH = 4000 USD, 8 digits decimal.
+  });
+  await deploy("MockChainlinkOracleFeedOGNETH", {
+    from: deployerAddr,
+    contract: "MockChainlinkOracleFeed",
+    args: [parseUnits("0.1", 18).toString(), 18], // 10 OGN = 1 ETH, 18 digits decimal.
   });
 
   // Deploy mock Uniswap router
@@ -172,6 +226,50 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     args: [[dai.address, usdc.address, usdt.address], threePoolToken.address],
   });
 
+  // Mock CVX token
+  await deploy("MockCVX", {
+    from: deployerAddr,
+  });
+
+  const mockCVX = await ethers.getContract("MockCVX");
+
+  await deploy("MockBooster", {
+    from: deployerAddr,
+    args: [mockCVX.address, mockCRV.address, mockCVX.address],
+  });
+  const mockBooster = await ethers.getContract("MockBooster");
+  await mockBooster.setPool(threeCRVPid, threePoolToken.address);
+
+  await deploy("MockRewardPool", {
+    from: deployerAddr,
+    args: [
+      threeCRVPid,
+      threePoolToken.address,
+      mockCRV.address,
+      mockCVX.address,
+      mockCRV.address,
+    ],
+  });
+
+  await deploy("MockAAVEToken", {
+    from: deployerAddr,
+    args: [],
+  });
+
+  const mockAaveToken = await ethers.getContract("MockAAVEToken");
+
+  await deploy("MockStkAave", {
+    from: deployerAddr,
+    args: [mockAaveToken.address],
+  });
+
+  const mockStkAave = await ethers.getContract("MockStkAave");
+
+  await deploy("MockAaveIncentivesController", {
+    from: deployerAddr,
+    args: [mockStkAave.address],
+  });
+
   await deploy("MockNonRebasing", {
     from: deployerAddr,
   });
@@ -179,6 +277,49 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
   await deploy("MockNonRebasingTwo", {
     from: deployerAddr,
     contract: "MockNonRebasing",
+  });
+
+  const factory = await deploy("MockUniswapV3Factory", {
+    from: deployerAddr,
+    contract: {
+      abi: FACTORY_ABI,
+      bytecode: FACTORY_BYTECODE,
+    },
+  });
+
+  const weth = await ethers.getContract("MockWETH");
+  await deploy("MockUniswapV3Router", {
+    from: deployerAddr,
+    contract: {
+      abi: ROUTER_ABI,
+      bytecode: ROUTER_BYTECODE,
+    },
+    args: [factory.address, weth.address],
+  });
+
+  await deploy("MockUniswapV3NonfungiblePositionManager", {
+    from: deployerAddr,
+    contract: {
+      abi: MANAGER_ABI,
+      bytecode: MANAGER_BYTECODE,
+    },
+    /*
+     * The last constructor argument should be of type "NonfungibleTokenPositionDescriptor", but
+     * the bytecode of that seems to be corrupt - hardhat doesn't want to deploy it. Shouldn't be a
+     * problem as long as we don't call the `tokenUri` function:
+     * https://github.com/Uniswap/uniswap-v3-periphery/blob/79c708f357df69f7b3a494467e0f501810a11146/contracts/NonfungiblePositionManager.sol#L189-L192
+     *
+     */
+    args: [factory.address, weth.address, factory.address],
+  });
+
+  await deploy("MockUniswapV3Quoter", {
+    from: deployerAddr,
+    contract: {
+      abi: QUOTER_ABI,
+      bytecode: QUOTER_BYTECODE,
+    },
+    args: [factory.address, weth.address],
   });
 
   console.log("000_mock deploy done.");

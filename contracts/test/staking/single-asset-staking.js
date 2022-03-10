@@ -45,9 +45,7 @@ describe("Single Asset Staking", function () {
   });
 
   it("Invalid durations not allowed", async () => {
-    const { ogn, anna, governor, ognStaking } = await loadFixture(
-      defaultFixture
-    );
+    const { ogn, anna, ognStaking } = await loadFixture(defaultFixture);
     const stakeAmount = ognUnits("1");
     await ogn.connect(anna).approve(ognStaking.address, stakeAmount);
 
@@ -157,11 +155,10 @@ describe("Single Asset Staking", function () {
     ).to.be.revertedWith("Only token contract can make this call");
 
     // This generate the data needed for calling stakeWithSender
-    const iface = ognStaking.interface;
     const fragment = ognStaking.interface.getFunction(
       "stakeWithSender(address,uint256,uint256)"
     );
-    const fnSig = iface.getSighash(fragment);
+    const fnSig = ognStaking.interface.getSighash(fragment);
 
     const params = utils.solidityPack(
       ["uint256", "uint256"],
@@ -437,6 +434,80 @@ describe("Single Asset Staking", function () {
 
     expect(await ogn.balanceOf(anna.address)).to.approxEqual(
       annaStartBalance.add(expectedThreeMonthReward).add(expectedHalfYearReward)
+    );
+  });
+
+  it("Stake, transfer then exit and then stake again", async () => {
+    const { ogn, anna, matt, governor, ognStaking } = await loadFixture(
+      defaultFixture
+    );
+
+    // use signer 8 as the the agent
+    const transferAgent = await ethers.getSigner(8);
+
+    await expect(
+      ognStaking.connect(anna).setTransferAgent(transferAgent.address)
+    ).to.be.revertedWith("Caller is not the Governor");
+
+    await ognStaking.connect(governor).setTransferAgent(transferAgent.address);
+
+    const annaStartBalance = await ogn.balanceOf(anna.address);
+    const mattStartBalance = await ogn.balanceOf(matt.address);
+
+    const numStakeAmount = 1;
+    const stakeAmount = ognUnits(numStakeAmount.toString());
+
+    const expectedThreeMonthReward = ognUnits(
+      (numStakeAmount * 0.085).toString()
+    );
+    const expectedHalfYearReward = ognUnits(
+      (numStakeAmount * 0.145).toString()
+    );
+
+    // Stake for 180 days
+    await ogn.connect(anna).approve(ognStaking.address, stakeAmount);
+    await ognStaking.connect(anna).stake(stakeAmount, halfYear);
+
+    // Advance by 70 days and stake for 90 days
+    await advanceTime(70 * day);
+    await ogn.connect(anna).approve(ognStaking.address, stakeAmount);
+    await ognStaking.connect(anna).stake(stakeAmount, threeMonth);
+
+    // Advance by 95 days and exit
+    await advanceTime(95 * day);
+    await ognStaking.connect(anna).exit();
+
+    // remember anna had staked twice so exit only brought one back
+    expect(await ogn.balanceOf(anna.address)).to.approxEqual(
+      annaStartBalance.add(expectedThreeMonthReward).sub(stakeAmount)
+    );
+
+    // anna needs to sign this message and to approve it
+    const sig = await anna.signMessage(
+      utils.arrayify(
+        utils.solidityPack(
+          ["string", "address", "address", "address"],
+          ["tran", ognStaking.address, anna.address, matt.address]
+        )
+      )
+    );
+
+    const s = utils.splitSignature(sig);
+
+    // "rescue the wallet" by transfering to another address
+    await ognStaking
+      .connect(transferAgent)
+      .transferStakes(anna.address, matt.address, s.r, s.s, s.v);
+
+    expect(await ognStaking.totalStaked(anna.address)).to.equal(0);
+    expect(await ognStaking.totalStaked(matt.address)).to.equal(stakeAmount);
+
+    // Advance by 30 days and then try to exit
+    await advanceTime(30 * day);
+    await ognStaking.connect(matt).exit();
+
+    expect(await ogn.balanceOf(matt.address)).to.approxEqual(
+      mattStartBalance.add(stakeAmount).add(expectedHalfYearReward)
     );
   });
 

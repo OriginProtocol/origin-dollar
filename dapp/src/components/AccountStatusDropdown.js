@@ -4,8 +4,15 @@ import { fbt } from 'fbt-runtime'
 
 import Dropdown from 'components/Dropdown'
 import GetOUSD from 'components/GetOUSD'
-import { isCorrectNetwork, truncateAddress } from 'utils/web3'
-import withLoginModal from 'hoc/withLoginModal'
+import {
+  isCorrectNetwork,
+  truncateAddress,
+  switchEthereumChain,
+  shortenAddress,
+} from 'utils/web3'
+
+import withWalletSelectModal from 'hoc/withWalletSelectModal'
+import analytics from 'utils/analytics'
 
 import Content from './_AccountStatusContent'
 
@@ -23,15 +30,22 @@ const AccountStatusDropdown = ({ className, showLogin, dapp }) => {
         onClose={() => setOpen(false)}
       >
         <a
-          className={`account-status d-flex justify-content-center align-items-center ${className} ${
+          className={`account-status d-flex justify-content-center align-items-center clickable ${className} ${
             open ? 'open' : ''
           }`}
-          onClick={(e) => {
+          onClick={async (e) => {
             e.preventDefault()
             if (dapp && !active) {
               showLogin()
-            } else if (dapp || (active && !correctNetwork)) {
-              setOpen(!open)
+            } else if (active && !correctNetwork) {
+              analytics.track('On Change network', {
+                category: 'settings',
+              })
+              // open the dropdown to allow disconnecting, while also requesting an auto switch to mainnet
+              await switchEthereumChain()
+              setOpen(true)
+            } else if (dapp) {
+              setOpen(true)
             }
           }}
         >
@@ -46,8 +60,20 @@ const AccountStatusDropdown = ({ className, showLogin, dapp }) => {
           )}
           {/* What causes !active && account? */}
           {dapp && !active && account && <div className="dot" />}
-          {active && !correctNetwork && <div className="dot yellow" />}
-          {dapp && active && correctNetwork && <div className="dot green" />}
+          {active && !correctNetwork && (
+            <>
+              <div className="dot yellow" />
+              <div className="address">
+                {fbt('Wrong network', 'Wrong network')}
+              </div>
+            </>
+          )}
+          {dapp && active && correctNetwork && (
+            <>
+              <div className="dot green" />
+              <div className="address">{shortenAddress(account)}</div>
+            </>
+          )}
         </a>
       </Dropdown>
       <style jsx>{`
@@ -87,6 +113,9 @@ const AccountStatusDropdown = ({ className, showLogin, dapp }) => {
           min-width: 30px;
           border-radius: 15px;
           border: solid 1px white;
+        }
+
+        .account-status.clickable {
           cursor: pointer;
         }
 
@@ -103,6 +132,7 @@ const AccountStatusDropdown = ({ className, showLogin, dapp }) => {
           color: white;
           margin-left: 10px;
           margin-right: 19px;
+          margin-bottom: 2px;
         }
 
         .account-status:hover {
@@ -113,6 +143,7 @@ const AccountStatusDropdown = ({ className, showLogin, dapp }) => {
         .dot {
           width: 10px;
           height: 10px;
+          margin-left: 10px;
           border-radius: 5px;
           background-color: #ed2a28;
         }
@@ -141,4 +172,4 @@ const AccountStatusDropdown = ({ className, showLogin, dapp }) => {
   )
 }
 
-export default withLoginModal(AccountStatusDropdown)
+export default withWalletSelectModal(AccountStatusDropdown)

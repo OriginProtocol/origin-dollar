@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react'
 const ethers = require('ethers')
 
+import AccountStore from 'stores/AccountStore'
 import TransactionStore from 'stores/TransactionStore'
 import { useStoreState } from 'pullstate'
 
 const withRpcProvider = (WrappedComponent) => {
-  const provider = new ethers.providers.JsonRpcProvider(
+  const provider = new ethers.providers.StaticJsonRpcProvider(
     process.env.ETHEREUM_RPC_PROVIDER,
     { chainId: parseInt(process.env.ETHEREUM_RPC_CHAIN_ID) }
   )
@@ -15,6 +16,8 @@ const withRpcProvider = (WrappedComponent) => {
       TransactionStore,
       (s) => s.dirtyTransactions
     )
+
+    const isSafe = useStoreState(AccountStore, (s) => s.isSafe)
 
     const storeTransactionError = async (type, coins) => {
       const lastBlockNr = await provider.getBlockNumber()
@@ -28,6 +31,7 @@ const withRpcProvider = (WrappedComponent) => {
             coins,
             mined: true,
             isError: true,
+            isSafe,
             blockNumber: lastBlockNr,
           },
         ]
@@ -48,6 +52,7 @@ const withRpcProvider = (WrappedComponent) => {
             data,
             isError: false,
             mined: false,
+            isSafe,
           },
         ]
       })

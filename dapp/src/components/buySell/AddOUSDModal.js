@@ -2,21 +2,25 @@ import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
 import { CopyToClipboard } from 'react-copy-to-clipboard'
-import analytics from 'utils/analytics'
+import { get } from 'lodash'
 
 import AccountStore from 'stores/AccountStore'
 import ContractStore from 'stores/ContractStore'
 import withIsMobile from 'hoc/withIsMobile'
 import { providerName, trackOUSDInMetaMask, shortenAddress } from 'utils/web3'
+import analytics from 'utils/analytics'
+import { connectorNameIconMap, getConnectorIcon } from 'utils/connectors'
+import { assetRootPath } from 'utils/image'
 
 const AddOUSDModal = ({ onClose, isMobile }) => {
-  const connectorIcon = useStoreState(AccountStore, (s) => s.connectorIcon)
   const ousdAddress = useStoreState(
     ContractStore,
     (s) => s.contracts && s.contracts.ousd.address
   )
   const provider = providerName()
   const [addressCopied, setAddressCopied] = useState(false)
+  const connectorName = useStoreState(AccountStore, (s) => s.connectorName)
+  const connectorIcon = getConnectorIcon(connectorName)
 
   return (
     <>
@@ -34,9 +38,18 @@ const AddOUSDModal = ({ onClose, isMobile }) => {
           }}
         >
           <div className="d-flex justify-content-center align-items-center mb-4">
-            <img className="icon" src="/images/ousd-token-icon.svg" />
-            <img className="icon small" src="/images/arrow-icon-dark.svg" />
-            <img className="icon" src={`/images/${connectorIcon}`} />
+            <img
+              className="icon"
+              src={assetRootPath('/images/ousd-token-icon.svg')}
+            />
+            <img
+              className="icon small"
+              src={assetRootPath('/images/arrow-icon-dark.svg')}
+            />
+            <img
+              className="icon"
+              src={assetRootPath(`/images/${connectorIcon}`)}
+            />
           </div>
           {provider === 'metamask' && (
             <>
@@ -73,7 +86,9 @@ const AddOUSDModal = ({ onClose, isMobile }) => {
                     setAddressCopied(false)
                   }, 4000)
 
-                  analytics.track('Vault address copied to clipboard')
+                  analytics.track(`On Vault address copied to clipboard`, {
+                    category: 'general',
+                  })
                 }}
                 text={ousdAddress}
               >
@@ -96,7 +111,7 @@ const AddOUSDModal = ({ onClose, isMobile }) => {
                       <div className="copy-image d-flex align-items-center justify-content-center">
                         <img
                           className="clipboard-icon"
-                          src="/images/clipboard-icon.svg"
+                          src={assetRootPath('/images/clipboard-icon.svg')}
                         />
                       </div>
                     </div>
@@ -129,7 +144,7 @@ const AddOUSDModal = ({ onClose, isMobile }) => {
           right: -1px;
           bottom: -1px;
           left: -1px;
-          z-index: 1;
+          z-index: 10;
           padding-left: 50px;
           padding-right: 50px;
         }

@@ -12,29 +12,27 @@ chai.Assertion.addMethod("approxEqual", function (expected, message) {
   chai.expect(actual, message).lte(expected.mul("100001").div("100000"));
 });
 
-chai.Assertion.addMethod("approxBalanceOf", async function (
-  expected,
-  contract,
-  message
-) {
-  var user = this._obj;
-  var address = user.address || user.getAddress(); // supports contracts too
-  const actual = await contract.balanceOf(address);
-  expected = parseUnits(expected, await decimalsFor(contract));
-  chai.expect(actual).to.approxEqual(expected, message);
-});
+chai.Assertion.addMethod(
+  "approxBalanceOf",
+  async function (expected, contract, message) {
+    var user = this._obj;
+    var address = user.address || user.getAddress(); // supports contracts too
+    const actual = await contract.balanceOf(address);
+    expected = parseUnits(expected, await decimalsFor(contract));
+    chai.expect(actual).to.approxEqual(expected, message);
+  }
+);
 
-chai.Assertion.addMethod("balanceOf", async function (
-  expected,
-  contract,
-  message
-) {
-  var user = this._obj;
-  var address = user.address || user.getAddress(); // supports contracts too
-  const actual = await contract.balanceOf(address);
-  expected = parseUnits(expected, await decimalsFor(contract));
-  chai.expect(actual).to.equal(expected, message);
-});
+chai.Assertion.addMethod(
+  "balanceOf",
+  async function (expected, contract, message) {
+    var user = this._obj;
+    var address = user.address || user.getAddress(); // supports contracts too
+    const actual = await contract.balanceOf(address);
+    expected = parseUnits(expected, await decimalsFor(contract));
+    chai.expect(actual).to.equal(expected, message);
+  }
+);
 
 const DECIMAL_CACHE = {};
 async function decimalsFor(contract) {
@@ -150,6 +148,10 @@ const advanceTime = async (seconds) => {
   await hre.ethers.provider.send("evm_mine");
 };
 
+const getBlockTimestamp = async () => {
+  return (await hre.ethers.provider.getBlock("latest")).timestamp;
+};
+
 const advanceBlocks = async (numBlocks) => {
   for (let i = 0; i < numBlocks; i++) {
     await hre.ethers.provider.send("evm_mine");
@@ -191,19 +193,33 @@ const getOracleAddresses = async (deployments) => {
         DAI_USD: addresses.mainnet.chainlinkDAI_USD,
         USDC_USD: addresses.mainnet.chainlinkUSDC_USD,
         USDT_USD: addresses.mainnet.chainlinkUSDT_USD,
+        COMP_USD: addresses.mainnet.chainlinkCOMP_USD,
+        AAVE_USD: addresses.mainnet.chainlinkAAVE_USD,
+        CRV_USD: addresses.mainnet.chainlinkCRV_USD,
+        CVX_USD: addresses.mainnet.chainlinkCVX_USD,
+        OGN_ETH: addresses.mainnet.chainlinkOGN_ETH,
       },
-      openOracle: addresses.mainnet.openOracle, // Depreciated
+      openOracle: addresses.mainnet.openOracle, // Deprecated
     };
   } else {
     // On other environments, return mock feeds.
     return {
       chainlink: {
+        ETH_USD: (await deployments.get("MockChainlinkOracleFeedETH")).address,
         DAI_USD: (await deployments.get("MockChainlinkOracleFeedDAI")).address,
         USDC_USD: (await deployments.get("MockChainlinkOracleFeedUSDC"))
           .address,
         USDT_USD: (await deployments.get("MockChainlinkOracleFeedUSDT"))
           .address,
         TUSD_USD: (await deployments.get("MockChainlinkOracleFeedTUSD"))
+          .address,
+        COMP_USD: (await deployments.get("MockChainlinkOracleFeedCOMP"))
+          .address,
+        AAVE_USD: (await deployments.get("MockChainlinkOracleFeedAAVE"))
+          .address,
+        CRV_USD: (await deployments.get("MockChainlinkOracleFeedCRV")).address,
+        CVX_USD: (await deployments.get("MockChainlinkOracleFeedCVX")).address,
+        OGN_ETH: (await deployments.get("MockChainlinkOracleFeedOGNETH"))
           .address,
         NonStandardToken_USD: (
           await deployments.get("MockChainlinkOracleFeedNonStandardToken")
@@ -229,14 +245,20 @@ const getAssetAddresses = async (deployments) => {
       ThreePoolToken: addresses.mainnet.ThreePoolToken,
       ThreePoolGauge: addresses.mainnet.ThreePoolGauge,
       CRV: addresses.mainnet.CRV,
+      CVX: addresses.mainnet.CVX,
       CRVMinter: addresses.mainnet.CRVMinter,
       aDAI: addresses.mainnet.aDAI,
+      aDAI_v2: addresses.mainnet.aDAI_v2,
       aUSDC: addresses.mainnet.aUSDC,
       aUSDT: addresses.mainnet.aUSDT,
       AAVE: addresses.mainnet.Aave,
+      AAVE_TOKEN: addresses.mainnet.Aave,
       AAVE_ADDRESS_PROVIDER: addresses.mainnet.AAVE_ADDRESS_PROVIDER,
+      AAVE_INCENTIVES_CONTROLLER: addresses.mainnet.AAVE_INCENTIVES_CONTROLLER,
+      STKAAVE: addresses.mainnet.STKAAVE,
       OGN: addresses.mainnet.OGN,
       uniswapRouter: addresses.mainnet.uniswapRouter,
+      sushiswapRouter: addresses.mainnet.sushiswapRouter,
     };
   } else {
     return {
@@ -254,19 +276,38 @@ const getAssetAddresses = async (deployments) => {
       ThreePoolToken: (await deployments.get("Mock3CRV")).address,
       ThreePoolGauge: (await deployments.get("MockCurveGauge")).address,
       CRV: (await deployments.get("MockCRV")).address,
+      CVX: (await deployments.get("MockCVX")).address,
       CRVMinter: (await deployments.get("MockCRVMinter")).address,
       aDAI: (await deployments.get("MockADAI")).address,
       aUSDC: (await deployments.get("MockAUSDC")).address,
       aUSDT: (await deployments.get("MockAUSDT")).address,
       AAVE: (await deployments.get("MockAave")).address,
+      AAVE_TOKEN: (await deployments.get("MockAAVEToken")).address,
       AAVE_ADDRESS_PROVIDER: (await deployments.get("MockAave")).address,
+      STKAAVE: (await deployments.get("MockStkAave")).address,
       OGN: isRinkeby
         ? addresses.rinkeby.OGN
         : (await deployments.get("MockOGN")).address,
       uniswapRouter: (await deployments.get("MockUniswapRouter")).address,
+      sushiswapRouter: (await deployments.get("MockUniswapRouter")).address,
     };
   }
 };
+
+async function changeInBalance(
+  functionChangingBalance,
+  balanceChangeContract,
+  balanceChangeAccount
+) {
+  const balanceBefore = await balanceChangeContract.balanceOf(
+    balanceChangeAccount
+  );
+  await functionChangingBalance();
+  const balanceAfter = await balanceChangeContract.balanceOf(
+    balanceChangeAccount
+  );
+  return balanceAfter - balanceBefore;
+}
 
 /**
  * Is first parameter's BigNumber value inside expected tolerance
@@ -343,6 +384,7 @@ module.exports = {
   humanBalance,
   expectApproxSupply,
   advanceTime,
+  getBlockTimestamp,
   isMainnet,
   isRinkeby,
   isFork,
@@ -362,4 +404,5 @@ module.exports = {
   proposeAndExecute,
   advanceBlocks,
   isWithinTolerance,
+  changeInBalance,
 };

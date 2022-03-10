@@ -101,13 +101,8 @@ describe("Can claim governance with Governor contract and govern", () => {
 
   it("Should be able to do one call to rule them all[Push simulation here]", async () => {
     const fixture = await loadFixture(defaultFixture);
-    const {
-      compoundStrategy,
-      vault,
-      governor,
-      governorContract,
-      ousd,
-    } = fixture;
+    const { compoundStrategy, vault, governor, governorContract, ousd } =
+      fixture;
 
     // Transfer everyone to the governorContract
     await vault.connect(governor).transferGovernance(governorContract.address);
@@ -322,9 +317,7 @@ describe("Can claim governance with Governor contract and govern", () => {
 
     await expect(
       governorContract.connect(governor).execute(proposalId)
-    ).to.be.revertedWith(
-      "Timelock::executeTransaction: Transaction execution reverted"
-    );
+    ).to.be.revertedWith("Caller is not the admin");
   });
 
   it("Should allow admin to call setPendingAdmin", async () => {

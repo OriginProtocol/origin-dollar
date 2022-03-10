@@ -8,6 +8,7 @@ const {
   units,
   loadFixture,
   expectApproxSupply,
+  getBlockTimestamp,
   isFork,
 } = require("../helpers");
 
@@ -21,6 +22,7 @@ describe("Aave Strategy", function () {
     josh,
     ousd,
     vault,
+    harvester,
     governor,
     adai,
     aaveStrategy,
@@ -47,6 +49,7 @@ describe("Aave Strategy", function () {
     matt = fixture.matt;
     josh = fixture.josh;
     vault = fixture.vault;
+    harvester = fixture.harvester;
     ousd = fixture.ousd;
     governor = fixture.governor;
     aaveStrategy = fixture.aaveStrategy;
@@ -55,7 +58,7 @@ describe("Aave Strategy", function () {
     usdc = fixture.usdc;
     dai = fixture.dai;
     aaveAddressProvider = fixture.aaveAddressProvider;
-    aaveCoreAddress = await aaveAddressProvider.getLendingPoolCore();
+    aaveCoreAddress = await aaveAddressProvider.getLendingPool();
   });
 
   describe("Mint", function () {
@@ -93,6 +96,15 @@ describe("Aave Strategy", function () {
       await expect(anna).to.have.a.balanceOf("10000", ousd);
     });
 
+    it("Should be able to withdrawAll", async function () {
+      await expectApproxSupply(ousd, ousdUnits("200"));
+      await mint("30000.00", dai);
+      await vault
+        .connect(governor)
+        .withdrawAllFromStrategy(aaveStrategy.address);
+      await expect(aaveStrategy).to.have.a.balanceOf("0", dai);
+    });
+
     it("Should be able to redeem and return assets after multiple mints", async function () {
       await mint("30000.00", usdt);
       await mint("30000.00", usdc);
@@ -127,5 +139,178 @@ describe("Aave Strategy", function () {
         aaveStrategy.connect(anna).transferToken(ousd.address, ousdUnits("8.0"))
       ).to.be.revertedWith("Caller is not the Governor");
     });
+  });
+
+  describe("Rewards", function () {
+    const STAKE_AMOUNT = "10000000000";
+    const REWARD_AMOUNT = "70000000000";
+    const ZERO_COOLDOWN = -1;
+    const DAY = 24 * 60 * 60;
+
+    const collectRewards = function (setupOpts, verificationOpts) {
+      return async function () {
+        let currentTimestamp;
+
+        const fixture = await loadFixture(aaveVaultFixture);
+        const aaveStrategy = fixture.aaveStrategy;
+        const aaveIncentives = fixture.aaveIncentivesController;
+        const aave = fixture.aaveToken;
+        const stkAave = fixture.stkAave;
+        const governor = fixture.governor;
+
+        let { cooldownAgo, hasStkAave, hasRewards } = setupOpts;
+        // Options
+        let stkAaveAmount = hasStkAave ? STAKE_AMOUNT : 0;
+        cooldownAgo = cooldownAgo == ZERO_COOLDOWN ? 0 : cooldownAgo;
+        let rewardsAmount = hasRewards ? REWARD_AMOUNT : 0;
+
+        // Configure
+        // ----
+        // - Give some AAVE to stkAAVE so that we can redeem the stkAAVE
+        await aave.connect(governor).mint(stkAaveAmount);
+        await aave.connect(governor).transfer(stkAave.address, stkAaveAmount);
+
+        // Setup for test
+        // ----
+        if (cooldownAgo > 0) {
+          currentTimestamp = await getBlockTimestamp();
+          let cooldown = currentTimestamp - cooldownAgo;
+          await stkAave.setCooldown(aaveStrategy.address, cooldown);
+        }
+        if (stkAaveAmount > 0) {
+          await stkAave.connect(governor).mint(stkAaveAmount);
+          await stkAave
+            .connect(governor)
+            .transfer(aaveStrategy.address, stkAaveAmount);
+        }
+        if (rewardsAmount > 0) {
+          await aaveIncentives.setRewardsBalance(
+            aaveStrategy.address,
+            rewardsAmount
+          );
+        }
+
+        // Run
+        // ----
+        await harvester.connect(governor)["harvest()"]();
+        currentTimestamp = await getBlockTimestamp();
+
+        // Verification
+        // ----
+        const {
+          shouldConvertStkAAVEToAAVE,
+          shouldResetCooldown,
+          shouldClaimRewards,
+        } = verificationOpts;
+        if (shouldConvertStkAAVEToAAVE) {
+          const stratAave = await aave.balanceOf(aaveStrategy.address);
+          expect(stratAave).to.equal("0", "AAVE:Strategy");
+          const harvesterAave = await aave.balanceOf(harvester.address);
+          expect(harvesterAave).to.equal(STAKE_AMOUNT, "AAVE:Vault");
+        } else {
+          const stratAave = await aave.balanceOf(aaveStrategy.address);
+          expect(stratAave).to.equal("0", "AAVE:Strategy");
+          const harvesterAave = await aave.balanceOf(harvester.address);
+          expect(harvesterAave).to.equal("0", "AAVE:Vault");
+        }
+
+        if (shouldResetCooldown) {
+          const cooldown = await stkAave.stakersCooldowns(aaveStrategy.address);
+          expect(currentTimestamp).to.equal(cooldown, "Cooldown should reset");
+        } else {
+          const cooldown = await stkAave.stakersCooldowns(aaveStrategy.address);
+          expect(currentTimestamp).to.not.equal(cooldown, "Cooldown not reset");
+        }
+
+        if (shouldClaimRewards === true) {
+          const stratStkAave = await stkAave.balanceOf(aaveStrategy.address);
+          expect(stratStkAave).to.be.at.least(
+            REWARD_AMOUNT,
+            "StkAAVE:Strategy"
+          );
+        } else if (shouldClaimRewards === false) {
+          const stratStkAave = await stkAave.balanceOf(aaveStrategy.address);
+          expect(stratStkAave).to.be.below(REWARD_AMOUNT, "StkAAVE:Strategy");
+        } else {
+          expect(false).to.be.true("shouldclaimRewards is not defined");
+        }
+      };
+    };
+
+    it(
+      "In cooldown window",
+      collectRewards(
+        {
+          cooldownAgo: 11 * DAY,
+          hasStkAave: true,
+          hasRewards: true,
+        },
+        {
+          shouldConvertStkAAVEToAAVE: true,
+          shouldResetCooldown: true,
+          shouldClaimRewards: true,
+        }
+      )
+    );
+    it(
+      "Before cooldown window",
+      collectRewards(
+        {
+          cooldownAgo: 2 * DAY,
+          hasStkAave: true,
+          hasRewards: true,
+        },
+        {
+          shouldConvertStkAAVEToAAVE: false,
+          shouldResetCooldown: false,
+          shouldClaimRewards: false,
+        }
+      )
+    );
+    it(
+      "No cooldown set",
+      collectRewards(
+        {
+          cooldownAgo: ZERO_COOLDOWN,
+          hasStkAave: true,
+          hasRewards: true,
+        },
+        {
+          shouldConvertStkAAVEToAAVE: false,
+          shouldResetCooldown: true,
+          shouldClaimRewards: true,
+        }
+      )
+    );
+    it(
+      "After window",
+      collectRewards(
+        {
+          cooldownAgo: 13 * DAY,
+          hasStkAave: true,
+          hasRewards: true,
+        },
+        {
+          shouldConvertStkAAVEToAAVE: false,
+          shouldResetCooldown: true,
+          shouldClaimRewards: true,
+        }
+      )
+    );
+    it(
+      "No pending rewards",
+      collectRewards(
+        {
+          cooldownAgo: 11 * DAY,
+          hasStkAave: true,
+          hasRewards: false,
+        },
+        {
+          shouldConvertStkAAVEToAAVE: true,
+          shouldResetCooldown: false,
+          shouldClaimRewards: false,
+        }
+      )
+    );
   });
 });

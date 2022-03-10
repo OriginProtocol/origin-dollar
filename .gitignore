@@ -48,6 +48,7 @@ Thumbs.db
 
 node_modules
 contracts/cache/**
+contracts/.env
 contracts/artifacts/
 contracts/deployments/localhost*
 contracts/deployments/ganache_*
@@ -56,6 +57,7 @@ contracts/coverage/
 contracts/coverage.json
 contracts/build/
 dapp/network.json
+dapp/keys/
 dapp/ganache-network.json
 website/network.json
 /playground/public/build/
@@ -67,3 +69,7 @@ crytic-export
 contracts/.certora_*
 contracts/.last_confs
 **/*.bak
+
+# Coverage #
+coverage
+coverage.json

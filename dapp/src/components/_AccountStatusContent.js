@@ -9,15 +9,18 @@ import { getEtherscanHost } from 'utils/web3'
 import { isCorrectNetwork, truncateAddress, networkIdToName } from 'utils/web3'
 import { currencies } from 'constants/Contract'
 import { formatCurrency } from 'utils/math'
+import { connectorNameIconMap, getConnectorIcon } from 'utils/connectors'
 import analytics from 'utils/analytics'
+import { assetRootPath } from 'utils/image'
 
 const AccountStatusContent = ({ className, onOpen }) => {
   const web3react = useWeb3React()
-  const { deactivate, active, account, chainId } = web3react
+  const { connector, deactivate, active, account, chainId } = web3react
   const correctNetwork = isCorrectNetwork(chainId)
   const balances = useStoreState(AccountStore, (s) => s.balances)
-  const connectorIcon = useStoreState(AccountStore, (s) => s.connectorIcon)
   const etherscanLink = `${getEtherscanHost(web3react)}/address/${account}`
+  const connectorName = useStoreState(AccountStore, (s) => s.connectorName)
+  const connectorIcon = getConnectorIcon(connectorName)
 
   return (
     <>
@@ -31,7 +34,7 @@ const AccountStatusContent = ({ className, onOpen }) => {
             {active && !correctNetwork && (
               <>
                 <div className="dot big yellow" />
-                <h2>{fbt('Incorrect network', 'Incorrect network')}</h2>
+                <h2>{fbt('Wrong network', 'Wrong network')}</h2>
               </>
             )}
             {active && correctNetwork && (
@@ -51,10 +54,9 @@ const AccountStatusContent = ({ className, onOpen }) => {
             <>
               <hr />
               <div className="d-flex align-items-start">
-                {/* TODO: do not hardcode connector image */}
                 <img
                   className="connector-image"
-                  src={`/images/${connectorIcon}`}
+                  src={assetRootPath(`/images/${connectorIcon}`)}
                 />
                 <div className="d-flex flex-column">
                   <div className="address">{truncateAddress(account)}</div>
@@ -77,19 +79,22 @@ const AccountStatusContent = ({ className, onOpen }) => {
                   rel="noopener noreferrer"
                   className="ml-auto etherscan-icon"
                 >
-                  <img src="/images/etherscan-icon.svg" />
+                  <img src={assetRootPath('/images/etherscan-icon.svg')} />
                 </a>
               </div>
             </>
           )}
         </div>
-        {active && correctNetwork && (
+        {active && (
           <div className="disconnect-box d-flex">
             <a
               className="btn-clear-blue w-100"
               onClick={(e) => {
                 e.preventDefault()
-                analytics.track('Disconnect wallet')
+                analytics.track('On Disconnect Wallet', {
+                  category: 'general',
+                  label: connectorName,
+                })
                 if (onOpen) {
                   onOpen(false)
                 }

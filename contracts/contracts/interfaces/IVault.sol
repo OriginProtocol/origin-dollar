@@ -1,13 +1,28 @@
-pragma solidity 0.5.11;
+// SPDX-License-Identifier: agpl-3.0
+pragma solidity ^0.8.0;
 
 interface IVault {
     event AssetSupported(address _asset);
+    event AssetDefaultStrategyUpdated(address _asset, address _strategy);
+    event AssetAllocated(address _asset, address _strategy, uint256 _amount);
     event StrategyApproved(address _addr);
     event StrategyRemoved(address _addr);
     event Mint(address _addr, uint256 _value);
     event Redeem(address _addr, uint256 _value);
-    event DepositsPaused();
-    event DepositsUnpaused();
+    event CapitalPaused();
+    event CapitalUnpaused();
+    event RebasePaused();
+    event RebaseUnpaused();
+    event VaultBufferUpdated(uint256 _vaultBuffer);
+    event RedeemFeeUpdated(uint256 _redeemFeeBps);
+    event PriceProviderUpdated(address _priceProvider);
+    event AllocateThresholdUpdated(uint256 _threshold);
+    event RebaseThresholdUpdated(uint256 _threshold);
+    event StrategistUpdated(address _address);
+    event MaxSupplyDiffChanged(uint256 maxSupplyDiff);
+    event YieldDistribution(address _to, uint256 _yield, uint256 _fee);
+    event TrusteeFeeBpsChanged(uint256 _basis);
+    event TrusteeAddressChanged(address _address);
 
     // Governable.sol
     function transferGovernance(address _newGovernor) external;
@@ -40,10 +55,6 @@ interface IVault {
     function setStrategistAddr(address _address) external;
 
     function strategistAddr() external view returns (address);
-
-    function setUniswapAddr(address _address) external;
-
-    function uniswapAddr() external view returns (address);
 
     function setMaxSupplyDiff(uint256 _maxSupplyDiff) external;
 
@@ -85,10 +96,6 @@ interface IVault {
 
     function transferToken(address _asset, uint256 _amount) external;
 
-    function harvest() external;
-
-    function harvest(address _strategyAddr) external;
-
     function priceUSDMint(address asset) external view returns (uint256);
 
     function priceUSDRedeem(address asset) external view returns (uint256);
@@ -97,16 +104,17 @@ interface IVault {
 
     function withdrawAllFromStrategies() external;
 
+    function reallocate(
+        address _strategyFromAddress,
+        address _strategyToAddress,
+        address[] calldata _assets,
+        uint256[] calldata _amounts
+    ) external;
+
     // VaultCore.sol
     function mint(
         address _asset,
         uint256 _amount,
-        uint256 _minimumOusdAmount
-    ) external;
-
-    function mintMultiple(
-        address[] calldata _assets,
-        uint256[] calldata _amount,
         uint256 _minimumOusdAmount
     ) external;
 
@@ -116,18 +124,9 @@ interface IVault {
 
     function allocate() external;
 
-    function reallocate(
-        address _strategyFromAddress,
-        address _strategyToAddress,
-        address[] calldata _assets,
-        uint256[] calldata _amounts
-    ) external;
-
     function rebase() external;
 
     function totalValue() external view returns (uint256 value);
-
-    function checkBalance() external view returns (uint256);
 
     function checkBalance(address _asset) external view returns (uint256);
 
@@ -141,6 +140,8 @@ interface IVault {
     function getAllAssets() external view returns (address[] memory);
 
     function getStrategyCount() external view returns (uint256);
+
+    function getAllStrategies() external view returns (address[] memory);
 
     function isSupportedAsset(address _asset) external view returns (bool);
 }

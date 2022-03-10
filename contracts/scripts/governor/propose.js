@@ -23,6 +23,21 @@ const addresses = require("../../utils/addresses");
 // Wait for 3 blocks confirmation on Mainnet/Rinkeby.
 const NUM_CONFIRMATIONS = isMainnet || isRinkeby ? 3 : 0;
 
+// Proposal for setting the timelock delay to 48hrs
+async function proposeGovernorSetDelayArgs() {
+  const governor = await ethers.getContract("Governor");
+
+  const description = "Set timelock to 48hrs";
+  const args = await proposeArgs([
+    {
+      contract: governor,
+      signature: "setDelay(uint256)",
+      args: [48 * 60 * 60], // 48hrs
+    },
+  ]);
+  return { args, description };
+}
+
 async function proposeVaultv2GovernanceArgs() {
   const mixOracle = await ethers.getContract("MixOracle");
   const chainlinkOracle = await ethers.getContract("ChainlinkOracle");
@@ -176,6 +191,23 @@ async function proposeSetMaxSupplyDiffArgs() {
   return { args, description };
 }
 
+async function proposeUnpauseRebaseArgs() {
+  const vaultProxy = await ethers.getContract("VaultProxy");
+  const vaultAdmin = await ethers.getContractAt(
+    "VaultAdmin",
+    vaultProxy.address
+  );
+
+  const args = await proposeArgs([
+    {
+      contract: vaultAdmin,
+      signature: "unpauseRebase()",
+    },
+  ]);
+  const description = "Unpause rebase";
+  return { args, description };
+}
+
 async function proposeUnpauseCapitalArgs() {
   const vaultProxy = await ethers.getContract("VaultProxy");
   const vaultAdmin = await ethers.getContractAt(
@@ -263,6 +295,40 @@ async function proposeSetUniswapAddrArgs(config) {
     },
   ]);
   const description = "Call setUniswapAddr";
+  return { args, description };
+}
+
+// Returns the arguments to use for sending a proposal to call setUniswapAddr(address) on the vault.
+async function proposeSetBuybackUniswapAddrArgs(config) {
+  const buyback = await ethers.getContract("Buyback");
+
+  const args = await proposeArgs([
+    {
+      contract: buyback,
+      signature: "setUniswapAddr(address)",
+      args: [config.address],
+    },
+  ]);
+  const description = "Call setUniswapAddr on buyback";
+  return { args, description };
+}
+
+// Returns the arguments to use for sending a proposal to call setTrusteeFeeBps(bps) on the vault.
+async function proposeSetTrusteeFeeBpsArgs(config) {
+  const vaultProxy = await ethers.getContract("VaultProxy");
+  const vaultAdmin = await ethers.getContractAt(
+    "VaultAdmin",
+    vaultProxy.address
+  );
+
+  const args = await proposeArgs([
+    {
+      contract: vaultAdmin,
+      signature: "setTrusteeFeeBps(uint256)",
+      args: [config.bps],
+    },
+  ]);
+  const description = "Call setTrusteeFeeBps";
   return { args, description };
 }
 
@@ -803,6 +869,26 @@ async function proposeSettingUpdatesArgs() {
   return { args, description };
 }
 
+async function proposeCompoundDAIArgs() {
+  const cCompoundStrategyProxy = await ethers.getContract(
+    "CompoundStrategyProxy"
+  );
+  const cCompoundStrategy = await ethers.getContractAt(
+    "CompoundStrategy",
+    cCompoundStrategyProxy.address
+  );
+
+  const args = await proposeArgs([
+    {
+      contract: cCompoundStrategy,
+      signature: "setPTokenAddress(address,address)",
+      args: [addresses.mainnet.DAI, addresses.mainnet.cDAI],
+    },
+  ]);
+  const description = "Enable DAI on Compound strategy";
+  return { args, description };
+}
+
 async function proposeWithdrawAllArgs() {
   const cAaveStrategyProxy = await ethers.getContract("AaveStrategyProxy");
   const cAaveStrategy = await ethers.getContractAt(
@@ -829,6 +915,26 @@ async function proposeWithdrawAllArgs() {
     },
   ]);
   const description = "Withdraw funds from Aave and Compound";
+  return { args, description };
+}
+
+async function proposeCompRewardTokenZero() {
+  const cCompoundStrategyProxy = await ethers.getContract(
+    "CompoundStrategyProxy"
+  );
+  const cCompoundStrategy = await ethers.getContractAt(
+    "CompoundStrategy",
+    cCompoundStrategyProxy.address
+  );
+
+  const args = await proposeArgs([
+    {
+      contract: cCompoundStrategy,
+      signature: "setRewardTokenAddress(address)",
+      args: [addresses.zero],
+    },
+  ]);
+  const description = "Set Compound reward token addresss to zero";
   return { args, description };
 }
 
@@ -867,6 +973,12 @@ async function main(config) {
   } else if (config.setUniswapAddr) {
     console.log("setUniswapAddr proposal");
     argsMethod = proposeSetUniswapAddrArgs;
+  } else if (config.setBuybackUniswapAddr) {
+    console.log("setBuybackUniswapAddr proposal");
+    argsMethod = proposeSetBuybackUniswapAddrArgs;
+  } else if (config.setTrusteeFeeBps) {
+    console.log("setTrusteeFeeBps proposal");
+    argsMethod = proposeSetTrusteeFeeBpsArgs;
   } else if (config.setRebaseHookAddr) {
     console.log("setRebaseHookAddr proposal");
     argsMethod = proposeSetRebaseHookAddrArgs;
@@ -915,6 +1027,9 @@ async function main(config) {
   } else if (config.unpauseCapital) {
     console.log("unpauseCapital");
     argsMethod = proposeUnpauseCapitalArgs;
+  } else if (config.unpauseRebase) {
+    console.log("unpauseRebase");
+    argsMethod = proposeUnpauseRebaseArgs;
   } else if (config.claimOGNStakingGovernance) {
     console.log("proposeClaimOGNStakingGovernance");
     argsMethod = proposeClaimOGNStakingGovernance;
@@ -954,6 +1069,13 @@ async function main(config) {
   } else if (config.withdrawAll) {
     console.log("proposeWithdrawAll");
     argsMethod = proposeWithdrawAllArgs;
+  } else if (config.compoundDAI) {
+    console.log("proposeCompoundDAI");
+    argsMethod = proposeCompoundDAIArgs;
+  } else if (config.compRewardTokenZero) {
+    argsMethod = proposeCompRewardTokenZero;
+  } else if (config.governorSetDelay) {
+    argsMethod = proposeGovernorSetDelayArgs;
   } else {
     console.error("An action must be specified on the command line.");
     return;
@@ -1016,9 +1138,12 @@ const config = {
   doIt: args["--doIt"] === "true" || false,
   duration: args["--duration"],
   address: args["--address"],
+  bps: args["--bps"],
   governorV1: args["--governorV1"],
   harvest: args["--harvest"],
   setUniswapAddr: args["--setUniswapAddr"],
+  setBuybackUniswapAddr: args["--setBuybackUniswapAddr"],
+  setTrusteeFeeBps: args["--setTrusteeFeeBps"],
   setRebaseHookAddr: args["--setRebaseHookAddr"],
   upgradeOusd: args["--upgradeOusd"],
   upgradeVaultCore: args["--upgradeVaultCore"],
@@ -1036,6 +1161,7 @@ const config = {
   prop17: args["--prop17"],
   pauseCapital: args["--pauseCapital"],
   unpauseCapital: args["--unpauseCapital"],
+  unpauseRebase: args["--unpauseRebase"],
   claimOGNStakingGovernance: args["--claimOGNStakingGovernance"],
   upgradeStaking: args["--upgradeStaking"],
   vaultv2Governance: args["--vaultv2Governance"],
@@ -1049,6 +1175,9 @@ const config = {
   setAirDropRoot: args["--setAirDropRoot"],
   proposeSettingUpdates: args["--proposeSettingUpdates"],
   withdrawAll: args["--withdrawAll"],
+  compoundDAI: args["--compoundDAI"],
+  compRewardTokenZero: args["--compRewardTokenZero"],
+  governorSetDelay: args["--governorSetDelay"],
 };
 
 // Validate arguments.

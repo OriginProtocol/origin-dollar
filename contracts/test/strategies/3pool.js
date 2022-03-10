@@ -1,5 +1,6 @@
 const { expect } = require("chai");
 const { utils } = require("ethers");
+const { MAX_UINT256 } = require("../../utils/constants");
 
 const { threepoolVaultFixture } = require("../_fixture");
 const {
@@ -20,6 +21,7 @@ describe("3Pool Strategy", function () {
   let anna,
     ousd,
     vault,
+    harvester,
     governor,
     crv,
     crvMinter,
@@ -42,6 +44,7 @@ describe("3Pool Strategy", function () {
     const fixture = await loadFixture(threepoolVaultFixture);
     anna = fixture.anna;
     vault = fixture.vault;
+    harvester = fixture.harvester;
     ousd = fixture.ousd;
     governor = fixture.governor;
     crv = fixture.crv;
@@ -100,7 +103,9 @@ describe("3Pool Strategy", function () {
   describe("Redeem", function () {
     it("Should be able to unstake from gauge and return USDT", async function () {
       await expectApproxSupply(ousd, ousdUnits("200"));
-      await mint("30000.00", usdt);
+      await mint("10000.00", dai);
+      await mint("10000.00", usdc);
+      await mint("10000.00", usdt);
       await vault.connect(anna).redeem(ousdUnits("20000"), 0);
       await expectApproxSupply(ousd, ousdUnits("10200"));
     });
@@ -130,22 +135,18 @@ describe("3Pool Strategy", function () {
       ).to.be.revertedWith("Caller is not the Governor");
     });
 
-    it("Should allow the strategist to call harvest", async () => {
-      await vault.connect(governor).setStrategistAddr(anna.address);
-      await vault.connect(anna)["harvest()"]();
-    });
-
-    it("Should allow the strategist to call harvest for a specific strategy", async () => {
+    it("Should allow the governor to call harvest for a specific strategy", async () => {
       // Mint of MockCRVMinter mints a fixed 2e18
-      await vault.connect(governor).setStrategistAddr(anna.address);
-      await vault.connect(anna)["harvest(address)"](threePoolStrategy.address);
+      // prettier-ignore
+      await harvester
+        .connect(governor)["harvest(address)"](threePoolStrategy.address);
     });
 
     it("Should collect reward tokens using collect rewards on all strategies", async () => {
       // Mint of MockCRVMinter mints a fixed 2e18
       await crvMinter.connect(governor).mint(threePoolStrategy.address);
-      await vault.connect(governor)["harvest()"]();
-      await expect(await crv.balanceOf(vault.address)).to.be.equal(
+      await harvester.connect(governor)["harvest()"]();
+      await expect(await crv.balanceOf(harvester.address)).to.be.equal(
         utils.parseUnits("2", 18)
       );
     });
@@ -153,14 +154,15 @@ describe("3Pool Strategy", function () {
     it("Should collect reward tokens using collect rewards on a specific strategy", async () => {
       // Mint of MockCRVMinter mints a fixed 2e18
       await crvMinter.connect(governor).mint(threePoolStrategy.address);
-      await vault
-        .connect(governor)
-        ["harvest(address)"](threePoolStrategy.address);
-      await expect(await crv.balanceOf(vault.address)).to.be.equal(
+      await harvester.connect(governor)[
+        // eslint-disable-next-line
+        "harvest(address)"
+      ](threePoolStrategy.address);
+      await expect(await crv.balanceOf(harvester.address)).to.be.equal(
         utils.parseUnits("2", 18)
       );
       await crvMinter.connect(governor).mint(threePoolStrategy.address);
-      await expect(await crv.balanceOf(vault.address)).to.be.equal(
+      await expect(await crv.balanceOf(harvester.address)).to.be.equal(
         utils.parseUnits("2", 18)
       );
     });
@@ -168,8 +170,15 @@ describe("3Pool Strategy", function () {
     it("Should collect reward tokens and swap via Uniswap", async () => {
       const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
 
-      mockUniswapRouter.initialize(crv.address, usdt.address);
-      await vault.connect(governor).setUniswapAddr(mockUniswapRouter.address);
+      mockUniswapRouter.initialize([crv.address], [usdt.address]);
+      await harvester.connect(governor).setRewardTokenConfig(
+        crv.address, // reward token
+        300, // max slippage bps
+        100, // harvest reward bps
+        mockUniswapRouter.address,
+        MAX_UINT256,
+        true
+      );
 
       // Make sure Vault has 0 USDT balance
       await expect(vault).has.a.balanceOf("0", usdt);
@@ -182,21 +191,25 @@ describe("3Pool Strategy", function () {
       await expect(await crv.balanceOf(threePoolStrategy.address)).to.be.equal(
         utils.parseUnits("2", 18)
       );
-
       // Give Uniswap mock some USDT so it can give it back in CRV liquidation
       await usdt
         .connect(anna)
         .transfer(mockUniswapRouter.address, usdtUnits("100"));
-
+      const balanceBeforeAnna = await usdt.balanceOf(anna.address);
       // prettier-ignore
-      await vault
-        .connect(governor)["harvest()"]();
+      await harvester
+        .connect(anna)["harvestAndSwap(address)"](threePoolStrategy.address);
+
+      const balanceAfterAnna = await usdt.balanceOf(anna.address);
 
       // Make sure Vault has 100 USDT balance (the Uniswap mock converts at 1:1)
-      await expect(vault).has.a.balanceOf("2", usdt);
+      await expect(vault).has.a.balanceOf("1.98", usdt);
+      await expect(balanceAfterAnna - balanceBeforeAnna).to.be.equal(
+        utils.parseUnits("0.02", 6)
+      );
 
       // No CRV in Vault or Compound strategy
-      await expect(vault).has.a.balanceOf("0", crv);
+      await expect(harvester).has.a.balanceOf("0", crv);
       await expect(await crv.balanceOf(threePoolStrategy.address)).to.be.equal(
         "0"
       );

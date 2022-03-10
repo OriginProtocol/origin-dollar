@@ -1,7 +1,7 @@
 import AccountStore from 'stores/AccountStore'
 
 import analytics from './analytics'
-import { injected } from 'utils/connectors'
+import { injectedConnector } from 'utils/connectors'
 import { providerName } from 'utils/web3'
 import { isMobileMetaMask } from 'utils/device'
 
@@ -13,7 +13,7 @@ export const walletLogin = (showLogin, activate) => {
     ) ||
     isMobileMetaMask()
   ) {
-    activate(injected)
+    activate(injectedConnector)
   } else if (showLogin) {
     showLogin()
   }
@@ -23,10 +23,7 @@ export const login = (address) => {
   AccountStore.update((s) => {
     s.address = address
   })
-
   analytics.identify(address)
-
-  localStorage.setItem('eagerConnect', true)
 }
 
 export const logout = () => {

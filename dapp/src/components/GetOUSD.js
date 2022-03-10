@@ -4,9 +4,10 @@ import { fbt } from 'fbt-runtime'
 import { useWeb3React } from '@web3-react/core'
 import { useRouter } from 'next/router'
 
-import withLoginModal from 'hoc/withLoginModal'
+import withWalletSelectModal from 'hoc/withWalletSelectModal'
 import analytics from 'utils/analytics'
 import { walletLogin } from 'utils/account'
+import { adjustLinkHref } from 'utils/utils'
 
 const GetOUSD = ({
   id,
@@ -23,9 +24,8 @@ const GetOUSD = ({
   connect,
 }) => {
   const { activate, active } = useWeb3React()
-  const [userAlreadyConnectedWallet, setUserAlreadyConnectedWallet] = useState(
-    false
-  )
+  const [userAlreadyConnectedWallet, setUserAlreadyConnectedWallet] =
+    useState(false)
   const router = useRouter()
   const classList = classnames(
     'btn d-flex align-items-center justify-content-center',
@@ -59,14 +59,18 @@ const GetOUSD = ({
         style={style}
         onClick={() => {
           if (process.browser) {
-            analytics.track(connect ? 'Connect' : 'Get OUSD', {
-              source: trackSource,
-            })
-
             if (connect) {
+              analytics.track('On Connect', {
+                category: 'general',
+                label: trackSource,
+              })
               walletLogin(showLogin, activate)
             } else {
-              router.push('/mint')
+              analytics.track('On Get OUSD', {
+                category: 'navigation',
+                label: trackSource,
+              })
+              router.push(adjustLinkHref('/swap'))
             }
           }
         }}
@@ -139,4 +143,4 @@ const GetOUSD = ({
   )
 }
 
-export default withLoginModal(GetOUSD)
+export default withWalletSelectModal(GetOUSD)

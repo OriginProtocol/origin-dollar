@@ -1,8 +1,7 @@
 import { fbt } from 'fbt-runtime'
-import Link from 'next/link'
-
 import analytics from 'utils/analytics'
 import { getDocsLink } from 'utils/getDocsLink'
+import { assetRootPath } from 'utils/image'
 
 import EmailForm from './EmailForm'
 
@@ -96,7 +95,7 @@ export default function Footer({ locale }) {
                 >
                   <img
                     className="social-icon"
-                    src="/images/discord.svg"
+                    src={assetRootPath('/images/discord.svg')}
                     alt="Discord logo"
                   />
                 </a>
@@ -110,14 +109,14 @@ export default function Footer({ locale }) {
                 >
                   <img
                     className="social-icon"
-                    src="/images/telegram.svg"
+                    src={assetRootPath('/images/telegram.svg')}
                     alt="Telegram logo"
                   />
                 </a>
                 <a href={wechatURL} target="_blank" rel="noopener noreferrer">
                   <img
                     className="social-icon"
-                    src="/images/wechat.svg"
+                    src={assetRootPath('/images/wechat.svg')}
                     alt="WeChat logo"
                   />
                 </a>
@@ -131,49 +130,49 @@ export default function Footer({ locale }) {
                 >
                   <img
                     className="social-icon"
-                    src="/images/github.svg"
+                    src={assetRootPath('/images/github.svg')}
                     alt="GitHub logo"
                   />
                 </a>
                 <a href={redditURL} target="_blank" rel="noopener noreferrer">
                   <img
                     className="social-icon"
-                    src="/images/reddit.svg"
+                    src={assetRootPath('/images/reddit.svg')}
                     alt="Reddit logo"
                   />
                 </a>
                 <a href={weiboURL} target="_blank" rel="noopener noreferrer">
                   <img
                     className="social-icon"
-                    src="/images/weibo.svg"
+                    src={assetRootPath('/images/weibo.svg')}
                     alt="Weibo logo"
                   />
                 </a>
                 <a href={facebookURL} target="_blank" rel="noopener noreferrer">
                   <img
                     className="social-icon"
-                    src="/images/facebook.svg"
+                    src={assetRootPath('/images/facebook.svg')}
                     alt="Facebook logo"
                   />
                 </a>
                 <a href={twitterURL} target="_blank" rel="noopener noreferrer">
                   <img
                     className="social-icon"
-                    src="/images/twitter.svg"
+                    src={assetRootPath('/images/twitter.svg')}
                     alt="Twitter logo"
                   />
                 </a>
                 <a href={mediumURL} target="_blank" rel="noopener noreferrer">
                   <img
                     className="social-icon"
-                    src="/images/medium.svg"
+                    src={assetRootPath('/images/medium.svg')}
                     alt="Medium logo"
                   />
                 </a>
                 <a href={youtubeURL} target="_blank" rel="noopener noreferrer">
                   <img
                     className="social-icon"
-                    src="/images/youtube.svg"
+                    src={assetRootPath('/images/youtube.svg')}
                     alt="YouTube logo"
                   />
                 </a>
@@ -184,7 +183,7 @@ export default function Footer({ locale }) {
                 >
                   <img
                     className="social-icon"
-                    src="/images/instagram.svg"
+                    src={assetRootPath('/images/instagram.svg')}
                     alt="Instagram logo"
                   />
                 </a>

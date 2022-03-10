@@ -1,0 +1,132 @@
+{
+  "storage": [
+    {
+      "contract": "Initializable",
+      "label": "initialized",
+      "type": "t_bool",
+      "src": "contracts/utils/Initializable.sol:8"
+    },
+    {
+      "contract": "Initializable",
+      "label": "initializing",
+      "type": "t_bool",
+      "src": "contracts/utils/Initializable.sol:13"
+    },
+    {
+      "contract": "Initializable",
+      "label": "______gap",
+      "type": "t_array(t_uint256)50_storage",
+      "src": "contracts/utils/Initializable.sol:37"
+    },
+    {
+      "contract": "InitializableAbstractStrategy",
+      "label": "platformAddress",
+      "type": "t_address",
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:34"
+    },
+    {
+      "contract": "InitializableAbstractStrategy",
+      "label": "vaultAddress",
+      "type": "t_address",
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:36"
+    },
+    {
+      "contract": "InitializableAbstractStrategy",
+      "label": "assetToPToken",
+      "type": "t_mapping(t_address,t_address)",
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:39"
+    },
+    {
+      "contract": "InitializableAbstractStrategy",
+      "label": "assetsMapped",
+      "type": "t_array(t_address)dyn_storage",
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:42"
+    },
+    {
+      "contract": "InitializableAbstractStrategy",
+      "label": "_deprecated_rewardTokenAddress",
+      "type": "t_address",
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:46"
+    },
+    {
+      "contract": "InitializableAbstractStrategy",
+      "label": "_deprecated_rewardLiquidationThreshold",
+      "type": "t_uint256",
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:50"
+    },
+    {
+      "contract": "InitializableAbstractStrategy",
+      "label": "harvesterAddress",
+      "type": "t_address",
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:53"
+    },
+    {
+      "contract": "InitializableAbstractStrategy",
+      "label": "rewardTokenAddresses",
+      "type": "t_array(t_address)dyn_storage",
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:56"
+    },
+    {
+      "contract": "InitializableAbstractStrategy",
+      "label": "_reserved",
+      "type": "t_array(t_int256)98_storage",
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:58"
+    },
+    {
+      "contract": "BaseCurveStrategy",
+      "label": "pTokenAddress",
+      "type": "t_address",
+      "src": "contracts/strategies/BaseCurveStrategy.sol:22"
+    },
+    {
+      "contract": "ConvexStrategy",
+      "label": "cvxDepositorAddress",
+      "type": "t_address",
+      "src": "contracts/strategies/ConvexStrategy.sol:21"
+    },
+    {
+      "contract": "ConvexStrategy",
+      "label": "cvxRewardStakerAddress",
+      "type": "t_address",
+      "src": "contracts/strategies/ConvexStrategy.sol:22"
+    },
+    {
+      "contract": "ConvexStrategy",
+      "label": "_deprecated_cvxRewardTokenAddress",
+      "type": "t_address",
+      "src": "contracts/strategies/ConvexStrategy.sol:24"
+    },
+    {
+      "contract": "ConvexStrategy",
+      "label": "cvxDepositorPTokenId",
+      "type": "t_uint256",
+      "src": "contracts/strategies/ConvexStrategy.sol:25"
+    }
+  ],
+  "types": {
+    "t_address": {
+      "label": "address"
+    },
+    "t_uint256": {
+      "label": "uint256"
+    },
+    "t_mapping(t_address,t_address)": {
+      "label": "mapping(address => address)"
+    },
+    "t_array(t_address)dyn_storage": {
+      "label": "address[]"
+    },
+    "t_array(t_int256)98_storage": {
+      "label": "int256[98]"
+    },
+    "t_int256": {
+      "label": "int256"
+    },
+    "t_bool": {
+      "label": "bool"
+    },
+    "t_array(t_uint256)50_storage": {
+      "label": "uint256[50]"
+    }
+  }
+}

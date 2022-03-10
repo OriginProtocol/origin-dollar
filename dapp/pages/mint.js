@@ -1,36 +1,23 @@
-import React from 'react'
-import Layout from 'components/layout'
-import Nav from 'components/Nav'
+import React, { useEffect } from 'react'
+import { fbt } from 'fbt-runtime'
+import Router from 'next/router'
+import { adjustLinkHref } from 'utils/utils'
 
-import MissionControl from 'components/MissionControl'
-import PrimarySidePanel from 'components/sidePanel/PrimarySidePanel'
+const Mint = ({ locale, onLocale }) => {
+  useEffect(() => {
+    Router.push(adjustLinkHref('/swap'))
+  }, [])
 
-export default function DApp({ locale, onLocale }) {
   return (
     <>
-      <Layout locale={locale} onLocale={onLocale} dapp showUniswapNotice>
-        <Nav
-          dapp
-          page={'mint'}
-          locale={locale}
-          onLocale={onLocale}
-        />
-        <div className="home d-flex">
-          <MissionControl />
-          <PrimarySidePanel />
-        </div>
-      </Layout>
-      <style jsx>{`
-        .home {
-          padding-top: 20px;
-        }
+      {fbt('Redirecting...', 'Redirecting...')}
 
+      <style jsx>{`
         @media (max-width: 799px) {
-          .home {
-            padding: 0;
-          }
         }
       `}</style>
     </>
   )
 }
+
+export default Mint

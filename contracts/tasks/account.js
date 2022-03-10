@@ -1,3 +1,5 @@
+const _ = require("lodash");
+
 // USDT has its own ABI because of non standard returns
 const usdtAbi = require("../test/abi/usdt.json").abi;
 const daiAbi = require("../test/abi/erc20.json");
@@ -47,6 +49,7 @@ async function accounts(taskArguments, hre, privateKeys) {
  * Funds test accounts on local or fork with DAI, USDT, USDC and TUSD.
  */
 async function fund(taskArguments, hre) {
+  const { findBestMainnetTokenHolder } = require("../utils/funding");
   const addresses = require("../utils/addresses");
   const {
     usdtUnits,
@@ -59,6 +62,11 @@ async function fund(taskArguments, hre) {
 
   if (!isFork && !isLocalhost) {
     throw new Error("Task can only be used on local or fork");
+  }
+
+  if (!process.env.ACCOUNTS_TO_FUND) {
+    // No need to fund accounts if no accounts to fund
+    return;
   }
 
   let usdt, dai, tusd, usdc;
@@ -74,21 +82,24 @@ async function fund(taskArguments, hre) {
     usdc = await hre.ethers.getContract("MockUSDC");
   }
 
-  let binanceSigner;
   const signers = await hre.ethers.getSigners();
 
-  if (isFork) {
-    await hre.network.provider.request({
-      method: "hardhat_impersonateAccount",
-      params: [addresses.mainnet.Binance],
-    });
-    binanceSigner = await hre.ethers.provider.getSigner(
-      addresses.mainnet.Binance
-    );
+  let accountsToFund;
+  let signersToFund;
+
+  if (taskArguments.accountsfromenv) {
+    if (!isFork) {
+      throw new Error("accountsfromenv param only works in fork mode");
+    }
+    accountsToFund = process.env.ACCOUNTS_TO_FUND.split(",");
+  } else {
+    const numAccounts = Number(taskArguments.num) || defaultNumAccounts;
+    const accountIndex = Number(taskArguments.account) || defaultAccountIndex;
+
+    signersToFund = signers.splice(accountIndex, numAccounts);
+    accountsToFund = signersToFund.map((signer) => signer.address);
   }
 
-  const numAccounts = Number(taskArguments.num) || defaultNumAccounts;
-  const accountIndex = Number(taskArguments.account) || defaultAccountIndex;
   const fundAmount = taskArguments.amount || defaultFundAmount;
 
   console.log(`DAI: ${dai.address}`);
@@ -96,40 +107,69 @@ async function fund(taskArguments, hre) {
   console.log(`USDT: ${usdt.address}`);
   console.log(`TUSD: ${tusd.address}`);
 
-  for (let i = accountIndex; i < accountIndex + numAccounts; i++) {
-    const signer = signers[i];
-    const address = signer.address;
-    console.log(`Funding account ${i} at address ${address}`);
-    if (isFork) {
-      await dai.connect(binanceSigner).transfer(address, daiUnits(fundAmount));
-    } else {
-      await dai.connect(signer).mint(daiUnits(fundAmount));
-    }
-    console.log(`  Funded with ${fundAmount} DAI`);
-    if (isFork) {
-      await usdc
-        .connect(binanceSigner)
-        .transfer(address, usdcUnits(fundAmount));
-    } else {
-      await usdc.connect(signer).mint(usdcUnits(fundAmount));
-    }
-    console.log(`  Funded with ${fundAmount} USDC`);
-    if (isFork) {
-      await usdt
-        .connect(binanceSigner)
-        .transfer(address, usdtUnits(fundAmount));
-    } else {
-      await usdt.connect(signer).mint(usdtUnits(fundAmount));
-    }
-    console.log(`  Funded with ${fundAmount} USDT`);
-    if (isFork) {
-      await tusd
-        .connect(binanceSigner)
-        .transfer(address, tusdUnits(fundAmount));
-    } else {
-      await tusd.connect(signer).mint(tusdUnits(fundAmount));
-    }
-    console.log(`  Funded with ${fundAmount} TUSD`);
+  const contractDataList = [
+    {
+      name: "eth",
+      contract: null,
+      unitsFn: ethers.utils.parseEther,
+      forkSigner: isFork ? await findBestMainnetTokenHolder(null, hre) : null,
+    },
+    {
+      name: "dai",
+      contract: dai,
+      unitsFn: daiUnits,
+      forkSigner: isFork ? await findBestMainnetTokenHolder(dai, hre) : null,
+    },
+    {
+      name: "usdc",
+      contract: usdc,
+      unitsFn: usdcUnits,
+      forkSigner: isFork ? await findBestMainnetTokenHolder(usdc, hre) : null,
+    },
+    {
+      name: "usdt",
+      contract: usdt,
+      unitsFn: usdtUnits,
+      forkSigner: isFork ? await findBestMainnetTokenHolder(usdt, hre) : null,
+    },
+  ];
+
+  for (let i = 0; i < accountsToFund.length; i++) {
+    const currentAccount = accountsToFund[i];
+    await Promise.all(
+      contractDataList.map(async (contractData) => {
+        const { contract, unitsFn, forkSigner, name } = contractData;
+        const usedFundAmount = contract !== null ? fundAmount : "100";
+        if (isFork) {
+          // fund ether
+          if (!contract) {
+            await forkSigner.sendTransaction({
+              to: currentAccount,
+              from: forkSigner._address,
+              value: hre.ethers.utils.parseEther(usedFundAmount),
+            });
+          } else {
+            await contract
+              .connect(forkSigner)
+              .transfer(currentAccount, unitsFn(usedFundAmount));
+          }
+        } else {
+          if (!contract) {
+            const signerWithEth = (await hre.ethers.getSigners())[0];
+            await signerWithEth.sendTransaction({
+              to: currentAccount,
+              value: unitsFn(usedFundAmount),
+            });
+          }
+          await contract
+            .connect(signersToFund[i])
+            .mint(unitsFn(usedFundAmount));
+        }
+        console.log(
+          `Funded ${currentAccount} with ${usedFundAmount} ${name.toUpperCase()}`
+        );
+      })
+    );
   }
 }
 
@@ -177,10 +217,21 @@ async function mint(taskArguments, hre) {
       );
     }
 
-    // Mint.
+    // for some reason we need to call impersonateAccount even on default list of signers
+    await hre.network.provider.request({
+      method: "hardhat_impersonateAccount",
+      params: [signer.address],
+    });
+
+    // Reset approval before requesting a fresh one, or non first approve calls will fail
+    await usdt
+      .connect(signer)
+      .approve(vault.address, "0x0", { gasLimit: 1000000 });
     await usdt
       .connect(signer)
       .approve(vault.address, usdtUnits(mintAmount), { gasLimit: 1000000 });
+
+    // Mint.
     await vault
       .connect(signer)
       .mint(usdt.address, usdtUnits(mintAmount), 0, { gasLimit: 2000000 });
@@ -192,6 +243,77 @@ async function mint(taskArguments, hre) {
       hre.ethers.utils.formatUnits(ousdBalance, 18)
     );
   }
+}
+
+/**
+ * Redeems OUSD on fork for specific account
+ */
+async function redeemFor(taskArguments, hre) {
+  const addresses = require("../utils/addresses");
+  const {
+    ousdUnits,
+    ousdUnitsFormat,
+    daiUnitsFormat,
+    usdcUnitsFormat,
+    usdtUnitsFormat,
+    isFork,
+    isLocalhost,
+  } = require("../test/helpers");
+
+  if (!isFork) {
+    throw new Error("Task can only be used on fork");
+  }
+
+  const ousd = await ethers.getContractAt("OUSD", addresses.mainnet.OUSDProxy);
+  const vault = await ethers.getContractAt(
+    "IVault",
+    addresses.mainnet.VaultProxy
+  );
+  const dai = await hre.ethers.getContractAt(usdtAbi, addresses.mainnet.DAI);
+  const usdc = await hre.ethers.getContractAt(usdtAbi, addresses.mainnet.USDC);
+  const usdt = await hre.ethers.getContractAt(usdtAbi, addresses.mainnet.USDT);
+
+  const address = taskArguments.account;
+
+  const signer = await hre.ethers.getSigner(address);
+  await hre.network.provider.request({
+    method: "hardhat_impersonateAccount",
+    params: [address],
+  });
+
+  const redeemAmount = taskArguments.amount;
+
+  console.log(`Redeeming ${redeemAmount} OUSD for address ${address}`);
+
+  // Show the current balances.
+  let ousdBalance = await ousd.balanceOf(address);
+  let daiBalance = await dai.balanceOf(address);
+  let usdcBalance = await usdc.balanceOf(address);
+  let usdtBalance = await usdt.balanceOf(address);
+  console.log("OUSD balance=", ousdUnitsFormat(ousdBalance, 18));
+  console.log("DAI balance=", daiUnitsFormat(daiBalance, 18));
+  console.log("USDC balance=", usdcUnitsFormat(usdcBalance, 6));
+  console.log("USDT balance=", usdtUnitsFormat(usdtBalance, 6));
+
+  const redeemAmountInt = parseInt(redeemAmount);
+  // Redeem.
+  await vault
+    .connect(signer)
+    .redeem(
+      ousdUnits(redeemAmount),
+      ousdUnits((redeemAmountInt - redeemAmountInt * 0.05).toString()),
+      { gasLimit: 2500000 }
+    );
+
+  // Show the new balances.
+  ousdBalance = await ousd.balanceOf(address);
+  daiBalance = await dai.balanceOf(address);
+  usdcBalance = await usdc.balanceOf(address);
+  usdtBalance = await usdt.balanceOf(address);
+  console.log("New OUSD balance=", ousdUnitsFormat(ousdBalance, 18));
+  console.log("New DAI balance=", daiUnitsFormat(daiBalance, 18));
+  console.log("New USDC balance=", usdcUnitsFormat(usdcBalance, 18));
+  console.log("New USDT balance=", usdtUnitsFormat(usdtBalance, 18));
 }
 
 /**
@@ -322,5 +444,6 @@ module.exports = {
   fund,
   mint,
   redeem,
+  redeemFor,
   transfer,
 };

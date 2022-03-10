@@ -7,6 +7,7 @@ const {
   getOracleAddresses,
   isMainnet,
   isFork,
+  isRinkeby,
   isMainnetOrRinkebyOrFork,
 } = require("../test/helpers.js");
 const {
@@ -411,11 +412,8 @@ const deployVault = async () => {
 };
 
 const upgradeAndResetOUSD = async () => {
-  const {
-    depoyerAddr,
-    governorAddr,
-    v1GovernorAddr,
-  } = await hre.getNamedAccounts();
+  const { depoyerAddr, governorAddr, v1GovernorAddr } =
+    await hre.getNamedAccounts();
 
   // Signers
   const sDeployer = await ethers.provider.getSigner(depoyerAddr);
@@ -530,7 +528,9 @@ const configureVault = async () => {
 
   const cVault = await ethers.getContractAt(
     "VaultAdmin",
-    (await ethers.getContract("VaultProxy")).address
+    (
+      await ethers.getContract("VaultProxy")
+    ).address
   );
 
   // Set Uniswap addr
@@ -710,6 +710,6 @@ const main = async () => {
 
 main.id = deployName;
 main.dependencies = ["002_upgrade_vault", "003_governor"];
-main.skip = () => !isMainnetOrRinkebyOrFork;
+main.skip = () => !(isMainnet || isRinkeby) || isFork;
 
 module.exports = main;

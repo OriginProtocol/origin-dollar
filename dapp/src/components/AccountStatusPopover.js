@@ -3,9 +3,10 @@ import { useWeb3React } from '@web3-react/core'
 import { fbt } from 'fbt-runtime'
 
 import { isCorrectNetwork } from 'utils/web3'
-import withLoginModal from 'hoc/withLoginModal'
+import withWalletSelectModal from 'hoc/withWalletSelectModal'
 import GetOUSD from 'components/GetOUSD'
 import Content from './_AccountStatusContent'
+import { assetRootPath } from 'utils/image'
 
 const AccountStatusPopover = ({ className }) => {
   const { active, account, chainId } = useWeb3React()
@@ -47,7 +48,11 @@ const AccountStatusPopover = ({ className }) => {
           aria-expanded="false"
           aria-label="Toggle popover"
         >
-          <img src="/images/close.svg" alt="Close icon" loading="lazy" />
+          <img
+            src={assetRootPath('/images/close.svg')}
+            alt="Close icon"
+            loading="lazy"
+          />
         </button>
         <Content />
       </div>
@@ -146,4 +151,4 @@ const AccountStatusPopover = ({ className }) => {
   )
 }
 
-export default withLoginModal(AccountStatusPopover)
+export default withWalletSelectModal(AccountStatusPopover)

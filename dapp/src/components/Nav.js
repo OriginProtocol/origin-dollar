@@ -17,32 +17,39 @@ import LanguageSelected from 'components/LanguageSelected'
 import LocaleDropdown from 'components/LocaleDropdown'
 import OusdDropdown from 'components/earn/OusdDropdown'
 import OgnDropdown from 'components/earn/OgnDropdown'
+import IPFSDappLink from 'components/IPFSDappLink'
 import ContractStore from 'stores/ContractStore'
+import AccountStore from 'stores/AccountStore'
 
 import Languages from '../constants/Languages'
 import AccountStatusPopover from './AccountStatusPopover'
+import { adjustLinkHref } from 'utils/utils'
+import { assetRootPath } from 'utils/image'
 
 const environment = process.env.NODE_ENV
-
+const showExperimentalSoftwareNotice = false
 const DappLinks = ({ dapp, page }) => {
+  const ousdBalance = useStoreState(AccountStore, (s) => s.balances['ousd'])
+  const lifetimeYield = useStoreState(AccountStore, (s) => s.lifetimeYield)
+
   return (
     <>
       {dapp && (
         <div className="d-flex align-items-center justify-content-center dapp-navigation mr-auto">
           {(process.env.ENABLE_LIQUIDITY_MINING === 'true' ||
             process.env.ENABLE_STAKING === 'true') && (
-            <Link href="/mint">
+            <Link href={adjustLinkHref('/swap')}>
               <a
                 className={`d-flex align-items-center ml-md-0 ${
-                  page === 'mint' ? 'selected' : ''
+                  page === 'swap' ? 'selected' : ''
                 }`}
               >
-                {fbt('Mint OUSD', 'Mint OUSD')}
+                {fbt('Swap OUSD', 'Swap OUSD')}
               </a>
             </Link>
           )}
           {process.env.ENABLE_LIQUIDITY_MINING === 'true' && (
-            <Link href="/earn">
+            <Link href={adjustLinkHref('/earn')}>
               <a
                 className={`d-flex align-items-center ${
                   page === 'earn' || page === 'pool-details' ? 'selected' : ''
@@ -53,16 +60,25 @@ const DappLinks = ({ dapp, page }) => {
             </Link>
           )}
           {process.env.ENABLE_STAKING === 'true' && (
-            <Link href="/stake">
+            <Link href={adjustLinkHref('/earn')}>
               <a
                 className={`d-flex align-items-center ${
-                  page === 'stake' ? 'selected' : ''
+                  page === 'earn' ? 'selected' : ''
                 }`}
               >
-                {fbt('Stake OGN', 'Stake OGN')}
+                {fbt('Earn OGN', 'Earn OGN')}
               </a>
             </Link>
           )}
+          <Link href={adjustLinkHref('/history')}>
+            <a
+              className={`d-flex align-items-center ${
+                page === 'history' ? 'selected' : ''
+              }`}
+            >
+              {fbt('History', 'History')}
+            </a>
+          </Link>
         </div>
       )}
       <style jsx>{`
@@ -120,7 +136,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
         >
           <div className="triangle d-none d-xl-block"></div>
           {fbt(
-            `Trailing 7-day APY: ${fbt.param(
+            `Trailing 30-day APY: ${fbt.param(
               'APY',
               formatCurrency(apy * 100, 2) + '%'
             )}`,
@@ -134,11 +150,11 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
           { dapp }
         )}
       >
-        <div className="container p-lg-0">
-          <Link href={'/'}>
+        <div className="container p-lg-0 flex-nowrap">
+          <Link href={adjustLinkHref('/')}>
             <a className="navbar-brand d-flex flex-column justify-content-center">
               <img
-                src="/images/origin-dollar-logo.svg"
+                src={assetRootPath('/images/origin-dollar-logo.svg')}
                 className="origin-logo"
                 alt="Origin Dollar logo"
               />
@@ -155,7 +171,10 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
               aria-label="Toggle side panel"
             >
               <div className="dropdown-marble">
-                <img src="/images/bell-icon.svg" alt="Activity menu" />
+                <img
+                  src={assetRootPath('/images/bell-icon.svg')}
+                  alt="Activity menu"
+                />
               </div>
             </button>
           )}
@@ -172,6 +191,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
               <LanguageSelected locale={locale} />
             </div>
           </button>
+          <IPFSDappLink dapp={dapp} css="d-lg-none" />
           {!dapp && (
             <button
               className="navbar-toggler d-lg-none ml-4"
@@ -182,7 +202,10 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
               aria-expanded="false"
               aria-label="Toggle menu side panel"
             >
-              <img src="/images/menu-icon.svg" alt="Activity menu" />
+              <img
+                src={assetRootPath('/images/menu-icon.svg')}
+                alt="Activity menu"
+              />
             </button>
           )}
           {dapp && <AccountStatusPopover />}
@@ -224,7 +247,11 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
               aria-expanded="false"
               aria-label="Toggle language navigation"
             >
-              <img src="/images/close.svg" alt="Close icon" loading="lazy" />
+              <img
+                src={assetRootPath('/images/close.svg')}
+                alt="Close icon"
+                loading="lazy"
+              />
             </button>
             <LanguageOptions locale={locale} onLocale={onLocale} />
           </div>
@@ -238,7 +265,11 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
               aria-expanded="false"
               aria-label="Toggle navigation"
             >
-              <img src="/images/close.svg" alt="Close icon" loading="lazy" />
+              <img
+                src={assetRootPath('/images/close.svg')}
+                alt="Close icon"
+                loading="lazy"
+              />
             </button>
             <div className="d-flex w-100 align-items-center">
               {!dapp && (
@@ -248,7 +279,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
                       active: pathname === '/',
                     })}
                   >
-                    <Link href="/">
+                    <Link href={adjustLinkHref('/')}>
                       <a className="nav-link">
                         {fbt('Home', 'Home page link')}{' '}
                         <span className="sr-only">(current)</span>
@@ -260,7 +291,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
                       active: pathname === '/earn-info',
                     })}
                   >
-                    <Link href="/earn-info">
+                    <Link href={adjustLinkHref('/earn-info')}>
                       <a className="nav-link">
                         {fbt('Earn', 'Earn info page link')}
                       </a>
@@ -271,7 +302,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
                       active: pathname === '/governance',
                     })}
                   >
-                    <Link href="/governance">
+                    <Link href={adjustLinkHref('/governance')}>
                       <a className="nav-link">
                         {fbt('Governance', 'Governance page link')}
                       </a>
@@ -293,12 +324,13 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
               {dapp && environment !== 'production' && (
                 <ul className="navbar-nav">
                   <li className="nav-item mr-2">
-                    <Link href="/dashboard">
+                    <Link href={adjustLinkHref('/dashboard')}>
                       <a>{fbt('Debug', 'Debugging dashboard link')}</a>
                     </Link>
                   </li>
                 </ul>
               )}
+              <IPFSDappLink dapp={dapp} css="d-none d-lg-block" />
               <div
                 className={`d-flex flex-column ${
                   dapp ? 'flex-lg-row-reverse' : 'flex-lg-row'
@@ -317,8 +349,6 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
                   dapp={dapp}
                   className={dapp ? '' : 'ml-2'}
                 />
-                {dapp && <OgnDropdown />}
-                {dapp && <OusdDropdown />}
               </div>
               <GetOUSD
                 style={{ marginTop: 40 }}
@@ -332,38 +362,6 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
         <div className="d-flex d-md-none">
           <DappLinks dapp={dapp} page={page} />
         </div>
-        {dapp && (
-          <div className="ousd-experimental-notice d-flex flex-column flex-md-row">
-            <div className="col-12 col-md-9 d-flex flex-column px-0">
-              <b className="mb-2 mb-md-0 text-center text-md-left">
-                {fbt(
-                  'OUSD is experimental software. Please use at your own risk.',
-                  'Experimental software notice part 1'
-                )}
-              </b>
-              <div className="d-none d-md-flex">
-                {fbt(
-                  'Learn more about our security measures, audits, insurance, and risk mitigations.',
-                  'Experimental software notice part 2'
-                )}
-              </div>
-            </div>
-            <a
-              href="https://docs.ousd.com/security-and-risks/risks"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="col-12 col-md-3 d-flex px-0 learn-more justify-content-center justify-content-md-end align-items-center"
-            >
-              <div className="d-flex align-items-center mr-2">
-                {fbt('Learn more', 'Learn more notice link')}
-              </div>
-              <img
-                className="mr-2 mt-1 linky-thing"
-                src="/images/linky-thing.svg"
-              />
-            </a>
-          </div>
-        )}
       </nav>
       <style jsx>{`
         .banner {

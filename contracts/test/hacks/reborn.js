@@ -1,14 +1,7 @@
 const { expect } = require("chai");
-const { utils } = require("ethers");
 
 const { rebornFixture } = require("../_fixture");
-const {
-  loadFixture,
-  units,
-  isFork,
-  daiUnits,
-  ousdUnits,
-} = require("../helpers");
+const { loadFixture, isFork, daiUnits, ousdUnits } = require("../helpers");
 
 describe("Reborn Attack Protection", function () {
   if (isFork) {

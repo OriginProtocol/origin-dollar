@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
 import { ethers } from 'ethers'
+import { get } from 'lodash'
 
 import withRpcProvider from 'hoc/withRpcProvider'
 import EarnModal from 'components/earn/modal/EarnModal'
@@ -9,7 +10,9 @@ import AccountStore from 'stores/AccountStore'
 import { useStoreState } from 'pullstate'
 import SpinningLoadingCircle from 'components/SpinningLoadingCircle'
 import analytics from 'utils/analytics'
+import { connectorNameIconMap, getConnectorIcon } from 'utils/connectors'
 import { getUserSource } from 'utils/user'
+import { assetRootPath } from 'utils/image'
 
 const StakeModal = ({
   tokenAllowanceSuffiscient,
@@ -45,7 +48,8 @@ const StakeModal = ({
   const [tokensToStake, setTokensToStake] = useState(0)
   const [displayedTokensToStake, setDisplayedTokensToStake] = useState(0)
   const [selectTokensError, setSelectTokensError] = useState(null)
-  const connectorIcon = useStoreState(AccountStore, (s) => s.connectorIcon)
+  const connectorName = useStoreState(AccountStore, (s) => s.connectorName)
+  const connectorIcon = getConnectorIcon(connectorName)
 
   const getActions = () => {
     if (modalState === 'select-tokens') {
@@ -312,7 +316,7 @@ const StakeModal = ({
                   )}
                 </div>
                 <div className="grey-icon-holder d-flex align-items-center justify-content-center mb-22">
-                  <img src={`/images/${connectorIcon}`} />
+                  <img src={assetRootPath(`/images/${connectorIcon}`)} />
                 </div>
               </div>
             )}
@@ -348,7 +352,7 @@ const StakeModal = ({
                 </div>
                 <img
                   className="mb-22 green-check"
-                  src="/images/green-check.svg"
+                  src={assetRootPath('/images/green-check.svg')}
                 />
               </div>
             )}
@@ -364,7 +368,7 @@ const StakeModal = ({
               <div className="d-flex align-items-center justify-content-center">
                 <img
                   className="big-connector-icon"
-                  src={`/images/${connectorIcon}`}
+                  src={assetRootPath(`/images/${connectorIcon}`)}
                 />
                 <div className="action-text">
                   {fbt(

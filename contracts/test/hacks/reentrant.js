@@ -1,8 +1,7 @@
 const { expect } = require("chai");
-const { utils } = require("ethers");
 
 const { hackedVaultFixture } = require("../_fixture");
-const { loadFixture, units, isFork } = require("../helpers");
+const { loadFixture, isFork } = require("../helpers");
 
 describe("Reentry Attack Protection", function () {
   if (isFork) {
@@ -15,7 +14,7 @@ describe("Reentry Attack Protection", function () {
 
       // to see this fail just comment out the require in the nonReentrant() in Governable.sol
       await expect(vault.mint(evilDAI.address, 10, 0)).to.be.revertedWith(
-        "SafeERC20: low-level call failed"
+        "Reentrant call"
       );
     });
   });

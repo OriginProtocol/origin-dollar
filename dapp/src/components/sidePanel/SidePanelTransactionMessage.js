@@ -7,6 +7,7 @@ import { useStoreState } from 'pullstate'
 import CoinCircleGraphics from 'components/sidePanel/CoinCircleGraphics'
 import TransactionStore from 'stores/TransactionStore'
 import { formatCurrency, formatCurrencyConditional } from 'utils/math'
+import { assetRootPath } from 'utils/image'
 
 const SidePanelTransactionMessage = ({
   transaction,
@@ -17,6 +18,7 @@ const SidePanelTransactionMessage = ({
   const isMintTransaction = transaction.type === 'mint'
   const isRedeemTransaction = transaction.type === 'redeem'
   const isRebaseTransaction = transaction.type === 'rebase'
+  const isRebaseOptInTransaction = transaction.type === 'rebaseOptIn'
   const [showContents, setShowContents] = useState(!animate)
   const [showInnerContents, setShowInnerContents] = useState(false)
   const [showExpandedContents, setShowExpandedContents] = useState(false)
@@ -27,12 +29,16 @@ const SidePanelTransactionMessage = ({
       s.expandedTransaction && s.expandedTransaction.hash === transaction.hash
   )
   const web3react = useWeb3React()
-  const etherscanLink = `${getEtherscanHost(web3react)}/tx/${transaction.hash}`
+
+  const etherscanLinkHash = transaction.safeData
+    ? transaction.safeData.txHash
+    : transaction.hash
+  const etherscanLink = `${getEtherscanHost(web3react)}/tx/${etherscanLinkHash}`
   /* failed transactions that have not been mined and shouldn't have a hash
    * still have a hash for deduplication purposes. This figures out if the hash
    * is a valid one, and if we should link to etherscan
    */
-  const isValidHash = transaction.hash.startsWith('0x')
+  const isValidHash = transaction.hash && transaction.hash.startsWith('0x')
 
   useEffect(() => {
     if (!isExpanded) {
@@ -161,6 +167,48 @@ const SidePanelTransactionMessage = ({
                 </div>
               </>
             )}
+            {showContents && isRebaseOptInTransaction && (
+              <>
+                <CoinCircleGraphics
+                  transaction={transaction}
+                  coin={coin}
+                  animate={animate}
+                  showTxStatusIcon={true}
+                  drawType="all-same"
+                />
+                <div
+                  className={`title-holder ${
+                    showInnerContents ? '' : 'hidden'
+                  }`}
+                >
+                  {!transaction.mined && (
+                    <div className="title">
+                      {fbt(
+                        'Opting in to OUSD rebasing',
+                        'Opting in to OUSD rebasing'
+                      )}
+                    </div>
+                  )}
+                  {transaction.mined && !transaction.isError && (
+                    <div className="title">
+                      {fbt(
+                        'Opted in to OUSD rebase',
+                        'Opted in to OUSD rebase'
+                      )}
+                    </div>
+                  )}
+                  {transaction.mined && transaction.isError && (
+                    <div className="title">
+                      {fbt(
+                        'Failed to opt in to OUSD rebase',
+                        'Failed to opt in to OUSD rebase'
+                      )}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+
             {showContents && isApproveTransaction && (
               <>
                 <CoinCircleGraphics
@@ -220,26 +268,28 @@ const SidePanelTransactionMessage = ({
                       {!transaction.mined && (
                         <img
                           className="waiting-icon rotating"
-                          src="/images/spinner-green-small.png"
+                          src={assetRootPath('/images/spinner-green-small.png')}
                         />
                       )}
                       {transaction.mined && !transaction.isError && (
                         <img
                           className="waiting-icon"
-                          src="/images/green-checkmark.svg"
+                          src={assetRootPath('/images/green-checkmark.svg')}
                         />
                       )}
                       {transaction.mined && transaction.isError && (
                         <img
                           className="waiting-icon"
-                          src="/images/red-x-filled.svg"
+                          src={assetRootPath('/images/red-x-filled.svg')}
                         />
                       )}
                     </div>
                   </div>
                   <CoinCircleGraphics
                     transaction={transaction}
-                    coin={coin.split(',')}
+                    coin={
+                      coin === 'mix' ? ['dai', 'usdt', 'usdc'] : coin.split(',')
+                    }
                     animate={animate}
                     showTxStatusIcon={false}
                     drawType="per-coin"
@@ -253,36 +303,36 @@ const SidePanelTransactionMessage = ({
                   {!transaction.mined && (
                     <div className="title">
                       {fbt(
-                        'Converting OUSD to ' +
+                        'Swapping OUSD for ' +
                           fbt.param(
                             'coin',
                             coin.split(',').join(' & ').toUpperCase()
                           ),
-                        'Converting OUSD to coins'
+                        'Swapping OUSD for coins'
                       )}
                     </div>
                   )}
                   {transaction.mined && !transaction.isError && (
                     <div className="title">
                       {fbt(
-                        'Converting OUSD to ' +
+                        'Swapped OUSD for ' +
                           fbt.param(
                             'coin',
                             coin.split(',').join(' & ').toUpperCase()
                           ),
-                        'Converted OUSD to coins'
+                        'Swapped OUSD for coins'
                       )}
                     </div>
                   )}
                   {transaction.mined && transaction.isError && (
                     <div className="title">
                       {fbt(
-                        'Failed converting OUSD to ' +
+                        'Failed swapping OUSD for ' +
                           fbt.param(
                             'coin',
                             coin.split(',').join(' & ').toUpperCase()
                           ),
-                        'Failed converting OUSD to coins'
+                        'Failed swapping OUSD for coins'
                       )}
                     </div>
                   )}
@@ -304,19 +354,19 @@ const SidePanelTransactionMessage = ({
                       {!transaction.mined && (
                         <img
                           className="waiting-icon rotating"
-                          src="/images/spinner-green-small.png"
+                          src={assetRootPath('/images/spinner-green-small.png')}
                         />
                       )}
                       {transaction.mined && !transaction.isError && (
                         <img
                           className="waiting-icon"
-                          src="/images/green-checkmark.svg"
+                          src={assetRootPath('/images/green-checkmark.svg')}
                         />
                       )}
                       {transaction.mined && transaction.isError && (
                         <img
                           className="waiting-icon"
-                          src="/images/red-x-filled.svg"
+                          src={assetRootPath('/images/red-x-filled.svg')}
                         />
                       )}
                     </div>
@@ -337,13 +387,13 @@ const SidePanelTransactionMessage = ({
                   {!transaction.mined && (
                     <div className="title">
                       {fbt(
-                        'Converting ' +
+                        'Swapping ' +
                           fbt.param(
                             'coin',
                             coin.split(',').join(' & ').toUpperCase()
                           ) +
-                          ' to OUSD',
-                        'Converting coins to OUSD'
+                          ' for OUSD',
+                        'Swapping coins for OUSD'
                       )}
                     </div>
                   )}
@@ -353,21 +403,21 @@ const SidePanelTransactionMessage = ({
                         fbt.param(
                           'coin',
                           coin.split(',').join(' & ').toUpperCase()
-                        ) + ' converted to OUSD',
-                        'Converted coins to OUSD'
+                        ) + ' swapped for OUSD',
+                        'Swapped coins for OUSD'
                       )}
                     </div>
                   )}
                   {transaction.mined && transaction.isError && (
                     <div className="title">
                       {fbt(
-                        'Failed converting ' +
+                        'Failed swapping ' +
                           fbt.param(
                             'coin',
                             coin.split(',').join(' & ').toUpperCase()
                           ) +
-                          ' to OUSD',
-                        'Failed with converting OUSD'
+                          ' for OUSD',
+                        'Failed swapping for OUSD'
                       )}
                     </div>
                   )}
@@ -439,7 +489,7 @@ const SidePanelTransactionMessage = ({
                   )}
                 </div>
                 <div className="small-arrow d-flex align-items-center justify-content-center align-self-center">
-                  <img src="/images/small-arrow.svg" />
+                  <img src={assetRootPath('/images/small-arrow.svg')} />
                 </div>
                 <div className="expand-box right d-flex flex-column align-items-center justify-content-center">
                   {redeemDataAvailable && (
@@ -583,8 +633,7 @@ const SidePanelTransactionMessage = ({
           position: absolute;
           right: 10px;
           bottom: 10px;
-          opacity: 1;
-          transition: opacity 0.7s ease-out 0.5s;
+          opacity: 0.6;
           cursor: pointer;
           width: 17px;
           height: 17px;
@@ -593,7 +642,7 @@ const SidePanelTransactionMessage = ({
         }
 
         .etherscan-link:hover {
-          background-image: url('/images/etherscan-icon-hover.svg');
+          opacity: 1;
         }
 
         .etherscan-link img,

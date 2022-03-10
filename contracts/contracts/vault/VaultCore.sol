@@ -1,22 +1,32 @@
-pragma solidity 0.5.11;
+// SPDX-License-Identifier: agpl-3.0
+pragma solidity ^0.8.0;
 
 /**
  * @title OUSD Vault Contract
  * @notice The Vault contract stores assets. On a deposit, OUSD will be minted
            and sent to the depositor. On a withdrawal, OUSD will be burned and
            assets will be sent to the withdrawer. The Vault accepts deposits of
-           interest form yield bearing strategies which will modify the supply
+           interest from yield bearing strategies which will modify the supply
            of OUSD.
  * @author Origin Protocol Inc
  */
 
-import "./VaultStorage.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
+
+import { StableMath } from "../utils/StableMath.sol";
 import { IOracle } from "../interfaces/IOracle.sol";
 import { IVault } from "../interfaces/IVault.sol";
 import { IBuyback } from "../interfaces/IBuyback.sol";
+import "./VaultStorage.sol";
 
 contract VaultCore is VaultStorage {
-    uint256 constant MAX_UINT = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
+    using SafeERC20 for IERC20;
+    using StableMath for uint256;
+    using SafeMath for uint256;
+
+    uint256 constant MAX_UINT =
+        0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
 
     /**
      * @dev Verifies that the rebasing is not paused.
@@ -53,9 +63,10 @@ contract VaultCore is VaultStorage {
             price = 1e8;
         }
         uint256 assetDecimals = Helpers.getDecimals(_asset);
-        uint256 unitAdjustedDeposit = _amount.scaleBy(int8(18 - assetDecimals));
+        // Scale up to 18 decimal
+        uint256 unitAdjustedDeposit = _amount.scaleBy(18, assetDecimals);
         uint256 priceAdjustedDeposit = _amount.mulTruncateScale(
-            price.scaleBy(int8(10)), // 18-8 because oracles have 8 decimals precision
+            price.scaleBy(18, 8), // Oracles have 8 decimal precision
             10**assetDecimals
         );
 
@@ -85,69 +96,7 @@ contract VaultCore is VaultStorage {
         }
     }
 
-    /**
-     * @dev Mint for multiple assets in the same call.
-     * @param _assets Addresses of assets being deposited
-     * @param _amounts Amount of each asset at the same index in the _assets
-     *                 to deposit.
-     * @param _minimumOusdAmount Minimum OUSD to mint
-     */
-    function mintMultiple(
-        address[] calldata _assets,
-        uint256[] calldata _amounts,
-        uint256 _minimumOusdAmount
-    ) external whenNotCapitalPaused nonReentrant {
-        require(_assets.length == _amounts.length, "Parameter length mismatch");
-
-        uint256 unitAdjustedTotal = 0;
-        uint256 priceAdjustedTotal = 0;
-        uint256[] memory assetPrices = _getAssetPrices(false);
-        for (uint256 j = 0; j < _assets.length; j++) {
-            // In memoriam
-            require(assets[_assets[j]].isSupported, "Asset is not supported");
-            require(_amounts[j] > 0, "Amount must be greater than 0");
-            for (uint256 i = 0; i < allAssets.length; i++) {
-                if (_assets[j] == allAssets[i]) {
-                    uint256 assetDecimals = Helpers.getDecimals(allAssets[i]);
-                    uint256 price = assetPrices[i];
-                    if (price > 1e18) {
-                        price = 1e18;
-                    }
-                    unitAdjustedTotal = unitAdjustedTotal.add(
-                        _amounts[j].scaleBy(int8(18 - assetDecimals))
-                    );
-                    priceAdjustedTotal = priceAdjustedTotal.add(
-                        _amounts[j].mulTruncateScale(price, 10**assetDecimals)
-                    );
-                }
-            }
-        }
-
-        if (_minimumOusdAmount > 0) {
-            require(
-                priceAdjustedTotal >= _minimumOusdAmount,
-                "Mint amount lower than minimum"
-            );
-        }
-
-        emit Mint(msg.sender, priceAdjustedTotal);
-
-        // Rebase must happen before any transfers occur.
-        if (unitAdjustedTotal >= rebaseThreshold && !rebasePaused) {
-            _rebase();
-        }
-
-        oUSD.mint(msg.sender, priceAdjustedTotal);
-
-        for (uint256 i = 0; i < _assets.length; i++) {
-            IERC20 asset = IERC20(_assets[i]);
-            asset.safeTransferFrom(msg.sender, address(this), _amounts[i]);
-        }
-
-        if (unitAdjustedTotal >= autoAllocateThreshold) {
-            _allocate();
-        }
-    }
+    // In memoriam
 
     /**
      * @dev Withdraw a supported asset and burn OUSD.
@@ -155,13 +104,10 @@ contract VaultCore is VaultStorage {
      * @param _minimumUnitAmount Minimum stablecoin units to receive in return
      */
     function redeem(uint256 _amount, uint256 _minimumUnitAmount)
-        public
+        external
         whenNotCapitalPaused
         nonReentrant
     {
-        if (_amount > rebaseThreshold && !rebasePaused) {
-            _rebase();
-        }
         _redeem(_amount, _minimumUnitAmount);
     }
 
@@ -173,14 +119,18 @@ contract VaultCore is VaultStorage {
     function _redeem(uint256 _amount, uint256 _minimumUnitAmount) internal {
         require(_amount > 0, "Amount must be greater than 0");
 
-        uint256 _totalSupply = oUSD.totalSupply();
-        uint256 _backingValue = _totalValue();
+        // Calculate redemption outputs
+        (
+            uint256[] memory outputs,
+            uint256 _backingValue
+        ) = _calculateRedeemOutputs(_amount);
 
+        // Check that OUSD is backed by enough assets
+        uint256 _totalSupply = oUSD.totalSupply();
         if (maxSupplyDiff > 0) {
             // Allow a max difference of maxSupplyDiff% between
             // backing assets value and OUSD total supply
             uint256 diff = _totalSupply.divPrecisely(_backingValue);
-
             require(
                 (diff > 1e18 ? diff.sub(1e18) : uint256(1e18).sub(diff)) <=
                     maxSupplyDiff,
@@ -190,8 +140,6 @@ contract VaultCore is VaultStorage {
 
         emit Redeem(msg.sender, _amount);
 
-        // Calculate redemption outputs
-        uint256[] memory outputs = _calculateRedeemOutputs(_amount);
         // Send outputs
         for (uint256 i = 0; i < allAssets.length; i++) {
             if (outputs[i] == 0) continue;
@@ -219,7 +167,7 @@ contract VaultCore is VaultStorage {
             for (uint256 i = 0; i < outputs.length; i++) {
                 uint256 assetDecimals = Helpers.getDecimals(allAssets[i]);
                 unitTotal = unitTotal.add(
-                    outputs[i].scaleBy(int8(18 - assetDecimals))
+                    outputs[i].scaleBy(18, assetDecimals)
                 );
             }
             require(
@@ -248,11 +196,6 @@ contract VaultCore is VaultStorage {
         whenNotCapitalPaused
         nonReentrant
     {
-        // Unfortunately we have to do balanceOf twice, the rebase may change
-        // the account balance
-        if (oUSD.balanceOf(msg.sender) > rebaseThreshold && !rebasePaused) {
-            _rebase();
-        }
         _redeem(oUSD.balanceOf(msg.sender), _minimumUnitAmount);
     }
 
@@ -260,7 +203,7 @@ contract VaultCore is VaultStorage {
      * @notice Allocate unallocated funds on Vault to strategies.
      * @dev Allocate unallocated funds on Vault to strategies.
      **/
-    function allocate() public whenNotCapitalPaused nonReentrant {
+    function allocate() external whenNotCapitalPaused nonReentrant {
         _allocate();
     }
 
@@ -299,7 +242,7 @@ contract VaultCore is VaultStorage {
         }
         if (vaultBufferModifier == 0) return;
 
-        // Iterate over all assets in the Vault and allocate the the appropriate
+        // Iterate over all assets in the Vault and allocate to the appropriate
         // strategy
         for (uint256 i = 0; i < allAssets.length; i++) {
             IERC20 asset = IERC20(allAssets[i]);
@@ -313,9 +256,9 @@ contract VaultCore is VaultStorage {
                 vaultBufferModifier
             );
 
-            address depositStrategyAddr = assetDefaultStrategies[address(
-                asset
-            )];
+            address depositStrategyAddr = assetDefaultStrategies[
+                address(asset)
+            ];
 
             if (depositStrategyAddr != address(0) && allocateAmount > 0) {
                 IStrategy strategy = IStrategy(depositStrategyAddr);
@@ -323,50 +266,32 @@ contract VaultCore is VaultStorage {
                 // mint or take required action
                 asset.safeTransfer(address(strategy), allocateAmount);
                 strategy.deposit(address(asset), allocateAmount);
-            }
-        }
-
-        // Harvest for all reward tokens above reward liquidation threshold
-        for (uint256 i = 0; i < allStrategies.length; i++) {
-            IStrategy strategy = IStrategy(allStrategies[i]);
-            address rewardTokenAddress = strategy.rewardTokenAddress();
-            if (rewardTokenAddress != address(0)) {
-                uint256 liquidationThreshold = strategy
-                    .rewardLiquidationThreshold();
-                if (liquidationThreshold == 0) {
-                    // No threshold set, always harvest from strategy
-                    IVault(address(this)).harvest(allStrategies[i]);
-                } else {
-                    // Check balance against liquidation threshold
-                    // Note some strategies don't hold the reward token balance
-                    // on their contract so the liquidation threshold should be
-                    // set to 0
-                    IERC20 rewardToken = IERC20(rewardTokenAddress);
-                    uint256 rewardTokenAmount = rewardToken.balanceOf(
-                        allStrategies[i]
-                    );
-                    if (rewardTokenAmount >= liquidationThreshold) {
-                        IVault(address(this)).harvest(allStrategies[i]);
-                    }
-                }
+                emit AssetAllocated(
+                    address(asset),
+                    depositStrategyAddr,
+                    allocateAmount
+                );
             }
         }
 
         // Trigger OGN Buyback
-        IBuyback(trusteeAddress).swap();
+        address _trusteeAddress = trusteeAddress; // gas savings
+        if (_trusteeAddress != address(0)) {
+            IBuyback(trusteeAddress).swap();
+        }
     }
 
     /**
      * @dev Calculate the total value of assets held by the Vault and all
      *      strategies and update the supply of OUSD.
      */
-    function rebase() public whenNotRebasePaused nonReentrant {
+    function rebase() external virtual nonReentrant {
         _rebase();
     }
 
     /**
      * @dev Calculate the total value of assets held by the Vault and all
-     *      strategies and update the supply of OUSD, optionaly sending a
+     *      strategies and update the supply of OUSD, optionally sending a
      *      portion of the yield to the trustee.
      */
     function _rebase() internal whenNotRebasePaused {
@@ -398,24 +323,24 @@ contract VaultCore is VaultStorage {
     /**
      * @dev Determine the total value of assets held by the vault and its
      *         strategies.
-     * @return uint256 value Total value in USD (1e18)
+     * @return value Total value in USD (1e18)
      */
-    function totalValue() external view returns (uint256 value) {
+    function totalValue() external view virtual returns (uint256 value) {
         value = _totalValue();
     }
 
     /**
      * @dev Internal Calculate the total value of the assets held by the
      *         vault and its strategies.
-     * @return uint256 value Total value in USD (1e18)
+     * @return value Total value in USD (1e18)
      */
-    function _totalValue() internal view returns (uint256 value) {
+    function _totalValue() internal view virtual returns (uint256 value) {
         return _totalValueInVault().add(_totalValueInStrategies());
     }
 
     /**
      * @dev Internal to calculate total value of all assets held in Vault.
-     * @return uint256 Total value in ETH (1e18)
+     * @return value Total value in ETH (1e18)
      */
     function _totalValueInVault() internal view returns (uint256 value) {
         for (uint256 y = 0; y < allAssets.length; y++) {
@@ -423,14 +348,14 @@ contract VaultCore is VaultStorage {
             uint256 assetDecimals = Helpers.getDecimals(allAssets[y]);
             uint256 balance = asset.balanceOf(address(this));
             if (balance > 0) {
-                value = value.add(balance.scaleBy(int8(18 - assetDecimals)));
+                value = value.add(balance.scaleBy(18, assetDecimals));
             }
         }
     }
 
     /**
      * @dev Internal to calculate total value of all assets held in Strategies.
-     * @return uint256 Total value in ETH (1e18)
+     * @return value Total value in ETH (1e18)
      */
     function _totalValueInStrategies() internal view returns (uint256 value) {
         for (uint256 i = 0; i < allStrategies.length; i++) {
@@ -441,7 +366,7 @@ contract VaultCore is VaultStorage {
     /**
      * @dev Internal to calculate total value of all assets held by strategy.
      * @param _strategyAddr Address of the strategy
-     * @return uint256 Total value in ETH (1e18)
+     * @return value Total value in ETH (1e18)
      */
     function _totalValueInStrategy(address _strategyAddr)
         internal
@@ -454,9 +379,7 @@ contract VaultCore is VaultStorage {
             if (strategy.supportsAsset(allAssets[y])) {
                 uint256 balance = strategy.checkBalance(allAssets[y]);
                 if (balance > 0) {
-                    value = value.add(
-                        balance.scaleBy(int8(18 - assetDecimals))
-                    );
+                    value = value.add(balance.scaleBy(18, assetDecimals));
                 }
             }
         }
@@ -474,11 +397,12 @@ contract VaultCore is VaultStorage {
     /**
      * @notice Get the balance of an asset held in Vault and all strategies.
      * @param _asset Address of asset
-     * @return uint256 Balance of asset in decimals of asset
+     * @return balance Balance of asset in decimals of asset
      */
     function _checkBalance(address _asset)
         internal
         view
+        virtual
         returns (uint256 balance)
     {
         IERC20 asset = IERC20(_asset);
@@ -493,13 +417,13 @@ contract VaultCore is VaultStorage {
 
     /**
      * @notice Get the balance of all assets held in Vault and all strategies.
-     * @return uint256 Balance of all assets (1e18)
+     * @return balance Balance of all assets (1e18)
      */
     function _checkBalance() internal view returns (uint256 balance) {
         for (uint256 i = 0; i < allAssets.length; i++) {
             uint256 assetDecimals = Helpers.getDecimals(allAssets[i]);
             balance = balance.add(
-                _checkBalance(allAssets[i]).scaleBy(int8(18 - assetDecimals))
+                _checkBalance(allAssets[i]).scaleBy(18, assetDecimals)
             );
         }
     }
@@ -513,18 +437,20 @@ contract VaultCore is VaultStorage {
         view
         returns (uint256[] memory)
     {
-        return _calculateRedeemOutputs(_amount);
+        (uint256[] memory outputs, ) = _calculateRedeemOutputs(_amount);
+        return outputs;
     }
 
     /**
      * @notice Calculate the outputs for a redeem function, i.e. the mix of
      * coins that will be returned.
-     * @return Array of amounts respective to the supported assets
+     * @return outputs Array of amounts respective to the supported assets
+     * @return totalBalance Total balance of Vault
      */
     function _calculateRedeemOutputs(uint256 _amount)
         internal
         view
-        returns (uint256[] memory outputs)
+        returns (uint256[] memory outputs, uint256 totalBalance)
     {
         // We always give out coins in proportion to how many we have,
         // Now if all coins were the same value, this math would easy,
@@ -556,10 +482,9 @@ contract VaultCore is VaultStorage {
         // And so the user gets $10.40 + $19.60 = $30 worth of value.
 
         uint256 assetCount = getAssetCount();
-        uint256[] memory assetPrices = _getAssetPrices(true);
+        uint256[] memory assetPrices = _getAssetPrices();
         uint256[] memory assetBalances = new uint256[](assetCount);
         uint256[] memory assetDecimals = new uint256[](assetCount);
-        uint256 totalBalance = 0;
         uint256 totalOutputRatio = 0;
         outputs = new uint256[](assetCount);
 
@@ -576,9 +501,7 @@ contract VaultCore is VaultStorage {
             uint256 decimals = Helpers.getDecimals(allAssets[i]);
             assetBalances[i] = balance;
             assetDecimals[i] = decimals;
-            totalBalance = totalBalance.add(
-                balance.scaleBy(int8(18 - decimals))
-            );
+            totalBalance = totalBalance.add(balance.scaleBy(18, decimals));
         }
         // Calculate totalOutputRatio
         for (uint256 i = 0; i < allAssets.length; i++) {
@@ -589,7 +512,7 @@ contract VaultCore is VaultStorage {
                 price = 1e18;
             }
             uint256 ratio = assetBalances[i]
-                .scaleBy(int8(18 - assetDecimals[i]))
+                .scaleBy(18, assetDecimals[i])
                 .mul(price)
                 .div(totalBalance);
             totalOutputRatio = totalOutputRatio.add(ratio);
@@ -603,9 +526,9 @@ contract VaultCore is VaultStorage {
 
     /**
      * @notice Get an array of the supported asset prices in USD.
-     * @return uint256[] Array of asset prices in USD (1e18)
+     * @return assetPrices Array of asset prices in USD (1e18)
      */
-    function _getAssetPrices(bool useMax)
+    function _getAssetPrices()
         internal
         view
         returns (uint256[] memory assetPrices)
@@ -616,7 +539,7 @@ contract VaultCore is VaultStorage {
         // Price from Oracle is returned with 8 decimals
         // _amount is in assetDecimals
         for (uint256 i = 0; i < allAssets.length; i++) {
-            assetPrices[i] = oracle.price(allAssets[i]).scaleBy(int8(18 - 8));
+            assetPrices[i] = oracle.price(allAssets[i]).scaleBy(18, 8);
         }
     }
 
@@ -625,7 +548,7 @@ contract VaultCore is VaultStorage {
     ****************************************/
 
     /**
-     * @dev Return the number of assets suppported by the Vault.
+     * @dev Return the number of assets supported by the Vault.
      */
     function getAssetCount() public view returns (uint256) {
         return allAssets.length;
@@ -645,6 +568,13 @@ contract VaultCore is VaultStorage {
         return allStrategies.length;
     }
 
+    /**
+     * @dev Return the array of all strategies
+     */
+    function getAllStrategies() external view returns (address[] memory) {
+        return allStrategies;
+    }
+
     function isSupportedAsset(address _asset) external view returns (bool) {
         return assets[_asset].isSupported;
     }
@@ -653,29 +583,36 @@ contract VaultCore is VaultStorage {
      * @dev Falldown to the admin implementation
      * @notice This is a catch all for all functions not declared in core
      */
-    function() external payable {
+    fallback() external payable {
         bytes32 slot = adminImplPosition;
         assembly {
             // Copy msg.data. We take full control of memory in this inline assembly
             // block because it will not return to Solidity code. We overwrite the
             // Solidity scratch pad at memory position 0.
-            calldatacopy(0, 0, calldatasize)
+            calldatacopy(0, 0, calldatasize())
 
             // Call the implementation.
             // out and outsize are 0 because we don't know the size yet.
-            let result := delegatecall(gas, sload(slot), 0, calldatasize, 0, 0)
+            let result := delegatecall(
+                gas(),
+                sload(slot),
+                0,
+                calldatasize(),
+                0,
+                0
+            )
 
             // Copy the returned data.
-            returndatacopy(0, 0, returndatasize)
+            returndatacopy(0, 0, returndatasize())
 
             switch result
-                // delegatecall returns 0 on error.
-                case 0 {
-                    revert(0, returndatasize)
-                }
-                default {
-                    return(0, returndatasize)
-                }
+            // delegatecall returns 0 on error.
+            case 0 {
+                revert(0, returndatasize())
+            }
+            default {
+                return(0, returndatasize())
+            }
         }
     }
 }

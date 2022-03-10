@@ -1,43 +1,64 @@
-pragma solidity 0.5.11;
+// SPDX-License-Identifier: agpl-3.0
+pragma solidity ^0.8.0;
 
 /**
  * @title OUSD Compound Strategy
  * @notice Investment strategy for investing stablecoins via Compound
  * @author Origin Protocol Inc
  */
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+
 import { ICERC20 } from "./ICompound.sol";
 import { IComptroller } from "../interfaces/IComptroller.sol";
-import {
-    IERC20,
-    InitializableAbstractStrategy
-} from "../utils/InitializableAbstractStrategy.sol";
+import { IERC20, InitializableAbstractStrategy } from "../utils/InitializableAbstractStrategy.sol";
 
 contract CompoundStrategy is InitializableAbstractStrategy {
+    using SafeERC20 for IERC20;
+
     event SkippedWithdrawal(address asset, uint256 amount);
 
     /**
-     * @dev Collect accumulated COMP and send to Vault.
+     * @dev Collect accumulated COMP and send to Harvester.
      */
-    function collectRewardToken() external onlyVault nonReentrant {
+    function collectRewardTokens()
+        external
+        override
+        onlyHarvester
+        nonReentrant
+    {
         // Claim COMP from Comptroller
         ICERC20 cToken = _getCTokenFor(assetsMapped[0]);
         IComptroller comptroller = IComptroller(cToken.comptroller());
-        comptroller.claimComp(address(this));
+        // Only collect from active cTokens, saves gas
+        address[] memory ctokensToCollect = new address[](assetsMapped.length);
+        for (uint256 i = 0; i < assetsMapped.length; i++) {
+            ICERC20 cToken = _getCTokenFor(assetsMapped[i]);
+            ctokensToCollect[i] = address(cToken);
+        }
+        // Claim only for this strategy
+        address[] memory claimers = new address[](1);
+        claimers[0] = address(this);
+        // Claim COMP from Comptroller. Only collect for supply, saves gas
+        comptroller.claimComp(claimers, ctokensToCollect, false, true);
         // Transfer COMP to Vault
-        IERC20 rewardToken = IERC20(rewardTokenAddress);
+        IERC20 rewardToken = IERC20(rewardTokenAddresses[0]);
         uint256 balance = rewardToken.balanceOf(address(this));
-        emit RewardTokenCollected(vaultAddress, balance);
-        rewardToken.safeTransfer(vaultAddress, balance);
+        emit RewardTokenCollected(
+            harvesterAddress,
+            rewardTokenAddresses[0],
+            balance
+        );
+        rewardToken.safeTransfer(harvesterAddress, balance);
     }
 
     /**
      * @dev Deposit asset into Compound
      * @param _asset Address of asset to deposit
      * @param _amount Amount of asset to deposit
-     * @return amountDeposited Amount of asset that was deposited
      */
     function deposit(address _asset, uint256 _amount)
         external
+        override
         onlyVault
         nonReentrant
     {
@@ -48,7 +69,6 @@ contract CompoundStrategy is InitializableAbstractStrategy {
      * @dev Deposit asset into Compound
      * @param _asset Address of asset to deposit
      * @param _amount Amount of asset to deposit
-     * @return amountDeposited Amount of asset that was deposited
      */
     function _deposit(address _asset, uint256 _amount) internal {
         require(_amount > 0, "Must deposit something");
@@ -60,7 +80,7 @@ contract CompoundStrategy is InitializableAbstractStrategy {
     /**
      * @dev Deposit the entire balance of any supported asset into Compound
      */
-    function depositAll() external onlyVault nonReentrant {
+    function depositAll() external override onlyVault nonReentrant {
         for (uint256 i = 0; i < assetsMapped.length; i++) {
             uint256 balance = IERC20(assetsMapped[i]).balanceOf(address(this));
             if (balance > 0) {
@@ -74,13 +94,12 @@ contract CompoundStrategy is InitializableAbstractStrategy {
      * @param _recipient Address to receive withdrawn asset
      * @param _asset Address of asset to withdraw
      * @param _amount Amount of asset to withdraw
-     * @return amountWithdrawn Amount of asset that was withdrawn
      */
     function withdraw(
         address _recipient,
         address _asset,
         uint256 _amount
-    ) external onlyVault nonReentrant {
+    ) external override onlyVault nonReentrant {
         require(_amount > 0, "Must withdraw something");
         require(_recipient != address(0), "Must specify recipient");
 
@@ -100,7 +119,7 @@ contract CompoundStrategy is InitializableAbstractStrategy {
     /**
      * @dev Remove all assets from platform and send them to Vault contract.
      */
-    function withdrawAll() external onlyVaultOrGovernor nonReentrant {
+    function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
         for (uint256 i = 0; i < assetsMapped.length; i++) {
             // Redeem entire balance of cToken
             ICERC20 cToken = _getCTokenFor(assetsMapped[i]);
@@ -130,6 +149,7 @@ contract CompoundStrategy is InitializableAbstractStrategy {
     function checkBalance(address _asset)
         external
         view
+        override
         returns (uint256 balance)
     {
         // Balance is always with token cToken decimals
@@ -151,14 +171,19 @@ contract CompoundStrategy is InitializableAbstractStrategy {
         uint256 cTokenBalance = _cToken.balanceOf(address(this));
         uint256 exchangeRate = _cToken.exchangeRateStored();
         // e.g. 50e8*205316390724364402565641705 / 1e18 = 1.0265..e18
-        balance = cTokenBalance.mul(exchangeRate).div(1e18);
+        balance = (cTokenBalance * exchangeRate) / 1e18;
     }
 
     /**
      * @dev Retuns bool indicating whether asset is supported by strategy
      * @param _asset Address of the asset
      */
-    function supportsAsset(address _asset) external view returns (bool) {
+    function supportsAsset(address _asset)
+        external
+        view
+        override
+        returns (bool)
+    {
         return assetToPToken[_asset] != address(0);
     }
 
@@ -166,14 +191,14 @@ contract CompoundStrategy is InitializableAbstractStrategy {
      * @dev Approve the spending of all assets by their corresponding cToken,
      *      if for some reason is it necessary.
      */
-    function safeApproveAllTokens() external {
+    function safeApproveAllTokens() external override {
         uint256 assetCount = assetsMapped.length;
         for (uint256 i = 0; i < assetCount; i++) {
             address asset = assetsMapped[i];
             address cToken = assetToPToken[asset];
             // Safe approval
             IERC20(asset).safeApprove(cToken, 0);
-            IERC20(asset).safeApprove(cToken, uint256(-1));
+            IERC20(asset).safeApprove(cToken, type(uint256).max);
         }
     }
 
@@ -181,12 +206,15 @@ contract CompoundStrategy is InitializableAbstractStrategy {
      * @dev Internal method to respond to the addition of new asset / cTokens
      *      We need to approve the cToken and give it permission to spend the asset
      * @param _asset Address of the asset to approve
-     * @param _cToken This cToken has the approval approval
+     * @param _cToken The cToken for the approval
      */
-    function _abstractSetPToken(address _asset, address _cToken) internal {
+    function _abstractSetPToken(address _asset, address _cToken)
+        internal
+        override
+    {
         // Safe approval
         IERC20(_asset).safeApprove(_cToken, 0);
-        IERC20(_asset).safeApprove(_cToken, uint256(-1));
+        IERC20(_asset).safeApprove(_cToken, type(uint256).max);
     }
 
     /**
@@ -216,6 +244,6 @@ contract CompoundStrategy is InitializableAbstractStrategy {
         uint256 exchangeRate = _cToken.exchangeRateStored();
         // e.g. 1e18*1e18 / 205316390724364402565641705 = 50e8
         // e.g. 1e8*1e18 / 205316390724364402565641705 = 0.45 or 0
-        amount = _underlying.mul(1e18).div(exchangeRate);
+        amount = (_underlying * 1e18) / exchangeRate;
     }
 }

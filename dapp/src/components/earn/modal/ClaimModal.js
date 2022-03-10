@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
+import { get } from 'lodash'
 
 import EarnModal from 'components/earn/modal/EarnModal'
 import { formatCurrency } from 'utils/math'
 import AccountStore from 'stores/AccountStore'
 import { useStoreState } from 'pullstate'
+import { connectorNameIconMap, getConnectorIcon } from 'utils/connectors'
+import { assetRootPath } from 'utils/image'
 
 const ClaimModal = ({
   onClaimContractCall,
@@ -16,7 +19,8 @@ const ClaimModal = ({
 }) => {
   // show-ogn-to-claim, claim-user-wait
   const [modalState, setModalState] = useState('show-ogn-to-claim')
-  const connectorIcon = useStoreState(AccountStore, (s) => s.connectorIcon)
+  const connectorName = useStoreState(AccountStore, (s) => s.connectorName)
+  const connectorIcon = getConnectorIcon(connectorName)
 
   const getActions = () => {
     if (modalState === 'show-ogn-to-claim') {
@@ -56,7 +60,10 @@ const ClaimModal = ({
             <div
               className={`d-flex align-items-center ${infoText ? 'mb-33' : ''}`}
             >
-              <img className="ogn-icon" src="/images/ogn-icon-blue.svg" />
+              <img
+                className="ogn-icon"
+                src={assetRootPath('/images/ogn-icon-blue.svg')}
+              />
               <div className="grey-text">
                 {fbt('Unclaimed OGN', 'Unclaimed OGN')}
               </div>
@@ -72,7 +79,7 @@ const ClaimModal = ({
               <div className="d-flex align-items-center justify-content-center">
                 <img
                   className="big-connector-icon"
-                  src={`/images/${connectorIcon}`}
+                  src={assetRootPath(`/images/${connectorIcon}`)}
                 />
                 <div className="action-text">
                   {fbt(

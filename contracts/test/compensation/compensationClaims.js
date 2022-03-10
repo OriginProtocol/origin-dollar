@@ -1,6 +1,6 @@
 const { defaultFixture } = require("../_fixture");
 const { expect } = require("chai");
-const { utils, BigNumber } = require("ethers");
+const { utils } = require("ethers");
 const parseUnits = utils.parseUnits;
 const {
   ousdUnits,
@@ -9,13 +9,6 @@ const {
   loadFixture,
   isGanacheFork,
 } = require("../helpers");
-
-const day = 24 * 60 * 60;
-const year = 360 * day;
-
-// const { ogn, anna, governor, ognStaking } = await loadFixture(
-//     defaultFixture
-//   );
 
 describe("Compensation Claims", async () => {
   if (isGanacheFork) {
@@ -44,7 +37,7 @@ describe("Compensation Claims", async () => {
     const { governor, adjuster, compensationClaims } = fixture;
     let accounts = [];
     let amounts = [];
-    for (row of claims) {
+    for (const row of claims) {
       accounts.push(await row[0].getAddress());
       amounts.push(ousdUnits(row[1]));
     }
@@ -53,7 +46,7 @@ describe("Compensation Claims", async () => {
   };
 
   describe("User claims", async () => {
-    let governor, adjuster, matt, josh, anna, OUSD, compensationClaims;
+    let governor, adjuster, matt, josh, anna, ousd, compensationClaims;
 
     beforeEach(async () => {
       fixture = await loadFixture(defaultFixture);
@@ -138,14 +131,13 @@ describe("Compensation Claims", async () => {
   });
 
   describe("Adjuster", async () => {
-    let governor, adjuster, matt, josh, anna, ousd, compensationClaims;
+    let governor, adjuster, matt, anna, compensationClaims;
 
     beforeEach(async () => {
       fixture = await loadFixture(defaultFixture);
       governor = fixture.governor;
       adjuster = fixture.adjuster;
       matt = fixture.matt;
-      josh = fixture.josh;
       anna = fixture.anna;
       compensationClaims = fixture.compensationClaims;
     });
@@ -189,7 +181,9 @@ describe("Compensation Claims", async () => {
       await compensationClaims.connect(governor).unlockAdjuster();
       await expect(
         compensationClaims.connect(adjuster).setClaims(accounts, amounts)
-      ).to.be.revertedWith("SafeMath: addition overflow");
+      ).to.be.revertedWith(
+        "Arithmetic operation underflowed or overflowed outside of an unchecked block"
+      );
     });
     it("should not be able to set mismatching addresses and amounts", async () => {
       const accounts = [await anna.getAddress()];
@@ -238,7 +232,7 @@ describe("Compensation Claims", async () => {
   });
 
   describe("Governor", async () => {
-    let governor, adjuster, matt, josh, anna, ousd, compensationClaims;
+    let governor, adjuster, matt, josh, anna, ousd, usdc, compensationClaims;
     beforeEach(async () => {
       fixture = await loadFixture(defaultFixture);
       governor = fixture.governor;

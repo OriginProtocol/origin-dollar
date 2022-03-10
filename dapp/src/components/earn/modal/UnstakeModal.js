@@ -1,15 +1,19 @@
 import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
+import { useStoreState } from 'pullstate'
+import { get } from 'lodash'
 
 import EarnModal from 'components/earn/modal/EarnModal'
 import { formatCurrency } from 'utils/math'
 import AccountStore from 'stores/AccountStore'
-import { useStoreState } from 'pullstate'
+import { connectorNameIconMap, getConnectorIcon } from 'utils/connectors'
+import { assetRootPath } from 'utils/image'
 
 const UnstakeModal = ({ pool, onClose, onUserConfirmedStakeTx, onError }) => {
   // show-ogn-to-unstake, unstake-user-wait
   const [modalState, setModalState] = useState('show-ogn-to-unstake')
-  const connectorIcon = useStoreState(AccountStore, (s) => s.connectorIcon)
+  const connectorName = useStoreState(AccountStore, (s) => s.connectorName)
+  const connectorIcon = getConnectorIcon(connectorName)
 
   const getActions = () => {
     if (modalState === 'show-ogn-to-unstake') {
@@ -46,11 +50,11 @@ const UnstakeModal = ({ pool, onClose, onUserConfirmedStakeTx, onError }) => {
             <div className="d-flex mb-33 align-items-center">
               <img
                 className="coin-icon first"
-                src={`/images/${pool.coin_one.icon}`}
+                src={assetRootPath(`/images/${pool.coin_one.icon}`)}
               />
               <img
                 className="coin-icon"
-                src={`/images/${pool.coin_two.icon}`}
+                src={assetRootPath(`/images/${pool.coin_two.icon}`)}
               />
               <div className="grey-text">
                 {fbt('Deposited LP tokens', 'Deposited LP tokens')}
@@ -60,7 +64,10 @@ const UnstakeModal = ({ pool, onClose, onUserConfirmedStakeTx, onError }) => {
               {formatCurrency(pool.claimable_ogn, 2)}
             </div>
             <div className="d-flex mb-33 align-items-center">
-              <img className="coin-icon" src="/images/ogn-icon-blue.svg" />
+              <img
+                className="coin-icon"
+                src={assetRootPath('/images/ogn-icon-blue.svg')}
+              />
               <div className="grey-text">
                 {fbt('Unclaimed OGN', 'Unclaimed OGN')}
               </div>
@@ -81,7 +88,7 @@ const UnstakeModal = ({ pool, onClose, onUserConfirmedStakeTx, onError }) => {
               <div className="d-flex align-items-center justify-content-center">
                 <img
                   className="big-connector-icon"
-                  src={`/images/${connectorIcon}`}
+                  src={assetRootPath(`/images/${connectorIcon}`)}
                 />
                 <div className="action-text">
                   {fbt(

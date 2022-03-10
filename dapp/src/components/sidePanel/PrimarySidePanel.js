@@ -7,8 +7,14 @@ import SidePanelTransactionMessage from 'components/sidePanel/SidePanelTransacti
 import SidePanelInsuranceMessage from 'components/sidePanel/SidePanelInsuranceMessage'
 import TransactionStore from 'stores/TransactionStore'
 import { usePrevious } from 'utils/hooks'
+import ContractStore from 'stores/ContractStore'
+import { assetRootPath } from 'utils/image'
 
 const PrimarySidePanel = () => {
+  const showingAllContracts = useStoreState(
+    ContractStore,
+    (s) => s.showAllContracts
+  )
   const transactions = useStoreState(TransactionStore, (s) => s.transactions)
   const prevTransactions = usePrevious(transactions)
   const [txHashesToAnimate, setTxHashesToAnimate] = useState([])
@@ -47,7 +53,11 @@ const PrimarySidePanel = () => {
         id="primarySidePanel"
         className="primarySidePanel sidepanel-wrapper collapse navbar-collapse"
       >
-        <div className="primary-side-panel d-flex flex-column justify-content-start align-items-center disable-scrollbars">
+        <div
+          className={`primary-side-panel d-flex flex-column justify-content-start align-items-center disable-scrollbars ${
+            showingAllContracts ? 'larger' : ''
+          }`}
+        >
           <button
             className="close navbar-toggler d-md-none"
             type="button"
@@ -57,7 +67,11 @@ const PrimarySidePanel = () => {
             aria-expanded="false"
             aria-label="Toggle navigation"
           >
-            <img src="/images/close.svg" alt="Close icon" loading="lazy" />
+            <img
+              src={assetRootPath('/images/close.svg')}
+              alt="Close icon"
+              loading="lazy"
+            />
           </button>
           <SidePanelInsuranceMessage />
           <SidePanelStakeMessage />
@@ -77,14 +91,19 @@ const PrimarySidePanel = () => {
           padding: 10px;
           max-width: 374px;
           min-width: 290px;
-          min-height: 719px;
-          max-height: 719px;
+          min-height: 794px;
+          max-height: 794px;
           border-radius: 10px;
           background-color: #fafbfc;
           border: 1px solid #cdd7e0;
           overflow-y: scroll;
           flex-grow: 1;
           box-shadow: 0 0 14px 0 rgba(24, 49, 64, 0.1);
+        }
+
+        .primary-side-panel.larger {
+          min-height: 988px;
+          max-height: 988px;
         }
 
         @media (min-width: 800px) {

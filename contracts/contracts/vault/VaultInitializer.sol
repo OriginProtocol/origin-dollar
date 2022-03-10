@@ -1,4 +1,5 @@
-pragma solidity 0.5.11;
+// SPDX-License-Identifier: agpl-3.0
+pragma solidity ^0.8.0;
 
 /**
  * @title OUSD VaultInitializer Contract
@@ -32,5 +33,7 @@ contract VaultInitializer is VaultStorage {
         autoAllocateThreshold = 25000e18;
         // Threshold for rebasing
         rebaseThreshold = 1000e18;
+        // Initialize all strategies
+        allStrategies = new address[](0);
     }
 }

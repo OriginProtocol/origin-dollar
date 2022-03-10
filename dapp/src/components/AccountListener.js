@@ -5,6 +5,7 @@ import { useWeb3React } from '@web3-react/core'
 import _ from 'lodash'
 
 import AccountStore from 'stores/AccountStore'
+import ContractStore from 'stores/ContractStore'
 import PoolStore from 'stores/PoolStore'
 import StakeStore from 'stores/StakeStore'
 import { usePrevious } from 'utils/hooks'
@@ -15,6 +16,7 @@ import { login } from 'utils/account'
 import { decorateContractStakeInfoWithTxHashes } from 'utils/stake'
 import { mergeDeep } from 'utils/utils'
 import { displayCurrency } from 'utils/math'
+import addresses from 'constants/contractAddresses'
 
 const AccountListener = (props) => {
   const web3react = useWeb3React()
@@ -56,6 +58,23 @@ const AccountListener = (props) => {
     }
   }, [active, prevActive, account, prevAccount])
 
+  useEffect(() => {
+    const fetchVaultThresholds = async () => {
+      if (!contracts) return
+
+      const vault = contracts.vault
+      const allocateThreshold = await vault.autoAllocateThreshold()
+      const rebaseThreshold = await vault.rebaseThreshold()
+
+      ContractStore.update((s) => {
+        s.vaultAllocateThreshold = allocateThreshold
+        s.vaultRebaseThreshold = rebaseThreshold
+      })
+    }
+
+    fetchVaultThresholds()
+  }, [contracts])
+
   const loadData = async (contracts, { onlyStaking } = {}) => {
     if (!account) {
       return
@@ -79,30 +98,29 @@ const AccountListener = (props) => {
       ousd,
       vault,
       ogn,
-      uniV2OusdUsdt,
+      uniV3SwapRouter,
+      uniV2Router,
+      sushiRouter,
       liquidityOusdUsdt,
+      flipper,
       ognStaking,
       ognStakingView,
+      curveOUSDMetaPool,
     } = contracts
 
     const loadbalancesDev = async () => {
       try {
-        const [
-          ousdBalance,
-          usdtBalance,
-          daiBalance,
-          usdcBalance,
-          ognBalance,
-        ] = await Promise.all([
-          /* IMPORTANT (!) production uses a different method to load balances. Any changes here need to
-           * also happen in production version of this function.
-           */
-          displayCurrency(await ousd.balanceOf(account), ousd),
-          displayCurrency(await usdt.balanceOf(account), usdt),
-          displayCurrency(await dai.balanceOf(account), dai),
-          displayCurrency(await usdc.balanceOf(account), usdc),
-          displayCurrency(await ogn.balanceOf(account), ogn),
-        ])
+        const [ousdBalance, usdtBalance, daiBalance, usdcBalance, ognBalance] =
+          await Promise.all([
+            /* IMPORTANT (!) production uses a different method to load balances. Any changes here need to
+             * also happen in production version of this function.
+             */
+            displayCurrency(await ousd.balanceOf(account), ousd),
+            displayCurrency(await usdt.balanceOf(account), usdt),
+            displayCurrency(await dai.balanceOf(account), dai),
+            displayCurrency(await usdc.balanceOf(account), usdc),
+            displayCurrency(await ogn.balanceOf(account), ogn),
+          ])
 
         AccountStore.update((s) => {
           s.balances = {
@@ -393,23 +411,159 @@ const AccountListener = (props) => {
 
       try {
         const [
-          usdtAllowance,
-          daiAllowance,
-          usdcAllowance,
-          ousdAllowance,
+          usdtAllowanceVault,
+          daiAllowanceVault,
+          usdcAllowanceVault,
+          ousdAllowanceVault,
+          usdtAllowanceRouter,
+          daiAllowanceRouter,
+          usdcAllowanceRouter,
+          ousdAllowanceRouter,
+          usdtAllowanceFlipper,
+          daiAllowanceFlipper,
+          usdcAllowanceFlipper,
+          ousdAllowanceFlipper,
         ] = await Promise.all([
           displayCurrency(await usdt.allowance(account, vault.address), usdt),
           displayCurrency(await dai.allowance(account, vault.address), dai),
           displayCurrency(await usdc.allowance(account, vault.address), usdc),
           displayCurrency(await ousd.allowance(account, vault.address), ousd),
+          displayCurrency(
+            await usdt.allowance(account, uniV3SwapRouter.address),
+            usdt
+          ),
+          displayCurrency(
+            await dai.allowance(account, uniV3SwapRouter.address),
+            dai
+          ),
+          displayCurrency(
+            await usdc.allowance(account, uniV3SwapRouter.address),
+            usdc
+          ),
+          displayCurrency(
+            await ousd.allowance(account, uniV3SwapRouter.address),
+            ousd
+          ),
+          displayCurrency(await usdt.allowance(account, flipper.address), usdt),
+          displayCurrency(await dai.allowance(account, flipper.address), dai),
+          displayCurrency(await usdc.allowance(account, flipper.address), usdc),
+          displayCurrency(await ousd.allowance(account, flipper.address), ousd),
         ])
+
+        let usdtAllowanceCurvePool,
+          daiAllowanceCurvePool,
+          usdcAllowanceCurvePool,
+          ousdAllowanceCurvePool,
+          usdtAllowanceRouterV2,
+          daiAllowanceRouterV2,
+          usdcAllowanceRouterV2,
+          ousdAllowanceRouterV2,
+          usdtAllowanceSushiRouter,
+          daiAllowanceSushiRouter,
+          usdcAllowanceSushiRouter,
+          ousdAllowanceSushiRouter
+
+        // curve pool functionality supported on mainnet and hardhat fork
+        if (curveOUSDMetaPool) {
+          ;[
+            usdtAllowanceCurvePool,
+            daiAllowanceCurvePool,
+            usdcAllowanceCurvePool,
+            ousdAllowanceCurvePool,
+            usdtAllowanceRouterV2,
+            daiAllowanceRouterV2,
+            usdcAllowanceRouterV2,
+            ousdAllowanceRouterV2,
+            usdtAllowanceSushiRouter,
+            daiAllowanceSushiRouter,
+            usdcAllowanceSushiRouter,
+            ousdAllowanceSushiRouter,
+          ] = await Promise.all([
+            displayCurrency(
+              await usdt.allowance(account, curveOUSDMetaPool.address),
+              usdt
+            ),
+            displayCurrency(
+              await dai.allowance(account, curveOUSDMetaPool.address),
+              dai
+            ),
+            displayCurrency(
+              await usdc.allowance(account, curveOUSDMetaPool.address),
+              usdc
+            ),
+            displayCurrency(
+              await ousd.allowance(account, curveOUSDMetaPool.address),
+              ousd
+            ),
+            displayCurrency(
+              await usdt.allowance(account, uniV2Router.address),
+              usdt
+            ),
+            displayCurrency(
+              await dai.allowance(account, uniV2Router.address),
+              dai
+            ),
+            displayCurrency(
+              await usdc.allowance(account, uniV2Router.address),
+              usdc
+            ),
+            displayCurrency(
+              await ousd.allowance(account, uniV2Router.address),
+              ousd
+            ),
+            displayCurrency(
+              await usdt.allowance(account, sushiRouter.address),
+              usdt
+            ),
+            displayCurrency(
+              await dai.allowance(account, sushiRouter.address),
+              dai
+            ),
+            displayCurrency(
+              await usdc.allowance(account, sushiRouter.address),
+              usdc
+            ),
+            displayCurrency(
+              await ousd.allowance(account, sushiRouter.address),
+              ousd
+            ),
+          ])
+        }
 
         AccountStore.update((s) => {
           s.allowances = {
-            usdt: usdtAllowance,
-            dai: daiAllowance,
-            usdc: usdcAllowance,
-            ousd: ousdAllowance,
+            usdt: {
+              vault: usdtAllowanceVault,
+              uniswapV3Router: usdtAllowanceRouter,
+              uniswapV2Router: usdtAllowanceRouterV2,
+              sushiRouter: usdtAllowanceSushiRouter,
+              flipper: usdtAllowanceFlipper,
+              curve: usdtAllowanceCurvePool,
+            },
+            dai: {
+              vault: daiAllowanceVault,
+              uniswapV3Router: daiAllowanceRouter,
+              uniswapV2Router: daiAllowanceRouterV2,
+              sushiRouter: daiAllowanceSushiRouter,
+              flipper: daiAllowanceFlipper,
+              curve: daiAllowanceCurvePool,
+            },
+            usdc: {
+              vault: usdcAllowanceVault,
+              uniswapV3Router: usdcAllowanceRouter,
+              uniswapV2Router: usdcAllowanceRouterV2,
+              sushiRouter: usdcAllowanceSushiRouter,
+              flipper: usdcAllowanceFlipper,
+              curve: usdcAllowanceCurvePool,
+            },
+            ousd: {
+              vault: ousdAllowanceVault,
+              uniswapV3Router: ousdAllowanceRouter,
+              uniswapV2Router: ousdAllowanceRouterV2,
+              sushiRouter: ousdAllowanceSushiRouter,
+              flipper: ousdAllowanceFlipper,
+              curve: ousdAllowanceCurvePool,
+            },
           }
         })
       } catch (e) {
@@ -420,12 +574,27 @@ const AccountListener = (props) => {
       }
     }
 
+    const loadRebaseStatus = async () => {
+      if (!account) return
+      // TODO handle other contract types. We only detect Gnosis Safe as having
+      // opted out here as rebaseState will always be 0 for all EOAs
+      const isSafe = !!_.get(library, 'provider.safe.safeAddress', false)
+      AccountStore.update((s) => {
+        s.isSafe = isSafe
+      })
+      const rebaseOptInState = await ousd.rebaseState(account)
+      AccountStore.update((s) => {
+        s.rebaseOptedOut = isSafe && rebaseOptInState === 0
+      })
+    }
+
     if (onlyStaking) {
       await loadStakingRelatedData()
     } else {
       await Promise.all([
         loadBalances(),
         loadAllowances(),
+        loadRebaseStatus(),
         // TODO maybe do this if only in the LM part of the dapp since it is very heavy
         loadPoolRelatedAccountData(),
         loadStakingRelatedData(),
@@ -436,6 +605,23 @@ const AccountListener = (props) => {
   useEffect(() => {
     if (account) {
       login(account, setCookie)
+    }
+
+    const loadLifetimeEarnings = async () => {
+      if (!account) return
+
+      const response = await fetch(
+        `${
+          process.env.ANALYTICS_ENDPOINT
+        }/api/v1/address/${account.toLowerCase()}/yield`
+      )
+
+      if (response.ok) {
+        const lifetimeYield = (await response.json()).lifetime_yield
+        AccountStore.update((s) => {
+          s.lifetimeYield = lifetimeYield
+        })
+      }
     }
 
     const setupContractsAndLoad = async () => {
@@ -458,7 +644,14 @@ const AccountListener = (props) => {
         usedLibrary = null
       }
 
-      const contracts = await setupContracts(account, usedLibrary, usedChainId)
+      window.fetchId = window.fetchId ? window.fetchId : 0
+      window.fetchId += 1
+      const contracts = await setupContracts(
+        account,
+        usedLibrary,
+        usedChainId,
+        window.fetchId
+      )
       setContracts(contracts)
 
       setTimeout(() => {
@@ -467,6 +660,7 @@ const AccountListener = (props) => {
     }
 
     setupContractsAndLoad()
+    loadLifetimeEarnings()
   }, [account, chainId])
 
   useEffect(() => {

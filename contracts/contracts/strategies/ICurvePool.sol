@@ -1,9 +1,12 @@
-pragma solidity 0.5.11;
+// SPDX-License-Identifier: agpl-3.0
+pragma solidity ^0.8.0;
 
 interface ICurvePool {
     function get_virtual_price() external view returns (uint256);
 
     function add_liquidity(uint256[3] calldata _amounts, uint256 _min) external;
+
+    function balances(uint256) external view returns (uint256);
 
     function calc_token_amount(uint256[3] calldata _amounts, bool _deposit)
         external
@@ -26,4 +29,9 @@ interface ICurvePool {
         returns (uint256);
 
     function coins(uint256 _index) external view returns (address);
+
+    function remove_liquidity_imbalance(
+        uint256[3] calldata _amounts,
+        uint256 maxBurnAmount
+    ) external;
 }

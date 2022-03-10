@@ -1,7 +1,7 @@
 const hre = require("hardhat");
 
 const addresses = require("../utils/addresses");
-const fundAccounts = require("../utils/funding");
+const { fundAccounts } = require("../utils/funding");
 const { getAssetAddresses, daiUnits, isFork } = require("./helpers");
 const { utils } = require("ethers");
 
@@ -25,12 +25,19 @@ async function defaultFixture() {
 
   const ousdProxy = await ethers.getContract("OUSDProxy");
   const vaultProxy = await ethers.getContract("VaultProxy");
+  const harvesterProxy = await ethers.getContract("HarvesterProxy");
   const compoundStrategyProxy = await ethers.getContract(
     "CompoundStrategyProxy"
   );
 
   const ousd = await ethers.getContractAt("OUSD", ousdProxy.address);
   const vault = await ethers.getContractAt("IVault", vaultProxy.address);
+  const harvester = await ethers.getContractAt(
+    "IHarvester",
+    harvesterProxy.address
+  );
+  const dripperProxy = await ethers.getContract("DripperProxy");
+  const dripper = await ethers.getContractAt("Dripper", dripperProxy.address);
   const governorContract = await ethers.getContract("Governor");
   const CompoundStrategyFactory = await ethers.getContractFactory(
     "CompoundStrategy"
@@ -47,21 +54,33 @@ async function defaultFixture() {
     "ThreePoolStrategy",
     threePoolStrategyProxy.address
   );
+  const convexStrategyProxy = await ethers.getContract("ConvexStrategyProxy");
+  const convexStrategy = await ethers.getContractAt(
+    "ConvexStrategy",
+    convexStrategyProxy.address
+  );
 
   const aaveStrategyProxy = await ethers.getContract("AaveStrategyProxy");
   const aaveStrategy = await ethers.getContractAt(
     "AaveStrategy",
     aaveStrategyProxy.address
   );
+  const aaveIncentivesController = await ethers.getContract(
+    "MockAaveIncentivesController"
+  );
 
   const liquidityRewardOUSD_USDT = await ethers.getContractAt(
     "LiquidityReward",
-    (await ethers.getContract("LiquidityRewardOUSD_USDTProxy")).address
+    (
+      await ethers.getContract("LiquidityRewardOUSD_USDTProxy")
+    ).address
   );
 
   const ognStaking = await ethers.getContractAt(
     "SingleAssetStaking",
-    (await ethers.getContract("OGNStakingProxy")).address
+    (
+      await ethers.getContract("OGNStakingProxy")
+    ).address
   );
 
   const oracleRouter = await ethers.getContract("OracleRouter");
@@ -93,12 +112,17 @@ async function defaultFixture() {
     cusdc,
     comp,
     adai,
+    aave,
+    aaveToken,
+    stkAave,
     mockNonRebasing,
     mockNonRebasingTwo;
 
   let chainlinkOracleFeedDAI,
     chainlinkOracleFeedUSDT,
     chainlinkOracleFeedUSDC,
+    chainlinkOracleFeedOGNETH,
+    chainlinkOracleFeedETH,
     crv,
     crvMinter,
     threePool,
@@ -106,7 +130,10 @@ async function defaultFixture() {
     threePoolGauge,
     aaveAddressProvider,
     uniswapPairOUSD_USDT,
-    flipper;
+    flipper,
+    cvx,
+    cvxBooster,
+    cvxRewardPool;
 
   if (isFork) {
     usdt = await ethers.getContractAt(usdtAbi, addresses.mainnet.USDT);
@@ -115,6 +142,7 @@ async function defaultFixture() {
     usdc = await ethers.getContractAt(usdcAbi, addresses.mainnet.USDC);
     comp = await ethers.getContractAt(compAbi, addresses.mainnet.COMP);
     crv = await ethers.getContractAt(crvAbi, addresses.mainnet.CRV);
+    cvx = await ethers.getContractAt(crvAbi, addresses.mainnet.CVX);
     ogn = await ethers.getContractAt(ognAbi, addresses.mainnet.OGN);
     crvMinter = await ethers.getContractAt(
       crvMinterAbi,
@@ -138,19 +166,23 @@ async function defaultFixture() {
     comp = await ethers.getContract("MockCOMP");
 
     crv = await ethers.getContract("MockCRV");
+    cvx = await ethers.getContract("MockCVX");
     crvMinter = await ethers.getContract("MockCRVMinter");
     threePool = await ethers.getContract("MockCurvePool");
     threePoolToken = await ethers.getContract("Mock3CRV");
     threePoolGauge = await ethers.getContract("MockCurveGauge");
+    cvxBooster = await ethers.getContract("MockBooster");
+    cvxRewardPool = await ethers.getContract("MockRewardPool");
 
     adai = await ethers.getContract("MockADAI");
-
-    const aave = await ethers.getContract("MockAave");
+    aaveToken = await ethers.getContract("MockAAVEToken");
+    aave = await ethers.getContract("MockAave");
     // currently in test the mockAave is itself the address provder
     aaveAddressProvider = await ethers.getContractAt(
       "ILendingPoolAddressesProvider",
       aave.address
     );
+    stkAave = await ethers.getContract("MockStkAave");
 
     uniswapPairOUSD_USDT = await ethers.getContract("MockUniswapPairOUSD_USDT");
 
@@ -163,6 +195,12 @@ async function defaultFixture() {
     chainlinkOracleFeedUSDC = await ethers.getContract(
       "MockChainlinkOracleFeedUSDC"
     );
+    chainlinkOracleFeedOGNETH = await ethers.getContract(
+      "MockChainlinkOracleFeedOGNETH"
+    );
+    chainlinkOracleFeedETH = await ethers.getContract(
+      "MockChainlinkOracleFeedETH"
+    );
 
     // Mock contracts for testing rebase opt out
     mockNonRebasing = await ethers.getContract("MockNonRebasing");
@@ -170,7 +208,7 @@ async function defaultFixture() {
     mockNonRebasingTwo = await ethers.getContract("MockNonRebasingTwo");
     await mockNonRebasingTwo.setOUSD(ousd.address);
 
-    flipper = await ethers.getContract("FlipperDev");
+    flipper = await ethers.getContract("Flipper");
   }
   const assetAddresses = await getAssetAddresses(deployments);
 
@@ -212,12 +250,16 @@ async function defaultFixture() {
     // Contracts
     ousd,
     vault,
+    harvester,
+    dripper,
     mockNonRebasing,
     mockNonRebasingTwo,
     // Oracle
     chainlinkOracleFeedDAI,
     chainlinkOracleFeedUSDT,
     chainlinkOracleFeedUSDC,
+    chainlinkOracleFeedOGNETH,
+    chainlinkOracleFeedETH,
     governorContract,
     compoundStrategy,
     oracleRouter,
@@ -244,8 +286,17 @@ async function defaultFixture() {
     threePoolGauge,
     threePoolToken,
     threePoolStrategy,
+    convexStrategy,
+    cvx,
+    cvxBooster,
+    cvxRewardPool,
+
     aaveStrategy,
+    aaveToken,
     aaveAddressProvider,
+    aaveIncentivesController,
+    aave,
+    stkAave,
     uniswapPairOUSD_USDT,
     liquidityRewardOUSD_USDT,
     ognStaking,
@@ -299,6 +350,11 @@ async function compoundVaultFixture() {
   await fixture.vault
     .connect(sGovernor)
     .approveStrategy(fixture.compoundStrategy.address);
+
+  await fixture.harvester
+    .connect(sGovernor)
+    .setSupportedStrategy(fixture.compoundStrategy.address, true);
+
   // Add USDT
   await fixture.compoundStrategy
     .connect(sGovernor)
@@ -343,6 +399,10 @@ async function threepoolVaultFixture() {
     .connect(sGovernor)
     .approveStrategy(fixture.threePoolStrategy.address);
 
+  await fixture.harvester
+    .connect(sGovernor)
+    .setSupportedStrategy(fixture.threePoolStrategy.address, true);
+
   await fixture.vault
     .connect(sGovernor)
     .setAssetDefaultStrategy(
@@ -359,6 +419,38 @@ async function threepoolVaultFixture() {
 }
 
 /**
+ * Configure a Vault with only the Convex strategy.
+ */
+async function convexVaultFixture() {
+  const fixture = await loadFixture(defaultFixture);
+
+  const { governorAddr } = await getNamedAccounts();
+  const sGovernor = await ethers.provider.getSigner(governorAddr);
+  // Add Convex
+  await fixture.vault
+    .connect(sGovernor)
+    .approveStrategy(fixture.convexStrategy.address);
+
+  await fixture.harvester
+    .connect(sGovernor)
+    .setSupportedStrategy(fixture.convexStrategy.address, true);
+
+  await fixture.vault
+    .connect(sGovernor)
+    .setAssetDefaultStrategy(
+      fixture.usdt.address,
+      fixture.convexStrategy.address
+    );
+  await fixture.vault
+    .connect(sGovernor)
+    .setAssetDefaultStrategy(
+      fixture.usdc.address,
+      fixture.convexStrategy.address
+    );
+  return fixture;
+}
+
+/**
  * Configure a Vault with only the Aave strategy.
  */
 async function aaveVaultFixture() {
@@ -370,6 +462,11 @@ async function aaveVaultFixture() {
   await fixture.vault
     .connect(sGovernor)
     .approveStrategy(fixture.aaveStrategy.address);
+
+  await fixture.harvester
+    .connect(sGovernor)
+    .setSupportedStrategy(fixture.aaveStrategy.address, true);
+
   // Add direct allocation of DAI to Aave
   await fixture.vault
     .connect(sGovernor)
@@ -378,7 +475,7 @@ async function aaveVaultFixture() {
 }
 
 /**
- * Configure a compound fixture with a false valt for testing
+ * Configure a compound fixture with a false vault for testing
  */
 async function compoundFixture() {
   const fixture = await loadFixture(defaultFixture);
@@ -398,10 +495,14 @@ async function compoundFixture() {
   await fixture.cStandalone.connect(sGovernor).initialize(
     addresses.dead,
     governorAddr, // Using Governor in place of Vault here
-    assetAddresses.COMP,
+    [assetAddresses.COMP],
     [assetAddresses.DAI, assetAddresses.USDC],
     [assetAddresses.cDAI, assetAddresses.cUSDC]
   );
+
+  await fixture.cStandalone
+    .connect(sGovernor)
+    .setHarvesterAddress(fixture.harvester.address);
 
   await fixture.usdc.transfer(
     await fixture.matt.getAddress(),
@@ -429,21 +530,22 @@ async function threepoolFixture() {
   fixture.tpStandalone = await ethers.getContract("StandaloneThreePool");
 
   // Set governor as vault
-  await fixture.tpStandalone
-    .connect(sGovernor)
-    ["initialize(address,address,address,address[],address[],address,address)"](
-      assetAddresses.ThreePool,
-      governorAddr, // Using Governor in place of Vault here
-      assetAddresses.CRV,
-      [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT],
-      [
-        assetAddresses.ThreePoolToken,
-        assetAddresses.ThreePoolToken,
-        assetAddresses.ThreePoolToken,
-      ],
-      assetAddresses.ThreePoolGauge,
-      assetAddresses.CRVMinter
-    );
+  await fixture.tpStandalone.connect(sGovernor)[
+    // eslint-disable-next-line
+    "initialize(address,address,address[],address[],address[],address,address)"
+  ](
+    assetAddresses.ThreePool,
+    governorAddr, // Using Governor in place of Vault here
+    [assetAddresses.CRV],
+    [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT],
+    [
+      assetAddresses.ThreePoolToken,
+      assetAddresses.ThreePoolToken,
+      assetAddresses.ThreePoolToken,
+    ],
+    assetAddresses.ThreePoolGauge,
+    assetAddresses.CRVMinter
+  );
 
   return fixture;
 }
@@ -471,12 +573,22 @@ async function multiStrategyVaultFixture() {
     .initialize(
       addresses.dead,
       fixture.vault.address,
-      assetAddresses.COMP,
+      [assetAddresses.COMP],
       [assetAddresses.DAI, assetAddresses.USDC],
       [assetAddresses.cDAI, assetAddresses.cUSDC]
     );
+
+  await cStrategyTwo
+    .connect(sGovernor)
+    .setHarvesterAddress(fixture.harvester.address);
+
   // Add second strategy to Vault
   await fixture.vault.connect(sGovernor).approveStrategy(cStrategyTwo.address);
+
+  await fixture.harvester
+    .connect(sGovernor)
+    .setSupportedStrategy(cStrategyTwo.address, true);
+
   // DAI to second strategy
   await fixture.vault
     .connect(sGovernor)
@@ -494,10 +606,14 @@ async function multiStrategyVaultFixture() {
     .initialize(
       addresses.dead,
       fixture.vault.address,
-      assetAddresses.COMP,
+      [assetAddresses.COMP],
       [assetAddresses.DAI],
       [assetAddresses.cDAI]
     );
+
+  await cStrategyThree
+    .connect(sGovernor)
+    .setHarvesterAddress(fixture.harvester.address);
 
   fixture.strategyTwo = cStrategyTwo;
   fixture.strategyThree = cStrategyThree;
@@ -582,6 +698,7 @@ module.exports = {
   multiStrategyVaultFixture,
   threepoolFixture,
   threepoolVaultFixture,
+  convexVaultFixture,
   aaveVaultFixture,
   hackedVaultFixture,
   rebornFixture,

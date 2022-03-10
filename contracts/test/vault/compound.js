@@ -5,6 +5,7 @@ const {
 } = require("../_fixture");
 const { expect } = require("chai");
 const { utils } = require("ethers");
+const { MAX_UINT256 } = require("../../utils/constants");
 
 const {
   advanceTime,
@@ -18,6 +19,7 @@ const {
   isFork,
   expectApproxSupply,
 } = require("../helpers");
+const addresses = require("../../utils/addresses");
 
 describe("Vault with Compound strategy", function () {
   if (isFork) {
@@ -52,28 +54,32 @@ describe("Vault with Compound strategy", function () {
   it("Only Vault can call collectRewardToken", async () => {
     const { matt, compoundStrategy } = await loadFixture(compoundVaultFixture);
     await expect(
-      compoundStrategy.connect(matt).collectRewardToken()
-    ).to.be.revertedWith("Caller is not the Vault");
+      compoundStrategy.connect(matt).collectRewardTokens()
+    ).to.be.revertedWith("Caller is not the Harvester");
   });
 
   it("Should allocate unallocated assets", async () => {
-    const {
-      anna,
-      governor,
-      dai,
-      usdc,
-      usdt,
-      tusd,
-      vault,
-      compoundStrategy,
-    } = await loadFixture(compoundVaultFixture);
+    const { anna, governor, dai, usdc, usdt, tusd, vault, compoundStrategy } =
+      await loadFixture(compoundVaultFixture);
 
     await dai.connect(anna).transfer(vault.address, daiUnits("100"));
     await usdc.connect(anna).transfer(vault.address, usdcUnits("200"));
     await usdt.connect(anna).transfer(vault.address, usdtUnits("300"));
     await tusd.connect(anna).transfer(vault.address, tusdUnits("400"));
 
-    await vault.connect(governor).allocate();
+    await expect(vault.connect(governor).allocate())
+      .to.emit(vault, "AssetAllocated")
+      .withArgs(dai.address, compoundStrategy.address, daiUnits("300"))
+      .to.emit(vault, "AssetAllocated")
+      .withArgs(usdc.address, compoundStrategy.address, usdcUnits("200"))
+      .to.emit(vault, "AssetAllocated")
+      .withArgs(usdt.address, compoundStrategy.address, usdcUnits("300"));
+    /*
+      TODO: There does not appear to be any support for .withoutArgs to verify
+      that this event doesn't get emitted.
+      .to.emit(vault, "AssetAllocated")
+      .withoutArgs(usdt.address, compoundStrategy.address, tusdUnits("400"));
+    */
 
     // Note compoundVaultFixture sets up with 200 DAI already in the Strategy
     // 200 + 100 = 300
@@ -105,14 +111,8 @@ describe("Vault with Compound strategy", function () {
   });
 
   it("Should allow withdrawals", async () => {
-    const {
-      anna,
-      compoundStrategy,
-      ousd,
-      usdc,
-      vault,
-      governor,
-    } = await loadFixture(compoundVaultFixture);
+    const { anna, compoundStrategy, ousd, usdc, vault, governor } =
+      await loadFixture(compoundVaultFixture);
     await expect(anna).has.a.balanceOf("1000.00", usdc);
     await usdc.connect(anna).approve(vault.address, usdcUnits("50.0"));
     await vault.connect(anna).mint(usdc.address, usdcUnits("50.0"), 0);
@@ -269,15 +269,8 @@ describe("Vault with Compound strategy", function () {
   });
 
   it("Should correctly withdrawAll all assets in Compound strategy", async () => {
-    const {
-      usdc,
-      vault,
-      matt,
-      josh,
-      dai,
-      compoundStrategy,
-      governor,
-    } = await loadFixture(compoundVaultFixture);
+    const { usdc, vault, matt, josh, dai, compoundStrategy, governor } =
+      await loadFixture(compoundVaultFixture);
 
     expect(await vault.totalValue()).to.approxEqual(
       utils.parseUnits("200", 18)
@@ -325,17 +318,31 @@ describe("Vault with Compound strategy", function () {
 
   it("Should withdrawAll assets in Strategy and return them to Vault on removal", async () => {
     const {
+      usdt,
       usdc,
+      comp,
       vault,
       matt,
       josh,
       dai,
+      harvester,
       compoundStrategy,
       governor,
     } = await loadFixture(compoundVaultFixture);
 
     expect(await vault.totalValue()).to.approxEqual(
       utils.parseUnits("200", 18)
+    );
+
+    const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
+
+    await harvester.connect(governor).setRewardTokenConfig(
+      comp.address, // reward token
+      300, // max slippage bps
+      0, // harvest reward bps
+      mockUniswapRouter.address,
+      MAX_UINT256,
+      true
     );
 
     // Matt deposits USDC, 6 decimals
@@ -356,6 +363,15 @@ describe("Vault with Compound strategy", function () {
 
     await expect(await vault.getStrategyCount()).to.equal(1);
 
+    await vault
+      .connect(governor)
+      .setAssetDefaultStrategy(usdt.address, addresses.zero);
+    await vault
+      .connect(governor)
+      .setAssetDefaultStrategy(usdc.address, addresses.zero);
+    await vault
+      .connect(governor)
+      .setAssetDefaultStrategy(dai.address, addresses.zero);
     await vault.connect(governor).removeStrategy(compoundStrategy.address);
 
     await expect(await vault.getStrategyCount()).to.equal(0);
@@ -429,7 +445,9 @@ describe("Vault with Compound strategy", function () {
         .mint(nonStandardToken.address, usdtUnits("1200"), 0);
     } catch (err) {
       expect(
-        /revert SafeERC20: ERC20 operation did not succeed/gi.test(err.message)
+        /reverted with reason string 'SafeERC20: ERC20 operation did not succeed/gi.test(
+          err.message
+        )
       ).to.be.true;
     } finally {
       // Make sure nothing got affected
@@ -543,14 +561,8 @@ describe("Vault with Compound strategy", function () {
   });
 
   it("Should allow transfer of arbitrary token by Governor", async () => {
-    const {
-      vault,
-      compoundStrategy,
-      ousd,
-      usdc,
-      matt,
-      governor,
-    } = await loadFixture(compoundVaultFixture);
+    const { vault, compoundStrategy, ousd, usdc, matt, governor } =
+      await loadFixture(compoundVaultFixture);
     // Matt deposits USDC, 6 decimals
     await usdc.connect(matt).approve(vault.address, usdcUnits("8.0"));
     await vault.connect(matt).mint(usdc.address, usdcUnits("8.0"), 0);
@@ -613,7 +625,7 @@ describe("Vault with Compound strategy", function () {
   });
 
   it("Should collect reward tokens using collect rewards on all strategies", async () => {
-    const { vault, governor, compoundStrategy, comp } = await loadFixture(
+    const { governor, harvester, compoundStrategy, comp } = await loadFixture(
       compoundVaultFixture
     );
     const compAmount = utils.parseUnits("100", 18);
@@ -628,16 +640,18 @@ describe("Vault with Compound strategy", function () {
       compAmount
     );
 
-    await vault.connect(governor)["harvest()"]();
+    await harvester.connect(governor)["harvest()"]();
 
     // Note if Uniswap address was configured, it would withdrawAll the COMP for
-    // a stablecoin to increase the value of Vault. No Uniswap configured here
-    // so the COMP just sits in Vault
-    await expect(await comp.balanceOf(vault.address)).to.be.equal(compAmount);
+    // a stablecoin to increase the value of Harvester. No Uniswap configured here
+    // so the COMP just sits in Harvester
+    await expect(await comp.balanceOf(harvester.address)).to.be.equal(
+      compAmount
+    );
   });
 
   it("Should collect reward tokens using collect rewards on a specific strategy", async () => {
-    const { vault, governor, compoundStrategy, comp } = await loadFixture(
+    const { harvester, governor, compoundStrategy, comp } = await loadFixture(
       compoundVaultFixture
     );
     const compAmount = utils.parseUnits("100", 18);
@@ -653,16 +667,20 @@ describe("Vault with Compound strategy", function () {
     );
 
     // prettier-ignore
-    await vault
+    await harvester
       .connect(governor)["harvest(address)"](compoundStrategy.address);
 
-    await expect(await comp.balanceOf(vault.address)).to.be.equal(compAmount);
+    await expect(await comp.balanceOf(harvester.address)).to.be.equal(
+      compAmount
+    );
   });
 
   it("Should collect reward tokens and swap via Uniswap", async () => {
     const {
       josh,
+      anna,
       vault,
+      harvester,
       governor,
       compoundStrategy,
       comp,
@@ -671,13 +689,86 @@ describe("Vault with Compound strategy", function () {
 
     const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
 
-    mockUniswapRouter.initialize(comp.address, usdt.address);
+    mockUniswapRouter.initialize([comp.address], [usdt.address]);
 
     const compAmount = utils.parseUnits("100", 18);
     await comp.connect(governor).mint(compAmount);
     await comp.connect(governor).transfer(compoundStrategy.address, compAmount);
 
-    await vault.connect(governor).setUniswapAddr(mockUniswapRouter.address);
+    await harvester
+      .connect(governor)
+      .setRewardTokenConfig(
+        comp.address,
+        300,
+        100,
+        mockUniswapRouter.address,
+        MAX_UINT256,
+        true
+      );
+
+    // Make sure Vault has 0 USDT balance
+    await expect(vault).has.a.balanceOf("0", usdt);
+
+    // Make sure the Strategy has COMP balance
+    await expect(await comp.balanceOf(await governor.getAddress())).to.be.equal(
+      "0"
+    );
+    await expect(await comp.balanceOf(compoundStrategy.address)).to.be.equal(
+      compAmount
+    );
+
+    // Give Uniswap mock some USDT so it can give it back in COMP liquidation
+    await usdt
+      .connect(josh)
+      .transfer(mockUniswapRouter.address, usdtUnits("100"));
+
+    const balanceBeforeAnna = await usdt.balanceOf(anna.address);
+
+    // prettier-ignore
+    await harvester
+      .connect(anna)["harvestAndSwap(address)"](compoundStrategy.address);
+
+    const balanceAfterAnna = await usdt.balanceOf(anna.address);
+
+    // Make sure Vault has 100 USDT balance (the Uniswap mock converts at 1:1)
+    await expect(vault).has.a.balanceOf("99", usdt);
+
+    // No COMP in Harvester or Compound strategy
+    await expect(harvester).has.a.balanceOf("0", comp);
+    await expect(await comp.balanceOf(compoundStrategy.address)).to.be.equal(
+      "0"
+    );
+    await expect(balanceAfterAnna - balanceBeforeAnna).to.be.equal(
+      utils.parseUnits("1", 6)
+    );
+  });
+
+  it("Should not swap if slippage is too high", async () => {
+    const { josh, vault, harvester, governor, compoundStrategy, comp, usdt } =
+      await loadFixture(compoundVaultFixture);
+
+    const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
+
+    mockUniswapRouter.initialize([comp.address], [usdt.address]);
+
+    // Mock router gives 1:1, if we set this to something high there will be
+    // too much slippage
+    await setOracleTokenPriceUsd("COMP", "1.3");
+
+    const compAmount = utils.parseUnits("100", 18);
+    await comp.connect(governor).mint(compAmount);
+    await comp.connect(governor).transfer(compoundStrategy.address, compAmount);
+
+    await harvester
+      .connect(governor)
+      .setRewardTokenConfig(
+        comp.address,
+        300,
+        100,
+        mockUniswapRouter.address,
+        MAX_UINT256,
+        true
+      );
 
     // Make sure Vault has 0 USDT balance
     await expect(vault).has.a.balanceOf("0", usdt);
@@ -696,14 +787,65 @@ describe("Vault with Compound strategy", function () {
       .transfer(mockUniswapRouter.address, usdtUnits("100"));
 
     // prettier-ignore
-    await vault
-      .connect(governor)["harvest()"]();
+    await expect(harvester
+      .connect(josh)["harvestAndSwap(address)"](compoundStrategy.address)).to.be.revertedWith("Slippage error");
+  });
+
+  it("Should collect reward tokens and swap as separate calls", async () => {
+    const { josh, vault, harvester, governor, compoundStrategy, comp, usdt } =
+      await loadFixture(compoundVaultFixture);
+
+    const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
+
+    mockUniswapRouter.initialize([comp.address], [usdt.address]);
+
+    const compAmount = utils.parseUnits("100", 18);
+    await comp.connect(governor).mint(compAmount);
+    await comp.connect(governor).transfer(compoundStrategy.address, compAmount);
+
+    await harvester
+      .connect(governor)
+      .setRewardTokenConfig(
+        comp.address,
+        300,
+        100,
+        mockUniswapRouter.address,
+        MAX_UINT256,
+        true
+      );
+
+    // Make sure Vault has 0 USDT balance
+    await expect(vault).has.a.balanceOf("0", usdt);
+
+    // Make sure the Strategy has COMP balance
+    await expect(await comp.balanceOf(await governor.getAddress())).to.be.equal(
+      "0"
+    );
+    await expect(await comp.balanceOf(compoundStrategy.address)).to.be.equal(
+      compAmount
+    );
+
+    // Give Uniswap mock some USDT so it can give it back in COMP liquidation
+    await usdt
+      .connect(josh)
+      .transfer(mockUniswapRouter.address, usdtUnits("100"));
+
+    // prettier-ignore
+    await harvester.connect(governor)["harvest()"]();
+
+    // COMP should be sitting in Harvester
+    await expect(await comp.balanceOf(harvester.address)).to.be.equal(
+      compAmount
+    );
+
+    // Call the swap
+    await harvester.connect(governor)["swap()"]();
 
     // Make sure Vault has 100 USDT balance (the Uniswap mock converts at 1:1)
     await expect(vault).has.a.balanceOf("100", usdt);
 
     // No COMP in Vault or Compound strategy
-    await expect(vault).has.a.balanceOf("0", comp);
+    await expect(harvester).has.a.balanceOf("0", comp);
     await expect(await comp.balanceOf(compoundStrategy.address)).to.be.equal(
       "0"
     );
@@ -809,13 +951,8 @@ describe("Vault with two Compound strategies", function () {
   }
 
   it("Should reallocate from one strategy to another", async () => {
-    const {
-      vault,
-      dai,
-      governor,
-      compoundStrategy,
-      strategyTwo,
-    } = await loadFixture(multiStrategyVaultFixture);
+    const { vault, dai, governor, compoundStrategy, strategyTwo } =
+      await loadFixture(multiStrategyVaultFixture);
 
     expect(await vault.totalValue()).to.approxEqual(
       utils.parseUnits("200", 18)
@@ -846,14 +983,8 @@ describe("Vault with two Compound strategies", function () {
   });
 
   it("Should not reallocate to a strategy that does not support the asset", async () => {
-    const {
-      vault,
-      usdt,
-      josh,
-      governor,
-      compoundStrategy,
-      strategyTwo,
-    } = await loadFixture(multiStrategyVaultFixture);
+    const { vault, usdt, josh, governor, compoundStrategy, strategyTwo } =
+      await loadFixture(multiStrategyVaultFixture);
 
     expect(await vault.totalValue()).to.approxEqual(
       utils.parseUnits("200", 18)
@@ -885,13 +1016,9 @@ describe("Vault with two Compound strategies", function () {
   });
 
   it("Should not reallocate to strategy that has not been added to the Vault", async () => {
-    const {
-      vault,
-      dai,
-      governor,
-      compoundStrategy,
-      strategyThree,
-    } = await loadFixture(multiStrategyVaultFixture);
+    const { vault, dai, governor, compoundStrategy, strategyThree } =
+      await loadFixture(multiStrategyVaultFixture);
+
     await expect(
       vault
         .connect(governor)
@@ -905,13 +1032,8 @@ describe("Vault with two Compound strategies", function () {
   });
 
   it("Should not reallocate from strategy that has not been added to the Vault", async () => {
-    const {
-      vault,
-      dai,
-      governor,
-      compoundStrategy,
-      strategyThree,
-    } = await loadFixture(multiStrategyVaultFixture);
+    const { vault, dai, governor, compoundStrategy, strategyThree } =
+      await loadFixture(multiStrategyVaultFixture);
     await expect(
       vault
         .connect(governor)

@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
+import { get } from 'lodash'
 
 import AccountStore from 'stores/AccountStore'
+import { connectorNameIconMap, getConnectorIcon } from 'utils/connectors'
+import { assetRootPath } from 'utils/image'
 
 const ErrorModal = ({
   error,
@@ -11,7 +14,8 @@ const ErrorModal = ({
   showRefreshButton,
   reason,
 }) => {
-  const connectorIcon = useStoreState(AccountStore, (s) => s.connectorIcon)
+  const connectorName = useStoreState(AccountStore, (s) => s.connectorName)
+  const connectorIcon = getConnectorIcon(connectorName)
 
   const errorTxt = () => {
     const errorMetadata = errorMap.filter((eMeta) => eMeta.errorCheck(error))[0]
@@ -37,7 +41,7 @@ const ErrorModal = ({
             <div className="d-flex align-items-center error">
               <img
                 className="connector-icon"
-                src={`/images/${connectorIcon}`}
+                src={assetRootPath(`/images/${connectorIcon}`)}
               />
               {reason !== undefined && reason}
               {errorMap && errorTxt()}

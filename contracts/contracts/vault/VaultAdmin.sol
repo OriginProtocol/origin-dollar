@@ -1,4 +1,5 @@
-pragma solidity 0.5.11;
+// SPDX-License-Identifier: agpl-3.0
+pragma solidity ^0.8.0;
 
 /**
  * @title OUSD Vault Admin Contract
@@ -6,11 +7,16 @@ pragma solidity 0.5.11;
  * @author Origin Protocol Inc
  */
 
-import "./VaultStorage.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+
+import { StableMath } from "../utils/StableMath.sol";
 import { IOracle } from "../interfaces/IOracle.sol";
-import { IUniswapV2Router } from "../interfaces/uniswap/IUniswapV2Router02.sol";
+import "./VaultStorage.sol";
 
 contract VaultAdmin is VaultStorage {
+    using SafeERC20 for IERC20;
+    using StableMath for uint256;
+
     /**
      * @dev Verifies that the caller is the Vault, Governor, or Strategist.
      */
@@ -50,6 +56,7 @@ contract VaultAdmin is VaultStorage {
      * @param _redeemFeeBps Basis point fee to be charged
      */
     function setRedeemFeeBps(uint256 _redeemFeeBps) external onlyGovernor {
+        require(_redeemFeeBps <= 1000, "Redeem fee should not be over 10%");
         redeemFeeBps = _redeemFeeBps;
         emit RedeemFeeUpdated(_redeemFeeBps);
     }
@@ -92,16 +99,6 @@ contract VaultAdmin is VaultStorage {
     }
 
     /**
-     * @dev Set address of Uniswap for performing liquidation of strategy reward
-     * tokens
-     * @param _address Address of Uniswap
-     */
-    function setUniswapAddr(address _address) external onlyGovernor {
-        uniswapAddr = _address;
-        emit UniswapUpdated(_address);
-    }
-
-    /**
      * @dev Set address of Strategist
      * @param _address Address of Strategist
      */
@@ -121,13 +118,18 @@ contract VaultAdmin is VaultStorage {
         onlyGovernorOrStrategist
     {
         emit AssetDefaultStrategyUpdated(_asset, _strategy);
-        require(strategies[_strategy].isSupported, "Strategy not approved");
-        IStrategy strategy = IStrategy(_strategy);
-        require(assets[_asset].isSupported, "Asset is not supported");
-        require(
-            strategy.supportsAsset(_asset),
-            "Asset not supported by Strategy"
-        );
+        // If its a zero address being passed for the strategy we are removing
+        // the default strategy
+        if (_strategy != address(0)) {
+            // Make sure the strategy meets some criteria
+            require(strategies[_strategy].isSupported, "Strategy not approved");
+            IStrategy strategy = IStrategy(_strategy);
+            require(assets[_asset].isSupported, "Asset is not supported");
+            require(
+                strategy.supportsAsset(_asset),
+                "Asset not supported by Strategy"
+            );
+        }
         assetDefaultStrategies[_asset] = _strategy;
     }
 
@@ -161,13 +163,19 @@ contract VaultAdmin is VaultStorage {
     }
 
     /**
-     * @dev Remove a strategy from the Vault. Removes all invested assets and
-     * returns them to the Vault.
+     * @dev Remove a strategy from the Vault.
      * @param _addr Address of the strategy to remove
      */
 
     function removeStrategy(address _addr) external onlyGovernor {
         require(strategies[_addr].isSupported, "Strategy not approved");
+
+        for (uint256 i = 0; i < allAssets.length; i++) {
+            require(
+                assetDefaultStrategies[allAssets[i]] != _addr,
+                "Strategy is default for an asset"
+            );
+        }
 
         // Initialize strategyIndex with out of bounds result so function will
         // revert if no valid index found
@@ -180,22 +188,20 @@ contract VaultAdmin is VaultStorage {
         }
 
         if (strategyIndex < allStrategies.length) {
-            allStrategies[strategyIndex] = allStrategies[allStrategies.length -
-                1];
+            allStrategies[strategyIndex] = allStrategies[
+                allStrategies.length - 1
+            ];
             allStrategies.pop();
+
+            // Mark the strategy as not supported
+            strategies[_addr].isSupported = false;
 
             // Withdraw all assets
             IStrategy strategy = IStrategy(_addr);
             strategy.withdrawAll();
-            // Call harvest after withdraw in case withdraw triggers
-            // distribution of additional reward tokens (true for Compound)
-            _harvest(_addr);
+
             emit StrategyRemoved(_addr);
         }
-
-        // Clean up struct in mapping, this can be removed later
-        // See https://github.com/OriginProtocol/origin-dollar/issues/324
-        strategies[_addr].isSupported = false;
     }
 
     /**
@@ -298,7 +304,7 @@ contract VaultAdmin is VaultStorage {
     }
 
     /***************************************
-                    Rewards
+                    Utils
     ****************************************/
 
     /**
@@ -313,72 +319,6 @@ contract VaultAdmin is VaultStorage {
     {
         require(!assets[_asset].isSupported, "Only unsupported assets");
         IERC20(_asset).safeTransfer(governor(), _amount);
-    }
-
-    /**
-     * @dev Collect reward tokens from all strategies and swap for supported
-     *      stablecoin via Uniswap
-     */
-    function harvest() external onlyGovernorOrStrategist {
-        for (uint256 i = 0; i < allStrategies.length; i++) {
-            _harvest(allStrategies[i]);
-        }
-    }
-
-    /**
-     * @dev Collect reward tokens for a specific strategy and swap for supported
-     *      stablecoin via Uniswap. Called from the vault.
-     * @param _strategyAddr Address of the strategy to collect rewards from
-     */
-    function harvest(address _strategyAddr)
-        external
-        onlyVaultOrGovernorOrStrategist
-        returns (uint256[] memory)
-    {
-        return _harvest(_strategyAddr);
-    }
-
-    /**
-     * @dev Collect reward tokens from a single strategy and swap them for a
-     *      supported stablecoin via Uniswap
-     * @param _strategyAddr Address of the strategy to collect rewards from
-     */
-    function _harvest(address _strategyAddr)
-        internal
-        returns (uint256[] memory)
-    {
-        IStrategy strategy = IStrategy(_strategyAddr);
-        address rewardTokenAddress = strategy.rewardTokenAddress();
-        if (rewardTokenAddress != address(0)) {
-            strategy.collectRewardToken();
-
-            if (uniswapAddr != address(0)) {
-                IERC20 rewardToken = IERC20(strategy.rewardTokenAddress());
-                uint256 rewardTokenAmount = rewardToken.balanceOf(
-                    address(this)
-                );
-                if (rewardTokenAmount > 0) {
-                    // Give Uniswap full amount allowance
-                    rewardToken.safeApprove(uniswapAddr, 0);
-                    rewardToken.safeApprove(uniswapAddr, rewardTokenAmount);
-
-                    // Uniswap redemption path
-                    address[] memory path = new address[](3);
-                    path[0] = strategy.rewardTokenAddress();
-                    path[1] = IUniswapV2Router(uniswapAddr).WETH();
-                    path[2] = allAssets[1]; // USDT
-
-                    return
-                        IUniswapV2Router(uniswapAddr).swapExactTokensForTokens(
-                            rewardTokenAmount,
-                            uint256(0),
-                            path,
-                            address(this),
-                            now.add(1800)
-                        );
-                }
-            }
-        }
     }
 
     /***************************************
@@ -396,15 +336,14 @@ contract VaultAdmin is VaultStorage {
         if (price > 1e8) {
             price = 1e8;
         }
-        // Price from Oracle is returned with 8 decimals
-        // scale to 18 so 18-8=10
-        return price.scaleBy(10);
+        // Price from Oracle is returned with 8 decimals so scale to 18
+        return price.scaleBy(18, 8);
     }
 
     /**
      * @dev Returns the total price in 18 digit USD for a given asset.
      *      Never goes below 1, since that is how we price redeems
-     * @param asset Addresss of the asset
+     * @param asset Address of the asset
      * @return uint256 USD price of 1 of the asset, in 18 decimal fixed
      */
     function priceUSDRedeem(address asset) external view returns (uint256) {
@@ -412,9 +351,8 @@ contract VaultAdmin is VaultStorage {
         if (price < 1e8) {
             price = 1e8;
         }
-        // Price from Oracle is returned with 8 decimals
-        // scale to 18 so 18-8=10
-        return price.scaleBy(10);
+        // Price from Oracle is returned with 8 decimals so scale to 18
+        return price.scaleBy(18, 8);
     }
 
     /***************************************

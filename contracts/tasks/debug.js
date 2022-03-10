@@ -31,13 +31,13 @@ async function debug(taskArguments, hre) {
   );
   const cCompoundStrategy = await hre.ethers.getContract("CompoundStrategy");
   const threePoolStrategyProxy = await hre.ethers.getContract(
-    "ThreePoolStrategyProxy"
+    "ConvexStrategyProxy"
   );
   const threePoolStrategy = await hre.ethers.getContractAt(
-    "ThreePoolStrategy",
+    "ConvexStrategy",
     threePoolStrategyProxy.address
   );
-  const cThreePoolStrategy = await hre.ethers.getContract("ThreePoolStrategy");
+  const cThreePoolStrategy = await hre.ethers.getContract("ConvexStrategy");
 
   const oracleRouter = await hre.ethers.getContract("OracleRouter");
 
@@ -45,6 +45,8 @@ async function debug(taskArguments, hre) {
 
   const ognStakingProxy = await hre.ethers.getContract("OGNStakingProxy");
   const ognStaking = await hre.ethers.getContract("SingleAssetStaking");
+
+  const cBuyback = await hre.ethers.getContract("Buyback");
 
   //
   // Addresses
@@ -74,6 +76,7 @@ async function debug(taskArguments, hre) {
   );
   console.log(`ThreePoolStrategy:       ${cThreePoolStrategy.address}`);
   console.log(`Governor:                ${governor.address}`);
+  console.log(`Buyback:                 ${cBuyback.address}`);
   console.log(`OGNStaking proxy:        ${ognStakingProxy.address}`);
   console.log(
     `OGNStaking proxy impl:   ${await ognStakingProxy.implementation()}`
@@ -163,7 +166,6 @@ async function debug(taskArguments, hre) {
   const autoAllocateThreshold = await vault.autoAllocateThreshold();
   const rebaseThreshold = await vault.rebaseThreshold();
   const maxSupplyDiff = await vault.maxSupplyDiff();
-  const uniswapAddr = await vault.uniswapAddr();
   const strategyCount = await vault.getStrategyCount();
   const assetCount = await vault.getAssetCount();
   const strategistAddress = await vault.strategistAddr();
@@ -193,7 +195,6 @@ async function debug(taskArguments, hre) {
   );
 
   console.log("Price provider address:\t\t", priceProvider);
-  console.log("Uniswap address:\t\t", uniswapAddr);
   console.log("Strategy count:\t\t\t", Number(strategyCount));
   console.log("Asset count:\t\t\t", Number(assetCount));
   console.log("Strategist address:\t\t", strategistAddress);
@@ -263,7 +264,7 @@ async function debug(taskArguments, hre) {
   //
   // Compound Strategy
   //
-  let compoundsAssets = [assets[1], assets[2]]; // Compound only holds USDC and USDT
+  let compoundsAssets = [assets[0], assets[1], assets[2]]; // Compound only holds USDC and USDT
   for (asset of compoundsAssets) {
     balanceRaw = await compoundStrategy.checkBalance(asset.address);
     balance = formatUnits(balanceRaw.toString(), asset.decimals);
@@ -341,6 +342,10 @@ async function debug(taskArguments, hre) {
   console.log(
     "rewardTokenAddress:\t\t",
     await threePoolStrategy.rewardTokenAddress()
+  );
+  console.log(
+    "cvxRewardTokenAddress:\t\t",
+    await threePoolStrategy.cvxRewardTokenAddress()
   );
   console.log(
     "rewardLiquidationThreshold:\t",
