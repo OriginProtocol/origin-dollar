@@ -407,7 +407,7 @@ const SwapHomepage = ({
           currency: 'usd',
         })
 
-        if (twttr) {
+        if (typeof twttr !== 'undefined') {
           twttr.conversion.trackPid('o73z1', {
             tw_sale_amount: selectedRedeemCoinAmount,
             tw_order_quantity: 1,
