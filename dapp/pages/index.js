@@ -540,7 +540,7 @@ const Home = ({ locale, onLocale }) => {
                 }}
               >
                 <div className="info-box d-flex justify-content-center align-items-center mb-2 mx-3">
-                  {fbt('Contract image signature', 'Contract image signature')}
+                  <img src={assetRootPath('/images/contract-icon.svg')} />
                 </div>
                 <div className="info-box-text">
                   {fbt(
@@ -561,7 +561,7 @@ const Home = ({ locale, onLocale }) => {
                 }}
               >
                 <div className="info-box d-flex justify-content-center align-items-center mb-2 mx-3">
-                  {fbt('Contract image time', 'Contract image time')}
+                  <img src={assetRootPath('/images/timelock-icon.svg')} />
                 </div>
                 <div className="info-box-text">
                   {fbt(
@@ -928,6 +928,7 @@ const Home = ({ locale, onLocale }) => {
         }
 
         .info-box img {
+          min-width: 150px;
           max-width: 150px;
           max-height: 150px;
         }
