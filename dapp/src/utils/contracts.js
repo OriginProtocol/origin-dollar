@@ -379,18 +379,33 @@ export async function setupContracts(account, library, chainId, fetchId) {
   }
 
   const fetchAPY = async () => {
-    try {
-      const response = await fetch(process.env.APR_ANALYTICS_ENDPOINT)
-      if (response.ok) {
-        const json = await response.json()
-        const apy = parseFloat(json.apy) / 100
-        ContractStore.update((s) => {
-          s.apy = apy
-        })
+    const fetchAPYDays = async (days) => {
+      let endpoint, varName
+      if (days == 30) {
+        endpoint = process.env.APR_ANALYTICS_ENDPOINT
+        varName = 'apy'
+      } else if (days == 365) {
+        endpoint = `${process.env.APR_ANALYTICS_ENDPOINT}/365`
+        varName = 'apy365'
+      } else {
+        throw new Error(`Unexpected days param: ${days}`)
       }
-    } catch (err) {
-      console.error('Failed to fetch APY', err)
+
+      try {
+        const response = await fetch(endpoint)
+        if (response.ok) {
+          const json = await response.json()
+          ContractStore.update((s) => {
+            s[varName] = parseFloat(json.apy / 100)
+          })
+        }
+      } catch (err) {
+        console.error(`Failed to fetch ${days} day APY`, err)
+      }
     }
+
+    await fetchAPYDays(30)
+    await fetchAPYDays(365)
   }
 
   const fetchCreditsPerToken = async () => {
