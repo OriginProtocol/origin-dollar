@@ -89,12 +89,12 @@ export default function Footer({ onLocale, locale, dapp }) {
                   rel="noopener noreferrer"
                   className="nav-link"
                   onClick={() => {
-                    analytics.track('To Help', {
+                    analytics.track('To Discord', {
                       category: 'navigation',
                     })
                   }}
                 >
-                  {fbt('Help', 'Help link')}
+                  {fbt('Discord', 'Discord link')}
                 </a>
               </nav>
             </div>

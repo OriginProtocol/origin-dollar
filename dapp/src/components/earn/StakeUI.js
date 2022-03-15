@@ -373,7 +373,7 @@ const StakeUI = ({ rpcProvider, isMobile }) => {
           )}
           {!ognStakingHidden && (
             <div className="home d-flex flex-column">
-              {stakes === null && active && (
+              {(stakes === null || stakeOptions.length === 0) && active && (
                 <div className="loading-text">
                   {fbt('Loading...', 'Loading...')}
                 </div>
@@ -403,11 +403,6 @@ const StakeUI = ({ rpcProvider, isMobile }) => {
                       )}
                     </div>
                   </div>
-                </div>
-              )}
-              {(stakes === null || stakeOptions.length === 0) && active && (
-                <div className="loading-text">
-                  {fbt('Loading...', 'Loading...')}
                 </div>
               )}
               {stakeOptions.length > 0 && (
