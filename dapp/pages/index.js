@@ -307,7 +307,7 @@ const Home = ({ locale, onLocale }) => {
           <div className="text-container text-center d-flex flex-column align-items-center">
             <h5>{fbt('Exchanges and partners', 'Exchanges and partners')}</h5>
             <p className="exchanges-summary">
-              {fbt('Where to get OUSD', 'Where to get OUSD')}
+              {fbt('Use the Dapp to get the best price when swapping to & from OUSD. The Dapp checks costs of the swap on external exchanges as well as our Vault contract and picks the best price for you. You can also trade OUSD directly from our partners & exchanges.', 'Where to get OUSD explanation text')}
             </p>
             <div className="d-flex justify-content-center flex-wrap">
               <div
