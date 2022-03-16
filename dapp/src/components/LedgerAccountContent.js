@@ -80,7 +80,7 @@ const LedgerAccountContent = ({
           text-align: center;
           color: #1a82ff;
           padding: 5px 20px;
-          margin: 10px;
+          margin: 10px auto;
           line-height: 22px;
         }
 
