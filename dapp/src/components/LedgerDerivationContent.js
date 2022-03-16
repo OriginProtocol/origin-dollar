@@ -1,17 +1,44 @@
 import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
-import { useWeb3React } from '@web3-react/core'
 import { ledgerConnector } from 'utils/connectors'
-
-import AccountStore from 'stores/AccountStore'
+import LedgerAccountContent from './LedgerAccountContent'
+import { assetRootPath } from 'utils/image'
+import { zipObject } from 'lodash'
 
 const LEDGER_OTHER = "44'/60'/0'/0'"
 const LEDGER_LEGACY_BASE_PATH = "44'/60'/0'"
 const LEDGER_LIVE_BASE_PATH = "44'/60'/0'/0"
 
 const LedgerDerivationContent = ({}) => {
-  const { activate, active } = useWeb3React()
   const [displayError, setDisplayError] = useState(null)
+  const [ledgerPath, setLedgerPath] = useState({})
+  const [addresses, setAddresses] = useState({})
+  const [addressBalances, setAddressBalances] = useState({})
+  const [addressStableBalances, setAddressStableBalances] = useState({})
+  const [pathTotals, setPathTotals] = useState({})
+  const [ready, setReady] = useState(false)
+  const [preloaded, setPreloaded] = useState(false)
+  const [activePath, setActivePath] = useState()
+  const [next, setNext] = useState({})
+  const [nextLoading, setNextLoading] = useState({})
+
+  const contractData = [
+    {
+      name: 'usdt',
+      decimals: 6,
+      address: '0xdac17f958d2ee523a2206206994597c13d831ec7',
+    },
+    {
+      name: 'dai',
+      decimals: 18,
+      address: '0x6b175474e89094c44da98b954eedeac495271d0f',
+    },
+    {
+      name: 'usdc',
+      decimals: 6,
+      address: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
+    },
+  ]
 
   const errorMessageMap = (error) => {
     if (!error || !error.message) {
@@ -38,30 +65,143 @@ const LedgerDerivationContent = ({}) => {
 
   const options = [
     {
-      display: `Ledger Live - m/${LEDGER_LIVE_BASE_PATH}`,
+      display: `Ledger Live`,
       path: LEDGER_LIVE_BASE_PATH,
     },
     {
-      display: `Legacy - m/${LEDGER_LEGACY_BASE_PATH}`,
+      display: `Legacy`,
       path: LEDGER_LEGACY_BASE_PATH,
     },
     {
-      display: `Ethereum - m/${LEDGER_OTHER}`,
+      display: `Ethereum`,
       path: LEDGER_OTHER,
     },
   ]
 
-  const onSelectDerivationPath = async (path) => {
+  const loadBalances = async (path) => {
+    if (ledgerConnector.provider && addresses[path]) {
+      const balances = await Promise.all(
+        addresses[path].map((a) =>
+          ledgerConnector
+            .getBalance(a)
+            .then((r) => (Number(r) / 10 ** 18).toFixed(2))
+        )
+      )
+
+      const stableBalances = await Promise.all(
+        addresses[path].map((a) => {
+          return Promise.all(
+            contractData.map((c) =>
+              ledgerConnector
+                .getTokenBalance(a, c.address)
+                .then((r) => Number(r) / 10 ** c.decimals)
+            )
+          )
+        })
+      )
+
+      let ethTotal = 0
+      for (let i = 0; i < balances.length; i++) {
+        ethTotal = ethTotal + Number(balances[i])
+      }
+
+      const stableTotals = stableBalances.map((balance) => {
+        let total = 0
+        for (let i = 0; i < contractData.length; i++) {
+          total = total + balance[i]
+        }
+        return total.toFixed(2)
+      })
+
+      setAddressBalances({
+        ...addressBalances,
+        [path]: zipObject(addresses[path], balances),
+      })
+      setAddressStableBalances({
+        ...addressStableBalances,
+        [path]: zipObject(addresses[path], stableTotals),
+      })
+      setPathTotals({ ...pathTotals, [path]: ethTotal })
+
+      // preload addresses for each path
+      if (!ledgerPath[LEDGER_LIVE_BASE_PATH]) {
+        setLedgerPath({ ...ledgerPath, [LEDGER_LIVE_BASE_PATH]: true })
+        onSelectDerivationPath(LEDGER_LIVE_BASE_PATH)
+      } else if (!ledgerPath[LEDGER_LEGACY_BASE_PATH]) {
+        setLedgerPath({ ...ledgerPath, [LEDGER_LEGACY_BASE_PATH]: true })
+        onSelectDerivationPath(LEDGER_LEGACY_BASE_PATH)
+      } else if (!ledgerPath[LEDGER_OTHER]) {
+        setLedgerPath({ ...ledgerPath, [LEDGER_OTHER]: true })
+        onSelectDerivationPath(LEDGER_OTHER)
+      } else if (!activePath) {
+        // autoselect first path with non-zero ETH balance
+        if (pathTotals[LEDGER_LIVE_BASE_PATH] > 0) {
+          setActivePath(LEDGER_LIVE_BASE_PATH)
+        } else if (pathTotals[LEDGER_LEGACY_BASE_PATH] > 0) {
+          setActivePath(LEDGER_LEGACY_BASE_PATH)
+        } else if (ethTotal > 0) {
+          setActivePath(LEDGER_OTHER)
+        } else setActivePath(LEDGER_LIVE_BASE_PATH)
+      }
+      setPreloaded(
+        ledgerPath[LEDGER_LIVE_BASE_PATH] &&
+          ledgerPath[LEDGER_LEGACY_BASE_PATH] &&
+          ledgerPath[LEDGER_OTHER]
+      )
+      // indicators for scrolling to next address page within path
+      if (nextLoading[activePath]) {
+        setNext({ [activePath]: !next[activePath] })
+      } else {
+        setNext({ [activePath]: false })
+      }
+      setNextLoading({ [activePath]: false })
+    }
+  }
+
+  useEffect(() => {
+    if (ready) loadBalances(LEDGER_LIVE_BASE_PATH)
+  }, [addresses[LEDGER_LIVE_BASE_PATH]])
+
+  useEffect(() => {
+    if (ready) loadBalances(LEDGER_LEGACY_BASE_PATH)
+  }, [addresses[LEDGER_LEGACY_BASE_PATH]])
+
+  useEffect(() => {
+    if (ready) loadBalances(LEDGER_OTHER)
+  }, [addresses[LEDGER_OTHER]])
+
+  const loadAddresses = async (path, next) => {
+    if (ledgerConnector.provider) {
+      setLedgerPath({ ...ledgerPath, [path]: true })
+      if (next) {
+        setAddresses({
+          ...addresses,
+          [path]: (await ledgerConnector.getAccounts(10)).slice(5),
+        })
+      } else {
+        setAddresses({
+          ...addresses,
+          [path]: await ledgerConnector.getAccounts(5),
+        })
+      }
+    }
+  }
+
+  useEffect(() => {
+    onSelectDerivationPath(LEDGER_LIVE_BASE_PATH)
+    setReady(true)
+  }, [])
+
+  const onSelectDerivationPath = async (path, next) => {
     try {
       await ledgerConnector.activate()
       await ledgerConnector.setPath(path)
+      setDisplayError(null)
     } catch (error) {
       setDisplayError(errorMessageMap(error))
       return
     }
-    AccountStore.update((s) => {
-      s.walletSelectModalState = 'LedgerAccounts'
-    })
+    loadAddresses(path, next)
   }
 
   return (
@@ -78,31 +218,104 @@ const LedgerDerivationContent = ({}) => {
             'Select a Ledger derivation path'
           )}
         </h2>
-        {options.map((option) => {
-          return (
-            <button
-              key={option.path}
-              className="text-center"
-              onClick={() => onSelectDerivationPath(option.path)}
-            >
-              {option.display}
-            </button>
-          )
-        })}
+        <div className={`paths d-flex flex-row`}>
+          {options.map((option) => {
+            return (
+              <button
+                key={option.path}
+                className={
+                  'text-center ' + (activePath === option.path && 'active')
+                }
+                onClick={() => {
+                  if (!nextLoading[option.path]) {
+                    setActivePath(option.path)
+                    if (!preloaded) {
+                      onSelectDerivationPath(option.path)
+                    } else if (next[activePath]) {
+                      // reset path to first address page in the background after clicking different path
+                      setNextLoading({ [activePath]: true })
+                      onSelectDerivationPath(activePath)
+                    }
+                  }
+                }}
+              >
+                {option.display}
+                <br />
+                <span className="button-path">{`m/${option.path}`}</span>
+              </button>
+            )
+          })}
+        </div>
         {displayError && (
           <div className="error d-flex align-items-center justify-content-center">
             {displayError}
           </div>
         )}
+        <div className="d-flex flex-column align-items-center justify-content-center">
+          {activePath && preloaded ? (
+            <>
+              {nextLoading[activePath] && (
+                <img
+                  className="waiting-icon rotating mx-auto"
+                  src={assetRootPath('/images/spinner-green-small.png')}
+                />
+              )}
+              {!nextLoading[activePath] && (
+                <LedgerAccountContent
+                  addresses={addresses[activePath]}
+                  addressBalances={addressBalances[activePath]}
+                  addressStableBalances={addressStableBalances[activePath]}
+                />
+              )}
+              {!next[activePath] && !nextLoading[activePath] && (
+                <button
+                  className="button-arrow"
+                  onClick={() => {
+                    setNextLoading({ [activePath]: true })
+                    onSelectDerivationPath(activePath, true)
+                  }}
+                >
+                  <img
+                    className="arrow-icon"
+                    src={assetRootPath('/images/arrow-down.png')}
+                  />
+                </button>
+              )}
+              {next[activePath] && !nextLoading[activePath] && (
+                <button
+                  className="button-arrow"
+                  onClick={() => {
+                    setNextLoading({ [activePath]: true })
+                    onSelectDerivationPath(activePath)
+                  }}
+                >
+                  <img
+                    className="arrow-icon"
+                    src={assetRootPath('/images/arrow-up.png')}
+                  />
+                </button>
+              )}
+            </>
+          ) : (
+            !displayError && (
+              <img
+                className="waiting-icon rotating mx-auto"
+                src={assetRootPath('/images/spinner-green-small.png')}
+              />
+            )
+          )}
+        </div>
       </div>
       <style jsx>{`
         .ledger-derivation-content {
-          padding: 34px 34px 46px 34px;
-          max-width: 350px;
-          min-width: 350px;
+          padding: 26px 22px 20px 22px;
+          max-width: 500px;
+          min-width: 500px;
           box-shadow: 0 0 14px 0 rgba(24, 49, 64, 0.1);
           background-color: white;
           border-radius: 10px;
+          align-items: center;
+          justify-content: center;
         }
 
         .ledger-derivation-content h2 {
@@ -112,21 +325,36 @@ const LedgerDerivationContent = ({}) => {
           font-weight: bold;
           text-align: center;
           line-height: normal;
-          margin-bottom: 26px;
+          margin-bottom: 14px;
+        }
+
+        .ledger-derivation-content .paths {
+          width: 100%;
+          justify-content: center;
         }
 
         .ledger-derivation-content button {
           width: 100%;
-          height: 50px;
-          border-radius: 25px;
+          height: 55px;
+          border-radius: 50px;
           border: solid 1px #1a82ff;
           background-color: white;
           font-size: 18px;
           font-weight: bold;
           text-align: center;
           color: #1a82ff;
-          padding: 10px 20px;
-          margin-top: 20px;
+          padding: 5px 10px;
+          margin: 10px 5px 20px 5px;
+          line-height: 22px;
+        }
+
+        .ledger-derivation-content .button-path {
+          font-size: 14px;
+          color: #a0a0a0;
+        }
+
+        .active {
+          background-color: #c0e0ff !important;
         }
 
         .error {
@@ -140,6 +368,45 @@ const LedgerDerivationContent = ({}) => {
           border: solid 1px #ed2a28;
           min-height: 50px;
           width: 100%;
+        }
+
+        .button-arrow {
+          width: 70px !important;
+          height: 35px !important;
+          margin: 10px 0 0 0 !important;
+        }
+
+        .arrow-icon {
+          width: 25px;
+          height: 25px;
+        }
+
+        .waiting-icon {
+          width: 25px;
+          height: 25px;
+        }
+
+        .rotating {
+          -webkit-animation: spin 2s linear infinite;
+          -moz-animation: spin 2s linear infinite;
+          animation: spin 2s linear infinite;
+        }
+
+        @-moz-keyframes spin {
+          100% {
+            -moz-transform: rotate(360deg);
+          }
+        }
+        @-webkit-keyframes spin {
+          100% {
+            -webkit-transform: rotate(360deg);
+          }
+        }
+        @keyframes spin {
+          100% {
+            -webkit-transform: rotate(360deg);
+            transform: rotate(360deg);
+          }
         }
       `}</style>
     </>

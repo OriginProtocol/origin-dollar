@@ -66,6 +66,29 @@ export class LedgerConnector extends AbstractConnector {
     })
   }
 
+  async getTokenBalance(address, tokenAddress) {
+    return new Promise((resolve, reject) => {
+      this.provider.sendAsync(
+        {
+          jsonrpc: '2.0',
+          method: 'eth_call',
+          params: [
+            {
+              from: null,
+              to: tokenAddress,
+              data: '0x70a08231000000000000000000000000' + address.slice(2),
+            },
+            'latest',
+          ],
+        },
+        (error, response) => {
+          if (error) reject(error)
+          else resolve(response.result)
+        }
+      )
+    })
+  }
+
   async getProvider() {
     return this.provider
   }
