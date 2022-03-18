@@ -123,7 +123,7 @@ const DappLinks = ({ dapp, page }) => {
 const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
   const { pathname } = useRouter()
   const { active, account } = useWeb3React()
-  const apy = useStoreState(ContractStore, (s) => s.apy || 0)
+  const apy = useStoreState(ContractStore, (s) => s.apy365 || 0)
 
   return (
     <>
@@ -136,7 +136,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
         >
           <div className="triangle d-none d-xl-block"></div>
           {fbt(
-            `Trailing 30-day APY: ${fbt.param(
+            `Trailing 365-day APY: ${fbt.param(
               'APY',
               formatCurrency(apy * 100, 2) + '%'
             )}`,
