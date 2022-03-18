@@ -3,12 +3,12 @@ import { useWeb3React } from '@web3-react/core'
 import { ledgerConnector } from 'utils/connectors'
 import AccountStore from 'stores/AccountStore'
 import { formatCurrency } from 'utils/math'
+import { shortenAddress } from 'utils/web3'
 
 const LedgerAccountContent = ({
   addresses,
   addressBalances,
-  addressStableBalances,
-  loading,
+  addressStableBalances
 }) => {
   const { activate, provider, connector } = useWeb3React()
 
@@ -52,7 +52,7 @@ const LedgerAccountContent = ({
               className="text-center"
               onClick={() => onSelectAddress(address)}
             >
-              {address} <br />
+              {shortenAddress(address)} <br />
               <span className="balance">
                 {addressBalances[address] !== undefined && (
                   <>{addressBalances[address]} ETH, </>
@@ -70,7 +70,7 @@ const LedgerAccountContent = ({
       </div>
       <style jsx>{`
         button {
-          width: 100%;
+          width: 415px;
           height: 55px;
           border-radius: 50px;
           border: solid 1px #1a82ff;
