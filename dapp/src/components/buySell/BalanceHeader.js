@@ -24,7 +24,7 @@ const BalanceHeader = ({
   isMobile,
 }) => {
   const { connector, account } = useWeb3React()
-  const apy = useStoreState(ContractStore, (s) => s.apy || 0)
+  const apy = useStoreState(ContractStore, (s) => s.apy365 || 0)
   const vault = useStoreState(ContractStore, (s) => _get(s, 'contracts.vault'))
   const ousdContract = useStoreState(ContractStore, (s) =>
     _get(s, 'contracts.ousd')
@@ -189,7 +189,7 @@ const BalanceHeader = ({
               }`}
             >
               <Statistic
-                title={fbt('30-day trailing APY', '30-day trailing APY')}
+                title={fbt('365-day trailing APY', '365-day trailing APY')}
                 titleLink="https://analytics.ousd.com/apy"
                 value={
                   typeof apy === 'number'
