@@ -97,12 +97,9 @@ const LedgerDerivationContent = ({}) => {
       .map((balance) => Number(balance))
       .reduce((a, b) => a + b, 0)
 
-    let stableTotals = stableBalances.map((balance) => {
+    const stableTotals = stableBalances.map((balance) => {
       return balance.reduce((a, b) => a + b, 0).toFixed(2)
     })
-
-    if (path === LEDGER_LIVE_BASE_PATH)
-      stableTotals = [100000, 55555555, 0, 10, 50000]
 
     setAddressBalances({
       ...addressBalances,
