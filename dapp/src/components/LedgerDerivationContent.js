@@ -86,21 +86,23 @@ const LedgerDerivationContent = ({}) => {
         addresses[path].map((a) => {
           return Promise.all(
             contractData.map((c) =>
-                c.contract.balanceOf(a)
-                .then((r) => Number(r) / 10 ** c.decimals)
+              c.contract.balanceOf(a).then((r) => Number(r) / 10 ** c.decimals)
             )
           )
         })
-      )
+      ),
     ])
 
-    const ethTotal = balances.map(balance => Number(balance)).reduce((a, b) => a + b, 0)
+    const ethTotal = balances
+      .map((balance) => Number(balance))
+      .reduce((a, b) => a + b, 0)
 
-    let stableTotals = stableBalances.map(balance => {
-      return (balance.reduce((a, b) => a + b, 0)).toFixed(2)
+    let stableTotals = stableBalances.map((balance) => {
+      return balance.reduce((a, b) => a + b, 0).toFixed(2)
     })
 
-    if (path === LEDGER_LIVE_BASE_PATH) stableTotals = [100000, 55555555, 0, 10, 50000]
+    if (path === LEDGER_LIVE_BASE_PATH)
+      stableTotals = [100000, 55555555, 0, 10, 50000]
 
     setAddressBalances({
       ...addressBalances,
@@ -139,7 +141,9 @@ const LedgerDerivationContent = ({}) => {
     )
 
     // indicators for scrolling to next address page within path
-    setNext({[activePath]: nextLoading[activePath] ? !next[activePath] : false})
+    setNext({
+      [activePath]: nextLoading[activePath] ? !next[activePath] : false,
+    })
     setNextLoading({ [activePath]: false })
   }
 

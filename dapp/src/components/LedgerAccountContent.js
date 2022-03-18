@@ -8,7 +8,7 @@ import { shortenAddress } from 'utils/web3'
 const LedgerAccountContent = ({
   addresses,
   addressBalances,
-  addressStableBalances
+  addressStableBalances,
 }) => {
   const { activate, provider, connector } = useWeb3React()
 
