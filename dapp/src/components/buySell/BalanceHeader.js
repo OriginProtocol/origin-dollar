@@ -16,6 +16,9 @@ import LinkIcon from 'components/buySell/_LinkIcon'
 import useExpectedYield from 'utils/useExpectedYield'
 import withRpcProvider from 'hoc/withRpcProvider'
 import { adjustLinkHref } from 'utils/utils'
+import Dropdown from 'components/Dropdown'
+import DownCaret from 'components/DownCaret'
+import { zipObject } from 'lodash'
 
 const BalanceHeader = ({
   storeTransaction,
@@ -24,7 +27,16 @@ const BalanceHeader = ({
   isMobile,
 }) => {
   const { connector, account } = useWeb3React()
-  const apy = useStoreState(ContractStore, (s) => s.apy365 || 0)
+  const dayOptions = [7, 30, 60, 90, 365]
+  const apyOptions = useStoreState(ContractStore, (s) => 
+    dayOptions.map(d => {
+      return s[`apy${d}`] || 0
+    })
+  )
+  const daysToApy = zipObject(dayOptions, apyOptions)
+  const [apyDays, setApyDays] = useState(
+    typeof window !== 'undefined' ? localStorage.getItem('last_user_selected_apy') : 365
+  )
   const vault = useStoreState(ContractStore, (s) => _get(s, 'contracts.vault'))
   const ousdContract = useStoreState(ContractStore, (s) =>
     _get(s, 'contracts.ousd')
@@ -98,6 +110,7 @@ const BalanceHeader = ({
    * Type: number or percentage
    */
   const Statistic = ({
+    dropdown,
     title,
     value,
     type,
@@ -112,27 +125,37 @@ const BalanceHeader = ({
           }`}
         >
           <div className={`value ${type}`}>{value}</div>
-          {titleLink && (
-            <a
-              className={`title link ${type}`}
-              href={adjustLinkHref(titleLink)}
-              rel="noopener noreferrer"
-              target="blank"
-            >
-              {title}
-            </a>
-          )}
-          {!titleLink && <div className="title">{title}</div>}
+          <div className='flex-row'>
+          <span className='dropdown'>{dropdown}</span>
+            {titleLink && (
+              <a
+                className={`title link ${type}`}
+                href={adjustLinkHref(titleLink)}
+                rel="noopener noreferrer"
+                target="blank"
+              >
+                {title}
+              </a>
+            )}
+            {!titleLink && <div className="title">{title}</div>}
+          </div>
         </div>
         <style jsx>{`
+          .dropdown {
+            display: inline-block;
+          }
+
           .title {
             color: #8293a4;
             font-size: 14px;
+            display: inline;
           }
+
           .title.link {
             cursor: pointer;
             text-decoration: underline;
           }
+          
           .value {
             color: white;
             font-size: 28px;
@@ -177,7 +200,96 @@ const BalanceHeader = ({
       </>
     )
   }
+
   const displayedBalance = formatCurrency(animatedOusdBalance || 0, 2)
+
+  useEffect(() => {
+    localStorage.setItem('last_user_selected_apy', apyDays)
+  }, [apyDays])
+
+  const ApySelect = () => {
+    const [open, setOpen] = useState(false)
+    return(
+      <>
+        <Dropdown
+          content={
+            <div className="dropdown-menu show wrapper d-flex flex-column">
+              {dayOptions.map((days) => {
+                return (
+                  <div
+                    key={days}
+                    className='dropdown-item justify-content-start align-items-center'
+                    onClick={() => {
+                      setApyDays(days)
+                      setOpen(false)
+                    }}
+                  >
+                    {`${days}d`}
+                  </div>
+                )
+              })}
+            </div>
+          }
+          open={open}
+          onClose={() => setOpen(false)}
+        >
+          <div
+            className='apy-select d-flex flex-row align-items-center'
+            onClick={() => setOpen(!open)}
+          >
+            {`${apyDays}d`}
+            <span className='downcaret'><DownCaret color='black' size='26' /></span>
+          </div>
+        </Dropdown>
+        <style jsx>{`
+          .apy-select {
+            background-color: white;
+            font-size: 16px;
+            font-weight: 500;
+            color: black;
+            width: 68px;
+            height: 25px;
+            padding: 0 22px 2px 8px;
+            margin-right: 8px;
+            border-radius: 20px;
+            cursor: pointer;
+          }
+
+          .apy-select:hover {
+            background-color: #f2f3f5;
+          }
+
+          .dropdown-menu {
+            margin-right: 200px;
+            background-color: white;
+            font-size: 16px;
+            color: black;
+            min-width: 90px;
+            top: 100%;
+            left: 0;
+            padding: 5px;
+          }
+
+          .dropdown-item {
+            background-color: white;
+            color: black;
+            padding: 3px 5px;
+            line-height: 20px;
+            cursor: pointer;
+          }
+
+          .dropdown-item:hover {
+            background-color: #f2f3f5;
+          }
+
+          .downcaret {
+            position: absolute;
+            left: 42px;
+          }
+        `}</style>
+      </>
+    )
+  }
   return (
     <>
       <div className="balance-header d-flex flex-column justify-content-start">
@@ -189,14 +301,15 @@ const BalanceHeader = ({
               }`}
             >
               <Statistic
-                title={fbt('365-day trailing APY', '365-day trailing APY')}
+                dropdown={<ApySelect />}
+                title={fbt('Trailing APY', 'Trailing APY')}
                 titleLink="https://analytics.ousd.com/apy"
                 value={
-                  typeof apy === 'number'
-                    ? formatCurrency(apy * 100, 2)
+                  typeof daysToApy[apyDays] === 'number'
+                    ? formatCurrency(daysToApy[apyDays] * 100, 2)
                     : '--.--'
                 }
-                type={typeof apy === 'number' ? 'percentage' : ''}
+                type={typeof daysToApy[apyDays] === 'number' ? 'percentage' : ''}
               />
             </div>
           </div>
