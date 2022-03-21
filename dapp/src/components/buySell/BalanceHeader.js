@@ -277,7 +277,7 @@ const BalanceHeader = ({
           .dropdown-item {
             background-color: white;
             color: black;
-            padding: 3px 5px;
+            padding: 3px 5px 3px 10px;
             line-height: 20px;
             cursor: pointer;
           }
