@@ -379,14 +379,12 @@ export async function setupContracts(account, library, chainId, fetchId) {
   }
 
   const fetchAPY = async () => {
+    const dayOptions = [7, 30, 60, 90, 365]
     const fetchAPYDays = async (days) => {
       let endpoint, varName
-      if (days == 30) {
-        endpoint = process.env.APR_ANALYTICS_ENDPOINT
-        varName = 'apy'
-      } else if (days == 365) {
-        endpoint = `${process.env.APR_ANALYTICS_ENDPOINT}/365`
-        varName = 'apy365'
+      if (dayOptions.includes(days)) {
+        endpoint = `${process.env.APR_ANALYTICS_ENDPOINT}/${days}`
+        varName = `apy${days}`
       } else {
         throw new Error(`Unexpected days param: ${days}`)
       }
@@ -404,8 +402,9 @@ export async function setupContracts(account, library, chainId, fetchId) {
       }
     }
 
-    await fetchAPYDays(30)
-    await fetchAPYDays(365)
+    dayOptions.forEach(async (days) => {
+      await fetchAPYDays(days)
+    })
   }
 
   const fetchCreditsPerToken = async () => {
