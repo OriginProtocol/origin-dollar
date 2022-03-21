@@ -28,14 +28,16 @@ const BalanceHeader = ({
 }) => {
   const { connector, account } = useWeb3React()
   const dayOptions = [7, 30, 60, 90, 365]
-  const apyOptions = useStoreState(ContractStore, (s) => 
-    dayOptions.map(d => {
+  const apyOptions = useStoreState(ContractStore, (s) =>
+    dayOptions.map((d) => {
       return s[`apy${d}`] || 0
     })
   )
   const daysToApy = zipObject(dayOptions, apyOptions)
   const [apyDays, setApyDays] = useState(
-    typeof window !== 'undefined' ? localStorage.getItem('last_user_selected_apy') : 365
+    typeof window !== 'undefined'
+      ? localStorage.getItem('last_user_selected_apy')
+      : 365
   )
   const vault = useStoreState(ContractStore, (s) => _get(s, 'contracts.vault'))
   const ousdContract = useStoreState(ContractStore, (s) =>
@@ -125,8 +127,8 @@ const BalanceHeader = ({
           }`}
         >
           <div className={`value ${type}`}>{value}</div>
-          <div className='flex-row'>
-          <span className='dropdown'>{dropdown}</span>
+          <div className="flex-row">
+            <span className="dropdown">{dropdown}</span>
             {titleLink && (
               <a
                 className={`title link ${type}`}
@@ -155,7 +157,7 @@ const BalanceHeader = ({
             cursor: pointer;
             text-decoration: underline;
           }
-          
+
           .value {
             color: white;
             font-size: 28px;
@@ -209,16 +211,16 @@ const BalanceHeader = ({
 
   const ApySelect = () => {
     const [open, setOpen] = useState(false)
-    return(
+    return (
       <>
         <Dropdown
           content={
-            <div className="dropdown-menu show wrapper d-flex flex-column">
+            <div className="dropdown-menu d-flex flex-column">
               {dayOptions.map((days) => {
                 return (
                   <div
                     key={days}
-                    className='dropdown-item justify-content-start align-items-center'
+                    className="dropdown-item justify-content-start align-items-center"
                     onClick={() => {
                       setApyDays(days)
                       setOpen(false)
@@ -234,11 +236,13 @@ const BalanceHeader = ({
           onClose={() => setOpen(false)}
         >
           <div
-            className='apy-select d-flex flex-row align-items-center'
+            className="apy-select d-flex flex-row align-items-center"
             onClick={() => setOpen(!open)}
           >
             {`${apyDays}d`}
-            <span className='downcaret'><DownCaret color='black' size='26' /></span>
+            <span className="downcaret">
+              <DownCaret color="black" size="26" />
+            </span>
           </div>
         </Dropdown>
         <style jsx>{`
@@ -309,7 +313,9 @@ const BalanceHeader = ({
                     ? formatCurrency(daysToApy[apyDays] * 100, 2)
                     : '--.--'
                 }
-                type={typeof daysToApy[apyDays] === 'number' ? 'percentage' : ''}
+                type={
+                  typeof daysToApy[apyDays] === 'number' ? 'percentage' : ''
+                }
               />
             </div>
           </div>
