@@ -4,7 +4,8 @@ import { useWeb3React } from '@web3-react/core'
 import { useRouter } from 'next/router'
 import { useCookies } from 'react-cookie'
 import { useStoreState } from 'pullstate'
-import { QueryClient, QueryClientProvider, useQuery } from 'react-query'
+import { QueryClient, QueryClientProvider } from 'react-query'
+import { ReactQueryDevtools } from 'react-query/devtools'
 
 import AccountStore from 'stores/AccountStore'
 import RouterStore from 'stores/RouterStore'
@@ -187,6 +188,7 @@ function App({ Component, pageProps, err }) {
             err={err}
           />
         </AnalyticsProvider>
+        <ReactQueryDevtools initialIsOpen={false} />
       </QueryClientProvider>
     </>
   )
