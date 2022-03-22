@@ -4,9 +4,9 @@ export default class TransactionHistoryService {
   }
 
   async fetchHistory(account) {
-    const response = await fetch(`${this.baseURL}/${account.toLowerCase()}/history`).then(
-      (res) => res.json()
-    )
+    const response = await fetch(
+      `${this.baseURL}/${account.toLowerCase()}/history`
+    ).then((res) => res.json())
 
     return response.history
   }
