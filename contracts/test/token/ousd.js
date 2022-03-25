@@ -1,5 +1,5 @@
 const { expect } = require("chai");
-const { defaultFixture } = require("./_fixture");
+const { defaultFixture } = require("../_fixture");
 const { utils } = require("ethers");
 
 const {
@@ -8,7 +8,7 @@ const {
   usdcUnits,
   isFork,
   loadFixture,
-} = require("./helpers");
+} = require("../helpers");
 
 describe("Token", function () {
   if (isFork) {

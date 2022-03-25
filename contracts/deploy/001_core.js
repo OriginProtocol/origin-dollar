@@ -706,6 +706,21 @@ const deployVaultVaultChecker = async () => {
   await deployWithConfirmation("VaultValueChecker", [vault.address]);
 };
 
+const deployWOusd = async () => {
+  const { deployerAddr, governorAddr } = await getNamedAccounts();
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+  const sGovernor = await ethers.provider.getSigner(governorAddr);
+  const ousd = await ethers.getContract("OUSDProxy");
+  await deployWithConfirmation("WrappedOusd", [
+    ousd.address,
+    "Wrapped OUSD",
+    "WOUSD",
+  ]);
+  const wousd = await ethers.getContract("WrappedOusd");
+  await wousd.connect(sDeployer).transferGovernance(governorAddr);
+  await wousd.connect(sGovernor).claimGovernance();
+};
+
 const main = async () => {
   console.log("Running 001_core deployment...");
   await deployOracles();
@@ -722,6 +737,7 @@ const main = async () => {
   await deployBuyback();
   await deployUniswapV3Pool();
   await deployVaultVaultChecker();
+  await deployWOusd();
   console.log("001_core deploy done.");
   return true;
 };
