@@ -4,7 +4,7 @@ const { deploymentWithProposal, withConfirmation } = require("../utils/deploy");
 // Upgrade to using it
 
 module.exports = deploymentWithProposal(
-  { deployName: "039_wrapped_ousd", forceDeploy: true },
+  { deployName: "039_wrapped_ousd", forceDeploy: false },
   async ({ deployWithConfirmation, getTxOpts, ethers }) => {
     const { deployerAddr, governorAddr } = await getNamedAccounts();
     const sDeployer = await ethers.provider.getSigner(deployerAddr);
