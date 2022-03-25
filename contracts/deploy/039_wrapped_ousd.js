@@ -41,7 +41,7 @@ module.exports = deploymentWithProposal(
           contract: cWousd,
           signature: "claimGovernance()",
         },
-      ]
-    }
+      ],
+    };
   }
 );
