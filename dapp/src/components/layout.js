@@ -32,7 +32,7 @@ const Layout = ({
   storeTransaction,
   storeTransactionError,
 }) => {
-  const { connector, account } = useWeb3React()
+  const { connector, account, library } = useWeb3React()
 
   const ousdContract = useStoreState(ContractStore, (s) =>
     get(s, 'contracts.ousd')
@@ -43,7 +43,9 @@ const Layout = ({
 
   const optIn = async () => {
     try {
-      const result = await ousdContract.rebaseOptIn()
+      const result = await ousdContract
+        .connect(library.getSigner(account))
+        .rebaseOptIn()
       storeTransaction(result, `rebaseOptIn`, 'ousd', {})
     } catch (error) {
       // 4001 code happens when a user rejects the transaction
