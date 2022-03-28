@@ -15,6 +15,11 @@ const PrimarySidePanel = () => {
     ContractStore,
     (s) => s.showAllContracts
   )
+  const approvalNeeded = useStoreState(
+    ContractStore,
+    (s) => s.approvalNeeded
+  )
+  console.log(approvalNeeded)
   const transactions = useStoreState(TransactionStore, (s) => s.transactions)
   const prevTransactions = usePrevious(transactions)
   const [txHashesToAnimate, setTxHashesToAnimate] = useState([])
@@ -54,9 +59,11 @@ const PrimarySidePanel = () => {
         className="primarySidePanel sidepanel-wrapper collapse navbar-collapse"
       >
         <div
-          className={`primary-side-panel d-flex flex-column justify-content-start align-items-center disable-scrollbars ${
-            showingAllContracts ? 'larger' : ''
-          }`}
+          className={`primary-side-panel d-flex flex-column justify-content-start align-items-center disable-scrollbars
+            ${(!showingAllContracts && approvalNeeded) ? 'h859' : ''}
+            ${(showingAllContracts && !approvalNeeded) ? 'h988' : ''}
+            ${(showingAllContracts && approvalNeeded) ? 'h1053' : ''}
+            `}
         >
           <button
             className="close navbar-toggler d-md-none"
@@ -101,9 +108,19 @@ const PrimarySidePanel = () => {
           box-shadow: 0 0 14px 0 rgba(24, 49, 64, 0.1);
         }
 
-        .primary-side-panel.larger {
+        .primary-side-panel.h859 {
+          min-height: 859px;
+          max-height: 859px;
+        }
+
+        .primary-side-panel.h988 {
           min-height: 988px;
           max-height: 988px;
+        }
+
+        .primary-side-panel.h1053 {
+          min-height: 1053px;
+          max-height: 1053px;
         }
 
         @media (min-width: 800px) {
