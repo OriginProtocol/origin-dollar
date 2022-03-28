@@ -31,7 +31,6 @@ const WalletSelectModal = ({}) => {
         >
           {modalState === 'Wallet' && <WalletSelectContent />}
           {modalState === 'LedgerDerivation' && <LedgerDerivationContent />}
-          {modalState === 'LedgerAccounts' && <LedgerAccountContent />}
         </div>
       )}
       <style jsx>{`
