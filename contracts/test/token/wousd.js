@@ -65,6 +65,14 @@ describe("WOUSD", function () {
     });
   });
 
+  describe("Check proxy", async () => {
+    it("should have correct ERC20 properties", async () => {
+      expect(await wousd.decimals()).to.eq(18);
+      expect(await wousd.name()).to.eq("Wrapped OUSD");
+      expect(await wousd.symbol()).to.eq("WOUSD");
+    });
+  });
+
   describe("Token recovery", async () => {
     it("should allow a governor to recover tokens", async () => {
       await dai.connect(matt).transfer(wousd.address, daiUnits("2"));

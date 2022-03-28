@@ -711,13 +711,25 @@ const deployWOusd = async () => {
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
   const sGovernor = await ethers.provider.getSigner(governorAddr);
   const ousd = await ethers.getContract("OUSDProxy");
-  await deployWithConfirmation("WrappedOusd", [
+  const dWrappedOusdImpl = await deployWithConfirmation("WrappedOusd", [
     ousd.address,
-    "Wrapped OUSD",
-    "WOUSD",
+    "Wrapped OUSD IMPL",
+    "WOUSD IMPL",
   ]);
-  const wousd = await ethers.getContract("WrappedOusd");
-  await wousd.connect(sDeployer)["initialize()"]();
+  const dWrappedOusdProxy = await deployWithConfirmation("WrappedOUSDProxy");
+  const wousdProxy = await ethers.getContract("WrappedOUSDProxy");
+  const wousd = await ethers.getContractAt("WrappedOusd", wousdProxy.address);
+
+  await wousdProxy
+    .connect(sDeployer)
+    ["initialize(address,address,bytes)"](
+      dWrappedOusdImpl.address,
+      deployerAddr,
+      []
+    );
+  await wousd
+    .connect(sDeployer)
+    ["initialize(string,string)"]("Wrapped OUSD", "WOUSD");
   await wousd.connect(sDeployer).transferGovernance(governorAddr);
   await wousd.connect(sGovernor).claimGovernance();
 };
