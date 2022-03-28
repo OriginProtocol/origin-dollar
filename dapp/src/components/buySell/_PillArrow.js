@@ -3,6 +3,7 @@ import { useStoreState } from 'pullstate'
 
 import { usePrevious } from 'utils/hooks'
 import analytics from 'utils/analytics'
+import ContractStore from 'stores/ContractStore'
 
 const DownCaret = ({ swapMode, disableRotation, color = '#8293a4' }) => {
   return (
@@ -14,7 +15,7 @@ const DownCaret = ({ swapMode, disableRotation, color = '#8293a4' }) => {
       <div className="image-holder-internal"></div>
       <svg
         xmlns="http://www.w3.org/2000/svg"
-        width="12"
+        width="13"
         height="13"
         viewBox="0 0 12 13"
       >
@@ -56,6 +57,9 @@ const PillArrow = ({ swapMode, setSwapMode }) => {
         <div
           className="caret-background position-absolute d-flex align-items-center justify-content-center"
           onClick={() => {
+            ContractStore.update((s) => {
+              s.swapEstimations = 'loading'
+            })
             setSwapMode(swapMode === 'mint' ? 'redeem' : 'mint')
           }}
         >

@@ -4,7 +4,6 @@ import { fbt } from 'fbt-runtime'
 
 import AccountStore from 'stores/AccountStore'
 import Dropdown from 'components/Dropdown'
-import DownCaret from 'components/DownCaret'
 import { usePrevious } from 'utils/hooks'
 import analytics from 'utils/analytics'
 import {
@@ -16,6 +15,21 @@ import {
 } from 'utils/math'
 import { currencies } from 'constants/Contract'
 import { assetRootPath } from 'utils/image'
+import ContractStore from 'stores/ContractStore'
+
+const DownCaret = ({ color = '#608fcf', size = '30' }) => (
+  <svg
+    style={{ marginRight: -13 }}
+    width={size}
+    height={size}
+    viewBox="0 0 20 20"
+  >
+    <g stroke={color} strokeWidth="1" strokeLinecap="round">
+      <line x1="7" y1="9" x2="10" y2="12" />
+      <line x1="10" y1="12" x2="13" y2="9" />
+    </g>
+  </svg>
+)
 
 const CoinImage = ({ small, coin, isSemiTransparent = false }) => {
   const className = `coin-image ${isSemiTransparent ? 'transparent' : ''}`
@@ -390,6 +404,11 @@ const SwapCurrencyPill = ({
             <CoinSelect
               selected={showOusd ? 'ousd' : selectedCoin}
               onChange={(coin) => {
+                if (coin !== selectedCoin) {
+                  ContractStore.update((s) => {
+                    s.swapEstimations = 'loading'
+                  })
+                }
                 onSelectChange(coin)
               }}
               options={coinsSelectOptions}
@@ -430,6 +449,9 @@ const SwapCurrencyPill = ({
                 onChange={(e) => {
                   const value = truncateDecimals(e.target.value)
                   const valueNoCommas = removeCommas(value)
+                  ContractStore.update((s) => {
+                    s.swapEstimations = 'loading'
+                  })
                   if (checkValidInputForCoin(valueNoCommas, selectedCoin)) {
                     onAmountChange(valueNoCommas)
                   }

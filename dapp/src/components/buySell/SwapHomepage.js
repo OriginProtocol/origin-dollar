@@ -7,17 +7,14 @@ import { get, find } from 'lodash'
 import AccountStore from 'stores/AccountStore'
 import TransactionStore from 'stores/TransactionStore'
 import ContractStore from 'stores/ContractStore'
-import ApproveModal from 'components/buySell/ApproveModal'
 import AddOUSDModal from 'components/buySell/AddOUSDModal'
 import ErrorModal from 'components/buySell/ErrorModal'
 import DisclaimerTooltip from 'components/buySell/DisclaimerTooltip'
-import ApproveCurrencyInProgressModal from 'components/buySell/ApproveCurrencyInProgressModal'
 import { currencies } from 'constants/Contract'
 import { providersNotAutoDetectingOUSD, providerName } from 'utils/web3'
 import withRpcProvider from 'hoc/withRpcProvider'
 import usePriceTolerance from 'hooks/usePriceTolerance'
 import useCurrencySwapper from 'hooks/useCurrencySwapper'
-import BuySellModal from 'components/buySell/BuySellModal'
 import SwapCurrencyPill from 'components/buySell/SwapCurrencyPill'
 import PillArrow from 'components/buySell/_PillArrow'
 import SettingsDropdown from 'components/buySell/SettingsDropdown'
@@ -28,6 +25,7 @@ import { getUserSource } from 'utils/user'
 import usePrevious from 'utils/usePrevious'
 import LinkIcon from 'components/buySell/_LinkIcon'
 import { connectorNameIconMap, getConnectorIcon } from 'utils/connectors'
+import ApproveSwap from 'components/buySell/ApproveSwap'
 
 import analytics from 'utils/analytics'
 import {
@@ -74,7 +72,6 @@ const SwapHomepage = ({
   const [sellWidgetState, setSellWidgetState] = useState('redeem now')
   const [sellWidgetSplitsInterval, setSellWidgetSplitsInterval] = useState(null)
   // buy/modal-buy, waiting-user/modal-waiting-user, waiting-network/modal-waiting-network
-  const [buyWidgetState, setBuyWidgetState] = useState('buy')
   const [priceToleranceOpen, setPriceToleranceOpen] = useState(false)
   // mint / redeem
   const [swapMode, setSwapMode] = useState(
@@ -220,7 +217,6 @@ const SwapHomepage = ({
       setSwapMode(swapMode === 'mint' ? 'redeem' : 'mint')
       return
     }
-
     localStorage.setItem(lastUserSelectedCoinKey, coin)
     setSelectedBuyCoin(coin)
   }
@@ -231,7 +227,6 @@ const SwapHomepage = ({
       setSwapMode(swapMode === 'mint' ? 'redeem' : 'mint')
       return
     }
-
     localStorage.setItem(lastUserSelectedCoinKey, coin)
     setSelectedRedeemCoin(coin)
   }
@@ -306,22 +301,6 @@ const SwapHomepage = ({
     }
   }
 
-  /* Mobile MetaMask app has this bug where it doesn't throw an exception on contract
-   * call when user rejects the transaction. Interestingly if you quit and re-enter
-   * the app after you reject the transaction the correct error with "user rejected..."
-   * message is thrown.
-   *
-   * As a workaround we hide the "waiting for user" modal after 5 seconds no matter what the
-   * user does if environment is the mobile Metamask.
-   */
-  const mobileMetaMaskHack = (prependStage) => {
-    if (isMobileMetaMask()) {
-      setTimeout(() => {
-        setBuyWidgetState(`${prependStage}buy`)
-      }, 5000)
-    }
-  }
-
   const swapMetadata = () => {
     const coinGiven = swapMode === 'mint' ? selectedBuyCoin : 'ousd'
     const coinReceived = swapMode === 'mint' ? 'ousd' : selectedRedeemCoin
@@ -337,13 +316,21 @@ const SwapHomepage = ({
     }
   }
 
-  const onSwapOusd = async (prependStage) => {
-    setBuyWidgetState(`${prependStage}waiting-user`)
+  const onSwapOusd = async () => {
+    analytics.track(
+      swapMode === 'mint'
+        ? 'On Swap to OUSD'
+        : 'On Swap from OUSD',
+      {
+        category: 'swap',
+        label: swapMetadata.stablecoinUsed,
+        value: swapMetadata.swapAmount,
+      }
+    )
+
     const metadata = swapMetadata()
 
     try {
-      mobileMetaMaskHack(prependStage)
-
       analytics.track('Before Swap Transaction', {
         category: 'swap',
         label: metadata.stablecoinUsed,
@@ -368,7 +355,6 @@ const SwapHomepage = ({
       } else if (selectedSwap.name === 'curve') {
         ;({ result, swapAmount, minSwapAmount } = await swapCurve())
       }
-      setBuyWidgetState(`${prependStage}waiting-network`)
 
       storeTransaction(
         result,
@@ -438,7 +424,6 @@ const SwapHomepage = ({
       onMintingError(e)
       console.error('Error swapping ousd! ', e)
     }
-    setBuyWidgetState(`buy`)
   }
 
   // TODO: modify this
@@ -448,52 +433,15 @@ const SwapHomepage = ({
     )
   }
 
-  const setShowApproveModal = (contractToApprove) => {
-    _setShowApproveModal(contractToApprove)
-    const metadata = swapMetadata()
-
-    if (contractToApprove) {
-      analytics.track('Show Approve Modal', {
-        category: 'swap',
-        label: metadata.coinGiven,
-        value: parseInt(metadata.swapAmount),
-      })
-    } else {
-      analytics.track('Hide Approve Modal', {
-        category: 'swap',
-      })
-    }
-  }
-
-  const onBuyNow = async (e) => {
-    const metadata = swapMetadata()
-
-    e.preventDefault()
-    analytics.track(
-      swapMode === 'mint'
-        ? 'On Approve Swap to OUSD'
-        : 'On Approve Swap from OUSD',
-      {
-        category: 'swap',
-        label: metadata.stablecoinUsed,
-        value: metadata.swapAmount,
-      }
-    )
-
-    if (!allowancesLoaded) {
+  useEffect(() => {
+    if (!allowancesLoaded && (selectedBuyCoinAmount || selectedRedeemCoinAmount)) {
       setGeneralErrorReason(
         fbt('Unable to load all allowances', 'Allowance load error')
       )
       console.error('Allowances: ', allowances)
       return
     }
-
-    if (needsApproval) {
-      setShowApproveModal(needsApproval)
-    } else {
-      await onSwapOusd('')
-    }
-  }
+  }, [])
 
   return (
     <>
@@ -503,9 +451,6 @@ const SwapHomepage = ({
           priceToleranceValue={priceToleranceValue}
           dropdownToleranceOptions={dropdownToleranceOptions}
         />
-        {/* If approve modal is not shown and transactions are pending show
-          the pending approval transactions modal */}
-        {!showApproveModal && <ApproveCurrencyInProgressModal />}
         {addOusdModalState === 'show' && providerNotAutoDetectOUSD && (
           <AddOUSDModal
             onClose={(e) => {
@@ -514,27 +459,6 @@ const SwapHomepage = ({
                 s.addOusdModalState = 'none'
               })
             }}
-          />
-        )}
-        {showApproveModal && (
-          <ApproveModal
-            stableCoinToApprove={swapMode === 'mint' ? selectedBuyCoin : 'ousd'}
-            swapMode={swapMode}
-            swapMetadata={swapMetadata()}
-            contractToApprove={showApproveModal}
-            onClose={(e) => {
-              e.preventDefault()
-              // do not close modal if in network or user waiting state
-              if ('buy' === buyWidgetState) {
-                setShowApproveModal(false)
-              }
-            }}
-            onFinalize={async () => {
-              await onSwapOusd('modal-')
-              setShowApproveModal(false)
-            }}
-            buyWidgetState={buyWidgetState}
-            onMintingError={onMintingError}
           />
         )}
         {generalErrorReason && (
@@ -551,22 +475,6 @@ const SwapHomepage = ({
             onClose={() => {
               setBuyErrorToDisplay(false)
             }}
-          />
-        )}
-        {buyWidgetState === 'waiting-user' && (
-          <BuySellModal
-            content={
-              <div className="d-flex align-items-center justify-content-center">
-                <img
-                  className="waiting-icon"
-                  src={assetRootPath(`/images/${connectorIcon}`)}
-                />
-                {fbt(
-                  'Waiting for you to confirm...',
-                  'Waiting for you to confirm...'
-                )}
-              </div>
-            }
           />
         )}
         <SwapCurrencyPill
@@ -595,34 +503,17 @@ const SwapHomepage = ({
           selectedCoin={selectedRedeemCoin}
           onSelectChange={userSelectsRedeemCoin}
         />
-        <div className="d-flex flex-column align-items-center justify-content-center justify-content-md-between flex-md-row mt-md-3 mt-2">
-          <a
-            href="#"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="link-detail"
-          >
-            {/* <span className="pr-2"> */}
-            {/*   {fbt( */}
-            {/*     'Read about costs associated with OUSD', */}
-            {/*     'Read about costs associated with OUSD' */}
-            {/*   )} */}
-            {/* </span> */}
-            {/* <LinkIcon color="1a82ff" /> */}
-          </a>
-          <button
-            //disabled={formHasErrors || buyFormHasWarnings || !totalOUSD}
-            className={`btn-blue buy-button mt-2 mt-md-0 w-100`}
-            disabled={
-              !selectedSwap || formHasErrors || swappingGloballyDisabled
-            }
-            onClick={onBuyNow}
-          >
-            {swappingGloballyDisabled &&
-              process.env.DISABLE_SWAP_BUTTON_MESSAGE}
-            {!swappingGloballyDisabled && fbt('Swap', 'Swap')}
-          </button>
-        </div>
+        <ApproveSwap
+          stableCoinToApprove={swapMode === 'mint' ? selectedBuyCoin : 'ousd'}
+          needsApproval={needsApproval}
+          selectedSwap={selectedSwap}
+          swapMetadata={swapMetadata()}
+          onSwap={() => onSwapOusd()}
+          allowancesLoaded={allowancesLoaded}
+          onMintingError={onMintingError}
+          formHasErrors={formHasErrors}
+          swappingGloballyDisabled={swappingGloballyDisabled}
+        />
       </div>
       <style jsx>{`
         .swap-homepage {
@@ -633,25 +524,6 @@ const SwapHomepage = ({
           min-height: 350px;
           padding: 35px 40px 40px 40px;
           position: relative;
-        }
-
-        .link-detail {
-          font-size: 12px;
-          color: #1a82ff;
-        }
-
-        .link-detail:hover {
-          color: #3aa2ff;
-        }
-
-        .waiting-icon {
-          width: 30px;
-          height: 30px;
-          margin-right: 10px;
-        }
-
-        .btn-blue:disabled {
-          opacity: 0.4;
         }
 
         @media (max-width: 799px) {
