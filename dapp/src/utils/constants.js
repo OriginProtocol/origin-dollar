@@ -14,6 +14,7 @@ const approveCoinGasLimits = {
   usdt: 48900,
   usdc: 60700,
 }
+const apyDayOptions = [7, 30, 60, 90, 365]
 
 module.exports = {
   mintAbsoluteGasLimitBuffer,
@@ -24,4 +25,5 @@ module.exports = {
   uniswapV3GasLimitBuffer,
   curveGasLimitBuffer,
   approveCoinGasLimits,
+  apyDayOptions,
 }

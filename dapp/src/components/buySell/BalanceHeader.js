@@ -10,6 +10,7 @@ import AnimatedOusdStore from 'stores/AnimatedOusdStore'
 import ContractStore from 'stores/ContractStore'
 import { formatCurrency } from 'utils/math'
 import { animateValue } from 'utils/animation'
+import { apyDayOptions } from 'utils/constants'
 import { usePrevious } from 'utils/hooks'
 import DisclaimerTooltip from 'components/buySell/DisclaimerTooltip'
 import LinkIcon from 'components/buySell/_LinkIcon'
@@ -27,7 +28,6 @@ const BalanceHeader = ({
   isMobile,
 }) => {
   const { connector, account } = useWeb3React()
-  const apyDayOptions = [7, 30, 60, 90, 365]
   const DEFAULT_SELECTED_APY = 365
   const apyOptions = useStoreState(ContractStore, (s) =>
     apyDayOptions.map((d) => {
