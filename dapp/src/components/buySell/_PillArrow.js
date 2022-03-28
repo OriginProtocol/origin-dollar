@@ -17,7 +17,7 @@ const DownCaret = ({ swapMode, disableRotation, color = '#8293a4' }) => {
         xmlns="http://www.w3.org/2000/svg"
         width="13"
         height="13"
-        viewBox="0 0 12 13"
+        viewBox="0 1 12 13"
       >
         <g fill="none" fillRule="evenodd">
           <g fill={color} fillRule="nonzero">
