@@ -68,7 +68,7 @@ const ApproveSwap = ({
   useEffect(() => {
     setCoinApproved(false)
     setStage('approve')
-  }, [stableCoinToApprove])
+  }, [selectedSwap])
 
   useEffect(() => {
     if (stableCoinToApprove === 'dai') {
