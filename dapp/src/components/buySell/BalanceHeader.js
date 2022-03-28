@@ -27,18 +27,20 @@ const BalanceHeader = ({
   isMobile,
 }) => {
   const { connector, account } = useWeb3React()
-  const dayOptions = [7, 30, 60, 90, 365]
+  const apyDayOptions = [7, 30, 60, 90, 365]
+  const DEFAULT_SELECTED_APY = 365
   const apyOptions = useStoreState(ContractStore, (s) =>
-    dayOptions.map((d) => {
+    apyDayOptions.map((d) => {
       return s[`apy${d}`] || 0
     })
   )
-  const daysToApy = zipObject(dayOptions, apyOptions)
+  const daysToApy = zipObject(apyDayOptions, apyOptions)
   const [apyDays, setApyDays] = useState(
-    typeof window !== 'undefined'
+    process.browser && localStorage.getItem('last_user_selected_apy') !== null
       ? localStorage.getItem('last_user_selected_apy')
-      : 365
+      : DEFAULT_SELECTED_APY
   )
+
   const vault = useStoreState(ContractStore, (s) => _get(s, 'contracts.vault'))
   const ousdContract = useStoreState(ContractStore, (s) =>
     _get(s, 'contracts.ousd')
@@ -216,7 +218,7 @@ const BalanceHeader = ({
         <Dropdown
           content={
             <div className="dropdown-menu d-flex flex-column">
-              {dayOptions.map((days) => {
+              {apyDayOptions.map((days) => {
                 return (
                   <div
                     key={days}
