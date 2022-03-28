@@ -16,7 +16,6 @@ const PrimarySidePanel = () => {
     (s) => s.showAllContracts
   )
   const approvalNeeded = useStoreState(ContractStore, (s) => s.approvalNeeded)
-  console.log(approvalNeeded)
   const transactions = useStoreState(TransactionStore, (s) => s.transactions)
   const prevTransactions = usePrevious(transactions)
   const [txHashesToAnimate, setTxHashesToAnimate] = useState([])

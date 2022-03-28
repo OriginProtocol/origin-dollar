@@ -38,7 +38,6 @@ const ApproveSwap = ({
         !needsApproval) &&
       !coinApproved
     )
-    console.log(approval)
     ContractStore.update((s) => {
       s.approvalNeeded = approval
     })
@@ -131,7 +130,6 @@ const ApproveSwap = ({
         }
         disabled={coinApproved}
         onClick={async () => {
-          console.log(contract)
           if (stage === 'approve' && contract) {
             analytics.track('On Approve Coin', {
               category: 'swap',
