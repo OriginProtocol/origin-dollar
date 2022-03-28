@@ -8,12 +8,13 @@ describe("WOUSD", function () {
     this.timeout(0);
   }
 
-  let ousd, wousd, dai, matt, josh, governor;
+  let ousd, wousd, vault, dai, matt, josh, governor;
 
   beforeEach(async () => {
     const fixture = await loadFixture(defaultFixture);
     ousd = fixture.ousd;
     wousd = fixture.wousd;
+    vault = fixture.vault;
     dai = fixture.dai;
     matt = fixture.matt;
     josh = fixture.josh;
@@ -52,6 +53,15 @@ describe("WOUSD", function () {
         .redeem(ousdUnits("50"), josh.address, josh.address);
       await expect(josh).to.have.a.balanceOf("0", wousd);
       await expect(josh).to.have.a.balanceOf("150", ousd);
+    });
+  });
+
+  describe("Collects Rebase", async () => {
+    it("should increase with an OUSD rebase", async () => {
+      await expect(wousd).to.have.approxBalanceOf("100", ousd);
+      await dai.connect(josh).transfer(vault.address, daiUnits("100"));
+      await vault.rebase();
+      await expect(wousd).to.have.approxBalanceOf("150", ousd);
     });
   });
 

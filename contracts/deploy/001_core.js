@@ -717,6 +717,7 @@ const deployWOusd = async () => {
     "WOUSD",
   ]);
   const wousd = await ethers.getContract("WrappedOusd");
+  await wousd.connect(sDeployer)["initialize()"]();
   await wousd.connect(sDeployer).transferGovernance(governorAddr);
   await wousd.connect(sGovernor).claimGovernance();
 };

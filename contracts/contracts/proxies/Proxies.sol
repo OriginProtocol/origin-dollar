@@ -11,6 +11,13 @@ contract OUSDProxy is InitializeGovernedUpgradeabilityProxy {
 }
 
 /**
+ * @notice WrappedOUSDProxy delegates calls to a WrappedOUSD implementation
+ */
+contract WrappedOUSDProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
+
+/**
  * @notice VaultProxy delegates calls to a Vault implementation
  */
 contract VaultProxy is InitializeGovernedUpgradeabilityProxy {

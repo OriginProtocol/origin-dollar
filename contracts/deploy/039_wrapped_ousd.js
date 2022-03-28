@@ -16,16 +16,40 @@ module.exports = deploymentWithProposal(
     // ----------------
 
     // 1. Deploy the new implementation.
-    const dWrappedOusd = await deployWithConfirmation("WrappedOusd", [
+    const dWrappedOusdImpl = await deployWithConfirmation("WrappedOusd", [
       cOUSDProxy.address,
       "Wrapped OUSD",
       "WOUSD",
     ]);
-    const cWousd = await ethers.getContract("WrappedOusd");
 
-    // 2. Assign ownership
+    // 2. Deploy the new proxy
+    const dWrappedOUSDProxy = await deployWithConfirmation("WrappedOUSDProxy");
+    const cWrappedOUSDProxy = await ethers.getContract("WrappedOUSDProxy");
+    const cWrappedOUSD = await ethers.getContractAt(
+      "WrappedOusd",
+      cWrappedOUSDProxy.address
+    );
+
+    // 3. Configure Proxy
     await withConfirmation(
-      cWousd
+      cWrappedOUSDProxy
+        .connect(sDeployer)
+        ["initialize(address,address,bytes)"](
+          dWrappedOusdImpl.address,
+          deployerAddr,
+          [],
+          await getTxOpts()
+        )
+    );
+
+    // 3. Initialize Wrapped OUSD
+    await withConfirmation(
+      cWrappedOUSD.connect(sDeployer)["initialize()"](await getTxOpts())
+    );
+
+    // 4. Assign ownership
+    await withConfirmation(
+      cWrappedOUSD
         .connect(sDeployer)
         .transferGovernance(governorAddr, await getTxOpts())
     );
@@ -38,7 +62,7 @@ module.exports = deploymentWithProposal(
       actions: [
         // 1. Claim governance
         {
-          contract: cWousd,
+          contract: cWrappedOUSD,
           signature: "claimGovernance()",
         },
       ],

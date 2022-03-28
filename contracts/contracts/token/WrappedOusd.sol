@@ -5,19 +5,25 @@ import { ERC20 } from "../../lib/solmate/src/tokens/ERC20.sol";
 import { ERC4626 } from "../../lib/solmate/src/mixins/ERC4626.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { OUSD } from "./OUSD.sol";
-import { Governable } from "../governance/Governable.sol";
 
-contract WrappedOusd is ERC4626, Governable {
+import { Governable } from "../governance/Governable.sol";
+import { Initializable } from "../utils/Initializable.sol";
+import { OUSD } from "./OUSD.sol";
+
+contract WrappedOusd is ERC4626, Governable, Initializable {
     using SafeERC20 for IERC20;
 
     constructor(
         ERC20 _underlying,
         string memory _name,
         string memory _symbol
-    ) ERC4626(_underlying, _name, _symbol) Governable() {
-        OUSD(address(_underlying)).rebaseOptOut(); // It's not treated as a contract yet
-        OUSD(address(_underlying)).rebaseOptIn();
+    ) ERC4626(_underlying, _name, _symbol) Governable() {}
+
+    /**
+     * @notice Enable OUSD rebasing for this contract
+     */
+    function initialize() external onlyGovernor initializer {
+        OUSD(address(asset)).rebaseOptIn();
     }
 
     /**
