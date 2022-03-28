@@ -318,9 +318,7 @@ const SwapHomepage = ({
 
   const onSwapOusd = async () => {
     analytics.track(
-      swapMode === 'mint'
-        ? 'On Swap to OUSD'
-        : 'On Swap from OUSD',
+      swapMode === 'mint' ? 'On Swap to OUSD' : 'On Swap from OUSD',
       {
         category: 'swap',
         label: swapMetadata.stablecoinUsed,
