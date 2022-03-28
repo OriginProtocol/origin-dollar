@@ -15,10 +15,7 @@ const PrimarySidePanel = () => {
     ContractStore,
     (s) => s.showAllContracts
   )
-  const approvalNeeded = useStoreState(
-    ContractStore,
-    (s) => s.approvalNeeded
-  )
+  const approvalNeeded = useStoreState(ContractStore, (s) => s.approvalNeeded)
   console.log(approvalNeeded)
   const transactions = useStoreState(TransactionStore, (s) => s.transactions)
   const prevTransactions = usePrevious(transactions)
@@ -60,9 +57,9 @@ const PrimarySidePanel = () => {
       >
         <div
           className={`primary-side-panel d-flex flex-column justify-content-start align-items-center disable-scrollbars
-            ${(!showingAllContracts && approvalNeeded) ? 'h859' : ''}
-            ${(showingAllContracts && !approvalNeeded) ? 'h988' : ''}
-            ${(showingAllContracts && approvalNeeded) ? 'h1053' : ''}
+            ${!showingAllContracts && approvalNeeded ? 'h859' : ''}
+            ${showingAllContracts && !approvalNeeded ? 'h988' : ''}
+            ${showingAllContracts && approvalNeeded ? 'h1053' : ''}
             `}
         >
           <button

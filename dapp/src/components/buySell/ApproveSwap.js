@@ -21,7 +21,7 @@ const ApproveSwap = ({
   storeTransaction,
   storeTransactionError,
   rpcProvider,
-  isMobile
+  isMobile,
 }) => {
   const [coinApproved, setCoinApproved] = useState(false)
   const [stage, setStage] = useState(coinApproved ? 'done' : 'approve')
@@ -30,13 +30,20 @@ const ApproveSwap = ({
   const { library, account } = web3react
 
   useEffect(() => {
-    const approval = !((!selectedSwap || formHasErrors || swappingGloballyDisabled || !allowancesLoaded || !needsApproval) && !coinApproved)
+    const approval = !(
+      (!selectedSwap ||
+        formHasErrors ||
+        swappingGloballyDisabled ||
+        !allowancesLoaded ||
+        !needsApproval) &&
+      !coinApproved
+    )
     console.log(approval)
     ContractStore.update((s) => {
       s.approvalNeeded = approval
     })
   }, [selectedSwap, needsApproval])
-  
+
   const {
     vault,
     flipper,
@@ -65,35 +72,47 @@ const ApproveSwap = ({
   }, [stableCoinToApprove])
 
   useEffect(() => {
-      if (stableCoinToApprove === 'dai') {
-        setContract(dai)
-      } else if (stableCoinToApprove === 'usdt') {
-        setContract(usdt)
-      } else if (stableCoinToApprove === 'usdc') {
-        setContract(usdc)
-      } else if (stableCoinToApprove === 'ousd') {
-        setContract(ousd)
-      }
+    if (stableCoinToApprove === 'dai') {
+      setContract(dai)
+    } else if (stableCoinToApprove === 'usdt') {
+      setContract(usdt)
+    } else if (stableCoinToApprove === 'usdc') {
+      setContract(usdc)
+    } else if (stableCoinToApprove === 'ousd') {
+      setContract(ousd)
+    }
   }, [stableCoinToApprove, usdt, dai, usdc, ousd])
 
-  const ApprovalMessage = ({needsApproval, stableCoinToApprove}) => {
+  const ApprovalMessage = ({ needsApproval, stableCoinToApprove }) => {
     const capitalized = needsApproval.charAt(0).toUpperCase()
-    const noncapitalized = needsApproval === 'uniswapV2' ? needsApproval.slice(1, 7) : needsApproval.slice(1)
+    const noncapitalized =
+      needsApproval === 'uniswapV2'
+        ? needsApproval.slice(1, 7)
+        : needsApproval.slice(1)
     const flipper = needsApproval === 'flipper' ? 'the ' : ''
     const vault = needsApproval === 'vault' ? 'the Origin ' : ''
     const coin = stableCoinToApprove.toUpperCase()
     return (
       <>
-        {
-          isMobile ?
-            fbt(
-              'Approve ' + fbt.param('flipper', flipper) + fbt.param('vault', vault) + fbt.param('capatalized', capitalized) + fbt.param('noncapitalized', noncapitalized),
-              'Approve coin'
-            ) : fbt(
-              'Allow ' + fbt.param('flipper', flipper) + fbt.param('vault', vault) + fbt.param('capitalzed', capitalized) + fbt.param('noncapitalized', noncapitalized) + ' to use your ' + fbt.param('coin', coin),
+        {isMobile
+          ? fbt(
+              'Approve ' +
+                fbt.param('flipper', flipper) +
+                fbt.param('vault', vault) +
+                fbt.param('capatalized', capitalized) +
+                fbt.param('noncapitalized', noncapitalized),
               'Approve coin'
             )
-        }
+          : fbt(
+              'Allow ' +
+                fbt.param('flipper', flipper) +
+                fbt.param('vault', vault) +
+                fbt.param('capitalzed', capitalized) +
+                fbt.param('noncapitalized', noncapitalized) +
+                ' to use your ' +
+                fbt.param('coin', coin),
+              'Approve coin'
+            )}
       </>
     )
   }
@@ -103,7 +122,12 @@ const ApproveSwap = ({
       <button
         className={`btn-blue buy-button mt-4 mt-md-3 w-100`}
         hidden={
-          (!selectedSwap || formHasErrors || swappingGloballyDisabled || !allowancesLoaded || !needsApproval) && !coinApproved
+          (!selectedSwap ||
+            formHasErrors ||
+            swappingGloballyDisabled ||
+            !allowancesLoaded ||
+            !needsApproval) &&
+          !coinApproved
         }
         disabled={coinApproved}
         onClick={async () => {
@@ -122,10 +146,8 @@ const ApproveSwap = ({
                 .approve(contracts[needsApproval].address, maximum)
               storeTransaction(result, 'approve', stableCoinToApprove)
               setStage('waiting-network')
-      
-              const receipt = await rpcProvider.waitForTransaction(
-                result.hash
-              )
+
+              const receipt = await rpcProvider.waitForTransaction(result.hash)
               analytics.track('Approval Successful', {
                 category: 'swap',
                 label: swapMetadata.coinGiven,
@@ -137,7 +159,7 @@ const ApproveSwap = ({
               onMintingError(e)
               console.error('Exception happened: ', e)
               setStage('approve')
-      
+
               if (e.code !== 4001) {
                 await storeTransactionError('approve', stableCoinToApprove)
                 analytics.track(`Approval failed`, {
@@ -156,7 +178,10 @@ const ApproveSwap = ({
         {!swappingGloballyDisabled && (
           <>
             {stage === 'approve' && needsApproval && (
-              <ApprovalMessage needsApproval={needsApproval} stableCoinToApprove={stableCoinToApprove} />
+              <ApprovalMessage
+                needsApproval={needsApproval}
+                stableCoinToApprove={stableCoinToApprove}
+              />
             )}
             {stage === 'waiting-user' && (
               <>
@@ -169,7 +194,11 @@ const ApproveSwap = ({
             {stage === 'waiting-network' && (
               <>
                 {fbt(
-                  'Approving ' + fbt.param('coin-name', stableCoinToApprove.toUpperCase() + '...'),
+                  'Approving ' +
+                    fbt.param(
+                      'coin-name',
+                      stableCoinToApprove.toUpperCase() + '...'
+                    ),
                   'Approving coin'
                 )}
               </>
@@ -177,7 +206,10 @@ const ApproveSwap = ({
             {stage === 'done' && (
               <>
                 {fbt(
-                  fbt.param('coin-name', stableCoinToApprove.toUpperCase() + ' approved'),
+                  fbt.param(
+                    'coin-name',
+                    stableCoinToApprove.toUpperCase() + ' approved'
+                  ),
                   'Coin approved'
                 )}
               </>
@@ -185,31 +217,32 @@ const ApproveSwap = ({
           </>
         )}
       </button>
-    <div className="d-flex flex-column align-items-center justify-content-center justify-content-md-between flex-md-row mt-md-3 mt-2">
-      <a
-        href="#"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="link-detail"
-      >
-      </a>
-      <button
-        className={`btn-blue buy-button mt-2 mt-md-0 w-100`}
-        disabled={
-          !selectedSwap || formHasErrors || swappingGloballyDisabled || (needsApproval && !coinApproved)
-        }
-        onClick={onSwap}
-      >
-        {swappingGloballyDisabled &&
-          process.env.DISABLE_SWAP_BUTTON_MESSAGE}
-        {!swappingGloballyDisabled && fbt('Swap', 'Swap')}
-      </button>
+      <div className="d-flex flex-column align-items-center justify-content-center justify-content-md-between flex-md-row mt-md-3 mt-2">
+        <a
+          href="#"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="link-detail"
+        ></a>
+        <button
+          className={`btn-blue buy-button mt-2 mt-md-0 w-100`}
+          disabled={
+            !selectedSwap ||
+            formHasErrors ||
+            swappingGloballyDisabled ||
+            (needsApproval && !coinApproved)
+          }
+          onClick={onSwap}
+        >
+          {swappingGloballyDisabled && process.env.DISABLE_SWAP_BUTTON_MESSAGE}
+          {!swappingGloballyDisabled && fbt('Swap', 'Swap')}
+        </button>
       </div>
       <style jsx>{`
         .btn-blue:disabled {
           opacity: 0.4;
         }
-        
+
         .link-detail {
           font-size: 12px;
           color: #1a82ff;
