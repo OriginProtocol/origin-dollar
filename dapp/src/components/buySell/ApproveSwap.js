@@ -77,25 +77,55 @@ const ApproveSwap = ({
     }
   }, [stableCoinToApprove, usdt, dai, usdc, ousd])
 
-  const ApprovalMessage = ({ needsApproval, stableCoinToApprove }) => {
-    const capitalized = needsApproval.charAt(0).toUpperCase()
+  const ApprovalMessage = ({
+    stage,
+    selectedSwap,
+    stableCoinToApprove,
+    isMobile,
+  }) => {
+    const capitalized = selectedSwap.name.charAt(0).toUpperCase()
     const noncapitalized =
-      needsApproval === 'uniswapV2'
-        ? needsApproval.slice(1, 7)
-        : needsApproval.slice(1)
-    const flipper = needsApproval === 'flipper' ? 'the ' : ''
-    const vault = needsApproval === 'vault' ? 'the Origin ' : ''
+      selectedSwap.name === 'uniswapV2'
+        ? selectedSwap.name.slice(1, 7)
+        : selectedSwap.name.slice(1)
+    const origin =
+      selectedSwap.name === 'flipper' || selectedSwap.name === 'vault'
+        ? 'the '
+        : ''
+    const vault = selectedSwap.name === 'vault' ? 'Origin ' : ''
     const coin = stableCoinToApprove.toUpperCase()
-    const route = `${flipper} ${vault} ${capitalized}${noncapitalized} to use your ${coin}`
-    const routeMobile = `${flipper} ${vault} ${capitalized}${noncapitalized}`
+    const route = `${origin} ${vault} ${capitalized}${noncapitalized} to use your ${coin}`
+    const routeMobile = `${origin} ${vault} ${capitalized}${noncapitalized}`
+    if (stage === 'waiting-user') {
+      return fbt(
+        'Waiting for you to confirm...',
+        'Waiting for you to confirm...'
+      )
+    }
+    if (stage === 'waiting-network') {
+      const waitingNetworkMessage = `${origin} ${vault} ${capitalized}${noncapitalized}`
+      return fbt(
+        'Approving ' +
+          fbt.param('waiting-network', waitingNetworkMessage) +
+          '...',
+        'Approving contract'
+      )
+    }
+    if (stage === 'done') {
+      const doneMessage = `${vault} ${capitalized}${noncapitalized}`
+      return fbt(
+        fbt.param('approval-done', doneMessage) + ' approved',
+        'Contract approved'
+      )
+    }
     return (
       <>
         {isMobile
           ? fbt(
               'Approve ' + fbt.param('route-mobile', routeMobile),
-              'Approve coin'
+              'Approve contract'
             )
-          : fbt('Allow ' + fbt.param('route', route), 'Approve coin')}
+          : fbt('Allow ' + fbt.param('route', route), 'Approve contract')}
       </>
     )
   }
@@ -158,42 +188,13 @@ const ApproveSwap = ({
       >
         {!swappingGloballyDisabled && (
           <>
-            {stage === 'approve' && needsApproval && (
+            {selectedSwap && (
               <ApprovalMessage
-                needsApproval={needsApproval}
+                stage={stage}
+                selectedSwap={selectedSwap}
                 stableCoinToApprove={stableCoinToApprove}
+                isMobile={isMobile}
               />
-            )}
-            {stage === 'waiting-user' && (
-              <>
-                {fbt(
-                  'Waiting for you to confirm...',
-                  'Waiting for you to confirm...'
-                )}
-              </>
-            )}
-            {stage === 'waiting-network' && (
-              <>
-                {fbt(
-                  'Approving ' +
-                    fbt.param(
-                      'coin-name',
-                      stableCoinToApprove.toUpperCase() + '...'
-                    ),
-                  'Approving coin'
-                )}
-              </>
-            )}
-            {stage === 'done' && (
-              <>
-                {fbt(
-                  fbt.param(
-                    'coin-name',
-                    stableCoinToApprove.toUpperCase() + ' approved'
-                  ),
-                  'Coin approved'
-                )}
-              </>
             )}
           </>
         )}
