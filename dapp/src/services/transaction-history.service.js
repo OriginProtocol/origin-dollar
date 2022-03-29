@@ -6,9 +6,13 @@ export default class TransactionHistoryService {
   async fetchHistory(account) {
     const response = await fetch(
       `${this.baseURL}/${account.toLowerCase()}/history`
-    ).then((res) => res.json())
+    )
 
-    return response.history
+    if (!response.ok) {
+      throw new Error('Failed fetching history from analytics')
+    }
+
+    return (await response.json()).history
   }
 }
 
