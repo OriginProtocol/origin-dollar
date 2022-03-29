@@ -224,6 +224,15 @@ const ApproveSwap = ({
           opacity: 0.4;
         }
 
+        button:focus {
+          opacity: 1;
+        }
+
+        button:hover {
+          background-color: #0a72ef;
+          opacity: 1;
+        }
+
         .link-detail {
           font-size: 12px;
           color: #1a82ff;
