@@ -7,7 +7,7 @@ export default function IPFSDappLink({ dapp, css }) {
 
   useEffect(() => {
     setDisplayIpfsLink(
-      window.location.host === 'ousd.com' ||
+      ['ousd.com', 'www.ousd.com'].includes(window.location.host) ||
         window.location.host.startsWith('localhost:') ||
         window.location.host.startsWith('ousd-staging')
     )
