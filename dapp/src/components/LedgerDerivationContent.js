@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
 import { ledgerConnector } from 'utils/connectors'
+import ContractStore from 'stores/ContractStore'
+import { useStoreState } from 'pullstate'
 import LedgerAccountContent from './LedgerAccountContent'
 import { assetRootPath } from 'utils/image'
 import { zipObject } from 'lodash'
@@ -22,23 +24,12 @@ const LedgerDerivationContent = ({}) => {
   const [next, setNext] = useState({})
   const [nextLoading, setNextLoading] = useState({})
 
-  const contractData = [
-    {
-      name: 'usdt',
-      decimals: 6,
-      address: '0xdac17f958d2ee523a2206206994597c13d831ec7',
-    },
-    {
-      name: 'dai',
-      decimals: 18,
-      address: '0x6b175474e89094c44da98b954eedeac495271d0f',
-    },
-    {
-      name: 'usdc',
-      decimals: 6,
-      address: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
-    },
-  ]
+  const contractData = useStoreState(ContractStore, (s) => {
+    if (s.coinInfoList) {
+      return [s.coinInfoList.usdt, s.coinInfoList.dai, s.coinInfoList.usdc]
+    }
+    return []
+  })
 
   const errorMessageMap = (error) => {
     if (!error || !error.message) {
@@ -79,83 +70,78 @@ const LedgerDerivationContent = ({}) => {
   ]
 
   const loadBalances = async (path) => {
-    if (ledgerConnector.provider && addresses[path]) {
-      const balances = await Promise.all(
+    if (!(ledgerConnector.provider && addresses[path])) {
+      return
+    }
+
+    const [balances, stableBalances] = await Promise.all([
+      Promise.all(
         addresses[path].map((a) =>
           ledgerConnector
             .getBalance(a)
             .then((r) => (Number(r) / 10 ** 18).toFixed(2))
         )
-      )
-
-      const stableBalances = await Promise.all(
+      ),
+      Promise.all(
         addresses[path].map((a) => {
           return Promise.all(
             contractData.map((c) =>
-              ledgerConnector
-                .getTokenBalance(a, c.address)
-                .then((r) => Number(r) / 10 ** c.decimals)
+              c.contract.balanceOf(a).then((r) => Number(r) / 10 ** c.decimals)
             )
           )
         })
-      )
+      ),
+    ])
 
-      let ethTotal = 0
-      for (let i = 0; i < balances.length; i++) {
-        ethTotal = ethTotal + Number(balances[i])
-      }
+    const ethTotal = balances
+      .map((balance) => Number(balance))
+      .reduce((a, b) => a + b, 0)
 
-      const stableTotals = stableBalances.map((balance) => {
-        let total = 0
-        for (let i = 0; i < contractData.length; i++) {
-          total = total + balance[i]
-        }
-        return total.toFixed(2)
-      })
+    const stableTotals = stableBalances.map((balance) => {
+      return balance.reduce((a, b) => a + b, 0).toFixed(2)
+    })
 
-      setAddressBalances({
-        ...addressBalances,
-        [path]: zipObject(addresses[path], balances),
-      })
-      setAddressStableBalances({
-        ...addressStableBalances,
-        [path]: zipObject(addresses[path], stableTotals),
-      })
-      setPathTotals({ ...pathTotals, [path]: ethTotal })
+    setAddressBalances({
+      ...addressBalances,
+      [path]: zipObject(addresses[path], balances),
+    })
+    setAddressStableBalances({
+      ...addressStableBalances,
+      [path]: zipObject(addresses[path], stableTotals),
+    })
+    setPathTotals({ ...pathTotals, [path]: ethTotal })
 
-      // preload addresses for each path
-      if (!ledgerPath[LEDGER_LIVE_BASE_PATH]) {
-        setLedgerPath({ ...ledgerPath, [LEDGER_LIVE_BASE_PATH]: true })
-        onSelectDerivationPath(LEDGER_LIVE_BASE_PATH)
-      } else if (!ledgerPath[LEDGER_LEGACY_BASE_PATH]) {
-        setLedgerPath({ ...ledgerPath, [LEDGER_LEGACY_BASE_PATH]: true })
-        onSelectDerivationPath(LEDGER_LEGACY_BASE_PATH)
-      } else if (!ledgerPath[LEDGER_OTHER]) {
-        setLedgerPath({ ...ledgerPath, [LEDGER_OTHER]: true })
-        onSelectDerivationPath(LEDGER_OTHER)
-      } else if (!activePath) {
-        // autoselect first path with non-zero ETH balance
-        if (pathTotals[LEDGER_LIVE_BASE_PATH] > 0) {
-          setActivePath(LEDGER_LIVE_BASE_PATH)
-        } else if (pathTotals[LEDGER_LEGACY_BASE_PATH] > 0) {
-          setActivePath(LEDGER_LEGACY_BASE_PATH)
-        } else if (ethTotal > 0) {
-          setActivePath(LEDGER_OTHER)
-        } else setActivePath(LEDGER_LIVE_BASE_PATH)
-      }
-      setPreloaded(
-        ledgerPath[LEDGER_LIVE_BASE_PATH] &&
-          ledgerPath[LEDGER_LEGACY_BASE_PATH] &&
-          ledgerPath[LEDGER_OTHER]
-      )
-      // indicators for scrolling to next address page within path
-      if (nextLoading[activePath]) {
-        setNext({ [activePath]: !next[activePath] })
-      } else {
-        setNext({ [activePath]: false })
-      }
-      setNextLoading({ [activePath]: false })
+    // preload addresses for each path
+    if (!ledgerPath[LEDGER_LIVE_BASE_PATH]) {
+      setLedgerPath({ ...ledgerPath, [LEDGER_LIVE_BASE_PATH]: true })
+      onSelectDerivationPath(LEDGER_LIVE_BASE_PATH)
+    } else if (!ledgerPath[LEDGER_LEGACY_BASE_PATH]) {
+      setLedgerPath({ ...ledgerPath, [LEDGER_LEGACY_BASE_PATH]: true })
+      onSelectDerivationPath(LEDGER_LEGACY_BASE_PATH)
+    } else if (!ledgerPath[LEDGER_OTHER]) {
+      setLedgerPath({ ...ledgerPath, [LEDGER_OTHER]: true })
+      onSelectDerivationPath(LEDGER_OTHER)
+    } else if (!activePath) {
+      // autoselect first path with non-zero ETH balance
+      if (pathTotals[LEDGER_LIVE_BASE_PATH] > 0) {
+        setActivePath(LEDGER_LIVE_BASE_PATH)
+      } else if (pathTotals[LEDGER_LEGACY_BASE_PATH] > 0) {
+        setActivePath(LEDGER_LEGACY_BASE_PATH)
+      } else if (ethTotal > 0) {
+        setActivePath(LEDGER_OTHER)
+      } else setActivePath(LEDGER_LIVE_BASE_PATH)
     }
+    setPreloaded(
+      ledgerPath[LEDGER_LIVE_BASE_PATH] &&
+        ledgerPath[LEDGER_LEGACY_BASE_PATH] &&
+        ledgerPath[LEDGER_OTHER]
+    )
+
+    // indicators for scrolling to next address page within path
+    setNext({
+      [activePath]: nextLoading[activePath] ? !next[activePath] : false,
+    })
+    setNextLoading({ [activePath]: false })
   }
 
   useEffect(() => {
@@ -171,19 +157,21 @@ const LedgerDerivationContent = ({}) => {
   }, [addresses[LEDGER_OTHER]])
 
   const loadAddresses = async (path, next) => {
-    if (ledgerConnector.provider) {
-      setLedgerPath({ ...ledgerPath, [path]: true })
-      if (next) {
-        setAddresses({
-          ...addresses,
-          [path]: (await ledgerConnector.getAccounts(10)).slice(5),
-        })
-      } else {
-        setAddresses({
-          ...addresses,
-          [path]: await ledgerConnector.getAccounts(5),
-        })
-      }
+    if (!ledgerConnector.provider) {
+      return
+    }
+
+    setLedgerPath({ ...ledgerPath, [path]: true })
+    if (next) {
+      setAddresses({
+        ...addresses,
+        [path]: (await ledgerConnector.getAccounts(10)).slice(5),
+      })
+    } else {
+      setAddresses({
+        ...addresses,
+        [path]: await ledgerConnector.getAccounts(5),
+      })
     }
   }
 
@@ -263,6 +251,7 @@ const LedgerDerivationContent = ({}) => {
                   addresses={addresses[activePath]}
                   addressBalances={addressBalances[activePath]}
                   addressStableBalances={addressStableBalances[activePath]}
+                  activePath={activePath}
                 />
               )}
               {!next[activePath] && !nextLoading[activePath] && (
@@ -315,7 +304,6 @@ const LedgerDerivationContent = ({}) => {
           align-items: center;
           justify-content: center;
         }
-
         .ledger-derivation-content h2 {
           padding-left: 12px;
           padding-right: 12px;
@@ -325,12 +313,10 @@ const LedgerDerivationContent = ({}) => {
           line-height: normal;
           margin-bottom: 14px;
         }
-
         .ledger-derivation-content .paths {
           width: 100%;
           justify-content: center;
         }
-
         .ledger-derivation-content button {
           width: 100%;
           height: 55px;
@@ -345,16 +331,13 @@ const LedgerDerivationContent = ({}) => {
           margin: 10px 5px 20px 5px;
           line-height: 22px;
         }
-
         .ledger-derivation-content .button-path {
           font-size: 14px;
           color: #a0a0a0;
         }
-
         .active {
           background-color: #c0e0ff !important;
         }
-
         .error {
           margin-top: 20px;
           padding: 5px 8px;
@@ -367,29 +350,25 @@ const LedgerDerivationContent = ({}) => {
           min-height: 50px;
           width: 100%;
         }
-
         .button-arrow {
           width: 70px !important;
           height: 35px !important;
+          padding: 0 !important;
           margin: 10px 0 0 0 !important;
         }
-
         .arrow-icon {
           width: 25px;
           height: 25px;
         }
-
         .waiting-icon {
           width: 25px;
           height: 25px;
         }
-
         .rotating {
           -webkit-animation: spin 2s linear infinite;
           -moz-animation: spin 2s linear infinite;
           animation: spin 2s linear infinite;
         }
-
         @-moz-keyframes spin {
           100% {
             -moz-transform: rotate(360deg);
