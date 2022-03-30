@@ -5,11 +5,11 @@ import { MewConnectConnector } from '@myetherwallet/mewconnect-connector'
 import { SafeAppConnector } from '@gnosis.pm/safe-apps-web3-react'
 import { LedgerConnector } from 'utils/LedgerConnector'
 import { get } from 'lodash'
+import { isProduction } from 'constants/env'
 
 import { providerName } from 'utils/web3'
 
 const POLLING_INTERVAL = 12000
-const isProduction = process.env.NODE_ENV === 'production'
 const RPC_PROVIDER = process.env.ETHEREUM_RPC_PROVIDER
 const WS_PROVIDER = process.env.ETHEREUM_WEBSOCKET_PROVIDER
 

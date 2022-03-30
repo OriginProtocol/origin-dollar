@@ -13,6 +13,7 @@ import { currencies } from 'constants/Contract'
 import { formatCurrency } from 'utils/math'
 import { displayCurrency } from 'utils/math'
 import { encodePriceSqrt } from 'utils/uniswapHelper'
+import { isProduction } from 'constants/env'
 
 const governorAddress = '0xeAD9C93b79Ae7C1591b1FB5323BD777E86e150d4'
 
@@ -45,7 +46,6 @@ const Dashboard = ({ locale, onLocale }) => {
     flipper,
   } = useStoreState(ContractStore, (s) => s.contracts || {})
   const isMainnetFork = process.env.NODE_ENV === 'development' && chainId === 1
-  const isProduction = process.env.NODE_ENV === 'production'
   const isGovernor = account && account === governorAddress
   const [refreshFlipperData, setRefreshFlipperData] = useState(0)
   const [refreshUniV3Data, setRefreshUniV3Data] = useState(0)
