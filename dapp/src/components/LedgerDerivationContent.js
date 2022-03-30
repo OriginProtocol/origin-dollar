@@ -304,6 +304,7 @@ const LedgerDerivationContent = ({}) => {
           align-items: center;
           justify-content: center;
         }
+
         .ledger-derivation-content h2 {
           padding-left: 12px;
           padding-right: 12px;
@@ -313,10 +314,12 @@ const LedgerDerivationContent = ({}) => {
           line-height: normal;
           margin-bottom: 14px;
         }
+
         .ledger-derivation-content .paths {
           width: 100%;
           justify-content: center;
         }
+
         .ledger-derivation-content button {
           width: 100%;
           height: 55px;
@@ -331,13 +334,16 @@ const LedgerDerivationContent = ({}) => {
           margin: 10px 5px 20px 5px;
           line-height: 22px;
         }
+
         .ledger-derivation-content .button-path {
           font-size: 14px;
           color: #a0a0a0;
         }
+
         .active {
           background-color: #c0e0ff !important;
         }
+
         .error {
           margin-top: 20px;
           padding: 5px 8px;
@@ -350,25 +356,30 @@ const LedgerDerivationContent = ({}) => {
           min-height: 50px;
           width: 100%;
         }
+
         .button-arrow {
           width: 70px !important;
           height: 35px !important;
           padding: 0 !important;
           margin: 10px 0 0 0 !important;
         }
+
         .arrow-icon {
           width: 25px;
           height: 25px;
         }
+
         .waiting-icon {
           width: 25px;
           height: 25px;
         }
+
         .rotating {
           -webkit-animation: spin 2s linear infinite;
           -moz-animation: spin 2s linear infinite;
           animation: spin 2s linear infinite;
         }
+
         @-moz-keyframes spin {
           100% {
             -moz-transform: rotate(360deg);
