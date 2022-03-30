@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useMemo } from 'react'
 import { useRouter } from 'next/router'
 import dateformat from 'dateformat'
 import EtherscanLink from 'components/earn/EtherscanLink'
@@ -10,6 +10,8 @@ import { shortenAddress } from '../utils/web3'
 import { exportToCsv, sleep } from '../utils/utils'
 import withIsMobile from 'hoc/withIsMobile'
 import { assetRootPath } from 'utils/image'
+
+import useTransactionHistoryQuery from '../queries/useTransactionHistoryQuery'
 
 const itemsPerPage = 50
 
@@ -120,9 +122,6 @@ const TransactionHistory = ({ isMobile }) => {
   const web3react = useWeb3React()
   const router = useRouter()
   const { account: web3Account, active } = web3react
-  const [history, setHistory] = useState(false)
-  const [shownHistory, setShownHistory] = useState(false)
-  const [currentPageHistory, setCurrentPageHistory] = useState(false)
   const [filters, _setFilters] = useState([])
   const [currentPage, setCurrentPage] = useState(1)
   const [pageNumbers, setPageNumbers] = useState([])
@@ -184,63 +183,28 @@ const TransactionHistory = ({ isMobile }) => {
   const setFilters = (filters) => {
     _setFilters(filters)
     setCurrentPage(1)
+  }
+
+  const historyQuery = useTransactionHistoryQuery(account)
+
+  const history = useMemo(
+    () => (historyQuery.isSuccess ? historyQuery.data : []),
+    [historyQuery.isSuccess, historyQuery.data]
+  )
+
+  const shownHistory = useMemo(() => {
     if (filters.length === 0) {
-      setShownHistory(history)
+      return history
     } else {
       const allowedFilters = Object.keys(txTypeMap).filter((txType) => {
         return filters.includes(txTypeMap[txType].filter)
       })
 
-      setShownHistory(
-        history.filter((history) => {
-          return allowedFilters.includes(history.type)
-        })
-      )
+      return history.filter((history) => {
+        return allowedFilters.includes(history.type)
+      })
     }
-  }
-
-  useEffect(() => {
-    if (!active && !account) return
-    const fetchAttempts = 5
-
-    const fetchHistory = async () => {
-      const response = await fetch(
-        `${
-          process.env.ANALYTICS_ENDPOINT
-        }/api/v1/address/${account.toLowerCase()}/history`
-      )
-
-      if (response.ok) {
-        const json = await response.json()
-        const history = json.history
-        _setFilters([])
-        setHistory(history)
-        setShownHistory(history)
-        setCurrentPage(1)
-      }
-    }
-
-    const attemptToFetchHistory = async () => {
-      let success = false
-      let attempts = 0
-
-      while (!success) {
-        try {
-          attempts += 1
-          await fetchHistory()
-          success = true
-        } catch (e) {
-          console.log('Failed fetching history: ', e.message)
-          await sleep(2000)
-          if (attempts >= fetchAttempts) {
-            throw e
-          }
-        }
-      }
-    }
-
-    attemptToFetchHistory()
-  }, [account, active])
+  }, [history, filters])
 
   useEffect(() => {
     const length = shownHistory.length
@@ -262,21 +226,17 @@ const TransactionHistory = ({ isMobile }) => {
     setPageNumbers(pageNumbers)
   }, [shownHistory, currentPage])
 
-  useEffect(() => {
-    if (!shownHistory) return
-
-    setCurrentPageHistory(
-      [...shownHistory].splice((currentPage - 1) * itemsPerPage, itemsPerPage)
-    )
-  }, [shownHistory, currentPage])
+  const currentPageHistory = useMemo(
+    () =>
+      [...shownHistory].splice((currentPage - 1) * itemsPerPage, itemsPerPage),
+    [shownHistory, currentPage]
+  )
 
   const greaterThanDollarYieldExists =
-    currentPageHistory &&
     currentPageHistory.filter(
       (tx) => tx.type === 'yield' && parseFloat(tx.amount) > 1
     ).length > 0
   const greaterThan10CentYieldExists =
-    currentPageHistory &&
     currentPageHistory.filter(
       (tx) => tx.type === 'yield' && parseFloat(tx.amount) > 0.1
     ).length > 0
@@ -284,7 +244,9 @@ const TransactionHistory = ({ isMobile }) => {
   return (
     <>
       <div className="d-flex holder flex-column justify-content-start">
-        {currentPageHistory && (
+        {historyQuery.isLoading ? (
+          <div className="m-4">{fbt('Loading...', 'Loading...')}</div>
+        ) : (
           <>
             <div className="filters d-flex justify-content-between">
               <div className="d-flex justify-content-start flex-wrap flex-md-nowrap">
@@ -517,9 +479,6 @@ const TransactionHistory = ({ isMobile }) => {
               })}
             </div>
           </>
-        )}
-        {!history && (
-          <div className="m-4">{fbt('Loading...', 'Loading...')}</div>
         )}
       </div>
       <style jsx>{`

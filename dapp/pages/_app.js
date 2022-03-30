@@ -4,6 +4,8 @@ import { useWeb3React } from '@web3-react/core'
 import { useRouter } from 'next/router'
 import { useCookies } from 'react-cookie'
 import { useStoreState } from 'pullstate'
+import { QueryClient, QueryClientProvider } from 'react-query'
+import { ReactQueryDevtools } from 'react-query/devtools'
 
 import AccountStore from 'stores/AccountStore'
 import RouterStore from 'stores/RouterStore'
@@ -36,6 +38,8 @@ if (process.browser) {
 }
 
 initSentry()
+
+const queryClient = new QueryClient()
 
 function App({ Component, pageProps, err }) {
   const [locale, setLocale] = useState('en_US')
@@ -161,28 +165,31 @@ function App({ Component, pageProps, err }) {
 
   return (
     <>
-      <AnalyticsProvider instance={analytics}>
-        <AccountListener />
-        <TransactionListener />
-        <UserActivityListener />
-        <WalletSelectModal />
-        <ToastContainer
-          position="bottom-right"
-          autoClose={5000}
-          hideProgressBar={false}
-          newestOnTop={false}
-          closeOnClick
-          rtl={false}
-          pauseOnFocusLoss
-          pauseOnHover
-        />
-        <Component
-          locale={locale}
-          onLocale={onLocale}
-          {...pageProps}
-          err={err}
-        />
-      </AnalyticsProvider>
+      <QueryClientProvider client={queryClient}>
+        <AnalyticsProvider instance={analytics}>
+          <AccountListener />
+          <TransactionListener />
+          <UserActivityListener />
+          <WalletSelectModal />
+          <ToastContainer
+            position="bottom-right"
+            autoClose={5000}
+            hideProgressBar={false}
+            newestOnTop={false}
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss
+            pauseOnHover
+          />
+          <Component
+            locale={locale}
+            onLocale={onLocale}
+            {...pageProps}
+            err={err}
+          />
+        </AnalyticsProvider>
+        <ReactQueryDevtools initialIsOpen={false} />
+      </QueryClientProvider>
     </>
   )
 }
