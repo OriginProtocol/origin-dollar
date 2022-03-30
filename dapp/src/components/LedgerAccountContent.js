@@ -9,10 +9,12 @@ const LedgerAccountContent = ({
   addresses,
   addressBalances,
   addressStableBalances,
+  activePath,
 }) => {
   const { activate, provider, connector } = useWeb3React()
 
   const onSelectAddress = async (address) => {
+    await ledgerConnector.setPath(activePath)
     ledgerConnector.setAccount(address)
 
     await activate(

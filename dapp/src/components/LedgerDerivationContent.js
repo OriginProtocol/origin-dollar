@@ -253,6 +253,7 @@ const LedgerDerivationContent = ({}) => {
                   addresses={addresses[activePath]}
                   addressBalances={addressBalances[activePath]}
                   addressStableBalances={addressStableBalances[activePath]}
+                  activePath={activePath}
                 />
               )}
               {!next[activePath] && !nextLoading[activePath] && (
