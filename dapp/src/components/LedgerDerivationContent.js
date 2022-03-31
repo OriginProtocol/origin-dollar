@@ -217,9 +217,7 @@ const LedgerDerivationContent = ({}) => {
                 onClick={() => {
                   if (!nextLoading[option.path]) {
                     setActivePath(option.path)
-                    if (!preloaded) {
-                      onSelectDerivationPath(option.path)
-                    } else if (next[activePath]) {
+                    if (next[activePath]) {
                       // reset path to first address page in the background after clicking different path
                       setNextLoading({ [activePath]: true })
                       onSelectDerivationPath(activePath)
