@@ -1,8 +1,5 @@
 const { deploymentWithProposal, withConfirmation } = require("../utils/deploy");
 
-// Deploy new staking implimentation contract with fix
-// Upgrade to using it
-
 module.exports = deploymentWithProposal(
   { deployName: "039_wrapped_ousd", forceDeploy: false },
   async ({ deployWithConfirmation, getTxOpts, ethers }) => {

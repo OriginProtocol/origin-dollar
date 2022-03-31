@@ -2,7 +2,7 @@ from world import *
 import random
 
 # Designed to be used on a fork test
-wrapper = load_contract('wrapped_ousd', '0x20E0c5F61124D184101a0A8d9afaeA69F5dAB907')
+wrapper = load_contract('wrapped_ousd', '0x1fDb67E186C6D955f26C5d706a0F3E0aa6d49333')
 
 
 NUM_TESTS = 100
