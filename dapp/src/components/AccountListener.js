@@ -17,6 +17,8 @@ import { decorateContractStakeInfoWithTxHashes } from 'utils/stake'
 import { mergeDeep } from 'utils/utils'
 import { displayCurrency } from 'utils/math'
 import addresses from 'constants/contractAddresses'
+import { isProduction, isDevelopment } from 'constants/env'
+import useBalancesQuery from '../queries/useBalancesQuery'
 
 const AccountListener = (props) => {
   const web3react = useWeb3React()
@@ -34,9 +36,15 @@ const AccountListener = (props) => {
   const rates = useStoreState(StakeStore, (s) => s.rates)
   const prevRefetchStakingData = usePrevious(refetchStakingData)
   const prevRefetchUserData = usePrevious(refetchUserData)
-  const isDevelopment = process.env.NODE_ENV === 'development'
-  const isProduction = process.env.NODE_ENV === 'production'
   const AIR_DROPPED_STAKE_TYPE = 1
+
+  const balancesQuery = useBalancesQuery(account, contracts, {
+    onSuccess: (balances) => {
+      AccountStore.update((s) => {
+        s.balances = balances
+      })
+    },
+  })
 
   useEffect(() => {
     if ((prevActive && !active) || prevAccount !== account) {
@@ -107,113 +115,6 @@ const AccountListener = (props) => {
       ognStakingView,
       curveOUSDMetaPool,
     } = contracts
-
-    const loadbalancesDev = async () => {
-      try {
-        const [ousdBalance, usdtBalance, daiBalance, usdcBalance, ognBalance] =
-          await Promise.all([
-            /* IMPORTANT (!) production uses a different method to load balances. Any changes here need to
-             * also happen in production version of this function.
-             */
-            displayCurrency(await ousd.balanceOf(account), ousd),
-            displayCurrency(await usdt.balanceOf(account), usdt),
-            displayCurrency(await dai.balanceOf(account), dai),
-            displayCurrency(await usdc.balanceOf(account), usdc),
-            displayCurrency(await ogn.balanceOf(account), ogn),
-          ])
-
-        AccountStore.update((s) => {
-          s.balances = {
-            usdt: usdtBalance,
-            dai: daiBalance,
-            usdc: usdcBalance,
-            ousd: ousdBalance,
-            ogn: ognBalance,
-          }
-        })
-      } catch (e) {
-        console.error(
-          'AccountListener.js error - can not load account balances: ',
-          e
-        )
-      }
-    }
-
-    let jsonCallId = 1
-    const loadBalancesProd = async () => {
-      const data = {
-        jsonrpc: '2.0',
-        method: 'alchemy_getTokenBalances',
-        params: [
-          account,
-          [ousd.address, usdt.address, dai.address, usdc.address, ogn.address],
-        ],
-        id: jsonCallId.toString(),
-      }
-      jsonCallId++
-
-      const response = await fetch(process.env.ETHEREUM_RPC_PROVIDER, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        referrerPolicy: 'no-referrer',
-        body: JSON.stringify(data),
-      })
-
-      if (response.ok) {
-        const responseJson = await response.json()
-        const balanceData = {}
-
-        const allContractData = [
-          { name: 'ousd', decimals: 18, contract: ousd },
-          { name: 'usdt', decimals: 6, contract: usdt },
-          { name: 'dai', decimals: 18, contract: dai },
-          { name: 'usdc', decimals: 6, contract: usdc },
-          { name: 'ogn', decimals: 18, contract: ogn },
-        ]
-
-        allContractData.forEach((contractData) => {
-          const balanceResponseData = responseJson.result.tokenBalances.filter(
-            (tokenBalanceData) =>
-              tokenBalanceData.contractAddress.toLowerCase() ===
-              contractData.contract.address.toLowerCase()
-          )[0]
-
-          if (balanceResponseData.error === null) {
-            balanceData[contractData.name] =
-              balanceResponseData.tokenBalance === '0x'
-                ? '0'
-                : ethers.utils.formatUnits(
-                    balanceResponseData.tokenBalance,
-                    contractData.decimals
-                  )
-          } else {
-            console.error(
-              `Can not load balance for ${contractData.name} reason: ${balanceResponseData.error}`
-            )
-          }
-        })
-
-        AccountStore.update((s) => {
-          s.balances = balanceData
-        })
-      } else {
-        throw new Error(
-          `Could not fetch balances from Alchemy http status: ${response.status}`
-        )
-      }
-    }
-
-    const loadBalances = async () => {
-      if (!account) return
-
-      if (isProduction) {
-        await loadBalancesProd()
-      } else {
-        await loadbalancesDev()
-      }
-    }
 
     const loadPoolRelatedAccountData = async () => {
       if (!account) return
@@ -591,8 +492,9 @@ const AccountListener = (props) => {
     if (onlyStaking) {
       await loadStakingRelatedData()
     } else {
+      balancesQuery.refetch()
+
       await Promise.all([
-        loadBalances(),
         loadAllowances(),
         loadRebaseStatus(),
         // TODO maybe do this if only in the LM part of the dapp since it is very heavy
