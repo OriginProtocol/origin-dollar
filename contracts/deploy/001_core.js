@@ -727,9 +727,7 @@ const deployWOusd = async () => {
       deployerAddr,
       []
     );
-  await wousd
-    .connect(sDeployer)
-    ["initialize(string,string)"]("Wrapped OUSD", "WOUSD");
+  await wousd.connect(sDeployer)["initialize()"]();
   await wousd.connect(sDeployer).transferGovernance(governorAddr);
   await wousd.connect(sGovernor).claimGovernance();
 };

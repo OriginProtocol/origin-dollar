@@ -22,11 +22,7 @@ contract WrappedOusd is ERC4626, Governable, Initializable {
     /**
      * @notice Enable OUSD rebasing for this contract
      */
-    function initialize(string memory name_, string memory symbol_)
-        external
-        onlyGovernor
-        initializer
-    {
+    function initialize() external onlyGovernor initializer {
         OUSD(address(asset())).rebaseOptIn();
     }
 

@@ -44,13 +44,7 @@ module.exports = deploymentWithProposal(
 
     // 3. Initialize Wrapped OUSD
     await withConfirmation(
-      cWrappedOUSD
-        .connect(sDeployer)
-        ["initialize(string,string)"](
-          "Wrapped OUSD",
-          "WOUSD",
-          await getTxOpts()
-        )
+      cWrappedOUSD.connect(sDeployer)["initialize()"](await getTxOpts())
     );
 
     // 4. Assign ownership
