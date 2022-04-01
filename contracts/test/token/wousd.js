@@ -3,7 +3,7 @@ const { defaultFixture } = require("../_fixture");
 
 const { ousdUnits, daiUnits, isFork, loadFixture } = require("../helpers");
 
-describe("WOUSD", function () {
+describe.only("WOUSD", function () {
   if (isFork) {
     this.timeout(0);
   }
@@ -91,6 +91,36 @@ describe("WOUSD", function () {
       await expect(
         wousd.connect(josh).transferToken(ousd.address, ousdUnits("2"))
       ).to.be.revertedWith("Caller is not the Governor");
+    });
+  });
+
+  describe("WOUSD upgrade", async () => {
+    it("should be upgradable", async () => {
+      // Do upgrade
+      const cWrappedOUSDProxy = await ethers.getContract("WrappedOUSDProxy");
+      const factory = await ethers.getContractFactory("MockLimitedWrappedOusd");
+      const dNewImpl = await factory.deploy(
+        ousd.address,
+        "WOUSD",
+        "Wrapped OUSD"
+      );
+      await cWrappedOUSDProxy.connect(governor).upgradeTo(dNewImpl.address);
+
+      // Test basics
+      expect(await wousd.decimals()).to.eq(18);
+      expect(await wousd.name()).to.eq("Wrapped OUSD");
+      expect(await wousd.symbol()).to.eq("WOUSD");
+
+      // Test previous balance
+      await expect(wousd).to.have.a.balanceOf("100", ousd);
+      await expect(josh).to.have.a.balanceOf("50", wousd);
+      await expect(matt).to.have.a.balanceOf("0", wousd);
+
+      // Upgraded contract will only allow deposits of up to 1 OUSD
+      await wousd.connect(josh).deposit(ousdUnits("1"), josh.address);
+      await expect(
+        wousd.connect(josh).deposit(ousdUnits("25"), josh.address)
+      ).to.be.revertedWith("ERC4626: deposit more then max");
     });
   });
 });
