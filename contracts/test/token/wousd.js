@@ -3,7 +3,7 @@ const { defaultFixture } = require("../_fixture");
 
 const { ousdUnits, daiUnits, isFork, loadFixture } = require("../helpers");
 
-describe.only("WOUSD", function () {
+describe("WOUSD", function () {
   if (isFork) {
     this.timeout(0);
   }
