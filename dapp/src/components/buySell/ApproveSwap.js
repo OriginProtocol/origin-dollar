@@ -26,8 +26,7 @@ const ApproveSwap = ({
   const [coinApproved, setCoinApproved] = useState(false)
   const [stage, setStage] = useState(coinApproved ? 'done' : 'approve')
   const [contract, setContract] = useState(null)
-  const [isContractApproving, setIsContractApproving] = useState(null)
-  const [isCoinApproving, setIsCoinApproving] = useState(null)
+  const [isApproving, setIsApproving] = useState({})
   const web3react = useWeb3React()
   const { library, account } = web3react
 
@@ -70,8 +69,8 @@ const ApproveSwap = ({
   useEffect(() => {
     if (selectedSwap) {
       if (
-        isContractApproving === selectedSwap.name &&
-        isCoinApproving === stableCoinToApprove
+        isApproving.contract === selectedSwap.name &&
+        isApproving.coin === stableCoinToApprove
       ) {
         setStage('waiting-network')
       } else {
@@ -169,16 +168,17 @@ const ApproveSwap = ({
                 .approve(contracts[needsApproval].address, maximum)
               storeTransaction(result, 'approve', stableCoinToApprove)
               setStage('waiting-network')
-              setIsContractApproving(needsApproval)
-              setIsCoinApproving(stableCoinToApprove)
+              setIsApproving({
+                contract: needsApproval,
+                coin: stableCoinToApprove,
+              })
               const receipt = await rpcProvider.waitForTransaction(result.hash)
               analytics.track('Approval Successful', {
                 category: 'swap',
                 label: swapMetadata.coinGiven,
                 value: parseInt(swapMetadata.swapAmount),
               })
-              setIsContractApproving(null)
-              setIsCoinApproving(null)
+              setIsApproving({})
               setCoinApproved(true)
               setStage('done')
             } catch (e) {
