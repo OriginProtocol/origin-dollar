@@ -24,25 +24,31 @@ const ApproveSwap = ({
   isMobile,
 }) => {
   const [coinApproved, setCoinApproved] = useState(false)
-  const [stage, setStage] = useState(coinApproved ? 'done' : 'approve')
+  const [stage, setStage] = useState('approve')
   const [contract, setContract] = useState(null)
   const [isApproving, setIsApproving] = useState({})
   const web3react = useWeb3React()
   const { library, account } = web3react
+  const approvalNeeded =
+    (!selectedSwap ||
+      formHasErrors ||
+      swappingGloballyDisabled ||
+      !allowancesLoaded ||
+      !needsApproval) &&
+    !coinApproved
 
   useEffect(() => {
-    const approval = !(
-      (!selectedSwap ||
-        formHasErrors ||
-        swappingGloballyDisabled ||
-        !allowancesLoaded ||
-        !needsApproval) &&
-      !coinApproved
-    )
     ContractStore.update((s) => {
-      s.approvalNeeded = approval
+      s.approvalNeeded = !approvalNeeded
     })
-  }, [selectedSwap, needsApproval])
+  }, [
+    selectedSwap,
+    formHasErrors,
+    swappingGloballyDisabled,
+    allowancesLoaded,
+    needsApproval,
+    coinApproved,
+  ])
 
   const {
     vault,
@@ -73,10 +79,10 @@ const ApproveSwap = ({
         isApproving.coin === stableCoinToApprove
       ) {
         setStage('waiting-network')
-      } else {
-        setCoinApproved(false)
-        setStage('approve')
       }
+    } else {
+      setCoinApproved(false)
+      setStage('approve')
     }
   }, [selectedSwap])
 
@@ -144,14 +150,7 @@ const ApproveSwap = ({
     <>
       <button
         className={`btn-blue buy-button mt-4 mt-md-3 w-100`}
-        hidden={
-          (!selectedSwap ||
-            formHasErrors ||
-            swappingGloballyDisabled ||
-            !allowancesLoaded ||
-            !needsApproval) &&
-          !coinApproved
-        }
+        hidden={approvalNeeded}
         disabled={coinApproved}
         onClick={async () => {
           if (stage === 'approve' && contract) {
