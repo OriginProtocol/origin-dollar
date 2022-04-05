@@ -79,11 +79,11 @@ const ApproveSwap = ({
         isApproving.coin === stableCoinToApprove
       ) {
         setStage('waiting-network')
+        return
       }
-    } else {
-      setCoinApproved(false)
-      setStage('approve')
     }
+    setCoinApproved(false)
+    setStage('approve')
   }, [selectedSwap])
 
   useEffect(() => {
