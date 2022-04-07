@@ -37,7 +37,8 @@ const ApproveSwap = ({
       swappingGloballyDisabled ||
       !allowancesLoaded ||
       !needsApproval) &&
-    !coinApproved) || !show
+      !coinApproved) ||
+    !show
 
   useEffect(() => {
     setShow(false)
