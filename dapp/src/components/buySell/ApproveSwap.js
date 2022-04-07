@@ -67,40 +67,48 @@ const ApproveSwap = ({
     ousd,
   } = useStoreState(ContractStore, (s) => s.contracts || {})
 
-  function alterFirstLetterCase(string, forceUpperCase) {
-    return (
-      (forceUpperCase ? string.charAt(0).toUpperCase() : string.charAt(0)) +
-      string.slice(1)
-    )
-  }
-
   const routeConfig = {
     vault: {
       contract: vault,
-      name: (forceUpperCase) =>
-        alterFirstLetterCase('the Origin Vault', forceUpperCase),
+      name: {
+        approving: 'the Origin Vault',
+        done: 'Origin Vault'
+      }
     },
     flipper: {
       contract: flipper,
-      name: (forceUpperCase) =>
-        alterFirstLetterCase('the Flipper', forceUpperCase),
+      name: {
+        approving: 'the Flipper',
+        done: 'Flipper'
+      }
     },
     uniswap: {
       contract: uniV3SwapRouter,
-      name: (forceUpperCase) => alterFirstLetterCase('Uniswap', forceUpperCase),
+      name: {
+        approving: 'Uniswap',
+        done: 'Uniswap'
+      }
     },
     curve: {
       contract: curveOUSDMetaPool,
-      name: (forceUpperCase) => alterFirstLetterCase('Curve', forceUpperCase),
+      name: {
+        approving: 'Curve',
+        done: 'Curve'
+      }
     },
     uniswapV2: {
       contract: uniV2Router,
-      name: (forceUpperCase) => alterFirstLetterCase('Uniswap', forceUpperCase),
+      name: {
+        approving: 'Uniswap',
+        done: 'Uniswap'
+      }
     },
     sushiswap: {
       contract: sushiRouter,
-      name: (forceUpperCase) =>
-        alterFirstLetterCase('Sushi Swap', forceUpperCase),
+      name: {
+        approving: 'Sushi Swap',
+        done: 'Sushi Swap'
+      }
     },
   }
 
@@ -137,7 +145,7 @@ const ApproveSwap = ({
       )
     }
     if (stage === 'waiting-network') {
-      const waitingNetworkMessage = routeConfig[selectedSwap.name].name(false)
+      const waitingNetworkMessage = routeConfig[selectedSwap.name].name.approving
       return fbt(
         'Approving ' +
           fbt.param('waiting-network', waitingNetworkMessage) +
@@ -146,17 +154,16 @@ const ApproveSwap = ({
       )
     }
     if (stage === 'done') {
-      const doneMessage = routeConfig[selectedSwap.name].name(true)
+      const doneMessage = routeConfig[selectedSwap.name].name.done
       return fbt(
         fbt.param('approval-done', doneMessage) + ' approved',
         'Contract approved'
       )
     }
 
-    const route = `${routeConfig[selectedSwap.name].name(
-      false
-    )} to use your ${stableCoinToApprove.toUpperCase()}`
-    const routeMobile = `${routeConfig[selectedSwap.name].name(false)}`
+    const route = `${routeConfig[selectedSwap.name].name.approving
+    } to use your ${stableCoinToApprove.toUpperCase()}`
+    const routeMobile = `${routeConfig[selectedSwap.name].name.approving}`
 
     return (
       <>
