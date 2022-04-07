@@ -38,6 +38,9 @@ const SettingsDropdown = ({
                         if (value < 0) {
                           value = 0
                         }
+                        if (value > 50) {
+                          value = 50
+                        }
                         value = truncateDecimals(value, 2)
                         if (value !== priceToleranceValue) {
                           analytics.track('On price tolerance change', {
