@@ -41,14 +41,7 @@ const ApproveSwap = ({
     ContractStore.update((s) => {
       s.approvalNeeded = !approvalNeeded
     })
-  }, [
-    selectedSwap,
-    formHasErrors,
-    swappingGloballyDisabled,
-    allowancesLoaded,
-    needsApproval,
-    coinApproved,
-  ])
+  }, [approvalNeeded])
 
   const {
     vault,
@@ -63,13 +56,36 @@ const ApproveSwap = ({
     ousd,
   } = useStoreState(ContractStore, (s) => s.contracts || {})
 
-  const contracts = {
-    vault: vault,
-    flipper: flipper,
-    uniswap: uniV3SwapRouter,
-    curve: curveOUSDMetaPool,
-    uniswapV2: uniV2Router,
-    sushiswap: sushiRouter,
+  function alterFirstLetterCase(string, forceUpperCase) {
+    return forceUpperCase ? string.charAt(0).toUpperCase() : string.charAt(0) + string.slice(1);
+  }
+
+
+  const routeConfig = {
+    vault: {
+      contract: vault,
+      name: 'the Origin Vault',
+    },
+    flipper: {
+      contract: flipper,
+      name: 'the Flipper'
+    },
+    uniswap: {
+      contract: uniV3SwapRouter,
+      name: 'Uniswap'
+    },
+    curve: {
+      contract: curveOUSDMetaPool,
+      name: 'Curve'
+    },
+    uniswapV2: {
+      contract: uniV2Router,
+      name: 'Uniswap'
+    },
+    sushiswap: {
+      contract: sushiRouter,
+      name: 'Sushi Swap'
+    },
   }
 
   useEffect(() => {
@@ -99,19 +115,6 @@ const ApproveSwap = ({
     stableCoinToApprove,
     isMobile,
   }) => {
-    const capitalized = selectedSwap.name.charAt(0).toUpperCase()
-    const noncapitalized =
-      selectedSwap.name === 'uniswapV2'
-        ? selectedSwap.name.slice(1, 7)
-        : selectedSwap.name.slice(1)
-    const origin =
-      selectedSwap.name === 'flipper' || selectedSwap.name === 'vault'
-        ? 'the '
-        : ''
-    const vault = selectedSwap.name === 'vault' ? 'Origin ' : ''
-    const coin = stableCoinToApprove.toUpperCase()
-    const route = `${origin} ${vault} ${capitalized}${noncapitalized} to use your ${coin}`
-    const routeMobile = `${origin} ${vault} ${capitalized}${noncapitalized}`
     if (stage === 'waiting-user') {
       return fbt(
         'Waiting for you to confirm...',
@@ -134,6 +137,13 @@ const ApproveSwap = ({
         'Contract approved'
       )
     }
+
+    if (!needsApproval) {
+      return ''
+    }
+    const route = `${routeConfig[needsApproval].name} to use your ${stableCoinToApprove.toUpperCase()}`
+    const routeMobile = `${routeConfig[needsApproval].name}`
+
     return (
       <>
         {isMobile
@@ -161,10 +171,9 @@ const ApproveSwap = ({
             })
             setStage('waiting-user')
             try {
-              const maximum = ethers.constants.MaxUint256
               const result = await contract
                 .connect(library.getSigner(account))
-                .approve(contracts[needsApproval].address, maximum)
+                .approve(routeConfig[needsApproval].contract.address, ethers.constants.MaxUint256)
               storeTransaction(result, 'approve', stableCoinToApprove)
               setStage('waiting-network')
               setIsApproving({
@@ -213,12 +222,6 @@ const ApproveSwap = ({
         )}
       </button>
       <div className="d-flex flex-column align-items-center justify-content-center justify-content-md-between flex-md-row mt-md-3 mt-2">
-        <a
-          href="#"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="link-detail"
-        ></a>
         <button
           className={`btn-blue buy-button mt-2 mt-md-0 w-100`}
           disabled={
