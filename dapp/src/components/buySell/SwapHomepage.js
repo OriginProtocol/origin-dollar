@@ -118,10 +118,8 @@ const SwapHomepage = ({
     typeof balances['dai'] === 'string' &&
     typeof balances['usdt'] === 'string' &&
     typeof balances['usdc'] === 'string'
-  const {
-    setPriceToleranceValue,
-    priceToleranceValue,
-  } = usePriceTolerance('mint')
+  const { setPriceToleranceValue, priceToleranceValue } =
+    usePriceTolerance('mint')
 
   const swappingGloballyDisabled = process.env.DISABLE_SWAP_BUTTON === 'true'
   const formHasErrors = formError !== null

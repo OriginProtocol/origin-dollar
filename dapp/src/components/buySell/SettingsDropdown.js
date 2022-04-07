@@ -8,10 +8,7 @@ import { useStoreState } from 'pullstate'
 import { assetRootPath } from 'utils/image'
 import { truncateDecimals } from 'utils/math'
 
-const SettingsDropdown = ({
-  setPriceToleranceValue,
-  priceToleranceValue,
-}) => {
+const SettingsDropdown = ({ setPriceToleranceValue, priceToleranceValue }) => {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const gasPrice = useStoreState(ContractStore, (s) => s.gasPrice)
 
@@ -52,9 +49,7 @@ const SettingsDropdown = ({
                       }
                     }}
                   />
-                  <div>
-                    %
-                  </div>
+                  <div>%</div>
                 </div>
                 <button
                   className="w-50 d-flex align-items-center justify-content-center auto"
