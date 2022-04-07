@@ -58,33 +58,39 @@ const ApproveSwap = ({
   } = useStoreState(ContractStore, (s) => s.contracts || {})
 
   function alterFirstLetterCase(string, forceUpperCase) {
-    return (forceUpperCase ? string.charAt(0).toUpperCase() : string.charAt(0)) + string.slice(1);
+    return (
+      (forceUpperCase ? string.charAt(0).toUpperCase() : string.charAt(0)) +
+      string.slice(1)
+    )
   }
 
   const routeConfig = {
     vault: {
       contract: vault,
-      name: (forceUpperCase) => alterFirstLetterCase('the Origin Vault', forceUpperCase),
+      name: (forceUpperCase) =>
+        alterFirstLetterCase('the Origin Vault', forceUpperCase),
     },
     flipper: {
       contract: flipper,
-      name: (forceUpperCase) => alterFirstLetterCase('the Flipper', forceUpperCase)
+      name: (forceUpperCase) =>
+        alterFirstLetterCase('the Flipper', forceUpperCase),
     },
     uniswap: {
       contract: uniV3SwapRouter,
-      name: (forceUpperCase) => alterFirstLetterCase('Uniswap', forceUpperCase)
+      name: (forceUpperCase) => alterFirstLetterCase('Uniswap', forceUpperCase),
     },
     curve: {
       contract: curveOUSDMetaPool,
-      name: (forceUpperCase) => alterFirstLetterCase('Curve', forceUpperCase)
+      name: (forceUpperCase) => alterFirstLetterCase('Curve', forceUpperCase),
     },
     uniswapV2: {
       contract: uniV2Router,
-      name: (forceUpperCase) => alterFirstLetterCase('Uniswap', forceUpperCase)
+      name: (forceUpperCase) => alterFirstLetterCase('Uniswap', forceUpperCase),
     },
     sushiswap: {
       contract: sushiRouter,
-      name: (forceUpperCase) => alterFirstLetterCase('Sushi Swap', forceUpperCase)
+      name: (forceUpperCase) =>
+        alterFirstLetterCase('Sushi Swap', forceUpperCase),
     },
   }
 
@@ -137,7 +143,9 @@ const ApproveSwap = ({
       )
     }
 
-    const route = `${routeConfig[selectedSwap.name].name(false)} to use your ${stableCoinToApprove.toUpperCase()}`
+    const route = `${routeConfig[selectedSwap.name].name(
+      false
+    )} to use your ${stableCoinToApprove.toUpperCase()}`
     const routeMobile = `${routeConfig[selectedSwap.name].name(false)}`
 
     return (
@@ -169,7 +177,10 @@ const ApproveSwap = ({
             try {
               const result = await contract
                 .connect(library.getSigner(account))
-                .approve(routeConfig[needsApproval].contract.address, ethers.constants.MaxUint256)
+                .approve(
+                  routeConfig[needsApproval].contract.address,
+                  ethers.constants.MaxUint256
+                )
               storeTransaction(result, 'approve', stableCoinToApprove)
               setStage('waiting-network')
               setIsApproving({
