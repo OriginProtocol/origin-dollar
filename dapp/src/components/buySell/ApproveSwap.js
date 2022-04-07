@@ -72,43 +72,43 @@ const ApproveSwap = ({
       contract: vault,
       name: {
         approving: 'the Origin Vault',
-        done: 'Origin Vault'
-      }
+        done: 'Origin Vault',
+      },
     },
     flipper: {
       contract: flipper,
       name: {
         approving: 'the Flipper',
-        done: 'Flipper'
-      }
+        done: 'Flipper',
+      },
     },
     uniswap: {
       contract: uniV3SwapRouter,
       name: {
         approving: 'Uniswap',
-        done: 'Uniswap'
-      }
+        done: 'Uniswap',
+      },
     },
     curve: {
       contract: curveOUSDMetaPool,
       name: {
         approving: 'Curve',
-        done: 'Curve'
-      }
+        done: 'Curve',
+      },
     },
     uniswapV2: {
       contract: uniV2Router,
       name: {
         approving: 'Uniswap',
-        done: 'Uniswap'
-      }
+        done: 'Uniswap',
+      },
     },
     sushiswap: {
       contract: sushiRouter,
       name: {
         approving: 'Sushi Swap',
-        done: 'Sushi Swap'
-      }
+        done: 'Sushi Swap',
+      },
     },
   }
 
@@ -145,7 +145,8 @@ const ApproveSwap = ({
       )
     }
     if (stage === 'waiting-network') {
-      const waitingNetworkMessage = routeConfig[selectedSwap.name].name.approving
+      const waitingNetworkMessage =
+        routeConfig[selectedSwap.name].name.approving
       return fbt(
         'Approving ' +
           fbt.param('waiting-network', waitingNetworkMessage) +
@@ -161,7 +162,8 @@ const ApproveSwap = ({
       )
     }
 
-    const route = `${routeConfig[selectedSwap.name].name.approving
+    const route = `${
+      routeConfig[selectedSwap.name].name.approving
     } to use your ${stableCoinToApprove.toUpperCase()}`
     const routeMobile = `${routeConfig[selectedSwap.name].name.approving}`
 
