@@ -23,12 +23,13 @@ const ApproveSwap = ({
   rpcProvider,
   isMobile,
 }) => {
-  const [coinApproved, setCoinApproved] = useState(false)
   const [stage, setStage] = useState('approve')
   const [contract, setContract] = useState(null)
   const [isApproving, setIsApproving] = useState({})
   const web3react = useWeb3React()
   const { library, account } = web3react
+  const coinApproved = stage === 'done'
+
   const approvalNeeded =
     (!selectedSwap ||
       formHasErrors ||
@@ -57,34 +58,33 @@ const ApproveSwap = ({
   } = useStoreState(ContractStore, (s) => s.contracts || {})
 
   function alterFirstLetterCase(string, forceUpperCase) {
-    return forceUpperCase ? string.charAt(0).toUpperCase() : string.charAt(0) + string.slice(1);
+    return (forceUpperCase ? string.charAt(0).toUpperCase() : string.charAt(0)) + string.slice(1);
   }
-
 
   const routeConfig = {
     vault: {
       contract: vault,
-      name: 'the Origin Vault',
+      name: (forceUpperCase) => alterFirstLetterCase('the Origin Vault', forceUpperCase),
     },
     flipper: {
       contract: flipper,
-      name: 'the Flipper'
+      name: (forceUpperCase) => alterFirstLetterCase('the Flipper', forceUpperCase)
     },
     uniswap: {
       contract: uniV3SwapRouter,
-      name: 'Uniswap'
+      name: (forceUpperCase) => alterFirstLetterCase('Uniswap', forceUpperCase)
     },
     curve: {
       contract: curveOUSDMetaPool,
-      name: 'Curve'
+      name: (forceUpperCase) => alterFirstLetterCase('Curve', forceUpperCase)
     },
     uniswapV2: {
       contract: uniV2Router,
-      name: 'Uniswap'
+      name: (forceUpperCase) => alterFirstLetterCase('Uniswap', forceUpperCase)
     },
     sushiswap: {
       contract: sushiRouter,
-      name: 'Sushi Swap'
+      name: (forceUpperCase) => alterFirstLetterCase('Sushi Swap', forceUpperCase)
     },
   }
 
@@ -98,7 +98,6 @@ const ApproveSwap = ({
         return
       }
     }
-    setCoinApproved(false)
     setStage('approve')
   }, [selectedSwap])
 
@@ -122,7 +121,7 @@ const ApproveSwap = ({
       )
     }
     if (stage === 'waiting-network') {
-      const waitingNetworkMessage = `${origin} ${vault} ${capitalized}${noncapitalized}`
+      const waitingNetworkMessage = routeConfig[selectedSwap.name].name(false)
       return fbt(
         'Approving ' +
           fbt.param('waiting-network', waitingNetworkMessage) +
@@ -131,18 +130,15 @@ const ApproveSwap = ({
       )
     }
     if (stage === 'done') {
-      const doneMessage = `${vault} ${capitalized}${noncapitalized}`
+      const doneMessage = routeConfig[selectedSwap.name].name(true)
       return fbt(
         fbt.param('approval-done', doneMessage) + ' approved',
         'Contract approved'
       )
     }
 
-    if (!needsApproval) {
-      return ''
-    }
-    const route = `${routeConfig[needsApproval].name} to use your ${stableCoinToApprove.toUpperCase()}`
-    const routeMobile = `${routeConfig[needsApproval].name}`
+    const route = `${routeConfig[selectedSwap.name].name(false)} to use your ${stableCoinToApprove.toUpperCase()}`
+    const routeMobile = `${routeConfig[selectedSwap.name].name(false)}`
 
     return (
       <>
@@ -187,7 +183,6 @@ const ApproveSwap = ({
                 value: parseInt(swapMetadata.swapAmount),
               })
               setIsApproving({})
-              setCoinApproved(true)
               setStage('done')
             } catch (e) {
               onMintingError(e)
