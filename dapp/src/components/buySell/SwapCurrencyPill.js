@@ -16,7 +16,6 @@ import {
 } from 'utils/math'
 import { currencies } from 'constants/Contract'
 import { assetRootPath } from 'utils/image'
-import ContractStore from 'stores/ContractStore'
 
 const CoinImage = ({ small, coin, isSemiTransparent = false }) => {
   const className = `coin-image ${isSemiTransparent ? 'transparent' : ''}`
@@ -391,11 +390,6 @@ const SwapCurrencyPill = ({
             <CoinSelect
               selected={showOusd ? 'ousd' : selectedCoin}
               onChange={(coin) => {
-                if (coin !== selectedCoin) {
-                  ContractStore.update((s) => {
-                    s.swapEstimations = 'loading'
-                  })
-                }
                 onSelectChange(coin)
               }}
               options={coinsSelectOptions}
@@ -436,9 +430,6 @@ const SwapCurrencyPill = ({
                 onChange={(e) => {
                   const value = truncateDecimals(e.target.value)
                   const valueNoCommas = removeCommas(value)
-                  ContractStore.update((s) => {
-                    s.swapEstimations = 'loading'
-                  })
                   if (checkValidInputForCoin(valueNoCommas, selectedCoin)) {
                     onAmountChange(valueNoCommas)
                   }

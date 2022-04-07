@@ -49,6 +49,8 @@ const useSwapEstimator = ({
     coinInfoList[swapMode === 'mint' ? selectedCoin : 'ousd']
   const coinToSwap = swapMode === 'redeem' ? 'ousd' : selectedCoin
 
+  const [selectedCoinPrev, setSelectedCoinPrev] = useState()
+
   let coinToReceiveContract, coinToReceiveDecimals
 
   // do not enter conditional body when redeeming a mix
@@ -158,11 +160,13 @@ const useSwapEstimator = ({
     /* Timeout the execution so it doesn't happen on each key stroke rather aiming
      * to when user has already stopped typing
      */
+    const delay = selectedCoin !== selectedCoinPrev ? 0 : 700
     setEstimationCallback(
       setTimeout(async () => {
         await runEstimations(swapMode, selectedCoin, inputAmountRaw)
-      }, 700)
+      }, delay)
     )
+    setSelectedCoinPrev(selectedCoin)
   }, [
     swapMode,
     selectedCoin,
