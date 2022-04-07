@@ -6,106 +6,11 @@ import analytics from 'utils/analytics'
 import ContractStore from 'stores/ContractStore'
 import { useStoreState } from 'pullstate'
 import { assetRootPath } from 'utils/image'
-
-const PriceToleranceDropdown = ({
-  setPriceToleranceValue,
-  priceToleranceValue,
-  dropdownToleranceOptions,
-}) => {
-  const [priceToleranceOpen, setPriceToleranceOpen] = useState(false)
-
-  return (
-    <div className="dropdown-holder">
-      <Dropdown
-        className="d-flex align-items-center min-h-42"
-        content={
-          <div className="d-flex flex-column dropdown-menu show">
-            {dropdownToleranceOptions.map((toleranceOption) => {
-              return (
-                <div
-                  key={toleranceOption}
-                  className={`price-tolerance-option ${
-                    priceToleranceValue === toleranceOption ? 'selected' : ''
-                  }`}
-                  onClick={(e) => {
-                    e.preventDefault()
-                    if (toleranceOption !== priceToleranceValue) {
-                      analytics.track('On price tolerance change', {
-                        category: 'settings',
-                        label: toleranceOption,
-                      })
-                    }
-                    setPriceToleranceValue(toleranceOption)
-                    setPriceToleranceOpen(false)
-                  }}
-                >
-                  {toleranceOption}%
-                </div>
-              )
-            })}
-          </div>
-        }
-        open={priceToleranceOpen}
-        onClose={() => setPriceToleranceOpen(false)}
-      >
-        <div
-          className="price-tolerance-selected d-flex justify-content-between"
-          onClick={(e) => {
-            setPriceToleranceOpen(!priceToleranceOpen)
-          }}
-        >
-          <div>{priceToleranceValue ? `${priceToleranceValue}%` : '...'}</div>
-          <div>
-            <img
-              className="tolerance-caret"
-              src={assetRootPath('/images/caret-left-grey.svg')}
-            />
-          </div>
-        </div>
-      </Dropdown>
-      <style jsx>{`
-        .price-tolerance-selected {
-          cursor: pointer;
-          font-weight: normal;
-          padding: 6px 18px;
-          border-radius: 5px;
-          border: solid 1px #cdd7e0;
-          background-color: #f2f3f5;
-          min-width: 120px;
-          min-height: 40px;
-        }
-
-        .tolerance-caret {
-          width: 5px;
-          height: 7px;
-          transform: rotate(270deg);
-          margin-left: 6px;
-        }
-
-        .dropdown-menu {
-          top: 115%;
-          left: 0;
-          right: auto;
-          padding: 15px;
-        }
-
-        .price-tolerance-option {
-          cursor: pointer;
-        }
-
-        .price-tolerance-option.selected {
-          cursor: auto;
-          color: #8293a4;
-        }
-      `}</style>
-    </div>
-  )
-}
+import { truncateDecimals } from 'utils/math'
 
 const SettingsDropdown = ({
   setPriceToleranceValue,
   priceToleranceValue,
-  dropdownToleranceOptions,
 }) => {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const gasPrice = useStoreState(ContractStore, (s) => s.gasPrice)
@@ -120,17 +25,49 @@ const SettingsDropdown = ({
               <div className="setting-title">
                 {fbt('Price tolerance', 'price tolerance setting')}
               </div>
-              <PriceToleranceDropdown
-                setPriceToleranceValue={setPriceToleranceValue}
-                priceToleranceValue={priceToleranceValue}
-                dropdownToleranceOptions={dropdownToleranceOptions}
-              />
+              <div className="d-flex setting-holder">
+                <div className="w-50 d-flex align-items-center">
+                  <input
+                    value={priceToleranceValue}
+                    className="tolerance h-100"
+                    onChange={(e) => {
+                      e.preventDefault()
+                      let value = 0
+                      if (!isNaN(e.target.value)) {
+                        value = e.target.value
+                        if (value < 0) {
+                          value = 0
+                        }
+                        value = truncateDecimals(value, 2)
+                        if (value !== priceToleranceValue) {
+                          analytics.track('On price tolerance change', {
+                            category: 'settings',
+                            label: value,
+                          })
+                        }
+                        setPriceToleranceValue(value)
+                      }
+                    }}
+                  />
+                  <div>
+                    %
+                  </div>
+                </div>
+                <button
+                  className="w-50 d-flex align-items-center justify-content-center auto"
+                  onClick={() => {
+                    setPriceToleranceValue(0.5)
+                  }}
+                >
+                  AUTO
+                </button>
+              </div>
             </div>
             <div className="d-flex justify-content-between align-items-center margin-top">
               <div className="setting-title">
                 {fbt('Gas price', 'Gas price setting')}
               </div>
-              <div className="d-flex gas-price-holder">
+              <div className="d-flex setting-holder">
                 <div className="w-50">
                   <input
                     type="number"
@@ -144,7 +81,6 @@ const SettingsDropdown = ({
                       }
                       value = Math.floor(value)
                       value *= Math.pow(10, 9)
-
                       analytics.track('On gas setting change', {
                         category: 'settings',
                         label: value,
@@ -212,8 +148,14 @@ const SettingsDropdown = ({
           margin-top: 15px;
         }
 
-        .gas-price-holder {
+        .tolerance {
+          width: 70%;
+        }
+
+        .setting-holder {
+          max-width: 120px;
           min-width: 120px;
+          max-height: 40px;
           min-height: 40px;
           border-radius: 5px;
           border: solid 1px #cdd7e0;
@@ -236,6 +178,15 @@ const SettingsDropdown = ({
           color: #8293a4;
           background-color: white;
           border-radius: 0 5px 5px 0;
+          border-left: solid 1px #cdd7e0;
+        }
+
+        button.auto {
+          font-size: 14px;
+          color: white;
+          background-color: #1a82ff;
+          border-radius: 0 5px 5px 0;
+          border: 0;
           border-left: solid 1px #cdd7e0;
         }
 

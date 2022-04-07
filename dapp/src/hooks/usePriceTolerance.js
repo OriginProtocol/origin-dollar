@@ -4,8 +4,6 @@ const usePriceTolerance = (mode) => {
   const [priceToleranceValue, setPriceTolerFct] = useState(null)
   const priceToleranceLocalStorageKey = `selected_price_tolerance_${mode}`
 
-  const dropdownToleranceOptions = [0.25, 0.5, 1]
-
   // store price tolerance value for future default setting
   useEffect(() => {
     // default price tolerance value
@@ -32,7 +30,7 @@ const usePriceTolerance = (mode) => {
   return {
     setPriceToleranceValue,
     priceToleranceValue,
-    dropdownToleranceOptions,
+    //dropdownToleranceOptions,
   }
 }
 
