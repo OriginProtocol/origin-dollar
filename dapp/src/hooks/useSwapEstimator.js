@@ -161,6 +161,10 @@ const useSwapEstimator = ({
      * to when user has already stopped typing
      */
     const delay = selectedCoin !== selectedCoinPrev ? 0 : 700
+    // reset swap estimations here for better UI experience
+    ContractStore.update((s) => {
+      s.swapEstimations = 'loading'
+    })
     setEstimationCallback(
       setTimeout(async () => {
         await runEstimations(swapMode, selectedCoin, inputAmountRaw)
@@ -182,9 +186,6 @@ const useSwapEstimator = ({
   }
 
   const runEstimations = async (mode, selectedCoin, amount) => {
-    ContractStore.update((s) => {
-      s.swapEstimations = 'loading'
-    })
     let usedGasPrice = gasPrice
 
     let vaultResult,

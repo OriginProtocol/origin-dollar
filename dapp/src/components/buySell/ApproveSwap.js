@@ -26,27 +26,17 @@ const ApproveSwap = ({
   const [stage, setStage] = useState('approve')
   const [contract, setContract] = useState(null)
   const [isApproving, setIsApproving] = useState({})
-  const [show, setShow] = useState(false)
   const web3react = useWeb3React()
   const { library, account } = web3react
   const coinApproved = stage === 'done'
 
   const approvalNeeded =
-    ((!selectedSwap ||
+    (!selectedSwap ||
       formHasErrors ||
       swappingGloballyDisabled ||
       !allowancesLoaded ||
       !needsApproval) &&
-      !coinApproved) ||
-    !show
-
-  useEffect(() => {
-    setShow(false)
-  }, [stableCoinToApprove])
-
-  useEffect(() => {
-    setShow(true)
-  }, [selectedSwap])
+    !coinApproved
 
   useEffect(() => {
     ContractStore.update((s) => {
