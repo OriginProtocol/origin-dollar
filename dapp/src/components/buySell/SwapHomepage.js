@@ -509,7 +509,7 @@ const SwapHomepage = ({
           padding: 35px 40px 40px 40px;
           position: relative;
         }
-        
+
         @media (max-width: 799px) {
           .swap-homepage {
             padding: 23px 20px 20px 20px;
