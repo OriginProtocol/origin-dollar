@@ -115,11 +115,8 @@ const SwapHomepage = ({
     typeof balances['dai'] === 'string' &&
     typeof balances['usdt'] === 'string' &&
     typeof balances['usdc'] === 'string'
-  const {
-    setPriceToleranceValue,
-    priceToleranceValue,
-    dropdownToleranceOptions,
-  } = usePriceTolerance('mint')
+  const { setPriceToleranceValue, priceToleranceValue } =
+    usePriceTolerance('mint')
 
   const swappingGloballyDisabled = process.env.DISABLE_SWAP_BUTTON === 'true'
   const formHasErrors = formError !== null
@@ -437,7 +434,6 @@ const SwapHomepage = ({
         <SettingsDropdown
           setPriceToleranceValue={setPriceToleranceValue}
           priceToleranceValue={priceToleranceValue}
-          dropdownToleranceOptions={dropdownToleranceOptions}
         />
         {addOusdModalState === 'show' && providerNotAutoDetectOUSD && (
           <AddOUSDModal
@@ -513,7 +509,7 @@ const SwapHomepage = ({
           padding: 35px 40px 40px 40px;
           position: relative;
         }
-
+        
         @media (max-width: 799px) {
           .swap-homepage {
             padding: 23px 20px 20px 20px;
