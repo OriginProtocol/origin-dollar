@@ -340,7 +340,7 @@ const Home = ({ locale, onLocale }) => {
                 }}
               >
                 <div className="uniswap-box info-box d-flex justify-content-center align-items-center mb-2 mx-3">
-                  <img src={assetRootPath('/images/logos/uniswap-color.png')} />
+                  <img src={assetRootPath('/images/logos/uniswap.svg')} />
                 </div>
                 <div>{fbt('Uniswap', 'Uniswap')}</div>
               </div>
@@ -359,6 +359,21 @@ const Home = ({ locale, onLocale }) => {
                   <img src={assetRootPath('/images/logos/curve-color.png')} />
                 </div>
                 <div>{fbt('Curve', 'Curve')}</div>
+              </div>
+              <div
+                className="info-box-holder d-flex flex-column"
+                onClick={() => {
+                  window.open(
+                    'https://www.gate.io/trade/OUSD_USDT',
+                    '_blank',
+                    'noopener'
+                  )
+                }}
+              >
+                <div className="gateio-box info-box d-flex justify-content-center align-items-center mb-2 mx-3">
+                  <img src={assetRootPath('/images/logos/gete_io.png')} />
+                </div>
+                <div>gate.io</div>
               </div>
             </div>
           </div>
@@ -945,11 +960,9 @@ const Home = ({ locale, onLocale }) => {
           background-color: #a5a4ce;
         }
 
+        .kucoin-box,
+        .gateio-box,
         .uniswap-box {
-          background-color: #fd0079;
-        }
-
-        .kucoin-box {
           background-color: #ffffff;
         }
 
