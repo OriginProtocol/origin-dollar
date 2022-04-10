@@ -11,7 +11,7 @@ export default class ApyService {
         } else {
           throw new Error(`Unexpected days param: ${days}`)
         }
-    
+
         try {
           const response = await fetch(endpoint)
           if (response.ok) {
@@ -26,7 +26,7 @@ export default class ApyService {
     )
     const apy = {}
     apyDayOptions.map((days, i) => {
-        apy[`apy${days}`] = dayResults[i] || 0
+      apy[`apy${days}`] = dayResults[i] || 0
     })
     return apy
   }

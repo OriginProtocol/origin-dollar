@@ -409,7 +409,6 @@ export async function setupContracts(account, library, chainId, fetchId) {
   }
 
   const callWithDelay = () => {
-    
     setTimeout(async () => {
       Promise.all([
         fetchExchangeRates(),
