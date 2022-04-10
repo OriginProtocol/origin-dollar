@@ -31,7 +31,7 @@ const BalanceHeader = ({
   const DEFAULT_SELECTED_APY = 365
   const apyOptions = useStoreState(ContractStore, (s) =>
     apyDayOptions.map((d) => {
-      return s[`apy${d}`] || 0
+      return s.apy[`apy${d}`] || 0
     })
   )
   const daysToApy = zipObject(apyDayOptions, apyOptions)

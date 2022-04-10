@@ -20,6 +20,7 @@ import addresses from 'constants/contractAddresses'
 import { isProduction, isDevelopment } from 'constants/env'
 import useBalancesQuery from '../queries/useBalancesQuery'
 import useAllowancesQuery from '../queries/useAllowancesQuery'
+import useApyQuery from '../queries/useApyQuery'
 
 const AccountListener = (props) => {
   const web3react = useWeb3React()
@@ -51,6 +52,14 @@ const AccountListener = (props) => {
     onSuccess: (allowances) => {
       AccountStore.update((s) => {
         s.allowances = allowances
+      })
+    },
+  })
+
+  const apyQuery = useApyQuery({
+    onSuccess: (apy) => {
+      ContractStore.update((s) => {
+        s.apy = apy
       })
     },
   })
@@ -389,6 +398,8 @@ const AccountListener = (props) => {
 
       window.fetchId = window.fetchId ? window.fetchId : 0
       window.fetchId += 1
+      apyQuery.refetch()
+
       const contracts = await setupContracts(
         account,
         usedLibrary,
