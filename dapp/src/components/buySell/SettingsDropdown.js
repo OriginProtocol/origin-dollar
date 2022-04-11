@@ -37,15 +37,8 @@ const SettingsDropdown = ({ setPriceToleranceValue, priceToleranceValue }) => {
                       let value = 0
                       if (!isNaN(e.target.value)) {
                         value = e.target.value
-                        if (value < 0) {
-                          value = 0
-                        }
-                        if (value > 1) {
-                          setShowWarning(true)
-                        }
-                        if (value > 50) {
-                          value = 50
-                        }
+                        setShowWarning(value > 1)
+                        value = value > 50 ? 50 : value
                         value = truncateDecimals(value, 2)
                         if (value !== priceToleranceValue) {
                           analytics.track('On price tolerance change', {
