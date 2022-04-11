@@ -63,7 +63,9 @@ const SettingsDropdown = ({ setPriceToleranceValue, priceToleranceValue }) => {
                 </button>
               </div>
             </div>
-            <div className={`warning ${showWarning ? '' : 'hide'}`}>Your transaction may be frontrun</div>
+            <div className={`warning ${showWarning ? '' : 'hide'}`}>
+              Your transaction may be frontrun
+            </div>
             <div className="d-flex justify-content-between align-items-center margin-top">
               <div className="setting-title">
                 {fbt('Gas price', 'Gas price setting')}
