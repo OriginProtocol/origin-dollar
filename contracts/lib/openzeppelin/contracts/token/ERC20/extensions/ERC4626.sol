@@ -7,6 +7,10 @@ import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
+// From Open Zeppelin draft PR commit:
+// fac43034dca85ff539db3fc8aa2a7084b843d454
+// https://github.com/OpenZeppelin/openzeppelin-contracts/pull/3171
+
 abstract contract ERC4626 is ERC20, IERC4626 {
     IERC20Metadata private immutable _asset;
 
@@ -172,7 +176,8 @@ abstract contract ERC4626 is ERC20, IERC4626 {
         return assets;
     }
 
-
+    // Included here, since this method was not yet present in
+    // the version of Open Zeppelin ERC20 code we use.
     function _spendAllowance(
         address owner,
         address spender,
