@@ -10,7 +10,12 @@ import { truncateDecimals } from 'utils/math'
 
 const SettingsDropdown = ({ setPriceToleranceValue, priceToleranceValue }) => {
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [showWarning, setShowWarning] = useState()
   const gasPrice = useStoreState(ContractStore, (s) => s.gasPrice)
+
+  useEffect(() => {
+    setShowWarning(priceToleranceValue > 1)
+  }, [priceToleranceValue])
 
   return (
     <div className="dropdown-holder">
@@ -35,6 +40,9 @@ const SettingsDropdown = ({ setPriceToleranceValue, priceToleranceValue }) => {
                         if (value < 0) {
                           value = 0
                         }
+                        if (value > 1) {
+                          setShowWarning(true)
+                        }
                         if (value > 50) {
                           value = 50
                         }
@@ -55,12 +63,14 @@ const SettingsDropdown = ({ setPriceToleranceValue, priceToleranceValue }) => {
                   className="w-50 d-flex align-items-center justify-content-center auto"
                   onClick={() => {
                     setPriceToleranceValue(0.5)
+                    setShowWarning(false)
                   }}
                 >
                   AUTO
                 </button>
               </div>
             </div>
+            <div className={`warning ${showWarning ? '' : 'hide'}`}>Your transaction may be frontrun</div>
             <div className="d-flex justify-content-between align-items-center margin-top">
               <div className="setting-title">
                 {fbt('Gas price', 'Gas price setting')}
@@ -169,6 +179,16 @@ const SettingsDropdown = ({ setPriceToleranceValue, priceToleranceValue }) => {
           text-align: center;
           border-radius: 5px 0 0 5px;
           background-color: #f2f3f5;
+        }
+
+        .warning {
+          font-size: 14px;
+          color: #ff8000;
+          margin-top: 10px;
+        }
+
+        .warning.hide {
+          display: none;
         }
 
         .gwei {
