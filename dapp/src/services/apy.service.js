@@ -11,17 +11,12 @@ export default class ApyService {
         } else {
           throw new Error(`Unexpected days param: ${days}`)
         }
-
-        try {
-          const response = await fetch(endpoint)
-          if (response.ok) {
-            const json = await response.json()
-            return json.apy / 100
-          }
-        } catch (err) {
-          console.error(`Failed to fetch ${days} day APY`, err)
+        const response = await fetch(endpoint)
+        if (!response.ok) {
+          throw new Error(`Failed to fetch ${days} day APY`, err)
         }
-        return null
+        const json = await response.json()
+        return json.apy / 100
       })
     )
     const apy = {}
