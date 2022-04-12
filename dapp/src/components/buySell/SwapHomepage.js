@@ -203,7 +203,7 @@ const SwapHomepage = ({
         const otherCoinAmount =
           Math.floor(selectedSwap.amountReceived * 1000000) / 1000000
         setSelectedBuyCoinAmount(otherCoinAmount)
-        setSelectedRedeemCoinAmount(selectedBuyCoinAmount)
+        setSelectedRedeemCoinAmount(otherCoinAmount)
       }
     }
   }, [swapMode])
