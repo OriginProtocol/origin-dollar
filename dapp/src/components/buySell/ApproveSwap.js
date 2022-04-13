@@ -169,16 +169,20 @@ const ApproveSwap = ({
     )
   }
 
-  const SwapMessage = ({balanceError, stableCoinToApprove, swapsLoaded, selectedSwap, swappingGloballyDisabled}) => {
+  const SwapMessage = ({
+    balanceError,
+    stableCoinToApprove,
+    swapsLoaded,
+    selectedSwap,
+    swappingGloballyDisabled,
+  }) => {
     const coin = stableCoinToApprove.toUpperCase()
     const noSwapRouteAvailable = swapsLoaded && !selectedSwap
     if (swappingGloballyDisabled) {
       return process.env.DISABLE_SWAP_BUTTON_MESSAGE
     } else if (balanceError) {
       return fbt(
-        'Insufficient ' +
-          fbt.param('coin', coin) +
-          ' balance',
+        'Insufficient ' + fbt.param('coin', coin) + ' balance',
         'Insufficient balance for swapping'
       )
     } else if (noSwapRouteAvailable) {
