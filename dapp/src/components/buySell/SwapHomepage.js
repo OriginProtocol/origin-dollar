@@ -62,7 +62,7 @@ const SwapHomepage = ({
   )
   const [selectedBuyCoinAmount, setSelectedBuyCoinAmount] = useState('')
   const [selectedRedeemCoinAmount, setSelectedRedeemCoinAmount] = useState('')
-  const [formError, setFormError] = useState(null)
+  const [balanceError, setBalanceError] = useState(null)
   const { setPriceToleranceValue, priceToleranceValue } =
     usePriceTolerance('mint')
 
@@ -371,13 +371,12 @@ const SwapHomepage = ({
           }
           onSelectChange={userSelectsBuyCoin}
           topItem
-          onErrorChange={setFormError}
+          onErrorChange={setBalanceError}
         />
         <PillArrow swapMode={swapMode} setSwapMode={setSwapMode} />
         <SwapCurrencyPill
           swapMode={swapMode}
           selectedSwap={selectedSwap}
-          swapsLoaded={swapsLoaded}
           swapsLoading={swapEstimations === 'loading'}
           priceToleranceValue={priceToleranceValue}
           selectedCoin={selectedRedeemCoin}
@@ -391,7 +390,8 @@ const SwapHomepage = ({
           onSwap={() => onSwapOusd()}
           allowancesLoaded={allowancesLoaded}
           onMintingError={onMintingError}
-          formError={formError}
+          balanceError={balanceError}
+          swapsLoaded={swapsLoaded}
           swappingGloballyDisabled={swappingGloballyDisabled}
         />
       </div>

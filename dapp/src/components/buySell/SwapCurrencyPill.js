@@ -326,16 +326,7 @@ const SwapCurrencyPill = ({
 
     const coin = swapMode === 'mint' ? selectedCoin : 'ousd'
 
-    setError(
-      parseFloat(coinBalances[coin]) < parseFloat(coinValue)
-        ? fbt(
-            'Insufficient ' +
-              fbt.param('coin', coin.toUpperCase()) +
-              ' balance',
-            'Insufficient balance for swapping'
-          )
-        : null
-    )
+    setError(parseFloat(coinBalances[coin]) < parseFloat(coinValue))
   }
 
   const displayBalance = getDisplayBalance()
@@ -367,7 +358,6 @@ const SwapCurrencyPill = ({
     displayBalance &&
     !maxBalanceSet &&
     parseFloat(displayBalance.balance) > 0
-  const noSwapRouteAvailable = swapsLoaded && !selectedSwap
 
   const onMaxBalanceClick = (e) => {
     e.preventDefault()
@@ -468,14 +458,6 @@ const SwapCurrencyPill = ({
                   : '-'}
               </div>
             )}
-            {bottomItem && noSwapRouteAvailable && (
-              <div className="error">
-                {fbt(
-                  'Route for selected swap not available',
-                  'no route available for selected swap'
-                )}
-              </div>
-            )}
           </div>
         </div>
         {coinSplits && (
@@ -514,12 +496,6 @@ const SwapCurrencyPill = ({
         .balance {
           font-size: 12px;
           color: #8293a4;
-          margin-left: 4px;
-        }
-
-        .error {
-          font-size: 12px;
-          color: #ed2a28;
           margin-left: 4px;
         }
 
