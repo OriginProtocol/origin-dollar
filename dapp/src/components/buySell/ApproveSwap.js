@@ -16,7 +16,7 @@ const ApproveSwap = ({
   onSwap,
   allowancesLoaded,
   onMintingError,
-  formHasErrors,
+  formError,
   swappingGloballyDisabled,
   storeTransaction,
   storeTransactionError,
@@ -29,18 +29,12 @@ const ApproveSwap = ({
   const web3react = useWeb3React()
   const { library, account } = web3react
   const coinApproved = stage === 'done'
-
-  const approvalNeeded =
-    (!selectedSwap ||
-      formHasErrors ||
-      swappingGloballyDisabled ||
-      !allowancesLoaded ||
-      !needsApproval) &&
-    !coinApproved
-
+  const formHasErrors = formError !== null
+  const approvalNeeded = (selectedSwap && !formHasErrors && !swappingGloballyDisabled && allowancesLoaded && needsApproval) || coinApproved
+  
   useEffect(() => {
     ContractStore.update((s) => {
-      s.approvalNeeded = !approvalNeeded
+      s.approvalNeeded = approvalNeeded
     })
   }, [approvalNeeded])
 
@@ -173,7 +167,7 @@ const ApproveSwap = ({
     <>
       <button
         className={`btn-blue buy-button mt-4 mt-md-3 w-100`}
-        hidden={approvalNeeded}
+        hidden={!approvalNeeded}
         disabled={coinApproved}
         onClick={async () => {
           if (stage === 'approve' && contract) {
@@ -248,7 +242,7 @@ const ApproveSwap = ({
           onClick={onSwap}
         >
           {swappingGloballyDisabled && process.env.DISABLE_SWAP_BUTTON_MESSAGE}
-          {!swappingGloballyDisabled && fbt('Swap', 'Swap')}
+          {!swappingGloballyDisabled && (formHasErrors ? formError : fbt('Swap', 'Swap'))}
         </button>
       </div>
       <style jsx>{`

@@ -5,8 +5,6 @@ import { fbt } from 'fbt-runtime'
 import AccountStore from 'stores/AccountStore'
 import Dropdown from 'components/Dropdown'
 import DownCaret from 'components/DownCaret'
-import { usePrevious } from 'utils/hooks'
-import analytics from 'utils/analytics'
 import {
   formatCurrency,
   formatCurrencyMinMaxDecimals,
@@ -14,8 +12,8 @@ import {
   checkValidInputForCoin,
   removeCommas,
 } from 'utils/math'
-import { currencies } from 'constants/Contract'
 import { assetRootPath } from 'utils/image'
+import { _ } from 'fbt-runtime/lib/fbt'
 
 const CoinImage = ({ small, coin, isSemiTransparent = false }) => {
   const className = `coin-image ${isSemiTransparent ? 'transparent' : ''}`
@@ -330,7 +328,7 @@ const SwapCurrencyPill = ({
 
     setError(
       parseFloat(coinBalances[coin]) < parseFloat(coinValue)
-        ? fbt('Insufficient balance', 'Insufficient balance for swapping')
+        ? fbt('Insufficient ' + fbt.param('coin', coin.toUpperCase()) + ' balance', 'Insufficient balance for swapping')
         : null
     )
   }
@@ -442,7 +440,6 @@ const SwapCurrencyPill = ({
                 }}
               />
             )}
-            {topItem && error && <div className="error">{error}</div>}
             {bottomItem && (
               <div className="expected-value">
                 {expectedAmount ||

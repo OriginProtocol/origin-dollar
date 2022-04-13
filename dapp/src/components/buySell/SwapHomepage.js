@@ -1,15 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
-import { ethers, BigNumber } from 'ethers'
-import { get, find } from 'lodash'
 
 import AccountStore from 'stores/AccountStore'
-import TransactionStore from 'stores/TransactionStore'
 import ContractStore from 'stores/ContractStore'
 import AddOUSDModal from 'components/buySell/AddOUSDModal'
 import ErrorModal from 'components/buySell/ErrorModal'
-import DisclaimerTooltip from 'components/buySell/DisclaimerTooltip'
 import { currencies } from 'constants/Contract'
 import { providersNotAutoDetectingOUSD, providerName } from 'utils/web3'
 import withRpcProvider from 'hoc/withRpcProvider'
@@ -18,22 +14,17 @@ import useCurrencySwapper from 'hooks/useCurrencySwapper'
 import SwapCurrencyPill from 'components/buySell/SwapCurrencyPill'
 import PillArrow from 'components/buySell/_PillArrow'
 import SettingsDropdown from 'components/buySell/SettingsDropdown'
-import { isMobileMetaMask } from 'utils/device'
 import useSwapEstimator from 'hooks/useSwapEstimator'
 import withIsMobile from 'hoc/withIsMobile'
 import { getUserSource } from 'utils/user'
 import usePrevious from 'utils/usePrevious'
-import LinkIcon from 'components/buySell/_LinkIcon'
-import { connectorNameIconMap, getConnectorIcon } from 'utils/connectors'
 import ApproveSwap from 'components/buySell/ApproveSwap'
 
 import analytics from 'utils/analytics'
 import {
-  truncateDecimals,
   formatCurrencyMinMaxDecimals,
   removeCommas,
 } from '../../utils/math'
-import { assetRootPath } from 'utils/image'
 
 let ReactPixel
 if (process.browser) {
@@ -49,30 +40,10 @@ const SwapHomepage = ({
   rpcProvider,
   isMobile,
 }) => {
-  const allowances = useStoreState(AccountStore, (s) => s.allowances)
-  const pendingMintTransactions = useStoreState(TransactionStore, (s) =>
-    s.transactions.filter((tx) => !tx.mined && tx.type === 'mint')
-  )
-  const balances = useStoreState(AccountStore, (s) => s.balances)
-  const ousdExchangeRates = useStoreState(
-    ContractStore,
-    (s) => s.ousdExchangeRates
-  )
   const swapEstimations = useStoreState(ContractStore, (s) => s.swapEstimations)
   const swapsLoaded = swapEstimations && typeof swapEstimations === 'object'
   const selectedSwap = useStoreState(ContractStore, (s) => s.selectedSwap)
 
-  const [displayedOusdToSell, setDisplayedOusdToSell] = useState('')
-  const [ousdToSell, setOusdToSell] = useState(0)
-  const [sellAllActive, setSellAllActive] = useState(false)
-  const [generalErrorReason, setGeneralErrorReason] = useState(null)
-  const [sellWidgetIsCalculating, setSellWidgetIsCalculating] = useState(false)
-  const [sellWidgetCoinSplit, setSellWidgetCoinSplit] = useState([])
-  // redeem now, waiting-user, waiting-network
-  const [sellWidgetState, setSellWidgetState] = useState('redeem now')
-  const [sellWidgetSplitsInterval, setSellWidgetSplitsInterval] = useState(null)
-  // buy/modal-buy, waiting-user/modal-waiting-user, waiting-network/modal-waiting-network
-  const [priceToleranceOpen, setPriceToleranceOpen] = useState(false)
   // mint / redeem
   const [swapMode, setSwapMode] = useState(
     localStorage.getItem(lastSelectedSwapModeKey) || 'mint'
@@ -92,37 +63,13 @@ const SwapHomepage = ({
   const [selectedRedeemCoin, setSelectedRedeemCoin] = useState(
     defaultSelectedCoinValue
   )
-
   const [selectedBuyCoinAmount, setSelectedBuyCoinAmount] = useState('')
   const [selectedRedeemCoinAmount, setSelectedRedeemCoinAmount] = useState('')
-  const [showApproveModal, _setShowApproveModal] = useState(false)
-  const {
-    vault: vaultContract,
-    usdt: usdtContract,
-    dai: daiContract,
-    usdc: usdcContract,
-    ousd: ousdContract,
-    flipper,
-  } = useStoreState(ContractStore, (s) => s.contracts || {})
-
   const [formError, setFormError] = useState(null)
-  const [buyFormWarnings, setBuyFormWarnings] = useState({})
-  const totalStablecoins =
-    parseFloat(balances['dai']) +
-    parseFloat(balances['usdt']) +
-    parseFloat(balances['usdc'])
-  const stableCoinsLoaded =
-    typeof balances['dai'] === 'string' &&
-    typeof balances['usdt'] === 'string' &&
-    typeof balances['usdc'] === 'string'
   const { setPriceToleranceValue, priceToleranceValue } =
     usePriceTolerance('mint')
 
   const swappingGloballyDisabled = process.env.DISABLE_SWAP_BUTTON === 'true'
-  const formHasErrors = formError !== null
-  const buyFormHasWarnings = buyFormWarnings !== null
-  const connectorName = useStoreState(AccountStore, (s) => s.connectorName)
-  const connectorIcon = getConnectorIcon(connectorName)
   const addOusdModalState = useStoreState(
     AccountStore,
     (s) => s.addOusdModalState
@@ -227,47 +174,6 @@ const SwapHomepage = ({
     localStorage.setItem(lastUserSelectedCoinKey, coin)
     setSelectedRedeemCoin(coin)
   }
-
-  // check if form should display any warnings
-  useEffect(() => {
-    if (pendingMintTransactions.length > 0) {
-      if (swapMode === 'mint') {
-        const allPendingCoins = pendingMintTransactions
-          .map((tx) => tx.data)
-          .reduce(
-            (a, b) => {
-              return {
-                dai: parseFloat(a.dai) + parseFloat(b.dai),
-                usdt: parseFloat(a.usdt) + parseFloat(b.usdt),
-                usdc: parseFloat(a.usdc) + parseFloat(b.usdc),
-              }
-            },
-            {
-              dai: 0,
-              usdt: 0,
-              usdc: 0,
-            }
-          )
-
-        if (
-          parseFloat(selectedBuyCoinAmount) >
-          parseFloat(balances[selectedBuyCoin]) -
-            parseFloat(allPendingCoins[selectedBuyCoin])
-        ) {
-          setBuyFormWarnings('not_have_enough')
-        } else {
-          setBuyFormWarnings(null)
-        }
-      }
-    } else {
-      setBuyFormWarnings(null)
-    }
-  }, [
-    swapMode,
-    selectedBuyCoin,
-    selectedBuyCoinAmount,
-    pendingMintTransactions,
-  ])
 
   const errorMap = [
     {
@@ -445,13 +351,6 @@ const SwapHomepage = ({
             }}
           />
         )}
-        {generalErrorReason && (
-          <ErrorModal
-            reason={generalErrorReason}
-            showRefreshButton={true}
-            onClose={() => {}}
-          />
-        )}
         {buyErrorToDisplay && (
           <ErrorModal
             error={buyErrorToDisplay}
@@ -495,7 +394,7 @@ const SwapHomepage = ({
           onSwap={() => onSwapOusd()}
           allowancesLoaded={allowancesLoaded}
           onMintingError={onMintingError}
-          formHasErrors={formHasErrors}
+          formError={formError}
           swappingGloballyDisabled={swappingGloballyDisabled}
         />
       </div>
