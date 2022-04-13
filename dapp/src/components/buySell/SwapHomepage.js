@@ -21,10 +21,7 @@ import usePrevious from 'utils/usePrevious'
 import ApproveSwap from 'components/buySell/ApproveSwap'
 
 import analytics from 'utils/analytics'
-import {
-  formatCurrencyMinMaxDecimals,
-  removeCommas,
-} from '../../utils/math'
+import { formatCurrencyMinMaxDecimals, removeCommas } from '../../utils/math'
 
 let ReactPixel
 if (process.browser) {

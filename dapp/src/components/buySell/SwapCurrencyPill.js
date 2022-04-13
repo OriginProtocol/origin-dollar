@@ -328,7 +328,12 @@ const SwapCurrencyPill = ({
 
     setError(
       parseFloat(coinBalances[coin]) < parseFloat(coinValue)
-        ? fbt('Insufficient ' + fbt.param('coin', coin.toUpperCase()) + ' balance', 'Insufficient balance for swapping')
+        ? fbt(
+            'Insufficient ' +
+              fbt.param('coin', coin.toUpperCase()) +
+              ' balance',
+            'Insufficient balance for swapping'
+          )
         : null
     )
   }
