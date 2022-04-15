@@ -123,7 +123,7 @@ const DappLinks = ({ dapp, page }) => {
 const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
   const { pathname } = useRouter()
   const { active, account } = useWeb3React()
-  const apy = useStoreState(ContractStore, (s) => s.apy365 || 0)
+  const apy = useStoreState(ContractStore, (s) => s.apy.apy365 || 0)
 
   return (
     <>

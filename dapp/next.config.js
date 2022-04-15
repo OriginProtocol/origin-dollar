@@ -9,7 +9,7 @@ let envFile = 'local.env'
 /*
  * Environmental variables are inserted into the code at the next build step. So it doesn't matter what
  * env variables the production instance has, because the vars have already been inserted and replaced at
- * build step. For that reason we decode production and staging all into deploy.env and have google instaces
+ * build step. For that reason we decode production and staging all into deploy.env and have google instances
  * read from that env file.
  */
 if (isProduction || isStaging) {

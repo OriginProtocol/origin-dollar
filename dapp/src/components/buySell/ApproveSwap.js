@@ -16,7 +16,8 @@ const ApproveSwap = ({
   onSwap,
   allowancesLoaded,
   onMintingError,
-  formHasErrors,
+  balanceError,
+  swapsLoaded,
   swappingGloballyDisabled,
   storeTransaction,
   storeTransactionError,
@@ -29,18 +30,17 @@ const ApproveSwap = ({
   const web3react = useWeb3React()
   const { library, account } = web3react
   const coinApproved = stage === 'done'
-
   const approvalNeeded =
-    (!selectedSwap ||
-      formHasErrors ||
-      swappingGloballyDisabled ||
-      !allowancesLoaded ||
-      !needsApproval) &&
-    !coinApproved
+    (selectedSwap &&
+      !balanceError &&
+      !swappingGloballyDisabled &&
+      allowancesLoaded &&
+      needsApproval) ||
+    coinApproved
 
   useEffect(() => {
     ContractStore.update((s) => {
-      s.approvalNeeded = !approvalNeeded
+      s.approvalNeeded = approvalNeeded
     })
   }, [approvalNeeded])
 
@@ -169,11 +169,37 @@ const ApproveSwap = ({
     )
   }
 
+  const SwapMessage = ({
+    balanceError,
+    stableCoinToApprove,
+    swapsLoaded,
+    selectedSwap,
+    swappingGloballyDisabled,
+  }) => {
+    const coin = stableCoinToApprove.toUpperCase()
+    const noSwapRouteAvailable = swapsLoaded && !selectedSwap
+    if (swappingGloballyDisabled) {
+      return process.env.DISABLE_SWAP_BUTTON_MESSAGE
+    } else if (balanceError) {
+      return fbt(
+        'Insufficient ' + fbt.param('coin', coin) + ' balance',
+        'Insufficient balance for swapping'
+      )
+    } else if (noSwapRouteAvailable) {
+      return fbt(
+        'Route for selected swap not available',
+        'No route available for selected swap'
+      )
+    } else {
+      return fbt('Swap', 'Swap')
+    }
+  }
+
   return (
     <>
       <button
         className={`btn-blue buy-button mt-4 mt-md-3 w-100`}
-        hidden={approvalNeeded}
+        hidden={!approvalNeeded}
         disabled={coinApproved}
         onClick={async () => {
           if (stage === 'approve' && contract) {
@@ -241,14 +267,18 @@ const ApproveSwap = ({
           className={`btn-blue buy-button mt-2 mt-md-0 w-100`}
           disabled={
             !selectedSwap ||
-            formHasErrors ||
+            balanceError ||
             swappingGloballyDisabled ||
             (needsApproval && !coinApproved)
           }
           onClick={onSwap}
         >
-          {swappingGloballyDisabled && process.env.DISABLE_SWAP_BUTTON_MESSAGE}
-          {!swappingGloballyDisabled && fbt('Swap', 'Swap')}
+          <SwapMessage
+            balanceError={balanceError}
+            stableCoinToApprove={stableCoinToApprove}
+            swapsLoaded={swapsLoaded}
+            selectedSwap={selectedSwap}
+          />
         </button>
       </div>
       <style jsx>{`

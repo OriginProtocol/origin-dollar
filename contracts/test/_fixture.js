@@ -38,6 +38,8 @@ async function defaultFixture() {
   );
   const dripperProxy = await ethers.getContract("DripperProxy");
   const dripper = await ethers.getContractAt("Dripper", dripperProxy.address);
+  const wousdProxy = await ethers.getContract("WrappedOUSDProxy");
+  const wousd = await ethers.getContractAt("WrappedOusd", wousdProxy.address);
   const governorContract = await ethers.getContract("Governor");
   const CompoundStrategyFactory = await ethers.getContractFactory(
     "CompoundStrategy"
@@ -304,6 +306,7 @@ async function defaultFixture() {
     compensationClaims,
     flipper,
     buyback,
+    wousd,
   };
 }
 
