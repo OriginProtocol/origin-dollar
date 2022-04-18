@@ -57,10 +57,6 @@ const BalanceHeader = ({
 
   const [balanceEmphasised, setBalanceEmphasised] = useState(false)
   const prevOusdBalance = usePrevious(ousdBalance)
-  const addOusdModalState = useStoreState(
-    AccountStore,
-    (s) => s.addOusdModalState
-  )
   const { animatedExpectedIncrease } = useExpectedYield()
 
   const normalOusdAnimation = (from, to) => {
@@ -75,11 +71,6 @@ const BalanceHeader = ({
       },
       onCompleteCallback: () => {
         setBalanceEmphasised(false)
-        if (addOusdModalState === 'waiting') {
-          AccountStore.update((s) => {
-            s.addOusdModalState = 'show'
-          })
-        }
       },
       // non even duration number so more of the decimals in ousdBalance animate
       duration: 1985,
