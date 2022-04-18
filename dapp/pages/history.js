@@ -40,7 +40,7 @@ export default function History({ locale, onLocale }) {
         .home {
           padding-top: 20px;
         }
-        
+
         .empty-placeholder {
           min-height: 470px;
           height: 100%;
