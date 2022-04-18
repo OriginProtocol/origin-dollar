@@ -348,7 +348,12 @@ const SwapCurrencyPill = ({
   const coinSplits = bottomItem && selectedSwap && selectedSwap.coinSplits
 
   useEffect(() => {
-    if (maxBalanceSet && Number(removeCommas(roundTo2to6Decimals(displayBalance.detailedBalance))) !== Number(removeCommas(roundTo2to6Decimals(coinValue)))) {
+    if (
+      maxBalanceSet &&
+      Number(
+        removeCommas(roundTo2to6Decimals(displayBalance.detailedBalance))
+      ) !== Number(removeCommas(roundTo2to6Decimals(coinValue)))
+    ) {
       setMaxBalanceSet(false)
     }
   }, [coinValue])
@@ -370,7 +375,9 @@ const SwapCurrencyPill = ({
   }
 
   const formatMax = (value) => {
-    return maxBalanceSet && parseFloat(displayBalance.balance) > 0 ? removeCommas(roundTo2to6Decimals(value)) : value
+    return maxBalanceSet && parseFloat(displayBalance.balance) > 0
+      ? removeCommas(roundTo2to6Decimals(value))
+      : value
   }
 
   return (
@@ -429,15 +436,16 @@ const SwapCurrencyPill = ({
                   const value = truncateDecimals(e.target.value)
                   const valueNoCommas = removeCommas(value)
                   if (checkValidInputForCoin(valueNoCommas, selectedCoin)) {
-                    if (maxBalanceSet && e.target.value === value) setMaxBalanceSet(false)
+                    if (maxBalanceSet && e.target.value === value)
+                      setMaxBalanceSet(false)
                     onAmountChange(valueNoCommas)
                   }
-                  
                 }}
                 onBlur={(e) => {
                   setMaxBalanceSet(
                     displayBalance &&
-                    Number(displayBalance.detailedBalance) === Number(coinValue)
+                      Number(displayBalance.detailedBalance) ===
+                        Number(coinValue)
                   )
                   const valueRounded = removeCommas(
                     roundTo2to6Decimals(coinValue)
