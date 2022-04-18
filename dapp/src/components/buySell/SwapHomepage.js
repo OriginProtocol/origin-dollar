@@ -288,7 +288,6 @@ const SwapHomepage = ({
           })
         }
       }
-
     } catch (e) {
       const metadata = swapMetadata()
       // 4001 code happens when a user rejects the transaction
