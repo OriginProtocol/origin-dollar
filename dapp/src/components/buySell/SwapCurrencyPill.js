@@ -432,7 +432,6 @@ const SwapCurrencyPill = ({
                 value={formatMax(coinValue)}
                 placeholder="0.00"
                 onChange={(e) => {
-                  console.log('change')
                   const value = truncateDecimals(e.target.value)
                   const valueNoCommas = removeCommas(value)
                   if (checkValidInputForCoin(valueNoCommas, selectedCoin)) {
@@ -442,11 +441,16 @@ const SwapCurrencyPill = ({
                   }
                 }}
                 onBlur={(e) => {
-                  setMaxBalanceSet(
+                  if (
                     displayBalance &&
-                      Number(displayBalance.detailedBalance) ===
-                        Number(coinValue)
-                  )
+                    Number(displayBalance.detailedBalance) === Number(coinValue)
+                  ) {
+                    setMaxBalanceSet(true)
+                  } else {
+                    setMaxBalanceSet(false)
+                    onAmountChange(coinValue)
+                    return
+                  }
                   const valueRounded = removeCommas(
                     roundTo2to6Decimals(coinValue)
                   )
