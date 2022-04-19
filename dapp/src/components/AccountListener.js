@@ -68,10 +68,9 @@ const AccountListener = (props) => {
   const historyQuery = useTransactionHistoryQuery(account, {
     onSuccess: (history) => {
       AccountStore.update((s) => {
-        s.history = history,
-        s.historyIsLoading = false
+        ;(s.history = history), (s.historyIsLoading = false)
       })
-    }
+    },
   })
 
   useEffect(() => {
