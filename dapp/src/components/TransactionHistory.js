@@ -1,10 +1,8 @@
 import React, { useEffect, useState, useMemo } from 'react'
-import { useRouter } from 'next/router'
 import dateformat from 'dateformat'
 import EtherscanLink from 'components/earn/EtherscanLink'
 
 import { fbt } from 'fbt-runtime'
-import { useWeb3React } from '@web3-react/core'
 import { formatCurrency } from '../utils/math'
 import { shortenAddress } from '../utils/web3'
 import { exportToCsv, sleep } from '../utils/utils'
@@ -13,8 +11,6 @@ import { assetRootPath } from 'utils/image'
 
 import AccountStore from 'stores/AccountStore'
 import { useStoreState } from 'pullstate'
-import useTransactionHistoryQuery from '../queries/useTransactionHistoryQuery'
-import { xor } from 'lodash'
 
 const itemsPerPage = 50
 
