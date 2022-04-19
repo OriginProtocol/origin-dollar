@@ -21,6 +21,7 @@ import { isProduction, isDevelopment } from 'constants/env'
 import useBalancesQuery from '../queries/useBalancesQuery'
 import useAllowancesQuery from '../queries/useAllowancesQuery'
 import useApyQuery from '../queries/useApyQuery'
+import useTransactionHistoryQuery from '../queries/useTransactionHistoryQuery'
 
 const AccountListener = (props) => {
   const web3react = useWeb3React()
@@ -62,6 +63,15 @@ const AccountListener = (props) => {
         s.apy = apy
       })
     },
+  })
+
+  const historyQuery = useTransactionHistoryQuery(account, {
+    onSuccess: (history) => {
+      AccountStore.update((s) => {
+        s.history = history,
+        s.historyIsLoading = false
+      })
+    }
   })
 
   useEffect(() => {
@@ -344,6 +354,7 @@ const AccountListener = (props) => {
     } else {
       balancesQuery.refetch()
       allowancesQuery.refetch()
+      historyQuery.refetch()
 
       await Promise.all([
         loadRebaseStatus(),
@@ -431,7 +442,7 @@ const AccountListener = (props) => {
   }, [userActive, contracts, refetchUserData, prevRefetchUserData])
 
   useEffect(() => {
-    // trigger a force referch user data when the flag is set by a user
+    // trigger a force refetch user data when the flag is set by a user
     if (
       (contracts && isCorrectNetwork(chainId),
       refetchStakingData && !prevRefetchStakingData)

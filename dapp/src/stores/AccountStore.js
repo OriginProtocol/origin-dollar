@@ -13,6 +13,8 @@ const AccountStore = new Store({
   // is user active / engaged with the dapp
   active: 'active', // active / idle
   lifetimeYield: null,
+  history: [],
+  historyIsLoading: true,
 })
 
 export default AccountStore

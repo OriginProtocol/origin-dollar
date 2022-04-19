@@ -11,7 +11,10 @@ import { exportToCsv, sleep } from '../utils/utils'
 import withIsMobile from 'hoc/withIsMobile'
 import { assetRootPath } from 'utils/image'
 
+import AccountStore from 'stores/AccountStore'
+import { useStoreState } from 'pullstate'
 import useTransactionHistoryQuery from '../queries/useTransactionHistoryQuery'
+import { xor } from 'lodash'
 
 const itemsPerPage = 50
 
@@ -119,15 +122,12 @@ const FormatCurrencyByImportance = ({
 }
 
 const TransactionHistory = ({ isMobile }) => {
-  const web3react = useWeb3React()
-  const router = useRouter()
-  const { account: web3Account, active } = web3react
   const [filters, _setFilters] = useState([])
   const [currentPage, setCurrentPage] = useState(1)
   const [pageNumbers, setPageNumbers] = useState([])
 
-  const overrideAccount = router.query.override_account
-  const account = overrideAccount || web3Account
+  const history = useStoreState(AccountStore, (s) => s.history)
+  const isLoading = useStoreState(AccountStore, (s) => s.historyIsLoading)
 
   const txTypeMap = {
     yield: {
@@ -185,13 +185,6 @@ const TransactionHistory = ({ isMobile }) => {
     setCurrentPage(1)
   }
 
-  const historyQuery = useTransactionHistoryQuery(account)
-
-  const history = useMemo(
-    () => (historyQuery.isSuccess ? historyQuery.data : []),
-    [historyQuery.isSuccess, historyQuery.data]
-  )
-
   const shownHistory = useMemo(() => {
     if (filters.length === 0) {
       return history
@@ -207,6 +200,7 @@ const TransactionHistory = ({ isMobile }) => {
   }, [history, filters])
 
   useEffect(() => {
+    //console.log(history)
     const length = shownHistory.length
     const pages = Math.ceil(length / itemsPerPage)
 
@@ -244,7 +238,7 @@ const TransactionHistory = ({ isMobile }) => {
   return (
     <>
       <div className="d-flex holder flex-column justify-content-start">
-        {historyQuery.isLoading ? (
+        {isLoading ? (
           <div className="m-4">{fbt('Loading...', 'Loading...')}</div>
         ) : (
           <>
