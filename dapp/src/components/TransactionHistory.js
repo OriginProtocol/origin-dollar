@@ -1,16 +1,16 @@
 import React, { useEffect, useState, useMemo } from 'react'
+import { useRouter } from 'next/router'
 import dateformat from 'dateformat'
 import EtherscanLink from 'components/earn/EtherscanLink'
 
 import { fbt } from 'fbt-runtime'
+import { useWeb3React } from '@web3-react/core'
 import { formatCurrency } from '../utils/math'
 import { shortenAddress } from '../utils/web3'
 import { exportToCsv, sleep } from '../utils/utils'
 import withIsMobile from 'hoc/withIsMobile'
 import { assetRootPath } from 'utils/image'
 
-import { useRouter } from 'next/router'
-import { useWeb3React } from '@web3-react/core'
 import useTransactionHistoryQuery from '../queries/useTransactionHistoryQuery'
 
 const itemsPerPage = 50
