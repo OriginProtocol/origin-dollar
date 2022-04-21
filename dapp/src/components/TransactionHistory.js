@@ -192,6 +192,10 @@ const TransactionHistory = ({ isMobile }) => {
     [historyQuery.isSuccess, historyQuery.data]
   )
 
+  useEffect(() => {
+    historyQuery.refetch()
+  }, [])
+
   const shownHistory = useMemo(() => {
     if (filters.length === 0) {
       return history
