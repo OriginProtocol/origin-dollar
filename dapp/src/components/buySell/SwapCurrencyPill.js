@@ -326,6 +326,7 @@ const SwapCurrencyPill = ({
      */
     if (
       displayBalance &&
+      coinValue &&
       floorTo2to6Decimals(displayBalance.detailedBalance) ===
         floorTo2to6Decimals(coinValue) &&
       removeCommas(displayBalance.detailedBalance) !== removeCommas(coinValue)
