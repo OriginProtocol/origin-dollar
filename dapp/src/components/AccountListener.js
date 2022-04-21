@@ -65,13 +65,7 @@ const AccountListener = (props) => {
     },
   })
 
-  const historyQuery = useTransactionHistoryQuery(account, {
-    onSuccess: (history) => {
-      AccountStore.update((s) => {
-        ;(s.history = history), (s.historyIsLoading = false)
-      })
-    },
-  })
+  const historyQuery = useTransactionHistoryQuery(account)
 
   useEffect(() => {
     if ((prevActive && !active) || prevAccount !== account) {
@@ -353,7 +347,6 @@ const AccountListener = (props) => {
     } else {
       balancesQuery.refetch()
       allowancesQuery.refetch()
-      historyQuery.refetch()
 
       await Promise.all([
         loadRebaseStatus(),
@@ -367,6 +360,7 @@ const AccountListener = (props) => {
   useEffect(() => {
     if (account) {
       login(account, setCookie)
+      historyQuery.refetch()
     }
 
     const loadLifetimeEarnings = async () => {
