@@ -444,10 +444,6 @@ const SwapCurrencyPill = ({
                     onAmountChange(valueNoCommas)
                   }
                 }}
-                onBlur={(e) => {
-                  const valueRounded = removeCommas(coinValue)
-                  onAmountChange(valueRounded)
-                }}
               />
             )}
             {bottomItem && (
