@@ -317,6 +317,23 @@ const SwapCurrencyPill = ({
     checkForBalanceError()
   }, [coinValue, swapMode, selectedCoin])
 
+  const displayBalance = getDisplayBalance()
+
+  useEffect(() => {
+    /* User has manually inputted the amount that matches the wallet's balance up to 6th decimal.
+     * Add the dust (decimals beyond the 6th one) to the input amount so it is not left behind
+     * in the wallet.
+     */
+    if (
+      displayBalance &&
+      floorTo2to6Decimals(displayBalance.detailedBalance) ===
+        floorTo2to6Decimals(coinValue) &&
+      removeCommas(displayBalance.detailedBalance) !== removeCommas(coinValue)
+    ) {
+      setMaxBalance()
+    }
+  }, [coinValue, displayBalance])
+
   const checkForBalanceError = () => {
     if (bottomItem) {
       return
@@ -327,7 +344,6 @@ const SwapCurrencyPill = ({
     setError(parseFloat(coinBalances[coin]) < parseFloat(coinValue))
   }
 
-  const displayBalance = getDisplayBalance()
   const coinsSelectOptions = getSelectOptions()
   const expectedAmount =
     bottomItem &&
@@ -349,7 +365,9 @@ const SwapCurrencyPill = ({
   const maxBalanceSet =
     topItem &&
     displayBalance &&
-    removeCommas(displayBalance.detailedBalance) === removeCommas(coinValue)
+    // if balance and input match up to 6th decimal. Consider it effectively as set to max balance
+    floorTo2to6Decimals(displayBalance.detailedBalance) ===
+      floorTo2to6Decimals(coinValue)
 
   const balanceClickable =
     topItem &&
@@ -357,9 +375,8 @@ const SwapCurrencyPill = ({
     !maxBalanceSet &&
     parseFloat(displayBalance.balance) > 0
 
-  const onMaxBalanceClick = (e) => {
-    e.preventDefault()
-    if (!balanceClickable || !displayBalance) {
+  const setMaxBalance = () => {
+    if (!displayBalance) {
       return
     }
 
@@ -390,7 +407,7 @@ const SwapCurrencyPill = ({
                 className={`d-flex justify-content-between balance mt-auto mr-2 ${
                   balanceClickable ? 'clickable' : ''
                 }`}
-                onClick={onMaxBalanceClick}
+                onClick={setMaxBalance}
               >
                 {displayBalance && (
                   <div>
@@ -405,7 +422,7 @@ const SwapCurrencyPill = ({
                   </div>
                 )}
                 {balanceClickable && (
-                  <a className="max-link ml-2" onClick={onMaxBalanceClick}>
+                  <a className="max-link ml-2" onClick={setMaxBalance}>
                     {fbt('Max', 'Set maximum currency amount')}
                   </a>
                 )}
@@ -416,10 +433,11 @@ const SwapCurrencyPill = ({
             {topItem && (
               <input
                 type="text"
-                value={floorTo2to6Decimals(coinValue)}
+                value={truncateDecimals(coinValue, 6)}
                 placeholder="0.00"
                 onChange={(e) => {
-                  const value = truncateDecimals(e.target.value)
+                  // truncate decimals after 6th position
+                  const value = truncateDecimals(e.target.value, 6)
                   const valueNoCommas = removeCommas(value)
                   if (checkValidInputForCoin(valueNoCommas, selectedCoin)) {
                     onAmountChange(valueNoCommas)
