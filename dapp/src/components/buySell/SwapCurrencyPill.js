@@ -246,10 +246,8 @@ const SwapCurrencyPill = ({
   topItem,
   onSelectChange,
   onAmountChange,
-  amountEditable,
   selectedCoin,
   selectedSwap,
-  swapsLoaded,
   swapsLoading,
   priceToleranceValue,
   swapMode,
@@ -265,7 +263,7 @@ const SwapCurrencyPill = ({
   const showOusd =
     (swapMode === 'redeem' && topItem) || (swapMode === 'mint' && bottomItem)
 
-  const roundTo2to6Decimals = (value) => {
+  const floorTo2to6Decimals = (value) => {
     return formatCurrencyMinMaxDecimals(value, {
       minDecimals: 2,
       maxDecimals: 6,
@@ -281,7 +279,7 @@ const SwapCurrencyPill = ({
       return {
         coin: 'ousd',
         balance: roundTo2Decimals(coinBalances.ousd),
-        detailedBalance: roundTo2to6Decimals(coinBalances.ousd),
+        detailedBalance: coinBalances.ousd || 0,
       }
     } else {
       if (selectedCoin === 'mix') {
@@ -291,7 +289,7 @@ const SwapCurrencyPill = ({
         return {
           coin: selectedCoin,
           balance: roundTo2Decimals(coinBalances[selectedCoin]),
-          detailedBalance: roundTo2to6Decimals(coinBalances[selectedCoin]),
+          detailedBalance: coinBalances[selectedCoin] || 0,
         }
       }
     }
@@ -319,6 +317,27 @@ const SwapCurrencyPill = ({
     checkForBalanceError()
   }, [coinValue, swapMode, selectedCoin])
 
+  const displayBalance = getDisplayBalance()
+
+  useEffect(() => {
+    /* User has manually inputted the amount that matches the wallet's balance up to 6th decimal.
+     * Add the dust (decimals beyond the 6th one) to the input amount so it is not left behind
+     * in the wallet.
+     */
+    if (
+      displayBalance &&
+      coinValue &&
+      floorTo2to6Decimals(displayBalance.detailedBalance) ===
+        floorTo2to6Decimals(coinValue) &&
+      removeCommas(displayBalance.detailedBalance) !==
+        removeCommas(coinValue) &&
+      // this bit is required so that zeroes can be added to input when already at max value
+      parseFloat(displayBalance.detailedBalance) !== parseFloat(coinValue)
+    ) {
+      setMaxBalance()
+    }
+  }, [coinValue, displayBalance])
+
   const checkForBalanceError = () => {
     if (bottomItem) {
       return
@@ -329,7 +348,6 @@ const SwapCurrencyPill = ({
     setError(parseFloat(coinBalances[coin]) < parseFloat(coinValue))
   }
 
-  const displayBalance = getDisplayBalance()
   const coinsSelectOptions = getSelectOptions()
   const expectedAmount =
     bottomItem &&
@@ -351,7 +369,9 @@ const SwapCurrencyPill = ({
   const maxBalanceSet =
     topItem &&
     displayBalance &&
-    removeCommas(displayBalance.detailedBalance) === removeCommas(coinValue)
+    // if balance and input match up to 6th decimal. Consider it effectively as set to max balance
+    floorTo2to6Decimals(displayBalance.detailedBalance) ===
+      floorTo2to6Decimals(coinValue)
 
   const balanceClickable =
     topItem &&
@@ -359,9 +379,8 @@ const SwapCurrencyPill = ({
     !maxBalanceSet &&
     parseFloat(displayBalance.balance) > 0
 
-  const onMaxBalanceClick = (e) => {
-    e.preventDefault()
-    if (!balanceClickable || !displayBalance) {
+  const setMaxBalance = () => {
+    if (!displayBalance) {
       return
     }
 
@@ -392,7 +411,7 @@ const SwapCurrencyPill = ({
                 className={`d-flex justify-content-between balance mt-auto mr-2 ${
                   balanceClickable ? 'clickable' : ''
                 }`}
-                onClick={onMaxBalanceClick}
+                onClick={setMaxBalance}
               >
                 {displayBalance && (
                   <div>
@@ -407,7 +426,7 @@ const SwapCurrencyPill = ({
                   </div>
                 )}
                 {balanceClickable && (
-                  <a className="max-link ml-2" onClick={onMaxBalanceClick}>
+                  <a className="max-link ml-2" onClick={setMaxBalance}>
                     {fbt('Max', 'Set maximum currency amount')}
                   </a>
                 )}
@@ -418,20 +437,15 @@ const SwapCurrencyPill = ({
             {topItem && (
               <input
                 type="text"
-                value={coinValue}
+                value={truncateDecimals(coinValue, 6)}
                 placeholder="0.00"
                 onChange={(e) => {
-                  const value = truncateDecimals(e.target.value)
+                  // truncate decimals after 6th position
+                  const value = truncateDecimals(e.target.value, 6)
                   const valueNoCommas = removeCommas(value)
                   if (checkValidInputForCoin(valueNoCommas, selectedCoin)) {
                     onAmountChange(valueNoCommas)
                   }
-                }}
-                onBlur={(e) => {
-                  const valueRounded = removeCommas(
-                    roundTo2to6Decimals(coinValue)
-                  )
-                  onAmountChange(valueRounded)
                 }}
               />
             )}

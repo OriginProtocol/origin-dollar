@@ -279,7 +279,7 @@ const ContractsTable = () => {
                   {swapContract.name}
                 </div>
                 <div className="value-cell d-none d-md-block text-right">
-                  {loadingOrEmpty
+                  {loadingOrEmpty || !canDoSwap
                     ? '-'
                     : formatCurrency(estimation.amountReceived, 2)}
                 </div>
