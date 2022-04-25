@@ -31,7 +31,7 @@ const useExpectedYield = (isWrapped = false) => {
   )
   const prevExpectedIncrease = usePrevious(expectedIncrease)
 
-  const expectedIncreaseAnimation = (from, to) => {
+  const expectedIncreaseAnimation = (from, to, isWrapped) => {
     return animateValue({
       from: parseFloat(from) || 0,
       to: parseFloat(to),
@@ -62,12 +62,12 @@ const useExpectedYield = (isWrapped = false) => {
       Math.abs(expectedIncreaseNum - prevExpectedIncreaseNum) >
         mintAnimationLimit
     ) {
-      expectedIncreaseAnimation(prevExpectedIncreaseNum, expectedIncreaseNum)
+      expectedIncreaseAnimation(prevExpectedIncreaseNum, expectedIncreaseNum, isWrapped)
     } else if (
       typeof expectedIncreaseNum === 'number' &&
       typeof prevExpectedIncreaseNum !== 'number'
     ) {
-      expectedIncreaseAnimation(0, expectedIncreaseNum)
+      expectedIncreaseAnimation(0, expectedIncreaseNum, isWrapped)
     }
   }, [expectedIncrease])
 
