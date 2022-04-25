@@ -59,7 +59,7 @@ const BalanceHeader = ({
   const [balanceEmphasised, setBalanceEmphasised] = useState(false)
   const prevOusdBalance = usePrevious(ousdBalance)
   const { animatedExpectedIncrease } = useExpectedYield(isWrapped)
-  
+
   const wousdBalance = useStoreState(AccountStore, (s) => s.balances['wousd'])
   const wousdBalanceLoaded = typeof wousdBalance === 'string'
 

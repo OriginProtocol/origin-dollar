@@ -304,20 +304,6 @@ const WrapOusdPill = ({
           margin-left: 4px;
         }
 
-        .multiple-balance {
-          margin-top: 6px;
-        }
-
-        .multiple-balance-holder {
-          border-top: 1px solid #cdd7e0;
-          margin-left: -10px;
-          margin-right: -24px;
-          padding-left: 10px;
-          padding-right: 24px;
-          margin-top: 10px;
-          padding-top: 4px;
-        }
-
         .mt-20 {
           margin-top: 20px;
         }
