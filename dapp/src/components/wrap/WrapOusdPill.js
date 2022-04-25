@@ -18,8 +18,8 @@ const CoinImage = ({ small, coin, isSemiTransparent = false }) => {
   return (
     <div className="d-flex align-items-center">
       <img
-          className={`${className} ${small ? 'small' : ''}`}
-          src={assetRootPath(`/images/currency/${coin}-icon-small.svg`)}
+        className={`${className} ${small ? 'small' : ''}`}
+        src={assetRootPath(`/images/currency/${coin}-icon-small.svg`)}
       />
       <style jsx>{`
         .coin-image {
@@ -65,7 +65,9 @@ const CoinSelect = ({ selected }) => {
         className={`coin-select d-flex align-items-center justify-content-start`}
       >
         <CoinImage coin={selected} />
-        <div className="coin mr-auto">{`${selected === 'wousd' ? 'w' : ''}OUSD`}</div>
+        <div className="coin mr-auto">{`${
+          selected === 'wousd' ? 'w' : ''
+        }OUSD`}</div>
       </div>
       <style jsx>{`
         .coin-select {
@@ -105,7 +107,8 @@ const WrapOusdPill = ({
 
   const selectedCoin = swapMode === 'mint' ? 'ousd' : 'wousd'
 
-  const showOusd = (swapMode === 'mint' && topItem) || (swapMode === 'redeem' && bottomItem)
+  const showOusd =
+    (swapMode === 'mint' && topItem) || (swapMode === 'redeem' && bottomItem)
 
   const floorTo2to6Decimals = (value) => {
     return formatCurrencyMinMaxDecimals(value, {
@@ -174,9 +177,7 @@ const WrapOusdPill = ({
   }
 
   const expectedAmount =
-    bottomItem &&
-    wrapEstimate &&
-    formatCurrency(wrapEstimate, 2)
+    bottomItem && wrapEstimate && formatCurrency(wrapEstimate, 2)
 
   const maxBalanceSet =
     topItem &&
@@ -211,18 +212,12 @@ const WrapOusdPill = ({
           className={`d-flex align-items-start justify-content-between currency-pill-inner`}
         >
           <div className="d-flex flex-column justify-content-between align-items-start h-100">
-            {topItem ?
-              (
-                <CoinSelect
-                  selected={swapMode === 'mint' ? 'ousd' : 'wousd'}
-                />
-              ) : (
-                <CoinSelect
-                  selected={swapMode === 'mint' ? 'wousd' : 'ousd'}
-                />
-              )
-            }
-            
+            {topItem ? (
+              <CoinSelect selected={swapMode === 'mint' ? 'ousd' : 'wousd'} />
+            ) : (
+              <CoinSelect selected={swapMode === 'mint' ? 'wousd' : 'ousd'} />
+            )}
+
             <div className="d-flex align-items-center">
               <div
                 className={`d-flex justify-content-between balance mt-auto mr-2 ${
@@ -271,10 +266,7 @@ const WrapOusdPill = ({
                 {rate !== null
                   ? fbt(
                       '1 wOUSD = ' +
-                        fbt.param(
-                          'wousd-rate',
-                          formatCurrency(rate, 6)
-                        ) +
+                        fbt.param('wousd-rate', formatCurrency(rate, 6)) +
                         ' OUSD',
                       'wOUSD conversion rate'
                     )

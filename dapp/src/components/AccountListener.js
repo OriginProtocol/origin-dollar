@@ -126,11 +126,7 @@ const AccountListener = (props) => {
       return
     }
 
-    const {
-      ousd,
-      ogn,
-      ognStakingView,
-    } = contracts
+    const { ousd, ogn, ognStakingView } = contracts
 
     const loadPoolRelatedAccountData = async () => {
       if (!account) return

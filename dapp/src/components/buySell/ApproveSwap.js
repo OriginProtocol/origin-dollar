@@ -106,7 +106,7 @@ const ApproveSwap = ({
       name: {
         approving: 'wOUSD',
         done: 'wOUSD',
-      }
+      },
     },
   }
 
@@ -184,7 +184,10 @@ const ApproveSwap = ({
     selectedSwap,
     swappingGloballyDisabled,
   }) => {
-    const coin = stableCoinToApprove === 'wousd' ? 'wOUSD' : stableCoinToApprove.toUpperCase()
+    const coin =
+      stableCoinToApprove === 'wousd'
+        ? 'wOUSD'
+        : stableCoinToApprove.toUpperCase()
     const noSwapRouteAvailable = swapsLoaded && !selectedSwap
     if (swappingGloballyDisabled) {
       return process.env.DISABLE_SWAP_BUTTON_MESSAGE
@@ -198,9 +201,13 @@ const ApproveSwap = ({
         'Route for selected swap not available',
         'No route available for selected swap'
       )
-    } else if (selectedSwap && selectedSwap.name === 'wousd' && stableCoinToApprove === 'ousd'){
+    } else if (
+      selectedSwap &&
+      selectedSwap.name === 'wousd' &&
+      stableCoinToApprove === 'ousd'
+    ) {
       return fbt('Wrap', 'Wrap')
-    } else if (stableCoinToApprove === 'wousd'){
+    } else if (stableCoinToApprove === 'wousd') {
       return fbt('Unwrap', 'Unwrap')
     } else {
       return fbt('Swap', 'Swap')

@@ -19,18 +19,18 @@ const useExpectedYield = (isWrapped = false) => {
     YieldStore,
     (s) => s.nextCreditsPerToken
   )
-  const expectedIncrease = useStoreState(YieldStore, (s) => isWrapped ? s.expectedIncreaseWrapped : s.expectedIncrease)
-  const animatedExpectedIncrease = useStoreState(
-    YieldStore,
-    (s) => isWrapped ? s.animatedExpectedIncreaseWrapped : s.animatedExpectedIncrease
+  const expectedIncrease = useStoreState(YieldStore, (s) =>
+    isWrapped ? s.expectedIncreaseWrapped : s.expectedIncrease
+  )
+  const animatedExpectedIncrease = useStoreState(YieldStore, (s) =>
+    isWrapped ? s.animatedExpectedIncreaseWrapped : s.animatedExpectedIncrease
   )
 
-  const creditsBalanceOf = useStoreState(
-    AccountStore,
-    (s) => isWrapped ? s.creditsWrapped : s.creditsBalanceOf
+  const creditsBalanceOf = useStoreState(AccountStore, (s) =>
+    isWrapped ? s.creditsWrapped : s.creditsBalanceOf
   )
   const prevExpectedIncrease = usePrevious(expectedIncrease)
-  
+
   const expectedIncreaseAnimation = (from, to) => {
     return animateValue({
       from: parseFloat(from) || 0,

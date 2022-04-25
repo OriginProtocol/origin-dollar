@@ -81,18 +81,24 @@ export default class BalancesService {
   async fetchBalancesForDevelopment(account, contracts) {
     const { ousd, usdt, dai, usdc, ogn, wousd } = contracts
 
-    const [ousdBalance, usdtBalance, daiBalance, usdcBalance, ognBalance, wousdBalance] =
-      await Promise.all([
-        /* IMPORTANT (!) production uses a different method to load balances. Any changes here need to
-         * also happen in production version of this function.
-         */
-        displayCurrency(await ousd.balanceOf(account), ousd),
-        displayCurrency(await usdt.balanceOf(account), usdt),
-        displayCurrency(await dai.balanceOf(account), dai),
-        displayCurrency(await usdc.balanceOf(account), usdc),
-        displayCurrency(await ogn.balanceOf(account), ogn),
-        displayCurrency(await wousd.balanceOf(account), wousd),
-      ])
+    const [
+      ousdBalance,
+      usdtBalance,
+      daiBalance,
+      usdcBalance,
+      ognBalance,
+      wousdBalance,
+    ] = await Promise.all([
+      /* IMPORTANT (!) production uses a different method to load balances. Any changes here need to
+       * also happen in production version of this function.
+       */
+      displayCurrency(await ousd.balanceOf(account), ousd),
+      displayCurrency(await usdt.balanceOf(account), usdt),
+      displayCurrency(await dai.balanceOf(account), dai),
+      displayCurrency(await usdc.balanceOf(account), usdc),
+      displayCurrency(await ogn.balanceOf(account), ogn),
+      displayCurrency(await wousd.balanceOf(account), wousd),
+    ])
 
     return {
       ousd: ousdBalance,

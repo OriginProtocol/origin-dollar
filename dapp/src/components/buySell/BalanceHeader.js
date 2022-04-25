@@ -120,7 +120,8 @@ const BalanceHeader = ({
   }, [ousdBalance])
 
   useEffect(() => {
-    if (isWrapped) animate(wousdBalanceLoaded, wousdBalance, prevWousdBalance, true)
+    if (isWrapped)
+      animate(wousdBalanceLoaded, wousdBalance, prevWousdBalance, true)
   }, [wousdBalance])
 
   /*
@@ -337,86 +338,82 @@ const BalanceHeader = ({
             </div>
           </div>
           <div className="d-flex flex-column flex-md-row align-items-center justify-content-between box box-narrow w-100">
-            {isWrapped ?
-              (
-                <>
-                  <Statistic
-                    title={fbt('wOUSD Balance', 'wOUSD Balance')}
-                    value={
-                      !isNaN(parseFloat(displayedBalanceWrapped)) && wousdBalanceLoaded
-                        ? displayedBalanceWrapped
-                        : '--.--'
-                    }
-                    type={'number'}
-                    marginBottom={true}
-                  />
-                  <Statistic
-                    title={fbt(
-                      'Current Value (OUSD)',
-                      'Current Value (OUSD)'
-                    )}
-                    value={
-                      walletConnected && !isNaN(wousdValue)
-                        ? formatCurrency(wousdValue, 2)
-                        : '--.--'
-                    }
-                    type={'number'}
-                  />
-                  <Statistic
-                    title={fbt('Pending yield (OUSD)', 'Pending yield (OUSD)')}
-                    value={
-                      walletConnected
-                        ? formatCurrency(animatedExpectedIncrease, 2)
-                        : '--.--'
-                    }
-                    type={'number'}
-                    marginBottom={true}
-                  />
-                </>
-              ) : (
-                <>
-                  <Statistic
-                    title={fbt('Balance', 'OUSD Balance')}
-                    value={
-                      !isNaN(parseFloat(displayedBalance)) && ousdBalanceLoaded
-                        ? displayedBalance
-                        : '--.--'
-                    }
-                    type={'number'}
-                    marginBottom={true}
-                  />
-                  <Statistic
-                    title={fbt('Pending yield', 'Pending yield')}
-                    value={
-                      walletConnected
-                        ? formatCurrency(animatedExpectedIncrease, 2)
-                        : '--.--'
-                    }
-                    type={'number'}
-                    marginBottom={true}
-                  />
-                  <Statistic
-                    title={fbt(
-                      'Lifetime earnings',
-                      'Lifetime OUSD balance header earnings'
-                    )}
-                    titleLink={
-                      account
-                        ? `${
-                            process.env.ANALYTICS_ENDPOINT
-                          }/address/${account.toLowerCase()}`
-                        : false
-                    }
-                    value={
-                      walletConnected && lifetimeYield
-                        ? formatCurrency(lifetimeYield, 2)
-                        : '--.--'
-                    }
-                    type={'number'}
-                  />
-                </>
-              )
-            }
+            {isWrapped ? (
+              <>
+                <Statistic
+                  title={fbt('wOUSD Balance', 'wOUSD Balance')}
+                  value={
+                    !isNaN(parseFloat(displayedBalanceWrapped)) &&
+                    wousdBalanceLoaded
+                      ? displayedBalanceWrapped
+                      : '--.--'
+                  }
+                  type={'number'}
+                  marginBottom={true}
+                />
+                <Statistic
+                  title={fbt('Current Value (OUSD)', 'Current Value (OUSD)')}
+                  value={
+                    walletConnected && !isNaN(wousdValue)
+                      ? formatCurrency(wousdValue, 2)
+                      : '--.--'
+                  }
+                  type={'number'}
+                />
+                <Statistic
+                  title={fbt('Pending yield (OUSD)', 'Pending yield (OUSD)')}
+                  value={
+                    walletConnected
+                      ? formatCurrency(animatedExpectedIncrease, 2)
+                      : '--.--'
+                  }
+                  type={'number'}
+                  marginBottom={true}
+                />
+              </>
+            ) : (
+              <>
+                <Statistic
+                  title={fbt('Balance', 'OUSD Balance')}
+                  value={
+                    !isNaN(parseFloat(displayedBalance)) && ousdBalanceLoaded
+                      ? displayedBalance
+                      : '--.--'
+                  }
+                  type={'number'}
+                  marginBottom={true}
+                />
+                <Statistic
+                  title={fbt('Pending yield', 'Pending yield')}
+                  value={
+                    walletConnected
+                      ? formatCurrency(animatedExpectedIncrease, 2)
+                      : '--.--'
+                  }
+                  type={'number'}
+                  marginBottom={true}
+                />
+                <Statistic
+                  title={fbt(
+                    'Lifetime earnings',
+                    'Lifetime OUSD balance header earnings'
+                  )}
+                  titleLink={
+                    account
+                      ? `${
+                          process.env.ANALYTICS_ENDPOINT
+                        }/address/${account.toLowerCase()}`
+                      : false
+                  }
+                  value={
+                    walletConnected && lifetimeYield
+                      ? formatCurrency(lifetimeYield, 2)
+                      : '--.--'
+                  }
+                  type={'number'}
+                />
+              </>
+            )}
           </div>
         </div>
       </div>

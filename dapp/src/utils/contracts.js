@@ -137,7 +137,7 @@ export async function setupContracts(account, library, chainId, fetchId) {
       throw e
     }
   }
-  
+
   const ousdProxy = contracts['OUSDProxy']
   const wousdProxy = contracts['WrappedOUSDProxy']
   const vaultProxy = contracts['VaultProxy']

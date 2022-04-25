@@ -18,7 +18,12 @@ import ApproveSwap from 'components/buySell/ApproveSwap'
 import { useWeb3React } from '@web3-react/core'
 
 import analytics from 'utils/analytics'
-import { formatCurrencyMinMaxDecimals, removeCommas, displayCurrency, calculateSwapAmounts } from '../../utils/math'
+import {
+  formatCurrencyMinMaxDecimals,
+  removeCommas,
+  displayCurrency,
+  calculateSwapAmounts,
+} from '../../utils/math'
 
 let ReactPixel
 if (process.browser) {
@@ -46,7 +51,8 @@ const WrapHomepage = ({
   const wrappingGloballyDisabled = process.env.DISABLE_WRAP_BUTTON === 'true'
 
   const allowances = useStoreState(AccountStore, (s) => s.allowances)
-  const allowancesLoaded = typeof allowances === 'object' && allowances.ousd !== undefined
+  const allowancesLoaded =
+    typeof allowances === 'object' && allowances.ousd !== undefined
 
   const [wrapEstimate, setWrapEstimate] = useState('')
   const [needsApproval, setNeedsApproval] = useState()
@@ -56,10 +62,7 @@ const WrapHomepage = ({
   const web3react = useWeb3React()
   const { library } = web3react
 
-  const {
-    ousd,
-    wousd,
-  } = useStoreState(ContractStore, (s) => s.contracts)
+  const { ousd, wousd } = useStoreState(ContractStore, (s) => s.contracts)
 
   const signer = (contract) => {
     return contract.connect(library.getSigner(account))
@@ -74,9 +77,19 @@ const WrapHomepage = ({
       if (!inputAmount) {
         estimate = 0
       } else if (swapMode === 'mint') {
-        estimate = await displayCurrency(await wousd.convertToShares(calculateSwapAmounts(inputAmount, 18).swapAmount), wousd)
+        estimate = await displayCurrency(
+          await wousd.convertToShares(
+            calculateSwapAmounts(inputAmount, 18).swapAmount
+          ),
+          wousd
+        )
       } else {
-        estimate = await displayCurrency(await wousd.convertToAssets(calculateSwapAmounts(inputAmount, 18).swapAmount), ousd)
+        estimate = await displayCurrency(
+          await wousd.convertToAssets(
+            calculateSwapAmounts(inputAmount, 18).swapAmount
+          ),
+          ousd
+        )
       }
       setWrapEstimate(estimate)
     }
@@ -84,10 +97,15 @@ const WrapHomepage = ({
       if (!allowancesLoaded) {
         return
       }
-      setNeedsApproval(parseFloat(allowances.ousd.wousd) < inputAmount ? 'wousd' : '')
+      setNeedsApproval(
+        parseFloat(allowances.ousd.wousd) < inputAmount ? 'wousd' : ''
+      )
     }
     const calculateRate = async () => {
-      const conversionRate = await displayCurrency(await wousd.convertToAssets(calculateSwapAmounts(1, 18).swapAmount), wousd)
+      const conversionRate = await displayCurrency(
+        await wousd.convertToAssets(calculateSwapAmounts(1, 18).swapAmount),
+        wousd
+      )
       setRate(conversionRate)
     }
     wrapEstimate()
@@ -165,9 +183,16 @@ const WrapHomepage = ({
 
       let result
       if (swapMode === 'mint') {
-        result = await signer(wousd).deposit(calculateSwapAmounts(inputAmount, 18).swapAmount, account)
+        result = await signer(wousd).deposit(
+          calculateSwapAmounts(inputAmount, 18).swapAmount,
+          account
+        )
       } else {
-        result = await signer(wousd).redeem(calculateSwapAmounts(inputAmount, 18).swapAmount, account, account)
+        result = await signer(wousd).redeem(
+          calculateSwapAmounts(inputAmount, 18).swapAmount,
+          account,
+          account
+        )
       }
 
       storeTransaction(
@@ -175,10 +200,8 @@ const WrapHomepage = ({
         swapMode === 'mint' ? 'redeem' : 'mint',
         'wousd',
         {
-          ousd:
-            inputAmount,
-          wousd:
-            inputAmount
+          ousd: inputAmount,
+          wousd: inputAmount,
         }
       )
       setStoredCoinValuesToZero()
@@ -259,14 +282,11 @@ const WrapHomepage = ({
           onErrorChange={setBalanceError}
         />
         <PillArrow swapMode={swapMode} setSwapMode={setSwapMode} />
-        <WrapOusdPill
-          swapMode={swapMode}
-          wrapEstimate={wrapEstimate}
-        />
+        <WrapOusdPill swapMode={swapMode} wrapEstimate={wrapEstimate} />
         <ApproveSwap
           stableCoinToApprove={swapMode === 'mint' ? 'ousd' : 'wousd'}
           needsApproval={needsApproval}
-          selectedSwap={{name: 'wousd'}}
+          selectedSwap={{ name: 'wousd' }}
           swapMetadata={swapMetadata()}
           onSwap={() => onWrapOusd()}
           allowancesLoaded={allowancesLoaded}
