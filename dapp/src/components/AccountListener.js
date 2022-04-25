@@ -21,6 +21,7 @@ import { isProduction, isDevelopment } from 'constants/env'
 import useBalancesQuery from '../queries/useBalancesQuery'
 import useAllowancesQuery from '../queries/useAllowancesQuery'
 import useApyQuery from '../queries/useApyQuery'
+import useTransactionHistoryQuery from '../queries/useTransactionHistoryQuery'
 import useWousdQuery from '../queries/useWousdQuery'
 
 const AccountListener = (props) => {
@@ -72,6 +73,8 @@ const AccountListener = (props) => {
       })
     },
   })
+
+  const historyQuery = useTransactionHistoryQuery(account)
 
   useEffect(() => {
     if ((prevActive && !active) || prevAccount !== account) {
@@ -352,6 +355,7 @@ const AccountListener = (props) => {
   useEffect(() => {
     if (account) {
       login(account, setCookie)
+      historyQuery.refetch()
     }
 
     const loadLifetimeEarnings = async () => {
@@ -426,7 +430,7 @@ const AccountListener = (props) => {
   }, [userActive, contracts, refetchUserData, prevRefetchUserData])
 
   useEffect(() => {
-    // trigger a force referch user data when the flag is set by a user
+    // trigger a force refetch user data when the flag is set by a user
     if (
       (contracts && isCorrectNetwork(chainId),
       refetchStakingData && !prevRefetchStakingData)
