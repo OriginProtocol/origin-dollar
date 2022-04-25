@@ -139,7 +139,6 @@ export async function setupContracts(account, library, chainId, fetchId) {
   }
 
   const ousdProxy = contracts['OUSDProxy']
-  const wousdProxy = contracts['WrappedOUSDProxy']
   const vaultProxy = contracts['VaultProxy']
   const OGNStakingProxy = contracts['OGNStakingProxy']
   let liquidityRewardOUSD_USDTProxy,
@@ -189,6 +188,7 @@ export async function setupContracts(account, library, chainId, fetchId) {
     curveAddressProvider
 
   let iVaultJson,
+    wousdJSON,
     liquidityRewardJson,
     iErc20Json,
     iUniPairJson,
@@ -218,6 +218,7 @@ export async function setupContracts(account, library, chainId, fetchId) {
     uniV3SwapQuoterJson = require('../../abis/UniswapV3Quoter.json')
     chainlinkAggregatorV3Json = require('../../abis/ChainlinkAggregatorV3Interface.json')
     curveAddressProviderJson = require('../../abis/CurveAddressProvider.json')
+    wousdJSON = require('../../abis/WOUSD.json')
   } catch (e) {
     console.error(`Can not find contract artifact file: `, e)
   }
@@ -251,7 +252,7 @@ export async function setupContracts(account, library, chainId, fetchId) {
   usdc = getContract(addresses.mainnet.USDC, usdcAbi.abi)
   dai = getContract(addresses.mainnet.DAI, daiAbi.abi)
   ogn = getContract(addresses.mainnet.OGN, ognAbi)
-  wousd = getContract(wousdProxy.address, network.contracts['WrappedOusd'].abi)
+  wousd = getContract(addresses.mainnet.WOUSDProxy, wousdJSON.abi)
   flipper = getContract(addresses.mainnet.Flipper, flipperAbi)
 
   uniV3OusdUsdt = getContract(
