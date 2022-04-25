@@ -21,7 +21,7 @@ import { isProduction, isDevelopment } from 'constants/env'
 import useBalancesQuery from '../queries/useBalancesQuery'
 import useAllowancesQuery from '../queries/useAllowancesQuery'
 import useApyQuery from '../queries/useApyQuery'
-import useTransactionHistoryQuery from '../queries/useTransactionHistoryQuery'
+import useWousdQuery from '../queries/useWousdQuery'
 
 const AccountListener = (props) => {
   const web3react = useWeb3React()
@@ -57,6 +57,14 @@ const AccountListener = (props) => {
     },
   })
 
+  const wousdQuery = useWousdQuery(account, contracts, {
+    onSuccess: (wousdValue) => {
+      AccountStore.update((s) => {
+        s.wousdValue = wousdValue
+      })
+    },
+  })
+
   const apyQuery = useApyQuery({
     onSuccess: (apy) => {
       ContractStore.update((s) => {
@@ -64,8 +72,6 @@ const AccountListener = (props) => {
       })
     },
   })
-
-  const historyQuery = useTransactionHistoryQuery(account)
 
   useEffect(() => {
     if ((prevActive && !active) || prevAccount !== account) {
@@ -121,20 +127,9 @@ const AccountListener = (props) => {
     }
 
     const {
-      usdt,
-      dai,
-      usdc,
       ousd,
-      vault,
       ogn,
-      uniV3SwapRouter,
-      uniV2Router,
-      sushiRouter,
-      liquidityOusdUsdt,
-      flipper,
-      ognStaking,
       ognStakingView,
-      curveOUSDMetaPool,
     } = contracts
 
     const loadPoolRelatedAccountData = async () => {
@@ -347,6 +342,7 @@ const AccountListener = (props) => {
     } else {
       balancesQuery.refetch()
       allowancesQuery.refetch()
+      wousdQuery.refetch()
 
       await Promise.all([
         loadRebaseStatus(),
@@ -360,7 +356,6 @@ const AccountListener = (props) => {
   useEffect(() => {
     if (account) {
       login(account, setCookie)
-      historyQuery.refetch()
     }
 
     const loadLifetimeEarnings = async () => {
@@ -435,7 +430,7 @@ const AccountListener = (props) => {
   }, [userActive, contracts, refetchUserData, prevRefetchUserData])
 
   useEffect(() => {
-    // trigger a force refetch user data when the flag is set by a user
+    // trigger a force referch user data when the flag is set by a user
     if (
       (contracts && isCorrectNetwork(chainId),
       refetchStakingData && !prevRefetchStakingData)

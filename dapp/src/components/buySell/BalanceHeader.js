@@ -7,6 +7,7 @@ import withIsMobile from 'hoc/withIsMobile'
 
 import AccountStore from 'stores/AccountStore'
 import AnimatedOusdStore from 'stores/AnimatedOusdStore'
+import AnimatedWousdStore from 'stores/AnimatedWousdStore'
 import ContractStore from 'stores/ContractStore'
 import { formatCurrency } from 'utils/math'
 import { animateValue } from 'utils/animation'
@@ -22,6 +23,7 @@ import DownCaret from 'components/DownCaret'
 import { zipObject } from 'lodash'
 
 const BalanceHeader = ({
+  isWrapped = false,
   storeTransaction,
   storeTransactionError,
   rpcProvider,
@@ -41,10 +43,6 @@ const BalanceHeader = ({
       : DEFAULT_SELECTED_APY
   )
 
-  const vault = useStoreState(ContractStore, (s) => _get(s, 'contracts.vault'))
-  const ousdContract = useStoreState(ContractStore, (s) =>
-    _get(s, 'contracts.ousd')
-  )
   const ousdBalance = useStoreState(AccountStore, (s) => s.balances['ousd'])
   const lifetimeYield = useStoreState(AccountStore, (s) => s.lifetimeYield)
   const ousdBalanceLoaded = typeof ousdBalance === 'string'
@@ -52,54 +50,78 @@ const BalanceHeader = ({
     AnimatedOusdStore,
     (s) => s.animatedOusdBalance
   )
+  const animatedWousdBalance = useStoreState(
+    AnimatedOusdStore,
+    (s) => s.animatedWousdBalance
+  )
   const mintAnimationLimit = 0.5
   const walletConnected = useStoreState(ContractStore, (s) => s.walletConnected)
 
   const [balanceEmphasised, setBalanceEmphasised] = useState(false)
   const prevOusdBalance = usePrevious(ousdBalance)
-  const { animatedExpectedIncrease } = useExpectedYield()
+  const { animatedExpectedIncrease } = useExpectedYield(isWrapped)
 
-  const normalOusdAnimation = (from, to) => {
+  const wousdBalance = useStoreState(AccountStore, (s) => s.balances['wousd'])
+  const wousdBalanceLoaded = typeof wousdBalance === 'string'
+
+  const prevWousdBalance = usePrevious(wousdBalance)
+  const wousdValue = useStoreState(AccountStore, (s) => s.wousdValue)
+
+  const normalOusdAnimation = (from, to, isWrapped = false) => {
     setBalanceEmphasised(true)
     return animateValue({
       from: parseFloat(from) || 0,
       to: parseFloat(to),
       callbackValue: (val) => {
-        AnimatedOusdStore.update((s) => {
-          s.animatedOusdBalance = val
-        })
+        if (isWrapped) {
+          AnimatedOusdStore.update((s) => {
+            s.animatedWousdBalance = val
+          })
+        } else {
+          AnimatedOusdStore.update((s) => {
+            s.animatedOusdBalance = val
+          })
+        }
       },
       onCompleteCallback: () => {
         setBalanceEmphasised(false)
       },
       // non even duration number so more of the decimals in ousdBalance animate
       duration: 1985,
-      id: 'header-balance-ousd-animation',
+      id: `header-balance-${isWrapped ? 'wousd' : 'ousd'}-animation`,
       stepTime: 30,
     })
   }
 
-  useEffect(() => {
-    if (ousdBalanceLoaded) {
-      const ousdBalanceNum = parseFloat(ousdBalance)
-      const prevOusdBalanceNum = parseFloat(prevOusdBalance)
+  const animate = (balanceLoaded, balance, prevBalance, isWrapped) => {
+    if (balanceLoaded) {
+      const balanceNum = parseFloat(balance)
+      const prevBalanceNum = parseFloat(prevBalance)
       // user must have minted the OUSD
       if (
-        !isNaN(parseFloat(ousdBalanceNum)) &&
-        !isNaN(parseFloat(prevOusdBalanceNum)) &&
-        Math.abs(ousdBalanceNum - prevOusdBalanceNum) > mintAnimationLimit
+        !isNaN(parseFloat(balanceNum)) &&
+        !isNaN(parseFloat(prevBalanceNum)) &&
+        Math.abs(balanceNum - prevBalanceNum) > mintAnimationLimit
       ) {
-        normalOusdAnimation(prevOusdBalance, ousdBalance)
+        normalOusdAnimation(prevBalance, balance, isWrapped)
       } else if (
-        !isNaN(parseFloat(ousdBalanceNum)) &&
-        ousdBalanceNum > mintAnimationLimit
+        !isNaN(parseFloat(balanceNum)) &&
+        balanceNum > mintAnimationLimit
       ) {
-        normalOusdAnimation(0, ousdBalance)
+        normalOusdAnimation(0, balance, isWrapped)
       } else {
-        normalOusdAnimation(prevOusdBalance, 0)
+        normalOusdAnimation(prevBalance, 0, isWrapped)
       }
     }
+  }
+
+  useEffect(() => {
+    if (!isWrapped) animate(ousdBalanceLoaded, ousdBalance, prevOusdBalance)
   }, [ousdBalance])
+
+  useEffect(() => {
+    if (isWrapped) animate(wousdBalanceLoaded, wousdBalance, prevWousdBalance, true)
+  }, [wousdBalance])
 
   /*
    * Type: number or percentage
@@ -197,6 +219,7 @@ const BalanceHeader = ({
   }
 
   const displayedBalance = formatCurrency(animatedOusdBalance || 0, 2)
+  const displayedBalanceWrapped = formatCurrency(animatedWousdBalance || 0, 2)
 
   useEffect(() => {
     localStorage.setItem('last_user_selected_apy', apyDays)
@@ -287,6 +310,7 @@ const BalanceHeader = ({
       </>
     )
   }
+
   return (
     <>
       <div className="balance-header d-flex flex-column justify-content-start">
@@ -313,45 +337,86 @@ const BalanceHeader = ({
             </div>
           </div>
           <div className="d-flex flex-column flex-md-row align-items-center justify-content-between box box-narrow w-100">
-            <Statistic
-              title={fbt('Balance', 'OUSD Balance')}
-              value={
-                !isNaN(parseFloat(displayedBalance)) && ousdBalanceLoaded
-                  ? displayedBalance
-                  : '--.--'
-              }
-              type={'number'}
-              marginBottom={true}
-            />
-            <Statistic
-              title={fbt('Pending yield', 'Pending yield')}
-              value={
-                walletConnected
-                  ? formatCurrency(animatedExpectedIncrease, 2)
-                  : '--.--'
-              }
-              type={'number'}
-              marginBottom={true}
-            />
-            <Statistic
-              title={fbt(
-                'Lifetime earnings',
-                'Lifetime OUSD balance header earnings'
-              )}
-              titleLink={
-                account
-                  ? `${
-                      process.env.ANALYTICS_ENDPOINT
-                    }/address/${account.toLowerCase()}`
-                  : false
-              }
-              value={
-                walletConnected && lifetimeYield
-                  ? formatCurrency(lifetimeYield, 2)
-                  : '--.--'
-              }
-              type={'number'}
-            />
+            {isWrapped ?
+              (
+                <>
+                  <Statistic
+                    title={fbt('wOUSD Balance', 'wOUSD Balance')}
+                    value={
+                      !isNaN(parseFloat(displayedBalanceWrapped)) && wousdBalanceLoaded
+                        ? displayedBalanceWrapped
+                        : '--.--'
+                    }
+                    type={'number'}
+                    marginBottom={true}
+                  />
+                  <Statistic
+                    title={fbt(
+                      'Current Value (OUSD)',
+                      'Current Value (OUSD)'
+                    )}
+                    value={
+                      walletConnected && !isNaN(wousdValue)
+                        ? formatCurrency(wousdValue, 2)
+                        : '--.--'
+                    }
+                    type={'number'}
+                  />
+                  <Statistic
+                    title={fbt('Pending yield (OUSD)', 'Pending yield (OUSD)')}
+                    value={
+                      walletConnected
+                        ? formatCurrency(animatedExpectedIncrease, 2)
+                        : '--.--'
+                    }
+                    type={'number'}
+                    marginBottom={true}
+                  />
+                </>
+              ) : (
+                <>
+                  <Statistic
+                    title={fbt('Balance', 'OUSD Balance')}
+                    value={
+                      !isNaN(parseFloat(displayedBalance)) && ousdBalanceLoaded
+                        ? displayedBalance
+                        : '--.--'
+                    }
+                    type={'number'}
+                    marginBottom={true}
+                  />
+                  <Statistic
+                    title={fbt('Pending yield', 'Pending yield')}
+                    value={
+                      walletConnected
+                        ? formatCurrency(animatedExpectedIncrease, 2)
+                        : '--.--'
+                    }
+                    type={'number'}
+                    marginBottom={true}
+                  />
+                  <Statistic
+                    title={fbt(
+                      'Lifetime earnings',
+                      'Lifetime OUSD balance header earnings'
+                    )}
+                    titleLink={
+                      account
+                        ? `${
+                            process.env.ANALYTICS_ENDPOINT
+                          }/address/${account.toLowerCase()}`
+                        : false
+                    }
+                    value={
+                      walletConnected && lifetimeYield
+                        ? formatCurrency(lifetimeYield, 2)
+                        : '--.--'
+                    }
+                    type={'number'}
+                  />
+                </>
+              )
+            }
           </div>
         </div>
       </div>

@@ -8,7 +8,7 @@ import YieldStore from 'stores/YieldStore'
 import { animateValue } from 'utils/animation'
 import { usePrevious } from 'utils/hooks'
 
-const useExpectedYield = () => {
+const useExpectedYield = (isWrapped = false) => {
   const mintAnimationLimit = 0.01
 
   const currentCreditsPerToken = useStoreState(
@@ -19,25 +19,29 @@ const useExpectedYield = () => {
     YieldStore,
     (s) => s.nextCreditsPerToken
   )
-  const expectedIncrease = useStoreState(YieldStore, (s) => s.expectedIncrease)
+  const expectedIncrease = useStoreState(YieldStore, (s) => isWrapped ? s.expectedIncreaseWrapped : s.expectedIncrease)
   const animatedExpectedIncrease = useStoreState(
     YieldStore,
-    (s) => s.animatedExpectedIncrease
+    (s) => isWrapped ? s.animatedExpectedIncreaseWrapped : s.animatedExpectedIncrease
   )
 
   const creditsBalanceOf = useStoreState(
     AccountStore,
-    (s) => s.creditsBalanceOf
+    (s) => isWrapped ? s.creditsWrapped : s.creditsBalanceOf
   )
   const prevExpectedIncrease = usePrevious(expectedIncrease)
-
+  
   const expectedIncreaseAnimation = (from, to) => {
     return animateValue({
       from: parseFloat(from) || 0,
       to: parseFloat(to),
       callbackValue: (val) => {
         YieldStore.update((s) => {
-          s.animatedExpectedIncrease = Number(val.toFixed(2))
+          if (isWrapped) {
+            s.animatedExpectedIncreaseWrapped = Number(val.toFixed(2))
+          } else {
+            s.animatedExpectedIncrease = Number(val.toFixed(2))
+          }
         })
       },
       onCompleteCallback: () => {},
@@ -80,7 +84,11 @@ const useExpectedYield = () => {
       )
       if (!isNaN(Math.max(0, yields))) {
         YieldStore.update((s) => {
-          s.expectedIncrease = Math.max(0, yields)
+          if (isWrapped) {
+            s.expectedIncreaseWrapped = Math.max(0, yields)
+          } else {
+            s.expectedIncrease = Math.max(0, yields)
+          }
         })
       }
     }

@@ -55,6 +55,7 @@ const ApproveSwap = ({
     dai,
     usdc,
     ousd,
+    wousd,
   } = useStoreState(ContractStore, (s) => s.contracts || {})
 
   const routeConfig = {
@@ -100,6 +101,13 @@ const ApproveSwap = ({
         done: 'Sushi Swap',
       },
     },
+    wousd: {
+      contract: wousd,
+      name: {
+        approving: 'wOUSD',
+        done: 'wOUSD',
+      }
+    },
   }
 
   useEffect(() => {
@@ -116,11 +124,11 @@ const ApproveSwap = ({
   }, [selectedSwap])
 
   useEffect(() => {
-    const coinToContract = { dai, usdt, usdc, ousd }
+    const coinToContract = { dai, usdt, usdc, ousd, wousd }
     if (Object.keys(coinToContract).includes(stableCoinToApprove)) {
       setContract(coinToContract[stableCoinToApprove])
     }
-  }, [stableCoinToApprove, usdt, dai, usdc, ousd])
+  }, [stableCoinToApprove, usdt, dai, usdc, ousd, wousd])
 
   const ApprovalMessage = ({
     stage,
@@ -176,20 +184,24 @@ const ApproveSwap = ({
     selectedSwap,
     swappingGloballyDisabled,
   }) => {
-    const coin = stableCoinToApprove.toUpperCase()
+    const coin = stableCoinToApprove === 'wousd' ? 'wOUSD' : stableCoinToApprove.toUpperCase()
     const noSwapRouteAvailable = swapsLoaded && !selectedSwap
     if (swappingGloballyDisabled) {
       return process.env.DISABLE_SWAP_BUTTON_MESSAGE
     } else if (balanceError) {
       return fbt(
         'Insufficient ' + fbt.param('coin', coin) + ' balance',
-        'Insufficient balance for swapping'
+        'Insufficient balance'
       )
     } else if (noSwapRouteAvailable) {
       return fbt(
         'Route for selected swap not available',
         'No route available for selected swap'
       )
+    } else if (selectedSwap && selectedSwap.name === 'wousd' && stableCoinToApprove === 'ousd'){
+      return fbt('Wrap', 'Wrap')
+    } else if (stableCoinToApprove === 'wousd'){
+      return fbt('Unwrap', 'Unwrap')
     } else {
       return fbt('Swap', 'Swap')
     }
@@ -278,6 +290,7 @@ const ApproveSwap = ({
             stableCoinToApprove={stableCoinToApprove}
             swapsLoaded={swapsLoaded}
             selectedSwap={selectedSwap}
+            swappingGloballyDisabled={swappingGloballyDisabled}
           />
         </button>
       </div>
