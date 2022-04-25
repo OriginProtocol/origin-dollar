@@ -62,7 +62,11 @@ const useExpectedYield = (isWrapped = false) => {
       Math.abs(expectedIncreaseNum - prevExpectedIncreaseNum) >
         mintAnimationLimit
     ) {
-      expectedIncreaseAnimation(prevExpectedIncreaseNum, expectedIncreaseNum, isWrapped)
+      expectedIncreaseAnimation(
+        prevExpectedIncreaseNum,
+        expectedIncreaseNum,
+        isWrapped
+      )
     } else if (
       typeof expectedIncreaseNum === 'number' &&
       typeof prevExpectedIncreaseNum !== 'number'

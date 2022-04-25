@@ -59,13 +59,13 @@ const BalanceHeader = ({
   const [balanceEmphasised, setBalanceEmphasised] = useState(false)
   const prevOusdBalance = usePrevious(ousdBalance)
   const { animatedExpectedIncrease } = useExpectedYield(isWrapped)
-    console.log(animatedExpectedIncrease)
+  console.log(animatedExpectedIncrease)
   const wousdBalance = useStoreState(AccountStore, (s) => s.balances['wousd'])
   const wousdBalanceLoaded = typeof wousdBalance === 'string'
 
   const prevWousdBalance = usePrevious(wousdBalance)
   const wousdValue = useStoreState(AccountStore, (s) => s.wousdValue)
-  const animatedWousdValue = animatedWousdBalance * wousdValue / wousdBalance
+  const animatedWousdValue = (animatedWousdBalance * wousdValue) / wousdBalance
 
   const normalOusdAnimation = (from, to, isWrapped = false) => {
     setBalanceEmphasised(true)
