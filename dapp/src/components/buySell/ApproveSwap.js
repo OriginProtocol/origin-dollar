@@ -30,7 +30,10 @@ const ApproveSwap = ({
   const web3react = useWeb3React()
   const { library, account } = web3react
   const coinApproved = stage === 'done'
-  const isWrapped = selectedSwap && selectedSwap.name === 'wousd' && stableCoinToApprove === 'ousd'
+  const isWrapped =
+    selectedSwap &&
+    selectedSwap.name === 'wousd' &&
+    stableCoinToApprove === 'ousd'
   const approvalNeeded =
     (selectedSwap &&
       !balanceError &&
