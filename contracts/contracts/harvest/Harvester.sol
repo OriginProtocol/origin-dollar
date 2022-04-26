@@ -241,7 +241,7 @@ contract Harvester is Governable {
     }
 
     /**
-     * @dev Collect reward tokens for a specific strategy. Called from the vault.
+     * @dev Collect reward tokens for a specific strategy.
      * @param _strategyAddr Address of the strategy to collect rewards from
      */
     function harvest(address _strategyAddr) external onlyGovernor nonReentrant {
