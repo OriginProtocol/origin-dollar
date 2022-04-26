@@ -154,11 +154,13 @@ const WrapHomepage = ({
   const swapMetadata = () => {
     const coinGiven = swapMode === 'mint' ? 'wousd' : 'ousd'
     const coinReceived = swapMode === 'mint' ? 'ousd' : 'wousd'
-    const swapAmount = inputAmount
+    const swapAmount = swapMode === 'mint' ? wrapEstimate : inputAmount
+    const coinUsed = 'wousd'
     return {
       coinGiven,
       coinReceived,
       swapAmount,
+      coinUsed,
     }
   }
 
@@ -167,7 +169,7 @@ const WrapHomepage = ({
       swapMode === 'mint' ? 'On Wrap to wOUSD' : 'On Unwrap from wOUSD',
       {
         category: 'wrap',
-        label: swapMetadata.stablecoinUsed,
+        label: swapMetadata.coinUsed,
         value: swapMetadata.swapAmount,
       }
     )
@@ -177,7 +179,7 @@ const WrapHomepage = ({
     try {
       analytics.track('Before Wrap Transaction', {
         category: 'wrap',
-        label: metadata.stablecoinUsed,
+        label: metadata.coinUsed,
         value: metadata.swapAmount,
       })
 
@@ -215,7 +217,7 @@ const WrapHomepage = ({
       })
       analytics.track('Wrap succeeded', {
         category: 'wrap',
-        label: metadata.stablecoinUsed,
+        label: metadata.coinUsed,
         value: metadata.swapAmount,
       })
 

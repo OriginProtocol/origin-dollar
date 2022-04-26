@@ -30,6 +30,7 @@ const ApproveSwap = ({
   const web3react = useWeb3React()
   const { library, account } = web3react
   const coinApproved = stage === 'done'
+  const isWrapped = selectedSwap && selectedSwap.name === 'wousd' && stableCoinToApprove === 'ousd'
   const approvalNeeded =
     (selectedSwap &&
       !balanceError &&
@@ -201,11 +202,7 @@ const ApproveSwap = ({
         'Route for selected swap not available',
         'No route available for selected swap'
       )
-    } else if (
-      selectedSwap &&
-      selectedSwap.name === 'wousd' &&
-      stableCoinToApprove === 'ousd'
-    ) {
+    } else if (isWrapped) {
       return fbt('Wrap', 'Wrap')
     } else if (stableCoinToApprove === 'wousd') {
       return fbt('Unwrap', 'Unwrap')
@@ -223,7 +220,7 @@ const ApproveSwap = ({
         onClick={async () => {
           if (stage === 'approve' && contract) {
             analytics.track('On Approve Coin', {
-              category: 'swap',
+              category: isWrapped ? 'wrap' : 'swap',
               label: swapMetadata.coinGiven,
               value: parseInt(swapMetadata.swapAmount),
             })
@@ -256,12 +253,12 @@ const ApproveSwap = ({
               if (e.code !== 4001) {
                 await storeTransactionError('approve', stableCoinToApprove)
                 analytics.track(`Approval failed`, {
-                  category: 'swap',
+                  category: isWrapped ? 'wrap' : 'swap',
                   label: e.message,
                 })
               } else {
                 analytics.track(`Approval canceled`, {
-                  category: 'swap',
+                  category: isWrapped ? 'wrap' : 'swap',
                 })
               }
             }
