@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useStoreState } from 'pullstate'
 
-import SidePanelWelcomeMessage from 'components/sidePanel/SidePanelWelcomeMessage'
+import SidePanelWrapWelcomeMessage from 'components/sidePanel/SidePanelWrapWelcomeMessage'
 import SidePanelStakeMessage from 'components/sidePanel/SidePanelStakeMessage'
 import SidePanelTransactionMessage from 'components/sidePanel/SidePanelTransactionMessage'
 import SidePanelWrapMessage from 'components/sidePanel/SidePanelWrapMessage'
@@ -85,6 +85,7 @@ const WrappedSidePanel = () => {
               animate={txHashesToAnimate.includes(tx.hash)}
             />
           ))}
+          <SidePanelWrapWelcomeMessage />
         </div>
       </div>
       <style jsx>{`
