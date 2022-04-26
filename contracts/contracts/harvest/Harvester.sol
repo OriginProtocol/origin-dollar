@@ -310,7 +310,6 @@ contract Harvester is Governable {
     {
         _harvest(_strategyAddr);
         IStrategy strategy = IStrategy(_strategyAddr);
-        address[] memory rewardTokens = strategy.getRewardTokenAddresses();
         for (uint256 i = 0; i < rewardTokens.length; i++) {
             _swap(rewardTokens[i], _rewardTo);
         }
@@ -328,9 +327,6 @@ contract Harvester is Governable {
         );
 
         IStrategy strategy = IStrategy(_strategyAddr);
-        address[] memory rewardTokenAddresses = strategy
-            .getRewardTokenAddresses();
-
         strategy.collectRewardTokens();
     }
 
