@@ -257,8 +257,7 @@ const BalanceHeaderWrapped = ({
             <Statistic
               title={fbt('wOUSD Balance', 'wOUSD Balance')}
               value={
-                !isNaN(parseFloat(displayedWousdBalance)) &&
-                wousdBalanceLoaded
+                !isNaN(parseFloat(displayedWousdBalance)) && wousdBalanceLoaded
                   ? displayedWousdBalance
                   : '--.--'
               }

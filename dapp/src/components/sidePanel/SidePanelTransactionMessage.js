@@ -520,18 +520,12 @@ const SidePanelTransactionMessage = ({
                 >
                   {!transaction.mined && (
                     <div className="title">
-                      {fbt(
-                        'Wrapping OUSD into wOUSD',
-                        'Wrapping OUSD'
-                      )}
+                      {fbt('Wrapping OUSD into wOUSD', 'Wrapping OUSD')}
                     </div>
                   )}
                   {transaction.mined && !transaction.isError && (
                     <div className="title">
-                      {fbt(
-                        'Wrapped OUSD into wOUSD',
-                        'Wrapped OUSD'
-                      )}
+                      {fbt('Wrapped OUSD into wOUSD', 'Wrapped OUSD')}
                     </div>
                   )}
                   {transaction.mined && transaction.isError && (
@@ -592,17 +586,12 @@ const SidePanelTransactionMessage = ({
                 >
                   {!transaction.mined && (
                     <div className="title">
-                      {fbt(
-                        'Unwrapping wOUSD into OUSD',
-                        'Unwrapping wOUSD'
-                      )}
+                      {fbt('Unwrapping wOUSD into OUSD', 'Unwrapping wOUSD')}
                     </div>
                   )}
                   {transaction.mined && !transaction.isError && (
                     <div className="title">
-                      {fbt('wOUSD unwrapped into OUSD',
-                        'Unwrapped wOUSD'
-                      )}
+                      {fbt('wOUSD unwrapped into OUSD', 'Unwrapped wOUSD')}
                     </div>
                   )}
                   {transaction.mined && transaction.isError && (
