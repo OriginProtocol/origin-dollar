@@ -164,7 +164,7 @@ const WrapHomepage = ({
 
   const onWrapOusd = async () => {
     analytics.track(
-      swapMode === 'mint' ? 'On Swap to wOUSD' : 'On Swap from wOUSD',
+      swapMode === 'mint' ? 'On Wrap to wOUSD' : 'On Unwrap from wOUSD',
       {
         category: 'wrap',
         label: swapMetadata.stablecoinUsed,
@@ -175,8 +175,8 @@ const WrapHomepage = ({
     const metadata = swapMetadata()
 
     try {
-      analytics.track('Before Swap Transaction', {
-        category: 'swap',
+      analytics.track('Before Wrap Transaction', {
+        category: 'wrap',
         label: metadata.stablecoinUsed,
         value: metadata.swapAmount,
       })
@@ -208,47 +208,34 @@ const WrapHomepage = ({
       setInputAmount('')
 
       const receipt = await rpcProvider.waitForTransaction(result.hash)
-      analytics.track('Swap succeeded User source', {
-        category: 'swap',
+      analytics.track('Wrap succeeded User source', {
+        category: 'wrap',
         label: getUserSource(),
         value: metadata.swapAmount,
       })
-      analytics.track('Swap succeeded', {
-        category: 'swap',
+      analytics.track('Wrap succeeded', {
+        category: 'wrap',
         label: metadata.stablecoinUsed,
         value: metadata.swapAmount,
       })
 
-      if (swapMode === 'mint') {
-        ReactPixel.track('InitiateCheckout', {
-          value: inputAmount,
-          currency: 'usd',
-        })
-
-        if (typeof twttr !== 'undefined') {
-          twttr.conversion.trackPid('o73z1', {
-            tw_sale_amount: inputAmount,
-            tw_order_quantity: 1,
-          })
-        }
-      }
     } catch (e) {
       const metadata = swapMetadata()
       // 4001 code happens when a user rejects the transaction
       if (e.code !== 4001) {
         await storeTransactionError(swapMode, 'ousd')
-        analytics.track('Swap failed', {
-          category: 'swap',
+        analytics.track('Wrap failed', {
+          category: 'wrap',
           label: e.message,
         })
       } else {
         analytics.track('Swap canceled', {
-          category: 'swap',
+          category: 'wrap',
         })
       }
 
       onMintingError(e)
-      console.error('Error swapping ousd! ', e)
+      console.error('Error wrapping ousd! ', e)
     }
   }
 
