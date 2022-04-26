@@ -229,7 +229,7 @@ const WrapHomepage = ({
           label: e.message,
         })
       } else {
-        analytics.track('Swap canceled', {
+        analytics.track('Wrap canceled', {
           category: 'wrap',
         })
       }
