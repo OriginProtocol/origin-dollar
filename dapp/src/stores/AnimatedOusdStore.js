@@ -6,7 +6,6 @@ import { Store } from 'pullstate'
  */
 const AnimatedOusdStore = new Store({
   animatedOusdBalance: null,
-  animatedWousdBalance: null,
 })
 
 export default AnimatedOusdStore

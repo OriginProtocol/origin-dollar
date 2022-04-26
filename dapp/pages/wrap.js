@@ -5,7 +5,7 @@ import Nav from 'components/Nav'
 import { useWeb3React } from '@web3-react/core'
 import { fbt } from 'fbt-runtime'
 
-import BalanceHeader from 'components/buySell/BalanceHeader'
+import BalanceHeaderWrapped from 'components/wrap/BalanceHeaderWrapped'
 import WrappedSidePanel from 'components/sidePanel/WrappedSidePanel'
 import WrapHomepage from 'components/wrap/WrapHomepage'
 import GetOUSD from 'components/GetOUSD'
@@ -19,7 +19,7 @@ export default function Wrap({ locale, onLocale }) {
       <Layout locale={locale} onLocale={onLocale} dapp>
         <Nav dapp page={'wrap'} locale={locale} onLocale={onLocale} />
         <div className="home d-flex flex-column">
-          <BalanceHeader isWrapped={true} />
+          <BalanceHeaderWrapped />
           <div className="d-flex">
             <div className="content-holder flex-grow d-flex flex-column shadow-div">
               {active && <WrapHomepage />}
