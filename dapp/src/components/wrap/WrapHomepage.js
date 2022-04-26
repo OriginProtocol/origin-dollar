@@ -199,7 +199,7 @@ const WrapHomepage = ({
 
       storeTransaction(
         result,
-        swapMode === 'mint' ? 'redeem' : 'mint',
+        swapMode === 'mint' ? 'unwrap' : 'wrap',
         'wousd',
         {
           ousd: inputAmount,

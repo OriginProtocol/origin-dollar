@@ -235,7 +235,7 @@ const ApproveSwap = ({
                   routeConfig[needsApproval].contract.address,
                   ethers.constants.MaxUint256
                 )
-              storeTransaction(result, 'approve', stableCoinToApprove)
+              storeTransaction(result, isWrapped ? 'approveWrap' : 'approve', stableCoinToApprove)
               setStage('waiting-network')
               setIsApproving({
                 contract: needsApproval,

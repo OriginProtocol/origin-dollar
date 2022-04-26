@@ -44,8 +44,10 @@ const WrappedSidePanel = () => {
       else if (!a.mined) return -10
       else return b.blockNumber - a.blockNumber
     })
-
-    setSortedTransactions(sortedTx)
+    const filteredTx = sortedTx.filter(tx => {
+      return tx.type === 'approveWrap' || tx.type === 'wrap' || tx.type === 'unwrap'
+    })
+    setSortedTransactions(filteredTx)
   }, [transactions])
 
   return (
