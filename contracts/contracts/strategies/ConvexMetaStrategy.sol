@@ -14,7 +14,7 @@ import { IERC20, BaseCurveStrategy } from "./BaseCurveStrategy.sol";
 import { StableMath } from "../utils/StableMath.sol";
 import { Helpers } from "../utils/Helpers.sol";
 
-contract ConvexStrategy is BaseCurveStrategy {
+contract ConvexMetaStrategy is BaseCurveStrategy {
     using StableMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -78,7 +78,7 @@ contract ConvexStrategy is BaseCurveStrategy {
 
     function _lpDepositAll() internal override {
         IERC20 threePoolLp = IERC20(pTokenAddress);
-        IERC20 ousdPoolLp = IERC20(...);
+        // IERC20 ousdPoolLp = IERC20(...);
 
         // 1. Calculate and Mint OUSD
             // TODO: Simulate different choices here
