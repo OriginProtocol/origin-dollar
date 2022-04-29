@@ -7,7 +7,7 @@ import StakeStore from 'stores/StakeStore'
 
 const StakingBanner = () => {
   const stakes = useStoreState(StakeStore, (s) => s)
-  const showStakingBanner = (stakes && stakes.length !== 0)
+  const showStakingBanner = stakes && stakes.length !== 0
 
   return (
     process.env.ENABLE_STAKING === 'true' && (
@@ -16,7 +16,6 @@ const StakingBanner = () => {
           <Link href={adjustLinkHref('/earn')}>
             <a>
               <div className="staking-banner d-flex justify-content-center">
-                
                 <div className="d-flex flex-column justify-content-center">
                   <div className="title-text">
                     {fbt(
