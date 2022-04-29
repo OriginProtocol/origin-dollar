@@ -25,6 +25,7 @@ import Languages from '../constants/Languages'
 import AccountStatusPopover from './AccountStatusPopover'
 import { adjustLinkHref } from 'utils/utils'
 import { assetRootPath } from 'utils/image'
+import StakingBanner from 'components/earn/StakingBanner'
 
 const environment = process.env.NODE_ENV
 const showExperimentalSoftwareNotice = false
@@ -144,6 +145,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
           )}
         </div>
       )}
+      <StakingBanner />
       <nav
         className={classnames(
           'navbar navbar-expand-lg d-flex justify-content-center flex-column',
