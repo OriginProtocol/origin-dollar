@@ -7,7 +7,9 @@ import StakeStore from 'stores/StakeStore'
 
 const StakingBanner = () => {
   const stakes = useStoreState(StakeStore, (s) => s)
-  const showStakingBanner = stakes && stakes.length !== 0
+  console.log(stakes)
+  console.log(stakes.length)
+  const showStakingBanner = stakes && stakes.stakes !== null && stakes.stakes.length !== 0
 
   return (
     process.env.ENABLE_STAKING_BANNER === 'true' && (
@@ -57,6 +59,12 @@ const StakingBanner = () => {
             line-height: normal;
             font-size: 16px;
             max-width: 1000px;
+          }
+
+          @media (max-width: 992px) {
+            .staking-banner {
+              padding-left: 20px;
+            }
           }
         `}</style>
       </>

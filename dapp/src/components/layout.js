@@ -27,6 +27,7 @@ const Layout = ({
   short,
   shorter,
   medium,
+  longer,
   isStakePage,
   showUniswapNotice,
   storeTransaction,
@@ -146,7 +147,7 @@ const Layout = ({
           </a>
         </div>
       </div>
-      <main className={classnames({ dapp, short, shorter, medium })}>
+      <main className={classnames({ dapp, short, shorter, medium, longer })}>
         {dapp && <div className="container">{children}</div>}
         {!dapp && children}
       </main>

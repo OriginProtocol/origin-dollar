@@ -14,7 +14,7 @@ export default function History({ locale, onLocale }) {
 
   return (
     <>
-      <Layout locale={locale} onLocale={onLocale} dapp>
+      <Layout locale={locale} onLocale={onLocale} dapp longer>
         <Nav dapp page={'history'} locale={locale} onLocale={onLocale} />
         <div className="home d-flex flex-column">
           <BalanceHeader />
