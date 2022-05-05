@@ -9,7 +9,8 @@ const StakingBanner = () => {
   const stakes = useStoreState(StakeStore, (s) => s)
   console.log(stakes)
   console.log(stakes.length)
-  const showStakingBanner = stakes && stakes.stakes !== null && stakes.stakes.length !== 0
+  const showStakingBanner =
+    stakes && stakes.stakes !== null && stakes.stakes.length !== 0
 
   return (
     process.env.ENABLE_STAKING_BANNER === 'true' && (
