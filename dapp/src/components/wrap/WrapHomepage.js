@@ -154,7 +154,7 @@ const WrapHomepage = ({
   const swapMetadata = () => {
     const coinGiven = swapMode === 'mint' ? 'wousd' : 'ousd'
     const coinReceived = swapMode === 'mint' ? 'ousd' : 'wousd'
-    const swapAmount = swapMode === 'mint' ? wrapEstimate : inputAmount
+    const swapAmount = swapMode === 'mint' ? inputAmount : wrapEstimate
     const coinUsed = 'wousd'
     return {
       coinGiven,
