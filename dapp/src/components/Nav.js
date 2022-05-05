@@ -35,7 +35,7 @@ const DappLinks = ({ dapp, page }) => {
   return (
     <>
       {dapp && (
-        <div className="d-flex align-items-center justify-content-center dapp-navigation mr-auto">
+        <div className="d-flex align-items-center justify-content-center dapp-navigation mr-auto flex-wrap">
           {(process.env.ENABLE_LIQUIDITY_MINING === 'true' ||
             process.env.ENABLE_STAKING === 'true') && (
             <Link href={adjustLinkHref('/swap')}>
@@ -116,7 +116,7 @@ const DappLinks = ({ dapp, page }) => {
           .dapp-navigation {
             margin-top: -10px;
             margin-left: 0px;
-            margin-bottom: 25px;
+            margin-bottom: 5px;
           }
 
           .dapp-navigation a {

@@ -296,7 +296,7 @@ const WrapHomepage = ({
         }
 
         @media (max-width: 799px) {
-          .swap-homepage {
+          .wrap-homepage {
             padding: 23px 20px 20px 20px;
           }
         }

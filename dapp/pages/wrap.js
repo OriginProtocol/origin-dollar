@@ -86,6 +86,20 @@ export default function Wrap({ locale, onLocale }) {
         }
 
         @media (max-width: 799px) {
+          .home {
+            padding: 0;
+          }
+          
+          div {
+            width: 100%;
+            min-width: 100%;
+            max-width: 100%;
+          }
+
+          .content-holder {
+            max-width: 100%;
+            min-width: 100%;
+          }
         }
       `}</style>
     </>

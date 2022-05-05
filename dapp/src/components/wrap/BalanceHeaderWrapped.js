@@ -272,6 +272,7 @@ const BalanceHeaderWrapped = ({
                   : '--.--'
               }
               type={'number'}
+              marginBottom={true}
             />
             <Statistic
               title={fbt('Pending yield (OUSD)', 'Pending yield (OUSD)')}
@@ -281,7 +282,6 @@ const BalanceHeaderWrapped = ({
                   : '--.--'
               }
               type={'number'}
-              marginBottom={true}
             />
           </div>
         </div>
