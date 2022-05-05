@@ -89,7 +89,7 @@ export default function Wrap({ locale, onLocale }) {
           .home {
             padding: 0;
           }
-          
+
           div {
             width: 100%;
             min-width: 100%;
