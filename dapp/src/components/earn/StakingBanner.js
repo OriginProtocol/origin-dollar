@@ -10,7 +10,7 @@ const StakingBanner = () => {
   const showStakingBanner = stakes && stakes.length !== 0
 
   return (
-    process.env.ENABLE_STAKING === 'true' && (
+    process.env.ENABLE_STAKING_BANNER === 'true' && (
       <>
         {showStakingBanner && (
           <Link href={adjustLinkHref('/earn')}>

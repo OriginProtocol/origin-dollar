@@ -145,7 +145,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
           )}
         </div>
       )}
-      <StakingBanner />
+      {dapp && <StakingBanner />}
       <nav
         className={classnames(
           'navbar navbar-expand-lg d-flex justify-content-center flex-column',
