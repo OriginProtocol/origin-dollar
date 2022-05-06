@@ -37,6 +37,7 @@ contract VaultStorage is Initializable, Governable {
     event RebasePaused();
     event RebaseUnpaused();
     event VaultBufferUpdated(uint256 _vaultBuffer);
+    event OusdMetaStrategyUpdated(address _ousdMetaStrategy);
     event RedeemFeeUpdated(uint256 _redeemFeeBps);
     event PriceProviderUpdated(address _priceProvider);
     event AllocateThresholdUpdated(uint256 _threshold);
@@ -106,6 +107,9 @@ contract VaultStorage is Initializable, Governable {
 
     // Deprecated: Tokens that should be swapped for stablecoins
     address[] private _deprecated_swapTokens;
+
+    // Meta strategy that is allowed to mint/burn OUSD without changing collateral
+    address public ousdMetaStrategy;
 
     /**
      * @dev set the implementation for the admin, this needs to be in a base class else we cannot set it

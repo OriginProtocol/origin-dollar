@@ -118,7 +118,11 @@ interface IVault {
         uint256 _minimumOusdAmount
     ) external;
 
+    function mintForStrategy(uint256 _amount) external;
+
     function redeem(uint256 _amount, uint256 _minimumUnitAmount) external;
+
+    function redeemForStrategy(uint256 _amount) external;
 
     function redeemAll(uint256 _minimumUnitAmount) external;
 

@@ -62,6 +62,12 @@ async function defaultFixture() {
     convexStrategyProxy.address
   );
 
+  const metaStrategyProxy = await ethers.getContract("ConvexMetaStrategyProxy");
+  const metaStrategy = await ethers.getContractAt(
+    "ConvexMetaStrategy",
+    metaStrategyProxy.address
+  );
+
   const aaveStrategyProxy = await ethers.getContract("AaveStrategyProxy");
   const aaveStrategy = await ethers.getContractAt(
     "AaveStrategy",
@@ -289,6 +295,7 @@ async function defaultFixture() {
     threePoolToken,
     threePoolStrategy,
     convexStrategy,
+    metaStrategy,
     cvx,
     cvxBooster,
     cvxRewardPool,
@@ -449,6 +456,43 @@ async function convexVaultFixture() {
     .setAssetDefaultStrategy(
       fixture.usdc.address,
       fixture.convexStrategy.address
+    );
+  return fixture;
+}
+
+/**
+ * Configure a Vault with only the Meta strategy.
+ */
+async function convexMetaVaultFixture() {
+  const fixture = await loadFixture(defaultFixture);
+
+  const { governorAddr } = await getNamedAccounts();
+  const sGovernor = await ethers.provider.getSigner(governorAddr);
+
+  // Add Convex Meta strategy
+
+  // TODO: uncomment once Metastrategy is deployed
+  // TODO: should only pick up things from 001 deploy.
+  // await fixture.vault
+  //   .connect(sGovernor)
+  //   .approveStrategy(fixture.metaStrategy.address);
+
+  await fixture.harvester
+    .connect(sGovernor)
+    .setSupportedStrategy(fixture.metaStrategy.address, true);
+
+  await fixture.vault
+    .connect(sGovernor)
+    .setAssetDefaultStrategy(
+      fixture.usdt.address,
+      fixture.metaStrategy.address
+    );
+
+  await fixture.vault
+    .connect(sGovernor)
+    .setAssetDefaultStrategy(
+      fixture.usdc.address,
+      fixture.metaStrategy.address
     );
   return fixture;
 }
@@ -702,6 +746,7 @@ module.exports = {
   threepoolFixture,
   threepoolVaultFixture,
   convexVaultFixture,
+  convexMetaVaultFixture,
   aaveVaultFixture,
   hackedVaultFixture,
   rebornFixture,

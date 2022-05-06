@@ -267,6 +267,15 @@ contract VaultAdmin is VaultStorage {
         emit TrusteeFeeBpsChanged(_basis);
     }
 
+    /**
+     * @dev Set OUSD Meta strategy
+     * @param _ousdMetaStrategy Address of ousd meta strategy
+     */
+    function setOusdMetaStrategy(address _ousdMetaStrategy) external onlyGovernor {
+        ousdMetaStrategy = _ousdMetaStrategy;
+        emit OusdMetaStrategyUpdated(_ousdMetaStrategy);
+    }
+
     /***************************************
                     Pause
     ****************************************/

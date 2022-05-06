@@ -13,6 +13,7 @@ import { ICRVMinter } from "./ICRVMinter.sol";
 import { IERC20, InitializableAbstractStrategy } from "../utils/InitializableAbstractStrategy.sol";
 import { StableMath } from "../utils/StableMath.sol";
 import { Helpers } from "../utils/Helpers.sol";
+import "hardhat/console.sol";
 
 abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
     using StableMath for uint256;
@@ -135,7 +136,6 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         uint256[3] memory _amounts = [uint256(0), uint256(0), uint256(0)];
         _amounts[coinIndex] = _amount;
         curvePool.remove_liquidity_imbalance(_amounts, maxBurnedPTokens);
-
         IERC20(_asset).safeTransfer(_recipient, _amount);
     }
 

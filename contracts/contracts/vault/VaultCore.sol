@@ -44,6 +44,14 @@ contract VaultCore is VaultStorage {
         _;
     }
 
+    modifier onlyOusdMetaStrategy() {
+        require(
+            msg.sender == ousdMetaStrategy,
+            "Caller is not the OUSD meta strategy"
+        );
+        _;
+    }
+
     /**
      * @dev Deposit a supported asset and mint OUSD.
      * @param _asset Address of the asset being deposited
@@ -94,6 +102,29 @@ contract VaultCore is VaultStorage {
         if (unitAdjustedDeposit >= autoAllocateThreshold) {
             _allocate();
         }
+    }
+
+    /**
+     * @dev Mint OUSD for OUSD Meta Strategy
+     * @param _amount Amount of the asset being deposited
+     * 
+     * Notice: can't use nonReentrant modifier since BaseCurveStrategy's deposit 
+     * already has that modifier present
+     */
+    function mintForStrategy(
+        uint256 _amount
+    ) external whenNotCapitalPaused onlyOusdMetaStrategy {
+        require(_amount > 0, "Amount must be greater than 0");
+
+        emit Mint(msg.sender, _amount);
+
+        // Rebase must happen before any transfers occur.
+        if (_amount >= rebaseThreshold && !rebasePaused) {
+            _rebase();
+        }
+
+        // Mint matching OUSD
+        oUSD.mint(msg.sender, _amount);
     }
 
     // In memoriam
@@ -176,6 +207,32 @@ contract VaultCore is VaultStorage {
             );
         }
 
+        oUSD.burn(msg.sender, _amount);
+
+        // Until we can prove that we won't affect the prices of our assets
+        // by withdrawing them, this should be here.
+        // It's possible that a strategy was off on its asset total, perhaps
+        // a reward token sold for more or for less than anticipated.
+        if (_amount > rebaseThreshold && !rebasePaused) {
+            _rebase();
+        }
+    }
+
+    /**
+     * @dev Burn OUSD for OUSD Meta Strategy
+     * @param _amount Amount of OUSD to burn
+     * 
+     * Notice: can't use nonReentrant modifier since BaseCurveStrategy's deposit 
+     * already has that modifier present
+     */
+    function redeemForStrategy(
+        uint256 _amount
+    ) external whenNotCapitalPaused onlyOusdMetaStrategy {
+        require(_amount > 0, "Amount must be greater than 0");
+
+        emit Redeem(msg.sender, _amount);
+        
+        // Burn OUSD
         oUSD.burn(msg.sender, _amount);
 
         // Until we can prove that we won't affect the prices of our assets

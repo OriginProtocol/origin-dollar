@@ -10,19 +10,25 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 
 import { IRewardStaking } from "./IRewardStaking.sol";
 import { IConvexDeposits } from "./IConvexDeposits.sol";
+import { ICurvePool } from "./ICurvePool.sol";
+import { ICurveMetaPool } from "./ICurveMetaPool.sol";
 import { IERC20, BaseCurveStrategy } from "./BaseCurveStrategy.sol";
 import { StableMath } from "../utils/StableMath.sol";
+import { InitializableSecondary } from "../utils/InitializableSecondary.sol";
 import { Helpers } from "../utils/Helpers.sol";
+import { IVault } from "../interfaces/IVault.sol";
+import "hardhat/console.sol";
 
-contract ConvexMetaStrategy is BaseCurveStrategy {
+contract ConvexMetaStrategy is BaseCurveStrategy, InitializableSecondary {
     using StableMath for uint256;
     using SafeERC20 for IERC20;
 
     address internal cvxDepositorAddress;
     address internal cvxRewardStakerAddress;
-    // slither-disable-next-line constable-states
-    address public _deprecated_cvxRewardTokenAddress;
     uint256 internal cvxDepositorPTokenId;
+    ICurveMetaPool internal metapool;
+    IERC20 internal ousd;
+    IVault internal vault;
 
     /**
      * Initializer for setting up strategy internal state. This overrides the
@@ -36,8 +42,8 @@ contract ConvexMetaStrategy is BaseCurveStrategy {
      *                DAI, USDC, USDT
      * @param _pTokens Platform Token corresponding addresses
      * @param _cvxDepositorAddress Address of the Convex depositor(AKA booster) for this pool
-     * @param _cvxRewardStakerAddress Address of the CVX rewards staker
-     * @param _cvxDepositorPTokenId Pid of the pool referred to by Depositor and staker
+     * @param _metapoolAddress Address of the OUSD-3Pool Curve MetaPool
+     * @param _ousd Address of OUSD token
      */
     function initialize(
         address _platformAddress, // 3Pool address
@@ -46,16 +52,17 @@ contract ConvexMetaStrategy is BaseCurveStrategy {
         address[] calldata _assets,
         address[] calldata _pTokens,
         address _cvxDepositorAddress,
-        address _cvxRewardStakerAddress,
-        uint256 _cvxDepositorPTokenId
+        address _metapoolAddress,
+        address _ousd
     ) external onlyGovernor initializer {
         require(_assets.length == 3, "Must have exactly three assets");
         // Should be set prior to abstract initialize call otherwise
         // abstractSetPToken calls will fail
         cvxDepositorAddress = _cvxDepositorAddress;
-        cvxRewardStakerAddress = _cvxRewardStakerAddress;
-        cvxDepositorPTokenId = _cvxDepositorPTokenId;
         pTokenAddress = _pTokens[0];
+        metapool = ICurveMetaPool(_metapoolAddress);
+        ousd = IERC20(_ousd);
+        vault = IVault(_vaultAddress);
 
         super._initialize(
             _platformAddress,
@@ -67,33 +74,54 @@ contract ConvexMetaStrategy is BaseCurveStrategy {
         _approveBase();
     }
 
+    /**
+     * Secondary Initializer for setting up strategy internal state. Can not fit everything into the first 
+     * initialize function. Solidity's stack has 16 variable limit
+     * @param _cvxRewardStakerAddress Address of the CVX rewards staker
+     * @param _cvxDepositorPTokenId Pid of the pool referred to by Depositor and staker
+     */
+    function initialize2(
+        address _cvxRewardStakerAddress,
+        uint256 _cvxDepositorPTokenId
+    ) external onlyGovernor secondaryInitializer {
+        cvxRewardStakerAddress = _cvxRewardStakerAddress;
+        cvxDepositorPTokenId = _cvxDepositorPTokenId;
+    }
 
-
-    // S -> 3Pool
-    // calc ratio to include OUSD
-    // Mint OUSD
-    // Deposit 3crv + OUSD to Curve OUSD factory pool
-    // Take OUSD factory pool tokens to Convex
-
-
+    /* Take 3pool LP and mint the corresponding amount of ousd. Deposit and stake that to
+     * ousd Curve Metapool. Take the LP from metapool and deposit them to Convex.
+     */
     function _lpDepositAll() internal override {
         IERC20 threePoolLp = IERC20(pTokenAddress);
-        // IERC20 ousdPoolLp = IERC20(...);
+        IERC20 ousdPoolLp = IERC20(address(metapool));
+        ICurvePool curvePool = ICurvePool(platformAddress);
 
-        // 1. Calculate and Mint OUSD
-            // TODO: Simulate different choices here
-        uint256 stablesToDeposit = // MATH. Results in 1e18
-        uint256 ousdToDeposit = stablesToDeposit; // Lel
-        vault.mintOUSD(address(this), ousdToDeposit);
+        uint256 threePoolLpBalance = threePoolLp.balanceOf(address(this));
+        uint256 threePoolStableBalance = threePoolLpBalance / curvePool.get_virtual_price() * 10**18;
 
-        // 2. Deposit 3CRV + OUSD to Curve OUSD factory pool
+        // console.log("Metapool LP: ", ousdPoolLp.balanceOf(address(this)));
+        // console.log("3pool LP: ", threePoolLpBalance);
+        // console.log("3pool stables", threePoolStableBalance);
+        // console.log("3pool LP 98%: ", threePoolLpBalance*100/98);
 
+        /* Mint 1:1 the amount of OUSD to the amount of stablecoins deposited to 3Pool.
+         *
+         * Todo: Figure out what the best ratio is
+         */
+        vault.mintForStrategy(threePoolStableBalance);
+        uint256 ousdBalance = ousd.balanceOf(address(this));
+        uint256[2] memory _amounts = [ousdBalance, threePoolLpBalance];
 
-        // 3. Stake OUSD pool tokens on convex
-        
+        // TODO: figure out what the best slippage is. Also minReceived is in OUSD3Pool LP tokens so need
+        // to account for that 
+        uint256 minReceived = (ousdBalance + threePoolLpBalance) * 985 / 1000;
+        uint256 result = metapool.add_liquidity(_amounts, minReceived);
+
+        uint256 metapoolLp = ousdPoolLp.balanceOf(address(this));
+        //console.log("Metapool LP Balance:", metapoolLp);
         bool success = IConvexDeposits(cvxDepositorAddress).deposit(
             cvxDepositorPTokenId,
-            ousdPoolLp.balanceOf(address(this)),
+            metapoolLp,
             true // Deposit with staking
         );
         require(success, "Failed to deposit to Convex");
@@ -105,6 +133,8 @@ contract ConvexMetaStrategy is BaseCurveStrategy {
             numPTokens,
             true
         );
+        // TODO burn some amount of OUSD
+        // TODO: in BaseCurveStrategy the remove_liquidity_imbalance fails. 
     }
 
     /**
@@ -134,12 +164,20 @@ contract ConvexMetaStrategy is BaseCurveStrategy {
 
     function _approveBase() internal override {
         IERC20 pToken = IERC20(pTokenAddress);
+        IERC20 ousdPoolLp = IERC20(address(metapool));
+
         // 3Pool for LP token (required for removing liquidity)
         pToken.safeApprove(platformAddress, 0);
         pToken.safeApprove(platformAddress, type(uint256).max);
         // Gauge for LP token
-        pToken.safeApprove(cvxDepositorAddress, 0);
-        pToken.safeApprove(cvxDepositorAddress, type(uint256).max);
+        ousdPoolLp.safeApprove(cvxDepositorAddress, 0);
+        ousdPoolLp.safeApprove(cvxDepositorAddress, type(uint256).max);
+        // Metapool for LP token
+        pToken.safeApprove(address(metapool), 0);
+        pToken.safeApprove(address(metapool), type(uint256).max);
+        // Metapool for OUSD token
+        ousd.safeApprove(address(metapool), 0);
+        ousd.safeApprove(address(metapool), type(uint256).max);
     }
 
     /**
@@ -151,6 +189,7 @@ contract ConvexMetaStrategy is BaseCurveStrategy {
         onlyHarvester
         nonReentrant
     {
+        console.log("COLLECT REWARDS!");
         // Collect CRV and CVX
         IRewardStaking(cvxRewardStakerAddress).getReward();
         _collectRewardTokens();
