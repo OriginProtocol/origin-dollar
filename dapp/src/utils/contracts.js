@@ -17,6 +17,7 @@ import usdcAbi from 'constants/mainnetAbi/cUsdc.json'
 import daiAbi from 'constants/mainnetAbi/dai.json'
 import ognAbi from 'constants/mainnetAbi/ogn.json'
 import flipperAbi from 'constants/mainnetAbi/flipper.json'
+import useWousdQuery from '../queries/useWousdQuery'
 
 const curveFactoryMiniAbi = [
   {
@@ -157,6 +158,7 @@ export async function setupContracts(account, library, chainId, fetchId) {
     ousd,
     vault,
     ogn,
+    wousd,
     flipper,
     uniV2OusdUsdt,
     uniV2OusdUsdt_iErc20,
@@ -186,6 +188,7 @@ export async function setupContracts(account, library, chainId, fetchId) {
     curveAddressProvider
 
   let iVaultJson,
+    wousdJSON,
     liquidityRewardJson,
     iErc20Json,
     iUniPairJson,
@@ -215,6 +218,7 @@ export async function setupContracts(account, library, chainId, fetchId) {
     uniV3SwapQuoterJson = require('../../abis/UniswapV3Quoter.json')
     chainlinkAggregatorV3Json = require('../../abis/ChainlinkAggregatorV3Interface.json')
     curveAddressProviderJson = require('../../abis/CurveAddressProvider.json')
+    wousdJSON = require('../../abis/WOUSD.json')
   } catch (e) {
     console.error(`Can not find contract artifact file: `, e)
   }
@@ -248,6 +252,7 @@ export async function setupContracts(account, library, chainId, fetchId) {
   usdc = getContract(addresses.mainnet.USDC, usdcAbi.abi)
   dai = getContract(addresses.mainnet.DAI, daiAbi.abi)
   ogn = getContract(addresses.mainnet.OGN, ognAbi)
+  wousd = getContract(addresses.mainnet.WOUSDProxy, wousdJSON.abi)
   flipper = getContract(addresses.mainnet.Flipper, flipperAbi)
 
   uniV3OusdUsdt = getContract(
@@ -400,8 +405,11 @@ export async function setupContracts(account, library, chainId, fetchId) {
         return
       }
       const credits = await ousd.creditsBalanceOf(account)
+      const wousdValue = await wousd.maxWithdraw(account)
+      const creditsWrapped = wousdValue.mul(credits[1])
       AccountStore.update((s) => {
         s.creditsBalanceOf = ethers.utils.formatUnits(credits[0], 18)
+        s.creditsWrapped = ethers.utils.formatUnits(creditsWrapped, 36)
       })
     } catch (err) {
       console.error('Failed to fetch credits balance', err)
@@ -448,6 +456,7 @@ export async function setupContracts(account, library, chainId, fetchId) {
     ousd,
     vault,
     ogn,
+    wousd,
     uniV2OusdUsdt,
     uniV2OusdUsdt_iErc20,
     uniV2OusdUsdt_iUniPair,

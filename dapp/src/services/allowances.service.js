@@ -7,6 +7,7 @@ export default class AllowancesService {
       dai,
       usdc,
       ousd,
+      wousd,
       vault,
       uniV3SwapRouter,
       uniV2Router,
@@ -28,6 +29,7 @@ export default class AllowancesService {
       daiAllowanceFlipper,
       usdcAllowanceFlipper,
       ousdAllowanceFlipper,
+      ousdAllowanceWousd,
     ] = await Promise.all([
       displayCurrency(await usdt.allowance(account, vault.address), usdt),
       displayCurrency(await dai.allowance(account, vault.address), dai),
@@ -53,6 +55,7 @@ export default class AllowancesService {
       displayCurrency(await dai.allowance(account, flipper.address), dai),
       displayCurrency(await usdc.allowance(account, flipper.address), usdc),
       displayCurrency(await ousd.allowance(account, flipper.address), ousd),
+      displayCurrency(await ousd.allowance(account, wousd.address), ousd),
     ])
 
     let usdtAllowanceCurvePool,
@@ -161,6 +164,7 @@ export default class AllowancesService {
         sushiRouter: ousdAllowanceSushiRouter,
         flipper: ousdAllowanceFlipper,
         curve: ousdAllowanceCurvePool,
+        wousd: ousdAllowanceWousd,
       },
     }
   }

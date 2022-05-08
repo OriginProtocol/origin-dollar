@@ -4,7 +4,9 @@ const YieldStore = new Store({
   currentCreditsPerToken: 0,
   nextCreditsPerToken: 0,
   expectedIncrease: 0,
+  expectedIncreaseWrapped: 0,
   animatedExpectedIncrease: 0,
+  animatedExpectedIncreaseWrapped: 0,
   redeemFee: 0,
 })
 

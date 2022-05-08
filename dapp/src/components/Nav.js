@@ -35,7 +35,7 @@ const DappLinks = ({ dapp, page }) => {
   return (
     <>
       {dapp && (
-        <div className="d-flex align-items-center justify-content-center dapp-navigation mr-auto">
+        <div className="d-flex align-items-center justify-content-center dapp-navigation mr-auto flex-wrap">
           {(process.env.ENABLE_LIQUIDITY_MINING === 'true' ||
             process.env.ENABLE_STAKING === 'true') && (
             <Link href={adjustLinkHref('/swap')}>
@@ -70,6 +70,15 @@ const DappLinks = ({ dapp, page }) => {
               </a>
             </Link>
           )}
+          <Link href={adjustLinkHref('/wrap')}>
+            <a
+              className={`d-flex align-items-center ${
+                page === 'wrap' ? 'selected' : ''
+              }`}
+            >
+              {fbt('Wrap OUSD', 'Wrap OUSD')}
+            </a>
+          </Link>
           <Link href={adjustLinkHref('/history')}>
             <a
               className={`d-flex align-items-center ${
@@ -86,13 +95,13 @@ const DappLinks = ({ dapp, page }) => {
           font-family: Lato;
           font-size: 14px;
           color: white;
-          margin-left: 50px;
+          margin-left: 25px;
         }
 
         .dapp-navigation a {
           padding: 6px 4px;
-          margin-left: 16px;
-          margin-right: 16px;
+          margin-left: 8px;
+          margin-right: 8px;
           white-space: nowrap;
           margin-bottom: 1px;
         }
@@ -107,7 +116,7 @@ const DappLinks = ({ dapp, page }) => {
           .dapp-navigation {
             margin-top: -10px;
             margin-left: 0px;
-            margin-bottom: 25px;
+            margin-bottom: 5px;
           }
 
           .dapp-navigation a {
