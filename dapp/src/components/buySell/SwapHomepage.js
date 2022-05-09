@@ -2,12 +2,9 @@ import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
 
-import AccountStore from 'stores/AccountStore'
 import ContractStore from 'stores/ContractStore'
-import AddOUSDModal from 'components/buySell/AddOUSDModal'
 import ErrorModal from 'components/buySell/ErrorModal'
 import { currencies } from 'constants/Contract'
-import { providersNotAutoDetectingOUSD, providerName } from 'utils/web3'
 import withRpcProvider from 'hoc/withRpcProvider'
 import usePriceTolerance from 'hooks/usePriceTolerance'
 import useCurrencySwapper from 'hooks/useCurrencySwapper'
@@ -67,13 +64,6 @@ const SwapHomepage = ({
     usePriceTolerance('mint')
 
   const swappingGloballyDisabled = process.env.DISABLE_SWAP_BUTTON === 'true'
-  const addOusdModalState = useStoreState(
-    AccountStore,
-    (s) => s.addOusdModalState
-  )
-  const providerNotAutoDetectOUSD = providersNotAutoDetectingOUSD().includes(
-    providerName()
-  )
 
   const swapParams = (rawCoinAmount, outputAmount) => {
     return {
@@ -298,12 +288,6 @@ const SwapHomepage = ({
           })
         }
       }
-
-      if (localStorage.getItem('addOUSDModalShown') !== 'true') {
-        AccountStore.update((s) => {
-          s.addOusdModalState = 'waiting'
-        })
-      }
     } catch (e) {
       const metadata = swapMetadata()
       // 4001 code happens when a user rejects the transaction
@@ -338,16 +322,6 @@ const SwapHomepage = ({
           setPriceToleranceValue={setPriceToleranceValue}
           priceToleranceValue={priceToleranceValue}
         />
-        {addOusdModalState === 'show' && providerNotAutoDetectOUSD && (
-          <AddOUSDModal
-            onClose={(e) => {
-              localStorage.setItem('addOUSDModalShown', 'true')
-              AccountStore.update((s) => {
-                s.addOusdModalState = 'none'
-              })
-            }}
-          />
-        )}
         {buyErrorToDisplay && (
           <ErrorModal
             error={buyErrorToDisplay}

@@ -3,4 +3,5 @@ export const QUERY_KEYS = {
   Balances: (account) => ['balances', { account }],
   Allowances: (account) => ['allowances', { account }],
   Apy: () => ['apy'],
+  WousdValue: (account) => ['wousdValue', { account }],
 }

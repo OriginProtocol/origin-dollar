@@ -30,6 +30,10 @@ const ApproveSwap = ({
   const web3react = useWeb3React()
   const { library, account } = web3react
   const coinApproved = stage === 'done'
+  const isWrapped =
+    selectedSwap &&
+    selectedSwap.name === 'wousd' &&
+    stableCoinToApprove === 'ousd'
   const approvalNeeded =
     (selectedSwap &&
       !balanceError &&
@@ -55,6 +59,7 @@ const ApproveSwap = ({
     dai,
     usdc,
     ousd,
+    wousd,
   } = useStoreState(ContractStore, (s) => s.contracts || {})
 
   const routeConfig = {
@@ -100,6 +105,13 @@ const ApproveSwap = ({
         done: 'Sushi Swap',
       },
     },
+    wousd: {
+      contract: wousd,
+      name: {
+        approving: 'wOUSD',
+        done: 'wOUSD',
+      },
+    },
   }
 
   useEffect(() => {
@@ -116,11 +128,11 @@ const ApproveSwap = ({
   }, [selectedSwap])
 
   useEffect(() => {
-    const coinToContract = { dai, usdt, usdc, ousd }
+    const coinToContract = { dai, usdt, usdc, ousd, wousd }
     if (Object.keys(coinToContract).includes(stableCoinToApprove)) {
       setContract(coinToContract[stableCoinToApprove])
     }
-  }, [stableCoinToApprove, usdt, dai, usdc, ousd])
+  }, [stableCoinToApprove, usdt, dai, usdc, ousd, wousd])
 
   const ApprovalMessage = ({
     stage,
@@ -176,20 +188,27 @@ const ApproveSwap = ({
     selectedSwap,
     swappingGloballyDisabled,
   }) => {
-    const coin = stableCoinToApprove.toUpperCase()
+    const coin =
+      stableCoinToApprove === 'wousd'
+        ? 'wOUSD'
+        : stableCoinToApprove.toUpperCase()
     const noSwapRouteAvailable = swapsLoaded && !selectedSwap
     if (swappingGloballyDisabled) {
       return process.env.DISABLE_SWAP_BUTTON_MESSAGE
     } else if (balanceError) {
       return fbt(
         'Insufficient ' + fbt.param('coin', coin) + ' balance',
-        'Insufficient balance for swapping'
+        'Insufficient balance'
       )
     } else if (noSwapRouteAvailable) {
       return fbt(
         'Route for selected swap not available',
         'No route available for selected swap'
       )
+    } else if (isWrapped) {
+      return fbt('Wrap', 'Wrap')
+    } else if (stableCoinToApprove === 'wousd') {
+      return fbt('Unwrap', 'Unwrap')
     } else {
       return fbt('Swap', 'Swap')
     }
@@ -204,7 +223,7 @@ const ApproveSwap = ({
         onClick={async () => {
           if (stage === 'approve' && contract) {
             analytics.track('On Approve Coin', {
-              category: 'swap',
+              category: isWrapped ? 'wrap' : 'swap',
               label: swapMetadata.coinGiven,
               value: parseInt(swapMetadata.swapAmount),
             })
@@ -216,7 +235,11 @@ const ApproveSwap = ({
                   routeConfig[needsApproval].contract.address,
                   ethers.constants.MaxUint256
                 )
-              storeTransaction(result, 'approve', stableCoinToApprove)
+              storeTransaction(
+                result,
+                isWrapped ? 'approveWrap' : 'approve',
+                stableCoinToApprove
+              )
               setStage('waiting-network')
               setIsApproving({
                 contract: needsApproval,
@@ -237,12 +260,12 @@ const ApproveSwap = ({
               if (e.code !== 4001) {
                 await storeTransactionError('approve', stableCoinToApprove)
                 analytics.track(`Approval failed`, {
-                  category: 'swap',
+                  category: isWrapped ? 'wrap' : 'swap',
                   label: e.message,
                 })
               } else {
                 analytics.track(`Approval canceled`, {
-                  category: 'swap',
+                  category: isWrapped ? 'wrap' : 'swap',
                 })
               }
             }
@@ -278,6 +301,7 @@ const ApproveSwap = ({
             stableCoinToApprove={stableCoinToApprove}
             swapsLoaded={swapsLoaded}
             selectedSwap={selectedSwap}
+            swappingGloballyDisabled={swappingGloballyDisabled}
           />
         </button>
       </div>
