@@ -8,7 +8,7 @@ import { get } from 'lodash'
 
 const StakingBanner = () => {
   const stakes = useStoreState(StakeStore, (s) => s)
-  const showStakingBanner = get(stakes, 'stakes', []).length !== 0
+  const showStakingBanner = (stakes.stakes || []).length !== 0
 
   return (
     process.env.ENABLE_STAKING_BANNER === 'true' && (
