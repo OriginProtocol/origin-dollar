@@ -4,13 +4,11 @@ import { useStoreState } from 'pullstate'
 import Link from 'next/link'
 import { adjustLinkHref } from 'utils/utils'
 import StakeStore from 'stores/StakeStore'
+import { get } from 'lodash'
 
 const StakingBanner = () => {
   const stakes = useStoreState(StakeStore, (s) => s)
-  console.log(stakes)
-  console.log(stakes.length)
-  const showStakingBanner =
-    stakes && stakes.stakes !== null && stakes.stakes.length !== 0
+  const showStakingBanner = get(stakes, 'stakes', []).length !== 0
 
   return (
     process.env.ENABLE_STAKING_BANNER === 'true' && (
@@ -39,7 +37,7 @@ const StakingBanner = () => {
         )}
         <style jsx>{`
           .staking-banner {
-            height: 80px;
+            min-height: 80px;
             width: 100%;
             padding-bottom: 8px;
             background-color: #1a82ff;
@@ -65,6 +63,16 @@ const StakingBanner = () => {
           @media (max-width: 992px) {
             .staking-banner {
               padding-left: 20px;
+              padding-right: 20px;
+            }
+
+            .staking-banner .title-text {
+              font-size: 16px;
+            }
+
+            .staking-banner .text {
+              opacity: 0.8;
+              font-size: 14px;
             }
           }
         `}</style>
