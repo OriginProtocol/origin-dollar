@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react'
 import { useStoreState } from 'pullstate'
 
-import SidePanelWelcomeMessage from 'components/sidePanel/SidePanelWelcomeMessage'
+import SidePanelWrapWelcomeMessage from 'components/sidePanel/SidePanelWrapWelcomeMessage'
 import SidePanelStakeMessage from 'components/sidePanel/SidePanelStakeMessage'
 import SidePanelTransactionMessage from 'components/sidePanel/SidePanelTransactionMessage'
-import SidePanelInsuranceMessage from 'components/sidePanel/SidePanelInsuranceMessage'
+import SidePanelWrapMessage from 'components/sidePanel/SidePanelWrapMessage'
 import TransactionStore from 'stores/TransactionStore'
 import { usePrevious } from 'utils/hooks'
 import ContractStore from 'stores/ContractStore'
 import { assetRootPath } from 'utils/image'
 
-const PrimarySidePanel = () => {
+const WrappedSidePanel = () => {
   const showingAllContracts = useStoreState(
     ContractStore,
     (s) => s.showAllContracts
@@ -46,7 +46,7 @@ const PrimarySidePanel = () => {
     })
     const filteredTx = sortedTx.filter((tx) => {
       return (
-        tx.type !== 'approveWrap' && tx.type !== 'wrap' && tx.type !== 'unwrap'
+        tx.type === 'approveWrap' || tx.type === 'wrap' || tx.type === 'unwrap'
       )
     })
     setSortedTransactions(filteredTx)
@@ -80,7 +80,7 @@ const PrimarySidePanel = () => {
               loading="lazy"
             />
           </button>
-          <SidePanelInsuranceMessage />
+          <SidePanelWrapMessage />
           <SidePanelStakeMessage />
           {sortedTransactions.map((tx) => (
             <SidePanelTransactionMessage
@@ -89,7 +89,7 @@ const PrimarySidePanel = () => {
               animate={txHashesToAnimate.includes(tx.hash)}
             />
           ))}
-          <SidePanelWelcomeMessage />
+          <SidePanelWrapWelcomeMessage />
         </div>
       </div>
       <style jsx>{`
@@ -183,4 +183,4 @@ const PrimarySidePanel = () => {
   )
 }
 
-export default PrimarySidePanel
+export default WrappedSidePanel

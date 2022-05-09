@@ -22,6 +22,7 @@ import useBalancesQuery from '../queries/useBalancesQuery'
 import useAllowancesQuery from '../queries/useAllowancesQuery'
 import useApyQuery from '../queries/useApyQuery'
 import useTransactionHistoryQuery from '../queries/useTransactionHistoryQuery'
+import useWousdQuery from '../queries/useWousdQuery'
 
 const AccountListener = (props) => {
   const web3react = useWeb3React()
@@ -53,6 +54,14 @@ const AccountListener = (props) => {
     onSuccess: (allowances) => {
       AccountStore.update((s) => {
         s.allowances = allowances
+      })
+    },
+  })
+
+  const wousdQuery = useWousdQuery(account, contracts, {
+    onSuccess: (wousdValue) => {
+      AccountStore.update((s) => {
+        s.wousdValue = wousdValue
       })
     },
   })
@@ -120,22 +129,7 @@ const AccountListener = (props) => {
       return
     }
 
-    const {
-      usdt,
-      dai,
-      usdc,
-      ousd,
-      vault,
-      ogn,
-      uniV3SwapRouter,
-      uniV2Router,
-      sushiRouter,
-      liquidityOusdUsdt,
-      flipper,
-      ognStaking,
-      ognStakingView,
-      curveOUSDMetaPool,
-    } = contracts
+    const { ousd, ogn, ognStakingView } = contracts
 
     const loadPoolRelatedAccountData = async () => {
       if (!account) return
@@ -347,6 +341,7 @@ const AccountListener = (props) => {
     } else {
       balancesQuery.refetch()
       allowancesQuery.refetch()
+      wousdQuery.refetch()
 
       await Promise.all([
         loadRebaseStatus(),
