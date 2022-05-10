@@ -37,10 +37,11 @@ ousd_metapool_virtual_price = ousd_metapool.get_virtual_price()
 
 # set ousd_metastrategy as default strategies for USDT & USDC in a governance proposal
 tx = vault_admin.setAssetDefaultStrategy(usdt.address, META_STRATEGY, {'from': GOVERNOR})
-tx2 = vault_admin.setAssetDefaultStrategy(usdc.address, META_STRATEGY, {'from': GOVERNOR})
+#tx2 = vault_admin.setAssetDefaultStrategy(usdc.address, META_STRATEGY, {'from': GOVERNOR})
 tx.sig_string = 'setAssetDefaultStrategy(address,address)'
-tx2.sig_string = 'setAssetDefaultStrategy(address,address)'
-create_gov_proposal("Set meta strategy as default strategy", [tx, tx2])
+#tx2.sig_string = 'setAssetDefaultStrategy(address,address)'
+#create_gov_proposal("Set meta strategy as default strategy", [tx, tx2])
+create_gov_proposal("Set meta strategy as default strategy", [tx])
 sim_governor_execute(33)
 
 # mint OUSD and make allocate deposit funds into the ousd meta strategy
@@ -49,7 +50,7 @@ usdt.approve(vault_core.address, int(0), OPTS)
 usdt.approve(vault_core.address, int(1e50), OPTS)
 vault_core.mint(usdt.address, 1000*1e6, 0, OPTS)
 vault_core.allocate(OPTS)
-#vault_core.redeem(900*1e18, 850*1e18, OPTS)
+vault_core.redeem(500*1e18, 250*1e18, OPTS)
 
 
 # RANDOM STUFF

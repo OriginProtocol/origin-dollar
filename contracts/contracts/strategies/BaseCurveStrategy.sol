@@ -35,6 +35,12 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
     {
         require(_amount > 0, "Must deposit something");
         emit Deposit(_asset, address(platformAddress), _amount);
+
+        (uint256 contractPTokens, , uint256 totalPTokens) = _getTotalPTokens();
+        console.log("DEPOSITING START");
+        console.log("contract ptokens:", contractPTokens / 10**18);
+        console.log("total ptokens:", totalPTokens / 10**18);
+
         // 3Pool requires passing deposit amounts for all 3 assets, set to 0 for
         // all
         uint256[3] memory _amounts;
@@ -52,6 +58,11 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         // Do the deposit to 3pool
         curvePool.add_liquidity(_amounts, minMintAmount);
         _lpDepositAll();
+
+        (contractPTokens, , totalPTokens) = _getTotalPTokens();
+        console.log("DEPOSITING END");
+        console.log("contract ptokens:", contractPTokens / 10**18);
+        console.log("total ptokens:", totalPTokens / 10**18);
     }
 
     function _lpDepositAll() internal virtual;
@@ -126,6 +137,12 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         );
         uint256 maxBurnedPTokens = (totalPTokens * _amount) / maxAmount;
 
+        console.log("WITHDRAWAL DATA");
+        console.log("Amount: ", _amount / 10**6);
+        console.log("totalPTokens", totalPTokens / 10**18);
+        console.log("maxAmount", maxAmount / 10**6);
+        console.log("maxBurnedPTokens:", maxBurnedPTokens / 10**18);
+
         // Not enough in this contract or in the Gauge, can't proceed
         require(totalPTokens > maxBurnedPTokens, "Insufficient 3CRV balance");
         // We have enough LP tokens, make sure they are all on this contract
@@ -135,7 +152,8 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
 
         uint256[3] memory _amounts = [uint256(0), uint256(0), uint256(0)];
         _amounts[coinIndex] = _amount;
-        curvePool.remove_liquidity_imbalance(_amounts, maxBurnedPTokens);
+        curvePool.remove_liquidity_imbalance(_amounts, maxBurnedPTokens * 2);
+        console.log("WITHDRAWAL DATA WORKED!");
         IERC20(_asset).safeTransfer(_recipient, _amount);
     }
 

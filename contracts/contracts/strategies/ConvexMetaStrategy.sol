@@ -93,16 +93,16 @@ contract ConvexMetaStrategy is BaseCurveStrategy, InitializableSecondary {
      */
     function _lpDepositAll() internal override {
         IERC20 threePoolLp = IERC20(pTokenAddress);
-        IERC20 ousdPoolLp = IERC20(address(metapool));
+        IERC20 metapoolErc20 = IERC20(address(metapool));
         ICurvePool curvePool = ICurvePool(platformAddress);
 
         uint256 threePoolLpBalance = threePoolLp.balanceOf(address(this));
         uint256 threePoolStableBalance = threePoolLpBalance / curvePool.get_virtual_price() * 10**18;
 
-        // console.log("Metapool LP: ", ousdPoolLp.balanceOf(address(this)));
-        // console.log("3pool LP: ", threePoolLpBalance);
-        // console.log("3pool stables", threePoolStableBalance);
-        // console.log("3pool LP 98%: ", threePoolLpBalance*100/98);
+        console.log("Metapool LP: ", metapoolErc20.balanceOf(address(this)) / 10**18);
+        console.log("3pool LP: ", threePoolLpBalance / 10**18);
+        console.log("3pool stables", threePoolStableBalance / 10**18);
+        console.log("3pool LP 98%: ", threePoolLpBalance*985 / 1000 / 10**18);
 
         /* Mint 1:1 the amount of OUSD to the amount of stablecoins deposited to 3Pool.
          *
@@ -117,24 +117,53 @@ contract ConvexMetaStrategy is BaseCurveStrategy, InitializableSecondary {
         uint256 minReceived = (ousdBalance + threePoolLpBalance) * 985 / 1000;
         uint256 result = metapool.add_liquidity(_amounts, minReceived);
 
-        uint256 metapoolLp = ousdPoolLp.balanceOf(address(this));
+        uint256 metapoolLp = metapoolErc20.balanceOf(address(this));
+
         //console.log("Metapool LP Balance:", metapoolLp);
+        console.log("GAuge tokens before deposit: ", IRewardStaking(cvxRewardStakerAddress).balanceOf(address(this)) / 10**18);
         bool success = IConvexDeposits(cvxDepositorAddress).deposit(
             cvxDepositorPTokenId,
             metapoolLp,
             true // Deposit with staking
         );
+
+        console.log("GAuge tokens after deposit: ", IRewardStaking(cvxRewardStakerAddress).balanceOf(address(this)) / 10**18);
+        console.log("Metapool LP", metapoolErc20.balanceOf(address(this)) / 10**18);
+        
         require(success, "Failed to deposit to Convex");
     }
 
     function _lpWithdraw(uint256 numPTokens) internal override {
+        console.log("WITHDRAWAL");
+        IERC20 metapoolErc20 = IERC20(address(metapool));
+        IERC20 threePoolLp = IERC20(pTokenAddress);
+
+        console.log("OUSD balance: ", ousd.balanceOf(address(this)) / 10**18);
+        console.log("3Pool balance: ", threePoolLp.balanceOf(address(this)) / 10**18);
+        console.log("GAuge tokens before: ", IRewardStaking(cvxRewardStakerAddress).balanceOf(address(this)) / 10**18);
+        console.log("NUM pTokens", numPTokens / 10**18);
+        console.log("Metapool LP: ", metapoolErc20.balanceOf(address(this)) / 10**18);
         // withdraw and unwrap with claim takes back the lpTokens and also collects the rewards to this
         IRewardStaking(cvxRewardStakerAddress).withdrawAndUnwrap(
-            numPTokens,
+            // removing twice the required amount of pTokens since we are going to burn the OUSD
+            numPTokens * 2,
             true
         );
-        // TODO burn some amount of OUSD
-        // TODO: in BaseCurveStrategy the remove_liquidity_imbalance fails. 
+        console.log("MID WITHDRAWAL!");
+        console.log("Metapool LP: ", metapoolErc20.balanceOf(address(this)));
+
+        // TODO: how much OUSD / stablecoins do we want to get back?
+        uint256[2] memory _minAmounts = [uint256(0), uint256(0)];
+        // always withdraw all of the available metapool LP tokens (similar to how we always deposit all)
+        metapool.remove_liquidity(metapoolErc20.balanceOf(address(this)), _minAmounts);
+        console.log("OUSD balance: ", ousd.balanceOf(address(this)) / 10**18);
+        vault.redeemForStrategy(ousd.balanceOf(address(this)));
+
+        console.log("AFTER WITHDRAWAL!");
+        console.log("OUSD balance: ", ousd.balanceOf(address(this)) / 10**18);
+        console.log("3Pool balance: ", threePoolLp.balanceOf(address(this)) / 10**18);
+        console.log("GAuge tokens: ", IRewardStaking(cvxRewardStakerAddress).balanceOf(address(this)) / 10**18);
+        console.log("Metapool LP: ", metapoolErc20.balanceOf(address(this)) / 10**18);
     }
 
     /**
