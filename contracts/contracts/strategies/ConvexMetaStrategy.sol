@@ -97,38 +97,33 @@ contract ConvexMetaStrategy is BaseCurveStrategy, InitializableSecondary {
         ICurvePool curvePool = ICurvePool(platformAddress);
 
         uint256 threePoolLpBalance = threePoolLp.balanceOf(address(this));
-        uint256 threePoolStableBalance = threePoolLpBalance / curvePool.get_virtual_price() * 10**18;
-
-        console.log("Metapool LP: ", metapoolErc20.balanceOf(address(this)) / 10**18);
-        console.log("3pool LP: ", threePoolLpBalance / 10**18);
-        console.log("3pool stables", threePoolStableBalance / 10**18);
-        console.log("3pool LP 98%: ", threePoolLpBalance*985 / 1000 / 10**18);
+        uint256 threePoolLpDollarValue = threePoolLpBalance * curvePool.get_virtual_price() / 10**18;
 
         /* Mint 1:1 the amount of OUSD to the amount of stablecoins deposited to 3Pool.
          *
-         * Todo: Figure out what the best ratio is
+         * TODO: research if there is a better ratio to pick according to how tilted 
+         * (more OUSD vs more 3PoolLP) the Metapool is at a specific block number. 
          */
-        vault.mintForStrategy(threePoolStableBalance);
+        vault.mintForStrategy(threePoolLpDollarValue);
         uint256 ousdBalance = ousd.balanceOf(address(this));
         uint256[2] memory _amounts = [ousdBalance, threePoolLpBalance];
 
-        // TODO: figure out what the best slippage is. Also minReceived is in OUSD3Pool LP tokens so need
-        // to account for that 
+        console.log("DEPOSITING");
+        console.log("3pool dollar value ", threePoolLpDollarValue / 10**18);
+        console.log("ousdBalance", ousdBalance / 10**18);
+
+        // TODO: figure out what the best slippage guard is. Also minReceived is in 
+        // OUSD3Pool LP tokens so need to account for that 
         uint256 minReceived = (ousdBalance + threePoolLpBalance) * 985 / 1000;
-        uint256 result = metapool.add_liquidity(_amounts, minReceived);
+        metapool.add_liquidity(_amounts, minReceived);
 
         uint256 metapoolLp = metapoolErc20.balanceOf(address(this));
 
-        //console.log("Metapool LP Balance:", metapoolLp);
-        console.log("GAuge tokens before deposit: ", IRewardStaking(cvxRewardStakerAddress).balanceOf(address(this)) / 10**18);
         bool success = IConvexDeposits(cvxDepositorAddress).deposit(
             cvxDepositorPTokenId,
             metapoolLp,
             true // Deposit with staking
         );
-
-        console.log("GAuge tokens after deposit: ", IRewardStaking(cvxRewardStakerAddress).balanceOf(address(this)) / 10**18);
-        console.log("Metapool LP", metapoolErc20.balanceOf(address(this)) / 10**18);
         
         require(success, "Failed to deposit to Convex");
     }
@@ -137,25 +132,46 @@ contract ConvexMetaStrategy is BaseCurveStrategy, InitializableSecondary {
         console.log("WITHDRAWAL");
         IERC20 metapoolErc20 = IERC20(address(metapool));
         IERC20 threePoolLp = IERC20(pTokenAddress);
+        ICurvePool curvePool = ICurvePool(platformAddress);
 
-        console.log("OUSD balance: ", ousd.balanceOf(address(this)) / 10**18);
-        console.log("3Pool balance: ", threePoolLp.balanceOf(address(this)) / 10**18);
         console.log("GAuge tokens before: ", IRewardStaking(cvxRewardStakerAddress).balanceOf(address(this)) / 10**18);
-        console.log("NUM pTokens", numPTokens / 10**18);
-        console.log("Metapool LP: ", metapoolErc20.balanceOf(address(this)) / 10**18);
+        console.log("NUM pTokens to withdraw", numPTokens / 10**18);
+
         // withdraw and unwrap with claim takes back the lpTokens and also collects the rewards to this
         IRewardStaking(cvxRewardStakerAddress).withdrawAndUnwrap(
             // removing twice the required amount of pTokens since we are going to burn the OUSD
             numPTokens * 2,
             true
         );
-        console.log("MID WITHDRAWAL!");
-        console.log("Metapool LP: ", metapoolErc20.balanceOf(address(this)));
+        uint256 metapoolLPWithdrawn = metapoolErc20.balanceOf(address(this));
+        uint256 metapoolLpDollarValue = metapoolLPWithdrawn * metapool.get_virtual_price() / 10**18;
 
-        // TODO: how much OUSD / stablecoins do we want to get back?
+        console.log("MID WITHDRAWAL!");
+        console.log("Metapool LP withdrawn: ", metapoolLPWithdrawn / 10**18);
+        console.log("Metapool price: ", metapool.get_virtual_price());
+        console.log("Curve price: ", curvePool.get_virtual_price());
+        console.log("Metapool LP dollar value: ", metapoolLpDollarValue / 10**18);
+        console.log("Stablecoin metapool dollar value: ", metapoolLpDollarValue / 10**18 * curvePool.get_virtual_price() / 10**18);
+        console.log("MIN AMOUNT: ", metapoolLpDollarValue / 2);
+        console.log("MIN AMOUNT(formatted): ", metapoolLpDollarValue / 4 / 10**18);
+
+        /* When depositing to Metapool we mint the amount of OUSD that corresponds to dollar value
+         * of the deposited LP tokens. And when withdrawing from the Metapool we expect to receive
+         * half of it as OUSD in the corresponding dollar value of the LP withdrawn.
+         *
+         * TODO: should we fixate to get half in stablecoins rather in OUSD?
+         * 
+         * note: 
+         * - OUSD token position 0
+         * - 3CrvLP token position 1
+         */
+        //uint256[2] memory _minAmounts = [metapoolLpDollarValue / 4, uint256(0)];
         uint256[2] memory _minAmounts = [uint256(0), uint256(0)];
         // always withdraw all of the available metapool LP tokens (similar to how we always deposit all)
-        metapool.remove_liquidity(metapoolErc20.balanceOf(address(this)), _minAmounts);
+        uint256[2] memory removedCoins = metapool.remove_liquidity(metapoolErc20.balanceOf(address(this)), _minAmounts);
+        console.log("REMOVED OUSD: ", removedCoins[0] / 10**18);
+        console.log("REMOVED 3Crv: ", removedCoins[1] / 10**18);
+
         console.log("OUSD balance: ", ousd.balanceOf(address(this)) / 10**18);
         vault.redeemForStrategy(ousd.balanceOf(address(this)));
 
@@ -164,7 +180,7 @@ contract ConvexMetaStrategy is BaseCurveStrategy, InitializableSecondary {
         console.log("3Pool balance: ", threePoolLp.balanceOf(address(this)) / 10**18);
         console.log("GAuge tokens: ", IRewardStaking(cvxRewardStakerAddress).balanceOf(address(this)) / 10**18);
         console.log("Metapool LP: ", metapoolErc20.balanceOf(address(this)) / 10**18);
-    }
+     }
 
     /**
      * @dev Calculate the total platform token balance (i.e. 3CRV) that exist in
@@ -185,10 +201,17 @@ contract ConvexMetaStrategy is BaseCurveStrategy, InitializableSecondary {
         )
     {
         contractPTokens = IERC20(pTokenAddress).balanceOf(address(this));
+        uint256 metapoolLP = IERC20(address(metapool)).balanceOf(address(this));
+        /* TODO: confirm the logic is sound. We are reporting half of the actual balance
+         * of gaugeTokens since half of them are represented as OUSD that get burned
+         * after the withdrawal.   -- NOT SOUND I THINK!
+         */
         gaugePTokens = IRewardStaking(cvxRewardStakerAddress).balanceOf(
             address(this)
-        ); //booster.poolInfo[pid].token.balanceOf(address(this)) Not needed if we always stake..
-        totalPTokens = contractPTokens + gaugePTokens;
+        //) / 2;
+        );
+        //booster.poolInfo[pid].token.balanceOf(address(this)) Not needed if we always stake..
+        totalPTokens = contractPTokens + metapoolLP + gaugePTokens;
     }
 
     function _approveBase() internal override {
@@ -209,6 +232,50 @@ contract ConvexMetaStrategy is BaseCurveStrategy, InitializableSecondary {
         ousd.safeApprove(address(metapool), type(uint256).max);
     }
 
+    /**
+     * @dev Withdraw asset from Curve 3Pool
+     * @param _recipient Address to receive withdrawn asset
+     * @param _asset Address of asset to withdraw
+     * @param _amount Amount of asset to withdraw
+     */
+    // function withdraw(
+    //     address _recipient,
+    //     address _asset,
+    //     uint256 _amount
+    // ) external override onlyVault nonReentrant {
+    //     require(_amount > 0, "Invalid amount");
+
+    //     emit Withdrawal(_asset, address(assetToPToken[_asset]), _amount);
+
+    //     (uint256 contractPTokens, , uint256 totalPTokens) = _getTotalPTokens();
+
+    //     uint256 coinIndex = _getCoinIndex(_asset);
+    //     int128 curveCoinIndex = int128(uint128(coinIndex));
+    //     // Calculate the max amount of the asset we'd get if we withdrew all the
+    //     // platform tokens
+    //     ICurvePool curvePool = ICurvePool(platformAddress);
+    //     // Calculate how many platform tokens we need to withdraw the asset
+    //     // amount in the worst case (i.e withdrawing all LP tokens)
+    //     uint256 maxAmount = curvePool.calc_withdraw_one_coin(
+    //         totalPTokens,
+    //         curveCoinIndex
+    //     );
+    //     uint256 maxBurnedPTokens = (totalPTokens * _amount) / maxAmount;
+
+    //     // Not enough in this contract or in the Gauge, can't proceed
+    //     require(totalPTokens > maxBurnedPTokens, "Insufficient 3CRV balance");
+    //     // We have enough LP tokens, make sure they are all on this contract
+    //     if (contractPTokens < maxBurnedPTokens) {
+    //         _lpWithdraw(maxBurnedPTokens - contractPTokens);
+    //     }
+
+    //     uint256[3] memory _amounts = [uint256(0), uint256(0), uint256(0)];
+    //     _amounts[coinIndex] = _amount;
+    //     curvePool.remove_liquidity_imbalance(_amounts, maxBurnedPTokens);
+    //     IERC20(_asset).safeTransfer(_recipient, _amount);
+    // }
+
+    
     /**
      * @dev Collect accumulated CRV and CVX and send to Vault.
      */

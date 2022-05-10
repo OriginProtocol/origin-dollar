@@ -117,7 +117,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         address _recipient,
         address _asset,
         uint256 _amount
-    ) external override onlyVault nonReentrant {
+    ) external virtual override onlyVault nonReentrant {
         require(_amount > 0, "Invalid amount");
 
         emit Withdrawal(_asset, address(assetToPToken[_asset]), _amount);
@@ -137,12 +137,6 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         );
         uint256 maxBurnedPTokens = (totalPTokens * _amount) / maxAmount;
 
-        console.log("WITHDRAWAL DATA");
-        console.log("Amount: ", _amount / 10**6);
-        console.log("totalPTokens", totalPTokens / 10**18);
-        console.log("maxAmount", maxAmount / 10**6);
-        console.log("maxBurnedPTokens:", maxBurnedPTokens / 10**18);
-
         // Not enough in this contract or in the Gauge, can't proceed
         require(totalPTokens > maxBurnedPTokens, "Insufficient 3CRV balance");
         // We have enough LP tokens, make sure they are all on this contract
@@ -152,8 +146,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
 
         uint256[3] memory _amounts = [uint256(0), uint256(0), uint256(0)];
         _amounts[coinIndex] = _amount;
-        curvePool.remove_liquidity_imbalance(_amounts, maxBurnedPTokens * 2);
-        console.log("WITHDRAWAL DATA WORKED!");
+        curvePool.remove_liquidity_imbalance(_amounts, maxBurnedPTokens);
         IERC20(_asset).safeTransfer(_recipient, _amount);
     }
 
@@ -170,6 +163,10 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
             uint256(0),
             uint256(0)
         ];
+
+        console.log("totalPTokens", totalPTokens / 1e18);
+        console.log("platform Tokens", IERC20(pTokenAddress).balanceOf(address(this)) / 1e18);
+
         // Remove liquidity
         ICurvePool threePool = ICurvePool(platformAddress);
         threePool.remove_liquidity(totalPTokens, minWithdrawAmounts);

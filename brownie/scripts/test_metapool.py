@@ -25,7 +25,7 @@ curve_factory = load_contract('curve_factory', CURVE_FACTORY)
 # 1. Acquire 3pool, ousd and usdt
 threepool_lp.transfer(me, TOTAL_AMOUNT, {'from': THREEPOOL_BAGS})
 ousd.transfer(me, 6*1e6*1e18, {'from': OUSD_BAGS})
-usdt.transfer(me, 6*1e6*1e6, {'from': USDT_BAGS})
+usdt.transfer(me, 50*1e6*1e6, {'from': USDT_BAGS})
 ousd.transfer(me, 5*1e6*1e18, {'from': OUSD_BAGS_2})
 
 # approve ousd and 3poolLp to be used by ousd_metapool
@@ -48,10 +48,12 @@ sim_governor_execute(33)
 usdt.balanceOf(me, OPTS)
 usdt.approve(vault_core.address, int(0), OPTS)
 usdt.approve(vault_core.address, int(1e50), OPTS)
-vault_core.mint(usdt.address, 1000*1e6, 0, OPTS)
-vault_core.allocate(OPTS)
-vault_core.redeem(500*1e18, 250*1e18, OPTS)
 
+vault_core.mint(usdt.address, 1000*1e6, 0, OPTS)
+vault_core.mint(usdt.address, 40*1e6*1e6, 0, OPTS)
+vault_core.allocate(OPTS)
+vault_core.redeem(1000*1e18, 980*1e18, OPTS)
+vault_core.redeem(40*1e6*1e18, 980*1e18, OPTS)
 
 # RANDOM STUFF
 # vault_core.redeem(900*1e18, 850*1e18, OPTS)
@@ -59,6 +61,19 @@ vault_core.redeem(500*1e18, 250*1e18, OPTS)
 # threepool_deposit_zap.calc_token_amount(ousd_metapool.address, [100*1e18, 100*1e18, 0, 200*1e18], True)
 # ousd_metapool.add_liquidity([100*1e18, 100*1e18], 0, me, OPTS)
 # ousd_metapool.add_liquidity([0, 1], 0, OPTS)
+
+# ousd.rebasingCreditsPerToken() / 1e18
+
+tx = vault_admin.withdrawAllFromStrategy(META_STRATEGY, {'from': GOVERNOR})
+#tx2 = vault_admin.setAssetDefaultStrategy(usdc.address, META_STRATEGY, {'from': GOVERNOR})
+tx.sig_string = 'withdrawAllFromStrategy(address)'
+#tx2.sig_string = 'setAssetDefaultStrategy(address,address)'
+#create_gov_proposal("Set meta strategy as default strategy", [tx, tx2])
+create_gov_proposal("Withdraw all from metastrategy", [tx])
+sim_governor_execute(34)
+
+
+
 # END OF LEAVE STUFF HERE
 
 #2. Deposit in metapool
