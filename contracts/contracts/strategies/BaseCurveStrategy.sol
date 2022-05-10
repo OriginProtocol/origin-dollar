@@ -13,7 +13,6 @@ import { ICRVMinter } from "./ICRVMinter.sol";
 import { IERC20, InitializableAbstractStrategy } from "../utils/InitializableAbstractStrategy.sol";
 import { StableMath } from "../utils/StableMath.sol";
 import { Helpers } from "../utils/Helpers.sol";
-import "hardhat/console.sol";
 
 abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
     using StableMath for uint256;
@@ -36,11 +35,6 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         require(_amount > 0, "Must deposit something");
         emit Deposit(_asset, address(platformAddress), _amount);
 
-        (uint256 contractPTokens, , uint256 totalPTokens) = _getTotalPTokens();
-        console.log("DEPOSITING START");
-        console.log("contract ptokens:", contractPTokens / 10**18);
-        console.log("total ptokens:", totalPTokens / 10**18);
-
         // 3Pool requires passing deposit amounts for all 3 assets, set to 0 for
         // all
         uint256[3] memory _amounts;
@@ -58,11 +52,6 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         // Do the deposit to 3pool
         curvePool.add_liquidity(_amounts, minMintAmount);
         _lpDepositAll();
-
-        (contractPTokens, , totalPTokens) = _getTotalPTokens();
-        console.log("DEPOSITING END");
-        console.log("contract ptokens:", contractPTokens / 10**18);
-        console.log("total ptokens:", totalPTokens / 10**18);
     }
 
     function _lpDepositAll() internal virtual;
@@ -163,9 +152,6 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
             uint256(0),
             uint256(0)
         ];
-
-        console.log("totalPTokens", totalPTokens / 1e18);
-        console.log("platform Tokens", IERC20(pTokenAddress).balanceOf(address(this)) / 1e18);
 
         // Remove liquidity
         ICurvePool threePool = ICurvePool(platformAddress);
