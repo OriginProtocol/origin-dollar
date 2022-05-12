@@ -5,20 +5,27 @@ import { fbt } from 'fbt-runtime'
 import Layout from 'components/layout'
 import Nav from 'components/Nav'
 import BalanceHeader from 'components/buySell/BalanceHeader'
+import BalanceHeaderWrapped from 'components/wrap/BalanceHeaderWrapped'
 import TransactionHistory from 'components/TransactionHistory'
 import GetOUSD from 'components/GetOUSD'
 import { assetRootPath } from 'utils/image'
 
 export default function History({ locale, onLocale }) {
   const { active } = useWeb3React()
+  const [wousdBalanceHeader, setWousdBalanceHeader] = useState()
 
   return (
     <>
       <Layout locale={locale} onLocale={onLocale} dapp>
         <Nav dapp page={'history'} locale={locale} onLocale={onLocale} />
         <div className="home d-flex flex-column">
+        {wousdBalanceHeader ? (
+          <BalanceHeaderWrapped />
+            ) : (
           <BalanceHeader />
-          {active && <TransactionHistory />}
+          )
+        }
+          {active && <TransactionHistory setWousdBalanceHeader={setWousdBalanceHeader}/>}
           {!active && (
             <div className="empty-placeholder d-flex flex-column align-items-center justify-content-start">
               <img src={assetRootPath('/images/wallet-icons.svg')} />

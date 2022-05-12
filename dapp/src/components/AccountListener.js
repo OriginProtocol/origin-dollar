@@ -22,6 +22,7 @@ import useBalancesQuery from '../queries/useBalancesQuery'
 import useAllowancesQuery from '../queries/useAllowancesQuery'
 import useApyQuery from '../queries/useApyQuery'
 import useTransactionHistoryQuery from '../queries/useTransactionHistoryQuery'
+import useTransactionHistoryWrappedQuery from '../queries/useTransactionHistoryWrappedQuery'
 import useWousdQuery from '../queries/useWousdQuery'
 
 const AccountListener = (props) => {
@@ -75,6 +76,7 @@ const AccountListener = (props) => {
   })
 
   const historyQuery = useTransactionHistoryQuery(account)
+  const historyWrappedQuery = useTransactionHistoryWrappedQuery(account)
 
   useEffect(() => {
     if ((prevActive && !active) || prevAccount !== account) {
@@ -356,6 +358,7 @@ const AccountListener = (props) => {
     if (account) {
       login(account, setCookie)
       historyQuery.refetch()
+      historyWrappedQuery.refetch()
     }
 
     const loadLifetimeEarnings = async () => {

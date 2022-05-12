@@ -12,6 +12,7 @@ import withIsMobile from 'hoc/withIsMobile'
 import { assetRootPath } from 'utils/image'
 
 import useTransactionHistoryQuery from '../queries/useTransactionHistoryQuery'
+import useTransactionHistoryWrappedQuery from '../queries/useTransactionHistoryWrappedQuery'
 
 const itemsPerPage = 50
 
@@ -118,11 +119,109 @@ const FormatCurrencyByImportance = ({
   )
 }
 
-const TransactionHistory = ({ isMobile }) => {
+const CoinToggle = ({
+  setFilters,
+  isOusd,
+  setIsOusd,
+}) => {
+  const ousdSelected = isOusd
+  return (
+    <>
+    <div className='d-flex'>
+      <div key='ousd'>
+        <div
+          className={`button ousd d-flex align-items-center justify-content-center ${
+            ousdSelected ? 'selected' : ''
+          }`}
+          onClick={() => {
+            if (!ousdSelected) {
+              setIsOusd(true)
+              setFilters([])
+            }
+          }}
+        >
+          <span className="d-none d-md-flex">{fbt('OUSD', 'Tx history filter: OUSD')}</span>
+          <img
+            className="d-flex d-md-none"
+            src={assetRootPath(`/images/history/mint_icon.svg`)}
+          />
+        </div>
+      </div>
+      <div key='wousd'>
+      <div
+        className={`button wousd d-flex align-items-center justify-content-center ${
+          !ousdSelected ? 'selected' : ''
+        }`}
+        onClick={() => {
+          if (ousdSelected) {
+            setIsOusd(false)
+            setFilters([])
+          }
+        }}
+      >
+        <span className="d-none d-md-flex">{fbt('wOUSD', 'Tx history filter: wOUSD')}</span>
+        <img
+          className="d-flex d-md-none"
+          src={assetRootPath(`/images/history/redeem_icon.svg`)}
+        />
+      </div>
+      </div>
+    </div>
+    <style jsx>{`
+        .button {
+          color: #8293a4;
+          min-height: 40px;
+          border-radius: 5px;
+          border: solid 1px #cdd7e0;
+          font-family: Lato;
+          font-size: 14px;
+          cursor: pointer;
+        }
+
+        .ousd {
+          min-width: 93px;
+          border-radius: 5px 0 0 5px;
+          margin-right: 0;
+        }
+
+        .wousd {
+          min-width: 92px;
+          border-radius: 0 5px 5px 0;
+          border-left: 0;
+          margin-right: 35px;
+          margin-left: 0;
+        }
+
+        .button.selected,
+        .button.selected:hover {
+          background-color: black;
+          color: white;
+        }
+
+        .button:hover {
+          background-color: #edf2f5;
+        }
+
+        @media (max-width: 799px) {
+          .button {
+            min-width: 50px;
+            min-height: 35px;
+            margin-right: 8px;
+            font-size: 14px;
+            margin-bottom: 20px;
+          }
+        }
+      `}</style>
+    </>
+  )
+}
+
+const TransactionHistory = ({ setWousdBalanceHeader, isMobile }) => {
   const web3react = useWeb3React()
   const router = useRouter()
   const { account: web3Account, active } = web3react
   const [filters, _setFilters] = useState([])
+  const [isOusd, setIsOusd] = useState(true)
   const [currentPage, setCurrentPage] = useState(1)
   const [pageNumbers, setPageNumbers] = useState([])
 
@@ -160,6 +259,30 @@ const TransactionHistory = ({ isMobile }) => {
       imageName: 'swap_icon.svg',
       filter: 'swap',
     },
+    transfer_in_wousd: {
+      name: fbt('Received', 'Received history type'),
+      verboseName: 'Received',
+      imageName: 'received_icon.svg',
+      filter: 'received_wousd',
+    },
+    transfer_out_wousd: {
+      name: fbt('Sent', 'Sent history type'),
+      verboseName: 'Sent',
+      imageName: 'sent_icon.svg',
+      filter: 'sent_wousd',
+    },
+    wrap_give_wousd: {
+      name: fbt('Unwrap', 'Unwrap history type'),
+      verboseName: 'Wrap give wOUSD',
+      imageName: 'redeem_icon.svg',
+      filter: 'wrap',
+    },
+    wrap_gain_wousd: {
+      name: fbt('Wrap', 'Wrap history type'),
+      verboseName: 'Wrap gain wOUSD',
+      imageName: 'mint_icon.svg',
+      filter: 'wrap',
+    },
     unknown_transfer: {
       name: fbt('Unknown transfer', 'Unknown transfer history type'),
       verboseName: 'Unknown transfer',
@@ -185,16 +308,29 @@ const TransactionHistory = ({ isMobile }) => {
     setCurrentPage(1)
   }
 
-  const historyQuery = useTransactionHistoryQuery(account)
+  const historyOusdQuery = useTransactionHistoryQuery(account)
+  const historyWousdQuery = useTransactionHistoryWrappedQuery(account)
 
-  const history = useMemo(
-    () => (historyQuery.isSuccess ? historyQuery.data : []),
-    [historyQuery.isSuccess, historyQuery.data]
+  const historyOusd = useMemo(
+    () => (historyOusdQuery.isSuccess ? historyOusdQuery.data : []),
+    [historyOusdQuery.isSuccess, historyOusdQuery.data]
+  )
+
+  const historyWousd = useMemo(
+    () => (historyWousdQuery.isSuccess ? historyWousdQuery.data : []),
+    [historyWousdQuery.isSuccess, historyWousdQuery.data]
   )
 
   useEffect(() => {
-    historyQuery.refetch()
+    historyOusdQuery.refetch()
+    historyWousdQuery.refetch()
   }, [])
+
+  const history = isOusd ? historyOusd : historyWousd
+
+  useEffect(() => {
+    setWousdBalanceHeader(!isOusd)
+  }, [isOusd])
 
   const shownHistory = useMemo(() => {
     if (filters.length === 0) {
@@ -248,40 +384,47 @@ const TransactionHistory = ({ isMobile }) => {
   return (
     <>
       <div className="d-flex holder flex-column justify-content-start">
-        {historyQuery.isLoading ? (
+        {historyOusdQuery.isLoading && historyWousdQuery.isLoading ? (
           <div className="m-4">{fbt('Loading...', 'Loading...')}</div>
         ) : (
           <>
             <div className="filters d-flex justify-content-between">
               <div className="d-flex justify-content-start flex-wrap flex-md-nowrap">
+                <CoinToggle
+                  setFilters={setFilters}
+                  isOusd={isOusd}
+                  setIsOusd={setIsOusd}
+                />
                 <FilterButton
                   filterText={fbt('Received', 'Tx history filter: Received')}
                   filterImage="received_icon.svg"
-                  filter="received"
+                  filter={isOusd ? "received" : "received_wousd"}
                   filters={filters}
                   setFilters={setFilters}
                 />
                 <FilterButton
                   filterText={fbt('Sent', 'Tx history filter: Sent')}
                   filterImage="sent_icon.svg"
-                  filter="sent"
+                  filter={isOusd ? "sent" : "sent_wousd"}
                   filters={filters}
                   setFilters={setFilters}
                 />
                 <FilterButton
-                  filterText={fbt('Swap', 'Tx history filter: Swap')}
+                  filterText={isOusd ? fbt('Swap', 'Tx history filter: Swap') : fbt('Wrap', 'Tx history filter: Wrap')}
                   filterImage="swap_icon.svg"
-                  filter="swap"
+                  filter={isOusd ? "swap" : "wrap"}
                   filters={filters}
                   setFilters={setFilters}
                 />
-                <FilterButton
-                  filterText={fbt('Yield', 'Tx history filter: Yield')}
-                  filterImage="yield_icon.svg"
-                  filter="yield"
-                  filters={filters}
-                  setFilters={setFilters}
-                />
+                {isOusd && 
+                  <FilterButton
+                    filterText={fbt('Yield', 'Tx history filter: Yield')}
+                    filterImage="yield_icon.svg"
+                    filter="yield"
+                    filters={filters}
+                    setFilters={setFilters}
+                  />
+                }
               </div>
               <div className="d-flex">
                 <div
