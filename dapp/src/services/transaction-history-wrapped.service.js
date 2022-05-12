@@ -16,4 +16,5 @@ export default class TransactionHistoryWrappedService {
   }
 }
 
-export const transactionHistoryWrappedService = new TransactionHistoryWrappedService()
+export const transactionHistoryWrappedService =
+  new TransactionHistoryWrappedService()

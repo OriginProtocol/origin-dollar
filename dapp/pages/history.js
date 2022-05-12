@@ -19,13 +19,10 @@ export default function History({ locale, onLocale }) {
       <Layout locale={locale} onLocale={onLocale} dapp>
         <Nav dapp page={'history'} locale={locale} onLocale={onLocale} />
         <div className="home d-flex flex-column">
-        {wousdBalanceHeader ? (
-          <BalanceHeaderWrapped />
-            ) : (
-          <BalanceHeader />
-          )
-        }
-          {active && <TransactionHistory setWousdBalanceHeader={setWousdBalanceHeader}/>}
+          {wousdBalanceHeader ? <BalanceHeaderWrapped /> : <BalanceHeader />}
+          {active && (
+            <TransactionHistory setWousdBalanceHeader={setWousdBalanceHeader} />
+          )}
           {!active && (
             <div className="empty-placeholder d-flex flex-column align-items-center justify-content-start">
               <img src={assetRootPath('/images/wallet-icons.svg')} />

@@ -119,55 +119,55 @@ const FormatCurrencyByImportance = ({
   )
 }
 
-const CoinToggle = ({
-  setFilters,
-  isOusd,
-  setIsOusd,
-}) => {
+const CoinToggle = ({ setFilters, isOusd, setIsOusd }) => {
   const ousdSelected = isOusd
   return (
     <>
-    <div className='d-flex'>
-      <div key='ousd'>
-        <div
-          className={`button ousd d-flex align-items-center justify-content-center ${
-            ousdSelected ? 'selected' : ''
-          }`}
-          onClick={() => {
-            if (!ousdSelected) {
-              setIsOusd(true)
-              setFilters([])
-            }
-          }}
-        >
-          <span className="d-none d-md-flex">{fbt('OUSD', 'Tx history filter: OUSD')}</span>
-          <img
-            className="d-flex d-md-none"
-            src={assetRootPath(`/images/history/mint_icon.svg`)}
-          />
+      <div className="d-flex">
+        <div key="ousd">
+          <div
+            className={`button ousd d-flex align-items-center justify-content-center ${
+              ousdSelected ? 'selected' : ''
+            }`}
+            onClick={() => {
+              if (!ousdSelected) {
+                setIsOusd(true)
+                setFilters([])
+              }
+            }}
+          >
+            <span className="d-none d-md-flex">
+              {fbt('OUSD', 'Tx history filter: OUSD')}
+            </span>
+            <img
+              className="d-flex d-md-none"
+              src={assetRootPath(`/images/history/mint_icon.svg`)}
+            />
+          </div>
+        </div>
+        <div key="wousd">
+          <div
+            className={`button wousd d-flex align-items-center justify-content-center ${
+              !ousdSelected ? 'selected' : ''
+            }`}
+            onClick={() => {
+              if (ousdSelected) {
+                setIsOusd(false)
+                setFilters([])
+              }
+            }}
+          >
+            <span className="d-none d-md-flex">
+              {fbt('wOUSD', 'Tx history filter: wOUSD')}
+            </span>
+            <img
+              className="d-flex d-md-none"
+              src={assetRootPath(`/images/history/redeem_icon.svg`)}
+            />
+          </div>
         </div>
       </div>
-      <div key='wousd'>
-      <div
-        className={`button wousd d-flex align-items-center justify-content-center ${
-          !ousdSelected ? 'selected' : ''
-        }`}
-        onClick={() => {
-          if (ousdSelected) {
-            setIsOusd(false)
-            setFilters([])
-          }
-        }}
-      >
-        <span className="d-none d-md-flex">{fbt('wOUSD', 'Tx history filter: wOUSD')}</span>
-        <img
-          className="d-flex d-md-none"
-          src={assetRootPath(`/images/history/redeem_icon.svg`)}
-        />
-      </div>
-      </div>
-    </div>
-    <style jsx>{`
+      <style jsx>{`
         .button {
           color: #8293a4;
           min-height: 40px;
@@ -398,25 +398,29 @@ const TransactionHistory = ({ setWousdBalanceHeader, isMobile }) => {
                 <FilterButton
                   filterText={fbt('Received', 'Tx history filter: Received')}
                   filterImage="received_icon.svg"
-                  filter={isOusd ? "received" : "received_wousd"}
+                  filter={isOusd ? 'received' : 'received_wousd'}
                   filters={filters}
                   setFilters={setFilters}
                 />
                 <FilterButton
                   filterText={fbt('Sent', 'Tx history filter: Sent')}
                   filterImage="sent_icon.svg"
-                  filter={isOusd ? "sent" : "sent_wousd"}
+                  filter={isOusd ? 'sent' : 'sent_wousd'}
                   filters={filters}
                   setFilters={setFilters}
                 />
                 <FilterButton
-                  filterText={isOusd ? fbt('Swap', 'Tx history filter: Swap') : fbt('Wrap', 'Tx history filter: Wrap')}
+                  filterText={
+                    isOusd
+                      ? fbt('Swap', 'Tx history filter: Swap')
+                      : fbt('Wrap', 'Tx history filter: Wrap')
+                  }
                   filterImage="swap_icon.svg"
-                  filter={isOusd ? "swap" : "wrap"}
+                  filter={isOusd ? 'swap' : 'wrap'}
                   filters={filters}
                   setFilters={setFilters}
                 />
-                {isOusd && 
+                {isOusd && (
                   <FilterButton
                     filterText={fbt('Yield', 'Tx history filter: Yield')}
                     filterImage="yield_icon.svg"
@@ -424,7 +428,7 @@ const TransactionHistory = ({ setWousdBalanceHeader, isMobile }) => {
                     filters={filters}
                     setFilters={setFilters}
                   />
-                }
+                )}
               </div>
               <div className="d-flex">
                 <div
