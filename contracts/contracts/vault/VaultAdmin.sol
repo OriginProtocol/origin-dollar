@@ -11,11 +11,14 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 
 import { StableMath } from "../utils/StableMath.sol";
 import { IOracle } from "../interfaces/IOracle.sol";
+import { Pausable } from "../pausing/Pausable.sol";
 import "./VaultStorage.sol";
 
-contract VaultAdmin is VaultStorage {
+contract VaultAdmin is VaultStorage, Pausable {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
+    
+    address private _pauser;
 
     /**
      * @dev Verifies that the caller is the Vault, Governor, or Strategist.
@@ -23,17 +26,32 @@ contract VaultAdmin is VaultStorage {
     modifier onlyVaultOrGovernorOrStrategist() {
         require(
             msg.sender == address(this) ||
-                msg.sender == strategistAddr ||
-                isGovernor(),
-            "Caller is not the Vault, Governor, or Strategist"
+            _isGovernorOrStrategist(),
+        "Caller is not the Vault, Governor, or Strategist"
         );
         _;
     }
 
     modifier onlyGovernorOrStrategist() {
         require(
-            msg.sender == strategistAddr || isGovernor(),
+            _isGovernorOrStrategist(),
             "Caller is not the Strategist or Governor"
+        );
+        _;
+    }
+
+    modifier onlyPauserOrGovernorOrStrategist() {
+        require(
+            msg.sender == _pauser || _isGovernorOrStrategist(),
+            "Caller is not the Pauser or Strategist or Governor"
+        );
+        _;
+    }
+
+    modifier onlyPauserOrGovernor() {
+        require(
+            msg.sender == _pauser || isGovernor(),
+            "Caller is not the Pauser or Governor"
         );
         _;
     }
@@ -272,9 +290,17 @@ contract VaultAdmin is VaultStorage {
     ****************************************/
 
     /**
+     * @dev Set the address of the pauser contract
+     */
+    function setPauser(address __pauser) external onlyGovernor {
+        _pauser = __pauser;
+        emit PauserChanged(__pauser);
+    }
+
+    /**
      * @dev Set the deposit paused flag to true to prevent rebasing.
      */
-    function pauseRebase() external onlyGovernorOrStrategist {
+    function pauseRebase() public onlyPauserOrGovernorOrStrategist {
         rebasePaused = true;
         emit RebasePaused();
     }
@@ -282,7 +308,7 @@ contract VaultAdmin is VaultStorage {
     /**
      * @dev Set the deposit paused flag to true to allow rebasing.
      */
-    function unpauseRebase() external onlyGovernor {
+    function unpauseRebase() public onlyPauserOrGovernor {
         rebasePaused = false;
         emit RebaseUnpaused();
     }
@@ -290,7 +316,7 @@ contract VaultAdmin is VaultStorage {
     /**
      * @dev Set the deposit paused flag to true to prevent capital movement.
      */
-    function pauseCapital() external onlyGovernorOrStrategist {
+    function pauseCapital() public onlyPauserOrGovernorOrStrategist {
         capitalPaused = true;
         emit CapitalPaused();
     }
@@ -298,9 +324,48 @@ contract VaultAdmin is VaultStorage {
     /**
      * @dev Set the deposit paused flag to false to enable capital movement.
      */
-    function unpauseCapital() external onlyGovernorOrStrategist {
+    function unpauseCapital() public onlyPauserOrGovernorOrStrategist {
         capitalPaused = false;
         emit CapitalUnpaused();
+    }
+
+    /**
+     * @dev Return the address of the pauser contract
+     */
+    function pauser() public view override returns (address) {
+        return _pauser;
+    }
+
+    /**
+     * @dev Execute the pause action
+     */
+    function _pause() internal override {
+        pauseCapital();
+        pauseRebase();
+    }
+
+    /**
+     * @dev Execute the unpause action
+     */
+    function _unpause() internal override {
+        unpauseCapital();
+        unpauseRebase();
+    }
+
+    /**
+     * @dev Returns true if the current user can pause the contract (in addition to the pauser)
+     * Required by the pausable specification.
+     */
+    function _canPause() internal view override returns (bool) {
+        return _isGovernorOrStrategist();
+    }
+
+    /**
+     * @dev Returns true if the current user can unpause the contract (in addition to the pauser)
+     * Required by the pausable specification.
+     */
+    function _canUnpause() internal view override returns (bool) {
+        return isGovernor();
     }
 
     /***************************************
@@ -319,6 +384,15 @@ contract VaultAdmin is VaultStorage {
     {
         require(!assets[_asset].isSupported, "Only unsupported assets");
         IERC20(_asset).safeTransfer(governor(), _amount);
+    }
+
+    /**
+     * @dev Checks if the current user is a governor or strategist
+     * @return true if the user is a governor or strategist, false otherwise
+     */
+    function _isGovernorOrStrategist() private view returns(bool) 
+    {
+        return msg.sender == strategistAddr || isGovernor();
     }
 
     /***************************************
