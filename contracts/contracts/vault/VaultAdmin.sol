@@ -45,14 +45,6 @@ contract VaultAdmin is VaultStorage, Pausable {
         _;
     }
 
-    modifier onlyPauserOrGovernor() {
-        require(
-            msg.sender == _pauser || isGovernor(),
-            "Caller is not the Pauser or Governor"
-        );
-        _;
-    }
-
     /***************************************
                  Configuration
     ****************************************/
@@ -305,7 +297,7 @@ contract VaultAdmin is VaultStorage, Pausable {
     /**
      * @dev Set the deposit paused flag to true to allow rebasing.
      */
-    function unpauseRebase() public onlyPauserOrGovernor {
+    function unpauseRebase() public onlyPauserOrGovernorOrStrategist {
         rebasePaused = false;
         emit RebaseUnpaused();
     }
