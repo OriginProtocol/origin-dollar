@@ -9,12 +9,12 @@ contract Pauser is Initializable, Governable {
     event ExpiryDurationChanged(uint256 _newExpiry);
     event PausableChanged(address _newPausable);
     event StrategistChanged(address _newStrategist);
-    event PauseInitiated(uint256 _expiry);
-    event PauseConfirmed();
+    event TempPaused(uint256 _expiry);
+    event Paused();
     event Unpaused();
     event Whitelisted(address _account);
     event DeWhitelisted(address _account);
-    
+
     uint8 public constant UNPAUSED = 0;
     uint8 public constant TEMP_PAUSE = 1;
     uint8 public constant PAUSED = 2;
@@ -61,29 +61,46 @@ contract Pauser is Initializable, Governable {
      * @dev Verifies that the caller is a whitelisted account or the governor or strategist.
      */
     modifier onlyWhitelistedOrGovernorOrStrategist() {
-        require(whitelist[msg.sender] ||
-            isGovernor() ||
-            msg.sender == strategistAddr,
+        require(
+            whitelist[msg.sender] || _isGovernorOrStrategist(),
             "Caller is not whitelisted and is not the Strategist or Governor"
         );
         _;
     }
 
-    function initialize(address _pausable, uint256 _expiryDuration) external onlyGovernor initializer {
+    modifier onlyGovernorOrStrategist() {
+        require(
+            _isGovernorOrStrategist(),
+            "Caller is not the Strategist or Governor"
+        );
+        _;
+    }
+
+    function initialize(address _pausable, uint256 _expiryDuration)
+        external
+        onlyGovernor
+        initializer
+    {
         setPausable(_pausable);
         setExpiryDuration(_expiryDuration);
     }
-    
-    function addToWhitelist(address _account) external onlyGovernor {
+
+    function addToWhitelist(address _account)
+        external
+        onlyGovernorOrStrategist
+    {
         whitelist[_account] = true;
         emit Whitelisted(_account);
     }
-    
-    function removeFromWhitelist(address _account) external onlyGovernor {
+
+    function removeFromWhitelist(address _account)
+        external
+        onlyGovernorOrStrategist
+    {
         whitelist[_account] = false;
         emit DeWhitelisted(_account);
     }
-    
+
     /**
      * @dev Pauses the managed contract for the duration of `expiryDuration`
      * The pause action can be canceled by any user when the temp-pause expires.
@@ -94,16 +111,44 @@ contract Pauser is Initializable, Governable {
         // Cannot pause if already paused
         require(pauseState == UNPAUSED, "Contract is not unpaused");
 
-        // Cannot initiate a temp-pause if done before (one-time-use)
-        require(pauseExpiry[msg.sender] == 0, "Caller has already initiated a temp pause");
-        
+        if (!_isGovernorOrStrategist()) {
+            // Cannot initiate a temp-pause if done before (one-time-use)
+            require(
+                pauseExpiry[msg.sender] == 0,
+                "Caller has already initiated a temp pause"
+            );
+        }
+
         pauseState = TEMP_PAUSE;
         currentExpiry = block.timestamp + expiryDuration;
         pauseExpiry[msg.sender] = currentExpiry;
-        emit PauseInitiated(currentExpiry);
+        emit TempPaused(currentExpiry);
 
         // Execute the pause action on the contract
         Pausable(pausable).pause();
+    }
+
+    /**
+     * @dev Confirm a temporary pause on the contract
+     * The contract MUST be in a TEMP_PAUSE state.
+     * The confirmer MUST be different from the initiator.
+     */
+    function confirmPause() external onlyGovernorOrStrategist {
+        // The contract MUST be in a TEMP_PAUSE state
+        require(pauseState == TEMP_PAUSE, "The contract is not temp-paused");
+
+        // currentExpiry MUST never be zero when pauseState = TEMP_PAUSE
+        assert(currentExpiry != 0);
+
+        // The confirmer MUST be different from the initiator
+        require(
+            pauseExpiry[msg.sender] != currentExpiry,
+            "Cannot confirm self-initiated temp pause"
+        );
+
+        pauseState = PAUSED;
+        currentExpiry = 0;
+        emit Paused();
     }
 
     /**
@@ -113,9 +158,12 @@ contract Pauser is Initializable, Governable {
     function cancelTempPause() external onlyWhitelistedOrGovernorOrStrategist {
         // Cannot cancel if not temp-paused
         require(pauseState == TEMP_PAUSE, "The contract is not temp-paused");
-        
+
         // Cannot cancel before expiry
-        require(block.timestamp > currentExpiry, "The current pause is not expired");
+        require(
+            block.timestamp > currentExpiry,
+            "The current pause is not expired"
+        );
 
         pauseState = UNPAUSED;
         currentExpiry = 0;
@@ -126,24 +174,34 @@ contract Pauser is Initializable, Governable {
     }
 
     /**
-     * @dev Confirm a temporary pause on the contract
-     * The contract MUST be in a TEMP_PAUSE state.
-     * The confirmer MUST be different from the initiator.
+     * @dev Pauses the managed contract indefinitely
      */
-    function confirmPause() external onlyWhitelistedOrGovernorOrStrategist {
-        // The contract MUST be in a TEMP_PAUSE state
-        require(pauseState == TEMP_PAUSE, "The contract is not temp-paused");
-        
-        // currentExpiry MUST never be zero when pauseState = TEMP_PAUSE
-        assert(currentExpiry != 0);
-        
-        // The confirmer MUST be different from the initiator
-        require(pauseExpiry[msg.sender] != currentExpiry, "Cannot confirm self-initiated temp pause");
-        
+    function pause() external onlyGovernorOrStrategist {
+        // Cannot pause if already paused
+        require(pauseState != PAUSED, "Contract is already paused");
+
         pauseState = PAUSED;
         currentExpiry = 0;
-        emit PauseConfirmed();
-     }
+        emit Paused();
+
+        // Execute the pause action on the contract
+        Pausable(pausable).pause();
+    }
+
+    /**
+     * @dev Unpauses the managed contract and resets expiry to 0
+     */
+    function unpause() external onlyGovernorOrStrategist {
+        // Cannot unpause if already unpaused
+        require(pauseState != UNPAUSED, "Contract is already unpaused");
+
+        pauseState = UNPAUSED;
+        currentExpiry = 0;
+        emit Unpaused();
+
+        // Execute the pause action on the contract
+        Pausable(pausable).unpause();
+    }
 
     /**
      * @dev Set the duration (in seconds) of a temp-pause expiry
@@ -170,5 +228,12 @@ contract Pauser is Initializable, Governable {
     function setStrategistAddr(address _strategistAddr) public onlyGovernor {
         strategistAddr = _strategistAddr;
         emit StrategistChanged(_strategistAddr);
+    }
+
+    /**
+     * @dev Returns true if the caller is the governor or strategist. False otherwise.
+     */
+    function _isGovernorOrStrategist() private view returns (bool) {
+        return msg.sender == strategistAddr || isGovernor();
     }
 }
