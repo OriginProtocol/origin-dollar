@@ -111,7 +111,7 @@ contract VaultStorage is Initializable, Governable {
     address[] private _deprecated_swapTokens;
     
     // Address of the pauser contract
-    address private _pauser;
+    address internal _pauser;
 
     // Address of the pauser contract
     address internal _pauser;
