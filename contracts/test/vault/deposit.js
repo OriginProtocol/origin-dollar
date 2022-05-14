@@ -27,10 +27,10 @@ describe("Vault deposit pausing", async () => {
   it("Other can not pause and unpause", async () => {
     const { anna, vault } = await loadFixture(compoundVaultFixture);
     await expect(vault.connect(anna).pauseCapital()).to.be.revertedWith(
-      "Caller is not the Strategist or Governor"
+      "Caller is not the Pauser or Strategist or Governor"
     );
     await expect(vault.connect(anna).unpauseCapital()).to.be.revertedWith(
-      "Caller is not the Strategist or Governor"
+      "Caller is not the Pauser or Strategist or Governor"
     );
   });
 
