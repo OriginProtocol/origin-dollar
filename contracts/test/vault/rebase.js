@@ -30,10 +30,10 @@ describe("Vault rebase pausing", async () => {
   it("Should not allow the public to pause or unpause rebasing", async () => {
     let { vault, anna } = await loadFixture(defaultFixture);
     await expect(vault.connect(anna).pauseRebase()).to.be.revertedWith(
-      "Caller is not the Strategist or Governor"
+      "Caller is not the Pauser or Strategist or Governor"
     );
     await expect(vault.connect(anna).unpauseRebase()).to.be.revertedWith(
-      "Caller is not the Governor"
+      "Caller is not the Pauser or Strategist or Governor"
     );
   });
 
@@ -46,12 +46,10 @@ describe("Vault rebase pausing", async () => {
   it("Should allow strategist to unpause rebasing", async () => {
     let { vault, governor, josh } = await loadFixture(defaultFixture);
     await vault.connect(governor).setStrategistAddr(josh.address);
-    await expect(vault.connect(josh).unpauseRebase()).to.be.revertedWith(
-      "Caller is not the Governor"
-    );
+    await vault.connect(josh).unpauseRebase()
   });
 
-  it("Should allow governor tonpause rebasing", async () => {
+  it("Should allow governor to pause rebasing", async () => {
     let { vault, governor } = await loadFixture(defaultFixture);
     await vault.connect(governor).pauseRebase();
   });
