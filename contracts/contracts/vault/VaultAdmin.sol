@@ -23,9 +23,8 @@ contract VaultAdmin is VaultStorage, Pausable {
      */
     modifier onlyVaultOrGovernorOrStrategist() {
         require(
-            msg.sender == address(this) ||
-            _isGovernorOrStrategist(),
-        "Caller is not the Vault, Governor, or Strategist"
+            msg.sender == address(this) || _isGovernorOrStrategist(),
+            "Caller is not the Vault, Governor, or Strategist"
         );
         _;
     }
@@ -388,8 +387,7 @@ contract VaultAdmin is VaultStorage, Pausable {
      * @dev Checks if the current user is a governor or strategist
      * @return true if the user is a governor or strategist, false otherwise
      */
-    function _isGovernorOrStrategist() private view returns(bool) 
-    {
+    function _isGovernorOrStrategist() private view returns (bool) {
         return msg.sender == strategistAddr || isGovernor();
     }
 

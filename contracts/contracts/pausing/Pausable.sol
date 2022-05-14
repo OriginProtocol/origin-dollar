@@ -7,17 +7,23 @@ pragma solidity ^0.8.0;
 abstract contract Pausable {
     event Paused();
     event Unpaused();
-    
+
     modifier onlyPausers() {
-        require(msg.sender == pauser() || _canPause(), "Caller cannot pause the contract");
+        require(
+            msg.sender == pauser() || _canPause(),
+            "Caller cannot pause the contract"
+        );
         _;
     }
-    
+
     modifier onlyUnpausers() {
-        require(msg.sender == pauser() || _canPause(), "Caller cannot pause the contract");
+        require(
+            msg.sender == pauser() || _canPause(),
+            "Caller cannot pause the contract"
+        );
         _;
     }
-    
+
     /**
      * @dev Executes the pausing action.
      */
@@ -56,7 +62,6 @@ abstract contract Pausable {
      */
     function _unpause() internal virtual;
 
-
     /**
      * @dev Returns true if the sender can pause this contract.
      * MUST be overriden in implementations if accounts other than the pauser can pause the contract.
@@ -64,7 +69,6 @@ abstract contract Pausable {
     function _canPause() internal view virtual returns (bool) {
         return false;
     }
-
 
     /**
      * @dev Returns true if the sender can unpause this contract.
