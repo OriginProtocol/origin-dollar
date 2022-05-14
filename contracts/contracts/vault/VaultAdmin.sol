@@ -17,8 +17,6 @@ import "./VaultStorage.sol";
 contract VaultAdmin is VaultStorage, Pausable {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
-    
-    address private _pauser;
 
     /**
      * @dev Verifies that the caller is the Vault, Governor, or Strategist.
