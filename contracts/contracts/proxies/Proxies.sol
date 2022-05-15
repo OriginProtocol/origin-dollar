@@ -25,6 +25,13 @@ contract VaultProxy is InitializeGovernedUpgradeabilityProxy {
 }
 
 /**
+ * @notice PauserProxy delegates calls to a Pauser implementation
+ */
+contract PauserProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
+
+/**
  * @notice CompoundStrategyProxy delegates calls to a CompoundStrategy implementation
  */
 contract CompoundStrategyProxy is InitializeGovernedUpgradeabilityProxy {
