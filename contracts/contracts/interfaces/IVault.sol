@@ -13,6 +13,7 @@ interface IVault {
     event CapitalUnpaused();
     event RebasePaused();
     event RebaseUnpaused();
+    event PauserChanged(address _newPauser);
     event VaultBufferUpdated(uint256 _vaultBuffer);
     event RedeemFeeUpdated(uint256 _redeemFeeBps);
     event PriceProviderUpdated(address _priceProvider);
@@ -81,6 +82,14 @@ interface IVault {
         external
         view
         returns (address);
+
+    function setPauser(address _pauser) external;
+
+    function pauser() external view returns (address);
+
+    function pause() external;
+
+    function unpause() external;
 
     function pauseRebase() external;
 
