@@ -131,7 +131,6 @@ contract Pauser is Initializable, Governable {
     /**
      * @dev Confirm a temporary pause on the contract
      * The contract MUST be in a TEMP_PAUSE state.
-     * The confirmer MUST be different from the initiator.
      */
     function confirmPause() external onlyGovernorOrStrategist {
         // The contract MUST be in a TEMP_PAUSE state
@@ -139,12 +138,6 @@ contract Pauser is Initializable, Governable {
 
         // currentExpiry MUST never be zero when pauseState = TEMP_PAUSE
         assert(currentExpiry != 0);
-
-        // The confirmer MUST be different from the initiator
-        require(
-            pauseExpiry[msg.sender] != currentExpiry,
-            "Cannot confirm self-initiated temp pause"
-        );
 
         pauseState = PAUSED;
         currentExpiry = 0;
