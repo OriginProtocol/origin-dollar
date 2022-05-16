@@ -29,6 +29,8 @@ async function defaultFixture() {
   const compoundStrategyProxy = await ethers.getContract(
     "CompoundStrategyProxy"
   );
+  const pauserProxy = await ethers.getContract("PauserProxy");
+  const pauser = await ethers.getContractAt("Pauser", pauserProxy.address)
 
   const ousd = await ethers.getContractAt("OUSD", ousdProxy.address);
   const vault = await ethers.getContractAt("IVault", vaultProxy.address);
@@ -254,6 +256,7 @@ async function defaultFixture() {
     vault,
     harvester,
     dripper,
+    pauser,
     mockNonRebasing,
     mockNonRebasingTwo,
     // Oracle
