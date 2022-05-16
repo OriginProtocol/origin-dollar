@@ -48,14 +48,14 @@ contract Pauser is Initializable, Governable {
     /**
      * @dev whitelist of addresses allowed to interact with the functionality exposed by this contract.
      */
-    mapping(address => bool) whitelist;
+    mapping(address => bool) public whitelist;
 
     /**
      * @dev Expiry of the pause initiated by the account.
      * Map of account to the expiry of the temp-pause they have initiated.
      * Also used to invalidate a pauser to prevent abuse.
      */
-    mapping(address => uint256) pauseExpiry;
+    mapping(address => uint256) public pauseExpiry;
 
     /**
      * @dev Verifies that the caller is a whitelisted account or the governor or strategist.
