@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { ethers, BigNumber } from 'ethers'
 import { useCookies } from 'react-cookie'
 import { useWeb3React } from '@web3-react/core'
@@ -21,8 +21,10 @@ import { isProduction, isDevelopment } from 'constants/env'
 import useBalancesQuery from '../queries/useBalancesQuery'
 import useAllowancesQuery from '../queries/useAllowancesQuery'
 import useApyQuery from '../queries/useApyQuery'
+import useTransactionHistoryPageQuery from '../queries/useTransactionHistoryPageQuery'
 import useTransactionHistoryQuery from '../queries/useTransactionHistoryQuery'
 import useWousdQuery from '../queries/useWousdQuery'
+import { transactionHistoryItemsPerPage } from 'utils/constants'
 
 const AccountListener = (props) => {
   const web3react = useWeb3React()
@@ -74,7 +76,20 @@ const AccountListener = (props) => {
     },
   })
 
-  const historyQuery = useTransactionHistoryQuery(account)
+  const historyPageQuery = useTransactionHistoryPageQuery(account, transactionHistoryItemsPerPage)
+
+  const transactionItems = useMemo(
+    () => (historyPageQuery.isSuccess ? historyPageQuery.data.page.pages * transactionHistoryItemsPerPage : 0),
+    [historyPageQuery.isSuccess, historyPageQuery.data]
+  )
+
+  const historyQuery = useTransactionHistoryQuery(account, transactionItems)
+
+  useEffect(() => {
+    if (transactionItems) {
+      historyQuery.refetch()
+    }
+  }, [transactionItems])
 
   useEffect(() => {
     if ((prevActive && !active) || prevAccount !== account) {
@@ -355,7 +370,6 @@ const AccountListener = (props) => {
   useEffect(() => {
     if (account) {
       login(account, setCookie)
-      historyQuery.refetch()
     }
 
     const loadLifetimeEarnings = async () => {

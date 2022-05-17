@@ -4,9 +4,7 @@ import ContractStore from 'stores/ContractStore'
 import PoolStore from 'stores/PoolStore'
 import CoinStore from 'stores/CoinStore'
 import { pools } from 'constants/Pool'
-import { apyDayOptions } from 'utils/constants'
 import { displayCurrency } from 'utils/math'
-import { sleep } from 'utils/utils'
 
 import AccountStore from 'stores/AccountStore'
 import YieldStore from 'stores/YieldStore'
@@ -17,7 +15,6 @@ import usdcAbi from 'constants/mainnetAbi/cUsdc.json'
 import daiAbi from 'constants/mainnetAbi/dai.json'
 import ognAbi from 'constants/mainnetAbi/ogn.json'
 import flipperAbi from 'constants/mainnetAbi/flipper.json'
-import useWousdQuery from '../queries/useWousdQuery'
 
 const curveFactoryMiniAbi = [
   {

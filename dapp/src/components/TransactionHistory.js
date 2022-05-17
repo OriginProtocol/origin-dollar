@@ -10,10 +10,12 @@ import { shortenAddress } from '../utils/web3'
 import { exportToCsv, sleep } from '../utils/utils'
 import withIsMobile from 'hoc/withIsMobile'
 import { assetRootPath } from 'utils/image'
+import { transactionHistoryItemsPerPage } from 'utils/constants'
 
+import useTransactionHistoryPageQuery from '../queries/useTransactionHistoryPageQuery'
 import useTransactionHistoryQuery from '../queries/useTransactionHistoryQuery'
 
-const itemsPerPage = 50
+const itemsPerPage = transactionHistoryItemsPerPage
 
 const FilterButton = ({
   filter,
@@ -185,16 +187,34 @@ const TransactionHistory = ({ isMobile }) => {
     setCurrentPage(1)
   }
 
-  const historyQuery = useTransactionHistoryQuery(account)
+  const historyPageQuery = useTransactionHistoryPageQuery(account)
 
-  const history = useMemo(
-    () => (historyQuery.isSuccess ? historyQuery.data : []),
-    [historyQuery.isSuccess, historyQuery.data]
+  const historyPages = useMemo(
+    () => (historyPageQuery.isSuccess ? historyPageQuery.data.page.pages : 0),
+    [historyPageQuery.isSuccess, historyPageQuery.data]
+  )
+
+  const historyQuery = useTransactionHistoryQuery(account, historyPages)
+
+  const history = useMemo(() => {
+      if (historyQuery.isSuccess && historyQuery.data.length !== 0) {
+        return historyQuery.data
+      } else if (historyPageQuery.isSuccess) {
+        return historyPageQuery.data.history
+      } else {
+        return []
+      }
+    },
+    [historyQuery.isSuccess, historyQuery.data, historyPageQuery.isSuccess, historyPageQuery.data]
   )
 
   useEffect(() => {
-    historyQuery.refetch()
+    historyPageQuery.refetch()
   }, [])
+
+  useEffect(() => {
+    historyQuery.refetch()
+  }, [historyPages])
 
   const shownHistory = useMemo(() => {
     if (filters.length === 0) {
@@ -211,8 +231,7 @@ const TransactionHistory = ({ isMobile }) => {
   }, [history, filters])
 
   useEffect(() => {
-    const length = shownHistory.length
-    const pages = Math.ceil(length / itemsPerPage)
+    const pages = historyPages
 
     let pageNumbers = [
       1,
@@ -248,7 +267,7 @@ const TransactionHistory = ({ isMobile }) => {
   return (
     <>
       <div className="d-flex holder flex-column justify-content-start">
-        {historyQuery.isLoading ? (
+        {historyPageQuery.isLoading ? (
           <div className="m-4">{fbt('Loading...', 'Loading...')}</div>
         ) : (
           <>
