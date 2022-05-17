@@ -9,7 +9,7 @@ const useTransactionHistoryQuery = (account, transactionItems, options) => {
     QUERY_KEYS.TransactionHistory(account),
     () => transactionHistoryService.fetchHistory(account, transactionItems),
     {
-      enabled: account != null && pages != 0,
+      enabled: account != null && transactionItems != 0,
       refetchOnWindowFocus: false,
       ...options,
     }
