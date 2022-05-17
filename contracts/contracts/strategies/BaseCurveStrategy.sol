@@ -105,7 +105,8 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         _lpDepositAll();
     }
 
-    function _lpWithdraw(uint256 numPTokens) internal virtual;
+    function _lpWithdraw(uint256 numCrvTokens) internal virtual;
+    function _lpWithdrawAll() internal virtual;
 
     /**
      * @dev Withdraw asset from Curve 3Pool
@@ -122,31 +123,32 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
 
         emit Withdrawal(_asset, address(assetToPToken[_asset]), _amount);
 
-        (uint256 contractPTokens, , uint256 totalPTokens) = _getTotalPTokens();
+        uint256 contractCrv3Tokens = IERC20(pTokenAddress).balanceOf(address(this));
 
         uint256 coinIndex = _getCoinIndex(_asset);
         int128 curveCoinIndex = int128(uint128(coinIndex));
         // Calculate the max amount of the asset we'd get if we withdrew all the
         // platform tokens
         ICurvePool curvePool = ICurvePool(platformAddress);
+
+        // Add a 5% threshold to help calculate required amount of crv3Tokens
+        uint256 crv3TokensTreshold = _amount * 105 / 100;
         // Calculate how many platform tokens we need to withdraw the asset
-        // amount in the worst case (i.e withdrawing all LP tokens)
-        uint256 maxAmount = curvePool.calc_withdraw_one_coin(
-            totalPTokens,
+        // amount in by adding 5% of overhead to required withdrawn amount
+        uint256 thresholdAmount = curvePool.calc_withdraw_one_coin(
+            crv3TokensTreshold,
             curveCoinIndex
         );
-        uint256 maxBurnedPTokens = (totalPTokens * _amount) / maxAmount;
+        uint256 requiredCrv3Tokens = (crv3TokensTreshold * _amount) / thresholdAmount;
 
-        // Not enough in this contract or in the Gauge, can't proceed
-        require(totalPTokens > maxBurnedPTokens, "Insufficient 3CRV balance");
         // We have enough LP tokens, make sure they are all on this contract
-        if (contractPTokens < maxBurnedPTokens) {
-            _lpWithdraw(maxBurnedPTokens - contractPTokens);
+        if (contractCrv3Tokens < requiredCrv3Tokens) {
+            _lpWithdraw(requiredCrv3Tokens - contractCrv3Tokens);
         }
 
         uint256[3] memory _amounts = [uint256(0), uint256(0), uint256(0)];
         _amounts[coinIndex] = _amount;
-        curvePool.remove_liquidity_imbalance(_amounts, maxBurnedPTokens);
+        curvePool.remove_liquidity_imbalance(_amounts, requiredCrv3Tokens);
         IERC20(_asset).safeTransfer(_recipient, _amount);
     }
 
@@ -154,9 +156,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
      * @dev Remove all assets from platform and send them to Vault contract.
      */
     function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
-        // Withdraw all from Gauge
-        (, uint256 gaugePTokens, uint256 totalPTokens) = _getTotalPTokens();
-        _lpWithdraw(gaugePTokens);
+        _lpWithdrawAll();
         // Withdraws are proportional to assets held by 3Pool
         uint256[3] memory minWithdrawAmounts = [
             uint256(0),
@@ -164,12 +164,9 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
             uint256(0)
         ];
 
-        console.log("totalPTokens", totalPTokens / 1e18);
-        console.log("platform Tokens", IERC20(pTokenAddress).balanceOf(address(this)) / 1e18);
-
         // Remove liquidity
         ICurvePool threePool = ICurvePool(platformAddress);
-        threePool.remove_liquidity(totalPTokens, minWithdrawAmounts);
+        threePool.remove_liquidity(IERC20(pTokenAddress).balanceOf(address(this)), minWithdrawAmounts);
         // Transfer assets out of Vault
         // Note that Curve will provide all 3 of the assets in 3pool even if
         // we have not set PToken addresses for all of them in this strategy
@@ -187,6 +184,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
     function checkBalance(address _asset)
         public
         view
+        virtual
         override
         returns (uint256 balance)
     {
@@ -251,6 +249,8 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
             uint256 gaugePTokens,
             uint256 totalPTokens
         );
+
+    function _getGaugePTokens() internal view virtual returns (uint256 gaugePTokens);
 
     /**
      * @dev Call the necessary approvals for the Curve pool and gauge

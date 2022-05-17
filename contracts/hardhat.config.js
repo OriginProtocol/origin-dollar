@@ -225,6 +225,8 @@ module.exports = {
       },
       chainId: 1337,
       initialBaseFeePerGas: 0,
+      gas: 7000000,
+      gasPrice: 1000
     },
     localhost: {
       timeout: 60000,

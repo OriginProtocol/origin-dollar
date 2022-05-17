@@ -78,14 +78,32 @@ contract ConvexStrategy is BaseCurveStrategy {
         require(success, "Failed to deposit to Convex");
     }
 
-    function _lpWithdraw(uint256 numPTokens) internal override {
+    function _lpWithdraw(uint256 numCrvTokens) internal override {
+        uint256 gaugePTokens = IRewardStaking(cvxRewardStakerAddress).balanceOf(
+            address(this)
+        );
+
+        // Not enough in this contract or in the Gauge, can't proceed
+        require(numCrvTokens > gaugePTokens, "Insufficient 3CRV balance");
+
         // withdraw and unwrap with claim takes back the lpTokens and also collects the rewards to this
         IRewardStaking(cvxRewardStakerAddress).withdrawAndUnwrap(
-            numPTokens,
+            numCrvTokens,
             true
         );
     }
 
+    function _lpWithdrawAll() internal override {
+        // withdraw and unwrap with claim takes back the lpTokens and also collects the rewards to this
+        IRewardStaking(cvxRewardStakerAddress).withdrawAndUnwrap(
+            IRewardStaking(cvxRewardStakerAddress).balanceOf(
+                address(this)
+            ),
+            true
+        );
+    }
+
+    // TODO delete this function
     /**
      * @dev Calculate the total platform token balance (i.e. 3CRV) that exist in
      * this contract or is staked in the Gauge (or in other words, the total

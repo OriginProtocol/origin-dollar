@@ -172,6 +172,26 @@ class TemporaryFork:
     def __exit__(self, *args, **kwargs):
         brownie.chain.revert()
 
+class SupplyChanges:
+    def __init__(self, txOptions):
+        self.txOptions=txOptions
+
+    def __enter__(self):
+        self.vaultTotalValue = vault_core.totalValue(self.txOptions)
+        self.ousdTotalSupply = ousd.totalSupply(self.txOptions)
+        return self
+
+    def __exit__(self, *args, **kwargs):
+        vaultTotalValue = vault_core.totalValue(self.txOptions)
+        ousdTotalSupply = ousd.totalSupply(self.txOptions)
+        rateBefore = self.vaultTotalValue / self.ousdTotalSupply
+        rateAfter = vaultTotalValue / ousdTotalSupply
+
+        print("Vault value (before, after, diff):       " + c18(self.vaultTotalValue) + " " + c18(vaultTotalValue) + " " + c18(vaultTotalValue - self.vaultTotalValue))
+        print("OUSD total supply (before, after, diff): " + c18(self.ousdTotalSupply) + " " + c18(ousdTotalSupply) + " " + c18(ousdTotalSupply - self.ousdTotalSupply))
+        print("Rate change (before, after, diff):       " + ' {:0.4f}% {:0.4f}% {:0.4f}%'.format(rateBefore, rateAfter, rateAfter - rateBefore))
+        
+
 def show_proposal(id):
     state = ['New','Queue','Expired','Executed'][governor.state(id)]
     prop = governor.proposals(id)
@@ -180,7 +200,7 @@ def show_proposal(id):
         remaining_hours = int((prop[2] - time.time()) / 60 / 60 * 100) / 100
         if remaining_hours > 0:
             print("📅 #{:} [{:}] with {:.2f} hours remaining in timelock".format(id, state, remaining_hours))
-        else: 
+        else:
             remaining_hours += 48.0
             print("⚛️  #{:} [{:}] with {:.2f} hours remaining in window".format(id, state, remaining_hours))
     elif state == 'New':
