@@ -76,10 +76,16 @@ const AccountListener = (props) => {
     },
   })
 
-  const historyPageQuery = useTransactionHistoryPageQuery(account, transactionHistoryItemsPerPage)
+  const historyPageQuery = useTransactionHistoryPageQuery(
+    account,
+    transactionHistoryItemsPerPage
+  )
 
   const transactionItems = useMemo(
-    () => (historyPageQuery.isSuccess ? historyPageQuery.data.page.pages * transactionHistoryItemsPerPage : 0),
+    () =>
+      historyPageQuery.isSuccess
+        ? historyPageQuery.data.page.pages * transactionHistoryItemsPerPage
+        : 0,
     [historyPageQuery.isSuccess, historyPageQuery.data]
   )
 

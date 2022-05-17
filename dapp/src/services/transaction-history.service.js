@@ -7,7 +7,9 @@ export default class TransactionHistoryService {
     if (transactionItems === 0) return []
 
     const response = await fetch(
-      `${this.baseURL}/${account.toLowerCase()}/history?per_page=${transactionItems}`
+      `${
+        this.baseURL
+      }/${account.toLowerCase()}/history?per_page=${transactionItems}`
     )
     if (!response.ok) {
       throw new Error('Failed fetching history from analytics')

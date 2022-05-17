@@ -5,14 +5,16 @@ export default class TransactionHistoryPageService {
 
   async fetchHistory(account, transactionHistoryItemsPerPage) {
     const response = await fetch(
-      `${this.baseURL}/${account.toLowerCase()}/history?per_page=${transactionHistoryItemsPerPage}`
+      `${
+        this.baseURL
+      }/${account.toLowerCase()}/history?per_page=${transactionHistoryItemsPerPage}`
     )
 
     if (!response.ok) {
       throw new Error('Failed fetching history from analytics')
     }
 
-    return (await response.json())
+    return await response.json()
   }
 }
 

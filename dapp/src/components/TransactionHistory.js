@@ -197,16 +197,19 @@ const TransactionHistory = ({ isMobile }) => {
   const historyQuery = useTransactionHistoryQuery(account, historyPages)
 
   const history = useMemo(() => {
-      if (historyQuery.isSuccess && historyQuery.data.length !== 0) {
-        return historyQuery.data
-      } else if (historyPageQuery.isSuccess) {
-        return historyPageQuery.data.history
-      } else {
-        return []
-      }
-    },
-    [historyQuery.isSuccess, historyQuery.data, historyPageQuery.isSuccess, historyPageQuery.data]
-  )
+    if (historyQuery.isSuccess && historyQuery.data.length !== 0) {
+      return historyQuery.data
+    } else if (historyPageQuery.isSuccess) {
+      return historyPageQuery.data.history
+    } else {
+      return []
+    }
+  }, [
+    historyQuery.isSuccess,
+    historyQuery.data,
+    historyPageQuery.isSuccess,
+    historyPageQuery.data,
+  ])
 
   useEffect(() => {
     historyPageQuery.refetch()
