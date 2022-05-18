@@ -1,3 +1,8 @@
+#CONFIGURATION - unfortunately this address changes until we deploy it to mainnet
+META_STRATEGY = '0x307a6343A4ecd5dF8F113fb7f1A78D792F81f91C'
+
+#END COFIGURATION
+
 import  brownie
 from addresses import *
 import json
@@ -42,6 +47,7 @@ v2router = load_contract('v2router', UNISWAP_V2_ROUTER)
 aave_strat = load_contract('aave_strat', AAVE_STRAT)
 comp_strat = load_contract('comp_strat', COMP_STRAT)
 convex_strat = load_contract('convex_strat', CONVEX_STRAT)
+meta_strat = load_contract('convex_strat', META_STRATEGY)
 
 aave_incentives_controller = load_contract('aave_incentives_controller', '0xd784927Ff2f95ba542BfC824c8a8a98F3495f6b5')
 stkaave = load_contract('stkaave', '0x4da27a545c0c5B758a6BA100e3a049001de870f5')
@@ -119,6 +125,10 @@ def show_vault_holdings():
     print("  Total: "+c18(vault_core.totalValue()))
     print("----------------------------------------")
 
+    print("Stables:", end='')
+    print(c18(dai.balanceOf(vault_core.address)) + ' DAI   ', end='')
+    print(c6(usdc.balanceOf(vault_core.address)) + ' USDC  ', end='')
+    print(c6(usdt.balanceOf(vault_core.address)) + ' USDT  ')
     print("AAVE:  ", end='')
     print(c18(aave_strat.checkBalance(DAI))+ ' DAI    ', end='')
     print(c6(aave_strat.checkBalance(USDC))+ ' USDC   ', end='')
@@ -131,6 +141,10 @@ def show_vault_holdings():
     convex_total = convex_strat.checkBalance(DAI) + convex_strat.checkBalance(USDC) * 1e12 + convex_strat.checkBalance(USDT) * 1e12
     convex_pct =  float(convex_total) / float(total) * 100
     print(c18(convex_total) + ' ({:0.2f}%)'.format(convex_pct))
+    print("Meta:", end='')
+    convex_meta_total = meta_strat.checkBalance(DAI) + meta_strat.checkBalance(USDC) * 1e12 + meta_strat.checkBalance(USDT) * 1e12
+    convex_meta_pct =  float(convex_meta_total) / float(total) * 100
+    print(c18(convex_meta_total) + ' ({:0.2f}%)'.format(convex_meta_pct))
     print("----------------------------------------")
 
 

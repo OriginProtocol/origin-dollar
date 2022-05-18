@@ -8,6 +8,7 @@ pragma solidity ^0.8.0;
  */
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
+import { ICurvePool } from "./ICurvePool.sol";
 import { IRewardStaking } from "./IRewardStaking.sol";
 import { IConvexDeposits } from "./IConvexDeposits.sol";
 import { IERC20, BaseCurveStrategy } from "./BaseCurveStrategy.sol";
@@ -103,32 +104,6 @@ contract ConvexStrategy is BaseCurveStrategy {
         );
     }
 
-    // TODO delete this function
-    /**
-     * @dev Calculate the total platform token balance (i.e. 3CRV) that exist in
-     * this contract or is staked in the Gauge (or in other words, the total
-     * amount platform tokens we own).
-     * @return contractPTokens Amount of platform tokens in this contract
-     * @return gaugePTokens Amount of platform tokens staked in gauge
-     * @return totalPTokens Total amount of platform tokens in native decimals
-     */
-    function _getTotalPTokens()
-        internal
-        view
-        override
-        returns (
-            uint256 contractPTokens,
-            uint256 gaugePTokens, // gauge is a misnomer here, need a better name
-            uint256 totalPTokens
-        )
-    {
-        contractPTokens = IERC20(pTokenAddress).balanceOf(address(this));
-        gaugePTokens = IRewardStaking(cvxRewardStakerAddress).balanceOf(
-            address(this)
-        ); //booster.poolInfo[pid].token.balanceOf(address(this)) Not needed if we always stake..
-        totalPTokens = contractPTokens + gaugePTokens;
-    }
-
     function _approveBase() internal override {
         IERC20 pToken = IERC20(pTokenAddress);
         // 3Pool for LP token (required for removing liquidity)
@@ -137,6 +112,36 @@ contract ConvexStrategy is BaseCurveStrategy {
         // Gauge for LP token
         pToken.safeApprove(cvxDepositorAddress, 0);
         pToken.safeApprove(cvxDepositorAddress, type(uint256).max);
+    }
+
+    /**
+     * @dev Get the total asset value held in the platform
+     * @param _asset      Address of the asset
+     * @return balance    Total value of the asset in the platform
+     */
+    function checkBalance(address _asset)
+        public
+        view
+        override
+        returns (uint256 balance)
+    {
+        require(assetToPToken[_asset] != address(0), "Unsupported asset");
+        // LP tokens in this contract. This should generally be nothing as we
+        // should always stake the full balance in the Gauge, but include for
+        // safety
+        uint256 contractPTokens = IERC20(pTokenAddress).balanceOf(address(this));
+        uint256 gaugePTokens = IRewardStaking(cvxRewardStakerAddress).balanceOf(
+            address(this)
+        );
+        uint256 totalPTokens = contractPTokens + gaugePTokens;
+
+        ICurvePool curvePool = ICurvePool(platformAddress);
+        if (totalPTokens > 0) {
+            uint256 virtual_price = curvePool.get_virtual_price();
+            uint256 value = (totalPTokens * virtual_price) / 1e18;
+            uint256 assetDecimals = Helpers.getDecimals(_asset);
+            balance = value.scaleBy(assetDecimals, 18) / 3;
+        }
     }
 
     /**

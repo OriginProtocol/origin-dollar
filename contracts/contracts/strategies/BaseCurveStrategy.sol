@@ -36,11 +36,6 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         require(_amount > 0, "Must deposit something");
         emit Deposit(_asset, address(platformAddress), _amount);
 
-        (uint256 contractPTokens, , uint256 totalPTokens) = _getTotalPTokens();
-        console.log("DEPOSITING START");
-        console.log("contract ptokens:", contractPTokens / 10**18);
-        console.log("total ptokens:", totalPTokens / 10**18);
-
         // 3Pool requires passing deposit amounts for all 3 assets, set to 0 for
         // all
         uint256[3] memory _amounts;
@@ -58,11 +53,6 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         // Do the deposit to 3pool
         curvePool.add_liquidity(_amounts, minMintAmount);
         _lpDepositAll();
-
-        (contractPTokens, , totalPTokens) = _getTotalPTokens();
-        console.log("DEPOSITING END");
-        console.log("contract ptokens:", contractPTokens / 10**18);
-        console.log("total ptokens:", totalPTokens / 10**18);
     }
 
     function _lpDepositAll() internal virtual;
@@ -131,15 +121,27 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         // platform tokens
         ICurvePool curvePool = ICurvePool(platformAddress);
 
+        uint256 virtual_price = curvePool.get_virtual_price();
         // Add a 5% threshold to help calculate required amount of crv3Tokens
-        uint256 crv3TokensTreshold = _amount * 105 / 100;
+        // Also consider the price of 3crv tokens
+        uint256 crv3TokensTreshold = _amount.scaleBy(18, Helpers.getDecimals(_asset)) *  // get dollar value of stablecoin in 18 decimals
+            105 / // first part of 5% increase
+            1e18 * virtual_price // convert from dollar value to 3crv token value
+            / 100; // last part of 5% increase
+
         // Calculate how many platform tokens we need to withdraw the asset
         // amount in by adding 5% of overhead to required withdrawn amount
         uint256 thresholdAmount = curvePool.calc_withdraw_one_coin(
             crv3TokensTreshold,
             curveCoinIndex
         );
+        console.log("111", thresholdAmount);
+        console.log("_amount to withdraw", _amount);
+        console.log("crv3TokensTreshold", crv3TokensTreshold);
+
         uint256 requiredCrv3Tokens = (crv3TokensTreshold * _amount) / thresholdAmount;
+
+        console.log("222");
 
         // We have enough LP tokens, make sure they are all on this contract
         if (contractCrv3Tokens < requiredCrv3Tokens) {
@@ -148,6 +150,10 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
 
         uint256[3] memory _amounts = [uint256(0), uint256(0), uint256(0)];
         _amounts[coinIndex] = _amount;
+        console.log("_amount", _amount);
+        console.log("requiredCrv3Tokens", requiredCrv3Tokens);
+        console.log("3crvTokensPresent", IERC20(pTokenAddress).balanceOf(address(this)));
+
         curvePool.remove_liquidity_imbalance(_amounts, requiredCrv3Tokens);
         IERC20(_asset).safeTransfer(_recipient, _amount);
     }
@@ -192,7 +198,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         // LP tokens in this contract. This should generally be nothing as we
         // should always stake the full balance in the Gauge, but include for
         // safety
-        (, , uint256 totalPTokens) = _getTotalPTokens();
+        uint256 totalPTokens = IERC20(assetToPToken[_asset]).balanceOf(address(this));
         ICurvePool curvePool = ICurvePool(platformAddress);
         if (totalPTokens > 0) {
             uint256 virtual_price = curvePool.get_virtual_price();
@@ -231,26 +237,6 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
             _approveAsset(assetsMapped[i]);
         }
     }
-
-    /**
-     * @dev Calculate the total platform token balance (i.e. 3CRV) that exist in
-     * this contract or is staked in the Gauge (or in other words, the total
-     * amount platform tokens we own).
-     * @return contractPTokens Amount of platform tokens in this contract
-     * @return gaugePTokens Amount of platform tokens staked in gauge
-     * @return totalPTokens Total amount of platform tokens in native decimals
-     */
-    function _getTotalPTokens()
-        internal
-        view
-        virtual
-        returns (
-            uint256 contractPTokens,
-            uint256 gaugePTokens,
-            uint256 totalPTokens
-        );
-
-    function _getGaugePTokens() internal view virtual returns (uint256 gaugePTokens);
 
     /**
      * @dev Call the necessary approvals for the Curve pool and gauge

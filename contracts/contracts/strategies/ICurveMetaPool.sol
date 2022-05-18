@@ -11,4 +11,6 @@ interface ICurveMetaPool {
     function calc_token_amount(uint256[2] calldata amounts, bool deposit) external view returns(uint256);
     function base_pool() external view returns(address);
     function coins(uint256 i) external view returns (address);
+    function exchange(int128 i, int128 j, uint256 dx, uint256 min_dy) external returns(uint256);
+    function get_dy(int128 i, int128 j, uint256 dx) external view returns(uint256);
 }

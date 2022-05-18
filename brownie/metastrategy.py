@@ -1,7 +1,3 @@
-#CONFIGURATION
-META_STRATEGY = '0x307a6343A4ecd5dF8F113fb7f1A78D792F81f91C'
-
-#END COFIGURATION
 from world import *
 
 me = ORIGINTEAM
@@ -60,4 +56,13 @@ def redeem(amount):
 def withdrawAllFromMeta():
 	vault_admin.withdrawAllFromStrategy(META_STRATEGY, {'from': STRATEGIST})
 
+# withdraw specific amount of USDT. Amount denominated in dollar value
+def withdrawFromMeta(usdtAmount):
+	meta_strat.withdraw(VAULT_PROXY_ADDRESS, '0xdAC17F958D2ee523a2206206994597C13D831ec7', usdtAmount * 1e6, {'from': VAULT_PROXY_ADDRESS})
+
+def tiltMetapoolToOUSD():
+	ousd_metapool.exchange(1,0, 10*1e6*1e18, 0, OPTS)
+
+def tiltMetapoolTo3CRV():
+	ousd_metapool.exchange(0,1, 11*1e6*1e18, 0, OPTS)
 

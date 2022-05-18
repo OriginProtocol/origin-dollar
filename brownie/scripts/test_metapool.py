@@ -2,13 +2,21 @@ from metastrategy import *
 mint(1e6)
 withdrawAllFromMeta()
 
+withdrawFromMeta(1e6)
+
+show_vault_holdings()
+
+with TemporaryFork():
+    with SupplyChanges(OPTS):
+        mint(10e6)
+        withdrawAllFromMeta()
+        redeem(10e6)
+
 with SupplyChanges(OPTS):
-    mint(10e6)
     withdrawAllFromMeta()
 
-
 from metastrategy import *
-
+vault_core.allocate(OPTS)
 with SupplyChanges(OPTS):
     mint(10000)
     redeem(10000)
