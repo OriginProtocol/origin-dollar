@@ -17,7 +17,9 @@ describe("Oracle", async () => {
     it("should read the mint price", async () => {
       const { vault, usdt } = await loadFixture(defaultFixture);
       const tests = [
-        ["0.80", "0.80"],
+        ["0.80", "0"],
+        ["0.997", "0"],
+        ["0.998", "0.998"],
         ["1.00", "1.00"],
         ["1.05", "1.00"],
       ];
