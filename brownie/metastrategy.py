@@ -64,5 +64,5 @@ def tiltMetapoolToOUSD():
 	ousd_metapool.exchange(1,0, 10*1e6*1e18, 0, OPTS)
 
 def tiltMetapoolTo3CRV():
-	ousd_metapool.exchange(0,1, 11*1e6*1e18, 0, OPTS)
+	ousd_metapool.exchange(0,1, 10*1e6*1e18, 0, OPTS)
 

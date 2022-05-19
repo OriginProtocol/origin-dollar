@@ -141,7 +141,7 @@ def show_vault_holdings():
     convex_total = convex_strat.checkBalance(DAI) + convex_strat.checkBalance(USDC) * 1e12 + convex_strat.checkBalance(USDT) * 1e12
     convex_pct =  float(convex_total) / float(total) * 100
     print(c18(convex_total) + ' ({:0.2f}%)'.format(convex_pct))
-    print("Meta:", end='')
+    print("Meta:  ", end='')
     convex_meta_total = meta_strat.checkBalance(DAI) + meta_strat.checkBalance(USDC) * 1e12 + meta_strat.checkBalance(USDT) * 1e12
     convex_meta_pct =  float(convex_meta_total) / float(total) * 100
     print(c18(convex_meta_total) + ' ({:0.2f}%)'.format(convex_meta_pct))

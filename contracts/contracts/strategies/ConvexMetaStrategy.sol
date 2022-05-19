@@ -30,8 +30,8 @@ contract ConvexMetaStrategy is BaseCurveStrategy, InitializableSecondary {
     ICurveMetaPool internal metapool;
     IERC20 internal ousd;
     IVault internal vault;
-    // the amount of non collateralized OUSD in metapool 
-    uint256 internal ousdMinted;
+    // Ordered list of metapool assets
+    address[] internal metapoolAssets;
 
     /**
      * Initializer for setting up strategy internal state. This overrides the
@@ -67,6 +67,7 @@ contract ConvexMetaStrategy is BaseCurveStrategy, InitializableSecondary {
         ousd = IERC20(_ousd);
         vault = IVault(_vaultAddress);
 
+        metapoolAssets = [metapool.coins(0), metapool.coins(1)];
         super._initialize(
             _platformAddress,
             _vaultAddress,
@@ -108,7 +109,6 @@ contract ConvexMetaStrategy is BaseCurveStrategy, InitializableSecondary {
          * (more OUSD vs more 3PoolLP) the Metapool is at a specific block number. 
          */
         vault.mintForStrategy(threePoolLpDollarValue);
-        ousdMinted += threePoolLpDollarValue;
 
         uint256 ousdBalance = ousd.balanceOf(address(this));
         uint256[2] memory _amounts = [ousdBalance, threePoolLpBalance];
@@ -150,21 +150,13 @@ contract ConvexMetaStrategy is BaseCurveStrategy, InitializableSecondary {
      * to remove liquidity from metapooll
      * @param numPTokens Number of Convex LP tokens to remove from gauge
      */
-    function _lpWithdraw(uint256 numPTokens) internal override {
-        //_lpWithdraw_one(numPTokens);
-        _lpWithdraw_two(numPTokens);
-    }
-
-    function _lpWithdraw_two(uint256 num3CrvTokens) internal {
-        console.log("WITHDRAWAL");
+    function _lpWithdraw(uint256 num3CrvTokens) internal override {
         IERC20 metapoolErc20 = IERC20(address(metapool));
         IERC20 threePoolLp = IERC20(pTokenAddress);
         ICurvePool curvePool = ICurvePool(platformAddress);
 
         uint256 gaugeTokens = IRewardStaking(cvxRewardStakerAddress).balanceOf(address(this));
-        console.log("GAuge tokens before: ", gaugeTokens / 10**18);
-        console.log("NUM num3CrvTokens to withdraw", num3CrvTokens / 10**18);
-
+        uint256 crv3VirtualPrice = curvePool.get_virtual_price();
         /**
          * Convert 3crv tokens to metapoolLP tokens and double it. Doubling is required because aside
          * from receiving 3crv we are also withdrawing OUSD. Instead of removing liquidity in an imbalanced
@@ -172,15 +164,14 @@ contract ConvexMetaStrategy is BaseCurveStrategy, InitializableSecondary {
          * make up for the token imbalance. The reason for this unpredictability is that the pool can be 
          * balanced either in OUSD direction or 3Crv.
          * 
-         * Further analysis to confirm the following assumption is required: It should be more cost effective
-         * to remove the largest sum of liquidity using a balanced function and then make up for the much smaller
-         * discrepancy in removed tokens using a metapool swap.
+         * Analysis has confirmed that: `It is more cost effective to remove liquidity in balanced manner and
+         * make up for the difference with additional swap. Comparing to removing liquidity in imbalanced manner.`
+         * Results of analysis here: https://docs.google.com/spreadsheets/d/1DYSyYwHqxRzSJh9dYkY5kcgP_K5gku6N2mQVhoH33vY/edit?usp=sharing
+         * run it yourself using code in test_metapool.py [REMOVING LIQUIDITY TEST] section
          */
         uint256 requiredMetapoolLpTokens = num3CrvTokens *
-            curvePool.get_virtual_price() / 1e18 /
+            crv3VirtualPrice / 1e18 /
             metapool.get_virtual_price() * 1e18 * 2;
-
-        console.log("requiredMetapoolLpTokens:", requiredMetapoolLpTokens / 1e18);
 
         require(
             requiredMetapoolLpTokens <= gaugeTokens,
@@ -200,107 +191,44 @@ contract ConvexMetaStrategy is BaseCurveStrategy, InitializableSecondary {
             requiredMetapoolLpTokens,
             true
         );
-        console.log("2");
-        uint256 metapoolLPWithdrawn = metapoolErc20.balanceOf(address(this));
-        uint256 metapoolLpDollarValue = metapoolLPWithdrawn * metapool.get_virtual_price() / 10**18;
-
-        console.log("MID WITHDRAWAL!");
-        console.log("Metapool LP withdrawn: ", metapoolLPWithdrawn / 10**18);
-        console.log("Metapool price: ", metapool.get_virtual_price());
-        console.log("Curve price: ", curvePool.get_virtual_price());
-        console.log("Metapool LP dollar value: ", metapoolLpDollarValue / 10**18);
-        console.log("Stablecoin metapool dollar value: ", metapoolLpDollarValue / 10**18 * curvePool.get_virtual_price() / 10**18);
 
         uint256[2] memory _minAmounts = [uint256(0), uint256(0)];
         // always withdraw all of the available metapool LP tokens (similar to how we always deposit all)
         uint256[2] memory removedCoins = metapool.remove_liquidity(metapoolErc20.balanceOf(address(this)), _minAmounts);
-        console.log("REMOVED OUSD: ", removedCoins[0] / 10**18);
-        console.log("REMOVED 3Crv: ", removedCoins[1] / 10**18);
+
+        uint128 crvCoinIndex = _getMetapoolCoinIndex(pTokenAddress);
+        uint128 ousdCoinIndex = _getMetapoolCoinIndex(address(ousd));
 
         // Receive too much 3crv 
-        if (removedCoins[1] > num3CrvTokens) {
+        if (removedCoins[uint256(crvCoinIndex)] > num3CrvTokens) {
             // TODO: should there be a gas saving threshold, to not perform a swap if value diff is 
             // relatively small
-            metapool.exchange(1, 0, removedCoins[1] - num3CrvTokens, 0);
+            metapool.exchange(int128(crvCoinIndex), int128(ousdCoinIndex), removedCoins[uint256(crvCoinIndex)] - num3CrvTokens, 0);
         }
         // We don't have enough 3CRV we need to swap for more
-        else  {
-            uint256 ousdToSwap = metapool.get_dy(0, 1, num3CrvTokens - removedCoins[1]);
-            // TODO these coin indexes should probably be dynamic
-            metapool.exchange(0, 1, ousdToSwap, 0);
+        else {
+            uint256 required3Crv = num3CrvTokens - removedCoins[uint256(crvCoinIndex)];
+            /**
+             * We first multiply the required3CRV with the virtual price so that we get a dollar
+             * value (i.e. OUSD value) of 3CRV required and we increase that by 5% for safety threshold
+             */
+            uint256 ousdWithThreshold = required3Crv * crv3VirtualPrice / 1e18 * 105 / 100;
+            uint256 crv3Received = metapool.get_dy(
+                int128(ousdCoinIndex), // Index value of the coin to send
+                int128(crvCoinIndex), // Index value of the coin to receive
+                ousdWithThreshold  // The amount of first coin being exchanged
+            );
+
+            metapool.exchange(
+                int128(ousdCoinIndex),
+                int128(crvCoinIndex),
+                // below is ousd to swap
+                required3Crv * ousdWithThreshold / crv3Received,
+                0
+            );
         }
 
-        console.log("OUSD balance after swap: ", ousd.balanceOf(address(this)) / 10**18);
-        console.log("3CRV LP balance after swap: ", threePoolLp.balanceOf(address(this)) / 10**18);
         vault.redeemForStrategy(ousd.balanceOf(address(this)));
-
-        console.log("AFTER WITHDRAWAL!");
-        console.log("OUSD balance: ", ousd.balanceOf(address(this)) / 10**18);
-        console.log("GAuge tokens: ", IRewardStaking(cvxRewardStakerAddress).balanceOf(address(this)) / 10**18);
-        console.log("GAuge tokens diff: ", (gaugeTokens - IRewardStaking(cvxRewardStakerAddress).balanceOf(address(this))) / 10**18);
-        console.log("Metapool LP: ", metapoolErc20.balanceOf(address(this)) / 10**18);
-    }
-
-    // be cognisent of OUSD balance 
-    function _lpWithdraw_one(uint256 numPTokens) internal {
-        console.log("WITHDRAWAL");
-        // NOTES: you are responsible now for figuring out if strategy has enough tokens
-        // 
-        //
-        IERC20 metapoolErc20 = IERC20(address(metapool));
-        IERC20 threePoolLp = IERC20(pTokenAddress);
-        ICurvePool curvePool = ICurvePool(platformAddress);
-
-        uint256 gaugeTokens = IRewardStaking(cvxRewardStakerAddress).balanceOf(address(this));
-        console.log("GAuge tokens before: ", gaugeTokens / 10**18);
-        console.log("NUM pTokens to withdraw", numPTokens / 10**18);
-
-        // withdraw and unwrap with claim takes back the lpTokens and also collects the rewards for deposit
-        IRewardStaking(cvxRewardStakerAddress).withdrawAndUnwrap(
-            numPTokens,
-            true
-        );
-        uint256 metapoolLPWithdrawn = metapoolErc20.balanceOf(address(this));
-        uint256 metapoolLpDollarValue = metapoolLPWithdrawn * metapool.get_virtual_price() / 10**18;
-
-        console.log("MID WITHDRAWAL!");
-        console.log("Metapool LP withdrawn: ", metapoolLPWithdrawn / 10**18);
-        console.log("Metapool price: ", metapool.get_virtual_price());
-        console.log("Curve price: ", curvePool.get_virtual_price());
-        console.log("Metapool LP dollar value: ", metapoolLpDollarValue / 10**18);
-        console.log("Stablecoin metapool dollar value: ", metapoolLpDollarValue / 10**18 * curvePool.get_virtual_price() / 10**18);
-        console.log("MIN AMOUNT: ", metapoolLpDollarValue / 2);
-        console.log("MIN AMOUNT(formatted): ", metapoolLpDollarValue / 4 / 10**18);
-
-        /* When depositing to Metapool we mint the amount of OUSD that corresponds to dollar value
-         * of the deposited LP tokens. And when withdrawing from the Metapool we expect to receive
-         * half of it as OUSD in the corresponding dollar value of the LP withdrawn.
-         *
-         * TODO: should we fixate to get half in stablecoins rather in OUSD?
-         * 
-         * note: 
-         * - OUSD token position 0
-         * - 3CrvLP token position 1
-         */
-        //uint256[2] memory _minAmounts = [metapoolLpDollarValue / 4, uint256(0)];
-        uint256[2] memory _minAmounts = [uint256(0), uint256(0)];
-        // always withdraw all of the available metapool LP tokens (similar to how we always deposit all)
-        uint256[2] memory removedCoins = metapool.remove_liquidity(metapoolErc20.balanceOf(address(this)), _minAmounts);
-        console.log("REMOVED OUSD: ", removedCoins[0] / 10**18);
-        console.log("REMOVED 3Crv: ", removedCoins[1] / 10**18);
-
-        console.log("OUSD balance: ", ousd.balanceOf(address(this)) / 10**18);
-        uint256 ousdBalance = ousd.balanceOf(address(this));
-        vault.redeemForStrategy(ousdBalance);
-        // TODO: could this underflow?
-        ousdMinted -= ousdBalance;
-
-        console.log("AFTER WITHDRAWAL!");
-        console.log("OUSD balance: ", ousd.balanceOf(address(this)) / 10**18);
-        console.log("3Pool balance: ", threePoolLp.balanceOf(address(this)) / 10**18);
-        console.log("GAuge tokens: ", IRewardStaking(cvxRewardStakerAddress).balanceOf(address(this)) / 10**18);
-        console.log("GAuge tokens diff: ", (gaugeTokens - IRewardStaking(cvxRewardStakerAddress).balanceOf(address(this))) / 10**18);
-        console.log("Metapool LP: ", metapoolErc20.balanceOf(address(this)) / 10**18);
     }
 
     function _lpWithdrawAll() internal override {
@@ -315,7 +243,6 @@ contract ConvexMetaStrategy is BaseCurveStrategy, InitializableSecondary {
         metapool.remove_liquidity(metapoolErc20.balanceOf(address(this)), _minAmounts);
 
         vault.redeemForStrategy(ousd.balanceOf(address(this)));
-        console.log("OUSD balance: ", ousd.balanceOf(address(this)) / 10**18);
     }
 
     /**
@@ -377,158 +304,15 @@ contract ConvexMetaStrategy is BaseCurveStrategy, InitializableSecondary {
     }
 
     /**
-     * @dev Withdraw asset from Curve 3Pool
-     * @param _recipient Address to receive withdrawn asset
-     * @param _asset Address of asset to withdraw
-     * @param _amount Amount of asset to withdraw
+     * @dev Get the index of the coin
      */
-    // function withdraw(
-    //     address _recipient,
-    //     address _asset,
-    //     uint256 _amount
-    // ) external override onlyVault nonReentrant {
-    //     withdrawStrat1(_recipient, _asset, _amount);
-    // }
-
-    /* Withdraw from strategy in a way where we are cognisant to burn the amount of OUSD proportional
-     * to the amount of gauge tokens present.
-     * 
-     * TODO: do we need a withdrawAll counterpart that also pays attention to amount of OUSD withdrawn?
-     */
-    function withdrawStrat1(
-        address _recipient,
-        address _asset,
-        uint256 _amount
-    ) internal {
-        require(_amount > 0, "Invalid amount");
-
-        emit Withdrawal(_asset, address(assetToPToken[_asset]), _amount);
-
-        uint256 crv3Tokens = IERC20(pTokenAddress).balanceOf(address(this));
-        uint256 gaugeMetaTokens = IRewardStaking(cvxRewardStakerAddress).balanceOf(
-            address(this)
-        );
-
-        uint256 maxOUSDWithdrawable = metapool.calc_withdraw_one_coin(
-            gaugeMetaTokens,
-            int128(0) // OUSD coin index
-        );
-
-        // This much gauge tokens we can spend on 3CrvLP token and still be on track to burn all
-        // OUSD that we have minted
-        uint256 total3PoolGaugeMetaTokens = gaugeMetaTokens - ousdMinted * gaugeMetaTokens / maxOUSDWithdrawable;
-        // what is the rate between metapoolLP tokens representing withdrawable OUSD vs representing withdrawable 3pool
-        // in basis points
-        uint256 ousdTo3PoolMetapoolGaugeRateBP = (gaugeMetaTokens - total3PoolGaugeMetaTokens) * 10000 / gaugeMetaTokens;
-        // 🔴 why was initial ousdMInted 350 units above expected value?
-        console.log("ousdMinted: ", ousdMinted / 1e18);
-        console.log("maxOUSDWithdrawable: ", maxOUSDWithdrawable / 1e18);
-        console.log("gaugeMetaTokens: ", gaugeMetaTokens / 1e18);
-        console.log("total3PoolGaugeMetaTokens: ", total3PoolGaugeMetaTokens / 1e18);
-        console.log("ousdTo3PoolMetapoolGaugeRateBP: ", ousdTo3PoolMetapoolGaugeRateBP);
-
-        /* Calculate what is the maximum amount of 3crv that is withdrawable if we were
-         * to unstake all the gauge tokens.
-         */
-        uint256 max3CrvTokensWithdrawable = metapool.calc_withdraw_one_coin(
-            total3PoolGaugeMetaTokens,
-            int128(1) // 3CRv coin index
-        );
-        console.log("max3CrvTokensWithdrawable: ", max3CrvTokensWithdrawable / 1e18);
-
-        uint256 totalAvailable3CrvTokens = crv3Tokens + max3CrvTokensWithdrawable;
-        console.log("totalAvailable3CrvTokens: ", totalAvailable3CrvTokens / 1e18);
-
-        uint256 coinIndex = _getCoinIndex(_asset);
-        uint256 maxAmount = ICurvePool(platformAddress).calc_withdraw_one_coin(
-            totalAvailable3CrvTokens,
-            int128(uint128(coinIndex)) // Curve coin index
-        );
-        uint256 maxBurned3PoolTokens = (totalAvailable3CrvTokens * _amount) / maxAmount;
-
-        console.log("_amount: ", _amount / 1e6);
-        console.log("maxAmount: ", maxAmount / 1e6);
-        console.log("maxBurned3PoolTokens: ", maxBurned3PoolTokens / 1e18);
-
-        // Not enough in this contract or in the Gauge, can't proceed
-        require(totalAvailable3CrvTokens > maxBurned3PoolTokens, "Insufficient 3CRV balance");
-        // We have enough LP tokens, make sure they are all on this contract
-        if (crv3Tokens < maxBurned3PoolTokens) {
-            // removing twice the required amount of pTokens since we are going to burn the OUSD
-            uint256 withdrawAmount = maxBurned3PoolTokens - crv3Tokens;
-            // Add enough tokens so that when removing liquidity sufficient amount of 3CRV along with
-            // OUSD gets withdrawn.
-            console.log("Wanting to get additional 3CRV from metapool:", withdrawAmount / 1e18);
-            console.log("crv3Tokens:", crv3Tokens / 1e18);
-            console.log("maxBurned3PoolTokens:", maxBurned3PoolTokens / 1e18);
-            console.log("LP TO WITHDRAW:", (withdrawAmount + withdrawAmount * ousdTo3PoolMetapoolGaugeRateBP * 2 / 10000) / 1e18);
-            console.log("----");
-            console.log("----");
-            console.log("3pool before:", IERC20(pTokenAddress).balanceOf(address(this)) / 1e17);
-            _lpWithdraw(withdrawAmount + withdrawAmount * ousdTo3PoolMetapoolGaugeRateBP * 2 / 10000);
+    function _getMetapoolCoinIndex(address _asset) internal view returns (uint128) {
+        for (uint128 i = 0; i < 2; i++) {
+            if (metapoolAssets[i] == _asset) return i;
         }
-
-        uint256[3] memory _amounts = [uint256(0), uint256(0), uint256(0)];
-        _amounts[coinIndex] = _amount;
-        console.log("3pool mid:", IERC20(pTokenAddress).balanceOf(address(this)) / 1e18);
-        ICurvePool(platformAddress).remove_liquidity_imbalance(_amounts, maxBurned3PoolTokens);
-        /* This method of calculation leaves us with ~1% of surplus 3 pool tokens. Probably because of
-         * using calc_withdraw_one_coin to calculate the basis of how much tokens to withdraw, when
-         * _lpWithdraw uses just a normal remove_liquidity. 
-         * 
-         * Would be convenient if there was a function on curve pool that would let us exactly calculate
-         * how much LP we need to burn using remove_liquidity to receive X amount of either of the tokens.
-         *
-         * this one works with combination of _lpWithdraw_one of withdrawal function
-         */
-        console.log("3pool after:", IERC20(pTokenAddress).balanceOf(address(this)) / 1e18);
-        IERC20(_asset).safeTransfer(_recipient, _amount);
+        revert("Invalid Metapool asset");
     }
 
-    /* Withdraw from strategy in a way where we are cognisant to burn the amount of OUSD proportional
-     * to the amount of gauge tokens present
-     */
-    // function unchangedMess(
-    //     address _recipient,
-    //     address _asset,
-    //     uint256 _amount
-    // ) internal {
-    //     require(_amount > 0, "Invalid amount");
-
-    //     emit Withdrawal(_asset, address(assetToPToken[_asset]), _amount);
-
-    //     (uint256 contractPTokens, uint256 gaugePTokens, uint256 totalPTokens) = _getTotalPTokens();
-
-    //     /* Calculate what is the maximum amount of asset that is withdrawable if we were
-    //      * to unstake all the gauge tokens.
-    //      */
-    //     uint256 max3CrvTokensWithdrawn = metapool.calc_withdraw_one_coin(
-    //         gaugePTokens,
-    //         int128(1) // 3CRv coin index
-    //     );
-
-    //     uint256 adjustedTotalPTokens = contractPTokens + gaugePTokens / 2;
-    //     uint256 coinIndex = _getCoinIndex(_asset);
-    //     uint256 maxAmount = ICurvePool(platformAddress).calc_withdraw_one_coin(
-    //         adjustedTotalPTokens,
-    //         int128(uint128(coinIndex)) // Curve coin index
-    //     );
-    //     uint256 maxBurnedPTokens = (adjustedTotalPTokens * _amount) / maxAmount;
-
-    //     // Not enough in this contract or in the Gauge, can't proceed
-    //     require(adjustedTotalPTokens > maxBurnedPTokens, "Insufficient 3CRV balance");
-    //     // We have enough LP tokens, make sure they are all on this contract
-    //     if (contractPTokens < maxBurnedPTokens) {
-    //         // removing twice the required amount of pTokens since we are going to burn the OUSD
-    //         _lpWithdraw((maxBurnedPTokens - contractPTokens) * 2);
-    //     }
-
-    //     uint256[3] memory _amounts = [uint256(0), uint256(0), uint256(0)];
-    //     _amounts[coinIndex] = _amount;
-    //     ICurvePool(platformAddress).remove_liquidity_imbalance(_amounts, maxBurnedPTokens);
-    //     IERC20(_asset).safeTransfer(_recipient, _amount);
-    // }
-    
     /**
      * @dev Collect accumulated CRV and CVX and send to Vault.
      */
@@ -538,7 +322,6 @@ contract ConvexMetaStrategy is BaseCurveStrategy, InitializableSecondary {
         onlyHarvester
         nonReentrant
     {
-        console.log("COLLECT REWARDS!");
         // Collect CRV and CVX
         IRewardStaking(cvxRewardStakerAddress).getReward();
         _collectRewardTokens();
