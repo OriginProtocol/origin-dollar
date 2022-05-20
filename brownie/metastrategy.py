@@ -52,11 +52,13 @@ def redeem(amount):
 
 def withdrawAllFromMeta():
 	vault_admin.withdrawAllFromStrategy(META_STRATEGY, {'from': STRATEGIST})
+	vault_core.rebase(OPTS)
 
 # withdraw specific amount of USDT. Amount denominated in dollar value
 # Notice: this functionality on vault might not make it to production
 def withdrawFromMeta(usdtAmount):
 	meta_strat.withdraw(VAULT_PROXY_ADDRESS, '0xdAC17F958D2ee523a2206206994597C13D831ec7', usdtAmount * 1e6, {'from': VAULT_PROXY_ADDRESS})
+	vault_core.rebase(OPTS)
 
 # swap 10 mio CRV for OUSD to tilt metapool to be heavier in OUSD
 def tiltMetapoolToOUSD():
