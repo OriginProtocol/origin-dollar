@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect } from 'react'
 import { ethers, BigNumber } from 'ethers'
 import { useCookies } from 'react-cookie'
 import { useWeb3React } from '@web3-react/core'
@@ -14,15 +14,12 @@ import { useStoreState } from 'pullstate'
 import { setupContracts } from 'utils/contracts'
 import { login } from 'utils/account'
 import { decorateContractStakeInfoWithTxHashes } from 'utils/stake'
-import { mergeDeep } from 'utils/utils'
 import { displayCurrency } from 'utils/math'
-import addresses from 'constants/contractAddresses'
 import { isProduction, isDevelopment } from 'constants/env'
 import useBalancesQuery from '../queries/useBalancesQuery'
 import useAllowancesQuery from '../queries/useAllowancesQuery'
 import useApyQuery from '../queries/useApyQuery'
 import useTransactionHistoryPageQuery from '../queries/useTransactionHistoryPageQuery'
-import useTransactionHistoryQuery from '../queries/useTransactionHistoryQuery'
 import useWousdQuery from '../queries/useWousdQuery'
 import { transactionHistoryItemsPerPage } from 'utils/constants'
 
@@ -78,24 +75,10 @@ const AccountListener = (props) => {
 
   const historyPageQuery = useTransactionHistoryPageQuery(
     account,
-    transactionHistoryItemsPerPage
+    transactionHistoryItemsPerPage,
+    1,
+    []
   )
-
-  const transactionItems = useMemo(
-    () =>
-      historyPageQuery.isSuccess
-        ? historyPageQuery.data.page.pages * transactionHistoryItemsPerPage
-        : 0,
-    [historyPageQuery.isSuccess, historyPageQuery.data]
-  )
-
-  const historyQuery = useTransactionHistoryQuery(account, transactionItems)
-
-  useEffect(() => {
-    if (transactionItems) {
-      historyQuery.refetch()
-    }
-  }, [transactionItems])
 
   useEffect(() => {
     if ((prevActive && !active) || prevAccount !== account) {
@@ -376,6 +359,7 @@ const AccountListener = (props) => {
   useEffect(() => {
     if (account) {
       login(account, setCookie)
+      historyPageQuery.refetch()
     }
 
     const loadLifetimeEarnings = async () => {

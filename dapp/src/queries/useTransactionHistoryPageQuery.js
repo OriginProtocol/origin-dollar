@@ -7,6 +7,8 @@ import { transactionHistoryPageService } from '../services/transaction-history-p
 const useTransactionHistoryPageQuery = (
   account,
   transactionHistoryItemsPerPage,
+  page,
+  filters,
   options
 ) => {
   return useQuery(
@@ -14,11 +16,14 @@ const useTransactionHistoryPageQuery = (
     () =>
       transactionHistoryPageService.fetchHistory(
         account,
-        transactionHistoryItemsPerPage
+        transactionHistoryItemsPerPage,
+        page,
+        filters
       ),
     {
       enabled: account != null,
       refetchOnWindowFocus: false,
+      keepPreviousData: true,
       ...options,
     }
   )
