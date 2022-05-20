@@ -10,18 +10,16 @@ OUSD_BAGS_2 = '0xc055de577ce2039e6d35621e3a885df9bb304ab9'
 USDT_BAGS = '0x5754284f345afc66a98fbb0a0afe71e0f007b949'
 CURVE_FACTORY = '0xB9fC157394Af804a3578134A6585C0dc9cc990d4'
 
-TOTAL_AMOUNT = int(11e6) * int(1e18)
-
 threepool_lp = load_contract('threepool_lp', THREEPOOL_LP)
 ousd_metapool = load_contract('ousd_metapool', OUSD_METAPOOL)
 threepool_swap = load_contract('threepool_swap', THREEPOOL)
 curve_factory = load_contract('curve_factory', CURVE_FACTORY)
 
 # 1. Acquire 3pool, ousd and usdt
-threepool_lp.transfer(me, TOTAL_AMOUNT, {'from': THREEPOOL_BAGS})
-ousd.transfer(me, 6*1e6*1e18, {'from': OUSD_BAGS})
-usdt.transfer(me, 50*1e6*1e6, {'from': USDT_BAGS})
-ousd.transfer(me, 5*1e6*1e18, {'from': OUSD_BAGS_2})
+threepool_lp.transfer(me, threepool_lp.balanceOf(THREEPOOL_BAGS), {'from': THREEPOOL_BAGS})
+ousd.transfer(me, ousd.balanceOf(OUSD_BAGS), {'from': OUSD_BAGS})
+usdt.transfer(me, usdt.balanceOf(USDT_BAGS), {'from': USDT_BAGS})
+ousd.transfer(me, ousd.balanceOf(OUSD_BAGS_2), {'from': OUSD_BAGS_2})
 
 # approve ousd and 3poolLp to be used by ousd_metapool
 threepool_lp.approve(ousd_metapool, int(1e50), OPTS)
@@ -37,6 +35,11 @@ sim_governor_execute(governor.proposalCount())
 # approve vault to move USDT
 usdt.approve(vault_core.address, int(0), OPTS)
 usdt.approve(vault_core.address, int(1e50), OPTS)
+
+print('\033[93m' + "Operational funds:")
+print("-------------------" + '\033[0m')
+print("'me' account has: " + c24(ousd.balanceOf(me)) + "m OUSD")
+print("'me' account has: " + c24(threepool_lp.balanceOf(me)) + "m 3CRV")
 
 # mint OUSD using USDT. Amount denominated in dollar value
 # also force call allocate so that funds get deposited to metastrategy
@@ -61,10 +64,18 @@ def withdrawFromMeta(usdtAmount):
 	vault_core.rebase(OPTS)
 
 # swap 10 mio CRV for OUSD to tilt metapool to be heavier in OUSD
-def tiltMetapoolToOUSD():
-	ousd_metapool.exchange(1,0, 10*1e6*1e18, 0, OPTS)
+def tiltMetapoolToOUSD(_amount=10*1e6*1e18):
+	return ousd_metapool.exchange(1,0, _amount, 0, OPTS)
 
 # swap 10 mio OUSD for 3CRV to tilt metapool to be heavier in 3CRV
-def tiltMetapoolTo3CRV():
-	ousd_metapool.exchange(0,1, 10*1e6*1e18, 0, OPTS)
+def tiltMetapoolTo3CRV(_amount=10*1e6*1e18):
+	return ousd_metapool.exchange(0,1, _amount, 0, OPTS)
+
+# show what direction metapool is tilted to and how much total supply is there
+def show_metapool_balances():
+    print("  Total: " + c18(ousd_metapool.totalSupply()))
+    print("----------------------------------------")
+    print(c18(ousd_metapool.balances(0)) + ' OUSD   ', end='')
+    print(c18(ousd_metapool.balances(1)) + ' 3CRV  ')
+    print("----------------------------------------")
 

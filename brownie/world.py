@@ -114,6 +114,9 @@ def commas(v, decimals = 18):
     s = f'{v:,}'
     return leading_whitespace(s, 16)
 
+def c24(v):
+    return commas(v, 24)
+
 def c18(v):
     return commas(v, 18)
 
