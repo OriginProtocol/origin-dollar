@@ -1,6 +1,5 @@
 from metastrategy import *
 
-# START OF REMOVING LIQUIDITY TEST
 # test economic feasibility of removing liquidity in:
 #   - imbalanced manner
 #   - balanced manner and do an extra swap to make up for the imbalance

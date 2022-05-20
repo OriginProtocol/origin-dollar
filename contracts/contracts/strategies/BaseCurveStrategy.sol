@@ -13,7 +13,6 @@ import { ICRVMinter } from "./ICRVMinter.sol";
 import { IERC20, InitializableAbstractStrategy } from "../utils/InitializableAbstractStrategy.sol";
 import { StableMath } from "../utils/StableMath.sol";
 import { Helpers } from "../utils/Helpers.sol";
-import "hardhat/console.sol";
 
 abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
     using StableMath for uint256;
@@ -109,7 +108,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         address _recipient,
         address _asset,
         uint256 _amount
-    ) external virtual override onlyVault nonReentrant {
+    ) external override onlyVault nonReentrant {
         require(_amount > 0, "Invalid amount");
 
         emit Withdrawal(_asset, address(assetToPToken[_asset]), _amount);
@@ -125,22 +124,26 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         ICurvePool curvePool = ICurvePool(platformAddress);
 
         uint256 virtual_price = curvePool.get_virtual_price();
-        // Add a 5% threshold to help calculate required amount of crv3Tokens
-        // Also consider the price of 3crv tokens
+        /** 
+         * Add a 5% threshold to help calculate required amount of crv3Tokens:
+         *  - convert asset to 18 decimals
+         *  - divide by virtual price to get 3Crv equivalent
+         *  - add a 5% threshold to it
+         */
         uint256 crv3TokensTreshold = (((_amount.scaleBy(
             18,
             Helpers.getDecimals(_asset)
-        ) * 105) / 1e18) * virtual_price) / 100; // get dollar value of stablecoin in 18 decimals // first part of 5% increase // convert from dollar value to 3crv token value // last part of 5% increase
+        ) * 105) * 1e18) / virtual_price) / 100;
 
         // Calculate how many platform tokens we need to withdraw the asset
         // amount in by adding 5% of overhead to required withdrawn amount
-        uint256 thresholdAmount = curvePool.calc_withdraw_one_coin(
+        uint256 thresholdAmountReceived = curvePool.calc_withdraw_one_coin(
             crv3TokensTreshold,
             curveCoinIndex
         );
 
         uint256 requiredCrv3Tokens = (crv3TokensTreshold * _amount) /
-            thresholdAmount;
+            thresholdAmountReceived;
 
         // We have enough LP tokens, make sure they are all on this contract
         if (contractCrv3Tokens < requiredCrv3Tokens) {

@@ -114,10 +114,6 @@ contract ConvexMetaStrategy is BaseCurveStrategy, InitializableSecondary {
         uint256 ousdBalance = ousd.balanceOf(address(this));
         uint256[2] memory _amounts = [ousdBalance, threePoolLpBalance];
 
-        console.log("DEPOSITING");
-        console.log("3pool dollar value ", threePoolLpDollarValue / 10**18);
-        console.log("ousdBalance", ousdBalance / 10**18);
-
         // TODO: figure out what the best slippage guard is. Also minReceived is in
         // OUSD3Pool LP tokens so need to account for that
         //
@@ -137,19 +133,9 @@ contract ConvexMetaStrategy is BaseCurveStrategy, InitializableSecondary {
     }
 
     /**
-     * NOtes: do a version of _lpWitdraw where you specify required amount of 3crvTokens you want to get
-     *
-     * Using virtual price calculation figure out how much gauged tokens we need to withdraw
-     * and then use the normal remove_liquidity to get those tokens.
-     *
-     * If we don't get the sufficient amount of 3CRV just swap it using the Metapool. Burn the excess
-     * OUSD as you would normally
-     */
-
-    /**
      * Withdraw the specified amount of tokens from the gauge. And use all the resulting tokens
-     * to remove liquidity from metapooll
-     * @param numPTokens Number of Convex LP tokens to remove from gauge
+     * to remove liquidity from metapool
+     * @param num3CrvTokens Number of Convex LP tokens to remove from gauge
      */
     function _lpWithdraw(uint256 num3CrvTokens) internal override {
         IERC20 metapoolErc20 = IERC20(address(metapool));
