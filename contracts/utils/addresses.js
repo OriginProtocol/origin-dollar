@@ -109,8 +109,6 @@ addresses.mainnet.CurveUSDTStrategyProxy =
   "0xe40e09cD6725E542001FcB900d9dfeA447B529C0";
 addresses.mainnet.CurveUSDTStrategy =
   "0x75Bc09f72db1663Ed35925B89De2b5212b9b6Cb3";
-addresses.mainnet.Curve3PoolDepositZap =
-  "0xA79828DF1850E8a3A3064576f380D90aECDD3359";
 
 addresses.mainnet.MixOracle = "0x4d4f5e7a1FE57F5cEB38BfcE8653EFFa5e584458";
 addresses.mainnet.UniswapOracle = "0xc15169Bad17e676b3BaDb699DEe327423cE6178e";
