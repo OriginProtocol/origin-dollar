@@ -22,18 +22,19 @@ module.exports = deploymentWithProposal(
     return {
       name: "Vault only mint with pegged stables",
       actions: [
-      {
-        // Set VaultCore implementation
-        contract: cVaultProxy,
-        signature: "upgradeTo(address)",
-        args: [dVaultCore.address],
-      },
-      {
-        // Set VaultAdmin implementation
-        contract: cVaultCore,
-        signature: "setAdminImpl(address)",
-        args: [dVaultAdmin.address],
-      },
-    ]};
+        {
+          // Set VaultCore implementation
+          contract: cVaultProxy,
+          signature: "upgradeTo(address)",
+          args: [dVaultCore.address],
+        },
+        {
+          // Set VaultAdmin implementation
+          contract: cVaultCore,
+          signature: "setAdminImpl(address)",
+          args: [dVaultAdmin.address],
+        },
+      ],
+    };
   }
 );
