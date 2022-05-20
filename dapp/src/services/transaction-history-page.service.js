@@ -1,6 +1,6 @@
 export default class TransactionHistoryPageService {
   constructor() {
-    this.baseURL = `${process.env.ANALYTICS_ENDPOINT}/api/v1/address`
+    this.baseURL = `${process.env.ANALYTICS_ENDPOINT_LOCAL}/api/v1/address`
   }
 
   async fetchHistory(
