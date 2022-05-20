@@ -161,7 +161,7 @@ const BalanceHeader = ({
             padding-left: 2px;
           }
 
-          @media (max-width: 799px) {
+          @media (max-width: 767px) {
             .title {
               width: 55%;
               text-align: left;
@@ -465,7 +465,7 @@ const BalanceHeader = ({
           min-width: 230px;
         }
 
-        @media (max-width: 799px) {
+        @media (max-width: 767px) {
           .balance-header {
             align-items: center;
             text-align: center;
