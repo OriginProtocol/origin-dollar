@@ -37,7 +37,9 @@ module.exports = deploymentWithProposal(
     );
 
     // 2. Deploy new implementation
-    const dConvexMetaStrategyImpl = await deployWithConfirmation("ConvexMetaStrategy");
+    const dConvexMetaStrategyImpl = await deployWithConfirmation(
+      "ConvexMetaStrategy"
+    );
     const cConvexMetaStrategy = await ethers.getContractAt(
       "ConvexMetaStrategy",
       dConvexMetaStrategyProxy.address
@@ -76,8 +78,7 @@ module.exports = deploymentWithProposal(
     );
 
     // 4,5. Init and configure new Convex Meta strategy
-    const initFunction2 =
-      "initialize2(address,uint256)";
+    const initFunction2 = "initialize2(address,uint256)";
     await withConfirmation(
       cConvexMetaStrategy.connect(sDeployer)[initFunction2](
         "0x7D536a737C13561e0D2Decf1152a653B4e615158", // _cvxRewardStakerAddress,
@@ -93,7 +94,7 @@ module.exports = deploymentWithProposal(
         .transferGovernance(governorAddr, await getTxOpts())
     );
 
-    console.log("META STRATEGY ADDRESS", dConvexMetaStrategyProxy.address)
+    console.log("META STRATEGY ADDRESS", dConvexMetaStrategyProxy.address);
     // Governance Actions
     // ----------------
     return {

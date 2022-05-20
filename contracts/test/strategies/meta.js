@@ -55,8 +55,6 @@ describe("Convex Meta Strategy", function () {
     usdt = fixture.usdt;
     usdc = fixture.usdc;
     dai = fixture.dai;
-
-
   });
 
   describe.only("Mint", function () {

@@ -101,7 +101,8 @@ interface IVault {
     function priceUSDRedeem(address asset) external view returns (uint256);
 
     // TODO: delete this before merging
-    function withdrawFromStrategy(address _strategyAddr, uint256 _usdtAmount) external;
+    function withdrawFromStrategy(address _strategyAddr, uint256 _usdtAmount)
+        external;
 
     function withdrawAllFromStrategy(address _strategyAddr) external;
 

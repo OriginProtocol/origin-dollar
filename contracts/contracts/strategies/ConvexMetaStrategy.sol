@@ -79,7 +79,7 @@ contract ConvexMetaStrategy is BaseCurveStrategy, InitializableSecondary {
     }
 
     /**
-     * Secondary Initializer for setting up strategy internal state. Can not fit everything into the first 
+     * Secondary Initializer for setting up strategy internal state. Can not fit everything into the first
      * initialize function. Solidity's stack has 16 variable limit
      * @param _cvxRewardStakerAddress Address of the CVX rewards staker
      * @param _cvxDepositorPTokenId Pid of the pool referred to by Depositor and staker
@@ -101,12 +101,13 @@ contract ConvexMetaStrategy is BaseCurveStrategy, InitializableSecondary {
         ICurvePool curvePool = ICurvePool(platformAddress);
 
         uint256 threePoolLpBalance = threePoolLp.balanceOf(address(this));
-        uint256 threePoolLpDollarValue = threePoolLpBalance * curvePool.get_virtual_price() / 10**18;
+        uint256 threePoolLpDollarValue = (threePoolLpBalance *
+            curvePool.get_virtual_price()) / 10**18;
 
         /* Mint 1:1 the amount of OUSD to the amount of stablecoins deposited to 3Pool.
          *
-         * TODO: research if there is a better ratio to pick according to how tilted 
-         * (more OUSD vs more 3PoolLP) the Metapool is at a specific block number. 
+         * TODO: research if there is a better ratio to pick according to how tilted
+         * (more OUSD vs more 3PoolLP) the Metapool is at a specific block number.
          */
         vault.mintForStrategy(threePoolLpDollarValue);
 
@@ -117,11 +118,11 @@ contract ConvexMetaStrategy is BaseCurveStrategy, InitializableSecondary {
         console.log("3pool dollar value ", threePoolLpDollarValue / 10**18);
         console.log("ousdBalance", ousdBalance / 10**18);
 
-        // TODO: figure out what the best slippage guard is. Also minReceived is in 
-        // OUSD3Pool LP tokens so need to account for that 
-        // 
+        // TODO: figure out what the best slippage guard is. Also minReceived is in
+        // OUSD3Pool LP tokens so need to account for that
+        //
         // Important(!) we need to be sure there are no flash loan attack possibilities here
-        uint256 minReceived = (ousdBalance + threePoolLpBalance) * 985 / 1000;
+        uint256 minReceived = ((ousdBalance + threePoolLpBalance) * 985) / 1000;
         metapool.add_liquidity(_amounts, minReceived);
 
         uint256 metapoolLp = metapoolErc20.balanceOf(address(this));
@@ -131,17 +132,17 @@ contract ConvexMetaStrategy is BaseCurveStrategy, InitializableSecondary {
             metapoolLp,
             true // Deposit with staking
         );
-        
+
         require(success, "Failed to deposit to Convex");
     }
 
     /**
      * NOtes: do a version of _lpWitdraw where you specify required amount of 3crvTokens you want to get
-     * 
+     *
      * Using virtual price calculation figure out how much gauged tokens we need to withdraw
      * and then use the normal remove_liquidity to get those tokens.
-     * 
-     * If we don't get the sufficient amount of 3CRV just swap it using the Metapool. Burn the excess 
+     *
+     * If we don't get the sufficient amount of 3CRV just swap it using the Metapool. Burn the excess
      * OUSD as you would normally
      */
 
@@ -155,23 +156,27 @@ contract ConvexMetaStrategy is BaseCurveStrategy, InitializableSecondary {
         IERC20 threePoolLp = IERC20(pTokenAddress);
         ICurvePool curvePool = ICurvePool(platformAddress);
 
-        uint256 gaugeTokens = IRewardStaking(cvxRewardStakerAddress).balanceOf(address(this));
+        uint256 gaugeTokens = IRewardStaking(cvxRewardStakerAddress).balanceOf(
+            address(this)
+        );
         uint256 crv3VirtualPrice = curvePool.get_virtual_price();
         /**
          * Convert 3crv tokens to metapoolLP tokens and double it. Doubling is required because aside
          * from receiving 3crv we are also withdrawing OUSD. Instead of removing liquidity in an imbalanced
-         * manner the preference is to remove it in a balanced manner and perform a swap on the metapool to 
-         * make up for the token imbalance. The reason for this unpredictability is that the pool can be 
+         * manner the preference is to remove it in a balanced manner and perform a swap on the metapool to
+         * make up for the token imbalance. The reason for this unpredictability is that the pool can be
          * balanced either in OUSD direction or 3Crv.
-         * 
+         *
          * Analysis has confirmed that: `It is more cost effective to remove liquidity in balanced manner and
          * make up for the difference with additional swap. Comparing to removing liquidity in imbalanced manner.`
          * Results of analysis here: https://docs.google.com/spreadsheets/d/1DYSyYwHqxRzSJh9dYkY5kcgP_K5gku6N2mQVhoH33vY/edit?usp=sharing
          * run it yourself using code in test_metapool.py [REMOVING LIQUIDITY TEST] section
          */
-        uint256 requiredMetapoolLpTokens = num3CrvTokens *
-            crv3VirtualPrice / 1e18 /
-            metapool.get_virtual_price() * 1e18 * 2;
+        uint256 requiredMetapoolLpTokens = ((num3CrvTokens * crv3VirtualPrice) /
+            1e18 /
+            metapool.get_virtual_price()) *
+            1e18 *
+            2;
 
         require(
             requiredMetapoolLpTokens <= gaugeTokens,
@@ -194,36 +199,46 @@ contract ConvexMetaStrategy is BaseCurveStrategy, InitializableSecondary {
 
         uint256[2] memory _minAmounts = [uint256(0), uint256(0)];
         // always withdraw all of the available metapool LP tokens (similar to how we always deposit all)
-        uint256[2] memory removedCoins = metapool.remove_liquidity(metapoolErc20.balanceOf(address(this)), _minAmounts);
+        uint256[2] memory removedCoins = metapool.remove_liquidity(
+            metapoolErc20.balanceOf(address(this)),
+            _minAmounts
+        );
 
         uint128 crvCoinIndex = _getMetapoolCoinIndex(pTokenAddress);
         uint128 ousdCoinIndex = _getMetapoolCoinIndex(address(ousd));
 
-        // Receive too much 3crv 
+        // Receive too much 3crv
         if (removedCoins[uint256(crvCoinIndex)] > num3CrvTokens) {
-            // TODO: should there be a gas saving threshold, to not perform a swap if value diff is 
+            // TODO: should there be a gas saving threshold, to not perform a swap if value diff is
             // relatively small
-            metapool.exchange(int128(crvCoinIndex), int128(ousdCoinIndex), removedCoins[uint256(crvCoinIndex)] - num3CrvTokens, 0);
+            metapool.exchange(
+                int128(crvCoinIndex),
+                int128(ousdCoinIndex),
+                removedCoins[uint256(crvCoinIndex)] - num3CrvTokens,
+                0
+            );
         }
         // We don't have enough 3CRV we need to swap for more
         else {
-            uint256 required3Crv = num3CrvTokens - removedCoins[uint256(crvCoinIndex)];
+            uint256 required3Crv = num3CrvTokens -
+                removedCoins[uint256(crvCoinIndex)];
             /**
              * We first multiply the required3CRV with the virtual price so that we get a dollar
              * value (i.e. OUSD value) of 3CRV required and we increase that by 5% for safety threshold
              */
-            uint256 ousdWithThreshold = required3Crv * crv3VirtualPrice / 1e18 * 105 / 100;
+            uint256 ousdWithThreshold = (((required3Crv * crv3VirtualPrice) /
+                1e18) * 105) / 100;
             uint256 crv3Received = metapool.get_dy(
                 int128(ousdCoinIndex), // Index value of the coin to send
                 int128(crvCoinIndex), // Index value of the coin to receive
-                ousdWithThreshold  // The amount of first coin being exchanged
+                ousdWithThreshold // The amount of first coin being exchanged
             );
 
             metapool.exchange(
                 int128(ousdCoinIndex),
                 int128(crvCoinIndex),
                 // below is ousd to swap
-                required3Crv * ousdWithThreshold / crv3Received,
+                (required3Crv * ousdWithThreshold) / crv3Received,
                 0
             );
         }
@@ -233,14 +248,19 @@ contract ConvexMetaStrategy is BaseCurveStrategy, InitializableSecondary {
 
     function _lpWithdrawAll() internal override {
         IERC20 metapoolErc20 = IERC20(address(metapool));
-        uint256 gaugeTokens = IRewardStaking(cvxRewardStakerAddress).balanceOf(address(this));
+        uint256 gaugeTokens = IRewardStaking(cvxRewardStakerAddress).balanceOf(
+            address(this)
+        );
         IRewardStaking(cvxRewardStakerAddress).withdrawAndUnwrap(
             gaugeTokens,
             true
         );
 
         uint256[2] memory _minAmounts = [uint256(0), uint256(0)];
-        metapool.remove_liquidity(metapoolErc20.balanceOf(address(this)), _minAmounts);
+        metapool.remove_liquidity(
+            metapoolErc20.balanceOf(address(this)),
+            _minAmounts
+        );
 
         vault.redeemForStrategy(ousd.balanceOf(address(this)));
     }
@@ -262,7 +282,9 @@ contract ConvexMetaStrategy is BaseCurveStrategy, InitializableSecondary {
         // LP tokens in this contract. This should generally be nothing as we
         // should always stake the full balance in the Gauge, but include for
         // safety
-        uint256 contractPTokens = IERC20(pTokenAddress).balanceOf(address(this));
+        uint256 contractPTokens = IERC20(pTokenAddress).balanceOf(
+            address(this)
+        );
         ICurvePool curvePool = ICurvePool(platformAddress);
         if (contractPTokens > 0) {
             uint256 virtual_price = curvePool.get_virtual_price();
@@ -271,17 +293,19 @@ contract ConvexMetaStrategy is BaseCurveStrategy, InitializableSecondary {
             balance += value.scaleBy(assetDecimals, 18) / 3;
         }
 
-        uint256 metapoolPTokens = IERC20(address(metapool)).balanceOf(address(this));
-        uint256 metapoolGaugePTokens = IRewardStaking(cvxRewardStakerAddress).balanceOf(
+        uint256 metapoolPTokens = IERC20(address(metapool)).balanceOf(
             address(this)
         );
+        uint256 metapoolGaugePTokens = IRewardStaking(cvxRewardStakerAddress)
+            .balanceOf(address(this));
         uint256 metapoolTotalPTokens = metapoolPTokens + metapoolGaugePTokens;
 
         if (metapoolTotalPTokens > 0) {
             uint256 metapool_virtual_price = metapool.get_virtual_price();
-            uint256 value = (metapoolTotalPTokens * metapool_virtual_price) / 1e18;
+            uint256 value = (metapoolTotalPTokens * metapool_virtual_price) /
+                1e18;
             uint256 assetDecimals = Helpers.getDecimals(_asset);
-            balance += value.scaleBy(assetDecimals, 18) / 3;   
+            balance += value.scaleBy(assetDecimals, 18) / 3;
         }
     }
 
@@ -306,7 +330,11 @@ contract ConvexMetaStrategy is BaseCurveStrategy, InitializableSecondary {
     /**
      * @dev Get the index of the coin
      */
-    function _getMetapoolCoinIndex(address _asset) internal view returns (uint128) {
+    function _getMetapoolCoinIndex(address _asset)
+        internal
+        view
+        returns (uint128)
+    {
         for (uint128 i = 0; i < 2; i++) {
             if (metapoolAssets[i] == _asset) return i;
         }

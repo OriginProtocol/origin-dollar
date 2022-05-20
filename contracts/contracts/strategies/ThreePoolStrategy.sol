@@ -97,7 +97,9 @@ contract ThreePoolStrategy is BaseCurveStrategy {
         // should always stake the full balance in the Gauge, but include for
         // safety
 
-        uint256 contractPTokens = IERC20(pTokenAddress).balanceOf(address(this));
+        uint256 contractPTokens = IERC20(pTokenAddress).balanceOf(
+            address(this)
+        );
         ICurveGauge gauge = ICurveGauge(crvGaugeAddress);
         uint256 gaugePTokens = gauge.balanceOf(address(this));
         uint256 totalPTokens = contractPTokens + gaugePTokens;

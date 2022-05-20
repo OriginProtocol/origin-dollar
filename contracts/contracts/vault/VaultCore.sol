@@ -108,13 +108,15 @@ contract VaultCore is VaultStorage {
     /**
      * @dev Mint OUSD for OUSD Meta Strategy
      * @param _amount Amount of the asset being deposited
-     * 
-     * Notice: can't use nonReentrant modifier since BaseCurveStrategy's deposit 
+     *
+     * Notice: can't use nonReentrant modifier since BaseCurveStrategy's deposit
      * already has that modifier present
      */
-    function mintForStrategy(
-        uint256 _amount
-    ) external whenNotCapitalPaused onlyOusdMetaStrategy {
+    function mintForStrategy(uint256 _amount)
+        external
+        whenNotCapitalPaused
+        onlyOusdMetaStrategy
+    {
         require(_amount > 0, "Amount must be greater than 0");
 
         emit Mint(msg.sender, _amount);
@@ -222,17 +224,19 @@ contract VaultCore is VaultStorage {
     /**
      * @dev Burn OUSD for OUSD Meta Strategy
      * @param _amount Amount of OUSD to burn
-     * 
-     * Notice: can't use nonReentrant modifier since BaseCurveStrategy's deposit 
+     *
+     * Notice: can't use nonReentrant modifier since BaseCurveStrategy's deposit
      * already has that modifier present
      */
-    function redeemForStrategy(
-        uint256 _amount
-    ) external whenNotCapitalPaused onlyOusdMetaStrategy {
+    function redeemForStrategy(uint256 _amount)
+        external
+        whenNotCapitalPaused
+        onlyOusdMetaStrategy
+    {
         require(_amount > 0, "Amount must be greater than 0");
 
         emit Redeem(msg.sender, _amount);
-        
+
         // Burn OUSD
         oUSD.burn(msg.sender, _amount);
 

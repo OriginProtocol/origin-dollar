@@ -97,9 +97,7 @@ contract ConvexStrategy is BaseCurveStrategy {
     function _lpWithdrawAll() internal override {
         // withdraw and unwrap with claim takes back the lpTokens and also collects the rewards to this
         IRewardStaking(cvxRewardStakerAddress).withdrawAndUnwrap(
-            IRewardStaking(cvxRewardStakerAddress).balanceOf(
-                address(this)
-            ),
+            IRewardStaking(cvxRewardStakerAddress).balanceOf(address(this)),
             true
         );
     }
@@ -129,7 +127,9 @@ contract ConvexStrategy is BaseCurveStrategy {
         // LP tokens in this contract. This should generally be nothing as we
         // should always stake the full balance in the Gauge, but include for
         // safety
-        uint256 contractPTokens = IERC20(pTokenAddress).balanceOf(address(this));
+        uint256 contractPTokens = IERC20(pTokenAddress).balanceOf(
+            address(this)
+        );
         uint256 gaugePTokens = IRewardStaking(cvxRewardStakerAddress).balanceOf(
             address(this)
         );

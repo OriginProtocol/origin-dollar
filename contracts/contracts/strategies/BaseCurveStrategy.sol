@@ -96,6 +96,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
     }
 
     function _lpWithdraw(uint256 numCrvTokens) internal virtual;
+
     function _lpWithdrawAll() internal virtual;
 
     /**
@@ -113,7 +114,9 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
 
         emit Withdrawal(_asset, address(assetToPToken[_asset]), _amount);
 
-        uint256 contractCrv3Tokens = IERC20(pTokenAddress).balanceOf(address(this));
+        uint256 contractCrv3Tokens = IERC20(pTokenAddress).balanceOf(
+            address(this)
+        );
 
         uint256 coinIndex = _getCoinIndex(_asset);
         int128 curveCoinIndex = int128(uint128(coinIndex));
@@ -124,10 +127,10 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         uint256 virtual_price = curvePool.get_virtual_price();
         // Add a 5% threshold to help calculate required amount of crv3Tokens
         // Also consider the price of 3crv tokens
-        uint256 crv3TokensTreshold = _amount.scaleBy(18, Helpers.getDecimals(_asset)) *  // get dollar value of stablecoin in 18 decimals
-            105 / // first part of 5% increase
-            1e18 * virtual_price // convert from dollar value to 3crv token value
-            / 100; // last part of 5% increase
+        uint256 crv3TokensTreshold = (((_amount.scaleBy(
+            18,
+            Helpers.getDecimals(_asset)
+        ) * 105) / 1e18) * virtual_price) / 100; // get dollar value of stablecoin in 18 decimals // first part of 5% increase // convert from dollar value to 3crv token value // last part of 5% increase
 
         // Calculate how many platform tokens we need to withdraw the asset
         // amount in by adding 5% of overhead to required withdrawn amount
@@ -135,13 +138,9 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
             crv3TokensTreshold,
             curveCoinIndex
         );
-        console.log("111", thresholdAmount);
-        console.log("_amount to withdraw", _amount);
-        console.log("crv3TokensTreshold", crv3TokensTreshold);
 
-        uint256 requiredCrv3Tokens = (crv3TokensTreshold * _amount) / thresholdAmount;
-
-        console.log("222");
+        uint256 requiredCrv3Tokens = (crv3TokensTreshold * _amount) /
+            thresholdAmount;
 
         // We have enough LP tokens, make sure they are all on this contract
         if (contractCrv3Tokens < requiredCrv3Tokens) {
@@ -150,9 +149,6 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
 
         uint256[3] memory _amounts = [uint256(0), uint256(0), uint256(0)];
         _amounts[coinIndex] = _amount;
-        console.log("_amount", _amount);
-        console.log("requiredCrv3Tokens", requiredCrv3Tokens);
-        console.log("3crvTokensPresent", IERC20(pTokenAddress).balanceOf(address(this)));
 
         curvePool.remove_liquidity_imbalance(_amounts, requiredCrv3Tokens);
         IERC20(_asset).safeTransfer(_recipient, _amount);
@@ -172,7 +168,10 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
 
         // Remove liquidity
         ICurvePool threePool = ICurvePool(platformAddress);
-        threePool.remove_liquidity(IERC20(pTokenAddress).balanceOf(address(this)), minWithdrawAmounts);
+        threePool.remove_liquidity(
+            IERC20(pTokenAddress).balanceOf(address(this)),
+            minWithdrawAmounts
+        );
         // Transfer assets out of Vault
         // Note that Curve will provide all 3 of the assets in 3pool even if
         // we have not set PToken addresses for all of them in this strategy
@@ -198,7 +197,9 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         // LP tokens in this contract. This should generally be nothing as we
         // should always stake the full balance in the Gauge, but include for
         // safety
-        uint256 totalPTokens = IERC20(assetToPToken[_asset]).balanceOf(address(this));
+        uint256 totalPTokens = IERC20(assetToPToken[_asset]).balanceOf(
+            address(this)
+        );
         ICurvePool curvePool = ICurvePool(platformAddress);
         if (totalPTokens > 0) {
             uint256 virtual_price = curvePool.get_virtual_price();
