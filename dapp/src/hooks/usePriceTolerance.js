@@ -7,7 +7,7 @@ const usePriceTolerance = (mode) => {
   // store price tolerance value for future default setting
   useEffect(() => {
     // default price tolerance value
-    let priceTolerance = 0.5
+    let priceTolerance = 0.1
     let localStorageValue = localStorage.getItem(priceToleranceLocalStorageKey)
     if (localStorageValue) {
       const localStorageParsed = parseFloat(localStorageValue)
