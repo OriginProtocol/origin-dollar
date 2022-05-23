@@ -17,8 +17,6 @@ describe("Oracle", async () => {
     it("should read the mint price", async () => {
       const { vault, usdt } = await loadFixture(defaultFixture);
       const tests = [
-        ["0.80", "0"],
-        ["0.997", "0"],
         ["0.998", "0.998"],
         ["1.00", "1.00"],
         ["1.05", "1.00"],
@@ -28,6 +26,21 @@ describe("Oracle", async () => {
         await setOracleTokenPriceUsd("USDT", actual);
         expect(await vault.priceUSDMint(usdt.address)).to.equal(
           ousdUnits(expectedRead)
+        );
+      }
+    });
+
+    it("should fail below peg on the mint price", async () => {
+      const { vault, usdt } = await loadFixture(defaultFixture);
+      const tests = [
+        ["0.85", "0"],
+        ["0.997", "0"],
+      ];
+      for (const test of tests) {
+        const [actual, expectedRead] = test;
+        await setOracleTokenPriceUsd("USDT", actual);
+        await expect(vault.priceUSDMint(usdt.address)).to.be.revertedWith(
+          "Asset price below peg"
         );
       }
     });
