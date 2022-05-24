@@ -132,6 +132,9 @@ export default function Footer({ onLocale, locale, dapp }) {
         }
 
         @media (max-width: 799px) {
+          .nav-link {
+            padding: 10px;
+          }
         }
       `}</style>
     </>
