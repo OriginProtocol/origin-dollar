@@ -287,38 +287,6 @@ contract VaultAdmin is VaultStorage, Pausable {
     }
 
     /**
-     * @dev Set the deposit paused flag to true to prevent rebasing.
-     */
-    function pauseRebase() public onlyPauserOrGovernorOrStrategist {
-        rebasePaused = true;
-        emit RebasePaused();
-    }
-
-    /**
-     * @dev Set the deposit paused flag to true to allow rebasing.
-     */
-    function unpauseRebase() public onlyPauserOrGovernorOrStrategist {
-        rebasePaused = false;
-        emit RebaseUnpaused();
-    }
-
-    /**
-     * @dev Set the deposit paused flag to true to prevent capital movement.
-     */
-    function pauseCapital() public onlyPauserOrGovernorOrStrategist {
-        capitalPaused = true;
-        emit CapitalPaused();
-    }
-
-    /**
-     * @dev Set the deposit paused flag to false to enable capital movement.
-     */
-    function unpauseCapital() public onlyPauserOrGovernorOrStrategist {
-        capitalPaused = false;
-        emit CapitalUnpaused();
-    }
-
-    /**
      * @dev Return the address of the pauser contract
      */
     function pauser() public view override returns (address) {
@@ -329,16 +297,14 @@ contract VaultAdmin is VaultStorage, Pausable {
      * @dev Execute the pause action
      */
     function _pause() internal override {
-        pauseCapital();
-        pauseRebase();
+        paused = true;
     }
 
     /**
      * @dev Execute the unpause action
      */
     function _unpause() internal override {
-        unpauseCapital();
-        unpauseRebase();
+        paused = false;
     }
 
     /**

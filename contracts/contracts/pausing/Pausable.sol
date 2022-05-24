@@ -5,8 +5,8 @@ pragma solidity ^0.8.0;
  * @dev Defines a contract that can be paused by the `Pauser` contract.
  */
 abstract contract Pausable {
-    event Paused();
-    event Unpaused();
+    event Paused(address account);
+    event Unpaused(address account);
 
     modifier onlyPausers() {
         require(
@@ -28,7 +28,7 @@ abstract contract Pausable {
      * @dev Executes the pausing action.
      */
     function pause() external onlyPausers {
-        emit Paused();
+        emit Paused(msg.sender);
         _pause();
     }
 
@@ -36,7 +36,7 @@ abstract contract Pausable {
      * @dev Executes the unpausing action.
      */
     function unpause() external onlyUnpausers {
-        emit Unpaused();
+        emit Unpaused(msg.sender);
         _unpause();
     }
 

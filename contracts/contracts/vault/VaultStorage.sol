@@ -32,10 +32,6 @@ contract VaultStorage is Initializable, Governable {
     event StrategyRemoved(address _addr);
     event Mint(address _addr, uint256 _value);
     event Redeem(address _addr, uint256 _value);
-    event CapitalPaused();
-    event CapitalUnpaused();
-    event RebasePaused();
-    event RebaseUnpaused();
     event PauserChanged(address _newPauser);
     event VaultBufferUpdated(uint256 _vaultBuffer);
     event RedeemFeeUpdated(uint256 _redeemFeeBps);
@@ -65,9 +61,15 @@ contract VaultStorage is Initializable, Governable {
 
     // Address of the Oracle price provider contract
     address public priceProvider;
-    // Pausing bools
-    bool public rebasePaused = false;
-    bool public capitalPaused = true;
+
+    // Deprecated: Rebase pause flag
+    // slither-disable-next-line constable-states
+    bool public _deprecated_rebasePaused = false;
+
+    // Deprecated: Rebase pause flag
+    // slither-disable-next-line constable-states
+    bool public _deprecated_capitalPaused = true;
+    
     // Redemption fee in basis points
     uint256 public redeemFeeBps;
     // Buffer of assets to keep in Vault to handle (most) withdrawals
@@ -110,6 +112,9 @@ contract VaultStorage is Initializable, Governable {
 
     // Address of the pauser contract
     address internal _pauser;
+    
+    // Pause flag
+    bool public paused;
 
     /**
      * @dev set the implementation for the admin, this needs to be in a base class else we cannot set it
