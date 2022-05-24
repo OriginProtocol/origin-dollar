@@ -162,6 +162,10 @@ const BalanceHeader = ({
           }
 
           @media (max-width: 767px) {
+            .dropdown {
+              padding-bottom: 10px;
+            }
+
             .title {
               width: 55%;
               text-align: left;
