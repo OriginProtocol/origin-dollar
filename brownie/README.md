@@ -21,3 +21,12 @@ Or connect to a direct forked of mainnet:
 
 Or run brownie scripts:
 `brownie run spell_apy --network hardhat`
+
+### Metastrategy usage
+
+Once brownie console is started run `from metastrategy import *` to import helper functions
+and funds for easier testing of metastrategy
+
+Inspect available functions under `brownie/metastrategy.py` and also `brownie/world.py`.
+
+For some ideas how to create test cases check out `brownie/scripts/metapool/*`
