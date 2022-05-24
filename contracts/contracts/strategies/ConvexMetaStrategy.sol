@@ -92,8 +92,7 @@ contract ConvexMetaStrategy is BaseCurveStrategy {
         ICurvePool curvePool = ICurvePool(platformAddress);
 
         uint256 threePoolLpBalance = threePoolLp.balanceOf(address(this));
-        uint256 threePoolLpDollarValue = (threePoolLpBalance *
-            curvePool.get_virtual_price()) / 10**18;
+        uint256 threePoolLpDollarValue = threePoolLpBalance.mulTruncate(curvePool.get_virtual_price());
 
         /* Mint 1:1 the amount of OUSD to the amount of stablecoins deposited to 3Pool.
          *
@@ -105,11 +104,17 @@ contract ConvexMetaStrategy is BaseCurveStrategy {
         uint256 ousdBalance = ousd.balanceOf(address(this));
         uint256[2] memory _amounts = [ousdBalance, threePoolLpBalance];
 
-        // TODO: figure out what the best slippage guard is. Also minReceived is in
-        // OUSD3Pool LP tokens so need to account for that
-        //
-        // Important(!) we need to be sure there are no flash loan attack possibilities here
-        uint256 minReceived = ((ousdBalance + threePoolLpBalance) * 985) / 1000;
+        uint256 metapoolVirtualPrice = metapool.get_virtual_price();
+        /**
+         * First convert all the deposited tokens to dollar values,
+         * then divide by virtual price to convert to metapool LP tokens
+         * and apply the max slippage
+         */
+         // Important(!) we need to be sure there are no flash loan attack possibilities here
+        uint256 minReceived = (ousdBalance + threePoolLpDollarValue)
+            .divPrecisely(metapoolVirtualPrice)
+            .mulTruncate(uint256(1e18) - maxSlippage);
+
         metapool.add_liquidity(_amounts, minReceived);
 
         uint256 metapoolLp = metapoolErc20.balanceOf(address(this));
@@ -267,7 +272,7 @@ contract ConvexMetaStrategy is BaseCurveStrategy {
         ICurvePool curvePool = ICurvePool(platformAddress);
         if (contractPTokens > 0) {
             uint256 virtual_price = curvePool.get_virtual_price();
-            uint256 value = (contractPTokens * virtual_price) / 1e18;
+            uint256 value = contractPTokens.mulTruncate(virtual_price);
             balance += value;
         }
 
