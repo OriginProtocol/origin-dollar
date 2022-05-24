@@ -15,12 +15,10 @@ import { ICurvePool } from "./ICurvePool.sol";
 import { ICurveMetaPool } from "./ICurveMetaPool.sol";
 import { IERC20, BaseCurveStrategy } from "./BaseCurveStrategy.sol";
 import { StableMath } from "../utils/StableMath.sol";
-import { InitializableSecondary } from "../utils/InitializableSecondary.sol";
 import { Helpers } from "../utils/Helpers.sol";
 import { IVault } from "../interfaces/IVault.sol";
-import "hardhat/console.sol";
 
-contract ConvexMetaStrategy is BaseCurveStrategy, InitializableSecondary {
+contract ConvexMetaStrategy is BaseCurveStrategy {
     using StableMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -37,59 +35,52 @@ contract ConvexMetaStrategy is BaseCurveStrategy, InitializableSecondary {
      * Initializer for setting up strategy internal state. This overrides the
      * InitializableAbstractStrategy initializer as Curve strategies don't fit
      * well within that abstraction.
-     * @param _platformAddress Address of the Curve 3pool
-     * @param _vaultAddress Address of the vault
      * @param _rewardTokenAddresses Address of CRV & CVX
      * @param _assets Addresses of supported assets. MUST be passed in the same
      *                order as returned by coins on the pool contract, i.e.
      *                DAI, USDC, USDT
      * @param _pTokens Platform Token corresponding addresses
-     * @param _cvxDepositorAddress Address of the Convex depositor(AKA booster) for this pool
-     * @param _metapoolAddress Address of the OUSD-3Pool Curve MetaPool
-     * @param _ousd Address of OUSD token
+     * @param _initAddresses Various addresses containing the following:
+     *  - _platformAddress Address of the Curve 3pool
+     *  - _vaultAddress Address of the vault
+     *  - _cvxDepositorAddress Address of the Convex depositor(AKA booster) for this pool
+     *  - _metapoolAddress Address of the OUSD-3Pool Curve MetaPool
+     *  - _ousd Address of OUSD token
+     *  - _cvxRewardStakerAddress Address of the CVX rewards staker
+     * @param _cvxDepositorPTokenId Pid of the pool referred to by Depositor and staker
      */
     function initialize(
-        address _platformAddress, // 3Pool address
-        address _vaultAddress,
         address[] calldata _rewardTokenAddresses, // CRV + CVX
         address[] calldata _assets,
         address[] calldata _pTokens,
-        address _cvxDepositorAddress,
-        address _metapoolAddress,
-        address _ousd
+        /**
+         * in the following order: _platformAddress(3Pool address), _vaultAddress, _cvxDepositorAddress
+         * _metapoolAddress, _ousd, _cvxRewardStakerAddress
+         */
+        address[] calldata _initAddresses, 
+        uint256 _cvxDepositorPTokenId
     ) external onlyGovernor initializer {
         require(_assets.length == 3, "Must have exactly three assets");
+        require(_initAddresses.length == 6, "_initAddresses must have exactly six items");
         // Should be set prior to abstract initialize call otherwise
         // abstractSetPToken calls will fail
-        cvxDepositorAddress = _cvxDepositorAddress;
+        cvxDepositorAddress = _initAddresses[2];
         pTokenAddress = _pTokens[0];
-        metapool = ICurveMetaPool(_metapoolAddress);
-        ousd = IERC20(_ousd);
-        vault = IVault(_vaultAddress);
+        metapool = ICurveMetaPool(_initAddresses[3]);
+        ousd = IERC20(_initAddresses[4]);
+        vault = IVault(_initAddresses[1]);
+        cvxRewardStakerAddress = _initAddresses[5];
+        cvxDepositorPTokenId = _cvxDepositorPTokenId;
 
         metapoolAssets = [metapool.coins(0), metapool.coins(1)];
         super._initialize(
-            _platformAddress,
-            _vaultAddress,
+            _initAddresses[0],
+            _initAddresses[1],
             _rewardTokenAddresses,
             _assets,
             _pTokens
         );
         _approveBase();
-    }
-
-    /**
-     * Secondary Initializer for setting up strategy internal state. Can not fit everything into the first
-     * initialize function. Solidity's stack has 16 variable limit
-     * @param _cvxRewardStakerAddress Address of the CVX rewards staker
-     * @param _cvxDepositorPTokenId Pid of the pool referred to by Depositor and staker
-     */
-    function initialize2(
-        address _cvxRewardStakerAddress,
-        uint256 _cvxDepositorPTokenId
-    ) external onlyGovernor secondaryInitializer {
-        cvxRewardStakerAddress = _cvxRewardStakerAddress;
-        cvxDepositorPTokenId = _cvxDepositorPTokenId;
     }
 
     /* Take 3pool LP and mint the corresponding amount of ousd. Deposit and stake that to
@@ -156,7 +147,7 @@ contract ConvexMetaStrategy is BaseCurveStrategy, InitializableSecondary {
          * Analysis has confirmed that: `It is more cost effective to remove liquidity in balanced manner and
          * make up for the difference with additional swap. Comparing to removing liquidity in imbalanced manner.`
          * Results of analysis here: https://docs.google.com/spreadsheets/d/1DYSyYwHqxRzSJh9dYkY5kcgP_K5gku6N2mQVhoH33vY/edit?usp=sharing
-         * run it yourself using code in test_metapool.py [REMOVING LIQUIDITY TEST] section
+         * run it yourself using code in brownie/scripts/liqidity_test.py
          */
         uint256 requiredMetapoolLpTokens = ((num3CrvTokens * crv3VirtualPrice) /
             1e18 /
@@ -265,6 +256,8 @@ contract ConvexMetaStrategy is BaseCurveStrategy, InitializableSecondary {
     {
         require(assetToPToken[_asset] != address(0), "Unsupported asset");
         balance = 0;
+        uint256 assetDecimals = Helpers.getDecimals(_asset);
+
         // LP tokens in this contract. This should generally be nothing as we
         // should always stake the full balance in the Gauge, but include for
         // safety
@@ -275,8 +268,7 @@ contract ConvexMetaStrategy is BaseCurveStrategy, InitializableSecondary {
         if (contractPTokens > 0) {
             uint256 virtual_price = curvePool.get_virtual_price();
             uint256 value = (contractPTokens * virtual_price) / 1e18;
-            uint256 assetDecimals = Helpers.getDecimals(_asset);
-            balance += value.scaleBy(assetDecimals, 18) / 3;
+            balance += value;
         }
 
         uint256 metapoolPTokens = IERC20(address(metapool)).balanceOf(
@@ -290,9 +282,10 @@ contract ConvexMetaStrategy is BaseCurveStrategy, InitializableSecondary {
             uint256 metapool_virtual_price = metapool.get_virtual_price();
             uint256 value = (metapoolTotalPTokens * metapool_virtual_price) /
                 1e18;
-            uint256 assetDecimals = Helpers.getDecimals(_asset);
-            balance += value.scaleBy(assetDecimals, 18) / 3;
+            balance += value;
         }
+
+        balance = balance.scaleBy(assetDecimals, 18) / 3;
     }
 
     function _approveBase() internal override {

@@ -58,11 +58,9 @@ module.exports = deploymentWithProposal(
     );
     // 4. Init and configure new Convex Meta strategy
     const initFunction =
-      "initialize(address,address,address[],address[],address[],address,address,address)";
+      "initialize(address[],address[],address[],address[],uint256)";
     await withConfirmation(
       cConvexMetaStrategy.connect(sDeployer)[initFunction](
-        assetAddresses.ThreePool,
-        cVaultProxy.address,
         [assetAddresses.CVX, assetAddresses.CRV],
         [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT],
         [
@@ -70,18 +68,14 @@ module.exports = deploymentWithProposal(
           assetAddresses.ThreePoolToken,
           assetAddresses.ThreePoolToken,
         ],
-        "0xF403C135812408BFbE8713b5A23a04b3D48AAE31", // _cvxDepositorAddress,
-        "0x87650d7bbfc3a9f10587d7778206671719d9910d", // _metapoolAddress
-        "0x2A8e1E676Ec238d8A992307B495b45B3fEAa5e86", // _ousdAddress
-        await getTxOpts()
-      )
-    );
-
-    // 4,5. Init and configure new Convex Meta strategy
-    const initFunction2 = "initialize2(address,uint256)";
-    await withConfirmation(
-      cConvexMetaStrategy.connect(sDeployer)[initFunction2](
-        "0x7D536a737C13561e0D2Decf1152a653B4e615158", // _cvxRewardStakerAddress,
+        [
+          assetAddresses.ThreePool,
+          cVaultProxy.address,
+          "0xF403C135812408BFbE8713b5A23a04b3D48AAE31", // _cvxDepositorAddress,
+          "0x87650d7bbfc3a9f10587d7778206671719d9910d", // _metapoolAddress
+          "0x2A8e1E676Ec238d8A992307B495b45B3fEAa5e86", // _ousdAddress
+          "0x7D536a737C13561e0D2Decf1152a653B4e615158", // _cvxRewardStakerAddress,
+        ],
         56, // _cvxDepositorPTokenId
         await getTxOpts()
       )

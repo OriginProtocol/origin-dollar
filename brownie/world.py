@@ -120,6 +120,9 @@ def c24(v):
 def c18(v):
     return commas(v, 18)
 
+def c12(v):
+    return commas(v, 12)
+
 def c6(v):
     return commas(v, 6)
 
@@ -233,3 +236,10 @@ def show_proposals(n=3):
     cnt = governor.proposalCount()
     for id in range(cnt,cnt-n, -1):
         show_proposal(id)
+
+def asset_default_strategy(strategy, asset):
+    tx = vault_admin.setAssetDefaultStrategy(asset.address, strategy.address, {'from': GOVERNOR})
+    tx.sig_string = 'setAssetDefaultStrategy(address,address)'
+    create_gov_proposal("Set comp strategy as default strategy for asset", [tx])
+    # execute latest proposal
+    sim_governor_execute(governor.proposalCount())

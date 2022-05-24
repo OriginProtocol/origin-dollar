@@ -161,16 +161,16 @@ contract VaultCore is VaultStorage {
 
         // Check that OUSD is backed by enough assets
         uint256 _totalSupply = oUSD.totalSupply();
-        // if (maxSupplyDiff > 0) {
-        //     // Allow a max difference of maxSupplyDiff% between
-        //     // backing assets value and OUSD total supply
-        //     uint256 diff = _totalSupply.divPrecisely(_backingValue);
-        //     require(
-        //         (diff > 1e18 ? diff.sub(1e18) : uint256(1e18).sub(diff)) <=
-        //             maxSupplyDiff,
-        //         "Backing supply liquidity error"
-        //     );
-        // }
+        if (maxSupplyDiff > 0) {
+            // Allow a max difference of maxSupplyDiff% between
+            // backing assets value and OUSD total supply
+            uint256 diff = _totalSupply.divPrecisely(_backingValue);
+            require(
+                (diff > 1e18 ? diff.sub(1e18) : uint256(1e18).sub(diff)) <=
+                    maxSupplyDiff,
+                "Backing supply liquidity error"
+            );
+        }
 
         emit Redeem(msg.sender, _amount);
 
@@ -377,8 +377,6 @@ contract VaultCore is VaultStorage {
 
         // Only rachet OUSD supply upwards
         ousdSupply = oUSD.totalSupply(); // Final check should use latest value
-        console.log("OUSD SUPPLY", ousdSupply / 10**18);
-        console.log("Vault value", vaultValue / 10**18);
         if (vaultValue > ousdSupply) {
             oUSD.changeSupply(vaultValue);
         }
