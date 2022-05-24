@@ -58,6 +58,7 @@ def redeem(amount):
 	vault_core.redeem(amount*1e18, amount*1e18*0.95, OPTS)
 	vault_core.rebase(OPTS)
 
+#withdraw all the funds from Metastrategy
 def withdrawAllFromMeta():
 	vault_admin.withdrawAllFromStrategy(META_STRATEGY, {'from': STRATEGIST})
 	vault_core.rebase(OPTS)
