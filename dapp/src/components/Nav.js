@@ -187,19 +187,6 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
               </div>
             </button>
           )}
-          <button
-            className={`navbar-toggler ${!dapp ? 'ml-auto' : ''}`}
-            type="button"
-            data-toggle="collapse"
-            data-target=".langLinks"
-            aria-controls="langLinks"
-            aria-expanded="false"
-            aria-label="Toggle language navigation"
-          >
-            <div className="dropdown-marble">
-              <LanguageSelected locale={locale} />
-            </div>
-          </button>
           <IPFSDappLink dapp={dapp} css="d-lg-none" />
           {!dapp && (
             <button
