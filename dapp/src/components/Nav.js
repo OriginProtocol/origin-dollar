@@ -124,6 +124,19 @@ const DappLinks = ({ dapp, page }) => {
             margin-right: 24px;
           }
         }
+
+        @media (max-width: 485px) {
+          .dapp-navigation {
+            margin-top: -10px;
+            margin-left: 0px;
+            margin-bottom: 5px;
+          }
+
+          .dapp-navigation a {
+            margin-left: 8px;
+            margin-right: 8px;
+          }
+        }
       `}</style>
     </>
   )
