@@ -134,6 +134,16 @@ contract VaultAdmin is VaultStorage {
     }
 
     /**
+     * @dev Set a minimum amount of OUSD in a mint or redeem that triggers a
+     * rebase
+     * @param _threshold OUSD amount with 18 fixed decimals.
+     */
+    function setNetOusdMintForStrategyThreshold(uint256 _threshold) external onlyGovernor {
+        netOusdMintForStrategyThreshold = _threshold;
+        emit NetOusdMintForStrategyThresholdChanged(_threshold);
+    }
+
+    /**
      * @dev Add a supported asset to the contract, i.e. one that can be
      *         to mint OUSD.
      * @param _asset Address of asset

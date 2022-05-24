@@ -47,6 +47,7 @@ contract VaultStorage is Initializable, Governable {
     event YieldDistribution(address _to, uint256 _yield, uint256 _fee);
     event TrusteeFeeBpsChanged(uint256 _basis);
     event TrusteeAddressChanged(address _address);
+    event NetOusdMintForStrategyThresholdChanged(uint256 _threshold);
 
     // Assets supported by the Vault, i.e. Stablecoins
     struct Asset {
@@ -110,6 +111,12 @@ contract VaultStorage is Initializable, Governable {
 
     // Meta strategy that is allowed to mint/burn OUSD without changing collateral
     address public ousdMetaStrategy;
+
+    // How much OUSD is currently minted by the strategy
+    int256 public netOusdMintedForStrategy;
+
+    // How much net total OUSD is allowed to be minted by all strategies
+    uint256 public netOusdMintForStrategyThreshold;
 
     /**
      * @dev set the implementation for the admin, this needs to be in a base class else we cannot set it

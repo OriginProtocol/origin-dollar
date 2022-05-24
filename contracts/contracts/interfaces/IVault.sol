@@ -152,4 +152,6 @@ interface IVault {
     function getAllStrategies() external view returns (address[] memory);
 
     function isSupportedAsset(address _asset) external view returns (bool);
+
+    function netOusdMintForStrategyThreshold() external view returns(uint256);
 }

@@ -1,4 +1,5 @@
 const { deploymentWithProposal } = require("../utils/deploy");
+const { BigNumber } = require('ethers');
 
 module.exports = deploymentWithProposal(
   { deployName: "040_convex_meta_strategy", forceDeploy: true },
@@ -89,6 +90,7 @@ module.exports = deploymentWithProposal(
     );
 
     console.log("META STRATEGY ADDRESS", dConvexMetaStrategyProxy.address);
+    const fiftyMil = BigNumber.from(50000000).mul(BigNumber.from(10).pow(18))
     // Governance Actions
     // ----------------
     return {
@@ -123,6 +125,13 @@ module.exports = deploymentWithProposal(
           contract: cVaultAdmin,
           signature: "setOusdMetaStrategy(address)",
           args: [cConvexMetaStrategy.address],
+        },
+        // 6. Set net OUSD Mint for strategy threshold
+        {
+          contract: cVaultAdmin,
+          signature: "setNetOusdMintForStrategyThreshold(uint256)",
+          // TODO: set at an arbitrary 50m?
+          args: [fiftyMil],
         },
       ],
     };

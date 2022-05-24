@@ -13,6 +13,7 @@ pragma solidity ^0.8.0;
 
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
 
 import { StableMath } from "../utils/StableMath.sol";
 import { IOracle } from "../interfaces/IOracle.sol";
@@ -122,9 +123,24 @@ contract VaultCore is VaultStorage {
         emit Mint(msg.sender, _amount);
 
         // Rebase must happen before any transfers occur.
+        // TODO: double check the relevance of this
         if (_amount >= rebaseThreshold && !rebasePaused) {
             _rebase();
         }
+
+        netOusdMintedForStrategy += int256(_amount);
+
+        require(
+            abs(netOusdMintedForStrategy) < netOusdMintForStrategyThreshold,
+            string(
+                bytes.concat(
+                    bytes("Attempting to mint too much OUSD. Threshold: "),
+                    bytes(Strings.toString(netOusdMintForStrategyThreshold)),
+                    bytes(", errorneous minted amount: "),
+                    bytes(Strings.toString(abs(netOusdMintedForStrategy)))
+                )
+            )
+        );
 
         // Mint matching OUSD
         oUSD.mint(msg.sender, _amount);
@@ -236,6 +252,19 @@ contract VaultCore is VaultStorage {
         require(_amount > 0, "Amount must be greater than 0");
 
         emit Redeem(msg.sender, _amount);
+
+        netOusdMintedForStrategy -= int256(_amount);
+        require(
+            abs(netOusdMintedForStrategy) < netOusdMintForStrategyThreshold,
+            string(
+                bytes.concat(
+                    bytes("Attempting to redeem too much OUSD. Threshold: "),
+                    bytes(Strings.toString(netOusdMintForStrategyThreshold)),
+                    bytes(", errorneous minted amount: -"),
+                    bytes(Strings.toString(abs(netOusdMintedForStrategy)))
+                )
+            )
+        );
 
         // Burn OUSD
         oUSD.burn(msg.sender, _amount);
@@ -677,4 +706,9 @@ contract VaultCore is VaultStorage {
             }
         }
     }
+
+    function abs(int256 x) private pure returns (uint256) {
+        return x >= 0 ? uint256(x) : uint256(-x);
+    }
+
 }
