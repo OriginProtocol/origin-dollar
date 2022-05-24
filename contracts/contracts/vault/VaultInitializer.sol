@@ -22,8 +22,7 @@ contract VaultInitializer is VaultStorage {
 
         priceProvider = _priceProvider;
 
-        rebasePaused = false;
-        capitalPaused = true;
+        paused = false;
 
         // Initial redeem fee of 0 basis points
         redeemFeeBps = 0;

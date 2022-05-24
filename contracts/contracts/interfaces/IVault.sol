@@ -9,10 +9,8 @@ interface IVault {
     event StrategyRemoved(address _addr);
     event Mint(address _addr, uint256 _value);
     event Redeem(address _addr, uint256 _value);
-    event CapitalPaused();
-    event CapitalUnpaused();
-    event RebasePaused();
-    event RebaseUnpaused();
+    event Paused(address account);
+    event Unpaused(address account);
     event PauserChanged(address _newPauser);
     event VaultBufferUpdated(uint256 _vaultBuffer);
     event RedeemFeeUpdated(uint256 _redeemFeeBps);
@@ -91,17 +89,7 @@ interface IVault {
 
     function unpause() external;
 
-    function pauseRebase() external;
-
-    function unpauseRebase() external;
-
-    function rebasePaused() external view returns (bool);
-
-    function pauseCapital() external;
-
-    function unpauseCapital() external;
-
-    function capitalPaused() external view returns (bool);
+    function paused() external view returns (bool);
 
     function transferToken(address _asset, uint256 _amount) external;
 

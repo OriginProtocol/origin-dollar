@@ -29,18 +29,10 @@ contract VaultCore is VaultStorage {
         0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
 
     /**
-     * @dev Verifies that the rebasing is not paused.
+     * @dev Verifies that the contract is not paused.
      */
-    modifier whenNotRebasePaused() {
-        require(!rebasePaused, "Rebasing paused");
-        _;
-    }
-
-    /**
-     * @dev Verifies that the deposits are not paused.
-     */
-    modifier whenNotCapitalPaused() {
-        require(!capitalPaused, "Capital paused");
+    modifier whenNotPaused() {
+        require(!paused, "paused");
         _;
     }
 
@@ -54,7 +46,7 @@ contract VaultCore is VaultStorage {
         address _asset,
         uint256 _amount,
         uint256 _minimumOusdAmount
-    ) external whenNotCapitalPaused nonReentrant {
+    ) external whenNotPaused nonReentrant {
         require(assets[_asset].isSupported, "Asset is not supported");
         require(_amount > 0, "Amount must be greater than 0");
 
@@ -81,7 +73,7 @@ contract VaultCore is VaultStorage {
         emit Mint(msg.sender, priceAdjustedDeposit);
 
         // Rebase must happen before any transfers occur.
-        if (unitAdjustedDeposit >= rebaseThreshold && !rebasePaused) {
+        if (unitAdjustedDeposit >= rebaseThreshold && !paused) {
             _rebase();
         }
 
@@ -106,7 +98,7 @@ contract VaultCore is VaultStorage {
      */
     function redeem(uint256 _amount, uint256 _minimumUnitAmount)
         external
-        whenNotCapitalPaused
+        whenNotPaused
         nonReentrant
     {
         _redeem(_amount, _minimumUnitAmount);
@@ -183,7 +175,7 @@ contract VaultCore is VaultStorage {
         // by withdrawing them, this should be here.
         // It's possible that a strategy was off on its asset total, perhaps
         // a reward token sold for more or for less than anticipated.
-        if (_amount > rebaseThreshold && !rebasePaused) {
+        if (_amount > rebaseThreshold && !paused) {
             _rebase();
         }
     }
@@ -194,7 +186,7 @@ contract VaultCore is VaultStorage {
      */
     function redeemAll(uint256 _minimumUnitAmount)
         external
-        whenNotCapitalPaused
+        whenNotPaused
         nonReentrant
     {
         _redeem(oUSD.balanceOf(msg.sender), _minimumUnitAmount);
@@ -204,7 +196,7 @@ contract VaultCore is VaultStorage {
      * @notice Allocate unallocated funds on Vault to strategies.
      * @dev Allocate unallocated funds on Vault to strategies.
      **/
-    function allocate() external whenNotCapitalPaused nonReentrant {
+    function allocate() external whenNotPaused nonReentrant {
         _allocate();
     }
 
@@ -295,7 +287,7 @@ contract VaultCore is VaultStorage {
      *      strategies and update the supply of OUSD, optionally sending a
      *      portion of the yield to the trustee.
      */
-    function _rebase() internal whenNotRebasePaused {
+    function _rebase() internal whenNotPaused {
         uint256 ousdSupply = oUSD.totalSupply();
         if (ousdSupply == 0) {
             return;
