@@ -116,7 +116,7 @@ const DappLinks = ({ dapp, page }) => {
           .dapp-navigation {
             margin-top: -10px;
             margin-left: 0px;
-            margin-bottom: 5px;
+            margin-bottom: 10px;
           }
 
           .dapp-navigation a {
@@ -126,12 +126,6 @@ const DappLinks = ({ dapp, page }) => {
         }
 
         @media (max-width: 485px) {
-          .dapp-navigation {
-            margin-top: -10px;
-            margin-left: 0px;
-            margin-bottom: 5px;
-          }
-
           .dapp-navigation a {
             margin-left: 8px;
             margin-right: 8px;
