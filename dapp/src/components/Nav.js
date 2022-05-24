@@ -112,7 +112,7 @@ const DappLinks = ({ dapp, page }) => {
           font-weight: bold;
         }
 
-        @media (max-width: 799px) {
+        @media (max-width: 992px) {
           .dapp-navigation {
             margin-top: -10px;
             margin-left: 0px;
@@ -362,7 +362,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
             </div>
           </div>
         </div>
-        <div className="d-flex d-md-none">
+        <div className="d-flex">
           <DappLinks dapp={dapp} page={page} />
         </div>
       </nav>
@@ -545,7 +545,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
           }
         }
 
-        @media (max-width: 799px) {
+        @media (max-width: 992px) {
           .origin-logo {
             max-width: 170px;
           }
@@ -628,7 +628,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
           }
         }
 
-        @media (max-width: 799px) {
+        @media (max-width: 992px) {
           .navbar {
             z-index: 100;
           }
