@@ -323,7 +323,9 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
                   </li>
                 </ul>
               )}
-              <DappLinks dapp={dapp} page={page} />
+              <div className="d-flex">
+                <DappLinks dapp={dapp} page={page} />
+              </div>
               {dapp && environment !== 'production' && (
                 <ul className="navbar-nav">
                   <li className="nav-item mr-2">
@@ -362,7 +364,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
             </div>
           </div>
         </div>
-        <div className="d-flex">
+        <div className="d-flex d-lg-none">
           <DappLinks dapp={dapp} page={page} />
         </div>
       </nav>
