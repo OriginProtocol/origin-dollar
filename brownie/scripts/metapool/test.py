@@ -11,17 +11,21 @@ with TemporaryFork():
         show_vault_holdings()
 
 
-# tilt pool towards OUSD, mint 10mio USDT to Metastrat, then withdraw and redeem that amount
+# tilt pool towards OUSD, mint 10mio USDT to Metastrategy, then withdraw and redeem that amount
 with TemporaryFork():
     with SupplyChanges(OPTS):
+        show_metapool_balances()
         tiltMetapoolToOUSD()
+        show_metapool_balances()
         mint(10e6)
         #withdrawFromMeta(10e6)
         withdrawAllFromMeta()
         redeem(10e6)
+        vault_core.allocate(OPTS)
         show_vault_holdings()
+        show_metapool_balances()
 
-//TODO Test different deposit strategies and what could be dangerous
+# TODO Test different deposit strategies and what could be dangerous
 
 def withdrawFromComp(amount, asset):
     comp_strat.withdraw(VAULT_PROXY_ADDRESS, asset.address, amount * math.pow(10, asset.decimals()), {'from': VAULT_PROXY_ADDRESS})

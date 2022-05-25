@@ -79,8 +79,8 @@ def tiltMetapoolTo3CRV(_amount=10*1e6*1e18):
 
 # show what direction metapool is tilted to and how much total supply is there
 def show_metapool_balances():
+    print("---------- Metapool balances -----------")
     print("  Total: " + c18(ousd_metapool.totalSupply()))
-    print("----------------------------------------")
     print(c18(ousd_metapool.balances(0)) + ' OUSD   ', end='')
     print(c18(ousd_metapool.balances(1)) + ' 3CRV  ')
     print("----------------------------------------")
