@@ -5,6 +5,7 @@ me = ORIGINTEAM
 some_gas_price = 100
 OPTS = {'from': me, "gas_price": some_gas_price}
 
+RANDOM_ACCOUNT = '0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B'
 THREEPOOL_BAGS = '0xceaf7747579696a2f0bb206a14210e3c9e6fb269'
 OUSD_BAGS = '0x8e02247d3ee0e6153495c971ffd45aa131f4d7cb'
 OUSD_BAGS_2 = '0xc055de577ce2039e6d35621e3a885df9bb304ab9'
@@ -22,6 +23,7 @@ threepool_lp.transfer(me, threepool_lp.balanceOf(THREEPOOL_BAGS), {'from': THREE
 ousd.transfer(me, ousd.balanceOf(OUSD_BAGS), {'from': OUSD_BAGS})
 usdt.transfer(me, usdt.balanceOf(USDT_BAGS), {'from': USDT_BAGS})
 ousd.transfer(me, ousd.balanceOf(OUSD_BAGS_2), {'from': OUSD_BAGS_2})
+ousd.transfer(RANDOM_ACCOUNT, 10000*1e18, OPTS)
 usdc.transfer(me, usdc.balanceOf(USDC_BAGS), {'from': USDC_BAGS})
 
 # approve ousd and 3poolLp to be used by ousd_metapool
@@ -85,3 +87,19 @@ def show_metapool_balances():
     print(c18(ousd_metapool.balances(1)) + ' 3CRV  ')
     print("----------------------------------------")
 
+# observe how OUSD balance changes for a random account
+class AccountOUSDBalance:
+    def __init__(self, txOptions):
+        self.txOptions=txOptions
+
+    def __enter__(self):
+        self.ousdBalance = ousd.balanceOf(RANDOM_ACCOUNT, OPTS)
+        return self
+
+    def __exit__(self, *args, **kwargs):
+        ousdBalance = ousd.balanceOf(RANDOM_ACCOUNT, OPTS)
+
+        print("----------- OUSD balance  -------------")
+        print("                      " + leading_whitespace("Before") + " " + leading_whitespace("After") + " " + leading_whitespace("Difference"))
+        print("OUSD balance :   " + c18(self.ousdBalance) + " " + c18(ousdBalance) + " " + c18(ousdBalance - self.ousdBalance))
+        print("----------------------------------------")
