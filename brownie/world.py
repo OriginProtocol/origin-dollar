@@ -138,7 +138,8 @@ def show_vault_holdings():
     print("Stables:", end='')
     print(c18(dai.balanceOf(vault_core.address)) + ' DAI   ', end='')
     print(c6(usdc.balanceOf(vault_core.address)) + ' USDC  ', end='')
-    print(c6(usdt.balanceOf(vault_core.address)) + ' USDT  ')
+    print(c6(usdt.balanceOf(vault_core.address)) + ' USDT  ', end='')
+    print(c18(vault_core.netOusdMintedForStrategy()) + ' OUSD minted for strategy')
     print("AAVE:  ", end='')
     print(c18(aave_strat.checkBalance(DAI))+ ' DAI    ', end='')
     print(c6(aave_strat.checkBalance(USDC))+ ' USDC   ', end='')
@@ -156,6 +157,16 @@ def show_vault_holdings():
     convex_meta_pct =  float(convex_meta_total) / float(total) * 100
     print(c18(convex_meta_total) + ' ({:0.2f}%)'.format(convex_meta_pct))
     print("----------------------------------------")
+
+def show_ousd_supply():
+    vaultTotalValue = vault_core.totalValue()
+    ousdTotalSupply = ousd.totalSupply()
+    rate = vaultTotalValue / ousdTotalSupply
+
+    print("Vault value:         " + c18(vaultTotalValue))
+    print("OUSD total supply:   " + c18(ousdTotalSupply))
+    print("Vault/OUSD diff:     " + c18(vaultTotalValue-ousdTotalSupply))
+    print("Rate:                " + '      {:0.4f}%'.format(rate))
 
 
 def show_aave_rewards():
@@ -205,17 +216,21 @@ class SupplyChanges:
     def __enter__(self):
         self.vaultTotalValue = vault_core.totalValue(self.txOptions)
         self.ousdTotalSupply = ousd.totalSupply(self.txOptions)
+        self.netOusdMinted = vault_core.netOusdMintedForStrategy()
         return self
 
     def __exit__(self, *args, **kwargs):
         vaultTotalValue = vault_core.totalValue(self.txOptions)
         ousdTotalSupply = ousd.totalSupply(self.txOptions)
+        netOusdMinted = vault_core.netOusdMintedForStrategy()
         rateBefore = self.vaultTotalValue / self.ousdTotalSupply
         rateAfter = vaultTotalValue / ousdTotalSupply
 
-        print("Vault value (before, after, diff):       " + c18(self.vaultTotalValue) + " " + c18(vaultTotalValue) + " " + c18(vaultTotalValue - self.vaultTotalValue))
-        print("OUSD total supply (before, after, diff): " + c18(self.ousdTotalSupply) + " " + c18(ousdTotalSupply) + " " + c18(ousdTotalSupply - self.ousdTotalSupply))
-        print("Rate change (before, after, diff):       " + ' {:0.4f}% {:0.4f}% {:0.4f}%'.format(rateBefore, rateAfter, rateAfter - rateBefore))
+        print("Vault value (before, after, diff):         " + c18(self.vaultTotalValue) + " " + c18(vaultTotalValue) + " " + c18(vaultTotalValue - self.vaultTotalValue))
+        print("OUSD total supply (before, after, diff):   " + c18(self.ousdTotalSupply) + " " + c18(ousdTotalSupply) + " " + c18(ousdTotalSupply - self.ousdTotalSupply))
+        print("Vault/OUSD diff (before, after, diff):     " + c18(self.vaultTotalValue-self.ousdTotalSupply) + " " + c18(vaultTotalValue-ousdTotalSupply) + " " + c18(self.vaultTotalValue-self.ousdTotalSupply - (vaultTotalValue-ousdTotalSupply)))
+        print("Rate change (before, after, diff):         " + ' {:0.4f}% {:0.4f}% {:0.4f}%'.format(rateBefore, rateAfter, rateAfter - rateBefore))
+        print("OUSD strategy minted(before, after, diff): " + c18(self.netOusdMinted) + " " + c18(netOusdMinted) + " " + c18(netOusdMinted - self.netOusdMinted))
         
 
 def show_proposal(id):

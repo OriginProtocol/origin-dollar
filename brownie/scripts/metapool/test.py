@@ -5,8 +5,9 @@ with TemporaryFork():
     with SupplyChanges(OPTS):
         tiltMetapoolTo3CRV()
         mint(10e6)
-        withdrawFromMeta(10e6)
-        redeem(10e6)
+        #withdrawFromMeta(10e6)
+        withdrawAllFromMeta()
+        #redeem(10e6)
         show_vault_holdings()
 
 
@@ -15,10 +16,12 @@ with TemporaryFork():
     with SupplyChanges(OPTS):
         tiltMetapoolToOUSD()
         mint(10e6)
-        withdrawFromMeta(10e6)
+        #withdrawFromMeta(10e6)
+        withdrawAllFromMeta()
         redeem(10e6)
         show_vault_holdings()
 
+//TODO Test different deposit strategies and what could be dangerous
 
 def withdrawFromComp(amount, asset):
     comp_strat.withdraw(VAULT_PROXY_ADDRESS, asset.address, amount * math.pow(10, asset.decimals()), {'from': VAULT_PROXY_ADDRESS})
