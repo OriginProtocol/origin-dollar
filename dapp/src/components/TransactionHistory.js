@@ -338,7 +338,11 @@ const TransactionHistory = ({ isMobile }) => {
                 </div>
               </div>
             </div>
-            <div className={`history-holder ${historyPageQuery.isPreviousData ? 'grey-font' : ''}`}>
+            <div
+              className={`history-holder ${
+                historyPageQuery.isPreviousData ? 'grey-font' : ''
+              }`}
+            >
               <div className="d-flex grey-font border-bt pb-10">
                 <div className="col-3 col-md-2 pl-0">
                   {fbt('Date', 'Transaction history date')}
