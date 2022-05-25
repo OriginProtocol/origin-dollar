@@ -76,7 +76,7 @@ def tiltMetapoolToOUSD(_amount=10*1e6*1e18):
 	return ousd_metapool.exchange(1,0, _amount, 0, OPTS)
 
 # swap 10 mio OUSD for 3CRV to tilt metapool to be heavier in 3CRV
-def tiltMetapoolTo3CRV(_amount=10*1e6*1e18):
+def tiltMetapoolTo3CRV(_amount=1e6*1e18):
 	return ousd_metapool.exchange(0,1, _amount, 0, OPTS)
 
 # show what direction metapool is tilted to and how much total supply is there
@@ -84,7 +84,8 @@ def show_metapool_balances():
     print("---------- Metapool balances -----------")
     print("  Total: " + c18(ousd_metapool.totalSupply()))
     print(c18(ousd_metapool.balances(0)) + ' OUSD   ', end='')
-    print(c18(ousd_metapool.balances(1)) + ' 3CRV  ')
+    print(c18(ousd_metapool.balances(1)) + ' 3CRV  ', end='')
+    print(c18(ousd_metapool.balances(1)-ousd_metapool.balances(0)) + ' Diff  ')
     print("----------------------------------------")
 
 # observe how OUSD balance changes for a random account
@@ -99,7 +100,7 @@ class AccountOUSDBalance:
     def __exit__(self, *args, **kwargs):
         ousdBalance = ousd.balanceOf(RANDOM_ACCOUNT, OPTS)
 
-        print("----------- OUSD balance  -------------")
+        print("--- Random account OUSD balance change ---")
         print("                      " + leading_whitespace("Before") + " " + leading_whitespace("After") + " " + leading_whitespace("Difference"))
         print("OUSD balance :   " + c18(self.ousdBalance) + " " + c18(ousdBalance) + " " + c18(ousdBalance - self.ousdBalance))
-        print("----------------------------------------")
+        print("------------------------------------------")
