@@ -12,7 +12,7 @@ const useTransactionHistoryPageQuery = (
   options
 ) => {
   return useQuery(
-    QUERY_KEYS.TransactionHistoryPage(account),
+    QUERY_KEYS.TransactionHistoryPage(page, filters, account),
     () =>
       transactionHistoryPageService.fetchHistory(
         account,
