@@ -135,27 +135,28 @@ def show_vault_holdings():
     print("  Total: "+c18(vault_core.totalValue()))
     print("----------- Vault Holdings --------------")
 
-    print("Stables:", end='')
+    print("Stables:                     ", end='')
     print(c18(dai.balanceOf(vault_core.address)) + ' DAI   ', end='')
     print(c6(usdc.balanceOf(vault_core.address)) + ' USDC  ', end='')
-    print(c6(usdt.balanceOf(vault_core.address)) + ' USDT  ', end='')
-    print(c18(vault_core.netOusdMintedForStrategy()) + ' OUSD minted for strategy')
-    print("AAVE:   ", end='')
+    print(c6(usdt.balanceOf(vault_core.address)) + ' USDT  ')
+    print("AAVE:                        ", end='')
     print(c18(aave_strat.checkBalance(DAI))+ ' DAI    ', end='')
     print(c6(aave_strat.checkBalance(USDC))+ ' USDC   ', end='')
     print(c6(aave_strat.checkBalance(USDT))+ ' USDT   ')
-    print("COMP:   ", end='')
+    print("COMP:                        ", end='')
     print(c18(comp_strat.checkBalance(DAI)) + ' DAI   ', end='')
     print(c6(comp_strat.checkBalance(USDC)) + ' USDC  ', end='')
     print(c6(comp_strat.checkBalance(USDT)) + ' USDT  ')
-    print("Convex: ", end='')
+    print("Convex:                      ", end='')
     convex_total = convex_strat.checkBalance(DAI) + convex_strat.checkBalance(USDC) * 1e12 + convex_strat.checkBalance(USDT) * 1e12
     convex_pct =  float(convex_total) / float(total) * 100
     print(c18(convex_total) + ' ({:0.2f}%)'.format(convex_pct))
-    print("Meta:   ", end='')
+    print("Meta:                        ", end='')
     convex_meta_total = meta_strat.checkBalance(DAI) + meta_strat.checkBalance(USDC) * 1e12 + meta_strat.checkBalance(USDT) * 1e12
     convex_meta_pct =  float(convex_meta_total) / float(total) * 100
     print(c18(convex_meta_total) + ' ({:0.2f}%)'.format(convex_meta_pct))
+    print("Net OUSD minted for strategy:", end='')
+    print(c18(vault_core.netOusdMintedForStrategy()) + ' OUSD')
     print("----------------------------------------")
 
 def show_ousd_supply():

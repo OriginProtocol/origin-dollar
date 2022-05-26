@@ -51,25 +51,25 @@ print("'me' account has: " + c12(usdt.balanceOf(me)) + "m USDT")
 # mint OUSD using USDT. Amount denominated in dollar value
 # also force call allocate so that funds get deposited to metastrategy
 def mint(amount):
-	vault_core.mint(usdt.address, amount * 1e6, 0, OPTS)
-	vault_core.allocate(OPTS)
-	vault_core.rebase(OPTS)
+    vault_core.mint(usdt.address, amount * 1e6, 0, OPTS)
+    vault_core.allocate(OPTS)
+    vault_core.rebase(OPTS)
 
 # redeem OUSD. Amount denominated in dollar value
 def redeem(amount):
-	vault_core.redeem(amount*1e18, amount*1e18*0.95, OPTS)
-	vault_core.rebase(OPTS)
+    vault_core.redeem(amount*1e18, amount*1e18*0.95, OPTS)
+    vault_core.rebase(OPTS)
 
 #withdraw all the funds from Metastrategy
 def withdrawAllFromMeta():
-	vault_admin.withdrawAllFromStrategy(META_STRATEGY, {'from': STRATEGIST})
-	vault_core.rebase(OPTS)
+    vault_admin.withdrawAllFromStrategy(META_STRATEGY, {'from': STRATEGIST})
+    vault_core.rebase(OPTS)
 
 # withdraw specific amount of USDT. Amount denominated in dollar value
 # Notice: this functionality on vault might not make it to production
 def withdrawFromMeta(usdtAmount):
-	meta_strat.withdraw(VAULT_PROXY_ADDRESS, '0xdAC17F958D2ee523a2206206994597C13D831ec7', usdtAmount * 1e6, {'from': VAULT_PROXY_ADDRESS})
-	vault_core.rebase(OPTS)
+    meta_strat.withdraw(VAULT_PROXY_ADDRESS, '0xdAC17F958D2ee523a2206206994597C13D831ec7', usdtAmount * 1e6, {'from': VAULT_PROXY_ADDRESS})
+    vault_core.rebase(OPTS)
 
 # show what direction metapool is tilted to and how much total supply is there
 def show_metapool_balances():
@@ -82,21 +82,47 @@ def show_metapool_balances():
 
 # swap 10 mio CRV for OUSD to tilt metapool to be heavier in OUSD
 def tiltMetapoolToOUSD(_amount=10*1e6*1e18):
-	return ousd_metapool.exchange(0,1, _amount, 0, OPTS)
+    return ousd_metapool.exchange(0,1, _amount, 0, OPTS)
 
 # swap 10 mio OUSD for 3CRV to tilt metapool to be heavier in 3CRV
 def tiltMetapoolTo3CRV(_amount=10*1e6*1e18):
-	return ousd_metapool.exchange(1,0, _amount, 0, OPTS)
+    return ousd_metapool.exchange(1,0, _amount, 0, OPTS)
 
 # balance the metapool so that 3CRV and OUSD amounts are close together
 def balance_metapool():
-	ousd = ousd_metapool.balances(0)
-	crv3 = ousd_metapool.balances(1)
+    ousd = ousd_metapool.balances(0)
+    crv3 = ousd_metapool.balances(1)
 
-	if (ousd > crv3):
-		tiltMetapoolTo3CRV((ousd-crv3)/2)
-	else:
-		tiltMetapoolToOUSD((crv3-ousd)/2)
+    if (ousd > crv3):
+        tiltMetapoolTo3CRV((ousd-crv3)/2)
+    else:
+        tiltMetapoolToOUSD((crv3-ousd)/2)
+
+#observe metapool balance changes and virtual price
+class MetapoolBalances:
+    def __init__(self, txOptions):
+        self.txOptions=txOptions
+
+    def __enter__(self):
+        self.virtual_price = ousd_metapool.get_virtual_price()
+        self.ousd_balance = ousd_metapool.balances(0)
+        self.crv3_balance = ousd_metapool.balances(1)
+        self.tilt = self.ousd_balance - self.crv3_balance
+        return self
+
+    def __exit__(self, *args, **kwargs):
+        virtual_price = ousd_metapool.get_virtual_price()
+        ousd_balance = ousd_metapool.balances(0)
+        crv3_balance = ousd_metapool.balances(1)
+        tilt = ousd_balance- crv3_balance
+
+        print("-------- OUSD Metapool changes ---------")
+        print("                " + leading_whitespace("Before") + " " + leading_whitespace("After") + " " + leading_whitespace("Difference"))
+        print("OUSD:           " + c18(self.ousd_balance) + " " + c18(ousd_balance) + " " + c18(ousd_balance - self.ousd_balance))
+        print("3CRV:           " + c18(self.crv3_balance) + " " + c18(crv3_balance) + " " + c18(crv3_balance - self.crv3_balance))
+        print("Tilt:           " + c18(self.tilt) + " " + c18(tilt) + " " + c18(tilt-self.tilt))
+        print("Virtual price:  " + c6(self.virtual_price) + " " + c6(virtual_price) + " " + c6(virtual_price - self.virtual_price))
+        print("----------------------------------------")
 
 # observe how OUSD balance changes for a random account
 class AccountOUSDBalance:
