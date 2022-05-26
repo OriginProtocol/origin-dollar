@@ -46,6 +46,12 @@ module.exports = deploymentWithProposal(
       dConvexMetaStrategyProxy.address
     );
 
+    const cHarvesterProxy = await ethers.getContract("HarvesterProxy");
+    const cHarvester = await ethers.getContractAt(
+      "Harvester",
+      cHarvesterProxy.address
+    );
+
     // 3. Init the proxy to point at the implementation
     await withConfirmation(
       cConvexMetaStrategyProxy
@@ -132,6 +138,18 @@ module.exports = deploymentWithProposal(
           signature: "setNetOusdMintForStrategyThreshold(uint256)",
           // TODO: set at an arbitrary 50m?
           args: [fiftyMil],
+        },
+        // 7. Set supported strategy on Harvester
+        {
+          contract: cHarvester,
+          signature: "setSupportedStrategy(address,bool)",
+          args: [cConvexMetaStrategyProxy.address, true],
+        },
+        // 8. Set harvester address
+        {
+          contract: cConvexMetaStrategy,
+          signature: "setHarvesterAddress(address)",
+          args: [cHarvesterProxy.address],
         },
       ],
     };

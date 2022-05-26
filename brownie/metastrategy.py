@@ -71,14 +71,6 @@ def withdrawFromMeta(usdtAmount):
 	meta_strat.withdraw(VAULT_PROXY_ADDRESS, '0xdAC17F958D2ee523a2206206994597C13D831ec7', usdtAmount * 1e6, {'from': VAULT_PROXY_ADDRESS})
 	vault_core.rebase(OPTS)
 
-# swap 10 mio CRV for OUSD to tilt metapool to be heavier in OUSD
-def tiltMetapoolToOUSD(_amount=10*1e6*1e18):
-	return ousd_metapool.exchange(1,0, _amount, 0, OPTS)
-
-# swap 10 mio OUSD for 3CRV to tilt metapool to be heavier in 3CRV
-def tiltMetapoolTo3CRV(_amount=1e6*1e18):
-	return ousd_metapool.exchange(0,1, _amount, 0, OPTS)
-
 # show what direction metapool is tilted to and how much total supply is there
 def show_metapool_balances():
     print("---------- Metapool balances -----------")
@@ -87,6 +79,24 @@ def show_metapool_balances():
     print(c18(ousd_metapool.balances(1)) + ' 3CRV  ', end='')
     print(c18(ousd_metapool.balances(1)-ousd_metapool.balances(0)) + ' Diff  ')
     print("----------------------------------------")
+
+# swap 10 mio CRV for OUSD to tilt metapool to be heavier in OUSD
+def tiltMetapoolToOUSD(_amount=10*1e6*1e18):
+	return ousd_metapool.exchange(0,1, _amount, 0, OPTS)
+
+# swap 10 mio OUSD for 3CRV to tilt metapool to be heavier in 3CRV
+def tiltMetapoolTo3CRV(_amount=10*1e6*1e18):
+	return ousd_metapool.exchange(1,0, _amount, 0, OPTS)
+
+# balance the metapool so that 3CRV and OUSD amounts are close together
+def balance_metapool():
+	ousd = ousd_metapool.balances(0)
+	crv3 = ousd_metapool.balances(1)
+
+	if (ousd > crv3):
+		tiltMetapoolTo3CRV((ousd-crv3)/2)
+	else:
+		tiltMetapoolToOUSD((crv3-ousd)/2)
 
 # observe how OUSD balance changes for a random account
 class AccountOUSDBalance:
@@ -104,3 +114,32 @@ class AccountOUSDBalance:
         print("                      " + leading_whitespace("Before") + " " + leading_whitespace("After") + " " + leading_whitespace("Difference"))
         print("OUSD balance :   " + c18(self.ousdBalance) + " " + c18(ousdBalance) + " " + c18(ousdBalance - self.ousdBalance))
         print("------------------------------------------")
+
+
+class ObserveMeBalances:
+    def __init__(self, txOptions):
+        self.txOptions=txOptions
+
+    def __enter__(self):
+        self.ousd_balance=ousd.balanceOf(me, OPTS)
+        self.usdt_balance=usdt.balanceOf(me, OPTS)
+        self.usdc_balance=usdc.balanceOf(me, OPTS)
+        self.dai_balance=dai.balanceOf(me, OPTS)
+        self.total=self.ousd_balance+self.usdt_balance*1e12+self.usdc_balance*1e12+self.dai_balance
+        return self
+
+    def __exit__(self, *args, **kwargs):
+        ousd_balance=ousd.balanceOf(me, OPTS)
+        usdt_balance=usdt.balanceOf(me, OPTS)
+        usdc_balance=usdc.balanceOf(me, OPTS)
+        dai_balance=dai.balanceOf(me, OPTS)
+        total=ousd_balance+usdt_balance*1e12+usdc_balance*1e12+dai_balance
+
+        print("----------- Me account changes ---------")
+        print("      " + leading_whitespace("Before") + " " + leading_whitespace("After") + " " + leading_whitespace("Difference"))
+        print("OUSD: " + c18(self.ousd_balance) + " " + c18(ousd_balance) + " " + c18(ousd_balance - self.ousd_balance))
+        print("USDT: " + c6(self.usdt_balance) + " " + c6(usdt_balance) + " " + c6(usdt_balance - self.usdt_balance))
+        print("USDC: " + c6(self.usdc_balance) + " " + c6(usdc_balance) + " " + c6(usdc_balance-self.usdc_balance))
+        print("DAI:  " + c18(self.dai_balance) + " " + c18(dai_balance) + " " + c18(dai_balance - self.dai_balance))
+        print("Total:" + c18(self.total) + " " + c18(total) + " " + c18(total - self.total))
+        print("----------------------------------------")

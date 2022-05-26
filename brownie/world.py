@@ -268,3 +268,16 @@ def asset_default_strategy(strategy, asset):
     create_gov_proposal("Set comp strategy as default strategy for asset", [tx])
     # execute latest proposal
     sim_governor_execute(governor.proposalCount())
+
+# harvest rewards from all the strategies
+def harvest_all_strategies():
+    tx = harvester.harvestAndSwap({'from': GOVERNOR})
+    tx.sig_string = 'harvestAndSwap()'
+    create_gov_proposal("Harvest and swap all strategies", [tx])
+    # execute latest proposal
+    sim_governor_execute(governor.proposalCount())
+
+# withdraw funds from Comp strategy
+def withdrawFromComp(amount, asset):
+    comp_strat.withdraw(VAULT_PROXY_ADDRESS, asset.address, amount * math.pow(10, asset.decimals()), {'from': VAULT_PROXY_ADDRESS})
+    vault_core.rebase(OPTS)
