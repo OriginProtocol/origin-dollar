@@ -18,8 +18,8 @@ abstract contract Pausable {
 
     modifier onlyUnpausers() {
         require(
-            msg.sender == pauser() || _canPause(),
-            "Caller cannot pause the contract"
+            msg.sender == pauser() || _canUnpause(),
+            "Caller cannot unpause the contract"
         );
         _;
     }

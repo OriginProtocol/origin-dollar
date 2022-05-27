@@ -128,8 +128,7 @@ describe("Pauser", async () => {
       );
 
       // Vault pausing should update values
-      expect(await vault.rebasePaused()).to.be.true;
-      expect(await vault.capitalPaused()).to.be.true;
+      expect(await vault.paused()).to.be.true;
     });
   });
 
@@ -254,8 +253,7 @@ describe("Pauser", async () => {
     it("Should unpause underlying contract on cancellation", async () => {
       const { strategist, pauser, vault } = await loadFixture(defaultFixture);
       await pauser.connect(strategist).tempPause();
-      expect(await vault.capitalPaused()).to.be.true;
-      expect(await vault.rebasePaused()).to.be.true;
+      expect(await vault.paused()).to.be.true;
 
       const expiryDuration = await pauser.expiryDuration();
       await advanceTime(expiryDuration.add(1).toNumber());
@@ -265,8 +263,8 @@ describe("Pauser", async () => {
       );
       expect(await pauser.currentExpiry()).to.eq(0);
       expect(await pauser.pauseState()).to.eq(await pauser.UNPAUSED());
-      expect(await vault.capitalPaused()).to.be.false;
-      expect(await vault.rebasePaused()).to.be.false;
+      expect(await vault.paused()).to.be.false;
+      expect(await vault.paused()).to.be.false;
     });
   });
 
@@ -300,8 +298,7 @@ describe("Pauser", async () => {
       );
       expect(await pauser.currentExpiry()).to.eq(0);
       expect(await pauser.pauseState()).to.eq(await pauser.PAUSED());
-      expect(await vault.capitalPaused()).to.be.true;
-      expect(await vault.rebasePaused()).to.be.true;
+      expect(await vault.paused()).to.be.true;
     });
   });
 
@@ -333,8 +330,7 @@ describe("Pauser", async () => {
     it("Should unpause underlying contract", async () => {
       const { strategist, pauser, vault } = await loadFixture(defaultFixture);
       pauser.connect(strategist).pause();
-      expect(await vault.capitalPaused()).to.be.true;
-      expect(await vault.rebasePaused()).to.be.true;
+      expect(await vault.paused()).to.be.true;
 
       await expect(pauser.connect(strategist).unpause()).to.emit(
         pauser,
@@ -342,8 +338,8 @@ describe("Pauser", async () => {
       );
       expect(await pauser.currentExpiry()).to.eq(0);
       expect(await pauser.pauseState()).to.eq(await pauser.UNPAUSED());
-      expect(await vault.capitalPaused()).to.be.false;
-      expect(await vault.rebasePaused()).to.be.false;
+      expect(await vault.paused()).to.be.false;
+      expect(await vault.paused()).to.be.false;
     });
   });
 

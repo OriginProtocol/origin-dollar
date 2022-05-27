@@ -156,8 +156,7 @@ async function debug(taskArguments, hre) {
   //
   // Vault
   //
-  const rebasePaused = await vault.rebasePaused();
-  const capitalPaused = await vault.capitalPaused();
+  const paused = await vault.paused();
   const redeemFeeBps = Number(await vault.redeemFeeBps());
   const trusteeFeeBps = Number(await vault.trusteeFeeBps());
   const vaultBuffer = Number(
@@ -174,8 +173,7 @@ async function debug(taskArguments, hre) {
 
   console.log("\nVault Settings");
   console.log("================");
-  console.log("rebasePaused:\t\t\t", rebasePaused);
-  console.log("capitalPaused:\t\t\t", capitalPaused);
+  console.log("paused:\t\t\t", paused);
   console.log(`redeemFeeBps:\t\t\t ${redeemFeeBps} (${redeemFeeBps / 100}%)`);
   console.log(
     `trusteeFeeBps:\t\t\t ${trusteeFeeBps} (${trusteeFeeBps / 100}%)`

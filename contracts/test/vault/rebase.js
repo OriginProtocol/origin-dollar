@@ -21,47 +21,47 @@ describe("Vault rebase pausing", async () => {
 
   it("Should handle rebase pause flag correctly", async () => {
     let { vault, governor } = await loadFixture(defaultFixture);
-    await vault.connect(governor).pauseRebase();
-    await expect(vault.rebase()).to.be.revertedWith("Rebasing paused");
-    await vault.connect(governor).unpauseRebase();
+    await vault.connect(governor).pause();
+    await expect(vault.rebase()).to.be.revertedWith("paused");
+    await vault.connect(governor).unpause();
     await vault.rebase();
   });
 
-  it("Should not allow the public to pause or unpause rebasing", async () => {
+  it("Should not allow the public to pause or unpause", async () => {
     let { vault, anna } = await loadFixture(defaultFixture);
-    await expect(vault.connect(anna).pauseRebase()).to.be.revertedWith(
-      "Caller is not the Pauser or Strategist or Governor"
+    await expect(vault.connect(anna).pause()).to.be.revertedWith(
+      "Caller cannot pause the contract"
     );
-    await expect(vault.connect(anna).unpauseRebase()).to.be.revertedWith(
-      "Caller is not the Pauser or Strategist or Governor"
+    await expect(vault.connect(anna).unpause()).to.be.revertedWith(
+      "Caller cannot unpause the contract"
     );
   });
 
-  it("Should allow strategist to pause rebasing", async () => {
+  it("Should allow strategist to pause", async () => {
     let { vault, governor, josh } = await loadFixture(defaultFixture);
     await vault.connect(governor).setStrategistAddr(josh.address);
-    await vault.connect(josh).pauseRebase();
+    await vault.connect(josh).pause();
   });
 
-  it("Should allow strategist to unpause rebasing", async () => {
+  it("Should allow strategist to unpause", async () => {
     let { vault, governor, josh } = await loadFixture(defaultFixture);
     await vault.connect(governor).setStrategistAddr(josh.address);
-    await vault.connect(josh).unpauseRebase()
+    await vault.connect(josh).unpause();
   });
 
-  it("Should allow governor to pause rebasing", async () => {
+  it("Should allow governor to pause", async () => {
     let { vault, governor } = await loadFixture(defaultFixture);
-    await vault.connect(governor).pauseRebase();
+    await vault.connect(governor).pause();
   });
 
-  it("Should allow governor to unpause rebasing", async () => {
+  it("Should allow governor to unpause", async () => {
     let { vault, governor } = await loadFixture(defaultFixture);
-    await vault.connect(governor).unpauseRebase();
+    await vault.connect(governor).unpause();
   });
 
   it("Rebase pause status can be read", async () => {
     let { vault, anna } = await loadFixture(defaultFixture);
-    await expect(await vault.connect(anna).rebasePaused()).to.be.false;
+    await expect(await vault.connect(anna).paused()).to.be.false;
   });
 });
 

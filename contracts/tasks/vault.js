@@ -129,7 +129,8 @@ async function yield(taskArguments, hre) {
 }
 
 /**
- * Call the Vault's admin pauseCapital method.
+ * Call the Vault's admin pause/unpause method.
+ * The name is kept to avoid breaking dependent workflows.
  */
 async function capital(taskArguments, hre) {
   const { isMainnet, isFork } = require("../test/helpers");
@@ -140,7 +141,7 @@ async function capital(taskArguments, hre) {
   if (param !== "true" && param !== "false")
     throw new Error("Set unpause param to true or false");
   const pause = param === "true";
-  console.log("Setting Vault capitalPause to", pause);
+  console.log("Setting Vault pause to", pause);
 
   const { governorAddr } = await getNamedAccounts();
   const sGovernor = await hre.ethers.provider.getSigner(governorAddr);
@@ -151,8 +152,8 @@ async function capital(taskArguments, hre) {
     cVaultProxy.address
   );
 
-  const propDescription = pause ? "Call pauseCapital" : "Call unpauseCapital";
-  const signature = pause ? "pauseCapital()" : "unpauseCapital()";
+  const propDescription = pause ? "Call pause" : "Call unpause";
+  const signature = pause ? "pause()" : "unpause()";
   const propArgs = await proposeArgs([{ contract: cVault, signature }]);
 
   if (isMainnet) {
@@ -166,11 +167,11 @@ async function capital(taskArguments, hre) {
     await executeProposal(propArgs, propDescription);
   } else {
     if (pause) {
-      cVault.connect(sGovernor).pauseCapital();
-      console.log("Capital paused on vault.");
+      cVault.connect(sGovernor).pause();
+      console.log("Vault paused.");
     } else {
-      cVault.connect(sGovernor).unpauseCapital();
-      console.log("Capital unpaused on vault.");
+      cVault.connect(sGovernor).unpause();
+      console.log("Vault unpaused.");
     }
   }
 }

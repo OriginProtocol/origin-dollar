@@ -25,7 +25,7 @@ describe("Can claim governance with Governor contract and govern", () => {
         },
         {
           contract: vault,
-          signature: "pauseCapital()",
+          signature: "pause()",
         },
         {
           contract: vault,
@@ -33,10 +33,10 @@ describe("Can claim governance with Governor contract and govern", () => {
           args: [69],
         },
       ],
-      "Accept admin for the vault and set pauseCapital and Redeem!"
+      "Accept admin for the vault and set pause and Redeem!"
     );
 
-    expect(await vault.capitalPaused()).to.be.true;
+    expect(await vault.paused()).to.be.true;
     expect(await vault.redeemFeeBps()).to.be.equal(69);
   });
 
@@ -56,10 +56,10 @@ describe("Can claim governance with Governor contract and govern", () => {
         },
         {
           contract: vault,
-          signature: "pauseCapital()",
+          signature: "pause()",
         },
       ],
-      "Accept admin for the vault and set pauseCapital"
+      "Accept admin for the vault and set pause"
     );
     await proposeAndExecute(
       fixture,
@@ -73,7 +73,7 @@ describe("Can claim governance with Governor contract and govern", () => {
       "Set Redeem!"
     );
 
-    expect(await vault.capitalPaused()).to.be.true;
+    expect(await vault.paused()).to.be.true;
     expect(await vault.redeemFeeBps()).to.be.equal(69);
   });
 
@@ -264,7 +264,7 @@ describe("Can claim governance with Governor contract and govern", () => {
         },
         {
           contract: vault,
-          signature: "pauseCapital()",
+          signature: "pause()",
         },
         {
           contract: vault,
@@ -272,7 +272,7 @@ describe("Can claim governance with Governor contract and govern", () => {
           args: [69],
         },
       ],
-      "Accept admin for the vault and set pauseCapital and Redeem!"
+      "Accept admin for the vault and set pause and Redeem!"
     );
 
     const tx = await governorContract.connect(governor).cancel(proposalId);

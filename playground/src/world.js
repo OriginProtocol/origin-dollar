@@ -82,11 +82,11 @@ export const CONTRACTS = [
     icon: "🏦",
     actions: [
       {
-        name: "pauseCapital",
+        name: "pause",
         params: [],
       },
       {
-        name: "unpauseCapital",
+        name: "unpause",
         params: [],
       },
       {

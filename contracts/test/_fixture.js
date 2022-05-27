@@ -30,7 +30,7 @@ async function defaultFixture() {
     "CompoundStrategyProxy"
   );
   const pauserProxy = await ethers.getContract("PauserProxy");
-  const pauser = await ethers.getContractAt("Pauser", pauserProxy.address)
+  const pauser = await ethers.getContractAt("Pauser", pauserProxy.address);
 
   const ousd = await ethers.getContractAt("OUSD", ousdProxy.address);
   const vault = await ethers.getContractAt("IVault", vaultProxy.address);
@@ -222,7 +222,7 @@ async function defaultFixture() {
   await vault.connect(sGovernor).supportAsset(assetAddresses.TUSD);
 
   // Enable capital movement
-  await vault.connect(sGovernor).unpauseCapital();
+  await vault.connect(sGovernor).unpause();
 
   // Add Buyback contract as trustee
   await vault.connect(sGovernor).setTrusteeAddress(buyback.address);
