@@ -124,6 +124,35 @@ class MetapoolBalances:
         print("Virtual price:  " + c6(self.virtual_price) + " " + c6(virtual_price) + " " + c6(virtual_price - self.virtual_price))
         print("----------------------------------------")
 
+#observe 3crv balance changes and virtual price
+class Crv3Balances:
+    def __init__(self, txOptions):
+        self.txOptions=txOptions
+
+    def __enter__(self):
+        self.virtual_price = threepool_swap.get_virtual_price()
+        self.dai_balance = threepool_swap.balances(0)
+        self.usdc_balance = threepool_swap.balances(1)
+        self.usdt_balance = threepool_swap.balances(2)
+        self.total = self.dai_balance + self.usdc_balance*1e12 + self.usdt_balance*1e12
+        return self
+
+    def __exit__(self, *args, **kwargs):
+        virtual_price = threepool_swap.get_virtual_price()
+        dai_balance = threepool_swap.balances(0)
+        usdc_balance = threepool_swap.balances(1)
+        usdt_balance = threepool_swap.balances(2)
+        total = dai_balance + usdc_balance*1e12 + usdt_balance*1e12
+
+        print("---------- 3CRV pool changes -----------")
+        print("                " + leading_whitespace("Before") + " " + leading_whitespace("After") + " " + leading_whitespace("Difference"))
+        print("DAI:            " + c18(self.dai_balance) + " " + c18(dai_balance) + " " + c18(dai_balance - self.dai_balance))
+        print("USDC:           " + c6(self.usdc_balance) + " " + c6(usdc_balance) + " " + c6(usdc_balance - self.usdc_balance))
+        print("USDT:           " + c6(self.usdt_balance) + " " + c6(usdt_balance) + " " + c6(usdt_balance - self.usdt_balance))
+        print("Total:          " + c18(self.total) + " " + c18(total) + " " + c18(total - self.total))
+        print("Virtual price:  " + c6(self.virtual_price) + " " + c6(virtual_price) + " " + c6(virtual_price - self.virtual_price))
+        print("----------------------------------------")
+
 # observe how OUSD balance changes for a random account
 class AccountOUSDBalance:
     def __init__(self, txOptions):

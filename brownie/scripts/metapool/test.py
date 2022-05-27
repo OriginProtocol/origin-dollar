@@ -27,11 +27,12 @@ with TemporaryFork():
         with SupplyChanges(OPTS):
             with ObserveMeBalances(OPTS):
                 with MetapoolBalances(OPTS):
-                    for x in range(30):
-                        mint(10e6)
-                        withdrawAllFromMeta()
-                        redeem(10e6)
-                    show_vault_holdings()
+                    with Crv3Balances(OPTS):
+                        for x in range(30):
+                            mint(10e6)
+                            withdrawAllFromMeta()
+                            redeem(10e6)
+                        show_vault_holdings()
 
 
 
@@ -52,20 +53,19 @@ with TemporaryFork():
     with AccountOUSDBalance(OPTS):
         with SupplyChanges(OPTS):
             with ObserveMeBalances(OPTS):
-                show_metapool_balances()
-                for x in range(15):
-                    mint(10e6)
-                    # Option 1
-                    balance_metapool()
-                    # Option 2
-                    #tiltMetapoolTo3CRV(5*1e6*1e18)
-                    # Option 3
-                    #tiltMetapoolToOUSD(5*1e6*1e18)
-                    withdrawAllFromMeta()
-                    redeem(10e6)
-                    balance_metapool()
-                show_vault_holdings()
-                show_metapool_balances()
+                with MetapoolBalances(OPTS):
+                    with Crv3Balances(OPTS):
+                        for x in range(15):
+                            mint(10e6)
+                            # Option 1
+                            balance_metapool()
+                            # Option 2
+                            #tiltMetapoolTo3CRV(5*1e6*1e18)
+                            # Option 3
+                            #tiltMetapoolToOUSD(5*1e6*1e18)
+                            withdrawAllFromMeta()
+                            redeem(10e6)
+                            balance_metapool()
 
 
 
