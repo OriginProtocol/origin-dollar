@@ -10,19 +10,19 @@ contract Pauser is Initializable, Governable {
     event PausableChanged(address _newPausable);
     event StrategistChanged(address _newStrategist);
     event TempPaused(uint256 _expiry);
-    event Paused();
-    event Unpaused();
     event Whitelisted(address _account);
     event DeWhitelisted(address _account);
 
-    uint8 public constant UNPAUSED = 0;
-    uint8 public constant TEMP_PAUSE = 1;
-    uint8 public constant PAUSED = 2;
+    enum PauseState {
+        UNPAUSED,
+        TEMP_PAUSED,
+        PAUSED
+    }
 
     /**
      * @dev The current state of the contract.
      */
-    uint8 public pauseState;
+    PauseState public pauseState;
 
     /**
      * @dev The duration of a temp-pause in seconds.
@@ -109,7 +109,7 @@ contract Pauser is Initializable, Governable {
      */
     function tempPause() external onlyWhitelistedOrGovernorOrStrategist {
         // Cannot pause if already paused
-        require(pauseState == UNPAUSED, "Contract is not unpaused");
+        require(pauseState == PauseState.UNPAUSED, "Contract is not unpaused");
 
         if (!_isGovernorOrStrategist()) {
             // Cannot initiate a temp-pause if done before (one-time-use)
@@ -119,7 +119,7 @@ contract Pauser is Initializable, Governable {
             );
         }
 
-        pauseState = TEMP_PAUSE;
+        pauseState = PauseState.TEMP_PAUSED;
         currentExpiry = block.timestamp + expiryDuration;
         pauseExpiry[msg.sender] = currentExpiry;
         emit TempPaused(currentExpiry);
@@ -134,14 +134,16 @@ contract Pauser is Initializable, Governable {
      */
     function confirmPause() external onlyGovernorOrStrategist {
         // The contract MUST be in a TEMP_PAUSE state
-        require(pauseState == TEMP_PAUSE, "The contract is not temp-paused");
+        require(
+            pauseState == PauseState.TEMP_PAUSED,
+            "The contract is not temp-paused"
+        );
 
         // currentExpiry MUST never be zero when pauseState = TEMP_PAUSE
         assert(currentExpiry != 0);
 
-        pauseState = PAUSED;
+        pauseState = PauseState.PAUSED;
         currentExpiry = 0;
-        emit Paused();
     }
 
     /**
@@ -150,7 +152,10 @@ contract Pauser is Initializable, Governable {
      */
     function cancelTempPause() external onlyWhitelistedOrGovernorOrStrategist {
         // Cannot cancel if not temp-paused
-        require(pauseState == TEMP_PAUSE, "The contract is not temp-paused");
+        require(
+            pauseState == PauseState.TEMP_PAUSED,
+            "The contract is not temp-paused"
+        );
 
         // Cannot cancel before expiry
         require(
@@ -158,9 +163,8 @@ contract Pauser is Initializable, Governable {
             "The current pause is not expired"
         );
 
-        pauseState = UNPAUSED;
+        pauseState = PauseState.UNPAUSED;
         currentExpiry = 0;
-        emit Unpaused();
 
         // Execute the unpausing action on the contract
         Pausable(pausable).unpause();
@@ -171,11 +175,10 @@ contract Pauser is Initializable, Governable {
      */
     function pause() external onlyGovernorOrStrategist {
         // Cannot pause if already paused
-        require(pauseState != PAUSED, "Contract is already paused");
+        require(pauseState != PauseState.PAUSED, "Contract is already paused");
 
-        pauseState = PAUSED;
+        pauseState = PauseState.PAUSED;
         currentExpiry = 0;
-        emit Paused();
 
         // Execute the pause action on the contract
         Pausable(pausable).pause();
@@ -186,11 +189,13 @@ contract Pauser is Initializable, Governable {
      */
     function unpause() external onlyGovernorOrStrategist {
         // Cannot unpause if already unpaused
-        require(pauseState != UNPAUSED, "Contract is already unpaused");
+        require(
+            pauseState != PauseState.UNPAUSED,
+            "Contract is already unpaused"
+        );
 
-        pauseState = UNPAUSED;
+        pauseState = PauseState.UNPAUSED;
         currentExpiry = 0;
-        emit Unpaused();
 
         // Execute the pause action on the contract
         Pausable(pausable).unpause();
