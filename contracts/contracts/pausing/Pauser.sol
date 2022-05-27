@@ -4,20 +4,21 @@ pragma solidity ^0.8.0;
 import { Governable } from "../governance/Governable.sol";
 import { Initializable } from "../utils/Initializable.sol";
 import { Pausable } from "./Pausable.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
 
-contract Pauser is Initializable, Governable {
+contract Pauser is Initializable, AccessControl, Governable {
     event ExpiryDurationChanged(uint256 _newExpiry);
     event PausableChanged(address _newPausable);
-    event StrategistChanged(address _newStrategist);
-    event TempPaused(uint256 _expiry);
-    event Whitelisted(address _account);
-    event DeWhitelisted(address _account);
+    event TempPaused(address _sender, uint256 _expiry);
 
     enum PauseState {
         UNPAUSED,
         TEMP_PAUSED,
         PAUSED
     }
+
+    bytes32 public constant STRATEGIST_ROLE = keccak256("STRATEGIST_ROLE");
+    bytes32 public constant TEMP_PAUSER_ROLE = keccak256("TEMP_PAUSER_ROLE");
 
     /**
      * @dev The current state of the contract.
@@ -41,28 +42,11 @@ contract Pauser is Initializable, Governable {
     address public pausable;
 
     /**
-     * @dev Address of the strategist
-     */
-    address public strategistAddr = address(0);
-
-    /**
-     * @dev whitelist of addresses allowed to interact with the functionality exposed by this contract.
-     */
-    mapping(address => bool) public whitelist;
-
-    /**
-     * @dev Expiry of the pause initiated by the account.
-     * Map of account to the expiry of the temp-pause they have initiated.
-     * Also used to invalidate a pauser to prevent abuse.
-     */
-    mapping(address => uint256) public pauseExpiry;
-
-    /**
      * @dev Verifies that the caller is a whitelisted account or the governor or strategist.
      */
     modifier onlyWhitelistedOrGovernorOrStrategist() {
         require(
-            whitelist[msg.sender] || _isGovernorOrStrategist(),
+            hasRole(TEMP_PAUSER_ROLE, msg.sender) || _isGovernorOrStrategist(),
             "Caller is not whitelisted and is not the Strategist or Governor"
         );
         _;
@@ -83,102 +67,39 @@ contract Pauser is Initializable, Governable {
     {
         setPausable(_pausable);
         setExpiryDuration(_expiryDuration);
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
     function addToWhitelist(address _account)
         external
         onlyGovernorOrStrategist
     {
-        whitelist[_account] = true;
-        emit Whitelisted(_account);
+        _grantRole(TEMP_PAUSER_ROLE, _account);
     }
 
     function removeFromWhitelist(address _account)
         external
         onlyGovernorOrStrategist
     {
-        whitelist[_account] = false;
-        emit DeWhitelisted(_account);
-    }
-
-    /**
-     * @dev Pauses the managed contract for the duration of `expiryDuration`
-     * The pause action can be canceled by any user when the temp-pause expires.
-     * The contract MUST be in an UNPAUSED state.
-     * The function is one-time-use (The contract cannot be temp-paused by the same account twice).
-     */
-    function tempPause() external onlyWhitelistedOrGovernorOrStrategist {
-        // Cannot pause if already paused
-        require(pauseState == PauseState.UNPAUSED, "Contract is not unpaused");
-
-        if (!_isGovernorOrStrategist()) {
-            // Cannot initiate a temp-pause if done before (one-time-use)
-            require(
-                pauseExpiry[msg.sender] == 0,
-                "Caller has already initiated a temp pause"
-            );
-        }
-
-        pauseState = PauseState.TEMP_PAUSED;
-        currentExpiry = block.timestamp + expiryDuration;
-        pauseExpiry[msg.sender] = currentExpiry;
-        emit TempPaused(currentExpiry);
-
-        // Execute the pause action on the contract
-        Pausable(pausable).pause();
-    }
-
-    /**
-     * @dev Confirm a temporary pause on the contract
-     * The contract MUST be in a TEMP_PAUSE state.
-     */
-    function confirmPause() external onlyGovernorOrStrategist {
-        // The contract MUST be in a TEMP_PAUSE state
-        require(
-            pauseState == PauseState.TEMP_PAUSED,
-            "The contract is not temp-paused"
-        );
-
-        // currentExpiry MUST never be zero when pauseState = TEMP_PAUSE
-        assert(currentExpiry != 0);
-
-        pauseState = PauseState.PAUSED;
-        currentExpiry = 0;
-    }
-
-    /**
-     * @dev Cancel the temporary pause on the contract after expiry.
-     * The contract MUST be in a TEMP_PAUSE state.
-     */
-    function cancelTempPause() external onlyWhitelistedOrGovernorOrStrategist {
-        // Cannot cancel if not temp-paused
-        require(
-            pauseState == PauseState.TEMP_PAUSED,
-            "The contract is not temp-paused"
-        );
-
-        // Cannot cancel before expiry
-        require(
-            block.timestamp > currentExpiry,
-            "The current pause is not expired"
-        );
-
-        pauseState = PauseState.UNPAUSED;
-        currentExpiry = 0;
-
-        // Execute the unpausing action on the contract
-        Pausable(pausable).unpause();
+        _revokeRole(TEMP_PAUSER_ROLE, _account);
     }
 
     /**
      * @dev Pauses the managed contract indefinitely
      */
-    function pause() external onlyGovernorOrStrategist {
+    function pause() external onlyWhitelistedOrGovernorOrStrategist {
         // Cannot pause if already paused
         require(pauseState != PauseState.PAUSED, "Contract is already paused");
 
-        pauseState = PauseState.PAUSED;
-        currentExpiry = 0;
+        if (_isGovernorOrStrategist()) {
+            pauseState = PauseState.PAUSED;
+            currentExpiry = 0;
+        } else {
+            pauseState = PauseState.TEMP_PAUSED;
+            currentExpiry = block.timestamp + expiryDuration;
+            _revokeRole(TEMP_PAUSER_ROLE, msg.sender);
+            emit TempPaused(msg.sender, currentExpiry);
+        }
 
         // Execute the pause action on the contract
         Pausable(pausable).pause();
@@ -187,17 +108,24 @@ contract Pauser is Initializable, Governable {
     /**
      * @dev Unpauses the managed contract and resets expiry to 0
      */
-    function unpause() external onlyGovernorOrStrategist {
+    function unpause() external {
         // Cannot unpause if already unpaused
         require(
             pauseState != PauseState.UNPAUSED,
             "Contract is already unpaused"
         );
 
+        // Normal users can unpause when the contract has expired
+        if (!_isGovernorOrStrategist()) {
+            require(
+                block.timestamp > currentExpiry,
+                "The current pause is not expired"
+            );
+        }
+
         pauseState = PauseState.UNPAUSED;
         currentExpiry = 0;
-
-        // Execute the pause action on the contract
+        // Execute the unpause action on the contract
         Pausable(pausable).unpause();
     }
 
@@ -220,18 +148,25 @@ contract Pauser is Initializable, Governable {
     }
 
     /**
-     * @dev Set the address of the strategist.
+     * @dev Add the address to the strategist role
      * The caller MUST be the governor
      */
-    function setStrategistAddr(address _strategistAddr) public onlyGovernor {
-        strategistAddr = _strategistAddr;
-        emit StrategistChanged(_strategistAddr);
+    function addStrategist(address _addr) public onlyGovernor {
+        _grantRole(STRATEGIST_ROLE, _addr);
+    }
+
+    /**
+     * @dev Add the address to the strategist role
+     * The caller MUST be the governor
+     */
+    function removeStrategist(address _addr) public onlyGovernor {
+        _revokeRole(STRATEGIST_ROLE, _addr);
     }
 
     /**
      * @dev Returns true if the caller is the governor or strategist. False otherwise.
      */
     function _isGovernorOrStrategist() private view returns (bool) {
-        return msg.sender == strategistAddr || isGovernor();
+        return hasRole(STRATEGIST_ROLE, msg.sender) || isGovernor();
     }
 }

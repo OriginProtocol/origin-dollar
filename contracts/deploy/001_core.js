@@ -781,7 +781,7 @@ const deployPauser = async () => {
 
   // 5. Set Strategist address.
   await withConfirmation(
-    cPauser.connect(sDeployer).setStrategistAddr(strategistAddr)
+    cPauser.connect(sDeployer).addStrategist(strategistAddr)
   );
 
   // 6. Assign ownership
