@@ -50,8 +50,8 @@ print("'me' account has: " + c12(usdt.balanceOf(me)) + "m USDT")
 
 # mint OUSD using USDT. Amount denominated in dollar value
 # also force call allocate so that funds get deposited to metastrategy
-def mint(amount):
-    vault_core.mint(usdt.address, amount * 1e6, 0, OPTS)
+def mint(amount, asset=usdt):
+    vault_core.mint(asset.address, amount * math.pow(10, asset.decimals()), 0, OPTS)
     vault_core.allocate(OPTS)
     vault_core.rebase(OPTS)
 
