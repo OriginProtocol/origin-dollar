@@ -5,7 +5,14 @@ pragma solidity ^0.8.0;
  * @dev Defines a contract that can be paused by the `Pauser` contract.
  */
 abstract contract Pausable {
+    /**
+     * @dev Emitted when the pause is triggered by `account`.
+     */
     event Paused(address account);
+
+    /**
+     * @dev Emitted when the pause is lifted by `account`.
+     */
     event Unpaused(address account);
 
     modifier onlyPausers() {
