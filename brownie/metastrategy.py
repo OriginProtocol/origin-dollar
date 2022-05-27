@@ -180,7 +180,10 @@ class ObserveMeBalances:
         self.usdt_balance=usdt.balanceOf(me, OPTS)
         self.usdc_balance=usdc.balanceOf(me, OPTS)
         self.dai_balance=dai.balanceOf(me, OPTS)
-        self.total=self.ousd_balance+self.usdt_balance*1e12+self.usdc_balance*1e12+self.dai_balance
+        self.crv3_balance=threepool_lp.balanceOf(me, OPTS)
+        self.crv3_price=threepool_swap.get_virtual_price(OPTS)
+        self.crv3_dollar_value = self.crv3_price * self.crv3_balance / 1e18
+        self.total=self.ousd_balance+self.usdt_balance*1e12+self.usdc_balance*1e12+self.dai_balance+self.crv3_dollar_value
         return self
 
     def __exit__(self, *args, **kwargs):
@@ -188,13 +191,18 @@ class ObserveMeBalances:
         usdt_balance=usdt.balanceOf(me, OPTS)
         usdc_balance=usdc.balanceOf(me, OPTS)
         dai_balance=dai.balanceOf(me, OPTS)
-        total=ousd_balance+usdt_balance*1e12+usdc_balance*1e12+dai_balance
+        crv3_balance=threepool_lp.balanceOf(me, OPTS)
+        crv3_price=threepool_swap.get_virtual_price(OPTS)
+        crv3_dollar_value = crv3_price * crv3_balance / 1e18
+        total=ousd_balance+usdt_balance*1e12+usdc_balance*1e12+dai_balance+crv3_dollar_value
 
         print("----------- Me account changes ---------")
-        print("      " + leading_whitespace("Before") + " " + leading_whitespace("After") + " " + leading_whitespace("Difference"))
-        print("OUSD: " + c18(self.ousd_balance) + " " + c18(ousd_balance) + " " + c18(ousd_balance - self.ousd_balance))
-        print("USDT: " + c6(self.usdt_balance) + " " + c6(usdt_balance) + " " + c6(usdt_balance - self.usdt_balance))
-        print("USDC: " + c6(self.usdc_balance) + " " + c6(usdc_balance) + " " + c6(usdc_balance-self.usdc_balance))
-        print("DAI:  " + c18(self.dai_balance) + " " + c18(dai_balance) + " " + c18(dai_balance - self.dai_balance))
-        print("Total:" + c18(self.total) + " " + c18(total) + " " + c18(total - self.total))
+        print("             " + leading_whitespace("Before") + " " + leading_whitespace("After") + " " + leading_whitespace("Difference"))
+        print("OUSD:        " + c18(self.ousd_balance) + " " + c18(ousd_balance) + " " + c18(ousd_balance - self.ousd_balance))
+        print("USDT:        " + c6(self.usdt_balance) + " " + c6(usdt_balance) + " " + c6(usdt_balance - self.usdt_balance))
+        print("USDC:        " + c6(self.usdc_balance) + " " + c6(usdc_balance) + " " + c6(usdc_balance-self.usdc_balance))
+        print("DAI:         " + c18(self.dai_balance) + " " + c18(dai_balance) + " " + c18(dai_balance - self.dai_balance))
+        print("3CRV(token): " + c18(self.crv3_balance) + " " + c18(crv3_balance) + " " + c18(crv3_balance - self.crv3_balance))
+        print("3CRV($value): " + c18(self.crv3_dollar_value) + " " + c18(crv3_dollar_value) + " " + c18(crv3_dollar_value - self.crv3_dollar_value))
+        print("Total:       " + c18(self.total) + " " + c18(total) + " " + c18(total - self.total))
         print("----------------------------------------")
