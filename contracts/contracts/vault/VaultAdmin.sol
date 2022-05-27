@@ -320,7 +320,7 @@ contract VaultAdmin is VaultStorage, Pausable {
      * Required by the pausable specification.
      */
     function _canUnpause() internal view override returns (bool) {
-        return isGovernor();
+        return _isGovernorOrStrategist();
     }
 
     /***************************************

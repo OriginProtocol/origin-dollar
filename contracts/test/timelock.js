@@ -80,28 +80,26 @@ describe("Governor can instantly pause deposits", () => {
   });
 
   it("Should allow pausing deposits immediately", async () => {
-    await governorContract.connect(governor).unpauseCapital(vault.address);
-    await governorContract.connect(governor).pauseCapital(vault.address);
-    expect(await vault.capitalPaused()).to.be.true;
+    await governorContract.connect(governor).unpause(vault.address);
+    await governorContract.connect(governor).pause(vault.address);
+    expect(await vault.paused()).to.be.true;
   });
 
   it("Should allow unpausing deposits immediately", async () => {
-    await governorContract.connect(governor).pauseCapital(vault.address);
-    await governorContract.connect(governor).unpauseCapital(vault.address);
-    expect(await vault.capitalPaused()).to.be.false;
+    await governorContract.connect(governor).pause(vault.address);
+    await governorContract.connect(governor).unpause(vault.address);
+    expect(await vault.paused()).to.be.false;
   });
 
   it("Should not allow a non-admin to pause deposits", async () => {
     await expect(
-      governorContract.connect(anna).pauseCapital(vault.address)
-    ).to.be.revertedWith("Timelock::pauseCapital: Call must come from admin.");
+      governorContract.connect(anna).pause(vault.address)
+    ).to.be.revertedWith("Timelock::pause: Call must come from admin.");
   });
 
   it("Should not allow a non-admin to unpause deposits", async () => {
     await expect(
-      governorContract.connect(anna).unpauseCapital(vault.address)
-    ).to.be.revertedWith(
-      "Timelock::unpauseCapital: Call must come from admin."
-    );
+      governorContract.connect(anna).unpause(vault.address)
+    ).to.be.revertedWith("Timelock::unpause: Call must come from admin.");
   });
 });

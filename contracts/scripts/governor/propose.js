@@ -191,7 +191,7 @@ async function proposeSetMaxSupplyDiffArgs() {
   return { args, description };
 }
 
-async function proposeUnpauseRebaseArgs() {
+async function proposeUnpauseArgs() {
   const vaultProxy = await ethers.getContract("VaultProxy");
   const vaultAdmin = await ethers.getContractAt(
     "VaultAdmin",
@@ -201,14 +201,14 @@ async function proposeUnpauseRebaseArgs() {
   const args = await proposeArgs([
     {
       contract: vaultAdmin,
-      signature: "unpauseRebase()",
+      signature: "unpause()",
     },
   ]);
-  const description = "Unpause rebase";
+  const description = "Unpause";
   return { args, description };
 }
 
-async function proposeUnpauseCapitalArgs() {
+async function proposePauseArgs() {
   const vaultProxy = await ethers.getContract("VaultProxy");
   const vaultAdmin = await ethers.getContractAt(
     "VaultAdmin",
@@ -218,27 +218,10 @@ async function proposeUnpauseCapitalArgs() {
   const args = await proposeArgs([
     {
       contract: vaultAdmin,
-      signature: "unpauseCapital()",
+      signature: "pause()",
     },
   ]);
-  const description = "Unpause capital";
-  return { args, description };
-}
-
-async function proposePauseCapitalArgs() {
-  const vaultProxy = await ethers.getContract("VaultProxy");
-  const vaultAdmin = await ethers.getContractAt(
-    "VaultAdmin",
-    vaultProxy.address
-  );
-
-  const args = await proposeArgs([
-    {
-      contract: vaultAdmin,
-      signature: "pauseCapital()",
-    },
-  ]);
-  const description = "Pause capital";
+  const description = "Pause";
   return { args, description };
 }
 
@@ -1021,15 +1004,12 @@ async function main(config) {
   } else if (config.prop17) {
     console.log("prop17 proposal");
     argsMethod = proposeProp17Args;
-  } else if (config.pauseCapital) {
-    console.log("pauseCapital");
-    argsMethod = proposePauseCapitalArgs;
-  } else if (config.unpauseCapital) {
-    console.log("unpauseCapital");
-    argsMethod = proposeUnpauseCapitalArgs;
-  } else if (config.unpauseRebase) {
-    console.log("unpauseRebase");
-    argsMethod = proposeUnpauseRebaseArgs;
+  } else if (config.pause) {
+    console.log("pause");
+    argsMethod = proposePauseArgs;
+  } else if (config.unpause) {
+    console.log("unpause");
+    argsMethod = proposeUnpauseArgs;
   } else if (config.claimOGNStakingGovernance) {
     console.log("proposeClaimOGNStakingGovernance");
     argsMethod = proposeClaimOGNStakingGovernance;
@@ -1125,8 +1105,7 @@ function parseArgv() {
   for (const arg of process.argv) {
     const elems = arg.split("=");
     const key = elems[0];
-    const val = elems.length > 1 ? elems[1] : true;
-    args[key] = val;
+    args[key] = elems.length > 1 ? elems[1] : true;
   }
   return args;
 }
@@ -1159,9 +1138,8 @@ const config = {
   claimAaveStrategy: args["--claimAaveStrategy"],
   prop14: args["--prop14"],
   prop17: args["--prop17"],
-  pauseCapital: args["--pauseCapital"],
-  unpauseCapital: args["--unpauseCapital"],
-  unpauseRebase: args["--unpauseRebase"],
+  pause: args["--pause"],
+  unpause: args["--unpause"],
   claimOGNStakingGovernance: args["--claimOGNStakingGovernance"],
   upgradeStaking: args["--upgradeStaking"],
   vaultv2Governance: args["--vaultv2Governance"],

@@ -6,12 +6,7 @@ pragma solidity ^0.8.0;
  * @author Origin Protocol Inc
  */
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
-
-interface CapitalPausable {
-    function pauseCapital() external;
-
-    function unpauseCapital() external;
-}
+import "../pausing/Pausable.sol";
 
 contract Timelock {
     using SafeMath for uint256;
@@ -223,19 +218,19 @@ contract Timelock {
         return block.timestamp;
     }
 
-    function pauseCapital(address target) external {
+    function pause(address target) external {
         require(
             msg.sender == admin,
-            "Timelock::pauseCapital: Call must come from admin."
+            "Timelock::pause: Call must come from admin."
         );
-        CapitalPausable(target).pauseCapital();
+        Pausable(target).pause();
     }
 
-    function unpauseCapital(address target) external {
+    function unpause(address target) external {
         require(
             msg.sender == admin,
-            "Timelock::unpauseCapital: Call must come from admin."
+            "Timelock::unpause: Call must come from admin."
         );
-        CapitalPausable(target).unpauseCapital();
+        Pausable(target).unpause();
     }
 }

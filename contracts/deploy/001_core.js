@@ -12,6 +12,7 @@ const {
   deployWithConfirmation,
   withConfirmation,
 } = require("../utils/deploy");
+const { getTxOpts } = require("../utils/tx");
 
 /**
  * Deploy AAVE Strategy which only supports DAI.
@@ -331,7 +332,7 @@ const configureVault = async (harvesterProxy) => {
   );
   log("Added USDC asset to Vault");
   // Unpause deposits
-  await withConfirmation(cVault.connect(sGovernor).unpauseCapital());
+  await withConfirmation(cVault.connect(sGovernor).unpause());
   log("Unpaused deposits on Vault");
   // Set Strategist address.
   await withConfirmation(
@@ -732,6 +733,67 @@ const deployWOusd = async () => {
   await wousd.connect(sGovernor).claimGovernance();
 };
 
+const deployPauser = async () => {
+  const { deployerAddr, governorAddr, strategistAddr } =
+    await getNamedAccounts();
+
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+  const sGovernor = await ethers.provider.getSigner(governorAddr);
+
+  // Current contracts
+  const cVaultProxy = await ethers.getContract("VaultProxy");
+  const cVault = await ethers.getContractAt("Vault", cVaultProxy.address);
+
+  // Deployer Actions
+  // ----------------
+
+  // 1. Deploy the pauser implementation.
+  const dPauserImpl = await deployWithConfirmation("Pauser");
+
+  // 2. Deploy the pauser proxy
+  await deployWithConfirmation("PauserProxy");
+  const cPauserProxy = await ethers.getContract("PauserProxy");
+  const cPauser = await ethers.getContractAt("Pauser", cPauserProxy.address);
+
+  // 3. Configure Proxy
+  await withConfirmation(
+    cPauserProxy
+      .connect(sDeployer)
+      ["initialize(address,address,bytes)"](
+        dPauserImpl.address,
+        deployerAddr,
+        [],
+        await getTxOpts()
+      )
+  );
+
+  // 4. Initialize Pauser with vault as pausable and 12 hours time
+  const expiryDuration = 12 * 60 * 60; // 12 hours in seconds
+  await withConfirmation(
+    cPauser
+      .connect(sDeployer)
+      ["initialize(address,uint256)"](
+        cVaultProxy.address,
+        expiryDuration,
+        await getTxOpts()
+      )
+  );
+
+  // 5. Set Strategist address.
+  await withConfirmation(
+    cPauser.connect(sDeployer).setStrategistAddr(strategistAddr)
+  );
+
+  // 6. Assign ownership
+  await withConfirmation(
+    cPauser
+      .connect(sDeployer)
+      .transferGovernance(governorAddr, await getTxOpts())
+  );
+  await cPauser.connect(sGovernor).claimGovernance();
+  await cVault.connect(sGovernor).setPauser(cPauser.address);
+};
+
 const main = async () => {
   console.log("Running 001_core deployment...");
   await deployOracles();
@@ -749,6 +811,7 @@ const main = async () => {
   await deployUniswapV3Pool();
   await deployVaultVaultChecker();
   await deployWOusd();
+  await deployPauser();
   console.log("001_core deploy done.");
   return true;
 };

@@ -1,7 +1,7 @@
 const { deploymentWithProposal } = require("../utils/deploy");
 
 module.exports = deploymentWithProposal(
-  { deployName: "040_pauser", forceDeploy: true },
+  { deployName: "040_pauser", forceDeploy: false },
   async ({ deployWithConfirmation, getTxOpts, ethers, withConfirmation }) => {
     const { deployerAddr, governorAddr, strategistAddr } =
       await getNamedAccounts();

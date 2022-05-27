@@ -115,7 +115,7 @@ task("balance", "Get OUSD balance of an account")
 
 // Vault tasks.
 task("allocate", "Call allocate() on the Vault", allocate);
-task("capital", "Set the Vault's pauseCapital flag", capital);
+task("capital", "Set the Vault's pause flag", capital);
 task("harvest", "Call harvest() on Vault", harvest);
 task("rebase", "Call rebase() on the Vault", rebase);
 task("yield", "Artificially generate yield on the Vault", yield);
