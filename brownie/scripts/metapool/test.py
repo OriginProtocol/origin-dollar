@@ -56,16 +56,17 @@ with TemporaryFork():
                 with MetapoolBalances(OPTS):
                     with Crv3Balances(OPTS):
                         for x in range(15):
-                            mint(10e6)
+                            mint(100e6)
                             # Option 1
-                            balance_metapool()
+                            #balance_metapool()
                             # Option 2
-                            #tiltMetapoolTo3CRV(5*1e6*1e18)
+                            tiltMetapoolTo3CRV(50*1e6*1e18)
                             # Option 3
                             #tiltMetapoolToOUSD(5*1e6*1e18)
                             withdrawAllFromMeta()
-                            redeem(10e6)
+                            redeem(100e6)
                             balance_metapool()
+                        show_vault_holdings()
 
 
 

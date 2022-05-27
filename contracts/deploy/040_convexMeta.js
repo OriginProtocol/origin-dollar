@@ -96,7 +96,7 @@ module.exports = deploymentWithProposal(
     );
 
     console.log("META STRATEGY ADDRESS", dConvexMetaStrategyProxy.address);
-    const fiftyMil = BigNumber.from(50000000).mul(BigNumber.from(10).pow(18))
+    const billion = BigNumber.from(1000000000).mul(BigNumber.from(10).pow(18))
     // Governance Actions
     // ----------------
     return {
@@ -137,7 +137,7 @@ module.exports = deploymentWithProposal(
           contract: cVaultAdmin,
           signature: "setNetOusdMintForStrategyThreshold(uint256)",
           // TODO: set at an arbitrary 50m?
-          args: [fiftyMil],
+          args: [billion],
         },
         // 7. Set supported strategy on Harvester
         {
