@@ -118,7 +118,8 @@ contract Pauser is Initializable, AccessControl, Governable {
         // Normal users can unpause when the contract has expired
         if (!_isGovernorOrStrategist()) {
             require(
-                block.timestamp > currentExpiry,
+                pauseState == PauseState.TEMP_PAUSED &&
+                    block.timestamp > currentExpiry,
                 "The current pause is not expired"
             );
         }
