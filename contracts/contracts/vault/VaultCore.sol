@@ -72,7 +72,7 @@ contract VaultCore is VaultStorage {
         emit Mint(msg.sender, priceAdjustedDeposit);
 
         // Rebase must happen before any transfers occur.
-        if (unitAdjustedDeposit >= rebaseThreshold && !paused) {
+        if (unitAdjustedDeposit >= rebaseThreshold) {
             _rebase();
         }
 
