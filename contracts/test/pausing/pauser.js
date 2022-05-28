@@ -200,6 +200,13 @@ describe("Pauser", async () => {
   });
 
   describe("Direct Unpausing", () => {
+    it("Normal user cannot direct-unpause", async () => {
+      const { governor, matt, pauser } = await loadFixture(defaultFixture);
+      await pauser.connect(governor).pause();
+      await expect(pauser.connect(matt).unpause()).to.be.revertedWith(
+        "The current pause is not expired"
+      );
+    });
     it("Governor can direct-unpause", async () => {
       const { governor, pauser } = await loadFixture(defaultFixture);
       await pauser.connect(governor).pause();
