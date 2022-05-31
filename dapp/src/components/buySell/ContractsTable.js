@@ -230,10 +230,7 @@ const ContractsTable = () => {
             if (estimation.isBest) {
               status = fbt('Best', 'Swap estimations best one')
             } else {
-              status = `- ${formatCurrency(
-                estimation.diffPercentage * -1,
-                2
-              )}%`
+              status = `- ${formatCurrency(estimation.diffPercentage * -1, 2)}%`
               redStatus = true
             }
           }
@@ -241,9 +238,7 @@ const ContractsTable = () => {
           const loadingOrEmpty = loading || empty
           const isSelected =
             canDoSwap &&
-            (userSelectionExists
-              ? estimation.userSelected
-              : estimation.isBest)
+            (userSelectionExists ? estimation.userSelected : estimation.isBest)
           const isViableOption =
             canDoSwap && numberOfCanDoSwaps > 1 && !isSelected
 
