@@ -286,11 +286,11 @@ const SwapCurrencyPill = ({
         detailedBalance: coinBalances.ousd || 0,
       }
     } else {
-        return {
-          coin: selectedCoin,
-          balance: roundTo2Decimals(coinBalances[selectedCoin]),
-          detailedBalance: coinBalances[selectedCoin] || 0,
-        }
+      return {
+        coin: selectedCoin,
+        balance: roundTo2Decimals(coinBalances[selectedCoin]),
+        detailedBalance: coinBalances[selectedCoin] || 0,
+      }
     }
   }
 

@@ -197,12 +197,8 @@ const ApproveSwap = ({
     if (swappingGloballyDisabled) {
       return process.env.DISABLE_SWAP_BUTTON_MESSAGE
     } else if (!active) {
-      return fbt(
-        'Connect Wallet',
-        'Connect Wallet'
-      )
-    }
-      else if (balanceError) {
+      return fbt('Connect Wallet', 'Connect Wallet')
+    } else if (balanceError) {
       return fbt(
         'Insufficient ' + fbt.param('coin', coin) + ' balance',
         'Insufficient balance'
