@@ -98,6 +98,14 @@ def balance_metapool():
     else:
         tiltMetapoolToOUSD((crv3-ousd)/2)
 
+# set an address that can mint OUSD without providing collateral
+def set_no_collateral_minter(address):
+    tx = vault_admin.setOusdMetaStrategy(address, {'from': GOVERNOR})
+    tx.sig_string = 'setOusdMetaStrategy(address)'
+    create_gov_proposal("Set uncollateralized minter", [tx])
+    # execute latest proposal
+    sim_governor_execute(governor.proposalCount())
+
 #observe metapool balance changes and virtual price
 class MetapoolBalances:
     def __init__(self, txOptions):
