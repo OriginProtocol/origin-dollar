@@ -6,13 +6,14 @@ import { injectedConnector } from 'utils/connectors'
 import { walletConnectConnector } from 'utils/connectors'
 import { myEtherWalletConnector } from 'utils/connectors'
 import { walletlink, resetWalletConnector } from 'utils/connectors'
+import withIsMobile from 'hoc/withIsMobile'
 
 import AccountStore from 'stores/AccountStore'
 
 import analytics from 'utils/analytics'
 import { assetRootPath } from 'utils/image'
 
-const WalletSelectContent = ({}) => {
+const WalletSelectContent = ({ isMobile }) => {
   const { connector, activate, deactivate, active } = useWeb3React()
   const [error, setError] = useState(null)
 
@@ -29,6 +30,12 @@ const WalletSelectContent = ({}) => {
   }
 
   const errorMessageMap = (error) => {
+    if (error === 'ledger-error') {
+      return fbt(
+        'Please use WalletConnect to connect to Ledger Live',
+        'No Ledger on mobile'
+      )
+    }
     if (
       error.message.includes(
         'No Ethereum provider was found on window.ethereum'
@@ -107,8 +114,19 @@ const WalletSelectContent = ({}) => {
           return (
             <button
               key={name}
-              className="connector-button d-flex align-items-center"
-              onClick={() => onConnect(name)}
+              className={`connector-button d-flex align-items-center ${
+                isMobile && name === 'Ledger' ? 'grey' : ''
+              }`}
+              onClick={() => {
+                if (isMobile && name === 'MetaMask') {
+                  setError(null)
+                  window.location.href = process.env.METAMASK_DEEPLINK
+                } else if (isMobile && name === 'Ledger') {
+                  setError('ledger-error')
+                } else {
+                  onConnect(name)
+                }
+              }}
             >
               <div className="col-2">
                 <img
@@ -179,6 +197,11 @@ const WalletSelectContent = ({}) => {
           margin-bottom: 20px;
         }
 
+        .wallet-select-content .grey {
+          cursor: default;
+          opacity: 0.4;
+        }
+
         .error {
           padding: 5px 8px;
           font-size: 14px;
@@ -195,4 +218,4 @@ const WalletSelectContent = ({}) => {
   )
 }
 
-export default WalletSelectContent
+export default withIsMobile(WalletSelectContent)
