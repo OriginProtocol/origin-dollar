@@ -21,13 +21,14 @@ with TemporaryFork():
     balance_metapool()
 
     # un-comment any of the below two to make the initial state of the pool balanced/unbalanced
-    #tiltMetapoolTo3CRV(5*1e6*1e18)
-    tiltMetapoolToOUSD(5*1e6*1e18)
+    #tiltMetapoolTo3CRV(0.25*1e6*1e18)
+    tiltMetapoolToOUSD(0.25*1e6*1e18)
 
+    show_metapool_balances()
     # un-comment any of the liquidity adding strategies
-    # [crv3LiquidityAdded, ousdLiquidityAdded, lp_added] = addEqualLiquidity()
+    [crv3LiquidityAdded, ousdLiquidityAdded, lp_added] = addEqualLiquidity()
     # [crv3LiquidityAdded, ousdLiquidityAdded, lp_added] = addLiquidityToBeEqualInPool()
-    [crv3LiquidityAdded, ousdLiquidityAdded, lp_added] = addTwiceTheOUSD()
+    # [crv3LiquidityAdded, ousdLiquidityAdded, lp_added] = addTwiceTheOUSD()
     show_metapool_balances()
     # un-comment any of the liquidity removing strategies
     removeLiquidityBalanced(crv3LiquidityAdded, ousdLiquidityAdded, lp_added)
@@ -93,7 +94,7 @@ def addLiquidityToBeEqualInPool(crv3_to_add=1e6*1e18):
     crv3Liquidity = crv3_to_add / threepool_swap.get_virtual_price() * 1e18
     ousdPoolBalance = ousd_metapool.balances(0)
     crv3PoolBalance = ousd_metapool.balances(1)
-    ousd_to_add = (crv3PoolBalance - ousdPoolBalance) / 2 + crv3Liquidity
+    ousd_to_add = crv3PoolBalance - ousdPoolBalance + crv3Liquidity
     if ousd_to_add < 0:
         ousd_to_add = 0
 
