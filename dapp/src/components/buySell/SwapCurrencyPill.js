@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useStoreState } from 'pullstate'
 import { fbt } from 'fbt-runtime'
+import { useWeb3React } from '@web3-react/core'
 
 import AccountStore from 'stores/AccountStore'
 import Dropdown from 'components/Dropdown'
@@ -258,6 +259,7 @@ const SwapCurrencyPill = ({
   const [error, setError] = useState(null)
   const stableCoinMintOptions = ['ousd', 'dai', 'usdt', 'usdc']
   const coinRedeemOptions = ['ousd', 'mix', 'dai', 'usdt', 'usdc']
+  const { active } = useWeb3React()
 
   const bottomItem = !topItem
   const showOusd =
@@ -275,23 +277,20 @@ const SwapCurrencyPill = ({
     const roundTo2Decimals = (value) => {
       return formatCurrency(parseFloat(value), 2)
     }
-    if (showOusd) {
+    if (!active || selectedCoin === 'mix') {
+      return null
+    } else if (showOusd) {
       return {
         coin: 'ousd',
         balance: roundTo2Decimals(coinBalances.ousd),
         detailedBalance: coinBalances.ousd || 0,
       }
     } else {
-      if (selectedCoin === 'mix') {
-        // don't show stablecoin balance when mix stablecoin breakdown shall be displayed
-        return null
-      } else {
         return {
           coin: selectedCoin,
           balance: roundTo2Decimals(coinBalances[selectedCoin]),
           detailedBalance: coinBalances[selectedCoin] || 0,
         }
-      }
     }
   }
 

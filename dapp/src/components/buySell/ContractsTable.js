@@ -135,7 +135,7 @@ const ContractsTable = () => {
   const empty = swapEstimations === null
 
   return (
-    walletActive && (
+    !walletActive && (
       <div className="contracts-table">
         {showAlternateRouteModal && (
           <ConfirmContractPickModal

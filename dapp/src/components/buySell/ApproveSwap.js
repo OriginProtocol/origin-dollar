@@ -28,7 +28,7 @@ const ApproveSwap = ({
   const [contract, setContract] = useState(null)
   const [isApproving, setIsApproving] = useState({})
   const web3react = useWeb3React()
-  const { library, account } = web3react
+  const { library, account, active } = web3react
   const coinApproved = stage === 'done'
   const isWrapped =
     selectedSwap &&
@@ -187,6 +187,7 @@ const ApproveSwap = ({
     swapsLoaded,
     selectedSwap,
     swappingGloballyDisabled,
+    active,
   }) => {
     const coin =
       stableCoinToApprove === 'wousd'
@@ -195,7 +196,13 @@ const ApproveSwap = ({
     const noSwapRouteAvailable = swapsLoaded && !selectedSwap
     if (swappingGloballyDisabled) {
       return process.env.DISABLE_SWAP_BUTTON_MESSAGE
-    } else if (balanceError) {
+    } else if (!active) {
+      return fbt(
+        'Connect Wallet',
+        'Connect Wallet'
+      )
+    }
+      else if (balanceError) {
       return fbt(
         'Insufficient ' + fbt.param('coin', coin) + ' balance',
         'Insufficient balance'
@@ -292,7 +299,8 @@ const ApproveSwap = ({
             !selectedSwap ||
             balanceError ||
             swappingGloballyDisabled ||
-            (needsApproval && !coinApproved)
+            (needsApproval && !coinApproved) ||
+            !active
           }
           onClick={onSwap}
         >
@@ -302,6 +310,7 @@ const ApproveSwap = ({
             swapsLoaded={swapsLoaded}
             selectedSwap={selectedSwap}
             swappingGloballyDisabled={swappingGloballyDisabled}
+            active={active}
           />
         </button>
       </div>
