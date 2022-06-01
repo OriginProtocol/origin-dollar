@@ -12,6 +12,7 @@ const ApproveSwap = ({
   stableCoinToApprove,
   needsApproval,
   selectedSwap,
+  inputAmount,
   swapMetadata,
   onSwap,
   allowancesLoaded,
@@ -292,7 +293,8 @@ const ApproveSwap = ({
             !selectedSwap ||
             balanceError ||
             swappingGloballyDisabled ||
-            (needsApproval && !coinApproved)
+            (needsApproval && !coinApproved) ||
+            !inputAmount
           }
           onClick={onSwap}
         >
