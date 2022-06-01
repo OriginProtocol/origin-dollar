@@ -28,6 +28,11 @@ interface ICurveMetaPool {
         view
         returns (uint256);
 
+    function balances(uint256 i)
+        external
+        view
+        returns (uint256);
+
     function calc_token_amount(uint256[2] calldata amounts, bool deposit)
         external
         view

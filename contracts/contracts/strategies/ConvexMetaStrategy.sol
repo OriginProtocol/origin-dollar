@@ -8,6 +8,7 @@ pragma solidity ^0.8.0;
  */
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
 
 import { IRewardStaking } from "./IRewardStaking.sol";
 import { IConvexDeposits } from "./IConvexDeposits.sol";
@@ -92,14 +93,29 @@ contract ConvexMetaStrategy is BaseCurveStrategy {
         ICurvePool curvePool = ICurvePool(platformAddress);
 
         uint256 threePoolLpBalance = threePoolLp.balanceOf(address(this));
-        uint256 threePoolLpDollarValue = threePoolLpBalance.mulTruncate(curvePool.get_virtual_price());
+        uint256 curve3PoolVirtualPrice = curvePool.get_virtual_price();
+        uint256 threePoolLpDollarValue = threePoolLpBalance.mulTruncate(curve3PoolVirtualPrice);
 
-        /* Mint 1:1 the amount of OUSD to the amount of stablecoins deposited to 3Pool.
-         *
-         * TODO: research if there is a better ratio to pick according to how tilted
-         * (more OUSD vs more 3PoolLP) the Metapool is at a specific block number.
+
+        uint128 crvCoinIndex = _getMetapoolCoinIndex(pTokenAddress);
+        uint128 ousdCoinIndex = _getMetapoolCoinIndex(address(ousd));
+
+        uint256 ousdToAdd = toPositive(
+            int256(metapool.balances(crvCoinIndex).mulTruncate(curve3PoolVirtualPrice)) - 
+            int256(metapool.balances(ousdCoinIndex)) + 
+            int256(threePoolLpDollarValue)
+        );
+
+        /* Mint so much ousd that the dollar value of 3CRVLP in the pool and OUSD will be equal after
+         * deployment of liquidity. In cases where pool is heavier in OUSD before the deposit strategy mints
+         * less OUSD and gets less metapoolLP and less rewards. And when pool is heavier in 3CRV strategy mints
+         * more OUSD and gets more metapoolLP and more rewards. 
+         * 
+         * In both cases metapool ends up being balanced and there should be no incentive to execute arbitrage trade.
          */
-        vault.mintForStrategy(threePoolLpDollarValue);
+        if (ousdToAdd > 0) {
+            vault.mintForStrategy(ousdToAdd);
+        }
 
         uint256 ousdBalance = ousd.balanceOf(address(this));
         uint256[2] memory _amounts = [ousdBalance, threePoolLpBalance];
@@ -110,7 +126,6 @@ contract ConvexMetaStrategy is BaseCurveStrategy {
          * then divide by virtual price to convert to metapool LP tokens
          * and apply the max slippage
          */
-         // Important(!) we need to be sure there are no flash loan attack possibilities here
         uint256 minReceived = (ousdBalance + threePoolLpDollarValue)
             .divPrecisely(metapoolVirtualPrice)
             .mulTruncate(uint256(1e18) - maxSlippage);
@@ -151,7 +166,7 @@ contract ConvexMetaStrategy is BaseCurveStrategy {
          *
          * Analysis has confirmed that: `It is more cost effective to remove liquidity in balanced manner and
          * make up for the difference with additional swap. Comparing to removing liquidity in imbalanced manner.`
-         * Results of analysis here: https://docs.google.com/spreadsheets/d/1DYSyYwHqxRzSJh9dYkY5kcgP_K5gku6N2mQVhoH33vY/edit?usp=sharing
+         * Results of analysis here: https://docs.google.com/spreadsheets/d/1DYSyYwHqxRzSJh9dYkY5kcgP_K5gku6N2mQVhoH33vY
          * run it yourself using code in brownie/scripts/liqidity_test.py
          */
         uint256 requiredMetapoolLpTokens = ((num3CrvTokens * crv3VirtualPrice) /
@@ -337,5 +352,12 @@ contract ConvexMetaStrategy is BaseCurveStrategy {
         // Collect CRV and CVX
         IRewardStaking(cvxRewardStakerAddress).getReward();
         _collectRewardTokens();
+    }
+
+    /**
+     * @dev If x a negative number return 0 else return x
+     */
+    function toPositive(int256 x) private pure returns (uint256) {
+        return x >= 0 ? uint256(x) : uint256(0);
     }
 }

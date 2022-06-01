@@ -26,8 +26,8 @@ with TemporaryFork():
 
     show_metapool_balances()
     # un-comment any of the liquidity adding strategies
-    [crv3LiquidityAdded, ousdLiquidityAdded, lp_added] = addEqualLiquidity()
-    # [crv3LiquidityAdded, ousdLiquidityAdded, lp_added] = addLiquidityToBeEqualInPool()
+    # [crv3LiquidityAdded, ousdLiquidityAdded, lp_added] = addEqualLiquidity()
+    [crv3LiquidityAdded, ousdLiquidityAdded, lp_added] = addLiquidityToBeEqualInPool()
     # [crv3LiquidityAdded, ousdLiquidityAdded, lp_added] = addTwiceTheOUSD()
     show_metapool_balances()
     # un-comment any of the liquidity removing strategies
