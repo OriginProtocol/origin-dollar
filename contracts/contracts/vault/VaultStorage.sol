@@ -107,6 +107,8 @@ contract VaultStorage is Initializable, Governable {
     // Deprecated: Tokens that should be swapped for stablecoins
     address[] private _deprecated_swapTokens;
 
+    uint256 constant MINT_MINIMUM_ORACLE = 99800000;
+
     /**
      * @dev set the implementation for the admin, this needs to be in a base class else we cannot set it
      * @param newImpl address of the implementation
