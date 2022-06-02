@@ -29,7 +29,7 @@ const ApproveSwap = ({
   const web3react = useWeb3React()
   const { library, account } = web3react
   const approvalStage = useStoreState(ContractStore, (s) => s.approvalStage)
-  const stage = approvalStage?.[stableCoinToApprove]?.[selectedSwap?.name];
+  const stage = approvalStage?.[stableCoinToApprove]?.[selectedSwap?.name]
   const coinApproved = stage === 'done'
   const isWrapped =
     selectedSwap &&
@@ -68,8 +68,8 @@ const ApproveSwap = ({
         ...s.approvalStage,
         [stableCoinToApprove]: {
           ...s.approvalStage?.[stableCoinToApprove],
-          [selectedSwap?.name]: newStage
-        }
+          [selectedSwap?.name]: newStage,
+        },
       }
     })
   }
@@ -132,12 +132,12 @@ const ApproveSwap = ({
         isApproving.contract === selectedSwap.name &&
         isApproving.coin === stableCoinToApprove
       ) {
-        updateApprovalStage('waiting-network');
+        updateApprovalStage('waiting-network')
         return
       }
     }
-    if(!stage){
-      updateApprovalStage('approve');
+    if (!stage) {
+      updateApprovalStage('approve')
     }
   }, [selectedSwap])
 
@@ -148,11 +148,7 @@ const ApproveSwap = ({
     }
   }, [stableCoinToApprove, usdt, dai, usdc, ousd, wousd])
 
-  const ApprovalMessage = ({
-    selectedSwap,
-    stableCoinToApprove,
-    isMobile,
-  }) => {
+  const ApprovalMessage = ({ selectedSwap, stableCoinToApprove, isMobile }) => {
     if (stage === 'waiting-user') {
       return fbt(
         'Waiting for you to confirm...',
@@ -229,7 +225,6 @@ const ApproveSwap = ({
 
   return (
     <>
-    <p>this is a test</p>
       <button
         className={`btn-blue buy-button mt-4 mt-md-3 w-100`}
         hidden={!approvalNeeded}
