@@ -54,6 +54,7 @@ contract VaultCore is VaultStorage {
         if (price > 1e8) {
             price = 1e8;
         }
+        require(price >= MINT_MINIMUM_ORACLE, "Asset price below peg");
         uint256 assetDecimals = Helpers.getDecimals(_asset);
         // Scale up to 18 decimal
         uint256 unitAdjustedDeposit = _amount.scaleBy(18, assetDecimals);

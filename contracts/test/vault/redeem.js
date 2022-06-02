@@ -331,7 +331,7 @@ describe("Vault Redeem", function () {
       [dai, daiUnits],
       [usdc, usdcUnits],
     ];
-    const prices = [0.98, 1.02, 1.09];
+    const prices = [0.998, 1.02, 1.09];
     const amounts = [5.09, 10.32, 20.99, 100.01];
 
     const getUserOusdBalance = async (user) => {
