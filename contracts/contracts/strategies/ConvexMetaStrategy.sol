@@ -311,7 +311,6 @@ contract ConvexMetaStrategy is BaseCurveStrategy {
     function _approveBase() internal override {
         IERC20 pToken = IERC20(pTokenAddress);
         IERC20 ousdPoolLp = IERC20(address(metapool));
-
         // 3Pool for LP token (required for removing liquidity)
         pToken.safeApprove(platformAddress, 0);
         pToken.safeApprove(platformAddress, type(uint256).max);

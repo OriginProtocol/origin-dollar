@@ -154,4 +154,8 @@ interface IVault {
     function isSupportedAsset(address _asset) external view returns (bool);
 
     function netOusdMintForStrategyThreshold() external view returns(uint256);
+
+    function setOusdMetaStrategy(address _ousdMetaStrategy) external;
+
+    function setNetOusdMintForStrategyThreshold(uint256 _threshold) external;
 }

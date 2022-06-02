@@ -2,7 +2,7 @@ const { deploymentWithProposal } = require("../utils/deploy");
 const { BigNumber } = require('ethers');
 
 module.exports = deploymentWithProposal(
-  { deployName: "040_convex_meta_strategy", forceDeploy: true },
+  { deployName: "040_convex_meta_strategy", forceDeploy: false },
   async ({
     assetAddresses,
     deployWithConfirmation,

@@ -470,12 +470,19 @@ async function convexMetaVaultFixture() {
   const sGovernor = await ethers.provider.getSigner(governorAddr);
 
   // Add Convex Meta strategy
+  await fixture.vault
+    .connect(sGovernor)
+    .approveStrategy(fixture.metaStrategy.address);
 
-  // TODO: uncomment once Metastrategy is deployed
-  // TODO: should only pick up things from 001 deploy.
-  // await fixture.vault
-  //   .connect(sGovernor)
-  //   .approveStrategy(fixture.metaStrategy.address);
+  // set meta strategy on vault so meta strategy is allowed to mint OUSD
+  await fixture.vault
+    .connect(sGovernor)
+    .setOusdMetaStrategy(fixture.metaStrategy.address);
+
+  // set OUSD mint threshold to 50 million
+  await fixture.vault
+    .connect(sGovernor)
+    .setNetOusdMintForStrategyThreshold(utils.parseUnits("50", 24));
 
   await fixture.harvester
     .connect(sGovernor)

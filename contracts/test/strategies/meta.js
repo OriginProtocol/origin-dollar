@@ -13,7 +13,7 @@ const {
   isFork,
 } = require("../helpers");
 
-describe("Convex Meta Strategy", function () {
+describe("Convex 3pool/OUSD Meta Strategy", function () {
   if (isFork) {
     this.timeout(0);
   }
@@ -61,7 +61,7 @@ describe("Convex Meta Strategy", function () {
     it("Should stake USDT in Curve gauge via 3pool", async function () {
       await expectApproxSupply(ousd, ousdUnits("200"));
       await mint("30000.00", usdt);
-      await expectApproxSupply(ousd, ousdUnits("30200"));
+      await expectApproxSupply(ousd, ousdUnits("60200"));
       await expect(anna).to.have.a.balanceOf("30000", ousd);
     });
   });
