@@ -4,6 +4,7 @@ import { BigNumber } from 'ethers'
 const ContractStore = new Store({
   contracts: {},
   apy: {},
+  approvalStage: {},
   ousdExchangeRates: {
     dai: {
       mint: 1,

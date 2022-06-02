@@ -24,11 +24,12 @@ const ApproveSwap = ({
   rpcProvider,
   isMobile,
 }) => {
-  const [stage, setStage] = useState('approve')
   const [contract, setContract] = useState(null)
   const [isApproving, setIsApproving] = useState({})
   const web3react = useWeb3React()
   const { library, account } = web3react
+  const approvalStage = useStoreState(ContractStore, (s) => s.approvalStage)
+  const stage = approvalStage?.[stableCoinToApprove]?.[selectedSwap?.name];
   const coinApproved = stage === 'done'
   const isWrapped =
     selectedSwap &&
@@ -47,7 +48,6 @@ const ApproveSwap = ({
       s.approvalNeeded = approvalNeeded
     })
   }, [approvalNeeded])
-
   const {
     vault,
     flipper,
@@ -61,6 +61,18 @@ const ApproveSwap = ({
     ousd,
     wousd,
   } = useStoreState(ContractStore, (s) => s.contracts || {})
+
+  const updateApprovalStage = (newStage) => {
+    ContractStore.update((s) => {
+      s.approvalStage = {
+        ...s.approvalStage,
+        [stableCoinToApprove]: {
+          ...s.approvalStage?.[stableCoinToApprove],
+          [selectedSwap?.name]: newStage
+        }
+      }
+    })
+  }
 
   const routeConfig = {
     vault: {
@@ -120,11 +132,13 @@ const ApproveSwap = ({
         isApproving.contract === selectedSwap.name &&
         isApproving.coin === stableCoinToApprove
       ) {
-        setStage('waiting-network')
+        updateApprovalStage('waiting-network');
         return
       }
     }
-    setStage('approve')
+    if(!stage){
+      updateApprovalStage('approve');
+    }
   }, [selectedSwap])
 
   useEffect(() => {
@@ -135,7 +149,6 @@ const ApproveSwap = ({
   }, [stableCoinToApprove, usdt, dai, usdc, ousd, wousd])
 
   const ApprovalMessage = ({
-    stage,
     selectedSwap,
     stableCoinToApprove,
     isMobile,
@@ -216,6 +229,7 @@ const ApproveSwap = ({
 
   return (
     <>
+    <p>this is a test</p>
       <button
         className={`btn-blue buy-button mt-4 mt-md-3 w-100`}
         hidden={!approvalNeeded}
@@ -227,7 +241,7 @@ const ApproveSwap = ({
               label: swapMetadata.coinGiven,
               value: parseInt(swapMetadata.swapAmount),
             })
-            setStage('waiting-user')
+            updateApprovalStage('waiting-user')
             try {
               const result = await contract
                 .connect(library.getSigner(account))
@@ -240,7 +254,7 @@ const ApproveSwap = ({
                 isWrapped ? 'approveWrap' : 'approve',
                 stableCoinToApprove
               )
-              setStage('waiting-network')
+              updateApprovalStage('waiting-network')
               setIsApproving({
                 contract: needsApproval,
                 coin: stableCoinToApprove,
@@ -252,11 +266,11 @@ const ApproveSwap = ({
                 value: parseInt(swapMetadata.swapAmount),
               })
               setIsApproving({})
-              setStage('done')
+              updateApprovalStage('done')
             } catch (e) {
               onMintingError(e)
               console.error('Exception happened: ', e)
-              setStage('approve')
+              updateApprovalStage('approve')
               if (e.code !== 4001) {
                 await storeTransactionError('approve', stableCoinToApprove)
                 analytics.track(`Approval failed`, {
@@ -276,7 +290,6 @@ const ApproveSwap = ({
           <>
             {selectedSwap && (
               <ApprovalMessage
-                stage={stage}
                 selectedSwap={selectedSwap}
                 stableCoinToApprove={stableCoinToApprove}
                 isMobile={isMobile}
