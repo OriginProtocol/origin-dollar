@@ -3,8 +3,6 @@ import { useStoreState } from 'pullstate'
 import { fbt } from 'fbt-runtime'
 
 import AccountStore from 'stores/AccountStore'
-import Dropdown from 'components/Dropdown'
-import DownCaret from 'components/DownCaret'
 import {
   formatCurrency,
   formatCurrencyMinMaxDecimals,
@@ -19,28 +17,10 @@ const CoinImage = ({ small, coin, isSemiTransparent = false }) => {
   const className = `coin-image ${isSemiTransparent ? 'transparent' : ''}`
   return (
     <div className="d-flex align-items-center">
-      {coin !== 'mix' && (
-        <img
-          className={`${className} ${small ? 'small' : ''}`}
-          src={assetRootPath(`/images/currency/${coin}-icon-small.svg`)}
-        />
-      )}
-      {coin === 'mix' && (
-        <div className="d-flex align-items-start">
-          <img
-            className={`${className} mixed coin-1 ${small ? 'small' : ''}`}
-            src={assetRootPath(`/images/currency/dai-icon-small.svg`)}
-          />
-          <img
-            className={`${className} mixed coin-2 ${small ? 'small' : ''}`}
-            src={assetRootPath(`/images/currency/usdt-icon-small.svg`)}
-          />
-          <img
-            className={`${className} mixed coin-3 ${small ? 'small' : ''}`}
-            src={assetRootPath(`/images/currency/usdc-icon-small.svg`)}
-          />
-        </div>
-      )}
+      <img
+        className={`${className} ${small ? 'small' : ''}`}
+        src={assetRootPath(`/images/currency/${coin}-icon-small.svg`)}
+      />
       <style jsx>{`
         .coin-image {
           width: 26px;
@@ -78,160 +58,28 @@ const CoinImage = ({ small, coin, isSemiTransparent = false }) => {
   )
 }
 
-const CoinSelect = ({ selected, onChange, options = [] }) => {
-  const [open, setOpen] = useState(false)
-
-  if (options.length === 0) {
-    return (
-      <>
-        <div
-          className={`coin-select d-flex align-items-center justify-content-start`}
-        >
-          <CoinImage coin={selected} />
-          <div className="coin text-uppercase mr-auto">{selected}</div>
-        </div>
-        <style jsx>{`
-          .coin-select {
-            min-width: 160px;
-            min-height: 40px;
-            padding: 7px 20px 7px 7px;
-            font-size: 18px;
-          }
-
-          .coin {
-            color: black;
-            margin-left: 12px;
-          }
-        `}</style>
-      </>
-    )
-  }
-
+const CoinSelect = ({ selected }) => {
   return (
     <>
-      <Dropdown
-        content={
-          <div className="dropdown-menu show wrapper d-flex flex-column">
-            {options.map((option) => {
-              return (
-                <div
-                  key={option}
-                  className={`${
-                    option === 'ousd' ? 'ousd' : ''
-                  }  d-flex justify-content-start align-items-center p-5px dropdown-item`}
-                  onClick={(e) => {
-                    onChange(option)
-                    setOpen(false)
-                  }}
-                >
-                  <CoinImage
-                    coin={option}
-                    isSemiTransparent={option === 'ousd'}
-                  />
-                  <div
-                    className={`coin ${
-                      option === 'mix' ? 'text-capitalize' : 'text-uppercase'
-                    } mr-auto`}
-                  >
-                    {option}
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        }
-        open={open}
-        onClose={() => setOpen(false)}
+      <div
+        className={`coin-select d-flex align-items-center justify-content-start`}
       >
-        <div
-          className={`coin-select d-flex align-items-center justify-content-start`}
-          onClick={(e) => {
-            e.preventDefault()
-            setOpen(!open)
-          }}
-        >
-          <CoinImage coin={selected} />
-          <div
-            className={`coin ${
-              selected === 'mix' ? 'text-capitalize' : 'text-uppercase'
-            } mr-auto`}
-          >
-            {selected}
-          </div>
-          <DownCaret />
-        </div>
-      </Dropdown>
+        <CoinImage coin={selected} />
+        <div className="coin mr-auto">{`${
+          selected === 'wousd' ? 'w' : ''
+        }OUSD`}</div>
+      </div>
       <style jsx>{`
-        .dropdown-menu {
-          padding: 10px;
-          right: auto;
-          left: 0;
-          top: 100%;
-        }
-
         .coin-select {
           min-width: 160px;
           min-height: 40px;
           padding: 7px 20px 7px 7px;
-          border-radius: 20px;
-          border: solid 1px #cdd7e0;
-          background-color: white;
-          cursor: pointer;
-        }
-
-        .coin-select:hover {
-          background-color: #f2f3f5;
-        }
-
-        .p-5px {
-          padding: 5px;
-        }
-
-        .single-coin {
-          width: 26px;
-          height: 26px;
-        }
-
-        .cursor-pointer {
-          cursor: pointer;
-        }
-
-        .dropdown-item {
-          cursor: pointer;
-        }
-
-        /*.dropdown-item.ousd {
-          background-color: #e2e3e5;
-        }
-
-        .dropdown-item.ousd:hover {
-          background-color: #d2d3d5;
-        }*/
-
-        .dropdown-item.ousd .coin {
-          color: #18314055;
-        }
-
-        .dropdown-item:hover {
-          background-color: #f2f3f5;
+          font-size: 18px;
         }
 
         .coin {
           color: black;
           margin-left: 12px;
-        }
-
-        @media (max-width: 799px) {
-          .coin-select {
-            min-width: 120px;
-            min-height: 32px;
-            padding: 4px 14px 4px 4px;
-          }
-
-          .coin {
-            color: black;
-            margin-left: 8px;
-          }
         }
       `}</style>
     </>
@@ -242,26 +90,25 @@ const CoinSelect = ({ selected, onChange, options = [] }) => {
  * selectedCoin - the coin or coin combination to be shown - selected
  * balances - Array of balances to be shown. UI differs when there is only 1 item vs many in the array
  */
-const SwapCurrencyPill = ({
+const WrapOusdPill = ({
   topItem,
-  onSelectChange,
   onAmountChange,
-  selectedCoin,
-  selectedSwap,
-  swapsLoading,
-  priceToleranceValue,
   swapMode,
   onErrorChange,
   coinValue,
+  wrapEstimate,
+  swapsLoading,
+  rate,
 }) => {
   const coinBalances = useStoreState(AccountStore, (s) => s.balances)
   const [error, setError] = useState(null)
-  const stableCoinMintOptions = ['ousd', 'dai', 'usdt', 'usdc']
-  const coinRedeemOptions = ['ousd', 'mix', 'dai', 'usdt', 'usdc']
 
   const bottomItem = !topItem
+
+  const selectedCoin = swapMode === 'mint' ? 'ousd' : 'wousd'
+
   const showOusd =
-    (swapMode === 'redeem' && topItem) || (swapMode === 'mint' && bottomItem)
+    (swapMode === 'mint' && topItem) || (swapMode === 'redeem' && bottomItem)
 
   const floorTo2to6Decimals = (value) => {
     return formatCurrencyMinMaxDecimals(value, {
@@ -282,27 +129,10 @@ const SwapCurrencyPill = ({
         detailedBalance: coinBalances.ousd || 0,
       }
     } else {
-      if (selectedCoin === 'mix') {
-        // don't show stablecoin balance when mix stablecoin breakdown shall be displayed
-        return null
-      } else {
-        return {
-          coin: selectedCoin,
-          balance: roundTo2Decimals(coinBalances[selectedCoin]),
-          detailedBalance: coinBalances[selectedCoin] || 0,
-        }
-      }
-    }
-  }
-
-  const getSelectOptions = () => {
-    if (showOusd) {
-      return []
-    } else {
-      if (topItem) {
-        return stableCoinMintOptions
-      } else {
-        return coinRedeemOptions
+      return {
+        coin: 'wousd',
+        balance: roundTo2Decimals(coinBalances.wousd),
+        detailedBalance: coinBalances.wousd || 0,
       }
     }
   }
@@ -343,28 +173,11 @@ const SwapCurrencyPill = ({
       return
     }
 
-    const coin = swapMode === 'mint' ? selectedCoin : 'ousd'
-
-    setError(parseFloat(coinBalances[coin]) < parseFloat(coinValue))
+    setError(parseFloat(coinBalances[selectedCoin]) < parseFloat(coinValue))
   }
 
-  const coinsSelectOptions = getSelectOptions()
   const expectedAmount =
-    bottomItem &&
-    selectedSwap &&
-    selectedSwap.amountReceived &&
-    formatCurrency(selectedSwap.amountReceived, 2)
-
-  const minReceived =
-    bottomItem &&
-    selectedSwap &&
-    selectedSwap.amountReceived &&
-    priceToleranceValue
-      ? selectedSwap.amountReceived -
-        (selectedSwap.amountReceived * priceToleranceValue) / 100
-      : null
-
-  const coinSplits = bottomItem && selectedSwap && selectedSwap.coinSplits
+    bottomItem && wrapEstimate && formatCurrency(wrapEstimate, 2)
 
   const maxBalanceSet =
     topItem &&
@@ -399,13 +212,12 @@ const SwapCurrencyPill = ({
           className={`d-flex align-items-start justify-content-between currency-pill-inner`}
         >
           <div className="d-flex flex-column justify-content-between align-items-start h-100">
-            <CoinSelect
-              selected={showOusd ? 'ousd' : selectedCoin}
-              onChange={(coin) => {
-                onSelectChange(coin)
-              }}
-              options={coinsSelectOptions}
-            />
+            {topItem ? (
+              <CoinSelect selected={swapMode === 'mint' ? 'ousd' : 'wousd'} />
+            ) : (
+              <CoinSelect selected={swapMode === 'mint' ? 'wousd' : 'ousd'} />
+            )}
+
             <div className="d-flex align-items-center">
               <div
                 className={`d-flex justify-content-between balance mt-auto mr-2 ${
@@ -420,8 +232,8 @@ const SwapCurrencyPill = ({
                         fbt.param('coin-balance', displayBalance.balance),
                       'Coin balance'
                     )}
-                    <span className="text-uppercase ml-1">
-                      {displayBalance.coin}
+                    <span className="ml-1">
+                      {`${displayBalance.coin === 'wousd' ? 'w' : ''}OUSD`}
                     </span>
                   </div>
                 )}
@@ -449,49 +261,28 @@ const SwapCurrencyPill = ({
                 }}
               />
             )}
-            {bottomItem && (
-              <div className="expected-value">
-                {expectedAmount ||
-                  (swapsLoading ? fbt('Loading...', 'Swaps Loading...') : '-')}
-              </div>
-            )}
-            {bottomItem && (
+            {topItem && (
               <div className="balance mt-auto">
-                {minReceived !== null
+                {rate !== null
                   ? fbt(
-                      'Min. received: ' +
-                        fbt.param(
-                          'ousd-amount',
-                          formatCurrency(minReceived, 2)
-                        ) +
+                      '1 wOUSD = ' +
+                        fbt.param('wousd-rate', formatCurrency(rate, 6)) +
                         ' OUSD',
-                      'Min OUSD amount received'
+                      'wOUSD conversion rate'
                     )
                   : topItem
                   ? ''
                   : '-'}
               </div>
             )}
+            {bottomItem && (
+              <div className="expected-value">
+                {expectedAmount ||
+                  (swapsLoading ? fbt('Loading...', 'Swaps Loading...') : '-')}
+              </div>
+            )}
           </div>
         </div>
-        {coinSplits && (
-          <div className="d-flex flex-column multiple-balance-holder">
-            {coinSplits.map((split) => {
-              return (
-                <div
-                  className="d-flex justify-content-between align-items-center balance multiple-balance"
-                  key={split.coin}
-                >
-                  <div className="d-flex justify-content-start align-items-center">
-                    <CoinImage small coin={split.coin} />
-                    <div className="text-uppercase ml-5px">{split.coin}</div>
-                  </div>
-                  <div>{formatCurrency(split.amount, 2)}</div>
-                </div>
-              )
-            })}
-          </div>
-        )}
       </div>
       <style jsx>{`
         .currency-pill {
@@ -511,20 +302,6 @@ const SwapCurrencyPill = ({
           font-size: 12px;
           color: #8293a4;
           margin-left: 4px;
-        }
-
-        .multiple-balance {
-          margin-top: 6px;
-        }
-
-        .multiple-balance-holder {
-          border-top: 1px solid #cdd7e0;
-          margin-left: -10px;
-          margin-right: -24px;
-          padding-left: 10px;
-          padding-right: 24px;
-          margin-top: 10px;
-          padding-top: 4px;
         }
 
         .mt-20 {
@@ -602,4 +379,4 @@ const SwapCurrencyPill = ({
   )
 }
 
-export default SwapCurrencyPill
+export default WrapOusdPill

@@ -19,6 +19,9 @@ const SidePanelTransactionMessage = ({
   const isRedeemTransaction = transaction.type === 'redeem'
   const isRebaseTransaction = transaction.type === 'rebase'
   const isRebaseOptInTransaction = transaction.type === 'rebaseOptIn'
+  const isApproveWrapTransaction = transaction.type === 'approveWrap'
+  const isWrapTransaction = transaction.type === 'wrap'
+  const isUnwrapTransaction = transaction.type === 'unwrap'
   const [showContents, setShowContents] = useState(!animate)
   const [showInnerContents, setShowInnerContents] = useState(false)
   const [showExpandedContents, setShowExpandedContents] = useState(false)
@@ -418,6 +421,184 @@ const SidePanelTransactionMessage = ({
                           ) +
                           ' for OUSD',
                         'Failed swapping for OUSD'
+                      )}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+            {showContents && isApproveWrapTransaction && (
+              <>
+                <CoinCircleGraphics
+                  transaction={transaction}
+                  coin={coin}
+                  animate={animate}
+                  showTxStatusIcon={true}
+                  drawType="all-same"
+                />
+                <div
+                  className={`title-holder ${
+                    showInnerContents ? '' : 'hidden'
+                  }`}
+                >
+                  {!transaction.mined && (
+                    <div className="title">
+                      {fbt(
+                        'Granting permission to move your ' +
+                          fbt.param('coin', coin.toUpperCase()),
+                        'Granting permission to move your coin'
+                      )}
+                    </div>
+                  )}
+                  {transaction.mined && !transaction.isError && (
+                    <div className="title">
+                      {fbt(
+                        'Permission granted to move your ' +
+                          fbt.param('coin', coin.toUpperCase()),
+                        'Permission granted to move your coin'
+                      )}
+                    </div>
+                  )}
+                  {transaction.mined && transaction.isError && (
+                    <div className="title">
+                      {fbt(
+                        'Failed granting permission to move your ' +
+                          fbt.param('coin', coin.toUpperCase()),
+                        'Failed granting permission to move your coin'
+                      )}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+            {showContents && isUnwrapTransaction && (
+              <>
+                <div className="d-flex align-items-center">
+                  <CoinCircleGraphics
+                    transaction={transaction}
+                    coin={'ousd'}
+                    animate={animate}
+                    showTxStatusIcon={false}
+                    drawType="all-same"
+                  />
+                  <div className={`line ${showInnerContents ? '' : 'hidden'}`}>
+                    <div className="completion-indicator">
+                      {!transaction.mined && (
+                        <img
+                          className="waiting-icon rotating"
+                          src={assetRootPath('/images/spinner-green-small.png')}
+                        />
+                      )}
+                      {transaction.mined && !transaction.isError && (
+                        <img
+                          className="waiting-icon"
+                          src={assetRootPath('/images/green-checkmark.svg')}
+                        />
+                      )}
+                      {transaction.mined && transaction.isError && (
+                        <img
+                          className="waiting-icon"
+                          src={assetRootPath('/images/red-x-filled.svg')}
+                        />
+                      )}
+                    </div>
+                  </div>
+                  <CoinCircleGraphics
+                    transaction={transaction}
+                    coin={
+                      coin === 'mix' ? ['dai', 'usdt', 'usdc'] : coin.split(',')
+                    }
+                    animate={animate}
+                    showTxStatusIcon={false}
+                    drawType="per-coin"
+                  />
+                </div>
+                <div
+                  className={`title-holder ${
+                    showInnerContents ? '' : 'hidden'
+                  }`}
+                >
+                  {!transaction.mined && (
+                    <div className="title">
+                      {fbt('Wrapping OUSD into wOUSD', 'Wrapping OUSD')}
+                    </div>
+                  )}
+                  {transaction.mined && !transaction.isError && (
+                    <div className="title">
+                      {fbt('Wrapped OUSD into wOUSD', 'Wrapped OUSD')}
+                    </div>
+                  )}
+                  {transaction.mined && transaction.isError && (
+                    <div className="title">
+                      {fbt(
+                        'Failed wrapping OUSD into wOUSD',
+                        'Failed wrapping OUSD'
+                      )}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+            {showContents && isWrapTransaction && (
+              <>
+                <div className="d-flex align-items-center">
+                  <CoinCircleGraphics
+                    transaction={transaction}
+                    coin={coin.split(',')}
+                    animate={animate}
+                    showTxStatusIcon={false}
+                    drawType="per-coin"
+                  />
+                  <div className={`line ${showInnerContents ? '' : 'hidden'}`}>
+                    <div className="completion-indicator">
+                      {!transaction.mined && (
+                        <img
+                          className="waiting-icon rotating"
+                          src={assetRootPath('/images/spinner-green-small.png')}
+                        />
+                      )}
+                      {transaction.mined && !transaction.isError && (
+                        <img
+                          className="waiting-icon"
+                          src={assetRootPath('/images/green-checkmark.svg')}
+                        />
+                      )}
+                      {transaction.mined && transaction.isError && (
+                        <img
+                          className="waiting-icon"
+                          src={assetRootPath('/images/red-x-filled.svg')}
+                        />
+                      )}
+                    </div>
+                  </div>
+                  <CoinCircleGraphics
+                    transaction={transaction}
+                    coin={'ousd'}
+                    animate={animate}
+                    showTxStatusIcon={false}
+                    drawType="all-same"
+                  />
+                </div>
+                <div
+                  className={`title-holder ${
+                    showInnerContents ? '' : 'hidden'
+                  }`}
+                >
+                  {!transaction.mined && (
+                    <div className="title">
+                      {fbt('Unwrapping wOUSD into OUSD', 'Unwrapping wOUSD')}
+                    </div>
+                  )}
+                  {transaction.mined && !transaction.isError && (
+                    <div className="title">
+                      {fbt('wOUSD unwrapped into OUSD', 'Unwrapped wOUSD')}
+                    </div>
+                  )}
+                  {transaction.mined && transaction.isError && (
+                    <div className="title">
+                      {fbt(
+                        'Failed unwrapping wOUSD into OUSD',
+                        'Failed unwrapping wOUSD'
                       )}
                     </div>
                   )}

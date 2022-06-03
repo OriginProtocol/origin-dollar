@@ -72,7 +72,7 @@ const MissionControl = ({}) => {
           margin-bottom: 50px;
         }
 
-        @media (max-width: 799px) {
+        @media (max-width: 992px) {
           div {
             width: 100%;
             min-width: 100%;

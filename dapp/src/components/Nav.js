@@ -35,7 +35,7 @@ const DappLinks = ({ dapp, page }) => {
   return (
     <>
       {dapp && (
-        <div className="d-flex align-items-center justify-content-center dapp-navigation mr-auto">
+        <div className="d-flex align-items-center justify-content-center dapp-navigation mr-auto flex-wrap">
           {(process.env.ENABLE_LIQUIDITY_MINING === 'true' ||
             process.env.ENABLE_STAKING === 'true') && (
             <Link href={adjustLinkHref('/swap')}>
@@ -70,6 +70,15 @@ const DappLinks = ({ dapp, page }) => {
               </a>
             </Link>
           )}
+          <Link href={adjustLinkHref('/wrap')}>
+            <a
+              className={`d-flex align-items-center ${
+                page === 'wrap' ? 'selected' : ''
+              }`}
+            >
+              {fbt('Wrap OUSD', 'Wrap OUSD')}
+            </a>
+          </Link>
           <Link href={adjustLinkHref('/history')}>
             <a
               className={`d-flex align-items-center ${
@@ -86,13 +95,13 @@ const DappLinks = ({ dapp, page }) => {
           font-family: Lato;
           font-size: 14px;
           color: white;
-          margin-left: 50px;
+          margin-left: 25px;
         }
 
         .dapp-navigation a {
           padding: 6px 4px;
-          margin-left: 16px;
-          margin-right: 16px;
+          margin-left: 8px;
+          margin-right: 8px;
           white-space: nowrap;
           margin-bottom: 1px;
         }
@@ -103,16 +112,23 @@ const DappLinks = ({ dapp, page }) => {
           font-weight: bold;
         }
 
-        @media (max-width: 799px) {
+        @media (max-width: 992px) {
           .dapp-navigation {
             margin-top: -10px;
             margin-left: 0px;
-            margin-bottom: 25px;
+            margin-bottom: 10px;
           }
 
           .dapp-navigation a {
             margin-left: 24px;
             margin-right: 24px;
+          }
+        }
+
+        @media (max-width: 485px) {
+          .dapp-navigation a {
+            margin-left: 8px;
+            margin-right: 8px;
           }
         }
       `}</style>
@@ -123,7 +139,7 @@ const DappLinks = ({ dapp, page }) => {
 const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
   const { pathname } = useRouter()
   const { active, account } = useWeb3React()
-  const apy = useStoreState(ContractStore, (s) => s.apy365 || 0)
+  const apy = useStoreState(ContractStore, (s) => s.apy.apy365 || 0)
 
   return (
     <>
@@ -178,19 +194,6 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
               </div>
             </button>
           )}
-          <button
-            className={`navbar-toggler ${!dapp ? 'ml-auto' : ''}`}
-            type="button"
-            data-toggle="collapse"
-            data-target=".langLinks"
-            aria-controls="langLinks"
-            aria-expanded="false"
-            aria-label="Toggle language navigation"
-          >
-            <div className="dropdown-marble">
-              <LanguageSelected locale={locale} />
-            </div>
-          </button>
           <IPFSDappLink dapp={dapp} css="d-lg-none" />
           {!dapp && (
             <button
@@ -359,7 +362,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
             </div>
           </div>
         </div>
-        <div className="d-flex d-md-none">
+        <div className="d-flex d-lg-none">
           <DappLinks dapp={dapp} page={page} />
         </div>
       </nav>
@@ -542,7 +545,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
           }
         }
 
-        @media (max-width: 799px) {
+        @media (max-width: 992px) {
           .origin-logo {
             max-width: 170px;
           }
@@ -625,7 +628,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
           }
         }
 
-        @media (max-width: 799px) {
+        @media (max-width: 992px) {
           .navbar {
             z-index: 100;
           }

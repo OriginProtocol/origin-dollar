@@ -20,7 +20,7 @@ const githubURL = process.env.GITHUB_URL
 const Home = ({ locale, onLocale }) => {
   const ousdInitialValue = 13426.953245
   const [ousdValue, setOusdValue] = useState(ousdInitialValue)
-  const apy = useStoreState(ContractStore, (s) => s.apy365 || 0)
+  const apy = useStoreState(ContractStore, (s) => s.apy.apy365 || 0)
 
   const goodTempo = 10000
 

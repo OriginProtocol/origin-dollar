@@ -16,7 +16,7 @@ export default function History({ locale, onLocale }) {
     <>
       <Layout locale={locale} onLocale={onLocale} dapp>
         <Nav dapp page={'history'} locale={locale} onLocale={onLocale} />
-        <div className="d-flex flex-column p-0 pt-md-5">
+        <div className="home d-flex flex-column">
           <BalanceHeader />
           {active && <TransactionHistory />}
           {!active && (
@@ -63,7 +63,10 @@ export default function History({ locale, onLocale }) {
           margin-bottom: 50px;
         }
 
-        @media (max-width: 799px) {
+        @media (min-width: 799px) {
+          .home {
+            padding-top: 20px;
+          }
         }
       `}</style>
     </>

@@ -175,6 +175,9 @@ export function checkValidInputForCoin(amount, coin) {
     case 'dai':
       decimals = 18
       break
+    case 'wousd':
+      decimals = 18
+      break
     default:
       throw new Error(`Unexpected stablecoin: ${coin}`)
   }

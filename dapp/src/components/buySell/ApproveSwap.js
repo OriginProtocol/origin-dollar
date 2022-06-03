@@ -16,7 +16,8 @@ const ApproveSwap = ({
   onSwap,
   allowancesLoaded,
   onMintingError,
-  formHasErrors,
+  balanceError,
+  swapsLoaded,
   swappingGloballyDisabled,
   storeTransaction,
   storeTransactionError,
@@ -29,18 +30,21 @@ const ApproveSwap = ({
   const web3react = useWeb3React()
   const { library, account } = web3react
   const coinApproved = stage === 'done'
-
+  const isWrapped =
+    selectedSwap &&
+    selectedSwap.name === 'wousd' &&
+    stableCoinToApprove === 'ousd'
   const approvalNeeded =
-    (!selectedSwap ||
-      formHasErrors ||
-      swappingGloballyDisabled ||
-      !allowancesLoaded ||
-      !needsApproval) &&
-    !coinApproved
+    (selectedSwap &&
+      !balanceError &&
+      !swappingGloballyDisabled &&
+      allowancesLoaded &&
+      needsApproval) ||
+    coinApproved
 
   useEffect(() => {
     ContractStore.update((s) => {
-      s.approvalNeeded = !approvalNeeded
+      s.approvalNeeded = approvalNeeded
     })
   }, [approvalNeeded])
 
@@ -55,6 +59,7 @@ const ApproveSwap = ({
     dai,
     usdc,
     ousd,
+    wousd,
   } = useStoreState(ContractStore, (s) => s.contracts || {})
 
   const routeConfig = {
@@ -100,6 +105,13 @@ const ApproveSwap = ({
         done: 'Sushi Swap',
       },
     },
+    wousd: {
+      contract: wousd,
+      name: {
+        approving: 'wOUSD',
+        done: 'wOUSD',
+      },
+    },
   }
 
   useEffect(() => {
@@ -116,11 +128,11 @@ const ApproveSwap = ({
   }, [selectedSwap])
 
   useEffect(() => {
-    const coinToContract = { dai, usdt, usdc, ousd }
+    const coinToContract = { dai, usdt, usdc, ousd, wousd }
     if (Object.keys(coinToContract).includes(stableCoinToApprove)) {
       setContract(coinToContract[stableCoinToApprove])
     }
-  }, [stableCoinToApprove, usdt, dai, usdc, ousd])
+  }, [stableCoinToApprove, usdt, dai, usdc, ousd, wousd])
 
   const ApprovalMessage = ({
     stage,
@@ -169,16 +181,49 @@ const ApproveSwap = ({
     )
   }
 
+  const SwapMessage = ({
+    balanceError,
+    stableCoinToApprove,
+    swapsLoaded,
+    selectedSwap,
+    swappingGloballyDisabled,
+  }) => {
+    const coin =
+      stableCoinToApprove === 'wousd'
+        ? 'wOUSD'
+        : stableCoinToApprove.toUpperCase()
+    const noSwapRouteAvailable = swapsLoaded && !selectedSwap
+    if (swappingGloballyDisabled) {
+      return process.env.DISABLE_SWAP_BUTTON_MESSAGE
+    } else if (balanceError) {
+      return fbt(
+        'Insufficient ' + fbt.param('coin', coin) + ' balance',
+        'Insufficient balance'
+      )
+    } else if (noSwapRouteAvailable) {
+      return fbt(
+        'Route for selected swap not available',
+        'No route available for selected swap'
+      )
+    } else if (isWrapped) {
+      return fbt('Wrap', 'Wrap')
+    } else if (stableCoinToApprove === 'wousd') {
+      return fbt('Unwrap', 'Unwrap')
+    } else {
+      return fbt('Swap', 'Swap')
+    }
+  }
+
   return (
     <>
       <button
         className={`btn-blue buy-button mt-4 mt-md-3 w-100`}
-        hidden={approvalNeeded}
+        hidden={!approvalNeeded}
         disabled={coinApproved}
         onClick={async () => {
           if (stage === 'approve' && contract) {
             analytics.track('On Approve Coin', {
-              category: 'swap',
+              category: isWrapped ? 'wrap' : 'swap',
               label: swapMetadata.coinGiven,
               value: parseInt(swapMetadata.swapAmount),
             })
@@ -190,7 +235,11 @@ const ApproveSwap = ({
                   routeConfig[needsApproval].contract.address,
                   ethers.constants.MaxUint256
                 )
-              storeTransaction(result, 'approve', stableCoinToApprove)
+              storeTransaction(
+                result,
+                isWrapped ? 'approveWrap' : 'approve',
+                stableCoinToApprove
+              )
               setStage('waiting-network')
               setIsApproving({
                 contract: needsApproval,
@@ -211,12 +260,12 @@ const ApproveSwap = ({
               if (e.code !== 4001) {
                 await storeTransactionError('approve', stableCoinToApprove)
                 analytics.track(`Approval failed`, {
-                  category: 'swap',
+                  category: isWrapped ? 'wrap' : 'swap',
                   label: e.message,
                 })
               } else {
                 analytics.track(`Approval canceled`, {
-                  category: 'swap',
+                  category: isWrapped ? 'wrap' : 'swap',
                 })
               }
             }
@@ -241,14 +290,19 @@ const ApproveSwap = ({
           className={`btn-blue buy-button mt-2 mt-md-0 w-100`}
           disabled={
             !selectedSwap ||
-            formHasErrors ||
+            balanceError ||
             swappingGloballyDisabled ||
             (needsApproval && !coinApproved)
           }
           onClick={onSwap}
         >
-          {swappingGloballyDisabled && process.env.DISABLE_SWAP_BUTTON_MESSAGE}
-          {!swappingGloballyDisabled && fbt('Swap', 'Swap')}
+          <SwapMessage
+            balanceError={balanceError}
+            stableCoinToApprove={stableCoinToApprove}
+            swapsLoaded={swapsLoaded}
+            selectedSwap={selectedSwap}
+            swappingGloballyDisabled={swappingGloballyDisabled}
+          />
         </button>
       </div>
       <style jsx>{`

@@ -13,7 +13,7 @@ export default class BalancesService {
   }
 
   async fetchBalancesForProduction(account, contracts) {
-    const { ousd, usdt, dai, usdc, ogn } = contracts
+    const { ousd, usdt, dai, usdc, ogn, wousd } = contracts
 
     const allContractData = [
       { name: 'ousd', decimals: 18, contract: ousd, address: ousd.address },
@@ -21,6 +21,7 @@ export default class BalancesService {
       { name: 'dai', decimals: 18, contract: dai, address: dai.address },
       { name: 'usdc', decimals: 6, contract: usdc, address: usdc.address },
       { name: 'ogn', decimals: 18, contract: ogn, address: ogn.address },
+      { name: 'wousd', decimals: 18, contract: wousd, address: wousd.address },
     ]
 
     const data = {
@@ -78,19 +79,26 @@ export default class BalancesService {
   }
 
   async fetchBalancesForDevelopment(account, contracts) {
-    const { ousd, usdt, dai, usdc, ogn } = contracts
+    const { ousd, usdt, dai, usdc, ogn, wousd } = contracts
 
-    const [ousdBalance, usdtBalance, daiBalance, usdcBalance, ognBalance] =
-      await Promise.all([
-        /* IMPORTANT (!) production uses a different method to load balances. Any changes here need to
-         * also happen in production version of this function.
-         */
-        displayCurrency(await ousd.balanceOf(account), ousd),
-        displayCurrency(await usdt.balanceOf(account), usdt),
-        displayCurrency(await dai.balanceOf(account), dai),
-        displayCurrency(await usdc.balanceOf(account), usdc),
-        displayCurrency(await ogn.balanceOf(account), ogn),
-      ])
+    const [
+      ousdBalance,
+      usdtBalance,
+      daiBalance,
+      usdcBalance,
+      ognBalance,
+      wousdBalance,
+    ] = await Promise.all([
+      /* IMPORTANT (!) production uses a different method to load balances. Any changes here need to
+       * also happen in production version of this function.
+       */
+      displayCurrency(await ousd.balanceOf(account), ousd),
+      displayCurrency(await usdt.balanceOf(account), usdt),
+      displayCurrency(await dai.balanceOf(account), dai),
+      displayCurrency(await usdc.balanceOf(account), usdc),
+      displayCurrency(await ogn.balanceOf(account), ogn),
+      displayCurrency(await wousd.balanceOf(account), wousd),
+    ])
 
     return {
       ousd: ousdBalance,
@@ -98,6 +106,7 @@ export default class BalancesService {
       dai: daiBalance,
       usdc: usdcBalance,
       ogn: ognBalance,
+      wousd: wousdBalance,
     }
   }
 }

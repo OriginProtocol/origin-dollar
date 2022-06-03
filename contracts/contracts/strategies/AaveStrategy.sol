@@ -159,7 +159,7 @@ contract AaveStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @dev Retuns bool indicating whether asset is supported by strategy
+     * @dev Returns bool indicating whether asset is supported by strategy
      * @param _asset Address of the asset
      */
     function supportsAsset(address _asset)
@@ -268,7 +268,7 @@ contract AaveStrategy is InitializableAbstractStrategy {
             }
         }
 
-        // Collect avaiable rewards and restart the cooldown timer, if either of
+        // Collect available rewards and restart the cooldown timer, if either of
         // those should be run.
         if (block.timestamp > windowStart || cooldown == 0) {
             // aToken addresses for incentives controller

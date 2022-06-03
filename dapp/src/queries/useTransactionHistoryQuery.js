@@ -8,7 +8,11 @@ const useTransactionHistoryQuery = (account, options) => {
   return useQuery(
     QUERY_KEYS.TransactionHistory(account),
     () => transactionHistoryService.fetchHistory(account),
-    options
+    {
+      enabled: account != null,
+      refetchOnWindowFocus: false,
+      ...options,
+    }
   )
 }
 
