@@ -110,7 +110,7 @@ contract VaultStorage is Initializable, Governable {
     address[] private _deprecated_swapTokens;
 
     uint256 constant MINT_MINIMUM_ORACLE = 99800000;
-    
+
     // Meta strategy that is allowed to mint/burn OUSD without changing collateral
     address public ousdMetaStrategy;
 

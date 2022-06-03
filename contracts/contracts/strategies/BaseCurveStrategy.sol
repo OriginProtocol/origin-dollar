@@ -124,7 +124,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         ICurvePool curvePool = ICurvePool(platformAddress);
 
         uint256 virtual_price = curvePool.get_virtual_price();
-        /** 
+        /**
          * Add a 5% threshold to help calculate required amount of crv3Tokens:
          *  - convert asset to 18 decimals
          *  - divide by virtual price to get 3Crv equivalent

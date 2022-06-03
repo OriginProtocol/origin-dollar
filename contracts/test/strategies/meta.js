@@ -94,7 +94,7 @@ describe("Convex 3pool/OUSD Meta Strategy", function () {
       await mint("10000.00", usdc);
       await mint("10000.00", usdt);
       await vault.connect(anna).redeem(ousdUnits("20000"), 0);
-      // Dai minted OUSD has not been deployed to Metastrategy for that reason the 
+      // Dai minted OUSD has not been deployed to Metastrategy for that reason the
       // total supply of OUSD has not doubled
       await expectApproxSupply(ousd, ousdUnits("10200"));
     });
@@ -105,9 +105,7 @@ describe("Convex 3pool/OUSD Meta Strategy", function () {
       await dai.connect(anna).approve(vault.address, daiUnits("8.0"));
       await vault.connect(anna).mint(dai.address, daiUnits("8.0"), 0);
       // Anna sends her OUSD directly to Strategy
-      await ousd
-        .connect(anna)
-        .transfer(metaStrategy.address, ousdUnits("8.0"));
+      await ousd.connect(anna).transfer(metaStrategy.address, ousdUnits("8.0"));
       // Anna asks Governor for help
       await metaStrategy
         .connect(governor)
@@ -118,9 +116,7 @@ describe("Convex 3pool/OUSD Meta Strategy", function () {
     it("Should not allow transfer of arbitrary token by non-Governor", async () => {
       // Naughty Anna
       await expect(
-        metaStrategy
-          .connect(anna)
-          .transferToken(ousd.address, ousdUnits("8.0"))
+        metaStrategy.connect(anna).transferToken(ousd.address, ousdUnits("8.0"))
       ).to.be.revertedWith("Caller is not the Governor");
     });
   });

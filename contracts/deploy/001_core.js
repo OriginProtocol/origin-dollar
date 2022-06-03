@@ -296,7 +296,6 @@ const deployConvexStrategy = async () => {
   }
   return cConvexStrategy;
 };
-  
 
 /**
  * Deploys a Convex Meta Strategy which supports OUSD / 3Crv
@@ -309,9 +308,13 @@ const deployConvexMetaStrategy = async () => {
   const sGovernor = await ethers.provider.getSigner(governorAddr);
 
   await deployWithConfirmation("ConvexMetaStrategyProxy");
-  const cConvexMetaStrategyProxy = await ethers.getContract("ConvexMetaStrategyProxy");
+  const cConvexMetaStrategyProxy = await ethers.getContract(
+    "ConvexMetaStrategyProxy"
+  );
 
-  const dConvexMetaStrategy = await deployWithConfirmation("ConvexMetaStrategy");
+  const dConvexMetaStrategy = await deployWithConfirmation(
+    "ConvexMetaStrategy"
+  );
   const cConvexMetaStrategy = await ethers.getContractAt(
     "ConvexMetaStrategy",
     cConvexMetaStrategyProxy.address
@@ -335,9 +338,7 @@ const deployConvexMetaStrategy = async () => {
   await withConfirmation(
     cConvexMetaStrategy
       .connect(sDeployer)
-      [
-        "initialize(address[],address[],address[],address[],uint256)"
-      ](
+      ["initialize(address[],address[],address[],address[],uint256)"](
         [assetAddresses.CVX, assetAddresses.CRV],
         [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT],
         [
@@ -715,7 +716,7 @@ const deployCurveMetapoolMocks = async () => {
   const metapoolToken = await ethers.getContract("MockCurveMetapool");
   const mockBooster = await ethers.getContract("MockBooster");
   await mockBooster.setPool(metapoolLPCRVPid, metapoolToken.address);
-}
+};
 
 // Deploy the Flipper trading contract
 const deployFlipper = async () => {

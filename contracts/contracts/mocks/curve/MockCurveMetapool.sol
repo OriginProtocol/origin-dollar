@@ -15,7 +15,9 @@ contract MockCurveMetapool is MintableERC20 {
     address[] public coins;
     uint256[2] public balances;
 
-    constructor(address[2] memory _coins) ERC20("Curve.fi 3pool/OUSD metapool", "3crv_OUSD") {
+    constructor(address[2] memory _coins)
+        ERC20("Curve.fi 3pool/OUSD metapool", "3crv_OUSD")
+    {
         coins = _coins;
     }
 
@@ -91,11 +93,7 @@ contract MockCurveMetapool is MintableERC20 {
         uint256[2] memory _amounts,
         uint256 _max_burned_tokens
     ) public {
-        transferFrom(
-            msg.sender,
-            address(this),
-            _max_burned_tokens
-        );
+        transferFrom(msg.sender, address(this), _max_burned_tokens);
         for (uint256 i = 0; i < _amounts.length; i++) {
             IERC20(coins[i]).transfer(msg.sender, _amounts[i]);
             balances[i] = balances[i] - _amounts[i];

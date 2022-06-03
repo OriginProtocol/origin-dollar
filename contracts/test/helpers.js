@@ -292,13 +292,17 @@ const getAssetAddresses = async (deployments) => {
       sushiswapRouter: (await deployments.get("MockUniswapRouter")).address,
     };
     try {
-      /* Metapool gets deployed in 001_core instead of 000_mocks and is requested even when 
+      /* Metapool gets deployed in 001_core instead of 000_mocks and is requested even when
        * metapool is not yet deployed. Just return without metapool info if it is not
        * yet available.
        */
-      addressMap.ThreePoolOUSDMetapool = (await deployments.get("MockCurveMetapool")).address;
+      addressMap.ThreePoolOUSDMetapool = (
+        await deployments.get("MockCurveMetapool")
+      ).address;
       // token is implemented by the same contract as the metapool
-      addressMap.metapoolToken = (await deployments.get("MockCurveMetapool")).address;
+      addressMap.metapoolToken = (
+        await deployments.get("MockCurveMetapool")
+      ).address;
     } catch (e) {
       // do nothing
     }

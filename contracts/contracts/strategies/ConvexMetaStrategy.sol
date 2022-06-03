@@ -58,11 +58,14 @@ contract ConvexMetaStrategy is BaseCurveStrategy {
          * in the following order: _platformAddress(3Pool address), _vaultAddress, _cvxDepositorAddress
          * _metapoolAddress, _ousd, _cvxRewardStakerAddress
          */
-        address[] calldata _initAddresses, 
+        address[] calldata _initAddresses,
         uint256 _cvxDepositorPTokenId
     ) external onlyGovernor initializer {
         require(_assets.length == 3, "Must have exactly three assets");
-        require(_initAddresses.length == 6, "_initAddresses must have exactly six items");
+        require(
+            _initAddresses.length == 6,
+            "_initAddresses must have exactly six items"
+        );
         // Should be set prior to abstract initialize call otherwise
         // abstractSetPToken calls will fail
         cvxDepositorAddress = _initAddresses[2];
@@ -94,23 +97,28 @@ contract ConvexMetaStrategy is BaseCurveStrategy {
 
         uint256 threePoolLpBalance = threePoolLp.balanceOf(address(this));
         uint256 curve3PoolVirtualPrice = curvePool.get_virtual_price();
-        uint256 threePoolLpDollarValue = threePoolLpBalance.mulTruncate(curve3PoolVirtualPrice);
-
+        uint256 threePoolLpDollarValue = threePoolLpBalance.mulTruncate(
+            curve3PoolVirtualPrice
+        );
 
         uint128 crvCoinIndex = _getMetapoolCoinIndex(pTokenAddress);
         uint128 ousdCoinIndex = _getMetapoolCoinIndex(address(ousd));
 
         uint256 ousdToAdd = toPositive(
-            int256(metapool.balances(crvCoinIndex).mulTruncate(curve3PoolVirtualPrice)) - 
-            int256(metapool.balances(ousdCoinIndex)) + 
-            int256(threePoolLpDollarValue)
+            int256(
+                metapool.balances(crvCoinIndex).mulTruncate(
+                    curve3PoolVirtualPrice
+                )
+            ) -
+                int256(metapool.balances(ousdCoinIndex)) +
+                int256(threePoolLpDollarValue)
         );
 
         /* Mint so much ousd that the dollar value of 3CRVLP in the pool and OUSD will be equal after
          * deployment of liquidity. In cases where pool is heavier in OUSD before the deposit strategy mints
          * less OUSD and gets less metapoolLP and less rewards. And when pool is heavier in 3CRV strategy mints
-         * more OUSD and gets more metapoolLP and more rewards. 
-         * 
+         * more OUSD and gets more metapoolLP and more rewards.
+         *
          * In both cases metapool ends up being balanced and there should be no incentive to execute arbitrage trade.
          */
         if (ousdToAdd > 0) {

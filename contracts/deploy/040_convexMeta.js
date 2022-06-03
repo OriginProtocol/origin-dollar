@@ -1,5 +1,5 @@
 const { deploymentWithProposal } = require("../utils/deploy");
-const { BigNumber } = require('ethers');
+const { BigNumber } = require("ethers");
 
 module.exports = deploymentWithProposal(
   { deployName: "040_convex_meta_strategy", forceDeploy: false },
@@ -96,7 +96,7 @@ module.exports = deploymentWithProposal(
     );
 
     console.log("META STRATEGY ADDRESS", dConvexMetaStrategyProxy.address);
-    const fiftyMil = BigNumber.from(50000000).mul(BigNumber.from(10).pow(18))
+    const fiftyMil = BigNumber.from(50000000).mul(BigNumber.from(10).pow(18));
     // Governance Actions
     // ----------------
     return {

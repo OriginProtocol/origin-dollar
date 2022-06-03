@@ -711,5 +711,4 @@ contract VaultCore is VaultStorage {
     function abs(int256 x) private pure returns (uint256) {
         return x >= 0 ? uint256(x) : uint256(-x);
     }
-
 }
