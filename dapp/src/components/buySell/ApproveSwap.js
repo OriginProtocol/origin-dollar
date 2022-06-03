@@ -228,7 +228,7 @@ const ApproveSwap = ({
       <button
         className={`btn-blue buy-button mt-4 mt-md-3 w-100`}
         hidden={!approvalNeeded}
-        disabled={coinApproved}
+        disabled={coinApproved || stage === 'waiting-user'}
         onClick={async () => {
           if (stage === 'approve' && contract) {
             analytics.track('On Approve Coin', {
