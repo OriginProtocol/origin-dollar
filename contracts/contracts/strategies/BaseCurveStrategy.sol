@@ -130,6 +130,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
          *  - divide by virtual price to get 3Crv equivalent
          *  - add a 5% threshold to it
          */
+        // slither-disable-next-line divide-before-multiply
         uint256 crv3TokensTreshold = (((_amount.scaleBy(
             18,
             Helpers.getDecimals(_asset)

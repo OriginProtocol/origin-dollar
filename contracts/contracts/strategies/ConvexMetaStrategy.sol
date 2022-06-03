@@ -138,6 +138,7 @@ contract ConvexMetaStrategy is BaseCurveStrategy {
             .divPrecisely(metapoolVirtualPrice)
             .mulTruncate(uint256(1e18) - maxSlippage);
 
+        // slither-disable-next-line unused-return
         metapool.add_liquidity(_amounts, minReceived);
 
         uint256 metapoolLp = metapoolErc20.balanceOf(address(this));
@@ -177,6 +178,7 @@ contract ConvexMetaStrategy is BaseCurveStrategy {
          * Results of analysis here: https://docs.google.com/spreadsheets/d/1DYSyYwHqxRzSJh9dYkY5kcgP_K5gku6N2mQVhoH33vY
          * run it yourself using code in brownie/scripts/liqidity_test.py
          */
+        // slither-disable-next-line divide-before-multiply
         uint256 requiredMetapoolLpTokens = ((num3CrvTokens * crv3VirtualPrice) /
             1e18 /
             metapool.get_virtual_price()) *
@@ -214,8 +216,11 @@ contract ConvexMetaStrategy is BaseCurveStrategy {
 
         // Receive too much 3crv
         if (removedCoins[uint256(crvCoinIndex)] > num3CrvTokens) {
-            // TODO: should there be a gas saving threshold, to not perform a swap if value diff is
-            // relatively small
+            /**
+             * TODO: should there be a gas saving threshold, to not perform a swap if value diff is
+             * relatively small
+             */
+            // slither-disable-next-line unused-return
             metapool.exchange(
                 int128(crvCoinIndex),
                 int128(ousdCoinIndex),
@@ -231,6 +236,7 @@ contract ConvexMetaStrategy is BaseCurveStrategy {
              * We first multiply the required3CRV with the virtual price so that we get a dollar
              * value (i.e. OUSD value) of 3CRV required and we increase that by 5% for safety threshold
              */
+            // slither-disable-next-line divide-before-multiply
             uint256 ousdWithThreshold = (((required3Crv * crv3VirtualPrice) /
                 1e18) * 105) / 100;
             uint256 crv3Received = metapool.get_dy(
@@ -239,6 +245,7 @@ contract ConvexMetaStrategy is BaseCurveStrategy {
                 ousdWithThreshold // The amount of first coin being exchanged
             );
 
+            // slither-disable-next-line unused-return
             metapool.exchange(
                 int128(ousdCoinIndex),
                 int128(crvCoinIndex),
@@ -262,6 +269,7 @@ contract ConvexMetaStrategy is BaseCurveStrategy {
         );
 
         uint256[2] memory _minAmounts = [uint256(0), uint256(0)];
+        // slither-disable-next-line unused-return
         metapool.remove_liquidity(
             metapoolErc20.balanceOf(address(this)),
             _minAmounts

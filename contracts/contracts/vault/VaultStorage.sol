@@ -112,13 +112,13 @@ contract VaultStorage is Initializable, Governable {
     uint256 constant MINT_MINIMUM_ORACLE = 99800000;
 
     // Meta strategy that is allowed to mint/burn OUSD without changing collateral
-    address public ousdMetaStrategy;
+    address public ousdMetaStrategy = address(0);
 
     // How much OUSD is currently minted by the strategy
-    int256 public netOusdMintedForStrategy;
+    int256 public netOusdMintedForStrategy = 0;
 
     // How much net total OUSD is allowed to be minted by all strategies
-    uint256 public netOusdMintForStrategyThreshold;
+    uint256 public netOusdMintForStrategyThreshold = 0;
 
     /**
      * @dev set the implementation for the admin, this needs to be in a base class else we cannot set it
