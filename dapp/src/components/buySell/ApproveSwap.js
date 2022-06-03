@@ -236,6 +236,9 @@ const ApproveSwap = ({
               label: swapMetadata.coinGiven,
               value: parseInt(swapMetadata.swapAmount),
             })
+            ContractStore.update((s) => {
+              s.approvalInProgress = true
+            })
             updateApprovalStage('waiting-user')
             try {
               const result = await contract
@@ -262,10 +265,16 @@ const ApproveSwap = ({
               })
               setIsApproving({})
               updateApprovalStage('done')
+              ContractStore.update((s) => {
+                s.approvalInProgress = false
+              })
             } catch (e) {
               onMintingError(e)
               console.error('Exception happened: ', e)
               updateApprovalStage('approve')
+              ContractStore.update((s) => {
+                s.approvalInProgress = false
+              })
               if (e.code !== 4001) {
                 await storeTransactionError('approve', stableCoinToApprove)
                 analytics.track(`Approval failed`, {
