@@ -513,6 +513,15 @@ const configureStrategies = async (harvesterProxy) => {
     convex.connect(sGovernor).setHarvesterAddress(harvesterProxy.address)
   );
 
+  const metaStrategyProxy = await ethers.getContract("ConvexMetaStrategyProxy");
+  const metaStrategy = await ethers.getContractAt(
+    "ConvexMetaStrategy",
+    metaStrategyProxy.address
+  );
+  await withConfirmation(
+    metaStrategy.connect(sGovernor).setHarvesterAddress(harvesterProxy.address)
+  );
+
   const threePoolProxy = await ethers.getContract("ThreePoolStrategyProxy");
   const threePool = await ethers.getContractAt(
     "ThreePoolStrategy",

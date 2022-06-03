@@ -135,6 +135,7 @@ async function defaultFixture() {
     crvMinter,
     threePool,
     threePoolToken,
+    metapoolToken,
     threePoolGauge,
     aaveAddressProvider,
     uniswapPairOUSD_USDT,
@@ -178,6 +179,7 @@ async function defaultFixture() {
     crvMinter = await ethers.getContract("MockCRVMinter");
     threePool = await ethers.getContract("MockCurvePool");
     threePoolToken = await ethers.getContract("Mock3CRV");
+    metapoolToken = await ethers.getContract("MockCurveMetapool");
     threePoolGauge = await ethers.getContract("MockCurveGauge");
     cvxBooster = await ethers.getContract("MockBooster");
     cvxRewardPool = await ethers.getContract("MockRewardPool");
@@ -293,6 +295,7 @@ async function defaultFixture() {
     threePool,
     threePoolGauge,
     threePoolToken,
+    metapoolToken,
     threePoolStrategy,
     convexStrategy,
     metaStrategy,
