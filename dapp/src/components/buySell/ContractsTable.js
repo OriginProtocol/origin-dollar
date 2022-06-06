@@ -149,6 +149,9 @@ const ContractsTable = () => {
             setConfirmAlternateRoute={(isConfirmed) => {
               if (isConfirmed) {
                 setUserSelectedRoute(alternateRouteEstimationSelected.name)
+                ContractStore.update((s) => {
+                  s.lastOverride = alternateRouteEstimationSelected.name
+                })
               }
 
               setAlternateTxRouteConfirmed(isConfirmed)
@@ -272,6 +275,9 @@ const ContractsTable = () => {
                     return
                   }
 
+                  ContractStore.update((s) => {
+                    s.lastOverride = estimation.name
+                  })
                   setUserSelectedRoute(estimation.name)
                 }}
               >
