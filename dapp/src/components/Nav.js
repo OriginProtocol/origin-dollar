@@ -112,16 +112,23 @@ const DappLinks = ({ dapp, page }) => {
           font-weight: bold;
         }
 
-        @media (max-width: 799px) {
+        @media (max-width: 992px) {
           .dapp-navigation {
             margin-top: -10px;
             margin-left: 0px;
-            margin-bottom: 5px;
+            margin-bottom: 10px;
           }
 
           .dapp-navigation a {
             margin-left: 24px;
             margin-right: 24px;
+          }
+        }
+
+        @media (max-width: 485px) {
+          .dapp-navigation a {
+            margin-left: 8px;
+            margin-right: 8px;
           }
         }
       `}</style>
@@ -187,19 +194,6 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
               </div>
             </button>
           )}
-          <button
-            className={`navbar-toggler ${!dapp ? 'ml-auto' : ''}`}
-            type="button"
-            data-toggle="collapse"
-            data-target=".langLinks"
-            aria-controls="langLinks"
-            aria-expanded="false"
-            aria-label="Toggle language navigation"
-          >
-            <div className="dropdown-marble">
-              <LanguageSelected locale={locale} />
-            </div>
-          </button>
           <IPFSDappLink dapp={dapp} css="d-lg-none" />
           {!dapp && (
             <button
@@ -368,7 +362,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
             </div>
           </div>
         </div>
-        <div className="d-flex d-md-none">
+        <div className="d-flex d-lg-none">
           <DappLinks dapp={dapp} page={page} />
         </div>
       </nav>
@@ -551,7 +545,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
           }
         }
 
-        @media (max-width: 799px) {
+        @media (max-width: 992px) {
           .origin-logo {
             max-width: 170px;
           }
@@ -634,7 +628,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
           }
         }
 
-        @media (max-width: 799px) {
+        @media (max-width: 992px) {
           .navbar {
             z-index: 100;
           }

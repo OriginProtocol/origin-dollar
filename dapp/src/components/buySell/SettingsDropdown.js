@@ -55,7 +55,7 @@ const SettingsDropdown = ({ setPriceToleranceValue, priceToleranceValue }) => {
                 <button
                   className="w-50 d-flex align-items-center justify-content-center auto"
                   onClick={() => {
-                    setPriceToleranceValue(0.5)
+                    setPriceToleranceValue(0.1)
                     setShowWarning(false)
                   }}
                 >
