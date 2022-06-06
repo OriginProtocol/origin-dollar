@@ -162,7 +162,8 @@ const WrapOusdPill = ({
       removeCommas(displayBalance.detailedBalance) !==
         removeCommas(coinValue) &&
       // this bit is required so that zeroes can be added to input when already at max value
-      parseFloat(displayBalance.detailedBalance) !== parseFloat(floorTo2to6Decimals(coinValue))
+      parseFloat(displayBalance.detailedBalance) !==
+        parseFloat(floorTo2to6Decimals(coinValue))
     ) {
       setMaxBalance()
     }
