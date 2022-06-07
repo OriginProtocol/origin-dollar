@@ -10,10 +10,6 @@ import ContractStore from 'stores/ContractStore'
 import ConfirmContractPickModal from 'components/buySell/ConfirmContractPickModal'
 
 const ContractsTable = () => {
-  const approvalInProgress = useStoreState(
-    ContractStore,
-    (s) => s.approvalInProgress
-  )
   const swapEstimations = useStoreState(ContractStore, (s) => s.swapEstimations)
   const [alternateTxRouteConfirmed, setAlternateTxRouteConfirmed] =
     useState(false)
@@ -251,10 +247,7 @@ const ContractsTable = () => {
                 ? estimation.userSelected
                 : estimation.isBest)
             const isViableOption =
-              canDoSwap &&
-              numberOfCanDoSwaps > 1 &&
-              !isSelected &&
-              !approvalInProgress
+              canDoSwap && numberOfCanDoSwaps > 1 && !isSelected
 
             return (
               <div

@@ -5,7 +5,6 @@ const ContractStore = new Store({
   contracts: {},
   apy: {},
   approvalStage: {},
-  approvalInProgress: false,
   ousdExchangeRates: {
     dai: {
       mint: 1,
