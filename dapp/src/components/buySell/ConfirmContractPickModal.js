@@ -1,19 +1,7 @@
-import React, { useState, useEffect } from 'react'
+import React from 'react'
 import { fbt } from 'fbt-runtime'
-import { formatCurrency } from 'utils/math'
-import { capitalize } from 'utils/utils'
 
-import analytics from 'utils/analytics'
-
-const ConfirmContractPickModal = ({
-  onClose,
-  onConfirm,
-  setConfirmAlternateRoute,
-  bestEstimation,
-  estimationSelected,
-  nameMapping,
-  description,
-}) => {
+const ConfirmContractPickModal = ({ onClose, onConfirm, description }) => {
   return (
     <>
       <div className="contract-approve-modal d-flex" onClick={onClose}>
@@ -25,7 +13,7 @@ const ConfirmContractPickModal = ({
           }}
         >
           <div className="body-content d-flex flex-column">
-            <h2>{fbt('Confirm', 'Confirm alternate transaction route')}</h2>
+            <h2>{fbt('Confirm', 'Confirm')}</h2>
             <div className="currencies">{description}</div>
           </div>
           <div className="body-actions d-flex align-items-center justify-content-center">
@@ -33,13 +21,13 @@ const ConfirmContractPickModal = ({
               className="btn-clear-blue d-flex align-items-center justify-content-center mr-2"
               onClick={onClose}
             >
-              {fbt('No', 'I do not confirm contract change')}
+              {fbt('No', 'Not confirm')}
             </button>
             <button
               className="btn-blue d-flex align-items-center justify-content-center ml-2"
               onClick={onConfirm}
             >
-              {fbt('Yes', 'I confirm contract change')}
+              {fbt('Yes', 'I confirm')}
             </button>
           </div>
         </div>
