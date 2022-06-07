@@ -7,10 +7,12 @@ import analytics from 'utils/analytics'
 
 const ConfirmContractPickModal = ({
   onClose,
+  onConfirm,
   setConfirmAlternateRoute,
   bestEstimation,
   estimationSelected,
   nameMapping,
+  description,
 }) => {
   return (
     <>
@@ -24,56 +26,18 @@ const ConfirmContractPickModal = ({
         >
           <div className="body-content d-flex flex-column">
             <h2>{fbt('Confirm', 'Confirm alternate transaction route')}</h2>
-            <div className="currencies">
-              {fbt(
-                fbt.param(
-                  'selected estimation name',
-                  nameMapping[estimationSelected.name].name
-                ) +
-                  ' offers -' +
-                  fbt.param(
-                    'selected estimation diff',
-                    formatCurrency(estimationSelected.diffPercentage * -1, 2)
-                  ) +
-                  '% ' +
-                  ' worse price than ' +
-                  fbt.param(
-                    'best estimation name',
-                    nameMapping[bestEstimation.name].name
-                  ) +
-                  '.',
-                'Selected vs best estimation comparison'
-              )}{' '}
-              {fbt(
-                'Are you sure you want to override best transaction route?',
-                'transaction route override prompt'
-              )}
-            </div>
+            <div className="currencies">{description}</div>
           </div>
           <div className="body-actions d-flex align-items-center justify-content-center">
             <button
               className="btn-clear-blue d-flex align-items-center justify-content-center mr-2"
-              onClick={async (e) => {
-                setConfirmAlternateRoute(false)
-                analytics.track('On deny tx route change', {
-                  category: 'settings',
-                  label: estimationSelected.name,
-                })
-                onClose()
-              }}
+              onClick={onClose}
             >
               {fbt('No', 'I do not confirm contract change')}
             </button>
             <button
               className="btn-blue d-flex align-items-center justify-content-center ml-2"
-              onClick={async (e) => {
-                setConfirmAlternateRoute(true)
-                analytics.track('On confirm tx route change', {
-                  category: 'settings',
-                  label: estimationSelected.name,
-                })
-                onClose()
-              }}
+              onClick={onConfirm}
             >
               {fbt('Yes', 'I confirm contract change')}
             </button>
