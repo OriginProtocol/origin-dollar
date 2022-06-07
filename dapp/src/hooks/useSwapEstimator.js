@@ -310,14 +310,6 @@ const useSwapEstimator = ({
 
     if (best) {
       best.isBest = true
-      // set displayPopup as true if best option is differetn from last override
-      ContractStore.update((s) => {
-        s.displayPopup = s.lastOverride && s.lastOverride !== best.name
-      })
-      // update last override
-      ContractStore.update((s) => {
-        s.lastOverride = best.name
-      })
       canDoSwaps.map((estimation) => {
         if (estimation === best) {
           return

@@ -19,6 +19,7 @@
   "bIRKYRZQz36Vbb4mmg5yqw==": "Wrap",
   "UeUEKX8IP9JakGd3M5+0qQ==": "Unwrap",
   "6Wtugp8tAPPTk/MbwqdOtA==": "Swap",
+  "noaN3c4TofuYztLpySAv5Q==": "Your contract selection has been changed to {VAR_NEW_CONTRACT_NAME_B64_bmV3IGNvbnRyYWN0IG5hbWU}. If you want your transaction to be routed through {VAR_ABANDONED_CONTRACT_NAME_B64_YWJhbmRvbmVkIGNvbnRyYWN0IG5hbWU}, you can go back and override it. Do you want to continue with the default selection?",
   "Pn/puwCebcKEtHY+PGZooQ==": "Trailing APY",
   "wmU0CuWrCI5lWvUJFccpHA==": "Balance",
   "l9AuSh9cgYP+/V+O35ymDg==": "Pending yield",

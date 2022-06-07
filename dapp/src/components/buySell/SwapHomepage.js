@@ -34,7 +34,6 @@ const SwapHomepage = ({
   rpcProvider,
   isMobile,
 }) => {
-  const displayPopup = useStoreState(ContractStore, (s) => s.displayPopup)
   const swapEstimations = useStoreState(ContractStore, (s) => s.swapEstimations)
   const swapsLoaded = swapEstimations && typeof swapEstimations === 'object'
   const selectedSwap = useStoreState(ContractStore, (s) => s.selectedSwap)
@@ -357,24 +356,6 @@ const SwapHomepage = ({
           selectedCoin={selectedRedeemCoin}
           onSelectChange={userSelectsRedeemCoin}
         />
-        {displayPopup && (
-          <div className="popup-container">
-            <p className="popup-text">
-              Changing swap coin type and/or amount choose the most economically
-              feasible option to swap. Your previous selection has been
-              overridden.
-            </p>
-            <img
-              className="close-x"
-              src={assetRootPath('/images/close.svg')}
-              onClick={() => {
-                ContractStore.update((s) => {
-                  s.displayPopup = false
-                })
-              }}
-            />
-          </div>
-        )}
         <ApproveSwap
           stableCoinToApprove={swapMode === 'mint' ? selectedBuyCoin : 'ousd'}
           needsApproval={needsApproval}

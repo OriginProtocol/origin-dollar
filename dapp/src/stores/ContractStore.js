@@ -5,7 +5,6 @@ const ContractStore = new Store({
   contracts: {},
   apy: {},
   lastOverride: '',
-  displayPopup: false,
   ousdExchangeRates: {
     dai: {
       mint: 1,

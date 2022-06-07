@@ -19,6 +19,7 @@
   "1b6Z1e": "Wrap",
   "40DPFc": "Unwrap",
   "416oku": "Swap",
+  "4g5DeW": "Your contract selection has been changed to {new contract name}. If you want your transaction to be routed through {abandoned contract name}, you can go back and override it. Do you want to continue with the default selection?",
   "3NqyUv": "Trailing APY",
   "18TYa6": "Balance",
   "3PTmKc": "Pending yield",
