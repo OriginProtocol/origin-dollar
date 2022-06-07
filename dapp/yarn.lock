@@ -3525,7 +3525,7 @@ babel-plugin-fbt-runtime@^0.9.17:
     fbjs "^1.0.0"
     invariant "^2.2.4"
 
-babel-plugin-fbt@^0.20.0:
+babel-plugin-fbt@^0.20.3:
   version "0.20.3"
   resolved "https://registry.yarnpkg.com/babel-plugin-fbt/-/babel-plugin-fbt-0.20.3.tgz#28436d22c60583ee7e154e3204fe9ea100114d85"
   integrity sha512-SOjM7NKoRTdfx98aotPR5FMtc+0OjjhoN57RQPvNBHEVu4JEidEjrAK2bMFiYg0SyHh12TaAcrmNgvQv7eY89Q==
