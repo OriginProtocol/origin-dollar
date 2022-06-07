@@ -118,9 +118,9 @@ const WrapHomepage = ({
     if (previousSwapMode !== swapMode) {
       localStorage.setItem(lastSelectedSwapModeKey, swapMode)
       if (inputAmount) {
-        const otherCoinAmount = Math.floor(wrapEstimate * 1000000) / 1000000
-        setInputAmount(Math.floor(otherCoinAmount * 100) / 100)
+        setInputAmount(wrapEstimate)
       }
+      setInputAmount(wrapEstimate)
     }
   }, [swapMode])
 
