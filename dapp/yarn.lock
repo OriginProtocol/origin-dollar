@@ -1826,6 +1826,23 @@
     "@ethersproject/properties" "^5.5.0"
     "@ethersproject/strings" "^5.5.0"
 
+"@fbtjs/default-collection-transform@^1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@fbtjs/default-collection-transform/-/default-collection-transform-1.0.0.tgz#4ef941ced57e60eb54916398bc64d3b80e6cc0a4"
+  integrity sha512-FVQMKo3/t8ZQcE56wuL6MhV1Sa46Q6d8VirW0oORXlsxqcNsEb1H4kjYyeF3uwkiMMBwVx+s5VQmgaT3OJ8USg==
+  dependencies:
+    "@babel/core" "^7.0.0"
+    "@babel/generator" "^7.0.0"
+    "@babel/parser" "^7.7.4"
+    "@babel/plugin-syntax-class-properties" "^7.0.0"
+    "@babel/plugin-syntax-flow" "^7.7.4"
+    "@babel/plugin-syntax-jsx" "^7.0.0"
+    "@babel/plugin-syntax-nullish-coalescing-operator" "^7.0.0"
+    "@babel/plugin-syntax-numeric-separator" "^7.2.0"
+    "@babel/plugin-syntax-object-rest-spread" "^7.0.0"
+    "@babel/plugin-syntax-optional-catch-binding" "^7.0.0"
+    "@babel/plugin-syntax-optional-chaining" "^7.0.0"
+
 "@fortawesome/fontawesome-common-types@^0.2.36":
   version "0.2.36"
   resolved "https://registry.yarnpkg.com/@fortawesome/fontawesome-common-types/-/fontawesome-common-types-0.2.36.tgz#b44e52db3b6b20523e0c57ef8c42d315532cb903"
