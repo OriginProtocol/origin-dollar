@@ -62,8 +62,7 @@ const SidePanelInsuranceMessage = () => {
           letter-spacing: normal;
           text-align: center;
           color: white;
-          background-image:
-            radial-gradient(
+          background-image: radial-gradient(
               circle at 50% 19%,
               rgba(255, 255, 255, 0.2),
               rgba(26, 130, 240, 0) 25%

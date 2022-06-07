@@ -58,7 +58,9 @@ const WrappedSidePanel = () => {
         className="primarySidePanel sidepanel-wrapper collapse navbar-collapse"
       >
         <div
-          className={"primary-side-panel d-flex flex-column justify-content-start align-items-center disable-scrollbars"}
+          className={
+            'primary-side-panel d-flex flex-column justify-content-start align-items-center disable-scrollbars'
+          }
         >
           <button
             className="close navbar-toggler d-md-none"
