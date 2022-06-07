@@ -270,7 +270,6 @@ const ApproveSwap = ({
     }
   }
 
-  console.log('lastOverride: ', lastOverride, 'selected: ', selectedSwap?.name)
   return (
     <>
       {visibleConfirmationModal && (
