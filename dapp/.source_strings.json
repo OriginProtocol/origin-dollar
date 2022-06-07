@@ -354,7 +354,7 @@
    "hashToText": {
     "Ahv514gwUx25dg3Q161dng==": "Confirm"
    },
-   "filepath": "src/components/buySell/ConfirmContractPickModal.js",
+   "filepath": "src/components/buySell/ConfirmationModal.js",
    "line_beg": 16,
    "col_beg": 17,
    "line_end": 16,
@@ -368,7 +368,7 @@
    "hashToText": {
     "zczaUg9l/0BMFtE4pXK8mw==": "No"
    },
-   "filepath": "src/components/buySell/ConfirmContractPickModal.js",
+   "filepath": "src/components/buySell/ConfirmationModal.js",
    "line_beg": 24,
    "col_beg": 15,
    "line_end": 24,
@@ -382,7 +382,7 @@
    "hashToText": {
     "mm99y2/glDAdzzInLJzy+Q==": "Yes"
    },
-   "filepath": "src/components/buySell/ConfirmContractPickModal.js",
+   "filepath": "src/components/buySell/ConfirmationModal.js",
    "line_beg": 30,
    "col_beg": 15,
    "line_end": 30,

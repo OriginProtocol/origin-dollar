@@ -7,7 +7,7 @@ import { formatCurrency } from 'utils/math'
 import analytics from 'utils/analytics'
 
 import ContractStore from 'stores/ContractStore'
-import ConfirmContractPickModal from 'components/buySell/ConfirmContractPickModal'
+import ConfirmationModal from 'components/buySell/ConfirmationModal'
 
 const ContractsTable = () => {
   const swapEstimations = useStoreState(ContractStore, (s) => s.swapEstimations)
@@ -147,7 +147,7 @@ const ContractsTable = () => {
     walletActive && (
       <div className="contracts-table">
         {showAlternateRouteModal && (
-          <ConfirmContractPickModal
+          <ConfirmationModal
             onConfirm={() => {
               setConfirmAlternateRoute(true)
               analytics.track('On confirm tx route change', {

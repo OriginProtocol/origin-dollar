@@ -1,7 +1,7 @@
 import React from 'react'
 import { fbt } from 'fbt-runtime'
 
-const ConfirmContractPickModal = ({ onClose, onConfirm, description }) => {
+const ConfirmationModal = ({ onClose, onConfirm, description }) => {
   return (
     <>
       <div className="contract-approve-modal d-flex" onClick={onClose}>
@@ -100,4 +100,4 @@ const ConfirmContractPickModal = ({ onClose, onConfirm, description }) => {
   )
 }
 
-export default ConfirmContractPickModal
+export default ConfirmationModal
