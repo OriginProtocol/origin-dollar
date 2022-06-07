@@ -32,8 +32,8 @@ const SidePanelInsuranceMessage = () => {
           />
           <div>
             {fbt(
-              'Wrapped OUSD appreciates in value at the same rate as regular OUSD earns yield, while the number of tokens in your wallet stays the same.',
-              'Wrapped OUSD appreciates in value at the same rate as regular OUSD earns yield, while the number of tokens in your wallet stays the same.'
+              'Wrapped OUSD is a non-rebasing tokenized vault that appreciates in value instead of growing in number',
+              'Wrapped OUSD is a non-rebasing tokenized vault that appreciates in value instead of growing in number'
             )}
           </div>
           <Link href="https://docs.ousd.com/core-concepts/wrapped-ousd">
@@ -52,8 +52,8 @@ const SidePanelInsuranceMessage = () => {
           position: relative;
           width: 100%;
           border-radius: 5px;
-          background-color: #2c4554;
-          padding: 20px 10px 20px 10px;
+          background-color: #183140;
+          padding: 95px 27px 24px 27px;
           margin-bottom: 10px;
           background-size: contain;
           font-family: Lato;
@@ -62,13 +62,23 @@ const SidePanelInsuranceMessage = () => {
           letter-spacing: normal;
           text-align: center;
           color: white;
-          padding-top: 120px;
+          background-image:
+            radial-gradient(
+              circle at 50% 19%,
+              rgba(255, 255, 255, 0.2),
+              rgba(26, 130, 240, 0) 25%
+            ),
+            radial-gradient(
+              circle at 42% 27.5%,
+              rgba(26, 130, 250, 0.7),
+              rgba(26, 130, 240, 0) 12%
+            );
         }
 
         .wousd-icon {
           position: absolute;
-          height: 100px;
-          top: 10px;
+          height: 65px;
+          top: 15px;
           z-index: 1;
         }
 
