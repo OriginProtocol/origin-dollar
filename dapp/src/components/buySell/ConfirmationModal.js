@@ -1,7 +1,13 @@
 import React from 'react'
 import { fbt } from 'fbt-runtime'
 
-const ConfirmationModal = ({ onClose, onConfirm, description }) => {
+const ConfirmationModal = ({
+  onClose,
+  onConfirm,
+  description,
+  declineBtnText,
+  confirmBtnText,
+}) => {
   return (
     <>
       <div className="contract-approve-modal d-flex" onClick={onClose}>
@@ -21,13 +27,13 @@ const ConfirmationModal = ({ onClose, onConfirm, description }) => {
               className="btn-clear-blue d-flex align-items-center justify-content-center mr-2"
               onClick={onClose}
             >
-              {fbt('No', 'Not confirm')}
+              {declineBtnText}
             </button>
             <button
               className="btn-blue d-flex align-items-center justify-content-center ml-2"
               onClick={onConfirm}
             >
-              {fbt('Yes', 'I confirm')}
+              {confirmBtnText}
             </button>
           </div>
         </div>

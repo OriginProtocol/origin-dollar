@@ -16,7 +16,6 @@ import withIsMobile from 'hoc/withIsMobile'
 import { getUserSource } from 'utils/user'
 import usePrevious from 'utils/usePrevious'
 import ApproveSwap from 'components/buySell/ApproveSwap'
-import { assetRootPath } from 'utils/image'
 import analytics from 'utils/analytics'
 import { formatCurrencyMinMaxDecimals, removeCommas } from '../../utils/math'
 
@@ -384,24 +383,6 @@ const SwapHomepage = ({
           .swap-homepage {
             padding: 23px 20px 20px 20px;
           }
-        }
-        .popup-container {
-          border: solid 2px #e4cf55;
-          padding: 20px 15px 10px 15px;
-          text-align: center;
-          border-radius: 20px;
-          position: relative;
-        }
-        .popup-text {
-          font-size: 14px;
-          color: gray;
-        }
-        .close-x {
-          position: absolute;
-          right: 10px;
-          top: 10px;
-          width: 14px;
-          cursor: pointer;
         }
       `}</style>
     </>

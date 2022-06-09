@@ -195,6 +195,8 @@ const ContractsTable = () => {
                 'transaction route override prompt'
               )
             }
+            declineBtnText={fbt('No', 'Not confirm')}
+            confirmBtnText={fbt('Yes', 'I confirm')}
           />
         )}
         <div className="d-flex flex-column">

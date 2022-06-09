@@ -292,6 +292,8 @@ const ApproveSwap = ({
             })
             startApprovalProcess()
           }}
+          declineBtnText={fbt('No', 'Not confirm')}
+          confirmBtnText={fbt('Go ahead', 'Yes, Go ahead')}
         />
       )}
       <button
