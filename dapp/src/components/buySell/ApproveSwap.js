@@ -301,7 +301,7 @@ const ApproveSwap = ({
         hidden={!approvalNeeded}
         disabled={coinApproved}
         onClick={() => {
-          if (lastOverride !== selectedSwap?.name) {
+          if (lastOverride && lastOverride !== selectedSwap?.name) {
             setVisibleConfirmationModal(true)
           } else {
             startApprovalProcess()
