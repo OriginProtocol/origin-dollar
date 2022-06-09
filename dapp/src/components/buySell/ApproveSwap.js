@@ -25,8 +25,7 @@ const ApproveSwap = ({
   rpcProvider,
   isMobile,
 }) => {
-  const [visibleConfirmationModal, setVisibleConfirmationModal] =
-    useState(false)
+  const [visibleConfirmationModal, setVisibleConfirmationModal] = useState(0)
   const lastOverride = useStoreState(ContractStore, (s) => s.lastOverride)
   const [stage, setStage] = useState('approve')
   const [contract, setContract] = useState(null)
@@ -272,7 +271,7 @@ const ApproveSwap = ({
 
   return (
     <>
-      {visibleConfirmationModal && (
+      {!!visibleConfirmationModal && (
         <ConfirmationModal
           description={fbt(
             'Your contract selection has been changed to ' +
@@ -283,14 +282,14 @@ const ApproveSwap = ({
             'Confirm approval'
           )}
           onClose={() => {
-            setVisibleConfirmationModal(false)
+            setVisibleConfirmationModal(0)
           }}
           onConfirm={() => {
-            setVisibleConfirmationModal(false)
+            setVisibleConfirmationModal(0)
             ContractStore.update((s) => {
               s.lastOverride = selectedSwap?.name
             })
-            startApprovalProcess()
+            visibleConfirmationModal === 1 ? startApprovalProcess() : onSwap()
           }}
           declineBtnText={fbt('No', 'Not confirm')}
           confirmBtnText={fbt('Go ahead', 'Yes, Go ahead')}
@@ -302,7 +301,7 @@ const ApproveSwap = ({
         disabled={coinApproved}
         onClick={() => {
           if (lastOverride && lastOverride !== selectedSwap?.name) {
-            setVisibleConfirmationModal(true)
+            setVisibleConfirmationModal(1)
           } else {
             startApprovalProcess()
           }
@@ -330,7 +329,13 @@ const ApproveSwap = ({
             swappingGloballyDisabled ||
             (needsApproval && !coinApproved)
           }
-          onClick={onSwap}
+          onClick={() => {
+            if (lastOverride && lastOverride !== selectedSwap?.name) {
+              setVisibleConfirmationModal(2)
+            } else {
+              onSwap()
+            }
+          }}
         >
           <SwapMessage
             balanceError={balanceError}
