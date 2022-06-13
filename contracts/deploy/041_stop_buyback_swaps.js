@@ -13,7 +13,7 @@ module.exports = deploymentWithProposal(
       name: "Deploy all new contracts and migrate all funds",
       actions: [
         {
-          // Collect old OGN
+          // Set Uniswap address to 0x0
           contract: cBuyback,
           signature: "setUniswapAddr(address)",
           args: [addresses.zero],
