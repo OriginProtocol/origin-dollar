@@ -10,7 +10,7 @@ module.exports = deploymentWithProposal(
 
     // Governance proposal
     return {
-      name: "Deploy all new contracts and migrate all funds",
+      name: "Pause swaps on buyback contract",
       actions: [
         {
           // Set Uniswap address to 0x0

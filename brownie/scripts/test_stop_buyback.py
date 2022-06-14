@@ -4,7 +4,7 @@ from world import *
 OUSD_BAGS = '0x8e02247d3ee0e6153495c971ffd45aa131f4d7cb'
 ousd.transfer(buyback, ousd.balanceOf(OUSD_BAGS), {'from': OUSD_BAGS})
 
-# cofirm address is set to 0x0
+# confirm address is set to 0x0
 buyback.uniswapAddr()
 preswap_balance = ousd.balanceOf(buyback.address)
 
