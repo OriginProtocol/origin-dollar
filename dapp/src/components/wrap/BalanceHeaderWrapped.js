@@ -268,7 +268,7 @@ const BalanceHeaderWrapped = ({
               title={fbt('Current Value (OUSD)', 'Current Value (OUSD)')}
               value={
                 walletConnected && !isNaN(wousdValue)
-                  ? formatCurrency(parseFloat(wousdValue), 2)
+                  ? formatCurrency(wousdValue, 2)
                   : '--.--'
               }
               type={'number'}
