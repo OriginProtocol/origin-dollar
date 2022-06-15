@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useStoreState } from 'pullstate'
 
-import SidePanelWrapWelcomeMessage from 'components/sidePanel/SidePanelWrapWelcomeMessage'
 import SidePanelStakeMessage from 'components/sidePanel/SidePanelStakeMessage'
 import SidePanelTransactionMessage from 'components/sidePanel/SidePanelTransactionMessage'
 import SidePanelWrapMessage from 'components/sidePanel/SidePanelWrapMessage'
@@ -59,11 +58,9 @@ const WrappedSidePanel = () => {
         className="primarySidePanel sidepanel-wrapper collapse navbar-collapse"
       >
         <div
-          className={`primary-side-panel d-flex flex-column justify-content-start align-items-center disable-scrollbars
-            ${!showingAllContracts && approvalNeeded ? 'h859' : ''}
-            ${showingAllContracts && !approvalNeeded ? 'h988' : ''}
-            ${showingAllContracts && approvalNeeded ? 'h1053' : ''}
-            `}
+          className={
+            'primary-side-panel d-flex flex-column justify-content-start align-items-center disable-scrollbars'
+          }
         >
           <button
             className="close navbar-toggler d-md-none"
@@ -89,7 +86,6 @@ const WrappedSidePanel = () => {
               animate={txHashesToAnimate.includes(tx.hash)}
             />
           ))}
-          <SidePanelWrapWelcomeMessage />
         </div>
       </div>
       <style jsx>{`
@@ -98,29 +94,14 @@ const WrappedSidePanel = () => {
           padding: 10px;
           max-width: 374px;
           min-width: 290px;
-          min-height: 794px;
-          max-height: 794px;
+          min-height: 624px;
+          max-height: 624px;
           border-radius: 10px;
           background-color: #fafbfc;
           border: 1px solid #cdd7e0;
           overflow-y: scroll;
           flex-grow: 1;
           box-shadow: 0 0 14px 0 rgba(24, 49, 64, 0.1);
-        }
-
-        .primary-side-panel.h859 {
-          min-height: 859px;
-          max-height: 859px;
-        }
-
-        .primary-side-panel.h988 {
-          min-height: 988px;
-          max-height: 988px;
-        }
-
-        .primary-side-panel.h1053 {
-          min-height: 1053px;
-          max-height: 1053px;
         }
 
         @media (min-width: 800px) {
