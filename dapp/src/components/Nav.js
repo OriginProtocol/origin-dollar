@@ -144,21 +144,27 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
   return (
     <>
       {!dapp && (
-        <div
-          className={classnames(
-            'banner align-items-center justify-content-center',
-            { dapp }
-          )}
+        <a
+          href={adjustLinkHref('https://analytics.ousd.com/apy')}
+          rel="noopener noreferrer"
+          target="blank"
         >
-          <div className="triangle d-none d-xl-block"></div>
-          {fbt(
-            `Trailing 365-day APY: ${fbt.param(
-              'APY',
-              formatCurrency(apy * 100, 2) + '%'
-            )}`,
-            'Current APY banner'
-          )}
-        </div>
+          <div
+            className={classnames(
+              'banner align-items-center justify-content-center',
+              { dapp }
+            )}
+          >
+            <div className="triangle d-none d-xl-block"></div>
+            {fbt(
+              `Trailing 365-day APY: ${fbt.param(
+                'APY',
+                formatCurrency(apy * 100, 2) + '%'
+              )}`,
+              'Current APY banner'
+            )}
+          </div>
+        </a>
       )}
       <nav
         className={classnames(
@@ -374,7 +380,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
           position: absolute;
           top: -40px;
           width: 100%;
-          z-index: 1;
+          z-index: 3;
           display: flex;
         }
         .banner:not(.dapp) {
