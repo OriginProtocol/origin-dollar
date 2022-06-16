@@ -16,7 +16,6 @@ import withIsMobile from 'hoc/withIsMobile'
 import { getUserSource } from 'utils/user'
 import usePrevious from 'utils/usePrevious'
 import ApproveSwap from 'components/buySell/ApproveSwap'
-
 import analytics from 'utils/analytics'
 import { formatCurrencyMinMaxDecimals, removeCommas } from '../../utils/math'
 

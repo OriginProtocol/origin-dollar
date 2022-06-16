@@ -7,7 +7,7 @@ import { formatCurrency } from 'utils/math'
 import analytics from 'utils/analytics'
 
 import ContractStore from 'stores/ContractStore'
-import ConfirmContractPickModal from 'components/buySell/ConfirmContractPickModal'
+import ConfirmationModal from 'components/buySell/ConfirmationModal'
 
 const ContractsTable = () => {
   const swapEstimations = useStoreState(ContractStore, (s) => s.swapEstimations)
@@ -133,45 +133,90 @@ const ContractsTable = () => {
   const loading = swapEstimations === 'loading'
   const empty = swapEstimations === null
 
+  const setConfirmAlternateRoute = (isConfirmed) => {
+    if (isConfirmed) {
+      setUserSelectedRoute(alternateRouteEstimationSelected.name)
+      ContractStore.update((s) => {
+        s.lastOverride = alternateRouteEstimationSelected.name
+      })
+    }
+    setAlternateTxRouteConfirmed(isConfirmed)
+  }
   return (
-    <div className="contracts-table">
-      {showAlternateRouteModal && (
-        <ConfirmContractPickModal
-          onClose={() => {
-            setShowAlternateRouteModal(false)
-            setAlternateRouteEstimationSelected(null)
-          }}
-          bestEstimation={selectedEstimation}
-          estimationSelected={alternateRouteEstimationSelected}
-          nameMapping={swapContracts}
-          setConfirmAlternateRoute={(isConfirmed) => {
-            if (isConfirmed) {
-              setUserSelectedRoute(alternateRouteEstimationSelected.name)
+      <div className="contracts-table">
+        {showAlternateRouteModal && (
+          <ConfirmationModal
+            onConfirm={() => {
+              setConfirmAlternateRoute(true)
+              analytics.track('On confirm tx route change', {
+                category: 'settings',
+                label: alternateRouteEstimationSelected.name,
+              })
+              setShowAlternateRouteModal(false)
+              setAlternateRouteEstimationSelected(null)
+            }}
+            onClose={() => {
+              setConfirmAlternateRoute(false)
+              analytics.track('On deny tx route change', {
+                category: 'settings',
+                label: alternateRouteEstimationSelected.name,
+              })
+              setShowAlternateRouteModal(false)
+              setAlternateRouteEstimationSelected(null)
+            }}
+            description={
+              fbt(
+                fbt.param(
+                  'selected estimation name',
+                  swapContracts[alternateRouteEstimationSelected.name].name
+                ) +
+                  ' offers -' +
+                  fbt.param(
+                    'selected estimation diff',
+                    formatCurrency(
+                      alternateRouteEstimationSelected.diffPercentage * -1,
+                      2
+                    )
+                  ) +
+                  '% ' +
+                  ' worse price than ' +
+                  fbt.param(
+                    'best estimation name',
+                    swapContracts[selectedEstimation.name].name
+                  ) +
+                  '.',
+                'Selected vs best estimation comparison'
+              ) +
+              ' ' +
+              fbt(
+                'Are you sure you want to override best transaction route?',
+                'transaction route override prompt'
+              )
             }
-
-            setAlternateTxRouteConfirmed(isConfirmed)
-          }}
-        />
-      )}
-      <div className="d-flex flex-column">
-        <div className="contracts-table-top">
-          <div className="title">
-            {empty &&
-              fbt(
-                'Best price will be displayed here',
-                'Best price displayed transaction table'
-              )}
-            {loading &&
-              fbt(
-                'Finding you the best price...',
-                'Finding the best price for your transaction'
-              )}
-            {!empty &&
-              !loading &&
-              fbt(
-                'Best price for your transaction',
-                'Contracts table best price for transaction'
-              )}
+            declineBtnText={fbt('No', 'Not confirm')}
+            confirmBtnText={fbt('Yes', 'I confirm')}
+          />
+        )}
+        <div className="d-flex flex-column">
+          <div className="contracts-table-top">
+            <div className="title">
+              {empty &&
+                fbt(
+                  'Best price will be displayed here',
+                  'Best price displayed transaction table'
+                )}
+              {loading &&
+                fbt(
+                  'Finding you the best price...',
+                  'Finding the best price for your transaction'
+                )}
+              {!empty &&
+                !loading &&
+                fbt(
+                  'Best price for your transaction',
+                  'Contracts table best price for transaction'
+                )}
+            </div>
           </div>
         </div>
         {/* <div className="subtitle"> */}
@@ -277,23 +322,32 @@ const ContractsTable = () => {
                   : formatCurrency(estimation.amountReceived, 2)}
               </div>
               <div
-                title={
-                  approveAllowanceNeeded
-                    ? `${fbt(
-                        `Includes 2 transactions Approve($${fbt.param(
-                          'Approve Cost',
-                          formatCurrency(estimation.gasEstimateApprove, 2)
-                        )}) + Swap($${fbt.param(
-                          'Swap Cost',
-                          formatCurrency(estimation.gasEstimateSwap, 2)
-                        )})`,
-                        'Swap & approve transaction gas estimation'
-                      )}`
-                    : ''
-                }
-                className={`value-cell d-none d-md-block text-right ${
-                  approveAllowanceNeeded ? 'pointer' : ''
-                }`}
+                className={`d-flex content-row ${
+                  isViableOption ? 'clickable' : ''
+                } ${canDoSwap && isSelected ? 'selected' : ''}`}
+                key={swapContract.name}
+                onClick={() => {
+                  if (!isViableOption) {
+                    return
+                  }
+
+                  analytics.track('On tx route change', {
+                    category: 'settings',
+                    label: estimation.name,
+                    value: estimation.isBest ? 1 : 0,
+                  })
+
+                  if (!alternateTxRouteConfirmed) {
+                    setShowAlternateRouteModal(estimation.name)
+                    setAlternateRouteEstimationSelected(estimation)
+                    return
+                  }
+
+                  ContractStore.update((s) => {
+                    s.lastOverride = estimation.name
+                  })
+                  setUserSelectedRoute(estimation.name)
+                }}
               >
                 {loadingOrEmpty || !canDoSwap
                   ? '-'

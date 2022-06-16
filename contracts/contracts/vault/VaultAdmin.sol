@@ -333,6 +333,7 @@ contract VaultAdmin is VaultStorage {
      */
     function priceUSDMint(address asset) external view returns (uint256) {
         uint256 price = IOracle(priceProvider).price(asset);
+        require(price >= MINT_MINIMUM_ORACLE, "Asset price below peg");
         if (price > 1e8) {
             price = 1e8;
         }
