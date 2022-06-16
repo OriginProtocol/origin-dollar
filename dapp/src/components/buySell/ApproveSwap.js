@@ -332,7 +332,11 @@ const ApproveSwap = ({
             balanceError ||
             swappingGloballyDisabled ||
             (needsApproval && !coinApproved) ||
+<<<<<<< HEAD
             !active
+=======
+            !inputAmount
+>>>>>>> 88bebf6b80e815e8624f99f099bb988cdd4110d3
           }
           onClick={() => {
             if (lastOverride && lastOverride !== selectedSwap?.name) {
