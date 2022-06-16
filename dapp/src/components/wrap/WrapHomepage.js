@@ -256,56 +256,56 @@ const WrapHomepage = ({
       {typeof window !== 'undefined' && (
         <>
           <div className="wrap-homepage d-flex flex-column flex-grow">
-        {buyErrorToDisplay && (
-          <ErrorModal
-            error={buyErrorToDisplay}
-            errorMap={errorMap}
-            onClose={() => {
-              setBuyErrorToDisplay(false)
-            }}
-          />
-        )}
-        <WrapOusdPill
-          swapMode={swapMode}
-          onAmountChange={async (amount) => {
-            setInputAmount(amount)
-          }}
-          coinValue={inputAmount}
-          rate={rate}
-          topItem
-          onErrorChange={setBalanceError}
-        />
-        <PillArrow swapMode={swapMode} setSwapMode={setSwapMode} />
-        <WrapOusdPill swapMode={swapMode} wrapEstimate={wrapEstimate} />
-        <ApproveSwap
-          stableCoinToApprove={swapMode === 'mint' ? 'ousd' : 'wousd'}
-          needsApproval={needsApproval}
-          selectedSwap={{ name: 'wousd' }}
-          inputAmount={inputAmount}
-          swapMetadata={swapMetadata()}
-          onSwap={() => onWrapOusd()}
-          allowancesLoaded={allowancesLoaded}
-          onMintingError={onMintingError}
-          balanceError={balanceError}
-          swapsLoaded={true}
-          swappingGloballyDisabled={wrappingGloballyDisabled}
-        />
-      </div>
-      <style jsx>{`
-        .wrap-homepage {
-          margin: 0px -1px -1px -1px;
-          border: solid 1px #cdd7e0;
-          border-radius: 10px;
-          background-color: #fafbfc;
-          min-height: 350px;
-          padding: 35px 40px 40px 40px;
-          position: relative;
-        }
-          
-        @media (max-width: 799px) {
-          .wrap-homepage {
-            padding: 23px 20px 20px 20px;
-          }
+            {buyErrorToDisplay && (
+              <ErrorModal
+                error={buyErrorToDisplay}
+                errorMap={errorMap}
+                onClose={() => {
+                  setBuyErrorToDisplay(false)
+                }}
+              />
+            )}
+            <WrapOusdPill
+              swapMode={swapMode}
+              onAmountChange={async (amount) => {
+                setInputAmount(amount)
+              }}
+              coinValue={inputAmount}
+              rate={rate}
+              topItem
+              onErrorChange={setBalanceError}
+            />
+            <PillArrow swapMode={swapMode} setSwapMode={setSwapMode} />
+            <WrapOusdPill swapMode={swapMode} wrapEstimate={wrapEstimate} />
+            <ApproveSwap
+              stableCoinToApprove={swapMode === 'mint' ? 'ousd' : 'wousd'}
+              needsApproval={needsApproval}
+              selectedSwap={{ name: 'wousd' }}
+              inputAmount={inputAmount}
+              swapMetadata={swapMetadata()}
+              onSwap={() => onWrapOusd()}
+              allowancesLoaded={allowancesLoaded}
+              onMintingError={onMintingError}
+              balanceError={balanceError}
+              swapsLoaded={true}
+              swappingGloballyDisabled={wrappingGloballyDisabled}
+            />
+          </div>
+          <style jsx>{`
+            .wrap-homepage {
+              margin: 0px -1px -1px -1px;
+              border: solid 1px #cdd7e0;
+              border-radius: 10px;
+              background-color: #fafbfc;
+              min-height: 350px;
+              padding: 35px 40px 40px 40px;
+              position: relative;
+            }
+
+            @media (max-width: 799px) {
+              .wrap-homepage {
+                padding: 23px 20px 20px 20px;
+              }
             }
           `}</style>
         </>
