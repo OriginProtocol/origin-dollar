@@ -119,8 +119,10 @@ const WrapHomepage = ({
     // currencies flipped
     if (previousSwapMode !== swapMode) {
       localStorage.setItem(lastSelectedSwapModeKey, swapMode)
-      const otherCoinAmount = Math.floor(wrapEstimate * 1000000) / 1000000
-      setInputAmount(Math.floor(otherCoinAmount * 100) / 100)
+      if (inputAmount) {
+        setInputAmount(wrapEstimate)
+      }
+      setInputAmount(wrapEstimate)
     }
   }, [swapMode])
 
@@ -279,6 +281,7 @@ const WrapHomepage = ({
               stableCoinToApprove={swapMode === 'mint' ? 'ousd' : 'wousd'}
               needsApproval={needsApproval}
               selectedSwap={{ name: 'wousd' }}
+              inputAmount={inputAmount}
               swapMetadata={swapMetadata()}
               onSwap={() => onWrapOusd()}
               allowancesLoaded={allowancesLoaded}
@@ -298,7 +301,6 @@ const WrapHomepage = ({
               padding: 35px 40px 40px 40px;
               position: relative;
             }
-
             @media (max-width: 799px) {
               .wrap-homepage {
                 padding: 23px 20px 20px 20px;
