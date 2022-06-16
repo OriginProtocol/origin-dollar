@@ -309,6 +309,9 @@ const ContractsTable = () => {
                   return
                 }
 
+                ContractStore.update((s) => {
+                  s.lastOverride = estimation.name
+                })
                 setUserSelectedRoute(estimation.name)
               }}
             >
@@ -321,32 +324,23 @@ const ContractsTable = () => {
                   : formatCurrency(estimation.amountReceived, 2)}
               </div>
               <div
-                className={`d-flex content-row ${
-                  isViableOption ? 'clickable' : ''
-                } ${canDoSwap && isSelected ? 'selected' : ''}`}
-                key={swapContract.name}
-                onClick={() => {
-                  if (!isViableOption) {
-                    return
-                  }
-
-                  analytics.track('On tx route change', {
-                    category: 'settings',
-                    label: estimation.name,
-                    value: estimation.isBest ? 1 : 0,
-                  })
-
-                  if (!alternateTxRouteConfirmed) {
-                    setShowAlternateRouteModal(estimation.name)
-                    setAlternateRouteEstimationSelected(estimation)
-                    return
-                  }
-
-                  ContractStore.update((s) => {
-                    s.lastOverride = estimation.name
-                  })
-                  setUserSelectedRoute(estimation.name)
-                }}
+                title={
+                  approveAllowanceNeeded
+                    ? `${fbt(
+                        `Includes 2 transactions Approve($${fbt.param(
+                          'Approve Cost',
+                          formatCurrency(estimation.gasEstimateApprove, 2)
+                        )}) + Swap($${fbt.param(
+                          'Swap Cost',
+                          formatCurrency(estimation.gasEstimateSwap, 2)
+                        )})`,
+                        'Swap & approve transaction gas estimation'
+                      )}`
+                    : ''
+                }
+                className={`value-cell d-none d-md-block text-right ${
+                  approveAllowanceNeeded ? 'pointer' : ''
+                }`}
               >
                 {loadingOrEmpty || !canDoSwap
                   ? '-'
