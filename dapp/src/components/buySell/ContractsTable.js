@@ -19,6 +19,7 @@ const ContractsTable = () => {
     setAlternateRouteEstimationSelected,
   ] = useState(null)
   const [showAllContracts, setShowAllContracts] = useState(false)
+  const { active } = useWeb3React()
 
   const swapContracts = {
     flipper: {
@@ -284,7 +285,7 @@ const ContractsTable = () => {
             canDoSwap &&
             (userSelectionExists ? estimation.userSelected : estimation.isBest)
           const isViableOption =
-            canDoSwap && numberOfCanDoSwaps > 1 && !isSelected
+            canDoSwap && numberOfCanDoSwaps > 1 && !isSelected && active
 
           return (
             <div
