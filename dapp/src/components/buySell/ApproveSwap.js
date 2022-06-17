@@ -7,11 +7,13 @@ import analytics from 'utils/analytics'
 import withRpcProvider from 'hoc/withRpcProvider'
 import { ethers } from 'ethers'
 import withIsMobile from 'hoc/withIsMobile'
+import ConfirmationModal from './ConfirmationModal'
 
 const ApproveSwap = ({
   stableCoinToApprove,
   needsApproval,
   selectedSwap,
+  inputAmount,
   swapMetadata,
   onSwap,
   allowancesLoaded,
@@ -24,6 +26,8 @@ const ApproveSwap = ({
   rpcProvider,
   isMobile,
 }) => {
+  const [visibleConfirmationModal, setVisibleConfirmationModal] = useState(0)
+  const lastOverride = useStoreState(ContractStore, (s) => s.lastOverride)
   const [stage, setStage] = useState('approve')
   const [contract, setContract] = useState(null)
   const [isApproving, setIsApproving] = useState({})
@@ -214,61 +218,93 @@ const ApproveSwap = ({
     }
   }
 
+  const startApprovalProcess = async () => {
+    if (stage === 'approve' && contract) {
+      analytics.track('On Approve Coin', {
+        category: isWrapped ? 'wrap' : 'swap',
+        label: swapMetadata.coinGiven,
+        value: parseInt(swapMetadata.swapAmount),
+      })
+      setStage('waiting-user')
+      try {
+        const result = await contract
+          .connect(library.getSigner(account))
+          .approve(
+            routeConfig[needsApproval].contract.address,
+            ethers.constants.MaxUint256
+          )
+        storeTransaction(
+          result,
+          isWrapped ? 'approveWrap' : 'approve',
+          stableCoinToApprove
+        )
+        setStage('waiting-network')
+        setIsApproving({
+          contract: needsApproval,
+          coin: stableCoinToApprove,
+        })
+        const receipt = await rpcProvider.waitForTransaction(result.hash)
+        analytics.track('Approval Successful', {
+          category: 'swap',
+          label: swapMetadata.coinGiven,
+          value: parseInt(swapMetadata.swapAmount),
+        })
+        setIsApproving({})
+        setStage('done')
+      } catch (e) {
+        onMintingError(e)
+        console.error('Exception happened: ', e)
+        setStage('approve')
+        if (e.code !== 4001) {
+          await storeTransactionError('approve', stableCoinToApprove)
+          analytics.track(`Approval failed`, {
+            category: isWrapped ? 'wrap' : 'swap',
+            label: e.message,
+          })
+        } else {
+          analytics.track(`Approval canceled`, {
+            category: isWrapped ? 'wrap' : 'swap',
+          })
+        }
+      }
+    }
+  }
+
   return (
     <>
+      {!!visibleConfirmationModal && (
+        <ConfirmationModal
+          description={fbt(
+            'Your contract selection has been changed to ' +
+              fbt.param('new contract name', selectedSwap?.name) +
+              '. If you want your transaction to be routed through ' +
+              fbt.param('abandoned contract name', lastOverride) +
+              ', you can go back and override it. Do you want to continue with the default selection?',
+            'Confirm approval'
+          )}
+          onClose={() => {
+            setVisibleConfirmationModal(0)
+          }}
+          onConfirm={() => {
+            setVisibleConfirmationModal(0)
+            ContractStore.update((s) => {
+              s.lastOverride = selectedSwap?.name
+            })
+            visibleConfirmationModal === 1 ? startApprovalProcess() : onSwap()
+          }}
+          declineBtnText={fbt('No', 'Not confirm')}
+          confirmBtnText={fbt('Go ahead', 'Yes, Go ahead')}
+        />
+      )}
       <button
         className={`btn-blue buy-button mt-4 mt-md-3 w-100`}
         hidden={!approvalNeeded}
         disabled={coinApproved}
-        onClick={async () => {
-          if (stage === 'approve' && contract) {
-            analytics.track('On Approve Coin', {
-              category: isWrapped ? 'wrap' : 'swap',
-              label: swapMetadata.coinGiven,
-              value: parseInt(swapMetadata.swapAmount),
-            })
-            setStage('waiting-user')
-            try {
-              const result = await contract
-                .connect(library.getSigner(account))
-                .approve(
-                  routeConfig[needsApproval].contract.address,
-                  ethers.constants.MaxUint256
-                )
-              storeTransaction(
-                result,
-                isWrapped ? 'approveWrap' : 'approve',
-                stableCoinToApprove
-              )
-              setStage('waiting-network')
-              setIsApproving({
-                contract: needsApproval,
-                coin: stableCoinToApprove,
-              })
-              const receipt = await rpcProvider.waitForTransaction(result.hash)
-              analytics.track('Approval Successful', {
-                category: 'swap',
-                label: swapMetadata.coinGiven,
-                value: parseInt(swapMetadata.swapAmount),
-              })
-              setIsApproving({})
-              setStage('done')
-            } catch (e) {
-              onMintingError(e)
-              console.error('Exception happened: ', e)
-              setStage('approve')
-              if (e.code !== 4001) {
-                await storeTransactionError('approve', stableCoinToApprove)
-                analytics.track(`Approval failed`, {
-                  category: isWrapped ? 'wrap' : 'swap',
-                  label: e.message,
-                })
-              } else {
-                analytics.track(`Approval canceled`, {
-                  category: isWrapped ? 'wrap' : 'swap',
-                })
-              }
-            }
+        onClick={() => {
+          if (lastOverride && lastOverride !== selectedSwap?.name) {
+            setVisibleConfirmationModal(1)
+          } else {
+            startApprovalProcess()
           }
         }}
       >
@@ -292,9 +328,16 @@ const ApproveSwap = ({
             !selectedSwap ||
             balanceError ||
             swappingGloballyDisabled ||
-            (needsApproval && !coinApproved)
+            (needsApproval && !coinApproved) ||
+            !inputAmount
           }
-          onClick={onSwap}
+          onClick={() => {
+            if (lastOverride && lastOverride !== selectedSwap?.name) {
+              setVisibleConfirmationModal(2)
+            } else {
+              onSwap()
+            }
+          }}
         >
           <SwapMessage
             balanceError={balanceError}

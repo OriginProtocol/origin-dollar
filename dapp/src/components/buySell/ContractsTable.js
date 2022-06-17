@@ -7,7 +7,7 @@ import { formatCurrency } from 'utils/math'
 import analytics from 'utils/analytics'
 
 import ContractStore from 'stores/ContractStore'
-import ConfirmContractPickModal from 'components/buySell/ConfirmContractPickModal'
+import ConfirmationModal from 'components/buySell/ConfirmationModal'
 
 const ContractsTable = () => {
   const swapEstimations = useStoreState(ContractStore, (s) => s.swapEstimations)
@@ -134,25 +134,69 @@ const ContractsTable = () => {
   const loading = swapEstimations === 'loading'
   const empty = swapEstimations === null
 
+  const setConfirmAlternateRoute = (isConfirmed) => {
+    if (isConfirmed) {
+      setUserSelectedRoute(alternateRouteEstimationSelected.name)
+      ContractStore.update((s) => {
+        s.lastOverride = alternateRouteEstimationSelected.name
+      })
+    }
+    setAlternateTxRouteConfirmed(isConfirmed)
+  }
   return (
     walletActive && (
       <div className="contracts-table">
         {showAlternateRouteModal && (
-          <ConfirmContractPickModal
-            onClose={() => {
+          <ConfirmationModal
+            onConfirm={() => {
+              setConfirmAlternateRoute(true)
+              analytics.track('On confirm tx route change', {
+                category: 'settings',
+                label: alternateRouteEstimationSelected.name,
+              })
               setShowAlternateRouteModal(false)
               setAlternateRouteEstimationSelected(null)
             }}
-            bestEstimation={selectedEstimation}
-            estimationSelected={alternateRouteEstimationSelected}
-            nameMapping={swapContracts}
-            setConfirmAlternateRoute={(isConfirmed) => {
-              if (isConfirmed) {
-                setUserSelectedRoute(alternateRouteEstimationSelected.name)
-              }
-
-              setAlternateTxRouteConfirmed(isConfirmed)
+            onClose={() => {
+              setConfirmAlternateRoute(false)
+              analytics.track('On deny tx route change', {
+                category: 'settings',
+                label: alternateRouteEstimationSelected.name,
+              })
+              setShowAlternateRouteModal(false)
+              setAlternateRouteEstimationSelected(null)
             }}
+            description={
+              fbt(
+                fbt.param(
+                  'selected estimation name',
+                  swapContracts[alternateRouteEstimationSelected.name].name
+                ) +
+                  ' offers -' +
+                  fbt.param(
+                    'selected estimation diff',
+                    formatCurrency(
+                      alternateRouteEstimationSelected.diffPercentage * -1,
+                      2
+                    )
+                  ) +
+                  '% ' +
+                  ' worse price than ' +
+                  fbt.param(
+                    'best estimation name',
+                    swapContracts[selectedEstimation.name].name
+                  ) +
+                  '.',
+                'Selected vs best estimation comparison'
+              ) +
+              ' ' +
+              fbt(
+                'Are you sure you want to override best transaction route?',
+                'transaction route override prompt'
+              )
+            }
+            declineBtnText={fbt('No', 'Not confirm')}
+            confirmBtnText={fbt('Yes', 'I confirm')}
           />
         )}
         <div className="d-flex flex-column">
@@ -272,6 +316,9 @@ const ContractsTable = () => {
                     return
                   }
 
+                  ContractStore.update((s) => {
+                    s.lastOverride = estimation.name
+                  })
                   setUserSelectedRoute(estimation.name)
                 }}
               >
