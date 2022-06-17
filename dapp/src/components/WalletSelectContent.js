@@ -16,6 +16,9 @@ import { assetRootPath } from 'utils/image'
 const WalletSelectContent = ({ isMobile }) => {
   const { connector, activate, deactivate, active } = useWeb3React()
   const [error, setError] = useState(null)
+  const wallets = isMobile
+    ? ['WalletConnect', 'CoinbaseWallet', 'MyEtherWallet', 'MetaMask', 'Ledger']
+    : ['MetaMask', 'Ledger', 'CoinbaseWallet', 'WalletConnect', 'MyEtherWallet']
 
   useEffect(() => {
     if (active) {
@@ -104,13 +107,7 @@ const WalletSelectContent = ({ isMobile }) => {
             'Connect a wallet to get started'
           )}
         </h2>
-        {[
-          'MetaMask',
-          'Ledger',
-          'CoinbaseWallet',
-          'WalletConnect',
-          'MyEtherWallet',
-        ].map((name) => {
+        {wallets.map((name) => {
           return (
             <button
               key={name}
