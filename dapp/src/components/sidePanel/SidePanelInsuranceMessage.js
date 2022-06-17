@@ -53,7 +53,7 @@ const SidePanelInsuranceMessage = () => {
           width: 100%;
           border-radius: 5px;
           background-color: #183140;
-          padding: 20px 25px 24px 25px;
+          padding: 120px 25px 24px 25px;
           margin-bottom: 10px;
           background-size: contain;
           font-family: Lato;
@@ -62,7 +62,6 @@ const SidePanelInsuranceMessage = () => {
           letter-spacing: normal;
           text-align: center;
           color: white;
-          padding-top: 120px;
         }
 
         .insurance-icon {
