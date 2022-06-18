@@ -29,8 +29,8 @@ export default function Governance({ locale, onLocale }) {
           </h3>
           <p className="m-auto w-lg-520">
             {fbt(
-              'Governance privileges and incentives will be given to users that create value for the OUSD platform',
-              'Governance privileges and incentives will be given to users that create value for the OUSD platform'
+              'Governance privileges and incentives will be given to supporters who create value for the protocol',
+              'Governance privileges and incentives will be given to supporters who create value for the protocol'
             )}
           </p>
           <div className="row px-5 d-flex flex-column flex-lg-row">
@@ -56,7 +56,7 @@ export default function Governance({ locale, onLocale }) {
                 />
               </div>
               <div className="action">
-                {fbt('Supply liquidity', 'Supply liquidity')}
+                {fbt('Supply liquidity on Curve', 'Supply liquidity on Curve')}
               </div>
             </div>
             <div className="col col-lg-4">
@@ -66,7 +66,7 @@ export default function Governance({ locale, onLocale }) {
                   alt="Origin Token (OGN) icon"
                 />
               </div>
-              <div className="action">{fbt('Stake OGN', 'Stake OGN')}</div>
+              <div className="action">{fbt('Hodl OGN', 'Hodl OGN')}</div>
             </div>
           </div>
         </div>
@@ -99,8 +99,8 @@ export default function Governance({ locale, onLocale }) {
                 </div>
                 <div className="">
                   {fbt(
-                    'Join our Discord to share proposals, provide feedback, get pointers on how to contribute, and shape the future of the protocol with OUSD community.',
-                    'Join our Discord to share proposals, provide feedback, get pointers on how to contribute, and shape the future of the protocol with OUSD community.'
+                    'Join our Discord to share proposals, provide feedback, contribute, and shape the future of digital money.',
+                    'Join our Discord to share proposals, provide feedback, contribute, and shape the future of digital money.'
                   )}
                 </div>
               </div>
@@ -122,8 +122,8 @@ export default function Governance({ locale, onLocale }) {
                 </div>
                 <div className="">
                   {fbt(
-                    'Explore the source code and inspect in detail how OUSD functions or clone the project if you want to contribute.',
-                    'Explore the source code and inspect in detail how OUSD functions or clone the project if you want to contribute.'
+                    'Explore the source code and inspect how OUSD functions or clone the project and contribute to its development.',
+                    'Explore the source code and inspect how OUSD functions or clone the project and contribute to its development.'
                   )}
                 </div>
               </div>
@@ -145,8 +145,8 @@ export default function Governance({ locale, onLocale }) {
                 </div>
                 <div className="">
                   {fbt(
-                    'Off chain voting interface where users can express their sentiment on various proposals.',
-                    'Off chain voting interface where users can express their sentiment on various proposals.'
+                    'Create or vote on proposals using our gasless, off-chain governance forum.',
+                    'Create or vote on proposals using our gasless, off-chain governance forum.'
                   )}
                 </div>
               </div>
