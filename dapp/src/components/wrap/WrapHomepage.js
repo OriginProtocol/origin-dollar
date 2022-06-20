@@ -117,6 +117,9 @@ const WrapHomepage = ({
     // currencies flipped
     if (previousSwapMode !== swapMode) {
       localStorage.setItem(lastSelectedSwapModeKey, swapMode)
+      if (inputAmount) {
+        setInputAmount(wrapEstimate)
+      }
       setInputAmount(wrapEstimate)
     }
   }, [swapMode])
@@ -274,6 +277,7 @@ const WrapHomepage = ({
           stableCoinToApprove={swapMode === 'mint' ? 'ousd' : 'wousd'}
           needsApproval={needsApproval}
           selectedSwap={{ name: 'wousd' }}
+          inputAmount={inputAmount}
           swapMetadata={swapMetadata()}
           onSwap={() => onWrapOusd()}
           allowancesLoaded={allowancesLoaded}
