@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useStoreState } from 'pullstate'
 import { fbt } from 'fbt-runtime'
+import { useWeb3React } from '@web3-react/core'
 
 import AccountStore from 'stores/AccountStore'
 import {
@@ -102,6 +103,7 @@ const WrapOusdPill = ({
 }) => {
   const coinBalances = useStoreState(AccountStore, (s) => s.balances)
   const [error, setError] = useState(null)
+  const { active } = useWeb3React()
 
   const bottomItem = !topItem
 
@@ -122,7 +124,9 @@ const WrapOusdPill = ({
     const roundTo2Decimals = (value) => {
       return formatCurrency(parseFloat(value), 2)
     }
-    if (showOusd) {
+    if (!active) {
+      return null
+    } else if (showOusd) {
       return {
         coin: 'ousd',
         balance: roundTo2Decimals(coinBalances.ousd),
