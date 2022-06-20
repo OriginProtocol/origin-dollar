@@ -130,18 +130,11 @@ const useSwapEstimator = ({
      * the contracts with alchemy provider instead of Metamask one. When estimations are ran with that
      * setup, half of the estimations fail with an error.
      */
-    if (!walletConnected) {
-      return
-    }
 
     /*
      * When function is triggered because of a non user change in gas price, ignore the trigger.
      */
     if (!isGasPriceUserOverriden && previousGasPrice !== gasPrice) {
-      return
-    }
-
-    if (!allowancesLoaded) {
       return
     }
 
@@ -381,8 +374,9 @@ const useSwapEstimator = ({
       }
     }
 
-    const approveAllowanceNeeded =
-      parseFloat(allowances[coinToSwap].flipper) === 0
+    const approveAllowanceNeeded = allowancesLoaded
+      ? parseFloat(allowances[coinToSwap].flipper) === 0
+      : true
     const swapGasUsage = 90000
     const approveGasUsage = approveAllowanceNeeded
       ? gasLimitForApprovingCoin(coinToSwap)
@@ -417,8 +411,9 @@ const useSwapEstimator = ({
         isRedeem ? coinToReceiveDecimals : 18
       )
 
-      const approveAllowanceNeeded =
-        parseFloat(allowances[coinToSwap].curve) === 0
+      const approveAllowanceNeeded = allowancesLoaded
+        ? parseFloat(allowances[coinToSwap].curve) === 0
+        : true
 
       /* Check if Curve router has allowance to spend coin. If not we can not run gas estimation and need
        * to guess the gas usage.
@@ -517,8 +512,11 @@ const useSwapEstimator = ({
        *
        * We don't check if positive amount is large enough: since we always approve max_int allowance.
        */
-      const requiredAllowance =
-        allowances[coinToSwap][isSushiSwap ? 'sushiRouter' : 'uniswapV2Router']
+      const requiredAllowance = allowancesLoaded
+        ? allowances[coinToSwap][
+            isSushiSwap ? 'sushiRouter' : 'uniswapV2Router'
+          ]
+        : 0
 
       if (requiredAllowance === undefined) {
         throw new Error('Can not find correct allowance for coin')
@@ -646,11 +644,13 @@ const useSwapEstimator = ({
        * We don't check if positive amount is large enough: since we always approve max_int allowance.
        */
       if (
+        !allowancesLoaded ||
         parseFloat(allowances[coinToSwap].uniswapV3Router) === 0 ||
         !userHasEnoughStablecoin(coinToSwap, parseFloat(inputAmountRaw))
       ) {
-        const approveAllowanceNeeded =
-          parseFloat(allowances[coinToSwap].uniswapV3Router) === 0
+        const approveAllowanceNeeded = allowancesLoaded
+          ? parseFloat(allowances[coinToSwap].uniswapV3Router) === 0
+          : true
         const approveGasUsage = approveAllowanceNeeded
           ? gasLimitForApprovingCoin(coinToSwap)
           : 0
@@ -728,8 +728,9 @@ const useSwapEstimator = ({
       const amountReceived =
         amount * parseFloat(ethers.utils.formatUnits(oracleCoinPrice, 18))
 
-      const approveAllowanceNeeded =
-        parseFloat(allowances[coinToSwap].vault) === 0
+      const approveAllowanceNeeded = allowancesLoaded
+        ? parseFloat(allowances[coinToSwap].vault) === 0
+        : true
       // Check if Vault has allowance to spend coin.
       if (
         approveAllowanceNeeded ||
