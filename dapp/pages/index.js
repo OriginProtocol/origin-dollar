@@ -614,7 +614,7 @@ const Home = ({ locale, onLocale }) => {
           font-family: Poppins;
           font-size: 4rem;
           font-weight: 500;
-          margin-top: 206px;
+          margin-top: 310px;
         }
 
         h1 {
@@ -1067,6 +1067,10 @@ const Home = ({ locale, onLocale }) => {
 
           .info-box-holder {
             margin-bottom: 40px;
+          }
+
+          .ticker-symbol {
+            margin-top: 270px;
           }
         }
 
