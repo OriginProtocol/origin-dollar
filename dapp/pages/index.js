@@ -371,7 +371,7 @@ const Home = ({ locale, onLocale }) => {
           </div>
         </div>
       </section>
-      <section className="dark pb-100 work-in-progress">
+      <section className="light pb-100 work-in-progress">
         <div className="container">
           <div className="text-container text-center d-flex flex-column align-items-center">
             <h5>{fbt('Security first', 'Security first')}</h5>
@@ -381,7 +381,7 @@ const Home = ({ locale, onLocale }) => {
                 'Security proclamation'
               )}
             </p>
-            <div className="d-flex justify-content-center flex-wrap">
+            <div className="d-flex justify-content-center flex-wrap mb-4">
               <div
                 className="info-box-holder d-flex flex-column"
                 onClick={() => {
@@ -439,7 +439,7 @@ const Home = ({ locale, onLocale }) => {
                 <div>{fbt('OpenZeppelin', 'OpenZeppelin')}</div>
               </div>
             </div>
-            <div className="d-flex justify-content-center flex-wrap">
+            <div className="d-flex justify-content-center flex-wrap mt-4">
               <div
                 className="info-box-holder d-flex flex-column align-items-center"
                 onClick={() => {
@@ -831,7 +831,6 @@ const Home = ({ locale, onLocale }) => {
         }
 
         .info-box {
-          background-color: #eeeeee;
           border-radius: 10px;
           min-height: 170px;
           min-width: 170px;

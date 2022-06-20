@@ -33,48 +33,42 @@ export default function Governance({ locale, onLocale }) {
               'Governance privileges and incentives will be given to supporters who create value for the protocol'
             )}
           </p>
-          <div className="row px-5 d-flex flex-column flex-lg-row">
-            <div className="col col-lg-4">
-              <div className="image-container">
-                <img
-                  src={assetRootPath('/images/convert-icon.svg')}
-                  alt="Token conversion icon"
-                />
-              </div>
-              <div className="action">
-                {fbt(
-                  'Convert stablecoins to OUSD',
-                  'Convert stablecoins to OUSD'
-                )}
-              </div>
+          <div className="row px-5 d-flex flex-column">
+            <div className="image-container">
+              <img
+                src={assetRootPath('/images/convert-icon.svg')}
+                alt="Token conversion icon"
+              />
             </div>
-            <div className="col col-lg-4">
-              <div className="image-container">
-                <img
-                  src={assetRootPath('/images/liquidity-icon.svg')}
-                  alt="Liquidity supply icon"
-                />
-              </div>
-              <div className="action">
-                {fbt('Supply liquidity on Curve', 'Supply liquidity on Curve')}
-              </div>
+            <div className="action">
+              {fbt(
+                'Convert stablecoins to OUSD',
+                'Convert stablecoins to OUSD'
+              )}
             </div>
-            <div className="col col-lg-4">
-              <div className="image-container">
-                <img
-                  src={assetRootPath('/images/ogn-icon.svg')}
-                  alt="Origin Token (OGN) icon"
-                />
-              </div>
-              <div className="action">{fbt('Hodl OGN', 'Hodl OGN')}</div>
+            <div className="image-container">
+              <img
+                src={assetRootPath('/images/liquidity-icon.svg')}
+                alt="Liquidity supply icon"
+              />
             </div>
+            <div className="action">
+              {fbt('Supply liquidity on Curve', 'Supply liquidity on Curve')}
+            </div>
+            <div className="image-container">
+              <img
+                src={assetRootPath('/images/ogn-icon.svg')}
+                alt="Origin Token (OGN) icon"
+              />
+            </div>
+            <div className="action">{fbt('Hodl OGN', 'Hodl OGN')}</div>
           </div>
         </div>
       </section>
       <section className="dark pb-100 work-in-progress px-0">
         <div className="container">
           <div className="text-container d-flex flex-column align-items-start">
-            <h5 className="mb-5">
+            <h5 className="mb-5 mx-auto">
               {fbt(
                 'Help shape the future of OUSD',
                 'Help shape the future of OUSD'
