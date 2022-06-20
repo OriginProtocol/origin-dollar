@@ -176,15 +176,6 @@ export default function Earn({ locale, onLocale }) {
           </div>
         </div>
       </header>
-      <section className="bonus">
-        <div className="container text-center px-lg-0">
-          <img
-            src={assetRootPath('/images/yield-4-icon-small.svg')}
-            alt="Origin rewards tokens"
-            className="d-block d-lg-inline mb-3 mb-lg-0 mx-auto mr-lg-3"
-          />
-        </div>
-      </section>
       <section className="light">
         <div className="container text-center text-lg-left px-lg-0">
           <div className="row">
@@ -461,21 +452,6 @@ export default function Earn({ locale, onLocale }) {
 
         .source img {
           max-height: 100%;
-        }
-
-        .bonus {
-          background-color: #2f424e;
-          font-size: 1.125rem;
-          line-height: 1.06;
-          padding: 25px 0;
-          text-align: center;
-          opacity: 0.8;
-        }
-
-        .bonus .label {
-          font-size: 0.8125rem;
-          line-height: 1.85;
-          opacity: 0.8;
         }
 
         h3 {
