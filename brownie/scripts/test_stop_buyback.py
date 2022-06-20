@@ -8,11 +8,12 @@ ousd.transfer(buyback, ousd.balanceOf(OUSD_BAGS), {'from': OUSD_BAGS})
 buyback.uniswapAddr()
 preswap_balance = ousd.balanceOf(buyback.address)
 
-print("Buyback account has: " + c18(preswap_balance) + " OUSD pre swap")
-buyback.swap({'from': vault_core})
-postswap_balance = ousd.balanceOf(buyback.address)
-print("Buyback account has: " + c18(postswap_balance) + " OUSD post swap")
-if (preswap_balance == postswap_balance):
-	print("SUCCESS!")
-else:
-	print("FAIL!")
+def main():
+	print("Buyback account has: " + c18(preswap_balance) + " OUSD pre swap")
+	buyback.swap({'from': vault_core})
+	postswap_balance = ousd.balanceOf(buyback.address)
+	print("Buyback account has: " + c18(postswap_balance) + " OUSD post swap")
+	if (preswap_balance == postswap_balance):
+		print("SUCCESS!")
+	else:
+		print("FAIL!")
