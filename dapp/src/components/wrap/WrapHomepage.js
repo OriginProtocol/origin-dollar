@@ -40,9 +40,7 @@ const WrapHomepage = ({
 }) => {
   // mint / redeem
   const [swapMode, setSwapMode] = useState(
-    typeof window !== 'undefined'
-      ? localStorage.getItem(lastSelectedSwapModeKey)
-      : 'mint'
+    process.browser ? localStorage.getItem(lastSelectedSwapModeKey) : 'mint'
   )
   const previousSwapMode = usePrevious(swapMode)
   const [buyErrorToDisplay, setBuyErrorToDisplay] = useState(false)
@@ -253,7 +251,7 @@ const WrapHomepage = ({
 
   return (
     <>
-      {typeof window !== 'undefined' && (
+      {process.browser && (
         <>
           <div className="wrap-homepage d-flex flex-column flex-grow">
             {buyErrorToDisplay && (

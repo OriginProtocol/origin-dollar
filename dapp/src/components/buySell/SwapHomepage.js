@@ -39,17 +39,14 @@ const SwapHomepage = ({
 
   // mint / redeem
   const [swapMode, setSwapMode] = useState(
-    typeof window !== 'undefined'
-      ? localStorage.getItem(lastSelectedSwapModeKey)
-      : 'mint'
+    process.browser ? localStorage.getItem(lastSelectedSwapModeKey) : 'mint'
   )
   const previousSwapMode = usePrevious(swapMode)
   const [buyErrorToDisplay, setBuyErrorToDisplay] = useState(false)
 
-  const storedSelectedCoin =
-    typeof window !== 'undefined'
-      ? localStorage.getItem(lastUserSelectedCoinKey)
-      : 'dai'
+  const storedSelectedCoin = process.browser
+    ? localStorage.getItem(lastUserSelectedCoinKey)
+    : 'dai'
   // Just in case inconsistent state happens where selected coin is mix and mode mint, reset selected coin to dai
   const defaultSelectedCoinValue =
     (storedSelectedCoin === 'mix' && swapMode === 'mint'
@@ -119,10 +116,9 @@ const SwapHomepage = ({
   )
 
   useEffect(() => {
-    let lastUserSelectedCoin =
-      typeof window !== 'undefined'
-        ? localStorage.getItem(lastUserSelectedCoinKey)
-        : null
+    let lastUserSelectedCoin = process.browser
+      ? localStorage.getItem(lastUserSelectedCoinKey)
+      : null
 
     if (swapMode === 'mint') {
       setSelectedRedeemCoin('ousd')
@@ -324,7 +320,7 @@ const SwapHomepage = ({
 
   return (
     <>
-      {typeof window !== 'undefined' && (
+      {process.browser && (
         <>
           <div className="swap-homepage d-flex flex-column flex-grow">
             <SettingsDropdown
