@@ -332,9 +332,10 @@ const ApproveSwap = ({
           className={`btn-blue buy-button mt-2 mt-md-0 w-100`}
           disabled={
             (!selectedSwap ||
-            balanceError ||
-            swappingGloballyDisabled ||
-            (needsApproval && !coinApproved)) && active
+              balanceError ||
+              swappingGloballyDisabled ||
+              (needsApproval && !coinApproved)) &&
+            active
           }
           onClick={() => {
             if (!active) {
