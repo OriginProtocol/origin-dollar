@@ -8,6 +8,8 @@ import withRpcProvider from 'hoc/withRpcProvider'
 import { ethers } from 'ethers'
 import withIsMobile from 'hoc/withIsMobile'
 import ConfirmationModal from './ConfirmationModal'
+import withWalletSelectModal from 'hoc/withWalletSelectModal'
+import { walletLogin } from 'utils/account'
 
 const ApproveSwap = ({
   stableCoinToApprove,
@@ -25,6 +27,7 @@ const ApproveSwap = ({
   storeTransactionError,
   rpcProvider,
   isMobile,
+  showLogin,
 }) => {
   const [visibleConfirmationModal, setVisibleConfirmationModal] = useState(0)
   const lastOverride = useStoreState(ContractStore, (s) => s.lastOverride)
@@ -32,7 +35,7 @@ const ApproveSwap = ({
   const [contract, setContract] = useState(null)
   const [isApproving, setIsApproving] = useState({})
   const web3react = useWeb3React()
-  const { library, account, active } = web3react
+  const { library, account, activate, active } = web3react
   const coinApproved = stage === 'done'
   const isWrapped =
     selectedSwap &&
@@ -328,14 +331,15 @@ const ApproveSwap = ({
         <button
           className={`btn-blue buy-button mt-2 mt-md-0 w-100`}
           disabled={
-            !selectedSwap ||
+            (!selectedSwap ||
             balanceError ||
             swappingGloballyDisabled ||
-            (needsApproval && !coinApproved) ||
-            !active
+            (needsApproval && !coinApproved)) && active
           }
           onClick={() => {
-            if (lastOverride && lastOverride !== selectedSwap?.name) {
+            if (!active) {
+              walletLogin(showLogin, activate)
+            } else if (lastOverride && lastOverride !== selectedSwap?.name) {
               setVisibleConfirmationModal(2)
             } else {
               onSwap()
@@ -379,4 +383,4 @@ const ApproveSwap = ({
   )
 }
 
-export default withIsMobile(withRpcProvider(ApproveSwap))
+export default withWalletSelectModal(withIsMobile(withRpcProvider(ApproveSwap)))
