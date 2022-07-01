@@ -4,6 +4,7 @@ import { WalletLinkConnector } from '@web3-react/walletlink-connector'
 import { MewConnectConnector } from '@myetherwallet/mewconnect-connector'
 import { SafeAppConnector } from '@gnosis.pm/safe-apps-web3-react'
 import { LedgerConnector } from 'utils/LedgerConnector'
+import { DeFiWeb3Connector } from 'deficonnect'
 import { get } from 'lodash'
 import { isProduction } from 'constants/env'
 
@@ -57,6 +58,14 @@ export const ledgerConnector = new LedgerConnector({
   chainId: isProduction ? 1 : 1337,
   url: RPC_PROVIDER,
 })
+
+export const defiWalletConnector = process.browser ? new DeFiWeb3Connector({
+  supportedChainIds: [1],
+  rpc: {
+    1: RPC_PROVIDER
+  },
+  pollingInterval: POLLING_INTERVAL,
+}) : {}
 
 export const connectorNameIconMap = {
   MetaMask: 'metamask-icon.svg',

@@ -6,6 +6,7 @@ import { injectedConnector } from 'utils/connectors'
 import { walletConnectConnector } from 'utils/connectors'
 import { myEtherWalletConnector } from 'utils/connectors'
 import { walletlink, resetWalletConnector } from 'utils/connectors'
+import { defiWalletConnector } from 'utils/connectors'
 import withIsMobile from 'hoc/withIsMobile'
 
 import AccountStore from 'stores/AccountStore'
@@ -17,8 +18,8 @@ const WalletSelectContent = ({ isMobile }) => {
   const { connector, activate, deactivate, active } = useWeb3React()
   const [error, setError] = useState(null)
   const wallets = isMobile
-    ? ['WalletConnect', 'CoinbaseWallet', 'MyEtherWallet', 'MetaMask', 'Ledger']
-    : ['MetaMask', 'Ledger', 'CoinbaseWallet', 'WalletConnect', 'MyEtherWallet']
+    ? ['WalletConnect', 'Coinbase Wallet', 'MyEtherWallet', 'MetaMask', 'Ledger']
+    : ['MetaMask', 'Ledger', 'Coinbase Wallet', 'WalletConnect', 'MyEtherWallet', 'DeFi Wallet']
 
   useEffect(() => {
     if (active) {
@@ -71,8 +72,10 @@ const WalletSelectContent = ({ isMobile }) => {
       connector = myEtherWalletConnector
     } else if (name === 'WalletConnect') {
       connector = walletConnectConnector
-    } else if (name === 'CoinbaseWallet') {
+    } else if (name === 'Coinbase Wallet') {
       connector = walletlink
+    } else if (name === 'DeFi Wallet') {
+      connector = defiWalletConnector
     }
     // fix wallet connect bug: if you click the button and close the modal you wouldn't be able to open it again
     if (name === 'WalletConnect') {
@@ -127,7 +130,7 @@ const WalletSelectContent = ({ isMobile }) => {
             >
               <div className="col-2">
                 <img
-                  src={assetRootPath(`/images/${name.toLowerCase()}-icon.svg`)}
+                  src={assetRootPath(`/images/${name.toLowerCase().replace(/\s+/g, '')}-icon.${name === 'DeFi Wallet' ? 'png' : 'svg'}`)}
                 />
               </div>
               <div className="col-8">{name}</div>
