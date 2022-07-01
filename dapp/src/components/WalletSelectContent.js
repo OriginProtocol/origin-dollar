@@ -18,8 +18,21 @@ const WalletSelectContent = ({ isMobile }) => {
   const { connector, activate, deactivate, active } = useWeb3React()
   const [error, setError] = useState(null)
   const wallets = isMobile
-    ? ['WalletConnect', 'Coinbase Wallet', 'MyEtherWallet', 'MetaMask', 'Ledger']
-    : ['MetaMask', 'Ledger', 'Coinbase Wallet', 'WalletConnect', 'MyEtherWallet', 'DeFi Wallet']
+    ? [
+        'WalletConnect',
+        'Coinbase Wallet',
+        'MyEtherWallet',
+        'MetaMask',
+        'Ledger',
+      ]
+    : [
+        'MetaMask',
+        'Ledger',
+        'Coinbase Wallet',
+        'WalletConnect',
+        'MyEtherWallet',
+        'DeFi Wallet',
+      ]
 
   useEffect(() => {
     if (active) {
@@ -130,7 +143,11 @@ const WalletSelectContent = ({ isMobile }) => {
             >
               <div className="col-2">
                 <img
-                  src={assetRootPath(`/images/${name.toLowerCase().replace(/\s+/g, '')}-icon.${name === 'DeFi Wallet' ? 'png' : 'svg'}`)}
+                  src={assetRootPath(
+                    `/images/${name.toLowerCase().replace(/\s+/g, '')}-icon.${
+                      name === 'DeFi Wallet' ? 'png' : 'svg'
+                    }`
+                  )}
                 />
               </div>
               <div className="col-8">{name}</div>

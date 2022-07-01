@@ -59,13 +59,15 @@ export const ledgerConnector = new LedgerConnector({
   url: RPC_PROVIDER,
 })
 
-export const defiWalletConnector = process.browser ? new DeFiWeb3Connector({
-  supportedChainIds: [1],
-  rpc: {
-    1: RPC_PROVIDER
-  },
-  pollingInterval: POLLING_INTERVAL,
-}) : {}
+export const defiWalletConnector = process.browser
+  ? new DeFiWeb3Connector({
+      supportedChainIds: [1],
+      rpc: {
+        1: RPC_PROVIDER,
+      },
+      pollingInterval: POLLING_INTERVAL,
+    })
+  : {}
 
 export const connectorNameIconMap = {
   MetaMask: 'metamask-icon.svg',
