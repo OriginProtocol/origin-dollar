@@ -384,7 +384,7 @@ const StakeUI = ({ rpcProvider, isMobile }) => {
                   {error}
                 </div>
               )}
-              
+
               <div className="story-banner d-flex flex-column flex-md-row">
                 <div className="text-box d-flex flex-column justify-content-center">
                   <div className="title-text">
@@ -405,9 +405,7 @@ const StakeUI = ({ rpcProvider, isMobile }) => {
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    <div className='story-button btn-dark'>
-                      Visit story.xyz
-                    </div>
+                    <div className="story-button btn-dark">Visit story.xyz</div>
                   </a>
                 </div>
                 <img
@@ -419,7 +417,7 @@ const StakeUI = ({ rpcProvider, isMobile }) => {
                   src={assetRootPath('/images/splines.png')}
                 />
               </div>
-              
+
               {stakeOptions.length > 0 && (
                 <div className="d-flex flex-column lockup-options">
                   <div
@@ -881,11 +879,11 @@ const StakeUI = ({ rpcProvider, isMobile }) => {
               margin: auto;
             }
 
-            .story-banner .splines{
+            .story-banner .splines {
               display: none;
             }
 
-            .story-banner .story-logo{
+            .story-banner .story-logo {
               display: none;
             }
 
