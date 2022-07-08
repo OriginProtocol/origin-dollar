@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import Dropdown from 'components/Dropdown'
 import DownCaret from 'components/DownCaret'
 
-const ApySelect = ({apyDayOptions, apyDays, setApyDays, nav}) => {
+const ApySelect = ({ apyDayOptions, apyDays, setApyDays, nav }) => {
   const [open, setOpen] = useState(false)
   return (
     <>
@@ -30,7 +30,9 @@ const ApySelect = ({apyDayOptions, apyDays, setApyDays, nav}) => {
         onClose={() => setOpen(false)}
       >
         <div
-          className={`apy-select ${nav ? 'nav' : ''} d-flex flex-row align-items-center`}
+          className={`apy-select ${
+            nav ? 'nav' : ''
+          } d-flex flex-row align-items-center`}
           onClick={(e) => {
             e.preventDefault()
             setOpen(!open)

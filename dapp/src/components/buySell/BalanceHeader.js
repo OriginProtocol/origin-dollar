@@ -215,7 +215,13 @@ const BalanceHeader = ({
               }`}
             >
               <Statistic
-                dropdown={<ApySelect apyDayOptions={apyDayOptions} apyDays={apyDays} setApyDays={setApyDays}/>}
+                dropdown={
+                  <ApySelect
+                    apyDayOptions={apyDayOptions}
+                    apyDays={apyDays}
+                    setApyDays={setApyDays}
+                  />
+                }
                 title={fbt('Trailing APY', 'Trailing APY')}
                 titleLink="https://analytics.ousd.com/apy"
                 value={

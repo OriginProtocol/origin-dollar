@@ -161,28 +161,35 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
     <>
       {!dapp && (
         <>
-        <a
-          href={adjustLinkHref('https://analytics.ousd.com/apy')}
-          rel="noopener noreferrer"
-          target="blank"
-        >
-          <div
-            className={classnames(
-              'banner align-items-center justify-content-center',
-              { dapp }
-            )}
+          <a
+            href={adjustLinkHref('https://analytics.ousd.com/apy')}
+            rel="noopener noreferrer"
+            target="blank"
           >
-            <div className="triangle d-none d-xl-block"></div>
-            <span className='apy-select'><ApySelect apyDayOptions={apyDayOptions} apyDays={apyDays} setApyDays={setApyDays} nav={true}/></span>
-            {fbt(
-              `Trailing APY: ${fbt.param(
-                'APY',
-                formatCurrency(daysToApy[apyDays] * 100, 2) + '%'
-              )}`,
-              'Current APY banner'
-            )}
-          </div>
-        </a>
+            <div
+              className={classnames(
+                'banner align-items-center justify-content-center',
+                { dapp }
+              )}
+            >
+              <div className="triangle d-none d-xl-block"></div>
+              <span className="apy-select">
+                <ApySelect
+                  apyDayOptions={apyDayOptions}
+                  apyDays={apyDays}
+                  setApyDays={setApyDays}
+                  nav={true}
+                />
+              </span>
+              {fbt(
+                `Trailing APY: ${fbt.param(
+                  'APY',
+                  formatCurrency(daysToApy[apyDays] * 100, 2) + '%'
+                )}`,
+                'Current APY banner'
+              )}
+            </div>
+          </a>
         </>
       )}
       <nav
