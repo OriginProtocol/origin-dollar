@@ -221,8 +221,8 @@ const StakeUI = ({ rpcProvider, isMobile }) => {
         <StakeModal
           tokenAllowanceSuffiscient={
             /* On prod we whitelist ognStaking to move ogn tokens around. On dev users need to do it manually
-              * by clicking on the "Approve staking contract to move OGN" button in dashboard
-              */
+             * by clicking on the "Approve staking contract to move OGN" button in dashboard
+             */
             true
           }
           tokenToStakeDecimalsCall={ognContract.decimals}
@@ -425,9 +425,7 @@ const StakeUI = ({ rpcProvider, isMobile }) => {
                       >
                         <StakeBoxBig
                           percentage={stakeOption.rate}
-                          duration={durationToDays(
-                            stakeOption.duration * 1000
-                          )}
+                          duration={durationToDays(stakeOption.duration * 1000)}
                           onClick={(e) => {
                             onStakeModalClick(
                               stakeOption.durationBn,
@@ -468,9 +466,9 @@ const StakeUI = ({ rpcProvider, isMobile }) => {
                     disabled={!vestedStakes || vestedStakes.length === 0}
                     onClick={(e) => {
                       /* We don't want to visually disable the button when waitingForClaimTx is true
-                        * because the loading spinner isn't evident then. For that reason we still keep it
-                        * visibly enabled, but disable the functionality in onClick
-                        */
+                       * because the loading spinner isn't evident then. For that reason we still keep it
+                       * visibly enabled, but disable the functionality in onClick
+                       */
                       if (waitingForClaimTx) {
                         return
                       }
@@ -531,19 +529,14 @@ const StakeUI = ({ rpcProvider, isMobile }) => {
                                 )}
                               </td>
                               <td>
-                                {dateformat(
-                                  new Date(stake.end),
-                                  'mm/dd/yyyy'
-                                )}
+                                {dateformat(new Date(stake.end), 'mm/dd/yyyy')}
                               </td>
                               <td>
                                 {formatCurrency(stake.amount, ognDecimals)}
                               </td>
                             </>
                           )}
-                          <td>
-                            {formatCurrency(stake.interest, ognDecimals)}
-                          </td>
+                          <td>{formatCurrency(stake.interest, ognDecimals)}</td>
                           <td>
                             <div className="modal-details-button d-flex align-items-center justify-content-between">
                               <div>

@@ -19,8 +19,7 @@ import MarketingFooter from './MarketingFooter'
 import { adjustLinkHref } from 'utils/utils'
 import { assetRootPath } from 'utils/image'
 
-const AIRDROP_URL =
-  'https://governance.ousd.com/claim'
+const AIRDROP_URL = 'https://governance.ousd.com/claim'
 const UNISWAP_URL =
   'https://app.uniswap.org/#/swap?inputCurrency=0xdac17f958d2ee523a2206206994597c13d831ec7&outputCurrency=0x2A8e1E676Ec238d8A992307B495b45B3fEAa5e86'
 
@@ -155,31 +154,34 @@ const Layout = ({
         </div>
       </div>
       <div
-        className={classnames(`notice ${showStakingBanner ? 'staking pt-2' : 'pt-3'} text-white text-center pb-3`, {
-          dapp,
-        })}
+        className={classnames(
+          `notice ${
+            showStakingBanner ? 'staking pt-2' : 'pt-3'
+          } text-white text-center pb-3`,
+          {
+            dapp,
+          }
+        )}
       >
         <div className="container d-flex flex-column flex-md-row align-items-center">
           {showStakingBanner ? (
             <>
               <div className="d-flex flex-column mt-0 justify-content-center">
-                    <div className="title-text">
-                      {fbt(
-                        'Changes are coming to OGN staking.',
-                        'Changes are coming to OGN staking.'
-                      )}
-                    </div>
-                    <div className="text">
-                      {fbt(
-                        'Your existing stakes will not be impacted. Claim your OGN at the end of your staking period.',
-                        'Your existing stakes will not be impacted. Claim your OGN at the end of your staking period.'
-                      )}
-                    </div>
+                <div className="title-text">
+                  {fbt(
+                    'Changes are coming to OGN staking.',
+                    'Changes are coming to OGN staking.'
+                  )}
+                </div>
+                <div className="text">
+                  {fbt(
+                    'Your existing stakes will not be impacted. Claim your OGN at the end of your staking period.',
+                    'Your existing stakes will not be impacted. Claim your OGN at the end of your staking period.'
+                  )}
+                </div>
               </div>
               <div className="btn btn-dark mt-4 mt-md-1 ml-md-auto">
-                <Link href={adjustLinkHref('/earn')}>
-                  Legacy staking
-                </Link>
+                <Link href={adjustLinkHref('/earn')}>Legacy staking</Link>
               </div>
             </>
           ) : (
@@ -194,8 +196,7 @@ const Layout = ({
                 Learn more
               </a>
             </>
-          )
-          }
+          )}
         </div>
       </div>
       <main className={classnames({ dapp, short, shorter, medium })}>
