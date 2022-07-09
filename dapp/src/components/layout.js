@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import classnames from 'classnames'
 import Head from 'next/head'
+import Link from 'next/link'
 import { useStoreState } from 'pullstate'
 import { useEffect, useRef } from 'react'
 import { useCookies } from 'react-cookie'
@@ -11,9 +12,11 @@ import { get } from 'lodash'
 import { useEagerConnect } from 'utils/hooks'
 import AccountStore from 'stores/AccountStore'
 import ContractStore from 'stores/ContractStore'
+import StakeStore from 'stores/StakeStore'
 import withRpcProvider from 'hoc/withRpcProvider'
 import AppFooter from './AppFooter'
 import MarketingFooter from './MarketingFooter'
+import { adjustLinkHref } from 'utils/utils'
 import { assetRootPath } from 'utils/image'
 
 const AIRDROP_URL =
@@ -42,6 +45,9 @@ const Layout = ({
   const rebaseOptedOut = useStoreState(AccountStore, (s) =>
     get(s, 'rebaseOptedOut')
   )
+
+  const stakes = useStoreState(StakeStore, (s) => s)
+  const showStakingBanner = (stakes.stakes || []).length !== 0
 
   const optIn = async () => {
     try {
@@ -149,20 +155,47 @@ const Layout = ({
         </div>
       </div>
       <div
-        className={classnames('notice text-white text-center p-3', {
+        className={classnames(`notice ${showStakingBanner ? 'staking pt-2' : 'pt-3'} text-white text-center pb-3`, {
           dapp,
         })}
       >
         <div className="container d-flex flex-column flex-md-row align-items-center">
-          {fbt('Get ready for the upcoming OGV airdrop', 'Airdrop notice')}
-          <a
-            href={AIRDROP_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn btn-dark mt-3 mt-md-0 ml-md-auto"
-          >
-            Learn more
-          </a>
+          {showStakingBanner ? (
+            <>
+              <div className="d-flex flex-column mt-0 justify-content-center">
+                    <div className="title-text">
+                      {fbt(
+                        'Changes are coming to OGN staking.',
+                        'Changes are coming to OGN staking.'
+                      )}
+                    </div>
+                    <div className="text">
+                      {fbt(
+                        'Your existing stakes will not be impacted. Claim your OGN at the end of your staking period.',
+                        'Your existing stakes will not be impacted. Claim your OGN at the end of your staking period.'
+                      )}
+                    </div>
+              </div>
+              <div className="btn btn-dark mt-4 mt-md-1 ml-md-auto">
+                <Link href={adjustLinkHref('/earn')}>
+                  Legacy staking
+                </Link>
+              </div>
+            </>
+          ) : (
+            <>
+              {fbt('Get ready for the upcoming OGV airdrop', 'Airdrop notice')}
+              <a
+                href={AIRDROP_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-dark mt-3 mt-md-0 ml-md-auto"
+              >
+                Learn more
+              </a>
+            </>
+          )
+          }
         </div>
       </div>
       <main className={classnames({ dapp, short, shorter, medium })}>
@@ -175,6 +208,25 @@ const Layout = ({
         .notice {
           background-color: #7a26f3;
           margin-bottom: 35px;
+        }
+
+        .notice.staking {
+          background-color: #1a82ff;
+        }
+
+        .notice .title-text {
+          font-size: 18px;
+          font-weight: bold;
+          line-height: 1.75;
+          color: white;
+        }
+
+        .notice .text {
+          opacity: 0.8;
+          color: white;
+          line-height: normal;
+          font-size: 14px;
+          max-width: 1000px;
         }
 
         .notice.dapp {
