@@ -180,7 +180,7 @@ const Layout = ({
                   )}
                 </div>
               </div>
-              <div className="btn btn-dark mt-5 mt-md-2 ml-md-auto">
+              <div className="btn btn-dark mt-2 ml-md-auto">
                 <Link href={adjustLinkHref('/earn')}>Legacy staking</Link>
               </div>
             </>
