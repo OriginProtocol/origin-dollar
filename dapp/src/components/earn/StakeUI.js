@@ -857,7 +857,7 @@ const StakeUI = ({ rpcProvider, isMobile }) => {
             }
 
             .story-banner .text-box {
-              margin-top: 5px; 
+              margin-top: 5px;
               margin-left: 18px;
               z-index: 3;
             }
