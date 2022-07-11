@@ -33,7 +33,6 @@ const StakeUI = ({ rpcProvider, isMobile }) => {
   const [showStakeModal, setShowStakeModal] = useState(false)
   const [showStakeDetailsEndKey, setShowStakeDetailsEndKey] = useState(null)
   const [selectedDuration, setSelectedDuration] = useState(false)
-  const [stakeOptions, setStakeOptions] = useState([])
   const [selectedRate, setSelectedRate] = useState(false)
   const [tokensToStake, setTokensToStake] = useState(0)
   const [error, setError] = useState(null)
@@ -343,7 +342,7 @@ const StakeUI = ({ rpcProvider, isMobile }) => {
           )}
           {!ognStakingHidden && (
             <div className="home d-flex flex-column">
-              {(stakes === null || stakeOptions.length === 0) && active && (
+              {(stakes === null) && active && (
                 <div className="loading-text">
                   {fbt('Loading...', 'Loading...')}
                 </div>
