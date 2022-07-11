@@ -153,14 +153,14 @@ const Layout = ({
         })}
       >
         <div className="container d-flex flex-column flex-md-row align-items-center">
-          {fbt('Get ready for the upcoming OGV airdrop', 'Airdrop notice')}
+          {fbt('OGV airdrop is live!', 'Airdrop notice')}
           <a
             href={AIRDROP_URL}
             target="_blank"
             rel="noopener noreferrer"
             className="btn btn-dark mt-3 mt-md-0 ml-md-auto"
           >
-            Learn more
+            Check eligibility
           </a>
         </div>
       </div>
@@ -172,7 +172,7 @@ const Layout = ({
       {dapp && <AppFooter dapp={dapp} locale={locale} onLocale={onLocale} />}
       <style jsx>{`
         .notice {
-          background-color: #7a26f3;
+          background-color: black;
           margin-bottom: 35px;
         }
 
