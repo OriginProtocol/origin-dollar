@@ -780,7 +780,7 @@ const StakeUI = ({ rpcProvider, isMobile }) => {
           .story-banner .splines {
             width: 233px;
             height: 197px;
-            margin: 0 0 0 108px;
+            margin: 0 0 0 auto;
             position: relative;
             z-index: 1;
             object-fit: contain;
@@ -790,7 +790,7 @@ const StakeUI = ({ rpcProvider, isMobile }) => {
             width: 274px;
             height: 50px;
             margin-top: 75px;
-            margin-left: 610px;
+            margin-left: 605px;
             position: absolute;
             z-index: 2;
             object-fit: contain;
@@ -831,7 +831,7 @@ const StakeUI = ({ rpcProvider, isMobile }) => {
             }
           }
 
-          @media (max-width: 799px) {
+          @media (max-width: 849px) {
             .home {
               padding: 0;
               padding-left: 20px;
@@ -857,7 +857,9 @@ const StakeUI = ({ rpcProvider, isMobile }) => {
             }
 
             .story-banner .text-box {
-              margin: 10px;
+              margin-top: 5px; 
+              margin-left: 18px;
+              z-index: 3;
             }
 
             .story-banner .title-text {
@@ -876,42 +878,25 @@ const StakeUI = ({ rpcProvider, isMobile }) => {
             }
 
             .story-banner .story-button {
-              margin: auto;
+              width: 140px;
+              height: 40px;
+              font-size: 14px;
+              margin: 0 auto 0 0;
             }
 
             .story-banner .splines {
-              display: none;
+              position: absolute;
+              right: 20px;
             }
 
             .story-banner .story-logo {
-              display: none;
-            }
-
-            .no-stakes-box {
-              padding: 30px 20px;
-              margin-top: 0px;
-              height: auto;
-              background-image: radial-gradient(
-                circle at 50% 25%,
-                rgba(255, 255, 255, 0.4),
-                rgba(26, 130, 240, 0) 25%
-              );
-            }
-
-            .no-stakes-box .title-text {
-              font-size: 22px;
-              line-height: 1.2;
-              text-align: center;
-              margin-top: 20px;
-              margin-bottom: 20px;
-            }
-
-            .no-stakes-box .text {
-              text-align: center;
-            }
-
-            .no-stakes-box .big-ogn-icon {
-              margin-right: 0px;
+              width: 126px;
+              height: 23px;
+              margin-top: 160px;
+              right: 40px;
+              position: absolute;
+              z-index: 3;
+              object-fit: contain;
             }
           }
         `}</style>
