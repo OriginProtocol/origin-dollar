@@ -184,6 +184,8 @@ const Layout = ({
           font-size: 12px;
           height: auto;
           padding: 5px 20px;
+          background-color: white;
+          color: black;
         }
 
         .container {
