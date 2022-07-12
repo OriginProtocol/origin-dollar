@@ -30,9 +30,9 @@ const ApySelect = ({ apyDayOptions, apyDays, setApyDays, nav, homepage }) => {
         onClose={() => setOpen(false)}
       >
         <div
-          className={`apy-select ${
-            nav ? 'nav' : ''
-          } ${homepage ? 'homepage' : ''} d-flex flex-row align-items-center`}
+          className={`apy-select ${nav ? 'nav' : ''} ${
+            homepage ? 'homepage' : ''
+          } d-flex flex-row align-items-center`}
           onClick={(e) => {
             e.preventDefault()
             setOpen(!open)

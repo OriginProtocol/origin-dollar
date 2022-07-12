@@ -36,7 +36,11 @@ const Home = ({ locale, onLocale }) => {
   )
   const daysToApy = zipObject(apyDayOptions, apyOptions)
   const [apyDays, setApyDays] = useState(
-    process.browser && localStorage.getItem('last_user_selected_apy') !== null && apyDayOptions.includes(Number(localStorage.getItem('last_user_selected_apy')))
+    process.browser &&
+      localStorage.getItem('last_user_selected_apy') !== null &&
+      apyDayOptions.includes(
+        Number(localStorage.getItem('last_user_selected_apy'))
+      )
       ? localStorage.getItem('last_user_selected_apy')
       : DEFAULT_SELECTED_APY
   )
