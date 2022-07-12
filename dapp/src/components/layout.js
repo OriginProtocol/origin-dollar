@@ -166,7 +166,7 @@ const Layout = ({
         <div className="container d-flex flex-column flex-md-row align-items-center">
           {showStakingBanner ? (
             <>
-              <div className="d-flex flex-column mt-0 justify-content-center">
+              <div className="d-flex flex-column mt-0 justify-content-center px-4 px-md-0 text-md-left">
                 <div className="title-text">
                   {fbt(
                     'Changes are coming to OGN staking.',
