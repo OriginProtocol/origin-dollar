@@ -186,14 +186,14 @@ const Layout = ({
             </>
           ) : (
             <>
-              {fbt('Get ready for the upcoming OGV airdrop', 'Airdrop notice')}
+              {fbt('OGV airdrop is live!', 'Airdrop notice')}
               <a
                 href={AIRDROP_URL}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn btn-dark mt-3 mt-md-0 ml-md-auto"
               >
-                Learn more
+                Check eligibility
               </a>
             </>
           )}
@@ -207,7 +207,7 @@ const Layout = ({
       {dapp && <AppFooter dapp={dapp} locale={locale} onLocale={onLocale} />}
       <style jsx>{`
         .notice {
-          background-color: #7a26f3;
+          background-color: black;
           margin-bottom: 35px;
         }
 
@@ -238,6 +238,8 @@ const Layout = ({
           font-size: 12px;
           height: auto;
           padding: 5px 20px;
+          background-color: white;
+          color: black;
         }
 
         .container {
