@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import Dropdown from 'components/Dropdown'
 import DownCaret from 'components/DownCaret'
 
-const ApySelect = ({ apyDayOptions, apyDays, setApyDays, nav }) => {
+const ApySelect = ({ apyDayOptions, apyDays, setApyDays, nav, homepage }) => {
   const [open, setOpen] = useState(false)
   return (
     <>
@@ -20,7 +20,7 @@ const ApySelect = ({ apyDayOptions, apyDays, setApyDays, nav }) => {
                     setOpen(false)
                   }}
                 >
-                  {`${days}d`}
+                  {`${days}${homepage ? ' days' : 'd'}`}
                 </div>
               )
             })}
@@ -32,14 +32,14 @@ const ApySelect = ({ apyDayOptions, apyDays, setApyDays, nav }) => {
         <div
           className={`apy-select ${
             nav ? 'nav' : ''
-          } d-flex flex-row align-items-center`}
+          } ${homepage ? 'homepage' : ''} d-flex flex-row align-items-center`}
           onClick={(e) => {
             e.preventDefault()
             setOpen(!open)
           }}
         >
-          {`${apyDays}d`}
-          <span className="downcaret">
+          {`${apyDays}${homepage ? ' days' : 'd'}`}
+          <span className={`downcaret ${homepage ? 'homepage' : ''}`}>
             <DownCaret color={nav ? 'white' : 'black'} size={26} />
           </span>
         </div>
@@ -72,6 +72,11 @@ const ApySelect = ({ apyDayOptions, apyDays, setApyDays, nav }) => {
           background-color: #364c5a;
         }
 
+        .apy-select.homepage {
+          width: 90px;
+          font-size: 14px;
+        }
+
         .dropdown-menu {
           margin-right: 200px;
           background-color: white;
@@ -99,6 +104,11 @@ const ApySelect = ({ apyDayOptions, apyDays, setApyDays, nav }) => {
           color: red;
           position: absolute;
           left: 42px;
+        }
+
+        .downcaret.homepage {
+          position: absolute;
+          left: 62px;
         }
       `}</style>
     </>

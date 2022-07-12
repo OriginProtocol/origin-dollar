@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React from 'react'
 import classnames from 'classnames'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
@@ -20,9 +20,6 @@ import OgnDropdown from 'components/earn/OgnDropdown'
 import IPFSDappLink from 'components/IPFSDappLink'
 import ContractStore from 'stores/ContractStore'
 import AccountStore from 'stores/AccountStore'
-import ApySelect from 'components/ApySelect'
-import { apyDayOptions, DEFAULT_SELECTED_APY } from 'utils/constants'
-import { zipObject } from 'lodash'
 
 import Languages from '../constants/Languages'
 import AccountStatusPopover from './AccountStatusPopover'
@@ -139,58 +136,32 @@ const DappLinks = ({ dapp, page }) => {
 const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
   const { pathname } = useRouter()
   const { active, account } = useWeb3React()
-  const apy = useStoreState(ContractStore, (s) => s.apy.apy365 || 0)
-
-  const apyOptions = useStoreState(ContractStore, (s) =>
-    apyDayOptions.map((d) => {
-      return s.apy[`apy${d}`] || 0
-    })
-  )
-  const daysToApy = zipObject(apyDayOptions, apyOptions)
-  const [apyDays, setApyDays] = useState(
-    process.browser && localStorage.getItem('last_user_selected_apy') !== null
-      ? localStorage.getItem('last_user_selected_apy')
-      : DEFAULT_SELECTED_APY
-  )
-
-  useEffect(() => {
-    localStorage.setItem('last_user_selected_apy', apyDays)
-  }, [apyDays])
+  const apy = useStoreState(ContractStore, (s) => s.apy.apy30 || 0)
 
   return (
     <>
       {!dapp && (
-        <>
-          <a
-            href={adjustLinkHref('https://analytics.ousd.com/apy')}
-            rel="noopener noreferrer"
-            target="blank"
+        <a
+          href={adjustLinkHref('https://analytics.ousd.com/apy')}
+          rel="noopener noreferrer"
+          target="blank"
+        >
+          <div
+            className={classnames(
+              'banner align-items-center justify-content-center',
+              { dapp }
+            )}
           >
-            <div
-              className={classnames(
-                'banner align-items-center justify-content-center',
-                { dapp }
-              )}
-            >
-              <div className="triangle d-none d-xl-block"></div>
-              <span className="apy-select">
-                <ApySelect
-                  apyDayOptions={apyDayOptions}
-                  apyDays={apyDays}
-                  setApyDays={setApyDays}
-                  nav={true}
-                />
-              </span>
-              {fbt(
-                `Trailing APY: ${fbt.param(
-                  'APY',
-                  formatCurrency(daysToApy[apyDays] * 100, 2) + '%'
-                )}`,
-                'Current APY banner'
-              )}
-            </div>
-          </a>
-        </>
+            <div className="triangle d-none d-xl-block"></div>
+            {fbt(
+              `Trailing 30-day APY: ${fbt.param(
+                'APY',
+                formatCurrency(apy * 100, 2) + '%'
+              )}`,
+              'Current APY banner'
+            )}
+          </div>
+        </a>
       )}
       <nav
         className={classnames(
@@ -416,10 +387,6 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
           border-radius: 5px;
           border: solid 1px #fec100;
           color: #fec100;
-        }
-
-        .apy-select {
-          display: flex;
         }
 
         .navbar-brand {
