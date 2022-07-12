@@ -82,7 +82,7 @@ const ApySelect = ({ apyDayOptions, apyDays, setApyDays, nav, homepage }) => {
           background-color: white;
           font-size: 16px;
           color: black;
-          min-width: 96px;
+          min-width: 98px;
           top: 100%;
           left: 0;
           padding: 5px;
