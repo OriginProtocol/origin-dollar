@@ -106,9 +106,7 @@ export class LedgerConnector extends AbstractConnector {
       accounts = [...accounts, await this.getAccount()]
     }
     console.log(accounts)
-    return (
-      accounts
-    )
+    return accounts
   }
 
   deactivate() {
