@@ -13,8 +13,10 @@ const LedgerAccountContent = ({
 }) => {
   const { activate, provider, connector } = useWeb3React()
 
-  const onSelectAddress = async (address) => {
-    await ledgerConnector.setPath(activePath)
+  const onSelectAddress = async (address, n) => {
+    const path = activePath === "44'/60'/0'/0" ? `44'/60'/${n}'/0` : activePath
+    await ledgerConnector.setPath(path)
+    console.log(path)
     ledgerConnector.setAccount(address)
 
     await activate(
@@ -47,12 +49,12 @@ const LedgerAccountContent = ({
         }}
         className={`d-flex flex-column`}
       >
-        {addresses.map((address) => {
+        {addresses.map((address, n) => {
           return (
             <button
               key={address}
               className="text-center"
-              onClick={() => onSelectAddress(address)}
+              onClick={() => onSelectAddress(address, n)}
             >
               {shortenAddress(address)} <br />
               <span className="balance">
