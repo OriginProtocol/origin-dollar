@@ -80,7 +80,7 @@ export class LedgerConnector extends AbstractConnector {
     this._selectedAccount = undefined
     const account = await this.getAccount()
     this.emitUpdate({ account })
-    return account;
+    return account
   }
 
   async getAccounts(limit) {
