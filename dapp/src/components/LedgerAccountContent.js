@@ -18,8 +18,6 @@ const LedgerAccountContent = ({
     const n = next ? i + 5 : i
     const path = activePath === "44'/60'/0'/0" ? `44'/60'/${n}'/0` : activePath
     await ledgerConnector.setPath(path)
-    console.log(path)
-    console.log(next)
     ledgerConnector.setAccount(address)
 
     await activate(
