@@ -170,12 +170,18 @@ const LedgerDerivationContent = ({}) => {
     if (next) {
       setAddresses({
         ...addresses,
-        [path]: (path === LEDGER_LIVE_BASE_PATH ? await ledgerConnector.getLedgerLiveAccounts(5) : await ledgerConnector.getAccounts(10)).slice(5),
+        [path]: (path === LEDGER_LIVE_BASE_PATH
+          ? await ledgerConnector.getLedgerLiveAccounts(5)
+          : await ledgerConnector.getAccounts(10)
+        ).slice(5),
       })
     } else {
       setAddresses({
         ...addresses,
-        [path]: path === LEDGER_LIVE_BASE_PATH ? await ledgerConnector.getLedgerLiveAccounts(5) : await ledgerConnector.getAccounts(5),
+        [path]:
+          path === LEDGER_LIVE_BASE_PATH
+            ? await ledgerConnector.getLedgerLiveAccounts(5)
+            : await ledgerConnector.getAccounts(5),
       })
     }
   }
