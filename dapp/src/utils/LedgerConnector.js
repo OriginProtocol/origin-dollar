@@ -78,7 +78,9 @@ export class LedgerConnector extends AbstractConnector {
     this.provider._providers[0].setPath(baseDerivationPath)
     this.baseDerivationPath = baseDerivationPath
     this._selectedAccount = undefined
-    this.emitUpdate({ account: await this.getAccount() })
+    const account = await this.getAccount()
+    this.emitUpdate({ account })
+    return account;
   }
 
   async getAccounts(limit) {
@@ -102,8 +104,8 @@ export class LedgerConnector extends AbstractConnector {
   async getLedgerLiveAccounts(limit) {
     let accounts = []
     for (let n = 0; n < limit; n++) {
-      await this.setPath(`44'/60'/${n}'/0`)
-      accounts = [...accounts, await this.getAccount()]
+      const account = await this.setPath(`44'/60'/${n}'/0`)
+      accounts = [...accounts, account]
     }
     return accounts
   }
