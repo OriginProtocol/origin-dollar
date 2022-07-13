@@ -16,7 +16,6 @@ const LedgerAccountContent = ({
   const onSelectAddress = async (address, n) => {
     const path = activePath === "44'/60'/0'/0" ? `44'/60'/${n}'/0` : activePath
     await ledgerConnector.setPath(path)
-    console.log(path)
     ledgerConnector.setAccount(address)
 
     await activate(

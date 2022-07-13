@@ -105,7 +105,6 @@ export class LedgerConnector extends AbstractConnector {
       await this.setPath(`44'/60'/${n}'/0`)
       accounts = [...accounts, await this.getAccount()]
     }
-    console.log(accounts)
     return accounts
   }
 
