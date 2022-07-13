@@ -277,7 +277,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
                 loading="lazy"
               />
             </button>
-            <div className="d-flex flex-column mb-auto w-100 align-items-center">
+            <div className={`d-flex mobile mb-auto w-100 align-items-center`}>
               {!dapp && (
                 <ul className={`navbar-nav ${!dapp ? 'ml-auto' : ''}`}>
                   <li
@@ -639,6 +639,11 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
           .navbar .container {
             margin: 1.5rem 0;
             padding: 0 30px;
+          }
+
+          .navbar .mobile {
+            display: flex;
+            flex-direction: column;
           }
 
           .lang-opts {
