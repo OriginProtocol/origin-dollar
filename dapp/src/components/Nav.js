@@ -277,7 +277,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
                 loading="lazy"
               />
             </button>
-            <div className="d-flex flex-column mb-auto w-100 align-items-center">
+            <div className="d-flex flex-column flex-md-row mb-auto w-100 align-items-center">
               {!dapp && (
                 <ul className={`navbar-nav ${!dapp ? 'ml-auto' : ''}`}>
                   <li
