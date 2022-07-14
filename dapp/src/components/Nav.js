@@ -92,13 +92,13 @@ const DappLinks = ({ dapp, page }) => {
           font-family: Lato;
           font-size: 14px;
           color: white;
-          margin-left: 25px;
+          margin-left: 50px;
         }
 
         .dapp-navigation a {
           padding: 6px 4px;
-          margin-left: 8px;
-          margin-right: 8px;
+          margin-left: 16px;
+          margin-right: 16px;
           white-space: nowrap;
           margin-bottom: 1px;
         }
@@ -277,7 +277,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
                 loading="lazy"
               />
             </button>
-            <div className="d-flex flex-column flex-md-row mb-auto w-100 align-items-center">
+            <div className="d-flex flex-column flex-lg-row mb-auto w-100 align-items-center">
               {!dapp && (
                 <ul className={`navbar-nav ${!dapp ? 'ml-auto' : ''}`}>
                   <li
