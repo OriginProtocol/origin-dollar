@@ -46,7 +46,7 @@ const Layout = ({
   )
 
   const stakes = useStoreState(StakeStore, (s) => s)
-  const showStakingBanner = (stakes.stakes || []).length !== 0
+  const showStakingBanner = (stakes.stakes || []).length !== 0 && !isStakePage
 
   const optIn = async () => {
     try {
