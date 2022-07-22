@@ -1,36 +1,15 @@
 import React, { useState } from 'react'
 import { useWeb3React } from '@web3-react/core'
-import { fbt } from 'fbt-runtime'
 
-import AccountStore from 'stores/AccountStore'
 import SwapHomepage from 'components/buySell/SwapHomepage'
 import ContractsTable from 'components/buySell/ContractsTable'
-import GetOUSD from 'components/GetOUSD'
-import { assetRootPath } from 'utils/image'
 
 const MissionControl = ({}) => {
-  const { active } = useWeb3React()
-
   return (
     <>
       <div>
         <div className="content-holder flex-grow d-flex flex-column shadow-div">
-          {active && <SwapHomepage />}
-          {!active && (
-            <div className="empty-placeholder d-flex flex-column align-items-center justify-content-start">
-              <img src={assetRootPath('/images/wallet-icons.svg')} />
-              <div className="header-text">
-                {fbt('No wallet connected', 'Disconnected dapp message')}
-              </div>
-              <div className="subtext">
-                {fbt(
-                  'Please connect an Ethereum wallet',
-                  'Disconnected dapp subtext'
-                )}
-              </div>
-              <GetOUSD primary connect trackSource="Dapp widget body" />
-            </div>
-          )}
+          <SwapHomepage />
         </div>
         <ContractsTable />
       </div>
@@ -72,7 +51,7 @@ const MissionControl = ({}) => {
           margin-bottom: 50px;
         }
 
-        @media (max-width: 799px) {
+        @media (max-width: 992px) {
           div {
             width: 100%;
             min-width: 100%;

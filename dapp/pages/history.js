@@ -37,15 +37,11 @@ export default function History({ locale, onLocale }) {
         </div>
       </Layout>
       <style jsx>{`
-        .home {
-          padding-top: 20px;
-        }
-
         .empty-placeholder {
           min-height: 470px;
           height: 100%;
           padding: 70px;
-          border-radius: 0 0 10px 10px;
+          border-radius: 10px;
           border-top: solid 1px #cdd7e0;
           background-color: #fafbfc;
         }
@@ -67,7 +63,10 @@ export default function History({ locale, onLocale }) {
           margin-bottom: 50px;
         }
 
-        @media (max-width: 799px) {
+        @media (min-width: 799px) {
+          .home {
+            padding-top: 20px;
+          }
         }
       `}</style>
     </>

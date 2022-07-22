@@ -6,15 +6,33 @@ import { injectedConnector } from 'utils/connectors'
 import { walletConnectConnector } from 'utils/connectors'
 import { myEtherWalletConnector } from 'utils/connectors'
 import { walletlink, resetWalletConnector } from 'utils/connectors'
+import { defiWalletConnector } from 'utils/connectors'
+import withIsMobile from 'hoc/withIsMobile'
 
 import AccountStore from 'stores/AccountStore'
 
 import analytics from 'utils/analytics'
 import { assetRootPath } from 'utils/image'
 
-const WalletSelectContent = ({}) => {
+const WalletSelectContent = ({ isMobile }) => {
   const { connector, activate, deactivate, active } = useWeb3React()
   const [error, setError] = useState(null)
+  const wallets = isMobile
+    ? [
+        'WalletConnect',
+        'Coinbase Wallet',
+        'MyEtherWallet',
+        'MetaMask',
+        'Ledger',
+      ]
+    : [
+        'MetaMask',
+        'Ledger',
+        'Coinbase Wallet',
+        'WalletConnect',
+        'MyEtherWallet',
+        'DeFi Wallet',
+      ]
 
   useEffect(() => {
     if (active) {
@@ -29,6 +47,12 @@ const WalletSelectContent = ({}) => {
   }
 
   const errorMessageMap = (error) => {
+    if (error === 'ledger-error') {
+      return fbt(
+        'Please use WalletConnect to connect to Ledger Live',
+        'No Ledger on mobile'
+      )
+    }
     if (
       error.message.includes(
         'No Ethereum provider was found on window.ethereum'
@@ -61,8 +85,10 @@ const WalletSelectContent = ({}) => {
       connector = myEtherWalletConnector
     } else if (name === 'WalletConnect') {
       connector = walletConnectConnector
-    } else if (name === 'CoinbaseWallet') {
+    } else if (name === 'Coinbase Wallet') {
       connector = walletlink
+    } else if (name === 'DeFi Wallet') {
+      connector = defiWalletConnector
     }
     // fix wallet connect bug: if you click the button and close the modal you wouldn't be able to open it again
     if (name === 'WalletConnect') {
@@ -97,22 +123,31 @@ const WalletSelectContent = ({}) => {
             'Connect a wallet to get started'
           )}
         </h2>
-        {[
-          'MetaMask',
-          'Ledger',
-          'CoinbaseWallet',
-          'WalletConnect',
-          'MyEtherWallet',
-        ].map((name) => {
+        {wallets.map((name) => {
           return (
             <button
               key={name}
-              className="connector-button d-flex align-items-center"
-              onClick={() => onConnect(name)}
+              className={`connector-button d-flex align-items-center ${
+                isMobile && name === 'Ledger' ? 'grey' : ''
+              }`}
+              onClick={() => {
+                if (isMobile && name === 'MetaMask') {
+                  setError(null)
+                  window.location.href = process.env.METAMASK_DEEPLINK
+                } else if (isMobile && name === 'Ledger') {
+                  setError('ledger-error')
+                } else {
+                  onConnect(name)
+                }
+              }}
             >
               <div className="col-2">
                 <img
-                  src={assetRootPath(`/images/${name.toLowerCase()}-icon.svg`)}
+                  src={assetRootPath(
+                    `/images/${name.toLowerCase().replace(/\s+/g, '')}-icon.${
+                      name === 'DeFi Wallet' ? 'png' : 'svg'
+                    }`
+                  )}
                 />
               </div>
               <div className="col-8">{name}</div>
@@ -179,6 +214,11 @@ const WalletSelectContent = ({}) => {
           margin-bottom: 20px;
         }
 
+        .wallet-select-content .grey {
+          cursor: default;
+          opacity: 0.4;
+        }
+
         .error {
           padding: 5px 8px;
           font-size: 14px;
@@ -195,4 +235,4 @@ const WalletSelectContent = ({}) => {
   )
 }
 
-export default WalletSelectContent
+export default withIsMobile(WalletSelectContent)

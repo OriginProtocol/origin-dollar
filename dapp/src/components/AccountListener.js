@@ -371,7 +371,7 @@ const AccountListener = (props) => {
         }/api/v1/address/${account.toLowerCase()}/yield`
       )
 
-      if (response.ok) {
+      if (response !== undefined && response.ok) {
         const lifetimeYield = (await response.json()).lifetime_yield
         AccountStore.update((s) => {
           s.lifetimeYield = lifetimeYield

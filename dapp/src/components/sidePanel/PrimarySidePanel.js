@@ -139,7 +139,7 @@ const PrimarySidePanel = () => {
           -ms-overflow-style: none; /* IE 10+ */
         }
 
-        @media (max-width: 799px) {
+        @media (max-width: 992px) {
           .sidepanel-wrapper {
             position: fixed;
             top: 0;
