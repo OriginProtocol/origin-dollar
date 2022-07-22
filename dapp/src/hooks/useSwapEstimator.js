@@ -8,6 +8,7 @@ import {
   mintPercentGasLimitBuffer,
   redeemPercentGasLimitBuffer,
   approveCoinGasLimits,
+  max_price,
 } from 'utils/constants'
 import { usePrevious } from 'utils/hooks'
 import useCurrencySwapper from 'hooks/useCurrencySwapper'
@@ -411,6 +412,18 @@ const useSwapEstimator = ({
         isRedeem ? coinToReceiveDecimals : 18
       )
 
+      const decimals = swapMode === 'redeem' || selectedCoin === 'dai' ? 18 : 6
+
+      if (
+        ethers.utils.formatUnits(swapAmount, decimals) / amountReceived >
+        max_price
+      ) {
+        return {
+          canDoSwap: false,
+          error: 'price_too_high',
+        }
+      }
+
       const approveAllowanceNeeded = allowancesLoaded
         ? parseFloat(allowances[coinToSwap].curve) === 0
         : true
@@ -506,6 +519,18 @@ const useSwapEstimator = ({
         priceQuoteBn,
         isRedeem ? coinToReceiveDecimals : 18
       )
+
+      const decimals = swapMode === 'redeem' || selectedCoin === 'dai' ? 18 : 6
+
+      if (
+        ethers.utils.formatUnits(swapAmount, decimals) / amountReceived >
+        max_price
+      ) {
+        return {
+          canDoSwap: false,
+          error: 'price_too_high',
+        }
+      }
 
       /* Check if Uniswap router has allowance to spend coin. If not we can not run gas estimation and need
        * to guess the gas usage.
@@ -607,7 +632,7 @@ const useSwapEstimator = ({
       ) {
         return {
           canDoSwap: false,
-          error: 'slippage_too_high',
+          error: 'price_too_high',
         }
       }
 
@@ -637,6 +662,20 @@ const useSwapEstimator = ({
         priceQuoteBn,
         isRedeem ? coinToReceiveDecimals : 18
       )
+
+      const decimals = swapMode === 'redeem' || selectedCoin === 'dai' ? 18 : 6
+
+      console.log()
+
+      if (
+        ethers.utils.formatUnits(swapAmount, decimals) / amountReceived >
+        max_price
+      ) {
+        return {
+          canDoSwap: false,
+          error: 'price_too_high',
+        }
+      }
 
       /* Check if Uniswap router has allowance to spend coin. If not we can not run gas estimation and need
        * to guess the gas usage.
@@ -704,7 +743,7 @@ const useSwapEstimator = ({
       ) {
         return {
           canDoSwap: false,
-          error: 'slippage_too_high',
+          error: 'price_too_high',
         }
       }
 
@@ -796,7 +835,7 @@ const useSwapEstimator = ({
       ) {
         return {
           canDoSwap: false,
-          error: 'slippage_too_high',
+          error: 'price_too_high',
         }
       }
 
@@ -866,7 +905,7 @@ const useSwapEstimator = ({
       if (errorIncludes('Redeem amount lower than minimum')) {
         return {
           canDoSwap: false,
-          error: 'slippage_too_high',
+          error: 'price_too_high',
         }
         /* Various error messages strategies emit when too much funds attempt to
          * be withdrawn:
