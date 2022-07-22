@@ -57,10 +57,6 @@ const ContractsTable = () => {
       'Amount too high',
       'Swap estimations: amount too high'
     ),
-    slippage_too_high: fbt(
-      'Slippage too high',
-      'Swap estimations: slippage too high'
-    ),
     liquidity_error: fbt(
       'Liquidity error',
       'Swap estimations: liquidity error'

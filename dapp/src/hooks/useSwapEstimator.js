@@ -412,13 +412,9 @@ const useSwapEstimator = ({
         isRedeem ? coinToReceiveDecimals : 18
       )
 
-      const decimals =
-        selectedCoin === 'ousd' || selectedCoin === 'dai' ? 18 : 6
+      const decimals = swapMode === 'redeem' || selectedCoin === 'dai' ? 18 : 6
 
-      if (
-        ethers.utils.formatUnits(swapAmount, decimals) / amountReceived >
-        max_price
-      ) {
+      if (ethers.utils.formatUnits(swapAmount, decimals) / amountReceived > max_price) {
         return {
           canDoSwap: false,
           error: 'price_too_high',
@@ -521,13 +517,9 @@ const useSwapEstimator = ({
         isRedeem ? coinToReceiveDecimals : 18
       )
 
-      const decimals =
-        selectedCoin === 'ousd' || selectedCoin === 'dai' ? 18 : 6
+      const decimals = swapMode === 'redeem' || selectedCoin === 'dai' ? 18 : 6
 
-      if (
-        ethers.utils.formatUnits(swapAmount, decimals) / amountReceived >
-        max_price
-      ) {
+      if (ethers.utils.formatUnits(swapAmount, decimals) / amountReceived > max_price) {
         return {
           canDoSwap: false,
           error: 'price_too_high',
@@ -634,7 +626,7 @@ const useSwapEstimator = ({
       ) {
         return {
           canDoSwap: false,
-          error: 'slippage_too_high',
+          error: 'price_too_high',
         }
       }
 
@@ -665,13 +657,11 @@ const useSwapEstimator = ({
         isRedeem ? coinToReceiveDecimals : 18
       )
 
-      const decimals =
-        selectedCoin === 'ousd' || selectedCoin === 'dai' ? 18 : 6
+      const decimals = swapMode === 'redeem' || selectedCoin === 'dai' ? 18 : 6
 
-      if (
-        ethers.utils.formatUnits(swapAmount, decimals) / amountReceived >
-        max_price
-      ) {
+      console.log()
+
+      if (ethers.utils.formatUnits(swapAmount, decimals) / amountReceived > max_price) {
         return {
           canDoSwap: false,
           error: 'price_too_high',
@@ -744,7 +734,7 @@ const useSwapEstimator = ({
       ) {
         return {
           canDoSwap: false,
-          error: 'slippage_too_high',
+          error: 'price_too_high',
         }
       }
 
@@ -836,7 +826,7 @@ const useSwapEstimator = ({
       ) {
         return {
           canDoSwap: false,
-          error: 'slippage_too_high',
+          error: 'price_too_high',
         }
       }
 
@@ -906,7 +896,7 @@ const useSwapEstimator = ({
       if (errorIncludes('Redeem amount lower than minimum')) {
         return {
           canDoSwap: false,
-          error: 'slippage_too_high',
+          error: 'price_too_high',
         }
         /* Various error messages strategies emit when too much funds attempt to
          * be withdrawn:
