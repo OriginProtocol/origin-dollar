@@ -412,9 +412,13 @@ const useSwapEstimator = ({
         isRedeem ? coinToReceiveDecimals : 18
       )
 
-      const decimals = selectedCoin === 'ousd' || selectedCoin === 'dai' ? 18 : 6
+      const decimals =
+        selectedCoin === 'ousd' || selectedCoin === 'dai' ? 18 : 6
 
-      if (ethers.utils.formatUnits(swapAmount, decimals) / amountReceived > max_price) {
+      if (
+        ethers.utils.formatUnits(swapAmount, decimals) / amountReceived >
+        max_price
+      ) {
         return {
           canDoSwap: false,
           error: 'price_too_high',
@@ -517,9 +521,13 @@ const useSwapEstimator = ({
         isRedeem ? coinToReceiveDecimals : 18
       )
 
-      const decimals = selectedCoin === 'ousd' || selectedCoin === 'dai' ? 18 : 6
+      const decimals =
+        selectedCoin === 'ousd' || selectedCoin === 'dai' ? 18 : 6
 
-      if (ethers.utils.formatUnits(swapAmount, decimals) / amountReceived > max_price) {
+      if (
+        ethers.utils.formatUnits(swapAmount, decimals) / amountReceived >
+        max_price
+      ) {
         return {
           canDoSwap: false,
           error: 'price_too_high',
@@ -657,9 +665,13 @@ const useSwapEstimator = ({
         isRedeem ? coinToReceiveDecimals : 18
       )
 
-      const decimals = selectedCoin === 'ousd' || selectedCoin === 'dai' ? 18 : 6
+      const decimals =
+        selectedCoin === 'ousd' || selectedCoin === 'dai' ? 18 : 6
 
-      if (ethers.utils.formatUnits(swapAmount, decimals) / amountReceived > max_price) {
+      if (
+        ethers.utils.formatUnits(swapAmount, decimals) / amountReceived >
+        max_price
+      ) {
         return {
           canDoSwap: false,
           error: 'price_too_high',

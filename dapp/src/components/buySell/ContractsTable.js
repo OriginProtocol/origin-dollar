@@ -65,10 +65,7 @@ const ContractsTable = () => {
       'Liquidity error',
       'Swap estimations: liquidity error'
     ),
-    price_too_high: fbt(
-      'Price too high',
-      'Swap estimations: price too high'
-    ),
+    price_too_high: fbt('Price too high', 'Swap estimations: price too high'),
   }
 
   // Defines the sorting order of errored items
