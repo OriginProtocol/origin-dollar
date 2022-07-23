@@ -73,6 +73,13 @@ const Info = ({ contract }) => {
           margin-bottom: 2px;
           cursor: pointer;
         }
+
+        @media (max-width: 992px) {
+          .dropdown-menu {
+            left: auto;
+            right: 0;
+          }
+        }
       `}</style>
     </>
   )
