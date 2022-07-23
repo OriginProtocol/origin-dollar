@@ -11,7 +11,7 @@ import ContractStore from 'stores/ContractStore'
 import ConfirmationModal from 'components/buySell/ConfirmationModal'
 import Dropdown from 'components/Dropdown'
 
-const Info = ({contract}) => {
+const Info = ({ contract }) => {
   const [infoOpen, setInfoOpen] = useState(false)
   const vault = contract === 'vault'
 
@@ -20,8 +20,20 @@ const Info = ({contract}) => {
       <div className="info-box">
         <Dropdown
           content={
-            <div className={`d-flex dropdown-menu text-wrap ${vault ? '' : 'short'}`}>
-              {vault ? fbt('The Origin Vault only allows redeeming OUSD into a mix of stablecoins, determined by the proportion of assets it governs', 'Unsupported-vault-message') : fbt('This route only supports redeeming OUSD into a single stablecoin', 'Unsupported-route-message')}
+            <div
+              className={`d-flex dropdown-menu text-wrap ${
+                vault ? '' : 'short'
+              }`}
+            >
+              {vault
+                ? fbt(
+                    'The Origin Vault only allows redeeming OUSD into a mix of stablecoins, determined by the proportion of assets it governs',
+                    'Unsupported-vault-message'
+                  )
+                : fbt(
+                    'This route only supports redeeming OUSD into a single stablecoin',
+                    'Unsupported-route-message'
+                  )}
             </div>
           }
           open={infoOpen}
@@ -415,9 +427,7 @@ const ContractsTable = () => {
                 }`}
               >
                 {empty ? '-' : status}
-                {errorReason === 'unsupported' && (
-                  <Info contract={contract}/>
-                )}
+                {errorReason === 'unsupported' && <Info contract={contract} />}
               </div>
             </div>
           )
