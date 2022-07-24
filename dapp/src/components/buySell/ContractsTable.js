@@ -5,9 +5,85 @@ import { find, sortBy } from 'lodash'
 import { useStoreState } from 'pullstate'
 import { formatCurrency } from 'utils/math'
 import analytics from 'utils/analytics'
+import { assetRootPath } from 'utils/image'
 
 import ContractStore from 'stores/ContractStore'
 import ConfirmationModal from 'components/buySell/ConfirmationModal'
+import Dropdown from 'components/Dropdown'
+
+const Info = ({ contract }) => {
+  const [infoOpen, setInfoOpen] = useState(false)
+  const vault = contract === 'vault'
+
+  return (
+    <>
+      <div className="info-box">
+        <Dropdown
+          content={
+            <div
+              className={`d-flex dropdown-menu text-wrap ${
+                vault ? '' : 'short'
+              }`}
+            >
+              {vault
+                ? fbt(
+                    'The Origin Vault only supports redeeming OUSD for a mix of stablecoins.',
+                    'Unsupported-vault-message'
+                  )
+                : fbt(
+                    'This route only supports swapping OUSD for a single stablecoin.',
+                    'Unsupported-route-message'
+                  )}
+            </div>
+          }
+          open={infoOpen}
+          onClose={() => setInfoOpen(false)}
+        >
+          <img
+            className="info-icon"
+            src={assetRootPath('/images/question-icon.svg')}
+            onClick={() => {
+              setInfoOpen(!infoOpen)
+            }}
+          />
+        </Dropdown>
+      </div>
+      <style jsx>{`
+        .info-box {
+          display: inline-block;
+          margin-left: 4px;
+        }
+
+        .dropdown-menu {
+          font-size: 14px;
+          top: 115%;
+          left: 0;
+          right: auto;
+          min-width: 230px;
+          padding: 18px 18px 18px 20px;
+        }
+
+        .dropdown-menu.short {
+          min-width: 190px;
+        }
+
+        .info-icon {
+          width: 16px;
+          height: 16px;
+          margin-bottom: 2px;
+          cursor: pointer;
+        }
+
+        @media (max-width: 992px) {
+          .dropdown-menu {
+            left: auto;
+            right: 0;
+          }
+        }
+      `}</style>
+    </>
+  )
+}
 
 const ContractsTable = () => {
   const swapEstimations = useStoreState(ContractStore, (s) => s.swapEstimations)
@@ -140,6 +216,7 @@ const ContractsTable = () => {
     }
     setAlternateTxRouteConfirmed(isConfirmed)
   }
+
   return (
     <div className="contracts-table">
       {showAlternateRouteModal && (
@@ -357,6 +434,7 @@ const ContractsTable = () => {
                 }`}
               >
                 {empty ? '-' : status}
+                {errorReason === 'unsupported' && <Info contract={contract} />}
               </div>
             </div>
           )
