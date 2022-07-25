@@ -7,11 +7,14 @@ import EmailForm from 'components/EmailForm'
 import GetOUSD from 'components/GetOUSD'
 import Layout from 'components/layout'
 import Nav from 'components/Nav'
+import ApySelect from 'components/ApySelect'
 import ContractStore from 'stores/ContractStore'
 import { formatCurrency } from 'utils/math'
 import { animateValue } from 'utils/animation'
 import { getDocsLink } from 'utils/getDocsLink'
 import { assetRootPath } from 'utils/image'
+import { DEFAULT_SELECTED_APY } from 'utils/constants'
+import { zipObject } from 'lodash'
 
 const discordURL = process.env.DISCORD_URL
 const jobsURL = process.env.JOBS_URL
@@ -23,6 +26,28 @@ const Home = ({ locale, onLocale }) => {
   const apy = useStoreState(ContractStore, (s) => s.apy.apy365 || 0)
 
   const goodTempo = 10000
+
+  const apyDayOptions = [7, 30, 365]
+
+  const apyOptions = useStoreState(ContractStore, (s) =>
+    apyDayOptions.map((d) => {
+      return s.apy[`apy${d}`] || 0
+    })
+  )
+  const daysToApy = zipObject(apyDayOptions, apyOptions)
+  const [apyDays, setApyDays] = useState(
+    process.browser &&
+      localStorage.getItem('last_user_selected_apy') !== null &&
+      apyDayOptions.includes(
+        Number(localStorage.getItem('last_user_selected_apy'))
+      )
+      ? localStorage.getItem('last_user_selected_apy')
+      : DEFAULT_SELECTED_APY
+  )
+
+  useEffect(() => {
+    localStorage.setItem('last_user_selected_apy', apyDays)
+  }, [apyDays])
 
   useEffect(() => {
     return animateValue({
@@ -85,10 +110,21 @@ const Home = ({ locale, onLocale }) => {
               <div className="text-container overflowing">
                 <div className="current">{fbt('Actual', 'Actual')}</div>
                 <div className="rate">
-                  {formatCurrency(apy * 100, 2) + '%'} APY
+                  {formatCurrency(daysToApy[apyDays] * 100, 2) + '%'} APY
                 </div>
-                <div className="timeframe">
-                  {fbt('over the past year', 'over the past year')}
+                <div className="timeframe d-flex flex-row">
+                  <span className="time-text">
+                    {fbt('over the past', 'over the past')}
+                  </span>
+                  <span className="apy-select">
+                    <ApySelect
+                      apyDayOptions={apyDayOptions}
+                      apyDays={apyDays}
+                      setApyDays={setApyDays}
+                      nav={true}
+                      homepage={true}
+                    />
+                  </span>
                 </div>
                 <h2>
                   {fbt(
@@ -629,14 +665,23 @@ const Home = ({ locale, onLocale }) => {
         }
 
         .timeframe {
+          margin-top: 10px;
           font-size: 0.75rem;
+        }
+
+        .timeframe .time-text {
           opacity: 0.8;
+          line-height: 24px;
         }
 
         .rate {
           font-family: Poppins;
           font-size: 4rem;
           line-height: 1;
+        }
+
+        .apy-select {
+          margin-left: 6px;
         }
 
         .disclaimer {
