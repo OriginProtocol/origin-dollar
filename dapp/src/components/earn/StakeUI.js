@@ -342,7 +342,7 @@ const StakeUI = ({ rpcProvider, isMobile }) => {
         )}
         {!ognStakingHidden && (
           <div className="home d-flex flex-column">
-            {(stakes === null || stakeOptions.length === 0) && active && (
+            {(stakes === null) && active && (
               <div className="loading-text">
                 {fbt('Loading...', 'Loading...')}
               </div>
@@ -386,48 +386,6 @@ const StakeUI = ({ rpcProvider, isMobile }) => {
               />
             </div>
 
-            {stakeOptions.length > 0 && (
-              <div className="d-flex flex-column lockup-options">
-                <div
-                  className={`title available-lockups ${
-                    curveStakingEnabled ? 'grey' : ''
-                  }`}
-                >
-                  {fbt('Available Lock-ups', 'Available Lock-ups')}
-                </div>
-              )}
-              {nonClaimedActiveStakes && nonClaimedActiveStakes.length > 0 && (
-                <div className="d-flex flex-column current-lockups">
-                  <div className="title">
-                    {fbt('Current Lock-ups', 'Current Lock-ups')}
-                  </div>
-                  {nonClaimedActiveStakes.map((stake) => {
-                    return (
-                      <div
-                        key={stakeOption.duration}
-                        className="col-12 col-md-4"
-                      >
-                        <StakeBoxBig
-                          percentage={stakeOption.rate}
-                          duration={durationToDays(stakeOption.duration * 1000)}
-                          onClick={(e) => {
-                            onStakeModalClick(
-                              stakeOption.durationBn,
-                              stakeOption.rate
-                            )
-                          }}
-                          subtitle={stakeOption.subtitle}
-                          showLoadingWheel={
-                            waitingForStakeTx &&
-                            waitingFormattedDuration === stakeOption.duration
-                          }
-                        />
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-            )}
             {nonClaimedActiveStakes && nonClaimedActiveStakes.length > 0 && (
               <div className="d-flex flex-column current-lockups">
                 <div className="title dark">
