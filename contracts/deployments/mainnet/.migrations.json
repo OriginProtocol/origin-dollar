@@ -35,5 +35,6 @@
   "037_dripper": 1645459202,
   "038_staking_patch": 1647020527,
   "039_wrapped_ousd": 1649704912,
-  "041_stop_buyback_swaps": 1655503634
+  "041_stop_buyback_swaps": 1655503634,
+  "040_vault_peg_check": 1659100448
 }
