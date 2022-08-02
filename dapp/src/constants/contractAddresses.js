@@ -34,6 +34,8 @@ addresses.mainnet.cUSDT = '0xf650c3d88d12db855b8bf7d11be6c55a4e07dcc9'
 
 // Ogn
 addresses.mainnet.OGN = '0x8207c1ffc5b6804f6024322ccf34f29c3541ae26'
+// OGV
+addresses.mainnet.OGV = "0x8207c1ffc5b6804f6024322ccf34f29c3541ae26";  // TODO: update
 
 // Open Oracle
 addresses.mainnet.openOracle = '0x9b8eb8b3d6e2e0db36f41455185fef7049a35cae'
@@ -105,6 +107,7 @@ addresses.mainnet.ChainlinkOracle = '0x8DE3Ac42F800a1186b6D70CB91e0D6876cC36759'
 addresses.mainnet.UniswapOracle = '0xc15169Bad17e676b3BaDb699DEe327423cE6178e'
 addresses.mainnet.CompensationClaims =
   '0x9C94df9d594BA1eb94430C006c269C314B1A8281'
+addresses.mainnet.RewardsSource = addresses.mainnet.CompensationClaims // TODO: update
 
 /* --- RINKEBY --- */
 addresses.rinkeby = {}

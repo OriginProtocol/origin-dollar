@@ -16,6 +16,7 @@ const usdcAbi = require("./abi/erc20.json");
 const compAbi = require("./abi/erc20.json");
 const crvAbi = require("./abi/erc20.json");
 const ognAbi = require("./abi/erc20.json");
+const ogvAbi = require("./abi/erc20.json");
 const crvMinterAbi = require("./abi/crvMinter.json");
 
 async function defaultFixture() {
@@ -108,6 +109,7 @@ async function defaultFixture() {
     tusd,
     usdc,
     ogn,
+    ogv,
     nonStandardToken,
     cusdt,
     cdai,
@@ -146,6 +148,7 @@ async function defaultFixture() {
     crv = await ethers.getContractAt(crvAbi, addresses.mainnet.CRV);
     cvx = await ethers.getContractAt(crvAbi, addresses.mainnet.CVX);
     ogn = await ethers.getContractAt(ognAbi, addresses.mainnet.OGN);
+    ogv = await ethers.getContractAt(ogvAbi, addresses.mainnet.OGV);
     crvMinter = await ethers.getContractAt(
       crvMinterAbi,
       addresses.mainnet.CRVMinter
@@ -160,6 +163,7 @@ async function defaultFixture() {
     tusd = await ethers.getContract("MockTUSD");
     usdc = await ethers.getContract("MockUSDC");
     ogn = await ethers.getContract("MockOGN");
+    ogv = await ethers.getContract("MockOGN");  // MockOGV
     nonStandardToken = await ethers.getContract("MockNonStandardToken");
 
     cdai = await ethers.getContract("MockCDAI");
@@ -271,6 +275,7 @@ async function defaultFixture() {
     tusd,
     usdc,
     ogn,
+    ogv,
     nonStandardToken,
     // cTokens
     cdai,

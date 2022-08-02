@@ -54,6 +54,8 @@ addresses.mainnet.CVXBooster = "0xF403C135812408BFbE8713b5A23a04b3D48AAE31";
 addresses.mainnet.openOracle = "0x922018674c12a7f0d394ebeef9b58f186cde13c1";
 // OGN
 addresses.mainnet.OGN = "0x8207c1ffc5b6804f6024322ccf34f29c3541ae26";
+// OGV
+addresses.mainnet.OGV = "0x8207c1ffc5b6804f6024322ccf34f29c3541ae26";  // TODO: update
 
 // Uniswap router
 addresses.mainnet.uniswapRouter = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D";
@@ -114,6 +116,7 @@ addresses.mainnet.MixOracle = "0x4d4f5e7a1FE57F5cEB38BfcE8653EFFa5e584458";
 addresses.mainnet.UniswapOracle = "0xc15169Bad17e676b3BaDb699DEe327423cE6178e";
 addresses.mainnet.CompensationClaims =
   "0x9C94df9d594BA1eb94430C006c269C314B1A8281";
+addresses.mainnet.RewardsSource = addresses.mainnet.CompensationClaims // TODO: update
 addresses.mainnet.Flipper = "0xcecaD69d7D4Ed6D52eFcFA028aF8732F27e08F70";
 
 /* --- RINKEBY --- */

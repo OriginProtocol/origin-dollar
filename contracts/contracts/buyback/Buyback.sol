@@ -27,6 +27,9 @@ contract Buyback is Governable {
     // Swap to OGN
     IERC20 immutable ogn;
 
+    // Swap to OGV
+    IERC20 immutable ogv;
+
     // USDT for Uniswap path
     IERC20 immutable usdt;
 
@@ -37,24 +40,30 @@ contract Buyback is Governable {
     address immutable ognEthOracle;
     address immutable ethUsdOracle;
 
+    address immutable rewardsSource;
+
     constructor(
         address _uniswapAddr,
         address _vaultAddr,
         address _ousd,
         address _ogn,
+        address _ogv,
         address _usdt,
         address _weth9,
         address _ognEthOracle,
-        address _ethUsdOracle
+        address _ethUsdOracle,
+        address _rewardsSource
     ) {
         uniswapAddr = _uniswapAddr;
         vaultAddr = _vaultAddr;
         ousd = IERC20(_ousd);
         ogn = IERC20(_ogn);
+        ogv = IERC20(_ogv);
         usdt = IERC20(_usdt);
         weth9 = IERC20(_weth9);
         ognEthOracle = _ognEthOracle;
         ethUsdOracle = _ethUsdOracle;
+        rewardsSource = _rewardsSource;
         // Give approval to Uniswap router for OUSD, this is handled
         // by setUniswapAddr in the production contract
         IERC20(_ousd).safeApprove(uniswapAddr, 0);
@@ -91,11 +100,6 @@ contract Buyback is Governable {
         uint256 sourceAmount = ousd.balanceOf(address(this));
         if (sourceAmount < 1000 * 1e18) return;
         if (uniswapAddr == address(0)) return;
-        // 97% should be the limits of our oracle errors.
-        // If this swap sometimes skips when it should succeed, that’s okay,
-        // the amounts will get get sold the next time this runs,
-        // when presumably the oracles are more accurate.
-        uint256 minExpected = expectedOgnPerOUSD(sourceAmount).mul(97).div(100);
 
         UniswapV3Router.ExactInputParams memory params = UniswapV3Router
             .ExactInputParams({
@@ -106,12 +110,14 @@ contract Buyback is Governable {
                     uint24(3000), // Pool fee, usdt -> weth9
                     weth9,
                     uint24(3000), // Pool fee, weth9 -> ogn
-                    ogn
+                    ogn,
+                    uint24(3000), // Pool fee, ogn -> ogv,
+                    ogv
                 ),
-                recipient: address(this),
+                recipient: rewardsSource,   // forward OGV on to the rewards source contract
                 deadline: uint256(block.timestamp.add(1000)),
                 amountIn: sourceAmount,
-                amountOutMinimum: minExpected
+                amountOutMinimum: 0     // TODO: create OGV oracle
             });
 
         // Don't revert everything, even if the buyback fails.
@@ -127,17 +133,6 @@ contract Buyback is Governable {
         if (!success) {
             emit BuybackFailed(data);
         }
-    }
-
-    function expectedOgnPerOUSD(uint256 ousdAmount)
-        public
-        view
-        returns (uint256)
-    {
-        return
-            ousdAmount.mul(uint256(1e26)).div( // ognEth is 18 decimal. ethUsd is 8 decimal.
-                _price(ognEthOracle).mul(_price(ethUsdOracle))
-            );
     }
 
     function _price(address _feed) internal view returns (uint256) {

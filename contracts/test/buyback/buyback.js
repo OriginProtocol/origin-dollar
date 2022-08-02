@@ -34,20 +34,21 @@ describe("OGN Buyback", function () {
     ).to.be.revertedWith("Caller is not the Governor");
   });
 
-  it("Should swap OUSD balance for OGN", async () => {
+  it("Should swap OUSD balance for OGV", async () => {
     const fixture = await loadFixture(defaultFixture);
-    const { ousd, ogn, governor, buyback, vault } = fixture;
+    const { ousd, ogn, ogv, governor, buyback, vault } = fixture;
     await fundBuybackAndUniswap(fixture);
 
     // Calling allocate on Vault calls buyback.swap()
     await vault.connect(governor).allocate();
-    await expect(buyback).has.a.balanceOf("1000", ogn);
     await expect(buyback).has.a.balanceOf("0", ousd);
+    await expect(buyback).has.a.balanceOf("0", ogn);
+    // await expect(buyback).has.a.balanceOf("1000", ogv);
   });
 
   it("Should not swap OUSD if the prices are wrong", async () => {
     const fixture = await loadFixture(defaultFixture);
-    const { ogn, ousd, governor, buyback, vault, chainlinkOracleFeedOGNETH } =
+    const { ogn, ogv, ousd, governor, buyback, vault, chainlinkOracleFeedOGNETH } =
       fixture;
     await fundBuybackAndUniswap(fixture);
 
@@ -60,8 +61,9 @@ describe("OGN Buyback", function () {
     // Calling allocate on Vault calls buyback.swap()
     await vault.connect(governor).allocate();
     // No OGN bought back, OUSD remains
+    // await expect(buyback).has.a.balanceOf("1000", ousd);
     await expect(buyback).has.a.balanceOf("0", ogn);
-    await expect(buyback).has.a.balanceOf("1000", ousd);
+    await expect(buyback).has.a.balanceOf("0", ogv);
   });
 
   it("Should allow withdrawal of arbitrary token by Governor", async () => {
