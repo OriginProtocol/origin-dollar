@@ -126,6 +126,7 @@ async function defaultFixture() {
     chainlinkOracleFeedUSDT,
     chainlinkOracleFeedUSDC,
     chainlinkOracleFeedOGNETH,
+    chainlinkOracleFeedOGVETH,
     chainlinkOracleFeedETH,
     crv,
     crvMinter,
@@ -204,6 +205,9 @@ async function defaultFixture() {
     chainlinkOracleFeedOGNETH = await ethers.getContract(
       "MockChainlinkOracleFeedOGNETH"
     );
+    chainlinkOracleFeedOGVETH = await ethers.getContract(
+      "MockChainlinkOracleFeedOGVETH"
+    );
     chainlinkOracleFeedETH = await ethers.getContract(
       "MockChainlinkOracleFeedETH"
     );
@@ -265,6 +269,7 @@ async function defaultFixture() {
     chainlinkOracleFeedUSDT,
     chainlinkOracleFeedUSDC,
     chainlinkOracleFeedOGNETH,
+    chainlinkOracleFeedOGVETH,
     chainlinkOracleFeedETH,
     governorContract,
     compoundStrategy,

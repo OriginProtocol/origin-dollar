@@ -676,6 +676,7 @@ const deployBuyback = async () => {
     assetAddresses.USDT,
     assetAddresses.WETH,
     oracleAddresses.chainlink.OGN_ETH,
+    oracleAddresses.chainlink.OGV_ETH,
     oracleAddresses.chainlink.ETH_USD,
     "0x8207c1ffc5b6804f6024322ccf34f29c3541ae26"  // await ethers.getContract("RewardsSource")
   ]);

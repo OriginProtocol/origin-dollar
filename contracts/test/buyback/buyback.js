@@ -48,15 +48,15 @@ describe("OGN Buyback", function () {
 
   it("Should not swap OUSD if the prices are wrong", async () => {
     const fixture = await loadFixture(defaultFixture);
-    const { ogn, ogv, ousd, governor, buyback, vault, chainlinkOracleFeedOGNETH } =
+    const { ogn, ogv, ousd, governor, buyback, vault, chainlinkOracleFeedOGVETH } =
       fixture;
     await fundBuybackAndUniswap(fixture);
 
-    // Our mock uniswap is set to trade at 1 OGN = 1 OUSD
-    // If we set the price of OGN to 0.80, then we would expect 1,250 OGN
+    // Our mock uniswap is set to trade at 1 OGV = 1 OUSD
+    // If we set the price of OGV to 0.80, then we would expect 1,250 OGV
     // in return for 1,000 OUSD.
-    // 1 ETH = 4000 USD, 1 OGN = 0.0002 ETH is 0.80
-    await chainlinkOracleFeedOGNETH.setPrice(utils.parseUnits("0.0002", 18));
+    // 1 ETH = 4000 USD, 1 OGV = 0.0002 ETH is 0.80
+    await chainlinkOracleFeedOGVETH.setPrice(utils.parseUnits("0.0002", 18));
 
     // Calling allocate on Vault calls buyback.swap()
     await vault.connect(governor).allocate();

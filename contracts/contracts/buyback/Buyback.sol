@@ -38,6 +38,7 @@ contract Buyback is Governable {
 
     // Oracles
     address immutable ognEthOracle;
+    address immutable ogvEthOracle;
     address immutable ethUsdOracle;
 
     address immutable rewardsSource;
@@ -51,6 +52,7 @@ contract Buyback is Governable {
         address _usdt,
         address _weth9,
         address _ognEthOracle,
+        address _ogvEthOracle,
         address _ethUsdOracle,
         address _rewardsSource
     ) {
@@ -62,6 +64,7 @@ contract Buyback is Governable {
         usdt = IERC20(_usdt);
         weth9 = IERC20(_weth9);
         ognEthOracle = _ognEthOracle;
+        ogvEthOracle = _ogvEthOracle;
         ethUsdOracle = _ethUsdOracle;
         rewardsSource = _rewardsSource;
         // Give approval to Uniswap router for OUSD, this is handled
@@ -100,6 +103,11 @@ contract Buyback is Governable {
         uint256 sourceAmount = ousd.balanceOf(address(this));
         if (sourceAmount < 1000 * 1e18) return;
         if (uniswapAddr == address(0)) return;
+        // 97% should be the limits of our oracle errors.
+        // If this swap sometimes skips when it should succeed, that’s okay,
+        // the amounts will get get sold the next time this runs,
+        // when presumably the oracles are more accurate.
+        uint256 minExpected = expectedOgvPerOUSD(sourceAmount).mul(97).div(100);
 
         UniswapV3Router.ExactInputParams memory params = UniswapV3Router
             .ExactInputParams({
@@ -117,7 +125,7 @@ contract Buyback is Governable {
                 recipient: rewardsSource,   // forward OGV on to the rewards source contract
                 deadline: uint256(block.timestamp.add(1000)),
                 amountIn: sourceAmount,
-                amountOutMinimum: 0     // TODO: create OGV oracle
+                amountOutMinimum: minExpected
             });
 
         // Don't revert everything, even if the buyback fails.
@@ -134,6 +142,17 @@ contract Buyback is Governable {
             emit BuybackFailed(data);
         }
     }
+
+    function expectedOgvPerOUSD(uint256 ousdAmount)
+         public
+         view
+         returns (uint256)
+     {
+         return
+             ousdAmount.mul(uint256(1e26)).div( // ogvEth is 18 decimal. ethUsd is 8 decimal.
+                 _price(ogvEthOracle).mul(_price(ethUsdOracle))
+             );
+     }
 
     function _price(address _feed) internal view returns (uint256) {
         require(_feed != address(0), "Asset not available");
