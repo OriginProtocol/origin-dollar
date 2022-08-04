@@ -54,6 +54,8 @@ const useSwapEstimator = ({
 
   let coinToReceiveContract, coinToReceiveDecimals
 
+  const decimals = swapMode === 'redeem' || selectedCoin === 'dai' ? 18 : 6
+
   // do not enter conditional body when redeeming a mix
   if (!(swapMode === 'redeem' && selectedCoin === 'mix')) {
     ;({ contract: coinToReceiveContract, decimals: coinToReceiveDecimals } =
@@ -412,8 +414,6 @@ const useSwapEstimator = ({
         isRedeem ? coinToReceiveDecimals : 18
       )
 
-      const decimals = swapMode === 'redeem' || selectedCoin === 'dai' ? 18 : 6
-
       if (
         ethers.utils.formatUnits(swapAmount, decimals) / amountReceived >
         max_price
@@ -519,8 +519,6 @@ const useSwapEstimator = ({
         priceQuoteBn,
         isRedeem ? coinToReceiveDecimals : 18
       )
-
-      const decimals = swapMode === 'redeem' || selectedCoin === 'dai' ? 18 : 6
 
       if (
         ethers.utils.formatUnits(swapAmount, decimals) / amountReceived >
@@ -662,10 +660,6 @@ const useSwapEstimator = ({
         priceQuoteBn,
         isRedeem ? coinToReceiveDecimals : 18
       )
-
-      const decimals = swapMode === 'redeem' || selectedCoin === 'dai' ? 18 : 6
-
-      console.log()
 
       if (
         ethers.utils.formatUnits(swapAmount, decimals) / amountReceived >
