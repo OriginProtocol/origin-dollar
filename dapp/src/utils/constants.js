@@ -16,6 +16,7 @@ const approveCoinGasLimits = {
 }
 const apyDayOptions = [7, 30, 60, 90, 365]
 const DEFAULT_SELECTED_APY = 30
+const transactionHistoryItemsPerPage = 50
 const max_price = 1.2
 
 module.exports = {
@@ -29,5 +30,6 @@ module.exports = {
   approveCoinGasLimits,
   apyDayOptions,
   DEFAULT_SELECTED_APY,
+  transactionHistoryItemsPerPage,
   max_price,
 }

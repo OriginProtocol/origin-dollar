@@ -1,9 +1,14 @@
-export default class TransactionHistoryService {
+export default class TransactionHistoryPageService {
   constructor() {
     this.baseURL = `${process.env.ANALYTICS_ENDPOINT}/api/v1/address`
   }
 
-  async fetchHistory(account, filters) {
+  async fetchHistory(
+    account,
+    transactionHistoryItemsPerPage,
+    page,
+    filters = []
+  ) {
     const filter = filters.reduce((result, filter, i) => {
       return `${result}${i !== 0 ? '+' : ''}${filter}`
     }, '')
@@ -11,14 +16,15 @@ export default class TransactionHistoryService {
     const response = await fetch(
       `${
         this.baseURL
-      }/${account.toLowerCase()}/history?per_page=1000000${filter_param}`
+      }/${account.toLowerCase()}/history?per_page=${transactionHistoryItemsPerPage}&page=${page}${filter_param}`
     )
+
     if (!response.ok) {
       throw new Error('Failed fetching history from analytics')
     }
 
-    return (await response.json()).history
+    return await response.json()
   }
 }
 
-export const transactionHistoryService = new TransactionHistoryService()
+export const transactionHistoryPageService = new TransactionHistoryPageService()
