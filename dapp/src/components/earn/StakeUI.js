@@ -767,7 +767,7 @@ const StakeUI = ({ rpcProvider, isMobile }) => {
           border-top: solid 1px #cdd7e0;
           background-color: #fafbfc;
         }
-  
+
         .header-text {
           font-size: 22px;
           line-height: 0.86;
@@ -776,7 +776,7 @@ const StakeUI = ({ rpcProvider, isMobile }) => {
           margin-top: 23px;
           margin-bottom: 10px;
         }
-  
+
         .subtext {
           font-size: 14px;
           line-height: 1.36;
