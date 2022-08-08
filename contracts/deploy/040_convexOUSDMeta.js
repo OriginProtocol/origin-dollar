@@ -2,7 +2,7 @@ const { deploymentWithProposal } = require("../utils/deploy");
 const { BigNumber } = require("ethers");
 
 module.exports = deploymentWithProposal(
-  { deployName: "040_convex_meta_strategy", forceDeploy: false },
+  { deployName: "040_convex_OUSD_meta_strategy", forceDeploy: false },
   async ({
     assetAddresses,
     deployWithConfirmation,
@@ -29,21 +29,21 @@ module.exports = deploymentWithProposal(
 
     // 1. Deploy new proxy
     // New strategy will be living at a clean address
-    const dConvexMetaStrategyProxy = await deployWithConfirmation(
-      "ConvexMetaStrategyProxy"
+    const dConvexOUSDMetaStrategyProxy = await deployWithConfirmation(
+      "ConvexOUSDMetaStrategyProxy"
     );
-    const cConvexMetaStrategyProxy = await ethers.getContractAt(
-      "ConvexMetaStrategyProxy",
-      dConvexMetaStrategyProxy.address
+    const cConvexOUSDMetaStrategyProxy = await ethers.getContractAt(
+      "ConvexOUSDMetaStrategyProxy",
+      dConvexOUSDMetaStrategyProxy.address
     );
 
     // 2. Deploy new implementation
-    const dConvexMetaStrategyImpl = await deployWithConfirmation(
-      "ConvexMetaStrategy"
+    const dConvexOUSDMetaStrategyImpl = await deployWithConfirmation(
+      "ConvexOUSDMetaStrategy"
     );
-    const cConvexMetaStrategy = await ethers.getContractAt(
-      "ConvexMetaStrategy",
-      dConvexMetaStrategyProxy.address
+    const cConvexOUSDMetaStrategy = await ethers.getContractAt(
+      "ConvexOUSDMetaStrategy",
+      dConvexOUSDMetaStrategyProxy.address
     );
 
     const cHarvesterProxy = await ethers.getContract("HarvesterProxy");
@@ -54,20 +54,20 @@ module.exports = deploymentWithProposal(
 
     // 3. Init the proxy to point at the implementation
     await withConfirmation(
-      cConvexMetaStrategyProxy
+      cConvexOUSDMetaStrategyProxy
         .connect(sDeployer)
         ["initialize(address,address,bytes)"](
-          dConvexMetaStrategyImpl.address,
+          dConvexOUSDMetaStrategyImpl.address,
           deployerAddr,
           [],
           await getTxOpts()
         )
     );
-    // 4. Init and configure new Convex Meta strategy
+    // 4. Init and configure new Convex OUSD Meta strategy
     const initFunction =
       "initialize(address[],address[],address[],address[],uint256)";
     await withConfirmation(
-      cConvexMetaStrategy.connect(sDeployer)[initFunction](
+      cConvexOUSDMetaStrategy.connect(sDeployer)[initFunction](
         [assetAddresses.CVX, assetAddresses.CRV],
         [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT],
         [
@@ -90,17 +90,17 @@ module.exports = deploymentWithProposal(
 
     // 5. Transfer governance
     await withConfirmation(
-      cConvexMetaStrategy
+      cConvexOUSDMetaStrategy
         .connect(sDeployer)
         .transferGovernance(governorAddr, await getTxOpts())
     );
 
-    console.log("META STRATEGY ADDRESS", dConvexMetaStrategyProxy.address);
+    console.log("OUSD META STRATEGY ADDRESS", dConvexOUSDMetaStrategyProxy.address);
     const fiftyMil = BigNumber.from(50000000).mul(BigNumber.from(10).pow(18));
     // Governance Actions
     // ----------------
     return {
-      name: "Deploy new Convex Meta strategy",
+      name: "Deploy new Convex OUSD Meta strategy",
       actions: [
         // 1. Set VaultCore implementation
         {
@@ -116,7 +116,7 @@ module.exports = deploymentWithProposal(
         },
         // 3. Accept governance of new ConvexStrategy
         {
-          contract: cConvexMetaStrategy,
+          contract: cConvexOUSDMetaStrategy,
           signature: "claimGovernance()",
           args: [],
         },
@@ -124,13 +124,13 @@ module.exports = deploymentWithProposal(
         {
           contract: cVaultAdmin,
           signature: "approveStrategy(address)",
-          args: [cConvexMetaStrategy.address],
+          args: [cConvexOUSDMetaStrategy.address],
         },
         // 5. Set OUSD meta strategy on Vault Admin contract
         {
           contract: cVaultAdmin,
           signature: "setOusdMetaStrategy(address)",
-          args: [cConvexMetaStrategy.address],
+          args: [cConvexOUSDMetaStrategy.address],
         },
         // 6. Set net OUSD Mint for strategy threshold
         {
@@ -143,11 +143,11 @@ module.exports = deploymentWithProposal(
         {
           contract: cHarvester,
           signature: "setSupportedStrategy(address,bool)",
-          args: [cConvexMetaStrategyProxy.address, true],
+          args: [cConvexOUSDMetaStrategyProxy.address, true],
         },
         // 8. Set harvester address
         {
-          contract: cConvexMetaStrategy,
+          contract: cConvexOUSDMetaStrategy,
           signature: "setHarvesterAddress(address)",
           args: [cHarvesterProxy.address],
         },

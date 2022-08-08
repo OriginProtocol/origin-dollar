@@ -300,34 +300,34 @@ const deployConvexStrategy = async () => {
 /**
  * Deploys a Convex Meta Strategy which supports OUSD / 3Crv
  */
-const deployConvexMetaStrategy = async () => {
+const deployConvexOUSDMetaStrategy = async () => {
   const assetAddresses = await getAssetAddresses(deployments);
   const { deployerAddr, governorAddr } = await getNamedAccounts();
   // Signers
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
   const sGovernor = await ethers.provider.getSigner(governorAddr);
 
-  await deployWithConfirmation("ConvexMetaStrategyProxy");
-  const cConvexMetaStrategyProxy = await ethers.getContract(
-    "ConvexMetaStrategyProxy"
+  await deployWithConfirmation("ConvexOUSDMetaStrategyProxy");
+  const cConvexOUSDMetaStrategyProxy = await ethers.getContract(
+    "ConvexOUSDMetaStrategyProxy"
   );
 
-  const dConvexMetaStrategy = await deployWithConfirmation(
-    "ConvexMetaStrategy"
+  const dConvexOUSDMetaStrategy = await deployWithConfirmation(
+    "ConvexOUSDMetaStrategy"
   );
-  const cConvexMetaStrategy = await ethers.getContractAt(
-    "ConvexMetaStrategy",
-    cConvexMetaStrategyProxy.address
+  const cConvexOUSDMetaStrategy = await ethers.getContractAt(
+    "ConvexOUSDMetaStrategy",
+    cConvexOUSDMetaStrategyProxy.address
   );
 
   await withConfirmation(
-    cConvexMetaStrategyProxy["initialize(address,address,bytes)"](
-      dConvexMetaStrategy.address,
+    cConvexOUSDMetaStrategyProxy["initialize(address,address,bytes)"](
+      dConvexOUSDMetaStrategy.address,
       deployerAddr,
       []
     )
   );
-  log("Initialized ConvexMetaStrategyProxy");
+  log("Initialized ConvexOUSDMetaStrategyProxy");
 
   // Initialize Strategies
   const cVaultProxy = await ethers.getContract("VaultProxy");
@@ -336,7 +336,7 @@ const deployConvexMetaStrategy = async () => {
   const ousd = await ethers.getContract("OUSDProxy");
 
   await withConfirmation(
-    cConvexMetaStrategy
+    cConvexOUSDMetaStrategy
       .connect(sDeployer)
       ["initialize(address[],address[],address[],address[],uint256)"](
         [assetAddresses.CVX, assetAddresses.CRV],
@@ -357,24 +357,24 @@ const deployConvexMetaStrategy = async () => {
         56 // _cvxDepositorPTokenId
       )
   );
-  log("Initialized ConvexMetaStrategy");
+  log("Initialized ConvexOUSDMetaStrategy");
 
   await withConfirmation(
-    cConvexMetaStrategy.connect(sDeployer).transferGovernance(governorAddr)
+    cConvexOUSDMetaStrategy.connect(sDeployer).transferGovernance(governorAddr)
   );
-  log(`ConvexMetaStrategy transferGovernance(${governorAddr}) called`);
+  log(`ConvexOUSDMetaStrategy transferGovernance(${governorAddr}) called`);
   // On Mainnet the governance transfer gets executed separately, via the
   // multi-sig wallet. On other networks, this migration script can claim
   // governance by the governor.
   if (!isMainnet) {
     await withConfirmation(
-      cConvexMetaStrategy
+      cConvexOUSDMetaStrategy
         .connect(sGovernor) // Claim governance with governor
         .claimGovernance()
     );
-    log("Claimed governance for ConvexMetaStrategy");
+    log("Claimed governance for ConvexOUSDMetaStrategy");
   }
-  return cConvexMetaStrategy;
+  return cConvexOUSDMetaStrategy;
 };
 
 /**
@@ -847,7 +847,7 @@ const main = async () => {
   await deployAaveStrategy();
   await deployThreePoolStrategy();
   await deployConvexStrategy();
-  await deployConvexMetaStrategy();
+  await deployConvexOUSDMetaStrategy();
   const harvesterProxy = await deployHarvester();
   await configureVault(harvesterProxy);
   await configureStrategies(harvesterProxy);

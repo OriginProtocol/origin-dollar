@@ -67,8 +67,8 @@ contract DripperProxy is InitializeGovernedUpgradeabilityProxy {
 }
 
 /**
- * @notice ConvexMetaStrategyProxy delegates calls to a ConvexMetaStrategy implementation
+ * @notice ConvexOUSDMetaStrategyProxy delegates calls to a ConvexOUSDMetaStrategy implementation
  */
-contract ConvexMetaStrategyProxy is InitializeGovernedUpgradeabilityProxy {
+contract ConvexOUSDMetaStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 
 }

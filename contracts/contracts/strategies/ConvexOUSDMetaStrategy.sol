@@ -19,7 +19,7 @@ import { StableMath } from "../utils/StableMath.sol";
 import { Helpers } from "../utils/Helpers.sol";
 import { IVault } from "../interfaces/IVault.sol";
 
-contract ConvexMetaStrategy is BaseCurveStrategy {
+contract ConvexOUSDMetaStrategy is BaseCurveStrategy {
     using StableMath for uint256;
     using SafeERC20 for IERC20;
 

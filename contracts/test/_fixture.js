@@ -62,10 +62,10 @@ async function defaultFixture() {
     convexStrategyProxy.address
   );
 
-  const metaStrategyProxy = await ethers.getContract("ConvexMetaStrategyProxy");
-  const metaStrategy = await ethers.getContractAt(
-    "ConvexMetaStrategy",
-    metaStrategyProxy.address
+  const OUSDmetaStrategyProxy = await ethers.getContract("ConvexOUSDMetaStrategyProxy");
+  const OUSDmetaStrategy = await ethers.getContractAt(
+    "ConvexOUSDMetaStrategy",
+    OUSDmetaStrategyProxy.address
   );
 
   const aaveStrategyProxy = await ethers.getContract("AaveStrategyProxy");
@@ -298,7 +298,7 @@ async function defaultFixture() {
     metapoolToken,
     threePoolStrategy,
     convexStrategy,
-    metaStrategy,
+    OUSDmetaStrategy,
     cvx,
     cvxBooster,
     cvxRewardPool,
@@ -475,12 +475,12 @@ async function convexMetaVaultFixture() {
   // Add Convex Meta strategy
   await fixture.vault
     .connect(sGovernor)
-    .approveStrategy(fixture.metaStrategy.address);
+    .approveStrategy(fixture.OUSDmetaStrategy.address);
 
   // set meta strategy on vault so meta strategy is allowed to mint OUSD
   await fixture.vault
     .connect(sGovernor)
-    .setOusdMetaStrategy(fixture.metaStrategy.address);
+    .setOusdMetaStrategy(fixture.OUSDmetaStrategy.address);
 
   // set OUSD mint threshold to 50 million
   await fixture.vault
@@ -489,20 +489,20 @@ async function convexMetaVaultFixture() {
 
   await fixture.harvester
     .connect(sGovernor)
-    .setSupportedStrategy(fixture.metaStrategy.address, true);
+    .setSupportedStrategy(fixture.OUSDmetaStrategy.address, true);
 
   await fixture.vault
     .connect(sGovernor)
     .setAssetDefaultStrategy(
       fixture.usdt.address,
-      fixture.metaStrategy.address
+      fixture.OUSDmetaStrategy.address
     );
 
   await fixture.vault
     .connect(sGovernor)
     .setAssetDefaultStrategy(
       fixture.usdc.address,
-      fixture.metaStrategy.address
+      fixture.OUSDmetaStrategy.address
     );
   return fixture;
 }
