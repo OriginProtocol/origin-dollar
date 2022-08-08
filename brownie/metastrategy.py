@@ -27,7 +27,9 @@ ousd.transfer(RANDOM_ACCOUNT, 10000*1e18, OPTS)
 usdc.transfer(me, usdc.balanceOf(USDC_BAGS), {'from': USDC_BAGS})
 
 # approve ousd and 3poolLp to be used by ousd_metapool
+threepool_lp.approve(ousd_metapool, int(0), OPTS)
 threepool_lp.approve(ousd_metapool, int(1e50), OPTS)
+ousd.approve(ousd_metapool, int(0), OPTS)
 ousd.approve(ousd_metapool, int(1e50), OPTS)
 
 # set ousd_metastrategy as default strategies for USDT in a governance proposal
