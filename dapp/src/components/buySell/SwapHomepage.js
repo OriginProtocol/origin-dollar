@@ -39,7 +39,7 @@ const SwapHomepage = ({
 
   // mint / redeem
   const [swapMode, setSwapMode] = useState(
-    process.browser && localStorage.getItem(lastSelectedSwapModeKey) !== 'null' ? localStorage.getItem(lastSelectedSwapModeKey) : 'mint'
+    process.browser && localStorage.getItem(lastSelectedSwapModeKey) !== null ? localStorage.getItem(lastSelectedSwapModeKey) : 'mint'
   )
   const previousSwapMode = usePrevious(swapMode)
   const [buyErrorToDisplay, setBuyErrorToDisplay] = useState(false)
@@ -135,7 +135,7 @@ const SwapHomepage = ({
 
     // currencies flipped
     if (previousSwapMode !== swapMode) {
-      localStorage.setItem(lastSelectedSwapModeKey, swapMode)
+      if (swapMode) localStorage.setItem(lastSelectedSwapModeKey, swapMode)
       if (selectedSwap) {
         const otherCoinAmount =
           Math.floor(selectedSwap.amountReceived * 1000000) / 1000000
