@@ -239,6 +239,24 @@ contract VaultAdmin is VaultStorage {
         strategyTo.depositAll();
     }
 
+    function withdraw(
+      address _strategyFromAddress,
+      address[] calldata _assets,
+      uint256[] calldata _amounts
+    ) external onlyGovernorOrStrategist {
+      require(
+            strategies[_strategyFromAddress].isSupported,
+            "Invalid from Strategy"
+        );
+      require(_assets.length == _amounts.length, "Parameter length mismatch");
+
+      IStrategy strategyFrom = IStrategy(_strategyFromAddress);
+      for (uint256 i = 0; i < _assets.length; i++) {
+          // Withdraw from Strategy and Vault  as recipient
+          strategyFrom.withdraw(address(this), _assets[i], _amounts[i]);
+      }
+    }
+
     /**
      * @dev Sets the maximum allowable difference between
      * total supply and backing assets' value.

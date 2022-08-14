@@ -111,6 +111,12 @@ interface IVault {
         uint256[] calldata _amounts
     ) external;
 
+    function withdraw(
+        address _strategyFromAddress,
+        address[] calldata _assets,
+        uint256[] calldata _amounts
+    ) external;
+
     // VaultCore.sol
     function mint(
         address _asset,
