@@ -415,6 +415,64 @@ describe("Vault", function () {
     ).to.be.revertedWith("Caller is not the Strategist or Governor");
   });
 
+
+  it("Should allow the Governor to call withdraw", async () => {
+    const { vault, governor, dai, josh, compoundStrategy } =
+      await loadFixture(defaultFixture);
+
+    await vault.connect(governor).approveStrategy(compoundStrategy.address);
+    // Send all DAI to Compound
+    await vault
+      .connect(governor)
+      .setAssetDefaultStrategy(dai.address, compoundStrategy.address);
+    await dai.connect(josh).approve(vault.address, daiUnits("200"));
+    await vault.connect(josh).mint(dai.address, daiUnits("200"), 0);
+    await vault.connect(governor).allocate();
+
+    await vault
+      .connect(governor)
+      .withdraw(
+        compoundStrategy.address,
+        [dai.address],
+        [daiUnits("200")]
+      );
+  });
+
+  it("Should allow the Strategist to call withdraw", async () => {
+    const { vault, governor, dai, josh, compoundStrategy, aaveStrategy } =
+      await loadFixture(defaultFixture);
+
+    await vault.connect(governor).setStrategistAddr(await josh.getAddress());
+    await vault.connect(governor).approveStrategy(compoundStrategy.address);
+    // Send all DAI to Compound
+    await vault
+      .connect(governor)
+      .setAssetDefaultStrategy(dai.address, compoundStrategy.address);
+    await dai.connect(josh).approve(vault.address, daiUnits("200"));
+    await vault.connect(josh).mint(dai.address, daiUnits("200"), 0);
+    await vault.connect(governor).allocate();
+
+    await vault
+      .connect(josh)
+      .withdraw(
+        compoundStrategy.address,
+        [dai.address],
+        [daiUnits("200")]
+      );
+  });
+
+  it("Should not allow non-Governor and non-Strategist to call withdraw", async () => {
+    const { vault, dai, josh } = await loadFixture(defaultFixture);
+
+    await expect(
+      vault.connect(josh).withdraw(
+        vault.address, // Args don't matter because it doesn't reach checks
+        [dai.address],
+        [daiUnits("200")]
+      )
+    ).to.be.revertedWith("Caller is not the Strategist or Governor");
+  });
+
   it("Should allow Governor and Strategist to set vaultBuffer", async () => {
     const { vault, governor, strategist } = await loadFixture(defaultFixture);
     await vault.connect(governor).setVaultBuffer(utils.parseUnits("5", 17));
