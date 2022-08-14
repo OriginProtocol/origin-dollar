@@ -239,6 +239,12 @@ contract VaultAdmin is VaultStorage {
         strategyTo.depositAll();
     }
 
+    /**
+     * @notice Withdraw multiple assets from one strategy to the vault
+     * @param _strategyFromAddress Address of Strategy to withdraw assets from.
+     * @param _assets Array of asset address that will be withdrawn from the strategy.
+     * @param _amounts Array of amounts of each corresponding asset to withdraw.
+     */
     function withdraw(
       address _strategyFromAddress,
       address[] calldata _assets,
