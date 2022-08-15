@@ -1,5 +1,14 @@
 from world import *
+import world
 import math
+
+#CONFIGURATION - unfortunately this address changes until we deploy it to mainnet
+META_STRATEGY = '0x307a6343A4ecd5dF8F113fb7f1A78D792F81f91C'
+FRAX_STRATEGY = '0x307a6343A4ecd5dF8F113fb7f1A78D792F81f91C'
+# Define which meta strategy should be set as default USDT asset strategy. Important for
+# supplying liquidity when minting using USDT
+USDT_DEFAULT_META_STRATEGY = FRAX_STRATEGY
+#END COFIGURATION
 
 me = ORIGINTEAM
 some_gas_price = 100
@@ -11,10 +20,12 @@ OUSD_BAGS = '0x8e02247d3ee0e6153495c971ffd45aa131f4d7cb'
 OUSD_BAGS_2 = '0xc055de577ce2039e6d35621e3a885df9bb304ab9'
 USDT_BAGS = '0x5754284f345afc66a98fbb0a0afe71e0f007b949'
 USDC_BAGS = '0x40ec5b33f54e0e8a33a975908c5ba1c14e5bbbdf'
+FRAX_BAGS = '0xd632f22692fac7611d2aa1c0d552930d43caed3b'
 CURVE_FACTORY = '0xB9fC157394Af804a3578134A6585C0dc9cc990d4'
 
 threepool_lp = load_contract('threepool_lp', THREEPOOL_LP)
 ousd_metapool = load_contract('ousd_metapool', OUSD_METAPOOL)
+frax_metapool = load_contract('ousd_metapool', FRAX_METAPOOL)
 threepool_swap = load_contract('threepool_swap', THREEPOOL)
 curve_factory = load_contract('curve_factory', CURVE_FACTORY)
 
@@ -25,15 +36,22 @@ usdt.transfer(me, usdt.balanceOf(USDT_BAGS), {'from': USDT_BAGS})
 ousd.transfer(me, ousd.balanceOf(OUSD_BAGS_2), {'from': OUSD_BAGS_2})
 ousd.transfer(RANDOM_ACCOUNT, 10000*1e18, OPTS)
 usdc.transfer(me, usdc.balanceOf(USDC_BAGS), {'from': USDC_BAGS})
+frax.transfer(me, frax.balanceOf(FRAX_BAGS), {'from': FRAX_BAGS})
+meta_strat = load_contract('convex_strat', META_STRATEGY)
+frax_strat = load_contract('convex_strat', FRAX_STRATEGY)
 
 # approve ousd and 3poolLp to be used by ousd_metapool
 threepool_lp.approve(ousd_metapool, int(0), OPTS)
 threepool_lp.approve(ousd_metapool, int(1e50), OPTS)
+threepool_lp.approve(frax_metapool, int(0), OPTS)
+threepool_lp.approve(frax_metapool, int(1e50), OPTS)
 ousd.approve(ousd_metapool, int(0), OPTS)
 ousd.approve(ousd_metapool, int(1e50), OPTS)
+frax.approve(frax_metapool, int(0), OPTS)
+frax.approve(frax_metapool, int(1e50), OPTS)
 
-# set ousd_metastrategy as default strategies for USDT in a governance proposal
-tx = vault_admin.setAssetDefaultStrategy(usdt.address, META_STRATEGY, {'from': GOVERNOR})
+# set metastrategy as default strategies for USDT in a governance proposal
+tx = vault_admin.setAssetDefaultStrategy(usdt.address, USDT_DEFAULT_META_STRATEGY, {'from': GOVERNOR})
 tx.sig_string = 'setAssetDefaultStrategy(address,address)'
 create_gov_proposal("Set meta strategy as default strategy", [tx])
 # execute latest proposal
@@ -42,13 +60,26 @@ sim_governor_execute(governor.proposalCount())
 # approve vault to move USDT
 usdt.approve(vault_core.address, int(0), OPTS)
 usdt.approve(vault_core.address, int(1e50), OPTS)
-
 print('\033[93m' + "Operational funds:")
 print("-------------------" + '\033[0m')
 print("'me' account has: " + c24(ousd.balanceOf(me)) + "m OUSD")
 print("'me' account has: " + c24(threepool_lp.balanceOf(me)) + "m 3CRV")
 print("'me' account has: " + c12(usdc.balanceOf(me)) + "m USDC")
 print("'me' account has: " + c12(usdt.balanceOf(me)) + "m USDT")
+print("'me' account has: " + c24(frax.balanceOf(me)) + "m FRAX")
+
+def show_vault_holdings():
+    total = vault_core.totalValue()
+    world.show_vault_holdings()
+    print("-------- Meta Vault Holdings -----------")
+    print("Meta:                        ", end='')
+    convex_meta_total = meta_strat.checkBalance(DAI) + meta_strat.checkBalance(USDC) * 1e12 + meta_strat.checkBalance(USDT) * 1e12
+    convex_meta_pct =  float(convex_meta_total) / float(total) * 100
+    print(c18(convex_meta_total) + ' ({:0.2f}%)'.format(convex_meta_pct))
+    # TODO: uncomment once if becomes available
+    #print("Net OUSD minted for strategy:", end='')
+    #print(c18(vault_core.netOusdMintedForStrategy()) + ' OUSD')
+    print("----------------------------------------")
 
 # mint OUSD using USDT. Amount denominated in dollar value
 # also force call allocate so that funds get deposited to metastrategy

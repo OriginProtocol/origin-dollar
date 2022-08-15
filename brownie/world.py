@@ -1,9 +1,3 @@
-#CONFIGURATION - unfortunately this address changes until we deploy it to mainnet
-META_STRATEGY = '0x307a6343A4ecd5dF8F113fb7f1A78D792F81f91C'
-FRAX_STRATEGY = '0x307a6343A4ecd5dF8F113fb7f1A78D792F81f91C'
-
-#END COFIGURATION
-
 import  brownie
 from addresses import *
 import json
@@ -31,6 +25,7 @@ def load_contract(name, address):
         abi = json.load(f)
         return brownie.Contract.from_abi(name, address, abi)
 
+frax = load_contract('ERC20', FRAX)
 ousd = load_contract('ousd', OUSD)
 usdt = load_contract('usdt', USDT)
 usdc = load_contract('usdc', USDC)
@@ -48,7 +43,6 @@ v2router = load_contract('v2router', UNISWAP_V2_ROUTER)
 aave_strat = load_contract('aave_strat', AAVE_STRAT)
 comp_strat = load_contract('comp_strat', COMP_STRAT)
 convex_strat = load_contract('convex_strat', CONVEX_STRAT)
-meta_strat = load_contract('convex_strat', META_STRATEGY)
 
 aave_incentives_controller = load_contract('aave_incentives_controller', '0xd784927Ff2f95ba542BfC824c8a8a98F3495f6b5')
 stkaave = load_contract('stkaave', '0x4da27a545c0c5B758a6BA100e3a049001de870f5')
@@ -155,12 +149,6 @@ def show_vault_holdings():
     convex_total = convex_strat.checkBalance(DAI) + convex_strat.checkBalance(USDC) * 1e12 + convex_strat.checkBalance(USDT) * 1e12
     convex_pct =  float(convex_total) / float(total) * 100
     print(c18(convex_total) + ' ({:0.2f}%)'.format(convex_pct))
-    print("Meta:                        ", end='')
-    convex_meta_total = meta_strat.checkBalance(DAI) + meta_strat.checkBalance(USDC) * 1e12 + meta_strat.checkBalance(USDT) * 1e12
-    convex_meta_pct =  float(convex_meta_total) / float(total) * 100
-    print(c18(convex_meta_total) + ' ({:0.2f}%)'.format(convex_meta_pct))
-    print("Net OUSD minted for strategy:", end='')
-    print(c18(vault_core.netOusdMintedForStrategy()) + ' OUSD')
     print("----------------------------------------")
 
 def show_ousd_supply():
@@ -221,13 +209,15 @@ class SupplyChanges:
     def __enter__(self):
         self.vaultTotalValue = vault_core.totalValue(self.txOptions)
         self.ousdTotalSupply = ousd.totalSupply(self.txOptions)
-        self.netOusdMinted = vault_core.netOusdMintedForStrategy()
+        # TODO: Uncomment once this becomes available
+        #self.netOusdMinted = vault_core.netOusdMintedForStrategy()
         return self
 
     def __exit__(self, *args, **kwargs):
         vaultTotalValue = vault_core.totalValue(self.txOptions)
         ousdTotalSupply = ousd.totalSupply(self.txOptions)
-        netOusdMinted = vault_core.netOusdMintedForStrategy()
+        # TODO: Uncomment once this becomes available
+        #netOusdMinted = vault_core.netOusdMintedForStrategy()
         rateBefore = self.vaultTotalValue / self.ousdTotalSupply
         rateAfter = vaultTotalValue / ousdTotalSupply
 
@@ -237,7 +227,8 @@ class SupplyChanges:
         print("OUSD total supply :   " + c18(self.ousdTotalSupply) + " " + c18(ousdTotalSupply) + " " + c18(ousdTotalSupply - self.ousdTotalSupply))
         print("Vault/OUSD diff :     " + c18(self.vaultTotalValue-self.ousdTotalSupply) + " " + c18(vaultTotalValue-ousdTotalSupply) + " " + c18(self.vaultTotalValue-self.ousdTotalSupply - (vaultTotalValue-ousdTotalSupply)))
         print("Rate change :         " + leading_whitespace('{:0.4f}%'.format(rateBefore)) + " " + leading_whitespace('{:0.4f}%'.format(rateAfter)) + " " + leading_whitespace('{:0.4f}%'.format(rateAfter - rateBefore)))
-        print("OUSD strategy minted: " + c18(self.netOusdMinted) + " " + c18(netOusdMinted) + " " + c18(netOusdMinted - self.netOusdMinted))
+        # TODO: Uncomment once this becomes available
+        # print("OUSD strategy minted: " + c18(self.netOusdMinted) + " " + c18(netOusdMinted) + " " + c18(netOusdMinted - self.netOusdMinted))
         print("----------------------------------------")
         
 
