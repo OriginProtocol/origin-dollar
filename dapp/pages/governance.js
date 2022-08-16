@@ -125,7 +125,7 @@ export default function Governance({ locale, onLocale }) {
                 className="d-flex flex-column big-info-box col-12 col-md-4 mr-md-2"
                 onClick={() => {
                   window.open(
-                    'https://snapshot.org/#/origingov.eth',
+                    'https://vote.ousd.com',
                     '_blank',
                     'noopener'
                   )

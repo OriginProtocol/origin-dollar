@@ -24,6 +24,7 @@ import { refetchUserData, refetchStakingData } from 'utils/account'
 import { addStakeTxHashToWaitingBuffer } from 'utils/stake'
 import StakeDetailEquation from 'components/earn/StakeDetailEquation'
 import { assetRootPath } from 'utils/image'
+import GetOUSD from 'components/GetOUSD'
 
 const StakeUI = ({ rpcProvider, isMobile }) => {
   const { active, library } = useWeb3React()
@@ -386,6 +387,22 @@ const StakeUI = ({ rpcProvider, isMobile }) => {
               />
             </div>
 
+            {!active && (
+              <div className="empty-placeholder d-flex flex-column align-items-center justify-content-start">
+                <img src={assetRootPath('/images/wallet-icons.svg')} />
+                <div className="header-text">
+                  {fbt('No wallet connected', 'Disconnected dapp message')}
+                </div>
+                <div className="subtext">
+                  {fbt(
+                    'Please connect an Ethereum wallet',
+                    'Disconnected dapp subtext'
+                  )}
+                </div>
+                <GetOUSD primary connect trackSource="Dapp widget body" />
+              </div>
+            )}
+
             {nonClaimedActiveStakes && nonClaimedActiveStakes.length > 0 && (
               <div className="d-flex flex-column current-lockups">
                 <div className="title dark">
@@ -703,7 +720,7 @@ const StakeUI = ({ rpcProvider, isMobile }) => {
           height: 197px;
           margin: 0 0 0 auto;
           position: relative;
-          z-index: 1;
+          z-index: 0;
           object-fit: contain;
         }
 
@@ -713,7 +730,7 @@ const StakeUI = ({ rpcProvider, isMobile }) => {
           margin-top: 75px;
           margin-left: 605px;
           position: absolute;
-          z-index: 2;
+          z-index: 1;
           object-fit: contain;
         }
 
@@ -740,6 +757,32 @@ const StakeUI = ({ rpcProvider, isMobile }) => {
 
         .toggle-ogn-staking:hover {
           color: #0a72ef;
+        }
+
+        .empty-placeholder {
+          min-height: 470px;
+          height: 100%;
+          padding: 70px;
+          border-radius: 10px;
+          border-top: solid 1px #cdd7e0;
+          background-color: #fafbfc;
+        }
+
+        .header-text {
+          font-size: 22px;
+          line-height: 0.86;
+          text-align: center;
+          color: black;
+          margin-top: 23px;
+          margin-bottom: 10px;
+        }
+
+        .subtext {
+          font-size: 14px;
+          line-height: 1.36;
+          text-align: center;
+          color: #8293a4;
+          margin-bottom: 50px;
         }
 
         @media (min-width: 768px) {
