@@ -188,9 +188,15 @@ async function mint(taskArguments, hre) {
   let ousdProxy, ousd, vaultProxy, vault, usdt;
 
   if (isFork) {
-    ousdProxy = await ethers.getContractAt("OUSDProxy", addresses.mainnet.OUSDProxy);
+    ousdProxy = await ethers.getContractAt(
+      "OUSDProxy",
+      addresses.mainnet.OUSDProxy
+    );
     ousd = await ethers.getContractAt("OUSD", ousdProxy.address);
-    vaultProxy = await ethers.getContractAt("VaultProxy", addresses.mainnet.VaultProxy);
+    vaultProxy = await ethers.getContractAt(
+      "VaultProxy",
+      addresses.mainnet.VaultProxy
+    );
     vault = await ethers.getContractAt("IVault", vaultProxy.address);
     usdt = await hre.ethers.getContractAt(usdtAbi, addresses.mainnet.USDT);
   } else {
