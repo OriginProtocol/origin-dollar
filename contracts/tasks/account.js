@@ -5,6 +5,7 @@ const usdtAbi = require("../test/abi/usdt.json").abi;
 const daiAbi = require("../test/abi/erc20.json");
 const tusdAbi = require("../test/abi/erc20.json");
 const usdcAbi = require("../test/abi/erc20.json");
+const addresses = require("../utils/addresses");
 
 // By default we use 10 test accounts.
 const defaultNumAccounts = 10;
@@ -184,16 +185,19 @@ async function mint(taskArguments, hre) {
     throw new Error("Task can only be used on local or fork");
   }
 
-  const ousdProxy = await ethers.getContract("OUSDProxy");
-  const ousd = await ethers.getContractAt("OUSD", ousdProxy.address);
+  let ousdProxy, ousd, vaultProxy, vault, usdt;
 
-  const vaultProxy = await ethers.getContract("VaultProxy");
-  const vault = await ethers.getContractAt("IVault", vaultProxy.address);
-
-  let usdt;
   if (isFork) {
+    ousdProxy = await ethers.getContractAt("OUSDProxy", addresses.mainnet.OUSDProxy);
+    ousd = await ethers.getContractAt("OUSD", ousdProxy.address);
+    vaultProxy = await ethers.getContractAt("VaultProxy", addresses.mainnet.VaultProxy);
+    vault = await ethers.getContractAt("IVault", vaultProxy.address);
     usdt = await hre.ethers.getContractAt(usdtAbi, addresses.mainnet.USDT);
   } else {
+    ousdProxy = await ethers.getContract("OUSDProxy");
+    ousd = await ethers.getContract("OUSD", ousdProxy.address);
+    vaultProxy = await ethers.getContract("VaultProxy");
+    vault = await ethers.getContractAt("IVault", vaultProxy.address);
     usdt = await hre.ethers.getContract("MockUSDT");
   }
 
