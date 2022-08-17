@@ -54,6 +54,10 @@ addresses.mainnet.CVXBooster = "0xF403C135812408BFbE8713b5A23a04b3D48AAE31";
 addresses.mainnet.openOracle = "0x922018674c12a7f0d394ebeef9b58f186cde13c1";
 // OGN
 addresses.mainnet.OGN = "0x8207c1ffc5b6804f6024322ccf34f29c3541ae26";
+// OGV
+addresses.mainnet.OGV = "0x9c354503C38481a7A7a51629142963F98eCC12D0";
+// RewardsSource
+addresses.mainnet.RewardsSource = "0x7d82e86cf1496f9485a8ea04012afeb3c7489397";
 
 // Uniswap router
 addresses.mainnet.uniswapRouter = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D";
@@ -120,6 +124,7 @@ addresses.mainnet.Flipper = "0xcecaD69d7D4Ed6D52eFcFA028aF8732F27e08F70";
 addresses.rinkeby = {};
 
 addresses.rinkeby.OGN = "0xA115e16ef6e217f7a327a57031F75cE0487AaDb8";
+// TODO: Is there a OGV contract on Rinkeby??
 
 // Compound
 addresses.rinkeby.cDAI = "0x6d7f0754ffeb405d23c51ce938289d4835be3b14";

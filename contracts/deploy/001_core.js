@@ -652,12 +652,12 @@ const deployUniswapV3Pool = async () => {
 };
 
 const deployBuyback = async () => {
-  const { deployerAddr, governorAddr } = await getNamedAccounts();
+  const { deployerAddr, governorAddr, strategistAddr } =
+    await getNamedAccounts();
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
   const sGovernor = await ethers.provider.getSigner(governorAddr);
 
   const assetAddresses = await getAssetAddresses(deployments);
-  const oracleAddresses = await getOracleAddresses(deployments);
   const ousd = await ethers.getContract("OUSDProxy");
   const vault = await ethers.getContract("VaultProxy");
   const cVault = await ethers.getContractAt(
@@ -670,12 +670,13 @@ const deployBuyback = async () => {
   await deployWithConfirmation("Buyback", [
     assetAddresses.uniswapRouter,
     vault.address,
+    strategistAddr,
     ousd.address,
+    assetAddresses.OGV,
     assetAddresses.OGN,
     assetAddresses.USDT,
     assetAddresses.WETH,
-    oracleAddresses.chainlink.OGN_ETH,
-    oracleAddresses.chainlink.ETH_USD,
+    assetAddresses.RewardsSource,
   ]);
   const cBuyback = await ethers.getContract("Buyback");
 

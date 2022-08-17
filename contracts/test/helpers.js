@@ -257,6 +257,8 @@ const getAssetAddresses = async (deployments) => {
       AAVE_INCENTIVES_CONTROLLER: addresses.mainnet.AAVE_INCENTIVES_CONTROLLER,
       STKAAVE: addresses.mainnet.STKAAVE,
       OGN: addresses.mainnet.OGN,
+      OGV: addresses.mainnet.OGV,
+      RewardsSource: addresses.mainnet.RewardsSource,
       uniswapRouter: addresses.mainnet.uniswapRouter,
       sushiswapRouter: addresses.mainnet.sushiswapRouter,
     };
@@ -288,6 +290,10 @@ const getAssetAddresses = async (deployments) => {
       OGN: isRinkeby
         ? addresses.rinkeby.OGN
         : (await deployments.get("MockOGN")).address,
+      OGV: (await deployments.get("MockOGV")).address,
+      // Note: This is only used to transfer the swapped OGV in `Buyback` contract.
+      // So, as long as this is a valid address, it should be fine.
+      RewardsSource: addresses.dead,
       uniswapRouter: (await deployments.get("MockUniswapRouter")).address,
       sushiswapRouter: (await deployments.get("MockUniswapRouter")).address,
     };
