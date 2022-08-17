@@ -47,7 +47,7 @@ describe("Convex 3pool/OUSD Meta Strategy", function () {
     governor = fixture.governor;
     crv = fixture.crv;
     cvx = fixture.cvx;
-    metaStrategy = fixture.metaStrategy;
+    OUSDmetaStrategy = fixture.OUSDmetaStrategy;
     metapoolToken = fixture.metapoolToken;
     cvxBooster = fixture.cvxBooster;
     usdt = fixture.usdt;
@@ -103,9 +103,9 @@ describe("Convex 3pool/OUSD Meta Strategy", function () {
       await dai.connect(anna).approve(vault.address, daiUnits("8.0"));
       await vault.connect(anna).mint(dai.address, daiUnits("8.0"), 0);
       // Anna sends her OUSD directly to Strategy
-      await ousd.connect(anna).transfer(metaStrategy.address, ousdUnits("8.0"));
+      await ousd.connect(anna).transfer(OUSDmetaStrategy.address, ousdUnits("8.0"));
       // Anna asks Governor for help
-      await metaStrategy
+      await OUSDmetaStrategy
         .connect(governor)
         .transferToken(ousd.address, ousdUnits("8.0"));
       await expect(governor).has.a.balanceOf("8.0", ousd);
@@ -114,7 +114,7 @@ describe("Convex 3pool/OUSD Meta Strategy", function () {
     it("Should not allow transfer of arbitrary token by non-Governor", async () => {
       // Naughty Anna
       await expect(
-        metaStrategy.connect(anna).transferToken(ousd.address, ousdUnits("8.0"))
+        OUSDmetaStrategy.connect(anna).transferToken(ousd.address, ousdUnits("8.0"))
       ).to.be.revertedWith("Caller is not the Governor");
     });
   });
@@ -123,7 +123,7 @@ describe("Convex 3pool/OUSD Meta Strategy", function () {
     it("Should allow the strategist to call harvest for a specific strategy", async () => {
       // prettier-ignore
       await harvester
-        .connect(governor)["harvest(address)"](metaStrategy.address);
+        .connect(governor)["harvest(address)"](OUSDmetaStrategy.address);
     });
 
     it("Should collect reward tokens using collect rewards on all strategies", async () => {
@@ -148,7 +148,7 @@ describe("Convex 3pool/OUSD Meta Strategy", function () {
       await harvester.connect(governor)[
         // eslint-disable-next-line
         "harvest(address)"
-      ](metaStrategy.address);
+      ](OUSDmetaStrategy.address);
 
       await expect(await crv.balanceOf(harvester.address)).to.be.equal(
         utils.parseUnits("2", 18)
