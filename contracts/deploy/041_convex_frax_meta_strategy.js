@@ -2,7 +2,7 @@ const generalizedConvexStratDeployment = require("../utils/generalizedConvexStra
 
 module.exports = generalizedConvexStratDeployment({
   deployName: "041_convex_frax_meta_strategy",
-  forceDeploy: true,
+  forceDeploy: false,
   mainTokenName: "Frax",
   rewardTokenNames: ['CVX', 'CRV'],
   assets: ['DAI', 'USDC', 'USDT'],

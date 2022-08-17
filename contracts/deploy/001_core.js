@@ -334,7 +334,7 @@ const deployConvexGeneralizedMetaStrategy = async () => {
   const mockBooster = await ethers.getContract("MockBooster");
   const mockRewardPool = await ethers.getContract("MockRewardPool");
 
-  console.log("1", assetAddresses.ThreePoolFRAXMetapool, addresses.mainnet.FRAX)
+  const frax = await ethers.getContract("MockFrax");
   await withConfirmation(
     cConvexGeneralizedMetaStrategy
       .connect(sDeployer)
@@ -351,13 +351,12 @@ const deployConvexGeneralizedMetaStrategy = async () => {
           cVaultProxy.address,
           mockBooster.address, // _cvxDepositorAddress,
           assetAddresses.ThreePoolFRAXMetapool, // metapool address,
-          addresses.mainnet.FRAX,
+          frax.address, // Frax
           mockRewardPool.address, // _cvxRewardStakerAddress,
         ],
         fraxMetapoolLPCRVPid // _cvxDepositorPTokenId
       )
   );
-  console.log("2")
   log("Initialized ConvexGeneralizedMetaStrategy");
 
   await withConfirmation(
@@ -955,14 +954,10 @@ const main = async () => {
   await deployThreePoolStrategy();
   await deployConvexStrategy();
   await deployConvexOUSDMetaStrategy();
-  console.log("111")
   await deployConvexGeneralizedMetaStrategy();
-  console.log("112")
   const harvesterProxy = await deployHarvester();
-  console.log("113")
   await configureVault(harvesterProxy);
   await configureStrategies(harvesterProxy);
-  console.log("115")
   await deployDripper();
   await deployFlipper();
   await deployBuyback();
