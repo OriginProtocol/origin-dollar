@@ -11,7 +11,7 @@ module.exports = ({
   platformAddress,
   cvxDepositorAddress,
   metapoolAddress,
-  fraxAddress,
+  mainTokenAddress,
   cvxRewardStakerAddress,
   cvxDepositorPTokenId
 }) => {
@@ -95,7 +95,7 @@ module.exports = ({
             cVaultProxy.address,
             cvxDepositorAddress,
             metapoolAddress,
-            fraxAddress,
+            mainTokenAddress,
             cvxRewardStakerAddress
           ],
           cvxDepositorPTokenId,

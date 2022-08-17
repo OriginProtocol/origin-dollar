@@ -12,7 +12,7 @@ const {
   deployWithConfirmation,
   withConfirmation,
 } = require("../utils/deploy");
-const { metapoolLPCRVPid } = require("../utils/constants");
+const { metapoolLPCRVPid, fraxMetapoolLPCRVPid } = require("../utils/constants");
 
 /**
  * Deploy AAVE Strategy which only supports DAI.
@@ -298,6 +298,88 @@ const deployConvexStrategy = async () => {
 };
 
 /**
+ * Deploys a Convex Generalized Meta Strategy with Frax token configuration
+ */
+const deployConvexGeneralizedMetaStrategy = async () => {
+  const assetAddresses = await getAssetAddresses(deployments);
+  const { deployerAddr, governorAddr } = await getNamedAccounts();
+  // Signers
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+  const sGovernor = await ethers.provider.getSigner(governorAddr);
+
+  await deployWithConfirmation("ConvexGeneralizedMetaStrategyProxy");
+  const cConvexGeneralizedMetaStrategyProxy = await ethers.getContract(
+    "ConvexGeneralizedMetaStrategyProxy"
+  );
+
+  const dConvexGeneralizedMetaStrategy = await deployWithConfirmation(
+    "ConvexGeneralizedMetaStrategy"
+  );
+  const cConvexGeneralizedMetaStrategy = await ethers.getContractAt(
+    "ConvexGeneralizedMetaStrategy",
+    cConvexGeneralizedMetaStrategyProxy.address
+  );
+
+  await withConfirmation(
+    cConvexGeneralizedMetaStrategyProxy["initialize(address,address,bytes)"](
+      dConvexGeneralizedMetaStrategy.address,
+      deployerAddr,
+      []
+    )
+  );
+  log("Initialized ConvexGeneralizedMetaStrategyProxy");
+
+  // Initialize Strategies
+  const cVaultProxy = await ethers.getContract("VaultProxy");
+  const mockBooster = await ethers.getContract("MockBooster");
+  const mockRewardPool = await ethers.getContract("MockRewardPool");
+
+  console.log("1", assetAddresses.ThreePoolFRAXMetapool, addresses.mainnet.FRAX)
+  await withConfirmation(
+    cConvexGeneralizedMetaStrategy
+      .connect(sDeployer)
+      ["initialize(address[],address[],address[],address[],uint256)"](
+        [assetAddresses.CVX, assetAddresses.CRV],
+        [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT],
+        [
+          assetAddresses.ThreePoolToken,
+          assetAddresses.ThreePoolToken,
+          assetAddresses.ThreePoolToken,
+        ],
+        [
+          assetAddresses.ThreePool,
+          cVaultProxy.address,
+          mockBooster.address, // _cvxDepositorAddress,
+          assetAddresses.ThreePoolFRAXMetapool, // metapool address,
+          addresses.mainnet.FRAX,
+          mockRewardPool.address, // _cvxRewardStakerAddress,
+        ],
+        fraxMetapoolLPCRVPid // _cvxDepositorPTokenId
+      )
+  );
+  console.log("2")
+  log("Initialized ConvexGeneralizedMetaStrategy");
+
+  await withConfirmation(
+    cConvexGeneralizedMetaStrategy.connect(sDeployer).transferGovernance(governorAddr)
+  );
+  log(`ConvexGeneralizedMetaStrategy transferGovernance(${governorAddr}) called`);
+  // On Mainnet the governance transfer gets executed separately, via the
+  // multi-sig wallet. On other networks, this migration script can claim
+  // governance by the governor.
+  if (!isMainnet) {
+    await withConfirmation(
+      cConvexGeneralizedMetaStrategy
+        .connect(sGovernor) // Claim governance with governor
+        .claimGovernance()
+    );
+    log("Claimed governance for ConvexGeneralizedMetaStrategy");
+  }
+  return cConvexGeneralizedMetaStrategy;
+};
+
+
+/**
  * Deploys a Convex Meta Strategy which supports OUSD / 3Crv
  */
 const deployConvexOUSDMetaStrategy = async () => {
@@ -354,7 +436,7 @@ const deployConvexOUSDMetaStrategy = async () => {
           ousd.address, // _ousdAddress,
           mockRewardPool.address, // _cvxRewardStakerAddress,
         ],
-        56 // _cvxDepositorPTokenId
+        metapoolLPCRVPid // _cvxDepositorPTokenId
       )
   );
   log("Initialized ConvexOUSDMetaStrategy");
@@ -521,6 +603,15 @@ const configureStrategies = async (harvesterProxy) => {
   );
   await withConfirmation(
     metaStrategy.connect(sGovernor).setHarvesterAddress(harvesterProxy.address)
+  );
+
+  const FraxMetaStrategyProxy = await ethers.getContract("ConvexGeneralizedMetaStrategyProxy");
+  const fraxMetaStrategy = await ethers.getContractAt(
+    "ConvexGeneralizedMetaStrategy",
+    FraxMetaStrategyProxy.address
+  );
+  await withConfirmation(
+    fraxMetaStrategy.connect(sGovernor).setHarvesterAddress(harvesterProxy.address)
   );
 
   const threePoolProxy = await ethers.getContract("ThreePoolStrategyProxy");
@@ -718,6 +809,21 @@ const deployCurveMetapoolMocks = async () => {
   await mockBooster.setPool(metapoolLPCRVPid, metapoolToken.address);
 };
 
+// deploy curve metapool mocks
+const deployCurveFraxMetapoolMocks = async () => {
+  const { deployerAddr } = await hre.getNamedAccounts();
+  const assetAddresses = await getAssetAddresses(deployments);
+
+  await hre.deployments.deploy("MockCurveFraxMetapool", {
+    from: deployerAddr,
+    args: [[addresses.mainnet.FRAX, assetAddresses.ThreePoolToken]],
+  });
+
+  const fraxMetapoolToken = await ethers.getContract("MockCurveFraxMetapool");
+  const mockBooster = await ethers.getContract("MockBooster");
+  await mockBooster.setPool(fraxMetapoolLPCRVPid, fraxMetapoolToken.address);
+};
+
 // Deploy the Flipper trading contract
 const deployFlipper = async () => {
   const assetAddresses = await getAssetAddresses(deployments);
@@ -843,14 +949,20 @@ const main = async () => {
   await deployOracles();
   await deployCore();
   await deployCurveMetapoolMocks();
+  await deployCurveFraxMetapoolMocks();
   await deployCompoundStrategy();
   await deployAaveStrategy();
   await deployThreePoolStrategy();
   await deployConvexStrategy();
   await deployConvexOUSDMetaStrategy();
+  console.log("111")
+  await deployConvexGeneralizedMetaStrategy();
+  console.log("112")
   const harvesterProxy = await deployHarvester();
+  console.log("113")
   await configureVault(harvesterProxy);
   await configureStrategies(harvesterProxy);
+  console.log("115")
   await deployDripper();
   await deployFlipper();
   await deployBuyback();

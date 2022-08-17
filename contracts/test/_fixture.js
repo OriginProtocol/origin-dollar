@@ -136,6 +136,7 @@ async function defaultFixture() {
     threePool,
     threePoolToken,
     metapoolToken,
+    fraxMetapoolToken,
     threePoolGauge,
     aaveAddressProvider,
     uniswapPairOUSD_USDT,
@@ -180,6 +181,7 @@ async function defaultFixture() {
     threePool = await ethers.getContract("MockCurvePool");
     threePoolToken = await ethers.getContract("Mock3CRV");
     metapoolToken = await ethers.getContract("MockCurveMetapool");
+    fraxMetapoolToken = await ethers.getContract("MockCurveFraxMetapool");
     threePoolGauge = await ethers.getContract("MockCurveGauge");
     cvxBooster = await ethers.getContract("MockBooster");
     cvxRewardPool = await ethers.getContract("MockRewardPool");
@@ -296,6 +298,7 @@ async function defaultFixture() {
     threePoolGauge,
     threePoolToken,
     metapoolToken,
+    fraxMetapoolToken,
     threePoolStrategy,
     convexStrategy,
     OUSDmetaStrategy,
