@@ -36,10 +36,10 @@ addresses.mainnet.cUSDT = '0xf650c3d88d12db855b8bf7d11be6c55a4e07dcc9'
 addresses.mainnet.OGN = '0x8207c1ffc5b6804f6024322ccf34f29c3541ae26'
 
 // OGV
-addresses.mainnet.OGV = "0x9c354503C38481a7A7a51629142963F98eCC12D0";
+addresses.mainnet.OGV = '0x9c354503C38481a7A7a51629142963F98eCC12D0'
 
 // RewardsSource
-addresses.mainnet.RewardsSource = "0x7d82e86cf1496f9485a8ea04012afeb3c7489397";
+addresses.mainnet.RewardsSource = '0x7d82e86cf1496f9485a8ea04012afeb3c7489397'
 
 // Open Oracle
 addresses.mainnet.openOracle = '0x9b8eb8b3d6e2e0db36f41455185fef7049a35cae'
