@@ -25,8 +25,8 @@ contract ConvexGeneralizedMetaStrategy is BaseCurveStrategy {
     address internal cvxDepositorAddress;
     address internal cvxRewardStakerAddress;
     uint256 internal cvxDepositorPTokenId;
-    ICurveMetaPool internal metapool;
-    IERC20 internal metapoolMainToken;
+    ICurveMetaPool public metapool;
+    IERC20 public metapoolMainToken;
     // Ordered list of metapool assets
     address[] internal metapoolAssets;
 

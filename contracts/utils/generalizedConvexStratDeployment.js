@@ -87,8 +87,8 @@ module.exports = ({
         "initialize(address[],address[],address[],address[],uint256)";
       await withConfirmation(
         cConvexTokenMetaStrategy.connect(sDeployer)[initFunction](
-          tokenNameToAddress(rewardTokenNames),//[assetAddresses.CVX, assetAddresses.CRV],
-          tokenNameToAddress(assets), //[assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT],
+          tokenNameToAddress(rewardTokenNames),
+          tokenNameToAddress(assets),
           tokenNameToAddress(pTokens),
           [
             tokenNameToAddress(platformAddress)[0],
@@ -110,7 +110,7 @@ module.exports = ({
           .transferGovernance(governorAddr, await getTxOpts())
       );
 
-      console.log(mainTokenName + " META STRATEGY ADDRESS", dConvexTokenMetaStrategyProxy.address);
+      console.log(mainTokenName + " meta strategy address", dConvexTokenMetaStrategyProxy.address);
       // Governance Actions
       // ----------------
       return {

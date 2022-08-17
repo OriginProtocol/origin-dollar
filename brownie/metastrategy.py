@@ -16,11 +16,13 @@ OPTS = {'from': me, "gas_price": some_gas_price}
 
 RANDOM_ACCOUNT = '0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B'
 THREEPOOL_BAGS = '0xceaf7747579696a2f0bb206a14210e3c9e6fb269'
+THREEPOOL_BAGS_2 = '0xbfcf63294ad7105dea65aa58f8ae5be2d9d0952a'
+THREEPOOL_BAGS_3 = '0xaa5a67c256e27a5d80712c51971408db3370927d'
 OUSD_BAGS = '0x8e02247d3ee0e6153495c971ffd45aa131f4d7cb'
 OUSD_BAGS_2 = '0xc055de577ce2039e6d35621e3a885df9bb304ab9'
 USDT_BAGS = '0x5754284f345afc66a98fbb0a0afe71e0f007b949'
 USDC_BAGS = '0x40ec5b33f54e0e8a33a975908c5ba1c14e5bbbdf'
-FRAX_BAGS = '0xd632f22692fac7611d2aa1c0d552930d43caed3b'
+FRAX_BAGS = '0xdcef968d416a41cdac0ed8702fac8128a64241a2'
 CURVE_FACTORY = '0xB9fC157394Af804a3578134A6585C0dc9cc990d4'
 
 threepool_lp = load_contract('threepool_lp', THREEPOOL_LP)
@@ -31,6 +33,8 @@ curve_factory = load_contract('curve_factory', CURVE_FACTORY)
 
 # 1. Acquire 3pool, ousd and usdt
 threepool_lp.transfer(me, threepool_lp.balanceOf(THREEPOOL_BAGS), {'from': THREEPOOL_BAGS})
+threepool_lp.transfer(me, threepool_lp.balanceOf(THREEPOOL_BAGS_2), {'from': THREEPOOL_BAGS_2})
+threepool_lp.transfer(me, threepool_lp.balanceOf(THREEPOOL_BAGS_3), {'from': THREEPOOL_BAGS_3})
 ousd.transfer(me, ousd.balanceOf(OUSD_BAGS), {'from': OUSD_BAGS})
 usdt.transfer(me, usdt.balanceOf(USDT_BAGS), {'from': USDT_BAGS})
 ousd.transfer(me, ousd.balanceOf(OUSD_BAGS_2), {'from': OUSD_BAGS_2})
@@ -52,10 +56,6 @@ frax.approve(frax_metapool, int(1e50), OPTS)
 
 # set metastrategy as default strategies for USDT in a governance proposal
 tx = vault_admin.setAssetDefaultStrategy(usdt.address, USDT_DEFAULT_META_STRATEGY, {'from': GOVERNOR})
-tx.sig_string = 'setAssetDefaultStrategy(address,address)'
-create_gov_proposal("Set meta strategy as default strategy", [tx])
-# execute latest proposal
-sim_governor_execute(governor.proposalCount())
 
 # approve vault to move USDT
 usdt.approve(vault_core.address, int(0), OPTS)
@@ -71,8 +71,8 @@ print("'me' account has: " + c24(frax.balanceOf(me)) + "m FRAX")
 def show_vault_holdings():
     total = vault_core.totalValue()
     world.show_vault_holdings()
-    print("-------- Meta Vault Holdings -----------")
-    print("Meta:                        ", end='')
+    print("-------- Cnofigured Meta Strategy Vault Holdings -----------")
+    print("Meta strategy coin:", end='')
     convex_meta_total = meta_strat.checkBalance(DAI) + meta_strat.checkBalance(USDC) * 1e12 + meta_strat.checkBalance(USDT) * 1e12
     convex_meta_pct =  float(convex_meta_total) / float(total) * 100
     print(c18(convex_meta_total) + ' ({:0.2f}%)'.format(convex_meta_pct))
@@ -87,6 +87,10 @@ def mint(amount, asset=usdt):
     vault_core.mint(asset.address, amount * math.pow(10, asset.decimals()), 0, OPTS)
     vault_core.allocate(OPTS)
     vault_core.rebase(OPTS)
+
+# reallocate funds from one strategy to another
+def reallocate(from_strat, to_strat, asset, amount):
+    vault_admin.reallocate(from_strat, to_strat, [asset], [amount], {'from': GOVERNOR})
 
 # redeem OUSD. Amount denominated in dollar value
 def redeem(amount):
