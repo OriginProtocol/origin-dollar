@@ -1,4 +1,5 @@
 const generalizedConvexStratDeployment = require("../utils/generalizedConvexStratDeployment");
+const { fraxMetapoolLPCRVPid } = require("../utils/constants");
 
 module.exports = generalizedConvexStratDeployment({
   deployName: "041_convex_frax_meta_strategy",
@@ -12,5 +13,5 @@ module.exports = generalizedConvexStratDeployment({
   metapoolAddress: "0xd632f22692FaC7611d2AA1C0D552930D43CAEd3B",
   mainTokenAddress: "0x853d955acef822db058eb8505911ed77f175b99e", // FRAX
   cvxRewardStakerAddress: "0xB900EF131301B307dB5eFcbed9DBb50A3e209B2e",
-  cvxDepositorPTokenId: 32,
+  cvxDepositorPTokenId: fraxMetapoolLPCRVPid, // 32
 });

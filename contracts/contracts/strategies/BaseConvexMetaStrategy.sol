@@ -40,8 +40,8 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
      *  - _platformAddress Address of the Curve 3pool
      *  - _vaultAddress Address of the vault
      *  - _cvxDepositorAddress Address of the Convex depositor(AKA booster) for this pool
-     *  - _metapoolAddress Address of the OUSD-3Pool Curve MetaPool
-     *  - _ousd Address of OUSD token
+     *  - _metapoolAddress Address of the Curve MetaPool
+     *  - _metapoolMainToken Address of Main metapool token
      *  - _cvxRewardStakerAddress Address of the CVX rewards staker
      * @param _cvxDepositorPTokenId Pid of the pool referred to by Depositor and staker
      */
@@ -51,7 +51,7 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
         address[] calldata _pTokens,
         /**
          * in the following order: _platformAddress(3Pool address), _vaultAddress, _cvxDepositorAddress
-         * _metapoolAddress, _ousd, _cvxRewardStakerAddress
+         * _metapoolAddress, _metapoolMainToken, _cvxRewardStakerAddress
          */
         address[] calldata _initAddresses,
         uint256 _cvxDepositorPTokenId

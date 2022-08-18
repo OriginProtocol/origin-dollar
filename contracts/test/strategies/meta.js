@@ -11,7 +11,7 @@ const {
   isFork,
 } = require("../helpers");
 
-describe.only("Convex 3pool/OUSD Meta Strategy", function () {
+describe("Convex 3pool/OUSD Meta Strategy", function () {
   if (isFork) {
     this.timeout(0);
   }
