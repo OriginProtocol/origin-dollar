@@ -59,6 +59,10 @@ function ousdUnits(amount) {
   return parseUnits(amount, 18);
 }
 
+function fraxUnits(amount) {
+  return parseUnits(amount, 18);
+}
+
 function ousdUnitsFormat(amount) {
   return formatUnits(amount, 18);
 }
@@ -409,6 +413,7 @@ module.exports = {
   daiUnits,
   ognUnits,
   ethUnits,
+  fraxUnits,
   oracleUnits,
   units,
   daiUnitsFormat,

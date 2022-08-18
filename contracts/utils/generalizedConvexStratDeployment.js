@@ -13,7 +13,7 @@ module.exports = ({
   metapoolAddress,
   mainTokenAddress,
   cvxRewardStakerAddress,
-  cvxDepositorPTokenId
+  cvxDepositorPTokenId,
 }) => {
   return deploymentWithProposal(
     { deployName, forceDeploy },
@@ -79,28 +79,30 @@ module.exports = ({
       );
 
       const tokenNameToAddress = (tokenNames) => {
-        return tokenNames.map(name => assetAddresses[name]);
+        return tokenNames.map((name) => assetAddresses[name]);
       };
 
       // 4. Init and configure new Convex Token Meta strategy
       const initFunction =
         "initialize(address[],address[],address[],address[],uint256)";
       await withConfirmation(
-        cConvexTokenMetaStrategy.connect(sDeployer)[initFunction](
-          tokenNameToAddress(rewardTokenNames),
-          tokenNameToAddress(assets),
-          tokenNameToAddress(pTokens),
-          [
-            tokenNameToAddress(platformAddress)[0],
-            cVaultProxy.address,
-            cvxDepositorAddress,
-            metapoolAddress,
-            mainTokenAddress,
-            cvxRewardStakerAddress
-          ],
-          cvxDepositorPTokenId,
-          await getTxOpts()
-        )
+        cConvexTokenMetaStrategy
+          .connect(sDeployer)
+          [initFunction](
+            tokenNameToAddress(rewardTokenNames),
+            tokenNameToAddress(assets),
+            tokenNameToAddress(pTokens),
+            [
+              tokenNameToAddress(platformAddress)[0],
+              cVaultProxy.address,
+              cvxDepositorAddress,
+              metapoolAddress,
+              mainTokenAddress,
+              cvxRewardStakerAddress,
+            ],
+            cvxDepositorPTokenId,
+            await getTxOpts()
+          )
       );
 
       // 5. Transfer governance
@@ -110,7 +112,10 @@ module.exports = ({
           .transferGovernance(governorAddr, await getTxOpts())
       );
 
-      console.log(mainTokenName + " meta strategy address", dConvexTokenMetaStrategyProxy.address);
+      console.log(
+        mainTokenName + " meta strategy address",
+        dConvexTokenMetaStrategyProxy.address
+      );
       // Governance Actions
       // ----------------
       return {

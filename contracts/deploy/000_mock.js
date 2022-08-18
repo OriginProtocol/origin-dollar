@@ -229,7 +229,7 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
   await deploy("MockFrax", {
     from: deployerAddr,
   });
-  
+
   // Mock CVX token
   await deploy("MockCVX", {
     from: deployerAddr,

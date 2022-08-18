@@ -76,6 +76,8 @@ contract ConvexOUSDMetaStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 /**
  * @notice ConvexGeneralizedMetaStrategyProxy delegates calls to a ConvexGeneralizedMetaStrategy implementation
  */
-contract ConvexGeneralizedMetaStrategyProxy is InitializeGovernedUpgradeabilityProxy {
+contract ConvexGeneralizedMetaStrategyProxy is
+    InitializeGovernedUpgradeabilityProxy
+{
 
 }

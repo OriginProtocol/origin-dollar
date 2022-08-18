@@ -6,4 +6,9 @@ const MAX_UINT256 = BigNumber.from(
   "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
 );
 
-module.exports = { threeCRVPid, metapoolLPCRVPid, fraxMetapoolLPCRVPid, MAX_UINT256 };
+module.exports = {
+  threeCRVPid,
+  metapoolLPCRVPid,
+  fraxMetapoolLPCRVPid,
+  MAX_UINT256,
+};

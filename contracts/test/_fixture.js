@@ -11,11 +11,7 @@ const { loadFixture, getOracleAddresses } = require("./helpers");
 
 const daiAbi = require("./abi/dai.json").abi;
 const usdtAbi = require("./abi/usdt.json").abi;
-const tusdAbi = require("./abi/erc20.json");
-const usdcAbi = require("./abi/erc20.json");
-const compAbi = require("./abi/erc20.json");
-const crvAbi = require("./abi/erc20.json");
-const ognAbi = require("./abi/erc20.json");
+const erc20Abi = require("./abi/erc20.json");
 const crvMinterAbi = require("./abi/crvMinter.json");
 
 async function defaultFixture() {
@@ -62,10 +58,20 @@ async function defaultFixture() {
     convexStrategyProxy.address
   );
 
-  const OUSDmetaStrategyProxy = await ethers.getContract("ConvexOUSDMetaStrategyProxy");
+  const OUSDmetaStrategyProxy = await ethers.getContract(
+    "ConvexOUSDMetaStrategyProxy"
+  );
   const OUSDmetaStrategy = await ethers.getContractAt(
     "ConvexOUSDMetaStrategy",
     OUSDmetaStrategyProxy.address
+  );
+
+  const generalizedMetaStrategyProxy = await ethers.getContract(
+    "ConvexGeneralizedMetaStrategyProxy"
+  );
+  const generalizedMetaStrategy = await ethers.getContractAt(
+    "ConvexGeneralizedMetaStrategy",
+    generalizedMetaStrategyProxy.address
   );
 
   const aaveStrategyProxy = await ethers.getContract("AaveStrategyProxy");
@@ -124,7 +130,8 @@ async function defaultFixture() {
     aaveToken,
     stkAave,
     mockNonRebasing,
-    mockNonRebasingTwo;
+    mockNonRebasingTwo,
+    frax;
 
   let chainlinkOracleFeedDAI,
     chainlinkOracleFeedUSDT,
@@ -148,12 +155,13 @@ async function defaultFixture() {
   if (isFork) {
     usdt = await ethers.getContractAt(usdtAbi, addresses.mainnet.USDT);
     dai = await ethers.getContractAt(daiAbi, addresses.mainnet.DAI);
-    tusd = await ethers.getContractAt(tusdAbi, addresses.mainnet.TUSD);
-    usdc = await ethers.getContractAt(usdcAbi, addresses.mainnet.USDC);
-    comp = await ethers.getContractAt(compAbi, addresses.mainnet.COMP);
-    crv = await ethers.getContractAt(crvAbi, addresses.mainnet.CRV);
+    tusd = await ethers.getContractAt(erc20Abi, addresses.mainnet.TUSD);
+    usdc = await ethers.getContractAt(erc20Abi, addresses.mainnet.USDC);
+    comp = await ethers.getContractAt(erc20Abi, addresses.mainnet.COMP);
+    crv = await ethers.getContractAt(erc20Abi, addresses.mainnet.CRV);
     cvx = await ethers.getContractAt(crvAbi, addresses.mainnet.CVX);
-    ogn = await ethers.getContractAt(ognAbi, addresses.mainnet.OGN);
+    ogn = await ethers.getContractAt(erc20Abi, addresses.mainnet.OGN);
+    frax = await ethers.getContractAt(erc20Abi, addresses.mainnet.FRAX);
     crvMinter = await ethers.getContractAt(
       crvMinterAbi,
       addresses.mainnet.CRVMinter
@@ -168,6 +176,7 @@ async function defaultFixture() {
     tusd = await ethers.getContract("MockTUSD");
     usdc = await ethers.getContract("MockUSDC");
     ogn = await ethers.getContract("MockOGN");
+    frax = await ethers.getContract("MockFrax");
     nonStandardToken = await ethers.getContract("MockNonStandardToken");
 
     cdai = await ethers.getContract("MockCDAI");
@@ -281,6 +290,7 @@ async function defaultFixture() {
     tusd,
     usdc,
     ogn,
+    frax,
     nonStandardToken,
     // cTokens
     cdai,
@@ -302,6 +312,7 @@ async function defaultFixture() {
     threePoolStrategy,
     convexStrategy,
     OUSDmetaStrategy,
+    generalizedMetaStrategy,
     cvx,
     cvxBooster,
     cvxRewardPool,
@@ -506,6 +517,40 @@ async function convexMetaVaultFixture() {
     .setAssetDefaultStrategy(
       fixture.usdc.address,
       fixture.OUSDmetaStrategy.address
+    );
+  return fixture;
+}
+
+/**
+ * Configure a Vault with only the Frax Generalized Meta strategy.
+ */
+async function convexGeneralizedMetaVaultFixture() {
+  const fixture = await loadFixture(defaultFixture);
+
+  const { governorAddr } = await getNamedAccounts();
+  const sGovernor = await ethers.provider.getSigner(governorAddr);
+
+  // Add Convex Meta strategy
+  await fixture.vault
+    .connect(sGovernor)
+    .approveStrategy(fixture.generalizedMetaStrategy.address);
+
+  await fixture.harvester
+    .connect(sGovernor)
+    .setSupportedStrategy(fixture.generalizedMetaStrategy.address, true);
+
+  await fixture.vault
+    .connect(sGovernor)
+    .setAssetDefaultStrategy(
+      fixture.usdt.address,
+      fixture.generalizedMetaStrategy.address
+    );
+
+  await fixture.vault
+    .connect(sGovernor)
+    .setAssetDefaultStrategy(
+      fixture.usdc.address,
+      fixture.generalizedMetaStrategy.address
     );
   return fixture;
 }
@@ -760,6 +805,7 @@ module.exports = {
   threepoolVaultFixture,
   convexVaultFixture,
   convexMetaVaultFixture,
+  convexGeneralizedMetaVaultFixture,
   aaveVaultFixture,
   hackedVaultFixture,
   rebornFixture,

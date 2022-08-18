@@ -149,17 +149,22 @@ contract ConvexGeneralizedMetaStrategy is BaseCurveStrategy {
          * run it yourself using code in brownie/scripts/liqidity_test.py
          */
         // slither-disable-next-line divide-before-multiply
-        uint256 estimationRequiredMetapoolLpTokens = (((curvePool.get_virtual_price() * 1e18) / metapool.get_virtual_price()) * num3CrvTokens) / 1e18;
+        uint256 estimationRequiredMetapoolLpTokens = (((curvePool
+            .get_virtual_price() * 1e18) / metapool.get_virtual_price()) *
+            num3CrvTokens) / 1e18;
 
-
-        int128 metapool3CrvCoinIndex = int128(_getMetapoolCoinIndex(address(pTokenAddress)));
+        int128 metapool3CrvCoinIndex = int128(
+            _getMetapoolCoinIndex(address(pTokenAddress))
+        );
         // add 10% margin to the calculation of required tokens
-        uint256 estimatedMetapoolLPWithMargin = (estimationRequiredMetapoolLpTokens * 1100) / 1e3;
+        uint256 estimatedMetapoolLPWithMargin = (estimationRequiredMetapoolLpTokens *
+                1100) / 1e3;
         uint256 crv3ReceivedWithMargin = metapool.calc_withdraw_one_coin(
             estimatedMetapoolLPWithMargin,
             metapool3CrvCoinIndex
         );
-        uint256 requiredMetapoolLpTokens = (estimatedMetapoolLPWithMargin * num3CrvTokens) / crv3ReceivedWithMargin;
+        uint256 requiredMetapoolLpTokens = (estimatedMetapoolLPWithMargin *
+            num3CrvTokens) / crv3ReceivedWithMargin;
 
         require(
             requiredMetapoolLpTokens <= gaugeTokens,
@@ -210,7 +215,9 @@ contract ConvexGeneralizedMetaStrategy is BaseCurveStrategy {
             true
         );
 
-        uint128 metapool3CrvCoinIndex = _getMetapoolCoinIndex(address(pTokenAddress));
+        uint128 metapool3CrvCoinIndex = _getMetapoolCoinIndex(
+            address(pTokenAddress)
+        );
         // // always withdraw all of the available metapool LP tokens (similar to how we always deposit all)
         uint256 removed3Crv = metapool.remove_liquidity_one_coin(
             metapoolErc20.balanceOf(address(this)),

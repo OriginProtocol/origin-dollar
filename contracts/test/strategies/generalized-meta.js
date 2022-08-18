@@ -1,6 +1,6 @@
 const { expect } = require("chai");
 const { utils } = require("ethers");
-const { convexMetaVaultFixture } = require("../_fixture");
+const { convexGeneralizedMetaVaultFixture } = require("../_fixture");
 
 const {
   daiUnits,
@@ -11,7 +11,7 @@ const {
   isFork,
 } = require("../helpers");
 
-describe("Convex 3pool/OUSD Meta Strategy", function () {
+describe("Convex 3pool/Generalized (Frax) Meta Strategy", function () {
   if (isFork) {
     this.timeout(0);
   }
@@ -23,8 +23,8 @@ describe("Convex 3pool/OUSD Meta Strategy", function () {
     governor,
     crv,
     cvx,
-    metaStrategy,
-    metapoolToken,
+    generalizedMetaStrategy,
+    fraxMetapoolToken,
     cvxBooster,
     usdt,
     usdc,
@@ -39,7 +39,7 @@ describe("Convex 3pool/OUSD Meta Strategy", function () {
   };
 
   beforeEach(async function () {
-    const fixture = await loadFixture(convexMetaVaultFixture);
+    const fixture = await loadFixture(convexGeneralizedMetaVaultFixture);
     anna = fixture.anna;
     vault = fixture.vault;
     harvester = fixture.harvester;
@@ -47,8 +47,8 @@ describe("Convex 3pool/OUSD Meta Strategy", function () {
     governor = fixture.governor;
     crv = fixture.crv;
     cvx = fixture.cvx;
-    OUSDmetaStrategy = fixture.OUSDmetaStrategy;
-    metapoolToken = fixture.metapoolToken;
+    generalizedMetaStrategy = fixture.generalizedMetaStrategy;
+    fraxMetapoolToken = fixture.fraxMetapoolToken;
     cvxBooster = fixture.cvxBooster;
     usdt = fixture.usdt;
     usdc = fixture.usdc;
@@ -59,17 +59,23 @@ describe("Convex 3pool/OUSD Meta Strategy", function () {
     it("Should stake USDT in Curve gauge via metapool", async function () {
       await expectApproxSupply(ousd, ousdUnits("200"));
       await mint("30000.00", usdt);
-      await expectApproxSupply(ousd, ousdUnits("60200"));
+      await expectApproxSupply(ousd, ousdUnits("30200"));
       await expect(anna).to.have.a.balanceOf("30000", ousd);
-      await expect(cvxBooster).has.an.approxBalanceOf("60000", metapoolToken);
+      await expect(cvxBooster).has.an.approxBalanceOf(
+        "30000",
+        fraxMetapoolToken
+      );
     });
 
     it("Should stake USDC in Curve gauge via metapool", async function () {
       await expectApproxSupply(ousd, ousdUnits("200"));
       await mint("50000.00", usdc);
-      await expectApproxSupply(ousd, ousdUnits("100200"));
+      await expectApproxSupply(ousd, ousdUnits("50200"));
       await expect(anna).to.have.a.balanceOf("50000", ousd);
-      await expect(cvxBooster).has.an.approxBalanceOf("100000", metapoolToken);
+      await expect(cvxBooster).has.an.approxBalanceOf(
+        "50000",
+        fraxMetapoolToken
+      );
     });
 
     it("Should use a minimum LP token amount when depositing USDT into metapool", async function () {
@@ -92,8 +98,6 @@ describe("Convex 3pool/OUSD Meta Strategy", function () {
       await mint("10000.00", usdc);
       await mint("10000.00", usdt);
       await vault.connect(anna).redeem(ousdUnits("20000"), 0);
-      // Dai minted OUSD has not been deployed to Metastrategy for that reason the
-      // total supply of OUSD has not doubled
       await expectApproxSupply(ousd, ousdUnits("10200"));
     });
   });
@@ -105,22 +109,20 @@ describe("Convex 3pool/OUSD Meta Strategy", function () {
       // Anna sends her OUSD directly to Strategy
       await ousd
         .connect(anna)
-        .transfer(OUSDmetaStrategy.address, ousdUnits("8.0"));
+        .transfer(generalizedMetaStrategy.address, ousdUnits("8.0"));
       // Anna asks Governor for help
-      await OUSDmetaStrategy.connect(governor).transferToken(
-        ousd.address,
-        ousdUnits("8.0")
-      );
+      await generalizedMetaStrategy
+        .connect(governor)
+        .transferToken(ousd.address, ousdUnits("8.0"));
       await expect(governor).has.a.balanceOf("8.0", ousd);
     });
 
     it("Should not allow transfer of arbitrary token by non-Governor", async () => {
       // Naughty Anna
       await expect(
-        OUSDmetaStrategy.connect(anna).transferToken(
-          ousd.address,
-          ousdUnits("8.0")
-        )
+        generalizedMetaStrategy
+          .connect(anna)
+          .transferToken(ousd.address, ousdUnits("8.0"))
       ).to.be.revertedWith("Caller is not the Governor");
     });
   });
@@ -129,7 +131,7 @@ describe("Convex 3pool/OUSD Meta Strategy", function () {
     it("Should allow the strategist to call harvest for a specific strategy", async () => {
       // prettier-ignore
       await harvester
-        .connect(governor)["harvest(address)"](OUSDmetaStrategy.address);
+        .connect(governor)["harvest(address)"](generalizedMetaStrategy.address);
     });
 
     it("Should collect reward tokens using collect rewards on all strategies", async () => {
@@ -154,7 +156,7 @@ describe("Convex 3pool/OUSD Meta Strategy", function () {
       await harvester.connect(governor)[
         // eslint-disable-next-line
         "harvest(address)"
-      ](OUSDmetaStrategy.address);
+      ](generalizedMetaStrategy.address);
 
       await expect(await crv.balanceOf(harvester.address)).to.be.equal(
         utils.parseUnits("2", 18)

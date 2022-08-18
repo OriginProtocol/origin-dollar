@@ -12,7 +12,10 @@ const {
   deployWithConfirmation,
   withConfirmation,
 } = require("../utils/deploy");
-const { metapoolLPCRVPid, fraxMetapoolLPCRVPid } = require("../utils/constants");
+const {
+  metapoolLPCRVPid,
+  fraxMetapoolLPCRVPid,
+} = require("../utils/constants");
 
 /**
  * Deploy AAVE Strategy which only supports DAI.
@@ -360,9 +363,13 @@ const deployConvexGeneralizedMetaStrategy = async () => {
   log("Initialized ConvexGeneralizedMetaStrategy");
 
   await withConfirmation(
-    cConvexGeneralizedMetaStrategy.connect(sDeployer).transferGovernance(governorAddr)
+    cConvexGeneralizedMetaStrategy
+      .connect(sDeployer)
+      .transferGovernance(governorAddr)
   );
-  log(`ConvexGeneralizedMetaStrategy transferGovernance(${governorAddr}) called`);
+  log(
+    `ConvexGeneralizedMetaStrategy transferGovernance(${governorAddr}) called`
+  );
   // On Mainnet the governance transfer gets executed separately, via the
   // multi-sig wallet. On other networks, this migration script can claim
   // governance by the governor.
@@ -376,7 +383,6 @@ const deployConvexGeneralizedMetaStrategy = async () => {
   }
   return cConvexGeneralizedMetaStrategy;
 };
-
 
 /**
  * Deploys a Convex Meta Strategy which supports OUSD / 3Crv
@@ -595,7 +601,9 @@ const configureStrategies = async (harvesterProxy) => {
     convex.connect(sGovernor).setHarvesterAddress(harvesterProxy.address)
   );
 
-  const OUSDmetaStrategyProxy = await ethers.getContract("ConvexOUSDMetaStrategyProxy");
+  const OUSDmetaStrategyProxy = await ethers.getContract(
+    "ConvexOUSDMetaStrategyProxy"
+  );
   const metaStrategy = await ethers.getContractAt(
     "ConvexOUSDMetaStrategy",
     OUSDmetaStrategyProxy.address
@@ -604,13 +612,17 @@ const configureStrategies = async (harvesterProxy) => {
     metaStrategy.connect(sGovernor).setHarvesterAddress(harvesterProxy.address)
   );
 
-  const FraxMetaStrategyProxy = await ethers.getContract("ConvexGeneralizedMetaStrategyProxy");
+  const FraxMetaStrategyProxy = await ethers.getContract(
+    "ConvexGeneralizedMetaStrategyProxy"
+  );
   const fraxMetaStrategy = await ethers.getContractAt(
     "ConvexGeneralizedMetaStrategy",
     FraxMetaStrategyProxy.address
   );
   await withConfirmation(
-    fraxMetaStrategy.connect(sGovernor).setHarvesterAddress(harvesterProxy.address)
+    fraxMetaStrategy
+      .connect(sGovernor)
+      .setHarvesterAddress(harvesterProxy.address)
   );
 
   const threePoolProxy = await ethers.getContract("ThreePoolStrategyProxy");
