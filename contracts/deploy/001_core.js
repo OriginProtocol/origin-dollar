@@ -514,7 +514,9 @@ const configureStrategies = async (harvesterProxy) => {
     convex.connect(sGovernor).setHarvesterAddress(harvesterProxy.address)
   );
 
-  const OUSDmetaStrategyProxy = await ethers.getContract("ConvexOUSDMetaStrategyProxy");
+  const OUSDmetaStrategyProxy = await ethers.getContract(
+    "ConvexOUSDMetaStrategyProxy"
+  );
   const metaStrategy = await ethers.getContractAt(
     "ConvexOUSDMetaStrategy",
     OUSDmetaStrategyProxy.address

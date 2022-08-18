@@ -95,7 +95,10 @@ module.exports = deploymentWithProposal(
         .transferGovernance(governorAddr, await getTxOpts())
     );
 
-    console.log("OUSD META STRATEGY ADDRESS", dConvexOUSDMetaStrategyProxy.address);
+    console.log(
+      "OUSD META STRATEGY ADDRESS",
+      dConvexOUSDMetaStrategyProxy.address
+    );
     const fiftyMil = BigNumber.from(50000000).mul(BigNumber.from(10).pow(18));
     // Governance Actions
     // ----------------

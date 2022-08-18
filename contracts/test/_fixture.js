@@ -62,7 +62,9 @@ async function defaultFixture() {
     convexStrategyProxy.address
   );
 
-  const OUSDmetaStrategyProxy = await ethers.getContract("ConvexOUSDMetaStrategyProxy");
+  const OUSDmetaStrategyProxy = await ethers.getContract(
+    "ConvexOUSDMetaStrategyProxy"
+  );
   const OUSDmetaStrategy = await ethers.getContractAt(
     "ConvexOUSDMetaStrategy",
     OUSDmetaStrategyProxy.address
