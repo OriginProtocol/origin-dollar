@@ -211,10 +211,7 @@ const ApproveSwap = ({
         'Insufficient balance'
       )
     } else if (noSwapRouteAvailable) {
-      return fbt(
-        'Insufficient liquidity',
-        'Insufficient liquidity'
-      )
+      return fbt('Insufficient liquidity', 'Insufficient liquidity')
     } else if (isWrapped) {
       return fbt('Wrap', 'Wrap')
     } else if (stableCoinToApprove === 'wousd') {
