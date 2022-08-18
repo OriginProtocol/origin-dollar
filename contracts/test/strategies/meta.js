@@ -23,7 +23,7 @@ describe("Convex 3pool/OUSD Meta Strategy", function () {
     governor,
     crv,
     cvx,
-    metaStrategy,
+    OUSDmetaStrategy,
     metapoolToken,
     cvxBooster,
     usdt,
