@@ -159,7 +159,7 @@ async function defaultFixture() {
     usdc = await ethers.getContractAt(erc20Abi, addresses.mainnet.USDC);
     comp = await ethers.getContractAt(erc20Abi, addresses.mainnet.COMP);
     crv = await ethers.getContractAt(erc20Abi, addresses.mainnet.CRV);
-    cvx = await ethers.getContractAt(crvAbi, addresses.mainnet.CVX);
+    cvx = await ethers.getContractAt(erc20Abi, addresses.mainnet.CVX);
     ogn = await ethers.getContractAt(erc20Abi, addresses.mainnet.OGN);
     frax = await ethers.getContractAt(erc20Abi, addresses.mainnet.FRAX);
     crvMinter = await ethers.getContractAt(

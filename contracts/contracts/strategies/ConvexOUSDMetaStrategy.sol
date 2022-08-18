@@ -8,82 +8,18 @@ pragma solidity ^0.8.0;
  */
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
-import "@openzeppelin/contracts/utils/math/Math.sol";
 
 import { IRewardStaking } from "./IRewardStaking.sol";
 import { IConvexDeposits } from "./IConvexDeposits.sol";
 import { ICurvePool } from "./ICurvePool.sol";
-import { ICurveMetaPool } from "./ICurveMetaPool.sol";
-import { IERC20, BaseCurveStrategy } from "./BaseCurveStrategy.sol";
+import { IERC20 } from "./BaseCurveStrategy.sol";
+import { BaseConvexMetaStrategy } from "./BaseConvexMetaStrategy.sol";
 import { StableMath } from "../utils/StableMath.sol";
-import { Helpers } from "../utils/Helpers.sol";
 import { IVault } from "../interfaces/IVault.sol";
 
-contract ConvexOUSDMetaStrategy is BaseCurveStrategy {
+contract ConvexOUSDMetaStrategy is BaseConvexMetaStrategy {
     using StableMath for uint256;
     using SafeERC20 for IERC20;
-
-    address internal cvxDepositorAddress;
-    address internal cvxRewardStakerAddress;
-    uint256 internal cvxDepositorPTokenId;
-    ICurveMetaPool internal metapool;
-    IERC20 internal ousd;
-    // Ordered list of metapool assets
-    address[] internal metapoolAssets;
-
-    /**
-     * Initializer for setting up strategy internal state. This overrides the
-     * InitializableAbstractStrategy initializer as Curve strategies don't fit
-     * well within that abstraction.
-     * @param _rewardTokenAddresses Address of CRV & CVX
-     * @param _assets Addresses of supported assets. MUST be passed in the same
-     *                order as returned by coins on the pool contract, i.e.
-     *                DAI, USDC, USDT
-     * @param _pTokens Platform Token corresponding addresses
-     * @param _initAddresses Various addresses containing the following:
-     *  - _platformAddress Address of the Curve 3pool
-     *  - _vaultAddress Address of the vault
-     *  - _cvxDepositorAddress Address of the Convex depositor(AKA booster) for this pool
-     *  - _metapoolAddress Address of the OUSD-3Pool Curve MetaPool
-     *  - _ousd Address of OUSD token
-     *  - _cvxRewardStakerAddress Address of the CVX rewards staker
-     * @param _cvxDepositorPTokenId Pid of the pool referred to by Depositor and staker
-     */
-    function initialize(
-        address[] calldata _rewardTokenAddresses, // CRV + CVX
-        address[] calldata _assets,
-        address[] calldata _pTokens,
-        /**
-         * in the following order: _platformAddress(3Pool address), _vaultAddress, _cvxDepositorAddress
-         * _metapoolAddress, _ousd, _cvxRewardStakerAddress
-         */
-        address[] calldata _initAddresses,
-        uint256 _cvxDepositorPTokenId
-    ) external onlyGovernor initializer {
-        require(_assets.length == 3, "Must have exactly three assets");
-        require(
-            _initAddresses.length == 6,
-            "_initAddresses must have exactly six items"
-        );
-        // Should be set prior to abstract initialize call otherwise
-        // abstractSetPToken calls will fail
-        cvxDepositorAddress = _initAddresses[2];
-        pTokenAddress = _pTokens[0];
-        metapool = ICurveMetaPool(_initAddresses[3]);
-        ousd = IERC20(_initAddresses[4]);
-        cvxRewardStakerAddress = _initAddresses[5];
-        cvxDepositorPTokenId = _cvxDepositorPTokenId;
-
-        metapoolAssets = [metapool.coins(0), metapool.coins(1)];
-        super._initialize(
-            _initAddresses[0],
-            _initAddresses[1],
-            _rewardTokenAddresses,
-            _assets,
-            _pTokens
-        );
-        _approveBase();
-    }
 
     /* Take 3pool LP and mint the corresponding amount of ousd. Deposit and stake that to
      * ousd Curve Metapool. Take the LP from metapool and deposit them to Convex.
@@ -100,7 +36,9 @@ contract ConvexOUSDMetaStrategy is BaseCurveStrategy {
         );
 
         uint128 crvCoinIndex = _getMetapoolCoinIndex(pTokenAddress);
-        uint128 ousdCoinIndex = _getMetapoolCoinIndex(address(ousd));
+        uint128 ousdCoinIndex = _getMetapoolCoinIndex(
+            address(metapoolMainToken)
+        );
 
         uint256 ousdToAdd = toPositive(
             int256(
@@ -123,7 +61,7 @@ contract ConvexOUSDMetaStrategy is BaseCurveStrategy {
             IVault(vaultAddress).mintForStrategy(ousdToAdd);
         }
 
-        uint256 ousdBalance = ousd.balanceOf(address(this));
+        uint256 ousdBalance = metapoolMainToken.balanceOf(address(this));
         uint256[2] memory _amounts = [ousdBalance, threePoolLpBalance];
 
         uint256 metapoolVirtualPrice = metapool.get_virtual_price();
@@ -210,7 +148,9 @@ contract ConvexOUSDMetaStrategy is BaseCurveStrategy {
         );
 
         uint128 crvCoinIndex = _getMetapoolCoinIndex(pTokenAddress);
-        uint128 ousdCoinIndex = _getMetapoolCoinIndex(address(ousd));
+        uint128 ousdCoinIndex = _getMetapoolCoinIndex(
+            address(metapoolMainToken)
+        );
 
         // Receive too much 3crv
         if (removedCoins[uint256(crvCoinIndex)] > num3CrvTokens) {
@@ -253,7 +193,9 @@ contract ConvexOUSDMetaStrategy is BaseCurveStrategy {
             );
         }
 
-        IVault(vaultAddress).redeemForStrategy(ousd.balanceOf(address(this)));
+        IVault(vaultAddress).redeemForStrategy(
+            metapoolMainToken.balanceOf(address(this))
+        );
     }
 
     function _lpWithdrawAll() internal override {
@@ -273,104 +215,8 @@ contract ConvexOUSDMetaStrategy is BaseCurveStrategy {
             _minAmounts
         );
 
-        IVault(vaultAddress).redeemForStrategy(ousd.balanceOf(address(this)));
-    }
-
-    /**
-     * @dev Get the total asset value held in the platform
-     * @param _asset      Address of the asset
-     * @return balance    Total value of the asset in the platform
-     */
-    function checkBalance(address _asset)
-        public
-        view
-        virtual
-        override
-        returns (uint256 balance)
-    {
-        require(assetToPToken[_asset] != address(0), "Unsupported asset");
-        balance = 0;
-        uint256 assetDecimals = Helpers.getDecimals(_asset);
-
-        // LP tokens in this contract. This should generally be nothing as we
-        // should always stake the full balance in the Gauge, but include for
-        // safety
-        uint256 contractPTokens = IERC20(pTokenAddress).balanceOf(
-            address(this)
+        IVault(vaultAddress).redeemForStrategy(
+            metapoolMainToken.balanceOf(address(this))
         );
-        ICurvePool curvePool = ICurvePool(platformAddress);
-        if (contractPTokens > 0) {
-            uint256 virtual_price = curvePool.get_virtual_price();
-            uint256 value = contractPTokens.mulTruncate(virtual_price);
-            balance += value;
-        }
-
-        uint256 metapoolPTokens = IERC20(address(metapool)).balanceOf(
-            address(this)
-        );
-        uint256 metapoolGaugePTokens = IRewardStaking(cvxRewardStakerAddress)
-            .balanceOf(address(this));
-        uint256 metapoolTotalPTokens = metapoolPTokens + metapoolGaugePTokens;
-
-        if (metapoolTotalPTokens > 0) {
-            uint256 metapool_virtual_price = metapool.get_virtual_price();
-            uint256 value = (metapoolTotalPTokens * metapool_virtual_price) /
-                1e18;
-            balance += value;
-        }
-
-        balance = balance.scaleBy(assetDecimals, 18) / 3;
-    }
-
-    function _approveBase() internal override {
-        IERC20 pToken = IERC20(pTokenAddress);
-        IERC20 ousdPoolLp = IERC20(address(metapool));
-        // 3Pool for LP token (required for removing liquidity)
-        pToken.safeApprove(platformAddress, 0);
-        pToken.safeApprove(platformAddress, type(uint256).max);
-        // Gauge for LP token
-        ousdPoolLp.safeApprove(cvxDepositorAddress, 0);
-        ousdPoolLp.safeApprove(cvxDepositorAddress, type(uint256).max);
-        // Metapool for LP token
-        pToken.safeApprove(address(metapool), 0);
-        pToken.safeApprove(address(metapool), type(uint256).max);
-        // Metapool for OUSD token
-        ousd.safeApprove(address(metapool), 0);
-        ousd.safeApprove(address(metapool), type(uint256).max);
-    }
-
-    /**
-     * @dev Get the index of the coin
-     */
-    function _getMetapoolCoinIndex(address _asset)
-        internal
-        view
-        returns (uint128)
-    {
-        for (uint128 i = 0; i < 2; i++) {
-            if (metapoolAssets[i] == _asset) return i;
-        }
-        revert("Invalid Metapool asset");
-    }
-
-    /**
-     * @dev Collect accumulated CRV and CVX and send to Vault.
-     */
-    function collectRewardTokens()
-        external
-        override
-        onlyHarvester
-        nonReentrant
-    {
-        // Collect CRV and CVX
-        IRewardStaking(cvxRewardStakerAddress).getReward();
-        _collectRewardTokens();
-    }
-
-    /**
-     * @dev If x a negative number return 0 else return x
-     */
-    function toPositive(int256 x) private pure returns (uint256) {
-        return x >= 0 ? uint256(x) : uint256(0);
     }
 }
