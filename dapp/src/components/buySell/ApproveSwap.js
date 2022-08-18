@@ -212,8 +212,8 @@ const ApproveSwap = ({
       )
     } else if (noSwapRouteAvailable) {
       return fbt(
-        'Route for selected swap not available',
-        'No route available for selected swap'
+        'Insufficient liquidity',
+        'Insufficient liquidity'
       )
     } else if (isWrapped) {
       return fbt('Wrap', 'Wrap')
