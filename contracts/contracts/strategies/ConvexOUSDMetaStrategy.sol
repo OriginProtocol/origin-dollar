@@ -28,7 +28,6 @@ contract ConvexOUSDMetaStrategy is BaseCurveStrategy {
     uint256 internal cvxDepositorPTokenId;
     ICurveMetaPool internal metapool;
     IERC20 internal ousd;
-    IVault internal vault;
     // Ordered list of metapool assets
     address[] internal metapoolAssets;
 
@@ -72,7 +71,6 @@ contract ConvexOUSDMetaStrategy is BaseCurveStrategy {
         pTokenAddress = _pTokens[0];
         metapool = ICurveMetaPool(_initAddresses[3]);
         ousd = IERC20(_initAddresses[4]);
-        vault = IVault(_initAddresses[1]);
         cvxRewardStakerAddress = _initAddresses[5];
         cvxDepositorPTokenId = _cvxDepositorPTokenId;
 
@@ -122,7 +120,7 @@ contract ConvexOUSDMetaStrategy is BaseCurveStrategy {
          * In both cases metapool ends up being balanced and there should be no incentive to execute arbitrage trade.
          */
         if (ousdToAdd > 0) {
-            vault.mintForStrategy(ousdToAdd);
+            IVault(vaultAddress).mintForStrategy(ousdToAdd);
         }
 
         uint256 ousdBalance = ousd.balanceOf(address(this));
@@ -255,7 +253,7 @@ contract ConvexOUSDMetaStrategy is BaseCurveStrategy {
             );
         }
 
-        vault.redeemForStrategy(ousd.balanceOf(address(this)));
+        IVault(vaultAddress).redeemForStrategy(ousd.balanceOf(address(this)));
     }
 
     function _lpWithdrawAll() internal override {
@@ -275,7 +273,7 @@ contract ConvexOUSDMetaStrategy is BaseCurveStrategy {
             _minAmounts
         );
 
-        vault.redeemForStrategy(ousd.balanceOf(address(this)));
+        IVault(vaultAddress).redeemForStrategy(ousd.balanceOf(address(this)));
     }
 
     /**
