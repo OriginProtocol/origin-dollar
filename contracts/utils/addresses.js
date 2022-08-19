@@ -124,7 +124,6 @@ addresses.mainnet.Flipper = "0xcecaD69d7D4Ed6D52eFcFA028aF8732F27e08F70";
 addresses.rinkeby = {};
 
 addresses.rinkeby.OGN = "0xA115e16ef6e217f7a327a57031F75cE0487AaDb8";
-// TODO: Is there a OGV contract on Rinkeby??
 
 // Compound
 addresses.rinkeby.cDAI = "0x6d7f0754ffeb405d23c51ce938289d4835be3b14";
