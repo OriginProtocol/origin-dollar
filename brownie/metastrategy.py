@@ -90,7 +90,7 @@ def mint(amount, asset=usdt):
 
 # reallocate funds from one strategy to another
 def reallocate(from_strat, to_strat, asset, amount):
-    vault_admin.reallocate(from_strat, to_strat, [asset], [amount], {'from': GOVERNOR})
+    vault_admin.reallocate(from_strat, to_strat, [asset], [amount * math.pow(10, asset.decimals())], {'from': GOVERNOR})
 
 # redeem OUSD. Amount denominated in dollar value
 def redeem(amount):
