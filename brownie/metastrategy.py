@@ -71,7 +71,7 @@ print("'me' account has: " + c24(frax.balanceOf(me)) + "m FRAX")
 def show_vault_holdings():
     total = vault_core.totalValue()
     world.show_vault_holdings()
-    print("-------- Cnofigured Meta Strategy Vault Holdings -----------")
+    print("-------- Configured Meta Strategy Vault Holdings -----------")
     print("Meta strategy coin:", end='')
     convex_meta_total = meta_strat.checkBalance(DAI) + meta_strat.checkBalance(USDC) * 1e12 + meta_strat.checkBalance(USDT) * 1e12
     convex_meta_pct =  float(convex_meta_total) / float(total) * 100

@@ -9,9 +9,9 @@ def main():
 
     def preparePool():
         # Option 1
-        # tiltMetapoolTo3CRV(frax_metapool, 5*1e6*1e18)
+        tiltMetapoolTo3CRV(frax_metapool, 150*1e6*1e18)
         # Option 2
-        tiltMetapoolToMainCoin(frax_metapool, 100*1e6*1e18)
+        # tiltMetapoolToMainCoin(frax_metapool, 300*1e6*1e18)
         with MetapoolBalances(OPTS, frax_metapool):
             mint(mint_amount)
 
