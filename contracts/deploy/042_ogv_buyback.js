@@ -1,7 +1,7 @@
 const { deploymentWithProposal } = require("../utils/deploy");
 
 module.exports = deploymentWithProposal(
-  { deployName: "042_ogv_buyback", forceDeploy: false },
+  { deployName: "042_ogv_buyback", forceDeploy: true },
   async ({
     withConfirmation,
     deployWithConfirmation,
@@ -13,13 +13,11 @@ module.exports = deploymentWithProposal(
       await getNamedAccounts();
     const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
-    const ousd = await ethers.getContract("OUSDProxy");
+    const ousd = await ethers.getContract("OUSD");
     const vault = await ethers.getContract("VaultProxy");
     const cVault = await ethers.getContractAt(
       "VaultAdmin",
-      (
-        await ethers.getContract("VaultProxy")
-      ).address
+      vault.address
     );
 
     // Deploy the new Buyback contract
