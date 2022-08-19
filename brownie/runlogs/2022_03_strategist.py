@@ -44,3 +44,29 @@ vault_admin.reallocate(COMP_STRAT, AAVE_STRAT, [USDC], [1e6*1e6], {'from': GOVER
 vault_admin.reallocate(AAVE_STRAT, COMP_STRAT, [USDC], [1e6*1e6], {'from': GOVERNOR})
 # Test - should fail
 vault_admin.reallocate(COMP_STRAT, CONVEX_STRAT, [USDC], [1e6*1e6], {'from': GOVERNOR})
+
+
+# --------------------------------
+# Mar 14, 2022 Strategist allocation
+# 
+
+from allocations import *
+from ape_safe import ApeSafe
+import time
+
+txs = transactions_for_reallocation([
+        ["AAVE", "DAI",  24.74],
+        ["AAVE", "USDC", 28.38],
+        ["AAVE", "USDT", 13.20],
+        ["COMP", "DAI",  14.69],
+        ["COMP", "USDC", 11.81],
+        ["COMP", "USDT", 7.14],
+        ["Convex", "*",  0.0],
+    ])
+
+safe = ApeSafe('0xF14BBdf064E3F67f51cd9BD646aE3716aD938FDC')
+safe_tx = safe.multisend_from_receipts(txs)
+safe.sign_with_frame(safe_tx)
+r = safe.post_transaction(safe_tx)
+
+

@@ -14,15 +14,14 @@ import { useStoreState } from 'pullstate'
 import { setupContracts } from 'utils/contracts'
 import { login } from 'utils/account'
 import { decorateContractStakeInfoWithTxHashes } from 'utils/stake'
-import { mergeDeep } from 'utils/utils'
 import { displayCurrency } from 'utils/math'
-import addresses from 'constants/contractAddresses'
 import { isProduction, isDevelopment } from 'constants/env'
 import useBalancesQuery from '../queries/useBalancesQuery'
 import useAllowancesQuery from '../queries/useAllowancesQuery'
 import useApyQuery from '../queries/useApyQuery'
-import useTransactionHistoryQuery from '../queries/useTransactionHistoryQuery'
+import useTransactionHistoryPageQuery from '../queries/useTransactionHistoryPageQuery'
 import useWousdQuery from '../queries/useWousdQuery'
+import { transactionHistoryItemsPerPage } from 'utils/constants'
 
 const AccountListener = (props) => {
   const web3react = useWeb3React()
@@ -74,7 +73,12 @@ const AccountListener = (props) => {
     },
   })
 
-  const historyQuery = useTransactionHistoryQuery(account)
+  const historyPageQuery = useTransactionHistoryPageQuery(
+    account,
+    transactionHistoryItemsPerPage,
+    1,
+    []
+  )
 
   useEffect(() => {
     if ((prevActive && !active) || prevAccount !== account) {
@@ -355,7 +359,7 @@ const AccountListener = (props) => {
   useEffect(() => {
     if (account) {
       login(account, setCookie)
-      historyQuery.refetch()
+      historyPageQuery.refetch()
     }
 
     const loadLifetimeEarnings = async () => {
@@ -367,7 +371,7 @@ const AccountListener = (props) => {
         }/api/v1/address/${account.toLowerCase()}/yield`
       )
 
-      if (response.ok) {
+      if (response !== undefined && response.ok) {
         const lifetimeYield = (await response.json()).lifetime_yield
         AccountStore.update((s) => {
           s.lifetimeYield = lifetimeYield

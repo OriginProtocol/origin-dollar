@@ -21,7 +21,7 @@
     {
       "contract": "VaultStorage",
       "label": "assets",
-      "type": "t_mapping(t_address,t_struct(Asset)22055_storage)",
+      "type": "t_mapping(t_address,t_struct(Asset)22454_storage)",
       "src": "contracts/vault/VaultStorage.sol:54"
     },
     {
@@ -33,7 +33,7 @@
     {
       "contract": "VaultStorage",
       "label": "strategies",
-      "type": "t_mapping(t_address,t_struct(Strategy)22068_storage)",
+      "type": "t_mapping(t_address,t_struct(Strategy)22467_storage)",
       "src": "contracts/vault/VaultStorage.sol:62"
     },
     {
@@ -87,7 +87,7 @@
     {
       "contract": "VaultStorage",
       "label": "oUSD",
-      "type": "t_contract(OUSD)18655",
+      "type": "t_contract(OUSD)18925",
       "src": "contracts/vault/VaultStorage.sol:79"
     },
     {
@@ -140,13 +140,13 @@
     }
   ],
   "types": {
-    "t_mapping(t_address,t_struct(Asset)22055_storage)": {
+    "t_mapping(t_address,t_struct(Asset)22454_storage)": {
       "label": "mapping(address => struct VaultStorage.Asset)"
     },
     "t_address": {
       "label": "address"
     },
-    "t_struct(Asset)22055_storage": {
+    "t_struct(Asset)22454_storage": {
       "label": "struct VaultStorage.Asset",
       "members": [
         {
@@ -161,10 +161,10 @@
     "t_array(t_address)dyn_storage": {
       "label": "address[]"
     },
-    "t_mapping(t_address,t_struct(Strategy)22068_storage)": {
+    "t_mapping(t_address,t_struct(Strategy)22467_storage)": {
       "label": "mapping(address => struct VaultStorage.Strategy)"
     },
-    "t_struct(Strategy)22068_storage": {
+    "t_struct(Strategy)22467_storage": {
       "label": "struct VaultStorage.Strategy",
       "members": [
         {
@@ -180,7 +180,7 @@
     "t_uint256": {
       "label": "uint256"
     },
-    "t_contract(OUSD)18655": {
+    "t_contract(OUSD)18925": {
       "label": "contract OUSD"
     },
     "t_mapping(t_address,t_address)": {
