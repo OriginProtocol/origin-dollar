@@ -2,8 +2,8 @@ const generalizedConvexStratDeployment = require("../utils/generalizedConvexStra
 const { fraxMetapoolLPCRVPid } = require("../utils/constants");
 
 module.exports = generalizedConvexStratDeployment({
-  deployName: "041_convex_frax_meta_strategy",
-  forceDeploy: false,
+  deployName: "043_convex_frax_meta_strategy",
+  forceDeploy: true,
   mainTokenName: "Frax",
   rewardTokenNames: ["CVX", "CRV"],
   assets: ["DAI", "USDC", "USDT"],
