@@ -9,6 +9,9 @@ contract Strategizable is Governable {
     // Address of strategist
     address public strategistAddr;
 
+    // For future use
+    uint256[50] private __gap;
+
     /**
      * @dev Verifies that the caller is either Governor or Strategist.
      */
