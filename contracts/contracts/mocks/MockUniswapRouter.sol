@@ -7,7 +7,7 @@ import { IUniswapV2Router } from "../interfaces/uniswap/IUniswapV2Router02.sol";
 import { Helpers } from "../utils/Helpers.sol";
 import { StableMath } from "../utils/StableMath.sol";
 
-import "hardhat/console.sol";
+// import "hardhat/console.sol";
 
 contract MockUniswapRouter is IUniswapV2Router {
     using StableMath for uint256;
@@ -73,21 +73,21 @@ contract MockUniswapRouter is IUniswapV2Router {
             Helpers.getDecimals(tok0)
         );
 
-        console.log(
-            "Using Token Pair: %s, %s; Amount out: %s",
-            tok0,
-            tok1,
-            amountOut
-        );
+        // console.log(
+        //     "Using Token Pair: %s, %s; Amount out: %s",
+        //     tok0,
+        //     tok1,
+        //     amountOut
+        // );
 
         IERC20(tok0).transferFrom(msg.sender, address(this), params.amountIn);
         IERC20(tok1).transfer(params.recipient, amountOut);
 
-        console.log(
-            "After swap: %s, amountOutMinimum: %s",
-            amountOut,
-            params.amountOutMinimum
-        );
+        // console.log(
+        //     "After swap: %s, amountOutMinimum: %s",
+        //     amountOut,
+        //     params.amountOutMinimum
+        // );
 
         require(
             amountOut >= params.amountOutMinimum,

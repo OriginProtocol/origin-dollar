@@ -17,17 +17,11 @@ contract Buyback is Strategizable {
     // Address of Uniswap
     address public uniswapAddr;
 
-    // Address of OUSD Vault
-    address public immutable vaultAddr;
-
     // Swap from OUSD
     IERC20 immutable ousd;
 
     // Swap to OGV
     IERC20 immutable ogv;
-
-    // OGN for Uniswap path
-    IERC20 immutable ogn;
 
     // USDT for Uniswap path
     IERC20 immutable usdt;
@@ -40,21 +34,17 @@ contract Buyback is Strategizable {
 
     constructor(
         address _uniswapAddr,
-        address _vaultAddr,
         address _strategistAddr,
         address _ousd,
         address _ogv,
-        address _ogn,
         address _usdt,
         address _weth9,
         address _rewardsSource
     ) {
         uniswapAddr = _uniswapAddr;
-        vaultAddr = _vaultAddr;
         strategistAddr = _strategistAddr;
         ousd = IERC20(_ousd);
         ogv = IERC20(_ogv);
-        ogn = IERC20(_ogn);
         usdt = IERC20(_usdt);
         weth9 = IERC20(_weth9);
         rewardsSource = _rewardsSource;
@@ -62,14 +52,6 @@ contract Buyback is Strategizable {
         // by setUniswapAddr in the production contract
         IERC20(_ousd).safeApprove(uniswapAddr, 0);
         IERC20(_ousd).safeApprove(uniswapAddr, type(uint256).max);
-    }
-
-    /**
-     * @dev Verifies that the caller is the OUSD Vault.
-     */
-    modifier onlyVault() {
-        require(vaultAddr == msg.sender, "Caller is not the Vault");
-        _;
     }
 
     /**
@@ -90,13 +72,9 @@ contract Buyback is Strategizable {
      * @dev Execute a swap of OGV for OUSD via Uniswap or Uniswap compatible
      * protocol (e.g. Sushiswap)
      **/
-    function swap() external onlyVault nonReentrant {
+    function swap() external {
         // Disabled for now, will be manually swapped by
         // `strategistAddr` using `swapNow()` method
-
-        // TODO: should there be a isDisabled() function that
-        // the vault could use? Will need an contract upgrade
-        // if we make that change to the Vault
         return;
     }
 
@@ -114,20 +92,15 @@ contract Buyback is Strategizable {
         require(uniswapAddr != address(0), "Exchange address not set");
         require(minExpected > 0, "Invalid minExpected value");
 
-        uint256 ousdBalance = ousd.balanceOf(address(this));
-        require(ousdBalance >= ousdAmount, "Insufficient OUSD balance");
-
         UniswapV3Router.ExactInputParams memory params = UniswapV3Router
             .ExactInputParams({
                 path: abi.encodePacked(
                     ousd,
                     uint24(500), // Pool fee, ousd -> usdt
                     usdt,
-                    uint24(3000), // Pool fee, usdt -> weth9
+                    uint24(500), // Pool fee, usdt -> weth9
                     weth9,
-                    uint24(3000), // Pool fee, weth9 -> ogn
-                    ogn,
-                    uint24(3000), // Pool fee, ogn -> ogv
+                    uint24(3000), // Pool fee, weth9 -> ogv
                     ogv
                 ),
                 recipient: rewardsSource,

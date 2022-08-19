@@ -659,7 +659,6 @@ const deployBuyback = async () => {
 
   const assetAddresses = await getAssetAddresses(deployments);
   const ousd = await ethers.getContract("OUSDProxy");
-  const vault = await ethers.getContract("VaultProxy");
   const cVault = await ethers.getContractAt(
     "VaultAdmin",
     (
@@ -669,11 +668,9 @@ const deployBuyback = async () => {
 
   await deployWithConfirmation("Buyback", [
     assetAddresses.uniswapRouter,
-    vault.address,
     strategistAddr,
     ousd.address,
     assetAddresses.OGV,
-    assetAddresses.OGN,
     assetAddresses.USDT,
     assetAddresses.WETH,
     assetAddresses.RewardsSource,
