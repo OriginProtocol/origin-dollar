@@ -38,7 +38,7 @@ module.exports = deploymentWithProposal(
     );
 
     // Fetch OUSD and OGN balance of existing contract
-    const oldBuybackAddress = await cVault.connect(sDeployer).trusteeAddress();
+    const oldBuybackAddress = "0x77314EB392b2be47C014cde0706908b3307Ad6a9";
     const cOldBuyback = await ethers.getContractAt(
       ["function transferToken(address token, uint256 amount) external"],
       oldBuybackAddress
