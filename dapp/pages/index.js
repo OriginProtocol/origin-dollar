@@ -7,11 +7,14 @@ import EmailForm from 'components/EmailForm'
 import GetOUSD from 'components/GetOUSD'
 import Layout from 'components/layout'
 import Nav from 'components/Nav'
+import ApySelect from 'components/ApySelect'
 import ContractStore from 'stores/ContractStore'
 import { formatCurrency } from 'utils/math'
 import { animateValue } from 'utils/animation'
 import { getDocsLink } from 'utils/getDocsLink'
 import { assetRootPath } from 'utils/image'
+import { DEFAULT_SELECTED_APY } from 'utils/constants'
+import { zipObject } from 'lodash'
 
 const discordURL = process.env.DISCORD_URL
 const jobsURL = process.env.JOBS_URL
@@ -23,6 +26,28 @@ const Home = ({ locale, onLocale }) => {
   const apy = useStoreState(ContractStore, (s) => s.apy.apy365 || 0)
 
   const goodTempo = 10000
+
+  const apyDayOptions = [7, 30, 365]
+
+  const apyOptions = useStoreState(ContractStore, (s) =>
+    apyDayOptions.map((d) => {
+      return s.apy[`apy${d}`] || 0
+    })
+  )
+  const daysToApy = zipObject(apyDayOptions, apyOptions)
+  const [apyDays, setApyDays] = useState(
+    process.browser &&
+      localStorage.getItem('last_user_selected_apy') !== null &&
+      apyDayOptions.includes(
+        Number(localStorage.getItem('last_user_selected_apy'))
+      )
+      ? localStorage.getItem('last_user_selected_apy')
+      : DEFAULT_SELECTED_APY
+  )
+
+  useEffect(() => {
+    localStorage.setItem('last_user_selected_apy', apyDays)
+  }, [apyDays])
 
   useEffect(() => {
     return animateValue({
@@ -59,14 +84,11 @@ const Home = ({ locale, onLocale }) => {
               className="coin"
             />
             <div className="d-flex flex-column align-items-center">
-              <div className="introducing">
-                {fbt('Introducing', 'Introducing')}
-              </div>
               <div className="ticker-symbol">OUSD</div>
               <h1>
                 {fbt(
-                  'The first stablecoin that earns a yield while it’s still in your wallet',
-                  'The first stablecoin that earns a yield while it’s still in your wallet'
+                  'A fully transparent stablecoin that earns a yield from DeFi',
+                  'A fully transparent stablecoin that earns a yield from DeFi'
                 )}
               </h1>
               <GetOUSD
@@ -86,22 +108,28 @@ const Home = ({ locale, onLocale }) => {
           <div className="row">
             <div className="col-lg-6 d-flex flex-column align-items-center justify-content-center order-lg-2">
               <div className="text-container overflowing">
-                <div className="current">
-                  {fbt('Currently earning', 'Currently earning')}
-                </div>
+                <div className="current">{fbt('Actual', 'Actual')}</div>
                 <div className="rate">
-                  {formatCurrency(apy * 100, 2) + '%'} APY
+                  {formatCurrency(daysToApy[apyDays] * 100, 2) + '%'} APY
                 </div>
-                <div className="timeframe">
-                  {fbt(
-                    'Based on a trailing 365-day calculation',
-                    'Based on a trailing 365-day calculation'
-                  )}
+                <div className="timeframe d-flex flex-row">
+                  <span className="time-text">
+                    {fbt('over the past', 'over the past')}
+                  </span>
+                  <span className="apy-select">
+                    <ApySelect
+                      apyDayOptions={apyDayOptions}
+                      apyDays={apyDays}
+                      setApyDays={setApyDays}
+                      nav={true}
+                      homepage={true}
+                    />
+                  </span>
                 </div>
                 <h2>
                   {fbt(
-                    'Convert your USDT, USDC, and DAI to OUSD to start earning yields immediately',
-                    'Convert your USDT, USDC, and DAI to OUSD to start earning yields immediately'
+                    'Start earning immediately by converting your USDT, USDC, and DAI to OUSD',
+                    'Start earning immediately by converting your USDT, USDC, and DAI to OUSD'
                   )}
                 </h2>
               </div>
@@ -122,14 +150,14 @@ const Home = ({ locale, onLocale }) => {
               <div className="text-container mb-md-4">
                 <h3 className="w-lg-300">
                   {fbt(
-                    'All the earnings, none of the hassles',
-                    'All the earnings, none of the hassles'
+                    'Earn passively with full control',
+                    'Earn passively with full control'
                   )}
                 </h3>
                 <p className="w-lg-330">
                   {fbt(
-                    'DeFi yields are automatically converted to OUSD and accrue in your wallet. Your OUSD balance compounds multiple times per day. No staking or lock-ups are required.',
-                    'DeFi yields are automatically converted to OUSD and accrue in your wallet. Your OUSD balance compounds multiple times per day. No staking or lock-ups are required.'
+                    'OUSD grows in your wallet while you maintain custody of your funds. Yields are generated automatically through open-source, on-chain yield farming strategies.',
+                    'OUSD grows in your wallet while you maintain custody of your funds. Yields are generated automatically through open-source, on-chain yield farming strategies.'
                   )}
                 </p>
               </div>
@@ -146,14 +174,14 @@ const Home = ({ locale, onLocale }) => {
               <div className="text-container overflowing">
                 <h3 className="w-lg-300">
                   {fbt(
-                    'Spend your OUSD with ease',
-                    'Spend your OUSD with ease'
+                    'Move OUSD like any other token',
+                    'Move OUSD like any other token'
                   )}
                 </h3>
                 <p className="w-lg-380">
                   {fbt(
-                    "There's no need to unwind complicated positions when you want to spend your OUSD. Transfer OUSD without having to unstake or unlock capital.",
-                    "There's no need to unwind complicated positions when you want to spend your OUSD. Transfer OUSD without having to unstake or unlock capital."
+                    "There's no need to unwind complicated positions when you want to transfer OUSD. No staking or locking is required.",
+                    "There's no need to unwind complicated positions when you want to transfer OUSD. No staking or locking is required."
                   )}
                 </p>
               </div>
@@ -174,14 +202,14 @@ const Home = ({ locale, onLocale }) => {
               <div className="text-container">
                 <h4 className="w-lg-250">
                   {fbt(
-                    'Elastic supply, stable price',
-                    'Elastic supply, stable price'
+                    'Stable price, increasing supply',
+                    'Stable price, increasing supply'
                   )}
                 </h4>
                 <p>
                   {fbt(
-                    'OUSD is pegged to the US Dollar. Returns are distributed as additional units of OUSD. See your OUSD grow much faster than your USD grows in traditional savings accounts.',
-                    'OUSD is pegged to the US Dollar. Returns are distributed as additional units of OUSD. See your OUSD grow much faster than your USD grows in traditional savings accounts.'
+                    'OUSD is pegged to the US Dollar. Returns are distributed as additional units of OUSD. See your balance grow every day as yield is generated.',
+                    'OUSD is pegged to the US Dollar. Returns are distributed as additional units of OUSD. See your balance grow every day as yield is generated.'
                   )}
                 </p>
               </div>
@@ -200,15 +228,12 @@ const Home = ({ locale, onLocale }) => {
             <div className="col-lg-5 d-flex flex-column align-items-center justify-content-center order-lg-2">
               <div className="text-container">
                 <h4>
-                  {fbt(
-                    '1:1 backed by other stablecoins',
-                    '1:1 backed by other stablecoins'
-                  )}
+                  {fbt('Fully collateralized 1:1', 'Fully collateralized 1:1')}
                 </h4>
                 <p>
                   {fbt(
-                    'OUSD is secured by other proven stablecoins like USDT, USDC, and DAI. Capital is further insured by governance tokens issued by platforms like Aave and MakerDAO.',
-                    'OUSD is secured by other proven stablecoins like USDT, USDC, and DAI. Capital is further insured by governance tokens issued by platforms like Aave and MakerDAO.'
+                    'OUSD is backed by the most trusted collateral in crypto. Conservative use of oracles and defensive programming mitigate the risk of loss.',
+                    'OUSD is backed by the most trusted collateral in crypto. Conservative use of oracles and defensive programming mitigate the risk of loss.'
                   )}
                 </p>
               </div>
@@ -225,12 +250,15 @@ const Home = ({ locale, onLocale }) => {
             <div className="col-lg-6 d-flex flex-column align-items-center justify-content-center">
               <div className="text-container">
                 <h4>
-                  {fbt('Automated yield farming', 'Automated yield farming')}
+                  {fbt(
+                    'Automated and decentralized',
+                    'Automated and decentralized'
+                  )}
                 </h4>
                 <p>
                   {fbt(
-                    'Automated strategies in transparent OUSD smart contracts manage your funds. See exactly how your money is being put to work.',
-                    'Automated strategies in transparent OUSD smart contracts manage your funds. See exactly how your money is being put to work.'
+                    'Funds are managed by smart contracts and community governance. There are no corporate gatekeepers controlling your money.',
+                    'Funds are managed by smart contracts and community governance. There are no corporate gatekeepers controlling your money.'
                   )}
                 </p>
               </div>
@@ -248,14 +276,14 @@ const Home = ({ locale, onLocale }) => {
               <div className="text-container">
                 <h4 className="w-lg-240">
                   {fbt(
-                    'You always have full control',
-                    'You always have full control'
+                    'Supported by the top wallets',
+                    'Supported by the top wallets'
                   )}
                 </h4>
                 <p>
                   {fbt(
-                    "Store and earn OUSD with non-custodial Ethereum wallets. Enter and exit OUSD whenever you want. There's no minimum holding period or minimum OUSD amount required to earn yields.",
-                    "Store and earn OUSD with non-custodial Ethereum wallets. Enter and exit OUSD whenever you want. There's no minimum holding period or minimum OUSD amount required to earn yields."
+                    "Store and earn OUSD with non-custodial Ethereum wallets. Enter and exit OUSD whenever you want. There's no minimum holding period or minimum amount required to earn yields.",
+                    "Store and earn OUSD with non-custodial Ethereum wallets. Enter and exit OUSD whenever you want. There's no minimum holding period or minimum amount required to earn yields."
                   )}
                 </p>
               </div>
@@ -273,14 +301,14 @@ const Home = ({ locale, onLocale }) => {
               <div className="text-container">
                 <h4>
                   {fbt(
-                    'Backed by optional insurance',
-                    'Backed by optional insurance'
+                    'Covered by optional insurance',
+                    'Covered by optional insurance'
                   )}
                 </h4>
                 <p>
                   {fbt(
-                    'Protect your OUSD holdings with smart contract insurance. Optional coverage is provided by Nexus Mutual and InsurAce.',
-                    'Protect your OUSD holdings with smart contract insurance. Optional coverage is provided by Nexus Mutual and InsurAce.'
+                    'Protect your OUSD holdings with peg protection and smart contract cover provided by Nexus Mutual and InsurAce.',
+                    'Protect your OUSD holdings with peg protection and smart contract cover provided by Nexus Mutual and InsurAce.'
                   )}
                 </p>
                 <a
@@ -308,7 +336,7 @@ const Home = ({ locale, onLocale }) => {
             <h5>{fbt('Exchanges and partners', 'Exchanges and partners')}</h5>
             <p className="exchanges-summary">
               {fbt(
-                'Use the Dapp to get the best price when swapping to & from OUSD. The Dapp checks costs of the swap on external exchanges as well as our Vault contract and picks the best price for you. You can also trade OUSD directly from our partners & exchanges.',
+                'Get the best price on OUSD using our DApp. OUSD Swap compares prices and gas costs across Curve, Uniswap, and other smart contracts. You can also buy and sell OUSD on several centralized exchanges.',
                 'Where to get OUSD explanation text'
               )}
             </p>
@@ -379,110 +407,17 @@ const Home = ({ locale, onLocale }) => {
           </div>
         </div>
       </section>
-      <section className="light perfection perfect-stable-coin">
+      <section className="light pb-100 work-in-progress">
         <div className="container">
           <div className="text-container text-center d-flex flex-column align-items-center">
-            <h5>
-              {fbt(
-                'The perfect stablecoin for both spending and saving',
-                'The perfect stablecoin for both spending and saving'
-              )}
-            </h5>
-          </div>
-          <div className="row">
-            <div className="col-6 col-md-4 ml-auto text-center">
-              <div className="image-container">
-                <img
-                  src={assetRootPath('/images/savings-icon.svg')}
-                  alt="Savings icon"
-                />
-              </div>
-              <h6>
-                {fbt(
-                  'Beat traditional savings and money markets',
-                  'Beat traditional savings and money markets'
-                )}
-              </h6>
-              <p>
-                {fbt(
-                  `At an estimated APY of ${fbt.param(
-                    'current-apy',
-                    formatCurrency(apy * 100, 2) + '%'
-                  )}, OUSD earnings trounce traditional financial instruments.`,
-                  'At estimated APYs over X, OUSD earnings trounce traditional financial instruments.'
-                )}
-              </p>
-            </div>
-            <div className="col-6 col-md-4 offset-md-1 mr-auto text-center">
-              <div className="image-container d-flex justify-content-center">
-                <img
-                  src={assetRootPath('/images/transfer-icon.svg')}
-                  alt="Transfer icon"
-                />
-              </div>
-              <h6>
-                {fbt(
-                  'Instantaneous peer-to-peer transfers',
-                  'Instantaneous peer-to-peer transfers'
-                )}
-              </h6>
-              <p>
-                {fbt(
-                  'Send OUSD to pay your friends and family instead of using Venmo or Paypal. They’ll earn yield immediately.',
-                  'Send OUSD to pay your friends and family instead of using Venmo or Paypal. They’ll earn yield immediately.'
-                )}
-              </p>
-            </div>
-          </div>
-          <div className="row">
-            <div className="col-6 col-md-4 ml-auto text-center">
-              <div className="image-container d-flex justify-content-center">
-                <img
-                  src={assetRootPath('/images/remittances-icon.svg')}
-                  alt="Remittances icon"
-                />
-              </div>
-              <h6>
-                {fbt('Remittances without fees', 'Remittances without fees')}
-              </h6>
-              <p>
-                {fbt(
-                  'Need to send money to China or the Philippines? Your recipients get OUSD without losing the average of 6.7% on fees.',
-                  'Need to send money to China or the Philippines? Your recipients get OUSD without losing the average of 6.7% on fees.'
-                )}
-              </p>
-            </div>
-            <div className="col-6 col-md-4 offset-md-1 mr-auto text-center">
-              <div className="image-container d-flex justify-content-center">
-                <img
-                  src={assetRootPath('/images/account-icon.svg')}
-                  alt="Account icon"
-                />
-              </div>
-              <h6>
-                {fbt('A better unit of account', 'A better unit of account')}
-              </h6>
-              <p>
-                {fbt(
-                  'Easily track your DeFi earnings without complicated spreadsheets and custom dashboards.',
-                  'Easily track your DeFi earnings without complicated spreadsheets and custom dashboards.'
-                )}
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-      <section className="dark pb-100 work-in-progress">
-        <div className="container">
-          <div className="text-container text-center d-flex flex-column align-items-center">
-            <h5>{fbt('Audited and Verified', 'Audited and Verified')}</h5>
+            <h5>{fbt('Security first', 'Security first')}</h5>
             <p className="exchanges-summary">
               {fbt(
-                'OUSD has been audited by multiple, well-respected security firms.',
-                'OUSD has been audited by multiple, well-respected security firms.'
+                'OUSD and each of its strategies are reviewed, tested, and audited by industry-leading security experts.',
+                'Security proclamation'
               )}
             </p>
-            <div className="d-flex justify-content-center flex-wrap">
+            <div className="d-flex justify-content-center flex-wrap mb-4">
               <div
                 className="info-box-holder d-flex flex-column"
                 onClick={() => {
@@ -540,13 +475,7 @@ const Home = ({ locale, onLocale }) => {
                 <div>{fbt('OpenZeppelin', 'OpenZeppelin')}</div>
               </div>
             </div>
-            <p className="exchanges-summary top-margin">
-              {fbt(
-                'Protocol security remains top priority',
-                'Protocol security remains top priority'
-              )}
-            </p>
-            <div className="d-flex justify-content-center flex-wrap">
+            <div className="d-flex justify-content-center flex-wrap mt-4">
               <div
                 className="info-box-holder d-flex flex-column align-items-center"
                 onClick={() => {
@@ -622,7 +551,7 @@ const Home = ({ locale, onLocale }) => {
       </section>
       <section className="follow-development">
         <div className="container text-center">
-          <h5>{fbt('Follow our development', 'Follow our development')}</h5>
+          <h5>{fbt('Watch us buidl', 'Watch us buidl')}</h5>
           <div className="d-flex community-buttons flex-column flex-lg-row justify-content-center">
             <a
               href={discordURL}
@@ -721,7 +650,7 @@ const Home = ({ locale, onLocale }) => {
           font-family: Poppins;
           font-size: 4rem;
           font-weight: 500;
-          margin-top: 206px;
+          margin-top: 310px;
         }
 
         h1 {
@@ -736,14 +665,23 @@ const Home = ({ locale, onLocale }) => {
         }
 
         .timeframe {
+          margin-top: 10px;
           font-size: 0.75rem;
+        }
+
+        .timeframe .time-text {
           opacity: 0.8;
+          line-height: 24px;
         }
 
         .rate {
           font-family: Poppins;
           font-size: 4rem;
           line-height: 1;
+        }
+
+        .apy-select {
+          margin-left: 6px;
         }
 
         .disclaimer {
@@ -938,7 +876,6 @@ const Home = ({ locale, onLocale }) => {
         }
 
         .info-box {
-          background-color: #eeeeee;
           border-radius: 10px;
           min-height: 170px;
           min-width: 170px;
@@ -1174,6 +1111,10 @@ const Home = ({ locale, onLocale }) => {
 
           .info-box-holder {
             margin-bottom: 40px;
+          }
+
+          .ticker-symbol {
+            margin-top: 270px;
           }
         }
 

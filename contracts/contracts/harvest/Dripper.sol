@@ -88,8 +88,8 @@ contract Dripper is Governable {
     ///  balance over if no collects were called during that time.
     function setDripDuration(uint256 _durationSeconds) external onlyGovernor {
         require(_durationSeconds > 0, "duration must be non-zero");
-        dripDuration = uint192(_durationSeconds);
-        Dripper(this).collect(); // duration change take immediate effect
+        dripDuration = _durationSeconds;
+        _collect(); // duration change take immediate effect
     }
 
     /// @dev Transfer out ERC20 tokens held by the contract. Governor only.

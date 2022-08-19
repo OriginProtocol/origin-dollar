@@ -41,7 +41,7 @@ export default function History({ locale, onLocale }) {
           min-height: 470px;
           height: 100%;
           padding: 70px;
-          border-radius: 0 0 10px 10px;
+          border-radius: 10px;
           border-top: solid 1px #cdd7e0;
           background-color: #fafbfc;
         }

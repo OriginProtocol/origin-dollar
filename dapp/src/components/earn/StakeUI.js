@@ -11,7 +11,6 @@ import ContractStore from 'stores/ContractStore'
 import StakeStore from 'stores/StakeStore'
 import AccountStore from 'stores/AccountStore'
 import SummaryHeaderStat from 'components/earn/SummaryHeaderStat'
-import StakeBoxBig from 'components/earn/StakeBoxBig'
 import CurrentStakeLockup from 'components/earn/CurrentStakeLockup'
 import EtherscanLink from 'components/earn/EtherscanLink'
 import ClaimModal from 'components/earn/modal/ClaimModal'
@@ -25,6 +24,7 @@ import { refetchUserData, refetchStakingData } from 'utils/account'
 import { addStakeTxHashToWaitingBuffer } from 'utils/stake'
 import StakeDetailEquation from 'components/earn/StakeDetailEquation'
 import { assetRootPath } from 'utils/image'
+import GetOUSD from 'components/GetOUSD'
 
 const StakeUI = ({ rpcProvider, isMobile }) => {
   const { active, library } = useWeb3React()
@@ -34,7 +34,6 @@ const StakeUI = ({ rpcProvider, isMobile }) => {
   const [showStakeModal, setShowStakeModal] = useState(false)
   const [showStakeDetailsEndKey, setShowStakeDetailsEndKey] = useState(null)
   const [selectedDuration, setSelectedDuration] = useState(false)
-  const [stakeOptions, setStakeOptions] = useState([])
   const [selectedRate, setSelectedRate] = useState(false)
   const [tokensToStake, setTokensToStake] = useState(0)
   const [error, setError] = useState(null)
@@ -51,6 +50,8 @@ const StakeUI = ({ rpcProvider, isMobile }) => {
   const [ognToClaim, setOgnToClaim] = useState(null)
   const isLocalEnvironment = process.env.NODE_ENV === 'development'
   const curveStakingEnabled = process.env.ENABLE_CURVE_STAKING === 'true'
+
+  const STORY_URL = 'https://www.story.xyz/#/stake'
 
   const {
     durations,
@@ -138,7 +139,6 @@ const StakeUI = ({ rpcProvider, isMobile }) => {
     }
     return {}
   })
-  const showGetStartedBanner = (stakes && stakes.length === 0) || !active
 
   const toFriendlyError = (error) => {
     let message = error.message ? error.message : ''
@@ -176,672 +176,695 @@ const StakeUI = ({ rpcProvider, isMobile }) => {
     }
   }
 
-  useEffect(() => {
-    if (rates && durations && rates.length > 0 && durations.length > 0) {
-      setStakeOptions([
-        {
-          rate: formatBn(rates[0], 18),
-          duration: formatBn(durations[0], 0),
-          durationBn: durations[0],
-        },
-        {
-          rate: formatBn(rates[1], 18),
-          duration: formatBn(durations[1], 0),
-          durationBn: durations[1],
-        },
-        {
-          rate: formatBn(rates[2], 18),
-          duration: formatBn(durations[2], 0),
-          durationBn: durations[2],
-        },
-      ])
-    }
-  }, [durations, rates])
-
-  const onStakeModalClick = (duration, rate) => {
-    setSelectedDuration(duration)
-    setSelectedRate(rate)
-    setError(null)
-    setShowStakeModal(true)
-  }
-
   return (
-    process.env.ENABLE_STAKING === 'true' && (
-      <>
-        {showStakeDetailsEndKey && (
-          <StakeDetailsModal
-            stake={
-              stakes.filter((stake) => stake.end === showStakeDetailsEndKey)[0]
+    <>
+      {showStakeDetailsEndKey && (
+        <StakeDetailsModal
+          stake={
+            stakes.filter((stake) => stake.end === showStakeDetailsEndKey)[0]
+          }
+          onClose={(e) => {
+            setShowStakeDetailsEndKey(null)
+          }}
+        />
+      )}
+      {showStakeModal && (
+        <StakeModal
+          tokenAllowanceSuffiscient={
+            /* On prod we whitelist ognStaking to move ogn tokens around. On dev users need to do it manually
+             * by clicking on the "Approve staking contract to move OGN" button in dashboard
+             */
+            true
+          }
+          tokenToStakeDecimalsCall={ognContract.decimals}
+          stakeFunctionCall={async (stakeAmount) => {
+            //const stakeAmountString = formatBn(stakeAmount, 18)
+            const iface = ognStaking.interface
+            const fragment = iface.getFunction(
+              'stakeWithSender(address,uint256,uint256)'
+            )
+            const fnSig = iface.getSighash(fragment)
+            const params = ethers.utils.solidityPack(
+              ['uint256', 'uint256'],
+              [stakeAmount, selectedDuration]
+            )
+            return connSigner(ognContract).approveAndCallWithSender(
+              ognStaking.address,
+              stakeAmount,
+              fnSig,
+              params
+            )
+          }}
+          stakeTokenBalance={ognBalance}
+          stakeTokenName="OGN"
+          contractApprovingTokenUsage={ognContract}
+          contractAllowedToMoveTokens={ognStaking}
+          stakeButtonText={fbt('Stake now', 'Stake now')}
+          selectTokensAmountTitle={fbt(
+            fbt.param('Stake rate', formatRate(selectedRate)) +
+              '% - ' +
+              fbt.param(
+                'Duration in days',
+                durationToDays(selectedDuration * 1000)
+              ) +
+              ' days',
+            'Selected duration and staking rate'
+          )}
+          approveTokensTitle={fbt('Approve & stake', 'Approve & stake')}
+          availableToDepositSymbol="OGN"
+          tokenIconAndName={
+            <div className="d-flex align-items-center">
+              <img
+                className="coin-icon"
+                src={assetRootPath('/images/ogn-icon-blue.svg')}
+              />
+              <div className="coin-name">OGN</div>
+            </div>
+          }
+          tokenIcon={
+            <div className="d-flex align-items-center">
+              <img
+                className="coin-icon"
+                src={assetRootPath('/images/ogn-icon-blue.svg')}
+              />
+            </div>
+          }
+          permissionToUseTokensText={fbt(
+            'Permission to use OGN token',
+            'Permission to use OGN token'
+          )}
+          onClose={(e) => {
+            setShowStakeModal(false)
+          }}
+          onUserConfirmedStakeTx={async (result, data) => {
+            setWaitingForStakeTx(true)
+            setWaitingForStakeTxDuration(selectedDuration)
+            // just to make the loading circle on the button noticable in local dev
+            if (isLocalEnvironment) {
+              await sleep(3000)
             }
-            onClose={(e) => {
-              setShowStakeDetailsEndKey(null)
-            }}
-          />
-        )}
-        {showStakeModal && (
-          <StakeModal
-            tokenAllowanceSuffiscient={
-              /* On prod we whitelist ognStaking to move ogn tokens around. On dev users need to do it manually
-               * by clicking on the "Approve staking contract to move OGN" button in dashboard
-               */
-              true
-            }
-            tokenToStakeDecimalsCall={ognContract.decimals}
-            stakeFunctionCall={async (stakeAmount) => {
-              //const stakeAmountString = formatBn(stakeAmount, 18)
-              const iface = ognStaking.interface
-              const fragment = iface.getFunction(
-                'stakeWithSender(address,uint256,uint256)'
-              )
-              const fnSig = iface.getSighash(fragment)
-              const params = ethers.utils.solidityPack(
-                ['uint256', 'uint256'],
-                [stakeAmount, selectedDuration]
-              )
-              return connSigner(ognContract).approveAndCallWithSender(
-                ognStaking.address,
-                stakeAmount,
-                fnSig,
-                params
-              )
-            }}
-            stakeTokenBalance={ognBalance}
-            stakeTokenName="OGN"
-            contractApprovingTokenUsage={ognContract}
-            contractAllowedToMoveTokens={ognStaking}
-            stakeButtonText={fbt('Stake now', 'Stake now')}
-            selectTokensAmountTitle={fbt(
-              fbt.param('Stake rate', formatRate(selectedRate)) +
-                '% - ' +
-                fbt.param(
-                  'Duration in days',
-                  durationToDays(selectedDuration * 1000)
-                ) +
-                ' days',
-              'Selected duration and staking rate'
-            )}
-            approveTokensTitle={fbt('Approve & stake', 'Approve & stake')}
-            availableToDepositSymbol="OGN"
-            tokenIconAndName={
-              <div className="d-flex align-items-center">
-                <img
-                  className="coin-icon"
-                  src={assetRootPath('/images/ogn-icon-blue.svg')}
-                />
-                <div className="coin-name">OGN</div>
-              </div>
-            }
-            tokenIcon={
-              <div className="d-flex align-items-center">
-                <img
-                  className="coin-icon"
-                  src={assetRootPath('/images/ogn-icon-blue.svg')}
-                />
-              </div>
-            }
-            permissionToUseTokensText={fbt(
-              'Permission to use OGN token',
-              'Permission to use OGN token'
-            )}
-            onClose={(e) => {
-              setShowStakeModal(false)
-            }}
-            onUserConfirmedStakeTx={async (result, data) => {
-              setWaitingForStakeTx(true)
-              setWaitingForStakeTxDuration(selectedDuration)
-              // just to make the loading circle on the button noticable in local dev
-              if (isLocalEnvironment) {
-                await sleep(3000)
-              }
 
-              // add hash to a list to be able to match it with stake info returned by the contract
+            // add hash to a list to be able to match it with stake info returned by the contract
+            addStakeTxHashToWaitingBuffer(
+              result.hash,
+              formatBn(data.stakeAmount, 18),
+              selectedDuration
+            )
+            const receipt = await rpcProvider.waitForTransaction(result.hash)
+            setWaitingForStakeTx(false)
+            setWaitingForStakeTxDuration(false)
+            refetchStakingData()
+          }}
+          onError={(e) => {
+            setError(toFriendlyError(e))
+          }}
+          className="wider-stake-input"
+          onTokensToStakeChange={(tokens) => {
+            setTokensToStake(tokens)
+          }}
+          underInputFieldContent={
+            <div className="w-100 stake-detail-holder">
+              <StakeDetailEquation
+                duration={selectedDuration}
+                durationText={`${durationToDays(selectedDuration * 1000)}d`}
+                rate={selectedRate}
+                principal={tokensToStake}
+              />
+            </div>
+          }
+        />
+      )}
+      {showClaimModal && (
+        <ClaimModal
+          onClose={(e) => {
+            setShowClaimModal(false)
+          }}
+          onClaimContractCall={connSigner(ognStaking).exit}
+          ognToClaim={ognToClaim}
+          onUserConfirmedClaimTx={async (result) => {
+            setWaitingForClaimTx(true)
+            // just to make the loading circle on the button noticable in local dev
+            if (isLocalEnvironment) {
+              await sleep(3000)
+            }
+
+            vestedStakes.forEach((stake) => {
+              // add claim hash to all the vested stakes. That will be stored to local storage and added to contract data
               addStakeTxHashToWaitingBuffer(
                 result.hash,
-                formatBn(data.stakeAmount, 18),
-                selectedDuration
+                stake.amount,
+                formatCurrency(stake.duration / 1000, 1),
+                stake.end,
+                true
               )
-              const receipt = await rpcProvider.waitForTransaction(result.hash)
-              setWaitingForStakeTx(false)
-              setWaitingForStakeTxDuration(false)
-              refetchStakingData()
+            })
+
+            const receipt = await rpcProvider.waitForTransaction(result.hash)
+            setWaitingForClaimTx(false)
+            refetchStakingData()
+          }}
+          onError={(e) => {
+            setError(toFriendlyError(e))
+          }}
+        />
+      )}
+      <div className="d-flex flex-column">
+        {curveStakingEnabled && (
+          <button
+            className="toggle-ogn-staking"
+            onClick={() => {
+              setOgnStakingHidden(!ognStakingHidden)
             }}
-            onError={(e) => {
-              setError(toFriendlyError(e))
-            }}
-            className="wider-stake-input"
-            onTokensToStakeChange={(tokens) => {
-              setTokensToStake(tokens)
-            }}
-            underInputFieldContent={
-              <div className="w-100 stake-detail-holder">
-                <StakeDetailEquation
-                  duration={selectedDuration}
-                  durationText={`${durationToDays(selectedDuration * 1000)}d`}
-                  rate={selectedRate}
-                  principal={tokensToStake}
-                />
+          >
+            {ognStakingHidden
+              ? fbt('Show OGN Staking', 'Show OGN Staking Button')
+              : fbt('Hide OGN Staking', 'Hide OGN Staking Button')}
+          </button>
+        )}
+        {!ognStakingHidden && (
+          <div className="home d-flex flex-column">
+            {stakes === null && active && (
+              <div className="loading-text">
+                {fbt('Loading...', 'Loading...')}
               </div>
-            }
-          />
-        )}
-        {showClaimModal && (
-          <ClaimModal
-            onClose={(e) => {
-              setShowClaimModal(false)
-            }}
-            onClaimContractCall={connSigner(ognStaking).exit}
-            ognToClaim={ognToClaim}
-            onUserConfirmedClaimTx={async (result) => {
-              setWaitingForClaimTx(true)
-              // just to make the loading circle on the button noticable in local dev
-              if (isLocalEnvironment) {
-                await sleep(3000)
-              }
+            )}
+            {error && (
+              <div className="error-box d-flex align-items-center justify-content-center">
+                {error}
+              </div>
+            )}
 
-              vestedStakes.forEach((stake) => {
-                // add claim hash to all the vested stakes. That will be stored to local storage and added to contract data
-                addStakeTxHashToWaitingBuffer(
-                  result.hash,
-                  stake.amount,
-                  formatCurrency(stake.duration / 1000, 1),
-                  stake.end,
-                  true
-                )
-              })
+            <div className="story-banner d-flex flex-column flex-md-row">
+              <div className="text-box d-flex flex-column justify-content-center">
+                <div className="title-text">
+                  {fbt(
+                    'Earn ETH when you stake OGN on Origin Story',
+                    'Story staking title'
+                  )}
+                </div>
+                <div className="text">
+                  {fbt(
+                    `OGN staking has moved to Origin's NFT platform. Yields are now generated by fees from primary mints, secondary trading, and royalties.`,
+                    'Story staking message'
+                  )}
+                </div>
+                <a
+                  className={`d-flex justify-content-center align-items-center`}
+                  href={STORY_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <div className="story-button btn-dark">Visit story.xyz</div>
+                </a>
+              </div>
+              <img
+                className="story-logo"
+                src={assetRootPath('/images/story-logo-white.svg')}
+              />
+              <img
+                className="splines"
+                src={assetRootPath('/images/splines.png')}
+              />
+            </div>
 
-              const receipt = await rpcProvider.waitForTransaction(result.hash)
-              setWaitingForClaimTx(false)
-              refetchStakingData()
-            }}
-            onError={(e) => {
-              setError(toFriendlyError(e))
-            }}
-          />
-        )}
-        <div className="d-flex flex-column">
-          {curveStakingEnabled && (
-            <button
-              className="toggle-ogn-staking"
-              onClick={() => {
-                setOgnStakingHidden(!ognStakingHidden)
-              }}
-            >
-              {ognStakingHidden
-                ? fbt('Show OGN Staking', 'Show OGN Staking Button')
-                : fbt('Hide OGN Staking', 'Hide OGN Staking Button')}
-            </button>
-          )}
-          {!ognStakingHidden && (
-            <div className="home d-flex flex-column">
-              {(stakes === null || stakeOptions.length === 0) && active && (
-                <div className="loading-text">
-                  {fbt('Loading...', 'Loading...')}
+            {!active && (
+              <div className="empty-placeholder d-flex flex-column align-items-center justify-content-start">
+                <img src={assetRootPath('/images/wallet-icons.svg')} />
+                <div className="header-text">
+                  {fbt('No wallet connected', 'Disconnected dapp message')}
                 </div>
-              )}
-              {error && (
-                <div className="error-box d-flex align-items-center justify-content-center">
-                  {error}
+                <div className="subtext">
+                  {fbt(
+                    'Please connect an Ethereum wallet',
+                    'Disconnected dapp subtext'
+                  )}
                 </div>
-              )}
-              {showGetStartedBanner && (
-                <div className="no-stakes-box d-flex flex-column flex-md-row">
-                  <img
-                    className="big-ogn-icon"
-                    src={assetRootPath('/images/ogn-icon-large.svg')}
-                  />
-                  <div className="d-flex flex-column justify-content-center">
-                    <div className="title-text">
-                      {fbt(
-                        'Get started with staking by selecting a lock-up period',
-                        'Empty stakes title'
-                      )}
-                    </div>
-                    <div className="text">
-                      {fbt(
-                        'You will be able to claim your OGN principal plus interest at the end of the staking period.',
-                        'Empty stakes message'
-                      )}
-                    </div>
-                  </div>
+                <GetOUSD primary connect trackSource="Dapp widget body" />
+              </div>
+            )}
+
+            {nonClaimedActiveStakes && nonClaimedActiveStakes.length > 0 && (
+              <div className="d-flex flex-column current-lockups">
+                <div className="title dark">
+                  {fbt('Current Lock-ups', 'Current Lock-ups')}
                 </div>
-              )}
-              {stakeOptions.length > 0 && (
-                <div className="d-flex flex-column lockup-options">
-                  <div
-                    className={`title available-lockups ${
-                      showGetStartedBanner || curveStakingEnabled ? 'grey' : ''
-                    }`}
+                {nonClaimedActiveStakes.map((stake) => {
+                  return (
+                    <CurrentStakeLockup
+                      key={stake.end}
+                      stake={stake}
+                      onDetailsClick={(e) => {
+                        setShowStakeDetailsEndKey(stake.end)
+                      }}
+                    />
+                  )
+                })}
+                <div className="claim-button-holder d-flex align-items-center justify-content-center">
+                  <button
+                    className="btn-dark"
+                    disabled={!vestedStakes || vestedStakes.length === 0}
+                    onClick={(e) => {
+                      /* We don't want to visually disable the button when waitingForClaimTx is true
+                       * because the loading spinner isn't evident then. For that reason we still keep it
+                       * visibly enabled, but disable the functionality in onClick
+                       */
+                      if (waitingForClaimTx) {
+                        return
+                      }
+
+                      setError(null)
+                      setShowClaimModal(true)
+                    }}
                   >
-                    {fbt('Available Lock-ups', 'Available Lock-ups')}
-                  </div>
-                  <div className="d-flex stake-options flex-column flex-md-row">
-                    {stakeOptions.map((stakeOption) => {
-                      const waitingFormattedDuration = waitingForStakeTxDuration
-                        ? formatBn(waitingForStakeTxDuration, 0)
-                        : false
+                    {!waitingForClaimTx && fbt('Claim OGN', 'Claim OGN')}
+                    {waitingForClaimTx && (
+                      <SpinningLoadingCircle backgroundColor="385160" />
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
+            {pastStakes && pastStakes.length > 0 && (
+              <div className="d-flex flex-column previous-lockups">
+                <div className="title dark">
+                  {fbt('Previous Lock-ups', 'Previous Lock-ups')}
+                </div>
+                <table>
+                  <thead>
+                    <tr key="table-head">
+                      <td>{fbt('APY', 'APY')}</td>
+                      {!isMobile && (
+                        <>
+                          <td>{fbt('Duration', 'Duration')}</td>
+                          <td>{fbt('Maturity', 'Maturity')}</td>
+                          <td>{fbt('Principal', 'Principal')}</td>
+                        </>
+                      )}
+                      <td>{fbt('Interest', 'Interest')}</td>
+                      <td>{fbt('Total', 'Total')}</td>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pastStakes.map((stake) => {
+                      const ognDecimals = isMobile ? 2 : 6
                       return (
-                        <div
-                          key={stakeOption.duration}
-                          className="col-12 col-md-4"
+                        <tr
+                          onClick={() => {
+                            setShowStakeDetailsEndKey(stake.end)
+                          }}
+                          className="previous-lockup"
+                          key={stake.end}
                         >
-                          <StakeBoxBig
-                            percentage={stakeOption.rate}
-                            duration={durationToDays(
-                              stakeOption.duration * 1000
-                            )}
-                            onClick={(e) => {
-                              onStakeModalClick(
-                                stakeOption.durationBn,
-                                stakeOption.rate
-                              )
-                            }}
-                            subtitle={stakeOption.subtitle}
-                            showLoadingWheel={
-                              waitingForStakeTx &&
-                              waitingFormattedDuration === stakeOption.duration
-                            }
-                          />
-                        </div>
+                          <td>{formatRate(stake.rate)}%</td>
+                          {!isMobile && (
+                            <>
+                              <td>
+                                {fbt(
+                                  fbt.param(
+                                    'number_of_days',
+                                    stake.durationDays
+                                  ) + ' days',
+                                  'duration in days'
+                                )}
+                              </td>
+                              <td>
+                                {dateformat(new Date(stake.end), 'mm/dd/yyyy')}
+                              </td>
+                              <td>
+                                {formatCurrency(stake.amount, ognDecimals)}
+                              </td>
+                            </>
+                          )}
+                          <td>{formatCurrency(stake.interest, ognDecimals)}</td>
+                          <td>
+                            <div className="modal-details-button d-flex align-items-center justify-content-between">
+                              <div>
+                                {formatCurrency(stake.total, ognDecimals)}
+                              </div>
+                              <div className="modal-link d-flex align-items-center justify-content-center">
+                                <img
+                                  className="caret-left"
+                                  src={assetRootPath(
+                                    '/images/caret-left-grey.svg'
+                                  )}
+                                />
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
                       )
                     })}
-                  </div>
-                </div>
-              )}
-              {nonClaimedActiveStakes && nonClaimedActiveStakes.length > 0 && (
-                <div className="d-flex flex-column current-lockups">
-                  <div className="title dark">
-                    {fbt('Current Lock-ups', 'Current Lock-ups')}
-                  </div>
-                  {nonClaimedActiveStakes.map((stake) => {
-                    return (
-                      <CurrentStakeLockup
-                        key={stake.end}
-                        stake={stake}
-                        onDetailsClick={(e) => {
-                          setShowStakeDetailsEndKey(stake.end)
-                        }}
-                      />
-                    )
-                  })}
-                  <div className="claim-button-holder d-flex align-items-center justify-content-center">
-                    <button
-                      className="btn-dark"
-                      disabled={!vestedStakes || vestedStakes.length === 0}
-                      onClick={(e) => {
-                        /* We don't want to visually disable the button when waitingForClaimTx is true
-                         * because the loading spinner isn't evident then. For that reason we still keep it
-                         * visibly enabled, but disable the functionality in onClick
-                         */
-                        if (waitingForClaimTx) {
-                          return
-                        }
+                  </tbody>
+                </table>
+              </div>
+            )}
+            {ognStaking && (
+              <div className="d-flex justify-content-center mt-50">
+                <EtherscanLink
+                  href={`https://etherscan.io/address/${ognStaking.address}`}
+                  text={fbt('OGN Staking Contract', 'OGN Staking Contract')}
+                />
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+      <style jsx>{`
+        .home {
+          padding-top: 10px;
+        }
 
-                        setError(null)
-                        setShowClaimModal(true)
-                      }}
-                    >
-                      {!waitingForClaimTx && fbt('Claim OGN', 'Claim OGN')}
-                      {waitingForClaimTx && (
-                        <SpinningLoadingCircle backgroundColor="385160" />
-                      )}
-                    </button>
-                  </div>
-                </div>
-              )}
-              {pastStakes && pastStakes.length > 0 && (
-                <div className="d-flex flex-column previous-lockups">
-                  <div className="title dark">
-                    {fbt('Previous Lock-ups', 'Previous Lock-ups')}
-                  </div>
-                  <table>
-                    <thead>
-                      <tr key="table-head">
-                        <td>{fbt('APY', 'APY')}</td>
-                        {!isMobile && (
-                          <>
-                            <td>{fbt('Duration', 'Duration')}</td>
-                            <td>{fbt('Maturity', 'Maturity')}</td>
-                            <td>{fbt('Principal', 'Principal')}</td>
-                          </>
-                        )}
-                        <td>{fbt('Interest', 'Interest')}</td>
-                        <td>{fbt('Total', 'Total')}</td>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {pastStakes.map((stake) => {
-                        const ognDecimals = isMobile ? 2 : 6
-                        return (
-                          <tr
-                            onClick={() => {
-                              setShowStakeDetailsEndKey(stake.end)
-                            }}
-                            className="previous-lockup"
-                            key={stake.end}
-                          >
-                            <td>{formatRate(stake.rate)}%</td>
-                            {!isMobile && (
-                              <>
-                                <td>
-                                  {fbt(
-                                    fbt.param(
-                                      'number_of_days',
-                                      stake.durationDays
-                                    ) + ' days',
-                                    'duration in days'
-                                  )}
-                                </td>
-                                <td>
-                                  {dateformat(
-                                    new Date(stake.end),
-                                    'mm/dd/yyyy'
-                                  )}
-                                </td>
-                                <td>
-                                  {formatCurrency(stake.amount, ognDecimals)}
-                                </td>
-                              </>
-                            )}
-                            <td>
-                              {formatCurrency(stake.interest, ognDecimals)}
-                            </td>
-                            <td>
-                              <div className="modal-details-button d-flex align-items-center justify-content-between">
-                                <div>
-                                  {formatCurrency(stake.total, ognDecimals)}
-                                </div>
-                                <div className="modal-link d-flex align-items-center justify-content-center">
-                                  <img
-                                    className="caret-left"
-                                    src={assetRootPath(
-                                      '/images/caret-left-grey.svg'
-                                    )}
-                                  />
-                                </div>
-                              </div>
-                            </td>
-                          </tr>
-                        )
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-              {ognStaking && (
-                <div className="d-flex justify-content-center mt-50">
-                  <EtherscanLink
-                    href={`https://etherscan.io/address/${ognStaking.address}`}
-                    text={fbt('OGN Staking Contract', 'OGN Staking Contract')}
-                  />
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-        <style jsx>{`
+        .pr-10 {
+          padding-right: 10px !important;
+        }
+
+        .pl-10 {
+          padding-left: 10px !important;
+        }
+
+        .title {
+          margin-top: 44px;
+          margin-bottom: 23px;
+          font-family: Lato;
+          font-size: 14px;
+          font-weight: bold;
+          color: white;
+        }
+
+        .previous-lockups .title {
+          margin-bottom: 10px;
+        }
+
+        .title.grey {
+          color: #8293a4;
+        }
+
+        .title.dark {
+          color: #183140;
+        }
+
+        .mt-50 {
+          margin-top: 50px;
+        }
+
+        .btn-dark {
+          background-color: #385160;
+          height: 50px;
+        }
+
+        .claim-button-holder {
+          width: 100%;
+          height: 80px;
+          border-radius: 10px;
+          border: solid 1px #cdd7e0;
+          background-color: #f2f3f5;
+        }
+
+        .previous-lockups table thead {
+          font-size: 14px;
+          color: #576c7a;
+        }
+
+        .previous-lockups table tbody {
+          font-size: 14px;
+          color: black;
+        }
+
+        .previous-lockups table tr {
+          height: 52px;
+          border-bottom: solid 1px #e4e4e4;
+        }
+
+        .previous-lockup {
+          cursor: pointer;
+        }
+
+        .previous-lockup:hover {
+          opacity: 0.7;
+        }
+
+        .previous-lockups table td {
+          min-width: 100px;
+        }
+
+        .coin-icon {
+          width: 30px;
+          height: 30px;
+          min-width: 30px;
+          min-height: 30px;
+          position: relative;
+          z-index: 1;
+        }
+
+        .coin-name {
+          margin-left: 10px;
+          font-size: 14px;
+          color: #8293a4;
+        }
+
+        .stake-options div:first-child {
+          padding-left: 0px !important;
+          padding-right: 10px !important;
+        }
+
+        .stake-options div:last-child {
+          padding-left: 10px !important;
+          padding-right: 0px !important;
+        }
+
+        .stake-options div:not(:first-child):not(:last-child) {
+          padding-left: 10px !important;
+          padding-right: 10px !important;
+        }
+
+        .error-box {
+          font-size: 14px;
+          line-height: 1.36;
+          text-align: center;
+          color: #183140;
+          border-radius: 5px;
+          border: solid 1px #ed2a28;
+          background-color: #fff0f0;
+          height: 50px;
+          min-width: 320px;
+          margin-top: 50px;
+        }
+
+        .modal-link {
+          width: 30px;
+          height: 30px;
+          border-radius: 15px;
+          font-family: material;
+          font-size: 14px;
+          text-align: right;
+          padding: 10px;
+          cursor: pointer;
+          color: #8293a4;
+          background-color: transparent;
+        }
+
+        .loading-text {
+          font-size: 35px;
+          color: white;
+          margin-top: 30px;
+          margin-bottom: 30px;
+        }
+
+        .story-banner {
+          width: 100%;
+          height: 197px;
+          margin-top: 50px;
+          padding: 0;
+          border-radius: 10px;
+          color: white;
+          box-shadow: 0 2px 14px 0 rgba(0, 0, 0, 0.1);
+          background-image: linear-gradient(102deg, #1a82ff, #0268e2 100%);
+        }
+
+        .story-banner .text-box {
+          margin-left: 40px;
+        }
+
+        .story-banner .title-text {
+          margin: 22px 57px 1px 0;
+          font-size: 22px;
+          font-weight: bold;
+          line-height: 1.91;
+          color: white;
+        }
+
+        .story-banner .text {
+          width: 519px;
+          margin: 1px 46px 17px 0;
+          opacity: 0.8;
+          font-size: 16px;
+          line-height: normal;
+        }
+
+        .story-banner .story-button {
+          width: 180px;
+          height: 40px;
+          margin: 4px 385px 30px 0;
+          padding: 0;
+          border-radius: 25px;
+          background-color: #183140;
+          line-height: 2.33;
+        }
+
+        .story-banner .story-button:hover {
+          opacity: 0.9;
+        }
+
+        .story-banner .splines {
+          width: 233px;
+          height: 197px;
+          margin: 0 0 0 auto;
+          position: relative;
+          z-index: 0;
+          object-fit: contain;
+        }
+
+        .story-banner .story-logo {
+          width: 274px;
+          height: 50px;
+          margin-top: 75px;
+          margin-left: 605px;
+          position: absolute;
+          z-index: 1;
+          object-fit: contain;
+        }
+
+        .caret-left {
+          transform: rotate(180deg);
+          width: 7px;
+          height: 14px;
+        }
+
+        .stake-detail-holder {
+          margin-top: 16px;
+          margin-bottom: 30px;
+        }
+
+        .toggle-ogn-staking {
+          font-size: 14px;
+          font-weight: bold;
+          text-align: center;
+          color: #1a82ff;
+          background-color: transparent;
+          border: 0;
+          margin-top: 67px;
+        }
+
+        .toggle-ogn-staking:hover {
+          color: #0a72ef;
+        }
+
+        .empty-placeholder {
+          min-height: 470px;
+          height: 100%;
+          padding: 70px;
+          border-radius: 10px;
+          border-top: solid 1px #cdd7e0;
+          background-color: #fafbfc;
+        }
+
+        .header-text {
+          font-size: 22px;
+          line-height: 0.86;
+          text-align: center;
+          color: black;
+          margin-top: 23px;
+          margin-bottom: 10px;
+        }
+
+        .subtext {
+          font-size: 14px;
+          line-height: 1.36;
+          text-align: center;
+          color: #8293a4;
+          margin-bottom: 50px;
+        }
+
+        @media (min-width: 768px) {
+          .pr-md-10 {
+            padding-right: 10px !important;
+          }
+
+          .pl-md-10 {
+            padding-left: 10px !important;
+          }
+        }
+
+        @media (max-width: 849px) {
           .home {
-            padding-top: 10px;
+            padding: 0;
+            padding-left: 20px;
+            padding-right: 20px;
           }
 
-          .pr-10 {
-            padding-right: 10px !important;
+          .stat-holder {
+            padding-left: 0px;
+            padding-right: 0px;
+            margin-bottom: 20px;
           }
 
-          .pl-10 {
-            padding-left: 10px !important;
-          }
-
-          .title {
-            margin-top: 44px;
-            margin-bottom: 23px;
-            font-family: Lato;
-            font-size: 14px;
-            font-weight: bold;
-            color: white;
-          }
-
-          .previous-lockups .title {
-            margin-bottom: 10px;
-          }
-
-          .title.grey {
-            color: #8293a4;
-          }
-
-          .title.dark {
-            color: #183140;
-          }
-
-          .mt-50 {
-            margin-top: 50px;
-          }
-
-          .btn-dark {
-            background-color: #385160;
-            height: 50px;
-          }
-
-          .claim-button-holder {
-            width: 100%;
-            height: 80px;
-            border-radius: 10px;
-            border: solid 1px #cdd7e0;
-            background-color: #f2f3f5;
-          }
-
-          .previous-lockups table thead {
-            font-size: 14px;
-            color: #576c7a;
-          }
-
-          .previous-lockups table tbody {
-            font-size: 14px;
-            color: black;
-          }
-
-          .previous-lockups table tr {
-            height: 52px;
-            border-bottom: solid 1px #e4e4e4;
-          }
-
-          .previous-lockup {
-            cursor: pointer;
-          }
-
-          .previous-lockup:hover {
-            opacity: 0.7;
-          }
-
-          .previous-lockups table td {
-            min-width: 100px;
-          }
-
-          .coin-icon {
-            width: 30px;
-            height: 30px;
-            min-width: 30px;
-            min-height: 30px;
-            position: relative;
-            z-index: 1;
-          }
-
-          .coin-name {
-            margin-left: 10px;
-            font-size: 14px;
-            color: #8293a4;
-          }
-
-          .stake-options div:first-child {
-            padding-left: 0px !important;
-            padding-right: 10px !important;
-          }
-
-          .stake-options div:last-child {
-            padding-left: 10px !important;
-            padding-right: 0px !important;
-          }
-
-          .stake-options div:not(:first-child):not(:last-child) {
-            padding-left: 10px !important;
-            padding-right: 10px !important;
-          }
-
-          .error-box {
-            font-size: 14px;
-            line-height: 1.36;
-            text-align: center;
-            color: #183140;
-            border-radius: 5px;
-            border: solid 1px #ed2a28;
-            background-color: #fff0f0;
-            height: 50px;
-            min-width: 320px;
-            margin-top: 50px;
-          }
-
-          .modal-link {
-            width: 30px;
-            height: 30px;
-            border-radius: 15px;
-            font-family: material;
-            font-size: 14px;
-            text-align: right;
-            padding: 10px;
-            cursor: pointer;
-            color: #8293a4;
-            background-color: transparent;
-          }
-
-          .loading-text {
-            font-size: 35px;
-            color: white;
-            margin-top: 30px;
-            margin-bottom: 30px;
-          }
-
-          .no-stakes-box {
-            height: 200px;
-            width: 100%;
-            padding: 40px;
-            background-image: radial-gradient(
-              circle at 10% 50%,
-              rgba(255, 255, 255, 0.4),
-              rgba(26, 130, 240, 0) 25%
-            );
-            background-color: #1a82ff;
-            border-radius: 10px;
+          .available-lockups {
             margin-top: 20px;
           }
 
-          .no-stakes-box .title-text {
-            font-size: 24px;
-            font-weight: bold;
-            line-height: 1.75;
-            color: white;
+          .stake-options div:last-child,
+          .stake-options div:first-child,
+          .stake-options div:not(:first-child):not(:last-child) {
+            padding-left: 0px !important;
+            padding-right: 0px !important;
+            margin-bottom: 20px;
           }
 
-          .no-stakes-box .text {
-            opacity: 0.8;
-            color: white;
+          .story-banner .text-box {
+            margin-top: 5px;
+            margin-left: 18px;
+            z-index: 3;
+          }
+
+          .story-banner .title-text {
+            width: 100%;
+            margin-top: 10px;
+            font-size: 20px;
             line-height: normal;
-            font-size: 18px;
-            max-width: 524px;
           }
 
-          .no-stakes-box .big-ogn-icon {
-            margin-right: 35px;
-          }
-
-          .caret-left {
-            transform: rotate(180deg);
-            width: 7px;
-            height: 14px;
-          }
-
-          .stake-detail-holder {
-            margin-top: 16px;
-            margin-bottom: 30px;
-          }
-
-          .toggle-ogn-staking {
+          .story-banner .text {
+            width: 100%;
+            margin-top: 10px;
+            margin-bottom: 15px;
             font-size: 14px;
-            font-weight: bold;
-            text-align: center;
-            color: #1a82ff;
-            background-color: transparent;
-            border: 0;
-            margin-top: 67px;
+            line-height: normal;
           }
 
-          .toggle-ogn-staking:hover {
-            color: #0a72ef;
+          .story-banner .story-button {
+            width: 140px;
+            height: 40px;
+            font-size: 14px;
+            margin: 0 auto 0 0;
           }
 
-          @media (min-width: 768px) {
-            .pr-md-10 {
-              padding-right: 10px !important;
-            }
-
-            .pl-md-10 {
-              padding-left: 10px !important;
-            }
+          .story-banner .splines {
+            position: absolute;
+            right: 20px;
           }
 
-          @media (max-width: 799px) {
-            .home {
-              padding: 0;
-              padding-left: 20px;
-              padding-right: 20px;
-            }
-
-            .stat-holder {
-              padding-left: 0px;
-              padding-right: 0px;
-              margin-bottom: 20px;
-            }
-
-            .available-lockups {
-              margin-top: 20px;
-            }
-
-            .stake-options div:last-child,
-            .stake-options div:first-child,
-            .stake-options div:not(:first-child):not(:last-child) {
-              padding-left: 0px !important;
-              padding-right: 0px !important;
-              margin-bottom: 20px;
-            }
-
-            .no-stakes-box {
-              padding: 30px 20px;
-              margin-top: 0px;
-              height: auto;
-              background-image: radial-gradient(
-                circle at 50% 25%,
-                rgba(255, 255, 255, 0.4),
-                rgba(26, 130, 240, 0) 25%
-              );
-            }
-
-            .no-stakes-box .title-text {
-              font-size: 22px;
-              line-height: 1.2;
-              text-align: center;
-              margin-top: 20px;
-              margin-bottom: 20px;
-            }
-
-            .no-stakes-box .text {
-              text-align: center;
-            }
-
-            .no-stakes-box .big-ogn-icon {
-              margin-right: 0px;
-            }
+          .story-banner .story-logo {
+            width: 126px;
+            height: 23px;
+            margin-top: 160px;
+            right: 40px;
+            position: absolute;
+            z-index: 3;
+            object-fit: contain;
           }
-        `}</style>
-      </>
-    )
+        }
+      `}</style>
+    </>
   )
 }
 

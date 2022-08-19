@@ -10,15 +10,14 @@ import AnimatedOusdStore from 'stores/AnimatedOusdStore'
 import ContractStore from 'stores/ContractStore'
 import { formatCurrency } from 'utils/math'
 import { animateValue } from 'utils/animation'
-import { apyDayOptions } from 'utils/constants'
 import { usePrevious } from 'utils/hooks'
 import DisclaimerTooltip from 'components/buySell/DisclaimerTooltip'
 import LinkIcon from 'components/buySell/_LinkIcon'
 import useExpectedYield from 'utils/useExpectedYield'
 import withRpcProvider from 'hoc/withRpcProvider'
 import { adjustLinkHref } from 'utils/utils'
-import Dropdown from 'components/Dropdown'
-import DownCaret from 'components/DownCaret'
+import ApySelect from 'components/ApySelect'
+import { apyDayOptions, DEFAULT_SELECTED_APY } from 'utils/constants'
 import { zipObject } from 'lodash'
 
 const BalanceHeader = ({
@@ -28,7 +27,6 @@ const BalanceHeader = ({
   isMobile,
 }) => {
   const { connector, account } = useWeb3React()
-  const DEFAULT_SELECTED_APY = 365
   const apyOptions = useStoreState(ContractStore, (s) =>
     apyDayOptions.map((d) => {
       return s.apy[`apy${d}`] || 0
@@ -206,91 +204,6 @@ const BalanceHeader = ({
     localStorage.setItem('last_user_selected_apy', apyDays)
   }, [apyDays])
 
-  const ApySelect = () => {
-    const [open, setOpen] = useState(false)
-    return (
-      <>
-        <Dropdown
-          content={
-            <div className="dropdown-menu d-flex flex-column">
-              {apyDayOptions.map((days) => {
-                return (
-                  <div
-                    key={days}
-                    className="dropdown-item justify-content-start align-items-center"
-                    onClick={() => {
-                      setApyDays(days)
-                      setOpen(false)
-                    }}
-                  >
-                    {`${days}d`}
-                  </div>
-                )
-              })}
-            </div>
-          }
-          open={open}
-          onClose={() => setOpen(false)}
-        >
-          <div
-            className="apy-select d-flex flex-row align-items-center"
-            onClick={() => setOpen(!open)}
-          >
-            {`${apyDays}d`}
-            <span className="downcaret">
-              <DownCaret color="black" size="26" />
-            </span>
-          </div>
-        </Dropdown>
-        <style jsx>{`
-          .apy-select {
-            background-color: white;
-            font-size: 16px;
-            font-weight: 500;
-            color: black;
-            width: 68px;
-            height: 25px;
-            padding: 0 22px 2px 8px;
-            margin-right: 8px;
-            border-radius: 20px;
-            cursor: pointer;
-          }
-
-          .apy-select:hover {
-            background-color: #f2f3f5;
-          }
-
-          .dropdown-menu {
-            margin-right: 200px;
-            background-color: white;
-            font-size: 16px;
-            color: black;
-            min-width: 90px;
-            top: 100%;
-            left: 0;
-            padding: 5px;
-          }
-
-          .dropdown-item {
-            background-color: white;
-            color: black;
-            padding: 3px 5px 3px 10px;
-            line-height: 20px;
-            cursor: pointer;
-          }
-
-          .dropdown-item:hover {
-            background-color: #f2f3f5;
-          }
-
-          .downcaret {
-            position: absolute;
-            left: 42px;
-          }
-        `}</style>
-      </>
-    )
-  }
   return (
     <>
       <div className="balance-header d-flex flex-column justify-content-start">
@@ -302,7 +215,13 @@ const BalanceHeader = ({
               }`}
             >
               <Statistic
-                dropdown={<ApySelect />}
+                dropdown={
+                  <ApySelect
+                    apyDayOptions={apyDayOptions}
+                    apyDays={apyDays}
+                    setApyDays={setApyDays}
+                  />
+                }
                 title={fbt('Trailing APY', 'Trailing APY')}
                 titleLink="https://analytics.ousd.com/apy"
                 value={
