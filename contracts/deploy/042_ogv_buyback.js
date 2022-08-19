@@ -37,7 +37,7 @@ module.exports = deploymentWithProposal(
 
     // Deploy the new Buyback contract
     await deployWithConfirmation("Buyback", [
-      assetAddresses.uniswapRouter,
+      assetAddresses.uniswapV3Router,
       strategistAddr,
       cOUSD.address,
       assetAddresses.OGV,

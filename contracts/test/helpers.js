@@ -260,6 +260,7 @@ const getAssetAddresses = async (deployments) => {
       OGV: addresses.mainnet.OGV,
       RewardsSource: addresses.mainnet.RewardsSource,
       uniswapRouter: addresses.mainnet.uniswapRouter,
+      uniswapV3Router: addresses.mainnet.uniswapV3Router,
       sushiswapRouter: addresses.mainnet.sushiswapRouter,
     };
   } else {
@@ -295,6 +296,7 @@ const getAssetAddresses = async (deployments) => {
       // So, as long as this is a valid address, it should be fine.
       RewardsSource: addresses.dead,
       uniswapRouter: (await deployments.get("MockUniswapRouter")).address,
+      uniswapV3Router: (await deployments.get("MockUniswapRouter")).address,
       sushiswapRouter: (await deployments.get("MockUniswapRouter")).address,
     };
   }
