@@ -1,7 +1,7 @@
 const { deploymentWithProposal } = require("../utils/deploy");
 
 module.exports = deploymentWithProposal(
-  { deployName: "042_ogv_buyback", forceDeploy: true },
+  { deployName: "042_ogv_buyback", forceDeploy: false },
   async ({
     withConfirmation,
     deployWithConfirmation,
