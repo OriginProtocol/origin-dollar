@@ -29,7 +29,7 @@ def main():
 
             redeem_amount = mint_amount - relocate_step * mint_amount * first_precision_counter - secondary_precision_step * mint_amount * second_precision_counter
             try:
-                result = reallocate(META_STRATEGY, AAVE_STRAT, usdt, redeem_amount)
+                result = reallocate(FRAX_STRATEGY, AAVE_STRAT, usdt, redeem_amount)
                 if in_first_precision:
                     # explore seconds precision step of relocation
                     in_first_precision = False

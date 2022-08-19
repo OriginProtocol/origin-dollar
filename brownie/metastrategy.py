@@ -3,8 +3,8 @@ import world
 import math
 
 #CONFIGURATION - unfortunately this address changes until we deploy it to mainnet
-META_STRATEGY = '0x307a6343A4ecd5dF8F113fb7f1A78D792F81f91C'
-FRAX_STRATEGY = '0x307a6343A4ecd5dF8F113fb7f1A78D792F81f91C'
+OUSD_META_STRATEGY = '0x307a6343A4ecd5dF8F113fb7f1A78D792F81f91C'
+FRAX_STRATEGY = '0xE5643a899C0CA15B5aAb5a01D39741B425F5Bcc0'
 # Define which meta strategy should be set as default USDT asset strategy. Important for
 # supplying liquidity when minting using USDT
 USDT_DEFAULT_META_STRATEGY = FRAX_STRATEGY
@@ -41,7 +41,7 @@ ousd.transfer(me, ousd.balanceOf(OUSD_BAGS_2), {'from': OUSD_BAGS_2})
 ousd.transfer(RANDOM_ACCOUNT, 10000*1e18, OPTS)
 usdc.transfer(me, usdc.balanceOf(USDC_BAGS), {'from': USDC_BAGS})
 frax.transfer(me, frax.balanceOf(FRAX_BAGS), {'from': FRAX_BAGS})
-meta_strat = load_contract('convex_strat', META_STRATEGY)
+meta_strat = load_contract('convex_strat', OUSD_META_STRATEGY)
 frax_strat = load_contract('convex_strat', FRAX_STRATEGY)
 
 # approve ousd and 3poolLp to be used by ousd_metapool
