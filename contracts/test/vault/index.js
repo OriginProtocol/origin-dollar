@@ -439,7 +439,7 @@ describe("Vault", function () {
   });
 
   it("Should allow the Strategist to call withdraw", async () => {
-    const { vault, governor, dai, josh, compoundStrategy, aaveStrategy } =
+    const { vault, governor, dai, josh, compoundStrategy } =
       await loadFixture(defaultFixture);
 
     await vault.connect(governor).setStrategistAddr(await josh.getAddress());
@@ -475,7 +475,7 @@ describe("Vault", function () {
 
 
   it("Should withdraw the correct amount for multiple assests", async () => {
-    const { vault, governor, dai, usdc, cusdc, josh, compoundStrategy, aaveStrategy } =
+    const { vault, governor, dai, usdc, cusdc, josh, compoundStrategy } =
       await loadFixture(defaultFixture);
 
     await vault.connect(governor).setStrategistAddr(await josh.getAddress());
