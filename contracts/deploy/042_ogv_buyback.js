@@ -15,15 +15,9 @@ module.exports = deploymentWithProposal(
 
     const cOUSDProxy = await ethers.getContract("OUSDProxy");
     const cOUSD = await ethers.getContractAt("OUSD", cOUSDProxy.address);
-    const cOGN = await ethers.getContractAt(
-      [
-        "function transfer(address to, uint256 value) public returns (bool success)",
-        "function balanceOf(address owner) external view returns (uint256 balance)",
-      ],
-      assetAddresses.OGN
-    );
+
     const vault = await ethers.getContract("VaultProxy");
-    const cVault = await ethers.getContractAt("VaultAdmin", vault.address);
+    const cVaultAdmin = await ethers.getContractAt("VaultAdmin", vault.address);
 
     const oldBuybackAddress = "0x77314EB392b2be47C014cde0706908b3307Ad6a9";
     const cOldBuyback = await ethers.getContractAt(
@@ -31,8 +25,7 @@ module.exports = deploymentWithProposal(
       oldBuybackAddress
     );
 
-    // Fetch OUSD and OGN balance of existing contract
-    const ognBalance = await cOGN.balanceOf(oldBuybackAddress);
+    // Fetch OUSD balance of existing contract
     const ousdBalance = await cOUSD.balanceOf(oldBuybackAddress);
 
     // Deploy the new Buyback contract
@@ -63,30 +56,18 @@ module.exports = deploymentWithProposal(
         },
         {
           // 2. Update trustee address on Vault
-          contract: cVault,
+          contract: cVaultAdmin,
           signature: "setTrusteeAddress(address)",
           args: [cBuyback.address],
         },
         {
-          // 3. Transfer OGN balance to Governor
-          contract: cOldBuyback,
-          signature: "transferToken(address,uint256)",
-          args: [cOGN.address, ognBalance],
-        },
-        {
-          // 4. Transfer OGN balance from Governor to New Contract
-          contract: cOGN,
-          signature: "transfer(address,uint256)",
-          args: [cBuyback.address, ognBalance],
-        },
-        {
-          // 5. Transfer OUSD balance to Governor
+          // 3. Transfer OUSD balance to Governor
           contract: cOldBuyback,
           signature: "transferToken(address,uint256)",
           args: [cOUSDProxy.address, ousdBalance],
         },
         {
-          // 6. Transfer OUSD balance from Governor to New Contract
+          // 4. Transfer OUSD balance from Governor to New Contract
           contract: cOUSD,
           signature: "transfer(address,uint256)",
           args: [cBuyback.address, ousdBalance],

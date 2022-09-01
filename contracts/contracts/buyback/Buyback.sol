@@ -32,6 +32,15 @@ contract Buyback is Strategizable {
     // Address that receives rewards
     address public immutable rewardsSource;
 
+    /**
+     * @param _uniswapAddr Address of Uniswap
+     * @param _strategistAddr Address of Strategist multi-sig wallet
+     * @param _ousd OUSD Proxy Contract Address
+     * @param _ogv OGV Proxy Contract Address
+     * @param _usdt USDT Address
+     * @param _weth9 WETH Address
+     * @param _rewardsSource Address of RewardsSource contract
+     */
     constructor(
         address _uniswapAddr,
         address _strategistAddr,
@@ -50,7 +59,6 @@ contract Buyback is Strategizable {
         rewardsSource = _rewardsSource;
         // Give approval to Uniswap router for OUSD, this is handled
         // by setUniswapAddr in the production contract
-        IERC20(_ousd).safeApprove(uniswapAddr, 0);
         IERC20(_ousd).safeApprove(uniswapAddr, type(uint256).max);
     }
 
