@@ -19,7 +19,6 @@ main()
             echo -e "${RED} File $ENV_FILE does not exist. Have you forgotten to rename the dev.env to .env? ${NO_COLOR}"
             exit 1
         fi
-        echo $BLOCK_NUMBER
         if [ -z "$PROVIDER_URL" ]; then echo "Set PROVIDER_URL" && exit 1; fi
         params=()
         params+=(--fork ${PROVIDER_URL})
@@ -29,12 +28,13 @@ main()
             params+=(--fork-block-number ${BLOCK_NUMBER})
         fi
         cp -r deployments/mainnet deployments/localhost
-        
+
         nodeOutput=$(mktemp "${TMPDIR:-/tmp/}$(basename 0).XXX")
         # the --no-install is here so npx doesn't download some package on its own if it can not find one in the repo
         FORK=true npx --no-install hardhat node --no-reset --export '../dapp/network.json' ${params[@]} > $nodeOutput 2>&1 &
 
         tail -f $nodeOutput &
+
         i=0
         until grep -q -i 'Started HTTP and WebSocket JSON-RPC server at' $nodeOutput
         do
