@@ -108,8 +108,12 @@ describe("OGV Buyback", function () {
     await fundBuybackAndUniswap(fixture);
 
     // Set Uniswap Address to 0x0
-    await buyback.connect(governor).setUniswapAddr('0x0000000000000000000000000000000000000000');
-    expect(await buyback.uniswapAddr()).to.be.equal('0x0000000000000000000000000000000000000000');
+    await buyback
+      .connect(governor)
+      .setUniswapAddr("0x0000000000000000000000000000000000000000");
+    expect(await buyback.uniswapAddr()).to.be.equal(
+      "0x0000000000000000000000000000000000000000"
+    );
 
     const ousdAmount = utils.parseUnits("1000", 18);
     const minOGV = utils.parseUnits("1000", 18);
@@ -132,7 +136,7 @@ describe("OGV Buyback", function () {
     await fundBuybackAndUniswap(fixture);
 
     const ousdAmount = utils.parseUnits("1000", 18);
-    const minOGV = BigNumber.from("0")
+    const minOGV = BigNumber.from("0");
 
     await expect(
       buyback.connect(governor).swapNow(ousdAmount, minOGV)

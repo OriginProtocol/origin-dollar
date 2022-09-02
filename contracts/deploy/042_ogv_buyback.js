@@ -29,15 +29,20 @@ module.exports = deploymentWithProposal(
     const ousdBalance = await cOUSD.balanceOf(oldBuybackAddress);
 
     // Deploy the new Buyback contract
-    await deployWithConfirmation("Buyback", [
-      assetAddresses.uniswapV3Router,
-      strategistAddr,
-      cOUSD.address,
-      assetAddresses.OGV,
-      assetAddresses.USDT,
-      assetAddresses.WETH,
-      assetAddresses.RewardsSource,
-    ], "Buyback", true);
+    await deployWithConfirmation(
+      "Buyback",
+      [
+        assetAddresses.uniswapV3Router,
+        strategistAddr,
+        cOUSD.address,
+        assetAddresses.OGV,
+        assetAddresses.USDT,
+        assetAddresses.WETH,
+        assetAddresses.RewardsSource,
+      ],
+      "Buyback",
+      true
+    );
     const cBuyback = await ethers.getContract("Buyback");
 
     // Transfer governance of new contract to the governor
