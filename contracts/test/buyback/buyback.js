@@ -4,7 +4,7 @@ const { utils, BigNumber } = require("ethers");
 const { defaultFixture } = require("../_fixture");
 const { ousdUnits, usdcUnits, loadFixture } = require("../helpers");
 
-describe.only("OGV Buyback", function () {
+describe("OGV Buyback", function () {
   it("Should allow Governor to set Trustee address", async () => {
     const { vault, governor, ousd } = await loadFixture(defaultFixture);
     // Pretend OUSD is trustee
