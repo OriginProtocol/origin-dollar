@@ -28,6 +28,14 @@ contract Strategizable is Governable {
      * @param _address Address of Strategist
      */
     function setStrategistAddr(address _address) external onlyGovernor {
+        _setStrategistAddr(_address);
+    }
+
+    /**
+     * @dev Set address of Strategist
+     * @param _address Address of Strategist
+     */
+    function _setStrategistAddr(address _address) internal {
         strategistAddr = _address;
         emit StrategistUpdated(_address);
     }

@@ -1,0 +1,15 @@
+{
+  "storage": [
+    {
+      "contract": "Buyback",
+      "label": "uniswapAddr",
+      "type": "t_address",
+      "src": "contracts/buyback/Buyback.sol:19"
+    }
+  ],
+  "types": {
+    "t_address": {
+      "label": "address"
+    }
+  }
+}

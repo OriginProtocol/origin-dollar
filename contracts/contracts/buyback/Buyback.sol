@@ -51,15 +51,17 @@ contract Buyback is Strategizable {
         address _rewardsSource
     ) {
         uniswapAddr = _uniswapAddr;
-        strategistAddr = _strategistAddr;
+        _setStrategistAddr(_strategistAddr);
         ousd = IERC20(_ousd);
         ogv = IERC20(_ogv);
         usdt = IERC20(_usdt);
         weth9 = IERC20(_weth9);
         rewardsSource = _rewardsSource;
+
         // Give approval to Uniswap router for OUSD, this is handled
         // by setUniswapAddr in the production contract
         IERC20(_ousd).safeApprove(uniswapAddr, type(uint256).max);
+        emit UniswapUpdated(_uniswapAddr);
     }
 
     /**
@@ -69,10 +71,17 @@ contract Buyback is Strategizable {
      */
     function setUniswapAddr(address _address) external onlyGovernor {
         uniswapAddr = _address;
-        if (uniswapAddr == address(0)) return;
-        // Give Uniswap unlimited OUSD allowance
-        ousd.safeApprove(uniswapAddr, 0);
-        ousd.safeApprove(uniswapAddr, type(uint256).max);
+
+        if (uniswapAddr != address(0)) {
+            // OUSD doesn't allow changing allowances.
+            // You have to reset it to zero before you
+            // can give it a different allowance.
+            ousd.safeApprove(uniswapAddr, 0);
+
+            // Give Uniswap unlimited OUSD allowance
+            ousd.safeApprove(uniswapAddr, type(uint256).max);
+        }
+
         emit UniswapUpdated(_address);
     }
 
@@ -112,7 +121,7 @@ contract Buyback is Strategizable {
                     ogv
                 ),
                 recipient: rewardsSource,
-                deadline: uint256(block.timestamp.add(1000)),
+                deadline: block.timestamp,
                 amountIn: ousdAmount,
                 amountOutMinimum: minExpected
             });

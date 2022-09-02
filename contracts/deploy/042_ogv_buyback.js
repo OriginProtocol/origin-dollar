@@ -37,7 +37,7 @@ module.exports = deploymentWithProposal(
       assetAddresses.USDT,
       assetAddresses.WETH,
       assetAddresses.RewardsSource,
-    ]);
+    ], "Buyback", true);
     const cBuyback = await ethers.getContract("Buyback");
 
     // Transfer governance of new contract to the governor
