@@ -3,7 +3,7 @@ const { expect } = require("chai");
 
 const { usdcUnits, loadFixture, isFork } = require("../helpers");
 
-describe("Vault deposit pausing", async () => {
+describe("Vault deposit pausing", function () {
   if (isFork) {
     this.timeout(0);
   }
