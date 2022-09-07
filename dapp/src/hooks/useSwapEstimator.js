@@ -391,6 +391,7 @@ const useSwapEstimator = ({
       swapGasUsage,
       approveGasUsage,
       approveAllowanceNeeded,
+      inputAmount: parseFloat(inputAmountRaw),
       amountReceived: amount,
     }
   }
@@ -454,6 +455,7 @@ const useSwapEstimator = ({
           swapGasUsage,
           approveGasUsage,
           approveAllowanceNeeded,
+          inputAmount: parseFloat(inputAmountRaw),
           amountReceived,
         }
       }
@@ -475,6 +477,7 @@ const useSwapEstimator = ({
       return {
         canDoSwap: true,
         gasUsed: gasEstimate,
+        inputAmount: parseFloat(inputAmountRaw),
         amountReceived,
       }
     } catch (e) {
@@ -583,6 +586,7 @@ const useSwapEstimator = ({
           swapGasUsage,
           approveGasUsage,
           approveAllowanceNeeded,
+          inputAmount: parseFloat(inputAmountRaw),
           amountReceived,
         }
       }
@@ -613,6 +617,7 @@ const useSwapEstimator = ({
       return {
         canDoSwap: true,
         gasUsed: gasEstimate,
+        inputAmount: parseFloat(inputAmountRaw),
         amountReceived,
       }
     } catch (e) {
@@ -700,6 +705,7 @@ const useSwapEstimator = ({
           approveAllowanceNeeded,
           swapGasUsage,
           approveGasUsage,
+          inputAmount: parseFloat(inputAmountRaw),
           amountReceived,
         }
       }
@@ -721,6 +727,7 @@ const useSwapEstimator = ({
       return {
         canDoSwap: true,
         gasUsed: gasEstimate,
+        inputAmount: parseFloat(inputAmountRaw),
         amountReceived,
       }
     } catch (e) {
@@ -794,6 +801,7 @@ const useSwapEstimator = ({
           swapGasUsage,
           approveGasUsage,
           approveAllowanceNeeded,
+          inputAmount: parseFloat(inputAmountRaw),
           amountReceived,
         }
       }
@@ -813,6 +821,7 @@ const useSwapEstimator = ({
         canDoSwap: true,
         gasUsed: gasEstimate,
         // TODO: should this be rather done with BigNumbers instead?
+        inputAmount: parseFloat(inputAmountRaw),
         amountReceived,
       }
     } catch (e) {
@@ -865,6 +874,7 @@ const useSwapEstimator = ({
         return {
           canDoSwap: true,
           gasUsed: 1500000,
+          inputAmount: parseFloat(inputAmountRaw),
           amountReceived: splitsSum,
           coinSplits,
         }
@@ -882,6 +892,7 @@ const useSwapEstimator = ({
         canDoSwap: true,
         gasUsed: gasEstimate,
         // TODO: should this be rather done with BigNumbers instead?
+        inputAmount: parseFloat(inputAmountRaw),
         amountReceived: splitsSum,
         coinSplits,
       }
