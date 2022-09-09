@@ -126,15 +126,7 @@ contract Buyback is Strategizable {
                 amountOutMinimum: minExpected
             });
 
-        (bool success, bytes memory data) = uniswapAddr.call(
-            abi.encodeWithSignature(
-                "exactInput((bytes,address,uint256,uint256,uint256))",
-                params
-            )
-        );
-
-        // Revert if swap fails
-        require(success, "Buyback of OGV failed");
+        UniswapV3Router.exactInput(params);
     }
 
     /**
