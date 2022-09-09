@@ -14,6 +14,7 @@ const {
   getOracleAddresses,
   getAssetAddresses,
   isSmokeTest,
+  isForkTest,
 } = require("../test/helpers.js");
 
 const {
@@ -322,7 +323,15 @@ function deploymentWithProposal(opts, fn) {
   if (forceDeploy) {
     main.skip = () => false;
   } else {
-    main.skip = () => !(isMainnet || isRinkeby) || isSmokeTest || isFork;
+    main.skip = () => {
+      if (isFork) {
+        const networkName = isForkTest ? 'hardhat' : 'localhost'
+        const migrations = require(`./../deployments/${networkName}/.migrations.json`)
+        return Boolean(migrations[deployName])
+      } else {
+        return !(isMainnet || isRinkeby) || isSmokeTest || isFork
+      }
+    }
   }
   return main;
 }

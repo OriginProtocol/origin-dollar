@@ -125,6 +125,7 @@ const isTest = process.env.IS_TEST === "true";
 const isSmokeTest = process.env.SMOKE_TEST === "true";
 const isMainnetOrFork = isMainnet || isFork;
 const isMainnetOrRinkebyOrFork = isMainnetOrFork || isRinkeby;
+const isForkTest = isFork && isTest;
 
 // Fixture loader that is compatible with Ganache
 const loadFixture = createFixtureLoader(
@@ -410,6 +411,7 @@ module.exports = {
   isLocalhost,
   isMainnetOrFork,
   isMainnetOrRinkebyOrFork,
+  isForkTest,
   loadFixture,
   getOracleAddress,
   setOracleTokenPriceUsd,
