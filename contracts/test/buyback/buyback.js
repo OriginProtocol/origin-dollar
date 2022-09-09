@@ -1,10 +1,10 @@
 const { expect } = require("chai");
-const { utils } = require("ethers");
+const { utils, BigNumber } = require("ethers");
 
 const { defaultFixture } = require("../_fixture");
 const { ousdUnits, usdcUnits, loadFixture } = require("../helpers");
 
-describe("OGN Buyback", function () {
+describe("OGV Buyback", function () {
   it("Should allow Governor to set Trustee address", async () => {
     const { vault, governor, ousd } = await loadFixture(defaultFixture);
     // Pretend OUSD is trustee
@@ -28,39 +28,125 @@ describe("OGN Buyback", function () {
 
   it("Should not allow non-Governor to set Uniswap address", async () => {
     const { buyback, anna, ousd } = await loadFixture(defaultFixture);
-    // Pretend OUSD is trustee
+    // Pretend OUSD is uniswap
     await expect(
       buyback.connect(anna).setUniswapAddr(ousd.address)
     ).to.be.revertedWith("Caller is not the Governor");
   });
 
-  it("Should swap OUSD balance for OGN", async () => {
+  it("Should allow Governor to set Strategist address", async () => {
+    const { buyback, governor, ousd } = await loadFixture(defaultFixture);
+    // Pretend OUSD is a Strategist
+    await buyback.connect(governor).setStrategistAddr(ousd.address);
+    expect(await buyback.strategistAddr()).to.be.equal(ousd.address);
+  });
+
+  it("Should not allow non-Governor to set Strategist address", async () => {
+    const { buyback, anna, ousd } = await loadFixture(defaultFixture);
+    // Pretend OUSD is Strategist
+    await expect(
+      buyback.connect(anna).setStrategistAddr(ousd.address)
+    ).to.be.revertedWith("Caller is not the Governor");
+  });
+
+  it("Should NOT swap OUSD balance for OGV when called by vault", async () => {
     const fixture = await loadFixture(defaultFixture);
-    const { ousd, ogn, governor, buyback, vault } = fixture;
+    const { ousd, ogn, ogv, governor, buyback, vault, rewardsSource } = fixture;
     await fundBuybackAndUniswap(fixture);
 
     // Calling allocate on Vault calls buyback.swap()
     await vault.connect(governor).allocate();
-    await expect(buyback).has.a.balanceOf("1000", ogn);
+
+    // Currently disabled, so shouldn't have swapped anything
+    await expect(buyback).has.a.balanceOf("0", ogn);
+    await expect(buyback).has.a.balanceOf("0", ogv);
+    await expect(rewardsSource).has.a.balanceOf("0", ogn);
+    await expect(rewardsSource).has.a.balanceOf("0", ogv);
+    await expect(buyback).has.a.balanceOf("1000", ousd);
+  });
+
+  it("Should swap when called by strategist", async () => {
+    const fixture = await loadFixture(defaultFixture);
+    const { ousd, ogn, ogv, strategist, buyback, rewardsSource } = fixture;
+    await fundBuybackAndUniswap(fixture);
+
+    const ousdAmount = utils.parseUnits("1000", 18);
+    const minOGV = utils.parseUnits("1000", 18);
+    await buyback.connect(strategist).swapNow(ousdAmount, minOGV);
+
+    // Should've swapped for OGV
+    await expect(buyback).has.a.balanceOf("0", ogn);
+    await expect(buyback).has.a.balanceOf("0", ogv);
+    await expect(rewardsSource).has.a.balanceOf("0", ogn);
+    await expect(rewardsSource).has.a.balanceOf("1000", ogv);
     await expect(buyback).has.a.balanceOf("0", ousd);
   });
 
-  it("Should not swap OUSD if the prices are wrong", async () => {
+  it("Should NOT swap when called by someone else", async () => {
     const fixture = await loadFixture(defaultFixture);
-    const { ogn, ousd, governor, buyback, vault, chainlinkOracleFeedOGNETH } =
-      fixture;
+    const { ousd, ogn, ogv, anna, buyback, rewardsSource } = fixture;
     await fundBuybackAndUniswap(fixture);
 
-    // Our mock uniswap is set to trade at 1 OGN = 1 OUSD
-    // If we set the price of OGN to 0.80, then we would expect 1,250 OGN
-    // in return for 1,000 OUSD.
-    // 1 ETH = 4000 USD, 1 OGN = 0.0002 ETH is 0.80
-    await chainlinkOracleFeedOGNETH.setPrice(utils.parseUnits("0.0002", 18));
+    const ousdAmount = utils.parseUnits("1000", 18);
+    const minOGV = utils.parseUnits("456456", 18);
 
-    // Calling allocate on Vault calls buyback.swap()
-    await vault.connect(governor).allocate();
-    // No OGN bought back, OUSD remains
+    await expect(
+      buyback.connect(anna).swapNow(ousdAmount, minOGV)
+    ).to.be.revertedWith("Caller is not the Strategist or Governor");
+
+    // Shouldn't have swapped anything
     await expect(buyback).has.a.balanceOf("0", ogn);
+    await expect(buyback).has.a.balanceOf("0", ogv);
+    await expect(rewardsSource).has.a.balanceOf("0", ogn);
+    await expect(rewardsSource).has.a.balanceOf("0", ogv);
+    await expect(buyback).has.a.balanceOf("1000", ousd);
+  });
+
+  it("Should NOT swap when uniswap address isn't set", async () => {
+    const fixture = await loadFixture(defaultFixture);
+    const { ousd, ogn, ogv, governor, buyback, rewardsSource } = fixture;
+    await fundBuybackAndUniswap(fixture);
+
+    // Set Uniswap Address to 0x0
+    await buyback
+      .connect(governor)
+      .setUniswapAddr("0x0000000000000000000000000000000000000000");
+    expect(await buyback.uniswapAddr()).to.be.equal(
+      "0x0000000000000000000000000000000000000000"
+    );
+
+    const ousdAmount = utils.parseUnits("1000", 18);
+    const minOGV = utils.parseUnits("1000", 18);
+
+    await expect(
+      buyback.connect(governor).swapNow(ousdAmount, minOGV)
+    ).to.be.revertedWith("Exchange address not set");
+
+    // Shouldn't have swapped anything
+    await expect(buyback).has.a.balanceOf("0", ogn);
+    await expect(buyback).has.a.balanceOf("0", ogv);
+    await expect(rewardsSource).has.a.balanceOf("0", ogn);
+    await expect(rewardsSource).has.a.balanceOf("0", ogv);
+    await expect(buyback).has.a.balanceOf("1000", ousd);
+  });
+
+  it("Should NOT swap when min expected is zero", async () => {
+    const fixture = await loadFixture(defaultFixture);
+    const { ousd, ogn, ogv, governor, buyback, rewardsSource } = fixture;
+    await fundBuybackAndUniswap(fixture);
+
+    const ousdAmount = utils.parseUnits("1000", 18);
+    const minOGV = BigNumber.from("0");
+
+    await expect(
+      buyback.connect(governor).swapNow(ousdAmount, minOGV)
+    ).to.be.revertedWith("Invalid minExpected value");
+
+    // Shouldn't have swapped anything
+    await expect(buyback).has.a.balanceOf("0", ogn);
+    await expect(buyback).has.a.balanceOf("0", ogv);
+    await expect(rewardsSource).has.a.balanceOf("0", ogn);
+    await expect(rewardsSource).has.a.balanceOf("0", ogv);
     await expect(buyback).has.a.balanceOf("1000", ousd);
   });
 
@@ -81,28 +167,40 @@ describe("OGN Buyback", function () {
   });
 
   it("Should not allow withdrawal of arbitrary token by non-Governor", async () => {
-    const { vault, ousd, matt } = await loadFixture(defaultFixture);
+    const { buyback, ousd, matt, strategist } = await loadFixture(
+      defaultFixture
+    );
     // Naughty Matt
     await expect(
-      vault.connect(matt).transferToken(ousd.address, ousdUnits("8.0"))
+      buyback.connect(matt).transferToken(ousd.address, ousdUnits("8.0"))
+    ).to.be.revertedWith("Caller is not the Governor");
+
+    // Make sure strategist can't do that either
+    await expect(
+      buyback.connect(strategist).transferToken(ousd.address, ousdUnits("8.0"))
     ).to.be.revertedWith("Caller is not the Governor");
   });
 });
 
 async function fundBuybackAndUniswap(fixture) {
-  const { matt, ogn, ousd, buyback, dai, vault } = fixture;
-  const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
-  mockUniswapRouter.initialize([ousd.address], [ogn.address]);
+  const { matt, ogn, ogv, ousd, buyback, dai, vault } = fixture;
 
-  // Give Uniswap mock some OGN so it can swap
-  await ogn.connect(matt).mint(utils.parseUnits("1000", 18));
-  await ogn
-    .connect(matt)
-    .transfer(mockUniswapRouter.address, utils.parseUnits("1000", 18));
+  const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
+  await mockUniswapRouter.initialize([ousd.address], [ogv.address]);
+
+  // Give Uniswap some mock OGN and OGV so it can swap
+  for (const token of [ogn, ogv]) {
+    await token.connect(matt).mint(utils.parseUnits("1000", 18));
+    await token
+      .connect(matt)
+      .transfer(mockUniswapRouter.address, utils.parseUnits("1000", 18));
+  }
+
   // Get OUSD for the buyback contract to use
   await dai.connect(matt).mint(utils.parseUnits("1000", 18));
   await dai.connect(matt).approve(vault.address, utils.parseUnits("1000", 18));
   await vault.connect(matt).mint(dai.address, utils.parseUnits("1000", 18), 0);
+
   // Give the Buyback contract some OUSD to trigger the swap
   await ousd
     .connect(matt)
