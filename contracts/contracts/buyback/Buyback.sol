@@ -126,7 +126,7 @@ contract Buyback is Strategizable {
                 amountOutMinimum: minExpected
             });
 
-        UniswapV3Router.exactInput(params);
+        UniswapV3Router(uniswapAddr).exactInput(params);
     }
 
     /**
