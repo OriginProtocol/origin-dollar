@@ -304,7 +304,7 @@ export default function Burn({ locale, onLocale }) {
                     ((airdropAllocation - burnAmount) * 100) /
                       airdropAllocation,
                     2
-                  )}%)`}</span>
+                  )}%)*`}</span>
                 </div>
                 <div className="d-flex flex-row">
                   <div className="mr-lg-5 mr-md-3">
@@ -383,6 +383,7 @@ export default function Burn({ locale, onLocale }) {
               </div>
             </div>
           </div>
+          <div className='footnote'>* Not including portion of tokens sent to exchanges</div>
         </div>
       </section>
       <style jsx>{`
@@ -529,6 +530,12 @@ export default function Burn({ locale, onLocale }) {
           display: inline;
         }
 
+        .footnote {
+          font-size: 0.75rem;
+          margin-top: 2vw;
+          margin-left: 2vw;
+        }
+
         @media (max-width: 1199px) {
           .stats {
             width: 80vw;
@@ -559,6 +566,10 @@ export default function Burn({ locale, onLocale }) {
 
         @media (max-width: 799px) {
           .stats {
+            display: none !important;
+          }
+
+          .footnote {
             display: none !important;
           }
 
