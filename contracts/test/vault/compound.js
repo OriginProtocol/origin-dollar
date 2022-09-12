@@ -852,7 +852,7 @@ describe("Vault with Compound strategy", function () {
   });
 });
 
-describe("Vault auto allocation", async () => {
+describe("Vault auto allocation", function () {
   if (isFork) {
     this.timeout(0);
   }
