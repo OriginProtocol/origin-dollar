@@ -56,8 +56,6 @@
     "solhint": "^3.3.6",
     "solidifier": "^2.1.0",
     "solidity-coverage": "^0.7.17",
-    "truffle": "^5.4.9",
-    "truffle-flattener": "^1.5.0",
     "web3-utils": "^1.5.2"
   },
   "husky": {

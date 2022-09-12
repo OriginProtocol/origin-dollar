@@ -139,7 +139,9 @@ const SwapHomepage = ({
       const otherCoinAmount =
         Math.floor(selectedSwap.amountReceived * 1000000) / 1000000
       setSelectedBuyCoinAmount(Math.floor(otherCoinAmount * 100) / 100)
-      setSelectedRedeemCoinAmount(Math.floor(otherCoinAmount * 100) / 100)
+      setSelectedRedeemCoinAmount(
+        Math.floor(selectedSwap.inputAmount * 100) / 100
+      )
     }
   }, [swapMode])
 
@@ -244,7 +246,6 @@ const SwapHomepage = ({
       } else if (selectedSwap.name === 'curve') {
         ;({ result, swapAmount, minSwapAmount } = await swapCurve())
       }
-
       storeTransaction(
         result,
         swapMode,

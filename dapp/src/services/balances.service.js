@@ -60,7 +60,7 @@ export default class BalancesService {
           contractData.contract.address.toLowerCase()
       )[0]
 
-      if (balanceResponseData.error === null) {
+      if (!balanceResponseData.error) {
         balanceData[contractData.name] =
           balanceResponseData.tokenBalance === '0x'
             ? '0'

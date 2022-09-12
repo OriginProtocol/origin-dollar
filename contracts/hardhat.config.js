@@ -265,7 +265,8 @@ module.exports = {
   namedAccounts: {
     deployerAddr: {
       default: 0,
-      localhost: 0,
+      localhost: process.env.FORK === "true" ? MAINNET_DEPLOYER : 0,
+      hardhat: process.env.FORK === "true" ? MAINNET_DEPLOYER : 0,
       mainnet: MAINNET_DEPLOYER,
     },
     governorAddr: {
