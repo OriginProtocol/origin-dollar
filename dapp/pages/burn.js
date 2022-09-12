@@ -394,8 +394,8 @@ export default function Burn({ locale, onLocale }) {
         section.burn {
           background-image: url(/images/flame.svg);
           background-repeat: no-repeat;
-          background-position: 100% -20%;
-          background-size: 60vw;
+          background-position: 100% -15%;
+          background-size: 70vw;
           padding-top: 0px;
         }
 
@@ -542,6 +542,11 @@ export default function Burn({ locale, onLocale }) {
             margin-top: 100px;
           }
 
+          section.burn {
+            background-position: 100% 0%;
+            background-size: 80vw;
+          }
+
           h1 {
             margin-top: 15px;
           }
@@ -575,7 +580,7 @@ export default function Burn({ locale, onLocale }) {
 
           section.burn {
             background-position: 100% 0%;
-            background-size: 80vw;
+            background-size: 90vw;
           }
 
           .container {
