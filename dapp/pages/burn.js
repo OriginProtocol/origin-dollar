@@ -36,40 +36,33 @@ const BurnCountdown = ({ days, hours, minutes, seconds }) => {
       </div>
       <style jsx>{`
         .number {
-          font-size: 6rem;
-          font-weight: 700;
+          font-size: 7rem;
+          font-weight: 900;
         }
 
         .colon {
-          font-size: 6rem;
+          font-size: 7rem;
           font-weight: 400;
           padding: 0 20px;
-          opacity: 0.2;
         }
 
         .label {
-          font-size: 1.125rem;
+          font-size: 1.25rem;
           font-weight: 700;
-          opacity: 0.2;
         }
 
         @media (max-width: 799px) {
           .number {
             font-size: 3rem;
-            font-weight: 700;
           }
 
           .colon {
             font-size: 3rem;
-            font-weight: 400;
             padding: 0 10px;
-            opacity: 0.2;
           }
 
           .label {
             font-size: 0.625rem;
-            font-weight: 700;
-            opacity: 0.2;
           }
         }
       `}</style>
@@ -606,7 +599,7 @@ export default function Burn({ locale, onLocale }) {
 
           .ogv-logo {
             width: 15%;
-            margin-bottom: 1vw;
+            margin-bottom: 2vw;
           }
         }
       `}</style>
