@@ -147,7 +147,14 @@ export default function Burn({ locale, onLocale }) {
       </header>
       <section className="burn black">
         <div className="container d-flex flex-column text-align-left ml-lg-5 pl-lg-5">
-          <h2>{fbt('OGV BURN', 'OGV BURN')}</h2>
+          <h2>
+            <img
+              src={assetRootPath('/images/ogv-logo.svg')}
+              className="ogv-logo pb-lg-3"
+              alt="OGV logo"
+            />
+            {fbt('OGV BURN', 'OGV BURN')}
+          </h2>
           <div className="text-container mb-5">
             {fbt(
               'On October 10th, 2022 at 0:00UTC all unclaimed tokens from the OGV airdrop will be burned forever.',
@@ -185,11 +192,6 @@ export default function Burn({ locale, onLocale }) {
 
           <h1>
             {formatCurrency(burnAmount, 0)}
-            <img
-              src={assetRootPath('/images/ogv-logo.svg')}
-              className="ogv-logo pb-lg-3"
-              alt="OGV logo"
-            />
           </h1>
 
           <h3>
@@ -461,7 +463,7 @@ export default function Burn({ locale, onLocale }) {
 
         .ogv-logo {
           width: 10%;
-          margin-left: 2vw;
+          margin-right: 1vw;
         }
 
         .info-box {
@@ -555,6 +557,11 @@ export default function Burn({ locale, onLocale }) {
           .grey {
             font-size: 1rem;
           }
+
+          .ogv-logo {
+            width: 12.5%;
+            margin-bottom: 1vw;
+          }
         }
 
         @media (max-width: 799px) {
@@ -595,6 +602,11 @@ export default function Burn({ locale, onLocale }) {
 
           .link {
             width: 50%;
+          }
+
+          .ogv-logo {
+            width: 15%;
+            margin-bottom: 1vw;
           }
         }
       `}</style>
