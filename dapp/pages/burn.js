@@ -183,9 +183,7 @@ export default function Burn({ locale, onLocale }) {
             </span>
           </div>
 
-          <h1>
-            {formatCurrency(burnAmount, 0)}
-          </h1>
+          <h1>{formatCurrency(burnAmount, 0)}</h1>
 
           <h3>
             <span className="percent gradient1">{`${formatCurrency(
@@ -383,7 +381,9 @@ export default function Burn({ locale, onLocale }) {
               </div>
             </div>
           </div>
-          <div className='footnote'>* Not including portion of tokens sent to exchanges</div>
+          <div className="footnote">
+            * Not including portion of tokens sent to exchanges
+          </div>
         </div>
       </section>
       <style jsx>{`
