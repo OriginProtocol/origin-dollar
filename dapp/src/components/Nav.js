@@ -293,9 +293,9 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
                     </Link>
                   </li>
                   <li
-                    className={classnames('nav-item burn', {
+                    className={classnames(`nav-item ${isMobile ? '' : 'burn'}`, {
                       active: pathname === '/burn',
-                      gradient1: pathname !== '/burn',
+                      gradient1: !isMobile && pathname !== '/burn',
                     })}
                   >
                     <Link href={adjustLinkHref('/burn')}>
