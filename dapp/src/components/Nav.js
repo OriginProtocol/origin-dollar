@@ -403,7 +403,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
 
         .banner.burn {
           background-color: #141519;
-          border: solid 2px;
+          border: solid 1px;
           border-radius: 5px;
         }
 

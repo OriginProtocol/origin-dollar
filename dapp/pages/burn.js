@@ -497,7 +497,7 @@ export default function Burn({ locale, onLocale }) {
 
         .stats {
           width: 70vw;
-          margin-top: 100px;
+          margin-top: 50px;
         }
 
         .apy {
