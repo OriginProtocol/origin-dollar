@@ -157,9 +157,9 @@ const Layout = ({
       </div>
       <div
         className={classnames(
-          `notice ${
-            showStakingBanner ? 'staking pt-2' : 'pt-3'
-          } ${pathname === '/burn' ? 'burn' : ''} text-white text-center pb-3`,
+          `notice ${showStakingBanner ? 'staking pt-2' : 'pt-3'} ${
+            pathname === '/burn' ? 'burn' : ''
+          } text-white text-center pb-3`,
           {
             dapp,
           }
@@ -214,7 +214,7 @@ const Layout = ({
         }
 
         .notice.burn {
-          background: linear-gradient(90deg, #8C66FC -28.99%, #0274F1 144.97%);
+          background: linear-gradient(90deg, #8c66fc -28.99%, #0274f1 144.97%);
         }
 
         .notice.staking {

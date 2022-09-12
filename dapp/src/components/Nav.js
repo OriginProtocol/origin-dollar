@@ -149,7 +149,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
           <div
             className={classnames(
               'banner align-items-center justify-content-center',
-              { dapp, 'burn' : pathname === '/burn'}
+              { dapp, burn: pathname === '/burn' }
             )}
           >
             <div className="triangle d-none d-xl-block"></div>
@@ -400,7 +400,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
           border: solid 1px #fec100;
           color: #fec100;
         }
-        
+
         .banner.burn {
           background-color: #141519;
           border: solid 2px;
