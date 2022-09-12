@@ -149,7 +149,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
           <div
             className={classnames(
               'banner align-items-center justify-content-center',
-              { dapp }
+              { dapp, 'burn' : pathname === '/burn'}
             )}
           >
             <div className="triangle d-none d-xl-block"></div>
@@ -294,6 +294,17 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
                   </li>
                   <li
                     className={classnames('nav-item', {
+                      active: pathname === '/burn',
+                    })}
+                  >
+                    <Link href={adjustLinkHref('/burn')}>
+                      <a className="nav-link">
+                        {fbt('Burn', 'Burn page link')}
+                      </a>
+                    </Link>
+                  </li>
+                  <li
+                    className={classnames('nav-item', {
                       active: pathname === '/earn-info',
                     })}
                   >
@@ -375,6 +386,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
           font-size: 0.8125rem;
           height: 40px;
           position: absolute;
+          margin-top: 35px;
           top: -40px;
           width: 100%;
           z-index: 3;
@@ -388,13 +400,26 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
           border: solid 1px #fec100;
           color: #fec100;
         }
+        
+        .banner.burn {
+          background-color: #141519;
+          border: solid 2px;
+          border-radius: 5px;
+        }
+
+        .banner.burn .triangle {
+          top: 8px;
+          border-top: 6px solid transparent;
+          border-right: 8px solid white;
+          border-bottom: 6px solid transparent;
+        }
 
         .navbar-brand {
           min-height: 40px;
         }
 
         .navbar {
-          padding: 0;
+          padding: 35px 0 0 0;
           font-size: 0.8125rem;
           margin-top: 0;
           z-index: 2;

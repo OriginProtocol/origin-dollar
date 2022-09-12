@@ -2,6 +2,7 @@ import { fbt } from 'fbt-runtime'
 import analytics from 'utils/analytics'
 import { getDocsLink } from 'utils/getDocsLink'
 import { assetRootPath } from 'utils/image'
+import { useRouter } from 'next/router'
 
 import EmailForm from './EmailForm'
 
@@ -22,9 +23,11 @@ const youtubeURL = process.env.YOUTUBE_URL
 const instagramURL = process.env.INSTAGRAM_URL
 
 export default function Footer({ locale }) {
+  const { pathname } = useRouter()
+
   return (
     <>
-      <footer>
+      <footer className={`${pathname === '/burn' ? 'burn' : ''}`}>
         <div className="container">
           <div className="d-flex align-items-center justify-content-center">
             <div className="">
@@ -123,6 +126,10 @@ export default function Footer({ locale }) {
         footer {
           background-color: #061d2a;
           padding: 100px 0 160px 0;
+        }
+
+        footer.burn {
+          background-color: #141519;
         }
 
         h5 {

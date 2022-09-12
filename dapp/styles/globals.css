@@ -93,6 +93,32 @@ section.light {
   color: #183140;
 }
 
+section.black {
+  background-color: #141519;
+  color: #fafbfb;
+}
+
+section.dim {
+  background-color: #1e1f25;
+  color: #fafbfb;
+}
+
+.gradient1 {
+  background-image: -webkit-linear-gradient(left, #fedba8 -3.29%, #cf75d5 106.42%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.gradient2 {
+  background-image: -webkit-linear-gradient(left, #8C66FC -28.99%, #0274F1 144.97%);
+}
+
+.gradient3 {
+  background-image: -webkit-linear-gradient(left, #8C66FC -28.99%, #0274F1 144.97%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
 .mono {
   font-family: 'Courier Prime', monospace;
 }

@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import classnames from 'classnames'
 import Head from 'next/head'
 import Link from 'next/link'
+import { useRouter } from 'next/router'
 import { useStoreState } from 'pullstate'
 import { useEffect, useRef } from 'react'
 import { useCookies } from 'react-cookie'
@@ -47,6 +48,7 @@ const Layout = ({
 
   const stakes = useStoreState(StakeStore, (s) => s)
   const showStakingBanner = (stakes.stakes || []).length !== 0 && !isStakePage
+  const { pathname } = useRouter()
 
   const optIn = async () => {
     try {
@@ -157,7 +159,7 @@ const Layout = ({
         className={classnames(
           `notice ${
             showStakingBanner ? 'staking pt-2' : 'pt-3'
-          } text-white text-center pb-3`,
+          } ${pathname === '/burn' ? 'burn' : ''} text-white text-center pb-3`,
           {
             dapp,
           }
@@ -208,7 +210,11 @@ const Layout = ({
       <style jsx>{`
         .notice {
           background-color: black;
-          margin-bottom: 35px;
+          margin-bottom: 0px;
+        }
+
+        .notice.burn {
+          background: linear-gradient(90deg, #8C66FC -28.99%, #0274F1 144.97%);
         }
 
         .notice.staking {
@@ -243,7 +249,7 @@ const Layout = ({
         }
 
         .container {
-          max-width: 940px !important;
+          max-width: 940px;
           padding-left: 0px;
           padding-right: 0px;
         }

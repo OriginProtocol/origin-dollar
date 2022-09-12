@@ -35,6 +35,12 @@ addresses.mainnet.cUSDT = '0xf650c3d88d12db855b8bf7d11be6c55a4e07dcc9'
 // Ogn
 addresses.mainnet.OGN = '0x8207c1ffc5b6804f6024322ccf34f29c3541ae26'
 
+// Ogv
+addresses.mainnet.OGV = "0x9c354503C38481a7A7a51629142963F98eCC12D0";
+
+// veOgv
+addresses.mainnet.veOGV = "0x0C4576Ca1c365868E162554AF8e385dc3e7C66D9";
+
 // Open Oracle
 addresses.mainnet.openOracle = '0x9b8eb8b3d6e2e0db36f41455185fef7049a35cae'
 
