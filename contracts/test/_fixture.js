@@ -4,7 +4,7 @@ const { ethers } = hre
 
 const addresses = require("../utils/addresses");
 const { fundAccounts } = require("../utils/funding");
-const { getAssetAddresses, daiUnits, isFork } = require("./helpers");
+const { getAssetAddresses, daiUnits, isFork, isForkWithLocalNode } = require("./helpers");
 const { utils } = require("ethers");
 
 const { airDropPayouts } = require("../scripts/staking/airDrop.js");
@@ -23,10 +23,12 @@ const crvMinterAbi = require("./abi/crvMinter.json");
 // const curveFactoryAbi = require("./abi/curveFactory.json")
 const ousdMetapoolAbi = require("./abi/ousdMetapool.json")
 const threepoolLPAbi = require("./abi/threepoolLP.json")
-// const threepoolSwapAbi = require("./abi/threepoolSwap.json")
+const threepoolSwapAbi = require("./abi/threepoolSwap.json")
 
 async function defaultFixture() {
-  await deployments.fixture();
+  await deployments.fixture(undefined, {
+    keepExistingDeployments: Boolean(isForkWithLocalNode)
+  });
 
   const { governorAddr } = await getNamedAccounts();
 
@@ -251,7 +253,7 @@ async function defaultFixture() {
   }
 
   const signers = await hre.ethers.getSigners();
-  const governor = signers[1];
+  let governor = signers[1];
   const strategist = signers[0];
   const adjuster = signers[0];
   const matt = signers[4];
@@ -261,12 +263,8 @@ async function defaultFixture() {
   let originTeam 
 
   if (isFork) {
-    await hre.network.provider.request({
-      method: "hardhat_impersonateAccount",
-      params: [addresses.mainnet.ORIGINTEAM],
-    });
-    const address = addresses.mainnet.ORIGINTEAM
-    originTeam = await ethers.provider.getSigner(address)
+    originTeam = await impersonateAndFundContract(addresses.mainnet.ORIGINTEAM)
+    governor = await impersonateAndFundContract(governorAddr)
   }
 
   await fundAccounts();
@@ -505,7 +503,7 @@ async function convexVaultFixture() {
 async function convexMetaVaultFixture() {
   const fixture = await loadFixture(defaultFixture);
 
-  const { governorAddr } = await getNamedAccounts();
+  const { governor } = fixture;
 
   if (isFork) {
     const { originTeam, ousd, usdt, usdc, dai, vault, harvester, OUSDmetaStrategy } = fixture
@@ -514,7 +512,7 @@ async function convexMetaVaultFixture() {
 
     const threepoolLP = await ethers.getContractAt(threepoolLPAbi, addresses.mainnet.ThreePoolToken)
     const ousdMetaPool = await ethers.getContractAt(ousdMetapoolAbi, addresses.mainnet.CurveOUSDMetaPool)
-    // const threepoolSwap = await ethers.getContractAt(threepoolSwapAbi, addresses.mainnet.ThreePool)
+    const threepoolSwap = await ethers.getContractAt(threepoolSwapAbi, addresses.mainnet.ThreePool)
     // const curveFactory = await ethers.getContractAt(curveFactoryAbi, curveFactoryAddress)
 
     // Get some 3CRV from most loaded contracts/wallets
@@ -540,55 +538,19 @@ async function convexMetaVaultFixture() {
     await resetAllowance(usdc, originTeam, vault.address)
     await resetAllowance(dai, originTeam, vault.address)
 
-    // const vaultAdmin = await ethers.getContract("VaultAdmin")
-
     // Set default USDT & USDC strategy
-    const sGovernor = await impersonateAndFundContract(governorAddr)
-
-    // await vault.connect(sGovernor).setAdminImpl(vaultAdmin.address)
-
-    console.log('supports', OUSDmetaStrategy)
-    console.log('supports', await OUSDmetaStrategy.connect(sGovernor).supportsAsset(usdt.address))
-
-    try {
-      // TODO: Migrations should take care of it by default.
-      // But there seems to be some sort of caching at play here.
-      // Adding this in a try-catch block that does nothing on errors
-      // just for convience. Should probably get to the bottom of this issue.
-
-      // // Add Convex Meta strategy
-      // await vault
-      //   .connect(sGovernor)
-      //   .approveStrategy(OUSDmetaStrategy.address);
-    
-      // // Set meta strategy on vault so meta strategy is allowed to mint OUSD
-      // await vault
-      //   .connect(sGovernor)
-      //   .setOusdMetaStrategy(OUSDmetaStrategy.address);
-
-      // // set OUSD mint threshold to 50 million
-      // await vault
-      //   .connect(sGovernor)
-      //   .setNetOusdMintForStrategyThreshold(utils.parseUnits("50", 24));
-    
-      // await harvester
-      //   .connect(sGovernor)
-      //   .setSupportedStrategy(fixture.OUSDmetaStrategy.address, true);
-    } catch (_) {
-      // Do nothing
-    }
-
-    await vault.connect(sGovernor).setAssetDefaultStrategy(
+    await vault.connect(governor).setAssetDefaultStrategy(
       usdt.address,
       OUSDmetaStrategy.address
     )
-    // await vault.connect(sGovernor).setAssetDefaultStrategy(
-    //   usdc.address,
-    //   OUSDmetaStrategy.address
-    // )
+    await vault.connect(governor).setAssetDefaultStrategy(
+      usdc.address,
+      OUSDmetaStrategy.address
+    )
 
     fixture.OUSDMetaPool = ousdMetaPool
     fixture.threePoolToken = threepoolLP
+    fixture.threepoolSwap = threepoolSwap
   } else {
     // Migrations should do these on fork
     const sGovernor = await ethers.provider.getSigner(governorAddr);

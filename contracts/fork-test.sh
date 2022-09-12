@@ -19,16 +19,22 @@ main()
     fi
     if [ -z "$PROVIDER_URL" ] && [ -z "$LOCAL_PROVIDER_URL" ]; then echo "Set PROVIDER_URL" && exit 1; fi
     
+    params=()
+
     if [ -z "$LOCAL_PROVIDER_URL" ]; then
         cp -r deployments/mainnet deployments/hardhat
     else
+        mineresp=$(curl -s -H "Content-Type: application/json" -X POST --data '{"id":1,"jsonrpc":"2.0","method":"evm_mine"}' "$LOCAL_PROVIDER_URL")
+        blockresp=$((curl -s -H "Content-Type: application/json" -X POST --data '{"id":1,"jsonrpc":"2.0","method":"eth_blockNumber"}' "$LOCAL_PROVIDER_URL") | jq -r '.result')
+        blocknum=$((16#${blockresp:2}))
+        export FORK_BLOCK_NUMBER=$blocknum
+
+        echo "Will be using block number: $FORK_BLOCK_NUMBER"
+
+        # params+="--deploy-fixture "
+
         cp -r deployments/localhost deployments/hardhat
     fi
-
-    rm deployments/hardhat/.chainId
-    echo "31337" > deployments/hardhat/.chainId
-
-    params=()
 
     if [ -z "$1" ]; then
         params+="test/**/*.fork-test.js"
@@ -36,7 +42,7 @@ main()
         params+=($1)
     fi
 
-    FORK=true IS_TEST=true npx --no-install hardhat test --deploy-fixture ${params[@]}
+    FORK=true IS_TEST=true npx --no-install hardhat test ${params[@]}
 }
 
 main "$@"

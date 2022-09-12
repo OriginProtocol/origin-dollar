@@ -226,10 +226,12 @@ module.exports = {
         mnemonic,
       },
       ...(isForkTest ? {
+        chainId: 1,
         timeout: 0,
         forking: {
           enabled: true,
           url: `${process.env.LOCAL_PROVIDER_URL || process.env.PROVIDER_URL}`,
+          blockNumber: Number(process.env.FORK_BLOCK_NUMBER) || undefined,
           timeout: 0
         }
       } : {
