@@ -365,7 +365,7 @@ export default function Burn({ locale, onLocale }) {
                   <span className="large">{`${formatCurrency(
                     stakingApy,
                     2
-                  )}%`}</span>
+                  )}% `}</span>
                   <span className="small">{' APY'}</span>
                 </div>
                 <div>
