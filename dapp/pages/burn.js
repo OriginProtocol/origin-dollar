@@ -255,7 +255,7 @@ export default function Burn({ locale, onLocale }) {
                   <span className="large">
                     {formatCurrency(airdropAllocation, 0)}
                   </span>
-                  <span className='small'>{' OGV'}</span>
+                  <span className="small">{' OGV'}</span>
                 </div>
                 <div className="d-flex flex-row">
                   <div className="mr-lg-5 mr-md-3">
@@ -270,7 +270,7 @@ export default function Burn({ locale, onLocale }) {
                     <span className="medium">
                       {formatCurrency(airdropAllocationOgn, 0)}
                     </span>
-                    <span className='small'>{' OGV'}</span>
+                    <span className="small">{' OGV'}</span>
                     <div className="grey">(68.97%)</div>
                   </div>
                   <div>
@@ -285,7 +285,7 @@ export default function Burn({ locale, onLocale }) {
                     <span className="medium">
                       {formatCurrency(airdropAllocationOusd, 0)}
                     </span>
-                    <span className='small'>{' OGV'}</span>
+                    <span className="small">{' OGV'}</span>
                     <div className="grey">(31.03%)</div>
                   </div>
                 </div>
@@ -297,7 +297,7 @@ export default function Burn({ locale, onLocale }) {
                   <span className="large">
                     {formatCurrency(airdropAllocationOgn - burnAmount, 0)}
                   </span>
-                  <span className='small'>{' OGV'}</span>
+                  <span className="small">{' OGV'}</span>
                   <span className="grey">{` (${formatCurrency(
                     ((airdropAllocation - burnAmount) * 100) /
                       airdropAllocation,
@@ -313,7 +313,7 @@ export default function Burn({ locale, onLocale }) {
                         0
                       )}
                     </span>
-                    <span className='small'>{' OGV'}</span>
+                    <span className="small">{' OGV'}</span>
                     <div className="grey">{`(${formatCurrency(
                       ((airdropAllocationOgn - optionalLockupBalance) /
                         airdropAllocationOgn) *
@@ -329,7 +329,7 @@ export default function Burn({ locale, onLocale }) {
                         0
                       )}
                     </span>
-                    <span className='small'>{' OGV'}</span>
+                    <span className="small">{' OGV'}</span>
                     <div className="grey">{`(${formatCurrency(
                       ((airdropAllocationOusd - mandatoryLockupBalance) /
                         airdropAllocationOusd) *
@@ -349,7 +349,7 @@ export default function Burn({ locale, onLocale }) {
                     <span className="large">
                       {formatCurrency(totalStaked, 0)}
                     </span>
-                    <span className='small'>{' OGV'}</span>
+                    <span className="small">{' OGV'}</span>
                   </div>
                   <div className="ml-lg-3">
                     <div className="text-container grey">Percentage staked</div>
@@ -366,7 +366,7 @@ export default function Burn({ locale, onLocale }) {
                     stakingApy,
                     2
                   )}%`}</span>
-                  <span className='small'>{' APY'}</span>
+                  <span className="small">{' APY'}</span>
                 </div>
                 <div>
                   <a
