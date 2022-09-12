@@ -17,16 +17,21 @@ main()
         echo -e "${RED} File $ENV_FILE does not exist. Have you forgotten to rename the dev.env to .env? ${NO_COLOR}"
         exit 1
     fi
-    if [ -z "$PROVIDER_URL" ]; then echo "Set PROVIDER_URL" && exit 1; fi
+    if [ -z "$PROVIDER_URL" ] && [ -z "$LOCAL_PROVIDER_URL" ]; then echo "Set PROVIDER_URL" && exit 1; fi
     
-    cp -r deployments/mainnet deployments/hardhat
+    if [ -z "$LOCAL_PROVIDER_URL" ]; then
+        cp -r deployments/mainnet deployments/hardhat
+    else
+        cp -r deployments/localhost deployments/hardhat
+    fi
+
     rm deployments/hardhat/.chainId
     echo "31337" > deployments/hardhat/.chainId
 
     params=()
 
     if [ -z "$1" ]; then
-        params+="test/**/*.forktest.js"
+        params+="test/**/*.fork-test.js"
     else
         params+=($1)
     fi

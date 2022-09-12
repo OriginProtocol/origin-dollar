@@ -94,30 +94,37 @@ const fundAccounts = async () => {
       params: [addresses.mainnet.Binance],
     });
     binanceSigner = await ethers.provider.getSigner(addresses.mainnet.Binance);
-    // Send some Ethereum to Governor
-    await binanceSigner.sendTransaction({
-      to: governorAddr,
-      value: utils.parseEther("100"),
-    });
   }
 
-  for (let i = 0; i < 10; i++) {
+  const addressPromises = new Array(10).fill(0).map((_, i) => signers[i].getAddress())
+  const signerAddresses = await Promise.all(addressPromises)
+  
+  if (isFork) {
+    signerAddresses.push(addresses.mainnet.ORIGINTEAM)
+  }
+
+  for (const address of signerAddresses) {
     if (isFork) {
+      await hre.network.provider.send("hardhat_setBalance", [
+        address,
+        utils.parseEther("1000000").toHexString(),
+      ])
+      
       await dai
         .connect(binanceSigner)
-        .transfer(await signers[i].getAddress(), daiUnits("1000"));
+        .transfer(address, daiUnits("1000000"));
       await usdc
         .connect(binanceSigner)
-        .transfer(await signers[i].getAddress(), usdcUnits("1000"));
+        .transfer(address, usdcUnits("1000000"));
       await usdt
         .connect(binanceSigner)
-        .transfer(await signers[i].getAddress(), usdtUnits("1000"));
+        .transfer(address, usdtUnits("1000000"));
       await tusd
         .connect(binanceSigner)
-        .transfer(await signers[i].getAddress(), tusdUnits("1000"));
+        .transfer(address, tusdUnits("1000000"));
       await ogn
         .connect(binanceSigner)
-        .transfer(await signers[i].getAddress(), ognUnits("1000"));
+        .transfer(address, ognUnits("1000000"));
     } else {
       await dai.connect(signers[i]).mint(daiUnits("1000"));
       await usdc.connect(signers[i]).mint(usdcUnits("1000"));

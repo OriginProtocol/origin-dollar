@@ -10,6 +10,8 @@ addresses.dead = "0x0000000000000000000000000000000000000001";
 
 addresses.mainnet = {};
 
+addresses.mainnet.ORIGINTEAM = "0x449e0b5564e0d141b3bc3829e74ffa0ea8c08ad5";
+
 addresses.mainnet.Binance = "0xf977814e90da44bfa03b6295a0616a897441acec";
 /* All the Binance addresses. There is not 1 address that has enough of all of the stablecoins and ether.
  * But all together do. In case new ones are added update them from here:
@@ -109,6 +111,8 @@ addresses.mainnet.CurveUSDTStrategyProxy =
   "0xe40e09cD6725E542001FcB900d9dfeA447B529C0";
 addresses.mainnet.CurveUSDTStrategy =
   "0x75Bc09f72db1663Ed35925B89De2b5212b9b6Cb3";
+addresses.mainnet.CurveOUSDMetaPool =
+'0x87650D7bbfC3A9F10587d7778206671719d9910D'
 
 addresses.mainnet.MixOracle = "0x4d4f5e7a1FE57F5cEB38BfcE8653EFFa5e584458";
 addresses.mainnet.UniswapOracle = "0xc15169Bad17e676b3BaDb699DEe327423cE6178e";

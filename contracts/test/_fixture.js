@@ -1,5 +1,7 @@
 const hre = require("hardhat");
 
+const { ethers } = hre
+
 const addresses = require("../utils/addresses");
 const { fundAccounts } = require("../utils/funding");
 const { getAssetAddresses, daiUnits, isFork } = require("./helpers");
@@ -17,6 +19,11 @@ const compAbi = require("./abi/erc20.json");
 const crvAbi = require("./abi/erc20.json");
 const ognAbi = require("./abi/erc20.json");
 const crvMinterAbi = require("./abi/crvMinter.json");
+
+// const curveFactoryAbi = require("./abi/curveFactory.json")
+const ousdMetapoolAbi = require("./abi/ousdMetapool.json")
+const threepoolLPAbi = require("./abi/threepoolLP.json")
+// const threepoolSwapAbi = require("./abi/threepoolSwap.json")
 
 async function defaultFixture() {
   await deployments.fixture();
@@ -75,16 +82,6 @@ async function defaultFixture() {
     "AaveStrategy",
     aaveStrategyProxy.address
   );
-  const aaveIncentivesController = await ethers.getContract(
-    "MockAaveIncentivesController"
-  );
-
-  const liquidityRewardOUSD_USDT = await ethers.getContractAt(
-    "LiquidityReward",
-    (
-      await ethers.getContract("LiquidityRewardOUSD_USDTProxy")
-    ).address
-  );
 
   const ognStaking = await ethers.getContractAt(
     "SingleAssetStaking",
@@ -125,6 +122,7 @@ async function defaultFixture() {
     aave,
     aaveToken,
     stkAave,
+    aaveIncentivesController,
     mockNonRebasing,
     mockNonRebasingTwo;
 
@@ -141,6 +139,7 @@ async function defaultFixture() {
     threePoolGauge,
     aaveAddressProvider,
     uniswapPairOUSD_USDT,
+    liquidityRewardOUSD_USDT,
     flipper,
     cvx,
     cvxBooster,
@@ -195,8 +194,17 @@ async function defaultFixture() {
       aave.address
     );
     stkAave = await ethers.getContract("MockStkAave");
+    aaveIncentivesController = await ethers.getContract(
+      "MockAaveIncentivesController"
+    );
 
     uniswapPairOUSD_USDT = await ethers.getContract("MockUniswapPairOUSD_USDT");
+    liquidityRewardOUSD_USDT = await ethers.getContractAt(
+      "LiquidityReward",
+      (
+        await ethers.getContract("LiquidityRewardOUSD_USDTProxy")
+      ).address
+    );
 
     chainlinkOracleFeedDAI = await ethers.getContract(
       "MockChainlinkOracleFeedDAI"
@@ -222,18 +230,21 @@ async function defaultFixture() {
 
     flipper = await ethers.getContract("Flipper");
   }
-  const assetAddresses = await getAssetAddresses(deployments);
 
-  const sGovernor = await ethers.provider.getSigner(governorAddr);
-
-  // Add TUSD in fixture, it is disabled by default in deployment
-  await vault.connect(sGovernor).supportAsset(assetAddresses.TUSD);
-
-  // Enable capital movement
-  await vault.connect(sGovernor).unpauseCapital();
-
-  // Add Buyback contract as trustee
-  await vault.connect(sGovernor).setTrusteeAddress(buyback.address);
+  if (!isFork) {
+    const assetAddresses = await getAssetAddresses(deployments);
+  
+    const sGovernor = await ethers.provider.getSigner(governorAddr);
+  
+    // Add TUSD in fixture, it is disabled by default in deployment
+    await vault.connect(sGovernor).supportAsset(assetAddresses.TUSD);
+  
+    // Enable capital movement
+    await vault.connect(sGovernor).unpauseCapital();
+  
+    // Add Buyback contract as trustee
+    await vault.connect(sGovernor).setTrusteeAddress(buyback.address);
+  }
 
   const signers = await hre.ethers.getSigners();
   const governor = signers[1];
@@ -243,8 +254,19 @@ async function defaultFixture() {
   const josh = signers[5];
   const anna = signers[6];
 
-  await fundAccounts();
+  let originTeam 
 
+  if (isFork) {
+    await hre.network.provider.request({
+      method: "hardhat_impersonateAccount",
+      params: [addresses.mainnet.ORIGINTEAM],
+    });
+    const address = addresses.mainnet.ORIGINTEAM
+    originTeam = await ethers.provider.getSigner(address)
+  }
+
+  await fundAccounts();
+  
   // Matt and Josh each have $100 OUSD
   for (const user of [matt, josh]) {
     await dai.connect(user).approve(vault.address, daiUnits("100"));
@@ -259,6 +281,7 @@ async function defaultFixture() {
     governor,
     strategist,
     adjuster,
+    originTeam,
     // Contracts
     ousd,
     vault,
@@ -472,41 +495,176 @@ async function convexMetaVaultFixture() {
   const fixture = await loadFixture(defaultFixture);
 
   const { governorAddr } = await getNamedAccounts();
-  const sGovernor = await ethers.provider.getSigner(governorAddr);
 
-  // Add Convex Meta strategy
-  await fixture.vault
-    .connect(sGovernor)
-    .approveStrategy(fixture.OUSDmetaStrategy.address);
+  if (isFork) {
+    const { originTeam, ousd, usdt, usdc, dai, vault, harvester, OUSDmetaStrategy } = fixture
 
-  // set meta strategy on vault so meta strategy is allowed to mint OUSD
-  await fixture.vault
-    .connect(sGovernor)
-    .setOusdMetaStrategy(fixture.OUSDmetaStrategy.address);
+    // const curveFactoryAddress = '0xB9fC157394Af804a3578134A6585C0dc9cc990d4'
 
-  // set OUSD mint threshold to 50 million
-  await fixture.vault
-    .connect(sGovernor)
-    .setNetOusdMintForStrategyThreshold(utils.parseUnits("50", 24));
+    const threepoolLP = await ethers.getContractAt(threepoolLPAbi, addresses.mainnet.ThreePoolToken)
+    const ousdMetaPool = await ethers.getContractAt(ousdMetapoolAbi, addresses.mainnet.CurveOUSDMetaPool)
+    // const threepoolSwap = await ethers.getContractAt(threepoolSwapAbi, addresses.mainnet.ThreePool)
+    // const curveFactory = await ethers.getContractAt(curveFactoryAbi, curveFactoryAddress)
 
-  await fixture.harvester
-    .connect(sGovernor)
-    .setSupportedStrategy(fixture.OUSDmetaStrategy.address, true);
+    // Get some 3CRV from most loaded contracts/wallets
+    await transferTokensFromContract(
+      addresses.mainnet.ThreePoolToken,
+      [
+        '0xceaf7747579696a2f0bb206a14210e3c9e6fb269',
+        '0xd632f22692fac7611d2aa1c0d552930d43caed3b',
+        '0xbfcf63294ad7105dea65aa58f8ae5be2d9d0952a',
+        '0xed279fdd11ca84beef15af5d39bb4d4bee23f0ca',
+        '0x43b4fdfd4ff969587185cdb6f0bd875c5fc83f8c',
+      ],
+      originTeam.getAddress()
+    )
 
-  await fixture.vault
-    .connect(sGovernor)
-    .setAssetDefaultStrategy(
-      fixture.usdt.address,
-      fixture.OUSDmetaStrategy.address
-    );
+    // Approve OUSD MetaPool contract to move funds
+    await resetAllowance(threepoolLP, originTeam, ousdMetaPool.address)
+    await resetAllowance(ousd, originTeam, ousdMetaPool.address)
 
-  await fixture.vault
-    .connect(sGovernor)
-    .setAssetDefaultStrategy(
-      fixture.usdc.address,
-      fixture.OUSDmetaStrategy.address
-    );
+    // Approve Vault to move funds
+    await resetAllowance(ousd, originTeam, vault.address)
+    await resetAllowance(usdt, originTeam, vault.address)
+    await resetAllowance(usdc, originTeam, vault.address)
+    await resetAllowance(dai, originTeam, vault.address)
+
+    // const vaultAdmin = await ethers.getContract("VaultAdmin")
+
+    // Set default USDT & USDC strategy
+    const sGovernor = await impersonateAndFundContract(governorAddr)
+
+    // await vault.connect(sGovernor).setAdminImpl(vaultAdmin.address)
+
+    console.log('supports', OUSDmetaStrategy)
+    console.log('supports', await OUSDmetaStrategy.connect(sGovernor).supportsAsset(usdt.address))
+
+    try {
+      // TODO: Migrations should take care of it by default.
+      // But there seems to be some sort of caching at play here.
+      // Adding this in a try-catch block that does nothing on errors
+      // just for convience. Should probably get to the bottom of this issue.
+
+      // // Add Convex Meta strategy
+      // await vault
+      //   .connect(sGovernor)
+      //   .approveStrategy(OUSDmetaStrategy.address);
+    
+      // // Set meta strategy on vault so meta strategy is allowed to mint OUSD
+      // await vault
+      //   .connect(sGovernor)
+      //   .setOusdMetaStrategy(OUSDmetaStrategy.address);
+
+      // // set OUSD mint threshold to 50 million
+      // await vault
+      //   .connect(sGovernor)
+      //   .setNetOusdMintForStrategyThreshold(utils.parseUnits("50", 24));
+    
+      // await harvester
+      //   .connect(sGovernor)
+      //   .setSupportedStrategy(fixture.OUSDmetaStrategy.address, true);
+    } catch (_) {
+      // Do nothing
+    }
+
+    await vault.connect(sGovernor).setAssetDefaultStrategy(
+      usdt.address,
+      OUSDmetaStrategy.address
+    )
+    // await vault.connect(sGovernor).setAssetDefaultStrategy(
+    //   usdc.address,
+    //   OUSDmetaStrategy.address
+    // )
+
+    fixture.OUSDMetaPool = ousdMetaPool
+    fixture.threePoolToken = threepoolLP
+  } else {
+    // Migrations should do these on fork
+    const sGovernor = await ethers.provider.getSigner(governorAddr);
+
+    // Add Convex Meta strategy
+    await fixture.vault
+      .connect(sGovernor)
+      .approveStrategy(fixture.OUSDmetaStrategy.address);
+  
+    // set meta strategy on vault so meta strategy is allowed to mint OUSD
+    await fixture.vault
+      .connect(sGovernor)
+      .setOusdMetaStrategy(fixture.OUSDmetaStrategy.address);
+  
+    // set OUSD mint threshold to 50 million
+    await fixture.vault
+      .connect(sGovernor)
+      .setNetOusdMintForStrategyThreshold(utils.parseUnits("50", 24));
+  
+    await fixture.harvester
+      .connect(sGovernor)
+      .setSupportedStrategy(fixture.OUSDmetaStrategy.address, true);
+  
+    await fixture.vault
+      .connect(sGovernor)
+      .setAssetDefaultStrategy(
+        fixture.usdt.address,
+        fixture.OUSDmetaStrategy.address
+      );
+  
+    await fixture.vault
+      .connect(sGovernor)
+      .setAssetDefaultStrategy(
+        fixture.usdc.address,
+        fixture.OUSDmetaStrategy.address
+      );
+  }
+
   return fixture;
+}
+
+async function impersonateAndFundContract(address) {
+  await network.provider.request({
+    method: "hardhat_impersonateAccount",
+    params: [address],
+  })
+
+  await network.provider.send("hardhat_setBalance", [
+    address,
+    utils.parseEther("1000000").toHexString(),
+  ])
+  
+  return await ethers.provider.getSigner(address)
+}
+
+async function transferTokensFromContract(tokenAddress, contractAddresses, toAddress) {
+  if (!Array.isArray(contractAddresses)) {
+    contractAddresses = [contractAddresses]
+  }
+
+  for (const contractAddress of contractAddresses) {
+    const impersonatedSigner = await impersonateAndFundContract(contractAddress)
+  
+    const tokenContract = await ethers.getContractAt(
+      daiAbi,
+      tokenAddress
+    )
+  
+    const balance = await tokenContract.connect(impersonatedSigner).balanceOf(contractAddress)
+    await tokenContract.connect(impersonatedSigner).transfer(toAddress, balance)
+  }
+}
+
+async function resetAllowance(tokenContract, signer, toAddress, allowance = '10000000000000000000000000000000000000000000000000') {
+  await tokenContract.connect(signer).approve(toAddress, '0')
+  await tokenContract.connect(signer).approve(toAddress, allowance)
+}
+
+async function withImpersonatedAccount(address, cb) {
+  const signer = await impersonateAndFundContract(address)
+
+  await cb(signer)
+
+  await network.provider.request({
+    method: "hardhat_stopImpersonatingAccount",
+    params: [address],
+  })
 }
 
 /**

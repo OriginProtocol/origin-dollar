@@ -229,7 +229,7 @@ module.exports = {
         timeout: 0,
         forking: {
           enabled: true,
-          url: `${process.env.PROVIDER_URL}`,
+          url: `${process.env.LOCAL_PROVIDER_URL || process.env.PROVIDER_URL}`,
           timeout: 0
         }
       } : {
