@@ -27,6 +27,7 @@ main()
         else
             params+=(--fork-block-number ${BLOCK_NUMBER})
         fi
+        if [ -z "$STACK_TRACE" ]; then params+=( --show-stack-traces); fi
         cp -r deployments/mainnet deployments/localhost
 
         nodeOutput=$(mktemp "${TMPDIR:-/tmp/}$(basename 0).XXX")

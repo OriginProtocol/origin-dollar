@@ -10,7 +10,7 @@ const {
 } = require("../helpers");
 const { parseUnits } = require("ethers/lib/utils");
 
-describe("Flipper", async function () {
+describe("Flipper", function () {
   if (isFork) {
     this.timeout(0);
   }

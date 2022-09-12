@@ -120,6 +120,8 @@ async function defaultFixture() {
     tusd,
     usdc,
     ogn,
+    ogv,
+    rewardsSource,
     nonStandardToken,
     cusdt,
     cdai,
@@ -170,6 +172,7 @@ async function defaultFixture() {
       "ILendingPoolAddressesProvider",
       addresses.mainnet.AAVE_ADDRESS_PROVIDER
     );
+    rewardsSource = addresses.mainnet.RewardsSource;
   } else {
     usdt = await ethers.getContract("MockUSDT");
     dai = await ethers.getContract("MockDAI");
@@ -177,6 +180,7 @@ async function defaultFixture() {
     usdc = await ethers.getContract("MockUSDC");
     ogn = await ethers.getContract("MockOGN");
     frax = await ethers.getContract("MockFrax");
+    ogv = await ethers.getContract("MockOGV");
     nonStandardToken = await ethers.getContract("MockNonStandardToken");
 
     cdai = await ethers.getContract("MockCDAI");
@@ -260,6 +264,11 @@ async function defaultFixture() {
     await vault.connect(user).mint(dai.address, daiUnits("100"), 0);
   }
 
+  if (!rewardsSource && !isFork) {
+    const address = await buyback.connect(governor).rewardsSource();
+    rewardsSource = await ethers.getContractAt([], address);
+  }
+
   return {
     // Accounts
     matt,
@@ -291,6 +300,8 @@ async function defaultFixture() {
     usdc,
     ogn,
     frax,
+    ogv,
+    rewardsSource,
     nonStandardToken,
     // cTokens
     cdai,

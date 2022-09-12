@@ -43,6 +43,7 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     "MockDAI",
     "MockNonStandardToken",
     "MockWETH",
+    "MockOGV",
     "MockAave",
   ];
   for (const contract of assetContracts) {

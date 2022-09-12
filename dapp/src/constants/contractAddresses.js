@@ -32,8 +32,14 @@ addresses.mainnet.cDAI = '0x5d3a536e4d6dbd6114cc1ead35777bab948e3643'
 addresses.mainnet.cUSDC = '0x39aa39c021dfbae8fac545936693ac917d5e7563'
 addresses.mainnet.cUSDT = '0xf650c3d88d12db855b8bf7d11be6c55a4e07dcc9'
 
-// Ogn
+// OGN
 addresses.mainnet.OGN = '0x8207c1ffc5b6804f6024322ccf34f29c3541ae26'
+
+// OGV
+addresses.mainnet.OGV = '0x9c354503C38481a7A7a51629142963F98eCC12D0'
+
+// RewardsSource
+addresses.mainnet.RewardsSource = '0x7d82e86cf1496f9485a8ea04012afeb3c7489397'
 
 // Open Oracle
 addresses.mainnet.openOracle = '0x9b8eb8b3d6e2e0db36f41455185fef7049a35cae'
