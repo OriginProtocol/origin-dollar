@@ -293,8 +293,9 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
                     </Link>
                   </li>
                   <li
-                    className={classnames('nav-item', {
+                    className={classnames('nav-item burn', {
                       active: pathname === '/burn',
+                      gradient1: pathname !== '/burn'
                     })}
                   >
                     <Link href={adjustLinkHref('/burn')}>
@@ -412,6 +413,10 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
           border-top: 6px solid transparent;
           border-right: 8px solid white;
           border-bottom: 6px solid transparent;
+        }
+
+        li.burn:not(.active) {
+          font-weight: 700;
         }
 
         .navbar-brand {
