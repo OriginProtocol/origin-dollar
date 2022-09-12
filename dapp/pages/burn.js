@@ -460,9 +460,9 @@ export default function Burn({ locale, onLocale }) {
         }
 
         .info-box {
-          margin: 10px;
+          margin: 7px;
           padding: 30px;
-          border: solid #303030;
+          background-color: #141519;
           border-radius: 10px;
         }
 
