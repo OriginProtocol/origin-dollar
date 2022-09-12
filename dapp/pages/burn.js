@@ -404,7 +404,7 @@ export default function Burn({ locale, onLocale }) {
           font-family: Poppins;
           font-size: 6rem;
           font-weight: 500;
-          margin: 50px 0 20px 0;
+          margin-top: 10px;
         }
 
         h2 {
