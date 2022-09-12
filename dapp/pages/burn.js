@@ -163,7 +163,7 @@ export default function Burn({ locale, onLocale }) {
               href="https://app.uniswap.org/#/swap?outputCurrency=0x9c354503C38481a7A7a51629142963F98eCC12D0&chain=mainnet"
               target="_blank"
               rel="noopener noreferrer"
-              className="button gradient2"
+              className="button gradient3"
             >
               Buy OGV
             </a>
@@ -201,7 +201,7 @@ export default function Burn({ locale, onLocale }) {
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                <span className="gradient3">Liquid OGV airdrop contract</span>
+                <span className="gradient4">Liquid OGV airdrop contract</span>
                 <img
                   src={assetRootPath('/images/external-link.svg')}
                   className="external-link"
@@ -217,7 +217,7 @@ export default function Burn({ locale, onLocale }) {
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                <span className="gradient3">Locked OGV airdrop contract</span>
+                <span className="gradient4">Locked OGV airdrop contract</span>
                 <img
                   src={assetRootPath('/images/external-link.svg')}
                   className="external-link"
@@ -373,7 +373,7 @@ export default function Burn({ locale, onLocale }) {
                     href="https://governance.ousd.com/stake"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="button border"
+                    className="button gradient2"
                   >
                     Stake OGV
                   </a>

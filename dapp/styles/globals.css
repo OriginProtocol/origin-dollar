@@ -110,10 +110,15 @@ section.dim {
 }
 
 .gradient2 {
-  background-image: -webkit-linear-gradient(left, #8C66FC -28.99%, #0274F1 144.97%);
+  color: #141519;
+  background-image: -webkit-linear-gradient(left, #fedba8 -3.29%, #cf75d5 106.42%);
 }
 
 .gradient3 {
+  background-image: -webkit-linear-gradient(left, #8C66FC -28.99%, #0274F1 144.97%);
+}
+
+.gradient4 {
   background-image: -webkit-linear-gradient(left, #8C66FC -28.99%, #0274F1 144.97%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
