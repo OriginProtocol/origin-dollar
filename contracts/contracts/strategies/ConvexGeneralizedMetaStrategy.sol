@@ -93,7 +93,9 @@ contract ConvexGeneralizedMetaStrategy is BaseConvexMetaStrategy {
         int128 metapool3CrvCoinIndex = int128(
             _getMetapoolCoinIndex(address(pTokenAddress))
         );
+
         // add 10% margin to the calculation of required tokens
+        // slither-disable-next-line divide-before-multiply
         uint256 estimatedMetapoolLPWithMargin = (estimationRequiredMetapoolLpTokens *
                 1100) / 1e3;
         uint256 crv3ReceivedWithMargin = metapool.calc_withdraw_one_coin(
@@ -122,6 +124,7 @@ contract ConvexGeneralizedMetaStrategy is BaseConvexMetaStrategy {
             true
         );
 
+        // slither-disable-next-line unused-return
         metapool.remove_liquidity_one_coin(
             metapoolErc20.balanceOf(address(this)),
             metapool3CrvCoinIndex,
