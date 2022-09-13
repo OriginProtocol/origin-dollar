@@ -181,8 +181,8 @@ async function mint(taskArguments, hre) {
   const addresses = require("../utils/addresses");
   const { usdtUnits, isFork, isLocalhost } = require("../test/helpers");
 
-  if (!isFork && !isLocalhost) {
-    throw new Error("Task can only be used on local or fork");
+  if (!isFork) {
+    throw new Error("Task can only be used on fork");
   }
 
   let ousdProxy, ousd, vaultProxy, vault, usdt;

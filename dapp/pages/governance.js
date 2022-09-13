@@ -124,11 +124,7 @@ export default function Governance({ locale, onLocale }) {
               <div
                 className="d-flex flex-column big-info-box col-12 col-md-4 mr-md-2"
                 onClick={() => {
-                  window.open(
-                    'https://snapshot.org/#/origingov.eth',
-                    '_blank',
-                    'noopener'
-                  )
+                  window.open('https://vote.ousd.com', '_blank', 'noopener')
                 }}
               >
                 <div className="inner-info-box snapshot d-flex justify-content-center align-items-center">

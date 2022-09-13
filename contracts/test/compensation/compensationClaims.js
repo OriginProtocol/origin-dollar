@@ -10,7 +10,7 @@ const {
   isGanacheFork,
 } = require("../helpers");
 
-describe("Compensation Claims", async () => {
+describe("Compensation Claims", function () {
   if (isGanacheFork) {
     this.timeout(0);
   }

@@ -1,19 +1,20 @@
 import React, { useEffect, useState, useMemo } from 'react'
 import { useRouter } from 'next/router'
 import dateformat from 'dateformat'
-import EtherscanLink from 'components/earn/EtherscanLink'
 
 import { fbt } from 'fbt-runtime'
 import { useWeb3React } from '@web3-react/core'
 import { formatCurrency } from '../utils/math'
 import { shortenAddress } from '../utils/web3'
-import { exportToCsv, sleep } from '../utils/utils'
+import { exportToCsv } from '../utils/utils'
 import withIsMobile from 'hoc/withIsMobile'
 import { assetRootPath } from 'utils/image'
+import { transactionHistoryItemsPerPage } from 'utils/constants'
 
+import useTransactionHistoryPageQuery from '../queries/useTransactionHistoryPageQuery'
 import useTransactionHistoryQuery from '../queries/useTransactionHistoryQuery'
 
-const itemsPerPage = 50
+const itemsPerPage = transactionHistoryItemsPerPage
 
 const FilterButton = ({
   filter,
@@ -21,13 +22,14 @@ const FilterButton = ({
   filterImage,
   filters,
   setFilters,
+  currentFilters,
 }) => {
   const selected = filters.includes(filter)
   return (
     <div key={filter}>
       <div
         className={`button d-flex align-items-center justify-content-center ${
-          selected ? 'selected' : ''
+          currentFilters.includes(filter) ? 'selected' : ''
         }`}
         onClick={() => {
           if (selected) {
@@ -185,56 +187,57 @@ const TransactionHistory = ({ isMobile }) => {
     setCurrentPage(1)
   }
 
-  const historyQuery = useTransactionHistoryQuery(account)
+  const historyPageQuery = useTransactionHistoryPageQuery(
+    account,
+    itemsPerPage,
+    currentPage,
+    filters
+  )
+  const historyQuery = useTransactionHistoryQuery(account, filters)
 
-  const history = useMemo(
-    () => (historyQuery.isSuccess ? historyQuery.data : []),
-    [historyQuery.isSuccess, historyQuery.data]
+  const historyPages = useMemo(
+    () => (historyPageQuery.isSuccess ? historyPageQuery.data.page.pages : 0),
+    [historyPageQuery.isSuccess, historyPageQuery.data]
+  )
+
+  const receivedFilters = historyPageQuery.data
+    ? historyPageQuery.data.page.filters
+    : []
+  const receivedPage = historyPageQuery.data
+    ? historyPageQuery.data.page.current
+    : 1
+
+  useEffect(() => {
+    const dataRefetch =
+      (JSON.stringify(receivedFilters) !== JSON.stringify(filters) ||
+        receivedPage !== currentPage) &&
+      !historyPageQuery.isRefetching
+    if (dataRefetch) historyPageQuery.refetch()
+  }, [currentPage, filters, historyPageQuery.data])
+
+  const currentPageHistory = useMemo(
+    () => (historyPageQuery.data ? historyPageQuery.data.history : []),
+    [historyPageQuery.data]
   )
 
   useEffect(() => {
-    historyQuery.refetch()
-  }, [])
-
-  const shownHistory = useMemo(() => {
-    if (filters.length === 0) {
-      return history
-    } else {
-      const allowedFilters = Object.keys(txTypeMap).filter((txType) => {
-        return filters.includes(txTypeMap[txType].filter)
-      })
-
-      return history.filter((history) => {
-        return allowedFilters.includes(history.type)
-      })
-    }
-  }, [history, filters])
-
-  useEffect(() => {
-    const length = shownHistory.length
-    const pages = Math.ceil(length / itemsPerPage)
+    const pages = historyPages
 
     let pageNumbers = [
       1,
       2,
       pages,
       pages - 1,
-      currentPage,
-      currentPage - 1,
-      currentPage + 1,
+      receivedPage,
+      receivedPage - 1,
+      receivedPage + 1,
     ]
     pageNumbers = pageNumbers.filter((number) => number > 0 && number <= pages)
     // distinct
     pageNumbers = [...new Set(pageNumbers)]
     pageNumbers = pageNumbers.sort((a, b) => a - b)
     setPageNumbers(pageNumbers)
-  }, [shownHistory, currentPage])
-
-  const currentPageHistory = useMemo(
-    () =>
-      [...shownHistory].splice((currentPage - 1) * itemsPerPage, itemsPerPage),
-    [shownHistory, currentPage]
-  )
+  }, [receivedPage, historyPages])
 
   const greaterThanDollarYieldExists =
     currentPageHistory.filter(
@@ -245,10 +248,45 @@ const TransactionHistory = ({ isMobile }) => {
       (tx) => tx.type === 'yield' && parseFloat(tx.amount) > 0.1
     ).length > 0
 
+  const exportData = (exportHistory) => {
+    const exportDataHeader = [
+      'Date',
+      'Block Number',
+      'Type',
+      'From Address',
+      'To Address',
+      'Amount',
+      'Balance',
+      'Transaction hash',
+    ]
+
+    exportToCsv('transaction_history.csv', [
+      exportDataHeader,
+      ...exportHistory.map((historyItem) => {
+        return [
+          historyItem.time,
+          historyItem.block_number,
+          historyItem.type,
+          historyItem.from_address || '',
+          historyItem.to_address || '',
+          historyItem.amount,
+          historyItem.balance,
+          historyItem.tx_hash,
+        ]
+      }),
+    ])
+  }
+
+  useEffect(() => {
+    if (historyQuery.data && !historyQuery.isRefetching) {
+      exportData(historyQuery.data)
+    }
+  }, [historyQuery.isLoading, historyQuery.isRefetching])
+
   return (
     <>
       <div className="d-flex holder flex-column justify-content-start">
-        {historyQuery.isLoading ? (
+        {historyPageQuery.isLoading ? (
           <div className="m-4">{fbt('Loading...', 'Loading...')}</div>
         ) : (
           <>
@@ -257,23 +295,26 @@ const TransactionHistory = ({ isMobile }) => {
                 <FilterButton
                   filterText={fbt('Received', 'Tx history filter: Received')}
                   filterImage="received_icon.svg"
-                  filter="received"
+                  filter="transfer_in"
                   filters={filters}
                   setFilters={setFilters}
+                  currentFilters={receivedFilters}
                 />
                 <FilterButton
                   filterText={fbt('Sent', 'Tx history filter: Sent')}
                   filterImage="sent_icon.svg"
-                  filter="sent"
+                  filter="transfer_out"
                   filters={filters}
                   setFilters={setFilters}
+                  currentFilters={receivedFilters}
                 />
                 <FilterButton
                   filterText={fbt('Swap', 'Tx history filter: Swap')}
                   filterImage="swap_icon.svg"
-                  filter="swap"
+                  filter={'swap_ousd'}
                   filters={filters}
                   setFilters={setFilters}
+                  currentFilters={receivedFilters}
                 />
                 <FilterButton
                   filterText={fbt('Yield', 'Tx history filter: Yield')}
@@ -281,45 +322,27 @@ const TransactionHistory = ({ isMobile }) => {
                   filter="yield"
                   filters={filters}
                   setFilters={setFilters}
+                  currentFilters={receivedFilters}
                 />
               </div>
               <div className="d-flex">
                 <div
                   className="button d-flex align-items-center justify-content-center mb-auto"
                   onClick={() => {
-                    const exportDataHeader = [
-                      'Date',
-                      'Block Number',
-                      'Type',
-                      'From Address',
-                      'To Address',
-                      'Amount',
-                      'Balance',
-                      'Transaction hash',
-                    ]
-
-                    exportToCsv('transaction_history.csv', [
-                      exportDataHeader,
-                      ...shownHistory.map((historyItem) => {
-                        return [
-                          historyItem.time,
-                          historyItem.block_number,
-                          historyItem.type,
-                          historyItem.from_address || '',
-                          historyItem.to_address || '',
-                          historyItem.amount,
-                          historyItem.balance,
-                          historyItem.tx_hash,
-                        ]
-                      }),
-                    ])
+                    historyQuery.refetch()
                   }}
                 >
-                  {fbt('Export', 'Tx history action: Export history')}
+                  {historyQuery.isLoading || historyQuery.isRefetching
+                    ? fbt('Exporting...', 'Exporting...')
+                    : fbt('Export', 'Tx history action: Export history')}
                 </div>
               </div>
             </div>
-            <div className="history-holder">
+            <div
+              className={`history-holder ${
+                historyPageQuery.isPreviousData ? 'grey-font' : ''
+              }`}
+            >
               <div className="d-flex grey-font border-bt pb-10">
                 <div className="col-3 col-md-2 pl-0">
                   {fbt('Date', 'Transaction history date')}
@@ -454,7 +477,8 @@ const TransactionHistory = ({ isMobile }) => {
             </div>
             <div className="pagination d-flex justify-content-center justify-content-md-start">
               {pageNumbers.map((pageNumber, index) => {
-                const isCurrent = pageNumber === currentPage
+                const isCurrent =
+                  pageNumber === historyPageQuery.data.page.current //currentPage
                 const skippedAPage =
                   index > 0 && pageNumber - pageNumbers[index - 1] !== 1
 

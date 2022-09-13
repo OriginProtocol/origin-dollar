@@ -4,12 +4,12 @@ import { QUERY_KEYS } from '../constants/queryKeys'
 
 import { transactionHistoryService } from '../services/transaction-history.service'
 
-const useTransactionHistoryQuery = (account, options) => {
+const useTransactionHistoryQuery = (account, filters, options) => {
   return useQuery(
     QUERY_KEYS.TransactionHistory(account),
-    () => transactionHistoryService.fetchHistory(account),
+    () => transactionHistoryService.fetchHistory(account, filters),
     {
-      enabled: account != null,
+      enabled: false,
       refetchOnWindowFocus: false,
       ...options,
     }

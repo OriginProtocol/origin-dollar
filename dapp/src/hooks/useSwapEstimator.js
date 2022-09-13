@@ -54,6 +54,8 @@ const useSwapEstimator = ({
 
   let coinToReceiveContract, coinToReceiveDecimals
 
+  const decimals = swapMode === 'redeem' || selectedCoin === 'dai' ? 18 : 6
+
   // do not enter conditional body when redeeming a mix
   if (!(swapMode === 'redeem' && selectedCoin === 'mix')) {
     ;({ contract: coinToReceiveContract, decimals: coinToReceiveDecimals } =
@@ -389,6 +391,7 @@ const useSwapEstimator = ({
       swapGasUsage,
       approveGasUsage,
       approveAllowanceNeeded,
+      inputAmount: parseFloat(inputAmountRaw),
       amountReceived: amount,
     }
   }
@@ -411,8 +414,6 @@ const useSwapEstimator = ({
         // 18 because ousd has 18 decimals
         isRedeem ? coinToReceiveDecimals : 18
       )
-
-      const decimals = swapMode === 'redeem' || selectedCoin === 'dai' ? 18 : 6
 
       if (
         ethers.utils.formatUnits(swapAmount, decimals) / amountReceived >
@@ -454,6 +455,7 @@ const useSwapEstimator = ({
           swapGasUsage,
           approveGasUsage,
           approveAllowanceNeeded,
+          inputAmount: parseFloat(inputAmountRaw),
           amountReceived,
         }
       }
@@ -475,6 +477,7 @@ const useSwapEstimator = ({
       return {
         canDoSwap: true,
         gasUsed: gasEstimate,
+        inputAmount: parseFloat(inputAmountRaw),
         amountReceived,
       }
     } catch (e) {
@@ -519,8 +522,6 @@ const useSwapEstimator = ({
         priceQuoteBn,
         isRedeem ? coinToReceiveDecimals : 18
       )
-
-      const decimals = swapMode === 'redeem' || selectedCoin === 'dai' ? 18 : 6
 
       if (
         ethers.utils.formatUnits(swapAmount, decimals) / amountReceived >
@@ -585,6 +586,7 @@ const useSwapEstimator = ({
           swapGasUsage,
           approveGasUsage,
           approveAllowanceNeeded,
+          inputAmount: parseFloat(inputAmountRaw),
           amountReceived,
         }
       }
@@ -615,6 +617,7 @@ const useSwapEstimator = ({
       return {
         canDoSwap: true,
         gasUsed: gasEstimate,
+        inputAmount: parseFloat(inputAmountRaw),
         amountReceived,
       }
     } catch (e) {
@@ -663,10 +666,6 @@ const useSwapEstimator = ({
         isRedeem ? coinToReceiveDecimals : 18
       )
 
-      const decimals = swapMode === 'redeem' || selectedCoin === 'dai' ? 18 : 6
-
-      console.log()
-
       if (
         ethers.utils.formatUnits(swapAmount, decimals) / amountReceived >
         max_price
@@ -706,6 +705,7 @@ const useSwapEstimator = ({
           approveAllowanceNeeded,
           swapGasUsage,
           approveGasUsage,
+          inputAmount: parseFloat(inputAmountRaw),
           amountReceived,
         }
       }
@@ -727,6 +727,7 @@ const useSwapEstimator = ({
       return {
         canDoSwap: true,
         gasUsed: gasEstimate,
+        inputAmount: parseFloat(inputAmountRaw),
         amountReceived,
       }
     } catch (e) {
@@ -800,6 +801,7 @@ const useSwapEstimator = ({
           swapGasUsage,
           approveGasUsage,
           approveAllowanceNeeded,
+          inputAmount: parseFloat(inputAmountRaw),
           amountReceived,
         }
       }
@@ -819,6 +821,7 @@ const useSwapEstimator = ({
         canDoSwap: true,
         gasUsed: gasEstimate,
         // TODO: should this be rather done with BigNumbers instead?
+        inputAmount: parseFloat(inputAmountRaw),
         amountReceived,
       }
     } catch (e) {
@@ -871,6 +874,7 @@ const useSwapEstimator = ({
         return {
           canDoSwap: true,
           gasUsed: 1500000,
+          inputAmount: parseFloat(inputAmountRaw),
           amountReceived: splitsSum,
           coinSplits,
         }
@@ -888,6 +892,7 @@ const useSwapEstimator = ({
         canDoSwap: true,
         gasUsed: gasEstimate,
         // TODO: should this be rather done with BigNumbers instead?
+        inputAmount: parseFloat(inputAmountRaw),
         amountReceived: splitsSum,
         coinSplits,
       }
