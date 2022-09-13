@@ -22,7 +22,20 @@ Or connect to a direct forked of mainnet:
 Or run brownie scripts:
 `brownie run spell_apy --network hardhat`
 
-### Metastrategy usage
+### (OUSD/Generalized) Metastrategy usage
+
+#### Configuration
+
+OUSD & Generalized metastrategy both have their corresponding deploy scripts that need to be
+have `forceDeploy` set to `true`. Node will emit addresses of the deployed OUSD & FRAX strategy
+in console. Copy those and set them in the `brownie/metastrategy.py` configuration section under
+`OUSD_META_STRATEGY` & `FRAX_STRATEGY` variables. Also set which one of those you want to act as a
+default USDT asset strategy under `USDT_DEFAULT_META_STRATEGY`. This way minting (using USDT asset) will
+directly fund configured strategy.
+
+(Note most of the configuration section shall be deleted once these strategies are deployed to mainnet.) 
+
+#### Notes
 
 Once brownie console is started run `from metastrategy import *` to import helper functions
 and funds for easier testing of metastrategy
