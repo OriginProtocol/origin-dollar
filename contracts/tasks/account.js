@@ -5,7 +5,6 @@ const usdtAbi = require("../test/abi/usdt.json").abi;
 const daiAbi = require("../test/abi/erc20.json");
 const tusdAbi = require("../test/abi/erc20.json");
 const usdcAbi = require("../test/abi/erc20.json");
-const addresses = require("../utils/addresses");
 
 // By default we use 10 test accounts.
 const defaultNumAccounts = 10;
@@ -185,27 +184,14 @@ async function mint(taskArguments, hre) {
     throw new Error("Task can only be used on fork");
   }
 
-  let ousdProxy, ousd, vaultProxy, vault, usdt;
+  const ousd = await ethers.getContractAt("OUSD", addresses.mainnet.OUSDProxy);
+  const vault = await ethers.getContractAt(
+    "IVault",
+    addresses.mainnet.VaultProxy
+  );
 
-  if (isFork) {
-    ousdProxy = await ethers.getContractAt(
-      "OUSDProxy",
-      addresses.mainnet.OUSDProxy
-    );
-    ousd = await ethers.getContractAt("OUSD", ousdProxy.address);
-    vaultProxy = await ethers.getContractAt(
-      "VaultProxy",
-      addresses.mainnet.VaultProxy
-    );
-    vault = await ethers.getContractAt("IVault", vaultProxy.address);
-    usdt = await hre.ethers.getContractAt(usdtAbi, addresses.mainnet.USDT);
-  } else {
-    ousdProxy = await ethers.getContract("OUSDProxy");
-    ousd = await ethers.getContract("OUSD", ousdProxy.address);
-    vaultProxy = await ethers.getContract("VaultProxy");
-    vault = await ethers.getContractAt("IVault", vaultProxy.address);
-    usdt = await hre.ethers.getContract("MockUSDT");
-  }
+  const usdt = await hre.ethers.getContractAt(usdtAbi, addresses.mainnet.USDT);
+
 
   const numAccounts = Number(taskArguments.num) || defaultNumAccounts;
   const accountIndex = Number(taskArguments.index) || defaultAccountIndex;
