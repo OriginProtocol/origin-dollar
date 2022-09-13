@@ -382,7 +382,7 @@ export default function Burn({ locale, onLocale }) {
             </div>
           </div>
           <div className="footnote">
-            * Not including portion of tokens sent to exchanges
+            * Including portion of tokens sent to exchanges
           </div>
         </div>
       </section>
