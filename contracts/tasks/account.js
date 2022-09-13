@@ -192,7 +192,6 @@ async function mint(taskArguments, hre) {
 
   const usdt = await hre.ethers.getContractAt(usdtAbi, addresses.mainnet.USDT);
 
-
   const numAccounts = Number(taskArguments.num) || defaultNumAccounts;
   const accountIndex = Number(taskArguments.index) || defaultAccountIndex;
   const mintAmount = taskArguments.amount || defaultMintAmount;
