@@ -295,7 +295,7 @@ export default function Burn({ locale, onLocale }) {
                 <div className="grey">Tokens claimed</div>
                 <div className="mb-4">
                   <span className="large">
-                    {formatCurrency(airdropAllocationOgn - burnAmount, 0)}
+                    {formatCurrency(airdropAllocation - burnAmount, 0)}
                   </span>
                   <span className="small">{' OGV'}</span>
                   <span className="grey">{` (${formatCurrency(
