@@ -19,23 +19,23 @@ def main():
     with TemporaryFork():
         # always leave the balancing call. Even if we want to tilt the pool we first want to balance
         # it to mitigate the pre-existing state
-        balance_metapool()
+        balance_metapool(ousd_metapool)
 
         # un-comment any of the below two to make the initial state of the pool balanced/unbalanced
-        #tiltMetapoolTo3CRV(0.25*1e6*1e18)
-        tiltMetapoolToOUSD(0.25*1e6*1e18)
+        #tiltMetapoolTo3CRV(ousd_metapool, 0.25*1e6*1e18)
+        tiltMetapoolToMainCoin(ousd_metapool, 0.25*1e6*1e18)
 
-        show_metapool_balances()
+        show_metapool_balances(ousd_metapool)
         # un-comment any of the liquidity adding strategies
         # [crv3LiquidityAdded, ousdLiquidityAdded, lp_added] = addEqualLiquidity()
         [crv3LiquidityAdded, ousdLiquidityAdded, lp_added] = addLiquidityToBeEqualInPool()
         # [crv3LiquidityAdded, ousdLiquidityAdded, lp_added] = addTwiceTheOUSD()
-        show_metapool_balances()
+        show_metapool_balances(ousd_metapool)
         # un-comment any of the liquidity removing strategies
         removeLiquidityBalanced(crv3LiquidityAdded, ousdLiquidityAdded, lp_added)
         #removeLiquidityImbalanced(crv3LiquidityAdded, ousdLiquidityAdded, lp_added)
 
-        show_metapool_balances()
+        show_metapool_balances(ousd_metapool)
 
 def removeLiquidityImbalanced(crv3LiquidityAdded, ousdLiquidityAdded, lp_added):
     crv3Balance = threepool_lp.balanceOf(me, OPTS)

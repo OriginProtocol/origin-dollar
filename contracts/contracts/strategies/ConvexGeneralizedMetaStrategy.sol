@@ -15,14 +15,13 @@ import { ICurvePool } from "./ICurvePool.sol";
 import { IERC20 } from "./BaseCurveStrategy.sol";
 import { BaseConvexMetaStrategy } from "./BaseConvexMetaStrategy.sol";
 import { StableMath } from "../utils/StableMath.sol";
-import { IVault } from "../interfaces/IVault.sol";
 
-contract ConvexOUSDMetaStrategy is BaseConvexMetaStrategy {
+contract ConvexGeneralizedMetaStrategy is BaseConvexMetaStrategy {
     using StableMath for uint256;
     using SafeERC20 for IERC20;
 
-    /* Take 3pool LP and mint the corresponding amount of ousd. Deposit and stake that to
-     * ousd Curve Metapool. Take the LP from metapool and deposit them to Convex.
+    /* Take 3pool LP and deposit it to metapool. Take the LP from metapool
+     * and deposit them to Convex.
      */
     function _lpDepositAll() internal override {
         IERC20 threePoolLp = IERC20(pTokenAddress);
@@ -35,34 +34,7 @@ contract ConvexOUSDMetaStrategy is BaseConvexMetaStrategy {
             curve3PoolVirtualPrice
         );
 
-        uint128 crvCoinIndex = _getMetapoolCoinIndex(pTokenAddress);
-        uint128 ousdCoinIndex = _getMetapoolCoinIndex(
-            address(metapoolMainToken)
-        );
-
-        uint256 ousdToAdd = toPositive(
-            int256(
-                metapool.balances(crvCoinIndex).mulTruncate(
-                    curve3PoolVirtualPrice
-                )
-            ) -
-                int256(metapool.balances(ousdCoinIndex)) +
-                int256(threePoolLpDollarValue)
-        );
-
-        /* Mint so much ousd that the dollar value of 3CRVLP in the pool and OUSD will be equal after
-         * deployment of liquidity. In cases where pool is heavier in OUSD before the deposit strategy mints
-         * less OUSD and gets less metapoolLP and less rewards. And when pool is heavier in 3CRV strategy mints
-         * more OUSD and gets more metapoolLP and more rewards.
-         *
-         * In both cases metapool ends up being balanced and there should be no incentive to execute arbitrage trade.
-         */
-        if (ousdToAdd > 0) {
-            IVault(vaultAddress).mintForStrategy(ousdToAdd);
-        }
-
-        uint256 ousdBalance = metapoolMainToken.balanceOf(address(this));
-        uint256[2] memory _amounts = [ousdBalance, threePoolLpBalance];
+        uint256[2] memory _amounts = [0, threePoolLpBalance];
 
         uint256 metapoolVirtualPrice = metapool.get_virtual_price();
         /**
@@ -70,7 +42,7 @@ contract ConvexOUSDMetaStrategy is BaseConvexMetaStrategy {
          * then divide by virtual price to convert to metapool LP tokens
          * and apply the max slippage
          */
-        uint256 minReceived = (ousdBalance + threePoolLpDollarValue)
+        uint256 minReceived = threePoolLpDollarValue
             .divPrecisely(metapoolVirtualPrice)
             .mulTruncate(uint256(1e18) - maxSlippage);
 
@@ -101,7 +73,6 @@ contract ConvexOUSDMetaStrategy is BaseConvexMetaStrategy {
         uint256 gaugeTokens = IRewardStaking(cvxRewardStakerAddress).balanceOf(
             address(this)
         );
-        uint256 crv3VirtualPrice = curvePool.get_virtual_price();
         /**
          * Convert 3crv tokens to metapoolLP tokens and double it. Doubling is required because aside
          * from receiving 3crv we are also withdrawing OUSD. Instead of removing liquidity in an imbalanced
@@ -115,11 +86,22 @@ contract ConvexOUSDMetaStrategy is BaseConvexMetaStrategy {
          * run it yourself using code in brownie/scripts/liqidity_test.py
          */
         // slither-disable-next-line divide-before-multiply
-        uint256 requiredMetapoolLpTokens = ((num3CrvTokens * crv3VirtualPrice) /
-            1e18 /
-            metapool.get_virtual_price()) *
-            1e18 *
-            2;
+        uint256 estimationRequiredMetapoolLpTokens = (((curvePool
+            .get_virtual_price() * 1e18) / metapool.get_virtual_price()) *
+            num3CrvTokens) / 1e18;
+
+        int128 metapool3CrvCoinIndex = int128(
+            _getMetapoolCoinIndex(address(pTokenAddress))
+        );
+        // add 10% margin to the calculation of required tokens
+        uint256 estimatedMetapoolLPWithMargin = (estimationRequiredMetapoolLpTokens *
+                1100) / 1e3;
+        uint256 crv3ReceivedWithMargin = metapool.calc_withdraw_one_coin(
+            estimatedMetapoolLPWithMargin,
+            metapool3CrvCoinIndex
+        );
+        uint256 requiredMetapoolLpTokens = (estimatedMetapoolLPWithMargin *
+            num3CrvTokens) / crv3ReceivedWithMargin;
 
         require(
             requiredMetapoolLpTokens <= gaugeTokens,
@@ -140,61 +122,10 @@ contract ConvexOUSDMetaStrategy is BaseConvexMetaStrategy {
             true
         );
 
-        uint256[2] memory _minAmounts = [uint256(0), uint256(0)];
-        // always withdraw all of the available metapool LP tokens (similar to how we always deposit all)
-        uint256[2] memory removedCoins = metapool.remove_liquidity(
+        metapool.remove_liquidity_one_coin(
             metapoolErc20.balanceOf(address(this)),
-            _minAmounts
-        );
-
-        uint128 crvCoinIndex = _getMetapoolCoinIndex(pTokenAddress);
-        uint128 ousdCoinIndex = _getMetapoolCoinIndex(
-            address(metapoolMainToken)
-        );
-
-        // Receive too much 3crv
-        if (removedCoins[uint256(crvCoinIndex)] > num3CrvTokens) {
-            /**
-             * TODO: should there be a gas saving threshold, to not perform a swap if value diff is
-             * relatively small
-             */
-            // slither-disable-next-line unused-return
-            metapool.exchange(
-                int128(crvCoinIndex),
-                int128(ousdCoinIndex),
-                removedCoins[uint256(crvCoinIndex)] - num3CrvTokens,
-                0
-            );
-        }
-        // We don't have enough 3CRV we need to swap for more
-        else {
-            uint256 required3Crv = num3CrvTokens -
-                removedCoins[uint256(crvCoinIndex)];
-            /**
-             * We first multiply the required3CRV with the virtual price so that we get a dollar
-             * value (i.e. OUSD value) of 3CRV required and we increase that by 5% for safety threshold
-             */
-            // slither-disable-next-line divide-before-multiply
-            uint256 ousdWithThreshold = (((required3Crv * crv3VirtualPrice) /
-                1e18) * 105) / 100;
-            uint256 crv3Received = metapool.get_dy(
-                int128(ousdCoinIndex), // Index value of the coin to send
-                int128(crvCoinIndex), // Index value of the coin to receive
-                ousdWithThreshold // The amount of first coin being exchanged
-            );
-
-            // slither-disable-next-line unused-return
-            metapool.exchange(
-                int128(ousdCoinIndex),
-                int128(crvCoinIndex),
-                // below is ousd to swap
-                (required3Crv * ousdWithThreshold) / crv3Received,
-                0
-            );
-        }
-
-        IVault(vaultAddress).redeemForStrategy(
-            metapoolMainToken.balanceOf(address(this))
+            metapool3CrvCoinIndex,
+            num3CrvTokens
         );
     }
 
@@ -208,15 +139,14 @@ contract ConvexOUSDMetaStrategy is BaseConvexMetaStrategy {
             true
         );
 
-        uint256[2] memory _minAmounts = [uint256(0), uint256(0)];
-        // slither-disable-next-line unused-return
-        metapool.remove_liquidity(
-            metapoolErc20.balanceOf(address(this)),
-            _minAmounts
+        uint128 metapool3CrvCoinIndex = _getMetapoolCoinIndex(
+            address(pTokenAddress)
         );
-
-        IVault(vaultAddress).redeemForStrategy(
-            metapoolMainToken.balanceOf(address(this))
+        // // always withdraw all of the available metapool LP tokens (similar to how we always deposit all)
+        uint256 removed3Crv = metapool.remove_liquidity_one_coin(
+            metapoolErc20.balanceOf(address(this)),
+            int128(metapool3CrvCoinIndex),
+            uint256(0)
         );
     }
 }

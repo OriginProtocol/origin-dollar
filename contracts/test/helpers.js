@@ -59,6 +59,10 @@ function ousdUnits(amount) {
   return parseUnits(amount, 18);
 }
 
+function fraxUnits(amount) {
+  return parseUnits(amount, 18);
+}
+
 function ousdUnitsFormat(amount) {
   return formatUnits(amount, 18);
 }
@@ -299,6 +303,7 @@ const getAssetAddresses = async (deployments) => {
       uniswapV3Router: (await deployments.get("MockUniswapRouter")).address,
       sushiswapRouter: (await deployments.get("MockUniswapRouter")).address,
     };
+
     try {
       /* Metapool gets deployed in 001_core instead of 000_mocks and is requested even when
        * metapool is not yet deployed. Just return without metapool info if it is not
@@ -310,6 +315,22 @@ const getAssetAddresses = async (deployments) => {
       // token is implemented by the same contract as the metapool
       addressMap.metapoolToken = (
         await deployments.get("MockCurveMetapool")
+      ).address;
+    } catch (e) {
+      // do nothing
+    }
+
+    try {
+      /* Metapool gets deployed in 001_core instead of 000_mocks and is requested even when
+       * metapool is not yet deployed. Just return without metapool info if it is not
+       * yet available.
+       */
+      addressMap.ThreePoolFRAXMetapool = (
+        await deployments.get("MockCurveFraxMetapool")
+      ).address;
+      // token is implemented by the same contract as the metapool
+      addressMap.fraxMetapoolToken = (
+        await deployments.get("MockCurveFraxMetapool")
       ).address;
     } catch (e) {
       // do nothing
@@ -400,6 +421,7 @@ module.exports = {
   daiUnits,
   ognUnits,
   ethUnits,
+  fraxUnits,
   oracleUnits,
   units,
   daiUnitsFormat,
