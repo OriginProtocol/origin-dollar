@@ -2,6 +2,9 @@ import * as Sentry from '@sentry/node'
 import { RewriteFrames } from '@sentry/integrations'
 import getConfig from 'next/config'
 
+const isStaging = process.env.STAGING === 'true'
+const isProduction = process.env.NODE_ENV === 'production'
+
 export const initSentry = () => {
   if (!process.env.SENTRY_DSN) {
     return
@@ -10,7 +13,7 @@ export const initSentry = () => {
   const config = getConfig()
   const distDir = `${config.serverRuntimeConfig.rootDir}/.next`
   Sentry.init({
-    enabled: process.env.NODE_ENV === 'production',
+    enabled: isProduction || isStaging,
     integrations: [
       new RewriteFrames({
         iteratee: (frame) => {
