@@ -52,7 +52,8 @@ const Layout = ({
   const burnDays = days === 0 ? 1 : days
 
   const stakes = useStoreState(StakeStore, (s) => s)
-  const showStakingBanner = dapp && (stakes.stakes || []).length !== 0 && !isStakePage
+  const showStakingBanner =
+    dapp && (stakes.stakes || []).length !== 0 && !isStakePage
   const { pathname } = useRouter()
 
   const notice = showStakingBanner || burnDays >= 0
@@ -198,8 +199,9 @@ const Layout = ({
               <>
                 {fbt(
                   'Only ' +
-                  fbt.param('burn-days', burnDays) +
-                  ' days left to claim your OGV before the burn', 'Burn notice'
+                    fbt.param('burn-days', burnDays) +
+                    ' days left to claim your OGV before the burn',
+                  'Burn notice'
                 )}
                 <a
                   href={AIRDROP_URL}
