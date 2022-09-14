@@ -149,7 +149,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
           <div
             className={classnames(
               'banner align-items-center justify-content-center',
-              { dapp, burn: pathname === '/burn' }
+              { dapp }
             )}
           >
             <div className="triangle d-none d-xl-block"></div>
@@ -293,21 +293,6 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
                     </Link>
                   </li>
                   <li
-                    className={classnames(
-                      `nav-item ${isMobile ? '' : 'burn'}`,
-                      {
-                        active: pathname === '/burn',
-                        gradient1: !isMobile && pathname !== '/burn',
-                      }
-                    )}
-                  >
-                    <Link href={adjustLinkHref('/burn')}>
-                      <a className="nav-link">
-                        {fbt('Burn', 'Burn page link')}
-                      </a>
-                    </Link>
-                  </li>
-                  <li
                     className={classnames('nav-item', {
                       active: pathname === '/earn-info',
                     })}
@@ -416,10 +401,6 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
           border-top: 6px solid transparent;
           border-right: 8px solid white;
           border-bottom: 6px solid transparent;
-        }
-
-        li.burn:not(.active) {
-          font-weight: 700;
         }
 
         .navbar-brand {
