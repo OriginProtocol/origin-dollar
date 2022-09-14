@@ -14,6 +14,7 @@ export const initSentry = () => {
   const distDir = `${config.serverRuntimeConfig.rootDir}/.next`
   Sentry.init({
     enabled: isProduction || isStaging,
+    environment: isProduction ? 'production' : 'staging',
     integrations: [
       new RewriteFrames({
         iteratee: (frame) => {
