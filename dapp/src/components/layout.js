@@ -9,6 +9,7 @@ import { useCookies } from 'react-cookie'
 import { fbt } from 'fbt-runtime'
 import { useWeb3React } from '@web3-react/core'
 import { get } from 'lodash'
+import moment from 'moment'
 
 import { useEagerConnect } from 'utils/hooks'
 import AccountStore from 'stores/AccountStore'
@@ -46,9 +47,15 @@ const Layout = ({
     get(s, 'rebaseOptedOut')
   )
 
+  const burn = moment('2022-10-10T00:00:00.000Z')
+  const days = burn.diff(moment(), 'days')
+  const burnDays = days === 0 ? 1 : days
+
   const stakes = useStoreState(StakeStore, (s) => s)
-  const showStakingBanner = (stakes.stakes || []).length !== 0 && !isStakePage
+  const showStakingBanner = dapp && (stakes.stakes || []).length !== 0 && !isStakePage
   const { pathname } = useRouter()
+
+  const notice = showStakingBanner || burnDays >= 0
 
   const optIn = async () => {
     try {
@@ -155,52 +162,58 @@ const Layout = ({
           </a>
         </div>
       </div>
-      <div
-        className={classnames(
-          `notice ${showStakingBanner ? 'staking pt-2' : 'pt-3'} ${
-            pathname === '/burn' ? 'burn' : ''
-          } text-white text-center pb-3`,
-          {
-            dapp,
-          }
-        )}
-      >
-        <div className="container d-flex flex-column flex-md-row align-items-center">
-          {showStakingBanner ? (
-            <>
-              <div className="d-flex flex-column mt-0 justify-content-center px-4 px-md-0 text-md-left">
-                <div className="title-text">
-                  {fbt(
-                    'Changes are coming to OGN staking.',
-                    'Changes are coming to OGN staking.'
-                  )}
-                </div>
-                <div className="text">
-                  {fbt(
-                    'Your existing stakes will not be impacted. Claim your OGN at the end of your staking period.',
-                    'Your existing stakes will not be impacted. Claim your OGN at the end of your staking period.'
-                  )}
-                </div>
-              </div>
-              <div className="btn btn-dark mt-2 ml-md-auto">
-                <Link href={adjustLinkHref('/earn')}>Legacy staking</Link>
-              </div>
-            </>
-          ) : (
-            <>
-              {fbt('OGV airdrop is live!', 'Airdrop notice')}
-              <a
-                href={AIRDROP_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn btn-dark mt-3 mt-md-0 ml-md-auto"
-              >
-                Check eligibility
-              </a>
-            </>
+      {notice && (
+        <div
+          className={classnames(
+            `notice ${showStakingBanner ? 'staking pt-2' : 'pt-3'} ${
+              pathname === '/burn' ? 'burn' : ''
+            } text-white text-center pb-3`,
+            {
+              dapp,
+            }
           )}
+        >
+          <div className="container d-flex flex-column flex-md-row align-items-center">
+            {showStakingBanner ? (
+              <>
+                <div className="d-flex flex-column mt-0 justify-content-center px-4 px-md-0 text-md-left">
+                  <div className="title-text">
+                    {fbt(
+                      'Changes are coming to OGN staking.',
+                      'Changes are coming to OGN staking.'
+                    )}
+                  </div>
+                  <div className="text">
+                    {fbt(
+                      'Your existing stakes will not be impacted. Claim your OGN at the end of your staking period.',
+                      'Your existing stakes will not be impacted. Claim your OGN at the end of your staking period.'
+                    )}
+                  </div>
+                </div>
+                <div className="btn btn-dark mt-2 ml-md-auto">
+                  <Link href={adjustLinkHref('/earn')}>Legacy staking</Link>
+                </div>
+              </>
+            ) : (
+              <>
+                {fbt(
+                  'Only ' +
+                  fbt.param('burn-days', burnDays) +
+                  ' days left to claim your OGV before the burn', 'Burn notice'
+                )}
+                <a
+                  href={AIRDROP_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-dark mt-3 mt-md-0 ml-md-auto"
+                >
+                  Check eligibility
+                </a>
+              </>
+            )}
+          </div>
         </div>
-      </div>
+      )}
       <main className={classnames({ dapp, short, shorter, medium })}>
         {dapp && <div className="container">{children}</div>}
         {!dapp && children}
