@@ -28,21 +28,23 @@ main()
         cp -r deployments/mainnet deployments/hardhat
         echo "No running node detected spinning up a fresh one"
     else
-        mineresp=$(curl -s -H "Content-Type: application/json" -X POST --data '{"id":1,"jsonrpc":"2.0","method":"evm_mine"}' "$LOCAL_PROVIDER_URL")
+        # Fetch latest block number from hardhat instance
         blockresp=$((curl -s -H "Content-Type: application/json" -X POST --data '{"id":1,"jsonrpc":"2.0","method":"eth_blockNumber"}' "$LOCAL_PROVIDER_URL") | jq -r '.result')
         blocknum=$((16#${blockresp:2}))
         export FORK_BLOCK_NUMBER=$blocknum
 
+        # Hardhat has the habit of not using blocks with less than 32 confirmations
+        # Force it to use the latest block
         echo "Connecting to node $LOCAL_PROVIDER_URL using block number: $FORK_BLOCK_NUMBER"
-
-        # params+="--deploy-fixture "
 
         cp -r deployments/localhost deployments/hardhat
     fi
 
     if [ -z "$1" ]; then
+        # Run all files with `.fork-test.js` suffix when no param is given
         params+="test/**/*.fork-test.js"
     else
+        # Run specifc files when a param is given
         params+=($1)
     fi
 
