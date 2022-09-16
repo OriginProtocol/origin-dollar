@@ -67,7 +67,6 @@ contract ConvexGeneralizedMetaStrategy is BaseConvexMetaStrategy {
      */
     function _lpWithdraw(uint256 num3CrvTokens) internal override {
         IERC20 metapoolErc20 = IERC20(address(metapool));
-        IERC20 threePoolLp = IERC20(pTokenAddress);
         ICurvePool curvePool = ICurvePool(platformAddress);
 
         uint256 gaugeTokens = IRewardStaking(cvxRewardStakerAddress).balanceOf(
@@ -145,8 +144,8 @@ contract ConvexGeneralizedMetaStrategy is BaseConvexMetaStrategy {
         uint128 metapool3CrvCoinIndex = _getMetapoolCoinIndex(
             address(pTokenAddress)
         );
-        // // always withdraw all of the available metapool LP tokens (similar to how we always deposit all)
-        uint256 removed3Crv = metapool.remove_liquidity_one_coin(
+        // always withdraw all of the available metapool LP tokens (similar to how we always deposit all)
+        metapool.remove_liquidity_one_coin(
             metapoolErc20.balanceOf(address(this)),
             int128(metapool3CrvCoinIndex),
             uint256(0)

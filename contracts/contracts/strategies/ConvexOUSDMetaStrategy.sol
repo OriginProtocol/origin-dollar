@@ -95,7 +95,6 @@ contract ConvexOUSDMetaStrategy is BaseConvexMetaStrategy {
      */
     function _lpWithdraw(uint256 num3CrvTokens) internal override {
         IERC20 metapoolErc20 = IERC20(address(metapool));
-        IERC20 threePoolLp = IERC20(pTokenAddress);
         ICurvePool curvePool = ICurvePool(platformAddress);
 
         uint256 gaugeTokens = IRewardStaking(cvxRewardStakerAddress).balanceOf(
