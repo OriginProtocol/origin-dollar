@@ -6,6 +6,7 @@ import ContractStore from 'stores/ContractStore'
 import addresses from 'constants/contractAddresses'
 import { formatCurrency, getRewardsApy } from 'utils/math'
 import { assetRootPath } from 'utils/image'
+import withIsMobile from 'hoc/withIsMobile'
 
 import Layout from 'components/layout'
 import Nav from 'components/Nav'
@@ -85,7 +86,7 @@ const renderer = ({ days, hours, minutes, seconds, completed }) => {
   }
 }
 
-export default function Burn({ locale, onLocale }) {
+const Burn = ({ locale, onLocale, isMobile }) => {
   const ogv = useStoreState(ContractStore, (s) => s.ogv || 0)
   const veogv = useStoreState(ContractStore, (s) => s.veogv || 0)
   const [totalStaked, setTotalStaked] = useState()
@@ -192,7 +193,7 @@ export default function Burn({ locale, onLocale }) {
             )}% `}</span>
             {fbt('of initial supply', ' of initial supply')}
           </h3>
-          <div className="links flex-row">
+          <div className="links">
             <div className="link">
               <a
                 href={
@@ -245,9 +246,25 @@ export default function Burn({ locale, onLocale }) {
               accounts. Additional supply reductions occur through periodic
               automated buybacks funded by yield from OUSD.
             </div>
+            <div className="link mt-2">
+              <a
+                href={
+                  'https://blog.originprotocol.com/tokenomics-retroactive-rewards-and-prelaunch-liquidity-mining-campaign-for-ogv-1b20b8ab41c8'
+                }
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <span className="gradient4">Learn more</span>
+                <img
+                  src={assetRootPath('/images/external-link.svg')}
+                  className="external-link"
+                  alt="External link"
+                />
+              </a>
+            </div>
           </div>
           <div className="stats d-flex flex-column">
-            <div className="d-flex flex-row">
+            <div className={`d-flex layout`}>
               <div className="info-box airdrop">
                 <div className="medium mb-3">Airdrop allocation stats</div>
                 <div className="grey">Airdrop total</div>
@@ -257,8 +274,8 @@ export default function Burn({ locale, onLocale }) {
                   </span>
                   <span className="small">{' OGV'}</span>
                 </div>
-                <div className="d-flex flex-row">
-                  <div className="mr-lg-5 mr-md-3">
+                <div className={`d-flex layout`}>
+                  <div className={`mr-lg-5 mr-md-3 ${isMobile ? 'mb-3' : ''}`}>
                     <div className="text-container">
                       <img
                         src={assetRootPath('/images/purple-dot-dark.svg')}
@@ -290,7 +307,7 @@ export default function Burn({ locale, onLocale }) {
                   </div>
                 </div>
               </div>
-              <div className="info-box claim">
+              <div className={`info-box claim ${isMobile ? 'text-center' : ''}`}>
                 <div className="medium mb-3">Claim stats</div>
                 <div className="grey">Tokens claimed</div>
                 <div className="mb-4">
@@ -304,8 +321,8 @@ export default function Burn({ locale, onLocale }) {
                     2
                   )}%)*`}</span>
                 </div>
-                <div className="d-flex flex-row">
-                  <div className="mr-lg-5 mr-md-3">
+                <div className={`d-flex layout`}>
+                  <div className={`mr-lg-5 mr-md-3 ${isMobile ? 'mb-3' : ''}`}>
                     <div className="text-container grey">OGN holders</div>
                     <span className="medium">
                       {formatCurrency(
@@ -340,18 +357,18 @@ export default function Burn({ locale, onLocale }) {
                 </div>
               </div>
             </div>
-            <div className="info-box stake d-flex flex-row">
+            <div className={`info-box stake d-flex layout ${isMobile ? 'text-center' : ''}`}>
               <div>
                 <div className="medium mb-4">Staking stats</div>
-                <div className="d-flex flex-row">
-                  <div className="mr-lg-5 mr-md-4">
+                <div className="d-flex layout">
+                  <div className={`mr-lg-5 mr-md-4 ${isMobile ? 'mb-3' : ''}`}>
                     <div className="text-container grey">Total staked</div>
                     <span className="large">
                       {formatCurrency(totalStaked, 0)}
                     </span>
                     <span className="small">{' OGV'}</span>
                   </div>
-                  <div className="ml-lg-3">
+                  <div className={`ml-lg-3 ${isMobile ? 'mb-3' : ''}`}>
                     <div className="text-container grey">Percentage staked</div>
                     <span className="large">{`${formatCurrency(
                       (totalStaked / totalSupply) * 100,
@@ -507,10 +524,14 @@ export default function Burn({ locale, onLocale }) {
           border: 0;
           border-radius: 50px;
           white-space: nowrap;
-          margin-top: 10px;
+          margin: 10px auto 0 auto;
           padding: 15px 0px;
           text-align: center;
           width: 100%;
+        }
+
+        .layout {
+          flex-direction: row;
         }
 
         .grey {
@@ -574,12 +595,21 @@ export default function Burn({ locale, onLocale }) {
         }
 
         @media (max-width: 799px) {
+          .info-box {
+            width: 95% !important;
+          }
+  
           .stats {
-            display: none !important;
+            margin: 50px auto 0 auto;
           }
 
-          .footnote {
-            display: none !important;
+          .info-box.airdrop {
+            background-size: 40vw;
+          }
+
+          .apy {
+            align-self: normal;
+            margin: 0;
           }
 
           section.burn {
@@ -590,6 +620,10 @@ export default function Burn({ locale, onLocale }) {
           .container {
             padding-left: 30px;
             padding-right: 30px;
+          }
+
+          .layout {
+            flex-direction: column;
           }
 
           h1 {
@@ -609,14 +643,6 @@ export default function Burn({ locale, onLocale }) {
             width: 40%;
           }
 
-          .links {
-            display: flex;
-          }
-
-          .link {
-            width: 50%;
-          }
-
           .ogv-logo {
             width: 15%;
             margin-bottom: 2vw;
@@ -626,3 +652,5 @@ export default function Burn({ locale, onLocale }) {
     </Layout>
   )
 }
+
+export default withIsMobile(Burn)
