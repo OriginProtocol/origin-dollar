@@ -596,11 +596,14 @@ const Burn = ({ locale, onLocale, isMobile }) => {
 
         @media (max-width: 799px) {
           .info-box {
-            width: 95% !important;
+            width: 100% !important;
+            margin-left: 0;
+            margin-right: 0;
           }
   
           .stats {
             margin: 50px auto 0 auto;
+            width: 100%;
           }
 
           .info-box.airdrop {
