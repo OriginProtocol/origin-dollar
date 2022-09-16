@@ -49,6 +49,9 @@ main()
     fi
 
     FORK=true IS_TEST=true npx --no-install hardhat test ${params[@]}
+
+    # Cleanup
+    rm -rf deployments/hardhat
 }
 
 main "$@"

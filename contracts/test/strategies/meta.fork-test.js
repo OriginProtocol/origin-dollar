@@ -1,91 +1,107 @@
-const { loadFixture } = require('ethereum-waffle')
-const { ethers } = require('hardhat')
-const addresses = require('../../utils/addresses')
-const { isForkTest } = require('../helpers')
-const { convexMetaVaultFixture } = require('../_fixture')
+const { expect } = require("chai");
+
+const { loadFixture } = require("ethereum-waffle");
+const { isForkTest, expectApproxSupply, units } = require("../helpers");
+const { convexMetaVaultFixture } = require("../_fixture");
 
 // Ugly hack to avoid running these tests when running `npx hardhat test` directly.
 // A right way would be to add suffix to files and use patterns to filter
-const forkDescribe = isForkTest ? describe : describe.skip
+const forkDescribe = isForkTest ? describe : describe.skip;
 
-forkDescribe('Convex 3pool/OUSD Meta Strategy', function () {
-  this.timeout(0)
+forkDescribe("Convex 3pool/OUSD Meta Strategy", function () {
+  this.timeout(0);
 
-  let fixture
+  let fixture;
   beforeEach(async () => {
-    fixture = await loadFixture(balancedMetaPoolFixture)
-  })
+    fixture = await loadFixture(convexMetaVaultFixture);
+  });
 
-  async function balancedMetaPoolFixture() {
-    const f = await loadFixture(convexMetaVaultFixture)
-    await balanceMetaPool(f)
-    return f
-  }
+  describe("Mint", function () {
+    async function mintTest(user, asset, amount = "30000") {
+      const { vault, ousd, usdt, ousdMetaPool, cvxBooster } = fixture;
 
-  async function balanceMetaPool(_fixture = fixture) {
-    const { OUSDMetaPool, originTeam, threePoolToken } = _fixture
-    const ousd = await OUSDMetaPool.connect(originTeam).balances(0)
-    const crv3 = await OUSDMetaPool.connect(originTeam).balances(1)
-    const diff = ousd.gt(crv3) ? ousd.sub(crv3) : crv3.sub(ousd)
-    console.log(`Trying to balance metapool...`)
-    console.log(`OUSD: ${ousd.toString()}`)
-    console.log(`3CRV: ${crv3.toString()}`)
-    console.log(`Diff: ${diff.toString()}`)
+      const unitAmount = await units(amount, asset);
 
-    const bal = await threePoolToken.connect(originTeam).balanceOf(originTeam.getAddress())
-    console.log('Bal :', bal.toString())
+      const currentSupply = await ousd.totalSupply();
+      const currentBalance = await ousd.connect(user).balanceOf(user.address);
 
-    if (ousd.gt(crv3)) {
-      await tiltMetapoolTo3CRV(diff.div(2), _fixture)
-    } else if (crv3.gt(ousd)) {
-      await tiltMetapoolToOUSD(diff.div(2), _fixture)
+      // Mint OUSD w/ asset
+      await vault.connect(user).mint(asset.address, unitAmount, 0);
+
+      // Ensure 2x OUSD has been added to supply (in case of USDT)
+      // 1x for USDC and DAI
+      await expectApproxSupply(
+        ousd,
+        (await units(amount, ousd))
+          .mul(asset.address === usdt.address ? 2 : 1)
+          .add(currentSupply)
+      );
+
+      // Ensure user has correct balance (w/ 1% slippage tolerance)
+      const newBalance = await ousd.connect(user).balanceOf(user.address);
+      expect(newBalance).to.approxEqualTolerance(
+        currentBalance.add(await units(amount, ousd)),
+        1
+      );
+
+      // // TODO: Check why this is zero on fork for USDT??
+      // if (asset.address === usdt.address) {
+      //   console.log(await ousdMetaPool.connect(user).balanceOf(cvxBooster.address))
+      // }
     }
-  }
 
-  async function tiltMetapoolToOUSD(amount, _fixture = fixture) {
-    console.log(`Tilting MetaPool to OUSD by ${amount}`)
-    const { OUSDMetaPool, originTeam } = _fixture
-    await OUSDMetaPool.connect(originTeam)['exchange(int128,int128,uint256,uint256)'](0, 1, amount.toString(), 0)
-  }
+    it("Should stake USDT in Cruve guage via metapool", async function () {
+      const { josh, usdt } = fixture;
+      await mintTest(josh, usdt);
+    });
 
-  async function tiltMetapoolTo3CRV(amount, _fixture = fixture) {
-    console.log(`Tilting MetaPool to 3CRV by ${amount}`)
-    const { OUSDMetaPool, originTeam } = _fixture
-    await OUSDMetaPool.connect(originTeam)['exchange(int128,int128,uint256,uint256)'](1, 0, amount.toString(), 0)
-  }
+    it("Should NOT stake USDC in Cruve guage via metapool", async function () {
+      const { matt, usdc } = fixture;
+      await mintTest(matt, usdc, "34500");
+    });
 
-  describe('Balanced metapool', () => {
-    it('Add equal liquidity', async () => {
-      const { ousd, usdt, matt } = fixture
-  
-      // # always leave the balancing call. Even if we want to tilt the pool we first want to balance
-      // # it to mitigate the pre-existing state
-      // balance_metapool()
-  
-      // # un-comment any of the below two to make the initial state of the pool balanced/unbalanced
-      // #tiltMetapoolTo3CRV(0.25*1e6*1e18)
-      // tiltMetapoolToOUSD(0.25*1e6*1e18)
-  
-      // show_metapool_balances()
-      // # un-comment any of the liquidity adding strategies
-      // # [crv3LiquidityAdded, ousdLiquidityAdded, lp_added] = addEqualLiquidity()
-      // [crv3LiquidityAdded, ousdLiquidityAdded, lp_added] = addLiquidityToBeEqualInPool()
-      // # [crv3LiquidityAdded, ousdLiquidityAdded, lp_added] = addTwiceTheOUSD()
-      // show_metapool_balances()
-      // # un-comment any of the liquidity removing strategies
-      // removeLiquidityBalanced(crv3LiquidityAdded, ousdLiquidityAdded, lp_added)
-      // #removeLiquidityImbalanced(crv3LiquidityAdded, ousdLiquidityAdded, lp_added)
-  
-      // show_metapool_balances()
-    })
+    it("Should NOT stake DAI in Cruve guage via metapool", async function () {
+      const { anna, dai } = fixture;
+      await mintTest(anna, dai, "43200");
+    });
+  });
 
-    it('Add equal liquidity 2', async () => {
-      const { ousd, usdt, matt } = fixture
-    })
+  describe("Redeem", function () {
+    it("Should redeem", async () => {
+      const { vault, ousd, usdt, usdc, dai, anna } = fixture;
 
-    it('Add equal liquidity 3', async () => {
-      const { ousd, usdt, matt } = fixture
-    })
-  })
-})
+      // // Force vault to reallocate USDT to OUSDMetaStrategy.
+      // // Not necessary as of now, since vaultBuffer is zero on mainnet
+      // await vault.connect(originTeam).allocate()
 
+      const amount = "10000";
+
+      // Mint with all three assets
+      for (const asset of [usdt, usdc, dai]) {
+        await vault
+          .connect(anna)
+          .mint(asset.address, await units(amount, asset), 0);
+      }
+
+      // Total supply should be up by (10k x 2) + 10k + 10k = 40k
+      const currentSupply = await ousd.totalSupply();
+      const currentBalance = await ousd.connect(anna).balanceOf(anna.address);
+
+      // Now try to redeem 30k
+      await vault.connect(anna).redeem(units("30000", ousd), 0);
+
+      // Supply should be down by 40k
+      await expectApproxSupply(
+        ousd,
+        currentSupply.sub((await units(amount, ousd)).mul(4))
+      );
+
+      // User balance should be down by 30k
+      const newBalance = await ousd.connect(anna).balanceOf(anna.address);
+      expect(newBalance).to.approxEqualTolerance(
+        currentBalance.sub((await units(amount, ousd)).mul(3)),
+        1
+      );
+    });
+  });
+});

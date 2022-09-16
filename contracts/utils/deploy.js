@@ -325,13 +325,13 @@ function deploymentWithProposal(opts, fn) {
   } else {
     main.skip = () => {
       if (isFork) {
-        const networkName = isForkTest ? 'hardhat' : 'localhost'
-        const migrations = require(`./../deployments/${networkName}/.migrations.json`)
-        return Boolean(migrations[deployName])
+        const networkName = isForkTest ? "hardhat" : "localhost";
+        const migrations = require(`./../deployments/${networkName}/.migrations.json`);
+        return Boolean(migrations[deployName]);
       } else {
-        return !(isMainnet || isRinkeby) || isSmokeTest || isFork
+        return !(isMainnet || isRinkeby) || isSmokeTest || isFork;
       }
-    }
+    };
   }
   return main;
 }

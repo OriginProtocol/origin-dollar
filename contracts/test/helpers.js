@@ -13,6 +13,19 @@ chai.Assertion.addMethod("approxEqual", function (expected, message) {
 });
 
 chai.Assertion.addMethod(
+  "approxEqualTolerance",
+  function (expected, maxTolerancePct = 1, message = undefined) {
+    const actual = this._obj;
+    chai
+      .expect(actual, message)
+      .gte(expected.mul(100 - maxTolerancePct).div(100));
+    chai
+      .expect(actual, message)
+      .lte(expected.mul(100 + maxTolerancePct).div(100));
+  }
+);
+
+chai.Assertion.addMethod(
   "approxBalanceOf",
   async function (expected, contract, message) {
     var user = this._obj;
