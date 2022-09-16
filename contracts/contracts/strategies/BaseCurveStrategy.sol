@@ -241,6 +241,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
      * @dev Call the necessary approvals for the Curve pool and gauge
      * @param _asset Address of the asset
      */
+    // solhint-disable-next-line no-unused-vars
     function _abstractSetPToken(address _asset, address _pToken)
         internal
         override

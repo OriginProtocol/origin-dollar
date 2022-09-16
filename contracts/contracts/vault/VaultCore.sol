@@ -584,6 +584,7 @@ contract VaultCore is VaultStorage {
      * @dev Falldown to the admin implementation
      * @notice This is a catch all for all functions not declared in core
      */
+     // solhint-disable-next-line no-complex-fallback
     fallback() external payable {
         bytes32 slot = adminImplPosition;
         assembly {
