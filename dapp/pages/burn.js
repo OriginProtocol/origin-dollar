@@ -307,7 +307,9 @@ const Burn = ({ locale, onLocale, isMobile }) => {
                   </div>
                 </div>
               </div>
-              <div className={`info-box claim ${isMobile ? 'text-center' : ''}`}>
+              <div
+                className={`info-box claim ${isMobile ? 'text-center' : ''}`}
+              >
                 <div className="medium mb-3">Claim stats</div>
                 <div className="grey">Tokens claimed</div>
                 <div className="mb-4">
@@ -357,7 +359,11 @@ const Burn = ({ locale, onLocale, isMobile }) => {
                 </div>
               </div>
             </div>
-            <div className={`info-box stake d-flex layout ${isMobile ? 'text-center' : ''}`}>
+            <div
+              className={`info-box stake d-flex layout ${
+                isMobile ? 'text-center' : ''
+              }`}
+            >
               <div>
                 <div className="medium mb-4">Staking stats</div>
                 <div className="d-flex layout">
@@ -600,7 +606,7 @@ const Burn = ({ locale, onLocale, isMobile }) => {
             margin-left: 0;
             margin-right: 0;
           }
-  
+
           .stats {
             margin: 50px auto 0 auto;
             width: 100%;
