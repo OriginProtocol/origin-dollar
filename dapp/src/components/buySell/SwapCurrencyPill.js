@@ -194,18 +194,6 @@ const CoinSelect = ({ selected, onChange, options = [] }) => {
           cursor: pointer;
         }
 
-        /*.dropdown-item.ousd {
-          background-color: #e2e3e5;
-        }
-
-        .dropdown-item.ousd:hover {
-          background-color: #d2d3d5;
-        }*/
-
-        .dropdown-item.ousd .coin {
-          color: #18314055;
-        }
-
         .dropdown-item:hover {
           background-color: #f2f3f5;
         }
