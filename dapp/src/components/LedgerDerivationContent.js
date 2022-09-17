@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
-import { ledgerConnector } from 'utils/connectors'
-import ContractStore from 'stores/ContractStore'
+import { ledgerConnector } from '@utils/connectors'
+import ContractStore from '@stores/ContractStore'
 import { useStoreState } from 'pullstate'
 import LedgerAccountContent from './LedgerAccountContent'
-import { assetRootPath } from 'utils/image'
+import { assetRootPath } from '@utils/image'
 import { zipObject } from 'lodash'
 
 const LEDGER_OTHER = "44'/60'/0'/0'"

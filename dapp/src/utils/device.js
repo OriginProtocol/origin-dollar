@@ -1,4 +1,4 @@
-import { providerName } from 'utils/web3'
+import { providerName } from '@utils/web3'
 
 export function isMobileDevice() {
   if (process.browser) {

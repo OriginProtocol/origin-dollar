@@ -2,15 +2,15 @@ import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
 import classnames from 'classnames'
 import { useStoreState } from 'pullstate'
-import withRpcProvider from 'hoc/withRpcProvider'
+import withRpcProvider from '@hoc/withRpcProvider'
 
-import PoolNameAndIcon from 'components/earn/PoolNameAndIcon'
-import { formatCurrency } from 'utils/math'
-import StakeModal from 'components/earn/modal/StakeModal'
-import ClaimModal from 'components/earn/modal/ClaimModal'
-import UnstakeModal from 'components/earn/modal/UnstakeModal'
-import SpinningLoadingCircle from 'components/SpinningLoadingCircle'
-import { assetRootPath } from 'utils/image'
+import PoolNameAndIcon from '@components/earn/PoolNameAndIcon'
+import { formatCurrency } from '@utils/math'
+import StakeModal from '@components/earn/modal/StakeModal'
+import ClaimModal from '@components/earn/modal/ClaimModal'
+import UnstakeModal from '@components/earn/modal/UnstakeModal'
+import SpinningLoadingCircle from '@components/SpinningLoadingCircle'
+import { assetRootPath } from '@utils/image'
 
 const LiquidityMiningWidget = ({ pool, rpcProvider }) => {
   const [showChinContents, setShowChinContents] = useState(false)

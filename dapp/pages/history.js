@@ -2,12 +2,12 @@ import React, { useEffect, useState } from 'react'
 import { useWeb3React } from '@web3-react/core'
 import { fbt } from 'fbt-runtime'
 
-import Layout from 'components/layout'
-import Nav from 'components/Nav'
-import BalanceHeader from 'components/buySell/BalanceHeader'
-import TransactionHistory from 'components/TransactionHistory'
-import GetOUSD from 'components/GetOUSD'
-import { assetRootPath } from 'utils/image'
+import Layout from '@components/layout'
+import Nav from '@components/Nav'
+import BalanceHeader from '@components/buySell/BalanceHeader'
+import TransactionHistory from '@components/TransactionHistory'
+import GetOUSD from '@components/GetOUSD'
+import { assetRootPath } from '@utils/image'
 
 export default function History({ locale, onLocale }) {
   const { active } = useWeb3React()

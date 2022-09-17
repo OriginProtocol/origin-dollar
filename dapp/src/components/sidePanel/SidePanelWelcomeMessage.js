@@ -2,9 +2,9 @@ import React, { useState } from 'react'
 import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
 
-import { formatCurrency } from 'utils/math'
-import AccountStore from 'stores/AccountStore'
-import ContractStore from 'stores/ContractStore'
+import { formatCurrency } from '@utils/math'
+import AccountStore from '@stores/AccountStore'
+import ContractStore from '@stores/ContractStore'
 
 const SidePanelWelcomeMessage = () => {
   const ousdExchangeRates = useStoreState(

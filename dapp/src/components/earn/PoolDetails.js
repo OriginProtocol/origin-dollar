@@ -1,18 +1,18 @@
 import React, { useEffect, useState } from 'react'
 import { fbt } from 'fbt-runtime'
-import { formatCurrency } from 'utils/math'
+import { formatCurrency } from '@utils/math'
 import { useWeb3React } from '@web3-react/core'
 
-import PoolNameAndIcon from 'components/earn/PoolNameAndIcon'
-import UniswapPoolLink from 'components/earn/UniswapPoolLink'
+import PoolNameAndIcon from '@components/earn/PoolNameAndIcon'
+import UniswapPoolLink from '@components/earn/UniswapPoolLink'
 import Link from 'next/link'
-import RewardsBoost from 'components/earn/RewardsBoost'
-import LiquidityWizard from 'components/earn/LiquidityWizard'
-import LiquidityMiningWidget from 'components/earn/LiquidityMiningWidget'
-import ApyModal from 'components/earn/modal/ApyModal'
-import GetOUSD from 'components/GetOUSD'
-import { assetRootPath } from 'utils/image'
-import { adjustLinkHref } from 'utils/utils'
+import RewardsBoost from '@components/earn/RewardsBoost'
+import LiquidityWizard from '@components/earn/LiquidityWizard'
+import LiquidityMiningWidget from '@components/earn/LiquidityMiningWidget'
+import ApyModal from '@components/earn/modal/ApyModal'
+import GetOUSD from '@components/GetOUSD'
+import { assetRootPath } from '@utils/image'
+import { adjustLinkHref } from '@utils/utils'
 
 export default function PoolDetails({ pool }) {
   const { account, active } = useWeb3React()

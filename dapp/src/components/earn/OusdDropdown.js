@@ -3,10 +3,10 @@ import classnames from 'classnames'
 import { useStoreState } from 'pullstate'
 import { fbt } from 'fbt-runtime'
 
-import AccountStore from 'stores/AccountStore'
-import Dropdown from 'components/Dropdown'
-import { formatCurrency, formatCurrencyAbbreviated } from 'utils/math'
-import { assetRootPath } from 'utils/image'
+import AccountStore from '@stores/AccountStore'
+import Dropdown from '@components/Dropdown'
+import { formatCurrency, formatCurrencyAbbreviated } from '@utils/math'
+import { assetRootPath } from '@utils/image'
 
 const OusdDropdown = ({}) => {
   const [open, setOpen] = useState(false)

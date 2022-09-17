@@ -1,10 +1,10 @@
 import React from 'react'
 import { fbt } from 'fbt-runtime'
 
-import withIsMobile from 'hoc/withIsMobile'
-import { formatCurrencyMinMaxDecimals, formatCurrency } from 'utils/math'
-import CircularProgressMeter from 'components/earn/CircularProgressMeter'
-import { assetRootPath } from 'utils/image'
+import withIsMobile from '@hoc/withIsMobile'
+import { formatCurrencyMinMaxDecimals, formatCurrency } from '@utils/math'
+import CircularProgressMeter from '@components/earn/CircularProgressMeter'
+import { assetRootPath } from '@utils/image'
 
 const CurrentStakeLockup = ({ stake, onDetailsClick, isMobile }) => {
   return (

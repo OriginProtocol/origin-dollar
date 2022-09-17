@@ -1,6 +1,6 @@
 import React from 'react'
-import Pool from 'components/earn/Pool'
-import { assetRootPath } from 'utils/image'
+import Pool from '@components/earn/Pool'
+import { assetRootPath } from '@utils/image'
 
 export default function SummaryHeaderStat({
   title,

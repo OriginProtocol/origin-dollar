@@ -1,4 +1,4 @@
-import { apyDayOptions } from 'utils/constants'
+import { apyDayOptions } from '@utils/constants'
 
 export default class ApyService {
   async fetchApy() {

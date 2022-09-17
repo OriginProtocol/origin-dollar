@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import classnames from 'classnames'
 import { fbt } from 'fbt-runtime'
 
-import { formatCurrency } from 'utils/math'
+import { formatCurrency } from '@utils/math'
 
 const StakeDetailEquation = ({
   duration,

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import AccountStore from 'stores/AccountStore'
+import AccountStore from '@stores/AccountStore'
 
 const withWalletSelectModal = (WrappedComponent) => {
   const Wrapper = (props) => {

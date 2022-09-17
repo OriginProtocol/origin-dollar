@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
-import Dropdown from 'components/Dropdown'
-import DownCaret from 'components/DownCaret'
+import Dropdown from '@components/Dropdown'
+import DownCaret from '@components/DownCaret'
 
 const ApySelect = ({ apyDayOptions, apyDays, setApyDays, nav, homepage }) => {
   const [open, setOpen] = useState(false)

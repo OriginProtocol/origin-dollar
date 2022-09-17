@@ -1,4 +1,4 @@
-import { displayCurrency } from 'utils/math'
+import { displayCurrency } from '@utils/math'
 
 export default class WousdService {
   async fetchWousdValue(account, contracts) {

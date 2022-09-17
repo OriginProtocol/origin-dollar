@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react'
 const ethers = require('ethers')
 
-import AccountStore from 'stores/AccountStore'
-import TransactionStore from 'stores/TransactionStore'
+import AccountStore from '@stores/AccountStore'
+import TransactionStore from '@stores/TransactionStore'
 import { useStoreState } from 'pullstate'
 
 const withRpcProvider = (WrappedComponent) => {

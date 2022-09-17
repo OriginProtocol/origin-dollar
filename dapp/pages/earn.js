@@ -1,9 +1,9 @@
 import React from 'react'
-import Layout from 'components/layout'
-import Nav from 'components/Nav'
+import Layout from '@components/layout'
+import Nav from '@components/Nav'
 
-import StakeUI from 'components/earn/StakeUI'
-import CurveStake from 'components/earn/CurveStake'
+import StakeUI from '@components/earn/StakeUI'
+import CurveStake from '@components/earn/CurveStake'
 
 const Stake = ({ locale, onLocale }) => {
   return (
@@ -20,8 +20,8 @@ export default Stake
 //
 // import { fbt } from 'fbt-runtime'
 // import { useStoreState } from 'pullstate'
-// import PoolsList from 'components/earn/PoolsList'
-// import PoolStore from 'stores/PoolStore'
+// import PoolsList from '@components/earn/PoolsList'
+// import PoolStore from '@stores/PoolStore'
 //
 // export default function Earn({ locale, onLocale }) {
 //   const pools = useStoreState(PoolStore, (s) => s.pools)

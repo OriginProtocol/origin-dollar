@@ -1,4 +1,4 @@
-import accountsToBeCompensated from 'constants/merkleProofedAccountsToBeCompensated.json'
+import accountsToBeCompensated from '@constants/merkleProofedAccountsToBeCompensated.json'
 
 export default function handler(req, res) {
   res.statusCode = 200

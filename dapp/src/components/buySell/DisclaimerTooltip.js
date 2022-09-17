@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
-import Dropdown from 'components/Dropdown'
-import { assetRootPath } from 'utils/image'
+import Dropdown from '@components/Dropdown'
+import { assetRootPath } from '@utils/image'
 
 const DisclaimerTooltip = ({
   children,

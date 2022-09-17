@@ -3,14 +3,14 @@ import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
 import { useRouter } from 'next/router'
 
-import ContractStore from 'stores/ContractStore'
+import ContractStore from '@stores/ContractStore'
 import useStake from 'hooks/useStake'
-import { sleep } from 'utils/utils'
-import { formatCurrencyMinMaxDecimals } from 'utils/math'
-import StakeDetailEquation from 'components/earn/StakeDetailEquation'
-import withRpcProvider from 'hoc/withRpcProvider'
-import SpinningLoadingCircle from 'components/SpinningLoadingCircle'
-import { assetRootPath } from 'utils/image'
+import { sleep } from '@utils/utils'
+import { formatCurrencyMinMaxDecimals } from '@utils/math'
+import StakeDetailEquation from '@components/earn/StakeDetailEquation'
+import withRpcProvider from '@hoc/withRpcProvider'
+import SpinningLoadingCircle from '@components/SpinningLoadingCircle'
+import { assetRootPath } from '@utils/image'
 
 const ClaimStakeModal = ({
   showModal,

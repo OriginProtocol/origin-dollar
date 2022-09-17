@@ -1,4 +1,4 @@
-import analytics from 'utils/analytics'
+import analytics from '@utils/analytics'
 const localStorageUserSourceKey = 'utm_source'
 
 let source

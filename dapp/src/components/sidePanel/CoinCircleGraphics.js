@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
-import { assetRootPath } from 'utils/image'
+import { assetRootPath } from '@utils/image'
 
 const CoinCircleGraphics = ({
   transaction,

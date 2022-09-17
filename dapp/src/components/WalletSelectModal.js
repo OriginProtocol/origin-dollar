@@ -2,10 +2,10 @@ import React, { useState } from 'react'
 import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
 
-import AccountStore from 'stores/AccountStore'
-import WalletSelectContent from 'components/WalletSelectContent'
-import LedgerDerivationContent from 'components/LedgerDerivationContent'
-import LedgerAccountContent from 'components/LedgerAccountContent'
+import AccountStore from '@stores/AccountStore'
+import WalletSelectContent from '@components/WalletSelectContent'
+import LedgerDerivationContent from '@components/LedgerDerivationContent'
+import LedgerAccountContent from '@components/LedgerAccountContent'
 
 const WalletSelectModal = ({}) => {
   const modalState = useStoreState(

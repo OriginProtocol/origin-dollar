@@ -4,20 +4,20 @@ import { useStoreState } from 'pullstate'
 
 import { ethers, BigNumber } from 'ethers'
 
-import AccountStore from 'stores/AccountStore'
-import ContractStore from 'stores/ContractStore'
-import ErrorModal from 'components/buySell/ErrorModal'
+import AccountStore from '@stores/AccountStore'
+import ContractStore from '@stores/ContractStore'
+import ErrorModal from '@components/buySell/ErrorModal'
 import { currencies } from '../../constants/Contract'
-import withRpcProvider from 'hoc/withRpcProvider'
-import WrapOusdPill from 'components/wrap/WrapOusdPill'
-import PillArrow from 'components/buySell/_PillArrow'
-import withIsMobile from 'hoc/withIsMobile'
-import { getUserSource } from 'utils/user'
-import usePrevious from 'utils/usePrevious'
-import ApproveSwap from 'components/buySell/ApproveSwap'
+import withRpcProvider from '@hoc/withRpcProvider'
+import WrapOusdPill from '@components/wrap/WrapOusdPill'
+import PillArrow from '@components/buySell/_PillArrow'
+import withIsMobile from '@hoc/withIsMobile'
+import { getUserSource } from '@utils/user'
+import usePrevious from '@utils/usePrevious'
+import ApproveSwap from '@components/buySell/ApproveSwap'
 import { useWeb3React } from '@web3-react/core'
 
-import analytics from 'utils/analytics'
+import analytics from '@utils/analytics'
 import {
   formatCurrencyMinMaxDecimals,
   removeCommas,
