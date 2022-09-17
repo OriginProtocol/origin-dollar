@@ -33,9 +33,7 @@ try {
 const config = {
   webpack: (config, { isServer, buildId }) => {
     // Fixes npm packages that depend on `fs` module
-    config.node = {
-      fs: 'empty',
-    }
+    config.resolve.fallback = { fs: false };
     /**
      * Returns environment variables as an object
      */
