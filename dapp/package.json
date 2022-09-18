@@ -100,15 +100,6 @@
     "sass": "^1.39.2",
     "use-analytics": "^0.0.5"
   },
-  "babel": {
-    "presets": [
-      "next/babel"
-    ],
-    "plugins": [
-      "babel-plugin-fbt",
-      "babel-plugin-fbt-runtime"
-    ]
-  },
   "husky": {
     "hooks": {
       "pre-push": "yarn run prettier:check"
