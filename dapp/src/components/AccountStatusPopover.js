@@ -2,11 +2,11 @@ import React from 'react'
 import { useWeb3React } from '@web3-react/core'
 import { fbt } from 'fbt-runtime'
 
-import { isCorrectNetwork } from '@utils/web3'
-import withWalletSelectModal from '@hoc/withWalletSelectModal'
-import GetOUSD from '@components/GetOUSD'
+import { isCorrectNetwork } from 'utils/web3'
+import withWalletSelectModal from 'hoc/withWalletSelectModal'
+import GetOUSD from 'components/GetOUSD'
 import Content from './_AccountStatusContent'
-import { assetRootPath } from '@utils/image'
+import { assetRootPath } from 'utils/image'
 
 const AccountStatusPopover = ({ className }) => {
   const { active, account, chainId } = useWeb3React()

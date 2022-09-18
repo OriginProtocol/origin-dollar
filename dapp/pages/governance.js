@@ -1,9 +1,9 @@
 import { fbt } from 'fbt-runtime'
 
-import Closing from '@components/Closing'
-import Layout from '@components/layout'
-import Nav from '@components/Nav'
-import { assetRootPath } from '@utils/image'
+import Closing from 'components/Closing'
+import Layout from 'components/layout'
+import Nav from 'components/Nav'
+import { assetRootPath } from 'utils/image'
 
 export default function Governance({ locale, onLocale }) {
   return (

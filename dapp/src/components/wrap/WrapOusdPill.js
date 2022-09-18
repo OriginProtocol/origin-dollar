@@ -3,15 +3,15 @@ import { useStoreState } from 'pullstate'
 import { fbt } from 'fbt-runtime'
 import { useWeb3React } from '@web3-react/core'
 
-import AccountStore from '@stores/AccountStore'
+import AccountStore from 'stores/AccountStore'
 import {
   formatCurrency,
   formatCurrencyMinMaxDecimals,
   truncateDecimals,
   checkValidInputForCoin,
   removeCommas,
-} from '@utils/math'
-import { assetRootPath } from '@utils/image'
+} from 'utils/math'
+import { assetRootPath } from 'utils/image'
 import { _ } from 'fbt-runtime/lib/fbt'
 
 const CoinImage = ({ small, coin }) => {

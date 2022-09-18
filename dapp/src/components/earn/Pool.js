@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { fbt } from 'fbt-runtime'
-import { formatCurrency } from '@utils/math'
-import PoolNameAndIcon from '@components/earn/PoolNameAndIcon'
-import UniswapPoolLink from '@components/earn/UniswapPoolLink'
-import RewardsBoost from '@components/earn/RewardsBoost'
-import { assetRootPath } from '@utils/image'
-import { adjustLinkHref } from '@utils/utils'
+import { formatCurrency } from 'utils/math'
+import PoolNameAndIcon from 'components/earn/PoolNameAndIcon'
+import UniswapPoolLink from 'components/earn/UniswapPoolLink'
+import RewardsBoost from 'components/earn/RewardsBoost'
+import { assetRootPath } from 'utils/image'
+import { adjustLinkHref } from 'utils/utils'
 
 export default function Pool({ pool }) {
   const [isOpen, setIsOpen] = useState(false)

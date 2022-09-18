@@ -1,5 +1,5 @@
 import React from 'react'
-import { assetRootPath } from '@utils/image'
+import { assetRootPath } from 'utils/image'
 
 export default function EtherscanLink({
   href,

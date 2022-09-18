@@ -2,19 +2,19 @@ import React, { useEffect, useState } from 'react'
 import { ethers, BigNumber } from 'ethers'
 import { useStoreState } from 'pullstate'
 import { get, minBy } from 'lodash'
-import AccountStore from '@stores/AccountStore'
+import AccountStore from 'stores/AccountStore'
 import {
   mintAbsoluteGasLimitBuffer,
   mintPercentGasLimitBuffer,
   redeemPercentGasLimitBuffer,
   approveCoinGasLimits,
   max_price,
-} from '@utils/constants'
-import { usePrevious } from '@utils/hooks'
+} from 'utils/constants'
+import { usePrevious } from 'utils/hooks'
 import useCurrencySwapper from 'hooks/useCurrencySwapper'
-import ContractStore from '@stores/ContractStore'
-import { calculateSwapAmounts, formatCurrency } from '@utils/math'
-import fetchWithTimeout from '@utils/fetchWithTimeout'
+import ContractStore from 'stores/ContractStore'
+import { calculateSwapAmounts, formatCurrency } from 'utils/math'
+import fetchWithTimeout from 'utils/fetchWithTimeout'
 import { find } from 'lodash'
 
 /* Swap estimator listens for input changes of the currency and amount users is attempting

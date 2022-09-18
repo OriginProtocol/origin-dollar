@@ -3,11 +3,11 @@ import classnames from 'classnames'
 import { useStoreState } from 'pullstate'
 import { fbt } from 'fbt-runtime'
 
-import AccountStore from '@stores/AccountStore'
-import Dropdown from '@components/Dropdown'
-import { formatCurrency, formatCurrencyAbbreviated } from '@utils/math'
-import CoinStore from '@stores/CoinStore'
-import { assetRootPath } from '@utils/image'
+import AccountStore from 'stores/AccountStore'
+import Dropdown from 'components/Dropdown'
+import { formatCurrency, formatCurrencyAbbreviated } from 'utils/math'
+import CoinStore from 'stores/CoinStore'
+import { assetRootPath } from 'utils/image'
 
 const OgnDropdown = ({}) => {
   const [open, setOpen] = useState(false)

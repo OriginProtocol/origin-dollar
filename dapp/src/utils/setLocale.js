@@ -1,5 +1,5 @@
 import { IntlViewerContext, init } from 'fbt-runtime'
-import Languages from '@constants/Languages'
+import Languages from 'constants/Languages'
 import analytics from './analytics'
 
 export default async function setLocale(newLocale, initialise = false) {

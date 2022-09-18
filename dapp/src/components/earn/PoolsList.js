@@ -1,5 +1,5 @@
 import React from 'react'
-import Pool from '@components/earn/Pool'
+import Pool from 'components/earn/Pool'
 
 export default function PoolsList({ title, pools, titleStyle }) {
   if (pools.length === 0) {

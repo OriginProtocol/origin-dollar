@@ -3,10 +3,10 @@ import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
 import { BigNumber } from 'ethers'
 
-import AccountStore from '@stores/AccountStore'
-import YieldStore from '@stores/YieldStore'
-import { animateValue } from '@utils/animation'
-import { usePrevious } from '@utils/hooks'
+import AccountStore from 'stores/AccountStore'
+import YieldStore from 'stores/YieldStore'
+import { animateValue } from 'utils/animation'
+import { usePrevious } from 'utils/hooks'
 
 const useExpectedYield = (isWrapped = false) => {
   const mintAnimationLimit = 0.01

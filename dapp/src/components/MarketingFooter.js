@@ -1,7 +1,7 @@
 import { fbt } from 'fbt-runtime'
-import analytics from '@utils/analytics'
-import { getDocsLink } from '@utils/getDocsLink'
-import { assetRootPath } from '@utils/image'
+import analytics from 'utils/analytics'
+import { getDocsLink } from 'utils/getDocsLink'
+import { assetRootPath } from 'utils/image'
 
 import EmailForm from './EmailForm'
 

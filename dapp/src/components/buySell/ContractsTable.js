@@ -3,13 +3,13 @@ import { useWeb3React } from '@web3-react/core'
 import { fbt } from 'fbt-runtime'
 import { find, sortBy } from 'lodash'
 import { useStoreState } from 'pullstate'
-import { formatCurrency } from '@utils/math'
-import analytics from '@utils/analytics'
-import { assetRootPath } from '@utils/image'
+import { formatCurrency } from 'utils/math'
+import analytics from 'utils/analytics'
+import { assetRootPath } from 'utils/image'
 
-import ContractStore from '@stores/ContractStore'
-import ConfirmationModal from '@components/buySell/ConfirmationModal'
-import Dropdown from '@components/Dropdown'
+import ContractStore from 'stores/ContractStore'
+import ConfirmationModal from 'components/buySell/ConfirmationModal'
+import Dropdown from 'components/Dropdown'
 
 const Info = ({ contract }) => {
   const [infoOpen, setInfoOpen] = useState(false)

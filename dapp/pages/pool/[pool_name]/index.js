@@ -1,13 +1,13 @@
 import React from 'react'
-import Layout from '@components/layout'
-import Nav from '@components/Nav'
-import PoolDetails from '@components/earn/PoolDetails'
+import Layout from 'components/layout'
+import Nav from 'components/Nav'
+import PoolDetails from 'components/earn/PoolDetails'
 import { useRouter } from 'next/router'
 import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
 
-import ContractStore from '@stores/ContractStore'
-import PoolStore from '@stores/PoolStore'
+import ContractStore from 'stores/ContractStore'
+import PoolStore from 'stores/PoolStore'
 
 export default function PoolDetailsPage({ locale, onLocale }) {
   const router = useRouter()

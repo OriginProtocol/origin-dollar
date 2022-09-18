@@ -1,12 +1,12 @@
 import { fbt } from 'fbt-runtime'
 
-import withIsMobile from '@hoc/withIsMobile'
+import withIsMobile from 'hoc/withIsMobile'
 
-import Closing from '@components/Closing'
-import GetOUSD from '@components/GetOUSD'
-import Layout from '@components/layout'
-import Nav from '@components/Nav'
-import { assetRootPath } from '@utils/image'
+import Closing from 'components/Closing'
+import GetOUSD from 'components/GetOUSD'
+import Layout from 'components/layout'
+import Nav from 'components/Nav'
+import { assetRootPath } from 'utils/image'
 
 export default function Earn({ locale, onLocale }) {
   return (

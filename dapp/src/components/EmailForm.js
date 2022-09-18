@@ -2,8 +2,8 @@ import React, { useState } from 'react'
 import classnames from 'classnames'
 import { fbt } from 'fbt-runtime'
 import { toast } from 'react-toastify'
-import analytics from '@utils/analytics'
-import { assetRootPath } from '@utils/image'
+import analytics from 'utils/analytics'
+import { assetRootPath } from 'utils/image'
 
 const EmailForm = ({ footer }) => {
   const [email, setEmail] = useState('')

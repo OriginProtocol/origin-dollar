@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { fbt } from 'fbt-runtime'
-import { assetRootPath } from '@utils/image'
+import { assetRootPath } from 'utils/image'
 
 export default function IPFSDappLink({ dapp, css }) {
   const [displayIpfsLink, setDisplayIpfsLink] = useState(false)

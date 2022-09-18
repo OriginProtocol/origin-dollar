@@ -1,7 +1,7 @@
 import Analytics from 'analytics'
 import googleAnalytics from '@analytics/google-analytics'
 import mixpanel from '@analytics/mixpanel'
-import { isProduction, isDevelopment } from '@constants/env'
+import { isProduction, isDevelopment } from 'constants/env'
 
 const MIXPANEL_ID = process.env.MIXPANEL_ID
 const isStaging = process.env.STAGING === 'true'

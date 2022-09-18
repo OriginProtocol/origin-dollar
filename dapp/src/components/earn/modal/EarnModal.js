@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
 
-import { usePrevious } from '@utils/hooks'
-import { assetRootPath } from '@utils/image'
+import { usePrevious } from 'utils/hooks'
+import { assetRootPath } from 'utils/image'
 
 /* Actions needs to be a modal of elements where each element has:
  *  - text

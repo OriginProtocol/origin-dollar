@@ -3,12 +3,12 @@ import { useStoreState } from 'pullstate'
 import { get } from 'lodash'
 import { useWeb3React } from '@web3-react/core'
 import { ethers } from 'ethers'
-import { sleep } from '@utils/utils'
+import { sleep } from 'utils/utils'
 
-import ContractStore from '@stores/ContractStore'
-import StakeStore from '@stores/StakeStore'
-import { formatCurrency } from '@utils/math'
-import { usePrevious } from '@utils/hooks'
+import ContractStore from 'stores/ContractStore'
+import StakeStore from 'stores/StakeStore'
+import { formatCurrency } from 'utils/math'
+import { usePrevious } from 'utils/hooks'
 
 const useCompensation = () => {
   const ousdClaimedLocalStorageKey = (account) =>

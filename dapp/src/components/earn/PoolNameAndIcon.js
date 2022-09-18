@@ -1,6 +1,6 @@
 import React from 'react'
 import classnames from 'classnames'
-import { assetRootPath } from '@utils/image'
+import { assetRootPath } from 'utils/image'
 
 export default function PoolNameAndIcon({
   pool,

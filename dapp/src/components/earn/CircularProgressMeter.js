@@ -1,7 +1,7 @@
 import React from 'react'
 import { fbt } from 'fbt-runtime'
-import { getTimeLeftText } from '@utils/stake'
-import { assetRootPath } from '@utils/image'
+import { getTimeLeftText } from 'utils/stake'
+import { assetRootPath } from 'utils/image'
 
 export default function CircularProgressMeter({
   rotate,

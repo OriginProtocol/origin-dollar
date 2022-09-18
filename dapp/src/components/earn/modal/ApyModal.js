@@ -1,8 +1,8 @@
 import React from 'react'
 import { fbt } from 'fbt-runtime'
 
-import EarnModal from '@components/earn/modal/EarnModal'
-import { formatCurrency } from '@utils/math'
+import EarnModal from 'components/earn/modal/EarnModal'
+import { formatCurrency } from 'utils/math'
 
 const ApyModal = ({ pool, onClose }) => {
   return (

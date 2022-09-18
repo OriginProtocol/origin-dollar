@@ -5,9 +5,9 @@ import { fbt } from 'fbt-runtime'
 
 import { ethers } from 'ethers'
 
-import ContractStore from '@stores/ContractStore'
-import GetOUSD from '@components/GetOUSD'
-import { assetRootPath } from '@utils/image'
+import ContractStore from 'stores/ContractStore'
+import GetOUSD from 'components/GetOUSD'
+import { assetRootPath } from 'utils/image'
 
 const SignTransferAuth = ({}) => {
   const { account, active, library } = useWeb3React()

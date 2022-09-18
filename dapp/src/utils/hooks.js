@@ -7,8 +7,8 @@ import {
   gnosisConnector,
   ledgerConnector,
 } from './connectors'
-import AccountStore from '@stores/AccountStore'
-import analytics from '@utils/analytics'
+import AccountStore from 'stores/AccountStore'
+import analytics from 'utils/analytics'
 
 export function useEagerConnect() {
   const { activate, active } = useWeb3React()

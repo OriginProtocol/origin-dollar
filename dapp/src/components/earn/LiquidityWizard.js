@@ -4,11 +4,11 @@ import classnames from 'classnames'
 import Link from 'next/link'
 import { useStoreState } from 'pullstate'
 
-import AccountStore from '@stores/AccountStore'
+import AccountStore from 'stores/AccountStore'
 
-import EtherscanLink from '@components/earn/EtherscanLink'
-import { assetRootPath } from '@utils/image'
-import { adjustLinkHref } from '@utils/utils'
+import EtherscanLink from 'components/earn/EtherscanLink'
+import { assetRootPath } from 'utils/image'
+import { adjustLinkHref } from 'utils/utils'
 
 export default function LiquidityWizard({ pool, onHideWizzard }) {
   const ousd = Number(useStoreState(AccountStore, (s) => s.balances).ousd)

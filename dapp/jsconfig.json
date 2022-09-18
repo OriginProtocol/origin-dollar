@@ -2,11 +2,13 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-        "@constants/*": ["src/constants/*"],
-        "@components/*": ["src/components/*"],
-        "@hoc/*": ["src/hoc/*"],
-        "@stores/*": ["src/stores/*"],
-        "@utils/*": ["src/utils/*"],
+        "constants/*": ["src/constants/*"],
+        "components/*": ["src/components/*"],
+        "hoc/*": ["src/hoc/*"],
+        "hooks/*": ["src/hooks/*"],
+        "pages/*": ["src/pages/*"],
+        "stores/*": ["src/stores/*"],
+        "utils/*": ["src/utils/*"],
      }
   }
 }

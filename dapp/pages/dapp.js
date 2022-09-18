@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
 import Router from 'next/router'
-import { adjustLinkHref } from '@utils/utils'
+import { adjustLinkHref } from 'utils/utils'
 
 const Dapp = ({ locale, onLocale }) => {
   useEffect(() => {

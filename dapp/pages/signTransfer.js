@@ -1,8 +1,8 @@
 import React from 'react'
-import Layout from '@components/layout'
-import Nav from '@components/Nav'
+import Layout from 'components/layout'
+import Nav from 'components/Nav'
 
-import SignTransferAuth from '@components/SignTransferAuth'
+import SignTransferAuth from 'components/SignTransferAuth'
 
 export default function DApp({ locale, onLocale }) {
   return (

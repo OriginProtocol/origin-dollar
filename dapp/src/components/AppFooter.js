@@ -1,8 +1,8 @@
 import { fbt } from 'fbt-runtime'
 
-import analytics from '@utils/analytics'
-import { getDocsLink } from '@utils/getDocsLink'
-import LocaleDropdown from '@components/LocaleDropdown'
+import analytics from 'utils/analytics'
+import { getDocsLink } from 'utils/getDocsLink'
+import LocaleDropdown from 'components/LocaleDropdown'
 
 const analyticsURL = process.env.ANALYTICS_URL
 const jobsURL = process.env.JOBS_URL

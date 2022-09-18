@@ -1,4 +1,4 @@
-import { displayCurrency } from '@utils/math'
+import { displayCurrency } from 'utils/math'
 
 export default class AllowancesService {
   async fetchAllowances(account, contracts) {

@@ -4,14 +4,14 @@ import { useWeb3React } from '@web3-react/core'
 import { useStoreState } from 'pullstate'
 import { ethers, Contract, BigNumber } from 'ethers'
 
-import withIsMobile from '@hoc/withIsMobile'
-import analytics from '@utils/analytics'
-import { formatCurrency } from '@utils/math'
-import ContractStore from '@stores/ContractStore'
-import CoinStore from '@stores/CoinStore'
-import addresses from '@constants/contractAddresses'
+import withIsMobile from 'hoc/withIsMobile'
+import analytics from 'utils/analytics'
+import { formatCurrency } from 'utils/math'
+import ContractStore from 'stores/ContractStore'
+import CoinStore from 'stores/CoinStore'
+import addresses from 'constants/contractAddresses'
 import useCurveStaking from 'hooks/useCurveStaking'
-import { assetRootPath } from '@utils/image'
+import { assetRootPath } from 'utils/image'
 
 // Just adding the methods we are using
 const gaugeMiniAbi = [

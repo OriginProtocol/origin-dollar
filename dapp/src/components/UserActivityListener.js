@@ -1,11 +1,11 @@
 import React, { Component } from 'react'
 import { useStoreState } from 'pullstate'
 
-import AccountStore from '@stores/AccountStore'
+import AccountStore from 'stores/AccountStore'
 /* Intentionally not using withIsMobile since that one is more interested in screen sizes. Here it is important
  * for us to detect a touch device (since those ones do not have mouses)
  */
-import { isMobileDevice } from '@utils/device'
+import { isMobileDevice } from 'utils/device'
 
 const activeDelay = 10000 // time in miliseconds after last activity and we consider user still active
 

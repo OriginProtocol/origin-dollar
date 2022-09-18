@@ -1,4 +1,4 @@
-import { formatCurrencyMinMaxDecimals, formatCurrency } from '@utils/math'
+import { formatCurrencyMinMaxDecimals, formatCurrency } from 'utils/math'
 import { fbt } from 'fbt-runtime'
 import { ethers } from 'ethers'
 

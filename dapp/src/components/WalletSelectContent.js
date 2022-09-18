@@ -2,17 +2,17 @@ import React, { useState, useEffect } from 'react'
 
 import { fbt } from 'fbt-runtime'
 import { useWeb3React } from '@web3-react/core'
-import { injectedConnector } from '@utils/connectors'
-import { walletConnectConnector } from '@utils/connectors'
-import { myEtherWalletConnector } from '@utils/connectors'
-import { walletlink, resetWalletConnector } from '@utils/connectors'
-import { defiWalletConnector } from '@utils/connectors'
-import withIsMobile from '@hoc/withIsMobile'
+import { injectedConnector } from 'utils/connectors'
+import { walletConnectConnector } from 'utils/connectors'
+import { myEtherWalletConnector } from 'utils/connectors'
+import { walletlink, resetWalletConnector } from 'utils/connectors'
+import { defiWalletConnector } from 'utils/connectors'
+import withIsMobile from 'hoc/withIsMobile'
 
-import AccountStore from '@stores/AccountStore'
+import AccountStore from 'stores/AccountStore'
 
-import analytics from '@utils/analytics'
-import { assetRootPath } from '@utils/image'
+import analytics from 'utils/analytics'
+import { assetRootPath } from 'utils/image'
 
 const WalletSelectContent = ({ isMobile }) => {
   const { connector, activate, deactivate, active } = useWeb3React()

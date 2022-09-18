@@ -1,6 +1,6 @@
 import React from 'react'
 import { fbt } from 'fbt-runtime'
-import { assetRootPath } from '@utils/image'
+import { assetRootPath } from 'utils/image'
 
 export default function UniswapPoolLink({ pool, isPoolDetails }) {
   return (

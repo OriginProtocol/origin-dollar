@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
-import { getEtherscanHost } from '@utils/web3'
+import { getEtherscanHost } from 'utils/web3'
 import { useWeb3React } from '@web3-react/core'
 import { useStoreState } from 'pullstate'
 
-import CoinCircleGraphics from '@components/sidePanel/CoinCircleGraphics'
-import TransactionStore from '@stores/TransactionStore'
-import { formatCurrency, formatCurrencyConditional } from '@utils/math'
-import { assetRootPath } from '@utils/image'
+import CoinCircleGraphics from 'components/sidePanel/CoinCircleGraphics'
+import TransactionStore from 'stores/TransactionStore'
+import { formatCurrency, formatCurrencyConditional } from 'utils/math'
+import { assetRootPath } from 'utils/image'
 
 const SidePanelTransactionMessage = ({
   transaction,

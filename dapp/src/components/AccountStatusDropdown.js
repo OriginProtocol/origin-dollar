@@ -2,17 +2,17 @@ import React, { useState } from 'react'
 import { useWeb3React } from '@web3-react/core'
 import { fbt } from 'fbt-runtime'
 
-import Dropdown from '@components/Dropdown'
-import GetOUSD from '@components/GetOUSD'
+import Dropdown from 'components/Dropdown'
+import GetOUSD from 'components/GetOUSD'
 import {
   isCorrectNetwork,
   truncateAddress,
   switchEthereumChain,
   shortenAddress,
-} from '@utils/web3'
+} from 'utils/web3'
 
-import withWalletSelectModal from '@hoc/withWalletSelectModal'
-import analytics from '@utils/analytics'
+import withWalletSelectModal from 'hoc/withWalletSelectModal'
+import analytics from 'utils/analytics'
 
 import Content from './_AccountStatusContent'
 

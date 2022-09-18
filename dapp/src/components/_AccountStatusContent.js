@@ -4,14 +4,14 @@ import { useStoreState } from 'pullstate'
 import { fbt } from 'fbt-runtime'
 import { get } from 'lodash'
 
-import AccountStore from '@stores/AccountStore'
-import { getEtherscanHost } from '@utils/web3'
-import { isCorrectNetwork, truncateAddress, networkIdToName } from '@utils/web3'
-import { currencies } from '@constants/Contract'
-import { formatCurrency } from '@utils/math'
-import { connectorNameIconMap, getConnectorIcon } from '@utils/connectors'
-import analytics from '@utils/analytics'
-import { assetRootPath } from '@utils/image'
+import AccountStore from 'stores/AccountStore'
+import { getEtherscanHost } from 'utils/web3'
+import { isCorrectNetwork, truncateAddress, networkIdToName } from 'utils/web3'
+import { currencies } from 'constants/Contract'
+import { formatCurrency } from 'utils/math'
+import { connectorNameIconMap, getConnectorIcon } from 'utils/connectors'
+import analytics from 'utils/analytics'
+import { assetRootPath } from 'utils/image'
 
 const AccountStatusContent = ({ className, onOpen }) => {
   const web3react = useWeb3React()

@@ -2,12 +2,12 @@ import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
 import dateformat from 'dateformat'
 
-import withIsMobile from '@hoc/withIsMobile'
-import { formatCurrency } from '@utils/math'
-import CircularProgressMeter from '@components/earn/CircularProgressMeter'
-import { formatRate, durationToDays } from '@utils/stake'
-import EtherscanLink from '@components/earn/EtherscanLink'
-import { assetRootPath } from '@utils/image'
+import withIsMobile from 'hoc/withIsMobile'
+import { formatCurrency } from 'utils/math'
+import CircularProgressMeter from 'components/earn/CircularProgressMeter'
+import { formatRate, durationToDays } from 'utils/stake'
+import EtherscanLink from 'components/earn/EtherscanLink'
+import { assetRootPath } from 'utils/image'
 
 const StakeDetailsModal = ({ stake, onClose, isMobile }) => {
   const stakeStatusToDisplayedStatus = {

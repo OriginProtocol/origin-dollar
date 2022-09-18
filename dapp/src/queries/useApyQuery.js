@@ -1,6 +1,6 @@
 import { useQuery } from 'react-query'
 
-import { QUERY_KEYS } from '@constants/queryKeys'
+import { QUERY_KEYS } from 'constants/queryKeys'
 
 import { apyService } from '../services/apy.service'
 

@@ -2,9 +2,9 @@ import React, { useState } from 'react'
 import classnames from 'classnames'
 
 import Languages from '../constants/Languages'
-import Dropdown from '@components/Dropdown'
-import LanguageSelected from '@components/LanguageSelected'
-import LanguageOptions from '@components/LanguageOptions'
+import Dropdown from 'components/Dropdown'
+import LanguageSelected from 'components/LanguageSelected'
+import LanguageOptions from 'components/LanguageOptions'
 
 const LocaleDropdown = ({
   className,

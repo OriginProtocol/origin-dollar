@@ -3,10 +3,10 @@ import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
 import Link from 'next/link'
 
-import AccountStore from '@stores/AccountStore'
-import RouterStore from '@stores/RouterStore'
-import { assetRootPath } from '@utils/image'
-import { adjustLinkHref } from '@utils/utils'
+import AccountStore from 'stores/AccountStore'
+import RouterStore from 'stores/RouterStore'
+import { assetRootPath } from 'utils/image'
+import { adjustLinkHref } from 'utils/utils'
 
 const SidePanelStakeMessage = () => {
   const balances = useStoreState(AccountStore, (s) => s.balances)

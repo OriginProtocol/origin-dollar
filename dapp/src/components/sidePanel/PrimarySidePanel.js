@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react'
 import { useStoreState } from 'pullstate'
 
-import SidePanelWelcomeMessage from '@components/sidePanel/SidePanelWelcomeMessage'
-import SidePanelStakeMessage from '@components/sidePanel/SidePanelStakeMessage'
-import SidePanelTransactionMessage from '@components/sidePanel/SidePanelTransactionMessage'
-import SidePanelInsuranceMessage from '@components/sidePanel/SidePanelInsuranceMessage'
-import TransactionStore from '@stores/TransactionStore'
-import { usePrevious } from '@utils/hooks'
-import ContractStore from '@stores/ContractStore'
-import { assetRootPath } from '@utils/image'
+import SidePanelWelcomeMessage from 'components/sidePanel/SidePanelWelcomeMessage'
+import SidePanelStakeMessage from 'components/sidePanel/SidePanelStakeMessage'
+import SidePanelTransactionMessage from 'components/sidePanel/SidePanelTransactionMessage'
+import SidePanelInsuranceMessage from 'components/sidePanel/SidePanelInsuranceMessage'
+import TransactionStore from 'stores/TransactionStore'
+import { usePrevious } from 'utils/hooks'
+import ContractStore from 'stores/ContractStore'
+import { assetRootPath } from 'utils/image'
 
 const PrimarySidePanel = () => {
   const showingAllContracts = useStoreState(

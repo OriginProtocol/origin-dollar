@@ -1,10 +1,10 @@
 import React from 'react'
-import Layout from '@components/layout'
-import Nav from '@components/Nav'
+import Layout from 'components/layout'
+import Nav from 'components/Nav'
 
-import BalanceHeaderWrapped from '@components/wrap/BalanceHeaderWrapped'
-import WrappedSidePanel from '@components/sidePanel/WrappedSidePanel'
-import WrapHomepage from '@components/wrap/WrapHomepage'
+import BalanceHeaderWrapped from 'components/wrap/BalanceHeaderWrapped'
+import WrappedSidePanel from 'components/sidePanel/WrappedSidePanel'
+import WrapHomepage from 'components/wrap/WrapHomepage'
 
 export default function Wrap({ locale, onLocale }) {
   return (

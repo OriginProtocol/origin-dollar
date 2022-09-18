@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import { useWeb3React } from '@web3-react/core'
-import { ledgerConnector } from '@utils/connectors'
-import AccountStore from '@stores/AccountStore'
-import { formatCurrency } from '@utils/math'
-import { shortenAddress } from '@utils/web3'
+import { ledgerConnector } from 'utils/connectors'
+import AccountStore from 'stores/AccountStore'
+import { formatCurrency } from 'utils/math'
+import { shortenAddress } from 'utils/web3'
 
 const LedgerAccountContent = ({
   addresses,

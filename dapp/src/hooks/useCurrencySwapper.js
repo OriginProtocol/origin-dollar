@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react'
 import { ethers, BigNumber } from 'ethers'
 import { useStoreState } from 'pullstate'
 
-import ContractStore from '@stores/ContractStore'
-import AccountStore from '@stores/AccountStore'
+import ContractStore from 'stores/ContractStore'
+import AccountStore from 'stores/AccountStore'
 import {
   mintAbsoluteGasLimitBuffer,
   mintPercentGasLimitBuffer,
@@ -12,12 +12,12 @@ import {
   sushiswapGasLimitBuffer,
   uniswapV3GasLimitBuffer,
   curveGasLimitBuffer,
-} from '@utils/constants'
+} from 'utils/constants'
 import { useWeb3React } from '@web3-react/core'
 import { find } from 'lodash'
-import addresses from '@constants/contractAddresses'
+import addresses from 'constants/contractAddresses'
 
-import { calculateSwapAmounts } from '@utils/math'
+import { calculateSwapAmounts } from 'utils/math'
 
 const useCurrencySwapper = ({
   swapMode,
