@@ -61,9 +61,6 @@ const config = {
 
     return config
   },
-  cssLoaderOptions: {
-    url: false,
-  },
   async headers() {
     return [
       {
