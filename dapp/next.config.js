@@ -37,10 +37,12 @@ const config = {
     /**
      * Returns environment variables as an object
      */
-    const env = Object.keys(process.env).reduce((acc, curr) => {
-      acc[`process.env.${curr}`] = JSON.stringify(process.env[curr])
-      return acc
-    }, {})
+    const env = Object.keys(process.env)
+                      .filter(k => !['__NEXT_REACT_ROOT', 'NEXT_RUNTIME'].includes(k))
+                      .reduce((acc, curr) => {
+                        acc[`process.env.${curr}`] = JSON.stringify(process.env[curr])
+                        return acc
+                      }, {})
 
     //console.log("CONFIG: ", JSON.stringify(config.module.rules))
 
