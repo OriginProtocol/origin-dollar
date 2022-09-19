@@ -189,7 +189,6 @@ export function checkValidInputForCoin(amount, coin) {
   return regex.test(amount)
 }
 
-
 // APY calculating function from ousd-governance
 export function getDailyRewardsEmissions(time = Date.now() / 1000) {
   // format: start_timestamp, end_timestamp, daily emissions

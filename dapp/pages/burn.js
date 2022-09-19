@@ -172,10 +172,14 @@ const Burn = ({ locale, onLocale, isMobile }) => {
 
       if (burnOver) {
         const burnedOptional = await ogv
-          .balanceOf(addresses.mainnet.optionalLockupDistributor, { blockTag: burnBlock })
+          .balanceOf(addresses.mainnet.optionalLockupDistributor, {
+            blockTag: burnBlock,
+          })
           .then((r) => Number(r) / 10 ** 18)
         const burnedMandatory = await ogv
-          .balanceOf(addresses.mainnet.mandatoryLockupDistributor, { blockTag: burnBlock })
+          .balanceOf(addresses.mainnet.mandatoryLockupDistributor, {
+            blockTag: burnBlock,
+          })
           .then((r) => Number(r) / 10 ** 18)
         setBurnedOptionalAmount(burnedOptional)
         setBurnedMandatoryAmount(burnedMandatory)
