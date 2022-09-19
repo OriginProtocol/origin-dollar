@@ -17,7 +17,7 @@ const BurnCountdown = ({ days, hours, minutes, seconds }) => {
   return (
     <>
       <div className="text mt-5">
-            {fbt('Countdown to burn', 'Countdown to burn')}
+        {fbt('Countdown to burn', 'Countdown to burn')}
       </div>
       <div className="d-flex flex-row text-center">
         <div className="d-flex flex-column">
@@ -88,21 +88,19 @@ const renderer = ({ days, hours, minutes, seconds, completed }) => {
   if (completed) {
     return (
       <>
-        <div className="text gradient1">
-          Burn complete!
-        </div>
+        <div className="text gradient1">Burn complete!</div>
         <style jsx>{`
-        .text {
-          font-size: 7rem;
-          font-weight: 900;
-        }
-
-        @media (max-width: 799px) {
           .text {
-            font-size: 3rem;
+            font-size: 7rem;
+            font-weight: 900;
           }
-        }
-      `}</style>
+
+          @media (max-width: 799px) {
+            .text {
+              font-size: 3rem;
+            }
+          }
+        `}</style>
       </>
     )
   } else {
@@ -168,8 +166,12 @@ const Burn = ({ locale, onLocale, isMobile }) => {
       setTotalVeSupply(totalVe)
 
       if (burnOver) {
-        const burnedOptional = await ogv.balanceOf(optionalLockupDistributor, {blockTag: blockTag}).then((r) => Number(r) / 10 ** 18)
-        const burnedMandatory = await ogv.balanceOf(mandatoryLockupDistributor, {blockTag: blockTag}).then((r) => Number(r) / 10 ** 18)
+        const burnedOptional = await ogv
+          .balanceOf(optionalLockupDistributor, { blockTag: blockTag })
+          .then((r) => Number(r) / 10 ** 18)
+        const burnedMandatory = await ogv
+          .balanceOf(mandatoryLockupDistributor, { blockTag: blockTag })
+          .then((r) => Number(r) / 10 ** 18)
         setBurnedOptionalAmount(burnedOptional)
         setBurnedMandatoryAmount(burnedMandatory)
       }
@@ -222,16 +224,14 @@ const Burn = ({ locale, onLocale, isMobile }) => {
           <div className="text-container mt-5">
             {burnOver ? (
               fbt('OGV burned', 'OGV burned')
-              ) : (
-                <>
-                  {fbt('Estimated burn amount', 'Estimated burn amount')}
-                  {' '}
-                  <span className="subtext">
-                    {fbt('(currently unclaimed OGV)', '(currently unclaimed OGV')}
-                  </span>
-                </>
-              )
-            }
+            ) : (
+              <>
+                {fbt('Estimated burn amount', 'Estimated burn amount')}{' '}
+                <span className="subtext">
+                  {fbt('(currently unclaimed OGV)', '(currently unclaimed OGV')}
+                </span>
+              </>
+            )}
           </div>
 
           <h1>{formatCurrency(burnOver ? burnedAmount : burnAmount, 0)}</h1>

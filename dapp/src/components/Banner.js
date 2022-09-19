@@ -129,7 +129,11 @@ const Banner = ({ dapp }) => {
             }
           )}
         >
-          <div className={`container d-flex flex-column flex-md-row align-items-center ${dapp ? '' : 'nav px-lg-5'}`}>
+          <div
+            className={`container d-flex flex-column flex-md-row align-items-center ${
+              dapp ? '' : 'nav px-lg-5'
+            }`}
+          >
             {showStakingBanner ? (
               <StakingBanner />
             ) : burnPage ? (

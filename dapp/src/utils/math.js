@@ -245,5 +245,5 @@ export function burnTimer() {
   const days = burn.diff(moment(), 'days')
   const seconds = burn.diff(moment(), 'seconds')
   const burnDays = days === 0 ? 1 : days
-  return {days: burnDays, seconds: seconds}
+  return { days: burnDays, seconds: seconds }
 }
