@@ -76,7 +76,7 @@ jobs:
     name: "Fork Tests"
     runs-on: ubuntu-latest
     env:
-      HARDHAT_CACHE_DIR: /runner/_work/hardhat-cache
+      HARDHAT_CACHE_DIR: ./cache
       PROVIDER_URL: ${{ secrets.PROVIDER_URL }}
     steps:
     - uses: actions/checkout@v2
@@ -103,8 +103,8 @@ jobs:
     - uses: actions/cache@v3
       id: hardhat-cache
       with:
-        path: /runner/_work/hardhat-cache
-        key: 1-${{ runner.os }}-hardhat-${{ hashFiles('/runner/_work/hardhat-cache/*.json') }}
+        path: contracts/cache
+        key: 1-${{ runner.os }}-hardhat-${{ hashFiles('contracts/cache/*.json') }}
         restore-keys: |
           1-${{ runner.os }}-hardhat-cache
 
