@@ -77,6 +77,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       HARDHAT_CACHE_DIR: /runner/_work/hardhat-cache
+      PROVIDER_URL: ${{ secrets.PROVIDER_URL }}
     steps:
     - uses: actions/checkout@v2
 

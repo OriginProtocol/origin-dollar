@@ -14,7 +14,7 @@ main()
     LOCAL_PROVIDER_URL=http://localhost:8545
     source .env
 
-    if [ ! -f "$ENV_FILE" ]; then
+    if [ -z "$GITHUB_ACTIONS" ] && [ ! -f "$ENV_FILE" ]; then
         echo -e "${RED} File $ENV_FILE does not exist. Have you forgotten to rename the dev.env to .env? ${NO_COLOR}"
         exit 1
     fi
