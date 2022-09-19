@@ -1,7 +1,7 @@
 const { expect } = require("chai");
 
 const { defaultFixture } = require("./../_fixture");
-const { utils, ethers } = require("ethers");
+const { utils } = require("ethers");
 
 const {
   loadFixture,

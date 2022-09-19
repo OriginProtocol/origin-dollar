@@ -533,21 +533,7 @@ async function convexMetaVaultFixture() {
   const fixture = await loadFixture(defaultFixture);
 
   if (isFork) {
-    const {
-      governor,
-      josh,
-      matt,
-      anna,
-      domen,
-      daniel,
-      franck,
-      ousd,
-      usdt,
-      usdc,
-      dai,
-      vault,
-      OUSDmetaStrategy,
-    } = fixture;
+    const { josh, matt, anna, domen, daniel, franck, ousd } = fixture;
 
     // const curveFactoryAddress = '0xB9fC157394Af804a3578134A6585C0dc9cc990d4'
 
@@ -631,12 +617,12 @@ async function convexMetaVaultFixture() {
 }
 
 async function impersonateAndFundContract(address) {
-  await network.provider.request({
+  await hre.network.provider.request({
     method: "hardhat_impersonateAccount",
     params: [address],
   });
 
-  await network.provider.send("hardhat_setBalance", [
+  await hre.network.provider.send("hardhat_setBalance", [
     address,
     utils.parseEther("1000000").toHexString(),
   ]);
@@ -684,7 +670,7 @@ async function withImpersonatedAccount(address, cb) {
 
   await cb(signer);
 
-  await network.provider.request({
+  await hre.network.provider.request({
     method: "hardhat_stopImpersonatingAccount",
     params: [address],
   });
@@ -978,4 +964,5 @@ module.exports = {
   aaveVaultFixture,
   hackedVaultFixture,
   rebornFixture,
+  withImpersonatedAccount,
 };

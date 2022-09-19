@@ -38,16 +38,13 @@ async function balanceMetaPool(fixture) {
   const crv3Balance = await ousdMetaPool.balances(1);
 
   const exchangeSign = "exchange(int128,int128,uint256,uint256)";
+  const exchagneMethod = await ousdMetaPool.connect(domen)[exchangeSign];
   if (ousdBalance.gt(crv3Balance)) {
     // Tilt to 3CRV
-    await ousdMetaPool
-      .connect(domen)
-      [exchangeSign](1, 0, ousdBalance.sub(crv3Balance).div(2), 0);
+    await exchagneMethod(1, 0, ousdBalance.sub(crv3Balance).div(2), 0);
   } else if (crv3Balance.gt(ousdBalance)) {
     // Tilt to OUSD
-    await ousdMetaPool
-      .connect(domen)
-      [exchangeSign](0, 1, crv3Balance.sub(ousdBalance).div(2), 0);
+    await exchagneMethod(0, 1, crv3Balance.sub(ousdBalance).div(2), 0);
   }
 
   await vault.connect(domen).allocate();
@@ -108,9 +105,8 @@ async function addLiquidity(fixture, ousdAmount, crv3Liquidity, receiver) {
   receiver = receiver ? receiver.getAddress() : domen.getAddress();
 
   const addSignature = "add_liquidity(uint256[2],uint256,address)";
-  await ousdMetaPool
-    .connect(domen)
-    [addSignature]([ousdAmount, crv3Liquidity], 0, receiver);
+  const addMethod = await ousdMetaPool.connect(domen)[addSignature];
+  addMethod([ousdAmount, crv3Liquidity], 0, receiver);
 }
 
 async function removeAllLiquidity(fixture, user) {
@@ -118,9 +114,8 @@ async function removeAllLiquidity(fixture, user) {
 
   const address = user.getAddress();
   const removeSign = "remove_liquidity(uint256,uint256[2])";
-  await ousdMetaPool
-    .connect(user)
-    [removeSign](ousdMetaPool.balanceOf(address), ["0", "0"]);
+  const removeMethod = await ousdMetaPool.connect(user)[removeSign];
+  removeMethod(ousdMetaPool.balanceOf(address), ["0", "0"]);
 }
 
 async function removeLiquidityImbalanced(fixture, user, crv3Liquidity) {
