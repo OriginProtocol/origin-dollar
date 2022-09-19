@@ -87,8 +87,7 @@ forkDescribe("OUSD MetaPool Liquidity Test", function () {
         const crv3Diff = new3CRVBalance.sub(current3CRVBalance);
 
         const amount = ousdUnits("10000").mul(2);
-        expect(ousdDiff).to.be.approxEqualTolerance(amount, 5);
-        expect(crv3Diff).to.be.approxEqualTolerance(amount, 5);
+        expect(ousdDiff.add(crv3Diff)).to.be.approxEqualTolerance(amount, 10);
       });
 
       it("Should remove imbalanced liquidity", async function () {

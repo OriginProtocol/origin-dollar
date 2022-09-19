@@ -49,7 +49,9 @@ forkDescribe("Vault", function () {
     it("Should have the correct OUSD MetaStrategy address set", async () => {
       const { vault } = fixture;
       // TODO: Update this after the contract deployed
-      expect(await vault.ousdMetaStrategy()).to.equal("");
+      expect(await vault.ousdMetaStrategy()).to.equal(
+        "0xEB85123eb2992296a835B422EfB0275C8A6C9745"
+      );
     });
   });
 
