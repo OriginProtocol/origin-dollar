@@ -6,15 +6,14 @@ import { useStoreState } from 'pullstate'
 import { fbt } from 'fbt-runtime'
 import StakeStore from 'stores/StakeStore'
 import { adjustLinkHref } from 'utils/utils'
-import { burnTimer } from 'utils/math'
+import { burnTimer } from 'utils/constants'
 
 const Banner = ({ dapp }) => {
   const { pathname } = useRouter()
   const burnPage = pathname === '/burn'
   const stakePage = pathname === '/earn'
   const stakes = useStoreState(StakeStore, (s) => s)
-  const showStakingBanner =
-    dapp && (stakes.stakes || []).length !== 0 && !stakePage
+  const showStakingBanner = dapp && !stakePage && stakes.stakes?.length
 
   const notice = showStakingBanner || burnTimer().days >= 0
 
@@ -66,13 +65,11 @@ const Banner = ({ dapp }) => {
     )
   }
   const ClaimBanner = () => {
-    const AIRDROP_URL = 'https://governance.ousd.com/claim'
-
     return (
       <>
         {fbt('OGV airdrop is live!', 'Airdrop notice')}
         <a
-          href={AIRDROP_URL}
+          href={process.env.AIRDROP_URL}
           target="_blank"
           rel="noopener noreferrer"
           className="btn btn-dark mt-3 mt-md-0 ml-md-auto"

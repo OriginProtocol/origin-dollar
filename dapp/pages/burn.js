@@ -8,7 +8,7 @@ import addresses from 'constants/contractAddresses'
 import { formatCurrency, getRewardsApy } from 'utils/math'
 import { assetRootPath } from 'utils/image'
 import withIsMobile from 'hoc/withIsMobile'
-import { burnTimer } from 'utils/math'
+import { burnTimer } from 'utils/constants'
 
 import Layout from 'components/layout'
 import Nav from 'components/Nav'
@@ -134,7 +134,7 @@ const Burn = ({ locale, onLocale, isMobile }) => {
   const airdropAllocationOusd = 450000000
   const airdropAllocation = airdropAllocationOgn + airdropAllocationOusd
   const burnBlock = 15713631
-  const burnOver = burnTimer().seconds <= 0 && burnBlock < currentBlock
+  const burnOver = burnBlock < currentBlock
 
   const stakingApy =
     getRewardsApy(100 * 1.8 ** (48 / 12), 100, totalVeSupply) || 0

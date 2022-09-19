@@ -1,5 +1,4 @@
 import { ethers } from 'ethers'
-import moment from 'moment'
 
 // use different number of decimals when below or above threshold
 export function formatCurrencyConditional(
@@ -190,6 +189,8 @@ export function checkValidInputForCoin(amount, coin) {
   return regex.test(amount)
 }
 
+
+// APY calculating function from ousd-governance
 export function getDailyRewardsEmissions(time = Date.now() / 1000) {
   // format: start_timestamp, end_timestamp, daily emissions
   const data = [
@@ -227,7 +228,7 @@ export function getRewardsApy(veOgvReceived, ogvToStake, totalSupplyVeOgv) {
     )
   }
   const ogvRewardsDaily = dailyEmissions * ogvPercentageOfRewards
-  const ogvRewardsYearly = ogvRewardsDaily * 365.25
+  const ogvRewardsYearly = ogvRewardsDaily * 365.25 // accounting for leap year
   // No need to use actual prices since originating tokens and reward tokens have the same price
   const ogvLockupRewardApr = ogvRewardsYearly / ogvToStake
 
@@ -238,12 +239,4 @@ export function getRewardsApy(veOgvReceived, ogvToStake, totalSupplyVeOgv) {
    * compounding in this case
    */
   return ((1 + ogvLockupRewardApr / 1) ** 1 - 1) * 100
-}
-
-export function burnTimer() {
-  const burn = moment('2022-10-10T00:00:00.000Z')
-  const days = burn.diff(moment(), 'days')
-  const seconds = burn.diff(moment(), 'seconds')
-  const burnDays = days === 0 ? 1 : days
-  return { days: burnDays, seconds: seconds }
 }
