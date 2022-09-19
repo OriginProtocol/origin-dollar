@@ -86,9 +86,6 @@ forkDescribe("OUSD MetaPool Liquidity Test", function () {
         const ousdDiff = newOUSDBalance.sub(currentOUSDBalance);
         const crv3Diff = new3CRVBalance.sub(current3CRVBalance);
 
-        // Must be in the same ballpark
-        expect(ousdDiff).to.be.approxEqualTolerance(crv3Diff, 1);
-
         const amount = ousdUnits("10000").mul(2);
         expect(ousdDiff).to.be.approxEqualTolerance(amount, 5);
         expect(crv3Diff).to.be.approxEqualTolerance(amount, 5);
@@ -185,7 +182,7 @@ forkDescribe("OUSD MetaPool Liquidity Test", function () {
         const crv3Diff = new3CRVBalance.sub(current3CRVBalance);
 
         expect(ousdDiff.add(crv3Diff)).to.be.approxEqualTolerance(
-          ousdUnits("40000"),
+          ousdUnits("20000"),
           10
         );
       });
@@ -283,7 +280,7 @@ forkDescribe("OUSD MetaPool Liquidity Test", function () {
         const crv3Diff = new3CRVBalance.sub(current3CRVBalance);
 
         expect(ousdDiff.add(crv3Diff)).to.be.approxEqualTolerance(
-          ousdUnits("40000"),
+          ousdUnits("20000"),
           10
         );
       });
