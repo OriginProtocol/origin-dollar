@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import { ethers } from 'ethers'
 import { fbt } from 'fbt-runtime'
 import Countdown from 'react-countdown'
 import { useStoreState } from 'pullstate'
@@ -124,7 +125,10 @@ const Burn = ({ locale, onLocale, isMobile }) => {
   const [totalVeSupply, setTotalVeSupply] = useState()
   const [optionalLockupBalance, setOptionalLockupBalance] = useState()
   const [mandatoryLockupBalance, setMandatoryLockupBalance] = useState()
+  const [burnedOptionalAmount, setBurnedOptionalAmount] = useState(0)
+  const [burnedMandatoryAmount, setBurnedMandatoryAmount] = useState(0)
   const burnAmount = optionalLockupBalance + mandatoryLockupBalance
+  const burnedAmount = burnedOptionalAmount + burnedMandatoryAmount
 
   const optionalLockupDistributor = '0x7aE2334f12a449895AD21d4c255D9DE194fe986f'
   const mandatoryLockupDistributor =
@@ -133,6 +137,8 @@ const Burn = ({ locale, onLocale, isMobile }) => {
   const airdropAllocationOgn = 1000000000
   const airdropAllocationOusd = 450000000
   const airdropAllocation = airdropAllocationOgn + airdropAllocationOusd
+  const blockTag = 15414780
+  const burnOver = burnTimer().seconds > 0
 
   const stakingApy =
     getRewardsApy(100 * 1.8 ** (48 / 12), 100, totalVeSupply) || 0
@@ -160,9 +166,18 @@ const Burn = ({ locale, onLocale, isMobile }) => {
       setOptionalLockupBalance(optional)
       setMandatoryLockupBalance(mandatory)
       setTotalVeSupply(totalVe)
+
+      if (burnOver) {
+        const burnedOptional = await ogv.balanceOf(optionalLockupDistributor, {blockTag: blockTag}).then((r) => Number(r) / 10 ** 18)
+        const burnedMandatory = await ogv.balanceOf(mandatoryLockupDistributor, {blockTag: blockTag}).then((r) => Number(r) / 10 ** 18)
+        setBurnedOptionalAmount(burnedOptional)
+        setBurnedMandatoryAmount(burnedMandatory)
+      }
     }
     fetchStakedOgv()
   }, [ogv, veogv])
+
+  console.log(burnedAmount)
 
   return (
     <Layout locale={locale}>
@@ -185,7 +200,7 @@ const Burn = ({ locale, onLocale, isMobile }) => {
               'On October 10th, 2022 at 0:00UTC all unclaimed tokens from the OGV airdrop will be burned forever.'
             )}
           </div>
-          <Countdown date={'2021-10-10T00:00:00.000Z'} renderer={renderer} />
+          <Countdown date={'2022-10-10T00:00:00.000Z'} renderer={renderer} />
           <div className="flex-row mt-5 mb-5">
             <a
               href="https://app.uniswap.org/#/swap?outputCurrency=0x9c354503C38481a7A7a51629142963F98eCC12D0&chain=mainnet"
@@ -205,7 +220,7 @@ const Burn = ({ locale, onLocale, isMobile }) => {
             </a>
           </div>
           <div className="text-container mt-5">
-            {burnTimer().seconds <= 0 ? (
+            {burnOver ? (
               fbt('OGV burned', 'OGV burned')
               ) : (
                 <>
@@ -219,7 +234,7 @@ const Burn = ({ locale, onLocale, isMobile }) => {
             }
           </div>
 
-          <h1>{formatCurrency(burnAmount, 0)}</h1>
+          <h1>{formatCurrency(burnOver ? burnedAmount : burnAmount, 0)}</h1>
 
           <h3>
             <span className="percent gradient1">{`${formatCurrency(
