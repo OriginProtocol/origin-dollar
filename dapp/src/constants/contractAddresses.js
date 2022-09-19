@@ -44,6 +44,12 @@ addresses.mainnet.veOGV = '0x0C4576Ca1c365868E162554AF8e385dc3e7C66D9'
 // RewardsSource
 addresses.mainnet.RewardsSource = '0x7d82e86cf1496f9485a8ea04012afeb3c7489397'
 
+// Optional lockup distributor
+addresses.mainnet.optionalLockupDistributor = '0x7aE2334f12a449895AD21d4c255D9DE194fe986f'
+
+// Mandatory lockup distributor
+addresses.mainnet.mandatoryLockupDistributor = '0xD667091c2d1DCc8620f4eaEA254CdFB0a176718D'
+
 // Open Oracle
 addresses.mainnet.openOracle = '0x9b8eb8b3d6e2e0db36f41455185fef7049a35cae'
 

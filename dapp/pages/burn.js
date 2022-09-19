@@ -125,18 +125,16 @@ const Burn = ({ locale, onLocale, isMobile }) => {
   const [mandatoryLockupBalance, setMandatoryLockupBalance] = useState()
   const [burnedOptionalAmount, setBurnedOptionalAmount] = useState(0)
   const [burnedMandatoryAmount, setBurnedMandatoryAmount] = useState(0)
+  const [currentBlock, setCurrentBlock] = useState()
   const burnAmount = optionalLockupBalance + mandatoryLockupBalance
   const burnedAmount = burnedOptionalAmount + burnedMandatoryAmount
 
-  const optionalLockupDistributor = '0x7aE2334f12a449895AD21d4c255D9DE194fe986f'
-  const mandatoryLockupDistributor =
-    '0xD667091c2d1DCc8620f4eaEA254CdFB0a176718D'
   const initialSupply = 4000000000
   const airdropAllocationOgn = 1000000000
   const airdropAllocationOusd = 450000000
   const airdropAllocation = airdropAllocationOgn + airdropAllocationOusd
-  const blockTag = 15719200 // ballpark for now
-  const burnOver = burnTimer().seconds <= 0
+  const burnBlock = 15713631
+  const burnOver = burnTimer().seconds <= 0 && burnBlock < currentBlock
 
   const stakingApy =
     getRewardsApy(100 * 1.8 ** (48 / 12), 100, totalVeSupply) || 0
@@ -151,10 +149,10 @@ const Burn = ({ locale, onLocale, isMobile }) => {
         .then((r) => Number(r) / 10 ** 18)
       const supply = await ogv.totalSupply().then((r) => Number(r) / 10 ** 18)
       const optional = await ogv
-        .balanceOf(optionalLockupDistributor)
+        .balanceOf(addresses.mainnet.optionalLockupDistributor)
         .then((r) => Number(r) / 10 ** 18)
       const mandatory = await ogv
-        .balanceOf(mandatoryLockupDistributor)
+        .balanceOf(addresses.mainnet.mandatoryLockupDistributor)
         .then((r) => Number(r) / 10 ** 18)
       const totalVe = await veogv
         .totalSupply()
@@ -165,12 +163,19 @@ const Burn = ({ locale, onLocale, isMobile }) => {
       setMandatoryLockupBalance(mandatory)
       setTotalVeSupply(totalVe)
 
+      const jsonRpcProvider = new ethers.providers.StaticJsonRpcProvider(
+        process.env.ETHEREUM_RPC_PROVIDER,
+        { chainId: parseInt(process.env.ETHEREUM_RPC_CHAIN_ID) }
+      )
+      const block = await jsonRpcProvider.getBlockNumber()
+      setCurrentBlock(block)
+
       if (burnOver) {
         const burnedOptional = await ogv
-          .balanceOf(optionalLockupDistributor, { blockTag: blockTag })
+          .balanceOf(addresses.mainnet.optionalLockupDistributor, { blockTag: burnBlock })
           .then((r) => Number(r) / 10 ** 18)
         const burnedMandatory = await ogv
-          .balanceOf(mandatoryLockupDistributor, { blockTag: blockTag })
+          .balanceOf(addresses.mainnet.mandatoryLockupDistributor, { blockTag: burnBlock })
           .then((r) => Number(r) / 10 ** 18)
         setBurnedOptionalAmount(burnedOptional)
         setBurnedMandatoryAmount(burnedMandatory)
@@ -178,8 +183,6 @@ const Burn = ({ locale, onLocale, isMobile }) => {
     }
     fetchStakedOgv()
   }, [ogv, veogv])
-
-  console.log(burnedAmount)
 
   return (
     <Layout locale={locale}>
