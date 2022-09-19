@@ -75,6 +75,7 @@ jobs:
   contracts-forktest:
     name: "Fork Tests"
     runs-on: ubuntu-latest
+    environment: test
     env:
       HARDHAT_CACHE_DIR: /runner/_work/hardhat-cache
       PROVIDER_URL: ${{ secrets.PROVIDER_URL }}
