@@ -127,13 +127,13 @@ const Banner = ({ dapp }) => {
           className={classnames(
             `notice ${showStakingBanner ? 'staking pt-2' : 'pt-3'} ${
               burnPage ? 'burn' : ''
-            } text-white text-center pb-3`,
+            } ${dapp ? '' : 'px-lg-5'} text-white text-center pb-3`,
             {
               dapp,
             }
           )}
         >
-          <div className="container d-flex flex-column flex-md-row align-items-center">
+          <div className={`container d-flex flex-column flex-md-row align-items-center ${dapp ? '' : 'nav px-lg-5'}`}>
             {showStakingBanner ? (
               <StakingBanner />
             ) : burnPage ? (

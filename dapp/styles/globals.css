@@ -332,3 +332,9 @@ section.dim {
     max-width: 940px !important;
   }
 }
+
+@media (min-width: 1200px) {
+  .container.nav {
+    max-width: none !important;
+  }
+}
