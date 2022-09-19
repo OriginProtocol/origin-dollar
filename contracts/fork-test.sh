@@ -1,8 +1,4 @@
 #!/bin/bash
-trap "exit" INT TERM ERR
-trap "kill 0" EXIT
-#nodeWaitTimeout=120
-nodeWaitTimeout=1200
 RED='\033[0;31m'
 NO_COLOR='\033[0m'
 
@@ -73,8 +69,12 @@ main()
 
     FORK=true IS_TEST=true npx --no-install hardhat test ${params[@]}
 
-    # Cleanup
-    rm -rf deployments/hardhat
+    if $is_ci; then
+        exit 0;
+    else
+        # Cleanup
+        rm -rf deployments/hardhat
+    fi
 }
 
 main "$@"
