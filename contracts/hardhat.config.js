@@ -310,4 +310,9 @@ module.exports = {
   etherscan: {
     apiKey: process.env.ETHERSCAN_API_KEY,
   },
+  paths: process.env.HARDHAT_CACHE_DIR
+    ? {
+        cache: process.env.HARDHAT_CACHE_DIR,
+      }
+    : {},
 };

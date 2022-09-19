@@ -1,9 +1,5 @@
-name: Tests
-on:
-  push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
+name: Contract Tests
+on: [push, pull_request]
 
 concurrency:
   cancel-in-progress: true
@@ -11,7 +7,7 @@ concurrency:
 
 jobs:
   contracts-lint:
-    name: "Smart Contracts Linter"
+    name: "Linter"
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -27,7 +23,7 @@ jobs:
       id: yarn-cache-dir-path
       run: echo "::set-output name=dir::$(yarn config get cacheFolder)"
 
-    - uses: actions/cache@v2
+    - uses: actions/cache@v3
       id: yarn-cache
       with:
         path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
@@ -45,7 +41,7 @@ jobs:
       working-directory: ./contracts
 
   contracts-test:
-    name: "Smart Contracts Unit Tests"
+    name: "Unit Tests"
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -61,7 +57,7 @@ jobs:
       id: yarn-cache-dir-path
       run: echo "::set-output name=dir::$(yarn config get cacheFolder)"
 
-    - uses: actions/cache@v2
+    - uses: actions/cache@v3
       id: yarn-cache
       with:
         path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
@@ -77,8 +73,10 @@ jobs:
       working-directory: ./contracts
 
   contracts-forktest:
-    name: "Smart Contracts Fork Tests"
+    name: "Fork Tests"
     runs-on: ubuntu-latest
+    env:
+      HARDHAT_CACHE_DIR: /runner/_work/hardhat-cache
     steps:
     - uses: actions/checkout@v2
 
@@ -93,7 +91,7 @@ jobs:
       id: yarn-cache-dir-path
       run: echo "::set-output name=dir::$(yarn config get cacheFolder)"
 
-    - uses: actions/cache@v2
+    - uses: actions/cache@v3
       id: yarn-cache
       with:
         path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
@@ -101,40 +99,17 @@ jobs:
         restore-keys: |
           1-${{ runner.os }}-yarn-contracts
 
+    - uses: actions/cache@v3
+      id: hardhat-cache
+      with:
+        path: /runner/_work/hardhat-cache
+        key: 1-${{ runner.os }}-hardhat-${{ hashFiles('/runner/_work/hardhat-cache/*.json') }}
+        restore-keys: |
+          1-${{ runner.os }}-hardhat-cache
+
     - run: yarn install
       working-directory: ./contracts
 
 
     - run: yarn run test:fork
       working-directory: ./contracts
-
-  dapp-lint:
-    name: "DApp Linter"
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2
-
-    - name: Use Node.js
-      uses: actions/setup-node@v2
-      with:
-        node-version: "14.x"
-
-    - run: yarn config set cacheFolder /runner/_work/.yarn-cache
-
-    - name: Get yarn cache directory path
-      id: yarn-cache-dir-path
-      run: echo "::set-output name=dir::$(yarn config get cacheFolder)"
-
-    - uses: actions/cache@v2
-      id: yarn-cache
-      with:
-        path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
-        key: 1-${{ runner.os }}-yarn-${{ hashFiles('dapp/yarn.lock') }}-dapp
-        restore-keys: |
-          1-${{ runner.os }}-yarn-dapp
-
-    - run: yarn install
-      working-directory: ./dapp
-
-    - run: yarn prettier:check
-      working-directory: ./dapp

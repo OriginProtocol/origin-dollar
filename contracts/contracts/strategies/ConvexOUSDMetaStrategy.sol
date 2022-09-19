@@ -194,9 +194,7 @@ contract ConvexOUSDMetaStrategy is BaseConvexMetaStrategy {
 
         uint256 ousdToBurn = metapoolMainToken.balanceOf(address(this));
         if (ousdToBurn > 0) {
-            IVault(vaultAddress).redeemForStrategy(
-                ousdToBurn
-            );
+            IVault(vaultAddress).redeemForStrategy(ousdToBurn);
         }
     }
 
@@ -219,9 +217,7 @@ contract ConvexOUSDMetaStrategy is BaseConvexMetaStrategy {
 
         uint256 ousdToBurn = metapoolMainToken.balanceOf(address(this));
         if (ousdToBurn > 0) {
-            IVault(vaultAddress).redeemForStrategy(
-                ousdToBurn
-            );
+            IVault(vaultAddress).redeemForStrategy(ousdToBurn);
         }
     }
 }

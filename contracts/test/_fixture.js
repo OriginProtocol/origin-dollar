@@ -275,21 +275,17 @@ async function defaultFixture() {
   let governor = signers[1];
   const strategist = signers[0];
   const adjuster = signers[0];
-  const matt = signers[4];
-  const josh = signers[5];
-  const anna = signers[6];
 
-  let originTeam;
+  const [matt, josh, anna, domen, daniel, franck] = signers.slice(4);
 
   if (isFork) {
-    originTeam = await impersonateAndFundContract(addresses.mainnet.ORIGINTEAM);
     governor = await impersonateAndFundContract(governorAddr);
   }
 
   await fundAccounts();
 
   if (isFork) {
-    for (const user of [originTeam, josh, matt, anna]) {
+    for (const user of [josh, matt, anna, domen, daniel, franck]) {
       // Approve Vault to move funds
       for (const asset of [ousd, usdt, usdc, dai]) {
         await resetAllowance(asset, user, vault.address);
@@ -316,7 +312,9 @@ async function defaultFixture() {
     governor,
     strategist,
     adjuster,
-    originTeam,
+    domen,
+    daniel,
+    franck,
     // Contracts
     ousd,
     vault,
@@ -540,7 +538,9 @@ async function convexMetaVaultFixture() {
       josh,
       matt,
       anna,
-      originTeam,
+      domen,
+      daniel,
+      franck,
       ousd,
       usdt,
       usdc,
@@ -575,10 +575,11 @@ async function convexMetaVaultFixture() {
         "0xed279fdd11ca84beef15af5d39bb4d4bee23f0ca",
         "0x43b4fdfd4ff969587185cdb6f0bd875c5fc83f8c",
       ],
-      originTeam.getAddress()
+      // Domen is loaded with 3CRV
+      domen.getAddress()
     );
 
-    for (const user of [originTeam, josh, matt, anna]) {
+    for (const user of [josh, matt, anna, domen, daniel, franck]) {
       // Approve OUSD MetaPool contract to move funds
       await resetAllowance(threepoolLP, user, ousdMetaPool.address);
       await resetAllowance(ousd, user, ousdMetaPool.address);
@@ -589,7 +590,7 @@ async function convexMetaVaultFixture() {
     fixture.threepoolSwap = threepoolSwap;
   } else {
     // Migrations should do these on fork
-    const { governorAddr } = await getNamedAccounts()
+    const { governorAddr } = await getNamedAccounts();
     const sGovernor = await ethers.provider.getSigner(governorAddr);
 
     // Add Convex Meta strategy

@@ -101,10 +101,6 @@ const fundAccounts = async () => {
     .map((_, i) => signers[i].getAddress());
   const signerAddresses = await Promise.all(addressPromises);
 
-  if (isFork) {
-    signerAddresses.push(addresses.mainnet.ORIGINTEAM);
-  }
-
   for (const address of signerAddresses) {
     if (isFork) {
       await hre.network.provider.send("hardhat_setBalance", [
