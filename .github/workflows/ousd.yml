@@ -1,0 +1,212 @@
+name: OUSD
+on: 
+  pull_request:
+    types: [opened, reopened]
+  push:
+  workflow_dispatch:
+
+concurrency:
+  cancel-in-progress: true
+  group: ${{ github.ref_name }}
+
+jobs:
+  contracts-lint:
+    name: "Contracts Linter"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Use Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "14.x"
+
+      # - name: "Set Yarn cache fallback path"
+      #   run: yarn config set cacheFolder /runner/_work/.yarn-cache
+
+      - name: Get yarn cache directory path
+        id: yarn-cache-dir-path
+        run: echo "::set-output name=dir::$(yarn config get cacheFolder)"
+
+      - uses: actions/cache@v3
+        id: yarn-cache
+        with:
+          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+          key: ${{ runner.os }}-yarn-${{ hashFiles('contracts/yarn.lock') }}-contracts
+          restore-keys: |
+            ${{ runner.os }}-yarn-
+
+      - run: yarn install
+        working-directory: ./contracts
+
+      - run: yarn run lint
+        working-directory: ./contracts
+
+      - run: yarn prettier:check
+        working-directory: ./contracts
+
+  contracts-test:
+    name: "Contracts Unit Tests"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Use Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "14.x"
+
+      # - name: "Set Yarn cache fallback path"
+      #   run: yarn config set cacheFolder /runner/_work/.yarn-cache
+
+      - name: Get yarn cache directory path
+        id: yarn-cache-dir-path
+        run: echo "::set-output name=dir::$(yarn config get cacheFolder)"
+
+      - uses: actions/cache@v3
+        id: yarn-cache
+        with:
+          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+          key: ${{ runner.os }}-yarn-${{ hashFiles('contracts/yarn.lock') }}-contracts
+          restore-keys: |
+            ${{ runner.os }}-yarn-
+
+      - run: yarn install
+        working-directory: ./contracts
+
+      - run: yarn run test
+        working-directory: ./contracts
+
+  contracts-forktest:
+    name: "Contracts Fork Tests"
+    runs-on: ubuntu-latest
+    env:
+      HARDHAT_CACHE_DIR: ./cache
+      PROVIDER_URL: ${{ secrets.PROVIDER_URL }}
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Use Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "14.x"
+
+      # - name: "Set Yarn cache fallback path"
+      #   run: yarn config set cacheFolder /runner/_work/.yarn-cache
+
+      - name: Get yarn cache directory path
+        id: yarn-cache-dir-path
+        run: echo "::set-output name=dir::$(yarn config get cacheFolder)"
+
+      - uses: actions/cache@v3
+        id: yarn-cache
+        with:
+          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+          key: ${{ runner.os }}-yarn-${{ hashFiles('contracts/yarn.lock') }}-contracts
+          restore-keys: |
+            ${{ runner.os }}-yarn-
+
+      - uses: actions/cache@v3
+        id: hardhat-cache
+        with:
+          path: contracts/cache
+          key: ${{ runner.os }}-hardhat-${{ hashFiles('contracts/cache/*.json') }}
+          restore-keys: |
+            ${{ runner.os }}-hardhat-cache
+
+      - run: yarn install
+        working-directory: ./contracts
+
+      - run: yarn run test:fork
+        working-directory: ./contracts
+
+  dapp-lint:
+    name: "DApp Linter"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Use Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "14.x"
+
+      # - name: "Set Yarn cache fallback path"
+      #   run: yarn config set cacheFolder /runner/_work/.yarn-cache
+
+      - name: Get yarn cache directory path
+        id: yarn-cache-dir-path
+        run: echo "::set-output name=dir::$(yarn config get cacheFolder)"
+
+      - uses: actions/cache@v2
+        id: yarn-cache
+        with:
+          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+          key: ${{ runner.os }}-yarn-${{ hashFiles('dapp/yarn.lock') }}-dapp
+          restore-keys: |
+            ${{ runner.os }}-yarn-dapp
+
+      - run: yarn install
+        working-directory: ./dapp
+
+      - run: yarn prettier:check
+        working-directory: ./dapp
+
+  slither:
+    name: "Slither"
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Python 3.6
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.6
+
+      - name: Install dependencies
+        run: |
+          wget https://github.com/ethereum/solidity/releases/download/v0.5.11/solc-static-linux
+          chmod +x solc-static-linux
+          sudo mv solc-static-linux /usr/local/bin/solc
+          pip3 install slither-analyzer
+
+      - name: Use Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "14.x"
+
+      # - name: "Set Yarn cache fallback path"
+      #   run: yarn config set cacheFolder /runner/_work/.yarn-cache
+
+      - name: Get yarn cache directory path
+        id: yarn-cache-dir-path
+        run: echo "::set-output name=dir::$(yarn config get cacheFolder)"
+
+      - uses: actions/cache@v3
+        id: yarn-cache
+        with:
+          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+          key: ${{ runner.os }}-yarn-${{ hashFiles('contracts/yarn.lock') }}-contracts
+          restore-keys: |
+          ${{ runner.os }}-yarn-
+
+      - run: yarn install
+        working-directory: ./contracts
+
+      - name: Test with Slither
+        working-directory: ./contracts
+        run: yarn run slither
+
+  snyk:
+    name: "Snyk"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: Run Snyk to check for vulnerabilities
+        uses: snyk/actions/node@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high  --all-projects
