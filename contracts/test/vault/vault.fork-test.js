@@ -42,7 +42,7 @@ forkDescribe("Vault", function () {
       // This fails locally for now, since
       // BuyBack contract is yet to be deployed
       expect(await vault.strategistAddr()).to.equal(
-        "0x77314eb392b2be47c014cde0706908b3307ad6a9"
+        "0xF14BBdf064E3F67f51cd9BD646aE3716aD938FDC"
       );
     });
 

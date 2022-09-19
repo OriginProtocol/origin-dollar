@@ -41,7 +41,7 @@ async function defaultFixture() {
   );
 
   const ousd = await ethers.getContractAt("OUSD", ousdProxy.address);
-  const vault = await ethers.getContractAt("IVault", vaultProxy.address);
+  const vault = await ethers.getContractAt("Vault", vaultProxy.address);
   const harvester = await ethers.getContractAt(
     "Harvester",
     harvesterProxy.address
