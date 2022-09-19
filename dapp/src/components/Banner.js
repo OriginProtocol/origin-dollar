@@ -4,15 +4,11 @@ import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useStoreState } from 'pullstate'
 import { fbt } from 'fbt-runtime'
-import moment from 'moment'
 import StakeStore from 'stores/StakeStore'
 import { adjustLinkHref } from 'utils/utils'
+import { burnTimer } from 'utils/math'
 
 const Banner = ({ dapp }) => {
-  const burn = moment('2022-10-10T00:00:00.000Z')
-  const days = burn.diff(moment(), 'days')
-  const burnDays = days === 0 ? 1 : days
-
   const { pathname } = useRouter()
   const burnPage = pathname === '/burn'
   const stakePage = pathname === '/earn'
@@ -20,7 +16,7 @@ const Banner = ({ dapp }) => {
   const showStakingBanner =
     dapp && (stakes.stakes || []).length !== 0 && !stakePage
 
-  const notice = showStakingBanner || burnDays >= 0
+  const notice = showStakingBanner || burnTimer().days >= 0
 
   const StakingBanner = () => {
     return (
@@ -100,7 +96,7 @@ const Banner = ({ dapp }) => {
       <>
         {fbt(
           'Only ' +
-            fbt.param('burn-days', burnDays) +
+            fbt.param('burn-days', burnTimer.days) +
             ' days left to claim your OGV before the burn',
           'Burn notice'
         )}

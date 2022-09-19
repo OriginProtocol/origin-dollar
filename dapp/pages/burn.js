@@ -7,6 +7,7 @@ import addresses from 'constants/contractAddresses'
 import { formatCurrency, getRewardsApy } from 'utils/math'
 import { assetRootPath } from 'utils/image'
 import withIsMobile from 'hoc/withIsMobile'
+import { burnTimer } from 'utils/math'
 
 import Layout from 'components/layout'
 import Nav from 'components/Nav'
@@ -14,6 +15,9 @@ import Nav from 'components/Nav'
 const BurnCountdown = ({ days, hours, minutes, seconds }) => {
   return (
     <>
+      <div className="text mt-5">
+            {fbt('Countdown to burn', 'Countdown to burn')}
+      </div>
       <div className="d-flex flex-row text-center">
         <div className="d-flex flex-column">
           <div className="number gradient1">{days}</div>
@@ -36,6 +40,14 @@ const BurnCountdown = ({ days, hours, minutes, seconds }) => {
         </div>
       </div>
       <style jsx>{`
+        .text {
+          color: fafbfb;
+          max-width: 550px;
+          font-size: 1.25rem;
+          font-weight: 500;
+          line-height: 1.25;
+        }
+
         .number {
           font-size: 7rem;
           font-weight: 900;
@@ -73,7 +85,25 @@ const BurnCountdown = ({ days, hours, minutes, seconds }) => {
 
 const renderer = ({ days, hours, minutes, seconds, completed }) => {
   if (completed) {
-    return <span className="gradient1">OGV has been burned!</span>
+    return (
+      <>
+        <div className="text gradient1">
+          Burn complete!
+        </div>
+        <style jsx>{`
+        .text {
+          font-size: 7rem;
+          font-weight: 900;
+        }
+
+        @media (max-width: 799px) {
+          .text {
+            font-size: 3rem;
+          }
+        }
+      `}</style>
+      </>
+    )
   } else {
     return (
       <BurnCountdown
@@ -155,10 +185,7 @@ const Burn = ({ locale, onLocale, isMobile }) => {
               'On October 10th, 2022 at 0:00UTC all unclaimed tokens from the OGV airdrop will be burned forever.'
             )}
           </div>
-          <div className="text-container mt-5">
-            {fbt('Countdown to burn', 'Countdown to burn')}
-          </div>
-          <Countdown date={'2022-10-10T00:00:00.000Z'} renderer={renderer} />
+          <Countdown date={'2021-10-10T00:00:00.000Z'} renderer={renderer} />
           <div className="flex-row mt-5 mb-5">
             <a
               href="https://app.uniswap.org/#/swap?outputCurrency=0x9c354503C38481a7A7a51629142963F98eCC12D0&chain=mainnet"
@@ -178,10 +205,18 @@ const Burn = ({ locale, onLocale, isMobile }) => {
             </a>
           </div>
           <div className="text-container mt-5">
-            {fbt('Estimated burn amount', 'Estimated burn amount')}{' '}
-            <span className="subtext">
-              {fbt('(currently unclaimed OGV)', '(currently unclaimed OGV')}
-            </span>
+            {burnTimer().seconds <= 0 ? (
+              fbt('OGV burned', 'OGV burned')
+              ) : (
+                <>
+                  {fbt('Estimated burn amount', 'Estimated burn amount')}
+                  {' '}
+                  <span className="subtext">
+                    {fbt('(currently unclaimed OGV)', '(currently unclaimed OGV')}
+                  </span>
+                </>
+              )
+            }
           </div>
 
           <h1>{formatCurrency(burnAmount, 0)}</h1>
@@ -417,7 +452,7 @@ const Burn = ({ locale, onLocale, isMobile }) => {
         section.burn {
           background-image: url(/images/flame.svg);
           background-repeat: no-repeat;
-          background-position: 100% -15%;
+          background-position: 100% -5%;
           background-size: 70vw;
           padding-top: 0px;
         }
