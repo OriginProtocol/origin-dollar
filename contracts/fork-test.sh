@@ -11,22 +11,45 @@ main()
     rm -rf deployments/hardhat
 
     ENV_FILE=.env
-    LOCAL_PROVIDER_URL=http://localhost:8545
-    source .env
 
-    if [ -z "$GITHUB_ACTIONS" ] && [ ! -f "$ENV_FILE" ]; then
-        echo -e "${RED} File $ENV_FILE does not exist. Have you forgotten to rename the dev.env to .env? ${NO_COLOR}"
-        exit 1
+    is_ci=false
+    is_local=true
+    if [ "$GITHUB_ACTIONS" = "true" ]; then
+        is_ci=true
+        is_local=false
     fi
+
+    if $is_local; then
+        # When not running on CI/CD, make sure there's an env file
+        if [ ! -f "$ENV_FILE" ]; then
+            echo -e "${RED} File $ENV_FILE does not exist. Have you forgotten to rename the dev.env to .env? ${NO_COLOR}"
+            exit 1
+        fi
+        source .env
+    fi
+
+    # There must be a provider URL in all cases
     if [ -z "$PROVIDER_URL" ]; then echo "Set PROVIDER_URL" && exit 1; fi
     
     params=()
-    # if local node is running resp is a non empty string
-    resp=$(curl -X POST -H "Content-Type: application/json" --data '{"jsonrpc":"2.0","method":"web3_clientVersion","params":[],"id":67}' "$LOCAL_PROVIDER_URL")
+    if $is_local; then
+        # Check if any node is running on port 8545
+        defaultNodeUrl=http://localhost:8545
 
-    if [ -z "$resp" ]; then
+        # If local node is running, $resp is a non empty string
+        resp=$(curl -X POST --connect-timeout 3 -H "Content-Type: application/json" --data '{"jsonrpc":"2.0","method":"web3_clientVersion","params":[],"id":67}' "$defaultNodeUrl")
+
+        if [ ! -z "$resp" ]; then
+            # Use the running node, if found
+            echo "Found node running on $defaultNodeUrl"
+            export LOCAL_PROVIDER_URL="$defaultNodeUrl"
+        fi
+    fi
+
+    if [ -z "$LOCAL_PROVIDER_URL" ]; then
         cp -r deployments/mainnet deployments/hardhat
         echo "No running node detected spinning up a fresh one"
+        # params+="--deploy-fixture "
     else
         # Fetch latest block number from hardhat instance
         blockresp=$((curl -s -H "Content-Type: application/json" -X POST --data '{"id":1,"jsonrpc":"2.0","method":"eth_blockNumber"}' "$LOCAL_PROVIDER_URL") | jq -r '.result')
