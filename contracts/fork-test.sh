@@ -49,7 +49,7 @@ main()
     if [ -z "$LOCAL_PROVIDER_URL" ]; then
         cp -r deployments/mainnet deployments/hardhat
         echo "No running node detected spinning up a fresh one"
-        # params+="--deploy-fixture "
+        params+="--deploy-fixture "
     else
         # Fetch latest block number from hardhat instance
         blockresp=$((curl -s -H "Content-Type: application/json" -X POST --data '{"id":1,"jsonrpc":"2.0","method":"eth_blockNumber"}' "$LOCAL_PROVIDER_URL") | jq -r '.result')
