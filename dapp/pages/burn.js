@@ -135,8 +135,8 @@ const Burn = ({ locale, onLocale, isMobile }) => {
   const airdropAllocationOgn = 1000000000
   const airdropAllocationOusd = 450000000
   const airdropAllocation = airdropAllocationOgn + airdropAllocationOusd
-  const blockTag = 15414780
-  const burnOver = burnTimer().seconds > 0
+  const blockTag = 15719200 // ballpark for now
+  const burnOver = burnTimer().seconds <= 0
 
   const stakingApy =
     getRewardsApy(100 * 1.8 ** (48 / 12), 100, totalVeSupply) || 0
