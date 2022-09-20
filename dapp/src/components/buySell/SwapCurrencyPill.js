@@ -16,8 +16,8 @@ import {
 import { assetRootPath } from 'utils/image'
 import { _ } from 'fbt-runtime/lib/fbt'
 
-const CoinImage = ({ small, coin, isSemiTransparent = false }) => {
-  const className = `coin-image ${isSemiTransparent ? 'transparent' : ''}`
+const CoinImage = ({ small, coin }) => {
+  const className = `coin-image`
   return (
     <div className="d-flex align-items-center">
       {coin !== 'mix' && (
@@ -46,10 +46,6 @@ const CoinImage = ({ small, coin, isSemiTransparent = false }) => {
         .coin-image {
           width: 26px;
           height: 26px;
-        }
-
-        .coin-image.transparent {
-          opacity: 0.3;
         }
 
         .coin-image.small {
@@ -125,10 +121,7 @@ const CoinSelect = ({ selected, onChange, options = [] }) => {
                     setOpen(false)
                   }}
                 >
-                  <CoinImage
-                    coin={option}
-                    isSemiTransparent={option === 'ousd'}
-                  />
+                  <CoinImage coin={option} />
                   <div
                     className={`coin ${
                       option === 'mix' ? 'text-capitalize' : 'text-uppercase'
@@ -199,18 +192,6 @@ const CoinSelect = ({ selected, onChange, options = [] }) => {
 
         .dropdown-item {
           cursor: pointer;
-        }
-
-        /*.dropdown-item.ousd {
-          background-color: #e2e3e5;
-        }
-
-        .dropdown-item.ousd:hover {
-          background-color: #d2d3d5;
-        }*/
-
-        .dropdown-item.ousd .coin {
-          color: #18314055;
         }
 
         .dropdown-item:hover {
