@@ -5,7 +5,7 @@ Checkout our [docs](https://docs.ousd.com) for more details about the product.
 
 ## Requirements
 - Node Version
-  - `^8.11.2 >= node <=^14.0.0`
+  - `^12.22.0 >= node <=^14.0.0`
   - Recommended: `^14.0.0`
 - Web3 Wallet
   - Recommended: [Metamask](https://metamask.io/) 
