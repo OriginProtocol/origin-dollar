@@ -179,45 +179,49 @@ const Layout = ({
             {showStakingBanner ? (
               <>
                 <div className="d-flex flex-column mt-0 justify-content-center px-4 px-md-0 text-md-left">
-          <div className="title-text">
-            {fbt(
-              'Changes are coming to OGN staking.',
-              'Changes are coming to OGN staking.'
-            )}
-          </div>
-          <div className="text">
-            {fbt(
-              'Your existing stakes will not be impacted. Claim your OGN at the end of your staking period.',
-              'Your existing stakes will not be impacted. Claim your OGN at the end of your staking period.'
-            )}
-          </div>
-        </div>
-        <div className="btn btn-dark mt-2 ml-md-auto">
-          <Link href={adjustLinkHref('/earn')}>Legacy staking</Link>
-        </div>
+                  <div className="title-text">
+                    {fbt(
+                      'Changes are coming to OGN staking.',
+                      'Changes are coming to OGN staking.'
+                    )}
+                  </div>
+                  <div className="text">
+                    {fbt(
+                      'Your existing stakes will not be impacted. Claim your OGN at the end of your staking period.',
+                      'Your existing stakes will not be impacted. Claim your OGN at the end of your staking period.'
+                    )}
+                  </div>
+                </div>
+                <div className="btn btn-dark mt-2 ml-md-auto">
+                  <Link href={adjustLinkHref('/earn')}>Legacy staking</Link>
+                </div>
               </>
             ) : burnPage ? (
-              <>{fbt('OGV airdrop is live!', 'Airdrop notice')}
-              <a
-                href={process.env.AIRDROP_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn btn-dark mt-3 mt-md-0 ml-md-auto"
-              >
-                Check eligibility
-              </a></>
-            ) : (
-              <>{fbt(
-                'Only ' +
-                  fbt.param('burn-days', burnTimer().days) +
-                  ' days left to claim your OGV before the burn',
-                'Burn notice'
-              )}
-              <Link href={adjustLinkHref('/burn')}>
-                <a className="btn btn-dark gradient2 mt-3 mt-md-0 ml-md-auto">
-                  OGV Burn
+              <>
+                {fbt('OGV airdrop is live!', 'Airdrop notice')}
+                <a
+                  href={process.env.AIRDROP_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-dark mt-3 mt-md-0 ml-md-auto"
+                >
+                  Check eligibility
                 </a>
-              </Link></>
+              </>
+            ) : (
+              <>
+                {fbt(
+                  'Only ' +
+                    fbt.param('burn-days', burnTimer().days) +
+                    ' days left to claim your OGV before the burn',
+                  'Burn notice'
+                )}
+                <Link href={adjustLinkHref('/burn')}>
+                  <a className="btn btn-dark gradient2 mt-3 mt-md-0 ml-md-auto">
+                    OGV Burn
+                  </a>
+                </Link>
+              </>
             )}
           </div>
         </div>
