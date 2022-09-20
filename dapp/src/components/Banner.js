@@ -93,7 +93,7 @@ const Banner = ({ dapp }) => {
       <>
         {fbt(
           'Only ' +
-            fbt.param('burn-days', burnTimer.days) +
+            fbt.param('burn-days', burnTimer().days) +
             ' days left to claim your OGV before the burn',
           'Burn notice'
         )}
