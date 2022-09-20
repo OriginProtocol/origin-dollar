@@ -32,6 +32,7 @@ contract MockUniswapRouter is IUniswapV2Router {
         uint256 amountOutMin,
         address[] calldata path,
         address to,
+        // solhint-disable-next-line no-unused-vars
         uint256 deadline
     ) external override returns (uint256[] memory amounts) {
         address tok0 = path[0];

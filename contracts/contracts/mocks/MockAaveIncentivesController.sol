@@ -20,6 +20,7 @@ contract MockAaveIncentivesController {
      * @param user The address of the user
      * @return The rewards
      **/
+    // solhint-disable-next-line no-unused-vars
     function getRewardsBalance(address[] calldata assets, address user)
         external
         view
@@ -35,6 +36,7 @@ contract MockAaveIncentivesController {
      * @return Rewards claimed
      **/
     function claimRewards(
+        // solhint-disable-next-line no-unused-vars
         address[] calldata assets,
         uint256 amount,
         address to
@@ -43,6 +45,7 @@ contract MockAaveIncentivesController {
         require(rewards[to] == amount);
         REWARD_TOKEN.mint(amount);
         require(REWARD_TOKEN.transfer(to, amount));
+        // solhint-disable-next-line reentrancy
         rewards[to] = 0;
         return amount;
     }
