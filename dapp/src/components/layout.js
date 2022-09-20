@@ -9,7 +9,6 @@ import { useCookies } from 'react-cookie'
 import { fbt } from 'fbt-runtime'
 import { useWeb3React } from '@web3-react/core'
 import { get } from 'lodash'
-import Banner from 'components/Banner'
 
 import { useEagerConnect } from 'utils/hooks'
 import AccountStore from 'stores/AccountStore'
