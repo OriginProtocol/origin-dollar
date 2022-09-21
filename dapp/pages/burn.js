@@ -131,7 +131,8 @@ const Burn = ({ locale, onLocale, isMobile }) => {
 
   const mandatoryDistributorInitialOgv = 398752449
   const optionalDistributorInitialOgv = 747905084
-  const distributorInitialOgv = mandatoryDistributorInitialOgv + optionalDistributorInitialOgv
+  const distributorInitialOgv =
+    mandatoryDistributorInitialOgv + optionalDistributorInitialOgv
 
   const initialSupply = 4000000000
   const airdropAllocationOgn = 1000000000
@@ -380,7 +381,7 @@ const Burn = ({ locale, onLocale, isMobile }) => {
                   <span className="small">{' OGV'}</span>
                   <span className="grey">{` (${formatCurrency(
                     ((distributorInitialOgv - burnAmount) * 100) /
-                    distributorInitialOgv,
+                      distributorInitialOgv,
                     2
                   )}%)*`}</span>
                 </div>
@@ -411,8 +412,9 @@ const Burn = ({ locale, onLocale, isMobile }) => {
                     </span>
                     <span className="small">{' OGV'}</span>
                     <div className="grey">{`(${formatCurrency(
-                      ((mandatoryDistributorInitialOgv - mandatoryLockupBalance) /
-                      mandatoryDistributorInitialOgv) *
+                      ((mandatoryDistributorInitialOgv -
+                        mandatoryLockupBalance) /
+                        mandatoryDistributorInitialOgv) *
                         100,
                       2
                     )}%)`}</div>
@@ -466,7 +468,9 @@ const Burn = ({ locale, onLocale, isMobile }) => {
             </div>
           </div>
           <div className="footnote">
-            * 306,217,404 OGV were sent to exchanges whose customers were eligible for the airdrop. These exchanges are expected to burn any unclaimed tokens at the end of the claim period.
+            * 306,217,404 OGV were sent to exchanges whose customers were
+            eligible for the airdrop. These exchanges are expected to burn any
+            unclaimed tokens at the end of the claim period.
           </div>
         </div>
       </section>
