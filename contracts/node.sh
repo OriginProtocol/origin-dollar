@@ -7,8 +7,13 @@ RED='\033[0;31m'
 NO_COLOR='\033[0m'
 
 main()
-{
-    rm -rf deployments/localhost
+{   
+    if [ "$IS_TEST" == "true" ] && [ "$FORK" == "true" ]; 
+    then
+        rm -rf deployments/hardhat
+    else
+        rm -rf deployments/localhost
+    fi 
     if  [[ $1 == "fork" ]]
     then
         # Fetch env variables like PROVIDER_URL and BLOCK_NUMBER from .env file so they don't
@@ -28,7 +33,13 @@ main()
             params+=(--fork-block-number ${BLOCK_NUMBER})
         fi
         if [ -z "$STACK_TRACE" ]; then params+=( --show-stack-traces); fi
-        cp -r deployments/mainnet deployments/localhost
+
+        if [ "$IS_TEST" == "true" ] && [ "$FORK" == "true" ]; 
+        then
+            cp -r deployments/mainnet deployments/hardhat
+        else
+            cp -r deployments/mainnet deployments/localhost
+        fi 
 
         nodeOutput=$(mktemp "${TMPDIR:-/tmp/}$(basename 0).XXX")
         # the --no-install is here so npx doesn't download some package on its own if it can not find one in the repo
