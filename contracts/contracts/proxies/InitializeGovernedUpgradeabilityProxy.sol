@@ -106,6 +106,7 @@ contract InitializeGovernedUpgradeabilityProxy is Governable {
      * @param _impl Address to delegate.
      */
     function _delegate(address _impl) internal {
+        // solhint-disable-next-line no-inline-assembly
         assembly {
             // Copy msg.data. We take full control of memory in this inline assembly
             // block because it will not return to Solidity code. We overwrite the
@@ -160,6 +161,7 @@ contract InitializeGovernedUpgradeabilityProxy is Governable {
      */
     function _implementation() internal view returns (address impl) {
         bytes32 slot = IMPLEMENTATION_SLOT;
+        // solhint-disable-next-line no-inline-assembly
         assembly {
             impl := sload(slot)
         }
@@ -186,6 +188,7 @@ contract InitializeGovernedUpgradeabilityProxy is Governable {
 
         bytes32 slot = IMPLEMENTATION_SLOT;
 
+        // solhint-disable-next-line no-inline-assembly
         assembly {
             sstore(slot, newImplementation)
         }

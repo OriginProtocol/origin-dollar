@@ -8,6 +8,7 @@
       "avoid-tx-origin": "error",
       "no-complex-fallback": "error",
       "not-rely-on-block-hash": "error",
-      "reentrancy": "error"
+      "reentrancy": "error",
+      "no-inline-assembly": "error"
     }
 }
