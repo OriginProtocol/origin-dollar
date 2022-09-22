@@ -552,7 +552,7 @@ async function convexMetaVaultFixture() {
     // const curveFactory = await ethers.getContractAt(curveFactoryAbi, curveFactoryAddress)
 
     // Get some 3CRV from most loaded contracts/wallets
-    await transferTokensFromContract(
+    await impersonateAndFundAddress(
       addresses.mainnet.ThreePoolToken,
       [
         "0xceaf7747579696a2f0bb206a14210e3c9e6fb269",
@@ -630,10 +630,11 @@ async function impersonateAndFundContract(address) {
   return await ethers.provider.getSigner(address);
 }
 
-async function transferTokensFromContract(
+async function impersonateAndFundAddress(
   tokenAddress,
   contractAddresses,
-  toAddress
+  toAddress,
+  balanceToUse = 30 // 30%
 ) {
   if (!Array.isArray(contractAddresses)) {
     contractAddresses = [contractAddresses];
@@ -651,7 +652,7 @@ async function transferTokensFromContract(
       .balanceOf(contractAddress);
     await tokenContract
       .connect(impersonatedSigner)
-      .transfer(toAddress, balance);
+      .transfer(toAddress, balance.mul(balanceToUse).div(100));
   }
 }
 

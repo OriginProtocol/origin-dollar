@@ -127,7 +127,7 @@ contract ConvexGeneralizedMetaStrategy is BaseConvexMetaStrategy {
         if (burnAmount > 0) {
             // slither-disable-next-line unused-return
             metapool.remove_liquidity_one_coin(
-                metapoolErc20.balanceOf(address(this)),
+                burnAmount,
                 metapool3CrvCoinIndex,
                 num3CrvTokens
             );
