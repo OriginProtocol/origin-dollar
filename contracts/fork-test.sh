@@ -69,7 +69,10 @@ main()
 
     FORK=true IS_TEST=true npx --no-install hardhat test ${params[@]}
 
-    if $is_ci; then
+    if [ ! $? -eq 0 ] && $is_ci; then
+        echo "Test suite has failed"
+        exit 1;
+    elif $is_ci; then
         exit 0;
     else
         # Cleanup
