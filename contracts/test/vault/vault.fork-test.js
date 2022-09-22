@@ -5,16 +5,12 @@ const { utils } = require("ethers");
 
 const {
   loadFixture,
-  isForkTest,
+  forkOnlyDescribe,
   ousdUnits,
   usdtUnits,
 } = require("./../helpers");
 
-// Ugly hack to avoid running these tests when running `npx hardhat test` directly.
-// A right way would be to add suffix to files and use patterns to filter
-const forkDescribe = isForkTest ? describe : describe.skip;
-
-forkDescribe("Vault", function () {
+forkOnlyDescribe("Vault", function () {
   this.timeout(0);
 
   let fixture;

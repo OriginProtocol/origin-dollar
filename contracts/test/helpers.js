@@ -428,6 +428,10 @@ async function proposeAndExecute(fixture, governorArgsArray, description) {
   await governorContract.connect(governor).execute(proposalId);
 }
 
+// Ugly hack to avoid running these tests when running `npx hardhat test` directly.
+// A right way would be to add suffix to files and use patterns to filter
+const forkOnlyDescribe = isForkTest ? describe : describe.skip;
+
 module.exports = {
   ousdUnits,
   usdtUnits,
@@ -469,4 +473,5 @@ module.exports = {
   advanceBlocks,
   isWithinTolerance,
   changeInBalance,
+  forkOnlyDescribe,
 };

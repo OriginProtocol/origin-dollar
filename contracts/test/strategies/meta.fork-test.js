@@ -1,18 +1,14 @@
 const { expect } = require("chai");
 
 const { loadFixture } = require("ethereum-waffle");
-const { isForkTest, units, ousdUnits } = require("../helpers");
+const { units, ousdUnits, forkOnlyDescribe } = require("../helpers");
 const {
   withBalancedMetaPool,
   withCRV3TitledMetapool,
   withOUSDTitledMetapool,
 } = require("../_metastrategies-fixtures");
 
-// Ugly hack to avoid running these tests when running `npx hardhat test` directly.
-// A right way would be to add suffix to files and use patterns to filter
-const forkDescribe = isForkTest ? describe : describe.skip;
-
-forkDescribe("Convex 3pool/OUSD Meta Strategy", function () {
+forkOnlyDescribe("Convex 3pool/OUSD Meta Strategy", function () {
   this.timeout(0);
 
   describe("Balanced metapool", () => {
@@ -79,6 +75,8 @@ forkDescribe("Convex 3pool/OUSD Meta Strategy", function () {
       it("Should redeem", async () => {
         const { vault, ousd, usdt, usdc, dai, anna } = fixture;
 
+        const supplyBeforeMint = await ousd.totalSupply();
+
         const amount = "10000";
 
         // Mint with all three assets
@@ -90,6 +88,9 @@ forkDescribe("Convex 3pool/OUSD Meta Strategy", function () {
 
         // Total supply should be up by (10k x 2) + (10k x 2) + 10k = 50k
         const currentSupply = await ousd.totalSupply();
+        const supplyAdded = currentSupply.sub(supplyBeforeMint);
+        expect(supplyAdded).to.be.gte("50000");
+
         const currentBalance = await ousd.connect(anna).balanceOf(anna.address);
 
         // Now try to redeem 30k
@@ -105,7 +106,7 @@ forkDescribe("Convex 3pool/OUSD Meta Strategy", function () {
         const newSupply = await ousd.totalSupply();
         const supplyDiff = currentSupply.sub(newSupply);
 
-        expect(supplyDiff).to.gte(ousdUnits("30000"));
+        expect(supplyDiff).to.be.gte(ousdUnits("30000"));
       });
     });
   });
@@ -167,6 +168,8 @@ forkDescribe("Convex 3pool/OUSD Meta Strategy", function () {
       it("Should redeem", async () => {
         const { vault, ousd, usdt, usdc, dai, anna } = fixture;
 
+        const supplyBeforeMint = await ousd.totalSupply();
+
         const amount = "10000";
 
         // Mint with all three assets
@@ -178,6 +181,9 @@ forkDescribe("Convex 3pool/OUSD Meta Strategy", function () {
 
         // Total supply should be up by (10k x 2) + (10k x 2) + 10k = 50k
         const currentSupply = await ousd.totalSupply();
+        const supplyAdded = currentSupply.sub(supplyBeforeMint);
+        expect(supplyAdded).to.be.gte("50000");
+
         const currentBalance = await ousd.connect(anna).balanceOf(anna.address);
 
         // Now try to redeem 30k
@@ -193,7 +199,7 @@ forkDescribe("Convex 3pool/OUSD Meta Strategy", function () {
         const newSupply = await ousd.totalSupply();
         const supplyDiff = currentSupply.sub(newSupply);
 
-        expect(supplyDiff).to.gte(ousdUnits("30000"));
+        expect(supplyDiff).to.be.gte(ousdUnits("30000"));
       });
     });
   });
@@ -250,6 +256,8 @@ forkDescribe("Convex 3pool/OUSD Meta Strategy", function () {
       it("Should redeem", async () => {
         const { vault, ousd, usdt, usdc, dai, anna } = fixture;
 
+        const supplyBeforeMint = await ousd.totalSupply();
+
         const amount = "10000";
 
         // Mint with all three assets
@@ -261,6 +269,9 @@ forkDescribe("Convex 3pool/OUSD Meta Strategy", function () {
 
         // Total supply should be up by (10k x 2) + (10k x 2) + 10k = 50k
         const currentSupply = await ousd.totalSupply();
+        const supplyAdded = currentSupply.sub(supplyBeforeMint);
+        expect(supplyAdded).to.be.gte("50000");
+
         const currentBalance = await ousd.connect(anna).balanceOf(anna.address);
 
         // Now try to redeem 30k
@@ -276,7 +287,7 @@ forkDescribe("Convex 3pool/OUSD Meta Strategy", function () {
         const newSupply = await ousd.totalSupply();
         const supplyDiff = currentSupply.sub(newSupply);
 
-        expect(supplyDiff).to.gte(ousdUnits("30000"));
+        expect(supplyDiff).to.be.gte(ousdUnits("30000"));
       });
     });
   });

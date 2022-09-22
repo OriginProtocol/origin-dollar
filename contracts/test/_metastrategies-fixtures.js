@@ -52,7 +52,7 @@ async function balanceMetaPool(fixture) {
 }
 
 async function withCRV3TitledMetapool() {
-  const fixture = await loadFixture(withBalancedMetaPool);
+  const fixture = await loadFixture(withDefaultStrategiesSet);
 
   await tiltTo3CRV(fixture);
 
@@ -61,6 +61,9 @@ async function withCRV3TitledMetapool() {
 
 async function tiltTo3CRV(fixture, amount) {
   const { vault, domen, ousdMetaPool } = fixture;
+
+  // Balance metapool
+  await balanceMetaPool(fixture);
 
   amount = amount || ousdUnits("500000");
 
@@ -73,7 +76,7 @@ async function tiltTo3CRV(fixture, amount) {
 }
 
 async function withOUSDTitledMetapool() {
-  const fixture = await loadFixture(withBalancedMetaPool);
+  const fixture = await loadFixture(withDefaultStrategiesSet);
 
   await tiltToOUSD(fixture);
 
@@ -82,6 +85,9 @@ async function withOUSDTitledMetapool() {
 
 async function tiltToOUSD(fixture, amount) {
   const { vault, domen, ousdMetaPool } = fixture;
+
+  // Balance metapool
+  await balanceMetaPool(fixture);
 
   amount = amount || ousdUnits("500000");
 
@@ -118,6 +124,10 @@ async function removeAllLiquidity(fixture, user) {
   removeMethod(ousdMetaPool.balanceOf(address), ["0", "0"]);
 }
 
+/**
+ * Removes liquidity by first removing the required amount of 3crvLPTokens
+ * and then removes OUSD tokens with remaining metapoolLP
+ */
 async function removeLiquidityImbalanced(fixture, user, crv3Liquidity) {
   const { ousdMetaPool } = fixture;
 
@@ -127,6 +137,8 @@ async function removeLiquidityImbalanced(fixture, user, crv3Liquidity) {
     ["0", crv3Liquidity],
     crv3Liquidity.mul("12").div("10") // 20% of tolerance
   );
+
+  // Remaining metapool LP user has is used to remove liquidity to get OUSD
   const removeOneCoinSign = "remove_liquidity_one_coin(uint256,int128,uint256)";
   await ousdMetaPool.connect(user)[removeOneCoinSign](
     await ousdMetaPool.balanceOf(address),
@@ -167,9 +179,6 @@ async function withLiquidityOnOUSDTitledPool() {
   // Franck has added imbalanced liquidity
   await addLiquidity(fixture, ousdAmount, crv3Liquidity.div(2), fixture.franck);
 
-  // Balance metapool
-  await balanceMetaPool(fixture);
-
   // Tilt to OUSD
   await tiltToOUSD(fixture);
 
@@ -188,9 +197,6 @@ async function withLiquidityOn3CRVTitledPool() {
 
   // Franck has added imbalanced liquidity
   await addLiquidity(fixture, ousdAmount, crv3Liquidity.div(2), fixture.franck);
-
-  // Balance metapool
-  await balanceMetaPool(fixture);
 
   // Tilt to 3CRV
   await tiltTo3CRV(fixture);

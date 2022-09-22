@@ -1,7 +1,7 @@
 const { expect } = require("chai");
 
 const { loadFixture } = require("ethereum-waffle");
-const { isForkTest, ousdUnits } = require("../helpers");
+const { forkOnlyDescribe, ousdUnits } = require("../helpers");
 const {
   withBalancedMetaPool,
   addLiquidity,
@@ -15,11 +15,7 @@ const {
   withLiquidityOnOUSDTitledPool,
 } = require("../_metastrategies-fixtures");
 
-// Ugly hack to avoid running these tests when running `npx hardhat test` directly.
-// A right way would be to add suffix to files and use patterns to filter
-const forkDescribe = isForkTest ? describe : describe.skip;
-
-forkDescribe("OUSD MetaPool Liquidity Test", function () {
+forkOnlyDescribe("OUSD MetaPool Liquidity Test", function () {
   this.timeout(0);
 
   describe("Balanced metapool", () => {
