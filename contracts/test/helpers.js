@@ -1,5 +1,6 @@
 const hre = require("hardhat");
 const chai = require("chai");
+const mocha = require("mocha");
 const { parseUnits, formatUnits } = require("ethers").utils;
 const BigNumber = require("ethers").BigNumber;
 const { createFixtureLoader } = require("ethereum-waffle");
@@ -430,7 +431,7 @@ async function proposeAndExecute(fixture, governorArgsArray, description) {
 
 // Ugly hack to avoid running these tests when running `npx hardhat test` directly.
 // A right way would be to add suffix to files and use patterns to filter
-const forkOnlyDescribe = isForkTest ? describe : describe.skip;
+const forkOnlyDescribe = isForkTest ? mocha.describe : mocha.describe.skip
 
 module.exports = {
   ousdUnits,
