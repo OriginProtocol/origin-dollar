@@ -81,8 +81,8 @@ module.exports = deploymentWithProposal(
           cVaultProxy.address,
           addresses.mainnet.CVXBooster, // _cvxDepositorAddress,
           addresses.mainnet.CurveOUSDMetaPool, // _metapoolAddress
-          "0x2A8e1E676Ec238d8A992307B495b45B3fEAa5e86", // _ousdAddress
-          "0x7D536a737C13561e0D2Decf1152a653B4e615158", // _cvxRewardStakerAddress,
+          addresses.mainnet.OUSDProxy, // _ousdAddress
+          addresses.mainnet.CVXRewardsPool, // _cvxRewardStakerAddress,
         ],
         56, // _cvxDepositorPTokenId
         await getTxOpts()

@@ -52,6 +52,7 @@ addresses.mainnet.ThreePoolGauge = "0xbFcF63294aD7105dEa65aA58F8AE5BE2D9d0952A";
 addresses.mainnet.CVX = "0x4e3fbd56cd56c3e72c1403e103b45db9da5b9d2b";
 addresses.mainnet.CRVRewardsPool = "0x689440f2ff927e1f24c72f1087e1faf471ece1c8";
 addresses.mainnet.CVXBooster = "0xF403C135812408BFbE8713b5A23a04b3D48AAE31";
+addresses.mainnet.CVXRewardsPool = "0x7D536a737C13561e0D2Decf1152a653B4e615158";
 // Open Oracle
 addresses.mainnet.openOracle = "0x922018674c12a7f0d394ebeef9b58f186cde13c1";
 // OGN

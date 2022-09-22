@@ -184,6 +184,10 @@ async function defaultFixture() {
       "MockBooster",
       addresses.mainnet.CVXBooster
     );
+    cvxRewardPool = await ethers.getContractAt(
+      "IRewardStaking",
+      addresses.mainnet.CVXRewardsPool
+    );
   } else {
     usdt = await ethers.getContract("MockUSDT");
     dai = await ethers.getContract("MockDAI");

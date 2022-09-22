@@ -19,12 +19,23 @@ forkOnlyDescribe("Convex 3pool/OUSD Meta Strategy", function () {
 
     describe("Mint", function () {
       async function mintTest(user, asset, amount = "30000") {
-        const { vault, ousd, usdt, usdc } = fixture;
+        const {
+          vault,
+          ousd,
+          usdt,
+          usdc,
+          dai,
+          OUSDmetaStrategy,
+          cvxRewardPool,
+        } = fixture;
 
         const unitAmount = await units(amount, asset);
 
         const currentSupply = await ousd.totalSupply();
         const currentBalance = await ousd.connect(user).balanceOf(user.address);
+        const currentRewardPoolBalance = await cvxRewardPool
+          .connect(user)
+          .balanceOf(OUSDmetaStrategy.address);
 
         // Mint OUSD w/ asset
         await vault.connect(user).mint(asset.address, unitAmount, 0);
@@ -50,9 +61,23 @@ forkOnlyDescribe("Convex 3pool/OUSD Meta Strategy", function () {
           expect(supplyDiff).to.approxEqualTolerance(ousdUnits(amount), 1);
         }
 
-        // // TODO: Check why this is zero on fork for USDT??
-        // const { ousdMetaPool, cvxBooster } = fixture
-        // console.log(await ousdMetaPool.connect(user).balanceOf(cvxBooster.address))
+        // Ensure some LP tokens got staked under OUSDMetaStrategy address
+        const newRewardPoolBalance = await cvxRewardPool
+          .connect(user)
+          .balanceOf(OUSDmetaStrategy.address);
+        const rewardPoolBalanceDiff = newRewardPoolBalance.sub(
+          currentRewardPoolBalance
+        );
+        if (asset.address === dai.address) {
+          // Should not have staked when minted with DAI
+          expect(rewardPoolBalanceDiff).to.equal("0");
+        } else {
+          // Should have staked the LP tokens for USDT and USDC
+          expect(rewardPoolBalanceDiff).to.approxEqualTolerance(
+            ousdUnits(amount).mul(2),
+            5
+          );
+        }
       }
 
       it("Should stake USDT in Cruve guage via metapool", async function () {
@@ -119,12 +144,23 @@ forkOnlyDescribe("Convex 3pool/OUSD Meta Strategy", function () {
 
     describe("Mint", function () {
       async function mintTest(user, asset, amount = "30000") {
-        const { vault, ousd, usdt, usdc } = fixture;
+        const {
+          vault,
+          ousd,
+          usdt,
+          usdc,
+          dai,
+          OUSDmetaStrategy,
+          cvxRewardPool,
+        } = fixture;
 
         const unitAmount = await units(amount, asset);
 
         const currentSupply = await ousd.totalSupply();
         const currentBalance = await ousd.connect(user).balanceOf(user.address);
+        const currentRewardPoolBalance = await cvxRewardPool
+          .connect(user)
+          .balanceOf(OUSDmetaStrategy.address);
 
         // Mint OUSD w/ asset
         await vault.connect(user).mint(asset.address, unitAmount, 0);
@@ -145,6 +181,23 @@ forkOnlyDescribe("Convex 3pool/OUSD Meta Strategy", function () {
         } else {
           // 1x for DAI
           expect(supplyDiff).to.approxEqualTolerance(ousdUnits(amount), 1);
+        }
+
+        // Ensure some LP tokens got staked under OUSDMetaStrategy address
+        const newRewardPoolBalance = await cvxRewardPool
+          .connect(user)
+          .balanceOf(OUSDmetaStrategy.address);
+        const rewardPoolBalanceDiff = newRewardPoolBalance.sub(
+          currentRewardPoolBalance
+        );
+        if (asset.address === dai.address) {
+          // Should not have staked when minted with DAI
+          expect(rewardPoolBalanceDiff).to.equal("0");
+        } else {
+          // Should have staked the LP tokens for USDT and USDC
+          expect(rewardPoolBalanceDiff).to.be.gte(
+            ousdUnits(amount).mul(3).div(2)
+          );
         }
       }
 
@@ -212,12 +265,15 @@ forkOnlyDescribe("Convex 3pool/OUSD Meta Strategy", function () {
 
     describe("Mint", function () {
       async function mintTest(user, asset, amount = "30000") {
-        const { vault, ousd } = fixture;
+        const { vault, ousd, dai, OUSDmetaStrategy, cvxRewardPool } = fixture;
 
         const unitAmount = await units(amount, asset);
 
         const currentSupply = await ousd.totalSupply();
         const currentBalance = await ousd.connect(user).balanceOf(user.address);
+        const currentRewardPoolBalance = await cvxRewardPool
+          .connect(user)
+          .balanceOf(OUSDmetaStrategy.address);
 
         // Mint OUSD w/ asset
         await vault.connect(user).mint(asset.address, unitAmount, 0);
@@ -234,6 +290,24 @@ forkOnlyDescribe("Convex 3pool/OUSD Meta Strategy", function () {
 
         // Ensure about ~1x OUSD has been added to supply
         expect(supplyDiff).to.approxEqualTolerance(ousdUnits(amount), 1);
+
+        // Ensure some LP tokens got staked under OUSDMetaStrategy address
+        const newRewardPoolBalance = await cvxRewardPool
+          .connect(user)
+          .balanceOf(OUSDmetaStrategy.address);
+        const rewardPoolBalanceDiff = newRewardPoolBalance.sub(
+          currentRewardPoolBalance
+        );
+        if (asset.address === dai.address) {
+          // Should not have staked when minted with DAI
+          expect(rewardPoolBalanceDiff).to.equal("0");
+        } else {
+          // Should have staked the LP tokens for USDT and USDC
+          expect(rewardPoolBalanceDiff).to.approxEqualTolerance(
+            ousdUnits(amount),
+            5
+          );
+        }
       }
 
       it("Should stake USDT in Cruve guage via metapool", async function () {
