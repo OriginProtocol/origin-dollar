@@ -145,6 +145,7 @@ contract ConvexGeneralizedMetaStrategy is BaseConvexMetaStrategy {
             address(pTokenAddress)
         );
         // always withdraw all of the available metapool LP tokens (similar to how we always deposit all)
+        // slither-disable-next-line unused-return
         metapool.remove_liquidity_one_coin(
             metapoolErc20.balanceOf(address(this)),
             int128(metapool3CrvCoinIndex),
