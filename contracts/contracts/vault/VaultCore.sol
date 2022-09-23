@@ -20,7 +20,6 @@ import { IOracle } from "../interfaces/IOracle.sol";
 import { IVault } from "../interfaces/IVault.sol";
 import { IBuyback } from "../interfaces/IBuyback.sol";
 import "./VaultStorage.sol";
-import "hardhat/console.sol";
 
 contract VaultCore is VaultStorage {
     using SafeERC20 for IERC20;
@@ -129,18 +128,11 @@ contract VaultCore is VaultStorage {
             _rebase();
         }
 
-        netOusdMintedForStrategy += int256(_amount);
+        netOusdMintedForStrategy += _amount;
 
         require(
-            abs(netOusdMintedForStrategy) < netOusdMintForStrategyThreshold,
-            string(
-                bytes.concat(
-                    bytes("Attempting to mint too much OUSD. Threshold: "),
-                    bytes(Strings.toString(netOusdMintForStrategyThreshold)),
-                    bytes(", errorneous minted amount: "),
-                    bytes(Strings.toString(abs(netOusdMintedForStrategy)))
-                )
-            )
+            netOusdMintedForStrategy < netOusdMintForStrategyThreshold,
+            "Minted ousd surpassed netOusdMintForStrategyThreshold."
         );
 
         // Mint matching OUSD
@@ -245,7 +237,7 @@ contract VaultCore is VaultStorage {
      * Notice: can't use nonReentrant modifier since BaseCurveStrategy's deposit
      * already has that modifier present
      */
-    function redeemForStrategy(uint256 _amount)
+    function burnForStrategy(uint256 _amount)
         external
         whenNotCapitalPaused
         onlyOusdMetaStrategy
@@ -254,17 +246,10 @@ contract VaultCore is VaultStorage {
 
         emit Redeem(msg.sender, _amount);
 
-        netOusdMintedForStrategy -= int256(_amount);
+        netOusdMintedForStrategy -= _amount;
         require(
-            abs(netOusdMintedForStrategy) < netOusdMintForStrategyThreshold,
-            string(
-                bytes.concat(
-                    bytes("Attempting to redeem too much OUSD. Threshold: "),
-                    bytes(Strings.toString(netOusdMintForStrategyThreshold)),
-                    bytes(", errorneous minted amount: -"),
-                    bytes(Strings.toString(abs(netOusdMintedForStrategy)))
-                )
-            )
+            netOusdMintedForStrategy < netOusdMintForStrategyThreshold,
+            "Attempting to burn too much OUSD."
         );
 
         // Burn OUSD
@@ -706,9 +691,5 @@ contract VaultCore is VaultStorage {
                 return(0, returndatasize())
             }
         }
-    }
-
-    function abs(int256 x) private pure returns (uint256) {
-        return x >= 0 ? uint256(x) : uint256(-x);
     }
 }

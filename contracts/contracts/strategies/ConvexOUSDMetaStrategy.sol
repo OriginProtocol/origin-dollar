@@ -192,7 +192,7 @@ contract ConvexOUSDMetaStrategy is BaseConvexMetaStrategy {
             );
         }
 
-        IVault(vaultAddress).redeemForStrategy(
+        IVault(vaultAddress).burnForStrategy(
             metapoolMainToken.balanceOf(address(this))
         );
     }
@@ -214,7 +214,7 @@ contract ConvexOUSDMetaStrategy is BaseConvexMetaStrategy {
             _minAmounts
         );
 
-        IVault(vaultAddress).redeemForStrategy(
+        IVault(vaultAddress).burnForStrategy(
             metapoolMainToken.balanceOf(address(this))
         );
     }

@@ -115,7 +115,7 @@ contract VaultStorage is Initializable, Governable {
     address public ousdMetaStrategy = address(0);
 
     // How much OUSD is currently minted by the strategy
-    int256 public netOusdMintedForStrategy = 0;
+    uint256 public netOusdMintedForStrategy = 0;
 
     // How much net total OUSD is allowed to be minted by all strategies
     uint256 public netOusdMintForStrategyThreshold = 0;

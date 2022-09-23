@@ -3,8 +3,8 @@ import world
 import math
 
 #CONFIGURATION - unfortunately this address changes until we deploy it to mainnet
-OUSD_META_STRATEGY = '0x307a6343A4ecd5dF8F113fb7f1A78D792F81f91C'
-FRAX_STRATEGY = '0xE5643a899C0CA15B5aAb5a01D39741B425F5Bcc0'
+OUSD_META_STRATEGY = '0xb12C3410C44854054c217fbF79dFf38ffD1C0676'
+FRAX_STRATEGY = '0xC83Cb4F34874E0Ef4c58b4e77D4935F8F819d203'
 # Define which meta strategy should be set as default USDT asset strategy. Important for
 # supplying liquidity when minting using USDT
 USDT_DEFAULT_META_STRATEGY = FRAX_STRATEGY

@@ -134,8 +134,8 @@ contract VaultAdmin is VaultStorage {
     }
 
     /**
-     * @dev Set a minimum amount of OUSD in a mint or redeem that triggers a
-     * rebase
+     * @dev Set maximum amount of OUSD that can at any point be minted and deployed
+     * to strategy (used only by ConvexOUSDMetaStrategy for now).
      * @param _threshold OUSD amount with 18 fixed decimals.
      */
     function setNetOusdMintForStrategyThreshold(uint256 _threshold)
