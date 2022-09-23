@@ -85,9 +85,9 @@ contract ConvexGeneralizedMetaStrategy is BaseConvexMetaStrategy {
          * run it yourself using code in brownie/scripts/liqidity_test.py
          */
         // slither-disable-next-line divide-before-multiply
-        uint256 estimationRequiredMetapoolLpTokens = (((curvePool
-            .get_virtual_price() * 1e18) / metapool.get_virtual_price()) *
-            num3CrvTokens) / 1e18;
+        uint256 estimationRequiredMetapoolLpTokens = curvePool.get_virtual_price()
+            .divPrecisely(metapool.get_virtual_price())
+            .mulTruncate(num3CrvTokens);
 
         int128 metapool3CrvCoinIndex = int128(
             _getMetapoolCoinIndex(address(pTokenAddress))
