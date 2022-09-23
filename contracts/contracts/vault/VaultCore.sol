@@ -25,7 +25,8 @@ contract VaultCore is VaultStorage {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
     using SafeMath for uint256;
-
+    // max signed int
+    uint256 constant MAX_INT = 2**255 - 1;
     uint256 constant MAX_UINT =
         0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
 
@@ -118,7 +119,7 @@ contract VaultCore is VaultStorage {
         whenNotCapitalPaused
         onlyOusdMetaStrategy
     {
-        require(_amount > 0, "Amount must be greater than 0");
+        require(_amount < MAX_INT, "Amount too high");
 
         emit Mint(msg.sender, _amount);
 
@@ -128,7 +129,8 @@ contract VaultCore is VaultStorage {
             _rebase();
         }
 
-        netOusdMintedForStrategy += _amount;
+        // safe to convert because of the require check at the beginning of the function
+        netOusdMintedForStrategy += int256(_amount);
 
         require(
             netOusdMintedForStrategy < netOusdMintForStrategyThreshold,
@@ -160,8 +162,6 @@ contract VaultCore is VaultStorage {
      * @param _minimumUnitAmount Minimum stablecoin units to receive in return
      */
     function _redeem(uint256 _amount, uint256 _minimumUnitAmount) internal {
-        require(_amount > 0, "Amount must be greater than 0");
-
         // Calculate redemption outputs
         (
             uint256[] memory outputs,
@@ -242,11 +242,13 @@ contract VaultCore is VaultStorage {
         whenNotCapitalPaused
         onlyOusdMetaStrategy
     {
-        require(_amount > 0, "Amount must be greater than 0");
+        require(_amount < MAX_INT, "Amount too high");
 
         emit Redeem(msg.sender, _amount);
 
-        netOusdMintedForStrategy -= _amount;
+        // safe to convert because of the require check at the beginning of the function
+        netOusdMintedForStrategy -= int256(_amount);
+
         require(
             netOusdMintedForStrategy < netOusdMintForStrategyThreshold,
             "Attempting to burn too much OUSD."
