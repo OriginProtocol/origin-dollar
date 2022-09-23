@@ -129,7 +129,7 @@ contract VaultCore is VaultStorage {
             _rebase();
         }
 
-        // safe to convert because of the require check at the beginning of the function
+        // safe to cast because of the require check at the beginning of the function
         netOusdMintedForStrategy += int256(_amount);
 
         require(
@@ -246,7 +246,7 @@ contract VaultCore is VaultStorage {
 
         emit Redeem(msg.sender, _amount);
 
-        // safe to convert because of the require check at the beginning of the function
+        // safe to cast because of the require check at the beginning of the function
         netOusdMintedForStrategy -= int256(_amount);
 
         require(
