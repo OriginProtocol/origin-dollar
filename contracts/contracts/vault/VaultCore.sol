@@ -134,7 +134,7 @@ contract VaultCore is VaultStorage {
         netOusdMintedForStrategy += int256(_amount);
 
         require(
-            netOusdMintedForStrategy < netOusdMintForStrategyThreshold,
+            abs(netOusdMintedForStrategy) < netOusdMintForStrategyThreshold,
             "Minted ousd surpassed netOusdMintForStrategyThreshold."
         );
 
@@ -251,7 +251,7 @@ contract VaultCore is VaultStorage {
         netOusdMintedForStrategy -= int256(_amount);
 
         require(
-            netOusdMintedForStrategy < netOusdMintForStrategyThreshold,
+            abs(netOusdMintedForStrategy) < netOusdMintForStrategyThreshold,
             "Attempting to burn too much OUSD."
         );
 
@@ -694,5 +694,10 @@ contract VaultCore is VaultStorage {
                 return(0, returndatasize())
             }
         }
+    }
+
+    function abs(int256 x) private pure returns (uint256) {
+        require(x < int256(MAX_INT), "Amount too high");
+        return x >= 0 ? uint256(x) : uint256(-x);
     }
 }
