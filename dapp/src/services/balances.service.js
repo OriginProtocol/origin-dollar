@@ -44,7 +44,7 @@ export default class BalancesService {
       body: JSON.stringify(data),
     })
 
-    if (!response.ok) {
+    if (!response || !response.ok) {
       throw new Error(
         `Could not fetch balances from Alchemy http status: ${response.status}`
       )
