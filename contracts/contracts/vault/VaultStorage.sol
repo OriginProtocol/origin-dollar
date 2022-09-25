@@ -130,6 +130,7 @@ contract VaultStorage is Initializable, Governable {
             "new implementation is not a contract"
         );
         bytes32 position = adminImplPosition;
+        // solhint-disable-next-line no-inline-assembly
         assembly {
             sstore(position, newImpl)
         }

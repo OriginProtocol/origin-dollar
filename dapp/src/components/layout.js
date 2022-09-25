@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import classnames from 'classnames'
 import Head from 'next/head'
 import Link from 'next/link'
+import { useRouter } from 'next/router'
 import { useStoreState } from 'pullstate'
 import { useEffect, useRef } from 'react'
 import { useCookies } from 'react-cookie'
@@ -18,8 +19,8 @@ import AppFooter from './AppFooter'
 import MarketingFooter from './MarketingFooter'
 import { adjustLinkHref } from 'utils/utils'
 import { assetRootPath } from 'utils/image'
+import { burnTimer } from 'utils/constants'
 
-const AIRDROP_URL = 'https://governance.ousd.com/claim'
 const UNISWAP_URL =
   'https://app.uniswap.org/#/swap?inputCurrency=0xdac17f958d2ee523a2206206994597c13d831ec7&outputCurrency=0x2A8e1E676Ec238d8A992307B495b45B3fEAa5e86'
 
@@ -45,9 +46,6 @@ const Layout = ({
     get(s, 'rebaseOptedOut')
   )
 
-  const stakes = useStoreState(StakeStore, (s) => s)
-  const showStakingBanner = (stakes.stakes || []).length !== 0 && !isStakePage
-
   const optIn = async () => {
     try {
       const result = await ousdContract
@@ -62,6 +60,14 @@ const Layout = ({
       console.error('Error OUSD REBASE OPT IN: ', error)
     }
   }
+
+  const { pathname } = useRouter()
+  const burnPage = pathname === '/burn'
+  const stakePage = pathname === '/earn'
+  const stakes = useStoreState(StakeStore, (s) => s)
+  const showStakingBanner = dapp && !stakePage && stakes.stakes?.length
+
+  const notice = showStakingBanner || burnTimer().days >= 0
 
   return (
     <>
@@ -153,52 +159,72 @@ const Layout = ({
           </a>
         </div>
       </div>
-      <div
-        className={classnames(
-          `notice ${
-            showStakingBanner ? 'staking pt-2' : 'pt-3'
-          } text-white text-center pb-3`,
-          {
-            dapp,
-          }
-        )}
-      >
-        <div className="container d-flex flex-column flex-md-row align-items-center">
-          {showStakingBanner ? (
-            <>
-              <div className="d-flex flex-column mt-0 justify-content-center px-4 px-md-0 text-md-left">
-                <div className="title-text">
-                  {fbt(
-                    'Changes are coming to OGN staking.',
-                    'Changes are coming to OGN staking.'
-                  )}
-                </div>
-                <div className="text">
-                  {fbt(
-                    'Your existing stakes will not be impacted. Claim your OGN at the end of your staking period.',
-                    'Your existing stakes will not be impacted. Claim your OGN at the end of your staking period.'
-                  )}
-                </div>
-              </div>
-              <div className="btn btn-dark mt-2 ml-md-auto">
-                <Link href={adjustLinkHref('/earn')}>Legacy staking</Link>
-              </div>
-            </>
-          ) : (
-            <>
-              {fbt('OGV airdrop is live!', 'Airdrop notice')}
-              <a
-                href={AIRDROP_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn btn-dark mt-3 mt-md-0 ml-md-auto"
-              >
-                Check eligibility
-              </a>
-            </>
+      {notice && (
+        <div
+          className={classnames(
+            `notice ${showStakingBanner ? 'staking pt-2' : 'pt-3'} ${
+              burnPage ? 'burn' : ''
+            } ${dapp ? '' : 'px-lg-5'} text-white text-center pb-3`,
+            {
+              dapp,
+            }
           )}
+        >
+          <div
+            className={`container d-flex flex-column flex-md-row align-items-center ${
+              dapp ? '' : 'nav px-lg-5'
+            }`}
+          >
+            {showStakingBanner ? (
+              <>
+                <div className="d-flex flex-column mt-0 justify-content-center px-4 px-md-0 text-md-left">
+                  <div className="title-text">
+                    {fbt(
+                      'Changes are coming to OGN staking.',
+                      'Changes are coming to OGN staking.'
+                    )}
+                  </div>
+                  <div className="text">
+                    {fbt(
+                      'Your existing stakes will not be impacted. Claim your OGN at the end of your staking period.',
+                      'Your existing stakes will not be impacted. Claim your OGN at the end of your staking period.'
+                    )}
+                  </div>
+                </div>
+                <div className="btn btn-dark mt-2 ml-md-auto">
+                  <Link href={adjustLinkHref('/earn')}>Legacy staking</Link>
+                </div>
+              </>
+            ) : burnPage ? (
+              <>
+                {fbt('OGV airdrop is live!', 'Airdrop notice')}
+                <a
+                  href={process.env.AIRDROP_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-dark mt-3 mt-md-0 ml-md-auto"
+                >
+                  Check eligibility
+                </a>
+              </>
+            ) : (
+              <>
+                {fbt(
+                  'Only ' +
+                    fbt.param('burn-days', burnTimer().days) +
+                    ' days left to claim your OGV before the burn',
+                  'Burn notice'
+                )}
+                <Link href={adjustLinkHref('/burn')}>
+                  <a className="btn btn-dark gradient2 mt-3 mt-md-0 ml-md-auto">
+                    OGV Burn
+                  </a>
+                </Link>
+              </>
+            )}
+          </div>
         </div>
-      </div>
+      )}
       <main className={classnames({ dapp, short, shorter, medium })}>
         {dapp && <div className="container">{children}</div>}
         {!dapp && children}
@@ -208,26 +234,15 @@ const Layout = ({
       <style jsx>{`
         .notice {
           background-color: black;
-          margin-bottom: 35px;
+          margin-bottom: 0px;
+        }
+
+        .notice.burn {
+          background: linear-gradient(90deg, #8c66fc -28.99%, #0274f1 144.97%);
         }
 
         .notice.staking {
           background-color: #1a82ff;
-        }
-
-        .notice .title-text {
-          font-size: 18px;
-          font-weight: bold;
-          line-height: 1.75;
-          color: white;
-        }
-
-        .notice .text {
-          opacity: 0.8;
-          color: white;
-          line-height: normal;
-          font-size: 14px;
-          max-width: 1000px;
         }
 
         .notice.dapp {
@@ -243,9 +258,24 @@ const Layout = ({
         }
 
         .container {
-          max-width: 940px !important;
+          max-width: 940px;
           padding-left: 0px;
           padding-right: 0px;
+        }
+
+        .title-text {
+          font-size: 18px;
+          font-weight: bold;
+          line-height: 1.75;
+          color: white;
+        }
+
+        .text {
+          opacity: 0.8;
+          color: white;
+          line-height: normal;
+          font-size: 14px;
+          max-width: 1000px;
         }
       `}</style>
     </>
