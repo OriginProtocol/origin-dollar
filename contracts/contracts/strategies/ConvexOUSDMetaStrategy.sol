@@ -114,8 +114,9 @@ contract ConvexOUSDMetaStrategy is BaseConvexMetaStrategy {
          * run it yourself using code in brownie/scripts/liqidity_test.py
          */
         // slither-disable-next-line divide-before-multiply
-        uint256 requiredMetapoolLpTokens = (num3CrvTokens.mulTruncate(crv3VirtualPrice) /
-            metapool.get_virtual_price()) *
+        uint256 requiredMetapoolLpTokens = (num3CrvTokens.mulTruncate(
+            crv3VirtualPrice
+        ) / metapool.get_virtual_price()) *
             1e18 *
             2;
 
@@ -173,7 +174,9 @@ contract ConvexOUSDMetaStrategy is BaseConvexMetaStrategy {
              * value (i.e. OUSD value) of 3CRV required and we increase that by 5% for safety threshold
              */
             // slither-disable-next-line divide-before-multiply
-            uint256 ousdWithThreshold = (required3Crv.mulTruncate(crv3VirtualPrice) * 105) / 100;
+            uint256 ousdWithThreshold = (required3Crv.mulTruncate(
+                crv3VirtualPrice
+            ) * 105) / 100;
             uint256 crv3Received = metapool.get_dy(
                 int128(ousdCoinIndex), // Index value of the coin to send
                 int128(crvCoinIndex), // Index value of the coin to receive

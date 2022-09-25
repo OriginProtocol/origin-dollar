@@ -129,21 +129,17 @@ describe("Convex 3pool/OUSD Meta Strategy", function () {
         "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
       );
 
-      await vault
-        .connect(governor)
-        .setOusdMetaStrategy(anna.address);
+      await vault.connect(governor).setOusdMetaStrategy(anna.address);
 
       await expect(
-        vault
-          .connect(anna)
-          .mintForStrategy(MAX_UINT)
+        vault.connect(anna).mintForStrategy(MAX_UINT)
       ).to.be.revertedWith("Amount too high");
 
       await expect(
-        vault
-          .connect(anna)
-          .mintForStrategy(MAX_UINT.div(2).sub(1))
-      ).to.be.revertedWith("Minted ousd surpassed netOusdMintForStrategyThreshold.");
+        vault.connect(anna).mintForStrategy(MAX_UINT.div(2).sub(1))
+      ).to.be.revertedWith(
+        "Minted ousd surpassed netOusdMintForStrategyThreshold."
+      );
     });
 
     it("Should not allow too large burnForStrategy", async () => {
@@ -151,20 +147,14 @@ describe("Convex 3pool/OUSD Meta Strategy", function () {
         "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
       );
 
-      await vault
-        .connect(governor)
-        .setOusdMetaStrategy(anna.address);
+      await vault.connect(governor).setOusdMetaStrategy(anna.address);
 
       await expect(
-        vault
-          .connect(anna)
-          .burnForStrategy(MAX_UINT)
+        vault.connect(anna).burnForStrategy(MAX_UINT)
       ).to.be.revertedWith("Amount too high");
 
       await expect(
-        vault
-          .connect(anna)
-          .burnForStrategy(MAX_UINT.div(2).sub(1))
+        vault.connect(anna).burnForStrategy(MAX_UINT.div(2).sub(1))
       ).to.be.revertedWith("Attempting to burn too much OUSD.");
     });
   });
