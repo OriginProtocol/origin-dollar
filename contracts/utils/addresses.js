@@ -57,7 +57,7 @@ addresses.mainnet.CVXRewardsPool = "0x7D536a737C13561e0D2Decf1152a653B4e615158";
 addresses.mainnet.openOracle = "0x922018674c12a7f0d394ebeef9b58f186cde13c1";
 // OGN
 addresses.mainnet.OGN = "0x8207c1ffc5b6804f6024322ccf34f29c3541ae26";
-addresses.mainnet.FRAX = "0x853d955aCEf822Db058eb8505911ED77F175b99e";
+addresses.mainnet.alUSD = "0xBC6DA0FE9aD5f3b0d58160288917AA56653660E9";
 // OGV
 addresses.mainnet.OGV = "0x9c354503C38481a7A7a51629142963F98eCC12D0";
 // veOGV

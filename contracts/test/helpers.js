@@ -341,12 +341,12 @@ const getAssetAddresses = async (deployments) => {
        * metapool is not yet deployed. Just return without metapool info if it is not
        * yet available.
        */
-      addressMap.ThreePoolFRAXMetapool = (
-        await deployments.get("MockCurveFraxMetapool")
+      addressMap.ThreePoolalUSDMetapool = (
+        await deployments.get("MockCurvealUSDMetapool")
       ).address;
       // token is implemented by the same contract as the metapool
-      addressMap.fraxMetapoolToken = (
-        await deployments.get("MockCurveFraxMetapool")
+      addressMap.alUSDMetapoolToken = (
+        await deployments.get("MockCurvealUSDMetapool")
       ).address;
     } catch (e) {
       // do nothing
@@ -429,10 +429,12 @@ async function proposeAndExecute(fixture, governorArgsArray, description) {
   await governorContract.connect(governor).execute(proposalId);
 }
 
+// eslint-disable-next-line no-unused-vars
+const doNothing = (title, fn) => { return true };
 // Ugly hack to avoid running these tests when running `npx hardhat test` directly.
 // A right way would be to add suffix to files and use patterns to filter
 const forkOnlyDescribe = (title, fn) =>
-  isForkTest ? mocha.describe(title, fn) : mocha.describe.skip(title, fn);
+  isForkTest ? mocha.describe(title, fn) : doNothing(title, fn);
 
 module.exports = {
   ousdUnits,
