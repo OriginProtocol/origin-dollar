@@ -21,7 +21,7 @@ Basically, you start a forked node that runs the deployments and all. Next, the 
 
 ```mermaid
 gitGraph
-  commit
+  commit id: "block n-1"
   commit id: "FORK_BLOCK_NUMBER"
   branch fork
   commit id: "local deployments"
@@ -29,8 +29,8 @@ gitGraph
   commit id: "test fixtures"
   commit id: "fork tests"
   checkout main
-  commit
-  commit
+  commit "block n+1"
+  commit "block n+2"
 ```
 
 #### Things to know
