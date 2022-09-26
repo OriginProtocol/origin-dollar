@@ -25,7 +25,6 @@ contract ConvexGeneralizedMetaStrategy is BaseConvexMetaStrategy {
      */
     function _lpDepositAll() internal override {
         IERC20 threePoolLp = IERC20(pTokenAddress);
-        IERC20 metapoolErc20 = IERC20(address(metapool));
         ICurvePool curvePool = ICurvePool(platformAddress);
 
         uint256 threePoolLpBalance = threePoolLp.balanceOf(address(this));
@@ -49,7 +48,7 @@ contract ConvexGeneralizedMetaStrategy is BaseConvexMetaStrategy {
         // slither-disable-next-line unused-return
         metapool.add_liquidity(_amounts, minReceived);
 
-        uint256 metapoolLp = metapoolErc20.balanceOf(address(this));
+        uint256 metapoolLp = metapoolLPToken.balanceOf(address(this));
 
         bool success = IConvexDeposits(cvxDepositorAddress).deposit(
             cvxDepositorPTokenId,
@@ -66,7 +65,6 @@ contract ConvexGeneralizedMetaStrategy is BaseConvexMetaStrategy {
      * @param num3CrvTokens Number of Convex LP tokens to remove from gauge
      */
     function _lpWithdraw(uint256 num3CrvTokens) internal override {
-        IERC20 metapoolErc20 = IERC20(address(metapool));
         ICurvePool curvePool = ICurvePool(platformAddress);
 
         uint256 gaugeTokens = IRewardStaking(cvxRewardStakerAddress).balanceOf(
@@ -126,14 +124,13 @@ contract ConvexGeneralizedMetaStrategy is BaseConvexMetaStrategy {
 
         // slither-disable-next-line unused-return
         metapool.remove_liquidity_one_coin(
-            metapoolErc20.balanceOf(address(this)),
+            metapoolLPToken.balanceOf(address(this)),
             metapool3CrvCoinIndex,
             num3CrvTokens
         );
     }
 
     function _lpWithdrawAll() internal override {
-        IERC20 metapoolErc20 = IERC20(address(metapool));
         uint256 gaugeTokens = IRewardStaking(cvxRewardStakerAddress).balanceOf(
             address(this)
         );
@@ -148,7 +145,7 @@ contract ConvexGeneralizedMetaStrategy is BaseConvexMetaStrategy {
         // always withdraw all of the available metapool LP tokens (similar to how we always deposit all)
         // slither-disable-next-line unused-return
         metapool.remove_liquidity_one_coin(
-            metapoolErc20.balanceOf(address(this)),
+            metapoolLPToken.balanceOf(address(this)),
             int128(metapool3CrvCoinIndex),
             uint256(0)
         );
