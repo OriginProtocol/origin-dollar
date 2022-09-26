@@ -39,7 +39,8 @@ In cases where you don't want to fork or run the deployments again and again
 #### How it works
 Basically, you start a forked node that runs the deployments and all. Next, the hardhat forks from this forked node when running the tests. Since any new deployments have already been run on the base fork, running `yarn test:fork` will be much faster. This can be useful when you are just writing tests and there isn't any change to contracts or deployment files.
 
-```mermaidgitGraph
+```mermaid
+gitGraph
   commit id: "block n-1"
   commit id: "FORK_BLOCK_NUMBER"
   branch fork
