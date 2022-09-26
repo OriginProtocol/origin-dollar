@@ -19,6 +19,7 @@ gitGraph
   commit id: "local deployments"
   commit id: "test fixtures"
   commit id: "fork tests"
+  commit id: "tests end" type: REVERSE
   checkout main
   commit id: "block n+1"
   commit id: "block n+2"
@@ -41,9 +42,14 @@ gitGraph
   branch hre
   commit id: "test fixtures"
   commit id: "fork tests"
+  commit id: "tests end" type: REVERSE
   checkout main
   commit id: "block n+1"
   commit id: "block n+2"
+  checkout fork
+  commit id: "terminated" type: REVERSE
+  checkout main
+  commit id: "block n+3"
 ```
 
 #### Things to know
