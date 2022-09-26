@@ -29,8 +29,8 @@ gitGraph
   commit id: "test fixtures"
   commit id: "fork tests"
   checkout main
-  commit "block n+1"
-  commit "block n+2"
+  commit id: "block n+1"
+  commit id: "block n+2"
 ```
 
 #### Things to know
