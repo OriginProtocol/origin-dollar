@@ -12,15 +12,15 @@ const {
 
 /**
  * Regarding hardcoded addresses:
- * The addresses are hardcoded in the test files (instead of 
- * using them from addresses.js) intentionally. While importing and 
+ * The addresses are hardcoded in the test files (instead of
+ * using them from addresses.js) intentionally. While importing and
  * using the variables from that file increases readability, it may
  * result in it being a single point of failure. Anyone can update
  * the addresses.js file and it may go unnoticed.
- * 
+ *
  * Points against this: The on-chain data would still be correct,
  * making the tests to fail in case only addresses.js is updated.
- * 
+ *
  * Still open to discussion.
  */
 
