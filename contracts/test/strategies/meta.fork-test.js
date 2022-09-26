@@ -181,7 +181,7 @@ forkOnlyDescribe("Convex 3pool/OUSD Meta Strategy", function () {
           // It should have added 1million + amount*2 supply
           // (in case of USDT/USDC)
           expect(supplyDiff).to.approxEqualTolerance(
-            ousdUnits("1000000").add(ousdUnitAmount).mul(2),
+            ousdUnits("1000000").add(ousdUnitAmount.mul(2)),
             1
           );
         } else {
