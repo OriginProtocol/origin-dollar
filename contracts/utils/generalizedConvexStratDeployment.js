@@ -39,7 +39,7 @@ module.exports = ({
         cVaultProxy.address
       );
       const cVault = await ethers.getContractAt("Vault", cVaultProxy.address);
-      const proxyName = `Convex${mainTokenSymbol}MetaStrategyProxy`
+      const proxyName = `Convex${mainTokenSymbol}MetaStrategyProxy`;
 
       // Deployer Actions
       // ----------------
