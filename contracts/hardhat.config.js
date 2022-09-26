@@ -229,13 +229,6 @@ module.exports = {
     localhost: {
       timeout: 60000,
     },
-    rinkeby: {
-      url: `${process.env.PROVIDER_URL}`,
-      accounts: [
-        process.env.DEPLOYER_PK || privateKeys[1],
-        process.env.GOVERNOR_PK || privateKeys[1],
-      ],
-    },
     mainnet: {
       url: `${process.env.PROVIDER_URL}`,
       accounts: [
