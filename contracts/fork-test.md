@@ -11,6 +11,19 @@ Fork tests are similar to unit tests, except that it is run on a mainnet fork ag
 
 This forks the blockchain (using `PROVIDER_URL`) everytime you run the command, might take a lot of time.
 
+```mermaid
+gitGraph
+  commit id: "block n-1"
+  commit id: "FORK_BLOCK_NUMBER"
+  branch hre
+  commit id: "local deployments"
+  commit id: "test fixtures"
+  commit id: "fork tests"
+  checkout main
+  commit id: "block n+1"
+  commit id: "block n+2"
+```
+
 ### Option 2: Nested forking (only for local/dev usage)
 In cases where you don't want to fork or run the deployments again and again
 - Start the node in a separate terminal using `FORK=true yarn run node`
