@@ -169,9 +169,17 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
           { dapp }
         )}
       >
-        <div className="container p-lg-0 flex-nowrap">
+        <div
+          className={`container ${
+            dapp ? '' : 'nav pl-lg-5 pr-lg-5'
+          } flex-nowrap`}
+        >
           <Link href={adjustLinkHref('/')}>
-            <a className="navbar-brand d-flex flex-column justify-content-center">
+            <a
+              className={`navbar-brand d-flex flex-column justify-content-center ${
+                dapp ? '' : 'ml-lg-5'
+              }`}
+            >
               <img
                 src={assetRootPath('/images/origin-dollar-logo.svg')}
                 className="origin-logo"
@@ -261,7 +269,11 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
             </button>
             <LanguageOptions locale={locale} onLocale={onLocale} />
           </div>
-          <div className="navLinks collapse navbar-collapse justify-content-end flex-column flex-lg-row d-flex">
+          <div
+            className={`navLinks collapse navbar-collapse justify-content-end flex-column flex-lg-row d-flex ${
+              dapp ? '' : 'mr-lg-5'
+            }`}
+          >
             <button
               className="close navbar-toggler"
               type="button"
@@ -375,7 +387,9 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
           font-size: 0.8125rem;
           height: 40px;
           position: absolute;
+          margin-top: 35px;
           top: -40px;
+          background-color: red;
           width: 100%;
           z-index: 3;
           display: flex;
@@ -389,12 +403,25 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
           color: #fec100;
         }
 
+        .banner.burn {
+          background-color: #141519;
+          border: solid 1px;
+          border-radius: 5px;
+        }
+
+        .banner.burn .triangle {
+          top: 8px;
+          border-top: 6px solid transparent;
+          border-right: 8px solid white;
+          border-bottom: 6px solid transparent;
+        }
+
         .navbar-brand {
           min-height: 40px;
         }
 
         .navbar {
-          padding: 0;
+          padding: 35px 0 0 0;
           font-size: 0.8125rem;
           margin-top: 0;
           z-index: 2;
@@ -623,7 +650,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
             width: initial;
           }
           .banner:not(.dapp) {
-            left: calc((100vw - 940px) / 2 + 337px);
+            left: 430px;
           }
 
           .navbar {

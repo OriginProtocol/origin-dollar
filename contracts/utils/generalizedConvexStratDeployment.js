@@ -5,12 +5,14 @@ module.exports = ({
   deployName,
   forceDeploy,
   mainTokenName,
+  mainTokenSymbol,
   rewardTokenNames,
   assets,
   pTokens,
   platformAddress,
   cvxDepositorAddress,
   metapoolAddress,
+  metapoolLPToken,
   mainTokenAddress,
   cvxRewardStakerAddress,
   cvxDepositorPTokenId,
@@ -37,6 +39,7 @@ module.exports = ({
         cVaultProxy.address
       );
       const cVault = await ethers.getContractAt("Vault", cVaultProxy.address);
+      const proxyName = `Convex${mainTokenSymbol}MetaStrategyProxy`
 
       // Deployer Actions
       // ----------------
@@ -44,10 +47,10 @@ module.exports = ({
       // 1. Deploy new proxy
       // New strategy will be living at a clean address
       const dConvexTokenMetaStrategyProxy = await deployWithConfirmation(
-        "ConvexGeneralizedMetaStrategyProxy"
+        proxyName
       );
       const cConvexTokenMetaStrategyProxy = await ethers.getContractAt(
-        "ConvexGeneralizedMetaStrategyProxy",
+        proxyName,
         dConvexTokenMetaStrategyProxy.address
       );
 
@@ -99,6 +102,7 @@ module.exports = ({
               metapoolAddress,
               mainTokenAddress,
               cvxRewardStakerAddress,
+              metapoolLPToken,
             ],
             cvxDepositorPTokenId,
             await getTxOpts()

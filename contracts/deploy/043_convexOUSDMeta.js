@@ -83,6 +83,7 @@ module.exports = deploymentWithProposal(
           addresses.mainnet.CurveOUSDMetaPool, // _metapoolAddress
           addresses.mainnet.OUSDProxy, // _ousdAddress
           addresses.mainnet.CVXRewardsPool, // _cvxRewardStakerAddress,
+          addresses.mainnet.CurveOUSDMetaPool, // metapoolLPToken (_metapoolAddress)
         ],
         56, // _cvxDepositorPTokenId
         await getTxOpts()

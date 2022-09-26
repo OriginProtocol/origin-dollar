@@ -24,6 +24,7 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
     uint256 internal cvxDepositorPTokenId;
     ICurveMetaPool internal metapool;
     IERC20 internal metapoolMainToken;
+    IERC20 internal metapoolLPToken;
     // Ordered list of metapool assets
     address[] internal metapoolAssets;
 
@@ -51,15 +52,15 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
         address[] calldata _pTokens,
         /**
          * in the following order: _platformAddress(3Pool address), _vaultAddress, _cvxDepositorAddress
-         * _metapoolAddress, _metapoolMainToken, _cvxRewardStakerAddress
+         * _metapoolAddress, _metapoolMainToken, _cvxRewardStakerAddress, _metapoolLPToken
          */
         address[] calldata _initAddresses,
         uint256 _cvxDepositorPTokenId
     ) external onlyGovernor initializer {
         require(_assets.length == 3, "Must have exactly three assets");
         require(
-            _initAddresses.length == 6,
-            "_initAddresses must have exactly six items"
+            _initAddresses.length == 7,
+            "_initAddresses must have exactly seven items"
         );
         // Should be set prior to abstract initialize call otherwise
         // abstractSetPToken calls will fail
@@ -68,6 +69,7 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
         metapool = ICurveMetaPool(_initAddresses[3]);
         metapoolMainToken = IERC20(_initAddresses[4]);
         cvxRewardStakerAddress = _initAddresses[5];
+        metapoolLPToken = IERC20(_initAddresses[6]);
         cvxDepositorPTokenId = _cvxDepositorPTokenId;
 
         metapoolAssets = [metapool.coins(0), metapool.coins(1)];
@@ -110,7 +112,7 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
             balance += value;
         }
 
-        uint256 metapoolPTokens = IERC20(address(metapool)).balanceOf(
+        uint256 metapoolPTokens = metapoolLPToken.balanceOf(
             address(this)
         );
         uint256 metapoolGaugePTokens = IRewardStaking(cvxRewardStakerAddress)
@@ -129,13 +131,12 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
 
     function _approveBase() internal override {
         IERC20 pToken = IERC20(pTokenAddress);
-        IERC20 mainTokenPoolLP = IERC20(address(metapool));
         // 3Pool for LP token (required for removing liquidity)
         pToken.safeApprove(platformAddress, 0);
         pToken.safeApprove(platformAddress, type(uint256).max);
         // Gauge for LP token
-        mainTokenPoolLP.safeApprove(cvxDepositorAddress, 0);
-        mainTokenPoolLP.safeApprove(cvxDepositorAddress, type(uint256).max);
+        metapoolLPToken.safeApprove(cvxDepositorAddress, 0);
+        metapoolLPToken.safeApprove(cvxDepositorAddress, type(uint256).max);
         // Metapool for LP token
         pToken.safeApprove(address(metapool), 0);
         pToken.safeApprove(address(metapool), type(uint256).max);

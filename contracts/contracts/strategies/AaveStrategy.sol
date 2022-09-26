@@ -198,6 +198,7 @@ contract AaveStrategy is InitializableAbstractStrategy {
      * @param _asset Address of the asset to approve
      * @param _aToken Address of the aToken
      */
+    // solhint-disable-next-line no-unused-vars
     function _abstractSetPToken(address _asset, address _aToken)
         internal
         override

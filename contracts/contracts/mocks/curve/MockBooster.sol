@@ -134,6 +134,7 @@ contract MockBooster {
     //callback from reward contract when crv is received.
     function rewardClaimed(
         uint256 _pid,
+        // solhint-disable-next-line no-unused-vars
         address _address,
         uint256 _amount
     ) external returns (bool) {

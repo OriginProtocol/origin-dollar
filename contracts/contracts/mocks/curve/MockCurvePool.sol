@@ -59,6 +59,7 @@ contract MockCurvePool {
     function remove_liquidity_one_coin(
         uint256 _amount,
         int128 _index,
+        // solhint-disable-next-line no-unused-vars
         uint256 _minAmount
     ) external {
         IERC20(lpToken).transferFrom(msg.sender, address(this), _amount);
@@ -66,6 +67,7 @@ contract MockCurvePool {
         amounts[uint128(_index)] = _amount;
         uint256 amount = calc_withdraw_one_coin(_amount, _index);
         IERC20(coins[uint128(_index)]).transfer(msg.sender, amount);
+        // solhint-disable-next-line reentrancy
         balances[uint128(_index)] = balances[uint128(_index)] - amount;
     }
 
@@ -73,6 +75,7 @@ contract MockCurvePool {
         return 1 * 10**18;
     }
 
+    // solhint-disable-next-line no-unused-vars
     function remove_liquidity(uint256 _amount, uint256[3] memory _min_amounts)
         public
     {
@@ -82,6 +85,7 @@ contract MockCurvePool {
             uint256 amount = (_amount / totalSupply) *
                 IERC20(coins[i]).balanceOf(address(this));
             IERC20(coins[i]).transfer(msg.sender, amount);
+            // solhint-disable-next-line reentrancy
             balances[i] = balances[i] - amount;
         }
     }
@@ -97,6 +101,7 @@ contract MockCurvePool {
         );
         for (uint256 i = 0; i < _amounts.length; i++) {
             IERC20(coins[i]).transfer(msg.sender, _amounts[i]);
+            // solhint-disable-next-line reentrancy
             balances[i] = balances[i] - _amounts[i];
         }
     }

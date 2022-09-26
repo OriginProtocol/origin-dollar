@@ -52,6 +52,7 @@ contract MockRewardPool {
         address _stakingToken,
         address _rewardTokenA,
         address _rewardTokenB,
+        // solhint-disable-next-line no-unused-vars
         address _operator
     ) public {
         pid = _pid;
@@ -106,6 +107,7 @@ contract MockRewardPool {
         withdrawAndUnwrap(_balances[msg.sender], claim);
     }
 
+    // solhint-disable-next-line no-unused-vars
     function getReward(address _account, bool _claimExtras)
         public
         returns (bool)
