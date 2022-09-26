@@ -5,13 +5,13 @@ Fork tests are similar to unit tests, except that it is run on a mainnet fork ag
 
 ## Running Fork Tests
 
-### Option 1: Fork each time
+### Option 1: Fork each time (just like CI)
 - Set `PROVIDER_URL` in `.env` file
 - Run `yarn test:fork` (or `yarn test:fork -- filename.fork-test.js`)
 
 This forks the blockchain (using `PROVIDER_URL`) everytime you run the command, might take a lot of time.
 
-### Option 2: Nested forking
+### Option 2: Nested forking (only for local/dev usage)
 In cases where you don't want to fork or run the deployments again and again
 - Start the node in a separate terminal using `FORK=true yarn run node`
 - Run `yarn test:fork` in a new terminal
