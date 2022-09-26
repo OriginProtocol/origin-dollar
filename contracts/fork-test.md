@@ -15,7 +15,13 @@ This forks the blockchain (using `PROVIDER_URL`) everytime you run the command, 
 gitGraph
   commit id: "block n-1"
   commit id: "FORK_BLOCK_NUMBER"
-  branch hre
+  branch testRun1
+  commit id: "local deployments"
+  commit id: "test fixtures"
+  commit id: "fork tests"
+  commit id: "tests end" type: REVERSE
+  checkout main
+  branch testRun2
   commit id: "local deployments"
   commit id: "test fixtures"
   commit id: "fork tests"
@@ -39,7 +45,12 @@ gitGraph
   commit id: "FORK_BLOCK_NUMBER"
   branch fork
   commit id: "local deployments"
-  branch hre
+  branch testRun1
+  commit id: "test fixtures"
+  commit id: "fork tests"
+  commit id: "tests end" type: REVERSE
+  checkout fork
+  branch testRun2
   commit id: "test fixtures"
   commit id: "fork tests"
   commit id: "tests end" type: REVERSE
@@ -47,7 +58,7 @@ gitGraph
   commit id: "block n+1"
   commit id: "block n+2"
   checkout fork
-  commit id: "terminated" type: REVERSE
+  commit id: "manually terminated" type: REVERSE
   checkout main
   commit id: "block n+3"
 ```
