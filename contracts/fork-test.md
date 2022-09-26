@@ -15,11 +15,17 @@ This forks the blockchain (using `PROVIDER_URL`) everytime you run the command, 
 gitGraph
   commit id: "block n-1"
   commit id: "FORK_BLOCK_NUMBER"
-  branch hre
-  commit id: "local deployments"
-  commit id: "test fixtures"
-  commit id: "fork tests"
-  commit id: "tests end" type: REVERSE
+  branch testRun1
+  commit id: "1: local deployments"
+  commit id: "1: test fixtures"
+  commit id: "1: fork tests"
+  commit id: "1: tests end" type: REVERSE
+  checkout main
+  branch testRun2
+  commit id: "2: local deployments"
+  commit id: "2: test fixtures"
+  commit id: "2: fork tests"
+  commit id: "2: tests end" type: REVERSE
   checkout main
   commit id: "block n+1"
   commit id: "block n+2"
@@ -33,16 +39,20 @@ In cases where you don't want to fork or run the deployments again and again
 #### How it works
 Basically, you start a forked node that runs the deployments and all. Next, the hardhat forks from this forked node when running the tests. Since any new deployments have already been run on the base fork, running `yarn test:fork` will be much faster. This can be useful when you are just writing tests and there isn't any change to contracts or deployment files.
 
-```mermaid
-gitGraph
+```mermaidgitGraph
   commit id: "block n-1"
   commit id: "FORK_BLOCK_NUMBER"
   branch fork
   commit id: "local deployments"
-  branch hre
-  commit id: "test fixtures"
-  commit id: "fork tests"
-  commit id: "tests end" type: REVERSE
+  branch testRun1
+  commit id: "1: test fixtures"
+  commit id: "1: fork tests"
+  commit id: "1: tests end" type: REVERSE
+  checkout fork
+  branch testRun2
+  commit id: "2: test fixtures"
+  commit id: "2: fork tests"
+  commit id: "2: tests end" type: REVERSE
   checkout main
   commit id: "block n+1"
   commit id: "block n+2"
