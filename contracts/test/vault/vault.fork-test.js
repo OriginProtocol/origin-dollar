@@ -185,7 +185,7 @@ forkOnlyDescribe("Vault", function () {
         "0xEA2Ef2e2E5A749D4A66b41Db9aD85a38Aa264cb3", // Convex
         // TODO: Hardcode these after deploy
         "0xb12C3410C44854054c217fbF79dFf38ffD1C0676", // OUSD MetaStrategy
-        "0xB262b69d1dB3dc092C73384B8553DA3d00e93682", // Frax MetaStrategy
+        "0xC83Cb4F34874E0Ef4c58b4e77D4935F8F819d203", // Frax MetaStrategy
       ];
 
       for (const s of strategies) {
