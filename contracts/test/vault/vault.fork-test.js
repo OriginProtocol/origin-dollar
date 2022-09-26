@@ -60,7 +60,7 @@ forkOnlyDescribe("Vault", function () {
       const { vault } = fixture;
       // TODO: Update this after the contract deployed
       expect(await vault.ousdMetaStrategy()).to.equal(
-        "0xEB85123eb2992296a835B422EfB0275C8A6C9745"
+        "0xb12C3410C44854054c217fbF79dFf38ffD1C0676"
       );
     });
   });
@@ -184,7 +184,7 @@ forkOnlyDescribe("Vault", function () {
         "0x5e3646A1Db86993f73E6b74A57D8640B69F7e259", // Aave
         "0xEA2Ef2e2E5A749D4A66b41Db9aD85a38Aa264cb3", // Convex
         // TODO: Hardcode these after deploy
-        "0xEB85123eb2992296a835B422EfB0275C8A6C9745", // OUSD MetaStrategy
+        "0xb12C3410C44854054c217fbF79dFf38ffD1C0676", // OUSD MetaStrategy
         "0xB262b69d1dB3dc092C73384B8553DA3d00e93682", // Frax MetaStrategy
       ];
 
