@@ -498,7 +498,7 @@ describe("Vault", function () {
     await expect(
       vault.connect(anna).mintForStrategy(ousdUnits("11"))
     ).to.be.revertedWith(
-      "Attempting to mint too much OUSD. Threshold: 10000000000000000000, errorneous minted amount: 11000000000000000000"
+      "Minted ousd surpassed netOusdMintForStrategyThreshold."
     );
 
     await expect(

@@ -20,13 +20,14 @@ import { IOracle } from "../interfaces/IOracle.sol";
 import { IVault } from "../interfaces/IVault.sol";
 import { IBuyback } from "../interfaces/IBuyback.sol";
 import "./VaultStorage.sol";
-import "hardhat/console.sol";
 
 contract VaultCore is VaultStorage {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
     using SafeMath for uint256;
-
+    // max signed int
+    uint256 constant MAX_INT = 2**255 - 1;
+    // max un-signed int
     uint256 constant MAX_UINT =
         0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
 
@@ -119,7 +120,7 @@ contract VaultCore is VaultStorage {
         whenNotCapitalPaused
         onlyOusdMetaStrategy
     {
-        require(_amount > 0, "Amount must be greater than 0");
+        require(_amount < MAX_INT, "Amount too high");
 
         emit Mint(msg.sender, _amount);
 
@@ -129,18 +130,12 @@ contract VaultCore is VaultStorage {
             _rebase();
         }
 
+        // safe to cast because of the require check at the beginning of the function
         netOusdMintedForStrategy += int256(_amount);
 
         require(
             abs(netOusdMintedForStrategy) < netOusdMintForStrategyThreshold,
-            string(
-                bytes.concat(
-                    bytes("Attempting to mint too much OUSD. Threshold: "),
-                    bytes(Strings.toString(netOusdMintForStrategyThreshold)),
-                    bytes(", errorneous minted amount: "),
-                    bytes(Strings.toString(abs(netOusdMintedForStrategy)))
-                )
-            )
+            "Minted ousd surpassed netOusdMintForStrategyThreshold."
         );
 
         // Mint matching OUSD
@@ -168,8 +163,6 @@ contract VaultCore is VaultStorage {
      * @param _minimumUnitAmount Minimum stablecoin units to receive in return
      */
     function _redeem(uint256 _amount, uint256 _minimumUnitAmount) internal {
-        require(_amount > 0, "Amount must be greater than 0");
-
         // Calculate redemption outputs
         (
             uint256[] memory outputs,
@@ -245,26 +238,21 @@ contract VaultCore is VaultStorage {
      * Notice: can't use nonReentrant modifier since BaseCurveStrategy's deposit
      * already has that modifier present
      */
-    function redeemForStrategy(uint256 _amount)
+    function burnForStrategy(uint256 _amount)
         external
         whenNotCapitalPaused
         onlyOusdMetaStrategy
     {
-        require(_amount > 0, "Amount must be greater than 0");
+        require(_amount < MAX_INT, "Amount too high");
 
         emit Redeem(msg.sender, _amount);
 
+        // safe to cast because of the require check at the beginning of the function
         netOusdMintedForStrategy -= int256(_amount);
+
         require(
             abs(netOusdMintedForStrategy) < netOusdMintForStrategyThreshold,
-            string(
-                bytes.concat(
-                    bytes("Attempting to redeem too much OUSD. Threshold: "),
-                    bytes(Strings.toString(netOusdMintForStrategyThreshold)),
-                    bytes(", errorneous minted amount: -"),
-                    bytes(Strings.toString(abs(netOusdMintedForStrategy)))
-                )
-            )
+            "Attempting to burn too much OUSD."
         );
 
         // Burn OUSD
@@ -709,6 +697,7 @@ contract VaultCore is VaultStorage {
     }
 
     function abs(int256 x) private pure returns (uint256) {
+        require(x < int256(MAX_INT), "Amount too high");
         return x >= 0 ? uint256(x) : uint256(-x);
     }
 }

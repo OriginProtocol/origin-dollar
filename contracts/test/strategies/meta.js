@@ -1,5 +1,5 @@
 const { expect } = require("chai");
-const { utils } = require("ethers");
+const { utils, BigNumber } = require("ethers");
 const { convexMetaVaultFixture } = require("../_fixture");
 
 const {
@@ -122,6 +122,40 @@ describe("Convex 3pool/OUSD Meta Strategy", function () {
           ousdUnits("8.0")
         )
       ).to.be.revertedWith("Caller is not the Governor");
+    });
+
+    it("Should not allow too large mintForStrategy", async () => {
+      const MAX_UINT = BigNumber.from(
+        "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      );
+
+      await vault.connect(governor).setOusdMetaStrategy(anna.address);
+
+      await expect(
+        vault.connect(anna).mintForStrategy(MAX_UINT)
+      ).to.be.revertedWith("Amount too high");
+
+      await expect(
+        vault.connect(anna).mintForStrategy(MAX_UINT.div(2).sub(1))
+      ).to.be.revertedWith(
+        "Minted ousd surpassed netOusdMintForStrategyThreshold."
+      );
+    });
+
+    it("Should not allow too large burnForStrategy", async () => {
+      const MAX_UINT = BigNumber.from(
+        "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      );
+
+      await vault.connect(governor).setOusdMetaStrategy(anna.address);
+
+      await expect(
+        vault.connect(anna).burnForStrategy(MAX_UINT)
+      ).to.be.revertedWith("Amount too high");
+
+      await expect(
+        vault.connect(anna).burnForStrategy(MAX_UINT.div(2).sub(1))
+      ).to.be.revertedWith("Attempting to burn too much OUSD.");
     });
   });
 
