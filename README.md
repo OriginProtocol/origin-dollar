@@ -177,20 +177,8 @@ Smoke tests can be run in 2 modes:
 <br/><br/>
 
 ---
-## Running Fork Tests
-
-### Option 1: Fork each time
-- Set `PROVIDER_URL` in `.env` file
-- Run `yarn test:fork` (or `yarn test:fork -- filename.fork-test.js`)
-
-This forks the blockchain (using `PROVIDER_URL`) everytime you run the command, might take a lot of time.
-
-### Option 2: Nested forking
-In cases where you don't want to fork or run the deployments again and again
-- Start the node in a separate terminal using `FORK=true IS_TEST=true yarn run node`
-- Run `yarn test:fork` in a new terminal
-
-Basically, you start a forked node that runs the deployments and all. Next, the hardhat forks from this forked node when running the tests. Since any new deployments have already been run on the base fork, running `yarn test:fork` will be much faster. This can be useful when you are just writing tests and there isn't any change to contracts or deployment files.
+## Fork Tests
+Head over to [contracts/fork-test.md](contracts/fork-test.md)
 
 ---
 
