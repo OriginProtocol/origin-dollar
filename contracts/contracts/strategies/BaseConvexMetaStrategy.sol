@@ -112,9 +112,7 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
             balance += value;
         }
 
-        uint256 metapoolPTokens = metapoolLPToken.balanceOf(
-            address(this)
-        );
+        uint256 metapoolPTokens = metapoolLPToken.balanceOf(address(this));
         uint256 metapoolGaugePTokens = IRewardStaking(cvxRewardStakerAddress)
             .balanceOf(address(this));
         uint256 metapoolTotalPTokens = metapoolPTokens + metapoolGaugePTokens;

@@ -87,7 +87,7 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
         address[] calldata _rewardTokenAddresses,
         address[] memory _assets,
         address[] memory _pTokens
-    ) internal {        
+    ) internal {
         platformAddress = _platformAddress;
         vaultAddress = _vaultAddress;
         rewardTokenAddresses = _rewardTokenAddresses;
