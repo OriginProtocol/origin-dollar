@@ -80,14 +80,6 @@ async function defaultFixture() {
     OUSDmetaStrategyProxy.address
   );
 
-  const generalizedMetaStrategyProxy = await ethers.getContract(
-    "ConvexGeneralizedMetaStrategyProxy"
-  );
-  const generalizedMetaStrategy = await ethers.getContractAt(
-    "ConvexGeneralizedMetaStrategy",
-    generalizedMetaStrategyProxy.address
-  );
-
   const aaveStrategyProxy = await ethers.getContract("AaveStrategyProxy");
   const aaveStrategy = await ethers.getContractAt(
     "AaveStrategy",
@@ -158,7 +150,9 @@ async function defaultFixture() {
     flipper,
     cvx,
     cvxBooster,
-    cvxRewardPool;
+    cvxRewardPool,
+    generalizedMetaStrategyProxy,
+    generalizedMetaStrategy;
 
   if (isFork) {
     usdt = await ethers.getContractAt(usdtAbi, addresses.mainnet.USDT);
@@ -258,6 +252,14 @@ async function defaultFixture() {
     await mockNonRebasingTwo.setOUSD(ousd.address);
 
     flipper = await ethers.getContract("Flipper");
+
+    generalizedMetaStrategyProxy = await ethers.getContract(
+      "ConvexGeneralizedMetaStrategyProxy"
+    );
+    generalizedMetaStrategy = await ethers.getContractAt(
+      "ConvexGeneralizedMetaStrategy",
+      generalizedMetaStrategyProxy.address
+    );
   }
 
   if (!isFork) {
