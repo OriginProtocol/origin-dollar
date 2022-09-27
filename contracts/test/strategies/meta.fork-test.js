@@ -90,7 +90,7 @@ forkOnlyDescribe("Convex 3pool/OUSD Meta Strategy", function () {
 
       it("Should stake USDC in Cruve guage via metapool", async function () {
         const { matt, usdc } = fixture;
-        await mintTest(matt, usdc, "345000");
+        await mintTest(matt, usdc, "120000");
       });
 
       it("Should NOT stake DAI in Cruve guage via metapool", async function () {
@@ -188,7 +188,7 @@ forkOnlyDescribe("Convex 3pool/OUSD Meta Strategy", function () {
           // (in case of USDT/USDC)
           expect(supplyDiff).to.approxEqualTolerance(
             ousdUnits("1000000").add(ousdUnitAmount.mul(2)),
-            1
+            5
           );
         } else {
           // 1x for DAI
@@ -220,7 +220,7 @@ forkOnlyDescribe("Convex 3pool/OUSD Meta Strategy", function () {
 
       it("Should stake USDC in Cruve guage via metapool", async function () {
         const { matt, usdc } = fixture;
-        await mintTest(matt, usdc, "345000");
+        await mintTest(matt, usdc, "110000");
       });
 
       it("Should NOT stake DAI in Cruve guage via metapool", async function () {
@@ -331,7 +331,7 @@ forkOnlyDescribe("Convex 3pool/OUSD Meta Strategy", function () {
 
       it("Should stake USDC in Cruve guage via metapool", async function () {
         const { matt, usdc } = fixture;
-        await mintTest(matt, usdc, "345000");
+        await mintTest(matt, usdc, "120000");
       });
 
       it("Should NOT stake DAI in Cruve guage via metapool", async function () {

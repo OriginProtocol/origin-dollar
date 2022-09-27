@@ -93,7 +93,7 @@ forkOnlyDescribe("Vault", function () {
       const balancePostMint = await ousd
         .connect(josh)
         .balanceOf(josh.getAddress());
-      expect(balancePostMint.sub(balancePreMint)).to.approxEqual(
+      expect(balancePostMint.sub(balancePreMint)).to.approxEqualTolerance(
         ousdUnits("50000")
       );
 
@@ -102,7 +102,7 @@ forkOnlyDescribe("Vault", function () {
       const balancePostRedeem = await ousd
         .connect(josh)
         .balanceOf(josh.getAddress());
-      expect(balancePreMint).to.approxEqual(balancePostRedeem);
+      expect(balancePreMint).to.approxEqualTolerance(balancePostRedeem);
     });
 
     it("Should have vault buffer disabled", async () => {
