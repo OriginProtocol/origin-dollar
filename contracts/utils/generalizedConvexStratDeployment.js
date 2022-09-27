@@ -125,7 +125,7 @@ module.exports = ({
         const dVaultCore = await deployWithConfirmation("VaultCore");
 
         additionalActions.push(
-          // 2. Set VaultAdmin implementation
+          // 1. Set VaultAdmin implementation
           {
             contract: cVault,
             signature: "setAdminImpl(address)",
@@ -133,7 +133,7 @@ module.exports = ({
           }
         );
         additionalActions.push(
-          // 1. Set VaultCore implementation
+          // 2. Set VaultCore implementation
           {
             contract: cVaultProxy,
             signature: "upgradeTo(address)",

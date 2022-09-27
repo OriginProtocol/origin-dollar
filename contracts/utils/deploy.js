@@ -296,9 +296,6 @@ function deploymentWithProposal(opts, fn) {
           );
           await executeProposalOnFork(proposalId);
         }
-        governor.queue(id, { from: GOV_MULTISIG });
-        brownie.chain.sleep(48 * 60 * 60 + 1);
-        governor.execute(id, { from: GOV_MULTISIG });
       }
 
       if (!skipExecuteProposal) {
