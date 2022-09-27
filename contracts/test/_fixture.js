@@ -622,15 +622,18 @@ async function convexMetaVaultFixture() {
   return fixture;
 }
 
-
 /**
  * Generalized strategy fixture that works only in forked environment
- * 
+ *
  * @param metapoolAddress -> the address of the metapool
  * @param rewardPoolAddress -> address of the reward staker contract
  * @param metastrategyProxyName -> name of the generalizedMetastrategy proxy contract
  */
-async function convexGeneralizedMetaForkedFixture(metapoolAddress, rewardPoolAddress, metastrategyProxyName) {
+async function convexGeneralizedMetaForkedFixture(
+  metapoolAddress,
+  rewardPoolAddress,
+  metastrategyProxyName
+) {
   return async () => {
     const fixture = await loadFixture(defaultFixture);
     const { governorAddr } = await getNamedAccounts();
@@ -686,7 +689,6 @@ async function convexGeneralizedMetaForkedFixture(metapoolAddress, rewardPoolAdd
       rewardPoolAddress
     );
 
-    console.log("metastrategy address USDT", fixture.metaStrategy.address)
     await fixture.vault
       .connect(sGovernor)
       .setAssetDefaultStrategy(
@@ -694,7 +696,6 @@ async function convexGeneralizedMetaForkedFixture(metapoolAddress, rewardPoolAdd
         fixture.metaStrategy.address
       );
 
-    console.log("metastrategy address USDC", fixture.metaStrategy.address)
     await fixture.vault
       .connect(sGovernor)
       .setAssetDefaultStrategy(
@@ -703,7 +704,7 @@ async function convexGeneralizedMetaForkedFixture(metapoolAddress, rewardPoolAdd
       );
 
     return fixture;
-  }
+  };
 }
 
 async function impersonateAndFundContract(address) {

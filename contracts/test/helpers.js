@@ -430,7 +430,9 @@ async function proposeAndExecute(fixture, governorArgsArray, description) {
 }
 
 // eslint-disable-next-line no-unused-vars
-const doNothing = (title, fn) => { return true };
+const doNothing = (title, fn) => {
+  return true;
+};
 
 // Ugly hack to avoid running these tests when running `npx hardhat test` directly.
 // A right way would be to add suffix to files and use patterns to filter

@@ -119,7 +119,6 @@ module.exports = ({
         dConvexTokenMetaStrategyProxy.address
       );
 
-
       const additionalActions = [];
       if (redeployVault) {
         const dVaultAdmin = await deployWithConfirmation("VaultAdmin");
