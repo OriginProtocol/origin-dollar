@@ -260,7 +260,7 @@ const sendProposal = async (proposalArgs, description, opts = {}) => {
  * @returns {Object} main object used by hardhat
  */
 function deploymentWithProposal(opts, fn) {
-  const { deployName, dependencies, forceDeploy } = opts;
+  const { deployName, dependencies, forceDeploy, proposalId } = opts;
   const runDeployment = async (hre) => {
     const oracleAddresses = await getOracleAddresses(hre.deployments);
     const assetAddresses = await getAssetAddresses(hre.deployments);
@@ -284,10 +284,26 @@ function deploymentWithProposal(opts, fn) {
       await sendProposal(propArgs, propDescription, propOpts);
       log("Proposal sent.");
     } else if (isFork) {
-      // On Fork we can send the proposal then impersonate the guardian to execute it.
-      log("Sending and executing proposal...");
-      await executeProposal(propArgs, propDescription, propOpts);
-      log("Proposal executed.");
+      let skipExecuteProposal = false;
+      if (proposalId) {
+        const proposalState = ["New", "Queue", "Expired", "Executed"][
+          await governor.state(proposalId)
+        ];
+        if (["New", "Queue"].includes(proposalState)) {
+          skipExecuteProposal = true;
+          console.log(
+            `Found proposal id: ${proposalId} on forked network. Executing proposal in place of deployment of: ${deployName}`
+          );
+          await executeProposalOnFork(proposalId);
+        }
+      }
+
+      if (!skipExecuteProposal) {
+        // On Fork we can send the proposal then impersonate the guardian to execute it.
+        log("Sending and executing proposal...");
+        await executeProposal(propArgs, propDescription, propOpts);
+        log("Proposal executed.");
+      }
     } else {
       // Hardcoding gas estimate on Rinkeby since it fails for an undetermined reason...
       const gasLimit = isRinkeby ? 1000000 : null;

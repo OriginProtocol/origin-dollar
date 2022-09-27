@@ -364,13 +364,9 @@ const deployConvexalUSDMetaStrategy = async () => {
   log("Initialized ConvexalUSDMetaStrategy");
 
   await withConfirmation(
-    cConvexalUSDMetaStrategy
-      .connect(sDeployer)
-      .transferGovernance(governorAddr)
+    cConvexalUSDMetaStrategy.connect(sDeployer).transferGovernance(governorAddr)
   );
-  log(
-    `ConvexalUSDMetaStrategy transferGovernance(${governorAddr}) called`
-  );
+  log(`ConvexalUSDMetaStrategy transferGovernance(${governorAddr}) called`);
   // On Mainnet the governance transfer gets executed separately, via the
   // multi-sig wallet. On other networks, this migration script can claim
   // governance by the governor.

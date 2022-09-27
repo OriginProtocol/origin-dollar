@@ -29,6 +29,9 @@ forkOnlyDescribe("Convex 3pool/OUSD Meta Strategy", function () {
           cvxRewardPool,
         } = fixture;
 
+        await vault.connect(user).allocate();
+        await vault.connect(user).rebase();
+
         const unitAmount = await units(amount, asset);
 
         const currentSupply = await ousd.totalSupply();
@@ -154,6 +157,9 @@ forkOnlyDescribe("Convex 3pool/OUSD Meta Strategy", function () {
           cvxRewardPool,
         } = fixture;
 
+        await vault.connect(user).allocate();
+        await vault.connect(user).rebase();
+
         const unitAmount = await units(amount, asset);
 
         const currentSupply = await ousd.totalSupply();
@@ -272,6 +278,8 @@ forkOnlyDescribe("Convex 3pool/OUSD Meta Strategy", function () {
     describe("Mint", function () {
       async function mintTest(user, asset, amount = "30000") {
         const { vault, ousd, dai, OUSDmetaStrategy, cvxRewardPool } = fixture;
+        await vault.connect(user).allocate();
+        await vault.connect(user).rebase();
 
         const unitAmount = await units(amount, asset);
 
