@@ -74,22 +74,29 @@ contract ConvexOUSDMetaStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 }
 
 /**
- * @notice ConvexalUSDMetaStrategyProxy delegates calls to a ConvexalUSDMetaStrategy implementation
+ * @notice ConvexalUSDMetaStrategyProxy delegates calls to a ConvexalGeneralizedMetaStrategy implementation
  */
 contract ConvexalUSDMetaStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
 
 /**
- * @notice ConvexmUSDMetaStrategyProxy delegates calls to a ConvexmUSDMetaStrategy implementation
+ * @notice ConvexmUSDMetaStrategyProxy delegates calls to a ConvexalGeneralizedMetaStrategy implementation
  */
 contract ConvexmUSDMetaStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
 
 /**
- * @notice ConvexUSDDMetaStrategyProxy delegates calls to a ConvexUSDDMetaStrategy implementation
+ * @notice ConvexUSDDMetaStrategyProxy delegates calls to a ConvexalGeneralizedMetaStrategy implementation
  */
 contract ConvexUSDDMetaStrategyProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
+
+/**
+ * @notice ConvexBUSDMetaStrategyProxy delegates calls to a ConvexalGeneralizedMetaStrategy implementation
+ */
+contract ConvexBUSDMetaStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 
 }

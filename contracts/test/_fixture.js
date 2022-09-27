@@ -622,6 +622,88 @@ async function convexMetaVaultFixture() {
   return fixture;
 }
 
+
+/**
+ * Generalized strategy fixture that works only in forked environment
+ * 
+ * @param metapoolAddress -> the address of the metapool
+ * @param rewardPoolAddress -> address of the reward staker contract
+ * @param metastrategyProxyName -> name of the generalizedMetastrategy proxy contract
+ */
+async function convexGeneralizedMetaForkedFixture(metapoolAddress, rewardPoolAddress, metastrategyProxyName) {
+  return async () => {
+    const fixture = await loadFixture(defaultFixture);
+    const { governorAddr } = await getNamedAccounts();
+    const sGovernor = await ethers.provider.getSigner(governorAddr);
+
+    const { josh, matt, anna, domen, daniel, franck, ousd } = fixture;
+
+    const threepoolLP = await ethers.getContractAt(
+      threepoolLPAbi,
+      addresses.mainnet.ThreePoolToken
+    );
+    const metapool = await ethers.getContractAt(
+      ousdMetapoolAbi,
+      metapoolAddress
+    );
+    const threepoolSwap = await ethers.getContractAt(
+      threepoolSwapAbi,
+      addresses.mainnet.ThreePool
+    );
+
+    // Get some 3CRV from most loaded contracts/wallets
+    await impersonateAndFundAddress(
+      addresses.mainnet.ThreePoolToken,
+      [
+        "0xceaf7747579696a2f0bb206a14210e3c9e6fb269",
+        "0xd632f22692fac7611d2aa1c0d552930d43caed3b",
+        "0xbfcf63294ad7105dea65aa58f8ae5be2d9d0952a",
+        "0xed279fdd11ca84beef15af5d39bb4d4bee23f0ca",
+        "0x43b4fdfd4ff969587185cdb6f0bd875c5fc83f8c",
+      ],
+      // Domen is loaded with 3CRV
+      domen.getAddress()
+    );
+
+    for (const user of [josh, matt, anna, domen, daniel, franck]) {
+      // Approve Metapool contract to move funds
+      await resetAllowance(threepoolLP, user, metapoolAddress);
+      await resetAllowance(ousd, user, metapoolAddress);
+    }
+
+    fixture.metapool = metapool;
+    fixture.threePoolToken = threepoolLP;
+    fixture.threepoolSwap = threepoolSwap;
+
+    fixture.metaStrategyProxy = await ethers.getContract(metastrategyProxyName);
+    fixture.metaStrategy = await ethers.getContractAt(
+      "ConvexGeneralizedMetaStrategy",
+      fixture.metaStrategyProxy.address
+    );
+
+    fixture.rewardPool = await ethers.getContractAt(
+      "IRewardStaking",
+      rewardPoolAddress
+    );
+
+    await fixture.vault
+      .connect(sGovernor)
+      .setAssetDefaultStrategy(
+        fixture.usdt.address,
+        fixture.metaStrategy.address
+      );
+
+    await fixture.vault
+      .connect(sGovernor)
+      .setAssetDefaultStrategy(
+        fixture.usdc.address,
+        fixture.metaStrategy.address
+      );
+
+    return fixture;
+  }
+}
+
 async function impersonateAndFundContract(address) {
   await hre.network.provider.request({
     method: "hardhat_impersonateAccount",
@@ -967,6 +1049,7 @@ module.exports = {
   threepoolVaultFixture,
   convexVaultFixture,
   convexMetaVaultFixture,
+  convexGeneralizedMetaForkedFixture,
   convexalUSDMetaVaultFixture,
   aaveVaultFixture,
   hackedVaultFixture,
