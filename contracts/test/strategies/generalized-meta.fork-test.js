@@ -5,18 +5,18 @@ const { units, ousdUnits, forkOnlyDescribe } = require("../helpers");
 const { convexGeneralizedMetaForkedFixture } = require("../_fixture");
 
 const metastrategies = [
-  {
-    token: "alUSD",
-    metapoolAddress: "0x43b4FdFD4Ff969587185cDB6f0BD875c5Fc83f8c",
-    metastrategyProxyName: "ConvexalUSDMetaStrategyProxy",
-    rewardPoolAddress: "0x02E2151D4F351881017ABdF2DD2b51150841d5B3"
-  },
-  {
-    token: "mUSD",
-    metapoolAddress: "0x8474DdbE98F5aA3179B3B3F5942D724aFcdec9f6",
-    metastrategyProxyName: "ConvexmUSDMetaStrategyProxy",
-    rewardPoolAddress: "0xDBFa6187C79f4fE4Cda20609E75760C5AaE88e52"
-  },
+  // {
+  //   token: "alUSD",
+  //   metapoolAddress: "0x43b4FdFD4Ff969587185cDB6f0BD875c5Fc83f8c",
+  //   metastrategyProxyName: "ConvexalUSDMetaStrategyProxy",
+  //   rewardPoolAddress: "0x02E2151D4F351881017ABdF2DD2b51150841d5B3"
+  // },
+  // {
+  //   token: "mUSD",
+  //   metapoolAddress: "0x8474DdbE98F5aA3179B3B3F5942D724aFcdec9f6",
+  //   metastrategyProxyName: "ConvexmUSDMetaStrategyProxy",
+  //   rewardPoolAddress: "0xDBFa6187C79f4fE4Cda20609E75760C5AaE88e52"
+  // },
   {
     token: "USDD",
     metapoolAddress: "0xe6b5CC1B4b47305c58392CE3D359B10282FC36Ea",

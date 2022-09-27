@@ -686,6 +686,7 @@ async function convexGeneralizedMetaForkedFixture(metapoolAddress, rewardPoolAdd
       rewardPoolAddress
     );
 
+    console.log("metastrategy address USDT", fixture.metaStrategy.address)
     await fixture.vault
       .connect(sGovernor)
       .setAssetDefaultStrategy(
@@ -693,6 +694,7 @@ async function convexGeneralizedMetaForkedFixture(metapoolAddress, rewardPoolAdd
         fixture.metaStrategy.address
       );
 
+    console.log("metastrategy address USDC", fixture.metaStrategy.address)
     await fixture.vault
       .connect(sGovernor)
       .setAssetDefaultStrategy(

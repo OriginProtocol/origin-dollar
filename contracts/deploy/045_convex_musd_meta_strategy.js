@@ -16,4 +16,5 @@ module.exports = generalizedConvexStratDeployment({
   mainTokenAddress: "0xe2f2a5c287993345a840db3b0845fbc70f5935a5", // mStable USD
   cvxRewardStakerAddress: "0xDBFa6187C79f4fE4Cda20609E75760C5AaE88e52",
   cvxDepositorPTokenId: musdMetapoolLPCRVPid, // 14
+  redeployVault: false,
 });

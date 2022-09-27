@@ -16,6 +16,7 @@ module.exports = ({
   mainTokenAddress,
   cvxRewardStakerAddress,
   cvxDepositorPTokenId,
+  redeployVault,
 }) => {
   return deploymentWithProposal(
     { deployName, forceDeploy },
@@ -28,9 +29,6 @@ module.exports = ({
     }) => {
       const { deployerAddr, governorAddr } = await getNamedAccounts();
       const sDeployer = await ethers.provider.getSigner(deployerAddr);
-
-      const dVaultAdmin = await deployWithConfirmation("VaultAdmin");
-      const dVaultCore = await deployWithConfirmation("VaultCore");
 
       // Current contracts
       const cVaultProxy = await ethers.getContract("VaultProxy");
@@ -120,11 +118,37 @@ module.exports = ({
         mainTokenName + " meta strategy address",
         dConvexTokenMetaStrategyProxy.address
       );
+
+
+      const additionalActions = [];
+      if (redeployVault) {
+        const dVaultAdmin = await deployWithConfirmation("VaultAdmin");
+        const dVaultCore = await deployWithConfirmation("VaultCore");
+
+        additionalActions.push(
+          // 2. Set VaultAdmin implementation
+          {
+            contract: cVault,
+            signature: "setAdminImpl(address)",
+            args: [dVaultAdmin.address],
+          }
+        );
+        additionalActions.push(
+          // 1. Set VaultCore implementation
+          {
+            contract: cVaultProxy,
+            signature: "upgradeTo(address)",
+            args: [dVaultCore.address],
+          }
+        );
+      }
+
       // Governance Actions
       // ----------------
       return {
         name: `Deploy new Convex ${mainTokenName} Meta strategy`,
         actions: [
+          ...additionalActions,
           // 1. Accept governance of new ConvexMetaStrategy
           {
             contract: cConvexTokenMetaStrategy,
