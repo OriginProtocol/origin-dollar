@@ -95,7 +95,7 @@ forkOnlyDescribe("Convex 3pool/OUSD Meta Strategy", function () {
 
       it("Should NOT stake DAI in Cruve guage via metapool", async function () {
         const { anna, dai } = fixture;
-        await mintTest(anna, dai, "432000");
+        await mintTest(anna, dai, "110000");
       });
     });
 
@@ -225,7 +225,7 @@ forkOnlyDescribe("Convex 3pool/OUSD Meta Strategy", function () {
 
       it("Should NOT stake DAI in Cruve guage via metapool", async function () {
         const { anna, dai } = fixture;
-        await mintTest(anna, dai, "432000");
+        await mintTest(anna, dai, "110000");
       });
     });
 
@@ -336,7 +336,7 @@ forkOnlyDescribe("Convex 3pool/OUSD Meta Strategy", function () {
 
       it("Should NOT stake DAI in Cruve guage via metapool", async function () {
         const { anna, dai } = fixture;
-        await mintTest(anna, dai, "432000");
+        await mintTest(anna, dai, "110000");
       });
     });
 
