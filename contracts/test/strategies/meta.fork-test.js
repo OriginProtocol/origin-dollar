@@ -47,7 +47,7 @@ forkOnlyDescribe("Convex 3pool/OUSD Meta Strategy", function () {
         // Ensure user has correct balance (w/ 1% slippage tolerance)
         const newBalance = await ousd.connect(user).balanceOf(user.address);
         const balanceDiff = newBalance.sub(currentBalance);
-        expect(balanceDiff).to.approxEqualTolerance(ousdUnits(amount), 1);
+        expect(balanceDiff).to.approxEqualTolerance(ousdUnits(amount), 2);
 
         // Supply checks
         const newSupply = await ousd.totalSupply();
@@ -61,7 +61,7 @@ forkOnlyDescribe("Convex 3pool/OUSD Meta Strategy", function () {
           );
         } else {
           // 1x for DAI
-          expect(supplyDiff).to.approxEqualTolerance(ousdUnits(amount), 1);
+          expect(supplyDiff).to.approxEqualTolerance(ousdUnits(amount), 2);
         }
 
         // Ensure some LP tokens got staked under OUSDMetaStrategy address
@@ -175,7 +175,7 @@ forkOnlyDescribe("Convex 3pool/OUSD Meta Strategy", function () {
         // Ensure user has correct balance (w/ 1% slippage tolerance)
         const newBalance = await ousd.connect(user).balanceOf(user.address);
         const balanceDiff = newBalance.sub(currentBalance);
-        expect(balanceDiff).to.approxEqualTolerance(ousdUnits(amount), 1);
+        expect(balanceDiff).to.approxEqualTolerance(ousdUnits(amount), 2);
 
         // Supply checks
         const newSupply = await ousd.totalSupply();
@@ -188,7 +188,11 @@ forkOnlyDescribe("Convex 3pool/OUSD Meta Strategy", function () {
           // (in case of USDT/USDC)
           expect(supplyDiff).to.approxEqualTolerance(
             ousdUnits("1000000").add(ousdUnitAmount.mul(2)),
+<<<<<<< Updated upstream
             5
+=======
+            2
+>>>>>>> Stashed changes
           );
         } else {
           // 1x for DAI
@@ -296,14 +300,14 @@ forkOnlyDescribe("Convex 3pool/OUSD Meta Strategy", function () {
         // Ensure user has correct balance (w/ 1% slippage tolerance)
         const newBalance = await ousd.connect(user).balanceOf(user.address);
         const balanceDiff = newBalance.sub(currentBalance);
-        expect(balanceDiff).to.approxEqualTolerance(ousdUnits(amount), 1);
+        expect(balanceDiff).to.approxEqualTolerance(ousdUnits(amount), 2);
 
         // Supply checks
         const newSupply = await ousd.totalSupply();
         const supplyDiff = newSupply.sub(currentSupply);
 
         // Ensure about ~1x OUSD has been added to supply
-        expect(supplyDiff).to.approxEqualTolerance(ousdUnits(amount), 1);
+        expect(supplyDiff).to.approxEqualTolerance(ousdUnits(amount), 2);
 
         // Ensure some LP tokens got staked under OUSDMetaStrategy address
         const newRewardPoolBalance = await cvxRewardPool

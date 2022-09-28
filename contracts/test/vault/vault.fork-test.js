@@ -94,7 +94,8 @@ forkOnlyDescribe("Vault", function () {
         .connect(josh)
         .balanceOf(josh.getAddress());
       expect(balancePostMint.sub(balancePreMint)).to.approxEqualTolerance(
-        ousdUnits("50000")
+        ousdUnits("50000"),
+        1
       );
 
       await vault.connect(josh).redeem(ousdUnits("50000"), 0);
@@ -102,7 +103,7 @@ forkOnlyDescribe("Vault", function () {
       const balancePostRedeem = await ousd
         .connect(josh)
         .balanceOf(josh.getAddress());
-      expect(balancePreMint).to.approxEqualTolerance(balancePostRedeem);
+      expect(balancePreMint).to.approxEqualTolerance(balancePostRedeem, 1);
     });
 
     it("Should have vault buffer disabled", async () => {
@@ -209,25 +210,25 @@ forkOnlyDescribe("Vault", function () {
     it("Should have correct default strategy set for USDT", async () => {
       const { vault, usdt } = fixture;
 
-      expect(await vault.assetDefaultStrategies(usdt.address)).to.equal(
-        "0x5e3646A1Db86993f73E6b74A57D8640B69F7e259"
-      );
+      // aave and compound
+      expect(["0x5e3646A1Db86993f73E6b74A57D8640B69F7e259", "0x9c459eeb3fa179a40329b81c1635525e9a0ef094"])
+        .to.include(await vault.assetDefaultStrategies(usdt.address))
     });
 
     it("Should have correct default strategy set for USDC", async () => {
       const { vault, usdc } = fixture;
 
-      expect(await vault.assetDefaultStrategies(usdc.address)).to.equal(
-        "0x5e3646A1Db86993f73E6b74A57D8640B69F7e259"
-      );
+      // aave and compound
+      expect(["0x5e3646A1Db86993f73E6b74A57D8640B69F7e259", "0x9c459eeb3fa179a40329b81c1635525e9a0ef094"])
+        .to.include(await vault.assetDefaultStrategies(usdc.address))
     });
 
     it("Should have correct default strategy set for DAI", async () => {
       const { vault, dai } = fixture;
 
-      expect(await vault.assetDefaultStrategies(dai.address)).to.equal(
-        "0x5e3646A1Db86993f73E6b74A57D8640B69F7e259"
-      );
+      // aave and compound
+      expect(["0x5e3646A1Db86993f73E6b74A57D8640B69F7e259", "0x9c459eeb3fa179a40329b81c1635525e9a0ef094"])
+        .to.include(await vault.assetDefaultStrategies(dai.address))
     });
 
     it("Should be able to withdraw from all strategies", async () => {
