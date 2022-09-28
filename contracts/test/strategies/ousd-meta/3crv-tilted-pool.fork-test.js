@@ -4,70 +4,73 @@ const { loadFixture } = require("ethereum-waffle");
 const { units, ousdUnits, forkOnlyDescribe } = require("../../helpers");
 const { withCRV3TitledMetapool } = require("../../_metastrategies-fixtures");
 
-forkOnlyDescribe("Convex 3pool/OUSD Meta Strategy - Titled to 3CRV", () => {
-  this.timeout(0);
+forkOnlyDescribe(
+  "Convex 3pool/OUSD Meta Strategy - Titled to 3CRV",
+  function () {
+    this.timeout(0);
 
-  describe("Mint", function () {
-    it("Should stake USDT in Cruve guage via metapool", async function () {
-      const fixture = await loadFixture(withCRV3TitledMetapool);
-      const { josh, usdt } = fixture;
-      await mintTest(fixture, josh, usdt, "200000");
+    describe("Mint", function () {
+      it("Should stake USDT in Cruve guage via metapool", async function () {
+        const fixture = await loadFixture(withCRV3TitledMetapool);
+        const { josh, usdt } = fixture;
+        await mintTest(fixture, josh, usdt, "200000");
+      });
+
+      it("Should stake USDC in Cruve guage via metapool", async function () {
+        const fixture = await loadFixture(withCRV3TitledMetapool);
+        const { matt, usdc } = fixture;
+        await mintTest(fixture, matt, usdc, "110000");
+      });
+
+      it("Should NOT stake DAI in Cruve guage via metapool", async function () {
+        const fixture = await loadFixture(withCRV3TitledMetapool);
+        const { anna, dai } = fixture;
+        await mintTest(fixture, anna, dai, "110000");
+      });
     });
 
-    it("Should stake USDC in Cruve guage via metapool", async function () {
-      const fixture = await loadFixture(withCRV3TitledMetapool);
-      const { matt, usdc } = fixture;
-      await mintTest(fixture, matt, usdc, "110000");
+    describe("Redeem", function () {
+      it("Should redeem", async () => {
+        const { vault, ousd, usdt, usdc, dai, anna } = await loadFixture(
+          withCRV3TitledMetapool
+        );
+
+        const supplyBeforeMint = await ousd.totalSupply();
+
+        const amount = "10000";
+
+        // Mint with all three assets
+        for (const asset of [usdt, usdc, dai]) {
+          await vault
+            .connect(anna)
+            .mint(asset.address, await units(amount, asset), 0);
+        }
+
+        // Total supply should be up by (10k x 2) + (10k x 2) + 10k = 50k
+        const currentSupply = await ousd.totalSupply();
+        const supplyAdded = currentSupply.sub(supplyBeforeMint);
+        expect(supplyAdded).to.be.gte("50000");
+
+        const currentBalance = await ousd.connect(anna).balanceOf(anna.address);
+
+        // Now try to redeem 30k
+        await vault.connect(anna).redeem(ousdUnits("30000"), 0);
+
+        // User balance should be down by 30k
+        const newBalance = await ousd.connect(anna).balanceOf(anna.address);
+        expect(newBalance).to.approxEqualTolerance(
+          currentBalance.sub(ousdUnits("30000")),
+          1
+        );
+
+        const newSupply = await ousd.totalSupply();
+        const supplyDiff = currentSupply.sub(newSupply);
+
+        expect(supplyDiff).to.be.gte(ousdUnits("30000"));
+      });
     });
-
-    it("Should NOT stake DAI in Cruve guage via metapool", async function () {
-      const fixture = await loadFixture(withCRV3TitledMetapool);
-      const { anna, dai } = fixture;
-      await mintTest(fixture, anna, dai, "110000");
-    });
-  });
-
-  describe("Redeem", function () {
-    it("Should redeem", async () => {
-      const { vault, ousd, usdt, usdc, dai, anna } = await loadFixture(
-        withCRV3TitledMetapool
-      );
-
-      const supplyBeforeMint = await ousd.totalSupply();
-
-      const amount = "10000";
-
-      // Mint with all three assets
-      for (const asset of [usdt, usdc, dai]) {
-        await vault
-          .connect(anna)
-          .mint(asset.address, await units(amount, asset), 0);
-      }
-
-      // Total supply should be up by (10k x 2) + (10k x 2) + 10k = 50k
-      const currentSupply = await ousd.totalSupply();
-      const supplyAdded = currentSupply.sub(supplyBeforeMint);
-      expect(supplyAdded).to.be.gte("50000");
-
-      const currentBalance = await ousd.connect(anna).balanceOf(anna.address);
-
-      // Now try to redeem 30k
-      await vault.connect(anna).redeem(ousdUnits("30000"), 0);
-
-      // User balance should be down by 30k
-      const newBalance = await ousd.connect(anna).balanceOf(anna.address);
-      expect(newBalance).to.approxEqualTolerance(
-        currentBalance.sub(ousdUnits("30000")),
-        1
-      );
-
-      const newSupply = await ousd.totalSupply();
-      const supplyDiff = currentSupply.sub(newSupply);
-
-      expect(supplyDiff).to.be.gte(ousdUnits("30000"));
-    });
-  });
-});
+  }
+);
 
 async function mintTest(fixture, user, asset, amount = "30000") {
   const { vault, ousd, usdt, usdc, dai, OUSDmetaStrategy, cvxRewardPool } =
