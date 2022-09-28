@@ -18,6 +18,7 @@ import { Helpers } from "../utils/Helpers.sol";
 abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
     using StableMath for uint256;
     using SafeERC20 for IERC20;
+    event MaxWithdrawalSlippageUpdated(uint256 _previousAmount, uint256 _newAmount);
 
     address internal cvxDepositorAddress;
     address internal cvxRewardStakerAddress;
@@ -27,7 +28,9 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
     IERC20 internal metapoolLPToken;
     // Ordered list of metapool assets
     address[] internal metapoolAssets;
-
+    // Max withdrawal slippage denominated in 1e18 (1e18 == 100%)
+    uint256 public maxWithdrawalSlippage = 1e16;
+    int256[20] private _reserved;
     /**
      * Initializer for setting up strategy internal state. This overrides the
      * InitializableAbstractStrategy initializer as Curve strategies don't fit
@@ -155,6 +158,22 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
             if (metapoolAssets[i] == _asset) return i;
         }
         revert("Invalid Metapool asset");
+    }
+
+    /**
+     * @dev Sets max withdrawal slippage that is considered when removing
+     * liquidity from Metapools
+     */
+    function setMaxWithdrawalSlippage(uint256 _maxWithdrawalSlippage)
+        external
+        onlyVaultOrGovernor
+    {
+        require(
+            _maxWithdrawalSlippage > 1e15 && _maxWithdrawalSlippage < 1e17,
+            "Max withdrawal slippage needs to be between 0.1% - 10%"
+        );
+        emit MaxWithdrawalSlippageUpdated(maxWithdrawalSlippage, _maxWithdrawalSlippage);
+        maxWithdrawalSlippage = _maxWithdrawalSlippage;
     }
 
     /**

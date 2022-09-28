@@ -3,7 +3,7 @@ const { busdMetapoolLPCRVPid } = require("../utils/constants");
 
 module.exports = generalizedConvexStratDeployment({
   deployName: "047_convex_busd_meta_strategy",
-  forceDeploy: false,
+  forceDeploy: true,
   mainTokenName: "Binance USD",
   mainTokenSymbol: "BUSD",
   rewardTokenNames: ["CVX", "CRV"],

@@ -115,11 +115,10 @@ metastrategies.forEach(
       });
 
       describe("Redeem", function () {
-        it("Should redeem", async () => {
-          const { vault, ousd, usdt, usdc, dai, anna } = fixture;
+        const redeem = async (preRedeemFn) => {
+          const { vault, ousd, usdt, usdc, dai, anna, domen } = fixture;
           await vault.connect(anna).allocate();
           await vault.connect(anna).rebase();
-
           const supplyBeforeMint = await ousd.totalSupply();
 
           const amount = "10000";
@@ -140,6 +139,7 @@ metastrategies.forEach(
             .connect(anna)
             .balanceOf(anna.address);
 
+          await preRedeemFn(fixture);
           // Now try to redeem 30k - 1% (possible undervaluation of coins)
           await vault.connect(anna).redeem(ousdUnits("29700"), 0);
 
@@ -156,6 +156,16 @@ metastrategies.forEach(
           expect(supplyDiff).to.be.gte(
             ousdUnits("29700").sub(ousdUnits("29700").div(100))
           );
+        };
+
+        it("Should redeem", async () => {
+          await redeem((fixture) => {});
+        });
+
+        it("Should redeem when MEW tries to manipulate the pool", async () => {
+          await redeem((fixture) => {
+
+          });
         });
       });
     });

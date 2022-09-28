@@ -2,7 +2,7 @@ const { expect } = require("chai");
 
 const { loadFixture } = require("ethereum-waffle");
 const { units, ousdUnits, forkOnlyDescribe } = require("../../helpers");
-const { withBalancedMetaPool } = require("../../_metastrategies-fixtures");
+const { withBalancedOUSDMetaPool } = require("../../_metastrategies-fixtures");
 
 forkOnlyDescribe(
   "Convex 3pool/OUSD Meta Strategy - Balanced Metapool",
@@ -11,19 +11,19 @@ forkOnlyDescribe(
 
     describe("Mint", function () {
       it("Should stake USDT in Cruve guage via metapool", async function () {
-        const fixture = await loadFixture(withBalancedMetaPool);
+        const fixture = await loadFixture(withBalancedOUSDMetaPool);
         const { josh, usdt } = fixture;
         await mintTest(fixture, josh, usdt, "100000");
       });
 
       it("Should stake USDC in Cruve guage via metapool", async function () {
-        const fixture = await loadFixture(withBalancedMetaPool);
+        const fixture = await loadFixture(withBalancedOUSDMetaPool);
         const { matt, usdc } = fixture;
         await mintTest(fixture, matt, usdc, "120000");
       });
 
       it("Should NOT stake DAI in Cruve guage via metapool", async function () {
-        const fixture = await loadFixture(withBalancedMetaPool);
+        const fixture = await loadFixture(withBalancedOUSDMetaPool);
         const { anna, dai } = fixture;
         await mintTest(fixture, anna, dai, "110000");
       });
@@ -31,7 +31,7 @@ forkOnlyDescribe(
 
     describe("Redeem", function () {
       it("Should redeem", async () => {
-        const fixture = await loadFixture(withBalancedMetaPool);
+        const fixture = await loadFixture(withBalancedOUSDMetaPool);
         const { vault, ousd, usdt, usdc, dai, anna } = fixture;
 
         const supplyBeforeMint = await ousd.totalSupply();

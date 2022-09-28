@@ -3,7 +3,7 @@ const { alusdMetapoolLPCRVPid } = require("../utils/constants");
 
 module.exports = generalizedConvexStratDeployment({
   deployName: "044_convex_alusd_meta_strategy",
-  forceDeploy: false,
+  forceDeploy: true,
   mainTokenName: "Alchemix USD",
   mainTokenSymbol: "alUSD",
   rewardTokenNames: ["CVX", "CRV"],
