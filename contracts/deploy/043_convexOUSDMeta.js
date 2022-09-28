@@ -1,4 +1,5 @@
 const { deploymentWithProposal } = require("../utils/deploy");
+const addresses = require("../utils/addresses");
 const { BigNumber } = require("ethers");
 
 module.exports = deploymentWithProposal(
@@ -78,11 +79,11 @@ module.exports = deploymentWithProposal(
         [
           assetAddresses.ThreePool,
           cVaultProxy.address,
-          "0xF403C135812408BFbE8713b5A23a04b3D48AAE31", // _cvxDepositorAddress,
-          "0x87650d7bbfc3a9f10587d7778206671719d9910d", // _metapoolAddress
-          "0x2A8e1E676Ec238d8A992307B495b45B3fEAa5e86", // _ousdAddress
-          "0x7D536a737C13561e0D2Decf1152a653B4e615158", // _cvxRewardStakerAddress,
-          "0x87650d7bbfc3a9f10587d7778206671719d9910d", // metapoolLPToken (_metapoolAddress)
+          addresses.mainnet.CVXBooster, // _cvxDepositorAddress,
+          addresses.mainnet.CurveOUSDMetaPool, // _metapoolAddress
+          addresses.mainnet.OUSDProxy, // _ousdAddress
+          addresses.mainnet.CVXRewardsPool, // _cvxRewardStakerAddress,
+          addresses.mainnet.CurveOUSDMetaPool, // metapoolLPToken (_metapoolAddress)
         ],
         56, // _cvxDepositorPTokenId
         await getTxOpts()

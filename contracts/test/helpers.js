@@ -1,5 +1,6 @@
 const hre = require("hardhat");
 const chai = require("chai");
+const mocha = require("mocha");
 const { parseUnits, formatUnits } = require("ethers").utils;
 const BigNumber = require("ethers").BigNumber;
 const { createFixtureLoader } = require("ethereum-waffle");
@@ -11,6 +12,19 @@ chai.Assertion.addMethod("approxEqual", function (expected, message) {
   chai.expect(actual, message).gte(expected.mul("99999").div("100000"));
   chai.expect(actual, message).lte(expected.mul("100001").div("100000"));
 });
+
+chai.Assertion.addMethod(
+  "approxEqualTolerance",
+  function (expected, maxTolerancePct = 1, message = undefined) {
+    const actual = this._obj;
+    chai
+      .expect(actual, message)
+      .gte(expected.mul(100 - maxTolerancePct).div(100));
+    chai
+      .expect(actual, message)
+      .lte(expected.mul(100 + maxTolerancePct).div(100));
+  }
+);
 
 chai.Assertion.addMethod(
   "approxBalanceOf",
@@ -129,6 +143,8 @@ const isTest = process.env.IS_TEST === "true";
 const isSmokeTest = process.env.SMOKE_TEST === "true";
 const isMainnetOrFork = isMainnet || isFork;
 const isMainnetOrRinkebyOrFork = isMainnetOrFork || isRinkeby;
+const isForkTest = isFork && isTest;
+const isForkWithLocalNode = isFork && process.env.LOCAL_PROVIDER_URL;
 
 // Fixture loader that is compatible with Ganache
 const loadFixture = createFixtureLoader(
@@ -325,12 +341,12 @@ const getAssetAddresses = async (deployments) => {
        * metapool is not yet deployed. Just return without metapool info if it is not
        * yet available.
        */
-      addressMap.ThreePoolFRAXMetapool = (
-        await deployments.get("MockCurveFraxMetapool")
+      addressMap.ThreePoolalUSDMetapool = (
+        await deployments.get("MockCurvealUSDMetapool")
       ).address;
       // token is implemented by the same contract as the metapool
-      addressMap.fraxMetapoolToken = (
-        await deployments.get("MockCurveFraxMetapool")
+      addressMap.alUSDMetapoolToken = (
+        await deployments.get("MockCurvealUSDMetapool")
       ).address;
     } catch (e) {
       // do nothing
@@ -413,6 +429,11 @@ async function proposeAndExecute(fixture, governorArgsArray, description) {
   await governorContract.connect(governor).execute(proposalId);
 }
 
+// Ugly hack to avoid running these tests when running `npx hardhat test` directly.
+// A right way would be to add suffix to files and use patterns to filter
+const forkOnlyDescribe = (title, fn) =>
+  isForkTest ? mocha.describe(title, fn) : mocha.describe.skip(title, fn);
+
 module.exports = {
   ousdUnits,
   usdtUnits,
@@ -440,6 +461,8 @@ module.exports = {
   isLocalhost,
   isMainnetOrFork,
   isMainnetOrRinkebyOrFork,
+  isForkTest,
+  isForkWithLocalNode,
   loadFixture,
   getOracleAddress,
   setOracleTokenPriceUsd,
@@ -452,4 +475,5 @@ module.exports = {
   advanceBlocks,
   isWithinTolerance,
   changeInBalance,
+  forkOnlyDescribe,
 };

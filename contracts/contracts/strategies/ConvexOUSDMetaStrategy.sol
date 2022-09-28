@@ -193,9 +193,10 @@ contract ConvexOUSDMetaStrategy is BaseConvexMetaStrategy {
             );
         }
 
-        IVault(vaultAddress).burnForStrategy(
-            metapoolMainToken.balanceOf(address(this))
-        );
+        uint256 ousdToBurn = metapoolMainToken.balanceOf(address(this));
+        if (ousdToBurn > 0) {
+            IVault(vaultAddress).burnForStrategy(ousdToBurn);
+        }
     }
 
     function _lpWithdrawAll() internal override {

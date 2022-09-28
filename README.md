@@ -177,6 +177,10 @@ Smoke tests can be run in 2 modes:
 <br/><br/>
 
 ---
+## Fork Tests
+Head over to [contracts/fork-test.md](contracts/fork-test.md)
+
+---
 
 ## Contributing
 Want to contribute to OUSD? Awesome!

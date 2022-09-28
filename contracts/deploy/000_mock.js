@@ -227,7 +227,7 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     args: [[dai.address, usdc.address, usdt.address], threePoolToken.address],
   });
 
-  await deploy("MockFrax", {
+  await deploy("MockalUSD", {
     from: deployerAddr,
   });
 

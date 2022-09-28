@@ -114,12 +114,15 @@ contract ConvexGeneralizedMetaStrategy is BaseConvexMetaStrategy {
             true
         );
 
-        // slither-disable-next-line unused-return
-        metapool.remove_liquidity_one_coin(
-            metapoolLPToken.balanceOf(address(this)),
-            metapool3CrvCoinIndex,
-            num3CrvTokens
-        );
+        uint256 burnAmount = metapoolLPToken.balanceOf(address(this));
+        if (burnAmount > 0) {
+            // slither-disable-next-line unused-return
+            metapool.remove_liquidity_one_coin(
+                burnAmount,
+                metapool3CrvCoinIndex,
+                num3CrvTokens
+            );
+        }
     }
 
     function _lpWithdrawAll() internal override {
@@ -134,12 +137,16 @@ contract ConvexGeneralizedMetaStrategy is BaseConvexMetaStrategy {
         uint128 metapool3CrvCoinIndex = _getMetapoolCoinIndex(
             address(pTokenAddress)
         );
-        // always withdraw all of the available metapool LP tokens (similar to how we always deposit all)
-        // slither-disable-next-line unused-return
-        metapool.remove_liquidity_one_coin(
-            metapoolLPToken.balanceOf(address(this)),
-            int128(metapool3CrvCoinIndex),
-            uint256(0)
-        );
+
+        uint256 burnAmount = metapoolLPToken.balanceOf(address(this));
+        if (burnAmount > 0) {
+            // Always withdraw all of the available metapool LP tokens (similar to how we always deposit all)
+            // slither-disable-next-line unused-return
+            metapool.remove_liquidity_one_coin(
+                burnAmount,
+                int128(metapool3CrvCoinIndex),
+                uint256(0)
+            );
+        }
     }
 }

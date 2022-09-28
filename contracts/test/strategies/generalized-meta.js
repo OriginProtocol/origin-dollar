@@ -1,6 +1,6 @@
 const { expect } = require("chai");
 const { utils } = require("ethers");
-const { convexGeneralizedMetaVaultFixture } = require("../_fixture");
+const { convexalUSDMetaVaultFixture } = require("../_fixture");
 
 const {
   daiUnits,
@@ -11,7 +11,7 @@ const {
   isFork,
 } = require("../helpers");
 
-describe("Convex 3pool/Generalized (Frax) Meta Strategy", function () {
+describe("Convex 3pool/Generalized (alUSD) Meta Strategy", function () {
   if (isFork) {
     this.timeout(0);
   }
@@ -23,8 +23,8 @@ describe("Convex 3pool/Generalized (Frax) Meta Strategy", function () {
     governor,
     crv,
     cvx,
-    generalizedMetaStrategy,
-    fraxMetapoolToken,
+    alUSDMetaStrategy,
+    alUSDMetapoolToken,
     cvxBooster,
     usdt,
     usdc,
@@ -39,7 +39,7 @@ describe("Convex 3pool/Generalized (Frax) Meta Strategy", function () {
   };
 
   beforeEach(async function () {
-    const fixture = await loadFixture(convexGeneralizedMetaVaultFixture);
+    const fixture = await loadFixture(convexalUSDMetaVaultFixture);
     anna = fixture.anna;
     vault = fixture.vault;
     harvester = fixture.harvester;
@@ -47,8 +47,8 @@ describe("Convex 3pool/Generalized (Frax) Meta Strategy", function () {
     governor = fixture.governor;
     crv = fixture.crv;
     cvx = fixture.cvx;
-    generalizedMetaStrategy = fixture.generalizedMetaStrategy;
-    fraxMetapoolToken = fixture.fraxMetapoolToken;
+    alUSDMetaStrategy = fixture.alUSDMetaStrategy;
+    alUSDMetapoolToken = fixture.alUSDMetapoolToken;
     cvxBooster = fixture.cvxBooster;
     usdt = fixture.usdt;
     usdc = fixture.usdc;
@@ -63,7 +63,7 @@ describe("Convex 3pool/Generalized (Frax) Meta Strategy", function () {
       await expect(anna).to.have.a.balanceOf("30000", ousd);
       await expect(cvxBooster).has.an.approxBalanceOf(
         "30000",
-        fraxMetapoolToken
+        alUSDMetapoolToken
       );
     });
 
@@ -74,7 +74,7 @@ describe("Convex 3pool/Generalized (Frax) Meta Strategy", function () {
       await expect(anna).to.have.a.balanceOf("50000", ousd);
       await expect(cvxBooster).has.an.approxBalanceOf(
         "50000",
-        fraxMetapoolToken
+        alUSDMetapoolToken
       );
     });
 
@@ -109,9 +109,9 @@ describe("Convex 3pool/Generalized (Frax) Meta Strategy", function () {
       // Anna sends her OUSD directly to Strategy
       await ousd
         .connect(anna)
-        .transfer(generalizedMetaStrategy.address, ousdUnits("8.0"));
+        .transfer(alUSDMetaStrategy.address, ousdUnits("8.0"));
       // Anna asks Governor for help
-      await generalizedMetaStrategy
+      await alUSDMetaStrategy
         .connect(governor)
         .transferToken(ousd.address, ousdUnits("8.0"));
       await expect(governor).has.a.balanceOf("8.0", ousd);
@@ -120,7 +120,7 @@ describe("Convex 3pool/Generalized (Frax) Meta Strategy", function () {
     it("Should not allow transfer of arbitrary token by non-Governor", async () => {
       // Naughty Anna
       await expect(
-        generalizedMetaStrategy
+        alUSDMetaStrategy
           .connect(anna)
           .transferToken(ousd.address, ousdUnits("8.0"))
       ).to.be.revertedWith("Caller is not the Governor");
@@ -131,7 +131,7 @@ describe("Convex 3pool/Generalized (Frax) Meta Strategy", function () {
     it("Should allow the strategist to call harvest for a specific strategy", async () => {
       // prettier-ignore
       await harvester
-        .connect(governor)["harvest(address)"](generalizedMetaStrategy.address);
+        .connect(governor)["harvest(address)"](alUSDMetaStrategy.address);
     });
 
     it("Should collect reward tokens using collect rewards on all strategies", async () => {
@@ -156,7 +156,7 @@ describe("Convex 3pool/Generalized (Frax) Meta Strategy", function () {
       await harvester.connect(governor)[
         // eslint-disable-next-line
         "harvest(address)"
-      ](generalizedMetaStrategy.address);
+      ](alUSDMetaStrategy.address);
 
       await expect(await crv.balanceOf(harvester.address)).to.be.equal(
         utils.parseUnits("2", 18)

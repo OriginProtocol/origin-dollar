@@ -68,6 +68,8 @@ interface IVault {
 
     function trusteeFeeBps() external view returns (uint256);
 
+    function ousdMetaStrategy() external view returns (address);
+
     function supportAsset(address _asset) external;
 
     function approveStrategy(address _addr) external;
