@@ -97,10 +97,7 @@ forkOnlyDescribe("Vault", function () {
         .balanceOf(josh.getAddress());
 
       const balanceDiff = balancePostMint.sub(balancePreMint);
-      expect(balanceDiff).to.approxEqualTolerance(
-        ousdUnits("50000"),
-        1
-      );
+      expect(balanceDiff).to.approxEqualTolerance(ousdUnits("50000"), 1);
 
       await vault.connect(josh).redeem(balanceDiff, 0);
 
@@ -122,10 +119,7 @@ forkOnlyDescribe("Vault", function () {
         .balanceOf(josh.getAddress());
 
       const balanceDiff = balancePostMint.sub(balancePreMint);
-      expect(balanceDiff).to.approxEqualTolerance(
-        ousdUnits("50000"),
-        1
-      );
+      expect(balanceDiff).to.approxEqualTolerance(ousdUnits("50000"), 1);
 
       await vault.connect(josh).redeem(balanceDiff, 0);
 
@@ -147,10 +141,7 @@ forkOnlyDescribe("Vault", function () {
         .balanceOf(josh.getAddress());
 
       const balanceDiff = balancePostMint.sub(balancePreMint);
-      expect(balanceDiff).to.approxEqualTolerance(
-        ousdUnits("50000"),
-        1
-      );
+      expect(balanceDiff).to.approxEqualTolerance(ousdUnits("50000"), 1);
 
       await vault.connect(josh).redeem(balanceDiff, 0);
 
