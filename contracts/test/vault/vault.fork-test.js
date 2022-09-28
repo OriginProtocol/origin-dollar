@@ -8,6 +8,8 @@ const {
   forkOnlyDescribe,
   ousdUnits,
   usdtUnits,
+  usdcUnits,
+  daiUnits,
 } = require("./../helpers");
 
 /**
@@ -83,12 +85,58 @@ forkOnlyDescribe("Vault", function () {
       expect(await vault.capitalPaused()).to.be.false;
     });
 
-    it("Should allow to mint and redeem", async () => {
+    it("Should allow to mint and redeem w/ USDT", async () => {
       const { ousd, vault, josh, usdt } = fixture;
       const balancePreMint = await ousd
         .connect(josh)
         .balanceOf(josh.getAddress());
       await vault.connect(josh).mint(usdt.address, usdtUnits("50000"), 0);
+
+      const balancePostMint = await ousd
+        .connect(josh)
+        .balanceOf(josh.getAddress());
+      expect(balancePostMint.sub(balancePreMint)).to.approxEqualTolerance(
+        ousdUnits("50000"),
+        1
+      );
+
+      await vault.connect(josh).redeem(ousdUnits("50000"), 0);
+
+      const balancePostRedeem = await ousd
+        .connect(josh)
+        .balanceOf(josh.getAddress());
+      expect(balancePreMint).to.approxEqualTolerance(balancePostRedeem, 1);
+    });
+
+    it("Should allow to mint and redeem w/ USDC", async () => {
+      const { ousd, vault, josh, usdc } = fixture;
+      const balancePreMint = await ousd
+        .connect(josh)
+        .balanceOf(josh.getAddress());
+      await vault.connect(josh).mint(usdc.address, usdcUnits("50000"), 0);
+
+      const balancePostMint = await ousd
+        .connect(josh)
+        .balanceOf(josh.getAddress());
+      expect(balancePostMint.sub(balancePreMint)).to.approxEqualTolerance(
+        ousdUnits("50000"),
+        1
+      );
+
+      await vault.connect(josh).redeem(ousdUnits("50000"), 0);
+
+      const balancePostRedeem = await ousd
+        .connect(josh)
+        .balanceOf(josh.getAddress());
+      expect(balancePreMint).to.approxEqualTolerance(balancePostRedeem, 1);
+    });
+
+    it("Should allow to mint and redeem w/ DAI", async () => {
+      const { ousd, vault, josh, dai } = fixture;
+      const balancePreMint = await ousd
+        .connect(josh)
+        .balanceOf(josh.getAddress());
+      await vault.connect(josh).mint(dai.address, daiUnits("50000"), 0);
 
       const balancePostMint = await ousd
         .connect(josh)
@@ -213,7 +261,7 @@ forkOnlyDescribe("Vault", function () {
       // aave and compound
       expect([
         "0x5e3646A1Db86993f73E6b74A57D8640B69F7e259",
-        "0x9c459eeb3fa179a40329b81c1635525e9a0ef094",
+        "0x9c459eeb3FA179a40329b81C1635525e9A0Ef094",
       ]).to.include(await vault.assetDefaultStrategies(usdt.address));
     });
 
@@ -223,7 +271,7 @@ forkOnlyDescribe("Vault", function () {
       // aave and compound
       expect([
         "0x5e3646A1Db86993f73E6b74A57D8640B69F7e259",
-        "0x9c459eeb3fa179a40329b81c1635525e9a0ef094",
+        "0x9c459eeb3FA179a40329b81C1635525e9A0Ef094",
       ]).to.include(await vault.assetDefaultStrategies(usdc.address));
     });
 
@@ -233,7 +281,7 @@ forkOnlyDescribe("Vault", function () {
       // aave and compound
       expect([
         "0x5e3646A1Db86993f73E6b74A57D8640B69F7e259",
-        "0x9c459eeb3fa179a40329b81c1635525e9a0ef094",
+        "0x9c459eeb3FA179a40329b81C1635525e9A0Ef094",
       ]).to.include(await vault.assetDefaultStrategies(dai.address));
     });
 
