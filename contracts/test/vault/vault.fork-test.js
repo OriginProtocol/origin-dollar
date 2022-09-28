@@ -211,24 +211,30 @@ forkOnlyDescribe("Vault", function () {
       const { vault, usdt } = fixture;
 
       // aave and compound
-      expect(["0x5e3646A1Db86993f73E6b74A57D8640B69F7e259", "0x9c459eeb3fa179a40329b81c1635525e9a0ef094"])
-        .to.include(await vault.assetDefaultStrategies(usdt.address))
+      expect([
+        "0x5e3646A1Db86993f73E6b74A57D8640B69F7e259",
+        "0x9c459eeb3fa179a40329b81c1635525e9a0ef094",
+      ]).to.include(await vault.assetDefaultStrategies(usdt.address));
     });
 
     it("Should have correct default strategy set for USDC", async () => {
       const { vault, usdc } = fixture;
 
       // aave and compound
-      expect(["0x5e3646A1Db86993f73E6b74A57D8640B69F7e259", "0x9c459eeb3fa179a40329b81c1635525e9a0ef094"])
-        .to.include(await vault.assetDefaultStrategies(usdc.address))
+      expect([
+        "0x5e3646A1Db86993f73E6b74A57D8640B69F7e259",
+        "0x9c459eeb3fa179a40329b81c1635525e9a0ef094",
+      ]).to.include(await vault.assetDefaultStrategies(usdc.address));
     });
 
     it("Should have correct default strategy set for DAI", async () => {
       const { vault, dai } = fixture;
 
       // aave and compound
-      expect(["0x5e3646A1Db86993f73E6b74A57D8640B69F7e259", "0x9c459eeb3fa179a40329b81c1635525e9a0ef094"])
-        .to.include(await vault.assetDefaultStrategies(dai.address))
+      expect([
+        "0x5e3646A1Db86993f73E6b74A57D8640B69F7e259",
+        "0x9c459eeb3fa179a40329b81c1635525e9a0ef094",
+      ]).to.include(await vault.assetDefaultStrategies(dai.address));
     });
 
     it("Should be able to withdraw from all strategies", async () => {

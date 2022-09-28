@@ -188,11 +188,7 @@ forkOnlyDescribe("Convex 3pool/OUSD Meta Strategy", function () {
           // (in case of USDT/USDC)
           expect(supplyDiff).to.approxEqualTolerance(
             ousdUnits("1000000").add(ousdUnitAmount.mul(2)),
-<<<<<<< Updated upstream
             5
-=======
-            2
->>>>>>> Stashed changes
           );
         } else {
           // 1x for DAI
