@@ -1,9 +1,4 @@
-const {
-  isMainnet,
-  isFork,
-  isRinkeby,
-  isSmokeTest,
-} = require("../test/helpers.js");
+const { isMainnet, isFork, isSmokeTest } = require("../test/helpers.js");
 const {
   log,
   deployWithConfirmation,
@@ -105,9 +100,6 @@ const runDeployment = async (hre) => {
     await executeProposal(propArgs, propDescription);
     log("Proposal executed.");
   } else {
-    // Hardcoding gas estimate on Rinkeby since it fails for an undetermined
-    // reason...
-    const gasLimit = isRinkeby ? 1000000 : null;
     await withConfirmation(
       cVaultProxy.connect(sGovernor).upgradeTo(dVaultCore.address)
     );
@@ -137,6 +129,6 @@ const main = async (hre) => {
 
 main.id = deployName;
 main.dependencies = ["015_flipper"];
-main.skip = () => !(isMainnet || isRinkeby) || isSmokeTest || isFork;
+main.skip = () => !isMainnet || isSmokeTest || isFork;
 
 module.exports = main;

@@ -1,11 +1,6 @@
 const hre = require("hardhat");
 
-const {
-  isMainnet,
-  isFork,
-  isRinkeby,
-  isMainnetOrRinkebyOrFork,
-} = require("../test/helpers.js");
+const { isMainnet, isFork } = require("../test/helpers.js");
 const {
   log,
   deployWithConfirmation,
@@ -76,8 +71,6 @@ const fixOUSD = async () => {
     await executeProposal(propResetArgs, propResetDescription);
     log("Proposal executed.");
   } else {
-    // Hardcoding gas estimate on Rinkeby since it fails for an undetermined reason...
-    const gasLimit = isRinkeby ? 1000000 : null;
     await withConfirmation(
       cOUSDProxy
         .connect(sGovernor)
@@ -118,6 +111,6 @@ const main = async () => {
 
 main.id = deployName;
 main.dependencies = ["002_upgrade_vault", "003_governor", "008_ousd_reset"];
-main.skip = () => !(isMainnet || isRinkeby) || isFork;
+main.skip = () => !isMainnet || isFork;
 
 module.exports = main;
