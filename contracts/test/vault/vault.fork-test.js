@@ -95,12 +95,14 @@ forkOnlyDescribe("Vault", function () {
       const balancePostMint = await ousd
         .connect(josh)
         .balanceOf(josh.getAddress());
-      expect(balancePostMint.sub(balancePreMint)).to.approxEqualTolerance(
+
+      const balanceDiff = balancePostMint.sub(balancePreMint);
+      expect(balanceDiff).to.approxEqualTolerance(
         ousdUnits("50000"),
         1
       );
 
-      await vault.connect(josh).redeem(ousdUnits("50000"), 0);
+      await vault.connect(josh).redeem(balanceDiff, 0);
 
       const balancePostRedeem = await ousd
         .connect(josh)
@@ -118,12 +120,14 @@ forkOnlyDescribe("Vault", function () {
       const balancePostMint = await ousd
         .connect(josh)
         .balanceOf(josh.getAddress());
-      expect(balancePostMint.sub(balancePreMint)).to.approxEqualTolerance(
+
+      const balanceDiff = balancePostMint.sub(balancePreMint);
+      expect(balanceDiff).to.approxEqualTolerance(
         ousdUnits("50000"),
         1
       );
 
-      await vault.connect(josh).redeem(ousdUnits("50000"), 0);
+      await vault.connect(josh).redeem(balanceDiff, 0);
 
       const balancePostRedeem = await ousd
         .connect(josh)
@@ -141,12 +145,14 @@ forkOnlyDescribe("Vault", function () {
       const balancePostMint = await ousd
         .connect(josh)
         .balanceOf(josh.getAddress());
-      expect(balancePostMint.sub(balancePreMint)).to.approxEqualTolerance(
+
+      const balanceDiff = balancePostMint.sub(balancePreMint);
+      expect(balanceDiff).to.approxEqualTolerance(
         ousdUnits("50000"),
         1
       );
 
-      await vault.connect(josh).redeem(ousdUnits("50000"), 0);
+      await vault.connect(josh).redeem(balanceDiff, 0);
 
       const balancePostRedeem = await ousd
         .connect(josh)
