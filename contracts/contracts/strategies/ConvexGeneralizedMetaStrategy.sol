@@ -71,16 +71,8 @@ contract ConvexGeneralizedMetaStrategy is BaseConvexMetaStrategy {
             address(this)
         );
         /**
-         * Convert 3crv tokens to metapoolLP tokens and double it. Doubling is required because aside
-         * from receiving 3crv we are also withdrawing OUSD. Instead of removing liquidity in an imbalanced
-         * manner the preference is to remove it in a balanced manner and perform a swap on the metapool to
-         * make up for the token imbalance. The reason for this unpredictability is that the pool can be
-         * balanced either in OUSD direction or 3Crv.
-         *
-         * Analysis has confirmed that: `It is more cost effective to remove liquidity in balanced manner and
-         * make up for the difference with additional swap. Comparing to removing liquidity in imbalanced manner.`
-         * Results of analysis here: https://docs.google.com/spreadsheets/d/1DYSyYwHqxRzSJh9dYkY5kcgP_K5gku6N2mQVhoH33vY
-         * run it yourself using code in brownie/scripts/liqidity_test.py
+         * Convert 3crv tokens to metapoolLP tokens. Since we have no use for the other token we are also
+         * removing liquidity in the balanced manner (only removing 3CrvLP tokens)
          */
         // slither-disable-next-line divide-before-multiply
         uint256 estimationRequiredMetapoolLpTokens = curvePool
