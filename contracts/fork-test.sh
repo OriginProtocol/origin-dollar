@@ -59,10 +59,6 @@ main()
         cp -r deployments/localhost deployments/hardhat
     fi
 
-    if $is_ci; then
-        params+="--parallel "
-    fi
-
     if [ -z "$1" ]; then
         # Run all files with `.fork-test.js` suffix when no param is given
         params+="test/**/*.fork-test.js"

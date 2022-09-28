@@ -267,8 +267,6 @@ module.exports = {
   mocha: {
     bail: process.env.BAIL === "true",
     timeout: 40000,
-    // Enable parallelization on CI
-    parallel: process.env.GITHUB_ACTIONS === "true",
   },
   throwOnTransactionFailures: true,
   namedAccounts: {
