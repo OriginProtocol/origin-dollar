@@ -14,7 +14,9 @@ contract MockEvilDAI is MintableERC20 {
     }
 
     function transferFrom(
+        // solhint-disable-next-line no-unused-vars
         address _from,
+        // solhint-disable-next-line no-unused-vars
         address _to,
         uint256 _amount
     ) public override returns (bool) {

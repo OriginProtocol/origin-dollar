@@ -1,9 +1,5 @@
 const networkInfo = {
   1: 'Mainnet',
-  3: 'Ropsten',
-  4: 'Rinkeby',
-  5: 'Goerli',
-  42: 'Kovan',
   1337: 'Localhost',
 }
 
@@ -25,8 +21,6 @@ export async function switchEthereumChain() {
 export function getEtherscanHost(web3React) {
   const chainIdToEtherscan = {
     1: 'https://etherscan.io',
-    3: 'https://ropsten.etherscan.io',
-    4: 'https://rinkeby.etherscan.io',
   }
 
   if (chainIdToEtherscan[web3React.chainId]) {

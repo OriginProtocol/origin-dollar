@@ -56,6 +56,8 @@ addresses.mainnet.openOracle = "0x922018674c12a7f0d394ebeef9b58f186cde13c1";
 addresses.mainnet.OGN = "0x8207c1ffc5b6804f6024322ccf34f29c3541ae26";
 // OGV
 addresses.mainnet.OGV = "0x9c354503C38481a7A7a51629142963F98eCC12D0";
+// veOGV
+addresses.mainnet.veOGV = "0x0C4576Ca1c365868E162554AF8e385dc3e7C66D9";
 // RewardsSource
 addresses.mainnet.RewardsSource = "0x7d82e86cf1496f9485a8ea04012afeb3c7489397";
 
@@ -119,15 +121,5 @@ addresses.mainnet.UniswapOracle = "0xc15169Bad17e676b3BaDb699DEe327423cE6178e";
 addresses.mainnet.CompensationClaims =
   "0x9C94df9d594BA1eb94430C006c269C314B1A8281";
 addresses.mainnet.Flipper = "0xcecaD69d7D4Ed6D52eFcFA028aF8732F27e08F70";
-
-/* --- RINKEBY --- */
-addresses.rinkeby = {};
-
-addresses.rinkeby.OGN = "0xA115e16ef6e217f7a327a57031F75cE0487AaDb8";
-
-// Compound
-addresses.rinkeby.cDAI = "0x6d7f0754ffeb405d23c51ce938289d4835be3b14";
-addresses.rinkeby.cUSDC = "0x5b281a6dda0b271e91ae35de655ad301c976edb1";
-addresses.rinkeby.cUSDT = "0x2fb298bdbef468638ad6653ff8376575ea41e768";
 
 module.exports = addresses;
