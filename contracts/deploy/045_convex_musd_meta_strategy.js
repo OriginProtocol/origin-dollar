@@ -3,7 +3,7 @@ const { musdMetapoolLPCRVPid } = require("../utils/constants");
 
 module.exports = generalizedConvexStratDeployment({
   deployName: "045_convex_musd_meta_strategy",
-  forceDeploy: true,
+  forceDeploy: false,
   mainTokenName: "mStable USD",
   mainTokenSymbol: "mUSD",
   rewardTokenNames: ["CVX", "CRV"],
