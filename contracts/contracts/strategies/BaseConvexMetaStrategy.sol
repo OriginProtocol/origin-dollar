@@ -169,7 +169,7 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
      */
     function setMaxWithdrawalSlippage(uint256 _maxWithdrawalSlippage)
         external
-        onlyVaultOrGovernor
+        onlyVaultOrGovernorOrStrategist
     {
         require(
             _maxWithdrawalSlippage >= 1e15 && _maxWithdrawalSlippage <= 1e17,
