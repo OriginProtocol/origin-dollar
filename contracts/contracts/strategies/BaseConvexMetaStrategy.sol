@@ -103,7 +103,6 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
     {
         require(assetToPToken[_asset] != address(0), "Unsupported asset");
         balance = 0;
-        uint256 assetDecimals = Helpers.getDecimals(_asset);
 
         // LP tokens in this contract. This should generally be nothing as we
         // should always stake the full balance in the Gauge, but include for
@@ -130,6 +129,7 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
             balance += value;
         }
 
+        uint256 assetDecimals = Helpers.getDecimals(_asset);
         balance = balance.scaleBy(assetDecimals, 18) / 3;
     }
 
