@@ -31,30 +31,35 @@ async function withBalancedOUSDMetaPool() {
 }
 
 async function balanceOUSDMetaPool(fixture) {
-  const { vault, domen, ousdMetaPool } = fixture;
+  const { vault, ousdMetaPool } = fixture;
+  await _balanceMetaPool(fixture, ousdMetaPool)
+}
+
+async function _balanceMetaPool(fixture, metapool) {
+  const { vault, domen } = fixture;
 
   // Balance metapool
-  const ousdBalance = await ousdMetaPool.balances(0);
-  const crv3Balance = await ousdMetaPool.balances(1);
+  const mainCoinBalance = await metapool.balances(0);
+  const crv3Balance = await metapool.balances(1);
 
   // Dollar value of coins
-  const ousdValue = await getOUSDValue(fixture, ousdBalance);
+  const mainCoinValue = await _getCoinValue(metapool, mainCoinBalance);
   const crv3Value = await get3CRVValue(fixture, crv3Balance);
 
   const exchangeSign = "exchange(int128,int128,uint256,uint256)";
-  const exchagneMethod = await ousdMetaPool.connect(domen)[exchangeSign];
+  const exchagneMethod = await metapool.connect(domen)[exchangeSign];
 
-  if (ousdValue.gt(crv3Value)) {
-    const diffInDollars = ousdValue.sub(crv3Value);
-    const liquidityDiff = await getOUSDLiquidity(fixture, diffInDollars.div(2));
+  if (mainCoinValue.gt(crv3Value)) {
+    const diffInDollars = mainCoinValue.sub(crv3Value);
+    const liquidityDiff = await _getCoinLiquidity(metapool, diffInDollars.div(2))
 
     // Tilt to 3CRV
     await exchagneMethod(1, 0, liquidityDiff, 0);
-  } else if (crv3Value.gt(ousdValue)) {
-    const diffInDollars = crv3Value.sub(ousdValue);
+  } else if (crv3Value.gt(mainCoinValue)) {
+    const diffInDollars = crv3Value.sub(mainCoinValue);
     const liquidityDiff = await get3CRVLiquidity(fixture, diffInDollars.div(2));
 
-    // Tilt to OUSD
+    // Tilt to Main Token
     await exchagneMethod(0, 1, liquidityDiff, 0);
   }
 
@@ -73,14 +78,50 @@ async function withCRV3TitledOUSDMetapool() {
 async function tiltTo3CRV_OUSDMetapool(fixture, amount) {
   const { vault, domen, ousdMetaPool } = fixture;
 
+  await tiltTo3CRV_Metapool(fixture, ousdMetaPool, amount);
+}
+
+/* Tilt towards 3CRV but if pool has very low liquidity still leave the 
+ * threshold amount of the other token inside
+ */
+async function tiltTo3CRV_Metapool_considering_liquidity(fixture, metapool, amount, threshold=0.1) {
+  const { vault, domen } = fixture;
+  const mainCoinPoolBalance = await metapool.balances(0);
+
+  // unfortunately we need to skip balancing the metapool, because the other main token is not yet
+  // in the fixtures
+  //await _balanceMetaPool(fixture, metapool);
+
+  amount = amount || ousdUnits("1000000");
+  let amountToSwap = amount.div(2);
+  const maxAmountAllowedByThreshold = mainCoinPoolBalance
+    .mul(ousdUnits(`${1 - threshold}`))
+    .div(ousdUnits("1"));
+
+
+  if (amountToSwap > maxAmountAllowedByThreshold) {
+    amountToSwap = maxAmountAllowedByThreshold;
+  }
+
+  // Tilt to 3CRV by a million
+  const exchangeSign = "exchange(int128,int128,uint256,uint256)";
+  await metapool.connect(domen)[exchangeSign](1, 0, amountToSwap, 0);
+
+  await vault.connect(domen).allocate();
+  await vault.connect(domen).rebase();
+}
+
+async function tiltTo3CRV_Metapool(fixture, metapool, amount) {
+  const { vault, domen } = fixture;
+
   // Balance metapool
-  await balanceOUSDMetaPool(fixture);
+  await _balanceMetaPool(fixture, metapool);
 
   amount = amount || ousdUnits("1000000");
 
   // Tilt to 3CRV by a million
   const exchangeSign = "exchange(int128,int128,uint256,uint256)";
-  await ousdMetaPool.connect(domen)[exchangeSign](1, 0, amount.div(2), 0);
+  await metapool.connect(domen)[exchangeSign](1, 0, amount.div(2), 0);
 
   await vault.connect(domen).allocate();
   await vault.connect(domen).rebase();
@@ -152,6 +193,9 @@ module.exports = {
 
   withOUSDTitledMetapool,
   tiltToOUSD_OUSDMetapool,
+
+  tiltTo3CRV_Metapool,
+  tiltTo3CRV_Metapool_considering_liquidity,
 
   getOUSDLiquidity,
   get3CRVLiquidity,

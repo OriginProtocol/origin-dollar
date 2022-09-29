@@ -7,6 +7,7 @@ const { fundAccounts } = require("../utils/funding");
 const {
   getAssetAddresses,
   daiUnits,
+  ousdUnits,
   isFork,
   isForkWithLocalNode,
 } = require("./helpers");
@@ -632,7 +633,8 @@ async function convexMetaVaultFixture() {
 async function convexGeneralizedMetaForkedFixture(
   metapoolAddress,
   rewardPoolAddress,
-  metastrategyProxyName
+  metastrategyProxyName,
+  lpTokenAddress,
 ) {
   return async () => {
     const fixture = await loadFixture(defaultFixture);
@@ -649,10 +651,27 @@ async function convexGeneralizedMetaForkedFixture(
       ousdMetapoolAbi,
       metapoolAddress
     );
+
+    const primaryCoin = await ethers.getContractAt(
+      erc20Abi,
+      await metapool.coins(0)
+    );
+
     const threepoolSwap = await ethers.getContractAt(
       threepoolSwapAbi,
       addresses.mainnet.ThreePool
     );
+
+    const lpToken = await ethers.getContractAt(
+      erc20Abi,
+      lpTokenAddress
+    );
+
+    for (const user of [josh, matt, anna, domen, daniel, franck]) {
+      // Approve Metapool contract to move funds
+      await resetAllowance(threepoolLP, user, metapoolAddress);
+      await resetAllowance(primaryCoin, user, metapoolAddress);
+    }
 
     // Get some 3CRV from most loaded contracts/wallets
     await impersonateAndFundAddress(
@@ -668,13 +687,29 @@ async function convexGeneralizedMetaForkedFixture(
       domen.getAddress()
     );
 
-    for (const user of [josh, matt, anna, domen, daniel, franck]) {
-      // Approve Metapool contract to move funds
-      await resetAllowance(threepoolLP, user, metapoolAddress);
-      await resetAllowance(ousd, user, metapoolAddress);
+    /* Get a bunch of other token as well... By adding and removing liquidity from the pool
+     * get 20m of the token or max 80% of the token balance
+     */
+    const mainCoinBalance = await metapool.balances(0);
+    const balanceThreshold = mainCoinBalance.mul(80).div(100);
+    let amountToAdd = ousdUnits("20000000");
+    if(amountToAdd > balanceThreshold) {
+      amountToAdd = balanceThreshold;
     }
 
+    // add 3poolLP as liquidity
+    await metapool
+      .connect(domen)['add_liquidity(uint256[2],uint256)']([0, amountToAdd], 0);
+
+    await metapool
+      .connect(domen)['remove_liquidity_one_coin(uint256,int128,uint256)'](
+        lpToken.connect(domen).balanceOf(domen.address),
+        0,
+        0
+    );
+
     fixture.metapool = metapool;
+    fixture.metapoolLpToken = lpToken;
     fixture.threePoolToken = threepoolLP;
     fixture.threepoolSwap = threepoolSwap;
 

@@ -143,7 +143,6 @@ contract ConvexGeneralizedMetaStrategy is BaseConvexMetaStrategy {
             uint256 burnDollarAmount = burnAmount.mulTruncate(metapool.get_virtual_price());
             uint256 curve3PoolExpected = burnDollarAmount.divPrecisely(ICurvePool(platformAddress).get_virtual_price());
 
-
             // Always withdraw all of the available metapool LP tokens (similar to how we always deposit all)
             // slither-disable-next-line unused-return
             metapool.remove_liquidity_one_coin(
