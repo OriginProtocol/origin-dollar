@@ -27,6 +27,10 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
     IERC20 internal metapoolLPToken;
     // Ordered list of metapool assets
     address[] internal metapoolAssets;
+    uint128 crvCoinIndex;
+    uint128 mainCoinIndex;
+
+    int256[30] private _reserved;
 
     /**
      * Initializer for setting up strategy internal state. This overrides the
@@ -73,6 +77,8 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
         cvxDepositorPTokenId = _cvxDepositorPTokenId;
 
         metapoolAssets = [metapool.coins(0), metapool.coins(1)];
+        crvCoinIndex = _getMetapoolCoinIndex(pTokenAddress);
+        mainCoinIndex = _getMetapoolCoinIndex(_initAddresses[4]);
         super._initialize(
             _initAddresses[0],
             _initAddresses[1],

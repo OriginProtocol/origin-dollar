@@ -35,18 +35,13 @@ contract ConvexOUSDMetaStrategy is BaseConvexMetaStrategy {
             curve3PoolVirtualPrice
         );
 
-        uint128 crvCoinIndex = _getMetapoolCoinIndex(pTokenAddress);
-        uint128 ousdCoinIndex = _getMetapoolCoinIndex(
-            address(metapoolMainToken)
-        );
-
         uint256 ousdToAdd = toPositive(
             int256(
                 metapool.balances(crvCoinIndex).mulTruncate(
                     curve3PoolVirtualPrice
                 )
             ) -
-                int256(metapool.balances(ousdCoinIndex)) +
+                int256(metapool.balances(mainCoinIndex)) +
                 int256(threePoolLpDollarValue)
         );
 
@@ -146,11 +141,6 @@ contract ConvexOUSDMetaStrategy is BaseConvexMetaStrategy {
             _minAmounts
         );
 
-        uint128 crvCoinIndex = _getMetapoolCoinIndex(pTokenAddress);
-        uint128 ousdCoinIndex = _getMetapoolCoinIndex(
-            address(metapoolMainToken)
-        );
-
         // Receive too much 3crv
         if (removedCoins[uint256(crvCoinIndex)] > num3CrvTokens) {
             /**
@@ -160,7 +150,7 @@ contract ConvexOUSDMetaStrategy is BaseConvexMetaStrategy {
             // slither-disable-next-line unused-return
             metapool.exchange(
                 int128(crvCoinIndex),
-                int128(ousdCoinIndex),
+                int128(mainCoinIndex),
                 removedCoins[uint256(crvCoinIndex)] - num3CrvTokens,
                 0
             );
@@ -178,14 +168,14 @@ contract ConvexOUSDMetaStrategy is BaseConvexMetaStrategy {
                 crv3VirtualPrice
             ) * 105) / 100;
             uint256 crv3Received = metapool.get_dy(
-                int128(ousdCoinIndex), // Index value of the coin to send
+                int128(mainCoinIndex), // Index value of the coin to send
                 int128(crvCoinIndex), // Index value of the coin to receive
                 ousdWithThreshold // The amount of first coin being exchanged
             );
 
             // slither-disable-next-line unused-return
             metapool.exchange(
-                int128(ousdCoinIndex),
+                int128(mainCoinIndex),
                 int128(crvCoinIndex),
                 // below is ousd to swap
                 (required3Crv * ousdWithThreshold) / crv3Received,
