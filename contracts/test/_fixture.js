@@ -641,7 +641,7 @@ async function convexGeneralizedMetaForkedFixture(
     const { governorAddr } = await getNamedAccounts();
     const sGovernor = await ethers.provider.getSigner(governorAddr);
 
-    const { josh, matt, anna, domen, daniel, franck, ousd } = fixture;
+    const { josh, matt, anna, domen, daniel, franck } = fixture;
 
     const threepoolLP = await ethers.getContractAt(
       threepoolLPAbi,

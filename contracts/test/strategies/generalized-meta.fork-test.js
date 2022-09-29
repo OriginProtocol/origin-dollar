@@ -124,7 +124,7 @@ metastrategies.forEach(
 
       describe("Redeem", function () {
         it("Should redeem", async () => {
-          const { vault, ousd, usdt, usdc, dai, anna, domen } = fixture;
+          const { vault, ousd, usdt, usdc, dai, anna } = fixture;
           await vault.connect(anna).allocate();
           await vault.connect(anna).rebase();
           const supplyBeforeMint = await ousd.totalSupply();
@@ -172,7 +172,7 @@ metastrategies.forEach(
           const { governorAddr } = await getNamedAccounts();
           const sGovernor = await ethers.provider.getSigner(governorAddr);
 
-          const { vault, ousd, usdt, anna, rewardPool } = fixture;
+          const { vault, usdt, anna } = fixture;
           await vault.connect(anna).allocate();
           await vault.connect(anna).rebase();
           await vault
@@ -180,8 +180,6 @@ metastrategies.forEach(
               .mint(usdt.address, await units("30000", usdt), 0);
           await vault.connect(anna).allocate();
 
-
-          const vaultBefore = await vault.totalValue();
           await fixture.metaStrategy.connect(sGovernor)
             .setMaxWithdrawalSlippage(ousdUnits("0.001"));
           await tiltToMainToken(fixture);

@@ -33,7 +33,7 @@ async function withBalancedOUSDMetaPool() {
 }
 
 async function balanceOUSDMetaPool(fixture) {
-  const { vault, ousdMetaPool } = fixture;
+  const { ousdMetaPool } = fixture;
   await _balanceMetaPool(fixture, ousdMetaPool)
 }
 
@@ -78,7 +78,7 @@ async function withCRV3TitledOUSDMetapool() {
 }
 
 async function tiltTo3CRV_OUSDMetapool(fixture, amount) {
-  const { vault, domen, ousdMetaPool } = fixture;
+  const { ousdMetaPool } = fixture;
 
   await tiltTo3CRV_Metapool(fixture, ousdMetaPool, amount);
 }
@@ -117,7 +117,7 @@ async function tiltTo3CRV_Metapool_considering_liquidity(fixture, amount, thresh
  * re-deploys its own liquidity
  */
 async function tiltToMainToken(fixture) {
-  const { vault, domen, metapool, metapoolCoin } = fixture;
+  const { metapool, metapoolCoin } = fixture;
 
   const metapoolSigner = await ethers.provider.getSigner(metapool.address);
   await resetAllowance(metapoolCoin, metapoolSigner, metapool.address);
@@ -125,16 +125,12 @@ async function tiltToMainToken(fixture) {
   const shareOfMainCoinBalance = (await metapoolCoin.balanceOf(metapool.address))
     .mul(ousdUnits("0.9"))
     .div(ousdUnits("1"));
-    
+
   // Tilt to main token
   await metapool
-    .connect(metapoolSigner)
-    ["add_liquidity(uint256[2],uint256)"]
-    ([shareOfMainCoinBalance, 0], 0);
+    .connect(metapoolSigner)["add_liquidity(uint256[2],uint256)"]([shareOfMainCoinBalance, 0], 0);
   await metapool
-    .connect(metapoolSigner)
-    ["add_liquidity(uint256[2],uint256)"]
-    ([shareOfMainCoinBalance, 0], 0);
+    .connect(metapoolSigner)["add_liquidity(uint256[2],uint256)"]([shareOfMainCoinBalance, 0], 0);
 }
 
 async function tiltTo3CRV_Metapool(fixture, metapool, amount) {
@@ -192,11 +188,6 @@ async function _getCoinLiquidity(poolSwap, coinAmount) {
   return coinAmount.div(vPrice).mul(ousdUnits("1"));
 }
 
-async function getOUSDValue(fixture, ousdAmount) {
-  const { ousdMetaPool } = fixture;
-  return _getCoinValue(ousdMetaPool, ousdAmount);
-}
-
 async function _getCoinValue(metapool, coinAmount) {
   const vPrice = await metapool.get_virtual_price();
   return coinAmount.mul(vPrice).div(ousdUnits("1"));
@@ -221,6 +212,7 @@ module.exports = {
   tiltToOUSD_OUSDMetapool,
 
   tiltTo3CRV_Metapool,
+  tiltTo3CRV_Metapool_considering_liquidity,
   tiltToMainToken,
 
   getOUSDLiquidity,
