@@ -5,7 +5,7 @@ const { ethers } = hre;
 const { loadFixture } = require("ethereum-waffle");
 const { units, ousdUnits, forkOnlyDescribe } = require("../helpers");
 const { convexGeneralizedMetaForkedFixture } = require("../_fixture");
-const { tiltTo3CRV_Metapool_considering_liquidity } = require("../_metastrategies-fixtures");
+const { tiltToMainToken } = require("../_metastrategies-fixtures");
 
 const metastrategies = [
   {
@@ -168,7 +168,7 @@ metastrategies.forEach(
 
       describe("Withdraw all", function () {
         // DO IT FOR ONE TOKEN ONLY
-        it.only("Should not allow withdraw all when MEW tries to manipulate the pool", async () => {
+        it("Should not allow withdraw all when MEW tries to manipulate the pool", async () => {
           const { governorAddr } = await getNamedAccounts();
           const sGovernor = await ethers.provider.getSigner(governorAddr);
 
@@ -180,20 +180,22 @@ metastrategies.forEach(
               .mint(usdt.address, await units("30000", usdt), 0);
           await vault.connect(anna).allocate();
 
-          console.log("TOKENS", (await rewardPool
-            .connect(anna)
-            .balanceOf(fixture.metaStrategyProxy.address)).toString(), (await vault.totalValue()).toString());
 
           const vaultBefore = await vault.totalValue();
           await fixture.metaStrategy.connect(sGovernor)
             .setMaxWithdrawalSlippage(ousdUnits("0.001"));
-          await tiltTo3CRV_Metapool_considering_liquidity(fixture, fixture.metapool, ousdUnits("100000000"), 0.001); // 100mio
+          await tiltToMainToken(fixture);
 
-          const receit = await vault.connect(sGovernor)
+          await expect(
+            vault.connect(sGovernor)
+            .withdrawAllFromStrategy(fixture.metaStrategyProxy.address)
+          ).to.be.revertedWith("Transaction reverted without a reason string");
+
+          // should not revert when slippage tolerance set to 10%
+          await fixture.metaStrategy.connect(sGovernor)
+            .setMaxWithdrawalSlippage(ousdUnits("0.1"));
+          await vault.connect(sGovernor)
             .withdrawAllFromStrategy(fixture.metaStrategyProxy.address);
-
-          const vaultAfter = await vault.totalValue();
-          console.log("AFTER", (vaultAfter.sub(vaultBefore)).toString());
         });
       });
     });

@@ -1,6 +1,8 @@
+const hre = require("hardhat");
+const { ethers } = hre;
 const { loadFixture } = require("ethereum-waffle");
 const { ousdUnits } = require("./helpers");
-const { convexMetaVaultFixture } = require("./_fixture");
+const { convexMetaVaultFixture, resetAllowance } = require("./_fixture");
 
 // NOTE: This can cause a change in setup from mainnet.
 // However, mint/redeem tests, without any changes, are tested
@@ -84,8 +86,8 @@ async function tiltTo3CRV_OUSDMetapool(fixture, amount) {
 /* Tilt towards 3CRV but if pool has very low liquidity still leave the 
  * threshold amount of the other token inside
  */
-async function tiltTo3CRV_Metapool_considering_liquidity(fixture, metapool, amount, threshold=0.1) {
-  const { vault, domen } = fixture;
+async function tiltTo3CRV_Metapool_considering_liquidity(fixture, amount, threshold=0.1) {
+  const { vault, domen, metapool } = fixture;
   const mainCoinPoolBalance = await metapool.balances(0);
 
   // unfortunately we need to skip balancing the metapool, because the other main token is not yet
@@ -109,6 +111,30 @@ async function tiltTo3CRV_Metapool_considering_liquidity(fixture, metapool, amou
 
   await vault.connect(domen).allocate();
   await vault.connect(domen).rebase();
+}
+
+/* Just triple the main token liquidity in a flaky manner where the pool
+ * re-deploys its own liquidity
+ */
+async function tiltToMainToken(fixture) {
+  const { vault, domen, metapool, metapoolCoin } = fixture;
+
+  const metapoolSigner = await ethers.provider.getSigner(metapool.address);
+  await resetAllowance(metapoolCoin, metapoolSigner, metapool.address);
+  // 90% of main coin pool liquidity
+  const shareOfMainCoinBalance = (await metapoolCoin.balanceOf(metapool.address))
+    .mul(ousdUnits("0.9"))
+    .div(ousdUnits("1"));
+    
+  // Tilt to main token
+  await metapool
+    .connect(metapoolSigner)
+    ["add_liquidity(uint256[2],uint256)"]
+    ([shareOfMainCoinBalance, 0], 0);
+  await metapool
+    .connect(metapoolSigner)
+    ["add_liquidity(uint256[2],uint256)"]
+    ([shareOfMainCoinBalance, 0], 0);
 }
 
 async function tiltTo3CRV_Metapool(fixture, metapool, amount) {
@@ -195,7 +221,7 @@ module.exports = {
   tiltToOUSD_OUSDMetapool,
 
   tiltTo3CRV_Metapool,
-  tiltTo3CRV_Metapool_considering_liquidity,
+  tiltToMainToken,
 
   getOUSDLiquidity,
   get3CRVLiquidity,

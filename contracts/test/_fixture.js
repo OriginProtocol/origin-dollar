@@ -708,6 +708,7 @@ async function convexGeneralizedMetaForkedFixture(
         0
     );
 
+    fixture.metapoolCoin = primaryCoin;
     fixture.metapool = metapool;
     fixture.metapoolLpToken = lpToken;
     fixture.threePoolToken = threepoolLP;
@@ -1078,6 +1079,7 @@ async function rebornFixture() {
 }
 
 module.exports = {
+  resetAllowance,
   defaultFixture,
   mockVaultFixture,
   compoundFixture,

@@ -68,7 +68,7 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
         require(_assets.length == 3, "Must have exactly three assets");
         // Should be set prior to abstract initialize call otherwise
         // abstractSetPToken calls will fail
-        cvxDepositorAddress = cvxDepositorAddress;
+        cvxDepositorAddress = initState.cvxDepositorAddress;
         pTokenAddress = _pTokens[0];
         metapool = ICurveMetaPool(initState.metapoolAddress);
         metapoolMainToken = IERC20(initState.metapoolMainToken);
