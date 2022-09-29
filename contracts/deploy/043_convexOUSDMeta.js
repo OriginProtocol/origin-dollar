@@ -64,9 +64,10 @@ module.exports = deploymentWithProposal(
           await getTxOpts()
         )
     );
+    
     // 4. Init and configure new Convex OUSD Meta strategy
     const initFunction =
-      "initialize(address[],address[],address[],address[],uint256)";
+      "initialize(address[],address[],address[],(address,address,address,address,address,address,address,uint256))";
     await withConfirmation(
       cConvexOUSDMetaStrategy.connect(sDeployer)[initFunction](
         [assetAddresses.CVX, assetAddresses.CRV],
@@ -84,8 +85,8 @@ module.exports = deploymentWithProposal(
           addresses.mainnet.OUSDProxy, // _ousdAddress
           addresses.mainnet.CVXRewardsPool, // _cvxRewardStakerAddress,
           addresses.mainnet.CurveOUSDMetaPool, // metapoolLPToken (_metapoolAddress)
+          56, // _cvxDepositorPTokenId
         ],
-        56, // _cvxDepositorPTokenId
         await getTxOpts()
       )
     );

@@ -85,7 +85,7 @@ module.exports = ({
 
       // 4. Init and configure new Convex Token Meta strategy
       const initFunction =
-        "initialize(address[],address[],address[],address[],uint256)";
+        "initialize(address[],address[],address[],(address,address,address,address,address,address,address,uint256))";
       await withConfirmation(
         cConvexTokenMetaStrategy
           .connect(sDeployer)
@@ -101,8 +101,8 @@ module.exports = ({
               mainTokenAddress,
               cvxRewardStakerAddress,
               metapoolLPToken,
+              cvxDepositorPTokenId,
             ],
-            cvxDepositorPTokenId,
             await getTxOpts()
           )
       );

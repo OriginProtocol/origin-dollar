@@ -19,6 +19,19 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
     using StableMath for uint256;
     using SafeERC20 for IERC20;
 
+    // used to circumvent the stack too deep issue
+    struct InitState {
+      address platformAddress; //Address of the Curve 3pool
+      address vaultAddress; //Address of the vault
+      address cvxDepositorAddress; //Address of the Convex depositor(AKA booster) for this pool
+      address metapoolAddress; //Address of the Curve MetaPool
+      address metapoolMainToken; //Address of Main metapool token
+      address cvxRewardStakerAddress; //Address of the CVX rewards staker
+      address metapoolLPToken; //Address of metapool LP token
+      uint256 cvxDepositorPTokenId; //Pid of the pool referred to by Depositor and staker
+   }
+
+
     address internal cvxDepositorAddress;
     address internal cvxRewardStakerAddress;
     uint256 internal cvxDepositorPTokenId;
@@ -41,47 +54,31 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
      *                order as returned by coins on the pool contract, i.e.
      *                DAI, USDC, USDT
      * @param _pTokens Platform Token corresponding addresses
-     * @param _initAddresses Various addresses containing the following:
-     *  - _platformAddress Address of the Curve 3pool
-     *  - _vaultAddress Address of the vault
-     *  - _cvxDepositorAddress Address of the Convex depositor(AKA booster) for this pool
-     *  - _metapoolAddress Address of the Curve MetaPool
-     *  - _metapoolMainToken Address of Main metapool token
-     *  - _cvxRewardStakerAddress Address of the CVX rewards staker
-     * @param _cvxDepositorPTokenId Pid of the pool referred to by Depositor and staker
+     * @param initState Various addresses and info for initialization state
      */
     function initialize(
         address[] calldata _rewardTokenAddresses, // CRV + CVX
         address[] calldata _assets,
         address[] calldata _pTokens,
-        /**
-         * in the following order: _platformAddress(3Pool address), _vaultAddress, _cvxDepositorAddress
-         * _metapoolAddress, _metapoolMainToken, _cvxRewardStakerAddress, _metapoolLPToken
-         */
-        address[] calldata _initAddresses,
-        uint256 _cvxDepositorPTokenId
+        InitState calldata initState
     ) external onlyGovernor initializer {
         require(_assets.length == 3, "Must have exactly three assets");
-        require(
-            _initAddresses.length == 7,
-            "_initAddresses must have exactly seven items"
-        );
         // Should be set prior to abstract initialize call otherwise
         // abstractSetPToken calls will fail
-        cvxDepositorAddress = _initAddresses[2];
+        cvxDepositorAddress = cvxDepositorAddress;
         pTokenAddress = _pTokens[0];
-        metapool = ICurveMetaPool(_initAddresses[3]);
-        metapoolMainToken = IERC20(_initAddresses[4]);
-        cvxRewardStakerAddress = _initAddresses[5];
-        metapoolLPToken = IERC20(_initAddresses[6]);
-        cvxDepositorPTokenId = _cvxDepositorPTokenId;
+        metapool = ICurveMetaPool(initState.metapoolAddress);
+        metapoolMainToken = IERC20(initState.metapoolMainToken);
+        cvxRewardStakerAddress = initState.cvxRewardStakerAddress;
+        metapoolLPToken = IERC20(initState.metapoolLPToken);
+        cvxDepositorPTokenId = initState.cvxDepositorPTokenId;
 
         metapoolAssets = [metapool.coins(0), metapool.coins(1)];
         crvCoinIndex = _getMetapoolCoinIndex(pTokenAddress);
-        mainCoinIndex = _getMetapoolCoinIndex(_initAddresses[4]);
+        mainCoinIndex = _getMetapoolCoinIndex(initState.metapoolMainToken);
         super._initialize(
-            _initAddresses[0],
-            _initAddresses[1],
+            initState.platformAddress,
+            initState.vaultAddress,
             _rewardTokenAddresses,
             _assets,
             _pTokens
