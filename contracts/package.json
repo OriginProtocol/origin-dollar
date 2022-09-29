@@ -5,7 +5,6 @@
   "main": "index.js",
   "scripts": {
     "deploy": "(npx hardhat deploy --export '../dapp/network.json') && yarn run copy-interface-artifacts",
-    "deploy:rinkeby": "(npx hardhat deploy --network rinkeby --verbose --export '../dapp/network.rinkeby.json') && yarn run copy-interface-artifacts",
     "deploy:mainnet": "(npx hardhat deploy --network mainnet --verbose --export '../dapp/network.mainnet.json') && yarn run copy-interface-artifacts",
     "node": "yarn run node:fork",
     "node:fork": "./node.sh fork",
