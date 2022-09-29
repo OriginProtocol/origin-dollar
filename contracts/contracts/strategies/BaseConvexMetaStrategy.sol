@@ -93,6 +93,11 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
      * @dev Get the total asset value held in the platform
      * @param _asset      Address of the asset
      * @return balance    Total value of the asset in the platform
+     * 
+     * IMPORTANT(!) Because of gas optimization we don't check for 3CrvLP
+     * or metapoolLp tokens held by the strategy. All strategies inheriting
+     * this one need to make sure after withdrawals & deposits that there are
+     * no extra 3CrvLP or metapoolLP tokens held by the strategy.
      */
     function checkBalance(address _asset)
         public
@@ -104,28 +109,12 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
         require(assetToPToken[_asset] != address(0), "Unsupported asset");
         balance = 0;
 
-        // LP tokens in this contract. This should generally be nothing as we
-        // should always stake the full balance in the Gauge, but include for
-        // safety
-        uint256 contractPTokens = IERC20(pTokenAddress).balanceOf(
-            address(this)
-        );
-        ICurvePool curvePool = ICurvePool(platformAddress);
-        if (contractPTokens > 0) {
-            uint256 virtual_price = curvePool.get_virtual_price();
-            uint256 value = contractPTokens.mulTruncate(virtual_price);
-            balance += value;
-        }
-
-        uint256 metapoolPTokens = metapoolLPToken.balanceOf(address(this));
         uint256 metapoolGaugePTokens = IRewardStaking(cvxRewardStakerAddress)
             .balanceOf(address(this));
-        uint256 metapoolTotalPTokens = metapoolPTokens + metapoolGaugePTokens;
 
-        if (metapoolTotalPTokens > 0) {
+        if (metapoolGaugePTokens > 0) {
             uint256 metapool_virtual_price = metapool.get_virtual_price();
-            uint256 value = (metapoolTotalPTokens * metapool_virtual_price) /
-                1e18;
+            uint256 value = metapoolGaugePTokens.mulTruncate(metapool_virtual_price);
             balance += value;
         }
 

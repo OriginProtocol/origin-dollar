@@ -22,6 +22,10 @@ contract ConvexGeneralizedMetaStrategy is BaseConvexMetaStrategy {
 
     /* Take 3pool LP and deposit it to metapool. Take the LP from metapool
      * and deposit them to Convex.
+     *
+     * IMPORTANT(!) because of gas savings of `checkBalance[BaseConvexMetaStrategy]` this 
+     * function needs to deploy all 3crvLP to metapool and all metapoolLP to gauge. Strategy
+     * should not hold any LP tokens after deposit is done
      */
     function _lpDepositAll() internal override {
         IERC20 threePoolLp = IERC20(pTokenAddress);
@@ -49,13 +53,11 @@ contract ConvexGeneralizedMetaStrategy is BaseConvexMetaStrategy {
         metapool.add_liquidity(_amounts, minReceived);
 
         uint256 metapoolLp = metapoolLPToken.balanceOf(address(this));
-
         bool success = IConvexDeposits(cvxDepositorAddress).deposit(
             cvxDepositorPTokenId,
             metapoolLp,
             true // Deposit with staking
         );
-
         require(success, "Failed to deposit to Convex");
     }
 
@@ -63,8 +65,13 @@ contract ConvexGeneralizedMetaStrategy is BaseConvexMetaStrategy {
      * Withdraw the specified amount of tokens from the gauge. And use all the resulting tokens
      * to remove liquidity from metapool
      * @param num3CrvTokens Number of Convex LP tokens to remove from gauge
+     * 
+     * IMPORTANT(!) because of gas savings of `checkBalance[BaseConvexMetaStrategy]` this 
+     * function needs to withdraw the correct amount of metapoolLP and convert it to 3crvLP. After
+     * withdrawal no 3crvLP should be left on the strategy.
      */
     function _lpWithdraw(uint256 num3CrvTokens) internal override {
+        IERC20 threePoolLp = IERC20(pTokenAddress);
         ICurvePool curvePool = ICurvePool(platformAddress);
 
         uint256 gaugeTokens = IRewardStaking(cvxRewardStakerAddress).balanceOf(
@@ -123,8 +130,18 @@ contract ConvexGeneralizedMetaStrategy is BaseConvexMetaStrategy {
                 num3CrvTokens
             );
         }
+
+        require(
+            threePoolLp.balanceOf(address(this)) - num3CrvTokens <
+                num3CrvTokens.mulTruncate(5e15),
+            "Withdrew more than 0.5% extra of the total required 3Crv"
+        );
     }
 
+    /*
+     * IMPORTANT(!) because of gas savings of `checkBalance[BaseConvexMetaStrategy]` this 
+     * function needs to withdraw all metapoolLP it holds to get 3crvLP.
+     */
     function _lpWithdrawAll() internal override {
         uint256 gaugeTokens = IRewardStaking(cvxRewardStakerAddress).balanceOf(
             address(this)

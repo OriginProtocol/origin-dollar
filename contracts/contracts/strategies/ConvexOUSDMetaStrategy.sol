@@ -23,6 +23,10 @@ contract ConvexOUSDMetaStrategy is BaseConvexMetaStrategy {
 
     /* Take 3pool LP and mint the corresponding amount of ousd. Deposit and stake that to
      * ousd Curve Metapool. Take the LP from metapool and deposit them to Convex.
+     *
+     * IMPORTANT(!) because of gas savings of `checkBalance[BaseConvexMetaStrategy]` this 
+     * function needs to deploy all 3crvLP to metapool and all metapoolLP to gauge. Strategy
+     * should not hold any LP tokens after deposit is done
      */
     function _lpDepositAll() internal override {
         IERC20 threePoolLp = IERC20(pTokenAddress);
@@ -72,14 +76,13 @@ contract ConvexOUSDMetaStrategy is BaseConvexMetaStrategy {
         // slither-disable-next-line unused-return
         metapool.add_liquidity(_amounts, minReceived);
 
+        // Deposit all of the metapoolLP we have. Strategy should not hold any LP tokens
         uint256 metapoolLp = metapoolErc20.balanceOf(address(this));
-
         bool success = IConvexDeposits(cvxDepositorAddress).deposit(
             cvxDepositorPTokenId,
             metapoolLp,
             true // Deposit with staking
         );
-
         require(success, "Failed to deposit to Convex");
     }
 
@@ -87,6 +90,12 @@ contract ConvexOUSDMetaStrategy is BaseConvexMetaStrategy {
      * Withdraw the specified amount of tokens from the gauge. And use all the resulting tokens
      * to remove liquidity from metapool
      * @param num3CrvTokens Number of Convex LP tokens to remove from gauge
+     * 
+     * IMPORTANT(!) because of gas savings of `checkBalance[BaseConvexMetaStrategy]` this 
+     * function needs to withdraw correct amount of metapoolLP to get 3crvLP. And in case of too much
+     * 3crvLP received swap it to ousd as to not hold any non deployed metapoolLP or 3crvLP tokens. And
+     * in case of too little 3crvLP received swap the correct amount from OUSD. No 3crvLP should be left
+     * in the strategy after withdrawal.
      */
     function _lpWithdraw(uint256 num3CrvTokens) internal override {
         IERC20 metapoolErc20 = IERC20(address(metapool));
@@ -189,6 +198,11 @@ contract ConvexOUSDMetaStrategy is BaseConvexMetaStrategy {
         }
     }
 
+    /*
+     * IMPORTANT(!) because of gas savings of `checkBalance[BaseConvexMetaStrategy]` this 
+     * function needs to withdraw all metapoolLP it holds to get 3crvLP. And burn all the ousd
+     * it has gained removing liquidity.
+     */
     function _lpWithdrawAll() internal override {
         IERC20 metapoolErc20 = IERC20(address(metapool));
         uint256 gaugeTokens = IRewardStaking(cvxRewardStakerAddress).balanceOf(
