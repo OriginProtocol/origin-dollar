@@ -8,6 +8,7 @@ pragma solidity ^0.8.0;
  */
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
 
 import { IRewardStaking } from "./IRewardStaking.sol";
 import { IConvexDeposits } from "./IConvexDeposits.sol";
@@ -25,11 +26,10 @@ contract ConvexOUSDMetaStrategy is BaseConvexMetaStrategy {
      * ousd Curve Metapool. Take the LP from metapool and deposit them to Convex.
      */
     function _lpDepositAll() internal override {
-        IERC20 threePoolLp = IERC20(pTokenAddress);
         IERC20 metapoolErc20 = IERC20(address(metapool));
         ICurvePool curvePool = ICurvePool(platformAddress);
 
-        uint256 threePoolLpBalance = threePoolLp.balanceOf(address(this));
+        uint256 threePoolLpBalance = IERC20(pTokenAddress).balanceOf(address(this));
         uint256 curve3PoolVirtualPrice = curvePool.get_virtual_price();
         uint256 threePoolLpDollarValue = threePoolLpBalance.mulTruncate(
             curve3PoolVirtualPrice
@@ -44,6 +44,13 @@ contract ConvexOUSDMetaStrategy is BaseConvexMetaStrategy {
                 int256(metapool.balances(mainCoinIndex)) +
                 int256(threePoolLpDollarValue)
         );
+
+        /* Add so much OUSD so that the pool ends up being balanced. But at minimum
+         * add at least the same amount of OUSD as 3poolLP and at maximum at twice as 
+         * much OUSD. 
+         */
+        ousdToAdd = Math.max(ousdToAdd, threePoolLpDollarValue);
+        ousdToAdd = Math.min(ousdToAdd, threePoolLpDollarValue * 2);
 
         /* Mint so much ousd that the dollar value of 3CRVLP in the pool and OUSD will be equal after
          * deployment of liquidity. In cases where pool is heavier in OUSD before the deposit strategy mints

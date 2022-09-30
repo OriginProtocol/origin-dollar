@@ -103,10 +103,11 @@ async function mintTest(fixture, user, asset, amount = "30000") {
 
   // The pool is titled to 3CRV by a million
   if ([usdt.address, usdc.address].includes(asset.address)) {
-    // It should have added 1million + amount*2 supply
+    // It should have added 3 times the OUSD amount. 
+    // 1x for 3poolLp tokens and 2x for maximum amount of OUSD printed
     // (in case of USDT/USDC)
     expect(supplyDiff).to.approxEqualTolerance(
-      ousdUnits("1000000").add(ousdUnitAmount.mul(2)),
+      ousdUnitAmount.mul(3),
       5
     );
   } else {
