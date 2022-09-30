@@ -37,6 +37,8 @@ interface ICurveMetaPool {
 
     function base_pool() external view returns (address);
 
+    function fee() external view returns (uint256);
+
     function coins(uint256 i) external view returns (address);
 
     function exchange(

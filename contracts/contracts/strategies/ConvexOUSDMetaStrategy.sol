@@ -96,38 +96,36 @@ contract ConvexOUSDMetaStrategy is BaseConvexMetaStrategy {
      * @param num3CrvTokens Number of Convex LP tokens to remove from gauge
      */
     function _lpWithdraw(uint256 num3CrvTokens) internal override {
-        IERC20 metapoolErc20 = IERC20(address(metapool));
-        ICurvePool curvePool = ICurvePool(platformAddress);
+        /* The rate between coins in the metapool determines the rate at which metapool returns
+         * tokens when doing balanced removal (remove_liquidity call). And by knowing how much 3crvLp
+         * we want we can determine how much of OUSD we receive by removing liquidity. Pool's `calc_token_amount`
+         * helps us determine how much LP we need.
+         * 
+         * Because we are doing balanced removal we should be making profit when removing liquidity in a 
+         * pool tilted to either side.
+         *
+         * Important: A downside is that the Strategist / Governor needs to be
+         * cognisant of not removing too much liquidity. And while the proposal to remove liquidity
+         * is being voted on the pool tilt might change so much that the proposal that has been valid while
+         * created is no longer valid.
+         */
+        uint256 mainTokenBalance = metapool.balances(mainCoinIndex);
+        uint256 threePoolLpBalance = metapool.balances(crvCoinIndex);
 
+        uint256 balancedRemovalMainTokenAmount = num3CrvTokens * mainTokenBalance / threePoolLpBalance;
+        uint256 lpToBurn = metapool.calc_token_amount([balancedRemovalMainTokenAmount, num3CrvTokens], false);
+        // TODO: double check fee needs to be included when removing liquidity
+        uint256 lpToBurnWithFee = lpToBurn + lpToBurn * metapool.fee() / 1e10;
         uint256 gaugeTokens = IRewardStaking(cvxRewardStakerAddress).balanceOf(
             address(this)
         );
-        uint256 crv3VirtualPrice = curvePool.get_virtual_price();
-        /**
-         * Convert 3crv tokens to metapoolLP tokens and double it. Doubling is required because aside
-         * from receiving 3crv we are also withdrawing OUSD. Instead of removing liquidity in an imbalanced
-         * manner the preference is to remove it in a balanced manner and perform a swap on the metapool to
-         * make up for the token imbalance. The reason for this unpredictability is that the pool can be
-         * balanced either in OUSD direction or 3Crv.
-         *
-         * Analysis has confirmed that: `It is more cost effective to remove liquidity in balanced manner and
-         * make up for the difference with additional swap. Comparing to removing liquidity in imbalanced manner.`
-         * Results of analysis here: https://docs.google.com/spreadsheets/d/1DYSyYwHqxRzSJh9dYkY5kcgP_K5gku6N2mQVhoH33vY
-         * run it yourself using code in brownie/scripts/liqidity_test.py
-         */
-        // slither-disable-next-line divide-before-multiply
-        uint256 requiredMetapoolLpTokens = (num3CrvTokens.mulTruncate(
-            crv3VirtualPrice
-        ) / metapool.get_virtual_price()) *
-            1e18 *
-            2;
 
         require(
-            requiredMetapoolLpTokens <= gaugeTokens,
+            lpToBurnWithFee <= gaugeTokens,
             string(
                 bytes.concat(
                     bytes("Attempting to withdraw "),
-                    bytes(Strings.toString(requiredMetapoolLpTokens)),
+                    bytes(Strings.toString(lpToBurnWithFee)),
                     bytes(", metapoolLP but only "),
                     bytes(Strings.toString(gaugeTokens)),
                     bytes(" available.")
@@ -137,58 +135,16 @@ contract ConvexOUSDMetaStrategy is BaseConvexMetaStrategy {
 
         // withdraw and unwrap with claim takes back the lpTokens and also collects the rewards for deposit
         IRewardStaking(cvxRewardStakerAddress).withdrawAndUnwrap(
-            requiredMetapoolLpTokens,
+            lpToBurnWithFee,
             true
         );
 
         uint256[2] memory _minAmounts = [uint256(0), uint256(0)];
         // always withdraw all of the available metapool LP tokens (similar to how we always deposit all)
         uint256[2] memory removedCoins = metapool.remove_liquidity(
-            metapoolErc20.balanceOf(address(this)),
+            metapoolLPToken.balanceOf(address(this)),
             _minAmounts
         );
-
-        // Receive too much 3crv
-        if (removedCoins[uint256(crvCoinIndex)] > num3CrvTokens) {
-            /**
-             * TODO: should there be a gas saving threshold, to not perform a swap if value diff is
-             * relatively small
-             */
-            // slither-disable-next-line unused-return
-            metapool.exchange(
-                int128(crvCoinIndex),
-                int128(mainCoinIndex),
-                removedCoins[uint256(crvCoinIndex)] - num3CrvTokens,
-                0
-            );
-        }
-        // We don't have enough 3CRV we need to swap for more
-        else {
-            uint256 required3Crv = num3CrvTokens -
-                removedCoins[uint256(crvCoinIndex)];
-            /**
-             * We first multiply the required3CRV with the virtual price so that we get a dollar
-             * value (i.e. OUSD value) of 3CRV required and we increase that by 5% for safety threshold
-             */
-            // slither-disable-next-line divide-before-multiply
-            uint256 ousdWithThreshold = (required3Crv.mulTruncate(
-                crv3VirtualPrice
-            ) * 105) / 100;
-            uint256 crv3Received = metapool.get_dy(
-                int128(mainCoinIndex), // Index value of the coin to send
-                int128(crvCoinIndex), // Index value of the coin to receive
-                ousdWithThreshold // The amount of first coin being exchanged
-            );
-
-            // slither-disable-next-line unused-return
-            metapool.exchange(
-                int128(mainCoinIndex),
-                int128(crvCoinIndex),
-                // below is ousd to swap
-                (required3Crv * ousdWithThreshold) / crv3Received,
-                0
-            );
-        }
 
         uint256 ousdToBurn = metapoolMainToken.balanceOf(address(this));
         if (ousdToBurn > 0) {
