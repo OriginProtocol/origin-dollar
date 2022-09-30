@@ -45,8 +45,8 @@ contract ConvexOUSDMetaStrategy is BaseConvexMetaStrategy {
                 int256(threePoolLpDollarValue)
         );
 
-        /* Add so much OUSD so that the pool ends up being balanced. But at minimum
-         * add at least the same amount of OUSD as 3poolLP and at maximum at twice as 
+        /* Add so much OUSD so that the pool ends up being balanced. And at minimum
+         * add twice as much OUSD as 3poolLP and at maximum at twice as 
          * much OUSD. 
          */
         ousdToAdd = Math.max(ousdToAdd, threePoolLpDollarValue);
