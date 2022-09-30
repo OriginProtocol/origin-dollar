@@ -15,7 +15,7 @@ forkOnlyDescribe(
         const { josh, usdt } = fixture;
         await mintTest(fixture, josh, usdt, "100000");
       });
-      
+
       it("Should stake USDC in Cruve guage via metapool", async function () {
         const fixture = await loadFixture(withBalancedOUSDMetaPool);
         const { matt, usdc } = fixture;

@@ -137,9 +137,11 @@ async function tiltToMainToken(fixture) {
   // Tilt to main token
   await metapool
     .connect(metapoolSigner)
+    // eslint-disable-next-line
     ["add_liquidity(uint256[2],uint256)"]([shareOfMainCoinBalance, 0], 0);
   await metapool
     .connect(metapoolSigner)
+    // eslint-disable-next-line
     ["add_liquidity(uint256[2],uint256)"]([shareOfMainCoinBalance, 0], 0);
 }
 

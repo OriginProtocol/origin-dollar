@@ -29,7 +29,9 @@ contract ConvexOUSDMetaStrategy is BaseConvexMetaStrategy {
         IERC20 metapoolErc20 = IERC20(address(metapool));
         ICurvePool curvePool = ICurvePool(platformAddress);
 
-        uint256 threePoolLpBalance = IERC20(pTokenAddress).balanceOf(address(this));
+        uint256 threePoolLpBalance = IERC20(pTokenAddress).balanceOf(
+            address(this)
+        );
         uint256 curve3PoolVirtualPrice = curvePool.get_virtual_price();
         uint256 threePoolLpDollarValue = threePoolLpBalance.mulTruncate(
             curve3PoolVirtualPrice
@@ -46,8 +48,8 @@ contract ConvexOUSDMetaStrategy is BaseConvexMetaStrategy {
         );
 
         /* Add so much OUSD so that the pool ends up being balanced. And at minimum
-         * add twice as much OUSD as 3poolLP and at maximum at twice as 
-         * much OUSD. 
+         * add twice as much OUSD as 3poolLP and at maximum at twice as
+         * much OUSD.
          */
         ousdToAdd = Math.max(ousdToAdd, threePoolLpDollarValue);
         ousdToAdd = Math.min(ousdToAdd, threePoolLpDollarValue * 2);
@@ -98,10 +100,9 @@ contract ConvexOUSDMetaStrategy is BaseConvexMetaStrategy {
     function _lpWithdraw(uint256 num3CrvTokens) internal override {
         /* The rate between coins in the metapool determines the rate at which metapool returns
          * tokens when doing balanced removal (remove_liquidity call). And by knowing how much 3crvLp
-         * we want we can determine how much of OUSD we receive by removing liquidity. Pool's `calc_token_amount`
-         * helps us determine how much LP we need.
-         * 
-         * Because we are doing balanced removal we should be making profit when removing liquidity in a 
+         * we want we can determine how much of OUSD we receive by removing liquidity.
+         *
+         * Because we are doing balanced removal we should be making profit when removing liquidity in a
          * pool tilted to either side.
          *
          * Important: A downside is that the Strategist / Governor needs to be
@@ -109,23 +110,20 @@ contract ConvexOUSDMetaStrategy is BaseConvexMetaStrategy {
          * is being voted on the pool tilt might change so much that the proposal that has been valid while
          * created is no longer valid.
          */
-        uint256 mainTokenBalance = metapool.balances(mainCoinIndex);
-        uint256 threePoolLpBalance = metapool.balances(crvCoinIndex);
 
-        uint256 balancedRemovalMainTokenAmount = num3CrvTokens * mainTokenBalance / threePoolLpBalance;
-        uint256 lpToBurn = metapool.calc_token_amount([balancedRemovalMainTokenAmount, num3CrvTokens], false);
-        // TODO: double check fee needs to be included when removing liquidity
-        uint256 lpToBurnWithFee = lpToBurn + lpToBurn * metapool.fee() / 1e10;
+        // adding 1e18 to make up for the possible rounding errors
+        uint256 lpToBurn = ((num3CrvTokens + 1e10) *
+            metapoolLPToken.totalSupply()) / metapool.balances(crvCoinIndex);
         uint256 gaugeTokens = IRewardStaking(cvxRewardStakerAddress).balanceOf(
             address(this)
         );
 
         require(
-            lpToBurnWithFee <= gaugeTokens,
+            lpToBurn <= gaugeTokens,
             string(
                 bytes.concat(
                     bytes("Attempting to withdraw "),
-                    bytes(Strings.toString(lpToBurnWithFee)),
+                    bytes(Strings.toString(lpToBurn)),
                     bytes(", metapoolLP but only "),
                     bytes(Strings.toString(gaugeTokens)),
                     bytes(" available.")
@@ -135,21 +133,18 @@ contract ConvexOUSDMetaStrategy is BaseConvexMetaStrategy {
 
         // withdraw and unwrap with claim takes back the lpTokens and also collects the rewards for deposit
         IRewardStaking(cvxRewardStakerAddress).withdrawAndUnwrap(
-            lpToBurnWithFee,
+            lpToBurn,
             true
         );
 
-        uint256[2] memory _minAmounts = [uint256(0), uint256(0)];
         // always withdraw all of the available metapool LP tokens (similar to how we always deposit all)
-        uint256[2] memory removedCoins = metapool.remove_liquidity(
-            metapoolLPToken.balanceOf(address(this)),
-            _minAmounts
+        metapool.remove_liquidity(
+            lpToBurn,
+            [uint256(0), uint256(0)]
         );
-
-        uint256 ousdToBurn = metapoolMainToken.balanceOf(address(this));
-        if (ousdToBurn > 0) {
-            IVault(vaultAddress).burnForStrategy(ousdToBurn);
-        }
+        IVault(vaultAddress).burnForStrategy(
+            metapoolMainToken.balanceOf(address(this))
+        );
     }
 
     function _lpWithdrawAll() internal override {

@@ -107,10 +107,7 @@ async function mintTest(fixture, user, asset, amount = "30000") {
   if ([usdt.address, usdc.address].includes(asset.address)) {
     // It should have added amount*3 supply
     // (in case of USDT/USDC)
-    expect(supplyDiff).to.approxEqualTolerance(
-      ousdUnitAmount.mul(3),
-      5
-    );
+    expect(supplyDiff).to.approxEqualTolerance(ousdUnitAmount.mul(3), 5);
   } else {
     // 1x for DAI
     expect(supplyDiff).to.approxEqualTolerance(ousdUnitAmount, 1);
