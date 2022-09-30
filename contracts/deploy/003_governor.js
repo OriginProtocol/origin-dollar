@@ -2,7 +2,7 @@
 // Deploys a new governor contract on Mainnet
 //
 
-const { isMainnet, isRinkeby, isFork } = require("../test/helpers.js");
+const { isMainnet, isFork } = require("../test/helpers.js");
 const { deployWithConfirmation } = require("../utils/deploy");
 
 const deployName = "003_governor";
@@ -24,6 +24,6 @@ deployNewGovernor.id = deployName;
 deployNewGovernor.dependencies = ["core"];
 
 // Only run on non-local network.
-deployNewGovernor.skip = () => !(isMainnet || isRinkeby) || isFork;
+deployNewGovernor.skip = () => !isMainnet || isFork;
 
 module.exports = deployNewGovernor;

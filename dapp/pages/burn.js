@@ -129,6 +129,11 @@ const Burn = ({ locale, onLocale, isMobile }) => {
   const burnAmount = optionalLockupBalance + mandatoryLockupBalance
   const burnedAmount = burnedOptionalAmount + burnedMandatoryAmount
 
+  const mandatoryDistributorInitialOgv = 398752449
+  const optionalDistributorInitialOgv = 747905084
+  const distributorInitialOgv =
+    mandatoryDistributorInitialOgv + optionalDistributorInitialOgv
+
   const initialSupply = 4000000000
   const airdropAllocationOgn = 1000000000
   const airdropAllocationOusd = 450000000
@@ -371,12 +376,12 @@ const Burn = ({ locale, onLocale, isMobile }) => {
                 <div className="grey">Tokens claimed</div>
                 <div className="mb-4">
                   <span className="large">
-                    {formatCurrency(airdropAllocation - burnAmount, 0)}
+                    {formatCurrency(distributorInitialOgv - burnAmount, 0)}
                   </span>
                   <span className="small">{' OGV'}</span>
                   <span className="grey">{` (${formatCurrency(
-                    ((airdropAllocation - burnAmount) * 100) /
-                      airdropAllocation,
+                    ((distributorInitialOgv - burnAmount) * 100) /
+                      distributorInitialOgv,
                     2
                   )}%)*`}</span>
                 </div>
@@ -385,14 +390,14 @@ const Burn = ({ locale, onLocale, isMobile }) => {
                     <div className="text-container grey">OGN holders</div>
                     <span className="medium">
                       {formatCurrency(
-                        airdropAllocationOgn - optionalLockupBalance,
+                        optionalDistributorInitialOgv - optionalLockupBalance,
                         0
                       )}
                     </span>
                     <span className="small">{' OGV'}</span>
                     <div className="grey">{`(${formatCurrency(
-                      ((airdropAllocationOgn - optionalLockupBalance) /
-                        airdropAllocationOgn) *
+                      ((optionalDistributorInitialOgv - optionalLockupBalance) /
+                        optionalDistributorInitialOgv) *
                         100,
                       2
                     )}%)`}</div>
@@ -401,14 +406,15 @@ const Burn = ({ locale, onLocale, isMobile }) => {
                     <div className="text-container grey">OUSD holders</div>
                     <span className="medium">
                       {formatCurrency(
-                        airdropAllocationOusd - mandatoryLockupBalance,
+                        mandatoryDistributorInitialOgv - mandatoryLockupBalance,
                         0
                       )}
                     </span>
                     <span className="small">{' OGV'}</span>
                     <div className="grey">{`(${formatCurrency(
-                      ((airdropAllocationOusd - mandatoryLockupBalance) /
-                        airdropAllocationOusd) *
+                      ((mandatoryDistributorInitialOgv -
+                        mandatoryLockupBalance) /
+                        mandatoryDistributorInitialOgv) *
                         100,
                       2
                     )}%)`}</div>
@@ -462,7 +468,9 @@ const Burn = ({ locale, onLocale, isMobile }) => {
             </div>
           </div>
           <div className="footnote">
-            * Including portion of tokens sent to exchanges
+            * 306,217,404 OGV were sent to exchanges whose customers were
+            eligible for the airdrop. These exchanges are expected to burn any
+            unclaimed tokens at the end of the claim period.
           </div>
         </div>
       </section>

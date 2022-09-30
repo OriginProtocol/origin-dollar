@@ -4,8 +4,7 @@ import getConfig from 'next/config'
 
 const isStaging = process.env.STAGING === 'true'
 // in staging environment NODE_ENV is also set to 'production'
-const isProduction =
-  process.env.NODE_ENV === 'production' && isStaging !== 'true'
+const isProduction = process.env.NODE_ENV === 'production' && !isStaging
 
 export const initSentry = () => {
   if (!process.env.SENTRY_DSN) {

@@ -12,14 +12,11 @@ const {
 const isFork = process.env.FORK === "true";
 
 const getStorageFileLocation = (hre, contractName) => {
-  const isRinkeby = hre.network.name === "rinkeby";
   const isMainnet = hre.network.name === "mainnet";
 
   let folder = "localhost";
   if (isFork || isMainnet) {
     folder = "mainnet";
-  } else if (isRinkeby) {
-    folder = "rinkeby";
   }
 
   const layoutFolder = `./storageLayout/${folder}/`;

@@ -56,6 +56,7 @@ contract Governable {
      */
     function _governor() internal view returns (address governorOut) {
         bytes32 position = governorPosition;
+        // solhint-disable-next-line no-inline-assembly
         assembly {
             governorOut := sload(position)
         }
@@ -70,6 +71,7 @@ contract Governable {
         returns (address pendingGovernor)
     {
         bytes32 position = pendingGovernorPosition;
+        // solhint-disable-next-line no-inline-assembly
         assembly {
             pendingGovernor := sload(position)
         }
@@ -92,6 +94,7 @@ contract Governable {
 
     function _setGovernor(address newGovernor) internal {
         bytes32 position = governorPosition;
+        // solhint-disable-next-line no-inline-assembly
         assembly {
             sstore(position, newGovernor)
         }
@@ -107,6 +110,7 @@ contract Governable {
     modifier nonReentrant() {
         bytes32 position = reentryStatusPosition;
         uint256 _reentry_status;
+        // solhint-disable-next-line no-inline-assembly
         assembly {
             _reentry_status := sload(position)
         }
@@ -115,6 +119,7 @@ contract Governable {
         require(_reentry_status != _ENTERED, "Reentrant call");
 
         // Any calls to nonReentrant after this point will fail
+        // solhint-disable-next-line no-inline-assembly
         assembly {
             sstore(position, _ENTERED)
         }
@@ -123,6 +128,7 @@ contract Governable {
 
         // By storing the original value once again, a refund is triggered (see
         // https://eips.ethereum.org/EIPS/eip-2200)
+        // solhint-disable-next-line no-inline-assembly
         assembly {
             sstore(position, _NOT_ENTERED)
         }
@@ -130,6 +136,7 @@ contract Governable {
 
     function _setPendingGovernor(address newGovernor) internal {
         bytes32 position = pendingGovernorPosition;
+        // solhint-disable-next-line no-inline-assembly
         assembly {
             sstore(position, newGovernor)
         }

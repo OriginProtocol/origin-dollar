@@ -122,14 +122,4 @@ addresses.mainnet.CompensationClaims =
   "0x9C94df9d594BA1eb94430C006c269C314B1A8281";
 addresses.mainnet.Flipper = "0xcecaD69d7D4Ed6D52eFcFA028aF8732F27e08F70";
 
-/* --- RINKEBY --- */
-addresses.rinkeby = {};
-
-addresses.rinkeby.OGN = "0xA115e16ef6e217f7a327a57031F75cE0487AaDb8";
-
-// Compound
-addresses.rinkeby.cDAI = "0x6d7f0754ffeb405d23c51ce938289d4835be3b14";
-addresses.rinkeby.cUSDC = "0x5b281a6dda0b271e91ae35de655ad301c976edb1";
-addresses.rinkeby.cUSDT = "0x2fb298bdbef468638ad6653ff8376575ea41e768";
-
 module.exports = addresses;

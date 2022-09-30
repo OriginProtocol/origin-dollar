@@ -9,8 +9,7 @@ const {
   advanceTime,
   isMainnet,
   isFork,
-  isRinkeby,
-  isMainnetOrRinkebyOrFork,
+  isMainnetOrFork,
   getOracleAddresses,
   getAssetAddresses,
   isSmokeTest,
@@ -25,11 +24,11 @@ const addresses = require("../utils/addresses.js");
 const { getTxOpts } = require("../utils/tx");
 const { proposeArgs } = require("../utils/governor");
 
-// Wait for 3 blocks confirmation on Mainnet/Rinkeby.
-const NUM_CONFIRMATIONS = isMainnet || isRinkeby ? 3 : 0;
+// Wait for 3 blocks confirmation on Mainnet.
+const NUM_CONFIRMATIONS = isMainnet ? 3 : 0;
 
 function log(msg, deployResult = null) {
-  if (isMainnetOrRinkebyOrFork || process.env.VERBOSE) {
+  if (isMainnetOrFork || process.env.VERBOSE) {
     if (deployResult && deployResult.receipt) {
       const gasUsed = Number(deployResult.receipt.gasUsed.toString());
       msg += ` Address: ${deployResult.address} Gas Used: ${gasUsed}`;
@@ -123,7 +122,7 @@ const impersonateGuardian = async (optGuardianAddr = null) => {
  * @returns {Promise<void>}
  */
 const executeProposal = async (proposalArgs, description, opts = {}) => {
-  if (isMainnet || isRinkeby) {
+  if (isMainnet) {
     throw new Error("executeProposal only works on local test network");
   }
 
@@ -288,9 +287,6 @@ function deploymentWithProposal(opts, fn) {
       await executeProposal(propArgs, propDescription, propOpts);
       log("Proposal executed.");
     } else {
-      // Hardcoding gas estimate on Rinkeby since it fails for an undetermined reason...
-      const gasLimit = isRinkeby ? 1000000 : null;
-
       const { governorAddr } = await getNamedAccounts();
       const sGovernor = await ethers.provider.getSigner(governorAddr);
 
@@ -322,7 +318,7 @@ function deploymentWithProposal(opts, fn) {
   if (forceDeploy) {
     main.skip = () => false;
   } else {
-    main.skip = () => !(isMainnet || isRinkeby) || isSmokeTest || isFork;
+    main.skip = () => !isMainnet || isSmokeTest || isFork;
   }
   return main;
 }

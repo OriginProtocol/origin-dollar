@@ -4,9 +4,8 @@
 const {
   getAssetAddresses,
   isMainnet,
-  isRinkeby,
   isFork,
-  isMainnetOrRinkebyOrFork,
+  isMainnetOrFork,
 } = require("../test/helpers.js");
 const addresses = require("../utils/addresses.js");
 const { utils } = require("ethers");
@@ -26,7 +25,7 @@ const liquidityReward = async ({ getNamedAccounts, deployments }) => {
   const assetAddresses = await getAssetAddresses(deployments);
 
   for (const stablecoin of ["USDT", "USDC", "DAI"]) {
-    if (!isMainnetOrRinkebyOrFork) {
+    if (!isMainnetOrFork) {
       // Mock Uniswap pair for OUSD -> USDT is dependent on OUSD being deployed
       const cOUSDProxy = await ethers.getContract("OUSDProxy");
 
@@ -113,7 +112,7 @@ const liquidityReward = async ({ getNamedAccounts, deployments }) => {
     // On Mainnet the governance transfer gets executed separately, via the
     // multi-sig wallet. On other networks, this migration script can claim
     // governance by the governor.
-    if (!isMainnetOrRinkebyOrFork) {
+    if (!isMainnetOrFork) {
       await cLiquidityRewardOUSD_STABLECOIN
         .connect(sGovernor)
         .claimGovernance();
@@ -138,7 +137,7 @@ const liquidityReward = async ({ getNamedAccounts, deployments }) => {
     //        utils.parseUnits("6.153846153846154", 18),
     //        0, 6500 * 180);
     //
-    if (!isMainnetOrRinkebyOrFork) {
+    if (!isMainnetOrFork) {
       const ogn = await ethers.getContract("MockOGN");
       const loadAmount = utils.parseUnits("7200000", 18);
       const rate = utils.parseUnits("6.1538461538", 18);
@@ -160,7 +159,7 @@ const liquidityReward = async ({ getNamedAccounts, deployments }) => {
 liquidityReward.id = deployName;
 liquidityReward.dependencies = ["core"];
 
-// Liquidity mining will get deployed to Rinkeby and Mainnet at a later date.
-liquidityReward.skip = () => isMainnet || isRinkeby || isFork;
+// Liquidity mining will get deployed to Mainnet at a later date.
+liquidityReward.skip = () => isMainnet || isFork;
 
 module.exports = liquidityReward;
