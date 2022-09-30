@@ -34,7 +34,7 @@ async function withBalancedOUSDMetaPool() {
 
 async function balanceOUSDMetaPool(fixture) {
   const { ousdMetaPool } = fixture;
-  await _balanceMetaPool(fixture, ousdMetaPool)
+  await _balanceMetaPool(fixture, ousdMetaPool);
 }
 
 async function _balanceMetaPool(fixture, metapool) {
@@ -53,7 +53,10 @@ async function _balanceMetaPool(fixture, metapool) {
 
   if (mainCoinValue.gt(crv3Value)) {
     const diffInDollars = mainCoinValue.sub(crv3Value);
-    const liquidityDiff = await _getCoinLiquidity(metapool, diffInDollars.div(2))
+    const liquidityDiff = await _getCoinLiquidity(
+      metapool,
+      diffInDollars.div(2)
+    );
 
     // Tilt to 3CRV
     await exchagneMethod(1, 0, liquidityDiff, 0);
@@ -83,10 +86,14 @@ async function tiltTo3CRV_OUSDMetapool(fixture, amount) {
   await tiltTo3CRV_Metapool(fixture, ousdMetaPool, amount);
 }
 
-/* Tilt towards 3CRV but if pool has very low liquidity still leave the 
+/* Tilt towards 3CRV but if pool has very low liquidity still leave the
  * threshold amount of the other token inside
  */
-async function tiltTo3CRV_Metapool_considering_liquidity(fixture, amount, threshold=0.1) {
+async function tiltTo3CRV_Metapool_considering_liquidity(
+  fixture,
+  amount,
+  threshold = 0.1
+) {
   const { vault, domen, metapool } = fixture;
   const mainCoinPoolBalance = await metapool.balances(0);
 
@@ -99,7 +106,6 @@ async function tiltTo3CRV_Metapool_considering_liquidity(fixture, amount, thresh
   const maxAmountAllowedByThreshold = mainCoinPoolBalance
     .mul(ousdUnits(`${1 - threshold}`))
     .div(ousdUnits("1"));
-
 
   if (amountToSwap > maxAmountAllowedByThreshold) {
     amountToSwap = maxAmountAllowedByThreshold;
@@ -122,15 +128,19 @@ async function tiltToMainToken(fixture) {
   const metapoolSigner = await ethers.provider.getSigner(metapool.address);
   await resetAllowance(metapoolCoin, metapoolSigner, metapool.address);
   // 90% of main coin pool liquidity
-  const shareOfMainCoinBalance = (await metapoolCoin.balanceOf(metapool.address))
+  const shareOfMainCoinBalance = (
+    await metapoolCoin.balanceOf(metapool.address)
+  )
     .mul(ousdUnits("0.9"))
     .div(ousdUnits("1"));
 
   // Tilt to main token
   await metapool
-    .connect(metapoolSigner)["add_liquidity(uint256[2],uint256)"]([shareOfMainCoinBalance, 0], 0);
+    .connect(metapoolSigner)
+    ["add_liquidity(uint256[2],uint256)"]([shareOfMainCoinBalance, 0], 0);
   await metapool
-    .connect(metapoolSigner)["add_liquidity(uint256[2],uint256)"]([shareOfMainCoinBalance, 0], 0);
+    .connect(metapoolSigner)
+    ["add_liquidity(uint256[2],uint256)"]([shareOfMainCoinBalance, 0], 0);
 }
 
 async function tiltTo3CRV_Metapool(fixture, metapool, amount) {

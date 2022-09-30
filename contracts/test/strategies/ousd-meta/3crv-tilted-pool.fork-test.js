@@ -2,7 +2,9 @@ const { expect } = require("chai");
 
 const { loadFixture } = require("ethereum-waffle");
 const { units, ousdUnits, forkOnlyDescribe } = require("../../helpers");
-const { withCRV3TitledOUSDMetapool } = require("../../_metastrategies-fixtures");
+const {
+  withCRV3TitledOUSDMetapool,
+} = require("../../_metastrategies-fixtures");
 
 forkOnlyDescribe(
   "Convex 3pool/OUSD Meta Strategy - Titled to 3CRV",

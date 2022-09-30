@@ -153,8 +153,8 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
     modifier onlyVaultOrGovernorOrStrategist() {
         require(
             msg.sender == vaultAddress ||
-            msg.sender == governor() ||
-            msg.sender == IVault(vaultAddress).strategistAddr(),
+                msg.sender == governor() ||
+                msg.sender == IVault(vaultAddress).strategistAddr(),
             "Caller is not the Vault, Governor, or Strategist"
         );
         _;

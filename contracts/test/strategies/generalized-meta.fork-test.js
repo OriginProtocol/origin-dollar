@@ -39,7 +39,13 @@ const metastrategies = [
 ];
 
 metastrategies.forEach(
-  ({ token, metapoolAddress, metastrategyProxyName, rewardPoolAddress, lpToken }) => {
+  ({
+    token,
+    metapoolAddress,
+    metastrategyProxyName,
+    rewardPoolAddress,
+    lpToken,
+  }) => {
     forkOnlyDescribe(`Convex 3pool/${token} Meta Strategy`, function () {
       this.timeout(0);
 
@@ -176,23 +182,27 @@ metastrategies.forEach(
           await vault.connect(anna).allocate();
           await vault.connect(anna).rebase();
           await vault
-              .connect(anna)
-              .mint(usdt.address, await units("30000", usdt), 0);
+            .connect(anna)
+            .mint(usdt.address, await units("30000", usdt), 0);
           await vault.connect(anna).allocate();
 
-          await fixture.metaStrategy.connect(sGovernor)
+          await fixture.metaStrategy
+            .connect(sGovernor)
             .setMaxWithdrawalSlippage(ousdUnits("0.001"));
           await tiltToMainToken(fixture);
 
           await expect(
-            vault.connect(sGovernor)
-            .withdrawAllFromStrategy(fixture.metaStrategyProxy.address)
+            vault
+              .connect(sGovernor)
+              .withdrawAllFromStrategy(fixture.metaStrategyProxy.address)
           ).to.be.revertedWith("Transaction reverted without a reason string");
 
           // should not revert when slippage tolerance set to 10%
-          await fixture.metaStrategy.connect(sGovernor)
+          await fixture.metaStrategy
+            .connect(sGovernor)
             .setMaxWithdrawalSlippage(ousdUnits("0.1"));
-          await vault.connect(sGovernor)
+          await vault
+            .connect(sGovernor)
             .withdrawAllFromStrategy(fixture.metaStrategyProxy.address);
         });
       });

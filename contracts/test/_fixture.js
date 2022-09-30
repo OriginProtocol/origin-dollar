@@ -634,7 +634,7 @@ async function convexGeneralizedMetaForkedFixture(
   metapoolAddress,
   rewardPoolAddress,
   metastrategyProxyName,
-  lpTokenAddress,
+  lpTokenAddress
 ) {
   return async () => {
     const fixture = await loadFixture(defaultFixture);
@@ -662,10 +662,7 @@ async function convexGeneralizedMetaForkedFixture(
       addresses.mainnet.ThreePool
     );
 
-    const lpToken = await ethers.getContractAt(
-      erc20Abi,
-      lpTokenAddress
-    );
+    const lpToken = await ethers.getContractAt(erc20Abi, lpTokenAddress);
 
     for (const user of [josh, matt, anna, domen, daniel, franck]) {
       // Approve Metapool contract to move funds
@@ -693,20 +690,22 @@ async function convexGeneralizedMetaForkedFixture(
     const mainCoinBalance = await metapool.balances(0);
     const balanceThreshold = mainCoinBalance.mul(80).div(100);
     let amountToAdd = ousdUnits("20000000");
-    if(amountToAdd > balanceThreshold) {
+    if (amountToAdd > balanceThreshold) {
       amountToAdd = balanceThreshold;
     }
 
     // add 3poolLP as liquidity
     await metapool
-      .connect(domen)['add_liquidity(uint256[2],uint256)']([0, amountToAdd], 0);
+      .connect(domen)
+      ["add_liquidity(uint256[2],uint256)"]([0, amountToAdd], 0);
 
     await metapool
-      .connect(domen)['remove_liquidity_one_coin(uint256,int128,uint256)'](
+      .connect(domen)
+      ["remove_liquidity_one_coin(uint256,int128,uint256)"](
         lpToken.connect(domen).balanceOf(domen.address),
         0,
         0
-    );
+      );
 
     fixture.metapoolCoin = primaryCoin;
     fixture.metapool = metapool;
