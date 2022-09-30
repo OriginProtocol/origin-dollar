@@ -18,7 +18,7 @@ import { Helpers } from "../utils/Helpers.sol";
 abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
     using StableMath for uint256;
     using SafeERC20 for IERC20;
-    event MaxWithdrawalSlippageUpdated(uint256 _previousAmount, uint256 _newAmount);
+    event MaxWithdrawalSlippageUpdated(uint256 _prevMaxSlippagePercentage, uint256 _newMaxSlippagePercentage);
 
     // used to circumvent the stack too deep issue
     struct InitState {
@@ -165,7 +165,9 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
 
     /**
      * @dev Sets max withdrawal slippage that is considered when removing
-     * liquidity from Metapools
+     * liquidity from Metapools. 
+     * 
+     * 1e18 == 100%, 1e16 == 1%
      */
     function setMaxWithdrawalSlippage(uint256 _maxWithdrawalSlippage)
         external
