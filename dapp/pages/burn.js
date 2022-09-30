@@ -383,7 +383,8 @@ const Burn = ({ locale, onLocale, isMobile }) => {
                     ((distributorInitialOgv - burnAmount) * 100) /
                       distributorInitialOgv,
                     2
-                  )}%)*`}</span>
+                  )}%)`}</span>
+                  &#42;
                 </div>
                 <div className={`d-flex layout`}>
                   <div className={`mr-lg-5 mr-md-3 ${isMobile ? 'mb-3' : ''}`}>
@@ -468,7 +469,7 @@ const Burn = ({ locale, onLocale, isMobile }) => {
             </div>
           </div>
           <div className="footnote">
-            * 306,217,404 OGV were sent to exchanges whose customers were
+            &#42; 306,217,404 OGV were sent to exchanges whose customers were
             eligible for the airdrop. These exchanges are expected to burn any
             unclaimed tokens at the end of the claim period.
           </div>
