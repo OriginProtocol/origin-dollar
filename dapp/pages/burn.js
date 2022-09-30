@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { ethers } from 'ethers'
 import { fbt } from 'fbt-runtime'
-import Countdown from 'react-countdown'
+import Countdown, { zeroPad } from 'react-countdown'
 import { useStoreState } from 'pullstate'
 import ContractStore from 'stores/ContractStore'
 import addresses from 'constants/contractAddresses'
@@ -21,22 +21,22 @@ const BurnCountdown = ({ days, hours, minutes, seconds }) => {
       </div>
       <div className="d-flex flex-row text-center">
         <div className="d-flex flex-column">
-          <div className="number gradient1">{days}</div>
+          <div className="number gradient1">{zeroPad(days)}</div>
           <div className="label">Days</div>
         </div>
         <div className="colon">:</div>
         <div className="d-flex flex-column">
-          <div className="number gradient1">{hours}</div>
+          <div className="number gradient1">{zeroPad(hours)}</div>
           <div className="label">Hours</div>
         </div>
         <div className="colon">:</div>
         <div className="d-flex flex-column">
-          <div className="number gradient1">{minutes}</div>
+          <div className="number gradient1">{zeroPad(minutes)}</div>
           <div className="label">Minutes</div>
         </div>
         <div className="colon">:</div>
         <div className="d-flex flex-column">
-          <div className="number gradient1">{seconds}</div>
+          <div className="number gradient1">{zeroPad(seconds)}</div>
           <div className="label">Seconds</div>
         </div>
       </div>
