@@ -341,7 +341,9 @@ const deployConvexalUSDMetaStrategy = async () => {
   await withConfirmation(
     cConvexalUSDMetaStrategy
       .connect(sDeployer)
-      ["initialize(address[],address[],address[],(address,address,address,address,address,address,address,uint256))"](
+      [
+        "initialize(address[],address[],address[],(address,address,address,address,address,address,address,uint256))"
+      ](
         [assetAddresses.CVX, assetAddresses.CRV],
         [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT],
         [
@@ -357,8 +359,8 @@ const deployConvexalUSDMetaStrategy = async () => {
           alUsd.address, // alUsd
           mockRewardPool.address, // _cvxRewardStakerAddress,
           assetAddresses.alUSDMetapoolToken, // metapoolLpToken
-          alusdMetapoolLPCRVPid // _cvxDepositorPTokenId
-        ],
+          alusdMetapoolLPCRVPid, // _cvxDepositorPTokenId
+        ]
       )
   );
   log("Initialized ConvexalUSDMetaStrategy");
@@ -422,7 +424,9 @@ const deployConvexOUSDMetaStrategy = async () => {
   await withConfirmation(
     cConvexOUSDMetaStrategy
       .connect(sDeployer)
-      ["initialize(address[],address[],address[],(address,address,address,address,address,address,address,uint256))"](
+      [
+        "initialize(address[],address[],address[],(address,address,address,address,address,address,address,uint256))"
+      ](
         [assetAddresses.CVX, assetAddresses.CRV],
         [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT],
         [
@@ -439,7 +443,7 @@ const deployConvexOUSDMetaStrategy = async () => {
           mockRewardPool.address, // _cvxRewardStakerAddress,
           assetAddresses.ThreePoolOUSDMetapool, // metapoolLpToken (metapool address),
           metapoolLPCRVPid, // _cvxDepositorPTokenId
-        ],
+        ]
       )
   );
   log("Initialized ConvexOUSDMetaStrategy");

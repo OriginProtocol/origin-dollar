@@ -64,7 +64,7 @@ module.exports = deploymentWithProposal(
           await getTxOpts()
         )
     );
-    
+
     // 4. Init and configure new Convex OUSD Meta strategy
     const initFunction =
       "initialize(address[],address[],address[],(address,address,address,address,address,address,address,uint256))";

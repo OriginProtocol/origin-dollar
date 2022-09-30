@@ -7,6 +7,7 @@ import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 import { Initializable } from "../utils/Initializable.sol";
 import { Governable } from "../governance/Governable.sol";
+import { IVault } from "../interfaces/IVault.sol";
 
 abstract contract InitializableAbstractStrategy is Initializable, Governable {
     using SafeERC20 for IERC20;
@@ -142,6 +143,19 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
         require(
             msg.sender == vaultAddress || msg.sender == governor(),
             "Caller is not the Vault or Governor"
+        );
+        _;
+    }
+
+    /**
+     * @dev Verifies that the caller is the Vault, Governor, or Strategist.
+     */
+    modifier onlyVaultOrGovernorOrStrategist() {
+        require(
+            msg.sender == vaultAddress ||
+                msg.sender == governor() ||
+                msg.sender == IVault(vaultAddress).strategistAddr(),
+            "Caller is not the Vault, Governor, or Strategist"
         );
         _;
     }

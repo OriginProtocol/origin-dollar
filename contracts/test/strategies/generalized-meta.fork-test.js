@@ -1,38 +1,51 @@
 const { expect } = require("chai");
+const hre = require("hardhat");
+const { ethers } = hre;
 
 const { loadFixture } = require("ethereum-waffle");
 const { units, ousdUnits, forkOnlyDescribe } = require("../helpers");
 const { convexGeneralizedMetaForkedFixture } = require("../_fixture");
+const { tiltToMainToken } = require("../_metastrategies-fixtures");
 
 const metastrategies = [
   {
     token: "alUSD",
     metapoolAddress: "0x43b4FdFD4Ff969587185cDB6f0BD875c5Fc83f8c",
+    lpToken: "0x43b4FdFD4Ff969587185cDB6f0BD875c5Fc83f8c",
     metastrategyProxyName: "ConvexalUSDMetaStrategyProxy",
     rewardPoolAddress: "0x02E2151D4F351881017ABdF2DD2b51150841d5B3",
   },
   {
     token: "mUSD",
     metapoolAddress: "0x8474DdbE98F5aA3179B3B3F5942D724aFcdec9f6",
+    lpToken: "0x1aef73d49dedc4b1778d0706583995958dc862e6",
     metastrategyProxyName: "ConvexmUSDMetaStrategyProxy",
     rewardPoolAddress: "0xDBFa6187C79f4fE4Cda20609E75760C5AaE88e52",
   },
   {
     token: "USDD",
     metapoolAddress: "0xe6b5CC1B4b47305c58392CE3D359B10282FC36Ea",
+    lpToken: "0xe6b5CC1B4b47305c58392CE3D359B10282FC36Ea",
     metastrategyProxyName: "ConvexUSDDMetaStrategyProxy",
     rewardPoolAddress: "0x7D475cc8A5E0416f0e63042547aDB94ca7045A5b",
   },
   {
     token: "BUSD",
     metapoolAddress: "0x4807862AA8b2bF68830e4C8dc86D0e9A998e085a",
+    lpToken: "0x4807862AA8b2bF68830e4C8dc86D0e9A998e085a",
     metastrategyProxyName: "ConvexBUSDMetaStrategyProxy",
     rewardPoolAddress: "0xbD223812d360C9587921292D0644D18aDb6a2ad0",
   },
 ];
 
 metastrategies.forEach(
-  ({ token, metapoolAddress, metastrategyProxyName, rewardPoolAddress }) => {
+  ({
+    token,
+    metapoolAddress,
+    metastrategyProxyName,
+    rewardPoolAddress,
+    lpToken,
+  }) => {
     forkOnlyDescribe(`Convex 3pool/${token} Meta Strategy`, function () {
       this.timeout(0);
 
@@ -42,7 +55,8 @@ metastrategies.forEach(
           await convexGeneralizedMetaForkedFixture(
             metapoolAddress,
             rewardPoolAddress,
-            metastrategyProxyName
+            metastrategyProxyName,
+            lpToken
           )
         );
       });
@@ -119,7 +133,6 @@ metastrategies.forEach(
           const { vault, ousd, usdt, usdc, dai, anna } = fixture;
           await vault.connect(anna).allocate();
           await vault.connect(anna).rebase();
-
           const supplyBeforeMint = await ousd.totalSupply();
 
           const amount = "10000";
@@ -156,6 +169,41 @@ metastrategies.forEach(
           expect(supplyDiff).to.be.gte(
             ousdUnits("29700").sub(ousdUnits("29700").div(100))
           );
+        });
+      });
+
+      describe("Withdraw all", function () {
+        // DO IT FOR ONE TOKEN ONLY
+        it("Should not allow withdraw all when MEW tries to manipulate the pool", async () => {
+          const { governorAddr } = await getNamedAccounts();
+          const sGovernor = await ethers.provider.getSigner(governorAddr);
+
+          const { vault, usdt, anna } = fixture;
+          await vault.connect(anna).allocate();
+          await vault.connect(anna).rebase();
+          await vault
+            .connect(anna)
+            .mint(usdt.address, await units("30000", usdt), 0);
+          await vault.connect(anna).allocate();
+
+          await fixture.metaStrategy
+            .connect(sGovernor)
+            .setMaxWithdrawalSlippage(ousdUnits("0.001"));
+          await tiltToMainToken(fixture);
+
+          await expect(
+            vault
+              .connect(sGovernor)
+              .withdrawAllFromStrategy(fixture.metaStrategyProxy.address)
+          ).to.be.revertedWith("Transaction reverted without a reason string");
+
+          // should not revert when slippage tolerance set to 10%
+          await fixture.metaStrategy
+            .connect(sGovernor)
+            .setMaxWithdrawalSlippage(ousdUnits("0.1"));
+          await vault
+            .connect(sGovernor)
+            .withdrawAllFromStrategy(fixture.metaStrategyProxy.address);
         });
       });
     });

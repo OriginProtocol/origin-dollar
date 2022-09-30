@@ -18,19 +18,22 @@ import { Helpers } from "../utils/Helpers.sol";
 abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
     using StableMath for uint256;
     using SafeERC20 for IERC20;
+    event MaxWithdrawalSlippageUpdated(
+        uint256 _prevMaxSlippagePercentage,
+        uint256 _newMaxSlippagePercentage
+    );
 
     // used to circumvent the stack too deep issue
     struct InitState {
-      address platformAddress; //Address of the Curve 3pool
-      address vaultAddress; //Address of the vault
-      address cvxDepositorAddress; //Address of the Convex depositor(AKA booster) for this pool
-      address metapoolAddress; //Address of the Curve MetaPool
-      address metapoolMainToken; //Address of Main metapool token
-      address cvxRewardStakerAddress; //Address of the CVX rewards staker
-      address metapoolLPToken; //Address of metapool LP token
-      uint256 cvxDepositorPTokenId; //Pid of the pool referred to by Depositor and staker
-   }
-
+        address platformAddress; //Address of the Curve 3pool
+        address vaultAddress; //Address of the vault
+        address cvxDepositorAddress; //Address of the Convex depositor(AKA booster) for this pool
+        address metapoolAddress; //Address of the Curve MetaPool
+        address metapoolMainToken; //Address of Main metapool token
+        address cvxRewardStakerAddress; //Address of the CVX rewards staker
+        address metapoolLPToken; //Address of metapool LP token
+        uint256 cvxDepositorPTokenId; //Pid of the pool referred to by Depositor and staker
+    }
 
     address internal cvxDepositorAddress;
     address internal cvxRewardStakerAddress;
@@ -40,10 +43,12 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
     IERC20 internal metapoolLPToken;
     // Ordered list of metapool assets
     address[] internal metapoolAssets;
+    // Max withdrawal slippage denominated in 1e18 (1e18 == 100%)
+    uint256 public maxWithdrawalSlippage = 1e16;
     uint128 crvCoinIndex;
     uint128 mainCoinIndex;
 
-    int256[30] private _reserved;
+    int256[30] private __reserved;
 
     /**
      * Initializer for setting up strategy internal state. This overrides the
@@ -158,6 +163,27 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
             if (metapoolAssets[i] == _asset) return i;
         }
         revert("Invalid Metapool asset");
+    }
+
+    /**
+     * @dev Sets max withdrawal slippage that is considered when removing
+     * liquidity from Metapools.
+     *
+     * 1e18 == 100%, 1e16 == 1%
+     */
+    function setMaxWithdrawalSlippage(uint256 _maxWithdrawalSlippage)
+        external
+        onlyVaultOrGovernorOrStrategist
+    {
+        require(
+            _maxWithdrawalSlippage >= 1e15 && _maxWithdrawalSlippage <= 1e17,
+            "Max withdrawal slippage needs to be between 0.1% - 10%"
+        );
+        emit MaxWithdrawalSlippageUpdated(
+            maxWithdrawalSlippage,
+            _maxWithdrawalSlippage
+        );
+        maxWithdrawalSlippage = _maxWithdrawalSlippage;
     }
 
     /**
