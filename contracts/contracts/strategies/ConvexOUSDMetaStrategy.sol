@@ -111,9 +111,17 @@ contract ConvexOUSDMetaStrategy is BaseConvexMetaStrategy {
          * created is no longer valid.
          */
 
-        // adding 1e18 to make up for the possible rounding errors
-        uint256 lpToBurn = ((num3CrvTokens + 1e10) *
-            metapoolLPToken.totalSupply()) / metapool.balances(crvCoinIndex);
+        uint256 crvPoolBalance = metapool.balances(crvCoinIndex);
+        /* K is multiplied by 1e36 which is used for higher precision calculation of required
+         * metapool LP tokens. Without it the end value can have rounding errors up to precision of
+         * 10 digits. This way we move the decimal point by 36 places when doing the calculation
+         * and again by 36 places when we are done with it. 
+         */
+        uint256 k = (1e36 * metapoolLPToken.totalSupply()) / crvPoolBalance;
+        // simplifying below to: `uint256 diff = (num3CrvTokens - 1) * k` causes loss of precision
+        uint256 diff = crvPoolBalance * k - (crvPoolBalance - num3CrvTokens - 1) * k;
+        uint256 lpToBurn = diff / 1e36;
+
         uint256 gaugeTokens = IRewardStaking(cvxRewardStakerAddress).balanceOf(
             address(this)
         );
