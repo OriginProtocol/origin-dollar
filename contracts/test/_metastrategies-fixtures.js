@@ -3,7 +3,6 @@ const { ethers } = hre;
 const { loadFixture } = require("ethereum-waffle");
 const { ousdUnits } = require("./helpers");
 const { convexMetaVaultFixture, resetAllowance } = require("./_fixture");
-const addresses = require("../utils/addresses");
 
 // NOTE: This can cause a change in setup from mainnet.
 // However, mint/redeem tests, without any changes, are tested
@@ -92,7 +91,7 @@ async function tiltTo3CRV_OUSDMetapool(fixture, amount) {
 async function tiltTo3CRV_Metapool_automatic(
   fixture
 ) {
-  const { vault, domen, metapool, threePoolToken, metapoolCoin } = fixture;
+  const { metapool, threePoolToken } = fixture;
   
   await hre.network.provider.request({
     method: "hardhat_impersonateAccount",
@@ -114,9 +113,6 @@ async function tiltTo3CRV_Metapool_automatic(
     .mul(ousdUnits("0.9"))
     .div(ousdUnits("1"));
 
-  const mainCoinBalance = await metapoolCoin.balanceOf(metapool.address);
-
-  let count = 0;
   let acc = ethers.BigNumber.from("0");
   /* self deploy 90% of threepool coin liquidity until pool has at least five times
    * the 3crvLP liquidity comparing to main coin.
@@ -138,7 +134,7 @@ async function tiltTo3CRV_Metapool_automatic(
  * re-deploys its own liquidity
  */
 async function tiltToMainToken(fixture) {
-  const { metapool, metapoolCoin, threePoolToken } = fixture;
+  const { metapool, metapoolCoin } = fixture;
 
   await hre.network.provider.request({
     method: "hardhat_impersonateAccount",
@@ -159,9 +155,6 @@ async function tiltToMainToken(fixture) {
     .mul(ousdUnits("0.9"))
     .div(ousdUnits("1"));
 
-  const threeCrvBalance = await threePoolToken.balanceOf(metapool.address);
-
-  let count = 0;
   let acc = ethers.BigNumber.from("0");
 
   /* self deploy 90% of main coin liquidity until at least five times the main coin liquidity

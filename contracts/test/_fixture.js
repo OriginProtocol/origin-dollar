@@ -7,7 +7,6 @@ const { fundAccounts } = require("../utils/funding");
 const {
   getAssetAddresses,
   daiUnits,
-  ousdUnits,
   isFork,
   isForkWithLocalNode,
 } = require("./helpers");
@@ -676,11 +675,6 @@ async function convexGeneralizedMetaForkedFixture(
       // Domen is loaded with 3CRV
       domen.getAddress()
     );
-    /* Get a bunch of other token as well... By adding and removing liquidity from the pool
-     * get 20m of the token or max 80% of the token balance
-     */
-    const mainCoinBalance = await metapool.balances(0);
-    const balanceThreshold = mainCoinBalance.mul(80).div(100);
 
     fixture.metapoolCoin = primaryCoin;
     fixture.metapool = metapool;
