@@ -149,6 +149,7 @@ contract ConvexOUSDMetaStrategy is BaseConvexMetaStrategy {
         );
 
         // always withdraw all of the available metapool LP tokens (similar to how we always deposit all)
+        // slither-disable-next-line unused-return
         metapool.remove_liquidity(lpToBurn, [uint256(0), uint256(0)]);
         IVault(vaultAddress).burnForStrategy(
             metapoolMainToken.balanceOf(address(this))
