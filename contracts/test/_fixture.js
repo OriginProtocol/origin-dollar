@@ -695,19 +695,15 @@ async function convexGeneralizedMetaForkedFixture(
     }
 
     // add 3poolLP as liquidity
-    await metapool
-      .connect(domen)
+    await metapool.connect(domen)[
       // eslint-disable-next-line
-      ["add_liquidity(uint256[2],uint256)"]([0, amountToAdd], 0);
+      "add_liquidity(uint256[2],uint256)"
+    ]([0, amountToAdd], 0);
 
-    await metapool
-      .connect(domen)
+    await metapool.connect(domen)[
       // eslint-disable-next-line
-      ["remove_liquidity_one_coin(uint256,int128,uint256)"](
-        lpToken.connect(domen).balanceOf(domen.address),
-        0,
-        0
-      );
+      "remove_liquidity_one_coin(uint256,int128,uint256)"
+    ](lpToken.connect(domen).balanceOf(domen.address), 0, 0);
 
     fixture.metapoolCoin = primaryCoin;
     fixture.metapool = metapool;

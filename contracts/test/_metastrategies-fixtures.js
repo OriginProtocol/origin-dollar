@@ -135,14 +135,14 @@ async function tiltToMainToken(fixture) {
     .div(ousdUnits("1"));
 
   // Tilt to main token
-  await metapool
-    .connect(metapoolSigner)
+  await metapool.connect(metapoolSigner)[
     // eslint-disable-next-line
-    ["add_liquidity(uint256[2],uint256)"]([shareOfMainCoinBalance, 0], 0);
-  await metapool
-    .connect(metapoolSigner)
+    "add_liquidity(uint256[2],uint256)"
+  ]([shareOfMainCoinBalance, 0], 0);
+  await metapool.connect(metapoolSigner)[
     // eslint-disable-next-line
-    ["add_liquidity(uint256[2],uint256)"]([shareOfMainCoinBalance, 0], 0);
+    "add_liquidity(uint256[2],uint256)"
+  ]([shareOfMainCoinBalance, 0], 0);
 }
 
 async function tiltTo3CRV_Metapool(fixture, metapool, amount) {
