@@ -93,6 +93,10 @@ const fundAccounts = async () => {
       method: "hardhat_impersonateAccount",
       params: [addresses.mainnet.Binance],
     });
+    await hre.network.provider.send("hardhat_setBalance", [
+        addresses.mainnet.Binance,
+        utils.parseEther("1000000").toHexString(),
+      ]);
     binanceSigner = await ethers.provider.getSigner(addresses.mainnet.Binance);
   }
 

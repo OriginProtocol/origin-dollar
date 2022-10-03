@@ -3,6 +3,7 @@ const { ethers } = hre;
 const { loadFixture } = require("ethereum-waffle");
 const { ousdUnits } = require("./helpers");
 const { convexMetaVaultFixture, resetAllowance } = require("./_fixture");
+const addresses = require("../utils/addresses");
 
 // NOTE: This can cause a change in setup from mainnet.
 // However, mint/redeem tests, without any changes, are tested
@@ -86,44 +87,68 @@ async function tiltTo3CRV_OUSDMetapool(fixture, amount) {
   await tiltTo3CRV_Metapool(fixture, ousdMetaPool, amount);
 }
 
-/* Tilt towards 3CRV but if pool has very low liquidity still leave the
- * threshold amount of the other token inside
+/* Tilt towards 3CRV by checking liquidity
  */
-async function tiltTo3CRV_Metapool_considering_liquidity(
-  fixture,
-  amount,
-  threshold = 0.1
+async function tiltTo3CRV_Metapool_automatic(
+  fixture
 ) {
-  const { vault, domen, metapool } = fixture;
-  const mainCoinPoolBalance = await metapool.balances(0);
+  const { vault, domen, metapool, threePoolToken, metapoolCoin } = fixture;
+  
+  await hre.network.provider.request({
+    method: "hardhat_impersonateAccount",
+    params: [metapool.address],
+  });
+  
+  await hre.network.provider.request({
+    method: "hardhat_setBalance",
+    params: [metapool.address, "0x1bc16d674ec8000000"],
+  });
 
-  // unfortunately we need to skip balancing the metapool, because the other main token is not yet
-  // in the fixtures
-  //await _balanceMetaPool(fixture, metapool);
+  const metapoolSigner = await ethers.provider.getSigner(metapool.address);
+  await resetAllowance(threePoolToken, metapoolSigner, metapool.address);
 
-  amount = amount || ousdUnits("1000000");
-  let amountToSwap = amount.div(2);
-  const maxAmountAllowedByThreshold = mainCoinPoolBalance
-    .mul(ousdUnits(`${1 - threshold}`))
+  // 90% of main coin pool liquidity
+  const shareOfThreePoolCoinBalance = (
+    await threePoolToken.balanceOf(metapool.address)
+  )
+    .mul(ousdUnits("0.9"))
     .div(ousdUnits("1"));
 
-  if (amountToSwap > maxAmountAllowedByThreshold) {
-    amountToSwap = maxAmountAllowedByThreshold;
+  const mainCoinBalance = await metapoolCoin.balanceOf(metapool.address);
+
+  let count = 0;
+  let acc = ethers.BigNumber.from("0");
+  /* self deploy 90% of threepool coin liquidity until pool has at least five times
+   * the 3crvLP liquidity comparing to main coin.
+   */
+  while(acc.lt((await metapool.balances(0)).mul(5))) {
+    // Tilt to main token
+    await metapool.connect(metapoolSigner)[
+      // eslint-disable-next-line
+      "add_liquidity(uint256[2],uint256)"
+    ]([0, shareOfThreePoolCoinBalance], 0);
+
+    acc = acc.add(shareOfThreePoolCoinBalance);
   }
 
-  // Tilt to 3CRV by a million
-  const exchangeSign = "exchange(int128,int128,uint256,uint256)";
-  await metapool.connect(domen)[exchangeSign](1, 0, amountToSwap, 0);
 
-  await vault.connect(domen).allocate();
-  await vault.connect(domen).rebase();
 }
 
 /* Just triple the main token liquidity in a flaky manner where the pool
  * re-deploys its own liquidity
  */
 async function tiltToMainToken(fixture) {
-  const { metapool, metapoolCoin } = fixture;
+  const { metapool, metapoolCoin, threePoolToken } = fixture;
+
+  await hre.network.provider.request({
+    method: "hardhat_impersonateAccount",
+    params: [metapool.address],
+  });
+  
+  await hre.network.provider.request({
+    method: "hardhat_setBalance",
+    params: [metapool.address, "0x1bc16d674ec8000000"],
+  });
 
   const metapoolSigner = await ethers.provider.getSigner(metapool.address);
   await resetAllowance(metapoolCoin, metapoolSigner, metapool.address);
@@ -134,15 +159,23 @@ async function tiltToMainToken(fixture) {
     .mul(ousdUnits("0.9"))
     .div(ousdUnits("1"));
 
-  // Tilt to main token
-  await metapool.connect(metapoolSigner)[
-    // eslint-disable-next-line
-    "add_liquidity(uint256[2],uint256)"
-  ]([shareOfMainCoinBalance, 0], 0);
-  await metapool.connect(metapoolSigner)[
-    // eslint-disable-next-line
-    "add_liquidity(uint256[2],uint256)"
-  ]([shareOfMainCoinBalance, 0], 0);
+  const threeCrvBalance = await threePoolToken.balanceOf(metapool.address);
+
+  let count = 0;
+  let acc = ethers.BigNumber.from("0");
+
+  /* self deploy 90% of main coin liquidity until at least five times the main coin liquidity
+   * comparing to 3crv is deployed to the pool.
+   */
+  while(acc.lt((await metapool.balances(1)).mul(5))) {
+    // Tilt to main token
+    await metapool.connect(metapoolSigner)[
+      // eslint-disable-next-line
+      "add_liquidity(uint256[2],uint256)"
+    ]([shareOfMainCoinBalance, 0], 0);
+
+    acc = acc.add(shareOfMainCoinBalance);
+  }
 }
 
 async function tiltTo3CRV_Metapool(fixture, metapool, amount) {
@@ -224,7 +257,7 @@ module.exports = {
   tiltToOUSD_OUSDMetapool,
 
   tiltTo3CRV_Metapool,
-  tiltTo3CRV_Metapool_considering_liquidity,
+  tiltTo3CRV_Metapool_automatic,
   tiltToMainToken,
 
   getOUSDLiquidity,

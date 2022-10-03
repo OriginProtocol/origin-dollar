@@ -107,7 +107,6 @@ async function defaultFixture() {
     ognStaking.address,
     testPayoutsModified
   );
-
   const compensationClaims = await ethers.getContract("CompensationClaims");
 
   const buyback = await ethers.getContract("Buyback");
@@ -262,7 +261,6 @@ async function defaultFixture() {
       alUSDMetaStrategyProxy.address
     );
   }
-
   if (!isFork) {
     const assetAddresses = await getAssetAddresses(deployments);
 
@@ -288,9 +286,7 @@ async function defaultFixture() {
   if (isFork) {
     governor = await impersonateAndFundContract(governorAddr);
   }
-
   await fundAccounts();
-
   if (isFork) {
     for (const user of [josh, matt, anna, domen, daniel, franck]) {
       // Approve Vault to move funds
@@ -305,12 +301,10 @@ async function defaultFixture() {
       await vault.connect(user).mint(dai.address, daiUnits("100"), 0);
     }
   }
-
   if (!rewardsSource && !isFork) {
     const address = await buyback.connect(governor).rewardsSource();
     rewardsSource = await ethers.getContractAt([], address);
   }
-
   return {
     // Accounts
     matt,
@@ -640,7 +634,6 @@ async function convexGeneralizedMetaForkedFixture(
     const fixture = await loadFixture(defaultFixture);
     const { governorAddr } = await getNamedAccounts();
     const sGovernor = await ethers.provider.getSigner(governorAddr);
-
     const { josh, matt, anna, domen, daniel, franck } = fixture;
 
     const threepoolLP = await ethers.getContractAt(
@@ -683,27 +676,11 @@ async function convexGeneralizedMetaForkedFixture(
       // Domen is loaded with 3CRV
       domen.getAddress()
     );
-
     /* Get a bunch of other token as well... By adding and removing liquidity from the pool
      * get 20m of the token or max 80% of the token balance
      */
     const mainCoinBalance = await metapool.balances(0);
     const balanceThreshold = mainCoinBalance.mul(80).div(100);
-    let amountToAdd = ousdUnits("20000000");
-    if (amountToAdd > balanceThreshold) {
-      amountToAdd = balanceThreshold;
-    }
-
-    // add 3poolLP as liquidity
-    await metapool.connect(domen)[
-      // eslint-disable-next-line
-      "add_liquidity(uint256[2],uint256)"
-    ]([0, amountToAdd], 0);
-
-    await metapool.connect(domen)[
-      // eslint-disable-next-line
-      "remove_liquidity_one_coin(uint256,int128,uint256)"
-    ](lpToken.connect(domen).balanceOf(domen.address), 0, 0);
 
     fixture.metapoolCoin = primaryCoin;
     fixture.metapool = metapool;

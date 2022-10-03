@@ -47,6 +47,11 @@ main()
         echo "No running node detected spinning up a fresh one"
         params+="--deploy-fixture "
     else
+        if ! command -v jq &> /dev/null
+        then
+            echo "jq could not be found try installing it"
+            exit 1
+        fi
         # Fetch latest block number from hardhat instance
         blockresp=$((curl -s -H "Content-Type: application/json" -X POST --data '{"id":1,"jsonrpc":"2.0","method":"eth_blockNumber"}' "$LOCAL_PROVIDER_URL") | jq -r '.result')
         blocknum=$((16#${blockresp:2}))
