@@ -120,6 +120,7 @@ contract ConvexOUSDMetaStrategy is BaseConvexMetaStrategy {
         uint256 k = (1e36 * metapoolLPToken.totalSupply()) / crvPoolBalance;
         // simplifying below to: `uint256 diff = (num3CrvTokens - 1) * k` causes loss of precision
         // prettier-ignore
+        // slither-disable-next-line divide-before-multiply
         uint256 diff = crvPoolBalance * k -
             (crvPoolBalance - num3CrvTokens - 1) * k;
         uint256 lpToBurn = diff / 1e36;
