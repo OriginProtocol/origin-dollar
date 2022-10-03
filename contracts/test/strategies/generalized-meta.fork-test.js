@@ -5,7 +5,10 @@ const { ethers } = hre;
 const { loadFixture } = require("ethereum-waffle");
 const { units, ousdUnits, forkOnlyDescribe } = require("../helpers");
 const { convexGeneralizedMetaForkedFixture } = require("../_fixture");
-const { tiltToMainToken, tiltTo3CRV_Metapool_automatic } = require("../_metastrategies-fixtures");
+const {
+  tiltToMainToken,
+  tiltTo3CRV_Metapool_automatic,
+} = require("../_metastrategies-fixtures");
 
 const metastrategies = [
   {
@@ -56,7 +59,7 @@ metastrategies.forEach(
     forkOnlyDescribe(
       `ForkTest: Convex 3pool/${token} Meta Strategy`,
       function () {
-        this.timeout(0);        
+        this.timeout(0);
         let fixture;
         beforeEach(async () => {
           fixture = await loadFixture(
@@ -181,7 +184,7 @@ metastrategies.forEach(
         });
 
         describe("Withdraw all", function () {
-          it("Should not allow withdraw all when MEW tries to manipulate the pool", async function (){
+          it("Should not allow withdraw all when MEW tries to manipulate the pool", async function () {
             if (skipMewTest) {
               this.skip();
               return;
@@ -200,7 +203,7 @@ metastrategies.forEach(
               params: [vault.address],
             });
 
-            const sVault = await ethers.provider.getSigner(vault.address);            
+            const sVault = await ethers.provider.getSigner(vault.address);
 
             await vault.connect(anna).allocate();
             await vault.connect(anna).rebase();
@@ -210,7 +213,6 @@ metastrategies.forEach(
               .connect(anna)
               .mint(usdt.address, await units("30000", usdt), 0);
             await vault.connect(anna).allocate();
-
 
             await fixture.metaStrategy
               .connect(sGovernor)

@@ -88,16 +88,14 @@ async function tiltTo3CRV_OUSDMetapool(fixture, amount) {
 
 /* Tilt towards 3CRV by checking liquidity
  */
-async function tiltTo3CRV_Metapool_automatic(
-  fixture
-) {
+async function tiltTo3CRV_Metapool_automatic(fixture) {
   const { metapool, threePoolToken } = fixture;
-  
+
   await hre.network.provider.request({
     method: "hardhat_impersonateAccount",
     params: [metapool.address],
   });
-  
+
   await hre.network.provider.request({
     method: "hardhat_setBalance",
     params: [metapool.address, "0x1bc16d674ec8000000"],
@@ -117,7 +115,7 @@ async function tiltTo3CRV_Metapool_automatic(
   /* self deploy 90% of threepool coin liquidity until pool has at least five times
    * the 3crvLP liquidity comparing to main coin.
    */
-  while(acc.lt((await metapool.balances(0)).mul(5))) {
+  while (acc.lt((await metapool.balances(0)).mul(5))) {
     // Tilt to main token
     await metapool.connect(metapoolSigner)[
       // eslint-disable-next-line
@@ -126,8 +124,6 @@ async function tiltTo3CRV_Metapool_automatic(
 
     acc = acc.add(shareOfThreePoolCoinBalance);
   }
-
-
 }
 
 /* Just triple the main token liquidity in a flaky manner where the pool
@@ -140,7 +136,7 @@ async function tiltToMainToken(fixture) {
     method: "hardhat_impersonateAccount",
     params: [metapool.address],
   });
-  
+
   await hre.network.provider.request({
     method: "hardhat_setBalance",
     params: [metapool.address, "0x1bc16d674ec8000000"],
@@ -160,7 +156,7 @@ async function tiltToMainToken(fixture) {
   /* self deploy 90% of main coin liquidity until at least five times the main coin liquidity
    * comparing to 3crv is deployed to the pool.
    */
-  while(acc.lt((await metapool.balances(1)).mul(5))) {
+  while (acc.lt((await metapool.balances(1)).mul(5))) {
     // Tilt to main token
     await metapool.connect(metapoolSigner)[
       // eslint-disable-next-line
