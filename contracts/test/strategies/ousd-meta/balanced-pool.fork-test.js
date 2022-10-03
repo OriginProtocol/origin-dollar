@@ -8,6 +8,8 @@ forkOnlyDescribe(
   "ForkTest: Convex 3pool/OUSD Meta Strategy - Balanced Metapool",
   function () {
     this.timeout(0);
+    // due to hardhat forked mode timeouts - retry failed tests up to 3 times
+    this.retries(3);
 
     describe("Mint", function () {
       it("Should stake USDT in Cruve guage via metapool", async function () {

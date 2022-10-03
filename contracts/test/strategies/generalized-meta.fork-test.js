@@ -60,6 +60,8 @@ metastrategies.forEach(
       `ForkTest: Convex 3pool/${token} Meta Strategy`,
       function () {
         this.timeout(0);
+        // due to hardhat forked mode timeouts - retry failed tests up to 3 times
+        this.retries(3);
         let fixture;
         beforeEach(async () => {
           fixture = await loadFixture(
