@@ -827,9 +827,11 @@ const deployCurvealUSDMetapoolMocks = async () => {
   const { deployerAddr } = await hre.getNamedAccounts();
   const assetAddresses = await getAssetAddresses(deployments);
 
+  const alUsd = await ethers.getContract("MockalUSD");
+
   await hre.deployments.deploy("MockCurvealUSDMetapool", {
     from: deployerAddr,
-    args: [[addresses.mainnet.alUSD, assetAddresses.ThreePoolToken]],
+    args: [[alUsd.address, assetAddresses.ThreePoolToken]],
   });
 
   const alUSDMetapoolToken = await ethers.getContract("MockCurvealUSDMetapool");

@@ -46,7 +46,7 @@ metastrategies.forEach(
     rewardPoolAddress,
     lpToken,
   }) => {
-    forkOnlyDescribe(`Convex 3pool/${token} Meta Strategy`, function () {
+    forkOnlyDescribe(`ForkTest: Convex 3pool/${token} Meta Strategy`, function () {
       this.timeout(0);
 
       let fixture;

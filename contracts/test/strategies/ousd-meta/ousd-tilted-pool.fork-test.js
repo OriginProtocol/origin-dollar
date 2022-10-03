@@ -5,7 +5,7 @@ const { units, ousdUnits, forkOnlyDescribe } = require("../../helpers");
 const { withOUSDTitledMetapool } = require("../../_metastrategies-fixtures");
 
 forkOnlyDescribe(
-  "Convex 3pool/OUSD Meta Strategy - Titled to OUSD",
+  "ForkTest: Convex 3pool/OUSD Meta Strategy - Titled to OUSD",
   function () {
     this.timeout(0);
 
