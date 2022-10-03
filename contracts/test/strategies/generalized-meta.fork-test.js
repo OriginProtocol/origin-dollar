@@ -181,9 +181,10 @@ metastrategies.forEach(
         });
 
         describe("Withdraw all", function () {
-          it("Should not allow withdraw all when MEW tries to manipulate the pool", async () => {
+          it("Should not allow withdraw all when MEW tries to manipulate the pool", async function (){
             if (skipMewTest) {
               this.skip();
+              return;
             }
             const { governorAddr } = await getNamedAccounts();
             const sGovernor = await ethers.provider.getSigner(governorAddr);
