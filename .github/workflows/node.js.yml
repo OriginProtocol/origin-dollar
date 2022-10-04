@@ -17,6 +17,8 @@ jobs:
       uses: actions/setup-node@v1
       with:
         node-version: ${{ matrix.node-version }}
+    - name: Install dependencies
+      run: sudo apt update && sudo apt-get install -y libudev-dev libusb-1.0-0-dev
     - run: yarn install
       working-directory: ./contracts
     - run: yarn run lint
