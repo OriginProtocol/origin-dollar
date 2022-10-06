@@ -134,6 +134,19 @@ contract VaultAdmin is VaultStorage {
     }
 
     /**
+     * @dev Set maximum amount of OUSD that can at any point be minted and deployed
+     * to strategy (used only by ConvexOUSDMetaStrategy for now).
+     * @param _threshold OUSD amount with 18 fixed decimals.
+     */
+    function setNetOusdMintForStrategyThreshold(uint256 _threshold)
+        external
+        onlyGovernor
+    {
+        netOusdMintForStrategyThreshold = _threshold;
+        emit NetOusdMintForStrategyThresholdChanged(_threshold);
+    }
+
+    /**
      * @dev Add a supported asset to the contract, i.e. one that can be
      *         to mint OUSD.
      * @param _asset Address of asset
@@ -265,6 +278,18 @@ contract VaultAdmin is VaultStorage {
         require(_basis <= 5000, "basis cannot exceed 50%");
         trusteeFeeBps = _basis;
         emit TrusteeFeeBpsChanged(_basis);
+    }
+
+    /**
+     * @dev Set OUSD Meta strategy
+     * @param _ousdMetaStrategy Address of ousd meta strategy
+     */
+    function setOusdMetaStrategy(address _ousdMetaStrategy)
+        external
+        onlyGovernor
+    {
+        ousdMetaStrategy = _ousdMetaStrategy;
+        emit OusdMetaStrategyUpdated(_ousdMetaStrategy);
     }
 
     /***************************************

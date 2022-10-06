@@ -8,6 +8,7 @@ pragma solidity ^0.8.0;
  */
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
+import { ICurvePool } from "./ICurvePool.sol";
 import { IRewardStaking } from "./IRewardStaking.sol";
 import { IConvexDeposits } from "./IConvexDeposits.sol";
 import { IERC20, BaseCurveStrategy } from "./BaseCurveStrategy.sol";
@@ -78,37 +79,27 @@ contract ConvexStrategy is BaseCurveStrategy {
         require(success, "Failed to deposit to Convex");
     }
 
-    function _lpWithdraw(uint256 numPTokens) internal override {
+    function _lpWithdraw(uint256 numCrvTokens) internal override {
+        uint256 gaugePTokens = IRewardStaking(cvxRewardStakerAddress).balanceOf(
+            address(this)
+        );
+
+        // Not enough in this contract or in the Gauge, can't proceed
+        require(numCrvTokens > gaugePTokens, "Insufficient 3CRV balance");
+
         // withdraw and unwrap with claim takes back the lpTokens and also collects the rewards to this
         IRewardStaking(cvxRewardStakerAddress).withdrawAndUnwrap(
-            numPTokens,
+            numCrvTokens,
             true
         );
     }
 
-    /**
-     * @dev Calculate the total platform token balance (i.e. 3CRV) that exist in
-     * this contract or is staked in the Gauge (or in other words, the total
-     * amount platform tokens we own).
-     * @return contractPTokens Amount of platform tokens in this contract
-     * @return gaugePTokens Amount of platform tokens staked in gauge
-     * @return totalPTokens Total amount of platform tokens in native decimals
-     */
-    function _getTotalPTokens()
-        internal
-        view
-        override
-        returns (
-            uint256 contractPTokens,
-            uint256 gaugePTokens, // gauge is a misnomer here, need a better name
-            uint256 totalPTokens
-        )
-    {
-        contractPTokens = IERC20(pTokenAddress).balanceOf(address(this));
-        gaugePTokens = IRewardStaking(cvxRewardStakerAddress).balanceOf(
-            address(this)
-        ); //booster.poolInfo[pid].token.balanceOf(address(this)) Not needed if we always stake..
-        totalPTokens = contractPTokens + gaugePTokens;
+    function _lpWithdrawAll() internal override {
+        // withdraw and unwrap with claim takes back the lpTokens and also collects the rewards to this
+        IRewardStaking(cvxRewardStakerAddress).withdrawAndUnwrap(
+            IRewardStaking(cvxRewardStakerAddress).balanceOf(address(this)),
+            true
+        );
     }
 
     function _approveBase() internal override {
@@ -119,6 +110,38 @@ contract ConvexStrategy is BaseCurveStrategy {
         // Gauge for LP token
         pToken.safeApprove(cvxDepositorAddress, 0);
         pToken.safeApprove(cvxDepositorAddress, type(uint256).max);
+    }
+
+    /**
+     * @dev Get the total asset value held in the platform
+     * @param _asset      Address of the asset
+     * @return balance    Total value of the asset in the platform
+     */
+    function checkBalance(address _asset)
+        public
+        view
+        override
+        returns (uint256 balance)
+    {
+        require(assetToPToken[_asset] != address(0), "Unsupported asset");
+        // LP tokens in this contract. This should generally be nothing as we
+        // should always stake the full balance in the Gauge, but include for
+        // safety
+        uint256 contractPTokens = IERC20(pTokenAddress).balanceOf(
+            address(this)
+        );
+        uint256 gaugePTokens = IRewardStaking(cvxRewardStakerAddress).balanceOf(
+            address(this)
+        );
+        uint256 totalPTokens = contractPTokens + gaugePTokens;
+
+        ICurvePool curvePool = ICurvePool(platformAddress);
+        if (totalPTokens > 0) {
+            uint256 virtual_price = curvePool.get_virtual_price();
+            uint256 value = (totalPTokens * virtual_price) / 1e18;
+            uint256 assetDecimals = Helpers.getDecimals(_asset);
+            balance = value.scaleBy(assetDecimals, 18) / 3;
+        }
     }
 
     /**

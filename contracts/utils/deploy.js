@@ -13,6 +13,7 @@ const {
   getOracleAddresses,
   getAssetAddresses,
   isSmokeTest,
+  isForkTest,
 } = require("../test/helpers.js");
 
 const {
@@ -258,7 +259,7 @@ const sendProposal = async (proposalArgs, description, opts = {}) => {
  * @returns {Object} main object used by hardhat
  */
 function deploymentWithProposal(opts, fn) {
-  const { deployName, dependencies, forceDeploy } = opts;
+  const { deployName, dependencies, forceDeploy, proposalId } = opts;
   const runDeployment = async (hre) => {
     const oracleAddresses = await getOracleAddresses(hre.deployments);
     const assetAddresses = await getAssetAddresses(hre.deployments);
@@ -282,10 +283,26 @@ function deploymentWithProposal(opts, fn) {
       await sendProposal(propArgs, propDescription, propOpts);
       log("Proposal sent.");
     } else if (isFork) {
-      // On Fork we can send the proposal then impersonate the guardian to execute it.
-      log("Sending and executing proposal...");
-      await executeProposal(propArgs, propDescription, propOpts);
-      log("Proposal executed.");
+      let skipExecuteProposal = false;
+      if (proposalId) {
+        const proposalState = ["New", "Queue", "Expired", "Executed"][
+          await governor.state(proposalId)
+        ];
+        if (["New", "Queue"].includes(proposalState)) {
+          skipExecuteProposal = true;
+          console.log(
+            `Found proposal id: ${proposalId} on forked network. Executing proposal in place of deployment of: ${deployName}`
+          );
+          await executeProposalOnFork(proposalId);
+        }
+      }
+
+      if (!skipExecuteProposal) {
+        // On Fork we can send the proposal then impersonate the guardian to execute it.
+        log("Sending and executing proposal...");
+        await executeProposal(propArgs, propDescription, propOpts);
+        log("Proposal executed.");
+      }
     } else {
       const { governorAddr } = await getNamedAccounts();
       const sGovernor = await ethers.provider.getSigner(governorAddr);
@@ -318,7 +335,15 @@ function deploymentWithProposal(opts, fn) {
   if (forceDeploy) {
     main.skip = () => false;
   } else {
-    main.skip = () => !isMainnet || isSmokeTest || isFork;
+    main.skip = () => {
+      if (isFork) {
+        const networkName = isForkTest ? "hardhat" : "localhost";
+        const migrations = require(`./../deployments/${networkName}/.migrations.json`);
+        return Boolean(migrations[deployName]);
+      } else {
+        return !isMainnet || isSmokeTest || isFork;
+      }
+    };
   }
   return main;
 }

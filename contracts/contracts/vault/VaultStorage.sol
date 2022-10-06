@@ -37,6 +37,7 @@ contract VaultStorage is Initializable, Governable {
     event RebasePaused();
     event RebaseUnpaused();
     event VaultBufferUpdated(uint256 _vaultBuffer);
+    event OusdMetaStrategyUpdated(address _ousdMetaStrategy);
     event RedeemFeeUpdated(uint256 _redeemFeeBps);
     event PriceProviderUpdated(address _priceProvider);
     event AllocateThresholdUpdated(uint256 _threshold);
@@ -46,6 +47,7 @@ contract VaultStorage is Initializable, Governable {
     event YieldDistribution(address _to, uint256 _yield, uint256 _fee);
     event TrusteeFeeBpsChanged(uint256 _basis);
     event TrusteeAddressChanged(address _address);
+    event NetOusdMintForStrategyThresholdChanged(uint256 _threshold);
 
     // Assets supported by the Vault, i.e. Stablecoins
     struct Asset {
@@ -108,6 +110,15 @@ contract VaultStorage is Initializable, Governable {
     address[] private _deprecated_swapTokens;
 
     uint256 constant MINT_MINIMUM_ORACLE = 99800000;
+
+    // Meta strategy that is allowed to mint/burn OUSD without changing collateral
+    address public ousdMetaStrategy = address(0);
+
+    // How much OUSD is currently minted by the strategy
+    int256 public netOusdMintedForStrategy = 0;
+
+    // How much net total OUSD is allowed to be minted by all strategies
+    uint256 public netOusdMintForStrategyThreshold = 0;
 
     /**
      * @dev set the implementation for the admin, this needs to be in a base class else we cannot set it

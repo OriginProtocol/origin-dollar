@@ -25,6 +25,7 @@ def load_contract(name, address):
         abi = json.load(f)
         return brownie.Contract.from_abi(name, address, abi)
 
+frax = load_contract('ERC20', FRAX)
 ousd = load_contract('ousd', OUSD)
 usdt = load_contract('usdt', USDT)
 usdc = load_contract('usdc', USDC)
@@ -71,7 +72,10 @@ threepool = brownie.Contract.from_abi(
         [{"name":"TokenExchange","inputs":[{"type":"address","name":"buyer","indexed":True},{"type":"int128","name":"sold_id","indexed":False},{"type":"uint256","name":"tokens_sold","indexed":False},{"type":"int128","name":"bought_id","indexed":False},{"type":"uint256","name":"tokens_bought","indexed":False}],"anonymous":False,"type":"event"},{"name":"AddLiquidity","inputs":[{"type":"address","name":"provider","indexed":True},{"type":"uint256[3]","name":"token_amounts","indexed":False},{"type":"uint256[3]","name":"fees","indexed":False},{"type":"uint256","name":"invariant","indexed":False},{"type":"uint256","name":"token_supply","indexed":False}],"anonymous":False,"type":"event"},{"name":"RemoveLiquidity","inputs":[{"type":"address","name":"provider","indexed":True},{"type":"uint256[3]","name":"token_amounts","indexed":False},{"type":"uint256[3]","name":"fees","indexed":False},{"type":"uint256","name":"token_supply","indexed":False}],"anonymous":False,"type":"event"},{"name":"RemoveLiquidityOne","inputs":[{"type":"address","name":"provider","indexed":True},{"type":"uint256","name":"token_amount","indexed":False},{"type":"uint256","name":"coin_amount","indexed":False}],"anonymous":False,"type":"event"},{"name":"RemoveLiquidityImbalance","inputs":[{"type":"address","name":"provider","indexed":True},{"type":"uint256[3]","name":"token_amounts","indexed":False},{"type":"uint256[3]","name":"fees","indexed":False},{"type":"uint256","name":"invariant","indexed":False},{"type":"uint256","name":"token_supply","indexed":False}],"anonymous":False,"type":"event"},{"name":"CommitNewAdmin","inputs":[{"type":"uint256","name":"deadline","indexed":True},{"type":"address","name":"admin","indexed":True}],"anonymous":False,"type":"event"},{"name":"NewAdmin","inputs":[{"type":"address","name":"admin","indexed":True}],"anonymous":False,"type":"event"},{"name":"CommitNewFee","inputs":[{"type":"uint256","name":"deadline","indexed":True},{"type":"uint256","name":"fee","indexed":False},{"type":"uint256","name":"admin_fee","indexed":False}],"anonymous":False,"type":"event"},{"name":"NewFee","inputs":[{"type":"uint256","name":"fee","indexed":False},{"type":"uint256","name":"admin_fee","indexed":False}],"anonymous":False,"type":"event"},{"name":"RampA","inputs":[{"type":"uint256","name":"old_A","indexed":False},{"type":"uint256","name":"new_A","indexed":False},{"type":"uint256","name":"initial_time","indexed":False},{"type":"uint256","name":"future_time","indexed":False}],"anonymous":False,"type":"event"},{"name":"StopRampA","inputs":[{"type":"uint256","name":"A","indexed":False},{"type":"uint256","name":"t","indexed":False}],"anonymous":False,"type":"event"},{"outputs":[],"inputs":[{"type":"address","name":"_owner"},{"type":"address[3]","name":"_coins"},{"type":"address","name":"_pool_token"},{"type":"uint256","name":"_A"},{"type":"uint256","name":"_fee"},{"type":"uint256","name":"_admin_fee"}],"stateMutability":"nonpayable","type":"constructor"},{"name":"A","outputs":[{"type":"uint256","name":""}],"inputs":[],"stateMutability":"view","type":"function","gas":5227},{"name":"get_virtual_price","outputs":[{"type":"uint256","name":""}],"inputs":[],"stateMutability":"view","type":"function","gas":1133537},{"name":"calc_token_amount","outputs":[{"type":"uint256","name":""}],"inputs":[{"type":"uint256[3]","name":"amounts"},{"type":"bool","name":"deposit"}],"stateMutability":"view","type":"function","gas":4508776},{"name":"add_liquidity","outputs":[],"inputs":[{"type":"uint256[3]","name":"amounts"},{"type":"uint256","name":"min_mint_amount"}],"stateMutability":"nonpayable","type":"function","gas":6954858},{"name":"get_dy","outputs":[{"type":"uint256","name":""}],"inputs":[{"type":"int128","name":"i"},{"type":"int128","name":"j"},{"type":"uint256","name":"dx"}],"stateMutability":"view","type":"function","gas":2673791},{"name":"get_dy_underlying","outputs":[{"type":"uint256","name":""}],"inputs":[{"type":"int128","name":"i"},{"type":"int128","name":"j"},{"type":"uint256","name":"dx"}],"stateMutability":"view","type":"function","gas":2673474},{"name":"exchange","outputs":[],"inputs":[{"type":"int128","name":"i"},{"type":"int128","name":"j"},{"type":"uint256","name":"dx"},{"type":"uint256","name":"min_dy"}],"stateMutability":"nonpayable","type":"function","gas":2818066},{"name":"remove_liquidity","outputs":[],"inputs":[{"type":"uint256","name":"_amount"},{"type":"uint256[3]","name":"min_amounts"}],"stateMutability":"nonpayable","type":"function","gas":192846},{"name":"remove_liquidity_imbalance","outputs":[],"inputs":[{"type":"uint256[3]","name":"amounts"},{"type":"uint256","name":"max_burn_amount"}],"stateMutability":"nonpayable","type":"function","gas":6951851},{"name":"calc_withdraw_one_coin","outputs":[{"type":"uint256","name":""}],"inputs":[{"type":"uint256","name":"_token_amount"},{"type":"int128","name":"i"}],"stateMutability":"view","type":"function","gas":1102},{"name":"remove_liquidity_one_coin","outputs":[],"inputs":[{"type":"uint256","name":"_token_amount"},{"type":"int128","name":"i"},{"type":"uint256","name":"min_amount"}],"stateMutability":"nonpayable","type":"function","gas":4025523},{"name":"ramp_A","outputs":[],"inputs":[{"type":"uint256","name":"_future_A"},{"type":"uint256","name":"_future_time"}],"stateMutability":"nonpayable","type":"function","gas":151919},{"name":"stop_ramp_A","outputs":[],"inputs":[],"stateMutability":"nonpayable","type":"function","gas":148637},{"name":"commit_new_fee","outputs":[],"inputs":[{"type":"uint256","name":"new_fee"},{"type":"uint256","name":"new_admin_fee"}],"stateMutability":"nonpayable","type":"function","gas":110461},{"name":"apply_new_fee","outputs":[],"inputs":[],"stateMutability":"nonpayable","type":"function","gas":97242},{"name":"revert_new_parameters","outputs":[],"inputs":[],"stateMutability":"nonpayable","type":"function","gas":21895},{"name":"commit_transfer_ownership","outputs":[],"inputs":[{"type":"address","name":"_owner"}],"stateMutability":"nonpayable","type":"function","gas":74572},{"name":"apply_transfer_ownership","outputs":[],"inputs":[],"stateMutability":"nonpayable","type":"function","gas":60710},{"name":"revert_transfer_ownership","outputs":[],"inputs":[],"stateMutability":"nonpayable","type":"function","gas":21985},{"name":"admin_balances","outputs":[{"type":"uint256","name":""}],"inputs":[{"type":"uint256","name":"i"}],"stateMutability":"view","type":"function","gas":3481},{"name":"withdraw_admin_fees","outputs":[],"inputs":[],"stateMutability":"nonpayable","type":"function","gas":21502},{"name":"donate_admin_fees","outputs":[],"inputs":[],"stateMutability":"nonpayable","type":"function","gas":111389},{"name":"kill_me","outputs":[],"inputs":[],"stateMutability":"nonpayable","type":"function","gas":37998},{"name":"unkill_me","outputs":[],"inputs":[],"stateMutability":"nonpayable","type":"function","gas":22135},{"name":"coins","outputs":[{"type":"address","name":""}],"inputs":[{"type":"uint256","name":"arg0"}],"stateMutability":"view","type":"function","gas":2220},{"name":"balances","outputs":[{"type":"uint256","name":""}],"inputs":[{"type":"uint256","name":"arg0"}],"stateMutability":"view","type":"function","gas":2250},{"name":"fee","outputs":[{"type":"uint256","name":""}],"inputs":[],"stateMutability":"view","type":"function","gas":2171},{"name":"admin_fee","outputs":[{"type":"uint256","name":""}],"inputs":[],"stateMutability":"view","type":"function","gas":2201},{"name":"owner","outputs":[{"type":"address","name":""}],"inputs":[],"stateMutability":"view","type":"function","gas":2231},{"name":"initial_A","outputs":[{"type":"uint256","name":""}],"inputs":[],"stateMutability":"view","type":"function","gas":2261},{"name":"future_A","outputs":[{"type":"uint256","name":""}],"inputs":[],"stateMutability":"view","type":"function","gas":2291},{"name":"initial_A_time","outputs":[{"type":"uint256","name":""}],"inputs":[],"stateMutability":"view","type":"function","gas":2321},{"name":"future_A_time","outputs":[{"type":"uint256","name":""}],"inputs":[],"stateMutability":"view","type":"function","gas":2351},{"name":"admin_actions_deadline","outputs":[{"type":"uint256","name":""}],"inputs":[],"stateMutability":"view","type":"function","gas":2381},{"name":"transfer_ownership_deadline","outputs":[{"type":"uint256","name":""}],"inputs":[],"stateMutability":"view","type":"function","gas":2411},{"name":"future_fee","outputs":[{"type":"uint256","name":""}],"inputs":[],"stateMutability":"view","type":"function","gas":2441},{"name":"future_admin_fee","outputs":[{"type":"uint256","name":""}],"inputs":[],"stateMutability":"view","type":"function","gas":2471},{"name":"future_owner","outputs":[{"type":"address","name":""}],"inputs":[],"stateMutability":"view","type":"function","gas":2501}]
     )
 
+def get_erc20_name(address):
+    return load_contract('ERC20', address).name()
 
+# show transfers of a transaction
 def show_transfers(tx):
     TRANSFER = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
     for log in tx.logs:
@@ -94,10 +98,9 @@ def show_transfers(tx):
                 amount
                 ]))
 
+# unlock an address to issue transactions as that address
 def unlock(address):
     brownie.network.web3.provider.make_request('hardhat_impersonateAccount', [address])
-
-
 
 def leading_whitespace(s, desired = 16):
     return ' ' * (desired-len(s)) + s
@@ -108,31 +111,56 @@ def commas(v, decimals = 18):
     s = f'{v:,}'
     return leading_whitespace(s, 16)
 
+# format BigNumber represented in 24 decimals
+def c24(v):
+    return commas(v, 24)
+
+# format BigNumber represented in 18 decimals
 def c18(v):
     return commas(v, 18)
 
+# format BigNumber represented in 12 decimals
+def c12(v):
+    return commas(v, 12)
+
+# format BigNumber represented in 6 decimals
 def c6(v):
     return commas(v, 6)
 
+# show complete vault holdings: stable coins & strategies
 def show_vault_holdings():
     total = vault_core.totalValue()
     print("  Total: "+c18(vault_core.totalValue()))
-    print("----------------------------------------")
+    print("----------- Vault Holdings --------------")
 
-    print("AAVE:  ", end='')
+    print("Stables:                     ", end='')
+    print(c18(dai.balanceOf(vault_core.address)) + ' DAI   ', end='')
+    print(c6(usdc.balanceOf(vault_core.address)) + ' USDC  ', end='')
+    print(c6(usdt.balanceOf(vault_core.address)) + ' USDT  ')
+    print("AAVE:                        ", end='')
     print(c18(aave_strat.checkBalance(DAI))+ ' DAI    ', end='')
     print(c6(aave_strat.checkBalance(USDC))+ ' USDC   ', end='')
     print(c6(aave_strat.checkBalance(USDT))+ ' USDT   ')
-    print("COMP:  ", end='')
+    print("COMP:                        ", end='')
     print(c18(comp_strat.checkBalance(DAI)) + ' DAI   ', end='')
     print(c6(comp_strat.checkBalance(USDC)) + ' USDC  ', end='')
     print(c6(comp_strat.checkBalance(USDT)) + ' USDT  ')
-    print("Convex:", end='')
+    print("Convex:                      ", end='')
     convex_total = convex_strat.checkBalance(DAI) + convex_strat.checkBalance(USDC) * 1e12 + convex_strat.checkBalance(USDT) * 1e12
     convex_pct =  float(convex_total) / float(total) * 100
     print(c18(convex_total) + ' ({:0.2f}%)'.format(convex_pct))
     print("----------------------------------------")
 
+def show_ousd_supply():
+    vaultTotalValue = vault_core.totalValue()
+    ousdTotalSupply = ousd.totalSupply()
+    rate = vaultTotalValue / ousdTotalSupply
+    print("-------------- Ousd Supply ---------------")
+    print("Vault value:         " + c18(vaultTotalValue))
+    print("OUSD total supply:   " + c18(ousdTotalSupply))
+    print("Vault/OUSD diff:     " + c18(vaultTotalValue-ousdTotalSupply))
+    print("Rate:                " + leading_whitespace('{:0.4f}%'.format(rate)))
+    print("------------------------------------------")
 
 def show_aave_rewards():
     print("==== AAVE Rewards ====")
@@ -165,12 +193,44 @@ def sim_governor_execute(id):
     governor.execute(id, {'from': GOV_MULTISIG})
     print("Executed %s" % id)
 
+# crate a temporary fork of a node that cleans up ethereum state when exiting code block
 class TemporaryFork:
     def __enter__(self):
         brownie.chain.snapshot()
 
     def __exit__(self, *args, **kwargs):
         brownie.chain.revert()
+
+# show changes in Vault's & OUSD's supply once the code block exits 
+class SupplyChanges:
+    def __init__(self, txOptions):
+        self.txOptions=txOptions
+
+    def __enter__(self):
+        self.vaultTotalValue = vault_core.totalValue(self.txOptions)
+        self.ousdTotalSupply = ousd.totalSupply(self.txOptions)
+        # TODO: Uncomment once this becomes available
+        #self.netOusdMinted = vault_core.netOusdMintedForStrategy()
+        return self
+
+    def __exit__(self, *args, **kwargs):
+        vaultTotalValue = vault_core.totalValue(self.txOptions)
+        ousdTotalSupply = ousd.totalSupply(self.txOptions)
+        # TODO: Uncomment once this becomes available
+        #netOusdMinted = vault_core.netOusdMintedForStrategy()
+        rateBefore = self.vaultTotalValue / self.ousdTotalSupply
+        rateAfter = vaultTotalValue / ousdTotalSupply
+
+        print("----------- Supply Changes -------------")
+        print("                      " + leading_whitespace("Before") + " " + leading_whitespace("After") + " " + leading_whitespace("Difference"))
+        print("Vault value :         " + c18(self.vaultTotalValue) + " " + c18(vaultTotalValue) + " " + c18(vaultTotalValue - self.vaultTotalValue))
+        print("OUSD total supply :   " + c18(self.ousdTotalSupply) + " " + c18(ousdTotalSupply) + " " + c18(ousdTotalSupply - self.ousdTotalSupply))
+        print("Vault/OUSD diff :     " + c18(self.vaultTotalValue-self.ousdTotalSupply) + " " + c18(vaultTotalValue-ousdTotalSupply) + " " + c18(self.vaultTotalValue-self.ousdTotalSupply - (vaultTotalValue-ousdTotalSupply)))
+        print("Rate change :         " + leading_whitespace('{:0.4f}%'.format(rateBefore)) + " " + leading_whitespace('{:0.4f}%'.format(rateAfter)) + " " + leading_whitespace('{:0.4f}%'.format(rateAfter - rateBefore)))
+        # TODO: Uncomment once this becomes available
+        # print("OUSD strategy minted: " + c18(self.netOusdMinted) + " " + c18(netOusdMinted) + " " + c18(netOusdMinted - self.netOusdMinted))
+        print("----------------------------------------")
+        
 
 def show_proposal(id):
     state = ['New','Queue','Expired','Executed'][governor.state(id)]
@@ -180,7 +240,7 @@ def show_proposal(id):
         remaining_hours = int((prop[2] - time.time()) / 60 / 60 * 100) / 100
         if remaining_hours > 0:
             print("📅 #{:} [{:}] with {:.2f} hours remaining in timelock".format(id, state, remaining_hours))
-        else: 
+        else:
             remaining_hours += 48.0
             print("⚛️  #{:} [{:}] with {:.2f} hours remaining in window".format(id, state, remaining_hours))
     elif state == 'New':
@@ -196,3 +256,24 @@ def show_proposals(n=3):
     cnt = governor.proposalCount()
     for id in range(cnt,cnt-n, -1):
         show_proposal(id)
+
+# set as an asset default strategy
+def asset_default_strategy(strategy, asset):
+    tx = vault_admin.setAssetDefaultStrategy(asset.address, strategy.address, {'from': GOVERNOR})
+    tx.sig_string = 'setAssetDefaultStrategy(address,address)'
+    create_gov_proposal("Set comp strategy as default strategy for asset", [tx])
+    # execute latest proposal
+    sim_governor_execute(governor.proposalCount())
+
+# harvest rewards from all the strategies
+def harvest_all_strategies():
+    tx = harvester.harvestAndSwap({'from': GOVERNOR})
+    tx.sig_string = 'harvestAndSwap()'
+    create_gov_proposal("Harvest and swap all strategies", [tx])
+    # execute latest proposal
+    sim_governor_execute(governor.proposalCount())
+
+# withdraw funds from Comp strategy
+def withdrawFromComp(amount, asset):
+    comp_strat.withdraw(VAULT_PROXY_ADDRESS, asset.address, amount * math.pow(10, asset.decimals()), {'from': VAULT_PROXY_ADDRESS})
+    vault_core.rebase(OPTS)

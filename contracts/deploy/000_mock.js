@@ -227,6 +227,10 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     args: [[dai.address, usdc.address, usdt.address], threePoolToken.address],
   });
 
+  await deploy("MockalUSD", {
+    from: deployerAddr,
+  });
+
   // Mock CVX token
   await deploy("MockCVX", {
     from: deployerAddr,
