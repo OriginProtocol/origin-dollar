@@ -65,3 +65,10 @@ contract HarvesterProxy is InitializeGovernedUpgradeabilityProxy {
 contract DripperProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
+
+/**
+ * @notice MorphoCompoundStrategyProxy delegates calls to a MorphoCompoundStrategy implementation
+ */
+contract MorphoCompoundStrategyProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
