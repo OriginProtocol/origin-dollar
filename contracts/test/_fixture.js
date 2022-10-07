@@ -80,6 +80,14 @@ async function defaultFixture() {
     OUSDmetaStrategyProxy.address
   );
 
+  const morphoCompoundStrategyProxy = await ethers.getContract(
+    "MorphoCompoundStrategyProxy"
+  );
+  const morphoCompoundStrategy = await ethers.getContractAt(
+    "MorphoCompoundStrategy",
+    morphoCompoundStrategyProxy.address
+  );
+
   const aaveStrategyProxy = await ethers.getContract("AaveStrategyProxy");
   const aaveStrategy = await ethers.getContractAt(
     "AaveStrategy",
@@ -362,6 +370,7 @@ async function defaultFixture() {
     convexStrategy,
     OUSDmetaStrategy,
     alUSDMetaStrategy,
+    morphoCompoundStrategy,
     cvx,
     cvxBooster,
     cvxRewardPool,
@@ -615,6 +624,38 @@ async function convexMetaVaultFixture() {
 
   return fixture;
 }
+
+/**
+ * Configure a Vault with only the Morpho strategy.
+ */
+async function morphoCompoundFixture() {
+  const fixture = await loadFixture(defaultFixture);
+
+  const { governorAddr } = await getNamedAccounts();
+  const sGovernor = await ethers.provider.getSigner(governorAddr);
+
+  if (isFork) {
+    await fixture.vault
+      .connect(sGovernor)
+      .setAssetDefaultStrategy(
+        fixture.usdt.address,
+        fixture.morphoCompoundStrategy.address
+      );
+
+    await fixture.vault
+      .connect(sGovernor)
+      .setAssetDefaultStrategy(
+        fixture.usdc.address,
+        fixture.morphoCompoundStrategy.address
+      );
+
+  } else {
+    throw new Error("Morpho strategy only supported in forked test environment")
+  }
+
+  return fixture;
+}
+
 
 /**
  * Generalized strategy fixture that works only in forked environment
@@ -1059,6 +1100,7 @@ module.exports = {
   convexMetaVaultFixture,
   convexGeneralizedMetaForkedFixture,
   convexalUSDMetaVaultFixture,
+  morphoCompoundFixture,
   aaveVaultFixture,
   hackedVaultFixture,
   rebornFixture,

@@ -9,13 +9,21 @@ pragma solidity ^0.8.0;
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { BaseCompoundStrategy } from "./BaseCompoundStrategy.sol";
 import { IERC20 } from "../utils/InitializableAbstractStrategy.sol";
-import { IMorpho } from "../interfaces/morpho/IMorpho.sol";
+import { IMorpho, ICompoundOracle } from "../interfaces/morpho/IMorpho.sol";
+import { ILens } from "../interfaces/morpho/ILens.sol";
+import { StableMath } from "../utils/StableMath.sol";
+import "../utils/Helpers.sol";
 
 
 contract MorphoCompoundStrategy is BaseCompoundStrategy {
     address public constant MORPHO = 0x8888882f8f843896699869179fB6E4f7e3B58888;
+    address public constant LENS = 0x930f1b46e1D081Ec1524efD95752bE3eCe51EF67;
     using SafeERC20 for IERC20;
+    using StableMath for uint256;
     event SkippedWithdrawal(address asset, uint256 amount);
+
+    ICompoundOracle public ORACLE;
+
 
     /**
      * @dev Internal initialize function, to set up initial internal state
@@ -37,6 +45,7 @@ contract MorphoCompoundStrategy is BaseCompoundStrategy {
             _assets,
             _pTokens
         );
+        ORACLE = ICompoundOracle(IMorpho(MORPHO).comptroller().oracle());
     }
 
     /**
@@ -52,6 +61,22 @@ contract MorphoCompoundStrategy is BaseCompoundStrategy {
             IERC20(asset).safeApprove(MORPHO, 0);
             IERC20(asset).safeApprove(MORPHO, type(uint256).max);
         }
+    }
+
+    /**
+     * TODO: comment not right
+     * @dev Internal method to respond to the addition of new asset / cTokens
+     *      We need to approve the cToken and give it permission to spend the asset
+     * @param _asset Address of the asset to approve
+     * @param _pToken The pToken for the approval
+     */
+    function _abstractSetPToken(address _asset, address _pToken)
+        internal
+        override
+    {
+        // Safe approval
+        // IERC20(_pToken).safeApprove(MORPHO, 0);
+        // IERC20(_pToken).safeApprove(MORPHO, type(uint256).max);
     }
 
     /**
@@ -119,8 +144,27 @@ contract MorphoCompoundStrategy is BaseCompoundStrategy {
         address _asset,
         uint256 _amount
     ) external override onlyVault nonReentrant {
+        _withdraw(_recipient, _asset, _amount);
+    }
+
+    function _withdraw(
+        address _recipient,
+        address _asset,
+        uint256 _amount
+    ) internal onlyVault nonReentrant {
         require(_amount > 0, "Must withdraw something");
         require(_recipient != address(0), "Must specify recipient");
+
+        address pToken = assetToPToken[_asset];
+        uint256 oraclePrice = ORACLE.getUnderlyingPrice(pToken);
+
+        IMorpho(MORPHO).withdraw(
+            pToken,
+            _amount.divPrecisely(oraclePrice)
+        );
+
+        emit Withdrawal(_asset, address(0), _amount);
+        IERC20(_asset).safeTransfer(_recipient, _amount);
     }
 
     /**
@@ -128,15 +172,13 @@ contract MorphoCompoundStrategy is BaseCompoundStrategy {
      */
     function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
         for (uint256 i = 0; i < assetsMapped.length; i++) {
-
+            uint256 balance = _checkBalance(assetsMapped[i]);
+            _withdraw(vaultAddress, assetsMapped[i], balance);
         }
     }
 
     /**
-     * @dev Get the total asset value held in the platform
-     *      This includes any interest that was generated since depositing
-     *      Compound exchange rate between the cToken and asset gradually increases,
-     *      causing the cToken to be worth more corresponding asset.
+     * @dev TODO
      * @param _asset      Address of the asset
      * @return balance    Total value of the asset in the platform
      */
@@ -146,6 +188,34 @@ contract MorphoCompoundStrategy is BaseCompoundStrategy {
         override
         returns (uint256 balance)
     {
-        return 0;
+
+        return _checkBalance(_asset);
+    }
+
+    /**
+     * @dev TODO
+     * @param _asset      Address of the asset
+     * @return balance    Total value of the asset in the platform
+     */
+    function _checkBalance(address _asset)
+        internal
+        view
+        returns (uint256 balance)
+    {
+        address pToken = assetToPToken[_asset];
+
+        // both represented with 18 decimals no matter the underlying token
+        (uint256 suppliedOnPool, uint256 suppliedP2P, ) = ILens(LENS)
+            .getCurrentSupplyBalanceInOf(
+                pToken,
+                address(this) // the address of the user you want to know the supply of
+            );
+
+        uint256 assetDecimals = Helpers.getDecimals(_asset);
+        uint256 oraclePrice = ORACLE.getUnderlyingPrice(pToken);
+        uint256 suppliedOnPoolUSD = suppliedOnPool.mulTruncate(oraclePrice).scaleBy(assetDecimals, 18);
+        uint256 suppliedP2PUSD = suppliedP2P.mulTruncate(oraclePrice).scaleBy(assetDecimals, 18);
+
+        return suppliedOnPoolUSD + suppliedP2PUSD;
     }
 }

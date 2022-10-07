@@ -14,6 +14,8 @@ import { IERC20, InitializableAbstractStrategy } from "../utils/InitializableAbs
 abstract contract BaseCompoundStrategy is InitializableAbstractStrategy {
     using SafeERC20 for IERC20;
 
+    // TODO: check for storage slot problems / collisions
+
     /**
      * @dev Retuns bool indicating whether asset is supported by strategy
      * @param _asset Address of the asset
@@ -25,21 +27,6 @@ abstract contract BaseCompoundStrategy is InitializableAbstractStrategy {
         returns (bool)
     {
         return assetToPToken[_asset] != address(0);
-    }
-
-    /**
-     * @dev Internal method to respond to the addition of new asset / cTokens
-     *      We need to approve the cToken and give it permission to spend the asset
-     * @param _asset Address of the asset to approve
-     * @param _cToken The cToken for the approval
-     */
-    function _abstractSetPToken(address _asset, address _cToken)
-        internal
-        override
-    {
-        // Safe approval
-        IERC20(_asset).safeApprove(_cToken, 0);
-        IERC20(_asset).safeApprove(_cToken, type(uint256).max);
     }
 
     /**

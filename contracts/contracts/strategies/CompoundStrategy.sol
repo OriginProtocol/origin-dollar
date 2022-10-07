@@ -117,6 +117,21 @@ contract CompoundStrategy is BaseCompoundStrategy {
     }
 
     /**
+     * @dev Internal method to respond to the addition of new asset / cTokens
+     *      We need to approve the cToken and give it permission to spend the asset
+     * @param _asset Address of the asset to approve
+     * @param _pToken The pToken for the approval
+     */
+    function _abstractSetPToken(address _asset, address _pToken)
+        internal
+        override
+    {
+        // Safe approval
+        IERC20(_asset).safeApprove(_pToken, 0);
+        IERC20(_asset).safeApprove(_pToken, type(uint256).max);
+    }
+
+    /**
      * @dev Remove all assets from platform and send them to Vault contract.
      */
     function withdrawAll() external override onlyVaultOrGovernor nonReentrant {

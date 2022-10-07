@@ -39,7 +39,7 @@ module.exports = deploymentWithProposal(
     );
     const cMorphoCompoundStrategy = await ethers.getContractAt(
       "MorphoCompoundStrategy",
-      dMorphoCompoundStrategyImpl.address
+      dMorphoCompoundStrategyProxy.address
     );
 
     const cHarvesterProxy = await ethers.getContract("HarvesterProxy");
@@ -68,11 +68,7 @@ module.exports = deploymentWithProposal(
         cVaultProxy.address,
         [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT], // reward token addresses
         [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT], // asset token addresses
-        [
-          assetAddresses.ThreePoolToken,
-          assetAddresses.ThreePoolToken,
-          assetAddresses.ThreePoolToken,
-        ],
+        [assetAddresses.cDAI, assetAddresses.cUSDC, assetAddresses.cUSDT],
         await getTxOpts()
       )
     );
@@ -84,6 +80,16 @@ module.exports = deploymentWithProposal(
         .transferGovernance(governorAddr, await getTxOpts())
     );
 
+    // 6. Transfer governance
+    await withConfirmation(
+      cMorphoCompoundStrategy
+        .connect(sDeployer)
+        .safeApproveAllTokens(await getTxOpts())
+    );
+
+    console.log("3pool tokens:", assetAddresses.ThreePoolToken);
+    console.log("SETTING MORPHO STRATEGY: ", cMorphoCompoundStrategy.address)
+    console.log("SETTING MORPHO STRATEGY PROXY: ", dMorphoCompoundStrategyProxy.address)
     // Governance Actions
     // ----------------
     return {
@@ -105,7 +111,7 @@ module.exports = deploymentWithProposal(
         {
           contract: cHarvester,
           signature: "setSupportedStrategy(address,bool)",
-          args: [cMorphoCompoundStrategy.address, true],
+          args: [dMorphoCompoundStrategyProxy.address, true],
         },
         // 8. Set harvester address
         {
