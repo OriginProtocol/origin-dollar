@@ -269,11 +269,12 @@ const enrichLayoutData = (layout) => {
       throw new Error(
         "\x1b[31mStructures are not yet supported. Logic needs to be updated (probably with recursion) \x1b[0m"
       );
+    } else if (sItem.type === "t_string_storage") {
+      sItem.newSlot = true;
+      sItem.bits = 256;
     } else {
       throw new Error(
-        "\x1b[31mUnexpected solidity type: ",
-        sItem.type,
-        "\x1b[0m"
+        `\x1b[31mUnexpected solidity type: ${sItem.type}  for item: ${sItem.label} located in ${sItem.src}\x1b[0m`
       );
     }
 
