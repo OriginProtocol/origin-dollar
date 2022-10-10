@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useWeb3React } from '@web3-react/core'
 import { fbt } from 'fbt-runtime'
+import { useRouter } from 'next/router'
 
 import Layout from 'components/layout'
 import Nav from 'components/Nav'
@@ -11,6 +12,8 @@ import { assetRootPath } from 'utils/image'
 
 export default function History({ locale, onLocale }) {
   const { active } = useWeb3React()
+  const router = useRouter()
+  const overrideAccount = router.query.override_account
 
   return (
     <>
@@ -18,8 +21,8 @@ export default function History({ locale, onLocale }) {
         <Nav dapp page={'history'} locale={locale} onLocale={onLocale} />
         <div className="home d-flex flex-column">
           <BalanceHeader />
-          {active && <TransactionHistory />}
-          {!active && (
+          {(overrideAccount || active) && <TransactionHistory />}
+          {!overrideAccount && !active && (
             <div className="empty-placeholder d-flex flex-column align-items-center justify-content-start">
               <img src={assetRootPath('/images/wallet-icons.svg')} />
               <div className="header-text">

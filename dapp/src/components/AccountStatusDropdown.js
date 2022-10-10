@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { useWeb3React } from '@web3-react/core'
 import { fbt } from 'fbt-runtime'
+import { useRouter } from 'next/router'
 
 import Dropdown from 'components/Dropdown'
 import GetOUSD from 'components/GetOUSD'
@@ -20,6 +21,8 @@ const AccountStatusDropdown = ({ className, showLogin, dapp }) => {
   const { active, account, chainId } = useWeb3React()
   const [open, setOpen] = useState(false)
   const correctNetwork = isCorrectNetwork(chainId)
+  const router = useRouter()
+  const overrideAccount = router.query.override_account
 
   return (
     <>
@@ -71,7 +74,9 @@ const AccountStatusDropdown = ({ className, showLogin, dapp }) => {
           {dapp && active && correctNetwork && (
             <>
               <div className="dot green" />
-              <div className="address">{shortenAddress(account)}</div>
+              <div className="address">
+                {shortenAddress(overrideAccount || account)}
+              </div>
             </>
           )}
         </a>
