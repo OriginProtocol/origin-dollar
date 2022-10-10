@@ -273,7 +273,6 @@ const enrichLayoutData = (layout) => {
       sItem.newSlot = true;
       sItem.bits = 256;
     } else {
-      console.log("TYPE", sItem.type, sItem)
       throw new Error(
         `\x1b[31mUnexpected solidity type: ${sItem.type}  for item: ${sItem.label} located in ${sItem.src}\x1b[0m`
       );
