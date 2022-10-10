@@ -191,7 +191,7 @@ const Burn = ({ locale, onLocale, isMobile }) => {
       }
     }
     fetchStakedOgv()
-  }, [ogv, veogv])
+  }, [ogv, veogv, currentBlock])
 
   return (
     <Layout locale={locale}>
