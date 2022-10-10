@@ -60,5 +60,8 @@
     "hooks": {
       "pre-push": "yarn run prettier:check"
     }
+  },
+  "dependencies": {
+    "@openzeppelin/contracts-upgradeable": "4.6.0"
   }
 }
