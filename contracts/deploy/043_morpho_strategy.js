@@ -2,7 +2,7 @@ const { deploymentWithProposal } = require("../utils/deploy");
 const addresses = require("../utils/addresses");
 
 module.exports = deploymentWithProposal(
-  { deployName: "043_morpho_strategy", forceDeploy: true },
+  { deployName: "043_morpho_strategy", forceDeploy: false },
   async ({
     assetAddresses,
     deployWithConfirmation,
@@ -79,31 +79,31 @@ module.exports = deploymentWithProposal(
         .transferGovernance(governorAddr, await getTxOpts())
     );
 
-    console.log("SETTING MORPHO STRATEGY: ", cMorphoCompoundStrategy.address);
+    console.log("Morpho Compound strategy address: ", cMorphoCompoundStrategy.address);
     // Governance Actions
     // ----------------
     return {
       name: "Deploy new Morpho Compound strategy",
       actions: [
-        // 3. Accept governance of new MorphoCompoundStrategy
+        // 1. Accept governance of new MorphoCompoundStrategy
         {
           contract: cMorphoCompoundStrategy,
           signature: "claimGovernance()",
           args: [],
         },
-        // 4. Add new Morpho strategy to vault
+        // 2. Add new Morpho strategy to vault
         {
           contract: cVaultAdmin,
           signature: "approveStrategy(address)",
           args: [cMorphoCompoundStrategy.address],
         },
-        // 7. Set supported strategy on Harvester
+        // 3. Set supported strategy on Harvester
         {
           contract: cHarvester,
           signature: "setSupportedStrategy(address,bool)",
           args: [dMorphoCompoundStrategyProxy.address, true],
         },
-        // 8. Set harvester address
+        // 4. Set harvester address
         {
           contract: cMorphoCompoundStrategy,
           signature: "setHarvesterAddress(address)",
