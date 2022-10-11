@@ -139,7 +139,9 @@ const Burn = ({ locale, onLocale, isMobile }) => {
   const burnBlock = 15724869
   const burnOver = burnBlock < currentBlock
   const burnedAmount = burnedOptionalAmount + burnedMandatoryAmount
-  const burnAmount = burnOver ? burnedAmount : optionalLockupBalance + mandatoryLockupBalance
+  const burnAmount = burnOver
+    ? burnedAmount
+    : optionalLockupBalance + mandatoryLockupBalance
 
   const stakingApy =
     getRewardsApy(100 * 1.8 ** (48 / 12), 100, totalVeSupply) || 0
