@@ -196,7 +196,7 @@ contract MorphoCompoundStrategy is BaseCompoundStrategy {
         address _recipient,
         address _asset,
         uint256 _amount
-    ) internal onlyVault nonReentrant {
+    ) internal {
         require(_amount > 0, "Must withdraw something");
         require(_recipient != address(0), "Must specify recipient");
 
