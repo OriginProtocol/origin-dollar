@@ -648,14 +648,6 @@ async function morphoCompoundFixture() {
   const { governorAddr } = await getNamedAccounts();
   const sGovernor = await ethers.provider.getSigner(governorAddr);
 
-  // Get some USDC to daniel
-  await impersonateAndFundAddress(
-    addresses.mainnet.USDC,
-    [addresses.mainnet.ThreePool],
-    // Daniel is loaded with usdc
-    fixture.daniel.getAddress()
-  );
-
   if (isFork) {
     await fixture.vault
       .connect(sGovernor)

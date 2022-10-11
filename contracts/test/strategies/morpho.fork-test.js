@@ -39,7 +39,7 @@ forkOnlyDescribe("ForkTest: Morpho Compound Strategy", function () {
   });
 
   describe("Redeem", function () {
-    it("Should redeem", async () => {
+    it("Should redeem from Morpho", async () => {
       const { vault, ousd, usdt, usdc, dai, anna } = fixture;
 
       const supplyBeforeMint = await ousd.totalSupply();
@@ -92,7 +92,7 @@ forkOnlyDescribe("ForkTest: Morpho Compound Strategy", function () {
     await mintTest(fixture, anna, usdc, "110000");
 
     // harvester always exchanges for USDT and parks the funds in the dripper
-    const usdcBalanceDiff = await differenceInErc20TokenBalance(
+    const usdtBalanceDiff = await differenceInErc20TokenBalance(
       dripper.address,
       usdt,
       async () => {
@@ -112,7 +112,7 @@ forkOnlyDescribe("ForkTest: Morpho Compound Strategy", function () {
       }
     );
 
-    await expect(usdcBalanceDiff).to.be.gte(0);
+    await expect(usdtBalanceDiff).to.be.gte(0);
   });
 });
 
