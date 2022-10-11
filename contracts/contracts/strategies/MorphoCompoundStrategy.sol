@@ -125,6 +125,18 @@ contract MorphoCompoundStrategy is BaseCompoundStrategy {
     }
 
     /**
+     * @dev Get the amount of rewards pending to be collected from the protocol
+     */
+    function getPendingRewards() external view returns (uint256 balance) {
+        address[] memory poolTokens = new address[](assetsMapped.length);
+        for (uint256 i = 0; i < assetsMapped.length; i++) {
+            poolTokens[i] = assetToPToken[assetsMapped[i]];
+        }
+
+        return ILens(LENS).getUserUnclaimedRewards(poolTokens, address(this));
+    }
+
+    /**
      * @dev Deposit asset into Morpho
      * @param _asset Address of asset to deposit
      * @param _amount Amount of asset to deposit

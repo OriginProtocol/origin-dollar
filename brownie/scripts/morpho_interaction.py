@@ -6,6 +6,7 @@ morphoStrat = "0xC83Cb4F34874E0Ef4c58b4e77D4935F8F819d203";
 morphoLens = interface.morpho_lens("0x930f1b46e1d081ec1524efd95752be3ece51ef67")
 morphoComp = interface.morpho("0x8888882f8f843896699869179fB6E4f7e3B58888")
 
+morpho_strat = load_contract('morpho_strat', morphoStrat)
 vault_admin.setAssetDefaultStrategy(usdc.address, morphoStrat, {'from': GOVERNOR})
 vault_admin.setAssetDefaultStrategy(usdt.address, morphoStrat, {'from': GOVERNOR})
 mint(110000, usdc)

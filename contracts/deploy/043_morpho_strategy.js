@@ -79,7 +79,10 @@ module.exports = deploymentWithProposal(
         .transferGovernance(governorAddr, await getTxOpts())
     );
 
-    console.log("Morpho Compound strategy address: ", cMorphoCompoundStrategy.address);
+    console.log(
+      "Morpho Compound strategy address: ",
+      cMorphoCompoundStrategy.address
+    );
     // Governance Actions
     // ----------------
     return {
