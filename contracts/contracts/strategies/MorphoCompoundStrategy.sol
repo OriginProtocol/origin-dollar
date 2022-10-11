@@ -2,8 +2,8 @@
 pragma solidity ^0.8.0;
 
 /**
- * @title OUSD Compound Strategy
- * @notice Investment strategy for investing stablecoins via Compound
+ * @title OUSD Morpho Compound Strategy
+ * @notice Investment strategy for investing stablecoins via Morpho (Compound)
  * @author Origin Protocol Inc
  */
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -19,7 +19,6 @@ contract MorphoCompoundStrategy is BaseCompoundStrategy {
     address public constant LENS = 0x930f1b46e1D081Ec1524efD95752bE3eCe51EF67;
     using SafeERC20 for IERC20;
     using StableMath for uint256;
-    event SkippedWithdrawal(address asset, uint256 amount);
 
     ICompoundOracle public ORACLE;
 
@@ -47,7 +46,7 @@ contract MorphoCompoundStrategy is BaseCompoundStrategy {
     }
 
     /**
-     * @dev Approve the spending of all assets by their corresponding cToken,
+     * @dev Approve the spending of all assets by main Morpho contract,
      *      if for some reason is it necessary.
      */
     function safeApproveAllTokens() external override {
@@ -62,8 +61,8 @@ contract MorphoCompoundStrategy is BaseCompoundStrategy {
     }
 
     /**
-     * @dev Internal method to respond to the addition of new asset / cTokens
-     *      We need to approve the cToken and give it permission to spend the asset
+     * @dev Internal method to respond to the addition of new asset
+     *      We need to approve and allow Morpho to move them
      * @param _asset Address of the asset to approve
      * @param _pToken The pToken for the approval
      */
@@ -77,7 +76,7 @@ contract MorphoCompoundStrategy is BaseCompoundStrategy {
     }
 
     /**
-     * @dev Collect accumulated rewards and send to Harvester.
+     * @dev Collect accumulated rewards and send them to Harvester.
      */
     function collectRewardTokens()
         external
@@ -85,6 +84,25 @@ contract MorphoCompoundStrategy is BaseCompoundStrategy {
         onlyHarvester
         nonReentrant
     {
+        /**
+         * Gas considerations. We could query Morpho LENS's `getUserUnclaimedRewards` for each
+         * cToken separately and only claimRewards where it is economically feasible. Each call
+         * (out of 3) costs ~60k gas extra.
+         *
+         * Each extra cToken in the `poolTokens` of `claimRewards` function makes that call
+         * 89-120k more expensive gas wise.
+         *
+         * With Lens query in case where:
+         *  - there is only 1 reward token to collect. Net gas usage in best case would be
+         *    3*60 - 2*120 = -60k -> saving 60k gas
+         *  - there are 2 reward tokens to collect. Net gas usage in best case would be
+         *    3*60 - 120 = 60k -> more expensive for 60k gas
+         *  - there are 3 reward tokens to collect. Net gas usage in best case would be
+         *    3*60 = 180k -> more expensive for 180k gas
+         *
+         * For the above reasoning such "optimization" is not implemented
+         */
+
         address[] memory poolTokens = new address[](assetsMapped.length);
         for (uint256 i = 0; i < assetsMapped.length; i++) {
             poolTokens[i] = assetToPToken[assetsMapped[i]];
@@ -137,7 +155,7 @@ contract MorphoCompoundStrategy is BaseCompoundStrategy {
     }
 
     /**
-     * @dev Deposit the entire balance of any supported asset into Compound
+     * @dev Deposit the entire balance of any supported asset into Morpho
      */
     function depositAll() external override onlyVault nonReentrant {
         for (uint256 i = 0; i < assetsMapped.length; i++) {
@@ -149,7 +167,7 @@ contract MorphoCompoundStrategy is BaseCompoundStrategy {
     }
 
     /**
-     * @dev Withdraw asset from Compound
+     * @dev Withdraw asset from Morpho
      * @param _recipient Address to receive withdrawn asset
      * @param _asset Address of asset to withdraw
      * @param _amount Amount of asset to withdraw
@@ -190,7 +208,7 @@ contract MorphoCompoundStrategy is BaseCompoundStrategy {
     }
 
     /**
-     * @dev TODO
+     * @dev Return total value of an asset held in the platform
      * @param _asset      Address of the asset
      * @return balance    Total value of the asset in the platform
      */
@@ -203,11 +221,6 @@ contract MorphoCompoundStrategy is BaseCompoundStrategy {
         return _checkBalance(_asset);
     }
 
-    /**
-     * @dev TODO
-     * @param _asset      Address of the asset
-     * @return balance    Total value of the asset in the platform
-     */
     function _checkBalance(address _asset)
         internal
         view
@@ -215,23 +228,20 @@ contract MorphoCompoundStrategy is BaseCompoundStrategy {
     {
         address pToken = assetToPToken[_asset];
 
-        // both represented with 18 decimals no matter the underlying token
+        /**
+         * Both values represented with 18 decimals no matter the underlying token. Morpho
+         * differentiates between funds deployed in underlying Compound pool and
+         * the ones that are matched P2P (those have higher APY).
+         */
         (uint256 suppliedOnPool, uint256 suppliedP2P, ) = ILens(LENS)
-            .getCurrentSupplyBalanceInOf(
-                pToken,
-                address(this) // the address of the user you want to know the supply of
-            );
+            .getCurrentSupplyBalanceInOf(pToken, address(this));
 
         uint256 assetDecimals = Helpers.getDecimals(_asset);
         uint256 oraclePrice = ORACLE.getUnderlyingPrice(pToken);
-        uint256 suppliedOnPoolUSD = suppliedOnPool
+        uint256 suppliedInUsd = (suppliedOnPool + suppliedP2P)
             .mulTruncate(oraclePrice)
             .scaleBy(assetDecimals, 18);
-        uint256 suppliedP2PUSD = suppliedP2P.mulTruncate(oraclePrice).scaleBy(
-            assetDecimals,
-            18
-        );
 
-        return suppliedOnPoolUSD + suppliedP2PUSD;
+        return suppliedInUsd;
     }
 }
