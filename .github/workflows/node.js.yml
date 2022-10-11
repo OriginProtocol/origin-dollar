@@ -1,0 +1,33 @@
+name: Run tests
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [14.x]
+    steps:
+    - uses: actions/checkout@v2
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v1
+      with:
+        node-version: ${{ matrix.node-version }}
+    - name: Install dependencies
+      run: sudo apt update && sudo apt-get install -y libudev-dev libusb-1.0-0-dev
+    - run: yarn install
+      working-directory: ./contracts
+    - run: yarn run lint
+      working-directory: ./contracts
+    - run: yarn prettier:check
+      working-directory: ./contracts
+    - run: yarn run test
+      working-directory: ./contracts
+    - run: yarn install
+      working-directory: ./dapp
+    - run: yarn prettier:check
+      working-directory: ./dapp

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { ethers } from 'ethers'
 import { fbt } from 'fbt-runtime'
-import Countdown from 'react-countdown'
+import Countdown, { zeroPad } from 'react-countdown'
 import { useStoreState } from 'pullstate'
 import ContractStore from 'stores/ContractStore'
 import addresses from 'constants/contractAddresses'
@@ -21,22 +21,22 @@ const BurnCountdown = ({ days, hours, minutes, seconds }) => {
       </div>
       <div className="d-flex flex-row text-center">
         <div className="d-flex flex-column">
-          <div className="number gradient1">{days}</div>
+          <div className="number gradient1">{zeroPad(days)}</div>
           <div className="label">Days</div>
         </div>
         <div className="colon">:</div>
         <div className="d-flex flex-column">
-          <div className="number gradient1">{hours}</div>
+          <div className="number gradient1">{zeroPad(hours)}</div>
           <div className="label">Hours</div>
         </div>
         <div className="colon">:</div>
         <div className="d-flex flex-column">
-          <div className="number gradient1">{minutes}</div>
+          <div className="number gradient1">{zeroPad(minutes)}</div>
           <div className="label">Minutes</div>
         </div>
         <div className="colon">:</div>
         <div className="d-flex flex-column">
-          <div className="number gradient1">{seconds}</div>
+          <div className="number gradient1">{zeroPad(seconds)}</div>
           <div className="label">Seconds</div>
         </div>
       </div>
@@ -129,6 +129,11 @@ const Burn = ({ locale, onLocale, isMobile }) => {
   const burnAmount = optionalLockupBalance + mandatoryLockupBalance
   const burnedAmount = burnedOptionalAmount + burnedMandatoryAmount
 
+  const mandatoryDistributorInitialOgv = 398752449
+  const optionalDistributorInitialOgv = 747905084
+  const distributorInitialOgv =
+    mandatoryDistributorInitialOgv + optionalDistributorInitialOgv
+
   const initialSupply = 4000000000
   const airdropAllocationOgn = 1000000000
   const airdropAllocationOusd = 450000000
@@ -186,7 +191,7 @@ const Burn = ({ locale, onLocale, isMobile }) => {
       }
     }
     fetchStakedOgv()
-  }, [ogv, veogv])
+  }, [ogv, veogv, currentBlock])
 
   return (
     <Layout locale={locale}>
@@ -371,28 +376,29 @@ const Burn = ({ locale, onLocale, isMobile }) => {
                 <div className="grey">Tokens claimed</div>
                 <div className="mb-4">
                   <span className="large">
-                    {formatCurrency(airdropAllocation - burnAmount, 0)}
+                    {formatCurrency(distributorInitialOgv - burnAmount, 0)}
                   </span>
                   <span className="small">{' OGV'}</span>
                   <span className="grey">{` (${formatCurrency(
-                    ((airdropAllocation - burnAmount) * 100) /
-                      airdropAllocation,
+                    ((distributorInitialOgv - burnAmount) * 100) /
+                      distributorInitialOgv,
                     2
-                  )}%)*`}</span>
+                  )}%)`}</span>
+                  &#42;
                 </div>
                 <div className={`d-flex layout`}>
                   <div className={`mr-lg-5 mr-md-3 ${isMobile ? 'mb-3' : ''}`}>
                     <div className="text-container grey">OGN holders</div>
                     <span className="medium">
                       {formatCurrency(
-                        airdropAllocationOgn - optionalLockupBalance,
+                        optionalDistributorInitialOgv - optionalLockupBalance,
                         0
                       )}
                     </span>
                     <span className="small">{' OGV'}</span>
                     <div className="grey">{`(${formatCurrency(
-                      ((airdropAllocationOgn - optionalLockupBalance) /
-                        airdropAllocationOgn) *
+                      ((optionalDistributorInitialOgv - optionalLockupBalance) /
+                        optionalDistributorInitialOgv) *
                         100,
                       2
                     )}%)`}</div>
@@ -401,14 +407,15 @@ const Burn = ({ locale, onLocale, isMobile }) => {
                     <div className="text-container grey">OUSD holders</div>
                     <span className="medium">
                       {formatCurrency(
-                        airdropAllocationOusd - mandatoryLockupBalance,
+                        mandatoryDistributorInitialOgv - mandatoryLockupBalance,
                         0
                       )}
                     </span>
                     <span className="small">{' OGV'}</span>
                     <div className="grey">{`(${formatCurrency(
-                      ((airdropAllocationOusd - mandatoryLockupBalance) /
-                        airdropAllocationOusd) *
+                      ((mandatoryDistributorInitialOgv -
+                        mandatoryLockupBalance) /
+                        mandatoryDistributorInitialOgv) *
                         100,
                       2
                     )}%)`}</div>
@@ -462,7 +469,9 @@ const Burn = ({ locale, onLocale, isMobile }) => {
             </div>
           </div>
           <div className="footnote">
-            * Including portion of tokens sent to exchanges
+            &#42; 306,217,404 OGV were sent to exchanges whose customers were
+            eligible for the airdrop. These exchanges are expected to burn any
+            unclaimed tokens at the end of the claim period.
           </div>
         </div>
       </section>
