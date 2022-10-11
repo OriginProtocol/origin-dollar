@@ -126,8 +126,6 @@ const Burn = ({ locale, onLocale, isMobile }) => {
   const [burnedOptionalAmount, setBurnedOptionalAmount] = useState(0)
   const [burnedMandatoryAmount, setBurnedMandatoryAmount] = useState(0)
   const [currentBlock, setCurrentBlock] = useState()
-  const burnAmount = optionalLockupBalance + mandatoryLockupBalance
-  const burnedAmount = burnedOptionalAmount + burnedMandatoryAmount
 
   const mandatoryDistributorInitialOgv = 398752449
   const optionalDistributorInitialOgv = 747905084
@@ -138,8 +136,10 @@ const Burn = ({ locale, onLocale, isMobile }) => {
   const airdropAllocationOgn = 1000000000
   const airdropAllocationOusd = 450000000
   const airdropAllocation = airdropAllocationOgn + airdropAllocationOusd
-  const burnBlock = 15713631
+  const burnBlock = 15724869
   const burnOver = burnBlock < currentBlock
+  const burnedAmount = burnedOptionalAmount + burnedMandatoryAmount
+  const burnAmount = burnOver ? burnedAmount : optionalLockupBalance + mandatoryLockupBalance
 
   const stakingApy =
     getRewardsApy(100 * 1.8 ** (48 / 12), 100, totalVeSupply) || 0
@@ -188,6 +188,8 @@ const Burn = ({ locale, onLocale, isMobile }) => {
           .then((r) => Number(r) / 10 ** 18)
         setBurnedOptionalAmount(burnedOptional)
         setBurnedMandatoryAmount(burnedMandatory)
+        setOptionalLockupBalance(burnedOptional)
+        setMandatoryLockupBalance(burnedMandatory)
       }
     }
     fetchStakedOgv()
