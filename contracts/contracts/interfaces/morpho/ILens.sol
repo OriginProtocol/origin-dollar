@@ -38,14 +38,20 @@ interface ILens {
 
     function isMarketCreated(address _poolToken) external view returns (bool);
 
-    function isMarketCreatedAndNotPaused(address _poolToken) external view returns (bool);
+    function isMarketCreatedAndNotPaused(address _poolToken)
+        external
+        view
+        returns (bool);
 
     function isMarketCreatedAndNotPausedNorPartiallyPaused(address _poolToken)
         external
         view
         returns (bool);
 
-    function getAllMarkets() external view returns (address[] memory marketsCreated_);
+    function getAllMarkets()
+        external
+        view
+        returns (address[] memory marketsCreated_);
 
     function getMainMarketData(address _poolToken)
         external
@@ -98,14 +104,23 @@ interface ILens {
 
     /// INDEXES ///
 
-    function getCurrentP2PSupplyIndex(address _poolToken) external view returns (uint256);
+    function getCurrentP2PSupplyIndex(address _poolToken)
+        external
+        view
+        returns (uint256);
 
-    function getCurrentP2PBorrowIndex(address _poolToken) external view returns (uint256);
+    function getCurrentP2PBorrowIndex(address _poolToken)
+        external
+        view
+        returns (uint256);
 
     function getCurrentPoolIndexes(address _poolToken)
         external
         view
-        returns (uint256 currentPoolSupplyIndex, uint256 currentPoolBorrowIndex);
+        returns (
+            uint256 currentPoolSupplyIndex,
+            uint256 currentPoolBorrowIndex
+        );
 
     function getIndexes(address _poolToken, bool _computeUpdatedIndexes)
         external
@@ -124,12 +139,15 @@ interface ILens {
         view
         returns (address[] memory enteredMarkets);
 
-    function getUserHealthFactor(address _user, address[] calldata _updatedMarkets)
-        external
-        view
-        returns (uint256);
+    function getUserHealthFactor(
+        address _user,
+        address[] calldata _updatedMarkets
+    ) external view returns (uint256);
 
-    function getUserBalanceStates(address _user, address[] calldata _updatedMarkets)
+    function getUserBalanceStates(
+        address _user,
+        address[] calldata _updatedMarkets
+    )
         external
         view
         returns (
@@ -189,9 +207,15 @@ interface ILens {
 
     /// RATES ///
 
-    function getAverageSupplyRatePerBlock(address _poolToken) external view returns (uint256);
+    function getAverageSupplyRatePerBlock(address _poolToken)
+        external
+        view
+        returns (uint256);
 
-    function getAverageBorrowRatePerBlock(address _poolToken) external view returns (uint256);
+    function getAverageBorrowRatePerBlock(address _poolToken)
+        external
+        view
+        returns (uint256);
 
     function getRatesPerBlock(address _poolToken)
         external
@@ -243,10 +267,10 @@ interface ILens {
 
     /// REWARDS ///
 
-    function getUserUnclaimedRewards(address[] calldata _poolTokens, address _user)
-        external
-        view
-        returns (uint256 unclaimedRewards);
+    function getUserUnclaimedRewards(
+        address[] calldata _poolTokens,
+        address _user
+    ) external view returns (uint256 unclaimedRewards);
 
     function getAccruedSupplierComp(
         address _supplier,
@@ -260,7 +284,13 @@ interface ILens {
         uint256 _balance
     ) external view returns (uint256);
 
-    function getCurrentCompSupplyIndex(address _poolToken) external view returns (uint256);
+    function getCurrentCompSupplyIndex(address _poolToken)
+        external
+        view
+        returns (uint256);
 
-    function getCurrentCompBorrowIndex(address _poolToken) external view returns (uint256);
+    function getCurrentCompBorrowIndex(address _poolToken)
+        external
+        view
+        returns (uint256);
 }

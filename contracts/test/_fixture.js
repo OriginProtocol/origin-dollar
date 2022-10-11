@@ -19,6 +19,8 @@ const { loadFixture, getOracleAddresses } = require("./helpers");
 const daiAbi = require("./abi/dai.json").abi;
 const usdtAbi = require("./abi/usdt.json").abi;
 const erc20Abi = require("./abi/erc20.json");
+const morphoAbi = require("./abi/morpho.json");
+const morphoLensAbi = require("./abi/morphoLens.json");
 const crvMinterAbi = require("./abi/crvMinter.json");
 
 // const curveFactoryAbi = require("./abi/curveFactory.json")
@@ -149,6 +151,8 @@ async function defaultFixture() {
     threePool,
     threePoolToken,
     metapoolToken,
+    morpho,
+    morphoLens,
     alUSDMetapoolToken,
     threePoolGauge,
     aaveAddressProvider,
@@ -166,12 +170,20 @@ async function defaultFixture() {
     dai = await ethers.getContractAt(daiAbi, addresses.mainnet.DAI);
     tusd = await ethers.getContractAt(erc20Abi, addresses.mainnet.TUSD);
     usdc = await ethers.getContractAt(erc20Abi, addresses.mainnet.USDC);
+    cusdt = await ethers.getContractAt(erc20Abi, addresses.mainnet.cUSDT);
+    cusdc = await ethers.getContractAt(erc20Abi, addresses.mainnet.cUSDC);
     comp = await ethers.getContractAt(erc20Abi, addresses.mainnet.COMP);
     crv = await ethers.getContractAt(erc20Abi, addresses.mainnet.CRV);
     cvx = await ethers.getContractAt(erc20Abi, addresses.mainnet.CVX);
     ogn = await ethers.getContractAt(erc20Abi, addresses.mainnet.OGN);
     alUSD = await ethers.getContractAt(erc20Abi, addresses.mainnet.alUSD);
     aave = await ethers.getContractAt(erc20Abi, addresses.mainnet.Aave);
+    morpho = await ethers.getContractAt(morphoAbi, addresses.mainnet.Morpho);
+    morphoLens = await ethers.getContractAt(
+      morphoLensAbi,
+      addresses.mainnet.MorphoLens
+    );
+
     crvMinter = await ethers.getContractAt(
       crvMinterAbi,
       addresses.mainnet.CRVMinter
@@ -365,6 +377,8 @@ async function defaultFixture() {
     threePoolGauge,
     threePoolToken,
     metapoolToken,
+    morpho,
+    morphoLens,
     alUSDMetapoolToken,
     threePoolStrategy,
     convexStrategy,
@@ -634,6 +648,14 @@ async function morphoCompoundFixture() {
   const { governorAddr } = await getNamedAccounts();
   const sGovernor = await ethers.provider.getSigner(governorAddr);
 
+  // Get some USDC to daniel
+  await impersonateAndFundAddress(
+    addresses.mainnet.USDC,
+    [addresses.mainnet.ThreePool],
+    // Daniel is loaded with usdc
+    fixture.daniel.getAddress()
+  );
+
   if (isFork) {
     await fixture.vault
       .connect(sGovernor)
@@ -648,14 +670,14 @@ async function morphoCompoundFixture() {
         fixture.usdc.address,
         fixture.morphoCompoundStrategy.address
       );
-
   } else {
-    throw new Error("Morpho strategy only supported in forked test environment")
+    throw new Error(
+      "Morpho strategy only supported in forked test environment"
+    );
   }
 
   return fixture;
 }
-
 
 /**
  * Generalized strategy fixture that works only in forked environment

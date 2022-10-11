@@ -40,7 +40,7 @@ contract CompoundStrategy is BaseCompoundStrategy {
         claimers[0] = address(this);
         // Claim COMP from Comptroller. Only collect for supply, saves gas
         comptroller.claimComp(claimers, ctokensToCollect, false, true);
-        // Transfer COMP to Vault
+        // Transfer COMP to Harvester
         IERC20 rewardToken = IERC20(rewardTokenAddresses[0]);
         uint256 balance = rewardToken.balanceOf(address(this));
         emit RewardTokenCollected(

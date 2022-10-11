@@ -72,7 +72,9 @@ interface IComptroller {
             bool isComped
         );
 
-    function enterMarkets(address[] calldata cTokens) external returns (uint256[] memory);
+    function enterMarkets(address[] calldata cTokens)
+        external
+        returns (uint256[] memory);
 
     function exitMarket(address cToken) external returns (uint256);
 
@@ -218,9 +220,15 @@ interface IComptroller {
 
     function compBorrowSpeeds(address) external view returns (uint256);
 
-    function compSupplyState(address) external view returns (CompMarketState memory);
+    function compSupplyState(address)
+        external
+        view
+        returns (CompMarketState memory);
 
-    function compBorrowState(address) external view returns (CompMarketState memory);
+    function compBorrowState(address)
+        external
+        view
+        returns (CompMarketState memory);
 
     function getCompAddress() external view returns (address);
 
@@ -228,11 +236,14 @@ interface IComptroller {
 
     function _setMintPaused(ICToken cToken, bool state) external returns (bool);
 
-    function _setBorrowPaused(ICToken cToken, bool state) external returns (bool);
-
-    function _setCollateralFactor(ICToken cToken, uint256 newCollateralFactorMantissa)
+    function _setBorrowPaused(ICToken cToken, bool state)
         external
-        returns (uint256);
+        returns (bool);
+
+    function _setCollateralFactor(
+        ICToken cToken,
+        uint256 newCollateralFactorMantissa
+    ) external returns (uint256);
 
     function _setCompSpeeds(
         ICToken[] memory cTokens,
@@ -269,7 +280,10 @@ interface ICToken {
 
     function approve(address spender, uint256 amount) external returns (bool);
 
-    function allowance(address owner, address spender) external view returns (uint256);
+    function allowance(address owner, address spender)
+        external
+        view
+        returns (uint256);
 
     function balanceOf(address owner) external view returns (uint256);
 
@@ -293,7 +307,10 @@ interface ICToken {
 
     function borrowBalanceCurrent(address account) external returns (uint256);
 
-    function borrowBalanceStored(address account) external view returns (uint256);
+    function borrowBalanceStored(address account)
+        external
+        view
+        returns (uint256);
 
     function exchangeRateCurrent() external returns (uint256);
 
@@ -315,7 +332,9 @@ interface ICToken {
 
     function repayBorrow(uint256) external returns (uint256);
 
-    function repayBorrowBehalf(address borrower, uint256 repayAmount) external returns (uint256);
+    function repayBorrowBehalf(address borrower, uint256 repayAmount)
+        external
+        returns (uint256);
 
     function liquidateBorrow(
         address borrower,
@@ -347,13 +366,19 @@ interface ICToken {
 
     /*** Admin Functions ***/
 
-    function _setPendingAdmin(address payable newPendingAdmin) external returns (uint256);
+    function _setPendingAdmin(address payable newPendingAdmin)
+        external
+        returns (uint256);
 
     function _acceptAdmin() external returns (uint256);
 
-    function _setComptroller(IComptroller newComptroller) external returns (uint256);
+    function _setComptroller(IComptroller newComptroller)
+        external
+        returns (uint256);
 
-    function _setReserveFactor(uint256 newReserveFactorMantissa) external returns (uint256);
+    function _setReserveFactor(uint256 newReserveFactorMantissa)
+        external
+        returns (uint256);
 
     function _reduceReserves(uint256 reduceAmount) external returns (uint256);
 

@@ -14,7 +14,6 @@ import { ILens } from "../interfaces/morpho/ILens.sol";
 import { StableMath } from "../utils/StableMath.sol";
 import "../utils/Helpers.sol";
 
-
 contract MorphoCompoundStrategy is BaseCompoundStrategy {
     address public constant MORPHO = 0x8888882f8f843896699869179fB6E4f7e3B58888;
     address public constant LENS = 0x930f1b46e1D081Ec1524efD95752bE3eCe51EF67;
@@ -23,7 +22,6 @@ contract MorphoCompoundStrategy is BaseCompoundStrategy {
     event SkippedWithdrawal(address asset, uint256 amount);
 
     ICompoundOracle public ORACLE;
-
 
     /**
      * @dev Internal initialize function, to set up initial internal state
@@ -64,19 +62,18 @@ contract MorphoCompoundStrategy is BaseCompoundStrategy {
     }
 
     /**
-     * TODO: comment not right
      * @dev Internal method to respond to the addition of new asset / cTokens
      *      We need to approve the cToken and give it permission to spend the asset
      * @param _asset Address of the asset to approve
      * @param _pToken The pToken for the approval
      */
+    // solhint-disable-next-line no-unused-vars
     function _abstractSetPToken(address _asset, address _pToken)
         internal
         override
     {
-        // Safe approval
-        // IERC20(_pToken).safeApprove(MORPHO, 0);
-        // IERC20(_pToken).safeApprove(MORPHO, type(uint256).max);
+        IERC20(_asset).safeApprove(MORPHO, 0);
+        IERC20(_asset).safeApprove(MORPHO, type(uint256).max);
     }
 
     /**
@@ -88,7 +85,25 @@ contract MorphoCompoundStrategy is BaseCompoundStrategy {
         onlyHarvester
         nonReentrant
     {
-        
+        address[] memory poolTokens = new address[](assetsMapped.length);
+        for (uint256 i = 0; i < assetsMapped.length; i++) {
+            poolTokens[i] = assetToPToken[assetsMapped[i]];
+        }
+
+        IMorpho(MORPHO).claimRewards(
+            poolTokens, // The addresses of the underlying protocol's pools to claim rewards from
+            false // Whether to trade the accrued rewards for MORPHO token, with a premium
+        );
+
+        // Transfer COMP to Harvester
+        IERC20 rewardToken = IERC20(rewardTokenAddresses[0]);
+        uint256 balance = rewardToken.balanceOf(address(this));
+        emit RewardTokenCollected(
+            harvesterAddress,
+            rewardTokenAddresses[0],
+            balance
+        );
+        rewardToken.safeTransfer(harvesterAddress, balance);
     }
 
     /**
@@ -158,10 +173,7 @@ contract MorphoCompoundStrategy is BaseCompoundStrategy {
         address pToken = assetToPToken[_asset];
         uint256 oraclePrice = ORACLE.getUnderlyingPrice(pToken);
 
-        IMorpho(MORPHO).withdraw(
-            pToken,
-            _amount.divPrecisely(oraclePrice)
-        );
+        IMorpho(MORPHO).withdraw(pToken, _amount.divPrecisely(oraclePrice));
 
         emit Withdrawal(_asset, address(0), _amount);
         IERC20(_asset).safeTransfer(_recipient, _amount);
@@ -188,7 +200,6 @@ contract MorphoCompoundStrategy is BaseCompoundStrategy {
         override
         returns (uint256 balance)
     {
-
         return _checkBalance(_asset);
     }
 
@@ -213,8 +224,13 @@ contract MorphoCompoundStrategy is BaseCompoundStrategy {
 
         uint256 assetDecimals = Helpers.getDecimals(_asset);
         uint256 oraclePrice = ORACLE.getUnderlyingPrice(pToken);
-        uint256 suppliedOnPoolUSD = suppliedOnPool.mulTruncate(oraclePrice).scaleBy(assetDecimals, 18);
-        uint256 suppliedP2PUSD = suppliedP2P.mulTruncate(oraclePrice).scaleBy(assetDecimals, 18);
+        uint256 suppliedOnPoolUSD = suppliedOnPool
+            .mulTruncate(oraclePrice)
+            .scaleBy(assetDecimals, 18);
+        uint256 suppliedP2PUSD = suppliedP2P.mulTruncate(oraclePrice).scaleBy(
+            assetDecimals,
+            18
+        );
 
         return suppliedOnPoolUSD + suppliedP2PUSD;
     }

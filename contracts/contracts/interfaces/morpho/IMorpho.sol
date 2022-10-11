@@ -35,7 +35,11 @@ interface IMorpho {
     function getEnteredMarkets(address _user) external view returns (address[] memory enteredMarkets_);
     function getAllMarkets() external view returns (address[] memory marketsCreated_);
     function getHead(address _poolTokenAddress, Types.PositionType _positionType) external view returns (address head);
-    function getNext(address _poolTokenAddress, Types.PositionType _positionType, address _user) external view returns (address next);
+    function getNext(
+        address _poolTokenAddress,
+        Types.PositionType _positionType,
+        address _user
+    ) external view returns (address next);
 
     /// USERS ///
 
@@ -45,6 +49,14 @@ interface IMorpho {
     function borrow(address _poolTokenAddress, uint256 _amount, uint256 _maxGasForMatching) external;
     function withdraw(address _poolTokenAddress, uint256 _amount) external;
     function repay(address _poolTokenAddress, address _onBehalf, uint256 _amount) external;
-    function liquidate(address _poolTokenBorrowedAddress, address _poolTokenCollateralAddress, address _borrower, uint256 _amount) external;
-    function claimRewards(address[] calldata _cTokenAddresses, bool _tradeForMorphoToken) external returns (uint256 claimedAmount);
+    function liquidate(
+        address _poolTokenBorrowedAddress,
+        address _poolTokenCollateralAddress,
+        address _borrower,
+        uint256 _amount
+    ) external;
+    function claimRewards(
+        address[] calldata _cTokenAddresses,
+        bool _tradeForMorphoToken
+    ) external returns (uint256 claimedAmount);
 }

@@ -61,14 +61,13 @@ module.exports = deploymentWithProposal(
     );
 
     // 4. Init and configure new Morpho strategy
-    const initFunction =
-      "initialize(address,address[],address[],address[])";
+    const initFunction = "initialize(address,address[],address[],address[])";
     await withConfirmation(
       cMorphoCompoundStrategy.connect(sDeployer)[initFunction](
         cVaultProxy.address,
-        [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT], // reward token addresses
+        [assetAddresses.COMP, assetAddresses.COMP, assetAddresses.COMP], // reward token addresses
         [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT], // asset token addresses
-        [assetAddresses.cDAI, assetAddresses.cUSDC, assetAddresses.cUSDT],
+        [assetAddresses.cDAI, assetAddresses.cUSDC, assetAddresses.cUSDT], // platform tokens addresses
         await getTxOpts()
       )
     );
@@ -80,16 +79,7 @@ module.exports = deploymentWithProposal(
         .transferGovernance(governorAddr, await getTxOpts())
     );
 
-    // 6. Transfer governance
-    await withConfirmation(
-      cMorphoCompoundStrategy
-        .connect(sDeployer)
-        .safeApproveAllTokens(await getTxOpts())
-    );
-
-    console.log("3pool tokens:", assetAddresses.ThreePoolToken);
-    console.log("SETTING MORPHO STRATEGY: ", cMorphoCompoundStrategy.address)
-    console.log("SETTING MORPHO STRATEGY PROXY: ", dMorphoCompoundStrategyProxy.address)
+    console.log("SETTING MORPHO STRATEGY: ", cMorphoCompoundStrategy.address);
     // Governance Actions
     // ----------------
     return {

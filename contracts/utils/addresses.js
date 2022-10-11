@@ -128,4 +128,7 @@ addresses.mainnet.CompensationClaims =
   "0x9C94df9d594BA1eb94430C006c269C314B1A8281";
 addresses.mainnet.Flipper = "0xcecaD69d7D4Ed6D52eFcFA028aF8732F27e08F70";
 
+addresses.mainnet.Morpho = "0x8888882f8f843896699869179fB6E4f7e3B58888";
+addresses.mainnet.MorphoLens = "0x930f1b46e1d081ec1524efd95752be3ece51ef67";
+
 module.exports = addresses;
