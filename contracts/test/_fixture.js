@@ -82,14 +82,6 @@ async function defaultFixture() {
     OUSDmetaStrategyProxy.address
   );
 
-  const morphoCompoundStrategyProxy = await ethers.getContract(
-    "MorphoCompoundStrategyProxy"
-  );
-  const morphoCompoundStrategy = await ethers.getContractAt(
-    "MorphoCompoundStrategy",
-    morphoCompoundStrategyProxy.address
-  );
-
   const aaveStrategyProxy = await ethers.getContract("AaveStrategyProxy");
   const aaveStrategy = await ethers.getContractAt(
     "AaveStrategy",
@@ -152,6 +144,7 @@ async function defaultFixture() {
     threePoolToken,
     metapoolToken,
     morpho,
+    morphoCompoundStrategy,
     morphoLens,
     alUSDMetapoolToken,
     threePoolGauge,
@@ -201,6 +194,15 @@ async function defaultFixture() {
       "IRewardStaking",
       addresses.mainnet.CVXRewardsPool
     );
+    const morphoCompoundStrategyProxy = await ethers.getContract(
+      "MorphoCompoundStrategyProxy"
+    );
+
+    morphoCompoundStrategy = await ethers.getContractAt(
+      "MorphoCompoundStrategy",
+      morphoCompoundStrategyProxy.address
+    );
+
   } else {
     usdt = await ethers.getContract("MockUSDT");
     dai = await ethers.getContract("MockDAI");
