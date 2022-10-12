@@ -202,7 +202,6 @@ async function defaultFixture() {
       "MorphoCompoundStrategy",
       morphoCompoundStrategyProxy.address
     );
-
   } else {
     usdt = await ethers.getContract("MockUSDT");
     dai = await ethers.getContract("MockDAI");
