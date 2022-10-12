@@ -222,38 +222,6 @@ forkOnlyDescribe("ForkTest: Vault", function () {
       }
     });
 
-    it("Should NOT have any unknown strategies", async () => {
-      const { vault } = fixture;
-      const strategies = await vault.getAllStrategies();
-
-      const knownStrategies = [
-        // TODO: Update this every time a new strategy is added
-        "0x9c459eeb3FA179a40329b81C1635525e9A0Ef094", // Compound
-        "0x5e3646A1Db86993f73E6b74A57D8640B69F7e259", // Aave
-        "0xEA2Ef2e2E5A749D4A66b41Db9aD85a38Aa264cb3", // Convex
-        // TODO: Hardcode these after deploy
-        "0xb12C3410C44854054c217fbF79dFf38ffD1C0676", // OUSD MetaStrategy
-        "0xC83Cb4F34874E0Ef4c58b4e77D4935F8F819d203", // Frax MetaStrategy
-        "0x1ce298Ec5FE0B1E4B04fb78d275Da6280f6e82A3", // mUSD MetaStrategy
-        "0x40fB69B05Db0ed4A49caFb7d4711B42f8871F542", // USDD MetaStrategy
-        "0x6996352570817113965b0325005f868B1Fe2f2e9", // BUSD MetaStrategy
-      ];
-
-      for (const s of strategies) {
-        expect(knownStrategies).to.include(
-          s,
-          `Unknown strategy with address: ${s}`
-        );
-      }
-
-      for (const s of knownStrategies) {
-        expect(strategies).to.include(
-          s,
-          `Known strategy missing from contract: ${s}`
-        );
-      }
-    });
-
     it("Should have correct default strategy set for USDT", async () => {
       const { vault, usdt } = fixture;
 

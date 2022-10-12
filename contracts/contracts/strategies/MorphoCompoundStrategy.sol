@@ -190,24 +190,27 @@ contract MorphoCompoundStrategy is BaseCompoundStrategy {
         address _asset,
         uint256 _amount
     ) external override onlyVault nonReentrant {
-        _withdraw(_recipient, _asset, _amount);
+        _withdraw(_recipient, _asset, _amount, false);
     }
 
     function _withdraw(
         address _recipient,
         address _asset,
-        uint256 _amount
+        uint256 _amount,
+        bool _skipAmountCheck
     ) internal {
-        require(_amount > 0, "Must withdraw something");
+        require(_amount > 0 || _skipAmountCheck, "Must withdraw something");
         require(_recipient != address(0), "Must specify recipient");
 
         address pToken = assetToPToken[_asset];
         uint256 oraclePrice = ORACLE.getUnderlyingPrice(pToken);
 
-        IMorpho(MORPHO).withdraw(pToken, _amount.divPrecisely(oraclePrice));
+        if (_amount > 0) {
+            IMorpho(MORPHO).withdraw(pToken, _amount.divPrecisely(oraclePrice));
 
-        emit Withdrawal(_asset, address(0), _amount);
-        IERC20(_asset).safeTransfer(_recipient, _amount);
+            emit Withdrawal(_asset, address(0), _amount);
+            IERC20(_asset).safeTransfer(_recipient, _amount);
+        }
     }
 
     /**
@@ -216,7 +219,8 @@ contract MorphoCompoundStrategy is BaseCompoundStrategy {
     function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
         for (uint256 i = 0; i < assetsMapped.length; i++) {
             uint256 balance = _checkBalance(assetsMapped[i]);
-            _withdraw(vaultAddress, assetsMapped[i], balance);
+            // do not require for amount > 0 when calling withdrawAll
+            _withdraw(vaultAddress, assetsMapped[i], balance, true);
         }
     }
 
