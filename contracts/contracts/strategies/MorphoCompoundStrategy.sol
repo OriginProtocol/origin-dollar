@@ -108,7 +108,7 @@ contract MorphoCompoundStrategy is BaseCompoundStrategy {
             poolTokens[i] = assetToPToken[assetsMapped[i]];
         }
 
-        // solhint-disable-next-line no-unused-vars
+        // solhint-disable-next-line unused-return
         IMorpho(MORPHO).claimRewards(
             poolTokens, // The addresses of the underlying protocol's pools to claim rewards from
             false // Whether to trade the accrued rewards for MORPHO token, with a premium
