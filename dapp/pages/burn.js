@@ -126,8 +126,6 @@ const Burn = ({ locale, onLocale, isMobile }) => {
   const [burnedOptionalAmount, setBurnedOptionalAmount] = useState(0)
   const [burnedMandatoryAmount, setBurnedMandatoryAmount] = useState(0)
   const [currentBlock, setCurrentBlock] = useState()
-  const burnAmount = optionalLockupBalance + mandatoryLockupBalance
-  const burnedAmount = burnedOptionalAmount + burnedMandatoryAmount
 
   const mandatoryDistributorInitialOgv = 398752449
   const optionalDistributorInitialOgv = 747905084
@@ -138,8 +136,12 @@ const Burn = ({ locale, onLocale, isMobile }) => {
   const airdropAllocationOgn = 1000000000
   const airdropAllocationOusd = 450000000
   const airdropAllocation = airdropAllocationOgn + airdropAllocationOusd
-  const burnBlock = 15713631
+  const burnBlock = 15724869
   const burnOver = burnBlock < currentBlock
+  const burnedAmount = burnedOptionalAmount + burnedMandatoryAmount
+  const burnAmount = burnOver
+    ? burnedAmount
+    : optionalLockupBalance + mandatoryLockupBalance
 
   const stakingApy =
     getRewardsApy(100 * 1.8 ** (48 / 12), 100, totalVeSupply) || 0
@@ -188,6 +190,8 @@ const Burn = ({ locale, onLocale, isMobile }) => {
           .then((r) => Number(r) / 10 ** 18)
         setBurnedOptionalAmount(burnedOptional)
         setBurnedMandatoryAmount(burnedMandatory)
+        setOptionalLockupBalance(burnedOptional)
+        setMandatoryLockupBalance(burnedMandatory)
       }
     }
     fetchStakedOgv()
@@ -210,8 +214,8 @@ const Burn = ({ locale, onLocale, isMobile }) => {
           </h2>
           <div className="text-container mb-5">
             {fbt(
-              'On October 10th, 2022 at 0:00UTC all unclaimed tokens from the OGV airdrop will be burned forever.',
-              'On October 10th, 2022 at 0:00UTC all unclaimed tokens from the OGV airdrop will be burned forever.'
+              'On October 10th, 2022 at 0:00UTC all unclaimed tokens from the OGV airdrop were burned forever.',
+              'On October 10th, 2022 at 0:00UTC all unclaimed tokens from the OGV airdrop were burned forever.'
             )}
           </div>
           <Countdown date={'2022-10-10T00:00:00.000Z'} renderer={renderer} />
@@ -302,9 +306,9 @@ const Burn = ({ locale, onLocale, isMobile }) => {
               became eligible to claim OGV, the new governance token for Origin
               Dollar. OGV accrues staking rewards, fees, and voting power when
               staked for one month or longer. The claim period for this airdrop
-              runs for 90 days, after which all remaining tokens held in the
-              distributor contracts will be burned. Centralized exchanges will
-              be instructed to burn additional unclaimed tokens held in their
+              ran for 90 days, after which all remaining tokens held in the
+              distributor contracts were burned. Centralized exchanges have been
+              instructed to burn additional unclaimed tokens held in their
               accounts. Additional supply reductions occur through periodic
               automated buybacks funded by yield from OUSD.
             </div>
