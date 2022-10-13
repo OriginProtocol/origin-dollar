@@ -214,8 +214,8 @@ const Burn = ({ locale, onLocale, isMobile }) => {
           </h2>
           <div className="text-container mb-5">
             {fbt(
-              'On October 10th, 2022 at 0:00UTC all unclaimed tokens from the OGV airdrop will be burned forever.',
-              'On October 10th, 2022 at 0:00UTC all unclaimed tokens from the OGV airdrop will be burned forever.'
+              'On October 10th, 2022 at 0:00UTC all unclaimed tokens from the OGV airdrop were burned forever.',
+              'On October 10th, 2022 at 0:00UTC all unclaimed tokens from the OGV airdrop were burned forever.'
             )}
           </div>
           <Countdown date={'2022-10-10T00:00:00.000Z'} renderer={renderer} />
