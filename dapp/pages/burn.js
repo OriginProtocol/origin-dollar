@@ -306,9 +306,9 @@ const Burn = ({ locale, onLocale, isMobile }) => {
               became eligible to claim OGV, the new governance token for Origin
               Dollar. OGV accrues staking rewards, fees, and voting power when
               staked for one month or longer. The claim period for this airdrop
-              runs for 90 days, after which all remaining tokens held in the
-              distributor contracts will be burned. Centralized exchanges will
-              be instructed to burn additional unclaimed tokens held in their
+              ran for 90 days, after which all remaining tokens held in the
+              distributor contracts were burned. Centralized exchanges have been
+              instructed to burn additional unclaimed tokens held in their
               accounts. Additional supply reductions occur through periodic
               automated buybacks funded by yield from OUSD.
             </div>
