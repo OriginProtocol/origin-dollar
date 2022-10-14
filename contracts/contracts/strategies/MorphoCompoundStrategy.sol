@@ -187,7 +187,7 @@ contract MorphoCompoundStrategy is BaseCompoundStrategy {
         address _asset,
         uint256 _amount
     ) external override onlyVault nonReentrant {
-        _withdraw(_recipient, _asset, _amount, false);
+        _withdraw(_recipient, _asset, _amount);
     }
 
     function _withdraw(
