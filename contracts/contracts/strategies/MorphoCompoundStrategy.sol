@@ -9,7 +9,7 @@ pragma solidity ^0.8.0;
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { BaseCompoundStrategy } from "./BaseCompoundStrategy.sol";
 import { IERC20 } from "../utils/InitializableAbstractStrategy.sol";
-import { IMorpho, ICompoundOracle } from "../interfaces/morpho/IMorpho.sol";
+import { IMorpho } from "../interfaces/morpho/IMorpho.sol";
 import { ILens } from "../interfaces/morpho/ILens.sol";
 import { StableMath } from "../utils/StableMath.sol";
 import "../utils/Helpers.sol";
@@ -19,8 +19,6 @@ contract MorphoCompoundStrategy is BaseCompoundStrategy {
     address public constant LENS = 0x930f1b46e1D081Ec1524efD95752bE3eCe51EF67;
     using SafeERC20 for IERC20;
     using StableMath for uint256;
-
-    ICompoundOracle public ORACLE;
 
     /**
      * @dev Internal initialize function, to set up initial internal state
@@ -42,7 +40,6 @@ contract MorphoCompoundStrategy is BaseCompoundStrategy {
             _assets,
             _pTokens
         );
-        ORACLE = ICompoundOracle(IMorpho(MORPHO).comptroller().oracle());
     }
 
     /**
@@ -196,21 +193,16 @@ contract MorphoCompoundStrategy is BaseCompoundStrategy {
     function _withdraw(
         address _recipient,
         address _asset,
-        uint256 _amount,
-        bool _skipAmountCheck
+        uint256 _amount
     ) internal {
-        require(_amount > 0 || _skipAmountCheck, "Must withdraw something");
+        require(_amount > 0, "Must withdraw something");
         require(_recipient != address(0), "Must specify recipient");
 
         address pToken = assetToPToken[_asset];
-        uint256 oraclePrice = ORACLE.getUnderlyingPrice(pToken);
 
-        if (_amount > 0) {
-            IMorpho(MORPHO).withdraw(pToken, _amount.divPrecisely(oraclePrice));
-
-            emit Withdrawal(_asset, address(0), _amount);
-            IERC20(_asset).safeTransfer(_recipient, _amount);
-        }
+        IMorpho(MORPHO).withdraw(pToken, _amount);
+        emit Withdrawal(_asset, address(0), _amount);
+        IERC20(_asset).safeTransfer(_recipient, _amount);
     }
 
     /**
@@ -219,8 +211,9 @@ contract MorphoCompoundStrategy is BaseCompoundStrategy {
     function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
         for (uint256 i = 0; i < assetsMapped.length; i++) {
             uint256 balance = _checkBalance(assetsMapped[i]);
-            // do not require for amount > 0 when calling withdrawAll
-            _withdraw(vaultAddress, assetsMapped[i], balance, true);
+            if (balance > 0) {
+                _withdraw(vaultAddress, assetsMapped[i], balance);
+            }
         }
     }
 
@@ -245,20 +238,12 @@ contract MorphoCompoundStrategy is BaseCompoundStrategy {
     {
         address pToken = assetToPToken[_asset];
 
-        /**
-         * Both values represented with 18 decimals no matter the underlying token. Morpho
-         * differentiates between funds deployed in underlying Compound pool and
-         * the ones that are matched P2P (those have higher APY).
-         */
-        (uint256 suppliedOnPool, uint256 suppliedP2P, ) = ILens(LENS)
-            .getCurrentSupplyBalanceInOf(pToken, address(this));
+        // Total value represented in 18 decimals no matter the underlying token
+        (, , uint256 totalSupply) = ILens(LENS).getCurrentSupplyBalanceInOf(
+            pToken,
+            address(this)
+        );
 
-        uint256 assetDecimals = Helpers.getDecimals(_asset);
-        uint256 oraclePrice = ORACLE.getUnderlyingPrice(pToken);
-        uint256 suppliedInUsd = (suppliedOnPool + suppliedP2P)
-            .mulTruncate(oraclePrice)
-            .scaleBy(assetDecimals, 18);
-
-        return suppliedInUsd;
+        return totalSupply;
     }
 }

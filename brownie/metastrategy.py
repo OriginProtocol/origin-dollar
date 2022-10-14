@@ -23,6 +23,7 @@ OUSD_BAGS_2 = '0xc055de577ce2039e6d35621e3a885df9bb304ab9'
 USDT_BAGS = '0x5754284f345afc66a98fbb0a0afe71e0f007b949'
 USDC_BAGS = '0x40ec5b33f54e0e8a33a975908c5ba1c14e5bbbdf'
 FRAX_BAGS = '0xdcef968d416a41cdac0ed8702fac8128a64241a2'
+DAI_BAGS = '0x40ec5b33f54e0e8a33a975908c5ba1c14e5bbbdf' #polygon bridge
 CURVE_FACTORY = '0xB9fC157394Af804a3578134A6585C0dc9cc990d4'
 
 threepool_lp = load_contract('threepool_lp', THREEPOOL_LP)
@@ -40,6 +41,7 @@ usdt.transfer(me, usdt.balanceOf(USDT_BAGS), {'from': USDT_BAGS})
 ousd.transfer(me, ousd.balanceOf(OUSD_BAGS_2), {'from': OUSD_BAGS_2})
 ousd.transfer(RANDOM_ACCOUNT, 10000*1e18, OPTS)
 usdc.transfer(me, usdc.balanceOf(USDC_BAGS), {'from': USDC_BAGS})
+dai.transfer(me, dai.balanceOf(DAI_BAGS), {'from': DAI_BAGS})
 frax.transfer(me, frax.balanceOf(FRAX_BAGS), {'from': FRAX_BAGS})
 meta_strat = load_contract('convex_strat', OUSD_META_STRATEGY)
 frax_strat = load_contract('convex_strat', FRAX_STRATEGY)
@@ -66,6 +68,7 @@ print("'me' account has: " + c24(ousd.balanceOf(me)) + "m OUSD")
 print("'me' account has: " + c24(threepool_lp.balanceOf(me)) + "m 3CRV")
 print("'me' account has: " + c12(usdc.balanceOf(me)) + "m USDC")
 print("'me' account has: " + c12(usdt.balanceOf(me)) + "m USDT")
+print("'me' account has: " + c24(dai.balanceOf(me)) + "m DAI")
 print("'me' account has: " + c24(frax.balanceOf(me)) + "m FRAX")
 
 def show_vault_holdings():
@@ -84,9 +87,10 @@ def show_vault_holdings():
 # mint OUSD using USDT. Amount denominated in dollar value
 # also force call allocate so that funds get deposited to metastrategy
 def mint(amount, asset=usdt):
-    vault_core.mint(asset.address, amount * math.pow(10, asset.decimals()), 0, OPTS)
+    tx = vault_core.mint(asset.address, amount * math.pow(10, asset.decimals()), 0, OPTS)
     vault_core.allocate(OPTS)
     vault_core.rebase(OPTS)
+    return tx
 
 # reallocate funds from one strategy to another
 def reallocate(from_strat, to_strat, asset, amount):
