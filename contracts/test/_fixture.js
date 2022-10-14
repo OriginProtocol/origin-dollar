@@ -1120,4 +1120,5 @@ module.exports = {
   hackedVaultFixture,
   rebornFixture,
   withImpersonatedAccount,
+  impersonateAndFundContract,
 };

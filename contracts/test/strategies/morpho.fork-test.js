@@ -9,7 +9,10 @@ const {
   advanceBlocks,
   advanceTime,
 } = require("../helpers");
-const { morphoCompoundFixture } = require("../_fixture");
+const {
+  morphoCompoundFixture,
+  impersonateAndFundContract,
+} = require("../_fixture");
 
 forkOnlyDescribe("ForkTest: Morpho Compound Strategy", function () {
   this.timeout(0);
@@ -113,6 +116,60 @@ forkOnlyDescribe("ForkTest: Morpho Compound Strategy", function () {
     );
 
     await expect(usdtBalanceDiff).to.be.gte(0);
+  });
+
+  it("Should be able to withdraw from strategy", async function () {
+    const { matt, usdc, vault, morphoCompoundStrategy } = fixture;
+    const amount = "110000";
+    await mintTest(fixture, matt, usdc, amount);
+
+    const usdcUnits = await units(amount, usdc);
+    const vaultUsdcBefore = await usdc.balanceOf(vault.address);
+    const vaultSigner = await impersonateAndFundContract(vault.address);
+
+    await morphoCompoundStrategy
+      .connect(vaultSigner)
+      .withdraw(vault.address, usdc.address, usdcUnits);
+    const vaultUsdcDiff =
+      (await usdc.balanceOf(vault.address)) - vaultUsdcBefore;
+
+    expect(vaultUsdcDiff).to.approxEqualTolerance(usdcUnits, 1);
+  });
+
+  it("Should be able to withdrawAll from strategy", async function () {
+    const { matt, usdc, vault, usdt, morphoCompoundStrategy } = fixture;
+    const vaultSigner = await impersonateAndFundContract(vault.address);
+    const amount = "110000";
+
+    const removeFundsFromVault = async () => {
+      await usdc
+        .connect(vaultSigner)
+        .transfer(matt.address, usdc.balanceOf(vault.address));
+      await usdt
+        .connect(vaultSigner)
+        .transfer(matt.address, usdt.balanceOf(vault.address));
+    };
+
+    // remove funds so no residual funds get allocated
+    await removeFundsFromVault();
+
+    await mintTest(fixture, matt, usdc, amount);
+    await mintTest(fixture, matt, usdt, amount);
+
+    const usdcUnits = await units(amount, usdc);
+    const usdtUnits = await units(amount, usdt);
+    const vaultUsdtBefore = await usdt.balanceOf(vault.address);
+    const vaultUsdcBefore = await usdc.balanceOf(vault.address);
+
+    await morphoCompoundStrategy.connect(vaultSigner).withdrawAll();
+
+    const vaultUsdtDiff =
+      (await usdt.balanceOf(vault.address)) - vaultUsdtBefore;
+    const vaultUsdcDiff =
+      (await usdc.balanceOf(vault.address)) - vaultUsdcBefore;
+
+    expect(vaultUsdcDiff).to.approxEqualTolerance(usdcUnits, 1);
+    expect(vaultUsdtDiff).to.approxEqualTolerance(usdtUnits, 1);
   });
 });
 
