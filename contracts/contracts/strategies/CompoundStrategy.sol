@@ -183,10 +183,10 @@ contract CompoundStrategy is BaseCompoundStrategy {
         view
         returns (uint256 balance)
     {
-        uint256 cTokenBalance = _cToken.balanceOf(address(this));
-        uint256 exchangeRate = _cToken.exchangeRateStored();
         // e.g. 50e8*205316390724364402565641705 / 1e18 = 1.0265..e18
-        balance = (cTokenBalance * exchangeRate) / 1e18;
+        balance =
+            (_cToken.balanceOf(address(this)) * _cToken.exchangeRateStored()) /
+            1e18;
     }
 
     /**

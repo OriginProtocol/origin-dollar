@@ -21,7 +21,7 @@ contract MorphoCompoundStrategy is BaseCompoundStrategy {
     using StableMath for uint256;
 
     /**
-     * @dev Internal initialize function, to set up initial internal state
+     * @dev Initialize function, to set up initial internal state
      * @param _vaultAddress Address of the Vault
      * @param _rewardTokenAddresses Address of reward token for platform
      * @param _assets Addresses of initial supported assets
@@ -161,7 +161,7 @@ contract MorphoCompoundStrategy is BaseCompoundStrategy {
             address(this), // the address of the user you want to supply on behalf of
             _amount
         );
-        emit Deposit(_asset, address(0), _amount);
+        emit Deposit(_asset, address(_getCTokenFor(_asset)), _amount);
     }
 
     /**
@@ -201,7 +201,7 @@ contract MorphoCompoundStrategy is BaseCompoundStrategy {
         address pToken = assetToPToken[_asset];
 
         IMorpho(MORPHO).withdraw(pToken, _amount);
-        emit Withdrawal(_asset, address(0), _amount);
+        emit Withdrawal(_asset, address(_getCTokenFor(_asset)), _amount);
         IERC20(_asset).safeTransfer(_recipient, _amount);
     }
 
@@ -238,12 +238,10 @@ contract MorphoCompoundStrategy is BaseCompoundStrategy {
     {
         address pToken = assetToPToken[_asset];
 
-        // Total value represented in 18 decimals no matter the underlying token
-        (, , uint256 totalSupply) = ILens(LENS).getCurrentSupplyBalanceInOf(
+        // Total value represented by decimal position of underlying token
+        (, , balance) = ILens(LENS).getCurrentSupplyBalanceInOf(
             pToken,
             address(this)
         );
-
-        return totalSupply;
     }
 }

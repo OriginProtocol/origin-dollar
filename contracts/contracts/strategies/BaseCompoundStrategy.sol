@@ -14,8 +14,6 @@ import { IERC20, InitializableAbstractStrategy } from "../utils/InitializableAbs
 abstract contract BaseCompoundStrategy is InitializableAbstractStrategy {
     using SafeERC20 for IERC20;
 
-    // TODO: check for storage slot problems / collisions
-
     /**
      * @dev Retuns bool indicating whether asset is supported by strategy
      * @param _asset Address of the asset
