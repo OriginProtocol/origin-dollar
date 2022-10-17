@@ -53,9 +53,8 @@ abstract contract BaseCompoundStrategy is InitializableAbstractStrategy {
         view
         returns (uint256 amount)
     {
-        uint256 exchangeRate = _cToken.exchangeRateStored();
         // e.g. 1e18*1e18 / 205316390724364402565641705 = 50e8
         // e.g. 1e8*1e18 / 205316390724364402565641705 = 0.45 or 0
-        amount = (_underlying * 1e18) / exchangeRate;
+        amount = (_underlying * 1e18) / _cToken.exchangeRateStored();
     }
 }
