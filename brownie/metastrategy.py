@@ -21,8 +21,12 @@ THREEPOOL_BAGS_3 = '0xaa5a67c256e27a5d80712c51971408db3370927d'
 OUSD_BAGS = '0x8e02247d3ee0e6153495c971ffd45aa131f4d7cb'
 OUSD_BAGS_2 = '0xc055de577ce2039e6d35621e3a885df9bb304ab9'
 USDT_BAGS = '0x5754284f345afc66a98fbb0a0afe71e0f007b949'
+USDT_BAGS_2 = '0x5041ed759dd4afc3a72b8192c143f72f4724081a'
 USDC_BAGS = '0x40ec5b33f54e0e8a33a975908c5ba1c14e5bbbdf'
+USDC_BAGS_2 = '0x0a59649758aa4d66e25f08dd01271e891fe52199'
 FRAX_BAGS = '0xdcef968d416a41cdac0ed8702fac8128a64241a2'
+DAI_BAGS = '0x40ec5b33f54e0e8a33a975908c5ba1c14e5bbbdf' #polygon bridge
+DAI_BAGS_2 = '0x5d3a536e4d6dbd6114cc1ead35777bab948e3643'
 CURVE_FACTORY = '0xB9fC157394Af804a3578134A6585C0dc9cc990d4'
 
 threepool_lp = load_contract('threepool_lp', THREEPOOL_LP)
@@ -37,9 +41,13 @@ threepool_lp.transfer(me, threepool_lp.balanceOf(THREEPOOL_BAGS_2), {'from': THR
 threepool_lp.transfer(me, threepool_lp.balanceOf(THREEPOOL_BAGS_3), {'from': THREEPOOL_BAGS_3})
 ousd.transfer(me, ousd.balanceOf(OUSD_BAGS), {'from': OUSD_BAGS})
 usdt.transfer(me, usdt.balanceOf(USDT_BAGS), {'from': USDT_BAGS})
+usdt.transfer(me, usdt.balanceOf(USDT_BAGS_2), {'from': USDT_BAGS_2})
 ousd.transfer(me, ousd.balanceOf(OUSD_BAGS_2), {'from': OUSD_BAGS_2})
 ousd.transfer(RANDOM_ACCOUNT, 10000*1e18, OPTS)
 usdc.transfer(me, usdc.balanceOf(USDC_BAGS), {'from': USDC_BAGS})
+usdc.transfer(me, usdc.balanceOf(USDC_BAGS_2), {'from': USDC_BAGS_2})
+dai.transfer(me, dai.balanceOf(DAI_BAGS), {'from': DAI_BAGS})
+dai.transfer(me, dai.balanceOf(DAI_BAGS_2), {'from': DAI_BAGS_2})
 frax.transfer(me, frax.balanceOf(FRAX_BAGS), {'from': FRAX_BAGS})
 meta_strat = load_contract('convex_strat', OUSD_META_STRATEGY)
 frax_strat = load_contract('convex_strat', FRAX_STRATEGY)
