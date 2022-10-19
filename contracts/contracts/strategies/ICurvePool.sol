@@ -6,6 +6,8 @@ interface ICurvePool {
 
     function add_liquidity(uint256[3] calldata _amounts, uint256 _min) external;
 
+    function fee() external view returns (uint256);
+
     function balances(uint256) external view returns (uint256);
 
     function calc_token_amount(uint256[3] calldata _amounts, bool _deposit)
