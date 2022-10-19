@@ -65,8 +65,7 @@ contract ConvexOUSDMetaStrategy is BaseConvexMetaStrategy {
             IVault(vaultAddress).mintForStrategy(ousdToAdd);
         }
 
-        uint256 ousdBalance = metapoolMainToken.balanceOf(address(this));
-        uint256[2] memory _amounts = [ousdBalance, threePoolLpBalance];
+        uint256[2] memory _amounts = [ousdToAdd, threePoolLpBalance];
 
         uint256 metapoolVirtualPrice = metapool.get_virtual_price();
         /**
@@ -74,14 +73,11 @@ contract ConvexOUSDMetaStrategy is BaseConvexMetaStrategy {
          * then divide by virtual price to convert to metapool LP tokens
          * and apply the max slippage
          */
-        uint256 minReceived = (ousdBalance + threePoolLpDollarValue)
+        uint256 minReceived = (ousdToAdd + threePoolLpDollarValue)
             .divPrecisely(metapoolVirtualPrice)
             .mulTruncate(uint256(1e18) - maxSlippage);
 
-        // slither-disable-next-line unused-return
-        metapool.add_liquidity(_amounts, minReceived);
-
-        uint256 metapoolLp = metapoolErc20.balanceOf(address(this));
+        uint256 metapoolLp = metapool.add_liquidity(_amounts, minReceived);
 
         bool success = IConvexDeposits(cvxDepositorAddress).deposit(
             cvxDepositorPTokenId,
@@ -148,12 +144,12 @@ contract ConvexOUSDMetaStrategy is BaseConvexMetaStrategy {
             true
         );
 
-        // always withdraw all of the available metapool LP tokens (similar to how we always deposit all)
-        // slither-disable-next-line unused-return
-        metapool.remove_liquidity(lpToBurn, [uint256(0), uint256(0)]);
-        IVault(vaultAddress).burnForStrategy(
-            metapoolMainToken.balanceOf(address(this))
-        );
+        // calculate the min amount of OUSD expected for the specified amount of LP tokens
+        uint256 minOUSDAmount = lpToBurn * metapool.get_virtual_price() - num3CrvTokens - 1;
+
+        // withdraw the liquidity from metapool
+        uint256[2] memory _removedAmounts = metapool.remove_liquidity(lpToBurn, [minOUSDAmount, num3CrvTokens]);
+        IVault(vaultAddress).burnForStrategy(_removedAmounts[mainCoinIndex]);
     }
 
     function _lpWithdrawAll() internal override {
@@ -167,14 +163,11 @@ contract ConvexOUSDMetaStrategy is BaseConvexMetaStrategy {
         );
 
         uint256[2] memory _minAmounts = [uint256(0), uint256(0)];
-        // slither-disable-next-line unused-return
-        metapool.remove_liquidity(
+        uint256[2] memory _removedAmounts = metapool.remove_liquidity(
             metapoolErc20.balanceOf(address(this)),
             _minAmounts
         );
 
-        IVault(vaultAddress).burnForStrategy(
-            metapoolMainToken.balanceOf(address(this))
-        );
+        IVault(vaultAddress).burnForStrategy(_removedAmounts[mainCoinIndex]);
     }
 }

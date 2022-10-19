@@ -45,10 +45,7 @@ contract ConvexGeneralizedMetaStrategy is BaseConvexMetaStrategy {
             .divPrecisely(metapoolVirtualPrice)
             .mulTruncate(uint256(1e18) - maxSlippage);
 
-        // slither-disable-next-line unused-return
-        metapool.add_liquidity(_amounts, minReceived);
-
-        uint256 metapoolLp = metapoolLPToken.balanceOf(address(this));
+        uint256 metapoolLp = metapool.add_liquidity(_amounts, minReceived);
 
         bool success = IConvexDeposits(cvxDepositorAddress).deposit(
             cvxDepositorPTokenId,
@@ -114,11 +111,10 @@ contract ConvexGeneralizedMetaStrategy is BaseConvexMetaStrategy {
             true
         );
 
-        uint256 burnAmount = metapoolLPToken.balanceOf(address(this));
-        if (burnAmount > 0) {
+        if (requiredMetapoolLpTokens > 0) {
             // slither-disable-next-line unused-return
             metapool.remove_liquidity_one_coin(
-                burnAmount,
+                requiredMetapoolLpTokens,
                 metapool3CrvCoinIndex,
                 num3CrvTokens
             );
@@ -138,9 +134,8 @@ contract ConvexGeneralizedMetaStrategy is BaseConvexMetaStrategy {
             address(pTokenAddress)
         );
 
-        uint256 burnAmount = metapoolLPToken.balanceOf(address(this));
-        if (burnAmount > 0) {
-            uint256 burnDollarAmount = burnAmount.mulTruncate(
+        if (gaugeTokens > 0) {
+            uint256 burnDollarAmount = gaugeTokens.mulTruncate(
                 metapool.get_virtual_price()
             );
             uint256 curve3PoolExpected = burnDollarAmount.divPrecisely(
@@ -150,7 +145,7 @@ contract ConvexGeneralizedMetaStrategy is BaseConvexMetaStrategy {
             // Always withdraw all of the available metapool LP tokens (similar to how we always deposit all)
             // slither-disable-next-line unused-return
             metapool.remove_liquidity_one_coin(
-                burnAmount,
+                gaugeTokens,
                 int128(metapool3CrvCoinIndex),
                 curve3PoolExpected -
                     curve3PoolExpected.mulTruncate(maxWithdrawalSlippage)
