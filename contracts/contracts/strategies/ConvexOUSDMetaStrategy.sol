@@ -26,7 +26,6 @@ contract ConvexOUSDMetaStrategy is BaseConvexMetaStrategy {
      * ousd Curve Metapool. Take the LP from metapool and deposit them to Convex.
      */
     function _lpDepositAll() internal override {
-        IERC20 metapoolErc20 = IERC20(address(metapool));
         ICurvePool curvePool = ICurvePool(platformAddress);
 
         uint256 threePoolLpBalance = IERC20(pTokenAddress).balanceOf(
@@ -145,10 +144,16 @@ contract ConvexOUSDMetaStrategy is BaseConvexMetaStrategy {
         );
 
         // calculate the min amount of OUSD expected for the specified amount of LP tokens
-        uint256 minOUSDAmount = lpToBurn * metapool.get_virtual_price() - num3CrvTokens - 1;
+        uint256 minOUSDAmount = lpToBurn *
+            metapool.get_virtual_price() -
+            num3CrvTokens -
+            1;
 
         // withdraw the liquidity from metapool
-        uint256[2] memory _removedAmounts = metapool.remove_liquidity(lpToBurn, [minOUSDAmount, num3CrvTokens]);
+        uint256[2] memory _removedAmounts = metapool.remove_liquidity(
+            lpToBurn,
+            [minOUSDAmount, num3CrvTokens]
+        );
         IVault(vaultAddress).burnForStrategy(_removedAmounts[mainCoinIndex]);
     }
 
