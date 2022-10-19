@@ -118,41 +118,19 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         );
 
         uint256 coinIndex = _getCoinIndex(_asset);
-        int128 curveCoinIndex = int128(uint128(coinIndex));
-        // Calculate the max amount of the asset we'd get if we withdrew all the
-        // platform tokens
         ICurvePool curvePool = ICurvePool(platformAddress);
 
-        uint256 virtual_price = curvePool.get_virtual_price();
-        /**
-         * Add a 5% threshold to help calculate required amount of crv3Tokens:
-         *  - convert asset to 18 decimals
-         *  - divide by virtual price to get 3Crv equivalent
-         *  - add a 5% threshold to it
-         */
-        // slither-disable-next-line divide-before-multiply
-        uint256 crv3TokensTreshold = (((_amount.scaleBy(
-            18,
-            Helpers.getDecimals(_asset)
-        ) * 105) * 1e18) / virtual_price) / 100;
-
-        // Calculate how many platform tokens we need to withdraw the asset
-        // amount in by adding 5% of overhead to required withdrawn amount
-        uint256 thresholdAmountReceived = curvePool.calc_withdraw_one_coin(
-            crv3TokensTreshold,
-            curveCoinIndex
+        uint256[3] memory _amounts = [uint256(0), uint256(0), uint256(0)];
+        _amounts[coinIndex] = _amount;
+        uint256 requiredCrv3Tokens = curvePool.calc_token_amount(
+            _amounts,
+            false
         );
-
-        uint256 requiredCrv3Tokens = (crv3TokensTreshold * _amount) /
-            thresholdAmountReceived;
 
         // We have enough LP tokens, make sure they are all on this contract
         if (contractCrv3Tokens < requiredCrv3Tokens) {
             _lpWithdraw(requiredCrv3Tokens - contractCrv3Tokens);
         }
-
-        uint256[3] memory _amounts = [uint256(0), uint256(0), uint256(0)];
-        _amounts[coinIndex] = _amount;
 
         curvePool.remove_liquidity_imbalance(_amounts, requiredCrv3Tokens);
         IERC20(_asset).safeTransfer(_recipient, _amount);
