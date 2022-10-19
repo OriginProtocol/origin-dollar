@@ -144,6 +144,7 @@ contract ConvexOUSDMetaStrategy is BaseConvexMetaStrategy {
         );
 
         // calculate the min amount of OUSD expected for the specified amount of LP tokens
+        // slither-disable-next-line divide-before-multiply
         uint256 minOUSDAmount = lpToBurn *
             metapool.get_virtual_price() -
             num3CrvTokens -
