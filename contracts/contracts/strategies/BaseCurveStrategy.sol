@@ -127,6 +127,9 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
             false
         );
 
+        // Adjust the required amount for the fee (fee is integer with 1e10 precision)
+        requiredCrv3Tokens += (requiredCrv3Tokens * curvePool.fee()) / 1e10;
+
         // We have enough LP tokens, make sure they are all on this contract
         if (contractCrv3Tokens < requiredCrv3Tokens) {
             _lpWithdraw(requiredCrv3Tokens - contractCrv3Tokens);
