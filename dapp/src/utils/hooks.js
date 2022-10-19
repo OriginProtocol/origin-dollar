@@ -1,5 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
+import { useRouter } from 'next/router'
 import { useWeb3React } from '@web3-react/core'
+import { ethers } from 'ethers'
 import { useStoreState } from 'pullstate'
 
 import {
@@ -144,4 +146,19 @@ export function usePrevious(value) {
     ref.current = value
   })
   return ref.current
+}
+
+export function useOverrideAccount() {
+  const router = useRouter()
+  const isValid =
+    router.query.override_account &&
+    !ethers.utils.isAddress(router.query.override_account)
+      ? false
+      : true
+  const overrideAccount =
+    router.pathname === '/history' && router.query.override_account && isValid
+      ? router.query.override_account
+      : null
+
+  return { overrideAccount: overrideAccount, isValid: isValid }
 }

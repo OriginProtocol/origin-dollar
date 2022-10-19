@@ -1,7 +1,6 @@
 import React, { useState } from 'react'
 import { useWeb3React } from '@web3-react/core'
 import { fbt } from 'fbt-runtime'
-import { useRouter } from 'next/router'
 
 import Dropdown from 'components/Dropdown'
 import GetOUSD from 'components/GetOUSD'
@@ -14,6 +13,7 @@ import {
 
 import withWalletSelectModal from 'hoc/withWalletSelectModal'
 import analytics from 'utils/analytics'
+import { useOverrideAccount } from 'utils/hooks'
 
 import Content from './_AccountStatusContent'
 
@@ -21,8 +21,8 @@ const AccountStatusDropdown = ({ className, showLogin, dapp }) => {
   const { active, account, chainId } = useWeb3React()
   const [open, setOpen] = useState(false)
   const correctNetwork = isCorrectNetwork(chainId)
-  const router = useRouter()
-  const overrideAccount = router.query.override_account
+
+  const { overrideAccount } = useOverrideAccount()
 
   return (
     <>
@@ -63,7 +63,18 @@ const AccountStatusDropdown = ({ className, showLogin, dapp }) => {
           )}
           {/* What causes !active && account? */}
           {dapp && !active && account && <div className="dot" />}
-          {active && !correctNetwork && (
+          {active && overrideAccount && (
+            <>
+              <div className="dot white" />
+              <div className="address">
+                {`${fbt('readonly', 'readonly')}: ${overrideAccount.substring(
+                  0,
+                  5
+                )}...`}
+              </div>
+            </>
+          )}
+          {active && !correctNetwork && !overrideAccount && (
             <>
               <div className="dot yellow" />
               <div className="address">
@@ -71,12 +82,10 @@ const AccountStatusDropdown = ({ className, showLogin, dapp }) => {
               </div>
             </>
           )}
-          {dapp && active && correctNetwork && (
+          {dapp && active && correctNetwork && !overrideAccount && (
             <>
               <div className="dot green" />
-              <div className="address">
-                {shortenAddress(overrideAccount || account)}
-              </div>
+              <div className="address">{shortenAddress(account)}</div>
             </>
           )}
         </a>
@@ -151,6 +160,10 @@ const AccountStatusDropdown = ({ className, showLogin, dapp }) => {
           margin-left: 10px;
           border-radius: 5px;
           background-color: #ed2a28;
+        }
+
+        .dot.white {
+          background-color: #fff;
         }
 
         .dot.green {

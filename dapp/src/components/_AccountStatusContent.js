@@ -7,6 +7,7 @@ import { get } from 'lodash'
 import AccountStore from 'stores/AccountStore'
 import { getEtherscanHost } from 'utils/web3'
 import { isCorrectNetwork, truncateAddress, networkIdToName } from 'utils/web3'
+import { useOverrideAccount } from 'utils/hooks'
 import { currencies } from 'constants/Contract'
 import { formatCurrency } from 'utils/math'
 import { connectorNameIconMap, getConnectorIcon } from 'utils/connectors'
@@ -21,6 +22,7 @@ const AccountStatusContent = ({ className, onOpen }) => {
   const etherscanLink = `${getEtherscanHost(web3react)}/address/${account}`
   const connectorName = useStoreState(AccountStore, (s) => s.connectorName)
   const connectorIcon = getConnectorIcon(connectorName)
+  const { overrideAccount } = useOverrideAccount()
 
   return (
     <>
@@ -85,7 +87,19 @@ const AccountStatusContent = ({ className, onOpen }) => {
             </>
           )}
         </div>
-        {active && (
+        {overrideAccount && (
+          <div className="disconnect-box d-flex">
+            <a
+              className="btn-clear-blue w-100"
+              onClick={() => {
+                window.location = window.location.pathname
+              }}
+            >
+              {fbt('Clear', 'Clear')}
+            </a>
+          </div>
+        )}
+        {active && !overrideAccount && (
           <div className="disconnect-box d-flex">
             <a
               className="btn-clear-blue w-100"

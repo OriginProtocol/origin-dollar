@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useWeb3React } from '@web3-react/core'
 import { fbt } from 'fbt-runtime'
-import { useRouter } from 'next/router'
 
 import Layout from 'components/layout'
 import Nav from 'components/Nav'
@@ -9,14 +8,36 @@ import BalanceHeader from 'components/buySell/BalanceHeader'
 import TransactionHistory from 'components/TransactionHistory'
 import GetOUSD from 'components/GetOUSD'
 import { assetRootPath } from 'utils/image'
+import { useOverrideAccount } from '../src/utils/hooks'
+import ErrorModal from '../src/components/buySell/ErrorModal'
 
 export default function History({ locale, onLocale }) {
   const { active } = useWeb3React()
-  const router = useRouter()
-  const overrideAccount = router.query.override_account
+  const { overrideAccount, isValid } = useOverrideAccount()
+  const [showErrorModal, setShowErrorModal] = useState(!isValid)
 
+  const errorMap = [
+    {
+      errorCheck: (err) => {
+        return err === 'invalidAddress'
+      },
+      friendlyMessage: fbt(
+        "Overridden account's address is invalid",
+        "Overridden account's address is invalid"
+      ),
+    },
+  ]
   return (
     <>
+      {showErrorModal && (
+        <ErrorModal
+          error="invalidAddress"
+          errorMap={errorMap}
+          onClose={() => {
+            setShowErrorModal(false)
+          }}
+        />
+      )}
       <Layout locale={locale} onLocale={onLocale} dapp>
         <Nav dapp page={'history'} locale={locale} onLocale={onLocale} />
         <div className="home d-flex flex-column">

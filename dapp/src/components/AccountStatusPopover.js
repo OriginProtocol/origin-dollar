@@ -7,10 +7,14 @@ import withWalletSelectModal from 'hoc/withWalletSelectModal'
 import GetOUSD from 'components/GetOUSD'
 import Content from './_AccountStatusContent'
 import { assetRootPath } from 'utils/image'
+import { useOverrideAccount } from 'utils/hooks'
 
 const AccountStatusPopover = ({ className }) => {
   const { active, account, chainId } = useWeb3React()
   const correctNetwork = isCorrectNetwork(chainId)
+
+  const { overrideAccount } = useOverrideAccount()
+
   if (!active && !account) {
     return ''
   }
@@ -28,8 +32,13 @@ const AccountStatusPopover = ({ className }) => {
       >
         <div className={`dropdown-marble${className ? ' ' + className : ''}`}>
           {!active && account && <div className="dot" />}
-          {active && !correctNetwork && <div className="dot yellow" />}
-          {active && correctNetwork && <div className="dot green" />}
+          {active && overrideAccount && <div className="dot white" />}
+          {active && !correctNetwork && !overrideAccount && (
+            <div className="dot yellow" />
+          )}
+          {active && correctNetwork && !overrideAccount && (
+            <div className="dot green" />
+          )}
         </div>
       </button>
       <div
@@ -75,6 +84,10 @@ const AccountStatusPopover = ({ className }) => {
 
         .dot.green {
           background-color: #00d592;
+        }
+
+        .dot.white {
+          background-color: #fff;
         }
 
         .dot.green.yellow {
