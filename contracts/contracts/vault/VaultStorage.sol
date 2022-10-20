@@ -37,7 +37,7 @@ contract VaultStorage is Initializable, Governable {
     event RebasePaused();
     event RebaseUnpaused();
     event VaultBufferUpdated(uint256 _vaultBuffer);
-    event OusdMetaStrategyUpdated(address _ousdMetaStrategy);
+    event OusdMetaStrategyUpdated(address indexed _ousdMetaStrategy);
     event RedeemFeeUpdated(uint256 _redeemFeeBps);
     event PriceProviderUpdated(address _priceProvider);
     event AllocateThresholdUpdated(uint256 _threshold);
