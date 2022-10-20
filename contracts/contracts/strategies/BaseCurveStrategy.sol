@@ -18,7 +18,9 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
     using StableMath for uint256;
     using SafeERC20 for IERC20;
 
-    uint256 internal constant maxSlippage = 1e16; // 1%, same as the Curve UI
+    uint256 internal constant MAX_SLIPPAGE = 1e16; // 1%, same as the Curve UI
+    // number of assets in Curve 3Pool (USDC, DAI, USDT)
+    uint256 internal constant THREEPOOL_ASSET_COUNT = 3;
     address internal pTokenAddress;
 
     /**
@@ -47,7 +49,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
             curvePool.get_virtual_price()
         );
         uint256 minMintAmount = depositValue.mulTruncate(
-            uint256(1e18) - maxSlippage
+            uint256(1e18) - MAX_SLIPPAGE
         );
         // Do the deposit to 3pool
         curvePool.add_liquidity(_amounts, minMintAmount);
@@ -85,7 +87,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         }
 
         uint256 minMintAmount = depositValue.mulTruncate(
-            uint256(1e18) - maxSlippage
+            uint256(1e18) - MAX_SLIPPAGE
         );
         // Do the deposit to 3pool
         curvePool.add_liquidity(_amounts, minMintAmount);
@@ -209,7 +211,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
             uint256 virtual_price = curvePool.get_virtual_price();
             uint256 value = (totalPTokens * virtual_price) / 1e18;
             uint256 assetDecimals = Helpers.getDecimals(_asset);
-            balance = value.scaleBy(assetDecimals, 18) / 3;
+            balance = value.scaleBy(assetDecimals, 18) / THREEPOOL_ASSET_COUNT;
         }
     }
 
