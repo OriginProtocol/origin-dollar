@@ -112,8 +112,9 @@ contract VaultCore is VaultStorage {
      * @dev Mint OUSD for OUSD Meta Strategy
      * @param _amount Amount of the asset being deposited
      *
-     * Notice: can't use nonReentrant modifier since BaseCurveStrategy's deposit
-     * already has that modifier present
+     * Notice: can't use `nonReentrant` modifier since the `mint` function can
+     * be called within the same transaction as `mintForStrategy` and can cause
+     * a `nonReentrant` collision.
      */
     function mintForStrategy(uint256 _amount)
         external
