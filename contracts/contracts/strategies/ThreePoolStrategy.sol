@@ -15,6 +15,11 @@ import { IERC20, BaseCurveStrategy } from "./BaseCurveStrategy.sol";
 import { StableMath } from "../utils/StableMath.sol";
 import { Helpers } from "../utils/Helpers.sol";
 
+/*
+ * IMPORTANT(!) If TreePoolStrategy is every to be re-deployed, it needs new
+ * proxy contract with fresh storage slots. Changes in `BaseCurveStrategy`
+ * storage slots would break existing implementation.
+ */
 contract ThreePoolStrategy is BaseCurveStrategy {
     using StableMath for uint256;
     using SafeERC20 for IERC20;

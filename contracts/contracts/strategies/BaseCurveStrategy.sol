@@ -21,6 +21,8 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
     uint256 internal constant maxSlippage = 1e16; // 1%, same as the Curve UI
     address internal pTokenAddress;
 
+    int256[49] private __reserved;
+
     /**
      * @dev Deposit asset into the Curve 3Pool
      * @param _asset Address of asset to deposit
