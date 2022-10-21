@@ -113,8 +113,8 @@ contract VaultCore is VaultStorage {
      * @param _amount Amount of the asset being deposited
      *
      * Notice: can't use `nonReentrant` modifier since the `mint` function can
-     * call allocate, and that can trigger `ConvexOUSDMetaStrategy` to call this function
-     * while the execution of the `mint` has not yet completed -> causing a collision.
+     * call `allocate`, and that can trigger `ConvexOUSDMetaStrategy` to call this function
+     * while the execution of the `mint` has not yet completed -> causing a `nonReentrant` collision.
      */
     function mintForStrategy(uint256 _amount)
         external
