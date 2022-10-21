@@ -22,6 +22,8 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
     uint256 internal constant THREEPOOL_ASSET_COUNT = 3;
     address internal pTokenAddress;
 
+    int256[49] private __reserved;
+
     /**
      * @dev Deposit asset into the Curve 3Pool
      * @param _asset Address of asset to deposit

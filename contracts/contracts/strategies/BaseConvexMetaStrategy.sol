@@ -48,7 +48,7 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
     uint128 internal crvCoinIndex;
     uint128 internal mainCoinIndex;
 
-    int256[30] private __reserved;
+    int256[41] private ___reserved;
 
     /**
      * Initializer for setting up strategy internal state. This overrides the

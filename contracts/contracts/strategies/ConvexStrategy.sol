@@ -15,6 +15,13 @@ import { IERC20, BaseCurveStrategy } from "./BaseCurveStrategy.sol";
 import { StableMath } from "../utils/StableMath.sol";
 import { Helpers } from "../utils/Helpers.sol";
 
+/*
+ * IMPORTANT(!) If ConvexStrategy needs to be re-deployed, it requires new
+ * proxy contract with fresh storage slots. Changes in `BaseCurveStrategy`
+ * storage slots would break existing implementation.
+ *
+ * Remove this notice if ConvexStrategy is re-deployed
+ */
 contract ConvexStrategy is BaseCurveStrategy {
     using StableMath for uint256;
     using SafeERC20 for IERC20;
