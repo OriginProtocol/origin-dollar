@@ -168,8 +168,8 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
     /**
      * @dev Sets max withdrawal slippage that is considered when removing
      * liquidity from Metapools.
-     *
-     * 1e18 == 100%, 1e16 == 1%
+     * @param _maxWithdrawalSlippage Max withdrawal slippage denominated in
+     *        wad (number with 18 decimals): 1e18 == 100%, 1e16 == 1%
      */
     function setMaxWithdrawalSlippage(uint256 _maxWithdrawalSlippage)
         external
