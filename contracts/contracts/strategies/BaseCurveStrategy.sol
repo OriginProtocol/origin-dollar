@@ -258,8 +258,8 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
     function _approveAsset(address _asset) internal {
         IERC20 asset = IERC20(_asset);
         // 3Pool for asset (required for adding liquidity)
-        asset.safeApprove(platformAddress, 0);
-        asset.safeApprove(platformAddress, type(uint256).max);
+        asset.approve(platformAddress, 0);
+        asset.approve(platformAddress, type(uint256).max);
     }
 
     function _approveBase() internal virtual;

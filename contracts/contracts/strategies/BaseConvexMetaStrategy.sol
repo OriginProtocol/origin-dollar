@@ -138,17 +138,17 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
     function _approveBase() internal override {
         IERC20 pToken = IERC20(pTokenAddress);
         // 3Pool for LP token (required for removing liquidity)
-        pToken.safeApprove(platformAddress, 0);
-        pToken.safeApprove(platformAddress, type(uint256).max);
+        pToken.approve(platformAddress, 0);
+        pToken.approve(platformAddress, type(uint256).max);
         // Gauge for LP token
-        metapoolLPToken.safeApprove(cvxDepositorAddress, 0);
-        metapoolLPToken.safeApprove(cvxDepositorAddress, type(uint256).max);
+        metapoolLPToken.approve(cvxDepositorAddress, 0);
+        metapoolLPToken.approve(cvxDepositorAddress, type(uint256).max);
         // Metapool for LP token
-        pToken.safeApprove(address(metapool), 0);
-        pToken.safeApprove(address(metapool), type(uint256).max);
+        pToken.approve(address(metapool), 0);
+        pToken.approve(address(metapool), type(uint256).max);
         // Metapool for Metapool main token
-        metapoolMainToken.safeApprove(address(metapool), 0);
-        metapoolMainToken.safeApprove(address(metapool), type(uint256).max);
+        metapoolMainToken.approve(address(metapool), 0);
+        metapoolMainToken.approve(address(metapool), type(uint256).max);
     }
 
     /**
