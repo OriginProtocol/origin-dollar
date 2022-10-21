@@ -236,8 +236,9 @@ contract VaultCore is VaultStorage {
      * @dev Burn OUSD for OUSD Meta Strategy
      * @param _amount Amount of OUSD to burn
      *
-     * Notice: can't use nonReentrant modifier since BaseCurveStrategy's deposit
-     * already has that modifier present
+     * Notice: can't use `nonReentrant` modifier since the `redeem` function could
+     * require withdrawal on `ConvexOUSDMetaStrategy` and that one can call `burnForStrategy`
+     * while the execution of the `redeem` has not yet completed -> causing a `nonReentrant` collision.
      */
     function burnForStrategy(uint256 _amount)
         external
