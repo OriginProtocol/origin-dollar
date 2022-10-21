@@ -132,7 +132,7 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
         }
 
         uint256 assetDecimals = Helpers.getDecimals(_asset);
-        balance = balance.scaleBy(assetDecimals, 18) / 3;
+        balance = balance.scaleBy(assetDecimals, 18) / THREEPOOL_ASSET_COUNT;
     }
 
     function _approveBase() internal override {
