@@ -111,7 +111,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
     ) external override onlyVault nonReentrant {
         require(_amount > 0, "Invalid amount");
 
-        emit Withdrawal(_asset, address(assetToPToken[_asset]), _amount);
+        emit Withdrawal(_asset, pTokenAddress, _amount);
 
         uint256 contractCrv3Tokens = IERC20(pTokenAddress).balanceOf(
             address(this)
@@ -201,9 +201,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         // LP tokens in this contract. This should generally be nothing as we
         // should always stake the full balance in the Gauge, but include for
         // safety
-        uint256 totalPTokens = IERC20(assetToPToken[_asset]).balanceOf(
-            address(this)
-        );
+        uint256 totalPTokens = IERC20(pTokenAddress).balanceOf(address(this));
         ICurvePool curvePool = ICurvePool(platformAddress);
         if (totalPTokens > 0) {
             uint256 virtual_price = curvePool.get_virtual_price();
