@@ -33,7 +33,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         nonReentrant
     {
         require(_amount > 0, "Must deposit something");
-        emit Deposit(_asset, address(platformAddress), _amount);
+        emit Deposit(_asset, pTokenAddress, _amount);
 
         // 3Pool requires passing deposit amounts for all 3 assets, set to 0 for
         // all
@@ -80,7 +80,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
                     balance.scaleBy(18, assetDecimals).divPrecisely(
                         curveVirtualPrice
                     );
-                emit Deposit(assetAddress, address(platformAddress), balance);
+                emit Deposit(assetAddress, pTokenAddress, balance);
             }
         }
 
