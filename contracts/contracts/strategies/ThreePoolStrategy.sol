@@ -19,7 +19,7 @@ import { Helpers } from "../utils/Helpers.sol";
  * IMPORTANT(!) If ThreePoolStrategy needs to be re-deployed, it requires new
  * proxy contract with fresh storage slots. Changes in `BaseCurveStrategy`
  * storage slots would break existing implementation.
- * 
+ *
  * Remove this notice if ThreePoolStrategy is re-deployed
  */
 contract ThreePoolStrategy is BaseCurveStrategy {

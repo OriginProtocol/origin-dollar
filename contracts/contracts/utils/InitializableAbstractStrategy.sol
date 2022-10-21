@@ -56,7 +56,7 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
     // Reward token addresses
     address[] public rewardTokenAddresses;
     /* Reserved for future expansion. Used to be 100 storage slots
-     * and has decreased to accommodate: 
+     * and has decreased to accommodate:
      * - harvesterAddress
      * - rewardTokenAddresses
      */
