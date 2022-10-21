@@ -45,8 +45,8 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
     address[] internal metapoolAssets;
     // Max withdrawal slippage denominated in 1e18 (1e18 == 100%)
     uint256 public maxWithdrawalSlippage = 1e16;
-    uint128 crvCoinIndex;
-    uint128 mainCoinIndex;
+    uint128 internal crvCoinIndex;
+    uint128 internal mainCoinIndex;
 
     int256[30] private __reserved;
 
