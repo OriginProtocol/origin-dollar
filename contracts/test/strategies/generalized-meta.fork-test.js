@@ -185,6 +185,13 @@ metastrategies.forEach(
           });
         });
 
+        it("Should have the correct initial maxWithdrawalSlippage state", async function () {
+          const { metaStrategy, anna } = fixture;
+          await expect(
+            await fixture.metaStrategy.connect(anna).maxWithdrawalSlippage()
+          ).to.equal(ousdUnits("0.01"));
+        });
+
         describe("Withdraw all", function () {
           it("Should not allow withdraw all when MEW tries to manipulate the pool", async function () {
             if (skipMewTest) {
