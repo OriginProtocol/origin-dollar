@@ -44,7 +44,7 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
     // Ordered list of metapool assets
     address[] internal metapoolAssets;
     // Max withdrawal slippage denominated in 1e18 (1e18 == 100%)
-    uint256 public maxWithdrawalSlippage = 1e16;
+    uint256 public maxWithdrawalSlippage;
     uint128 internal crvCoinIndex;
     uint128 internal mainCoinIndex;
 
@@ -77,6 +77,7 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
         cvxRewardStakerAddress = initState.cvxRewardStakerAddress;
         metapoolLPToken = IERC20(initState.metapoolLPToken);
         cvxDepositorPTokenId = initState.cvxDepositorPTokenId;
+        maxWithdrawalSlippage = 1e16;
 
         metapoolAssets = [metapool.coins(0), metapool.coins(1)];
         crvCoinIndex = _getMetapoolCoinIndex(pTokenAddress);
