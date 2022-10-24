@@ -188,7 +188,7 @@ metastrategies.forEach(
         it("Should have the correct initial maxWithdrawalSlippage state", async function () {
           const { metaStrategy, anna } = fixture;
           await expect(
-            await fixture.metaStrategy.connect(anna).maxWithdrawalSlippage()
+            await metaStrategy.connect(anna).maxWithdrawalSlippage()
           ).to.equal(ousdUnits("0.01"));
         });
 
