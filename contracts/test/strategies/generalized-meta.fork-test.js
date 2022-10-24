@@ -234,7 +234,7 @@ metastrategies.forEach(
 
             expect(error).to.be.oneOf([
               "Transaction reverted without a reason string",
-              "VM Exception while processing transaction: reverted with reason string \'Not enough coins removed\'",
+              "VM Exception while processing transaction: reverted with reason string \\'Not enough coins removed\\'",
             ]);
 
             // should not revert when slippage tolerance set to 10%
