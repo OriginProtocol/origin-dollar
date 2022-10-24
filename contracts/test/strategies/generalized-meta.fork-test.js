@@ -27,7 +27,7 @@ const metastrategies = [
     rewardPoolAddress: "0xDBFa6187C79f4fE4Cda20609E75760C5AaE88e52",
     // metapool implementation wont allow tilting of the pools the way this test does it
     // and then withdrawing liquidity
-    skipMewTest: true,
+    skipMewTest: false,
   },
   {
     token: "USDD",
@@ -221,13 +221,19 @@ metastrategies.forEach(
               .setMaxWithdrawalSlippage(ousdUnits("0"));
             await tiltToMainToken(fixture);
 
-            await expect(
-              vault
+
+            let error = false
+            try {
+              await vault
                 .connect(sGovernor)
                 .withdrawAllFromStrategy(fixture.metaStrategyProxy.address)
-            ).to.be.revertedWith(
-              "Transaction reverted without a reason string"
-            );
+
+              expect.fail("Transaction not reverted");
+            } catch(e) {
+              error = e.message
+            }
+
+            expect(error).to.be.oneOf(["Transaction reverted without a reason string", "Not enough coins removed"])
 
             // should not revert when slippage tolerance set to 10%
             await fixture.metaStrategy
