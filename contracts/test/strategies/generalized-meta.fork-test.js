@@ -232,6 +232,10 @@ metastrategies.forEach(
               error = e.message;
             }
 
+            /* Different implementations of Curve's StableSwap pools fail differently when the
+             * the minimum expected token payout threshold is not reached. For that reason we
+             * test the revert error against multiple possible values.
+             */
             expect(error).to.be.oneOf([
               "Transaction reverted without a reason string",
               "VM Exception while processing transaction: reverted with reason string 'Not enough coins removed'",
