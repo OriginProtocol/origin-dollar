@@ -27,7 +27,7 @@ const metastrategies = [
     rewardPoolAddress: "0xDBFa6187C79f4fE4Cda20609E75760C5AaE88e52",
     // metapool implementation wont allow tilting of the pools the way this test does it
     // and then withdrawing liquidity
-    skipMewTest: true,
+    skipMewTest: false,
   },
   {
     token: "USDD",
@@ -218,7 +218,7 @@ metastrategies.forEach(
 
             await fixture.metaStrategy
               .connect(sGovernor)
-              .setMaxWithdrawalSlippage(ousdUnits("0.001"));
+              .setMaxWithdrawalSlippage(ousdUnits("0"));
             await tiltToMainToken(fixture);
 
             await expect(
