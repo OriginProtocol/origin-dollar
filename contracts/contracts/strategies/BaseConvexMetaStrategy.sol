@@ -119,15 +119,18 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
             balance += value;
         }
 
-        uint256 metapoolPTokens = metapoolLPToken.balanceOf(address(this));
+        /* We intentionally omit the metapoolLp tokens held by the metastrategyContract
+         * since the contract should never (except in the middle of deposit/withdrawal
+         * transaction) hold any amount of those tokens in normal operation. There
+         * could be tokens sent to it by a 3rd party and we decide to actively ignore
+         * those.
+         */
         uint256 metapoolGaugePTokens = IRewardStaking(cvxRewardStakerAddress)
             .balanceOf(address(this));
-        uint256 metapoolTotalPTokens = metapoolPTokens + metapoolGaugePTokens;
 
-        if (metapoolTotalPTokens > 0) {
-            uint256 metapool_virtual_price = metapool.get_virtual_price();
-            uint256 value = (metapoolTotalPTokens * metapool_virtual_price) /
-                1e18;
+        if (metapoolGaugePTokens > 0) {
+            uint256 value = (metapoolGaugePTokens *
+                metapool.get_virtual_price()) / 1e18;
             balance += value;
         }
 
