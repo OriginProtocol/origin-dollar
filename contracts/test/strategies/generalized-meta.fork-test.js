@@ -185,6 +185,13 @@ metastrategies.forEach(
           });
         });
 
+        it("Should have the correct initial maxWithdrawalSlippage state", async function () {
+          const { metaStrategy, anna } = fixture;
+          await expect(
+            await metaStrategy.connect(anna).maxWithdrawalSlippage()
+          ).to.equal(ousdUnits("0.01"));
+        });
+
         describe("Withdraw all", function () {
           it("Should not allow withdraw all when MEW tries to manipulate the pool", async function () {
             if (skipMewTest) {
@@ -233,6 +240,39 @@ metastrategies.forEach(
             await fixture.metaStrategy
               .connect(sVault)
               .setMaxWithdrawalSlippage(ousdUnits("0.1"));
+            await vault
+              .connect(sGovernor)
+              .withdrawAllFromStrategy(fixture.metaStrategyProxy.address);
+          });
+
+          it("Should successfully withdrawAll even without any changes to maxWithdrawalSlippage", async function () {
+            if (skipMewTest) {
+              this.skip();
+              return;
+            }
+            const { governorAddr } = await getNamedAccounts();
+            const sGovernor = await ethers.provider.getSigner(governorAddr);
+
+            const { vault, usdt, anna } = fixture;
+
+            await hre.network.provider.request({
+              method: "hardhat_setBalance",
+              params: [vault.address, "0x1bc16d674ec80000"], // 2 Eth
+            });
+            await hre.network.provider.request({
+              method: "hardhat_impersonateAccount",
+              params: [vault.address],
+            });
+
+            await vault.connect(anna).allocate();
+            await vault.connect(anna).rebase();
+            await tiltTo3CRV_Metapool_automatic(fixture);
+
+            await vault
+              .connect(anna)
+              .mint(usdt.address, await units("30000", usdt), 0);
+            await vault.connect(anna).allocate();
+
             await vault
               .connect(sGovernor)
               .withdrawAllFromStrategy(fixture.metaStrategyProxy.address);
