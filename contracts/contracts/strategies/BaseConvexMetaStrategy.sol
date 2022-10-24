@@ -171,14 +171,18 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
      * liquidity from Metapools.
      * @param _maxWithdrawalSlippage Max withdrawal slippage denominated in
      *        wad (number with 18 decimals): 1e18 == 100%, 1e16 == 1%
+     *
+     * IMPORTANT Minimum maxWithdrawalSlippage should actually be 0.1% (1e15)
+     * for production usage. Contract allows as low value as 0% for confirming
+     * correct behavior in test suite.
      */
     function setMaxWithdrawalSlippage(uint256 _maxWithdrawalSlippage)
         external
         onlyVaultOrGovernorOrStrategist
     {
         require(
-            _maxWithdrawalSlippage >= 1e15 && _maxWithdrawalSlippage <= 1e17,
-            "Max withdrawal slippage needs to be between 0.1% - 10%"
+            _maxWithdrawalSlippage <= 1e17,
+            "Max withdrawal slippage needs to be between 0% - 10%"
         );
         emit MaxWithdrawalSlippageUpdated(
             maxWithdrawalSlippage,

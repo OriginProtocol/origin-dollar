@@ -27,7 +27,7 @@ const metastrategies = [
     rewardPoolAddress: "0xDBFa6187C79f4fE4Cda20609E75760C5AaE88e52",
     // metapool implementation wont allow tilting of the pools the way this test does it
     // and then withdrawing liquidity
-    skipMewTest: true,
+    skipMewTest: false,
   },
   {
     token: "USDD",
@@ -225,16 +225,28 @@ metastrategies.forEach(
 
             await fixture.metaStrategy
               .connect(sGovernor)
-              .setMaxWithdrawalSlippage(ousdUnits("0.001"));
+              .setMaxWithdrawalSlippage(ousdUnits("0"));
             await tiltToMainToken(fixture);
 
-            await expect(
-              vault
+            let error = false;
+            try {
+              await vault
                 .connect(sGovernor)
-                .withdrawAllFromStrategy(fixture.metaStrategyProxy.address)
-            ).to.be.revertedWith(
-              "Transaction reverted without a reason string"
-            );
+                .withdrawAllFromStrategy(fixture.metaStrategyProxy.address);
+
+              expect.fail("Transaction not reverted");
+            } catch (e) {
+              error = e.message;
+            }
+
+            /* Different implementations of Curve's StableSwap pools fail differently when the
+             * the minimum expected token payout threshold is not reached. For that reason we
+             * test the revert error against multiple possible values.
+             */
+            expect(error).to.be.oneOf([
+              "Transaction reverted without a reason string",
+              "VM Exception while processing transaction: reverted with reason string 'Not enough coins removed'",
+            ]);
 
             // should not revert when slippage tolerance set to 10%
             await fixture.metaStrategy
