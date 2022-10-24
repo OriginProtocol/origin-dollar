@@ -221,19 +221,21 @@ metastrategies.forEach(
               .setMaxWithdrawalSlippage(ousdUnits("0"));
             await tiltToMainToken(fixture);
 
-
-            let error = false
+            let error = false;
             try {
               await vault
                 .connect(sGovernor)
-                .withdrawAllFromStrategy(fixture.metaStrategyProxy.address)
+                .withdrawAllFromStrategy(fixture.metaStrategyProxy.address);
 
               expect.fail("Transaction not reverted");
-            } catch(e) {
-              error = e.message
+            } catch (e) {
+              error = e.message;
             }
 
-            expect(error).to.be.oneOf(["Transaction reverted without a reason string", "Not enough coins removed"])
+            expect(error).to.be.oneOf([
+              "Transaction reverted without a reason string",
+              "Not enough coins removed",
+            ]);
 
             // should not revert when slippage tolerance set to 10%
             await fixture.metaStrategy
