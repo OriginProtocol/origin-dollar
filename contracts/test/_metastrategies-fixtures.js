@@ -2,7 +2,11 @@ const hre = require("hardhat");
 const { ethers } = hre;
 const { loadFixture } = require("ethereum-waffle");
 const { ousdUnits } = require("./helpers");
-const { convexMetaVaultFixture, resetAllowance, impersonateAndFundContract } = require("./_fixture");
+const {
+  convexMetaVaultFixture,
+  resetAllowance,
+  impersonateAndFundContract,
+} = require("./_fixture");
 const erc20Abi = require("./abi/erc20.json");
 
 // NOTE: This can cause a change in setup from mainnet.
@@ -39,7 +43,7 @@ async function balanceOUSDMetaPool(fixture) {
 }
 
 async function _balanceMetaPool(fixture, metapool) {
-  const { vault, domen, threePoolToken, ousd } = fixture;
+  const { vault, domen } = fixture;
 
   // Balance metapool
   const mainCoinBalance = await metapool.balances(0);
@@ -49,13 +53,19 @@ async function _balanceMetaPool(fixture, metapool) {
   const mainCoinValue = await _getCoinValue(metapool, mainCoinBalance);
   const crv3Value = await get3CRVValue(fixture, crv3Balance);
 
-  const coinOneContract = await ethers.getContractAt(erc20Abi, await metapool.coins(0));
-  const coinTwoContract = await ethers.getContractAt(erc20Abi, await metapool.coins(1));
+  const coinOneContract = await ethers.getContractAt(
+    erc20Abi,
+    await metapool.coins(0)
+  );
+  const coinTwoContract = await ethers.getContractAt(
+    erc20Abi,
+    await metapool.coins(1)
+  );
 
   const exchangeSign = "exchange(int128,int128,uint256,uint256)";
   const metapoolSigner = await impersonateAndFundContract(metapool.address);
-  /* let metapool perform the exchange on itself. This is somewhat dirty, but is also the 
-   * best assurance that the liquidity of both coins for balancing are going to be 
+  /* let metapool perform the exchange on itself. This is somewhat dirty, but is also the
+   * best assurance that the liquidity of both coins for balancing are going to be
    * available.
    */
   const exchangeMethod = await metapool.connect(metapoolSigner)[exchangeSign];
