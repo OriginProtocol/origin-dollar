@@ -34,7 +34,7 @@ forkOnlyDescribe(
     describe("Redeem", function () {
       it("Should redeem", async () => {
         const { vault, ousd, usdt, usdc, dai, anna, OUSDmetaStrategy } =
-          await loadFixture(withCRV3TitledOUSDMetapool);
+          await loadFixture(withBalancedOUSDMetaPool);
 
         await vault.connect(anna).allocate();
 
