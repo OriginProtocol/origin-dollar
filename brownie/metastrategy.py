@@ -7,7 +7,8 @@ OUSD_META_STRATEGY = '0xb12C3410C44854054c217fbF79dFf38ffD1C0676'
 BUSD_STRATEGY = '0x6996352570817113965b0325005f868B1Fe2f2e9'
 # Define which meta strategy should be set as default USDT asset strategy. Important for
 # supplying liquidity when minting using USDT
-USDT_DEFAULT_META_STRATEGY = BUSD_STRATEGY
+USDT_DEFAULT_META_STRATEGY = OUSD_META_STRATEGY
+#USDT_DEFAULT_META_STRATEGY = BUSD_STRATEGY
 #END COFIGURATION
 
 me = ORIGINTEAM
@@ -27,7 +28,7 @@ USDC_BAGS_2 = '0x0a59649758aa4d66e25f08dd01271e891fe52199'
 FRAX_BAGS = '0xdcef968d416a41cdac0ed8702fac8128a64241a2'
 BUSD_BAGS = '0xf977814e90da44bfa03b6295a0616a897441acec' # Binance
 DAI_BAGS = '0x40ec5b33f54e0e8a33a975908c5ba1c14e5bbbdf' #polygon bridge
-DAI_BAGS_2 = '0x5d3a536e4d6dbd6114cc1ead35777bab948e3643'
+DAI_BAGS_2 = '0x5d3a536e4d6dbd6114cc1ead35777bab948e3643' #this is compound cDai. Don't touch this!
 CURVE_FACTORY = '0xB9fC157394Af804a3578134A6585C0dc9cc990d4'
 
 threepool_lp = load_contract('threepool_lp', THREEPOOL_LP)
@@ -48,7 +49,6 @@ ousd.transfer(RANDOM_ACCOUNT, 10000*1e18, OPTS)
 usdc.transfer(me, usdc.balanceOf(USDC_BAGS), {'from': USDC_BAGS})
 usdc.transfer(me, usdc.balanceOf(USDC_BAGS_2), {'from': USDC_BAGS_2})
 dai.transfer(me, dai.balanceOf(DAI_BAGS), {'from': DAI_BAGS})
-dai.transfer(me, dai.balanceOf(DAI_BAGS_2), {'from': DAI_BAGS_2})
 frax.transfer(me, frax.balanceOf(FRAX_BAGS), {'from': FRAX_BAGS})
 busd.transfer(me, busd.balanceOf(BUSD_BAGS), {'from': BUSD_BAGS})
 meta_strat = load_contract('convex_strat', OUSD_META_STRATEGY)
