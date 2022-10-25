@@ -44,7 +44,7 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
     // Ordered list of metapool assets
     address[] internal metapoolAssets;
     // Max withdrawal slippage denominated in 1e18 (1e18 == 100%)
-    uint256 public maxWithdrawalSlippage = 1e16;
+    uint256 public maxWithdrawalSlippage;
     uint128 internal crvCoinIndex;
     uint128 internal mainCoinIndex;
 
@@ -77,6 +77,7 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
         cvxRewardStakerAddress = initState.cvxRewardStakerAddress;
         metapoolLPToken = IERC20(initState.metapoolLPToken);
         cvxDepositorPTokenId = initState.cvxDepositorPTokenId;
+        maxWithdrawalSlippage = 1e16;
 
         metapoolAssets = [metapool.coins(0), metapool.coins(1)];
         crvCoinIndex = _getMetapoolCoinIndex(pTokenAddress);
@@ -173,14 +174,18 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
      * liquidity from Metapools.
      * @param _maxWithdrawalSlippage Max withdrawal slippage denominated in
      *        wad (number with 18 decimals): 1e18 == 100%, 1e16 == 1%
+     *
+     * IMPORTANT Minimum maxWithdrawalSlippage should actually be 0.1% (1e15)
+     * for production usage. Contract allows as low value as 0% for confirming
+     * correct behavior in test suite.
      */
     function setMaxWithdrawalSlippage(uint256 _maxWithdrawalSlippage)
         external
         onlyVaultOrGovernorOrStrategist
     {
         require(
-            _maxWithdrawalSlippage >= 1e15 && _maxWithdrawalSlippage <= 1e17,
-            "Max withdrawal slippage needs to be between 0.1% - 10%"
+            _maxWithdrawalSlippage <= 1e17,
+            "Max withdrawal slippage needs to be between 0% - 10%"
         );
         emit MaxWithdrawalSlippageUpdated(
             maxWithdrawalSlippage,
@@ -190,7 +195,7 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
     }
 
     /**
-     * @dev Collect accumulated CRV and CVX and send to Vault.
+     * @dev Collect accumulated CRV and CVX and send to Harvester.
      */
     function collectRewardTokens()
         external

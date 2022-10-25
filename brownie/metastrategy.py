@@ -4,10 +4,11 @@ import math
 
 #CONFIGURATION - unfortunately this address changes until we deploy it to mainnet
 OUSD_META_STRATEGY = '0xb12C3410C44854054c217fbF79dFf38ffD1C0676'
-FRAX_STRATEGY = '0xC83Cb4F34874E0Ef4c58b4e77D4935F8F819d203'
+BUSD_STRATEGY = '0x6996352570817113965b0325005f868B1Fe2f2e9'
 # Define which meta strategy should be set as default USDT asset strategy. Important for
 # supplying liquidity when minting using USDT
 USDT_DEFAULT_META_STRATEGY = OUSD_META_STRATEGY
+#USDT_DEFAULT_META_STRATEGY = BUSD_STRATEGY
 #END COFIGURATION
 
 me = ORIGINTEAM
@@ -25,13 +26,14 @@ USDT_BAGS_2 = '0x5041ed759dd4afc3a72b8192c143f72f4724081a'
 USDC_BAGS = '0x40ec5b33f54e0e8a33a975908c5ba1c14e5bbbdf'
 USDC_BAGS_2 = '0x0a59649758aa4d66e25f08dd01271e891fe52199'
 FRAX_BAGS = '0xdcef968d416a41cdac0ed8702fac8128a64241a2'
+BUSD_BAGS = '0xf977814e90da44bfa03b6295a0616a897441acec' # Binance
 DAI_BAGS = '0x40ec5b33f54e0e8a33a975908c5ba1c14e5bbbdf' #polygon bridge
 DAI_BAGS_2 = '0x5d3a536e4d6dbd6114cc1ead35777bab948e3643' #this is compound cDai. Don't touch this!
 CURVE_FACTORY = '0xB9fC157394Af804a3578134A6585C0dc9cc990d4'
 
 threepool_lp = load_contract('threepool_lp', THREEPOOL_LP)
 ousd_metapool = load_contract('ousd_metapool', OUSD_METAPOOL)
-frax_metapool = load_contract('ousd_metapool', FRAX_METAPOOL)
+busd_metapool = load_contract('ousd_metapool', BUSD_METAPOOL)
 threepool_swap = load_contract('threepool_swap', THREEPOOL)
 curve_factory = load_contract('curve_factory', CURVE_FACTORY)
 
@@ -48,18 +50,19 @@ usdc.transfer(me, usdc.balanceOf(USDC_BAGS), {'from': USDC_BAGS})
 usdc.transfer(me, usdc.balanceOf(USDC_BAGS_2), {'from': USDC_BAGS_2})
 dai.transfer(me, dai.balanceOf(DAI_BAGS), {'from': DAI_BAGS})
 frax.transfer(me, frax.balanceOf(FRAX_BAGS), {'from': FRAX_BAGS})
+busd.transfer(me, busd.balanceOf(BUSD_BAGS), {'from': BUSD_BAGS})
 meta_strat = load_contract('convex_strat', OUSD_META_STRATEGY)
-frax_strat = load_contract('convex_strat', FRAX_STRATEGY)
+busd_strat = load_contract('convex_strat', BUSD_STRATEGY)
 
 # approve ousd and 3poolLp to be used by ousd_metapool
 threepool_lp.approve(ousd_metapool, int(0), OPTS)
 threepool_lp.approve(ousd_metapool, int(1e50), OPTS)
-threepool_lp.approve(frax_metapool, int(0), OPTS)
-threepool_lp.approve(frax_metapool, int(1e50), OPTS)
+threepool_lp.approve(busd_metapool, int(0), OPTS)
+threepool_lp.approve(busd_metapool, int(1e50), OPTS)
 ousd.approve(ousd_metapool, int(0), OPTS)
 ousd.approve(ousd_metapool, int(1e50), OPTS)
-frax.approve(frax_metapool, int(0), OPTS)
-frax.approve(frax_metapool, int(1e50), OPTS)
+busd.approve(busd_metapool, int(0), OPTS)
+busd.approve(busd_metapool, int(1e50), OPTS)
 
 # set metastrategy as default strategies for USDT in a governance proposal
 tx = vault_admin.setAssetDefaultStrategy(usdt.address, USDT_DEFAULT_META_STRATEGY, {'from': GOVERNOR})

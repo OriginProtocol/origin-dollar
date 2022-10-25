@@ -27,7 +27,7 @@ const metastrategies = [
     rewardPoolAddress: "0xDBFa6187C79f4fE4Cda20609E75760C5AaE88e52",
     // metapool implementation wont allow tilting of the pools the way this test does it
     // and then withdrawing liquidity
-    skipMewTest: true,
+    skipMewTest: false,
   },
   {
     token: "USDD",
@@ -185,6 +185,13 @@ metastrategies.forEach(
           });
         });
 
+        it("Should have the correct initial maxWithdrawalSlippage state", async function () {
+          const { metaStrategy, anna } = fixture;
+          await expect(
+            await metaStrategy.connect(anna).maxWithdrawalSlippage()
+          ).to.equal(ousdUnits("0.01"));
+        });
+
         describe("Withdraw all", function () {
           it("Should not allow withdraw all when MEW tries to manipulate the pool", async function () {
             if (skipMewTest) {
@@ -218,21 +225,66 @@ metastrategies.forEach(
 
             await fixture.metaStrategy
               .connect(sGovernor)
-              .setMaxWithdrawalSlippage(ousdUnits("0.001"));
+              .setMaxWithdrawalSlippage(ousdUnits("0"));
             await tiltToMainToken(fixture);
 
-            await expect(
-              vault
+            let error = false;
+            try {
+              await vault
                 .connect(sGovernor)
-                .withdrawAllFromStrategy(fixture.metaStrategyProxy.address)
-            ).to.be.revertedWith(
-              "Transaction reverted without a reason string"
-            );
+                .withdrawAllFromStrategy(fixture.metaStrategyProxy.address);
+
+              expect.fail("Transaction not reverted");
+            } catch (e) {
+              error = e.message;
+            }
+
+            /* Different implementations of Curve's StableSwap pools fail differently when the
+             * the minimum expected token payout threshold is not reached. For that reason we
+             * test the revert error against multiple possible values.
+             */
+            expect(error).to.be.oneOf([
+              "Transaction reverted without a reason string",
+              "VM Exception while processing transaction: reverted with reason string 'Not enough coins removed'",
+            ]);
 
             // should not revert when slippage tolerance set to 10%
             await fixture.metaStrategy
               .connect(sVault)
               .setMaxWithdrawalSlippage(ousdUnits("0.1"));
+            await vault
+              .connect(sGovernor)
+              .withdrawAllFromStrategy(fixture.metaStrategyProxy.address);
+          });
+
+          it("Should successfully withdrawAll even without any changes to maxWithdrawalSlippage", async function () {
+            if (skipMewTest) {
+              this.skip();
+              return;
+            }
+            const { governorAddr } = await getNamedAccounts();
+            const sGovernor = await ethers.provider.getSigner(governorAddr);
+
+            const { vault, usdt, anna } = fixture;
+
+            await hre.network.provider.request({
+              method: "hardhat_setBalance",
+              params: [vault.address, "0x1bc16d674ec80000"], // 2 Eth
+            });
+            await hre.network.provider.request({
+              method: "hardhat_impersonateAccount",
+              params: [vault.address],
+            });
+
+            await vault.connect(anna).allocate();
+            await vault.connect(anna).rebase();
+            await tiltTo3CRV_Metapool_automatic(fixture);
+
+            await vault
+              .connect(anna)
+              .mint(usdt.address, await units("30000", usdt), 0);
+            await vault.connect(anna).allocate();
+
             await vault
               .connect(sGovernor)
               .withdrawAllFromStrategy(fixture.metaStrategyProxy.address);

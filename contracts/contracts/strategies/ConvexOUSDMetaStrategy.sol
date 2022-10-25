@@ -53,12 +53,13 @@ contract ConvexOUSDMetaStrategy is BaseConvexMetaStrategy {
         ousdToAdd = Math.max(ousdToAdd, threePoolLpDollarValue);
         ousdToAdd = Math.min(ousdToAdd, threePoolLpDollarValue * 2);
 
-        /* Mint so much ousd that the dollar value of 3CRVLP in the pool and OUSD will be equal after
-         * deployment of liquidity. In cases where pool is heavier in OUSD before the deposit strategy mints
-         * less OUSD and gets less metapoolLP and less rewards. And when pool is heavier in 3CRV strategy mints
-         * more OUSD and gets more metapoolLP and more rewards.
+        /* Mint OUSD with a strategy that attempts to contribute to stability of OUSD metapool. Try
+         * to mint so much OUSD that after deployment of liquidity pool ends up being balanced.
          *
-         * In both cases metapool ends up being balanced and there should be no incentive to execute arbitrage trade.
+         * To manage unpredictability minimal OUSD minted will always be at least equal or greater
+         * to stablecoin(DAI, USDC, USDT) amount of 3CRVLP deployed. And never larger than twice the
+         * stablecoin amount of 3CRVLP deployed even if it would have a further beneficial effect
+         * on pool stability.
          */
         if (ousdToAdd > 0) {
             IVault(vaultAddress).mintForStrategy(ousdToAdd);
@@ -90,7 +91,7 @@ contract ConvexOUSDMetaStrategy is BaseConvexMetaStrategy {
     /**
      * Withdraw the specified amount of tokens from the gauge. And use all the resulting tokens
      * to remove liquidity from metapool
-     * @param num3CrvTokens Number of Convex LP tokens to remove from gauge
+     * @param num3CrvTokens Number of Convex 3pool LP tokens to withdraw from metapool
      */
     function _lpWithdraw(uint256 num3CrvTokens) internal override {
         ICurvePool curvePool = ICurvePool(platformAddress);

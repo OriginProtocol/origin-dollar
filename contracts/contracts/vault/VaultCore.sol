@@ -112,8 +112,14 @@ contract VaultCore is VaultStorage {
      * @dev Mint OUSD for OUSD Meta Strategy
      * @param _amount Amount of the asset being deposited
      *
-     * Notice: can't use nonReentrant modifier since BaseCurveStrategy's deposit
-     * already has that modifier present
+     * Notice: can't use `nonReentrant` modifier since the `mint` function can
+     * call `allocate`, and that can trigger `ConvexOUSDMetaStrategy` to call this function
+     * while the execution of the `mint` has not yet completed -> causing a `nonReentrant` collision.
+     *
+     * Also important to understand is that this is a limitation imposed by the test suite.
+     * Production / mainnet contracts should never be configured in a way where mint/redeem functions
+     * that are moving funds between the Vault and end user wallets can influence strategies
+     * utilizing this function.
      */
     function mintForStrategy(uint256 _amount)
         external
@@ -235,8 +241,14 @@ contract VaultCore is VaultStorage {
      * @dev Burn OUSD for OUSD Meta Strategy
      * @param _amount Amount of OUSD to burn
      *
-     * Notice: can't use nonReentrant modifier since BaseCurveStrategy's deposit
-     * already has that modifier present
+     * Notice: can't use `nonReentrant` modifier since the `redeem` function could
+     * require withdrawal on `ConvexOUSDMetaStrategy` and that one can call `burnForStrategy`
+     * while the execution of the `redeem` has not yet completed -> causing a `nonReentrant` collision.
+     *
+     * Also important to understand is that this is a limitation imposed by the test suite.
+     * Production / mainnet contracts should never be configured in a way where mint/redeem functions
+     * that are moving funds between the Vault and end user wallets can influence strategies
+     * utilizing this function.
      */
     function burnForStrategy(uint256 _amount)
         external
