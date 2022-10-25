@@ -12,19 +12,19 @@ forkOnlyDescribe(
     this.retries(3);
 
     describe("Mint", function () {
-      it("Should stake USDT in Cruve guage via metapool", async function () {
+      it("Should stake USDT in Curve guage via metapool", async function () {
         const fixture = await loadFixture(withCRV3TitledOUSDMetapool);
         const { josh, usdt } = fixture;
         await mintTest(fixture, josh, usdt, "200000");
       });
 
-      it("Should stake USDC in Cruve guage via metapool", async function () {
+      it("Should stake USDC in Curve guage via metapool", async function () {
         const fixture = await loadFixture(withCRV3TitledOUSDMetapool);
         const { matt, usdc } = fixture;
         await mintTest(fixture, matt, usdc, "110000");
       });
 
-      it("Should NOT stake DAI in Cruve guage via metapool", async function () {
+      it("Should NOT stake DAI in Curve guage via metapool", async function () {
         const fixture = await loadFixture(withCRV3TitledOUSDMetapool);
         const { anna, dai } = fixture;
         await mintTest(fixture, anna, dai, "110000");
