@@ -45,10 +45,10 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
     address[] internal metapoolAssets;
     // Max withdrawal slippage denominated in 1e18 (1e18 == 100%)
     uint256 public maxWithdrawalSlippage = 1e16;
-    uint128 crvCoinIndex;
-    uint128 mainCoinIndex;
+    uint128 internal crvCoinIndex;
+    uint128 internal mainCoinIndex;
 
-    int256[30] private __reserved;
+    int256[41] private ___reserved;
 
     /**
      * Initializer for setting up strategy internal state. This overrides the
@@ -135,7 +135,7 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
         }
 
         uint256 assetDecimals = Helpers.getDecimals(_asset);
-        balance = balance.scaleBy(assetDecimals, 18) / 3;
+        balance = balance.scaleBy(assetDecimals, 18) / THREEPOOL_ASSET_COUNT;
     }
 
     function _approveBase() internal override {
@@ -171,8 +171,8 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
     /**
      * @dev Sets max withdrawal slippage that is considered when removing
      * liquidity from Metapools.
-     *
-     * 1e18 == 100%, 1e16 == 1%
+     * @param _maxWithdrawalSlippage Max withdrawal slippage denominated in
+     *        wad (number with 18 decimals): 1e18 == 100%, 1e16 == 1%
      */
     function setMaxWithdrawalSlippage(uint256 _maxWithdrawalSlippage)
         external

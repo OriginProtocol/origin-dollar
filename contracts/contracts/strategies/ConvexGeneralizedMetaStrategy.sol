@@ -43,7 +43,7 @@ contract ConvexGeneralizedMetaStrategy is BaseConvexMetaStrategy {
          */
         uint256 minReceived = threePoolLpDollarValue
             .divPrecisely(metapoolVirtualPrice)
-            .mulTruncate(uint256(1e18) - maxSlippage);
+            .mulTruncate(uint256(1e18) - MAX_SLIPPAGE);
 
         uint256 metapoolLp = metapool.add_liquidity(_amounts, minReceived);
 
