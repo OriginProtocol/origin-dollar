@@ -62,7 +62,7 @@ forkOnlyDescribe(
         // Total supply should be up by at least (10k x 2) + (10k x 2) + 10k = 50k
         const currentSupply = await ousd.totalSupply();
         const supplyAdded = currentSupply.sub(supplyBeforeMint);
-        expect(supplyAdded).to.be.gte(ousdUnits("50000"));
+        expect(supplyAdded).to.be.gte(ousdUnits("49999"));
 
         const currentBalance = await ousd.connect(anna).balanceOf(anna.address);
 
