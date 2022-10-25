@@ -2,7 +2,8 @@ const hre = require("hardhat");
 const { ethers } = hre;
 const { loadFixture } = require("ethereum-waffle");
 const { ousdUnits } = require("./helpers");
-const { convexMetaVaultFixture, resetAllowance } = require("./_fixture");
+const { convexMetaVaultFixture, resetAllowance, impersonateAndFundContract } = require("./_fixture");
+const erc20Abi = require("./abi/erc20.json");
 
 // NOTE: This can cause a change in setup from mainnet.
 // However, mint/redeem tests, without any changes, are tested
@@ -38,7 +39,7 @@ async function balanceOUSDMetaPool(fixture) {
 }
 
 async function _balanceMetaPool(fixture, metapool) {
-  const { vault, domen } = fixture;
+  const { vault, domen, threePoolToken, ousd } = fixture;
 
   // Balance metapool
   const mainCoinBalance = await metapool.balances(0);
@@ -48,8 +49,18 @@ async function _balanceMetaPool(fixture, metapool) {
   const mainCoinValue = await _getCoinValue(metapool, mainCoinBalance);
   const crv3Value = await get3CRVValue(fixture, crv3Balance);
 
+  const coinOneContract = await ethers.getContractAt(erc20Abi, await metapool.coins(0));
+  const coinTwoContract = await ethers.getContractAt(erc20Abi, await metapool.coins(1));
+
   const exchangeSign = "exchange(int128,int128,uint256,uint256)";
-  const exchagneMethod = await metapool.connect(domen)[exchangeSign];
+  const metapoolSigner = await impersonateAndFundContract(metapool.address);
+  /* let metapool perform the exchange on itself. This is somewhat dirty, but is also the 
+   * best assurance that the liquidity of both coins for balancing are going to be 
+   * available.
+   */
+  const exchangeMethod = await metapool.connect(metapoolSigner)[exchangeSign];
+  await resetAllowance(coinOneContract, metapoolSigner, metapool.address);
+  await resetAllowance(coinTwoContract, metapoolSigner, metapool.address);
 
   if (mainCoinValue.gt(crv3Value)) {
     const diffInDollars = mainCoinValue.sub(crv3Value);
@@ -59,13 +70,12 @@ async function _balanceMetaPool(fixture, metapool) {
     );
 
     // Tilt to 3CRV
-    await exchagneMethod(1, 0, liquidityDiff, 0);
+    await exchangeMethod(1, 0, liquidityDiff, 0);
   } else if (crv3Value.gt(mainCoinValue)) {
     const diffInDollars = crv3Value.sub(mainCoinValue);
     const liquidityDiff = await get3CRVLiquidity(fixture, diffInDollars.div(2));
-
     // Tilt to Main Token
-    await exchagneMethod(0, 1, liquidityDiff, 0);
+    await exchangeMethod(0, 1, liquidityDiff, 0);
   }
 
   await vault.connect(domen).allocate();
@@ -91,17 +101,7 @@ async function tiltTo3CRV_OUSDMetapool(fixture, amount) {
 async function tiltTo3CRV_Metapool_automatic(fixture) {
   const { metapool, threePoolToken } = fixture;
 
-  await hre.network.provider.request({
-    method: "hardhat_impersonateAccount",
-    params: [metapool.address],
-  });
-
-  await hre.network.provider.request({
-    method: "hardhat_setBalance",
-    params: [metapool.address, "0x1bc16d674ec8000000"],
-  });
-
-  const metapoolSigner = await ethers.provider.getSigner(metapool.address);
+  const metapoolSigner = await impersonateAndFundContract(metapool.address);
   await resetAllowance(threePoolToken, metapoolSigner, metapool.address);
 
   // 90% of main coin pool liquidity
@@ -132,17 +132,7 @@ async function tiltTo3CRV_Metapool_automatic(fixture) {
 async function tiltToMainToken(fixture) {
   const { metapool, metapoolCoin } = fixture;
 
-  await hre.network.provider.request({
-    method: "hardhat_impersonateAccount",
-    params: [metapool.address],
-  });
-
-  await hre.network.provider.request({
-    method: "hardhat_setBalance",
-    params: [metapool.address, "0x1bc16d674ec8000000"],
-  });
-
-  const metapoolSigner = await ethers.provider.getSigner(metapool.address);
+  const metapoolSigner = await impersonateAndFundContract(metapool.address);
   await resetAllowance(metapoolCoin, metapoolSigner, metapool.address);
   // 90% of main coin pool liquidity
   const shareOfMainCoinBalance = (
