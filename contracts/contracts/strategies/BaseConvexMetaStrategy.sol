@@ -192,7 +192,7 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
     }
 
     /**
-     * @dev Collect accumulated CRV and CVX and send to Vault.
+     * @dev Collect accumulated CRV and CVX and send to Harvester.
      */
     function collectRewardTokens()
         external

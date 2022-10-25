@@ -92,8 +92,11 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         );
         // Do the deposit to 3pool
         curvePool.add_liquidity(_amounts, minMintAmount);
-        // Deposit into Gauge, the PToken is the same (3Crv) for all mapped
-        // assets, so just get the address from the first one
+
+        /* In case of Curve Strategy all assets are mapped to the same pToken (3CrvLP). Let
+         * descendants further handle the pToken. By either deploying it to the metapool and
+         * resulting tokens in Gauge. Or deploying pTokens directly to the Gauge.
+         */
         _lpDepositAll();
     }
 
