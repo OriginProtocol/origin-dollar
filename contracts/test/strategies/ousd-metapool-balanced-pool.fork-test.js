@@ -1,8 +1,8 @@
 const { expect } = require("chai");
 
 const { loadFixture } = require("ethereum-waffle");
-const { units, ousdUnits, forkOnlyDescribe } = require("../../helpers");
-const { withBalancedOUSDMetaPool } = require("../../_metastrategies-fixtures");
+const { units, ousdUnits, forkOnlyDescribe } = require("../helpers");
+const { withBalancedOUSDMetaPool } = require("../_metastrategies-fixtures");
 
 forkOnlyDescribe(
   "ForkTest: Convex 3pool/OUSD Meta Strategy - Balanced Metapool",

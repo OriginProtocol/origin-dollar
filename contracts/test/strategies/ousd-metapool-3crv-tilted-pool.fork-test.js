@@ -1,11 +1,13 @@
 const { expect } = require("chai");
 
 const { loadFixture } = require("ethereum-waffle");
-const { units, ousdUnits, forkOnlyDescribe } = require("../../helpers");
-const { withOUSDTitledMetapool } = require("../../_metastrategies-fixtures");
+const { units, ousdUnits, forkOnlyDescribe } = require("../helpers");
+const {
+  withCRV3TitledOUSDMetapool,
+} = require("../_metastrategies-fixtures");
 
 forkOnlyDescribe(
-  "ForkTest: Convex 3pool/OUSD Meta Strategy - Titled to OUSD",
+  "ForkTest: Convex 3pool/OUSD Meta Strategy - Titled to 3CRV",
   function () {
     this.timeout(0);
     // due to hardhat forked mode timeouts - retry failed tests up to 3 times
@@ -13,19 +15,19 @@ forkOnlyDescribe(
 
     describe("Mint", function () {
       it("Should stake USDT in Cruve guage via metapool", async function () {
-        const fixture = await loadFixture(withOUSDTitledMetapool);
+        const fixture = await loadFixture(withCRV3TitledOUSDMetapool);
         const { josh, usdt } = fixture;
-        await mintTest(fixture, josh, usdt, "100000");
+        await mintTest(fixture, josh, usdt, "200000");
       });
 
       it("Should stake USDC in Cruve guage via metapool", async function () {
-        const fixture = await loadFixture(withOUSDTitledMetapool);
+        const fixture = await loadFixture(withCRV3TitledOUSDMetapool);
         const { matt, usdc } = fixture;
-        await mintTest(fixture, matt, usdc, "120000");
+        await mintTest(fixture, matt, usdc, "110000");
       });
 
       it("Should NOT stake DAI in Cruve guage via metapool", async function () {
-        const fixture = await loadFixture(withOUSDTitledMetapool);
+        const fixture = await loadFixture(withCRV3TitledOUSDMetapool);
         const { anna, dai } = fixture;
         await mintTest(fixture, anna, dai, "110000");
       });
@@ -34,7 +36,7 @@ forkOnlyDescribe(
     describe("Redeem", function () {
       it("Should redeem", async () => {
         const { vault, ousd, usdt, usdc, dai, anna, OUSDmetaStrategy } =
-          await loadFixture(withOUSDTitledMetapool);
+          await loadFixture(withCRV3TitledOUSDMetapool);
 
         await vault.connect(anna).allocate();
 
@@ -88,6 +90,7 @@ forkOnlyDescribe(
 async function mintTest(fixture, user, asset, amount = "30000") {
   const { vault, ousd, usdt, usdc, dai, OUSDmetaStrategy, cvxRewardPool } =
     fixture;
+
   await vault.connect(user).allocate();
   await vault.connect(user).rebase();
 
@@ -111,16 +114,16 @@ async function mintTest(fixture, user, asset, amount = "30000") {
   // Supply checks
   const newSupply = await ousd.totalSupply();
   const supplyDiff = newSupply.sub(currentSupply);
+  const ousdUnitAmount = ousdUnits(amount);
 
   // The pool is titled to 3CRV by a million
   if ([usdt.address, usdc.address].includes(asset.address)) {
-    // It should have added 2 times the OUSD amount.
-    // 1x for 3poolLp tokens and 1x for minimum amount of OUSD printed
+    // It should have added amount*3 supply
     // (in case of USDT/USDC)
-    expect(supplyDiff).to.approxEqualTolerance(ousdUnits(amount).mul(2), 5);
+    expect(supplyDiff).to.approxEqualTolerance(ousdUnitAmount.mul(3), 5);
   } else {
     // 1x for DAI
-    expect(supplyDiff).to.approxEqualTolerance(ousdUnits(amount), 2);
+    expect(supplyDiff).to.approxEqualTolerance(ousdUnitAmount, 1);
   }
 
   // Ensure some LP tokens got staked under OUSDMetaStrategy address
@@ -135,9 +138,6 @@ async function mintTest(fixture, user, asset, amount = "30000") {
     expect(rewardPoolBalanceDiff).to.equal("0");
   } else {
     // Should have staked the LP tokens for USDT and USDC
-    expect(rewardPoolBalanceDiff).to.approxEqualTolerance(
-      ousdUnits(amount).mul(2),
-      5
-    );
+    expect(rewardPoolBalanceDiff).to.be.gte(ousdUnits(amount).mul(3).div(2));
   }
 }
