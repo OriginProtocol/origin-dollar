@@ -130,8 +130,9 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
             .balanceOf(address(this));
 
         if (metapoolGaugePTokens > 0) {
-            uint256 value = (metapoolGaugePTokens *
-                metapool.get_virtual_price()) / 1e18;
+            uint256 value = metapoolGaugePTokens.mulTruncate(
+                metapool.get_virtual_price()
+            );
             balance += value;
         }
 
