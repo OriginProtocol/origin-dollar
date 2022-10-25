@@ -33,8 +33,10 @@ forkOnlyDescribe(
 
     describe("Redeem", function () {
       it("Should redeem", async () => {
-        const fixture = await loadFixture(withOUSDTitledMetapool);
-        const { vault, ousd, usdt, usdc, dai, anna } = fixture;
+        const { vault, ousd, usdt, usdc, dai, anna, OUSDmetaStrategy } =
+          await loadFixture(withCRV3TitledOUSDMetapool);
+
+        await vault.connect(anna).allocate();
 
         const supplyBeforeMint = await ousd.totalSupply();
 
@@ -47,27 +49,37 @@ forkOnlyDescribe(
             .mint(asset.address, await units(amount, asset), 0);
         }
 
-        // Total supply should be up by (10k x 2) + (10k x 2) + 10k = 50k
+        await vault.connect(anna).allocate();
+
+        // we multiply it by 3 because 1/3 of balance is represented by each of the assets
+        const strategyBalance = (
+          await OUSDmetaStrategy.checkBalance(dai.address)
+        ).mul(3);
+
+        // min 1x 3crv + 1x printed OUSD: (10k + 10k) * (usdt + usdc) = 40k
+        await expect(strategyBalance).to.be.gte(ousdUnits("40000"));
+
+        // Total supply should be up by at least (10k x 2) + (10k x 2) + 10k = 50k
         const currentSupply = await ousd.totalSupply();
         const supplyAdded = currentSupply.sub(supplyBeforeMint);
-        expect(supplyAdded).to.be.gte("50000");
+        expect(supplyAdded).to.be.gte(ousdUnits("50000"));
 
         const currentBalance = await ousd.connect(anna).balanceOf(anna.address);
 
-        // Now try to redeem 30k
-        await vault.connect(anna).redeem(ousdUnits("30000"), 0);
+        // Now try to redeem the amount
+        await vault.connect(anna).redeem(ousdUnits("29900"), 0);
 
         // User balance should be down by 30k
         const newBalance = await ousd.connect(anna).balanceOf(anna.address);
         expect(newBalance).to.approxEqualTolerance(
-          currentBalance.sub(ousdUnits("30000")),
+          currentBalance.sub(ousdUnits("29900")),
           1
         );
 
         const newSupply = await ousd.totalSupply();
         const supplyDiff = currentSupply.sub(newSupply);
 
-        expect(supplyDiff).to.be.gte(ousdUnits("30000"));
+        expect(supplyDiff).to.be.gte(ousdUnits("29900"));
       });
     });
   }

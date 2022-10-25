@@ -93,6 +93,7 @@ contract ConvexOUSDMetaStrategy is BaseConvexMetaStrategy {
      * @param num3CrvTokens Number of Convex LP tokens to remove from gauge
      */
     function _lpWithdraw(uint256 num3CrvTokens) internal override {
+        ICurvePool curvePool = ICurvePool(platformAddress);
         /* The rate between coins in the metapool determines the rate at which metapool returns
          * tokens when doing balanced removal (remove_liquidity call). And by knowing how much 3crvLp
          * we want we can determine how much of OUSD we receive by removing liquidity.
@@ -144,10 +145,10 @@ contract ConvexOUSDMetaStrategy is BaseConvexMetaStrategy {
         );
 
         // calculate the min amount of OUSD expected for the specified amount of LP tokens
-        // slither-disable-next-line divide-before-multiply
-        uint256 minOUSDAmount = lpToBurn *
-            metapool.get_virtual_price() -
-            num3CrvTokens -
+        uint256 minOUSDAmount = lpToBurn.mulTruncate(
+            metapool.get_virtual_price()
+        ) -
+            num3CrvTokens.mulTruncate(curvePool.get_virtual_price()) -
             1;
 
         // withdraw the liquidity from metapool
@@ -155,6 +156,7 @@ contract ConvexOUSDMetaStrategy is BaseConvexMetaStrategy {
             lpToBurn,
             [minOUSDAmount, num3CrvTokens]
         );
+
         IVault(vaultAddress).burnForStrategy(_removedAmounts[mainCoinIndex]);
     }
 
