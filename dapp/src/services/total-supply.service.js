@@ -5,4 +5,4 @@ export default class TotalSupplyService {
   }
 }
 
-export const totalSupplyService = new TotalSupplyService();
+export const totalSupplyService = new TotalSupplyService()

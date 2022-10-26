@@ -10,8 +10,8 @@ import { formatCurrency, getRewardsApy } from 'utils/math'
 import { assetRootPath } from 'utils/image'
 import withIsMobile from 'hoc/withIsMobile'
 import { Header } from '@originprotocol/origin-storybook'
-import { fetchAPI } from "../lib/api";
-import transformLinks from "../src/utils/transformLinks"
+import { fetchAPI } from '../lib/api'
+import transformLinks from '../src/utils/transformLinks'
 
 const BurnCountdown = ({ days, hours, minutes, seconds }) => {
   return (
@@ -202,7 +202,7 @@ const Burn = ({ locale, onLocale, isMobile, navLinks }) => {
       <section className="burn black">
         <Header mappedLinks={navLinks} webProperty="ousd" />
         <div className="container d-flex flex-column text-align-left ml-lg-5 pl-lg-5">
-          <h2 className='mt-4'>
+          <h2 className="mt-4">
             <img
               src={assetRootPath('/images/ogv-logo.svg')}
               className="ogv-logo pb-lg-3 inline"
@@ -731,22 +731,22 @@ const Burn = ({ locale, onLocale, isMobile, navLinks }) => {
 }
 
 export async function getStaticProps() {
-  const navRes = await fetchAPI("/ousd-nav-links", {
+  const navRes = await fetchAPI('/ousd-nav-links', {
     populate: {
       links: {
-        populate: "*",
+        populate: '*',
       },
-    }
-  });
+    },
+  })
 
-  const navLinks = transformLinks(navRes.data);
+  const navLinks = transformLinks(navRes.data)
 
   return {
     props: {
       navLinks,
     },
     revalidate: 5 * 60, // Cache response for 5m
-  };
+  }
 }
 
 export default withIsMobile(Burn)

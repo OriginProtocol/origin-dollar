@@ -1,13 +1,13 @@
-import { Header, Typography } from "@originprotocol/origin-storybook";
-import News from "components/News";
+import { Header, Typography } from '@originprotocol/origin-storybook'
+import News from 'components/News'
 import Layout from 'components/Layout'
-import Head from "next/head";
-import React from "react";
-import { assetRootPath } from "utils/image";
-import { fetchAPI } from "../lib/api";
-import Seo from "../src/components/strapi/seo";
-import formatSeo from "../src/utils/seo";
-import transformLinks from "../src/utils/transformLinks";
+import Head from 'next/head'
+import React from 'react'
+import { assetRootPath } from 'utils/image'
+import { fetchAPI } from '../lib/api'
+import Seo from '../src/components/strapi/seo'
+import formatSeo from '../src/utils/seo'
+import transformLinks from '../src/utils/transformLinks'
 
 const Blog = ({
   locale,
@@ -31,37 +31,38 @@ const Blog = ({
         <div className="max-w-screen-xl mx-auto px-6 mb-6">
           <Typography.H2>Latest news</Typography.H2>
         </div>
-        {!articles?.length ? null : <News articles={articles} meta={meta} categories={categories} />}
+        {!articles?.length ? null : (
+          <News articles={articles} meta={meta} categories={categories} />
+        )}
       </section>
-      <style jsx>{`
-      `}</style>
+      <style jsx>{``}</style>
     </Layout>
   )
 }
 
 export async function getStaticProps() {
   // Run API calls in parallel
-  const articlesRes = await fetchAPI("/ousd/blog/en", {
-    populate: ["cover", "category"],
-  });
+  const articlesRes = await fetchAPI('/ousd/blog/en', {
+    populate: ['cover', 'category'],
+  })
 
-  const categories = {};
+  const categories = {}
   articlesRes?.data?.forEach((article) => {
     if (article && article.category) {
-      categories[article.category.slug] = article.category;
+      categories[article.category.slug] = article.category
     }
-  });
+  })
 
-  const seoRes = await fetchAPI("/ousd/page/en/%2Fblog");
-  const navRes = await fetchAPI("/ousd-nav-links", {
+  const seoRes = await fetchAPI('/ousd/page/en/%2Fblog')
+  const navRes = await fetchAPI('/ousd-nav-links', {
     populate: {
       links: {
-        populate: "*",
+        populate: '*',
       },
-    }
-  });
+    },
+  })
 
-  const navLinks = transformLinks(navRes.data);
+  const navLinks = transformLinks(navRes.data)
 
   return {
     props: {
@@ -72,7 +73,7 @@ export async function getStaticProps() {
       navLinks,
     },
     revalidate: 5 * 60, // Cache response for 5m
-  };
+  }
 }
 
 export default Blog

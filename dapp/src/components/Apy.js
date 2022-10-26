@@ -7,7 +7,7 @@ import { zipObject } from 'lodash'
 import { formatCurrency } from 'utils/math'
 import withIsMobile from 'hoc/withIsMobile'
 
-const Apy = ({isMobile}) => {
+const Apy = ({ isMobile }) => {
   const apyDayOptions = [7, 30, 365]
   const [loaded, setLoaded] = useState()
   const apyOptions = useStoreState(ContractStore, (s) =>
@@ -17,7 +17,7 @@ const Apy = ({isMobile}) => {
   )
   const daysToApy = zipObject(apyDayOptions, apyOptions)
   const [apyDays, setApyDays] = useState(
-    process.browser && 
+    process.browser &&
       localStorage.getItem('last_user_selected_apy') !== null &&
       apyDayOptions.includes(
         Number(localStorage.getItem('last_user_selected_apy'))
@@ -33,30 +33,43 @@ const Apy = ({isMobile}) => {
 
   return (
     <>
-      <section className='home dim'>
-        <div className='pb-20 px-3 md:px-8 text-center'>
+      <section className="home dim">
+        <div className="pb-20 px-3 md:px-8 text-center">
           <Typography.H4>
             {'The simplest '}
-            <span className="gradient-ousd font-bold py-1">market-neutral </span>
-            DeFi <br className="hidden md:block" />strategy
+            <span className="gradient-ousd font-bold py-1">
+              market-neutral{' '}
+            </span>
+            DeFi <br className="hidden md:block" />
+            strategy
           </Typography.H4>
           <br className="block" />
-          <Typography.Body2 className='opacity-75'>
-            Grow your stablecoin portfolio by swapping USDC, USDT, or DAI to OUSD. Yields are generated on-chain, distributed directly <br className="hidden md:block" />to your wallet, and compounded automatically. Your funds are never risked on speculative positions.
+          <Typography.Body2 className="opacity-75">
+            Grow your stablecoin portfolio by swapping USDC, USDT, or DAI to
+            OUSD. Yields are generated on-chain, distributed directly{' '}
+            <br className="hidden md:block" />
+            to your wallet, and compounded automatically. Your funds are never
+            risked on speculative positions.
           </Typography.Body2>
           {loaded && (
-            <div className='apy flex flex-col md:flex-row justify-between rounded-xl my-10 md:m-16 p-6 md:p-10'>
-              <div className='mt-2 mb-6 md:mb-0'>
-                <Typography.H1 className='inline'>{formatCurrency(daysToApy[apyDays] * 100, 2) + '% '}</Typography.H1>
-                <Typography.Body className='opacity-75 block md:inline'>{`Trailing ${apyDays}-day APY`}</Typography.Body>
+            <div className="apy flex flex-col md:flex-row justify-between rounded-xl my-10 md:m-16 p-6 md:p-10">
+              <div className="mt-2 mb-6 md:mb-0">
+                <Typography.H1 className="inline">
+                  {formatCurrency(daysToApy[apyDays] * 100, 2) + '% '}
+                </Typography.H1>
+                <Typography.Body className="opacity-75 block md:inline">{`Trailing ${apyDays}-day APY`}</Typography.Body>
               </div>
-              <div className='flex flex-col md:w-2/5'>
-                <Typography.Body2 className='opacity-75 mb-3'>Moving average</Typography.Body2>
-                <div className='flex flex-row justify-around'>
+              <div className="flex flex-col md:w-2/5">
+                <Typography.Body2 className="opacity-75 mb-3">
+                  Moving average
+                </Typography.Body2>
+                <div className="flex flex-row justify-around">
                   {apyDayOptions.map((days) => {
                     return (
                       <div
-                        className={`bttn ${apyDays === days ? 'gradient3' : 'bttn-g'} ${isMobile ? 'px-4' : 'px-16'} mb-6 md:mb-1`}
+                        className={`bttn ${
+                          apyDays === days ? 'gradient3' : 'bttn-g'
+                        } ${isMobile ? 'px-4' : 'px-16'} mb-6 md:mb-1`}
                         key={days}
                         onClick={() => {
                           setApyDays(days)
@@ -71,7 +84,7 @@ const Apy = ({isMobile}) => {
             </div>
           )}
           <a
-            href='/swap'
+            href="/swap"
             target="_blank"
             rel="noopener noreferrer"
             className="bttn gradient3 white"
@@ -87,7 +100,7 @@ const Apy = ({isMobile}) => {
 
         .bttn-g {
           color: #fafbfb;
-          background-color: #1E1F25;
+          background-color: #1e1f25;
         }
       `}</style>
     </>

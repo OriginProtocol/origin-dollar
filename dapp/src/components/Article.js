@@ -1,29 +1,29 @@
-import Moment from "react-moment"
-import Seo from "./strapi/seo"
-import { Typography, Header } from "@originprotocol/origin-storybook"
-import Image from "next/image"
-import Link from "next/link"
-import styles from "../styles/Article.module.css"
+import Moment from 'react-moment'
+import Seo from './strapi/seo'
+import { Typography, Header } from '@originprotocol/origin-storybook'
+import Image from 'next/image'
+import Link from 'next/link'
+import styles from '../styles/Article.module.css'
 import { assetRootPath } from 'utils/image'
 
 const Article = ({ article, navLinks }) => {
-  const imageUrl = article.cover?.url;
+  const imageUrl = article.cover?.url
 
   const seo = {
     metaTitle: article.title,
     metaDescription: article.description,
     shareImage: article.cover,
     article: true,
-  };
+  }
 
   return (
-    <section className='intro black'>
+    <section className="intro black">
       <Seo seo={seo} />
       <Header mappedLinks={navLinks} webProperty="ousd" />
       <div className="max-w-screen-xl mx-auto">
         <Typography.Link className="flex space-x-2">
           <img
-            src={assetRootPath("/images/left-arrow.svg")}
+            src={assetRootPath('/images/left-arrow.svg')}
             className="ml-2"
             alt="left arrow"
           />
@@ -46,8 +46,8 @@ const Article = ({ article, navLinks }) => {
             <Image
               src={imageUrl}
               alt={article.cover?.alternativeText}
-              layout='fill'
-              objectFit='cover'
+              layout="fill"
+              objectFit="cover"
               priority
             />
           </div>
@@ -67,8 +67,8 @@ const Article = ({ article, navLinks }) => {
                     src={article.author.avatar.url}
                     alt={article.author.avatar.alternativeText}
                     style={{
-                      position: "static",
-                      borderRadius: "20%",
+                      position: 'static',
+                      borderRadius: '20%',
                       height: 60,
                     }}
                     width="64px"
@@ -77,11 +77,7 @@ const Article = ({ article, navLinks }) => {
                 )}
               </div>
               <div className="ml-4 text-black">
-                {article.author?.name && (
-                  <p>
-                    By {article.author.name}
-                  </p>
-                )}
+                {article.author?.name && <p>By {article.author.name}</p>}
                 <p>
                   <Moment format="MMM Do YYYY">{article.published_at}</Moment>
                 </p>

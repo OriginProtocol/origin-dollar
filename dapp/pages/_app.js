@@ -1,5 +1,5 @@
 import React, { useEffect, useState, createContext } from 'react'
-import App from "next/app";
+import App from 'next/app'
 import cookies from 'next-cookies'
 import { useWeb3React } from '@web3-react/core'
 import { useRouter } from 'next/router'
@@ -8,9 +8,9 @@ import { useStoreState } from 'pullstate'
 import { QueryClient, QueryClientProvider } from 'react-query'
 import { ReactQueryDevtools } from 'react-query/devtools'
 
-import { fetchAPI } from "../lib/api";
-import { getStrapiMedia } from "../lib/media";
-import bundledCss from "@originprotocol/origin-storybook/lib/styles.css";
+import { fetchAPI } from '../lib/api'
+import { getStrapiMedia } from '../lib/media'
+import bundledCss from '@originprotocol/origin-storybook/lib/styles.css'
 
 import AccountStore from 'stores/AccountStore'
 import RouterStore from 'stores/RouterStore'
@@ -45,7 +45,7 @@ if (process.browser) {
 initSentry()
 
 const queryClient = new QueryClient()
-export const GlobalContext = createContext({});
+export const GlobalContext = createContext({})
 
 function MyApp({ Component, pageProps, err }) {
   const [locale, setLocale] = useState('en_US')
@@ -205,24 +205,24 @@ function MyApp({ Component, pageProps, err }) {
 
 MyApp.getInitialProps = async (ctx) => {
   // Calls page's `getInitialProps` and fills `appProps.pageProps`
-  const appProps = await App.getInitialProps(ctx);
+  const appProps = await App.getInitialProps(ctx)
 
   // Fetch global site settings from Strapi
-  const globalRes = await fetchAPI("/global", {
+  const globalRes = await fetchAPI('/global', {
     populate: {
-      favicon: "*",
+      favicon: '*',
       defaultSeo: {
-        populate: "*",
+        populate: '*',
       },
     },
-  });
+  })
 
   // Pass the data to our page via props
   return {
     ...appProps,
     pageProps: { global: globalRes.data },
     styles: [
-      process.env.NODE_ENV === "production" ? (
+      process.env.NODE_ENV === 'production' ? (
         <style
           key="custom"
           dangerouslySetInnerHTML={{

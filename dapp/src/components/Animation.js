@@ -9,7 +9,7 @@ import { zipObject } from 'lodash'
 import { formatCurrency } from 'utils/math'
 import addresses from 'constants/contractAddresses'
 
-const Animation = ({navLinks}) => {
+const Animation = ({ navLinks }) => {
   const [totalOusd, setTotalOusd] = useState()
   const ousdInitialValue = parseFloat(totalOusd - 2000000, 0)
   const [ousdValue, setOusdValue] = useState(ousdInitialValue)
@@ -32,37 +32,40 @@ const Animation = ({navLinks}) => {
   }, [])*/
 
   useEffect(() => {
-    if (!(ousd)) {
+    if (!ousd) {
       return
     }
     const fetchTotalSupply = async () => {
-      const total = await ousd
-        .totalSupply()
-        .then((r) => Number(r) / 10 ** 18)
+      const total = await ousd.totalSupply().then((r) => Number(r) / 10 ** 18)
       setTotalOusd(total)
     }
     fetchTotalSupply()
   }, [ousd])
 
   return (
-    <section className='intro black'>
+    <section className="intro black">
       <Header mappedLinks={navLinks} webProperty="ousd" />
-      <div className='flex flex-col md:flex-row items-center max-w-screen-xl mx-auto relative overflow-hidden pt-10 px-8'>
+      <div className="flex flex-col md:flex-row items-center max-w-screen-xl mx-auto relative overflow-hidden pt-10 px-8">
         <div>
           <Typography.H2>
             The most trusted <br className="hidden md:block" />
-            <span className="gradient-ousd font-bold py-1">yield-generating, </span>
+            <span className="gradient-ousd font-bold py-1">
+              yield-generating,{' '}
+            </span>
             <br className="hidden md:block" />
             self-custodial, <br className="block" /> stablecoin
           </Typography.H2>
           <br className="block" />
-          <Typography.Body2 className='opacity-75'>
-            {'Origin Dollar simplifies DeFi by eliminating the need for staking or lock-ups. Hold OUSD '}
-            <br className="hidden md:block" />in any Ethereum wallet and watch your balance increase every day.
+          <Typography.Body2 className="opacity-75">
+            {
+              'Origin Dollar simplifies DeFi by eliminating the need for staking or lock-ups. Hold OUSD '
+            }
+            <br className="hidden md:block" />
+            in any Ethereum wallet and watch your balance increase every day.
           </Typography.Body2>
           <br className="block" />
           <a
-            href='/swap'
+            href="/swap"
             target="_blank"
             rel="noopener noreferrer"
             className="bttn gradient3"
@@ -71,26 +74,28 @@ const Animation = ({navLinks}) => {
           </a>
         </div>
         <div className="container self-end md:self-start flex-1 relative mt-20 md:mt-0 pb-10">
-          <div className='hidden md:block'>
+          <div className="hidden md:block">
             <img
-              src={assetRootPath("/images/ousd-transparent.svg")}
+              src={assetRootPath('/images/ousd-transparent.svg')}
               className="ousd m-auto pb-4"
               alt="ousd"
             />
           </div>
           {totalOusd && (
-            <div className='md:absolute md:bottom-0 md:left-0 md:right-0 md:text-center'>
-              <Typography.H2 className='flex flex-row md:block'>
+            <div className="md:absolute md:bottom-0 md:left-0 md:right-0 md:text-center">
+              <Typography.H2 className="flex flex-row md:block">
                 {`$${formatCurrency(totalOusd, 0)}`}
-                <div className='md:hidden'>
+                <div className="md:hidden">
                   <img
-                    src={assetRootPath("/images/ousd-icon.svg")}
+                    src={assetRootPath('/images/ousd-icon.svg')}
                     className="ousd ml-3 pb-4 w-12"
                     alt="ousd"
                   />
                 </div>
               </Typography.H2>
-              <Typography.Body2 className='opacity-75 mt-2'>Total value of OUSD wallet balances</Typography.Body2>
+              <Typography.Body2 className="opacity-75 mt-2">
+                Total value of OUSD wallet balances
+              </Typography.Body2>
             </div>
           )}
         </div>

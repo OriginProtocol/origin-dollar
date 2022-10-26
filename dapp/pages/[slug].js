@@ -1,42 +1,42 @@
-import React from "react";
-import { fetchAPI } from "../lib/api";
-import Article from "../src/components/Article";
-import transformLinks from "../src/utils/transformLinks";
+import React from 'react'
+import { fetchAPI } from '../lib/api'
+import Article from '../src/components/Article'
+import transformLinks from '../src/utils/transformLinks'
 
 const FallbackRenderer = ({ article, navLinks }) => {
-  return <Article article={article} navLinks={navLinks} />;
-};
+  return <Article article={article} navLinks={navLinks} />
+}
 
 export async function getStaticPaths() {
-  const { data } = await fetchAPI("/ousd/blog/slugs");
+  const { data } = await fetchAPI('/ousd/blog/slugs')
 
   return {
     paths: (data || []).map((slug) => ({
       params: { slug },
       // TODO: Should all locales be pre-generated?
-      locale: "en",
+      locale: 'en',
     })),
-    fallback: "blocking",
-  };
+    fallback: 'blocking',
+  }
 }
 
 export async function getStaticProps({ params, locale }) {
   // TODO: Do something for rate-limit
-  const { data } = await fetchAPI(`/ousd/blog/${locale}/${params.slug}`);
-  const navRes = await fetchAPI("/ousd-nav-links", {
+  const { data } = await fetchAPI(`/ousd/blog/${locale}/${params.slug}`)
+  const navRes = await fetchAPI('/ousd-nav-links', {
     populate: {
       links: {
-        populate: "*",
+        populate: '*',
       },
-    }
-  });
+    },
+  })
 
-  const navLinks = transformLinks(navRes.data);
+  const navLinks = transformLinks(navRes.data)
 
   if (!data) {
     return {
       notFound: true,
-    };
+    }
   }
 
   return {
@@ -45,7 +45,7 @@ export async function getStaticProps({ params, locale }) {
       navLinks,
     },
     revalidate: 5 * 60, // Cache response for 5m
-  };
+  }
 }
 
-export default FallbackRenderer;
+export default FallbackRenderer

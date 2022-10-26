@@ -1,21 +1,21 @@
-import { Card, Select } from "@originprotocol/origin-storybook";
-import withIsMobile from "hoc/withIsMobile";
-import Image from "next/image";
-import React, { useEffect, useState } from "react";
-import { getStrapiMedia } from "../../lib/media";
-import { assetRootPath } from "utils/image";
+import { Card, Select } from '@originprotocol/origin-storybook'
+import withIsMobile from 'hoc/withIsMobile'
+import Image from 'next/image'
+import React, { useEffect, useState } from 'react'
+import { getStrapiMedia } from '../../lib/media'
+import { assetRootPath } from 'utils/image'
 
 const Category = ({ categories, setCategory }) => {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(false)
   //const categories = ['All news', 'News', 'Food', 'Nature', 'Tech', 'Story']
   const capitalize = (name) => {
-    return name.slice(0, 1).toUpperCase() + name.slice(1, name.length);
-  };
+    return name.slice(0, 1).toUpperCase() + name.slice(1, name.length)
+  }
 
   const categoriesFormatted = [
     {
       id: null,
-      name: "All articles",
+      name: 'All articles',
       unavailable: false,
     },
   ].concat(
@@ -24,51 +24,51 @@ const Category = ({ categories, setCategory }) => {
         id: category.slug,
         name: capitalize(category.name),
         unavailable: false,
-      };
+      }
     })
-  );
+  )
 
   return (
     <div className="pl-0 w-96 pt-4 text-black">
       <Select
         options={categoriesFormatted}
         onSelect={(value) => {
-          setCategory(value.id);
+          setCategory(value.id)
         }}
       />
     </div>
-  );
-};
+  )
+}
 
 const News = ({ isMobile, articles, meta, categories }) => {
-  const [loaded, setLoaded] = useState(false);
+  const [loaded, setLoaded] = useState(false)
 
   useEffect(() => {
-    setLoaded(true);
-  }, []);
+    setLoaded(true)
+  }, [])
 
-  const [category, setCategory] = useState("");
-  const [page, setPage] = useState(1);
-  const [pageNumbers, setPageNumbers] = useState([]);
+  const [category, setCategory] = useState('')
+  const [page, setPage] = useState(1)
+  const [pageNumbers, setPageNumbers] = useState([])
 
   const articlePages = Math.ceil(
     (category
       ? articles.filter((article) => article.slug === category.slug).length
       : meta.pagination.total) / 9
-  );
+  )
   const currentPageArticles = articles
     ? articles.slice(9 * (page - 1), 9 * page)
-    : [];
+    : []
 
   useEffect(() => {
-    const pages = articlePages;
+    const pages = articlePages
 
-    let pageNumbers = [1, 2, pages, pages - 1, page, page - 1, page + 1];
-    pageNumbers = pageNumbers.filter((number) => number > 0 && number <= pages);
-    pageNumbers = [...new Set(pageNumbers)];
-    pageNumbers = pageNumbers.sort((a, b) => a - b);
-    setPageNumbers(pageNumbers);
-  }, [page, articlePages]);
+    let pageNumbers = [1, 2, pages, pages - 1, page, page - 1, page + 1]
+    pageNumbers = pageNumbers.filter((number) => number > 0 && number <= pages)
+    pageNumbers = [...new Set(pageNumbers)]
+    pageNumbers = pageNumbers.sort((a, b) => a - b)
+    setPageNumbers(pageNumbers)
+  }, [page, articlePages])
 
   return (
     <>
@@ -84,23 +84,34 @@ const News = ({ isMobile, articles, meta, categories }) => {
               if (!category || category === a.category.slug) {
                 return (
                   <Card
-                    webProperty={"originprotocol"}
+                    webProperty={'originprotocol'}
                     title={a.title}
-                    img={<Image src={ a.cardCover?.url || a.cover?.url || assetRootPath('/images/logos/origin-press.svg')} alt={a.cover?.alternativeText} layout='fill' objectFit='cover' />}
+                    img={
+                      <Image
+                        src={
+                          a.cardCover?.url ||
+                          a.cover?.url ||
+                          assetRootPath('/images/logos/origin-press.svg')
+                        }
+                        alt={a.cover?.alternativeText}
+                        layout="fill"
+                        objectFit="cover"
+                      />
+                    }
                     body={a.description}
-                    linkText={"Read more"}
+                    linkText={'Read more'}
                     linkHref={`/${a.slug}`}
                     key={a.title}
                   />
-                );
+                )
               }
             })}
           </div>
           <div className="pagination flex justify-center">
             {pageNumbers.map((pageNumber, index) => {
-              const isCurrent = pageNumber === page;
+              const isCurrent = pageNumber === page
               const skippedAPage =
-                index > 0 && pageNumber - pageNumbers[index - 1] !== 1;
+                index > 0 && pageNumber - pageNumbers[index - 1] !== 1
 
               return (
                 <div className="flex" key={pageNumber}>
@@ -111,19 +122,19 @@ const News = ({ isMobile, articles, meta, categories }) => {
                   )}
                   <div
                     className={`page-number ${
-                      isCurrent ? "current" : ""
+                      isCurrent ? 'current' : ''
                     } flex items-center justify-center`}
                     onClick={() => {
                       if (isCurrent) {
-                        return;
+                        return
                       }
-                      setPage(pageNumber);
+                      setPage(pageNumber)
                     }}
                   >
                     {pageNumber}
                   </div>
                 </div>
-              );
+              )
             })}
           </div>
         </div>
@@ -174,7 +185,7 @@ const News = ({ isMobile, articles, meta, categories }) => {
         }
       `}</style>
     </>
-  );
-};
+  )
+}
 
-export default withIsMobile(News);
+export default withIsMobile(News)

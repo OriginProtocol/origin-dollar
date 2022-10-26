@@ -28,7 +28,7 @@ class MyDocument extends Document {
             integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
             crossOrigin="anonymous"
           />
-          
+
           {/* Twitter ads tracking */}
           <script
             src="//static.ads-twitter.com/oct.js"

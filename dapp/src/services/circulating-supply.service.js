@@ -5,4 +5,4 @@ export default class CirculatingSupplyService {
   }
 }
 
-export const circulatingSupplyService = new CirculatingSupplyService();
+export const circulatingSupplyService = new CirculatingSupplyService()

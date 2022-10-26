@@ -3,10 +3,10 @@ export const QUERY_KEYS = {
   Allowances: (account) => ['allowances', { account }],
   Apy: () => ['apy'],
   Balances: (account) => ['balances', { account }],
-  CirculatingSupply: () => ["circulatingSupply"],
+  CirculatingSupply: () => ['circulatingSupply'],
   Collateral: () => ['collateral'],
-  Price: () => ["price"],
-  TotalSupply: () => ["totalSupply"],
+  Price: () => ['price'],
+  TotalSupply: () => ['totalSupply'],
   TransactionHistory: (account) => ['transactionHistory', { account }],
   TransactionHistoryPage: (page, filters, account) => [
     'transactionHistoryPage',
