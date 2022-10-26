@@ -149,15 +149,15 @@ export function usePrevious(value) {
 }
 
 export function useOverrideAccount() {
-  const router = useRouter()
+  const {
+    query: { override_account },
+    pathname,
+  } = useRouter()
   const isValid =
-    router.query.override_account &&
-    !ethers.utils.isAddress(router.query.override_account)
-      ? false
-      : true
+    override_account && !ethers.utils.isAddress(override_account) ? false : true
   const overrideAccount =
-    router.pathname === '/history' && router.query.override_account && isValid
-      ? router.query.override_account
+    pathname === '/history' && override_account && isValid
+      ? override_account
       : null
 
   return { overrideAccount: overrideAccount, isValid: isValid }

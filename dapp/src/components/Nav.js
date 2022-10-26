@@ -222,7 +222,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
               />
             </button>
           )}
-          {dapp && <AccountStatusPopover />}
+          {dapp && <AccountStatusPopover dapp={dapp} />}
           {dapp && !active && !account && (
             <div className="d-flex d-md-none">
               <GetOUSD

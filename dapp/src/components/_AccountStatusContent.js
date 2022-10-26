@@ -1,5 +1,6 @@
 import React from 'react'
 import { useWeb3React } from '@web3-react/core'
+import { useRouter } from 'next/router'
 import { useStoreState } from 'pullstate'
 import { fbt } from 'fbt-runtime'
 import { get } from 'lodash'
@@ -23,6 +24,7 @@ const AccountStatusContent = ({ className, onOpen }) => {
   const connectorName = useStoreState(AccountStore, (s) => s.connectorName)
   const connectorIcon = getConnectorIcon(connectorName)
   const { overrideAccount } = useOverrideAccount()
+  const router = useRouter()
 
   return (
     <>
@@ -92,7 +94,7 @@ const AccountStatusContent = ({ className, onOpen }) => {
             <a
               className="btn-clear-blue w-100"
               onClick={() => {
-                window.location = window.location.pathname
+                router.replace('/history')
               }}
             >
               {fbt('Clear', 'Clear')}

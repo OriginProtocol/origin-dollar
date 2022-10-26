@@ -11,25 +11,26 @@ import { assetRootPath } from 'utils/image'
 import { useOverrideAccount } from '../src/utils/hooks'
 import ErrorModal from '../src/components/buySell/ErrorModal'
 
+const errorMap = [
+  {
+    errorCheck: (err) => {
+      return err === 'invalidAddress'
+    },
+    friendlyMessage: fbt(
+      "Overridden account's address is invalid",
+      "Overridden account's address is invalid"
+    ),
+  },
+]
+
 export default function History({ locale, onLocale }) {
   const { active } = useWeb3React()
   const { overrideAccount, isValid } = useOverrideAccount()
-  const [showErrorModal, setShowErrorModal] = useState(!isValid)
+  const [showErrorModal, setShowErrorModal] = useState(true)
 
-  const errorMap = [
-    {
-      errorCheck: (err) => {
-        return err === 'invalidAddress'
-      },
-      friendlyMessage: fbt(
-        "Overridden account's address is invalid",
-        "Overridden account's address is invalid"
-      ),
-    },
-  ]
   return (
     <>
-      {showErrorModal && (
+      {!isValid && showErrorModal && (
         <ErrorModal
           error="invalidAddress"
           errorMap={errorMap}
