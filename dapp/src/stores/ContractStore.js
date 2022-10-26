@@ -54,6 +54,11 @@ const ContractStore = new Store({
   showAllContracts: false,
   curveMetapoolUnderlyingCoins: false,
   fetchId: -1,
+  ogv: {
+    price: 0,
+    circulatingSupply: 0,
+    totalSupply: 0,
+  },
 })
 
 export default ContractStore

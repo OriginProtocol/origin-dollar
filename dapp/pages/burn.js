@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { ethers } from 'ethers'
 import { fbt } from 'fbt-runtime'
+import Layout from 'components/layout'
 import Countdown, { zeroPad } from 'react-countdown'
 import { useStoreState } from 'pullstate'
 import ContractStore from 'stores/ContractStore'
@@ -8,10 +9,9 @@ import addresses from 'constants/contractAddresses'
 import { formatCurrency, getRewardsApy } from 'utils/math'
 import { assetRootPath } from 'utils/image'
 import withIsMobile from 'hoc/withIsMobile'
-import { burnTimer } from 'utils/constants'
-
-import Layout from 'components/layout'
-import Nav from 'components/Nav'
+import { Header } from '@originprotocol/origin-storybook'
+import { fetchAPI } from "../lib/api";
+import transformLinks from "../src/utils/transformLinks"
 
 const BurnCountdown = ({ days, hours, minutes, seconds }) => {
   return (
@@ -115,7 +115,7 @@ const renderer = ({ days, hours, minutes, seconds, completed }) => {
   }
 }
 
-const Burn = ({ locale, onLocale, isMobile }) => {
+const Burn = ({ locale, onLocale, isMobile, navLinks }) => {
   const ogv = useStoreState(ContractStore, (s) => s.ogv || 0)
   const veogv = useStoreState(ContractStore, (s) => s.veogv || 0)
   const [totalStaked, setTotalStaked] = useState()
@@ -199,15 +199,13 @@ const Burn = ({ locale, onLocale, isMobile }) => {
 
   return (
     <Layout locale={locale}>
-      <header>
-        <Nav locale={locale} onLocale={onLocale} />
-      </header>
       <section className="burn black">
+        <Header mappedLinks={navLinks} webProperty="ousd" />
         <div className="container d-flex flex-column text-align-left ml-lg-5 pl-lg-5">
-          <h2>
+          <h2 className='mt-4'>
             <img
               src={assetRootPath('/images/ogv-logo.svg')}
-              className="ogv-logo pb-lg-3"
+              className="ogv-logo pb-lg-3 inline"
               alt="OGV logo"
             />
             {fbt('OGV BURN', 'OGV BURN')}
@@ -730,6 +728,25 @@ const Burn = ({ locale, onLocale, isMobile }) => {
       `}</style>
     </Layout>
   )
+}
+
+export async function getStaticProps() {
+  const navRes = await fetchAPI("/ousd-nav-links", {
+    populate: {
+      links: {
+        populate: "*",
+      },
+    }
+  });
+
+  const navLinks = transformLinks(navRes.data);
+
+  return {
+    props: {
+      navLinks,
+    },
+    revalidate: 5 * 60, // Cache response for 5m
+  };
 }
 
 export default withIsMobile(Burn)

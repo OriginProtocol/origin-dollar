@@ -518,6 +518,7 @@ export async function setupContracts(account, library, chainId, fetchId) {
     s.ogn = ogn
     s.ogv = ogv
     s.veogv = veogv
+    s.ousd = ousd
     s.walletConnected = walletConnected
     s.chainId = chainId
     s.readOnlyProvider = jsonRpcProvider
