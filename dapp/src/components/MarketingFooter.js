@@ -35,7 +35,7 @@ export default function Footer({ locale }) {
               src={assetRootPath(`/images/origin-white.svg`)}
               className="w-28 md:w-32 pb-6 md:pb-0"
             />
-            <div className='flex flex-col md:flex-row justify-between mt-2 md:w-1/2'>
+            <div className="flex flex-col md:flex-row justify-between mt-2 md:w-1/2">
               <a
                 href={'https://governance.ousd.com/'}
                 target="_blank"
@@ -45,7 +45,9 @@ export default function Footer({ locale }) {
                   analytics.track('Governance Link click')
                 }}
               >
-                <Typography.Body2>{fbt('Governance', 'Governance link')}</Typography.Body2>
+                <Typography.Body2>
+                  {fbt('Governance', 'Governance link')}
+                </Typography.Body2>
               </a>
               <a
                 href={getDocsLink(locale)}
@@ -56,7 +58,9 @@ export default function Footer({ locale }) {
                   analytics.track('Docs Link click')
                 }}
               >
-                <Typography.Body2>{fbt('Docs', 'Documentation link')}</Typography.Body2>
+                <Typography.Body2>
+                  {fbt('Docs', 'Documentation link')}
+                </Typography.Body2>
               </a>
               <a
                 href={'/blog'}
@@ -91,7 +95,7 @@ export default function Footer({ locale }) {
               >
                 <Typography.Body2>{fbt('OGV', 'OGV link')}</Typography.Body2>
               </a>
-              <br className='block md:hidden' />
+              <br className="block md:hidden" />
               <a
                 href="/swap"
                 target="_blank"
@@ -115,21 +119,21 @@ export default function Footer({ locale }) {
                 )}
               </Typography.Caption>
             </a>
-            <div className='flex flex-row md:justify-between mt-2 md:mt-0'>
+            <div className="flex flex-row md:justify-between mt-2 md:mt-0">
               <a
                 href={termsURL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className='mr-4 md:mr-0'
+                className="mr-4 md:mr-0"
               >
-                <Typography.Caption>{fbt('Terms of Service', 'Terms of Service')}</Typography.Caption>
+                <Typography.Caption>
+                  {fbt('Terms of Service', 'Terms of Service')}
+                </Typography.Caption>
               </a>
-              <a
-                href={privacyURL}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Typography.Caption>{fbt('Privacy Policy', 'Privacy Policy')}</Typography.Caption>
+              <a href={privacyURL} target="_blank" rel="noopener noreferrer">
+                <Typography.Caption>
+                  {fbt('Privacy Policy', 'Privacy Policy')}
+                </Typography.Caption>
               </a>
             </div>
           </div>
