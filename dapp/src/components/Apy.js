@@ -34,7 +34,7 @@ const Apy = ({ isMobile }) => {
   return (
     <>
       <section className="home dim">
-        <div className="pb-20 px-3 md:px-8 text-center">
+        <div className="max-w-screen-xl mx-auto pb-20 px-3 md:px-8 text-center">
           <Typography.H4>
             {'The simplest '}
             <span className="gradient-ousd font-bold py-1">

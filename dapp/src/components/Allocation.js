@@ -48,7 +48,7 @@ const Allocation = () => {
   return (
     <>
       <section className="home black">
-        <div className="pb-20 px-3 md:px-8 text-center">
+        <div className="max-w-screen-xl mx-auto pb-20 px-3 md:px-8 text-center">
           <Typography.H4>
             Fully transparent on the Ethereum <br className="hidden md:block" />
             blockchain

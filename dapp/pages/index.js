@@ -40,7 +40,7 @@ const Home = ({ locale, onLocale, articles, seo, navLinks }) => {
       <Allocation />
       <Collateral />
       <section className="home black">
-        <div className="pb-20 px-2 md:px-8 text-center">
+        <div className="max-w-screen-xl mx-auto pb-20 px-2 md:px-8 text-center">
           <Typography.H4>Audited by leading security experts</Typography.H4>
           <br className="block" />
           <Typography.Body2 className="opacity-75">

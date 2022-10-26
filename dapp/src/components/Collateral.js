@@ -45,7 +45,7 @@ const Collateral = () => {
   return (
     <>
       <section className="home dim m-0">
-        <div className="pb-20 px-8 text-center">
+        <div className="max-w-screen-xl mx-auto pb-20 px-8 text-center">
           <Typography.H4>Always 100% collateralized</Typography.H4>
           <br className="block" />
           <Typography.Body2 className="opacity-75">
