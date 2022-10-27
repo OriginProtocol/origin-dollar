@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { fbt } from 'fbt-runtime'
 import { Typography } from '@originprotocol/origin-storybook'
 import { assetRootPath } from 'utils/image'
 import { PieChart } from 'react-minimal-pie-chart'
@@ -46,13 +47,17 @@ const Collateral = () => {
     <>
       <section className="home dim m-0">
         <div className="max-w-screen-xl mx-auto pb-20 px-8 text-center">
-          <Typography.H4>Always 100% collateralized</Typography.H4>
+          <Typography.H4>
+            {fbt('Always 100% collateralized', 'Always 100% collateralized')}
+          </Typography.H4>
           <br className="block" />
           <Typography.Body2 className="opacity-75">
-            OUSD is backed 1:1 by the most trusted collateral in crypto.
-            Reserves are verifiable on-chain. You can redeem OUSD{' '}
+            {fbt(
+              'OUSD is backed 1:1 by the most trusted collateral in crypto. Reserves are verifiable on-chain. You can redeem OUSD',
+              'OUSD is backed 1:1 by the most trusted collateral in crypto. Reserves are verifiable on-chain. You can redeem OUSD'
+            )}{' '}
             <br className="hidden md:block" />
-            immediately at any time.
+            {fbt('immediately at any time.', 'immediately at any time.')}
           </Typography.Body2>
           <div className="collateral flex flex-col md:flex-row justify-between rounded-xl my-10 md:m-16 px-6 pb-6 md:p-6 md:px-28 md:py-20">
             <div className="relative h-96">
@@ -61,7 +66,7 @@ const Collateral = () => {
             </div>
             <div className="md:w-1/2 md:px-20 text-left">
               <Typography.Body className="mb-3">
-                Currently-held collateral
+                {fbt('Currently-held collateral', 'Currently-held collateral')}
               </Typography.Body>
               <br className="hidden md:block" />
               <div className="flex flex-col justify-between h-4/5">
@@ -116,7 +121,7 @@ const Collateral = () => {
             rel="noopener noreferrer"
             className="bttn gradient3"
           >
-            See how it's minted
+            {fbt("See how it's minted", "See how it's minted")}
           </a>
         </div>
       </section>

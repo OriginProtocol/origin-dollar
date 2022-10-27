@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react'
+import { fbt } from 'fbt-runtime'
 import { Typography } from '@originprotocol/origin-storybook'
 import { assetRootPath } from 'utils/image'
 import { useStoreState } from 'pullstate'
@@ -58,12 +59,14 @@ const Ogv = () => {
           <div className="flex flex-col md:flex-row overflow-hidden max-w-screen-xl mx-auto md:pt-10 px-8 pb-20 text-center md:text-left">
             <div>
               <Typography.H3 className="md:text-left font-weight-bold">
-                Governed by OGV stakers
+                {fbt('Governed by OGV stakers', 'Governed by OGV stakers')}
               </Typography.H3>
               <br className="block" />
               <Typography.Caption className="md:text-left opacity-100">
-                OUSD's future is shaped by voters who lock their OGV and
-                participate in decentralized governance.
+                {fbt(
+                  "OUSD's future is shaped by voters who lock their OGV and participate in decentralized governance.",
+                  "OUSD's future is shaped by voters who lock their OGV and participate in decentralized governance."
+                )}
               </Typography.Caption>
               <img
                 src={assetRootPath(`/images/ogv.png`)}
@@ -116,7 +119,7 @@ const Ogv = () => {
                   rel="noopener noreferrer"
                   className="bttn bg-black"
                 >
-                  Buy OGV
+                  {fbt('Buy OGV', 'Buy OGV')}
                 </a>
               </span>
               {/*<a
@@ -134,7 +137,10 @@ const Ogv = () => {
                 className="hidden md:block"
               />
               <Typography.Body2 className="my-4 opacity-75 text-center">
-                OGV is listed on top exchanges
+                {fbt(
+                  'OGV is listed on top exchanges',
+                  'OGV is listed on top exchanges'
+                )}
               </Typography.Body2>
               <div className="flex flex-row justify-between">
                 <img src={assetRootPath(`/images/huobi.svg`)} />
@@ -147,7 +153,7 @@ const Ogv = () => {
                 rel="noopener noreferrer"
                 className="bttn bg-black block md:hidden text-center mt-5"
               >
-                Buy OGV
+                {fbt('Buy OGV', 'Buy OGV')}
               </a>
             </div>
           </div>
@@ -156,14 +162,22 @@ const Ogv = () => {
           <div className="overflow-hidden max-w-screen-xl mx-auto mt-16 md:pt-10 px-8 pb-10 md:pb-20 text-center">
             <div>
               <Typography.H3>
-                Stake OGV <br className="block" />
-                <span className="gradient1 font-bold py-1">To Earn OGV</span>
+                {fbt('Stake OGV', 'Stake OGV')} <br className="block" />
+                <span className="gradient1 font-bold py-1">
+                  {fbt('To Earn OGV', 'To Earn OGV')}
+                </span>
               </Typography.H3>
               <br className="block" />
               <Typography.Body2 className="mb-10 font-light">
-                Fees and voting rights accrue to OGV stakers. Control the future
-                of OUSD <br className="hidden md:block" />
-                and profit from its growth.
+                {fbt(
+                  'Fees and voting rights accrue to OGV stakers. Control the future of OUSD',
+                  'Fees and voting rights accrue to OGV stakers. Control the future of OUSD'
+                )}{' '}
+                <br className="hidden md:block" />
+                {fbt(
+                  'and profit from its growth.',
+                  'and profit from its growth.'
+                )}
               </Typography.Body2>
               <a
                 href="https://governance.ousd.com/stake"
@@ -171,7 +185,7 @@ const Ogv = () => {
                 rel="noopener noreferrer"
                 className="bttn bg-black"
               >
-                Earn rewards
+                {fbt('Earn rewards', 'Earn rewards')}
               </a>
             </div>
           </div>

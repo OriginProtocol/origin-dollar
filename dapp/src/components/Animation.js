@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { fbt } from 'fbt-runtime'
 import { Typography, Header } from '@originprotocol/origin-storybook'
 import { assetRootPath } from 'utils/image'
 import { animateValue } from 'utils/animation'
@@ -48,20 +49,26 @@ const Animation = ({ navLinks }) => {
       <div className="flex flex-col md:flex-row items-center max-w-screen-xl mx-auto relative overflow-hidden pt-10 px-8">
         <div>
           <Typography.H2>
-            The most trusted <br className="hidden md:block" />
+            {fbt('The most trusted', 'The most trusted')}{' '}
+            <br className="hidden md:block" />
             <span className="gradient-ousd font-bold py-1">
-              yield-generating,{' '}
+              {fbt('yield-generating,', 'yield-generating,')}{' '}
             </span>
             <br className="hidden md:block" />
-            self-custodial, <br className="block" /> stablecoin
+            {fbt('self-custodial,', 'self-custodial,')} <br className="block" />
+            {fbt('stablecoin', 'stablecoin')}
           </Typography.H2>
           <br className="block" />
           <Typography.Body2 className="opacity-75">
-            {
-              'Origin Dollar simplifies DeFi by eliminating the need for staking or lock-ups. Hold OUSD '
-            }
+            {fbt(
+              'Origin Dollar simplifies DeFi by eliminating the need for staking or lock-ups. Hold OUSD',
+              'Origin Dollar simplifies DeFi by eliminating the need for staking or lock-ups. Hold OUSD'
+            )}{' '}
             <br className="hidden md:block" />
-            in any Ethereum wallet and watch your balance increase every day.
+            {fbt(
+              'in any Ethereum wallet and watch your balance increase every day.',
+              'in any Ethereum wallet and watch your balance increase every day.'
+            )}
           </Typography.Body2>
           <br className="block" />
           <a
@@ -94,7 +101,10 @@ const Animation = ({ navLinks }) => {
                 </div>
               </Typography.H2>
               <Typography.Body2 className="opacity-75 mt-2">
-                Total value of OUSD wallet balances
+                {fbt(
+                  'Total value of OUSD wallet balances',
+                  'Total value of OUSD wallet balances'
+                )}
               </Typography.Body2>
             </div>
           )}

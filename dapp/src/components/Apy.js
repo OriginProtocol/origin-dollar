@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { fbt } from 'fbt-runtime'
 import { Typography } from '@originprotocol/origin-storybook'
 import { useStoreState } from 'pullstate'
 import ContractStore from 'stores/ContractStore'
@@ -36,20 +37,24 @@ const Apy = ({ isMobile }) => {
       <section className="home dim">
         <div className="max-w-screen-xl mx-auto pb-20 px-3 md:px-8 text-center">
           <Typography.H4>
-            {'The simplest '}
+            {fbt('The simplest', 'The simplest')}{' '}
             <span className="gradient-ousd font-bold py-1">
-              market-neutral{' '}
+              {fbt('market-neutral', 'market-neutral')}{' '}
             </span>
-            DeFi <br className="hidden md:block" />
-            strategy
+            {fbt('DeFi', 'DeFi')} <br className="hidden md:block" />
+            {fbt('strategy', 'strategy')}
           </Typography.H4>
           <br className="block" />
           <Typography.Body2 className="opacity-75">
-            Grow your stablecoin portfolio by swapping USDC, USDT, or DAI to
-            OUSD. Yields are generated on-chain, distributed directly{' '}
+            {fbt(
+              'Grow your stablecoin portfolio by swapping USDC, USDT, or DAI to OUSD. Yields are generated on-chain, distributed directly',
+              'Grow your stablecoin portfolio by swapping USDC, USDT, or DAI to OUSD. Yields are generated on-chain, distributed directly'
+            )}{' '}
             <br className="hidden md:block" />
-            to your wallet, and compounded automatically. Your funds are never
-            risked on speculative positions.
+            {fbt(
+              'to your wallet, and compounded automatically. Your funds are never risked on speculative positions.',
+              'to your wallet, and compounded automatically. Your funds are never risked on speculative positions.'
+            )}
           </Typography.Body2>
           {loaded && (
             <div className="apy flex flex-col md:flex-row justify-between rounded-xl my-10 md:m-16 p-6 md:p-10">
@@ -61,7 +66,7 @@ const Apy = ({ isMobile }) => {
               </div>
               <div className="flex flex-col md:w-2/5">
                 <Typography.Body2 className="opacity-75 mb-3">
-                  Moving average
+                  {fbt('Moving average', 'Moving average')}
                 </Typography.Body2>
                 <div className="flex flex-row justify-around">
                   {apyDayOptions.map((days) => {
@@ -89,7 +94,7 @@ const Apy = ({ isMobile }) => {
             rel="noopener noreferrer"
             className="bttn gradient3 white"
           >
-            Start earning now
+            {fbt('Start earning now', 'Start earning now')}
           </a>
         </div>
       </section>

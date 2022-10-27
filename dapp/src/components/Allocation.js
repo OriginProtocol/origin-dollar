@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { fbt } from 'fbt-runtime'
 import { Typography } from '@originprotocol/origin-storybook'
 import { assetRootPath } from 'utils/image'
 import { LinearProgress } from '@mui/material'
@@ -50,18 +51,26 @@ const Allocation = () => {
       <section className="home black">
         <div className="max-w-screen-xl mx-auto pb-20 px-3 md:px-8 text-center">
           <Typography.H4>
-            Fully transparent on the Ethereum <br className="hidden md:block" />
-            blockchain
+            {fbt(
+              'Fully transparent on the Ethereum',
+              'Fully transparent on the Ethereum'
+            )}{' '}
+            <br className="hidden md:block" />
+            {fbt('blockchain', 'blockchain')}
           </Typography.H4>
           <br className="hidden md:block" />
           <Typography.Body2 className="opacity-75">
-            Funds are deployed to automated, on-chain, blue-chip stablecoin
-            strategies. There are no gatekeepers or centralized money managers
-            and governance is entirely decentralized.
+            {fbt(
+              'Funds are deployed to automated, on-chain, blue-chip stablecoin strategies. There are no gatekeepers or centralized money managers and governance is entirely decentralized.',
+              'Funds are deployed to automated, on-chain, blue-chip stablecoin strategies. There are no gatekeepers or centralized money managers and governance is entirely decentralized.'
+            )}
           </Typography.Body2>
           <div className="allocation rounded-xl my-10 md:m-16 p-6 md:p-10 divide-black divide-y-2">
             <Typography.Body className="font-bold pb-8">
-              Current yield sources & allocations
+              {fbt(
+                'Current yield sources & allocations',
+                'Current yield sources & allocations'
+              )}
             </Typography.Body>
             <div className="flex flex-col pt-3">
               <ThemeProvider theme={theme}>
@@ -217,7 +226,7 @@ const Allocation = () => {
             rel="noopener noreferrer"
             className="bttn gradient3"
           >
-            See how it works
+            {fbt('See how it works', 'See how it works')}
           </a>
         </div>
       </section>
