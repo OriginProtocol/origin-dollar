@@ -195,3 +195,60 @@ safe = ApeSafe('0xF14BBdf064E3F67f51cd9BD646aE3716aD938FDC')
 safe_tx = safe.multisend_from_receipts(txs)
 safe.sign_with_frame(safe_tx)
 r = safe.post_transaction(safe_tx)
+
+
+# --------------------------------
+# Oct 26, 2022 Accept goverance on old contracts
+# 
+
+from world import *
+
+newgov = Contract.from_explorer("0x3cdD07c16614059e66344a7b579DAB4f9516C0b6")
+
+old_contracts = [
+  "0x9C94df9d594BA1eb94430C006c269C314B1A8281",  # CompensationClaims
+  "0xD5433168Ed0B1F7714819646606DB509D9d8EC1f",  # CompoundStrategyProxy
+  "0x9f2b18751376cF6a3432eb158Ba5F9b1AbD2F7ce",  # InitializeGovernedUpgradeabilityProxy
+  "0x3c5fe0a3922777343CBD67D3732FCdc9f2Fa6f2F",  # ThreePoolStrategyProxy
+  "0x48Cf14DeA2f5dD31c57218877195913412D3278A",  # VaultCore
+  "0x12115A32a19e4994C2BA4A5437C22CEf5ABb59C3",  # CompoundStrategyProxy
+  "0x47211B1D1F6Da45aaEE06f877266E072Cf8BaA74",  # CompoundStrategyProxy
+  "0x051CaEFA90aDf261B8E8200920C83778b7B176B6",  # InitializeGovernedUpgradeabilityProxy
+  "0x277e80f3E14E7fB3fc40A9d6184088e0241034bD",  # InitializeGovernedUpgradeabilityProxy
+  "0x4d4f5e7a1FE57F5cEB38BfcE8653EFFa5e584458",  # MixOracle
+  "0xe40e09cD6725E542001FcB900d9dfeA447B529C0",  # ThreePoolStrategyProxy
+]
+
+txs = []
+
+with TemporaryFork():
+	for address in old_contracts:
+		contract = Contract.from_explorer(address)
+		txs.append(contract.claimGovernance({'from': newgov.timelock()}))
+		print(contract.governor())
+
+
+newgov.propose(
+	[x.receiver for x in txs],
+	[0 for x in txs],
+	['claimGovernance()' for x in txs],
+	[x.input[10:] for x in txs],
+	"Claim governance on old contracts\n\nMoves a selection of old contracts from old goverance to the new.",
+	{'from': GOV_MULTISIG }
+)
+
+print("Raw proposal:")
+print(history[-1].receiver)
+print(history[-1].input)
+print(history[-1].events)
+proposal_id = history[-1].events['ProposalCreated'][0]['proposalId']
+print(proposal_id)
+
+
+
+# # Test
+
+
+oldgov.queue(proposal_id, {'from': OLD_GOV_MULTI_SIG})
+chain.mine(timedelta=2*24*60*60+2)
+oldgov.execute(proposal_id, {'from': OLD_GOV_MULTI_SIG})
