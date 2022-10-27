@@ -153,7 +153,7 @@ const Ogv = () => {
           </div>
         </div>
         <div>
-          <div className="overflow-hidden max-w-screen-xl mx-auto mt-16 md:pt-28 px-8 pb-10 md:pb-20 text-center">
+          <div className="overflow-hidden max-w-screen-xl mx-auto mt-16 md:pt-10 px-8 pb-10 md:pb-20 text-center">
             <div>
               <Typography.H3>
                 Stake OGV <br className="block" />

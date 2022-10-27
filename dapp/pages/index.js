@@ -9,7 +9,7 @@ import Ogv from 'components/Ogv'
 import { fetchAPI } from '../lib/api'
 import formatSeo from '../src/utils/seo'
 import transformLinks from '../src/utils/transformLinks'
-import { Typography, Header } from '@originprotocol/origin-storybook'
+import { Typography } from '@originprotocol/origin-storybook'
 import { formatCurrency } from 'utils/math'
 import { assetRootPath } from 'utils/image'
 

@@ -2755,10 +2755,10 @@
   resolved "https://registry.yarnpkg.com/@opentelemetry/context-base/-/context-base-0.14.0.tgz#c67fc20a4d891447ca1a855d7d70fa79a3533001"
   integrity sha512-sDOAZcYwynHFTbLo6n8kIbLiVF3a3BLkrmehJUyEbT9F+Smbi47kLGS2gG2g0fjBLR/Lr1InPD7kXL7FaTqEkw==
 
-"@originprotocol/origin-storybook@^0.19.12":
-  version "0.19.12"
-  resolved "https://registry.yarnpkg.com/@originprotocol/origin-storybook/-/origin-storybook-0.19.12.tgz#0225ed09b64d5698c9cea74156110eea1a317869"
-  integrity sha512-lePjdX+kumSe4AFA//IF3dDNU9bWa+qvqjw7ERC7ypiyC952Uh4HXJUff1PWBdGlvfTY+eYTyU+M7YeglD3bDw==
+"@originprotocol/origin-storybook@^0.19.16":
+  version "0.19.16"
+  resolved "https://registry.yarnpkg.com/@originprotocol/origin-storybook/-/origin-storybook-0.19.16.tgz#7d619f27309d2d46ba9b5f1519a3daba7923b607"
+  integrity sha512-HmJIOzoZRULaw7lx4vjLpthR+2h5kYtAQhZFEovt6Bu8YTNqNfT9fJ8qK6jX4Sbo0akKsQSuLSnM4fsnSUrh0Q==
   dependencies:
     "@heroicons/react" "^2.0.11"
     next "^12.3.1"
