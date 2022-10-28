@@ -1,17 +1,10 @@
 import { Card, Select } from '@originprotocol/origin-storybook'
-import withIsMobile from 'hoc/withIsMobile'
 import Image from 'next/image'
 import React, { useEffect, useState } from 'react'
-import { getStrapiMedia } from '../../lib/media'
 import { assetRootPath } from 'utils/image'
+import { capitalize } from 'lodash'
 
 const Category = ({ categories, setCategory }) => {
-  const [open, setOpen] = useState(false)
-  //const categories = ['All news', 'News', 'Food', 'Nature', 'Tech', 'Story']
-  const capitalize = (name) => {
-    return name.slice(0, 1).toUpperCase() + name.slice(1, name.length)
-  }
-
   const categoriesFormatted = [
     {
       id: null,
@@ -40,7 +33,7 @@ const Category = ({ categories, setCategory }) => {
   )
 }
 
-const News = ({ isMobile, articles, meta, categories }) => {
+const News = ({ articles, meta, categories }) => {
   const [loaded, setLoaded] = useState(false)
 
   useEffect(() => {
@@ -188,4 +181,4 @@ const News = ({ isMobile, articles, meta, categories }) => {
   )
 }
 
-export default withIsMobile(News)
+export default News

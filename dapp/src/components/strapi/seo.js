@@ -21,7 +21,11 @@ const Seo = ({ seo }) => {
 
   return (
     <Head>
-      {fullSeo.metaTitle && <title>{fullSeo.metaTitle}</title>}
+      {fullSeo.metaTitle ? (
+        <title>{fullSeo.metaTitle}</title>
+      ) : (
+        <title>Origin Dollar</title>
+      )}
       {fullSeo.metaDescription && (
         <meta name="description" content={fullSeo.metaDescription} />
       )}

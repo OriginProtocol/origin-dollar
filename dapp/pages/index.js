@@ -11,14 +11,13 @@ import transformLinks from '../src/utils/transformLinks'
 import { Typography } from '@originprotocol/origin-storybook'
 import { assetRootPath } from 'utils/image'
 import Layout from 'components/layout'
+import { audits } from 'utils/constants'
 
 const discordURL = process.env.DISCORD_URL
 const jobsURL = process.env.JOBS_URL
 const githubURL = process.env.GITHUB_URL
 
 const Home = ({ locale, onLocale, articles, seo, navLinks }) => {
-  const audits = ['Trail of bits', 'Certora', 'Solidified', 'OpenZeppelin']
-
   return (
     <Layout locale={locale}>
       <Animation navLinks={navLinks} />

@@ -7,6 +7,7 @@ import { formatCurrency } from '../utils/math'
 import useCollateralQuery from '../queries/useCollateralQuery'
 import { useStoreState } from 'pullstate'
 import ContractStore from 'stores/ContractStore'
+import { tokenColors } from 'utils/constants'
 
 const Collateral = () => {
   const collateral = useStoreState(ContractStore, (s) => {
@@ -29,17 +30,11 @@ const Collateral = () => {
     return { total: Number(t.total) + Number(s.total) }
   }).total
 
-  const colors = {
-    usdc: '#2775ca',
-    dai: '#f4b731',
-    usdt: '#26a17b',
-  }
-
   const chartData = collateral.collateral?.map((token) => {
     return {
       title: token.name.toUpperCase(),
       value: (token.total / total) * 100,
-      color: colors[token.name] || '#ff0000',
+      color: tokenColors[token.name] || '#ff0000',
     }
   })
 

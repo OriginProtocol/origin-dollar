@@ -3,27 +3,14 @@ import { fbt } from 'fbt-runtime'
 import { Typography } from '@originprotocol/origin-storybook'
 import { assetRootPath } from 'utils/image'
 import { LinearProgress } from '@mui/material'
-import { createTheme, ThemeProvider } from '@mui/material/styles'
+import { ThemeProvider } from '@mui/material/styles'
 import useAllocationQuery from '../queries/useAllocationQuery'
 import { useStoreState } from 'pullstate'
 import ContractStore from 'stores/ContractStore'
 import { formatCurrency } from 'utils/math'
+import { theme } from 'utils/constants'
 
 const Allocation = () => {
-  const theme = createTheme({
-    palette: {
-      compound: {
-        main: '#00d592',
-      },
-      aave: {
-        main: '#7a26f3',
-      },
-      convex: {
-        main: '#ff5a5a',
-      },
-    },
-  })
-
   const [open, setOpen] = useState({})
 
   const allocation = useStoreState(ContractStore, (s) => {
