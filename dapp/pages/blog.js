@@ -3,7 +3,6 @@ import News from 'components/News'
 import Layout from 'components/Layout'
 import Head from 'next/head'
 import React from 'react'
-import { assetRootPath } from 'utils/image'
 import { fetchAPI } from '../lib/api'
 import Seo from '../src/components/strapi/seo'
 import formatSeo from '../src/utils/seo'
@@ -18,8 +17,6 @@ const Blog = ({
   seo,
   navLinks,
 }) => {
-  console.log(articles)
-
   return (
     <Layout locale={locale}>
       <Head>
