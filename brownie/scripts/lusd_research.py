@@ -13,12 +13,11 @@ usdc.approve(threepool.address, 1e50, OPTS)
 lusd.approve(lusd_metapool.address, 1e50, SOPS)
 threepool_lp.approve(lusd_metapool, 1e50, SOPS)
 threepool_lp.approve(lusd_metapool, 1e50, OPTS)
-usdcToDeploy = 1e6*1e6
+usdcToDeploy = 10e6*1e6
 
 print("starting LUSD priced in USDC: ", lusd_metapool.get_dy_underlying(0,2,1e18))
 
 def deposit():
-	# add 1 mio of USDC to threepool
 	startLp = threepool_lp.balanceOf(me)
 	threepool.add_liquidity([0,usdcToDeploy, 0], 0, OPTS)
 	diff3Pool = threepool_lp.balanceOf(me) - startLp
@@ -44,12 +43,23 @@ with TemporaryFork():
 	withdraw(lusdLpDiff)
 	# lost 160 USDC & LUSD priced at 1.039472
 
+#deploy liquidity, pool gets 5(3pool)/95 ish balanced and remove liquidity
+with TemporaryFork():
+	lusdLpDiff = deposit()
+	#amountLusd = 53 * 1e6 * 1e18 # 1 mio USDC amount
+	amountLusd = 61 * 1e6 * 1e18 # 10 mio USDC amount
+	lusd_metapool.exchange(0,1,amountLusd, 0, SOPS)
+	print("balances: ", lusd_metapool.balances(0) / 1e24, lusd_metapool.balances(1)/1e24)
+	print("LUSD priced in USDC: ", lusd_metapool.get_dy_underlying(0,2,1e18))
+	withdraw(lusdLpDiff)
 
 #deploy liquidity, pool gets 50/50 ish balanced and remove liquidity
 with TemporaryFork():
 	lusdLpDiff = deposit()
 	# balance lusd metapool
-	lusd_metapool.add_liquidity([49 * 1e6 * 1e18, 0], 0, SOPS)
+	#lusd_metapool.add_liquidity([49 * 1e6 * 1e18, 0], 0, SOPS) # 1 mio USDC
+	lusd_metapool.add_liquidity([59 * 1e6 * 1e18, 0], 0, SOPS) # 10 mio USDC
+	print("balances: ", lusd_metapool.balances(0) / 1e24, lusd_metapool.balances(1)/1e24)
 	print("LUSD priced in USDC: ", lusd_metapool.get_dy_underlying(0,2,1e18))
 	withdraw(lusdLpDiff)
 	# lost 5710 USDC & LUSD priced at 0.999690
@@ -58,7 +68,10 @@ with TemporaryFork():
 with TemporaryFork():
 	lusdLpDiff = deposit()
 	# balance lusd metapool
-	lusd_metapool.add_liquidity([18.3 * 1e6 * 1e18, 0], 0, SOPS)
+	# lusd_metapool.add_liquidity([18.3 * 1e6 * 1e18, 0], 0, SOPS) # 1 mio USDC
+	lusd_metapool.add_liquidity([23 * 1e6 * 1e18, 0], 0, SOPS) # 10 mio USDC
+	print("balances: ", lusd_metapool.balances(0) / 1e24, lusd_metapool.balances(1)/1e24)
+	print("rate: ", lusd_metapool.balances(0) / (lusd_metapool.balances(0) + lusd_metapool.balances(1)))
 	print("LUSD priced in USDC: ", lusd_metapool.get_dy_underlying(0,2,1e18))
 	withdraw(lusdLpDiff)
 	# lost 4790 USDC & LUSD priced at 1.002046
@@ -67,7 +80,9 @@ with TemporaryFork():
 with TemporaryFork():
 	lusdLpDiff = deposit()
 	# balance lusd metapool
-	lusd_metapool.add_liquidity([8.8 * 1e6 * 1e18, 0], 0, SOPS)
+	# lusd_metapool.add_liquidity([8.8 * 1e6 * 1e18, 0], 0, SOPS) # 1 mio USDC
+	lusd_metapool.add_liquidity([11.3 * 1e6 * 1e18, 0], 0, SOPS) # 10 mio USDC
+	print("rate: ", lusd_metapool.balances(0) / (lusd_metapool.balances(0) + lusd_metapool.balances(1)))
 	print("LUSD priced in USDC: ", lusd_metapool.get_dy_underlying(0,2,1e18))
 	withdraw(lusdLpDiff)
 	# lost 3908 USDC & LUSD priced at 1.005
@@ -77,11 +92,15 @@ with TemporaryFork():
 with TemporaryFork():
 	lusdLpDiff = deposit()
 	# balance lusd metapool
-	amount3Pool = 42 * 1e6 * 1e18
+	# amount3Pool = 42 * 1e6 * 1e18 # 1 mio USDC
+	amount3Pool = 40.8 * 1e6 * 1e18 # 10 mio USDC
 	threepool_lp.transfer(STRATEGIST, amount3Pool, OPTS)
-	lusd_metapool.add_liquidity([0, 42 * 1e6 * 1e18], 0, SOPS)
+	lusd_metapool.add_liquidity([0, amount3Pool], 0, SOPS)
+	print("rate: ", lusd_metapool.balances(0) / (lusd_metapool.balances(0) + lusd_metapool.balances(1)))
 	print("LUSD priced in USDC: ", lusd_metapool.get_dy_underlying(0,2,1e18))
 	withdraw(lusdLpDiff)
 	# gained 4235 USDC & LUSD priced at 1.114993
+
+	
 
 
