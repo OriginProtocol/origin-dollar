@@ -54,7 +54,7 @@ with TemporaryFork():
 	withdraw(lusdLpDiff)
 	# lost 5710 USDC & LUSD priced at 0.999690
 
-#deploy liquidity, pool gets 70(LUSD)/30 ish balanced and remove liquidity
+#deploy liquidity, pool gets 70(3pool)/30 ish balanced and remove liquidity
 with TemporaryFork():
 	lusdLpDiff = deposit()
 	# balance lusd metapool
@@ -63,7 +63,7 @@ with TemporaryFork():
 	withdraw(lusdLpDiff)
 	# lost 4790 USDC & LUSD priced at 1.002046
 
-#deploy liquidity, pool gets 80(LUSD)/20 ish balanced and remove liquidity
+#deploy liquidity, pool gets 80(3pool)/20 ish balanced and remove liquidity
 with TemporaryFork():
 	lusdLpDiff = deposit()
 	# balance lusd metapool
@@ -73,7 +73,7 @@ with TemporaryFork():
 	# lost 3908 USDC & LUSD priced at 1.005
 
 
-#deploy liquidity, pool gets 95(LUSD)/5 ish balanced and remove liquidity
+#deploy liquidity, pool gets 95(3pool)/5 ish balanced and remove liquidity
 with TemporaryFork():
 	lusdLpDiff = deposit()
 	# balance lusd metapool
@@ -83,8 +83,5 @@ with TemporaryFork():
 	print("LUSD priced in USDC: ", lusd_metapool.get_dy_underlying(0,2,1e18))
 	withdraw(lusdLpDiff)
 	# gained 4235 USDC & LUSD priced at 1.114993
-
-
-#$1 50/50 $1.01 70/30 %1.05 95/05
 
 
