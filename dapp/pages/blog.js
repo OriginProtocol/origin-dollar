@@ -35,7 +35,6 @@ const Blog = ({
           <News articles={articles} meta={meta} categories={categories} />
         )}
       </section>
-      <style jsx>{``}</style>
     </Layout>
   )
 }
