@@ -1,6 +1,6 @@
 export default class CirculatingSupplyService {
   async fetchCirculatingSupply() {
-    const endpoint = `/api/circulating-ogv`
+    const endpoint = `https://api.originprotocol.com/circulating-ogv`
     return fetch(endpoint).then((r) => r.json())
   }
 }
