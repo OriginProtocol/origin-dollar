@@ -96,10 +96,18 @@ section.intro {
   background-repeat: no-repeat;
 }
 
-@media (max-width: 799px) {
+@media (max-width: 1200px) {
+  section.intro {
+    background-position: 100% 100%;
+    background-size: 200vw;
+  }
+}
+
+@media (max-width: 992px) {
   section.intro {
     background-image: url(/images/splines35.png);
     background-position: 100% 100%;
+    background-size: 150vw;
   }
 }
 

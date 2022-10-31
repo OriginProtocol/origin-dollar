@@ -47,24 +47,19 @@ const Apy = ({ isMobile }) => {
           <br className="block" />
           <Typography.Body2 className="opacity-75">
             {fbt(
-              'Grow your stablecoin portfolio by swapping USDC, USDT, or DAI to OUSD. Yields are generated on-chain, distributed directly',
-              'Grow your stablecoin portfolio by swapping USDC, USDT, or DAI to OUSD. Yields are generated on-chain, distributed directly'
-            )}{' '}
-            <br className="hidden md:block" />
-            {fbt(
-              'to your wallet, and compounded automatically. Your funds are never risked on speculative positions.',
-              'to your wallet, and compounded automatically. Your funds are never risked on speculative positions.'
+              'Grow your stablecoin portfolio by swapping USDC, USDT, or DAI to OUSD. Yields are generated on-chain, distributed directly to your wallet, and compounded automatically. Your funds are never risked on speculative positions.',
+              'Grow your stablecoin portfolio by swapping USDC, USDT, or DAI to OUSD. Yields are generated on-chain, distributed directly to your wallet, and compounded automatically. Your funds are never risked on speculative positions.'
             )}
           </Typography.Body2>
           {loaded && (
             <div className="apy flex flex-col md:flex-row justify-between rounded-xl my-10 md:m-16 p-6 md:p-10">
               <div className="mt-2 mb-6 md:mb-0">
-                <Typography.H1 className="inline">
+                <Typography.H1 className="lg:inline">
                   {formatCurrency(daysToApy[apyDays] * 100, 2) + '% '}
                 </Typography.H1>
-                <Typography.Body className="opacity-75 block md:inline">{`Trailing ${apyDays}-day APY`}</Typography.Body>
+                <Typography.Body className="opacity-75 block lg:inline">{`Trailing ${apyDays}-day APY`}</Typography.Body>
               </div>
-              <div className="flex flex-col md:w-2/5">
+              <div className="flex flex-col lg:w-2/5">
                 <Typography.Body2 className="opacity-75 mb-3">
                   {fbt('Moving average', 'Moving average')}
                 </Typography.Body2>

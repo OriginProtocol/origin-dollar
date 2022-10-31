@@ -54,12 +54,12 @@ const Collateral = () => {
             <br className="hidden md:block" />
             {fbt('immediately at any time.', 'immediately at any time.')}
           </Typography.Body2>
-          <div className="collateral flex flex-col md:flex-row justify-between rounded-xl my-10 md:m-16 px-6 pb-6 md:p-6 md:px-28 md:py-20">
+          <div className="collateral flex flex-col md:flex-row justify-between rounded-xl my-10 md:m-16 px-6 pb-6 md:p-6 lg:px-28 md:py-20">
             <div className="relative h-96">
               <PieChart data={chartData} lineWidth={6} startAngle={270} />
               <Typography.H5 className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">{`$${'40,123,456'}`}</Typography.H5>
             </div>
-            <div className="md:w-1/2 md:px-20 text-left">
+            <div className="lg:w-1/2 md:px-20 text-left">
               <Typography.Body className="mb-3">
                 {fbt('Currently-held collateral', 'Currently-held collateral')}
               </Typography.Body>

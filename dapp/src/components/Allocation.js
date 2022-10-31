@@ -36,7 +36,7 @@ const Allocation = () => {
   return (
     <>
       <section className="home black">
-        <div className="max-w-screen-xl mx-auto pb-20 px-3 md:px-8 text-center">
+        <div className="max-w-screen-xl mx-auto pb-20 px-6 md:px-8 text-center">
           <Typography.H4>
             {fbt(
               'Fully transparent on the Ethereum',
@@ -45,7 +45,7 @@ const Allocation = () => {
             <br className="hidden md:block" />
             {fbt('blockchain', 'blockchain')}
           </Typography.H4>
-          <br className="hidden md:block" />
+          <br className="block" />
           <Typography.Body2 className="opacity-75">
             {fbt(
               'Funds are deployed to automated, on-chain, blue-chip stablecoin strategies. There are no gatekeepers or centralized money managers and governance is entirely decentralized.',

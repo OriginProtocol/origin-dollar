@@ -8,14 +8,10 @@ import Ogv from 'components/Ogv'
 import { fetchAPI } from '../lib/api'
 import formatSeo from '../src/utils/seo'
 import transformLinks from '../src/utils/transformLinks'
-import { Typography } from '@originprotocol/origin-storybook'
+import { Typography, Header, Button } from '@originprotocol/origin-storybook'
 import { assetRootPath } from 'utils/image'
 import Layout from 'components/layout'
 import { audits } from 'utils/constants'
-
-const discordURL = process.env.DISCORD_URL
-const jobsURL = process.env.JOBS_URL
-const githubURL = process.env.GITHUB_URL
 
 const Home = ({ locale, onLocale, articles, seo, navLinks }) => {
   return (
@@ -39,15 +35,15 @@ const Home = ({ locale, onLocale, articles, seo, navLinks }) => {
               'Securing your funds is OUSD’s top priority. Changes to the protocol are reviewed by internal and external auditors on an ongoing basis.'
             )}
           </Typography.Body2>
-          <div className="audits rounded-xl m-6 md:m-16 md:mx-40 p-6 md:p-10">
+          <div className="audits rounded-xl m-6 lg:m-16 lg:mx-40 p-6 lg:p-10">
             <Typography.Body>
               {fbt('Existing audits', 'Existing audits')}
             </Typography.Body>
-            <div className="grid grid-rows-2 grid-cols-2 md:flex md:flex-row md:justify-around mt-6 md:mt-10">
+            <div className="grid grid-rows-2 grid-cols-2 lg:flex lg:flex-row lg:justify-around mt-6 lg:mt-10">
               {audits.map((audit) => {
                 return (
-                  <div className="m-2 md:m-0" key={audit}>
-                    <div className="item relative rounded-full w-28 h-28 md:w-48 md:h-48 mb-6">
+                  <div className="m-2 md:m-0 mx-auto" key={audit}>
+                    <div className="item relative rounded-full w-28 h-28 md:w-36 md:h-36 xl:w-48 xl:h-48 mb-6">
                       <img
                         src={assetRootPath(
                           `/images/${audit

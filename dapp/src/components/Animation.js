@@ -46,8 +46,8 @@ const Animation = ({ navLinks }) => {
   return (
     <section className="intro black">
       <Header mappedLinks={navLinks} webProperty="ousd" />
-      <div className="flex flex-col md:flex-row items-center max-w-screen-xl mx-auto relative overflow-hidden pt-10 px-8">
-        <div>
+      <div className="flex flex-col md:flex-row items-center max-w-screen-xl mx-auto overflow-hidden pt-10 px-8">
+        <div className='md:w-1/2'>
           <Typography.H2>
             {fbt('The most trusted', 'The most trusted')}{' '}
             <br className="hidden md:block" />
@@ -61,14 +61,9 @@ const Animation = ({ navLinks }) => {
           <br className="block" />
           <Typography.Body2 className="opacity-75">
             {fbt(
-              'Origin Dollar simplifies DeFi by eliminating the need for staking or lock-ups. Hold OUSD',
-              'Origin Dollar simplifies DeFi by eliminating the need for staking or lock-ups. Hold OUSD'
+              'Origin Dollar simplifies DeFi by eliminating the need for staking or lock-ups. Hold OUSD in any Ethereum wallet and watch your balance increase every day.',
+              'Origin Dollar simplifies DeFi by eliminating the need for staking or lock-ups. Hold OUSD in any Ethereum wallet and watch your balance increase every day.'
             )}{' '}
-            <br className="hidden md:block" />
-            {fbt(
-              'in any Ethereum wallet and watch your balance increase every day.',
-              'in any Ethereum wallet and watch your balance increase every day.'
-            )}
           </Typography.Body2>
           <br className="block" />
           <a

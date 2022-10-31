@@ -56,13 +56,13 @@ const Ogv = () => {
     <section className="home gradient5 relative z-0">
       <div className="relative divide-black divide-y-2">
         <div>
-          <div className="flex flex-col md:flex-row overflow-hidden max-w-screen-xl mx-auto md:pt-10 px-8 pb-20 text-center md:text-left">
-            <div>
-              <Typography.H3 className="md:text-left font-weight-bold">
+          <div className="flex flex-col lg:flex-row overflow-hidden max-w-screen-xl mx-auto lg:pt-10 px-8 pb-20 text-center lg:text-left">
+            <div className='lg:w-2/3'>
+              <Typography.H3 className="lg:text-left font-weight-bold">
                 {fbt('Governed by OGV stakers', 'Governed by OGV stakers')}
               </Typography.H3>
               <br className="block" />
-              <Typography.Caption className="md:text-left opacity-100">
+              <Typography.Caption className="lg:text-left opacity-100">
                 {fbt(
                   "OUSD's future is shaped by voters who lock their OGV and participate in decentralized governance.",
                   "OUSD's future is shaped by voters who lock their OGV and participate in decentralized governance."
@@ -70,12 +70,12 @@ const Ogv = () => {
               </Typography.Caption>
               <img
                 src={assetRootPath(`/images/ogv.png`)}
-                className="mt-10 px-10 block md:hidden"
+                className="mt-10 mx-auto px-10 block lg:hidden"
               />
-              <div className=" flex flex-col justify-between w-full md:w-4/5 h-48 mb-20 text-left font-weight-bold mt-10 md:mt-24 h-36 md:h-52">
+              <div className="flex flex-col justify-between w-full md:mx-20 lg:mx-0 lg:w-4/5 mb-20 text-left font-weight-bold mt-10 lg:mt-24 h-36 md:h-52">
                 <div className="flex flex-row justify-between">
                   <div className="w-96">
-                    <Typography.Body2 className="text-xs md:text-base mb-2 font-weight-bold">
+                    <Typography.Body2 className="text-xs lg:text-base mb-2 font-weight-bold">
                       {'OGV PRICE'}
                     </Typography.Body2>
                     <Typography.H5>{`$${formatCurrency(
@@ -84,7 +84,7 @@ const Ogv = () => {
                     )}`}</Typography.H5>
                   </div>
                   <div className="w-96">
-                    <Typography.Body2 className="text-xs md:text-base mb-2 font-weight-bold">
+                    <Typography.Body2 className="text-xs lg:text-base mb-2 font-weight-bold">
                       {'OGV MARKET CAP'}
                     </Typography.Body2>
                     <Typography.H5>{`$${formatCurrency(
@@ -95,7 +95,7 @@ const Ogv = () => {
                 </div>
                 <div className="flex flex-row justify-between">
                   <div className="w-96">
-                    <Typography.Body2 className="text-xs md:text-base mb-2 font-weight-bold">
+                    <Typography.Body2 className="text-xs lg:text-base mb-2 font-weight-bold">
                       {'CIRCULATING SUPPLY'}
                     </Typography.Body2>
                     <Typography.H5>
@@ -103,7 +103,7 @@ const Ogv = () => {
                     </Typography.H5>
                   </div>
                   <div className="w-96">
-                    <Typography.Body2 className="text-xs md:text-base mb-2 font-weight-bold">
+                    <Typography.Body2 className="text-xs lg:text-base mb-2 font-weight-bold">
                       {'TOTAL SUPPLY'}
                     </Typography.Body2>
                     <Typography.H5>
@@ -112,7 +112,7 @@ const Ogv = () => {
                   </div>
                 </div>
               </div>
-              <span className="hidden md:block w-1/5">
+              <span className="hidden lg:block w-1/5">
                 <a
                   href='https://"app.uniswap.org/#/swap?outputCurrency=0x9c354503C38481a7A7a51629142963F98eCC12D0&chain=mainnet"'
                   target="_blank"
@@ -131,10 +131,10 @@ const Ogv = () => {
                 View dashboard
               </a>*/}
             </div>
-            <div>
+            <div className=''>
               <img
                 src={assetRootPath(`/images/ogv.png`)}
-                className="hidden md:block"
+                className="hidden lg:block"
               />
               <Typography.Body2 className="my-4 opacity-75 text-center">
                 {fbt(
@@ -142,7 +142,7 @@ const Ogv = () => {
                   'OGV is listed on top exchanges'
                 )}
               </Typography.Body2>
-              <div className="flex flex-row justify-between">
+              <div className="flex flex-row justify-between md:mx-32 lg:mx-0">
                 <img src={assetRootPath(`/images/huobi.svg`)} />
                 <img src={assetRootPath(`/images/uniswap.svg`)} />
                 <img src={assetRootPath(`/images/kucoin.svg`)} />
@@ -151,7 +151,7 @@ const Ogv = () => {
                 href='https://"app.uniswap.org/#/swap?outputCurrency=0x9c354503C38481a7A7a51629142963F98eCC12D0&chain=mainnet"'
                 target="_blank"
                 rel="noopener noreferrer"
-                className="bttn bg-black block md:hidden text-center mt-5"
+                className="bttn bg-black block lg:hidden text-center mt-5"
               >
                 {fbt('Buy OGV', 'Buy OGV')}
               </a>
@@ -159,7 +159,7 @@ const Ogv = () => {
           </div>
         </div>
         <div>
-          <div className="overflow-hidden max-w-screen-xl mx-auto mt-16 md:pt-10 px-8 pb-10 md:pb-20 text-center">
+          <div className="overflow-hidden max-w-screen-xl mx-auto mt-16 lg:pt-10 px-8 pb-10 lg:pb-20 text-center">
             <div>
               <Typography.H3>
                 {fbt('Stake OGV', 'Stake OGV')} <br className="block" />
@@ -173,7 +173,7 @@ const Ogv = () => {
                   'Fees and voting rights accrue to OGV stakers. Control the future of OUSD',
                   'Fees and voting rights accrue to OGV stakers. Control the future of OUSD'
                 )}{' '}
-                <br className="hidden md:block" />
+                <br className="hidden lg:block" />
                 {fbt(
                   'and profit from its growth.',
                   'and profit from its growth.'
