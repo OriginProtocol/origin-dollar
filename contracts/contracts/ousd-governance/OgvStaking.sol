@@ -150,6 +150,7 @@ contract OgvStaking is ERC20Votes {
             })
         );
         _mint(to, points);
+        //slither-disable-next-line unchecked-transfer
         ogv.transferFrom(msg.sender, address(this), amount); // Important that it's sender
         emit Stake(to, lockups[to].length - 1, amount, end, points);
     }
@@ -166,6 +167,7 @@ contract OgvStaking is ERC20Votes {
         _collectRewards(msg.sender);
         delete lockups[msg.sender][lockupId]; // Keeps empty in array, so indexes are stable
         _burn(msg.sender, points);
+        //slither-disable-next-line unchecked-transfer
         ogv.transfer(msg.sender, amount);
         emit Unstake(msg.sender, lockupId, amount, end, points);
     }
@@ -264,6 +266,7 @@ contract OgvStaking is ERC20Votes {
         uint256 supply = totalSupply();
         if (supply > 0) {
             uint256 preBalance = ogv.balanceOf(address(this));
+            //slither-disable-next-line unused-return
             try rewardsSource.collectRewards() {} catch {
                 // Governance staking should continue, even if rewards fail
             }
@@ -277,6 +280,7 @@ contract OgvStaking is ERC20Votes {
         if (netRewards == 0) {
             return;
         }
+        //slither-disable-next-line unchecked-transfer
         ogv.transfer(user, netRewards);
         emit Reward(user, netRewards);
     }

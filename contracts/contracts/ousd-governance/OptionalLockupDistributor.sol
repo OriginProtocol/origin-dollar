@@ -56,6 +56,7 @@ contract OptionalLockupDistributor is AbstractLockupDistributor {
         // Mark it claimed and send the token.
         setClaimed(_index);
         if (_stakeDuration > 0) {
+            //slither-disable-next-line unused-return
             IERC20(token).approve(stakingContract, _amount);
             // stakingContract.stake(_amount, _stakeDuration, msg.sender),
             IOGVStaking(stakingContract).stake(

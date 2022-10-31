@@ -4,6 +4,7 @@ pragma solidity ^0.8.4;
 
 import "./AbstractLockupDistributor.sol";
 
+//slither-disable-next-line name-reused
 interface IOGVStaking {
     function stake(
         uint256 amount,
@@ -54,6 +55,7 @@ contract MandatoryLockupDistributor is AbstractLockupDistributor {
         // Mark it claimed and send the token.
         setClaimed(_index);
 
+        //slither-disable-next-line unused-return
         IERC20(token).approve(stakingContract, _amount);
 
         // Create four lockups in 12 month increments (1 month = 2629800 seconds)

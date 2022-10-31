@@ -62,6 +62,7 @@ contract RewardsSource is Governable {
         uint256 balance = Mintable(ogv).balanceOf(address(this));
         if (balance > 0) {
             // Transfer the balance
+            //slither-disable-next-line unchecked-transfer
             Mintable(ogv).transfer(rewardsTarget, balance);
         }
 
