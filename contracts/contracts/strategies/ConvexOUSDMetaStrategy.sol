@@ -91,7 +91,7 @@ contract ConvexOUSDMetaStrategy is BaseConvexMetaStrategy {
     /**
      * Withdraw the specified amount of tokens from the gauge. And use all the resulting tokens
      * to remove liquidity from metapool
-     * @param num3CrvTokens Number of Convex 3pool LP tokens to withdraw from metapool
+     * @param num3CrvTokens Number of 3CRV tokens to withdraw from metapool
      */
     function _lpWithdraw(uint256 num3CrvTokens) internal override {
         ICurvePool curvePool = ICurvePool(platformAddress);
