@@ -4,7 +4,7 @@ import { ethers, BigNumber } from 'ethers'
 import { get } from 'lodash'
 import { useWeb3React } from '@web3-react/core'
 
-import Layout from 'components/layout'
+import Layout from 'components/Layout'
 import Nav from 'components/Nav'
 import AccountStore from 'stores/AccountStore'
 import ContractStore from 'stores/ContractStore'

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { ethers } from 'ethers'
 import { fbt } from 'fbt-runtime'
-import Layout from 'components/layout'
+import Layout from 'components/Layout'
 import Countdown, { zeroPad } from 'react-countdown'
 import { useStoreState } from 'pullstate'
 import ContractStore from 'stores/ContractStore'

@@ -4,7 +4,7 @@ import withIsMobile from 'hoc/withIsMobile'
 
 import Closing from 'components/Closing'
 import GetOUSD from 'components/GetOUSD'
-import Layout from 'components/layout'
+import Layout from 'components/Layout'
 import Nav from 'components/Nav'
 import { assetRootPath } from 'utils/image'
 

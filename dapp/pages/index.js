@@ -10,7 +10,7 @@ import formatSeo from '../src/utils/seo'
 import transformLinks from '../src/utils/transformLinks'
 import { Typography } from '@originprotocol/origin-storybook'
 import { assetRootPath } from 'utils/image'
-import Layout from 'components/layout'
+import Layout from 'components/Layout'
 import { audits } from 'utils/constants'
 
 const discordURL = process.env.DISCORD_URL
