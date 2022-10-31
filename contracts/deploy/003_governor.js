@@ -14,7 +14,7 @@ const deployNewGovernor = async ({ getNamedAccounts }) => {
   // Deploy a new governor contract.
   // The governor's admin is the guardian account (e.g. the multi-sig).
   // Set a min delay of 60sec for executing proposals.
-  await deployWithConfirmation("Governor", [guardianAddr, 60]);
+  await deployWithConfirmation("OriginGovernor", [guardianAddr, 60]);
 
   console.log(`${deployName} deploy done.`);
   return true;

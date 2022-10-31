@@ -5,7 +5,7 @@ import "./../timelock/Timelock.sol";
 
 // Modeled off of Compound's Governor Alpha
 //    https://github.com/compound-finance/compound-protocol/blob/master/contracts/Governance/GovernorAlpha.sol
-contract Governor is Timelock {
+contract OriginGovernor is Timelock {
     // @notice The total number of proposals
     uint256 public proposalCount;
 

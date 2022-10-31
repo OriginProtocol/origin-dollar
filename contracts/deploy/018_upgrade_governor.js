@@ -37,7 +37,7 @@ const runDeployment = async (hre) => {
   // Deploy a new governor contract.
   // The governor's admin is the guardian account (e.g. the multi-sig).
   // Set a min delay of 60sec for executing proposals.
-  const dGovernor = await deployWithConfirmation("Governor", [
+  const dGovernor = await deployWithConfirmation("OriginGovernor", [
     addresses.mainnet.Guardian,
     60,
   ]);

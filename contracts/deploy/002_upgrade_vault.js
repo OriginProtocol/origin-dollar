@@ -57,7 +57,7 @@ const upgradeVaultCoreAndAdmin = async ({ getNamedAccounts }) => {
     console.log("Upgraded VaultAdmin implementation to", dVaultAdmin.address);
   } else {
     // Upgrade the Vault by issuing and executing a governance proposal.
-    const governorContract = await ethers.getContract("Governor");
+    const governorContract = await ethers.getContract("OriginGovernor");
     const sGuardian = sGovernor;
 
     console.log("Submitting proposal for Vault Core and Admin upgrade...");

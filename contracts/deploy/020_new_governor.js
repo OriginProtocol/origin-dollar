@@ -11,12 +11,12 @@ module.exports = deploymentWithProposal(
     const cVaultProxy = await ethers.getContract("VaultProxy");
     const cBuyback = await ethers.getContract("Buyback");
 
-    const oldGovernor = await ethers.getContract("Governor");
-    const dGovernor = await deployWithConfirmation("Governor", [
+    const oldGovernor = await ethers.getContract("OriginGovernor");
+    const dGovernor = await deployWithConfirmation("OriginGovernor", [
       guardianAddr,
       60,
     ]);
-    log("Deployed Governor...");
+    log("Deployed OriginGovernor...");
 
     // Governance proposal
     return {

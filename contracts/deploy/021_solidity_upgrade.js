@@ -28,7 +28,7 @@ module.exports = deploymentWithProposal(
       "VaultCore",
       cVaultProxy.address
     );
-    const cGovernor = await ethers.getContract("Governor");
+    const cGovernor = await ethers.getContract("OriginGovernor");
 
     // Oracle contract
     const dOracleRouter = await deployWithConfirmation("OracleRouter");

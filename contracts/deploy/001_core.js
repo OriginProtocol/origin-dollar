@@ -556,7 +556,7 @@ const deployCore = async () => {
   const dVaultCore = await deployWithConfirmation("VaultCore");
   const dVaultAdmin = await deployWithConfirmation("VaultAdmin");
 
-  await deployWithConfirmation("Governor", [governorAddr, 60]);
+  await deployWithConfirmation("OriginGovernor", [governorAddr, 60]);
 
   // Get contract instances
   const cOUSDProxy = await ethers.getContract("OUSDProxy");

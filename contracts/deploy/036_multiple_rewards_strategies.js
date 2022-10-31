@@ -133,7 +133,7 @@ module.exports = deploymentWithProposal(
       cHarvesterProxy.address
     );
 
-    const cGovernor = await ethers.getContract("Governor");
+    const cGovernor = await ethers.getContract("OriginGovernor");
     await withConfirmation(
       cHarvester.connect(sDeployer).transferGovernance(cGovernor.address)
     );
