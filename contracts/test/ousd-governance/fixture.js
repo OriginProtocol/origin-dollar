@@ -15,7 +15,7 @@ const {
  * Sets up a whale voting address
  */
 const deploymentFixture = deployments.createFixture(async () => {
-  const [admin, user1, user2, voter] = await ethers.getSigners();
+  const [admin, , , voter] = await ethers.getSigners();
 
   // Origin dollar governance token (OGV) deployment
   const ogvImpl = await deploy("OriginDollarGovernance");

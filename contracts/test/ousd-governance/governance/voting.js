@@ -11,16 +11,18 @@ const { deploymentFixture } = require("../fixture");
 
 // Tests for Governance
 describe("Contract: Governance", async () => {
+  let ogv, veogv, governance, rewardsSource;
+  let admin, user1, voter;
   beforeEach(async () => {
-    ({ ogv, veogv, governance, timelock, rewardsSource } =
-      await deploymentFixture());
-    [admin, user1, user2, voter, ...addrs] = await ethers.getSigners();
+    ({ ogv, veogv, governance, rewardsSource } = await deploymentFixture());
+    [admin, user1, , voter] = await ethers.getSigners();
   });
 
   describe("Voting", async () => {
     it("should be able to create a proposal", async () => {
       // Ethers needs to specify which function signature
       // we're calling when there are overloaded functions
+      /* eslint-disable */
       let tx = await governance
         .connect(voter)
         ["propose(address[],uint256[],string[],bytes[],string)"](
@@ -32,6 +34,7 @@ describe("Contract: Governance", async () => {
           ],
           "Switch to new Convex implementation"
         );
+      /* eslint-enable */
       await mineBlocks(1);
       let quorum = await governance.quorum(tx.blockNumber);
       let totalSupply = await veogv.getPastTotalSupply(tx.blockNumber);
@@ -53,6 +56,7 @@ describe("Contract: Governance", async () => {
         );
       }),
       it("should be able to cancel proposal", async () => {
+        /* eslint-disable */
         let tx = await governance
           .connect(voter)
           ["propose(address[],uint256[],string[],bytes[],string)"](
@@ -64,6 +68,7 @@ describe("Contract: Governance", async () => {
             ],
             "Set voting delay"
           );
+        /* eslint-enable */
         await mineBlocks(1);
         tx = await tx.wait();
         let proposalId = tx.events[0].args.proposalId;
@@ -73,6 +78,7 @@ describe("Contract: Governance", async () => {
         expect(state).to.be.eq(2);
       }),
       it("should be able to pass proposal", async () => {
+        /* eslint-disable */
         let tx = await governance
           .connect(voter)
           ["propose(address[],uint256[],string[],bytes[],string)"](
@@ -84,6 +90,7 @@ describe("Contract: Governance", async () => {
             ],
             "Set voting delay"
           );
+        /* eslint-enable */
         await mineBlocks(1);
         tx = await tx.wait();
         let proposalId = tx.events[0].args.proposalId;
@@ -109,6 +116,7 @@ describe("Contract: Governance", async () => {
           week,
           admin.address
         );
+        /* eslint-disable */
         await veogv
           .connect(user1)
           ["stake(uint256,uint256,address)"](
@@ -116,9 +124,11 @@ describe("Contract: Governance", async () => {
             week,
             user1.address
           );
+        /* eslint-enable */
         await veogv.delegate(admin.address);
         await veogv.connect(user1).delegate(user1.address);
 
+        /* eslint-disable */
         let tx = await governance
           .connect(voter)
           ["propose(address[],uint256[],string[],bytes[],string)"](
@@ -130,6 +140,7 @@ describe("Contract: Governance", async () => {
             ],
             "Set voting delay"
           );
+        /* eslint-enable */
         await mineBlocks(1);
 
         tx = await tx.wait();
@@ -145,6 +156,7 @@ describe("Contract: Governance", async () => {
         expect(state).to.be.eq(3);
       }),
       it("should be able to queue and execute proposal", async () => {
+        /* eslint-disable */
         let tx = await governance
           .connect(voter)
           ["propose(address[],uint256[],string[],bytes[],string)"](
@@ -156,6 +168,7 @@ describe("Contract: Governance", async () => {
             ],
             "Set voting delay"
           );
+        /* eslint-enable */
         await mineBlocks(1);
         tx = await tx.wait();
         let proposalId = tx.events[0].args.proposalId;
@@ -174,6 +187,7 @@ describe("Contract: Governance", async () => {
         expect(state).to.be.eq(7);
       }),
       it("late vote should extend quorum", async () => {
+        /* eslint-disable */
         let tx = await governance
           .connect(voter)
           ["propose(address[],uint256[],string[],bytes[],string)"](
@@ -185,6 +199,7 @@ describe("Contract: Governance", async () => {
             ],
             "Set voting delay"
           );
+        /* eslint-enable */
         await mineBlocks(17265); // less than required for vote end
         tx = await tx.wait();
         let proposalId = tx.events[0].args.proposalId;
@@ -200,6 +215,7 @@ describe("Contract: Governance", async () => {
         expect(proposalEndBlock).to.be.eq(expectedEndBlock);
       }),
       it("should be able to cancel already queued proposal", async () => {
+        /* eslint-disable */
         let tx = await governance
           .connect(voter)
           ["propose(address[],uint256[],string[],bytes[],string)"](
@@ -211,6 +227,7 @@ describe("Contract: Governance", async () => {
             ],
             "Set voting delay"
           );
+        /* eslint-enable */
         await mineBlocks(1);
         tx = await tx.wait();
         let proposalId = tx.events[0].args.proposalId;
@@ -230,6 +247,7 @@ describe("Contract: Governance", async () => {
         ).to.be.revertedWith("Governor: proposal not active");
       }),
       it("should be able to cancel already queued proposal after time passes", async () => {
+        /* eslint-disable */
         let tx = await governance
           .connect(voter)
           ["propose(address[],uint256[],string[],bytes[],string)"](
@@ -241,6 +259,7 @@ describe("Contract: Governance", async () => {
             ],
             "Set voting delay"
           );
+        /* eslint-enable */
         await mineBlocks(1);
         tx = await tx.wait();
         let proposalId = tx.events[0].args.proposalId;
@@ -259,6 +278,7 @@ describe("Contract: Governance", async () => {
         expect(state).to.be.eq(2);
       }),
       it("should't be able to cancel proposal after it has been executed", async () => {
+        /* eslint-disable */
         let tx = await governance
           .connect(voter)
           ["propose(address[],uint256[],string[],bytes[],string)"](
@@ -270,6 +290,7 @@ describe("Contract: Governance", async () => {
             ],
             "Set voting delay"
           );
+        /* eslint-enable */
         await mineBlocks(1);
         tx = await tx.wait();
         let proposalId = tx.events[0].args.proposalId;

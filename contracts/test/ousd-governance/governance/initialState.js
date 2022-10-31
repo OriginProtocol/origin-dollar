@@ -5,9 +5,11 @@ const { deploymentFixture } = require("../fixture");
 
 // Tests for Governance
 describe("Contract: Governance", async () => {
+  let governance, timelock;
+  let admin;
   beforeEach(async () => {
     ({ governance, timelock } = await deploymentFixture());
-    [admin, user1, user2, voter, ...addrs] = await ethers.getSigners();
+    [admin] = await ethers.getSigners();
   });
 
   describe("Initial state", async () => {

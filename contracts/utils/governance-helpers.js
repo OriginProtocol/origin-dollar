@@ -1,5 +1,4 @@
 const { ethers } = require("hardhat");
-const { network } = require("hardhat-2.12.0");
 
 /**
  * OUSD-governance helper scripts

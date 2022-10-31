@@ -13,6 +13,7 @@ const { deploymentFixture } = require("../fixture");
 
 // Tests for MandatoryLockupDistributor
 describe("Contract: MandatoryLockupDistributor", async () => {
+  let ogv, veogv, mandatoryLockup, claimer;
   beforeEach(async () => {
     ({ ogv, veogv, mandatoryLockup, claimer } = await deploymentFixture());
 

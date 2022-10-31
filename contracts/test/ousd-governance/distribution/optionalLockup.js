@@ -11,6 +11,7 @@ const { deploymentFixture } = require("../fixture");
 
 // Tests for OptionalLockupDistributor
 describe("Contract: OptionalLockupDistributor", async () => {
+  let ogv, veogv, optionalLockup, claimer;
   beforeEach(async () => {
     ({ ogv, veogv, optionalLockup, claimer } = await deploymentFixture());
 

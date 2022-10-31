@@ -5,9 +5,11 @@ const { deploymentFixture } = require("./fixture");
 
 // Tests for OGV
 describe("Contract: OriginDollarGovernance", async () => {
+  let ogv;
+  let admin, user1;
   beforeEach(async () => {
     ({ ogv } = await deploymentFixture());
-    [admin, user1, user2, voter, ...addrs] = await ethers.getSigners();
+    [admin, user1] = await ethers.getSigners();
   });
 
   describe("OGV", async () => {
