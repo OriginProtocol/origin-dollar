@@ -211,12 +211,25 @@ task("showStorageLayout", "Visually show the storage layout of the contract")
 
 module.exports = {
   solidity: {
-    version: "0.8.7",
-    settings: {
-      optimizer: {
-        enabled: true,
+    compilers: [
+      {
+        version: "0.8.7",
+        settings: {
+          optimizer: {
+            enabled: true
+          }
+        }
       },
-    },
+      {
+        version: "0.8.10",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 10000,
+          }
+        }
+      }
+    ]
   },
   networks: {
     hardhat: {
