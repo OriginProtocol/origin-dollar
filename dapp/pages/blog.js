@@ -1,6 +1,6 @@
 import { Header, Typography } from '@originprotocol/origin-storybook'
 import News from 'components/News'
-import Layout from 'components/Layout'
+import Layout from 'components/layout'
 import Head from 'next/head'
 import React from 'react'
 import { fetchAPI } from '../lib/api'

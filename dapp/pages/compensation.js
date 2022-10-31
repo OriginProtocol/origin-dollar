@@ -6,7 +6,7 @@ import withRpcProvider from 'hoc/withRpcProvider'
 
 import ContractStore from 'stores/ContractStore'
 import withWalletSelectModal from 'hoc/withWalletSelectModal'
-import Layout from 'components/Layout'
+import Layout from 'components/layout'
 import Nav from 'components/Nav'
 import ClaimStakeModal from 'components/ClaimStakeModal'
 import WarningAlert from 'components/WarningAlert'
