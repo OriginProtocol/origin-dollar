@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.10;
-import {ERC20Votes} from "openzeppelin-4.6.0/token/ERC20/extensions/ERC20Votes.sol";
-import {ERC20Permit} from "openzeppelin-4.6.0/token/ERC20/extensions/draft-ERC20Permit.sol";
-import {ERC20} from "openzeppelin-4.6.0/token/ERC20/ERC20.sol";
-import {PRBMathUD60x18} from "@prb/math/contracts/PRBMathUD60x18.sol";
-import {RewardsSource} from "./RewardsSource.sol";
+import { ERC20Votes } from "openzeppelin-4.6.0/token/ERC20/extensions/ERC20Votes.sol";
+import { ERC20Permit } from "openzeppelin-4.6.0/token/ERC20/extensions/draft-ERC20Permit.sol";
+import { ERC20 } from "openzeppelin-4.6.0/token/ERC20/ERC20.sol";
+import { PRBMathUD60x18 } from "@prb/math/contracts/PRBMathUD60x18.sol";
+import { RewardsSource } from "./RewardsSource.sol";
 
 /// @title OGV Staking
 /// @author Daniel Von Fange

@@ -7,7 +7,11 @@ import "openzeppelin-4.6.0/token/ERC20/IERC20.sol";
 
 abstract contract AbstractLockupDistributor {
     //@notice This event is triggered whenever a call to #claim succeeds.
-    event Claimed(uint256 indexed index, address indexed account, uint256 amount);
+    event Claimed(
+        uint256 indexed index,
+        address indexed account,
+        uint256 amount
+    );
 
     event OGVBurned(uint256 amount);
 
@@ -70,11 +74,10 @@ abstract contract AbstractLockupDistributor {
      * @dev burn all the remaining OGV balance
      */
     function burnRemainingOGV() external {
-    	require(block.number >= endBlock, "Can not yet burn the remaining OGV");
-    	uint256 burnAmount = IERC20(token).balanceOf(address(this));
+        require(block.number >= endBlock, "Can not yet burn the remaining OGV");
+        uint256 burnAmount = IERC20(token).balanceOf(address(this));
 
-    	ERC20BurnableUpgradeable(token).burn(burnAmount);
-    	emit OGVBurned(burnAmount);
-
+        ERC20BurnableUpgradeable(token).burn(burnAmount);
+        emit OGVBurned(burnAmount);
     }
 }

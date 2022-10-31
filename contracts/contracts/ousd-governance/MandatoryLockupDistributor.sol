@@ -13,13 +13,19 @@ interface IOGVStaking {
 }
 
 contract MandatoryLockupDistributor is AbstractLockupDistributor {
-
     constructor(
         address _token,
         bytes32 _merkleRoot,
         address _stakingContract,
         uint256 _endBlock
-    ) AbstractLockupDistributor(_token, _merkleRoot, _stakingContract, _endBlock) {}
+    )
+        AbstractLockupDistributor(
+            _token,
+            _merkleRoot,
+            _stakingContract,
+            _endBlock
+        )
+    {}
 
     /**
      * @dev Execute a claim using a merkle proof with optional lockup in the staking contract.
@@ -33,7 +39,10 @@ contract MandatoryLockupDistributor is AbstractLockupDistributor {
         bytes32[] calldata _merkleProof
     ) external {
         require(!isClaimed(_index), "MerkleDistributor: Drop already claimed.");
-        require(block.number < endBlock, "Can no longer claim. Claim period expired");
+        require(
+            block.number < endBlock,
+            "Can no longer claim. Claim period expired"
+        );
 
         // Verify the merkle proof.
         bytes32 node = keccak256(abi.encodePacked(_index, msg.sender, _amount));
@@ -48,10 +57,26 @@ contract MandatoryLockupDistributor is AbstractLockupDistributor {
         IERC20(token).approve(stakingContract, _amount);
 
         // Create four lockups in 12 month increments (1 month = 2629800 seconds)
-        IOGVStaking(stakingContract).stake(_amount / 4, 2629800 * 12, msg.sender);
-        IOGVStaking(stakingContract).stake(_amount / 4, 2629800 * 24, msg.sender);
-        IOGVStaking(stakingContract).stake(_amount / 4, 2629800 * 36, msg.sender);
-        IOGVStaking(stakingContract).stake(_amount / 4, 2629800 * 48, msg.sender);
+        IOGVStaking(stakingContract).stake(
+            _amount / 4,
+            2629800 * 12,
+            msg.sender
+        );
+        IOGVStaking(stakingContract).stake(
+            _amount / 4,
+            2629800 * 24,
+            msg.sender
+        );
+        IOGVStaking(stakingContract).stake(
+            _amount / 4,
+            2629800 * 36,
+            msg.sender
+        );
+        IOGVStaking(stakingContract).stake(
+            _amount / 4,
+            2629800 * 48,
+            msg.sender
+        );
 
         emit Claimed(_index, msg.sender, _amount);
     }

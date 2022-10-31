@@ -216,9 +216,9 @@ module.exports = {
         version: "0.8.7",
         settings: {
           optimizer: {
-            enabled: true
-          }
-        }
+            enabled: true,
+          },
+        },
       },
       {
         version: "0.8.10",
@@ -226,10 +226,10 @@ module.exports = {
           optimizer: {
             enabled: true,
             runs: 10000,
-          }
-        }
-      }
-    ]
+          },
+        },
+      },
+    ],
   },
   networks: {
     hardhat: {

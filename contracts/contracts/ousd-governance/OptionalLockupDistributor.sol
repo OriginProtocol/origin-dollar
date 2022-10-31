@@ -13,13 +13,19 @@ interface IOGVStaking {
 }
 
 contract OptionalLockupDistributor is AbstractLockupDistributor {
-
     constructor(
         address _token,
         bytes32 _merkleRoot,
         address _stakingContract,
         uint256 _endBlock
-    ) AbstractLockupDistributor(_token, _merkleRoot, _stakingContract, _endBlock) {}
+    )
+        AbstractLockupDistributor(
+            _token,
+            _merkleRoot,
+            _stakingContract,
+            _endBlock
+        )
+    {}
 
     /**
      * @dev Execute a claim using a merkle proof with optional stake in the staking contract.
@@ -35,7 +41,10 @@ contract OptionalLockupDistributor is AbstractLockupDistributor {
         uint256 _stakeDuration
     ) external {
         require(!isClaimed(_index), "MerkleDistributor: Drop already claimed.");
-        require(block.number < endBlock, "Can no longer claim. Claim period expired");
+        require(
+            block.number < endBlock,
+            "Can no longer claim. Claim period expired"
+        );
 
         // Verify the merkle proof.
         bytes32 node = keccak256(abi.encodePacked(_index, msg.sender, _amount));
