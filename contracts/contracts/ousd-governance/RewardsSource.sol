@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.10;
-import {Governable} from "./Governable.sol";
+import {Governable} from "../governance/Governable.sol";
 
 interface Mintable {
     function mint(address to, uint256 amount) external;
