@@ -1,7 +1,9 @@
+// SPDX-License-Identifier: Unlicense
+pragma solidity 0.8.10;
 import "forge-std/Test.sol";
-import "../../contracts/upgrades/RewardsSourceProxy.sol";
-import "../../contracts/RewardsSource.sol";
-import "../../contracts/tests/MockOgv.sol";
+import "../../../contracts/ousd-governance/upgrades/RewardsSourceProxy.sol";
+import "../../../contracts/ousd-governance/RewardsSource.sol";
+import "../../../contracts/mocks/MockOgvGovernance.sol";
 
 contract RewardsSourceTest is Test {
     MockOgv ogv;

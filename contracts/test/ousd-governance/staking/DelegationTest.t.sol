@@ -2,9 +2,9 @@
 pragma solidity 0.8.10;
 
 import "forge-std/Test.sol";
-import "../../contracts/OgvStaking.sol";
-import "../../contracts/RewardsSource.sol";
-import "../../contracts/tests/MockOgv.sol";
+import "../../../contracts/ousd-governance/OgvStaking.sol";
+import "../../../contracts/ousd-governance/RewardsSource.sol";
+import "../../../contracts/mocks/MockOgvGovernance.sol";
 
 //
 // Sanity test of OpenZeppelin's voting and deletegation.
