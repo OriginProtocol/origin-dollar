@@ -17,6 +17,8 @@ module.exports = ({
   cvxRewardStakerAddress,
   cvxDepositorPTokenId,
   redeployVault,
+  // we only need to deploy the implementation contract for first time & when it changes
+  deployStrategyImplementation,
 }) => {
   return deploymentWithProposal(
     { deployName, forceDeploy },
@@ -52,10 +54,19 @@ module.exports = ({
         dConvexTokenMetaStrategyProxy.address
       );
 
-      // 2. Deploy new implementation
-      const dConvexTokenMetaStrategyImpl = await deployWithConfirmation(
-        "ConvexGeneralizedMetaStrategy"
-      );
+      let convexTokenMetaStrategyImpl;
+
+      if (deployStrategyImplementation) {
+        // Deploy new implementation
+        convexTokenMetaStrategyImpl = await deployWithConfirmation(
+          "ConvexGeneralizedMetaStrategy"
+        );
+      } else {
+        convexTokenMetaStrategyImpl= await ethers.getContract(
+          "ConvexGeneralizedMetaStrategy"
+        );
+      }
+
       const cConvexTokenMetaStrategy = await ethers.getContractAt(
         "ConvexGeneralizedMetaStrategy",
         dConvexTokenMetaStrategyProxy.address
@@ -72,7 +83,7 @@ module.exports = ({
         cConvexTokenMetaStrategyProxy
           .connect(sDeployer)
           ["initialize(address,address,bytes)"](
-            dConvexTokenMetaStrategyImpl.address,
+            convexTokenMetaStrategyImpl.address,
             deployerAddr,
             [],
             await getTxOpts()
