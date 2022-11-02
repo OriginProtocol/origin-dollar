@@ -178,8 +178,10 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
             1e10
         );
 
-        // asset received when withdrawing full fee applicable LP
-        uint256 assetReceivedCorrectFees = curvePool.calc_withdraw_one_coin(
+        /* asset received when withdrawing full fee applicable LP accounting for
+         * slippage and fees
+         */
+        uint256 assetReceivedForFullLPFees = curvePool.calc_withdraw_one_coin(
             lpRequiredFullFees,
             int128(uint128(_coinIndex))
         );
@@ -187,7 +189,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         // exact amount of LP required
         required3Crv =
             (lpRequiredFullFees * _amount) /
-            assetReceivedCorrectFees;
+            assetReceivedForFullLPFees;
     }
 
     /**

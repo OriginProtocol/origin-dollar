@@ -159,8 +159,10 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
             1e10
         );
 
-        // asset received when withdrawing full fee applicable LP
-        uint256 assetReceivedCorrectFees = metapool.calc_withdraw_one_coin(
+        /* asset received when withdrawing full fee applicable LP accounting for
+         * slippage and fees
+         */
+        uint256 assetReceivedForFullLPFees = metapool.calc_withdraw_one_coin(
             lpRequiredFullFees,
             int128(_coinIndex)
         );
@@ -168,7 +170,7 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
         // exact amount of LP required
         requiredMetapoolLP =
             (lpRequiredFullFees * _amount) /
-            assetReceivedCorrectFees;
+            assetReceivedForFullLPFees;
     }
 
     function _approveBase() internal override {
