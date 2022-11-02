@@ -62,7 +62,7 @@ module.exports = ({
           "ConvexGeneralizedMetaStrategy"
         );
       } else {
-        convexTokenMetaStrategyImpl= await ethers.getContract(
+        convexTokenMetaStrategyImpl = await ethers.getContract(
           "ConvexGeneralizedMetaStrategy"
         );
       }
