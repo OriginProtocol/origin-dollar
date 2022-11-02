@@ -185,8 +185,8 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
         onlyVaultOrGovernorOrStrategist
     {
         require(
-            _maxWithdrawalSlippage <= 1e17,
-            "Max withdrawal slippage needs to be between 0% - 10%"
+            _maxWithdrawalSlippage <= 1e18,
+            "Max withdrawal slippage needs to be between 0% - 100%"
         );
         emit MaxWithdrawalSlippageUpdated(
             maxWithdrawalSlippage,
