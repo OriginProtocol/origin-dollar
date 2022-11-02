@@ -124,33 +124,9 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         );
 
         uint256 coinIndex = _getCoinIndex(_asset);
-        int128 curveCoinIndex = int128(uint128(coinIndex));
-        // Calculate the max amount of the asset we'd get if we withdrew all the
-        // platform tokens
         ICurvePool curvePool = ICurvePool(platformAddress);
 
-        uint256 virtual_price = curvePool.get_virtual_price();
-        /**
-         * Add a 5% threshold to help calculate required amount of crv3Tokens:
-         *  - convert asset to 18 decimals
-         *  - divide by virtual price to get 3Crv equivalent
-         *  - add a 5% threshold to it
-         */
-        // slither-disable-next-line divide-before-multiply
-        uint256 crv3TokensTreshold = (((_amount.scaleBy(
-            18,
-            Helpers.getDecimals(_asset)
-        ) * 105) * 1e18) / virtual_price) / 100;
-
-        // Calculate how many platform tokens we need to withdraw the asset
-        // amount in by adding 5% of overhead to required withdrawn amount
-        uint256 thresholdAmountReceived = curvePool.calc_withdraw_one_coin(
-            crv3TokensTreshold,
-            curveCoinIndex
-        );
-
-        uint256 requiredCrv3Tokens = (crv3TokensTreshold * _amount) /
-            thresholdAmountReceived;
+        uint256 requiredCrv3Tokens = _calcCurveTokenAmount(coinIndex, _amount);
 
         // We have enough LP tokens, make sure they are all on this contract
         if (contractCrv3Tokens < requiredCrv3Tokens) {
@@ -162,6 +138,56 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
 
         curvePool.remove_liquidity_imbalance(_amounts, requiredCrv3Tokens);
         IERC20(_asset).safeTransfer(_recipient, _amount);
+    }
+
+    /**
+     * @dev Calculate amount of LP required when withdrawing specific amount of one
+     * of the underlying assets accounting for fees and slippage.
+     *
+     * Curve pools unfortunately do not contain a calculation function for
+     * amount of LP required when withdrawing a specific amount of one of the
+     * underlying tokens and also accounting for fees (Curve's calc_token_amount
+     * does account for slippage but not fees).
+     *
+     * Steps taken to calculate the metric:
+     *  - get amount of LP required if fees wouldn't apply
+     *  - increase the LP amount as if fees would apply to the entirety of the underlying
+     *    asset withdrawal. (when withdrawing only one coin fees apply only to amounts
+     *    of other assets pool would return in case of balanced removal - since those need
+     *    to be swapped for the single underlying asset being withdrawn)
+     *  - get amount of underlying asset withdrawn (this Curve function does consider slippage
+     *    and fees) when using the increased LP amount. As LP amount is slightly over-increased
+     *    so is amount of underlying assets returned.
+     *  - since we know exactly how much asset we require take the rate of LP required for asset
+     *    withdrawn to get the exact amount of LP.
+     */
+    function _calcCurveTokenAmount(uint256 _coinIndex, uint256 _amount)
+        internal
+        returns (uint256 required3Crv)
+    {
+        ICurvePool curvePool = ICurvePool(platformAddress);
+
+        uint256[3] memory _amounts = [uint256(0), uint256(0), uint256(0)];
+        _amounts[_coinIndex] = _amount;
+
+        // LP required when removing required asset ignoring fees
+        uint256 lpRequredNoFees = curvePool.calc_token_amount(_amounts, false);
+        // LP required if fees would apply to entirety of removed amount
+        uint256 lpRequiredFullFees = lpRequredNoFees.mulTruncateScale(
+            1e10 + curvePool.fee(),
+            1e10
+        );
+
+        // asset received when withdrawing full fee applicable LP
+        uint256 assetReceivedCorrectFees = curvePool.calc_withdraw_one_coin(
+            lpRequiredFullFees,
+            int128(uint128(_coinIndex))
+        );
+
+        // exact amount of LP required
+        required3Crv =
+            (lpRequiredFullFees * _amount) /
+            assetReceivedCorrectFees;
     }
 
     /**

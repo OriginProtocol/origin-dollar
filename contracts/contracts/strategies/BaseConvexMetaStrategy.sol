@@ -140,6 +140,37 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
         balance = balance.scaleBy(assetDecimals, 18) / THREEPOOL_ASSET_COUNT;
     }
 
+    /**
+     * @dev This function is completely analogous to _calcCurveTokenAmount[BaseCurveStrategy]
+     * and just utilizes different Curve (meta)pool API
+     */
+    function _calcCurveMetaTokenAmount(uint128 _coinIndex, uint256 _amount)
+        internal
+        returns (uint256 requiredMetapoolLP)
+    {
+        uint256[2] memory _amounts = [uint256(0), uint256(0)];
+        _amounts[uint256(_coinIndex)] = _amount;
+
+        // LP required when removing required asset ignoring fees
+        uint256 lpRequredNoFees = metapool.calc_token_amount(_amounts, false);
+        // LP required if fees would apply to entirety of removed amount
+        uint256 lpRequiredFullFees = lpRequredNoFees.mulTruncateScale(
+            1e10 + metapool.fee(),
+            1e10
+        );
+
+        // asset received when withdrawing full fee applicable LP
+        uint256 assetReceivedCorrectFees = metapool.calc_withdraw_one_coin(
+            lpRequiredFullFees,
+            int128(_coinIndex)
+        );
+
+        // exact amount of LP required
+        requiredMetapoolLP =
+            (lpRequiredFullFees * _amount) /
+            assetReceivedCorrectFees;
+    }
+
     function _approveBase() internal override {
         IERC20 pToken = IERC20(pTokenAddress);
         // 3Pool for LP token (required for removing liquidity)
