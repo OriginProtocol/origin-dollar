@@ -65,12 +65,9 @@ contract ConvexGeneralizedMetaStrategy is BaseConvexMetaStrategy {
         uint256 gaugeTokens = IRewardStaking(cvxRewardStakerAddress).balanceOf(
             address(this)
         );
-        uint128 metapool3CrvCoinIndex = _getMetapoolCoinIndex(
-            address(pTokenAddress)
-        );
 
         uint256 requiredMetapoolLpTokens = _calcCurveMetaTokenAmount(
-            metapool3CrvCoinIndex,
+            crvCoinIndex,
             num3CrvTokens
         );
 
@@ -97,7 +94,7 @@ contract ConvexGeneralizedMetaStrategy is BaseConvexMetaStrategy {
             // slither-disable-next-line unused-return
             metapool.remove_liquidity_one_coin(
                 requiredMetapoolLpTokens,
-                int128(metapool3CrvCoinIndex),
+                int128(crvCoinIndex),
                 num3CrvTokens
             );
         }
@@ -112,10 +109,6 @@ contract ConvexGeneralizedMetaStrategy is BaseConvexMetaStrategy {
             true
         );
 
-        uint128 metapool3CrvCoinIndex = _getMetapoolCoinIndex(
-            address(pTokenAddress)
-        );
-
         if (gaugeTokens > 0) {
             uint256 burnDollarAmount = gaugeTokens.mulTruncate(
                 metapool.get_virtual_price()
@@ -128,7 +121,7 @@ contract ConvexGeneralizedMetaStrategy is BaseConvexMetaStrategy {
             // slither-disable-next-line unused-return
             metapool.remove_liquidity_one_coin(
                 gaugeTokens,
-                int128(metapool3CrvCoinIndex),
+                int128(crvCoinIndex),
                 curve3PoolExpected -
                     curve3PoolExpected.mulTruncate(maxWithdrawalSlippage)
             );
