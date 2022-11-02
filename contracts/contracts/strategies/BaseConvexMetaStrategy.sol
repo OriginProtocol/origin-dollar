@@ -24,7 +24,7 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
     );
 
     // used to circumvent the stack too deep issue
-    struct InitState {
+    struct InitConfig {
         address platformAddress; //Address of the Curve 3pool
         address vaultAddress; //Address of the vault
         address cvxDepositorAddress; //Address of the Convex depositor(AKA booster) for this pool
@@ -59,32 +59,32 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
      *                order as returned by coins on the pool contract, i.e.
      *                DAI, USDC, USDT
      * @param _pTokens Platform Token corresponding addresses
-     * @param initState Various addresses and info for initialization state
+     * @param initConfig Various addresses and info for initialization state
      */
     function initialize(
         address[] calldata _rewardTokenAddresses, // CRV + CVX
         address[] calldata _assets,
         address[] calldata _pTokens,
-        InitState calldata initState
+        InitConfig calldata initConfig
     ) external onlyGovernor initializer {
         require(_assets.length == 3, "Must have exactly three assets");
         // Should be set prior to abstract initialize call otherwise
         // abstractSetPToken calls will fail
-        cvxDepositorAddress = initState.cvxDepositorAddress;
+        cvxDepositorAddress = initConfig.cvxDepositorAddress;
         pTokenAddress = _pTokens[0];
-        metapool = ICurveMetaPool(initState.metapoolAddress);
-        metapoolMainToken = IERC20(initState.metapoolMainToken);
-        cvxRewardStakerAddress = initState.cvxRewardStakerAddress;
-        metapoolLPToken = IERC20(initState.metapoolLPToken);
-        cvxDepositorPTokenId = initState.cvxDepositorPTokenId;
+        metapool = ICurveMetaPool(initConfig.metapoolAddress);
+        metapoolMainToken = IERC20(initConfig.metapoolMainToken);
+        cvxRewardStakerAddress = initConfig.cvxRewardStakerAddress;
+        metapoolLPToken = IERC20(initConfig.metapoolLPToken);
+        cvxDepositorPTokenId = initConfig.cvxDepositorPTokenId;
         maxWithdrawalSlippage = 1e16;
 
         metapoolAssets = [metapool.coins(0), metapool.coins(1)];
         crvCoinIndex = _getMetapoolCoinIndex(pTokenAddress);
-        mainCoinIndex = _getMetapoolCoinIndex(initState.metapoolMainToken);
+        mainCoinIndex = _getMetapoolCoinIndex(initConfig.metapoolMainToken);
         super._initialize(
-            initState.platformAddress,
-            initState.vaultAddress,
+            initConfig.platformAddress,
+            initConfig.vaultAddress,
             _rewardTokenAddresses,
             _assets,
             _pTokens
