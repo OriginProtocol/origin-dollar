@@ -209,6 +209,7 @@ async function tiltToOUSD_OUSDMetapool(fixture, amount) {
 
   await ousdMetaPool
     .connect(metapoolSigner)
+    // eslint-disable-next-line
     [exchangeSign](0, 1, amount.div(2), 0);
 
   await vault.connect(domen).allocate();
