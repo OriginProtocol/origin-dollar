@@ -11,7 +11,7 @@ import "../../../contracts/mocks/MockOgvGovernance.sol";
 //
 
 contract DelegationTest is Test {
-    MockOgv ogv;
+    MockOgvGovernance ogv;
     OgvStaking staking;
     RewardsSource source;
 
@@ -26,7 +26,7 @@ contract DelegationTest is Test {
 
     function setUp() public {
         vm.startPrank(team);
-        ogv = new MockOgv();
+        ogv = new MockOgvGovernance();
         source = new RewardsSource(address(ogv));
         staking = new OgvStaking(address(ogv), EPOCH, 7 days, address(source));
         source.setRewardsTarget(address(staking));

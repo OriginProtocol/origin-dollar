@@ -6,7 +6,7 @@ import "../../../contracts/ousd-governance/RewardsSource.sol";
 import "../../../contracts/mocks/MockOgvGovernance.sol";
 
 contract RewardsSourceTest is Test {
-    MockOgv ogv;
+    MockOgvGovernance ogv;
     RewardsSource rewards;
 
     address staking = address(0x42);
@@ -20,7 +20,7 @@ contract RewardsSourceTest is Test {
 
     function setUp() public {
         vm.startPrank(team);
-        ogv = new MockOgv();
+        ogv = new MockOgvGovernance();
         rewards = new RewardsSource(address(ogv));
 
         // Setup Rewards Proxy

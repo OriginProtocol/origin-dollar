@@ -9,7 +9,7 @@ import "../../../contracts/ousd-governance/RewardsSource.sol";
 import "../../../contracts/mocks/MockOgvGovernance.sol";
 
 contract OgvStakingTest is Test {
-    MockOgv ogv;
+    MockOgvGovernance ogv;
     OgvStaking staking;
     RewardsSource source;
 
@@ -22,7 +22,7 @@ contract OgvStakingTest is Test {
 
     function setUp() public {
         vm.startPrank(team);
-        ogv = new MockOgv();
+        ogv = new MockOgvGovernance();
         source = new RewardsSource(address(ogv));
 
         RewardsSourceProxy rewardsProxy = new RewardsSourceProxy();
