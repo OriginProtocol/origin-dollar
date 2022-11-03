@@ -171,9 +171,9 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         _amounts[_coinIndex] = _amount;
 
         // LP required when removing required asset ignoring fees
-        uint256 lpRequredNoFees = curvePool.calc_token_amount(_amounts, false);
+        uint256 lpRequiredNoFees = curvePool.calc_token_amount(_amounts, false);
         // LP required if fees would apply to entirety of removed amount
-        uint256 lpRequiredFullFees = lpRequredNoFees.mulTruncateScale(
+        uint256 lpRequiredFullFees = lpRequiredNoFees.mulTruncateScale(
             1e10 + curvePool.fee(),
             1e10
         );

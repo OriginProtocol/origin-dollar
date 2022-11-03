@@ -152,9 +152,9 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
         _amounts[uint256(_coinIndex)] = _amount;
 
         // LP required when removing required asset ignoring fees
-        uint256 lpRequredNoFees = metapool.calc_token_amount(_amounts, false);
+        uint256 lpRequiredNoFees = metapool.calc_token_amount(_amounts, false);
         // LP required if fees would apply to entirety of removed amount
-        uint256 lpRequiredFullFees = lpRequredNoFees.mulTruncateScale(
+        uint256 lpRequiredFullFees = lpRequiredNoFees.mulTruncateScale(
             1e10 + metapool.fee(),
             1e10
         );
