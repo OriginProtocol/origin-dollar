@@ -172,7 +172,10 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
 
         // LP required when removing required asset ignoring fees
         uint256 lpRequiredNoFees = curvePool.calc_token_amount(_amounts, false);
-        // LP required if fees would apply to entirety of removed amount
+        /* LP required if fees would apply to entirety of removed amount
+         * 
+         * fee is 1e10 denominated number: https://curve.readthedocs.io/exchange-pools.html#StableSwap.fee        
+         */
         uint256 lpRequiredFullFees = lpRequiredNoFees.mulTruncateScale(
             1e10 + curvePool.fee(),
             1e10
