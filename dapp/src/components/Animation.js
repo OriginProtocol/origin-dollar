@@ -64,8 +64,6 @@ const Animation = ({ navLinks }) => {
             )}{' '}
           </Typography.Body2>
           <a
-            href="/swap"
-            target="_blank"
             rel="noopener noreferrer"
             className="bttn gradient2"
           >
