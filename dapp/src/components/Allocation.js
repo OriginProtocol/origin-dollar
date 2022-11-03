@@ -37,7 +37,7 @@ const Allocation = () => {
     <>
       <section className="home black">
         <div className="max-w-screen-xl mx-auto pb-20 px-6 md:px-8 text-center">
-          <Typography.H3 className='font-bold'>
+          <Typography.H3 className="font-bold">
             {fbt(
               'Fully transparent on the Ethereum',
               'Fully transparent on the Ethereum'

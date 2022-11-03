@@ -282,7 +282,9 @@ const Burn = ({ locale, onLocale, isMobile, navLinks }) => {
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                <span className="text-gradient2">Locked OGV airdrop contract</span>
+                <span className="text-gradient2">
+                  Locked OGV airdrop contract
+                </span>
                 <img
                   src={assetRootPath('/images/external-link.svg')}
                   className="external-link"

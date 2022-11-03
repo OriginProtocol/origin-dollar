@@ -36,7 +36,7 @@ const Apy = ({ isMobile }) => {
     <>
       <section className="home dim">
         <div className="max-w-screen-xl mx-auto pb-20 px-3 md:px-8 text-center">
-          <Typography.H3 className='font-bold'>
+          <Typography.H3 className="font-bold">
             {fbt('The simplest', 'The simplest')}{' '}
             <span className="text-gradient2 py-1">
               {fbt('market-neutral', 'market-neutral')}{' '}

@@ -57,7 +57,7 @@ const Ogv = () => {
       <div className="relative divide-black divide-y-2">
         <div>
           <div className="flex flex-col lg:flex-row overflow-hidden max-w-screen-xl mx-auto lg:pt-10 px-8 pb-20 text-center lg:text-left">
-            <div className='lg:w-2/3'>
+            <div className="lg:w-2/3">
               <Typography.H1 className="lg:text-left font-bold">
                 {fbt('Governed by OGV stakers', 'Governed by OGV stakers')}
               </Typography.H1>
@@ -114,7 +114,7 @@ const Ogv = () => {
               </div>
               <span className="hidden lg:block w-1/5">
                 <a
-                  href='https://app.uniswap.org/#/swap?outputCurrency=0x9c354503C38481a7A7a51629142963F98eCC12D0&chain=mainnet'
+                  href="https://app.uniswap.org/#/swap?outputCurrency=0x9c354503C38481a7A7a51629142963F98eCC12D0&chain=mainnet"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="bttn bg-black"
@@ -124,7 +124,7 @@ const Ogv = () => {
               </span>
               <span className="hidden">
                 <a
-                  href='/ogv'
+                  href="/ogv"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="bttn gradient2"
@@ -133,7 +133,7 @@ const Ogv = () => {
                 </a>
               </span>
             </div>
-            <div className=''>
+            <div className="">
               <img
                 src={assetRootPath(`/images/ogv.png`)}
                 className="hidden lg:block"
@@ -146,31 +146,25 @@ const Ogv = () => {
               </Typography.Body2>
               <div className="flex flex-row justify-between md:mx-32 lg:mx-0">
                 <a
-                  href='https://www.huobi.com/en-in/exchange/ogv_usdt'
-                  target='_blank'
-                  rel='noopener noreferrer'
+                  href="https://www.huobi.com/en-in/exchange/ogv_usdt"
+                  target="_blank"
+                  rel="noopener noreferrer"
                 >
-                  <img
-                    src={assetRootPath(`/images/huobi.svg`)}
-                  />
+                  <img src={assetRootPath(`/images/huobi.svg`)} />
                 </a>
                 <a
-                  href='https://app.uniswap.org/#/swap?outputCurrency=0x9c354503C38481a7A7a51629142963F98eCC12D0&chain=mainnet'
-                  target='_blank'
-                  rel='noopener noreferrer'
+                  href="https://app.uniswap.org/#/swap?outputCurrency=0x9c354503C38481a7A7a51629142963F98eCC12D0&chain=mainnet"
+                  target="_blank"
+                  rel="noopener noreferrer"
                 >
-                  <img
-                    src={assetRootPath(`/images/uniswap.svg`)}
-                  />
+                  <img src={assetRootPath(`/images/uniswap.svg`)} />
                 </a>
                 <a
-                  href='https://www.kucoin.com/trade/OGV-USDT'
-                  target='_blank'
-                  rel='noopener noreferrer'
+                  href="https://www.kucoin.com/trade/OGV-USDT"
+                  target="_blank"
+                  rel="noopener noreferrer"
                 >
-                  <img
-                    src={assetRootPath(`/images/kucoin.svg`)}
-                  />
+                  <img src={assetRootPath(`/images/kucoin.svg`)} />
                 </a>
               </div>
               <a
@@ -187,7 +181,7 @@ const Ogv = () => {
         <div>
           <div className="overflow-hidden max-w-screen-xl mx-auto mt-16 lg:pt-10 px-8 pb-10 lg:pb-20 text-center">
             <div>
-              <Typography.H2 className='font-normal'>
+              <Typography.H2 className="font-normal">
                 {fbt('Stake OGV', 'Stake OGV')} <br className="block" />
                 <span className="text-gradient1 font-bold py-1">
                   {fbt('To Earn OGV', 'To Earn OGV')}

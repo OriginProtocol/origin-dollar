@@ -85,7 +85,9 @@ export default function Footer({ locale }) {
                 <Typography.Body2>{fbt('FAQ', 'FAQ link')}</Typography.Body2>
               </a>
               <a
-                href={'https://www.coingecko.com/en/coins/origin-dollar-governance'}
+                href={
+                  'https://www.coingecko.com/en/coins/origin-dollar-governance'
+                }
                 target="_blank"
                 rel="noopener noreferrer"
                 className="mt-2"

@@ -22,7 +22,7 @@ const Home = ({ locale, onLocale, articles, seo, navLinks }) => {
       <Collateral />
       <section className="home black">
         <div className="max-w-screen-xl mx-auto pb-20 px-2 md:px-8 text-center">
-          <Typography.H3 className='font-bold'>
+          <Typography.H3 className="font-bold">
             {fbt(
               'Audited by leading security experts',
               'Audited by leading security experts'
