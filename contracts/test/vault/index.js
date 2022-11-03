@@ -509,4 +509,30 @@ describe("Vault", function () {
 
     await expect(await ousd.balanceOf(anna.address)).to.equal(ousdUnits("9"));
   });
+
+  it("Should reset netOusdMintedForStrategy when new threshold is set", async () => {
+    const { vault, governor, anna } = await loadFixture(defaultFixture);
+
+    await vault
+      .connect(governor)
+      .setNetOusdMintForStrategyThreshold(ousdUnits("10"));
+
+    // Approve anna address as an address allowed to mint OUSD without backing
+    await vault.connect(governor).setOusdMetaStrategy(anna.address);
+    await vault.connect(anna).mintForStrategy(ousdUnits("9"));
+
+    // netOusdMintedForStrategy should be reset back to 0
+    await expect(await vault.netOusdMintedForStrategy()).to.equal(
+      ousdUnits("9")
+    );
+
+    await vault
+      .connect(governor)
+      .setNetOusdMintForStrategyThreshold(ousdUnits("10"));
+
+    // netOusdMintedForStrategy should be reset back to 0
+    await expect(await vault.netOusdMintedForStrategy()).to.equal(
+      ousdUnits("0")
+    );
+  });
 });
