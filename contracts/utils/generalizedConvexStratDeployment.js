@@ -54,18 +54,16 @@ module.exports = ({
         dConvexTokenMetaStrategyProxy.address
       );
 
-      let convexTokenMetaStrategyImpl;
-
       if (deployStrategyImplementation) {
         // Deploy new implementation
-        convexTokenMetaStrategyImpl = await deployWithConfirmation(
-          "ConvexGeneralizedMetaStrategy"
-        );
-      } else {
-        convexTokenMetaStrategyImpl = await ethers.getContract(
+        const dConvexTokenMetaStrategyImpl = await deployWithConfirmation(
           "ConvexGeneralizedMetaStrategy"
         );
       }
+
+      const convexTokenMetaStrategyImpl = await ethers.getContract(
+        "ConvexGeneralizedMetaStrategy"
+      );
 
       const cConvexTokenMetaStrategy = await ethers.getContractAt(
         "ConvexGeneralizedMetaStrategy",
