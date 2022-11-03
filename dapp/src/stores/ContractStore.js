@@ -56,8 +56,8 @@ const ContractStore = new Store({
   fetchId: -1,
   ogv: {
     price: 0,
-    circulatingSupply: 0,
-    totalSupply: 0,
+    circulating: 0,
+    total: 0,
   },
 })
 

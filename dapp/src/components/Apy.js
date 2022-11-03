@@ -36,14 +36,14 @@ const Apy = ({ isMobile }) => {
     <>
       <section className="home dim">
         <div className="max-w-screen-xl mx-auto pb-20 px-3 md:px-8 text-center">
-          <Typography.H4>
+          <Typography.H3 className='font-bold'>
             {fbt('The simplest', 'The simplest')}{' '}
-            <span className="gradient-ousd font-bold py-1">
+            <span className="text-gradient2 py-1">
               {fbt('market-neutral', 'market-neutral')}{' '}
             </span>
             {fbt('DeFi', 'DeFi')} <br className="hidden md:block" />
             {fbt('strategy', 'strategy')}
-          </Typography.H4>
+          </Typography.H3>
           <br className="block" />
           <Typography.Body2 className="opacity-75">
             {fbt(
@@ -68,7 +68,7 @@ const Apy = ({ isMobile }) => {
                     return (
                       <div
                         className={`bttn ${
-                          apyDays === days ? 'gradient3' : 'bttn-g'
+                          apyDays === days ? 'gradient2' : 'bttn-g'
                         } ${isMobile ? 'px-4' : 'px-16'} mb-6 md:mb-1`}
                         key={days}
                         onClick={() => {
@@ -87,7 +87,7 @@ const Apy = ({ isMobile }) => {
             href="/swap"
             target="_blank"
             rel="noopener noreferrer"
-            className="bttn gradient3 white"
+            className="bttn gradient2 white"
           >
             {fbt('Start earning now', 'Start earning now')}
           </a>

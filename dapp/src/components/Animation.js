@@ -48,29 +48,26 @@ const Animation = ({ navLinks }) => {
       <Header mappedLinks={navLinks} webProperty="ousd" />
       <div className="flex flex-col md:flex-row items-center max-w-screen-xl mx-auto overflow-hidden pt-10 px-8">
         <div className='md:w-1/2'>
-          <Typography.H2>
-            {fbt('The most trusted', 'The most trusted')}{' '}
+          <Typography.H2 className='font-normal'>
+            {fbt('The self-custodial,', 'The self-custodial,')}{' '}
             <br className="hidden md:block" />
-            <span className="gradient-ousd font-bold py-1">
+            <span className="text-gradient2 font-bold py-1">
               {fbt('yield-generating,', 'yield-generating,')}{' '}
             </span>
             <br className="hidden md:block" />
-            {fbt('self-custodial,', 'self-custodial,')} <br className="block" />
             {fbt('stablecoin', 'stablecoin')}
           </Typography.H2>
-          <br className="block" />
-          <Typography.Body2 className="opacity-75">
+          <Typography.Body2 className="mt-6 mb-10 opacity-75">
             {fbt(
               'Origin Dollar simplifies DeFi by eliminating the need for staking or lock-ups. Hold OUSD in any Ethereum wallet and watch your balance increase every day.',
               'Origin Dollar simplifies DeFi by eliminating the need for staking or lock-ups. Hold OUSD in any Ethereum wallet and watch your balance increase every day.'
             )}{' '}
           </Typography.Body2>
-          <br className="block" />
           <a
             href="/swap"
             target="_blank"
             rel="noopener noreferrer"
-            className="bttn gradient3"
+            className="bttn gradient2"
           >
             Get OUSD
           </a>
@@ -85,7 +82,7 @@ const Animation = ({ navLinks }) => {
           </div>
           {totalOusd && (
             <div className="md:absolute md:bottom-0 md:left-0 md:right-0 md:text-center">
-              <Typography.H2 className="flex flex-row md:block">
+              <Typography.H2 className="flex flex-row font-bold md:block">
                 {`$${formatCurrency(totalOusd, 0)}`}
                 <div className="md:hidden">
                   <img

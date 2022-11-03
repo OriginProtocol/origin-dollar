@@ -22,12 +22,12 @@ const Home = ({ locale, onLocale, articles, seo, navLinks }) => {
       <Collateral />
       <section className="home black">
         <div className="max-w-screen-xl mx-auto pb-20 px-2 md:px-8 text-center">
-          <Typography.H4>
+          <Typography.H3 className='font-bold'>
             {fbt(
               'Audited by leading security experts',
               'Audited by leading security experts'
             )}
-          </Typography.H4>
+          </Typography.H3>
           <br className="block" />
           <Typography.Body2 className="opacity-75">
             {fbt(
@@ -65,7 +65,7 @@ const Home = ({ locale, onLocale, articles, seo, navLinks }) => {
             href="https://docs.ousd.com/security-and-risks/audits"
             target="_blank"
             rel="noopener noreferrer"
-            className="bttn gradient3"
+            className="bttn gradient2"
           >
             {fbt('Review audits', 'Review audits')}
           </a>

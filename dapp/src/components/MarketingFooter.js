@@ -85,7 +85,7 @@ export default function Footer({ locale }) {
                 <Typography.Body2>{fbt('FAQ', 'FAQ link')}</Typography.Body2>
               </a>
               <a
-                href={'/ogv'}
+                href={'https://www.coingecko.com/en/coins/origin-dollar-governance'}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="mt-2"
@@ -100,7 +100,7 @@ export default function Footer({ locale }) {
                 href="/swap"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="bttn gradient3 px-4 py-2 w-full md:w-32 m-0"
+                className="bttn gradient2 px-4 py-2 w-full md:w-32 m-0"
               >
                 <Typography.Body2>Get OUSD</Typography.Body2>
               </a>

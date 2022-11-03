@@ -219,7 +219,7 @@ const Layout = ({
                   'Burn notice'
                 )}
                 <Link href={adjustLinkHref('/burn')}>
-                  <a className="btn btn-dark gradient2 mt-3 mt-md-0 ml-md-auto">
+                  <a className="btn btn-dark gradient1 mt-3 mt-md-0 ml-md-auto">
                     OGV Burn
                   </a>
                 </Link>

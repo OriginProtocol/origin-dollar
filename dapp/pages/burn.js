@@ -21,22 +21,22 @@ const BurnCountdown = ({ days, hours, minutes, seconds }) => {
       </div>
       <div className="d-flex flex-row text-center">
         <div className="d-flex flex-column">
-          <div className="number gradient1">{zeroPad(days)}</div>
+          <div className="number text-gradient1">{zeroPad(days)}</div>
           <div className="label">Days</div>
         </div>
         <div className="colon">:</div>
         <div className="d-flex flex-column">
-          <div className="number gradient1">{zeroPad(hours)}</div>
+          <div className="number text-gradient1">{zeroPad(hours)}</div>
           <div className="label">Hours</div>
         </div>
         <div className="colon">:</div>
         <div className="d-flex flex-column">
-          <div className="number gradient1">{zeroPad(minutes)}</div>
+          <div className="number text-gradient1">{zeroPad(minutes)}</div>
           <div className="label">Minutes</div>
         </div>
         <div className="colon">:</div>
         <div className="d-flex flex-column">
-          <div className="number gradient1">{zeroPad(seconds)}</div>
+          <div className="number text-gradient1">{zeroPad(seconds)}</div>
           <div className="label">Seconds</div>
         </div>
       </div>
@@ -88,7 +88,7 @@ const renderer = ({ days, hours, minutes, seconds, completed }) => {
   if (completed) {
     return (
       <>
-        <div className="text gradient1">Burn complete!</div>
+        <div className="text text-gradient1">Burn complete!</div>
         <style jsx>{`
           .text {
             font-size: 7rem;
@@ -222,7 +222,7 @@ const Burn = ({ locale, onLocale, isMobile, navLinks }) => {
               href="https://app.uniswap.org/#/swap?outputCurrency=0x9c354503C38481a7A7a51629142963F98eCC12D0&chain=mainnet"
               target="_blank"
               rel="noopener noreferrer"
-              className="button gradient3"
+              className="button gradient2"
             >
               Buy OGV
             </a>
@@ -251,7 +251,7 @@ const Burn = ({ locale, onLocale, isMobile, navLinks }) => {
           <h1>{formatCurrency(burnOver ? burnedAmount : burnAmount, 0)}</h1>
 
           <h3>
-            <span className="percent gradient1">{`${formatCurrency(
+            <span className="percent text-gradient1">{`${formatCurrency(
               (burnAmount / initialSupply) * 100,
               2
             )}% `}</span>
@@ -266,7 +266,7 @@ const Burn = ({ locale, onLocale, isMobile, navLinks }) => {
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                <span className="gradient4">Liquid OGV airdrop contract</span>
+                <span className="text-2">Liquid OGV airdrop contract</span>
                 <img
                   src={assetRootPath('/images/external-link.svg')}
                   className="external-link"
@@ -282,7 +282,7 @@ const Burn = ({ locale, onLocale, isMobile, navLinks }) => {
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                <span className="gradient4">Locked OGV airdrop contract</span>
+                <span className="text-gradient2">Locked OGV airdrop contract</span>
                 <img
                   src={assetRootPath('/images/external-link.svg')}
                   className="external-link"
@@ -318,7 +318,7 @@ const Burn = ({ locale, onLocale, isMobile, navLinks }) => {
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                <span className="gradient4">Learn more</span>
+                <span className="text-gradient2">Learn more</span>
                 <img
                   src={assetRootPath('/images/external-link.svg')}
                   className="external-link"
@@ -462,7 +462,7 @@ const Burn = ({ locale, onLocale, isMobile, navLinks }) => {
                     href="https://governance.ousd.com/stake"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="button gradient2"
+                    className="button gradient1"
                   >
                     Stake OGV
                   </a>

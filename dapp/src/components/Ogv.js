@@ -15,7 +15,7 @@ const Ogv = () => {
   })
 
   const circulatingSupply = useStoreState(ContractStore, (s) => {
-    return s.ogv.circulatingSupply || 0
+    return s.ogv.circulating || 0
   })
 
   const totalSupply = useStoreState(ContractStore, (s) => {
@@ -33,7 +33,7 @@ const Ogv = () => {
   const circulatingSupplyQuery = useCirculatingSupplyQuery({
     onSuccess: (circulatingSupply) => {
       ContractStore.update((s) => {
-        s.ogv.circulatingSupply = circulatingSupply
+        s.ogv.circulating = circulatingSupply
       })
     },
   })
@@ -53,14 +53,14 @@ const Ogv = () => {
   }, [price, circulatingSupply, totalSupply])
 
   return (
-    <section className="home gradient5 relative z-0">
+    <section className="home gradient3 relative z-0">
       <div className="relative divide-black divide-y-2">
         <div>
           <div className="flex flex-col lg:flex-row overflow-hidden max-w-screen-xl mx-auto lg:pt-10 px-8 pb-20 text-center lg:text-left">
             <div className='lg:w-2/3'>
-              <Typography.H3 className="lg:text-left font-weight-bold">
+              <Typography.H1 className="lg:text-left font-bold">
                 {fbt('Governed by OGV stakers', 'Governed by OGV stakers')}
-              </Typography.H3>
+              </Typography.H1>
               <br className="block" />
               <Typography.Caption className="lg:text-left opacity-100">
                 {fbt(
@@ -114,7 +114,7 @@ const Ogv = () => {
               </div>
               <span className="hidden lg:block w-1/5">
                 <a
-                  href='https://"app.uniswap.org/#/swap?outputCurrency=0x9c354503C38481a7A7a51629142963F98eCC12D0&chain=mainnet"'
+                  href='https://app.uniswap.org/#/swap?outputCurrency=0x9c354503C38481a7A7a51629142963F98eCC12D0&chain=mainnet'
                   target="_blank"
                   rel="noopener noreferrer"
                   className="bttn bg-black"
@@ -122,14 +122,16 @@ const Ogv = () => {
                   {fbt('Buy OGV', 'Buy OGV')}
                 </a>
               </span>
-              {/*<a
-                href='/ogv'
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bttn gradient3"
-              >
-                View dashboard
-              </a>*/}
+              <span className="hidden">
+                <a
+                  href='/ogv'
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bttn gradient2"
+                >
+                  View dashboard
+                </a>
+              </span>
             </div>
             <div className=''>
               <img
@@ -143,9 +145,33 @@ const Ogv = () => {
                 )}
               </Typography.Body2>
               <div className="flex flex-row justify-between md:mx-32 lg:mx-0">
-                <img src={assetRootPath(`/images/huobi.svg`)} />
-                <img src={assetRootPath(`/images/uniswap.svg`)} />
-                <img src={assetRootPath(`/images/kucoin.svg`)} />
+                <a
+                  href='https://www.huobi.com/en-in/exchange/ogv_usdt'
+                  target='_blank'
+                  rel='noopener noreferrer'
+                >
+                  <img
+                    src={assetRootPath(`/images/huobi.svg`)}
+                  />
+                </a>
+                <a
+                  href='https://app.uniswap.org/#/swap?outputCurrency=0x9c354503C38481a7A7a51629142963F98eCC12D0&chain=mainnet'
+                  target='_blank'
+                  rel='noopener noreferrer'
+                >
+                  <img
+                    src={assetRootPath(`/images/uniswap.svg`)}
+                  />
+                </a>
+                <a
+                  href='https://www.kucoin.com/trade/OGV-USDT'
+                  target='_blank'
+                  rel='noopener noreferrer'
+                >
+                  <img
+                    src={assetRootPath(`/images/kucoin.svg`)}
+                  />
+                </a>
               </div>
               <a
                 href='https://"app.uniswap.org/#/swap?outputCurrency=0x9c354503C38481a7A7a51629142963F98eCC12D0&chain=mainnet"'
@@ -161,14 +187,14 @@ const Ogv = () => {
         <div>
           <div className="overflow-hidden max-w-screen-xl mx-auto mt-16 lg:pt-10 px-8 pb-10 lg:pb-20 text-center">
             <div>
-              <Typography.H3>
+              <Typography.H2 className='font-normal'>
                 {fbt('Stake OGV', 'Stake OGV')} <br className="block" />
-                <span className="gradient1 font-bold py-1">
+                <span className="text-gradient1 font-bold py-1">
                   {fbt('To Earn OGV', 'To Earn OGV')}
                 </span>
-              </Typography.H3>
+              </Typography.H2>
               <br className="block" />
-              <Typography.Body2 className="mb-10 font-light">
+              <Typography.Body2 className="mb-10 font-normal">
                 {fbt(
                   'Fees and voting rights accrue to OGV stakers. Control the future of OUSD',
                   'Fees and voting rights accrue to OGV stakers. Control the future of OUSD'

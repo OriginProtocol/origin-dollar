@@ -42,9 +42,9 @@ const Collateral = () => {
     <>
       <section className="home dim m-0">
         <div className="max-w-screen-xl mx-auto pb-20 px-8 text-center">
-          <Typography.H4>
+          <Typography.H3 className='font-bold'>
             {fbt('Always 100% collateralized', 'Always 100% collateralized')}
-          </Typography.H4>
+          </Typography.H3>
           <br className="block" />
           <Typography.Body2 className="opacity-75">
             {fbt(
@@ -80,28 +80,11 @@ const Collateral = () => {
                           (token.total / total) * 100,
                           2
                         )}%`}</Typography.H6>
-                        <div className="flex flex-row pt-2">
+                        <div className="pt-2">
                           <Typography.Body2 className="opacity-75 pr-2">{`$${formatCurrency(
                             token.total,
                             0
                           )}`}</Typography.Body2>
-                          {/*<a
-                            href='https://etherscan.io/'
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className='w-full'
-                          >
-                            <img
-                              src={assetRootPath('/images/etherscan-icon-white.svg')}
-                              className='opacity-75'
-                            />
-                          </a>*/}
-                          <img
-                            src={assetRootPath(
-                              '/images/etherscan-icon-white.svg'
-                            )}
-                            className="opacity-75"
-                          />
                         </div>
                       </div>
                     </div>
@@ -111,12 +94,12 @@ const Collateral = () => {
             </div>
           </div>
           <a
-            href="https://docs.ousd.com/core-concepts/supported-stablecoins"
+            href="https://docs.ousd.com/how-it-works"
             target="_blank"
             rel="noopener noreferrer"
-            className="bttn gradient3"
+            className="bttn gradient2"
           >
-            {fbt("See how it's minted", "See how it's minted")}
+            {fbt("See how it works", "See how it works")}
           </a>
         </div>
       </section>

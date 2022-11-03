@@ -37,14 +37,14 @@ const Allocation = () => {
     <>
       <section className="home black">
         <div className="max-w-screen-xl mx-auto pb-20 px-6 md:px-8 text-center">
-          <Typography.H4>
+          <Typography.H3 className='font-bold'>
             {fbt(
               'Fully transparent on the Ethereum',
               'Fully transparent on the Ethereum'
             )}{' '}
             <br className="hidden md:block" />
             {fbt('blockchain', 'blockchain')}
-          </Typography.H4>
+          </Typography.H3>
           <br className="block" />
           <Typography.Body2 className="opacity-75">
             {fbt(
@@ -208,12 +208,12 @@ const Allocation = () => {
             </div>
           </div>
           <a
-            href="https://docs.ousd.com/"
+            href="https://docs.ousd.com/core-concepts/yield-generation"
             target="_blank"
             rel="noopener noreferrer"
-            className="bttn gradient3"
+            className="bttn gradient2"
           >
-            {fbt('See how it works', 'See how it works')}
+            {fbt('See how yield is generated', 'See how yield is generated')}
           </a>
         </div>
       </section>
