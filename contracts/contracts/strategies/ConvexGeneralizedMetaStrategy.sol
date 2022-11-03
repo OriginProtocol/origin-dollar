@@ -62,31 +62,14 @@ contract ConvexGeneralizedMetaStrategy is BaseConvexMetaStrategy {
      * @param num3CrvTokens Number of Convex 3pool LP tokens to withdraw from metapool
      */
     function _lpWithdraw(uint256 num3CrvTokens) internal override {
-        ICurvePool curvePool = ICurvePool(platformAddress);
-
         uint256 gaugeTokens = IRewardStaking(cvxRewardStakerAddress).balanceOf(
             address(this)
         );
-        /**
-         * Convert 3crv tokens to metapoolLP tokens. Since we have no use for the other token we are also
-         * removing liquidity in the balanced manner (only removing 3CrvLP tokens)
-         */
-        // slither-disable-next-line divide-before-multiply
-        uint256 estimationRequiredMetapoolLpTokens = curvePool
-            .get_virtual_price()
-            .divPrecisely(metapool.get_virtual_price())
-            .mulTruncate(num3CrvTokens);
 
-        // add 10% margin to the calculation of required tokens
-        // slither-disable-next-line divide-before-multiply
-        uint256 estimatedMetapoolLPWithMargin = (estimationRequiredMetapoolLpTokens *
-                1100) / 1e3;
-        uint256 crv3ReceivedWithMargin = metapool.calc_withdraw_one_coin(
-            estimatedMetapoolLPWithMargin,
-            int128(crvCoinIndex)
+        uint256 requiredMetapoolLpTokens = _calcCurveMetaTokenAmount(
+            crvCoinIndex,
+            num3CrvTokens
         );
-        uint256 requiredMetapoolLpTokens = (estimatedMetapoolLPWithMargin *
-            num3CrvTokens) / crv3ReceivedWithMargin;
 
         require(
             requiredMetapoolLpTokens <= gaugeTokens,
