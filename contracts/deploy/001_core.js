@@ -12,6 +12,7 @@ const {
   deployWithConfirmation,
   withConfirmation,
 } = require("../utils/deploy");
+const { toHex } = require("../utils/governance-helpers");
 
 /**
  * Deploy AAVE Strategy which only supports DAI.
@@ -730,6 +731,114 @@ const deployWOusd = async () => {
   await wousd.connect(sGovernor).claimGovernance();
 };
 
+/**
+ * Deploy Governance contracts:
+ * OGV, veOGV, Governance, Timelock, Rewards Source and lockup contracts
+ */
+const deployGovernance = async () => {
+  const { deployerAddr, governorAddr } = await getNamedAccounts();
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+  const sGovernor = await ethers.provider.getSigner(governorAddr);
+  log("Deploying Governance contracts from", sDeployer);
+
+  // Origin dollar governance token (OGV) deployment
+  const ogvImpl = await deployWithConfirmation("OriginDollarGovernance");
+  const ogvProxy = await deployWithConfirmation("ERC1967Proxy", [
+    ogvImpl.address,
+    "0x",
+  ]);
+  const ogv = await ethers.getContractAt(
+    "OriginDollarGovernance",
+    ogvProxy.address
+  );
+  await ogv.initialize();
+  log("deployed ogv impl and proxy");
+
+  // Deploy rewards source
+  const rewardsSourceImpl = await deployWithConfirmation("RewardsSource", [
+    ogv.address,
+  ]);
+  await deployWithConfirmation("RewardsSourceProxy");
+  const rewardsSourceProxy = await ethers.getContract("RewardsSourceProxy");
+  const rewardsSource = await ethers.getContractAt(
+    "RewardsSource",
+    rewardsSourceProxy.address
+  );
+  // Init rewards source
+  // Set governor address as governor for rewards source
+  await rewardsSourceProxy.initialize(
+    rewardsSourceImpl.address,
+    governorAddr,
+    "0x"
+  );
+  log("deployed rewards source impl and proxy");
+
+  // Deploy Staking (veOGV)
+  const minStakingTime = 7 * 24 * 60 * 60;
+  const rewardsStartTimestamp = 1657584000; // Start of rewards: Tuesday, July 12, 2022 12:00:00 AM UTC
+  const epochBlock = 15124542;
+  const endBlock = ((60 * 60 * 24 * 30 * 3) / 13.2).toFixed(0) + epochBlock; // end of claims
+  const veogvImpl = await deployWithConfirmation("OgvStaking", [
+    ogv.address,
+    rewardsStartTimestamp,
+    minStakingTime,
+    rewardsSource.address,
+  ]);
+  await deployWithConfirmation("OgvStakingProxy");
+  const veogvProxy = await ethers.getContract("OgvStakingProxy");
+  const veogv = await ethers.getContractAt("OgvStaking", veogvProxy.address);
+  log("deployed veogv impl and proxy");
+
+  // Initialize veOGV
+  // Set governor address as governor for veOGV
+  await veogvProxy.initialize(veogvImpl.address, governorAddr, "0x");
+  // Deploy timelock
+  await deployWithConfirmation("TimelockGovernance", [
+    [deployerAddr],
+    [deployerAddr],
+  ]);
+  const timelock = await ethers.getContract("TimelockGovernance");
+  log("deployed timelock");
+
+  // Deploy governance
+  const governance = await deployWithConfirmation("Governance", [
+    veogv.address,
+    timelock.address,
+  ]);
+  log("deployed governance");
+
+  // Add governance roles to timelock
+  await timelock.grantRole(
+    ethers.utils.keccak256(toHex("PROPOSER_ROLE")),
+    governance.address
+  );
+  await timelock.grantRole(
+    ethers.utils.keccak256(toHex("EXECUTOR_ROLE")),
+    governance.address
+  );
+  await timelock.grantRole(
+    ethers.utils.keccak256(toHex("CANCELLER_ROLE")),
+    governance.address
+  );
+  log("granted roles to governance");
+
+  // Deploy lockups
+  // Load merkle claims
+  const optionalLockupClaims = require(`../scripts/ousd-governance/1_data/optional_lockup_claims.json`);
+  const mandatoryLockupClaims = require(`../scripts/ousd-governance/1_data/mandatory_lockup_claims.json`);
+
+  const optionalLockup = await deployWithConfirmation(
+    "OptionalLockupDistributor",
+    [ogv.address, optionalLockupClaims.merkleRoot, veogv.address, endBlock]
+  );
+
+  const mandatoryLockup = await deployWithConfirmation(
+    "MandatoryLockupDistributor",
+    [ogv.address, mandatoryLockupClaims.merkleRoot, veogv.address, endBlock]
+  );
+  log("deployed lockup claims");
+};
+
 const main = async () => {
   console.log("Running 001_core deployment...");
   await deployOracles();
@@ -747,6 +856,7 @@ const main = async () => {
   await deployUniswapV3Pool();
   await deployVaultVaultChecker();
   await deployWOusd();
+  await deployGovernance();
   console.log("001_core deploy done.");
   return true;
 };
