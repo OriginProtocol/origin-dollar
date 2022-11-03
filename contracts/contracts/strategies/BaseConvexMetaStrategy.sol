@@ -243,9 +243,9 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
     }
 
     /**
-     * @dev If x a negative number return 0 else return x
+     * @dev Returns the largest of two numbers int256 version
      */
-    function toPositive(int256 x) internal pure returns (uint256) {
-        return x >= 0 ? uint256(x) : uint256(0);
+    function _max(int256 a, int256 b) internal pure returns (int256) {
+        return a >= b ? a : b;
     }
 }

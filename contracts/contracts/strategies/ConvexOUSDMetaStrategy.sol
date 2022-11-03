@@ -36,14 +36,18 @@ contract ConvexOUSDMetaStrategy is BaseConvexMetaStrategy {
             curve3PoolVirtualPrice
         );
 
-        uint256 ousdToAdd = toPositive(
-            int256(
-                metapool.balances(crvCoinIndex).mulTruncate(
-                    curve3PoolVirtualPrice
-                )
-            ) -
-                int256(metapool.balances(mainCoinIndex)) +
-                int256(threePoolLpDollarValue)
+        // safe to cast since min value is at least 0
+        uint256 ousdToAdd = uint256(
+            _max(
+                0,
+                int256(
+                    metapool.balances(crvCoinIndex).mulTruncate(
+                        curve3PoolVirtualPrice
+                    )
+                ) -
+                    int256(metapool.balances(mainCoinIndex)) +
+                    int256(threePoolLpDollarValue)
+            )
         );
 
         /* Add so much OUSD so that the pool ends up being balanced. And at minimum
