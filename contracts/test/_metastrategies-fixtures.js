@@ -168,7 +168,7 @@ async function tiltToMainToken(fixture) {
 }
 
 async function tiltTo3CRV_Metapool(fixture, metapool, amount) {
-  const { vault, domen } = fixture;
+  const { vault, domen, ousdMetaPool } = fixture;
 
   // Balance metapool
   await _balanceMetaPool(fixture, metapool);
@@ -207,7 +207,9 @@ async function tiltToOUSD_OUSDMetapool(fixture, amount) {
   // make metapool make exchange on itself. It should always have enough OUSD/3crv to do this
   const metapoolSigner = await impersonateAndFundContract(ousdMetaPool.address);
 
-  await ousdMetaPool.connect(metapoolSigner)[exchangeSign](0, 1, amount.div(2), 0);
+  await ousdMetaPool
+    .connect(metapoolSigner)
+    [exchangeSign](0, 1, amount.div(2), 0);
 
   await vault.connect(domen).allocate();
   await vault.connect(domen).rebase();
