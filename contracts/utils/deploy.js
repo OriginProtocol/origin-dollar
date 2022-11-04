@@ -191,8 +191,7 @@ const executeProposalOnFork = async (proposalId, executeGasLimit = null) => {
   await impersonateGuardian();
 
   const governor = await ethers.getContract("Governor");
-
-  console.log("GUARDIAN: ", guardianAddr, governor);
+  
   //First enqueue the proposal, then execute it.
   await withConfirmation(
     governor.connect(sGuardian).queue(proposalId, await getTxOpts())
@@ -271,8 +270,27 @@ function deploymentWithProposal(opts, fn) {
       getTxOpts,
       withConfirmation,
     };
-    const proposal = await fn(tools);
+    const { governorAddr } = await getNamedAccounts();
+    const governor = await ethers.getContractAt("Governor", governorAddr);
 
+    if (isFork) {
+      if (proposalId) {
+        const proposalState = ["New", "Queue", "Expired", "Executed"][
+          await governor.state(proposalId)
+        ];
+
+        if (["New", "Queue"].includes(proposalState)) {
+          console.log(
+            `Found proposal id: ${proposalId} on forked network. Executing proposal containing deployment of: ${deployName}`
+          );
+          await executeProposalOnFork(proposalId);
+          // deployment ran, nothing else to do here
+          return;
+        }
+      }
+    }
+
+    const proposal = await fn(tools);
     const propDescription = proposal.name;
     const propArgs = await proposeArgs(proposal.actions);
     const propOpts = proposal.opts || {};
@@ -283,28 +301,11 @@ function deploymentWithProposal(opts, fn) {
       await sendProposal(propArgs, propDescription, propOpts);
       log("Proposal sent.");
     } else if (isFork) {
-      let skipExecuteProposal = false;
-      if (proposalId) {
-        const proposalState = ["New", "Queue", "Expired", "Executed"][
-          await governor.state(proposalId)
-        ];
-        if (["New", "Queue"].includes(proposalState)) {
-          skipExecuteProposal = true;
-          console.log(
-            `Found proposal id: ${proposalId} on forked network. Executing proposal in place of deployment of: ${deployName}`
-          );
-          await executeProposalOnFork(proposalId);
-        }
-      }
-
-      if (!skipExecuteProposal) {
-        // On Fork we can send the proposal then impersonate the guardian to execute it.
-        log("Sending and executing proposal...");
-        await executeProposal(propArgs, propDescription, propOpts);
-        log("Proposal executed.");
-      }
+      // On Fork we can send the proposal then impersonate the guardian to execute it.
+      log("Sending and executing proposal...");
+      await executeProposal(propArgs, propDescription, propOpts);
+      log("Proposal executed.");
     } else {
-      const { governorAddr } = await getNamedAccounts();
       const sGovernor = await ethers.provider.getSigner(governorAddr);
 
       for (const action of proposal.actions) {
