@@ -1,5 +1,6 @@
 const hre = require("hardhat");
 const chai = require("chai");
+const mocha = require("mocha");
 const { parseUnits, formatUnits } = require("ethers").utils;
 const BigNumber = require("ethers").BigNumber;
 const { createFixtureLoader } = require("ethereum-waffle");
@@ -11,6 +12,19 @@ chai.Assertion.addMethod("approxEqual", function (expected, message) {
   chai.expect(actual, message).gte(expected.mul("99999").div("100000"));
   chai.expect(actual, message).lte(expected.mul("100001").div("100000"));
 });
+
+chai.Assertion.addMethod(
+  "approxEqualTolerance",
+  function (expected, maxTolerancePct = 1, message = undefined) {
+    const actual = this._obj;
+    chai
+      .expect(actual, message)
+      .gte(expected.mul(10000 - maxTolerancePct * 100).div(10000));
+    chai
+      .expect(actual, message)
+      .lte(expected.mul(10000 + maxTolerancePct * 100).div(10000));
+  }
+);
 
 chai.Assertion.addMethod(
   "approxBalanceOf",
@@ -56,6 +70,10 @@ function ognUnits(amount) {
 }
 
 function ousdUnits(amount) {
+  return parseUnits(amount, 18);
+}
+
+function fraxUnits(amount) {
   return parseUnits(amount, 18);
 }
 
@@ -123,6 +141,8 @@ const isMainnet = hre.network.name === "mainnet";
 const isTest = process.env.IS_TEST === "true";
 const isSmokeTest = process.env.SMOKE_TEST === "true";
 const isMainnetOrFork = isMainnet || isFork;
+const isForkTest = isFork && isTest;
+const isForkWithLocalNode = isFork && process.env.LOCAL_PROVIDER_URL;
 
 // Fixture loader that is compatible with Ganache
 const loadFixture = createFixtureLoader(
@@ -262,7 +282,7 @@ const getAssetAddresses = async (deployments) => {
       sushiswapRouter: addresses.mainnet.sushiswapRouter,
     };
   } else {
-    return {
+    const addressMap = {
       USDT: (await deployments.get("MockUSDT")).address,
       USDC: (await deployments.get("MockUSDC")).address,
       TUSD: (await deployments.get("MockTUSD")).address,
@@ -295,6 +315,40 @@ const getAssetAddresses = async (deployments) => {
       uniswapV3Router: (await deployments.get("MockUniswapRouter")).address,
       sushiswapRouter: (await deployments.get("MockUniswapRouter")).address,
     };
+
+    try {
+      /* Metapool gets deployed in 001_core instead of 000_mocks and is requested even when
+       * metapool is not yet deployed. Just return without metapool info if it is not
+       * yet available.
+       */
+      addressMap.ThreePoolOUSDMetapool = (
+        await deployments.get("MockCurveMetapool")
+      ).address;
+      // token is implemented by the same contract as the metapool
+      addressMap.metapoolToken = (
+        await deployments.get("MockCurveMetapool")
+      ).address;
+    } catch (e) {
+      // do nothing
+    }
+
+    try {
+      /* Metapool gets deployed in 001_core instead of 000_mocks and is requested even when
+       * metapool is not yet deployed. Just return without metapool info if it is not
+       * yet available.
+       */
+      addressMap.ThreePoolalUSDMetapool = (
+        await deployments.get("MockCurvealUSDMetapool")
+      ).address;
+      // token is implemented by the same contract as the metapool
+      addressMap.alUSDMetapoolToken = (
+        await deployments.get("MockCurvealUSDMetapool")
+      ).address;
+    } catch (e) {
+      // do nothing
+    }
+
+    return addressMap;
   }
 };
 
@@ -371,6 +425,11 @@ async function proposeAndExecute(fixture, governorArgsArray, description) {
   await governorContract.connect(governor).execute(proposalId);
 }
 
+// Ugly hack to avoid running these tests when running `npx hardhat test` directly.
+// A right way would be to add suffix to files and use patterns to filter
+const forkOnlyDescribe = (title, fn) =>
+  isForkTest ? mocha.describe(title, fn) : mocha.describe.skip(title, fn);
+
 module.exports = {
   ousdUnits,
   usdtUnits,
@@ -379,6 +438,7 @@ module.exports = {
   daiUnits,
   ognUnits,
   ethUnits,
+  fraxUnits,
   oracleUnits,
   units,
   daiUnitsFormat,
@@ -395,6 +455,8 @@ module.exports = {
   isSmokeTest,
   isLocalhost,
   isMainnetOrFork,
+  isForkTest,
+  isForkWithLocalNode,
   loadFixture,
   getOracleAddress,
   setOracleTokenPriceUsd,
@@ -407,4 +469,5 @@ module.exports = {
   advanceBlocks,
   isWithinTolerance,
   changeInBalance,
+  forkOnlyDescribe,
 };

@@ -9,7 +9,6 @@ pragma solidity ^0.8.0;
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import { ICurvePool } from "./ICurvePool.sol";
-import { ICRVMinter } from "./ICRVMinter.sol";
 import { IERC20, InitializableAbstractStrategy } from "../utils/InitializableAbstractStrategy.sol";
 import { StableMath } from "../utils/StableMath.sol";
 import { Helpers } from "../utils/Helpers.sol";
@@ -18,8 +17,12 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
     using StableMath for uint256;
     using SafeERC20 for IERC20;
 
-    uint256 internal constant maxSlippage = 1e16; // 1%, same as the Curve UI
+    uint256 internal constant MAX_SLIPPAGE = 1e16; // 1%, same as the Curve UI
+    // number of assets in Curve 3Pool (USDC, DAI, USDT)
+    uint256 internal constant THREEPOOL_ASSET_COUNT = 3;
     address internal pTokenAddress;
+
+    int256[49] private __reserved;
 
     /**
      * @dev Deposit asset into the Curve 3Pool
@@ -33,7 +36,8 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         nonReentrant
     {
         require(_amount > 0, "Must deposit something");
-        emit Deposit(_asset, address(platformAddress), _amount);
+        emit Deposit(_asset, pTokenAddress, _amount);
+
         // 3Pool requires passing deposit amounts for all 3 assets, set to 0 for
         // all
         uint256[3] memory _amounts;
@@ -46,7 +50,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
             curvePool.get_virtual_price()
         );
         uint256 minMintAmount = depositValue.mulTruncate(
-            uint256(1e18) - maxSlippage
+            uint256(1e18) - MAX_SLIPPAGE
         );
         // Do the deposit to 3pool
         curvePool.add_liquidity(_amounts, minMintAmount);
@@ -79,21 +83,26 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
                     balance.scaleBy(18, assetDecimals).divPrecisely(
                         curveVirtualPrice
                     );
-                emit Deposit(assetAddress, address(platformAddress), balance);
+                emit Deposit(assetAddress, pTokenAddress, balance);
             }
         }
 
         uint256 minMintAmount = depositValue.mulTruncate(
-            uint256(1e18) - maxSlippage
+            uint256(1e18) - MAX_SLIPPAGE
         );
         // Do the deposit to 3pool
         curvePool.add_liquidity(_amounts, minMintAmount);
-        // Deposit into Gauge, the PToken is the same (3Crv) for all mapped
-        // assets, so just get the address from the first one
+
+        /* In case of Curve Strategy all assets are mapped to the same pToken (3CrvLP). Let
+         * descendants further handle the pToken. By either deploying it to the metapool and
+         * resulting tokens in Gauge. Or deploying pTokens directly to the Gauge.
+         */
         _lpDepositAll();
     }
 
-    function _lpWithdraw(uint256 numPTokens) internal virtual;
+    function _lpWithdraw(uint256 numCrvTokens) internal virtual;
+
+    function _lpWithdrawAll() internal virtual;
 
     /**
      * @dev Withdraw asset from Curve 3Pool
@@ -108,53 +117,102 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
     ) external override onlyVault nonReentrant {
         require(_amount > 0, "Invalid amount");
 
-        emit Withdrawal(_asset, address(assetToPToken[_asset]), _amount);
+        emit Withdrawal(_asset, pTokenAddress, _amount);
 
-        (uint256 contractPTokens, , uint256 totalPTokens) = _getTotalPTokens();
+        uint256 contractCrv3Tokens = IERC20(pTokenAddress).balanceOf(
+            address(this)
+        );
 
         uint256 coinIndex = _getCoinIndex(_asset);
-        int128 curveCoinIndex = int128(uint128(coinIndex));
-        // Calculate the max amount of the asset we'd get if we withdrew all the
-        // platform tokens
         ICurvePool curvePool = ICurvePool(platformAddress);
-        // Calculate how many platform tokens we need to withdraw the asset
-        // amount in the worst case (i.e withdrawing all LP tokens)
-        uint256 maxAmount = curvePool.calc_withdraw_one_coin(
-            totalPTokens,
-            curveCoinIndex
-        );
-        uint256 maxBurnedPTokens = (totalPTokens * _amount) / maxAmount;
 
-        // Not enough in this contract or in the Gauge, can't proceed
-        require(totalPTokens > maxBurnedPTokens, "Insufficient 3CRV balance");
+        uint256 requiredCrv3Tokens = _calcCurveTokenAmount(coinIndex, _amount);
+
         // We have enough LP tokens, make sure they are all on this contract
-        if (contractPTokens < maxBurnedPTokens) {
-            _lpWithdraw(maxBurnedPTokens - contractPTokens);
+        if (contractCrv3Tokens < requiredCrv3Tokens) {
+            _lpWithdraw(requiredCrv3Tokens - contractCrv3Tokens);
         }
 
         uint256[3] memory _amounts = [uint256(0), uint256(0), uint256(0)];
         _amounts[coinIndex] = _amount;
-        curvePool.remove_liquidity_imbalance(_amounts, maxBurnedPTokens);
 
+        curvePool.remove_liquidity_imbalance(_amounts, requiredCrv3Tokens);
         IERC20(_asset).safeTransfer(_recipient, _amount);
+    }
+
+    /**
+     * @dev Calculate amount of LP required when withdrawing specific amount of one
+     * of the underlying assets accounting for fees and slippage.
+     *
+     * Curve pools unfortunately do not contain a calculation function for
+     * amount of LP required when withdrawing a specific amount of one of the
+     * underlying tokens and also accounting for fees (Curve's calc_token_amount
+     * does account for slippage but not fees).
+     *
+     * Steps taken to calculate the metric:
+     *  - get amount of LP required if fees wouldn't apply
+     *  - increase the LP amount as if fees would apply to the entirety of the underlying
+     *    asset withdrawal. (when withdrawing only one coin fees apply only to amounts
+     *    of other assets pool would return in case of balanced removal - since those need
+     *    to be swapped for the single underlying asset being withdrawn)
+     *  - get amount of underlying asset withdrawn (this Curve function does consider slippage
+     *    and fees) when using the increased LP amount. As LP amount is slightly over-increased
+     *    so is amount of underlying assets returned.
+     *  - since we know exactly how much asset we require take the rate of LP required for asset
+     *    withdrawn to get the exact amount of LP.
+     */
+    function _calcCurveTokenAmount(uint256 _coinIndex, uint256 _amount)
+        internal
+        returns (uint256 required3Crv)
+    {
+        ICurvePool curvePool = ICurvePool(platformAddress);
+
+        uint256[3] memory _amounts = [uint256(0), uint256(0), uint256(0)];
+        _amounts[_coinIndex] = _amount;
+
+        // LP required when removing required asset ignoring fees
+        uint256 lpRequiredNoFees = curvePool.calc_token_amount(_amounts, false);
+        /* LP required if fees would apply to entirety of removed amount
+         *
+         * fee is 1e10 denominated number: https://curve.readthedocs.io/exchange-pools.html#StableSwap.fee
+         */
+        uint256 lpRequiredFullFees = lpRequiredNoFees.mulTruncateScale(
+            1e10 + curvePool.fee(),
+            1e10
+        );
+
+        /* asset received when withdrawing full fee applicable LP accounting for
+         * slippage and fees
+         */
+        uint256 assetReceivedForFullLPFees = curvePool.calc_withdraw_one_coin(
+            lpRequiredFullFees,
+            int128(uint128(_coinIndex))
+        );
+
+        // exact amount of LP required
+        required3Crv =
+            (lpRequiredFullFees * _amount) /
+            assetReceivedForFullLPFees;
     }
 
     /**
      * @dev Remove all assets from platform and send them to Vault contract.
      */
     function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
-        // Withdraw all from Gauge
-        (, uint256 gaugePTokens, uint256 totalPTokens) = _getTotalPTokens();
-        _lpWithdraw(gaugePTokens);
+        _lpWithdrawAll();
         // Withdraws are proportional to assets held by 3Pool
         uint256[3] memory minWithdrawAmounts = [
             uint256(0),
             uint256(0),
             uint256(0)
         ];
+
         // Remove liquidity
         ICurvePool threePool = ICurvePool(platformAddress);
-        threePool.remove_liquidity(totalPTokens, minWithdrawAmounts);
+        threePool.remove_liquidity(
+            IERC20(pTokenAddress).balanceOf(address(this)),
+            minWithdrawAmounts
+        );
         // Transfer assets out of Vault
         // Note that Curve will provide all 3 of the assets in 3pool even if
         // we have not set PToken addresses for all of them in this strategy
@@ -172,6 +230,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
     function checkBalance(address _asset)
         public
         view
+        virtual
         override
         returns (uint256 balance)
     {
@@ -179,13 +238,13 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         // LP tokens in this contract. This should generally be nothing as we
         // should always stake the full balance in the Gauge, but include for
         // safety
-        (, , uint256 totalPTokens) = _getTotalPTokens();
+        uint256 totalPTokens = IERC20(pTokenAddress).balanceOf(address(this));
         ICurvePool curvePool = ICurvePool(platformAddress);
         if (totalPTokens > 0) {
             uint256 virtual_price = curvePool.get_virtual_price();
             uint256 value = (totalPTokens * virtual_price) / 1e18;
             uint256 assetDecimals = Helpers.getDecimals(_asset);
-            balance = value.scaleBy(assetDecimals, 18) / 3;
+            balance = value.scaleBy(assetDecimals, 18) / THREEPOOL_ASSET_COUNT;
         }
     }
 
@@ -218,24 +277,6 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
             _approveAsset(assetsMapped[i]);
         }
     }
-
-    /**
-     * @dev Calculate the total platform token balance (i.e. 3CRV) that exist in
-     * this contract or is staked in the Gauge (or in other words, the total
-     * amount platform tokens we own).
-     * @return contractPTokens Amount of platform tokens in this contract
-     * @return gaugePTokens Amount of platform tokens staked in gauge
-     * @return totalPTokens Total amount of platform tokens in native decimals
-     */
-    function _getTotalPTokens()
-        internal
-        view
-        virtual
-        returns (
-            uint256 contractPTokens,
-            uint256 gaugePTokens,
-            uint256 totalPTokens
-        );
 
     /**
      * @dev Call the necessary approvals for the Curve pool and gauge

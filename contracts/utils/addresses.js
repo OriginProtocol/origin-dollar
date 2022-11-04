@@ -10,6 +10,8 @@ addresses.dead = "0x0000000000000000000000000000000000000001";
 
 addresses.mainnet = {};
 
+addresses.mainnet.ORIGINTEAM = "0x449e0b5564e0d141b3bc3829e74ffa0ea8c08ad5";
+
 addresses.mainnet.Binance = "0xf977814e90da44bfa03b6295a0616a897441acec";
 /* All the Binance addresses. There is not 1 address that has enough of all of the stablecoins and ether.
  * But all together do. In case new ones are added update them from here:
@@ -50,10 +52,12 @@ addresses.mainnet.ThreePoolGauge = "0xbFcF63294aD7105dEa65aA58F8AE5BE2D9d0952A";
 addresses.mainnet.CVX = "0x4e3fbd56cd56c3e72c1403e103b45db9da5b9d2b";
 addresses.mainnet.CRVRewardsPool = "0x689440f2ff927e1f24c72f1087e1faf471ece1c8";
 addresses.mainnet.CVXBooster = "0xF403C135812408BFbE8713b5A23a04b3D48AAE31";
+addresses.mainnet.CVXRewardsPool = "0x7D536a737C13561e0D2Decf1152a653B4e615158";
 // Open Oracle
 addresses.mainnet.openOracle = "0x922018674c12a7f0d394ebeef9b58f186cde13c1";
 // OGN
 addresses.mainnet.OGN = "0x8207c1ffc5b6804f6024322ccf34f29c3541ae26";
+addresses.mainnet.alUSD = "0xBC6DA0FE9aD5f3b0d58160288917AA56653660E9";
 // OGV
 addresses.mainnet.OGV = "0x9c354503C38481a7A7a51629142963F98eCC12D0";
 // veOGV
@@ -115,6 +119,8 @@ addresses.mainnet.CurveUSDTStrategyProxy =
   "0xe40e09cD6725E542001FcB900d9dfeA447B529C0";
 addresses.mainnet.CurveUSDTStrategy =
   "0x75Bc09f72db1663Ed35925B89De2b5212b9b6Cb3";
+addresses.mainnet.CurveOUSDMetaPool =
+  "0x87650D7bbfC3A9F10587d7778206671719d9910D";
 
 addresses.mainnet.MixOracle = "0x4d4f5e7a1FE57F5cEB38BfcE8653EFFa5e584458";
 addresses.mainnet.UniswapOracle = "0xc15169Bad17e676b3BaDb699DEe327423cE6178e";
