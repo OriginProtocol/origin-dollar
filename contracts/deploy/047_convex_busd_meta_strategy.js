@@ -18,4 +18,5 @@ module.exports = generalizedConvexStratDeployment({
   cvxDepositorPTokenId: busdMetapoolLPCRVPid, // 34
   redeployVault: false,
   deployStrategyImplementation: false,
+  skipMainnetDeploy: true,
 });

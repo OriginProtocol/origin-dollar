@@ -1,5 +1,6 @@
 const { deploymentWithProposal } = require("../utils/deploy");
 const { BigNumber } = require("ethers");
+const { isMainnet } = require("../test/helpers.js");
 
 module.exports = ({
   deployName,
@@ -19,9 +20,14 @@ module.exports = ({
   redeployVault,
   // we only need to deploy the implementation contract for first time & when it changes
   deployStrategyImplementation,
+  skipMainnetDeploy,
 }) => {
   return deploymentWithProposal(
-    { deployName, forceDeploy },
+    {
+      deployName,
+      forceDeploy,
+      forceSkip: isMainnet && skipMainnetDeploy,
+    },
     async ({
       assetAddresses,
       deployWithConfirmation,

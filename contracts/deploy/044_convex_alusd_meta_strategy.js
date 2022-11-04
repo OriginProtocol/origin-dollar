@@ -18,4 +18,5 @@ module.exports = generalizedConvexStratDeployment({
   cvxDepositorPTokenId: alusdMetapoolLPCRVPid, // 36
   redeployVault: true,
   deployStrategyImplementation: true,
+  skipMainnetDeploy: true,
 });
