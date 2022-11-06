@@ -67,10 +67,17 @@ const Allocation = ({ isMobile }) => {
                     if (strategy.name === 'vault') return
                     return (
                       <div
-                        className="strategy rounded-xl border-2 my-6 md:m-6"
+                        className="strategy rounded-xl border-2 my-6 md:m-6 cursor-pointer"
                         key={strategy.name}
+                        onClick={(e) => {
+                          e.preventDefault()
+                          setOpen({
+                            ...open,
+                            [strategy.name]: !open[strategy.name],
+                          })
+                        }}
                       >
-                        <div className="m-6 md:m-10">
+                        <div className="m-6 xl:m-10 xl:mb-8">
                           <div className="flex flex-row justify-between">
                             <img
                               src={assetRootPath(
@@ -85,14 +92,7 @@ const Allocation = ({ isMobile }) => {
                               )}%`}</Typography.H7>
                               <img
                                 src={assetRootPath(`/images/caret.svg`)}
-                                className="w-4 md:w-6 pb-2 cursor-pointer inline"
-                                onClick={(e) => {
-                                  e.preventDefault()
-                                  setOpen({
-                                    ...open,
-                                    [strategy.name]: !open[strategy.name],
-                                  })
-                                }}
+                                className={`w-4 md:w-6 mb-2 inline ${open[strategy.name] ? 'rotate-180' : ''}`}
                               />
                             </div>
                           </div>
@@ -240,4 +240,4 @@ const Allocation = ({ isMobile }) => {
   )
 }
 
-export default withIsMobile(Allocation)
+export default Allocation

@@ -66,16 +66,22 @@ const Apy = ({ isMobile }) => {
                 <div className="flex flex-row justify-around">
                   {apyDayOptions.map((days) => {
                     return (
-                      <div
-                        className={`bttn ${
-                          apyDays === days ? 'active gradient4' : 'inactive'
-                        } days w-1/3 mb-6 md:mb-1`}
-                        key={days}
-                        onClick={() => {
-                          setApyDays(days)
-                        }}
-                      >
-                        {days}
+                        <div
+                          className={`${
+                            apyDays === days ? 'gradient2' : 'inactive'
+                          } days1 w-1/3 mb-6 md:mb-1 p-px`}
+                          key={days}
+                          onClick={() => {
+                            setApyDays(days)
+                          }}
+                        >
+                          <div
+                            className={`${
+                              apyDays === days ? 'gradient4' : 'inactive'
+                            } days2 w-full h-full`}
+                          >
+                            {days}
+                          </div>
                       </div>
                     )
                   })}
@@ -98,17 +104,25 @@ const Apy = ({ isMobile }) => {
           background-color: #141519;
         }
 
-        .days {
+        .days1 {
           display: inline-block;
           border-radius: 5px;
           white-space: nowrap;
           margin: 0px 10px 10px 10px;
+          text-align: center;
+          cursor: pointer;
+        }
+
+        .days2 {
+          display: inline-block;
+          border-radius: 5px;
+          white-space: nowrap;
           padding: 12px 50px;
           text-align: center;
           cursor: pointer;
         }
 
-        .days:hover {
+        .days1:hover {
           opacity: 0.9;
         }
 
