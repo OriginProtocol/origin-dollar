@@ -66,22 +66,22 @@ const Apy = ({ isMobile }) => {
                 <div className="flex flex-row justify-around">
                   {apyDayOptions.map((days) => {
                     return (
+                      <div
+                        className={`${
+                          apyDays === days ? 'gradient2' : 'inactive'
+                        } days1 w-1/3 mb-6 md:mb-1 p-px`}
+                        key={days}
+                        onClick={() => {
+                          setApyDays(days)
+                        }}
+                      >
                         <div
                           className={`${
-                            apyDays === days ? 'gradient2' : 'inactive'
-                          } days1 w-1/3 mb-6 md:mb-1 p-px`}
-                          key={days}
-                          onClick={() => {
-                            setApyDays(days)
-                          }}
+                            apyDays === days ? 'gradient4' : 'inactive'
+                          } days2 w-full h-full`}
                         >
-                          <div
-                            className={`${
-                              apyDays === days ? 'gradient4' : 'inactive'
-                            } days2 w-full h-full`}
-                          >
-                            {days}
-                          </div>
+                          {days}
+                        </div>
                       </div>
                     )
                   })}

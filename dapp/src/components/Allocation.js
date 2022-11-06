@@ -92,7 +92,9 @@ const Allocation = ({ isMobile }) => {
                               )}%`}</Typography.H7>
                               <img
                                 src={assetRootPath(`/images/caret.svg`)}
-                                className={`w-4 md:w-6 mb-2 inline ${open[strategy.name] ? 'rotate-180' : ''}`}
+                                className={`w-4 md:w-6 mb-2 inline ${
+                                  open[strategy.name] ? 'rotate-180' : ''
+                                }`}
                               />
                             </div>
                           </div>
