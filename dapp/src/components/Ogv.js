@@ -58,16 +58,16 @@ const Ogv = () => {
         <div>
           <div className="flex flex-col lg:flex-row overflow-hidden max-w-screen-xl mx-auto lg:pt-10 px-8 pb-20 text-center lg:text-left">
             <div className="lg:w-2/3">
-              <Typography.H1 className="lg:text-left font-bold">
+              <Typography.H2 className="lg:text-left font-bold">
                 {fbt('Governed by OGV stakers', 'Governed by OGV stakers')}
-              </Typography.H1>
+              </Typography.H2>
               <br className="block" />
-              <Typography.Caption className="lg:text-left opacity-100">
+              <Typography.Body3 className="lg:text-left">
                 {fbt(
                   "OUSD's future is shaped by voters who lock their OGV and participate in decentralized governance.",
                   "OUSD's future is shaped by voters who lock their OGV and participate in decentralized governance."
                 )}
-              </Typography.Caption>
+              </Typography.Body3>
               <img
                 src={assetRootPath(`/images/ogv.png`)}
                 className="mt-10 mx-auto px-10 block lg:hidden"
@@ -75,18 +75,18 @@ const Ogv = () => {
               <div className="flex flex-col justify-between w-full md:mx-20 lg:mx-0 lg:w-4/5 mb-20 text-left font-weight-bold mt-10 lg:mt-24 h-36 md:h-52">
                 <div className="flex flex-row justify-between">
                   <div className="w-96">
-                    <Typography.Body2 className="text-xs lg:text-base mb-2 font-weight-bold">
+                    <Typography.Body3 className="text-xs lg:text-base mb-2 font-weight-bold">
                       {'OGV PRICE'}
-                    </Typography.Body2>
+                    </Typography.Body3>
                     <Typography.H5>{`$${formatCurrency(
                       price,
                       4
                     )}`}</Typography.H5>
                   </div>
                   <div className="w-96">
-                    <Typography.Body2 className="text-xs lg:text-base mb-2 font-weight-bold">
+                    <Typography.Body3 className="text-xs lg:text-base mb-2 font-weight-bold">
                       {'OGV MARKET CAP'}
-                    </Typography.Body2>
+                    </Typography.Body3>
                     <Typography.H5>{`$${formatCurrency(
                       circulatingSupply * price,
                       0
@@ -95,17 +95,17 @@ const Ogv = () => {
                 </div>
                 <div className="flex flex-row justify-between">
                   <div className="w-96">
-                    <Typography.Body2 className="text-xs lg:text-base mb-2 font-weight-bold">
+                    <Typography.Body3 className="text-xs lg:text-base mb-2 font-weight-bold">
                       {'CIRCULATING SUPPLY'}
-                    </Typography.Body2>
+                    </Typography.Body3>
                     <Typography.H5>
                       {formatCurrency(circulatingSupply, 0)}
                     </Typography.H5>
                   </div>
                   <div className="w-96">
-                    <Typography.Body2 className="text-xs lg:text-base mb-2 font-weight-bold">
+                    <Typography.Body3 className="text-xs lg:text-base mb-2 font-weight-bold">
                       {'TOTAL SUPPLY'}
-                    </Typography.Body2>
+                    </Typography.Body3>
                     <Typography.H5>
                       {formatCurrency(totalSupply, 0)}
                     </Typography.H5>
@@ -138,12 +138,12 @@ const Ogv = () => {
                 src={assetRootPath(`/images/ogv.png`)}
                 className="hidden lg:block"
               />
-              <Typography.Body2 className="my-4 opacity-75 text-center">
+              <Typography.Body3 className="my-4 text-center text-white">
                 {fbt(
                   'OGV is listed on top exchanges',
                   'OGV is listed on top exchanges'
                 )}
-              </Typography.Body2>
+              </Typography.Body3>
               <div className="flex flex-row justify-between md:mx-32 lg:mx-0">
                 <a
                   href="https://www.huobi.com/en-in/exchange/ogv_usdt"
@@ -188,7 +188,7 @@ const Ogv = () => {
                 </span>
               </Typography.H2>
               <br className="block" />
-              <Typography.Body2 className="mb-10 font-normal">
+              <Typography.Body3 className="mb-10 font-normal">
                 {fbt(
                   'Fees and voting rights accrue to OGV stakers. Control the future of OUSD',
                   'Fees and voting rights accrue to OGV stakers. Control the future of OUSD'
@@ -198,7 +198,7 @@ const Ogv = () => {
                   'and profit from its growth.',
                   'and profit from its growth.'
                 )}
-              </Typography.Body2>
+              </Typography.Body3>
               <a
                 href="https://governance.ousd.com/stake"
                 target="_blank"

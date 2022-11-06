@@ -10,7 +10,6 @@ import { ReactQueryDevtools } from 'react-query/devtools'
 
 import { fetchAPI } from '../lib/api'
 import { getStrapiMedia } from '../lib/media'
-import bundledCss from '@originprotocol/origin-storybook/lib/styles.css'
 
 import AccountStore from 'stores/AccountStore'
 import RouterStore from 'stores/RouterStore'
@@ -32,6 +31,7 @@ import { initSentry } from 'utils/sentry'
 
 import 'react-toastify/scss/main.scss'
 import '../node_modules/bootstrap/dist/css/bootstrap.min.css'
+import '@originprotocol/origin-storybook/lib/styles.css'
 import '../styles/globals.css'
 
 let VConsole, ReactPixel

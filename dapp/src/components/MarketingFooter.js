@@ -45,9 +45,9 @@ export default function Footer({ locale }) {
                   analytics.track('Governance Link click')
                 }}
               >
-                <Typography.Body2>
+                <Typography.Body3 className="text-[#fafbfb]">
                   {fbt('Governance', 'Governance link')}
-                </Typography.Body2>
+                </Typography.Body3>
               </a>
               <a
                 href={getDocsLink(locale)}
@@ -58,9 +58,9 @@ export default function Footer({ locale }) {
                   analytics.track('Docs Link click')
                 }}
               >
-                <Typography.Body2>
+                <Typography.Body3 className="text-[#fafbfb]">
                   {fbt('Docs', 'Documentation link')}
-                </Typography.Body2>
+                </Typography.Body3>
               </a>
               <a
                 href={'/blog'}
@@ -71,7 +71,9 @@ export default function Footer({ locale }) {
                   analytics.track('Blog Link click')
                 }}
               >
-                <Typography.Body2>{fbt('Blog', 'Blog link')}</Typography.Body2>
+                <Typography.Body3 className="text-[#fafbfb]">
+                  {fbt('Blog', 'Blog link')}
+                </Typography.Body3>
               </a>
               <a
                 href={'/faq'}
@@ -82,7 +84,9 @@ export default function Footer({ locale }) {
                   analytics.track('FAQ Link click')
                 }}
               >
-                <Typography.Body2>{fbt('FAQ', 'FAQ link')}</Typography.Body2>
+                <Typography.Body3 className="text-[#fafbfb]">
+                  {fbt('FAQ', 'FAQ link')}
+                </Typography.Body3>
               </a>
               <a
                 href={
@@ -95,7 +99,9 @@ export default function Footer({ locale }) {
                   analytics.track('OGV Link click')
                 }}
               >
-                <Typography.Body2>{fbt('OGV', 'OGV link')}</Typography.Body2>
+                <Typography.Body3 className="text-[#fafbfb]">
+                  {fbt('OGV', 'OGV link')}
+                </Typography.Body3>
               </a>
               <br className="block md:hidden" />
               <a
@@ -104,11 +110,13 @@ export default function Footer({ locale }) {
                 rel="noopener noreferrer"
                 className="bttn gradient2 px-4 py-2 w-full md:w-32 m-0"
               >
-                <Typography.Body2>Get OUSD</Typography.Body2>
+                <Typography.Body3 className="text-white">
+                  Get OUSD
+                </Typography.Body3>
               </a>
             </div>
           </div>
-          <div className="flex flex-col md:flex-row justify-between pt-10 opacity-75">
+          <div className="flex flex-col md:flex-row justify-between pt-10 text-[#b5beca]">
             <a
               href="https://originprotocol.com"
               target="_blank"

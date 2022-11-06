@@ -29,12 +29,12 @@ const Home = ({ locale, onLocale, articles, seo, navLinks }) => {
             )}
           </Typography.H3>
           <br className="block" />
-          <Typography.Body2 className="opacity-75">
+          <Typography.Body3 className="opacity-75">
             {fbt(
               'Securing your funds is OUSD’s top priority. Changes to the protocol are reviewed by internal and external auditors on an ongoing basis.',
               'Securing your funds is OUSD’s top priority. Changes to the protocol are reviewed by internal and external auditors on an ongoing basis.'
             )}
-          </Typography.Body2>
+          </Typography.Body3>
           <div className="audits rounded-xl m-6 lg:m-16 lg:mx-40 p-6 lg:p-10">
             <Typography.Body>
               {fbt('Existing audits', 'Existing audits')}

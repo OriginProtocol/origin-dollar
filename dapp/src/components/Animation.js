@@ -57,12 +57,12 @@ const Animation = ({ navLinks }) => {
             <br className="hidden md:block" />
             {fbt('stablecoin', 'stablecoin')}
           </Typography.H2>
-          <Typography.Body2 className="mt-6 mb-10 opacity-75">
+          <Typography.Body3 className="mt-6 mb-10 text-[#b5beca]">
             {fbt(
               'Origin Dollar simplifies DeFi by eliminating the need for staking or lock-ups. Hold OUSD in any Ethereum wallet and watch your balance increase every day.',
               'Origin Dollar simplifies DeFi by eliminating the need for staking or lock-ups. Hold OUSD in any Ethereum wallet and watch your balance increase every day.'
             )}{' '}
-          </Typography.Body2>
+          </Typography.Body3>
           <a rel="noopener noreferrer" className="bttn gradient2">
             Get OUSD
           </a>
@@ -87,12 +87,12 @@ const Animation = ({ navLinks }) => {
                   />
                 </div>
               </Typography.H2>
-              <Typography.Body2 className="opacity-75 mt-2">
+              <Typography.Body3 className="text-[#b5beca] mt-2">
                 {fbt(
                   'Total value of OUSD wallet balances',
                   'Total value of OUSD wallet balances'
                 )}
-              </Typography.Body2>
+              </Typography.Body3>
             </div>
           )}
         </div>

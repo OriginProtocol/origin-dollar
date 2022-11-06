@@ -45,31 +45,31 @@ const Apy = ({ isMobile }) => {
             {fbt('strategy', 'strategy')}
           </Typography.H3>
           <br className="block" />
-          <Typography.Body2 className="opacity-75">
+          <Typography.Body3 className="text-[#b5beca]">
             {fbt(
               'Grow your stablecoin portfolio by swapping USDC, USDT, or DAI to OUSD. Yields are generated on-chain, distributed directly to your wallet, and compounded automatically. Your funds are never risked on speculative positions.',
               'Grow your stablecoin portfolio by swapping USDC, USDT, or DAI to OUSD. Yields are generated on-chain, distributed directly to your wallet, and compounded automatically. Your funds are never risked on speculative positions.'
             )}
-          </Typography.Body2>
+          </Typography.Body3>
           {loaded && (
             <div className="apy flex flex-col md:flex-row justify-between rounded-xl my-10 md:m-16 p-6 md:p-10">
               <div className="mt-2 mb-6 md:mb-0">
-                <Typography.H1 className="lg:inline">
+                <Typography.H2 className="font-bold lg:inline">
                   {formatCurrency(daysToApy[apyDays] * 100, 2) + '% '}
-                </Typography.H1>
-                <Typography.Body className="opacity-75 block lg:inline">{`Trailing ${apyDays}-day APY`}</Typography.Body>
+                </Typography.H2>
+                <Typography.Body className="text-[#b5beca] block lg:inline">{`Trailing ${apyDays}-day APY`}</Typography.Body>
               </div>
               <div className="flex flex-col lg:w-2/5">
-                <Typography.Body2 className="opacity-75 mb-3">
+                <Typography.Body3 className="text-[#b5beca] mb-3">
                   {fbt('Moving average', 'Moving average')}
-                </Typography.Body2>
+                </Typography.Body3>
                 <div className="flex flex-row justify-around">
                   {apyDayOptions.map((days) => {
                     return (
                       <div
                         className={`bttn ${
-                          apyDays === days ? 'gradient2' : 'bttn-g'
-                        } ${isMobile ? 'px-4' : 'px-16'} mb-6 md:mb-1`}
+                          apyDays === days ? 'active gradient4' : 'inactive'
+                        } days w-1/3 mb-6 md:mb-1`}
                         key={days}
                         onClick={() => {
                           setApyDays(days)
@@ -98,9 +98,37 @@ const Apy = ({ isMobile }) => {
           background-color: #141519;
         }
 
-        .bttn-g {
+        .days {
+          display: inline-block;
+          border-radius: 5px;
+          white-space: nowrap;
+          margin: 0px 10px 10px 10px;
+          padding: 12px 50px;
+          text-align: center;
+          cursor: pointer;
+        }
+
+        .days:hover {
+          opacity: 0.9;
+        }
+
+        .active {
+          border: 2px solid #8c66fc;
+        }
+
+        .inactive {
           color: #fafbfb;
           background-color: #1e1f25;
+        }
+
+        .days {
+        }
+
+        @media (max-width: 799px) {
+          .days {
+            padding-left: 4px;
+            padding-right: 4px;
+          }
         }
       `}</style>
     </>

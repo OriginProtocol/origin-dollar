@@ -135,15 +135,15 @@ section.dim {
   color: #fafbfb;
 }
 
+.gradient1 {
+  color: #141519;
+  background-image: -webkit-linear-gradient(left, #fedba8 -3.29%, #cf75d5 106.42%);
+}
+
 .text-gradient1 {
   background-image: -webkit-linear-gradient(left, #fedba8 -3.29%, #cf75d5 106.42%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-}
-
-.gradient1 {
-  color: #141519;
-  background-image: -webkit-linear-gradient(left, #fedba8 -3.29%, #cf75d5 106.42%);
 }
 
 .gradient2 {
@@ -159,6 +159,11 @@ section.dim {
 
 .gradient3 {
   background-image: -webkit-linear-gradient(left, #B361E6 -28.99%, #6A36FC 144.97%);
+}
+
+.gradient4 {
+  color: #fafbfb;
+  background-image: -webkit-linear-gradient(left, #8C66FC34 -28.99%, #0274F134 144.97%);
 }
 
 .bttn {

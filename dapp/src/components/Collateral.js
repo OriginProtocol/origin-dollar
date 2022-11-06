@@ -46,18 +46,18 @@ const Collateral = () => {
             {fbt('Always 100% collateralized', 'Always 100% collateralized')}
           </Typography.H3>
           <br className="block" />
-          <Typography.Body2 className="opacity-75">
+          <Typography.Body3 className="text-[#b5beca]">
             {fbt(
               'OUSD is backed 1:1 by the most trusted collateral in crypto. Reserves are verifiable on-chain. You can redeem OUSD',
               'OUSD is backed 1:1 by the most trusted collateral in crypto. Reserves are verifiable on-chain. You can redeem OUSD'
             )}{' '}
             <br className="hidden md:block" />
             {fbt('immediately at any time.', 'immediately at any time.')}
-          </Typography.Body2>
+          </Typography.Body3>
           <div className="collateral flex flex-col md:flex-row justify-between rounded-xl my-10 md:m-16 px-6 pb-6 md:p-6 lg:px-28 md:py-20">
             <div className="relative h-96">
               <PieChart data={chartData} lineWidth={6} startAngle={270} />
-              <Typography.H5 className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">{`$${'40,123,456'}`}</Typography.H5>
+              <Typography.H6 className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">{`$${'40,123,456'}`}</Typography.H6>
             </div>
             <div className="lg:w-1/2 md:px-20 text-left">
               <Typography.Body className="mb-3">
@@ -81,10 +81,10 @@ const Collateral = () => {
                           2
                         )}%`}</Typography.H6>
                         <div className="pt-2">
-                          <Typography.Body2 className="opacity-75 pr-2">{`$${formatCurrency(
+                          <Typography.Body3 className="text-[#b5beca] pr-2">{`$${formatCurrency(
                             token.total,
                             0
-                          )}`}</Typography.Body2>
+                          )}`}</Typography.Body3>
                         </div>
                       </div>
                     </div>
