@@ -3,7 +3,11 @@ const addresses = require("../utils/addresses");
 const { BigNumber } = require("ethers");
 
 module.exports = deploymentWithProposal(
-  { deployName: "043_convex_OUSD_meta_strategy", forceDeploy: false, proposalId: 38 },
+  {
+    deployName: "043_convex_OUSD_meta_strategy",
+    forceDeploy: false,
+    proposalId: 38,
+  },
   async ({
     assetAddresses,
     deployWithConfirmation,
