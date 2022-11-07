@@ -69,7 +69,7 @@ const Ogv = () => {
                 )}
               </Typography.Body3>
               <img
-                src={assetRootPath(`/images/ogv.png`)}
+                src={assetRootPath(`/images/ogv.svg`)}
                 className="mt-10 mx-auto px-10 block lg:hidden"
               />
               <div className="flex flex-col justify-between w-full md:mx-20 lg:mx-0 lg:w-4/5 mb-20 text-left font-weight-bold mt-10 lg:mt-24 h-36 md:h-52">

@@ -70,7 +70,7 @@ const Animation = ({ navLinks }) => {
         <div className="container self-end md:self-start flex-1 relative mt-20 md:mt-0 pb-10">
           <div className="hidden md:block">
             <img
-              src={assetRootPath('/images/ousd-transparent.svg')}
+              src={assetRootPath('/images/ousd.svg')}
               className="ousd m-auto pb-4"
               alt="ousd"
             />
