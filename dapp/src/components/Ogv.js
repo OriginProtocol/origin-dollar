@@ -56,7 +56,7 @@ const Ogv = () => {
     <section className="home gradient3 relative z-0">
       <div className="relative divide-black divide-y-2">
         <div>
-          <div className="flex flex-col lg:flex-row overflow-hidden max-w-screen-xl mx-auto lg:pt-10 px-8 pb-20 text-center lg:text-left">
+          <div className="flex flex-col lg:flex-row overflow-hidden max-w-screen-xl mx-auto lg:pt-10 px-4 pb-20 text-center lg:text-left">
             <div className="lg:w-2/3">
               <Typography.H2 className="lg:text-left font-bold">
                 {fbt('Governed by OGV stakers', 'Governed by OGV stakers')}
@@ -119,7 +119,9 @@ const Ogv = () => {
                   rel="noopener noreferrer"
                   className="bttn bg-black"
                 >
-                  {fbt('Buy OGV', 'Buy OGV')}
+                  <Typography.H7 className="font-normal">
+                    {fbt('Buy OGV', 'Buy OGV')}
+                  </Typography.H7>
                 </a>
               </span>
               <span className="hidden">
@@ -129,13 +131,15 @@ const Ogv = () => {
                   rel="noopener noreferrer"
                   className="bttn gradient2"
                 >
-                  View dashboard
+                  <Typography.H7 className="font-normal">
+                    {fbt('View dashboard', 'View dashboard')}
+                  </Typography.H7>
                 </a>
               </span>
             </div>
-            <div className="">
+            <div>
               <img
-                src={assetRootPath(`/images/ogv.png`)}
+                src={assetRootPath(`/images/ogv.svg`)}
                 className="hidden lg:block"
               />
               <Typography.Body3 className="my-4 text-center text-white">
@@ -175,13 +179,15 @@ const Ogv = () => {
                 rel="noopener noreferrer"
                 className="bttn bg-black block lg:hidden text-center mt-5"
               >
-                {fbt('Buy OGV', 'Buy OGV')}
+                <Typography.H7 className="font-normal">
+                  {fbt('Buy OGV', 'Buy OGV')}
+                </Typography.H7>
               </a>
             </div>
           </div>
         </div>
         <div>
-          <div className="overflow-hidden max-w-screen-xl mx-auto mt-16 lg:pt-10 px-8 pb-10 lg:pb-20 text-center">
+          <div className="overflow-hidden max-w-screen-xl mx-auto mt-16 lg:pt-10 px-4 pb-10 lg:pb-20 text-center">
             <div>
               <Typography.H2 className="font-normal">
                 {fbt('Stake OGV', 'Stake OGV')} <br className="block" />
@@ -207,7 +213,9 @@ const Ogv = () => {
                 rel="noopener noreferrer"
                 className="bttn bg-black"
               >
-                {fbt('Earn rewards', 'Earn rewards')}
+                <Typography.H7 className="font-normal">
+                  {fbt('Earn rewards', 'Earn rewards')}
+                </Typography.H7>
               </a>
             </div>
           </div>

@@ -172,13 +172,21 @@ section.dim {
   border-radius: 50px;
   white-space: nowrap;
   margin: 0px 10px 10px 10px;
-  padding: 12px 50px;
+  padding: 20px 80px;
   text-align: center;
   cursor: pointer;
 }
 
 .bttn:hover {
   opacity: 0.9;
+}
+
+@media (max-width: 799px) {
+  .bttn {
+    width: 100%;
+    margin: 0;
+    padding: 20px 0;
+  }
 }
 
 .mono {

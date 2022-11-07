@@ -41,7 +41,7 @@ const Collateral = () => {
   return (
     <>
       <section className="home dim m-0">
-        <div className="max-w-screen-xl mx-auto pb-20 px-8 text-center">
+        <div className="max-w-screen-xl mx-auto pb-20 px-4 text-center">
           <Typography.H3 className="font-bold">
             {fbt('Always 100% collateralized', 'Always 100% collateralized')}
           </Typography.H3>
@@ -99,7 +99,9 @@ const Collateral = () => {
             rel="noopener noreferrer"
             className="bttn gradient2"
           >
-            {fbt('See how it works', 'See how it works')}
+            <Typography.H7 className="font-normal">
+              {fbt('See how it works', 'See how it works')}
+            </Typography.H7>
           </a>
         </div>
       </section>

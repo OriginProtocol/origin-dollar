@@ -37,7 +37,7 @@ const Allocation = ({ isMobile }) => {
   return (
     <>
       <section className="home black">
-        <div className="max-w-screen-xl mx-auto pb-20 px-3 md:px-8 text-center">
+        <div className="max-w-screen-xl mx-auto pb-20 px-4 md:px-8 text-center">
           <Typography.H3 className="font-bold">
             {fbt(
               'Fully transparent on the Ethereum',
@@ -218,7 +218,9 @@ const Allocation = ({ isMobile }) => {
             rel="noopener noreferrer"
             className="bttn gradient2"
           >
-            {fbt('See how yield is generated', 'See how yield is generated')}
+            <Typography.H7 className="font-normal">
+              {fbt('See how yield is generated', 'See how yield is generated')}
+            </Typography.H7>
           </a>
         </div>
       </section>

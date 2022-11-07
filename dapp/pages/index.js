@@ -21,7 +21,7 @@ const Home = ({ locale, onLocale, articles, seo, navLinks }) => {
       <Allocation />
       <Collateral />
       <section className="home black">
-        <div className="max-w-screen-xl mx-auto pb-20 px-2 md:px-8 text-center">
+        <div className="max-w-screen-xl mx-auto pb-20 px-4 md:px-8 text-center">
           <Typography.H3 className="font-bold">
             {fbt(
               'Audited by leading security experts',
@@ -35,7 +35,7 @@ const Home = ({ locale, onLocale, articles, seo, navLinks }) => {
               'Securing your funds is OUSD’s top priority. Changes to the protocol are reviewed by internal and external auditors on an ongoing basis.'
             )}
           </Typography.Body3>
-          <div className="audits rounded-xl m-6 lg:m-16 lg:mx-40 p-6 lg:p-10">
+          <div className="audits rounded-xl mx-[2px] my-6 lg:m-16 lg:mx-40 p-6 lg:p-10">
             <Typography.Body>
               {fbt('Existing audits', 'Existing audits')}
             </Typography.Body>
@@ -67,7 +67,9 @@ const Home = ({ locale, onLocale, articles, seo, navLinks }) => {
             rel="noopener noreferrer"
             className="bttn gradient2"
           >
-            {fbt('Review audits', 'Review audits')}
+            <Typography.H7 className="font-normal">
+              {fbt('Review audits', 'Review audits')}
+            </Typography.H7>
           </a>
         </div>
       </section>

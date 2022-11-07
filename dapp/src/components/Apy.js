@@ -35,7 +35,7 @@ const Apy = ({ isMobile }) => {
   return (
     <>
       <section className="home dim">
-        <div className="max-w-screen-xl mx-auto pb-20 px-3 lg:px-8 text-center">
+        <div className="max-w-screen-xl mx-auto pb-20 px-4 lg:px-8 text-center">
           <Typography.H3 className="font-bold">
             {fbt('The simplest', 'The simplest')}{' '}
             <span className="text-gradient2 py-1">
@@ -95,7 +95,9 @@ const Apy = ({ isMobile }) => {
             rel="noopener noreferrer"
             className="bttn gradient2 white"
           >
-            {fbt('Start earning now', 'Start earning now')}
+            <Typography.H7 className="font-normal">
+              {fbt('Start earning now', 'Start earning now')}
+            </Typography.H7>
           </a>
         </div>
       </section>

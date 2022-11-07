@@ -63,8 +63,13 @@ const Animation = ({ navLinks }) => {
               'Origin Dollar simplifies DeFi by eliminating the need for staking or lock-ups. Hold OUSD in any Ethereum wallet and watch your balance increase every day.'
             )}{' '}
           </Typography.Body3>
-          <a href="/swap" className="bttn ml-0 gradient2">
-            Get OUSD
+          <a
+            href="/swap"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="bttn ml-0 gradient2"
+          >
+            <Typography.H7 className="font-normal">Get OUSD</Typography.H7>
           </a>
         </div>
         <div className="container self-end md:self-start flex-1 relative mt-20 md:mt-0 pb-10">
