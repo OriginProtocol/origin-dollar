@@ -9,6 +9,8 @@ import { useCookies } from 'react-cookie'
 import { fbt } from 'fbt-runtime'
 import { useWeb3React } from '@web3-react/core'
 import { get } from 'lodash'
+import Nav from 'components/Nav'
+import { Header } from '@originprotocol/origin-storybook'
 
 import { useEagerConnect } from 'utils/hooks'
 import AccountStore from 'stores/AccountStore'
@@ -36,6 +38,7 @@ const Layout = ({
   showUniswapNotice,
   storeTransaction,
   storeTransactionError,
+  navLinks,
 }) => {
   const { connector, account, library } = useWeb3React()
 
@@ -216,7 +219,7 @@ const Layout = ({
                   'Burn notice'
                 )}
                 <Link href={adjustLinkHref('/burn')}>
-                  <a className="btn btn-dark gradient2 mt-3 mt-md-0 ml-md-auto">
+                  <a className="btn btn-dark gradient1 mt-3 mt-md-0 ml-md-auto">
                     OGV Burn
                   </a>
                 </Link>
