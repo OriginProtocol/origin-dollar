@@ -35,13 +35,13 @@ const Apy = ({ isMobile }) => {
   return (
     <>
       <section className="home dim">
-        <div className="max-w-screen-xl mx-auto pb-20 px-3 md:px-8 text-center">
+        <div className="max-w-screen-xl mx-auto pb-20 px-3 lg:px-8 text-center">
           <Typography.H3 className="font-bold">
             {fbt('The simplest', 'The simplest')}{' '}
             <span className="text-gradient2 py-1">
               {fbt('market-neutral', 'market-neutral')}{' '}
             </span>
-            {fbt('DeFi', 'DeFi')} <br className="hidden md:block" />
+            {fbt('DeFi', 'DeFi')} <br className="hidden lg:block" />
             {fbt('strategy', 'strategy')}
           </Typography.H3>
           <br className="block" />
@@ -52,8 +52,8 @@ const Apy = ({ isMobile }) => {
             )}
           </Typography.Body3>
           {loaded && (
-            <div className="apy flex flex-col md:flex-row justify-between rounded-xl my-10 md:m-16 p-6 md:p-10">
-              <div className="mt-2 mb-6 md:mb-0">
+            <div className="apy flex flex-col lg:flex-row justify-between rounded-xl my-10 lg:m-16 p-6 lg:p-10">
+              <div className="mt-2 mb-6 lg:mb-0">
                 <Typography.H2 className="font-bold lg:inline">
                   {formatCurrency(daysToApy[apyDays] * 100, 2) + '% '}
                 </Typography.H2>
@@ -69,7 +69,7 @@ const Apy = ({ isMobile }) => {
                       <div
                         className={`${
                           apyDays === days ? 'gradient2' : 'inactive'
-                        } days1 w-1/3 mb-6 md:mb-1 p-px`}
+                        } days1 w-1/3 mb-6 lg:mb-1 p-px text-center`}
                         key={days}
                         onClick={() => {
                           setApyDays(days)
@@ -117,7 +117,7 @@ const Apy = ({ isMobile }) => {
           display: inline-block;
           border-radius: 5px;
           white-space: nowrap;
-          padding: 12px 50px;
+          padding: 12px 0;
           text-align: center;
           cursor: pointer;
         }

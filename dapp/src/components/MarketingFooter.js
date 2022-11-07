@@ -50,7 +50,7 @@ export default function Footer({ locale }) {
                 </Typography.Body3>
               </a>
               <a
-                href={getDocsLink(locale)}
+                href={process.env.DOCS_URL}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="mt-2"
@@ -75,7 +75,7 @@ export default function Footer({ locale }) {
                   {fbt('Blog', 'Blog link')}
                 </Typography.Body3>
               </a>
-              <a
+              {/*<a
                 href={'/faq'}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -87,7 +87,7 @@ export default function Footer({ locale }) {
                 <Typography.Body3 className="text-[#fafbfb]">
                   {fbt('FAQ', 'FAQ link')}
                 </Typography.Body3>
-              </a>
+              </a>*/}
               <a
                 href={
                   'https://www.coingecko.com/en/coins/origin-dollar-governance'

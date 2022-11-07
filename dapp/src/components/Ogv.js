@@ -149,6 +149,7 @@ const Ogv = () => {
                   href="https://www.huobi.com/en-in/exchange/ogv_usdt"
                   target="_blank"
                   rel="noopener noreferrer"
+                  className="pt-[4px]"
                 >
                   <img src={assetRootPath(`/images/huobi.svg`)} />
                 </a>
@@ -163,6 +164,7 @@ const Ogv = () => {
                   href="https://www.kucoin.com/trade/OGV-USDT"
                   target="_blank"
                   rel="noopener noreferrer"
+                  className="pt-[8px]"
                 >
                   <img src={assetRootPath(`/images/kucoin.svg`)} />
                 </a>
