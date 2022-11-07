@@ -83,8 +83,11 @@ const Animation = ({ navLinks }) => {
           {totalOusd && (
             <div className="md:absolute md:bottom-0 md:left-0 md:right-0 md:text-center">
               <div className="relative flex flex-row md:block">
-                <div className='z-10'>
-                  <Typography.H2 className='font-bold pb-[4px] md:pb-[8px] my-auto'>{`$${formatCurrency(totalOusd, 0)}`}</Typography.H2>
+                <div className="z-10">
+                  <Typography.H2 className="font-bold pb-[4px] md:pb-[8px] my-auto">{`$${formatCurrency(
+                    totalOusd,
+                    0
+                  )}`}</Typography.H2>
                   <Typography.Body3 className="text-[#b5beca]">
                     {fbt(
                       'Total value of OUSD wallet balances',
