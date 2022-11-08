@@ -69,7 +69,7 @@ export async function getStaticProps() {
       articles: articlesRes?.data || null,
       meta: articlesRes?.meta || null,
       categories: Object.values(categories),
-      seo: formatSeo(seoRes.data),
+      seo: formatSeo(seoRes?.data),
       navLinks,
     },
     revalidate: 5 * 60, // Cache response for 5m
