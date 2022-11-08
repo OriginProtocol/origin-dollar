@@ -60,7 +60,10 @@ const Collateral = () => {
             </Typography.Body>
             <div className="relative h-96 my-10 md:my-0">
               <PieChart data={chartData} lineWidth={6} startAngle={270} />
-              <Typography.H6 className="absolute font-bold text-3xl left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">{`$${formatCurrency(total, 0)}`}</Typography.H6>
+              <Typography.H6 className="absolute font-bold text-3xl left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">{`$${formatCurrency(
+                total,
+                0
+              )}`}</Typography.H6>
             </div>
             <div className="lg:w-1/2 md:px-20 text-left">
               <Typography.Body className="mb-3 hidden md:block">
@@ -79,10 +82,8 @@ const Collateral = () => {
                         className="pr-[8px] md:pr-6 w-12 md:w-auto"
                       ></img>
                       <div>
-                        <Typography.H6>{`${formatCurrency(
-                          (token.total / total) * 100,
-                          2
-                          )}%`}
+                        <Typography.H6>
+                          {`${formatCurrency((token.total / total) * 100, 2)}%`}
                         </Typography.H6>
                         <div className="pt-[0px] md:pt-2">
                           <Typography.Body3 className="text-[#b5beca]">{`$${formatCurrency(
