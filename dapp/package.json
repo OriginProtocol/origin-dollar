@@ -55,7 +55,7 @@
     "@ledgerhq/hw-transport-webusb": "^6.11.2",
     "@mui/material": "^5.10.10",
     "@myetherwallet/mewconnect-connector": "^0.1.8",
-    "@originprotocol/origin-storybook": "^0.22.2",
+    "@originprotocol/origin-storybook": "^0.22.6",
     "@sentry/browser": "^5.22.3",
     "@sentry/integrations": "^5.22.3",
     "@sentry/node": "^5.22.3",
