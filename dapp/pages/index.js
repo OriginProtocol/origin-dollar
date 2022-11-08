@@ -5,8 +5,8 @@ import Apy from 'components/Apy'
 import Allocation from 'components/Allocation'
 import Collateral from 'components/Collateral'
 import Ogv from 'components/Ogv'
-import Seo from "components/strapi/seo";
-import Head from "next/head";
+import Seo from 'components/strapi/seo'
+import Head from 'next/head'
 import { fetchAPI } from '../lib/api'
 import formatSeo from '../src/utils/seo'
 import transformLinks from '../src/utils/transformLinks'

@@ -66,11 +66,10 @@ const Animation = ({ navLinks }) => {
             )}{' '}
           </Typography.Body3>
           <Link href={adjustLinkHref('/swap')}>
-            <a
-              target="_blank"
-              className="bttn ml-0 gradient2 w-auto"
-            >
-              <Typography.H7 className="mx-8 font-normal">{fbt('Get OUSD', 'Get OUSD')}</Typography.H7>
+            <a target="_blank" className="bttn ml-0 gradient2 w-auto">
+              <Typography.H7 className="mx-8 font-normal">
+                {fbt('Get OUSD', 'Get OUSD')}
+              </Typography.H7>
             </a>
           </Link>
         </div>

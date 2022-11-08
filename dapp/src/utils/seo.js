@@ -8,22 +8,22 @@ const formatSeo = (seoRes) => {
   }
 
   if (seoRes.structuredData) {
-    seo.structuredData = JSON.stringify(seoRes.structuredData);
+    seo.structuredData = JSON.stringify(seoRes.structuredData)
   }
 
   if (seoRes.metaViewport) {
-    seo.metaViewport = seoRes.metaViewport;
+    seo.metaViewport = seoRes.metaViewport
   }
 
   if (seoRes.metaSocial) {
-    const metaSocial = {};
+    const metaSocial = {}
     seoRes.metaSocial.forEach((metaSoc) => {
-      metaSocial[metaSoc.socialNetwork.toLowerCase()] = metaSoc;
+      metaSocial[metaSoc.socialNetwork.toLowerCase()] = metaSoc
     })
-    seo.metaSocial = metaSocial;
+    seo.metaSocial = metaSocial
   }
 
   return seo
 }
 
-export default formatSeo;
+export default formatSeo

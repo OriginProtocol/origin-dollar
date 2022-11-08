@@ -92,10 +92,7 @@ const Apy = ({ isMobile }) => {
             </div>
           )}
           <Link href={adjustLinkHref('/swap')}>
-            <a
-              target="_blank"
-              className="bttn ml-0 gradient2 w-auto"
-            >
+            <a target="_blank" className="bttn ml-0 gradient2 w-auto">
               <Typography.H7 className="font-normal">
                 {fbt('Start earning now', 'Start earning now')}
               </Typography.H7>
