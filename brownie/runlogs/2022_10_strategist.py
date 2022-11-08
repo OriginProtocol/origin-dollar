@@ -249,6 +249,6 @@ print(proposal_id)
 # # Test
 
 
-oldgov.queue(proposal_id, {'from': OLD_GOV_MULTI_SIG})
+newgov.queue(proposal_id, {'from': OLD_GOV_MULTI_SIG})
 chain.mine(timedelta=2*24*60*60+2)
-oldgov.execute(proposal_id, {'from': OLD_GOV_MULTI_SIG})
+newgov.execute(proposal_id, {'from': OLD_GOV_MULTI_SIG})
