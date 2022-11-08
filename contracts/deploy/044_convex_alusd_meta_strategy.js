@@ -16,7 +16,7 @@ module.exports = generalizedConvexStratDeployment({
   mainTokenAddress: "0xBC6DA0FE9aD5f3b0d58160288917AA56653660E9", // Alchemix USD
   cvxRewardStakerAddress: "0x02E2151D4F351881017ABdF2DD2b51150841d5B3",
   cvxDepositorPTokenId: alusdMetapoolLPCRVPid, // 36
-  redeployVault: true,
+  redeployVault: false,
   deployStrategyImplementation: true,
   skipMainnetDeploy: true,
 });
