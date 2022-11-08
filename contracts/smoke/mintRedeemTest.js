@@ -81,8 +81,7 @@ async function setup(hre) {
   usdt = await hre.ethers.getContractAt(erc20Abi, addresses.mainnet.USDT);
   dai = await hre.ethers.getContractAt(erc20Abi, addresses.mainnet.DAI);
   usdc = await hre.ethers.getContractAt(erc20Abi, addresses.mainnet.USDC);
-  const vaultProxy = await hre.ethers.getContract("VaultProxy");
-  vault = await ethers.getContractAt("IVault", vaultProxy.address);
+  vault = await ethers.getContractAt("IVault", addresses.mainnet.VaultProxy);
   signer = (await hre.ethers.getSigners())[4];
   signer2 = (await hre.ethers.getSigners())[5];
 
