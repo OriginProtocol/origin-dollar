@@ -208,13 +208,13 @@ newgov = Contract.from_explorer("0x3cdD07c16614059e66344a7b579DAB4f9516C0b6")
 old_contracts = [
   "0x9C94df9d594BA1eb94430C006c269C314B1A8281",  # CompensationClaims
   "0xD5433168Ed0B1F7714819646606DB509D9d8EC1f",  # CompoundStrategyProxy
-  "0x9f2b18751376cF6a3432eb158Ba5F9b1AbD2F7ce",  # InitializeGovernedUpgradeabilityProxy
+  "0x9f2b18751376cF6a3432eb158Ba5F9b1AbD2F7ce",  # InitializeGovernedUpgradeabilityProxy (DAI Aave Strategy)
   "0x3c5fe0a3922777343CBD67D3732FCdc9f2Fa6f2F",  # ThreePoolStrategyProxy
   "0x48Cf14DeA2f5dD31c57218877195913412D3278A",  # VaultCore
   "0x12115A32a19e4994C2BA4A5437C22CEf5ABb59C3",  # CompoundStrategyProxy
   "0x47211B1D1F6Da45aaEE06f877266E072Cf8BaA74",  # CompoundStrategyProxy
-  "0x051CaEFA90aDf261B8E8200920C83778b7B176B6",  # InitializeGovernedUpgradeabilityProxy
-  "0x277e80f3E14E7fB3fc40A9d6184088e0241034bD",  # InitializeGovernedUpgradeabilityProxy
+  "0x051CaEFA90aDf261B8E8200920C83778b7B176B6",  # InitializeGovernedUpgradeabilityProxy (DAI Aave Strategy)
+  "0x277e80f3E14E7fB3fc40A9d6184088e0241034bD",  # InitializeGovernedUpgradeabilityProxy (Curve  Strategy)
   "0x4d4f5e7a1FE57F5cEB38BfcE8653EFFa5e584458",  # MixOracle
   "0xe40e09cD6725E542001FcB900d9dfeA447B529C0",  # ThreePoolStrategyProxy
 ]
