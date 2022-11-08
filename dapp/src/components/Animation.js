@@ -46,17 +46,18 @@ const Animation = ({ navLinks }) => {
   }, [ousd])
 
   return (
-    <section className="intro black">
+    <>
+    <section className="intro black p-[0px] lg:pb-[75px]">
       <Header mappedLinks={navLinks} webProperty="ousd" />
-      <div className="flex flex-col md:flex-row items-center max-w-screen-xl mx-auto overflow-hidden pt-10 px-8">
-        <div className="md:w-1/2">
+      <div className="flex flex-col lg:flex-row items-center max-w-screen-xl mx-auto overflow-hidden pt-10 px-8">
+        <div className="lg:w-1/2">
           <Typography.H2 as="h1" className="font-normal">
             {fbt('The self-custodial,', 'The self-custodial,')}{' '}
             <br className="hidden md:block" />
             <span className="text-gradient2 font-bold py-1">
               {fbt('yield-generating,', 'yield-generating,')}{' '}
             </span>
-            <br className="hidden md:block" />
+            <br className="hidden lg:block" />
             {fbt('stablecoin', 'stablecoin')}
           </Typography.H2>
           <Typography.Body3 className="mt-6 mb-10 text-[#b5beca]">
@@ -73,8 +74,8 @@ const Animation = ({ navLinks }) => {
             </a>
           </Link>
         </div>
-        <div className="container self-end md:self-start flex-1 relative mt-20 md:mt-0 pb-10">
-          <div className="hidden md:block">
+        <div className="container self-end lg:self-start flex-1 relative mt-20 lg:mt-0 md:pb-10">
+          <div className="hidden lg:block">
             <img
               src={assetRootPath('/images/ousd.svg')}
               className="ousd m-auto pb-4"
@@ -82,28 +83,34 @@ const Animation = ({ navLinks }) => {
             />
           </div>
           {totalOusd && (
-            <div className="md:absolute md:bottom-0 md:left-0 md:right-0 md:text-center">
-              <Typography.H2 className="flex flex-row font-bold md:block">
-                {`$${formatCurrency(totalOusd, 0)}`}
-                <div className="md:hidden">
+            <div className="lg:absolute lg:bottom-0 lg:left-0 lg:right-0 text-center">
+              <div className="relative h-32 md:h-64 lg:h-auto flex flex-row lg:block">
+                <div className="absolute right-20 md:right-40 md:top-10 lg:static z-10">
+                  <Typography.H2 className="text-[40px] md:text-7xl font-bold pb-[4px] lg:pb-[8px] my-auto">{`$${formatCurrency(
+                    totalOusd,
+                    0
+                  )}`}</Typography.H2>
+                  <Typography.Body3 className="text-sm md:text-base text-[#b5beca] pt-[0px] md:pt-[4px] lg:-mt-2">
+                    {fbt(
+                      'Total value of OUSD wallet balances',
+                      'Total value of OUSD wallet balances'
+                    )}
+                  </Typography.Body3>
+                </div>
+                <div className="absolute -top-12 -right-12 z-0 lg:hidden">
                   <img
-                    src={assetRootPath('/images/ousd-icon.svg')}
-                    className="ousd ml-3 pb-4 w-12"
+                    src={assetRootPath('/images/ousd.svg')}
+                    className="ousd ml-3 w-40 md:w-64"
                     alt="ousd"
                   />
                 </div>
-              </Typography.H2>
-              <Typography.Body3 className="text-[#b5beca] mt-2">
-                {fbt(
-                  'Total value of OUSD wallet balances',
-                  'Total value of OUSD wallet balances'
-                )}
-              </Typography.Body3>
+              </div>
             </div>
           )}
         </div>
       </div>
     </section>
+    </>
   )
 }
 

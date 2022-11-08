@@ -89,8 +89,6 @@ section {
 }
 
 section.intro {
-  padding: 0;
-  padding-bottom: 75px;
   background-image: url(/images/splines34.png);
   background-position: 100% 0;
   background-repeat: no-repeat;
