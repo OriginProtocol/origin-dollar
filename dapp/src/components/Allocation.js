@@ -105,7 +105,7 @@ const Allocation = ({ isMobile }) => {
                             sx={{
                               bgcolor: '#141519',
                               borderRadius: 10,
-                              height: 15,
+                              height: { xs: 4, md: 12}
                             }}
                             className="h-2"
                           ></LinearProgress>

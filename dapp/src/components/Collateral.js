@@ -54,17 +54,20 @@ const Collateral = () => {
             <br className="hidden md:block" />
             {fbt('immediately at any time.', 'immediately at any time.')}
           </Typography.Body3>
-          <div className="collateral flex flex-col md:flex-row justify-between rounded-xl my-10 md:m-16 px-6 pb-6 md:p-6 lg:px-28 md:py-20">
-            <div className="relative h-96">
+          <div className="collateral flex flex-col md:flex-row justify-between rounded-xl my-10 md:m-16 p-6 md:p-6 lg:px-28 md:py-20">
+            <Typography.Body className="md:hidden">
+              {fbt('Currently-held collateral', 'Currently-held collateral')}
+            </Typography.Body>
+            <div className="relative h-96 my-10 md:my-0">
               <PieChart data={chartData} lineWidth={6} startAngle={270} />
-              <Typography.H6 className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">{`$${'40,123,456'}`}</Typography.H6>
+              <Typography.H6 className="absolute font-bold text-3xl left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">{`$${formatCurrency(total, 0)}`}</Typography.H6>
             </div>
             <div className="lg:w-1/2 md:px-20 text-left">
-              <Typography.Body className="mb-3">
+              <Typography.Body className="mb-3 hidden md:block">
                 {fbt('Currently-held collateral', 'Currently-held collateral')}
               </Typography.Body>
               <br className="hidden md:block" />
-              <div className="flex flex-col justify-between h-4/5">
+              <div className="flex flex-wrap md:flex-col justify-between h-4/5 bd-red-500">
                 {collateral.collateral?.map((token) => {
                   return (
                     <div
@@ -73,15 +76,16 @@ const Collateral = () => {
                     >
                       <img
                         src={assetRootPath(`/images/${token.name}-logo.svg`)}
-                        className="pr-6"
+                        className="pr-[8px] md:pr-6 w-12 md:w-auto"
                       ></img>
                       <div>
                         <Typography.H6>{`${formatCurrency(
                           (token.total / total) * 100,
                           2
-                        )}%`}</Typography.H6>
-                        <div className="pt-2">
-                          <Typography.Body3 className="text-[#b5beca] pr-2">{`$${formatCurrency(
+                          )}%`}
+                        </Typography.H6>
+                        <div className="pt-[0px] md:pt-2">
+                          <Typography.Body3 className="text-[#b5beca]">{`$${formatCurrency(
                             token.total,
                             0
                           )}`}</Typography.Body3>
