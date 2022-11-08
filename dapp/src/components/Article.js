@@ -9,12 +9,7 @@ import { assetRootPath } from 'utils/image'
 const Article = ({ article, navLinks }) => {
   const imageUrl = article.cover?.url
 
-  const seo = {
-    metaTitle: article.title,
-    metaDescription: article.description,
-    shareImage: article.cover,
-    article: true,
-  }
+  const seo = formatSeo(article.seo)
 
   return (
     <section className="intro black">

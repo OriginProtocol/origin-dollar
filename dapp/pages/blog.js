@@ -18,21 +18,27 @@ const Blog = ({
   navLinks,
 }) => {
   return (
-    <Layout locale={locale}>
+    <>
       <Head>
         <title>Blog</title>
       </Head>
       <Seo seo={seo} />
-      <section className="intro black pb-12">
-        <Header mappedLinks={navLinks} webProperty="ousd" />
-        <div className="max-w-screen-xl mx-auto px-6 mb-6">
-          <Typography.H2>Latest news</Typography.H2>
-        </div>
-        {!articles?.length ? null : (
-          <News articles={articles} meta={meta} categories={categories} />
-        )}
-      </section>
-    </Layout>
+      <Layout locale={locale}>
+        <Head>
+          <title>Blog</title>
+        </Head>
+        <Seo seo={seo} />
+        <section className="intro black pb-12">
+          <Header mappedLinks={navLinks} webProperty="ousd" />
+          <div className="max-w-screen-xl mx-auto px-6 mb-6">
+            <Typography.H2>Latest news</Typography.H2>
+          </div>
+          {!articles?.length ? null : (
+            <News articles={articles} meta={meta} categories={categories} />
+          )}
+        </section>
+      </Layout>
+    </>
   )
 }
 
@@ -63,7 +69,7 @@ export async function getStaticProps() {
       articles: articlesRes?.data || null,
       meta: articlesRes?.meta || null,
       categories: Object.values(categories),
-      seo: formatSeo(seoRes),
+      seo: formatSeo(seoRes.data),
       navLinks,
     },
     revalidate: 5 * 60, // Cache response for 5m

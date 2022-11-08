@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
+import Link from 'next/link'
 import { Typography } from '@originprotocol/origin-storybook'
 import { useStoreState } from 'pullstate'
 import ContractStore from 'stores/ContractStore'
@@ -7,6 +8,7 @@ import { DEFAULT_SELECTED_APY } from 'utils/constants'
 import { zipObject } from 'lodash'
 import { formatCurrency } from 'utils/math'
 import withIsMobile from 'hoc/withIsMobile'
+import { adjustLinkHref } from 'utils/utils'
 
 const Apy = ({ isMobile }) => {
   const apyDayOptions = [7, 30, 365]
@@ -89,16 +91,16 @@ const Apy = ({ isMobile }) => {
               </div>
             </div>
           )}
-          <a
-            href="/swap"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="bttn gradient2 white"
-          >
-            <Typography.H7 className="font-normal">
-              {fbt('Start earning now', 'Start earning now')}
-            </Typography.H7>
-          </a>
+          <Link href={adjustLinkHref('/swap')}>
+            <a
+              target="_blank"
+              className="bttn ml-0 gradient2 w-auto"
+            >
+              <Typography.H7 className="font-normal">
+                {fbt('Start earning now', 'Start earning now')}
+              </Typography.H7>
+            </a>
+          </Link>
         </div>
       </section>
       <style jsx>{`

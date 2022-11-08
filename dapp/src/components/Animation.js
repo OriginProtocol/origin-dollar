@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
+import Link from 'next/link'
 import { Typography, Header } from '@originprotocol/origin-storybook'
 import { assetRootPath } from 'utils/image'
 import { animateValue } from 'utils/animation'
@@ -9,6 +10,7 @@ import { DEFAULT_SELECTED_APY } from 'utils/constants'
 import { zipObject } from 'lodash'
 import { formatCurrency } from 'utils/math'
 import addresses from 'constants/contractAddresses'
+import { adjustLinkHref } from 'utils/utils'
 
 const Animation = ({ navLinks }) => {
   const [totalOusd, setTotalOusd] = useState()
@@ -48,7 +50,7 @@ const Animation = ({ navLinks }) => {
       <Header mappedLinks={navLinks} webProperty="ousd" />
       <div className="flex flex-col md:flex-row items-center max-w-screen-xl mx-auto overflow-hidden pt-10 px-8">
         <div className="md:w-1/2">
-          <Typography.H2 className="font-normal">
+          <Typography.H2 as="h1" className="font-normal">
             {fbt('The self-custodial,', 'The self-custodial,')}{' '}
             <br className="hidden md:block" />
             <span className="text-gradient2 font-bold py-1">
@@ -63,14 +65,14 @@ const Animation = ({ navLinks }) => {
               'Origin Dollar simplifies DeFi by eliminating the need for staking or lock-ups. Hold OUSD in any Ethereum wallet and watch your balance increase every day.'
             )}{' '}
           </Typography.Body3>
-          <a
-            href="/swap"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="bttn ml-0 gradient2 w-auto"
-          >
-            <Typography.H7 className="mx-8 font-normal">Get OUSD</Typography.H7>
-          </a>
+          <Link href={adjustLinkHref('/swap')}>
+            <a
+              target="_blank"
+              className="bttn ml-0 gradient2 w-auto"
+            >
+              <Typography.H7 className="mx-8 font-normal">{fbt('Get OUSD', 'Get OUSD')}</Typography.H7>
+            </a>
+          </Link>
         </div>
         <div className="container self-end md:self-start flex-1 relative mt-20 md:mt-0 pb-10">
           <div className="hidden md:block">

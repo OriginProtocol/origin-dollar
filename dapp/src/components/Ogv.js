@@ -124,7 +124,7 @@ const Ogv = () => {
                   </Typography.H7>
                 </a>
               </span>
-              <span className="hidden">
+              {/*<span>
                 <a
                   href="/ogv"
                   target="_blank"
@@ -135,7 +135,7 @@ const Ogv = () => {
                     {fbt('View dashboard', 'View dashboard')}
                   </Typography.H7>
                 </a>
-              </span>
+              </span>*/}
             </div>
             <div>
               <img
@@ -152,7 +152,7 @@ const Ogv = () => {
                 <a
                   href="https://www.huobi.com/en-in/exchange/ogv_usdt"
                   target="_blank"
-                  rel="noopener noreferrer"
+                  rel="nofollow noreferrer"
                   className="pt-[4px]"
                 >
                   <img src={assetRootPath(`/images/huobi.svg`)} />
@@ -160,14 +160,14 @@ const Ogv = () => {
                 <a
                   href="https://app.uniswap.org/#/swap?outputCurrency=0x9c354503C38481a7A7a51629142963F98eCC12D0&chain=mainnet"
                   target="_blank"
-                  rel="noopener noreferrer"
+                  rel="nofollow noreferrer"
                 >
                   <img src={assetRootPath(`/images/uniswap.svg`)} />
                 </a>
                 <a
                   href="https://www.kucoin.com/trade/OGV-USDT"
                   target="_blank"
-                  rel="noopener noreferrer"
+                  rel="nofollow noreferrer"
                   className="pt-[8px]"
                 >
                   <img src={assetRootPath(`/images/kucoin.svg`)} />
