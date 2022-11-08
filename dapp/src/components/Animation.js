@@ -83,27 +83,22 @@ const Animation = ({ navLinks }) => {
           </div>
           {totalOusd && (
             <div className="md:absolute md:bottom-0 md:left-0 md:right-0 md:text-center">
-              <div className="relative flex flex-row md:block">
-                <div className="z-10">
-                  <Typography.H2 className="font-bold pb-[4px] md:pb-[8px] my-auto">{`$${formatCurrency(
-                    totalOusd,
-                    0
-                  )}`}</Typography.H2>
-                  <Typography.Body3 className="text-[#b5beca]">
-                    {fbt(
-                      'Total value of OUSD wallet balances',
-                      'Total value of OUSD wallet balances'
-                    )}
-                  </Typography.Body3>
-                </div>
-                <div className="absolute -top-16 -right-12 z-0 md:hidden">
+              <Typography.H2 className="flex flex-row font-bold md:block">
+                {`$${formatCurrency(totalOusd, 0)}`}
+                <div className="md:hidden">
                   <img
-                    src={assetRootPath('/images/ousd.svg')}
-                    className="ousd ml-3 w-40"
+                    src={assetRootPath('/images/ousd-icon.svg')}
+                    className="ousd ml-3 pb-4 w-12"
                     alt="ousd"
                   />
                 </div>
-              </div>
+              </Typography.H2>
+              <Typography.Body3 className="text-[#b5beca] mt-2">
+                {fbt(
+                  'Total value of OUSD wallet balances',
+                  'Total value of OUSD wallet balances'
+                )}
+              </Typography.Body3>
             </div>
           )}
         </div>
