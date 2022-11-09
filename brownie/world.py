@@ -26,6 +26,7 @@ def load_contract(name, address):
         return brownie.Contract.from_abi(name, address, abi)
 
 frax = load_contract('ERC20', FRAX)
+busd = load_contract('ERC20', BUSD)
 ousd = load_contract('ousd', OUSD)
 usdt = load_contract('usdt', USDT)
 usdc = load_contract('usdc', USDC)

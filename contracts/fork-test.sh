@@ -61,7 +61,11 @@ main()
         for run in {1..40}; do
           response=$(curl -s -H "Content-Type: application/json" -X POST --data '{"id":1,"jsonrpc":"2.0","method":"evm_mine"}' "$LOCAL_PROVIDER_URL")
         done
+<<<<<<< HEAD
 
+=======
+        
+>>>>>>> origin/master
         # Hardhat has the habit of not using blocks with less than 32 confirmations
         # Force it to use the latest block
         echo "Connecting to node $LOCAL_PROVIDER_URL using block number: $FORK_BLOCK_NUMBER"

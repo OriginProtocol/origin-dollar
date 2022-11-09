@@ -43,12 +43,9 @@ contract ConvexGeneralizedMetaStrategy is BaseConvexMetaStrategy {
          */
         uint256 minReceived = threePoolLpDollarValue
             .divPrecisely(metapoolVirtualPrice)
-            .mulTruncate(uint256(1e18) - maxSlippage);
+            .mulTruncate(uint256(1e18) - MAX_SLIPPAGE);
 
-        // slither-disable-next-line unused-return
-        metapool.add_liquidity(_amounts, minReceived);
-
-        uint256 metapoolLp = metapoolLPToken.balanceOf(address(this));
+        uint256 metapoolLp = metapool.add_liquidity(_amounts, minReceived);
 
         bool success = IConvexDeposits(cvxDepositorAddress).deposit(
             cvxDepositorPTokenId,
@@ -62,38 +59,17 @@ contract ConvexGeneralizedMetaStrategy is BaseConvexMetaStrategy {
     /**
      * Withdraw the specified amount of tokens from the gauge. And use all the resulting tokens
      * to remove liquidity from metapool
-     * @param num3CrvTokens Number of Convex LP tokens to remove from gauge
+     * @param num3CrvTokens Number of Convex 3pool LP tokens to withdraw from metapool
      */
     function _lpWithdraw(uint256 num3CrvTokens) internal override {
-        ICurvePool curvePool = ICurvePool(platformAddress);
-
         uint256 gaugeTokens = IRewardStaking(cvxRewardStakerAddress).balanceOf(
             address(this)
         );
-        /**
-         * Convert 3crv tokens to metapoolLP tokens. Since we have no use for the other token we are also
-         * removing liquidity in the balanced manner (only removing 3CrvLP tokens)
-         */
-        // slither-disable-next-line divide-before-multiply
-        uint256 estimationRequiredMetapoolLpTokens = curvePool
-            .get_virtual_price()
-            .divPrecisely(metapool.get_virtual_price())
-            .mulTruncate(num3CrvTokens);
 
-        int128 metapool3CrvCoinIndex = int128(
-            _getMetapoolCoinIndex(address(pTokenAddress))
+        uint256 requiredMetapoolLpTokens = _calcCurveMetaTokenAmount(
+            crvCoinIndex,
+            num3CrvTokens
         );
-
-        // add 10% margin to the calculation of required tokens
-        // slither-disable-next-line divide-before-multiply
-        uint256 estimatedMetapoolLPWithMargin = (estimationRequiredMetapoolLpTokens *
-                1100) / 1e3;
-        uint256 crv3ReceivedWithMargin = metapool.calc_withdraw_one_coin(
-            estimatedMetapoolLPWithMargin,
-            metapool3CrvCoinIndex
-        );
-        uint256 requiredMetapoolLpTokens = (estimatedMetapoolLPWithMargin *
-            num3CrvTokens) / crv3ReceivedWithMargin;
 
         require(
             requiredMetapoolLpTokens <= gaugeTokens,
@@ -114,12 +90,11 @@ contract ConvexGeneralizedMetaStrategy is BaseConvexMetaStrategy {
             true
         );
 
-        uint256 burnAmount = metapoolLPToken.balanceOf(address(this));
-        if (burnAmount > 0) {
+        if (requiredMetapoolLpTokens > 0) {
             // slither-disable-next-line unused-return
             metapool.remove_liquidity_one_coin(
-                burnAmount,
-                metapool3CrvCoinIndex,
+                requiredMetapoolLpTokens,
+                int128(crvCoinIndex),
                 num3CrvTokens
             );
         }
@@ -134,13 +109,8 @@ contract ConvexGeneralizedMetaStrategy is BaseConvexMetaStrategy {
             true
         );
 
-        uint128 metapool3CrvCoinIndex = _getMetapoolCoinIndex(
-            address(pTokenAddress)
-        );
-
-        uint256 burnAmount = metapoolLPToken.balanceOf(address(this));
-        if (burnAmount > 0) {
-            uint256 burnDollarAmount = burnAmount.mulTruncate(
+        if (gaugeTokens > 0) {
+            uint256 burnDollarAmount = gaugeTokens.mulTruncate(
                 metapool.get_virtual_price()
             );
             uint256 curve3PoolExpected = burnDollarAmount.divPrecisely(
@@ -150,8 +120,8 @@ contract ConvexGeneralizedMetaStrategy is BaseConvexMetaStrategy {
             // Always withdraw all of the available metapool LP tokens (similar to how we always deposit all)
             // slither-disable-next-line unused-return
             metapool.remove_liquidity_one_coin(
-                burnAmount,
-                int128(metapool3CrvCoinIndex),
+                gaugeTokens,
+                int128(crvCoinIndex),
                 curve3PoolExpected -
                     curve3PoolExpected.mulTruncate(maxWithdrawalSlippage)
             );

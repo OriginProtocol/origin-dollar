@@ -5,6 +5,7 @@ import { assetRootPath } from 'utils/image'
 import { useRouter } from 'next/router'
 
 import EmailForm from './EmailForm'
+import { Typography } from '@originprotocol/origin-storybook'
 
 const analyticsURL = process.env.ANALYTICS_URL
 const jobsURL = process.env.JOBS_URL
@@ -27,171 +28,131 @@ export default function Footer({ locale }) {
 
   return (
     <>
-      <footer className={`${pathname === '/burn' ? 'burn' : ''}`}>
-        <div className="container">
-          <div className="d-flex align-items-center justify-content-center">
-            <div className="">
-              <nav className="nav d-flex justify-content-center">
-                <a
-                  href={analyticsURL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="nav-link"
-                  onClick={() => {
-                    analytics.track('Analytics Link click')
-                  }}
-                >
-                  {fbt('Analytics', 'Analytics link')}
-                </a>
-                <a
-                  href={jobsURL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="nav-link"
-                  onClick={() => {
-                    analytics.track('Jobs Link click')
-                  }}
-                >
-                  {fbt('Jobs', 'Jobs link')}
-                </a>
-                <a
-                  href={getDocsLink(locale)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="nav-link"
-                  onClick={() => {
-                    analytics.track('Docs Link click')
-                  }}
-                >
+      <footer>
+        <div className="max-w-screen-xl mx-auto relative overflow-hidden px-8 pt-16 pb-10 divide-gray-500 divide-y-2 text-white">
+          <div className="flex flex-col md:flex-row justify-between pt-10 pb-10 md:pb-16 text-left">
+            <img
+              src={assetRootPath(`/images/origin-white.svg`)}
+              className="w-28 md:w-32 pb-6 md:pb-0"
+            />
+            <div className="flex flex-col md:flex-row justify-between mt-2 md:w-1/2">
+              <a
+                href={'https://governance.ousd.com/'}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-2"
+                onClick={() => {
+                  analytics.track('Governance Link click')
+                }}
+              >
+                <Typography.Body3 className="text-[#fafbfb]">
+                  {fbt('Governance', 'Governance link')}
+                </Typography.Body3>
+              </a>
+              <a
+                href={process.env.DOCS_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-2"
+                onClick={() => {
+                  analytics.track('Docs Link click')
+                }}
+              >
+                <Typography.Body3 className="text-[#fafbfb]">
                   {fbt('Docs', 'Documentation link')}
-                </a>
-                <a
-                  href={discordURL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="nav-link"
-                  onClick={() => {
-                    analytics.track('Discord Link click')
-                  }}
-                >
-                  {fbt('Discord', 'Discord link')}
-                </a>
-                <a
-                  href={githubURL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="nav-link"
-                  onClick={() => {
-                    analytics.track('Github Link click')
-                  }}
-                >
-                  {fbt('Github', 'Github link')}
-                </a>
-              </nav>
-              <div className="legal d-flex flex-column align-items-center">
-                <a
-                  href="https://originprotocol.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {fbt(
-                    'Originally released by Origin Protocol',
-                    'Originally released by Origin Protocol'
-                  )}
-                </a>
-                <nav className="nav d-flex">
-                  <a
-                    href={termsURL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="nav-link"
-                  >
-                    {fbt('Terms of Service', 'Terms of Service')}
-                  </a>
-                  <a
-                    href={privacyURL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="nav-link"
-                  >
-                    {fbt('Privacy Policy', 'Privacy Policy')}
-                  </a>
-                </nav>
-              </div>
+                </Typography.Body3>
+              </a>
+              <a
+                href={'/blog'}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-2"
+                onClick={() => {
+                  analytics.track('Blog Link click')
+                }}
+              >
+                <Typography.Body3 className="text-[#fafbfb]">
+                  {fbt('Blog', 'Blog link')}
+                </Typography.Body3>
+              </a>
+              {/*<a
+                href={'/faq'}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-2"
+                onClick={() => {
+                  analytics.track('FAQ Link click')
+                }}
+              >
+                <Typography.Body3 className="text-[#fafbfb]">
+                  {fbt('FAQ', 'FAQ link')}
+                </Typography.Body3>
+              </a>*/}
+              <a
+                href={
+                  'https://www.coingecko.com/en/coins/origin-dollar-governance'
+                }
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-2"
+                onClick={() => {
+                  analytics.track('OGV Link click')
+                }}
+              >
+                <Typography.Body3 className="text-[#fafbfb]">
+                  {fbt('OGV', 'OGV link')}
+                </Typography.Body3>
+              </a>
+              <br className="block md:hidden" />
+              <a
+                href="/swap"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bttn gradient2 px-4 py-2 w-full md:w-32 m-0"
+              >
+                <Typography.Body3 className="text-white">
+                  Get OUSD
+                </Typography.Body3>
+              </a>
+            </div>
+          </div>
+          <div className="flex flex-col md:flex-row justify-between pt-10 text-[#b5beca]">
+            <a
+              href="https://originprotocol.com"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Typography.Caption>
+                {fbt(
+                  'Originally released by Origin Protocol',
+                  'Originally released by Origin Protocol'
+                )}
+              </Typography.Caption>
+            </a>
+            <div className="flex flex-row md:justify-between mt-2 md:mt-0">
+              <a
+                href={termsURL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mr-4 md:mr-0"
+              >
+                <Typography.Caption>
+                  {fbt('Terms of Service', 'Terms of Service')}
+                </Typography.Caption>
+              </a>
+              <a href={privacyURL} target="_blank" rel="noopener noreferrer">
+                <Typography.Caption>
+                  {fbt('Privacy Policy', 'Privacy Policy')}
+                </Typography.Caption>
+              </a>
             </div>
           </div>
         </div>
       </footer>
       <style jsx>{`
         footer {
-          background-color: #061d2a;
-          padding: 100px 0 160px 0;
-        }
-
-        footer.burn {
           background-color: #141519;
-        }
-
-        h5 {
-          color: white;
-          font-size: 1.125rem;
-          font-weight: bold;
-        }
-
-        p {
-          color: #bdcbd5;
-          font-size: 1.125rem;
-        }
-
-        a,
-        .legal {
-          color: white;
-          font-size: 0.875rem;
-        }
-
-        .nav,
-        .legal {
-          margin-top: 20px;
-        }
-
-        a:hover {
-          cursor: pointer;
-          opacity: 0.8;
-        }
-
-        .nav-link {
-          padding: 0;
-        }
-
-        .nav-link:not(:last-of-type) {
-          padding-right: 32px;
-        }
-
-        .legal,
-        .legal .nav-link {
-          color: #bdcbd5;
-          line-height: 2;
-        }
-
-        @media (max-width: 799px) {
-          .container {
-            padding-left: 30px;
-            padding-right: 30px;
-          }
-
-          .col-12 {
-            padding-right: 0px;
-            padding-left: 0px;
-          }
-
-          footer {
-            padding: 50px 10px;
-          }
-
-          .nav-link {
-            min-width: 110px;
-            margin-bottom: 20px;
-          }
+          color: #fafbfb;
         }
       `}</style>
     </>

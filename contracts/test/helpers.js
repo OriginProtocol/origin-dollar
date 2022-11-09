@@ -19,10 +19,10 @@ chai.Assertion.addMethod(
     const actual = this._obj;
     chai
       .expect(actual, message)
-      .gte(expected.mul(100 - maxTolerancePct).div(100));
+      .gte(expected.mul(10000 - maxTolerancePct * 100).div(10000));
     chai
       .expect(actual, message)
-      .lte(expected.mul(100 + maxTolerancePct).div(100));
+      .lte(expected.mul(10000 + maxTolerancePct * 100).div(10000));
   }
 );
 

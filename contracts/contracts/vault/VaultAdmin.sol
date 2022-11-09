@@ -142,6 +142,21 @@ contract VaultAdmin is VaultStorage {
         external
         onlyGovernor
     {
+        /**
+         * Because `netOusdMintedForStrategy` check in vault core works both ways
+         * (positive and negative) the actual impact of the amount of OUSD minted
+         * could be double the threshold. E.g.:
+         *  - contract has threshold set to 100
+         *  - state of netOusdMinted is -90
+         *  - in effect it can mint 190 OUSD and still be within limits
+         *
+         * We are somewhat mitigating this behaviour by resetting the netOusdMinted
+         * counter whenever new threshold is set. So it can only move one threshold
+         * amount in each direction. This also enables us to reduce the threshold
+         * amount and not have problems with current netOusdMinted being near
+         * limits on either side.
+         */
+        netOusdMintedForStrategy = 0;
         netOusdMintForStrategyThreshold = _threshold;
         emit NetOusdMintForStrategyThresholdChanged(_threshold);
     }

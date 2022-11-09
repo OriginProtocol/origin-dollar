@@ -1,13 +1,18 @@
 export const QUERY_KEYS = {
+  Allocation: () => ['allocation'],
+  Allowances: (account) => ['allowances', { account }],
+  Apy: () => ['apy'],
+  Balances: (account) => ['balances', { account }],
+  CirculatingSupply: () => ['circulatingSupply'],
+  Collateral: () => ['collateral'],
+  Price: () => ['price'],
+  TotalSupply: () => ['totalSupply'],
+  TransactionHistory: (account) => ['transactionHistory', { account }],
   TransactionHistoryPage: (page, filters, account) => [
     'transactionHistoryPage',
     page,
     filters,
     { account },
   ],
-  TransactionHistory: (account) => ['transactionHistory', { account }],
-  Balances: (account) => ['balances', { account }],
-  Allowances: (account) => ['allowances', { account }],
-  Apy: () => ['apy'],
   WousdValue: (account) => ['wousdValue', { account }],
 }

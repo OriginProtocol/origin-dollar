@@ -1,4 +1,5 @@
 import moment from 'moment'
+import { createTheme } from '@mui/material/styles'
 
 const mintAbsoluteGasLimitBuffer = 20000
 /* All gas limit buffers are expressed in relative percentages. Meaning a 0.2
@@ -29,6 +30,28 @@ const burnTimer = () => {
   return { days: burnDays, seconds: seconds }
 }
 
+const theme = createTheme({
+  palette: {
+    compound: {
+      main: '#00d592',
+    },
+    aave: {
+      main: '#7a26f3',
+    },
+    convex: {
+      main: '#ff5a5a',
+    },
+  },
+})
+
+const tokenColors = {
+  usdc: '#2775ca',
+  dai: '#f4b731',
+  usdt: '#26a17b',
+}
+
+const audits = ['Trail of bits', 'Certora', 'Solidified', 'OpenZeppelin']
+
 module.exports = {
   mintAbsoluteGasLimitBuffer,
   mintPercentGasLimitBuffer,
@@ -43,4 +66,7 @@ module.exports = {
   transactionHistoryItemsPerPage,
   max_price,
   burnTimer,
+  theme,
+  tokenColors,
+  audits,
 }

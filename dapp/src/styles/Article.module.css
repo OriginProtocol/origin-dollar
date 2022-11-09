@@ -1,0 +1,38 @@
+.article ul {
+  list-style: disc;
+}
+
+.article li {
+  margin-left: 2rem;
+}
+
+.article li li {
+  margin-left: 2rem;
+}
+
+.article h1 {
+  font-size: 2.5rem;
+  border-bottom: 1px solid #ccc;
+  padding-bottom: 1rem;
+  margin-bottom: 1rem;
+}
+
+.article h2 {
+  font-size: 2rem;
+  border-bottom: 1px solid #ccc;
+  padding-bottom: 1rem;
+  margin-bottom: 1rem;
+}
+
+.article h3 {
+  font-size: 1.2rem;
+  padding-top: 0.4rem;
+}
+
+.article figure {
+  text-align: center;
+}
+
+.article figure img {
+  display: inline !important;
+}

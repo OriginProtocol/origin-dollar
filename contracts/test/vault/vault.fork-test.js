@@ -62,9 +62,14 @@ forkOnlyDescribe("ForkTest: Vault", function () {
 
     it("Should have the correct OUSD MetaStrategy address set", async () => {
       const { vault } = fixture;
+<<<<<<< HEAD
       // TODO: Update this after the contract deployed
       expect(await vault.ousdMetaStrategy()).to.equal(
         "0xb12C3410C44854054c217fbF79dFf38ffD1C0676"
+=======
+      expect(await vault.ousdMetaStrategy()).to.equal(
+        "0x89Eb88fEdc50FC77ae8a18aAD1cA0ac27f777a90"
+>>>>>>> origin/master
       );
     });
   });
@@ -222,6 +227,41 @@ forkOnlyDescribe("ForkTest: Vault", function () {
       }
     });
 
+<<<<<<< HEAD
+=======
+    it("Should NOT have any unknown strategies", async () => {
+      const { vault } = fixture;
+      const strategies = await vault.getAllStrategies();
+
+      const knownStrategies = [
+        // TODO: Update this every time a new strategy is added
+        "0x9c459eeb3FA179a40329b81C1635525e9A0Ef094", // Compound
+        "0x5e3646A1Db86993f73E6b74A57D8640B69F7e259", // Aave
+        "0xEA2Ef2e2E5A749D4A66b41Db9aD85a38Aa264cb3", // Convex
+        "0x89Eb88fEdc50FC77ae8a18aAD1cA0ac27f777a90", // OUSD MetaStrategy
+        // TODO: Hardcode these after deploy
+        "0x4258a6E32Eb33Eed64c3caefe6bcCf53141518dE", // alUSD MetaStrategy
+        "0x617F960A19f0f4d560256E04B5F4B92E187C512D", // mUSD MetaStrategy
+        "0xB262b69d1dB3dc092C73384B8553DA3d00e93682", // USDD MetaStrategy
+        "0xD2001BaF4E726dAfd6589D5c7bf8C74d59E48438", // BUSD MetaStrategy
+      ];
+
+      for (const s of strategies) {
+        expect(knownStrategies).to.include(
+          s,
+          `Unknown strategy with address: ${s}`
+        );
+      }
+
+      for (const s of knownStrategies) {
+        expect(strategies).to.include(
+          s,
+          `Known strategy missing from contract: ${s}`
+        );
+      }
+    });
+
+>>>>>>> origin/master
     it("Should have correct default strategy set for USDT", async () => {
       const { vault, usdt } = fixture;
 

@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 html,
 body {
   background-color: #183140;
@@ -84,6 +88,34 @@ section {
   background-color: #1a82ff;
 }
 
+section.intro {
+  padding: 0;
+  padding-bottom: 75px;
+  background-image: url(/images/splines34.png);
+  background-position: 100% 0;
+  background-repeat: no-repeat;
+}
+
+@media (max-width: 1200px) {
+  section.intro {
+    background-position: 100% 100%;
+    background-size: 200vw;
+  }
+}
+
+@media (max-width: 992px) {
+  section.intro {
+    background-image: url(/images/splines35.png);
+    background-position: 100% 100%;
+    background-size: 150vw;
+  }
+}
+
+section.home {
+  padding-top: 75px;
+  padding-bottom: 0;
+}
+
 section.dark {
   background-color: #183140;
 }
@@ -104,24 +136,57 @@ section.dim {
 }
 
 .gradient1 {
+  color: #141519;
+  background-image: -webkit-linear-gradient(left, #fedba8 -3.29%, #cf75d5 106.42%);
+}
+
+.text-gradient1 {
   background-image: -webkit-linear-gradient(left, #fedba8 -3.29%, #cf75d5 106.42%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 .gradient2 {
-  color: #141519;
-  background-image: -webkit-linear-gradient(left, #fedba8 -3.29%, #cf75d5 106.42%);
-}
-
-.gradient3 {
+  color: #fafbfb;
   background-image: -webkit-linear-gradient(left, #8C66FC -28.99%, #0274F1 144.97%);
 }
 
-.gradient4 {
+.text-gradient2 {
   background-image: -webkit-linear-gradient(left, #8C66FC -28.99%, #0274F1 144.97%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+}
+
+.gradient3 {
+  background-image: -webkit-linear-gradient(left, #B361E6 -28.99%, #6A36FC 144.97%);
+}
+
+.gradient4 {
+  color: #fafbfb;
+  background-image: -webkit-linear-gradient(left, #0d0033 -28.99%, #001124 144.97%);
+}
+
+.bttn {
+  display: inline-block;
+  border: 0;
+  border-radius: 50px;
+  white-space: nowrap;
+  margin: 0px 10px 10px 10px;
+  padding: 20px 80px;
+  text-align: center;
+  cursor: pointer;
+}
+
+.bttn:hover {
+  opacity: 0.9;
+}
+
+@media (max-width: 799px) {
+  .bttn {
+    width: 100%;
+    margin: 0;
+    padding: 20px 0;
+  }
 }
 
 .mono {

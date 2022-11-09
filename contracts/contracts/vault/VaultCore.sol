@@ -112,8 +112,14 @@ contract VaultCore is VaultStorage {
      * @dev Mint OUSD for OUSD Meta Strategy
      * @param _amount Amount of the asset being deposited
      *
-     * Notice: can't use nonReentrant modifier since BaseCurveStrategy's deposit
-     * already has that modifier present
+     * Notice: can't use `nonReentrant` modifier since the `mint` function can
+     * call `allocate`, and that can trigger `ConvexOUSDMetaStrategy` to call this function
+     * while the execution of the `mint` has not yet completed -> causing a `nonReentrant` collision.
+     *
+     * Also important to understand is that this is a limitation imposed by the test suite.
+     * Production / mainnet contracts should never be configured in a way where mint/redeem functions
+     * that are moving funds between the Vault and end user wallets can influence strategies
+     * utilizing this function.
      */
     function mintForStrategy(uint256 _amount)
         external
@@ -226,7 +232,49 @@ contract VaultCore is VaultStorage {
         // by withdrawing them, this should be here.
         // It's possible that a strategy was off on its asset total, perhaps
         // a reward token sold for more or for less than anticipated.
-        if (_amount > rebaseThreshold && !rebasePaused) {
+        if (_amount >= rebaseThreshold && !rebasePaused) {
+            _rebase();
+        }
+    }
+
+    /**
+     * @dev Burn OUSD for OUSD Meta Strategy
+     * @param _amount Amount of OUSD to burn
+     *
+     * Notice: can't use `nonReentrant` modifier since the `redeem` function could
+     * require withdrawal on `ConvexOUSDMetaStrategy` and that one can call `burnForStrategy`
+     * while the execution of the `redeem` has not yet completed -> causing a `nonReentrant` collision.
+     *
+     * Also important to understand is that this is a limitation imposed by the test suite.
+     * Production / mainnet contracts should never be configured in a way where mint/redeem functions
+     * that are moving funds between the Vault and end user wallets can influence strategies
+     * utilizing this function.
+     */
+    function burnForStrategy(uint256 _amount)
+        external
+        whenNotCapitalPaused
+        onlyOusdMetaStrategy
+    {
+        require(_amount < MAX_INT, "Amount too high");
+
+        emit Redeem(msg.sender, _amount);
+
+        // safe to cast because of the require check at the beginning of the function
+        netOusdMintedForStrategy -= int256(_amount);
+
+        require(
+            abs(netOusdMintedForStrategy) < netOusdMintForStrategyThreshold,
+            "Attempting to burn too much OUSD."
+        );
+
+        // Burn OUSD
+        oUSD.burn(msg.sender, _amount);
+
+        // Until we can prove that we won't affect the prices of our assets
+        // by withdrawing them, this should be here.
+        // It's possible that a strategy was off on its asset total, perhaps
+        // a reward token sold for more or for less than anticipated.
+        if (_amount >= rebaseThreshold && !rebasePaused) {
             _rebase();
         }
     }
