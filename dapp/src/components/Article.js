@@ -5,7 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import styles from '../styles/Article.module.css'
 import { assetRootPath } from 'utils/image'
-import formatSeo from '../src/utils/formatSeo'
+import formatSeo from '../src/utils/seo'
 
 const Article = ({ article, navLinks }) => {
   const imageUrl = article.cover?.url
