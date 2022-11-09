@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GNU AGPLv3
 pragma solidity ^0.8.0;
 
-import "./compound/ICompound.sol";
+import "./compound/ICompoundOracle.sol";
 import "./IMorpho.sol";
 
 interface ILens {
