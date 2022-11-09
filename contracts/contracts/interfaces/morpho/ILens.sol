@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GNU AGPLv3
 pragma solidity ^0.8.0;
 
+import "./compound/ICompound.sol";
 import "./IMorpho.sol";
 
 interface ILens {
@@ -210,32 +211,20 @@ interface ILens {
     function getAverageSupplyRatePerBlock(address _poolToken)
         external
         view
-        returns (uint256);
+        returns (
+            uint256 avgSupplyRatePerBlock,
+            uint256 p2pSupplyAmount,
+            uint256 poolSupplyAmount
+        );
 
     function getAverageBorrowRatePerBlock(address _poolToken)
         external
         view
-        returns (uint256);
-
-    function getRatesPerBlock(address _poolToken)
-        external
-        view
         returns (
-            uint256 p2pSupplyRate,
-            uint256 p2pBorrowRate,
-            uint256 poolSupplyRate,
-            uint256 poolBorrowRate
+            uint256 avgBorrowRatePerBlock,
+            uint256 p2pBorrowAmount,
+            uint256 poolBorrowAmount
         );
-
-    function getCurrentUserSupplyRatePerBlock(address _poolToken, address _user)
-        external
-        view
-        returns (uint256);
-
-    function getCurrentUserBorrowRatePerBlock(address _poolToken, address _user)
-        external
-        view
-        returns (uint256);
 
     function getNextUserSupplyRatePerBlock(
         address _poolToken,
@@ -263,6 +252,26 @@ interface ILens {
             uint256 balanceOnPool,
             uint256 balanceInP2P,
             uint256 totalBalance
+        );
+
+    function getCurrentUserSupplyRatePerBlock(address _poolToken, address _user)
+        external
+        view
+        returns (uint256);
+
+    function getCurrentUserBorrowRatePerBlock(address _poolToken, address _user)
+        external
+        view
+        returns (uint256);
+
+    function getRatesPerBlock(address _poolToken)
+        external
+        view
+        returns (
+            uint256 p2pSupplyRate,
+            uint256 p2pBorrowRate,
+            uint256 poolSupplyRate,
+            uint256 poolBorrowRate
         );
 
     /// REWARDS ///

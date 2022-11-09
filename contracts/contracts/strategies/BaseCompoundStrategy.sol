@@ -13,7 +13,7 @@ import { IERC20, InitializableAbstractStrategy } from "../utils/InitializableAbs
 
 abstract contract BaseCompoundStrategy is InitializableAbstractStrategy {
     using SafeERC20 for IERC20;
-    
+
     int256[50] private __reserved;
 
     /**
