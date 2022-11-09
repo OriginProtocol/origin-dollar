@@ -19,15 +19,8 @@ const Blog = ({
 }) => {
   return (
     <>
-      <Head>
-        <title>Blog</title>
-      </Head>
       <Seo seo={seo} />
       <Layout locale={locale}>
-        <Head>
-          <title>Blog</title>
-        </Head>
-        <Seo seo={seo} />
         <section className="intro black pb-12">
           <Header mappedLinks={navLinks} webProperty="ousd" />
           <div className="max-w-screen-xl mx-auto px-6 mb-6">

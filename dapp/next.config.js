@@ -99,6 +99,14 @@ const config = {
       },
     ]
   },
+  async rewrites() {
+    return {
+      beforeFiles: [{
+        source: '/sitemap.xml',
+        destination: `${process.env.STRAPI_API_URL}/api/ousd/sitemap`
+      }]
+    }
+  },
 }
 
 if (process.env.NO_LANDING === 'true') {

@@ -18,9 +18,6 @@ import { audits } from 'utils/constants'
 const Home = ({ locale, onLocale, seo, navLinks }) => {
   return (
     <>
-      <Head>
-        <title>Origin Dollar</title>
-      </Head>
       <Seo seo={seo} />
       <Layout locale={locale}>
         <Animation navLinks={navLinks} />
