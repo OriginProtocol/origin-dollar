@@ -1,9 +1,6 @@
 const { deploymentWithProposal } = require("../utils/deploy");
 const { BigNumber } = require("ethers");
-<<<<<<< HEAD
-=======
 const { isMainnet } = require("../test/helpers.js");
->>>>>>> origin/master
 
 module.exports = ({
   deployName,
@@ -21,11 +18,6 @@ module.exports = ({
   cvxRewardStakerAddress,
   cvxDepositorPTokenId,
   redeployVault,
-<<<<<<< HEAD
-}) => {
-  return deploymentWithProposal(
-    { deployName, forceDeploy },
-=======
   // we only need to deploy the implementation contract for first time & when it changes
   deployStrategyImplementation,
   skipMainnetDeploy,
@@ -36,7 +28,6 @@ module.exports = ({
       forceDeploy,
       forceSkip: isMainnet && skipMainnetDeploy,
     },
->>>>>>> origin/master
     async ({
       assetAddresses,
       deployWithConfirmation,
@@ -69,12 +60,6 @@ module.exports = ({
         dConvexTokenMetaStrategyProxy.address
       );
 
-<<<<<<< HEAD
-      // 2. Deploy new implementation
-      const dConvexTokenMetaStrategyImpl = await deployWithConfirmation(
-        "ConvexGeneralizedMetaStrategy"
-      );
-=======
       if (deployStrategyImplementation) {
         // Deploy new implementation
         const dConvexTokenMetaStrategyImpl = await deployWithConfirmation(
@@ -86,7 +71,6 @@ module.exports = ({
         "ConvexGeneralizedMetaStrategy"
       );
 
->>>>>>> origin/master
       const cConvexTokenMetaStrategy = await ethers.getContractAt(
         "ConvexGeneralizedMetaStrategy",
         dConvexTokenMetaStrategyProxy.address
@@ -103,11 +87,7 @@ module.exports = ({
         cConvexTokenMetaStrategyProxy
           .connect(sDeployer)
           ["initialize(address,address,bytes)"](
-<<<<<<< HEAD
-            dConvexTokenMetaStrategyImpl.address,
-=======
             convexTokenMetaStrategyImpl.address,
->>>>>>> origin/master
             deployerAddr,
             [],
             await getTxOpts()

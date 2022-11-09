@@ -280,42 +280,6 @@ contract VaultCore is VaultStorage {
     }
 
     /**
-     * @dev Burn OUSD for OUSD Meta Strategy
-     * @param _amount Amount of OUSD to burn
-     *
-     * Notice: can't use nonReentrant modifier since BaseCurveStrategy's deposit
-     * already has that modifier present
-     */
-    function burnForStrategy(uint256 _amount)
-        external
-        whenNotCapitalPaused
-        onlyOusdMetaStrategy
-    {
-        require(_amount < MAX_INT, "Amount too high");
-
-        emit Redeem(msg.sender, _amount);
-
-        // safe to cast because of the require check at the beginning of the function
-        netOusdMintedForStrategy -= int256(_amount);
-
-        require(
-            abs(netOusdMintedForStrategy) < netOusdMintForStrategyThreshold,
-            "Attempting to burn too much OUSD."
-        );
-
-        // Burn OUSD
-        oUSD.burn(msg.sender, _amount);
-
-        // Until we can prove that we won't affect the prices of our assets
-        // by withdrawing them, this should be here.
-        // It's possible that a strategy was off on its asset total, perhaps
-        // a reward token sold for more or for less than anticipated.
-        if (_amount > rebaseThreshold && !rebasePaused) {
-            _rebase();
-        }
-    }
-
-    /**
      * @notice Withdraw a supported asset and burn all OUSD.
      * @param _minimumUnitAmount Minimum stablecoin units to receive in return
      */

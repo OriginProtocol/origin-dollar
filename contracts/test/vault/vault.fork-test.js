@@ -62,14 +62,8 @@ forkOnlyDescribe("ForkTest: Vault", function () {
 
     it("Should have the correct OUSD MetaStrategy address set", async () => {
       const { vault } = fixture;
-<<<<<<< HEAD
-      // TODO: Update this after the contract deployed
-      expect(await vault.ousdMetaStrategy()).to.equal(
-        "0xb12C3410C44854054c217fbF79dFf38ffD1C0676"
-=======
       expect(await vault.ousdMetaStrategy()).to.equal(
         "0x89Eb88fEdc50FC77ae8a18aAD1cA0ac27f777a90"
->>>>>>> origin/master
       );
     });
   });
@@ -227,8 +221,6 @@ forkOnlyDescribe("ForkTest: Vault", function () {
       }
     });
 
-<<<<<<< HEAD
-=======
     it("Should NOT have any unknown strategies", async () => {
       const { vault } = fixture;
       const strategies = await vault.getAllStrategies();
@@ -261,7 +253,6 @@ forkOnlyDescribe("ForkTest: Vault", function () {
       }
     });
 
->>>>>>> origin/master
     it("Should have correct default strategy set for USDT", async () => {
       const { vault, usdt } = fixture;
 

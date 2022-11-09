@@ -27,11 +27,7 @@ const metastrategies = [
     rewardPoolAddress: "0xDBFa6187C79f4fE4Cda20609E75760C5AaE88e52",
     // metapool implementation wont allow tilting of the pools the way this test does it
     // and then withdrawing liquidity
-<<<<<<< HEAD
-    skipMewTest: true,
-=======
     skipMewTest: false,
->>>>>>> origin/master
   },
   {
     token: "USDD",
@@ -189,8 +185,6 @@ metastrategies.forEach(
           });
         });
 
-<<<<<<< HEAD
-=======
         it("Should have the correct initial maxWithdrawalSlippage state", async function () {
           const { metaStrategy, anna } = fixture;
           await expect(
@@ -198,7 +192,6 @@ metastrategies.forEach(
           ).to.equal(ousdUnits("0.01"));
         });
 
->>>>>>> origin/master
         describe("Withdraw all", function () {
           it("Should not allow withdraw all when MEW tries to manipulate the pool", async function () {
             if (skipMewTest) {
@@ -232,18 +225,6 @@ metastrategies.forEach(
 
             await fixture.metaStrategy
               .connect(sGovernor)
-<<<<<<< HEAD
-              .setMaxWithdrawalSlippage(ousdUnits("0.001"));
-            await tiltToMainToken(fixture);
-
-            await expect(
-              vault
-                .connect(sGovernor)
-                .withdrawAllFromStrategy(fixture.metaStrategyProxy.address)
-            ).to.be.revertedWith(
-              "Transaction reverted without a reason string"
-            );
-=======
               .setMaxWithdrawalSlippage(ousdUnits("0"));
             await tiltToMainToken(fixture);
 
@@ -266,7 +247,6 @@ metastrategies.forEach(
               "Transaction reverted without a reason string",
               "VM Exception while processing transaction: reverted with reason string 'Not enough coins removed'",
             ]);
->>>>>>> origin/master
 
             // should not revert when slippage tolerance set to 10%
             await fixture.metaStrategy
@@ -276,8 +256,6 @@ metastrategies.forEach(
               .connect(sGovernor)
               .withdrawAllFromStrategy(fixture.metaStrategyProxy.address);
           });
-<<<<<<< HEAD
-=======
 
           it("Should successfully withdrawAll even without any changes to maxWithdrawalSlippage", async function () {
             if (skipMewTest) {
@@ -311,7 +289,6 @@ metastrategies.forEach(
               .connect(sGovernor)
               .withdrawAllFromStrategy(fixture.metaStrategyProxy.address);
           });
->>>>>>> origin/master
         });
       }
     );

@@ -24,11 +24,7 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
     );
 
     // used to circumvent the stack too deep issue
-<<<<<<< HEAD
-    struct InitState {
-=======
     struct InitConfig {
->>>>>>> origin/master
         address platformAddress; //Address of the Curve 3pool
         address vaultAddress; //Address of the vault
         address cvxDepositorAddress; //Address of the Convex depositor(AKA booster) for this pool
@@ -48,19 +44,11 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
     // Ordered list of metapool assets
     address[] internal metapoolAssets;
     // Max withdrawal slippage denominated in 1e18 (1e18 == 100%)
-<<<<<<< HEAD
-    uint256 public maxWithdrawalSlippage = 1e16;
-    uint128 crvCoinIndex;
-    uint128 mainCoinIndex;
-
-    int256[30] private __reserved;
-=======
     uint256 public maxWithdrawalSlippage;
     uint128 internal crvCoinIndex;
     uint128 internal mainCoinIndex;
 
     int256[41] private ___reserved;
->>>>>>> origin/master
 
     /**
      * Initializer for setting up strategy internal state. This overrides the
@@ -71,41 +59,17 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
      *                order as returned by coins on the pool contract, i.e.
      *                DAI, USDC, USDT
      * @param _pTokens Platform Token corresponding addresses
-<<<<<<< HEAD
-     * @param initState Various addresses and info for initialization state
-=======
      * @param initConfig Various addresses and info for initialization state
->>>>>>> origin/master
      */
     function initialize(
         address[] calldata _rewardTokenAddresses, // CRV + CVX
         address[] calldata _assets,
         address[] calldata _pTokens,
-<<<<<<< HEAD
-        InitState calldata initState
-=======
         InitConfig calldata initConfig
->>>>>>> origin/master
     ) external onlyGovernor initializer {
         require(_assets.length == 3, "Must have exactly three assets");
         // Should be set prior to abstract initialize call otherwise
         // abstractSetPToken calls will fail
-<<<<<<< HEAD
-        cvxDepositorAddress = initState.cvxDepositorAddress;
-        pTokenAddress = _pTokens[0];
-        metapool = ICurveMetaPool(initState.metapoolAddress);
-        metapoolMainToken = IERC20(initState.metapoolMainToken);
-        cvxRewardStakerAddress = initState.cvxRewardStakerAddress;
-        metapoolLPToken = IERC20(initState.metapoolLPToken);
-        cvxDepositorPTokenId = initState.cvxDepositorPTokenId;
-
-        metapoolAssets = [metapool.coins(0), metapool.coins(1)];
-        crvCoinIndex = _getMetapoolCoinIndex(pTokenAddress);
-        mainCoinIndex = _getMetapoolCoinIndex(initState.metapoolMainToken);
-        super._initialize(
-            initState.platformAddress,
-            initState.vaultAddress,
-=======
         cvxDepositorAddress = initConfig.cvxDepositorAddress;
         pTokenAddress = _pTokens[0];
         metapool = ICurveMetaPool(initConfig.metapoolAddress);
@@ -121,7 +85,6 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
         super._initialize(
             initConfig.platformAddress,
             initConfig.vaultAddress,
->>>>>>> origin/master
             _rewardTokenAddresses,
             _assets,
             _pTokens
@@ -157,17 +120,6 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
             balance += value;
         }
 
-<<<<<<< HEAD
-        uint256 metapoolPTokens = metapoolLPToken.balanceOf(address(this));
-        uint256 metapoolGaugePTokens = IRewardStaking(cvxRewardStakerAddress)
-            .balanceOf(address(this));
-        uint256 metapoolTotalPTokens = metapoolPTokens + metapoolGaugePTokens;
-
-        if (metapoolTotalPTokens > 0) {
-            uint256 metapool_virtual_price = metapool.get_virtual_price();
-            uint256 value = (metapoolTotalPTokens * metapool_virtual_price) /
-                1e18;
-=======
         /* We intentionally omit the metapoolLp tokens held by the metastrategyContract
          * since the contract should never (except in the middle of deposit/withdrawal
          * transaction) hold any amount of those tokens in normal operation. There
@@ -181,14 +133,10 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
             uint256 value = metapoolGaugePTokens.mulTruncate(
                 metapool.get_virtual_price()
             );
->>>>>>> origin/master
             balance += value;
         }
 
         uint256 assetDecimals = Helpers.getDecimals(_asset);
-<<<<<<< HEAD
-        balance = balance.scaleBy(assetDecimals, 18) / 3;
-=======
         balance = balance.scaleBy(assetDecimals, 18) / THREEPOOL_ASSET_COUNT;
     }
 
@@ -226,7 +174,6 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
         requiredMetapoolLP =
             (lpRequiredFullFees * _amount) /
             assetReceivedForFullLPFees;
->>>>>>> origin/master
     }
 
     function _approveBase() internal override {
@@ -262,30 +209,20 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
     /**
      * @dev Sets max withdrawal slippage that is considered when removing
      * liquidity from Metapools.
-<<<<<<< HEAD
-     *
-     * 1e18 == 100%, 1e16 == 1%
-=======
      * @param _maxWithdrawalSlippage Max withdrawal slippage denominated in
      *        wad (number with 18 decimals): 1e18 == 100%, 1e16 == 1%
      *
      * IMPORTANT Minimum maxWithdrawalSlippage should actually be 0.1% (1e15)
      * for production usage. Contract allows as low value as 0% for confirming
      * correct behavior in test suite.
->>>>>>> origin/master
      */
     function setMaxWithdrawalSlippage(uint256 _maxWithdrawalSlippage)
         external
         onlyVaultOrGovernorOrStrategist
     {
         require(
-<<<<<<< HEAD
-            _maxWithdrawalSlippage >= 1e15 && _maxWithdrawalSlippage <= 1e17,
-            "Max withdrawal slippage needs to be between 0.1% - 10%"
-=======
             _maxWithdrawalSlippage <= 1e18,
             "Max withdrawal slippage needs to be between 0% - 100%"
->>>>>>> origin/master
         );
         emit MaxWithdrawalSlippageUpdated(
             maxWithdrawalSlippage,
@@ -295,11 +232,7 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
     }
 
     /**
-<<<<<<< HEAD
-     * @dev Collect accumulated CRV and CVX and send to Vault.
-=======
      * @dev Collect accumulated CRV and CVX and send to Harvester.
->>>>>>> origin/master
      */
     function collectRewardTokens()
         external
@@ -313,16 +246,9 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
     }
 
     /**
-<<<<<<< HEAD
-     * @dev If x a negative number return 0 else return x
-     */
-    function toPositive(int256 x) internal pure returns (uint256) {
-        return x >= 0 ? uint256(x) : uint256(0);
-=======
      * @dev Returns the largest of two numbers int256 version
      */
     function _max(int256 a, int256 b) internal pure returns (int256) {
         return a >= b ? a : b;
->>>>>>> origin/master
     }
 }

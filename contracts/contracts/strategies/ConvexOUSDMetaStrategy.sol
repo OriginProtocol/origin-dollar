@@ -26,10 +26,6 @@ contract ConvexOUSDMetaStrategy is BaseConvexMetaStrategy {
      * ousd Curve Metapool. Take the LP from metapool and deposit them to Convex.
      */
     function _lpDepositAll() internal override {
-<<<<<<< HEAD
-        IERC20 metapoolErc20 = IERC20(address(metapool));
-=======
->>>>>>> origin/master
         ICurvePool curvePool = ICurvePool(platformAddress);
 
         uint256 threePoolLpBalance = IERC20(pTokenAddress).balanceOf(
@@ -40,16 +36,6 @@ contract ConvexOUSDMetaStrategy is BaseConvexMetaStrategy {
             curve3PoolVirtualPrice
         );
 
-<<<<<<< HEAD
-        uint256 ousdToAdd = toPositive(
-            int256(
-                metapool.balances(crvCoinIndex).mulTruncate(
-                    curve3PoolVirtualPrice
-                )
-            ) -
-                int256(metapool.balances(mainCoinIndex)) +
-                int256(threePoolLpDollarValue)
-=======
         // safe to cast since min value is at least 0
         uint256 ousdToAdd = uint256(
             _max(
@@ -62,7 +48,6 @@ contract ConvexOUSDMetaStrategy is BaseConvexMetaStrategy {
                     int256(metapool.balances(mainCoinIndex)) +
                     int256(threePoolLpDollarValue)
             )
->>>>>>> origin/master
         );
 
         /* Add so much OUSD so that the pool ends up being balanced. And at minimum
@@ -72,14 +57,6 @@ contract ConvexOUSDMetaStrategy is BaseConvexMetaStrategy {
         ousdToAdd = Math.max(ousdToAdd, threePoolLpDollarValue);
         ousdToAdd = Math.min(ousdToAdd, threePoolLpDollarValue * 2);
 
-<<<<<<< HEAD
-        /* Mint so much ousd that the dollar value of 3CRVLP in the pool and OUSD will be equal after
-         * deployment of liquidity. In cases where pool is heavier in OUSD before the deposit strategy mints
-         * less OUSD and gets less metapoolLP and less rewards. And when pool is heavier in 3CRV strategy mints
-         * more OUSD and gets more metapoolLP and more rewards.
-         *
-         * In both cases metapool ends up being balanced and there should be no incentive to execute arbitrage trade.
-=======
         /* Mint OUSD with a strategy that attempts to contribute to stability of OUSD metapool. Try
          * to mint so much OUSD that after deployment of liquidity pool ends up being balanced.
          *
@@ -87,18 +64,12 @@ contract ConvexOUSDMetaStrategy is BaseConvexMetaStrategy {
          * to stablecoin(DAI, USDC, USDT) amount of 3CRVLP deployed. And never larger than twice the
          * stablecoin amount of 3CRVLP deployed even if it would have a further beneficial effect
          * on pool stability.
->>>>>>> origin/master
          */
         if (ousdToAdd > 0) {
             IVault(vaultAddress).mintForStrategy(ousdToAdd);
         }
 
-<<<<<<< HEAD
-        uint256 ousdBalance = metapoolMainToken.balanceOf(address(this));
-        uint256[2] memory _amounts = [ousdBalance, threePoolLpBalance];
-=======
         uint256[2] memory _amounts = [ousdToAdd, threePoolLpBalance];
->>>>>>> origin/master
 
         uint256 metapoolVirtualPrice = metapool.get_virtual_price();
         /**
@@ -106,22 +77,11 @@ contract ConvexOUSDMetaStrategy is BaseConvexMetaStrategy {
          * then divide by virtual price to convert to metapool LP tokens
          * and apply the max slippage
          */
-<<<<<<< HEAD
-        uint256 minReceived = (ousdBalance + threePoolLpDollarValue)
-            .divPrecisely(metapoolVirtualPrice)
-            .mulTruncate(uint256(1e18) - maxSlippage);
-
-        // slither-disable-next-line unused-return
-        metapool.add_liquidity(_amounts, minReceived);
-
-        uint256 metapoolLp = metapoolErc20.balanceOf(address(this));
-=======
         uint256 minReceived = (ousdToAdd + threePoolLpDollarValue)
             .divPrecisely(metapoolVirtualPrice)
             .mulTruncate(uint256(1e18) - MAX_SLIPPAGE);
 
         uint256 metapoolLp = metapool.add_liquidity(_amounts, minReceived);
->>>>>>> origin/master
 
         bool success = IConvexDeposits(cvxDepositorAddress).deposit(
             cvxDepositorPTokenId,
@@ -135,16 +95,10 @@ contract ConvexOUSDMetaStrategy is BaseConvexMetaStrategy {
     /**
      * Withdraw the specified amount of tokens from the gauge. And use all the resulting tokens
      * to remove liquidity from metapool
-<<<<<<< HEAD
-     * @param num3CrvTokens Number of Convex LP tokens to remove from gauge
-     */
-    function _lpWithdraw(uint256 num3CrvTokens) internal override {
-=======
      * @param num3CrvTokens Number of 3CRV tokens to withdraw from metapool
      */
     function _lpWithdraw(uint256 num3CrvTokens) internal override {
         ICurvePool curvePool = ICurvePool(platformAddress);
->>>>>>> origin/master
         /* The rate between coins in the metapool determines the rate at which metapool returns
          * tokens when doing balanced removal (remove_liquidity call). And by knowing how much 3crvLp
          * we want we can determine how much of OUSD we receive by removing liquidity.
@@ -195,14 +149,6 @@ contract ConvexOUSDMetaStrategy is BaseConvexMetaStrategy {
             true
         );
 
-<<<<<<< HEAD
-        // always withdraw all of the available metapool LP tokens (similar to how we always deposit all)
-        // slither-disable-next-line unused-return
-        metapool.remove_liquidity(lpToBurn, [uint256(0), uint256(0)]);
-        IVault(vaultAddress).burnForStrategy(
-            metapoolMainToken.balanceOf(address(this))
-        );
-=======
         // calculate the min amount of OUSD expected for the specified amount of LP tokens
         uint256 minOUSDAmount = lpToBurn.mulTruncate(
             metapool.get_virtual_price()
@@ -217,7 +163,6 @@ contract ConvexOUSDMetaStrategy is BaseConvexMetaStrategy {
         );
 
         IVault(vaultAddress).burnForStrategy(_removedAmounts[mainCoinIndex]);
->>>>>>> origin/master
     }
 
     function _lpWithdrawAll() internal override {
@@ -231,22 +176,11 @@ contract ConvexOUSDMetaStrategy is BaseConvexMetaStrategy {
         );
 
         uint256[2] memory _minAmounts = [uint256(0), uint256(0)];
-<<<<<<< HEAD
-        // slither-disable-next-line unused-return
-        metapool.remove_liquidity(
-=======
         uint256[2] memory _removedAmounts = metapool.remove_liquidity(
->>>>>>> origin/master
             metapoolErc20.balanceOf(address(this)),
             _minAmounts
         );
 
-<<<<<<< HEAD
-        IVault(vaultAddress).burnForStrategy(
-            metapoolMainToken.balanceOf(address(this))
-        );
-=======
         IVault(vaultAddress).burnForStrategy(_removedAmounts[mainCoinIndex]);
->>>>>>> origin/master
     }
 }

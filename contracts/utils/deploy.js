@@ -301,26 +301,10 @@ function deploymentWithProposal(opts, fn) {
       await sendProposal(propArgs, propDescription, propOpts);
       log("Proposal sent.");
     } else if (isFork) {
-      let skipExecuteProposal = false;
-      if (proposalId) {
-        const proposalState = ["New", "Queue", "Expired", "Executed"][
-          await governor.state(proposalId)
-        ];
-        if (["New", "Queue"].includes(proposalState)) {
-          skipExecuteProposal = true;
-          console.log(
-            `Found proposal id: ${proposalId} on forked network. Executing proposal in place of deployment of: ${deployName}`
-          );
-          await executeProposalOnFork(proposalId);
-        }
-      }
-
-      if (!skipExecuteProposal) {
-        // On Fork we can send the proposal then impersonate the guardian to execute it.
-        log("Sending and executing proposal...");
-        await executeProposal(propArgs, propDescription, propOpts);
-        log("Proposal executed.");
-      }
+      // On Fork we can send the proposal then impersonate the guardian to execute it.
+      log("Sending and executing proposal...");
+      await executeProposal(propArgs, propDescription, propOpts);
+      log("Proposal executed.");
     } else {
       const sGovernor = await ethers.provider.getSigner(governorAddr);
 
