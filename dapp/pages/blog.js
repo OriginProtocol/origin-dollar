@@ -5,7 +5,7 @@ import Head from 'next/head'
 import React from 'react'
 import { fetchAPI } from '../lib/api'
 import Seo from '../src/components/strapi/seo'
-import formatSeo from '../src/utils/seo'
+import formatSeo from '../src/utils/formatSeo'
 import transformLinks from '../src/utils/transformLinks'
 
 const Blog = ({
