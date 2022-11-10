@@ -237,7 +237,6 @@ forkOnlyDescribe("ForkTest: Vault", function () {
         "0xB262b69d1dB3dc092C73384B8553DA3d00e93682", // USDD MetaStrategy
         "0xD2001BaF4E726dAfd6589D5c7bf8C74d59E48438", // BUSD MetaStrategy
         "0x885a4D0b5070faB2C8F58B86fD196974cDe4feCd", // Morpho MetaStrategy
-
       ];
 
       for (const s of strategies) {
