@@ -114,9 +114,17 @@ const fundAccounts = async () => {
         utils.parseEther("1000000").toHexString(),
       ]);
 
-      for(const tokenContract of [dai, usdc, usdt, tusd, ogn]) {
-        const signer = await findBestMainnetTokenHolderSigner(tokenContract, hre);
-        await tokenContract.connect(signer).transfer(address, utils.parseUnits("1000000", await tokenContract.decimals()));
+      for (const tokenContract of [dai, usdc, usdt, tusd, ogn]) {
+        const signer = await findBestMainnetTokenHolderSigner(
+          tokenContract,
+          hre
+        );
+        await tokenContract
+          .connect(signer)
+          .transfer(
+            address,
+            utils.parseUnits("1000000", await tokenContract.decimals())
+          );
       }
     } else {
       const signer = await ethers.provider.getSigner(address);
