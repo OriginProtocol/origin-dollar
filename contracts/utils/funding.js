@@ -67,6 +67,21 @@ const findBestMainnetTokenHolder = async (contract, hre) => {
   return binanceSigners[largestBalanceIndex];
 };
 
+const findBestMainnetTokenHolderSigner = async (contract, hre) => {
+  const signer = await findBestMainnetTokenHolder(contract, hre);
+  const address = await signer.getAddress();
+
+  await hre.network.provider.request({
+    method: "hardhat_impersonateAccount",
+    params: [address],
+  });
+  await hre.network.provider.send("hardhat_setBalance", [
+    address,
+    utils.parseEther("1000000").toHexString(),
+  ]);
+  return signer;
+};
+
 const fundAccounts = async () => {
   let usdt, dai, tusd, usdc, nonStandardToken;
   if (isFork) {
@@ -84,21 +99,8 @@ const fundAccounts = async () => {
     nonStandardToken = await ethers.getContract("MockNonStandardToken");
   }
 
-  let binanceSigner;
   const signers = await hre.ethers.getSigners();
   const { governorAddr } = await getNamedAccounts();
-
-  if (isFork) {
-    await hre.network.provider.request({
-      method: "hardhat_impersonateAccount",
-      params: [addresses.mainnet.Binance],
-    });
-    await hre.network.provider.send("hardhat_setBalance", [
-      addresses.mainnet.Binance,
-      utils.parseEther("1000000").toHexString(),
-    ]);
-    binanceSigner = await ethers.provider.getSigner(addresses.mainnet.Binance);
-  }
 
   const addressPromises = new Array(10)
     .fill(0)
@@ -112,11 +114,10 @@ const fundAccounts = async () => {
         utils.parseEther("1000000").toHexString(),
       ]);
 
-      await dai.connect(binanceSigner).transfer(address, daiUnits("1000000"));
-      await usdc.connect(binanceSigner).transfer(address, usdcUnits("1000000"));
-      await usdt.connect(binanceSigner).transfer(address, usdtUnits("1000000"));
-      await tusd.connect(binanceSigner).transfer(address, tusdUnits("1000000"));
-      await ogn.connect(binanceSigner).transfer(address, ognUnits("1000000"));
+      for(const tokenContract of [dai, usdc, usdt, tusd, ogn]) {
+        const signer = await findBestMainnetTokenHolderSigner(tokenContract, hre);
+        await tokenContract.connect(signer).transfer(address, utils.parseUnits("1000000", await tokenContract.decimals()));
+      }
     } else {
       const signer = await ethers.provider.getSigner(address);
       await dai.connect(signer).mint(daiUnits("1000"));
