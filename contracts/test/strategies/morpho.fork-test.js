@@ -35,7 +35,7 @@ forkOnlyDescribe("ForkTest: Morpho Compound Strategy", function () {
       await mintTest(fixture, josh, usdt, "200000");
     });
 
-    it("Should NOT deploy DAI in Morpho Compound", async function () {
+    it("Should deploy DAI in Morpho Compound", async function () {
       const { anna, dai } = fixture;
       await mintTest(fixture, anna, dai, "110000");
     });
@@ -56,10 +56,9 @@ forkOnlyDescribe("ForkTest: Morpho Compound Strategy", function () {
           .mint(asset.address, await units(amount, asset), 0);
       }
 
-      // Total supply should be up by (10k x 2) + (10k x 2) + 10k = 50k
       const currentSupply = await ousd.totalSupply();
       const supplyAdded = currentSupply.sub(supplyBeforeMint);
-      expect(supplyAdded).to.be.gte("50000");
+      expect(supplyAdded).to.approxEqualTolerance(ousdUnits("30000"), 1);
 
       const currentBalance = await ousd.connect(anna).balanceOf(anna.address);
 
@@ -174,7 +173,7 @@ forkOnlyDescribe("ForkTest: Morpho Compound Strategy", function () {
 });
 
 async function mintTest(fixture, user, asset, amount = "30000") {
-  const { vault, ousd, dai, morphoCompoundStrategy } = fixture;
+  const { vault, ousd, morphoCompoundStrategy } = fixture;
 
   await vault.connect(user).allocate();
 
@@ -207,14 +206,10 @@ async function mintTest(fixture, user, asset, amount = "30000") {
   expect(supplyDiff).to.approxEqualTolerance(ousdUnitAmount, 1);
 
   const morphoLiquidityDiff = newMorphoBalance.sub(currentMorphoBalance);
-  if (asset.address === dai.address) {
-    // Should not have staked when minted with DAI
-    expect(morphoLiquidityDiff).to.equal("0");
-  } else {
-    // Should have liquidity in Morpho
-    expect(morphoLiquidityDiff).to.approxEqualTolerance(
-      await units(amount, asset),
-      1
-    );
-  }
+
+  // Should have liquidity in Morpho
+  expect(morphoLiquidityDiff).to.approxEqualTolerance(
+    await units(amount, asset),
+    1
+  );
 }

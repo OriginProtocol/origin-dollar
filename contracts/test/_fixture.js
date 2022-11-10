@@ -663,6 +663,13 @@ async function morphoCompoundFixture() {
         fixture.usdc.address,
         fixture.morphoCompoundStrategy.address
       );
+
+    await fixture.vault
+      .connect(sGovernor)
+      .setAssetDefaultStrategy(
+        fixture.dai.address,
+        fixture.morphoCompoundStrategy.address
+      );
   } else {
     throw new Error(
       "Morpho strategy only supported in forked test environment"
