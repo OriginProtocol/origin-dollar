@@ -67,7 +67,7 @@ const findBestMainnetTokenHolder = async (contract, hre) => {
   return binanceSigners[largestBalanceIndex];
 };
 
-const findBestMainnetTokenHolderSigner = async (contract, hre) => {
+const findBestMainnetTokenHolderAndImpersonate = async (contract, hre) => {
   const signer = await findBestMainnetTokenHolder(contract, hre);
   const address = await signer.getAddress();
 
@@ -115,7 +115,7 @@ const fundAccounts = async () => {
       ]);
 
       for (const tokenContract of [dai, usdc, usdt, tusd, ogn]) {
-        const signer = await findBestMainnetTokenHolderSigner(
+        const signer = await findBestMainnetTokenHolderAndImpersonate(
           tokenContract,
           hre
         );
