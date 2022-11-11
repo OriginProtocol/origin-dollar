@@ -67,6 +67,13 @@ contract DripperProxy is InitializeGovernedUpgradeabilityProxy {
 }
 
 /**
+ * @notice MorphoCompoundStrategyProxy delegates calls to a MorphoCompoundStrategy implementation
+ */
+contract MorphoCompoundStrategyProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
+
+/**
  * @notice ConvexOUSDMetaStrategyProxy delegates calls to a ConvexOUSDMetaStrategy implementation
  */
 contract ConvexOUSDMetaStrategyProxy is InitializeGovernedUpgradeabilityProxy {

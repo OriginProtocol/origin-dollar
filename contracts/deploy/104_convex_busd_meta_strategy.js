@@ -1,21 +1,21 @@
 const generalizedConvexStratDeployment = require("../utils/generalizedConvexStratDeployment");
-const { musdMetapoolLPCRVPid } = require("../utils/constants");
+const { busdMetapoolLPCRVPid } = require("../utils/constants");
 
 module.exports = generalizedConvexStratDeployment({
-  deployName: "045_convex_musd_meta_strategy",
+  deployName: "104_convex_busd_meta_strategy",
   forceDeploy: false,
-  mainTokenName: "mStable USD",
-  mainTokenSymbol: "mUSD",
+  mainTokenName: "Binance USD",
+  mainTokenSymbol: "BUSD",
   rewardTokenNames: ["CVX", "CRV"],
   assets: ["DAI", "USDC", "USDT"],
   pTokens: ["ThreePoolToken", "ThreePoolToken", "ThreePoolToken"],
   platformAddress: ["ThreePool"],
   cvxDepositorAddress: "0xF403C135812408BFbE8713b5A23a04b3D48AAE31",
-  metapoolAddress: "0x8474DdbE98F5aA3179B3B3F5942D724aFcdec9f6",
-  metapoolLPToken: "0x1aef73d49dedc4b1778d0706583995958dc862e6",
-  mainTokenAddress: "0xe2f2a5c287993345a840db3b0845fbc70f5935a5", // mStable USD
-  cvxRewardStakerAddress: "0xDBFa6187C79f4fE4Cda20609E75760C5AaE88e52",
-  cvxDepositorPTokenId: musdMetapoolLPCRVPid, // 14
+  metapoolAddress: "0x4807862AA8b2bF68830e4C8dc86D0e9A998e085a",
+  metapoolLPToken: "0x4807862AA8b2bF68830e4C8dc86D0e9A998e085a",
+  mainTokenAddress: "0x4fabb145d64652a948d72533023f6e7a623c7c53", // BUSD
+  cvxRewardStakerAddress: "0xbD223812d360C9587921292D0644D18aDb6a2ad0",
+  cvxDepositorPTokenId: busdMetapoolLPCRVPid, // 34
   redeployVault: false,
   deployStrategyImplementation: false,
   skipMainnetDeploy: true,

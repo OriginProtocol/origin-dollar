@@ -9,12 +9,12 @@ pragma solidity ^0.8.0;
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import { ICERC20 } from "./ICompound.sol";
+import { BaseCompoundStrategy } from "./BaseCompoundStrategy.sol";
 import { IComptroller } from "../interfaces/IComptroller.sol";
-import { IERC20, InitializableAbstractStrategy } from "../utils/InitializableAbstractStrategy.sol";
+import { IERC20 } from "../utils/InitializableAbstractStrategy.sol";
 
-contract CompoundStrategy is InitializableAbstractStrategy {
+contract CompoundStrategy is BaseCompoundStrategy {
     using SafeERC20 for IERC20;
-
     event SkippedWithdrawal(address asset, uint256 amount);
 
     /**
@@ -40,7 +40,7 @@ contract CompoundStrategy is InitializableAbstractStrategy {
         claimers[0] = address(this);
         // Claim COMP from Comptroller. Only collect for supply, saves gas
         comptroller.claimComp(claimers, ctokensToCollect, false, true);
-        // Transfer COMP to Vault
+        // Transfer COMP to Harvester
         IERC20 rewardToken = IERC20(rewardTokenAddresses[0]);
         uint256 balance = rewardToken.balanceOf(address(this));
         emit RewardTokenCollected(
@@ -117,6 +117,21 @@ contract CompoundStrategy is InitializableAbstractStrategy {
     }
 
     /**
+     * @dev Internal method to respond to the addition of new asset / cTokens
+     *      We need to approve the cToken and give it permission to spend the asset
+     * @param _asset Address of the asset to approve
+     * @param _pToken The pToken for the approval
+     */
+    function _abstractSetPToken(address _asset, address _pToken)
+        internal
+        override
+    {
+        // Safe approval
+        IERC20(_asset).safeApprove(_pToken, 0);
+        IERC20(_asset).safeApprove(_pToken, type(uint256).max);
+    }
+
+    /**
      * @dev Remove all assets from platform and send them to Vault contract.
      */
     function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
@@ -168,23 +183,10 @@ contract CompoundStrategy is InitializableAbstractStrategy {
         view
         returns (uint256 balance)
     {
-        uint256 cTokenBalance = _cToken.balanceOf(address(this));
-        uint256 exchangeRate = _cToken.exchangeRateStored();
         // e.g. 50e8*205316390724364402565641705 / 1e18 = 1.0265..e18
-        balance = (cTokenBalance * exchangeRate) / 1e18;
-    }
-
-    /**
-     * @dev Retuns bool indicating whether asset is supported by strategy
-     * @param _asset Address of the asset
-     */
-    function supportsAsset(address _asset)
-        external
-        view
-        override
-        returns (bool)
-    {
-        return assetToPToken[_asset] != address(0);
+        balance =
+            (_cToken.balanceOf(address(this)) * _cToken.exchangeRateStored()) /
+            1e18;
     }
 
     /**
@@ -200,50 +202,5 @@ contract CompoundStrategy is InitializableAbstractStrategy {
             IERC20(asset).safeApprove(cToken, 0);
             IERC20(asset).safeApprove(cToken, type(uint256).max);
         }
-    }
-
-    /**
-     * @dev Internal method to respond to the addition of new asset / cTokens
-     *      We need to approve the cToken and give it permission to spend the asset
-     * @param _asset Address of the asset to approve
-     * @param _cToken The cToken for the approval
-     */
-    function _abstractSetPToken(address _asset, address _cToken)
-        internal
-        override
-    {
-        // Safe approval
-        IERC20(_asset).safeApprove(_cToken, 0);
-        IERC20(_asset).safeApprove(_cToken, type(uint256).max);
-    }
-
-    /**
-     * @dev Get the cToken wrapped in the ICERC20 interface for this asset.
-     *      Fails if the pToken doesn't exist in our mappings.
-     * @param _asset Address of the asset
-     * @return Corresponding cToken to this asset
-     */
-    function _getCTokenFor(address _asset) internal view returns (ICERC20) {
-        address cToken = assetToPToken[_asset];
-        require(cToken != address(0), "cToken does not exist");
-        return ICERC20(cToken);
-    }
-
-    /**
-     * @dev Converts an underlying amount into cToken amount
-     *      cTokenAmt = (underlying * 1e18) / exchangeRate
-     * @param _cToken     cToken for which to change
-     * @param _underlying Amount of underlying to convert
-     * @return amount     Equivalent amount of cTokens
-     */
-    function _convertUnderlyingToCToken(ICERC20 _cToken, uint256 _underlying)
-        internal
-        view
-        returns (uint256 amount)
-    {
-        uint256 exchangeRate = _cToken.exchangeRateStored();
-        // e.g. 1e18*1e18 / 205316390724364402565641705 = 50e8
-        // e.g. 1e8*1e18 / 205316390724364402565641705 = 0.45 or 0
-        amount = (_underlying * 1e18) / exchangeRate;
     }
 }

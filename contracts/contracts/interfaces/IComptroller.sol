@@ -9,4 +9,6 @@ interface IComptroller {
         bool borrowers,
         bool suppliers
     ) external;
+
+    function oracle() external view returns (address);
 }

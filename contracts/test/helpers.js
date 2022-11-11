@@ -385,6 +385,16 @@ function isWithinTolerance(bigNumber, bigNumberExpected, tolerance) {
   return bigNumber.gte(lowestAllowed) && bigNumber.lte(highestAllowed);
 }
 
+/**
+ * Return the difference in ERC20 `token` balance of an `address` after
+ * the `asyncFn` is executed.
+ */
+async function differenceInErc20TokenBalance(address, tokenContract, asyncFn) {
+  const balanceBefore = await tokenContract.balanceOf(address);
+  await asyncFn();
+  return (await tokenContract.balanceOf(address)).sub(balanceBefore);
+}
+
 async function governorArgs({ contract, signature, args = [] }) {
   const method = signature.split("(")[0];
   const tx = await contract.populateTransaction[method](...args);
@@ -470,4 +480,5 @@ module.exports = {
   isWithinTolerance,
   changeInBalance,
   forkOnlyDescribe,
+  differenceInErc20TokenBalance,
 };
