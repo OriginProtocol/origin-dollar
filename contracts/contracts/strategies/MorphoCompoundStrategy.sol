@@ -46,7 +46,12 @@ contract MorphoCompoundStrategy is BaseCompoundStrategy {
      * @dev Approve the spending of all assets by main Morpho contract,
      *      if for some reason is it necessary.
      */
-    function safeApproveAllTokens() external override nonReentrant {
+    function safeApproveAllTokens()
+        external
+        override
+        onlyGovernor
+        nonReentrant
+    {
         uint256 assetCount = assetsMapped.length;
         for (uint256 i = 0; i < assetCount; i++) {
             address asset = assetsMapped[i];
