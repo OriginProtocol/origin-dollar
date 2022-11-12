@@ -58,7 +58,10 @@ const Ogv = () => {
         <div>
           <div className="flex flex-col lg:flex-row overflow-hidden max-w-screen-2xl mx-auto px-[32px] py-[56px] lg:py-[120px] lg:pl-[134px] lg:pr-[208px] text-center lg:text-left">
             <div className="lg:w-2/3">
-              <Typography.H2 className="text-[32px] md:text-[72px] lg:text-left" style={{fontWeight: 700}}>
+              <Typography.H2
+                className="text-[32px] md:text-[72px] lg:text-left"
+                style={{ fontWeight: 700 }}
+              >
                 {fbt('Governed by OGV stakers', 'Governed by OGV stakers')}
               </Typography.H2>
               <Typography.Body3 className="mt-[16px] lg:text-left">
@@ -77,7 +80,7 @@ const Ogv = () => {
                     <Typography.Body3 className="text-xs lg:text-base font-bold">
                       {'OGV PRICE'}
                     </Typography.Body3>
-                    <Typography.H5 className='mt-[4px] font-bold'>{`$${formatCurrency(
+                    <Typography.H5 className="mt-[4px] font-bold">{`$${formatCurrency(
                       price,
                       4
                     )}`}</Typography.H5>
@@ -86,7 +89,7 @@ const Ogv = () => {
                     <Typography.Body3 className="text-xs lg:text-base font-bold">
                       {'OGV MARKET CAP'}
                     </Typography.Body3>
-                    <Typography.H5 className='mt-[4px] font-bold'>{`$${formatCurrency(
+                    <Typography.H5 className="mt-[4px] font-bold">{`$${formatCurrency(
                       circulatingSupply * price,
                       0
                     )}`}</Typography.H5>
@@ -97,7 +100,7 @@ const Ogv = () => {
                     <Typography.Body3 className="text-xs lg:text-base font-bold">
                       {'CIRCULATING SUPPLY'}
                     </Typography.Body3>
-                    <Typography.H5 className='mt-[4px] font-bold'>
+                    <Typography.H5 className="mt-[4px] font-bold">
                       {formatCurrency(circulatingSupply, 0)}
                     </Typography.H5>
                   </div>
@@ -105,7 +108,7 @@ const Ogv = () => {
                     <Typography.Body3 className="text-xs lg:text-base font-bold">
                       {'TOTAL SUPPLY'}
                     </Typography.Body3>
-                    <Typography.H5 className='mt-[4px] font-bold'>
+                    <Typography.H5 className="mt-[4px] font-bold">
                       {formatCurrency(totalSupply, 0)}
                     </Typography.H5>
                   </div>

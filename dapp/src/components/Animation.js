@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
 import Link from 'next/link'
-import { Typography, GradientText, Header } from '@originprotocol/origin-storybook'
+import {
+  Typography,
+  GradientText,
+  Header,
+} from '@originprotocol/origin-storybook'
 import CountUp from 'react-countup'
 import { assetRootPath } from 'utils/image'
 import { animateValue } from 'utils/animation'
@@ -87,16 +91,21 @@ const Animation = ({ navLinks, active }) => {
               <div className="lg:absolute lg:bottom-0 lg:left-0 lg:right-0 text-center">
                 <div className="relative h-32 md:h-64 lg:h-auto flex flex-row lg:block">
                   <div className="absolute right-20 md:right-32 md:top-10 lg:static z-10">
-                    <Typography.H2 className='ml-20 text-left' style={{fontWeight: 700}}>
-                    {
-                      <CountUp
-                        start={0}
-                        end={totalOusd}
-                        duration={5}
-                        useEasing
-                        includeComma
-                        formattingFn={(num) => { return `$${formatCurrency(num, 0)}`}}
-                      />
+                    <Typography.H2
+                      className="ml-20 text-left"
+                      style={{ fontWeight: 700 }}
+                    >
+                      {
+                        <CountUp
+                          start={0}
+                          end={totalOusd}
+                          duration={5}
+                          useEasing
+                          includeComma
+                          formattingFn={(num) => {
+                            return `$${formatCurrency(num, 0)}`
+                          }}
+                        />
                       }
                     </Typography.H2>
                     <Typography.Body3 className="text-sm md:text-base text-[#b5beca] pt-[0px] md:pt-[4px]">

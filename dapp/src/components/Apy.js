@@ -2,8 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react'
 import { fbt } from 'fbt-runtime'
 import Link from 'next/link'
 import { Chart as ChartJS } from 'chart.js/auto'
-import { Chart }            from 'react-chartjs-2'
-import { LineChart } from "../components/Chart"
+import { Chart } from 'react-chartjs-2'
+import { LineChart } from '../components/Chart'
 import { Typography } from '@originprotocol/origin-storybook'
 import { useStoreState } from 'pullstate'
 import ContractStore from 'stores/ContractStore'
@@ -35,7 +35,7 @@ const Apy = ({ isMobile }) => {
   const [chartData, setChartData] = useState({})
 
   const data = {
-    data: []
+    data: [],
   }
 
   useEffect(() => {
@@ -50,12 +50,10 @@ const Apy = ({ isMobile }) => {
       datasets: [
         {
           data: data.data.map((crypto) => crypto.price),
-          backgroundColor: [
-            '#0274F1'
-          ],
-          borderColor: '#8C66FC'
-        }
-      ]
+          backgroundColor: ['#0274F1'],
+          borderColor: '#8C66FC',
+        },
+      ],
     })
   }, [])
 
@@ -63,7 +61,10 @@ const Apy = ({ isMobile }) => {
     <>
       <section className="home dim">
         <div className="py-[120px] px-[16px] md:px-[134px] text-center">
-          <Typography.H6 className="text-[32px] md:text-[56px] leading-[36px] md:leading-[64px]" style={{fontWeight: 700}}>
+          <Typography.H6
+            className="text-[32px] md:text-[56px] leading-[36px] md:leading-[64px]"
+            style={{ fontWeight: 700 }}
+          >
             {fbt('The simplest', 'The simplest')}{' '}
             <span className="text-gradient2 py-1">
               {fbt('market-neutral', 'market-neutral')}{' '}
@@ -78,7 +79,7 @@ const Apy = ({ isMobile }) => {
           </Typography.Body3>
           {loaded && (
             <div className="max-w-[1432px] mx-auto flex flex-col mt-20 mb-16 p-[16px] md:p-10 rounded-xl bg-[#141519]">
-              <div className='flex flex-col lg:flex-row justify-between'>
+              <div className="flex flex-col lg:flex-row justify-between">
                 <div className="mt-[16px]">
                   <Typography.H2 className="font-bold xl:inline">
                     {formatCurrency(daysToApy[apyDays] * 100, 2) + '% '}
@@ -101,11 +102,21 @@ const Apy = ({ isMobile }) => {
                             setApyDays(days)
                           }}
                         >
-                          <div
-                            className='bg-[#1e1f25] w-full h-full rounded-lg'
-                          >
-                            <div className={`w-full h-full py-[14px] rounded-lg ${apyDays === days ? 'gradient4' : 'text-[#b5beca]'}`}>
-                              <Typography.Body3 className={`${apyDays === days ? 'text-[#fafbfb] font-medium' : 'text-[#b5beca]'}`}>{`${days}-day`}</Typography.Body3>
+                          <div className="bg-[#1e1f25] w-full h-full rounded-lg">
+                            <div
+                              className={`w-full h-full py-[14px] rounded-lg ${
+                                apyDays === days
+                                  ? 'gradient4'
+                                  : 'text-[#b5beca]'
+                              }`}
+                            >
+                              <Typography.Body3
+                                className={`${
+                                  apyDays === days
+                                    ? 'text-[#fafbfb] font-medium'
+                                    : 'text-[#b5beca]'
+                                }`}
+                              >{`${days}-day`}</Typography.Body3>
                             </div>
                           </div>
                         </div>

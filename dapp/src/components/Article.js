@@ -29,7 +29,12 @@ const Article = ({ article, navLinks }) => {
         </Typography.Link>
       </div>
       <div className="mb-6 mt-2 max-w-screen-xl mx-auto">
-        <Typography.H7 as="h1" className="text-[32px] md:text-[56px] leading-[36px] md:leading-[64px] font-bold">{article.title}</Typography.H7>
+        <Typography.H7
+          as="h1"
+          className="text-[32px] md:text-[56px] leading-[36px] md:leading-[64px] font-bold"
+        >
+          {article.title}
+        </Typography.H7>
       </div>
       <div className="max-w-screen-xl mx-auto bg-white rounded-2xl pb-10">
         {imageUrl && (

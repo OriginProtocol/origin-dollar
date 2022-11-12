@@ -1,4 +1,4 @@
-import { Line } from "react-chartjs-2";
+import { Line } from 'react-chartjs-2'
 
 export const LineChart = ({ chartData }) => {
   return (
@@ -12,11 +12,11 @@ export const LineChart = ({ chartData }) => {
             },
             legend: {
               display: false,
-              position: "bottom"
-           }
-          }
+              position: 'bottom',
+            },
+          },
         }}
       />
     </div>
-  );
-};
+  )
+}

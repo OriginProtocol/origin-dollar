@@ -48,11 +48,7 @@ function MyApp({ Component, pageProps, err }) {
   const [locale, setLocale] = useState('en_US')
   const { global } = pageProps
 
-  const {
-    account,
-    active,
-    error,
-  } = useWeb3React()
+  const { account, active, error } = useWeb3React()
   const [setCookie] = useCookies(['loggedIn'])
   const router = useRouter()
   const tried = useEagerConnect()

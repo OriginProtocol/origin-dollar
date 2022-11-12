@@ -38,7 +38,10 @@ const Allocation = ({ isMobile }) => {
     <>
       <section className="black">
         <div className="py-[120px] px-[16px] md:px-[134px] text-center">
-          <Typography.H6 className="text-[32px] md:text-[56px] leading-[36px] md:leading-[64px]" style={{fontWeight: 700}}>
+          <Typography.H6
+            className="text-[32px] md:text-[56px] leading-[36px] md:leading-[64px]"
+            style={{ fontWeight: 700 }}
+          >
             {fbt(
               'Fully transparent on the Ethereum blockchain',
               'Fully transparent on the Ethereum blockchain'
@@ -106,7 +109,10 @@ const Allocation = ({ isMobile }) => {
                             }}
                             className="mt-[16px]"
                           ></LinearProgress>
-                          <Typography.Caption className='mt-[22px] text-[#b5beca] text-left'>Interest is earned by borrowers and governance token rewards are harvested for additional yields.</Typography.Caption>
+                          <Typography.Caption className="mt-[22px] text-[#b5beca] text-left">
+                            Interest is earned by borrowers and governance token
+                            rewards are harvested for additional yields.
+                          </Typography.Caption>
                           <div
                             className={`${
                               open[strategy.name] ? '' : 'hidden'

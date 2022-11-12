@@ -31,7 +31,10 @@ const Home = ({ locale, onLocale, seo, navLinks }) => {
         <Collateral />
         <section className="home black">
           <div className="py-[120px] px-[16px] md:px-[200px] text-center">
-            <Typography.H6 className="text-[32px] md:text-[56px] leading-[36px] md:leading-[64px]" style={{fontWeight: 700}}>
+            <Typography.H6
+              className="text-[32px] md:text-[56px] leading-[36px] md:leading-[64px]"
+              style={{ fontWeight: 700 }}
+            >
               {fbt(
                 'Audited by leading security experts',
                 'Audited by leading security experts'
@@ -44,7 +47,7 @@ const Home = ({ locale, onLocale, seo, navLinks }) => {
               )}
             </Typography.Body3>
             <div className="audits max-w-[1134px] mx-auto mt-20 mb-16 rounded-xl px-[16px] xl:px-[86px] py-6 md:py-[56px]">
-              <Typography.H7 className='font-bold'>
+              <Typography.H7 className="font-bold">
                 {fbt('Existing audits', 'Existing audits')}
               </Typography.H7>
               <div className="grid grid-rows-2 grid-cols-2 gap-y-20 2xl:flex 2xl:flex-row 2xl:justify-between mt-6 md:mt-[56px] mx-auto">

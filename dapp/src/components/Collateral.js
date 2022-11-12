@@ -42,7 +42,10 @@ const Collateral = () => {
     <>
       <section className="dim">
         <div className="py-[120px] px-[16px] md:px-[134px] text-center">
-          <Typography.H6 className="text-[32px] md:text-[56px] leading-[36px] md:leading-[64px]" style={{fontWeight: 700}}>
+          <Typography.H6
+            className="text-[32px] md:text-[56px] leading-[36px] md:leading-[64px]"
+            style={{ fontWeight: 700 }}
+          >
             {fbt('Always 100% collateralized', 'Always 100% collateralized')}
           </Typography.H6>
           <Typography.Body3 className="md:max-w-[943px] mt-[16px] mx-auto text-[#b5beca]">
@@ -77,8 +80,8 @@ const Collateral = () => {
                         src={assetRootPath(`/images/${token.name}-logo.svg`)}
                         className="w-12 md:w-[72px]"
                       ></img>
-                      <div className='ml-[8px] md:ml-8'>
-                        <Typography.H7 className='text-base md:text-[32px] font-bold'>
+                      <div className="ml-[8px] md:ml-8">
+                        <Typography.H7 className="text-base md:text-[32px] font-bold">
                           {`${formatCurrency((token.total / total) * 100, 2)}%`}
                         </Typography.H7>
                         <Typography.H7 className="mt-[0px] md:mt-[8px] text-[12px] md:text-[24px] text-normal text-[#b5beca]">{`$${formatCurrency(
