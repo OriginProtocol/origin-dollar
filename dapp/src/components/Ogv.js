@@ -53,16 +53,15 @@ const Ogv = () => {
   }, [price, circulatingSupply, totalSupply])
 
   return (
-    <section className="home gradient3 relative z-0">
+    <section className="gradient3 relative z-0">
       <div className="relative divide-black divide-y-2">
         <div>
-          <div className="flex flex-col lg:flex-row overflow-hidden max-w-screen-xl mx-auto lg:pt-10 px-4 pb-20 text-center lg:text-left">
+          <div className="flex flex-col lg:flex-row overflow-hidden max-w-screen-2xl mx-auto px-[32px] py-[56px] lg:py-[120px] lg:pl-[134px] lg:pr-[208px] text-center lg:text-left">
             <div className="lg:w-2/3">
-              <Typography.H2 className="lg:text-left font-bold">
+              <Typography.H2 className="text-[32px] md:text-[72px] lg:text-left" style={{fontWeight: 700}}>
                 {fbt('Governed by OGV stakers', 'Governed by OGV stakers')}
               </Typography.H2>
-              <br className="block" />
-              <Typography.Body3 className="lg:text-left">
+              <Typography.Body3 className="mt-[16px] lg:text-left">
                 {fbt(
                   "OUSD's future is shaped by voters who lock their OGV and participate in decentralized governance.",
                   "OUSD's future is shaped by voters who lock their OGV and participate in decentralized governance."
@@ -70,43 +69,43 @@ const Ogv = () => {
               </Typography.Body3>
               <img
                 src={assetRootPath(`/images/ogv.svg`)}
-                className="mt-10 mx-auto px-10 block lg:hidden"
+                className="mt-8 lg:mt-8 mx-auto block lg:hidden"
               />
-              <div className="flex flex-col justify-between w-full md:mx-20 lg:mx-0 lg:w-4/5 mb-20 text-left font-weight-bold mt-10 lg:mt-24 h-36 md:h-52">
+              <div className="flex flex-col justify-between w-full my-16 lg:w-4/5 text-left font-weight-bold">
                 <div className="flex flex-row justify-between">
                   <div className="w-96">
-                    <Typography.Body3 className="text-xs lg:text-base mb-2 font-weight-bold">
+                    <Typography.Body3 className="text-xs lg:text-base font-bold">
                       {'OGV PRICE'}
                     </Typography.Body3>
-                    <Typography.H5>{`$${formatCurrency(
+                    <Typography.H5 className='mt-[4px] font-bold'>{`$${formatCurrency(
                       price,
                       4
                     )}`}</Typography.H5>
                   </div>
                   <div className="w-96">
-                    <Typography.Body3 className="text-xs lg:text-base mb-2 font-weight-bold">
+                    <Typography.Body3 className="text-xs lg:text-base font-bold">
                       {'OGV MARKET CAP'}
                     </Typography.Body3>
-                    <Typography.H5>{`$${formatCurrency(
+                    <Typography.H5 className='mt-[4px] font-bold'>{`$${formatCurrency(
                       circulatingSupply * price,
                       0
                     )}`}</Typography.H5>
                   </div>
                 </div>
-                <div className="flex flex-row justify-between">
+                <div className="flex flex-row justify-between mt-10">
                   <div className="w-96">
-                    <Typography.Body3 className="text-xs lg:text-base mb-2 font-weight-bold">
+                    <Typography.Body3 className="text-xs lg:text-base font-bold">
                       {'CIRCULATING SUPPLY'}
                     </Typography.Body3>
-                    <Typography.H5>
+                    <Typography.H5 className='mt-[4px] font-bold'>
                       {formatCurrency(circulatingSupply, 0)}
                     </Typography.H5>
                   </div>
                   <div className="w-96">
-                    <Typography.Body3 className="text-xs lg:text-base mb-2 font-weight-bold">
+                    <Typography.Body3 className="text-xs lg:text-base font-bold">
                       {'TOTAL SUPPLY'}
                     </Typography.Body3>
-                    <Typography.H5>
+                    <Typography.H5 className='mt-[4px] font-bold'>
                       {formatCurrency(totalSupply, 0)}
                     </Typography.H5>
                   </div>
@@ -142,13 +141,13 @@ const Ogv = () => {
                 src={assetRootPath(`/images/ogv.svg`)}
                 className="hidden lg:block"
               />
-              <Typography.Body3 className="my-4 text-center text-white">
+              <Typography.Body3 className="mt-8 text-center text-white opacity-75">
                 {fbt(
                   'OGV is listed on top exchanges',
                   'OGV is listed on top exchanges'
                 )}
               </Typography.Body3>
-              <div className="flex flex-row justify-between md:mx-32 lg:mx-0">
+              <div className="flex flex-row justify-between mt-[20px] md:mx-32 lg:mx-0">
                 <a
                   href="https://www.huobi.com/en-in/exchange/ogv_usdt"
                   target="_blank"
@@ -187,7 +186,7 @@ const Ogv = () => {
           </div>
         </div>
         <div>
-          <div className="overflow-hidden max-w-screen-xl mx-auto mt-16 lg:pt-10 px-4 pb-10 lg:pb-20 text-center">
+          <div className="overflow-hidden max-w-screen-2xl mx-auto py-[120px] px-8 md:px-[134px] text-center">
             <div>
               <Typography.H2 className="font-normal">
                 {fbt('Stake OGV', 'Stake OGV')} <br className="block" />
@@ -195,8 +194,7 @@ const Ogv = () => {
                   {fbt('To Earn OGV', 'To Earn OGV')}
                 </span>
               </Typography.H2>
-              <br className="block" />
-              <Typography.Body3 className="mb-10 font-normal">
+              <Typography.Body3 className="mt-[16px] mb-10 font-normal text-[#fafbfb]">
                 {fbt(
                   'Fees and voting rights accrue to OGV stakers. Control the future of OUSD',
                   'Fees and voting rights accrue to OGV stakers. Control the future of OUSD'

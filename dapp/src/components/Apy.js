@@ -1,6 +1,9 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { fbt } from 'fbt-runtime'
 import Link from 'next/link'
+import { Chart as ChartJS } from 'chart.js/auto'
+import { Chart }            from 'react-chartjs-2'
+import { LineChart } from "../components/Chart"
 import { Typography } from '@originprotocol/origin-storybook'
 import { useStoreState } from 'pullstate'
 import ContractStore from 'stores/ContractStore'
@@ -29,66 +32,91 @@ const Apy = ({ isMobile }) => {
       : DEFAULT_SELECTED_APY
   )
 
+  const [chartData, setChartData] = useState({})
+
+  const data = {
+    data: []
+  }
+
   useEffect(() => {
     localStorage.setItem('last_user_selected_apy', apyDays)
     setLoaded(true)
   }, [apyDays])
 
+  useEffect(() => {
+    setChartData({
+      label: 'APY',
+      labels: data.data.map((crypto) => crypto.name),
+      datasets: [
+        {
+          data: data.data.map((crypto) => crypto.price),
+          backgroundColor: [
+            '#0274F1'
+          ],
+          borderColor: '#8C66FC'
+        }
+      ]
+    })
+  }, [])
+
   return (
     <>
       <section className="home dim">
-        <div className="max-w-screen-xl mx-auto pb-20 px-4 lg:px-8 text-center">
-          <Typography.H3 className="font-bold">
+        <div className="py-[120px] px-[16px] md:px-[134px] text-center">
+          <Typography.H6 className="text-[32px] md:text-[56px] leading-[36px] md:leading-[64px]" style={{fontWeight: 700}}>
             {fbt('The simplest', 'The simplest')}{' '}
             <span className="text-gradient2 py-1">
               {fbt('market-neutral', 'market-neutral')}{' '}
             </span>
-            {fbt('DeFi', 'DeFi')} <br className="hidden lg:block" />
-            {fbt('strategy', 'strategy')}
-          </Typography.H3>
-          <br className="block" />
-          <Typography.Body3 className="text-[#b5beca]">
+            {fbt('DeFi strategy', 'DeFi strategy')}
+          </Typography.H6>
+          <Typography.Body3 className="md:max-w-[943px] mt-[16px] mx-auto text-[#b5beca]">
             {fbt(
               'Grow your stablecoin portfolio by swapping USDC, USDT, or DAI to OUSD. Yields are generated on-chain, distributed directly to your wallet, and compounded automatically. Your funds are never risked on speculative positions.',
               'Grow your stablecoin portfolio by swapping USDC, USDT, or DAI to OUSD. Yields are generated on-chain, distributed directly to your wallet, and compounded automatically. Your funds are never risked on speculative positions.'
             )}
           </Typography.Body3>
           {loaded && (
-            <div className="apy flex flex-col lg:flex-row justify-between rounded-xl my-10 lg:m-16 p-6 lg:p-10">
-              <div className="mt-2 mb-6 lg:mb-0">
-                <Typography.H2 className="font-bold lg:inline">
-                  {formatCurrency(daysToApy[apyDays] * 100, 2) + '% '}
-                </Typography.H2>
-                <Typography.Body className="text-[#b5beca] block lg:inline">{`Trailing ${apyDays}-day APY`}</Typography.Body>
-              </div>
-              <div className="flex flex-col lg:w-2/5">
-                <Typography.Body3 className="text-[#b5beca] mb-3">
-                  {fbt('Moving average', 'Moving average')}
-                </Typography.Body3>
-                <div className="flex flex-row justify-around">
-                  {apyDayOptions.map((days) => {
-                    return (
-                      <div
-                        className={`${
-                          apyDays === days ? 'gradient2' : 'inactive'
-                        } days1 w-1/3 mb-6 lg:mb-1 p-px text-center`}
-                        key={days}
-                        onClick={() => {
-                          setApyDays(days)
-                        }}
-                      >
+            <div className="max-w-[1432px] mx-auto flex flex-col mt-20 mb-16 p-[16px] md:p-10 rounded-xl bg-[#141519]">
+              <div className='flex flex-col lg:flex-row justify-between'>
+                <div className="mt-[16px]">
+                  <Typography.H2 className="font-bold xl:inline">
+                    {formatCurrency(daysToApy[apyDays] * 100, 2) + '% '}
+                  </Typography.H2>
+                  <Typography.H7 className="text-base font-normal md:text-2xl text-[#b5beca] mt-[4px] xl:mt-0 xl:inline lg:text-left opacity-70">{`Trailing ${apyDays}-day APY`}</Typography.H7>
+                </div>
+                <div className="flex flex-col w-[286px] sm:w-[425px] mt-6 lg:mt-0 mx-[auto] lg:mx-0">
+                  <Typography.Body3 className="text-[#b5beca]">
+                    {fbt('Moving average', 'Moving average')}
+                  </Typography.Body3>
+                  <div className="flex flex-row justify-between mt-[12px]">
+                    {apyDayOptions.map((days) => {
+                      return (
                         <div
                           className={`${
-                            apyDays === days ? 'gradient4' : 'inactive'
-                          } days2 w-full h-full`}
+                            apyDays === days ? 'gradient2' : 'bg-[#1e1f25]'
+                          } w-[90px] sm:w-[135px] p-px rounded-lg text-center cursor-pointer hover:opacity-90`}
+                          key={days}
+                          onClick={() => {
+                            setApyDays(days)
+                          }}
                         >
-                          {days}
+                          <div
+                            className='bg-[#1e1f25] w-full h-full rounded-lg'
+                          >
+                            <div className={`w-full h-full py-[14px] rounded-lg ${apyDays === days ? 'gradient4' : 'text-[#b5beca]'}`}>
+                              <Typography.Body3 className={`${apyDays === days ? 'text-[#fafbfb] font-medium' : 'text-[#b5beca]'}`}>{`${days}-day`}</Typography.Body3>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    )
-                  })}
+                      )
+                    })}
+                  </div>
                 </div>
               </div>
+              {/*(<div className='mb-12'>
+                <LineChart chartData={chartData} />
+              </div>*/}
             </div>
           )}
           <Link href={adjustLinkHref('/swap')}>
@@ -100,52 +128,6 @@ const Apy = ({ isMobile }) => {
           </Link>
         </div>
       </section>
-      <style jsx>{`
-        .apy {
-          background-color: #141519;
-        }
-
-        .days1 {
-          display: inline-block;
-          border-radius: 5px;
-          white-space: nowrap;
-          margin: 0px 10px 10px 10px;
-          text-align: center;
-          cursor: pointer;
-        }
-
-        .days2 {
-          display: inline-block;
-          border-radius: 5px;
-          white-space: nowrap;
-          padding: 12px 0;
-          text-align: center;
-          cursor: pointer;
-        }
-
-        .days1:hover {
-          opacity: 0.9;
-        }
-
-        .active {
-          border: 2px solid #8c66fc;
-        }
-
-        .inactive {
-          color: #fafbfb;
-          background-color: #1e1f25;
-        }
-
-        .days {
-        }
-
-        @media (max-width: 799px) {
-          .days {
-            padding-left: 4px;
-            padding-right: 4px;
-          }
-        }
-      `}</style>
     </>
   )
 }

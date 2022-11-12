@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
 import Link from 'next/link'
-import { Typography, Header } from '@originprotocol/origin-storybook'
+import { Typography, GradientText, Header } from '@originprotocol/origin-storybook'
+import CountUp from 'react-countup'
 import { assetRootPath } from 'utils/image'
 import { animateValue } from 'utils/animation'
 import { useStoreState } from 'pullstate'
@@ -12,7 +13,7 @@ import { formatCurrency } from 'utils/math'
 import addresses from 'constants/contractAddresses'
 import { adjustLinkHref } from 'utils/utils'
 
-const Animation = ({ navLinks }) => {
+const Animation = ({ navLinks, active }) => {
   const [totalOusd, setTotalOusd] = useState()
   const ousdInitialValue = parseFloat(totalOusd - 2000000, 0)
   const [ousdValue, setOusdValue] = useState(ousdInitialValue)
@@ -47,10 +48,10 @@ const Animation = ({ navLinks }) => {
 
   return (
     <>
-      <section className="intro black p-[0px] lg:pb-[75px]">
-        <Header mappedLinks={navLinks} webProperty="ousd" />
-        <div className="flex flex-col lg:flex-row items-center max-w-screen-xl mx-auto overflow-hidden pt-10 px-8">
-          <div className="lg:w-1/2">
+      <section className="intro black">
+        <Header mappedLinks={navLinks} webProperty="ousd" active={active} />
+        <div className="flex flex-col lg:flex-row max-w-screen-2xl mt-[20px] md:mt-16 mx-auto px-8 md:px-[134px] lg:pb-40 overflow-hidden">
+          <div className="lg:w-7/12">
             <Typography.H2 as="h1" className="font-normal">
               {fbt('The self-custodial,', 'The self-custodial,')}{' '}
               <br className="hidden md:block" />
@@ -64,11 +65,11 @@ const Animation = ({ navLinks }) => {
               {fbt(
                 'Origin Dollar simplifies DeFi by eliminating the need for staking or lock-ups. Hold OUSD in any Ethereum wallet and watch your balance increase every day.',
                 'Origin Dollar simplifies DeFi by eliminating the need for staking or lock-ups. Hold OUSD in any Ethereum wallet and watch your balance increase every day.'
-              )}{' '}
+              )}
             </Typography.Body3>
             <Link href={adjustLinkHref('/swap')}>
               <a target="_blank" className="bttn ml-0 gradient2 w-auto">
-                <Typography.H7 className="mx-8 font-normal">
+                <Typography.H7 className="mx-8 md:mx-0 font-normal">
                   {fbt('Get OUSD', 'Get OUSD')}
                 </Typography.H7>
               </a>
@@ -85,12 +86,20 @@ const Animation = ({ navLinks }) => {
             {totalOusd && (
               <div className="lg:absolute lg:bottom-0 lg:left-0 lg:right-0 text-center">
                 <div className="relative h-32 md:h-64 lg:h-auto flex flex-row lg:block">
-                  <div className="absolute right-20 md:right-40 md:top-10 lg:static z-10">
-                    <Typography.H2 className="text-[40px] md:text-7xl font-bold pb-[4px] lg:pb-[8px] my-auto">{`$${formatCurrency(
-                      totalOusd,
-                      0
-                    )}`}</Typography.H2>
-                    <Typography.Body3 className="text-sm md:text-base text-[#b5beca] pt-[0px] md:pt-[4px] lg:-mt-2">
+                  <div className="absolute right-20 md:right-32 md:top-10 lg:static z-10">
+                    <Typography.H2 className='ml-20 text-left' style={{fontWeight: 700}}>
+                    {
+                      <CountUp
+                        start={0}
+                        end={totalOusd}
+                        duration={5}
+                        useEasing
+                        includeComma
+                        formattingFn={(num) => { return `$${formatCurrency(num, 0)}`}}
+                      />
+                      }
+                    </Typography.H2>
+                    <Typography.Body3 className="text-sm md:text-base text-[#b5beca] pt-[0px] md:pt-[4px]">
                       {fbt(
                         'Total value of OUSD wallet balances',
                         'Total value of OUSD wallet balances'

@@ -39,10 +39,6 @@ button:hover {
   opacity: 0.8;
 }
 
-section {
-  padding: 150px 0;
-}
-
 main {
   min-height: 100vh;
   position: relative;
@@ -94,6 +90,12 @@ section.intro {
   background-repeat: no-repeat;
 }
 
+section.faq {
+  background-image: url(/images/splines36.png);
+  background-position: 100% 0;
+  background-repeat: no-repeat;
+}
+
 @media (max-width: 1200px) {
   section.intro {
     background-position: 100% 100%;
@@ -107,11 +109,12 @@ section.intro {
     background-position: 100% 100%;
     background-size: 150vw;
   }
-}
 
-section.home {
-  padding-top: 75px;
-  padding-bottom: 0;
+  section.faq {
+    background-image: url(/images/splines37.png);
+    background-position: 100% 0;
+    background-repeat: no-repeat;
+  }
 }
 
 section.dark {
@@ -161,7 +164,7 @@ section.dim {
 
 .gradient4 {
   color: #fafbfb;
-  background-image: -webkit-linear-gradient(left, #0d0033 -28.99%, #001124 144.97%);
+  background-image: -webkit-linear-gradient(left, #8C66FC33 -28.99%, #0274F133 144.97%);
 }
 
 .bttn {
@@ -179,7 +182,7 @@ section.dim {
   opacity: 0.9;
 }
 
-@media (max-width: 799px) {
+@media (max-width: 767px) {
   .bttn {
     width: 100%;
     margin: 0;

@@ -29,18 +29,18 @@ export default function Footer({ locale }) {
   return (
     <>
       <footer>
-        <div className="max-w-screen-xl mx-auto relative overflow-hidden px-8 pt-16 pb-10 divide-gray-500 divide-y-2 text-white">
-          <div className="flex flex-col md:flex-row justify-between pt-10 pb-10 md:pb-16 text-left">
+        <div className="max-w-screen-2xl mx-auto relative overflow-hidden px-8 lg:px-[134px] py-10 lg:pt-32 lg:pb-10 divide-[#ffffff33] divide-y-2 text-white">
+          <div className="flex flex-col lg:flex-row justify-between pb-10 lg:pb-[88px] text-left">
             <img
               src={assetRootPath(`/images/origin-white.svg`)}
-              className="w-28 md:w-32 pb-6 md:pb-0"
+              className="w-28 lg:w-32 mb-10 lg:mb-0"
             />
-            <div className="flex flex-col md:flex-row justify-between mt-2 md:w-1/2">
+            <div className="flex flex-col lg:flex-row justify-between">
               <a
                 href={'https://governance.ousd.com/'}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-2"
+                className="mt-2 lg:mr-10"
                 onClick={() => {
                   analytics.track('Governance Link click')
                 }}
@@ -53,7 +53,7 @@ export default function Footer({ locale }) {
                 href={process.env.DOCS_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-2"
+                className="mt-2 lg:mr-10 mt-[20px] lg:mt-0"
                 onClick={() => {
                   analytics.track('Docs Link click')
                 }}
@@ -66,7 +66,7 @@ export default function Footer({ locale }) {
                 href={'/blog'}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-2"
+                className="mt-2 lg:mr-10 mt-[20px] lg:mt-0"
                 onClick={() => {
                   analytics.track('Blog Link click')
                 }}
@@ -79,7 +79,7 @@ export default function Footer({ locale }) {
                 href={'/faq'}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-2"
+                className="mt-2 lg:mr-10 mt-[20px] lg:mt-0"
                 onClick={() => {
                   analytics.track('FAQ Link click')
                 }}
@@ -94,7 +94,7 @@ export default function Footer({ locale }) {
                 }
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-2"
+                className="mt-2 mr-10 mt-[20px] lg:mt-0"
                 onClick={() => {
                   analytics.track('OGV Link click')
                 }}
@@ -103,47 +103,47 @@ export default function Footer({ locale }) {
                   {fbt('OGV', 'OGV link')}
                 </Typography.Body3>
               </a>
-              <br className="block md:hidden" />
+              <br className="block lg:hidden" />
               <a
                 href="/swap"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="bttn gradient2 px-4 py-2 w-full md:w-32 m-0"
+                className="gradient2 w-full lg:w-[126px] px-6 py-[6px] mt-[20px] lg:mt-0 rounded-full text-center"
               >
-                <Typography.Body3 className="text-white">
+                <Typography.Body3 className="font-medium text-white">
                   Get OUSD
                 </Typography.Body3>
               </a>
             </div>
           </div>
-          <div className="flex flex-col md:flex-row justify-between pt-10 text-[#b5beca]">
+          <div className="flex flex-col lg:flex-row justify-between pt-8 lg:pt-10 text-[#b5beca]">
             <a
               href="https://originprotocol.com"
               target="_blank"
               rel="noopener noreferrer"
             >
-              <Typography.Caption>
+              <Typography.Caption2>
                 {fbt(
                   'Originally released by Origin Protocol',
                   'Originally released by Origin Protocol'
                 )}
-              </Typography.Caption>
+              </Typography.Caption2>
             </a>
-            <div className="flex flex-row md:justify-between mt-2 md:mt-0">
+            <div className="flex flex-row lg:justify-between mt-2 lg:mt-0">
               <a
                 href={termsURL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mr-4 md:mr-0"
+                className="mr-4 lg:mr-0"
               >
-                <Typography.Caption>
+                <Typography.Caption2>
                   {fbt('Terms of Service', 'Terms of Service')}
-                </Typography.Caption>
+                </Typography.Caption2>
               </a>
               <a href={privacyURL} target="_blank" rel="noopener noreferrer">
-                <Typography.Caption>
+                <Typography.Caption2>
                   {fbt('Privacy Policy', 'Privacy Policy')}
-                </Typography.Caption>
+                </Typography.Caption2>
               </a>
             </div>
           </div>

@@ -36,38 +36,35 @@ const Allocation = ({ isMobile }) => {
 
   return (
     <>
-      <section className="home black">
-        <div className="max-w-screen-xl mx-auto pb-20 px-4 md:px-8 text-center">
-          <Typography.H3 className="font-bold">
+      <section className="black">
+        <div className="py-[120px] px-[16px] md:px-[134px] text-center">
+          <Typography.H6 className="text-[32px] md:text-[56px] leading-[36px] md:leading-[64px]" style={{fontWeight: 700}}>
             {fbt(
-              'Fully transparent on the Ethereum',
-              'Fully transparent on the Ethereum'
-            )}{' '}
-            <br className="hidden md:block" />
-            {fbt('blockchain', 'blockchain')}
-          </Typography.H3>
-          <br className="block" />
-          <Typography.Body3 className="text-[#b5beca]">
+              'Fully transparent on the Ethereum blockchain',
+              'Fully transparent on the Ethereum blockchain'
+            )}
+          </Typography.H6>
+          <Typography.Body3 className="md:max-w-[943px] mt-[16px] mx-auto text-[#b5beca]">
             {fbt(
               'Funds are deployed to automated, on-chain, blue-chip stablecoin strategies. There are no gatekeepers or centralized money managers and governance is entirely decentralized.',
               'Funds are deployed to automated, on-chain, blue-chip stablecoin strategies. There are no gatekeepers or centralized money managers and governance is entirely decentralized.'
             )}
           </Typography.Body3>
-          <div className="allocation rounded-xl my-10 md:m-16 p-6 md:p-10 divide-black divide-y-2">
-            <Typography.Body className="font-bold pb-8">
+          <div className="allocation mt-20 mb-16 rounded-xl divide-black divide-y-2">
+            <Typography.H7 className="font-bold px-[16px] py-[22px] md:p-10">
               {fbt(
                 'Current yield sources & allocations',
                 'Current yield sources & allocations'
               )}
-            </Typography.Body>
-            <div className="flex flex-col pt-3">
+            </Typography.H7>
+            <div className="max-w-[1432px] mx-auto flex flex-col px-[16px] md:px-10 py-[10px] md:py-8">
               <ThemeProvider theme={theme}>
                 <div className="flex flex-col justify-between">
                   {allocation.strategies?.map((strategy) => {
                     if (strategy.name === 'vault') return
                     return (
                       <div
-                        className="strategy rounded-xl border-2 my-6 md:m-6 cursor-pointer"
+                        className="strategy rounded-xl border-2 p-[16px] md:p-8 my-[6px] md:my-[8px] cursor-pointer"
                         key={strategy.name}
                         onClick={(e) => {
                           e.preventDefault()
@@ -77,13 +74,13 @@ const Allocation = ({ isMobile }) => {
                           })
                         }}
                       >
-                        <div className="m-6 xl:m-10 xl:mb-8">
+                        <div>
                           <div className="flex flex-row justify-between">
                             <img
                               src={assetRootPath(
                                 `/images/${strategy.name}-logo-allocation.svg`
                               )}
-                              className={`logo mb-8`}
+                              className={`logo`}
                             />
                             <div>
                               <Typography.H7 className="inline pr-3">{`${formatCurrency(
@@ -105,18 +102,19 @@ const Allocation = ({ isMobile }) => {
                             sx={{
                               bgcolor: '#141519',
                               borderRadius: 10,
-                              height: { xs: 4, md: 12 },
+                              height: 4,
                             }}
-                            className="h-2"
+                            className="mt-[16px]"
                           ></LinearProgress>
+                          <Typography.Caption className='mt-[22px] text-[#b5beca] text-left'>Interest is earned by borrowers and governance token rewards are harvested for additional yields.</Typography.Caption>
                           <div
                             className={`${
                               open[strategy.name] ? '' : 'hidden'
-                            } flex flex-col xl:flex-row mt-6 whitespace-nowrap`}
+                            } flex flex-col xl:flex-row mt-[22px] whitespace-nowrap`}
                           >
                             {strategy.name !== 'convex' ? (
                               <>
-                                <div className="flex flex-row justify-between md:pr-10 py-1">
+                                <div className="flex flex-row justify-between md:pr-10">
                                   <div className="flex flex-row">
                                     <img
                                       src={assetRootPath(
@@ -125,19 +123,19 @@ const Allocation = ({ isMobile }) => {
                                           1
                                         )}dai.svg`
                                       )}
-                                      className="w-8"
+                                      className="w-6"
                                     />
-                                    <Typography.Body3 className="pt-1 px-2 md:mx-1 font-light">{`${
+                                    <Typography.Body3 className="pl-[12px] pr-[16px] font-light">{`${
                                       strategy.name.charAt(0).toUpperCase() +
                                       strategy.name.slice(1)
                                     } DAI`}</Typography.Body3>
                                   </div>
-                                  <Typography.Body3 className="pt-1 text-[#b5beca] font-light">{`${formatCurrency(
+                                  <Typography.Body3 className="text-[#b5beca] font-light">{`${formatCurrency(
                                     (strategy.dai / strategy.total) * 100,
                                     2
                                   )}%`}</Typography.Body3>
                                 </div>
-                                <div className="flex flex-row justify-between md:pr-10 py-1">
+                                <div className="flex flex-row justify-between md:pr-10">
                                   <div className="flex flex-row">
                                     <img
                                       src={assetRootPath(
@@ -146,19 +144,19 @@ const Allocation = ({ isMobile }) => {
                                           1
                                         )}usdc.svg`
                                       )}
-                                      className="w-8"
+                                      className="w-6"
                                     />
-                                    <Typography.Body3 className="pt-1 px-2 md:mx-1 font-light">{`${
+                                    <Typography.Body3 className="pl-[12px] pr-[16px] font-light">{`${
                                       strategy.name.charAt(0).toUpperCase() +
                                       strategy.name.slice(1)
                                     } USDC`}</Typography.Body3>
                                   </div>
-                                  <Typography.Body3 className="pt-1 text-[#b5beca] font-light">{`${formatCurrency(
+                                  <Typography.Body3 className="text-[#b5beca] font-light">{`${formatCurrency(
                                     (strategy.usdc / strategy.total) * 100,
                                     2
                                   )}%`}</Typography.Body3>
                                 </div>
-                                <div className="flex flex-row justify-between md:pr-10 py-1">
+                                <div className="flex flex-row justify-between md:pr-10">
                                   <div className="flex flex-row">
                                     <img
                                       src={assetRootPath(
@@ -167,33 +165,33 @@ const Allocation = ({ isMobile }) => {
                                           1
                                         )}usdt.svg`
                                       )}
-                                      className="w-8"
+                                      className="w-6"
                                     />
-                                    <Typography.Body3 className="pt-1 px-2 md:mx-1 font-light">{`${
+                                    <Typography.Body3 className="pl-[12px] pr-[16px] font-light">{`${
                                       strategy.name.charAt(0).toUpperCase() +
                                       strategy.name.slice(1)
                                     } USDT`}</Typography.Body3>
                                   </div>
-                                  <Typography.Body3 className="pt-1 text-[#b5beca] font-light">{`${formatCurrency(
+                                  <Typography.Body3 className="text-[#b5beca] font-light">{`${formatCurrency(
                                     (strategy.usdt / strategy.total) * 100,
                                     2
                                   )}%`}</Typography.Body3>
                                 </div>
                               </>
                             ) : (
-                              <div className="flex flex-row justify-between md:pr-10 py-1">
+                              <div className="flex flex-row justify-between md:pr-10">
                                 <div className="flex flex-row">
                                   <img
                                     src={assetRootPath(
                                       `/images/convex-3pool.svg`
                                     )}
-                                    className="w-8"
+                                    className="w-6"
                                   />
-                                  <Typography.Body3 className="pt-1 px-2 md:mx-1 font-light">
+                                  <Typography.Body3 className="pl-[12px] pr-[16px] font-light">
                                     Convex 3pool
                                   </Typography.Body3>
                                 </div>
-                                <Typography.Body3 className="pt-1 text-[#b5beca] font-light">{`${formatCurrency(
+                                <Typography.Body3 className="text-[#b5beca] font-light">{`${formatCurrency(
                                   ((strategy.dai +
                                     strategy.usdc +
                                     strategy.usdt) /

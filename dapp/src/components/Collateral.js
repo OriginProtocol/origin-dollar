@@ -40,57 +40,51 @@ const Collateral = () => {
 
   return (
     <>
-      <section className="home dim m-0">
-        <div className="max-w-screen-xl mx-auto pb-20 px-4 text-center">
-          <Typography.H3 className="font-bold">
+      <section className="dim">
+        <div className="py-[120px] px-[16px] md:px-[134px] text-center">
+          <Typography.H6 className="text-[32px] md:text-[56px] leading-[36px] md:leading-[64px]" style={{fontWeight: 700}}>
             {fbt('Always 100% collateralized', 'Always 100% collateralized')}
-          </Typography.H3>
-          <br className="block" />
-          <Typography.Body3 className="text-[#b5beca]">
+          </Typography.H6>
+          <Typography.Body3 className="md:max-w-[943px] mt-[16px] mx-auto text-[#b5beca]">
             {fbt(
-              'OUSD is backed 1:1 by the most trusted collateral in crypto. Reserves are verifiable on-chain. You can redeem OUSD',
-              'OUSD is backed 1:1 by the most trusted collateral in crypto. Reserves are verifiable on-chain. You can redeem OUSD'
-            )}{' '}
-            <br className="hidden md:block" />
-            {fbt('immediately at any time.', 'immediately at any time.')}
+              'OUSD is backed 1:1 by the most trusted collateral in crypto. Reserves are verifiable on-chain. You can redeem OUSD immediately at any time.',
+              'OUSD is backed 1:1 by the most trusted collateral in crypto. Reserves are verifiable on-chain. You can redeem OUSD immediately at any time.'
+            )}
           </Typography.Body3>
-          <div className="collateral flex flex-col md:flex-row justify-between rounded-xl my-10 md:m-16 p-6 md:p-6 lg:px-28 md:py-20">
-            <Typography.Body className="md:hidden">
+          <div className="max-w-[1432px] mx-auto flex flex-col md:flex-row justify-between mt-20 mb-16 px-8 xl:px-[132px] py-6 xl:py-20 rounded-xl bg-[#141519]">
+            <Typography.H7 className="font-bold md:hidden">
               {fbt('Currently-held collateral', 'Currently-held collateral')}
-            </Typography.Body>
-            <div className="relative h-96 my-10 md:my-0">
+            </Typography.H7>
+            <div className="relative w-full sm:w-1/2 mt-6 md:mt-0 mx-auto">
               <PieChart data={chartData} lineWidth={6} startAngle={270} />
               <Typography.H6 className="absolute font-bold text-3xl left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">{`$${formatCurrency(
                 total,
                 0
               )}`}</Typography.H6>
             </div>
-            <div className="lg:w-1/2 md:px-20 text-left">
-              <Typography.Body className="mb-3 hidden md:block">
+            <div className="md:w-1/2 md:ml-10 xl:ml-32 mt-6 md:mt-0 pl-0 md:py-10 text-left">
+              <Typography.H7 className="mb-3 font-bold hidden md:block">
                 {fbt('Currently-held collateral', 'Currently-held collateral')}
-              </Typography.Body>
-              <br className="hidden md:block" />
-              <div className="flex flex-wrap md:flex-col justify-between h-4/5 bd-red-500">
+              </Typography.H7>
+              <div className="flex flex-wrap md:mt-12 md:flex-col justify-between h-4/5">
                 {collateral.collateral?.map((token) => {
                   return (
                     <div
-                      className="flex flex-row my-2 md:my-0"
+                      className="flex flex-row my-[2px] md:my-0"
                       key={token.name}
                     >
                       <img
                         src={assetRootPath(`/images/${token.name}-logo.svg`)}
-                        className="pr-[8px] md:pr-6 w-12 md:w-auto"
+                        className="w-12 md:w-[72px]"
                       ></img>
-                      <div>
-                        <Typography.H6>
+                      <div className='ml-[8px] md:ml-8'>
+                        <Typography.H7 className='text-base md:text-[32px] font-bold'>
                           {`${formatCurrency((token.total / total) * 100, 2)}%`}
-                        </Typography.H6>
-                        <div className="pt-[0px] md:pt-2">
-                          <Typography.Body3 className="text-[#b5beca]">{`$${formatCurrency(
-                            token.total,
-                            0
-                          )}`}</Typography.Body3>
-                        </div>
+                        </Typography.H7>
+                        <Typography.H7 className="mt-[0px] md:mt-[8px] text-[12px] md:text-[24px] text-normal text-[#b5beca]">{`$${formatCurrency(
+                          token.total,
+                          0
+                        )}`}</Typography.H7>
                       </div>
                     </div>
                   )
@@ -110,11 +104,6 @@ const Collateral = () => {
           </a>
         </div>
       </section>
-      <style jsx>{`
-        .collateral {
-          background-color: #141519;
-        }
-      `}</style>
     </>
   )
 }

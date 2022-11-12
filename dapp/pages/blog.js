@@ -1,12 +1,15 @@
-import { Header, Typography } from '@originprotocol/origin-storybook'
+import React from 'react'
+import { Typography, Header } from '@originprotocol/origin-storybook'
+import { fbt } from 'fbt-runtime'
 import News from 'components/News'
 import Layout from 'components/layout'
 import Head from 'next/head'
-import React from 'react'
+import { useRouter } from 'next/router'
 import { fetchAPI } from '../lib/api'
 import Seo from '../src/components/strapi/seo'
 import formatSeo from '../src/utils/seo'
 import transformLinks from '../src/utils/transformLinks'
+import { capitalize } from 'lodash'
 
 const Blog = ({
   locale,
@@ -17,14 +20,17 @@ const Blog = ({
   seo,
   navLinks,
 }) => {
+  const { pathname } = useRouter()
+  const active = capitalize(pathname.slice(1))
+
   return (
     <>
       <Seo seo={seo} />
       <Layout locale={locale}>
-        <section className="intro black pb-12">
-          <Header mappedLinks={navLinks} webProperty="ousd" />
+        <section className="intro black p-[0px] pb-12">
+          <Header mappedLinks={navLinks} webProperty="ousd" active={active} />
           <div className="max-w-screen-xl mx-auto px-6 mb-6">
-            <Typography.H2>Latest news</Typography.H2>
+            <Typography.H2 as='h1' className="font-normal">Latest news</Typography.H2>
           </div>
           {!articles?.length ? null : (
             <News articles={articles} meta={meta} categories={categories} />

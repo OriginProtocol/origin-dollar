@@ -1,6 +1,5 @@
 import React, { useEffect, useState, createContext } from 'react'
 import App from 'next/app'
-import cookies from 'next-cookies'
 import { useWeb3React } from '@web3-react/core'
 import { useRouter } from 'next/router'
 import { useCookies } from 'react-cookie'
@@ -9,7 +8,6 @@ import { QueryClient, QueryClientProvider } from 'react-query'
 import { ReactQueryDevtools } from 'react-query/devtools'
 
 import { fetchAPI } from '../lib/api'
-import { getStrapiMedia } from '../lib/media'
 
 import AccountStore from 'stores/AccountStore'
 import RouterStore from 'stores/RouterStore'
@@ -20,10 +18,9 @@ import withWeb3Provider from 'hoc/withWeb3Provider'
 import setUtilLocale from 'utils/setLocale'
 import { setUserSource } from 'utils/user'
 import { useEagerConnect } from 'utils/hooks'
-import { logout, login } from 'utils/account'
+import { login } from 'utils/account'
 import WalletSelectModal from 'components/WalletSelectModal'
 import { ToastContainer } from 'react-toastify'
-import { getConnector, getConnectorImage } from 'utils/connectors'
 
 import analytics from 'utils/analytics'
 import { AnalyticsProvider } from 'use-analytics'
@@ -52,16 +49,11 @@ function MyApp({ Component, pageProps, err }) {
   const { global } = pageProps
 
   const {
-    connector,
-    library,
-    chainId,
     account,
-    activate,
-    deactivate,
     active,
     error,
   } = useWeb3React()
-  const [cookies, setCookie, removeCookie] = useCookies(['loggedIn'])
+  const [setCookie] = useCookies(['loggedIn'])
   const router = useRouter()
   const tried = useEagerConnect()
   const address = useStoreState(AccountStore, (s) => s.address)

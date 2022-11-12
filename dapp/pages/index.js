@@ -7,6 +7,7 @@ import Collateral from 'components/Collateral'
 import Ogv from 'components/Ogv'
 import Seo from 'components/strapi/seo'
 import Head from 'next/head'
+import { useRouter } from 'next/router'
 import { fetchAPI } from '../lib/api'
 import formatSeo from '../src/utils/seo'
 import transformLinks from '../src/utils/transformLinks'
@@ -14,50 +15,53 @@ import { Typography, Header, Button } from '@originprotocol/origin-storybook'
 import { assetRootPath } from 'utils/image'
 import Layout from 'components/layout'
 import { audits } from 'utils/constants'
+import { capitalize } from 'lodash'
 
 const Home = ({ locale, onLocale, seo, navLinks }) => {
+  const { pathname } = useRouter()
+  const active = capitalize(pathname.slice(1))
+
   return (
     <>
       <Seo seo={seo} />
       <Layout locale={locale}>
-        <Animation navLinks={navLinks} />
+        <Animation navLinks={navLinks} active={active} />
         <Apy />
         <Allocation />
         <Collateral />
         <section className="home black">
-          <div className="max-w-screen-xl mx-auto pb-20 px-4 md:px-8 text-center">
-            <Typography.H3 className="font-bold">
+          <div className="py-[120px] px-[16px] md:px-[200px] text-center">
+            <Typography.H6 className="text-[32px] md:text-[56px] leading-[36px] md:leading-[64px]" style={{fontWeight: 700}}>
               {fbt(
                 'Audited by leading security experts',
                 'Audited by leading security experts'
               )}
-            </Typography.H3>
-            <br className="block" />
-            <Typography.Body3 className="opacity-75">
+            </Typography.H6>
+            <Typography.Body3 className="md:max-w-[943px] mt-[16px] mx-auto text-[#b5beca]">
               {fbt(
                 'Securing your funds is OUSD’s top priority. Changes to the protocol are reviewed by internal and external auditors on an ongoing basis.',
                 'Securing your funds is OUSD’s top priority. Changes to the protocol are reviewed by internal and external auditors on an ongoing basis.'
               )}
             </Typography.Body3>
-            <div className="audits rounded-xl mx-[2px] my-6 lg:m-16 lg:mx-40 p-6 lg:p-10">
-              <Typography.Body>
+            <div className="audits max-w-[1134px] mx-auto mt-20 mb-16 rounded-xl px-[16px] xl:px-[86px] py-6 md:py-[56px]">
+              <Typography.H7 className='font-bold'>
                 {fbt('Existing audits', 'Existing audits')}
-              </Typography.Body>
-              <div className="grid grid-rows-2 grid-cols-2 lg:flex lg:flex-row lg:justify-around mt-6 lg:mt-10">
-                {audits.map((audit) => {
+              </Typography.H7>
+              <div className="grid grid-rows-2 grid-cols-2 gap-y-20 2xl:flex 2xl:flex-row 2xl:justify-between mt-6 md:mt-[56px] mx-auto">
+                {audits.map((audit, i) => {
                   return (
-                    <div className="m-2 md:m-0 mx-auto" key={audit}>
-                      <div className="item relative rounded-full w-28 h-28 md:w-36 md:h-36 xl:w-48 xl:h-48 mb-6">
+                    <div className={`mx-auto`} key={audit}>
+                      <div className="item relative rounded-full w-28 h-28 xl:w-[200px] xl:h-[200px]">
                         <img
                           src={assetRootPath(
                             `/images/${audit
                               .replace(/ /g, '-')
                               .toLowerCase()}.svg`
                           )}
-                          className="w-1/2 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+                          className="w-50 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
                         />
                       </div>
-                      <Typography.Body className="opacity-75">
+                      <Typography.Body className="mt-[8px] md:mt-6 opacity-75">
                         {audit}
                       </Typography.Body>
                     </div>
