@@ -86,16 +86,14 @@ const Allocation = ({ isMobile }) => {
                               className={`logo`}
                             />
                             <div>
-                              <Typography.H7 className="inline pr-3">{`${formatCurrency(
+                              <Typography.H6 className="inline text-[14px] md:text-[20px] text-normal items-center text-[#b5beca]" style={{ fontWeight: 400 }}>{`($${formatCurrency(
+                                strategy.total,
+                                0
+                              )})`}</Typography.H6>
+                              <Typography.H7 className="inline pl-[8px]" style={{ fontWeight: 700 }}>{`${formatCurrency(
                                 (strategy.total / total) * 100,
-                                2
+                                0
                               )}%`}</Typography.H7>
-                              <img
-                                src={assetRootPath(`/images/caret.svg`)}
-                                className={`w-4 md:w-6 mb-2 inline ${
-                                  open[strategy.name] ? 'rotate-180' : ''
-                                }`}
-                              />
                             </div>
                           </div>
                           <LinearProgress
@@ -109,18 +107,14 @@ const Allocation = ({ isMobile }) => {
                             }}
                             className="mt-[16px]"
                           ></LinearProgress>
-                          <Typography.Caption className="mt-[22px] text-[#b5beca] text-left">
-                            Interest is earned by borrowers and governance token
-                            rewards are harvested for additional yields.
-                          </Typography.Caption>
                           <div
                             className={`${
-                              open[strategy.name] ? '' : 'hidden'
+                              open[strategy.name] ? '' : ''
                             } flex flex-col xl:flex-row mt-[22px] whitespace-nowrap`}
                           >
                             {strategy.name !== 'convex' ? (
                               <>
-                                <div className="flex flex-row justify-between md:pr-10">
+                                <div className="flex flex-row justify-between xl:pr-10">
                                   <div className="flex flex-row">
                                     <img
                                       src={assetRootPath(
@@ -141,7 +135,7 @@ const Allocation = ({ isMobile }) => {
                                     2
                                   )}%`}</Typography.Body3>
                                 </div>
-                                <div className="flex flex-row justify-between md:pr-10">
+                                <div className="flex flex-row justify-between xl:pr-10">
                                   <div className="flex flex-row">
                                     <img
                                       src={assetRootPath(
@@ -162,7 +156,7 @@ const Allocation = ({ isMobile }) => {
                                     2
                                   )}%`}</Typography.Body3>
                                 </div>
-                                <div className="flex flex-row justify-between md:pr-10">
+                                <div className="flex flex-row justify-between xl:pr-10">
                                   <div className="flex flex-row">
                                     <img
                                       src={assetRootPath(
@@ -185,7 +179,7 @@ const Allocation = ({ isMobile }) => {
                                 </div>
                               </>
                             ) : (
-                              <div className="flex flex-row justify-between md:pr-10">
+                              <div className="flex flex-row justify-between xl:pr-10">
                                 <div className="flex flex-row">
                                   <img
                                     src={assetRootPath(
@@ -208,6 +202,10 @@ const Allocation = ({ isMobile }) => {
                               </div>
                             )}
                           </div>
+                          <Typography.Caption className="mt-[22px] text-[#b5beca] text-left">
+                            Interest is earned by borrowers and governance token
+                            rewards are harvested for additional yields.
+                          </Typography.Caption>
                         </div>
                       </div>
                     )
