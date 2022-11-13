@@ -86,11 +86,17 @@ const Allocation = ({ isMobile }) => {
                               className={`logo`}
                             />
                             <div>
-                              <Typography.H6 className="inline text-[14px] md:text-[20px] text-normal items-center text-[#b5beca]" style={{ fontWeight: 400 }}>{`($${formatCurrency(
+                              <Typography.H6
+                                className="inline text-[14px] md:text-[20px] text-normal items-center text-[#b5beca]"
+                                style={{ fontWeight: 400 }}
+                              >{`($${formatCurrency(
                                 strategy.total,
                                 0
                               )})`}</Typography.H6>
-                              <Typography.H7 className="inline pl-[8px]" style={{ fontWeight: 700 }}>{`${formatCurrency(
+                              <Typography.H7
+                                className="inline pl-[8px]"
+                                style={{ fontWeight: 700 }}
+                              >{`${formatCurrency(
                                 (strategy.total / total) * 100,
                                 0
                               )}%`}</Typography.H7>
