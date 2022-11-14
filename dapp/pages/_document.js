@@ -18,18 +18,18 @@ class MyDocument extends Document {
               rel="stylesheet"
             />
             {/* jQuery is required for bootstrap javascript */}
-            <NextScript
+            <script
               src="https://code.jquery.com/jquery-3.6.0.slim.min.js"
               integrity="sha384-Qg00WFl9r0Xr6rUqNLv1ffTSSKEFFCDCKVyHZ+sVt8KuvG99nWw5RNvbhuKgif9z"
             />
-            <NextScript
+            <script
               src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
               integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
             />
           </Head>
 
           {/* Twitter ads tracking */}
-          <NextScript
+          <script
             src="//static.ads-twitter.com/oct.js"
             type="text/javascript"
           />
@@ -49,7 +49,7 @@ class MyDocument extends Document {
             content="A fully transparent stablecoin that earns a yield from DeFi"
           />
           {/* If not on localhost and request's protocl was HTTP, redirect to HTTPS */}
-          <NextScript
+          <script
             dangerouslySetInnerHTML={{
               __html: `
             var href = window.location.href;
