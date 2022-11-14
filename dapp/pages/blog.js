@@ -27,16 +27,16 @@ const Blog = ({
     <>
       <Seo seo={seo} />
       <Layout locale={locale}>
-        <section className="page black p-[0px] pb-12">
+        <section className="page black">
           <Header mappedLinks={navLinks} webProperty="ousd" active={active} />
-          <div className="max-w-screen-xl mx-auto px-6 mb-6">
+          <div className="max-w-screen-2xl mt-[20px] md:mt-16 mx-auto px-8 md:px-[134px] pb-12">
             <Typography.H2 as="h1" className="font-normal">
               Latest news
             </Typography.H2>
+            {!articles?.length ? null : (
+              <News articles={articles} meta={meta} categories={categories} />
+            )}
           </div>
-          {!articles?.length ? null : (
-            <News articles={articles} meta={meta} categories={categories} />
-          )}
         </section>
       </Layout>
     </>

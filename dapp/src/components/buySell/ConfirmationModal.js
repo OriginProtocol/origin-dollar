@@ -1,6 +1,6 @@
 import React from 'react'
 import { fbt } from 'fbt-runtime'
-import { Modal } from 'react-bootstrap'
+//import { Modal } from 'react-bootstrap'
 const ConfirmationModal = ({
   onClose,
   onConfirm,
