@@ -27,7 +27,7 @@ import { AnalyticsProvider } from 'use-analytics'
 import { initSentry } from 'utils/sentry'
 
 import 'react-toastify/scss/main.scss'
-//import '../node_modules/bootstrap/dist/css/bootstrap.min.css'
+import '../node_modules/bootstrap/dist/css/bootstrap.min.css'
 import bundledCss from '@originprotocol/origin-storybook/lib/styles.css'
 import '../styles/globals.css'
 
