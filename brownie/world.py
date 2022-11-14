@@ -44,6 +44,7 @@ v2router = load_contract('v2router', UNISWAP_V2_ROUTER)
 aave_strat = load_contract('aave_strat', AAVE_STRAT)
 comp_strat = load_contract('comp_strat', COMP_STRAT)
 convex_strat = load_contract('convex_strat', CONVEX_STRAT)
+ousd_metastrat = load_contract('ousd_metastrat', OUSD_METASTRAT)
 
 aave_incentives_controller = load_contract('aave_incentives_controller', '0xd784927Ff2f95ba542BfC824c8a8a98F3495f6b5')
 stkaave = load_contract('stkaave', '0x4da27a545c0c5B758a6BA100e3a049001de870f5')
@@ -128,6 +129,10 @@ def c12(v):
 def c6(v):
     return commas(v, 6)
 
+def prices(p, decimals = 18):
+    p = float(p / 10**decimals)
+    return leading_whitespace('{:0.4f}'.format(p), 16)
+
 # show complete vault holdings: stable coins & strategies
 def show_vault_holdings():
     total = vault_core.totalValue()
@@ -193,6 +198,65 @@ def sim_governor_execute(id):
     brownie.chain.sleep(48*60*60+1)
     governor.execute(id, {'from': GOV_MULTISIG})
     print("Executed %s" % id)
+
+def show_ousd_metastrat_underlying_balance():
+    metapool = load_contract("ousd_metapool", ousd_metastrat.platformAddress())
+    metapool_lp_price = metapool.get_virtual_price()
+
+    # Staked bal
+    cvx_rewards_staking = load_contract("ERC20", CVX_REWARDS_POOL)
+    staked_bal = cvx_rewards_staking.balanceOf(OUSD_METASTRAT)
+
+    print("---------------------")
+    print("MetaPool: {}".format(metapool.address))
+    print("MetaPool LP Price: {}".format(prices(metapool_lp_price)))
+    print("CVX Rewards: {}".format(cvx_rewards_staking.address))
+    print("CVX Rewards Staked: {}".format(commas(staked_bal)))
+    print("---------------------")
+
+    total_lp_owned = staked_bal
+
+    for asset in (dai, usdt, usdc):
+        ptoken_addr = ousd_metastrat.assetToPToken(asset.address)
+        ptoken_contract = load_contract('ERC20', ptoken_addr)
+
+        # Unstaked LP tokens
+        unstaked_ptoken_bal = ptoken_contract.balanceOf(CVX_REWARDS_POOL)
+
+        total_lp_owned += unstaked_ptoken_bal
+
+        print("---------------------")
+        print("Asset: {} ({})".format(asset.symbol(), asset.address))
+        print("PToken: {} ({})".format(ptoken_contract.symbol(), ptoken_addr))
+        print("PToken Bal (Unstaked): {}".format(unstaked_ptoken_bal, ptoken_contract.decimals()))
+        print("---------------------")
+
+    total_lp_value = total_lp_owned * metapool_lp_price / 1e18
+    underlying_asset = {}
+    total_underlying = 0
+
+    for i in range(0, 3):
+        address = metapool.coins(i)
+        balance = metapool.balances(i)
+        if address in (usdt.address, usdc.address):
+            # Scale to 18 decimals
+            balance = balance * 10**12
+        underlying_asset[address] = balance
+        total_underlying += balance
+
+    print("---------------------")
+    print("Total LP Owned: {}".format(commas(total_lp_owned)))
+    print("Total LP Value: {}".format(commas(total_lp_value)))
+    print(metapool.coins(0),metapool.coins(1),metapool.coins(2))
+    print("---------------------")
+
+    
+    print("---------------------")
+    for asset in (dai, usdt, usdc):
+        underlying_pct = underlying_asset[asset.address] / total_underlying
+        scaled_balance = commas(total_lp_value * underlying_pct, 18)
+        print("{} ({}): {}".format(asset.symbol(), int(underlying_pct * 10**4) / 100, scaled_balance))
+    print("---------------------")
 
 # crate a temporary fork of a node that cleans up ethereum state when exiting code block
 class TemporaryFork:
