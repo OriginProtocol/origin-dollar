@@ -18,7 +18,7 @@ class MyDocument extends Document {
           />
 
           {/* Twitter ads tracking */}
-          <NextScript
+          <script
             src="//static.ads-twitter.com/oct.js"
             type="text/javascript"
           />
@@ -38,7 +38,7 @@ class MyDocument extends Document {
             content="A fully transparent stablecoin that earns a yield from DeFi"
           />
           {/* If not on localhost and request's protocl was HTTP, redirect to HTTPS */}
-          <NextScript
+          <script
             dangerouslySetInnerHTML={{
               __html: `
             var href = window.location.href;

@@ -87,7 +87,7 @@ const Faq = ({ locale, onLocale, faq, seo, navLinks }) => {
 
 export async function getStaticProps() {
   const faqRes = await fetchAPI('/ousd-faqs')
-  const seoRes = await fetchAPI('/ousd/page/en/%2Fblog')
+  const seoRes = await fetchAPI('/ousd/page/en/%2Ffaq')
   const navRes = await fetchAPI('/ousd-nav-links', {
     populate: {
       links: {
