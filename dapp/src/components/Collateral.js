@@ -84,10 +84,15 @@ const Collateral = () => {
                         <Typography.H7 className="text-base md:text-[32px] font-bold">
                           {`${formatCurrency((token.total / total) * 100, 2)}%`}
                         </Typography.H7>
-                        <Typography.H7 className="mt-[0px] md:mt-[8px] text-[12px] md:text-[24px] text-normal text-[#b5beca]">{`$${formatCurrency(
-                          token.total,
-                          0
-                        )}`}</Typography.H7>
+                        <Typography.H7
+                          className="mt-[0px] md:mt-[8px] text-[12px] md:text-[24px] text-[#b5beca]"
+                          style={{ fontWeight: 400 }}
+                        >
+                          {`$${formatCurrency(
+                            token.total,
+                            0
+                          )}`}
+                        </Typography.H7>
                       </div>
                     </div>
                   )
