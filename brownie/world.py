@@ -44,6 +44,7 @@ v2router = load_contract('v2router', UNISWAP_V2_ROUTER)
 aave_strat = load_contract('aave_strat', AAVE_STRAT)
 comp_strat = load_contract('comp_strat', COMP_STRAT)
 convex_strat = load_contract('convex_strat', CONVEX_STRAT)
+ousd_metastrat = load_contract('ousd_metastrat', OUSD_METASTRAT)
 
 aave_incentives_controller = load_contract('aave_incentives_controller', '0xd784927Ff2f95ba542BfC824c8a8a98F3495f6b5')
 stkaave = load_contract('stkaave', '0x4da27a545c0c5B758a6BA100e3a049001de870f5')
@@ -128,6 +129,10 @@ def c12(v):
 def c6(v):
     return commas(v, 6)
 
+def prices(p, decimals = 18):
+    p = float(p / 10**decimals)
+    return leading_whitespace('{:0.4f}'.format(p), 16)
+
 # show complete vault holdings: stable coins & strategies
 def show_vault_holdings():
     total = vault_core.totalValue()
@@ -193,6 +198,77 @@ def sim_governor_execute(id):
     brownie.chain.sleep(48*60*60+1)
     governor.execute(id, {'from': GOV_MULTISIG})
     print("Executed %s" % id)
+
+def show_ousd_metastrat_underlying_balance():
+    crv3_metapool = load_contract("ousd_metapool", THREEPOOL)
+    crv3_metapool_lp_price = crv3_metapool.get_virtual_price()
+
+    ousd_metapool = load_contract("ousd_metapool", OUSD_METAPOOL)
+    ousd_metapool_lp_price = ousd_metapool.get_virtual_price()
+
+    ousd_metapool_total = ousd_metapool.balances(0) + ousd_metapool.balances(1)
+    ousd_metapool_ousd_pct = ousd_metapool.balances(0) / ousd_metapool_total
+    ousd_metapool_3crv_pct = ousd_metapool.balances(1) / ousd_metapool_total
+
+    # Staked bal
+    cvx_rewards_staking = load_contract("ERC20", CVX_REWARDS_POOL)
+    staked_bal = cvx_rewards_staking.balanceOf(OUSD_METASTRAT)
+
+    print("---------------------")
+    print("3CRV MetaPool: {}".format(crv3_metapool.address))
+    print("3CRV MetaPool LP Price: {}".format(prices(crv3_metapool_lp_price)))
+    print("---------------------")
+    print("OUSD MetaPool: {}".format(crv3_metapool.address))
+    print("OUSD MetaPool Split: OUSD: {:.2f}% & 3CRV: {:.2f}%".format(
+        ousd_metapool_ousd_pct * 100,
+        ousd_metapool_3crv_pct * 100,
+    ))
+    print("---------------------")
+    print("CVX Rewards: {}".format(cvx_rewards_staking.address))
+    print("CVX Rewards Staked: {}".format(commas(staked_bal)))
+
+    total_lp_owned = staked_bal
+
+    for asset in (dai, usdt, usdc):
+        ptoken_addr = ousd_metastrat.assetToPToken(asset.address)
+        ptoken_contract = load_contract('ERC20', ptoken_addr)
+
+        # Unstaked LP tokens
+        unstaked_ptoken_bal = ptoken_contract.balanceOf(CVX_REWARDS_POOL)
+
+        total_lp_owned += unstaked_ptoken_bal
+
+        print("---------------------")
+        print("Asset: {} ({})".format(asset.symbol(), asset.address))
+        print("PToken: {} ({})".format(ptoken_contract.symbol(), ptoken_addr))
+        print("PToken Bal (Unstaked): {}".format(unstaked_ptoken_bal, ptoken_contract.decimals()))
+
+    total_ousd_lp_value = total_lp_owned * ousd_metapool_ousd_pct * ousd_metapool_lp_price / 1e18
+    total_3crv_lp_value = total_lp_owned * ousd_metapool_3crv_pct * crv3_metapool_lp_price / 1e18
+    underlying_asset = {}
+    total_underlying = 0
+
+    for i in range(0, 3):
+        address = crv3_metapool.coins(i)
+        balance = crv3_metapool.balances(i)
+        if address in (usdt.address, usdc.address):
+            # Scale to 18 decimals
+            balance = balance * 10**12
+        underlying_asset[address] = balance
+        total_underlying += balance
+
+    print("---------------------")
+    print("Total LP Owned: {}".format(commas(total_lp_owned)))
+    print("Total OUSD LP Value: {}".format(commas(total_ousd_lp_value)))
+    print("Total 3CRV LP Value: {}".format(commas(total_3crv_lp_value)))
+    
+    print("---------------------")
+    print("OUSD ({:.2f}%): {}".format(ousd_metapool_ousd_pct * 100, commas(total_ousd_lp_value)))
+    for asset in (dai, usdt, usdc):
+        underlying_pct = underlying_asset[asset.address] / total_underlying
+        scaled_balance = commas(total_3crv_lp_value * underlying_pct, 18)
+        print("{} ({:.2f}%): {}".format(asset.symbol(), underlying_pct * 100 / 2, scaled_balance))
+    print("---------------------")
 
 # crate a temporary fork of a node that cleans up ethereum state when exiting code block
 class TemporaryFork:
