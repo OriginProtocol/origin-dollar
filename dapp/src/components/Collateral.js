@@ -88,10 +88,7 @@ const Collateral = () => {
                           className="mt-[0px] md:mt-[8px] text-[12px] md:text-[24px] text-[#b5beca]"
                           style={{ fontWeight: 400 }}
                         >
-                          {`$${formatCurrency(
-                            token.total,
-                            0
-                          )}`}
+                          {`$${formatCurrency(token.total, 0)}`}
                         </Typography.H7>
                       </div>
                     </div>
