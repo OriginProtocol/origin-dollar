@@ -200,19 +200,32 @@ def sim_governor_execute(id):
     print("Executed %s" % id)
 
 def show_ousd_metastrat_underlying_balance():
-    metapool = load_contract("ousd_metapool", ousd_metastrat.platformAddress())
-    metapool_lp_price = metapool.get_virtual_price()
+    crv3_metapool = load_contract("ousd_metapool", THREEPOOL)
+    crv3_metapool_lp_price = crv3_metapool.get_virtual_price()
+
+    ousd_metapool = load_contract("ousd_metapool", OUSD_METAPOOL)
+    ousd_metapool_lp_price = ousd_metapool.get_virtual_price()
+
+    ousd_metapool_total = ousd_metapool.balances(0) + ousd_metapool.balances(1)
+    ousd_metapool_ousd_pct = ousd_metapool.balances(0) / ousd_metapool_total
+    ousd_metapool_3crv_pct = ousd_metapool.balances(1) / ousd_metapool_total
 
     # Staked bal
     cvx_rewards_staking = load_contract("ERC20", CVX_REWARDS_POOL)
     staked_bal = cvx_rewards_staking.balanceOf(OUSD_METASTRAT)
 
     print("---------------------")
-    print("MetaPool: {}".format(metapool.address))
-    print("MetaPool LP Price: {}".format(prices(metapool_lp_price)))
+    print("3CRV MetaPool: {}".format(crv3_metapool.address))
+    print("3CRV MetaPool LP Price: {}".format(prices(crv3_metapool_lp_price)))
+    print("---------------------")
+    print("OUSD MetaPool: {}".format(crv3_metapool.address))
+    print("OUSD MetaPool Split: OUSD: {:.2f}% & 3CRV: {:.2f}%".format(
+        ousd_metapool_ousd_pct * 100,
+        ousd_metapool_3crv_pct * 100,
+    ))
+    print("---------------------")
     print("CVX Rewards: {}".format(cvx_rewards_staking.address))
     print("CVX Rewards Staked: {}".format(commas(staked_bal)))
-    print("---------------------")
 
     total_lp_owned = staked_bal
 
@@ -229,15 +242,15 @@ def show_ousd_metastrat_underlying_balance():
         print("Asset: {} ({})".format(asset.symbol(), asset.address))
         print("PToken: {} ({})".format(ptoken_contract.symbol(), ptoken_addr))
         print("PToken Bal (Unstaked): {}".format(unstaked_ptoken_bal, ptoken_contract.decimals()))
-        print("---------------------")
 
-    total_lp_value = total_lp_owned * metapool_lp_price / 1e18
+    total_ousd_lp_value = total_lp_owned * ousd_metapool_ousd_pct * ousd_metapool_lp_price / 1e18
+    total_3crv_lp_value = total_lp_owned * ousd_metapool_3crv_pct * crv3_metapool_lp_price / 1e18
     underlying_asset = {}
     total_underlying = 0
 
     for i in range(0, 3):
-        address = metapool.coins(i)
-        balance = metapool.balances(i)
+        address = crv3_metapool.coins(i)
+        balance = crv3_metapool.balances(i)
         if address in (usdt.address, usdc.address):
             # Scale to 18 decimals
             balance = balance * 10**12
@@ -246,16 +259,15 @@ def show_ousd_metastrat_underlying_balance():
 
     print("---------------------")
     print("Total LP Owned: {}".format(commas(total_lp_owned)))
-    print("Total LP Value: {}".format(commas(total_lp_value)))
-    print(metapool.coins(0),metapool.coins(1),metapool.coins(2))
-    print("---------------------")
-
+    print("Total OUSD LP Value: {}".format(commas(total_ousd_lp_value)))
+    print("Total 3CRV LP Value: {}".format(commas(total_3crv_lp_value)))
     
     print("---------------------")
+    print("OUSD ({:.2f}%): {}".format(ousd_metapool_ousd_pct * 100, commas(total_ousd_lp_value)))
     for asset in (dai, usdt, usdc):
         underlying_pct = underlying_asset[asset.address] / total_underlying
-        scaled_balance = commas(total_lp_value * underlying_pct, 18)
-        print("{} ({}): {}".format(asset.symbol(), int(underlying_pct * 10**4) / 100, scaled_balance))
+        scaled_balance = commas(total_3crv_lp_value * underlying_pct, 18)
+        print("{} ({:.2f}%): {}".format(asset.symbol(), underlying_pct * 100 / 2, scaled_balance))
     print("---------------------")
 
 # crate a temporary fork of a node that cleans up ethereum state when exiting code block
