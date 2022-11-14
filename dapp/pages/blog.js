@@ -27,7 +27,7 @@ const Blog = ({
     <>
       <Seo seo={seo} />
       <Layout locale={locale}>
-        <section className="intro black p-[0px] pb-12">
+        <section className="page black p-[0px] pb-12">
           <Header mappedLinks={navLinks} webProperty="ousd" active={active} />
           <div className="max-w-screen-xl mx-auto px-6 mb-6">
             <Typography.H2 as="h1" className="font-normal">

@@ -77,7 +77,7 @@ const News = ({ articles, meta, categories }) => {
               if (!category || category === a.category.slug) {
                 return (
                   <Card
-                    webProperty={'originprotocol'}
+                    webProperty={'ousd'}
                     title={a.title}
                     img={
                       <Image

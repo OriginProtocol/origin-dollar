@@ -90,7 +90,7 @@ section.intro {
   background-repeat: no-repeat;
 }
 
-section.faq {
+section.page {
   background-image: url(/images/splines36.png);
   background-position: 100% 0;
   background-repeat: no-repeat;
@@ -110,7 +110,7 @@ section.faq {
     background-size: 150vw;
   }
 
-  section.faq {
+  section.page {
     background-image: url(/images/splines37.png);
     background-position: 100% 0;
     background-repeat: no-repeat;

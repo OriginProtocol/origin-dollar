@@ -19,7 +19,7 @@ const Faq = ({ locale, onLocale, faq, seo, navLinks }) => {
     <>
       <Seo seo={seo} />
       <Layout locale={locale}>
-        <section className="faq black">
+        <section className="page black">
           <Header mappedLinks={navLinks} webProperty="ousd" active={active} />
           <div className="max-w-screen-2xl mt-[20px] md:mt-16 mx-auto pb-[132px] px-[16px] md:px-[134px] text-left">
             <Typography.H2 as="h1" className="font-normal">
