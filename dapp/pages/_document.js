@@ -30,10 +30,10 @@ class MyDocument extends Document {
           />
 
           {/* Twitter ads tracking */}
-          <script
+          <NextScript
             src="//static.ads-twitter.com/oct.js"
             type="text/javascript"
-          ></script>
+          />
 
           <meta property="og:url" content="https://ousd.com" />
           <meta property="og:type" content="website" />
