@@ -29,12 +29,6 @@ class MyDocument extends Document {
             crossOrigin="anonymous"
           />
 
-          {/* Twitter ads tracking */}
-          <NextScript
-            src="//static.ads-twitter.com/oct.js"
-            type="text/javascript"
-          />
-
           <meta property="og:url" content="https://ousd.com" />
           <meta property="og:type" content="website" />
           <meta property="og:title" content="Origin Dollar (OUSD)" />
