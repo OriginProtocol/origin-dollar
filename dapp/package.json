@@ -81,6 +81,7 @@
     "ethers": "^5.5.1",
     "fbt-runtime": "^0.9.4",
     "file-loader": "6.2.0",
+    "he": "^1.2.0",
     "lodash": "^4.17.21",
     "moment": "^2.29.4",
     "next": "10.2.3",
@@ -107,6 +108,7 @@
     "react-router-dom": "5.3.0",
     "react-styl": "^0.0.3",
     "react-toastify": "^6.2.0",
+    "sanitize-html": "^2.7.3",
     "sass": "^1.39.2",
     "tailwindcss": "^3.1.8",
     "use-analytics": "^0.0.5"

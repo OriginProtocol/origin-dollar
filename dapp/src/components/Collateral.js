@@ -27,13 +27,13 @@ const Collateral = () => {
   }, [])
 
   const total = collateral.collateral?.reduce((t, s) => {
-    return { total: Number(t.total) + Number(s.total) }
+    return { total: Number(t.total) + Number(s.name === 'ousd' ? 0 : s.total) }
   }).total
 
   const chartData = collateral.collateral?.map((token) => {
     return {
       title: token.name.toUpperCase(),
-      value: (token.total / total) * 100,
+      value: total ? (token.name === 'ousd' ? 0 : token.total / total) * 100 : 0,
       color: tokenColors[token.name] || '#ff0000',
     }
   })
@@ -71,6 +71,7 @@ const Collateral = () => {
               </Typography.H7>
               <div className="flex flex-wrap md:mt-12 md:flex-col justify-between h-4/5">
                 {collateral.collateral?.map((token) => {
+                  if (token.name === 'ousd') return
                   return (
                     <div
                       className="flex flex-row my-[2px] md:my-0"

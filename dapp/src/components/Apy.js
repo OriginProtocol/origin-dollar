@@ -80,7 +80,7 @@ const Apy = ({ isMobile }) => {
           {loaded && (
             <div className="max-w-[1432px] mx-auto flex flex-col mt-20 mb-16 p-[16px] md:p-10 rounded-xl bg-[#141519]">
               <div className="flex flex-col lg:flex-row justify-between">
-                <div className="mt-[16px]">
+                <div className="mt-[16px] md:mt-[0px]">
                   <Typography.H2 className="font-bold xl:inline">
                     {formatCurrency(daysToApy[apyDays] * 100, 2) + '% '}
                   </Typography.H2>

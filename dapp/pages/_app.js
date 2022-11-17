@@ -163,7 +163,10 @@ function MyApp({ Component, pageProps, err }) {
       <GlobalContext.Provider value={global?.attributes}>
         <QueryClientProvider client={queryClient}>
           <AnalyticsProvider instance={analytics}>
+            <AccountListener />
+            <TransactionListener />
             <UserActivityListener />
+            <WalletSelectModal />
             <ToastContainer
               position="bottom-right"
               autoClose={5000}
