@@ -64,7 +64,8 @@ const Allocation = ({ isMobile }) => {
               <ThemeProvider theme={theme}>
                 <div className="flex flex-col justify-between">
                   {allocation.strategies?.map((strategy) => {
-                    if (strategy.name === 'vault' || strategy.name === 'meta') return
+                    if (strategy.name === 'vault' || strategy.name === 'meta')
+                      return
                     return (
                       <div
                         className="strategy rounded-xl border-2 p-[16px] md:p-8 my-[6px] md:my-[8px] cursor-pointer"

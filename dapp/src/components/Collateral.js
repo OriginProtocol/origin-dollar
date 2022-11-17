@@ -33,7 +33,9 @@ const Collateral = () => {
   const chartData = collateral.collateral?.map((token) => {
     return {
       title: token.name.toUpperCase(),
-      value: total ? (token.name === 'ousd' ? 0 : token.total / total) * 100 : 0,
+      value: total
+        ? (token.name === 'ousd' ? 0 : token.total / total) * 100
+        : 0,
       color: tokenColors[token.name] || '#ff0000',
     }
   })

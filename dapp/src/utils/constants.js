@@ -53,15 +53,31 @@ const tokenColors = {
 const audits = ['Trail of bits', 'Certora', 'Solidified', 'OpenZeppelin']
 
 const sanitizationOptions = {
-  allowedTags: [ 'b', 'i', 'em', 'strong', 'u', 'a', 'img', 'h1', 'h2', 'h3', 'span', 'p', 'ul', 'ol', 'li' ],
+  allowedTags: [
+    'b',
+    'i',
+    'em',
+    'strong',
+    'u',
+    'a',
+    'img',
+    'h1',
+    'h2',
+    'h3',
+    'span',
+    'p',
+    'ul',
+    'ol',
+    'li',
+  ],
   allowedAttributes: {
-    'a': [ 'href', 'target', 'rel' ],
-    'img': [ 'src', 'alt', 'srcset', 'sizes' ],
-    'span': [ 'style' ],
-    'ul': [ 'style' ],
-    'ol': [ 'style' ]
+    a: ['href', 'target', 'rel'],
+    img: ['src', 'alt', 'srcset', 'sizes'],
+    span: ['style'],
+    ul: ['style'],
+    ol: ['style'],
   },
-  allowedIframeHostnames: ['www.youtube.com']
+  allowedIframeHostnames: ['www.youtube.com'],
 }
 
 module.exports = {

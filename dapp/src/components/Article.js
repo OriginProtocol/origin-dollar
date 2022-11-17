@@ -9,7 +9,7 @@ import { assetRootPath } from 'utils/image'
 import formatSeo from 'utils/seo'
 import sanitizeHtml from 'sanitize-html'
 import he from 'he'
-import { sanitizationOptions } from "utils/constants"
+import { sanitizationOptions } from 'utils/constants'
 
 const Article = ({ locale, article, navLinks }) => {
   const imageUrl = article.cover?.url
@@ -52,7 +52,10 @@ const Article = ({ locale, article, navLinks }) => {
                 <div className="py-6 pl-6 pr-6 md:px-28 text-black">
                   <div
                     dangerouslySetInnerHTML={{
-                      __html: sanitizeHtml(he.decode(article.body), sanitizationOptions),
+                      __html: sanitizeHtml(
+                        he.decode(article.body),
+                        sanitizationOptions
+                      ),
                     }}
                   />
                   <hr className="my-6" />
