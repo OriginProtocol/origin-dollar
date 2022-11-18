@@ -15,12 +15,18 @@ export default class ApyHistoryService {
         const json = await response.json()
         return json.trailing_history
       })
-    )
-    const data = {}
-    apyDayOptions.map((days, i) => {
-      data[`apy${days}`] = apyHistory[i] || []
-    })
-    return data
+    ).then(function(apyHistory) {
+      const data = {}
+      apyDayOptions.map((days, i) => {
+        data[`apy${days}`] = apyHistory[i] || []
+      })
+      return data
+    }).catch(function(err) {
+      console.log(err.message);
+    });
+
+
+    
   }
 }
 

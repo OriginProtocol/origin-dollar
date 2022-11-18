@@ -26,6 +26,7 @@ const LineChart = ({ chartData, isMobile }) => {
               titleColor: '#b5beca',
               titleFont: { size: 16 },
               displayColors: false,
+              backgroundColor: '#1e1f25C0',
               callbacks: {
                 label: function (context) {
                   const value = context.parsed.y
