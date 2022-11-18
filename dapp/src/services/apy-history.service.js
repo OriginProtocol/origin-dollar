@@ -8,8 +8,7 @@ export default class ApyHistoryService {
         const response = await fetch(endpoint)
         if (!response.ok) {
           throw new Error(
-            `Failed to fetch ${days}-day trailing APY history`,
-            err
+            `Failed to fetch ${days}-day trailing APY history`
           )
         }
         const json = await response.json()
