@@ -41,9 +41,8 @@ const Apy = ({ apy }) => {
   )
 
   const [chartData, setChartData] = useState()
-  const dataReversed = apyHistory[`apy${apyDays}`]
-    ? apyHistory[`apy${apyDays}`]
-    : []
+  const dataReversed =
+    apyHistory && apyHistory[`apy${apyDays}`] ? apyHistory[`apy${apyDays}`] : []
   const data = dataReversed.slice().reverse()
 
   useEffect(() => {
@@ -56,16 +55,16 @@ const Apy = ({ apy }) => {
   }, [apyDays])
 
   let width, height, gradient
-    function getGradient(ctx, chartArea) {
-      const chartWidth = chartArea.right - chartArea.left
-      const chartHeight = chartArea.bottom - chartArea.top
-      if (!gradient || width !== chartWidth || height !== chartHeight) {
-        width = chartWidth
-        height = chartHeight
-        gradient = ctx.createLinearGradient(0, chartArea.left, chartArea.right, 0)
-        gradient.addColorStop(0, '#8c66fc')
-        gradient.addColorStop(1, '#0274f1')
-      }
+  function getGradient(ctx, chartArea) {
+    const chartWidth = chartArea.right - chartArea.left
+    const chartHeight = chartArea.bottom - chartArea.top
+    if (!gradient || width !== chartWidth || height !== chartHeight) {
+      width = chartWidth
+      height = chartHeight
+      gradient = ctx.createLinearGradient(0, chartArea.left, chartArea.right, 0)
+      gradient.addColorStop(0, '#8c66fc')
+      gradient.addColorStop(1, '#0274f1')
+    }
 
     return gradient
   }
@@ -79,14 +78,14 @@ const Apy = ({ apy }) => {
         datasets: [
           {
             data: data.map((d) => d.trailing_apy),
-            borderColor: function(context) {
-              const chart = context.chart;
-              const {ctx, chartArea} = chart;
-      
+            borderColor: function (context) {
+              const chart = context.chart
+              const { ctx, chartArea } = chart
+
               if (!chartArea) {
-                return;
+                return
               }
-              return getGradient(ctx, chartArea);
+              return getGradient(ctx, chartArea)
             },
             borderWidth: 5,
             tension: 0,

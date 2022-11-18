@@ -146,7 +146,7 @@ export async function getStaticProps() {
 
   const navLinks = transformLinks(navRes.data)
 
-  const apy = JSON.stringify(apyHistoryService.fetchApyHistory())
+  const apy = await apyHistoryService.fetchApyHistory()
 
   return {
     props: {
