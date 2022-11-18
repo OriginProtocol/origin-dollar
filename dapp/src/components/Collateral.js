@@ -8,7 +8,7 @@ import { tokenColors } from 'utils/constants'
 
 const Collateral = ({ collateral, allocation }) => {
   // temporary calculation, waiting for metastrategy integration into analytics
-  const meta = allocation?.strategies[4].ousd
+  const meta = allocation?.strategies && allocation.strategies[4].ousd
 
   const total =
     collateral.collateral?.reduce((t, s) => {
@@ -18,7 +18,6 @@ const Collateral = ({ collateral, allocation }) => {
     }).total - meta
 
   const chartData = collateral.collateral?.map((token) => {
-    console.log(allocation.strategies[4][token.name])
     return {
       title: token.name.toUpperCase(),
       value: total

@@ -55,6 +55,21 @@ const Apy = ({ apy }) => {
     setLoaded(true)
   }, [apyDays])
 
+  let width, height, gradient
+    function getGradient(ctx, chartArea) {
+      const chartWidth = chartArea.right - chartArea.left
+      const chartHeight = chartArea.bottom - chartArea.top
+      if (!gradient || width !== chartWidth || height !== chartHeight) {
+        width = chartWidth
+        height = chartHeight
+        gradient = ctx.createLinearGradient(0, chartArea.left, chartArea.right, 0)
+        gradient.addColorStop(0, '#8c66fc')
+        gradient.addColorStop(1, '#0274f1')
+      }
+
+    return gradient
+  }
+
   useEffect(() => {
     if (data.length === 0) return
     else {
@@ -64,7 +79,15 @@ const Apy = ({ apy }) => {
         datasets: [
           {
             data: data.map((d) => d.trailing_apy),
-            borderColor: '#8C66FC',
+            borderColor: function(context) {
+              const chart = context.chart;
+              const {ctx, chartArea} = chart;
+      
+              if (!chartArea) {
+                return;
+              }
+              return getGradient(ctx, chartArea);
+            },
             borderWidth: 5,
             tension: 0,
             borderJoinStyle: 'round',
@@ -100,7 +123,7 @@ const Apy = ({ apy }) => {
             <div className="max-w-[1432px] mx-auto flex flex-col mt-20 mb-16 p-[16px] md:p-10 rounded-xl bg-[#141519]">
               <div className="flex flex-col lg:flex-row justify-between">
                 <div className="mt-[0px] md:mt-[16px]">
-                  <Typography.H2 className="font-bold xl:inline">
+                  <Typography.H2 className="font-bold xl:inline md:text-left">
                     {formatCurrency(daysToApy[apyDays] * 100, 2) + '% '}
                   </Typography.H2>
                   <Typography.H7 className="text-base font-normal md:text-2xl text-[#b5beca] mt-[4px] xl:mt-0 xl:inline lg:text-left opacity-70">{`Trailing ${apyDays}-day APY`}</Typography.H7>

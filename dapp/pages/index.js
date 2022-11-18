@@ -18,7 +18,7 @@ import { audits } from 'utils/constants'
 import { capitalize } from 'lodash'
 import { apyHistoryService } from '../src/services/apy-history.service'
 import { useStoreState } from 'pullstate'
-import ContractStore from 'stores/ContractStore'
+import ContractStore from '../src/stores/ContractStore'
 import useAllocationQuery from '../src/queries/useAllocationQuery'
 import useCollateralQuery from '../src/queries/useCollateralQuery'
 
