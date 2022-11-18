@@ -1,19 +1,20 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { fbt } from 'fbt-runtime'
+import moment from 'moment'
 import Link from 'next/link'
 import { Chart as ChartJS } from 'chart.js/auto'
 import { Chart } from 'react-chartjs-2'
-import { LineChart } from '../components/Chart'
+import LineChart from '../components/Chart'
 import { Typography } from '@originprotocol/origin-storybook'
 import { useStoreState } from 'pullstate'
 import ContractStore from 'stores/ContractStore'
 import { DEFAULT_SELECTED_APY } from 'utils/constants'
 import { zipObject } from 'lodash'
 import { formatCurrency } from 'utils/math'
-import withIsMobile from 'hoc/withIsMobile'
 import { adjustLinkHref } from 'utils/utils'
+import useApyHistoryQuery from '../queries/useApyhistoryQuery'
 
-const Apy = ({ isMobile }) => {
+const Apy = ({ apy }) => {
   const apyDayOptions = [7, 30, 365]
   const [loaded, setLoaded] = useState()
   const apyOptions = useStoreState(ContractStore, (s) =>
@@ -32,11 +33,22 @@ const Apy = ({ isMobile }) => {
       : DEFAULT_SELECTED_APY
   )
 
-  const [chartData, setChartData] = useState({})
+  const apyHistoryQuery = useApyHistoryQuery(apy)
 
-  const data = {
-    data: [],
-  }
+  const apyHistory = useMemo(
+    () => apyHistoryQuery.data,
+    [apyHistoryQuery.isSuccess, apyHistoryQuery.data]
+  )
+
+  const [chartData, setChartData] = useState()
+  const dataReversed = apyHistory[`apy${apyDays}`]
+    ? apyHistory[`apy${apyDays}`]
+    : []
+  const data = dataReversed.slice().reverse()
+
+  useEffect(() => {
+    apyHistoryQuery.refetch()
+  }, [])
 
   useEffect(() => {
     localStorage.setItem('last_user_selected_apy', apyDays)
@@ -44,18 +56,25 @@ const Apy = ({ isMobile }) => {
   }, [apyDays])
 
   useEffect(() => {
-    setChartData({
-      label: 'APY',
-      labels: data.data.map((crypto) => crypto.name),
-      datasets: [
-        {
-          data: data.data.map((crypto) => crypto.price),
-          backgroundColor: ['#0274F1'],
-          borderColor: '#8C66FC',
-        },
-      ],
-    })
-  }, [])
+    if (data.length === 0) return
+    else {
+      setChartData({
+        label: 'APY',
+        labels: data.map((d, i) => moment(d.day).format('MMM Do')),
+        datasets: [
+          {
+            data: data.map((d) => d.trailing_apy),
+            borderColor: '#8C66FC',
+            borderWidth: 5,
+            tension: 0,
+            borderJoinStyle: 'round',
+            pointRadius: 0,
+            pointHitRadius: 1,
+          },
+        ],
+      })
+    }
+  }, [apyHistory, apyDays])
 
   return (
     <>
@@ -80,7 +99,7 @@ const Apy = ({ isMobile }) => {
           {loaded && (
             <div className="max-w-[1432px] mx-auto flex flex-col mt-20 mb-16 p-[16px] md:p-10 rounded-xl bg-[#141519]">
               <div className="flex flex-col lg:flex-row justify-between">
-                <div className="mt-[16px] md:mt-[0px]">
+                <div className="mt-[0px] md:mt-[16px]">
                   <Typography.H2 className="font-bold xl:inline">
                     {formatCurrency(daysToApy[apyDays] * 100, 2) + '% '}
                   </Typography.H2>
@@ -125,9 +144,11 @@ const Apy = ({ isMobile }) => {
                   </div>
                 </div>
               </div>
-              {/*(<div className='mb-12'>
-                <LineChart chartData={chartData} />
-              </div>*/}
+              {chartData && (
+                <div className="mt-12 -mr-[16px] -ml-[16px] md:ml-[0px]">
+                  <LineChart chartData={chartData} />
+                </div>
+              )}
             </div>
           )}
           <Link href={adjustLinkHref('/swap')}>
@@ -143,4 +164,4 @@ const Apy = ({ isMobile }) => {
   )
 }
 
-export default withIsMobile(Apy)
+export default Apy

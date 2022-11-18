@@ -16,19 +16,53 @@ import { assetRootPath } from 'utils/image'
 import Layout from 'components/layout'
 import { audits } from 'utils/constants'
 import { capitalize } from 'lodash'
+import { apyHistoryService } from '../src/services/apy-history.service'
+import { useStoreState } from 'pullstate'
+import ContractStore from 'stores/ContractStore'
+import useAllocationQuery from '../src/queries/useAllocationQuery'
+import useCollateralQuery from '../src/queries/useCollateralQuery'
 
-const Home = ({ locale, onLocale, seo, navLinks }) => {
+const Home = ({ locale, onLocale, seo, navLinks, apy }) => {
   const { pathname } = useRouter()
   const active = capitalize(pathname.slice(1))
+
+  const allocation = useStoreState(ContractStore, (s) => {
+    return s.allocation || {}
+  })
+
+  const collateral = useStoreState(ContractStore, (s) => {
+    return s.collateral || {}
+  })
+
+  const allocationQuery = useAllocationQuery({
+    onSuccess: (allocation) => {
+      ContractStore.update((s) => {
+        s.allocation = allocation
+      })
+    },
+  })
+
+  const collateralQuery = useCollateralQuery({
+    onSuccess: (collateral) => {
+      ContractStore.update((s) => {
+        s.collateral = collateral
+      })
+    },
+  })
+
+  useEffect(() => {
+    allocationQuery.refetch()
+    collateralQuery.refetch()
+  }, [])
 
   return (
     <>
       <Seo seo={seo} />
       <Layout locale={locale}>
         <Animation navLinks={navLinks} active={active} />
-        <Apy />
-        <Allocation />
-        <Collateral />
+        <Apy apy={apy} />
+        <Allocation allocation={allocation} />
+        <Collateral collateral={collateral} allocation={allocation} />
         <section className="home black">
           <div className="py-[120px] px-[16px] md:px-[200px] text-center">
             <Typography.H6
@@ -112,11 +146,14 @@ export async function getStaticProps() {
 
   const navLinks = transformLinks(navRes.data)
 
+  const apy = JSON.stringify(apyHistoryService.fetchApyHistory())
+
   return {
     props: {
       articles: articlesRes.data,
       seo: formatSeo(seoRes?.data),
       navLinks,
+      apy,
     },
     revalidate: 5 * 60, // Cache response for 5m
   }

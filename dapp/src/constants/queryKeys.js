@@ -2,6 +2,7 @@ export const QUERY_KEYS = {
   Allocation: () => ['allocation'],
   Allowances: (account) => ['allowances', { account }],
   Apy: () => ['apy'],
+  ApyHistory: (days) => ['apyHistory', days],
   Balances: (account) => ['balances', { account }],
   CirculatingSupply: () => ['circulatingSupply'],
   Collateral: () => ['collateral'],

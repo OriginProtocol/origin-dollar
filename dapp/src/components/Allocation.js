@@ -4,31 +4,11 @@ import { Typography } from '@originprotocol/origin-storybook'
 import { assetRootPath } from 'utils/image'
 import { LinearProgress } from '@mui/material'
 import { ThemeProvider } from '@mui/material/styles'
-import useAllocationQuery from '../queries/useAllocationQuery'
-import { useStoreState } from 'pullstate'
-import ContractStore from 'stores/ContractStore'
 import { formatCurrency } from 'utils/math'
 import { theme } from 'utils/constants'
-import withIsMobile from 'hoc/withIsMobile'
 
-const Allocation = ({ isMobile }) => {
+const Allocation = ({ allocation }) => {
   const [open, setOpen] = useState({})
-
-  const allocation = useStoreState(ContractStore, (s) => {
-    return s.allocation || {}
-  })
-
-  const allocationQuery = useAllocationQuery({
-    onSuccess: (allocation) => {
-      ContractStore.update((s) => {
-        s.allocation = allocation
-      })
-    },
-  })
-
-  useEffect(() => {
-    allocationQuery.refetch()
-  }, [])
 
   const total = allocation.strategies?.reduce((t, s) => {
     return { total: Number(t.total) + Number(s.total) }

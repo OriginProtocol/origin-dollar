@@ -4,37 +4,25 @@ import { Typography } from '@originprotocol/origin-storybook'
 import { assetRootPath } from 'utils/image'
 import { PieChart } from 'react-minimal-pie-chart'
 import { formatCurrency } from '../utils/math'
-import useCollateralQuery from '../queries/useCollateralQuery'
-import { useStoreState } from 'pullstate'
-import ContractStore from 'stores/ContractStore'
 import { tokenColors } from 'utils/constants'
 
-const Collateral = () => {
-  const collateral = useStoreState(ContractStore, (s) => {
-    return s.collateral || {}
-  })
+const Collateral = ({ collateral, allocation }) => {
+  // temporary calculation, waiting for metastrategy integration into analytics
+  const meta = allocation?.strategies[4].ousd
 
-  const collateralQuery = useCollateralQuery({
-    onSuccess: (collateral) => {
-      ContractStore.update((s) => {
-        s.collateral = collateral
-      })
-    },
-  })
-
-  useEffect(() => {
-    collateralQuery.refetch()
-  }, [])
-
-  const total = collateral.collateral?.reduce((t, s) => {
-    return { total: Number(t.total) + Number(s.name === 'ousd' ? 0 : s.total) }
-  }).total
+  const total =
+    collateral.collateral?.reduce((t, s) => {
+      return {
+        total: Number(t.total) + Number(s.name === 'ousd' ? 0 : s.total),
+      }
+    }).total - meta
 
   const chartData = collateral.collateral?.map((token) => {
+    console.log(allocation.strategies[4][token.name])
     return {
       title: token.name.toUpperCase(),
       value: total
-        ? (token.name === 'ousd' ? 0 : token.total / total) * 100
+        ? (token.name === 'ousd' ? 0 : (token.total - meta / 3) / total) * 100
         : 0,
       color: tokenColors[token.name] || '#ff0000',
     }
@@ -74,6 +62,7 @@ const Collateral = () => {
               <div className="flex flex-wrap md:mt-12 md:flex-col justify-between h-4/5">
                 {collateral.collateral?.map((token) => {
                   if (token.name === 'ousd') return
+                  const realTotal = token.total - meta / 3
                   return (
                     <div
                       className="flex flex-row my-[2px] md:my-0"
@@ -85,13 +74,13 @@ const Collateral = () => {
                       ></img>
                       <div className="ml-[8px] md:ml-8">
                         <Typography.H7 className="text-base md:text-[32px] font-bold">
-                          {`${formatCurrency((token.total / total) * 100, 2)}%`}
+                          {`${formatCurrency((realTotal / total) * 100, 2)}%`}
                         </Typography.H7>
                         <Typography.H7
                           className="mt-[0px] md:mt-[8px] text-[12px] md:text-[24px] text-[#b5beca]"
                           style={{ fontWeight: 400 }}
                         >
-                          {`$${formatCurrency(token.total, 0)}`}
+                          {`$${formatCurrency(realTotal, 0)}`}
                         </Typography.H7>
                       </div>
                     </div>
