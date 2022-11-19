@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { fbt } from 'fbt-runtime'
-import moment from 'moment'
 import Link from 'next/link'
 import { Chart as ChartJS } from 'chart.js/auto'
 import { Chart } from 'react-chartjs-2'
@@ -74,7 +73,7 @@ const Apy = ({ apy }) => {
     else {
       setChartData({
         label: 'APY',
-        labels: data.map((d, i) => moment(d.day).format('MMM Do')),
+        labels: data.map((d) => d.day),
         datasets: [
           {
             data: data.map((d) => d.trailing_apy),

@@ -1,4 +1,3 @@
-import moment from 'moment'
 import { createTheme } from '@mui/material/styles'
 
 const mintAbsoluteGasLimitBuffer = 20000
@@ -21,14 +20,6 @@ const apyDayOptions = [7, 30, 365]
 const DEFAULT_SELECTED_APY = 30
 const transactionHistoryItemsPerPage = 50
 const max_price = 1.2
-
-const burnTimer = () => {
-  const burn = moment('2022-10-10T00:00:00.000Z')
-  const days = burn.diff(moment(), 'days')
-  const seconds = burn.diff(moment(), 'seconds')
-  const burnDays = days === 0 ? 1 : days
-  return { days: burnDays, seconds: seconds }
-}
 
 const theme = createTheme({
   palette: {
@@ -93,7 +84,6 @@ module.exports = {
   DEFAULT_SELECTED_APY,
   transactionHistoryItemsPerPage,
   max_price,
-  burnTimer,
   theme,
   tokenColors,
   audits,

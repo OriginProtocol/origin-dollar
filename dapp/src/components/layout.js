@@ -21,7 +21,6 @@ import AppFooter from './AppFooter'
 import MarketingFooter from './MarketingFooter'
 import { adjustLinkHref } from 'utils/utils'
 import { assetRootPath } from 'utils/image'
-import { burnTimer } from 'utils/constants'
 
 const UNISWAP_URL =
   'https://app.uniswap.org/#/swap?inputCurrency=0xdac17f958d2ee523a2206206994597c13d831ec7&outputCurrency=0x2A8e1E676Ec238d8A992307B495b45B3fEAa5e86'
@@ -70,7 +69,7 @@ const Layout = ({
   const stakes = useStoreState(StakeStore, (s) => s)
   const showStakingBanner = dapp && !stakePage && stakes.stakes?.length
 
-  const notice = showStakingBanner || burnTimer().days >= 0
+  const notice = showStakingBanner
 
   return (
     <>
@@ -177,7 +176,7 @@ const Layout = ({
               dapp ? '' : 'nav px-lg-5'
             }`}
           >
-            {showStakingBanner ? (
+            {showStakingBanner && (
               <>
                 <div className="d-flex flex-column mt-0 justify-content-center px-4 px-md-0 text-md-left">
                   <div className="title-text">
@@ -196,32 +195,6 @@ const Layout = ({
                 <div className="btn btn-dark mt-2 ml-md-auto">
                   <Link href={adjustLinkHref('/earn')}>Legacy staking</Link>
                 </div>
-              </>
-            ) : burnPage ? (
-              <>
-                {fbt('OGV airdrop is live!', 'Airdrop notice')}
-                <a
-                  href={process.env.AIRDROP_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn btn-dark mt-3 mt-md-0 ml-md-auto"
-                >
-                  Check eligibility
-                </a>
-              </>
-            ) : (
-              <>
-                {fbt(
-                  'Only ' +
-                    fbt.param('burn-days', burnTimer().days) +
-                    ' days left to claim your OGV before the burn',
-                  'Burn notice'
-                )}
-                <Link href={adjustLinkHref('/burn')}>
-                  <a className="btn btn-dark gradient1 mt-3 mt-md-0 ml-md-auto">
-                    OGV Burn
-                  </a>
-                </Link>
               </>
             )}
           </div>

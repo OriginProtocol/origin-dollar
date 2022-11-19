@@ -4,9 +4,7 @@ import { fbt } from 'fbt-runtime'
 import { useWeb3React } from '@web3-react/core'
 import { injectedConnector } from 'utils/connectors'
 import { walletConnectConnector } from 'utils/connectors'
-import { myEtherWalletConnector } from 'utils/connectors'
 import { walletlink, resetWalletConnector } from 'utils/connectors'
-import { defiWalletConnector } from 'utils/connectors'
 import withIsMobile from 'hoc/withIsMobile'
 
 import AccountStore from 'stores/AccountStore'
@@ -22,7 +20,6 @@ const WalletSelectContent = ({ isMobile }) => {
         'WalletConnect',
         'Coinbase Wallet',
         'MetaMask',
-        'MyEtherWallet',
         'Ledger',
       ]
     : [
@@ -31,8 +28,6 @@ const WalletSelectContent = ({ isMobile }) => {
         'Exodus',
         'Coinbase Wallet',
         'WalletConnect',
-        'MyEtherWallet',
-        'DeFi Wallet',
       ]
 
   useEffect(() => {
@@ -82,14 +77,10 @@ const WalletSelectContent = ({ isMobile }) => {
         s.walletSelectModalState = 'LedgerDerivation'
       })
       return
-    } else if (name === 'MyEtherWallet') {
-      connector = myEtherWalletConnector
     } else if (name === 'WalletConnect') {
       connector = walletConnectConnector
     } else if (name === 'Coinbase Wallet') {
       connector = walletlink
-    } else if (name === 'DeFi Wallet') {
-      connector = defiWalletConnector
     }
     // fix wallet connect bug: if you click the button and close the modal you wouldn't be able to open it again
     if (name === 'WalletConnect') {

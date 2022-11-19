@@ -14,15 +14,14 @@ export async function getStaticPaths() {
     paths: (data || []).map((slug) => ({
       params: { slug },
       // TODO: Should all locales be pre-generated?
-      locale: 'en',
     })),
     fallback: 'blocking',
   }
 }
 
-export async function getStaticProps({ params, locale }) {
+export async function getStaticProps({ params }) {
   // TODO: Do something for rate-limit
-  const { data } = await fetchAPI(`/ousd/blog/${locale}/${params.slug}`)
+  const { data } = await fetchAPI(`/ousd/blog/en/${params.slug}`)
   const navRes = await fetchAPI('/ousd-nav-links', {
     populate: {
       links: {

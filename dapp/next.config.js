@@ -71,10 +71,10 @@ const config = {
     loader: "default",
     domains: ["localhost", "cmsmediaproduction.s3.amazonaws.com", "cmsmediastaging.s3.amazonaws.com"],
   },
-  i18n: {
+  /*i18n: {
     locales,
     defaultLocale: 'en',
-  },
+  },*/
   async headers() {
     return [
       {

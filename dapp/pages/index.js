@@ -22,7 +22,7 @@ import ContractStore from '../src/stores/ContractStore'
 import useAllocationQuery from '../src/queries/useAllocationQuery'
 import useCollateralQuery from '../src/queries/useCollateralQuery'
 
-const Home = ({ locale, onLocale, seo, navLinks, apy }) => {
+const Home = ({ locale, onLocale, seo, navLinks, apy = {} }) => {
   const { pathname } = useRouter()
   const active = capitalize(pathname.slice(1))
 
@@ -133,6 +133,28 @@ const Home = ({ locale, onLocale, seo, navLinks, apy }) => {
   )
 }
 
+export async function fetchApyHistory() {
+  const apyDayOptions = [7, 30, 365]
+  const apyHistory = await Promise.all(
+    apyDayOptions.map(async (days) => {
+      const endpoint = `${process.env.ANALYTICS_ENDPOINT}/api/v1/apr/trailing_history/${days}`
+      const response = await fetch(endpoint)
+      if (!response.ok) {
+        throw new Error(`Failed to fetch ${days}-day trailing APY history`)
+      }
+      const json = await response.json()
+      return json.trailing_history
+    })
+  ).catch(function (err) {
+    console.log(err.message)
+  })
+  const data = {}
+  apyDayOptions.map((days, i) => {
+    data[`apy${days}`] = apyHistory[i] || []
+  })
+  return data
+}
+
 export async function getStaticProps() {
   const articlesRes = await fetchAPI('/ousd/blog/en')
   const seoRes = await fetchAPI('/ousd/page/en/%2F')
@@ -146,14 +168,15 @@ export async function getStaticProps() {
 
   const navLinks = transformLinks(navRes.data)
 
-  const apy = await apyHistoryService.fetchApyHistory()
+  const apy = await fetchApyHistory()
 
   return {
     props: {
       articles: articlesRes.data,
       seo: formatSeo(seoRes?.data),
       navLinks,
-      apy,
+      apy: apy || [],
+      fallback: false,
     },
     revalidate: 5 * 60, // Cache response for 5m
   }
