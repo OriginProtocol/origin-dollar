@@ -11,7 +11,7 @@ const Allocation = ({ allocation }) => {
   const [open, setOpen] = useState({})
 
   const total = allocation.strategies?.reduce((t, s) => {
-    return { total: Number(t.total) + Number(s.total) }
+    return { total: t.total + s.total }
   }).total
 
   return (
@@ -44,7 +44,11 @@ const Allocation = ({ allocation }) => {
               <ThemeProvider theme={theme}>
                 <div className="flex flex-col justify-between">
                   {allocation.strategies?.map((strategy) => {
-                    if (strategy.name === 'vault' || strategy.name === 'meta')
+                    if (
+                      strategy.name === 'Vault' ||
+                      strategy.name === 'OUSD MetaStrategy' ||
+                      strategy.name === 'Morpho Strategy'
+                    )
                       return
                     return (
                       <div
@@ -62,7 +66,9 @@ const Allocation = ({ allocation }) => {
                           <div className="flex flex-row justify-between">
                             <img
                               src={assetRootPath(
-                                `/images/${strategy.name}-logo-allocation.svg`
+                                `/images/${strategy.name
+                                  .replace(/\s+/g, '-')
+                                  .toLowerCase()}.svg`
                               )}
                               className={`logo`}
                             />
@@ -85,8 +91,10 @@ const Allocation = ({ allocation }) => {
                           </div>
                           <LinearProgress
                             variant="determinate"
-                            value={Number((strategy.total / total) * 100)}
-                            color={`${strategy.name}`}
+                            value={(strategy.total / total) * 100}
+                            color={`${strategy.name
+                              .replace(/\s+/g, '-')
+                              .toLowerCase()}`}
                             sx={{
                               bgcolor: '#141519',
                               borderRadius: 10,
@@ -99,23 +107,21 @@ const Allocation = ({ allocation }) => {
                               open[strategy.name] ? '' : ''
                             } flex flex-col xl:flex-row mt-[22px] whitespace-nowrap`}
                           >
-                            {strategy.name !== 'convex' ? (
+                            {strategy.name !== 'Convex Strategy' ? (
                               <>
                                 <div className="flex flex-row justify-between xl:pr-10">
                                   <div className="flex flex-row">
                                     <img
                                       src={assetRootPath(
-                                        `/images/${strategy.name.slice(
-                                          0,
-                                          1
-                                        )}dai.svg`
+                                        `/images/${strategy.name
+                                          .slice(0, 1)
+                                          .toLowerCase()}dai.svg`
                                       )}
                                       className="w-6"
                                     />
-                                    <Typography.Body3 className="pl-[12px] pr-[16px] font-light">{`${
-                                      strategy.name.charAt(0).toUpperCase() +
-                                      strategy.name.slice(1)
-                                    } DAI`}</Typography.Body3>
+                                    <Typography.Body3 className="pl-[12px] pr-[16px] font-light">{`${strategy.name
+                                      .charAt(0)
+                                      .toLowerCase()}DAI`}</Typography.Body3>
                                   </div>
                                   <Typography.Body3 className="text-[#b5beca] font-light">{`${formatCurrency(
                                     (strategy.dai / strategy.total) * 100,
@@ -126,17 +132,15 @@ const Allocation = ({ allocation }) => {
                                   <div className="flex flex-row">
                                     <img
                                       src={assetRootPath(
-                                        `/images/${strategy.name.slice(
-                                          0,
-                                          1
-                                        )}usdc.svg`
+                                        `/images/${strategy.name
+                                          .slice(0, 1)
+                                          .toLowerCase()}usdc.svg`
                                       )}
                                       className="w-6"
                                     />
-                                    <Typography.Body3 className="pl-[12px] pr-[16px] font-light">{`${
-                                      strategy.name.charAt(0).toUpperCase() +
-                                      strategy.name.slice(1)
-                                    } USDC`}</Typography.Body3>
+                                    <Typography.Body3 className="pl-[12px] pr-[16px] font-light">{`${strategy.name
+                                      .charAt(0)
+                                      .toLowerCase()}USDC`}</Typography.Body3>
                                   </div>
                                   <Typography.Body3 className="text-[#b5beca] font-light">{`${formatCurrency(
                                     (strategy.usdc / strategy.total) * 100,
@@ -147,17 +151,15 @@ const Allocation = ({ allocation }) => {
                                   <div className="flex flex-row">
                                     <img
                                       src={assetRootPath(
-                                        `/images/${strategy.name.slice(
-                                          0,
-                                          1
-                                        )}usdt.svg`
+                                        `/images/${strategy.name
+                                          .slice(0, 1)
+                                          .toLowerCase()}usdt.svg`
                                       )}
                                       className="w-6"
                                     />
-                                    <Typography.Body3 className="pl-[12px] pr-[16px] font-light">{`${
-                                      strategy.name.charAt(0).toUpperCase() +
-                                      strategy.name.slice(1)
-                                    } USDT`}</Typography.Body3>
+                                    <Typography.Body3 className="pl-[12px] pr-[16px] font-light">{`${strategy.name
+                                      .charAt(0)
+                                      .toLowerCase()}USDT`}</Typography.Body3>
                                   </div>
                                   <Typography.Body3 className="text-[#b5beca] font-light">{`${formatCurrency(
                                     (strategy.usdt / strategy.total) * 100,

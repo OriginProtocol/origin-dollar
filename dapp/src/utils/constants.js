@@ -23,13 +23,13 @@ const max_price = 1.2
 
 const theme = createTheme({
   palette: {
-    compound: {
+    'compound-strategy': {
       main: '#00d592',
     },
-    aave: {
+    'aave-strategy': {
       main: '#7a26f3',
     },
-    convex: {
+    'convex-strategy': {
       main: '#ff5a5a',
     },
   },

@@ -19,7 +19,6 @@ export default class ApyService {
         return json.apy / 100
       })
     )
-    console.log({ dayResults: dayResults })
     const apy = {}
     apyDayOptions.map((days, i) => {
       apy[`apy${days}`] = dayResults[i] || 0

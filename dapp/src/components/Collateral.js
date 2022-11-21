@@ -8,7 +8,10 @@ import { tokenColors } from 'utils/constants'
 
 const Collateral = ({ collateral, allocation }) => {
   // temporary calculation, waiting for metastrategy integration into analytics
-  const meta = allocation?.strategies && allocation.strategies[4].ousd
+  //const meta = allocation?.strategies && allocation.strategies[4].ousd
+  const meta = allocation.strategies?.find((s) => {
+    return s.name === 'OUSD MetaStrategy'
+  }).ousd
 
   const total =
     collateral.collateral?.reduce((t, s) => {

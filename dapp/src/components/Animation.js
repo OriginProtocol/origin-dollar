@@ -1,20 +1,12 @@
 import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
 import Link from 'next/link'
-import {
-  Typography,
-  GradientText,
-  Header,
-} from '@originprotocol/origin-storybook'
+import { Typography, Header } from '@originprotocol/origin-storybook'
 import CountUp from 'react-countup'
 import { assetRootPath } from 'utils/image'
-import { animateValue } from 'utils/animation'
 import { useStoreState } from 'pullstate'
 import ContractStore from 'stores/ContractStore'
-import { DEFAULT_SELECTED_APY } from 'utils/constants'
-import { zipObject } from 'lodash'
 import { formatCurrency } from 'utils/math'
-import addresses from 'constants/contractAddresses'
 import { adjustLinkHref } from 'utils/utils'
 
 const Animation = ({ navLinks, active }) => {
