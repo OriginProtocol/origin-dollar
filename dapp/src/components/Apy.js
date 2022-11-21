@@ -11,7 +11,7 @@ import { DEFAULT_SELECTED_APY } from 'utils/constants'
 import { zipObject } from 'lodash'
 import { formatCurrency } from 'utils/math'
 import { adjustLinkHref } from 'utils/utils'
-import useApyHistoryQuery from '../queries/useApyhistoryQuery'
+import useApyHistoryQuery from '../queries/useApyHistoryQuery'
 
 const Apy = ({ apy }) => {
   const apyDayOptions = [7, 30, 365]
