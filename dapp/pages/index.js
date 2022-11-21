@@ -88,8 +88,8 @@ const Home = ({ locale, onLocale, seo, navLinks, apy = {} }) => {
                     <a
                       className="mx-auto"
                       href={audit.link}
-                      target='_blank'
-                      rel='noopener noreferrer'
+                      target="_blank"
+                      rel="noopener noreferrer"
                       key={audit.name}
                     >
                       <div className="item relative rounded-full w-[140px] h-[140px] md:w-[200px] md:h-[200px] lg:w-[130px] lg:h-[130px] xl:w-[170px] xl:h-[170px] 2xl:w-[200px] 2xl:h-[200px]">

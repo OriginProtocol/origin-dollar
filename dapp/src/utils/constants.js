@@ -41,7 +41,24 @@ const tokenColors = {
   usdt: '#26a17b',
 }
 
-const audits = [{name: 'Trail of bits', link: 'https://github.com/OriginProtocol/security/blob/master/audits/Trail%20of%20Bits%20-%20Origin%20Dollar%20-%20Dec%202020.pdf'}, {name: 'Certora', link: 'https://www.certora.com/wp-content/uploads/2022/02/OriginFeb2021.pdf'}, {name: 'Solidified', link: 'https://github.com/OriginProtocol/security/blob/master/audits/Solidified%20-%20Origin%20Dollar%20-%20Dec%202020.pdf'}, {name: 'OpenZeppelin', link: 'https://github.com/OriginProtocol/security/blob/master/audits/OpenZeppelin%20-%20Origin%20Dollar%20-%20October%202021.pdf'}]
+const audits = [
+  {
+    name: 'Trail of bits',
+    link: 'https://github.com/OriginProtocol/security/blob/master/audits/Trail%20of%20Bits%20-%20Origin%20Dollar%20-%20Dec%202020.pdf',
+  },
+  {
+    name: 'Certora',
+    link: 'https://www.certora.com/wp-content/uploads/2022/02/OriginFeb2021.pdf',
+  },
+  {
+    name: 'Solidified',
+    link: 'https://github.com/OriginProtocol/security/blob/master/audits/Solidified%20-%20Origin%20Dollar%20-%20Dec%202020.pdf',
+  },
+  {
+    name: 'OpenZeppelin',
+    link: 'https://github.com/OriginProtocol/security/blob/master/audits/OpenZeppelin%20-%20Origin%20Dollar%20-%20October%202021.pdf',
+  },
+]
 
 const sanitizationOptions = {
   allowedTags: [
