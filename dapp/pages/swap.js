@@ -1,8 +1,6 @@
 import React from 'react'
 import Layout from 'components/layout'
 import Nav from 'components/Nav'
-import Head from 'next/head'
-import { NextScript } from 'next/document'
 import AccountListener from 'components/AccountListener'
 
 import BalanceHeader from 'components/buySell/BalanceHeader'

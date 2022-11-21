@@ -3,6 +3,7 @@ import { fbt } from 'fbt-runtime'
 import Link from 'next/link'
 import { Typography, Header } from '@originprotocol/origin-storybook'
 import CountUp from 'react-countup'
+import AccountListener from 'components/AccountListener'
 import { assetRootPath } from 'utils/image'
 import { useStoreState } from 'pullstate'
 import ContractStore from 'stores/ContractStore'
@@ -46,6 +47,7 @@ const Animation = ({ navLinks, active }) => {
     <>
       <section className="intro black">
         <Header mappedLinks={navLinks} webProperty="ousd" active={active} />
+        <AccountListener />
         <div className="flex flex-col lg:flex-row max-w-screen-2xl mt-[20px] md:mt-16 mx-auto px-8 md:px-[134px] lg:pb-40 overflow-hidden">
           <div className="lg:w-7/12">
             <Typography.H2 as="h1" className="font-normal">
@@ -84,7 +86,7 @@ const Animation = ({ navLinks, active }) => {
                 <div className="relative h-32 md:h-64 lg:h-auto flex flex-row lg:block">
                   <div className="absolute right-20 md:right-32 md:top-10 lg:static z-10">
                     <Typography.H2
-                      className="ml-20 text-left"
+                      className="xl:ml-16 2xl:ml-20 text-left"
                       style={{ fontWeight: 700 }}
                     >
                       {
