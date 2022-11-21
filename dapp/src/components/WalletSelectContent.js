@@ -16,19 +16,8 @@ const WalletSelectContent = ({ isMobile }) => {
   const { connector, activate, deactivate, active } = useWeb3React()
   const [error, setError] = useState(null)
   const wallets = isMobile
-    ? [
-        'WalletConnect',
-        'Coinbase Wallet',
-        'MetaMask',
-        'Ledger',
-      ]
-    : [
-        'MetaMask',
-        'Ledger',
-        'Exodus',
-        'Coinbase Wallet',
-        'WalletConnect',
-      ]
+    ? ['WalletConnect', 'Coinbase Wallet', 'MetaMask', 'Ledger']
+    : ['MetaMask', 'Ledger', 'Exodus', 'Coinbase Wallet', 'WalletConnect']
 
   useEffect(() => {
     if (active) {

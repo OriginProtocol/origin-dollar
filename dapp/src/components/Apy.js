@@ -72,7 +72,7 @@ const Apy = ({ apy }) => {
     else {
       setChartData({
         label: 'APY',
-        labels: data.map((d) => (new Date(d.day)).toString().slice(4, 10)),
+        labels: data.map((d) => new Date(d.day).toString().slice(4, 10)),
         datasets: [
           {
             data: data.map((d) => d.trailing_apy),
