@@ -3,12 +3,14 @@ import Layout from 'components/layout'
 import Nav from 'components/Nav'
 
 import SignTransferAuth from 'components/SignTransferAuth'
+import AccountListener from 'components/AccountListener'
 
 export default function DApp({ locale, onLocale }) {
   return (
     <>
       <Layout locale={locale} onLocale={onLocale} dapp>
         <Nav dapp page={'swap'} locale={locale} onLocale={onLocale} />
+        <AccountListener />
         <div className="home d-flex flex-column">
           <div className="d-flex">
             <SignTransferAuth />

@@ -6,7 +6,6 @@ import Allocation from 'components/Allocation'
 import Collateral from 'components/Collateral'
 import Ogv from 'components/Ogv'
 import Seo from 'components/strapi/seo'
-import Head from 'next/head'
 import { useRouter } from 'next/router'
 import { fetchAPI } from '../lib/api'
 import formatSeo from '../src/utils/seo'
@@ -16,7 +15,6 @@ import { assetRootPath } from 'utils/image'
 import Layout from 'components/layout'
 import { audits } from 'utils/constants'
 import { capitalize } from 'lodash'
-import { apyHistoryService } from '../src/services/apy-history.service'
 import { useStoreState } from 'pullstate'
 import ContractStore from '../src/stores/ContractStore'
 import useAllocationQuery from '../src/queries/useAllocationQuery'
@@ -64,7 +62,7 @@ const Home = ({ locale, onLocale, seo, navLinks, apy = {} }) => {
         <Allocation allocation={allocation} />
         <Collateral collateral={collateral} allocation={allocation} />
         <section className="home black">
-          <div className="py-[120px] px-[16px] md:px-[200px] text-center">
+          <div className="py-[120px] px-[16px] md:px-[134px] lg:px-[200px] text-center">
             <Typography.H6
               className="text-[32px] md:text-[56px] leading-[36px] md:leading-[64px]"
               style={{ fontWeight: 700 }}
@@ -84,18 +82,18 @@ const Home = ({ locale, onLocale, seo, navLinks, apy = {} }) => {
               <Typography.H7 className="font-bold">
                 {fbt('Existing audits', 'Existing audits')}
               </Typography.H7>
-              <div className="grid grid-rows-2 grid-cols-2 gap-y-20 2xl:flex 2xl:flex-row 2xl:justify-between mt-6 md:mt-[56px] mx-auto">
+              <div className="grid grid-rows-2 grid-cols-2 gap-y-10 lg:flex lg:flex-row lg:justify-between mt-6 md:mt-[56px] mx-auto">
                 {audits.map((audit, i) => {
                   return (
-                    <div className={`mx-auto`} key={audit}>
-                      <div className="item relative rounded-full w-28 h-28 xl:w-[200px] xl:h-[200px]">
+                    <div className="mx-auto" key={audit}>
+                      <div className="item relative rounded-full w-[140px] h-[140px] md:w-[200px] md:h-[200px] lg:w-[130px] lg:h-[130px] xl:w-[170px] xl:h-[170px] 2xl:w-[200px] 2xl:h-[200px]">
                         <img
                           src={assetRootPath(
                             `/images/${audit
                               .replace(/ /g, '-')
                               .toLowerCase()}.svg`
                           )}
-                          className="w-50 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+                          className="h-[56px] md:h-[80px] lg:h-[56px] 2xl:h-[80px] absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
                         />
                       </div>
                       <Typography.Body className="mt-[8px] md:mt-6 opacity-75">
@@ -150,7 +148,7 @@ export async function fetchApyHistory() {
   })
   const data = {}
   apyDayOptions.map((days, i) => {
-    data[`apy${days}`] = apyHistory[i] || []
+    data[`apy${days}`] = apyHistory ? apyHistory[i] : []
   })
   return data
 }

@@ -3,6 +3,7 @@ import { useWeb3React } from '@web3-react/core'
 import { fbt } from 'fbt-runtime'
 import Head from 'next/head'
 import { NextScript } from 'next/document'
+import AccountListener from 'components/AccountListener'
 
 import Layout from 'components/layout'
 import Nav from 'components/Nav'
@@ -18,6 +19,7 @@ export default function History({ locale, onLocale }) {
     <>
       <Layout locale={locale} onLocale={onLocale} dapp>
         <Nav dapp page={'history'} locale={locale} onLocale={onLocale} />
+        <AccountListener />
         <div className="home d-flex flex-column">
           <BalanceHeader />
           {active && <TransactionHistory />}

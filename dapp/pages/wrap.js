@@ -3,6 +3,7 @@ import Layout from 'components/layout'
 import Nav from 'components/Nav'
 import Head from 'next/head'
 import { NextScript } from 'next/document'
+import AccountListener from 'components/AccountListener'
 
 import BalanceHeaderWrapped from 'components/wrap/BalanceHeaderWrapped'
 import WrappedSidePanel from 'components/sidePanel/WrappedSidePanel'
@@ -13,6 +14,7 @@ export default function Wrap({ locale, onLocale }) {
     <>
       <Layout locale={locale} onLocale={onLocale} dapp>
         <Nav dapp page={'wrap'} locale={locale} onLocale={onLocale} />
+        <AccountListener />
         <div className="home d-flex flex-column">
           <BalanceHeaderWrapped />
           <div className="d-flex">

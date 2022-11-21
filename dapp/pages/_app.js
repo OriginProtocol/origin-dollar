@@ -11,7 +11,6 @@ import { fetchAPI } from '../lib/api'
 
 import AccountStore from 'stores/AccountStore'
 import RouterStore from 'stores/RouterStore'
-import AccountListener from 'components/AccountListener'
 import UserActivityListener from 'components/UserActivityListener'
 import TransactionListener from 'components/TransactionListener'
 import withWeb3Provider from 'hoc/withWeb3Provider'
@@ -163,7 +162,6 @@ function MyApp({ Component, pageProps, err }) {
       <GlobalContext.Provider value={global?.attributes}>
         <QueryClientProvider client={queryClient}>
           <AnalyticsProvider instance={analytics}>
-            <AccountListener />
             <TransactionListener />
             <UserActivityListener />
             <WalletSelectModal />

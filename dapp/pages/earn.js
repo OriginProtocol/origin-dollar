@@ -3,6 +3,7 @@ import Layout from 'components/layout'
 import Nav from 'components/Nav'
 import Head from 'next/head'
 import { NextScript } from 'next/document'
+import AccountListener from 'components/AccountListener'
 
 import StakeUI from 'components/earn/StakeUI'
 import CurveStake from 'components/earn/CurveStake'
@@ -12,6 +13,7 @@ const Stake = ({ locale, onLocale }) => {
     <>
       <Layout onLocale={onLocale} locale={locale} dapp shorter isStakePage>
         <Nav dapp page={'earn'} locale={locale} onLocale={onLocale} />
+        <AccountListener />
         {process.env.ENABLE_CURVE_STAKING === 'true' && <CurveStake />}
         {process.env.ENABLE_OGN_STAKING === 'true' && <StakeUI />}
       </Layout>

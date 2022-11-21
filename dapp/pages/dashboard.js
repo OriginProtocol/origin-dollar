@@ -3,6 +3,7 @@ import { useStoreState } from 'pullstate'
 import { ethers, BigNumber } from 'ethers'
 import { get } from 'lodash'
 import { useWeb3React } from '@web3-react/core'
+import AccountListener from 'components/AccountListener'
 
 import Layout from 'components/layout'
 import Nav from 'components/Nav'
@@ -676,6 +677,7 @@ const Dashboard = ({ locale, onLocale }) => {
     <>
       <Layout locale={locale} onLocale={onLocale} dapp>
         <Nav dapp locale={locale} onLocale={onLocale} />
+        <AccountListener />
         <div className="my-5">
           {!account && <h1 className="text-white">No account :(</h1>}
           {account && (

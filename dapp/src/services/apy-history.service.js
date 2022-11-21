@@ -17,7 +17,7 @@ export default class ApyHistoryService {
     })
     const data = {}
     apyDayOptions.map((days, i) => {
-      data[`apy${days}`] = apyHistory[i] || []
+      data[`apy${days}`] = apyHistory ? apyHistory[i] : []
     })
     return data
   }
