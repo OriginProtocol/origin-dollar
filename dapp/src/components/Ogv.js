@@ -562,7 +562,7 @@ const Ogv = () => {
                     href="https://app.uniswap.org/#/swap?outputCurrency=0x9c354503C38481a7A7a51629142963F98eCC12D0&chain=mainnet"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="bttn bg-black"
+                    className="bttn bg-black ml-0"
                   >
                     <Typography.H7 className="font-normal">
                       {fbt('Buy OGV', 'Buy OGV')}
@@ -606,6 +606,7 @@ const Ogv = () => {
                     href="https://app.uniswap.org/#/swap?outputCurrency=0x9c354503C38481a7A7a51629142963F98eCC12D0&chain=mainnet"
                     target="_blank"
                     rel="nofollow noreferrer"
+                    className='ml-[10px]'
                   >
                     <Uniswap />
                   </a>
