@@ -174,7 +174,7 @@ export async function getStaticProps() {
       seo: formatSeo(seoRes?.data),
       navLinks,
       apy: apy || [],
-      fallback: false,
+      fallback: true,
     },
     revalidate: 5 * 60, // Cache response for 5m
   }
