@@ -85,11 +85,17 @@ const Home = ({ locale, onLocale, seo, navLinks, apy = {} }) => {
               <div className="grid grid-rows-2 grid-cols-2 gap-y-10 lg:flex lg:flex-row lg:justify-between mt-6 md:mt-[56px] mx-auto">
                 {audits.map((audit, i) => {
                   return (
-                    <div className="mx-auto" key={audit}>
+                    <a
+                      className="mx-auto"
+                      href={audit.link}
+                      target='_blank'
+                      rel='noopener noreferrer'
+                      key={audit.name}
+                    >
                       <div className="item relative rounded-full w-[140px] h-[140px] md:w-[200px] md:h-[200px] lg:w-[130px] lg:h-[130px] xl:w-[170px] xl:h-[170px] 2xl:w-[200px] 2xl:h-[200px]">
                         <img
                           src={assetRootPath(
-                            `/images/${audit
+                            `/images/${audit.name
                               .replace(/ /g, '-')
                               .toLowerCase()}.svg`
                           )}
@@ -97,9 +103,9 @@ const Home = ({ locale, onLocale, seo, navLinks, apy = {} }) => {
                         />
                       </div>
                       <Typography.Body className="mt-[8px] md:mt-6 opacity-75">
-                        {audit}
+                        {audit.name}
                       </Typography.Body>
-                    </div>
+                    </a>
                   )
                 })}
               </div>

@@ -11,11 +11,20 @@ import { DEFAULT_SELECTED_APY } from 'utils/constants'
 import { zipObject } from 'lodash'
 import { formatCurrency } from 'utils/math'
 import { adjustLinkHref } from 'utils/utils'
+import useApyQuery from '../queries/useApyQuery'
 import useApyHistoryQuery from '../queries/useApyHistoryQuery'
+import { apyDayOptions } from '../utils/constants'
 
 const Apy = ({ apy }) => {
-  const apyDayOptions = [7, 30, 365]
   const [loaded, setLoaded] = useState()
+  
+  const apyQuery = useApyQuery({
+    onSuccess: (apy) => {
+      ContractStore.update((s) => {
+        s.apy = apy
+      })
+    },
+  })
   const apyOptions = useStoreState(ContractStore, (s) =>
     apyDayOptions.map((d) => {
       return s.apy[`apy${d}`] || 0
@@ -45,6 +54,7 @@ const Apy = ({ apy }) => {
   const data = dataReversed.slice().reverse()
 
   useEffect(() => {
+    apyQuery.refetch()
     apyHistoryQuery.refetch()
   }, [])
 
