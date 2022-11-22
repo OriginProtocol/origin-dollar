@@ -2,56 +2,203 @@ const { expect } = require("chai");
 const { defaultFixture } = require("../_fixture");
 const { loadFixture } = require("../helpers");
 
-describe("Check vault value", () => {
-  let vault, matt, dai;
+describe.only("Check vault value", () => {
+  let vault, ousd, matt, dai, checker, vaultSigner;
 
   beforeEach(async () => {
     const fixture = await loadFixture(defaultFixture);
     vault = fixture.vault;
+    ousd = fixture.vault;
     matt = fixture.matt;
     dai = fixture.dai;
+    checker = await ethers.getContract("VaultValueChecker");
+    vaultSigner = await ethers.getSigner(vault.address);
   });
 
-  function testLoss(opts) {
+  async function changeAndSnapshot(opts) {
+    const valueDelta = opts.valueDelta;
+    const supplyDelta = opts.supplyDelta;
+
+    // // Alter value
+    // if(valueDelta > 0){
+    //   await dai.mintTo(valueDelta, vault.address)
+    // } else {
+    //   await dai.connect(vaultSigner).transfer(matt, valueDelta * -1)
+    // }
+    // // Alter supply
+    // await ousd.connect(vaultSigner).changeSupply(await ousd.totalSupply() + supplyDelta)
+
+    await checker.takeSnapshot();
+  }
+
+  function testChange(opts) {
     return async () => {
-      const { actual, max, shouldRevert } = opts;
-      const checker = await ethers.getContract("VaultValueChecker");
+      const {
+        valueDelta,
+        valueMin,
+        valueMax,
+        supplyDelta,
+        supplyMin,
+        supplyMax,
+        expectedRevert,
+      } = opts;
 
-      // Take snapshot
-      await checker.takeSnapshot();
-
-      // Alter funds
-      if (actual > 0) {
-        await vault.connect(matt).redeem(actual, 0);
-      } else {
-        await dai.connect(matt).transfer(vault.address, Math.abs(actual));
-      }
+      await changeAndSnapshot({ valueDelta, supplyDelta });
 
       // Verify checkLoss behavior
-      if (shouldRevert) {
-        await expect(checker.checkLoss(max)).to.be.revertedWith(
-          "Max loss exceeded"
-        );
+      if (expectedRevert) {
+        await expect(
+          checker.checkDelta(valueMin, valueMax, supplyMin, supplyMax)
+        ).to.be.revertedWith(expectedRevert);
       } else {
-        await checker.checkLoss(max);
+        await checker.checkDelta(valueMin, valueMax, supplyMin, supplyMax);
       }
     };
   }
 
+  // ---- Vault value
+
   it(
-    "should succeed if loss was less than allowed",
-    testLoss({ actual: 100, max: 200 })
+    "should succeed if vault gain was inside the allowed band",
+    testChange({
+      valueDelta: 200,
+      valueMin: 100,
+      valueMax: 300,
+      supplyDelta: 1,
+      supplyMin: 0,
+      supplyMax: 1,
+    })
   );
   it(
-    "should revert if loss was greater that allowed",
-    testLoss({ actual: 300, max: 200, shouldRevert: true })
+    "should revert if vault gain less than allowed",
+    testChange({
+      valueDelta: 50,
+      valueMin: 100,
+      valueMax: 150,
+      supplyDelta: 1,
+      supplyMin: 0,
+      supplyMax: 1,
+      expectedRevert: "Vault value too low",
+    })
   );
   it(
-    "should succeed if value grew above expected",
-    testLoss({ actual: -300, max: -200 })
+    "should revert if vault gain more than allowed",
+    testChange({
+      valueDelta: 550,
+      valueMin: 200,
+      valueMax: 350,
+      supplyDelta: 1,
+      supplyMin: 0,
+      supplyMax: 1,
+      expectedRevert: "Vault value too high",
+    })
   );
   it(
-    "should revert if value grew, but not enough",
-    testLoss({ actual: -100, max: -200, shouldRevert: true })
+    "should succeed if vault loss was inside the allowed band",
+    testChange({
+      valueDelta: -200,
+      valueMin: -100,
+      valueMax: -300,
+      supplyDelta: 1,
+      supplyMin: 0,
+      supplyMax: 1,
+    })
+  );
+  it(
+    "should revert if vault loss less than allowed",
+    testChange({
+      valueDelta: -40,
+      valueMin: -100,
+      valueMax: -20,
+      supplyDelta: 1,
+      supplyMin: 0,
+      supplyMax: 1,
+      expectedRevert: "Vault value too low",
+    })
+  );
+  it(
+    "should revert if vault loss more than allowed",
+    testChange({
+      valueDelta: -550,
+      valueMin: -400,
+      valueMax: -150,
+      supplyDelta: 1,
+      supplyMin: 0,
+      supplyMax: 1,
+      expectedRevert: "Vault value too high",
+    })
+  );
+
+  // ---- OUSD Supply
+
+  it(
+    "should succeed if supply gain was inside the allowed band",
+    testChange({
+      valueDelta: 0,
+      valueMin: 0,
+      valueMax: 0,
+      supplyDelta: 200,
+      supplyMin: 100,
+      supplyMax: 300,
+    })
+  );
+  it(
+    "should revert if supply gain less than allowed",
+    testChange({
+      valueDelta: 0,
+      valueMin: 0,
+      valueMax: 0,
+      supplyDelta: 50,
+      supplyMin: 100,
+      supplyMax: 150,
+      expectedRevert: "OUSD supply too low",
+    })
+  );
+  it(
+    "should revert if supply gain more than allowed",
+    testChange({
+      valueDelta: 0,
+      valueMin: 0,
+      valueMax: 0,
+      supplyDelta: 550,
+      supplyMin: 200,
+      supplyMax: 350,
+      expectedRevert: "OUSD supply too high",
+    })
+  );
+  it(
+    "should succeed if supply loss was inside the allowed band",
+    testChange({
+      valueDelta: 0,
+      valueMin: 0,
+      valueMax: 0,
+      supplyDelta: -200,
+      supplyMin: -100,
+      supplyMax: -300,
+    })
+  );
+  it(
+    "should revert if supply loss less than allowed",
+    testChange({
+      valueDelta: 0,
+      valueMin: 0,
+      valueMax: 0,
+      supplyDelta: -40,
+      supplyMin: -100,
+      supplyMax: -20,
+      expectedRevert: "OUSD supply too low",
+    })
+  );
+  it(
+    "should revert if supply loss more than allowed",
+    testChange({
+      valueDelta: 0,
+      valueMin: 0,
+      valueMax: 0,
+      supplyDelta: -550,
+      supplyMin: -400,
+      supplyMax: -150,
+      expectedRevert: "OUSD supply too high",
+    })
   );
 });
