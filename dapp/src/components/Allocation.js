@@ -33,14 +33,14 @@ const Allocation = ({ allocation }) => {
               'Funds are deployed to automated, on-chain, blue-chip stablecoin strategies. There are no gatekeepers or centralized money managers and governance is entirely decentralized.'
             )}
           </Typography.Body3>
-          <div className="allocation mt-20 mb-16 rounded-xl divide-black divide-y-2">
+          <div className="allocation max-w-[1432px] mx-auto mt-20 mb-16 rounded-xl divide-black divide-y-2">
             <Typography.H7 className="font-bold px-[16px] py-[22px] md:p-10">
               {fbt(
                 'Current yield sources & allocations',
                 'Current yield sources & allocations'
               )}
             </Typography.H7>
-            <div className="max-w-[1432px] mx-auto flex flex-col px-[16px] md:px-10 py-[10px] md:py-8">
+            <div className="flex flex-col px-[16px] md:px-10 py-[10px] md:py-8">
               <ThemeProvider theme={theme}>
                 <div className="flex flex-col justify-between">
                   {allocation.strategies?.map((strategy) => {

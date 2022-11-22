@@ -46,10 +46,11 @@ const Animation = ({ navLinks, active }) => {
   return (
     <>
       <section className="intro black">
+        <div className="mt-[20px] md:mt-16 px-8 md:px-[134px] lg:pb-40 overflow-hidden">
         <Header mappedLinks={navLinks} webProperty="ousd" active={active} />
         <AccountListener />
-        <div className="flex flex-col lg:flex-row max-w-screen-2xl mt-[20px] md:mt-16 mx-auto px-8 md:px-[134px] lg:pb-40 overflow-hidden">
-          <div className="lg:w-7/12">
+          <div className='flex flex-col lg:flex-row justify-between max-w-[1432px] mx-auto'>
+          <div className="lg:w-1/2 xl:w-7/12">
             <Typography.H2 as="h1" className="font-normal">
               {fbt('The self-custodial,', 'The self-custodial,')}{' '}
               <br className="hidden md:block" />
@@ -73,7 +74,7 @@ const Animation = ({ navLinks, active }) => {
               </a>
             </Link>
           </div>
-          <div className="container self-end lg:self-start flex-1 relative mt-20 lg:mt-0 md:pb-10">
+          <div className="container self-end lg:self-start flex-1 relative mt-20 lg:mt-14 xl:mt-0 md:pb-10">
             <div className="hidden lg:block">
               <img
                 src={assetRootPath('/images/ousd.svg')}
@@ -84,12 +85,13 @@ const Animation = ({ navLinks, active }) => {
             {totalOusd && (
               <div className="lg:absolute lg:bottom-0 lg:left-0 lg:right-0 text-center">
                 <div className="relative h-32 md:h-64 lg:h-auto flex flex-row lg:block">
-                  <div className="absolute right-20 md:right-32 md:top-10 lg:static z-10">
+                  <div className="absolute right-20 md:right-36 md:top-10 lg:static z-10">
                     <Typography.H2
-                      className="xl:ml-16 2xl:ml-20 text-left"
+                      //className="xl:ml-16 2xl:ml-20 text-left"
                       style={{ fontWeight: 700 }}
                     >
-                      {
+                      {`$${formatCurrency(totalOusd, 0)}`}
+                      {/*
                         <CountUp
                           start={0}
                           end={totalOusd}
@@ -100,9 +102,9 @@ const Animation = ({ navLinks, active }) => {
                             return `$${formatCurrency(num, 0)}`
                           }}
                         />
-                      }
+                      */}
                     </Typography.H2>
-                    <Typography.Body3 className="text-sm md:text-base text-[#b5beca] pt-[0px] md:pt-[4px]">
+                    <Typography.Body3 className="text-sm md:text-base text-[#b5beca] pt-[0px] md:pt-[8px]">
                       {fbt(
                         'Total value of OUSD wallet balances',
                         'Total value of OUSD wallet balances'
@@ -119,6 +121,7 @@ const Animation = ({ navLinks, active }) => {
                 </div>
               </div>
             )}
+          </div>
           </div>
         </div>
       </section>
