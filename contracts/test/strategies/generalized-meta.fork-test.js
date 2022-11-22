@@ -49,7 +49,7 @@ const metastrategies = [
     token: "TrueUSD",
     metapoolAddress: "0xEcd5e75AFb02eFa118AF914515D6521aaBd189F1",
     lpToken: "0xEcd5e75AFb02eFa118AF914515D6521aaBd189F1",
-    metastrategyProxyName: "ConvexTrueUSDMetaStrategyProxy",
+    metastrategyProxyName: "ConvexTUSDMetaStrategyProxy",
     rewardPoolAddress: "0x308b48F037AAa75406426dACFACA864ebd88eDbA",
     skipMewTest: false,
   },
