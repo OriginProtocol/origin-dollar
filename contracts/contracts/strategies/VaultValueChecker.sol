@@ -31,10 +31,10 @@ contract VaultValueChecker {
     }
 
     function checkDelta(
-        int256 minValueDelta,
-        int256 maxValueDelta,
-        int256 minSupplyDelta,
-        int256 maxSupplyDelta
+        int256 lowValueDelta,
+        int256 highValueDelta,
+        int256 lowSupplyDelta,
+        int256 highSupplyDelta
     ) external {
         Snapshot memory snapshot = snapshots[msg.sender];
         int256 valueChange = toInt256(vault.totalValue()) -
@@ -42,10 +42,10 @@ contract VaultValueChecker {
         int256 supplyChange = toInt256(ousd.totalSupply()) -
             toInt256(snapshot.totalSupply);
 
-        require(valueChange >= minValueDelta, "Vault value too low");
-        require(valueChange <= maxValueDelta, "Vault value too high");
-        require(supplyChange >= minSupplyDelta, "OUSD supply too low");
-        require(supplyChange <= maxSupplyDelta, "OUSD supply too high");
+        require(valueChange >= lowValueDelta, "Vault value too low");
+        require(valueChange <= highValueDelta, "Vault value too high");
+        require(supplyChange >= lowSupplyDelta, "OUSD supply too low");
+        require(supplyChange <= highSupplyDelta, "OUSD supply too high");
     }
 
     function toInt256(uint256 value) internal pure returns (int256) {
