@@ -107,3 +107,10 @@ contract ConvexUSDDMetaStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 contract ConvexBUSDMetaStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
+
+/**
+ * @notice ConvexTUSDMetaStrategyProxy delegates calls to a ConvexalGeneralizedMetaStrategy implementation
+ */
+contract ConvexTUSDMetaStrategyProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
