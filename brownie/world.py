@@ -45,6 +45,7 @@ aave_strat = load_contract('aave_strat', AAVE_STRAT)
 comp_strat = load_contract('comp_strat', COMP_STRAT)
 convex_strat = load_contract('convex_strat', CONVEX_STRAT)
 ousd_metastrat = load_contract('ousd_metastrat', OUSD_METASTRAT)
+morpho_comp_strat = load_contract('comp_strat', MORPHO_COMP_STRAT)
 
 aave_incentives_controller = load_contract('aave_incentives_controller', '0xd784927Ff2f95ba542BfC824c8a8a98F3495f6b5')
 stkaave = load_contract('stkaave', '0x4da27a545c0c5B758a6BA100e3a049001de870f5')
