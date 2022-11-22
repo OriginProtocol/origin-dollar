@@ -2,7 +2,7 @@ const generalizedConvexStratDeployment = require("../utils/generalizedConvexStra
 const { tusdMetapoolLPCRVPid } = require("../utils/constants");
 
 module.exports = generalizedConvexStratDeployment({
-  deployName: "045_morpho_strategy",
+  deployName: "045_convex_tusd_meta_strategy",
   forceDeploy: false,
   mainTokenName: "True USD",
   mainTokenSymbol: "TUSD",
