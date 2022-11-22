@@ -1,5 +1,5 @@
 const { expect } = require("chai");
-const { defaultFixture } = require("../_fixture");
+const { defaultFixture, impersonateAccount } = require("../_fixture");
 const { loadFixture } = require("../helpers");
 
 describe.only("Check vault value", () => {
@@ -13,20 +13,21 @@ describe.only("Check vault value", () => {
     dai = fixture.dai;
     checker = await ethers.getContract("VaultValueChecker");
     vaultSigner = await ethers.getSigner(vault.address);
+    await impersonateAccount(vaultSigner.address);
   });
 
   async function changeAndSnapshot(opts) {
     const valueDelta = opts.valueDelta;
     const supplyDelta = opts.supplyDelta;
 
-    // // Alter value
-    // if(valueDelta > 0){
-    //   await dai.mintTo(valueDelta, vault.address)
-    // } else {
-    //   await dai.connect(vaultSigner).transfer(matt, valueDelta * -1)
-    // }
-    // // Alter supply
-    // await ousd.connect(vaultSigner).changeSupply(await ousd.totalSupply() + supplyDelta)
+    // Alter value
+    if(valueDelta > 0){
+      await dai.mintTo(valueDelta, vault.address)
+    } else {
+      await dai.connect(vaultSigner).transfer(matt.address, valueDelta * -1)
+    }
+    // Alter supply
+    await ousd.connect(vaultSigner).changeSupply(await ousd.totalSupply() + supplyDelta)
 
     await checker.takeSnapshot();
   }
