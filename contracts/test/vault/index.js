@@ -521,7 +521,7 @@ describe("Vault", function () {
     await vault.connect(governor).setOusdMetaStrategy(anna.address);
     await vault.connect(anna).mintForStrategy(ousdUnits("9"));
 
-    // netOusdMintedForStrategy should be reset back to 0
+    // netOusdMintedForStrategy should be equal to amount minted
     await expect(await vault.netOusdMintedForStrategy()).to.equal(
       ousdUnits("9")
     );
