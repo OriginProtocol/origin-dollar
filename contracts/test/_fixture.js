@@ -782,7 +782,7 @@ async function impersonateAccount(address) {
 }
 
 async function impersonateAndFundContract(address) {
-  await impersonateAccount(address)
+  await impersonateAccount(address);
 
   await hre.network.provider.send("hardhat_setBalance", [
     address,
