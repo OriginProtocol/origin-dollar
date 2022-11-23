@@ -45,6 +45,7 @@ aave_strat = load_contract('aave_strat', AAVE_STRAT)
 comp_strat = load_contract('comp_strat', COMP_STRAT)
 convex_strat = load_contract('convex_strat', CONVEX_STRAT)
 ousd_metastrat = load_contract('ousd_metastrat', OUSD_METASTRAT)
+morpho_comp_strat = load_contract('comp_strat', MORPHO_COMP_STRAT)
 
 aave_incentives_controller = load_contract('aave_incentives_controller', '0xd784927Ff2f95ba542BfC824c8a8a98F3495f6b5')
 stkaave = load_contract('stkaave', '0x4da27a545c0c5B758a6BA100e3a049001de870f5')
@@ -65,7 +66,10 @@ COINS = {
     '0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9': {'name': 'AAVE', 'decimals': 18},
     '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2': {'name': 'WETH', 'decimals': 18},
     '0xdac17f958d2ee523a2206206994597c13d831ec7': {'name': 'USDT', 'decimals': 6},
+    USDC.lower(): {'name': 'USDC', 'decimals': 6},
+    DAI.lower(): {'name': 'DAI', 'decimals': 18},
     '0x4da27a545c0c5b758a6ba100e3a049001de870f5': {'name': 'STKAAVE', 'decimals': 18},
+    OUSD.lower(): {'name': 'OUSD', 'decimals': 18},
     }
 
 threepool = brownie.Contract.from_abi(
