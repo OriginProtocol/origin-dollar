@@ -14,7 +14,7 @@ def silent_tx():
     """
     Hide std out transaction information printing.
 
-    ETH brownie does not currently have a way to slilence transaction details.
+    ETH brownie does not currently have a way to silence transaction details.
     """
     f = io.StringIO()
     with redirect_stdout(f):
@@ -35,9 +35,14 @@ def sim_buyback_ogv(amount):
         return after - before
 
 
-def build_buyback_tx(max_dollars=5000, max_slippage=2):
+def build_buyback_tx(max_dollars=5000, max_slippage=2.0):
     """
     Build a buyback transaction and print a varity of information about it.
+
+    :param float max_dollars:
+      How much OUSD to use for the buyback. Will use balance if balance is smaller
+    :param float max_slippage:
+      Percentage of slippage from current prices to allow.
     """
     buyback = BUYBACK_CONTRACT
 
