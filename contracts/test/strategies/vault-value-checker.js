@@ -24,13 +24,19 @@ describe("Check vault value", () => {
     await checker.connect(matt).takeSnapshot();
 
     // Alter value
-    if(valueDelta > 0){
-      await dai.mintTo(vault.address, valueDelta)
+    if (valueDelta > 0) {
+      await dai.mintTo(vault.address, valueDelta);
     } else {
-      await dai.connect(vaultSigner).transfer(matt.address, valueDelta * -1, {'gasPrice':0})
+      await dai
+        .connect(vaultSigner)
+        .transfer(matt.address, valueDelta * -1, { gasPrice: 0 });
     }
     // Alter supply
-    await ousd.connect(vaultSigner).changeSupply((await ousd.totalSupply()).add(supplyDelta), {'gasPrice':0})
+    await ousd
+      .connect(vaultSigner)
+      .changeSupply((await ousd.totalSupply()).add(supplyDelta), {
+        gasPrice: 0,
+      });
   }
 
   function testChange(opts) {
@@ -48,12 +54,13 @@ describe("Check vault value", () => {
       await changeAndSnapshot({ valueDelta, supplyDelta });
 
       // Verify checkDelta behavior
-      const fn = checker.connect(matt).checkDelta(valueLow, valueHigh, supplyLow, supplyHigh)
+      const fn = checker
+        .connect(matt)
+        .checkDelta(valueLow, valueHigh, supplyLow, supplyHigh);
       if (expectedRevert) {
-
         await expect(fn).to.be.revertedWith(expectedRevert);
       } else {
-        await fn
+        await fn;
       }
     };
   }

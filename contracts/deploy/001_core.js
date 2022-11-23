@@ -929,8 +929,11 @@ const deployBuyback = async () => {
 const deployVaultVaultChecker = async () => {
   const vault = await ethers.getContract("VaultProxy");
   const ousd = await ethers.getContract("OUSDProxy");
-  
-  await deployWithConfirmation("VaultValueChecker", [vault.address, ousd.address]);
+
+  await deployWithConfirmation("VaultValueChecker", [
+    vault.address,
+    ousd.address,
+  ]);
 };
 
 const deployWOusd = async () => {
