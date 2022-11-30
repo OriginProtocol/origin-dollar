@@ -1,5 +1,4 @@
-import React, { useEffect, useState, createContext } from 'react'
-import App from 'next/app'
+import React, { useEffect, useState } from 'react'
 import cookies from 'next-cookies'
 import { useWeb3React } from '@web3-react/core'
 import { useRouter } from 'next/router'
@@ -7,9 +6,6 @@ import { useCookies } from 'react-cookie'
 import { useStoreState } from 'pullstate'
 import { QueryClient, QueryClientProvider } from 'react-query'
 import { ReactQueryDevtools } from 'react-query/devtools'
-
-import { fetchAPI } from '../lib/api'
-import { getStrapiMedia } from '../lib/media'
 
 import AccountStore from 'stores/AccountStore'
 import RouterStore from 'stores/RouterStore'
@@ -31,7 +27,6 @@ import { initSentry } from 'utils/sentry'
 
 import 'react-toastify/scss/main.scss'
 import '../node_modules/bootstrap/dist/css/bootstrap.min.css'
-import bundledCss from '@originprotocol/origin-storybook/lib/styles.css'
 import '../styles/globals.css'
 
 let VConsole, ReactPixel
@@ -45,11 +40,9 @@ if (process.browser) {
 initSentry()
 
 const queryClient = new QueryClient()
-export const GlobalContext = createContext({})
 
-function MyApp({ Component, pageProps, err }) {
+function App({ Component, pageProps, err }) {
   const [locale, setLocale] = useState('en_US')
-  const { global } = pageProps
 
   const {
     connector,
@@ -172,68 +165,33 @@ function MyApp({ Component, pageProps, err }) {
 
   return (
     <>
-      <GlobalContext.Provider value={global?.attributes}>
-        <QueryClientProvider client={queryClient}>
-          <AnalyticsProvider instance={analytics}>
-            <AccountListener />
-            <TransactionListener />
-            <UserActivityListener />
-            <WalletSelectModal />
-            <ToastContainer
-              position="bottom-right"
-              autoClose={5000}
-              hideProgressBar={false}
-              newestOnTop={false}
-              closeOnClick
-              rtl={false}
-              pauseOnFocusLoss
-              pauseOnHover
-            />
-            <Component
-              locale={locale}
-              onLocale={onLocale}
-              {...pageProps}
-              err={err}
-            />
-          </AnalyticsProvider>
-          <ReactQueryDevtools initialIsOpen={false} />
-        </QueryClientProvider>
-      </GlobalContext.Provider>
+      <QueryClientProvider client={queryClient}>
+        <AnalyticsProvider instance={analytics}>
+          <AccountListener />
+          <TransactionListener />
+          <UserActivityListener />
+          <WalletSelectModal />
+          <ToastContainer
+            position="bottom-right"
+            autoClose={5000}
+            hideProgressBar={false}
+            newestOnTop={false}
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss
+            pauseOnHover
+          />
+          <Component
+            locale={locale}
+            onLocale={onLocale}
+            {...pageProps}
+            err={err}
+          />
+        </AnalyticsProvider>
+        <ReactQueryDevtools initialIsOpen={false} />
+      </QueryClientProvider>
     </>
   )
 }
 
-MyApp.getInitialProps = async (ctx) => {
-  // Calls page's `getInitialProps` and fills `appProps.pageProps`
-  const appProps = await App.getInitialProps(ctx)
-
-  // Fetch global site settings from Strapi
-  const globalRes = await fetchAPI('/global', {
-    populate: {
-      favicon: '*',
-      defaultSeo: {
-        populate: '*',
-      },
-    },
-  })
-
-  // Pass the data to our page via props
-  return {
-    ...appProps,
-    pageProps: { global: globalRes.data },
-    styles: [
-      process.env.NODE_ENV === 'production' ? (
-        <style
-          key="custom"
-          dangerouslySetInnerHTML={{
-            __html: bundledCss,
-          }}
-        />
-      ) : (
-        <></>
-      ),
-    ],
-  }
-}
-
-export default withWeb3Provider(MyApp)
+export default withWeb3Provider(App)

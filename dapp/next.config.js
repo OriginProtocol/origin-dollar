@@ -1,7 +1,6 @@
 const path = require('path')
 const webpack = require('webpack')
 const nextSourceMaps = require('@zeit/next-source-maps')()
-const locales = require('./locales');
 
 const isStaging = process.env.STAGING === 'true'
 const isProduction = process.env.NODE_ENV === 'production' && !isStaging
@@ -67,13 +66,24 @@ const config = {
   cssLoaderOptions: {
     url: false,
   },
-  images: {
-    loader: "default",
-    domains: ["localhost", "cmsmediaproduction.s3.amazonaws.com", "cmsmediastaging.s3.amazonaws.com"],
-  },
-  i18n: {
-    locales,
-    defaultLocale: 'en',
+  async redirects() {
+    return [
+      {
+        source: '/swap',
+        destination: '/',
+        permanent: true
+      },
+      {
+        source: '/dapp',
+        destination: '/',
+        permanent: true
+      },
+      {
+        source: '/mint',
+        destination: '/',
+        permanent: true
+      },
+    ]
   },
   async headers() {
     return [

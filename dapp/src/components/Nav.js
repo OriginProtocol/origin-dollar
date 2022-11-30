@@ -34,9 +34,32 @@ const DappLinks = ({ dapp, page }) => {
 
   return (
     <>
+      {!dapp && (
+        <a
+          href={adjustLinkHref('https://analytics.ousd.com/apy')}
+          rel="noopener noreferrer"
+          target="blank"
+        >
+          <div
+            className={classnames(
+              'banner align-items-center justify-content-center',
+              { dapp }
+            )}
+          >
+            <div className="triangle d-none d-xl-block"></div>
+            {fbt(
+              `Trailing 30-day APY: ${fbt.param(
+                'APY',
+                formatCurrency(apy * 100, 2) + '%'
+              )}`,
+              'Current APY banner'
+            )}
+          </div>
+        </a>
+      )}
       {dapp && (
         <div className="d-flex align-items-center justify-content-center dapp-navigation mr-auto flex-wrap">
-          <Link href={adjustLinkHref('/swap')}>
+          <Link href={adjustLinkHref('/')}>
             <a
               className={`d-flex align-items-center ml-md-0 ${
                 page === 'swap' ? 'selected' : ''
