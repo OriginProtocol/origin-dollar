@@ -24,7 +24,11 @@ def load_from_blockchain():
             ["COMP", "DAI", int(world.comp_strat.checkBalance(world.DAI) / 1e18)],
             ["COMP", "USDC", int(world.comp_strat.checkBalance(world.USDC) / 1e6)],
             ["COMP", "USDT", int(world.comp_strat.checkBalance(world.USDT) / 1e6)],
+            ["MORPHO_COMP", "DAI", int(world.morpho_comp_strat.checkBalance(world.DAI) / 1e18)],
+            ["MORPHO_COMP", "USDC", int(world.morpho_comp_strat.checkBalance(world.USDC) / 1e6)],
+            ["MORPHO_COMP", "USDT", int(world.morpho_comp_strat.checkBalance(world.USDT) / 1e6)],
             ["Convex", "*", int(world.convex_strat.checkBalance(world.DAI) * 3 / 1e18)],
+            ["OUSD_META", "*", int(world.ousd_metastrat.checkBalance(world.DAI) * 3 / 2 / 1e18)],
         ],
         columns=["strategy", "token", "current_dollars"],
     )

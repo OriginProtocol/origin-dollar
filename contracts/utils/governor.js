@@ -1,5 +1,10 @@
 async function _governorArgs({ contract, signature, args = [] }) {
   const method = signature;
+  if (!contract.populateTransaction[method]) {
+    throw Error(
+      `Check that the contract has the following method signature: ${method}`
+    );
+  }
   const tx = await contract.populateTransaction[method](...args);
   const data = "0x" + tx.data.slice(10);
   return [tx.to, signature, data];

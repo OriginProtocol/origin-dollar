@@ -13,6 +13,7 @@ const {
   getOracleAddresses,
   getAssetAddresses,
   isSmokeTest,
+  isForkTest,
 } = require("../test/helpers.js");
 
 const {
@@ -191,7 +192,6 @@ const executeProposalOnFork = async (proposalId, executeGasLimit = null) => {
 
   const governor = await ethers.getContract("Governor");
 
-  console.log("GUARDIAN: ", guardianAddr, governor);
   //First enqueue the proposal, then execute it.
   await withConfirmation(
     governor.connect(sGuardian).queue(proposalId, await getTxOpts())
@@ -258,7 +258,7 @@ const sendProposal = async (proposalArgs, description, opts = {}) => {
  * @returns {Object} main object used by hardhat
  */
 function deploymentWithProposal(opts, fn) {
-  const { deployName, dependencies, forceDeploy } = opts;
+  const { deployName, dependencies, forceDeploy, forceSkip, proposalId } = opts;
   const runDeployment = async (hre) => {
     const oracleAddresses = await getOracleAddresses(hre.deployments);
     const assetAddresses = await getAssetAddresses(hre.deployments);
@@ -270,8 +270,27 @@ function deploymentWithProposal(opts, fn) {
       getTxOpts,
       withConfirmation,
     };
-    const proposal = await fn(tools);
+    const { governorAddr } = await getNamedAccounts();
+    const governor = await ethers.getContractAt("Governor", governorAddr);
 
+    if (isFork) {
+      if (proposalId) {
+        const proposalState = ["New", "Queue", "Expired", "Executed"][
+          await governor.state(proposalId)
+        ];
+
+        if (["New", "Queue"].includes(proposalState)) {
+          console.log(
+            `Found proposal id: ${proposalId} on forked network. Executing proposal containing deployment of: ${deployName}`
+          );
+          await executeProposalOnFork(proposalId);
+          // deployment ran, nothing else to do here
+          return;
+        }
+      }
+    }
+
+    const proposal = await fn(tools);
     const propDescription = proposal.name;
     const propArgs = await proposeArgs(proposal.actions);
     const propOpts = proposal.opts || {};
@@ -287,7 +306,6 @@ function deploymentWithProposal(opts, fn) {
       await executeProposal(propArgs, propDescription, propOpts);
       log("Proposal executed.");
     } else {
-      const { governorAddr } = await getNamedAccounts();
       const sGovernor = await ethers.provider.getSigner(governorAddr);
 
       for (const action of proposal.actions) {
@@ -315,10 +333,20 @@ function deploymentWithProposal(opts, fn) {
   };
   main.id = deployName;
   main.dependencies = dependencies;
-  if (forceDeploy) {
+  if (forceSkip) {
+    main.skip = () => true;
+  } else if (forceDeploy) {
     main.skip = () => false;
   } else {
-    main.skip = () => !isMainnet || isSmokeTest || isFork;
+    main.skip = () => {
+      if (isFork) {
+        const networkName = isForkTest ? "hardhat" : "localhost";
+        const migrations = require(`./../deployments/${networkName}/.migrations.json`);
+        return Boolean(migrations[deployName]);
+      } else {
+        return !isMainnet || isSmokeTest || isFork;
+      }
+    };
   }
   return main;
 }

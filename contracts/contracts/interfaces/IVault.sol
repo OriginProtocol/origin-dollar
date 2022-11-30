@@ -68,6 +68,8 @@ interface IVault {
 
     function trusteeFeeBps() external view returns (uint256);
 
+    function ousdMetaStrategy() external view returns (address);
+
     function supportAsset(address _asset) external;
 
     function approveStrategy(address _addr) external;
@@ -118,7 +120,11 @@ interface IVault {
         uint256 _minimumOusdAmount
     ) external;
 
+    function mintForStrategy(uint256 _amount) external;
+
     function redeem(uint256 _amount, uint256 _minimumUnitAmount) external;
+
+    function burnForStrategy(uint256 _amount) external;
 
     function redeemAll(uint256 _minimumUnitAmount) external;
 
@@ -144,4 +150,12 @@ interface IVault {
     function getAllStrategies() external view returns (address[] memory);
 
     function isSupportedAsset(address _asset) external view returns (bool);
+
+    function netOusdMintForStrategyThreshold() external view returns (uint256);
+
+    function setOusdMetaStrategy(address _ousdMetaStrategy) external;
+
+    function setNetOusdMintForStrategyThreshold(uint256 _threshold) external;
+
+    function netOusdMintedForStrategy() external view returns (int256);
 }

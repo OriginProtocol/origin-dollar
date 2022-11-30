@@ -66,6 +66,25 @@ const config = {
   cssLoaderOptions: {
     url: false,
   },
+  async redirects() {
+    return [
+      {
+        source: '/swap',
+        destination: '/',
+        permanent: true
+      },
+      {
+        source: '/dapp',
+        destination: '/',
+        permanent: true
+      },
+      {
+        source: '/mint',
+        destination: '/',
+        permanent: true
+      },
+    ]
+  },
   async headers() {
     return [
       {
