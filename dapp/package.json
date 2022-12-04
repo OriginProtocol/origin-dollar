@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "engines": {
-    "node": "14.x",
+    "node": "14.9",
     "npm": "6.x"
   },
   "description": "Origin Dollar Dapp",
