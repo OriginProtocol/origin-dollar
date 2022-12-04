@@ -72,6 +72,7 @@ export const defiWalletConnector = process.browser
 export const connectorNameIconMap = {
   MetaMask: 'metamask-icon.svg',
   Ledger: 'ledger-icon.svg',
+  Exodus: 'exodus-icon.svg',
   MyEtherWallet: 'myetherwallet-icon.svg',
   WalletConnect: 'walletconnect-icon.svg',
 }

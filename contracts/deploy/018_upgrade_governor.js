@@ -2,12 +2,7 @@
 // 2. Submit a proposal on the old governor to call transferGovernance() on all governable contracts.
 // 3. Submit a proposal on the new governor to call claimGovernance() on all governable contracts.
 
-const {
-  isMainnet,
-  isFork,
-  isRinkeby,
-  isSmokeTest,
-} = require("../test/helpers.js");
+const { isMainnet, isFork, isSmokeTest } = require("../test/helpers.js");
 const {
   log,
   deployWithConfirmation,
@@ -169,6 +164,6 @@ const main = async (hre) => {
 
 main.id = deployName;
 main.dependencies = ["017_3pool_strategy_update"];
-main.skip = () => !(isMainnet || isRinkeby) || isSmokeTest || isFork;
+main.skip = () => !isMainnet || isSmokeTest || isFork;
 
 module.exports = main;

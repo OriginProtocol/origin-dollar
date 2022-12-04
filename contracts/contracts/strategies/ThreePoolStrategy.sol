@@ -9,11 +9,19 @@ pragma solidity ^0.8.0;
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import { ICurveGauge } from "./ICurveGauge.sol";
+import { ICurvePool } from "./ICurvePool.sol";
 import { ICRVMinter } from "./ICRVMinter.sol";
 import { IERC20, BaseCurveStrategy } from "./BaseCurveStrategy.sol";
 import { StableMath } from "../utils/StableMath.sol";
 import { Helpers } from "../utils/Helpers.sol";
 
+/*
+ * IMPORTANT(!) If ThreePoolStrategy needs to be re-deployed, it requires new
+ * proxy contract with fresh storage slots. Changes in `BaseCurveStrategy`
+ * storage slots would break existing implementation.
+ *
+ * Remove this notice if ThreePoolStrategy is re-deployed
+ */
 contract ThreePoolStrategy is BaseCurveStrategy {
     using StableMath for uint256;
     using SafeERC20 for IERC20;
@@ -75,28 +83,41 @@ contract ThreePoolStrategy is BaseCurveStrategy {
         ICurveGauge(crvGaugeAddress).withdraw(numPTokens);
     }
 
+    function _lpWithdrawAll() internal override {
+        ICurveGauge gauge = ICurveGauge(crvGaugeAddress);
+        gauge.withdraw(gauge.balanceOf(address(this)));
+    }
+
     /**
-     * @dev Calculate the total platform token balance (i.e. 3CRV) that exist in
-     * this contract or is staked in the Gauge (or in other words, the total
-     * amount platform tokens we own).
-     * @return contractPTokens Amount of platform tokens in this contract
-     * @return gaugePTokens Amount of platform tokens staked in gauge
-     * @return totalPTokens Total amount of platform tokens in native decimals
+     * @dev Get the total asset value held in the platform
+     * @param _asset      Address of the asset
+     * @return balance    Total value of the asset in the platform
      */
-    function _getTotalPTokens()
-        internal
+    function checkBalance(address _asset)
+        public
         view
         override
-        returns (
-            uint256 contractPTokens,
-            uint256 gaugePTokens,
-            uint256 totalPTokens
-        )
+        returns (uint256 balance)
     {
-        contractPTokens = IERC20(pTokenAddress).balanceOf(address(this));
+        require(assetToPToken[_asset] != address(0), "Unsupported asset");
+        // LP tokens in this contract. This should generally be nothing as we
+        // should always stake the full balance in the Gauge, but include for
+        // safety
+
+        uint256 contractPTokens = IERC20(pTokenAddress).balanceOf(
+            address(this)
+        );
         ICurveGauge gauge = ICurveGauge(crvGaugeAddress);
-        gaugePTokens = gauge.balanceOf(address(this));
-        totalPTokens = contractPTokens + gaugePTokens;
+        uint256 gaugePTokens = gauge.balanceOf(address(this));
+        uint256 totalPTokens = contractPTokens + gaugePTokens;
+
+        ICurvePool curvePool = ICurvePool(platformAddress);
+        if (totalPTokens > 0) {
+            uint256 virtual_price = curvePool.get_virtual_price();
+            uint256 value = (totalPTokens * virtual_price) / 1e18;
+            uint256 assetDecimals = Helpers.getDecimals(_asset);
+            balance = value.scaleBy(assetDecimals, 18) / 3;
+        }
     }
 
     function _approveBase() internal override {

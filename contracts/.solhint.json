@@ -1,3 +1,14 @@
 {
-  "extends": "solhint:default"
+  "extends": "solhint:default",
+  "rules": {
+      "no-unused-vars": "error",
+      "avoid-sha3": "error",
+      "avoid-suicide": "error",
+      "avoid-throw": "error",
+      "avoid-tx-origin": "error",
+      "no-complex-fallback": "error",
+      "not-rely-on-block-hash": "error",
+      "reentrancy": "error",
+      "no-inline-assembly": "error"
+    }
 }

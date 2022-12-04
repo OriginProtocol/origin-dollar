@@ -59,9 +59,28 @@ const config = {
 
     if (!isServer) {
       config.resolve.alias['@sentry/node'] = '@sentry/browser'
-    }  
+    }
 
     return config
+  },
+  async redirects() {
+    return [
+      {
+        source: '/swap',
+        destination: '/',
+        permanent: true
+      },
+      {
+        source: '/dapp',
+        destination: '/',
+        permanent: true
+      },
+      {
+        source: '/mint',
+        destination: '/',
+        permanent: true
+      },
+    ]
   },
   async headers() {
     return [

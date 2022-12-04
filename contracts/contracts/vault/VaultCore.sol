@@ -13,6 +13,7 @@ pragma solidity ^0.8.0;
 
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
 
 import { StableMath } from "../utils/StableMath.sol";
 import { IOracle } from "../interfaces/IOracle.sol";
@@ -24,7 +25,9 @@ contract VaultCore is VaultStorage {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
     using SafeMath for uint256;
-
+    // max signed int
+    uint256 constant MAX_INT = 2**255 - 1;
+    // max un-signed int
     uint256 constant MAX_UINT =
         0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
 
@@ -41,6 +44,14 @@ contract VaultCore is VaultStorage {
      */
     modifier whenNotCapitalPaused() {
         require(!capitalPaused, "Capital paused");
+        _;
+    }
+
+    modifier onlyOusdMetaStrategy() {
+        require(
+            msg.sender == ousdMetaStrategy,
+            "Caller is not the OUSD meta strategy"
+        );
         _;
     }
 
@@ -97,6 +108,46 @@ contract VaultCore is VaultStorage {
         }
     }
 
+    /**
+     * @dev Mint OUSD for OUSD Meta Strategy
+     * @param _amount Amount of the asset being deposited
+     *
+     * Notice: can't use `nonReentrant` modifier since the `mint` function can
+     * call `allocate`, and that can trigger `ConvexOUSDMetaStrategy` to call this function
+     * while the execution of the `mint` has not yet completed -> causing a `nonReentrant` collision.
+     *
+     * Also important to understand is that this is a limitation imposed by the test suite.
+     * Production / mainnet contracts should never be configured in a way where mint/redeem functions
+     * that are moving funds between the Vault and end user wallets can influence strategies
+     * utilizing this function.
+     */
+    function mintForStrategy(uint256 _amount)
+        external
+        whenNotCapitalPaused
+        onlyOusdMetaStrategy
+    {
+        require(_amount < MAX_INT, "Amount too high");
+
+        emit Mint(msg.sender, _amount);
+
+        // Rebase must happen before any transfers occur.
+        // TODO: double check the relevance of this
+        if (_amount >= rebaseThreshold && !rebasePaused) {
+            _rebase();
+        }
+
+        // safe to cast because of the require check at the beginning of the function
+        netOusdMintedForStrategy += int256(_amount);
+
+        require(
+            abs(netOusdMintedForStrategy) < netOusdMintForStrategyThreshold,
+            "Minted ousd surpassed netOusdMintForStrategyThreshold."
+        );
+
+        // Mint matching OUSD
+        oUSD.mint(msg.sender, _amount);
+    }
+
     // In memoriam
 
     /**
@@ -118,8 +169,6 @@ contract VaultCore is VaultStorage {
      * @param _minimumUnitAmount Minimum stablecoin units to receive in return
      */
     function _redeem(uint256 _amount, uint256 _minimumUnitAmount) internal {
-        require(_amount > 0, "Amount must be greater than 0");
-
         // Calculate redemption outputs
         (
             uint256[] memory outputs,
@@ -183,7 +232,49 @@ contract VaultCore is VaultStorage {
         // by withdrawing them, this should be here.
         // It's possible that a strategy was off on its asset total, perhaps
         // a reward token sold for more or for less than anticipated.
-        if (_amount > rebaseThreshold && !rebasePaused) {
+        if (_amount >= rebaseThreshold && !rebasePaused) {
+            _rebase();
+        }
+    }
+
+    /**
+     * @dev Burn OUSD for OUSD Meta Strategy
+     * @param _amount Amount of OUSD to burn
+     *
+     * Notice: can't use `nonReentrant` modifier since the `redeem` function could
+     * require withdrawal on `ConvexOUSDMetaStrategy` and that one can call `burnForStrategy`
+     * while the execution of the `redeem` has not yet completed -> causing a `nonReentrant` collision.
+     *
+     * Also important to understand is that this is a limitation imposed by the test suite.
+     * Production / mainnet contracts should never be configured in a way where mint/redeem functions
+     * that are moving funds between the Vault and end user wallets can influence strategies
+     * utilizing this function.
+     */
+    function burnForStrategy(uint256 _amount)
+        external
+        whenNotCapitalPaused
+        onlyOusdMetaStrategy
+    {
+        require(_amount < MAX_INT, "Amount too high");
+
+        emit Redeem(msg.sender, _amount);
+
+        // safe to cast because of the require check at the beginning of the function
+        netOusdMintedForStrategy -= int256(_amount);
+
+        require(
+            abs(netOusdMintedForStrategy) < netOusdMintForStrategyThreshold,
+            "Attempting to burn too much OUSD."
+        );
+
+        // Burn OUSD
+        oUSD.burn(msg.sender, _amount);
+
+        // Until we can prove that we won't affect the prices of our assets
+        // by withdrawing them, this should be here.
+        // It's possible that a strategy was off on its asset total, perhaps
+        // a reward token sold for more or for less than anticipated.
+        if (_amount >= rebaseThreshold && !rebasePaused) {
             _rebase();
         }
     }
@@ -584,8 +675,10 @@ contract VaultCore is VaultStorage {
      * @dev Falldown to the admin implementation
      * @notice This is a catch all for all functions not declared in core
      */
+    // solhint-disable-next-line no-complex-fallback
     fallback() external payable {
         bytes32 slot = adminImplPosition;
+        // solhint-disable-next-line no-inline-assembly
         assembly {
             // Copy msg.data. We take full control of memory in this inline assembly
             // block because it will not return to Solidity code. We overwrite the
@@ -615,5 +708,10 @@ contract VaultCore is VaultStorage {
                 return(0, returndatasize())
             }
         }
+    }
+
+    function abs(int256 x) private pure returns (uint256) {
+        require(x < int256(MAX_INT), "Amount too high");
+        return x >= 0 ? uint256(x) : uint256(-x);
     }
 }

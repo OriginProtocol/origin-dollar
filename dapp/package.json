@@ -19,8 +19,6 @@
     "start:development": "NODE_ENV=development ETHEREUM_RPC_PROVIDER=http://localhost:8545 next dev",
     "start:production": "NODE_ENV=production next start -p 8080",
     "gcp-build": "next build",
-    "deploy:staging": "rm -f deploy.env && yarn run decrypt-secrets-deploy:staging && gcloud app deploy staging.app.yaml --quiet",
-    "deploy:prod": "rm -f deploy.env && yarn run decrypt-secrets-deploy:prod && gcloud app deploy prod.app.yaml --quiet",
     "encrypt-secrets:prod": "gcloud kms encrypt --ciphertext-file=prod.secrets.enc --plaintext-file=prod.env --location=global --keyring=origin --key=cloudbuild",
     "decrypt-secrets:prod": "gcloud kms decrypt --ciphertext-file=prod.secrets.enc --plaintext-file=prod.env --location=global --keyring=origin --key=cloudbuild",
     "decrypt-secrets-deploy:prod": "gcloud kms decrypt --ciphertext-file=prod.secrets.enc --plaintext-file=deploy.env --location=global --keyring=origin --key=cloudbuild",

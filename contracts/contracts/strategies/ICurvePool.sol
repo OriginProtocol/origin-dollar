@@ -12,6 +12,8 @@ interface ICurvePool {
         external
         returns (uint256);
 
+    function fee() external view returns (uint256);
+
     function remove_liquidity_one_coin(
         uint256 _amount,
         int128 _index,

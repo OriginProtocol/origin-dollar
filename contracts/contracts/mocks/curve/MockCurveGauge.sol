@@ -24,6 +24,7 @@ contract MockCurveGauge is ICurveGauge {
 
     function withdraw(uint256 _value) external override {
         IERC20(lpToken).transfer(msg.sender, _value);
+        // solhint-disable-next-line reentrancy
         _balances[msg.sender] -= _value;
     }
 }

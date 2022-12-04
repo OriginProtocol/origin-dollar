@@ -21,13 +21,14 @@ const WalletSelectContent = ({ isMobile }) => {
     ? [
         'WalletConnect',
         'Coinbase Wallet',
-        'MyEtherWallet',
         'MetaMask',
+        'MyEtherWallet',
         'Ledger',
       ]
     : [
         'MetaMask',
         'Ledger',
+        'Exodus',
         'Coinbase Wallet',
         'WalletConnect',
         'MyEtherWallet',
@@ -72,7 +73,7 @@ const WalletSelectContent = ({ isMobile }) => {
     setError(null)
 
     let connector
-    if (name === 'MetaMask') {
+    if (name === 'MetaMask' || name === 'Exodus') {
       connector = injectedConnector
       localStorage.setItem('eagerConnect', name)
     } else if (name === 'Ledger') {

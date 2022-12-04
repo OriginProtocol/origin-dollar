@@ -134,6 +134,34 @@ contract VaultAdmin is VaultStorage {
     }
 
     /**
+     * @dev Set maximum amount of OUSD that can at any point be minted and deployed
+     * to strategy (used only by ConvexOUSDMetaStrategy for now).
+     * @param _threshold OUSD amount with 18 fixed decimals.
+     */
+    function setNetOusdMintForStrategyThreshold(uint256 _threshold)
+        external
+        onlyGovernor
+    {
+        /**
+         * Because `netOusdMintedForStrategy` check in vault core works both ways
+         * (positive and negative) the actual impact of the amount of OUSD minted
+         * could be double the threshold. E.g.:
+         *  - contract has threshold set to 100
+         *  - state of netOusdMinted is -90
+         *  - in effect it can mint 190 OUSD and still be within limits
+         *
+         * We are somewhat mitigating this behaviour by resetting the netOusdMinted
+         * counter whenever new threshold is set. So it can only move one threshold
+         * amount in each direction. This also enables us to reduce the threshold
+         * amount and not have problems with current netOusdMinted being near
+         * limits on either side.
+         */
+        netOusdMintedForStrategy = 0;
+        netOusdMintForStrategyThreshold = _threshold;
+        emit NetOusdMintForStrategyThresholdChanged(_threshold);
+    }
+
+    /**
      * @dev Add a supported asset to the contract, i.e. one that can be
      *         to mint OUSD.
      * @param _asset Address of asset
@@ -265,6 +293,18 @@ contract VaultAdmin is VaultStorage {
         require(_basis <= 5000, "basis cannot exceed 50%");
         trusteeFeeBps = _basis;
         emit TrusteeFeeBpsChanged(_basis);
+    }
+
+    /**
+     * @dev Set OUSD Meta strategy
+     * @param _ousdMetaStrategy Address of ousd meta strategy
+     */
+    function setOusdMetaStrategy(address _ousdMetaStrategy)
+        external
+        onlyGovernor
+    {
+        ousdMetaStrategy = _ousdMetaStrategy;
+        emit OusdMetaStrategyUpdated(_ousdMetaStrategy);
     }
 
     /***************************************

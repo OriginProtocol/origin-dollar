@@ -209,6 +209,9 @@ task("showStorageLayout", "Visually show the storage layout of the contract")
   .addParam("name", "Name of the contract.")
   .setAction(showStorageLayout);
 
+const isForkTest =
+  process.env.FORK === "true" && process.env.IS_TEST === "true";
+
 module.exports = {
   solidity: {
     version: "0.8.7",
@@ -223,18 +226,28 @@ module.exports = {
       accounts: {
         mnemonic,
       },
-      chainId: 1337,
-      initialBaseFeePerGas: 0,
+      ...(isForkTest
+        ? {
+            chainId: 1,
+            timeout: 0,
+            forking: {
+              enabled: true,
+              url: `${
+                process.env.LOCAL_PROVIDER_URL || process.env.PROVIDER_URL
+              }`,
+              blockNumber: Number(process.env.FORK_BLOCK_NUMBER) || undefined,
+              timeout: 0,
+            },
+          }
+        : {
+            chainId: 1337,
+            initialBaseFeePerGas: 0,
+            gas: 7000000,
+            gasPrice: 1000,
+          }),
     },
     localhost: {
       timeout: 60000,
-    },
-    rinkeby: {
-      url: `${process.env.PROVIDER_URL}`,
-      accounts: [
-        process.env.DEPLOYER_PK || privateKeys[1],
-        process.env.GOVERNOR_PK || privateKeys[1],
-      ],
     },
     mainnet: {
       url: `${process.env.PROVIDER_URL}`,
@@ -290,4 +303,9 @@ module.exports = {
   etherscan: {
     apiKey: process.env.ETHERSCAN_API_KEY,
   },
+  paths: process.env.HARDHAT_CACHE_DIR
+    ? {
+        cache: process.env.HARDHAT_CACHE_DIR,
+      }
+    : {},
 };
