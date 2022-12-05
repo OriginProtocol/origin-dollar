@@ -160,6 +160,7 @@ contract Timelock {
         // silently (without a revert message)
         if (_returnData.length < 68) return "Transaction reverted silently";
 
+        // solhint-disable-next-line no-inline-assembly
         assembly {
             // Slice the sighash.
             _returnData := add(_returnData, 0x04)

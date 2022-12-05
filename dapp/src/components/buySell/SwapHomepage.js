@@ -14,7 +14,6 @@ import SettingsDropdown from 'components/buySell/SettingsDropdown'
 import useSwapEstimator from 'hooks/useSwapEstimator'
 import withIsMobile from 'hoc/withIsMobile'
 import { getUserSource } from 'utils/user'
-import usePrevious from 'utils/usePrevious'
 import ApproveSwap from 'components/buySell/ApproveSwap'
 import analytics from 'utils/analytics'
 import { formatCurrencyMinMaxDecimals, removeCommas } from '../../utils/math'
@@ -39,9 +38,10 @@ const SwapHomepage = ({
 
   // mint / redeem
   const [swapMode, setSwapMode] = useState(
-    process.browser ? localStorage.getItem(lastSelectedSwapModeKey) : 'mint'
+    process.browser && localStorage.getItem(lastSelectedSwapModeKey) !== null
+      ? localStorage.getItem(lastSelectedSwapModeKey)
+      : 'mint'
   )
-  const previousSwapMode = usePrevious(swapMode)
   const [buyErrorToDisplay, setBuyErrorToDisplay] = useState(false)
 
   const storedSelectedCoin = process.browser
@@ -134,14 +134,14 @@ const SwapHomepage = ({
     }
 
     // currencies flipped
-    if (previousSwapMode !== swapMode) {
-      localStorage.setItem(lastSelectedSwapModeKey, swapMode)
-      if (selectedSwap) {
-        const otherCoinAmount =
-          Math.floor(selectedSwap.amountReceived * 1000000) / 1000000
-        setSelectedBuyCoinAmount(Math.floor(otherCoinAmount * 100) / 100)
-        setSelectedRedeemCoinAmount(Math.floor(otherCoinAmount * 100) / 100)
-      }
+    localStorage.setItem(lastSelectedSwapModeKey, swapMode)
+    if (selectedSwap) {
+      const otherCoinAmount =
+        Math.floor(selectedSwap.amountReceived * 1000000) / 1000000
+      setSelectedBuyCoinAmount(Math.floor(otherCoinAmount * 100) / 100)
+      setSelectedRedeemCoinAmount(
+        Math.floor(selectedSwap.inputAmount * 100) / 100
+      )
     }
   }, [swapMode])
 
@@ -246,7 +246,6 @@ const SwapHomepage = ({
       } else if (selectedSwap.name === 'curve') {
         ;({ result, swapAmount, minSwapAmount } = await swapCurve())
       }
-
       storeTransaction(
         result,
         swapMode,

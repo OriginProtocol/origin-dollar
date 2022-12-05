@@ -7,7 +7,7 @@ RED='\033[0;31m'
 NO_COLOR='\033[0m'
 
 main()
-{
+{   
     rm -rf deployments/localhost
     if  [[ $1 == "fork" ]]
     then
@@ -27,6 +27,8 @@ main()
         else
             params+=(--fork-block-number ${BLOCK_NUMBER})
         fi
+        if [ -z "$STACK_TRACE" ]; then params+=( --show-stack-traces); fi
+
         cp -r deployments/mainnet deployments/localhost
 
         nodeOutput=$(mktemp "${TMPDIR:-/tmp/}$(basename 0).XXX")

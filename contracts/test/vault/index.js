@@ -580,4 +580,56 @@ describe("Vault", function () {
       vault.connect(matt).withdrawAllFromStrategy(compoundStrategy.address)
     ).to.be.revertedWith("Caller is not the Strategist or Governor");
   });
+
+  it("Should only allow Governor and Strategist to call withdrawAllFromStrategy", async () => {
+    const { vault, ousd, governor, anna, josh } = await loadFixture(
+      defaultFixture
+    );
+
+    await vault
+      .connect(governor)
+      .setNetOusdMintForStrategyThreshold(ousdUnits("10"));
+    // Approve anna address as an address allowed to mint OUSD without backing
+    await vault.connect(governor).setOusdMetaStrategy(anna.address);
+
+    await expect(
+      vault.connect(anna).mintForStrategy(ousdUnits("11"))
+    ).to.be.revertedWith(
+      "Minted ousd surpassed netOusdMintForStrategyThreshold."
+    );
+
+    await expect(
+      vault.connect(josh).mintForStrategy(ousdUnits("9"))
+    ).to.be.revertedWith("Caller is not the OUSD meta strategy");
+
+    await vault.connect(anna).mintForStrategy(ousdUnits("9"));
+
+    await expect(await ousd.balanceOf(anna.address)).to.equal(ousdUnits("9"));
+  });
+
+  it("Should reset netOusdMintedForStrategy when new threshold is set", async () => {
+    const { vault, governor, anna } = await loadFixture(defaultFixture);
+
+    await vault
+      .connect(governor)
+      .setNetOusdMintForStrategyThreshold(ousdUnits("10"));
+
+    // Approve anna address as an address allowed to mint OUSD without backing
+    await vault.connect(governor).setOusdMetaStrategy(anna.address);
+    await vault.connect(anna).mintForStrategy(ousdUnits("9"));
+
+    // netOusdMintedForStrategy should be equal to amount minted
+    await expect(await vault.netOusdMintedForStrategy()).to.equal(
+      ousdUnits("9")
+    );
+
+    await vault
+      .connect(governor)
+      .setNetOusdMintForStrategyThreshold(ousdUnits("10"));
+
+    // netOusdMintedForStrategy should be reset back to 0
+    await expect(await vault.netOusdMintedForStrategy()).to.equal(
+      ousdUnits("0")
+    );
+  });
 });

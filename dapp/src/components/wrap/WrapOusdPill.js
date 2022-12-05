@@ -14,8 +14,8 @@ import {
 import { assetRootPath } from 'utils/image'
 import { _ } from 'fbt-runtime/lib/fbt'
 
-const CoinImage = ({ small, coin, isSemiTransparent = false }) => {
-  const className = `coin-image ${isSemiTransparent ? 'transparent' : ''}`
+const CoinImage = ({ small, coin }) => {
+  const className = `coin-image`
   return (
     <div className="d-flex align-items-center">
       <img
@@ -26,10 +26,6 @@ const CoinImage = ({ small, coin, isSemiTransparent = false }) => {
         .coin-image {
           width: 26px;
           height: 26px;
-        }
-
-        .coin-image.transparent {
-          opacity: 0.3;
         }
 
         .coin-image.small {

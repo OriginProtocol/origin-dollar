@@ -28,8 +28,8 @@ async function accounts(taskArguments, hre, privateKeys) {
   const accounts = await hre.ethers.getSigners();
   const roles = ["Deployer", "Governor"];
 
-  const isMainnetOrRinkeby = ["mainnet", "rinkeby"].includes(hre.network.name);
-  if (isMainnetOrRinkeby) {
+  const isMainnet = hre.network.name == "mainnet";
+  if (isMainnet) {
     privateKeys = [process.env.DEPLOYER_PK, process.env.GOVERNOR_PK];
   }
 
@@ -180,22 +180,17 @@ async function mint(taskArguments, hre) {
   const addresses = require("../utils/addresses");
   const { usdtUnits, isFork, isLocalhost } = require("../test/helpers");
 
-  if (!isFork && !isLocalhost) {
-    throw new Error("Task can only be used on local or fork");
+  if (!isFork) {
+    throw new Error("Task can only be used on fork");
   }
 
-  const ousdProxy = await ethers.getContract("OUSDProxy");
-  const ousd = await ethers.getContractAt("OUSD", ousdProxy.address);
+  const ousd = await ethers.getContractAt("OUSD", addresses.mainnet.OUSDProxy);
+  const vault = await ethers.getContractAt(
+    "IVault",
+    addresses.mainnet.VaultProxy
+  );
 
-  const vaultProxy = await ethers.getContract("VaultProxy");
-  const vault = await ethers.getContractAt("IVault", vaultProxy.address);
-
-  let usdt;
-  if (isFork) {
-    usdt = await hre.ethers.getContractAt(usdtAbi, addresses.mainnet.USDT);
-  } else {
-    usdt = await hre.ethers.getContract("MockUSDT");
-  }
+  const usdt = await hre.ethers.getContractAt(usdtAbi, addresses.mainnet.USDT);
 
   const numAccounts = Number(taskArguments.num) || defaultNumAccounts;
   const accountIndex = Number(taskArguments.index) || defaultAccountIndex;

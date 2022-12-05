@@ -1,5 +1,6 @@
 const hre = require("hardhat");
 const chai = require("chai");
+const mocha = require("mocha");
 const { parseUnits, formatUnits } = require("ethers").utils;
 const BigNumber = require("ethers").BigNumber;
 const { createFixtureLoader } = require("ethereum-waffle");
@@ -11,6 +12,19 @@ chai.Assertion.addMethod("approxEqual", function (expected, message) {
   chai.expect(actual, message).gte(expected.mul("99999").div("100000"));
   chai.expect(actual, message).lte(expected.mul("100001").div("100000"));
 });
+
+chai.Assertion.addMethod(
+  "approxEqualTolerance",
+  function (expected, maxTolerancePct = 1, message = undefined) {
+    const actual = this._obj;
+    chai
+      .expect(actual, message)
+      .gte(expected.mul(10000 - maxTolerancePct * 100).div(10000));
+    chai
+      .expect(actual, message)
+      .lte(expected.mul(10000 + maxTolerancePct * 100).div(10000));
+  }
+);
 
 chai.Assertion.addMethod(
   "approxBalanceOf",
@@ -56,6 +70,10 @@ function ognUnits(amount) {
 }
 
 function ousdUnits(amount) {
+  return parseUnits(amount, 18);
+}
+
+function fraxUnits(amount) {
   return parseUnits(amount, 18);
 }
 
@@ -119,12 +137,12 @@ async function humanBalance(user, contract) {
 
 const isFork = process.env.FORK === "true";
 const isLocalhost = !isFork && hre.network.name === "localhost";
-const isRinkeby = hre.network.name === "rinkeby";
 const isMainnet = hre.network.name === "mainnet";
 const isTest = process.env.IS_TEST === "true";
 const isSmokeTest = process.env.SMOKE_TEST === "true";
 const isMainnetOrFork = isMainnet || isFork;
-const isMainnetOrRinkebyOrFork = isMainnetOrFork || isRinkeby;
+const isForkTest = isFork && isTest;
+const isForkWithLocalNode = isFork && process.env.LOCAL_PROVIDER_URL;
 
 // Fixture loader that is compatible with Ganache
 const loadFixture = createFixtureLoader(
@@ -257,11 +275,14 @@ const getAssetAddresses = async (deployments) => {
       AAVE_INCENTIVES_CONTROLLER: addresses.mainnet.AAVE_INCENTIVES_CONTROLLER,
       STKAAVE: addresses.mainnet.STKAAVE,
       OGN: addresses.mainnet.OGN,
+      OGV: addresses.mainnet.OGV,
+      RewardsSource: addresses.mainnet.RewardsSource,
       uniswapRouter: addresses.mainnet.uniswapRouter,
+      uniswapV3Router: addresses.mainnet.uniswapV3Router,
       sushiswapRouter: addresses.mainnet.sushiswapRouter,
     };
   } else {
-    return {
+    const addressMap = {
       USDT: (await deployments.get("MockUSDT")).address,
       USDC: (await deployments.get("MockUSDC")).address,
       TUSD: (await deployments.get("MockTUSD")).address,
@@ -285,12 +306,49 @@ const getAssetAddresses = async (deployments) => {
       AAVE_TOKEN: (await deployments.get("MockAAVEToken")).address,
       AAVE_ADDRESS_PROVIDER: (await deployments.get("MockAave")).address,
       STKAAVE: (await deployments.get("MockStkAave")).address,
-      OGN: isRinkeby
-        ? addresses.rinkeby.OGN
-        : (await deployments.get("MockOGN")).address,
+      OGN: (await deployments.get("MockOGN")).address,
+      OGV: (await deployments.get("MockOGV")).address,
+      // Note: This is only used to transfer the swapped OGV in `Buyback` contract.
+      // So, as long as this is a valid address, it should be fine.
+      RewardsSource: addresses.dead,
       uniswapRouter: (await deployments.get("MockUniswapRouter")).address,
+      uniswapV3Router: (await deployments.get("MockUniswapRouter")).address,
       sushiswapRouter: (await deployments.get("MockUniswapRouter")).address,
     };
+
+    try {
+      /* Metapool gets deployed in 001_core instead of 000_mocks and is requested even when
+       * metapool is not yet deployed. Just return without metapool info if it is not
+       * yet available.
+       */
+      addressMap.ThreePoolOUSDMetapool = (
+        await deployments.get("MockCurveMetapool")
+      ).address;
+      // token is implemented by the same contract as the metapool
+      addressMap.metapoolToken = (
+        await deployments.get("MockCurveMetapool")
+      ).address;
+    } catch (e) {
+      // do nothing
+    }
+
+    try {
+      /* Metapool gets deployed in 001_core instead of 000_mocks and is requested even when
+       * metapool is not yet deployed. Just return without metapool info if it is not
+       * yet available.
+       */
+      addressMap.ThreePoolalUSDMetapool = (
+        await deployments.get("MockCurvealUSDMetapool")
+      ).address;
+      // token is implemented by the same contract as the metapool
+      addressMap.alUSDMetapoolToken = (
+        await deployments.get("MockCurvealUSDMetapool")
+      ).address;
+    } catch (e) {
+      // do nothing
+    }
+
+    return addressMap;
   }
 };
 
@@ -325,6 +383,16 @@ function isWithinTolerance(bigNumber, bigNumberExpected, tolerance) {
   const highestAllowed = bigNumberExpected.add(bgTolerance);
 
   return bigNumber.gte(lowestAllowed) && bigNumber.lte(highestAllowed);
+}
+
+/**
+ * Return the difference in ERC20 `token` balance of an `address` after
+ * the `asyncFn` is executed.
+ */
+async function differenceInErc20TokenBalance(address, tokenContract, asyncFn) {
+  const balanceBefore = await tokenContract.balanceOf(address);
+  await asyncFn();
+  return (await tokenContract.balanceOf(address)).sub(balanceBefore);
 }
 
 async function governorArgs({ contract, signature, args = [] }) {
@@ -367,6 +435,11 @@ async function proposeAndExecute(fixture, governorArgsArray, description) {
   await governorContract.connect(governor).execute(proposalId);
 }
 
+// Ugly hack to avoid running these tests when running `npx hardhat test` directly.
+// A right way would be to add suffix to files and use patterns to filter
+const forkOnlyDescribe = (title, fn) =>
+  isForkTest ? mocha.describe(title, fn) : mocha.describe.skip(title, fn);
+
 module.exports = {
   ousdUnits,
   usdtUnits,
@@ -375,6 +448,7 @@ module.exports = {
   daiUnits,
   ognUnits,
   ethUnits,
+  fraxUnits,
   oracleUnits,
   units,
   daiUnitsFormat,
@@ -386,13 +460,13 @@ module.exports = {
   advanceTime,
   getBlockTimestamp,
   isMainnet,
-  isRinkeby,
   isFork,
   isTest,
   isSmokeTest,
   isLocalhost,
   isMainnetOrFork,
-  isMainnetOrRinkebyOrFork,
+  isForkTest,
+  isForkWithLocalNode,
   loadFixture,
   getOracleAddress,
   setOracleTokenPriceUsd,
@@ -405,4 +479,6 @@ module.exports = {
   advanceBlocks,
   isWithinTolerance,
   changeInBalance,
+  forkOnlyDescribe,
+  differenceInErc20TokenBalance,
 };

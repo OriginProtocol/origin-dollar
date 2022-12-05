@@ -32,8 +32,25 @@ addresses.mainnet.cDAI = '0x5d3a536e4d6dbd6114cc1ead35777bab948e3643'
 addresses.mainnet.cUSDC = '0x39aa39c021dfbae8fac545936693ac917d5e7563'
 addresses.mainnet.cUSDT = '0xf650c3d88d12db855b8bf7d11be6c55a4e07dcc9'
 
-// Ogn
+// OGN
 addresses.mainnet.OGN = '0x8207c1ffc5b6804f6024322ccf34f29c3541ae26'
+
+// OGV
+addresses.mainnet.OGV = '0x9c354503C38481a7A7a51629142963F98eCC12D0'
+
+// veOGV
+addresses.mainnet.veOGV = '0x0C4576Ca1c365868E162554AF8e385dc3e7C66D9'
+
+// RewardsSource
+addresses.mainnet.RewardsSource = '0x7d82e86cf1496f9485a8ea04012afeb3c7489397'
+
+// Optional lockup distributor
+addresses.mainnet.optionalLockupDistributor =
+  '0x7aE2334f12a449895AD21d4c255D9DE194fe986f'
+
+// Mandatory lockup distributor
+addresses.mainnet.mandatoryLockupDistributor =
+  '0xD667091c2d1DCc8620f4eaEA254CdFB0a176718D'
 
 // Open Oracle
 addresses.mainnet.openOracle = '0x9b8eb8b3d6e2e0db36f41455185fef7049a35cae'
@@ -105,12 +122,5 @@ addresses.mainnet.ChainlinkOracle = '0x8DE3Ac42F800a1186b6D70CB91e0D6876cC36759'
 addresses.mainnet.UniswapOracle = '0xc15169Bad17e676b3BaDb699DEe327423cE6178e'
 addresses.mainnet.CompensationClaims =
   '0x9C94df9d594BA1eb94430C006c269C314B1A8281'
-
-/* --- RINKEBY --- */
-addresses.rinkeby = {}
-// Compound
-addresses.rinkeby.cDAI = '0x6d7f0754ffeb405d23c51ce938289d4835be3b14'
-addresses.rinkeby.cUSDC = '0x5b281a6dda0b271e91ae35de655ad301c976edb1'
-addresses.rinkeby.cUSDT = '0x2fb298bdbef468638ad6653ff8376575ea41e768'
 
 module.exports = addresses

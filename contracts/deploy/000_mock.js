@@ -1,5 +1,5 @@
 const { parseUnits } = require("ethers").utils;
-const { isMainnetOrRinkebyOrFork } = require("../test/helpers");
+const { isMainnetOrFork } = require("../test/helpers");
 const { threeCRVPid } = require("../utils/constants");
 
 const {
@@ -43,6 +43,7 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     "MockDAI",
     "MockNonStandardToken",
     "MockWETH",
+    "MockOGV",
     "MockAave",
   ];
   for (const contract of assetContracts) {
@@ -226,6 +227,10 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     args: [[dai.address, usdc.address, usdt.address], threePoolToken.address],
   });
 
+  await deploy("MockalUSD", {
+    from: deployerAddr,
+  });
+
   // Mock CVX token
   await deploy("MockCVX", {
     from: deployerAddr,
@@ -329,6 +334,6 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
 
 deployMocks.id = "000_mock";
 deployMocks.tags = ["mocks"];
-deployMocks.skip = () => isMainnetOrRinkebyOrFork;
+deployMocks.skip = () => isMainnetOrFork;
 
 module.exports = deployMocks;

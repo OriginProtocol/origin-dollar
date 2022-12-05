@@ -67,6 +67,21 @@ const findBestMainnetTokenHolder = async (contract, hre) => {
   return binanceSigners[largestBalanceIndex];
 };
 
+const findBestMainnetTokenHolderAndImpersonate = async (contract, hre) => {
+  const signer = await findBestMainnetTokenHolder(contract, hre);
+  const address = await signer.getAddress();
+
+  await hre.network.provider.request({
+    method: "hardhat_impersonateAccount",
+    params: [address],
+  });
+  await hre.network.provider.send("hardhat_setBalance", [
+    address,
+    utils.parseEther("1000000").toHexString(),
+  ]);
+  return signer;
+};
+
 const fundAccounts = async () => {
   let usdt, dai, tusd, usdc, nonStandardToken;
   if (isFork) {
@@ -84,47 +99,41 @@ const fundAccounts = async () => {
     nonStandardToken = await ethers.getContract("MockNonStandardToken");
   }
 
-  let binanceSigner;
   const signers = await hre.ethers.getSigners();
   const { governorAddr } = await getNamedAccounts();
 
-  if (isFork) {
-    await hre.network.provider.request({
-      method: "hardhat_impersonateAccount",
-      params: [addresses.mainnet.Binance],
-    });
-    binanceSigner = await ethers.provider.getSigner(addresses.mainnet.Binance);
-    // Send some Ethereum to Governor
-    await binanceSigner.sendTransaction({
-      to: governorAddr,
-      value: utils.parseEther("100"),
-    });
-  }
+  const addressPromises = new Array(10)
+    .fill(0)
+    .map((_, i) => signers[i].getAddress());
+  const signerAddresses = await Promise.all(addressPromises);
 
-  for (let i = 0; i < 10; i++) {
+  for (const address of signerAddresses) {
     if (isFork) {
-      await dai
-        .connect(binanceSigner)
-        .transfer(await signers[i].getAddress(), daiUnits("1000"));
-      await usdc
-        .connect(binanceSigner)
-        .transfer(await signers[i].getAddress(), usdcUnits("1000"));
-      await usdt
-        .connect(binanceSigner)
-        .transfer(await signers[i].getAddress(), usdtUnits("1000"));
-      await tusd
-        .connect(binanceSigner)
-        .transfer(await signers[i].getAddress(), tusdUnits("1000"));
-      await ogn
-        .connect(binanceSigner)
-        .transfer(await signers[i].getAddress(), ognUnits("1000"));
+      await hre.network.provider.send("hardhat_setBalance", [
+        address,
+        utils.parseEther("1000000").toHexString(),
+      ]);
+
+      for (const tokenContract of [dai, usdc, usdt, tusd, ogn]) {
+        const signer = await findBestMainnetTokenHolderAndImpersonate(
+          tokenContract,
+          hre
+        );
+        await tokenContract
+          .connect(signer)
+          .transfer(
+            address,
+            utils.parseUnits("1000000", await tokenContract.decimals())
+          );
+      }
     } else {
-      await dai.connect(signers[i]).mint(daiUnits("1000"));
-      await usdc.connect(signers[i]).mint(usdcUnits("1000"));
-      await usdt.connect(signers[i]).mint(usdtUnits("1000"));
-      await tusd.connect(signers[i]).mint(tusdUnits("1000"));
-      await ogn.connect(signers[i]).mint(ognUnits("1000"));
-      await nonStandardToken.connect(signers[i]).mint(usdtUnits("1000"));
+      const signer = await ethers.provider.getSigner(address);
+      await dai.connect(signer).mint(daiUnits("1000"));
+      await usdc.connect(signer).mint(usdcUnits("1000"));
+      await usdt.connect(signer).mint(usdtUnits("1000"));
+      await tusd.connect(signer).mint(tusdUnits("1000"));
+      await ogn.connect(signer).mint(ognUnits("1000"));
+      await nonStandardToken.connect(signer).mint(usdtUnits("1000"));
     }
   }
 

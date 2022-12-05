@@ -14,6 +14,8 @@ import usdtAbi from 'constants/mainnetAbi/usdt.json'
 import usdcAbi from 'constants/mainnetAbi/cUsdc.json'
 import daiAbi from 'constants/mainnetAbi/dai.json'
 import ognAbi from 'constants/mainnetAbi/ogn.json'
+import ogvAbi from 'constants/mainnetAbi/ogv.json'
+import veogvAbi from 'constants/mainnetAbi/veogv.json'
 import flipperAbi from 'constants/mainnetAbi/flipper.json'
 
 const curveFactoryMiniAbi = [
@@ -155,6 +157,8 @@ export async function setupContracts(account, library, chainId, fetchId) {
     ousd,
     vault,
     ogn,
+    ogv,
+    veogv,
     wousd,
     flipper,
     uniV2OusdUsdt,
@@ -249,6 +253,8 @@ export async function setupContracts(account, library, chainId, fetchId) {
   usdc = getContract(addresses.mainnet.USDC, usdcAbi.abi)
   dai = getContract(addresses.mainnet.DAI, daiAbi.abi)
   ogn = getContract(addresses.mainnet.OGN, ognAbi)
+  ogv = getContract(addresses.mainnet.OGV, ogvAbi)
+  veogv = getContract(addresses.mainnet.veOGV, veogvAbi)
   wousd = getContract(addresses.mainnet.WOUSDProxy, wousdJSON.abi)
   flipper = getContract(addresses.mainnet.Flipper, flipperAbi)
 
@@ -453,6 +459,8 @@ export async function setupContracts(account, library, chainId, fetchId) {
     ousd,
     vault,
     ogn,
+    ogv,
+    veogv,
     wousd,
     uniV2OusdUsdt,
     uniV2OusdUsdt_iErc20,
@@ -507,6 +515,10 @@ export async function setupContracts(account, library, chainId, fetchId) {
   ContractStore.update((s) => {
     s.contracts = contractsToExport
     s.coinInfoList = coinInfoList
+    s.ogn = ogn
+    s.ogv = ogv
+    s.veogv = veogv
+    s.ousd = ousd
     s.walletConnected = walletConnected
     s.chainId = chainId
     s.readOnlyProvider = jsonRpcProvider

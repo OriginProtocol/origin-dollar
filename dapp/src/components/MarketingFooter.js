@@ -2,6 +2,7 @@ import { fbt } from 'fbt-runtime'
 import analytics from 'utils/analytics'
 import { getDocsLink } from 'utils/getDocsLink'
 import { assetRootPath } from 'utils/image'
+import { useRouter } from 'next/router'
 
 import EmailForm from './EmailForm'
 
@@ -22,9 +23,11 @@ const youtubeURL = process.env.YOUTUBE_URL
 const instagramURL = process.env.INSTAGRAM_URL
 
 export default function Footer({ locale }) {
+  const { pathname } = useRouter()
+
   return (
     <>
-      <footer>
+      <footer className={`${pathname === '/burn' ? 'burn' : ''}`}>
         <div className="container">
           <div className="d-flex align-items-center justify-content-center">
             <div className="">
@@ -59,9 +62,7 @@ export default function Footer({ locale }) {
                   onClick={() => {
                     analytics.track('Docs Link click')
                   }}
-                >
-                  {fbt('Docs', 'Documentation link')}
-                </a>
+                ></a>
                 <a
                   href={discordURL}
                   target="_blank"
@@ -124,68 +125,58 @@ export default function Footer({ locale }) {
           background-color: #061d2a;
           padding: 100px 0 160px 0;
         }
-
+        footer.burn {
+          background-color: #141519;
+        }
         h5 {
           color: white;
           font-size: 1.125rem;
           font-weight: bold;
         }
-
         p {
           color: #bdcbd5;
           font-size: 1.125rem;
         }
-
         a,
         .legal {
           color: white;
           font-size: 0.875rem;
         }
-
         .nav,
         .legal {
           margin-top: 20px;
         }
-
         a:hover {
           cursor: pointer;
           opacity: 0.8;
         }
-
         .nav-link {
           padding: 0;
         }
-
         .nav-link:not(:last-of-type) {
           padding-right: 32px;
         }
-
         .legal,
         .legal .nav-link {
           color: #bdcbd5;
           line-height: 2;
         }
-
         @media (max-width: 799px) {
           .container {
             padding-left: 30px;
             padding-right: 30px;
           }
-
           .col-12 {
             padding-right: 0px;
             padding-left: 0px;
           }
-
           footer {
             padding: 50px 10px;
           }
-
           .nav-link {
             min-width: 110px;
             margin-bottom: 20px;
           }
-        }
       `}</style>
     </>
   )

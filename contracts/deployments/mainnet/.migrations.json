@@ -36,5 +36,8 @@
   "038_staking_patch": 1647020527,
   "039_wrapped_ousd": 1649704912,
   "041_stop_buyback_swaps": 1655503634,
-  "040_vault_peg_check": 1659100448
+  "040_vault_peg_check": 1659100448,
+  "042_ogv_buyback": 1662754619,
+  "043_convex_OUSD_meta_strategy": 1667562899,
+  "044_morpho_strategy": 1668204653
 }

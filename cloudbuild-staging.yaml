@@ -28,7 +28,7 @@ steps:
   entrypoint: yarn
   args: ['install']
 
-- id: 'Generate abis adn copy to dapp folder'
+- id: 'Generate ABIs and copy to dapp folder'
   name: 'node:16'
   dir: ./contracts
   entrypoint: yarn

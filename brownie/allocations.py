@@ -19,12 +19,16 @@ def load_from_blockchain():
     base = pd.DataFrame.from_records(
         [
             ["AAVE", "DAI", int(world.aave_strat.checkBalance(world.DAI) / 1e18)],
-            # ['AAVE','USDC', int(world.aave_strat.checkBalance(world.USDC)/1e6)],
+            ['AAVE','USDC', int(world.aave_strat.checkBalance(world.USDC)/1e6)],
             ["AAVE", "USDT", int(world.aave_strat.checkBalance(world.USDT) / 1e6)],
             ["COMP", "DAI", int(world.comp_strat.checkBalance(world.DAI) / 1e18)],
             ["COMP", "USDC", int(world.comp_strat.checkBalance(world.USDC) / 1e6)],
             ["COMP", "USDT", int(world.comp_strat.checkBalance(world.USDT) / 1e6)],
+            ["MORPHO_COMP", "DAI", int(world.morpho_comp_strat.checkBalance(world.DAI) / 1e18)],
+            ["MORPHO_COMP", "USDC", int(world.morpho_comp_strat.checkBalance(world.USDC) / 1e6)],
+            ["MORPHO_COMP", "USDT", int(world.morpho_comp_strat.checkBalance(world.USDT) / 1e6)],
             ["Convex", "*", int(world.convex_strat.checkBalance(world.DAI) * 3 / 1e18)],
+            ["OUSD_META", "*", int(world.ousd_metastrat.checkBalance(world.DAI) * 3 / 2 / 1e18)],
         ],
         columns=["strategy", "token", "current_dollars"],
     )
@@ -199,17 +203,3 @@ def transactions_for_reallocation(votes):
     txs = wrap_in_loss_prevention(txs, vault_loss_raw)
 
     return txs
-
-
-# txs = transactions_for_reallocation([
-#                 ["AAVE", "DAI", 0.05],
-#                 ["AAVE", "USDC", 0],
-#                 ["AAVE", "USDT", 3.38],
-#                 ["COMP", "DAI", 4.14],
-#                 ["COMP", "USDC", 5.62],
-#                 ["COMP", "USDT", 0],
-#                 ["Convex", "*", 86.81],
-#             ])
-# safe_tx = safe.multisend_from_receipts(txs)
-# safe.sign_with_frame(safe_tx)
-# r = safe.post_transaction(safe_tx)

@@ -10,13 +10,15 @@ addresses.dead = "0x0000000000000000000000000000000000000001";
 
 addresses.mainnet = {};
 
+addresses.mainnet.ORIGINTEAM = "0x449e0b5564e0d141b3bc3829e74ffa0ea8c08ad5";
+
 addresses.mainnet.Binance = "0xf977814e90da44bfa03b6295a0616a897441acec";
 /* All the Binance addresses. There is not 1 address that has enough of all of the stablecoins and ether.
  * But all together do. In case new ones are added update them from here:
  * https://etherscan.io/accounts/label/binance?subcatid=3-0&size=100&start=0&col=2&order=desc
  */
 addresses.mainnet.BinanceAll =
-  "0x564286362092d8e7936f0549571a803b203aaced,0xbe0eb53f46cd790cd13851d5eff43d12404d33e8,0xf977814e90da44bfa03b6295a0616a897441acec,0x28c6c06298d514db089934071355e5743bf21d60,0xdfd5293d8e347dfe59e90efd55b2956a1343963d,0x56eddb7aa87536c09ccc2793473599fd21a8b17f,0x21a31ee1afc51d94c2efccaa2092ad1028285549,0x9696f59e4d72e237be84ffd425dcad154bf96976,0x001866ae5b3de6caa5a51543fd9fb64f524f5478,0xab83d182f3485cf1d6ccdd34c7cfef95b4c08da4,0x8b99f3660622e21f2910ecca7fbe51d654a1517d,0x4d9ff50ef4da947364bb9650892b2554e7be5e2b,0xb8c77482e45f1f44de1745f52c74426c631bdd52,0x61189da79177950a7272c88c6058b96d4bcd6be2,0x0681d8db095565fe8a346fa0277bffde9c0edbbf,0x4e9ce36e442e55ecd9025b9a6e0d88485d628a67,0x85b931a32a0725be14285b66f1a22178c672d69b,0x8f22f2063d253846b53609231ed80fa571bc0c8f,0xe0f0cfde7ee664943906f17f7f14342e76a5cec7,0x708396f17127c42383e3b9014072679b2f60b82f,0xd551234ae421e3bcba99a0da6d736074f22192ff,0xfe9e8709d3215310075d67e3ed32a380ccf451c8,0x3f5ce5fbfe3e9af3971dd833d26ba9b5c936f0be";
+  "0x564286362092d8e7936f0549571a803b203aaced,0xbe0eb53f46cd790cd13851d5eff43d12404d33e8,0xf977814e90da44bfa03b6295a0616a897441acec,0x28c6c06298d514db089934071355e5743bf21d60,0xdfd5293d8e347dfe59e90efd55b2956a1343963d,0x56eddb7aa87536c09ccc2793473599fd21a8b17f,0x21a31ee1afc51d94c2efccaa2092ad1028285549,0x9696f59e4d72e237be84ffd425dcad154bf96976,0x001866ae5b3de6caa5a51543fd9fb64f524f5478,0xab83d182f3485cf1d6ccdd34c7cfef95b4c08da4,0x8b99f3660622e21f2910ecca7fbe51d654a1517d,0x4d9ff50ef4da947364bb9650892b2554e7be5e2b,0xb8c77482e45f1f44de1745f52c74426c631bdd52,0x61189da79177950a7272c88c6058b96d4bcd6be2,0x0681d8db095565fe8a346fa0277bffde9c0edbbf,0x4e9ce36e442e55ecd9025b9a6e0d88485d628a67,0x85b931a32a0725be14285b66f1a22178c672d69b,0x8f22f2063d253846b53609231ed80fa571bc0c8f,0xe0f0cfde7ee664943906f17f7f14342e76a5cec7,0x708396f17127c42383e3b9014072679b2f60b82f,0xd551234ae421e3bcba99a0da6d736074f22192ff,0xfe9e8709d3215310075d67e3ed32a380ccf451c8,0x3f5ce5fbfe3e9af3971dd833d26ba9b5c936f0be,0x40ec5b33f54e0e8a33a975908c5ba1c14e5bbbdf";
 
 // Native stablecoins
 addresses.mainnet.DAI = "0x6b175474e89094c44da98b954eedeac495271d0f";
@@ -50,10 +52,18 @@ addresses.mainnet.ThreePoolGauge = "0xbFcF63294aD7105dEa65aA58F8AE5BE2D9d0952A";
 addresses.mainnet.CVX = "0x4e3fbd56cd56c3e72c1403e103b45db9da5b9d2b";
 addresses.mainnet.CRVRewardsPool = "0x689440f2ff927e1f24c72f1087e1faf471ece1c8";
 addresses.mainnet.CVXBooster = "0xF403C135812408BFbE8713b5A23a04b3D48AAE31";
+addresses.mainnet.CVXRewardsPool = "0x7D536a737C13561e0D2Decf1152a653B4e615158";
 // Open Oracle
 addresses.mainnet.openOracle = "0x922018674c12a7f0d394ebeef9b58f186cde13c1";
 // OGN
 addresses.mainnet.OGN = "0x8207c1ffc5b6804f6024322ccf34f29c3541ae26";
+addresses.mainnet.alUSD = "0xBC6DA0FE9aD5f3b0d58160288917AA56653660E9";
+// OGV
+addresses.mainnet.OGV = "0x9c354503C38481a7A7a51629142963F98eCC12D0";
+// veOGV
+addresses.mainnet.veOGV = "0x0C4576Ca1c365868E162554AF8e385dc3e7C66D9";
+// RewardsSource
+addresses.mainnet.RewardsSource = "0x7d82e86cf1496f9485a8ea04012afeb3c7489397";
 
 // Uniswap router
 addresses.mainnet.uniswapRouter = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D";
@@ -93,7 +103,7 @@ addresses.mainnet.chainlinkUSDT_ETH =
 addresses.mainnet.WETH = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2";
 // Deployed OUSD contracts
 addresses.mainnet.Guardian = "0xbe2AB3d3d8F6a32b96414ebbd865dBD276d3d899"; // ERC 20 owner multisig.
-addresses.mainnet.VaultProxy = "0x277e80f3E14E7fB3fc40A9d6184088e0241034bD";
+addresses.mainnet.VaultProxy = "0xe75d77b1865ae93c7eaa3040b038d7aa7bc02f70";
 addresses.mainnet.Vault = "0xf251Cb9129fdb7e9Ca5cad097dE3eA70caB9d8F9";
 addresses.mainnet.OUSDProxy = "0x2A8e1E676Ec238d8A992307B495b45B3fEAa5e86";
 addresses.mainnet.OUSD = "0xB72b3f5523851C2EB0cA14137803CA4ac7295f3F";
@@ -109,6 +119,10 @@ addresses.mainnet.CurveUSDTStrategyProxy =
   "0xe40e09cD6725E542001FcB900d9dfeA447B529C0";
 addresses.mainnet.CurveUSDTStrategy =
   "0x75Bc09f72db1663Ed35925B89De2b5212b9b6Cb3";
+addresses.mainnet.CurveOUSDMetaPool =
+  "0x87650D7bbfC3A9F10587d7778206671719d9910D";
+addresses.mainnet.MorphoStrategyProxy =
+  "0x5A4eEe58744D1430876d5cA93cAB5CcB763C037D";
 
 addresses.mainnet.MixOracle = "0x4d4f5e7a1FE57F5cEB38BfcE8653EFFa5e584458";
 addresses.mainnet.UniswapOracle = "0xc15169Bad17e676b3BaDb699DEe327423cE6178e";
@@ -116,14 +130,7 @@ addresses.mainnet.CompensationClaims =
   "0x9C94df9d594BA1eb94430C006c269C314B1A8281";
 addresses.mainnet.Flipper = "0xcecaD69d7D4Ed6D52eFcFA028aF8732F27e08F70";
 
-/* --- RINKEBY --- */
-addresses.rinkeby = {};
-
-addresses.rinkeby.OGN = "0xA115e16ef6e217f7a327a57031F75cE0487AaDb8";
-
-// Compound
-addresses.rinkeby.cDAI = "0x6d7f0754ffeb405d23c51ce938289d4835be3b14";
-addresses.rinkeby.cUSDC = "0x5b281a6dda0b271e91ae35de655ad301c976edb1";
-addresses.rinkeby.cUSDT = "0x2fb298bdbef468638ad6653ff8376575ea41e768";
+addresses.mainnet.Morpho = "0x8888882f8f843896699869179fB6E4f7e3B58888";
+addresses.mainnet.MorphoLens = "0x930f1b46e1d081ec1524efd95752be3ece51ef67";
 
 module.exports = addresses;
