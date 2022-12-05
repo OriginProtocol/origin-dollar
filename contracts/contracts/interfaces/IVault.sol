@@ -113,8 +113,14 @@ interface IVault {
         uint256[] calldata _amounts
     ) external;
 
-    function withdraw(
+    function withdrawFromStrategy(
         address _strategyFromAddress,
+        address[] calldata _assets,
+        uint256[] calldata _amounts
+    ) external;
+
+    function depositToStrategy(
+        address _strategyToAddress,
         address[] calldata _assets,
         uint256[] calldata _amounts
     ) external;

@@ -246,25 +246,51 @@ contract VaultAdmin is VaultStorage {
         uint256[] calldata _amounts
     ) external onlyGovernorOrStrategist {
         require(
-            strategies[_strategyFromAddress].isSupported,
-            "Invalid from Strategy"
+            strategies[_strategyToAddress].isSupported,
+            "Invalid to Strategy"
         );
+        require(_assets.length == _amounts.length, "Parameter length mismatch");
+        _withdrawFromStrategy(_strategyToAddress, _strategyFromAddress, _assets, _amounts);
+
+        IStrategy strategyTo = IStrategy(_strategyToAddress);
+        // Tell new Strategy to deposit into protocol
+        strategyTo.depositAll();
+    }
+
+    /**
+     * @notice Deposit multiple assets from vault into one strategy
+     * @param _strategyToAddress Address of Strategy to deposit assets into.
+     * @param _assets Array of asset address that will be deposited into the strategy.
+     * @param _amounts Array of amounts of each corresponding asset to deposit.
+     */
+    function depositToStrategy(
+      address _strategyToAddress,
+      address[] calldata _assets,
+      uint256[] calldata _amounts
+    ) external onlyGovernorOrStrategist {
+        _depositToStrategy(_strategyToAddress, _assets, _amounts);
+    }
+
+    function _depositToStrategy(
+      address _strategyToAddress,
+      address[] calldata _assets,
+      uint256[] calldata _amounts
+    ) internal {
         require(
             strategies[_strategyToAddress].isSupported,
             "Invalid to Strategy"
         );
         require(_assets.length == _amounts.length, "Parameter length mismatch");
 
-        IStrategy strategyFrom = IStrategy(_strategyFromAddress);
         IStrategy strategyTo = IStrategy(_strategyToAddress);
 
         for (uint256 i = 0; i < _assets.length; i++) {
             require(strategyTo.supportsAsset(_assets[i]), "Asset unsupported");
-            // Withdraw from Strategy and pass other Strategy as recipient
-            strategyFrom.withdraw(address(strategyTo), _assets[i], _amounts[i]);
+            // Send required amount of funds to the strategy
+            IERC20(_assets[i]).safeTransfer(_strategyToAddress, _amounts[i]);
+            // Deposit into the Strategy from the vault
+            strategyTo.deposit(_assets[i], _amounts[i]);
         }
-        // Tell new Strategy to deposit into protocol
-        strategyTo.depositAll();
     }
 
     /**
@@ -273,22 +299,31 @@ contract VaultAdmin is VaultStorage {
      * @param _assets Array of asset address that will be withdrawn from the strategy.
      * @param _amounts Array of amounts of each corresponding asset to withdraw.
      */
-    function withdraw(
+    function withdrawFromStrategy(
       address _strategyFromAddress,
       address[] calldata _assets,
       uint256[] calldata _amounts
     ) external onlyGovernorOrStrategist {
-      require(
+        _withdrawFromStrategy(address(this), _strategyFromAddress, _assets, _amounts);
+    }
+
+    function _withdrawFromStrategy(
+      address _receiver,
+      address _strategyFromAddress,
+      address[] calldata _assets,
+      uint256[] calldata _amounts
+    ) internal {
+        require(
             strategies[_strategyFromAddress].isSupported,
             "Invalid from Strategy"
         );
-      require(_assets.length == _amounts.length, "Parameter length mismatch");
+        require(_assets.length == _amounts.length, "Parameter length mismatch");
 
-      IStrategy strategyFrom = IStrategy(_strategyFromAddress);
-      for (uint256 i = 0; i < _assets.length; i++) {
-          // Withdraw from Strategy and Vault  as recipient
-          strategyFrom.withdraw(address(this), _assets[i], _amounts[i]);
-      }
+        IStrategy strategyFrom = IStrategy(_strategyFromAddress);
+        for (uint256 i = 0; i < _assets.length; i++) {
+            // Withdraw from Strategy and Vault  as recipient
+            strategyFrom.withdraw(_receiver, _assets[i], _amounts[i]);
+        }
     }
 
     /**

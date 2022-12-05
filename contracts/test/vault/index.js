@@ -415,7 +415,7 @@ describe("Vault", function () {
     ).to.be.revertedWith("Caller is not the Strategist or Governor");
   });
 
-  it("Should allow the Governor to call withdraw", async () => {
+  it("Should allow the Governor to call withdraw and then deposit", async () => {
     const { vault, governor, dai, josh, compoundStrategy } = await loadFixture(
       defaultFixture
     );
@@ -431,15 +431,18 @@ describe("Vault", function () {
 
     await vault
       .connect(governor)
-      .withdraw(compoundStrategy.address, [dai.address], [daiUnits("200")]);
+      .withdrawFromStrategy(compoundStrategy.address, [dai.address], [daiUnits("200")]);
+
+    await vault
+      .connect(governor)
+      .depositToStrategy(compoundStrategy.address, [dai.address], [daiUnits("200")]);
   });
 
-  it("Should allow the Strategist to call withdraw", async () => {
-    const { vault, governor, dai, josh, compoundStrategy } = await loadFixture(
+  it("Should allow the Strategist to call withdrawFromStrategy", async () => {
+    const { vault, governor, dai, josh, strategist, compoundStrategy } = await loadFixture(
       defaultFixture
     );
 
-    await vault.connect(governor).setStrategistAddr(await josh.getAddress());
     await vault.connect(governor).approveStrategy(compoundStrategy.address);
     // Send all DAI to Compound
     await vault
@@ -450,15 +453,19 @@ describe("Vault", function () {
     await vault.connect(governor).allocate();
 
     await vault
-      .connect(josh)
-      .withdraw(compoundStrategy.address, [dai.address], [daiUnits("200")]);
+      .connect(strategist)
+      .withdrawFromStrategy(compoundStrategy.address, [dai.address], [daiUnits("200")]);
+
+    await vault
+      .connect(strategist)
+      .depositToStrategy(compoundStrategy.address, [dai.address], [daiUnits("200")]);
   });
 
-  it("Should not allow non-Governor and non-Strategist to call withdraw", async () => {
+  it("Should not allow non-Governor and non-Strategist to call withdrawFromStrategy", async () => {
     const { vault, dai, josh } = await loadFixture(defaultFixture);
 
     await expect(
-      vault.connect(josh).withdraw(
+      vault.connect(josh).withdrawFromStrategy(
         vault.address, // Args don't matter because it doesn't reach checks
         [dai.address],
         [daiUnits("200")]
@@ -466,11 +473,10 @@ describe("Vault", function () {
     ).to.be.revertedWith("Caller is not the Strategist or Governor");
   });
 
-  it("Should withdraw the correct amount for multiple assests", async () => {
-    const { vault, governor, dai, usdc, cusdc, josh, compoundStrategy } =
+  it("Should withdrawFromStrategy the correct amount for multiple assests and redeploy them", async () => {
+    const { vault, governor, dai, usdc, cusdc, josh, strategist, compoundStrategy } =
       await loadFixture(defaultFixture);
 
-    await vault.connect(governor).setStrategistAddr(await josh.getAddress());
     await vault.connect(governor).approveStrategy(compoundStrategy.address);
     // Send all DAI to Compound
     await vault
@@ -494,8 +500,8 @@ describe("Vault", function () {
     await vault.connect(governor).allocate();
 
     await vault
-      .connect(josh)
-      .withdraw(
+      .connect(strategist)
+      .withdrawFromStrategy(
         compoundStrategy.address,
         [dai.address, usdc.address],
         [daiUnits("50"), usdcUnits("90")]
@@ -510,6 +516,18 @@ describe("Vault", function () {
     await expect(await usdc.balanceOf(vault.address)).to.equal(
       expectedVaultUsdcBalance
     );
+
+    await vault
+      .connect(strategist)
+      .depositToStrategy(
+        compoundStrategy.address,
+        [dai.address, usdc.address],
+        [daiUnits("50"), usdcUnits("90")]
+      );
+
+    // correct balances after depositing back
+    await expect(await dai.balanceOf(vault.address)).to.equal(daiUnits("0"));
+    await expect(await usdc.balanceOf(vault.address)).to.equal(usdcUnits("0"));
   });
 
   it("Should allow Governor and Strategist to set vaultBuffer", async () => {
