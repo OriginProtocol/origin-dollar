@@ -446,7 +446,7 @@ describe("Vault", function () {
       );
   });
 
-  it("Should allow the Strategist to call withdrawFromStrategy", async () => {
+  it("Should allow the Strategist to call withdrawFromStrategy and then depositToStrategy", async () => {
     const { vault, governor, dai, josh, strategist, compoundStrategy } =
       await loadFixture(defaultFixture);
 
@@ -476,7 +476,7 @@ describe("Vault", function () {
       );
   });
 
-  it("Should not allow non-Governor and non-Strategist to call withdrawFromStrategy", async () => {
+  it("Should not allow non-Governor and non-Strategist to call withdrawFromStrategy or depositToStrategy", async () => {
     const { vault, dai, josh } = await loadFixture(defaultFixture);
 
     await expect(
@@ -486,9 +486,17 @@ describe("Vault", function () {
         [daiUnits("200")]
       )
     ).to.be.revertedWith("Caller is not the Strategist or Governor");
+
+    await expect(
+      vault.connect(josh).depositToStrategy(
+        vault.address, // Args don't matter because it doesn't reach checks
+        [dai.address],
+        [daiUnits("200")]
+      )
+    ).to.be.revertedWith("Caller is not the Strategist or Governor");
   });
 
-  it("Should withdrawFromStrategy the correct amount for multiple assests and redeploy them", async () => {
+  it("Should withdrawFromStrategy the correct amount for multiple assests and redeploy them using depositToStrategy", async () => {
     const {
       vault,
       governor,

@@ -233,7 +233,7 @@ contract VaultAdmin is VaultStorage {
     }
 
     /**
-     * @notice Move assets from one Strategy to another
+     * @dev Move assets from one Strategy to another
      * @param _strategyFromAddress Address of Strategy to move assets from.
      * @param _strategyToAddress Address of Strategy to move assets to.
      * @param _assets Array of asset address that will be moved
@@ -266,8 +266,8 @@ contract VaultAdmin is VaultStorage {
     }
 
     /**
-     * @notice Deposit multiple assets from vault into one strategy
-     * @param _strategyToAddress Address of Strategy to deposit assets into.
+     * @dev Deposit multiple assets from the vault into the strategy.
+     * @param _strategyToAddress Address of the Strategy to deposit assets into.
      * @param _assets Array of asset address that will be deposited into the strategy.
      * @param _amounts Array of amounts of each corresponding asset to deposit.
      */
@@ -302,8 +302,8 @@ contract VaultAdmin is VaultStorage {
     }
 
     /**
-     * @notice Withdraw multiple assets from one strategy to the vault
-     * @param _strategyFromAddress Address of Strategy to withdraw assets from.
+     * @dev Withdraw multiple assets from the strategy to the vault.
+     * @param _strategyFromAddress Address of the Strategy to withdraw assets from.
      * @param _assets Array of asset address that will be withdrawn from the strategy.
      * @param _amounts Array of amounts of each corresponding asset to withdraw.
      */

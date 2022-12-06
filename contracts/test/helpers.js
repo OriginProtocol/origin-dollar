@@ -117,6 +117,14 @@ function oracleUnits(amount) {
   return parseUnits(amount, 6);
 }
 
+function cDaiUnits(amount) {
+  return parseUnits(amount, 8);
+}
+
+function cUsdcUnits(amount) {
+  return parseUnits(amount, 8);
+}
+
 async function expectApproxSupply(contract, expected, message) {
   const balance = await contract.totalSupply();
   // shortcuts the 0 case, since that's neither gt or lt
@@ -450,6 +458,8 @@ module.exports = {
   ethUnits,
   fraxUnits,
   oracleUnits,
+  cDaiUnits,
+  cUsdcUnits,
   units,
   daiUnitsFormat,
   ousdUnitsFormat,
