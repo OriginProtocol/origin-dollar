@@ -431,17 +431,24 @@ describe("Vault", function () {
 
     await vault
       .connect(governor)
-      .withdrawFromStrategy(compoundStrategy.address, [dai.address], [daiUnits("200")]);
+      .withdrawFromStrategy(
+        compoundStrategy.address,
+        [dai.address],
+        [daiUnits("200")]
+      );
 
     await vault
       .connect(governor)
-      .depositToStrategy(compoundStrategy.address, [dai.address], [daiUnits("200")]);
+      .depositToStrategy(
+        compoundStrategy.address,
+        [dai.address],
+        [daiUnits("200")]
+      );
   });
 
   it("Should allow the Strategist to call withdrawFromStrategy", async () => {
-    const { vault, governor, dai, josh, strategist, compoundStrategy } = await loadFixture(
-      defaultFixture
-    );
+    const { vault, governor, dai, josh, strategist, compoundStrategy } =
+      await loadFixture(defaultFixture);
 
     await vault.connect(governor).approveStrategy(compoundStrategy.address);
     // Send all DAI to Compound
@@ -454,11 +461,19 @@ describe("Vault", function () {
 
     await vault
       .connect(strategist)
-      .withdrawFromStrategy(compoundStrategy.address, [dai.address], [daiUnits("200")]);
+      .withdrawFromStrategy(
+        compoundStrategy.address,
+        [dai.address],
+        [daiUnits("200")]
+      );
 
     await vault
       .connect(strategist)
-      .depositToStrategy(compoundStrategy.address, [dai.address], [daiUnits("200")]);
+      .depositToStrategy(
+        compoundStrategy.address,
+        [dai.address],
+        [daiUnits("200")]
+      );
   });
 
   it("Should not allow non-Governor and non-Strategist to call withdrawFromStrategy", async () => {
@@ -474,8 +489,16 @@ describe("Vault", function () {
   });
 
   it("Should withdrawFromStrategy the correct amount for multiple assests and redeploy them", async () => {
-    const { vault, governor, dai, usdc, cusdc, josh, strategist, compoundStrategy } =
-      await loadFixture(defaultFixture);
+    const {
+      vault,
+      governor,
+      dai,
+      usdc,
+      cusdc,
+      josh,
+      strategist,
+      compoundStrategy,
+    } = await loadFixture(defaultFixture);
 
     await vault.connect(governor).approveStrategy(compoundStrategy.address);
     // Send all DAI to Compound

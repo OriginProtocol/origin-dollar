@@ -2,7 +2,7 @@ const { deploymentWithProposal } = require("../utils/deploy");
 const addresses = require("../utils/addresses");
 
 module.exports = deploymentWithProposal(
-  { deployName: "045_deposit_withdraw_tooling", forceDeploy: false},
+  { deployName: "045_deposit_withdraw_tooling", forceDeploy: false },
   async ({
     assetAddresses,
     deployWithConfirmation,

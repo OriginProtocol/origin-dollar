@@ -250,7 +250,12 @@ contract VaultAdmin is VaultStorage {
             "Invalid to Strategy"
         );
         require(_assets.length == _amounts.length, "Parameter length mismatch");
-        _withdrawFromStrategy(_strategyToAddress, _strategyFromAddress, _assets, _amounts);
+        _withdrawFromStrategy(
+            _strategyToAddress,
+            _strategyFromAddress,
+            _assets,
+            _amounts
+        );
 
         IStrategy strategyTo = IStrategy(_strategyToAddress);
         // Tell new Strategy to deposit into protocol
@@ -264,17 +269,17 @@ contract VaultAdmin is VaultStorage {
      * @param _amounts Array of amounts of each corresponding asset to deposit.
      */
     function depositToStrategy(
-      address _strategyToAddress,
-      address[] calldata _assets,
-      uint256[] calldata _amounts
+        address _strategyToAddress,
+        address[] calldata _assets,
+        uint256[] calldata _amounts
     ) external onlyGovernorOrStrategist {
         _depositToStrategy(_strategyToAddress, _assets, _amounts);
     }
 
     function _depositToStrategy(
-      address _strategyToAddress,
-      address[] calldata _assets,
-      uint256[] calldata _amounts
+        address _strategyToAddress,
+        address[] calldata _assets,
+        uint256[] calldata _amounts
     ) internal {
         require(
             strategies[_strategyToAddress].isSupported,
@@ -300,18 +305,23 @@ contract VaultAdmin is VaultStorage {
      * @param _amounts Array of amounts of each corresponding asset to withdraw.
      */
     function withdrawFromStrategy(
-      address _strategyFromAddress,
-      address[] calldata _assets,
-      uint256[] calldata _amounts
+        address _strategyFromAddress,
+        address[] calldata _assets,
+        uint256[] calldata _amounts
     ) external onlyGovernorOrStrategist {
-        _withdrawFromStrategy(address(this), _strategyFromAddress, _assets, _amounts);
+        _withdrawFromStrategy(
+            address(this),
+            _strategyFromAddress,
+            _assets,
+            _amounts
+        );
     }
 
     function _withdrawFromStrategy(
-      address _receiver,
-      address _strategyFromAddress,
-      address[] calldata _assets,
-      uint256[] calldata _amounts
+        address _receiver,
+        address _strategyFromAddress,
+        address[] calldata _assets,
+        uint256[] calldata _amounts
     ) internal {
         require(
             strategies[_strategyFromAddress].isSupported,

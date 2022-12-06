@@ -156,7 +156,9 @@ forkOnlyDescribe("ForkTest: Vault", function () {
       const { vault, josh, usdc, dai, compoundStrategy } = fixture;
       await vault.connect(josh).mint(usdc.address, usdcUnits("90"), 0);
       await vault.connect(josh).mint(dai.address, daiUnits("50"), 0);
-      const strategistSigner = await impersonateAndFundContract(await vault.strategistAddr());
+      const strategistSigner = await impersonateAndFundContract(
+        await vault.strategistAddr()
+      );
 
       let daiBalance = await dai.balanceOf(vault.address);
       let usdcBalance = await usdc.balanceOf(vault.address);
@@ -169,8 +171,12 @@ forkOnlyDescribe("ForkTest: Vault", function () {
         );
 
       // stablecoin diff but with reversed sign (positive instead of expected negative)
-      const reversedDaiDiff = daiBalance.sub(await dai.balanceOf(vault.address));
-      const reversedUsdcDiff = usdcBalance.sub(await usdc.balanceOf(vault.address));
+      const reversedDaiDiff = daiBalance.sub(
+        await dai.balanceOf(vault.address)
+      );
+      const reversedUsdcDiff = usdcBalance.sub(
+        await usdc.balanceOf(vault.address)
+      );
 
       expect(reversedDaiDiff).to.equal(daiUnits("50"));
       expect(reversedUsdcDiff).to.approxEqualTolerance(usdcUnits("90"), 1);
@@ -191,7 +197,6 @@ forkOnlyDescribe("ForkTest: Vault", function () {
 
       expect(daiDiff).to.approxEqualTolerance(daiUnits("50"), 1);
       expect(usdcDiff).to.approxEqualTolerance(usdcUnits("90"), 1);
-
     });
 
     it("Should have vault buffer disabled", async () => {
