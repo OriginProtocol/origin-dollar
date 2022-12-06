@@ -258,6 +258,9 @@ contract VaultAdmin is VaultStorage {
         );
 
         IStrategy strategyTo = IStrategy(_strategyToAddress);
+        for (uint256 i = 0; i < _assets.length; i++) {
+            require(strategyTo.supportsAsset(_assets[i]), "Asset unsupported");
+        }
         // Tell new Strategy to deposit into protocol
         strategyTo.depositAll();
     }
