@@ -1,6 +1,6 @@
 const { expect } = require("chai");
 
-const { defaultFixture } = require("./../_fixture");
+const { defaultFixture, impersonateAndFundContract } = require("./../_fixture");
 const { utils } = require("ethers");
 
 const {
@@ -150,6 +150,48 @@ forkOnlyDescribe("ForkTest: Vault", function () {
         .connect(josh)
         .balanceOf(josh.getAddress());
       expect(balancePreMint).to.approxEqualTolerance(balancePostRedeem, 1);
+    });
+
+    it("should withdraw from and deposit to strategy", async () => {
+      const { vault, josh, usdc, dai, compoundStrategy } = fixture;
+      await vault.connect(josh).mint(usdc.address, usdcUnits("90"), 0);
+      await vault.connect(josh).mint(dai.address, daiUnits("50"), 0);
+      const strategistSigner = await impersonateAndFundContract(await vault.strategistAddr());
+
+      let daiBalance = await dai.balanceOf(vault.address);
+      let usdcBalance = await usdc.balanceOf(vault.address);
+      await vault
+        .connect(strategistSigner)
+        .depositToStrategy(
+          compoundStrategy.address,
+          [dai.address, usdc.address],
+          [daiUnits("50"), usdcUnits("90")]
+        );
+
+      // stablecoin diff but with reversed sign (positive instead of expected negative)
+      const reversedDaiDiff = daiBalance.sub(await dai.balanceOf(vault.address));
+      const reversedUsdcDiff = usdcBalance.sub(await usdc.balanceOf(vault.address));
+
+      expect(reversedDaiDiff).to.equal(daiUnits("50"));
+      expect(reversedUsdcDiff).to.approxEqualTolerance(usdcUnits("90"), 1);
+
+      daiBalance = await dai.balanceOf(vault.address);
+      usdcBalance = await usdc.balanceOf(vault.address);
+
+      await vault
+        .connect(strategistSigner)
+        .withdrawFromStrategy(
+          compoundStrategy.address,
+          [dai.address, usdc.address],
+          [daiUnits("50"), usdcUnits("90")]
+        );
+
+      const daiDiff = (await dai.balanceOf(vault.address)).sub(daiBalance);
+      const usdcDiff = (await usdc.balanceOf(vault.address)).sub(usdcBalance);
+
+      expect(daiDiff).to.approxEqualTolerance(daiUnits("50"), 1);
+      expect(usdcDiff).to.approxEqualTolerance(usdcUnits("90"), 1);
+
     });
 
     it("Should have vault buffer disabled", async () => {
