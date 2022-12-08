@@ -304,17 +304,18 @@ forkOnlyDescribe("ForkTest: Vault", function () {
       const strategies = await vault.getAllStrategies();
 
       const knownStrategies = [
-        // TODO: Update this every time a new strategy is added
+        // Update this every time a new strategy is added. Below are mainnet addresses
         "0x9c459eeb3FA179a40329b81C1635525e9A0Ef094", // Compound
         "0x5e3646A1Db86993f73E6b74A57D8640B69F7e259", // Aave
         "0xEA2Ef2e2E5A749D4A66b41Db9aD85a38Aa264cb3", // Convex
         "0x89Eb88fEdc50FC77ae8a18aAD1cA0ac27f777a90", // OUSD MetaStrategy
         "0x5A4eEe58744D1430876d5cA93cAB5CcB763C037D", // Morpho MetaStrategy
-        // TODO: Hardcode these after deploy
-        "0x4258a6E32Eb33Eed64c3caefe6bcCf53141518dE", // alUSD MetaStrategy
-        "0x617F960A19f0f4d560256E04B5F4B92E187C512D", // mUSD MetaStrategy
-        "0xB262b69d1dB3dc092C73384B8553DA3d00e93682", // USDD MetaStrategy
-        "0xD2001BaF4E726dAfd6589D5c7bf8C74d59E48438", // BUSD MetaStrategy
+        // TODO: Move addressed above this comment after they are deployed
+        // Below are the addresses for test environments
+        "0xb12C3410C44854054c217fbF79dFf38ffD1C0676", // alUSD MetaStrategy
+        "0xC83Cb4F34874E0Ef4c58b4e77D4935F8F819d203", // mUSD MetaStrategy
+        "0x85094b52754591A3dE0002AD97F433584389aea0", // USDD MetaStrategy
+        "0x9cc71E23839F95B596550D37f1Ca8a889c933258", // BUSD MetaStrategy
       ];
 
       for (const s of strategies) {
