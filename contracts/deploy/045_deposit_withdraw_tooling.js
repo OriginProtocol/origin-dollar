@@ -22,7 +22,7 @@ module.exports = deploymentWithProposal(
     // Governance Actions
     // ----------------
     return {
-      name: "Deploy new Morpho Compound strategy",
+      name: "Deploy new withdrawal utils",
       actions: [
         // 1. Set VaultAdmin implementation
         {

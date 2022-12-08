@@ -320,8 +320,11 @@ contract VaultAdmin is VaultStorage {
         );
     }
 
+    /**
+     * @param _recipient can either be a strategy or the Vault
+     */
     function _withdrawFromStrategy(
-        address _receiver,
+        address _recipient,
         address _strategyFromAddress,
         address[] calldata _assets,
         uint256[] calldata _amounts
@@ -334,8 +337,8 @@ contract VaultAdmin is VaultStorage {
 
         IStrategy strategyFrom = IStrategy(_strategyFromAddress);
         for (uint256 i = 0; i < _assets.length; i++) {
-            // Withdraw from Strategy and Vault  as recipient
-            strategyFrom.withdraw(_receiver, _assets[i], _amounts[i]);
+            // Withdraw from Strategy to the recipient
+            strategyFrom.withdraw(_recipient, _assets[i], _amounts[i]);
         }
     }
 
