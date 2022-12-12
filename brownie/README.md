@@ -43,3 +43,11 @@ and funds for easier testing of metastrategy
 Inspect available functions under `brownie/metastrategy.py` and also `brownie/world.py`.
 
 For some ideas how to create test cases check out `brownie/scripts/metapool/*`
+
+### Miscellaneous 
+
+If using Brownie console calls to your node timeout a lot you can reconnect to the provider with a higher timeout. E.g. connecting to localhost with 120 seconds timeout: 
+
+```
+web3.connect('http://127.0.0.1:8545', 120)
+```
