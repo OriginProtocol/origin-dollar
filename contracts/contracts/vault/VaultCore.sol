@@ -674,8 +674,12 @@ contract VaultCore is VaultStorage {
         view
         returns (uint256)
     {
+        uint256 dripPerBlock = _drip.perBlock;
+        if (dripPerBlock == 0) {
+            return _balance;
+        }
         uint256 elapsed = block.timestamp - _drip.lastCollect;
-        uint256 allowed = (elapsed * _drip.perBlock);
+        uint256 allowed = (elapsed * dripPerBlock);
         return (allowed > _balance) ? _balance : allowed;
     }
 
