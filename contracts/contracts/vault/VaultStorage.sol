@@ -120,6 +120,22 @@ contract VaultStorage is Initializable, Governable {
     // How much net total OUSD is allowed to be minted by all strategies
     uint256 public netOusdMintForStrategyThreshold = 0;
 
+    // Reserve funds held by the protocol
+    uint256 public protocolReserve;
+
+    uint256 public protocolReserveBps;
+
+    // Dripper funds held by the protocol
+    uint256 public dripperReserve;
+
+    // Dripper config/state
+    struct Dripper {
+        uint64 lastCollect;
+        uint128 perBlock;
+        uint64 dripDuration;
+    }
+    Dripper public dripper;
+
     /**
      * @dev set the implementation for the admin, this needs to be in a base class else we cannot set it
      * @param newImpl address of the implementation
