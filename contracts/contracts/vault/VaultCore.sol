@@ -415,8 +415,12 @@ contract VaultCore is VaultStorage {
         uint256 available = _dripperAvailableFunds(_dripperReserve, _dripper);
         _dripperReserve -= available;
         dripperReserve = _dripperReserve;
+        uint256 dripDuration = _dripper.dripDuration;
+        if (dripDuration == 0) {
+            dripDuration = 1;
+        }
         dripper = Dripper({
-            perBlock: uint128(_dripperReserve / _dripper.dripDuration), // TODO: use safe convert
+            perBlock: uint128(_dripperReserve / dripDuration), // TODO: use safe convert
             lastCollect: uint64(block.timestamp),
             dripDuration: _dripper.dripDuration
         });
