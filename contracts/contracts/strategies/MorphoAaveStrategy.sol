@@ -7,16 +7,16 @@ pragma solidity ^0.8.0;
  * @author Origin Protocol Inc
  */
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { BaseCompoundStrategy } from "./BaseCompoundStrategy.sol";
-import { IERC20 } from "../utils/InitializableAbstractStrategy.sol";
+import { IERC20, InitializableAbstractStrategy } from "../utils/InitializableAbstractStrategy.sol";
 import { IMorpho } from "../interfaces/morpho/IMorpho.sol";
 import { ILens } from "../interfaces/morpho/ILens.sol";
 import { StableMath } from "../utils/StableMath.sol";
 import "../utils/Helpers.sol";
 
-contract MorphoAaveStrategy is BaseCompoundStrategy {
+contract MorphoAaveStrategy is InitializableAbstractStrategy {
     address public constant MORPHO = 0x777777c9898D384F785Ee44Acfe945efDFf5f3E0;
     address public constant LENS = 0x507fA343d0A90786d86C7cd885f5C49263A91FF4;
+
     using SafeERC20 for IERC20;
     using StableMath for uint256;
 
@@ -123,11 +123,11 @@ contract MorphoAaveStrategy is BaseCompoundStrategy {
         require(_amount > 0, "Must deposit something");
 
         IMorpho(MORPHO).supply(
-            address(_getCTokenFor(_asset)),
+            address(_getPTokenFor(_asset)),
             address(this), // the address of the user you want to supply on behalf of
             _amount
         );
-        emit Deposit(_asset, address(_getCTokenFor(_asset)), _amount);
+        emit Deposit(_asset, address(_getPTokenFor(_asset)), _amount);
     }
 
     /**
@@ -167,7 +167,7 @@ contract MorphoAaveStrategy is BaseCompoundStrategy {
         address pToken = assetToPToken[_asset];
 
         IMorpho(MORPHO).withdraw(pToken, _amount);
-        emit Withdrawal(_asset, address(_getCTokenFor(_asset)), _amount);
+        emit Withdrawal(_asset, address(_getPTokenFor(_asset)), _amount);
         IERC20(_asset).safeTransfer(_recipient, _amount);
     }
 
@@ -209,5 +209,30 @@ contract MorphoAaveStrategy is BaseCompoundStrategy {
             pToken,
             address(this)
         );
+    }
+
+    /**
+     * @dev Retuns bool indicating whether asset is supported by strategy
+     * @param _asset Address of the asset
+     */
+    function supportsAsset(address _asset)
+        external
+        view
+        override
+        returns (bool)
+    {
+        return assetToPToken[_asset] != address(0);
+    }
+
+    /**
+     * @dev Get the pToken wrapped in the IERC20 interface for this asset.
+     *      Fails if the pToken doesn't exist in our mappings.
+     * @param _asset Address of the asset
+     * @return pToken Corresponding pToken to this asset
+     */
+    function _getPTokenFor(address _asset) internal view returns (ICERC20) {
+        address pToken = assetToPToken[_asset];
+        require(pToken != address(0), "pToken does not exist");
+        return IERC20(pToken);
     }
 }
