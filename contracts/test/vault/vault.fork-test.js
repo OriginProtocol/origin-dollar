@@ -234,8 +234,7 @@ forkOnlyDescribe("ForkTest: Vault", function () {
         "0x5A4eEe58744D1430876d5cA93cAB5CcB763C037D", // Morpho MetaStrategy
         // TODO: Hard-code these after deploy
         "0x050c4FcA28725d975c2896682eBD2905D2E58E84", // alUSD MetaStrategy
-        "0x4258a6E32Eb33Eed64c3caefe6bcCf53141518dE", // alUSD MetaStrategy
-        "0x617F960A19f0f4d560256E04B5F4B92E187C512D", // mUSD MetaStrategy
+        "0xdF58F78cebbb2A60740eD2f86cDf0545a485102F", // mUSD MetaStrategy
         "0xB262b69d1dB3dc092C73384B8553DA3d00e93682", // USDD MetaStrategy
         "0xD2001BaF4E726dAfd6589D5c7bf8C74d59E48438", // BUSD MetaStrategy
         "0xA27A68886fb6dB6e6E41910695FE913d4b2BB254", // LUSD MetaStrategy
