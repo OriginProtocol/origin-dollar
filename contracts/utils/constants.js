@@ -2,6 +2,7 @@ const threeCRVPid = 9;
 const metapoolLPCRVPid = 56;
 const musdMetapoolLPCRVPid = 14;
 const fraxMetapoolLPCRVPid = 32;
+const lusdMetapoolLPCRVPid = 33;
 const busdMetapoolLPCRVPid = 34;
 const alusdMetapoolLPCRVPid = 36;
 const usddMetapoolLPCRVPid = 96;
@@ -15,6 +16,7 @@ module.exports = {
   metapoolLPCRVPid,
   musdMetapoolLPCRVPid,
   fraxMetapoolLPCRVPid,
+  lusdMetapoolLPCRVPid,
   alusdMetapoolLPCRVPid,
   usddMetapoolLPCRVPid,
   busdMetapoolLPCRVPid,
