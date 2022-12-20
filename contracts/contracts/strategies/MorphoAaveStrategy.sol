@@ -205,7 +205,7 @@ contract MorphoAaveStrategy is InitializableAbstractStrategy {
         view
         returns (uint256 balance)
     {
-        address pToken = assetToPToken[_asset];
+        address pToken = address(_getPTokenFor(_asset));
 
         // Total value represented by decimal position of underlying token
         (, , balance) = ILens(LENS).getCurrentSupplyBalanceInOf(
