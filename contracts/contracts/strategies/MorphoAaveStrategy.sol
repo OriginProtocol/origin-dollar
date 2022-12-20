@@ -87,6 +87,7 @@ contract MorphoAaveStrategy is InitializableAbstractStrategy {
         nonReentrant
     {
         // Morpho Aave-v2 doesn't distribute reward tokens
+        // solhint-disable-next-line max-line-length
         // Ref: https://developers.morpho.xyz/interact-with-morpho/get-started/interact-with-morpho/claim-rewards#morpho-aave-v2
     }
 
@@ -95,6 +96,7 @@ contract MorphoAaveStrategy is InitializableAbstractStrategy {
      */
     function getPendingRewards() external view returns (uint256 balance) {
         // Morpho Aave-v2 doesn't distribute reward tokens
+        // solhint-disable-next-line max-line-length
         // Ref: https://developers.morpho.xyz/interact-with-morpho/get-started/interact-with-morpho/claim-rewards#morpho-aave-v2
         return 0;
     }
