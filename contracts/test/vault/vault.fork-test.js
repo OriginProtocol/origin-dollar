@@ -236,7 +236,7 @@ forkOnlyDescribe("ForkTest: Vault", function () {
         "0x050c4FcA28725d975c2896682eBD2905D2E58E84", // alUSD MetaStrategy
         "0xdF58F78cebbb2A60740eD2f86cDf0545a485102F", // mUSD MetaStrategy
         "0x7566773C0E4DB740848a92171E063518e7Bf94d9", // USDD MetaStrategy
-        "0xD2001BaF4E726dAfd6589D5c7bf8C74d59E48438", // BUSD MetaStrategy
+        "0x91c444e963993d154d3b1e63712088978cF33C49", // BUSD MetaStrategy
         "0xA27A68886fb6dB6e6E41910695FE913d4b2BB254", // LUSD MetaStrategy
       ];
 
