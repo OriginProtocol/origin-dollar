@@ -94,7 +94,6 @@ contract MorphoAaveStrategy is InitializableAbstractStrategy {
      * @dev Get the amount of rewards pending to be collected from the protocol
      */
     function getPendingRewards() external view returns (uint256 balance) {
-
         // Morpho Aave-v2 doesn't distribute reward tokens
         // Ref: https://developers.morpho.xyz/interact-with-morpho/get-started/interact-with-morpho/claim-rewards#morpho-aave-v2
         return 0;

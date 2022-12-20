@@ -208,7 +208,7 @@ async function defaultFixture() {
       "MorphoCompoundStrategy",
       morphoCompoundStrategyProxy.address
     );
-      
+
     const morphoAaveStrategyProxy = await ethers.getContract(
       "MorphoAaveStrategyProxy"
     );

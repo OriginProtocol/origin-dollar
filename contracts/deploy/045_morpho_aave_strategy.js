@@ -81,10 +81,7 @@ module.exports = deploymentWithProposal(
         .transferGovernance(governorAddr, await getTxOpts())
     );
 
-    console.log(
-      "Morpho Aave strategy address: ",
-      cMorphoAaveStrategy.address
-    );
+    console.log("Morpho Aave strategy address: ", cMorphoAaveStrategy.address);
     // Governance Actions
     // ----------------
     return {

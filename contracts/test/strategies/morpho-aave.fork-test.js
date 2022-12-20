@@ -81,46 +81,42 @@ forkOnlyDescribe("ForkTest: Morpho Aave Strategy", function () {
 
   describe("Supply Revenue", function () {
     it("Should get supply interest", async function () {
-      const {
-        anna,
-        dai,
-        morphoAaveStrategy,
-      } = fixture;
+      const { anna, dai, morphoAaveStrategy } = fixture;
       await mintTest(fixture, anna, dai, "110000");
-  
-      const currentBalance = await morphoAaveStrategy.checkBalance(dai.address)
-      
+
+      const currentBalance = await morphoAaveStrategy.checkBalance(dai.address);
+
       await advanceTime(60 * 60 * 24 * 365);
       await advanceBlocks(10000);
-      
-      const balanceAfter1Y = await morphoAaveStrategy.checkBalance(dai.address)
-  
-      const diff = balanceAfter1Y.sub(currentBalance)
-      expect(diff).to.be.gt(0)
+
+      const balanceAfter1Y = await morphoAaveStrategy.checkBalance(dai.address);
+
+      const diff = balanceAfter1Y.sub(currentBalance);
+      expect(diff).to.be.gt(0);
     });
-  })
+  });
 
   describe("Withdraw", function () {
     it("Should be able to withdraw from DAI strategy", async function () {
-      const { domen, dai } = fixture
-      await withdrawTest(fixture, domen, dai, '28000')
+      const { domen, dai } = fixture;
+      await withdrawTest(fixture, domen, dai, "28000");
     });
 
     it("Should be able to withdraw from USDT strategy", async function () {
-      const { franck, usdt } = fixture
-      await withdrawTest(fixture, franck, usdt, '33000')
+      const { franck, usdt } = fixture;
+      await withdrawTest(fixture, franck, usdt, "33000");
     });
 
     it("Should be able to withdraw from USDC strategy", async function () {
-      const { daniel, usdc } = fixture
-      await withdrawTest(fixture, daniel, usdc, '25000')
+      const { daniel, usdc } = fixture;
+      await withdrawTest(fixture, daniel, usdc, "25000");
     });
-  
+
     it("Should be able to withdrawAll from strategy", async function () {
       const { matt, usdc, vault, usdt, morphoAaveStrategy } = fixture;
       const vaultSigner = await impersonateAndFundContract(vault.address);
       const amount = "110000";
-  
+
       const removeFundsFromVault = async () => {
         await usdc
           .connect(vaultSigner)
@@ -129,30 +125,29 @@ forkOnlyDescribe("ForkTest: Morpho Aave Strategy", function () {
           .connect(vaultSigner)
           .transfer(matt.address, usdt.balanceOf(vault.address));
       };
-  
+
       // remove funds so no residual funds get allocated
       await removeFundsFromVault();
-  
+
       await mintTest(fixture, matt, usdc, amount);
       await mintTest(fixture, matt, usdt, amount);
-  
+
       const usdcUnits = await units(amount, usdc);
       const usdtUnits = await units(amount, usdt);
       const vaultUsdtBefore = await usdt.balanceOf(vault.address);
       const vaultUsdcBefore = await usdc.balanceOf(vault.address);
-  
+
       await morphoAaveStrategy.connect(vaultSigner).withdrawAll();
-  
+
       const vaultUsdtDiff =
         (await usdt.balanceOf(vault.address)) - vaultUsdtBefore;
       const vaultUsdcDiff =
         (await usdc.balanceOf(vault.address)) - vaultUsdcBefore;
-  
+
       expect(vaultUsdcDiff).to.approxEqualTolerance(usdcUnits, 1);
       expect(vaultUsdtDiff).to.approxEqualTolerance(usdtUnits, 1);
     });
-  })
-
+  });
 });
 
 async function mintTest(fixture, user, asset, amount = "30000") {
@@ -174,9 +169,7 @@ async function mintTest(fixture, user, asset, amount = "30000") {
 
   const newBalance = await ousd.connect(user).balanceOf(user.address);
   const newSupply = await ousd.totalSupply();
-  const newMorphoBalance = await morphoAaveStrategy.checkBalance(
-    asset.address
-  );
+  const newMorphoBalance = await morphoAaveStrategy.checkBalance(asset.address);
 
   const balanceDiff = newBalance.sub(currentBalance);
   // Ensure user has correct balance (w/ 1% slippage tolerance)
@@ -208,8 +201,9 @@ async function withdrawTest(fixture, user, asset, amount = "25000") {
   await morphoAaveStrategy
     .connect(vaultSigner)
     .withdraw(vault.address, asset.address, assetUnits);
-  const vaultAssetBalDiff =
-    (await asset.balanceOf(vault.address)).sub(vaultAssetBalBefore);
+  const vaultAssetBalDiff = (await asset.balanceOf(vault.address)).sub(
+    vaultAssetBalBefore
+  );
 
   expect(vaultAssetBalDiff).to.approxEqualTolerance(assetUnits, 1);
 }
