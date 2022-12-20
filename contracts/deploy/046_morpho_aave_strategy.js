@@ -64,9 +64,6 @@ module.exports = deploymentWithProposal(
     await withConfirmation(
       cMorphoAaveStrategy.connect(sDeployer)[initFunction](
         cVaultProxy.address,
-        // [assetAddresses.AAVE], // reward token addresses
-        // [assetAddresses.DAI], // asset token addresses
-        // [assetAddresses.aDAI], // platform tokens addresses
         [], // reward token addresses
         [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT], // asset token addresses
         [assetAddresses.aDAI, assetAddresses.aUSDC, assetAddresses.aUSDT], // platform tokens addresses

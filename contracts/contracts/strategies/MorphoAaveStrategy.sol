@@ -2,8 +2,8 @@
 pragma solidity ^0.8.0;
 
 /**
- * @title OUSD Morpho Compound Strategy
- * @notice Investment strategy for investing stablecoins via Morpho (Compound)
+ * @title OUSD Morpho Aave Strategy
+ * @notice Investment strategy for investing stablecoins via Morpho (Aave)
  * @author Origin Protocol Inc
  */
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -123,12 +123,14 @@ contract MorphoAaveStrategy is InitializableAbstractStrategy {
     function _deposit(address _asset, uint256 _amount) internal {
         require(_amount > 0, "Must deposit something");
 
+        address pToken = address(_getPTokenFor(_asset));
+
         IMorpho(MORPHO).supply(
-            address(_getPTokenFor(_asset)),
+            pToken,
             address(this), // the address of the user you want to supply on behalf of
             _amount
         );
-        emit Deposit(_asset, address(_getPTokenFor(_asset)), _amount);
+        emit Deposit(_asset, pToken, _amount);
     }
 
     /**
@@ -165,10 +167,10 @@ contract MorphoAaveStrategy is InitializableAbstractStrategy {
         require(_amount > 0, "Must withdraw something");
         require(_recipient != address(0), "Must specify recipient");
 
-        address pToken = assetToPToken[_asset];
+        address pToken = address(_getPTokenFor(_asset));
 
         IMorpho(MORPHO).withdraw(pToken, _amount);
-        emit Withdrawal(_asset, address(_getPTokenFor(_asset)), _amount);
+        emit Withdrawal(_asset, pToken, _amount);
         IERC20(_asset).safeTransfer(_recipient, _amount);
     }
 
