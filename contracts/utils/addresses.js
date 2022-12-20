@@ -30,9 +30,9 @@ addresses.mainnet.AAVE_ADDRESS_PROVIDER =
   "0xb53c1a33016b2dc2ff3653530bff1848a515c8c5"; // v2
 addresses.mainnet.Aave = "0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9"; // v1-v2
 addresses.mainnet.aTUSD = "--"; // Todo: use v2
-addresses.mainnet.aUSDT = "--"; // Todo: use v2
+addresses.mainnet.aUSDT = "0x3Ed3B47Dd13EC9a98b44e6204A523E766B225811"; // v2
 addresses.mainnet.aDAI = "0x028171bca77440897b824ca71d1c56cac55b68a3"; // v2
-addresses.mainnet.aUSDC = "--"; // Todo: use v2
+addresses.mainnet.aUSDC = "0xBcca60bB61934080951369a648Fb03DF4F96263C"; // v2
 addresses.mainnet.STKAAVE = "0x4da27a545c0c5b758a6ba100e3a049001de870f5"; // v1-v2
 addresses.mainnet.AAVE_INCENTIVES_CONTROLLER =
   "0xd784927Ff2f95ba542BfC824c8a8a98F3495f6b5"; // v2

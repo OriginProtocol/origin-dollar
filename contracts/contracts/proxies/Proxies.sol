@@ -107,3 +107,10 @@ contract ConvexUSDDMetaStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 contract ConvexBUSDMetaStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
+
+/**
+ * @notice MorphoAaveStrategyProxy delegates calls to a MorphoCompoundStrategy implementation
+ */
+contract MorphoAaveStrategyProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
