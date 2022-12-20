@@ -79,78 +79,80 @@ forkOnlyDescribe("ForkTest: Morpho Aave Strategy", function () {
     });
   });
 
-  it("Should get supply interest", async function () {
-    const {
-      anna,
-      dai,
-      morphoAaveStrategy,
-    } = fixture;
-    await mintTest(fixture, anna, dai, "110000");
+  describe("Supply Revenue", function () {
+    it("Should get supply interest", async function () {
+      const {
+        anna,
+        dai,
+        morphoAaveStrategy,
+      } = fixture;
+      await mintTest(fixture, anna, dai, "110000");
+  
+      const currentBalance = await morphoAaveStrategy.checkBalance(dai.address)
+      
+      await advanceTime(60 * 60 * 24 * 365);
+      await advanceBlocks(10000);
+      
+      const balanceAfter1Y = await morphoAaveStrategy.checkBalance(dai.address)
+  
+      const diff = balanceAfter1Y.sub(currentBalance)
+      expect(diff).to.be.gt(0)
+    });
+  })
 
-    const currentBalance = await morphoAaveStrategy.checkBalance(dai.address)
-    
-    await advanceTime(60 * 60 * 24 * 365);
-    await advanceBlocks(10000);
-    
-    const balanceAfter1Y = await morphoAaveStrategy.checkBalance(dai.address)
+  describe("Withdraw", function () {
+    it("Should be able to withdraw from DAI strategy", async function () {
+      const { domen, dai } = fixture
+      await withdrawTest(fixture, domen, dai, '28000')
+    });
 
-    const diff = balanceAfter1Y.sub(currentBalance)
-    expect(diff).to.be.gt(0)
-  });
+    it("Should be able to withdraw from USDT strategy", async function () {
+      const { franck, usdt } = fixture
+      await withdrawTest(fixture, franck, usdt, '33000')
+    });
 
-  it("Should be able to withdraw from strategy", async function () {
-    const { matt, dai, vault, morphoAaveStrategy } = fixture;
-    const amount = "110000";
-    await mintTest(fixture, matt, dai, amount);
+    it("Should be able to withdraw from USDC strategy", async function () {
+      const { daniel, usdc } = fixture
+      await withdrawTest(fixture, daniel, usdc, '25000')
+    });
+  
+    it("Should be able to withdrawAll from strategy", async function () {
+      const { matt, usdc, vault, usdt, morphoAaveStrategy } = fixture;
+      const vaultSigner = await impersonateAndFundContract(vault.address);
+      const amount = "110000";
+  
+      const removeFundsFromVault = async () => {
+        await usdc
+          .connect(vaultSigner)
+          .transfer(matt.address, usdc.balanceOf(vault.address));
+        await usdt
+          .connect(vaultSigner)
+          .transfer(matt.address, usdt.balanceOf(vault.address));
+      };
+  
+      // remove funds so no residual funds get allocated
+      await removeFundsFromVault();
+  
+      await mintTest(fixture, matt, usdc, amount);
+      await mintTest(fixture, matt, usdt, amount);
+  
+      const usdcUnits = await units(amount, usdc);
+      const usdtUnits = await units(amount, usdt);
+      const vaultUsdtBefore = await usdt.balanceOf(vault.address);
+      const vaultUsdcBefore = await usdc.balanceOf(vault.address);
+  
+      await morphoAaveStrategy.connect(vaultSigner).withdrawAll();
+  
+      const vaultUsdtDiff =
+        (await usdt.balanceOf(vault.address)) - vaultUsdtBefore;
+      const vaultUsdcDiff =
+        (await usdc.balanceOf(vault.address)) - vaultUsdcBefore;
+  
+      expect(vaultUsdcDiff).to.approxEqualTolerance(usdcUnits, 1);
+      expect(vaultUsdtDiff).to.approxEqualTolerance(usdtUnits, 1);
+    });
+  })
 
-    const daiUnits = await units(amount, dai);
-    const vaultDaiBefore = await dai.balanceOf(vault.address);
-    const vaultSigner = await impersonateAndFundContract(vault.address);
-
-    await morphoAaveStrategy
-      .connect(vaultSigner)
-      .withdraw(vault.address, dai.address, daiUnits);
-    const vaultDaiDiff =
-      (await dai.balanceOf(vault.address)).sub(vaultDaiBefore);
-
-    expect(vaultDaiDiff).to.approxEqualTolerance(daiUnits, 1);
-  });
-
-  it("Should be able to withdrawAll from strategy", async function () {
-    const { matt, usdc, vault, usdt, morphoAaveStrategy } = fixture;
-    const vaultSigner = await impersonateAndFundContract(vault.address);
-    const amount = "110000";
-
-    const removeFundsFromVault = async () => {
-      await usdc
-        .connect(vaultSigner)
-        .transfer(matt.address, usdc.balanceOf(vault.address));
-      await usdt
-        .connect(vaultSigner)
-        .transfer(matt.address, usdt.balanceOf(vault.address));
-    };
-
-    // remove funds so no residual funds get allocated
-    await removeFundsFromVault();
-
-    await mintTest(fixture, matt, usdc, amount);
-    await mintTest(fixture, matt, usdt, amount);
-
-    const usdcUnits = await units(amount, usdc);
-    const usdtUnits = await units(amount, usdt);
-    const vaultUsdtBefore = await usdt.balanceOf(vault.address);
-    const vaultUsdcBefore = await usdc.balanceOf(vault.address);
-
-    await morphoAaveStrategy.connect(vaultSigner).withdrawAll();
-
-    const vaultUsdtDiff =
-      (await usdt.balanceOf(vault.address)) - vaultUsdtBefore;
-    const vaultUsdcDiff =
-      (await usdc.balanceOf(vault.address)) - vaultUsdcBefore;
-
-    expect(vaultUsdcDiff).to.approxEqualTolerance(usdcUnits, 1);
-    expect(vaultUsdtDiff).to.approxEqualTolerance(usdtUnits, 1);
-  });
 });
 
 async function mintTest(fixture, user, asset, amount = "30000") {
@@ -193,4 +195,21 @@ async function mintTest(fixture, user, asset, amount = "30000") {
     await units(amount, asset),
     1
   );
+}
+
+async function withdrawTest(fixture, user, asset, amount = "25000") {
+  const { vault, morphoAaveStrategy } = fixture;
+  await mintTest(fixture, user, asset, amount);
+
+  const assetUnits = await units(amount, asset);
+  const vaultAssetBalBefore = await asset.balanceOf(vault.address);
+  const vaultSigner = await impersonateAndFundContract(vault.address);
+
+  await morphoAaveStrategy
+    .connect(vaultSigner)
+    .withdraw(vault.address, asset.address, assetUnits);
+  const vaultAssetBalDiff =
+    (await asset.balanceOf(vault.address)).sub(vaultAssetBalBefore);
+
+  expect(vaultAssetBalDiff).to.approxEqualTolerance(assetUnits, 1);
 }

@@ -230,7 +230,7 @@ contract MorphoAaveStrategy is InitializableAbstractStrategy {
      * @param _asset Address of the asset
      * @return pToken Corresponding pToken to this asset
      */
-    function _getPTokenFor(address _asset) internal view returns (ICERC20) {
+    function _getPTokenFor(address _asset) internal view returns (IERC20) {
         address pToken = assetToPToken[_asset];
         require(pToken != address(0), "pToken does not exist");
         return IERC20(pToken);
