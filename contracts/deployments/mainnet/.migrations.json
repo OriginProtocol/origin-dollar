@@ -39,5 +39,6 @@
   "040_vault_peg_check": 1659100448,
   "042_ogv_buyback": 1662754619,
   "043_convex_OUSD_meta_strategy": 1667562899,
-  "044_morpho_strategy": 1668204653
+  "044_morpho_strategy": 1668204653,
+  "046_vault_value_checker": 1669212530
 }
