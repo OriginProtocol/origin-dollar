@@ -45,6 +45,7 @@ contract VaultStorage is Initializable, Governable {
     event StrategistUpdated(address _address);
     event MaxSupplyDiffChanged(uint256 maxSupplyDiff);
     event YieldDistribution(address _to, uint256 _yield, uint256 _fee);
+    event ProtocolReserveBpsChanged(uint256 _basis);
     event TrusteeFeeBpsChanged(uint256 _basis);
     event TrusteeAddressChanged(address _address);
     event NetOusdMintForStrategyThresholdChanged(uint256 _threshold);

@@ -21,6 +21,8 @@ import { IVault } from "../interfaces/IVault.sol";
 import { IBuyback } from "../interfaces/IBuyback.sol";
 import "./VaultStorage.sol";
 
+import "hardhat/console.sol";
+
 contract VaultCore is VaultStorage {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
@@ -387,6 +389,7 @@ contract VaultCore is VaultStorage {
      *      portion of the yield to the trustee.
      */
     function _rebase() internal whenNotRebasePaused {
+        console.log("---Rebase---");
         // 1. Get data
         uint256 ousdSupply = oUSD.totalSupply();
         if (ousdSupply == 0) {
@@ -396,14 +399,18 @@ contract VaultCore is VaultStorage {
         uint256 _dripperReserve = dripperReserve;
         Dripper memory _dripper = dripper;
 
-        // Do not distribute funds unless assets > liabilities
-        if (vaultValue > ousdSupply) {
+        console.log("vv, os", vaultValue, ousdSupply);
+
+        // Do not distribute funds if assets < liabilities
+        if (vaultValue < ousdSupply) {
             return;
         }
 
-        // 2. Distribute new yield to internal accounts
+        console.log("pr, dr", protocolReserve, _dripperReserve);
+
+        // 2. Distribute new yield to internal accounts #todo, temp values pr
         uint256 preValue = ousdSupply - protocolReserve - dripperReserve;
-        if (preValue > vaultValue) {
+        if (vaultValue > preValue) {
             uint256 yield = vaultValue - preValue;
             // 3. Allocate to protocol reserve
             protocolReserve += (yield * protocolReserveBps) / 10000;
@@ -411,14 +418,23 @@ contract VaultCore is VaultStorage {
             _dripperReserve += yield - protocolReserve;
         }
 
+        console.log("pr, dr", protocolReserve, _dripperReserve);
+
         // 3. Drip previous yield, and update dripper
-        uint256 available = _dripperAvailableFunds(_dripperReserve, _dripper);
-        _dripperReserve -= available;
-        dripperReserve = _dripperReserve;
+        uint256 available = 0;
         uint256 dripDuration = _dripper.dripDuration;
         if (dripDuration == 0) {
             dripDuration = 1;
+            available = _dripperReserve;
+            _dripperReserve = 0;
+        } else {
+            available = _dripperAvailableFunds(_dripperReserve, _dripper);
+            _dripperReserve -= available;
         }
+
+        console.log("av, dr", available, _dripperReserve);
+
+        dripperReserve = _dripperReserve;
         dripper = Dripper({
             perBlock: uint128(_dripperReserve / dripDuration), // TODO: use safe convert
             lastCollect: uint64(block.timestamp),
@@ -443,9 +459,12 @@ contract VaultCore is VaultStorage {
         ousdSupply = oUSD.totalSupply(); // Final check should use latest value. TODO: Is this reload really needed?
         uint256 newSupply = ousdSupply + available - fee;
         // Only rachet OUSD supply upwards, final solvancy check
-        if (newSupply > ousdSupply && vaultValue > newSupply) {
+        console.log("ns, os, vv", newSupply, ousdSupply, vaultValue);
+        if (newSupply > ousdSupply && vaultValue >= newSupply) {
             oUSD.changeSupply(newSupply);
         }
+
+        console.log("pr, dr", protocolReserve, _dripperReserve);
 
         emit YieldDistribution(_trusteeAddress, available, fee);
     }
