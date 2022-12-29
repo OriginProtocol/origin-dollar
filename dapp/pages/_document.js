@@ -39,7 +39,7 @@ class MyDocument extends Document {
             type="text/javascript"
           ></script>
 
-          <meta name="image" content={"/images/ousd-image.jpeg"} />
+          <meta name="image" content={"/images/ousd-card.jpeg"} />
           <meta property="og:url" content="https://ousd.com" />
           <meta property="og:type" content="website" />
           <meta property="og:title" content="Origin Dollar (OUSD)" />
