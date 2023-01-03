@@ -252,6 +252,28 @@ const sendProposal = async (proposalArgs, description, opts = {}) => {
 };
 
 /**
+ * Sanity checks to perform before running the deploy
+ */
+const sanityCheck = async () => {
+  if (isMainnet) {
+    const VaultProxy = await ethers.getContract("VaultProxy");
+    const VaultAdmin = await ethers.getContractAt(
+      "VaultAdmin",
+      VaultProxy.address
+    );
+
+    const vaultGovernor = await VaultAdmin.governor();
+    const { governorAddr } = await getNamedAccounts();
+
+    if (vaultGovernor.toLowerCase() !== governorAddr.toLowerCase()) {
+      throw new Error(
+        `Hardhat environment has ${governorAddr} governor address configured which is different from Vault's governor: ${vaultGovernor}`
+      );
+    }
+  }
+};
+
+/**
  * Shortcut to create a deployment for hardhat to use
  * @param {Object} options for deployment
  * @param {Promise<Object>} fn to deploy contracts and return needed proposals
@@ -290,6 +312,7 @@ function deploymentWithProposal(opts, fn) {
       }
     }
 
+    await sanityCheck();
     const proposal = await fn(tools);
     const propDescription = proposal.name;
     const propArgs = await proposeArgs(proposal.actions);
