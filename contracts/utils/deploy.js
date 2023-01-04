@@ -420,7 +420,7 @@ function deploymentWithProposal(opts, fn) {
      * execution of a proposal and run all the for tests on top of (after) the proposal execution. But
      * since deployment artifacts are already present and migration file has already been updated
      * the hardhat deploy will skip the deployment file (ignoring even the force deploy/`skip` flags.
-     * Skipping the deployment file disables us to identify the New/Queued proposal id and executing it.
+     * Skipping the deployment file prevents us to identify the New/Queued proposal id and executing it.
      *
      * For that reason for any deployment ran on fork with proposalId we change the id of deployment
      * as a workaround so that Hardhat executes it. If proposal has already been executed the
