@@ -232,8 +232,9 @@ forkOnlyDescribe("ForkTest: Vault", function () {
         "0xEA2Ef2e2E5A749D4A66b41Db9aD85a38Aa264cb3", // Convex
         "0x89Eb88fEdc50FC77ae8a18aAD1cA0ac27f777a90", // OUSD MetaStrategy
         "0x5A4eEe58744D1430876d5cA93cAB5CcB763C037D", // Morpho MetaStrategy
-        // TODO: Hard-code these after deploy
         "0x7A192DD9Cc4Ea9bdEdeC9992df74F1DA55e60a19", // LUSD MetaStrategy
+        // TODO: Hard-code these after deploy
+        //"0x7A192DD9Cc4Ea9bdEdeC9992df74F1DA55e60a19", // LUSD MetaStrategy
       ];
 
       for (const s of strategies) {
