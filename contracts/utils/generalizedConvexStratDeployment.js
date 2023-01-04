@@ -21,12 +21,14 @@ module.exports = ({
   // we only need to deploy the implementation contract for first time & when it changes
   deployStrategyImplementation,
   skipMainnetDeploy,
+  proposalId
 }) => {
   return deploymentWithProposal(
     {
       deployName,
       forceDeploy,
       forceSkip: isMainnet && skipMainnetDeploy,
+      proposalId
     },
     async ({
       assetAddresses,
