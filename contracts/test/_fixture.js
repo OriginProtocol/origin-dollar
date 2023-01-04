@@ -125,6 +125,8 @@ async function defaultFixture() {
     cusdc,
     comp,
     adai,
+    ausdt,
+    ausdc,
     aave,
     aaveToken,
     stkAave,
@@ -145,6 +147,7 @@ async function defaultFixture() {
     metapoolToken,
     morpho,
     morphoCompoundStrategy,
+    morphoAaveStrategy,
     morphoLens,
     alUSDMetapoolToken,
     threePoolGauge,
@@ -171,6 +174,9 @@ async function defaultFixture() {
     ogn = await ethers.getContractAt(erc20Abi, addresses.mainnet.OGN);
     alUSD = await ethers.getContractAt(erc20Abi, addresses.mainnet.alUSD);
     aave = await ethers.getContractAt(erc20Abi, addresses.mainnet.Aave);
+    ausdt = await ethers.getContractAt(erc20Abi, addresses.mainnet.aUSDT);
+    ausdc = await ethers.getContractAt(erc20Abi, addresses.mainnet.aUSDC);
+    adai = await ethers.getContractAt(erc20Abi, addresses.mainnet.aDAI);
     morpho = await ethers.getContractAt(morphoAbi, addresses.mainnet.Morpho);
     morphoLens = await ethers.getContractAt(
       morphoLensAbi,
@@ -194,13 +200,21 @@ async function defaultFixture() {
       "IRewardStaking",
       addresses.mainnet.CVXRewardsPool
     );
+
     const morphoCompoundStrategyProxy = await ethers.getContract(
       "MorphoCompoundStrategyProxy"
     );
-
     morphoCompoundStrategy = await ethers.getContractAt(
       "MorphoCompoundStrategy",
       morphoCompoundStrategyProxy.address
+    );
+
+    const morphoAaveStrategyProxy = await ethers.getContract(
+      "MorphoAaveStrategyProxy"
+    );
+    morphoAaveStrategy = await ethers.getContractAt(
+      "MorphoAaveStrategy",
+      morphoAaveStrategyProxy.address
     );
   } else {
     usdt = await ethers.getContract("MockUSDT");
@@ -369,6 +383,8 @@ async function defaultFixture() {
     comp,
     // aTokens,
     adai,
+    ausdt,
+    ausdc,
     // CompoundStrategy contract factory to deploy
     CompoundStrategyFactory,
     // ThreePool
@@ -386,6 +402,7 @@ async function defaultFixture() {
     OUSDmetaStrategy,
     alUSDMetaStrategy,
     morphoCompoundStrategy,
+    morphoAaveStrategy,
     cvx,
     cvxBooster,
     cvxRewardPool,
@@ -669,6 +686,45 @@ async function morphoCompoundFixture() {
       .setAssetDefaultStrategy(
         fixture.dai.address,
         fixture.morphoCompoundStrategy.address
+      );
+  } else {
+    throw new Error(
+      "Morpho strategy only supported in forked test environment"
+    );
+  }
+
+  return fixture;
+}
+
+/**
+ * Configure a Vault with only the Morpho strategy.
+ */
+async function morphoAaveFixture() {
+  const fixture = await loadFixture(defaultFixture);
+
+  const { governorAddr } = await getNamedAccounts();
+  const sGovernor = await ethers.provider.getSigner(governorAddr);
+
+  if (isFork) {
+    await fixture.vault
+      .connect(sGovernor)
+      .setAssetDefaultStrategy(
+        fixture.usdt.address,
+        fixture.morphoAaveStrategy.address
+      );
+
+    await fixture.vault
+      .connect(sGovernor)
+      .setAssetDefaultStrategy(
+        fixture.usdc.address,
+        fixture.morphoAaveStrategy.address
+      );
+
+    await fixture.vault
+      .connect(sGovernor)
+      .setAssetDefaultStrategy(
+        fixture.dai.address,
+        fixture.morphoAaveStrategy.address
       );
   } else {
     throw new Error(
@@ -1127,6 +1183,7 @@ module.exports = {
   convexGeneralizedMetaForkedFixture,
   convexalUSDMetaVaultFixture,
   morphoCompoundFixture,
+  morphoAaveFixture,
   aaveVaultFixture,
   hackedVaultFixture,
   rebornFixture,
