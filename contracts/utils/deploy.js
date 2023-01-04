@@ -374,21 +374,21 @@ function deploymentWithProposal(opts, fn) {
 
   if (forceDeploy && isForkTest && proposalId) {
     /** Just for context of this fork test change the id of the deployment script. This is required
-     * in circumstances when: 
+     * in circumstances when:
      * - the deployment script has already been run on the mainnet
      * - proposal has been either "Queued" or is still "New"
      * - all the deployment artifacts and migration information is already present in the repo
-     * 
-     * Problem: as part of normal deployment procedure we want to be able to simulate the 
+     *
+     * Problem: as part of normal deployment procedure we want to be able to simulate the
      * execution of a proposal and run all the for tests on top of (after) the proposal execution. But
      * since deployment artifacts are already present and migration file has already been updated
-     * the hardhat deploy will skip the deployment file (ignoring any force deploy/`skip` flags. 
+     * the hardhat deploy will skip the deployment file (ignoring any force deploy/`skip` flags.
      * Skipping the deployment file disables us to identify the New/Queued proposal id and executing it.
-     * 
+     *
      * For that reason for that specific circumstance change the id of deployment as a workaround so that
-     * Hardhat doesn't identify it as a separate deployment. 
+     * Hardhat doesn't identify it as a separate deployment.
      */
-    main.id = `${deployName}_force`
+    main.id = `${deployName}_force`;
   }
   return main;
 }

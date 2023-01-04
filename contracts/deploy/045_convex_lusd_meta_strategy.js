@@ -19,5 +19,5 @@ module.exports = generalizedConvexStratDeployment({
   redeployVault: false,
   deployStrategyImplementation: true,
   skipMainnetDeploy: false,
-  proposalId: 41 // just set to false if no proposal id yet
+  proposalId: 41, // just set to false if no proposal id yet
 });
