@@ -3,7 +3,6 @@ const { lusdMetapoolLPCRVPid } = require("../utils/constants");
 
 module.exports = generalizedConvexStratDeployment({
   deployName: "045_convex_lusd_meta_strategy",
-  forceDeploy: false,
   mainTokenName: "Liquity USD",
   mainTokenSymbol: "LUSD",
   rewardTokenNames: ["CVX", "CRV"],
