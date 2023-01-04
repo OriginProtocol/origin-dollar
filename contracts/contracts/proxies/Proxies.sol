@@ -109,6 +109,13 @@ contract ConvexBUSDMetaStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 }
 
 /**
+ * @notice ConvexLUSDMetaStrategyProxy delegates calls to a ConvexalGeneralizedMetaStrategy implementation
+ */
+contract ConvexLUSDMetaStrategyProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
+
+/**
  * @notice MorphoAaveStrategyProxy delegates calls to a MorphoCompoundStrategy implementation
  */
 contract MorphoAaveStrategyProxy is InitializeGovernedUpgradeabilityProxy {

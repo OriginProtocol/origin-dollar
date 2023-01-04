@@ -2,9 +2,9 @@ const { deploymentWithProposal } = require("../utils/deploy");
 
 module.exports = deploymentWithProposal(
   {
-    deployName: "046_morpho_aave_strategy",
+    deployName: "047_morpho_aave_strategy",
     forceDeploy: false,
-    proposalId: 42,
+    // proposalId: 42,
   },
   async ({
     assetAddresses,

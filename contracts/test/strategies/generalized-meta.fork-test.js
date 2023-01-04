@@ -45,6 +45,14 @@ const metastrategies = [
     rewardPoolAddress: "0xbD223812d360C9587921292D0644D18aDb6a2ad0",
     skipMewTest: false,
   },
+  {
+    token: "LUSD",
+    metapoolAddress: "0xEd279fDD11cA84bEef15AF5D39BB4d4bEE23F0cA",
+    lpToken: "0xEd279fDD11cA84bEef15AF5D39BB4d4bEE23F0cA",
+    metastrategyProxyName: "ConvexLUSDMetaStrategyProxy",
+    rewardPoolAddress: "0x2ad92A7aE036a038ff02B96c88de868ddf3f8190",
+    skipMewTest: false,
+  },
 ];
 
 metastrategies.forEach(
