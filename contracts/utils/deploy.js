@@ -434,25 +434,8 @@ function deploymentWithProposal(opts, fn) {
     }
 
     main.skip = async () => {
-      if (isFork) {
-        const networkName = isForkTest ? "hardhat" : "localhost";
-        const migrations = require(`./../deployments/${networkName}/.migrations.json`);
-        const currentBlock = await ethers.provider.getBlockNumber();
-        const block = await ethers.provider.getBlockNumber(currentBlock);
-
-        if (proposalId) {
-          return false;
-        } else {
-          const skip = migrations[deployName] < currentBlock;
-          if (!skip) {
-            console.log(
-              ```Deploy ${deployName} has no proposal id and is deployed on the mainnet 
-                 with block number: ${migrations[deployName]} which is higher than forked
-                 node block: ${currentBlock}. Applying migration.```
-            );
-          }
-          return skip;
-        }
+      if (isFork && proposalId) {
+        return false;
       } else {
         return !isMainnet || isSmokeTest || isFork;
       }
