@@ -4,7 +4,7 @@ module.exports = deploymentWithProposal(
   {
     deployName: "047_morpho_aave_strategy",
     forceDeploy: false,
-    // proposalId: 42,
+    proposalId: 43,
   },
   async ({
     assetAddresses,
