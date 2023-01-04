@@ -1,11 +1,6 @@
 const threeCRVPid = 9;
 const metapoolLPCRVPid = 56;
-const musdMetapoolLPCRVPid = 14;
-const fraxMetapoolLPCRVPid = 32;
 const lusdMetapoolLPCRVPid = 33;
-const busdMetapoolLPCRVPid = 34;
-const alusdMetapoolLPCRVPid = 36;
-const usddMetapoolLPCRVPid = 96;
 const { BigNumber } = require("ethers");
 const MAX_UINT256 = BigNumber.from(
   "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
@@ -14,12 +9,7 @@ const MAX_UINT256 = BigNumber.from(
 module.exports = {
   threeCRVPid,
   metapoolLPCRVPid,
-  musdMetapoolLPCRVPid,
-  fraxMetapoolLPCRVPid,
   lusdMetapoolLPCRVPid,
-  alusdMetapoolLPCRVPid,
-  usddMetapoolLPCRVPid,
-  busdMetapoolLPCRVPid,
   MAX_UINT256,
 };
 
