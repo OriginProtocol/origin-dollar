@@ -313,20 +313,22 @@ const handlePossiblyActiveProposal = async (
         `Found proposal id: ${proposalId} on forked network. Executing proposal containing deployment of: ${deployName}`
       );
 
-      // Skip queue if proposal is already queued
+      // skip queue if proposal is already queued
       await executeProposalOnFork({
         proposalId,
         skipQueue: proposalState === "Queue",
       });
-      // deployment ran, nothing else to do here
+
+      // proposal executed skip deployment
       return true;
     } else if (proposalState === "Executed") {
       console.log(`Proposal ${deployName} already executed. Nothing to do.`);
-      // proposal has already been executed nothing to do here
+      // proposal has already been executed skip deployment
       return true;
     }
   }
 
+  // run deployment
   return false;
 };
 
