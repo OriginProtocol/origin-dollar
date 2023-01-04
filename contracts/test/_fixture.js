@@ -830,11 +830,15 @@ async function convexGeneralizedMetaForkedFixture(
   };
 }
 
-async function impersonateAndFundContract(address) {
+async function impersonateAccount(address) {
   await hre.network.provider.request({
     method: "hardhat_impersonateAccount",
     params: [address],
   });
+}
+
+async function impersonateAndFundContract(address) {
+  await impersonateAccount(address);
 
   await hre.network.provider.send("hardhat_setBalance", [
     address,
@@ -1185,4 +1189,5 @@ module.exports = {
   rebornFixture,
   withImpersonatedAccount,
   impersonateAndFundContract,
+  impersonateAccount,
 };
