@@ -182,7 +182,11 @@ const executeProposal = async (proposalArgs, description, opts = {}) => {
  * @param {Number} proposalId
  * @returns {Promise<void>}
  */
-const executeProposalOnFork = async (proposalId, executeGasLimit = null) => {
+const executeProposalOnFork = async ({
+  proposalId,
+  executeGasLimit = null,
+  skipQueue = false,
+}) => {
   if (!isFork) throw new Error("Can only be used on Fork");
 
   // Get the guardian of the governor and impersonate it.
@@ -192,12 +196,14 @@ const executeProposalOnFork = async (proposalId, executeGasLimit = null) => {
 
   const governor = await ethers.getContract("Governor");
 
-  //First enqueue the proposal, then execute it.
-  await withConfirmation(
-    governor.connect(sGuardian).queue(proposalId, await getTxOpts())
-  );
+  if (!skipQueue) {
+    //First enqueue the proposal, then execute it.
+    await withConfirmation(
+      governor.connect(sGuardian).queue(proposalId, await getTxOpts())
+    );
 
-  log(`Proposal ${proposalId} queued`);
+    log(`Proposal ${proposalId} queued`);
+  }
 
   log("Advancing time by 48 hours + 1 second for TimeLock delay.");
   await advanceTime(172801);
@@ -252,6 +258,81 @@ const sendProposal = async (proposalArgs, description, opts = {}) => {
 };
 
 /**
+ * Sanity checks to perform before running the deploy
+ */
+const sanityCheck = async () => {
+  if (isMainnet) {
+    const VaultProxy = await ethers.getContract("VaultProxy");
+    const VaultAdmin = await ethers.getContractAt(
+      "VaultAdmin",
+      VaultProxy.address
+    );
+
+    const vaultGovernor = await VaultAdmin.governor();
+    const { governorAddr } = await getNamedAccounts();
+
+    if (vaultGovernor.toLowerCase() !== governorAddr.toLowerCase()) {
+      throw new Error(
+        `Hardhat environment has ${governorAddr} governor address configured which is different from Vault's governor: ${vaultGovernor}`
+      );
+    }
+  }
+};
+
+/**
+ * When in forked/fork test environment we want special handling of possibly active proposals:
+ * - if node is forked below the proposal block number deploy the migration file
+ * - if node is forked after the proposal block number check the status of proposal:
+ *   - if proposal executed skip deployment
+ *   - if proposal New / Queued execute it and skip deployment
+ *
+ * @returns bool -> when true the hardhat deployment is skipped
+ */
+const handlePossiblyActiveProposal = async (
+  proposalId,
+  deployName,
+  governor
+) => {
+  if (isFork && proposalId) {
+    const proposalCount = Number((await governor.proposalCount()).toString());
+    // proposal has not yet been submitted on the forked node (with current block height)
+    if (proposalCount < proposalId) {
+      // execute the whole deployment normally
+      console.log(
+        `Proposal ${deployName} not yet submitted at this block height. Continue deploy.`
+      );
+      return false;
+    }
+
+    const proposalState = ["New", "Queue", "Expired", "Executed"][
+      await governor.state(proposalId)
+    ];
+
+    if (["New", "Queue"].includes(proposalState)) {
+      console.log(
+        `Found proposal id: ${proposalId} on forked network. Executing proposal containing deployment of: ${deployName}`
+      );
+
+      // skip queue if proposal is already queued
+      await executeProposalOnFork({
+        proposalId,
+        skipQueue: proposalState === "Queue",
+      });
+
+      // proposal executed skip deployment
+      return true;
+    } else if (proposalState === "Executed") {
+      console.log(`Proposal ${deployName} already executed. Nothing to do.`);
+      // proposal has already been executed skip deployment
+      return true;
+    }
+  }
+
+  // run deployment
+  return false;
+};
+
+/**
  * Shortcut to create a deployment for hardhat to use
  * @param {Object} options for deployment
  * @param {Promise<Object>} fn to deploy contracts and return needed proposals
@@ -273,23 +354,13 @@ function deploymentWithProposal(opts, fn) {
     const { governorAddr } = await getNamedAccounts();
     const governor = await ethers.getContractAt("Governor", governorAddr);
 
-    if (isFork) {
-      if (proposalId) {
-        const proposalState = ["New", "Queue", "Expired", "Executed"][
-          await governor.state(proposalId)
-        ];
-
-        if (["New", "Queue"].includes(proposalState)) {
-          console.log(
-            `Found proposal id: ${proposalId} on forked network. Executing proposal containing deployment of: ${deployName}`
-          );
-          await executeProposalOnFork(proposalId);
-          // deployment ran, nothing else to do here
-          return;
-        }
-      }
+    // proposal has either been already executed on forked node or just been executed
+    // no use of running the deploy script to create another
+    if (await handlePossiblyActiveProposal(proposalId, deployName, governor)) {
+      return;
     }
 
+    await sanityCheck();
     const proposal = await fn(tools);
     const propDescription = proposal.name;
     const propArgs = await proposeArgs(proposal.actions);
@@ -331,6 +402,7 @@ function deploymentWithProposal(opts, fn) {
     console.log(`${deployName} deploy done.`);
     return true;
   };
+
   main.id = deployName;
   main.dependencies = dependencies;
   if (forceSkip) {
@@ -338,11 +410,32 @@ function deploymentWithProposal(opts, fn) {
   } else if (forceDeploy) {
     main.skip = () => false;
   } else {
-    main.skip = () => {
-      if (isFork) {
-        const networkName = isForkTest ? "hardhat" : "localhost";
-        const migrations = require(`./../deployments/${networkName}/.migrations.json`);
-        return Boolean(migrations[deployName]);
+    /** Just for context of fork env change the id of the deployment script. This is required
+     * in circumstances when:
+     * - the deployment script has already been run on the mainnet
+     * - proposal has been either "Queued" or is still "New"
+     * - all the deployment artifacts and migration information is already present in the repo
+     *
+     * Problem: as part of normal deployment procedure we want to be able to simulate the
+     * execution of a proposal and run all the for tests on top of (after) the proposal execution. But
+     * since deployment artifacts are already present and migration file has already been updated
+     * the hardhat deploy will skip the deployment file (ignoring even the force deploy/`skip` flags.
+     * Skipping the deployment file prevents us to identify the New/Queued proposal id and executing it.
+     *
+     * For that reason for any deployment ran on fork with proposalId we change the id of deployment
+     * as a workaround so that Hardhat executes it. If proposal has already been executed the
+     * `runDeployment` function will exit without applying the deployment.
+     *
+     * And we can not package this inside of `skip` function since without this workaround it
+     * doesn't even get evaluated.
+     */
+    if (isFork && proposalId) {
+      main.id = `${deployName}_force`;
+    }
+
+    main.skip = async () => {
+      if (isFork && proposalId) {
+        return false;
       } else {
         return !isMainnet || isSmokeTest || isFork;
       }

@@ -337,12 +337,12 @@ const getAssetAddresses = async (deployments) => {
        * metapool is not yet deployed. Just return without metapool info if it is not
        * yet available.
        */
-      addressMap.ThreePoolalUSDMetapool = (
-        await deployments.get("MockCurvealUSDMetapool")
+      addressMap.ThreePoolLUSDMetapool = (
+        await deployments.get("MockCurveLUSDMetapool")
       ).address;
       // token is implemented by the same contract as the metapool
-      addressMap.alUSDMetapoolToken = (
-        await deployments.get("MockCurvealUSDMetapool")
+      addressMap.LUSDMetapoolToken = (
+        await deployments.get("MockCurveLUSDMetapool")
       ).address;
     } catch (e) {
       // do nothing

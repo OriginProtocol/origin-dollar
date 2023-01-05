@@ -30,9 +30,9 @@ addresses.mainnet.AAVE_ADDRESS_PROVIDER =
   "0xb53c1a33016b2dc2ff3653530bff1848a515c8c5"; // v2
 addresses.mainnet.Aave = "0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9"; // v1-v2
 addresses.mainnet.aTUSD = "--"; // Todo: use v2
-addresses.mainnet.aUSDT = "--"; // Todo: use v2
+addresses.mainnet.aUSDT = "0x3Ed3B47Dd13EC9a98b44e6204A523E766B225811"; // v2
 addresses.mainnet.aDAI = "0x028171bca77440897b824ca71d1c56cac55b68a3"; // v2
-addresses.mainnet.aUSDC = "--"; // Todo: use v2
+addresses.mainnet.aUSDC = "0xBcca60bB61934080951369a648Fb03DF4F96263C"; // v2
 addresses.mainnet.STKAAVE = "0x4da27a545c0c5b758a6ba100e3a049001de870f5"; // v1-v2
 addresses.mainnet.AAVE_INCENTIVES_CONTROLLER =
   "0xd784927Ff2f95ba542BfC824c8a8a98F3495f6b5"; // v2
@@ -57,7 +57,8 @@ addresses.mainnet.CVXRewardsPool = "0x7D536a737C13561e0D2Decf1152a653B4e615158";
 addresses.mainnet.openOracle = "0x922018674c12a7f0d394ebeef9b58f186cde13c1";
 // OGN
 addresses.mainnet.OGN = "0x8207c1ffc5b6804f6024322ccf34f29c3541ae26";
-addresses.mainnet.alUSD = "0xBC6DA0FE9aD5f3b0d58160288917AA56653660E9";
+// LUSD
+addresses.mainnet.LUSD = "0x5f98805A4E8be255a32880FDeC7F6728C6568bA0";
 // OGV
 addresses.mainnet.OGV = "0x9c354503C38481a7A7a51629142963F98eCC12D0";
 // veOGV

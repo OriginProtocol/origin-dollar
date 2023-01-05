@@ -14,7 +14,7 @@ const {
 } = require("../utils/deploy");
 const {
   metapoolLPCRVPid,
-  alusdMetapoolLPCRVPid,
+  lusdMetapoolLPCRVPid,
 } = require("../utils/constants");
 
 /**
@@ -301,45 +301,45 @@ const deployConvexStrategy = async () => {
 };
 
 /**
- * Deploys a Convex Generalized Meta Strategy with alUSD token configuration
+ * Deploys a Convex Generalized Meta Strategy with LUSD token configuration
  */
-const deployConvexalUSDMetaStrategy = async () => {
+const deployConvexLUSDMetaStrategy = async () => {
   const assetAddresses = await getAssetAddresses(deployments);
   const { deployerAddr, governorAddr } = await getNamedAccounts();
   // Signers
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
   const sGovernor = await ethers.provider.getSigner(governorAddr);
 
-  await deployWithConfirmation("ConvexalUSDMetaStrategyProxy");
-  const cConvexalUSDMetaStrategyProxy = await ethers.getContract(
-    "ConvexalUSDMetaStrategyProxy"
+  await deployWithConfirmation("ConvexLUSDMetaStrategyProxy");
+  const cConvexLUSDMetaStrategyProxy = await ethers.getContract(
+    "ConvexLUSDMetaStrategyProxy"
   );
 
-  const dConvexalUSDMetaStrategy = await deployWithConfirmation(
+  const dConvexLUSDMetaStrategy = await deployWithConfirmation(
     "ConvexGeneralizedMetaStrategy"
   );
-  const cConvexalUSDMetaStrategy = await ethers.getContractAt(
+  const cConvexLUSDMetaStrategy = await ethers.getContractAt(
     "ConvexGeneralizedMetaStrategy",
-    cConvexalUSDMetaStrategyProxy.address
+    cConvexLUSDMetaStrategyProxy.address
   );
 
   await withConfirmation(
-    cConvexalUSDMetaStrategyProxy["initialize(address,address,bytes)"](
-      dConvexalUSDMetaStrategy.address,
+    cConvexLUSDMetaStrategyProxy["initialize(address,address,bytes)"](
+      dConvexLUSDMetaStrategy.address,
       deployerAddr,
       []
     )
   );
-  log("Initialized ConvexalUSDMetaStrategyProxy");
+  log("Initialized ConvexLUSDMetaStrategyProxy");
 
   // Initialize Strategies
   const cVaultProxy = await ethers.getContract("VaultProxy");
   const mockBooster = await ethers.getContract("MockBooster");
   const mockRewardPool = await ethers.getContract("MockRewardPool");
 
-  const alUsd = await ethers.getContract("MockalUSD");
+  const LUSD = await ethers.getContract("MockLUSD");
   await withConfirmation(
-    cConvexalUSDMetaStrategy
+    cConvexLUSDMetaStrategy
       .connect(sDeployer)
       [
         "initialize(address[],address[],address[],(address,address,address,address,address,address,address,uint256))"
@@ -355,32 +355,32 @@ const deployConvexalUSDMetaStrategy = async () => {
           assetAddresses.ThreePool,
           cVaultProxy.address,
           mockBooster.address, // _cvxDepositorAddress,
-          assetAddresses.ThreePoolalUSDMetapool, // metapool address,
-          alUsd.address, // alUsd
+          assetAddresses.ThreePoolLUSDMetapool, // metapool address,
+          LUSD.address, // LUSD
           mockRewardPool.address, // _cvxRewardStakerAddress,
-          assetAddresses.alUSDMetapoolToken, // metapoolLpToken
-          alusdMetapoolLPCRVPid, // _cvxDepositorPTokenId
+          assetAddresses.LUSDMetapoolToken, // metapoolLpToken
+          lusdMetapoolLPCRVPid, // _cvxDepositorPTokenId
         ]
       )
   );
-  log("Initialized ConvexalUSDMetaStrategy");
+  log("Initialized ConvexLUSDMetaStrategy");
 
   await withConfirmation(
-    cConvexalUSDMetaStrategy.connect(sDeployer).transferGovernance(governorAddr)
+    cConvexLUSDMetaStrategy.connect(sDeployer).transferGovernance(governorAddr)
   );
-  log(`ConvexalUSDMetaStrategy transferGovernance(${governorAddr}) called`);
+  log(`ConvexLUSDMetaStrategy transferGovernance(${governorAddr}) called`);
   // On Mainnet the governance transfer gets executed separately, via the
   // multi-sig wallet. On other networks, this migration script can claim
   // governance by the governor.
   if (!isMainnet) {
     await withConfirmation(
-      cConvexalUSDMetaStrategy
+      cConvexLUSDMetaStrategy
         .connect(sGovernor) // Claim governance with governor
         .claimGovernance()
     );
-    log("Claimed governance for ConvexalUSDMetaStrategy");
+    log("Claimed governance for ConvexLUSDMetaStrategy");
   }
-  return cConvexalUSDMetaStrategy;
+  return cConvexLUSDMetaStrategy;
 };
 
 /**
@@ -614,17 +614,17 @@ const configureStrategies = async (harvesterProxy) => {
     metaStrategy.connect(sGovernor).setHarvesterAddress(harvesterProxy.address)
   );
 
-  const alUSDMetaStrategyProxy = await ethers.getContract(
-    "ConvexalUSDMetaStrategyProxy"
+  const LUSDMetaStrategyProxy = await ethers.getContract(
+    "ConvexLUSDMetaStrategyProxy"
   );
-  const alUSDMetaStrategy = await ethers.getContractAt(
+  const LUSDMetaStrategy = await ethers.getContractAt(
     "ConvexGeneralizedMetaStrategy",
-    alUSDMetaStrategyProxy.address
+    LUSDMetaStrategyProxy.address
   );
   await withConfirmation(
-    alUSDMetaStrategy
-      .connect(sGovernor)
-      .setHarvesterAddress(harvesterProxy.address)
+    LUSDMetaStrategy.connect(sGovernor).setHarvesterAddress(
+      harvesterProxy.address
+    )
   );
 
   const threePoolProxy = await ethers.getContract("ThreePoolStrategyProxy");
@@ -823,20 +823,20 @@ const deployCurveMetapoolMocks = async () => {
 };
 
 // deploy curve metapool mocks
-const deployCurvealUSDMetapoolMocks = async () => {
+const deployCurveLUSDMetapoolMocks = async () => {
   const { deployerAddr } = await hre.getNamedAccounts();
   const assetAddresses = await getAssetAddresses(deployments);
 
-  const alUsd = await ethers.getContract("MockalUSD");
+  const LUSD = await ethers.getContract("MockLUSD");
 
-  await hre.deployments.deploy("MockCurvealUSDMetapool", {
+  await hre.deployments.deploy("MockCurveLUSDMetapool", {
     from: deployerAddr,
-    args: [[alUsd.address, assetAddresses.ThreePoolToken]],
+    args: [[LUSD.address, assetAddresses.ThreePoolToken]],
   });
 
-  const alUSDMetapoolToken = await ethers.getContract("MockCurvealUSDMetapool");
+  const LUSDMetapoolToken = await ethers.getContract("MockCurveLUSDMetapool");
   const mockBooster = await ethers.getContract("MockBooster");
-  await mockBooster.setPool(alusdMetapoolLPCRVPid, alUSDMetapoolToken.address);
+  await mockBooster.setPool(lusdMetapoolLPCRVPid, LUSDMetapoolToken.address);
 };
 
 // Deploy the Flipper trading contract
@@ -928,7 +928,12 @@ const deployBuyback = async () => {
 
 const deployVaultVaultChecker = async () => {
   const vault = await ethers.getContract("VaultProxy");
-  await deployWithConfirmation("VaultValueChecker", [vault.address]);
+  const ousd = await ethers.getContract("OUSDProxy");
+
+  await deployWithConfirmation("VaultValueChecker", [
+    vault.address,
+    ousd.address,
+  ]);
 };
 
 const deployWOusd = async () => {
@@ -962,13 +967,13 @@ const main = async () => {
   await deployOracles();
   await deployCore();
   await deployCurveMetapoolMocks();
-  await deployCurvealUSDMetapoolMocks();
+  await deployCurveLUSDMetapoolMocks();
   await deployCompoundStrategy();
   await deployAaveStrategy();
   await deployThreePoolStrategy();
   await deployConvexStrategy();
   await deployConvexOUSDMetaStrategy();
-  await deployConvexalUSDMetaStrategy();
+  await deployConvexLUSDMetaStrategy();
   const harvesterProxy = await deployHarvester();
   await configureVault(harvesterProxy);
   await configureStrategies(harvesterProxy);

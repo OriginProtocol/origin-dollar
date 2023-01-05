@@ -2,23 +2,33 @@
   "storage": [
     {
       "contract": "VaultValueChecker",
-      "label": "snapshotValue",
-      "type": "t_uint256",
-      "src": "contracts/strategies/VaultValueChecker.sol:7"
-    },
-    {
-      "contract": "VaultValueChecker",
-      "label": "vault",
-      "type": "t_contract(VaultCore)21405",
-      "src": "contracts/strategies/VaultValueChecker.sol:8"
+      "label": "snapshots",
+      "type": "t_mapping(t_address,t_struct(Snapshot)20639_storage)",
+      "src": "contracts/strategies/VaultValueChecker.sol:19"
     }
   ],
   "types": {
+    "t_mapping(t_address,t_struct(Snapshot)20639_storage)": {
+      "label": "mapping(address => struct VaultValueChecker.Snapshot)"
+    },
+    "t_address": {
+      "label": "address"
+    },
+    "t_struct(Snapshot)20639_storage": {
+      "label": "struct VaultValueChecker.Snapshot",
+      "members": [
+        {
+          "label": "vaultValue",
+          "type": "t_uint256"
+        },
+        {
+          "label": "totalSupply",
+          "type": "t_uint256"
+        }
+      ]
+    },
     "t_uint256": {
       "label": "uint256"
-    },
-    "t_contract(VaultCore)21405": {
-      "label": "contract VaultCore"
     }
   }
 }
