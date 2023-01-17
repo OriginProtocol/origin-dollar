@@ -10,7 +10,7 @@ NAME_TO_STRAT = {
     "MORPHO_COMP": world.morpho_comp_strat,
     "MORPHO_AAVE": world.morpho_aave_strat,
     "OUSD_META": world.ousd_meta_strat,
-    "LUSD_3POOL": world.lusd_3pool_strat, # TODO, contract
+    "LUSD_3POOL": world.lusd_3pool_strat,  # TODO, contract
 }
 
 NAME_TO_TOKEN = {
@@ -204,7 +204,8 @@ def pretty_allocations(allocation, close_enough=50_000):
 
 
 def net_delta(allocation):
-    return allocation.groupby('token')['delta_dollars'].sum().to_dict()
+    return allocation.groupby("token")["delta_dollars"].sum().to_dict()
+
 
 def spread_to_coins(total, per_coin, reverse=False, min_move=5000):
     remaining = total
@@ -215,14 +216,16 @@ def spread_to_coins(total, per_coin, reverse=False, min_move=5000):
             amount = amount * -1
         if amount < min_move:
             continue
-        amounts_to_move.append([int(amount//1000*1000), CORE_STABLECOINS[token]])
+        amounts_to_move.append([int(amount // 1000 * 1000), CORE_STABLECOINS[token]])
     return amounts_to_move
+
 
 def auto_take_snapshot():
     return [
-        world.vault_core.rebase({'from': world.STRATEGIST}),
+        world.vault_core.rebase({"from": world.STRATEGIST}),
         world.vault_value_checker.takeSnapshot({"from": world.STRATEGIST}),
     ]
+
 
 def auto_check_snapshot():
     snapshot = world.vault_value_checker.snapshots(world.STRATEGIST)
@@ -236,39 +239,43 @@ def auto_check_snapshot():
             vault_change + 1000 * int(1e18),
             supply_change - 1000 * int(1e18),
             supply_change + 500 * int(1e18),
-            {"from": world.STRATEGIST})
+            {"from": world.STRATEGIST},
+        )
     ]
+
 
 def auto_consolidate_stables(allocation, consolidation):
     "Take all stables above target and send to consolidate strat"
     txs = []
-    for strat_name in ['AAVE', 'COMP', 'MORPHO_COMP', 'MORPHO_AAVE']:
+    for strat_name in ["AAVE", "COMP", "MORPHO_COMP", "MORPHO_AAVE"]:
         if consolidation == strat_name:
             continue
-        haves = net_delta(allocation[allocation['strategy']==strat_name])
+        haves = net_delta(allocation[allocation["strategy"] == strat_name])
         amounts = spread_to_coins(int(1e60), haves, reverse=True)
         print("auto_consolidate_stables", strat_name, haves, amounts)
         if amounts:
-            print("auto_consolidate_stables", strat_name, "->", consolidation, '|', pretty_amounts(amounts))
+            print("auto_consolidate_stables", strat_name, "->", consolidation, "|", pretty_amounts(amounts))
             txs.append(reallocate(strat_name, consolidation, amounts))
     return txs
+
 
 def auto_distribute_stables(allocation, consolidation, min_move):
     "Send to stable strats that are missing funds"
     txs = []
-    for strat_name in ['AAVE', 'COMP', 'MORPHO_COMP', 'MORPHO_AAVE']:
+    for strat_name in ["AAVE", "COMP", "MORPHO_COMP", "MORPHO_AAVE"]:
         if consolidation == strat_name:
             continue
-        needs = net_delta(allocation[allocation['strategy']==strat_name])
+        needs = net_delta(allocation[allocation["strategy"] == strat_name])
         amounts = spread_to_coins(int(1e60), per_coin=needs, min_move=min_move)
         print("auto")
         print(strat_name)
         print("auto", strat_name, needs)
         print("auto_distribute_stables", strat_name, needs, amounts)
         if amounts:
-            print("auto_distribute_stables", consolidation, '->', strat_name, '|', pretty_amounts(amounts))
+            print("auto_distribute_stables", consolidation, "->", strat_name, "|", pretty_amounts(amounts))
             txs.append(reallocate(consolidation, strat_name, amounts))
     return txs
+
 
 def auto_fund_defund_3pools(allocation, consolidation, exchange):
     "VERY INCOMPLETE FOR MANY REASONS."
@@ -280,11 +287,10 @@ def auto_fund_defund_3pools(allocation, consolidation, exchange):
     # #             continue
     # #         if row['delta_dollars'] > -5000:
     # #             continue
-    # # 
+    # #
     # #         strat_name = row['strategy']
     # #         delta = row['delta_dollars'] * -1
     # #         print(strat_name, delta)
-
 
     # # In
     # for k, row in allocation[allocation['token']=='*'].iterrows():
@@ -301,29 +307,34 @@ def auto_fund_defund_3pools(allocation, consolidation, exchange):
     #         txs.append(reallocate(consolidation, strat_name, amounts))
     return txs
 
+
 def auto_exchange_in(allocation, consolidation, exchange):
     "From consolidation to exchange"
     txs = []
-    exchange_has = allocation[(allocation.token=="*") & (allocation.strategy==exchange)]['delta_dollars'].sum()
+    exchange_has = allocation[(allocation.token == "*") & (allocation.strategy == exchange)]["delta_dollars"].sum()
     consolidation_needs = sum([x for x in net_delta(allocation).values() if x > 0])
     exchange_needed = exchange_has + consolidation_needs
     print(">>> auto_exchange_in", exchange_has, consolidation_needs, exchange_needed)
-    haves = net_delta(allocation[allocation['strategy']==consolidation])
+    haves = net_delta(allocation[allocation["strategy"] == consolidation])
     amounts = spread_to_coins(exchange_needed, haves, reverse=True)
     if amounts:
         txs.append(reallocate(consolidation, exchange, amounts))
     return txs
 
+
 def auto_exchange_out(allocation, consolidation, exchange):
     "From exchange to consolidation"
     txs = []
     net = net_delta(allocation)
-    exchange_excess = allocation[(allocation.token=="*") & (allocation.strategy==exchange)]['delta_dollars'].sum() * -1
+    exchange_excess = (
+        allocation[(allocation.token == "*") & (allocation.strategy == exchange)]["delta_dollars"].sum() * -1
+    )
     print(">>> auto_exchange_out", exchange_excess)
     amounts = spread_to_coins(exchange_excess, net)
     if amounts:
         txs.append(reallocate(exchange, consolidation, amounts))
     return txs
 
+
 def pretty_amounts(amounts):
-    return ", ".join(["{:,} {}".format(x[0],x[1].symbol()) for x in amounts])
+    return ", ".join(["{:,} {}".format(x[0], x[1].symbol()) for x in amounts])
