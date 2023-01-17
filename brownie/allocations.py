@@ -126,6 +126,33 @@ def show_default_strategies():
         print("{:>6} defaults to {} with {:,}".format(coin_name, name, funds))
 
 
+class TemporaryForkWithVaultStats:
+    def __init__(self, votes):
+        self.votes = votes
+
+    def __enter__(self):
+        brownie.chain.snapshot()
+        before_allocation = with_target_allocations(load_from_blockchain(), self.votes)
+        print(pretty_allocations(before_allocation))
+        self.before_votes = before_allocation
+        self.before_vault_value = world.vault_core.totalValue()
+        self.before_total_supply = world.ousd.totalSupply()
+
+    def __exit__(self, *args, **kwargs):
+        vault_change = world.vault_core.totalValue() - self.before_vault_value
+        supply_change = world.ousd.totalSupply() - self.before_total_supply
+        after_allocaiton = with_target_allocations(load_from_blockchain(), self.before_votes)
+        print(pretty_allocations(after_allocaiton))
+        allocation_exposure(after_allocaiton)
+        show_default_strategies()
+        print("Vault change", world.c18(vault_change))
+        print("Supply change", world.c18(supply_change))
+        print("Profit change", world.c18(vault_change - supply_change))
+        print("")
+
+        brownie.chain.revert()
+
+
 def with_target_allocations(allocation, votes):
     df = allocation.copy()
     df["target_allocation"] = float(0.0)

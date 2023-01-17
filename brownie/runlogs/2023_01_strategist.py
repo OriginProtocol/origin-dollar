@@ -220,3 +220,41 @@ safe = ApeSafe('0xF14BBdf064E3F67f51cd9BD646aE3716aD938FDC')
 safe_tx = safe.multisend_from_receipts(txs)
 safe.sign_with_frame(safe_tx)
 r = safe.post_transaction(safe_tx)
+
+# --------------------------------
+# Jan 17, 2022 - Weekly allocation Part 3
+# 
+
+from addresses import *
+from world import *
+from allocations import *
+from ape_safe import ApeSafe
+
+votes = """
+    Convex OUSD+3Crv    49.66
+    Aave USDT   32.04
+    Aave DAI    5.01
+    Morpho Aave USDT    4.18
+    Morpho Compound USDT    4.18
+    Aave USDC   3.91
+    Convex DAI+USDC+USDT    0.78
+    Compound DAI    0.03
+    Compound USDC   0.03
+    Compound USDT   0.03
+    Convex LUSD+3Crv    0.03
+    Morpho Aave DAI 0.03
+    Morpho Aave USDC    0.03
+    Morpho Compound DAI 0.03
+    Morpho Compound USDC    0.03
+    Existing Allocation 0
+    """
+
+with TemporaryForkWithVaultStats(votes):
+    txs = []
+    txs.append(reallocate(AAVE_STRAT, MORPHO_AAVE_STRAT, [[9_000, dai], [10_000, usdc]]))
+
+
+safe = ApeSafe('0xF14BBdf064E3F67f51cd9BD646aE3716aD938FDC')
+safe_tx = safe.multisend_from_receipts(txs)
+safe.sign_with_frame(safe_tx)
+r = safe.post_transaction(safe_tx)
