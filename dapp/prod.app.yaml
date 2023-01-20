@@ -1,6 +1,6 @@
 runtime: nodejs
 env: flex
-instance_class: B2
+instance_class: B4
 manual_scaling:
   instances: 3
 service: ousd-prod
