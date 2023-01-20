@@ -31,12 +31,14 @@ export function getEtherscanHost(web3React) {
   }
 }
 
-export function shortenAddress(address) {
+export function shortenAddress(address, shorter = false) {
   if (!address || address.length < 10) {
     return address
   }
 
-  return `${address.substring(0, 5)}...${address.substring(address.length - 5)}`
+  return `${address.substring(0, 5)}...${
+    !shorter ? address.substring(address.length - 5) : ''
+  }`
 }
 
 export function networkIdToName(chainId) {

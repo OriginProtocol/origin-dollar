@@ -44,8 +44,10 @@ v2router = load_contract('v2router', UNISWAP_V2_ROUTER)
 aave_strat = load_contract('aave_strat', AAVE_STRAT)
 comp_strat = load_contract('comp_strat', COMP_STRAT)
 convex_strat = load_contract('convex_strat', CONVEX_STRAT)
-ousd_metastrat = load_contract('ousd_metastrat', OUSD_METASTRAT)
-morpho_comp_strat = load_contract('comp_strat', MORPHO_COMP_STRAT)
+ousd_meta_strat = load_contract('ousd_metastrat', OUSD_METASTRAT)
+morpho_comp_strat = load_contract('morpho_comp_strat', MORPHO_COMP_STRAT)
+morpho_aave_strat = load_contract('morpho_aave_strat', MORPHO_AAVE_STRAT)
+lusd_3pool_strat = load_contract('lusd_3pool_strat', LUSD_3POOL_STRAT)
 
 aave_incentives_controller = load_contract('aave_incentives_controller', '0xd784927Ff2f95ba542BfC824c8a8a98F3495f6b5')
 stkaave = load_contract('stkaave', '0x4da27a545c0c5B758a6BA100e3a049001de870f5')
@@ -234,7 +236,7 @@ def show_ousd_metastrat_underlying_balance():
     total_lp_owned = staked_bal
 
     for asset in (dai, usdt, usdc):
-        ptoken_addr = ousd_metastrat.assetToPToken(asset.address)
+        ptoken_addr = ousd_meta_strat.assetToPToken(asset.address)
         ptoken_contract = load_contract('ERC20', ptoken_addr)
 
         # Unstaked LP tokens

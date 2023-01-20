@@ -39,6 +39,12 @@ class MyDocument extends Document {
             type="text/javascript"
           ></script>
 
+          <meta
+            name="image"
+            content={
+              'https://cmsmediaproduction.s3.amazonaws.com/meta_9121c5630d.jpeg'
+            }
+          />
           <meta property="og:url" content="https://ousd.com" />
           <meta property="og:type" content="website" />
           <meta property="og:title" content="Origin Dollar (OUSD)" />
