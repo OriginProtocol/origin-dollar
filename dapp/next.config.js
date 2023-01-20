@@ -130,4 +130,8 @@ if (process.env.DEPLOY_MODE === 'ipfs') {
   config.assetPrefix = './'
 }
 
+config.experimental = {
+  esmExternals: false
+};
+
 module.exports = config
