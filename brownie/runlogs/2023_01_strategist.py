@@ -221,6 +221,7 @@ safe_tx = safe.multisend_from_receipts(txs)
 safe.sign_with_frame(safe_tx)
 r = safe.post_transaction(safe_tx)
 
+
 # --------------------------------
 # Jan 17, 2022 - Weekly allocation Part 3
 # 
@@ -258,3 +259,82 @@ safe = ApeSafe('0xF14BBdf064E3F67f51cd9BD646aE3716aD938FDC')
 safe_tx = safe.multisend_from_receipts(txs)
 safe.sign_with_frame(safe_tx)
 r = safe.post_transaction(safe_tx)
+
+
+# --------------------------------
+# Jan 20, 2022 - Move ownership of new governance to new governance
+# 
+
+from world import *
+from allocations import *
+from ape_safe import ApeSafe
+
+veogv_proxy = Contract.from_abi('veogv_proxy', veogv, rewards_source.abi)
+rewards_source_impl = Contract.from_abi('rewards_source_impl', '0xE82191eF8996852a802aaE509993770480F9CA2C', rewards_source.abi)
+
+with TemporaryFork():
+    # Create old governance internal transactions
+    print(ogv.owner())
+    print(veogv_proxy.governor())
+    print(rewards_source.governor())
+    print(rewards_source_impl.governor())
+    txs = [
+        ogv.transferOwnership(TIMELOCK, {'from': GOV_MULTISIG}),
+        veogv_proxy.transferGovernance(TIMELOCK, {'from': GOV_MULTISIG}),
+        rewards_source.transferGovernance(TIMELOCK, {'from': GOV_MULTISIG}),
+        rewards_source_impl.transferGovernance(TIMELOCK, {'from': GOV_MULTISIG}),
+    ]
+    print(ogv.owner())
+    print(veogv_proxy.governor())
+    print(rewards_source.governor())
+    print(rewards_source_impl.governor())
+
+    # # Test Claim Ownership
+    accept_txs = []
+    with TemporaryFork():
+        for x in [veogv_proxy, rewards_source, rewards_source_impl]:
+            accept_txs.append(x.claimGovernance({'from': TIMELOCK}))
+
+    governor_five.propose(
+        [x.receiver for x in accept_txs],
+        [0 for x in accept_txs],
+        ['claimGovernance()' for x in accept_txs],
+        [x.input[10:] for x in accept_txs],
+        "Claim governance on governance system contracts\n\nOUSD governance contracts have been owned by the OUSD 5 of 8 multi-sig. Now that these governance contracts have been proven out, it's time for them to be directly owned by the community.",
+        {'from': GOV_MULTISIG }
+    )
+
+    print("Raw proposal:")
+    print(history[-1].receiver)
+    print(history[-1].input)
+    print(history[-1].events)
+    proposal_id = history[-1].events['ProposalCreated'][0]['proposalId']
+    print(proposal_id)
+
+    print("...Simulating vote")
+    chain.mine()
+    governor_five.castVote(proposal_id, 1, {'from': GOV_MULTISIG})
+
+    print("...Simulating voting time, going to take time")
+    chain.mine(governor_five.votingPeriod() + 1)
+
+    print("...Simulating queue")
+    governor_five.queue(proposal_id, {'from': GOV_MULTISIG})
+    chain.mine(timedelta=2*24*60*60+2)
+
+    print("...Simulating execution")
+    governor_five.execute(proposal_id, {'from': GOV_MULTISIG})
+
+    print(ogv.owner())
+    print(veogv_proxy.governor())
+    print(rewards_source.governor())
+    print(rewards_source_impl.governor())
+
+safe = ApeSafe(GOV_MULTISIG)
+safe_tx = safe.multisend_from_receipts(txs)
+safe.sign_with_frame(safe_tx)
+r = safe.post_transaction(safe_tx)
+
+
+
+
