@@ -80,6 +80,11 @@ const config = {
         destination: '/',
         permanent: true
       },
+      {
+        source: '/stake',
+        destination: '/earn',
+        permanent: true
+      },
     ]
   },
   async headers() {

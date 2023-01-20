@@ -76,7 +76,7 @@ async function executeOnFork(taskArguments) {
     ? Number(taskArguments.gaslimit)
     : null;
   console.log("Enqueueing and executing proposal", proposalId);
-  await executeProposalOnFork(proposalId, gasLimit);
+  await executeProposalOnFork({ proposalId, executeGasLimit: gasLimit });
 }
 
 async function proposal(taskArguments, hre) {

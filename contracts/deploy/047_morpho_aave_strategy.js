@@ -1,7 +1,11 @@
 const { deploymentWithProposal } = require("../utils/deploy");
 
 module.exports = deploymentWithProposal(
-  { deployName: "044_morpho_strategy", forceDeploy: false, proposalId: 39 },
+  {
+    deployName: "047_morpho_aave_strategy",
+    forceDeploy: false,
+    proposalId: 43,
+  },
   async ({
     assetAddresses,
     deployWithConfirmation,
@@ -24,21 +28,21 @@ module.exports = deploymentWithProposal(
 
     // 1. Deploy new proxy
     // New strategy will be living at a clean address
-    const dMorphoCompoundStrategyProxy = await deployWithConfirmation(
-      "MorphoCompoundStrategyProxy"
+    const dMorphoAaveStrategyProxy = await deployWithConfirmation(
+      "MorphoAaveStrategyProxy"
     );
-    const cMorphoCompoundStrategyProxy = await ethers.getContractAt(
-      "MorphoCompoundStrategyProxy",
-      dMorphoCompoundStrategyProxy.address
+    const cMorphoAaveStrategyProxy = await ethers.getContractAt(
+      "MorphoAaveStrategyProxy",
+      dMorphoAaveStrategyProxy.address
     );
 
     // 2. Deploy new implementation
-    const dMorphoCompoundStrategyImpl = await deployWithConfirmation(
-      "MorphoCompoundStrategy"
+    const dMorphoAaveStrategyImpl = await deployWithConfirmation(
+      "MorphoAaveStrategy"
     );
-    const cMorphoCompoundStrategy = await ethers.getContractAt(
-      "MorphoCompoundStrategy",
-      dMorphoCompoundStrategyProxy.address
+    const cMorphoAaveStrategy = await ethers.getContractAt(
+      "MorphoAaveStrategy",
+      dMorphoAaveStrategyProxy.address
     );
 
     const cHarvesterProxy = await ethers.getContract("HarvesterProxy");
@@ -49,10 +53,10 @@ module.exports = deploymentWithProposal(
 
     // 3. Init the proxy to point at the implementation
     await withConfirmation(
-      cMorphoCompoundStrategyProxy
+      cMorphoAaveStrategyProxy
         .connect(sDeployer)
         ["initialize(address,address,bytes)"](
-          dMorphoCompoundStrategyImpl.address,
+          dMorphoAaveStrategyImpl.address,
           deployerAddr,
           [],
           await getTxOpts()
@@ -62,34 +66,31 @@ module.exports = deploymentWithProposal(
     // 4. Init and configure new Morpho strategy
     const initFunction = "initialize(address,address[],address[],address[])";
     await withConfirmation(
-      cMorphoCompoundStrategy.connect(sDeployer)[initFunction](
+      cMorphoAaveStrategy.connect(sDeployer)[initFunction](
         cVaultProxy.address,
-        [assetAddresses.COMP, assetAddresses.COMP, assetAddresses.COMP], // reward token addresses
+        [], // reward token addresses
         [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT], // asset token addresses
-        [assetAddresses.cDAI, assetAddresses.cUSDC, assetAddresses.cUSDT], // platform tokens addresses
+        [assetAddresses.aDAI, assetAddresses.aUSDC, assetAddresses.aUSDT], // platform tokens addresses
         await getTxOpts()
       )
     );
 
     // 5. Transfer governance
     await withConfirmation(
-      cMorphoCompoundStrategy
+      cMorphoAaveStrategy
         .connect(sDeployer)
         .transferGovernance(governorAddr, await getTxOpts())
     );
 
-    console.log(
-      "Morpho Compound strategy address: ",
-      cMorphoCompoundStrategy.address
-    );
+    console.log("Morpho Aave strategy address: ", cMorphoAaveStrategy.address);
     // Governance Actions
     // ----------------
     return {
-      name: "Deploy new Morpho Compound strategy",
+      name: "Deploy new Morpho Aave strategy",
       actions: [
-        // 1. Accept governance of new MorphoCompoundStrategy
+        // 1. Accept governance of new MorphoAaveStrategy
         {
-          contract: cMorphoCompoundStrategy,
+          contract: cMorphoAaveStrategy,
           signature: "claimGovernance()",
           args: [],
         },
@@ -97,17 +98,17 @@ module.exports = deploymentWithProposal(
         {
           contract: cVaultAdmin,
           signature: "approveStrategy(address)",
-          args: [cMorphoCompoundStrategy.address],
+          args: [cMorphoAaveStrategy.address],
         },
         // 3. Set supported strategy on Harvester
         {
           contract: cHarvester,
           signature: "setSupportedStrategy(address,bool)",
-          args: [dMorphoCompoundStrategyProxy.address, true],
+          args: [dMorphoAaveStrategyProxy.address, true],
         },
         // 4. Set harvester address
         {
-          contract: cMorphoCompoundStrategy,
+          contract: cMorphoAaveStrategy,
           signature: "setHarvesterAddress(address)",
           args: [cHarvesterProxy.address],
         },

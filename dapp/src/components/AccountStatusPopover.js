@@ -1,16 +1,16 @@
 import React from 'react'
 import { useWeb3React } from '@web3-react/core'
-import { fbt } from 'fbt-runtime'
 
 import { isCorrectNetwork } from 'utils/web3'
 import withWalletSelectModal from 'hoc/withWalletSelectModal'
-import GetOUSD from 'components/GetOUSD'
 import Content from './_AccountStatusContent'
 import { assetRootPath } from 'utils/image'
+import AccountStatusIndicator from './_AccountStatusIndicator'
 
-const AccountStatusPopover = ({ className }) => {
+const AccountStatusPopover = ({ className, dapp }) => {
   const { active, account, chainId } = useWeb3React()
   const correctNetwork = isCorrectNetwork(chainId)
+
   if (!active && !account) {
     return ''
   }
@@ -27,9 +27,12 @@ const AccountStatusPopover = ({ className }) => {
         aria-label="Toggle account popover"
       >
         <div className={`dropdown-marble${className ? ' ' + className : ''}`}>
-          {!active && account && <div className="dot" />}
-          {active && !correctNetwork && <div className="dot yellow" />}
-          {active && correctNetwork && <div className="dot green" />}
+          <AccountStatusIndicator
+            active={active}
+            correctNetwork={correctNetwork}
+            account={account}
+            dapp={dapp}
+          />
         </div>
       </button>
       <div
@@ -59,38 +62,6 @@ const AccountStatusPopover = ({ className }) => {
       <style jsx>{`
         .navbar-toggler {
           padding: 0.25rem 10px;
-        }
-
-        .dot {
-          width: 10px;
-          height: 10px;
-          border-radius: 5px;
-          background-color: #ed2a28;
-          margin-left: 13px;
-        }
-
-        .dot.empty {
-          margin-left: 0px;
-        }
-
-        .dot.green {
-          background-color: #00d592;
-        }
-
-        .dot.green.yellow {
-          background-color: #ffce45;
-        }
-
-        .dot.big {
-          width: 16px;
-          height: 16px;
-          border-radius: 8px;
-          margin-right: 12px;
-        }
-
-        .dot.yellow.big,
-        .dot.green.big {
-          margin-left: 0px;
         }
 
         .dropdown-marble .dot {
