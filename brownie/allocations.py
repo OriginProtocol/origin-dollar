@@ -4,11 +4,13 @@ import brownie
 import re
 
 NAME_TO_STRAT = {
-    "Convex": world.convex_strat,
+    "CONVEX": world.convex_strat,
     "AAVE": world.aave_strat,
     "COMP": world.comp_strat,
     "MORPHO_COMP": world.morpho_comp_strat,
+    "MORPHO_AAVE": world.morpho_aave_strat,
     "OUSD_META": world.ousd_meta_strat,
+    "LUSD_3POOL": world.lusd_3pool_strat,  # TODO, contract
 }
 
 NAME_TO_TOKEN = {
@@ -33,8 +35,14 @@ SNAPSHOT_NAMES = {
     "Morpho Compound DAI": ["MORPHO_COMP", "DAI"],
     "Morpho Compound USDC": ["MORPHO_COMP", "USDC"],
     "Morpho Compound USDT": ["MORPHO_COMP", "USDT"],
+    "Morpho Aave DAI": ["MORPHO_AAVE", "DAI"],
+    "Morpho Aave USDC": ["MORPHO_AAVE", "USDC"],
+    "Morpho Aave USDT": ["MORPHO_AAVE", "USDT"],
     "Convex DAI/USDC/USDT": ["CONVEX", "*"],
+    "Convex DAI+USDC+USDT": ["CONVEX", "*"],
     "Convex OUSD/3Crv": ["OUSD_META", "*"],
+    "Convex OUSD+3Crv": ["OUSD_META", "*"],
+    "Convex LUSD+3Crv": ["LUSD_3POOL", "*"],
 }
 
 
@@ -50,7 +58,11 @@ def load_from_blockchain():
             ["MORPHO_COMP", "DAI", int(world.morpho_comp_strat.checkBalance(world.DAI) / 1e18)],
             ["MORPHO_COMP", "USDC", int(world.morpho_comp_strat.checkBalance(world.USDC) / 1e6)],
             ["MORPHO_COMP", "USDT", int(world.morpho_comp_strat.checkBalance(world.USDT) / 1e6)],
+            ["MORPHO_AAVE", "DAI", int(world.morpho_aave_strat.checkBalance(world.DAI) / 1e18)],
+            ["MORPHO_AAVE", "USDC", int(world.morpho_aave_strat.checkBalance(world.USDC) / 1e6)],
+            ["MORPHO_AAVE", "USDT", int(world.morpho_aave_strat.checkBalance(world.USDT) / 1e6)],
             ["CONVEX", "*", int(world.convex_strat.checkBalance(world.DAI) * 3 / 1e18)],
+            ["LUSD_3POOL", "*", int(world.lusd_3pool_strat.checkBalance(world.DAI) * 3 / 1e18)],
             ["OUSD_META", "*", int(world.ousd_meta_strat.checkBalance(world.DAI) * 3 / 2 / 1e18)],
         ],
         columns=["strategy", "token", "current_dollars"],
@@ -63,6 +75,10 @@ def reallocate(from_strat, to_strat, funds):
     """
     Execute and return a transaction reallocating funds from one strat to another
     """
+    if isinstance(from_strat, str) and from_strat[0:2] != "0x":
+        from_strat = NAME_TO_STRAT[from_strat]
+    if isinstance(to_strat, str) and to_strat[0:2] != "0x":
+        to_strat = NAME_TO_STRAT[to_strat]
     amounts = []
     coins = []
     for [dollars, coin] in funds:
@@ -108,6 +124,33 @@ def show_default_strategies():
         decimals = coin.decimals()
         funds = int(raw_funds / (10**decimals))
         print("{:>6} defaults to {} with {:,}".format(coin_name, name, funds))
+
+
+class TemporaryForkWithVaultStats:
+    def __init__(self, votes):
+        self.votes = votes
+
+    def __enter__(self):
+        brownie.chain.snapshot()
+        before_allocation = with_target_allocations(load_from_blockchain(), self.votes)
+        print(pretty_allocations(before_allocation))
+        self.before_votes = before_allocation
+        self.before_vault_value = world.vault_core.totalValue()
+        self.before_total_supply = world.ousd.totalSupply()
+
+    def __exit__(self, *args, **kwargs):
+        vault_change = world.vault_core.totalValue() - self.before_vault_value
+        supply_change = world.ousd.totalSupply() - self.before_total_supply
+        after_allocaiton = with_target_allocations(load_from_blockchain(), self.before_votes)
+        print(pretty_allocations(after_allocaiton))
+        allocation_exposure(after_allocaiton)
+        show_default_strategies()
+        print("Vault change", world.c18(vault_change))
+        print("Supply change", world.c18(supply_change))
+        print("Profit change", world.c18(vault_change - supply_change))
+        print("")
+
+        brownie.chain.revert()
 
 
 def with_target_allocations(allocation, votes):
@@ -158,3 +201,140 @@ def pretty_allocations(allocation, close_enough=50_000):
     df["target_dollars"] = df["target_dollars"].apply("{:,}".format)
     df["delta_dollars"] = df["delta_dollars"].apply("{:,}".format)
     return df.sort_values("token")
+
+
+def net_delta(allocation):
+    return allocation.groupby("token")["delta_dollars"].sum().to_dict()
+
+
+def spread_to_coins(total, per_coin, reverse=False, min_move=5000):
+    remaining = total
+    amounts_to_move = []
+    for token in CORE_STABLECOINS.keys():
+        amount = per_coin[token]
+        if reverse:
+            amount = amount * -1
+        if amount < min_move:
+            continue
+        amounts_to_move.append([int(amount // 1000 * 1000), CORE_STABLECOINS[token]])
+    return amounts_to_move
+
+
+def auto_take_snapshot():
+    return [
+        world.vault_core.rebase({"from": world.STRATEGIST}),
+        world.vault_value_checker.takeSnapshot({"from": world.STRATEGIST}),
+    ]
+
+
+def auto_check_snapshot():
+    snapshot = world.vault_value_checker.snapshots(world.STRATEGIST)
+    print(snapshot)
+    vault_change = world.vault_core.totalValue() - snapshot[0]
+    supply_change = world.ousd.totalSupply() - snapshot[1]
+
+    return [
+        world.vault_value_checker.checkDelta(
+            vault_change - 500 * int(1e18),
+            vault_change + 1000 * int(1e18),
+            supply_change - 1000 * int(1e18),
+            supply_change + 500 * int(1e18),
+            {"from": world.STRATEGIST},
+        )
+    ]
+
+
+def auto_consolidate_stables(allocation, consolidation):
+    "Take all stables above target and send to consolidate strat"
+    txs = []
+    for strat_name in ["AAVE", "COMP", "MORPHO_COMP", "MORPHO_AAVE"]:
+        if consolidation == strat_name:
+            continue
+        haves = net_delta(allocation[allocation["strategy"] == strat_name])
+        amounts = spread_to_coins(int(1e60), haves, reverse=True)
+        print("auto_consolidate_stables", strat_name, haves, amounts)
+        if amounts:
+            print("auto_consolidate_stables", strat_name, "->", consolidation, "|", pretty_amounts(amounts))
+            txs.append(reallocate(strat_name, consolidation, amounts))
+    return txs
+
+
+def auto_distribute_stables(allocation, consolidation, min_move):
+    "Send to stable strats that are missing funds"
+    txs = []
+    for strat_name in ["AAVE", "COMP", "MORPHO_COMP", "MORPHO_AAVE"]:
+        if consolidation == strat_name:
+            continue
+        needs = net_delta(allocation[allocation["strategy"] == strat_name])
+        amounts = spread_to_coins(int(1e60), per_coin=needs, min_move=min_move)
+        print("auto")
+        print(strat_name)
+        print("auto", strat_name, needs)
+        print("auto_distribute_stables", strat_name, needs, amounts)
+        if amounts:
+            print("auto_distribute_stables", consolidation, "->", strat_name, "|", pretty_amounts(amounts))
+            txs.append(reallocate(consolidation, strat_name, amounts))
+    return txs
+
+
+def auto_fund_defund_3pools(allocation, consolidation, exchange):
+    "VERY INCOMPLETE FOR MANY REASONS."
+    txs = []
+    # net = net_delta(allocation)
+    # # Out
+    # # for k, row in allocation[allocation['token']=='*'].iterrows():
+    # #         if row['strategy'] == exchange:
+    # #             continue
+    # #         if row['delta_dollars'] > -5000:
+    # #             continue
+    # #
+    # #         strat_name = row['strategy']
+    # #         delta = row['delta_dollars'] * -1
+    # #         print(strat_name, delta)
+
+    # # In
+    # for k, row in allocation[allocation['token']=='*'].iterrows():
+    #     if row['strategy'] == exchange:
+    #         continue
+    #     if row['delta_dollars'] < 5000:
+    #         continue
+
+    #     strat_name = row['strategy']
+    #     pool_need = row['delta_dollars']
+    #     haves = net_delta(allocation[allocation['strategy']==consolidation])
+    #     amounts = spread_to_coins(pool_need, haves, reverse=True)
+    #     if amounts:
+    #         txs.append(reallocate(consolidation, strat_name, amounts))
+    return txs
+
+
+def auto_exchange_in(allocation, consolidation, exchange):
+    "From consolidation to exchange"
+    txs = []
+    exchange_has = allocation[(allocation.token == "*") & (allocation.strategy == exchange)]["delta_dollars"].sum()
+    consolidation_needs = sum([x for x in net_delta(allocation).values() if x > 0])
+    exchange_needed = exchange_has + consolidation_needs
+    print(">>> auto_exchange_in", exchange_has, consolidation_needs, exchange_needed)
+    haves = net_delta(allocation[allocation["strategy"] == consolidation])
+    amounts = spread_to_coins(exchange_needed, haves, reverse=True)
+    if amounts:
+        txs.append(reallocate(consolidation, exchange, amounts))
+    return txs
+
+
+def auto_exchange_out(allocation, consolidation, exchange):
+    "From exchange to consolidation"
+    txs = []
+    net = net_delta(allocation)
+    exchange_excess = (
+        allocation[(allocation.token == "*") & (allocation.strategy == exchange)]["delta_dollars"].sum() * -1
+    )
+    print(">>> auto_exchange_out", exchange_excess)
+    amounts = spread_to_coins(exchange_excess, net)
+    if amounts:
+        txs.append(reallocate(exchange, consolidation, amounts))
+    return txs
+
+
+def pretty_amounts(amounts):
+    return ", ".join(["{:,} {}".format(x[0], x[1].symbol()) for x in amounts])

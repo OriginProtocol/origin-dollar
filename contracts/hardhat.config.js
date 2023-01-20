@@ -50,7 +50,9 @@ const {
   yield,
 } = require("./tasks/vault");
 
-const MAINNET_DEPLOYER = "0x29a8dF4d1c7a219679d197CF04C5FFD3Ecf56887";
+const MAINNET_DEPLOYER =
+  process.env.MAINNET_DEPLOYER_OVERRIDE ||
+  "0x29a8dF4d1c7a219679d197CF04C5FFD3Ecf56887";
 // Mainnet contracts are governed by the Governor contract (which derives off Timelock).
 const MAINNET_GOVERNOR = "0x72426ba137dec62657306b12b1e869d43fec6ec7";
 // Multi-sig that controls the Governor. Aka "Guardian".
