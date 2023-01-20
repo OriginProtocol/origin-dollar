@@ -33,7 +33,7 @@ function b64Encode(str) {
   return new Buffer.from(str).toString('base64')
     .replace(/=/g, '')       // Strip base64 padding. It is not essential.
     .replace(/\//g, 'SLASH')  // Replace '/' since otherwise MT alters the string.
-    .replace(/\+/g, 'PLUS')   // Replace '+' since otherwise MT alters the string.
+    .replace(/\+/g, 'PLUS');   // Replace '+' since otherwise MT alters the string.
 }
 
 function encodeVarName(varName) {

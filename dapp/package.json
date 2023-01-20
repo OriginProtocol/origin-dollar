@@ -81,7 +81,7 @@
     "file-loader": "6.2.0",
     "lodash": "^4.17.21",
     "mixpanel-browser": "^2.41.0",
-    "next": "^12.3.0",
+    "next": "^13.1.3",
     "moment": "^2.29.4",
     "next-cookies": "^2.0.3",
     "per-env": "^1.0.2",

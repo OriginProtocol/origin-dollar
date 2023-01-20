@@ -110,130 +110,128 @@ const WalletSelectContent = ({ isMobile }) => {
     })
   }
 
-  return (
-    <>
-      <div
-        onClick={(e) => {
-          e.stopPropagation()
-        }}
-        className={`wallet-select-content d-flex flex-column`}
-      >
-        <h2>
-          {fbt(
-            'Connect a wallet to get started',
-            'Connect a wallet to get started'
-          )}
-        </h2>
-        {wallets.map((name) => {
-          return (
-            <button
-              key={name}
-              className={`connector-button d-flex align-items-center ${
-                isMobile && name === 'Ledger' ? 'grey' : ''
-              }`}
-              onClick={() => {
-                if (isMobile && name === 'MetaMask') {
-                  setError(null)
-                  window.location.href = process.env.METAMASK_DEEPLINK
-                } else if (isMobile && name === 'Ledger') {
-                  setError('ledger-error')
-                } else {
-                  onConnect(name)
-                }
-              }}
-            >
-              <div className="col-2">
-                <img
-                  src={assetRootPath(
-                    `/images/${name.toLowerCase().replace(/\s+/g, '')}-icon.${
-                      name === 'DeFi Wallet' ? 'png' : 'svg'
-                    }`
-                  )}
-                />
-              </div>
-              <div className="col-8">{name}</div>
-              <div className="col-2"></div>
-            </button>
-          )
-        })}
-        {error && (
-          <div className="error d-flex align-items-center justify-content-center">
-            {errorMessageMap(error)}
-          </div>
+  return <>
+    <div
+      onClick={(e) => {
+        e.stopPropagation()
+      }}
+      className={`wallet-select-content d-flex flex-column`}
+    >
+      <h2>
+        {fbt(
+          'Connect a wallet to get started',
+          'Connect a wallet to get started'
         )}
-      </div>
-      <style jsx>{`
-        .wallet-select-content {
-          padding: 34px 34px 46px 34px;
-          max-width: 350px;
-          min-width: 350px;
-          box-shadow: 0 0 14px 0 rgba(24, 49, 64, 0.1);
-          background-color: white;
-          border-radius: 10px;
-        }
+      </h2>
+      {wallets.map((name) => {
+        return (
+          <button
+            key={name}
+            className={`connector-button d-flex align-items-center ${
+              isMobile && name === 'Ledger' ? 'grey' : ''
+            }`}
+            onClick={() => {
+              if (isMobile && name === 'MetaMask') {
+                setError(null)
+                window.location.href = process.env.METAMASK_DEEPLINK
+              } else if (isMobile && name === 'Ledger') {
+                setError('ledger-error')
+              } else {
+                onConnect(name)
+              }
+            }}
+          >
+            <div className="col-2">
+              <img
+                src={assetRootPath(
+                  `/images/${name.toLowerCase().replace(/\s+/g, '')}-icon.${
+                    name === 'DeFi Wallet' ? 'png' : 'svg'
+                  }`
+                )}
+              />
+            </div>
+            <div className="col-8">{name}</div>
+            <div className="col-2"></div>
+          </button>
+        );
+      })}
+      {error && (
+        <div className="error d-flex align-items-center justify-content-center">
+          {errorMessageMap(error)}
+        </div>
+      )}
+    </div>
+    <style jsx>{`
+      .wallet-select-content {
+        padding: 34px 34px 46px 34px;
+        max-width: 350px;
+        min-width: 350px;
+        box-shadow: 0 0 14px 0 rgba(24, 49, 64, 0.1);
+        background-color: white;
+        border-radius: 10px;
+      }
 
-        .wallet-select-content h2 {
-          padding-left: 12px;
-          padding-right: 12px;
-          font-size: 18px;
-          font-weight: bold;
-          text-align: center;
-          line-height: normal;
-          margin-bottom: 26px;
-        }
+      .wallet-select-content h2 {
+        padding-left: 12px;
+        padding-right: 12px;
+        font-size: 18px;
+        font-weight: bold;
+        text-align: center;
+        line-height: normal;
+        margin-bottom: 26px;
+      }
 
-        .wallet-select-content .connector-button {
-          width: 100%;
-          height: 50px;
-          border-radius: 25px;
-          border: solid 1px #1a82ff;
-          background-color: white;
-          font-size: 18px;
-          font-weight: bold;
-          text-align: center;
-          color: #1a82ff;
-        }
+      .wallet-select-content .connector-button {
+        width: 100%;
+        height: 50px;
+        border-radius: 25px;
+        border: solid 1px #1a82ff;
+        background-color: white;
+        font-size: 18px;
+        font-weight: bold;
+        text-align: center;
+        color: #1a82ff;
+      }
 
-        .wallet-select-content .connector-button:disabled {
-          cursor: default;
-          opacity: 0.6;
-        }
+      .wallet-select-content .connector-button:disabled {
+        cursor: default;
+        opacity: 0.6;
+      }
 
-        .wallet-select-content .connector-button img {
-          max-height: 27px;
-        }
+      .wallet-select-content .connector-button img {
+        max-height: 27px;
+      }
 
-        .wallet-select-content .connector-button img.mew {
-          max-height: 30px;
-        }
+      .wallet-select-content .connector-button img.mew {
+        max-height: 30px;
+      }
 
-        .wallet-select-content .connector-button:hover {
-          background-color: #f8f9fa;
-        }
+      .wallet-select-content .connector-button:hover {
+        background-color: #f8f9fa;
+      }
 
-        .wallet-select-content .connector-button:not(:last-child) {
-          margin-bottom: 20px;
-        }
+      .wallet-select-content .connector-button:not(:last-child) {
+        margin-bottom: 20px;
+      }
 
-        .wallet-select-content .grey {
-          cursor: default;
-          opacity: 0.4;
-        }
+      .wallet-select-content .grey {
+        cursor: default;
+        opacity: 0.4;
+      }
 
-        .error {
-          padding: 5px 8px;
-          font-size: 14px;
-          line-height: 1.36;
-          text-align: center;
-          color: #ed2a28;
-          border-radius: 5px;
-          border: solid 1px #ed2a28;
-          min-height: 50px;
-          width: 100%;
-        }
-      `}</style>
-    </>
-  )
+      .error {
+        padding: 5px 8px;
+        font-size: 14px;
+        line-height: 1.36;
+        text-align: center;
+        color: #ed2a28;
+        border-radius: 5px;
+        border: solid 1px #ed2a28;
+        min-height: 50px;
+        width: 100%;
+      }
+    `}</style>
+  </>;
 }
 
 export default withIsMobile(WalletSelectContent)
