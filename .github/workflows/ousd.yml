@@ -100,7 +100,7 @@ jobs:
       - run: yarn prettier:check
         working-directory: ./dapp
 
-  dapp-lint:
+  dapp-biuld:
     name: "DApp Build"
     runs-on: ubuntu-latest
     steps:
