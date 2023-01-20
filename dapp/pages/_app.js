@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import cookies from 'next-cookies'
 import { useWeb3React } from '@web3-react/core'
 import { useRouter } from 'next/router'
+import Head from 'next/head'
 import { useCookies } from 'react-cookie'
 import { useStoreState } from 'pullstate'
 import { QueryClient, QueryClientProvider } from 'react-query'
@@ -58,6 +59,10 @@ function App({ Component, pageProps, err }) {
   const router = useRouter()
   const tried = useEagerConnect()
   const address = useStoreState(AccountStore, (s) => s.address)
+
+  const canonicalUrl = (
+    `https://app.ousd.com` + (router.asPath === '/' ? '' : router.asPath)
+  ).split('?')[0]
 
   if (process.browser) {
     useEffect(() => {
@@ -165,6 +170,9 @@ function App({ Component, pageProps, err }) {
 
   return (
     <>
+      <Head>
+        <link rel="canonical" href={canonicalUrl} />
+      </Head>
       <QueryClientProvider client={queryClient}>
         <AnalyticsProvider instance={analytics}>
           <AccountListener />
