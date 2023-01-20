@@ -90,6 +90,9 @@ const AccountListener = (props) => {
         s.allowances = {}
         s.balances = {}
       })
+      ContractStore.update((s) => {
+        s.walletConnected = false
+      })
       PoolStore.update((s) => {
         s.claimable_ogn = null
         s.lp_tokens = null

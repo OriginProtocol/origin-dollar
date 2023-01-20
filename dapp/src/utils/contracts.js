@@ -389,6 +389,9 @@ export async function setupContracts(account, library, chainId, fetchId) {
 
   const fetchCreditsPerToken = async () => {
     try {
+      if (!walletConnected) {
+        return
+      }
       const response = await fetch(process.env.CREDITS_ANALYTICS_ENDPOINT)
       if (response.ok) {
         const json = await response.json()

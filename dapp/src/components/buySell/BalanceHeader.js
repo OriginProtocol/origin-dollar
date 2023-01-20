@@ -243,7 +243,9 @@ const BalanceHeader = ({
             <Statistic
               title={fbt('Balance', 'OUSD Balance')}
               value={
-                !isNaN(parseFloat(displayedBalance)) && ousdBalanceLoaded
+                walletConnected &&
+                !isNaN(parseFloat(displayedBalance)) &&
+                ousdBalanceLoaded
                   ? displayedBalance
                   : '--.--'
               }
