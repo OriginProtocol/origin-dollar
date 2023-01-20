@@ -60,7 +60,9 @@ function App({ Component, pageProps, err }) {
   const tried = useEagerConnect()
   const address = useStoreState(AccountStore, (s) => s.address)
 
-  const canonicalUrl = (`https://app.ousd.com` + (router.asPath === "/" ? "": router.asPath)).split("?")[0]
+  const canonicalUrl = (
+    `https://app.ousd.com` + (router.asPath === '/' ? '' : router.asPath)
+  ).split('?')[0]
 
   if (process.browser) {
     useEffect(() => {
