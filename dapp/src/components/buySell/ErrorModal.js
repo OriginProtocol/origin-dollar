@@ -73,7 +73,7 @@ const ErrorModal = ({
           right: -1px;
           bottom: -1px;
           left: -1px;
-          z-index: 2;
+          z-index: 3;
           padding-left: 110px;
           padding-right: 110px;
         }
@@ -82,6 +82,7 @@ const ErrorModal = ({
           background-color: white;
           place-self: center;
           padding: 20px;
+          margin: auto;
         }
 
         .error-modal-body .error {

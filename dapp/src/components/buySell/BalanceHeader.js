@@ -4,13 +4,14 @@ import { useStoreState } from 'pullstate'
 import { get as _get } from 'lodash'
 import { useWeb3React } from '@web3-react/core'
 import withIsMobile from 'hoc/withIsMobile'
+import { useRouter } from 'next/router'
 
 import AccountStore from 'stores/AccountStore'
 import AnimatedOusdStore from 'stores/AnimatedOusdStore'
 import ContractStore from 'stores/ContractStore'
 import { formatCurrency } from 'utils/math'
 import { animateValue } from 'utils/animation'
-import { usePrevious } from 'utils/hooks'
+import { usePrevious, useOverrideAccount } from 'utils/hooks'
 import DisclaimerTooltip from 'components/buySell/DisclaimerTooltip'
 import LinkIcon from 'components/buySell/_LinkIcon'
 import useExpectedYield from 'utils/useExpectedYield'
@@ -26,7 +27,11 @@ const BalanceHeader = ({
   rpcProvider,
   isMobile,
 }) => {
-  const { connector, account } = useWeb3React()
+  const { connector, account: web3Account } = useWeb3React()
+
+  const { overrideAccount } = useOverrideAccount()
+  const account = overrideAccount || web3Account
+
   const apyOptions = useStoreState(ContractStore, (s) =>
     apyDayOptions.map((d) => {
       return s.apy[`apy${d}`] || 0
@@ -56,7 +61,6 @@ const BalanceHeader = ({
   const [balanceEmphasised, setBalanceEmphasised] = useState(false)
   const prevOusdBalance = usePrevious(ousdBalance)
   const { animatedExpectedIncrease } = useExpectedYield()
-
   const normalOusdAnimation = (from, to) => {
     setBalanceEmphasised(true)
     return animateValue({
@@ -249,7 +253,7 @@ const BalanceHeader = ({
             <Statistic
               title={fbt('Pending yield', 'Pending yield')}
               value={
-                walletConnected
+                overrideAccount || walletConnected
                   ? formatCurrency(animatedExpectedIncrease, 2)
                   : '--.--'
               }
@@ -269,7 +273,7 @@ const BalanceHeader = ({
                   : false
               }
               value={
-                walletConnected && lifetimeYield
+                (overrideAccount || walletConnected) && lifetimeYield
                   ? formatCurrency(lifetimeYield, 2)
                   : '--.--'
               }

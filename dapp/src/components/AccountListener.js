@@ -8,7 +8,7 @@ import AccountStore from 'stores/AccountStore'
 import ContractStore from 'stores/ContractStore'
 import PoolStore from 'stores/PoolStore'
 import StakeStore from 'stores/StakeStore'
-import { usePrevious } from 'utils/hooks'
+import { usePrevious, useOverrideAccount } from 'utils/hooks'
 import { isCorrectNetwork } from 'utils/web3'
 import { useStoreState } from 'pullstate'
 import { setupContracts } from 'utils/contracts'
@@ -25,7 +25,11 @@ import { transactionHistoryItemsPerPage } from 'utils/constants'
 
 const AccountListener = (props) => {
   const web3react = useWeb3React()
-  const { account, chainId, library, active } = web3react
+  const { account: web3Account, chainId, library, active } = web3react
+
+  const { overrideAccount } = useOverrideAccount()
+  const account = overrideAccount || web3Account
+
   const prevAccount = usePrevious(account)
   const prevActive = usePrevious(active)
   const [contracts, setContracts] = useState(null)

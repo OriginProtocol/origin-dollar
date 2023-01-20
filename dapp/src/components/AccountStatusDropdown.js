@@ -1,20 +1,15 @@
 import React, { useState } from 'react'
 import { useWeb3React } from '@web3-react/core'
-import { fbt } from 'fbt-runtime'
 
 import Dropdown from 'components/Dropdown'
 import GetOUSD from 'components/GetOUSD'
-import {
-  isCorrectNetwork,
-  truncateAddress,
-  switchEthereumChain,
-  shortenAddress,
-} from 'utils/web3'
+import { isCorrectNetwork, switchEthereumChain } from 'utils/web3'
 
 import withWalletSelectModal from 'hoc/withWalletSelectModal'
 import analytics from 'utils/analytics'
 
 import Content from './_AccountStatusContent'
+import AccountStatusIndicator from './_AccountStatusIndicator'
 
 const AccountStatusDropdown = ({ className, showLogin, dapp }) => {
   const { active, account, chainId } = useWeb3React()
@@ -58,22 +53,13 @@ const AccountStatusDropdown = ({ className, showLogin, dapp }) => {
               trackSource="Account dropdown"
             />
           )}
-          {/* What causes !active && account? */}
-          {dapp && !active && account && <div className="dot" />}
-          {active && !correctNetwork && (
-            <>
-              <div className="dot yellow" />
-              <div className="address">
-                {fbt('Wrong network', 'Wrong network')}
-              </div>
-            </>
-          )}
-          {dapp && active && correctNetwork && (
-            <>
-              <div className="dot green" />
-              <div className="address">{shortenAddress(account)}</div>
-            </>
-          )}
+          <AccountStatusIndicator
+            active={active}
+            correctNetwork={correctNetwork}
+            account={account}
+            dapp={dapp}
+            withAddress
+          />
         </a>
       </Dropdown>
       <style jsx>{`
@@ -138,34 +124,6 @@ const AccountStatusDropdown = ({ className, showLogin, dapp }) => {
         .account-status:hover {
           color: inherit;
           text-decoration: none;
-        }
-
-        .dot {
-          width: 10px;
-          height: 10px;
-          margin-left: 10px;
-          border-radius: 5px;
-          background-color: #ed2a28;
-        }
-
-        .dot.green {
-          background-color: #00d592;
-        }
-
-        .dot.green.yellow {
-          background-color: #ffce45;
-        }
-
-        .dot.big {
-          width: 16px;
-          height: 16px;
-          border-radius: 8px;
-          margin-right: 12px;
-        }
-
-        .dot.yellow.big,
-        .dot.green.big {
-          margin-left: 0px;
         }
       `}</style>
     </>
