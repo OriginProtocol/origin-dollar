@@ -165,4 +165,4 @@ jobs:
         with:
           context: .
           push: true
-          tag: registry.heroku.com/ousd-dapp-staging/web
+          tags: registry.heroku.com/ousd-dapp-staging/web
