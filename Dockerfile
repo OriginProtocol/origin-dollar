@@ -16,6 +16,7 @@ RUN yarn deploy
 
 # Build DApp
 WORKDIR /app/dapp
+RUN yarn install
 RUN yarn build
 
 CMD ["yarn", "start"]
