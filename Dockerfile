@@ -3,6 +3,8 @@ FROM node:19-alpine
 # Install Git
 RUN apk update
 RUN apk add git
+git config --global --unset http.proxy
+git config --global --unset https.proxy
 
 # Copy files over
 WORKDIR /app
