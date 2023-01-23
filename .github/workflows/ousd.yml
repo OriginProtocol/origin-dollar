@@ -159,7 +159,7 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
       - name: Run Docker Login
-        run: docker login --username =_ --password=$(HEROKU_TOKEN) registry.heroku.com
+        run: docker login --username =_ --password=$HEROKU_TOKEN registry.heroku.com
       - name: Build Image
         uses: docker/build-push-action@v3
         with:
