@@ -163,6 +163,5 @@ jobs:
       - name: Build Image
         uses: docker/build-push-action@v3
         with:
-          context: .
           push: true
           tags: registry.heroku.com/ousd-dapp-staging/web
