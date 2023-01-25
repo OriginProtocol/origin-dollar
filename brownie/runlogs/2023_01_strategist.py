@@ -1,5 +1,5 @@
 # --------------------------------
-# Jan 6, 2022 - Weekly allocation
+# Jan 6, 2023 - Weekly allocation
 # 
 
 from addresses import *
@@ -66,7 +66,7 @@ r = safe.post_transaction(safe_tx)
 
 
 # --------------------------------
-# Jan 16, 2022 - Weekly allocation Part 1
+# Jan 16, 2023 - Weekly allocation Part 1
 # 
 
 from addresses import *
@@ -145,7 +145,7 @@ r = safe.post_transaction(safe_tx)
 
 
 # --------------------------------
-# Jan 16, 2022 - Weekly allocation Part 2
+# Jan 16, 2023 - Weekly allocation Part 2
 # 
 
 from addresses import *
@@ -223,7 +223,7 @@ r = safe.post_transaction(safe_tx)
 
 
 # --------------------------------
-# Jan 17, 2022 - Weekly allocation Part 3
+# Jan 17, 2023 - Weekly allocation Part 3
 # 
 
 from addresses import *
@@ -262,7 +262,7 @@ r = safe.post_transaction(safe_tx)
 
 
 # --------------------------------
-# Jan 20, 2022 - Move ownership of new governance to new governance
+# Jan 20, 2023 - Move ownership of new governance to new governance
 # 
 
 from world import *
@@ -300,7 +300,7 @@ with TemporaryFork():
         [0 for x in accept_txs],
         ['claimGovernance()' for x in accept_txs],
         [x.input[10:] for x in accept_txs],
-        "Claim governance on governance system contracts\n\nOUSD governance contracts have been owned by the OUSD 5 of 8 multi-sig. Now that these governance contracts have been proven out, it's time for them to be directly owned by the community.",
+        "Claim ownership of governance system contracts\n\nOUSD governance contracts have been owned by the OUSD 5 of 8 multi-sig. Now that these governance contracts have been proven out, it's time for them to be directly owned by the community.",
         {'from': GOV_MULTISIG }
     )
 
@@ -323,7 +323,7 @@ with TemporaryFork():
     chain.mine(timedelta=2*24*60*60+2)
 
     print("...Simulating execution")
-    governor_five.execute(proposal_id, {'from': GOV_MULTISIG})
+    governor_five.execute(proposal_id, {'from': STRATEGIST})
 
     print(ogv.owner())
     print(veogv_proxy.governor())
@@ -336,5 +336,65 @@ safe.sign_with_frame(safe_tx)
 r = safe.post_transaction(safe_tx)
 
 
+# --------------------------------
+# Jan 20, 2023 - Weekly reallocation
+# 
+
+# console.log(Array(...$('.space-y-3').querySelectorAll('.text-skin-link.flex')).map((x)=>{y=x.innerText.split("\n"); return [y[0], y[1].split('veOGV')[1]].join("\t")}).join("\n"))
+
+from world import *
+from allocations import *
+from ape_safe import ApeSafe
+
+votes = """
+    Convex OUSD+3Crv    44.27
+    Morpho Aave USDT    34.44
+    Morpho Aave DAI 3.94
+    Morpho Aave USDC    3.94
+    Convex DAI+USDC+USDT    3.12
+    Morpho Compound USDT    2.86
+    Morpho Compound DAI 2.43
+    Morpho Compound USDC    2.43
+    Convex LUSD+3Crv    0.27
+    Aave DAI    0.1
+    Aave USDC   0.1
+    Aave USDT   0.1
+    Compound DAI    0.1
+    Compound USDC   0.1
+    Compound USDT   0.1
+    Existing Allocation 1.67
+    """
+
+with TemporaryForkWithVaultStats(votes) as s:
+    before_votes = with_target_allocations(load_from_blockchain(), votes)
+    txs = []
+    txs.extend(auto_take_snapshot())
+    
+    # Consolidate Stables
+    allocation = with_target_allocations(load_from_blockchain(), before_votes)
+    txs.extend(auto_consolidate_stables(allocation, consolidation="MORPHO_AAVE"))
+
+    # Pull from strats
+    txs.append(reallocate(OUSD_META_STRAT, MORPHO_COMP_STRAT, [[600_000, dai], [900_000, usdc]]))
+    
+    # Push to strats
+    txs.append(reallocate(MORPHO_AAVE_STRAT, CONVEX_STRAT, [[800_000, usdt]]))
+
+    # # Distribute Stables
+    allocation = with_target_allocations(load_from_blockchain(), before_votes)
+    txs.extend(auto_distribute_stables(allocation, consolidation="MORPHO_AAVE", min_move=200_000))
+
+    txs.append(vault_admin.setAssetDefaultStrategy(DAI, MORPHO_AAVE_STRAT, {'from':STRATEGIST}))
+    txs.append(vault_admin.setAssetDefaultStrategy(USDC, MORPHO_AAVE_STRAT, {'from':STRATEGIST}))
+    txs.append(vault_admin.setAssetDefaultStrategy(USDT, MORPHO_AAVE_STRAT, {'from':STRATEGIST}))
+
+    txs.extend(auto_check_snapshot())
+
+print("Est Gas Max: {:,}".format(1.10*sum([x.gas_used for x in txs])))
 
 
+
+safe = ApeSafe('0xF14BBdf064E3F67f51cd9BD646aE3716aD938FDC')
+safe_tx = safe.multisend_from_receipts(txs)
+safe.sign_with_frame(safe_tx)
+r = safe.post_transaction(safe_tx)
