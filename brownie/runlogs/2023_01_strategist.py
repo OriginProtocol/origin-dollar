@@ -278,39 +278,40 @@ with TemporaryFork():
     print(veogv_proxy.governor())
     print(rewards_source.governor())
     print(rewards_source_impl.governor())
-    txs = [
-        ogv.transferOwnership(TIMELOCK, {'from': GOV_MULTISIG}),
-        veogv_proxy.transferGovernance(TIMELOCK, {'from': GOV_MULTISIG}),
-        rewards_source.transferGovernance(TIMELOCK, {'from': GOV_MULTISIG}),
-        rewards_source_impl.transferGovernance(TIMELOCK, {'from': GOV_MULTISIG}),
-    ]
-    print(ogv.owner())
-    print(veogv_proxy.governor())
-    print(rewards_source.governor())
-    print(rewards_source_impl.governor())
+    # txs = [
+    #     ogv.transferOwnership(TIMELOCK, {'from': GOV_MULTISIG}),
+    #     veogv_proxy.transferGovernance(TIMELOCK, {'from': GOV_MULTISIG}),
+    #     rewards_source.transferGovernance(TIMELOCK, {'from': GOV_MULTISIG}),
+    #     rewards_source_impl.transferGovernance(TIMELOCK, {'from': GOV_MULTISIG}),
+    # ]
+    # print(ogv.owner())
+    # print(veogv_proxy.governor())
+    # print(rewards_source.governor())
+    # print(rewards_source_impl.governor())
 
-    # # Test Claim Ownership
-    accept_txs = []
-    with TemporaryFork():
-        for x in [veogv_proxy, rewards_source, rewards_source_impl]:
-            accept_txs.append(x.claimGovernance({'from': TIMELOCK}))
+    # # # Test Claim Ownership
+    # accept_txs = []
+    # with TemporaryFork():
+    #     for x in [veogv_proxy, rewards_source, rewards_source_impl]:
+    #         accept_txs.append(x.claimGovernance({'from': TIMELOCK}))
 
-    governor_five.propose(
-        [x.receiver for x in accept_txs],
-        [0 for x in accept_txs],
-        ['claimGovernance()' for x in accept_txs],
-        [x.input[10:] for x in accept_txs],
-        "Claim ownership of governance system contracts\n\nOUSD governance contracts have been owned by the OUSD 5 of 8 multi-sig. Now that these governance contracts have been proven out, it's time for them to be directly owned by the community.",
-        {'from': GOV_MULTISIG }
-    )
+    # governor_five.propose(
+    #     [x.receiver for x in accept_txs],
+    #     [0 for x in accept_txs],
+    #     ['claimGovernance()' for x in accept_txs],
+    #     [x.input[10:] for x in accept_txs],
+    #     "Claim ownership of governance system contracts\n\nOUSD governance contracts have been owned by the OUSD 5 of 8 multi-sig. Now that these governance contracts have been proven out, it's time for them to be directly owned by the community.",
+    #     {'from': GOV_MULTISIG }
+    # )
 
-    print("Raw proposal:")
-    print(history[-1].receiver)
-    print(history[-1].input)
-    print(history[-1].events)
-    proposal_id = history[-1].events['ProposalCreated'][0]['proposalId']
-    print(proposal_id)
+    # print("Raw proposal:")
+    # print(history[-1].receiver)
+    # print(history[-1].input)
+    # print(history[-1].events)
+    # proposal_id = history[-1].events['ProposalCreated'][0]['proposalId']
+    # print(proposal_id)
 
+    proposal_id=45460677684519002822957979682755659358113294679122356573267204295153929076039
     print("...Simulating vote")
     chain.mine()
     governor_five.castVote(proposal_id, 1, {'from': GOV_MULTISIG})
@@ -320,7 +321,13 @@ with TemporaryFork():
 
     print("...Simulating queue")
     governor_five.queue(proposal_id, {'from': GOV_MULTISIG})
+    print(history[-1].events)
     chain.mine(timedelta=2*24*60*60+2)
+
+    print("...Proposal timestamp")
+    timelock = Contract.from_explorer(governor_five.timelock())
+    print(timelock.getTimestamp(proposal_id))
+    print("Chain time: ", chain.time(), " chain block height: ", web3.eth.blockNumber)
 
     print("...Simulating execution")
     governor_five.execute(proposal_id, {'from': STRATEGIST})
