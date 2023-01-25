@@ -34,6 +34,8 @@ dai = load_contract('dai', DAI)
 flipper = load_contract('flipper', FLIPPER)
 buyback = load_contract('buyback', BUYBACK)
 ogn = load_contract('ogn', OGN)
+ogv = load_contract('ogv', OGV)
+veogv = load_contract('veogv', VEOGV)
 vault_admin = load_contract('vault_admin', VAULT_PROXY_ADDRESS)
 vault_core = load_contract('vault_core', VAULT_PROXY_ADDRESS)
 vault_value_checker = load_contract('vault_value_checker', VAULT_VALUE_CHECKER)
@@ -55,6 +57,8 @@ stkaave = load_contract('stkaave', '0x4da27a545c0c5B758a6BA100e3a049001de870f5')
 strategist = brownie.accounts.at(STRATEGIST, force=True)
 gova = brownie.accounts.at(GOVERNOR, force=True)
 governor = load_contract('governor', GOVERNOR)
+governor_five = load_contract('governor_five', GOVERNOR_FIVE)
+rewards_source = load_contract('rewards_source', REWARDS_SOURCE)
 
 CONTRACT_ADDRESSES = {}
 CONTRACT_ADDRESSES[VAULT_PROXY_ADDRESS.lower()] = {'name': 'Vault'}

@@ -127,8 +127,9 @@ def show_default_strategies():
 
 
 class TemporaryForkWithVaultStats:
-    def __init__(self, votes):
+    def __init__(self, votes, has_snapshot=True):
         self.votes = votes
+        self.has_snapshot = has_snapshot
 
     def __enter__(self):
         brownie.chain.snapshot()
@@ -139,8 +140,13 @@ class TemporaryForkWithVaultStats:
         self.before_total_supply = world.ousd.totalSupply()
 
     def __exit__(self, *args, **kwargs):
-        vault_change = world.vault_core.totalValue() - self.before_vault_value
-        supply_change = world.ousd.totalSupply() - self.before_total_supply
+        if self.has_snapshot:
+            snapshot = world.vault_value_checker.snapshots(world.STRATEGIST)
+            vault_change = world.vault_core.totalValue() - snapshot[0]
+            supply_change = world.ousd.totalSupply() - snapshot[1]
+        else:
+            vault_change = world.vault_core.totalValue() - self.before_vault_value
+            supply_change = world.ousd.totalSupply() - self.before_total_supply
         after_allocaiton = with_target_allocations(load_from_blockchain(), self.before_votes)
         print(pretty_allocations(after_allocaiton))
         allocation_exposure(after_allocaiton)
