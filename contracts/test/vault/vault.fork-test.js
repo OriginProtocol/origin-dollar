@@ -231,8 +231,9 @@ forkOnlyDescribe("ForkTest: Vault", function () {
         "0x5e3646A1Db86993f73E6b74A57D8640B69F7e259", // Aave
         "0xEA2Ef2e2E5A749D4A66b41Db9aD85a38Aa264cb3", // Convex
         "0x89Eb88fEdc50FC77ae8a18aAD1cA0ac27f777a90", // OUSD MetaStrategy
-        "0x5A4eEe58744D1430876d5cA93cAB5CcB763C037D", // Morpho MetaStrategy
+        "0x5A4eEe58744D1430876d5cA93cAB5CcB763C037D", // MorphoCompoundStrategy
         "0x7A192DD9Cc4Ea9bdEdeC9992df74F1DA55e60a19", // LUSD MetaStrategy
+        "0x79F2188EF9350A1dC11A062cca0abE90684b0197", // MorphoAaveStrategy
         // TODO: Hard-code these after deploy
         //"0x7A192DD9Cc4Ea9bdEdeC9992df74F1DA55e60a19", // LUSD MetaStrategy
       ];
@@ -260,6 +261,7 @@ forkOnlyDescribe("ForkTest: Vault", function () {
         "0x5e3646A1Db86993f73E6b74A57D8640B69F7e259",
         "0x9c459eeb3FA179a40329b81C1635525e9A0Ef094",
         "0x5A4eEe58744D1430876d5cA93cAB5CcB763C037D", // Morpho
+        "0x79F2188EF9350A1dC11A062cca0abE90684b0197", // MorphoAave
       ]).to.include(await vault.assetDefaultStrategies(usdt.address));
     });
 
@@ -271,6 +273,7 @@ forkOnlyDescribe("ForkTest: Vault", function () {
         "0x5e3646A1Db86993f73E6b74A57D8640B69F7e259",
         "0x9c459eeb3FA179a40329b81C1635525e9A0Ef094",
         "0x5A4eEe58744D1430876d5cA93cAB5CcB763C037D", // Morpho
+        "0x79F2188EF9350A1dC11A062cca0abE90684b0197", // MorphoAave
       ]).to.include(await vault.assetDefaultStrategies(usdc.address));
     });
 
@@ -282,6 +285,7 @@ forkOnlyDescribe("ForkTest: Vault", function () {
         "0x5e3646A1Db86993f73E6b74A57D8640B69F7e259",
         "0x9c459eeb3FA179a40329b81C1635525e9A0Ef094",
         "0x5A4eEe58744D1430876d5cA93cAB5CcB763C037D", // Morpho
+        "0x79F2188EF9350A1dC11A062cca0abE90684b0197", // MorphoAave
       ]).to.include(await vault.assetDefaultStrategies(dai.address));
     });
 
