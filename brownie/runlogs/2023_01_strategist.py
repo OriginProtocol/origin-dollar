@@ -278,16 +278,16 @@ with TemporaryFork():
     print(veogv_proxy.governor())
     print(rewards_source.governor())
     print(rewards_source_impl.governor())
-    # txs = [
-    #     ogv.transferOwnership(TIMELOCK, {'from': GOV_MULTISIG}),
-    #     veogv_proxy.transferGovernance(TIMELOCK, {'from': GOV_MULTISIG}),
-    #     rewards_source.transferGovernance(TIMELOCK, {'from': GOV_MULTISIG}),
-    #     rewards_source_impl.transferGovernance(TIMELOCK, {'from': GOV_MULTISIG}),
-    # ]
-    # print(ogv.owner())
-    # print(veogv_proxy.governor())
-    # print(rewards_source.governor())
-    # print(rewards_source_impl.governor())
+    txs = [
+        ogv.transferOwnership(TIMELOCK, {'from': GOV_MULTISIG}),
+        veogv_proxy.transferGovernance(TIMELOCK, {'from': GOV_MULTISIG}),
+        rewards_source.transferGovernance(TIMELOCK, {'from': GOV_MULTISIG}),
+        rewards_source_impl.transferGovernance(TIMELOCK, {'from': GOV_MULTISIG}),
+    ]
+    print(ogv.owner())
+    print(veogv_proxy.governor())
+    print(rewards_source.governor())
+    print(rewards_source_impl.governor())
 
     # # # Test Claim Ownership
     # accept_txs = []
