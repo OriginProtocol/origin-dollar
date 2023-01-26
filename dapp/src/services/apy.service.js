@@ -12,7 +12,7 @@ export default class ApyService {
           throw new Error(`Unexpected days param: ${days}`)
         }
         const response = await fetch(endpoint)
-        if (!response.ok) {
+        if (!response || !response.ok) {
           throw new Error(`Failed to fetch ${days} day APY`, err)
         }
         const json = await response.json()

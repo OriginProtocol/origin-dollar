@@ -19,7 +19,7 @@ export default class TransactionHistoryPageService {
       }/${account.toLowerCase()}/history?per_page=${transactionHistoryItemsPerPage}&page=${page}${filter_param}`
     )
 
-    if (!response.ok) {
+    if (!response || !response.ok) {
       throw new Error('Failed fetching history from analytics')
     }
 
