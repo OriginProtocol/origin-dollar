@@ -188,6 +188,8 @@ jobs:
           heroku_api_key: ${{secrets.HEROKU_TOKEN}}
           heroku_app_name: ${{env.HEROKU_APP_NAME}}
           heroku_email: ${{secrets.HEROKU_EMAIL}}
-      - name: Deploy
+      - name: Deploy to Heroku
         if: ${{ contains(fromJSON('["shah/heroku-deploy", "staging", "stable"]'), github.ref_name) }}
-        run: heroku container:release web
+        env:
+          HEROKU_APP_NAME: ${{env.HEROKU_APP_NAME}}
+        run: heroku container:release web -a $HEROKU_APP_NAME
