@@ -149,8 +149,10 @@ jobs:
           args: --severity-threshold=high  --all-projects
 
   build-image:
-    name: "Build Release Image"
+    name: "Deploy App"
     runs-on: ubuntu-latest
+    # TODO: Add contracts-forktest when it's all green on master
+    needs: [contracts-lint, contracts-test, dapp-lint, slither]
     env:
       HEROKU_TOKEN: ${{ secrets.HEROKU_TOKEN }}
       CURR_BRANCH: ${{ github.ref_name }}
