@@ -154,7 +154,6 @@ jobs:
     env:
       HEROKU_TOKEN: ${{ secrets.HEROKU_TOKEN }}
       CURR_BRANCH: ${{ github.ref_name }}
-    with:
     # TODO: Remove `shah/heroku-deploy` branch after merging PR
     if: ${{ contains(fromJSON('["shah/heroku-deploy", "master", "staging", "stable"]'), github.ref_name) }}
     steps:
