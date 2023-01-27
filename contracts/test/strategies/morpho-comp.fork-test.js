@@ -41,9 +41,9 @@ forkOnlyDescribe("ForkTest: Morpho Compound Strategy", function () {
     });
   });
 
-  describe.only("Redeem", function () {
+  describe("Redeem", function () {
     it("Should redeem from Morpho", async () => {
-      const { vault, ousd, usdt, usdc, dai, anna } = fixture;
+      const { vault, ousd, usdt, usdc, dai, domen } = fixture;
 
       const supplyBeforeMint = await ousd.totalSupply();
 
@@ -52,7 +52,7 @@ forkOnlyDescribe("ForkTest: Morpho Compound Strategy", function () {
       // Mint with all three assets
       for (const asset of [usdt, usdc, dai]) {
         await vault
-          .connect(anna)
+          .connect(domen)
           .mint(asset.address, await units(amount, asset), 0);
       }
 
@@ -60,15 +60,15 @@ forkOnlyDescribe("ForkTest: Morpho Compound Strategy", function () {
       const supplyAdded = currentSupply.sub(supplyBeforeMint);
       expect(supplyAdded).to.approxEqualTolerance(ousdUnits("30000"), 1);
 
-      const currentBalance = await ousd.connect(anna).balanceOf(anna.address);
+      const currentBalance = await ousd.connect(domen).balanceOf(domen.address);
 
-      console.log("balance", (await ousd.balanceOf(anna.address)).toString())
+      console.log("balance", (await ousd.balanceOf(domen.address)).toString())
       console.log("redeem outputs", (await vault.calculateRedeemOutputs(ousdUnits("30000"))))
       // Now try to redeem 30k
-      await vault.connect(anna).redeem(ousdUnits("30000"), 0);
+      await vault.connect(domen).redeem(ousdUnits("30000"), 0);
 
       // User balance should be down by 30k
-      const newBalance = await ousd.connect(anna).balanceOf(anna.address);
+      const newBalance = await ousd.connect(domen).balanceOf(anna.address);
       expect(newBalance).to.approxEqualTolerance(
         currentBalance.sub(ousdUnits("30000")),
         1
