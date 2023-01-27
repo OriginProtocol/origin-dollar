@@ -41,7 +41,7 @@ forkOnlyDescribe("ForkTest: Morpho Compound Strategy", function () {
     });
   });
 
-  describe("Redeem", function () {
+  describe.only("Redeem", function () {
     it("Should redeem from Morpho", async () => {
       const { vault, ousd, usdt, usdc, dai, anna } = fixture;
 
@@ -62,6 +62,8 @@ forkOnlyDescribe("ForkTest: Morpho Compound Strategy", function () {
 
       const currentBalance = await ousd.connect(anna).balanceOf(anna.address);
 
+      console.log("balance", (await ousd.balanceOf(anna.address)).toString())
+      console.log("redeem outputs", (await vault.calculateRedeemOutputs(ousdUnits("30000"))))
       // Now try to redeem 30k
       await vault.connect(anna).redeem(ousdUnits("30000"), 0);
 
