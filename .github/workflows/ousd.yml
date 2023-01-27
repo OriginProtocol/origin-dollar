@@ -155,8 +155,7 @@ jobs:
     env:
       HEROKU_TOKEN: ${{ secrets.HEROKU_TOKEN }}
       CURR_BRANCH: ${{ github.ref_name }}
-    # TODO: Remove `shah/heroku-deploy` branch after merging PR
-    if: ${{ contains(fromJSON('["shah/heroku-deploy", "master", "staging", "stable"]'), github.ref_name) }}
+    if: ${{ contains(fromJSON('["master", "staging", "stable"]'), github.ref_name) }}
     steps:
       - uses: actions/checkout@v3
 
@@ -181,8 +180,7 @@ jobs:
 
       - name: Heroku Login
         uses: akhileshns/heroku-deploy@v3.12.12
-        # TODO: Remove `shah/heroku-deploy` branch after merging PR
-        if: ${{ contains(fromJSON('["shah/heroku-deploy", "staging", "stable"]'), github.ref_name) }}
+        if: ${{ contains(fromJSON('["staging", "stable"]'), github.ref_name) }}
         with:
           justlogin: true
           heroku_api_key: ${{secrets.HEROKU_TOKEN}}
@@ -196,8 +194,7 @@ jobs:
         run: heroku config -s -a $HEROKU_APP_NAME > deploy.env
       - name: Build and Push
         uses: docker/build-push-action@v3
-        # TODO: Remove `shah/heroku-deploy` branch after merging PR
-        if: ${{ contains(fromJSON('["shah/heroku-deploy", "staging", "stable"]'), github.ref_name) }}
+        if: ${{ contains(fromJSON('["staging", "stable"]'), github.ref_name) }}
         env:
           NODE_ENV: production
         with:
@@ -207,7 +204,7 @@ jobs:
           provenance: false
 
       - name: Deploy to Heroku
-        if: ${{ contains(fromJSON('["shah/heroku-deploy", "staging", "stable"]'), github.ref_name) }}
+        if: ${{ contains(fromJSON('["staging", "stable"]'), github.ref_name) }}
         env:
           HEROKU_APP_NAME: ${{env.HEROKU_APP_NAME}}
         run: heroku container:release web -a $HEROKU_APP_NAME
