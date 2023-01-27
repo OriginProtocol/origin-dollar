@@ -185,7 +185,8 @@ jobs:
       - name: Extract Deployment Env
         env:
           HEROKU_APP_NAME: ${{env.HEROKU_APP_NAME}}
-        run: heroku config -s -a $HEROKU_APP_NAME > dapp/deploy.env
+        working-directory: ./dapp
+        run: heroku config -s -a $HEROKU_APP_NAME > deploy.env
       - name: Build and Push
         uses: docker/build-push-action@v3
         # TODO: Remove `shah/heroku-deploy` branch after merging PR
