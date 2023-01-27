@@ -17,6 +17,6 @@ RUN yarn deploy
 # Build DApp
 WORKDIR /app/dapp
 RUN yarn install
-RUN yarn build
+RUN NODE_ENV=production yarn build
 
 CMD ["yarn", "start"]
