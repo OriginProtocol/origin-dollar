@@ -25,6 +25,10 @@ forkOnlyDescribe("ForkTest: Morpho Compound Strategy", function () {
   });
 
   describe("Mint", function () {
+    beforeEach(async () => {
+      fixture = await loadFixture(morphoCompoundFixture);
+    });
+
     it("Should deploy USDC in Morpho Compound", async function () {
       const { matt, usdc } = fixture;
       await mintTest(fixture, matt, usdc, "110000");
@@ -42,6 +46,10 @@ forkOnlyDescribe("ForkTest: Morpho Compound Strategy", function () {
   });
 
   describe("Redeem", function () {
+    beforeEach(async () => {
+      fixture = await loadFixture(morphoCompoundFixture);
+    });
+
     it("Should redeem from Morpho", async () => {
       const { vault, ousd, usdt, usdc, dai, domen } = fixture;
 
@@ -62,11 +70,6 @@ forkOnlyDescribe("ForkTest: Morpho Compound Strategy", function () {
 
       const currentBalance = await ousd.connect(domen).balanceOf(domen.address);
 
-      console.log("balance", (await ousd.balanceOf(domen.address)).toString());
-      console.log(
-        "redeem outputs",
-        await vault.calculateRedeemOutputs(ousdUnits("30000"))
-      );
       // Now try to redeem 30k
       await vault.connect(domen).redeem(ousdUnits("30000"), 0);
 
