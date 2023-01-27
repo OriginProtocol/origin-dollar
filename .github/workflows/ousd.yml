@@ -173,7 +173,7 @@ jobs:
         shell: bash
         run:
           if [[ $CURR_BRANCH == "stable" ]]; then 
-            echo "HEROKU_APP_NAME=ousd-dapp-prod" >> $GITHUB_ENV;
+            echo "HEROKU_APP_NAME=ousd-dapp" >> $GITHUB_ENV;
           else 
             echo "HEROKU_APP_NAME=ousd-dapp-staging" >> $GITHUB_ENV; 
           fi;
