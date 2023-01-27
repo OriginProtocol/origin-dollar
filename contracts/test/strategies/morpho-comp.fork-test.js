@@ -62,13 +62,16 @@ forkOnlyDescribe("ForkTest: Morpho Compound Strategy", function () {
 
       const currentBalance = await ousd.connect(domen).balanceOf(domen.address);
 
-      console.log("balance", (await ousd.balanceOf(domen.address)).toString())
-      console.log("redeem outputs", (await vault.calculateRedeemOutputs(ousdUnits("30000"))))
+      console.log("balance", (await ousd.balanceOf(domen.address)).toString());
+      console.log(
+        "redeem outputs",
+        await vault.calculateRedeemOutputs(ousdUnits("30000"))
+      );
       // Now try to redeem 30k
       await vault.connect(domen).redeem(ousdUnits("30000"), 0);
 
       // User balance should be down by 30k
-      const newBalance = await ousd.connect(domen).balanceOf(anna.address);
+      const newBalance = await ousd.connect(domen).balanceOf(domen.address);
       expect(newBalance).to.approxEqualTolerance(
         currentBalance.sub(ousdUnits("30000")),
         1
