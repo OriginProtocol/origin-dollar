@@ -437,9 +437,9 @@ function deploymentWithProposal(opts, fn) {
       // running on fork with a proposalId already available
       if (isFork && proposalId) {
         return false;
-      /* running on fork, and proposal not yet submitted. This is usually during development
-       * before kicking off deploy.
-       */
+        /* running on fork, and proposal not yet submitted. This is usually during development
+         * before kicking off deploy.
+         */
       } else if (isFork) {
         const networkName = isForkTest ? "hardhat" : "localhost";
         const migrations = require(`./../deployments/${networkName}/.migrations.json`);
