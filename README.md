@@ -3,6 +3,12 @@
 OUSD is a new kind of stablecoin that passively accrues yield while you are holding it.
 Checkout our [docs](https://docs.ousd.com) for more details about the product.
 
+| Branch  | CI/CD Status |
+| ------------- | ------------- |
+| `master` | [![OUSD](https://github.com/OriginProtocol/origin-dollar/actions/workflows/ousd.yml/badge.svg)](https://github.com/OriginProtocol/origin-dollar/actions/workflows/ousd.yml) |
+| `staging` | [![OUSD](https://github.com/OriginProtocol/origin-dollar/actions/workflows/ousd.yml/badge.svg?branch=staging)](https://github.com/OriginProtocol/origin-dollar/actions/workflows/ousd.yml?query=branch%3Astaging) |
+| `stable` | [![OUSD](https://github.com/OriginProtocol/origin-dollar/actions/workflows/ousd.yml/badge.svg?branch=stable)](https://github.com/OriginProtocol/origin-dollar/actions/workflows/ousd.yml?query=branch%3Astable) |
+
 ## Requirements
 - Node Version
   - `^8.11.2 >= node <=^14.0.0`
