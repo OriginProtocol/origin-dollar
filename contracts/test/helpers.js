@@ -423,7 +423,7 @@ async function differenceInErc20TokenBalances(
   asyncFn
 ) {
   if (addresses.length !== tokenContracts.length) {
-    throw new Exception(
+    throw new Error(
       "addresses and tokenContracts arrays need to be of same length"
     );
   }
@@ -468,7 +468,7 @@ async function differenceInStrategyBalance(
   }
 
   if (assetAddresses.length !== strategyContracts.length) {
-    throw new Exception(
+    throw new Error(
       "assetAddresses and strategyContracts arrays need to be of same length"
     );
   }

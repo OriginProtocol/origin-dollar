@@ -10,8 +10,6 @@ const {
   usdtUnits,
   usdcUnits,
   daiUnits,
-  cDaiUnits,
-  cUsdcUnits,
   differenceInStrategyBalance,
   differenceInErc20TokenBalances,
 } = require("./../helpers");
@@ -157,7 +155,7 @@ forkOnlyDescribe("ForkTest: Vault", function () {
     });
 
     it("should withdraw from and deposit to strategy", async () => {
-      const { vault, josh, usdc, dai, cdai, cusdc, compoundStrategy } = fixture;
+      const { vault, josh, usdc, dai, compoundStrategy } = fixture;
       await vault.connect(josh).mint(usdc.address, usdcUnits("90"), 0);
       await vault.connect(josh).mint(dai.address, daiUnits("50"), 0);
       const strategistSigner = await impersonateAndFundContract(
