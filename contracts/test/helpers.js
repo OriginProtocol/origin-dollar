@@ -17,12 +17,21 @@ chai.Assertion.addMethod(
   "approxEqualTolerance",
   function (expected, maxTolerancePct = 1, message = undefined) {
     const actual = this._obj;
-    chai
-      .expect(actual, message)
-      .gte(expected.mul(10000 - maxTolerancePct * 100).div(10000));
-    chai
-      .expect(actual, message)
-      .lte(expected.mul(10000 + maxTolerancePct * 100).div(10000));
+    if (expected.gte(BigNumber.from(0))) {
+      chai
+        .expect(actual, message)
+        .gte(expected.mul(10000 - maxTolerancePct * 100).div(10000));
+      chai
+        .expect(actual, message)
+        .lte(expected.mul(10000 + maxTolerancePct * 100).div(10000));
+    } else {
+      chai
+        .expect(actual, message)
+        .gte(expected.mul(10000 + maxTolerancePct * 100).div(10000));
+      chai
+        .expect(actual, message)
+        .lte(expected.mul(10000 - maxTolerancePct * 100).div(10000));
+    }
   }
 );
 
@@ -405,6 +414,33 @@ async function differenceInErc20TokenBalance(address, tokenContract, asyncFn) {
 
 
 /**
+ * Return the difference in ERC20 `token` balance of an `address` after
+ * the `asyncFn` is executed. Takes array as an input and also returns array
+ * of values
+ */
+async function differenceInErc20TokenBalances(addresses, tokenContracts, asyncFn) {
+  if (addresses.length !== tokenContracts.length) {
+    throw new Exception("addresses and tokenContracts arrays need to be of same length")
+  }
+
+  const arrayLength = addresses.length;
+  const balancesBefore = Array(arrayLength)
+  const returnVals = Array(arrayLength)
+
+  for (let i = 0; i < arrayLength; i++) {
+    balancesBefore[i] = await tokenContracts[i].balanceOf(addresses[i]);
+  }
+  await asyncFn();
+
+  for (let i = 0; i < arrayLength; i++) {
+    returnVals[i] = (await tokenContracts[i].balanceOf(addresses[i])).sub(balancesBefore[i]);
+  }
+
+  return returnVals;
+}
+
+
+/**
  * Return the difference strategy balance `strategyContract` for the `assetAddress` asset
  * after the `asyncFn` is executed.
  * 
@@ -534,5 +570,6 @@ module.exports = {
   changeInBalance,
   forkOnlyDescribe,
   differenceInErc20TokenBalance,
+  differenceInErc20TokenBalances,
   differenceInStrategyBalance,
 };
