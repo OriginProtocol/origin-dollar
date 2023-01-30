@@ -164,26 +164,27 @@ forkOnlyDescribe("ForkTest: Vault", function () {
         await vault.strategistAddr()
       );
 
-      let daiBalanceDiff, usdcBalanceDiff, daiStratDiff, usdcStratDiff
+      let daiBalanceDiff, usdcBalanceDiff, daiStratDiff, usdcStratDiff;
 
       [daiBalanceDiff, usdcBalanceDiff] = await differenceInErc20TokenBalances(
         [vault.address, vault.address],
         [dai, usdc],
         async () => {
           [daiStratDiff, usdcStratDiff] = await differenceInStrategyBalance(
-          [dai.address, usdc.address],
-          [compoundStrategy, compoundStrategy],
-          async () => {
-            await vault
-              .connect(strategistSigner)
-              .depositToStrategy(
-                compoundStrategy.address,
-                [dai.address, usdc.address],
-                [daiUnits("50"), usdcUnits("90")]
-              );
-          }
-        )}
-      )
+            [dai.address, usdc.address],
+            [compoundStrategy, compoundStrategy],
+            async () => {
+              await vault
+                .connect(strategistSigner)
+                .depositToStrategy(
+                  compoundStrategy.address,
+                  [dai.address, usdc.address],
+                  [daiUnits("50"), usdcUnits("90")]
+                );
+            }
+          );
+        }
+      );
 
       expect(daiBalanceDiff).to.equal(daiUnits("-50"));
       expect(usdcBalanceDiff).to.approxEqualTolerance(usdcUnits("-90"), 1);
@@ -206,9 +207,10 @@ forkOnlyDescribe("ForkTest: Vault", function () {
                   [dai.address, usdc.address],
                   [daiUnits("50"), usdcUnits("90")]
                 );
-          }
-        )}
-      )
+            }
+          );
+        }
+      );
 
       expect(daiBalanceDiff).to.approxEqualTolerance(daiUnits("50"), 1);
       expect(usdcBalanceDiff).to.approxEqualTolerance(usdcUnits("90"), 1);
