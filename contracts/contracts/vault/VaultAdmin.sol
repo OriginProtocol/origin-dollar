@@ -296,9 +296,10 @@ contract VaultAdmin is VaultStorage {
             require(strategyTo.supportsAsset(_assets[i]), "Asset unsupported");
             // Send required amount of funds to the strategy
             IERC20(_assets[i]).safeTransfer(_strategyToAddress, _amounts[i]);
-            // Deposit into the Strategy from the vault
-            strategyTo.deposit(_assets[i], _amounts[i]);
         }
+
+        // Deposit all the funds that have been sent to the strategy
+        strategyTo.depositAll();
     }
 
     /**
