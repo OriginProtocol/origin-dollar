@@ -156,7 +156,7 @@ forkOnlyDescribe("ForkTest: Vault", function () {
       expect(balancePreMint).to.approxEqualTolerance(balancePostRedeem, 1);
     });
 
-    it.only("should withdraw from and deposit to strategy", async () => {
+    it("should withdraw from and deposit to strategy", async () => {
       const { vault, josh, usdc, dai, cdai, cusdc, compoundStrategy } = fixture;
       await vault.connect(josh).mint(usdc.address, usdcUnits("90"), 0);
       await vault.connect(josh).mint(dai.address, daiUnits("50"), 0);
