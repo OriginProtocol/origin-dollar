@@ -152,7 +152,8 @@ jobs:
     name: "Deploy App"
     runs-on: ubuntu-latest
     needs: [contracts-lint, dapp-lint]
-    environment: ${{github.ref_name}}
+    environment:
+      name: ${{github.ref_name}}
     env:
       HEROKU_TOKEN: ${{ secrets.HEROKU_TOKEN }}
       CURR_BRANCH: ${{ github.ref_name }}
