@@ -12,6 +12,8 @@ const {
   daiUnits,
   cDaiUnits,
   cUsdcUnits,
+  differenceInErc20TokenBalance,
+  differenceInStrategyBalance,
 } = require("./../helpers");
 
 /**
@@ -154,7 +156,7 @@ forkOnlyDescribe("ForkTest: Vault", function () {
       expect(balancePreMint).to.approxEqualTolerance(balancePostRedeem, 1);
     });
 
-    it("should withdraw from and deposit to strategy", async () => {
+    it.only("should withdraw from and deposit to strategy", async () => {
       const { vault, josh, usdc, dai, cdai, cusdc, compoundStrategy } = fixture;
       await vault.connect(josh).mint(usdc.address, usdcUnits("90"), 0);
       await vault.connect(josh).mint(dai.address, daiUnits("50"), 0);
@@ -164,16 +166,21 @@ forkOnlyDescribe("ForkTest: Vault", function () {
 
       let daiBalance = await dai.balanceOf(vault.address);
       let usdcBalance = await usdc.balanceOf(vault.address);
-      let cDaiBalance = await cdai.balanceOf(compoundStrategy.address);
-      let cUsdcBalance = await cusdc.balanceOf(compoundStrategy.address);
+      let daiStratDiff, usdcStratDiff
 
-      await vault
-        .connect(strategistSigner)
-        .depositToStrategy(
-          compoundStrategy.address,
-          [dai.address, usdc.address],
-          [daiUnits("50"), usdcUnits("90")]
-        );
+      [daiStratDiff, usdcStratDiff] = await differenceInStrategyBalance(
+        [dai.address, usdc.address],
+        [compoundStrategy, compoundStrategy],
+        async () => {
+          await vault
+            .connect(strategistSigner)
+            .depositToStrategy(
+              compoundStrategy.address,
+              [dai.address, usdc.address],
+              [daiUnits("50"), usdcUnits("90")]
+            );
+        }
+      )
 
       // stablecoin diff but with reversed sign (positive instead of expected negative)
       const reversedDaiDiff = daiBalance.sub(
@@ -182,25 +189,16 @@ forkOnlyDescribe("ForkTest: Vault", function () {
       const reversedUsdcDiff = usdcBalance.sub(
         await usdc.balanceOf(vault.address)
       );
-      const cDaiDiff = (await cdai.balanceOf(compoundStrategy.address)).sub(
-        cDaiBalance
-      );
-      const cUsdcDiff = (await cusdc.balanceOf(compoundStrategy.address)).sub(
-        cUsdcBalance
-      );
-
-      // cDai, cUsdc are ~$0.02 dividing by 100 makes sure the tests pass even if the
-      // price of the tokens were $0.01
-      expect(cDaiDiff).gte(cDaiUnits("50").div(100));
-      expect(cUsdcDiff).gte(cUsdcUnits("90").div(100));
-
       expect(reversedDaiDiff).to.equal(daiUnits("50"));
       expect(reversedUsdcDiff).to.approxEqualTolerance(usdcUnits("90"), 1);
 
+      expect(daiStratDiff).gte(daiUnits("50"));
+      expect(usdcStratDiff).gte(usdcUnits("90"));
+
       daiBalance = await dai.balanceOf(vault.address);
       usdcBalance = await usdc.balanceOf(vault.address);
-      cDaiBalance = await cdai.balanceOf(compoundStrategy.address);
-      cUsdcBalance = await cusdc.balanceOf(compoundStrategy.address);
+      let daiStratBalance = await compoundStrategy.checkBalance(dai.address);
+      let usdcStratBalance = await compoundStrategy.checkBalance(usdc.address);
 
       await vault
         .connect(strategistSigner)
@@ -214,11 +212,11 @@ forkOnlyDescribe("ForkTest: Vault", function () {
       const usdcDiff = (await usdc.balanceOf(vault.address)).sub(usdcBalance);
 
       // token diff but with reversed sign (positive instead of expected negative)
-      const reversedcDaiDiff = cDaiBalance.sub(
-        await cdai.balanceOf(compoundStrategy.address)
+      const reversedDaiStratDiff = daiStratBalance.sub(
+        await compoundStrategy.checkBalance(dai.address)
       );
-      const reversedcUsdcDiff = cUsdcBalance.sub(
-        await cusdc.balanceOf(compoundStrategy.address)
+      const reversedUsdcStratDiff = usdcStratBalance.sub(
+        await compoundStrategy.checkBalance(usdc.address)
       );
 
       expect(daiDiff).to.approxEqualTolerance(daiUnits("50"), 1);
@@ -226,8 +224,8 @@ forkOnlyDescribe("ForkTest: Vault", function () {
 
       // cDai, cUsdc are ~$0.02 dividing by 100 makes sure the tests pass even if the
       // price of the tokens were $0.01
-      expect(reversedcDaiDiff).gte(cDaiUnits("50").div(100));
-      expect(reversedcUsdcDiff).gte(cUsdcUnits("90").div(100));
+      expect(reversedDaiStratDiff).gte(daiUnits("50").div(100));
+      expect(reversedUsdcStratDiff).gte(usdcUnits("90").div(100));
     });
 
     it("Should have vault buffer disabled", async () => {

@@ -403,6 +403,49 @@ async function differenceInErc20TokenBalance(address, tokenContract, asyncFn) {
   return (await tokenContract.balanceOf(address)).sub(balanceBefore);
 }
 
+
+/**
+ * Return the difference strategy balance `strategyContract` for the `assetAddress` asset
+ * after the `asyncFn` is executed.
+ * 
+ * assetAddresses & strategyContracts can either be an array or a single address. Return type
+ * depends on input parameters, can also either be an array or single value
+ */
+async function differenceInStrategyBalance(assetAddresses, strategyContracts, asyncFn) {
+  let inputArray = false
+  if (Array.isArray(assetAddresses) || Array.isArray(strategyContracts)) {
+    inputArray = true
+  } else {
+    // turn into an array for more uniform implementation
+    assetAddresses = [assetAddresses]
+    strategyContracts = [strategyContracts]
+  }
+
+  if (assetAddresses.length !== strategyContracts.length) {
+    throw new Exception("assetAddresses and strategyContracts arrays need to be of same length")
+  }
+
+  const arrayLength = assetAddresses.length;
+  const balancesBefore = Array(arrayLength)
+  const returnVals = Array(arrayLength)
+
+  for (let i = 0; i < arrayLength; i++) {
+    balancesBefore[i] = await strategyContracts[i].checkBalance(assetAddresses[i]);
+  }
+  await asyncFn();
+
+  for (let i = 0; i < arrayLength; i++) {
+    returnVals[i] = (await strategyContracts[i].checkBalance(assetAddresses[i])).sub(balancesBefore[i]);
+  }
+
+  // if input params weren't arrays return a single value
+  if (!inputArray) {
+    return returnVals[0]
+  }
+
+  return returnVals;
+}
+
 async function governorArgs({ contract, signature, args = [] }) {
   const method = signature.split("(")[0];
   const tx = await contract.populateTransaction[method](...args);
@@ -491,4 +534,5 @@ module.exports = {
   changeInBalance,
   forkOnlyDescribe,
   differenceInErc20TokenBalance,
+  differenceInStrategyBalance,
 };
