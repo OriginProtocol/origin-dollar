@@ -473,10 +473,16 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
                 // high resolution, and do not have to do any other bookkeeping
                 nonRebasingCreditsPerToken[_account] = 1e27;
             } else {
-                // Migrate an existing account:
-
+                // Migrate the existing account:
+                // It is important that balanceOf not be called inside updating
+                // account data, since it will give wrong answers if it does
+                // not have all an account's data in a consistent state. This
+                // isn't a problem in the current implimentation, since we only
+                // need to update nonRebasingCreditsPerToken.
                 // Set fixed credits per token for this account
                 nonRebasingCreditsPerToken[_account] = _rebasingCreditsPerToken;
+
+                // Update global totals:
                 // Update non rebasing supply
                 nonRebasingSupply = nonRebasingSupply.add(balanceOf(_account));
                 // Update credit tallies
