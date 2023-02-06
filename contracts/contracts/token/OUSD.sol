@@ -501,24 +501,29 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
     function rebaseOptIn() public nonReentrant {
         require(_isNonRebasingAccount(msg.sender), "Account has not opted out");
 
+        // Precalculate new credits, so that we avoid internal calls when
+        // atomicly updating account.
         // Convert balance into the same amount at the current exchange rate
         uint256 newCreditBalance = _creditBalances[msg.sender]
             .mul(_rebasingCreditsPerToken)
             .div(_creditsPerToken(msg.sender));
 
-        // Decreasing non rebasing supply
-        nonRebasingSupply = nonRebasingSupply.sub(balanceOf(msg.sender));
-
+        // Atomicly update this account:
+        // Important that no internal calls happen during this.
+        // Remove pinned fixed credits per token
+        delete nonRebasingCreditsPerToken[msg.sender];
+        // New credits
         _creditBalances[msg.sender] = newCreditBalance;
+        // Mark explicitly opted out of rebasing
+        rebaseState[msg.sender] = RebaseOptions.OptIn;
+        
 
+        // Update global totals:
+        // Decrease non rebasing supply
+        nonRebasingSupply = nonRebasingSupply.sub(balanceOf(msg.sender));
         // Increase rebasing credits, totalSupply remains unchanged so no
         // adjustment necessary
         _rebasingCredits = _rebasingCredits.add(_creditBalances[msg.sender]);
-
-        rebaseState[msg.sender] = RebaseOptions.OptIn;
-
-        // Delete any fixed credits per token
-        delete nonRebasingCreditsPerToken[msg.sender];
     }
 
     /**
@@ -527,17 +532,19 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
     function rebaseOptOut() public nonReentrant {
         require(!_isNonRebasingAccount(msg.sender), "Account has not opted in");
 
-        // Increase non rebasing supply
-        nonRebasingSupply = nonRebasingSupply.add(balanceOf(msg.sender));
+        // Atomicly update this account
+        // Important that no internal calls happen during this.
         // Set fixed credits per token
         nonRebasingCreditsPerToken[msg.sender] = _rebasingCreditsPerToken;
+        // Mark explicitly opted out of rebasing
+        rebaseState[msg.sender] = RebaseOptions.OptOut;
 
+        // Update global totals:
+        // Increase non rebasing supply
+        nonRebasingSupply = nonRebasingSupply.add(balanceOf(msg.sender));
         // Decrease rebasing credits, total supply remains unchanged so no
         // adjustment necessary
         _rebasingCredits = _rebasingCredits.sub(_creditBalances[msg.sender]);
-
-        // Mark explicitly opted out of rebasing
-        rebaseState[msg.sender] = RebaseOptions.OptOut;
     }
 
     /**
