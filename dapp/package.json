@@ -13,7 +13,7 @@
     "ipfs-export": "DEPLOY_MODE=ipfs yarn run build && next export",
     "start": "per-env",
     "start:development": "NODE_ENV=development ETHEREUM_RPC_PROVIDER=http://localhost:8545 next dev",
-    "start:production": "NODE_ENV=production next start -p 8080",
+    "start:production": "NODE_ENV=production next start -p $PORT",
     "gcp-build": "next build",
     "encrypt-secrets:prod": "gcloud kms encrypt --ciphertext-file=prod.secrets.enc --plaintext-file=prod.env --location=global --keyring=origin --key=cloudbuild",
     "decrypt-secrets:prod": "gcloud kms decrypt --ciphertext-file=prod.secrets.enc --plaintext-file=prod.env --location=global --keyring=origin --key=cloudbuild",
