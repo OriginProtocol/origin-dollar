@@ -8,5 +8,8 @@
     "build:contracts": "(cd contracts && NODE_ENV=development yarn install && yarn run deploy)",
     "start": "cd dapp && yarn run start"
   },
-  "dependencies": {}
+  "dependencies": {},
+  "engines": {
+    "node": "16.x"
+  }
 }
