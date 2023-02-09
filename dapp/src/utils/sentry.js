@@ -7,7 +7,7 @@ const isStaging = process.env.STAGING === 'true'
 const isProduction = process.env.NODE_ENV === 'production' && !isStaging
 
 export const initSentry = () => {
-  if (!process.env.SENTRY_DSN) {
+  if (!process.env.NEXT_PUBLIC_SENTRY_DSN) {
     return
   }
 
@@ -24,6 +24,6 @@ export const initSentry = () => {
         },
       }),
     ],
-    dsn: process.env.SENTRY_DSN,
+    dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
   })
 }
