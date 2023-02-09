@@ -17,7 +17,7 @@ export default function IPFSDappLink({ dapp, css }) {
     <div className={`${!displayIpfsLink || !dapp ? 'd-none' : css}`}>
       <a
         className={`ipfs-link d-flex justify-content-center align-items-center`}
-        href={process.env.IPFS_DAPP_URL}
+        href={process.env.NEXT_PUBLIC_IPFS_DAPP_URL}
         target="_blank"
         rel="noopener noreferrer"
       >

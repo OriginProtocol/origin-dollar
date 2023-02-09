@@ -64,7 +64,8 @@ const SwapHomepage = ({
   const { setPriceToleranceValue, priceToleranceValue } =
     usePriceTolerance('mint')
 
-  const swappingGloballyDisabled = process.env.DISABLE_SWAP_BUTTON === 'true'
+  const swappingGloballyDisabled =
+    process.env.NEXT_PUBLIC_DISABLE_SWAP_BUTTON === 'true'
 
   const swapParams = (rawCoinAmount, outputAmount) => {
     return {

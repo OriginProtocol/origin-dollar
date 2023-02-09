@@ -35,14 +35,17 @@ export default class BalancesService {
     }
     jsonCallId++
 
-    const response = await fetch(process.env.ETHEREUM_RPC_PROVIDER, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      referrerPolicy: 'no-referrer',
-      body: JSON.stringify(data),
-    })
+    const response = await fetch(
+      process.env.NEXT_PUBLIC_ETHEREUM_RPC_PROVIDER,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        referrerPolicy: 'no-referrer',
+        body: JSON.stringify(data),
+      }
+    )
 
     if (!response || !response.ok) {
       throw new Error(

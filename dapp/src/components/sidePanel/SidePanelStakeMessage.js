@@ -22,7 +22,7 @@ const SidePanelStakeMessage = () => {
   useEffect(() => {
     setShow(
       localStorage.getItem(localStorageKey) !== 'true' &&
-        process.env.ENABLE_LIQUIDITY_MINING === 'true' &&
+        process.env.NEXT_PUBLIC_ENABLE_LIQUIDITY_MINING === 'true' &&
         parseFloat(balances.ousd) > 0
     )
   }, [])

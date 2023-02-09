@@ -86,7 +86,7 @@ const TransactionListener = ({ rpcProvider }) => {
    */
   const startWebsocketListener = async () => {
     const wsProvider = new ethers.providers.WebSocketProvider(
-      process.env.ETHEREUM_WEBSOCKET_PROVIDER
+      process.env.NEXT_PUBLIC_ETHEREUM_WEBSOCKET_PROVIDER
     )
 
     const vault = ContractStore.currentState.contracts.vault
