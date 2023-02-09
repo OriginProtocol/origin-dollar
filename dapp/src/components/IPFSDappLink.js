@@ -18,7 +18,7 @@ export default function IPFSDappLink({ dapp, css }) {
       <a
         className={`ipfs-link d-flex justify-content-center align-items-center`}
         href={process.env.NEXT_PUBLIC_IPFS_DAPP_URL}
-        target="_blank"
+        target="_blank" 
         rel="noopener noreferrer"
       >
         <img
