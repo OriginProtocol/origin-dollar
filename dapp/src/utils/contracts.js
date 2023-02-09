@@ -82,8 +82,8 @@ export async function setupContracts(account, library, chainId, fetchId) {
    * running node in forked mode.
    */
   const jsonRpcProvider = new ethers.providers.StaticJsonRpcProvider(
-    process.env.ETHEREUM_RPC_PROVIDER,
-    { chainId: parseInt(process.env.ETHEREUM_RPC_CHAIN_ID) }
+    process.env.NEXT_PUBLIC_ETHEREUM_RPC_PROVIDER,
+    { chainId: parseInt(process.env.NEXT_PUBLIC_ETHEREUM_RPC_CHAIN_ID) }
   )
 
   let provider = jsonRpcProvider
@@ -144,7 +144,7 @@ export async function setupContracts(account, library, chainId, fetchId) {
     liquidityRewardOUSD_DAIProxy,
     liquidityRewardOUSD_USDCProxy
 
-  if (process.env.ENABLE_LIQUIDITY_MINING === 'true') {
+  if (process.env.NEXT_PUBLIC_ENABLE_LIQUIDITY_MINING === 'true') {
     liquidityRewardOUSD_USDTProxy = contracts['LiquidityRewardOUSD_USDTProxy']
     liquidityRewardOUSD_DAIProxy = contracts['LiquidityRewardOUSD_DAIProxy']
     liquidityRewardOUSD_USDCProxy = contracts['LiquidityRewardOUSD_USDCProxy']
@@ -226,7 +226,7 @@ export async function setupContracts(account, library, chainId, fetchId) {
 
   vault = getContract(vaultProxy.address, iVaultJson.abi)
 
-  if (process.env.ENABLE_LIQUIDITY_MINING === 'true') {
+  if (process.env.NEXT_PUBLIC_ENABLE_LIQUIDITY_MINING === 'true') {
     liquidityOusdUsdt = getContract(
       liquidityRewardOUSD_USDTProxy.address,
       liquidityRewardJson.abi
@@ -293,7 +293,7 @@ export async function setupContracts(account, library, chainId, fetchId) {
     curveAddressProviderJson.abi
   )
 
-  if (process.env.ENABLE_LIQUIDITY_MINING === 'true') {
+  if (process.env.NEXT_PUBLIC_ENABLE_LIQUIDITY_MINING === 'true') {
     uniV2OusdUsdt = null
     uniV2OusdUsdc = null
     uniV2OusdDai = null
@@ -307,7 +307,7 @@ export async function setupContracts(account, library, chainId, fetchId) {
     compensationClaimsJson.abi
   )
 
-  if (process.env.ENABLE_LIQUIDITY_MINING === 'true') {
+  if (process.env.NEXT_PUBLIC_ENABLE_LIQUIDITY_MINING === 'true') {
     uniV2OusdUsdt_iErc20 = getContract(uniV2OusdUsdt.address, iErc20Json.abi)
     uniV2OusdUsdt_iUniPair = getContract(
       uniV2OusdUsdt.address,
@@ -366,7 +366,7 @@ export async function setupContracts(account, library, chainId, fetchId) {
   const fetchOgnStats = async () => {
     try {
       const response = await fetch(
-        `${process.env.COINGECKO_API}/coins/origin-protocol`
+        `${process.env.NEXT_PUBLIC_COINGECKO_API}/coins/origin-protocol`
       )
       if (response.ok) {
         const json = await response.json()
@@ -392,7 +392,9 @@ export async function setupContracts(account, library, chainId, fetchId) {
       if (!walletConnected) {
         return
       }
-      const response = await fetch(process.env.CREDITS_ANALYTICS_ENDPOINT)
+      const response = await fetch(
+        process.env.NEXT_PUBLIC_CREDITS_ANALYTICS_ENDPOINT
+      )
       if (response.ok) {
         const json = await response.json()
         YieldStore.update((s) => {
@@ -529,7 +531,7 @@ export async function setupContracts(account, library, chainId, fetchId) {
     s.fetchId = fetchId
   })
 
-  if (process.env.ENABLE_LIQUIDITY_MINING === 'true') {
+  if (process.env.NEXT_PUBLIC_ENABLE_LIQUIDITY_MINING === 'true') {
     await setupPools(contractsToExport)
   }
 

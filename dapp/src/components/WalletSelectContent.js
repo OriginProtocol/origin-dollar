@@ -134,7 +134,8 @@ const WalletSelectContent = ({ isMobile }) => {
               onClick={() => {
                 if (isMobile && name === 'MetaMask') {
                   setError(null)
-                  window.location.href = process.env.METAMASK_DEEPLINK
+                  window.location.href =
+                    process.env.NEXT_PUBLIC_METAMASK_DEEPLINK
                 } else if (isMobile && name === 'Ledger') {
                   setError('ledger-error')
                 } else {

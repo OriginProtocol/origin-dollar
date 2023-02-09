@@ -4,7 +4,7 @@ import { GTM_ID } from '../lib/gtm'
 
 class MyDocument extends Document {
   render() {
-    const { FULLSTORY_ORG_ID } = process.env
+    const { NEXT_PUBLIC_FULLSTORY_ORG_ID } = process.env
     return (
       <Html>
         <Head>
@@ -73,14 +73,14 @@ class MyDocument extends Document {
           `,
             }}
           />
-          {!FULLSTORY_ORG_ID ? null : (
+          {!NEXT_PUBLIC_FULLSTORY_ORG_ID ? null : (
             <script
               dangerouslySetInnerHTML={{
                 __html: `
               window['_fs_debug'] = false;
               window['_fs_host'] = 'fullstory.com';
               window['_fs_script'] = 'edge.fullstory.com/s/fs.js';
-              window['_fs_org'] = '${FULLSTORY_ORG_ID}';
+              window['_fs_org'] = '${NEXT_PUBLIC_FULLSTORY_ORG_ID}';
               window['_fs_namespace'] = 'FS';
               (function(m,n,e,t,l,o,g,y){
                 if (e in m) {if(m.console && m.console.log) { m.console.log('FullStory namespace conflict. Please set window["_fs_namespace"].');} return;}

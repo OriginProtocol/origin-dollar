@@ -11,8 +11,8 @@ import { isProduction } from 'constants/env'
 import { providerName } from 'utils/web3'
 
 const POLLING_INTERVAL = 12000
-const RPC_PROVIDER = process.env.ETHEREUM_RPC_PROVIDER
-const WS_PROVIDER = process.env.ETHEREUM_WEBSOCKET_PROVIDER
+const RPC_PROVIDER = process.env.NEXT_PUBLIC_ETHEREUM_RPC_PROVIDER
+const WS_PROVIDER = process.env.NEXT_PUBLIC_ETHEREUM_WEBSOCKET_PROVIDER
 
 export const injectedConnector = new InjectedConnector({
   supportedChainIds: [1, 1337],
