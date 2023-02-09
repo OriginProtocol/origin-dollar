@@ -49,7 +49,8 @@ const StakeUI = ({ rpcProvider, isMobile }) => {
   const [vestedStakes, setVestedStakes] = useState(null)
   const [ognToClaim, setOgnToClaim] = useState(null)
   const isLocalEnvironment = process.env.NODE_ENV === 'development'
-  const curveStakingEnabled = process.env.ENABLE_CURVE_STAKING === 'true'
+  const curveStakingEnabled =
+    process.env.NEXT_PUBLIC_ENABLE_CURVE_STAKING === 'true'
 
   const STORY_URL = 'https://www.story.xyz/#/stake'
 

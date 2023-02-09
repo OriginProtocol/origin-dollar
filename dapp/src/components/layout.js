@@ -199,7 +199,7 @@ const Layout = ({
               <>
                 {fbt('OGV airdrop is live!', 'Airdrop notice')}
                 <a
-                  href={process.env.AIRDROP_URL}
+                  href={process.env.NEXT_PUBLIC_AIRDROP_URL}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn btn-dark mt-3 mt-md-0 ml-md-auto"

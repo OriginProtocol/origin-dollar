@@ -9,8 +9,10 @@ const Stake = ({ locale, onLocale }) => {
   return (
     <Layout onLocale={onLocale} locale={locale} dapp shorter isStakePage>
       <Nav dapp page={'earn'} locale={locale} onLocale={onLocale} />
-      {process.env.ENABLE_CURVE_STAKING === 'true' && <CurveStake />}
-      {process.env.ENABLE_OGN_STAKING === 'true' && <StakeUI />}
+      {process.env.NEXT_PUBLIC_ENABLE_CURVE_STAKING === 'true' && (
+        <CurveStake />
+      )}
+      {process.env.NEXT_PUBLIC_ENABLE_OGN_STAKING === 'true' && <StakeUI />}
     </Layout>
   )
 }
@@ -27,7 +29,7 @@ export default Stake
 //   const pools = useStoreState(PoolStore, (s) => s.pools)
 //
 //   return (
-//     process.env.ENABLE_LIQUIDITY_MINING === 'true' && (
+//     process.env.NEXT_PUBLIC_ENABLE_LIQUIDITY_MINING === 'true' && (
 //       <>
 //         <Layout onLocale={onLocale} locale={locale} dapp>
 //           <Nav dapp page={'earn'} locale={locale} onLocale={onLocale} />

@@ -202,7 +202,7 @@ const ApproveSwap = ({
         : stableCoinToApprove.toUpperCase()
     const noSwapRouteAvailable = swapsLoaded && !selectedSwap
     if (swappingGloballyDisabled) {
-      return process.env.DISABLE_SWAP_BUTTON_MESSAGE
+      return process.env.NEXT_PUBLIC_DISABLE_SWAP_BUTTON_MESSAGE
     } else if (!active) {
       return fbt('Connect Wallet', 'Connect Wallet')
     } else if (balanceError) {
