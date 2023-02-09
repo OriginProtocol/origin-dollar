@@ -1,12 +1,16 @@
-const { deploymentWithProposal } = require("../utils/deploy");
+const { deploymentWithGovernanceProposal } = require("../utils/deploy");
 const addresses = require("../utils/addresses");
 
-module.exports = deploymentWithProposal(
-  { deployName: "048_deposit_withdraw_tooling", forceDeploy: false },
+module.exports = deploymentWithGovernanceProposal(
+  {
+    deployName: "048_deposit_withdraw_tooling",
+    forceDeploy: false,
+    //proposalId: "40434364243407050666554191388123037800510237271029051418887027936281231737485"
+  },
   async ({
     assetAddresses,
     deployWithConfirmation,
-    ethers,
+  ethers,
     getTxOpts,
     withConfirmation,
   }) => {

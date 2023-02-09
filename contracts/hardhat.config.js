@@ -53,6 +53,10 @@ const {
 const MAINNET_DEPLOYER =
   process.env.MAINNET_DEPLOYER_OVERRIDE ||
   "0x29a8dF4d1c7a219679d197CF04C5FFD3Ecf56887";
+// Mainnet decentralized OGV Governor
+const MAINNET_GOVERNOR_FIVE = "0x3cdd07c16614059e66344a7b579dab4f9516c0b6";
+// Mainnet decentralized OGV Timelock
+const MAINNET_TIMELOCK = "0x35918cDE7233F2dD33fA41ae3Cb6aE0e42E0e69F";
 // Mainnet contracts are governed by the Governor contract (which derives off Timelock).
 const MAINNET_GOVERNOR = "0x72426ba137dec62657306b12b1e869d43fec6ec7";
 // Multi-sig that controls the Governor. Aka "Guardian".
@@ -277,6 +281,28 @@ module.exports = {
       localhost: process.env.FORK === "true" ? MAINNET_GOVERNOR : 1,
       hardhat: process.env.FORK === "true" ? MAINNET_GOVERNOR : 1,
       mainnet: MAINNET_GOVERNOR,
+    },
+    /* Local node environment currently has no access to Decentralized governance
+     * address, since the contract is in another repo. Once we merge the ousd-governance 
+     * and this repo, it will be able to fetch the address from the deployed governance contract.
+     *
+     * Even then in local node environment the `governorFiveAddr` named account
+     * is not to be used. Should only be used in forked and mainnet environments.
+     */
+    governorFiveAddr: {
+      default: ethers.constants.AddressZero,
+      // On Mainnet and fork, the governor is the Governor contract.
+      localhost: process.env.FORK === "true" ? MAINNET_GOVERNOR_FIVE : ethers.constants.AddressZero,
+      hardhat: process.env.FORK === "true" ? MAINNET_GOVERNOR_FIVE : ethers.constants.AddressZero,
+      mainnet: MAINNET_GOVERNOR_FIVE,
+    },
+    // above governorFiveAddr comment applies to timelock as well
+    timelockAddr: {
+      default: ethers.constants.AddressZero,
+      // On Mainnet and fork, the governor is the Governor contract.
+      localhost: process.env.FORK === "true" ? MAINNET_TIMELOCK : ethers.constants.AddressZero,
+      hardhat: process.env.FORK === "true" ? MAINNET_TIMELOCK : ethers.constants.AddressZero,
+      mainnet: MAINNET_TIMELOCK,
     },
     guardianAddr: {
       default: 1,
