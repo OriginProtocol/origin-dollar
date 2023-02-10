@@ -28,7 +28,6 @@ const { proposeArgs, proposeGovernanceArgs } = require("../utils/governor");
 const governorFiveAbi = require("../abi/governor_five.json");
 const timelockAbi = require("../abi/timelock.json");
 
-
 // Wait for 3 blocks confirmation on Mainnet.
 const NUM_CONFIRMATIONS = isMainnet ? 3 : 0;
 
@@ -80,7 +79,10 @@ const deployWithConfirmation = async (
   return result;
 };
 
-const withConfirmation = async (deployOrTransactionPromise, logContractAbi = false) => {
+const withConfirmation = async (
+  deployOrTransactionPromise,
+  logContractAbi = false
+) => {
   const result = await deployOrTransactionPromise;
   const receipt = await hre.ethers.provider.waitForTransaction(
     result.receipt ? result.receipt.transactionHash : result.hash,
@@ -89,10 +91,12 @@ const withConfirmation = async (deployOrTransactionPromise, logContractAbi = fal
 
   if (logContractAbi) {
     let contractInterface = new ethers.utils.Interface(logContractAbi);
-    receipt.parsedLogs = receipt.logs.map(log => contractInterface.parseLog(log))
+    receipt.parsedLogs = receipt.logs.map((log) =>
+      contractInterface.parseLog(log)
+    );
   }
 
-  result.receipt = receipt
+  result.receipt = receipt;
   return result;
 };
 
@@ -228,7 +232,7 @@ const executeProposalOnFork = async ({
 };
 
 /**
- * Successfully execute the proposal whether it is in 
+ * Successfully execute the proposal whether it is in
  * "Pending", "Active" or "Queued" state.
  * Given a proposal Id, enqueues and executes it on OGV Governance.
  * @param {Number} proposalId
@@ -252,55 +256,76 @@ const executeGovernanceProposalOnFork = async ({
   /* this should "almost" never happen since the votingDelay on the governor
    * contract is set to 1 block
    */
-  if(proposalState === "Pending") {
-    const votingDelay = Number((await governorFive.votingDelay()).toString())
+  if (proposalState === "Pending") {
+    const votingDelay = Number((await governorFive.votingDelay()).toString());
+    log(
+      `Advancing ${
+        votingDelay + 1
+      } blocks to make transaction for from Pending to Active`
+    );
     await advanceBlocks(votingDelay + 1);
     proposalState = "Active";
+    const newState = await getProposalState(proposalIdBn);
+    if (newState !== proposalState) {
+      throw new Error(
+        `Proposal state should now be "Active" but is ${newState}`
+      );
+    }
   }
 
   if (proposalState === "Active") {
     try {
       // vote positively on the proposal
-      await governorFive
-        .connect(sMultisig5of8)
-        .castVote(proposalIdBn, 1);
+      await governorFive.connect(sMultisig5of8).castVote(proposalIdBn, 1);
     } catch (e) {
-      // vote already cast is the only acceptable error 
+      // vote already cast is the only acceptable error
       if (!e.message.includes(`vote already cast`)) {
         throw e;
       }
     }
 
-    const votingPeriod = Number((await governorFive.votingPeriod()).toString())
+    const votingPeriod = Number((await governorFive.votingPeriod()).toString());
     // advance to the end of voting period
     await advanceBlocks(votingPeriod + 1);
 
-    await governorFive
-      .connect(sMultisig5of8)
-      ["queue(uint256)"](proposalIdBn);
+    let newState = await getProposalState(proposalIdBn);
+    if (newState !== "Succeeded") {
+      throw new Error(
+        `Proposal state should now be "Succeeded" but is ${newState}`
+      );
+    }
+
+    await governorFive.connect(sMultisig5of8)["queue(uint256)"](proposalIdBn);
+
+    newState = await getProposalState(proposalIdBn);
+    if (newState !== "Queued") {
+      throw new Error(
+        `Proposal state should now be "Queued" but is ${newState}`
+      );
+    }
 
     proposalState = "Queued";
   }
 
-  console.log("preparing to execute")
+  console.log("preparing to execute");
   /* In theory this could fail if proposal is rejected by votes on the mainnet.
    * In that case such proposalId should not be included in migration files
    */
   if (proposalState === "Queued") {
-    const votingPeriod = Number((await timelock.getMinDelay()).toString())
-    // advance to the end of voting period
-    await advanceTime(votingPeriod + 1);
+    const queuePeriod = Number((await timelock.getMinDelay()).toString());
+    // advance to the end of queue period
+    await advanceTime(queuePeriod + 1);
   }
 
-  await governorFive
-    .connect(sMultisig5of8)
-    ["execute(uint256)"](proposalIdBn);
+  await governorFive.connect(sMultisig5of8)["execute(uint256)"](proposalIdBn);
 
   const newProposalState = await getProposalState(proposalIdBn);
   if (newProposalState === "Executed") {
     log(`Proposal id: ${proposalIdBn.toString()} executed`);
   } else {
-    throw new Error(`Something is wrong! Proposal id: ${proposalIdBn.toString()} in ${newProposalState} state`);
+    throw new Error(
+      `Something is wrong! Proposal id: ${proposalIdBn.toString()} in ${newProposalState} state`
+    );
   }
 };
 
@@ -334,7 +359,7 @@ const sendProposal = async (proposalArgs, description, opts = {}) => {
       .propose(...proposalArgs, description, await getTxOpts())
   );
 
-  console.log("result", result)
+  console.log("result", result);
   const proposalId = (await governor.proposalCount()).toString();
   log(`Submitted proposal ${proposalId}`);
 
@@ -347,15 +372,20 @@ const sendProposal = async (proposalArgs, description, opts = {}) => {
 };
 
 /**
- * Sends OGV governance proposal.
+ * Builds the governance proposal transaction that is to be submitted via GnosisSafe Interface.
+ *
  * @param {Array<Object>} proposalArgs
  * @param {string} description
  * @returns {Promise<void>}
  */
-const submitProposalGnosisSafe = async (proposalArgs, description, opts = {}) => {
-  if (!isMainnet) {
-    throw new Error("submitProposalGnosisSafe only works on Mainnet");
-  }
+const submitProposalGnosisSafe = async (
+  proposalArgs,
+  description,
+  opts = {}
+) => {
+  // if (!isMainnet) {
+  //   throw new Error("submitProposalGnosisSafe only works on Mainnet");
+  // }
 
   const governorFive = await getGovernorFive();
   const multisig5of8 = addresses.mainnet.Guardian;
@@ -365,31 +395,20 @@ const submitProposalGnosisSafe = async (proposalArgs, description, opts = {}) =>
   log(`Submitting proposal for ${description}`);
   log(`Args: ${JSON.stringify(proposalArgs, null, 2)}`);
 
-  let proposalId = 'I am such an ID';
-  if (isFork) {
-    const result = await withConfirmation(
-      await governorFive
-        .connect(sMultisig5of8)
-        ["propose(address[],uint256[],string[],bytes[],string)"](...proposalArgs, description, await getTxOpts()),
-        governorFiveAbi
-    );
-    proposalId = result.receipt.parsedLogs[0].args[0].toString()
-
-    log(`Submitted governance proposal ${proposalId}`);
-
-  // else is Mainnet
-  } else {
-    // TODO: Submit proposal via submitting the transaction to Gnosis safe
-
-  }
-
+  const result = await governorFive.populateTransaction[
+    "propose(address[],uint256[],string[],bytes[],string)"
+  ](...proposalArgs, description, await getTxOpts());
 
   log(
-    `Next step: call the following methods on the governor at ${governor.address} via multi-sig`
+    `Next step: go to Gnosis Safe Web -> New Transaction -> 👷 Contract Interaction`
   );
-  log(`   queue(${proposalId})`);
-  log(`   execute(${proposalId})`);
-  log("Done");
+  log(`  - enable "Custom Data" toggle`);
+  log(`  - set "Enter address or ENS name" to: '${result.to}'`);
+  log(`  - set "ETH value" to: 0`);
+  log(`  - set "Data (Hex encoded)" to:`);
+  log(`${result.data}`);
+  log(`  - click on 'Add Transaction'`);
+  process.exit();
 };
 
 /**
@@ -398,9 +417,15 @@ const submitProposalGnosisSafe = async (proposalArgs, description, opts = {}) =>
  * @param {string} description
  * @returns {Promise<void>}
  */
-const submitProposalToOgvGovernance = async (proposalArgs, description, opts = {}) => {
+const submitProposalToOgvGovernance = async (
+  proposalArgs,
+  description,
+  opts = {}
+) => {
   if (!isFork) {
-    throw new Error("submitProposalToOgvGovernance only works on Fork networks");
+    throw new Error(
+      "submitProposalToOgvGovernance only works on Fork networks"
+    );
   }
 
   const governorFive = await getGovernorFive();
@@ -412,22 +437,26 @@ const submitProposalToOgvGovernance = async (proposalArgs, description, opts = {
   log(`Args: ${JSON.stringify(proposalArgs, null, 2)}`);
 
   const result = await withConfirmation(
-    await governorFive
+    governorFive
       .connect(sMultisig5of8)
-      ["propose(address[],uint256[],string[],bytes[],string)"](...proposalArgs, description, await getTxOpts()),
-      governorFiveAbi
+      ["propose(address[],uint256[],string[],bytes[],string)"](
+        ...proposalArgs,
+        description,
+        await getTxOpts()
+      ),
+    governorFiveAbi
   );
-  const proposalId = result.receipt.parsedLogs[0].args[0].toString()
+  const proposalId = result.receipt.parsedLogs[0].args[0].toString();
 
   log(`Submitted governance proposal to OGV governance ${proposalId}`);
-  await advanceBlocks(1)
-  const proposalIdBn = ethers.BigNumber.from(proposalId)
-  const proposalState = await getProposalState(proposalIdBn)
+  await advanceBlocks(1);
+  const proposalIdBn = ethers.BigNumber.from(proposalId);
+  const proposalState = await getProposalState(proposalIdBn);
 
   return {
     proposalState,
     proposalId,
-    proposalIdBn
+    proposalIdBn,
   };
 };
 
@@ -470,15 +499,15 @@ const handlePossiblyActiveGovernanceProposal = async (
 ) => {
   if (isFork && proposalId) {
     let proposalState;
-    let proposalIdBn = ethers.BigNumber.from(proposalId)
+    let proposalIdBn = ethers.BigNumber.from(proposalId);
     try {
-      proposalState = await getProposalState(proposalIdBn)
+      proposalState = await getProposalState(proposalIdBn);
     } catch (e) {
       // If proposal is non existent the governor reverts the transaction
       if (e.message.includes("invalid proposal id")) {
-        proposalState = false
+        proposalState = false;
       } else {
-        throw e
+        throw e;
       }
     }
 
@@ -503,8 +532,14 @@ const handlePossiblyActiveGovernanceProposal = async (
 
       // proposal executed skip deployment
       return true;
-    } else if (["Executed", "Expired", "Canceled", "Defeated", "Succeeded"].includes(proposalState)) {
-      console.log(`Proposal ${deployName} is in ${proposalState} state. Nothing to do.`);
+    } else if (
+      ["Executed", "Expired", "Canceled", "Defeated", "Succeeded"].includes(
+        proposalState
+      )
+    ) {
+      console.log(
+        `Proposal ${deployName} is in ${proposalState} state. Nothing to do.`
+      );
       // proposal has already been executed skip deployment
       return true;
     }
@@ -574,7 +609,7 @@ async function getGovernorFive() {
     governorFiveAddr,
     governorFiveAbi,
     hre.ethers.provider
-  )
+  );
 }
 
 async function getProposalState(proposalIdBn) {
@@ -587,18 +622,14 @@ async function getProposalState(proposalIdBn) {
     "Succeeded",
     "Queued",
     "Expired",
-    "Executed"
-  ][(await governorFive.state(proposalIdBn))];
+    "Executed",
+  ][await governorFive.state(proposalIdBn)];
 }
 
 async function getTimelock() {
   const { timelockAddr } = await getNamedAccounts();
 
-  return new ethers.Contract(
-    timelockAddr,
-    timelockAbi,
-    hre.ethers.provider
-  )
+  return new ethers.Contract(timelockAddr, timelockAbi, hre.ethers.provider);
 }
 
 /**
@@ -621,11 +652,17 @@ function deploymentWithGovernanceProposal(opts, fn) {
       withConfirmation,
     };
 
-    const governorFive = await getGovernorFive()
+    const governorFive = await getGovernorFive();
 
     // proposal has either been already executed on forked node or just been executed
     // no use of running the deploy script to create another
-    if (await handlePossiblyActiveGovernanceProposal(proposalId, deployName, governorFive)) {
+    if (
+      await handlePossiblyActiveGovernanceProposal(
+        proposalId,
+        deployName,
+        governorFive
+      )
+    ) {
       return;
     }
 
@@ -636,24 +673,30 @@ function deploymentWithGovernanceProposal(opts, fn) {
     const propArgs = await proposeGovernanceArgs(proposal.actions);
     const propOpts = proposal.opts || {};
 
-    //if (isMainnet) {
-    if (true) {
-      // On Mainnet, only propose. The enqueue and execution are handled manually via multi-sig.
-      log("Sending proposal to OGV governance...");
+    if (isMainnet) {
+      // On Mainnet, only build the propose transaction for OGV governance
+      log("Building OGV governance proposal...");
       await submitProposalGnosisSafe(propArgs, propDescription, propOpts);
       log("Proposal sent.");
     } else if (isFork) {
       // On Fork we can send the proposal then impersonate the guardian to execute it.
       log("Sending the governance proposal to OGV governance");
-      const {proposalState, proposalId, proposalIdBn} = await submitProposalToOgvGovernance(propArgs, propDescription, propOpts)
+      const { proposalState, proposalId, proposalIdBn } =
+        await submitProposalToOgvGovernance(
+          propArgs,
+          propDescription,
+          propOpts
+        );
       log("Executing the proposal");
       await executeGovernanceProposalOnFork({
         proposalIdBn,
-        proposalState
+        proposalState,
       });
       log("Proposal executed.");
     } else {
-      throw new Error("deploymentWithGovernanceProposal not supported in local node environment")
+      throw new Error(
+        "deploymentWithGovernanceProposal not supported in local node environment"
+      );
     }
   };
 

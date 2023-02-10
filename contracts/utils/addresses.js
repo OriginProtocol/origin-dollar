@@ -139,6 +139,6 @@ addresses.mainnet.Morpho = "0x8888882f8f843896699869179fB6E4f7e3B58888";
 addresses.mainnet.MorphoLens = "0x930f1b46e1d081ec1524efd95752be3ece51ef67";
 
 // OUSD Governance
-addresses.mainnet.GovernorFive = "0x3cdd07c16614059e66344a7b579dab4f9516c0b6"
-addresses.mainnet.Timelock = "0x35918cDE7233F2dD33fA41ae3Cb6aE0e42E0e69F"
+addresses.mainnet.GovernorFive = "0x3cdd07c16614059e66344a7b579dab4f9516c0b6";
+addresses.mainnet.Timelock = "0x35918cDE7233F2dD33fA41ae3Cb6aE0e42E0e69F";
 module.exports = addresses;

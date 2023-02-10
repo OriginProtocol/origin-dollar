@@ -283,7 +283,7 @@ module.exports = {
       mainnet: MAINNET_GOVERNOR,
     },
     /* Local node environment currently has no access to Decentralized governance
-     * address, since the contract is in another repo. Once we merge the ousd-governance 
+     * address, since the contract is in another repo. Once we merge the ousd-governance
      * and this repo, it will be able to fetch the address from the deployed governance contract.
      *
      * Even then in local node environment the `governorFiveAddr` named account
@@ -292,16 +292,28 @@ module.exports = {
     governorFiveAddr: {
       default: ethers.constants.AddressZero,
       // On Mainnet and fork, the governor is the Governor contract.
-      localhost: process.env.FORK === "true" ? MAINNET_GOVERNOR_FIVE : ethers.constants.AddressZero,
-      hardhat: process.env.FORK === "true" ? MAINNET_GOVERNOR_FIVE : ethers.constants.AddressZero,
+      localhost:
+        process.env.FORK === "true"
+          ? MAINNET_GOVERNOR_FIVE
+          : ethers.constants.AddressZero,
+      hardhat:
+        process.env.FORK === "true"
+          ? MAINNET_GOVERNOR_FIVE
+          : ethers.constants.AddressZero,
       mainnet: MAINNET_GOVERNOR_FIVE,
     },
     // above governorFiveAddr comment applies to timelock as well
     timelockAddr: {
       default: ethers.constants.AddressZero,
       // On Mainnet and fork, the governor is the Governor contract.
-      localhost: process.env.FORK === "true" ? MAINNET_TIMELOCK : ethers.constants.AddressZero,
-      hardhat: process.env.FORK === "true" ? MAINNET_TIMELOCK : ethers.constants.AddressZero,
+      localhost:
+        process.env.FORK === "true"
+          ? MAINNET_TIMELOCK
+          : ethers.constants.AddressZero,
+      hardhat:
+        process.env.FORK === "true"
+          ? MAINNET_TIMELOCK
+          : ethers.constants.AddressZero,
       mainnet: MAINNET_TIMELOCK,
     },
     guardianAddr: {

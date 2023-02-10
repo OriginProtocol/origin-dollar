@@ -1,5 +1,6 @@
 const { deploymentWithGovernanceProposal } = require("../utils/deploy");
 const addresses = require("../utils/addresses");
+const { isMainnet } = require("../test/helpers.js");
 
 module.exports = deploymentWithGovernanceProposal(
   {
@@ -10,18 +11,22 @@ module.exports = deploymentWithGovernanceProposal(
   async ({
     assetAddresses,
     deployWithConfirmation,
-  ethers,
+    ethers,
     getTxOpts,
     withConfirmation,
   }) => {
     const { deployerAddr, governorAddr } = await getNamedAccounts();
     const sDeployer = await ethers.provider.getSigner(deployerAddr);
+    let dVaultAdmin;
 
     // Current contracts
     const cVaultProxy = await ethers.getContract("VaultProxy");
-
-    const dVaultAdmin = await deployWithConfirmation("VaultAdmin");
     const cVault = await ethers.getContractAt("Vault", cVaultProxy.address);
+
+    // has already been ran on the mainnet and deployed to: 0x1eF0553FEb80e6f133cAe3092e38F0b23dA6452b
+    if (!isMainnet) {
+      dVaultAdmin = await deployWithConfirmation("VaultAdmin");
+    }
 
     // Governance Actions
     // ----------------
@@ -32,7 +37,12 @@ module.exports = deploymentWithGovernanceProposal(
         {
           contract: cVault,
           signature: "setAdminImpl(address)",
-          args: [dVaultAdmin.address],
+          // the implementation has already been ran on the mainnet and deployed to below address
+          args: [
+            isMainnet
+              ? "0x1eF0553FEb80e6f133cAe3092e38F0b23dA6452b"
+              : dVaultAdmin.address,
+          ],
         },
       ],
     };

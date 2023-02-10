@@ -36,9 +36,14 @@ async function proposeArgs(governorArgsArray) {
  * @returns {Promise<*[]>}
  */
 async function proposeGovernanceArgs(governorArgsArray) {
-  const args = await proposeArgs(governorArgsArray)
+  const args = await proposeArgs(governorArgsArray);
 
-  return [args[0], Array(governorArgsArray).fill(BigNumber.from(0)), args[1], args[2]]
+  return [
+    args[0],
+    Array(governorArgsArray).fill(BigNumber.from(0)),
+    args[1],
+    args[2],
+  ];
 }
 
 module.exports = {
