@@ -288,15 +288,18 @@ const executeGovernanceProposalOnFork = async ({
     // advance to the end of voting period
     await advanceBlocks(votingPeriod + 1);
 
+    proposalState = "Succeeded";
     let newState = await getProposalState(proposalIdBn);
     if (newState !== "Succeeded") {
       throw new Error(
         `Proposal state should now be "Succeeded" but is ${newState}`
       );
     }
+  }
 
+  if (proposalState === "Succeeded") {
     await governorFive.connect(sMultisig5of8)["queue(uint256)"](proposalIdBn);
-
+    log("Proposal queued");
     newState = await getProposalState(proposalIdBn);
     if (newState !== "Queued") {
       throw new Error(
@@ -307,7 +310,7 @@ const executeGovernanceProposalOnFork = async ({
     proposalState = "Queued";
   }
 
-  console.log("preparing to execute");
+  log("preparing to execute");
   /* In theory this could fail if proposal is rejected by votes on the mainnet.
    * In that case such proposalId should not be included in migration files
    */
@@ -353,13 +356,12 @@ const sendProposal = async (proposalArgs, description, opts = {}) => {
 
   log(`Submitting proposal for ${description} to governor ${governor.address}`);
   log(`Args: ${JSON.stringify(proposalArgs, null, 2)}`);
-  const result = await withConfirmation(
+  await withConfirmation(
     governor
       .connect(sDeployer)
       .propose(...proposalArgs, description, await getTxOpts())
   );
 
-  console.log("result", result);
   const proposalId = (await governor.proposalCount()).toString();
   log(`Submitted proposal ${proposalId}`);
 
@@ -383,9 +385,9 @@ const submitProposalGnosisSafe = async (
   description,
   opts = {}
 ) => {
-  // if (!isMainnet) {
-  //   throw new Error("submitProposalGnosisSafe only works on Mainnet");
-  // }
+  if (!isMainnet) {
+    throw new Error("submitProposalGnosisSafe only works on Mainnet");
+  }
 
   const governorFive = await getGovernorFive();
   const multisig5of8 = addresses.mainnet.Guardian;
@@ -412,7 +414,9 @@ const submitProposalGnosisSafe = async (
 };
 
 /**
- * Sends OGV governance proposal.
+ * In forked environment simulated that 5/8 multisig has submitted an OGV
+ * governance proposal
+ *
  * @param {Array<Object>} proposalArgs
  * @param {string} description
  * @returns {Promise<void>}
@@ -520,7 +524,7 @@ const handlePossiblyActiveGovernanceProposal = async (
       return false;
     }
 
-    if (["Pending", "Active", "Queued"].includes(proposalState)) {
+    if (["Pending", "Active", "Succeeded", "Queued"].includes(proposalState)) {
       console.log(
         `Found proposal id: ${proposalId} on forked network. Executing proposal containing deployment of: ${deployName}`
       );
@@ -533,14 +537,11 @@ const handlePossiblyActiveGovernanceProposal = async (
       // proposal executed skip deployment
       return true;
     } else if (
-      ["Executed", "Expired", "Canceled", "Defeated", "Succeeded"].includes(
-        proposalState
-      )
+      ["Executed", "Expired", "Canceled", "Defeated"].includes(proposalState)
     ) {
       console.log(
         `Proposal ${deployName} is in ${proposalState} state. Nothing to do.`
       );
-      // proposal has already been executed skip deployment
       return true;
     }
   }
@@ -654,8 +655,11 @@ function deploymentWithGovernanceProposal(opts, fn) {
 
     const governorFive = await getGovernorFive();
 
-    // proposal has either been already executed on forked node or just been executed
-    // no use of running the deploy script to create another
+    /* Proposal has either:
+     *  - already been executed before running this function or
+     *  - been executed by running this function
+     *  - is in one of the states that can't get to execution: "Expired", "Canceled", "Defeated"
+     */
     if (
       await handlePossiblyActiveGovernanceProposal(
         proposalId,
