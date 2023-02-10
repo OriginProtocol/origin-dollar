@@ -352,9 +352,9 @@ const sendProposal = async (proposalArgs, description, opts = {}) => {
  * @param {string} description
  * @returns {Promise<void>}
  */
-const sendGovernanceProposal = async (proposalArgs, description, opts = {}) => {
-  if (!isMainnet && !isFork) {
-    throw new Error("sendGovernanceProposal only works on Mainnet and Fork networks");
+const submitProposalGnosisSafe = async (proposalArgs, description, opts = {}) => {
+  if (!isMainnet) {
+    throw new Error("submitProposalGnosisSafe only works on Mainnet");
   }
 
   const governorFive = await getGovernorFive();
@@ -390,6 +390,45 @@ const sendGovernanceProposal = async (proposalArgs, description, opts = {}) => {
   log(`   queue(${proposalId})`);
   log(`   execute(${proposalId})`);
   log("Done");
+};
+
+/**
+ * Sends OGV governance proposal.
+ * @param {Array<Object>} proposalArgs
+ * @param {string} description
+ * @returns {Promise<void>}
+ */
+const submitProposalToOgvGovernance = async (proposalArgs, description, opts = {}) => {
+  if (!isFork) {
+    throw new Error("submitProposalToOgvGovernance only works on Fork networks");
+  }
+
+  const governorFive = await getGovernorFive();
+  const multisig5of8 = addresses.mainnet.Guardian;
+  const sMultisig5of8 = hre.ethers.provider.getSigner(multisig5of8);
+  await impersonateGuardian(multisig5of8);
+
+  log(`Submitting proposal for ${description}`);
+  log(`Args: ${JSON.stringify(proposalArgs, null, 2)}`);
+
+  const result = await withConfirmation(
+    await governorFive
+      .connect(sMultisig5of8)
+      ["propose(address[],uint256[],string[],bytes[],string)"](...proposalArgs, description, await getTxOpts()),
+      governorFiveAbi
+  );
+  const proposalId = result.receipt.parsedLogs[0].args[0].toString()
+
+  log(`Submitted governance proposal to OGV governance ${proposalId}`);
+  await advanceBlocks(1)
+  const proposalIdBn = ethers.BigNumber.from(proposalId)
+  const proposalState = await getProposalState(proposalIdBn)
+
+  return {
+    proposalState,
+    proposalId,
+    proposalIdBn
+  };
 };
 
 /**
@@ -601,12 +640,17 @@ function deploymentWithGovernanceProposal(opts, fn) {
     if (true) {
       // On Mainnet, only propose. The enqueue and execution are handled manually via multi-sig.
       log("Sending proposal to OGV governance...");
-      await sendGovernanceProposal(propArgs, propDescription, propOpts);
+      await submitProposalGnosisSafe(propArgs, propDescription, propOpts);
       log("Proposal sent.");
     } else if (isFork) {
       // On Fork we can send the proposal then impersonate the guardian to execute it.
-      log("Sending and executing proposal...");
-      await executeGovernanceProposal(propArgs, propDescription, propOpts);
+      log("Sending the governance proposal to OGV governance");
+      const {proposalState, proposalId, proposalIdBn} = await submitProposalToOgvGovernance(propArgs, propDescription, propOpts)
+      log("Executing the proposal");
+      await executeGovernanceProposalOnFork({
+        proposalIdBn,
+        proposalState
+      });
       log("Proposal executed.");
     } else {
       throw new Error("deploymentWithGovernanceProposal not supported in local node environment")
