@@ -25,11 +25,6 @@ import {
   calculateSwapAmounts,
 } from '../../utils/math'
 
-let ReactPixel
-if (process.browser) {
-  ReactPixel = require('react-facebook-pixel').default
-}
-
 const lastSelectedSwapModeKey = 'last_user_selected_wrap_mode'
 
 const WrapHomepage = ({

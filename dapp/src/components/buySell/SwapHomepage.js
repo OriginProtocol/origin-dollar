@@ -18,11 +18,6 @@ import ApproveSwap from 'components/buySell/ApproveSwap'
 import analytics from 'utils/analytics'
 import { formatCurrencyMinMaxDecimals, removeCommas } from '../../utils/math'
 
-let ReactPixel
-if (process.browser) {
-  ReactPixel = require('react-facebook-pixel').default
-}
-
 const lastUserSelectedCoinKey = 'last_user_selected_coin'
 const lastSelectedSwapModeKey = 'last_user_selected_swap_mode'
 
@@ -277,20 +272,6 @@ const SwapHomepage = ({
         label: metadata.stablecoinUsed,
         value: metadata.swapAmount,
       })
-
-      if (swapMode === 'mint') {
-        ReactPixel.track('InitiateCheckout', {
-          value: selectedRedeemCoinAmount,
-          currency: 'usd',
-        })
-
-        if (typeof twttr !== 'undefined') {
-          twttr.conversion.trackPid('o73z1', {
-            tw_sale_amount: selectedRedeemCoinAmount,
-            tw_order_quantity: 1,
-          })
-        }
-      }
     } catch (e) {
       const metadata = swapMetadata()
       // 4001 code happens when a user rejects the transaction
