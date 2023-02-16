@@ -474,25 +474,26 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
             // Since there is no existing balance, we can directly set to
             // high resolution, and do not have to do any other bookkeeping
             nonRebasingCreditsPerToken[_account] = 1e27;
-        } else {
-            // This does not change, but if it did, we want want to
-            // use the before changes value.
-            uint256 oldCredits = _creditBalances[_account];
-
-            // Atomicly update account information:
-            // It is important that balanceOf not be called inside updating
-            // account data, since it will give wrong answers if it does
-            // not have all an account's data in a consistent state.
-            //
-            // By setting a per account nonRebasingCreditsPerToken,
-            // this account will no longer follow with the global
-            // rebasing credits per token.
-            nonRebasingCreditsPerToken[_account] = _rebasingCreditsPerToken;
-
-            // Update global totals:
-            nonRebasingSupply = nonRebasingSupply.add(balanceOf(_account));
-            _rebasingCredits = _rebasingCredits.sub(oldCredits);
+            return;
         }
+
+        // This does not change, but if it did, we would want to
+        // use the value before changes.
+        uint256 oldCredits = _creditBalances[_account];
+
+        // Atomicly update account information:
+        // It is important that balanceOf not be called inside updating
+        // account data, since it will give wrong answers if it does
+        // not have all an account's data in a consistent state.
+        //
+        // By setting a per account nonRebasingCreditsPerToken,
+        // this account will no longer follow with the global
+        // rebasing credits per token and will become non-rebasing.
+        nonRebasingCreditsPerToken[_account] = _rebasingCreditsPerToken;
+
+        // Update global totals
+        nonRebasingSupply = nonRebasingSupply.add(balanceOf(_account));
+        _rebasingCredits = _rebasingCredits.sub(oldCredits);
     }
 
     /**
