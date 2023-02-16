@@ -504,6 +504,8 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
     function rebaseOptIn() public nonReentrant {
         require(_isNonRebasingAccount(msg.sender), "Account has not opted out");
 
+        uint256 oldBalance = balanceOf(msg.sender);
+
         // Precalculate new credits, so that we avoid internal calls when
         // atomicly updating account.
         // Convert balance into the same amount at the current exchange rate
@@ -522,7 +524,7 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
 
         // Update global totals:
         // Decrease non rebasing supply
-        nonRebasingSupply = nonRebasingSupply.sub(balanceOf(msg.sender));
+        nonRebasingSupply = nonRebasingSupply.sub(oldBalance);
         // Increase rebasing credits, totalSupply remains unchanged so no
         // adjustment necessary
         _rebasingCredits = _rebasingCredits.add(_creditBalances[msg.sender]);
