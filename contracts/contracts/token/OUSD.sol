@@ -475,23 +475,22 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
             // high resolution, and do not have to do any other bookkeeping
             nonRebasingCreditsPerToken[_account] = 1e27;
         } else {
-            // Get old values, so we can use them unaffected by changes
-            uint256 oldBalance = balanceOf(_account);
+            // This does not change, but if it did, we want want to
+            // use the before changes value.
             uint256 oldCredits = _creditBalances[_account];
 
             // Atomicly update account information:
             // It is important that balanceOf not be called inside updating
             // account data, since it will give wrong answers if it does
             // not have all an account's data in a consistent state.
-            nonRebasingCreditsPerToken[_account] = 1e27;
-            // difference between the 1e18 balance and the new 1e27 resolution
-            _creditBalances[_account] = oldBalance * 1e9;
-
-            // Verify perfect acccount accounting update
-            require(oldBalance == balanceOf(_account), "Balances do not match");
+            //
+            // By setting a per account nonRebasingCreditsPerToken,
+            // this account will no longer follow with the global
+            // rebasing credits per token.
+            nonRebasingCreditsPerToken[_account] = _rebasingCreditsPerToken;
 
             // Update global totals:
-            nonRebasingSupply = nonRebasingSupply.add(oldBalance);
+            nonRebasingSupply = nonRebasingSupply.add(balanceOf(_account));
             _rebasingCredits = _rebasingCredits.sub(oldCredits);
         }
     }
