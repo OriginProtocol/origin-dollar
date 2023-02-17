@@ -42,5 +42,6 @@
   "044_morpho_strategy": 1668204653,
   "045_convex_lusd_meta_strategy": 1671543402,
   "046_vault_value_checker": 1669212530,
-  "047_morpho_aave_strategy": 1672817148
+  "047_morpho_aave_strategy": 1672817148,
+  "048_deposit_withdraw_tooling": 1675100084
 }

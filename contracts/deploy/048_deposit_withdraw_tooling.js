@@ -2,7 +2,7 @@ const { deploymentWithGovernanceProposal } = require("../utils/deploy");
 const addresses = require("../utils/addresses");
 const { isMainnet } = require("../test/helpers.js");
 
-module.exports = deploymentWithGovernanceProposal(
+module.exports = deploymentWithProposal(
   {
     deployName: "048_deposit_withdraw_tooling",
     forceDeploy: false,
