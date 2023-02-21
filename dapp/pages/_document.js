@@ -4,7 +4,6 @@ import { GTM_ID } from '../lib/gtm'
 
 class MyDocument extends Document {
   render() {
-    const { NEXT_PUBLIC_FULLSTORY_ORG_ID } = process.env
     return (
       <Html>
         <Head>
