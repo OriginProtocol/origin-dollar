@@ -1,9 +1,9 @@
 import React from 'react'
 import Document, { Html, Head, Main, NextScript } from 'next/document'
+import { GTM_ID } from '../lib/gtm'
 
 class MyDocument extends Document {
   render() {
-    const { FULLSTORY_ORG_ID } = process.env
     return (
       <Html>
         <Head>
@@ -33,12 +33,12 @@ class MyDocument extends Document {
             integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
             crossOrigin="anonymous"
           />
-          {/* Twitter ads tracking */}
-          <script
-            src="//static.ads-twitter.com/oct.js"
-            type="text/javascript"
-          ></script>
-
+          <meta
+            name="image"
+            content={
+              'https://cmsmediaproduction.s3.amazonaws.com/meta_9121c5630d.jpeg'
+            }
+          />
           <meta property="og:url" content="https://ousd.com" />
           <meta property="og:type" content="website" />
           <meta property="og:title" content="Origin Dollar (OUSD)" />
@@ -66,37 +66,29 @@ class MyDocument extends Document {
           `,
             }}
           />
-          {!FULLSTORY_ORG_ID ? null : (
-            <script
-              dangerouslySetInnerHTML={{
-                __html: `
-              window['_fs_debug'] = false;
-              window['_fs_host'] = 'fullstory.com';
-              window['_fs_script'] = 'edge.fullstory.com/s/fs.js';
-              window['_fs_org'] = '${FULLSTORY_ORG_ID}';
-              window['_fs_namespace'] = 'FS';
-              (function(m,n,e,t,l,o,g,y){
-                if (e in m) {if(m.console && m.console.log) { m.console.log('FullStory namespace conflict. Please set window["_fs_namespace"].');} return;}
-                g=m[e]=function(a,b,s){g.q?g.q.push([a,b,s]):g._api(a,b,s);};g.q=[];
-                o=n.createElement(t);o.async=1;o.crossOrigin='anonymous';o.src='https://'+_fs_script;
-                y=n.getElementsByTagName(t)[0];y.parentNode.insertBefore(o,y);
-                g.identify=function(i,v,s){g(l,{uid:i},s);if(v)g(l,v,s)};g.setUserVars=function(v,s){g(l,v,s)};g.event=function(i,v,s){g('event',{n:i,p:v},s)};
-                g.anonymize=function(){g.identify(!!0)};
-                g.shutdown=function(){g("rec",!1)};g.restart=function(){g("rec",!0)};
-                g.log = function(a,b){g("log",[a,b])};
-                g.consent=function(a){g("consent",!arguments.length||a)};
-                g.identifyAccount=function(i,v){o='account';v=v||{};v.acctId=i;g(o,v)};
-                g.clearUserCookie=function(){};
-                g._w={};y='XMLHttpRequest';g._w[y]=m[y];y='fetch';g._w[y]=m[y];
-                if(m[y])m[y]=function(){return g._w[y].apply(this,arguments)};
-                g._v="1.2.0";
-              })(window,document,window['_fs_namespace'],'script','user');
-            `,
-              }}
-            />
-          )}
+          <script
+            id="gtag-base"
+            strategy="afterInteractive"
+            dangerouslySetInnerHTML={{
+              __html: `
+                (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+                new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+                j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+                'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+                })(window,document,'script','dataLayer', '${GTM_ID}');
+              `,
+            }}
+          />
         </Head>
         <body>
+          <noscript>
+            <iframe
+              src={`https://www.googletagmanager.com/ns.html?id=${GTM_ID}`}
+              height="0"
+              width="0"
+              style={{ display: 'none', visibility: 'hidden' }}
+            />
+          </noscript>
           <Main />
           <NextScript />
         </body>

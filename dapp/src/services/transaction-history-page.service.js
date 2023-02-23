@@ -1,6 +1,6 @@
 export default class TransactionHistoryPageService {
   constructor() {
-    this.baseURL = `${process.env.ANALYTICS_ENDPOINT}/api/v1/address`
+    this.baseURL = `${process.env.NEXT_PUBLIC_ANALYTICS_ENDPOINT}/api/v1/address`
   }
 
   async fetchHistory(
@@ -19,7 +19,7 @@ export default class TransactionHistoryPageService {
       }/${account.toLowerCase()}/history?per_page=${transactionHistoryItemsPerPage}&page=${page}${filter_param}`
     )
 
-    if (!response.ok) {
+    if (!response || !response.ok) {
       throw new Error('Failed fetching history from analytics')
     }
 

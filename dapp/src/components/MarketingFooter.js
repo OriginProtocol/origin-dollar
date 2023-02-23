@@ -6,21 +6,21 @@ import { useRouter } from 'next/router'
 
 import EmailForm from './EmailForm'
 
-const analyticsURL = process.env.ANALYTICS_URL
-const jobsURL = process.env.JOBS_URL
-const termsURL = process.env.TERMS_URL
-const privacyURL = process.env.PRIVACY_URL
-const discordURL = process.env.DISCORD_URL
-const telegramURL = process.env.TELEGRAM_URL
-const wechatURL = process.env.WECHAT_URL
-const githubURL = process.env.GITHUB_URL
-const redditURL = process.env.REDDIT_URL
-const weiboURL = process.env.WEIBO_URL
-const facebookURL = process.env.FACEBOOK_URL
-const twitterURL = process.env.TWITTER_URL
-const mediumURL = process.env.MEDIUM_URL
-const youtubeURL = process.env.YOUTUBE_URL
-const instagramURL = process.env.INSTAGRAM_URL
+const analyticsURL = process.env.NEXT_PUBLIC_ANALYTICS_URL
+const jobsURL = process.env.NEXT_PUBLIC_JOBS_URL
+const termsURL = process.env.NEXT_PUBLIC_TERMS_URL
+const privacyURL = process.env.NEXT_PUBLIC_PRIVACY_URL
+const discordURL = process.env.NEXT_PUBLIC_DISCORD_URL
+const telegramURL = process.env.NEXT_PUBLIC_TELEGRAM_URL
+const wechatURL = process.env.NEXT_PUBLIC_WECHAT_URL
+const githubURL = process.env.NEXT_PUBLIC_GITHUB_URL
+const redditURL = process.env.NEXT_PUBLIC_REDDIT_URL
+const weiboURL = process.env.NEXT_PUBLIC_WEIBO_URL
+const facebookURL = process.env.NEXT_PUBLIC_FACEBOOK_URL
+const twitterURL = process.env.NEXT_PUBLIC_TWITTER_URL
+const mediumURL = process.env.NEXT_PUBLIC_MEDIUM_URL
+const youtubeURL = process.env.NEXT_PUBLIC_YOUTUBE_URL
+const instagramURL = process.env.NEXT_PUBLIC_INSTAGRAM_URL
 
 export default function Footer({ locale }) {
   const { pathname } = useRouter()
@@ -37,9 +37,6 @@ export default function Footer({ locale }) {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="nav-link"
-                  onClick={() => {
-                    analytics.track('Analytics Link click')
-                  }}
                 >
                   {fbt('Analytics', 'Analytics link')}
                 </a>
@@ -48,9 +45,6 @@ export default function Footer({ locale }) {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="nav-link"
-                  onClick={() => {
-                    analytics.track('Jobs Link click')
-                  }}
                 >
                   {fbt('Jobs', 'Jobs link')}
                 </a>
@@ -59,18 +53,12 @@ export default function Footer({ locale }) {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="nav-link"
-                  onClick={() => {
-                    analytics.track('Docs Link click')
-                  }}
                 ></a>
                 <a
                   href={discordURL}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="nav-link"
-                  onClick={() => {
-                    analytics.track('Discord Link click')
-                  }}
                 >
                   {fbt('Discord', 'Discord link')}
                 </a>
@@ -79,9 +67,6 @@ export default function Footer({ locale }) {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="nav-link"
-                  onClick={() => {
-                    analytics.track('Github Link click')
-                  }}
                 >
                   {fbt('Github', 'Github link')}
                 </a>

@@ -6,13 +6,13 @@ export default class ApyService {
       apyDayOptions.map(async (days) => {
         let endpoint, varName
         if (apyDayOptions.includes(days)) {
-          endpoint = `${process.env.APR_ANALYTICS_ENDPOINT}/${days}`
+          endpoint = `${process.env.NEXT_PUBLIC_APR_ANALYTICS_ENDPOINT}/${days}`
           varName = `apy${days}`
         } else {
           throw new Error(`Unexpected days param: ${days}`)
         }
         const response = await fetch(endpoint)
-        if (!response.ok) {
+        if (!response || !response.ok) {
           throw new Error(`Failed to fetch ${days} day APY`, err)
         }
         const json = await response.json()

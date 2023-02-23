@@ -51,7 +51,7 @@ describe("Vault rebase pausing", async () => {
     );
   });
 
-  it("Should allow governor tonpause rebasing", async () => {
+  it("Should allow governor to pause rebasing", async () => {
     let { vault, governor } = await loadFixture(defaultFixture);
     await vault.connect(governor).pauseRebase();
   });

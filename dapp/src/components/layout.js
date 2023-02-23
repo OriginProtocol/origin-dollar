@@ -1,16 +1,12 @@
-import React, { useState } from 'react'
+import React from 'react'
 import classnames from 'classnames'
 import Head from 'next/head'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useStoreState } from 'pullstate'
-import { useEffect, useRef } from 'react'
-import { useCookies } from 'react-cookie'
 import { fbt } from 'fbt-runtime'
 import { useWeb3React } from '@web3-react/core'
 import { get } from 'lodash'
-
-import { useEagerConnect } from 'utils/hooks'
 import AccountStore from 'stores/AccountStore'
 import ContractStore from 'stores/ContractStore'
 import StakeStore from 'stores/StakeStore'
@@ -199,7 +195,7 @@ const Layout = ({
               <>
                 {fbt('OGV airdrop is live!', 'Airdrop notice')}
                 <a
-                  href={process.env.AIRDROP_URL}
+                  href={process.env.NEXT_PUBLIC_AIRDROP_URL}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn btn-dark mt-3 mt-md-0 ml-md-auto"

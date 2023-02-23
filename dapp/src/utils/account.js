@@ -23,7 +23,6 @@ export const login = (address) => {
   AccountStore.update((s) => {
     s.address = address
   })
-  analytics.identify(address)
 }
 
 export const logout = () => {

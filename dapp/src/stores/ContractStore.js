@@ -44,7 +44,7 @@ const ContractStore = new Store({
       decimals: 0,
     },
   },
-  chainId: parseInt(process.env.ETHEREUM_RPC_CHAIN_ID),
+  chainId: parseInt(process.env.NEXT_PUBLIC_ETHEREUM_RPC_CHAIN_ID),
   walletConnected: false,
   vaultAllocateThreshold: null,
   vaultRebaseThreshold: null,

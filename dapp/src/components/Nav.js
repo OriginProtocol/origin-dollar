@@ -68,7 +68,7 @@ const DappLinks = ({ dapp, page }) => {
               {fbt('Swap OUSD', 'Swap OUSD')}
             </a>
           </Link>
-          {process.env.ENABLE_LIQUIDITY_MINING === 'true' && (
+          {process.env.NEXT_PUBLIC_ENABLE_LIQUIDITY_MINING === 'true' && (
             <Link href={adjustLinkHref('/earn')}>
               <a
                 className={`d-flex align-items-center ${
@@ -79,7 +79,7 @@ const DappLinks = ({ dapp, page }) => {
               </a>
             </Link>
           )}
-          {process.env.ENABLE_STAKING === 'true' && (
+          {process.env.NEXT_PUBLIC_ENABLE_STAKING === 'true' && (
             <Link href={adjustLinkHref('/earn')}>
               <a
                 className={`d-flex align-items-center ${
@@ -222,7 +222,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
               />
             </button>
           )}
-          {dapp && <AccountStatusPopover />}
+          {dapp && <AccountStatusPopover dapp={dapp} />}
           {dapp && !active && !account && (
             <div className="d-flex d-md-none">
               <GetOUSD

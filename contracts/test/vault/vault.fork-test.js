@@ -1,6 +1,6 @@
 const { expect } = require("chai");
 
-const { defaultFixture } = require("./../_fixture");
+const { defaultFixture, impersonateAndFundContract } = require("./../_fixture");
 const { utils } = require("ethers");
 
 const {
@@ -10,6 +10,8 @@ const {
   usdtUnits,
   usdcUnits,
   daiUnits,
+  differenceInStrategyBalance,
+  differenceInErc20TokenBalances,
 } = require("./../helpers");
 
 /**
@@ -152,6 +154,69 @@ forkOnlyDescribe("ForkTest: Vault", function () {
       expect(balancePreMint).to.approxEqualTolerance(balancePostRedeem, 1);
     });
 
+    it("should withdraw from and deposit to strategy", async () => {
+      const { vault, josh, usdc, dai, compoundStrategy } = fixture;
+      await vault.connect(josh).mint(usdc.address, usdcUnits("90"), 0);
+      await vault.connect(josh).mint(dai.address, daiUnits("50"), 0);
+      const strategistSigner = await impersonateAndFundContract(
+        await vault.strategistAddr()
+      );
+
+      let daiBalanceDiff, usdcBalanceDiff, daiStratDiff, usdcStratDiff;
+
+      [daiBalanceDiff, usdcBalanceDiff] = await differenceInErc20TokenBalances(
+        [vault.address, vault.address],
+        [dai, usdc],
+        async () => {
+          [daiStratDiff, usdcStratDiff] = await differenceInStrategyBalance(
+            [dai.address, usdc.address],
+            [compoundStrategy, compoundStrategy],
+            async () => {
+              await vault
+                .connect(strategistSigner)
+                .depositToStrategy(
+                  compoundStrategy.address,
+                  [dai.address, usdc.address],
+                  [daiUnits("50"), usdcUnits("90")]
+                );
+            }
+          );
+        }
+      );
+
+      expect(daiBalanceDiff).to.equal(daiUnits("-50"));
+      expect(usdcBalanceDiff).to.approxEqualTolerance(usdcUnits("-90"), 1);
+
+      expect(daiStratDiff).gte(daiUnits("50"));
+      expect(usdcStratDiff).gte(usdcUnits("90"));
+
+      [daiBalanceDiff, usdcBalanceDiff] = await differenceInErc20TokenBalances(
+        [vault.address, vault.address],
+        [dai, usdc],
+        async () => {
+          [daiStratDiff, usdcStratDiff] = await differenceInStrategyBalance(
+            [dai.address, usdc.address],
+            [compoundStrategy, compoundStrategy],
+            async () => {
+              await vault
+                .connect(strategistSigner)
+                .withdrawFromStrategy(
+                  compoundStrategy.address,
+                  [dai.address, usdc.address],
+                  [daiUnits("50"), usdcUnits("90")]
+                );
+            }
+          );
+        }
+      );
+
+      expect(daiBalanceDiff).to.approxEqualTolerance(daiUnits("50"), 1);
+      expect(usdcBalanceDiff).to.approxEqualTolerance(usdcUnits("90"), 1);
+
+      expect(daiStratDiff).approxEqualTolerance(daiUnits("-50"));
+      expect(usdcStratDiff).approxEqualTolerance(usdcUnits("-90"));
+    });
+
     it("Should have vault buffer disabled", async () => {
       const { vault } = fixture;
       expect(await vault.vaultBuffer()).to.equal("0");
@@ -226,13 +291,14 @@ forkOnlyDescribe("ForkTest: Vault", function () {
       const strategies = await vault.getAllStrategies();
 
       const knownStrategies = [
-        // TODO: Update this every time a new strategy is added
+        // Update this every time a new strategy is added. Below are mainnet addresses
         "0x9c459eeb3FA179a40329b81C1635525e9A0Ef094", // Compound
         "0x5e3646A1Db86993f73E6b74A57D8640B69F7e259", // Aave
         "0xEA2Ef2e2E5A749D4A66b41Db9aD85a38Aa264cb3", // Convex
         "0x89Eb88fEdc50FC77ae8a18aAD1cA0ac27f777a90", // OUSD MetaStrategy
-        "0x5A4eEe58744D1430876d5cA93cAB5CcB763C037D", // Morpho MetaStrategy
+        "0x5A4eEe58744D1430876d5cA93cAB5CcB763C037D", // MorphoCompoundStrategy
         "0x7A192DD9Cc4Ea9bdEdeC9992df74F1DA55e60a19", // LUSD MetaStrategy
+        "0x79F2188EF9350A1dC11A062cca0abE90684b0197", // MorphoAaveStrategy
         // TODO: Hard-code these after deploy
         //"0x7A192DD9Cc4Ea9bdEdeC9992df74F1DA55e60a19", // LUSD MetaStrategy
       ];
@@ -260,6 +326,7 @@ forkOnlyDescribe("ForkTest: Vault", function () {
         "0x5e3646A1Db86993f73E6b74A57D8640B69F7e259",
         "0x9c459eeb3FA179a40329b81C1635525e9A0Ef094",
         "0x5A4eEe58744D1430876d5cA93cAB5CcB763C037D", // Morpho
+        "0x79F2188EF9350A1dC11A062cca0abE90684b0197", // MorphoAave
       ]).to.include(await vault.assetDefaultStrategies(usdt.address));
     });
 
@@ -271,6 +338,7 @@ forkOnlyDescribe("ForkTest: Vault", function () {
         "0x5e3646A1Db86993f73E6b74A57D8640B69F7e259",
         "0x9c459eeb3FA179a40329b81C1635525e9A0Ef094",
         "0x5A4eEe58744D1430876d5cA93cAB5CcB763C037D", // Morpho
+        "0x79F2188EF9350A1dC11A062cca0abE90684b0197", // MorphoAave
       ]).to.include(await vault.assetDefaultStrategies(usdc.address));
     });
 
@@ -282,6 +350,7 @@ forkOnlyDescribe("ForkTest: Vault", function () {
         "0x5e3646A1Db86993f73E6b74A57D8640B69F7e259",
         "0x9c459eeb3FA179a40329b81C1635525e9A0Ef094",
         "0x5A4eEe58744D1430876d5cA93cAB5CcB763C037D", // Morpho
+        "0x79F2188EF9350A1dC11A062cca0abE90684b0197", // MorphoAave
       ]).to.include(await vault.assetDefaultStrategies(dai.address));
     });
 

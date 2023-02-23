@@ -8,7 +8,7 @@ import AccountStore from 'stores/AccountStore'
 import ContractStore from 'stores/ContractStore'
 import PoolStore from 'stores/PoolStore'
 import StakeStore from 'stores/StakeStore'
-import { usePrevious } from 'utils/hooks'
+import { usePrevious, useOverrideAccount } from 'utils/hooks'
 import { isCorrectNetwork } from 'utils/web3'
 import { useStoreState } from 'pullstate'
 import { setupContracts } from 'utils/contracts'
@@ -25,7 +25,11 @@ import { transactionHistoryItemsPerPage } from 'utils/constants'
 
 const AccountListener = (props) => {
   const web3react = useWeb3React()
-  const { account, chainId, library, active } = web3react
+  const { account: web3Account, chainId, library, active } = web3react
+
+  const { overrideAccount } = useOverrideAccount()
+  const account = overrideAccount || web3Account
+
   const prevAccount = usePrevious(account)
   const prevActive = usePrevious(active)
   const [contracts, setContracts] = useState(null)
@@ -86,6 +90,9 @@ const AccountListener = (props) => {
         s.allowances = {}
         s.balances = {}
       })
+      ContractStore.update((s) => {
+        s.walletConnected = false
+      })
       PoolStore.update((s) => {
         s.claimable_ogn = null
         s.lp_tokens = null
@@ -137,7 +144,7 @@ const AccountListener = (props) => {
 
     const loadPoolRelatedAccountData = async () => {
       if (!account) return
-      if (process.env.ENABLE_LIQUIDITY_MINING !== 'true') return
+      if (process.env.NEXT_PUBLIC_ENABLE_LIQUIDITY_MINING !== 'true') return
 
       const pools = PoolStore.currentState.pools
       const initializedPools = pools.filter((pool) => pool.contract)
@@ -367,7 +374,7 @@ const AccountListener = (props) => {
 
       const response = await fetch(
         `${
-          process.env.ANALYTICS_ENDPOINT
+          process.env.NEXT_PUBLIC_ANALYTICS_ENDPOINT
         }/api/v1/address/${account.toLowerCase()}/yield`
       )
 
@@ -395,7 +402,7 @@ const AccountListener = (props) => {
         usedChainId = chainId
         usedLibrary = library
       } else {
-        usedChainId = parseInt(process.env.ETHEREUM_RPC_CHAIN_ID)
+        usedChainId = parseInt(process.env.NEXT_PUBLIC_ETHEREUM_RPC_CHAIN_ID)
         usedLibrary = null
       }
 

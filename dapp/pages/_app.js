@@ -1,14 +1,13 @@
 import React, { useEffect, useState } from 'react'
-import cookies from 'next-cookies'
 import { useWeb3React } from '@web3-react/core'
 import { useRouter } from 'next/router'
+import Head from 'next/head'
 import { useCookies } from 'react-cookie'
 import { useStoreState } from 'pullstate'
 import { QueryClient, QueryClientProvider } from 'react-query'
 import { ReactQueryDevtools } from 'react-query/devtools'
 
 import AccountStore from 'stores/AccountStore'
-import RouterStore from 'stores/RouterStore'
 import AccountListener from 'components/AccountListener'
 import UserActivityListener from 'components/UserActivityListener'
 import TransactionListener from 'components/TransactionListener'
@@ -16,10 +15,10 @@ import withWeb3Provider from 'hoc/withWeb3Provider'
 import setUtilLocale from 'utils/setLocale'
 import { setUserSource } from 'utils/user'
 import { useEagerConnect } from 'utils/hooks'
-import { logout, login } from 'utils/account'
+import { login } from 'utils/account'
 import WalletSelectModal from 'components/WalletSelectModal'
 import { ToastContainer } from 'react-toastify'
-import { getConnector, getConnectorImage } from 'utils/connectors'
+import { pageview } from '../lib/gtm'
 
 import analytics from 'utils/analytics'
 import { AnalyticsProvider } from 'use-analytics'
@@ -29,14 +28,6 @@ import 'react-toastify/scss/main.scss'
 import '../node_modules/bootstrap/dist/css/bootstrap.min.css'
 import '../styles/globals.css'
 
-let VConsole, ReactPixel
-if (process.browser && process.env.NODE_ENV === 'development') {
-  VConsole = require('vconsole/dist/vconsole.min.js')
-}
-if (process.browser) {
-  ReactPixel = require('react-facebook-pixel').default
-}
-
 initSentry()
 
 const queryClient = new QueryClient()
@@ -45,29 +36,24 @@ function App({ Component, pageProps, err }) {
   const [locale, setLocale] = useState('en_US')
 
   const {
-    connector,
-    library,
-    chainId,
     account,
-    activate,
-    deactivate,
     active,
-    error,
   } = useWeb3React()
   const [cookies, setCookie, removeCookie] = useCookies(['loggedIn'])
   const router = useRouter()
   const tried = useEagerConnect()
   const address = useStoreState(AccountStore, (s) => s.address)
 
-  if (process.browser) {
-    useEffect(() => {
-      router.events.on('routeChangeComplete', (url) => {
-        RouterStore.update((s) => {
-          s.history = [...RouterStore.currentState.history, url]
-        })
-      })
-    }, [])
-  }
+  const canonicalUrl = (
+    `https://app.ousd.com` + (router.asPath === '/' ? '' : router.asPath)
+  ).split('?')[0]
+
+  useEffect(() => {
+    router.events.on('routeChangeComplete', pageview)
+    return () => {
+      router.events.off('routeChangeComplete', pageview)
+    }
+  }, [router.events])
 
   useEffect(() => {
     // Update account info when connection already established
@@ -75,29 +61,6 @@ function App({ Component, pageProps, err }) {
       login(account, setCookie)
     }
   }, [active, tried, account])
-
-  useEffect(() => {
-    if (error) {
-      alert(error)
-      console.log(error)
-    }
-
-    if (process.browser && process.env.NODE_ENV === 'development') {
-      var vConsole = new VConsole()
-    }
-  }, [])
-
-  useEffect(() => {
-    if (!process.browser) return
-
-    const options = {
-      autoConfig: true,
-      debug: process.env.NODE_ENV === 'development',
-    }
-
-    ReactPixel.init('1106573693417404', {}, options)
-    ReactPixel.pageView()
-  }, [process.browser])
 
   useEffect(() => {
     if (localStorage.locale) {
@@ -165,6 +128,9 @@ function App({ Component, pageProps, err }) {
 
   return (
     <>
+      <Head>
+        <link rel="canonical" href={canonicalUrl} />
+      </Head>
       <QueryClientProvider client={queryClient}>
         <AnalyticsProvider instance={analytics}>
           <AccountListener />
