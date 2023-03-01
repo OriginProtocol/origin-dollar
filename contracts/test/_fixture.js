@@ -315,7 +315,7 @@ async function defaultFixture() {
   let governor = signers[1];
   const strategist = signers[0];
   const adjuster = signers[0];
-  let timelock
+  let timelock;
 
   const [matt, josh, anna, domen, daniel, franck] = signers.slice(4);
 
@@ -708,7 +708,7 @@ async function morphoAaveFixture() {
 
   const { governorAddr, timelockAddr } = await getNamedAccounts();
   let sGovernor = await ethers.provider.getSigner(governorAddr);
-  
+
   if (isFork) {
     sGovernor = await ethers.provider.getSigner(timelockAddr);
 
