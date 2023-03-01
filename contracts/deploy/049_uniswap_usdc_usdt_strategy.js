@@ -1,6 +1,6 @@
-const { deploymentWithProposal } = require("../utils/deploy");
+const { deploymentWithGovernanceProposal } = require("../utils/deploy");
 
-module.exports = deploymentWithProposal(
+module.exports = deploymentWithGovernanceProposal(
   {
     deployName: "049_uniswap_usdc_usdt_strategy",
     forceDeploy: false,
@@ -12,7 +12,7 @@ module.exports = deploymentWithProposal(
     getTxOpts,
     withConfirmation,
   }) => {
-    const { deployerAddr, governorAddr, operatorAddr } = await getNamedAccounts();
+    const { deployerAddr, operatorAddr, timelockAddr } = await getNamedAccounts();
     const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
     // Current contracts
@@ -63,8 +63,6 @@ module.exports = deploymentWithProposal(
       cHarvesterProxy.address
     );
 
-    console.log(governorAddr, await cMorphoCompProxy.governor())
-
     // 3. Init the proxy to point at the implementation
     await withConfirmation(
       cUniV3_USDC_USDT_Proxy
@@ -96,7 +94,7 @@ module.exports = deploymentWithProposal(
     await withConfirmation(
       cUniV3_USDC_USDT_Strategy
         .connect(sDeployer)
-        .transferGovernance(governorAddr, await getTxOpts())
+        .transferGovernance(timelockAddr, await getTxOpts())
     );
 
     console.log("Uniswap V3 (USDC-USDT pool) strategy address: ", cUniV3_USDC_USDT_Strategy.address);
@@ -117,30 +115,30 @@ module.exports = deploymentWithProposal(
           signature: "setAdminImpl(address)",
           args: [dVaultAdmin.address],
         },
-        // // 1. Accept governance of new cUniV3_USDC_USDT_Strategy
-        // {
-        //   contract: cUniV3_USDC_USDT_Strategy,
-        //   signature: "claimGovernance()",
-        //   args: [],
-        // },
-        // // 2. Add new strategy to vault
-        // {
-        //   contract: cVaultAdmin,
-        //   signature: "approveUniswapV3Strategy(address)",
-        //   args: [cUniV3_USDC_USDT_Proxy.address],
-        // },
-        // // 3. Set supported strategy on Harvester
-        // {
-        //   contract: cHarvester,
-        //   signature: "setSupportedStrategy(address,bool)",
-        //   args: [cUniV3_USDC_USDT_Proxy.address, true],
-        // },
-        // // 4. Set harvester address
-        // {
-        //   contract: cUniV3_USDC_USDT_Strategy,
-        //   signature: "setHarvesterAddress(address)",
-        //   args: [cHarvesterProxy.address],
-        // },
+        // 1. Accept governance of new cUniV3_USDC_USDT_Strategy
+        {
+          contract: cUniV3_USDC_USDT_Strategy,
+          signature: "claimGovernance()",
+          args: [],
+        },
+        // 2. Add new strategy to vault
+        {
+          contract: cVaultAdmin,
+          signature: "approveUniswapV3Strategy(address)",
+          args: [cUniV3_USDC_USDT_Proxy.address],
+        },
+        // 3. Set supported strategy on Harvester
+        {
+          contract: cHarvester,
+          signature: "setSupportedStrategy(address,bool)",
+          args: [cUniV3_USDC_USDT_Proxy.address, true],
+        },
+        // 4. Set harvester address
+        {
+          contract: cUniV3_USDC_USDT_Strategy,
+          signature: "setHarvesterAddress(address)",
+          args: [cHarvesterProxy.address],
+        },
       ],
     };
   }
