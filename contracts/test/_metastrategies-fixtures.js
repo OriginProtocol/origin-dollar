@@ -16,14 +16,14 @@ const erc20Abi = require("./abi/erc20.json");
 async function withDefaultOUSDMetapoolStrategiesSet() {
   const fixture = await loadFixture(convexMetaVaultFixture);
 
-  const { vault, governor, usdt, usdc, OUSDmetaStrategy } = fixture;
+  const { vault, timelock, usdt, usdc, OUSDmetaStrategy } = fixture;
 
   await vault
-    .connect(governor)
+    .connect(timelock)
     .setAssetDefaultStrategy(usdt.address, OUSDmetaStrategy.address);
 
   await vault
-    .connect(governor)
+    .connect(timelock)
     .setAssetDefaultStrategy(usdc.address, OUSDmetaStrategy.address);
 
   return fixture;

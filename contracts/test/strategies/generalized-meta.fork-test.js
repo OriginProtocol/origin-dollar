@@ -172,8 +172,8 @@ metastrategies.forEach(
               this.skip();
               return;
             }
-            const { governorAddr } = await getNamedAccounts();
-            const sGovernor = await ethers.provider.getSigner(governorAddr);
+            const { timelockAddr } = await getNamedAccounts();
+            const sGovernor = await ethers.provider.getSigner(timelockAddr);
 
             const { vault, usdt, anna } = fixture;
 
@@ -236,8 +236,8 @@ metastrategies.forEach(
               this.skip();
               return;
             }
-            const { governorAddr } = await getNamedAccounts();
-            const sGovernor = await ethers.provider.getSigner(governorAddr);
+            const { timelockAddr } = await getNamedAccounts();
+            const sGovernor = await ethers.provider.getSigner(timelockAddr);
 
             const { vault, usdt, anna } = fixture;
 

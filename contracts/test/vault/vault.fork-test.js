@@ -42,7 +42,7 @@ forkOnlyDescribe("ForkTest: Vault", function () {
     it("Should have the correct governor address set", async () => {
       const { vault } = fixture;
       expect(await vault.governor()).to.equal(
-        "0x72426BA137DEC62657306b12B1E869d43FeC6eC7"
+        "0x35918cDE7233F2dD33fA41ae3Cb6aE0e42E0e69F"
       );
     });
 
@@ -355,8 +355,8 @@ forkOnlyDescribe("ForkTest: Vault", function () {
     });
 
     it("Should be able to withdraw from all strategies", async () => {
-      const { vault, governor } = fixture;
-      await vault.connect(governor).withdrawAllFromStrategies();
+      const { vault, timelock } = fixture;
+      await vault.connect(timelock).withdrawAllFromStrategies();
     });
   });
 });

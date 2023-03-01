@@ -33,7 +33,7 @@ async function defaultFixture() {
     keepExistingDeployments: Boolean(isForkWithLocalNode),
   });
 
-  const { governorAddr } = await getNamedAccounts();
+  const { governorAddr, timelockAddr } = await getNamedAccounts();
 
   const ousdProxy = await ethers.getContract("OUSDProxy");
   const vaultProxy = await ethers.getContract("VaultProxy");
@@ -338,11 +338,13 @@ async function defaultFixture() {
   const strategist = signers[0];
   const adjuster = signers[0];
   const operator = signers[3];
+  let timelock;
 
   const [matt, josh, anna, domen, daniel, franck] = signers.slice(4);
 
   if (isFork) {
     governor = await impersonateAndFundContract(governorAddr);
+    timelock = await impersonateAndFundContract(timelockAddr);
   }
   await fundAccounts();
   if (isFork) {
@@ -375,6 +377,7 @@ async function defaultFixture() {
     daniel,
     franck,
     operator,
+    timelock,
     // Contracts
     ousd,
     vault,
@@ -693,8 +696,8 @@ async function convexMetaVaultFixture() {
 async function morphoCompoundFixture() {
   const fixture = await loadFixture(defaultFixture);
 
-  const { governorAddr } = await getNamedAccounts();
-  const sGovernor = await ethers.provider.getSigner(governorAddr);
+  const { timelockAddr } = await getNamedAccounts();
+  const sGovernor = await ethers.provider.getSigner(timelockAddr);
 
   if (isFork) {
     await fixture.vault
@@ -732,10 +735,12 @@ async function morphoCompoundFixture() {
 async function morphoAaveFixture() {
   const fixture = await loadFixture(defaultFixture);
 
-  const { governorAddr } = await getNamedAccounts();
-  const sGovernor = await ethers.provider.getSigner(governorAddr);
+  const { governorAddr, timelockAddr } = await getNamedAccounts();
+  let sGovernor = await ethers.provider.getSigner(governorAddr);
 
   if (isFork) {
+    sGovernor = await ethers.provider.getSigner(timelockAddr);
+
     await fixture.vault
       .connect(sGovernor)
       .setAssetDefaultStrategy(
@@ -780,8 +785,8 @@ async function convexGeneralizedMetaForkedFixture(
 ) {
   return async () => {
     const fixture = await loadFixture(defaultFixture);
-    const { governorAddr } = await getNamedAccounts();
-    const sGovernor = await ethers.provider.getSigner(governorAddr);
+    const { timelockAddr } = await getNamedAccounts();
+    const sGovernor = await ethers.provider.getSigner(timelockAddr);
     const { josh, matt, anna, domen, daniel, franck } = fixture;
 
     const threepoolLP = await ethers.getContractAt(
