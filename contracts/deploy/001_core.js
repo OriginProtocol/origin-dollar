@@ -635,6 +635,15 @@ const configureStrategies = async (harvesterProxy) => {
   await withConfirmation(
     threePool.connect(sGovernor).setHarvesterAddress(harvesterProxy.address)
   );
+
+  const uniV3UsdcUsdtProxy = await ethers.getContract("UniV3_USDC_USDT_Proxy");
+  const uniV3UsdcUsdt = await ethers.getContractAt(
+    "GeneralizedUniswapV3Strategy",
+    uniV3UsdcUsdtProxy.address
+  );
+  await withConfirmation(
+    uniV3UsdcUsdt.connect(sGovernor).setHarvesterAddress(harvesterProxy.address)
+  );
 };
 
 const deployDripper = async () => {
@@ -926,7 +935,7 @@ const deployBuyback = async () => {
   return cBuyback;
 };
 
-const deployVaultVaultChecker = async () => {
+const deployVaultValueChecker = async () => {
   const vault = await ethers.getContract("VaultProxy");
   const ousd = await ethers.getContract("OUSDProxy");
 
@@ -962,6 +971,65 @@ const deployWOusd = async () => {
   await wousd.connect(sGovernor).claimGovernance();
 };
 
+const deployUniswapV3Strategy = async () => {
+  const { deployerAddr, governorAddr, operatorAddr } = await getNamedAccounts();
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+  const sGovernor = await ethers.provider.getSigner(governorAddr);
+
+  const vault = await ethers.getContract("VaultProxy");
+  const pool = await ethers.getContract("MockUniswapV3Pool");
+  const manager = await ethers.getContract("MockNonfungiblePositionManager");
+  const compStrat = await ethers.getContract("CompoundStrategyProxy");
+  const v3Helper = await ethers.getContract("MockUniswapV3Helper");
+
+  const uniV3UsdcUsdtImpl = await deployWithConfirmation("UniV3_USDC_USDT_Strategy", [], "GeneralizedUniswapV3Strategy");
+  await deployWithConfirmation("UniV3_USDC_USDT_Proxy");
+  const uniV3UsdcUsdtProxy = await ethers.getContract("UniV3_USDC_USDT_Proxy");
+
+  await withConfirmation(
+    uniV3UsdcUsdtProxy["initialize(address,address,bytes)"](
+      uniV3UsdcUsdtImpl.address,
+      deployerAddr,
+      []
+    )
+  );
+  log("Initialized UniV3_USDC_USDT_Proxy");
+
+  const uniV3UsdcUsdtStrat = await ethers.getContractAt("GeneralizedUniswapV3Strategy", uniV3UsdcUsdtProxy.address);
+  await withConfirmation(
+    uniV3UsdcUsdtStrat.connect(sDeployer)
+      ["initialize(address,address,address,address,address,address,address)"](
+        vault.address,
+        pool.address,
+        manager.address,
+        compStrat.address,
+        compStrat.address,
+        operatorAddr,
+        v3Helper.address
+      )
+  );
+  log("Initialized UniV3_USDC_USDT_Strategy");
+
+  await withConfirmation(
+    uniV3UsdcUsdtStrat.connect(sDeployer).transferGovernance(governorAddr)
+  );
+  log(`UniV3_USDC_USDT_Strategy transferGovernance(${governorAddr}) called`);
+
+  // On Mainnet the governance transfer gets executed separately, via the
+  // multi-sig wallet. On other networks, this migration script can claim
+  // governance by the governor.
+  if (!isMainnet) {
+    await withConfirmation(
+      uniV3UsdcUsdtStrat
+        .connect(sGovernor) // Claim governance with governor
+        .claimGovernance()
+    );
+    log("Claimed governance for UniV3_USDC_USDT_Strategy");
+  }
+
+  return uniV3UsdcUsdtStrat;
+}
+
 const main = async () => {
   console.log("Running 001_core deployment...");
   await deployOracles();
@@ -974,6 +1042,7 @@ const main = async () => {
   await deployConvexStrategy();
   await deployConvexOUSDMetaStrategy();
   await deployConvexLUSDMetaStrategy();
+  await deployUniswapV3Strategy();
   const harvesterProxy = await deployHarvester();
   await configureVault(harvesterProxy);
   await configureStrategies(harvesterProxy);
@@ -981,7 +1050,7 @@ const main = async () => {
   await deployFlipper();
   await deployBuyback();
   await deployUniswapV3Pool();
-  await deployVaultVaultChecker();
+  await deployVaultValueChecker();
   await deployWOusd();
   console.log("001_core deploy done.");
   return true;

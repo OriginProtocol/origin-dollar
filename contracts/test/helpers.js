@@ -297,6 +297,9 @@ const getAssetAddresses = async (deployments) => {
       uniswapRouter: addresses.mainnet.uniswapRouter,
       uniswapV3Router: addresses.mainnet.uniswapV3Router,
       sushiswapRouter: addresses.mainnet.sushiswapRouter,
+
+      UniV3PositionManager: addresses.mainnet.UniV3PositionManager,
+      UniV3_USDC_USDT_Pool: addresses.mainnet.UniV3_USDC_USDT_Pool,
     };
   } else {
     const addressMap = {
@@ -331,6 +334,9 @@ const getAssetAddresses = async (deployments) => {
       uniswapRouter: (await deployments.get("MockUniswapRouter")).address,
       uniswapV3Router: (await deployments.get("MockUniswapRouter")).address,
       sushiswapRouter: (await deployments.get("MockUniswapRouter")).address,
+
+      UniV3PositionManager: (await deployments.get("MockNonfungiblePositionManager")).address,
+      UniV3_USDC_USDT_Pool: (await ethers.getContract("MockUniswapV3Pool")).address,
     };
 
     try {

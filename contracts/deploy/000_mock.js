@@ -26,6 +26,7 @@ const {
   abi: QUOTER_ABI,
   bytecode: QUOTER_BYTECODE,
 } = require("@uniswap/v3-periphery/artifacts/contracts/lens/Quoter.sol/Quoter.json");
+const { ethers } = require("hardhat");
 
 const deployMocks = async ({ getNamedAccounts, deployments }) => {
   const { deploy } = deployments;
@@ -327,10 +328,34 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     args: [factory.address, weth.address],
   });
 
+  // This is completely unrelated to the Uniswap V3 mocks above.
+  // This one focuses only on Uniswap V3 strategies
+  await deployMocksForUniswapV3Strategy(deploy, deployerAddr);
+
   console.log("000_mock deploy done.");
 
   return true;
 };
+
+async function deployMocksForUniswapV3Strategy(deploy, deployerAddr) {
+  const v3Helper = await deploy("MockUniswapV3Helper", {
+    from: deployerAddr,
+    contract: "UniswapV3Helper"
+  })
+
+  const mockUSDT = await ethers.getContract("MockUSDT");
+  const mockUSDC = await ethers.getContract("MockUSDC");
+
+  const mockPool = await deploy("MockUniswapV3Pool", {
+    from: deployerAddr,
+    args: [mockUSDC.address, mockUSDT.address, 500, v3Helper.address]
+  })
+
+  await deploy("MockNonfungiblePositionManager", {
+    from: deployerAddr,
+    args: [v3Helper.address, mockPool.address]
+  })
+}
 
 deployMocks.id = "000_mock";
 deployMocks.tags = ["mocks"];

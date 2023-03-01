@@ -13,6 +13,7 @@ import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 
 import { IStrategy } from "../interfaces/IStrategy.sol";
+import { IUniswapV3Strategy } from "../interfaces/IUniswapV3Strategy.sol";
 import { Governable } from "../governance/Governable.sol";
 import { OUSD } from "../token/OUSD.sol";
 import { Initializable } from "../utils/Initializable.sol";
@@ -60,6 +61,7 @@ contract VaultStorage is Initializable, Governable {
     struct Strategy {
         bool isSupported;
         uint256 _deprecated; // Deprecated storage slot
+        bool isUniswapV3Strategy;
     }
     mapping(address => Strategy) internal strategies;
     address[] internal allStrategies;
@@ -119,6 +121,9 @@ contract VaultStorage is Initializable, Governable {
 
     // How much net total OUSD is allowed to be minted by all strategies
     uint256 public netOusdMintForStrategyThreshold = 0;
+
+    // TODO: Should this be part of struct `Strategy`??
+    mapping(address => bool) public isUniswapV3Strategy;
 
     /**
      * @dev set the implementation for the admin, this needs to be in a base class else we cannot set it

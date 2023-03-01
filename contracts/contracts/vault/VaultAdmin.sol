@@ -11,6 +11,7 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 
 import { StableMath } from "../utils/StableMath.sol";
 import { IOracle } from "../interfaces/IOracle.sol";
+import { IUniswapV3Strategy } from "../interfaces/IUniswapV3Strategy.sol";
 import "./VaultStorage.sol";
 
 contract VaultAdmin is VaultStorage {
@@ -34,6 +35,14 @@ contract VaultAdmin is VaultStorage {
         require(
             msg.sender == strategistAddr || isGovernor(),
             "Caller is not the Strategist or Governor"
+        );
+        _;
+    }
+
+    modifier onlyUniswapV3Strategies() {
+        require(
+            isUniswapV3Strategy[msg.sender],
+            "Caller is not Uniswap V3 Strategy"
         );
         _;
     }
@@ -184,9 +193,18 @@ contract VaultAdmin is VaultStorage {
      * @param _addr Address of the strategy to add
      */
     function approveStrategy(address _addr) external onlyGovernor {
+        _approveStrategy(_addr, false);
+    }
+
+    function approveUniswapV3Strategy(address _addr) external onlyGovernor {
+        _approveStrategy(_addr, true);
+    }
+
+    function _approveStrategy(address _addr, bool isUniswapV3) internal {
         require(!strategies[_addr].isSupported, "Strategy already approved");
-        strategies[_addr] = Strategy({ isSupported: true, _deprecated: 0 });
+        strategies[_addr] = Strategy({ isSupported: true, isUniswapV3Strategy: isUniswapV3, _deprecated: 0 });
         allStrategies.push(_addr);
+        isUniswapV3Strategy[_addr] = isUniswapV3;
         emit StrategyApproved(_addr);
     }
 
@@ -223,6 +241,7 @@ contract VaultAdmin is VaultStorage {
 
             // Mark the strategy as not supported
             strategies[_addr].isSupported = false;
+            isUniswapV3Strategy[_addr] = false;
 
             // Withdraw all assets
             IStrategy strategy = IStrategy(_addr);
@@ -500,5 +519,31 @@ contract VaultAdmin is VaultStorage {
             IStrategy strategy = IStrategy(allStrategies[i]);
             strategy.withdrawAll();
         }
+    }
+
+    /***************************************
+             Uniswap V3 Utils
+    ****************************************/
+
+    function depositForUniswapV3(address asset, uint256 amount) external onlyUniswapV3Strategies nonReentrant {
+        _depositForUniswapV3(msg.sender, asset, amount);
+    }
+
+    function _depositForUniswapV3(address v3Strategy, address asset, uint256 amount) internal {
+        require(strategies[v3Strategy].isSupported, "Strategy not approved");
+        address reserveStrategy = IUniswapV3Strategy(v3Strategy).reserveStrategy(asset);
+        require(reserveStrategy != address(0), "Invalid Reserve Strategy address");
+        IERC20(asset).safeTransfer(reserveStrategy, amount);
+        IStrategy(reserveStrategy).deposit(asset, amount);
+    }
+
+    function withdrawForUniswapV3(address recipient, address asset, uint256 amount) external onlyUniswapV3Strategies nonReentrant {
+        _withdrawForUniswapV3(msg.sender, recipient, asset, amount);
+    }
+
+    function _withdrawForUniswapV3(address v3Strategy, address recipient, address asset, uint256 amount) internal {
+        require(strategies[v3Strategy].isSupported, "Strategy not approved");
+        address reserveStrategy = IUniswapV3Strategy(v3Strategy).reserveStrategy(asset);
+        IStrategy(reserveStrategy).withdraw(recipient, asset, amount);
     }
 }

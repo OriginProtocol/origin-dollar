@@ -74,6 +74,8 @@ interface IVault {
 
     function approveStrategy(address _addr) external;
 
+    function approveUniswapV3Strategy(address _addr) external;
+
     function removeStrategy(address _addr) external;
 
     function setAssetDefaultStrategy(address _asset, address _strategy)
@@ -170,4 +172,8 @@ interface IVault {
     function setNetOusdMintForStrategyThreshold(uint256 _threshold) external;
 
     function netOusdMintedForStrategy() external view returns (int256);
+
+    function depositForUniswapV3(address asset, uint256 amount) external;
+
+    function withdrawForUniswapV3(address recipient, address asset, uint256 amount) external;
 }

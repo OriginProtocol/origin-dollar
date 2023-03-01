@@ -50,7 +50,7 @@ const deployWithConfirmation = async (
 ) => {
   // check that upgrade doesn't corrupt the storage slots
   if (!skipUpgradeSafety) {
-    await assertUpgradeIsSafe(hre, contractName);
+    await assertUpgradeIsSafe(hre, typeof contract == "string" ? contract : contractName);
   }
 
   const { deploy } = deployments;

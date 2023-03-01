@@ -59,6 +59,7 @@ const MAINNET_GOVERNOR = "0x72426ba137dec62657306b12b1e869d43fec6ec7";
 const MAINNET_MULTISIG = "0xbe2AB3d3d8F6a32b96414ebbd865dBD276d3d899";
 const MAINNET_CLAIM_ADJUSTER = MAINNET_DEPLOYER;
 const MAINNET_STRATEGIST = "0xf14bbdf064e3f67f51cd9bd646ae3716ad938fdc";
+const MAINNET_OPERATOR = "0xf14bbdf064e3f67f51cd9bd646ae3716ad938fdc";
 
 const mnemonic =
   "replace hover unaware super where filter stone fine garlic address matrix basic";
@@ -216,12 +217,20 @@ const isForkTest =
 
 module.exports = {
   solidity: {
-    version: "0.8.7",
-    settings: {
-      optimizer: {
-        enabled: true,
+    compilers: [
+      {
+        version: "0.8.7",
+        settings: {
+          optimizer: {
+            enabled: true,
+          },
+        },
       },
-    },
+      {
+        // Uniswap V3 contracts use solc 0.7.6
+        version: "0.7.6"
+      }
+    ]
   },
   networks: {
     hardhat: {
@@ -296,6 +305,12 @@ module.exports = {
       localhost: process.env.FORK === "true" ? MAINNET_STRATEGIST : 0,
       hardhat: process.env.FORK === "true" ? MAINNET_STRATEGIST : 0,
       mainnet: MAINNET_STRATEGIST,
+    },
+    operatorAddr: {
+      default: 3,
+      localhost: process.env.FORK === "true" ? MAINNET_OPERATOR : 3,
+      hardhat: process.env.FORK === "true" ? MAINNET_OPERATOR : 3,
+      mainnet: MAINNET_OPERATOR,
     },
   },
   contractSizer: {

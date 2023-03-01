@@ -2,7 +2,7 @@
 trap "exit" INT TERM ERR
 trap "kill 0" EXIT
 #nodeWaitTimeout=120
-nodeWaitTimeout=1200
+nodeWaitTimeout=12000
 RED='\033[0;31m'
 NO_COLOR='\033[0m'
 

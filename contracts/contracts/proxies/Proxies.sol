@@ -88,8 +88,11 @@ contract ConvexLUSDMetaStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 }
 
 /**
- * @notice MorphoAaveStrategyProxy delegates calls to a MorphoCompoundStrategy implementation
+ * @notice MorphoAaveStrategyProxy delegates calls to a MorphoAaveStrategy implementation
  */
-contract MorphoAaveStrategyProxy is InitializeGovernedUpgradeabilityProxy {
+contract MorphoAaveStrategyProxy is InitializeGovernedUpgradeabilityProxy {}
 
-}
+/**
+ * @notice UniV3_USDC_USDT_Proxy delegates calls to a GeneralizedUniswapV3Strategy implementation
+ */
+contract UniV3_USDC_USDT_Proxy is InitializeGovernedUpgradeabilityProxy {}

@@ -337,7 +337,8 @@ contract VaultCore is VaultStorage {
         // Iterate over all assets in the Vault and allocate to the appropriate
         // strategy
         for (uint256 i = 0; i < allAssets.length; i++) {
-            IERC20 asset = IERC20(allAssets[i]);
+            address assetAddr = allAssets[i];
+            IERC20 asset = IERC20(assetAddr);
             uint256 assetBalance = asset.balanceOf(address(this));
             // No balance, nothing to do here
             if (assetBalance == 0) continue;
@@ -349,17 +350,26 @@ contract VaultCore is VaultStorage {
             );
 
             address depositStrategyAddr = assetDefaultStrategies[
-                address(asset)
+                assetAddr
             ];
 
             if (depositStrategyAddr != address(0) && allocateAmount > 0) {
-                IStrategy strategy = IStrategy(depositStrategyAddr);
+                IStrategy strategy;
+                if (isUniswapV3Strategy[depositStrategyAddr]) {
+                    IUniswapV3Strategy uniswapStrategy = IUniswapV3Strategy(depositStrategyAddr);
+                    strategy = IStrategy(uniswapStrategy.reserveStrategy(assetAddr));
+                } else {
+                    strategy = IStrategy(depositStrategyAddr);
+                }
+
+                require(address(strategy) != address(0), "Invalid deposit strategy");
+
                 // Transfer asset to Strategy and call deposit method to
                 // mint or take required action
                 asset.safeTransfer(address(strategy), allocateAmount);
-                strategy.deposit(address(asset), allocateAmount);
+                strategy.deposit(assetAddr, allocateAmount);
                 emit AssetAllocated(
-                    address(asset),
+                    assetAddr,
                     depositStrategyAddr,
                     allocateAmount
                 );
