@@ -791,7 +791,7 @@ function deploymentWithProposal(opts, fn) {
       return;
     }
 
-    await sanityCheck();
+    await sanityCheckOgvGovernance();
     const proposal = await fn(tools);
     const propDescription = proposal.name;
     const propArgs = await proposeArgs(proposal.actions);
