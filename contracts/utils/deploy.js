@@ -3,10 +3,11 @@
 //
 
 const hre = require("hardhat");
-const { utils } = require("ethers");
+const { utils, BigNumber } = require("ethers");
 
 const {
   advanceTime,
+  advanceBlocks,
   isMainnet,
   isFork,
   isMainnetOrFork,
@@ -23,7 +24,9 @@ const {
 
 const addresses = require("../utils/addresses.js");
 const { getTxOpts } = require("../utils/tx");
-const { proposeArgs } = require("../utils/governor");
+const { proposeArgs, proposeGovernanceArgs } = require("../utils/governor");
+const governorFiveAbi = require("../abi/governor_five.json");
+const timelockAbi = require("../abi/timelock.json");
 
 // Wait for 3 blocks confirmation on Mainnet.
 const NUM_CONFIRMATIONS = isMainnet ? 3 : 0;
@@ -76,12 +79,24 @@ const deployWithConfirmation = async (
   return result;
 };
 
-const withConfirmation = async (deployOrTransactionPromise) => {
+const withConfirmation = async (
+  deployOrTransactionPromise,
+  logContractAbi = false
+) => {
   const result = await deployOrTransactionPromise;
-  await hre.ethers.provider.waitForTransaction(
+  const receipt = await hre.ethers.provider.waitForTransaction(
     result.receipt ? result.receipt.transactionHash : result.hash,
     NUM_CONFIRMATIONS
   );
+
+  if (logContractAbi) {
+    let contractInterface = new ethers.utils.Interface(logContractAbi);
+    receipt.parsedLogs = receipt.logs.map((log) =>
+      contractInterface.parseLog(log)
+    );
+  }
+
+  result.receipt = receipt;
   return result;
 };
 
@@ -217,6 +232,107 @@ const executeProposalOnFork = async ({
 };
 
 /**
+ * Successfully execute the proposal whether it is in
+ * "Pending", "Active" or "Queued" state.
+ * Given a proposal Id, enqueues and executes it on OGV Governance.
+ * @param {Number} proposalId
+ * @returns {Promise<void>}
+ */
+const executeGovernanceProposalOnFork = async ({
+  proposalIdBn,
+  proposalState,
+  executeGasLimit = null,
+}) => {
+  if (!isFork) throw new Error("Can only be used on Fork");
+
+  // Get the guardian of the governor and impersonate it.
+  const multisig5of8 = addresses.mainnet.Guardian;
+  const sMultisig5of8 = hre.ethers.provider.getSigner(multisig5of8);
+  await impersonateGuardian(multisig5of8);
+
+  const governorFive = await getGovernorFive();
+  const timelock = await getTimelock();
+
+  /* this should "almost" never happen since the votingDelay on the governor
+   * contract is set to 1 block
+   */
+  if (proposalState === "Pending") {
+    const votingDelay = Number((await governorFive.votingDelay()).toString());
+    log(
+      `Advancing ${
+        votingDelay + 1
+      } blocks to make transaction for from Pending to Active`
+    );
+    await advanceBlocks(votingDelay + 1);
+    proposalState = "Active";
+    const newState = await getProposalState(proposalIdBn);
+    if (newState !== proposalState) {
+      throw new Error(
+        `Proposal state should now be "Active" but is ${newState}`
+      );
+    }
+  }
+
+  if (proposalState === "Active") {
+    try {
+      // vote positively on the proposal
+      await governorFive.connect(sMultisig5of8).castVote(proposalIdBn, 1);
+    } catch (e) {
+      // vote already cast is the only acceptable error
+      if (!e.message.includes(`vote already cast`)) {
+        throw e;
+      }
+    }
+
+    const votingPeriod = Number((await governorFive.votingPeriod()).toString());
+    // advance to the end of voting period
+    await advanceBlocks(votingPeriod + 1);
+
+    proposalState = "Succeeded";
+    let newState = await getProposalState(proposalIdBn);
+    if (newState !== "Succeeded") {
+      throw new Error(
+        `Proposal state should now be "Succeeded" but is ${newState}`
+      );
+    }
+  }
+
+  if (proposalState === "Succeeded") {
+    await governorFive.connect(sMultisig5of8)["queue(uint256)"](proposalIdBn);
+    log("Proposal queued");
+    newState = await getProposalState(proposalIdBn);
+    if (newState !== "Queued") {
+      throw new Error(
+        `Proposal state should now be "Queued" but is ${newState}`
+      );
+    }
+
+    proposalState = "Queued";
+  }
+
+  log("preparing to execute");
+  /* In theory this could fail if proposal is rejected by votes on the mainnet.
+   * In that case such proposalId should not be included in migration files
+   */
+  if (proposalState === "Queued") {
+    const queuePeriod = Number((await timelock.getMinDelay()).toString());
+    // advance to the end of queue period
+    await advanceTime(queuePeriod + 1);
+  }
+
+  await governorFive.connect(sMultisig5of8)["execute(uint256)"](proposalIdBn);
+
+  const newProposalState = await getProposalState(proposalIdBn);
+  if (newProposalState === "Executed") {
+    log(`Proposal id: ${proposalIdBn.toString()} executed`);
+  } else {
+    throw new Error(
+      `Something is wrong! Proposal id: ${proposalIdBn.toString()} in ${newProposalState} state`
+    );
+  }
+};
+
+/**
  * Sends a proposal to the governor contract.
  * @param {Array<Object>} proposalArgs
  * @param {string} description
@@ -258,9 +374,100 @@ const sendProposal = async (proposalArgs, description, opts = {}) => {
 };
 
 /**
+ * Builds the governance proposal transaction that is to be submitted via GnosisSafe Interface.
+ *
+ * @param {Array<Object>} proposalArgs
+ * @param {string} description
+ * @returns {Promise<void>}
+ */
+const submitProposalGnosisSafe = async (
+  proposalArgs,
+  description,
+  opts = {}
+) => {
+  if (!isMainnet) {
+    throw new Error("submitProposalGnosisSafe only works on Mainnet");
+  }
+
+  const governorFive = await getGovernorFive();
+  const multisig5of8 = addresses.mainnet.Guardian;
+  const sMultisig5of8 = hre.ethers.provider.getSigner(multisig5of8);
+  await impersonateGuardian(multisig5of8);
+
+  log(`Submitting proposal for ${description}`);
+  log(`Args: ${JSON.stringify(proposalArgs, null, 2)}`);
+
+  const result = await governorFive.populateTransaction[
+    "propose(address[],uint256[],string[],bytes[],string)"
+  ](...proposalArgs, description, await getTxOpts());
+
+  log(
+    `Next step: go to Gnosis Safe Web -> New Transaction -> 👷 Contract Interaction`
+  );
+  log(`  - enable "Custom Data" toggle`);
+  log(`  - set "Enter address or ENS name" to: '${result.to}'`);
+  log(`  - set "ETH value" to: 0`);
+  log(`  - set "Data (Hex encoded)" to:`);
+  log(`${result.data}`);
+  log(`  - click on 'Add Transaction'`);
+  process.exit();
+};
+
+/**
+ * In forked environment simulated that 5/8 multisig has submitted an OGV
+ * governance proposal
+ *
+ * @param {Array<Object>} proposalArgs
+ * @param {string} description
+ * @returns {Promise<void>}
+ */
+const submitProposalToOgvGovernance = async (
+  proposalArgs,
+  description,
+  opts = {}
+) => {
+  if (!isFork) {
+    throw new Error(
+      "submitProposalToOgvGovernance only works on Fork networks"
+    );
+  }
+
+  const governorFive = await getGovernorFive();
+  const multisig5of8 = addresses.mainnet.Guardian;
+  const sMultisig5of8 = hre.ethers.provider.getSigner(multisig5of8);
+  await impersonateGuardian(multisig5of8);
+
+  log(`Submitting proposal for ${description}`);
+  log(`Args: ${JSON.stringify(proposalArgs, null, 2)}`);
+
+  const result = await withConfirmation(
+    governorFive
+      .connect(sMultisig5of8)
+      ["propose(address[],uint256[],string[],bytes[],string)"](
+        ...proposalArgs,
+        description,
+        await getTxOpts()
+      ),
+    governorFiveAbi
+  );
+  const proposalId = result.receipt.parsedLogs[0].args[0].toString();
+
+  log(`Submitted governance proposal to OGV governance ${proposalId}`);
+  await advanceBlocks(1);
+  const proposalIdBn = ethers.BigNumber.from(proposalId);
+  const proposalState = await getProposalState(proposalIdBn);
+
+  return {
+    proposalState,
+    proposalId,
+    proposalIdBn,
+  };
+};
+
+/**
  * Sanity checks to perform before running the deploy
  */
-const sanityCheck = async () => {
+const sanityCheckOgvGovernance = async () => {
   if (isMainnet) {
     const VaultProxy = await ethers.getContract("VaultProxy");
     const VaultAdmin = await ethers.getContractAt(
@@ -269,14 +476,78 @@ const sanityCheck = async () => {
     );
 
     const vaultGovernor = await VaultAdmin.governor();
-    const { governorAddr } = await getNamedAccounts();
+    const { governorFiveAddr } = await getNamedAccounts();
 
-    if (vaultGovernor.toLowerCase() !== governorAddr.toLowerCase()) {
+    if (vaultGovernor.toLowerCase() !== governorFiveAddr.toLowerCase()) {
       throw new Error(
-        `Hardhat environment has ${governorAddr} governor address configured which is different from Vault's governor: ${vaultGovernor}`
+        `Hardhat environment has ${governorFiveAddr} governor address configured which is different from Vault's governor: ${vaultGovernor}`
       );
     }
   }
+};
+
+/**
+ * When in forked/fork test environment we want special handling of possibly active proposals:
+ * - if node is forked below the proposal block number deploy the migration file and execute
+ *   the proposal
+ * - if node is forked after the proposal block number check the status of proposal:
+ *   - if proposal executed skip deployment
+ *   - if proposal Pending / Active / Queued execute it and skip deployment
+ *
+ * @returns bool -> when true the hardhat deployment is skipped
+ */
+const handlePossiblyActiveGovernanceProposal = async (
+  proposalId,
+  deployName,
+  governorFive
+) => {
+  if (isFork && proposalId) {
+    let proposalState;
+    let proposalIdBn = ethers.BigNumber.from(proposalId);
+    try {
+      proposalState = await getProposalState(proposalIdBn);
+    } catch (e) {
+      // If proposal is non existent the governor reverts the transaction
+      if (e.message.includes("invalid proposal id")) {
+        proposalState = false;
+      } else {
+        throw e;
+      }
+    }
+
+    // proposal has not yet been submitted on the forked node (with current block height)
+    if (proposalState == false) {
+      // execute the whole deployment normally
+      console.log(
+        `Proposal ${deployName} not yet submitted at this block height. Continue deploy.`
+      );
+      return false;
+    }
+
+    if (["Pending", "Active", "Succeeded", "Queued"].includes(proposalState)) {
+      console.log(
+        `Found proposal id: ${proposalId} on forked network. Executing proposal containing deployment of: ${deployName}`
+      );
+
+      await executeGovernanceProposalOnFork({
+        proposalIdBn,
+        proposalState,
+      });
+
+      // proposal executed skip deployment
+      return true;
+    } else if (
+      ["Executed", "Expired", "Canceled", "Defeated"].includes(proposalState)
+    ) {
+      console.log(
+        `Proposal ${deployName} is in ${proposalState} state. Nothing to do.`
+      );
+      return true;
+    }
+  }
+
+  // run deployment
+  return false;
 };
 
 /**
@@ -331,6 +602,166 @@ const handlePossiblyActiveProposal = async (
   // run deployment
   return false;
 };
+
+async function getGovernorFive() {
+  const { governorFiveAddr } = await getNamedAccounts();
+
+  return new ethers.Contract(
+    governorFiveAddr,
+    governorFiveAbi,
+    hre.ethers.provider
+  );
+}
+
+async function getProposalState(proposalIdBn) {
+  const governorFive = await getGovernorFive();
+  return [
+    "Pending",
+    "Active",
+    "Canceled",
+    "Defeated",
+    "Succeeded",
+    "Queued",
+    "Expired",
+    "Executed",
+  ][await governorFive.state(proposalIdBn)];
+}
+
+async function getTimelock() {
+  const { timelockAddr } = await getNamedAccounts();
+
+  return new ethers.Contract(timelockAddr, timelockAbi, hre.ethers.provider);
+}
+
+/**
+ * Shortcut to create a deployment on decentralized Governance (OGV) for hardhat to use
+ * @param {Object} options for deployment
+ * @param {Promise<Object>} fn to deploy contracts and return needed proposals
+ * @returns {Object} main object used by hardhat
+ */
+function deploymentWithGovernanceProposal(opts, fn) {
+  const { deployName, dependencies, forceDeploy, forceSkip, proposalId } = opts;
+  const runDeployment = async (hre) => {
+    const oracleAddresses = await getOracleAddresses(hre.deployments);
+    const assetAddresses = await getAssetAddresses(hre.deployments);
+    const tools = {
+      oracleAddresses,
+      assetAddresses,
+      deployWithConfirmation,
+      ethers,
+      getTxOpts,
+      withConfirmation,
+    };
+
+    const governorFive = await getGovernorFive();
+
+    /* Proposal has either:
+     *  - already been executed before running this function or
+     *  - been executed by running this function
+     *  - is in one of the states that can't get to execution: "Expired", "Canceled", "Defeated"
+     */
+    if (
+      await handlePossiblyActiveGovernanceProposal(
+        proposalId,
+        deployName,
+        governorFive
+      )
+    ) {
+      return;
+    }
+
+    await sanityCheckOgvGovernance();
+
+    const proposal = await fn(tools);
+    const propDescription = proposal.name;
+    const propArgs = await proposeGovernanceArgs(proposal.actions);
+    const propOpts = proposal.opts || {};
+
+    if (isMainnet) {
+      // On Mainnet, only build the propose transaction for OGV governance
+      log("Building OGV governance proposal...");
+      await submitProposalGnosisSafe(propArgs, propDescription, propOpts);
+      log("Proposal sent.");
+    } else if (isFork) {
+      // On Fork we can send the proposal then impersonate the guardian to execute it.
+      log("Sending the governance proposal to OGV governance");
+      const { proposalState, proposalId, proposalIdBn } =
+        await submitProposalToOgvGovernance(
+          propArgs,
+          propDescription,
+          propOpts
+        );
+      log("Executing the proposal");
+      await executeGovernanceProposalOnFork({
+        proposalIdBn,
+        proposalState,
+      });
+      log("Proposal executed.");
+    } else {
+      throw new Error(
+        "deploymentWithGovernanceProposal not supported in local node environment"
+      );
+    }
+  };
+
+  const main = async (hre) => {
+    console.log(`Running ${deployName} deployment...`);
+    if (!hre) {
+      hre = require("hardhat");
+    }
+    await runDeployment(hre);
+    console.log(`${deployName} deploy done.`);
+    return true;
+  };
+
+  main.id = deployName;
+  main.dependencies = dependencies;
+  if (forceSkip) {
+    main.skip = () => true;
+  } else if (forceDeploy) {
+    main.skip = () => false;
+  } else {
+    /** Just for context of fork env change the id of the deployment script. This is required
+     * in circumstances when:
+     * - the deployment script has already been run on the mainnet
+     * - proposal has been either "Queued" or is still "New"
+     * - all the deployment artifacts and migration information is already present in the repo
+     *
+     * Problem: as part of normal deployment procedure we want to be able to simulate the
+     * execution of a proposal and run all the for tests on top of (after) the proposal execution. But
+     * since deployment artifacts are already present and migration file has already been updated
+     * the hardhat deploy will skip the deployment file (ignoring even the force deploy/`skip` flags.
+     * Skipping the deployment file prevents us to identify the New/Queued proposal id and executing it.
+     *
+     * For that reason for any deployment ran on fork with proposalId we change the id of deployment
+     * as a workaround so that Hardhat executes it. If proposal has already been executed the
+     * `runDeployment` function will exit without applying the deployment.
+     *
+     * And we can not package this inside of `skip` function since without this workaround it
+     * doesn't even get evaluated.
+     */
+    if (isFork && proposalId) {
+      main.id = `${deployName}_force`;
+    }
+
+    main.skip = async () => {
+      // running on fork with a proposalId already available
+      if (isFork && proposalId) {
+        return false;
+        /* running on fork, and proposal not yet submitted. This is usually during development
+         * before kicking off deploy.
+         */
+      } else if (isFork) {
+        const networkName = isForkTest ? "hardhat" : "localhost";
+        const migrations = require(`./../deployments/${networkName}/.migrations.json`);
+        return Boolean(migrations[deployName]);
+      } else {
+        return !isMainnet || isSmokeTest || isFork;
+      }
+    };
+  }
+  return main;
+}
 
 /**
  * Shortcut to create a deployment for hardhat to use
@@ -462,4 +893,5 @@ module.exports = {
   executeProposalOnFork,
   sendProposal,
   deploymentWithProposal,
+  deploymentWithGovernanceProposal,
 };

@@ -1013,7 +1013,7 @@ const useSwapEstimator = ({
   const fetchGasPrice = async () => {
     try {
       const gasPriceRequest = await fetchWithTimeout(
-        `https://ethgasstation.info/api/ethgasAPI.json?api-key=${process.env.DEFI_PULSE_API_KEY}`,
+        `https://ethgasstation.info/api/ethgasAPI.json`,
         // allow for 5 seconds timeout before falling back to chainlink
         {
           timeout: 5000,

@@ -37,9 +37,6 @@ export default function Footer({ locale }) {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="nav-link"
-                  onClick={() => {
-                    analytics.track('Analytics Link click')
-                  }}
                 >
                   {fbt('Analytics', 'Analytics link')}
                 </a>
@@ -48,9 +45,6 @@ export default function Footer({ locale }) {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="nav-link"
-                  onClick={() => {
-                    analytics.track('Jobs Link click')
-                  }}
                 >
                   {fbt('Jobs', 'Jobs link')}
                 </a>
@@ -59,18 +53,12 @@ export default function Footer({ locale }) {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="nav-link"
-                  onClick={() => {
-                    analytics.track('Docs Link click')
-                  }}
                 ></a>
                 <a
                   href={discordURL}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="nav-link"
-                  onClick={() => {
-                    analytics.track('Discord Link click')
-                  }}
                 >
                   {fbt('Discord', 'Discord link')}
                 </a>
@@ -79,9 +67,6 @@ export default function Footer({ locale }) {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="nav-link"
-                  onClick={() => {
-                    analytics.track('Github Link click')
-                  }}
                 >
                   {fbt('Github', 'Github link')}
                 </a>
