@@ -667,8 +667,8 @@ async function convexMetaVaultFixture() {
 async function morphoCompoundFixture() {
   const fixture = await loadFixture(defaultFixture);
 
-  const { governorAddr } = await getNamedAccounts();
-  const sGovernor = await ethers.provider.getSigner(governorAddr);
+  const { timelockAddr } = await getNamedAccounts();
+  const sGovernor = await ethers.provider.getSigner(timelockAddr);
 
   if (isFork) {
     await fixture.vault
