@@ -21,6 +21,8 @@ import { IVault } from "../interfaces/IVault.sol";
 import { IBuyback } from "../interfaces/IBuyback.sol";
 import "./VaultStorage.sol";
 
+import "hardhat/console.sol";
+
 contract VaultCore is VaultStorage {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
@@ -387,29 +389,84 @@ contract VaultCore is VaultStorage {
      *      portion of the yield to the trustee.
      */
     function _rebase() internal whenNotRebasePaused {
+        console.log("---Rebase---");
+        // 1. Get data
         uint256 ousdSupply = oUSD.totalSupply();
         if (ousdSupply == 0) {
             return;
         }
         uint256 vaultValue = _totalValue();
+        uint256 _dripperReserve = dripperReserve;
+        Dripper memory _dripper = dripper;
 
-        // Yield fee collection
+        console.log("vv, os", vaultValue, ousdSupply);
+
+        // Do not distribute funds if assets < liabilities
+        if (vaultValue < ousdSupply) {
+            return;
+        }
+
+        console.log("pr, dr", protocolReserve, _dripperReserve);
+
+        // 2. Distribute new yield to internal accounts #todo, temp values pr
+        uint256 preValue = ousdSupply - protocolReserve - dripperReserve;
+        if (vaultValue > preValue) {
+            uint256 yield = vaultValue - preValue;
+            // 3. Allocate to protocol reserve
+            protocolReserve += (yield * protocolReserveBps) / 10000;
+            // 4. Remainder to dripper
+            _dripperReserve += yield - protocolReserve;
+        }
+
+        console.log("pr, dr", protocolReserve, _dripperReserve);
+
+        // 3. Drip previous yield, and update dripper
+        uint256 available = 0;
+        uint256 dripDuration = _dripper.dripDuration;
+        if (dripDuration == 0) {
+            dripDuration = 1;
+            available = _dripperReserve;
+            _dripperReserve = 0;
+        } else {
+            available = _dripperAvailableFunds(_dripperReserve, _dripper);
+            _dripperReserve -= available;
+        }
+
+        console.log("av, dr", available, _dripperReserve);
+
+        dripperReserve = _dripperReserve;
+        dripper = Dripper({
+            perBlock: uint128(_dripperReserve / dripDuration), // TODO: use safe convert
+            lastCollect: uint64(block.timestamp),
+            dripDuration: _dripper.dripDuration
+        });
+
+        // 4. Post dripper, distribute OUSD yield fee
+        if (available == 0) {
+            return;
+        }
         address _trusteeAddress = trusteeAddress; // gas savings
+        uint256 fee = 0;
         if (_trusteeAddress != address(0) && (vaultValue > ousdSupply)) {
-            uint256 yield = vaultValue.sub(ousdSupply);
-            uint256 fee = yield.mul(trusteeFeeBps).div(10000);
-            require(yield > fee, "Fee must not be greater than yield");
+            fee = (available * trusteeFeeBps) / 10000;
+            require(available > fee, "Fee must not be greater than yield");
             if (fee > 0) {
                 oUSD.mint(_trusteeAddress, fee);
             }
-            emit YieldDistribution(_trusteeAddress, yield, fee);
         }
 
-        // Only rachet OUSD supply upwards
-        ousdSupply = oUSD.totalSupply(); // Final check should use latest value
-        if (vaultValue > ousdSupply) {
-            oUSD.changeSupply(vaultValue);
+        // 4. Post dripper, distribute OUSD to users
+        ousdSupply = oUSD.totalSupply(); // Final check should use latest value. TODO: Is this reload really needed?
+        uint256 newSupply = ousdSupply + available - fee;
+        // Only rachet OUSD supply upwards, final solvancy check
+        console.log("ns, os, vv", newSupply, ousdSupply, vaultValue);
+        if (newSupply > ousdSupply && vaultValue >= newSupply) {
+            oUSD.changeSupply(newSupply);
         }
+
+        console.log("pr, dr", protocolReserve, _dripperReserve);
+
+        emit YieldDistribution(_trusteeAddress, available, fee);
     }
 
     /**
@@ -633,6 +690,20 @@ contract VaultCore is VaultStorage {
         for (uint256 i = 0; i < allAssets.length; i++) {
             assetPrices[i] = oracle.price(allAssets[i]).scaleBy(18, 8);
         }
+    }
+
+    function _dripperAvailableFunds(uint256 _balance, Dripper memory _drip)
+        internal
+        view
+        returns (uint256)
+    {
+        uint256 dripPerBlock = _drip.perBlock;
+        if (dripPerBlock == 0) {
+            return _balance;
+        }
+        uint256 elapsed = block.timestamp - _drip.lastCollect;
+        uint256 allowed = (elapsed * dripPerBlock);
+        return (allowed > _balance) ? _balance : allowed;
     }
 
     /***************************************

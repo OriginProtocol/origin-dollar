@@ -353,6 +353,17 @@ contract VaultAdmin is VaultStorage {
     }
 
     /**
+     * @dev Sets the percent of top-line yield that should be
+     * set aside as a reserve.
+     * @param _basis yield reserved, in basis points
+     */
+    function setProtocolReserveBps(uint256 _basis) external onlyGovernor {
+        require(_basis <= 5000, "basis cannot exceed 50%");
+        protocolReserveBps = _basis;
+        emit ProtocolReserveBpsChanged(_basis);
+    }
+
+    /**
      * @dev Sets the trusteeAddress that can receive a portion of yield.
      *      Setting to the zero address disables this feature.
      */

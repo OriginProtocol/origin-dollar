@@ -60,6 +60,10 @@ interface IVault {
 
     function maxSupplyDiff() external view returns (uint256);
 
+    function setProtocolReserveBps(uint256 _basis) external;
+
+    function protocolReserve() external view returns (uint256);
+
     function setTrusteeAddress(address _address) external;
 
     function trusteeAddress() external view returns (address);

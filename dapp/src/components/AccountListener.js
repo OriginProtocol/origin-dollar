@@ -144,7 +144,7 @@ const AccountListener = (props) => {
 
     const loadPoolRelatedAccountData = async () => {
       if (!account) return
-      if (process.env.ENABLE_LIQUIDITY_MINING !== 'true') return
+      if (process.env.NEXT_PUBLIC_ENABLE_LIQUIDITY_MINING !== 'true') return
 
       const pools = PoolStore.currentState.pools
       const initializedPools = pools.filter((pool) => pool.contract)
@@ -374,7 +374,7 @@ const AccountListener = (props) => {
 
       const response = await fetch(
         `${
-          process.env.ANALYTICS_ENDPOINT
+          process.env.NEXT_PUBLIC_ANALYTICS_ENDPOINT
         }/api/v1/address/${account.toLowerCase()}/yield`
       )
 
@@ -402,7 +402,7 @@ const AccountListener = (props) => {
         usedChainId = chainId
         usedLibrary = library
       } else {
-        usedChainId = parseInt(process.env.ETHEREUM_RPC_CHAIN_ID)
+        usedChainId = parseInt(process.env.NEXT_PUBLIC_ETHEREUM_RPC_CHAIN_ID)
         usedLibrary = null
       }
 

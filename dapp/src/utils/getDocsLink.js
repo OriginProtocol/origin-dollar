@@ -1,6 +1,6 @@
 import Languages from '../constants/Languages'
 
-const docsURL = process.env.DOCS_URL
+const docsURL = process.env.NEXT_PUBLIC_DOCS_URL
 const exceptionLanguage = ['IT']
 
 export const getDocsLink = (locale = 'en_US') => {
