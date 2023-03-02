@@ -76,38 +76,38 @@ forkOnlyDescribe("ForkTest: Harvester", function () {
 
   describe("Harvest", () => {
     it("Should harvest from all strategies", async () => {
-      const { harvester, governor } = fixture;
-      await harvester.connect(governor)["harvest()"]();
+      const { harvester, timelock } = fixture;
+      await harvester.connect(timelock)["harvest()"]();
     });
 
     it("Should swap all coins", async () => {
-      const { harvester, governor } = fixture;
-      await harvester.connect(governor).swap();
+      const { harvester, timelock } = fixture;
+      await harvester.connect(timelock).swap();
     });
 
     it("Should harvest and swap from all strategies", async () => {
-      const { harvester, governor } = fixture;
-      await harvester.connect(governor)["harvestAndSwap()"]();
+      const { harvester, timelock } = fixture;
+      await harvester.connect(timelock)["harvestAndSwap()"]();
     });
 
     it("Should swap CRV", async () => {
-      const { harvester, governor, crv } = fixture;
-      await harvester.connect(governor).swapRewardToken(crv.address);
+      const { harvester, timelock, crv } = fixture;
+      await harvester.connect(timelock).swapRewardToken(crv.address);
     });
 
     it("Should swap CVX", async () => {
-      const { harvester, governor, cvx } = fixture;
-      await harvester.connect(governor).swapRewardToken(cvx.address);
+      const { harvester, timelock, cvx } = fixture;
+      await harvester.connect(timelock).swapRewardToken(cvx.address);
     });
 
     it("Should swap COMP", async () => {
-      const { harvester, governor, comp } = fixture;
-      await harvester.connect(governor).swapRewardToken(comp.address);
+      const { harvester, timelock, comp } = fixture;
+      await harvester.connect(timelock).swapRewardToken(comp.address);
     });
 
     it("Should swap AAVE", async () => {
-      const { harvester, governor, aave } = fixture;
-      await harvester.connect(governor).swapRewardToken(aave.address);
+      const { harvester, timelock, aave } = fixture;
+      await harvester.connect(timelock).swapRewardToken(aave.address);
     });
 
     // TODO: Tests for `harvest(address)` for each strategy

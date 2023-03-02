@@ -35,10 +35,7 @@ const queryClient = new QueryClient()
 function App({ Component, pageProps, err }) {
   const [locale, setLocale] = useState('en_US')
 
-  const {
-    account,
-    active,
-  } = useWeb3React()
+  const { account, active } = useWeb3React()
   const [cookies, setCookie, removeCookie] = useCookies(['loggedIn'])
   const router = useRouter()
   const tried = useEagerConnect()

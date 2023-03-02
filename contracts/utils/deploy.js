@@ -53,7 +53,10 @@ const deployWithConfirmation = async (
 ) => {
   // check that upgrade doesn't corrupt the storage slots
   if (!skipUpgradeSafety) {
-    await assertUpgradeIsSafe(hre, contractName);
+    await assertUpgradeIsSafe(
+      hre,
+      typeof contract == "string" ? contract : contractName
+    );
   }
 
   const { deploy } = deployments;
@@ -791,7 +794,7 @@ function deploymentWithProposal(opts, fn) {
       return;
     }
 
-    await sanityCheck();
+    await sanityCheckOgvGovernance();
     const proposal = await fn(tools);
     const propDescription = proposal.name;
     const propArgs = await proposeArgs(proposal.actions);
