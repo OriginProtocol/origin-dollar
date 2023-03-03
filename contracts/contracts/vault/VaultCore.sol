@@ -391,24 +391,29 @@ contract VaultCore is VaultStorage {
      * 3. Send trustee fees using post dripper funds
      * 4. Rebase remaining post dripper funds to users
      *
+     * After running:
+     *  - ousd supply + reserves should equal vault value
+     *  - If we started solvent, we should end solvent
      */
     function _rebase() internal whenNotRebasePaused {
-        // 1. Calculate new gains, splitting them between the dripper and protocol reserve
+        // Calculate new gains, splitting them between the dripper and protocol reserve
         // --------------------------------
+
+        // Load data used for rebasing
         uint256 ousdSupply = oUSD.totalSupply();
+        uint256 vaultValue = _totalValue();
         if (ousdSupply == 0) {
             return; // If there is no OUSD supply, we will not rebase
         }
-        uint256 vaultValue = _totalValue();
         if (vaultValue < ousdSupply) {
             return; // Do not distribute funds if assets < liabilities
         }
         uint256 _dripperReserve = dripperReserve; // cached for gas savings
         Dripper memory _dripper = dripper; // cached for gas savings
-
         uint256 reserves = protocolReserve + _dripperReserve;
+
         // Did we gain funds?
-        if (vaultValue > (ousdSupply + _reserves)) {
+        if (vaultValue > (ousdSupply + reserves)) {
             uint256 newYield = vaultValue - (ousdSupply + reserves);
             uint256 toProtocolReserve = (newYield * protocolReserveBps) / 10000;
             // Allocate to protocol reserve
@@ -419,11 +424,12 @@ contract VaultCore is VaultStorage {
             emit YieldReceived(newYield);
         }
 
-        // 2. Drip out from the dripper and update the dripper storage
+        // Drip out from the dripper and update the dripper storage
         // ----------------------------------------------------------
         uint256 postDripperYield = 0;
         uint256 _dripDuration = _dripper.dripDuration;
         if (_dripDuration == 0) {
+            // Will we need this?
             // If dripper disabled, distribute all immediately
             _dripDuration = 1;
             postDripperYield = _dripperReserve;
@@ -445,41 +451,58 @@ contract VaultCore is VaultStorage {
 
         // Post Dripper
         // ---------------------------------------------
-        if (postDripperYield == 0) {
-            return; // If no yield to distribute
+        if (postDripperYield > 0) {
+            _distibuteYield(postDripperYield, ousdSupply, vaultValue);
         }
+    }
+
+    function _distibuteYield(
+        uint256 postDripperYield,
+        uint256 ousdSupply,
+        uint256 vaultValue
+    ) {
         uint256 newSupply = ousdSupply + postDripperYield;
-        if (
-            (newSupply <= ousdSupply) || (newSupply < vaultValue) // OUSD supply must increase // OUSD must be solvent
-        ) {
-            // if we have funds to distribute but don't meet the criteria
+        // OUSD supply must increase, OUSD must remain solvent
+        if ((newSupply <= ousdSupply) || (newSupply < vaultValue)) {
+            // if we have funds to distribute
+            // but don't meet the criteria
             // save funds for later distribution.
             dripperReserve += postDripperYield;
             return;
         }
 
-        // 3. Send trustee fees using post dripper funds
+        // Send trustee fees using post dripper funds
         // ---------------------------------------------
-
         address _trusteeAddress = trusteeAddress; // gas savings
         uint256 fee = 0;
         if (_trusteeAddress != address(0)) {
             fee = (postDripperYield * trusteeFeeBps) / 10000;
-            require(
-                postDripperYield > fee,
-                "Fee must not be greater than yield"
-            );
-            if (fee > 0) {
-                oUSD.mint(_trusteeAddress, fee);
-            }
+            require(fee < postDripperYield, "Fee must be less than yield");
+            oUSD.mint(_trusteeAddress, fee);
         }
 
-        // 4. Rebase remaining post dripper funds to users
+        // Rebase remaining post dripper funds to users
         // ---------------------------------------------
-
         oUSD.changeSupply(newSupply);
-        require(newSupply <= vaultValue, "Insolvency check");
         emit YieldDistribution(_trusteeAddress, postDripperYield, fee);
+    }
+
+    function dripperAvailableFunds() external returns (uint256) {
+        return _dripperAvailableFunds(dripperReserve, dripper);
+    }
+
+    function _dripperAvailableFunds(uint256 _balance, Dripper memory _drip)
+        internal
+        view
+        returns (uint256)
+    {
+        uint256 dripPerBlock = _drip.perBlock;
+        if (dripPerBlock == 0) {
+            return _balance;
+        }
+        uint256 elapsed = block.timestamp - _drip.lastCollect;
+        uint256 allowed = (elapsed * dripPerBlock);
+        return (allowed > _balance) ? _balance : allowed;
     }
 
     /**
@@ -703,20 +726,6 @@ contract VaultCore is VaultStorage {
         for (uint256 i = 0; i < allAssets.length; i++) {
             assetPrices[i] = oracle.price(allAssets[i]).scaleBy(18, 8);
         }
-    }
-
-    function _dripperAvailableFunds(uint256 _balance, Dripper memory _drip)
-        internal
-        view
-        returns (uint256)
-    {
-        uint256 dripPerBlock = _drip.perBlock;
-        if (dripPerBlock == 0) {
-            return _balance;
-        }
-        uint256 elapsed = block.timestamp - _drip.lastCollect;
-        uint256 allowed = (elapsed * dripPerBlock);
-        return (allowed > _balance) ? _balance : allowed;
     }
 
     /***************************************
