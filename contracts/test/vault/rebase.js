@@ -219,7 +219,7 @@ describe("Vault rebasing", async () => {
   });
 });
 
-describe("Vault yield accrual to OGN", async () => {
+describe("Vault yield accrual to trustee", async () => {
   [
     { _yield: "1000", basis: 100, expectedFee: "10" },
     { _yield: "1000", basis: 5000, expectedFee: "500" },
@@ -253,7 +253,7 @@ describe("Vault yield accrual to OGN", async () => {
   });
 });
 
-describe("Vault protocol reserve accrual", async () => {
+describe.only("Vault protocol reserve accrual", async () => {
   [
     {
       _yield: "1000",
@@ -290,19 +290,23 @@ describe("Vault protocol reserve accrual", async () => {
       // Do rebase
       const supplyBefore = await ousd.totalSupply();
       const protocolReserveBefore = await vault.protocolReserve();
-      console.log(supplyBefore);
       console.log(protocolReserveBefore);
+      
       await vault.rebase();
+      console.log("Supply Before", supplyBefore.toString());
+      console.log("Supply After", supplyBefore.toString());
       // OUSD supply increases correctly
       await expectApproxSupply(
         ousd,
-        supplyBefore.add(ousdUnits(expectedRebase))
+        supplyBefore.add(ousdUnits(expectedRebase)),
+        "Supply"
       );
       // Reserve increased
       const protocolReserveAfter = await vault.protocolReserve();
       await expect(protocolReserveAfter).to.be.approxEqualTolerance(
         protocolReserveBefore.add(ousdUnits(expectedReserveIncrease)),
-        1
+        1,
+        "Reserve"
       );
     });
   });
