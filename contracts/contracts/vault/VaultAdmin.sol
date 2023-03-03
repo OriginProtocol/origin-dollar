@@ -365,6 +365,15 @@ contract VaultAdmin is VaultStorage {
     }
 
     /**
+     * @dev Sets the driper duration
+     * @param _durationSeconds length of time to drip out dripper reserves over
+     */
+    function setDripDuration(uint64 _durationSeconds) external onlyGovernor {
+        dripper.dripDuration = _durationSeconds;
+        emit DriperDurationChanged(_durationSeconds);
+    }
+
+    /**
      * @dev Sets the trusteeAddress that can receive a portion of yield.
      *      Setting to the zero address disables this feature.
      */
