@@ -384,89 +384,90 @@ contract VaultCore is VaultStorage {
     }
 
     /**
-     * @dev Calculate the total value of assets held by the Vault and all
-     *      strategies and update the supply of OUSD, optionally sending a
-     *      portion of the yield to the trustee.
+     * @dev Update the supply of ousd by
+     *
+     * 1. Calculate new gains, splitting them between the dripper and protocol reserve
+     * 2. Drip out from the driper and update the dripper storage
+     * 3. Send trustee fees using post dripper funds
+     * 4. Rebase remaining post dripper funds to users
+     *
      */
     function _rebase() internal whenNotRebasePaused {
-        console.log("---Rebase---");
-        // 1. Get data
+        // 1. Calculate new gains, splitting them between the dripper and protocol reserve
+        // --------------------------------
         uint256 ousdSupply = oUSD.totalSupply();
         if (ousdSupply == 0) {
-            return;
+            return; // If there is no OUSD supply, we will not rebase
         }
         uint256 vaultValue = _totalValue();
-        uint256 _dripperReserve = dripperReserve;
-        Dripper memory _dripper = dripper;
-
-        console.log("vv, os", vaultValue, ousdSupply);
-
-        // Do not distribute funds if assets < liabilities
         if (vaultValue < ousdSupply) {
-            return;
+            return; // Do not distribute funds if assets < liabilities
         }
+        uint256 _dripperReserve = dripperReserve; // cached for gas savings
+        Dripper memory _dripper = dripper; // cached for gas savings
 
-        console.log("pr, dr", protocolReserve, _dripperReserve);
-
-        // 2. Distribute new yield to internal accounts #todo, temp values pr
-        uint256 preValue = ousdSupply - protocolReserve - dripperReserve;
+        uint256 preValue = ousdSupply - protocolReserve - _dripperReserve;
         if (vaultValue > preValue) {
-            uint256 yield = vaultValue - preValue;
+            uint256 newYield = vaultValue - preValue;
+            uint256 toProtocolReserve = (newYield * protocolReserveBps) / 10000;
             // 3. Allocate to protocol reserve
-            protocolReserve += (yield * protocolReserveBps) / 10000;
+            protocolReserve += toProtocolReserve;
             // 4. Remainder to dripper
-            _dripperReserve += yield - protocolReserve;
+            _dripperReserve += newYield - toProtocolReserve;
+            // TODO: emit yeild Event
         }
 
-        console.log("pr, dr", protocolReserve, _dripperReserve);
-
-        // 3. Drip previous yield, and update dripper
-        uint256 available = 0;
-        uint256 dripDuration = _dripper.dripDuration;
-        if (dripDuration == 0) {
-            dripDuration = 1;
-            available = _dripperReserve;
+        // 2. Drip out from the dripper and update the dripper storage
+        // ----------------------------------------------------------
+        uint256 postDripperYield = 0;
+        uint256 _dripDuration = _dripper.dripDuration;
+        if (_dripDuration == 0) {
+            // If dripper disabled, distribute all immediately
+            _dripDuration = 1;
+            postDripperYield = _dripperReserve;
             _dripperReserve = 0;
         } else {
-            available = _dripperAvailableFunds(_dripperReserve, _dripper);
-            _dripperReserve -= available;
+            postDripperYield = _dripperAvailableFunds(
+                _dripperReserve,
+                _dripper
+            );
+            _dripperReserve -= postDripperYield;
         }
-
-        console.log("av, dr", available, _dripperReserve);
-
+        // Write dripper state
         dripperReserve = _dripperReserve;
         dripper = Dripper({
-            perBlock: uint128(_dripperReserve / dripDuration), // TODO: use safe convert
+            perBlock: uint128(_dripperReserve / _dripDuration), // TODO: use safe convert
             lastCollect: uint64(block.timestamp),
             dripDuration: _dripper.dripDuration
         });
 
-        // 4. Post dripper, distribute OUSD yield fee
-        if (available == 0) {
+        // 3. Send trustee fees using post dripper funds
+        // ---------------------------------------------
+        if (postDripperYield == 0) {
             return;
         }
         address _trusteeAddress = trusteeAddress; // gas savings
         uint256 fee = 0;
         if (_trusteeAddress != address(0) && (vaultValue > ousdSupply)) {
-            fee = (available * trusteeFeeBps) / 10000;
-            require(available > fee, "Fee must not be greater than yield");
+            fee = (postDripperYield * trusteeFeeBps) / 10000;
+            require(
+                postDripperYield > fee,
+                "Fee must not be greater than yield"
+            );
             if (fee > 0) {
                 oUSD.mint(_trusteeAddress, fee);
             }
         }
 
-        // 4. Post dripper, distribute OUSD to users
-        ousdSupply = oUSD.totalSupply(); // Final check should use latest value. TODO: Is this reload really needed?
-        uint256 newSupply = ousdSupply + available - fee;
+        // 4. Rebase remaining post dripper funds to users
+        // ---------------------------------------------
+        uint256 newSupply = ousdSupply + postDripperYield;
         // Only rachet OUSD supply upwards, final solvancy check
-        console.log("ns, os, vv", newSupply, ousdSupply, vaultValue);
         if (newSupply > ousdSupply && vaultValue >= newSupply) {
             oUSD.changeSupply(newSupply);
         }
 
-        console.log("pr, dr", protocolReserve, _dripperReserve);
-
-        emit YieldDistribution(_trusteeAddress, available, fee);
+        emit YieldDistribution(_trusteeAddress, postDripperYield, fee);
     }
 
     /**

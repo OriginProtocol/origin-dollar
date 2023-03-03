@@ -290,8 +290,8 @@ describe("Vault protocol reserve accrual", async () => {
       // Do rebase
       const supplyBefore = await ousd.totalSupply();
       const protocolReserveBefore = await vault.protocolReserve();
-      console.log(supplyBefore)
-      console.log(protocolReserveBefore)
+      console.log(supplyBefore);
+      console.log(protocolReserveBefore);
       await vault.rebase();
       // OUSD supply increases correctly
       await expectApproxSupply(
