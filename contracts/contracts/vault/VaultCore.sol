@@ -406,15 +406,17 @@ contract VaultCore is VaultStorage {
         uint256 _dripperReserve = dripperReserve; // cached for gas savings
         Dripper memory _dripper = dripper; // cached for gas savings
 
-        uint256 preValue = ousdSupply - protocolReserve - _dripperReserve;
-        if (vaultValue > preValue) {
-            uint256 newYield = vaultValue - preValue;
+        uint256 reserves = protocolReserve + _dripperReserve;
+        // Did we gain funds?
+        if (vaultValue > (ousdSupply + _reserves)) {
+            uint256 newYield = vaultValue - (ousdSupply + reserves);
             uint256 toProtocolReserve = (newYield * protocolReserveBps) / 10000;
-            // 3. Allocate to protocol reserve
+            // Allocate to protocol reserve
             protocolReserve += toProtocolReserve;
-            // 4. Remainder to dripper
+            // Remainder to dripper
             _dripperReserve += newYield - toProtocolReserve;
-            // TODO: emit yeild Event
+
+            emit YieldReceived(newYield);
         }
 
         // 2. Drip out from the dripper and update the dripper storage
@@ -441,14 +443,27 @@ contract VaultCore is VaultStorage {
             dripDuration: _dripper.dripDuration
         });
 
-        // 3. Send trustee fees using post dripper funds
+        // Post Dripper
         // ---------------------------------------------
         if (postDripperYield == 0) {
+            return; // If no yield to distribute
+        }
+        uint256 newSupply = ousdSupply + postDripperYield;
+        if (
+            (newSupply <= ousdSupply) || (newSupply < vaultValue) // OUSD supply must increase // OUSD must be solvent
+        ) {
+            // if we have funds to distribute but don't meet the criteria
+            // save funds for later distribution.
+            dripperReserve += postDripperYield;
             return;
         }
+
+        // 3. Send trustee fees using post dripper funds
+        // ---------------------------------------------
+
         address _trusteeAddress = trusteeAddress; // gas savings
         uint256 fee = 0;
-        if (_trusteeAddress != address(0) && (vaultValue > ousdSupply)) {
+        if (_trusteeAddress != address(0)) {
             fee = (postDripperYield * trusteeFeeBps) / 10000;
             require(
                 postDripperYield > fee,
@@ -461,12 +476,9 @@ contract VaultCore is VaultStorage {
 
         // 4. Rebase remaining post dripper funds to users
         // ---------------------------------------------
-        uint256 newSupply = ousdSupply + postDripperYield;
-        // Only rachet OUSD supply upwards, final solvancy check
-        if (newSupply > ousdSupply && vaultValue >= newSupply) {
-            oUSD.changeSupply(newSupply);
-        }
 
+        oUSD.changeSupply(newSupply);
+        require(newSupply <= vaultValue, "Insolvency check");
         emit YieldDistribution(_trusteeAddress, postDripperYield, fee);
     }
 
