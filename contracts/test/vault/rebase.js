@@ -253,7 +253,7 @@ describe("Vault yield accrual to trustee", async () => {
   });
 });
 
-describe.only("Vault protocol reserve accrual", async () => {
+describe("Vault protocol reserve accrual", async () => {
   [
     {
       _yield: "1000",
@@ -290,11 +290,8 @@ describe.only("Vault protocol reserve accrual", async () => {
       // Do rebase
       const supplyBefore = await ousd.totalSupply();
       const protocolReserveBefore = await vault.protocolReserve();
-      console.log(protocolReserveBefore);
-      
+
       await vault.rebase();
-      console.log("Supply Before", supplyBefore.toString());
-      console.log("Supply After", supplyBefore.toString());
       // OUSD supply increases correctly
       await expectApproxSupply(
         ousd,

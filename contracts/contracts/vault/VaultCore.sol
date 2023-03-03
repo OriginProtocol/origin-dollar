@@ -21,8 +21,6 @@ import { IVault } from "../interfaces/IVault.sol";
 import { IBuyback } from "../interfaces/IBuyback.sol";
 import "./VaultStorage.sol";
 
-import "hardhat/console.sol";
-
 contract VaultCore is VaultStorage {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
@@ -400,11 +398,9 @@ contract VaultCore is VaultStorage {
         uint256 ousdSupply = oUSD.totalSupply();
         uint256 vaultValue = _totalValue();
         if (ousdSupply == 0) {
-            console.log("<< No OUSD supply");
             return; // If there is no OUSD supply, we will not rebase
         }
         if (vaultValue < ousdSupply) {
-            console.log("<< vaultValue < ousdSupply");
             return; // Do not distribute funds if assets < liabilities
         }
         uint256 _dripperReserve = dripperReserve; // cached for gas savings
@@ -412,10 +408,8 @@ contract VaultCore is VaultStorage {
 
         // Calculate new gains, then split them between the dripper and
         // protocol reserve
-        console.log("(R) vv, s+r", vaultValue , (ousdSupply + reserves));
         if (vaultValue > (ousdSupply + reserves)) {
             uint256 newYield = vaultValue - (ousdSupply + reserves);
-            console.log("(R) newYield", newYield);
             uint256 toProtocolReserve = (newYield * protocolReserveBps) / 10000;
             protocolReserve += toProtocolReserve;
             _dripperReserve += newYield - toProtocolReserve;
@@ -450,7 +444,6 @@ contract VaultCore is VaultStorage {
         });
 
         // Distribute
-        console.log("(R) postDripperYield", postDripperYield);
         _distibuteYield(postDripperYield, ousdSupply, vaultValue);
     }
 
@@ -460,21 +453,15 @@ contract VaultCore is VaultStorage {
         uint256 vaultValue
     ) internal {
         if (yield == 0) {
-            console.log("<< No yield");
             return;
         }
         uint256 newSupply = ousdSupply + yield;
         // OUSD supply must increase, OUSD must remain solvent
-        console.log("(R) newSupply , ousdSupply", newSupply, ousdSupply);
-        console.log("(R) newSupply, vaultValue", newSupply, vaultValue);
-        console.log(newSupply <= ousdSupply);
-        console.log(newSupply > vaultValue);
         if ((newSupply <= ousdSupply) || (newSupply > vaultValue)) {
             // If we have funds to distribute but are not increasing supply or
             // keeping the protocol solvant, then save funds for later
             // distribution.
             dripperReserve += yield;
-            console.log("<< back to reserve");
             return;
         }
 
