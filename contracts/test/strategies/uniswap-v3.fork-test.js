@@ -165,7 +165,7 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
     it("Should show correct amount of fees", async () => {});
   });
 
-  describe.only("Uniswap V3 positions", function () {
+  describe.only("Uniswap V3 LP positions", function () {
     const findMaxDepositableAmount = async (
       lowerTick,
       upperTick,
@@ -226,15 +226,18 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
     };
 
     it("Should mint position", async () => {
+      const usdcBalBefore = await strategy.checkBalance(usdc.address);
+      const usdtBalBefore = await strategy.checkBalance(usdt.address);
+
       const [, activeTick] = await pool.slot0();
       const lowerTick = activeTick - 1000;
       const upperTick = activeTick + 1000;
 
-      const { tokenId, tx } = await mintLiquidity(
+      const { tokenId, amount0Minted, amount1Minted, liquidityMinted, tx } = await mintLiquidity(
         lowerTick,
         upperTick,
-        "1000000",
-        "1000000"
+        "100000",
+        "100000"
       );
 
       // Check events
@@ -248,76 +251,56 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
       expect(nfp.tickLower).to.equal(lowerTick, "Invalid lower tick");
       expect(nfp.tickUpper).to.equal(upperTick, "Invalid upper tick");
 
-      // TODO: Check storage values in Strategy
+      // Check Strategy balance
+      const usdcBalAfter = await strategy.checkBalance(usdc.address);
+      const usdtBalAfter = await strategy.checkBalance(usdt.address);
+      expect(usdcBalAfter).gte(usdcBalBefore, "Expected USDC balance to have increased");
+      expect(usdtBalAfter).gte(usdtBalBefore, "Expected USDT balance to have increased");
+      expect(usdcBalAfter).to.approxEqual(usdcBalBefore.add(amount0Minted), "Deposited USDC mismatch");
+      expect(usdtBalAfter).to.approxEqual(usdtBalBefore.add(amount1Minted), "Deposited USDT mismatch");
+
+      // Check data on strategy
+      const storedPosition = await strategy.tokenIdToPosition(tokenId);
+      expect(storedPosition.exists).to.be.true;
+      expect(storedPosition.tokenId).to.equal(tokenId);
+      expect(storedPosition.lowerTick).to.equal(lowerTick);
+      expect(storedPosition.upperTick).to.equal(upperTick);
+      expect(storedPosition.liquidity).to.equal(liquidityMinted);
+      expect(await strategy.currentPositionTokenId()).to.equal(tokenId);
     });
 
     it("Should increase liquidity of existing position", async () => {
+      const usdcBalBefore = await strategy.checkBalance(usdc.address);
+      const usdtBalBefore = await strategy.checkBalance(usdt.address);
+
       const [, activeTick] = await pool.slot0();
-      const lowerTick = activeTick - 1002;
-      const upperTick = activeTick + 1002;
+      const lowerTick = activeTick - 1003;
+      const upperTick = activeTick + 1005;
+
+      const amount = "100000"
+      const amountUnits = BigNumber.from(amount).mul(10**6)
 
       // Mint position
-      await mintLiquidity(lowerTick, upperTick, "1000000", "1000000");
+      const { tokenId, tx } = await mintLiquidity(lowerTick, upperTick, amount, amount);
+      await expect(tx).to.have.emittedEvent("UniswapV3PositionMinted");
+      const storedPosition = await strategy.tokenIdToPosition(tokenId);
+      expect(storedPosition.exists).to.be.true;
+      expect(await strategy.currentPositionTokenId()).to.equal(tokenId);
 
       // Rebalance again to increase liquidity
-      const { tokenId, tx } = await mintLiquidity(
-        lowerTick,
-        upperTick,
-        "1000000",
-        "1000000"
+      const tx2 = await strategy.connect(operator).increaseLiquidityForActivePosition(
+        amountUnits, 
+        amountUnits
       );
+      await expect(tx2).to.have.emittedEvent("UniswapV3LiquidityAdded");
 
-      // Check events
-      await expect(tx).to.have.emittedEvent("UniswapV3PositionMinted");
-      await expect(tx).to.have.emittedEvent("UniswapV3LiquidityAdded");
-
-      // Check minted position data
-      const nfp = await positionManager.positions(tokenId);
-      expect(nfp.token0).to.equal(usdc.address, "Invalid token0 address");
-      expect(nfp.token1).to.equal(usdt.address, "Invalid token1 address");
-      expect(nfp.tickLower).to.equal(lowerTick, "Invalid lower tick");
-      expect(nfp.tickUpper).to.equal(upperTick, "Invalid upper tick");
-
-      // TODO: Check storage values in Strategy
+      // Check balance on strategy
+      const usdcBalAfter = await strategy.checkBalance(usdc.address);
+      const usdtBalAfter = await strategy.checkBalance(usdt.address);
+      expect(usdcBalAfter).to.approxEqualTolerance(usdcBalBefore.add(amountUnits.mul(2)), 1, "Deposited USDC mismatch");
+      expect(usdtBalAfter).to.approxEqualTolerance(usdtBalBefore.add(amountUnits.mul(2)), 1, "Deposited USDT mismatch");
     });
 
-    // Mint
-    // Increase
-    // Close
-
-    // it("Should be able close existing positions", async () => {
-    //   const [, activeTick] = await pool.slot0();
-    //   const lowerTick = activeTick - 7
-    //   const upperTick = activeTick + 7
-
-    //   const { tokenId, tx } = await mintLiquidity(
-    //     lowerTick,
-    //     upperTick,
-    //     '1000000',
-    //     '1000000'
-    //   )
-
-    //   // Check events
-    //   await expect(tx).to.have.emittedEvent("UniswapV3PositionMinted")
-    //   await expect(tx).to.have.emittedEvent("UniswapV3LiquidityAdded")
-
-    //   // Check minted position data
-    //   const nfp = await positionManager.positions(tokenId)
-    //   expect(nfp.token0).to.equal(usdc.address, "Invalid token0 address")
-    //   expect(nfp.token1).to.equal(usdt.address, "Invalid token1 address")
-    //   expect(nfp.tickLower).to.equal(lowerTick, "Invalid lower tick")
-    //   expect(nfp.tickUpper).to.equal(upperTick, "Invalid upper tick")
-
-    //   // TODO: Check storage values in Strategy
-    // })
-
-    // describe.only("Liquidity management", function () {
-
-    // })
-
-    // it("Should provide liquidity on given tick", async () => {
-    // });
-
-    // it("Should close existing position", async () => {});
+    it("Should close active LP position", async () => {})
   });
 });

@@ -54,7 +54,7 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
     address public token1; // Token1 of Uniswap V3 Pool
 
     uint24 public poolFee; // Uniswap V3 Pool Fee
-    uint24 internal maxSlippage = 100; // 1%; Slippage tolerance when providing liquidity
+    uint24 public maxSlippage = 100; // 1%; Slippage tolerance when providing liquidity
 
     // Address mapping of (Asset -> Strategy). When the funds are
     // not deployed in Uniswap V3 Pool, they will be deposited
@@ -82,9 +82,9 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
     // A lookup table to find token IDs of position using f(lowerTick, upperTick)
     mapping(int48 => uint256) internal ticksToTokenId;
     // Maps tokenIDs to their Position object
-    mapping(uint256 => Position) internal tokenIdToPosition;
+    mapping(uint256 => Position) public tokenIdToPosition;
     // Token ID of the position that's being used to provide LP at the time
-    uint256 internal currentPositionTokenId;
+    uint256 public currentPositionTokenId;
 
     // A deployed contract that's used to call methods of Uniswap V3's libraries despite version mismatch
     IUniswapV3Helper internal uniswapV3Helper;
@@ -336,7 +336,7 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
      * @param minAmount0 Minimum amount of token0 needed
      * @param minAmount1 Minimum amount of token1 needed
      */
-    function _withdrawForLiquidity(uint256 minAmount0, uint256 minAmount1)
+    function _ensureAssetBalances(uint256 minAmount0, uint256 minAmount1)
         internal
     {
         IERC20 cToken0 = IERC20(token0);
@@ -544,8 +544,8 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
      * @dev Will pull funds needed from reserve strategies and then will deposit back all dust to them
      * @param desiredAmount0 Desired amount of token0 to provide liquidity
      * @param desiredAmount1 Desired amount of token1 to provide liquidity
-     * @param lowerTick Lower tick index
-     * @param upperTick Upper tick index
+     * @param lowerTick Desired lower tick index
+     * @param upperTick Desired upper tick index
      */
     function rebalance(
         uint256 desiredAmount0,
@@ -562,7 +562,7 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
         }
 
         // Withdraw enough funds from Reserve strategies
-        _withdrawForLiquidity(desiredAmount0, desiredAmount1);
+        _ensureAssetBalances(desiredAmount0, desiredAmount1);
 
         // Provide liquidity
         if (tokenId > 0) {
@@ -599,7 +599,7 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
         require(currentPositionTokenId > 0, "No active position");
 
         // Withdraw enough funds from Reserve strategies
-        _withdrawForLiquidity(desiredAmount0, desiredAmount1);
+        _ensureAssetBalances(desiredAmount0, desiredAmount1);
 
         Position storage p = tokenIdToPosition[currentPositionTokenId];
         _increaseLiquidityForPosition(p, desiredAmount0, desiredAmount1);
@@ -856,6 +856,14 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
         nonReentrant
     {
         IERC20(token0).safeApprove(
+            vaultAddress,
+            type(uint256).max
+        );
+        IERC20(token1).safeApprove(
+            vaultAddress,
+            type(uint256).max
+        );
+        IERC20(token0).safeApprove(
             address(nonfungiblePositionManager),
             type(uint256).max
         );
@@ -878,6 +886,10 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
         internal
         override
     {
+        IERC20(_asset).safeApprove(
+            vaultAddress,
+            type(uint256).max
+        );
         IERC20(_asset).safeApprove(
             address(nonfungiblePositionManager),
             type(uint256).max

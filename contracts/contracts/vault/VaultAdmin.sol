@@ -569,7 +569,7 @@ contract VaultAdmin is VaultStorage {
             reserveStrategy != address(0),
             "Invalid Reserve Strategy address"
         );
-        IERC20(asset).safeTransfer(reserveStrategy, amount);
+        IERC20(asset).safeTransferFrom(v3Strategy, reserveStrategy, amount);
         IStrategy(reserveStrategy).deposit(asset, amount);
     }
 
