@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import { IUniswapV3Helper } from "../../../interfaces/uniswap/v3/IUniswapV3Helper.sol";
+import { ISwapRouter } from "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 
 contract MockUniswapV3Pool {
     address public immutable token0;

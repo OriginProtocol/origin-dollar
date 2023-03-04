@@ -142,6 +142,8 @@ addresses.mainnet.UniV3PositionManager =
   "0xC36442b4a4522E871399CD717aBDD847Ab11FE88";
 addresses.mainnet.UniV3_USDC_USDT_Pool =
   "0x3416cf6c708da44db2624d63ea0aaef7113527c6";
+addresses.mainnet.UniV3SwapRouter =
+  "0xE592427A0AEce92De3Edee1F18E0157C05861564";
 
 // OUSD Governance
 addresses.mainnet.GovernorFive = "0x3cdd07c16614059e66344a7b579dab4f9516c0b6";

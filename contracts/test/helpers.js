@@ -367,6 +367,7 @@ const getAssetAddresses = async (deployments) => {
 
       UniV3PositionManager: addresses.mainnet.UniV3PositionManager,
       UniV3_USDC_USDT_Pool: addresses.mainnet.UniV3_USDC_USDT_Pool,
+      UniV3SwapRouter: addresses.mainnet.UniV3SwapRouter,
     };
   } else {
     const addressMap = {

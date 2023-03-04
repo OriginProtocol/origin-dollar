@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity ^0.8.0;
 
+import { INonfungiblePositionManager } from "./INonfungiblePositionManager.sol";
+
 interface IUniswapV3Helper {
     function getAmountsForLiquidity(
         uint160 sqrtRatioX96,
@@ -21,4 +23,17 @@ interface IUniswapV3Helper {
         external
         view
         returns (uint160 sqrtPriceX96);
+
+    function positionFees(
+        INonfungiblePositionManager positionManager,
+        address poolAddress,
+        uint256 tokenId
+    ) external view returns (uint256 amount0, uint256 amount1);
+
+    function positionValue(
+        INonfungiblePositionManager positionManager,
+        address poolAddress,
+        uint256 tokenId,
+        uint160 sqrtRatioX96
+    ) external view returns (uint256 amount0, uint256 amount1);
 }

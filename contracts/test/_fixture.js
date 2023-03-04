@@ -171,6 +171,7 @@ async function defaultFixture() {
     LUSDMetaStrategy,
     UniV3PositionManager,
     UniV3_USDC_USDT_Pool,
+    UniV3SwapRouter,
     mockStrategy,
     mockStrategyDAI;
 
@@ -239,6 +240,11 @@ async function defaultFixture() {
     UniV3_USDC_USDT_Pool = await ethers.getContractAt(
       "IUniswapV3Pool",
       addresses.mainnet.UniV3_USDC_USDT_Pool
+    );
+
+    UniV3SwapRouter = await ethers.getContractAt(
+      "ISwapRouter",
+      addresses.mainnet.UniV3SwapRouter
     );
   } else {
     usdt = await ethers.getContract("MockUSDT");
@@ -464,6 +470,7 @@ async function defaultFixture() {
     UniV3_USDC_USDT_Pool,
     UniV3_USDC_USDT_Strategy,
     UniV3Helper,
+    UniV3SwapRouter,
     mockStrategy,
     mockStrategyDAI,
   };
