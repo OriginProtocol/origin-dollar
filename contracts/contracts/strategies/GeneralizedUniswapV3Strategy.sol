@@ -50,10 +50,10 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
 
     // The address that can manage the positions on Uniswap V3
     address public operatorAddr;
-    address public constant token0; // Token0 of Uniswap V3 Pool
-    address public constant token1; // Token1 of Uniswap V3 Pool
+    address public token0; // Token0 of Uniswap V3 Pool
+    address public token1; // Token1 of Uniswap V3 Pool
 
-    uint24 public constant poolFee; // Uniswap V3 Pool Fee
+    uint24 public poolFee; // Uniswap V3 Pool Fee
     uint24 internal maxSlippage = 100; // 1%; Slippage tolerance when providing liquidity
 
     // Address mapping of (Asset -> Strategy). When the funds are
@@ -62,7 +62,7 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
     mapping(address => address) public reserveStrategy;
 
     // Uniswap V3's PositionManager
-    INonfungiblePositionManager public constant nonfungiblePositionManager;
+    INonfungiblePositionManager public nonfungiblePositionManager;
 
     // Represents a position minted by this contract
     struct Position {
@@ -287,7 +287,7 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
             // This might throw if there isn't enough in reserve strategy as well
             IVault(vaultAddress).withdrawForUniswapV3(
                 recipient,
-                asset,
+                _asset,
                 amount - selfBalance
             );
 
@@ -297,11 +297,11 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
             asset.safeTransfer(recipient, selfBalance);
 
             // Emit event for only the amount transferred out from this strategy
-            emit Withdrawal(asset, asset, selfBalance);
+            emit Withdrawal(_asset, _asset, selfBalance);
         } else {
             // Transfer requested amount
             asset.safeTransfer(recipient, amount);
-            emit Withdrawal(asset, asset, amount);
+            emit Withdrawal(_asset, _asset, amount);
         }
     }
 
