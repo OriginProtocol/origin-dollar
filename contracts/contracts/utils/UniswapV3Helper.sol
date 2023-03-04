@@ -5,6 +5,11 @@ import "@uniswap/v3-periphery/contracts/libraries/LiquidityAmounts.sol";
 import "@uniswap/v3-core/contracts/libraries/TickMath.sol";
 import { IUniswapV3Pool } from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 
+/**
+ * @dev Uniswap V3 Contracts use Solidity v0.7.6 and OUSD contracts are on 0.8.6.
+ *      So, the libraries cannot be directly imported into OUSD contracts.
+ *      This contract (on v0.7.6) just proxies the calls to the Uniswap Libraries.
+ */
 contract UniswapV3Helper {
     function getAmountsForLiquidity(
         uint160 sqrtRatioX96,

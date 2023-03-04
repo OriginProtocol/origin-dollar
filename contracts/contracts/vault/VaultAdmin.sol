@@ -197,10 +197,19 @@ contract VaultAdmin is VaultStorage {
         _approveStrategy(_addr, false);
     }
 
+    /**
+     * @dev Add a strategy to the Vault and mark it as Uniswap V3 strategy
+     * @param _addr Address of the strategy to add
+     */
     function approveUniswapV3Strategy(address _addr) external onlyGovernor {
         _approveStrategy(_addr, true);
     }
 
+    /**
+     * @dev Add a strategy to the Vault
+     * @param _addr Address of the strategy to add
+     * @param isUniswapV3 Set to true, if the strategy is an instance of GeneralizedUniswapV3Strategy
+     */
     function _approveStrategy(address _addr, bool isUniswapV3) internal {
         require(!strategies[_addr].isSupported, "Strategy already approved");
         strategies[_addr] = Strategy({
@@ -528,6 +537,12 @@ contract VaultAdmin is VaultStorage {
              Uniswap V3 Utils
     ****************************************/
 
+    /**
+     * @dev Deposits token to the reserve strategy
+     * @dev Only callable by whitelisted Uniswap V3 strategies
+     * @param asset The asset to deposit
+     * @param amount Amount of tokens to deposit
+     */
     function depositForUniswapV3(address asset, uint256 amount)
         external
         onlyUniswapV3Strategies
@@ -536,6 +551,12 @@ contract VaultAdmin is VaultStorage {
         _depositForUniswapV3(msg.sender, asset, amount);
     }
 
+    /**
+     * @dev Deposits token to the reserve strategy
+     * @param v3Strategy Uniswap V3 Strategy that's depositing the tokens
+     * @param asset The asset to deposit
+     * @param amount Amount of tokens to deposit
+     */
     function _depositForUniswapV3(
         address v3Strategy,
         address asset,
@@ -552,6 +573,13 @@ contract VaultAdmin is VaultStorage {
         IStrategy(reserveStrategy).deposit(asset, amount);
     }
 
+    /**
+     * @notice Moves tokens from reserve strategy to the recipient
+     * @dev Only callable by whitelisted Uniswap V3 strategies
+     * @param recipient Receiver of the funds
+     * @param asset The asset to move
+     * @param amount Amount of tokens to move
+     */
     function withdrawForUniswapV3(
         address recipient,
         address asset,
@@ -560,6 +588,13 @@ contract VaultAdmin is VaultStorage {
         _withdrawForUniswapV3(msg.sender, recipient, asset, amount);
     }
 
+    /**
+     * @notice Moves tokens from reserve strategy to the recipient
+     * @param v3Strategy Uniswap V3 Strategy that's requesting the withdraw
+     * @param recipient Receiver of the funds
+     * @param asset The asset to move
+     * @param amount Amount of tokens to move
+     */
     function _withdrawForUniswapV3(
         address v3Strategy,
         address recipient,

@@ -72,7 +72,6 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
         int24 lowerTick; // Lower tick index
         int24 upperTick; // Upper tick index
         bool exists; // True, if position is minted
-
         // The following two fields are redundant but since we use these
         // two quite a lot, think it might be cheaper to store it than
         // compute it every time?
@@ -272,7 +271,7 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
     /**
      * @notice Withdraws asset from the reserve strategy
      * @inheritdoc InitializableAbstractStrategy
-     */ 
+     */
     function withdraw(
         address recipient,
         address _asset,
@@ -286,7 +285,11 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
         if (selfBalance < amount) {
             // Try to pull remaining amount from reserve strategy
             // This might throw if there isn't enough in reserve strategy as well
-            IVault(vaultAddress).withdrawForUniswapV3(recipient, asset, amount - selfBalance);
+            IVault(vaultAddress).withdrawForUniswapV3(
+                recipient,
+                asset,
+                amount - selfBalance
+            );
 
             // TODO: Remove liquidity from V3 pool instead?
 
@@ -305,7 +308,7 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
     /**
      * @notice Closes active LP position, if any, and transfer all token balance to Vault
      * @inheritdoc InitializableAbstractStrategy
-     */ 
+     */
     function withdrawAll() external override onlyVault nonReentrant {
         if (currentPositionTokenId > 0) {
             _closePosition(currentPositionTokenId);
@@ -332,7 +335,7 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
      *      If not, tries to pull it from reserve strategies
      * @param minAmount0 Minimum amount of token0 needed
      * @param minAmount1 Minimum amount of token1 needed
-     */ 
+     */
     function _withdrawForLiquidity(uint256 minAmount0, uint256 minAmount1)
         internal
     {
@@ -377,13 +380,6 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
         if (currentPositionTokenId > 0) {
             _collectFeesForToken(currentPositionTokenId);
         }
-
-        // for (uint256 i = 0; i < allTokenIds.length; i++) {
-        //     uint256 tokenId = allTokenIds[0];
-        //     if (tokenIdToPosition[tokenId].liquidity > 0) {
-        //         _collectFeesForToken(tokenId);
-        //     }
-        // }
     }
 
     /**
@@ -445,10 +441,10 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @dev Only checks the active LP position. 
+     * @dev Only checks the active LP position.
      *      Doesn't return the balance held in the reserve strategies.
      * @inheritdoc InitializableAbstractStrategy
-     */ 
+     */
     function checkBalance(address _asset)
         external
         view
@@ -466,11 +462,6 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
             Position memory p = tokenIdToPosition[currentPositionTokenId];
             balance += _checkAssetBalanceOfPosition(_asset, p, sqrtRatioX96);
         }
-
-        // for (uint256 i = 0; i < allTokenIds.length; i++) {
-        //     Position memory p = tokenIdToPosition[allTokenIds[i]];
-        //     balance += _checkAssetBalanceOfPosition(_asset, p, sqrtRatioX96);
-        // }
     }
 
     /**
@@ -524,14 +515,13 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
         amount1 += feeAmount1;
     }
 
-
     /***************************************
             Pool Liquidity Management
     ****************************************/
 
     /**
      * @notice Returns a unique ID based on lowerTick and upperTick
-     * @dev Basically concats the lower tick and upper tick values. Shifts the value 
+     * @dev Basically concats the lower tick and upper tick values. Shifts the value
      *      of lowerTick by 24 bits and then adds the upperTick value to avoid overlaps.
      *      So, the result is smaller in size (int48 rather than bytes32 when using keccak256)
      * @param lowerTick Lower tick index
@@ -725,7 +715,6 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
         (tokenId, liquidity, amount0, amount1) = nonfungiblePositionManager
             .mint(params);
 
-        allTokenIds.push(tokenId);
         ticksToTokenId[_getTickPositionKey(lowerTick, upperTick)] = tokenId;
         tokenIdToPosition[tokenId] = Position({
             exists: true,
@@ -841,7 +830,7 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
     /***************************************
             ERC721 management
     ****************************************/
-    
+
     /// Callback function for whenever a NFT is transferred to this contract
     /// Ref: https://docs.openzeppelin.com/contracts/3.x/api/token/erc721#IERC721Receiver-onERC721Received-address-address-uint256-bytes-
     function onERC721Received(
@@ -855,11 +844,10 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
         return this.onERC721Received.selector;
     }
 
-
     /***************************************
             Inherited functions
     ****************************************/
-    
+
     /// @inheritdoc InitializableAbstractStrategy
     function safeApproveAllTokens()
         external

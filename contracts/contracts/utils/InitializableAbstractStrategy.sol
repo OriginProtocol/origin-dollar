@@ -281,7 +281,7 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
     ****************************************/
 
     /**
-     * @dev Callback function that's invoked everytime 
+     * @dev Callback function that's invoked everytime
      *      PToken address of an supported asset is updated.
      * @param _asset               Address for the asset
      * @param _pToken              Adress of the platform token
@@ -291,7 +291,7 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
         virtual;
 
     /**
-     * @dev Approve all the assets supported by the strategy 
+     * @dev Approve all the assets supported by the strategy
      *      to be moved around the platform.
      */
     function safeApproveAllTokens() external virtual;
