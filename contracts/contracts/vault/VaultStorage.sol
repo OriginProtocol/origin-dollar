@@ -61,6 +61,7 @@ contract VaultStorage is Initializable, Governable {
     struct Strategy {
         bool isSupported;
         uint256 _deprecated; // Deprecated storage slot
+        // Set to true if the Strategy is an instance of `GeneralizedUniswapV3Strategy`
         bool isUniswapV3Strategy;
     }
     mapping(address => Strategy) internal strategies;
@@ -121,9 +122,6 @@ contract VaultStorage is Initializable, Governable {
 
     // How much net total OUSD is allowed to be minted by all strategies
     uint256 public netOusdMintForStrategyThreshold = 0;
-
-    // TODO: Should this be part of struct `Strategy`??
-    mapping(address => bool) public isUniswapV3Strategy;
 
     /**
      * @dev set the implementation for the admin, this needs to be in a base class else we cannot set it

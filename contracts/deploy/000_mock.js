@@ -338,23 +338,23 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
 };
 
 async function deployMocksForUniswapV3Strategy(deploy, deployerAddr) {
-  const v3Helper = await deploy("MockUniswapV3Helper", {
+  const v3Helper = await deploy("UniswapV3Helper", {
     from: deployerAddr,
-    contract: "UniswapV3Helper"
-  })
+    contract: "UniswapV3Helper",
+  });
 
   const mockUSDT = await ethers.getContract("MockUSDT");
   const mockUSDC = await ethers.getContract("MockUSDC");
 
   const mockPool = await deploy("MockUniswapV3Pool", {
     from: deployerAddr,
-    args: [mockUSDC.address, mockUSDT.address, 500, v3Helper.address]
-  })
+    args: [mockUSDC.address, mockUSDT.address, 500, v3Helper.address],
+  });
 
   await deploy("MockNonfungiblePositionManager", {
     from: deployerAddr,
-    args: [v3Helper.address, mockPool.address]
-  })
+    args: [v3Helper.address, mockPool.address],
+  });
 }
 
 deployMocks.id = "000_mock";

@@ -55,6 +55,7 @@ aave_incentives_controller = load_contract('aave_incentives_controller', '0xd784
 stkaave = load_contract('stkaave', '0x4da27a545c0c5B758a6BA100e3a049001de870f5')
 
 strategist = brownie.accounts.at(STRATEGIST, force=True)
+timelock = brownie.accounts.at(TIMELOCK, force=True)
 gova = brownie.accounts.at(GOVERNOR, force=True)
 governor = load_contract('governor', GOVERNOR)
 governor_five = load_contract('governor_five', GOVERNOR_FIVE)

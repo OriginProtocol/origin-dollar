@@ -33,7 +33,7 @@ async function defaultFixture() {
     keepExistingDeployments: Boolean(isForkWithLocalNode),
   });
 
-  const { governorAddr, timelockAddr } = await getNamedAccounts();
+  const { governorAddr, timelockAddr, operatorAddr } = await getNamedAccounts();
 
   const ousdProxy = await ethers.getContract("OUSDProxy");
   const vaultProxy = await ethers.getContract("VaultProxy");
@@ -112,11 +112,14 @@ async function defaultFixture() {
 
   const buyback = await ethers.getContract("Buyback");
 
-  const UniV3_USDC_USDT_Proxy = await ethers.getContract("UniV3_USDC_USDT_Proxy")
+  const UniV3_USDC_USDT_Proxy = await ethers.getContract(
+    "UniV3_USDC_USDT_Proxy"
+  );
   const UniV3_USDC_USDT_Strategy = await ethers.getContractAt(
     "GeneralizedUniswapV3Strategy",
     UniV3_USDC_USDT_Proxy.address
   );
+  const UniV3Helper = await ethers.getContract("UniswapV3Helper");
 
   let usdt,
     dai,
@@ -167,7 +170,9 @@ async function defaultFixture() {
     LUSDMetaStrategyProxy,
     LUSDMetaStrategy,
     UniV3PositionManager,
-    UniV3_USDC_USDT_Pool;
+    UniV3_USDC_USDT_Pool,
+    mockStrategy,
+    mockStrategyDAI;
 
   if (isFork) {
     usdt = await ethers.getContractAt(usdtAbi, addresses.mainnet.USDT);
@@ -235,7 +240,6 @@ async function defaultFixture() {
       "IUniswapV3Pool",
       addresses.mainnet.UniV3_USDC_USDT_Pool
     );
-
   } else {
     usdt = await ethers.getContract("MockUSDT");
     dai = await ethers.getContract("MockDAI");
@@ -315,8 +319,12 @@ async function defaultFixture() {
       LUSDMetaStrategyProxy.address
     );
 
-    UniV3PositionManager = await ethers.getContract("MockNonfungiblePositionManager");
+    UniV3PositionManager = await ethers.getContract(
+      "MockNonfungiblePositionManager"
+    );
     UniV3_USDC_USDT_Pool = await ethers.getContract("MockUniswapV3Pool");
+    mockStrategy = await ethers.getContract("MockStrategy");
+    mockStrategyDAI = await ethers.getContract("MockStrategyDAI");
   }
   if (!isFork) {
     const assetAddresses = await getAssetAddresses(deployments);
@@ -337,7 +345,7 @@ async function defaultFixture() {
   let governor = signers[1];
   const strategist = signers[0];
   const adjuster = signers[0];
-  const operator = signers[3];
+  let operator = signers[3];
   let timelock;
 
   const [matt, josh, anna, domen, daniel, franck] = signers.slice(4);
@@ -345,6 +353,7 @@ async function defaultFixture() {
   if (isFork) {
     governor = await impersonateAndFundContract(governorAddr);
     timelock = await impersonateAndFundContract(timelockAddr);
+    operator = await impersonateAndFundContract(operatorAddr);
   }
   await fundAccounts();
   if (isFork) {
@@ -453,7 +462,10 @@ async function defaultFixture() {
     // Uniswap V3 Strategy
     UniV3PositionManager,
     UniV3_USDC_USDT_Pool,
-    UniV3_USDC_USDT_Strategy
+    UniV3_USDC_USDT_Strategy,
+    UniV3Helper,
+    mockStrategy,
+    mockStrategyDAI,
   };
 }
 
@@ -1205,33 +1217,49 @@ async function rebornFixture() {
 }
 
 async function uniswapV3Fixture() {
-  const fixture = await loadFixture(compoundVaultFixture);
+  const fixture = await loadFixture(defaultFixture);
 
-  const { usdc, usdt, UniV3_USDC_USDT_Strategy } = fixture;
+  const {
+    usdc,
+    usdt,
+    dai,
+    UniV3_USDC_USDT_Strategy,
+    mockStrategy,
+    mockStrategyDAI,
+  } = fixture;
 
-  // Approve Uniswap V3 Strategy
-  await _approveStrategy(fixture, UniV3_USDC_USDT_Strategy, true);
-  
+  if (!isFork) {
+    // Approve mockStrategy
+    await _approveStrategy(fixture, mockStrategy);
+    await _approveStrategy(fixture, mockStrategyDAI);
+
+    // Approve Uniswap V3 Strategy
+    await _approveStrategy(fixture, UniV3_USDC_USDT_Strategy, true);
+  }
+
   // Change default strategy to Uniswap V3 for both USDT and USDC
   await _setDefaultStrategy(fixture, usdc, UniV3_USDC_USDT_Strategy);
   await _setDefaultStrategy(fixture, usdt, UniV3_USDC_USDT_Strategy);
 
-  return fixture
+  if (!isFork) {
+    // And a different one for DAI
+    await _setDefaultStrategy(fixture, dai, mockStrategyDAI);
+  }
+
+  return fixture;
 }
 
 async function _approveStrategy(fixture, strategy, isUniswapV3) {
   const { vault, harvester } = fixture;
-  const { governorAddr } = await getNamedAccounts();
-  const sGovernor = await ethers.provider.getSigner(governorAddr);
+  const { governorAddr, timelockAddr } = await getNamedAccounts();
+  const sGovernor = await ethers.provider.getSigner(
+    isFork ? timelockAddr : governorAddr
+  );
 
   if (isUniswapV3) {
-    await vault
-      .connect(sGovernor)
-      .approveUniswapV3Strategy(strategy.address);
+    await vault.connect(sGovernor).approveUniswapV3Strategy(strategy.address);
   } else {
-    await vault
-      .connect(sGovernor)
-      .approveStrategy(strategy.address);
+    await vault.connect(sGovernor).approveStrategy(strategy.address);
   }
 
   await harvester
@@ -1241,14 +1269,13 @@ async function _approveStrategy(fixture, strategy, isUniswapV3) {
 
 async function _setDefaultStrategy(fixture, asset, strategy) {
   const { vault } = fixture;
-  const { governorAddr } = await getNamedAccounts();
-  const sGovernor = await ethers.provider.getSigner(governorAddr);
+  const { governorAddr, timelockAddr } = await getNamedAccounts();
+  const sGovernor = await ethers.provider.getSigner(
+    isFork ? timelockAddr : governorAddr
+  );
   await vault
     .connect(sGovernor)
-    .setAssetDefaultStrategy(
-      asset.address,
-      strategy.address
-    );
+    .setAssetDefaultStrategy(asset.address, strategy.address);
 }
 
 module.exports = {

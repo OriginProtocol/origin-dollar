@@ -35,27 +35,94 @@ chai.Assertion.addMethod(
   }
 );
 
+chai.Assertion.addMethod("totalSupplyOf", async function (expected, message) {
+  const contract = this._obj;
+  const actual = await contract.totalSupply();
+  if (!BigNumber.isBigNumber(expected)) {
+    expected = parseUnits(expected, await decimalsFor(contract));
+  }
+  chai.expect(actual).to.equal(expected, message);
+});
+
+chai.Assertion.addMethod(
+  "approxTotalSupplyOf",
+  async function (expected, message) {
+    const contract = this._obj;
+    const actual = await contract.totalSupply();
+    if (!BigNumber.isBigNumber(expected)) {
+      expected = parseUnits(expected, await decimalsFor(contract));
+    }
+    chai.expect(actual).to.approxEqualTolerance(expected, 1, message);
+  }
+);
+
 chai.Assertion.addMethod(
   "approxBalanceOf",
   async function (expected, contract, message) {
-    var user = this._obj;
-    var address = user.address || user.getAddress(); // supports contracts too
+    const user = this._obj;
+    const address = user.address || user.getAddress(); // supports contracts too
     const actual = await contract.balanceOf(address);
-    expected = parseUnits(expected, await decimalsFor(contract));
+    if (!BigNumber.isBigNumber(expected)) {
+      expected = parseUnits(expected, await decimalsFor(contract));
+    }
     chai.expect(actual).to.approxEqual(expected, message);
+  }
+);
+
+chai.Assertion.addMethod(
+  "approxBalanceWithToleranceOf",
+  async function (expected, contract, tolerancePct = 1, message = undefined) {
+    const user = this._obj;
+    const address = user.address || user.getAddress(); // supports contracts too
+    const actual = await contract.balanceOf(address);
+    if (!BigNumber.isBigNumber(expected)) {
+      expected = parseUnits(expected, await decimalsFor(contract));
+    }
+    chai
+      .expect(actual)
+      .to.approxEqualTolerance(expected, tolerancePct, message);
   }
 );
 
 chai.Assertion.addMethod(
   "balanceOf",
   async function (expected, contract, message) {
-    var user = this._obj;
-    var address = user.address || user.getAddress(); // supports contracts too
+    const user = this._obj;
+    const address = user.address || user.getAddress(); // supports contracts too
     const actual = await contract.balanceOf(address);
-    expected = parseUnits(expected, await decimalsFor(contract));
+    if (!BigNumber.isBigNumber(expected)) {
+      expected = parseUnits(expected, await decimalsFor(contract));
+    }
     chai.expect(actual).to.equal(expected, message);
   }
 );
+
+chai.Assertion.addMethod(
+  "assetBalanceOf",
+  async function (expected, asset, message) {
+    const strategy = this._obj;
+    const assetAddress = asset.address || asset.getAddress();
+    const actual = await strategy.checkBalance(assetAddress);
+    if (!BigNumber.isBigNumber(expected)) {
+      expected = parseUnits(expected, await decimalsFor(asset));
+    }
+    chai.expect(actual).to.approxEqualTolerance(expected, 1, message);
+  }
+);
+
+chai.Assertion.addMethod("emittedEvent", async function (eventName, args) {
+  const tx = this._obj;
+  const { events } = await tx.wait();
+  const log = events.find((e) => e.event == eventName);
+  chai.expect(log).to.not.be.undefined;
+
+  if (Array.isArray(args)) {
+    chai.expect(log.args).to.equal(args.length, "Invalid event arg count");
+    for (let i = 0; i < args.length; i++) {
+      chai.expect(log.args[i]).to.equal(args[i]);
+    }
+  }
+});
 
 const DECIMAL_CACHE = {};
 async function decimalsFor(contract) {
@@ -335,8 +402,11 @@ const getAssetAddresses = async (deployments) => {
       uniswapV3Router: (await deployments.get("MockUniswapRouter")).address,
       sushiswapRouter: (await deployments.get("MockUniswapRouter")).address,
 
-      UniV3PositionManager: (await deployments.get("MockNonfungiblePositionManager")).address,
-      UniV3_USDC_USDT_Pool: (await ethers.getContract("MockUniswapV3Pool")).address,
+      UniV3PositionManager: (
+        await deployments.get("MockNonfungiblePositionManager")
+      ).address,
+      UniV3_USDC_USDT_Pool: (await ethers.getContract("MockUniswapV3Pool"))
+        .address,
     };
 
     try {

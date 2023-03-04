@@ -175,5 +175,9 @@ interface IVault {
 
     function depositForUniswapV3(address asset, uint256 amount) external;
 
-    function withdrawForUniswapV3(address recipient, address asset, uint256 amount) external;
+    function withdrawForUniswapV3(
+        address recipient,
+        address asset,
+        uint256 amount
+    ) external;
 }

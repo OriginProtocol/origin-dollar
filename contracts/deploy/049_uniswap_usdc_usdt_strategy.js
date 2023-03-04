@@ -12,15 +12,13 @@ module.exports = deploymentWithGovernanceProposal(
     getTxOpts,
     withConfirmation,
   }) => {
-    const { deployerAddr, operatorAddr, timelockAddr } = await getNamedAccounts();
+    const { deployerAddr, operatorAddr, timelockAddr } =
+      await getNamedAccounts();
     const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
     // Current contracts
     const cVaultProxy = await ethers.getContract("VaultProxy");
-    const cVault = await ethers.getContractAt(
-      "Vault",
-      cVaultProxy.address
-    );
+    const cVault = await ethers.getContractAt("Vault", cVaultProxy.address);
     const cVaultAdmin = await ethers.getContractAt(
       "VaultAdmin",
       cVaultProxy.address
@@ -30,7 +28,7 @@ module.exports = deploymentWithGovernanceProposal(
     // ----------------
 
     // 0. Deploy UniswapV3Helper
-    const dUniswapV3Helper = await deployWithConfirmation("UniswapV3Helper")
+    const dUniswapV3Helper = await deployWithConfirmation("UniswapV3Helper");
 
     // 0. Upgrade VaultAdmin
     const dVaultAdmin = await deployWithConfirmation("VaultAdmin");
@@ -55,7 +53,9 @@ module.exports = deploymentWithGovernanceProposal(
       dUniV3_USDC_USDT_Proxy.address
     );
 
-    const cMorphoCompProxy = await ethers.getContract("MorphoCompoundStrategyProxy");
+    const cMorphoCompProxy = await ethers.getContract(
+      "MorphoCompoundStrategyProxy"
+    );
 
     const cHarvesterProxy = await ethers.getContract("HarvesterProxy");
     const cHarvester = await ethers.getContractAt(
@@ -76,7 +76,8 @@ module.exports = deploymentWithGovernanceProposal(
     );
 
     // 4. Init and configure new Uniswap V3 strategy
-    const initFunction = "initialize(address,address,address,address,address,address,address)";
+    const initFunction =
+      "initialize(address,address,address,address,address,address,address)";
     await withConfirmation(
       cUniV3_USDC_USDT_Strategy.connect(sDeployer)[initFunction](
         cVaultProxy.address, // Vault
@@ -97,7 +98,10 @@ module.exports = deploymentWithGovernanceProposal(
         .transferGovernance(timelockAddr, await getTxOpts())
     );
 
-    console.log("Uniswap V3 (USDC-USDT pool) strategy address: ", cUniV3_USDC_USDT_Strategy.address);
+    console.log(
+      "Uniswap V3 (USDC-USDT pool) strategy address: ",
+      cUniV3_USDC_USDT_Strategy.address
+    );
     // Governance Actions
     // ----------------
     return {

@@ -973,16 +973,37 @@ const deployWOusd = async () => {
 
 const deployUniswapV3Strategy = async () => {
   const { deployerAddr, governorAddr, operatorAddr } = await getNamedAccounts();
+
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
   const sGovernor = await ethers.provider.getSigner(governorAddr);
 
   const vault = await ethers.getContract("VaultProxy");
   const pool = await ethers.getContract("MockUniswapV3Pool");
   const manager = await ethers.getContract("MockNonfungiblePositionManager");
-  const compStrat = await ethers.getContract("CompoundStrategyProxy");
   const v3Helper = await ethers.getContract("MockUniswapV3Helper");
 
-  const uniV3UsdcUsdtImpl = await deployWithConfirmation("UniV3_USDC_USDT_Strategy", [], "GeneralizedUniswapV3Strategy");
+  const mockUSDT = await ethers.getContract("MockUSDT");
+  const mockUSDC = await ethers.getContract("MockUSDC");
+  const mockDAI = await ethers.getContract("MockDAI");
+
+  await deployWithConfirmation("MockStrategy", [
+    vault.address,
+    [mockUSDC.address, mockUSDT.address],
+  ]);
+
+  await deployWithConfirmation(
+    "MockStrategyDAI",
+    [vault.address, [mockDAI.address]],
+    "MockStrategy"
+  );
+
+  const mockStrat = await ethers.getContract("MockStrategy");
+
+  const uniV3UsdcUsdtImpl = await deployWithConfirmation(
+    "UniV3_USDC_USDT_Strategy",
+    [],
+    "GeneralizedUniswapV3Strategy"
+  );
   await deployWithConfirmation("UniV3_USDC_USDT_Proxy");
   const uniV3UsdcUsdtProxy = await ethers.getContract("UniV3_USDC_USDT_Proxy");
 
@@ -995,15 +1016,19 @@ const deployUniswapV3Strategy = async () => {
   );
   log("Initialized UniV3_USDC_USDT_Proxy");
 
-  const uniV3UsdcUsdtStrat = await ethers.getContractAt("GeneralizedUniswapV3Strategy", uniV3UsdcUsdtProxy.address);
+  const uniV3UsdcUsdtStrat = await ethers.getContractAt(
+    "GeneralizedUniswapV3Strategy",
+    uniV3UsdcUsdtProxy.address
+  );
   await withConfirmation(
-    uniV3UsdcUsdtStrat.connect(sDeployer)
+    uniV3UsdcUsdtStrat
+      .connect(sDeployer)
       ["initialize(address,address,address,address,address,address,address)"](
         vault.address,
         pool.address,
         manager.address,
-        compStrat.address,
-        compStrat.address,
+        mockStrat.address,
+        mockStrat.address,
         operatorAddr,
         v3Helper.address
       )
@@ -1028,7 +1053,7 @@ const deployUniswapV3Strategy = async () => {
   }
 
   return uniV3UsdcUsdtStrat;
-}
+};
 
 const main = async () => {
   console.log("Running 001_core deployment...");

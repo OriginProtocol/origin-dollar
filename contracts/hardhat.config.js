@@ -232,9 +232,9 @@ module.exports = {
       },
       {
         // Uniswap V3 contracts use solc 0.7.6
-        version: "0.7.6"
-      }
-    ]
+        version: "0.7.6",
+      },
+    ],
   },
   networks: {
     hardhat: {
@@ -262,7 +262,7 @@ module.exports = {
           }),
     },
     localhost: {
-      timeout: 60000,
+      timeout: 0,
     },
     mainnet: {
       url: `${process.env.PROVIDER_URL}`,
@@ -274,7 +274,7 @@ module.exports = {
   },
   mocha: {
     bail: process.env.BAIL === "true",
-    timeout: 40000,
+    timeout: 0,
   },
   throwOnTransactionFailures: true,
   namedAccounts: {

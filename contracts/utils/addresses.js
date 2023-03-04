@@ -138,8 +138,10 @@ addresses.mainnet.Flipper = "0xcecaD69d7D4Ed6D52eFcFA028aF8732F27e08F70";
 addresses.mainnet.Morpho = "0x8888882f8f843896699869179fB6E4f7e3B58888";
 addresses.mainnet.MorphoLens = "0x930f1b46e1d081ec1524efd95752be3ece51ef67";
 
-addresses.mainnet.UniV3PositionManager = "0xC36442b4a4522E871399CD717aBDD847Ab11FE88";
-addresses.mainnet.UniV3_USDC_USDT_Pool = "0x3416cf6c708da44db2624d63ea0aaef7113527c6";
+addresses.mainnet.UniV3PositionManager =
+  "0xC36442b4a4522E871399CD717aBDD847Ab11FE88";
+addresses.mainnet.UniV3_USDC_USDT_Pool =
+  "0x3416cf6c708da44db2624d63ea0aaef7113527c6";
 
 // OUSD Governance
 addresses.mainnet.GovernorFive = "0x3cdd07c16614059e66344a7b579dab4f9516c0b6";

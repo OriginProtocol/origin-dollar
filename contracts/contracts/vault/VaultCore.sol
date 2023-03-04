@@ -349,20 +349,31 @@ contract VaultCore is VaultStorage {
                 vaultBufferModifier
             );
 
-            address depositStrategyAddr = assetDefaultStrategies[
-                assetAddr
-            ];
+            address depositStrategyAddr = assetDefaultStrategies[assetAddr];
 
             if (depositStrategyAddr != address(0) && allocateAmount > 0) {
                 IStrategy strategy;
-                if (isUniswapV3Strategy[depositStrategyAddr]) {
-                    IUniswapV3Strategy uniswapStrategy = IUniswapV3Strategy(depositStrategyAddr);
-                    strategy = IStrategy(uniswapStrategy.reserveStrategy(assetAddr));
+                if (strategies[depositStrategyAddr].isUniswapV3Strategy) {
+                    IUniswapV3Strategy uniswapStrategy = IUniswapV3Strategy(
+                        depositStrategyAddr
+                    );
+
+                    address reserveStrategyAddr = IUniswapV3Strategy(
+                        depositStrategyAddr
+                    ).reserveStrategy(assetAddr);
+
+                    require(
+                        // Defensive check to make sure the address(0) or unsupported strategy
+                        // isn't returned by `IUniswapV3Strategy.reserveStrategy()`
+                        strategies[reserveStrategyAddr].isSupported,
+                        "Invalid reserve strategy for asset"
+                    );
+
+                    // For Uniswap V3 Strategies, always deposit to reserve strategies
+                    strategy = IStrategy(reserveStrategyAddr);
                 } else {
                     strategy = IStrategy(depositStrategyAddr);
                 }
-
-                require(address(strategy) != address(0), "Invalid deposit strategy");
 
                 // Transfer asset to Strategy and call deposit method to
                 // mint or take required action

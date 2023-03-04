@@ -17,5 +17,8 @@ interface IUniswapV3Helper {
         uint256 amount1
     ) external view returns (uint128 liquidity);
 
-    function getSqrtRatioAtTick(int24 tick) external view returns (uint160 sqrtPriceX96);
+    function getSqrtRatioAtTick(int24 tick)
+        external
+        view
+        returns (uint160 sqrtPriceX96);
 }
