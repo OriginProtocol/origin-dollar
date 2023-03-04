@@ -233,12 +233,8 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
       const lowerTick = activeTick - 1000;
       const upperTick = activeTick + 1000;
 
-      const { tokenId, amount0Minted, amount1Minted, liquidityMinted, tx } = await mintLiquidity(
-        lowerTick,
-        upperTick,
-        "100000",
-        "100000"
-      );
+      const { tokenId, amount0Minted, amount1Minted, liquidityMinted, tx } =
+        await mintLiquidity(lowerTick, upperTick, "100000", "100000");
 
       // Check events
       await expect(tx).to.have.emittedEvent("UniswapV3PositionMinted");
@@ -254,10 +250,22 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
       // Check Strategy balance
       const usdcBalAfter = await strategy.checkBalance(usdc.address);
       const usdtBalAfter = await strategy.checkBalance(usdt.address);
-      expect(usdcBalAfter).gte(usdcBalBefore, "Expected USDC balance to have increased");
-      expect(usdtBalAfter).gte(usdtBalBefore, "Expected USDT balance to have increased");
-      expect(usdcBalAfter).to.approxEqual(usdcBalBefore.add(amount0Minted), "Deposited USDC mismatch");
-      expect(usdtBalAfter).to.approxEqual(usdtBalBefore.add(amount1Minted), "Deposited USDT mismatch");
+      expect(usdcBalAfter).gte(
+        usdcBalBefore,
+        "Expected USDC balance to have increased"
+      );
+      expect(usdtBalAfter).gte(
+        usdtBalBefore,
+        "Expected USDT balance to have increased"
+      );
+      expect(usdcBalAfter).to.approxEqual(
+        usdcBalBefore.add(amount0Minted),
+        "Deposited USDC mismatch"
+      );
+      expect(usdtBalAfter).to.approxEqual(
+        usdtBalBefore.add(amount1Minted),
+        "Deposited USDT mismatch"
+      );
 
       // Check data on strategy
       const storedPosition = await strategy.tokenIdToPosition(tokenId);
@@ -277,30 +285,42 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
       const lowerTick = activeTick - 1003;
       const upperTick = activeTick + 1005;
 
-      const amount = "100000"
-      const amountUnits = BigNumber.from(amount).mul(10**6)
+      const amount = "100000";
+      const amountUnits = BigNumber.from(amount).mul(10 ** 6);
 
       // Mint position
-      const { tokenId, tx } = await mintLiquidity(lowerTick, upperTick, amount, amount);
+      const { tokenId, tx } = await mintLiquidity(
+        lowerTick,
+        upperTick,
+        amount,
+        amount
+      );
       await expect(tx).to.have.emittedEvent("UniswapV3PositionMinted");
       const storedPosition = await strategy.tokenIdToPosition(tokenId);
       expect(storedPosition.exists).to.be.true;
       expect(await strategy.currentPositionTokenId()).to.equal(tokenId);
 
       // Rebalance again to increase liquidity
-      const tx2 = await strategy.connect(operator).increaseLiquidityForActivePosition(
-        amountUnits, 
-        amountUnits
-      );
+      const tx2 = await strategy
+        .connect(operator)
+        .increaseLiquidityForActivePosition(amountUnits, amountUnits);
       await expect(tx2).to.have.emittedEvent("UniswapV3LiquidityAdded");
 
       // Check balance on strategy
       const usdcBalAfter = await strategy.checkBalance(usdc.address);
       const usdtBalAfter = await strategy.checkBalance(usdt.address);
-      expect(usdcBalAfter).to.approxEqualTolerance(usdcBalBefore.add(amountUnits.mul(2)), 1, "Deposited USDC mismatch");
-      expect(usdtBalAfter).to.approxEqualTolerance(usdtBalBefore.add(amountUnits.mul(2)), 1, "Deposited USDT mismatch");
+      expect(usdcBalAfter).to.approxEqualTolerance(
+        usdcBalBefore.add(amountUnits.mul(2)),
+        1,
+        "Deposited USDC mismatch"
+      );
+      expect(usdtBalAfter).to.approxEqualTolerance(
+        usdtBalBefore.add(amountUnits.mul(2)),
+        1,
+        "Deposited USDT mismatch"
+      );
     });
 
-    it("Should close active LP position", async () => {})
+    it("Should close active LP position", async () => {});
   });
 });
