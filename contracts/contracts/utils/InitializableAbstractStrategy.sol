@@ -103,7 +103,7 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
     }
 
     /**
-     * @dev Collect accumulated reward token and send to Vault.
+     * @dev Collect accumulated reward token and send to Harvester.
      */
     function collectRewardTokens() external virtual onlyHarvester nonReentrant {
         _collectRewardTokens();
@@ -280,10 +280,20 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
                  Abstract
     ****************************************/
 
+    /**
+     * @dev Callback function that's invoked everytime 
+     *      PToken address of an supported asset is updated.
+     * @param _asset               Address for the asset
+     * @param _pToken              Adress of the platform token
+     */
     function _abstractSetPToken(address _asset, address _pToken)
         internal
         virtual;
 
+    /**
+     * @dev Approve all the assets supported by the strategy 
+     *      to be moved around the platform.
+     */
     function safeApproveAllTokens() external virtual;
 
     /**
@@ -316,7 +326,7 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
     function withdrawAll() external virtual;
 
     /**
-     * @dev Get the total asset value held in the platform.
+     * @notice Get the total asset value held in the platform.
      *      This includes any interest that was generated since depositing.
      * @param _asset      Address of the asset
      * @return balance    Total value of the asset in the platform
