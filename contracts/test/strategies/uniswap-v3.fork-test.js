@@ -5,16 +5,10 @@ const {
   loadFixture,
   units,
   ousdUnits,
-  ousdUnitsFormat,
-  expectApproxSupply,
-  usdcUnits,
   usdcUnitsFormat,
-  usdtUnits,
   usdtUnitsFormat,
   daiUnits,
   daiUnitsFormat,
-  advanceTime,
-  advanceBlocks,
   getBlockTimestamp,
 } = require("../helpers");
 const { BigNumber } = require("ethers");
@@ -26,8 +20,8 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
   let vault, harvester, ousd, usdc, usdt, dai;
   let reserveStrategy, strategy, pool, positionManager, v3Helper, swapRouter;
   let timelock,
-    governor,
-    strategist,
+    // governor,
+    // strategist,
     operator,
     josh,
     matt,
@@ -50,8 +44,8 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
     dai = fixture.dai;
     vault = fixture.vault;
     harvester = fixture.harvester;
-    governor = fixture.governor;
-    strategist = fixture.strategist;
+    // governor = fixture.governor;
+    // strategist = fixture.strategist;
     operator = fixture.operator;
     timelock = fixture.timelock;
     josh = fixture.josh;

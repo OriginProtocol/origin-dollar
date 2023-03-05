@@ -354,10 +354,6 @@ contract VaultCore is VaultStorage {
             if (depositStrategyAddr != address(0) && allocateAmount > 0) {
                 IStrategy strategy;
                 if (strategies[depositStrategyAddr].isUniswapV3Strategy) {
-                    IUniswapV3Strategy uniswapStrategy = IUniswapV3Strategy(
-                        depositStrategyAddr
-                    );
-
                     address reserveStrategyAddr = IUniswapV3Strategy(
                         depositStrategyAddr
                     ).reserveStrategy(assetAddr);

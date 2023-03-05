@@ -159,6 +159,7 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
         );
 
         _setReserveStrategy(_token0ReserveStrategy, _token1ReserveStrategy);
+        _setOperator(_operator);
     }
 
     /***************************************
@@ -186,6 +187,10 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
      * @param _operator The new value to be set
      */
     function setOperator(address _operator) external onlyGovernor {
+        _setOperator(_operator);
+    }
+
+    function _setOperator(address _operator) internal {
         require(_operator != address(0), "Invalid operator address");
         operatorAddr = _operator;
         emit OperatorChanged(_operator);
@@ -775,6 +780,7 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
     ****************************************/
 
     /// Callback function for whenever a NFT is transferred to this contract
+    // solhint-disable-next-line max-line-length
     /// Ref: https://docs.openzeppelin.com/contracts/3.x/api/token/erc721#IERC721Receiver-onERC721Received-address-address-uint256-bytes-
     function onERC721Received(
         address,
@@ -813,10 +819,7 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
     }
 
     /// @inheritdoc InitializableAbstractStrategy
-    function _abstractSetPToken(address _asset, address _pToken)
-        internal
-        override
-    {
+    function _abstractSetPToken(address _asset, address) internal override {
         IERC20(_asset).safeApprove(vaultAddress, type(uint256).max);
         IERC20(_asset).safeApprove(address(positionManager), type(uint256).max);
     }
@@ -835,16 +838,12 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
             Hidden functions
     ****************************************/
 
-    function setPTokenAddress(address _asset, address _pToken)
-        external
-        override
-        onlyGovernor
-    {
+    function setPTokenAddress(address, address) external override onlyGovernor {
         // The pool tokens can never change.
         revert("Unsupported method");
     }
 
-    function removePToken(uint256 _assetIndex) external override onlyGovernor {
+    function removePToken(uint256) external override onlyGovernor {
         // The pool tokens can never change.
         revert("Unsupported method");
     }
