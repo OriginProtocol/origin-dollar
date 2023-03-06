@@ -323,13 +323,13 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
         IERC20 cToken1 = IERC20(token1);
 
         uint256 token0Balance = cToken0.balanceOf(address(this));
-        if (token0Balance >= 0) {
+        if (token0Balance > 0) {
             cToken0.safeTransfer(vaultAddress, token0Balance);
             emit Withdrawal(token0, token0, token0Balance);
         }
 
         uint256 token1Balance = cToken1.balanceOf(address(this));
-        if (token1Balance >= 0) {
+        if (token1Balance > 0) {
             cToken1.safeTransfer(vaultAddress, token1Balance);
             emit Withdrawal(token1, token1, token1Balance);
         }
