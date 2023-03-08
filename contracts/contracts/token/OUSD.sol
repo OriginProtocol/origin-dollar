@@ -31,6 +31,17 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
         uint256 rebasingCreditsPerToken
     );
 
+    event RebasingDisabled(
+        address indexed account,
+        uint256 balance,
+        uint256 rebasingCreditsPerToken
+    );
+    event RebasingEnabled(
+        address indexed account,
+        uint256 balance,
+        uint256 rebasingCreditsPerToken
+    );
+
     enum RebaseOptions {
         NotSet,
         OptOut,
@@ -48,7 +59,7 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
     // do not receive yield unless they explicitly opt in)
     uint256 public nonRebasingSupply;
     mapping(address => uint256) public nonRebasingCreditsPerToken;
-    mapping(address => RebaseOptions) public rebaseState;
+    mapping(address => RebaseOptions) public rebaseState; // User OptIn/OptOut
     mapping(address => uint256) public isUpgraded;
 
     uint256 private constant RESOLUTION_INCREASE = 1e9;
@@ -471,29 +482,34 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
             return; // Account already is non-rebasing
         }
         if (_creditBalances[_account] == 0) {
-            // Since there is no existing balance, we can directly set to
+            // Since there is no existing balance, we can directly set it to
             // high resolution, and do not have to do any other bookkeeping
             nonRebasingCreditsPerToken[_account] = 1e27;
-            return;
+        } else {
+            // This does not change, but if it did, we would want to
+            // use the value before changes.
+            uint256 oldCredits = _creditBalances[_account];
+
+            // Atomicly update account information:
+            // It is important that balanceOf not be called inside updating
+            // account data, since it will give wrong answers if it does
+            // not have all an account's data in a consistent state.
+            //
+            // By setting a per account nonRebasingCreditsPerToken,
+            // this account will no longer follow with the global
+            // rebasing credits per token and will become non-rebasing.
+            nonRebasingCreditsPerToken[_account] = _rebasingCreditsPerToken;
+
+            // Update global totals
+            nonRebasingSupply = nonRebasingSupply.add(balanceOf(_account));
+            _rebasingCredits = _rebasingCredits.sub(oldCredits);
         }
 
-        // This does not change, but if it did, we would want to
-        // use the value before changes.
-        uint256 oldCredits = _creditBalances[_account];
-
-        // Atomicly update account information:
-        // It is important that balanceOf not be called inside updating
-        // account data, since it will give wrong answers if it does
-        // not have all an account's data in a consistent state.
-        //
-        // By setting a per account nonRebasingCreditsPerToken,
-        // this account will no longer follow with the global
-        // rebasing credits per token and will become non-rebasing.
-        nonRebasingCreditsPerToken[_account] = _rebasingCreditsPerToken;
-
-        // Update global totals
-        nonRebasingSupply = nonRebasingSupply.add(balanceOf(_account));
-        _rebasingCredits = _rebasingCredits.sub(oldCredits);
+        emit RebasingDisabled(
+            _account,
+            balanceOf(_account),
+            _rebasingCreditsPerToken
+        );
     }
 
     /**
@@ -504,10 +520,12 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
     function rebaseOptIn() public nonReentrant {
         require(_isNonRebasingAccount(msg.sender), "Account has not opted out");
 
+        // Precalculate old balance so that no partial
+        // account changes will affect it
         uint256 oldBalance = balanceOf(msg.sender);
 
         // Precalculate new credits, so that we avoid internal calls when
-        // atomicly updating account.
+        // atomically updating account.
         // Convert balance into the same amount at the current exchange rate
         uint256 newCreditBalance = _creditBalances[msg.sender]
             .mul(_rebasingCreditsPerToken)
@@ -519,7 +537,7 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
         delete nonRebasingCreditsPerToken[msg.sender];
         // New credits
         _creditBalances[msg.sender] = newCreditBalance;
-        // Mark explicitly opted out of rebasing
+        // Mark explicitly opted in to rebasing
         rebaseState[msg.sender] = RebaseOptions.OptIn;
 
         // Update global totals:
@@ -528,6 +546,8 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
         // Increase rebasing credits, totalSupply remains unchanged so no
         // adjustment necessary
         _rebasingCredits = _rebasingCredits.add(_creditBalances[msg.sender]);
+
+        emit RebasingEnabled(msg.sender, oldBalance, _rebasingCreditsPerToken);
     }
 
     /**
