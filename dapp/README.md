@@ -61,7 +61,7 @@ Visit the /compensation page and run "Claim & Stake"
 
 ### Environment variables
 - On local use `local.env` file (copy initial contents from dev.env)
-- On prod use `prod.env` file. Check DevOps playbook to see how to encrypt/decrypt it.
+- For prod, use Heroku config variables. Ask someone who has permission to set it
 
 ## DevOps
 Refer to the [playbook](https://docs.google.com/document/d/1sWLL0gAfm8A2CQ_HRPoExbF-jDIgu7F1uo61cW-lLWU/edit#heading=h.brahy16zdtg1).

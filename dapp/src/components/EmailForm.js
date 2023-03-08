@@ -17,15 +17,11 @@ const EmailForm = ({ footer }) => {
         onSubmit={async (e) => {
           e.preventDefault()
 
-          analytics.track(`On Mailing List Subscription`, {
-            category: 'general',
-          })
-
           const searchParams = new URLSearchParams()
           searchParams.set('email', email)
           searchParams.set('source', 'ousd')
 
-          const response = await fetch(process.env.EMAIL_LIST_URL, {
+          const response = await fetch(process.env.NEXT_PUBLIC_EMAIL_LIST_URL, {
             method: 'POST',
             mode: 'cors',
             cache: 'no-cache',

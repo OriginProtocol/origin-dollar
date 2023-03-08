@@ -4,11 +4,11 @@ import analytics from 'utils/analytics'
 import { getDocsLink } from 'utils/getDocsLink'
 import LocaleDropdown from 'components/LocaleDropdown'
 
-const analyticsURL = process.env.ANALYTICS_URL
-const jobsURL = process.env.JOBS_URL
-const termsURL = process.env.TERMS_URL
-const privacyURL = process.env.PRIVACY_URL
-const discordURL = process.env.DISCORD_URL
+const analyticsURL = process.env.NEXT_PUBLIC_ANALYTICS_URL
+const jobsURL = process.env.NEXT_PUBLIC_JOBS_URL
+const termsURL = process.env.NEXT_PUBLIC_TERMS_URL
+const privacyURL = process.env.NEXT_PUBLIC_PRIVACY_URL
+const discordURL = process.env.NEXT_PUBLIC_DISCORD_URL
 
 export default function Footer({ onLocale, locale, dapp }) {
   return (
@@ -23,11 +23,6 @@ export default function Footer({ onLocale, locale, dapp }) {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="nav-link"
-                  onClick={() => {
-                    analytics.track('To Analytics', {
-                      category: 'navigation',
-                    })
-                  }}
                 >
                   {fbt('Analytics', 'Analytics link')}
                 </a>
@@ -36,11 +31,6 @@ export default function Footer({ onLocale, locale, dapp }) {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="nav-link"
-                  onClick={() => {
-                    analytics.track('To Jobs', {
-                      category: 'navigation',
-                    })
-                  }}
                 >
                   {fbt('Jobs', 'Jobs link')}
                 </a>
@@ -49,11 +39,6 @@ export default function Footer({ onLocale, locale, dapp }) {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="nav-link"
-                  onClick={() => {
-                    analytics.track('To Docs', {
-                      category: 'navigation',
-                    })
-                  }}
                 >
                   {fbt('Docs', 'Documentation link')}
                 </a>
@@ -62,11 +47,6 @@ export default function Footer({ onLocale, locale, dapp }) {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="nav-link"
-                  onClick={() => {
-                    analytics.track('To Terms', {
-                      category: 'navigation',
-                    })
-                  }}
                 >
                   {fbt('Terms', 'Terms link')}
                 </a>
@@ -75,11 +55,6 @@ export default function Footer({ onLocale, locale, dapp }) {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="nav-link"
-                  onClick={() => {
-                    analytics.track('To Privacy', {
-                      category: 'navigation',
-                    })
-                  }}
                 >
                   {fbt('Privacy', 'Privacy link')}
                 </a>
@@ -88,11 +63,6 @@ export default function Footer({ onLocale, locale, dapp }) {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="nav-link"
-                  onClick={() => {
-                    analytics.track('To Discord', {
-                      category: 'navigation',
-                    })
-                  }}
                 >
                   {fbt('Discord', 'Discord link')}
                 </a>
