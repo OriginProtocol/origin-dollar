@@ -501,6 +501,10 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
             nonRebasingCreditsPerToken[_account] = _rebasingCreditsPerToken;
 
             // Update global totals
+            // We use the current value of balanceOf, after the update, so
+            // that if any rounding errors happened in the conversion, we
+            // will be updating the nonRebasingSupply properly with
+            // the account balance
             nonRebasingSupply = nonRebasingSupply.add(balanceOf(_account));
             _rebasingCredits = _rebasingCredits.sub(oldCredits);
         }
@@ -541,7 +545,9 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
         rebaseState[msg.sender] = RebaseOptions.OptIn;
 
         // Update global totals:
-        // Decrease non rebasing supply
+        // Decrease non rebasing supply. We use the old balance, since that
+        // would have been the value that was originally used to adjust the
+        // nonRebasingSupply.
         nonRebasingSupply = nonRebasingSupply.sub(oldBalance);
         // Increase rebasing credits, totalSupply remains unchanged so no
         // adjustment necessary
