@@ -358,7 +358,7 @@ async function deployMocksForUniswapV3Strategy(deploy, deployerAddr) {
 }
 
 deployMocks.id = "000_mock";
-deployMocks.tags = ["mocks"];
+deployMocks.tags = ["mocks", "unit_tests"];
 deployMocks.skip = () => isMainnetOrFork;
 
 module.exports = deployMocks;

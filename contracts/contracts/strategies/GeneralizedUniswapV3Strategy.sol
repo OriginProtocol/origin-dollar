@@ -99,7 +99,7 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
         require(
             msg.sender == IVault(vaultAddress).strategistAddr() ||
                 msg.sender == governor(),
-            "Caller is not the Operator, Strategist or Governor"
+            "Caller is not the Strategist or Governor"
         );
         _;
     }
@@ -165,21 +165,6 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
     /***************************************
             Admin Utils
     ****************************************/
-
-    /**
-     * @notice Change the slippage tolerance
-     * @dev Can only be called by Governor or Strategist
-     * @param _slippage The new value to be set
-     */
-    function setMaxSlippage(uint24 _slippage)
-        external
-        onlyGovernorOrStrategist
-    {
-        require(_slippage <= 10000, "Invalid slippage value");
-        // TODO: Should we make sure that Governor doesn't
-        // accidentally set slippage > 2% or something???
-        maxSlippage = _slippage;
-    }
 
     /**
      * @notice Change the address of the operator
@@ -288,25 +273,86 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
         uint256 selfBalance = asset.balanceOf(address(this));
 
         if (selfBalance < amount) {
-            // Try to pull remaining amount from reserve strategy
-            // This might throw if there isn't enough in reserve strategy as well
-            IVault(vaultAddress).withdrawForUniswapV3(
-                recipient,
-                _asset,
-                amount - selfBalance
+            Position storage p = tokenIdToPosition[currentPositionTokenId];
+            require(p.exists && p.liquidity > 0, "Liquidity error");
+
+            // Figure out liquidity to burn
+            (
+                uint128 liquidity,
+                uint256 minAmount0,
+                uint256 minAmount1
+            ) = _calculateLiquidityToWithdraw(
+                    p,
+                    _asset,
+                    (amount - selfBalance)
+                );
+
+            // Liquidiate active position
+            _decreaseLiquidityForPosition(p, liquidity, minAmount0, minAmount1);
+        }
+
+        // Transfer requested amount
+        asset.safeTransfer(recipient, amount);
+        emit Withdrawal(_asset, _asset, amount);
+    }
+
+    /**
+     * @notice Calculates the amount liquidity that needs to be removed
+     *          to Withdraw specified amount of the given asset.
+     *
+     * @param p         Position object
+     * @param asset     Token needed
+     * @param amount    Minimum amount to liquidate
+     *
+     * @return liquidity    Liquidity to burn
+     * @return minAmount0   Minimum amount0 to expect
+     * @return minAmount1   Minimum amount1 to expect
+     */
+    function _calculateLiquidityToWithdraw(
+        Position memory p,
+        address asset,
+        uint256 amount
+    )
+        internal
+        view
+        returns (
+            uint128 liquidity,
+            uint256 minAmount0,
+            uint256 minAmount1
+        )
+    {
+        (uint160 sqrtRatioX96, , , , , , ) = IUniswapV3Pool(platformAddress)
+            .slot0();
+
+        // Total amount in Liquidity pools
+        (uint256 totalAmount0, uint256 totalAmount1) = uniswapV3Helper
+            .getAmountsForLiquidity(
+                sqrtRatioX96,
+                p.sqrtRatioAX96,
+                p.sqrtRatioBX96,
+                p.liquidity
             );
 
-            // TODO: Remove liquidity from V3 pool instead?
-
-            // Transfer all of unused balance
-            asset.safeTransfer(recipient, selfBalance);
-
-            // Emit event for only the amount transferred out from this strategy
-            emit Withdrawal(_asset, _asset, selfBalance);
+        if (asset == token0) {
+            minAmount0 = amount;
+            minAmount1 = totalAmount1 / (totalAmount0 / amount);
+            liquidity = uniswapV3Helper.getLiquidityForAmounts(
+                sqrtRatioX96,
+                p.sqrtRatioAX96,
+                p.sqrtRatioBX96,
+                amount,
+                minAmount1
+            );
         } else {
-            // Transfer requested amount
-            asset.safeTransfer(recipient, amount);
-            emit Withdrawal(_asset, _asset, amount);
+            minAmount0 = totalAmount0 / (totalAmount1 / amount);
+            minAmount1 = amount;
+            liquidity = uniswapV3Helper.getLiquidityForAmounts(
+                sqrtRatioX96,
+                p.sqrtRatioAX96,
+                p.sqrtRatioBX96,
+                minAmount0,
+                amount
+            );
         }
     }
 
@@ -316,21 +362,26 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
      */
     function withdrawAll() external override onlyVault nonReentrant {
         if (currentPositionTokenId > 0) {
-            _closePosition(currentPositionTokenId);
+            // TODO: This method is only callable from Vault directly
+            // and by Governor or Strategist indirectly.
+            // Changing the Vault code to pass a minAmount0 and minAmount1 will
+            // make things complex. We could perhaps make sure that there're no
+            // active position when withdrawingAll rather than passing zero values?
+            _closePosition(currentPositionTokenId, 0, 0);
         }
 
-        IERC20 cToken0 = IERC20(token0);
-        IERC20 cToken1 = IERC20(token1);
+        IERC20 token0Contract = IERC20(token0);
+        IERC20 token1Contract = IERC20(token1);
 
-        uint256 token0Balance = cToken0.balanceOf(address(this));
+        uint256 token0Balance = token0Contract.balanceOf(address(this));
         if (token0Balance > 0) {
-            cToken0.safeTransfer(vaultAddress, token0Balance);
+            token0Contract.safeTransfer(vaultAddress, token0Balance);
             emit Withdrawal(token0, token0, token0Balance);
         }
 
-        uint256 token1Balance = cToken1.balanceOf(address(this));
+        uint256 token1Balance = token1Contract.balanceOf(address(this));
         if (token1Balance > 0) {
-            cToken1.safeTransfer(vaultAddress, token1Balance);
+            token1Contract.safeTransfer(vaultAddress, token1Balance);
             emit Withdrawal(token1, token1, token1Balance);
         }
     }
@@ -344,12 +395,12 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
     function _ensureAssetBalances(uint256 minAmount0, uint256 minAmount1)
         internal
     {
-        IERC20 cToken0 = IERC20(token0);
-        IERC20 cToken1 = IERC20(token1);
+        IERC20 token0Contract = IERC20(token0);
+        IERC20 token1Contract = IERC20(token1);
         IVault vault = IVault(vaultAddress);
 
         // Withdraw enough funds from Reserve strategies
-        uint256 token0Balance = cToken0.balanceOf(address(this));
+        uint256 token0Balance = token0Contract.balanceOf(address(this));
         if (token0Balance < minAmount0) {
             vault.withdrawForUniswapV3(
                 address(this),
@@ -358,7 +409,7 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
             );
         }
 
-        uint256 token1Balance = cToken1.balanceOf(address(this));
+        uint256 token1Balance = token1Contract.balanceOf(address(this));
         if (token1Balance < minAmount1) {
             vault.withdrawForUniswapV3(
                 address(this),
@@ -376,10 +427,9 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
      * @notice Collect accumulated fees from the active position
      * @dev Doesn't send to vault or harvester
      */
-    function collectRewardTokens()
+    function collectFees()
         external
-        override
-        onlyHarvester
+        onlyGovernorOrStrategistOrOperator
         nonReentrant
     {
         if (currentPositionTokenId > 0) {
@@ -495,12 +545,20 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
      * @dev Will pull funds needed from reserve strategies and then will deposit back all dust to them
      * @param desiredAmount0 Desired amount of token0 to provide liquidity
      * @param desiredAmount1 Desired amount of token1 to provide liquidity
+     * @param minAmount0 Min amount of token0 to deposit
+     * @param minAmount1 Min amount of token1 to deposit
+     * @param minRedeemAmount0 Min amount of token0 received from closing active position
+     * @param minRedeemAmount1 Min amount of token1 received from closing active position
      * @param lowerTick Desired lower tick index
      * @param upperTick Desired upper tick index
      */
     function rebalance(
         uint256 desiredAmount0,
         uint256 desiredAmount1,
+        uint256 minAmount0,
+        uint256 minAmount1,
+        uint256 minRedeemAmount0,
+        uint256 minRedeemAmount1,
         int24 lowerTick,
         int24 upperTick
     ) external onlyGovernorOrStrategistOrOperator nonReentrant {
@@ -509,7 +567,11 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
 
         if (currentPositionTokenId > 0) {
             // Close any active position
-            _closePosition(currentPositionTokenId);
+            _closePosition(
+                currentPositionTokenId,
+                minRedeemAmount0,
+                minRedeemAmount1
+            );
         }
 
         // Withdraw enough funds from Reserve strategies
@@ -519,12 +581,20 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
         if (tokenId > 0) {
             // Add liquidity to the position token
             Position storage p = tokenIdToPosition[tokenId];
-            _increaseLiquidityForPosition(p, desiredAmount0, desiredAmount1);
+            _increaseLiquidityForPosition(
+                p,
+                desiredAmount0,
+                desiredAmount1,
+                minAmount0,
+                minAmount1
+            );
         } else {
             // Mint new position
             (tokenId, , , ) = _mintPosition(
                 desiredAmount0,
                 desiredAmount1,
+                minAmount0,
+                minAmount1,
                 lowerTick,
                 upperTick
             );
@@ -542,10 +612,14 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
      * @dev Will pull funds needed from reserve strategies and then will deposit back all dust to them
      * @param desiredAmount0 Desired amount of token0 to provide liquidity
      * @param desiredAmount1 Desired amount of token1 to provide liquidity
+     * @param minAmount0 Min amount of token0 to deposit
+     * @param minAmount1 Min amount of token1 to deposit
      */
     function increaseLiquidityForActivePosition(
         uint256 desiredAmount0,
-        uint256 desiredAmount1
+        uint256 desiredAmount1,
+        uint256 minAmount0,
+        uint256 minAmount1
     ) external onlyGovernorOrStrategistOrOperator nonReentrant {
         require(currentPositionTokenId > 0, "No active position");
 
@@ -553,7 +627,13 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
         _ensureAssetBalances(desiredAmount0, desiredAmount1);
 
         Position storage p = tokenIdToPosition[currentPositionTokenId];
-        _increaseLiquidityForPosition(p, desiredAmount0, desiredAmount1);
+        _increaseLiquidityForPosition(
+            p,
+            desiredAmount0,
+            desiredAmount1,
+            minAmount0,
+            minAmount1
+        );
 
         // Deposit all dust back to reserve strategies
         _depositAll();
@@ -561,14 +641,16 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
 
     /**
      * @notice Removes all liquidity from active position and collects the fees
+     * @param minAmount0 Min amount of token0 to receive back
+     * @param minAmount1 Min amount of token1 to receive back
      */
-    function closeActivePosition()
+    function closeActivePosition(uint256 minAmount0, uint256 minAmount1)
         external
         onlyGovernorOrStrategistOrOperator
         nonReentrant
     {
         require(currentPositionTokenId > 0, "No active position");
-        _closePosition(currentPositionTokenId);
+        _closePosition(currentPositionTokenId, minAmount0, minAmount1);
     }
 
     /**
@@ -576,13 +658,13 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
      * @dev Must be a position minted by this contract
      * @param tokenId ERC721 token ID of the position to liquidate
      */
-    function closePosition(uint256 tokenId)
-        external
-        onlyGovernorOrStrategistOrOperator
-        nonReentrant
-    {
+    function closePosition(
+        uint256 tokenId,
+        uint256 minAmount0,
+        uint256 minAmount1
+    ) external onlyGovernorOrStrategistOrOperator nonReentrant {
         require(tokenIdToPosition[tokenId].exists, "Invalid position");
-        _closePosition(tokenId);
+        _closePosition(tokenId, minAmount0, minAmount1);
 
         // Deposit all dust back to reserve strategies
         _depositAll();
@@ -591,13 +673,16 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
     /**
      * @notice Closes the position denoted by the tokenId and and collects all fees
      * @param tokenId ERC721 token ID of the position to liquidate
-     * @param amount0 Amount of token0 received after removing liquidity
-     * @param amount1 Amount of token1 received after removing liquidity
+     * @param minAmount0 Min amount of token0 to receive back
+     * @param minAmount1 Min amount of token1 to receive back
+     * @return amount0 Amount of token0 received after removing liquidity
+     * @return amount1 Amount of token1 received after removing liquidity
      */
-    function _closePosition(uint256 tokenId)
-        internal
-        returns (uint256 amount0, uint256 amount1)
-    {
+    function _closePosition(
+        uint256 tokenId,
+        uint256 minAmount0,
+        uint256 minAmount1
+    ) internal returns (uint256 amount0, uint256 amount1) {
         Position storage p = tokenIdToPosition[tokenId];
 
         if (p.liquidity == 0) {
@@ -605,7 +690,12 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
         }
 
         // Remove all liquidity
-        (amount0, amount1) = _decreaseLiquidityForPosition(p, p.liquidity);
+        (amount0, amount1) = _decreaseLiquidityForPosition(
+            p,
+            p.liquidity,
+            minAmount0,
+            minAmount1
+        );
 
         // Collect all fees for position
         (uint256 amount0Fee, uint256 amount1Fee) = _collectFeesForToken(
@@ -624,10 +714,14 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
 
     /**
      * @notice Mints a new position on the pool and provides liquidity to it
+     *
      * @param desiredAmount0 Desired amount of token0 to provide liquidity
      * @param desiredAmount1 Desired amount of token1 to provide liquidity
+     * @param minAmount0 Min amount of token0 to deposit
+     * @param minAmount1 Min amount of token1 to deposit
      * @param lowerTick Lower tick index
      * @param upperTick Upper tick index
+     *
      * @return tokenId ERC721 token ID of the position minted
      * @return liquidity Amount of liquidity added to the pool
      * @return amount0 Amount of token0 added to the position
@@ -636,6 +730,8 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
     function _mintPosition(
         uint256 desiredAmount0,
         uint256 desiredAmount1,
+        uint256 minAmount0,
+        uint256 minAmount1,
         int24 lowerTick,
         int24 upperTick
     )
@@ -647,8 +743,8 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
             uint256 amount1
         )
     {
-        INonfungiblePositionManager.MintParams memory params = INonfungiblePositionManager
-            .MintParams({
+        INonfungiblePositionManager.MintParams
+            memory params = INonfungiblePositionManager.MintParams({
                 token0: token0,
                 token1: token1,
                 fee: poolFee,
@@ -656,12 +752,8 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
                 tickUpper: upperTick,
                 amount0Desired: desiredAmount0,
                 amount1Desired: desiredAmount1,
-                amount0Min: maxSlippage == 0
-                    ? 0
-                    : (desiredAmount0 * (10000 - maxSlippage)) / 10000, // Price Slippage,
-                amount1Min: maxSlippage == 0
-                    ? 0
-                    : (desiredAmount1 * (10000 - maxSlippage)) / 10000, // Price Slippage,
+                amount0Min: minAmount0,
+                amount1Min: minAmount1,
                 recipient: address(this),
                 deadline: block.timestamp
             });
@@ -691,6 +783,8 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
      * @param p Position object
      * @param desiredAmount0 Desired amount of token0 to provide liquidity
      * @param desiredAmount1 Desired amount of token1 to provide liquidity
+     * @param minAmount0 Min amount of token0 to deposit
+     * @param minAmount1 Min amount of token1 to deposit
      * @return liquidity Amount of liquidity added to the pool
      * @return amount0 Amount of token0 added to the position
      * @return amount1 Amount of token1 added to the position
@@ -698,7 +792,9 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
     function _increaseLiquidityForPosition(
         Position storage p,
         uint256 desiredAmount0,
-        uint256 desiredAmount1
+        uint256 desiredAmount1,
+        uint256 minAmount0,
+        uint256 minAmount1
     )
         internal
         returns (
@@ -709,19 +805,16 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
     {
         require(p.exists, "Unknown position");
 
-        INonfungiblePositionManager.IncreaseLiquidityParams memory params = INonfungiblePositionManager
-            .IncreaseLiquidityParams({
-                tokenId: p.tokenId,
-                amount0Desired: desiredAmount0,
-                amount1Desired: desiredAmount1,
-                amount0Min: maxSlippage == 0
-                    ? 0
-                    : (desiredAmount0 * (10000 - maxSlippage)) / 10000, // Price Slippage,
-                amount1Min: maxSlippage == 0
-                    ? 0
-                    : (desiredAmount1 * (10000 - maxSlippage)) / 10000, // Price Slippage,
-                deadline: block.timestamp
-            });
+        INonfungiblePositionManager.IncreaseLiquidityParams
+            memory params = INonfungiblePositionManager
+                .IncreaseLiquidityParams({
+                    tokenId: p.tokenId,
+                    amount0Desired: desiredAmount0,
+                    amount1Desired: desiredAmount1,
+                    amount0Min: minAmount0,
+                    amount1Min: minAmount1,
+                    deadline: block.timestamp
+                });
 
         (liquidity, amount0, amount1) = positionManager.increaseLiquidity(
             params
@@ -736,12 +829,16 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
      * @notice Removes liquidity of the position in the pool
      * @param p Position object
      * @param liquidity Amount of liquidity to remove form the position
+     * @param minAmount0 Min amount of token0 to withdraw
+     * @param minAmount1 Min amount of token1 to withdraw
      * @return amount0 Amount of token0 received after liquidation
      * @return amount1 Amount of token1 received after liquidation
      */
     function _decreaseLiquidityForPosition(
         Position storage p,
-        uint128 liquidity
+        uint128 liquidity,
+        uint256 minAmount0,
+        uint256 minAmount1
     ) internal returns (uint256 amount0, uint256 amount1) {
         require(p.exists, "Unknown position");
 
@@ -755,18 +852,15 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
                 liquidity
             );
 
-        INonfungiblePositionManager.DecreaseLiquidityParams memory params = INonfungiblePositionManager
-            .DecreaseLiquidityParams({
-                tokenId: p.tokenId,
-                liquidity: liquidity,
-                amount0Min: maxSlippage == 0
-                    ? 0
-                    : (exactAmount0 * (10000 - maxSlippage)) / 10000, // Price Slippage,
-                amount1Min: maxSlippage == 0
-                    ? 0
-                    : (exactAmount1 * (10000 - maxSlippage)) / 10000, // Price Slippage,
-                deadline: block.timestamp
-            });
+        INonfungiblePositionManager.DecreaseLiquidityParams
+            memory params = INonfungiblePositionManager
+                .DecreaseLiquidityParams({
+                    tokenId: p.tokenId,
+                    liquidity: liquidity,
+                    amount0Min: minAmount0,
+                    amount1Min: minAmount1,
+                    deadline: block.timestamp
+                });
 
         (amount0, amount1) = positionManager.decreaseLiquidity(params);
 
@@ -846,5 +940,15 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
     function removePToken(uint256) external override onlyGovernor {
         // The pool tokens can never change.
         revert("Unsupported method");
+    }
+
+    /// @inheritdoc InitializableAbstractStrategy
+    function collectRewardTokens()
+        external
+        override
+        onlyHarvester
+        nonReentrant
+    {
+        // Do nothing
     }
 }

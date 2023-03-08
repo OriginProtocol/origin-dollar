@@ -29,8 +29,8 @@ const threepoolLPAbi = require("./abi/threepoolLP.json");
 const threepoolSwapAbi = require("./abi/threepoolSwap.json");
 
 async function defaultFixture() {
-  await deployments.fixture(undefined, {
-    keepExistingDeployments: Boolean(isForkWithLocalNode),
+  await deployments.fixture(isFork ? undefined : ["unit_tests"], {
+    keepExistingDeployments: true, // Boolean(isForkWithLocalNode),
   });
 
   const { governorAddr, timelockAddr, operatorAddr } = await getNamedAccounts();
@@ -1223,37 +1223,39 @@ async function rebornFixture() {
   return fixture;
 }
 
-async function uniswapV3Fixture() {
-  const fixture = await loadFixture(defaultFixture);
+function uniswapV3FixturSetup() {
+  return deployments.createFixture(async () => {
+    const fixture = await defaultFixture();
 
-  const {
-    usdc,
-    usdt,
-    dai,
-    UniV3_USDC_USDT_Strategy,
-    mockStrategy,
-    mockStrategyDAI,
-  } = fixture;
+    const {
+      usdc,
+      usdt,
+      dai,
+      UniV3_USDC_USDT_Strategy,
+      mockStrategy,
+      mockStrategyDAI,
+    } = fixture;
 
-  if (!isFork) {
-    // Approve mockStrategy
-    await _approveStrategy(fixture, mockStrategy);
-    await _approveStrategy(fixture, mockStrategyDAI);
+    if (!isFork) {
+      // Approve mockStrategy
+      await _approveStrategy(fixture, mockStrategy);
+      await _approveStrategy(fixture, mockStrategyDAI);
 
-    // Approve Uniswap V3 Strategy
-    await _approveStrategy(fixture, UniV3_USDC_USDT_Strategy, true);
-  }
+      // Approve Uniswap V3 Strategy
+      await _approveStrategy(fixture, UniV3_USDC_USDT_Strategy, true);
+    }
 
-  // Change default strategy to Uniswap V3 for both USDT and USDC
-  await _setDefaultStrategy(fixture, usdc, UniV3_USDC_USDT_Strategy);
-  await _setDefaultStrategy(fixture, usdt, UniV3_USDC_USDT_Strategy);
+    // Change default strategy to Uniswap V3 for both USDT and USDC
+    await _setDefaultStrategy(fixture, usdc, UniV3_USDC_USDT_Strategy);
+    await _setDefaultStrategy(fixture, usdt, UniV3_USDC_USDT_Strategy);
 
-  if (!isFork) {
-    // And a different one for DAI
-    await _setDefaultStrategy(fixture, dai, mockStrategyDAI);
-  }
+    if (!isFork) {
+      // And a different one for DAI
+      await _setDefaultStrategy(fixture, dai, mockStrategyDAI);
+    }
 
-  return fixture;
+    return fixture;
+  });
 }
 
 async function _approveStrategy(fixture, strategy, isUniswapV3) {
@@ -1303,7 +1305,7 @@ module.exports = {
   aaveVaultFixture,
   hackedVaultFixture,
   rebornFixture,
-  uniswapV3Fixture,
+  uniswapV3FixturSetup,
   withImpersonatedAccount,
   impersonateAndFundContract,
   impersonateAccount,

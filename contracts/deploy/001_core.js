@@ -980,7 +980,7 @@ const deployUniswapV3Strategy = async () => {
   const vault = await ethers.getContract("VaultProxy");
   const pool = await ethers.getContract("MockUniswapV3Pool");
   const manager = await ethers.getContract("MockNonfungiblePositionManager");
-  const v3Helper = await ethers.getContract("MockUniswapV3Helper");
+  const v3Helper = await ethers.getContract("UniswapV3Helper");
 
   const mockUSDT = await ethers.getContract("MockUSDT");
   const mockUSDC = await ethers.getContract("MockUSDC");
@@ -1083,6 +1083,7 @@ const main = async () => {
 
 main.id = "001_core";
 main.dependencies = ["mocks"];
+main.tags = ["core", "unit_tests"];
 main.skip = () => isFork;
 
 module.exports = main;

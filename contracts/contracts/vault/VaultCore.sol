@@ -194,17 +194,28 @@ contract VaultCore is VaultStorage {
         for (uint256 i = 0; i < allAssets.length; i++) {
             if (outputs[i] == 0) continue;
 
-            IERC20 asset = IERC20(allAssets[i]);
+            address assetAddr = allAssets[i];
+            IERC20 asset = IERC20(assetAddr);
 
             if (asset.balanceOf(address(this)) >= outputs[i]) {
                 // Use Vault funds first if sufficient
                 asset.safeTransfer(msg.sender, outputs[i]);
             } else {
-                address strategyAddr = assetDefaultStrategies[allAssets[i]];
+                address strategyAddr = assetDefaultStrategies[assetAddr];
+
+                // `strategies` is initialized in `VaultAdmin`
+                // slither-disable-next-line uninitialized-state
+                if (strategies[strategyAddr].isUniswapV3Strategy) {
+                    // In case of Uniswap Strategy, withdraw from
+                    // Reserve strategy directly
+                    strategyAddr = IUniswapV3Strategy(strategyAddr)
+                        .reserveStrategy(assetAddr);
+                }
+
                 if (strategyAddr != address(0)) {
                     // Nothing in Vault, but something in Strategy, send from there
                     IStrategy strategy = IStrategy(strategyAddr);
-                    strategy.withdraw(msg.sender, allAssets[i], outputs[i]);
+                    strategy.withdraw(msg.sender, assetAddr, outputs[i]);
                 } else {
                     // Cant find funds anywhere
                     revert("Liquidity error");

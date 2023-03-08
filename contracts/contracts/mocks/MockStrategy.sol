@@ -26,7 +26,7 @@ contract MockStrategy {
     }
 
     function deposit(address _asset, uint256 _amount) public onlyVault {
-        IERC20(_asset).safeTransferFrom(msg.sender, address(this), _amount);
+        // Do nothing
     }
 
     function depositAll() public onlyVault {
@@ -35,6 +35,14 @@ contract MockStrategy {
 
     function withdraw(address _asset, uint256 _amount) public onlyVault {
         IERC20(_asset).safeTransfer(vaultAddress, _amount);
+    }
+
+    function withdraw(
+        address _recipient,
+        address _asset,
+        uint256 _amount
+    ) external onlyVault {
+        IERC20(_asset).safeTransfer(_recipient, _amount);
     }
 
     function checkBalance(address _asset)

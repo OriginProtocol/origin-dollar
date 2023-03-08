@@ -1,7 +1,6 @@
 const { defaultFixture } = require("../_fixture");
 const chai = require("chai");
 const hre = require("hardhat");
-const { solidity } = require("ethereum-waffle");
 const { utils } = require("ethers");
 
 const {
@@ -16,8 +15,6 @@ const {
   isFork,
 } = require("../helpers");
 
-// Support BigNumber and all that with ethereum-waffle
-chai.use(solidity);
 const expect = chai.expect;
 
 describe("Vault", function () {
