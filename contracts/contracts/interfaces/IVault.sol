@@ -78,6 +78,8 @@ interface IVault {
 
     function removeStrategy(address _addr) external;
 
+    function isStrategySupported(address _addr) external view returns (bool);
+
     function setAssetDefaultStrategy(address _asset, address _strategy)
         external;
 

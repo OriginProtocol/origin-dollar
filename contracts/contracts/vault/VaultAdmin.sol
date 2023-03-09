@@ -225,7 +225,6 @@ contract VaultAdmin is VaultStorage {
      * @dev Remove a strategy from the Vault.
      * @param _addr Address of the strategy to remove
      */
-
     function removeStrategy(address _addr) external onlyGovernor {
         require(strategies[_addr].isSupported, "Strategy not approved");
 
@@ -261,6 +260,16 @@ contract VaultAdmin is VaultStorage {
 
             emit StrategyRemoved(_addr);
         }
+    }
+
+    /**
+     * @notice Checks if the address is a supported strategy
+     * @param _addr Address of the strategy to check
+     * @return supported True, if strategy is recognized by the vault
+     */
+    function isStrategySupported(address _addr) 
+        external view returns (bool supported) {
+        supported = strategies[_addr].isSupported;
     }
 
     /**

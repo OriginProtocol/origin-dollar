@@ -16,9 +16,13 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
     using SafeERC20 for IERC20;
 
     event OperatorChanged(address _address);
-    event ReserveStrategiesChanged(
-        address token0Strategy,
-        address token1Strategy
+    event ReserveStrategyChanged(
+        address asset,
+        address reserveStrategy
+    );
+    event MinDepositThresholdChanged(
+        address asset,
+        uint256 minDepositThreshold
     );
     event UniswapV3FeeCollected(
         uint256 indexed tokenId,
@@ -56,10 +60,23 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
     uint24 public poolFee; // Uniswap V3 Pool Fee
     uint24 public maxSlippage = 100; // 1%; Slippage tolerance when providing liquidity
 
-    // Address mapping of (Asset -> Strategy). When the funds are
-    // not deployed in Uniswap V3 Pool, they will be deposited
-    // to these reserve strategies
-    mapping(address => address) public reserveStrategy;
+    // Represents both tokens supported by the strategy
+    struct PoolToken {
+        bool isSupported; // True if asset is either token0 or token1
+
+        // When the funds are not deployed in Uniswap V3 Pool, they will
+        // be deposited to these reserve strategies
+        address reserveStrategy;
+
+        // Deposits to reserve strategy when contract balance exceeds this amount
+        uint256 minDepositThreshold;
+    }
+    mapping(address => PoolToken) public poolTokens;
+
+    // // Address mapping of (Asset -> Strategy). When the funds are
+    // // not deployed in Uniswap V3 Pool, they will be deposited
+    // // to these reserve strategies
+    // mapping(address => address) public reserveStrategy;
 
     // Uniswap V3's PositionManager
     INonfungiblePositionManager public positionManager;
@@ -90,8 +107,12 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
     IUniswapV3Helper internal uniswapV3Helper;
 
     // Future-proofing
-    uint256[50] private __gap;
+    uint256[100] private __gap;
 
+    /***************************************
+            Modifiers
+    ****************************************/
+    
     /**
      * @dev Ensures that the caller is Governor or Strategist.
      */
@@ -117,6 +138,18 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
         _;
     }
 
+    /**
+     * @dev Ensures that the asset address is either token0 or token1.
+     */
+    modifier onlyPoolTokens(address addr) {
+        require(poolTokens[addr].isSupported, "Unsupported asset");
+        _;
+    }
+
+    /***************************************
+            Initializer
+    ****************************************/
+    
     /**
      * @dev Initialize the contract
      * @param _vaultAddress OUSD Vault
@@ -158,67 +191,106 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
             _assets // Platform token addresses
         );
 
-        _setReserveStrategy(_token0ReserveStrategy, _token1ReserveStrategy);
+        poolTokens[token0] = PoolToken({
+            isSupported: true,
+            reserveStrategy: address(0), // Set below using `_setReserveStrategy()`
+            minDepositThreshold: 0
+        });
+        _setReserveStrategy(token0, _token0ReserveStrategy);
+
+        poolTokens[token1] = PoolToken({
+            isSupported: true,
+            reserveStrategy: address(0), // Set below using `_setReserveStrategy()
+            minDepositThreshold: 0
+        });
+        _setReserveStrategy(token1, _token1ReserveStrategy);
+
         _setOperator(_operator);
     }
 
     /***************************************
             Admin Utils
     ****************************************/
-
+    
     /**
      * @notice Change the address of the operator
-     * @dev Can only be called by the Governor
+     * @dev Can only be called by the Governor or Strategist
      * @param _operator The new value to be set
      */
-    function setOperator(address _operator) external onlyGovernor {
+    function setOperator(address _operator) external onlyGovernorOrStrategist {
         _setOperator(_operator);
     }
 
     function _setOperator(address _operator) internal {
-        require(_operator != address(0), "Invalid operator address");
         operatorAddr = _operator;
         emit OperatorChanged(_operator);
     }
 
     /**
      * @notice Change the reserve strategies of the supported assets
-     * @param _token0ReserveStrategy The new reserve strategy for token0
-     * @param _token1ReserveStrategy The new reserve strategy for token1
+     * @param _asset Asset to set the reserve strategy for
+     * @param _reserveStrategy The new reserve strategy for token
      */
     function setReserveStrategy(
-        address _token0ReserveStrategy,
-        address _token1ReserveStrategy
-    ) external onlyGovernorOrStrategistOrOperator nonReentrant {
-        _setReserveStrategy(_token0ReserveStrategy, _token1ReserveStrategy);
+        address _asset,
+        address _reserveStrategy
+    ) external onlyGovernorOrStrategist nonReentrant {
+        _setReserveStrategy(_asset, _reserveStrategy);
     }
 
     /**
-     * @notice Change the reserve strategies of the supported assets
-     * @dev Will throw if the strategies don't support the assets
-     * @param _token0ReserveStrategy The new reserve strategy for token0
-     * @param _token1ReserveStrategy The new reserve strategy for token1
+     * @notice Change the reserve strategy of the supported asset
+     * @dev Will throw if the strategies don't support the assets or if 
+     *      strategy is unsupported by the vault
+     * @param _asset Asset to set the reserve strategy for
+     * @param _reserveStrategy The new reserve strategy for token
      */
     function _setReserveStrategy(
-        address _token0ReserveStrategy,
-        address _token1ReserveStrategy
-    ) internal {
+        address _asset,
+        address _reserveStrategy
+    ) internal onlyPoolTokens(_asset) {
         require(
-            IStrategy(_token0ReserveStrategy).supportsAsset(token0),
-            "Invalid Reserve Strategy"
-        );
-        require(
-            IStrategy(_token1ReserveStrategy).supportsAsset(token1),
-            "Invalid Reserve Strategy"
+            IVault(vaultAddress).isStrategySupported(_reserveStrategy),
+            "Unsupported strategy"
         );
 
-        reserveStrategy[token0] = _token0ReserveStrategy;
-        reserveStrategy[token1] = _token1ReserveStrategy;
-
-        emit ReserveStrategiesChanged(
-            _token0ReserveStrategy,
-            _token1ReserveStrategy
+        require(
+            IStrategy(_reserveStrategy).supportsAsset(_asset),
+            "Invalid strategy for asset"
         );
+
+        PoolToken storage token = poolTokens[_asset];
+        token.reserveStrategy = _reserveStrategy;
+
+        emit ReserveStrategyChanged(
+            _asset,
+            _reserveStrategy
+        );
+    }
+
+    /**
+     * @notice Get reserve strategy of the given asset
+     * @param _asset Address of the asset
+     * @return reserveStrategyAddr Reserve strategy address
+     */
+    function reserveStrategy(address _asset) 
+        external view onlyPoolTokens(_asset) 
+        returns (address reserveStrategyAddr) 
+    {
+        return poolTokens[_asset].reserveStrategy;
+    }
+
+    /**
+     * @notice Change the minimum deposit threshold for the supported asset
+     * @param _asset Asset to set the threshold
+     * @param _minThreshold The new deposit threshold value
+     */
+    function setMinDepositThreshold(address _asset, uint256 _minThreshold)
+        external onlyGovernorOrStrategist onlyPoolTokens(_asset) 
+    {
+        PoolToken storage token = poolTokens[_asset];
+        token.minDepositThreshold = _minThreshold;
+        emit MinDepositThresholdChanged(_asset, _minThreshold);
     }
 
     /***************************************
@@ -230,9 +302,9 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
         external
         override
         onlyVault
+        onlyPoolTokens(_asset)
         nonReentrant
     {
-        require(_asset == token0 || _asset == token1, "Unsupported asset");
         IVault(vaultAddress).depositForUniswapV3(_asset, _amount);
         // Not emitting Deposit event since the Reserve strategy would do so
     }
@@ -248,13 +320,12 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
     function _depositAll() internal {
         uint256 token0Bal = IERC20(token0).balanceOf(address(this));
         uint256 token1Bal = IERC20(token1).balanceOf(address(this));
-        if (token0Bal > 0) {
+        if (token0Bal > 0 && token0Bal >= poolTokens[token0].minDepositThreshold) {
             IVault(vaultAddress).depositForUniswapV3(token0, token0Bal);
         }
-        if (token1Bal > 0) {
+        if (token1Bal > 0 && token1Bal >= poolTokens[token1].minDepositThreshold) {
             IVault(vaultAddress).depositForUniswapV3(token1, token1Bal);
         }
-
         // Not emitting Deposit events since the Reserve strategies would do so
     }
 
@@ -266,9 +337,7 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
         address recipient,
         address _asset,
         uint256 amount
-    ) external override onlyVault nonReentrant {
-        require(_asset == token0 || _asset == token1, "Unsupported asset");
-
+    ) external override onlyVault onlyPoolTokens(_asset) nonReentrant {
         IERC20 asset = IERC20(_asset);
         uint256 selfBalance = asset.balanceOf(address(this));
 
@@ -301,7 +370,7 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
      *          to Withdraw specified amount of the given asset.
      *
      * @param p         Position object
-     * @param asset     Token needed
+     * @param _asset    Token needed
      * @param amount    Minimum amount to liquidate
      *
      * @return liquidity    Liquidity to burn
@@ -310,11 +379,10 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
      */
     function _calculateLiquidityToWithdraw(
         Position memory p,
-        address asset,
+        address _asset,
         uint256 amount
     )
-        internal
-        view
+        internal view onlyPoolTokens(_asset)
         returns (
             uint128 liquidity,
             uint256 minAmount0,
@@ -333,7 +401,7 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
                 p.liquidity
             );
 
-        if (asset == token0) {
+        if (_asset == token0) {
             minAmount0 = amount;
             minAmount1 = totalAmount1 / (totalAmount0 / amount);
             liquidity = uniswapV3Helper.getLiquidityForAmounts(
@@ -486,10 +554,9 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
         external
         view
         override
+        onlyPoolTokens(_asset)
         returns (uint256 balance)
     {
-        require(_asset == token0 || _asset == token1, "Unsupported asset");
-
         balance = IERC20(_asset).balanceOf(address(this));
 
         (uint160 sqrtRatioX96, , , , , , ) = IUniswapV3Pool(platformAddress)
@@ -527,7 +594,7 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
      *      So, the result is smaller in size (int48 rather than bytes32 when using keccak256)
      * @param lowerTick Lower tick index
      * @param upperTick Upper tick index
-     * @param key A unique identifier to be used with ticksToTokenId
+     * @return key A unique identifier to be used with ticksToTokenId
      */
     function _getTickPositionKey(int24 lowerTick, int24 upperTick)
         internal
