@@ -481,6 +481,7 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
         if (nonRebasingCreditsPerToken[_account] != 0) {
             return; // Account already is non-rebasing
         }
+        uint256 oldBalance = balanceOf(_account); // For checks
         if (_creditBalances[_account] == 0) {
             // Since there is no existing balance, we can directly set it to
             // high resolution, and do not have to do any other bookkeeping
@@ -508,6 +509,10 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
             nonRebasingSupply = nonRebasingSupply.add(balanceOf(_account));
             _rebasingCredits = _rebasingCredits.sub(oldCredits);
         }
+
+        // Moving to a non rebasing account should always allow perfect accounting.
+        // This check does cost extra gas, but migrating accounts is rare.
+        require(oldBalance == balanceOf(_account), "Balances do not match");
 
         emit RebasingDisabled(
             _account,
