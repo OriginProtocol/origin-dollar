@@ -985,6 +985,7 @@ const deployUniswapV3Strategy = async () => {
   const mockUSDT = await ethers.getContract("MockUSDT");
   const mockUSDC = await ethers.getContract("MockUSDC");
   const mockDAI = await ethers.getContract("MockDAI");
+  const mockRouter = await ethers.getContract("MockUniswapRouter");
 
   await deployWithConfirmation("MockStrategy", [
     vault.address,
@@ -1030,7 +1031,8 @@ const deployUniswapV3Strategy = async () => {
         mockStrat.address,
         mockStrat.address,
         operatorAddr,
-        v3Helper.address
+        v3Helper.address,
+        mockRouter.address
       )
   );
   log("Initialized UniV3_USDC_USDT_Strategy");

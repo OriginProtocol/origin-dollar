@@ -87,6 +87,7 @@ module.exports = deploymentWithGovernanceProposal(
         cMorphoCompProxy.address, // Reserve strategy for USDT
         operatorAddr,
         dUniswapV3Helper.address,
+        assetAddresses.UniV3SwapRouter,
         await getTxOpts()
       )
     );

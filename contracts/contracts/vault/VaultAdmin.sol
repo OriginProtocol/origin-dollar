@@ -615,4 +615,28 @@ contract VaultAdmin is VaultStorage {
             .reserveStrategy(asset);
         IStrategy(reserveStrategy).withdraw(recipient, asset, amount);
     }
+
+    /**
+     * @notice Moves tokens from reserve strategy to the Uniswap V3 Strategy
+     * @dev Only callable by whitelisted Uniswap V3 strategies
+     * @param asset Address of the token
+     * @param amount Amount of token1 required
+     */
+    function withdrawAssetForUniswapV3(
+        address asset,
+        uint256 amount
+    ) external onlyUniswapV3Strategies nonReentrant {
+        IUniswapV3Strategy v3Strategy = IUniswapV3Strategy(msg.sender);
+        require(amount > 0, "Invalid amount specified");
+
+        address reserveStrategyAddr = IUniswapV3Strategy(v3Strategy)
+            .reserveStrategy(asset);
+        require(strategies[reserveStrategyAddr].isSupported, "Unknown reserve strategy");
+
+        IStrategy reserveStrategy = IStrategy(reserveStrategyAddr);
+        require(reserveStrategy.supportsAsset(asset), "Unsupported asset");
+        reserveStrategy.withdraw(msg.sender, asset, amount);
+
+        emit AssetTransferredToUniswapV3Strategy(msg.sender, asset, amount);
+    }
 }

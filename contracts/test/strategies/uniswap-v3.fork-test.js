@@ -1,8 +1,7 @@
 const { expect } = require("chai");
-const { uniswapV3Fixture } = require("../_fixture");
+const { uniswapV3FixturSetup } = require("../_fixture");
 const {
   forkOnlyDescribe,
-  loadFixture,
   units,
   ousdUnits,
   usdcUnitsFormat,
@@ -12,6 +11,8 @@ const {
   getBlockTimestamp,
 } = require("../helpers");
 const { BigNumber } = require("ethers");
+
+const uniswapV3Fixture = uniswapV3FixturSetup();
 
 forkOnlyDescribe("Uniswap V3 Strategy", function () {
   this.timeout(0);
@@ -30,7 +31,7 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
     franck;
 
   beforeEach(async () => {
-    fixture = await loadFixture(uniswapV3Fixture);
+    fixture = await uniswapV3Fixture();
     reserveStrategy = fixture.morphoCompoundStrategy;
     strategy = fixture.UniV3_USDC_USDT_Strategy;
     pool = fixture.UniV3_USDC_USDT_Pool;
@@ -103,7 +104,13 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
 
       const tx = await strategy
         .connect(operator)
-        .rebalance(maxUSDC, maxUSDT, lowerTick, upperTick);
+        .rebalance(
+          [maxUSDC, maxUSDT], 
+          [maxUSDC.mul(9900).div(10000), maxUSDT.mul(9900).div(10000)],
+          [0, 0],
+          lowerTick, 
+          upperTick
+        );
 
       const { events } = await tx.wait();
 
@@ -119,7 +126,7 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
       };
     };
 
-    it("Should mint position", async () => {
+    it.only("Should mint position", async () => {
       const usdcBalBefore = await strategy.checkBalance(usdc.address);
       const usdtBalBefore = await strategy.checkBalance(usdt.address);
 

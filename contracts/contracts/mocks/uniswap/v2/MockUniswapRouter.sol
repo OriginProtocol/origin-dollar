@@ -121,4 +121,28 @@ contract MockUniswapRouter is IUniswapV2Router {
     function WETH() external pure override returns (address) {
         return address(0);
     }
+
+    struct ExactInputSingleParams {
+        address tokenIn;
+        address tokenOut;
+        uint24 fee;
+        address recipient;
+        uint256 deadline;
+        uint256 amountIn;
+        uint256 amountOutMinimum;
+        uint160 sqrtPriceLimitX96;
+    }
+
+    function exactInputSingle(ExactInputSingleParams calldata params) external payable returns (uint256 amountOut) {
+        amountOut = params.amountIn.scaleBy(
+            Helpers.getDecimals(params.tokenIn),
+            Helpers.getDecimals(params.tokenOut)
+        );
+        IERC20(params.tokenIn).transferFrom(msg.sender, address(this), params.amountIn);
+        IERC20(params.tokenOut).transfer(params.recipient, amountOut);
+        require(
+            amountOut >= params.amountOutMinimum,
+            "UniswapMock: amountOut less than amountOutMinimum"
+        );
+    }
 }

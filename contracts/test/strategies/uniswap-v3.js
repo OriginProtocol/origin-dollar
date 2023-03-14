@@ -1,7 +1,6 @@
 const { expect } = require("chai");
 const { uniswapV3FixturSetup } = require("../_fixture");
 const {
-  loadFixture,
   units,
   ousdUnits,
   expectApproxSupply,
