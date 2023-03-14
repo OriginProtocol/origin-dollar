@@ -102,19 +102,19 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
         BigNumber.from(usdtAmount).mul(10 ** 6)
       );
 
-      console.log("Rebalance in process...")
+      console.log("Rebalance in process...");
 
       const tx = await strategy
         .connect(operator)
         .rebalance(
-          [maxUSDC, maxUSDT], 
+          [maxUSDC, maxUSDT],
           [maxUSDC.mul(9900).div(10000), maxUSDT.mul(9900).div(10000)],
           [0, 0],
-          lowerTick, 
+          lowerTick,
           upperTick
         );
 
-        console.log("Rebalance done")
+      console.log("Rebalance done");
 
       const { events } = await tx.wait();
 

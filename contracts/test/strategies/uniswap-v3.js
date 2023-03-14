@@ -1,10 +1,6 @@
 const { expect } = require("chai");
 const { uniswapV3FixturSetup } = require("../_fixture");
-const {
-  units,
-  ousdUnits,
-  expectApproxSupply,
-} = require("../helpers");
+const { units, ousdUnits, expectApproxSupply } = require("../helpers");
 
 const uniswapV3Fixture = uniswapV3FixturSetup();
 

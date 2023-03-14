@@ -267,8 +267,11 @@ contract VaultAdmin is VaultStorage {
      * @param _addr Address of the strategy to check
      * @return supported True, if strategy is recognized by the vault
      */
-    function isStrategySupported(address _addr) 
-        external view returns (bool supported) {
+    function isStrategySupported(address _addr)
+        external
+        view
+        returns (bool supported)
+    {
         supported = strategies[_addr].isSupported;
     }
 
@@ -622,16 +625,20 @@ contract VaultAdmin is VaultStorage {
      * @param asset Address of the token
      * @param amount Amount of token1 required
      */
-    function withdrawAssetForUniswapV3(
-        address asset,
-        uint256 amount
-    ) external onlyUniswapV3Strategies nonReentrant {
+    function withdrawAssetForUniswapV3(address asset, uint256 amount)
+        external
+        onlyUniswapV3Strategies
+        nonReentrant
+    {
         IUniswapV3Strategy v3Strategy = IUniswapV3Strategy(msg.sender);
         require(amount > 0, "Invalid amount specified");
 
         address reserveStrategyAddr = IUniswapV3Strategy(v3Strategy)
             .reserveStrategy(asset);
-        require(strategies[reserveStrategyAddr].isSupported, "Unknown reserve strategy");
+        require(
+            strategies[reserveStrategyAddr].isSupported,
+            "Unknown reserve strategy"
+        );
 
         IStrategy reserveStrategy = IStrategy(reserveStrategyAddr);
         require(reserveStrategy.supportsAsset(asset), "Unsupported asset");

@@ -84,9 +84,9 @@ library UniswapV3StrategyLib {
                     deadline: block.timestamp
                 });
 
-        (liquidity, amount0, amount1) = INonfungiblePositionManager(positionManager).increaseLiquidity(
-            params
-        );
+        (liquidity, amount0, amount1) = INonfungiblePositionManager(
+            positionManager
+        ).increaseLiquidity(params);
 
         p.liquidity += liquidity;
 
@@ -95,7 +95,7 @@ library UniswapV3StrategyLib {
 
     /**
      * @notice Removes liquidity of the position in the pool
-     * 
+     *
      * @param poolAddress Uniswap V3 pool address
      * @param positionManager Uniswap V3 Position manager
      * @param v3Helper Uniswap V3 helper contract
@@ -120,8 +120,9 @@ library UniswapV3StrategyLib {
 
         (uint160 sqrtRatioX96, , , , , , ) = IUniswapV3Pool(poolAddress)
             .slot0();
-        (uint256 exactAmount0, uint256 exactAmount1) = IUniswapV3Helper(v3Helper)
-            .getAmountsForLiquidity(
+        (uint256 exactAmount0, uint256 exactAmount1) = IUniswapV3Helper(
+            v3Helper
+        ).getAmountsForLiquidity(
                 sqrtRatioX96,
                 p.sqrtRatioAX96,
                 p.sqrtRatioBX96,
@@ -138,7 +139,8 @@ library UniswapV3StrategyLib {
                     deadline: block.timestamp
                 });
 
-        (amount0, amount1) = INonfungiblePositionManager(positionManager).decreaseLiquidity(params);
+        (amount0, amount1) = INonfungiblePositionManager(positionManager)
+            .decreaseLiquidity(params);
 
         p.liquidity -= liquidity;
 
@@ -164,7 +166,8 @@ library UniswapV3StrategyLib {
                 amount1Max: type(uint128).max
             });
 
-        (amount0, amount1) = INonfungiblePositionManager(positionManager).collect(params);
+        (amount0, amount1) = INonfungiblePositionManager(positionManager)
+            .collect(params);
 
         emit UniswapV3FeeCollected(tokenId, amount0, amount1);
     }
@@ -190,7 +193,8 @@ library UniswapV3StrategyLib {
         address _asset,
         uint256 amount
     )
-        external view
+        external
+        view
         returns (
             uint128 liquidity,
             uint256 minAmount0,
@@ -199,8 +203,7 @@ library UniswapV3StrategyLib {
     {
         IUniswapV3Helper uniswapV3Helper = IUniswapV3Helper(v3Helper);
         IUniswapV3Pool pool = IUniswapV3Pool(poolAddress);
-        (uint160 sqrtRatioX96, , , , , , ) = pool
-            .slot0();
+        (uint160 sqrtRatioX96, , , , , , ) = pool.slot0();
 
         // Total amount in Liquidity pools
         (uint256 totalAmount0, uint256 totalAmount1) = uniswapV3Helper

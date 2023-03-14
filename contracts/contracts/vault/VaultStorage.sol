@@ -49,7 +49,11 @@ contract VaultStorage is Initializable, Governable {
     event TrusteeFeeBpsChanged(uint256 _basis);
     event TrusteeAddressChanged(address _address);
     event NetOusdMintForStrategyThresholdChanged(uint256 _threshold);
-    event AssetTransferredToUniswapV3Strategy(address indexed strategy, address indexed asset, uint256 amount);
+    event AssetTransferredToUniswapV3Strategy(
+        address indexed strategy,
+        address indexed asset,
+        uint256 amount
+    );
 
     // Assets supported by the Vault, i.e. Stablecoins
     struct Asset {

@@ -19,10 +19,7 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
     using SafeERC20 for IERC20;
 
     event OperatorChanged(address _address);
-    event ReserveStrategyChanged(
-        address asset,
-        address reserveStrategy
-    );
+    event ReserveStrategyChanged(address asset, address reserveStrategy);
     event MinDepositThresholdChanged(
         address asset,
         uint256 minDepositThreshold
@@ -56,7 +53,12 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
     );
     event SwapsPauseStatusChanged(bool paused);
     event MaxSwapSlippageChanged(uint24 maxSlippage);
-    event AssetSwappedForRebalancing(address indexed tokenIn, address indexed tokenOut, uint256 amountIn, uint256 amountOut);
+    event AssetSwappedForRebalancing(
+        address indexed tokenIn,
+        address indexed tokenOut,
+        uint256 amountIn,
+        uint256 amountOut
+    );
 
     // The address that can manage the positions on Uniswap V3
     address public operatorAddr;
@@ -72,11 +74,9 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
     // Represents both tokens supported by the strategy
     struct PoolToken {
         bool isSupported; // True if asset is either token0 or token1
-
         // When the funds are not deployed in Uniswap V3 Pool, they will
         // be deposited to these reserve strategies
         address reserveStrategy;
-
         // Deposits to reserve strategy when contract balance exceeds this amount
         uint256 minDepositThreshold;
 
@@ -136,7 +136,7 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
     /***************************************
             Modifiers
     ****************************************/
-    
+
     /**
      * @dev Ensures that the caller is Governor or Strategist.
      */
@@ -173,7 +173,7 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
     /***************************************
             Initializer
     ****************************************/
-    
+
     /**
      * @dev Initialize the contract
      * @param _vaultAddress OUSD Vault
@@ -238,7 +238,7 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
     /***************************************
             Admin Utils
     ****************************************/
-    
+
     /**
      * @notice Change the address of the operator
      * @dev Can only be called by the Governor or Strategist
@@ -258,24 +258,24 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
      * @param _asset Asset to set the reserve strategy for
      * @param _reserveStrategy The new reserve strategy for token
      */
-    function setReserveStrategy(
-        address _asset,
-        address _reserveStrategy
-    ) external onlyGovernorOrStrategist nonReentrant {
+    function setReserveStrategy(address _asset, address _reserveStrategy)
+        external
+        onlyGovernorOrStrategist
+        nonReentrant
+    {
         _setReserveStrategy(_asset, _reserveStrategy);
     }
 
     /**
      * @notice Change the reserve strategy of the supported asset
-     * @dev Will throw if the strategies don't support the assets or if 
+     * @dev Will throw if the strategies don't support the assets or if
      *      strategy is unsupported by the vault
      * @param _asset Asset to set the reserve strategy for
      * @param _reserveStrategy The new reserve strategy for token
      */
-    function _setReserveStrategy(
-        address _asset,
-        address _reserveStrategy
-    ) internal {
+    function _setReserveStrategy(address _asset, address _reserveStrategy)
+        internal
+    {
         // require(
         //     IVault(vaultAddress).isStrategySupported(_reserveStrategy),
         //     "Unsupported strategy"
@@ -288,10 +288,7 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
 
         poolTokens[_asset].reserveStrategy = _reserveStrategy;
 
-        emit ReserveStrategyChanged(
-            _asset,
-            _reserveStrategy
-        );
+        emit ReserveStrategyChanged(_asset, _reserveStrategy);
     }
 
     /**
@@ -299,9 +296,11 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
      * @param _asset Address of the asset
      * @return reserveStrategyAddr Reserve strategy address
      */
-    function reserveStrategy(address _asset) 
-        external view onlyPoolTokens(_asset) 
-        returns (address reserveStrategyAddr) 
+    function reserveStrategy(address _asset)
+        external
+        view
+        onlyPoolTokens(_asset)
+        returns (address reserveStrategyAddr)
     {
         return poolTokens[_asset].reserveStrategy;
     }
@@ -312,7 +311,9 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
      * @param _minThreshold The new deposit threshold value
      */
     function setMinDepositThreshold(address _asset, uint256 _minThreshold)
-        external onlyGovernorOrStrategist onlyPoolTokens(_asset) 
+        external
+        onlyGovernorOrStrategist
+        onlyPoolTokens(_asset)
     {
         PoolToken storage token = poolTokens[_asset];
         token.minDepositThreshold = _minThreshold;
@@ -324,7 +325,10 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
         emit SwapsPauseStatusChanged(_paused);
     }
 
-    function setMaxSwapSlippage(uint24 _maxSlippage) external onlyGovernorOrStrategist {
+    function setMaxSwapSlippage(uint24 _maxSlippage)
+        external
+        onlyGovernorOrStrategist
+    {
         maxSwapSlippage = _maxSlippage;
         // emit SwapsPauseStatusChanged(_paused);
     }
@@ -363,17 +367,25 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
     function _depositAll() internal {
         uint256 token0Bal = IERC20(token0).balanceOf(address(this));
         uint256 token1Bal = IERC20(token1).balanceOf(address(this));
-        if (token0Bal > 0 && token0Bal >= poolTokens[token0].minDepositThreshold) {
+        if (
+            token0Bal > 0 && token0Bal >= poolTokens[token0].minDepositThreshold
+        ) {
             IVault(vaultAddress).depositForUniswapV3(token0, token0Bal);
         }
-        if (token1Bal > 0 && token1Bal >= poolTokens[token1].minDepositThreshold) {
+        if (
+            token1Bal > 0 && token1Bal >= poolTokens[token1].minDepositThreshold
+        ) {
             IVault(vaultAddress).depositForUniswapV3(token1, token1Bal);
         }
         // Not emitting Deposit events since the Reserve strategies would do so
     }
 
-    function _withdrawAssetFromCurrentPosition(address _asset, uint256 amount) internal {
-        UniswapV3StrategyLib.Position storage p = tokenIdToPosition[currentPositionTokenId];
+    function _withdrawAssetFromCurrentPosition(address _asset, uint256 amount)
+        internal
+    {
+        UniswapV3StrategyLib.Position storage p = tokenIdToPosition[
+            currentPositionTokenId
+        ];
         require(p.exists && p.liquidity > 0, "Liquidity error");
 
         // Figure out liquidity to burn
@@ -394,9 +406,9 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
             platformAddress,
             address(positionManager),
             address(uniswapV3Helper),
-            p, 
-            liquidity, 
-            minAmount0, 
+            p,
+            liquidity,
+            minAmount0,
             minAmount1
         );
     }
@@ -451,9 +463,7 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
         }
     }
 
-    function _getToken1ForToken0(uint256 amount0) internal {
-
-    }
+    function _getToken1ForToken0(uint256 amount0) internal {}
 
     /**
      * @dev Checks if there's enough balance left in the contract to provide liquidity.
@@ -461,9 +471,10 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
      * @param desiredAmount0 Minimum amount of token0 needed
      * @param desiredAmount1 Minimum amount of token1 needed
      */
-    function _ensureAssetBalances(uint256 desiredAmount0, uint256 desiredAmount1)
-        internal
-    {
+    function _ensureAssetBalances(
+        uint256 desiredAmount0,
+        uint256 desiredAmount1
+    ) internal {
         IVault vault = IVault(vaultAddress);
 
         // Withdraw enough funds from Reserve strategies
@@ -501,15 +512,23 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
         uint256 token0Balance = t0Contract.balanceOf(address(this));
         uint256 token1Balance = t1Contract.balanceOf(address(this));
 
-        uint256 token0Needed = desiredAmount0 > token0Balance ? desiredAmount0 - token0Balance : 0;
-        uint256 token1Needed = desiredAmount1 > token1Balance ? desiredAmount1 - token1Balance : 0;
+        uint256 token0Needed = desiredAmount0 > token0Balance
+            ? desiredAmount0 - token0Balance
+            : 0;
+        uint256 token1Needed = desiredAmount1 > token1Balance
+            ? desiredAmount1 - token1Balance
+            : 0;
 
         if (swapZeroForOne) {
             // Amount available in reserve strategies
-            uint256 t1ReserveBal = IStrategy(poolTokens[token1].reserveStrategy).checkBalance(token1);
+            uint256 t1ReserveBal = IStrategy(poolTokens[token1].reserveStrategy)
+                .checkBalance(token1);
 
             // Only swap when asset isn't available in reserve as well
-            require(token1Needed > 0 && token1Needed < t1ReserveBal, "Cannot swap when the asset is available in reserve");
+            require(
+                token1Needed > 0 && token1Needed < t1ReserveBal,
+                "Cannot swap when the asset is available in reserve"
+            );
             // Additional amount of token0 required for swapping
             token0Needed += swapAmountIn;
             // Subtract token1 that we will get from swapping
@@ -519,10 +538,14 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
             t0Contract.safeApprove(address(swapRouter), swapAmountIn);
         } else {
             // Amount available in reserve strategies
-            uint256 t0ReserveBal = IStrategy(poolTokens[token0].reserveStrategy).checkBalance(token0);
+            uint256 t0ReserveBal = IStrategy(poolTokens[token0].reserveStrategy)
+                .checkBalance(token0);
 
             // Only swap when asset isn't available in reserve as well
-            require(token0Needed > 0 && token0Needed < t0ReserveBal, "Cannot swap when the asset is available in reserve");
+            require(
+                token0Needed > 0 && token0Needed < t0ReserveBal,
+                "Cannot swap when the asset is available in reserve"
+            );
             // Additional amount of token1 required for swapping
             token1Needed += swapAmountIn;
             // Subtract token0 that we will get from swapping
@@ -536,11 +559,17 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
 
         // Fund strategy from reserve strategies
         if (token0Needed > 0) {
-            IVault(vaultAddress).withdrawAssetForUniswapV3(token0, token0Needed);
+            IVault(vaultAddress).withdrawAssetForUniswapV3(
+                token0,
+                token0Needed
+            );
         }
 
         if (token1Needed > 0) {
-            IVault(vaultAddress).withdrawAssetForUniswapV3(token0, token0Needed);
+            IVault(vaultAddress).withdrawAssetForUniswapV3(
+                token0,
+                token0Needed
+            );
         }
 
         // TODO: Slippage/price check
@@ -583,7 +612,10 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
         nonReentrant
     {
         if (currentPositionTokenId > 0) {
-            UniswapV3StrategyLib.collectFeesForToken(address(positionManager), currentPositionTokenId);
+            UniswapV3StrategyLib.collectFeesForToken(
+                address(positionManager),
+                currentPositionTokenId
+            );
         }
     }
 
@@ -702,7 +734,9 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
         // Provide liquidity
         if (tokenId > 0) {
             // Add liquidity to the position token
-            UniswapV3StrategyLib.Position storage p = tokenIdToPosition[tokenId];
+            UniswapV3StrategyLib.Position storage p = tokenIdToPosition[
+                tokenId
+            ];
             UniswapV3StrategyLib.increaseLiquidityForPosition(
                 address(positionManager),
                 p,
@@ -747,11 +781,17 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
         int24 lowerTick,
         int24 upperTick
     ) external onlyGovernorOrStrategistOrOperator nonReentrant {
-        _rebalance(desiredAmounts, minAmounts, minRedeemAmounts, lowerTick, upperTick);
+        _rebalance(
+            desiredAmounts,
+            minAmounts,
+            minRedeemAmounts,
+            lowerTick,
+            upperTick
+        );
     }
 
-    function swapAndRebalance(
-        SwapAndRebalanceParams calldata params
+    function swapAndRebalance(SwapAndRebalanceParams calldata params)
+        external
         // uint256[2] calldata desiredAmounts,
         // uint256[2] calldata minAmounts,
         // uint256[2] calldata minRedeemAmounts,
@@ -761,10 +801,14 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
         // uint256 swapMinAmountOut,
         // uint160 sqrtPriceLimitX96,
         // bool swapZeroForOne
-    ) external onlyGovernorOrStrategistOrOperator nonReentrant {
+        onlyGovernorOrStrategistOrOperator
+        nonReentrant
+    {
         require(params.lowerTick < params.upperTick, "Invalid tick range");
 
-        uint256 tokenId = ticksToTokenId[_getTickPositionKey(params.lowerTick, params.upperTick)];
+        uint256 tokenId = ticksToTokenId[
+            _getTickPositionKey(params.lowerTick, params.upperTick)
+        ];
 
         if (currentPositionTokenId > 0) {
             // Close any active position
@@ -777,18 +821,20 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
 
         // Withdraw enough funds from Reserve strategies and swap to desired amounts
         _ensureAssetsBySwapping(
-            params.desiredAmount0, 
-            params.desiredAmount1, 
-            params.swapAmountIn, 
-            params.swapMinAmountOut, 
-            params.sqrtPriceLimitX96, 
+            params.desiredAmount0,
+            params.desiredAmount1,
+            params.swapAmountIn,
+            params.swapMinAmountOut,
+            params.sqrtPriceLimitX96,
             params.swapZeroForOne
         );
 
         // Provide liquidity
         if (tokenId > 0) {
             // Add liquidity to the position token
-            UniswapV3StrategyLib.Position storage p = tokenIdToPosition[tokenId];
+            UniswapV3StrategyLib.Position storage p = tokenIdToPosition[
+                tokenId
+            ];
             UniswapV3StrategyLib.increaseLiquidityForPosition(
                 address(positionManager),
                 p,
@@ -932,10 +978,8 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
         emit UniswapV3PositionClosed(tokenId, amount0, amount1);
 
         // Collect all fees for position
-        (uint256 amount0Fee, uint256 amount1Fee) = UniswapV3StrategyLib.collectFeesForToken(
-            address(positionManager),
-            p.tokenId
-        );
+        (uint256 amount0Fee, uint256 amount1Fee) = UniswapV3StrategyLib
+            .collectFeesForToken(address(positionManager), p.tokenId);
 
         amount0 = amount0 + amount0Fee;
         amount1 = amount1 + amount1Fee;
@@ -1007,7 +1051,12 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
         });
 
         emit UniswapV3PositionMinted(tokenId, lowerTick, upperTick);
-        emit UniswapV3StrategyLib.UniswapV3LiquidityAdded(tokenId, amount0, amount1, liquidity);
+        emit UniswapV3StrategyLib.UniswapV3LiquidityAdded(
+            tokenId,
+            amount0,
+            amount1,
+            liquidity
+        );
     }
 
     /***************************************
