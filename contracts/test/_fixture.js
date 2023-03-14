@@ -112,11 +112,19 @@ async function defaultFixture() {
 
   const buyback = await ethers.getContract("Buyback");
 
+  const UniV3Lib = await ethers.getContract("UniswapV3StrategyLib");
   const UniV3_USDC_USDT_Proxy = await ethers.getContract(
     "UniV3_USDC_USDT_Proxy"
   );
-  const UniV3_USDC_USDT_Strategy = await ethers.getContractAt(
+  const UniswapV3StrategyFactory = await ethers.getContractFactory(
     "GeneralizedUniswapV3Strategy",
+    { libraries: { UniswapV3StrategyLib: UniV3Lib.address } }
+  );
+  const UniV3_USDC_USDT_Strategy = await ethers.getContractAt(
+    [
+      ...UniV3Lib.interface.format("full").filter((e) => e.startsWith("event")),
+      ...UniswapV3StrategyFactory.interface.format("full"),
+    ],
     UniV3_USDC_USDT_Proxy.address
   );
   const UniV3Helper = await ethers.getContract("UniswapV3Helper");

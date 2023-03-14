@@ -17,10 +17,12 @@ module.exports = deploymentWithProposal(
       "VaultAdmin",
       undefined,
       undefined,
+      undefined,
       true // Disable storage slot checking, we are renaming variables in InitializableAbstractStrategy.
     );
     const dVaultCore = await deployWithConfirmation(
       "VaultCore",
+      undefined,
       undefined,
       undefined,
       true // Disable storage slot checking, we are renaming variables in InitializableAbstractStrategy.
@@ -48,16 +50,19 @@ module.exports = deploymentWithProposal(
       "ConvexStrategy",
       undefined,
       undefined,
+      undefined,
       true // Disable storage slot checking, we are renaming variables in InitializableAbstractStrategy.
     );
     const dCompoundStrategyImpl = await deployWithConfirmation(
       "CompoundStrategy",
       undefined,
       undefined,
+      undefined,
       true // Disable storage slot checking, we are renaming variables in InitializableAbstractStrategy.
     );
     const dAaveStrategyImpl = await deployWithConfirmation(
       "AaveStrategy",
+      undefined,
       undefined,
       undefined,
       true // Disable storage slot checking, we are renaming variables in InitializableAbstractStrategy.

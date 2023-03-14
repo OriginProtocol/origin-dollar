@@ -102,6 +102,8 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
         BigNumber.from(usdtAmount).mul(10 ** 6)
       );
 
+      console.log("Rebalance in process...")
+
       const tx = await strategy
         .connect(operator)
         .rebalance(
@@ -111,6 +113,8 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
           lowerTick, 
           upperTick
         );
+
+        console.log("Rebalance done")
 
       const { events } = await tx.wait();
 
@@ -126,7 +130,7 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
       };
     };
 
-    it.only("Should mint position", async () => {
+    it("Should mint position", async () => {
       const usdcBalBefore = await strategy.checkBalance(usdc.address);
       const usdtBalBefore = await strategy.checkBalance(usdt.address);
 

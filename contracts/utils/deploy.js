@@ -50,13 +50,15 @@ const deployWithConfirmation = async (
   contractName,
   args,
   contract,
+  libraries,
   skipUpgradeSafety = false
 ) => {
   // check that upgrade doesn't corrupt the storage slots
   if (!skipUpgradeSafety) {
     await assertUpgradeIsSafe(
       hre,
-      typeof contract == "string" ? contract : contractName
+      typeof contract == "string" ? contract : contractName,
+      libraries
     );
   }
 
@@ -70,6 +72,7 @@ const deployWithConfirmation = async (
       args,
       contract,
       fieldsToCompare: null,
+      libraries,
       ...(await getTxOpts()),
     })
   );

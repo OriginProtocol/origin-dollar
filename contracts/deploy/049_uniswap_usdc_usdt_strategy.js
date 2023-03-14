@@ -27,8 +27,11 @@ module.exports = deploymentWithGovernanceProposal(
     // Deployer Actions
     // ----------------
 
-    // 0. Deploy UniswapV3Helper
+    // 0. Deploy UniswapV3Helper and UniswapV3StrategyLib
     const dUniswapV3Helper = await deployWithConfirmation("UniswapV3Helper");
+    const dUniswapV3StrategyLib = await deployWithConfirmation(
+      "UniswapV3StrategyLib"
+    );
 
     // 0. Upgrade VaultAdmin
     const dVaultAdmin = await deployWithConfirmation("VaultAdmin");
@@ -46,7 +49,12 @@ module.exports = deploymentWithGovernanceProposal(
 
     // 2. Deploy new implementation
     const dUniV3_USDC_USDT_StrategyImpl = await deployWithConfirmation(
-      "GeneralizedUniswapV3Strategy"
+      "GeneralizedUniswapV3Strategy",
+      [],
+      undefined,
+      {
+        UniswapV3StrategyLib: dUniswapV3StrategyLib.address,
+      }
     );
     const cUniV3_USDC_USDT_Strategy = await ethers.getContractAt(
       "GeneralizedUniswapV3Strategy",
@@ -77,7 +85,7 @@ module.exports = deploymentWithGovernanceProposal(
 
     // 4. Init and configure new Uniswap V3 strategy
     const initFunction =
-      "initialize(address,address,address,address,address,address,address)";
+      "initialize(address,address,address,address,address,address,address,address)";
     await withConfirmation(
       cUniV3_USDC_USDT_Strategy.connect(sDeployer)[initFunction](
         cVaultProxy.address, // Vault

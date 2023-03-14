@@ -1000,10 +1000,17 @@ const deployUniswapV3Strategy = async () => {
 
   const mockStrat = await ethers.getContract("MockStrategy");
 
+  const UniswapV3StrategyLib = await deployWithConfirmation(
+    "UniswapV3StrategyLib"
+  );
+
   const uniV3UsdcUsdtImpl = await deployWithConfirmation(
     "UniV3_USDC_USDT_Strategy",
     [],
-    "GeneralizedUniswapV3Strategy"
+    "GeneralizedUniswapV3Strategy",
+    {
+      UniswapV3StrategyLib: UniswapV3StrategyLib.address,
+    }
   );
   await deployWithConfirmation("UniV3_USDC_USDT_Proxy");
   const uniV3UsdcUsdtProxy = await ethers.getContract("UniV3_USDC_USDT_Proxy");

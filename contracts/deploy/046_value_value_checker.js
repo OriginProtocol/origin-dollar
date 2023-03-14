@@ -21,6 +21,7 @@ module.exports = deploymentWithProposal(
       "VaultValueChecker",
       [cVaultProxy.address, cOUSDProxy.address],
       undefined,
+      undefined,
       true // Incompatibable storage layout
     );
     const vaultValueChecker = await ethers.getContract("VaultValueChecker");

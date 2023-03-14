@@ -13,6 +13,8 @@ import { INonfungiblePositionManager } from "../interfaces/uniswap/v3/INonfungib
 import { IUniswapV3Helper } from "../interfaces/uniswap/v3/IUniswapV3Helper.sol";
 import { ISwapRouter } from "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 
+import { UniswapV3StrategyLib } from "../utils/UniswapV3StrategyLib.sol";
+
 contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
     using SafeERC20 for IERC20;
 
@@ -25,23 +27,23 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
         address asset,
         uint256 minDepositThreshold
     );
-    event UniswapV3FeeCollected(
-        uint256 indexed tokenId,
-        uint256 amount0,
-        uint256 amount1
-    );
-    event UniswapV3LiquidityAdded(
-        uint256 indexed tokenId,
-        uint256 amount0Sent,
-        uint256 amount1Sent,
-        uint128 liquidityMinted
-    );
-    event UniswapV3LiquidityRemoved(
-        uint256 indexed tokenId,
-        uint256 amount0Received,
-        uint256 amount1Received,
-        uint128 liquidityBurned
-    );
+    // event UniswapV3FeeCollected(
+    //     uint256 indexed tokenId,
+    //     uint256 amount0,
+    //     uint256 amount1
+    // );
+    // event UniswapV3LiquidityAdded(
+    //     uint256 indexed tokenId,
+    //     uint256 amount0Sent,
+    //     uint256 amount1Sent,
+    //     uint128 liquidityMinted
+    // );
+    // event UniswapV3LiquidityRemoved(
+    //     uint256 indexed tokenId,
+    //     uint256 amount0Received,
+    //     uint256 amount1Received,
+    //     uint128 liquidityBurned
+    // );
     event UniswapV3PositionMinted(
         uint256 indexed tokenId,
         int24 lowerTick,
@@ -80,30 +82,46 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
 
         // uint256 minSwapPrice; // Min swap price for the token
     }
+
+    struct SwapAndRebalanceParams {
+        uint256 desiredAmount0;
+        uint256 desiredAmount1;
+        uint256 minAmount0;
+        uint256 minAmount1;
+        uint256 minRedeemAmount0;
+        uint256 minRedeemAmount1;
+        int24 lowerTick;
+        int24 upperTick;
+        uint256 swapAmountIn;
+        uint256 swapMinAmountOut;
+        uint160 sqrtPriceLimitX96;
+        bool swapZeroForOne;
+    }
+
     mapping(address => PoolToken) public poolTokens;
 
     // Uniswap V3's PositionManager
     INonfungiblePositionManager public positionManager;
 
-    // Represents a position minted by this contract
-    struct Position {
-        bytes32 positionKey; // Required to read collectible fees from the V3 Pool
-        uint256 tokenId; // ERC721 token Id of the minted position
-        uint128 liquidity; // Amount of liquidity deployed
-        int24 lowerTick; // Lower tick index
-        int24 upperTick; // Upper tick index
-        bool exists; // True, if position is minted
-        // The following two fields are redundant but since we use these
-        // two quite a lot, think it might be cheaper to store it than
-        // compute it every time?
-        uint160 sqrtRatioAX96;
-        uint160 sqrtRatioBX96;
-    }
+    // // Represents a position minted by this contract
+    // struct Position {
+    //     bytes32 positionKey; // Required to read collectible fees from the V3 Pool
+    //     uint256 tokenId; // ERC721 token Id of the minted position
+    //     uint128 liquidity; // Amount of liquidity deployed
+    //     int24 lowerTick; // Lower tick index
+    //     int24 upperTick; // Upper tick index
+    //     bool exists; // True, if position is minted
+    //     // The following two fields are redundant but since we use these
+    //     // two quite a lot, think it might be cheaper to store it than
+    //     // compute it every time?
+    //     uint160 sqrtRatioAX96;
+    //     uint160 sqrtRatioBX96;
+    // }
 
     // A lookup table to find token IDs of position using f(lowerTick, upperTick)
     mapping(int48 => uint256) internal ticksToTokenId;
     // Maps tokenIDs to their Position object
-    mapping(uint256 => Position) public tokenIdToPosition;
+    mapping(uint256 => UniswapV3StrategyLib.Position) public tokenIdToPosition;
     // Token ID of the position that's being used to provide LP at the time
     uint256 public currentPositionTokenId;
 
@@ -257,16 +275,16 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
     function _setReserveStrategy(
         address _asset,
         address _reserveStrategy
-    ) internal onlyPoolTokens(_asset) {
-        require(
-            IVault(vaultAddress).isStrategySupported(_reserveStrategy),
-            "Unsupported strategy"
-        );
+    ) internal {
+        // require(
+        //     IVault(vaultAddress).isStrategySupported(_reserveStrategy),
+        //     "Unsupported strategy"
+        // );
 
-        require(
-            IStrategy(_reserveStrategy).supportsAsset(_asset),
-            "Invalid strategy for asset"
-        );
+        // require(
+        //     IStrategy(_reserveStrategy).supportsAsset(_asset),
+        //     "Invalid strategy for asset"
+        // );
 
         poolTokens[_asset].reserveStrategy = _reserveStrategy;
 
@@ -354,8 +372,36 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
         // Not emitting Deposit events since the Reserve strategies would do so
     }
 
+    function _withdrawAssetFromCurrentPosition(address _asset, uint256 amount) internal {
+        UniswapV3StrategyLib.Position storage p = tokenIdToPosition[currentPositionTokenId];
+        require(p.exists && p.liquidity > 0, "Liquidity error");
+
+        // Figure out liquidity to burn
+        (
+            uint128 liquidity,
+            uint256 minAmount0,
+            uint256 minAmount1
+        ) = UniswapV3StrategyLib.calculateLiquidityToWithdraw(
+                platformAddress,
+                address(uniswapV3Helper),
+                p,
+                _asset,
+                amount
+            );
+
+        // Liquidiate active position
+        UniswapV3StrategyLib.decreaseLiquidityForPosition(
+            platformAddress,
+            address(positionManager),
+            address(uniswapV3Helper),
+            p, 
+            liquidity, 
+            minAmount0, 
+            minAmount1
+        );
+    }
+
     /**
-     * @notice Withdraws asset from the reserve strategy
      * @inheritdoc InitializableAbstractStrategy
      */
     function withdraw(
@@ -367,86 +413,12 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
         uint256 selfBalance = asset.balanceOf(address(this));
 
         if (selfBalance < amount) {
-            Position storage p = tokenIdToPosition[currentPositionTokenId];
-            require(p.exists && p.liquidity > 0, "Liquidity error");
-
-            // Figure out liquidity to burn
-            (
-                uint128 liquidity,
-                uint256 minAmount0,
-                uint256 minAmount1
-            ) = _calculateLiquidityToWithdraw(
-                    p,
-                    _asset,
-                    (amount - selfBalance)
-                );
-
-            // Liquidiate active position
-            _decreaseLiquidityForPosition(p, liquidity, minAmount0, minAmount1);
+            _withdrawAssetFromCurrentPosition(_asset, amount - selfBalance);
         }
 
         // Transfer requested amount
         asset.safeTransfer(recipient, amount);
         emit Withdrawal(_asset, _asset, amount);
-    }
-
-    /**
-     * @notice Calculates the amount liquidity that needs to be removed
-     *          to Withdraw specified amount of the given asset.
-     *
-     * @param p         Position object
-     * @param _asset    Token needed
-     * @param amount    Minimum amount to liquidate
-     *
-     * @return liquidity    Liquidity to burn
-     * @return minAmount0   Minimum amount0 to expect
-     * @return minAmount1   Minimum amount1 to expect
-     */
-    function _calculateLiquidityToWithdraw(
-        Position memory p,
-        address _asset,
-        uint256 amount
-    )
-        internal view onlyPoolTokens(_asset)
-        returns (
-            uint128 liquidity,
-            uint256 minAmount0,
-            uint256 minAmount1
-        )
-    {
-        (uint160 sqrtRatioX96, , , , , , ) = IUniswapV3Pool(platformAddress)
-            .slot0();
-
-        // Total amount in Liquidity pools
-        (uint256 totalAmount0, uint256 totalAmount1) = uniswapV3Helper
-            .getAmountsForLiquidity(
-                sqrtRatioX96,
-                p.sqrtRatioAX96,
-                p.sqrtRatioBX96,
-                p.liquidity
-            );
-
-        if (_asset == token0) {
-            minAmount0 = amount;
-            minAmount1 = totalAmount1 / (totalAmount0 / amount);
-            liquidity = uniswapV3Helper.getLiquidityForAmounts(
-                sqrtRatioX96,
-                p.sqrtRatioAX96,
-                p.sqrtRatioBX96,
-                amount,
-                minAmount1
-            );
-        } else {
-            minAmount0 = totalAmount0 / (totalAmount1 / amount);
-            minAmount1 = amount;
-            liquidity = uniswapV3Helper.getLiquidityForAmounts(
-                sqrtRatioX96,
-                p.sqrtRatioAX96,
-                p.sqrtRatioBX96,
-                minAmount0,
-                amount
-            );
-        }
     }
 
     /**
@@ -611,7 +583,7 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
         nonReentrant
     {
         if (currentPositionTokenId > 0) {
-            _collectFeesForToken(currentPositionTokenId);
+            UniswapV3StrategyLib.collectFeesForToken(address(positionManager), currentPositionTokenId);
         }
     }
 
@@ -630,29 +602,6 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
             platformAddress,
             currentPositionTokenId
         );
-    }
-
-    /**
-     * @notice Collects the fees generated by the position on V3 pool
-     * @param tokenId Token ID of the position to collect fees of.
-     * @return amount0 Amount of token0 collected as fee
-     * @return amount1 Amount of token1 collected as fee
-     */
-    function _collectFeesForToken(uint256 tokenId)
-        internal
-        returns (uint256 amount0, uint256 amount1)
-    {
-        INonfungiblePositionManager.CollectParams
-            memory params = INonfungiblePositionManager.CollectParams({
-                tokenId: tokenId,
-                recipient: address(this),
-                amount0Max: type(uint128).max,
-                amount1Max: type(uint128).max
-            });
-
-        (amount0, amount1) = positionManager.collect(params);
-
-        emit UniswapV3FeeCollected(tokenId, amount0, amount1);
     }
 
     /**
@@ -753,8 +702,9 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
         // Provide liquidity
         if (tokenId > 0) {
             // Add liquidity to the position token
-            Position storage p = tokenIdToPosition[tokenId];
-            _increaseLiquidityForPosition(
+            UniswapV3StrategyLib.Position storage p = tokenIdToPosition[tokenId];
+            UniswapV3StrategyLib.increaseLiquidityForPosition(
+                address(positionManager),
                 p,
                 desiredAmounts[0],
                 desiredAmounts[1],
@@ -800,54 +750,62 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
         _rebalance(desiredAmounts, minAmounts, minRedeemAmounts, lowerTick, upperTick);
     }
 
-    function _swapAndRebalance(
-        uint256[2] calldata desiredAmounts,
-        uint256[2] calldata minAmounts,
-        uint256[2] calldata minRedeemAmounts,
-        int24 lowerTick,
-        int24 upperTick,
-        uint256 swapAmountIn,
-        uint256 swapMinAmountOut,
-        uint160 sqrtPriceLimitX96,
-        bool swapZeroForOne
-    ) internal {
-        require(lowerTick < upperTick, "Invalid tick range");
+    function swapAndRebalance(
+        SwapAndRebalanceParams calldata params
+        // uint256[2] calldata desiredAmounts,
+        // uint256[2] calldata minAmounts,
+        // uint256[2] calldata minRedeemAmounts,
+        // int24 lowerTick,
+        // int24 upperTick,
+        // uint256 swapAmountIn,
+        // uint256 swapMinAmountOut,
+        // uint160 sqrtPriceLimitX96,
+        // bool swapZeroForOne
+    ) external onlyGovernorOrStrategistOrOperator nonReentrant {
+        require(params.lowerTick < params.upperTick, "Invalid tick range");
 
-        int48 tickKey = _getTickPositionKey(lowerTick, upperTick);
-        uint256 tokenId = ticksToTokenId[tickKey];
+        uint256 tokenId = ticksToTokenId[_getTickPositionKey(params.lowerTick, params.upperTick)];
 
         if (currentPositionTokenId > 0) {
             // Close any active position
             _closePosition(
                 currentPositionTokenId,
-                minRedeemAmounts[0],
-                minRedeemAmounts[1]
+                params.minRedeemAmount0,
+                params.minRedeemAmount1
             );
         }
 
         // Withdraw enough funds from Reserve strategies and swap to desired amounts
-        _ensureAssetsBySwapping(desiredAmounts[0], desiredAmounts[1], swapAmountIn, swapMinAmountOut, sqrtPriceLimitX96, swapZeroForOne);
+        _ensureAssetsBySwapping(
+            params.desiredAmount0, 
+            params.desiredAmount1, 
+            params.swapAmountIn, 
+            params.swapMinAmountOut, 
+            params.sqrtPriceLimitX96, 
+            params.swapZeroForOne
+        );
 
         // Provide liquidity
         if (tokenId > 0) {
             // Add liquidity to the position token
-            Position storage p = tokenIdToPosition[tokenId];
-            _increaseLiquidityForPosition(
+            UniswapV3StrategyLib.Position storage p = tokenIdToPosition[tokenId];
+            UniswapV3StrategyLib.increaseLiquidityForPosition(
+                address(positionManager),
                 p,
-                desiredAmounts[0],
-                desiredAmounts[1],
-                minAmounts[0],
-                minAmounts[1]
+                params.desiredAmount0,
+                params.desiredAmount1,
+                params.minAmount0,
+                params.minAmount1
             );
         } else {
             // Mint new position
             (tokenId, , , ) = _mintPosition(
-                desiredAmounts[0],
-                desiredAmounts[1],
-                minAmounts[0],
-                minAmounts[1],
-                lowerTick,
-                upperTick
+                params.desiredAmount0,
+                params.desiredAmount1,
+                params.minAmount0,
+                params.minAmount1,
+                params.lowerTick,
+                params.upperTick
             );
         }
 
@@ -858,19 +816,19 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
         _depositAll();
     }
 
-    function swapAndRebalance(
-        uint256[2] calldata desiredAmounts,
-        uint256[2] calldata minAmounts,
-        uint256[2] calldata minRedeemAmounts,
-        int24 lowerTick,
-        int24 upperTick,
-        uint256 swapAmountIn,
-        uint256 swapMinAmountOut,
-        uint160 sqrtPriceLimitX96,
-        bool swapZeroForOne
-    ) external onlyGovernorOrStrategistOrOperator nonReentrant {
-        _swapAndRebalance(desiredAmounts, minAmounts, minRedeemAmounts, lowerTick, upperTick, swapAmountIn, swapMinAmountOut, sqrtPriceLimitX96, swapZeroForOne);
-    }
+    // function swapAndRebalance(
+    //     uint256[2] calldata desiredAmounts,
+    //     uint256[2] calldata minAmounts,
+    //     uint256[2] calldata minRedeemAmounts,
+    //     int24 lowerTick,
+    //     int24 upperTick,
+    //     uint256 swapAmountIn,
+    //     uint256 swapMinAmountOut,
+    //     uint160 sqrtPriceLimitX96,
+    //     bool swapZeroForOne
+    // ) external onlyGovernorOrStrategistOrOperator nonReentrant {
+    //     _swapAndRebalance(desiredAmounts, minAmounts, minRedeemAmounts, lowerTick, upperTick, swapAmountIn, swapMinAmountOut, sqrtPriceLimitX96, swapZeroForOne);
+    // }
 
     /**
      * @notice Increases liquidity of the active position.
@@ -888,12 +846,12 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
     ) external onlyGovernorOrStrategistOrOperator nonReentrant {
         require(currentPositionTokenId > 0, "No active position");
 
-        // // Withdraw enough funds from Reserve strategies
-        // _ensureAssetBalances(desiredAmount0, desiredAmount1);
+        // Withdraw enough funds from Reserve strategies
+        _ensureAssetBalances(desiredAmount0, desiredAmount1);
 
-        Position storage p = tokenIdToPosition[currentPositionTokenId];
-        _increaseLiquidityForPosition(
-            p,
+        UniswapV3StrategyLib.increaseLiquidityForPosition(
+            address(positionManager),
+            tokenIdToPosition[currentPositionTokenId],
             desiredAmount0,
             desiredAmount1,
             minAmount0,
@@ -949,7 +907,7 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
         uint256 minAmount0,
         uint256 minAmount1
     ) internal returns (uint256 amount0, uint256 amount1) {
-        Position storage p = tokenIdToPosition[tokenId];
+        UniswapV3StrategyLib.Position storage p = tokenIdToPosition[tokenId];
         require(p.exists, "Invalid position");
 
         if (p.liquidity == 0) {
@@ -957,26 +915,30 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
         }
 
         // Remove all liquidity
-        (amount0, amount1) = _decreaseLiquidityForPosition(
+        (amount0, amount1) = UniswapV3StrategyLib.decreaseLiquidityForPosition(
+            platformAddress,
+            address(positionManager),
+            address(uniswapV3Helper),
             p,
             p.liquidity,
             minAmount0,
             minAmount1
         );
 
-        // Collect all fees for position
-        (uint256 amount0Fee, uint256 amount1Fee) = _collectFeesForToken(
-            tokenId
-        );
-
-        amount0 = amount0 + amount0Fee;
-        amount1 = amount1 + amount1Fee;
-
         if (tokenId == currentPositionTokenId) {
             currentPositionTokenId = 0;
         }
 
         emit UniswapV3PositionClosed(tokenId, amount0, amount1);
+
+        // Collect all fees for position
+        (uint256 amount0Fee, uint256 amount1Fee) = UniswapV3StrategyLib.collectFeesForToken(
+            address(positionManager),
+            p.tokenId
+        );
+
+        amount0 = amount0 + amount0Fee;
+        amount1 = amount1 + amount1Fee;
     }
 
     /**
@@ -1011,7 +973,7 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
         )
     {
         int48 tickKey = _getTickPositionKey(lowerTick, upperTick);
-        require(ticksToTokenId[tickKey] != 0, "Duplicate position mint");
+        require(ticksToTokenId[tickKey] == 0, "Duplicate position mint");
 
         INonfungiblePositionManager.MintParams
             memory params = INonfungiblePositionManager.MintParams({
@@ -1031,7 +993,7 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
         (tokenId, liquidity, amount0, amount1) = positionManager.mint(params);
 
         ticksToTokenId[tickKey] = tokenId;
-        tokenIdToPosition[tokenId] = Position({
+        tokenIdToPosition[tokenId] = UniswapV3StrategyLib.Position({
             exists: true,
             tokenId: tokenId,
             liquidity: liquidity,
@@ -1045,98 +1007,7 @@ contract GeneralizedUniswapV3Strategy is InitializableAbstractStrategy {
         });
 
         emit UniswapV3PositionMinted(tokenId, lowerTick, upperTick);
-        emit UniswapV3LiquidityAdded(tokenId, amount0, amount1, liquidity);
-    }
-
-    /**
-     * @notice Increases liquidity of the position in the pool
-     * @param p Position object
-     * @param desiredAmount0 Desired amount of token0 to provide liquidity
-     * @param desiredAmount1 Desired amount of token1 to provide liquidity
-     * @param minAmount0 Min amount of token0 to deposit
-     * @param minAmount1 Min amount of token1 to deposit
-     * @return liquidity Amount of liquidity added to the pool
-     * @return amount0 Amount of token0 added to the position
-     * @return amount1 Amount of token1 added to the position
-     */
-    function _increaseLiquidityForPosition(
-        Position storage p,
-        uint256 desiredAmount0,
-        uint256 desiredAmount1,
-        uint256 minAmount0,
-        uint256 minAmount1
-    )
-        internal
-        returns (
-            uint128 liquidity,
-            uint256 amount0,
-            uint256 amount1
-        )
-    {
-        require(p.exists, "Unknown position");
-
-        INonfungiblePositionManager.IncreaseLiquidityParams
-            memory params = INonfungiblePositionManager
-                .IncreaseLiquidityParams({
-                    tokenId: p.tokenId,
-                    amount0Desired: desiredAmount0,
-                    amount1Desired: desiredAmount1,
-                    amount0Min: minAmount0,
-                    amount1Min: minAmount1,
-                    deadline: block.timestamp
-                });
-
-        (liquidity, amount0, amount1) = positionManager.increaseLiquidity(
-            params
-        );
-
-        p.liquidity += liquidity;
-
-        emit UniswapV3LiquidityAdded(p.tokenId, amount0, amount1, liquidity);
-    }
-
-    /**
-     * @notice Removes liquidity of the position in the pool
-     * @param p Position object
-     * @param liquidity Amount of liquidity to remove form the position
-     * @param minAmount0 Min amount of token0 to withdraw
-     * @param minAmount1 Min amount of token1 to withdraw
-     * @return amount0 Amount of token0 received after liquidation
-     * @return amount1 Amount of token1 received after liquidation
-     */
-    function _decreaseLiquidityForPosition(
-        Position storage p,
-        uint128 liquidity,
-        uint256 minAmount0,
-        uint256 minAmount1
-    ) internal returns (uint256 amount0, uint256 amount1) {
-        require(p.exists, "Unknown position");
-
-        (uint160 sqrtRatioX96, , , , , , ) = IUniswapV3Pool(platformAddress)
-            .slot0();
-        (uint256 exactAmount0, uint256 exactAmount1) = uniswapV3Helper
-            .getAmountsForLiquidity(
-                sqrtRatioX96,
-                p.sqrtRatioAX96,
-                p.sqrtRatioBX96,
-                liquidity
-            );
-
-        INonfungiblePositionManager.DecreaseLiquidityParams
-            memory params = INonfungiblePositionManager
-                .DecreaseLiquidityParams({
-                    tokenId: p.tokenId,
-                    liquidity: liquidity,
-                    amount0Min: minAmount0,
-                    amount1Min: minAmount1,
-                    deadline: block.timestamp
-                });
-
-        (amount0, amount1) = positionManager.decreaseLiquidity(params);
-
-        p.liquidity -= liquidity;
-
-        emit UniswapV3LiquidityRemoved(p.tokenId, amount0, amount1, liquidity);
+        emit UniswapV3StrategyLib.UniswapV3LiquidityAdded(tokenId, amount0, amount1, liquidity);
     }
 
     /***************************************
