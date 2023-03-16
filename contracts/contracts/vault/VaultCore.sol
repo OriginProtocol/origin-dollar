@@ -413,7 +413,6 @@ contract VaultCore is VaultStorage {
             uint256 toProtocolReserve = (newYield * protocolReserveBps) / 10000;
             protocolReserve += toProtocolReserve;
             _dripperReserve += newYield - toProtocolReserve;
-
             emit YieldReceived(newYield);
         }
 
@@ -444,7 +443,11 @@ contract VaultCore is VaultStorage {
         });
 
         // Distribute
-        _distibuteYield(postDripperYield, ousdSupply, vaultValue);
+        reserves = protocolReserve + _dripperReserve;
+        if (vaultValue > (ousdSupply + reserves)) {
+            uint256 excessValue = vaultValue - (ousdSupply + reserves);
+            _distibuteYield(excessValue, ousdSupply, vaultValue);
+        }
     }
 
     function _distibuteYield(
@@ -455,15 +458,13 @@ contract VaultCore is VaultStorage {
         if (yield == 0) {
             return;
         }
-        uint256 newSupply = ousdSupply + yield;
-        // OUSD supply must increase, OUSD must remain solvent
-        if ((newSupply <= ousdSupply) || (newSupply > vaultValue)) {
-            // If we have funds to distribute but are not increasing supply or
-            // keeping the protocol solvant, then save funds for later
-            // distribution.
-            dripperReserve += yield;
-            return;
-        }
+        // This should never revert, because _distibuteYield should never be
+        // called unless there is excess supply. Neverless, we really care
+        // about this invarient, so we check it anyway.
+        require(
+            vaultValue >= ousdSupply + yield,
+            "No distribution if insolvent"
+        );
 
         // Mint trustee fees
         address _trusteeAddress = trusteeAddress; // gas savings
@@ -475,7 +476,12 @@ contract VaultCore is VaultStorage {
         }
 
         // Rebase remaining to users
-        oUSD.changeSupply(newSupply);
+        // Must only move up. (Invarient)
+        // Can only move up because:
+        // ousdSupply + yield >= ousdSupply
+        // also:
+        // fee (already minted) < yield
+        oUSD.changeSupply(ousdSupply + yield);
         emit YieldDistribution(_trusteeAddress, yield, fee);
     }
 

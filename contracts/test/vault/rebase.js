@@ -278,7 +278,7 @@ describe("Vault protocol reserve accrual", async () => {
       options;
     it(`should collect ${expectedReserveIncrease} reserve from ${_yield} yield at ${reserveBasis}bp `, async function () {
       const fixture = await loadFixture(defaultFixture);
-      const { matt, governor, ousd, usdt, vault, mockNonRebasing } = fixture;
+      const { matt, governor, ousd, usdt, vault } = fixture;
       // const trustee = mockNonRebasing;
 
       // Setup reserve rate
