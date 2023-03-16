@@ -11,7 +11,7 @@ contract MockUniswapV3Pool {
 
     uint160 public mockSqrtPriceX96;
     int24 public mockTick;
-    IUniswapV3Helper internal uniswapV3Helper;
+    IUniswapV3Helper internal helper;
 
     constructor(
         address _token0,
@@ -22,7 +22,7 @@ contract MockUniswapV3Pool {
         token0 = _token0;
         token1 = _token1;
         fee = _fee;
-        uniswapV3Helper = IUniswapV3Helper(_helper);
+        helper = IUniswapV3Helper(_helper);
     }
 
     function slot0()
@@ -43,7 +43,7 @@ contract MockUniswapV3Pool {
 
     function setTick(int24 tick) public {
         mockTick = tick;
-        mockSqrtPriceX96 = uniswapV3Helper.getSqrtRatioAtTick(tick);
+        mockSqrtPriceX96 = helper.getSqrtRatioAtTick(tick);
     }
 
     function setVal(uint160 sqrtPriceX96, int24 tick) public {

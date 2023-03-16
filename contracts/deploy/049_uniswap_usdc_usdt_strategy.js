@@ -29,8 +29,8 @@ module.exports = deploymentWithGovernanceProposal(
 
     // 0. Deploy UniswapV3Helper and UniswapV3StrategyLib
     const dUniswapV3Helper = await deployWithConfirmation("UniswapV3Helper");
-    const dUniswapV3StrategyLib = await deployWithConfirmation(
-      "UniswapV3StrategyLib"
+    const dUniV3Lib = await deployWithConfirmation(
+      "UniswapV3Library"
     );
 
     // 0. Upgrade VaultAdmin
@@ -49,15 +49,23 @@ module.exports = deploymentWithGovernanceProposal(
 
     // 2. Deploy new implementation
     const dUniV3_USDC_USDT_StrategyImpl = await deployWithConfirmation(
-      "GeneralizedUniswapV3Strategy",
-      [],
+      "UniswapV3Strategy",
+      undefined,
       undefined,
       {
-        UniswapV3StrategyLib: dUniswapV3StrategyLib.address,
+        UniswapV3Library: dUniV3Lib.address
+      }
+    );
+    const dUniV3PoolLiquidityManager = await deployWithConfirmation(
+      "UniswapV3LiquidityManager",
+      undefined,
+      undefined,
+      {
+        UniswapV3Library: dUniV3Lib.address
       }
     );
     const cUniV3_USDC_USDT_Strategy = await ethers.getContractAt(
-      "GeneralizedUniswapV3Strategy",
+      "UniswapV3Strategy",
       dUniV3_USDC_USDT_Proxy.address
     );
 
@@ -85,22 +93,27 @@ module.exports = deploymentWithGovernanceProposal(
 
     // 4. Init and configure new Uniswap V3 strategy
     const initFunction =
-      "initialize(address,address,address,address,address,address,address,address)";
+      "initialize(address,address,address,address,address,address)";
     await withConfirmation(
       cUniV3_USDC_USDT_Strategy.connect(sDeployer)[initFunction](
         cVaultProxy.address, // Vault
         assetAddresses.UniV3_USDC_USDT_Pool, // Pool address
         assetAddresses.UniV3PositionManager, // NonfungiblePositionManager
-        cMorphoCompProxy.address, // Reserve strategy for USDC
-        cMorphoCompProxy.address, // Reserve strategy for USDT
-        operatorAddr,
         dUniswapV3Helper.address,
         assetAddresses.UniV3SwapRouter,
+        operatorAddr,
         await getTxOpts()
       )
     );
 
-    // 5. Transfer governance
+    // 5. Set LiquidityManager Implementation
+    await withConfirmation(
+      cUniV3_USDC_USDT_Strategy
+        .connect(sDeployer)
+        .setLiquidityManagerImpl(dUniV3PoolLiquidityManager.address)
+    )
+
+    // 6. Transfer governance
     await withConfirmation(
       cUniV3_USDC_USDT_Strategy
         .connect(sDeployer)
@@ -151,6 +164,18 @@ module.exports = deploymentWithGovernanceProposal(
           contract: cUniV3_USDC_USDT_Strategy,
           signature: "setHarvesterAddress(address)",
           args: [cHarvesterProxy.address],
+        },
+        // 4. Set Reserve Strategy for USDC
+        {
+          contract: cUniV3_USDC_USDT_Strategy,
+          signature: "setReserveStrategy(address,address)",
+          args: [assetAddresses.USDC, cMorphoCompProxy.address],
+        },
+        // 4. Set Reserve Strategy for USDT
+        {
+          contract: cUniV3_USDC_USDT_Strategy,
+          signature: "setReserveStrategy(address,address)",
+          args: [assetAddresses.USDT, cMorphoCompProxy.address],
         },
       ],
     };

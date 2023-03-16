@@ -555,12 +555,12 @@ contract VaultAdmin is VaultStorage {
      * @param asset The asset to deposit
      * @param amount Amount of tokens to deposit
      */
-    function depositForUniswapV3(address asset, uint256 amount)
+    function depositToUniswapV3Reserve(address asset, uint256 amount)
         external
         onlyUniswapV3Strategies
         nonReentrant
     {
-        _depositForUniswapV3(msg.sender, asset, amount);
+        _depositToUniswapV3Reserve(msg.sender, asset, amount);
     }
 
     /**
@@ -569,7 +569,7 @@ contract VaultAdmin is VaultStorage {
      * @param asset The asset to deposit
      * @param amount Amount of tokens to deposit
      */
-    function _depositForUniswapV3(
+    function _depositToUniswapV3Reserve(
         address v3Strategy,
         address asset,
         uint256 amount
@@ -578,45 +578,11 @@ contract VaultAdmin is VaultStorage {
         address reserveStrategy = IUniswapV3Strategy(v3Strategy)
             .reserveStrategy(asset);
         require(
-            reserveStrategy != address(0),
-            "Invalid Reserve Strategy address"
+            strategies[reserveStrategy].isSupported,
+            "Unknown reserve strategy"
         );
         IERC20(asset).safeTransferFrom(v3Strategy, reserveStrategy, amount);
         IStrategy(reserveStrategy).deposit(asset, amount);
-    }
-
-    /**
-     * @notice Moves tokens from reserve strategy to the recipient
-     * @dev Only callable by whitelisted Uniswap V3 strategies
-     * @param recipient Receiver of the funds
-     * @param asset The asset to move
-     * @param amount Amount of tokens to move
-     */
-    function withdrawForUniswapV3(
-        address recipient,
-        address asset,
-        uint256 amount
-    ) external onlyUniswapV3Strategies nonReentrant {
-        _withdrawForUniswapV3(msg.sender, recipient, asset, amount);
-    }
-
-    /**
-     * @notice Moves tokens from reserve strategy to the recipient
-     * @param v3Strategy Uniswap V3 Strategy that's requesting the withdraw
-     * @param recipient Receiver of the funds
-     * @param asset The asset to move
-     * @param amount Amount of tokens to move
-     */
-    function _withdrawForUniswapV3(
-        address v3Strategy,
-        address recipient,
-        address asset,
-        uint256 amount
-    ) internal {
-        require(strategies[v3Strategy].isSupported, "Strategy not approved");
-        address reserveStrategy = IUniswapV3Strategy(v3Strategy)
-            .reserveStrategy(asset);
-        IStrategy(reserveStrategy).withdraw(recipient, asset, amount);
     }
 
     /**
@@ -625,7 +591,7 @@ contract VaultAdmin is VaultStorage {
      * @param asset Address of the token
      * @param amount Amount of token1 required
      */
-    function withdrawAssetForUniswapV3(address asset, uint256 amount)
+    function withdrawFromUniswapV3Reserve(address asset, uint256 amount)
         external
         onlyUniswapV3Strategies
         nonReentrant

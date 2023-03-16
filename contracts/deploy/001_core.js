@@ -1076,7 +1076,7 @@ const main = async () => {
   await deployConvexStrategy();
   await deployConvexOUSDMetaStrategy();
   await deployConvexLUSDMetaStrategy();
-  await deployUniswapV3Strategy();
+  // await deployUniswapV3Strategy();
   const harvesterProxy = await deployHarvester();
   await configureVault(harvesterProxy);
   await configureStrategies(harvesterProxy);

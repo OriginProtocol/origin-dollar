@@ -1,5 +1,5 @@
 const { expect } = require("chai");
-const { uniswapV3FixturSetup } = require("../_fixture");
+const { uniswapV3FixturSetup, impersonateAndFundContract } = require("../_fixture");
 const {
   forkOnlyDescribe,
   units,
@@ -102,19 +102,63 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
         BigNumber.from(usdtAmount).mul(10 ** 6)
       );
 
-      console.log("Rebalance in process...");
-
       const tx = await strategy
         .connect(operator)
         .rebalance(
-          [maxUSDC, maxUSDT],
-          [maxUSDC.mul(9900).div(10000), maxUSDT.mul(9900).div(10000)],
-          [0, 0],
+          maxUSDC, maxUSDT,
+          maxUSDC.mul(9900).div(10000), maxUSDT.mul(9900).div(10000),
+          0, 0,
           lowerTick,
           upperTick
         );
 
-      console.log("Rebalance done");
+      const { events } = await tx.wait();
+
+      const [tokenId, amount0Minted, amount1Minted, liquidityMinted] =
+        events.find((e) => e.event == "UniswapV3LiquidityAdded").args;
+
+      return {
+        tokenId,
+        amount0Minted,
+        amount1Minted,
+        liquidityMinted,
+        tx,
+      };
+    };
+
+    const mintLiquidityBySwapping = async (
+      lowerTick,
+      upperTick,
+      usdcAmount,
+      usdtAmount,
+      swapAmountIn,
+      swapMinAmountOut,
+      sqrtPriceLimitX96,
+      swapZeroForOne
+    ) => {
+      const [maxUSDC, maxUSDT] = await findMaxDepositableAmount(
+        lowerTick,
+        upperTick,
+        BigNumber.from(usdcAmount).mul(10 ** 6),
+        BigNumber.from(usdtAmount).mul(10 ** 6)
+      );
+
+      const tx = await strategy
+        .connect(operator)
+        .swapAndRebalance({
+          desiredAmount0: maxUSDC,
+          desiredAmount1: maxUSDT,
+          minAmount0: maxUSDC.mul(9900).div(10000),
+          minAmount1: maxUSDT.mul(9900).div(10000),
+          minRedeemAmount0: 0,
+          minRedeemAmount1: 0,
+          lowerTick,
+          upperTick,
+          swapAmountIn: BigNumber.from(swapAmountIn).mul(10 ** 6),
+          swapMinAmountOut: BigNumber.from(swapMinAmountOut).mul(10 ** 6),
+          sqrtPriceLimitX96,
+          swapZeroForOne
+        });
 
       const { events } = await tx.wait();
 
@@ -179,8 +223,160 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
       expect(storedPosition.lowerTick).to.equal(lowerTick);
       expect(storedPosition.upperTick).to.equal(upperTick);
       expect(storedPosition.liquidity).to.equal(liquidityMinted);
-      expect(await strategy.currentPositionTokenId()).to.equal(tokenId);
+      expect(await strategy.activeTokenId()).to.equal(tokenId);
     });
+
+    it("Should swap USDC for USDT and mint position", async () => {
+      // Move all USDT out of reserve
+      await reserveStrategy
+        .connect(await impersonateAndFundContract(vault.address))
+        .withdraw(
+          vault.address,
+          usdt.address,
+          await reserveStrategy.checkBalance(usdt.address)
+        )
+      
+      const usdcBalBefore = await strategy.checkBalance(usdc.address);
+      const usdtBalBefore = await strategy.checkBalance(usdt.address);
+
+      const [, activeTick] = await pool.slot0();
+      const lowerTick = activeTick - 1000;
+      const upperTick = activeTick + 1000;
+
+      const swapAmountIn = "101000"
+      const swapAmountOut = "100000"
+      const sqrtPriceLimitX96 = v3Helper.getSqrtRatioAtTick(activeTick - 50)
+      const swapZeroForOne = true
+
+      const { tokenId, amount0Minted, amount1Minted, liquidityMinted, tx } =
+        await mintLiquidityBySwapping(
+          lowerTick, 
+          upperTick, 
+          "100000", 
+          "100000",
+          swapAmountIn,
+          swapAmountOut,
+          sqrtPriceLimitX96,
+          swapZeroForOne
+        );
+
+      // Check events
+      await expect(tx).to.have.emittedEvent("AssetSwappedForRebalancing");
+      await expect(tx).to.have.emittedEvent("UniswapV3PositionMinted");
+      await expect(tx).to.have.emittedEvent("UniswapV3LiquidityAdded");
+
+      // Check minted position data
+      const nfp = await positionManager.positions(tokenId);
+      expect(nfp.token0).to.equal(usdc.address, "Invalid token0 address");
+      expect(nfp.token1).to.equal(usdt.address, "Invalid token1 address");
+      expect(nfp.tickLower).to.equal(lowerTick, "Invalid lower tick");
+      expect(nfp.tickUpper).to.equal(upperTick, "Invalid upper tick");
+
+      // Check Strategy balance
+      const usdcBalAfter = await strategy.checkBalance(usdc.address);
+      const usdtBalAfter = await strategy.checkBalance(usdt.address);
+      expect(usdcBalAfter).gte(
+        usdcBalBefore,
+        "Expected USDC balance to have increased"
+      );
+      expect(usdtBalAfter).gte(
+        usdtBalBefore,
+        "Expected USDT balance to have increased"
+      );
+      expect(usdcBalAfter).to.approxEqual(
+        usdcBalBefore.add(amount0Minted),
+        "Deposited USDC mismatch"
+      );
+      expect(usdtBalAfter).to.approxEqual(
+        usdtBalBefore.add(amount1Minted),
+        "Deposited USDT mismatch"
+      );
+
+      // Check data on strategy
+      const storedPosition = await strategy.tokenIdToPosition(tokenId);
+      expect(storedPosition.exists).to.be.true;
+      expect(storedPosition.tokenId).to.equal(tokenId);
+      expect(storedPosition.lowerTick).to.equal(lowerTick);
+      expect(storedPosition.upperTick).to.equal(upperTick);
+      expect(storedPosition.liquidity).to.equal(liquidityMinted);
+      expect(await strategy.activeTokenId()).to.equal(tokenId);
+    })
+
+    it("Should swap USDT for USDC and mint position", async () => {
+      // Move all USDC out of reserve
+      await reserveStrategy
+        .connect(await impersonateAndFundContract(vault.address))
+        .withdraw(
+          vault.address,
+          usdc.address,
+          await reserveStrategy.checkBalance(usdc.address)
+        )
+      
+      const usdcBalBefore = await strategy.checkBalance(usdc.address);
+      const usdtBalBefore = await strategy.checkBalance(usdt.address);
+
+      const [, activeTick] = await pool.slot0();
+      const lowerTick = activeTick - 1000;
+      const upperTick = activeTick + 1000;
+
+      const swapAmountIn = "101000"
+      const swapAmountOut = "100000"
+      const sqrtPriceLimitX96 = v3Helper.getSqrtRatioAtTick(activeTick + 50)
+      const swapZeroForOne = false
+
+      const { tokenId, amount0Minted, amount1Minted, liquidityMinted, tx } =
+        await mintLiquidityBySwapping(
+          lowerTick, 
+          upperTick, 
+          "100000", 
+          "100000",
+          swapAmountIn,
+          swapAmountOut,
+          sqrtPriceLimitX96,
+          swapZeroForOne
+        );
+
+      // Check events
+      await expect(tx).to.have.emittedEvent("AssetSwappedForRebalancing");
+      await expect(tx).to.have.emittedEvent("UniswapV3PositionMinted");
+      await expect(tx).to.have.emittedEvent("UniswapV3LiquidityAdded");
+
+      // Check minted position data
+      const nfp = await positionManager.positions(tokenId);
+      expect(nfp.token0).to.equal(usdc.address, "Invalid token0 address");
+      expect(nfp.token1).to.equal(usdt.address, "Invalid token1 address");
+      expect(nfp.tickLower).to.equal(lowerTick, "Invalid lower tick");
+      expect(nfp.tickUpper).to.equal(upperTick, "Invalid upper tick");
+
+      // Check Strategy balance
+      const usdcBalAfter = await strategy.checkBalance(usdc.address);
+      const usdtBalAfter = await strategy.checkBalance(usdt.address);
+      expect(usdcBalAfter).gte(
+        usdcBalBefore,
+        "Expected USDC balance to have increased"
+      );
+      expect(usdtBalAfter).gte(
+        usdtBalBefore,
+        "Expected USDT balance to have increased"
+      );
+      expect(usdcBalAfter).to.approxEqual(
+        usdcBalBefore.add(amount0Minted),
+        "Deposited USDC mismatch"
+      );
+      expect(usdtBalAfter).to.approxEqual(
+        usdtBalBefore.add(amount1Minted),
+        "Deposited USDT mismatch"
+      );
+
+      // Check data on strategy
+      const storedPosition = await strategy.tokenIdToPosition(tokenId);
+      expect(storedPosition.exists).to.be.true;
+      expect(storedPosition.tokenId).to.equal(tokenId);
+      expect(storedPosition.lowerTick).to.equal(lowerTick);
+      expect(storedPosition.upperTick).to.equal(upperTick);
+      expect(storedPosition.liquidity).to.equal(liquidityMinted);
+      expect(await strategy.activeTokenId()).to.equal(tokenId);
+    })
 
     it("Should increase liquidity of existing position", async () => {
       const usdcBalBefore = await strategy.checkBalance(usdc.address);
@@ -203,12 +399,12 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
       await expect(tx).to.have.emittedEvent("UniswapV3PositionMinted");
       const storedPosition = await strategy.tokenIdToPosition(tokenId);
       expect(storedPosition.exists).to.be.true;
-      expect(await strategy.currentPositionTokenId()).to.equal(tokenId);
+      expect(await strategy.activeTokenId()).to.equal(tokenId);
 
       // Rebalance again to increase liquidity
       const tx2 = await strategy
         .connect(operator)
-        .increaseLiquidityForActivePosition(amountUnits, amountUnits);
+        .increaseActivePositionLiquidity(amountUnits, amountUnits, 0, 0);
       await expect(tx2).to.have.emittedEvent("UniswapV3LiquidityAdded");
 
       // Check balance on strategy
@@ -243,13 +439,13 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
       await expect(tx).to.have.emittedEvent("UniswapV3PositionMinted");
       const storedPosition = await strategy.tokenIdToPosition(tokenId);
       expect(storedPosition.exists).to.be.true;
-      expect(await strategy.currentPositionTokenId()).to.equal(tokenId);
+      expect(await strategy.activeTokenId()).to.equal(tokenId);
 
       // Remove liquidity
-      const tx2 = await strategy.connect(operator).closePosition(tokenId);
+      const tx2 = await strategy.connect(operator).closePosition(tokenId, 0, 0);
       await expect(tx2).to.have.emittedEvent("UniswapV3LiquidityRemoved");
 
-      expect(await strategy.currentPositionTokenId()).to.equal(
+      expect(await strategy.activeTokenId()).to.equal(
         BigNumber.from(0),
         "Should have no active position"
       );
@@ -257,14 +453,8 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
       // Check balance on strategy
       const usdcBalAfter = await strategy.checkBalance(usdc.address);
       const usdtBalAfter = await strategy.checkBalance(usdt.address);
-      expect(usdcBalAfter).to.equal(
-        BigNumber.from(0),
-        "Expected to have liquidated all USDC"
-      );
-      expect(usdtBalAfter).to.equal(
-        BigNumber.from(0),
-        "Expected to have liquidated all USDT"
-      );
+      expect(strategy).to.have.an.approxBalanceOf(usdcBalAfter, usdc)
+      expect(strategy).to.have.an.approxBalanceOf(usdtBalAfter, usdt)
     });
 
     async function _swap(user, amount, zeroForOne) {
@@ -287,7 +477,7 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
       ]);
     }
 
-    it("Should collect rewards", async () => {
+    it("Should collect fees", async () => {
       const [, activeTick] = await pool.slot0();
       const lowerTick = activeTick - 12;
       const upperTick = activeTick + 49;
@@ -303,7 +493,7 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
       await expect(tx).to.have.emittedEvent("UniswapV3PositionMinted");
       const storedPosition = await strategy.tokenIdToPosition(tokenId);
       expect(storedPosition.exists).to.be.true;
-      expect(await strategy.currentPositionTokenId()).to.equal(tokenId);
+      expect(await strategy.activeTokenId()).to.equal(tokenId);
 
       // Do some big swaps
       await _swap(matt, "1000000", true);
@@ -312,14 +502,15 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
       await _swap(daniel, "1000000", false);
       await _swap(domen, "1000000", true);
 
-      // Check reward amounts
+      // Check fee amounts
       let [fee0, fee1] = await strategy.getPendingFees();
       expect(fee0).to.be.gt(0);
       expect(fee1).to.be.gt(0);
 
-      // Harvest rewards
-      await harvester.connect(timelock)["harvest(address)"](strategy.address);
-      [fee0, fee1] = await strategy.getPendingFees();
+      // Collect fees
+      await strategy.connect(operator).collectFees()
+
+      ;[fee0, fee1] = await strategy.getPendingFees();
       expect(fee0).to.equal(0);
       expect(fee1).to.equal(0);
     });

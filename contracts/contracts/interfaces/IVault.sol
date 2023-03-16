@@ -175,7 +175,7 @@ interface IVault {
 
     function netOusdMintedForStrategy() external view returns (int256);
 
-    function depositForUniswapV3(address asset, uint256 amount) external;
+    function depositToUniswapV3Reserve(address asset, uint256 amount) external;
 
-    function withdrawAssetForUniswapV3(address asset, uint256 amount) external;
+    function withdrawFromUniswapV3Reserve(address asset, uint256 amount) external;
 }

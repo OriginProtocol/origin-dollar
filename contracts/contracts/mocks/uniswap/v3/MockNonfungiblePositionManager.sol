@@ -67,13 +67,13 @@ contract MockNonfungiblePositionManager {
 
     uint256 public slippage = 100;
 
-    IUniswapV3Helper internal uniswapV3Helper;
+    IUniswapV3Helper internal helper;
     IMockUniswapV3Pool internal mockPool;
 
     uint256 internal tokenCount = 0;
 
     constructor(address _helper, address _mockPool) {
-        uniswapV3Helper = IUniswapV3Helper(_helper);
+        helper = IUniswapV3Helper(_helper);
         mockPool = IMockUniswapV3Pool(_mockPool);
     }
 
@@ -149,18 +149,18 @@ contract MockNonfungiblePositionManager {
 
         MockPosition storage p = mockPositions[tokenId];
 
-        (liquidity) = uniswapV3Helper.getLiquidityForAmounts(
+        (liquidity) = helper.getLiquidityForAmounts(
             mockPool.mockSqrtPriceX96(),
-            uniswapV3Helper.getSqrtRatioAtTick(p.tickLower),
-            uniswapV3Helper.getSqrtRatioAtTick(p.tickUpper),
+            helper.getSqrtRatioAtTick(p.tickLower),
+            helper.getSqrtRatioAtTick(p.tickUpper),
             params.amount0Desired,
             params.amount1Desired
         );
 
-        (amount0, amount1) = uniswapV3Helper.getAmountsForLiquidity(
+        (amount0, amount1) = helper.getAmountsForLiquidity(
             mockPool.mockSqrtPriceX96(),
-            uniswapV3Helper.getSqrtRatioAtTick(p.tickLower),
-            uniswapV3Helper.getSqrtRatioAtTick(p.tickUpper),
+            helper.getSqrtRatioAtTick(p.tickLower),
+            helper.getSqrtRatioAtTick(p.tickUpper),
             liquidity
         );
 
@@ -192,18 +192,18 @@ contract MockNonfungiblePositionManager {
     {
         MockPosition storage p = mockPositions[params.tokenId];
 
-        (liquidity) = uniswapV3Helper.getLiquidityForAmounts(
+        (liquidity) = helper.getLiquidityForAmounts(
             mockPool.mockSqrtPriceX96(),
-            uniswapV3Helper.getSqrtRatioAtTick(p.tickLower),
-            uniswapV3Helper.getSqrtRatioAtTick(p.tickUpper),
+            helper.getSqrtRatioAtTick(p.tickLower),
+            helper.getSqrtRatioAtTick(p.tickUpper),
             params.amount0Desired,
             params.amount1Desired
         );
 
-        (amount0, amount1) = uniswapV3Helper.getAmountsForLiquidity(
+        (amount0, amount1) = helper.getAmountsForLiquidity(
             mockPool.mockSqrtPriceX96(),
-            uniswapV3Helper.getSqrtRatioAtTick(p.tickLower),
-            uniswapV3Helper.getSqrtRatioAtTick(p.tickUpper),
+            helper.getSqrtRatioAtTick(p.tickLower),
+            helper.getSqrtRatioAtTick(p.tickUpper),
             liquidity
         );
 
