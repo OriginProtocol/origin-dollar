@@ -171,11 +171,22 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
      * @param minTick Minimum price tick index
      * @param maxTick Maximum price tick index
      */
-    function setSwapPriceThreshold(int24 minTick, int24 maxTick) external onlyGovernorOrStrategist {
-        require((minTick < maxTick) || (minTick == 0 && maxTick == 0), "Invalid threshold");
+    function setSwapPriceThreshold(int24 minTick, int24 maxTick)
+        external
+        onlyGovernorOrStrategist
+    {
+        require(
+            (minTick < maxTick) || (minTick == 0 && maxTick == 0),
+            "Invalid threshold"
+        );
         minSwapPriceX96 = helper.getSqrtRatioAtTick(minTick);
         maxSwapPriceX96 = helper.getSqrtRatioAtTick(maxTick);
-        emit SwapPriceThresholdChanged(minTick, minSwapPriceX96, maxTick, maxSwapPriceX96);
+        emit SwapPriceThresholdChanged(
+            minTick,
+            minSwapPriceX96,
+            maxTick,
+            maxSwapPriceX96
+        );
     }
 
     /***************************************
@@ -205,7 +216,13 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
      * @notice Deposits all undeployed balances of the contract to the reserve strategies
      */
     function _depositAll() internal {
-        UniswapV3Library.depositAll(token0, token1, vaultAddress, poolTokens[token0].minDepositThreshold, poolTokens[token1].minDepositThreshold);
+        UniswapV3Library.depositAll(
+            token0,
+            token1,
+            vaultAddress,
+            poolTokens[token0].minDepositThreshold,
+            poolTokens[token1].minDepositThreshold
+        );
     }
 
     /**
@@ -221,7 +238,11 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
 
         if (selfBalance < amount) {
             (bool success, bytes memory data) = address(this).delegatecall(
-                abi.encodeWithSignature("withdrawAssetFromActivePosition(asset,uint256)", _asset, amount - selfBalance)
+                abi.encodeWithSignature(
+                    "withdrawAssetFromActivePosition(asset,uint256)",
+                    _asset,
+                    amount - selfBalance
+                )
             );
 
             require(success, "Failed to liquidate active position");
@@ -245,7 +266,12 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
             // active position when withdrawingAll rather than passing zero values?
 
             (bool success, bytes memory data) = address(this).delegatecall(
-                abi.encodeWithSignature("closePositionOnlyVault(uint256,uint256,uint256)", activeTokenId, 0, 0)
+                abi.encodeWithSignature(
+                    "closePositionOnlyVault(uint256,uint256,uint256)",
+                    activeTokenId,
+                    0,
+                    0
+                )
             );
 
             require(success, "Failed to close active position");
@@ -303,14 +329,10 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
     {
         balance = IERC20(_asset).balanceOf(address(this));
 
-        (uint160 sqrtRatioX96, , , , , , ) = pool
-            .slot0();
+        (uint160 sqrtRatioX96, , , , , , ) = pool.slot0();
 
         if (activeTokenId > 0) {
-            require(
-                tokenIdToPosition[activeTokenId].exists,
-                "Invalid token"
-            );
+            require(tokenIdToPosition[activeTokenId].exists, "Invalid token");
 
             (uint256 amount0, uint256 amount1) = helper.positionValue(
                 positionManager,

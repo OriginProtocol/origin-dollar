@@ -29,9 +29,7 @@ module.exports = deploymentWithGovernanceProposal(
 
     // 0. Deploy UniswapV3Helper and UniswapV3StrategyLib
     const dUniswapV3Helper = await deployWithConfirmation("UniswapV3Helper");
-    const dUniV3Lib = await deployWithConfirmation(
-      "UniswapV3Library"
-    );
+    const dUniV3Lib = await deployWithConfirmation("UniswapV3Library");
 
     // 0. Upgrade VaultAdmin
     const dVaultAdmin = await deployWithConfirmation("VaultAdmin");
@@ -53,7 +51,7 @@ module.exports = deploymentWithGovernanceProposal(
       undefined,
       undefined,
       {
-        UniswapV3Library: dUniV3Lib.address
+        UniswapV3Library: dUniV3Lib.address,
       }
     );
     const dUniV3PoolLiquidityManager = await deployWithConfirmation(
@@ -61,7 +59,7 @@ module.exports = deploymentWithGovernanceProposal(
       undefined,
       undefined,
       {
-        UniswapV3Library: dUniV3Lib.address
+        UniswapV3Library: dUniV3Lib.address,
       }
     );
     const cUniV3_USDC_USDT_Strategy = await ethers.getContractAt(
@@ -111,7 +109,7 @@ module.exports = deploymentWithGovernanceProposal(
       cUniV3_USDC_USDT_Strategy
         .connect(sDeployer)
         .setLiquidityManagerImpl(dUniV3PoolLiquidityManager.address)
-    )
+    );
 
     // 6. Transfer governance
     await withConfirmation(

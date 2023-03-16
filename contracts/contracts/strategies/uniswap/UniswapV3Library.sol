@@ -19,12 +19,14 @@ library UniswapV3Library {
         IVault vault = IVault(vaultAddress);
 
         if (
-            token0Bal > 0 && (minDepositThreshold0 == 0 || token0Bal >= minDepositThreshold0)
+            token0Bal > 0 &&
+            (minDepositThreshold0 == 0 || token0Bal >= minDepositThreshold0)
         ) {
             vault.depositToUniswapV3Reserve(token0, token0Bal);
         }
         if (
-            token1Bal > 0 && (minDepositThreshold1 == 0 || token1Bal >= minDepositThreshold1)
+            token1Bal > 0 &&
+            (minDepositThreshold1 == 0 || token1Bal >= minDepositThreshold1)
         ) {
             vault.depositToUniswapV3Reserve(token1, token1Bal);
         }

@@ -117,22 +117,24 @@ async function defaultFixture() {
     "UniV3_USDC_USDT_Proxy"
   );
   const UniV3_USDC_USDT_Strategy = await ethers.getContractAt(
-    Array.from(new Set([
-      ...(
-        await ethers.getContractFactory("UniswapV3Strategy", {
-          libraries: {
-            UniswapV3Library: UniV3Lib.address
-          }
-        })
-      ).interface.format("full"),
-      ...(
-        await ethers.getContractFactory("UniswapV3LiquidityManager", {
-          libraries: {
-            UniswapV3Library: UniV3Lib.address
-          }
-        })
-      ).interface.format("full"),
-    ])),
+    Array.from(
+      new Set([
+        ...(
+          await ethers.getContractFactory("UniswapV3Strategy", {
+            libraries: {
+              UniswapV3Library: UniV3Lib.address,
+            },
+          })
+        ).interface.format("full"),
+        ...(
+          await ethers.getContractFactory("UniswapV3LiquidityManager", {
+            libraries: {
+              UniswapV3Library: UniV3Lib.address,
+            },
+          })
+        ).interface.format("full"),
+      ])
+    ),
     UniV3_USDC_USDT_Proxy.address
   );
   const UniV3Helper = await ethers.getContract("UniswapV3Helper");

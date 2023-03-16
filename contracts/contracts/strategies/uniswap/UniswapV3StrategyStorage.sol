@@ -19,7 +19,12 @@ abstract contract UniswapV3StrategyStorage is InitializableAbstractStrategy {
         uint256 minDepositThreshold
     );
     event SwapsPauseStatusChanged(bool paused);
-    event SwapPriceThresholdChanged(int24 minTick, uint160 minSwapPriceX96, int24 maxTick, uint160 maxSwapPriceX96);
+    event SwapPriceThresholdChanged(
+        int24 minTick,
+        uint160 minSwapPriceX96,
+        int24 maxTick,
+        uint160 maxSwapPriceX96
+    );
     event MaxSwapSlippageChanged(uint24 maxSlippage);
     event AssetSwappedForRebalancing(
         address indexed tokenIn,
@@ -58,7 +63,7 @@ abstract contract UniswapV3StrategyStorage is InitializableAbstractStrategy {
     // Represents both tokens supported by the strategy
     struct PoolToken {
         // True if asset is either token0 or token1
-        bool isSupported; 
+        bool isSupported;
         // When the funds are not deployed in Uniswap V3 Pool, they will
         // be deposited to these reserve strategies
         address reserveStrategy;
@@ -73,7 +78,6 @@ abstract contract UniswapV3StrategyStorage is InitializableAbstractStrategy {
         int24 lowerTick; // Lower tick index
         int24 upperTick; // Upper tick index
         bool exists; // True, if position is minted
-
         // The following two fields are redundant but since we use these
         // two quite a lot, think it might be cheaper to store it than
         // compute it every time?
@@ -118,7 +122,6 @@ abstract contract UniswapV3StrategyStorage is InitializableAbstractStrategy {
 
     // Maps tokenIDs to their Position object
     mapping(uint256 => Position) public tokenIdToPosition;
-
 
     // keccak256("OUSD.UniswapV3Strategy.LiquidityManager.impl")
     bytes32 constant liquidityManagerImplPosition =
