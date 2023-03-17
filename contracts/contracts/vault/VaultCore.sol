@@ -382,16 +382,22 @@ contract VaultCore is VaultStorage {
     }
 
     /**
-     * @dev Update the supply of ousd by
+     * @dev Update the supply of ousd
      *
-     * 1. Calculate new gains, splitting them between the dripper and protocol reserve
+     * 1. Calculate new gains, splitting gains between the dripper and protocol reserve
      * 2. Drip out from the driper and update the dripper storage
-     * 3. Distribute, splitting between trustee fees and rebasing remaining
-     *    post dripper funds to users
+     * 3. Distribute yield, splitting between trustee fees and rebasing
+     *    the remaining post dripper funds to users
      *
      * After running:
-     *  - ousd supply + reserves should equal vault value
-     *  - If the protocol started solvent, the protocol should end solvent
+     *  - If the protocol started solvent then:
+     *      the protocol should end solvent
+     *  - If the protocol started solvent and had yield then:
+     *      ousd supply + reserves should equal vault value.
+     *  - If the protocol started insolvent then:
+     *      no funds should be distributed, or reserves changed
+     *  - All cases:
+     *     ending OUSD total supply should not be less than starting totalSupply
      */
     function _rebase() internal whenNotRebasePaused {
         // Load data used for rebasing
@@ -407,9 +413,9 @@ contract VaultCore is VaultStorage {
         
         // 1. Calculate new gains, then split them between the dripper and
         // protocol reserve
-        uint256 reserves = protocolReserve + _dripperReserve;
-        if (vaultValue > (ousdSupply + reserves)) {
-            uint256 newYield = vaultValue - (ousdSupply + reserves);
+        uint256 usedValue = ousdSupply + protocolReserve + _dripperReserve;
+        if (vaultValue > usedValue) {
+            uint256 newYield = vaultValue - usedValue;
             uint256 toProtocolReserve = (newYield * protocolReserveBps) / 10000;
             protocolReserve += toProtocolReserve;
             _dripperReserve += newYield - toProtocolReserve;
@@ -418,10 +424,10 @@ contract VaultCore is VaultStorage {
 
         // 2. Drip out from the dripper and update the dripper storage
         Dripper memory _dripper = dripper; // gas savings
-        uint256 _dripDuration = _dripper.dripDuration; // gas savings
+        uint256 _dripDuration = _dripper.dripDuration; // gas, not written back
         if (_dripDuration == 0) {
-            _dripDuration = 1;
-            _dripperReserve = 0; // dripper disabled, distribute all now
+            _dripDuration = 1; // Prevent divide by zero later
+            _dripperReserve = 0; // Dripper disabled, distribute all now
         } else {
             _dripperReserve -= _dripperAvailableFunds(
                 _dripperReserve,
@@ -434,13 +440,13 @@ contract VaultCore is VaultStorage {
         dripper = Dripper({
             perBlock: uint128(_dripperReserve / _dripDuration),
             lastCollect: uint64(block.timestamp),
-            dripDuration: _dripper.dripDuration
+            dripDuration: _dripper.dripDuration // must use stored value
         });
 
-        // 5. Distribute
-        reserves = protocolReserve + _dripperReserve;
-        if (vaultValue > (ousdSupply + reserves)) {
-            uint256 yield = vaultValue - (ousdSupply + reserves);
+        // 3. Distribute fees then rebase to users
+        usedValue = ousdSupply + protocolReserve + _dripperReserve;
+        if (vaultValue > usedValue) {
+            uint256 yield = vaultValue - usedValue;
             
             // Mint trustee fees
             address _trusteeAddress = trusteeAddress; // gas savings
