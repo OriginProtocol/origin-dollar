@@ -268,7 +268,7 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
       ).to.be.revertedWith("Rebalance position out of bounds");
     });
 
-    it.only("Should not mint if the position surpasses the maxTVL amount", async () => {
+    it("Should not mint if the position surpasses the maxTVL amount", async () => {
       // set max TVL of 100 units (denominated in 18 decimals)
       await setMaxTVL("100");
 
