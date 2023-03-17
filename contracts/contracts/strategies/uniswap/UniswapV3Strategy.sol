@@ -174,6 +174,14 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
         emit MaxSwapSlippageChanged(_maxSlippage);
     }
 
+    function setMaxTVL(uint256 _maxTVL)
+        external
+        onlyGovernorOrStrategist
+    {
+        maxTVL = _maxTVL;
+        emit MaxTVLChanged(_maxTVL);
+    }
+
     /**
      * @notice Change the rebalance price threshold
      * @param minTick Minimum price tick index

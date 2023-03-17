@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import { UniswapV3StrategyStorage } from "./UniswapV3StrategyStorage.sol";
 
+import { InitializableAbstractStrategy } from "../../utils/InitializableAbstractStrategy.sol";
 import { INonfungiblePositionManager } from "../../interfaces/uniswap/v3/INonfungiblePositionManager.sol";
 import { IVault } from "../../interfaces/IVault.sol";
 import { IStrategy } from "../../interfaces/IStrategy.sol";
@@ -13,7 +14,7 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 
 contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
     using SafeERC20 for IERC20;
-
+    
     function withdrawAssetFromActivePosition(address _asset, uint256 amount)
         external
         onlyVault
@@ -121,6 +122,16 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         _;
     }
 
+    modifier ensureTVL() {
+        _;
+        uint256 balance = InitializableAbstractStrategy(this).checkBalance(token0) +
+            InitializableAbstractStrategy(this).checkBalance(token1);
+        require(
+            balance <= maxTVL,
+            "MaxTVL threshold has been reached"
+        );
+    }
+
     /**
      * @notice Closes active LP position if any and then provides liquidity to the requested position.
      *         Mints new position, if it doesn't exist already.
@@ -149,6 +160,7 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         nonReentrant
         rebalanceNotPaused
         withinRebalacingLimits(lowerTick, upperTick)
+        ensureTVL
     {
         require(lowerTick < upperTick, "Invalid tick range");
 
@@ -219,6 +231,7 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         nonReentrant
         rebalanceNotPaused
         withinRebalacingLimits(params.lowerTick, params.upperTick)
+        ensureTVL
     {
         require(params.lowerTick < params.upperTick, "Invalid tick range");
 

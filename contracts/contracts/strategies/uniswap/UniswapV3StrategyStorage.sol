@@ -28,6 +28,7 @@ abstract contract UniswapV3StrategyStorage is InitializableAbstractStrategy {
         uint160 maxRebalancePriceX96
     );
     event MaxSwapSlippageChanged(uint24 maxSlippage);
+    event MaxTVLChanged(uint256 amountIn);
     event AssetSwappedForRebalancing(
         address indexed tokenIn,
         address indexed tokenOut,
@@ -184,14 +185,6 @@ abstract contract UniswapV3StrategyStorage is InitializableAbstractStrategy {
      */
     modifier onlyPoolTokens(address addr) {
         require(addr == token0 || addr == token1, "Unsupported asset");
-        _;
-    }
-
-    /**
-     * @dev Ensures that the caller is the proxy.
-     */
-    modifier onlySelf() {
-        require(msg.sender == address(_self), "Not self");
         _;
     }
 
