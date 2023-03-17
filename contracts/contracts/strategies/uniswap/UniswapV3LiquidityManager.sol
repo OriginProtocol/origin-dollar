@@ -14,10 +14,16 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
     using SafeERC20 for IERC20;
 
-    // TODO: Intentionally left out non-reentrant modifier since otherwise Vault would throw
     function withdrawAssetFromActivePosition(address _asset, uint256 amount)
-        public
+        external
         onlyVault
+        nonReentrant
+    {
+        _withdrawAssetFromActivePosition(_asset, amount);
+    }
+
+    function _withdrawAssetFromActivePosition(address _asset, uint256 amount)
+        internal
     {
         Position memory position = tokenIdToPosition[activeTokenId];
         require(position.exists && position.liquidity > 0, "Liquidity error");
@@ -774,7 +780,7 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         uint256 selfBalance = asset.balanceOf(address(this));
 
         if (selfBalance < amount) {
-            withdrawAssetFromActivePosition(_asset, amount - selfBalance);
+            _withdrawAssetFromActivePosition(_asset, amount - selfBalance);
         }
 
         // Transfer requested amount
