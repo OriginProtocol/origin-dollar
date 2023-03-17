@@ -306,7 +306,7 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
         }
 
         uint256 assetDecimals = Helpers.getDecimals(_asset);
-        balance = balance.scaleBy(assetDecimals, 18);
+        balance = balance.scaleBy(18, assetDecimals);
     }
 
     function checkBalanceOfAllAssets()
@@ -331,8 +331,8 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
 
         uint256 asset0Decimals = Helpers.getDecimals(token0);
         uint256 asset1Decimals = Helpers.getDecimals(token1);
-        amount0 = amount0.scaleBy(asset0Decimals, 18);
-        amount1 = amount1.scaleBy(asset1Decimals, 18);
+        amount0 = amount0.scaleBy(18, asset0Decimals);
+        amount1 = amount1.scaleBy(18, asset1Decimals);
     }
 
     /***************************************

@@ -129,8 +129,6 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         uint256 balance = InitializableAbstractStrategy(this).checkBalance(token0) +
             InitializableAbstractStrategy(this).checkBalance(token1);
 
-        //99999999998
-        revert(Strings.toString(balance));
         require(
             balance <= maxTVL,
             "MaxTVL threshold has been reached"

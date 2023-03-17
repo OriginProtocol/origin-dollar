@@ -83,7 +83,7 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
 
     await strategy
       .connect(sGovernor)
-      .setMaxTVL(utils.parseUnits(`${maxTvl}`, 18));
+      .setMaxTVL(utils.parseUnits(maxTvl, 18));
   }
 
   describe("Uniswap V3 LP positions", function () {
@@ -270,22 +270,8 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
 
     it.only("Should not mint if the position surpasses the maxTVL amount", async () => {
       // set max TVL of 100 units (denominated in 18 decimals)
-      await setMaxTVL(100);
+      await setMaxTVL("100");
 
-      const lowerTick = -10;
-      const upperTick = 10;
-
-      await expect(
-        mintLiquidity(lowerTick, upperTick, "100000", "100000")
-      ).to.be.revertedWith("MaxTVL threshold has been reached");
-
-    });
-
-    it.only("Should not mint and be able to rebase if that rebase surpasses the maxTVL amount", async () => {
-      // set max TVL of 100 units (denominated in 18 decimals)
-      await setMaxTVL(100);
-
-      // TODO add rebasing
       const lowerTick = -10;
       const upperTick = 10;
 
