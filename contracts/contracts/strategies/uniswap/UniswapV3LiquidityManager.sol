@@ -112,6 +112,15 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         _;
     }
 
+    modifier withinRebalacingLimits(int24 lowerTick, int24 upperTick) {
+        require(
+            minRebalanceTick <= lowerTick &&
+                maxRebalanceTick >= upperTick,
+            "Rebalance position out of bounds"
+        );
+        _;
+    }
+
     /**
      * @notice Closes active LP position if any and then provides liquidity to the requested position.
      *         Mints new position, if it doesn't exist already.
@@ -139,6 +148,7 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         onlyGovernorOrStrategistOrOperator
         nonReentrant
         rebalanceNotPaused
+        withinRebalacingLimits(lowerTick, upperTick)
     {
         require(lowerTick < upperTick, "Invalid tick range");
 
@@ -208,6 +218,7 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         onlyGovernorOrStrategistOrOperator
         nonReentrant
         rebalanceNotPaused
+        withinRebalacingLimits(params.lowerTick, params.upperTick)
     {
         require(params.lowerTick < params.upperTick, "Invalid tick range");
 
@@ -597,28 +608,6 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         // TODO: Check value of assets moved here
     }
 
-    function _checkSwapLimits(uint160 sqrtPriceLimitX96, bool swapZeroForOne)
-        internal
-        view
-    {
-        require(!swapsPaused, "Swaps are paused");
-
-        (uint160 currentPriceX96, , , , , , ) = pool.slot0();
-
-        require(
-            minSwapPriceX96 <= currentPriceX96 &&
-                currentPriceX96 <= maxSwapPriceX96,
-            "Price out of bounds"
-        );
-
-        require(
-            swapZeroForOne
-                ? (sqrtPriceLimitX96 >= minSwapPriceX96)
-                : (sqrtPriceLimitX96 <= maxSwapPriceX96),
-            "Slippage out of bounds"
-        );
-    }
-
     function _ensureAssetsBySwapping(
         uint256 desiredAmount0,
         uint256 desiredAmount1,
@@ -627,7 +616,7 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         uint160 sqrtPriceLimitX96,
         bool swapZeroForOne
     ) internal {
-        _checkSwapLimits(sqrtPriceLimitX96, swapZeroForOne);
+        require(!swapsPaused, "Swaps are paused");
 
         uint256 token0Balance = IERC20(token0).balanceOf(address(this));
         uint256 token1Balance = IERC20(token1).balanceOf(address(this));

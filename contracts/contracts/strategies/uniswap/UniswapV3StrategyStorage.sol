@@ -21,19 +21,13 @@ abstract contract UniswapV3StrategyStorage is InitializableAbstractStrategy {
     );
     event RebalancePauseStatusChanged(bool paused);
     event SwapsPauseStatusChanged(bool paused);
-    event SwapPriceThresholdChanged(
+    event RebalancePriceThresholdChanged(
         int24 minTick,
-        uint160 minSwapPriceX96,
+        uint160 minRebalancePriceX96,
         int24 maxTick,
-        uint160 maxSwapPriceX96
+        uint160 maxRebalancePriceX96
     );
     event MaxSwapSlippageChanged(uint24 maxSlippage);
-    event TokenPriceLimitChanged(
-        int24 minTick,
-        uint160 minPriceLimitX96,
-        int24 maxTick,
-        uint160 maxPriceLimitX96
-    );
     event AssetSwappedForRebalancing(
         address indexed tokenIn,
         address indexed tokenOut,
@@ -108,14 +102,9 @@ abstract contract UniswapV3StrategyStorage is InitializableAbstractStrategy {
 
     uint256 public maxTVL; // In USD, 18 decimals
 
-    // An upper and lower bound of swap price limits
-    uint160 public minSwapPriceX96;
-    uint160 public maxSwapPriceX96;
-
-    // Uses these params when checking the values of the tokens
-    // moved in and out of the reserve strategies
-    uint160 public minPriceLimitX96;
-    uint160 public maxPriceLimitX96;
+    // An upper and lower bound of rebalancing price limits 
+    int24 public minRebalanceTick;
+    int24 public maxRebalanceTick;
 
     // Token ID of active Position on the pool. zero, if there are no active LP position
     uint256 public activeTokenId;

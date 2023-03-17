@@ -175,45 +175,25 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
     }
 
     /**
-     * @notice Change the swap price threshold
+     * @notice Change the rebalance price threshold
      * @param minTick Minimum price tick index
      * @param maxTick Maximum price tick index
      */
-    function setSwapPriceThreshold(int24 minTick, int24 maxTick)
+    function setRebalancePriceThreshold(int24 minTick, int24 maxTick)
         external
         onlyGovernorOrStrategist
     {
         require((minTick < maxTick), "Invalid threshold");
-        minSwapPriceX96 = helper.getSqrtRatioAtTick(minTick);
-        maxSwapPriceX96 = helper.getSqrtRatioAtTick(maxTick);
-        emit SwapPriceThresholdChanged(
+        minRebalanceTick = minTick;
+        maxRebalanceTick = maxTick;
+        emit RebalancePriceThresholdChanged(
             minTick,
-            minSwapPriceX96,
+            helper.getSqrtRatioAtTick(minTick),
             maxTick,
-            maxSwapPriceX96
+            helper.getSqrtRatioAtTick(maxTick)
         );
     }
-
-    /**
-     * @notice Change the token price limit
-     * @param minTick Minimum price tick index
-     * @param maxTick Maximum price tick index
-     */
-    function setTokenPriceLimit(int24 minTick, int24 maxTick)
-        external
-        onlyGovernorOrStrategist
-    {
-        require((minTick < maxTick), "Invalid threshold");
-        minPriceLimitX96 = helper.getSqrtRatioAtTick(minTick);
-        maxPriceLimitX96 = helper.getSqrtRatioAtTick(maxTick);
-        emit TokenPriceLimitChanged(
-            minTick,
-            minPriceLimitX96,
-            maxTick,
-            maxPriceLimitX96
-        );
-    }
-
+    
     /***************************************
             Deposit/Withdraw
     ****************************************/
