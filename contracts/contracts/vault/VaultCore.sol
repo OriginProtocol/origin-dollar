@@ -386,8 +386,8 @@ contract VaultCore is VaultStorage {
      *
      * 1. Calculate new gains, splitting them between the dripper and protocol reserve
      * 2. Drip out from the driper and update the dripper storage
-     * 3. Send trustee fees using post dripper funds
-     * 4. Rebase remaining post dripper funds to users
+     * 3. Distribute, splitting between trustee fees and rebasing remaining
+     *    post dripper funds to users
      *
      * After running:
      *  - ousd supply + reserves should equal vault value
@@ -395,19 +395,19 @@ contract VaultCore is VaultStorage {
      */
     function _rebase() internal whenNotRebasePaused {
         // Load data used for rebasing
-        uint256 ousdSupply = oUSD.totalSupply();
-        uint256 vaultValue = _totalValue();
+        uint256 ousdSupply = oUSD.totalSupply(); // gas savings
+        uint256 vaultValue = _totalValue(); // gas savings
         if (ousdSupply == 0) {
             return; // If there is no OUSD supply, we will not rebase
         }
         if (vaultValue < ousdSupply) {
             return; // Do not distribute funds if assets < liabilities
         }
-        uint256 _dripperReserve = dripperReserve; // cached for gas savings
-        uint256 reserves = protocolReserve + _dripperReserve;
-
-        // Calculate new gains, then split them between the dripper and
+        uint256 _dripperReserve = dripperReserve; // gas savings
+        
+        // 1. Calculate new gains, then split them between the dripper and
         // protocol reserve
+        uint256 reserves = protocolReserve + _dripperReserve;
         if (vaultValue > (ousdSupply + reserves)) {
             uint256 newYield = vaultValue - (ousdSupply + reserves);
             uint256 toProtocolReserve = (newYield * protocolReserveBps) / 10000;
@@ -416,16 +416,14 @@ contract VaultCore is VaultStorage {
             emit YieldReceived(newYield);
         }
 
-        // Drip out from the dripper and update the dripper storage
+        // 2. Drip out from the dripper and update the dripper storage
         uint256 postDripperYield = 0;
-        Dripper memory _dripper = dripper; // cached for gas savings
+        Dripper memory _dripper = dripper; // gas savings
         uint256 _dripDuration = _dripper.dripDuration;
         if (_dripDuration == 0) {
-            // Will we need this?
-            // If dripper disabled, distribute all immediately
             _dripDuration = 1;
             postDripperYield = _dripperReserve;
-            _dripperReserve = 0;
+            _dripperReserve = 0; // dripper disabled, distribute all now
         } else {
             postDripperYield = _dripperAvailableFunds(
                 _dripperReserve,
@@ -442,47 +440,27 @@ contract VaultCore is VaultStorage {
             dripDuration: _dripper.dripDuration
         });
 
-        // Distribute
+        // 5. Distribute
         reserves = protocolReserve + _dripperReserve;
         if (vaultValue > (ousdSupply + reserves)) {
-            uint256 excessValue = vaultValue - (ousdSupply + reserves);
-            _distibuteYield(excessValue, ousdSupply, vaultValue);
-        }
-    }
+            uint256 yield = vaultValue - (ousdSupply + reserves);
+            
+            // Mint trustee fees
+            address _trusteeAddress = trusteeAddress; // gas savings
+            uint256 fee = 0;
+            if (_trusteeAddress != address(0)) {
+                fee = (yield * trusteeFeeBps) / 10000;
+                require(fee < yield, "Fee must be less than yield");
+                oUSD.mint(_trusteeAddress, fee);
+            }
 
-    function _distibuteYield(
-        uint256 yield,
-        uint256 ousdSupply,
-        uint256 vaultValue
-    ) internal {
-        if (yield == 0) {
-            return;
+            // Rebase remaining to users
+            // Invarient: must only increase OUSD supply.
+            // Can only increase because:
+            // ousdSupply + yield >= ousdSupply and yield > fee
+            oUSD.changeSupply(ousdSupply + yield);
+            emit YieldDistribution(_trusteeAddress, yield, fee);
         }
-        // This should never revert, because _distibuteYield should never be
-        // called unless there is excess supply. Neverless, we really care
-        // about this invarient, so we check it anyway.
-        require(
-            vaultValue >= ousdSupply + yield,
-            "No distribution if insolvent"
-        );
-
-        // Mint trustee fees
-        address _trusteeAddress = trusteeAddress; // gas savings
-        uint256 fee = 0;
-        if (_trusteeAddress != address(0)) {
-            fee = (yield * trusteeFeeBps) / 10000;
-            require(fee < yield, "Fee must be less than yield");
-            oUSD.mint(_trusteeAddress, fee);
-        }
-
-        // Rebase remaining to users
-        // Must only move up. (Invarient)
-        // Can only move up because:
-        // ousdSupply + yield >= ousdSupply
-        // also:
-        // fee (already minted) < yield
-        oUSD.changeSupply(ousdSupply + yield);
-        emit YieldDistribution(_trusteeAddress, yield, fee);
     }
 
     function dripperAvailableFunds() external returns (uint256) {
