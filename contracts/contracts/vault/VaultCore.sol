@@ -417,19 +417,16 @@ contract VaultCore is VaultStorage {
         }
 
         // 2. Drip out from the dripper and update the dripper storage
-        uint256 postDripperYield = 0;
         Dripper memory _dripper = dripper; // gas savings
-        uint256 _dripDuration = _dripper.dripDuration;
+        uint256 _dripDuration = _dripper.dripDuration; // gas savings
         if (_dripDuration == 0) {
             _dripDuration = 1;
-            postDripperYield = _dripperReserve;
             _dripperReserve = 0; // dripper disabled, distribute all now
         } else {
-            postDripperYield = _dripperAvailableFunds(
+            _dripperReserve -= _dripperAvailableFunds(
                 _dripperReserve,
                 _dripper
             );
-            _dripperReserve -= postDripperYield;
         }
 
         // Write dripper state
