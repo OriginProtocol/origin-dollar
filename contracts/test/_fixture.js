@@ -1235,7 +1235,7 @@ async function rebornFixture() {
   return fixture;
 }
 
-function uniswapV3FixturSetup() {
+function uniswapV3FixtureSetup() {
   return deployments.createFixture(async () => {
     const fixture = await defaultFixture();
 
@@ -1290,6 +1290,11 @@ function uniswapV3FixturSetup() {
       // 2 million
       .setMaxTVL(utils.parseUnits("2", 24))
 
+    UniV3_USDC_USDT_Strategy
+      .connect(sGovernor)
+      .setRebalancePriceThreshold(-100, 100)
+
+
     return fixture;
   });
 }
@@ -1341,7 +1346,7 @@ module.exports = {
   aaveVaultFixture,
   hackedVaultFixture,
   rebornFixture,
-  uniswapV3FixturSetup,
+  uniswapV3FixtureSetup,
   withImpersonatedAccount,
   impersonateAndFundContract,
   impersonateAccount,

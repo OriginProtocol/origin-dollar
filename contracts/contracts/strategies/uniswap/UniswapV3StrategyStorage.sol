@@ -187,13 +187,7 @@ abstract contract UniswapV3StrategyStorage is InitializableAbstractStrategy {
         _;
     }
 
-    function _depositAll(
-        address token0,
-        address token1,
-        address vaultAddress,
-        uint256 minDepositThreshold0,
-        uint256 minDepositThreshold1
-    ) internal {
+    function _depositAll() internal {
         IUniswapV3Strategy strat = IUniswapV3Strategy(msg.sender);
 
         uint256 token0Bal = IERC20(token0).balanceOf(address(this));

@@ -152,24 +152,24 @@ module.exports = deploymentWithGovernanceProposal(
           signature: "setHarvesterAddress(address)",
           args: [cHarvesterProxy.address],
         },
-        // 4. Set Reserve Strategy for USDC
+        // 5. Set Reserve Strategy for USDC
         {
           contract: cUniV3_USDC_USDT_Strategy,
           signature: "setReserveStrategy(address,address)",
           args: [assetAddresses.USDC, cMorphoCompProxy.address],
         },
-        // 4. Set Reserve Strategy for USDT
+        // 6. Set Reserve Strategy for USDT
         {
           contract: cUniV3_USDC_USDT_Strategy,
           signature: "setReserveStrategy(address,address)",
           args: [assetAddresses.USDT, cMorphoCompProxy.address],
         },
         // 4. Set Reserve Strategy for USDT
-        {
-          contract: cUniV3_USDC_USDT_Strategy,
-          signature: "setSwapPriceThreshold(int24,int24)",
-          args: [-1000, 1000],
-        },
+        // {
+        //   contract: cUniV3_USDC_USDT_Strategy,
+        //   signature: "setSwapPriceThreshold(int24,int24)",
+        //   args: [-1000, 1000],
+        // },
       ],
     };
   }

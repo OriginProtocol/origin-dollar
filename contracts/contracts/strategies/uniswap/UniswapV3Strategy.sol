@@ -16,9 +16,12 @@ import { IUniswapV3Helper } from "../../interfaces/uniswap/v3/IUniswapV3Helper.s
 import { IUniswapV3Pool } from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import { IUniswapV3Strategy } from "../../interfaces/IUniswapV3Strategy.sol";
 import { ISwapRouter } from "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
+import { StableMath } from "../../utils/StableMath.sol";
+import { Helpers } from "../../utils/Helpers.sol";
 
 contract UniswapV3Strategy is UniswapV3StrategyStorage {
     using SafeERC20 for IERC20;
+    using StableMath for uint256;
 
     /**
      * @dev Initialize the contract
@@ -174,14 +177,6 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
         emit SwapsPauseStatusChanged(_paused);
     }
 
-    function setMaxSwapSlippage(uint24 _maxSlippage)
-        external
-        onlyGovernorOrStrategist
-    {
-        maxSwapSlippage = _maxSlippage;
-        emit MaxSwapSlippageChanged(_maxSlippage);
-    }
-
     /**
      * @notice Change the maxTVL amount threshold
      * @param _maxTVL Maximum amount the strategy can have deployed in the Uniswap pool
@@ -309,6 +304,9 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
                 balance += amount1;
             }
         }
+
+        uint256 assetDecimals = Helpers.getDecimals(_asset);
+        balance = balance.scaleBy(assetDecimals, 18);
     }
 
     function checkBalanceOfAllAssets()
@@ -330,6 +328,11 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
 
         amount0 += IERC20(token0).balanceOf(address(this));
         amount1 += IERC20(token1).balanceOf(address(this));
+
+        uint256 asset0Decimals = Helpers.getDecimals(token0);
+        uint256 asset1Decimals = Helpers.getDecimals(token1);
+        amount0 = amount0.scaleBy(asset0Decimals, 18);
+        amount1 = amount1.scaleBy(asset1Decimals, 18);
     }
 
     /***************************************

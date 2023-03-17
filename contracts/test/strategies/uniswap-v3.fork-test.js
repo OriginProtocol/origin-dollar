@@ -1,6 +1,6 @@
 const { expect } = require("chai");
 const {
-  uniswapV3FixturSetup,
+  uniswapV3FixtureSetup,
   impersonateAndFundContract,
 } = require("../_fixture");
 const {
@@ -17,7 +17,7 @@ const {
 const { BigNumber, utils } = require("ethers");
 const { ethers } = hre;
 
-const uniswapV3Fixture = uniswapV3FixturSetup();
+const uniswapV3Fixture = uniswapV3FixtureSetup();
 
 forkOnlyDescribe("Uniswap V3 Strategy", function () {
   this.timeout(0);
