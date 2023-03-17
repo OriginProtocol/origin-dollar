@@ -341,21 +341,21 @@ with TemporaryForkWithVaultStats(votes):
     txs = []
     txs.extend(auto_take_snapshot())
 
-    # # From
+    # From
     txs.append(vault_admin.withdrawAllFromStrategy(COMP_STRAT, {'from':STRATEGIST}))
     # the minus 721_000 is because we can't deploy those funds to MORPHO_COMP_STRAT
     # because the USDC is paused in there
-    txs.append(from_strat(MORPHO_AAVE_STRAT, [[4_652_800, dai], [4_966_000, usdc], [5_923_000, usdt]]))
+    txs.append(from_strat(MORPHO_AAVE_STRAT, [[4_660_800, dai], [5_576_000, usdc], [5_923_000, usdt]]))
 
     # Swap
     txs.append(to_strat(CONVEX_STRAT, [[3_943_000, dai]]))
     txs.append(from_strat(CONVEX_STRAT, [[3_933_000, usdt]]))
 
-    # # To
-    txs.append(to_strat(OUSD_METASTRAT, [[5_300_000, usdc]]))
+    # To
+    txs.append(to_strat(OUSD_METASTRAT, [[5_910_000, usdc]]))
     txs.append(to_strat(AAVE_STRAT, [[2_233_000, usdt]]))
 
-    txs.append(to_strat(MORPHO_COMP_STRAT, [[721_000, dai], [7_639_000, usdt]]))
+    txs.append(to_strat(MORPHO_COMP_STRAT, [[721_000, dai], [7_600_000, usdt]]))
     #txs.append(to_strat(COMP_STRAT, [[323_000, usdc]]))
     #txs.append(to_strat(AAVE_STRAT, [[323_000, usdt]]))
     #txs.append(to_strat(CONVEX_STRAT, [[257_000, dai], [257_000, usdc], [257_000, usdt]]))
