@@ -466,7 +466,7 @@ contract VaultCore is VaultStorage {
         }
     }
 
-    function dripperAvailableFunds() external returns (uint256) {
+    function dripperAvailableFunds() external view returns (uint256) {
         return _dripperAvailableFunds(dripperReserve, dripper);
     }
 
