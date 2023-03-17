@@ -126,6 +126,7 @@ contract VaultStorage is Initializable, Governable {
     // Reserve funds held by the protocol
     uint256 public protocolReserve;
 
+    // Amount of reserve collected in Bps
     uint256 public protocolReserveBps;
 
     // Dripper funds held by the protocol
@@ -138,6 +139,7 @@ contract VaultStorage is Initializable, Governable {
         uint64 dripDuration;
     }
     Dripper public dripper;
+
 
     /**
      * @dev set the implementation for the admin, this needs to be in a base class else we cannot set it

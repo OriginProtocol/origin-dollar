@@ -30,6 +30,8 @@ contract VaultCore is VaultStorage {
     // max un-signed int
     uint256 constant MAX_UINT =
         0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
+    // impl contract address
+    address immutable SELF = address(this);
 
     /**
      * @dev Verifies that the rebasing is not paused.
@@ -749,6 +751,7 @@ contract VaultCore is VaultStorage {
      */
     // solhint-disable-next-line no-complex-fallback
     fallback() external payable {
+        require(SELF != address(this), "Must be proxied");
         bytes32 slot = adminImplPosition;
         // solhint-disable-next-line no-inline-assembly
         assembly {
