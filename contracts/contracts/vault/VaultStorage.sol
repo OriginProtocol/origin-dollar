@@ -124,13 +124,13 @@ contract VaultStorage is Initializable, Governable {
     uint256 public netOusdMintForStrategyThreshold = 0;
 
     // Reserve funds held by the protocol
-    uint256 public protocolReserve;
+    uint256 public protocolReserve = 0;
 
     // Amount of reserve collected in Bps
-    uint256 public protocolReserveBps;
+    uint256 public protocolReserveBps = 0;
 
     // Dripper funds held by the protocol
-    uint256 public dripperReserve;
+    uint256 public dripperReserve = 0;
 
     // Dripper config/state
     struct Dripper {
