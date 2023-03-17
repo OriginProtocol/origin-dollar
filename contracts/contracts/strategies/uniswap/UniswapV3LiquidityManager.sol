@@ -787,15 +787,10 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
      */
     function withdrawAll() external override onlyVault nonReentrant {
         if (activeTokenId > 0) {
-            // TODO: This method is only callable from Vault directly
-            // and by Governor or Strategist indirectly.
-            // Changing the Vault code to pass a minAmount0 and minAmount1 will
-            // make things complex. We could perhaps make sure that there're no
-            // active position when withdrawingAll rather than passing zero values?
-
             _closePosition(activeTokenId, 0, 0);
         }
 
+        // saves 100B of contract size to loop through these 2 tokens
         address[2] memory tokens = [token0, token1];
         for(uint256 i = 0; i < 2; i++) {
             IERC20 tokenContract = IERC20(tokens[i]);    
