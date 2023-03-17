@@ -179,13 +179,7 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         activeTokenId = tokenId;
 
         // Move any leftovers to Reserve
-        _depositAll(
-            token0,
-            token1,
-            vaultAddress,
-            poolTokens[token0].minDepositThreshold,
-            poolTokens[token1].minDepositThreshold
-        );
+        _depositAll();
     }
 
     struct SwapAndRebalanceParams {
@@ -260,13 +254,7 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         activeTokenId = tokenId;
 
         // Move any leftovers to Reserve
-        _depositAll(
-            token0,
-            token1,
-            vaultAddress,
-            poolTokens[token0].minDepositThreshold,
-            poolTokens[token1].minDepositThreshold
-        );
+        _depositAll();
     }
 
     /***************************************
@@ -798,8 +786,8 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
 
         // saves 100B of contract size to loop through these 2 tokens
         address[2] memory tokens = [token0, token1];
-        for(uint256 i = 0; i < 2; i++) {
-            IERC20 tokenContract = IERC20(tokens[i]);    
+        for (uint256 i = 0; i < 2; i++) {
+            IERC20 tokenContract = IERC20(tokens[i]);
             uint256 tokenBalance = tokenContract.balanceOf(address(this));
 
             if (tokenBalance > 0) {

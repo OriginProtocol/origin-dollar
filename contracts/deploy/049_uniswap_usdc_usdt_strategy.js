@@ -29,7 +29,6 @@ module.exports = deploymentWithGovernanceProposal(
 
     // 0. Deploy UniswapV3Helper and UniswapV3StrategyLib
     const dUniswapV3Helper = await deployWithConfirmation("UniswapV3Helper");
-    const dUniV3Lib = await deployWithConfirmation("UniswapV3Library");
 
     // 0. Upgrade VaultAdmin
     const dVaultAdmin = await deployWithConfirmation("VaultAdmin");
@@ -47,14 +46,10 @@ module.exports = deploymentWithGovernanceProposal(
 
     // 2. Deploy new implementation
     const dUniV3_USDC_USDT_StrategyImpl = await deployWithConfirmation(
-      "UniswapV3Strategy",
-      undefined,
-      undefined,
+      "UniswapV3Strategy"
     );
     const dUniV3PoolLiquidityManager = await deployWithConfirmation(
-      "UniswapV3LiquidityManager",
-      undefined,
-      undefined,
+      "UniswapV3LiquidityManager"
     );
     const cUniV3_USDC_USDT_Strategy = await ethers.getContractAt(
       "UniswapV3Strategy",
@@ -168,6 +163,12 @@ module.exports = deploymentWithGovernanceProposal(
           contract: cUniV3_USDC_USDT_Strategy,
           signature: "setReserveStrategy(address,address)",
           args: [assetAddresses.USDT, cMorphoCompProxy.address],
+        },
+        // 4. Set Reserve Strategy for USDT
+        {
+          contract: cUniV3_USDC_USDT_Strategy,
+          signature: "setSwapPriceThreshold(int24,int24)",
+          args: [-1000, 1000],
         },
       ],
     };

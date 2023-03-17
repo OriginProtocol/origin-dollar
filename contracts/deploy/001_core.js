@@ -638,7 +638,7 @@ const configureStrategies = async (harvesterProxy) => {
 
   const uniV3UsdcUsdtProxy = await ethers.getContract("UniV3_USDC_USDT_Proxy");
   const uniV3UsdcUsdt = await ethers.getContractAt(
-    "GeneralizedUniswapV3Strategy",
+    "UniswapV3Strategy",
     uniV3UsdcUsdtProxy.address
   );
   await withConfirmation(
@@ -993,75 +993,79 @@ const deployUniswapV3Strategy = async () => {
   ]);
 
   await deployWithConfirmation(
+    "MockStrategy2",
+    [vault.address, [mockUSDC.address, mockUSDT.address]],
+    "MockStrategy"
+  );
+
+  await deployWithConfirmation(
     "MockStrategyDAI",
     [vault.address, [mockDAI.address]],
     "MockStrategy"
   );
 
-  const mockStrat = await ethers.getContract("MockStrategy");
+  // const mockStrat = await ethers.getContract("MockStrategy");
 
-  const UniswapV3StrategyLib = await deployWithConfirmation(
-    "UniswapV3StrategyLib"
+  const dUniswapV3Strategy = await deployWithConfirmation("UniswapV3Strategy");
+  const dUniswapV3LiquidityManager = await deployWithConfirmation(
+    "UniswapV3LiquidityManager"
   );
 
-  const uniV3UsdcUsdtImpl = await deployWithConfirmation(
-    "UniV3_USDC_USDT_Strategy",
-    [],
-    "GeneralizedUniswapV3Strategy",
-    {
-      UniswapV3StrategyLib: UniswapV3StrategyLib.address,
-    }
-  );
   await deployWithConfirmation("UniV3_USDC_USDT_Proxy");
-  const uniV3UsdcUsdtProxy = await ethers.getContract("UniV3_USDC_USDT_Proxy");
+  const uniV3Proxy = await ethers.getContract("UniV3_USDC_USDT_Proxy");
 
   await withConfirmation(
-    uniV3UsdcUsdtProxy["initialize(address,address,bytes)"](
-      uniV3UsdcUsdtImpl.address,
+    uniV3Proxy["initialize(address,address,bytes)"](
+      dUniswapV3Strategy.address,
       deployerAddr,
       []
     )
   );
   log("Initialized UniV3_USDC_USDT_Proxy");
 
-  const uniV3UsdcUsdtStrat = await ethers.getContractAt(
-    "GeneralizedUniswapV3Strategy",
-    uniV3UsdcUsdtProxy.address
+  const uniV3Strat = await ethers.getContractAt(
+    "UniswapV3Strategy",
+    uniV3Proxy.address
   );
   await withConfirmation(
-    uniV3UsdcUsdtStrat
+    uniV3Strat
       .connect(sDeployer)
-      ["initialize(address,address,address,address,address,address,address)"](
+      ["initialize(address,address,address,address,address,address)"](
         vault.address,
         pool.address,
         manager.address,
-        mockStrat.address,
-        mockStrat.address,
-        operatorAddr,
         v3Helper.address,
-        mockRouter.address
+        mockRouter.address,
+        operatorAddr
       )
   );
-  log("Initialized UniV3_USDC_USDT_Strategy");
+  log("Initialized UniswapV3Strategy");
 
   await withConfirmation(
-    uniV3UsdcUsdtStrat.connect(sDeployer).transferGovernance(governorAddr)
+    uniV3Strat
+      .connect(sDeployer)
+      .setLiquidityManagerImpl(dUniswapV3LiquidityManager.address)
   );
-  log(`UniV3_USDC_USDT_Strategy transferGovernance(${governorAddr}) called`);
+  log("Initialized UniswapV3LiquidityManager");
+
+  await withConfirmation(
+    uniV3Strat.connect(sDeployer).transferGovernance(governorAddr)
+  );
+  log(`UniswapV3Strategy transferGovernance(${governorAddr}) called`);
 
   // On Mainnet the governance transfer gets executed separately, via the
   // multi-sig wallet. On other networks, this migration script can claim
   // governance by the governor.
   if (!isMainnet) {
     await withConfirmation(
-      uniV3UsdcUsdtStrat
+      uniV3Strat
         .connect(sGovernor) // Claim governance with governor
         .claimGovernance()
     );
     log("Claimed governance for UniV3_USDC_USDT_Strategy");
   }
 
-  return uniV3UsdcUsdtStrat;
+  return uniV3Strat;
 };
 
 const main = async () => {
@@ -1076,7 +1080,7 @@ const main = async () => {
   await deployConvexStrategy();
   await deployConvexOUSDMetaStrategy();
   await deployConvexLUSDMetaStrategy();
-  // await deployUniswapV3Strategy();
+  await deployUniswapV3Strategy();
   const harvesterProxy = await deployHarvester();
   await configureVault(harvesterProxy);
   await configureStrategies(harvesterProxy);

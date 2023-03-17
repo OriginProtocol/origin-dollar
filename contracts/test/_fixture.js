@@ -30,7 +30,7 @@ const threepoolSwapAbi = require("./abi/threepoolSwap.json");
 
 async function defaultFixture() {
   await deployments.fixture(isFork ? undefined : ["unit_tests"], {
-    keepExistingDeployments: true, // Boolean(isForkWithLocalNode),
+    keepExistingDeployments: true,
   });
 
   const { governorAddr, timelockAddr, operatorAddr } = await getNamedAccounts();
@@ -182,6 +182,7 @@ async function defaultFixture() {
     UniV3_USDC_USDT_Pool,
     UniV3SwapRouter,
     mockStrategy,
+    mockStrategy2,
     mockStrategyDAI;
 
   if (isFork) {
@@ -339,6 +340,7 @@ async function defaultFixture() {
     );
     UniV3_USDC_USDT_Pool = await ethers.getContract("MockUniswapV3Pool");
     mockStrategy = await ethers.getContract("MockStrategy");
+    mockStrategy2 = await ethers.getContract("MockStrategy2");
     mockStrategyDAI = await ethers.getContract("MockStrategyDAI");
   }
   if (!isFork) {
@@ -482,6 +484,7 @@ async function defaultFixture() {
     UniV3SwapRouter,
     mockStrategy,
     mockStrategyDAI,
+    mockStrategy2,
   };
 }
 
@@ -1242,12 +1245,14 @@ function uniswapV3FixturSetup() {
       dai,
       UniV3_USDC_USDT_Strategy,
       mockStrategy,
+      mockStrategy2,
       mockStrategyDAI,
     } = fixture;
 
     if (!isFork) {
       // Approve mockStrategy
       await _approveStrategy(fixture, mockStrategy);
+      await _approveStrategy(fixture, mockStrategy2);
       await _approveStrategy(fixture, mockStrategyDAI);
 
       // Approve Uniswap V3 Strategy
@@ -1258,9 +1263,21 @@ function uniswapV3FixturSetup() {
     await _setDefaultStrategy(fixture, usdc, UniV3_USDC_USDT_Strategy);
     await _setDefaultStrategy(fixture, usdt, UniV3_USDC_USDT_Strategy);
 
+    // await UniV3_USDC_USDT_Strategy.setSwapPriceThreshold(-1000, 1000);
+
     if (!isFork) {
       // And a different one for DAI
       await _setDefaultStrategy(fixture, dai, mockStrategyDAI);
+
+      // Set reserve strategy
+      await UniV3_USDC_USDT_Strategy.setReserveStrategy(
+        usdc.address,
+        mockStrategy.address
+      );
+      await UniV3_USDC_USDT_Strategy.setReserveStrategy(
+        usdt.address,
+        mockStrategy.address
+      );
     }
 
     return fixture;
