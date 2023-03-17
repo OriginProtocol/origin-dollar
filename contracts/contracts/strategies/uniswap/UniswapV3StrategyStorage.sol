@@ -5,6 +5,7 @@ import { InitializableAbstractStrategy } from "../../utils/InitializableAbstract
 import { IStrategy } from "../../interfaces/IStrategy.sol";
 import { IVault } from "../../interfaces/IVault.sol";
 
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IUniswapV3Pool } from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import { INonfungiblePositionManager } from "../../interfaces/uniswap/v3/INonfungiblePositionManager.sol";
 import { IUniswapV3Helper } from "../../interfaces/uniswap/v3/IUniswapV3Helper.sol";
@@ -203,5 +204,33 @@ abstract contract UniswapV3StrategyStorage is InitializableAbstractStrategy {
     modifier onlySelf() {
         require(msg.sender == address(_self), "Not self");
         _;
+    }
+
+    function _depositAll(
+        address token0,
+        address token1,
+        address vaultAddress,
+        uint256 minDepositThreshold0,
+        uint256 minDepositThreshold1
+    ) internal {
+        IUniswapV3Strategy strat = IUniswapV3Strategy(msg.sender);
+
+        uint256 token0Bal = IERC20(token0).balanceOf(address(this));
+        uint256 token1Bal = IERC20(token1).balanceOf(address(this));
+        IVault vault = IVault(vaultAddress);
+
+        if (
+            token0Bal > 0 &&
+            (minDepositThreshold0 == 0 || token0Bal >= minDepositThreshold0)
+        ) {
+            vault.depositToUniswapV3Reserve(token0, token0Bal);
+        }
+        if (
+            token1Bal > 0 &&
+            (minDepositThreshold1 == 0 || token1Bal >= minDepositThreshold1)
+        ) {
+            vault.depositToUniswapV3Reserve(token1, token1Bal);
+        }
+        // Not emitting Deposit events since the Reserve strategies would do so
     }
 }
