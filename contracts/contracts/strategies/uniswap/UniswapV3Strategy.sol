@@ -3,7 +3,6 @@ pragma solidity ^0.8.0;
 
 import { InitializableAbstractStrategy } from "../../utils/InitializableAbstractStrategy.sol";
 import { UniswapV3StrategyStorage } from "./UniswapV3StrategyStorage.sol";
-import { UniswapV3Library } from "./UniswapV3Library.sol";
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -106,7 +105,8 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
      */
     function setReserveStrategy(address _asset, address _reserveStrategy)
         external
-        onlyGovernor
+        onlyGovernorOrStrategist
+        onlyPoolTokens(_asset)
         nonReentrant
     {
         require(
@@ -153,6 +153,10 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
         emit MinDepositThresholdChanged(_asset, _minThreshold);
     }
 
+    /**
+     * @notice Toggle rebalance methods
+     * @param _paused True if rebalance has to be paused
+     */
     function setRebalancePaused(bool _paused)
         external
         onlyGovernorOrStrategist
@@ -161,6 +165,10 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
         emit RebalancePauseStatusChanged(_paused);
     }
 
+    /**
+     * @notice Toggle swapAndRebalance method
+     * @param _paused True if swaps have to be paused
+     */
     function setSwapsPaused(bool _paused) external onlyGovernorOrStrategist {
         swapsPaused = _paused;
         emit SwapsPauseStatusChanged(_paused);
@@ -174,6 +182,10 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
         emit MaxSwapSlippageChanged(_maxSlippage);
     }
 
+    /**
+     * @notice Change the maxTVL amount threshold
+     * @param _maxTVL Maximum amount the strategy can have deployed in the Uniswap pool
+     */
     function setMaxTVL(uint256 _maxTVL)
         external
         onlyGovernorOrStrategist
@@ -222,13 +234,7 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
 
     /// @inheritdoc InitializableAbstractStrategy
     function depositAll() external override onlyVault nonReentrant {
-        _depositAll(
-            token0,
-            token1,
-            vaultAddress,
-            poolTokens[token0].minDepositThreshold,
-            poolTokens[token1].minDepositThreshold
-        );
+        _depositAll();
     }
 
     /**

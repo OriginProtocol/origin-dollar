@@ -97,7 +97,6 @@ abstract contract UniswapV3StrategyStorage is InitializableAbstractStrategy {
     address public token1; // Token1 of Uniswap V3 Pool
 
     uint24 public poolFee; // Uniswap V3 Pool Fee
-    uint24 public maxSwapSlippage = 100; // 1%; Reverts if swap slippage is higher than this
     bool public swapsPaused = false; // True if Swaps are paused
     bool public rebalancePaused = false; // True if Swaps are paused
 
@@ -200,6 +199,9 @@ abstract contract UniswapV3StrategyStorage is InitializableAbstractStrategy {
         uint256 token0Bal = IERC20(token0).balanceOf(address(this));
         uint256 token1Bal = IERC20(token1).balanceOf(address(this));
         IVault vault = IVault(vaultAddress);
+
+        uint256 minDepositThreshold0 = poolTokens[token0].minDepositThreshold;
+        uint256 minDepositThreshold1 = poolTokens[token1].minDepositThreshold;
 
         if (
             token0Bal > 0 &&
