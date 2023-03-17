@@ -50,17 +50,11 @@ module.exports = deploymentWithGovernanceProposal(
       "UniswapV3Strategy",
       undefined,
       undefined,
-      {
-        UniswapV3Library: dUniV3Lib.address,
-      }
     );
     const dUniV3PoolLiquidityManager = await deployWithConfirmation(
       "UniswapV3LiquidityManager",
       undefined,
       undefined,
-      {
-        UniswapV3Library: dUniV3Lib.address,
-      }
     );
     const cUniV3_USDC_USDT_Strategy = await ethers.getContractAt(
       "UniswapV3Strategy",

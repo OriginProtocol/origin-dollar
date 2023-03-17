@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 import { UniswapV3StrategyStorage } from "./UniswapV3StrategyStorage.sol";
-import { UniswapV3Library } from "./UniswapV3Library.sol";
 
 import { INonfungiblePositionManager } from "../../interfaces/uniswap/v3/INonfungiblePositionManager.sol";
 import { IVault } from "../../interfaces/IVault.sol";
@@ -15,22 +14,9 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
     using SafeERC20 for IERC20;
 
-    /***************************************
-            Deposit/Withdraw
-    ****************************************/
-    function _depositAll() internal {
-        UniswapV3Library.depositAll(
-            token0,
-            token1,
-            vaultAddress,
-            poolTokens[token0].minDepositThreshold,
-            poolTokens[token1].minDepositThreshold
-        );
-    }
-
     // TODO: Intentionally left out non-reentrant modifier since otherwise Vault would throw
     function withdrawAssetFromActivePosition(address _asset, uint256 amount)
-        external
+        public
         onlyVault
     {
         Position memory position = tokenIdToPosition[activeTokenId];
@@ -187,7 +173,13 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         activeTokenId = tokenId;
 
         // Move any leftovers to Reserve
-        _depositAll();
+        _depositAll(
+            token0,
+            token1,
+            vaultAddress,
+            poolTokens[token0].minDepositThreshold,
+            poolTokens[token1].minDepositThreshold
+        );
     }
 
     struct SwapAndRebalanceParams {
@@ -262,7 +254,13 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         activeTokenId = tokenId;
 
         // Move any leftovers to Reserve
-        _depositAll();
+        _depositAll(
+            token0,
+            token1,
+            vaultAddress,
+            poolTokens[token0].minDepositThreshold,
+            poolTokens[token1].minDepositThreshold
+        );
     }
 
     /***************************************
@@ -550,27 +548,11 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         uint256 minAmount0,
         uint256 minAmount1
     )
-        external
+        public
         onlyGovernorOrStrategistOrOperator
         nonReentrant
         returns (uint256 amount0, uint256 amount1)
     {
-        return _closePosition(tokenId, minAmount0, minAmount1);
-    }
-
-    /**
-     * @notice Same as closePosition() but only callable by Vault and doesn't have non-reentrant
-     * @param tokenId Token ID of the position to collect fees of.
-     * @param minAmount0 Min amount of token0 to receive back
-     * @param minAmount1 Min amount of token1 to receive back
-     * @return amount0 Amount of token0 received after removing liquidity
-     * @return amount1 Amount of token1 received after removing liquidity
-     */
-    function closePositionOnlyVault(
-        uint256 tokenId,
-        uint256 minAmount0,
-        uint256 minAmount1
-    ) external onlyVault returns (uint256 amount0, uint256 amount1) {
         return _closePosition(tokenId, minAmount0, minAmount1);
     }
 
@@ -784,15 +766,46 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
     }
 
     function withdraw(
-        address _recipient,
+        address recipient,
         address _asset,
         uint256 amount
-    ) external virtual override {
-        revert("NO_IMPL");
+    ) external override onlyVault onlyPoolTokens(_asset) nonReentrant {
+        IERC20 asset = IERC20(_asset);
+        uint256 selfBalance = asset.balanceOf(address(this));
+
+        if (selfBalance < amount) {
+            withdrawAssetFromActivePosition(_asset, amount - selfBalance);
+        }
+
+        // Transfer requested amount
+        asset.safeTransfer(recipient, amount);
+        emit Withdrawal(_asset, _asset, amount);
     }
 
-    function withdrawAll() external virtual override {
-        revert("NO_IMPL");
+    /**
+     * @notice Closes active LP position, if any, and transfer all token balance to Vault
+     */
+    function withdrawAll() external override onlyVault nonReentrant {
+        if (activeTokenId > 0) {
+            // TODO: This method is only callable from Vault directly
+            // and by Governor or Strategist indirectly.
+            // Changing the Vault code to pass a minAmount0 and minAmount1 will
+            // make things complex. We could perhaps make sure that there're no
+            // active position when withdrawingAll rather than passing zero values?
+
+            _closePosition(activeTokenId, 0, 0);
+        }
+
+        address[2] memory tokens = [token0, token1];
+        for(uint256 i = 0; i < 2; i++) {
+            IERC20 tokenContract = IERC20(tokens[i]);    
+            uint256 tokenBalance = tokenContract.balanceOf(address(this));
+
+            if (tokenBalance > 0) {
+                tokenContract.safeTransfer(vaultAddress, tokenBalance);
+                emit Withdrawal(tokens[i], tokens[i], tokenBalance);
+            }
+        }
     }
 
     function checkBalance(address _asset)

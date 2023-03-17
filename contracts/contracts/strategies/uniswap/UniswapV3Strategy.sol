@@ -234,14 +234,7 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
 
     /// @inheritdoc InitializableAbstractStrategy
     function depositAll() external override onlyVault nonReentrant {
-        _depositAll();
-    }
-
-    /**
-     * @notice Deposits all undeployed balances of the contract to the reserve strategies
-     */
-    function _depositAll() internal {
-        UniswapV3Library.depositAll(
+        _depositAll(
             token0,
             token1,
             vaultAddress,
@@ -258,64 +251,15 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
         address _asset,
         uint256 amount
     ) external override onlyVault onlyPoolTokens(_asset) nonReentrant {
-        IERC20 asset = IERC20(_asset);
-        uint256 selfBalance = asset.balanceOf(address(this));
-
-        if (selfBalance < amount) {
-            (bool success, bytes memory data) = address(this).delegatecall(
-                abi.encodeWithSignature(
-                    "withdrawAssetFromActivePosition(asset,uint256)",
-                    _asset,
-                    amount - selfBalance
-                )
-            );
-
-            require(success, "Failed to liquidate active position");
-        }
-
-        // Transfer requested amount
-        asset.safeTransfer(recipient, amount);
-        emit Withdrawal(_asset, _asset, amount);
+        revert("NO_IMPL");
     }
 
     /**
      * @notice Closes active LP position, if any, and transfer all token balance to Vault
      * @inheritdoc InitializableAbstractStrategy
      */
-    function withdrawAll() external override onlyVault nonReentrant {
-        if (activeTokenId > 0) {
-            // TODO: This method is only callable from Vault directly
-            // and by Governor or Strategist indirectly.
-            // Changing the Vault code to pass a minAmount0 and minAmount1 will
-            // make things complex. We could perhaps make sure that there're no
-            // active position when withdrawingAll rather than passing zero values?
-
-            (bool success, bytes memory data) = address(this).delegatecall(
-                abi.encodeWithSignature(
-                    "closePositionOnlyVault(uint256,uint256,uint256)",
-                    activeTokenId,
-                    0,
-                    0
-                )
-            );
-
-            require(success, "Failed to close active position");
-        }
-
-        IERC20 token0Contract = IERC20(token0);
-        IERC20 token1Contract = IERC20(token1);
-
-        uint256 token0Balance = token0Contract.balanceOf(address(this));
-        if (token0Balance > 0) {
-            token0Contract.safeTransfer(vaultAddress, token0Balance);
-            emit Withdrawal(token0, token0, token0Balance);
-        }
-
-        uint256 token1Balance = token1Contract.balanceOf(address(this));
-        if (token1Balance > 0) {
-            token1Contract.safeTransfer(vaultAddress, token1Balance);
-            emit Withdrawal(token1, token1, token1Balance);
-        }
+    function withdrawAll() external virtual override {
+        revert("NO_IMPL");
     }
 
     /***************************************
