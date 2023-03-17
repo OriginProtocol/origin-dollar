@@ -472,18 +472,18 @@ contract VaultCore is VaultStorage {
         return _dripperAvailableFunds(dripperReserve, dripper);
     }
 
-    function _dripperAvailableFunds(uint256 _balance, Dripper memory _drip)
+    function _dripperAvailableFunds(uint256 _reserve, Dripper memory _drip)
         internal
         view
         returns (uint256)
     {
-        uint256 dripPerBlock = _drip.perBlock;
-        if (dripPerBlock == 0) {
-            return _balance;
+        uint256 _dripPerBlock = _drip.perBlock; // gas savings
+        if (_dripPerBlock == 0) { // Prevents forever dripper dust
+            return _reserve; 
         }
         uint256 elapsed = block.timestamp - _drip.lastCollect;
-        uint256 allowed = (elapsed * dripPerBlock);
-        return (allowed > _balance) ? _balance : allowed;
+        uint256 allowed = (elapsed * _dripPerBlock);
+        return (allowed > _reserve) ? _reserve : allowed;
     }
 
     /**
