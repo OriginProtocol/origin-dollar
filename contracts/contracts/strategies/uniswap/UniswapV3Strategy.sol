@@ -153,6 +153,14 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
         emit MinDepositThresholdChanged(_asset, _minThreshold);
     }
 
+    function setRebalancePaused(bool _paused)
+        external
+        onlyGovernorOrStrategist
+    {
+        rebalancePaused = _paused;
+        emit RebalancePauseStatusChanged(_paused);
+    }
+
     function setSwapsPaused(bool _paused) external onlyGovernorOrStrategist {
         swapsPaused = _paused;
         emit SwapsPauseStatusChanged(_paused);
@@ -175,10 +183,7 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
         external
         onlyGovernorOrStrategist
     {
-        require(
-            (minTick < maxTick) || (minTick == 0 && maxTick == 0),
-            "Invalid threshold"
-        );
+        require((minTick < maxTick), "Invalid threshold");
         minSwapPriceX96 = helper.getSqrtRatioAtTick(minTick);
         maxSwapPriceX96 = helper.getSqrtRatioAtTick(maxTick);
         emit SwapPriceThresholdChanged(
@@ -186,6 +191,26 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
             minSwapPriceX96,
             maxTick,
             maxSwapPriceX96
+        );
+    }
+
+    /**
+     * @notice Change the token price limit
+     * @param minTick Minimum price tick index
+     * @param maxTick Maximum price tick index
+     */
+    function setTokenPriceLimit(int24 minTick, int24 maxTick)
+        external
+        onlyGovernorOrStrategist
+    {
+        require((minTick < maxTick), "Invalid threshold");
+        minPriceLimitX96 = helper.getSqrtRatioAtTick(minTick);
+        maxPriceLimitX96 = helper.getSqrtRatioAtTick(maxTick);
+        emit TokenPriceLimitChanged(
+            minTick,
+            minPriceLimitX96,
+            maxTick,
+            maxPriceLimitX96
         );
     }
 
@@ -329,11 +354,10 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
     {
         balance = IERC20(_asset).balanceOf(address(this));
 
-        (uint160 sqrtRatioX96, , , , , , ) = pool.slot0();
-
         if (activeTokenId > 0) {
             require(tokenIdToPosition[activeTokenId].exists, "Invalid token");
 
+            (uint160 sqrtRatioX96, , , , , , ) = pool.slot0();
             (uint256 amount0, uint256 amount1) = helper.positionValue(
                 positionManager,
                 address(pool),
@@ -347,6 +371,27 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
                 balance += amount1;
             }
         }
+    }
+
+    function checkBalanceOfAllAssets()
+        external
+        view
+        returns (uint256 amount0, uint256 amount1)
+    {
+        if (activeTokenId > 0) {
+            require(tokenIdToPosition[activeTokenId].exists, "Invalid token");
+
+            (uint160 sqrtRatioX96, , , , , , ) = pool.slot0();
+            (amount0, amount1) = helper.positionValue(
+                positionManager,
+                address(pool),
+                activeTokenId,
+                sqrtRatioX96
+            );
+        }
+
+        amount0 += IERC20(token0).balanceOf(address(this));
+        amount1 += IERC20(token1).balanceOf(address(this));
     }
 
     /***************************************
@@ -380,9 +425,10 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
     {
         IERC20(token0).safeApprove(vaultAddress, type(uint256).max);
         IERC20(token1).safeApprove(vaultAddress, type(uint256).max);
-        // TODO: Should approval be done only during minting/increasing liquidity?
         IERC20(token0).safeApprove(address(positionManager), type(uint256).max);
         IERC20(token1).safeApprove(address(positionManager), type(uint256).max);
+        IERC20(token0).safeApprove(address(swapRouter), type(uint256).max);
+        IERC20(token1).safeApprove(address(swapRouter), type(uint256).max);
     }
 
     /**
@@ -391,13 +437,15 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
     function resetAllowanceOfTokens() external onlyGovernor nonReentrant {
         IERC20(token0).safeApprove(address(positionManager), 0);
         IERC20(token1).safeApprove(address(positionManager), 0);
+        IERC20(token0).safeApprove(address(swapRouter), 0);
+        IERC20(token1).safeApprove(address(swapRouter), 0);
     }
 
     /// @inheritdoc InitializableAbstractStrategy
     function _abstractSetPToken(address _asset, address) internal override {
         IERC20(_asset).safeApprove(vaultAddress, type(uint256).max);
-        // TODO: Should approval be done only during minting/increasing liquidity?
         IERC20(_asset).safeApprove(address(positionManager), type(uint256).max);
+        IERC20(_asset).safeApprove(address(swapRouter), type(uint256).max);
     }
 
     /// @inheritdoc InitializableAbstractStrategy

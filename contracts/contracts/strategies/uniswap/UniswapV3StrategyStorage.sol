@@ -18,6 +18,7 @@ abstract contract UniswapV3StrategyStorage is InitializableAbstractStrategy {
         address asset,
         uint256 minDepositThreshold
     );
+    event RebalancePauseStatusChanged(bool paused);
     event SwapsPauseStatusChanged(bool paused);
     event SwapPriceThresholdChanged(
         int24 minTick,
@@ -26,6 +27,12 @@ abstract contract UniswapV3StrategyStorage is InitializableAbstractStrategy {
         uint160 maxSwapPriceX96
     );
     event MaxSwapSlippageChanged(uint24 maxSlippage);
+    event TokenPriceLimitChanged(
+        int24 minTick,
+        uint160 minPriceLimitX96,
+        int24 maxTick,
+        uint160 maxPriceLimitX96
+    );
     event AssetSwappedForRebalancing(
         address indexed tokenIn,
         address indexed tokenOut,
@@ -96,15 +103,23 @@ abstract contract UniswapV3StrategyStorage is InitializableAbstractStrategy {
     uint24 public poolFee; // Uniswap V3 Pool Fee
     uint24 public maxSwapSlippage = 100; // 1%; Reverts if swap slippage is higher than this
     bool public swapsPaused = false; // True if Swaps are paused
+    bool public rebalancePaused = false; // True if Swaps are paused
 
     uint256 public maxTVL; // In USD, 18 decimals
 
+    // An upper and lower bound of swap price limits
     uint160 public minSwapPriceX96;
     uint160 public maxSwapPriceX96;
 
+    // Uses these params when checking the values of the tokens
+    // moved in and out of the reserve strategies
+    uint160 public minPriceLimitX96;
+    uint160 public maxPriceLimitX96;
+
+    // Token ID of active Position on the pool. zero, if there are no active LP position
     uint256 public activeTokenId;
 
-    // Uniswap V3's PositionManager
+    // Uniswap V3's Pool
     IUniswapV3Pool public pool;
 
     // Uniswap V3's PositionManager
@@ -113,8 +128,10 @@ abstract contract UniswapV3StrategyStorage is InitializableAbstractStrategy {
     // A deployed contract that's used to call methods of Uniswap V3's libraries despite version mismatch
     IUniswapV3Helper internal helper;
 
+    // Uniswap Swap Router
     ISwapRouter internal swapRouter;
 
+    // Contains data about both tokens
     mapping(address => PoolToken) public poolTokens;
 
     // A lookup table to find token IDs of position using f(lowerTick, upperTick)
@@ -183,7 +200,7 @@ abstract contract UniswapV3StrategyStorage is InitializableAbstractStrategy {
     /**
      * @dev Ensures that the caller is the proxy.
      */
-    modifier internalProxiedFunction() {
+    modifier onlySelf() {
         require(msg.sender == address(_self), "Not self");
         _;
     }

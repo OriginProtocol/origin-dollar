@@ -114,6 +114,12 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
     /***************************************
             Rebalance
     ****************************************/
+
+    modifier rebalanceNotPaused() {
+        require(!rebalancePaused, "Rebalance paused");
+        _;
+    }
+
     /**
      * @notice Closes active LP position if any and then provides liquidity to the requested position.
      *         Mints new position, if it doesn't exist already.
@@ -136,7 +142,12 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         uint256 minRedeemAmount1,
         int24 lowerTick,
         int24 upperTick
-    ) external onlyGovernorOrStrategistOrOperator nonReentrant {
+    )
+        external
+        onlyGovernorOrStrategistOrOperator
+        nonReentrant
+        rebalanceNotPaused
+    {
         require(lowerTick < upperTick, "Invalid tick range");
 
         int48 tickKey = _getTickPositionKey(lowerTick, upperTick);
@@ -198,6 +209,7 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         external
         onlyGovernorOrStrategistOrOperator
         nonReentrant
+        rebalanceNotPaused
     {
         require(params.lowerTick < params.upperTick, "Invalid tick range");
 
@@ -599,25 +611,24 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
 
     function _checkSwapLimits(uint160 sqrtPriceLimitX96, bool swapZeroForOne)
         internal
+        view
     {
         require(!swapsPaused, "Swaps are paused");
 
         (uint160 currentPriceX96, , , , , , ) = pool.slot0();
 
-        if (minSwapPriceX96 > 0 || maxSwapPriceX96 > 0) {
-            require(
-                minSwapPriceX96 <= currentPriceX96 &&
-                    currentPriceX96 <= maxSwapPriceX96,
-                "Price out of bounds"
-            );
+        require(
+            minSwapPriceX96 <= currentPriceX96 &&
+                currentPriceX96 <= maxSwapPriceX96,
+            "Price out of bounds"
+        );
 
-            require(
-                swapZeroForOne
-                    ? (sqrtPriceLimitX96 >= minSwapPriceX96)
-                    : (sqrtPriceLimitX96 <= maxSwapPriceX96),
-                "Slippage out of bounds"
-            );
-        }
+        require(
+            swapZeroForOne
+                ? (sqrtPriceLimitX96 >= minSwapPriceX96)
+                : (sqrtPriceLimitX96 <= maxSwapPriceX96),
+            "Slippage out of bounds"
+        );
     }
 
     function _ensureAssetsBySwapping(
@@ -630,11 +641,8 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
     ) internal {
         _checkSwapLimits(sqrtPriceLimitX96, swapZeroForOne);
 
-        IERC20 t0Contract = IERC20(token0);
-        IERC20 t1Contract = IERC20(token1);
-
-        uint256 token0Balance = t0Contract.balanceOf(address(this));
-        uint256 token1Balance = t1Contract.balanceOf(address(this));
+        uint256 token0Balance = IERC20(token0).balanceOf(address(this));
+        uint256 token1Balance = IERC20(token1).balanceOf(address(this));
 
         uint256 token0Needed = desiredAmount0 > token0Balance
             ? desiredAmount0 - token0Balance
@@ -659,9 +667,6 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
             token1Needed = (swapMinAmountOut >= token1Needed)
                 ? 0
                 : (token1Needed - swapMinAmountOut);
-
-            // Approve for swaps
-            t0Contract.safeApprove(address(swapRouter), swapAmountIn);
         } else {
             // Amount available in reserve strategies
             uint256 t0ReserveBal = IStrategy(poolTokens[token0].reserveStrategy)
@@ -679,9 +684,6 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
             token0Needed = (swapMinAmountOut >= token0Needed)
                 ? 0
                 : (token0Needed - swapMinAmountOut);
-
-            // Approve for swaps
-            t1Contract.safeApprove(address(swapRouter), swapAmountIn);
         }
 
         // Fund strategy from reserve strategies

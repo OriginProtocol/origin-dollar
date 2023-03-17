@@ -10,7 +10,7 @@ import "@uniswap/v3-periphery/contracts/libraries/LiquidityAmounts.sol";
 import { INonfungiblePositionManager } from "../interfaces/uniswap/v3/INonfungiblePositionManager.sol";
 
 /**
- * @dev Uniswap V3 Contracts use Solidity v0.7.6 and OUSD contracts are on 0.8.6.
+ * @dev Uniswap V3 Contracts use Solidity v0.7.6 and OUSD contracts are on 0.8.7.
  *      So, the libraries cannot be directly imported into OUSD contracts.
  *      This contract (on v0.7.6) just proxies the calls to the Uniswap Libraries.
  */
