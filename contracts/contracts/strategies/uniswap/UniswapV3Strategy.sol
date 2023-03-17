@@ -106,7 +106,7 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
      */
     function setReserveStrategy(address _asset, address _reserveStrategy)
         external
-        onlyGovernorOrStrategist
+        onlyGovernor
         nonReentrant
     {
         require(
@@ -193,7 +193,7 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
             helper.getSqrtRatioAtTick(maxTick)
         );
     }
-    
+
     /***************************************
             Deposit/Withdraw
     ****************************************/
