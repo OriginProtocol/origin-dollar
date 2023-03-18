@@ -117,18 +117,6 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
     /***************************************
             Rebalance
     ****************************************/
-    modifier rebalanceNotPausedAndWithinLimits(
-        int24 lowerTick,
-        int24 upperTick
-    ) {
-        require(rebalancePaused, "Rebalances are paused");
-        require(
-            minRebalanceTick <= lowerTick && maxRebalanceTick >= upperTick,
-            "Rebalance position out of bounds"
-        );
-        _;
-    }
-
     modifier ensureTVL() {
         // Vaule change should either be between 0 and 0 (for rebalance)
         // and 0 and slippage (for swapAndRebalance)
@@ -142,10 +130,10 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         require(balance <= maxTVL, "MaxTVL threshold has been reached");
     }
 
-    modifier swapsNotPausedAndWithinLimits(
+    function swapsNotPausedAndWithinLimits(
         uint160 sqrtPriceLimitX96,
         bool swapZeroForOne
-    ) {
+    ) internal {
         require(!swapsPaused, "Swaps are paused");
 
         (uint160 currentPriceX96, , , , , , ) = pool.slot0();
@@ -162,8 +150,14 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
                 : (sqrtPriceLimitX96 <= maxSwapPriceX96),
             "Slippage out of bounds"
         );
+    }
 
-        _;
+    function rebalanceNotPausedAndWithinLimits(int24 lowerTick, int24 upperTick) internal {
+        require(rebalancePaused, "Rebalances are paused");
+        require(
+            minRebalanceTick <= lowerTick && maxRebalanceTick >= upperTick,
+            "Rebalance position out of bounds"
+        );
     }
 
     /**
@@ -192,9 +186,9 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         external
         onlyGovernorOrStrategistOrOperator
         nonReentrant
-        rebalanceNotPausedAndWithinLimits(lowerTick, upperTick)
         ensureTVL
     {
+        rebalanceNotPausedAndWithinLimits(lowerTick, upperTick);
         require(lowerTick < upperTick, "Invalid tick range");
 
         int48 tickKey = _getTickPositionKey(lowerTick, upperTick);
@@ -256,13 +250,10 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         external
         onlyGovernorOrStrategistOrOperator
         nonReentrant
-        rebalanceNotPausedAndWithinLimits(params.lowerTick, params.upperTick)
-        swapsNotPausedAndWithinLimits(
-            params.sqrtPriceLimitX96,
-            params.swapZeroForOne
-        )
         ensureTVL
     {
+        swapsNotPausedAndWithinLimits(params.sqrtPriceLimitX96, params.swapZeroForOne);
+        rebalanceNotPausedAndWithinLimits(params.lowerTick, params.upperTick);
         require(params.lowerTick < params.upperTick, "Invalid tick range");
 
         uint256 tokenId = ticksToTokenId[
