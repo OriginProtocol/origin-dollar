@@ -16,9 +16,12 @@ import { IUniswapV3Helper } from "../../interfaces/uniswap/v3/IUniswapV3Helper.s
 import { IUniswapV3Pool } from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import { IUniswapV3Strategy } from "../../interfaces/IUniswapV3Strategy.sol";
 import { ISwapRouter } from "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
+import { StableMath } from "../../utils/StableMath.sol";
+import { Helpers } from "../../utils/Helpers.sol";
 
 contract UniswapV3Strategy is UniswapV3StrategyStorage {
     using SafeERC20 for IERC20;
+    using StableMath for uint256;
 
     /**
      * @dev Initialize the contract
@@ -175,42 +178,34 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
     }
 
     /**
-     * @notice Change the swap price threshold
-     * @param minTick Minimum price tick index
-     * @param maxTick Maximum price tick index
+     * @notice Change the maxTVL amount threshold
+     * @param _maxTVL Maximum amount the strategy can have deployed in the Uniswap pool
      */
-    function setSwapPriceThreshold(int24 minTick, int24 maxTick)
+    function setMaxTVL(uint256 _maxTVL)
         external
         onlyGovernorOrStrategist
     {
-        require((minTick < maxTick), "Invalid threshold");
-        minSwapPriceX96 = helper.getSqrtRatioAtTick(minTick);
-        maxSwapPriceX96 = helper.getSqrtRatioAtTick(maxTick);
-        emit SwapPriceThresholdChanged(
-            minTick,
-            minSwapPriceX96,
-            maxTick,
-            maxSwapPriceX96
-        );
+        maxTVL = _maxTVL;
+        emit MaxTVLChanged(_maxTVL);
     }
 
     /**
-     * @notice Change the token price limit
+     * @notice Change the rebalance price threshold
      * @param minTick Minimum price tick index
      * @param maxTick Maximum price tick index
      */
-    function setTokenPriceLimit(int24 minTick, int24 maxTick)
+    function setRebalancePriceThreshold(int24 minTick, int24 maxTick)
         external
         onlyGovernorOrStrategist
     {
         require((minTick < maxTick), "Invalid threshold");
-        minPriceLimitX96 = helper.getSqrtRatioAtTick(minTick);
-        maxPriceLimitX96 = helper.getSqrtRatioAtTick(maxTick);
-        emit TokenPriceLimitChanged(
+        minRebalanceTick = minTick;
+        maxRebalanceTick = maxTick;
+        emit RebalancePriceThresholdChanged(
             minTick,
-            minPriceLimitX96,
+            helper.getSqrtRatioAtTick(minTick),
             maxTick,
-            maxPriceLimitX96
+            helper.getSqrtRatioAtTick(maxTick)
         );
     }
 
@@ -309,6 +304,9 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
                 balance += amount1;
             }
         }
+
+        uint256 assetDecimals = Helpers.getDecimals(_asset);
+        balance = balance.scaleBy(18, assetDecimals);
     }
 
     function checkBalanceOfAllAssets()
@@ -330,6 +328,11 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
 
         amount0 += IERC20(token0).balanceOf(address(this));
         amount1 += IERC20(token1).balanceOf(address(this));
+
+        uint256 asset0Decimals = Helpers.getDecimals(token0);
+        uint256 asset1Decimals = Helpers.getDecimals(token1);
+        amount0 = amount0.scaleBy(18, asset0Decimals);
+        amount1 = amount1.scaleBy(18, asset1Decimals);
     }
 
     /***************************************

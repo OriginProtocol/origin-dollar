@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import { UniswapV3StrategyStorage } from "./UniswapV3StrategyStorage.sol";
 
+import { InitializableAbstractStrategy } from "../../utils/InitializableAbstractStrategy.sol";
 import { INonfungiblePositionManager } from "../../interfaces/uniswap/v3/INonfungiblePositionManager.sol";
 import { IVault } from "../../interfaces/IVault.sol";
 import { IStrategy } from "../../interfaces/IStrategy.sol";
@@ -11,9 +12,11 @@ import { ISwapRouter } from "@uniswap/v3-periphery/contracts/interfaces/ISwapRou
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
+import "@openzeppelin/contracts/utils/Strings.sol";
+
 contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
     using SafeERC20 for IERC20;
-
+    
     function withdrawAssetFromActivePosition(address _asset, uint256 amount)
         external
         onlyVault
@@ -112,6 +115,26 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         _;
     }
 
+    modifier withinRebalacingLimits(int24 lowerTick, int24 upperTick) {
+        require(
+            minRebalanceTick <= lowerTick &&
+                maxRebalanceTick >= upperTick,
+            "Rebalance position out of bounds"
+        );
+        _;
+    }
+
+    modifier ensureTVL() {
+        _;
+        uint256 balance = InitializableAbstractStrategy(this).checkBalance(token0) +
+            InitializableAbstractStrategy(this).checkBalance(token1);
+
+        require(
+            balance <= maxTVL,
+            "MaxTVL threshold has been reached"
+        );
+    }
+
     /**
      * @notice Closes active LP position if any and then provides liquidity to the requested position.
      *         Mints new position, if it doesn't exist already.
@@ -139,6 +162,8 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         onlyGovernorOrStrategistOrOperator
         nonReentrant
         rebalanceNotPaused
+        withinRebalacingLimits(lowerTick, upperTick)
+        ensureTVL
     {
         require(lowerTick < upperTick, "Invalid tick range");
 
@@ -202,6 +227,8 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         onlyGovernorOrStrategistOrOperator
         nonReentrant
         rebalanceNotPaused
+        withinRebalacingLimits(params.lowerTick, params.upperTick)
+        ensureTVL
     {
         require(params.lowerTick < params.upperTick, "Invalid tick range");
 
@@ -585,28 +612,6 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         // TODO: Check value of assets moved here
     }
 
-    function _checkSwapLimits(uint160 sqrtPriceLimitX96, bool swapZeroForOne)
-        internal
-        view
-    {
-        require(!swapsPaused, "Swaps are paused");
-
-        (uint160 currentPriceX96, , , , , , ) = pool.slot0();
-
-        require(
-            minSwapPriceX96 <= currentPriceX96 &&
-                currentPriceX96 <= maxSwapPriceX96,
-            "Price out of bounds"
-        );
-
-        require(
-            swapZeroForOne
-                ? (sqrtPriceLimitX96 >= minSwapPriceX96)
-                : (sqrtPriceLimitX96 <= maxSwapPriceX96),
-            "Slippage out of bounds"
-        );
-    }
-
     function _ensureAssetsBySwapping(
         uint256 desiredAmount0,
         uint256 desiredAmount1,
@@ -615,7 +620,7 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         uint160 sqrtPriceLimitX96,
         bool swapZeroForOne
     ) internal {
-        _checkSwapLimits(sqrtPriceLimitX96, swapZeroForOne);
+        require(!swapsPaused, "Swaps are paused");
 
         uint256 token0Balance = IERC20(token0).balanceOf(address(this));
         uint256 token1Balance = IERC20(token1).balanceOf(address(this));

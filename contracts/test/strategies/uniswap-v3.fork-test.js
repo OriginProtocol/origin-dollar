@@ -1,6 +1,6 @@
 const { expect } = require("chai");
 const {
-  uniswapV3FixturSetup,
+  uniswapV3FixtureSetup,
   impersonateAndFundContract,
 } = require("../_fixture");
 const {
@@ -10,12 +10,14 @@ const {
   usdcUnitsFormat,
   usdtUnitsFormat,
   daiUnits,
+  isFork,
   daiUnitsFormat,
   getBlockTimestamp,
 } = require("../helpers");
-const { BigNumber } = require("ethers");
+const { BigNumber, utils } = require("ethers");
+const { ethers } = hre;
 
-const uniswapV3Fixture = uniswapV3FixturSetup();
+const uniswapV3Fixture = uniswapV3FixtureSetup();
 
 forkOnlyDescribe("Uniswap V3 Strategy", function () {
   this.timeout(0);
@@ -58,6 +60,31 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
     domen = fixture.domen;
     franck = fixture.franck;
   });
+
+  async function setRebalancePriceThreshold(lowerTick, upperTick) {
+    const { vault } = fixture;
+    const { governorAddr, timelockAddr } = await getNamedAccounts();
+    const sGovernor = await ethers.provider.getSigner(
+      isFork ? timelockAddr : governorAddr
+    );
+
+    await strategy
+      .connect(sGovernor)
+      .setRebalancePriceThreshold(lowerTick, upperTick);
+  }
+
+  // maxTvl is denominated in 18 decimals already
+  async function setMaxTVL(maxTvl) {
+    const { vault } = fixture;
+    const { governorAddr, timelockAddr } = await getNamedAccounts();
+    const sGovernor = await ethers.provider.getSigner(
+      isFork ? timelockAddr : governorAddr
+    );
+
+    await strategy
+      .connect(sGovernor)
+      .setMaxTVL(utils.parseUnits(maxTvl, 18));
+  }
 
   describe("Uniswap V3 LP positions", function () {
     // NOTE: These tests all work on the assumption that the strategy
@@ -228,6 +255,30 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
       expect(storedPosition.upperTick).to.equal(upperTick);
       expect(storedPosition.liquidity).to.equal(liquidityMinted);
       expect(await strategy.activeTokenId()).to.equal(tokenId);
+    });
+
+    it("Should not mint if the position is out of hard boundary tick range", async () => {
+      await setRebalancePriceThreshold(-5, 5);
+
+      const lowerTick = -10;
+      const upperTick = 10;
+
+      await expect(
+        mintLiquidity(lowerTick, upperTick, "100000", "100000")
+      ).to.be.revertedWith("Rebalance position out of bounds");
+    });
+
+    it("Should not mint if the position surpasses the maxTVL amount", async () => {
+      // set max TVL of 100 units (denominated in 18 decimals)
+      await setMaxTVL("100");
+
+      const lowerTick = -10;
+      const upperTick = 10;
+
+      await expect(
+        mintLiquidity(lowerTick, upperTick, "100000", "100000")
+      ).to.be.revertedWith("MaxTVL threshold has been reached");
+
     });
 
     it("Should swap USDC for USDT and mint position", async () => {
