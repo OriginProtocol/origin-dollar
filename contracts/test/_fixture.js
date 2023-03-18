@@ -24,9 +24,17 @@ const threepoolLPAbi = require("./abi/threepoolLP.json");
 const threepoolSwapAbi = require("./abi/threepoolSwap.json");
 
 async function defaultFixture() {
-  await deployments.fixture(isFork ? undefined : ["unit_tests"], {
-    keepExistingDeployments: true,
-  });
+  // TODO: reset this tag later
+  await deployments.fixture(
+    isFork
+      ? undefined
+      : process.env.FORKED_LOCAL_TEST
+      ? ["none"]
+      : ["unit_tests"],
+    {
+      keepExistingDeployments: true,
+    }
+  );
 
   const { governorAddr, timelockAddr, operatorAddr } = await getNamedAccounts();
 
@@ -1285,8 +1293,8 @@ function uniswapV3FixtureSetup() {
         // 2 million
         .setMaxTVL(utils.parseUnits("2", 24));
       UniV3_USDC_USDT_Strategy.connect(sGovernor).setRebalancePriceThreshold(
-        -100,
-        100
+        -10000,
+        10000
       );
     } else {
       const [, activeTick] = await fixture.UniV3_USDC_USDT_Pool.slot0();

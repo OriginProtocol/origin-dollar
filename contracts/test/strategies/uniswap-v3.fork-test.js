@@ -658,7 +658,7 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
         amount1Added,
         liquidityAdded,
       } = await increaseLiquidity(tokenId, "1", "1");
-      await expect(increaseTx).to.have.emittedEvent("PositionLostValue");
+      await expect(increaseTx).to.have.emittedEvent("PositionValueChanged");
 
       storedPosition = await strategy.tokenIdToPosition(tokenId);
       expect(storedPosition.liquidity).approxEqual(

@@ -561,8 +561,9 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         Position storage position = tokenIdToPosition[tokenId];
         require(position.exists, "Unknown position");
 
-        // Make sure liquidity management is disabled when value lost threshold is breached
-        ensureNetLossThreshold(tokenId);
+        // Update net value loss (to capture the state value before updating it).
+        // Also allows to close/decrease liquidity even if beyond the net loss threshold.
+        updatePositionNetVal(tokenId);
 
         INonfungiblePositionManager.DecreaseLiquidityParams
             memory params = INonfungiblePositionManager
