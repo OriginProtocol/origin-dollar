@@ -412,7 +412,7 @@ contract VaultCore is VaultStorage {
             return; // Do not distribute funds if assets < liabilities
         }
         uint256 _dripperReserve = dripperReserve; // gas savings
-        
+
         // 1. Calculate new gains, then split them between the dripper and
         // protocol reserve
         uint256 usedValue = ousdSupply + protocolReserve + _dripperReserve;
@@ -449,7 +449,7 @@ contract VaultCore is VaultStorage {
         usedValue = ousdSupply + protocolReserve + _dripperReserve;
         if (vaultValue > usedValue) {
             uint256 yield = vaultValue - usedValue;
-            
+
             // Mint trustee fees
             address _trusteeAddress = trusteeAddress; // gas savings
             uint256 fee = 0;
@@ -477,9 +477,8 @@ contract VaultCore is VaultStorage {
         view
         returns (uint256)
     {
-        uint256 _dripPerBlock = _drip.perBlock; // gas savings
         uint256 elapsed = block.timestamp - _drip.lastCollect;
-        uint256 allowed = (elapsed * _dripPerBlock);
+        uint256 allowed = (elapsed * _drip.perBlock);
         return (allowed > _reserve) ? _reserve : allowed;
     }
 
