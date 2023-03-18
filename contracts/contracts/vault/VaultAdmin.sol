@@ -11,7 +11,6 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 
 import { StableMath } from "../utils/StableMath.sol";
 import { IOracle } from "../interfaces/IOracle.sol";
-import { IVault } from "../interfaces/IVault.sol";
 import "./VaultStorage.sol";
 
 contract VaultAdmin is VaultStorage {
@@ -462,12 +461,9 @@ contract VaultAdmin is VaultStorage {
         external
         onlyGovernor
     {
+        require(assets[_asset].isSupported, "Only supported assets");
         protocolReserve -= _amount;
         IERC20(_asset).safeTransfer(governor(), _amount);
-        require(
-            oUSD.totalSupply() < IVault(address(this)).totalValue(),
-            "Must be solvent"
-        );
     }
 
     /***************************************
