@@ -64,11 +64,11 @@ abstract contract UniswapV3StrategyStorage is InitializableAbstractStrategy {
         int24 maxTick,
         uint160 maxSwapPriceX96
     );
-    event PositionLostValue(
+    event PositionValueChanged(
         uint256 indexed tokenId,
         uint256 initialValue,
         uint256 currentValue,
-        uint256 netValueLost
+        int256 netValueChange
     );
 
     // Represents a position minted by UniswapV3Strategy contract

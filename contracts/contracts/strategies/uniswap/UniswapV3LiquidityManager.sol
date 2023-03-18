@@ -192,24 +192,22 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
 
     function updatePositionNetVal(uint256 tokenId)
         internal
-        returns (uint256 valueLost)
     {
         if (tokenId == 0) {
-            return 0;
+            return;
         }
 
         uint256 currentVal = getPositionValue(tokenId);
         uint256 lastVal = tokenIdToPosition[tokenId].netValue;
 
-        if (currentVal < lastVal) {
-            valueLost = lastVal - currentVal;
+        int256 valueChange = int256(currentVal) - int256(lastVal);
 
-            // TODO: Should these be also updated when the value rises?
-            netLostValue += valueLost;
-            tokenIdToPosition[tokenId].netValue = currentVal;
+        netLostValue = int256(netLostValue) - valueChange < 0 ?
+            0 :
+            uint256(int256(netLostValue) - valueChange);
 
-            emit PositionLostValue(tokenId, lastVal, currentVal, valueLost);
-        }
+        tokenIdToPosition[tokenId].netValue = currentVal;
+        emit PositionValueChanged(tokenId, lastVal, currentVal, valueChange);
     }
 
     function ensureNetLossThreshold(uint256 tokenId) internal {
