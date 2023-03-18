@@ -117,18 +117,7 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
     /***************************************
             Rebalance
     ****************************************/
-
-    modifier rebalanceNotPaused() {
-        require(!rebalancePaused, "Rebalance paused");
-        _;
-    }
-
-    modifier swapsNotPaused() {
-        require(!swapsPaused, "Swaps are paused");
-        _;
-    }
-
-    modifier withinRebalacingLimits(int24 lowerTick, int24 upperTick) {
+    modifier rebalanceNotPausedAndWithinLimits(int24 lowerTick, int24 upperTick) {
         require(rebalancePaused, "Rebalances are paused");
         require(
             minRebalanceTick <= lowerTick && maxRebalanceTick >= upperTick,
@@ -150,10 +139,12 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         require(balance <= maxTVL, "MaxTVL threshold has been reached");
     }
 
-    modifier withinSwapPriceLimits(
+    modifier swapsNotPausedAndWithinLimits(
         uint160 sqrtPriceLimitX96,
         bool swapZeroForOne
     ) {
+        require(!swapsPaused, "Swaps are paused");
+
         (uint160 currentPriceX96, , , , , , ) = pool.slot0();
 
         require(
@@ -198,8 +189,7 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         external
         onlyGovernorOrStrategistOrOperator
         nonReentrant
-        rebalanceNotPaused
-        withinRebalacingLimits(lowerTick, upperTick)
+        rebalanceNotPausedAndWithinLimits(lowerTick, upperTick)
         ensureTVL
     {
         require(lowerTick < upperTick, "Invalid tick range");
@@ -263,10 +253,8 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         external
         onlyGovernorOrStrategistOrOperator
         nonReentrant
-        rebalanceNotPaused
-        withinRebalacingLimits(params.lowerTick, params.upperTick)
-        swapsNotPaused
-        withinSwapPriceLimits(params.sqrtPriceLimitX96, params.swapZeroForOne)
+        rebalanceNotPausedAndWithinLimits(params.lowerTick, params.upperTick)
+        swapsNotPausedAndWithinLimits(params.sqrtPriceLimitX96, params.swapZeroForOne)
         ensureTVL
     {
         require(params.lowerTick < params.upperTick, "Invalid tick range");
