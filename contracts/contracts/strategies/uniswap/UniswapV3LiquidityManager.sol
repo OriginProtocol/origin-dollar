@@ -11,48 +11,24 @@ import { IUniswapV3Pool } from "@uniswap/v3-core/contracts/interfaces/IUniswapV3
 import { ISwapRouter } from "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { Helpers } from "../../utils/Helpers.sol";
+import { StableMath } from "../../utils/StableMath.sol";
 
 import "@openzeppelin/contracts/utils/Strings.sol";
 
 contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
     using SafeERC20 for IERC20;
-    
-    function withdrawAssetFromActivePosition(address _asset, uint256 amount)
-        external
-        onlyVault
-        nonReentrant
-    {
-        _withdrawAssetFromActivePosition(_asset, amount);
-    }
+    using StableMath for uint256;
 
-    function _withdrawAssetFromActivePosition(address _asset, uint256 amount)
-        internal
-    {
-        Position memory position = tokenIdToPosition[activeTokenId];
-        require(position.exists && position.liquidity > 0, "Liquidity error");
-
-        // Figure out liquidity to burn
-        (
-            uint128 liquidity,
-            uint256 minAmount0,
-            uint256 minAmount1
-        ) = _calculateLiquidityToWithdraw(position, _asset, amount);
-
-        // Liquidiate active position
-        _decreasePositionLiquidity(
-            position.tokenId,
-            liquidity,
-            minAmount0,
-            minAmount1
-        );
-    }
-
+    /***************************************
+            Withdraw
+    ****************************************/
     /**
      * @notice Calculates the amount liquidity that needs to be removed
      *          to Withdraw specified amount of the given asset.
      *
      * @param position  Position object
-     * @param _asset    Token needed
+     * @param asset    Token needed
      * @param amount    Minimum amount to liquidate
      *
      * @return liquidity    Liquidity to burn
@@ -61,7 +37,7 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
      */
     function _calculateLiquidityToWithdraw(
         Position memory position,
-        address _asset,
+        address asset,
         uint256 amount
     )
         internal
@@ -83,7 +59,7 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
                 position.liquidity
             );
 
-        if (_asset == token0) {
+        if (asset == token0) {
             minAmount0 = amount;
             minAmount1 = totalAmount1 / (totalAmount0 / amount);
             liquidity = helper.getLiquidityForAmounts(
@@ -93,7 +69,7 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
                 amount,
                 minAmount1
             );
-        } else if (_asset == token1) {
+        } else if (asset == token1) {
             minAmount0 = totalAmount0 / (totalAmount1 / amount);
             minAmount1 = amount;
             liquidity = helper.getLiquidityForAmounts(
@@ -106,6 +82,38 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         }
     }
 
+    /**
+     * @notice Liquidiates active position to remove required amount of give asset
+     * @dev Doesn't have non-Reentrant modifier since it's supposed to be delegatecalled
+     *      only from `UniswapV3Strategy.withdraw` which already has a nonReentrant check
+     *      and the storage is shared between these two contract.
+     *
+     * @param asset Asset address
+     * @param amount Min amount of token to receive
+     */
+    function withdrawAssetFromActivePositionOnlyVault(
+        address asset,
+        uint256 amount
+    ) external onlyVault {
+        Position memory position = tokenIdToPosition[activeTokenId];
+        require(position.exists && position.liquidity > 0, "Liquidity error");
+
+        // Figure out liquidity to burn
+        (
+            uint128 liquidity,
+            uint256 minAmount0,
+            uint256 minAmount1
+        ) = _calculateLiquidityToWithdraw(position, asset, amount);
+
+        // Liquidiate active position
+        _decreasePositionLiquidity(
+            position.tokenId,
+            liquidity,
+            minAmount0,
+            minAmount1
+        );
+    }
+
     /***************************************
             Rebalance
     ****************************************/
@@ -115,24 +123,53 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         _;
     }
 
+    modifier swapsNotPaused() {
+        require(!swapsPaused, "Swaps are paused");
+        _;
+    }
+
     modifier withinRebalacingLimits(int24 lowerTick, int24 upperTick) {
+        require(rebalancePaused, "Rebalances are paused");
         require(
-            minRebalanceTick <= lowerTick &&
-                maxRebalanceTick >= upperTick,
+            minRebalanceTick <= lowerTick && maxRebalanceTick >= upperTick,
             "Rebalance position out of bounds"
         );
         _;
     }
 
     modifier ensureTVL() {
+        // Vaule change should either be between 0 and 0 (for rebalance)
+        // and 0 and slippage (for swapAndRebalance)
+
         _;
-        uint256 balance = InitializableAbstractStrategy(this).checkBalance(token0) +
-            InitializableAbstractStrategy(this).checkBalance(token1);
+        uint256 balance = _self.checkBalance(token0).scaleBy(
+            18,
+            Helpers.getDecimals(token0)
+        ) + _self.checkBalance(token1).scaleBy(18, Helpers.getDecimals(token1));
+
+        require(balance <= maxTVL, "MaxTVL threshold has been reached");
+    }
+
+    modifier withinSwapPriceLimits(
+        uint160 sqrtPriceLimitX96,
+        bool swapZeroForOne
+    ) {
+        (uint160 currentPriceX96, , , , , , ) = pool.slot0();
 
         require(
-            balance <= maxTVL,
-            "MaxTVL threshold has been reached"
+            minSwapPriceX96 <= currentPriceX96 &&
+                currentPriceX96 <= maxSwapPriceX96,
+            "Price out of bounds"
         );
+
+        require(
+            swapZeroForOne
+                ? (sqrtPriceLimitX96 >= minSwapPriceX96)
+                : (sqrtPriceLimitX96 <= maxSwapPriceX96),
+            "Slippage out of bounds"
+        );
+
+        _;
     }
 
     /**
@@ -228,6 +265,8 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         nonReentrant
         rebalanceNotPaused
         withinRebalacingLimits(params.lowerTick, params.upperTick)
+        swapsNotPaused
+        withinSwapPriceLimits(params.sqrtPriceLimitX96, params.swapZeroForOne)
         ensureTVL
     {
         require(params.lowerTick < params.upperTick, "Invalid tick range");
@@ -569,12 +608,29 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         uint256 minAmount0,
         uint256 minAmount1
     )
-        public
+        external
         onlyGovernorOrStrategistOrOperator
         nonReentrant
         returns (uint256 amount0, uint256 amount1)
     {
         return _closePosition(tokenId, minAmount0, minAmount1);
+    }
+
+    /**
+     * @notice Same as closePosition but only callable by Vault
+     * @dev Doesn't have non-Reentrant modifier since it's supposed to be delegatecalled
+     *      only from `UniswapV3Strategy.withdrawAll` which already has a nonReentrant check
+     *      and the storage is shared between these two contract.
+     */
+    function closeActivePositionOnlyVault()
+        external
+        onlyVault
+        returns (uint256 amount0, uint256 amount1)
+    {
+        // Since this is called by the Vault, we cannot pass min redeem amounts
+        // without complicating the code of the Vault. So, passing 0 instead.
+        // A better way
+        return _closePosition(activeTokenId, 0, 0);
     }
 
     /***************************************
@@ -764,42 +820,16 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         revert("NO_IMPL");
     }
 
+    function withdrawAll() external virtual override {
+        revert("NO_IMPL");
+    }
+
     function withdraw(
         address recipient,
         address _asset,
         uint256 amount
     ) external override onlyVault onlyPoolTokens(_asset) nonReentrant {
-        IERC20 asset = IERC20(_asset);
-        uint256 selfBalance = asset.balanceOf(address(this));
-
-        if (selfBalance < amount) {
-            _withdrawAssetFromActivePosition(_asset, amount - selfBalance);
-        }
-
-        // Transfer requested amount
-        asset.safeTransfer(recipient, amount);
-        emit Withdrawal(_asset, _asset, amount);
-    }
-
-    /**
-     * @notice Closes active LP position, if any, and transfer all token balance to Vault
-     */
-    function withdrawAll() external override onlyVault nonReentrant {
-        if (activeTokenId > 0) {
-            _closePosition(activeTokenId, 0, 0);
-        }
-
-        // saves 100B of contract size to loop through these 2 tokens
-        address[2] memory tokens = [token0, token1];
-        for (uint256 i = 0; i < 2; i++) {
-            IERC20 tokenContract = IERC20(tokens[i]);
-            uint256 tokenBalance = tokenContract.balanceOf(address(this));
-
-            if (tokenBalance > 0) {
-                tokenContract.safeTransfer(vaultAddress, tokenBalance);
-                emit Withdrawal(tokens[i], tokens[i], tokenBalance);
-            }
-        }
+        revert("NO_IMPL");
     }
 
     function checkBalance(address _asset)

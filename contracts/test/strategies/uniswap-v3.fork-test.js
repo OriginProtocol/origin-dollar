@@ -81,9 +81,7 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
       isFork ? timelockAddr : governorAddr
     );
 
-    await strategy
-      .connect(sGovernor)
-      .setMaxTVL(utils.parseUnits(maxTvl, 18));
+    await strategy.connect(sGovernor).setMaxTVL(utils.parseUnits(maxTvl, 18));
   }
 
   describe("Uniswap V3 LP positions", function () {
@@ -278,7 +276,6 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
       await expect(
         mintLiquidity(lowerTick, upperTick, "100000", "100000")
       ).to.be.revertedWith("MaxTVL threshold has been reached");
-
     });
 
     it("Should swap USDC for USDT and mint position", async () => {

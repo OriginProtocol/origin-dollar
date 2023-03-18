@@ -17,7 +17,6 @@ import { IUniswapV3Pool } from "@uniswap/v3-core/contracts/interfaces/IUniswapV3
 import { IUniswapV3Strategy } from "../../interfaces/IUniswapV3Strategy.sol";
 import { ISwapRouter } from "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 import { StableMath } from "../../utils/StableMath.sol";
-import { Helpers } from "../../utils/Helpers.sol";
 
 contract UniswapV3Strategy is UniswapV3StrategyStorage {
     using SafeERC20 for IERC20;
@@ -181,10 +180,7 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
      * @notice Change the maxTVL amount threshold
      * @param _maxTVL Maximum amount the strategy can have deployed in the Uniswap pool
      */
-    function setMaxTVL(uint256 _maxTVL)
-        external
-        onlyGovernorOrStrategist
-    {
+    function setMaxTVL(uint256 _maxTVL) external onlyGovernorOrStrategist {
         maxTVL = _maxTVL;
         emit MaxTVLChanged(_maxTVL);
     }
@@ -198,14 +194,29 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
         external
         onlyGovernorOrStrategist
     {
-        require((minTick < maxTick), "Invalid threshold");
+        require(minTick < maxTick, "Invalid threshold");
         minRebalanceTick = minTick;
         maxRebalanceTick = maxTick;
-        emit RebalancePriceThresholdChanged(
+        emit RebalancePriceThresholdChanged(minTick, maxTick);
+    }
+
+    /**
+     * @notice Change the swap price threshold
+     * @param minTick Minimum price tick index
+     * @param maxTick Maximum price tick index
+     */
+    function setSwapPriceThreshold(int24 minTick, int24 maxTick)
+        external
+        onlyGovernorOrStrategist
+    {
+        require(minTick < maxTick, "Invalid threshold");
+        minSwapPriceX96 = helper.getSqrtRatioAtTick(minTick);
+        maxSwapPriceX96 = helper.getSqrtRatioAtTick(maxTick);
+        emit SwapPriceThresholdChanged(
             minTick,
-            helper.getSqrtRatioAtTick(minTick),
+            minSwapPriceX96,
             maxTick,
-            helper.getSqrtRatioAtTick(maxTick)
+            maxSwapPriceX96
         );
     }
 
@@ -232,23 +243,58 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
         _depositAll();
     }
 
-    /**
-     * @inheritdoc InitializableAbstractStrategy
-     */
+    /// @inheritdoc InitializableAbstractStrategy
     function withdraw(
         address recipient,
         address _asset,
         uint256 amount
     ) external override onlyVault onlyPoolTokens(_asset) nonReentrant {
-        revert("NO_IMPL");
+        IERC20 asset = IERC20(_asset);
+        uint256 selfBalance = asset.balanceOf(address(this));
+
+        if (selfBalance < amount) {
+            require(activeTokenId > 0, "Liquidity error");
+
+            // Delegatecall to `UniswapV3LiquidityManager` to remove liquidity from
+            // active LP position
+            (bool success, bytes memory data) = address(_self).delegatecall(
+                abi.encodeWithSignature(
+                    "withdrawAssetFromActivePositionOnlyVault(address,uint256)",
+                    _asset,
+                    amount - selfBalance
+                )
+            );
+            require(success, "DelegateCall to close position failed");
+        }
+
+        // Transfer requested amount
+        asset.safeTransfer(recipient, amount);
+        emit Withdrawal(_asset, _asset, amount);
     }
 
     /**
      * @notice Closes active LP position, if any, and transfer all token balance to Vault
      * @inheritdoc InitializableAbstractStrategy
      */
-    function withdrawAll() external virtual override {
-        revert("NO_IMPL");
+    function withdrawAll() external override onlyVault nonReentrant {
+        if (activeTokenId > 0) {
+            (bool success, bytes memory data) = address(_self).delegatecall(
+                abi.encodeWithSignature("closeActivePositionOnlyVault()")
+            );
+            require(success, "DelegateCall to close position failed");
+        }
+
+        // saves 100B of contract size to loop through these 2 tokens
+        address[2] memory tokens = [token0, token1];
+        for (uint256 i = 0; i < 2; i++) {
+            IERC20 tokenContract = IERC20(tokens[i]);
+            uint256 tokenBalance = tokenContract.balanceOf(address(this));
+
+            if (tokenBalance > 0) {
+                tokenContract.safeTransfer(vaultAddress, tokenBalance);
+                emit Withdrawal(tokens[i], tokens[i], tokenBalance);
+            }
+        }
     }
 
     /***************************************
@@ -304,36 +350,37 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
                 balance += amount1;
             }
         }
-
-        uint256 assetDecimals = Helpers.getDecimals(_asset);
-        balance = balance.scaleBy(18, assetDecimals);
     }
 
-    function checkBalanceOfAllAssets()
-        external
-        view
-        returns (uint256 amount0, uint256 amount1)
-    {
-        if (activeTokenId > 0) {
-            require(tokenIdToPosition[activeTokenId].exists, "Invalid token");
+    // /**
+    //  * @dev Only checks the active LP position.
+    //  *      Doesn't return the balance held in the reserve strategies.
+    //  */
+    // function checkBalanceOfAllAssets()
+    //     external
+    //     view
+    //     returns (uint256 amount0, uint256 amount1)
+    // {
+    //     if (activeTokenId > 0) {
+    //         require(tokenIdToPosition[activeTokenId].exists, "Invalid token");
 
-            (uint160 sqrtRatioX96, , , , , , ) = pool.slot0();
-            (amount0, amount1) = helper.positionValue(
-                positionManager,
-                address(pool),
-                activeTokenId,
-                sqrtRatioX96
-            );
-        }
+    //         (uint160 sqrtRatioX96, , , , , , ) = pool.slot0();
+    //         (amount0, amount1) = helper.positionValue(
+    //             positionManager,
+    //             address(pool),
+    //             activeTokenId,
+    //             sqrtRatioX96
+    //         );
+    //     }
 
-        amount0 += IERC20(token0).balanceOf(address(this));
-        amount1 += IERC20(token1).balanceOf(address(this));
+    //     amount0 += IERC20(token0).balanceOf(address(this));
+    //     amount1 += IERC20(token1).balanceOf(address(this));
 
-        uint256 asset0Decimals = Helpers.getDecimals(token0);
-        uint256 asset1Decimals = Helpers.getDecimals(token1);
-        amount0 = amount0.scaleBy(18, asset0Decimals);
-        amount1 = amount1.scaleBy(18, asset1Decimals);
-    }
+    //     // uint256 asset0Decimals = Helpers.getDecimals(token0);
+    //     // uint256 asset1Decimals = Helpers.getDecimals(token1);
+    //     // amount0 = amount0.scaleBy(18, asset0Decimals);
+    //     // amount1 = amount1.scaleBy(18, asset1Decimals);
+    // }
 
     /***************************************
             ERC721 management

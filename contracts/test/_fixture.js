@@ -1283,17 +1283,16 @@ function uniswapV3FixtureSetup() {
     const { governorAddr, timelockAddr } = await getNamedAccounts();
     const sGovernor = await ethers.provider.getSigner(
       isFork ? timelockAddr : governorAddr
-    );    
+    );
 
-    UniV3_USDC_USDT_Strategy
-      .connect(sGovernor)
+    UniV3_USDC_USDT_Strategy.connect(sGovernor)
       // 2 million
-      .setMaxTVL(utils.parseUnits("2", 24))
+      .setMaxTVL(utils.parseUnits("2", 24));
 
-    UniV3_USDC_USDT_Strategy
-      .connect(sGovernor)
-      .setRebalancePriceThreshold(-100, 100)
-
+    UniV3_USDC_USDT_Strategy.connect(sGovernor).setRebalancePriceThreshold(
+      -100,
+      100
+    );
 
     return fixture;
   });

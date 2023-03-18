@@ -21,13 +21,7 @@ abstract contract UniswapV3StrategyStorage is InitializableAbstractStrategy {
     );
     event RebalancePauseStatusChanged(bool paused);
     event SwapsPauseStatusChanged(bool paused);
-    event RebalancePriceThresholdChanged(
-        int24 minTick,
-        uint160 minRebalancePriceX96,
-        int24 maxTick,
-        uint160 maxRebalancePriceX96
-    );
-    event MaxSwapSlippageChanged(uint24 maxSlippage);
+    event RebalancePriceThresholdChanged(int24 minTick, int24 maxTick);
     event MaxTVLChanged(uint256 amountIn);
     event AssetSwappedForRebalancing(
         address indexed tokenIn,
@@ -61,6 +55,12 @@ abstract contract UniswapV3StrategyStorage is InitializableAbstractStrategy {
         uint256 indexed tokenId,
         uint256 amount0,
         uint256 amount1
+    );
+    event SwapPriceThresholdChanged(
+        int24 minTick,
+        uint160 minSwapPriceX96,
+        int24 maxTick,
+        uint160 maxSwapPriceX96
     );
 
     // Represents both tokens supported by the strategy
@@ -102,9 +102,13 @@ abstract contract UniswapV3StrategyStorage is InitializableAbstractStrategy {
 
     uint256 public maxTVL; // In USD, 18 decimals
 
-    // An upper and lower bound of rebalancing price limits 
+    // An upper and lower bound of rebalancing price limits
     int24 public minRebalanceTick;
     int24 public maxRebalanceTick;
+
+    // An upper and lower bound of swap price limits
+    uint160 public minSwapPriceX96;
+    uint160 public maxSwapPriceX96;
 
     // Token ID of active Position on the pool. zero, if there are no active LP position
     uint256 public activeTokenId;
@@ -187,6 +191,12 @@ abstract contract UniswapV3StrategyStorage is InitializableAbstractStrategy {
         _;
     }
 
+    /***************************************
+            Commom functions
+    ****************************************/
+    /**
+     * Deposits back strategy token balances back to the reserve strategies
+     */
     function _depositAll() internal {
         IUniswapV3Strategy strat = IUniswapV3Strategy(msg.sender);
 
