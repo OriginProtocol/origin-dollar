@@ -61,23 +61,8 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
       .setRebalancePriceThreshold(lowerTick, upperTick);
   }
 
-  async function setSwapPriceThreshold(lowerTick, upperTick) {
-    await strategy
-      .connect(timelock)
-      .setSwapPriceThreshold(lowerTick, upperTick);
-  }
-
   async function setMaxTVL(maxTvl) {
     await strategy.connect(timelock).setMaxTVL(utils.parseUnits(maxTvl, 18));
-  }
-
-  async function setMinDepositThreshold(asset, minThreshold) {
-    await strategy
-      .connect(timelock)
-      .setMaxTVL(
-        asset.address,
-        utils.parseUnits(minThreshold, await asset.decimals())
-      );
   }
 
   async function setMaxPositionValueLossThreshold(maxLossThreshold) {
@@ -159,12 +144,7 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
       };
     };
 
-    const increaseLiquidity = async (
-      tokenId,
-      usdcAmount,
-      usdtAmount,
-      returnAsPromise
-    ) => {
+    const increaseLiquidity = async (tokenId, usdcAmount, usdtAmount) => {
       const storedPosition = await strategy.tokenIdToPosition(tokenId);
       const [maxUSDC, maxUSDT] = await findMaxDepositableAmount(
         storedPosition.lowerTick,
@@ -590,7 +570,7 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
       const swapAmount = BigNumber.from(amount).mul(10 ** 6);
       usdc.connect(user).approve(swapRouter.address, swapAmount.mul(10));
       usdt.connect(user).approve(swapRouter.address, swapAmount.mul(10));
-      const tx = await swapRouter.connect(user).exactInputSingle([
+      await swapRouter.connect(user).exactInputSingle([
         zeroForOne ? usdc.address : usdt.address, // tokenIn
         zeroForOne ? usdt.address : usdc.address, // tokenOut
         100, // fee
