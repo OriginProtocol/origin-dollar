@@ -17,7 +17,6 @@ import { IUniswapV3Pool } from "@uniswap/v3-core/contracts/interfaces/IUniswapV3
 import { IUniswapV3Strategy } from "../../interfaces/IUniswapV3Strategy.sol";
 import { ISwapRouter } from "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 import { StableMath } from "../../utils/StableMath.sol";
-import { IVaultValueChecker } from "../../interfaces/IVaultValueChecker.sol";
 
 contract UniswapV3Strategy is UniswapV3StrategyStorage {
     using SafeERC20 for IERC20;
@@ -30,7 +29,6 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
      * @param _nonfungiblePositionManager Uniswap V3's Position Manager
      * @param _helper Deployed UniswapV3Helper contract
      * @param _swapRouter Uniswap SwapRouter contract
-     * @param _vaultValueChecker VaultValueChecker
      * @param _operator Operator address
      */
     function initialize(
@@ -39,7 +37,6 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
         address _nonfungiblePositionManager,
         address _helper,
         address _swapRouter,
-        address _vaultValueChecker,
         address _operator
     ) external onlyGovernor initializer {
         // TODO: Comment on why this is necessary and why it should always be the proxy address
@@ -51,8 +48,6 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
         positionManager = INonfungiblePositionManager(
             _nonfungiblePositionManager
         );
-
-        vaultValueChecker = IVaultValueChecker(_vaultValueChecker);
 
         token0 = pool.token0();
         token1 = pool.token1();
@@ -289,8 +284,8 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
 
             // Delegatecall to `UniswapV3LiquidityManager` to remove
             // liquidity from active LP position
-            // solhint-disable-next-line
-            (bool success, bytes memory _) = address(_self).delegatecall(
+            // solhint-disable-next-line no-unused-vars
+            (bool success, bytes memory data) = address(_self).delegatecall(
                 abi.encodeWithSignature(
                     "withdrawAssetFromActivePositionOnlyVault(address,uint256)",
                     _asset,
@@ -313,8 +308,8 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
         if (activeTokenId > 0) {
             // Delegatecall to `UniswapV3LiquidityManager` to remove
             // liquidity from active LP position
-            // solhint-disable-next-line
-            (bool success, bytes memory _) = address(_self).delegatecall(
+            // solhint-disable-next-line no-unused-vars
+            (bool success, bytes memory data) = address(_self).delegatecall(
                 abi.encodeWithSignature("closeActivePositionOnlyVault()")
             );
             require(success, "DelegateCall to close position failed");

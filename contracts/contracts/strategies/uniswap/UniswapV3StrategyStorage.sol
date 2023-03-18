@@ -10,7 +10,6 @@ import { IUniswapV3Pool } from "@uniswap/v3-core/contracts/interfaces/IUniswapV3
 import { INonfungiblePositionManager } from "../../interfaces/uniswap/v3/INonfungiblePositionManager.sol";
 import { IUniswapV3Helper } from "../../interfaces/uniswap/v3/IUniswapV3Helper.sol";
 import { IUniswapV3Strategy } from "../../interfaces/IUniswapV3Strategy.sol";
-import { IVaultValueChecker } from "../../interfaces/IVaultValueChecker.sol";
 import { ISwapRouter } from "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 
 abstract contract UniswapV3StrategyStorage is InitializableAbstractStrategy {
@@ -141,9 +140,6 @@ abstract contract UniswapV3StrategyStorage is InitializableAbstractStrategy {
 
     // Uniswap Swap Router
     ISwapRouter internal swapRouter;
-
-    // VaultValueChecker
-    IVaultValueChecker public vaultValueChecker;
 
     // A lookup table to find token IDs of position using f(lowerTick, upperTick)
     mapping(int48 => uint256) internal ticksToTokenId;
