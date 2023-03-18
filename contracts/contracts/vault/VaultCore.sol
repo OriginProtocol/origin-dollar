@@ -478,9 +478,6 @@ contract VaultCore is VaultStorage {
         returns (uint256)
     {
         uint256 _dripPerBlock = _drip.perBlock; // gas savings
-        if (_dripPerBlock == 0) { // Prevents forever dripper dust
-            return _reserve; 
-        }
         uint256 elapsed = block.timestamp - _drip.lastCollect;
         uint256 allowed = (elapsed * _dripPerBlock);
         return (allowed > _reserve) ? _reserve : allowed;
