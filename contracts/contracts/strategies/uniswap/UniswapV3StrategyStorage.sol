@@ -23,7 +23,9 @@ abstract contract UniswapV3StrategyStorage is InitializableAbstractStrategy {
     event RebalancePauseStatusChanged(bool paused);
     event SwapsPauseStatusChanged(bool paused);
     event RebalancePriceThresholdChanged(int24 minTick, int24 maxTick);
-    event MaxTVLChanged(uint256 amountIn);
+    event MaxTVLChanged(uint256 maxTVL);
+    event MaxValueLossThresholdChanged(uint256 amount);
+    event NetLossValueReset(uint256 lastValue);
     event AssetSwappedForRebalancing(
         address indexed tokenIn,
         address indexed tokenOut,
@@ -63,6 +65,12 @@ abstract contract UniswapV3StrategyStorage is InitializableAbstractStrategy {
         int24 maxTick,
         uint160 maxSwapPriceX96
     );
+    event PositionLostValue(
+        uint256 indexed tokenId,
+        uint256 initialValue,
+        uint256 currentValue,
+        uint256 netValueLost
+    );
 
     // Represents a position minted by UniswapV3Strategy contract
     struct Position {
@@ -76,6 +84,7 @@ abstract contract UniswapV3StrategyStorage is InitializableAbstractStrategy {
         // compute it every time?
         uint160 sqrtRatioAX96;
         uint160 sqrtRatioBX96;
+        uint256 netValue; // Last recorded net value of the position
     }
 
     // Set to the proxy address when initialized
@@ -111,6 +120,15 @@ abstract contract UniswapV3StrategyStorage is InitializableAbstractStrategy {
 
     // Token ID of active Position on the pool. zero, if there are no active LP position
     uint256 public activeTokenId;
+
+    // Value of the active position since mint (or last liquidity change)
+    uint256 public activePositionMintValue = 0;
+
+    // Sum of loss in value of tokens deployed to the pool
+    uint256 public netLostValue = 0;
+
+    // Max value loss threshold after which rebalances aren't allowed
+    uint256 public maxPositionValueLossThreshold;
 
     // Uniswap V3's Pool
     IUniswapV3Pool public pool;
@@ -178,10 +196,10 @@ abstract contract UniswapV3StrategyStorage is InitializableAbstractStrategy {
     }
 
     /***************************************
-            Commom functions
+            Shared functions
     ****************************************/
     /**
-     * Deposits back strategy token balances back to the reserve strategies
+     * @notice Deposits back strategy token balances back to the reserve strategies
      */
     function _depositAll() internal {
         uint256 token0Bal = IERC20(token0).balanceOf(address(this));
@@ -201,5 +219,46 @@ abstract contract UniswapV3StrategyStorage is InitializableAbstractStrategy {
             vault.depositToUniswapV3Reserve(token1, token1Bal);
         }
         // Not emitting Deposit events since the Reserve strategies would do so
+    }
+
+    /**
+     * @notice Returns the balance of both tokens in a given position (including fees)
+     * @param tokenId tokenID of the Position NFT
+     * @return amount0 Amount of token0 in position
+     * @return amount1 Amount of token1 in position
+     */
+    function getPositionBalance(uint256 tokenId)
+        internal
+        view
+        returns (uint256 amount0, uint256 amount1)
+    {
+        require(tokenIdToPosition[tokenId].exists, "Invalid position");
+        (uint160 sqrtRatioX96, , , , , , ) = pool.slot0();
+        (amount0, amount1) = helper.positionTotal(
+            positionManager,
+            address(pool),
+            tokenId,
+            sqrtRatioX96
+        );
+    }
+
+    /**
+     * @notice Returns the balance of both tokens in a given position (without fees)
+     * @param tokenId tokenID of the Position NFT
+     * @return amount0 Amount of token0 in position
+     * @return amount1 Amount of token1 in position
+     */
+    function getPositionPrincipal(uint256 tokenId)
+        internal
+        view
+        returns (uint256 amount0, uint256 amount1)
+    {
+        require(tokenIdToPosition[tokenId].exists, "Invalid position");
+        (uint160 sqrtRatioX96, , , , , , ) = pool.slot0();
+        (amount0, amount1) = helper.positionPrincipal(
+            positionManager,
+            tokenId,
+            sqrtRatioX96
+        );
     }
 }

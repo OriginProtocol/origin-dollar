@@ -190,6 +190,27 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
     }
 
     /**
+     * @notice Maximum value of loss the LP positions can incur before strategy shuts off rebalances
+     * @param _maxLossThreshold Maximum amount in 18 decimals
+     */
+    function setMaxPositionValueLossThreshold(uint256 _maxLossThreshold)
+        external
+        onlyGovernorOrStrategist
+    {
+        maxPositionValueLossThreshold = _maxLossThreshold;
+        emit MaxValueLossThresholdChanged(_maxLossThreshold);
+    }
+
+    /**
+     * @notice Reset loss counter
+     * @dev Only governor can call it
+     */
+    function resetLostValue() external onlyGovernor {
+        emit MaxValueLossThresholdChanged(netLostValue);
+        netLostValue = 0;
+    }
+
+    /**
      * @notice Change the rebalance price threshold
      * @param minTick Minimum price tick index
      * @param maxTick Maximum price tick index
@@ -266,9 +287,10 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
         if (selfBalance < amount) {
             require(activeTokenId > 0, "Liquidity error");
 
-            // Delegatecall to `UniswapV3LiquidityManager` to remove liquidity from
-            // active LP position
-            (bool success, bytes memory data) = address(_self).delegatecall(
+            // Delegatecall to `UniswapV3LiquidityManager` to remove
+            // liquidity from active LP position
+            // solhint-disable-next-line
+            (bool success, bytes memory _) = address(_self).delegatecall(
                 abi.encodeWithSignature(
                     "withdrawAssetFromActivePositionOnlyVault(address,uint256)",
                     _asset,
@@ -289,7 +311,10 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
      */
     function withdrawAll() external override onlyVault nonReentrant {
         if (activeTokenId > 0) {
-            (bool success, bytes memory data) = address(_self).delegatecall(
+            // Delegatecall to `UniswapV3LiquidityManager` to remove
+            // liquidity from active LP position
+            // solhint-disable-next-line
+            (bool success, bytes memory _) = address(_self).delegatecall(
                 abi.encodeWithSignature("closeActivePositionOnlyVault()")
             );
             require(success, "DelegateCall to close position failed");
@@ -322,6 +347,8 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
         returns (uint256 amount0, uint256 amount1)
     {
         if (activeTokenId > 0) {
+            require(tokenIdToPosition[activeTokenId].exists, "Invalid token");
+
             (amount0, amount1) = helper.positionFees(
                 positionManager,
                 address(pool),
@@ -331,7 +358,7 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
     }
 
     /**
-     * @dev Only checks the active LP position.
+     * @dev Only checks the active LP position and undeployed/undeposited balance held by the contract.
      *      Doesn't return the balance held in the reserve strategies.
      * @inheritdoc InitializableAbstractStrategy
      */
@@ -346,13 +373,8 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
 
         if (activeTokenId > 0) {
             require(tokenIdToPosition[activeTokenId].exists, "Invalid token");
-
-            (uint160 sqrtRatioX96, , , , , , ) = pool.slot0();
-            (uint256 amount0, uint256 amount1) = helper.positionValue(
-                positionManager,
-                address(pool),
-                activeTokenId,
-                sqrtRatioX96
+            (uint256 amount0, uint256 amount1) = getPositionBalance(
+                activeTokenId
             );
 
             if (_asset == token0) {
@@ -431,23 +453,18 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
             Hidden functions
     ****************************************/
 
-    function setPTokenAddress(address, address) external override onlyGovernor {
+    function setPTokenAddress(address, address) external override {
         // The pool tokens can never change.
         revert("Unsupported method");
     }
 
-    function removePToken(uint256) external override onlyGovernor {
+    function removePToken(uint256) external override {
         // The pool tokens can never change.
         revert("Unsupported method");
     }
 
     /// @inheritdoc InitializableAbstractStrategy
-    function collectRewardTokens()
-        external
-        override
-        onlyHarvester
-        nonReentrant
-    {
+    function collectRewardTokens() external override {
         // Do nothing
     }
 

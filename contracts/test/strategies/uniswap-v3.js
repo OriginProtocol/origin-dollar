@@ -6,11 +6,11 @@ const uniswapV3Fixture = uniswapV3FixturSetup();
 
 describe("Uniswap V3 Strategy", function () {
   let fixture;
-  let vault, harvester, ousd, usdc, usdt, dai;
+  let vault, ousd, usdc, usdt, dai;
   let reserveStrategy,
     strategy,
-    mockPool,
-    mockPositionManager,
+    // mockPool,
+    // mockPositionManager,
     mockStrategy2,
     mockStrategyDAI;
   let governor, strategist, operator, josh, matt, daniel, domen, franck;
@@ -21,14 +21,14 @@ describe("Uniswap V3 Strategy", function () {
     mockStrategy2 = fixture.mockStrategy2;
     mockStrategyDAI = fixture.mockStrategyDAI;
     strategy = fixture.UniV3_USDC_USDT_Strategy;
-    mockPool = fixture.UniV3_USDC_USDT_Pool;
-    mockPositionManager = fixture.UniV3PositionManager;
+    // mockPool = fixture.UniV3_USDC_USDT_Pool;
+    // mockPositionManager = fixture.UniV3PositionManager;
     ousd = fixture.ousd;
     usdc = fixture.usdc;
     usdt = fixture.usdt;
     dai = fixture.dai;
     vault = fixture.vault;
-    harvester = fixture.harvester;
+    // harvester = fixture.harvester;
     governor = fixture.governor;
     strategist = fixture.strategist;
     operator = fixture.operator;
@@ -129,6 +129,9 @@ describe("Uniswap V3 Strategy", function () {
         await expect(
           strategy.connect(operator).setOperator(addr1)
         ).to.be.revertedWith("Caller is not the Strategist or Governor");
+        await expect(
+          strategy.connect(josh).setOperator(addr1)
+        ).to.be.revertedWith("Caller is not the Strategist or Governor");
       });
     });
 
@@ -215,9 +218,9 @@ describe("Uniswap V3 Strategy", function () {
         it("Cannot call with invalid assets", async () => {
           await expect(
             strategy
-              .connect(operator)
+              .connect(governor)
               .setMinDepositThreshold(dai.address, "2000")
-          ).to.be.revertedWith("Caller is not the Strategist or Governor");
+          ).to.be.revertedWith("Unsupported asset");
         });
       });
     });

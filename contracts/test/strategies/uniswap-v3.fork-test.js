@@ -10,12 +10,10 @@ const {
   usdcUnitsFormat,
   usdtUnitsFormat,
   daiUnits,
-  isFork,
   daiUnitsFormat,
   getBlockTimestamp,
 } = require("../helpers");
 const { BigNumber, utils } = require("ethers");
-const { ethers } = hre;
 
 const uniswapV3Fixture = uniswapV3FixtureSetup();
 
@@ -23,17 +21,13 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
   this.timeout(0);
 
   let fixture;
-  let vault, harvester, ousd, usdc, usdt, dai;
+  let vault, ousd, usdc, usdt, dai;
   let reserveStrategy, strategy, pool, positionManager, v3Helper, swapRouter;
-  let timelock,
-    // governor,
-    // strategist,
-    operator,
-    josh,
-    matt,
-    daniel,
-    domen,
-    franck;
+  let timelock;
+  // governor,
+  // strategist,
+  // harvester
+  let operator, josh, matt, daniel, domen, franck;
 
   beforeEach(async () => {
     fixture = await uniswapV3Fixture();
@@ -49,7 +43,7 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
     usdt = fixture.usdt;
     dai = fixture.dai;
     vault = fixture.vault;
-    harvester = fixture.harvester;
+    // harvester = fixture.harvester;
     // governor = fixture.governor;
     // strategist = fixture.strategist;
     operator = fixture.operator;
@@ -62,26 +56,14 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
   });
 
   async function setRebalancePriceThreshold(lowerTick, upperTick) {
-    const { vault } = fixture;
-    const { governorAddr, timelockAddr } = await getNamedAccounts();
-    const sGovernor = await ethers.provider.getSigner(
-      isFork ? timelockAddr : governorAddr
-    );
-
     await strategy
-      .connect(sGovernor)
+      .connect(timelock)
       .setRebalancePriceThreshold(lowerTick, upperTick);
   }
 
   // maxTvl is denominated in 18 decimals already
   async function setMaxTVL(maxTvl) {
-    const { vault } = fixture;
-    const { governorAddr, timelockAddr } = await getNamedAccounts();
-    const sGovernor = await ethers.provider.getSigner(
-      isFork ? timelockAddr : governorAddr
-    );
-
-    await strategy.connect(sGovernor).setMaxTVL(utils.parseUnits(maxTvl, 18));
+    await strategy.connect(timelock).setMaxTVL(utils.parseUnits(maxTvl, 18));
   }
 
   describe("Uniswap V3 LP positions", function () {

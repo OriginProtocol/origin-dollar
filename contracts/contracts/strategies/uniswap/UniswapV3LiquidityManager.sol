@@ -20,6 +20,36 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
 
+    /**
+     * @notice Calculates the net value of the position exlcuding fees
+     * @param tokenId tokenID of the Position NFT
+     * @return posValue Value of position (in 18 decimals)
+     */
+    function getPositionValue(uint256 tokenId)
+        internal
+        view
+        returns (uint256 posValue)
+    {
+        (uint256 amount0, uint256 amount1) = getPositionPrincipal(tokenId);
+
+        posValue = _getValueOfTokens(amount0, amount1);
+    }
+
+    /**
+     * @notice Calculates the net value of the token amounts (assumes it's pegged to $1)
+     * @param amount0 Amount of token0
+     * @param amount1 Amount of token1
+     * @return value Net value (in 18 decimals)
+     */
+    function _getValueOfTokens(uint256 amount0, uint256 amount1)
+        internal
+        view
+        returns (uint256 value)
+    {
+        value += amount0.scaleBy(18, Helpers.getDecimals(token0));
+        value += amount1.scaleBy(18, Helpers.getDecimals(token1));
+    }
+
     /***************************************
             Withdraw
     ****************************************/
@@ -117,17 +147,11 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
     /***************************************
             Rebalance
     ****************************************/
-    modifier ensureTVL() {
-        // Vaule change should either be between 0 and 0 (for rebalance)
-        // and 0 and slippage (for swapAndRebalance)
-
-        _;
-        uint256 balance = _self.checkBalance(token0).scaleBy(
-            18,
-            Helpers.getDecimals(token0)
-        ) + _self.checkBalance(token1).scaleBy(18, Helpers.getDecimals(token1));
-
-        require(balance <= maxTVL, "MaxTVL threshold has been reached");
+    function ensureTVL() internal {
+        require(
+            getPositionValue(activeTokenId) <= maxTVL,
+            "MaxTVL threshold has been reached"
+        );
     }
 
     function swapsNotPausedAndWithinLimits(
@@ -152,11 +176,47 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         );
     }
 
-    function rebalanceNotPausedAndWithinLimits(int24 lowerTick, int24 upperTick) internal {
+    function rebalanceNotPaused() internal {
+        require(rebalancePaused, "Rebalances are paused");
+    }
+
+    function rebalanceNotPausedAndWithinLimits(int24 lowerTick, int24 upperTick)
+        internal
+    {
         require(rebalancePaused, "Rebalances are paused");
         require(
             minRebalanceTick <= lowerTick && maxRebalanceTick >= upperTick,
             "Rebalance position out of bounds"
+        );
+    }
+
+    function updatePositionNetVal(uint256 tokenId)
+        internal
+        returns (uint256 valueLost)
+    {
+        if (tokenId == 0) {
+            return 0;
+        }
+
+        uint256 currentVal = getPositionValue(tokenId);
+        uint256 lastVal = tokenIdToPosition[tokenId].netValue;
+
+        if (currentVal < lastVal) {
+            valueLost = lastVal - currentVal;
+
+            // TODO: Should these be also updated when the value rises?
+            netLostValue += valueLost;
+            tokenIdToPosition[tokenId].netValue = currentVal;
+
+            emit PositionLostValue(tokenId, lastVal, currentVal, valueLost);
+        }
+    }
+
+    function ensureNetLossThreshold(uint256 tokenId) internal {
+        updatePositionNetVal(tokenId);
+        require(
+            netLostValue < maxPositionValueLossThreshold,
+            "Over max value loss threshold"
         );
     }
 
@@ -182,14 +242,9 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         uint256 minRedeemAmount1,
         int24 lowerTick,
         int24 upperTick
-    )
-        external
-        onlyGovernorOrStrategistOrOperator
-        nonReentrant
-        ensureTVL
-    {
-        rebalanceNotPausedAndWithinLimits(lowerTick, upperTick);
+    ) external onlyGovernorOrStrategistOrOperator nonReentrant {
         require(lowerTick < upperTick, "Invalid tick range");
+        rebalanceNotPausedAndWithinLimits(lowerTick, upperTick);
 
         int48 tickKey = _getTickPositionKey(lowerTick, upperTick);
         uint256 tokenId = ticksToTokenId[tickKey];
@@ -229,6 +284,9 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
 
         // Move any leftovers to Reserve
         _depositAll();
+
+        // Final position value/sanity check
+        ensureTVL();
     }
 
     struct SwapAndRebalanceParams {
@@ -250,11 +308,13 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         external
         onlyGovernorOrStrategistOrOperator
         nonReentrant
-        ensureTVL
     {
-        swapsNotPausedAndWithinLimits(params.sqrtPriceLimitX96, params.swapZeroForOne);
-        rebalanceNotPausedAndWithinLimits(params.lowerTick, params.upperTick);
         require(params.lowerTick < params.upperTick, "Invalid tick range");
+        swapsNotPausedAndWithinLimits(
+            params.sqrtPriceLimitX96,
+            params.swapZeroForOne
+        );
+        rebalanceNotPausedAndWithinLimits(params.lowerTick, params.upperTick);
 
         uint256 tokenId = ticksToTokenId[
             _getTickPositionKey(params.lowerTick, params.upperTick)
@@ -306,6 +366,9 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
 
         // Move any leftovers to Reserve
         _depositAll();
+
+        // Final position value/sanity check
+        ensureTVL();
     }
 
     /***************************************
@@ -364,6 +427,9 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         int48 tickKey = _getTickPositionKey(lowerTick, upperTick);
         require(ticksToTokenId[tickKey] == 0, "Duplicate position mint");
 
+        // Make sure liquidity management is disabled when value lost threshold is breached
+        ensureNetLossThreshold(0);
+
         INonfungiblePositionManager.MintParams
             memory params = INonfungiblePositionManager.MintParams({
                 token0: token0,
@@ -389,7 +455,8 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
             lowerTick: lowerTick,
             upperTick: upperTick,
             sqrtRatioAX96: helper.getSqrtRatioAtTick(lowerTick),
-            sqrtRatioBX96: helper.getSqrtRatioAtTick(upperTick)
+            sqrtRatioBX96: helper.getSqrtRatioAtTick(upperTick),
+            netValue: _getValueOfTokens(amount0, amount1)
         });
 
         emit UniswapV3PositionMinted(tokenId, lowerTick, upperTick);
@@ -422,6 +489,9 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         Position storage position = tokenIdToPosition[tokenId];
         require(position.exists, "No active position");
 
+        // Make sure liquidity management is disabled when value lost threshold is breached
+        ensureNetLossThreshold(tokenId);
+
         // Withdraw enough funds from Reserve strategies
         _ensureAssetBalances(desiredAmount0, desiredAmount1);
 
@@ -441,6 +511,8 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         ).increaseLiquidity(params);
 
         position.liquidity += liquidity;
+        // Update last known value
+        position.netValue = getPositionValue(tokenId);
 
         emit UniswapV3LiquidityAdded(tokenId, amount0, amount1, liquidity);
     }
@@ -456,6 +528,8 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         nonReentrant
         returns (uint256 amount0, uint256 amount1)
     {
+        rebalanceNotPaused();
+
         _increasePositionLiquidity(
             activeTokenId,
             desiredAmount0,
@@ -463,6 +537,9 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
             minAmount0,
             minAmount1
         );
+
+        // Final position value/sanity check
+        ensureTVL();
     }
 
     /**
@@ -488,14 +565,8 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         Position storage position = tokenIdToPosition[tokenId];
         require(position.exists, "Unknown position");
 
-        (uint160 sqrtRatioX96, , , , , , ) = pool.slot0();
-        (uint256 exactAmount0, uint256 exactAmount1) = helper
-            .getAmountsForLiquidity(
-                sqrtRatioX96,
-                position.sqrtRatioAX96,
-                position.sqrtRatioBX96,
-                liquidity
-            );
+        // Make sure liquidity management is disabled when value lost threshold is breached
+        ensureNetLossThreshold(tokenId);
 
         INonfungiblePositionManager.DecreaseLiquidityParams
             memory params = INonfungiblePositionManager
@@ -510,6 +581,8 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         (amount0, amount1) = positionManager.decreaseLiquidity(params);
 
         position.liquidity -= liquidity;
+        // Update last known value
+        position.netValue = getPositionValue(tokenId);
 
         emit UniswapV3LiquidityRemoved(
             position.tokenId,
@@ -529,12 +602,17 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         nonReentrant
         returns (uint256 amount0, uint256 amount1)
     {
-        _decreasePositionLiquidity(
-            activeTokenId,
-            liquidity,
-            minAmount0,
-            minAmount1
-        );
+        rebalanceNotPaused();
+
+        return
+            _decreasePositionLiquidity(
+                activeTokenId,
+                liquidity,
+                minAmount0,
+                minAmount1
+            );
+
+        // Intentionally skipping TVL check since removing liquidity won't cause it to fail
     }
 
     /**
@@ -599,6 +677,8 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         returns (uint256 amount0, uint256 amount1)
     {
         return _closePosition(tokenId, minAmount0, minAmount1);
+
+        // Intentionally skipping TVL check since removing liquidity won't cause it to fail
     }
 
     /**
@@ -616,6 +696,8 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         // without complicating the code of the Vault. So, passing 0 instead.
         // A better way
         return _closePosition(activeTokenId, 0, 0);
+
+        // Intentionally skipping TVL check since removing liquidity won't cause it to fail
     }
 
     /***************************************
@@ -774,79 +856,66 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
 
         (amount0, amount1) = positionManager.collect(params);
 
+        if (netLostValue > 0) {
+            // Reset loss counter to include value of fee collected
+            uint256 feeValue = _getValueOfTokens(amount0, amount1);
+            netLostValue = (feeValue >= netLostValue)
+                ? 0
+                : (netLostValue - feeValue);
+        }
+
         emit UniswapV3FeeCollected(tokenId, amount0, amount1);
     }
 
     /***************************************
             Hidden functions
     ****************************************/
-    function _abstractSetPToken(address _asset, address _pToken)
-        internal
-        override
-    {
+    // solhint-disable-next-line
+    function _abstractSetPToken(address, address) internal override {
         revert("NO_IMPL");
     }
 
-    function safeApproveAllTokens() external virtual override {
+    function safeApproveAllTokens() external override {
         revert("NO_IMPL");
     }
 
-    function deposit(address _asset, uint256 _amount)
-        external
-        virtual
-        override
-    {
+    function deposit(address, uint256) external override {
         revert("NO_IMPL");
     }
 
-    function depositAll() external virtual override {
+    function depositAll() external override {
         revert("NO_IMPL");
     }
 
-    function withdrawAll() external virtual override {
+    function withdrawAll() external override {
         revert("NO_IMPL");
     }
 
     function withdraw(
-        address recipient,
-        address _asset,
-        uint256 amount
-    ) external override onlyVault onlyPoolTokens(_asset) nonReentrant {
+        address,
+        address,
+        uint256
+    ) external override {
         revert("NO_IMPL");
     }
 
-    function checkBalance(address _asset)
-        external
-        view
-        override
-        returns (uint256 balance)
-    {
+    function checkBalance(address) external view override returns (uint256) {
         revert("NO_IMPL");
     }
 
-    function supportsAsset(address _asset)
-        external
-        view
-        override
-        returns (bool)
-    {
+    function supportsAsset(address) external view override returns (bool) {
         revert("NO_IMPL");
     }
 
-    function setPTokenAddress(address, address) external override onlyGovernor {
+    function setPTokenAddress(address, address) external override {
         revert("NO_IMPL");
     }
 
-    function removePToken(uint256) external override onlyGovernor {
+    function removePToken(uint256) external override {
         revert("NO_IMPL");
     }
 
-    function collectRewardTokens()
-        external
-        override
-        onlyHarvester
-        nonReentrant
-    {
+    function collectRewardTokens() external override {
         revert("NO_IMPL");
     }
 }
