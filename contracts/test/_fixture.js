@@ -1279,7 +1279,7 @@ function uniswapV3FixtureSetup() {
     const sGovernor = await ethers.provider.getSigner(
       isFork ? timelockAddr : governorAddr
     );
-    
+
     if (!isFork) {
       UniV3_USDC_USDT_Strategy.connect(sGovernor)
         // 2 million
@@ -1290,11 +1290,19 @@ function uniswapV3FixtureSetup() {
       );
     } else {
       const [, activeTick] = await fixture.UniV3_USDC_USDT_Pool.slot0();
-      await UniV3_USDC_USDT_Strategy.connect(sGovernor).setRebalancePriceThreshold(activeTick - 10000, activeTick + 10000);
-      await UniV3_USDC_USDT_Strategy.connect(sGovernor).setSwapPriceThreshold(activeTick - 10000, activeTick + 10000);
-      await UniV3_USDC_USDT_Strategy.connect(sGovernor).setMaxPositionValueLossThreshold(utils.parseUnits('50000', 18));
-      UniV3_USDC_USDT_Strategy.connect(sGovernor)
-        .setMaxTVL(utils.parseUnits('2000000', 18)); // 2M
+      await UniV3_USDC_USDT_Strategy.connect(
+        sGovernor
+      ).setRebalancePriceThreshold(activeTick - 10000, activeTick + 10000);
+      await UniV3_USDC_USDT_Strategy.connect(sGovernor).setSwapPriceThreshold(
+        activeTick - 10000,
+        activeTick + 10000
+      );
+      await UniV3_USDC_USDT_Strategy.connect(
+        sGovernor
+      ).setMaxPositionValueLossThreshold(utils.parseUnits("50000", 18));
+      UniV3_USDC_USDT_Strategy.connect(sGovernor).setMaxTVL(
+        utils.parseUnits("2000000", 18)
+      ); // 2M
     }
 
     return fixture;

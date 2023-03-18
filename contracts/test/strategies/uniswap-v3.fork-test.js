@@ -184,8 +184,9 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
 
       const { events } = await tx.wait();
 
-      const [, amount0Added, amount1Added, liquidityAdded] =
-        events.find((e) => e.event == "UniswapV3LiquidityAdded").args;
+      const [, amount0Added, amount1Added, liquidityAdded] = events.find(
+        (e) => e.event == "UniswapV3LiquidityAdded"
+      ).args;
 
       return {
         tokenId,
@@ -450,7 +451,7 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
       // Check Strategy balance
       const usdcBalAfter = await strategy.checkBalance(usdc.address);
       const usdtBalAfter = await strategy.checkBalance(usdt.address);
-      
+
       expect(usdcBalAfter).gte(
         usdcBalBefore,
         "Expected USDC balance to have increased"
@@ -493,12 +494,8 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
       const amountUnits = BigNumber.from(amount).mul(10 ** 6);
 
       // Mint position
-      const { tokenId, tx, amount0Minted, amount1Minted, liquidityMinted } = await mintLiquidity(
-        lowerTick,
-        upperTick,
-        amount,
-        amount
-      );
+      const { tokenId, tx, amount0Minted, amount1Minted, liquidityMinted } =
+        await mintLiquidity(lowerTick, upperTick, amount, amount);
       await expect(tx).to.have.emittedEvent("UniswapV3PositionMinted");
       let storedPosition = await strategy.tokenIdToPosition(tokenId);
       expect(storedPosition.exists).to.be.true;
@@ -509,14 +506,25 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
       expect(await strategy.activeTokenId()).to.equal(tokenId);
 
       // Rebalance again to increase liquidity
-      const { tx: increaseTx, amount0Added, amount1Added, liquidityAdded } = await increaseLiquidity(tokenId, amount, amount);
+      const {
+        tx: increaseTx,
+        amount0Added,
+        amount1Added,
+        liquidityAdded,
+      } = await increaseLiquidity(tokenId, amount, amount);
       await expect(increaseTx).to.have.emittedEvent("UniswapV3LiquidityAdded");
 
       // Check storage
       storedPosition = await strategy.tokenIdToPosition(tokenId);
-      expect(storedPosition.liquidity).to.approxEqual(liquidityMinted.add(liquidityAdded));
+      expect(storedPosition.liquidity).to.approxEqual(
+        liquidityMinted.add(liquidityAdded)
+      );
       expect(storedPosition.netValue).to.approxEqual(
-        amount0Minted.add(amount1Minted).add(amount0Added).add(amount1Added).mul(BigNumber.from(1e12))
+        amount0Minted
+          .add(amount1Minted)
+          .add(amount0Added)
+          .add(amount1Added)
+          .mul(BigNumber.from(1e12))
       );
 
       // Check balance on strategy
@@ -556,7 +564,7 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
       // Remove liquidity
       const tx2 = await strategy.connect(operator).closePosition(tokenId, 0, 0);
       await expect(tx2).to.have.emittedEvent("UniswapV3LiquidityRemoved");
-      
+
       // Check storage
       storedPosition = await strategy.tokenIdToPosition(tokenId);
       expect(storedPosition.liquidity).to.be.equal(0);
@@ -638,17 +646,13 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
 
       // Mint position
       const amount = "100000";
-      const { tokenId, tx, amount0Minted, amount1Minted, liquidityMinted } = await mintLiquidity(
-        lowerTick,
-        upperTick,
-        amount,
-        amount
-      );
+      const { tokenId, tx, amount0Minted, amount1Minted, liquidityMinted } =
+        await mintLiquidity(lowerTick, upperTick, amount, amount);
       await expect(tx).to.have.emittedEvent("UniswapV3PositionMinted");
       let storedPosition = await strategy.tokenIdToPosition(tokenId);
       expect(storedPosition.exists).to.be.true;
       expect(await strategy.activeTokenId()).to.equal(tokenId);
-      expect(await strategy.netLostValue()).to.equal(0)
+      expect(await strategy.netLostValue()).to.equal(0);
 
       // Do some big swaps to move active tick
       await _swap(matt, "1000000", false);
@@ -662,24 +666,26 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
       await expect(
         strategy
           .connect(operator)
-          .increaseActivePositionLiquidity(
-            "1000000",
-            "1000000",
-            "0",
-            "0"
-          )
-      ).to.be.revertedWith("Over max value loss threshold")
+          .increaseActivePositionLiquidity("1000000", "1000000", "0", "0")
+      ).to.be.revertedWith("Over max value loss threshold");
 
       // Set the threshold higher and make sure the net loss event is emitted
       // and state updated properly
       await setMaxPositionValueLossThreshold("1000000000000000");
-      const { amount0Added, amount1Added, liquidityAdded } = await increaseLiquidity(tokenId, "1", "1")
+      const {
+        tx: increaseTx,
+        amount0Added,
+        amount1Added,
+        liquidityAdded,
+      } = await increaseLiquidity(tokenId, "1", "1");
+      await expect(increaseTx).to.have.emittedEvent("PositionLostValue");
+
       storedPosition = await strategy.tokenIdToPosition(tokenId);
       expect(storedPosition.liquidity).approxEqual(
         liquidityMinted.add(liquidityAdded)
-      )
-      const netLost = await strategy.netLostValue()
-      expect(netLost).to.be.gte(0, "Expected lost value to have been updated")
+      );
+      const netLost = await strategy.netLostValue();
+      expect(netLost).to.be.gte(0, "Expected lost value to have been updated");
       expect(storedPosition.netValue).to.be.lte(
         amount0Minted
           .add(amount1Minted)
@@ -687,8 +693,8 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
           .add(amount1Added)
           .mul(1e12)
           .sub(netLost)
-      )
-    })
+      );
+    });
   });
 
   describe("Sanity checks", () => {
@@ -696,17 +702,17 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
       const mintTest = async (user, amount, asset) => {
         const ousdAmount = ousdUnits(amount);
         const tokenAmount = await units(amount, asset);
-  
+
         const currentSupply = await ousd.totalSupply();
         const ousdBalance = await ousd.balanceOf(user.address);
         const tokenBalance = await asset.balanceOf(user.address);
         const reserveTokenBalance = await reserveStrategy.checkBalance(
           asset.address
         );
-  
+
         // await asset.connect(user).approve(vault.address, tokenAmount)
         await vault.connect(user).mint(asset.address, tokenAmount, 0);
-  
+
         await expect(ousd).to.have.an.approxTotalSupplyOf(
           currentSupply.add(ousdAmount),
           "Total supply mismatch"
@@ -725,7 +731,7 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
             "Expected reserve strategy to have received the other token"
           );
         }
-  
+
         await expect(user).to.have.an.approxBalanceWithToleranceOf(
           ousdBalance.add(ousdAmount),
           ousd,
@@ -739,7 +745,7 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
           "Should've deposoited equivaluent other token"
         );
       };
-  
+
       it("with USDC", async () => {
         await mintTest(daniel, "30000", usdc);
       });
@@ -750,25 +756,25 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
         await mintTest(franck, "30000", dai);
       });
     });
-  
+
     describe("Redeem", function () {
       const redeemTest = async (user, amount) => {
         const ousdAmount = ousdUnits(amount);
-  
+
         let ousdBalance = await ousd.balanceOf(user.address);
         if (ousdBalance.lt(ousdAmount)) {
           // Mint some OUSD
           await vault.connect(user).mint(dai.address, daiUnits(amount), 0);
           ousdBalance = await ousd.balanceOf(user.address);
         }
-  
+
         const currentSupply = await ousd.totalSupply();
         const usdcBalance = await usdc.balanceOf(user.address);
         const usdtBalance = await usdt.balanceOf(user.address);
         const daiBalance = await dai.balanceOf(user.address);
-  
+
         await vault.connect(user).redeem(ousdAmount, 0);
-  
+
         await expect(ousd).to.have.an.approxTotalSupplyOf(
           currentSupply.sub(ousdAmount),
           "Total supply mismatch"
@@ -779,7 +785,7 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
           1,
           "Should've burned equivalent OUSD"
         );
-  
+
         const balanceDiff =
           parseFloat(
             usdcUnitsFormat((await usdc.balanceOf(user.address)) - usdcBalance)
@@ -790,18 +796,17 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
           parseFloat(
             daiUnitsFormat((await dai.balanceOf(user.address)) - daiBalance)
           );
-  
+
         await expect(balanceDiff).to.approxEqualTolerance(
           amount,
           1,
           "Should've redeemed equivaluent other token"
         );
       };
-  
+
       it("Should withdraw from reserve strategy", async () => {
         redeemTest(josh, "10000");
       });
     });
-  })
-
+  });
 });
