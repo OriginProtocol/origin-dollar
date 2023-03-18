@@ -190,9 +190,7 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         );
     }
 
-    function updatePositionNetVal(uint256 tokenId)
-        internal
-    {
+    function updatePositionNetVal(uint256 tokenId) internal {
         if (tokenId == 0) {
             return;
         }
@@ -202,9 +200,9 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
 
         int256 valueChange = int256(currentVal) - int256(lastVal);
 
-        netLostValue = int256(netLostValue) - valueChange < 0 ?
-            0 :
-            uint256(int256(netLostValue) - valueChange);
+        netLostValue = (int256(netLostValue) - valueChange < 0)
+            ? 0
+            : uint256(int256(netLostValue) - valueChange);
 
         tokenIdToPosition[tokenId].netValue = currentVal;
         emit PositionValueChanged(tokenId, lastVal, currentVal, valueChange);
