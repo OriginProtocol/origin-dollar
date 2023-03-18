@@ -17,6 +17,7 @@ import { IUniswapV3Pool } from "@uniswap/v3-core/contracts/interfaces/IUniswapV3
 import { IUniswapV3Strategy } from "../../interfaces/IUniswapV3Strategy.sol";
 import { ISwapRouter } from "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 import { StableMath } from "../../utils/StableMath.sol";
+import { IVaultValueChecker } from "../../interfaces/IVaultValueChecker.sol";
 
 contract UniswapV3Strategy is UniswapV3StrategyStorage {
     using SafeERC20 for IERC20;
@@ -29,6 +30,7 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
      * @param _nonfungiblePositionManager Uniswap V3's Position Manager
      * @param _helper Deployed UniswapV3Helper contract
      * @param _swapRouter Uniswap SwapRouter contract
+     * @param _vaultValueChecker VaultValueChecker
      * @param _operator Operator address
      */
     function initialize(
@@ -37,6 +39,7 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
         address _nonfungiblePositionManager,
         address _helper,
         address _swapRouter,
+        address _vaultValueChecker,
         address _operator
     ) external onlyGovernor initializer {
         // TODO: Comment on why this is necessary and why it should always be the proxy address
@@ -48,6 +51,8 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
         positionManager = INonfungiblePositionManager(
             _nonfungiblePositionManager
         );
+
+        vaultValueChecker = IVaultValueChecker(_vaultValueChecker);
 
         token0 = pool.token0();
         token1 = pool.token1();
@@ -64,18 +69,6 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
             _assets, // Asset addresses
             _assets // Platform token addresses
         );
-
-        poolTokens[token0] = PoolToken({
-            isSupported: true,
-            reserveStrategy: address(0), // Set using `setReserveStrategy()`
-            minDepositThreshold: 0
-        });
-
-        poolTokens[token1] = PoolToken({
-            isSupported: true,
-            reserveStrategy: address(0), // Set using `setReserveStrategy()
-            minDepositThreshold: 0
-        });
 
         _setOperator(_operator);
     }
@@ -121,7 +114,11 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
             "Invalid strategy for asset"
         );
 
-        poolTokens[_asset].reserveStrategy = _reserveStrategy;
+        if (_asset == token0) {
+            reserveStrategy0 = IStrategy(_reserveStrategy);
+        } else if (_asset == token1) {
+            reserveStrategy1 = IStrategy(_reserveStrategy);
+        }
 
         emit ReserveStrategyChanged(_asset, _reserveStrategy);
     }
@@ -137,7 +134,11 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
         onlyPoolTokens(_asset)
         returns (address reserveStrategyAddr)
     {
-        reserveStrategyAddr = poolTokens[_asset].reserveStrategy;
+        if (_asset == token0) {
+            reserveStrategyAddr = address(reserveStrategy0);
+        } else if (_asset == token1) {
+            reserveStrategyAddr = address(reserveStrategy1);
+        }
     }
 
     /**
@@ -150,8 +151,11 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
         onlyGovernorOrStrategist
         onlyPoolTokens(_asset)
     {
-        PoolToken storage token = poolTokens[_asset];
-        token.minDepositThreshold = _minThreshold;
+        if (_asset == token0) {
+            minDepositThreshold0 = _minThreshold;
+        } else if (_asset == token1) {
+            minDepositThreshold1 = _minThreshold;
+        }
         emit MinDepositThresholdChanged(_asset, _minThreshold);
     }
 
@@ -232,7 +236,14 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
         onlyPoolTokens(_asset)
         nonReentrant
     {
-        if (_amount > poolTokens[_asset].minDepositThreshold) {
+        if (
+            _amount > 0 &&
+            (
+                _asset == token0
+                    ? (_amount > minDepositThreshold0)
+                    : (_amount > minDepositThreshold1)
+            )
+        ) {
             IVault(vaultAddress).depositToUniswapV3Reserve(_asset, _amount);
             // Not emitting Deposit event since the Reserve strategy would do so
         }
@@ -351,36 +362,6 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
             }
         }
     }
-
-    // /**
-    //  * @dev Only checks the active LP position.
-    //  *      Doesn't return the balance held in the reserve strategies.
-    //  */
-    // function checkBalanceOfAllAssets()
-    //     external
-    //     view
-    //     returns (uint256 amount0, uint256 amount1)
-    // {
-    //     if (activeTokenId > 0) {
-    //         require(tokenIdToPosition[activeTokenId].exists, "Invalid token");
-
-    //         (uint160 sqrtRatioX96, , , , , , ) = pool.slot0();
-    //         (amount0, amount1) = helper.positionValue(
-    //             positionManager,
-    //             address(pool),
-    //             activeTokenId,
-    //             sqrtRatioX96
-    //         );
-    //     }
-
-    //     amount0 += IERC20(token0).balanceOf(address(this));
-    //     amount1 += IERC20(token1).balanceOf(address(this));
-
-    //     // uint256 asset0Decimals = Helpers.getDecimals(token0);
-    //     // uint256 asset1Decimals = Helpers.getDecimals(token1);
-    //     // amount0 = amount0.scaleBy(18, asset0Decimals);
-    //     // amount1 = amount1.scaleBy(18, asset1Decimals);
-    // }
 
     /***************************************
             ERC721 management

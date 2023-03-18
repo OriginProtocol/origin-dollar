@@ -117,7 +117,10 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
     /***************************************
             Rebalance
     ****************************************/
-    modifier rebalanceNotPausedAndWithinLimits(int24 lowerTick, int24 upperTick) {
+    modifier rebalanceNotPausedAndWithinLimits(
+        int24 lowerTick,
+        int24 upperTick
+    ) {
         require(rebalancePaused, "Rebalances are paused");
         require(
             minRebalanceTick <= lowerTick && maxRebalanceTick >= upperTick,
@@ -254,7 +257,10 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         onlyGovernorOrStrategistOrOperator
         nonReentrant
         rebalanceNotPausedAndWithinLimits(params.lowerTick, params.upperTick)
-        swapsNotPausedAndWithinLimits(params.sqrtPriceLimitX96, params.swapZeroForOne)
+        swapsNotPausedAndWithinLimits(
+            params.sqrtPriceLimitX96,
+            params.swapZeroForOne
+        )
         ensureTVL
     {
         require(params.lowerTick < params.upperTick, "Invalid tick range");
@@ -678,8 +684,7 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
 
         if (swapZeroForOne) {
             // Amount available in reserve strategies
-            uint256 t1ReserveBal = IStrategy(poolTokens[token1].reserveStrategy)
-                .checkBalance(token1);
+            uint256 t1ReserveBal = reserveStrategy1.checkBalance(token1);
 
             // Only swap when asset isn't available in reserve as well
             require(
@@ -694,8 +699,7 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
                 : (token1Needed - swapMinAmountOut);
         } else {
             // Amount available in reserve strategies
-            uint256 t0ReserveBal = IStrategy(poolTokens[token0].reserveStrategy)
-                .checkBalance(token0);
+            uint256 t0ReserveBal = reserveStrategy0.checkBalance(token0);
 
             // Only swap when asset isn't available in reserve as well
             require(

@@ -10,6 +10,7 @@ import { IUniswapV3Pool } from "@uniswap/v3-core/contracts/interfaces/IUniswapV3
 import { INonfungiblePositionManager } from "../../interfaces/uniswap/v3/INonfungiblePositionManager.sol";
 import { IUniswapV3Helper } from "../../interfaces/uniswap/v3/IUniswapV3Helper.sol";
 import { IUniswapV3Strategy } from "../../interfaces/IUniswapV3Strategy.sol";
+import { IVaultValueChecker } from "../../interfaces/IVaultValueChecker.sol";
 import { ISwapRouter } from "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 
 abstract contract UniswapV3StrategyStorage is InitializableAbstractStrategy {
@@ -63,17 +64,6 @@ abstract contract UniswapV3StrategyStorage is InitializableAbstractStrategy {
         uint160 maxSwapPriceX96
     );
 
-    // Represents both tokens supported by the strategy
-    struct PoolToken {
-        // True if asset is either token0 or token1
-        bool isSupported;
-        // When the funds are not deployed in Uniswap V3 Pool, they will
-        // be deposited to these reserve strategies
-        address reserveStrategy;
-        // Deposits to reserve strategy when contract balance exceeds this amount
-        uint256 minDepositThreshold;
-    }
-
     // Represents a position minted by UniswapV3Strategy contract
     struct Position {
         uint256 tokenId; // ERC721 token Id of the minted position
@@ -95,6 +85,15 @@ abstract contract UniswapV3StrategyStorage is InitializableAbstractStrategy {
     address public operatorAddr;
     address public token0; // Token0 of Uniswap V3 Pool
     address public token1; // Token1 of Uniswap V3 Pool
+
+    // When the funds are not deployed in Uniswap V3 Pool, they will
+    // be deposited to these reserve strategies
+    IStrategy public reserveStrategy0; // Reserve strategy for token0
+    IStrategy public reserveStrategy1; // Reserve strategy for token1
+
+    // Deposits to reserve strategy when contract balance exceeds this amount
+    uint256 public minDepositThreshold0;
+    uint256 public minDepositThreshold1;
 
     uint24 public poolFee; // Uniswap V3 Pool Fee
     bool public swapsPaused = false; // True if Swaps are paused
@@ -125,8 +124,8 @@ abstract contract UniswapV3StrategyStorage is InitializableAbstractStrategy {
     // Uniswap Swap Router
     ISwapRouter internal swapRouter;
 
-    // Contains data about both tokens
-    mapping(address => PoolToken) public poolTokens;
+    // VaultValueChecker
+    IVaultValueChecker public vaultValueChecker;
 
     // A lookup table to find token IDs of position using f(lowerTick, upperTick)
     mapping(int48 => uint256) internal ticksToTokenId;
@@ -171,19 +170,6 @@ abstract contract UniswapV3StrategyStorage is InitializableAbstractStrategy {
     }
 
     /**
-     * @dev Ensures that the caller is Governor, Strategist or Operator.
-     */
-    modifier onlyGovernorOrStrategistOrOperatorOrVault() {
-        require(
-            msg.sender == operatorAddr ||
-                msg.sender == IVault(vaultAddress).strategistAddr() ||
-                msg.sender == governor(),
-            "Caller is not the Operator, Strategist, Governor or Vault"
-        );
-        _;
-    }
-
-    /**
      * @dev Ensures that the asset address is either token0 or token1.
      */
     modifier onlyPoolTokens(address addr) {
@@ -198,14 +184,9 @@ abstract contract UniswapV3StrategyStorage is InitializableAbstractStrategy {
      * Deposits back strategy token balances back to the reserve strategies
      */
     function _depositAll() internal {
-        IUniswapV3Strategy strat = IUniswapV3Strategy(msg.sender);
-
         uint256 token0Bal = IERC20(token0).balanceOf(address(this));
         uint256 token1Bal = IERC20(token1).balanceOf(address(this));
         IVault vault = IVault(vaultAddress);
-
-        uint256 minDepositThreshold0 = poolTokens[token0].minDepositThreshold;
-        uint256 minDepositThreshold1 = poolTokens[token1].minDepositThreshold;
 
         if (
             token0Bal > 0 &&
