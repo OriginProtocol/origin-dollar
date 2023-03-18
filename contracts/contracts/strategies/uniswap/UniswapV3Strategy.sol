@@ -96,9 +96,10 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
     function setReserveStrategy(address _asset, address _reserveStrategy)
         external
         onlyGovernorOrStrategist
-        onlyPoolTokens(_asset)
         nonReentrant
     {
+        onlyPoolTokens(_asset);
+
         require(
             IVault(vaultAddress).isStrategySupported(_reserveStrategy),
             "Unsupported strategy"
@@ -126,7 +127,6 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
     function reserveStrategy(address _asset)
         external
         view
-        onlyPoolTokens(_asset)
         returns (address reserveStrategyAddr)
     {
         if (_asset == token0) {
@@ -144,8 +144,9 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
     function setMinDepositThreshold(address _asset, uint256 _minThreshold)
         external
         onlyGovernorOrStrategist
-        onlyPoolTokens(_asset)
     {
+        onlyPoolTokens(_asset);
+
         if (_asset == token0) {
             minDepositThreshold0 = _minThreshold;
         } else if (_asset == token1) {
@@ -249,9 +250,10 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
         external
         override
         onlyVault
-        onlyPoolTokens(_asset)
         nonReentrant
     {
+        onlyPoolTokens(_asset);
+
         if (
             _amount > 0 &&
             (
@@ -275,7 +277,9 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
         address recipient,
         address _asset,
         uint256 amount
-    ) external override onlyVault onlyPoolTokens(_asset) nonReentrant {
+    ) external override onlyVault nonReentrant {
+        onlyPoolTokens(_asset);
+
         IERC20 asset = IERC20(_asset);
         uint256 selfBalance = asset.balanceOf(address(this));
 
@@ -361,9 +365,9 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
         external
         view
         override
-        onlyPoolTokens(_asset)
         returns (uint256 balance)
     {
+        onlyPoolTokens(_asset);
         balance = IERC20(_asset).balanceOf(address(this));
 
         if (activeTokenId > 0) {
@@ -378,6 +382,13 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
                 balance += amount1;
             }
         }
+    }
+
+    /**
+     * @dev Ensures that the asset address is either token0 or token1.
+     */
+    function onlyPoolTokens(address addr) internal view {
+        require(addr == token0 || addr == token1, "Unsupported asset");
     }
 
     /***************************************

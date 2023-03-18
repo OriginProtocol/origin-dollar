@@ -177,13 +177,13 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
     }
 
     function rebalanceNotPaused() internal {
-        require(rebalancePaused, "Rebalances are paused");
+        require(!rebalancePaused, "Rebalances are paused");
     }
 
     function rebalanceNotPausedAndWithinLimits(int24 lowerTick, int24 upperTick)
         internal
     {
-        require(rebalancePaused, "Rebalances are paused");
+        require(!rebalancePaused, "Rebalances are paused");
         require(
             minRebalanceTick <= lowerTick && maxRebalanceTick >= upperTick,
             "Rebalance position out of bounds"
@@ -731,8 +731,6 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
                 desiredAmount1 - token1Balance
             );
         }
-
-        // TODO: Check value of assets moved here
     }
 
     function _ensureAssetsBySwapping(
@@ -823,8 +821,6 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
             swapAmountIn,
             amountReceived
         );
-
-        // TODO: Check value of assets moved here
     }
 
     function collectFees()
@@ -870,7 +866,6 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
     /***************************************
             Hidden functions
     ****************************************/
-    // solhint-disable-next-line
     function _abstractSetPToken(address, address) internal override {
         revert("NO_IMPL");
     }

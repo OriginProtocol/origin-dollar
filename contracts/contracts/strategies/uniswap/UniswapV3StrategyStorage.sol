@@ -99,15 +99,15 @@ abstract contract UniswapV3StrategyStorage is InitializableAbstractStrategy {
     IStrategy public reserveStrategy0; // Reserve strategy for token0
     IStrategy public reserveStrategy1; // Reserve strategy for token1
 
-    // Deposits to reserve strategy when contract balance exceeds this amount
-    uint256 public minDepositThreshold0;
-    uint256 public minDepositThreshold1;
-
     uint24 public poolFee; // Uniswap V3 Pool Fee
     bool public swapsPaused = false; // True if Swaps are paused
     bool public rebalancePaused = false; // True if Swaps are paused
 
-    uint256 public maxTVL; // In USD, 18 decimals
+    uint256 public maxTVL = 1000000 ether; // In USD, 18 decimals, defaults to 1M
+
+    // Deposits to reserve strategy when contract balance exceeds this amount
+    uint256 public minDepositThreshold0;
+    uint256 public minDepositThreshold1;
 
     // An upper and lower bound of rebalancing price limits
     int24 public minRebalanceTick;
@@ -120,14 +120,11 @@ abstract contract UniswapV3StrategyStorage is InitializableAbstractStrategy {
     // Token ID of active Position on the pool. zero, if there are no active LP position
     uint256 public activeTokenId;
 
-    // Value of the active position since mint (or last liquidity change)
-    uint256 public activePositionMintValue = 0;
-
     // Sum of loss in value of tokens deployed to the pool
     uint256 public netLostValue = 0;
 
     // Max value loss threshold after which rebalances aren't allowed
-    uint256 public maxPositionValueLossThreshold;
+    uint256 public maxPositionValueLossThreshold = 50000 ether; // default to 50k
 
     // Uniswap V3's Pool
     IUniswapV3Pool public pool;
@@ -180,14 +177,6 @@ abstract contract UniswapV3StrategyStorage is InitializableAbstractStrategy {
                 msg.sender == governor(),
             "Caller is not the Operator, Strategist or Governor"
         );
-        _;
-    }
-
-    /**
-     * @dev Ensures that the asset address is either token0 or token1.
-     */
-    modifier onlyPoolTokens(address addr) {
-        require(addr == token0 || addr == token1, "Unsupported asset");
         _;
     }
 

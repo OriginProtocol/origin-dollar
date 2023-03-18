@@ -1,4 +1,5 @@
 const { deploymentWithGovernanceProposal } = require("../utils/deploy");
+const { utils } = require("ethers");
 
 module.exports = deploymentWithGovernanceProposal(
   {
@@ -164,12 +165,42 @@ module.exports = deploymentWithGovernanceProposal(
           signature: "setReserveStrategy(address,address)",
           args: [assetAddresses.USDT, cMorphoCompProxy.address],
         },
-        // 4. Set Reserve Strategy for USDT
+        // 7. Set Minimum Deposit threshold for USDC
+        {
+          contract: cUniV3_USDC_USDT_Strategy,
+          signature: "setMinDepositThreshold(address,uint256)",
+          args: [assetAddresses.USDC, utils.parseUnits("30000", 6)], // 30k
+        },
+        // 8. Set Minimum Deposit threshold for USDT
+        {
+          contract: cUniV3_USDC_USDT_Strategy,
+          signature: "setMinDepositThreshold(address,uint256)",
+          args: [assetAddresses.USDT, utils.parseUnits("30000", 6)], // 30k
+        },
+        // // 9. Set Max TVL
         // {
         //   contract: cUniV3_USDC_USDT_Strategy,
-        //   signature: "setSwapPriceThreshold(int24,int24)",
-        //   args: [-1000, 1000],
+        //   signature: "setMaxTVL(uint256)",
+        //   args: [utils.parseEther("1000000", 18)], // 1M
         // },
+        // // 10. Set Max Loss threshold
+        // {
+        //   contract: cUniV3_USDC_USDT_Strategy,
+        //   signature: "setMaxPositionValueLossThreshold(uint256)",
+        //   args: [utils.parseEther("50000", 18)], // 50k
+        // },
+        // 11. Set Rebalance Price Threshold
+        {
+          contract: cUniV3_USDC_USDT_Strategy,
+          signature: "setRebalancePriceThreshold(int24,int24)",
+          args: [-1000, 1000],
+        },
+        // 12. Set Swap price threshold
+        {
+          contract: cUniV3_USDC_USDT_Strategy,
+          signature: "setSwapPriceThreshold(int24,int24)",
+          args: [-1000, 1000],
+        },
       ],
     };
   }
