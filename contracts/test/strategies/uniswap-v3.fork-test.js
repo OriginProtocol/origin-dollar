@@ -784,7 +784,8 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
         );
       };
 
-      it("Should withdraw from reserve strategy", async () => {
+      it.skip("Should withdraw from reserve strategy", async () => {
+        // Withdraw liquidates current position, so this test is no longer valid
         redeemTest(josh, "10000");
       });
     });
