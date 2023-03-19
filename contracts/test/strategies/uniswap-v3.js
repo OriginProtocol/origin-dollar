@@ -2,6 +2,7 @@ const { expect } = require("chai");
 const {
   uniswapV3FixtureSetup,
   impersonateAndFundContract,
+  defaultFixtureSetup,
 } = require("../_fixture");
 const {
   units,
@@ -14,6 +15,14 @@ const { deployments } = require("hardhat");
 const { BigNumber } = require("ethers");
 
 describe("Uniswap V3 Strategy", function () {
+  after(async () => {
+    // This is needed to revert fixtures
+    // The other tests as of now don't use proper fixtures
+    // Rel: https://github.com/OriginProtocol/origin-dollar/issues/1259
+    const f = defaultFixtureSetup();
+    await f();
+  });
+
   // Fixtures
   const uniswapV3Fixture = uniswapV3FixtureSetup();
 

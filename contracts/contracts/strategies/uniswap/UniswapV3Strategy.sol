@@ -40,8 +40,8 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
         address _operator
     ) external onlyGovernor initializer {
         // NOTE: _self should always be the address of the proxy.
-        // This is used to do `delegecall` between the this contract and 
-        // `UniswapV3LiquidityManager` whenever it's required. 
+        // This is used to do `delegecall` between the this contract and
+        // `UniswapV3LiquidityManager` whenever it's required.
         _self = IUniswapV3Strategy(address(this));
 
         pool = IUniswapV3Pool(_poolAddress);
