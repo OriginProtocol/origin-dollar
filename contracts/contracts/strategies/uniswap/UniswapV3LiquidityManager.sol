@@ -20,6 +20,9 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
 
+    /***************************************
+            Position Value
+    ****************************************/
     /**
      * @notice Calculates the net value of the position exlcuding fees
      * @param tokenId tokenID of the Position NFT
@@ -147,6 +150,7 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
     /***************************************
             Rebalance
     ****************************************/
+    /// Reverts if active position's value is greater than maxTVL
     function ensureTVL() internal {
         require(
             getPositionValue(activeTokenId) <= maxTVL,
@@ -154,6 +158,11 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         );
     }
 
+    /**
+     * @notice Reverts if swaps are paused or if swapping constraints aren't met.
+     * @param sqrtPriceLimitX96 Desired swap price limit
+     * @param swapZeroForOne True when swapping token0 for token1
+     */
     function swapsNotPausedAndWithinLimits(
         uint160 sqrtPriceLimitX96,
         bool swapZeroForOne
@@ -176,10 +185,16 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         );
     }
 
+    /// Reverts if rebalances are paused
     function rebalanceNotPaused() internal {
         require(!rebalancePaused, "Rebalances are paused");
     }
 
+    /**
+     * @notice Reverts if rebalances are paused or if rebalance constraints aren't met.
+     * @param upperTick Upper tick index
+     * @param lowerTick Lower tick inded
+     */
     function rebalanceNotPausedAndWithinLimits(int24 lowerTick, int24 upperTick)
         internal
     {
@@ -197,6 +212,9 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
      * the counter would still be at zero. We don't keep track of any value gained
      * until the counter is > 0, as the only purpose of this state variable is
      * to shut off rebalancing if the LP positions are losing capital across rebalances.
+     *
+     * @param delta The unsigned change in value
+     * @param gained True, if sign of delta is positive
      */
     function _setNetLostValue(uint256 delta, bool gained) internal {
         if (delta == 0) {
@@ -223,6 +241,11 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         emit NetLostValueChanged(netLostValue);
     }
 
+    /**
+     * @notice Computes the current value of the given token and updates
+     *          the storage. Also, updates netLostValue state
+     * @param tokenId Token ID of the position
+     */
     function updatePositionNetVal(uint256 tokenId) internal {
         if (tokenId == 0) {
             return;
@@ -255,6 +278,11 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         tokenIdToPosition[tokenId].netValue = currentVal;
     }
 
+    /**
+     * @notice Updates the value of the current position.
+     *         Reverts if netLostValue threshold is breached.
+     * @param tokenId Token ID of the position
+     */
     function ensureNetLossThreshold(uint256 tokenId) internal {
         updatePositionNetVal(tokenId);
         require(
@@ -348,6 +376,24 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         bool swapZeroForOne;
     }
 
+    /**
+     * @notice Closes active LP position if any and then provides liquidity to the requested position.
+     *         Mints new position, if it doesn't exist already. If active position is on the same tick
+     *         range, then just increases the liquidity by the desiredAmounts. Will pull funds needed
+     *         from reserve strategies and then will deposit back all dust to them
+     * @param params.desiredAmount0 Amount of token0 to use to provide liquidity
+     * @param params.desiredAmount1 Amount of token1 to use to provide liquidity
+     * @param params.minAmount0 Min amount of token0 to deposit/expect
+     * @param params.minAmount1 Min amount of token1 to deposit/expect
+     * @param params.minRedeemAmount0 Min amount of token0 received from closing active position
+     * @param params.minRedeemAmount1 Min amount of token1 received from closing active position
+     * @param params.lowerTick Desired lower tick index
+     * @param params.upperTick Desired upper tick index
+     * @param params.swapAmountIn Amount of tokens to swap
+     * @param params.swapMinAmountOut Minimum amount of other tokens expected
+     * @param params.sqrtPriceLimitX96 Max price limit for swap
+     * @param params.swapZeroForOne True if swapping from token0 to token1
+     */
     function swapAndRebalance(SwapAndRebalanceParams calldata params)
         external
         onlyGovernorOrStrategistOrOperator
@@ -508,13 +554,17 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
     }
 
     /**
-     * @notice Increases liquidity of the active position.
-     * @dev Will pull funds needed from reserve strategies
+     * @notice Increases liquidity of the given token.
+     *
      * @param tokenId Position NFT's tokenId
      * @param desiredAmount0 Desired amount of token0 to provide liquidity
      * @param desiredAmount1 Desired amount of token1 to provide liquidity
      * @param minAmount0 Min amount of token0 to deposit
      * @param minAmount1 Min amount of token1 to deposit
+     *
+     * @return liquidity Amount of liquidity added
+     * @return amount0 Amount of token0 deposited
+     * @return amount1 Amount of token1 deposited
      */
     function _increasePositionLiquidity(
         uint256 tokenId,
@@ -558,6 +608,18 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         emit UniswapV3LiquidityAdded(tokenId, amount0, amount1, liquidity);
     }
 
+    /**
+     * @notice Increases liquidity of the active position token.
+     *         Will pull funds needed from reserve strategies if needed.
+     *
+     * @param desiredAmount0 Desired amount of token0 to provide liquidity
+     * @param desiredAmount1 Desired amount of token1 to provide liquidity
+     * @param minAmount0 Min amount of token0 to deposit
+     * @param minAmount1 Min amount of token1 to deposit
+     *
+     * @return amount0 Amount of token0 deposited
+     * @return amount1 Amount of token1 deposited
+     */
     function increaseActivePositionLiquidity(
         uint256 desiredAmount0,
         uint256 desiredAmount1,
@@ -591,9 +653,6 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
 
     /**
      * @notice Removes liquidity of the position in the pool
-     *
-     * @dev Scope intentionally set to public so that the base strategy can delegatecall this function.
-     *      Setting it to external would restrict other functions in this contract from using it
      *
      * @param tokenId Position NFT's tokenId
      * @param liquidity Amount of liquidity to remove form the position
@@ -640,6 +699,16 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         );
     }
 
+    /**
+     * @notice Removes liquidity of the active position in the pool
+     *
+     * @param liquidity Amount of liquidity to remove form the position
+     * @param minAmount0 Min amount of token0 to withdraw
+     * @param minAmount1 Min amount of token1 to withdraw
+     *
+     * @return amount0 Amount of token0 received after liquidation
+     * @return amount1 Amount of token1 received after liquidation
+     */
     function decreaseActivePositionLiquidity(
         uint128 liquidity,
         uint256 minAmount0,
@@ -783,6 +852,16 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         }
     }
 
+    /**
+     * @dev Swaps one token for other and then provides liquidity to pools.
+     *
+     * @param desiredAmount0 Minimum amount of token0 needed
+     * @param desiredAmount1 Minimum amount of token1 needed
+     * @param swapAmountIn Amount of tokens to swap
+     * @param swapMinAmountOut Minimum amount of other tokens expected
+     * @param sqrtPriceLimitX96 Max price limit for swap
+     * @param swapZeroForOne True if swapping from token0 to token1
+     */
     function _ensureAssetsBySwapping(
         uint256 desiredAmount0,
         uint256 desiredAmount1,
@@ -873,14 +952,6 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         );
     }
 
-    function collectFees()
-        external
-        onlyGovernorOrStrategistOrOperator
-        returns (uint256 amount0, uint256 amount1)
-    {
-        return _collectFeesForToken(activeTokenId);
-    }
-
     /**
      * @notice Collects the fees generated by the position on V3 pool.
      *         Also adjusts netLostValue based on fee collected.
@@ -907,6 +978,19 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         _setNetLostValue(_getValueOfTokens(amount0, amount1), true);
 
         emit UniswapV3FeeCollected(tokenId, amount0, amount1);
+    }
+
+    /**
+     * @notice Collects fees from the active LP position
+     * @return amount0 Amount of token0 collected as fee
+     * @return amount1 Amount of token1 collected as fee
+     */
+    function collectFees()
+        external
+        onlyGovernorOrStrategistOrOperator
+        returns (uint256 amount0, uint256 amount1)
+    {
+        return _collectFeesForToken(activeTokenId);
     }
 
     /***************************************

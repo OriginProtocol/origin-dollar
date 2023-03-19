@@ -15,10 +15,10 @@ const {
 } = require("../helpers");
 const { BigNumber, utils } = require("ethers");
 
-const uniswapV3Fixture = uniswapV3FixtureSetup();
-
 forkOnlyDescribe("Uniswap V3 Strategy", function () {
   this.timeout(0);
+
+  const uniswapV3Fixture = uniswapV3FixtureSetup();
 
   let fixture;
   let vault, ousd, usdc, usdt, dai;

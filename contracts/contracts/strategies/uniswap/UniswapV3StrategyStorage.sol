@@ -14,6 +14,7 @@ import { ISwapRouter } from "@uniswap/v3-periphery/contracts/interfaces/ISwapRou
 
 abstract contract UniswapV3StrategyStorage is InitializableAbstractStrategy {
     event OperatorChanged(address _address);
+    event LiquidityManagerImplementationUpgraded(address _newImpl);
     event ReserveStrategyChanged(address asset, address reserveStrategy);
     event MinDepositThresholdChanged(
         address asset,

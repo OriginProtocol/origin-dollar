@@ -24,7 +24,6 @@ const threepoolLPAbi = require("./abi/threepoolLP.json");
 const threepoolSwapAbi = require("./abi/threepoolSwap.json");
 
 async function defaultFixture() {
-  // TODO: reset this tag later
   await deployments.fixture(
     isFork
       ? undefined

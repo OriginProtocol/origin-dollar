@@ -13,68 +13,69 @@ const {
 const { deployments } = require("hardhat");
 const { BigNumber } = require("ethers");
 
-const uniswapV3Fixture = uniswapV3FixtureSetup();
+describe("Uniswap V3 Strategy", function () {
+  // Fixtures
+  const uniswapV3Fixture = uniswapV3FixtureSetup();
 
-const liquidityManagerFixture = deployments.createFixture(async () => {
-  const fixture = await uniswapV3Fixture();
-  const { franck, daniel, domen, vault, usdc, usdt, dai, UniV3SwapRouter } =
-    fixture;
+  const liquidityManagerFixture = deployments.createFixture(async () => {
+    const fixture = await uniswapV3Fixture();
+    const { franck, daniel, domen, vault, usdc, usdt, dai, UniV3SwapRouter } =
+      fixture;
 
-  // Mint some liquidity
-  for (const user of [franck, daniel, domen, UniV3SwapRouter]) {
-    const isRouter = user.address == UniV3SwapRouter.address;
-    const account = isRouter
-      ? await impersonateAndFundContract(UniV3SwapRouter.address)
-      : user;
-    for (const asset of [usdc, usdt, dai]) {
-      const amount = isRouter ? "10000000000" : "1000000";
-      await asset.connect(account).mint(await units(amount, asset));
-      if (!isRouter) {
-        await asset
-          .connect(user)
-          .approve(vault.address, await units(amount, asset));
-        await vault
-          .connect(user)
-          .mint(asset.address, await units(amount, asset), 0);
+    // Mint some liquidity
+    for (const user of [franck, daniel, domen, UniV3SwapRouter]) {
+      const isRouter = user.address == UniV3SwapRouter.address;
+      const account = isRouter
+        ? await impersonateAndFundContract(UniV3SwapRouter.address)
+        : user;
+      for (const asset of [usdc, usdt, dai]) {
+        const amount = isRouter ? "10000000000" : "1000000";
+        await asset.connect(account).mint(await units(amount, asset));
+        if (!isRouter) {
+          await asset
+            .connect(user)
+            .approve(vault.address, await units(amount, asset));
+          await vault
+            .connect(user)
+            .mint(asset.address, await units(amount, asset), 0);
+        }
       }
     }
-  }
 
-  // Configure mockPool
-  const { UniV3_USDC_USDT_Pool: mockPool, governor } = fixture;
-  await mockPool.connect(governor).setTick(-2);
+    // Configure mockPool
+    const { UniV3_USDC_USDT_Pool: mockPool, governor } = fixture;
+    await mockPool.connect(governor).setTick(-2);
 
-  await fixture.UniV3_USDC_USDT_Strategy.connect(
-    governor
-  ).setMaxPositionValueLossThreshold(ousdUnits("50000", 18));
+    await fixture.UniV3_USDC_USDT_Strategy.connect(
+      governor
+    ).setMaxPositionValueLossThreshold(ousdUnits("50000", 18));
 
-  await fixture.UniV3_USDC_USDT_Strategy.connect(
-    governor
-  ).setSwapPriceThreshold(-100, 100);
+    await fixture.UniV3_USDC_USDT_Strategy.connect(
+      governor
+    ).setSwapPriceThreshold(-100, 100);
 
-  return fixture;
-});
+    return fixture;
+  });
 
-const activePositionFixture = deployments.createFixture(async () => {
-  const fixture = await liquidityManagerFixture();
+  const activePositionFixture = deployments.createFixture(async () => {
+    const fixture = await liquidityManagerFixture();
 
-  // Mint a position
-  const { operator, UniV3_USDC_USDT_Strategy } = fixture;
-  await UniV3_USDC_USDT_Strategy.connect(operator).rebalance(
-    usdcUnits("100000"),
-    usdcUnits("100000"),
-    "0",
-    "0",
-    "0",
-    "0",
-    "-100",
-    "100"
-  );
+    // Mint a position
+    const { operator, UniV3_USDC_USDT_Strategy } = fixture;
+    await UniV3_USDC_USDT_Strategy.connect(operator).rebalance(
+      usdcUnits("100000"),
+      usdcUnits("100000"),
+      "0",
+      "0",
+      "0",
+      "0",
+      "-100",
+      "100"
+    );
 
-  return fixture;
-});
+    return fixture;
+  });
 
-describe("Uniswap V3 Strategy", function () {
   // let fixture;
   let vault, ousd, usdc, usdt, dai;
   let reserveStrategy,

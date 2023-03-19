@@ -39,7 +39,9 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
         address _swapRouter,
         address _operator
     ) external onlyGovernor initializer {
-        // TODO: Comment on why this is necessary and why it should always be the proxy address
+        // NOTE: _self should always be the address of the proxy.
+        // This is used to do `delegecall` between the this contract and 
+        // `UniswapV3LiquidityManager` whenever it's required. 
         _self = IUniswapV3Strategy(address(this));
 
         pool = IUniswapV3Pool(_poolAddress);
@@ -255,12 +257,9 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
         onlyPoolTokens(_asset);
 
         if (
-            _amount > 0 &&
-            (
-                _asset == token0
-                    ? (_amount > minDepositThreshold0)
-                    : (_amount > minDepositThreshold1)
-            )
+            _asset == token0
+                ? (_amount > minDepositThreshold0)
+                : (_amount > minDepositThreshold1)
         ) {
             IVault(vaultAddress).depositToUniswapV3Reserve(_asset, _amount);
             // Not emitting Deposit event since the Reserve strategy would do so
@@ -319,15 +318,13 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
             require(success, "DelegateCall to close position failed");
         }
 
-        // saves 100B of contract size to loop through these 2 tokens
-        address[2] memory tokens = [token0, token1];
         for (uint256 i = 0; i < 2; i++) {
-            IERC20 tokenContract = IERC20(tokens[i]);
+            IERC20 tokenContract = IERC20(assetsMapped[i]);
             uint256 tokenBalance = tokenContract.balanceOf(address(this));
 
             if (tokenBalance > 0) {
                 tokenContract.safeTransfer(vaultAddress, tokenBalance);
-                emit Withdrawal(tokens[i], tokens[i], tokenBalance);
+                emit Withdrawal(assetsMapped[i], assetsMapped[i], tokenBalance);
             }
         }
     }
@@ -404,8 +401,6 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
         uint256,
         bytes calldata
     ) external returns (bytes4) {
-        // TODO: Should we reject unwanted NFTs being transfered to the strategy?
-        // Could use `INonfungiblePositionManager.positions(tokenId)` to see if the token0 and token1 are matching
         return this.onERC721Received.selector;
     }
 
@@ -458,12 +453,13 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
     /***************************************
             Hidden functions
     ****************************************/
-
+    /// @inheritdoc InitializableAbstractStrategy
     function setPTokenAddress(address, address) external override {
         // The pool tokens can never change.
         revert("Unsupported method");
     }
 
+    /// @inheritdoc InitializableAbstractStrategy
     function removePToken(uint256) external override {
         // The pool tokens can never change.
         revert("Unsupported method");
@@ -482,10 +478,6 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
      * @param newImpl address of the implementation
      */
     function setLiquidityManagerImpl(address newImpl) external onlyGovernor {
-        _setLiquidityManagerImpl(newImpl);
-    }
-
-    function _setLiquidityManagerImpl(address newImpl) internal {
         require(
             Address.isContract(newImpl),
             "new implementation is not a contract"
@@ -495,6 +487,7 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
         assembly {
             sstore(position, newImpl)
         }
+        emit LiquidityManagerImplementationUpgraded(newImpl);
     }
 
     /**
