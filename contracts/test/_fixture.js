@@ -345,6 +345,8 @@ async function defaultFixture() {
     mockStrategy = await ethers.getContract("MockStrategy");
     mockStrategy2 = await ethers.getContract("MockStrategy2");
     mockStrategyDAI = await ethers.getContract("MockStrategyDAI");
+
+    UniV3SwapRouter = await ethers.getContract("MockUniswapRouter");
   }
   if (!isFork) {
     const assetAddresses = await getAssetAddresses(deployments);

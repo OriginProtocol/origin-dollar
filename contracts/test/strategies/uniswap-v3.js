@@ -17,19 +17,26 @@ const uniswapV3Fixture = uniswapV3FixtureSetup();
 
 const liquidityManagerFixture = deployments.createFixture(async () => {
   const fixture = await uniswapV3Fixture();
-  const { franck, daniel, domen, vault, usdc, usdt, dai } = fixture;
+  const { franck, daniel, domen, vault, usdc, usdt, dai, UniV3SwapRouter } =
+    fixture;
 
   // Mint some liquidity
-  for (const user of [franck, daniel, domen]) {
+  for (const user of [franck, daniel, domen, UniV3SwapRouter]) {
+    const isRouter = user.address == UniV3SwapRouter.address;
+    const account = isRouter
+      ? await impersonateAndFundContract(UniV3SwapRouter.address)
+      : user;
     for (const asset of [usdc, usdt, dai]) {
-      const amount = "1000000";
-      await asset.connect(user).mint(await units(amount, asset));
-      await asset
-        .connect(user)
-        .approve(vault.address, await units(amount, asset));
-      await vault
-        .connect(user)
-        .mint(asset.address, await units(amount, asset), 0);
+      const amount = isRouter ? "10000000000" : "1000000";
+      await asset.connect(account).mint(await units(amount, asset));
+      if (!isRouter) {
+        await asset
+          .connect(user)
+          .approve(vault.address, await units(amount, asset));
+        await vault
+          .connect(user)
+          .mint(asset.address, await units(amount, asset), 0);
+      }
     }
   }
 
@@ -40,6 +47,10 @@ const liquidityManagerFixture = deployments.createFixture(async () => {
   await fixture.UniV3_USDC_USDT_Strategy.connect(
     governor
   ).setMaxPositionValueLossThreshold(ousdUnits("50000", 18));
+
+  await fixture.UniV3_USDC_USDT_Strategy.connect(
+    governor
+  ).setSwapPriceThreshold(-100, 100);
 
   return fixture;
 });
@@ -86,7 +97,7 @@ describe("Uniswap V3 Strategy", function () {
   };
 
   function _destructureFixture(_fixture) {
-    fixture = _fixture;
+    // fixture = _fixture;
     reserveStrategy = _fixture.mockStrategy;
     mockStrategy2 = _fixture.mockStrategy2;
     mockStrategyDAI = _fixture.mockStrategyDAI;
@@ -94,12 +105,12 @@ describe("Uniswap V3 Strategy", function () {
     helper = _fixture.UniV3Helper;
     mockPool = _fixture.UniV3_USDC_USDT_Pool;
     mockPositionManager = _fixture.UniV3PositionManager;
+    // swapRotuer = _fixture.UniV3SwapRouter;
     ousd = _fixture.ousd;
     usdc = _fixture.usdc;
     usdt = _fixture.usdt;
     dai = _fixture.dai;
     vault = _fixture.vault;
-    // harvester = _fixture.harvester;
     governor = _fixture.governor;
     strategist = _fixture.strategist;
     operator = _fixture.operator;
@@ -172,8 +183,6 @@ describe("Uniswap V3 Strategy", function () {
       await vault.connect(matt).redeem(ousdUnits("30000"), 0);
       await expectApproxSupply(ousd, ousdUnits("200"));
     });
-
-    it.skip("Should withdraw from active position");
   });
 
   describe("Admin functions", () => {
@@ -372,6 +381,76 @@ describe("Uniswap V3 Strategy", function () {
       }
 
       await expect(tx).to.have.emittedEvent("UniswapV3LiquidityAdded");
+
+      return await tx.wait();
+    };
+
+    const mintLiquidityBySwapping = async ({
+      lowerTick,
+      upperTick,
+      amount0,
+      amount1,
+      minAmount0,
+      minAmount1,
+      minRedeemAmount0,
+      minRedeemAmount1,
+      swapAmountIn,
+      swapMinAmountOut,
+      sqrtPriceLimitX96,
+      swapZeroForOne,
+      existingPosition,
+
+      signer,
+      expectRevert,
+    }) => {
+      const params = {
+        desiredAmount0: usdcUnits(amount0 || "10000"),
+        desiredAmount1: usdtUnits(amount1 || "10000"),
+        minAmount0: usdcUnits(minAmount0 || "0"),
+        minAmount1: usdtUnits(minAmount1 || "0"),
+        minRedeemAmount0: usdcUnits(minRedeemAmount0 || "0"),
+        minRedeemAmount1: usdtUnits(minRedeemAmount1 || "0"),
+        lowerTick,
+        upperTick,
+        swapAmountIn: BigNumber.from(swapAmountIn).mul(10 ** 6),
+        swapMinAmountOut: BigNumber.from(swapMinAmountOut).mul(10 ** 6),
+        sqrtPriceLimitX96,
+        swapZeroForOne,
+      };
+
+      if (expectRevert) {
+        if (typeof expectRevert === "string") {
+          await expect(
+            strategy.connect(signer || operator).swapAndRebalance(params)
+          ).to.be.revertedWith(expectRevert);
+        } else {
+          await expect(
+            strategy.connect(signer || operator).swapAndRebalance(params)
+          ).to.be.reverted;
+        }
+
+        return;
+      }
+
+      const tx = await strategy
+        .connect(signer || operator)
+        .swapAndRebalance(params);
+
+      if (!existingPosition) {
+        await expect(tx).to.have.emittedEvent("UniswapV3PositionMinted");
+      }
+
+      await expect(tx).to.have.emittedEvent("UniswapV3LiquidityAdded");
+      await expect(tx).to.have.emittedEvent("AssetSwappedForRebalancing", [
+        swapZeroForOne ? usdc.address : usdt.address,
+        swapZeroForOne ? usdt.address : usdc.address,
+        usdcUnits(swapAmountIn),
+        (amountReceived) =>
+          expect(amountReceived).to.be.gte(
+            usdcUnits(swapMinAmountOut),
+            "Swap amountOut mismatch"
+          ),
+      ]);
 
       return await tx.wait();
     };
@@ -745,7 +824,7 @@ describe("Uniswap V3 Strategy", function () {
       });
     });
 
-    describe.only("DecreaseLiquidity/ClosePosition", () => {
+    describe("DecreaseLiquidity/ClosePosition", () => {
       beforeEach(async () => {
         _destructureFixture(await activePositionFixture());
       });
@@ -882,25 +961,280 @@ describe("Uniswap V3 Strategy", function () {
       });
     });
 
-    describe.skip("Swap And Rebalance", () => {
+    describe("Swap And Rebalance", () => {
+      let impersonatedVault;
       beforeEach(async () => {
         _destructureFixture(await liquidityManagerFixture());
+        impersonatedVault = await impersonateAndFundContract(vault.address);
       });
-      it("Should swap token0 for token1 during rebalance", async () => {});
 
-      it("Should swap token1 for token0 during rebalance", async () => {});
+      const drainFromReserve = async (asset) => {
+        const fSign = "withdraw(address,address,uint256)";
+        // Move all out of reserve
+        // prettier-ignore
+        await reserveStrategy.connect(impersonatedVault)[fSign](
+            vault.address,
+            asset.address,
+            await reserveStrategy.checkBalance(asset.address)
+          );
+      };
 
-      it("Should revert if caller isn't Governor/Strategist/Operator", async () => {});
+      it("Should swap token0 for token1 during rebalance", async () => {
+        // Move all USDT out of reserve
+        await drainFromReserve(usdt);
 
-      it("Should revert if TVL check fails", async () => {});
+        const amount = "100000";
+        const swapAmountIn = "100000";
+        const swapMinAmountOut = "100000";
+        const sqrtPriceLimitX96 = await helper.getSqrtRatioAtTick(2);
+        const swapZeroForOne = true;
 
-      it("Should revert if swap is paused");
+        const { events } = await mintLiquidityBySwapping({
+          amount0: amount,
+          amount1: amount,
+          lowerTick: "-100",
+          upperTick: "100",
+          swapAmountIn,
+          swapMinAmountOut,
+          sqrtPriceLimitX96,
+          swapZeroForOne,
+        });
 
-      it("Should revert if rebalance is paused");
+        const [tokenId, amount0Deposited, amount1Deposited, liquidityMinted] =
+          events.find((e) => e.event == "UniswapV3LiquidityAdded").args;
 
-      it("Should revert if swapping is unnecessary", async () => {});
+        // Check storage
+        expect(await strategy.activeTokenId()).to.equal(tokenId);
+        const position = await strategy.tokenIdToPosition(tokenId);
+        expect(position.exists).to.be.true;
+        expect(position.liquidity).to.equal(liquidityMinted);
+        expect(position.netValue).to.equal(
+          amount0Deposited.add(amount1Deposited).mul(1e12)
+        );
+      });
 
-      it("Should revert if beyond swap limits", async () => {});
+      it("Should swap token1 for token0 during rebalance", async () => {
+        // Move all USDC out of reserve
+        await drainFromReserve(usdc);
+
+        const amount = "100000";
+        const swapAmountIn = "100000";
+        const swapMinAmountOut = "100000";
+        const sqrtPriceLimitX96 = await helper.getSqrtRatioAtTick(-2);
+        const swapZeroForOne = false;
+
+        const { events } = await mintLiquidityBySwapping({
+          amount0: amount,
+          amount1: amount,
+          lowerTick: "-100",
+          upperTick: "100",
+          swapAmountIn,
+          swapMinAmountOut,
+          sqrtPriceLimitX96,
+          swapZeroForOne,
+        });
+
+        const [tokenId, amount0Deposited, amount1Deposited, liquidityMinted] =
+          events.find((e) => e.event == "UniswapV3LiquidityAdded").args;
+
+        // Check storage
+        expect(await strategy.activeTokenId()).to.equal(tokenId);
+        const position = await strategy.tokenIdToPosition(tokenId);
+        expect(position.exists).to.be.true;
+        expect(position.liquidity).to.equal(liquidityMinted);
+        expect(position.netValue).to.equal(
+          amount0Deposited.add(amount1Deposited).mul(1e12)
+        );
+      });
+
+      it("Should revert if TVL check fails", async () => {
+        await drainFromReserve(usdt);
+
+        await strategy.connect(governor).setMaxTVL(ousdUnits("1000"));
+
+        const amount = "100000";
+        const swapAmountIn = "100000";
+        const swapMinAmountOut = "100000";
+        const sqrtPriceLimitX96 = await helper.getSqrtRatioAtTick(2);
+        const swapZeroForOne = true;
+
+        await mintLiquidityBySwapping({
+          amount0: amount,
+          amount1: amount,
+          lowerTick: "-100",
+          upperTick: "100",
+          swapAmountIn,
+          swapMinAmountOut,
+          sqrtPriceLimitX96,
+          swapZeroForOne,
+
+          expectRevert: "MaxTVL threshold has been reached",
+        });
+      });
+
+      it("Should revert if swap is paused", async () => {
+        await strategy.connect(governor).setSwapsPaused(true);
+
+        const amount = "100000";
+        const swapAmountIn = "100000";
+        const swapMinAmountOut = "100000";
+        const sqrtPriceLimitX96 = await helper.getSqrtRatioAtTick(2);
+        const swapZeroForOne = true;
+
+        await mintLiquidityBySwapping({
+          amount0: amount,
+          amount1: amount,
+          lowerTick: "-100",
+          upperTick: "100",
+          swapAmountIn,
+          swapMinAmountOut,
+          sqrtPriceLimitX96,
+          swapZeroForOne,
+
+          expectRevert: "Swaps are paused",
+        });
+      });
+
+      it("Should revert if rebalance is paused", async () => {
+        await strategy.connect(governor).setRebalancePaused(true);
+
+        const amount = "100000";
+        const swapAmountIn = "100000";
+        const swapMinAmountOut = "100000";
+        const sqrtPriceLimitX96 = await helper.getSqrtRatioAtTick(2);
+        const swapZeroForOne = true;
+
+        await mintLiquidityBySwapping({
+          amount0: amount,
+          amount1: amount,
+          lowerTick: "-100",
+          upperTick: "100",
+          swapAmountIn,
+          swapMinAmountOut,
+          sqrtPriceLimitX96,
+          swapZeroForOne,
+
+          expectRevert: "Rebalances are paused",
+        });
+      });
+
+      it("Should revert if swapping is unnecessary", async () => {
+        const amount = "100000";
+        const swapAmountIn = "100000";
+        const swapMinAmountOut = "100000";
+        const sqrtPriceLimitX96 = await helper.getSqrtRatioAtTick(2);
+
+        await mintLiquidityBySwapping({
+          amount0: amount,
+          amount1: amount,
+          lowerTick: "-100",
+          upperTick: "100",
+          swapAmountIn,
+          swapMinAmountOut,
+          sqrtPriceLimitX96,
+          swapZeroForOne: true,
+
+          expectRevert: "Cannot swap when the asset is available in reserve",
+        });
+
+        await mintLiquidityBySwapping({
+          amount0: amount,
+          amount1: amount,
+          lowerTick: "-100",
+          upperTick: "100",
+          swapAmountIn,
+          swapMinAmountOut,
+          sqrtPriceLimitX96,
+          swapZeroForOne: false,
+
+          expectRevert: "Cannot swap when the asset is available in reserve",
+        });
+      });
+
+      it("Should revert if beyond swap limits", async () => {
+        const amount = "100000";
+        const swapAmountIn = "100000";
+        const swapMinAmountOut = "100000";
+        const sqrtPriceLimitX96 = await helper.getSqrtRatioAtTick(2);
+
+        await mockPool.setTick(-200000);
+
+        await mintLiquidityBySwapping({
+          amount0: amount,
+          amount1: amount,
+          lowerTick: "-100",
+          upperTick: "100",
+          swapAmountIn,
+          swapMinAmountOut,
+          sqrtPriceLimitX96,
+          swapZeroForOne: true,
+
+          expectRevert: "Price out of bounds",
+        });
+      });
+
+      it("Should revert if pool is tilted", async () => {
+        const amount = "100000";
+        const swapAmountIn = "100000";
+        const swapMinAmountOut = "100000";
+        const sqrtPriceLimitX96 = await helper.getSqrtRatioAtTick(-200000);
+
+        await mintLiquidityBySwapping({
+          amount0: amount,
+          amount1: amount,
+          lowerTick: "-100",
+          upperTick: "100",
+          swapAmountIn,
+          swapMinAmountOut,
+          sqrtPriceLimitX96,
+          swapZeroForOne: true,
+
+          expectRevert: "Slippage out of bounds",
+        });
+      });
+
+      it("Should revert if tick range is invalid", async () => {
+        const amount = "100000";
+        const swapAmountIn = "100000";
+        const swapMinAmountOut = "100000";
+        const sqrtPriceLimitX96 = await helper.getSqrtRatioAtTick(2);
+        const swapZeroForOne = true;
+
+        await mintLiquidityBySwapping({
+          amount0: amount,
+          amount1: amount,
+          lowerTick: "1000",
+          upperTick: "100",
+          swapAmountIn,
+          swapMinAmountOut,
+          sqrtPriceLimitX96,
+          swapZeroForOne,
+
+          expectRevert: "Invalid tick range",
+        });
+      });
+
+      it("Should revert if caller isn't Governor/Strategist/Operator", async () => {
+        const amount = "100000";
+        const swapAmountIn = "100000";
+        const swapMinAmountOut = "100000";
+        const sqrtPriceLimitX96 = await helper.getSqrtRatioAtTick(2);
+        const swapZeroForOne = true;
+
+        await mintLiquidityBySwapping({
+          amount0: amount,
+          amount1: amount,
+          lowerTick: "1000",
+          upperTick: "100",
+          swapAmountIn,
+          swapMinAmountOut,
+          sqrtPriceLimitX96,
+          swapZeroForOne,
+
+          signer: domen,
+          expectRevert: "Caller is not the Operator, Strategist or Governor",
+        });
+      });
     });
 
     describe("Fees", () => {
