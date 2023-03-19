@@ -68,8 +68,9 @@ abstract contract UniswapV3StrategyStorage is InitializableAbstractStrategy {
         uint256 indexed tokenId,
         uint256 initialValue,
         uint256 currentValue,
-        int256 netValueChange
+        int256 delta
     );
+    event NetLostValueChanged(uint256 currentNetLostValue);
 
     // Represents a position minted by UniswapV3Strategy contract
     struct Position {

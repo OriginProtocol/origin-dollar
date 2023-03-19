@@ -8,6 +8,7 @@ const {
   usdtUnits,
 } = require("../helpers");
 const { deployments } = require("hardhat");
+const { utils, BigNumber } = require("ethers")
 
 const uniswapV3Fixture = uniswapV3FixtureSetup();
 
@@ -741,20 +742,37 @@ describe("Uniswap V3 Strategy", function () {
       });
     });
 
-    describe.skip("DecreaseLiquidity/ClosePosition", () => {
+    describe("DecreaseLiquidity/ClosePosition", () => {
       beforeEach(async () => {
         _destructureFixture(await activePositionFixture());
       });
 
-      it("Should close active position during a mint", async () => {});
+      it("Should close active position during a mint", async () => {
+        const tokenId = await strategy.activeTokenId();
 
-      it("Should close active position", async () => {});
+        // Mint position in a different tick range
+        await mintLiquidity({
+          amount0: "100000",
+          amount1: "100000",
+          lowerTick: "-50",
+          upperTick: "5000",
+        });
 
-      it("Should liquidate active position during withdraw", async () => {});
+        expect(await strategy.activeTokenId()).to.not.equal(tokenId);
+        const lastPos = await strategy.tokenIdToPosition(tokenId);
+        expect(lastPos.liquidity).to.equal(
+          0,
+          "Should've removed all liquidity from closed position"
+        );
+      });
 
-      it("Should liquidate active position during withdrawAll", async () => {});
+      it.skip("Should close active position", async () => {});
 
-      it("Should revert if caller isn't Governor/Strategist/Operator", async () => {});
+      it.skip("Should liquidate active position during withdraw", async () => {});
+
+      it.skip("Should liquidate active position during withdrawAll", async () => {});
+
+      it.skip("Should revert if caller isn't Governor/Strategist/Operator", async () => {});
     });
 
     describe.skip("Swap And Rebalance", () => {
@@ -823,16 +841,131 @@ describe("Uniswap V3 Strategy", function () {
       });
     });
 
-    describe.skip("Net Value Lost Threshold", () => {
-      it("Should update threshold when value changes", async () => {});
+    describe.only("Net Value Lost Threshold", () => {
+      beforeEach(async () => {
+        _destructureFixture(await activePositionFixture());
+      });
 
-      it("Should update threshold when collecting fees", async () => {});
+      const _setNetLossVal = async (val) => {
+        const netLostValueStorageSlot = BigNumber.from(169).toHexString();
+        const expectedVal = BigNumber.from(val)
 
-      it("Should allow close/withdraw beyond threshold", async () => {});
+        const byte32Val = expectedVal.toHexString(val).replace(
+          "0x", 
+          "0x" + (new Array(64 - (expectedVal.toHexString().length - 2)).fill("0").join(""))
+        )
+        await hre.network.provider.send("hardhat_setStorageAt", [
+          strategy.address,
+          netLostValueStorageSlot,
+          // Set an higher lost value manually
+          byte32Val
+        ])
+        expect(await strategy.netLostValue()).to.equal(
+          expectedVal,
+          "Storage slot changed?"
+        )
+      }
 
-      it("Should revert if beyond threshold (during mint)", async () => {});
+      it.skip("Should update lost value of position during mint/increase", async () => {
 
-      it("Should revert if beyond threshold (when increasing liquidity)", async () => {});
+        // for (let i = 150; i <= 200; i++) {
+        //   const val = await hre.network.provider.send("eth_getStorageAt", [
+        //     strategy.address,
+        //     BigNumber.from(i).toHexString(),
+        //     "latest"
+        //   ])
+
+        //   console.log(i, val)
+        // }
+      });
+
+      it("Should update lost value when collecting fees", async () => {
+        await _setNetLossVal(ousdUnits("1000")) // $1000
+        const tokenId = await strategy.activeTokenId();
+
+        await mockPositionManager.setTokensOwed(
+          tokenId,
+          usdcUnits("330"), // $330
+          usdtUnits("120"), // $120
+        )
+        await strategy.collectFees()
+
+        expect(await strategy.netLostValue()).to.equal(
+          BigNumber.from(ousdUnits("550"))
+        )
+      });
+
+      it("Should reset lost value when collecting huge fees", async () => {
+        await _setNetLossVal(ousdUnits("1000")) // $1000
+        const tokenId = await strategy.activeTokenId();
+
+        await mockPositionManager.setTokensOwed(
+          tokenId,
+          usdcUnits("4000"), // $4000
+          usdtUnits("5000"), // $5000
+        )
+        await strategy.collectFees()
+
+        expect(await strategy.netLostValue()).to.equal(
+          BigNumber.from("0")
+        )
+      });
+
+      it("Should allow close/withdraw beyond threshold", async () => {
+        await _setNetLossVal("999999999999999999999999999999999999999999999")
+
+        const tokenId = await strategy.activeTokenId();
+
+        await expect(
+          strategy
+            .connect(operator)
+            .closePosition(
+              tokenId,
+              "0",
+              "0"
+            )
+        ).to.not.be.reverted
+        
+        expect(await strategy.activeTokenId()).to.not.equal(tokenId)
+      });
+
+      it("Should revert if beyond threshold (during mint)", async () => {
+        await _setNetLossVal("999999999999999999999999999999999999999999999")
+
+        await expect(
+          strategy
+            .connect(operator)
+            .rebalance(
+              "1",
+              "1",
+              "0",
+              "0",
+              "0",
+              "0",
+              "-120",
+              "1234"
+            )
+        ).to.be.revertedWith(
+          "Over max value loss threshold"
+        )
+      });
+
+      it("Should revert if beyond threshold (when increasing liquidity)", async () => {
+        await _setNetLossVal("999999999999999999999999999999999999999999999")
+
+        await expect(
+          strategy
+            .connect(operator)
+            .increaseActivePositionLiquidity(
+              "1",
+              "1",
+              "0",
+              "0"
+            )
+        ).to.be.revertedWith(
+          "Over max value loss threshold"
+        )
+      });
     });
   });
 });
