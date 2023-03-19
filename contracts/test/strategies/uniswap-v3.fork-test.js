@@ -2,6 +2,7 @@ const { expect } = require("chai");
 const {
   uniswapV3FixtureSetup,
   impersonateAndFundContract,
+  defaultFixtureSetup,
 } = require("../_fixture");
 const {
   forkOnlyDescribe,
@@ -16,6 +17,14 @@ const {
 const { BigNumber, utils } = require("ethers");
 
 forkOnlyDescribe("Uniswap V3 Strategy", function () {
+  after(async () => {
+    // This is needed to revert fixtures
+    // The other tests as of now don't use proper fixtures
+    // Rel: https://github.com/OriginProtocol/origin-dollar/issues/1259
+    const f = defaultFixtureSetup();
+    await f();
+  });
+
   this.timeout(0);
 
   const uniswapV3Fixture = uniswapV3FixtureSetup();
@@ -222,6 +231,26 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
         tx,
       };
     };
+
+    async function _swap(user, amount, zeroForOne) {
+      const [, activeTick] = await pool.slot0();
+      const sqrtPriceLimitX96 = await v3Helper.getSqrtRatioAtTick(
+        activeTick + (zeroForOne ? -2 : 2)
+      );
+      const swapAmount = BigNumber.from(amount).mul(10 ** 6);
+      usdc.connect(user).approve(swapRouter.address, swapAmount.mul(10));
+      usdt.connect(user).approve(swapRouter.address, swapAmount.mul(10));
+      await swapRouter.connect(user).exactInputSingle([
+        zeroForOne ? usdc.address : usdt.address, // tokenIn
+        zeroForOne ? usdt.address : usdc.address, // tokenOut
+        100, // fee
+        user.address, // recipient
+        (await getBlockTimestamp()) + 5, // deadline
+        swapAmount, // amountIn
+        0, // amountOutMinimum
+        sqrtPriceLimitX96,
+      ]);
+    }
 
     it("Should mint position", async () => {
       const usdcBalBefore = await strategy.checkBalance(usdc.address);
@@ -561,26 +590,6 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
       expect(strategy).to.have.an.approxBalanceOf(usdcBalAfter, usdc);
       expect(strategy).to.have.an.approxBalanceOf(usdtBalAfter, usdt);
     });
-
-    async function _swap(user, amount, zeroForOne) {
-      const [, activeTick] = await pool.slot0();
-      const sqrtPriceLimitX96 = await v3Helper.getSqrtRatioAtTick(
-        activeTick + (zeroForOne ? -2 : 2)
-      );
-      const swapAmount = BigNumber.from(amount).mul(10 ** 6);
-      usdc.connect(user).approve(swapRouter.address, swapAmount.mul(10));
-      usdt.connect(user).approve(swapRouter.address, swapAmount.mul(10));
-      await swapRouter.connect(user).exactInputSingle([
-        zeroForOne ? usdc.address : usdt.address, // tokenIn
-        zeroForOne ? usdt.address : usdc.address, // tokenOut
-        100, // fee
-        user.address, // recipient
-        (await getBlockTimestamp()) + 5, // deadline
-        swapAmount, // amountIn
-        0, // amountOutMinimum
-        sqrtPriceLimitX96,
-      ]);
-    }
 
     it("Should collect fees", async () => {
       const [, activeTick] = await pool.slot0();
