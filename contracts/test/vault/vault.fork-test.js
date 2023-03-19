@@ -301,7 +301,7 @@ forkOnlyDescribe("ForkTest: Vault", function () {
         "0x79F2188EF9350A1dC11A062cca0abE90684b0197", // MorphoAaveStrategy
         // TODO: Hard-code these after deploy
         //"0x7A192DD9Cc4Ea9bdEdeC9992df74F1DA55e60a19", // LUSD MetaStrategy
-        "0xa863A50233FB5Aa5aFb515e6C3e6FB9c075AA594", // USDC<>USDT Uniswap V3 Strategy
+        "0x050c4FcA28725d975c2896682eBD2905D2E58E84", // USDC<>USDT Uniswap V3 Strategy
       ];
 
       for (const s of strategies) {
@@ -328,6 +328,7 @@ forkOnlyDescribe("ForkTest: Vault", function () {
         "0x9c459eeb3FA179a40329b81C1635525e9A0Ef094",
         "0x5A4eEe58744D1430876d5cA93cAB5CcB763C037D", // Morpho
         "0x79F2188EF9350A1dC11A062cca0abE90684b0197", // MorphoAave
+        "0x050c4FcA28725d975c2896682eBD2905D2E58E84", // USDC<>USDT Uniswap V3 Strategy
       ]).to.include(await vault.assetDefaultStrategies(usdt.address));
     });
 
@@ -340,6 +341,7 @@ forkOnlyDescribe("ForkTest: Vault", function () {
         "0x9c459eeb3FA179a40329b81C1635525e9A0Ef094",
         "0x5A4eEe58744D1430876d5cA93cAB5CcB763C037D", // Morpho
         "0x79F2188EF9350A1dC11A062cca0abE90684b0197", // MorphoAave
+        "0x050c4FcA28725d975c2896682eBD2905D2E58E84", // USDC<>USDT Uniswap V3 Strategy
       ]).to.include(await vault.assetDefaultStrategies(usdc.address));
     });
 
@@ -352,6 +354,7 @@ forkOnlyDescribe("ForkTest: Vault", function () {
         "0x9c459eeb3FA179a40329b81C1635525e9A0Ef094",
         "0x5A4eEe58744D1430876d5cA93cAB5CcB763C037D", // Morpho
         "0x79F2188EF9350A1dC11A062cca0abE90684b0197", // MorphoAave
+        "0x050c4FcA28725d975c2896682eBD2905D2E58E84", // USDC<>USDT Uniswap V3 Strategy
       ]).to.include(await vault.assetDefaultStrategies(dai.address));
     });
 

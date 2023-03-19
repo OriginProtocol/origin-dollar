@@ -45,7 +45,7 @@ main()
     if [ -z "$LOCAL_PROVIDER_URL" ]; then
         cp -r deployments/mainnet deployments/hardhat
         echo "No running node detected spinning up a fresh one"
-        params+="--deploy-fixture "
+        # params+="--deploy-fixture "
     else
         if ! command -v jq &> /dev/null
         then
