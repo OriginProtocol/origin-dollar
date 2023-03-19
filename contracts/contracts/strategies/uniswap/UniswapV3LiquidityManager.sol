@@ -652,13 +652,15 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
     {
         rebalanceNotPaused();
 
-        return
-            _decreasePositionLiquidity(
-                activeTokenId,
-                liquidity,
-                minAmount0,
-                minAmount1
-            );
+        (amount0, amount1) = _decreasePositionLiquidity(
+            activeTokenId,
+            liquidity,
+            minAmount0,
+            minAmount1
+        );
+
+        // Deposit
+        _depositAll();
 
         // Intentionally skipping TVL check since removing liquidity won't cause it to fail
     }

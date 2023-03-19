@@ -900,6 +900,7 @@ async function convexGeneralizedMetaForkedFixture(
 }
 
 async function impersonateAccount(address) {
+  address = address?.address || address; // Support passing contracts as well
   await hre.network.provider.request({
     method: "hardhat_impersonateAccount",
     params: [address],
@@ -907,6 +908,7 @@ async function impersonateAccount(address) {
 }
 
 async function impersonateAndFundContract(address) {
+  address = address?.address || address; // Support passing contracts as well
   await impersonateAccount(address);
 
   await hre.network.provider.send("hardhat_setBalance", [

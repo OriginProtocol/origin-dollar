@@ -1,5 +1,8 @@
 const { expect } = require("chai");
-const { uniswapV3FixtureSetup } = require("../_fixture");
+const {
+  uniswapV3FixtureSetup,
+  impersonateAndFundContract,
+} = require("../_fixture");
 const {
   units,
   ousdUnits,
@@ -8,7 +11,7 @@ const {
   usdtUnits,
 } = require("../helpers");
 const { deployments } = require("hardhat");
-const { utils, BigNumber } = require("ethers")
+const { BigNumber } = require("ethers");
 
 const uniswapV3Fixture = uniswapV3FixtureSetup();
 
@@ -61,7 +64,7 @@ const activePositionFixture = deployments.createFixture(async () => {
 });
 
 describe("Uniswap V3 Strategy", function () {
-  let fixture;
+  // let fixture;
   let vault, ousd, usdc, usdt, dai;
   let reserveStrategy,
     strategy,
@@ -742,7 +745,7 @@ describe("Uniswap V3 Strategy", function () {
       });
     });
 
-    describe("DecreaseLiquidity/ClosePosition", () => {
+    describe.only("DecreaseLiquidity/ClosePosition", () => {
       beforeEach(async () => {
         _destructureFixture(await activePositionFixture());
       });
@@ -766,13 +769,117 @@ describe("Uniswap V3 Strategy", function () {
         );
       });
 
-      it.skip("Should close active position", async () => {});
+      it("Should close position", async () => {
+        const tokenId = await strategy.activeTokenId();
 
-      it.skip("Should liquidate active position during withdraw", async () => {});
+        await strategy.connect(operator).closePosition(tokenId, 0, 0);
+        expect(await strategy.activeTokenId()).to.not.equal(tokenId);
+        const storagePos = await strategy.tokenIdToPosition(tokenId);
+        expect(storagePos.liquidity).to.equal(
+          0,
+          "Should've removed all liquidity from closed position"
+        );
+      });
 
-      it.skip("Should liquidate active position during withdrawAll", async () => {});
+      it("Should decrease liquidity of active position", async () => {
+        const tokenId = await strategy.activeTokenId();
+        const lastPos = await strategy.tokenIdToPosition(tokenId);
 
-      it.skip("Should revert if caller isn't Governor/Strategist/Operator", async () => {});
+        await strategy
+          .connect(operator)
+          .decreaseActivePositionLiquidity(lastPos.liquidity.div(4), "0", "0");
+
+        const newPos = await strategy.tokenIdToPosition(tokenId);
+
+        expect(newPos.liquidity).to.be.lt(lastPos.liquidity);
+        expect(newPos.netValue).to.be.lt(lastPos.netValue);
+      });
+
+      it("Should liquidate active position during withdraw", async () => {
+        const tokenId = await strategy.activeTokenId();
+        const lastPos = await strategy.tokenIdToPosition(tokenId);
+
+        await strategy
+          .connect(await impersonateAndFundContract(vault.address))
+          .withdrawAssetFromActivePositionOnlyVault(
+            usdt.address,
+            usdtUnits("10000")
+          );
+
+        const newPos = await strategy.tokenIdToPosition(tokenId);
+
+        expect(newPos.liquidity).to.be.lt(lastPos.liquidity);
+        expect(newPos.netValue).to.be.lt(
+          lastPos.netValue.sub(ousdUnits("10000"))
+        );
+      });
+
+      it("Should liquidate active position during withdrawAll", async () => {
+        const tokenId = await strategy.activeTokenId();
+
+        await strategy
+          .connect(await impersonateAndFundContract(vault.address))
+          .withdrawAll();
+
+        const pos = await strategy.tokenIdToPosition(tokenId);
+
+        expect(pos.liquidity).to.equal(0);
+        expect(await strategy.activeTokenId()).to.equal(0);
+        expect(pos.netValue).to.equal(0);
+      });
+
+      it("Only vault can do withdraw/withdrawAll", async () => {
+        const impersonatedVaultSigner = await impersonateAndFundContract(
+          vault.address
+        );
+
+        await expect(
+          strategy
+            .connect(impersonatedVaultSigner)
+            .withdrawAssetFromActivePositionOnlyVault(
+              usdt.address,
+              usdtUnits("10000")
+            )
+        ).to.not.be.reverted;
+
+        await expect(strategy.connect(impersonatedVaultSigner).withdrawAll()).to
+          .not.be.reverted;
+
+        for (const user of [governor, strategist, operator, daniel]) {
+          await expect(
+            strategy
+              .connect(user)
+              .withdrawAssetFromActivePositionOnlyVault(
+                usdt.address,
+                usdtUnits("10000")
+              )
+          ).to.be.revertedWith("Caller is not the Vault");
+
+          await expect(strategy.connect(user).withdrawAll()).to.be.revertedWith(
+            "Caller is not the Vault"
+          );
+        }
+      });
+
+      it("Should let Governor/Strategist/Operator to decrease liquidity of positions", async () => {
+        for (const user of [governor, strategist, operator]) {
+          await expect(
+            strategy
+              .connect(user)
+              .decreaseActivePositionLiquidity("1000", "0", "0")
+          ).to.not.be.reverted;
+        }
+      });
+
+      it("Should revert if caller isn't Governor/Strategist/Operator", async () => {
+        await expect(
+          strategy
+            .connect(matt)
+            .decreaseActivePositionLiquidity("1000", "0", "0")
+        ).to.be.revertedWith(
+          "Caller is not the Operator, Strategist or Governor"
+        );
+      });
     });
 
     describe.skip("Swap And Rebalance", () => {
@@ -841,130 +948,168 @@ describe("Uniswap V3 Strategy", function () {
       });
     });
 
-    describe.only("Net Value Lost Threshold", () => {
+    describe("Net Value Lost Threshold", () => {
       beforeEach(async () => {
         _destructureFixture(await activePositionFixture());
       });
 
       const _setNetLossVal = async (val) => {
         const netLostValueStorageSlot = BigNumber.from(169).toHexString();
-        const expectedVal = BigNumber.from(val)
+        const expectedVal = BigNumber.from(val);
 
-        const byte32Val = expectedVal.toHexString(val).replace(
-          "0x", 
-          "0x" + (new Array(64 - (expectedVal.toHexString().length - 2)).fill("0").join(""))
-        )
+        const byte32Val = expectedVal
+          .toHexString(val)
+          .replace(
+            "0x",
+            "0x" +
+              new Array(64 - (expectedVal.toHexString().length - 2))
+                .fill("0")
+                .join("")
+          );
         await hre.network.provider.send("hardhat_setStorageAt", [
           strategy.address,
           netLostValueStorageSlot,
           // Set an higher lost value manually
-          byte32Val
-        ])
+          byte32Val,
+        ]);
         expect(await strategy.netLostValue()).to.equal(
           expectedVal,
           "Storage slot changed?"
-        )
-      }
+        );
+      };
 
-      it.skip("Should update lost value of position during mint/increase", async () => {
+      it("Should update gained value of position when rebalancing", async () => {
+        _setNetLossVal(ousdUnits("1000")); // $1000
+        const tokenId = await strategy.activeTokenId();
 
-        // for (let i = 150; i <= 200; i++) {
-        //   const val = await hre.network.provider.send("eth_getStorageAt", [
-        //     strategy.address,
-        //     BigNumber.from(i).toHexString(),
-        //     "latest"
-        //   ])
+        const initialValue = (await strategy.checkBalance(usdc.address))
+          .add(await strategy.checkBalance(usdt.address))
+          .mul(1e12);
 
-        //   console.log(i, val)
-        // }
+        // Increase value of that position (Hackish way)
+        for (const asset of [usdc, usdt]) {
+          const amount = "1000000";
+          await asset.connect(domen).mint(await units(amount, asset));
+          await asset
+            .connect(domen)
+            .approve(mockPositionManager.address, await units(amount, asset));
+        }
+        await mockPositionManager.connect(domen).increaseLiquidity({
+          tokenId,
+          amount0Desired: usdcUnits("30000"),
+          amount1Desired: usdtUnits("30000"),
+          amount0Min: 0,
+          amount1Min: 0,
+          deadline: 10000000,
+        });
+
+        const currentValue = (await strategy.checkBalance(usdc.address))
+          .add(await strategy.checkBalance(usdt.address))
+          .mul(1e12);
+
+        expect(currentValue).to.be.gt(initialValue);
+
+        // Increase liquidity to trigger net loss update
+        await mintLiquidity({
+          amount0: "1",
+          amount1: "1",
+          lowerTick: "-5",
+          upperTick: "-2",
+        });
+
+        expect(await strategy.netLostValue()).to.equal(0);
+      });
+
+      it("Should update lost value of position when rebalancing", async () => {
+        const tokenId = await strategy.activeTokenId();
+
+        const initialValue = (await strategy.checkBalance(usdc.address))
+          .add(await strategy.checkBalance(usdt.address))
+          .mul(1e12);
+
+        // Reduce value of that position (Hackish way)
+        const liquidity = (await mockPositionManager.positions(tokenId))
+          .liquidity;
+        await mockPositionManager.connect(operator).decreaseLiquidity({
+          tokenId,
+          liquidity: liquidity.div(4),
+          amount0Min: 0,
+          amount1Min: 0,
+          deadline: 10000000,
+        });
+
+        const currentValue = (await strategy.checkBalance(usdc.address))
+          .add(await strategy.checkBalance(usdt.address))
+          .mul(1e12);
+
+        const valueLost = initialValue.sub(currentValue);
+
+        // Increase liquidity to trigger net loss update
+        await strategy.increaseActivePositionLiquidity("1", "1", "0", "0");
+
+        expect(await strategy.netLostValue()).to.equal(valueLost);
       });
 
       it("Should update lost value when collecting fees", async () => {
-        await _setNetLossVal(ousdUnits("1000")) // $1000
+        await _setNetLossVal(ousdUnits("1000")); // $1000
         const tokenId = await strategy.activeTokenId();
 
         await mockPositionManager.setTokensOwed(
           tokenId,
           usdcUnits("330"), // $330
-          usdtUnits("120"), // $120
-        )
-        await strategy.collectFees()
+          usdtUnits("120") // $120
+        );
+        await strategy.collectFees();
 
         expect(await strategy.netLostValue()).to.equal(
           BigNumber.from(ousdUnits("550"))
-        )
+        );
       });
 
       it("Should reset lost value when collecting huge fees", async () => {
-        await _setNetLossVal(ousdUnits("1000")) // $1000
+        await _setNetLossVal(ousdUnits("1000")); // $1000
         const tokenId = await strategy.activeTokenId();
 
         await mockPositionManager.setTokensOwed(
           tokenId,
           usdcUnits("4000"), // $4000
-          usdtUnits("5000"), // $5000
-        )
-        await strategy.collectFees()
+          usdtUnits("5000") // $5000
+        );
+        await strategy.collectFees();
 
-        expect(await strategy.netLostValue()).to.equal(
-          BigNumber.from("0")
-        )
+        expect(await strategy.netLostValue()).to.equal(BigNumber.from("0"));
       });
 
       it("Should allow close/withdraw beyond threshold", async () => {
-        await _setNetLossVal("999999999999999999999999999999999999999999999")
+        await _setNetLossVal("999999999999999999999999999999999999999999999");
 
         const tokenId = await strategy.activeTokenId();
 
         await expect(
-          strategy
-            .connect(operator)
-            .closePosition(
-              tokenId,
-              "0",
-              "0"
-            )
-        ).to.not.be.reverted
-        
-        expect(await strategy.activeTokenId()).to.not.equal(tokenId)
+          strategy.connect(operator).closePosition(tokenId, "0", "0")
+        ).to.not.be.reverted;
+
+        expect(await strategy.activeTokenId()).to.not.equal(tokenId);
       });
 
       it("Should revert if beyond threshold (during mint)", async () => {
-        await _setNetLossVal("999999999999999999999999999999999999999999999")
+        await _setNetLossVal("999999999999999999999999999999999999999999999");
 
         await expect(
           strategy
             .connect(operator)
-            .rebalance(
-              "1",
-              "1",
-              "0",
-              "0",
-              "0",
-              "0",
-              "-120",
-              "1234"
-            )
-        ).to.be.revertedWith(
-          "Over max value loss threshold"
-        )
+            .rebalance("1", "1", "0", "0", "0", "0", "-120", "1234")
+        ).to.be.revertedWith("Over max value loss threshold");
       });
 
       it("Should revert if beyond threshold (when increasing liquidity)", async () => {
-        await _setNetLossVal("999999999999999999999999999999999999999999999")
+        await _setNetLossVal("999999999999999999999999999999999999999999999");
 
         await expect(
           strategy
             .connect(operator)
-            .increaseActivePositionLiquidity(
-              "1",
-              "1",
-              "0",
-              "0"
-            )
-        ).to.be.revertedWith(
-          "Over max value loss threshold"
-        )
+            .increaseActivePositionLiquidity("1", "1", "0", "0")
+        ).to.be.revertedWith("Over max value loss threshold");
       });
     });
   });
