@@ -7,7 +7,6 @@ module.exports = deploymentWithProposal(
       "OUSD",
       undefined,
       undefined,
-      undefined,
       true
     );
     const cOUSDProxy = await ethers.getContract("OUSDProxy");

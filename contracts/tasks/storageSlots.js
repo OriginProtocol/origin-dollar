@@ -27,11 +27,9 @@ const getStorageFileLocation = (hre, contractName) => {
   return `${layoutFolder}${contractName}.json`;
 };
 
-const getStorageLayoutForContract = async (hre, contractName, libraries) => {
+const getStorageLayoutForContract = async (hre, contractName) => {
   const validations = await readValidations(hre);
-  const implFactory = await hre.ethers.getContractFactory(contractName, {
-    libraries,
-  });
+  const implFactory = await hre.ethers.getContractFactory(contractName);
   const unlinkedBytecode = getUnlinkedBytecode(
     validations,
     implFactory.bytecode
@@ -52,12 +50,8 @@ const loadPreviousStorageLayoutForContract = async (hre, contractName) => {
   return JSON.parse(await promises.readFile(location, "utf8"));
 };
 
-const storeStorageLayoutForContract = async (hre, contractName, libraries) => {
-  const layout = await getStorageLayoutForContract(
-    hre,
-    contractName,
-    libraries
-  );
+const storeStorageLayoutForContract = async (hre, contractName) => {
+  const layout = await getStorageLayoutForContract(hre, contractName);
   const storageLayoutFile = getStorageFileLocation(hre, contractName);
 
   // pretty print storage layout for the contract
@@ -122,17 +116,13 @@ const showStorageLayout = async (taskArguments, hre) => {
   visualizeLayoutData(layout);
 };
 
-const assertUpgradeIsSafe = async (hre, contractName, libraries) => {
+const assertUpgradeIsSafe = async (hre, contractName) => {
   if (!isContractEligible(contractName)) {
     console.debug(`Skipping storage slot validation of ${contractName}.`);
     return true;
   }
 
-  const layout = await getStorageLayoutForContract(
-    hre,
-    contractName,
-    libraries
-  );
+  const layout = await getStorageLayoutForContract(hre, contractName);
 
   const oldLayout = await loadPreviousStorageLayoutForContract(
     hre,

@@ -208,7 +208,7 @@ contract VaultAdmin is VaultStorage {
     /**
      * @dev Add a strategy to the Vault
      * @param _addr Address of the strategy to add
-     * @param isUniswapV3 Set to true, if the strategy is an instance of GeneralizedUniswapV3Strategy
+     * @param isUniswapV3 Set to true, if the strategy is an instance of UniswapV3Strategy
      */
     function _approveStrategy(address _addr, bool isUniswapV3) internal {
         require(!strategies[_addr].isSupported, "Strategy already approved");

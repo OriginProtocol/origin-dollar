@@ -41,7 +41,6 @@ module.exports = deploymentWithProposal(
         assetAddresses.RewardsSource,
       ],
       "Buyback",
-      undefined,
       true
     );
     const cBuyback = await ethers.getContract("Buyback");

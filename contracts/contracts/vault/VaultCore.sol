@@ -203,23 +203,11 @@ contract VaultCore is VaultStorage {
             } else {
                 address strategyAddr = assetDefaultStrategies[assetAddr];
 
-                // `strategies` is initialized in `VaultAdmin`
-                // slither-disable-next-line uninitialized-state
-                if (strategies[strategyAddr].isUniswapV3Strategy) {
-                    // In case of Uniswap Strategy, withdraw from
-                    // Reserve strategy directly
-                    strategyAddr = IUniswapV3Strategy(strategyAddr)
-                        .reserveStrategy(assetAddr);
-                }
+                require(strategyAddr != address(0), "Liquidity error");
 
-                if (strategyAddr != address(0)) {
-                    // Nothing in Vault, but something in Strategy, send from there
-                    IStrategy strategy = IStrategy(strategyAddr);
-                    strategy.withdraw(msg.sender, assetAddr, outputs[i]);
-                } else {
-                    // Cant find funds anywhere
-                    revert("Liquidity error");
-                }
+                // Nothing in Vault, but something in Strategy, send from there
+                IStrategy strategy = IStrategy(strategyAddr);
+                strategy.withdraw(msg.sender, assetAddr, outputs[i]);
             }
         }
 

@@ -27,7 +27,6 @@ module.exports = deploymentWithProposal(
       "ConvexStrategy",
       undefined,
       undefined,
-      undefined,
       true // Disable storage slot checking. We are intentionally renaming a slot.
     );
     const cConvexStrategyProxy = await ethers.getContract(

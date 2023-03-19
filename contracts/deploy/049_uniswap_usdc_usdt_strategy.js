@@ -28,7 +28,7 @@ module.exports = deploymentWithGovernanceProposal(
     // Deployer Actions
     // ----------------
 
-    // 0. Deploy UniswapV3Helper and UniswapV3StrategyLib
+    // 0. Deploy UniswapV3Helper
     const dUniswapV3Helper = await deployWithConfirmation("UniswapV3Helper");
 
     // 0. Upgrade VaultAdmin

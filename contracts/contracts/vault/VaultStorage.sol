@@ -66,7 +66,7 @@ contract VaultStorage is Initializable, Governable {
     struct Strategy {
         bool isSupported;
         uint256 _deprecated; // Deprecated storage slot
-        // Set to true if the Strategy is an instance of `GeneralizedUniswapV3Strategy`
+        // Set to true if the Strategy is an instance of `UniswapV3Strategy`
         bool isUniswapV3Strategy;
     }
     mapping(address => Strategy) internal strategies;
