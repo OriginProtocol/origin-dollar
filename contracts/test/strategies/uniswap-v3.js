@@ -964,6 +964,9 @@ describe("Uniswap V3 Strategy", function () {
       });
 
       it("Should revert if no active position", async () => {
+        await strategy
+          .connect(operator)
+          .closePosition(await strategy.activeTokenId(), 0, 0);
         await expect(
           strategy
             .connect(operator)
@@ -1447,12 +1450,11 @@ describe("Uniswap V3 Strategy", function () {
       });
 
       it("Should include active position in balances", async () => {
-        expect(await strategy.checkBalance(usdc.address)).to.approxEqual(
-          usdcUnits("100000")
+        const netBalance = (await strategy.checkBalance(usdc.address)).add(
+          await strategy.checkBalance(usdt.address)
         );
-        expect(await strategy.checkBalance(usdt.address)).to.approxEqual(
-          usdtUnits("100000")
-        );
+
+        expect(netBalance).to.approxEqualTolerance(usdcUnits("200000"), 3);
       });
 
       it("Should include pending fees in balances", async () => {

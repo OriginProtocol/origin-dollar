@@ -138,6 +138,13 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
             uint256 minAmount1
         ) = _calculateLiquidityToWithdraw(position, asset, amount);
 
+        // NOTE: The minAmount is calculated using the current pool price.
+        // It can be tilted and a large amount OUSD can be redeemed to make the strategy
+        // liquidate positions on the tilted pool.
+        // However, we don't plan on making this the default strategy. So, this method
+        // would never be invoked on prod.
+        // TODO: Should we still a slippage (just in case it becomes a default strategy in future)?
+
         // Liquidiate active position
         _decreasePositionLiquidity(
             position.tokenId,
