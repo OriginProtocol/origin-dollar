@@ -587,8 +587,8 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
       // Check balance on strategy
       const usdcBalAfter = await strategy.checkBalance(usdc.address);
       const usdtBalAfter = await strategy.checkBalance(usdt.address);
-      expect(strategy).to.have.an.approxBalanceOf(usdcBalAfter, usdc);
-      expect(strategy).to.have.an.approxBalanceOf(usdtBalAfter, usdt);
+      await expect(strategy).to.have.an.approxBalanceOf(usdcBalAfter, usdc);
+      await expect(strategy).to.have.an.approxBalanceOf(usdtBalAfter, usdt);
     });
 
     it("Should collect fees", async () => {

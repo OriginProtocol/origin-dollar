@@ -773,7 +773,7 @@ describe("Uniswap V3 Strategy", function () {
         }
       });
       it("Should revert if caller isn't Governor/Strategist/Operator", async () => {
-        expect(
+        await expect(
           strategy
             .connect(matt)
             .rebalance("1", "1", "0", "0", "0", "0", "-1", "1")
@@ -784,7 +784,7 @@ describe("Uniswap V3 Strategy", function () {
 
       it("Should revert if rebalance is paused", async () => {
         await strategy.connect(governor).setRebalancePaused(true);
-        expect(
+        await expect(
           strategy
             .connect(operator)
             .rebalance("1", "1", "0", "0", "0", "0", "-1", "1")
@@ -793,7 +793,7 @@ describe("Uniswap V3 Strategy", function () {
 
       it("Should revert if out of rebalance limits", async () => {
         await strategy.connect(governor).setRebalancePriceThreshold(-100, 200);
-        expect(
+        await expect(
           strategy
             .connect(operator)
             .rebalance("1", "1", "0", "0", "0", "0", "-200", "1")
@@ -803,7 +803,7 @@ describe("Uniswap V3 Strategy", function () {
       it("Should revert if TVL check fails", async () => {
         await strategy.connect(governor).setMaxTVL(ousdUnits("100000"));
 
-        expect(
+        await expect(
           strategy
             .connect(operator)
             .rebalance(
@@ -823,7 +823,7 @@ describe("Uniswap V3 Strategy", function () {
         const reserve0 = await reserveStrategy.checkBalance(usdt.address);
         const reserve1 = await reserveStrategy.checkBalance(usdc.address);
 
-        expect(
+        await expect(
           strategy
             .connect(operator)
             .rebalance(
@@ -840,7 +840,7 @@ describe("Uniswap V3 Strategy", function () {
       });
 
       it("Should revert if tick range is invalid", async () => {
-        expect(
+        await expect(
           strategy
             .connect(operator)
             .rebalance(
@@ -964,7 +964,7 @@ describe("Uniswap V3 Strategy", function () {
       });
 
       it("Should revert if no active position", async () => {
-        expect(
+        await expect(
           strategy
             .connect(operator)
             .increaseActivePositionLiquidity("1", "1", "0", "0")
@@ -980,7 +980,7 @@ describe("Uniswap V3 Strategy", function () {
         });
 
         await strategy.connect(governor).setRebalancePaused(true);
-        expect(
+        await expect(
           strategy
             .connect(operator)
             .increaseActivePositionLiquidity("1", "1", "0", "0")
@@ -998,7 +998,7 @@ describe("Uniswap V3 Strategy", function () {
         const reserve0 = await reserveStrategy.checkBalance(usdt.address);
         const reserve1 = await reserveStrategy.checkBalance(usdc.address);
 
-        expect(
+        await expect(
           strategy
             .connect(operator)
             .increaseActivePositionLiquidity(
@@ -1020,7 +1020,7 @@ describe("Uniswap V3 Strategy", function () {
 
         await strategy.connect(governor).setMaxTVL(ousdUnits("100000"));
 
-        expect(
+        await expect(
           strategy
             .connect(operator)
             .increaseActivePositionLiquidity("1", "1", "0", "0")
@@ -1507,7 +1507,7 @@ describe("Uniswap V3 Strategy", function () {
 
       it("Should allow Governor/Strategist/Operator to collect fees", async () => {
         for (const user of [governor, strategist, operator]) {
-          expect(strategy.connect(user).collectFees()).to.not.be.reverted;
+          await expect(strategy.connect(user).collectFees()).to.not.be.reverted;
         }
       });
 
