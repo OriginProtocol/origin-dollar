@@ -117,7 +117,9 @@ chai.Assertion.addMethod("emittedEvent", async function (eventName, args) {
   chai.expect(log).to.not.be.undefined;
 
   if (Array.isArray(args)) {
-    chai.expect(log.args).to.equal(args.length, "Invalid event arg count");
+    chai
+      .expect(log.args.length)
+      .to.equal(args.length, "Invalid event arg count");
     for (let i = 0; i < args.length; i++) {
       chai.expect(log.args[i]).to.equal(args[i]);
     }

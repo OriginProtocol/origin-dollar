@@ -40,6 +40,25 @@ const liquidityManagerFixture = deployments.createFixture(async () => {
   return fixture;
 });
 
+const activePositionFixture = deployments.createFixture(async () => {
+  const fixture = await liquidityManagerFixture();
+
+  // Mint a position
+  const { operator, UniV3_USDC_USDT_Strategy } = fixture;
+  await UniV3_USDC_USDT_Strategy.connect(operator).rebalance(
+    usdcUnits("100000"),
+    usdcUnits("100000"),
+    "0",
+    "0",
+    "0",
+    "0",
+    "-100",
+    "100"
+  );
+
+  return fixture;
+});
+
 describe("Uniswap V3 Strategy", function () {
   let fixture;
   let vault, ousd, usdc, usdt, dai;
@@ -62,35 +81,36 @@ describe("Uniswap V3 Strategy", function () {
       .mint(asset.address, await units(amount, asset), 0);
   };
 
-  beforeEach(async () => {
-    fixture = await uniswapV3Fixture();
-    reserveStrategy = fixture.mockStrategy;
-    mockStrategy2 = fixture.mockStrategy2;
-    mockStrategyDAI = fixture.mockStrategyDAI;
-    strategy = fixture.UniV3_USDC_USDT_Strategy;
-    helper = fixture.UniV3Helper;
-    mockPool = fixture.UniV3_USDC_USDT_Pool;
-    mockPositionManager = fixture.UniV3PositionManager;
-    ousd = fixture.ousd;
-    usdc = fixture.usdc;
-    usdt = fixture.usdt;
-    dai = fixture.dai;
-    vault = fixture.vault;
-    // harvester = fixture.harvester;
-    governor = fixture.governor;
-    strategist = fixture.strategist;
-    operator = fixture.operator;
-    josh = fixture.josh;
-    matt = fixture.matt;
-    daniel = fixture.daniel;
-    domen = fixture.domen;
-    franck = fixture.franck;
-  });
+  function _destructureFixture(_fixture) {
+    fixture = _fixture;
+    reserveStrategy = _fixture.mockStrategy;
+    mockStrategy2 = _fixture.mockStrategy2;
+    mockStrategyDAI = _fixture.mockStrategyDAI;
+    strategy = _fixture.UniV3_USDC_USDT_Strategy;
+    helper = _fixture.UniV3Helper;
+    mockPool = _fixture.UniV3_USDC_USDT_Pool;
+    mockPositionManager = _fixture.UniV3PositionManager;
+    ousd = _fixture.ousd;
+    usdc = _fixture.usdc;
+    usdt = _fixture.usdt;
+    dai = _fixture.dai;
+    vault = _fixture.vault;
+    // harvester = _fixture.harvester;
+    governor = _fixture.governor;
+    strategist = _fixture.strategist;
+    operator = _fixture.operator;
+    josh = _fixture.josh;
+    matt = _fixture.matt;
+    daniel = _fixture.daniel;
+    domen = _fixture.domen;
+    franck = _fixture.franck;
+  }
 
   for (const assetSymbol of ["USDC", "USDT"]) {
     describe(`Mint w/ ${assetSymbol}`, function () {
       let asset;
-      beforeEach(() => {
+      beforeEach(async () => {
+        _destructureFixture(await uniswapV3Fixture());
         asset = assetSymbol == "USDT" ? usdt : usdc;
       });
 
@@ -119,6 +139,10 @@ describe("Uniswap V3 Strategy", function () {
   }
 
   describe("Redeem", function () {
+    beforeEach(async () => {
+      _destructureFixture(await uniswapV3Fixture());
+    });
+
     it("Should withdraw from vault balance", async () => {
       // Vault has 200 DAI from fixtures
       await expectApproxSupply(ousd, ousdUnits("200"));
@@ -148,13 +172,11 @@ describe("Uniswap V3 Strategy", function () {
     it.skip("Should withdraw from active position");
   });
 
-  describe("Balance & Fees", () => {
-    describe("getPendingFees()", () => {});
-    describe("checkBalance()", () => {});
-    describe("checkBalanceOfAllAssets()", () => {});
-  });
-
   describe("Admin functions", () => {
+    beforeEach(async () => {
+      _destructureFixture(await uniswapV3Fixture());
+    });
+
     describe("setOperator()", () => {
       it("Governor can set the operator", async () => {
         const addr1 = "0x0000000000000000000000000000000000011111";
@@ -178,6 +200,10 @@ describe("Uniswap V3 Strategy", function () {
     });
 
     describe("setReserveStrategy()", () => {
+      beforeEach(async () => {
+        _destructureFixture(await uniswapV3Fixture());
+      });
+
       describe("Validations", () => {
         it("Can set a valid strategy as reserve", async () => {
           await strategy
@@ -239,6 +265,10 @@ describe("Uniswap V3 Strategy", function () {
     });
 
     describe("setMinDepositThreshold()", () => {
+      beforeEach(async () => {
+        _destructureFixture(await uniswapV3Fixture());
+      });
+
       describe("Permissions", () => {
         it("Governer & Strategist can set the threshold", async () => {
           await strategy
@@ -268,6 +298,10 @@ describe("Uniswap V3 Strategy", function () {
     });
 
     describe("setRebalancePaused()", () => {
+      beforeEach(async () => {
+        _destructureFixture(await uniswapV3Fixture());
+      });
+
       it("Governer & Strategist can pause rebalance", async () => {
         await strategy.connect(governor).setRebalancePaused(true);
         expect(await strategy.rebalancePaused()).to.be.true;
@@ -282,6 +316,10 @@ describe("Uniswap V3 Strategy", function () {
     });
 
     describe("setSwapsPaused()", () => {
+      beforeEach(async () => {
+        _destructureFixture(await uniswapV3Fixture());
+      });
+
       it("Governer & Strategist can pause swaps", async () => {
         await strategy.connect(governor).setSwapsPaused(true);
         expect(await strategy.swapsPaused()).to.be.true;
@@ -301,10 +339,6 @@ describe("Uniswap V3 Strategy", function () {
   });
 
   describe("LiquidityManager", function () {
-    beforeEach(async () => {
-      fixture = await liquidityManagerFixture();
-    });
-
     const mintLiquidity = async ({
       amount0,
       amount1,
@@ -339,6 +373,10 @@ describe("Uniswap V3 Strategy", function () {
     };
 
     describe("Rebalance/Mint", () => {
+      beforeEach(async () => {
+        _destructureFixture(await liquidityManagerFixture());
+      });
+
       it("Should mint a new position (with reserve funds)", async () => {
         const { events } = await mintLiquidity({
           amount0: "100000",
@@ -407,10 +445,13 @@ describe("Uniswap V3 Strategy", function () {
         await usdc.connect(josh).transfer(strategy.address, amount);
         await usdt.connect(josh).transfer(strategy.address, amount);
 
+        const reserve0Bal = await reserveStrategy.checkBalance(usdc.address);
+        const reserve1Bal = await reserveStrategy.checkBalance(usdt.address);
+
         // Mint
         const { events } = await mintLiquidity({
-          amount0: "1000000",
-          amount1: "1000000",
+          amount0: "100000",
+          amount1: "100000",
           lowerTick: "-100",
           upperTick: "100",
         });
@@ -426,11 +467,15 @@ describe("Uniswap V3 Strategy", function () {
           amount0Deposited.add(amount1Deposited).mul(1e12)
         );
 
-        // Verify balance
-        const amount0Bal = await usdc.balanceOf(strategy.address);
-        const amount1Bal = await usdt.balanceOf(strategy.address);
-        expect(amount0Bal).to.approxEqual(amount.sub(amount0Deposited));
-        expect(amount1Bal).to.approxEqual(amount.sub(amount1Deposited));
+        // Should have deposited everything to reserve after mint
+        expect(await usdc.balanceOf(strategy.address)).to.equal(0);
+        expect(await reserveStrategy.checkBalance(usdc.address)).to.approxEqual(
+          reserve0Bal.add(amount).sub(amount0Deposited)
+        );
+        expect(await usdt.balanceOf(strategy.address)).to.equal(0);
+        expect(await reserveStrategy.checkBalance(usdt.address)).to.approxEqual(
+          reserve1Bal.add(amount).sub(amount1Deposited)
+        );
       });
 
       it("Should allow Governor/Strategist/Operator to rebalance", async () => {
@@ -469,14 +514,14 @@ describe("Uniswap V3 Strategy", function () {
       });
 
       it("Should revert if TVL check fails", async () => {
-        await strategy.connect(governor).setMaxTVL(await ousdUnits("100000"));
+        await strategy.connect(governor).setMaxTVL(ousdUnits("100000"));
 
         expect(
           strategy
             .connect(operator)
             .rebalance(
-              await units("100000", 18),
-              await units("100000", 18),
+              usdcUnits("100000"),
+              usdtUnits("100000"),
               "0",
               "0",
               "0",
@@ -512,8 +557,8 @@ describe("Uniswap V3 Strategy", function () {
           strategy
             .connect(operator)
             .rebalance(
-              await units("100000", 18),
-              await units("100000", 18),
+              usdcUnits("100000"),
+              usdtUnits("100000"),
               "0",
               "0",
               "0",
@@ -526,6 +571,10 @@ describe("Uniswap V3 Strategy", function () {
     });
 
     describe("IncreaseLiquidity", () => {
+      beforeEach(async () => {
+        _destructureFixture(await activePositionFixture());
+      });
+
       it("Should increase liquidity w/ mint (if position already exists)", async () => {
         const { events } = await mintLiquidity({
           amount0: "100000",
@@ -611,9 +660,11 @@ describe("Uniswap V3 Strategy", function () {
         });
 
         for (const user of [governor, strategist, operator]) {
-          await strategy
-            .connect(user)
-            .increaseActivePositionLiquidity("1", "1", "0", "0");
+          await expect(
+            strategy
+              .connect(user)
+              .increaseActivePositionLiquidity("1", "1", "0", "0")
+          ).to.not.be.reverted;
         }
 
         expect(
@@ -690,7 +741,11 @@ describe("Uniswap V3 Strategy", function () {
       });
     });
 
-    describe("DecreaseLiquidity/ClosePosition", () => {
+    describe.skip("DecreaseLiquidity/ClosePosition", () => {
+      beforeEach(async () => {
+        _destructureFixture(await activePositionFixture());
+      });
+
       it("Should close active position during a mint", async () => {});
 
       it("Should close active position", async () => {});
@@ -702,7 +757,10 @@ describe("Uniswap V3 Strategy", function () {
       it("Should revert if caller isn't Governor/Strategist/Operator", async () => {});
     });
 
-    describe("Swap And Rebalance", () => {
+    describe.skip("Swap And Rebalance", () => {
+      beforeEach(async () => {
+        _destructureFixture(await liquidityManagerFixture());
+      });
       it("Should swap token0 for token1 during rebalance", async () => {});
 
       it("Should swap token1 for token0 during rebalance", async () => {});
@@ -721,10 +779,51 @@ describe("Uniswap V3 Strategy", function () {
     });
 
     describe("Fees", () => {
-      it("Should accrue and collect fees", async () => {});
+      beforeEach(async () => {
+        _destructureFixture(await activePositionFixture());
+      });
+
+      it("Should accrue and collect fees", async () => {
+        // No fee accrued yet
+        let fees = await strategy.getPendingFees();
+        expect(fees[0]).to.equal(0, "No fee after mint");
+        expect(fees[1]).to.equal(0, "No fee after mint");
+
+        const expectedFee0 = usdcUnits("1234");
+        const expectedFee1 = usdtUnits("5678");
+        const tokenId = await strategy.activeTokenId();
+        await mockPositionManager.setTokensOwed(
+          tokenId.toString(),
+          expectedFee0.toString(),
+          expectedFee1.toString()
+        );
+
+        fees = await strategy.getPendingFees();
+        expect(fees[0]).to.equal(expectedFee0, "Fee0 mismatch");
+        expect(fees[1]).to.equal(expectedFee1, "Fee1 mismatch");
+
+        const tx = await strategy.connect(operator).collectFees();
+        expect(tx).to.have.emittedEvent("UniswapV3FeeCollected", [
+          tokenId,
+          expectedFee0,
+          expectedFee1,
+        ]);
+      });
+
+      it("Should allow Governor/Strategist/Operator to collect fees", async () => {
+        for (const user of [governor, strategist, operator]) {
+          expect(strategy.connect(user).collectFees()).to.not.be.reverted;
+        }
+      });
+
+      it("Should revert if caller isn't Governor/Strategist/Operator", async () => {
+        await expect(strategy.connect(matt).collectFees()).to.be.revertedWith(
+          "Caller is not the Operator, Strategist or Governor"
+        );
+      });
     });
 
-    describe("Net Value Lost Threshold", () => {
+    describe.skip("Net Value Lost Threshold", () => {
       it("Should update threshold when value changes", async () => {});
 
       it("Should update threshold when collecting fees", async () => {});

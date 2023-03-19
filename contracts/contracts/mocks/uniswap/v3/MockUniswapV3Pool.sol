@@ -67,6 +67,14 @@ contract MockUniswapV3Pool {
     {
         //
     }
+
+    function feeGrowthGlobal0X128() public view returns (uint256) {
+        return 0;
+    }
+
+    function feeGrowthGlobal1X128() public view returns (uint256) {
+        return 0;
+    }
 }
 
 interface IMockUniswapV3Pool {
