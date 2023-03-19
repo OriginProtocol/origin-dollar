@@ -1441,9 +1441,41 @@ describe("Uniswap V3 Strategy", function () {
       });
     });
 
-    describe("Fees", () => {
+    describe("Fees & Balances", () => {
       beforeEach(async () => {
         _destructureFixture(await activePositionFixture());
+      });
+
+      it("Should include active position in balances", async () => {
+        expect(await strategy.checkBalance(usdc.address)).to.approxEqual(
+          usdcUnits("100000")
+        );
+        expect(await strategy.checkBalance(usdt.address)).to.approxEqual(
+          usdtUnits("100000")
+        );
+      });
+
+      it("Should include pending fees in balances", async () => {
+        const balance0Before = await strategy.checkBalance(usdc.address);
+        const balance1Before = await strategy.checkBalance(usdt.address);
+
+        // Set some fee
+        const expectedFee0 = usdcUnits("1234");
+        const expectedFee1 = usdtUnits("5678");
+        const tokenId = await strategy.activeTokenId();
+        await mockPositionManager.setTokensOwed(
+          tokenId.toString(),
+          expectedFee0.toString(),
+          expectedFee1.toString()
+        );
+
+        expect(await strategy.checkBalance(usdc.address)).to.equal(
+          balance0Before.add(expectedFee0)
+        );
+
+        expect(await strategy.checkBalance(usdt.address)).to.equal(
+          balance1Before.add(expectedFee1)
+        );
       });
 
       it("Should accrue and collect fees", async () => {
