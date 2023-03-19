@@ -218,7 +218,8 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
 
     /**
      * @notice Closes active LP position if any and then provides liquidity to the requested position.
-     *         Mints new position, if it doesn't exist already.
+     *         Mints new position, if it doesn't exist already. If active position is on the same tick
+     *         range, then just increases the liquidity by the desiredAmounts
      * @dev Will pull funds needed from reserve strategies and then will deposit back all dust to them
      * @param desiredAmount0 Amount of token0 to use to provide liquidity
      * @param desiredAmount1 Amount of token1 to use to provide liquidity
@@ -245,8 +246,8 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         int48 tickKey = _getTickPositionKey(lowerTick, upperTick);
         uint256 tokenId = ticksToTokenId[tickKey];
 
-        if (activeTokenId > 0) {
-            // Close any active position
+        if (activeTokenId > 0 && activeTokenId != tokenId) {
+            // Close any active position (if it's not the same)
             _closePosition(activeTokenId, minRedeemAmount0, minRedeemAmount1);
         }
 
@@ -316,8 +317,8 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
             _getTickPositionKey(params.lowerTick, params.upperTick)
         ];
 
-        if (activeTokenId > 0) {
-            // Close any active position
+        if (activeTokenId > 0 && activeTokenId != tokenId) {
+            // Close any active position (if it's not the same)
             _closePosition(
                 activeTokenId,
                 params.minRedeemAmount0,
@@ -488,9 +489,6 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         // Make sure liquidity management is disabled when value lost threshold is breached
         ensureNetLossThreshold(tokenId);
 
-        // Withdraw enough funds from Reserve strategies
-        _ensureAssetBalances(desiredAmount0, desiredAmount1);
-
         INonfungiblePositionManager.IncreaseLiquidityParams
             memory params = INonfungiblePositionManager
                 .IncreaseLiquidityParams({
@@ -526,6 +524,9 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
     {
         rebalanceNotPaused();
 
+        // Withdraw enough funds from Reserve strategies
+        _ensureAssetBalances(desiredAmount0, desiredAmount1);
+
         _increasePositionLiquidity(
             activeTokenId,
             desiredAmount0,
@@ -533,6 +534,9 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
             minAmount0,
             minAmount1
         );
+
+        // Deposit
+        _depositAll();
 
         // Final position value/sanity check
         ensureTVL();

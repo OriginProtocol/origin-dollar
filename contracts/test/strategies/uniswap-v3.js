@@ -36,6 +36,8 @@ const liquidityManagerFixture = deployments.createFixture(async () => {
   await fixture.UniV3_USDC_USDT_Strategy.connect(
     governor
   ).setMaxPositionValueLossThreshold(ousdUnits("50000", 18));
+
+  return fixture;
 });
 
 describe("Uniswap V3 Strategy", function () {
