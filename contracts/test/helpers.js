@@ -62,9 +62,7 @@ chai.Assertion.addMethod(
     const user = this._obj;
     const address = user.address || user.getAddress(); // supports contracts too
     const actual = await contract.balanceOf(address);
-    if (!BigNumber.isBigNumber(expected)) {
-      expected = parseUnits(expected, await decimalsFor(contract));
-    }
+    expected = parseUnits(expected, await decimalsFor(contract));
     chai.expect(actual).to.approxEqual(expected, message);
   }
 );
@@ -90,9 +88,7 @@ chai.Assertion.addMethod(
     const user = this._obj;
     const address = user.address || user.getAddress(); // supports contracts too
     const actual = await contract.balanceOf(address);
-    if (!BigNumber.isBigNumber(expected)) {
-      expected = parseUnits(expected, await decimalsFor(contract));
-    }
+    expected = parseUnits(expected, await decimalsFor(contract));
     chai.expect(actual).to.equal(expected, message);
   }
 );

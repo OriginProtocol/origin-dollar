@@ -176,6 +176,7 @@ describe("Uniswap V3 Strategy", function () {
       // Vault has 200 DAI from fixtures
       await expectApproxSupply(ousd, ousdUnits("200"));
       await expect(vault).has.an.approxBalanceOf("200", dai);
+
       // Mint some OUSD with USDT
       await mint(matt, "30000", usdt);
       await expectApproxSupply(ousd, ousdUnits("30200"));
