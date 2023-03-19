@@ -125,7 +125,16 @@ async function defaultFixture() {
         ).interface.format("full"),
         ...(
           await ethers.getContractFactory("UniswapV3LiquidityManager")
-        ).interface.format("full"),
+        ).interface
+          .format("full")
+          .filter((x) => {
+            return !(
+              x.startsWith("function checkBalance(") ||
+              x.startsWith("function supportsAsset(") ||
+              x.startsWith("function deposit(") ||
+              x.startsWith("function withdraw(")
+            );
+          }),
       ])
     ),
     UniV3_USDC_USDT_Proxy.address
