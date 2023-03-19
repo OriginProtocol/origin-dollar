@@ -1316,7 +1316,7 @@ function uniswapV3FixtureSetup() {
       );
       await UniV3_USDC_USDT_Strategy.connect(
         sGovernor
-      ).setMaxPositionValueLossThreshold(utils.parseUnits("50000", 18));
+      ).setMaxPositionValueLostThreshold(utils.parseUnits("50000", 18));
       UniV3_USDC_USDT_Strategy.connect(sGovernor).setMaxTVL(
         utils.parseUnits("2000000", 18)
       ); // 2M

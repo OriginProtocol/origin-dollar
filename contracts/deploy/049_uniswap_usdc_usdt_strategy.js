@@ -186,7 +186,7 @@ module.exports = deploymentWithGovernanceProposal(
         // // 10. Set Max Loss threshold
         // {
         //   contract: cUniV3_USDC_USDT_Strategy,
-        //   signature: "setMaxPositionValueLossThreshold(uint256)",
+        //   signature: "setMaxPositionValueLostThreshold(uint256)",
         //   args: [utils.parseEther("50000", 18)], // 50k
         // },
         // 11. Set Rebalance Price Threshold

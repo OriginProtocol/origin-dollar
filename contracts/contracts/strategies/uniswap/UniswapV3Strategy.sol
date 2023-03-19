@@ -191,12 +191,12 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
      * @notice Maximum value of loss the LP positions can incur before strategy shuts off rebalances
      * @param _maxLossThreshold Maximum amount in 18 decimals
      */
-    function setMaxPositionValueLossThreshold(uint256 _maxLossThreshold)
+    function setMaxPositionValueLostThreshold(uint256 _maxLossThreshold)
         external
         onlyGovernorOrStrategist
     {
-        maxPositionValueLossThreshold = _maxLossThreshold;
-        emit MaxValueLossThresholdChanged(_maxLossThreshold);
+        maxPositionValueLostThreshold = _maxLossThreshold;
+        emit MaxValueLostThresholdChanged(_maxLossThreshold);
     }
 
     /**
@@ -204,7 +204,8 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
      * @dev Only governor can call it
      */
     function resetLostValue() external onlyGovernor {
-        emit MaxValueLossThresholdChanged(netLostValue);
+        emit NetLossValueReset(msg.sender);
+        emit NetLostValueChanged(0);
         netLostValue = 0;
     }
 

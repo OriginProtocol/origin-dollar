@@ -23,9 +23,22 @@ abstract contract UniswapV3StrategyStorage is InitializableAbstractStrategy {
     event RebalancePauseStatusChanged(bool paused);
     event SwapsPauseStatusChanged(bool paused);
     event RebalancePriceThresholdChanged(int24 minTick, int24 maxTick);
+    event SwapPriceThresholdChanged(
+        int24 minTick,
+        uint160 minSwapPriceX96,
+        int24 maxTick,
+        uint160 maxSwapPriceX96
+    );
     event MaxTVLChanged(uint256 maxTVL);
-    event MaxValueLossThresholdChanged(uint256 amount);
-    event NetLossValueReset(uint256 lastValue);
+    event MaxValueLostThresholdChanged(uint256 amount);
+    event NetLossValueReset(address indexed _by);
+    event NetLostValueChanged(uint256 currentNetLostValue);
+    event PositionValueChanged(
+        uint256 indexed tokenId,
+        uint256 initialValue,
+        uint256 currentValue,
+        int256 delta
+    );
     event AssetSwappedForRebalancing(
         address indexed tokenIn,
         address indexed tokenOut,
@@ -59,19 +72,6 @@ abstract contract UniswapV3StrategyStorage is InitializableAbstractStrategy {
         uint256 amount0,
         uint256 amount1
     );
-    event SwapPriceThresholdChanged(
-        int24 minTick,
-        uint160 minSwapPriceX96,
-        int24 maxTick,
-        uint160 maxSwapPriceX96
-    );
-    event PositionValueChanged(
-        uint256 indexed tokenId,
-        uint256 initialValue,
-        uint256 currentValue,
-        int256 delta
-    );
-    event NetLostValueChanged(uint256 currentNetLostValue);
 
     // Represents a position minted by UniswapV3Strategy contract
     struct Position {
@@ -126,7 +126,7 @@ abstract contract UniswapV3StrategyStorage is InitializableAbstractStrategy {
     uint256 public netLostValue = 0;
 
     // Max value loss threshold after which rebalances aren't allowed
-    uint256 public maxPositionValueLossThreshold = 50000 ether; // default to 50k
+    uint256 public maxPositionValueLostThreshold = 50000 ether; // default to 50k
 
     // Uniswap V3's Pool
     IUniswapV3Pool public pool;

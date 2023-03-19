@@ -74,10 +74,10 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
     await strategy.connect(timelock).setMaxTVL(utils.parseUnits(maxTvl, 18));
   }
 
-  async function setMaxPositionValueLossThreshold(maxLossThreshold) {
+  async function setMaxPositionValueLostThreshold(maxLossThreshold) {
     await strategy
       .connect(timelock)
-      .setMaxPositionValueLossThreshold(utils.parseUnits(maxLossThreshold, 18));
+      .setMaxPositionValueLostThreshold(utils.parseUnits(maxLossThreshold, 18));
   }
 
   describe("Uniswap V3 LP positions", function () {
@@ -651,7 +651,7 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
       await _swap(domen, "1000000", false);
 
       // Set threshold to a low value to see if it throws
-      await setMaxPositionValueLossThreshold("0.01");
+      await setMaxPositionValueLostThreshold("0.01");
       await expect(
         strategy
           .connect(operator)
@@ -660,7 +660,7 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
 
       // Set the threshold higher and make sure the net loss event is emitted
       // and state updated properly
-      await setMaxPositionValueLossThreshold("1000000000000000");
+      await setMaxPositionValueLostThreshold("1000000000000000");
       const {
         tx: increaseTx,
         amount0Added,

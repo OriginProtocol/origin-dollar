@@ -286,7 +286,7 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
     function ensureNetLossThreshold(uint256 tokenId) internal {
         updatePositionNetVal(tokenId);
         require(
-            netLostValue < maxPositionValueLossThreshold,
+            netLostValue < maxPositionValueLostThreshold,
             "Over max value loss threshold"
         );
     }

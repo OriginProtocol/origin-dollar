@@ -57,7 +57,7 @@ describe("Uniswap V3 Strategy", function () {
 
     await fixture.UniV3_USDC_USDT_Strategy.connect(
       governor
-    ).setMaxPositionValueLossThreshold(ousdUnits("50000", 18));
+    ).setMaxPositionValueLostThreshold(ousdUnits("50000", 18));
 
     await fixture.UniV3_USDC_USDT_Strategy.connect(
       governor
@@ -359,9 +359,200 @@ describe("Uniswap V3 Strategy", function () {
       });
     });
 
-    describe.skip("setSwapPriceThreshold()", () => {});
+    describe("setMaxTVL()", async () => {
+      it("Should change max TVL", async () => {
+        const newVal = ousdUnits("12345");
+        const tx = await strategy.connect(governor).setMaxTVL(newVal);
 
-    describe.skip("setTokenPriceLimit()", () => {});
+        await expect(tx).to.have.emittedEvent("MaxTVLChanged", [newVal]);
+
+        expect(await strategy.maxTVL()).to.equal(newVal);
+      });
+
+      it("Should let Governor/Strategist set maxTVL", async () => {
+        for (const user of [governor, strategist]) {
+          await expect(strategy.connect(user).setMaxTVL(ousdUnits("12232"))).to
+            .not.be.reverted;
+        }
+      });
+
+      it("Should not let anyone else set maxTVL", async () => {
+        for (const user of [operator, matt]) {
+          await expect(
+            strategy.connect(user).setMaxTVL(ousdUnits("122332"))
+          ).to.be.revertedWith("Caller is not the Strategist or Governor");
+        }
+      });
+    });
+
+    describe("setMaxPositionValueLostThreshold()", () => {
+      it("Should change max loss threshold", async () => {
+        const newVal = ousdUnits("12345");
+        const tx = await strategy
+          .connect(governor)
+          .setMaxPositionValueLostThreshold(newVal);
+
+        await expect(tx).to.have.emittedEvent("MaxValueLostThresholdChanged", [
+          newVal,
+        ]);
+
+        expect(await strategy.maxPositionValueLostThreshold()).to.equal(newVal);
+      });
+
+      it("Should let Governor/Strategist set max loss threshold", async () => {
+        for (const user of [governor, strategist]) {
+          await expect(
+            strategy
+              .connect(user)
+              .setMaxPositionValueLostThreshold(ousdUnits("12232"))
+          ).to.not.be.reverted;
+        }
+      });
+
+      it("Should not let anyone else set the threshold", async () => {
+        for (const user of [operator, daniel]) {
+          await expect(
+            strategy
+              .connect(user)
+              .setMaxPositionValueLostThreshold(ousdUnits("122332"))
+          ).to.be.revertedWith("Caller is not the Strategist or Governor");
+        }
+      });
+    });
+
+    describe("resetLostValue()", () => {
+      it("Should let Governor reset the lost value ", async () => {
+        const tx = await strategy.connect(governor).resetLostValue();
+
+        await expect(tx).to.have.emittedEvent("NetLossValueReset", [
+          governor.address,
+        ]);
+
+        await expect(tx).to.have.emittedEvent("NetLostValueChanged", [0]);
+      });
+
+      it("Should not let anyone else set the threshold", async () => {
+        for (const user of [strategist, operator, franck]) {
+          await expect(
+            strategy.connect(user).resetLostValue()
+          ).to.be.revertedWith("Caller is not the Governor");
+        }
+      });
+    });
+
+    describe("setRebalancePriceThreshold()", () => {
+      it("Should change rebalance threshold", async () => {
+        const minTick = 111;
+        const maxTick = 222;
+
+        const tx = await strategy
+          .connect(governor)
+          .setRebalancePriceThreshold(minTick, maxTick);
+
+        await expect(tx).to.have.emittedEvent(
+          "RebalancePriceThresholdChanged",
+          [minTick, maxTick]
+        );
+
+        expect(await strategy.minRebalanceTick()).to.equal(minTick);
+        expect(await strategy.maxRebalanceTick()).to.equal(maxTick);
+      });
+
+      it("Should let Governor/Strategist set the threshold", async () => {
+        for (const user of [governor, strategist]) {
+          await expect(
+            strategy.connect(user).setRebalancePriceThreshold(111, 222)
+          ).to.not.be.reverted;
+        }
+      });
+
+      it("Should revert if tick indices are invalid", async () => {
+        await expect(
+          strategy.connect(governor).setRebalancePriceThreshold(222, 111)
+        ).to.be.revertedWith("Invalid threshold");
+      });
+
+      it("Should not let anyone else set the threshold", async () => {
+        for (const user of [operator, josh]) {
+          await expect(
+            strategy.connect(user).setRebalancePriceThreshold(111, 222)
+          ).to.be.revertedWith("Caller is not the Strategist or Governor");
+        }
+      });
+    });
+
+    describe("setSwapPriceThreshold()", () => {
+      it("Should change swap threshold", async () => {
+        const minTick = 111;
+        const maxTick = 222;
+        const minTickX96 = await helper.getSqrtRatioAtTick(minTick);
+        const maxTickX96 = await helper.getSqrtRatioAtTick(maxTick);
+
+        const tx = await strategy
+          .connect(governor)
+          .setSwapPriceThreshold(minTick, maxTick);
+
+        await expect(tx).to.have.emittedEvent("SwapPriceThresholdChanged", [
+          minTick,
+          minTickX96,
+          maxTick,
+          maxTickX96,
+        ]);
+
+        expect(await strategy.minSwapPriceX96()).to.equal(minTickX96);
+        expect(await strategy.maxSwapPriceX96()).to.equal(maxTickX96);
+      });
+
+      it("Should let Governor/Strategist set the threshold", async () => {
+        for (const user of [governor, strategist]) {
+          await expect(strategy.connect(user).setSwapPriceThreshold(111, 222))
+            .to.not.be.reverted;
+        }
+      });
+
+      it("Should revert if tick indices are invalid", async () => {
+        await expect(
+          strategy.connect(governor).setSwapPriceThreshold(222, 111)
+        ).to.be.revertedWith("Invalid threshold");
+      });
+
+      it("Should not let anyone else set the threshold", async () => {
+        for (const user of [operator, josh]) {
+          await expect(
+            strategy.connect(user).setSwapPriceThreshold(111, 222)
+          ).to.be.revertedWith("Caller is not the Strategist or Governor");
+        }
+      });
+    });
+
+    describe("setLiquidityManagerImpl()", () => {
+      it("Should let Governor upgrade liquidity manager implementation ", async () => {
+        const tx = await strategy
+          .connect(governor)
+          .setLiquidityManagerImpl(mockStrategy2.address);
+
+        await expect(tx).to.have.emittedEvent(
+          "LiquidityManagerImplementationUpgraded",
+          [mockStrategy2.address]
+        );
+      });
+
+      it("Should throw if new implentation address is not a contract", async () => {
+        await expect(
+          strategy.connect(governor).setLiquidityManagerImpl(josh.address)
+        ).to.be.revertedWith("new implementation is not a contract");
+      });
+
+      it("Should not let anyone else set the threshold", async () => {
+        for (const user of [strategist, operator, domen]) {
+          await expect(
+            strategy
+              .connect(user)
+              .setLiquidityManagerImpl(mockStrategy2.address)
+          ).to.be.revertedWith("Caller is not the Governor");
+        }
+      });
+    });
   });
 
   describe("LiquidityManager", function () {
