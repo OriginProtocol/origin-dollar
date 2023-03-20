@@ -737,9 +737,9 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
         console.log("DEBUG daniel USDC: ", (await usdc.balanceOf(daniel.address)).toString())
         console.log("DEBUG josh USDT: ", (await usdt.balanceOf(josh.address)).toString())
         console.log("DEBUG josh USDC: ", (await usdc.balanceOf(josh.address)).toString())
-        await _swap(daniel, "100000", false);
+        await _swap(daniel, "90000", false);
         console.log("First swap succeed")
-        await _swap(josh, "100000", false);
+        await _swap(josh, "90000", false);
 
         console.log("pre-swaps done")
         const amount = "10000";
@@ -748,9 +748,9 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
         //await expect(tx).to.have.emittedEvent("UniswapV3PositionMinted");
 
         console.log("netLostValue", (await strategy.netLostValue()).toString() )
-        await _swap(daniel, "100000", true);
+        await _swap(daniel, "90000", true);
         console.log("First swap back succeed")
-        await _swap(josh, "100000", true);
+        await _swap(josh, "90000", true);
         console.log("post-swaps done")
 
         await strategy.connect(operator).closePosition(tokenId, 0, 0);
