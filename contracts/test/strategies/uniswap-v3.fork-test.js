@@ -237,7 +237,7 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
       const sqrtPriceLimitX96 = await v3Helper.getSqrtRatioAtTick(
         activeTick + (zeroForOne ? -2 : 2)
       );
-      const swapAmount = BigNumber.from(amount).mul(10e6);
+      const swapAmount = BigNumber.from(amount).mul(1e6);
       usdc.connect(user).approve(swapRouter.address, 0);
       usdt.connect(user).approve(swapRouter.address, 0);
       usdc.connect(user).approve(swapRouter.address, swapAmount.mul(1e3));
@@ -723,37 +723,29 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
         .closePosition(tokenId, Math.round(amount0Minted * 0.92), Math.round(amount1Minted * 0.92))
     });
 
-    it.only("netLostValue will catch possible pool tilts", async () => {
+    it("netLostValue will catch possible pool tilts", async () => {
       const [, activeTick] = await pool.slot0();
       const lowerTick = activeTick;
       const upperTick = activeTick + 1;
       let drainLoops = 10
-      console.log("Starting loop")
       while (drainLoops > 0) {
-        console.log("Beginning of loop")
+        const amount = "10000";
+        await mintLiquidity(lowerTick, upperTick, amount, amount);
         // Mint position
         // Do some big swaps to move active tick
-        console.log("DEBUG daniel USDT: ", (await usdt.balanceOf(daniel.address)).toString())
-        console.log("DEBUG daniel USDC: ", (await usdc.balanceOf(daniel.address)).toString())
-        console.log("DEBUG josh USDT: ", (await usdt.balanceOf(josh.address)).toString())
-        console.log("DEBUG josh USDC: ", (await usdc.balanceOf(josh.address)).toString())
-        await _swap(daniel, "100000", false);
-        console.log("WHAT?")
-        await _swap(josh, "100000", false);
+        await _swap(daniel, "500000", false);
+        await _swap(josh, "500000", false);
 
-        console.log("pre-swaps done")
-        const amount = "10000";
-        const { tx, tokenId } =
-          await mintLiquidity(lowerTick, upperTick, amount, amount);
-        //await expect(tx).to.have.emittedEvent("UniswapV3PositionMinted");
+        await mintLiquidity(lowerTick, upperTick, amount, amount);
 
-        console.log("netLostValue", (await strategy.netLostValue()).toString() )
-        await _swap(daniel, "100000", true);
-        await _swap(josh, "100000", true);
-        console.log("post-swaps done")
+        expect(await strategy.netLostValue()).gte(
+          0,
+          "Expected netLostValue to be greater than 0"
+        );
 
-        await strategy.connect(operator).closePosition(tokenId, 0, 0);
-        console.log("close position done")
+        await _swap(daniel, "500000", true);
+        await _swap(josh, "500000", true);
+        drainLoops--;
       }
     });
   });
