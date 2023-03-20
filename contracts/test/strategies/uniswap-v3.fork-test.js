@@ -238,10 +238,10 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
         activeTick + (zeroForOne ? -2 : 2)
       );
       const swapAmount = BigNumber.from(amount).mul(10e6);
-      usdc.connect(user).approve(swapRouter.address, 0);
-      usdt.connect(user).approve(swapRouter.address, 0);
-      usdc.connect(user).approve(swapRouter.address, swapAmount.mul(1e3));
-      usdt.connect(user).approve(swapRouter.address, swapAmount.mul(1e3));
+      await usdc.connect(user).approve(swapRouter.address, 0);
+      await usdt.connect(user).approve(swapRouter.address, 0);
+      await usdc.connect(user).approve(swapRouter.address, swapAmount.mul(1e3));
+      await usdt.connect(user).approve(swapRouter.address, swapAmount.mul(1e3));
       await swapRouter.connect(user).exactInputSingle([
         zeroForOne ? usdc.address : usdt.address, // tokenIn
         zeroForOne ? usdt.address : usdc.address, // tokenOut
