@@ -308,7 +308,7 @@ r = safe.post_transaction(safe_tx)
 
 
 # --------------------------------
-# March 16, 2023 - Weekly allocation
+# March 20, 2023 - Weekly allocation
 # 
 
 from addresses import *
@@ -349,7 +349,7 @@ with TemporaryForkWithVaultStats(votes):
 
     # Swap
     txs.append(to_strat(CONVEX_STRAT, [[3_943_000, dai]]))
-    txs.append(from_strat(CONVEX_STRAT, [[3_933_000, usdt]]))
+    txs.append(from_strat(CONVEX_STRAT, [[3_923_000, usdt]]))
 
     # To
     txs.append(to_strat(OUSD_METASTRAT, [[5_910_000, usdc]]))
