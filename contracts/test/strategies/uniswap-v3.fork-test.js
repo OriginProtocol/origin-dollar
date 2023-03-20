@@ -738,7 +738,7 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
         console.log("DEBUG josh USDT: ", (await usdt.balanceOf(josh.address)).toString())
         console.log("DEBUG josh USDC: ", (await usdc.balanceOf(josh.address)).toString())
         await _swap(daniel, "100000", false);
-        console.log("WHAT?")
+        console.log("First swap succeed")
         await _swap(josh, "100000", false);
 
         console.log("pre-swaps done")
@@ -749,6 +749,7 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
 
         console.log("netLostValue", (await strategy.netLostValue()).toString() )
         await _swap(daniel, "100000", true);
+        console.log("First swap back succeed")
         await _swap(josh, "100000", true);
         console.log("post-swaps done")
 
