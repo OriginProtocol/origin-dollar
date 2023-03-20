@@ -755,6 +755,8 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
 
         await strategy.connect(operator).closePosition(tokenId, 0, 0);
         console.log("close position done")
+
+        drainLoops--;
       }
     });
   });
