@@ -237,15 +237,16 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
       const sqrtPriceLimitX96 = await v3Helper.getSqrtRatioAtTick(
         activeTick + (zeroForOne ? -2 : 2)
       );
-      const swapAmount = BigNumber.from(amount).mul(10 ** 6);
+      const swapAmount = BigNumber.from(amount).mul(10e6);
       usdc.connect(user).approve(swapRouter.address, swapAmount.mul(10));
       usdt.connect(user).approve(swapRouter.address, swapAmount.mul(10));
+      console.log("ATTEMPTING TO SWAP", sqrtPriceLimitX96.toString())
       await swapRouter.connect(user).exactInputSingle([
         zeroForOne ? usdc.address : usdt.address, // tokenIn
         zeroForOne ? usdt.address : usdc.address, // tokenOut
         100, // fee
         user.address, // recipient
-        (await getBlockTimestamp()) + 150, // deadline
+        (await getBlockTimestamp()) + 10, // deadline
         swapAmount, // amountIn
         0, // amountOutMinimum
         sqrtPriceLimitX96,
@@ -692,7 +693,7 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
 
       // Mint position
       const amount = "100000";
-      const { tokenId, tx, amount0Minted, amount1Minted, liquidityMinted } =
+      const { tokenId, tx, amount0Minted, amount1Minted } =
         await mintLiquidity(lowerTick, upperTick, amount, amount);
       await expect(tx).to.have.emittedEvent("UniswapV3PositionMinted");
       let storedPosition = await strategy.tokenIdToPosition(tokenId);
@@ -718,7 +719,38 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
       // should still be allowed to close the position
       strategy
         .connect(operator)
-        .closePosition(tokenId, amount0Minted * 0.98, amount1Minted * 0.98)
+        .closePosition(tokenId, Math.round(amount0Minted * 0.98), Math.round(amount1Minted * 0.98))
+    });
+
+    it("netLostValue will catch possible pool tilts", async () => {
+      const [, activeTick] = await pool.slot0();
+      const lowerTick = activeTick;
+      const upperTick = activeTick + 1;
+      let drainLoops = 10
+      console.log("Starting loop")
+      while (drainLoops > 0) {
+        console.log("Beginning of loop")
+        // Mint position
+        // Do some big swaps to move active tick
+        console.log("DEBUG MATT USDT: ", (await usdt.balanceOf(matt.address)).toString())
+        console.log("DEBUG MATT USDC: ", (await usdc.balanceOf(matt.address)).toString())
+        console.log("DEBUG FRANCK USDT: ", (await usdt.balanceOf(franck.address)).toString())
+        console.log("DEBUG FRANCK USDC: ", (await usdc.balanceOf(franck.address)).toString())
+        await _swap(matt, "700000", false);
+        await _swap(franck, "700000", false);
+
+        console.log("pre-swaps done")
+        const amount = "100000";
+        const { tokenId, tx, amount0Minted, amount1Minted, liquidityMinted } =
+          await mintLiquidity(lowerTick, upperTick, amount, amount);
+        await expect(tx).to.have.emittedEvent("UniswapV3PositionMinted");
+
+        console.log("netLostValue", (await strategy.netLostValue()).toString() )
+        await _swap(matt, "600000", true);
+        console.log("worked for matt")
+        await _swap(franck, "600000", true);
+        console.log("post-swaps done")
+      }
     });
   });
 
