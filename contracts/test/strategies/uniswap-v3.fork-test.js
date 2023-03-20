@@ -245,7 +245,7 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
         zeroForOne ? usdt.address : usdc.address, // tokenOut
         100, // fee
         user.address, // recipient
-        (await getBlockTimestamp()) + 5, // deadline
+        (await getBlockTimestamp()) + 150, // deadline
         swapAmount, // amountIn
         0, // amountOutMinimum
         sqrtPriceLimitX96,
@@ -683,6 +683,42 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
           .mul(1e12)
           .sub(netLost)
       );
+    });
+
+    it("Should be allowed to close position when net loss threshold is breached", async () => {
+      const [, activeTick] = await pool.slot0();
+      const lowerTick = activeTick;
+      const upperTick = activeTick + 1;
+
+      // Mint position
+      const amount = "100000";
+      const { tokenId, tx, amount0Minted, amount1Minted, liquidityMinted } =
+        await mintLiquidity(lowerTick, upperTick, amount, amount);
+      await expect(tx).to.have.emittedEvent("UniswapV3PositionMinted");
+      let storedPosition = await strategy.tokenIdToPosition(tokenId);
+      expect(storedPosition.exists).to.be.true;
+      expect(await strategy.activeTokenId()).to.equal(tokenId);
+      expect(await strategy.netLostValue()).to.equal(0);
+
+      // Do some big swaps to move active tick
+      await _swap(matt, "1000000", false);
+      await _swap(josh, "1000000", false);
+      await _swap(franck, "1000000", false);
+      await _swap(daniel, "1000000", false);
+      await _swap(domen, "1000000", false);
+
+      // Set threshold to a low value to see if it throws
+      await setMaxPositionValueLostThreshold("0.01");
+      await expect(
+        strategy
+          .connect(operator)
+          .increaseActivePositionLiquidity("1000000", "1000000", "0", "0")
+      ).to.be.revertedWith("Over max value loss threshold");
+
+      // should still be allowed to close the position
+      strategy
+        .connect(operator)
+        .closePosition(tokenId, amount0Minted * 0.98, amount1Minted * 0.98)
     });
   });
 
