@@ -723,39 +723,39 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
         .closePosition(tokenId, Math.round(amount0Minted * 0.92), Math.round(amount1Minted * 0.92))
     });
 
-//     it.only("netLostValue will catch possible pool tilts", async () => {
-//       const [, activeTick] = await pool.slot0();
-//       const lowerTick = activeTick;
-//       const upperTick = activeTick + 1;
-//       let drainLoops = 10
-//       console.log("Starting loop")
-//       while (drainLoops > 0) {
-//         console.log("Beginning of loop")
-//         // Mint position
-//         // Do some big swaps to move active tick
-//         console.log("DEBUG daniel USDT: ", (await usdt.balanceOf(daniel.address)).toString())
-//         console.log("DEBUG daniel USDC: ", (await usdc.balanceOf(daniel.address)).toString())
-//         console.log("DEBUG josh USDT: ", (await usdt.balanceOf(josh.address)).toString())
-//         console.log("DEBUG josh USDC: ", (await usdc.balanceOf(josh.address)).toString())
-//         await _swap(daniel, "100000", false);
-//         console.log("WHAT?")
-//         await _swap(josh, "100000", false);
-// 
-//         console.log("pre-swaps done")
-//         const amount = "10000";
-//         const { tx, tokenId } =
-//           await mintLiquidity(lowerTick, upperTick, amount, amount);
-//         //await expect(tx).to.have.emittedEvent("UniswapV3PositionMinted");
-// 
-//         console.log("netLostValue", (await strategy.netLostValue()).toString() )
-//         await _swap(daniel, "200000", true);
-//         await _swap(josh, "200000", true);
-//         console.log("post-swaps done")
-// 
-//         await strategy.connect(operator).closePosition(tokenId, 0, 0);
-//         console.log("close position done")
-//       }
-//     });
+    it.only("netLostValue will catch possible pool tilts", async () => {
+      const [, activeTick] = await pool.slot0();
+      const lowerTick = activeTick;
+      const upperTick = activeTick + 1;
+      let drainLoops = 10
+      console.log("Starting loop")
+      while (drainLoops > 0) {
+        console.log("Beginning of loop")
+        // Mint position
+        // Do some big swaps to move active tick
+        console.log("DEBUG daniel USDT: ", (await usdt.balanceOf(daniel.address)).toString())
+        console.log("DEBUG daniel USDC: ", (await usdc.balanceOf(daniel.address)).toString())
+        console.log("DEBUG josh USDT: ", (await usdt.balanceOf(josh.address)).toString())
+        console.log("DEBUG josh USDC: ", (await usdc.balanceOf(josh.address)).toString())
+        await _swap(daniel, "100000", false);
+        console.log("WHAT?")
+        await _swap(josh, "100000", false);
+
+        console.log("pre-swaps done")
+        const amount = "10000";
+        const { tx, tokenId } =
+          await mintLiquidity(lowerTick, upperTick, amount, amount);
+        //await expect(tx).to.have.emittedEvent("UniswapV3PositionMinted");
+
+        console.log("netLostValue", (await strategy.netLostValue()).toString() )
+        await _swap(daniel, "100000", true);
+        await _swap(josh, "100000", true);
+        console.log("post-swaps done")
+
+        await strategy.connect(operator).closePosition(tokenId, 0, 0);
+        console.log("close position done")
+      }
+    });
   });
 
   describe("Sanity checks", () => {
