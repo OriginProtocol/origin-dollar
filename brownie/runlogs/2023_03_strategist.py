@@ -317,22 +317,22 @@ from allocations import *
 from ape_safe import ApeSafe
 
 votes = """
-Convex OUSD+3Crv    32.08%
-Morpho Compound USDT    27.97%
-Existing Allocation 11.92%
-Morpho Aave USDT    9.59%
-Aave USDT   8.88%
-Morpho Compound DAI 3.58%
-Morpho Compound USDC    3.58%
-Morpho Aave DAI 1.19%
-Morpho Aave USDC    1.19%
+Morpho Aave USDT    46.15%
+Existing Allocation 20.61%
+Convex OUSD+3Crv    14.67%
+Morpho Compound USDC    9.84%
+Morpho Compound DAI 8.73%
 Aave DAI    0%
 Aave USDC   0%
+Aave USDT   0%
 Compound DAI    0%
 Compound USDC   0%
 Compound USDT   0%
 Convex DAI+USDC+USDT    0%
 Convex LUSD+3Crv    0%
+Morpho Aave DAI 0%
+Morpho Aave USDC    0%
+Morpho Compound USDT    0%
 """
 
 with TemporaryForkWithVaultStats(votes):
@@ -345,21 +345,26 @@ with TemporaryForkWithVaultStats(votes):
     txs.append(vault_admin.withdrawAllFromStrategy(COMP_STRAT, {'from':STRATEGIST}))
     # the minus 721_000 is because we can't deploy those funds to MORPHO_COMP_STRAT
     # because the USDC is paused in there
-    txs.append(from_strat(MORPHO_AAVE_STRAT, [[4_660_800, dai], [5_576_000, usdc], [5_923_000, usdt]]))
+    txs.append(from_strat(MORPHO_AAVE_STRAT, [[2_255_000, dai], [3_429_000, usdc]]))
+    txs.append(from_strat(AAVE_STRAT, [[250_000, usdt]]))
+    txs.append(from_strat(MORPHO_COMP_STRAT, [[260_000, usdt]]))
 
-    # Swap
-    txs.append(to_strat(CONVEX_STRAT, [[3_943_000, dai]]))
-    txs.append(from_strat(CONVEX_STRAT, [[3_923_000, usdt]]))
+    # moving funds to usdt hurts
+    # # Swap
+    # txs.append(to_strat(CONVEX_STRAT, [[2_420_000, dai], [2_650_000, usdc]]))
+    # txs.append(from_strat(CONVEX_STRAT, [[5_000_000, usdt]]))
 
+    # # To
+    # txs.append(to_strat(MORPHO_COMP_STRAT, [[2_265_000, dai], [2_585_000, usdc]]))
+    # txs.append(to_strat(OUSD_METASTRAT, [[1_175_000, usdc]]))
+    # txs.append(to_strat(MORPHO_AAVE_STRAT, [[5_520_000, usdt]]))
+
+    # so we are not doing the swapping of USDC & DAI to USDT
     # To
-    txs.append(to_strat(OUSD_METASTRAT, [[5_910_000, usdc]]))
-    txs.append(to_strat(AAVE_STRAT, [[2_233_000, usdt]]))
+    txs.append(to_strat(MORPHO_COMP_STRAT, [[2_265_000, dai], [2_585_000, usdc]]))
+    txs.append(to_strat(OUSD_METASTRAT, [[1_175_000, usdc]]))
+    txs.append(to_strat(MORPHO_AAVE_STRAT, [[520_000, usdt]]))
 
-    txs.append(to_strat(MORPHO_COMP_STRAT, [[721_000, dai], [7_600_000, usdt]]))
-    #txs.append(to_strat(COMP_STRAT, [[323_000, usdc]]))
-    #txs.append(to_strat(AAVE_STRAT, [[323_000, usdt]]))
-    #txs.append(to_strat(CONVEX_STRAT, [[257_000, dai], [257_000, usdc], [257_000, usdt]]))
-    
     # # Defaults
     # txs.append(vault_admin.setAssetDefaultStrategy(dai, MORPHO_AAVE_STRAT,{'from':STRATEGIST}))
 
