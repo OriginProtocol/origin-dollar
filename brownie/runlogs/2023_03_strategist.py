@@ -366,7 +366,7 @@ with TemporaryForkWithVaultStats(votes):
     txs.append(to_strat(MORPHO_AAVE_STRAT, [[520_000, usdt]]))
 
     # # Defaults
-    # txs.append(vault_admin.setAssetDefaultStrategy(dai, MORPHO_AAVE_STRAT,{'from':STRATEGIST}))
+    txs.append(vault_admin.setAssetDefaultStrategy(dai, MORPHO_COMP_STRAT,{'from':STRATEGIST}))
 
     txs.extend(auto_check_snapshot())
     
