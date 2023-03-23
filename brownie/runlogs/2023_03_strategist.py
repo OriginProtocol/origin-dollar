@@ -345,7 +345,7 @@ with TemporaryForkWithVaultStats(votes):
     txs.append(vault_admin.withdrawAllFromStrategy(COMP_STRAT, {'from':STRATEGIST}))
     # the minus 721_000 is because we can't deploy those funds to MORPHO_COMP_STRAT
     # because the USDC is paused in there
-    txs.append(from_strat(MORPHO_AAVE_STRAT, [[2_255_000, dai], [3_429_000, usdc]]))
+    txs.append(from_strat(MORPHO_AAVE_STRAT, [[4_899_000, dai], [6_299_000, usdc]]))
     txs.append(from_strat(AAVE_STRAT, [[250_000, usdt]]))
     txs.append(from_strat(MORPHO_COMP_STRAT, [[260_000, usdt]]))
 
@@ -361,7 +361,7 @@ with TemporaryForkWithVaultStats(votes):
 
     # so we are not doing the swapping of USDC & DAI to USDT
     # To
-    txs.append(to_strat(MORPHO_COMP_STRAT, [[2_265_000, dai], [2_585_000, usdc]]))
+    txs.append(to_strat(MORPHO_COMP_STRAT, [[4_905_000, dai], [5_455_000, usdc]]))
     txs.append(to_strat(OUSD_METASTRAT, [[1_175_000, usdc]]))
     txs.append(to_strat(MORPHO_AAVE_STRAT, [[520_000, usdt]]))
 
