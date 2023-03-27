@@ -12,7 +12,6 @@ import ContractStore from 'stores/ContractStore'
 import StakeStore from 'stores/StakeStore'
 import withRpcProvider from 'hoc/withRpcProvider'
 import AppFooter from './AppFooter'
-import MarketingFooter from './MarketingFooter'
 import { adjustLinkHref } from 'utils/utils'
 import { assetRootPath } from 'utils/image'
 import { burnTimer } from 'utils/constants'
@@ -24,7 +23,6 @@ const Layout = ({
   locale,
   onLocale,
   children,
-  dapp,
   short,
   shorter,
   medium,
@@ -61,7 +59,7 @@ const Layout = ({
   const burnPage = pathname === '/burn'
   const stakePage = pathname === '/earn'
   const stakes = useStoreState(StakeStore, (s) => s)
-  const showStakingBanner = dapp && !stakePage && stakes.stakes?.length
+  const showStakingBanner = !stakePage && stakes.stakes?.length
 
   const notice = showStakingBanner || burnTimer().days >= 0
 
@@ -101,10 +99,7 @@ const Layout = ({
       </Head>
       <div
         className={classnames(
-          'notice text-white text-center p-3',
-          {
-            dapp,
-          },
+          'notice text-white text-center p-3 dapp',
           rebaseOptedOut ? '' : 'd-none'
         )}
       >
@@ -129,10 +124,7 @@ const Layout = ({
       </div>
       <div
         className={classnames(
-          'notice text-white text-center p-3',
-          {
-            dapp,
-          },
+          'notice text-white text-center p-3 dapp',
           showUniswapNotice ? '' : 'd-none'
         )}
       >
@@ -160,16 +152,11 @@ const Layout = ({
           className={classnames(
             `notice ${showStakingBanner ? 'staking pt-2' : 'pt-3'} ${
               burnPage ? 'burn' : ''
-            } ${dapp ? '' : 'px-lg-5'} text-white text-center pb-3`,
-            {
-              dapp,
-            }
+            } text-white text-center pb-3 dapp`,
           )}
         >
           <div
-            className={`container d-flex flex-column flex-md-row align-items-center ${
-              dapp ? '' : 'nav px-lg-5'
-            }`}
+            className='container d-flex flex-column flex-md-row align-items-center'
           >
             {showStakingBanner ? (
               <>
@@ -221,12 +208,10 @@ const Layout = ({
           </div>
         </div>
       )}
-      <main className={classnames({ dapp, short, shorter, medium })}>
-        {dapp && <div className="container">{children}</div>}
-        {!dapp && children}
+      <main className={classnames('dapp', { short, shorter, medium })}>
+        {<div className="container">{children}</div>}
       </main>
-      {!dapp && <MarketingFooter locale={locale} />}
-      {dapp && <AppFooter dapp={dapp} locale={locale} onLocale={onLocale} />}
+      {<AppFooter locale={locale} onLocale={onLocale} />}
       <style jsx>{`
         .notice {
           background-color: black;
