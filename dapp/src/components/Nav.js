@@ -126,16 +126,12 @@ const Nav = ({ isMobile, locale, onLocale, page }) => {
     <>
       <nav
         className={classnames(
-          'navbar navbar-expand-lg d-flex justify-content-center flex-column dapp',
+          'navbar navbar-expand-lg d-flex justify-content-center flex-column dapp'
         )}
       >
-        <div
-          className='container flex-nowrap'
-        >
+        <div className="container flex-nowrap">
           <Link href={adjustLinkHref('/')}>
-            <a
-              className='navbar-brand d-flex flex-column justify-content-center'
-            >
+            <a className="navbar-brand d-flex flex-column justify-content-center">
               <img
                 src={assetRootPath('/images/origin-dollar-logo.svg')}
                 className="origin-logo"
@@ -208,7 +204,9 @@ const Nav = ({ isMobile, locale, onLocale, page }) => {
             <LanguageOptions locale={locale} onLocale={onLocale} />
           </div>
           <div
-            className={'navLinks collapse navbar-collapse justify-content-end flex-column flex-lg-row d-flex'}
+            className={
+              'navLinks collapse navbar-collapse justify-content-end flex-column flex-lg-row d-flex'
+            }
           >
             <button
               className="close navbar-toggler"
@@ -237,9 +235,7 @@ const Nav = ({ isMobile, locale, onLocale, page }) => {
                 </ul>
               )}
               <IPFSDappLink css="d-none d-lg-block" />
-              <div
-                className={`d-flex flex-column flex-lg-row-reverse`}
-              >
+              <div className={`d-flex flex-column flex-lg-row-reverse`}>
                 <AccountStatusDropdown />
               </div>
               <GetOUSD

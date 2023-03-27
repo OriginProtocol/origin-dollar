@@ -152,12 +152,10 @@ const Layout = ({
           className={classnames(
             `notice ${showStakingBanner ? 'staking pt-2' : 'pt-3'} ${
               burnPage ? 'burn' : ''
-            } text-white text-center pb-3 dapp`,
+            } text-white text-center pb-3 dapp`
           )}
         >
-          <div
-            className='container d-flex flex-column flex-md-row align-items-center'
-          >
+          <div className="container d-flex flex-column flex-md-row align-items-center">
             {showStakingBanner ? (
               <>
                 <div className="d-flex flex-column mt-0 justify-content-center px-4 px-md-0 text-md-left">
