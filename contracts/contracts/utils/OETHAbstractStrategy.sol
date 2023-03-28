@@ -40,8 +40,8 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
 
-    //event Deposit(address indexed _asset, address _pToken, uint256 _amount);
-    //event Withdrawal(address indexed _asset, address _pToken, uint256 _amount);
+    event Deposit(address[] _assets, address[] _platformTokens, uint256[] _amounts);
+    event Withdrawal(address[] _assets, address[] _platformTokens, uint256[] _amounts);
     event RewardTokenCollected(
         address recipient,
         address indexed rewardToken,
