@@ -32,7 +32,7 @@ TBD:
   - I am in favour of reporting 2ETH with disclaimer that checkBalance should not be used to 
     loop thorough the assets and sum up their balances to figure out strategy balance
 
-- should transferToken always transfer to the governor? TimelockController might not
+- should `transferToken` always transfer to the governor? TimelockController might not
   have the functionality to do anything with ERC20 tokens
 
 */
@@ -40,6 +40,10 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
 
+    /* Applies to Deposit & Withdrawal events. Lengths _assets & _amounts array will always
+     * match while _platformTokens array can be shorter. e.g. with Curve strategy multiple
+     * assets can be deployed in order to receive one LP token.
+     */
     event Deposit(address[] _assets, address[] _platformTokens, uint256[] _amounts);
     event Withdrawal(address[] _assets, address[] _platformTokens, uint256[] _amounts);
     event RewardTokenCollected(
@@ -55,11 +59,11 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
         address[] _oldAddresses,
         address[] _newAddresses
     );
-    event AssetsSupportedUpdated(
+    event AssetSupportedAddressesUpdated(
         address[] _oldAddresses,
         address[] _newAddresses
     );
-    event HarvesterAddressesUpdated(
+    event HarvesterAddressUpdated(
         address _oldHarvesterAddress,
         address _newHarvesterAddress
     );
@@ -102,7 +106,6 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
     }
 
     function _initialize(
-        address _platformAddress,
         address _vaultAddress,
         address[] calldata _rewardTokenAddresses,
         address[] calldata _assets,
@@ -242,11 +245,11 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
      *      This method can only be called by the system Governor
      * @param _assetsSupported   Address for the supported asset tokens
      */
-    function setAssetsSupportedAddresses(address[] calldata _assetsSupported)
+    function setAssetSupportedAddresses(address[] calldata _assetsSupported)
         external
         onlyGovernor
     {
-        emit AssetsSupportedUpdated(
+        emit AssetSupportedAddressesUpdated(
             assetsSupported,
             _assetsSupported
         );
@@ -258,7 +261,7 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
      * @dev Get the list of the supported asset tokens.
      * @return address[] of the supported asset tokens.
      */
-    function getAssetsSupportedAddresses()
+    function getAssetSupportedAddresses()
         external
         view
         returns (address[] memory)
@@ -289,7 +292,7 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
         onlyGovernor
     {
         harvesterAddress = _harvesterAddress;
-        emit HarvesterAddressesUpdated(harvesterAddress, _harvesterAddress);
+        emit HarvesterAddressUpdated(harvesterAddress, _harvesterAddress);
     }
 
     /***************************************
@@ -369,5 +372,5 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
             }
         }
         return false;
-    };
+    }
 }
