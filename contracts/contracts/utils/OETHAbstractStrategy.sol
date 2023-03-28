@@ -38,7 +38,6 @@ TBD:
 */
 abstract contract InitializableAbstractStrategy is Initializable, Governable {
     using SafeERC20 for IERC20;
-    using SafeMath for uint256;
 
     /* Applies to Deposit & Withdrawal events. Lengths _assets & _amounts array will always
      * match while _platformTokens array can be shorter. e.g. with Curve strategy multiple
