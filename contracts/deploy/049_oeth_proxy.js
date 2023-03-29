@@ -1,4 +1,6 @@
+
 const { deploymentWithProposal } = require("../utils/deploy");
+const addresses = require("../utils/addresses");
 
 module.exports = deploymentWithProposal(
   { deployName: "049_oeth_proxy", forceDeploy: false },
@@ -36,21 +38,14 @@ module.exports = deploymentWithProposal(
     await withConfirmation(
       cOethProxy
         .connect(sDeployer)
-        .transferGovernance(governorAddr, await getTxOpts())
+        .transferGovernance(addresses.mainnet.Guardian, await getTxOpts())
     );
 
     // Governance Actions
     // ----------------
     return {
-      name: "Deploy empty OETH proxy",
-      actions: [
-        // 1. Accept governance of OETH proxy
-        {
-          contract: cOethProxy,
-          signature: "claimGovernance()",
-          args: [],
-        },
-      ],
+      name: "Deploy an empty OETH proxy",
+      actions: [],
     };
   }
 );

@@ -1,0 +1,41 @@
+{
+  "address": "0x84E45FDD8AC0E1Ef13Da5F78037255009842d135",
+  "abi": [],
+  "transactionHash": "0x413d8d25fbb91f65512291a66f3d1570dd86c5a62c252feddcb517e75e8c6aff",
+  "receipt": {
+    "to": null,
+    "from": "0xFD9E6005187F448957a0972a7d0C0A6dA2911236",
+    "contractAddress": "0x84E45FDD8AC0E1Ef13Da5F78037255009842d135",
+    "transactionIndex": 21,
+    "gasUsed": "67054",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "blockHash": "0xd1661fa30600d254dbacb3b8962ebcd22899af6fd312a6dd09571712f6a9170c",
+    "transactionHash": "0x413d8d25fbb91f65512291a66f3d1570dd86c5a62c252feddcb517e75e8c6aff",
+    "logs": [],
+    "blockNumber": 16935270,
+    "cumulativeGasUsed": "2734778",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [],
+  "solcInputHash": "fd147e8addb65b93518dc23db070bf76",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.7+commit.e28d00a7\"},\"language\":\"Solidity\",\"output\":{\"abi\":[],\"devdoc\":{\"author\":\"Origin Protocol Inc\",\"kind\":\"dev\",\"methods\":{},\"title\":\"OETH Token Contract\",\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/token/OETH.sol\":\"OETH\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[]},\"sources\":{\"contracts/token/OETH.sol\":{\"content\":\"// SPDX-License-Identifier: agpl-3.0\\npragma solidity ^0.8.0;\\n\\n/**\\n * @title OETH Token Contract\\n * @author Origin Protocol Inc\\n */\\n\\ncontract OETH {\\n\\n}\\n\",\"keccak256\":\"0x669b1bbf01a735f64da3c3b8b07609bc06786118d77de161453f9b7b3b1b1f6b\",\"license\":\"agpl-3.0\"}},\"version\":1}",
+  "bytecode": "0x6080604052348015600f57600080fd5b50603f80601d6000396000f3fe6080604052600080fdfea26469706673582212206bb94800cdbb2edf83d59010762037cc18a1bf10a4c78d38d9deff91ec19c15e64736f6c63430008070033",
+  "deployedBytecode": "0x6080604052600080fdfea26469706673582212206bb94800cdbb2edf83d59010762037cc18a1bf10a4c78d38d9deff91ec19c15e64736f6c63430008070033",
+  "devdoc": {
+    "author": "Origin Protocol Inc",
+    "kind": "dev",
+    "methods": {},
+    "title": "OETH Token Contract",
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {},
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [],
+    "types": null
+  }
+}
