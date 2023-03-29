@@ -8,34 +8,6 @@ import { Initializable } from "../utils/Initializable.sol";
 import { Governable } from "../governance/Governable.sol";
 import { IVault } from "../interfaces/IVault.sol";
 
-
-/*
-V2 Strategy interface
-
-Goals we want to achieve with the renewed strategy interface: 
-- platform tokens and assets are not necessarily mapped 1:1. Works well for compound 
-  and Aave, not so much for Curve
-- can withdraw/deposit multiple tokens instead of single coin. API should allow for 
-  strategy to do gas optimizations when withdrawing / depositing liquidity using multiple
-  tokens at once, instead of multiple calls to strategy contract with a single token
-- cheaper and more effective way to check balance. 
-
-TBD: 
-- `checkBalance(_asset)`: does the Vault also need a per asset breakdown of the LSD balances? 
-  - and if yes should checkBalance(_asset) return the amount of asset that can be extracted 
-    from the strategy or its balanced amount? E.g. if CurveStrategy (stEth/WETH) has 2 ETH's worth of 
-    liquidity should checkBalance report: 
-    - checkBalance(WETH) -> 1ETH
-    - or checkBalance(WETH) -> 2ETH
-  - We will also enter pools that have vanilla ETH as one of the pairs(e.g. (stEth/ETH)). In that case 
-    checkBalance(stEth) should for sure report 2ETH. 
-  - I am in favour of reporting 2ETH with disclaimer that checkBalance should not be used to 
-    loop thorough the assets and sum up their balances to figure out strategy balance
-
-- should `transferToken` always transfer to the governor? TimelockController might not
-  have the functionality to do anything with ERC20 tokens
-
-*/
 abstract contract InitializableAbstractStrategy is Initializable, Governable {
     using SafeERC20 for IERC20;
 
@@ -322,6 +294,18 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
         address[] calldata _assets,
         uint256[] calldata _amounts
     ) external virtual;
+
+    /**
+     * @dev Withdraws assets in a balanced manner (in case there are multiple
+     *      platform tokens) totaling up to _ethAmount
+     * @param _recipient         Address to which the asset should be sent
+     * @param _ethAmount         Total ETH value of assets withdrawn
+     */
+    function withdrawUnits(
+        address _recipient,
+        uint245 _ethAmount
+    ) external virtual;
+
 
     /**
      * @dev Withdraw all assets from strategy sending assets to Vault.
