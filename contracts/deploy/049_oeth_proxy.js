@@ -2,7 +2,7 @@ const { deploymentWithProposal } = require("../utils/deploy");
 const addresses = require("../utils/addresses");
 
 module.exports = deploymentWithProposal(
-  { deployName: "049_oeth_proxy", forceDeploy: false },
+  { deployName: "049_oeth_proxy", forceDeploy: false, forceSkip: true },
   async ({ deployWithConfirmation, ethers, getTxOpts, withConfirmation }) => {
     const { deployerAddr, governorAddr } = await getNamedAccounts();
     const sDeployer = await ethers.provider.getSigner(deployerAddr);
