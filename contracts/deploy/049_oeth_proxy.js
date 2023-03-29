@@ -1,24 +1,17 @@
 const { deploymentWithProposal } = require("../utils/deploy");
 
 module.exports = deploymentWithProposal(
-  { deployName: "049_oeth_proxy", forceDeploy: false},
-  async ({
-    deployWithConfirmation,
-    ethers,
-    getTxOpts,
-    withConfirmation,
-  }) => {
+  { deployName: "049_oeth_proxy", forceDeploy: false },
+  async ({ deployWithConfirmation, ethers, getTxOpts, withConfirmation }) => {
     const { deployerAddr, governorAddr } = await getNamedAccounts();
     const sDeployer = await ethers.provider.getSigner(deployerAddr);
-    
+
     // Deployer Actions
     // ----------------
 
     // 1. Deploy new proxy
     // New OETH proxy
-    const dOethProxy = await deployWithConfirmation(
-      "OETHProxy"
-    );
+    const dOethProxy = await deployWithConfirmation("OETHProxy");
     const cOethProxy = await ethers.getContractAt(
       "OETHProxy",
       dOethProxy.address
@@ -56,7 +49,7 @@ module.exports = deploymentWithProposal(
           contract: cOethProxy,
           signature: "claimGovernance()",
           args: [],
-        }
+        },
       ],
     };
   }
