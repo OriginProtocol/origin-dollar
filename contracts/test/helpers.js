@@ -256,6 +256,8 @@ const getOracleAddresses = async (deployments) => {
         CVX_USD: (await deployments.get("MockChainlinkOracleFeedCVX")).address,
         OGN_ETH: (await deployments.get("MockChainlinkOracleFeedOGNETH"))
           .address,
+        RETH_ETH: (await deployments.get("MockChainlinkOracleFeedRETHETH"))
+          .address,
         NonStandardToken_USD: (
           await deployments.get("MockChainlinkOracleFeedNonStandardToken")
         ).address,
@@ -325,6 +327,7 @@ const getAssetAddresses = async (deployments) => {
       STKAAVE: (await deployments.get("MockStkAave")).address,
       OGN: (await deployments.get("MockOGN")).address,
       OGV: (await deployments.get("MockOGV")).address,
+      RETH: (await deployments.get("MockRETH")).address,
       // Note: This is only used to transfer the swapped OGV in `Buyback` contract.
       // So, as long as this is a valid address, it should be fine.
       RewardsSource: addresses.dead,

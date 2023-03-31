@@ -429,7 +429,9 @@ describe("Vault with Compound strategy", function () {
     );
 
     if (nonStandardToken) {
-      await vault.connect(governor).supportAsset(nonStandardToken.address);
+      await vault
+        .connect(governor)
+        .supportAsset(nonStandardToken.address, false);
     }
 
     await setOracleTokenPriceUsd("NonStandardToken", "1.00");

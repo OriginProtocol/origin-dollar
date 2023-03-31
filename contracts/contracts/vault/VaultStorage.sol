@@ -52,6 +52,7 @@ contract VaultStorage is Initializable, Governable {
     // Assets supported by the Vault, i.e. Stablecoins
     struct Asset {
         bool isSupported;
+        bool hasExchangeRate;
     }
     mapping(address => Asset) internal assets;
     address[] internal allAssets;
@@ -121,7 +122,7 @@ contract VaultStorage is Initializable, Governable {
     uint256 public netOusdMintForStrategyThreshold = 0;
 
     // Cheaper to read decimals locally than to call out each time
-    mapping(address => uint256) internal decimalsCache;
+    mapping(address => uint256) internal decimalsCache; // TODO: Move to Asset struct
 
     /**
      * @dev set the implementation for the admin, this needs to be in a base class else we cannot set it

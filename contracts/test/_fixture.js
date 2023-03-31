@@ -131,6 +131,7 @@ async function defaultFixture() {
     aaveToken,
     stkAave,
     aaveIncentivesController,
+    reth,
     mockNonRebasing,
     mockNonRebasingTwo,
     LUSD;
@@ -225,6 +226,7 @@ async function defaultFixture() {
     ogn = await ethers.getContract("MockOGN");
     LUSD = await ethers.getContract("MockLUSD");
     ogv = await ethers.getContract("MockOGV");
+    reth = await ethers.getContract("MockRETH");
     nonStandardToken = await ethers.getContract("MockNonStandardToken");
 
     cdai = await ethers.getContract("MockCDAI");
@@ -302,7 +304,7 @@ async function defaultFixture() {
     const sGovernor = await ethers.provider.getSigner(governorAddr);
 
     // Add TUSD in fixture, it is disabled by default in deployment
-    await vault.connect(sGovernor).supportAsset(assetAddresses.TUSD);
+    await vault.connect(sGovernor).supportAsset(assetAddresses.TUSD, false);
 
     // Enable capital movement
     await vault.connect(sGovernor).unpauseCapital();
@@ -378,6 +380,7 @@ async function defaultFixture() {
     ogn,
     LUSD,
     ogv,
+    reth,
     rewardsSource,
     nonStandardToken,
     // cTokens
@@ -1128,7 +1131,7 @@ async function hackedVaultFixture() {
     evilDAI.address,
     oracleAddresses.chainlink.DAI_USD
   );
-  await fixture.vault.connect(sGovernor).supportAsset(evilDAI.address);
+  await fixture.vault.connect(sGovernor).supportAsset(evilDAI.address, false);
 
   fixture.evilDAI = evilDAI;
 

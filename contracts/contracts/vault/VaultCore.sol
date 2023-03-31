@@ -20,6 +20,7 @@ import { IOracle } from "../interfaces/IOracle.sol";
 import { IVault } from "../interfaces/IVault.sol";
 import { IBuyback } from "../interfaces/IBuyback.sol";
 import { IBasicToken } from "../interfaces/IBasicToken.sol";
+import { IExchangeRateToken } from "../interfaces/IExchangeRateToken.sol";
 import "./VaultStorage.sol";
 
 contract VaultCore is VaultStorage {
@@ -80,6 +81,7 @@ contract VaultCore is VaultStorage {
             1e8;
 
         if (_minimumOusdAmount > 0) {
+            // TODO: ADD!
             // require(
             //     priceAdjustedDeposit >= _minimumOusdAmount,
             //     "Mint amount lower than minimum"
@@ -589,9 +591,10 @@ contract VaultCore is VaultStorage {
             // Never give out more than one
             // stablecoin per dollar of OUSD
             if (price < 1e18) {
+                // TODO, convert to comparing to units!
                 price = 1e18;
             }
-            uint256 ratio = assetUnits[i].mul(price).div(totalBalance);
+            uint256 ratio = assetBalances[i].mul(price).div(totalBalance);
             totalOutputRatio = totalOutputRatio.add(ratio);
         }
         // Calculate final outputs
@@ -656,17 +659,20 @@ contract VaultCore is VaultStorage {
         return assets[_asset].isSupported;
     }
 
-    function _toUnits(uint256 raw, address token)
+    function _toUnits(uint256 raw, address _asset)
         internal
         view
         returns (uint256)
     {
-        uint256 units = raw.scaleBy(18, _getDecimals(token));
+        if (assets[_asset].hasExchangeRate) {
+            return (raw * IExchangeRateToken(_asset).exchangeRate()) / 1e18;
+        }
+        uint256 units = raw.scaleBy(18, _getDecimals(_asset));
         return units;
     }
 
-    function _getDecimals(address token) internal view returns (uint256) {
-        uint256 decimals = decimalsCache[token];
+    function _getDecimals(address _asset) internal view returns (uint256) {
+        uint256 decimals = decimalsCache[_asset];
         require(decimals > 0, "Decimals Not Cached");
         return decimals;
     }

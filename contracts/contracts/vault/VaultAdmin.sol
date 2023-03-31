@@ -166,10 +166,16 @@ contract VaultAdmin is VaultStorage {
      *         to mint OUSD.
      * @param _asset Address of asset
      */
-    function supportAsset(address _asset) external onlyGovernor {
+    function supportAsset(address _asset, bool _hasExchangeRate)
+        external
+        onlyGovernor
+    {
         require(!assets[_asset].isSupported, "Asset already supported");
 
-        assets[_asset] = Asset({ isSupported: true });
+        assets[_asset] = Asset({
+            isSupported: true,
+            hasExchangeRate: _hasExchangeRate
+        });
         allAssets.push(_asset);
         _cacheDecimals(_asset);
 

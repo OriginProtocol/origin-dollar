@@ -94,7 +94,7 @@ describe("Vault Redeem", function () {
       defaultFixture
     );
 
-    await vault.connect(governor).supportAsset(nonStandardToken.address);
+    await vault.connect(governor).supportAsset(nonStandardToken.address, false);
 
     await setOracleTokenPriceUsd("NonStandardToken", "1.00");
 

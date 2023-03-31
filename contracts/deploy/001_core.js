@@ -489,15 +489,15 @@ const configureVault = async (harvesterProxy) => {
   );
   // Set up supported assets for Vault
   await withConfirmation(
-    cVault.connect(sGovernor).supportAsset(assetAddresses.DAI)
+    cVault.connect(sGovernor).supportAsset(assetAddresses.DAI, false)
   );
   log("Added DAI asset to Vault");
   await withConfirmation(
-    cVault.connect(sGovernor).supportAsset(assetAddresses.USDT)
+    cVault.connect(sGovernor).supportAsset(assetAddresses.USDT, false)
   );
   log("Added USDT asset to Vault");
   await withConfirmation(
-    cVault.connect(sGovernor).supportAsset(assetAddresses.USDC)
+    cVault.connect(sGovernor).supportAsset(assetAddresses.USDC, false)
   );
   log("Added USDC asset to Vault");
   // Unpause deposits
@@ -716,6 +716,11 @@ const deployOracles = async () => {
     oracleRouter
       .connect(sDeployer)
       .setFeed(assetAddresses.CVX, oracleAddresses.chainlink.CVX_USD)
+  );
+  withConfirmation(
+    oracleRouter
+      .connect(sDeployer)
+      .setFeed(assetAddresses.RETH, oracleAddresses.chainlink.RETH_ETH)
   );
   withConfirmation(
     oracleRouter

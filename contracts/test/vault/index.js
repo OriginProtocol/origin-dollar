@@ -33,10 +33,9 @@ describe("Vault", function () {
     const origAssetCount = await vault.connect(governor).getAssetCount();
     expect(await vault.isSupportedAsset(ousd.address)).to.be.false;
     await oracleRouter.setFeed(ousd.address, oracleAddresses.chainlink.DAI_USD);
-    await expect(vault.connect(governor).supportAsset(ousd.address)).to.emit(
-      vault,
-      "AssetSupported"
-    );
+    await expect(
+      vault.connect(governor).supportAsset(ousd.address, false)
+    ).to.emit(vault, "AssetSupported");
     expect(await vault.getAssetCount()).to.equal(origAssetCount.add(1));
     const assets = await vault.connect(governor).getAllAssets();
     expect(assets.length).to.equal(origAssetCount.add(1));
@@ -48,13 +47,13 @@ describe("Vault", function () {
     const { vault, usdt, governor } = await loadFixture(defaultFixture);
     expect(await vault.isSupportedAsset(usdt.address)).to.be.true;
     await expect(
-      vault.connect(governor).supportAsset(usdt.address)
+      vault.connect(governor).supportAsset(usdt.address, false)
     ).to.be.revertedWith("Asset already supported");
   });
 
   it("Should revert when attempting to support an asset and not governor", async function () {
     const { vault, usdt } = await loadFixture(defaultFixture);
-    await expect(vault.supportAsset(usdt.address)).to.be.revertedWith(
+    await expect(vault.supportAsset(usdt.address, false)).to.be.revertedWith(
       "Caller is not the Governor"
     );
   });
@@ -127,7 +126,7 @@ describe("Vault", function () {
       defaultFixture
     );
 
-    await vault.connect(governor).supportAsset(nonStandardToken.address);
+    await vault.connect(governor).supportAsset(nonStandardToken.address, false);
 
     await expect(anna).has.a.balanceOf("1000.00", nonStandardToken);
     await setOracleTokenPriceUsd("NonStandardToken", "1.30");
@@ -159,7 +158,7 @@ describe("Vault", function () {
     const { ousd, vault, anna, nonStandardToken, governor } = await loadFixture(
       defaultFixture
     );
-    await vault.connect(governor).supportAsset(nonStandardToken.address);
+    await vault.connect(governor).supportAsset(nonStandardToken.address, false);
 
     await expect(anna).has.a.balanceOf("1000.00", nonStandardToken);
     await setOracleTokenPriceUsd("NonStandardToken", "1.00");
