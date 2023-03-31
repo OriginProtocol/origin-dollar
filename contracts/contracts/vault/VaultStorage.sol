@@ -120,6 +120,9 @@ contract VaultStorage is Initializable, Governable {
     // How much net total OUSD is allowed to be minted by all strategies
     uint256 public netOusdMintForStrategyThreshold = 0;
 
+    // Cheaper to read decimals locally than to call out each time
+    mapping(address => uint256) internal decimalsCache;
+
     /**
      * @dev set the implementation for the admin, this needs to be in a base class else we cannot set it
      * @param newImpl address of the implementation

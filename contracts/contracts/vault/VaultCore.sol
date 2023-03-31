@@ -19,6 +19,7 @@ import { StableMath } from "../utils/StableMath.sol";
 import { IOracle } from "../interfaces/IOracle.sol";
 import { IVault } from "../interfaces/IVault.sol";
 import { IBuyback } from "../interfaces/IBuyback.sol";
+import { IBasicToken } from "../interfaces/IBasicToken.sol";
 import "./VaultStorage.sol";
 
 contract VaultCore is VaultStorage {
@@ -74,25 +75,21 @@ contract VaultCore is VaultStorage {
             price = 1e8;
         }
         require(price >= MINT_MINIMUM_ORACLE, "Asset price below peg");
-        uint256 assetDecimals = Helpers.getDecimals(_asset);
         // Scale up to 18 decimal
-        uint256 unitAdjustedDeposit = _amount.scaleBy(18, assetDecimals);
-        uint256 priceAdjustedDeposit = _amount.mulTruncateScale(
-            price.scaleBy(18, 8), // Oracles have 8 decimal precision
-            10**assetDecimals
-        );
+        uint256 priceAdjustedDeposit = (_toUnits(_amount, _asset) * price) /
+            1e8;
 
         if (_minimumOusdAmount > 0) {
-            require(
-                priceAdjustedDeposit >= _minimumOusdAmount,
-                "Mint amount lower than minimum"
-            );
+            // require(
+            //     priceAdjustedDeposit >= _minimumOusdAmount,
+            //     "Mint amount lower than minimum"
+            // );
         }
 
         emit Mint(msg.sender, priceAdjustedDeposit);
 
         // Rebase must happen before any transfers occur.
-        if (unitAdjustedDeposit >= rebaseThreshold && !rebasePaused) {
+        if (priceAdjustedDeposit >= rebaseThreshold && !rebasePaused) {
             _rebase();
         }
 
@@ -103,7 +100,7 @@ contract VaultCore is VaultStorage {
         IERC20 asset = IERC20(_asset);
         asset.safeTransferFrom(msg.sender, address(this), _amount);
 
-        if (unitAdjustedDeposit >= autoAllocateThreshold) {
+        if (priceAdjustedDeposit >= autoAllocateThreshold) {
             _allocate();
         }
     }
@@ -215,10 +212,7 @@ contract VaultCore is VaultStorage {
         if (_minimumUnitAmount > 0) {
             uint256 unitTotal = 0;
             for (uint256 i = 0; i < outputs.length; i++) {
-                uint256 assetDecimals = Helpers.getDecimals(allAssets[i]);
-                unitTotal = unitTotal.add(
-                    outputs[i].scaleBy(18, assetDecimals)
-                );
+                unitTotal += _toUnits(outputs[i], allAssets[i]);
             }
             require(
                 unitTotal >= _minimumUnitAmount,
@@ -437,10 +431,9 @@ contract VaultCore is VaultStorage {
     function _totalValueInVault() internal view returns (uint256 value) {
         for (uint256 y = 0; y < allAssets.length; y++) {
             IERC20 asset = IERC20(allAssets[y]);
-            uint256 assetDecimals = Helpers.getDecimals(allAssets[y]);
             uint256 balance = asset.balanceOf(address(this));
             if (balance > 0) {
-                value = value.add(balance.scaleBy(18, assetDecimals));
+                value += _toUnits(balance, allAssets[y]);
             }
         }
     }
@@ -467,11 +460,10 @@ contract VaultCore is VaultStorage {
     {
         IStrategy strategy = IStrategy(_strategyAddr);
         for (uint256 y = 0; y < allAssets.length; y++) {
-            uint256 assetDecimals = Helpers.getDecimals(allAssets[y]);
             if (strategy.supportsAsset(allAssets[y])) {
                 uint256 balance = strategy.checkBalance(allAssets[y]);
                 if (balance > 0) {
-                    value = value.add(balance.scaleBy(18, assetDecimals));
+                    value += _toUnits(balance, allAssets[y]);
                 }
             }
         }
@@ -513,10 +505,7 @@ contract VaultCore is VaultStorage {
      */
     function _checkBalance() internal view returns (uint256 balance) {
         for (uint256 i = 0; i < allAssets.length; i++) {
-            uint256 assetDecimals = Helpers.getDecimals(allAssets[i]);
-            balance = balance.add(
-                _checkBalance(allAssets[i]).scaleBy(18, assetDecimals)
-            );
+            balance += _toUnits(_checkBalance(allAssets[i]), allAssets[i]);
         }
     }
 
@@ -576,7 +565,7 @@ contract VaultCore is VaultStorage {
         uint256 assetCount = getAssetCount();
         uint256[] memory assetPrices = _getAssetPrices();
         uint256[] memory assetBalances = new uint256[](assetCount);
-        uint256[] memory assetDecimals = new uint256[](assetCount);
+        uint256[] memory assetUnits = new uint256[](assetCount);
         uint256 totalOutputRatio = 0;
         outputs = new uint256[](assetCount);
 
@@ -590,10 +579,9 @@ contract VaultCore is VaultStorage {
         // for a large gas savings.
         for (uint256 i = 0; i < allAssets.length; i++) {
             uint256 balance = _checkBalance(allAssets[i]);
-            uint256 decimals = Helpers.getDecimals(allAssets[i]);
             assetBalances[i] = balance;
-            assetDecimals[i] = decimals;
-            totalBalance = totalBalance.add(balance.scaleBy(18, decimals));
+            assetUnits[i] = _toUnits(balance, allAssets[i]);
+            totalBalance = totalBalance.add(assetUnits[i]);
         }
         // Calculate totalOutputRatio
         for (uint256 i = 0; i < allAssets.length; i++) {
@@ -603,10 +591,7 @@ contract VaultCore is VaultStorage {
             if (price < 1e18) {
                 price = 1e18;
             }
-            uint256 ratio = assetBalances[i]
-                .scaleBy(18, assetDecimals[i])
-                .mul(price)
-                .div(totalBalance);
+            uint256 ratio = assetUnits[i].mul(price).div(totalBalance);
             totalOutputRatio = totalOutputRatio.add(ratio);
         }
         // Calculate final outputs
@@ -669,6 +654,21 @@ contract VaultCore is VaultStorage {
 
     function isSupportedAsset(address _asset) external view returns (bool) {
         return assets[_asset].isSupported;
+    }
+
+    function _toUnits(uint256 raw, address token)
+        internal
+        view
+        returns (uint256)
+    {
+        uint256 units = raw.scaleBy(18, _getDecimals(token));
+        return units;
+    }
+
+    function _getDecimals(address token) internal view returns (uint256) {
+        uint256 decimals = decimalsCache[token];
+        require(decimals > 0, "Decimals Not Cached");
+        return decimals;
     }
 
     /**

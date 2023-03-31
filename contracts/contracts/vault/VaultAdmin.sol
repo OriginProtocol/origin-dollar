@@ -171,12 +171,17 @@ contract VaultAdmin is VaultStorage {
 
         assets[_asset] = Asset({ isSupported: true });
         allAssets.push(_asset);
+        _cacheDecimals(_asset);
 
         // Verify that our oracle supports the asset
         // slither-disable-next-line unused-return
         IOracle(priceProvider).price(_asset);
 
         emit AssetSupported(_asset);
+    }
+
+    function cacheDecimals(address _asset) external onlyGovernor {
+        _cacheDecimals(_asset);
     }
 
     /**
@@ -500,5 +505,18 @@ contract VaultAdmin is VaultStorage {
             IStrategy strategy = IStrategy(allStrategies[i]);
             strategy.withdrawAll();
         }
+    }
+
+    /***************************************
+                    Utils
+    ****************************************/
+
+    function _cacheDecimals(address token) internal {
+        if (decimalsCache[token] != 0) {
+            return;
+        }
+        uint256 decimals = IBasicToken(token).decimals();
+        require(decimals >= 6 && decimals <= 18, "Unexpected precision");
+        decimalsCache[token] = decimals;
     }
 }
