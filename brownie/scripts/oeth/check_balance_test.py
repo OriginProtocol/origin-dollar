@@ -138,7 +138,7 @@ def simulateCheckBalanceCalls():
         largestStrategyBalanceDiff = 0
 
       if i % 100 == 0:
-        print("Gotten to: " + str(i))
+        print("Gotten to: " + str(i), blockNumber)
         print("results", reductionsInPrices, results)
     except:
       # do nothing just continue
