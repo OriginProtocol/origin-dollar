@@ -267,9 +267,7 @@ describe("OGV Buyback", function () {
     for (const user of [strategist, franck]) {
       await expect(
         buyback.connect(user).setTreasuryBps("123")
-      ).to.be.revertedWith(
-        "Caller is not the Governor"
-      );
+      ).to.be.revertedWith("Caller is not the Governor");
     }
   });
 });
