@@ -896,11 +896,13 @@ const deployBuyback = async () => {
   await deployWithConfirmation("Buyback", [
     assetAddresses.uniswapRouter,
     strategistAddr,
+    strategistAddr, // Treasury manager
     ousd.address,
     assetAddresses.OGV,
     assetAddresses.USDT,
     assetAddresses.WETH,
     assetAddresses.RewardsSource,
+    "5000" // 50%
   ]);
   const cBuyback = await ethers.getContract("Buyback");
 
