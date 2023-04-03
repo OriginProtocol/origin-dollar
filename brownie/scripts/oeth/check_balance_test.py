@@ -140,10 +140,10 @@ def simulateCheckBalanceCalls():
       if i % 100 == 0:
         print("Gotten to: " + str(i), blockNumber)
         print("results", reductionsInPrices, results)
-    except:
-      # do nothing just continue
+    except Exception as e:
+      print(e)
       pass
-  print("results", reductionsInPrices, results)
+  print("results final", reductionsInPrices, results)
 
 #calculateDifferencesInPrice()
 simulateCheckBalanceCalls()
