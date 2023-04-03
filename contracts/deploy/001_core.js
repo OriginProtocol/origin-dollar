@@ -798,7 +798,6 @@ const deployCore = async () => {
 
   // Initialize OUSD
   const resolution = ethers.utils.parseUnits("1", 18);
-  console.log(resolution.toString());
   await withConfirmation(
     cOUSD
       .connect(sGovernor)
