@@ -902,7 +902,7 @@ const deployBuyback = async () => {
     assetAddresses.USDT,
     assetAddresses.WETH,
     assetAddresses.RewardsSource,
-    "5000" // 50%
+    "5000", // 50%
   ]);
   const cBuyback = await ethers.getContract("Buyback");
 

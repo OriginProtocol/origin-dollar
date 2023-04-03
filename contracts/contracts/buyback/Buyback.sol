@@ -121,7 +121,7 @@ contract Buyback is Strategizable {
     }
 
     /**
-     * @dev Set the Treasury's share of OUSD 
+     * @dev Set the Treasury's share of OUSD
      * @param _bps Percentage of OUSD balance to be sent to treasury
      */
     function setTreasuryBps(uint256 _bps) external onlyGovernor {
@@ -186,7 +186,7 @@ contract Buyback is Strategizable {
             emit OUSDSwapped(address(ogv), swapAmountIn, amountOut);
         }
 
-        uint256 amountToTransfer = swapAmountIn - ousdAmount;
+        uint256 amountToTransfer = ousdAmount - swapAmountIn;
         if (amountToTransfer > 0) {
             ousd.safeTransfer(treasuryManager, amountToTransfer);
             emit OUSDTransferred(treasuryManager, amountToTransfer);
