@@ -67,19 +67,70 @@ describe("OGV Buyback", function () {
 
   it("Should distribute and swap OUSD when called by strategist", async () => {
     const fixture = await loadFixture(defaultFixture);
-    const { ousd, ogn, ogv, strategist, buyback, rewardsSource } = fixture;
+    const { ousd, ogn, ogv, strategist, governor, buyback, rewardsSource } =
+      fixture;
     await fundBuybackAndUniswap(fixture);
+
+    await buyback.connect(governor).setTreasuryBps("5000");
 
     const ousdAmount = utils.parseUnits("1000", 18);
     const minOGV = utils.parseUnits("500", 18);
     await buyback.connect(strategist).distributeAndSwap(ousdAmount, minOGV);
 
-    // Should've swapped for OGV
+    // Should've transferred the treasury's share of  500 OUSD
+    await expect(strategist).has.a.balanceOf("500", ousd);
+
+    // Should've swapped 500 OUSD for OGV
     await expect(buyback).has.a.balanceOf("0", ogn);
     await expect(buyback).has.a.balanceOf("0", ogv);
     await expect(rewardsSource).has.a.balanceOf("0", ogn);
     await expect(rewardsSource).has.a.balanceOf("500", ogv);
-    await expect(strategist).has.a.balanceOf("500", ousd);
+    await expect(buyback).has.a.balanceOf("0", ousd);
+  });
+
+  it("Should just distribute when treasuryBps is 100%", async () => {
+    const fixture = await loadFixture(defaultFixture);
+    const { ousd, ogn, ogv, strategist, governor, buyback, rewardsSource } =
+      fixture;
+    await fundBuybackAndUniswap(fixture);
+
+    await buyback.connect(governor).setTreasuryBps("10000");
+
+    const ousdAmount = utils.parseUnits("1000", 18);
+    const minOGV = utils.parseUnits("0", 18);
+    await buyback.connect(strategist).distributeAndSwap(ousdAmount, minOGV);
+
+    // Should've transferred the treasury's share
+    await expect(strategist).has.a.balanceOf("1000", ousd);
+
+    // Should not have swapped for OGV
+    await expect(buyback).has.a.balanceOf("0", ogn);
+    await expect(buyback).has.a.balanceOf("0", ogv);
+    await expect(rewardsSource).has.a.balanceOf("0", ogn);
+    await expect(rewardsSource).has.a.balanceOf("0", ogv);
+    await expect(buyback).has.a.balanceOf("0", ousd);
+  });
+
+  it("Should just swap when treasuryBps is 0%", async () => {
+    const fixture = await loadFixture(defaultFixture);
+    const { ousd, ogn, ogv, strategist, governor, buyback, rewardsSource } =
+      fixture;
+    await fundBuybackAndUniswap(fixture);
+
+    await buyback.connect(governor).setTreasuryBps("0");
+
+    const ousdAmount = utils.parseUnits("1000", 18);
+    const minOGV = utils.parseUnits("1000", 18);
+    await buyback.connect(strategist).distributeAndSwap(ousdAmount, minOGV);
+
+    // Shouldn't have transferred anything for treasury
+    await expect(strategist).has.a.balanceOf("0", ousd);
+
+    // Should've swapped 1000 OUSD for OGV
+    await expect(buyback).has.a.balanceOf("0", ogn);
+    await expect(buyback).has.a.balanceOf("0", ogv);
+    await expect(rewardsSource).has.a.balanceOf("0", ogn);
+    await expect(rewardsSource).has.a.balanceOf("1000", ogv);
     await expect(buyback).has.a.balanceOf("0", ousd);
   });
 
@@ -180,6 +231,46 @@ describe("OGV Buyback", function () {
     await expect(
       buyback.connect(strategist).transferToken(ousd.address, ousdUnits("8.0"))
     ).to.be.revertedWith("Caller is not the Governor");
+  });
+
+  it("Should allow Governor to change Treasury manager address", async () => {
+    const { buyback, governor, matt } = await loadFixture(defaultFixture);
+
+    await buyback.connect(governor).setTreasuryManager(matt.address);
+
+    expect(await buyback.treasuryManager()).to.equal(matt.address);
+  });
+
+  it("Should not allow anyone else to change Treasury manager address", async () => {
+    const { buyback, strategist, matt, josh } = await loadFixture(
+      defaultFixture
+    );
+
+    for (const user of [strategist, josh]) {
+      expect(
+        buyback.connect(user).setTreasuryManager(matt.address)
+      ).to.be.revertedWith("Caller is not the Governor");
+    }
+  });
+
+  it("Should allow Governor to change Treasury Bips", async () => {
+    const { buyback, governor } = await loadFixture(defaultFixture);
+
+    await buyback.connect(governor).setTreasuryBps("1234");
+
+    expect(await buyback.treasuryBps()).to.equal("1234");
+  });
+
+  it("Should not allow anyone else to change Treasury Bips", async () => {
+    const { buyback, strategist, franck } = await loadFixture(defaultFixture);
+
+    for (const user of [strategist, franck]) {
+      await expect(
+        buyback.connect(user).setTreasuryBps("123")
+      ).to.be.revertedWith(
+        "Caller is not the Governor"
+      );
+    }
   });
 });
 

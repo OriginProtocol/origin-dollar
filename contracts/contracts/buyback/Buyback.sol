@@ -159,7 +159,8 @@ contract Buyback is Strategizable {
     {
         require(uniswapAddr != address(0), "Exchange address not set");
 
-        uint256 swapAmountIn = ousdAmount.mul(treasuryBps).div(10000);
+        uint256 amountToTransfer = ousdAmount.mul(treasuryBps).div(10000);
+        uint256 swapAmountIn = ousdAmount - amountToTransfer;
 
         if (swapAmountIn > 0) {
             require(minOGVExpected > 0, "Invalid minOGVExpected value");
@@ -186,7 +187,6 @@ contract Buyback is Strategizable {
             emit OUSDSwapped(address(ogv), swapAmountIn, amountOut);
         }
 
-        uint256 amountToTransfer = ousdAmount - swapAmountIn;
         if (amountToTransfer > 0) {
             ousd.safeTransfer(treasuryManager, amountToTransfer);
             emit OUSDTransferred(treasuryManager, amountToTransfer);
