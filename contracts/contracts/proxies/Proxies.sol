@@ -100,3 +100,10 @@ contract MorphoAaveStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 contract OETHProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
+
+/**
+ * @notice WOETHProxy delegates calls to nowhere for now
+ */
+contract WOETHProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
