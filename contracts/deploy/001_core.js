@@ -802,10 +802,11 @@ const deployCore = async () => {
   log("Initialized VaultAdmin implementation");
 
   // Initialize OUSD
+  const resolution = ethers.utils.parseUnits("1", 18);
   await withConfirmation(
     cOUSD
       .connect(sGovernor)
-      .initialize("Origin Dollar", "OUSD", cVaultProxy.address)
+      .initialize("Origin Dollar", "OUSD", cVaultProxy.address, resolution)
   );
 
   log("Initialized OUSD");
