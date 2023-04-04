@@ -1,10 +1,10 @@
-const { deploymentWithProposal } = require("../utils/deploy");
+const { deploymentWithGovernanceProposal } = require("../utils/deploy");
+const addresses = require("../utils/addresses");
 
-module.exports = deploymentWithProposal(
+module.exports = deploymentWithGovernanceProposal(
   {
     deployName: "051_upgrade_buyback",
-    forceDeploy: false,
-    forceSkip: true,
+    forceDeploy: true,
   },
   async ({
     withConfirmation,
@@ -13,7 +13,7 @@ module.exports = deploymentWithProposal(
     assetAddresses,
   }) => {
     // Signers
-    const { governorAddr, deployerAddr, strategistAddr } =
+    const { timelockAddr, deployerAddr, strategistAddr } =
       await getNamedAccounts();
     const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
@@ -66,7 +66,7 @@ module.exports = deploymentWithProposal(
 
     // Transfer governance of new contract to the governor
     await withConfirmation(
-      cBuyback.connect(sDeployer).transferGovernance(governorAddr)
+      cBuyback.connect(sDeployer).transferGovernance(timelockAddr)
     );
 
     // Governance Actions
