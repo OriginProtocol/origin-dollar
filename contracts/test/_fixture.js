@@ -304,7 +304,7 @@ async function defaultFixture() {
     const sGovernor = await ethers.provider.getSigner(governorAddr);
 
     // Add TUSD in fixture, it is disabled by default in deployment
-    await vault.connect(sGovernor).supportAsset(assetAddresses.TUSD, false);
+    await vault.connect(sGovernor).supportAsset(assetAddresses.TUSD, 0);
 
     // Enable capital movement
     await vault.connect(sGovernor).unpauseCapital();
@@ -1131,7 +1131,7 @@ async function hackedVaultFixture() {
     evilDAI.address,
     oracleAddresses.chainlink.DAI_USD
   );
-  await fixture.vault.connect(sGovernor).supportAsset(evilDAI.address, false);
+  await fixture.vault.connect(sGovernor).supportAsset(evilDAI.address, 0);
 
   fixture.evilDAI = evilDAI;
 

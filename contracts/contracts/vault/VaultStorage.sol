@@ -50,9 +50,13 @@ contract VaultStorage is Initializable, Governable {
     event NetOusdMintForStrategyThresholdChanged(uint256 _threshold);
 
     // Assets supported by the Vault, i.e. Stablecoins
+    enum UnitConversion {
+        DECIMALS,
+        GETEXCHANGERATE
+    }
     struct Asset {
         bool isSupported;
-        bool hasExchangeRate;
+        UnitConversion unitConversion;
     }
     mapping(address => Asset) internal assets;
     address[] internal allAssets;

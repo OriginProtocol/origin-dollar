@@ -20,7 +20,7 @@ import { IOracle } from "../interfaces/IOracle.sol";
 import { IVault } from "../interfaces/IVault.sol";
 import { IBuyback } from "../interfaces/IBuyback.sol";
 import { IBasicToken } from "../interfaces/IBasicToken.sol";
-import { IExchangeRateToken } from "../interfaces/IExchangeRateToken.sol";
+import { IGetExchangeRateToken } from "../interfaces/IGetExchangeRateToken.sol";
 import "./VaultStorage.sol";
 
 contract VaultCore is VaultStorage {
@@ -662,11 +662,15 @@ contract VaultCore is VaultStorage {
         view
         returns (uint256)
     {
-        if (assets[_asset].hasExchangeRate) {
-            return (raw * IExchangeRateToken(_asset).exchangeRate()) / 1e18;
+        UnitConversion conversion = assets[_asset].unitConversion;
+        if (conversion == UnitConversion.DECIMALS) {
+            return raw.scaleBy(18, _getDecimals(_asset));
+        } else if (conversion == UnitConversion.GETEXCHANGERATE) {
+            return
+                (raw * IGetExchangeRateToken(_asset).getExchangeRate()) / 1e18;
+        } else {
+            require(false, "Unsupported conversion type");
         }
-        uint256 units = raw.scaleBy(18, _getDecimals(_asset));
-        return units;
     }
 
     function _getDecimals(address _asset) internal view returns (uint256) {

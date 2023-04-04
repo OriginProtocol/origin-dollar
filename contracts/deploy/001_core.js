@@ -489,15 +489,15 @@ const configureVault = async (harvesterProxy) => {
   );
   // Set up supported assets for Vault
   await withConfirmation(
-    cVault.connect(sGovernor).supportAsset(assetAddresses.DAI, false)
+    cVault.connect(sGovernor).supportAsset(assetAddresses.DAI, 0)
   );
   log("Added DAI asset to Vault");
   await withConfirmation(
-    cVault.connect(sGovernor).supportAsset(assetAddresses.USDT, false)
+    cVault.connect(sGovernor).supportAsset(assetAddresses.USDT, 0)
   );
   log("Added USDT asset to Vault");
   await withConfirmation(
-    cVault.connect(sGovernor).supportAsset(assetAddresses.USDC, false)
+    cVault.connect(sGovernor).supportAsset(assetAddresses.USDC, 0)
   );
   log("Added USDC asset to Vault");
   // Unpause deposits

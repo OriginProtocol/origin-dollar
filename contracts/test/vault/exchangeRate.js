@@ -19,7 +19,7 @@ describe.only("Vault Redeem", function () {
   beforeEach(async function () {
     fixture = await loadFixture(defaultFixture);
     const { vault, reth, governor } = fixture;
-    await vault.connect(governor).supportAsset(reth.address, true);
+    await vault.connect(governor).supportAsset(reth.address, 1);
     await setOracleTokenPriceUsd("RETHETH", "1.2");
   });
 

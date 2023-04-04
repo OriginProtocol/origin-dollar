@@ -166,7 +166,7 @@ contract VaultAdmin is VaultStorage {
      *         to mint OUSD.
      * @param _asset Address of asset
      */
-    function supportAsset(address _asset, bool _hasExchangeRate)
+    function supportAsset(address _asset, uint8 _unitConversion)
         external
         onlyGovernor
     {
@@ -174,7 +174,7 @@ contract VaultAdmin is VaultStorage {
 
         assets[_asset] = Asset({
             isSupported: true,
-            hasExchangeRate: _hasExchangeRate
+            unitConversion: UnitConversion(_unitConversion)
         });
         allAssets.push(_asset);
         _cacheDecimals(_asset);

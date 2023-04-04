@@ -70,7 +70,7 @@ interface IVault {
 
     function ousdMetaStrategy() external view returns (address);
 
-    function supportAsset(address _asset, bool _hasExchangeRate) external;
+    function supportAsset(address _asset, uint8 _supportsAsset) external;
 
     function approveStrategy(address _addr) external;
 
