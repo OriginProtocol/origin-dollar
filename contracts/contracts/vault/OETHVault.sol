@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity ^0.8.0;
 
-import { OUSD } from "./OUSD.sol";
+import { Vault } from "./Vault.sol";
 
 /**
- * @title OETH Token Contract
+ * @title OETH Vault Contract
  * @author Origin Protocol Inc
  */
-contract OETH is OUSD {}
+contract OETHVault is Vault {}

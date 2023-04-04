@@ -734,7 +734,6 @@ const deployOracles = async () => {
 
 /**
  * Deploy the core contracts (Vault and OUSD).
- *
  */
 const deployCore = async () => {
   const { governorAddr } = await hre.getNamedAccounts();

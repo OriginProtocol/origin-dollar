@@ -107,3 +107,17 @@ contract OETHProxy is InitializeGovernedUpgradeabilityProxy {
 contract WOETHProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
+
+/**
+ * @notice OETHVaultProxy delegates calls to a Vault implementation
+ */
+contract OETHVaultProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
+
+/**
+ * @notice OETHDripperProxy delegates calls to a OETHDripper implementation
+ */
+contract OETHDripperProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
