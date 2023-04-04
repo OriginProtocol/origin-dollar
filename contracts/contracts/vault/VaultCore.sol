@@ -657,17 +657,32 @@ contract VaultCore is VaultStorage {
         return assets[_asset].isSupported;
     }
 
-    function _toUnits(uint256 raw, address _asset)
+    /**
+     * @dev Convert a quantity of a token into 1e18 fixed decimal "units"
+     * in the underlying base (USD/ETH) used by the vault.
+     * Price is not taken into account, only quantity.
+     *
+     * Examples of this conversion:
+     *
+     * - 1e18 DAI becomes 1e18 units (same decimals)
+     * - 1e6 USDC becomes 1e18 units (decimal conversion)
+     * - 1e18 rETH becomes 1.2e18 units (exchange rate conversion)
+     * 
+     * @param _raw Quantity of asset
+     * @param _asset Core Asset address
+     * @return value 1e18 normalized quantity of units
+     */
+    function _toUnits(uint256 _raw, address _asset)
         internal
         view
         returns (uint256)
     {
         UnitConversion conversion = assets[_asset].unitConversion;
         if (conversion == UnitConversion.DECIMALS) {
-            return raw.scaleBy(18, _getDecimals(_asset));
+            return _raw.scaleBy(18, _getDecimals(_asset));
         } else if (conversion == UnitConversion.GETEXCHANGERATE) {
             return
-                (raw * IGetExchangeRateToken(_asset).getExchangeRate()) / 1e18;
+                (_raw * IGetExchangeRateToken(_asset).getExchangeRate()) / 1e18;
         } else {
             require(false, "Unsupported conversion type");
         }
