@@ -1,0 +1,121 @@
+const { deploymentWithProposal } = require("../utils/deploy");
+
+module.exports = deploymentWithProposal(
+  {
+    deployName: "051_upgrade_buyback",
+    forceDeploy: false,
+    forceSkip: true,
+  },
+  async ({
+    withConfirmation,
+    deployWithConfirmation,
+    ethers,
+    assetAddresses,
+  }) => {
+    // Signers
+    const { governorAddr, deployerAddr, strategistAddr } =
+      await getNamedAccounts();
+    const sDeployer = await ethers.provider.getSigner(deployerAddr);
+
+    const cOUSDProxy = await ethers.getContract("OUSDProxy");
+    const cOUSD = await ethers.getContractAt("OUSD", cOUSDProxy.address);
+
+    const cOGN = await ethers.getContractAt("MockOGN", assetAddresses.OGN);
+
+    // Vault contract
+    const cVaultProxy = await ethers.getContract("VaultProxy");
+    const cVaultAdmin = await ethers.getContractAt(
+      "VaultAdmin",
+      cVaultProxy.address
+    );
+
+    // Buyback contract with OGN
+    const oldBuybackAddress = "0x77314EB392b2be47C014cde0706908b3307Ad6a9";
+    const cOldBuyback = await ethers.getContractAt(
+      ["function transferToken(address token, uint256 amount) external"],
+      oldBuybackAddress
+    );
+    const ognBalance = await cOGN.balanceOf(oldBuybackAddress);
+
+    // Most recent buyback contract
+    const recentBuybackAddress = "0x6C5cdfB47150EFc52072cB93Eea1e0F123529748";
+    const cRecentBuyback = await ethers.getContractAt(
+      ["function transferToken(address token, uint256 amount) external"],
+      recentBuybackAddress
+    );
+    const ousdBalance = await cOUSD.balanceOf(recentBuybackAddress);
+
+    // Deploy new Buyback contract
+    await deployWithConfirmation(
+      "Buyback",
+      [
+        assetAddresses.uniswapV3Router,
+        strategistAddr,
+        strategistAddr, // Treasury manager
+        cOUSD.address,
+        assetAddresses.OGV,
+        assetAddresses.USDT,
+        assetAddresses.WETH,
+        assetAddresses.RewardsSource,
+        "5000", // 50%
+      ],
+      "Buyback",
+      true
+    );
+    const cBuyback = await ethers.getContract("Buyback");
+
+    // Transfer governance of new contract to the governor
+    await withConfirmation(
+      cBuyback.connect(sDeployer).transferGovernance(governorAddr)
+    );
+
+    // Governance Actions
+    // ----------------
+    return {
+      name: "Upgrade Buyback",
+      actions: [
+        {
+          // 1. Increase performance fee to 20%
+          contract: cVaultAdmin,
+          signature: "setTrusteeFeeBps(uint256)",
+          args: ["2000"], // 20%
+        },
+        {
+          // 2. Claim Governance of the new Buyback contract
+          contract: cBuyback,
+          signature: "claimGovernance()",
+        },
+        {
+          // 3. Update trustee address on Vault
+          contract: cVaultAdmin,
+          signature: "setTrusteeAddress(address)",
+          args: [cBuyback.address],
+        },
+        {
+          // 4. Transfer OUSD balance to Governor
+          contract: cRecentBuyback,
+          signature: "transferToken(address,uint256)",
+          args: [cOUSDProxy.address, ousdBalance],
+        },
+        {
+          // 5. Transfer OGN balance to Governor
+          contract: cOldBuyback,
+          signature: "transferToken(address,uint256)",
+          args: [cOGN.address, ognBalance],
+        },
+        {
+          // 6. Transfer OUSD balance from Governor to New Contract
+          contract: cOUSD,
+          signature: "transfer(address,uint256)",
+          args: [cBuyback.address, ousdBalance],
+        },
+        {
+          // 7. Transfer OGN balance from Governor to New Contract
+          contract: cOGN,
+          signature: "transfer(address,uint256)",
+          args: [cBuyback.address, ognBalance],
+        },
+      ],
+    };
+  }
+);
