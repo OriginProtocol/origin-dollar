@@ -56,10 +56,11 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
     function initialize(
         string calldata _nameArg,
         string calldata _symbolArg,
-        address _vaultAddress
+        address _vaultAddress,
+        uint256 _initialCreditsPerToken
     ) external onlyGovernor initializer {
         InitializableERC20Detailed._initialize(_nameArg, _symbolArg, 18);
-        _rebasingCreditsPerToken = 1e18;
+        _rebasingCreditsPerToken = _initialCreditsPerToken;
         vaultAddress = _vaultAddress;
     }
 
