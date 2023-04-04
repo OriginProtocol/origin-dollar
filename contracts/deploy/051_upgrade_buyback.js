@@ -4,7 +4,7 @@ const addresses = require("../utils/addresses");
 module.exports = deploymentWithGovernanceProposal(
   {
     deployName: "051_upgrade_buyback",
-    forceDeploy: true,
+    forceDeploy: false,
   },
   async ({
     withConfirmation,
