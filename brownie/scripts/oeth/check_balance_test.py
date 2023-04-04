@@ -85,7 +85,8 @@ def simulateCheckBalanceCalls():
   results = {
     "hoursNegative": {},
     "largestDiffs": {},
-    "largestDiffsList": []
+    "largestDiffsList": [],
+    "hoursNegativeList": [],
   }
   #totalRange = 24 * 7
   totalRange = 24 * 375
@@ -124,6 +125,7 @@ def simulateCheckBalanceCalls():
             results["hoursNegative"][key] = 1
           else:
             results["hoursNegative"][key] = results["hoursNegative"][key] + 1
+          results["hoursNegativeList"].append(hoursNegativeBalance)
 
         if largestStrategyBalanceDiff > 0:
           formattedDiff = round(largestStrategyBalanceDiff / 1e18 * 100, 5)
@@ -144,6 +146,32 @@ def simulateCheckBalanceCalls():
       print(e)
       pass
   print("results final", reductionsInPrices, results)
+  return results
+
+def plot_price_diff_results(results):
+  fig, ax1 = plt.subplots()
+  fig.subplots_adjust(right=0.75)
+  ax2 = ax1.twinx()
+  X = []
+  Y = []
+  Y2 = []
+  
+  for index in range(len(results["largestDiffsList"])):
+      X.append(index)
+      Y.append(float(results["largestDiffsList"][index]))
+      Y2.append(int(results["hoursNegativeList"][index]))
+  
+  ax1.plot(X,Y, 'g-')
+  ax1.grid()
+  ax2.plot(X,Y2, 'b-')
+
+  ax1.set_xlabel('Occurrence')
+  ax1.set_ylabel('Largest negative price diff [%]', color='g')
+  ax2.set_ylabel('Hours lasted', color='b')
+
+  plt.title("Negative price movements and their duration")
+  plt.show()
 
 #calculateDifferencesInPrice()
-simulateCheckBalanceCalls()
+#results = simulateCheckBalanceCalls()
+plot_price_diff_results(results)
