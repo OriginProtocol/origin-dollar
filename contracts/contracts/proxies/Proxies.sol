@@ -93,3 +93,17 @@ contract ConvexLUSDMetaStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 contract MorphoAaveStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
+
+/**
+ * @notice OETHProxy delegates calls to nowhere for now
+ */
+contract OETHProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
+
+/**
+ * @notice WOETHProxy delegates calls to nowhere for now
+ */
+contract WOETHProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
