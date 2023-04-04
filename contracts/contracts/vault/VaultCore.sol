@@ -567,7 +567,6 @@ contract VaultCore is VaultStorage {
         uint256 assetCount = getAssetCount();
         uint256[] memory assetPrices = _getAssetPrices();
         uint256[] memory assetBalances = new uint256[](assetCount);
-        uint256[] memory assetUnits = new uint256[](assetCount);
         uint256 totalOutputRatio = 0;
         outputs = new uint256[](assetCount);
 
@@ -582,8 +581,7 @@ contract VaultCore is VaultStorage {
         for (uint256 i = 0; i < allAssets.length; i++) {
             uint256 balance = _checkBalance(allAssets[i]);
             assetBalances[i] = balance;
-            assetUnits[i] = _toUnits(balance, allAssets[i]);
-            totalBalance = totalBalance.add(assetUnits[i]);
+            totalBalance = totalBalance.add(_toUnits(balance, allAssets[i]));
         }
         // Calculate totalOutputRatio
         for (uint256 i = 0; i < allAssets.length; i++) {
