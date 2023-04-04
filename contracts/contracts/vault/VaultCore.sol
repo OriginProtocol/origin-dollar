@@ -71,21 +71,21 @@ contract VaultCore is VaultStorage {
         require(assets[_asset].isSupported, "Asset is not supported");
         require(_amount > 0, "Amount must be greater than 0");
 
+        uint256 units = _toUnits(_amount, _asset);
         uint256 price = IOracle(priceProvider).price(_asset);
-        if (price > 1e8) {
-            price = 1e8;
+        uint256 unitPrice = _toUnitPrice(price, _asset);
+        if (unitPrice > 1e8) {
+            unitPrice = 1e8;
         }
-        require(price >= MINT_MINIMUM_ORACLE, "Asset price below peg");
+        require(unitPrice >= MINT_MINIMUM_ORACLE, "Asset price below peg"); // TODO
         // Scale up to 18 decimal
-        uint256 priceAdjustedDeposit = (_toUnits(_amount, _asset) * price) /
-            1e8;
+        uint256 priceAdjustedDeposit = (units * unitPrice) / 1e8;
 
         if (_minimumOusdAmount > 0) {
-            // TODO: ADD!
-            // require(
-            //     priceAdjustedDeposit >= _minimumOusdAmount,
-            //     "Mint amount lower than minimum"
-            // );
+            require(
+                priceAdjustedDeposit >= _minimumOusdAmount,
+                "Mint amount lower than minimum"
+            );
         }
 
         emit Mint(msg.sender, priceAdjustedDeposit);
@@ -565,7 +565,7 @@ contract VaultCore is VaultStorage {
         // And so the user gets $10.40 + $19.60 = $30 worth of value.
 
         uint256 assetCount = getAssetCount();
-        uint256[] memory assetPrices = _getAssetPrices();
+        uint256[] memory assetUnits = new uint256[](assetCount);
         uint256[] memory assetBalances = new uint256[](assetCount);
         uint256 totalOutputRatio = 0;
         outputs = new uint256[](assetCount);
@@ -581,43 +581,25 @@ contract VaultCore is VaultStorage {
         for (uint256 i = 0; i < allAssets.length; i++) {
             uint256 balance = _checkBalance(allAssets[i]);
             assetBalances[i] = balance;
-            totalBalance = totalBalance.add(_toUnits(balance, allAssets[i]));
+            assetUnits[i] = _toUnits(balance, allAssets[i]);
+            totalBalance = totalBalance.add(assetUnits[i]);
         }
         // Calculate totalOutputRatio
         for (uint256 i = 0; i < allAssets.length; i++) {
-            uint256 price = assetPrices[i];
+            uint256 price = IOracle(priceProvider).price(allAssets[i]);
+            uint256 unitPrice = _toUnitPrice(price, allAssets[i]) * 1e10;
             // Never give out more than one
-            // stablecoin per dollar of OUSD
-            if (price < 1e18) {
-                // TODO, convert to comparing to units!
-                price = 1e18;
+            // base token per unit of OUSD
+            if (unitPrice < 1e18) {
+                unitPrice = 1e18;
             }
-            uint256 ratio = assetBalances[i].mul(price).div(totalBalance);
+            uint256 ratio = assetUnits[i].mul(unitPrice).div(totalBalance);
             totalOutputRatio = totalOutputRatio.add(ratio);
         }
         // Calculate final outputs
         uint256 factor = _amount.divPrecisely(totalOutputRatio);
         for (uint256 i = 0; i < allAssets.length; i++) {
             outputs[i] = assetBalances[i].mul(factor).div(totalBalance);
-        }
-    }
-
-    /**
-     * @notice Get an array of the supported asset prices in USD.
-     * @return assetPrices Array of asset prices in USD (1e18)
-     */
-    function _getAssetPrices()
-        internal
-        view
-        returns (uint256[] memory assetPrices)
-    {
-        assetPrices = new uint256[](getAssetCount());
-
-        IOracle oracle = IOracle(priceProvider);
-        // Price from Oracle is returned with 8 decimals
-        // _amount is in assetDecimals
-        for (uint256 i = 0; i < allAssets.length; i++) {
-            assetPrices[i] = oracle.price(allAssets[i]).scaleBy(18, 8);
         }
     }
 
@@ -667,7 +649,7 @@ contract VaultCore is VaultStorage {
      * - 1e18 DAI becomes 1e18 units (same decimals)
      * - 1e6 USDC becomes 1e18 units (decimal conversion)
      * - 1e18 rETH becomes 1.2e18 units (exchange rate conversion)
-     * 
+     *
      * @param _raw Quantity of asset
      * @param _asset Core Asset address
      * @return value 1e18 normalized quantity of units
@@ -681,8 +663,26 @@ contract VaultCore is VaultStorage {
         if (conversion == UnitConversion.DECIMALS) {
             return _raw.scaleBy(18, _getDecimals(_asset));
         } else if (conversion == UnitConversion.GETEXCHANGERATE) {
-            return
-                (_raw * IGetExchangeRateToken(_asset).getExchangeRate()) / 1e18;
+            uint256 exchangeRate = IGetExchangeRateToken(_asset)
+                .getExchangeRate();
+            return (_raw * exchangeRate) / 1e18;
+        } else {
+            require(false, "Unsupported conversion type");
+        }
+    }
+
+    function _toUnitPrice(uint256 _price, address _asset)
+        internal
+        view
+        returns (uint256)
+    {
+        UnitConversion conversion = assets[_asset].unitConversion;
+        if (conversion == UnitConversion.DECIMALS) {
+            return _price;
+        } else if (conversion == UnitConversion.GETEXCHANGERATE) {
+            uint256 exchangeRate = IGetExchangeRateToken(_asset)
+                .getExchangeRate();
+            return (_price * 1e18) / exchangeRate;
         } else {
             require(false, "Unsupported conversion type");
         }
