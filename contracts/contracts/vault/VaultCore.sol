@@ -501,16 +501,6 @@ contract VaultCore is VaultStorage {
     }
 
     /**
-     * @notice Get the balance of all assets held in Vault and all strategies.
-     * @return balance Balance of all assets (1e18)
-     */
-    function _checkBalance() internal view returns (uint256 balance) {
-        for (uint256 i = 0; i < allAssets.length; i++) {
-            balance += _toUnits(_checkBalance(allAssets[i]), allAssets[i]);
-        }
-    }
-
-    /**
      * @notice Calculate the outputs for a redeem function, i.e. the mix of
      * coins that will be returned
      */
