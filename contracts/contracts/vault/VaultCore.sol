@@ -440,7 +440,7 @@ contract VaultCore is VaultStorage {
         // Write dripper state
         dripperReserve = _dripperReserve;
         dripper = Dripper({
-            perBlock: uint128(_dripperReserve / _dripDuration),
+            perSecond: uint128(_dripperReserve / _dripDuration),
             lastCollect: uint64(block.timestamp),
             dripDuration: _dripper.dripDuration // must use stored value
         });
@@ -478,7 +478,7 @@ contract VaultCore is VaultStorage {
         returns (uint256)
     {
         uint256 elapsed = block.timestamp - _drip.lastCollect;
-        uint256 allowed = (elapsed * _drip.perBlock);
+        uint256 allowed = (elapsed * _drip.perSecond);
         return (allowed > _reserve) ? _reserve : allowed;
     }
 

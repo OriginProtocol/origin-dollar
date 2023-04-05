@@ -135,7 +135,7 @@ contract VaultStorage is Initializable, Governable {
     // Dripper config/state
     struct Dripper {
         uint64 lastCollect;
-        uint128 perBlock;
+        uint128 perSecond;
         uint64 dripDuration;
     }
     Dripper public dripper;
