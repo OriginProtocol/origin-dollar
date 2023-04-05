@@ -26,6 +26,10 @@ module.exports = deploymentWithGuardianGovernor(
       ethers,
     });
     await deployDripper({ deployWithConfirmation, withConfirmation, ethers });
+    actions = actions.concat(
+      await deployFraxETHStrategy({ deployWithConfirmation, withConfirmation, ethers })
+    );
+
     // Governance Actions
     // ----------------
     return {
@@ -43,16 +47,13 @@ const deployCore = async ({
   withConfirmation,
   ethers,
 }) => {
-  const { deployerAddr, governorAddr } = await getNamedAccounts();
+  const { deployerAddr } = await getNamedAccounts();
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
   const assetAddresses = await getAssetAddresses(hre.deployments);
   console.log(
     `Using asset addresses: ${JSON.stringify(assetAddresses, null, 2)}`
   );
-
-  // Signers
-  const sGovernor = await ethers.provider.getSigner(governorAddr);
 
   // Proxies
   await deployWithConfirmation("OETHVaultProxy");
@@ -187,4 +188,65 @@ const deployDripper = async ({
       .connect(sDeployer)
       ["initialize(address,address,bytes)"](dDripper.address, guardianAddr, [])
   );
+};
+
+/**
+ * Deploy Frax ETH Strategy
+ */
+const deployFraxETHStrategy = async ({
+  deployWithConfirmation,
+  withConfirmation,
+  ethers,
+}) => {
+  const assetAddresses = await getAssetAddresses(deployments);
+  const { deployerAddr } = await getNamedAccounts();
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+  const cVaultProxy = await ethers.getContract("VaultProxy");
+
+  const dFraxETHStrategyProxy = await deployWithConfirmation(
+    "FraxETHStrategyProxy"
+  );
+  const cFraxETHStrategyProxy = await ethers.getContract(
+    "FraxETHStrategyProxy"
+  );
+  const dFraxETHStrategy = await deployWithConfirmation("FraxETHStrategy");
+  const cFraxETHStrategy = await ethers.getContractAt(
+    "FraxETHStrategy",
+    dFraxETHStrategyProxy.address
+  );
+  await withConfirmation(
+    cFraxETHStrategyProxy
+      .connect(sDeployer)["initialize(address,address,bytes)"](
+        dFraxETHStrategy.address,
+        deployerAddr,
+        []
+      )
+  );
+
+  console.log("Initialized FraxETHStrategyProxy");
+  await withConfirmation(
+    cFraxETHStrategy
+      .connect(sDeployer)
+      .initialize(
+        addresses.mainnet.sfrxETH,
+        cVaultProxy.address,
+        [],
+        [addresses.mainnet.frxETH],
+        [addresses.mainnet.sfrxETH]
+      )
+  );
+  console.log("Initialized FraxETHStrategy");
+  await withConfirmation(
+    cFraxETHStrategy.connect(sDeployer).transferGovernance(guardianAddr)
+  );
+  console.log(`FraxETHStrategy transferGovernance(${guardianAddr} called`);
+  
+  return [
+    {
+      // Claim Vault governance
+      contract: cFraxETHStrategy,
+      signature: "claimGovernance()",
+      args: [],
+    }
+  ];
 };

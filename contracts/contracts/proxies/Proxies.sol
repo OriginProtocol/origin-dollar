@@ -121,3 +121,10 @@ contract OETHVaultProxy is InitializeGovernedUpgradeabilityProxy {
 contract OETHDripperProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
+
+/**
+ * @notice FraxETHStrategyProxy delegates calls to a FraxETHStrategy implementation
+ */
+contract FraxETHStrategyProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
