@@ -387,7 +387,7 @@ contract VaultCore is VaultStorage {
      * @dev Update the supply of ousd
      *
      * 1. Calculate new gains, splitting gains between the dripper and protocol reserve
-     * 2. Drip out from the driper and update the dripper storage
+     * 2. Drip out from the dripper and update the dripper storage
      * 3. Distribute yield, splitting between trustee fees and rebasing
      *    the remaining post dripper funds to users
      *
@@ -460,7 +460,7 @@ contract VaultCore is VaultStorage {
             }
 
             // Rebase remaining to users
-            // Invarient: must only increase OUSD supply.
+            // Invariant: must only increase OUSD supply.
             // Can only increase because:
             // ousdSupply + yield >= ousdSupply and yield > fee
             oUSD.changeSupply(ousdSupply + yield);
@@ -502,7 +502,7 @@ contract VaultCore is VaultStorage {
 
     /**
      * @dev Internal to calculate total value of all assets held in Vault.
-     * @return value Total value in ETH (1e18)
+     * @return value Total value in USD (1e18)
      */
     function _totalValueInVault() internal view returns (uint256 value) {
         for (uint256 y = 0; y < allAssets.length; y++) {
@@ -517,7 +517,7 @@ contract VaultCore is VaultStorage {
 
     /**
      * @dev Internal to calculate total value of all assets held in Strategies.
-     * @return value Total value in ETH (1e18)
+     * @return value Total value in USD (1e18)
      */
     function _totalValueInStrategies() internal view returns (uint256 value) {
         for (uint256 i = 0; i < allStrategies.length; i++) {

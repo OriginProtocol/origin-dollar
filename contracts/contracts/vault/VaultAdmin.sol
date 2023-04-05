@@ -369,7 +369,7 @@ contract VaultAdmin is VaultStorage {
      */
     function setDripDuration(uint64 _durationSeconds) external onlyGovernor {
         dripper.dripDuration = _durationSeconds;
-        emit DriperDurationChanged(_durationSeconds);
+        emit DripperDurationChanged(_durationSeconds);
     }
 
     /**
