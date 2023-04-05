@@ -6,14 +6,17 @@ pragma solidity ^0.8.0;
  * @notice Investment strategy for investing ETH via staking frxETH
  * @author Origin Protocol Inc
  */
+import { IERC4626 } from "../../lib/openzeppelin/interfaces/IERC4626.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IERC20, InitializableAbstractStrategy } from "../utils/InitializableAbstractStrategy.sol";
 
 contract FraxETHStrategy is InitializableAbstractStrategy {
     using SafeERC20 for IERC20;
 
+    IERC20 sfrxETH;
+    IERC20 frxETH;
     /**
-     * @dev Deposit asset into Compound
+     * @dev Deposit frxEth by staking it as sfrxETH
      * @param _asset Address of asset to deposit
      * @param _amount Amount of asset to deposit
      */
@@ -23,56 +26,49 @@ contract FraxETHStrategy is InitializableAbstractStrategy {
         onlyVault
         nonReentrant
     {
-        //_deposit(_asset, _amount);
+        _deposit(_asset, _amount);
     }
 
     /**
-     * @dev Deposit asset into Compound
+     * @dev Deposit frxEth by staking it as sfrxETH
      * @param _asset Address of asset to deposit
      * @param _amount Amount of asset to deposit
      */
     function _deposit(address _asset, uint256 _amount) internal {
-        // require(_amount > 0, "Must deposit something");
-        // IERC20 cToken = _getCTokenFor(_asset);
-        // emit Deposit(_asset, address(cToken), _amount);
-        // require(cToken.mint(_amount) == 0, "cToken mint failed");
+        require(_amount > 0, "Must deposit something");
+        require(_asset == address(frxETH), "Asset it not frxETH");
+
+        IERC4626(platformAddress).deposit(_amount, address(this));
+        emit Deposit(_asset, address(frxETH), _amount);
     }
 
     /**
-     * @dev Deposit the entire balance of any supported asset into Compound
+     * @dev Deposit the entire balance of frxETH to sfrxETH
      */
     function depositAll() external override onlyVault nonReentrant {
-        // for (uint256 i = 0; i < assetsMapped.length; i++) {
-        //     uint256 balance = IERC20(assetsMapped[i]).balanceOf(address(this));
-        //     if (balance > 0) {
-        //         _deposit(assetsMapped[i], balance);
-        //     }
-        // }
+        uint256 balance = frxETH.balanceOf(address(this));
+        if (balance > 0) {
+            _deposit(address(frxETH), balance);
+        }
     }
 
     /**
-     * @dev Withdraw asset from Compound
-     * @param _recipient Address to receive withdrawn asset
-     * @param _asset Address of asset to withdraw
-     * @param _amount Amount of asset to withdraw
+     * @dev Withdraw frxETH from sfrxETH
+     * @param _recipient Address to receive withdrawn frxETH
+     * @param _asset Address of frxETH to withdraw
+     * @param _amount Amount of frxETH to withdraw
      */
     function withdraw(
         address _recipient,
         address _asset,
         uint256 _amount
     ) external override onlyVault nonReentrant {
-        // require(_amount > 0, "Must withdraw something");
-        // require(_recipient != address(0), "Must specify recipient");
-        // IERC20 cToken = _getCTokenFor(_asset);
-        // // If redeeming 0 cTokens, just skip, else COMP will revert
-        // uint256 cTokensToRedeem = _convertUnderlyingToCToken(cToken, _amount);
-        // if (cTokensToRedeem == 0) {
-        //     emit SkippedWithdrawal(_asset, _amount);
-        //     return;
-        // }
-        // emit Withdrawal(_asset, address(cToken), _amount);
-        // require(cToken.redeemUnderlying(_amount) == 0, "Redeem failed");
-        // IERC20(_asset).safeTransfer(_recipient, _amount);
+        require(_amount > 0, "Must withdraw something");
+        require(_recipient != address(0), "Must specify recipient");
+        require(_asset == address(frxETH), "Asset it not frxETH");
+
+        IERC4626(platformAddress).withdraw(_amount, _recipient, address(this));
+        emit Withdrawal(_asset, address(sfrxETH), _amount);
     }
 
     /**
@@ -85,39 +81,25 @@ contract FraxETHStrategy is InitializableAbstractStrategy {
         internal
         override
     {
+        sfrxETH = IERC20(_pToken);
+        frxETH = IERC20(_asset);
+
         // Safe approval
-        // IERC20(_asset).safeApprove(_pToken, 0);
-        // IERC20(_asset).safeApprove(_pToken, type(uint256).max);
+        sfrxETH.safeApprove(platformAddress, type(uint256).max);
     }
 
     /**
      * @dev Remove all assets from platform and send them to Vault contract.
      */
     function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
-        // for (uint256 i = 0; i < assetsMapped.length; i++) {
-        //     // Redeem entire balance of cToken
-        //     IERC20 cToken = _getCTokenFor(assetsMapped[i]);
-        //     if (cToken.balanceOf(address(this)) > 0) {
-        //         require(
-        //             cToken.redeem(cToken.balanceOf(address(this))) == 0,
-        //             "Redeem failed"
-        //         );
-        //         // Transfer entire balance to Vault
-        //         IERC20 asset = IERC20(assetsMapped[i]);
-        //         asset.safeTransfer(
-        //             vaultAddress,
-        //             asset.balanceOf(address(this))
-        //         );
-        //     }
-        // }
+        uint256 sfrxEthBalance = sfrxETH.balanceOf(address(this));
+        uint256 assetAmount = IERC4626(platformAddress).redeem(sfrxEthBalance, vaultAddress, address(this));
+        emit Withdrawal(address(frxETH), address(sfrxETH), assetAmount);
     }
 
     /**
      * @dev Get the total asset value held in the platform
-     *      This includes any interest that was generated since depositing
-     *      Compound exchange rate between the cToken and asset gradually increases,
-     *      causing the cToken to be worth more corresponding asset.
-     * @param _asset      Address of the asset
+     * @param _asset      Address of the frxETH
      * @return balance    Total value of the asset in the platform
      */
     function checkBalance(address _asset)
@@ -126,26 +108,8 @@ contract FraxETHStrategy is InitializableAbstractStrategy {
         override
         returns (uint256 balance)
     {
-        // Balance is always with token cToken decimals
-        // IERC20 cToken = _getCTokenFor(_asset);
-        // balance = _checkBalance(cToken);
-    }
-
-    /**
-     * @dev Get the total asset value held in the platform
-     *      underlying = (cTokenAmt * exchangeRate) / 1e18
-     * @param _cToken     cToken for which to check balance
-     * @return balance    Total value of the asset in the platform
-     */
-    function _checkBalance(IERC20 _cToken)
-        internal
-        view
-        returns (uint256 balance)
-    {
-        // e.g. 50e8*205316390724364402565641705 / 1e18 = 1.0265..e18
-        // balance =
-        //     (_cToken.balanceOf(address(this)) * _cToken.exchangeRateStored()) /
-        //     1e18;
+        require(_asset == address(frxETH), "Asset it not frxETH");
+        return IERC4626(platformAddress).totalAssets();
     }
 
     /**
@@ -153,14 +117,7 @@ contract FraxETHStrategy is InitializableAbstractStrategy {
      *      if for some reason is it necessary.
      */
     function safeApproveAllTokens() external override {
-        // uint256 assetCount = assetsMapped.length;
-        // for (uint256 i = 0; i < assetCount; i++) {
-        //     address asset = assetsMapped[i];
-        //     address cToken = assetToPToken[asset];
-        //     // Safe approval
-        //     IERC20(asset).safeApprove(cToken, 0);
-        //     IERC20(asset).safeApprove(cToken, type(uint256).max);
-        // }
+        sfrxETH.safeApprove(platformAddress, type(uint256).max);
     }
 
     /**
@@ -173,7 +130,6 @@ contract FraxETHStrategy is InitializableAbstractStrategy {
         override
         returns (bool)
     {
-        //return assetToPToken[_asset] != address(0);
-        return true;
+        return _asset == address(frxETH);
     }
 }
