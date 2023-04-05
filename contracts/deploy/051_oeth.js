@@ -11,7 +11,7 @@ const {
 } = require("../test/helpers.js");
 
 // 5/8 multisig
-const guardianAddr = addresses.mainnet.Guardian
+const guardianAddr = addresses.mainnet.Guardian;
 
 module.exports = deploymentWithGuardianGovernor(
   { deployName: "051_oeth", forceDeploy: true },
@@ -20,8 +20,12 @@ module.exports = deploymentWithGuardianGovernor(
     const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
     // actions = actions.concat(actions2)
-    let actions = await deployCore({ deployWithConfirmation, withConfirmation, ethers });
-    await deployDripper({ deployWithConfirmation, withConfirmation, ethers })
+    let actions = await deployCore({
+      deployWithConfirmation,
+      withConfirmation,
+      ethers,
+    });
+    await deployDripper({ deployWithConfirmation, withConfirmation, ethers });
     // Governance Actions
     // ----------------
     return {
@@ -34,12 +38,18 @@ module.exports = deploymentWithGuardianGovernor(
 /**
  * Deploy the core contracts (Vault and OETH).
  */
-const deployCore = async ({ deployWithConfirmation, withConfirmation, ethers }) => {
+const deployCore = async ({
+  deployWithConfirmation,
+  withConfirmation,
+  ethers,
+}) => {
   const { deployerAddr, governorAddr } = await getNamedAccounts();
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
   const assetAddresses = await getAssetAddresses(hre.deployments);
-  console.log(`Using asset addresses: ${JSON.stringify(assetAddresses, null, 2)}`);
+  console.log(
+    `Using asset addresses: ${JSON.stringify(assetAddresses, null, 2)}`
+  );
 
   // Signers
   const sGovernor = await ethers.provider.getSigner(governorAddr);
@@ -50,7 +60,7 @@ const deployCore = async ({ deployWithConfirmation, withConfirmation, ethers }) 
 
   // Main contracts
   const dOETH = await deployWithConfirmation("OETH");
-  /* We have wrapper contracts for all of the contracts that are shared between the 
+  /* We have wrapper contracts for all of the contracts that are shared between the
    * protocols. The reason for that is that we want separate deployment artifacts and
    * separate storage slot layouts for these shared contracts.
    */
@@ -64,15 +74,15 @@ const deployCore = async ({ deployWithConfirmation, withConfirmation, ethers }) 
   const cOETH = await ethers.getContractAt("OETH", cOETHProxy.address);
   const cOracleRouter = await ethers.getContract("OracleRouter");
   const cVault = await ethers.getContractAt("OETHVault", cVaultProxy.address);
-  const cVaultAdmin = await ethers.getContractAt("OETHVaultAdmin", dVaultAdmin.address);
+  const cVaultAdmin = await ethers.getContractAt(
+    "OETHVaultAdmin",
+    dVaultAdmin.address
+  );
 
   await withConfirmation(
     cOETHProxy
-      .connect(sDeployer)["initialize(address,address,bytes)"](
-        dOETH.address,
-        deployerAddr,
-        []
-      )
+      .connect(sDeployer)
+      ["initialize(address,address,bytes)"](dOETH.address, deployerAddr, [])
   );
   console.log("Initialized OETHProxy");
 
@@ -80,11 +90,8 @@ const deployCore = async ({ deployWithConfirmation, withConfirmation, ethers }) 
   // VaultCore implementation
   await withConfirmation(
     cVaultProxy
-      .connect(sDeployer)["initialize(address,address,bytes)"](
-        dVault.address,
-        deployerAddr,
-        []
-      )
+      .connect(sDeployer)
+      ["initialize(address,address,bytes)"](dVault.address, deployerAddr, [])
   );
   console.log("Initialized OETHVaultProxy");
 
@@ -106,7 +113,9 @@ const deployCore = async ({ deployWithConfirmation, withConfirmation, ethers }) 
 
   await withConfirmation(
     // TODO confirm this value
-    cVaultAdmin.connect(sDeployer).setAutoAllocateThreshold(utils.parseUnits("10", 18))
+    cVaultAdmin
+      .connect(sDeployer)
+      .setAutoAllocateThreshold(utils.parseUnits("10", 18))
   );
   await withConfirmation(
     // TODO confirm this value
@@ -117,13 +126,12 @@ const deployCore = async ({ deployWithConfirmation, withConfirmation, ethers }) 
 
   // Initialize OETH
   await withConfirmation(
-    cOETH
-      .connect(sDeployer)
-      .initialize(
-        "Origin Ether", // the name?
-        "OETH",
-        cVaultProxy.address,
-        utils.parseUnits("1", 27).sub(BigNumber.from(1)))
+    cOETH.connect(sDeployer).initialize(
+      "Origin Ether", // the name?
+      "OETH",
+      cVaultProxy.address,
+      utils.parseUnits("1", 27).sub(BigNumber.from(1))
+    )
   );
 
   console.log("Initialized OETH");
@@ -152,10 +160,14 @@ const deployCore = async ({ deployWithConfirmation, withConfirmation, ethers }) 
       signature: "claimGovernance()",
       args: [],
     },
-  ]
+  ];
 };
 
-const deployDripper = async ({ deployWithConfirmation, withConfirmation, ethers }) => {
+const deployDripper = async ({
+  deployWithConfirmation,
+  withConfirmation,
+  ethers,
+}) => {
   const { deployerAddr } = await getNamedAccounts();
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
@@ -172,10 +184,7 @@ const deployDripper = async ({ deployWithConfirmation, withConfirmation, ethers 
   cDripperProxy = await ethers.getContract("OETHDripperProxy");
   await withConfirmation(
     cDripperProxy
-      .connect(sDeployer)["initialize(address,address,bytes)"](
-        dDripper.address,
-        guardianAddr,
-        []
-      )
+      .connect(sDeployer)
+      ["initialize(address,address,bytes)"](dDripper.address, guardianAddr, [])
   );
 };

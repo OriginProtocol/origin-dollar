@@ -7,4 +7,6 @@ import { VaultAdmin } from "./VaultAdmin.sol";
  * @title OETH VaultAdmin Contract
  * @author Origin Protocol Inc
  */
-contract OETHVaultAdmin is VaultAdmin {}
+contract OETHVaultAdmin is VaultAdmin {
+
+}

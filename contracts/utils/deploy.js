@@ -818,9 +818,7 @@ function deploymentWithProposal(opts, fn) {
 
         log(`Sending governance action ${signature} to ${contract.address}`);
         await withConfirmation(
-          contract
-            .connect(sGovernor)
-            [signature](...args, await getTxOpts())
+          contract.connect(sGovernor)[signature](...args, await getTxOpts())
         );
         console.log(`... ${signature} completed`);
       }
@@ -886,10 +884,9 @@ function deploymentWithProposal(opts, fn) {
   return main;
 }
 
-
 /**
  * Shortcut to create a deployment for hardhat to use where 5/8 multisig is the
- * governor 
+ * governor
  * @param {Object} options for deployment
  * @param {Promise<Object>} fn to deploy contracts and return needed proposals
  * @returns {Object} main object used by hardhat
@@ -916,7 +913,10 @@ function deploymentWithGuardianGovernor(opts, fn) {
 
     if (isMainnet) {
       // On Mainnet, only propose. The enqueue and execution are handled manually via multi-sig.
-      log("Manually create the 5/8 multisig batch transaction with details:", proposal);
+      log(
+        "Manually create the 5/8 multisig batch transaction with details:",
+        proposal
+      );
     } else {
       const sGuardian = await ethers.provider.getSigner(guardianAddr);
 
@@ -925,9 +925,7 @@ function deploymentWithGuardianGovernor(opts, fn) {
 
         log(`Sending governance action ${signature} to ${contract.address}`);
         await withConfirmation(
-          contract
-            .connect(sGuardian)
-            [signature](...args, await getTxOpts())
+          contract.connect(sGuardian)[signature](...args, await getTxOpts())
         );
         console.log(`... ${signature} completed`);
       }

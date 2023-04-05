@@ -7,4 +7,6 @@ import { VaultCore } from "./VaultCore.sol";
  * @title OETH VaultCore Contract
  * @author Origin Protocol Inc
  */
-contract OETHVaultCore is VaultCore {}
+contract OETHVaultCore is VaultCore {
+
+}

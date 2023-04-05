@@ -8,5 +8,5 @@ import { Dripper } from "./Dripper.sol";
  * @author Origin Protocol Inc
  */
 contract OETHDripper is Dripper {
-  constructor(address _vault, address _token) Dripper(_vault, _token) {}
+    constructor(address _vault, address _token) Dripper(_vault, _token) {}
 }
