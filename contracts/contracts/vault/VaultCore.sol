@@ -72,14 +72,13 @@ contract VaultCore is VaultStorage {
         require(_amount > 0, "Amount must be greater than 0");
 
         uint256 units = _toUnits(_amount, _asset);
-        uint256 price = IOracle(priceProvider).price(_asset);
+        uint256 price = IOracle(priceProvider).price(_asset) * 1e10;
         uint256 unitPrice = _toUnitPrice(price, _asset);
-        if (unitPrice > 1e8) {
-            unitPrice = 1e8;
+        if (unitPrice > 1e18) {
+            unitPrice = 1e18;
         }
-        require(unitPrice >= MINT_MINIMUM_ORACLE, "Asset price below peg"); // TODO
-        // Scale up to 18 decimal
-        uint256 priceAdjustedDeposit = (units * unitPrice) / 1e8;
+        require(unitPrice >= MINT_MINIMUM_ORACLE, "Asset price below peg");
+        uint256 priceAdjustedDeposit = (units * unitPrice) / 1e18;
 
         if (_minimumOusdAmount > 0) {
             require(
@@ -528,12 +527,12 @@ contract VaultCore is VaultStorage {
      * @notice Calculate the outputs for a redeem function, i.e. the mix of
      * coins that will be returned.
      * @return outputs Array of amounts respective to the supported assets
-     * @return totalBalance Total balance of Vault
+     * @return totalUnits Total balance of Vault in units
      */
     function _calculateRedeemOutputs(uint256 _amount)
         internal
         view
-        returns (uint256[] memory outputs, uint256 totalBalance)
+        returns (uint256[] memory outputs, uint256 totalUnits)
     {
         // We always give out coins in proportion to how many we have,
         // Now if all coins were the same value, this math would easy,
@@ -564,10 +563,9 @@ contract VaultCore is VaultStorage {
         //
         // And so the user gets $10.40 + $19.60 = $30 worth of value.
 
-        uint256 assetCount = getAssetCount();
+        uint256 assetCount = allAssets.length;
         uint256[] memory assetUnits = new uint256[](assetCount);
         uint256[] memory assetBalances = new uint256[](assetCount);
-        uint256 totalOutputRatio = 0;
         outputs = new uint256[](assetCount);
 
         // Calculate redeem fee
@@ -578,28 +576,29 @@ contract VaultCore is VaultStorage {
 
         // Calculate assets balances and decimals once,
         // for a large gas savings.
-        for (uint256 i = 0; i < allAssets.length; i++) {
+        for (uint256 i = 0; i < assetCount; i++) {
             uint256 balance = _checkBalance(allAssets[i]);
             assetBalances[i] = balance;
             assetUnits[i] = _toUnits(balance, allAssets[i]);
-            totalBalance = totalBalance.add(assetUnits[i]);
+            totalUnits = totalUnits.add(assetUnits[i]);
         }
         // Calculate totalOutputRatio
-        for (uint256 i = 0; i < allAssets.length; i++) {
-            uint256 price = IOracle(priceProvider).price(allAssets[i]);
-            uint256 unitPrice = _toUnitPrice(price, allAssets[i]) * 1e10;
+        uint256 totalOutputRatio = 0;
+        for (uint256 i = 0; i < assetCount; i++) {
+            uint256 price = IOracle(priceProvider).price(allAssets[i]) * 1e10;
+            uint256 unitPrice = _toUnitPrice(price, allAssets[i]);
             // Never give out more than one
             // base token per unit of OUSD
             if (unitPrice < 1e18) {
                 unitPrice = 1e18;
             }
-            uint256 ratio = assetUnits[i].mul(unitPrice).div(totalBalance);
+            uint256 ratio = assetUnits[i].mul(unitPrice).div(totalUnits);
             totalOutputRatio = totalOutputRatio.add(ratio);
         }
         // Calculate final outputs
         uint256 factor = _amount.divPrecisely(totalOutputRatio);
-        for (uint256 i = 0; i < allAssets.length; i++) {
-            outputs[i] = assetBalances[i].mul(factor).div(totalBalance);
+        for (uint256 i = 0; i < assetCount; i++) {
+            outputs[i] = assetBalances[i].mul(factor).div(totalUnits);
         }
     }
 

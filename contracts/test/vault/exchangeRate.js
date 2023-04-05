@@ -9,7 +9,7 @@ const {
   isFork,
 } = require("../helpers");
 
-describe.only("Vault Redeem", function () {
+describe("Vault Redeem", function () {
   if (isFork) {
     this.timeout(0);
   }
