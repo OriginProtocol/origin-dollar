@@ -820,7 +820,7 @@ function deploymentWithProposal(opts, fn) {
         await withConfirmation(
           contract
             .connect(sGovernor)
-            [signature](...args, await getTxOpts(gasLimit))
+            [signature](...args, await getTxOpts())
         );
         console.log(`... ${signature} completed`);
       }
@@ -886,6 +886,84 @@ function deploymentWithProposal(opts, fn) {
   return main;
 }
 
+
+/**
+ * Shortcut to create a deployment for hardhat to use where 5/8 multisig is the
+ * governor 
+ * @param {Object} options for deployment
+ * @param {Promise<Object>} fn to deploy contracts and return needed proposals
+ * @returns {Object} main object used by hardhat
+ */
+function deploymentWithGuardianGovernor(opts, fn) {
+  const { deployName, dependencies, forceDeploy, forceSkip } = opts;
+  const runDeployment = async (hre) => {
+    const oracleAddresses = await getOracleAddresses(hre.deployments);
+    const assetAddresses = await getAssetAddresses(hre.deployments);
+    const tools = {
+      oracleAddresses,
+      assetAddresses,
+      deployWithConfirmation,
+      ethers,
+      getTxOpts,
+      withConfirmation,
+    };
+    const guardianAddr = addresses.mainnet.Guardian;
+    await impersonateGuardian(guardianAddr);
+
+    await sanityCheckOgvGovernance();
+    const proposal = await fn(tools);
+    const propDescription = proposal.name;
+
+    if (isMainnet) {
+      // On Mainnet, only propose. The enqueue and execution are handled manually via multi-sig.
+      log("Manually create the 5/8 multisig batch transaction with details:", proposal);
+    } else {
+      const sGuardian = await ethers.provider.getSigner(guardianAddr);
+
+      for (const action of proposal.actions) {
+        const { contract, signature, args } = action;
+
+        log(`Sending governance action ${signature} to ${contract.address}`);
+        await withConfirmation(
+          contract
+            .connect(sGuardian)
+            [signature](...args, await getTxOpts())
+        );
+        console.log(`... ${signature} completed`);
+      }
+    }
+  };
+
+  const main = async (hre) => {
+    console.log(`Running ${deployName} deployment...`);
+    if (!hre) {
+      hre = require("hardhat");
+    }
+    await runDeployment(hre);
+    console.log(`${deployName} deploy done.`);
+    return true;
+  };
+
+  main.id = deployName;
+  main.dependencies = dependencies;
+  if (forceSkip) {
+    main.skip = () => true;
+  } else if (forceDeploy) {
+    main.skip = () => false;
+  } else {
+    main.skip = async () => {
+      if (isFork) {
+        const networkName = isForkTest ? "hardhat" : "localhost";
+        const migrations = require(`./../deployments/${networkName}/.migrations.json`);
+        return Boolean(migrations[deployName]);
+      } else {
+        return !isMainnet || isSmokeTest || isFork;
+      }
+    };
+  }
+  return main;
+}
+
 module.exports = {
   log,
   sleep,
@@ -897,4 +975,5 @@ module.exports = {
   sendProposal,
   deploymentWithProposal,
   deploymentWithGovernanceProposal,
+  deploymentWithGuardianGovernor,
 };

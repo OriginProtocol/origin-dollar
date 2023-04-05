@@ -1,4 +1,5 @@
-const { deploymentWithProposal } = require("../utils/deploy");
+const { deploymentWithGuardianGovernor } = require("../utils/deploy");
+const addresses = require("../utils/addresses");
 const hre = require("hardhat");
 const { BigNumber, utils } = require("ethers");
 const {
@@ -9,7 +10,10 @@ const {
   isMainnetOrFork,
 } = require("../test/helpers.js");
 
-module.exports = deploymentWithProposal(
+// 5/8 multisig
+const guardianAddr = addresses.mainnet.Guardian
+
+module.exports = deploymentWithGuardianGovernor(
   { deployName: "051_oeth", forceDeploy: true },
   async ({ deployWithConfirmation, ethers, getTxOpts, withConfirmation }) => {
     const { deployerAddr, governorAddr } = await getNamedAccounts();
@@ -125,11 +129,11 @@ const deployCore = async ({ deployWithConfirmation, withConfirmation, ethers }) 
   console.log("Initialized OETH");
 
   await withConfirmation(
-    cVaultProxy.connect(sDeployer).transferGovernance(governorAddr)
+    cVaultProxy.connect(sDeployer).transferGovernance(guardianAddr)
   );
 
   await withConfirmation(
-    cOETHProxy.connect(sDeployer).transferGovernance(governorAddr)
+    cOETHProxy.connect(sDeployer).transferGovernance(guardianAddr)
   );
 
   console.log("Governance transfer initialized");
@@ -152,7 +156,7 @@ const deployCore = async ({ deployWithConfirmation, withConfirmation, ethers }) 
 };
 
 const deployDripper = async ({ deployWithConfirmation, withConfirmation, ethers }) => {
-  const { governorAddr, deployerAddr } = await getNamedAccounts();
+  const { deployerAddr } = await getNamedAccounts();
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
   const assetAddresses = await getAssetAddresses(deployments);
@@ -170,7 +174,7 @@ const deployDripper = async ({ deployWithConfirmation, withConfirmation, ethers 
     cDripperProxy
       .connect(sDeployer)["initialize(address,address,bytes)"](
         dDripper.address,
-        governorAddr,
+        guardianAddr,
         []
       )
   );
