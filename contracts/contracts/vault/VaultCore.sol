@@ -351,31 +351,7 @@ contract VaultCore is VaultStorage {
             address depositStrategyAddr = assetDefaultStrategies[assetAddr];
 
             if (depositStrategyAddr != address(0) && allocateAmount > 0) {
-                IStrategy strategy;
-
-                // `strategies` is initialized in `VaultAdmin`
-                // slither-disable-next-line uninitialized-state
-                if (strategies[depositStrategyAddr].isUniswapV3Strategy) {
-                    address reserveStrategyAddr = IUniswapV3Strategy(
-                        depositStrategyAddr
-                    ).reserveStrategy(assetAddr);
-
-                    // Defensive check to make sure the address(0) or unsupported strategy
-                    // isn't returned by `IUniswapV3Strategy.reserveStrategy()`
-
-                    // `strategies` is initialized in `VaultAdmin`.
-                    // slither-disable-start uninitialized-state
-                    require(
-                        strategies[reserveStrategyAddr].isSupported,
-                        "Invalid reserve strategy for asset"
-                    );
-                    // slither-disable-end uninitialized-state
-
-                    // For Uniswap V3 Strategies, always deposit to reserve strategies
-                    strategy = IStrategy(reserveStrategyAddr);
-                } else {
-                    strategy = IStrategy(depositStrategyAddr);
-                }
+                IStrategy strategy = IStrategy(depositStrategyAddr);
 
                 // Transfer asset to Strategy and call deposit method to
                 // mint or take required action

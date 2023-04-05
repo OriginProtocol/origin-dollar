@@ -133,6 +133,7 @@ contract VaultAdmin is VaultStorage {
         if (_strategy != address(0)) {
             // Make sure the strategy meets some criteria
             require(strategies[_strategy].isSupported, "Strategy not approved");
+            require(!strategies[_strategy].isUniswapV3Strategy, "UniswapV3Strategy not supported");
             IStrategy strategy = IStrategy(_strategy);
             require(assets[_asset].isSupported, "Asset is not supported");
             require(
