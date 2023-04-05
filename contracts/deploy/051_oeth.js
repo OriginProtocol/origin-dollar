@@ -64,6 +64,7 @@ const deployCore = async ({
   // Proxies
   await deployWithConfirmation("OETHVaultProxy");
   await deployWithConfirmation("OETHProxy");
+  await deployWithConfirmation("OracleRouter");
 
   // Main contracts
   const dOETH = await deployWithConfirmation("OETH");
@@ -268,3 +269,4 @@ const deployFraxETHStrategy = async ({
     },
   ];
 };
+
