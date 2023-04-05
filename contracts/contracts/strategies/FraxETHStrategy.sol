@@ -15,6 +15,7 @@ contract FraxETHStrategy is InitializableAbstractStrategy {
 
     IERC20 sfrxETH;
     IERC20 frxETH;
+
     /**
      * @dev Deposit frxEth by staking it as sfrxETH
      * @param _asset Address of asset to deposit
@@ -93,7 +94,11 @@ contract FraxETHStrategy is InitializableAbstractStrategy {
      */
     function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
         uint256 sfrxEthBalance = sfrxETH.balanceOf(address(this));
-        uint256 assetAmount = IERC4626(platformAddress).redeem(sfrxEthBalance, vaultAddress, address(this));
+        uint256 assetAmount = IERC4626(platformAddress).redeem(
+            sfrxEthBalance,
+            vaultAddress,
+            address(this)
+        );
         emit Withdrawal(address(frxETH), address(sfrxETH), assetAmount);
     }
 

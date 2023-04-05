@@ -27,7 +27,11 @@ module.exports = deploymentWithGuardianGovernor(
     });
     await deployDripper({ deployWithConfirmation, withConfirmation, ethers });
     actions = actions.concat(
-      await deployFraxETHStrategy({ deployWithConfirmation, withConfirmation, ethers })
+      await deployFraxETHStrategy({
+        deployWithConfirmation,
+        withConfirmation,
+        ethers,
+      })
     );
 
     // Governance Actions
@@ -216,7 +220,8 @@ const deployFraxETHStrategy = async ({
   );
   await withConfirmation(
     cFraxETHStrategyProxy
-      .connect(sDeployer)["initialize(address,address,bytes)"](
+      .connect(sDeployer)
+      ["initialize(address,address,bytes)"](
         dFraxETHStrategy.address,
         deployerAddr,
         []
@@ -240,13 +245,13 @@ const deployFraxETHStrategy = async ({
     cFraxETHStrategy.connect(sDeployer).transferGovernance(guardianAddr)
   );
   console.log(`FraxETHStrategy transferGovernance(${guardianAddr} called`);
-  
+
   return [
     {
       // Claim Vault governance
       contract: cFraxETHStrategy,
       signature: "claimGovernance()",
       args: [],
-    }
+    },
   ];
 };
