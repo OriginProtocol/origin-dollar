@@ -25,7 +25,9 @@ module.exports = deploymentWithGuardianGovernor(
       withConfirmation,
       ethers,
     });
+
     await deployDripper({ deployWithConfirmation, withConfirmation, ethers });
+
     actions = actions.concat(
       await deployFraxETHStrategy({
         deployWithConfirmation,
@@ -79,10 +81,6 @@ const deployCore = async ({
   const cOETH = await ethers.getContractAt("OETH", cOETHProxy.address);
   const cOracleRouter = await ethers.getContract("OracleRouter");
   const cVault = await ethers.getContractAt("OETHVault", cVaultProxy.address);
-  const cVaultAdmin = await ethers.getContractAt(
-    "OETHVaultAdmin",
-    dVaultAdmin.address
-  );
 
   await withConfirmation(
     cOETHProxy
@@ -118,13 +116,23 @@ const deployCore = async ({
 
   await withConfirmation(
     // TODO confirm this value
-    cVaultAdmin
+    cVault
       .connect(sDeployer)
       .setAutoAllocateThreshold(utils.parseUnits("10", 18))
   );
   await withConfirmation(
     // TODO confirm this value
-    cVaultAdmin.connect(sDeployer).setRebaseThreshold(utils.parseUnits("2", 18))
+    cVault.connect(sDeployer).setRebaseThreshold(utils.parseUnits("2", 18))
+  );
+
+  await withConfirmation(
+    // TODO is it ok to start with unpaused capital?
+    cVault.connect(sDeployer).unpauseCapital()
+  );
+
+  await withConfirmation(
+    // 0 stands for DECIMAL unit conversion
+    cVault.connect(sDeployer).supportAsset(addresses.mainnet.frxETH, 0)
   );
 
   console.log("Initialized OETHVaultAdmin implementation");
@@ -205,7 +213,8 @@ const deployFraxETHStrategy = async ({
   const assetAddresses = await getAssetAddresses(deployments);
   const { deployerAddr } = await getNamedAccounts();
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
-  const cVaultProxy = await ethers.getContract("VaultProxy");
+  const cVaultProxy = await ethers.getContract("OETHVaultProxy");
+  const cVault = await ethers.getContractAt("OETHVault", cVaultProxy.address);
 
   const dFraxETHStrategyProxy = await deployWithConfirmation(
     "FraxETHStrategyProxy"
@@ -213,9 +222,9 @@ const deployFraxETHStrategy = async ({
   const cFraxETHStrategyProxy = await ethers.getContract(
     "FraxETHStrategyProxy"
   );
-  const dFraxETHStrategy = await deployWithConfirmation("FraxETHStrategy");
+  const dFraxETHStrategy = await deployWithConfirmation("Generalized4626Strategy");
   const cFraxETHStrategy = await ethers.getContractAt(
-    "FraxETHStrategy",
+    "Generalized4626Strategy",
     dFraxETHStrategyProxy.address
   );
   await withConfirmation(
@@ -245,6 +254,10 @@ const deployFraxETHStrategy = async ({
     cFraxETHStrategy.connect(sDeployer).transferGovernance(guardianAddr)
   );
   console.log(`FraxETHStrategy transferGovernance(${guardianAddr} called`);
+
+  await withConfirmation(
+    cVault.connect(sDeployer).approveStrategy(cFraxETHStrategyProxy.address)
+  );
 
   return [
     {

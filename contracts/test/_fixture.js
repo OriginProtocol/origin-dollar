@@ -36,18 +36,23 @@ async function defaultFixture() {
   const { governorAddr, timelockAddr } = await getNamedAccounts();
 
   const ousdProxy = await ethers.getContract("OUSDProxy");
+  const oethProxy = await ethers.getContract("OETHProxy");
   const vaultProxy = await ethers.getContract("VaultProxy");
+  const OETHVaultProxy = await ethers.getContract("OETHVaultProxy");
   const harvesterProxy = await ethers.getContract("HarvesterProxy");
   const compoundStrategyProxy = await ethers.getContract(
     "CompoundStrategyProxy"
   );
 
   const ousd = await ethers.getContractAt("OUSD", ousdProxy.address);
+  const oeth = await ethers.getContractAt("OETH", oethProxy.address);
   const vault = await ethers.getContractAt("IVault", vaultProxy.address);
+  const oethVault = await ethers.getContractAt("IVault", OETHVaultProxy.address);
   const harvester = await ethers.getContractAt(
     "Harvester",
     harvesterProxy.address
   );
+
   const dripperProxy = await ethers.getContract("DripperProxy");
   const dripper = await ethers.getContractAt("Dripper", dripperProxy.address);
   const wousdProxy = await ethers.getContract("WrappedOUSDProxy");
@@ -132,6 +137,8 @@ async function defaultFixture() {
     stkAave,
     aaveIncentivesController,
     reth,
+    frxETH,
+    sfrxETH,
     mockNonRebasing,
     mockNonRebasingTwo,
     LUSD;
@@ -148,6 +155,7 @@ async function defaultFixture() {
     metapoolToken,
     morpho,
     morphoCompoundStrategy,
+    fraxEthStrategy,
     morphoAaveStrategy,
     morphoLens,
     LUSDMetapoolToken,
@@ -179,6 +187,8 @@ async function defaultFixture() {
     ausdt = await ethers.getContractAt(erc20Abi, addresses.mainnet.aUSDT);
     ausdc = await ethers.getContractAt(erc20Abi, addresses.mainnet.aUSDC);
     adai = await ethers.getContractAt(erc20Abi, addresses.mainnet.aDAI);
+    frxETH = await ethers.getContractAt(erc20Abi, addresses.mainnet.frxETH);
+    sfrxETH = await ethers.getContractAt(erc20Abi, addresses.mainnet.sfrxETH);
     morpho = await ethers.getContractAt(morphoAbi, addresses.mainnet.Morpho);
     morphoLens = await ethers.getContractAt(
       morphoLensAbi,
@@ -217,6 +227,14 @@ async function defaultFixture() {
     morphoAaveStrategy = await ethers.getContractAt(
       "MorphoAaveStrategy",
       morphoAaveStrategyProxy.address
+    );
+
+    const fraxEthStrategyProxy = await ethers.getContract(
+      "FraxETHStrategyProxy"
+    );
+    fraxEthStrategy = await ethers.getContractAt(
+      "Generalized4626Strategy",
+      fraxEthStrategyProxy.address
     );
   } else {
     usdt = await ethers.getContract("MockUSDT");
@@ -332,6 +350,10 @@ async function defaultFixture() {
       for (const asset of [ousd, usdt, usdc, dai]) {
         await resetAllowance(asset, user, vault.address);
       }
+
+      for (const asset of [oeth, frxETH]) {
+        await resetAllowance(asset, user, oethVault.address);
+      }
     }
   } else {
     // Matt and Josh each have $100 OUSD
@@ -428,6 +450,12 @@ async function defaultFixture() {
     flipper,
     buyback,
     wousd,
+    //OETH
+    oethVault,
+    oeth,
+    frxETH,
+    sfrxETH,
+    fraxEthStrategy,
   };
 }
 
@@ -740,6 +768,40 @@ async function morphoAaveFixture() {
       "Morpho strategy only supported in forked test environment"
     );
   }
+
+  return fixture;
+}
+
+/**
+ * FraxETHStrategy fixture that works only in forked environment
+ *
+ */
+async function fraxETHStrategyForkedFixture() {
+  const fixture = await loadFixture(defaultFixture);
+
+  const sGuardian = await ethers.provider.getSigner(addresses.mainnet.Guardian);
+  const { daniel } = fixture;
+
+  // Get some frxETH from most wealthy contracts/wallets
+  await impersonateAndFundAddress(
+    addresses.mainnet.frxETH,
+    [
+      "0x5Ae5eC04170E0dedC00b0Cfae3B8E7821C630AFA",
+      "0x2F08F4645d2fA1fB12D2db8531c0c2EA0268BdE2",
+      "0x8a15b2Dc9c4f295DCEbB0E7887DD25980088fDCB",
+      "0xce4DbAF3fa72C962Ee1F371694109fc2a80B03f5",
+      "0x4E30fc7ccD2dF3ddCA39a69d2085334Ee63b9c96",
+    ],
+    // Daniel is loaded with fraxETH
+    daniel.getAddress()
+  );
+
+  await fixture.oethVault
+    .connect(sGuardian)
+    .setAssetDefaultStrategy(
+      fixture.frxETH.address,
+      fixture.fraxEthStrategy.address
+    );
 
   return fixture;
 }
@@ -1199,4 +1261,5 @@ module.exports = {
   withImpersonatedAccount,
   impersonateAndFundContract,
   impersonateAccount,
+  fraxETHStrategyForkedFixture,
 };

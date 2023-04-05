@@ -2,22 +2,22 @@
 pragma solidity ^0.8.0;
 
 /**
- * @title OETH FraxETH Strategy
- * @notice Investment strategy for investing ETH via staking frxETH
+ * @title OETH Generalized 4626 Strategy
+ * @notice Investment strategy for vaults supporting ERC4626 
  * @author Origin Protocol Inc
  */
 import { IERC4626 } from "../../lib/openzeppelin/interfaces/IERC4626.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IERC20, InitializableAbstractStrategy } from "../utils/InitializableAbstractStrategy.sol";
 
-contract FraxETHStrategy is InitializableAbstractStrategy {
+contract Generalized4626Strategy is InitializableAbstractStrategy {
     using SafeERC20 for IERC20;
 
-    IERC20 sfrxETH;
-    IERC20 frxETH;
+    IERC20 shareToken;
+    IERC20 assetToken;
 
     /**
-     * @dev Deposit frxEth by staking it as sfrxETH
+     * @dev Deposit assets by converting them to shares
      * @param _asset Address of asset to deposit
      * @param _amount Amount of asset to deposit
      */
@@ -31,33 +31,33 @@ contract FraxETHStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @dev Deposit frxEth by staking it as sfrxETH
+     * @dev Deposit assets by converting them to shares
      * @param _asset Address of asset to deposit
      * @param _amount Amount of asset to deposit
      */
     function _deposit(address _asset, uint256 _amount) internal {
         require(_amount > 0, "Must deposit something");
-        require(_asset == address(frxETH), "Asset it not frxETH");
+        require(_asset == address(assetToken), "Unexpected asset address");
 
         IERC4626(platformAddress).deposit(_amount, address(this));
-        emit Deposit(_asset, address(frxETH), _amount);
+        emit Deposit(_asset, address(shareToken), _amount);
     }
 
     /**
-     * @dev Deposit the entire balance of frxETH to sfrxETH
+     * @dev Deposit the entire balance of assetToken to gain shareToken
      */
     function depositAll() external override onlyVault nonReentrant {
-        uint256 balance = frxETH.balanceOf(address(this));
+        uint256 balance = assetToken.balanceOf(address(this));
         if (balance > 0) {
-            _deposit(address(frxETH), balance);
+            _deposit(address(assetToken), balance);
         }
     }
 
     /**
-     * @dev Withdraw frxETH from sfrxETH
-     * @param _recipient Address to receive withdrawn frxETH
-     * @param _asset Address of frxETH to withdraw
-     * @param _amount Amount of frxETH to withdraw
+     * @dev Withdraw asset by burning shares
+     * @param _recipient Address to receive withdrawn asset
+     * @param _asset Address of asset to withdraw
+     * @param _amount Amount of asset to withdraw
      */
     function withdraw(
         address _recipient,
@@ -66,15 +66,14 @@ contract FraxETHStrategy is InitializableAbstractStrategy {
     ) external override onlyVault nonReentrant {
         require(_amount > 0, "Must withdraw something");
         require(_recipient != address(0), "Must specify recipient");
-        require(_asset == address(frxETH), "Asset it not frxETH");
+        require(_asset == address(assetToken), "Unexpected asset address");
 
         IERC4626(platformAddress).withdraw(_amount, _recipient, address(this));
-        emit Withdrawal(_asset, address(sfrxETH), _amount);
+        emit Withdrawal(_asset, address(shareToken), _amount);
     }
 
     /**
-     * @dev Internal method to respond to the addition of new asset / cTokens
-     *      We need to approve the cToken and give it permission to spend the asset
+     * @dev Internal method to respond to the addition of new asset / share tokens
      * @param _asset Address of the asset to approve
      * @param _pToken The pToken for the approval
      */
@@ -82,29 +81,30 @@ contract FraxETHStrategy is InitializableAbstractStrategy {
         internal
         override
     {
-        sfrxETH = IERC20(_pToken);
-        frxETH = IERC20(_asset);
+        shareToken = IERC20(_pToken);
+        assetToken = IERC20(_asset);
 
         // Safe approval
-        sfrxETH.safeApprove(platformAddress, type(uint256).max);
+        shareToken.safeApprove(platformAddress, type(uint256).max);
+        assetToken.safeApprove(platformAddress, type(uint256).max);
     }
 
     /**
      * @dev Remove all assets from platform and send them to Vault contract.
      */
     function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
-        uint256 sfrxEthBalance = sfrxETH.balanceOf(address(this));
+        uint256 shareBalance = shareToken.balanceOf(address(this));
         uint256 assetAmount = IERC4626(platformAddress).redeem(
-            sfrxEthBalance,
+            shareBalance,
             vaultAddress,
             address(this)
         );
-        emit Withdrawal(address(frxETH), address(sfrxETH), assetAmount);
+        emit Withdrawal(address(assetToken), address(shareToken), assetAmount);
     }
 
     /**
      * @dev Get the total asset value held in the platform
-     * @param _asset      Address of the frxETH
+     * @param _asset      Address of the asset
      * @return balance    Total value of the asset in the platform
      */
     function checkBalance(address _asset)
@@ -113,7 +113,7 @@ contract FraxETHStrategy is InitializableAbstractStrategy {
         override
         returns (uint256 balance)
     {
-        require(_asset == address(frxETH), "Asset it not frxETH");
+        require(_asset == address(assetToken), "Unexpected asset address");
         return IERC4626(platformAddress).totalAssets();
     }
 
@@ -122,7 +122,8 @@ contract FraxETHStrategy is InitializableAbstractStrategy {
      *      if for some reason is it necessary.
      */
     function safeApproveAllTokens() external override {
-        sfrxETH.safeApprove(platformAddress, type(uint256).max);
+        assetToken.safeApprove(platformAddress, type(uint256).max);
+        shareToken.safeApprove(platformAddress, type(uint256).max);
     }
 
     /**
@@ -135,6 +136,6 @@ contract FraxETHStrategy is InitializableAbstractStrategy {
         override
         returns (bool)
     {
-        return _asset == address(frxETH);
+        return _asset == address(assetToken);
     }
 }

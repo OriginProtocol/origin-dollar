@@ -82,6 +82,10 @@ function ousdUnits(amount) {
   return parseUnits(amount, 18);
 }
 
+function oethUnits(amount) {
+  return parseUnits(amount, 18);
+}
+
 function fraxUnits(amount) {
   return parseUnits(amount, 18);
 }
@@ -548,6 +552,7 @@ const forkOnlyDescribe = (title, fn) =>
 
 module.exports = {
   ousdUnits,
+  oethUnits,
   usdtUnits,
   usdcUnits,
   tusdUnits,

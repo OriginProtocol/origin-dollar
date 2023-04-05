@@ -181,7 +181,8 @@ contract VaultAdmin is VaultStorage {
 
         // Verify that our oracle supports the asset
         // slither-disable-next-line unused-return
-        IOracle(priceProvider).price(_asset);
+        // TODO: ADD THIS BACK IN - frxETH has no Oracle?
+        //IOracle(priceProvider).price(_asset);
 
         emit AssetSupported(_asset);
     }
