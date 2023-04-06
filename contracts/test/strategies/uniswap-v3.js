@@ -163,6 +163,22 @@ describe("Uniswap V3 Strategy", function () {
     });
   }
 
+  describe("Deposit", function () {
+    it("Should revert direct deposits", async () => {
+      const impersonatedVaultSigner = await impersonateAndFundContract(
+        vault.address
+      );
+
+      await expect(
+        strategy.connect(impersonatedVaultSigner).deposit(usdc.address, "1")
+      ).to.be.revertedWith("Direct deposits disabled on UniswapV3Strategy");
+
+      await expect(
+        strategy.connect(impersonatedVaultSigner).depositAll()
+      ).to.be.revertedWith("Direct deposits disabled on UniswapV3Strategy");
+    });
+  });
+
   describe("Redeem", function () {
     beforeEach(async () => {
       _destructureFixture(await uniswapV3Fixture());
