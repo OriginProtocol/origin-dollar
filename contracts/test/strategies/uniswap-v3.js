@@ -1081,25 +1081,6 @@ describe("Uniswap V3 Strategy", function () {
         expect(newPos.netValue).to.be.lt(lastPos.netValue);
       });
 
-      it("Should liquidate active position during withdraw", async () => {
-        const tokenId = await strategy.activeTokenId();
-        const lastPos = await strategy.tokenIdToPosition(tokenId);
-
-        await strategy
-          .connect(await impersonateAndFundContract(vault.address))
-          .withdrawAssetFromActivePositionOnlyVault(
-            usdt.address,
-            usdtUnits("10000")
-          );
-
-        const newPos = await strategy.tokenIdToPosition(tokenId);
-
-        expect(newPos.liquidity).to.be.lt(lastPos.liquidity);
-        expect(newPos.netValue).to.be.lt(
-          lastPos.netValue.sub(ousdUnits("10000"))
-        );
-      });
-
       it("Should liquidate active position during withdrawAll", async () => {
         const tokenId = await strategy.activeTokenId();
 
@@ -1114,33 +1095,28 @@ describe("Uniswap V3 Strategy", function () {
         expect(pos.netValue).to.equal(0);
       });
 
+      it("Should revert if there's an active position during withdraw", async () => {
+        const impersonatedVaultSigner = await impersonateAndFundContract(
+          vault.address
+        );
+
+        const withdrawFuncSign = "withdraw(address,address,uint256)";
+
+        await expect(
+          // prettier-ignore
+          strategy.connect(impersonatedVaultSigner)[withdrawFuncSign](vault.address, usdc.address, "10")
+        ).to.be.revertedWith("Close active position");
+      });
+
       it("Only vault can do withdraw/withdrawAll", async () => {
         const impersonatedVaultSigner = await impersonateAndFundContract(
           vault.address
         );
 
-        await expect(
-          strategy
-            .connect(impersonatedVaultSigner)
-            .withdrawAssetFromActivePositionOnlyVault(
-              usdt.address,
-              usdtUnits("10000")
-            )
-        ).to.not.be.reverted;
-
         await expect(strategy.connect(impersonatedVaultSigner).withdrawAll()).to
           .not.be.reverted;
 
         for (const user of [governor, strategist, operator, daniel]) {
-          await expect(
-            strategy
-              .connect(user)
-              .withdrawAssetFromActivePositionOnlyVault(
-                usdt.address,
-                usdtUnits("10000")
-              )
-          ).to.be.revertedWith("Caller is not the Vault");
-
           await expect(strategy.connect(user).withdrawAll()).to.be.revertedWith(
             "Caller is not the Vault"
           );
