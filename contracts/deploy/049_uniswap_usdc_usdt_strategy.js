@@ -90,6 +90,8 @@ module.exports = deploymentWithGovernanceProposal(
         dUniswapV3Helper.address,
         assetAddresses.UniV3SwapRouter,
         operatorAddr,
+        utils.parseEther("1000000", 18), // 1M, max TVL
+        utils.parseEther("50000", 18), // 50k, lost value threshold
         await getTxOpts()
       )
     );
@@ -177,25 +179,13 @@ module.exports = deploymentWithGovernanceProposal(
           signature: "setMinDepositThreshold(address,uint256)",
           args: [assetAddresses.USDT, utils.parseUnits("30000", 6)], // 30k
         },
-        // // 9. Set Max TVL
-        // {
-        //   contract: cUniV3_USDC_USDT_Strategy,
-        //   signature: "setMaxTVL(uint256)",
-        //   args: [utils.parseEther("1000000", 18)], // 1M
-        // },
-        // // 10. Set Max Loss threshold
-        // {
-        //   contract: cUniV3_USDC_USDT_Strategy,
-        //   signature: "setMaxPositionValueLostThreshold(uint256)",
-        //   args: [utils.parseEther("50000", 18)], // 50k
-        // },
-        // 11. Set Rebalance Price Threshold
+        // 9. Set Rebalance Price Threshold
         {
           contract: cUniV3_USDC_USDT_Strategy,
           signature: "setRebalancePriceThreshold(int24,int24)",
           args: [-1000, 1000],
         },
-        // 12. Set Swap price threshold
+        // 10. Set Swap price threshold
         {
           contract: cUniV3_USDC_USDT_Strategy,
           signature: "setSwapPriceThreshold(int24,int24)",

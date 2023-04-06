@@ -105,7 +105,7 @@ abstract contract UniswapV3StrategyStorage is InitializableAbstractStrategy {
     bool public swapsPaused = false; // True if Swaps are paused
     bool public rebalancePaused = false; // True if Swaps are paused
 
-    uint256 public maxTVL = 1000000 ether; // In USD, 18 decimals, defaults to 1M
+    uint256 public maxTVL; // In USD, 18 decimals
 
     // Deposits to reserve strategy when contract balance exceeds this amount
     uint256 public minDepositThreshold0;
@@ -123,10 +123,10 @@ abstract contract UniswapV3StrategyStorage is InitializableAbstractStrategy {
     uint256 public activeTokenId;
 
     // Sum of loss in value of tokens deployed to the pool
-    uint256 public netLostValue = 0;
+    uint256 public netLostValue;
 
     // Max value loss threshold after which rebalances aren't allowed
-    uint256 public maxPositionValueLostThreshold = 50000 ether; // default to 50k
+    uint256 public maxPositionValueLostThreshold;
 
     // Uniswap V3's Pool
     IUniswapV3Pool public pool;
