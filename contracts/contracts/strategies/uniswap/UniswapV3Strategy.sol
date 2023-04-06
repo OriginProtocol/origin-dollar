@@ -258,7 +258,7 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
         /**
          * Uniswap V3 strategies are never meant to be default strategies.
          * By design, they cannot hold any funds in the contract. When it needs
-         * funds to provide liquidity, it'll pull the required amounts from the 
+         * funds to provide liquidity, it'll pull the required amounts from the
          * reserve strategies. So, route any deposits to the reserve strategies
          */
         revert("Direct deposits disabled on UniswapV3Strategy");
@@ -269,10 +269,10 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
         /**
          * Uniswap V3 strategies are never meant to be default strategies.
          * By design, they cannot hold any funds in the contract. When it needs
-         * funds to provide liquidity, it'll pull the required amounts from the 
+         * funds to provide liquidity, it'll pull the required amounts from the
          * reserve strategies. So, route any deposits to the reserve strategies
          */
-         revert("Direct deposits disabled on UniswapV3Strategy");
+        revert("Direct deposits disabled on UniswapV3Strategy");
     }
 
     /// @inheritdoc InitializableAbstractStrategy
@@ -285,13 +285,8 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
 
         require(activeTokenId == 0, "Close active position");
 
-        IERC20 asset = IERC20(_asset);
-        uint256 selfBalance = asset.balanceOf(address(this));
-
-        require(selfBalance >= amount, "Liquidity error");
-
-        // Transfer requested amount
-        asset.safeTransfer(recipient, amount);
+        // Transfer requested amount, will revert when low on balance
+        IERC20(_asset).safeTransfer(recipient, amount);
         emit Withdrawal(_asset, _asset, amount);
     }
 

@@ -206,8 +206,11 @@ contract VaultCore is VaultStorage {
                 require(strategyAddr != address(0), "Liquidity error");
 
                 // Nothing in Vault, but something in Strategy, send from there
-                IStrategy strategy = IStrategy(strategyAddr);
-                strategy.withdraw(msg.sender, assetAddr, outputs[i]);
+                IStrategy(strategyAddr).withdraw(
+                    msg.sender,
+                    assetAddr,
+                    outputs[i]
+                );
             }
         }
 
