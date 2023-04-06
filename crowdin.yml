@@ -1,3 +1,6 @@
 files:
   - source: /dapp/translation/crowdin/all-messages.json
     translation: /dapp/translation/crowdin/all-messages_%locale_with_underscore%.json
+'3600s'
+options:
+  machineType: 'N1_HIGHCPU_32
