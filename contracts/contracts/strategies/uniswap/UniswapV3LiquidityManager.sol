@@ -757,17 +757,15 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         Position memory position = tokenIdToPosition[tokenId];
         require(position.exists, "Invalid position");
 
-        if (position.liquidity == 0) {
-            return (0, 0);
+        if (position.liquidity > 0) {
+            // Remove all liquidity
+            (amount0, amount1) = _decreasePositionLiquidity(
+                tokenId,
+                position.liquidity,
+                minAmount0,
+                minAmount1
+            );
         }
-
-        // Remove all liquidity
-        (amount0, amount1) = _decreasePositionLiquidity(
-            tokenId,
-            position.liquidity,
-            minAmount0,
-            minAmount1
-        );
 
         if (position.tokenId == activeTokenId) {
             activeTokenId = 0;
