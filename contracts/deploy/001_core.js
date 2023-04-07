@@ -1030,13 +1030,15 @@ const deployUniswapV3Strategy = async () => {
   await withConfirmation(
     uniV3Strat
       .connect(sDeployer)
-      ["initialize(address,address,address,address,address,address)"](
+      ["initialize(address,address,address,address,address,address,uint256,uint256)"](
         vault.address,
         pool.address,
         manager.address,
         v3Helper.address,
         mockRouter.address,
-        operatorAddr
+        operatorAddr,
+        "1000000000000",
+        "50000000000"
       )
   );
   log("Initialized UniswapV3Strategy");
