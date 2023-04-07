@@ -24,12 +24,12 @@ forkOnlyDescribe("ForkTest: Frax ETH Strategy", function () {
   });
 
   it("Should deposit fraxETH in Frax ETH Strategy", async function () {
-    const { daniel, frxETH } = fixture;
+    const { daniel } = fixture;
     await mintTest(fixture, daniel, "10");
   });
 
   it("Should depositAll fraxETH in Frax ETH Strategy", async function () {
-    const { daniel, frxETH } = fixture;
+    const { daniel } = fixture;
     await depositAllTest(fixture, daniel, "10");
   });
 
@@ -56,21 +56,20 @@ forkOnlyDescribe("ForkTest: Frax ETH Strategy", function () {
   });
 
   it("Should deploy fraxETH and then withdraw it", async function () {
-    const { daniel, frxETH } = fixture;
+    const { daniel } = fixture;
     await withdrawTest(fixture, daniel, "10");
   });
 
   it("Should deploy fraxETH and then call withdraw all on the strategy", async function () {
-    const { daniel, frxETH } = fixture;
+    const { daniel } = fixture;
     await withdrawAllTest(fixture, daniel, "10");
   });
 });
 
 async function depositAllTest(fixture, user, amount = "10") {
-  const { oethVault, oeth, frxETH, fraxEthStrategy } = fixture;
+  const { oethVault, frxETH, fraxEthStrategy } = fixture;
 
   const assetUnits = await frxETHUnits(amount);
-  const vaultAssetBalBefore = await frxETH.balanceOf(oethVault.address);
   const supply = await fraxEthStrategy.checkBalance(frxETH.address);
   const vaultSigner = await impersonateAndFundContract(oethVault.address);
 
@@ -86,12 +85,11 @@ async function depositAllTest(fixture, user, amount = "10") {
 }
 
 async function withdrawAllTest(fixture, user, amount = "10") {
-  const { oethVault, oeth, frxETH, fraxEthStrategy } = fixture;
+  const { oethVault, frxETH, fraxEthStrategy } = fixture;
   const vaultSigner = await impersonateAndFundContract(oethVault.address);
 
   await mintTest(fixture, user, amount);
 
-  const assetUnits = await frxETHUnits(amount);
   const strategyFrxETHBalance = await fraxEthStrategy.checkBalance(
     frxETH.address
   );
@@ -107,7 +105,7 @@ async function withdrawAllTest(fixture, user, amount = "10") {
 }
 
 async function withdrawTest(fixture, user, amount = "10") {
-  const { oethVault, oeth, frxETH, fraxEthStrategy } = fixture;
+  const { oethVault, frxETH, fraxEthStrategy } = fixture;
   await mintTest(fixture, user, amount);
 
   const assetUnits = await frxETHUnits(amount);

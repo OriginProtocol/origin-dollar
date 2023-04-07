@@ -14,7 +14,7 @@ const {
 const guardianAddr = addresses.mainnet.Guardian;
 
 module.exports = deploymentWithGuardianGovernor(
-  { deployName: "051_oeth", forceDeploy: true },
+  { deployName: "051_oeth" },
   async ({ deployWithConfirmation, ethers, getTxOpts, withConfirmation }) => {
     const { deployerAddr, governorAddr } = await getNamedAccounts();
     const sDeployer = await ethers.provider.getSigner(deployerAddr);

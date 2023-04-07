@@ -38,21 +38,23 @@ async function defaultFixture() {
   const { governorAddr, timelockAddr } = await getNamedAccounts();
 
   const ousdProxy = await ethers.getContract("OUSDProxy");
-  const oethProxy = await ethers.getContract("OETHProxy");
   const vaultProxy = await ethers.getContract("VaultProxy");
-  const OETHVaultProxy = await ethers.getContract("OETHVaultProxy");
   const harvesterProxy = await ethers.getContract("HarvesterProxy");
   const compoundStrategyProxy = await ethers.getContract(
     "CompoundStrategyProxy"
   );
 
   const ousd = await ethers.getContractAt("OUSD", ousdProxy.address);
-  const oeth = await ethers.getContractAt("OETH", oethProxy.address);
   const vault = await ethers.getContractAt("IVault", vaultProxy.address);
-  const oethVault = await ethers.getContractAt(
-    "IVault",
-    OETHVaultProxy.address
-  );
+
+  let oethProxy, OETHVaultProxy, oeth, oethVault;
+  if (isFork) {
+    oethProxy = await ethers.getContract("OETHProxy");
+    OETHVaultProxy = await ethers.getContract("OETHVaultProxy");
+    oeth = await ethers.getContractAt("OETH", oethProxy.address);
+    oethVault = await ethers.getContractAt("IVault", OETHVaultProxy.address);
+  }
+
   const harvester = await ethers.getContractAt(
     "Harvester",
     harvesterProxy.address
