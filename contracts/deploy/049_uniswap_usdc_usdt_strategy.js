@@ -81,7 +81,7 @@ module.exports = deploymentWithGovernanceProposal(
 
     // 4. Init and configure new Uniswap V3 strategy
     const initFunction =
-      "initialize(address,address,address,address,address,address)";
+      "initialize(address,address,address,address,address,address,uint256,uint256)";
     await withConfirmation(
       cUniV3_USDC_USDT_Strategy.connect(sDeployer)[initFunction](
         cVaultProxy.address, // Vault
