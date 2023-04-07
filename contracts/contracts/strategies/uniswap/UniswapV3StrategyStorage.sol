@@ -13,11 +13,14 @@ import { IUniswapV3Strategy } from "../../interfaces/IUniswapV3Strategy.sol";
 import { ISwapRouter } from "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 
 abstract contract UniswapV3StrategyStorage is InitializableAbstractStrategy {
-    event OperatorChanged(address _address);
-    event LiquidityManagerImplementationUpgraded(address _newImpl);
-    event ReserveStrategyChanged(address asset, address reserveStrategy);
+    event OperatorChanged(address indexed _address);
+    event LiquidityManagerImplementationUpgraded(address indexed _newImpl);
+    event ReserveStrategyChanged(
+        address indexed asset,
+        address reserveStrategy
+    );
     event MinDepositThresholdChanged(
-        address asset,
+        address indexed asset,
         uint256 minDepositThreshold
     );
     event RebalancePauseStatusChanged(bool paused);
