@@ -153,9 +153,6 @@ abstract contract UniswapV3StrategyStorage is InitializableAbstractStrategy {
     bytes32 constant LIQUIDITY_MANAGER_IMPL_POSITION =
         0xec676d52175f7cbb4e4ea392c6b70f8946575021aad20479602b98adc56ad62d;
 
-    // Future-proofing
-    uint256[100] private __gap;
-
     /***************************************
             Modifiers
     ****************************************/
