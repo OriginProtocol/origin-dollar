@@ -425,7 +425,7 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
     }
 
     /**
-     * Removes all allowance of both the tokens from NonfungiblePositionManager as 
+     * Removes all allowance of both the tokens from NonfungiblePositionManager as
      * well as from the Uniswap V3 Swap Router
      */
     function resetAllowanceOfTokens() external onlyGovernor nonReentrant {

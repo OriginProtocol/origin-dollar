@@ -894,8 +894,9 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
             uint256 t1ReserveBal = reserveStrategy1.checkBalance(token1);
 
             // Only swap when asset isn't available in reserve as well
+            require(token1Needed > 0, "No need for swap");
             require(
-                token1Needed > 0 && token1Needed > t1ReserveBal,
+                token1Needed > t1ReserveBal,
                 "Cannot swap when the asset is available in reserve"
             );
             // Additional amount of token0 required for swapping
@@ -909,8 +910,9 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
             uint256 t0ReserveBal = reserveStrategy0.checkBalance(token0);
 
             // Only swap when asset isn't available in reserve as well
+            require(token0Needed > 0, "No need for swap");
             require(
-                token0Needed > 0 && token0Needed > t0ReserveBal,
+                token0Needed > t0ReserveBal,
                 "Cannot swap when the asset is available in reserve"
             );
             // Additional amount of token1 required for swapping
