@@ -28,6 +28,8 @@ const ousdMetapoolAbi = require("./abi/ousdMetapool.json");
 const threepoolLPAbi = require("./abi/threepoolLP.json");
 const threepoolSwapAbi = require("./abi/threepoolSwap.json");
 
+const sfrxETHAbi = require("./abi/sfrxETH.json");
+
 async function defaultFixture() {
   await deployments.fixture(undefined, {
     keepExistingDeployments: Boolean(isForkWithLocalNode),
@@ -47,7 +49,10 @@ async function defaultFixture() {
   const ousd = await ethers.getContractAt("OUSD", ousdProxy.address);
   const oeth = await ethers.getContractAt("OETH", oethProxy.address);
   const vault = await ethers.getContractAt("IVault", vaultProxy.address);
-  const oethVault = await ethers.getContractAt("IVault", OETHVaultProxy.address);
+  const oethVault = await ethers.getContractAt(
+    "IVault",
+    OETHVaultProxy.address
+  );
   const harvester = await ethers.getContractAt(
     "Harvester",
     harvesterProxy.address
@@ -188,7 +193,7 @@ async function defaultFixture() {
     ausdc = await ethers.getContractAt(erc20Abi, addresses.mainnet.aUSDC);
     adai = await ethers.getContractAt(erc20Abi, addresses.mainnet.aDAI);
     frxETH = await ethers.getContractAt(erc20Abi, addresses.mainnet.frxETH);
-    sfrxETH = await ethers.getContractAt(erc20Abi, addresses.mainnet.sfrxETH);
+    sfrxETH = await ethers.getContractAt(sfrxETHAbi, addresses.mainnet.sfrxETH);
     morpho = await ethers.getContractAt(morphoAbi, addresses.mainnet.Morpho);
     morphoLens = await ethers.getContractAt(
       morphoLensAbi,

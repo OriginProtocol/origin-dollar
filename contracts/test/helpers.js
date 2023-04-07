@@ -86,6 +86,10 @@ function oethUnits(amount) {
   return parseUnits(amount, 18);
 }
 
+function frxETHUnits(amount) {
+  return parseUnits(amount, 18);
+}
+
 function fraxUnits(amount) {
   return parseUnits(amount, 18);
 }
@@ -563,6 +567,7 @@ module.exports = {
   oracleUnits,
   cDaiUnits,
   cUsdcUnits,
+  frxETHUnits,
   units,
   daiUnitsFormat,
   ousdUnitsFormat,

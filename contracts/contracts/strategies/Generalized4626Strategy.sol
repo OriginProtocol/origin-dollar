@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 /**
  * @title OETH Generalized 4626 Strategy
- * @notice Investment strategy for vaults supporting ERC4626 
+ * @notice Investment strategy for vaults supporting ERC4626
  * @author Origin Protocol Inc
  */
 import { IERC4626 } from "../../lib/openzeppelin/interfaces/IERC4626.sol";
@@ -114,7 +114,15 @@ contract Generalized4626Strategy is InitializableAbstractStrategy {
         returns (uint256 balance)
     {
         require(_asset == address(assetToken), "Unexpected asset address");
-        return IERC4626(platformAddress).totalAssets();
+        /* We are intentionally not counting the amount of assetToken parked on the
+         * contract toward the checkBalance. The deposit and withdraw functions
+         * should not result in assetToken being unused and owned by this strategy
+         * contract.
+         */
+        return
+            IERC4626(platformAddress).convertToAssets(
+                shareToken.balanceOf(address(this))
+            );
     }
 
     /**

@@ -223,7 +223,9 @@ const deployFraxETHStrategy = async ({
   const cFraxETHStrategyProxy = await ethers.getContract(
     "FraxETHStrategyProxy"
   );
-  const dFraxETHStrategy = await deployWithConfirmation("Generalized4626Strategy");
+  const dFraxETHStrategy = await deployWithConfirmation(
+    "Generalized4626Strategy"
+  );
   const cFraxETHStrategy = await ethers.getContractAt(
     "Generalized4626Strategy",
     dFraxETHStrategyProxy.address
@@ -269,4 +271,3 @@ const deployFraxETHStrategy = async ({
     },
   ];
 };
-
