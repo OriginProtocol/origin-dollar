@@ -28,7 +28,7 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
      * @param tokenId tokenID of the Position NFT
      * @return posValue Value of position (in 18 decimals)
      */
-    function getPositionValue(uint256 tokenId)
+    function _getPositionValue(uint256 tokenId)
         internal
         view
         returns (uint256 posValue)
@@ -158,9 +158,9 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
             Rebalance
     ****************************************/
     /// Reverts if active position's value is greater than maxTVL
-    function ensureTVL() internal {
+    function _ensureTVL() internal {
         require(
-            getPositionValue(activeTokenId) <= maxTVL,
+            _getPositionValue(activeTokenId) <= maxTVL,
             "MaxTVL threshold has been reached"
         );
     }
@@ -170,7 +170,7 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
      * @param sqrtPriceLimitX96 Desired swap price limit
      * @param swapZeroForOne True when swapping token0 for token1
      */
-    function swapsNotPausedAndWithinLimits(
+    function _swapsNotPausedAndWithinLimits(
         uint160 sqrtPriceLimitX96,
         bool swapZeroForOne
     ) internal {
@@ -193,7 +193,7 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
     }
 
     /// Reverts if rebalances are paused
-    function rebalanceNotPaused() internal {
+    function _rebalanceNotPaused() internal {
         require(!rebalancePaused, "Rebalances are paused");
     }
 
@@ -202,9 +202,10 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
      * @param upperTick Upper tick index
      * @param lowerTick Lower tick inded
      */
-    function rebalanceNotPausedAndWithinLimits(int24 lowerTick, int24 upperTick)
-        internal
-    {
+    function _rebalanceNotPausedAndWithinLimits(
+        int24 lowerTick,
+        int24 upperTick
+    ) internal {
         require(!rebalancePaused, "Rebalances are paused");
         require(
             minRebalanceTick <= lowerTick && maxRebalanceTick >= upperTick,
@@ -253,12 +254,12 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
      *          the storage. Also, updates netLostValue state
      * @param tokenId Token ID of the position
      */
-    function updatePositionNetVal(uint256 tokenId) internal {
+    function _updatePositionNetVal(uint256 tokenId) internal {
         if (tokenId == 0) {
             return;
         }
 
-        uint256 currentVal = getPositionValue(tokenId);
+        uint256 currentVal = _getPositionValue(tokenId);
         uint256 lastVal = tokenIdToPosition[tokenId].netValue;
 
         if (currentVal == lastVal) {
@@ -290,8 +291,8 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
      *         Reverts if netLostValue threshold is breached.
      * @param tokenId Token ID of the position
      */
-    function ensureNetValueLostThreshold(uint256 tokenId) internal {
-        updatePositionNetVal(tokenId);
+    function _ensureNetValueLostThreshold(uint256 tokenId) internal {
+        _updatePositionNetVal(tokenId);
         require(
             netLostValue < maxPositionValueLostThreshold,
             "Over max value loss threshold"
@@ -323,7 +324,7 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         int24 upperTick
     ) external onlyGovernorOrStrategistOrOperator nonReentrant {
         require(lowerTick < upperTick, "Invalid tick range");
-        rebalanceNotPausedAndWithinLimits(lowerTick, upperTick);
+        _rebalanceNotPausedAndWithinLimits(lowerTick, upperTick);
 
         int48 tickKey = _getTickPositionKey(lowerTick, upperTick);
         uint256 tokenId = ticksToTokenId[tickKey];
@@ -365,7 +366,7 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         _depositAll();
 
         // Final position value/sanity check
-        ensureTVL();
+        _ensureTVL();
     }
 
     struct SwapAndRebalanceParams {
@@ -407,11 +408,11 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         nonReentrant
     {
         require(params.lowerTick < params.upperTick, "Invalid tick range");
-        swapsNotPausedAndWithinLimits(
+        _swapsNotPausedAndWithinLimits(
             params.sqrtPriceLimitX96,
             params.swapZeroForOne
         );
-        rebalanceNotPausedAndWithinLimits(params.lowerTick, params.upperTick);
+        _rebalanceNotPausedAndWithinLimits(params.lowerTick, params.upperTick);
 
         uint256 tokenId = ticksToTokenId[
             _getTickPositionKey(params.lowerTick, params.upperTick)
@@ -465,7 +466,7 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         _depositAll();
 
         // Final position value/sanity check
-        ensureTVL();
+        _ensureTVL();
     }
 
     /***************************************
@@ -525,7 +526,7 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         require(ticksToTokenId[tickKey] == 0, "Duplicate position mint");
 
         // Make sure liquidity management is disabled when value lost threshold is breached
-        ensureNetValueLostThreshold(0);
+        _ensureNetValueLostThreshold(0);
 
         INonfungiblePositionManager.MintParams
             memory params = INonfungiblePositionManager.MintParams({
@@ -591,7 +592,7 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         require(position.exists, "No active position");
 
         // Make sure liquidity management is disabled when value lost threshold is breached
-        ensureNetValueLostThreshold(tokenId);
+        _ensureNetValueLostThreshold(tokenId);
 
         INonfungiblePositionManager.IncreaseLiquidityParams
             memory params = INonfungiblePositionManager
@@ -610,7 +611,7 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
 
         position.liquidity += liquidity;
         // Update last known value
-        position.netValue = getPositionValue(tokenId);
+        position.netValue = _getPositionValue(tokenId);
 
         emit UniswapV3LiquidityAdded(tokenId, amount0, amount1, liquidity);
     }
@@ -638,7 +639,7 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         nonReentrant
         returns (uint256 amount0, uint256 amount1)
     {
-        rebalanceNotPaused();
+        _rebalanceNotPaused();
 
         // Withdraw enough funds from Reserve strategies
         _ensureAssetBalances(desiredAmount0, desiredAmount1);
@@ -655,7 +656,7 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         _depositAll();
 
         // Final position value/sanity check
-        ensureTVL();
+        _ensureTVL();
     }
 
     /**
@@ -680,7 +681,7 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
 
         // Update net value loss (to capture the state value before updating it).
         // Also allows to close/decrease liquidity even if beyond the net loss threshold.
-        updatePositionNetVal(tokenId);
+        _updatePositionNetVal(tokenId);
 
         INonfungiblePositionManager.DecreaseLiquidityParams
             memory params = INonfungiblePositionManager
@@ -696,7 +697,7 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
 
         position.liquidity -= liquidity;
         // Update last known value
-        position.netValue = getPositionValue(tokenId);
+        position.netValue = _getPositionValue(tokenId);
 
         emit UniswapV3LiquidityRemoved(
             position.tokenId,
@@ -726,7 +727,7 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         nonReentrant
         returns (uint256 amount0, uint256 amount1)
     {
-        rebalanceNotPaused();
+        _rebalanceNotPaused();
 
         (amount0, amount1) = _decreasePositionLiquidity(
             activeTokenId,

@@ -138,13 +138,13 @@ abstract contract UniswapV3StrategyStorage is InitializableAbstractStrategy {
     INonfungiblePositionManager public positionManager;
 
     // A deployed contract that's used to call methods of Uniswap V3's libraries despite version mismatch
-    IUniswapV3Helper internal helper;
+    IUniswapV3Helper public helper;
 
     // Uniswap Swap Router
-    ISwapRouter internal swapRouter;
+    ISwapRouter public swapRouter;
 
     // A lookup table to find token IDs of position using f(lowerTick, upperTick)
-    mapping(int48 => uint256) internal ticksToTokenId;
+    mapping(int48 => uint256) public ticksToTokenId;
 
     // Maps tokenIDs to their Position object
     mapping(uint256 => Position) public tokenIdToPosition;
