@@ -34,7 +34,7 @@ abstract contract UniswapV3StrategyStorage is InitializableAbstractStrategy {
     );
     event MaxTVLChanged(uint256 maxTVL);
     event MaxValueLostThresholdChanged(uint256 amount);
-    event NetLossValueReset(address indexed _by);
+    event NetLostValueReset(address indexed _by);
     event NetLostValueChanged(uint256 currentNetLostValue);
     event PositionValueChanged(
         uint256 indexed tokenId,

@@ -290,7 +290,7 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
      *         Reverts if netLostValue threshold is breached.
      * @param tokenId Token ID of the position
      */
-    function ensureNetLossThreshold(uint256 tokenId) internal {
+    function ensureNetValueLostThreshold(uint256 tokenId) internal {
         updatePositionNetVal(tokenId);
         require(
             netLostValue < maxPositionValueLostThreshold,
@@ -525,7 +525,7 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         require(ticksToTokenId[tickKey] == 0, "Duplicate position mint");
 
         // Make sure liquidity management is disabled when value lost threshold is breached
-        ensureNetLossThreshold(0);
+        ensureNetValueLostThreshold(0);
 
         INonfungiblePositionManager.MintParams
             memory params = INonfungiblePositionManager.MintParams({
@@ -591,7 +591,7 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         require(position.exists, "No active position");
 
         // Make sure liquidity management is disabled when value lost threshold is breached
-        ensureNetLossThreshold(tokenId);
+        ensureNetValueLostThreshold(tokenId);
 
         INonfungiblePositionManager.IncreaseLiquidityParams
             memory params = INonfungiblePositionManager

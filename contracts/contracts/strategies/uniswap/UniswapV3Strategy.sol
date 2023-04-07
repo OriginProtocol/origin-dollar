@@ -204,7 +204,7 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
      * @dev Only governor can call it
      */
     function resetLostValue() external onlyGovernor {
-        emit NetLossValueReset(msg.sender);
+        emit NetLostValueReset(msg.sender);
         emit NetLostValueChanged(0);
         netLostValue = 0;
     }
