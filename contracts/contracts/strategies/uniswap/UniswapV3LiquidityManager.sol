@@ -487,7 +487,7 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         if (lowerTick > upperTick)
             (lowerTick, upperTick) = (upperTick, lowerTick);
         key = int48(lowerTick) * 2**24; // Shift by 24 bits
-        key = key + int24(upperTick);
+        key = key + upperTick;
     }
 
     /**
