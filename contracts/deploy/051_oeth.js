@@ -63,7 +63,6 @@ const deployCore = async ({
 
   // Proxies
   await deployWithConfirmation("OETHVaultProxy");
-  await deployWithConfirmation("OETHProxy");
   await deployWithConfirmation("OracleRouter");
 
   // Main contracts
@@ -77,18 +76,12 @@ const deployCore = async ({
   const dVaultAdmin = await deployWithConfirmation("OETHVaultAdmin");
 
   // Get contract instances
+  // OETH proxy has already been deployed by deploy 049
   const cOETHProxy = await ethers.getContract("OETHProxy");
   const cVaultProxy = await ethers.getContract("OETHVaultProxy");
   const cOETH = await ethers.getContractAt("OETH", cOETHProxy.address);
   const cOracleRouter = await ethers.getContract("OracleRouter");
   const cVault = await ethers.getContractAt("OETHVault", cVaultProxy.address);
-
-  await withConfirmation(
-    cOETHProxy
-      .connect(sDeployer)
-      ["initialize(address,address,bytes)"](dOETH.address, deployerAddr, [])
-  );
-  console.log("Initialized OETHProxy");
 
   // Need to call the initializer on the Vault then upgraded it to the actual
   // VaultCore implementation
@@ -138,24 +131,8 @@ const deployCore = async ({
 
   console.log("Initialized OETHVaultAdmin implementation");
 
-  // Initialize OETH
-  await withConfirmation(
-    cOETH.connect(sDeployer).initialize(
-      "Origin Ether", // the name?
-      "OETH",
-      cVaultProxy.address,
-      utils.parseUnits("1", 27).sub(BigNumber.from(1))
-    )
-  );
-
-  console.log("Initialized OETH");
-
   await withConfirmation(
     cVaultProxy.connect(sDeployer).transferGovernance(guardianAddr)
-  );
-
-  await withConfirmation(
-    cOETHProxy.connect(sDeployer).transferGovernance(guardianAddr)
   );
 
   console.log("Governance transfer initialized");
@@ -173,6 +150,24 @@ const deployCore = async ({
       contract: cOETHProxy,
       signature: "claimGovernance()",
       args: [],
+    },
+    {
+      // Upgrade OETH proxy
+      contract: cOETHProxy,
+      signature: "upgradeTo(address)",
+      args: [dOETH.address],
+    },
+    {
+      // Initialize OETH in the proxy storage slot space
+      contract: cOETH,
+      signature: "initialize(string,string,address,uint256)",
+      // TODO: Verify name is ok
+      args: [
+        "Origin Ether",
+        "OETH",
+        cVaultProxy.address,
+        utils.parseUnits("1", 27).sub(BigNumber.from(1)),
+      ],
     },
   ];
 };
