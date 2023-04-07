@@ -496,7 +496,7 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
      * @notice This is a catch all for all functions not declared here
      */
     // solhint-disable-next-line no-complex-fallback
-    fallback() external payable {
+    fallback() external {
         bytes32 slot = liquidityManagerImplPosition;
         // solhint-disable-next-line no-inline-assembly
         assembly {
