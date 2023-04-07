@@ -700,7 +700,7 @@ contract VaultCore is VaultStorage {
      */
     // solhint-disable-next-line no-complex-fallback
     fallback() external payable {
-        bytes32 slot = adminImplPosition;
+        bytes32 slot = ADMIN_IMPL_POSITION;
         // solhint-disable-next-line no-inline-assembly
         assembly {
             // Copy msg.data. We take full control of memory in this inline assembly

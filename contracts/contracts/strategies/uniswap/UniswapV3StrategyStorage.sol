@@ -147,7 +147,7 @@ abstract contract UniswapV3StrategyStorage is InitializableAbstractStrategy {
     mapping(uint256 => Position) public tokenIdToPosition;
 
     // keccak256("OUSD.UniswapV3Strategy.LiquidityManager.impl")
-    bytes32 constant liquidityManagerImplPosition =
+    bytes32 constant LIQUIDITY_MANAGER_IMPL_POSITION =
         0xec676d52175f7cbb4e4ea392c6b70f8946575021aad20479602b98adc56ad62d;
 
     // Future-proofing

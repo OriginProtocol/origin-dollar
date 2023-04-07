@@ -483,7 +483,7 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
             Address.isContract(newImpl),
             "new implementation is not a contract"
         );
-        bytes32 position = liquidityManagerImplPosition;
+        bytes32 position = LIQUIDITY_MANAGER_IMPL_POSITION;
         // solhint-disable-next-line no-inline-assembly
         assembly {
             sstore(position, newImpl)
@@ -497,7 +497,7 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
      */
     // solhint-disable-next-line no-complex-fallback
     fallback() external payable {
-        bytes32 slot = liquidityManagerImplPosition;
+        bytes32 slot = LIQUIDITY_MANAGER_IMPL_POSITION;
         // solhint-disable-next-line no-inline-assembly
         assembly {
             // Copy msg.data. We take full control of memory in this inline assembly
