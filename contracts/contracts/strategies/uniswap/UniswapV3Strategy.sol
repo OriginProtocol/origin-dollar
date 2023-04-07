@@ -425,7 +425,8 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
     }
 
     /**
-     * Removes all allowance of both the tokens from NonfungiblePositionManager
+     * Removes all allowance of both the tokens from NonfungiblePositionManager as 
+     * well as from the Uniswap V3 Swap Router
      */
     function resetAllowanceOfTokens() external onlyGovernor nonReentrant {
         IERC20(token0).safeApprove(address(positionManager), 0);
