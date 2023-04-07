@@ -24,7 +24,7 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
             Position Value
     ****************************************/
     /**
-     * @notice Calculates the net value of the position exlcuding fees
+     * @notice Calculates the net value of the position excluding fees
      * @param tokenId tokenID of the Position NFT
      * @return posValue Value of position (in 18 decimals)
      */
@@ -116,7 +116,7 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
     }
 
     /**
-     * @notice Liquidiates active position to remove required amount of give asset
+     * @notice Liquidates active position to remove required amount of give asset
      * @dev Doesn't have non-Reentrant modifier since it's supposed to be delegatecalled
      *      only from `UniswapV3Strategy.withdraw` which already has a nonReentrant check
      *      and the storage is shared between these two contract.
@@ -662,7 +662,7 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
      * @notice Removes liquidity of the position in the pool
      *
      * @param tokenId Position NFT's tokenId
-     * @param liquidity Amount of liquidity to remove form the position
+     * @param liquidity Amount of liquidity to remove from the position
      * @param minAmount0 Min amount of token0 to withdraw
      * @param minAmount1 Min amount of token1 to withdraw
      *
@@ -709,7 +709,7 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
     /**
      * @notice Removes liquidity of the active position in the pool
      *
-     * @param liquidity Amount of liquidity to remove form the position
+     * @param liquidity Amount of liquidity to remove from the position
      * @param minAmount0 Min amount of token0 to withdraw
      * @param minAmount1 Min amount of token1 to withdraw
      *
@@ -916,7 +916,6 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
             // Additional amount of token1 required for swapping
             token1Needed += swapAmountIn;
             // Subtract token0 that we will get from swapping
-            // Subtract token1 that we will get from swapping
             token0Needed = (swapMinAmountOut >= token0Needed)
                 ? 0
                 : (token0Needed - swapMinAmountOut);

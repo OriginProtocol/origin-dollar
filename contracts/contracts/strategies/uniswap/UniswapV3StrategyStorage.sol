@@ -189,7 +189,7 @@ abstract contract UniswapV3StrategyStorage is InitializableAbstractStrategy {
             Shared functions
     ****************************************/
     /**
-     * @notice Deposits back strategy token balances back to the reserve strategies
+     * @notice Deposits token balances in the contract back to the reserve strategies
      */
     function _depositAll() internal {
         uint256 token0Bal = IERC20(token0).balanceOf(address(this));
