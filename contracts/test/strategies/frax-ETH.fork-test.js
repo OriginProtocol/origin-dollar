@@ -44,7 +44,7 @@ forkOnlyDescribe("ForkTest: Frax ETH Strategy", function () {
       .withdraw(oethVault.address, frxETH.address, balance);
 
     const balanceAfter = await fraxEthStrategy.checkBalance(frxETH.address);
-    expect(balanceAfter).lt(frxETHUnits(0.0001));
+    expect(balanceAfter).lt(frxETHUnits("0.0001"));
   });
 
   it("Strategy should earn interest using fraxETH in Frax ETH Strategy", async function () {
