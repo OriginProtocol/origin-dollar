@@ -1,5 +1,4 @@
 const { expect } = require("chai");
-
 const { loadFixture } = require("ethereum-waffle");
 const {
   units,
@@ -31,6 +30,21 @@ forkOnlyDescribe("ForkTest: Frax ETH Strategy", function () {
   it("Should depositAll fraxETH in Frax ETH Strategy", async function () {
     const { daniel } = fixture;
     await depositAllTest(fixture, daniel, "10");
+  });
+
+  it("Should be able to withdraw the exact amount checkBalance returns", async function () {
+    const { daniel, oethVault, fraxEthStrategy, frxETH } = fixture;
+    const vaultSigner = await impersonateAndFundContract(oethVault.address);
+    await mintTest(fixture, daniel, "10");
+
+    const balance = await fraxEthStrategy.checkBalance(frxETH.address);
+
+    await fraxEthStrategy
+      .connect(vaultSigner)
+      .withdraw(oethVault.address, frxETH.address, balance);
+
+    const balanceAfter = await fraxEthStrategy.checkBalance(frxETH.address);
+    expect(balanceAfter).lt(frxETHUnits(0.0001));
   });
 
   it("Strategy should earn interest using fraxETH in Frax ETH Strategy", async function () {
@@ -69,7 +83,7 @@ forkOnlyDescribe("ForkTest: Frax ETH Strategy", function () {
 async function depositAllTest(fixture, user, amount = "10") {
   const { oethVault, frxETH, fraxEthStrategy } = fixture;
 
-  const assetUnits = await frxETHUnits(amount);
+  const assetUnits = frxETHUnits(amount);
   const supply = await fraxEthStrategy.checkBalance(frxETH.address);
   const vaultSigner = await impersonateAndFundContract(oethVault.address);
 
@@ -108,7 +122,7 @@ async function withdrawTest(fixture, user, amount = "10") {
   const { oethVault, frxETH, fraxEthStrategy } = fixture;
   await mintTest(fixture, user, amount);
 
-  const assetUnits = await frxETHUnits(amount);
+  const assetUnits = frxETHUnits(amount);
   const vaultAssetBalBefore = await frxETH.balanceOf(oethVault.address);
   const vaultSigner = await impersonateAndFundContract(oethVault.address);
 
