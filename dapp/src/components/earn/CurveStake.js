@@ -292,11 +292,6 @@ const CurveStake = ({ rpcProvider, isMobile }) => {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn btn-blue mt-md-auto"
-                onClick={() => {
-                  analytics.track('On Add Liquidity', {
-                    category: 'navigation',
-                  })
-                }}
               >
                 {fbt('Add Liquidity', 'Add Liquidity Button')}
               </a>
@@ -316,11 +311,6 @@ const CurveStake = ({ rpcProvider, isMobile }) => {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn btn-blue mt-md-auto"
-                onClick={() => {
-                  analytics.track('On Claim Rewards', {
-                    category: 'navigation',
-                  })
-                }}
               >
                 {fbt('Claim Rewards', 'Claim Rewards Button')}
               </a>

@@ -9,8 +9,8 @@ import WrapHomepage from 'components/wrap/WrapHomepage'
 export default function Wrap({ locale, onLocale }) {
   return (
     <>
-      <Layout locale={locale} onLocale={onLocale} dapp>
-        <Nav dapp page={'wrap'} locale={locale} onLocale={onLocale} />
+      <Layout locale={locale} onLocale={onLocale}>
+        <Nav page={'wrap'} locale={locale} onLocale={onLocale} />
         <div className="home d-flex flex-column">
           <BalanceHeaderWrapped />
           <div className="d-flex">
