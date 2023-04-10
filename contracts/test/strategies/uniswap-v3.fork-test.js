@@ -694,7 +694,7 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
 
       // Mint position
       const amount = "100000";
-      const { tokenId, tx, amount0Minted, amount1Minted } = await mintLiquidity(
+      const { tokenId, tx } = await mintLiquidity(
         lowerTick,
         upperTick,
         amount,
