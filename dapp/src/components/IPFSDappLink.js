@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { fbt } from 'fbt-runtime'
 import { assetRootPath } from 'utils/image'
 
-export default function IPFSDappLink({ dapp, css }) {
+export default function IPFSDappLink({ css }) {
   const [displayIpfsLink, setDisplayIpfsLink] = useState(false)
 
   useEffect(() => {
@@ -14,7 +14,7 @@ export default function IPFSDappLink({ dapp, css }) {
   }, [])
 
   return (
-    <div className={`${!displayIpfsLink || !dapp ? 'd-none' : css}`}>
+    <div className={`${!displayIpfsLink || css}`}>
       <a
         className={`ipfs-link d-flex justify-content-center align-items-center`}
         href={process.env.NEXT_PUBLIC_IPFS_DAPP_URL}

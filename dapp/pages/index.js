@@ -9,8 +9,8 @@ import PrimarySidePanel from 'components/sidePanel/PrimarySidePanel'
 export default function DApp({ locale, onLocale }) {
   return (
     <>
-      <Layout locale={locale} onLocale={onLocale} dapp>
-        <Nav dapp page={'swap'} locale={locale} onLocale={onLocale} />
+      <Layout locale={locale} onLocale={onLocale}>
+        <Nav page={'swap'} locale={locale} onLocale={onLocale} />
         <div className="home d-flex flex-column">
           <BalanceHeader />
           <div className="d-flex">
