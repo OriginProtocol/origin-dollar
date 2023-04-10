@@ -98,7 +98,7 @@ contract MorphoAaveStrategyProxy is InitializeGovernedUpgradeabilityProxy {
  * @notice UniV3_USDC_USDT_Proxy delegates calls to a UniswapV3Strategy implementation
  */
 contract UniV3_USDC_USDT_Proxy is InitializeGovernedUpgradeabilityProxy {
-  
+
 }
 
 /**
