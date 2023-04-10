@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity ^0.8.0;
 
+import { InitializableAbstractStrategy } from "../../utils/InitializableAbstractStrategy.sol";
 import { UniswapV3StrategyStorage } from "./UniswapV3StrategyStorage.sol";
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 
