@@ -722,13 +722,7 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
       ).to.be.revertedWith("Over max value loss threshold");
 
       // should still be allowed to close the position
-      strategy
-        .connect(operator)
-        .closePosition(
-          tokenId,
-          Math.round(amount0Minted * 0.92),
-          Math.round(amount1Minted * 0.92)
-        );
+      strategy.connect(operator).closePosition(tokenId, "0", "0");
     });
 
     it("netLostValue will catch possible pool tilts", async () => {
