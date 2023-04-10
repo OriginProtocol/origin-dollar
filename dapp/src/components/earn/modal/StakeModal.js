@@ -69,12 +69,6 @@ const StakeModal = ({
                 onUserConfirmedStakeTx(result, {
                   stakeAmount,
                 })
-                analytics.track('Stake', {
-                  amount: tokensToStake,
-                  // we already store utm_source as user property. This is for easier analytics
-                  utm_source: getUserSource(),
-                  token_name: stakeTokenName,
-                })
                 onClose()
               } else {
                 setModalState('approve-tokens')
@@ -113,12 +107,6 @@ const StakeModal = ({
               const result = await stakeFunctionCall(stakeAmount)
               onUserConfirmedStakeTx(result, {
                 stakeAmount,
-              })
-              analytics.track('Stake', {
-                amount: tokensToStake,
-                // we already store utm_source as user property. This is for easier analytics
-                utm_source: getUserSource(),
-                token_name: stakeTokenName,
               })
               onClose()
             } catch (e) {
