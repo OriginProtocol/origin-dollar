@@ -8,7 +8,6 @@ const AccountStatusIndicator = ({
   active,
   account,
   correctNetwork,
-  dapp,
   withAddress,
 }) => {
   const { overrideAccount } = useOverrideAccount()
@@ -16,7 +15,7 @@ const AccountStatusIndicator = ({
   return (
     <>
       {/* What causes !active && account? */}
-      {dapp && !active && account && <div className="dot" />}
+      {!active && account && <div className="dot" />}
       {active && overrideAccount && (
         <>
           <div className="dot white" />
@@ -40,7 +39,7 @@ const AccountStatusIndicator = ({
           )}
         </>
       )}
-      {dapp && active && correctNetwork && !overrideAccount && (
+      {active && correctNetwork && !overrideAccount && (
         <>
           <div className="dot green" />
           {withAddress && (
