@@ -113,12 +113,17 @@ const deployCore = async ({
       .connect(sDeployer)
       .setAutoAllocateThreshold(utils.parseUnits("10", 18))
   );
+
   await withConfirmation(
     cVault.connect(sDeployer).setRebaseThreshold(utils.parseUnits("1", 18))
   );
 
   await withConfirmation(
     cVault.connect(sDeployer).setMaxSupplyDiff(utils.parseUnits("3", 16))
+  );
+
+  await withConfirmation(
+    cVault.connect(sDeployer).setRedeemFeeBps(50) // 50 BPS = 0.5%
   );
 
   await withConfirmation(
