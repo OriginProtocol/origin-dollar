@@ -1,0 +1,41 @@
+{
+  "address": "0xA539C0aA49c3D3a446ab0FFCd12413A7E0C5fE78",
+  "abi": [],
+  "transactionHash": "0xd93e1f5e16dc7f3448df3646d8e5cf5098a0ce8a54327b7f03c9fe4776a67210",
+  "receipt": {
+    "to": null,
+    "from": "0xFD9E6005187F448957a0972a7d0C0A6dA2911236",
+    "contractAddress": "0xA539C0aA49c3D3a446ab0FFCd12413A7E0C5fE78",
+    "transactionIndex": 20,
+    "gasUsed": "67066",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "blockHash": "0x5f1d3d2fdb097beeed1bcdbe4c02d90a0315c57f7236273b25dda20907ee6343",
+    "transactionHash": "0xd93e1f5e16dc7f3448df3646d8e5cf5098a0ce8a54327b7f03c9fe4776a67210",
+    "logs": [],
+    "blockNumber": 16950119,
+    "cumulativeGasUsed": "1752324",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [],
+  "solcInputHash": "10ba15c25ec4709637fa219eb96eda1a",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.7+commit.e28d00a7\"},\"language\":\"Solidity\",\"output\":{\"abi\":[],\"devdoc\":{\"author\":\"Origin Protocol Inc\",\"kind\":\"dev\",\"methods\":{},\"title\":\"OETH Token Contract\",\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/token/WOETH.sol\":\"WOETH\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[]},\"sources\":{\"contracts/token/WOETH.sol\":{\"content\":\"// SPDX-License-Identifier: agpl-3.0\\npragma solidity ^0.8.0;\\n\\n/**\\n * @title OETH Token Contract\\n * @author Origin Protocol Inc\\n */\\n\\ncontract WOETH {\\n\\n}\\n\",\"keccak256\":\"0x322ab3927b6e07bb4f8b3f24c0b944b322ddd1de8cfbf46e25e66b0b95c048ac\",\"license\":\"agpl-3.0\"}},\"version\":1}",
+  "bytecode": "0x6080604052348015600f57600080fd5b50603f80601d6000396000f3fe6080604052600080fdfea26469706673582212205e6224b2ea21da39a738c8e2c002dbffddc633a603f16a0a60c4792f9fa51af664736f6c63430008070033",
+  "deployedBytecode": "0x6080604052600080fdfea26469706673582212205e6224b2ea21da39a738c8e2c002dbffddc633a603f16a0a60c4792f9fa51af664736f6c63430008070033",
+  "devdoc": {
+    "author": "Origin Protocol Inc",
+    "kind": "dev",
+    "methods": {},
+    "title": "OETH Token Contract",
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {},
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [],
+    "types": null
+  }
+}
