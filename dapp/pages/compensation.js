@@ -66,8 +66,8 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
 
   return (
     <>
-      <Layout locale={locale} onLocale={onLocale} dapp medium>
-        <Nav dapp page={'compensation'} locale={locale} onLocale={onLocale} />
+      <Layout locale={locale} onLocale={onLocale} medium>
+        <Nav page={'compensation'} locale={locale} onLocale={onLocale} />
         <div className="home d-flex flex-column">
           <div className="d-flex align-items-center flex-column flex-md-row">
             <div className="bold-text mr-md-3">

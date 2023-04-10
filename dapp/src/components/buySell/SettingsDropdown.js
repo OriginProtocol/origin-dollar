@@ -40,12 +40,6 @@ const SettingsDropdown = ({ setPriceToleranceValue, priceToleranceValue }) => {
                         setShowWarning(value > 1)
                         value = value > 50 ? 50 : value
                         value = truncateDecimals(value, 2)
-                        if (value !== priceToleranceValue) {
-                          analytics.track('On price tolerance change', {
-                            category: 'settings',
-                            label: value,
-                          })
-                        }
                         setPriceToleranceValue(value)
                       }
                     }}
@@ -84,10 +78,6 @@ const SettingsDropdown = ({ setPriceToleranceValue, priceToleranceValue }) => {
                       }
                       value = Math.floor(value)
                       value *= Math.pow(10, 9)
-                      analytics.track('On gas setting change', {
-                        category: 'settings',
-                        label: value,
-                      })
 
                       ContractStore.update((s) => {
                         s.gasPrice = BigNumber.from(value)
@@ -112,11 +102,6 @@ const SettingsDropdown = ({ setPriceToleranceValue, priceToleranceValue }) => {
           onClick={(e) => {
             const newOpenState = !settingsOpen
             setSettingsOpen(newOpenState)
-            if (newOpenState) {
-              analytics.track('On open settings', {
-                category: 'settings',
-              })
-            }
           }}
         />
       </Dropdown>
