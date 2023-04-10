@@ -7,7 +7,6 @@ import { useRouter } from 'next/router'
 import withWalletSelectModal from 'hoc/withWalletSelectModal'
 import analytics from 'utils/analytics'
 import { walletLogin } from 'utils/account'
-import { adjustLinkHref } from 'utils/utils'
 
 const GetOUSD = ({
   id,
@@ -21,7 +20,6 @@ const GetOUSD = ({
   light2,
   zIndex2,
   navMarble,
-  connect,
 }) => {
   const { activate, active } = useWeb3React()
   const [userAlreadyConnectedWallet, setUserAlreadyConnectedWallet] =
@@ -59,24 +57,15 @@ const GetOUSD = ({
         style={style}
         onClick={() => {
           if (process.browser) {
-            if (connect) {
-              analytics.track('On Connect', {
-                category: 'general',
-                label: trackSource,
-              })
-              walletLogin(showLogin, activate)
-            } else {
-              analytics.track('On Get OUSD', {
-                category: 'navigation',
-                label: trackSource,
-              })
-              router.push(adjustLinkHref('/swap'))
-            }
+            analytics.track('On Connect', {
+              category: 'general',
+              label: trackSource,
+            })
+            walletLogin(showLogin, activate)
           }
         }}
       >
-        {!connect && fbt('Get OUSD', 'Get OUSD button')}
-        {connect && fbt('Connect', 'Connect button')}
+        {fbt('Connect', 'Connect button')}
       </button>
       <style jsx>{`
         .btn {
