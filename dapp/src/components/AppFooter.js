@@ -10,7 +10,7 @@ const termsURL = process.env.NEXT_PUBLIC_TERMS_URL
 const privacyURL = process.env.NEXT_PUBLIC_PRIVACY_URL
 const discordURL = process.env.NEXT_PUBLIC_DISCORD_URL
 
-export default function Footer({ onLocale, locale, dapp }) {
+export default function Footer({ onLocale, locale }) {
   return (
     <>
       <footer>
@@ -73,7 +73,7 @@ export default function Footer({ onLocale, locale, dapp }) {
                 footer
                 locale={locale}
                 onLocale={onLocale}
-                outerClassName={`${dapp ? 'ml-2' : ''}`}
+                outerClassName={'ml-2'}
                 className="nav-dropdown"
                 useNativeSelectbox={false}
               />
