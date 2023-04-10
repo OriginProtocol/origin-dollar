@@ -3,7 +3,7 @@ const { utils } = require("ethers");
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "049_uniswap_usdc_usdt_strategy",
+    deployName: "051_uniswap_usdc_usdt_strategy",
     forceDeploy: false,
   },
   async ({
@@ -57,8 +57,8 @@ module.exports = deploymentWithGovernanceProposal(
       dUniV3_USDC_USDT_Proxy.address
     );
 
-    const cMorphoCompProxy = await ethers.getContract(
-      "MorphoCompoundStrategyProxy"
+    const cMorphoAaveProxy = await ethers.getContract(
+      "MorphoAaveStrategyProxy"
     );
 
     const cHarvesterProxy = await ethers.getContract("HarvesterProxy");
@@ -157,13 +157,13 @@ module.exports = deploymentWithGovernanceProposal(
         {
           contract: cUniV3_USDC_USDT_Strategy,
           signature: "setReserveStrategy(address,address)",
-          args: [assetAddresses.USDC, cMorphoCompProxy.address],
+          args: [assetAddresses.USDC, cMorphoAaveProxy.address],
         },
         // 6. Set Reserve Strategy for USDT
         {
           contract: cUniV3_USDC_USDT_Strategy,
           signature: "setReserveStrategy(address,address)",
-          args: [assetAddresses.USDT, cMorphoCompProxy.address],
+          args: [assetAddresses.USDT, cMorphoAaveProxy.address],
         },
         // 7. Set Minimum Deposit threshold for USDC
         {
