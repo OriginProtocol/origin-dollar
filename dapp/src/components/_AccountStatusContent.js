@@ -12,7 +12,6 @@ import { useOverrideAccount } from 'utils/hooks'
 import { currencies } from 'constants/Contract'
 import { formatCurrency } from 'utils/math'
 import { connectorNameIconMap, getConnectorIcon } from 'utils/connectors'
-import analytics from 'utils/analytics'
 import { assetRootPath } from 'utils/image'
 
 const AccountStatusContent = ({ className, onOpen }) => {
@@ -107,10 +106,6 @@ const AccountStatusContent = ({ className, onOpen }) => {
               className="btn-clear-blue w-100"
               onClick={(e) => {
                 e.preventDefault()
-                analytics.track('On Disconnect Wallet', {
-                  category: 'general',
-                  label: connectorName,
-                })
                 if (onOpen) {
                   onOpen(false)
                 }
