@@ -40,7 +40,7 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
 
   beforeEach(async () => {
     fixture = await uniswapV3Fixture();
-    reserveStrategy = fixture.morphoCompoundStrategy;
+    reserveStrategy = fixture.morphoAaveStrategy;
     strategy = fixture.UniV3_USDC_USDT_Strategy;
     pool = fixture.UniV3_USDC_USDT_Pool;
     positionManager = fixture.UniV3PositionManager;
@@ -694,8 +694,12 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
 
       // Mint position
       const amount = "100000";
-      const { tokenId, tx, amount0Minted, amount1Minted } =
-        await mintLiquidity(lowerTick, upperTick, amount, amount);
+      const { tokenId, tx } = await mintLiquidity(
+        lowerTick,
+        upperTick,
+        amount,
+        amount
+      );
       await expect(tx).to.have.emittedEvent("UniswapV3PositionMinted");
       let storedPosition = await strategy.tokenIdToPosition(tokenId);
       expect(storedPosition.exists).to.be.true;
@@ -718,16 +722,14 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
       ).to.be.revertedWith("Over max value loss threshold");
 
       // should still be allowed to close the position
-      strategy
-        .connect(operator)
-        .closePosition(tokenId, Math.round(amount0Minted * 0.92), Math.round(amount1Minted * 0.92))
+      strategy.connect(operator).closePosition(tokenId, "0", "0");
     });
 
     it("netLostValue will catch possible pool tilts", async () => {
       const [, activeTick] = await pool.slot0();
       const lowerTick = activeTick;
       const upperTick = activeTick + 1;
-      let drainLoops = 10
+      let drainLoops = 10;
       while (drainLoops > 0) {
         const amount = "10000";
         await mintLiquidity(lowerTick, upperTick, amount, amount);

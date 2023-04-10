@@ -674,8 +674,8 @@ const Dashboard = ({ locale, onLocale }) => {
 
   return (
     <>
-      <Layout locale={locale} onLocale={onLocale} dapp>
-        <Nav dapp locale={locale} onLocale={onLocale} />
+      <Layout locale={locale} onLocale={onLocale}>
+        <Nav locale={locale} onLocale={onLocale} />
         <div className="my-5">
           {!account && <h1 className="text-white">No account :(</h1>}
           {account && (

@@ -4,7 +4,6 @@ import { fbt } from 'fbt-runtime'
 import { find, sortBy } from 'lodash'
 import { useStoreState } from 'pullstate'
 import { formatCurrency } from 'utils/math'
-import analytics from 'utils/analytics'
 import { assetRootPath } from 'utils/image'
 
 import ContractStore from 'stores/ContractStore'
@@ -223,19 +222,11 @@ const ContractsTable = () => {
         <ConfirmationModal
           onConfirm={() => {
             setConfirmAlternateRoute(true)
-            analytics.track('On confirm tx route change', {
-              category: 'settings',
-              label: alternateRouteEstimationSelected.name,
-            })
             setShowAlternateRouteModal(false)
             setAlternateRouteEstimationSelected(null)
           }}
           onClose={() => {
             setConfirmAlternateRoute(false)
-            analytics.track('On deny tx route change', {
-              category: 'settings',
-              label: alternateRouteEstimationSelected.name,
-            })
             setShowAlternateRouteModal(false)
             setAlternateRouteEstimationSelected(null)
           }}
@@ -371,12 +362,6 @@ const ContractsTable = () => {
                 if (!isViableOption) {
                   return
                 }
-
-                analytics.track('On tx route change', {
-                  category: 'settings',
-                  label: estimation.name,
-                  value: estimation.isBest ? 1 : 0,
-                })
 
                 if (!alternateTxRouteConfirmed) {
                   setShowAlternateRouteModal(estimation.name)

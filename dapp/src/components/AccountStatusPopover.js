@@ -7,7 +7,7 @@ import Content from './_AccountStatusContent'
 import { assetRootPath } from 'utils/image'
 import AccountStatusIndicator from './_AccountStatusIndicator'
 
-const AccountStatusPopover = ({ className, dapp }) => {
+const AccountStatusPopover = ({ className }) => {
   const { active, account, chainId } = useWeb3React()
   const correctNetwork = isCorrectNetwork(chainId)
 
@@ -31,7 +31,6 @@ const AccountStatusPopover = ({ className, dapp }) => {
             active={active}
             correctNetwork={correctNetwork}
             account={account}
-            dapp={dapp}
           />
         </div>
       </button>
