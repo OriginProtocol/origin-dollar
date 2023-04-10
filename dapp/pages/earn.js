@@ -7,8 +7,8 @@ import CurveStake from 'components/earn/CurveStake'
 
 const Stake = ({ locale, onLocale }) => {
   return (
-    <Layout onLocale={onLocale} locale={locale} dapp shorter isStakePage>
-      <Nav dapp page={'earn'} locale={locale} onLocale={onLocale} />
+    <Layout onLocale={onLocale} locale={locale} shorter isStakePage>
+      <Nav page={'earn'} locale={locale} onLocale={onLocale} />
       {process.env.NEXT_PUBLIC_ENABLE_CURVE_STAKING === 'true' && (
         <CurveStake />
       )}
@@ -31,8 +31,8 @@ export default Stake
 //   return (
 //     process.env.NEXT_PUBLIC_ENABLE_LIQUIDITY_MINING === 'true' && (
 //       <>
-//         <Layout onLocale={onLocale} locale={locale} dapp>
-//           <Nav dapp page={'earn'} locale={locale} onLocale={onLocale} />
+//         <Layout onLocale={onLocale} locale={locale}>
+//           <Nav page={'earn'} locale={locale} onLocale={onLocale} />
 //           <div className="home d-flex flex-column">
 //             <PoolsList
 //               title={fbt('Featured Pools', 'Featured Pools')}

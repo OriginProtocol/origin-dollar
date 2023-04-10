@@ -480,11 +480,11 @@ const sanityCheckOgvGovernance = async () => {
     );
 
     const vaultGovernor = await VaultAdmin.governor();
-    const { governorFiveAddr } = await getNamedAccounts();
+    const { timelockAddr } = await getNamedAccounts();
 
-    if (vaultGovernor.toLowerCase() !== governorFiveAddr.toLowerCase()) {
+    if (vaultGovernor.toLowerCase() !== timelockAddr.toLowerCase()) {
       throw new Error(
-        `Hardhat environment has ${governorFiveAddr} governor address configured which is different from Vault's governor: ${vaultGovernor}`
+        `Hardhat environment has ${timelockAddr} governor address configured which is different from Vault's governor: ${vaultGovernor}`
       );
     }
   }
