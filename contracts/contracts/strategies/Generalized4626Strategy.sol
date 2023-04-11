@@ -39,6 +39,7 @@ contract Generalized4626Strategy is InitializableAbstractStrategy {
         require(_amount > 0, "Must deposit something");
         require(_asset == address(assetToken), "Unexpected asset address");
 
+        // slither-disable-next-line unused-return
         IERC4626(platformAddress).deposit(_amount, address(this));
         emit Deposit(_asset, address(shareToken), _amount);
     }
@@ -68,6 +69,7 @@ contract Generalized4626Strategy is InitializableAbstractStrategy {
         require(_recipient != address(0), "Must specify recipient");
         require(_asset == address(assetToken), "Unexpected asset address");
 
+        // slither-disable-next-line unused-return
         IERC4626(platformAddress).withdraw(_amount, _recipient, address(this));
         emit Withdrawal(_asset, address(shareToken), _amount);
     }
