@@ -77,7 +77,7 @@ contract VaultCore is VaultStorage {
         if (unitPrice > 1e18) {
             unitPrice = 1e18;
         }
-        require(unitPrice >= MINT_MINIMUM_ORACLE, "Asset price below peg");
+        require(unitPrice >= MINT_MINIMUM_UNIT_PRICE, "Asset price below peg");
         uint256 priceAdjustedDeposit = (units * unitPrice) / 1e18;
 
         if (_minimumOusdAmount > 0) {
