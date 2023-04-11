@@ -17,6 +17,7 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 
 import { StableMath } from "../utils/StableMath.sol";
 import { IVault } from "../interfaces/IVault.sol";
+import { IOracle } from "../interfaces/IOracle.sol";
 import { IBuyback } from "../interfaces/IBuyback.sol";
 import { IBasicToken } from "../interfaces/IBasicToken.sol";
 import { IGetExchangeRateToken } from "../interfaces/IGetExchangeRateToken.sol";
@@ -71,11 +72,7 @@ contract VaultCore is VaultStorage {
         require(_amount > 0, "Amount must be greater than 0");
 
         uint256 units = _toUnits(_amount, _asset);
-        uint256 unitPrice = _toUnitPrice(_asset);
-        if (unitPrice > 1e18) {
-            unitPrice = 1e18;
-        }
-        require(unitPrice >= MINT_MINIMUM_ORACLE, "Asset price below peg");
+        uint256 unitPrice = _toUnitPrice(_asset, true);
         uint256 priceAdjustedDeposit = (units * unitPrice) / 1e18;
 
         if (_minimumOusdAmount > 0) {
@@ -573,12 +570,7 @@ contract VaultCore is VaultStorage {
         // Calculate totalOutputRatio
         uint256 totalOutputRatio = 0;
         for (uint256 i = 0; i < assetCount; i++) {
-            uint256 unitPrice = _toUnitPrice(allAssets[i]);
-            // Never give out more than one
-            // base token per unit of OUSD
-            if (unitPrice < 1e18) {
-                unitPrice = 1e18;
-            }
+            uint256 unitPrice = _toUnitPrice(allAssets[i], false);
             uint256 ratio = assetUnits[i].mul(unitPrice).div(totalUnits);
             totalOutputRatio = totalOutputRatio.add(ratio);
         }
@@ -657,21 +649,51 @@ contract VaultCore is VaultStorage {
         }
     }
 
-    function _toUnitPrice(address _asset)
+    /**
+     * @dev Returns asset's unit price accounting for different asset types
+     *      and takes into account the context in which that price exists -
+     *      - mint or redeem. 
+     * 
+     * Note: since we are returning the price of the unit and not the one of the
+     * asset (see comment above how 1 rETH exchanges for 1.2 units) we need
+     * to make the Oracle price adjustment as well since we are pricing the 
+     * units and not the assets.
+     * 
+     * The price also snaps to a "full unit price" in case a mint or redeem 
+     * action would be unfavourable to the protocol.
+     * 
+     */
+    function _toUnitPrice(address _asset, bool isMint)
         internal
         view
-        returns (uint256)
+        returns (uint256 price)
     {
         UnitConversion conversion = assets[_asset].unitConversion;
-        uint256 price = oraclePrice(_asset) * 1e10;
-        if (conversion == UnitConversion.DECIMALS) {
-            return price;
-        } else if (conversion == UnitConversion.GETEXCHANGERATE) {
+        price = IOracle(priceProvider).price(asset) * 1e10;
+
+        if (conversion == UnitConversion.GETEXCHANGERATE) {
             uint256 exchangeRate = IGetExchangeRateToken(_asset)
                 .getExchangeRate();
-            return (price * 1e18) / exchangeRate;
-        } else {
+            price = (price * 1e18) / exchangeRate;
+        } else if (conversion != UnitConversion.DECIMALS){
             require(false, "Unsupported conversion type");
+        }
+
+        if (isMint) {
+            /* Never price a normalized unit price for more than one
+             * unit of OETH/OUSD when minting. 
+             */
+            if (price > 1e18) {
+                price = 1e18;
+            }
+            require(price >= MINT_MINIMUM_ORACLE, "Asset price below peg");
+        } else {
+            /* Never give out more than 1 normalized unit amount of assets
+             * for one unit of OETH/OUSD when redeeming.
+             */
+            if (price < 1e18) {
+                price = 1e18;
+            }
         }
     }
 

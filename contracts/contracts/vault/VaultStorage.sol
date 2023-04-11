@@ -13,8 +13,6 @@ import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 
 import { IStrategy } from "../interfaces/IStrategy.sol";
-import { IOracle } from "../interfaces/IOracle.sol";
-import { Helpers } from "../utils/Helpers.sol";
 import { Governable } from "../governance/Governable.sol";
 import { OUSD } from "../token/OUSD.sol";
 import { Initializable } from "../utils/Initializable.sol";
@@ -130,9 +128,6 @@ contract VaultStorage is Initializable, Governable {
     // Cheaper to read decimals locally than to call out each time
     mapping(address => uint256) internal decimalsCache; // TODO: Move to Asset struct
 
-    uint256 constant MIN_DRIFT = 0.7e18;
-    uint256 constant MAX_DRIFT = 1.3e18;
-
     /**
      * @dev set the implementation for the admin, this needs to be in a base class else we cannot set it
      * @param newImpl address of the implementation
@@ -146,62 +141,6 @@ contract VaultStorage is Initializable, Governable {
         // solhint-disable-next-line no-inline-assembly
         assembly {
             sstore(position, newImpl)
-        }
-    }
-
-    /**
-     * @dev asset is pegged to a unit - be it USD or ETH
-     * @param _asset address of the asset
-     */
-    function isUnitPegged(address _asset) internal view returns (bool) {
-        string memory symbol = Helpers.getSymbol(_asset);
-        bytes32 symbolHash = keccak256(abi.encodePacked(symbol));
-        return
-            symbolHash == keccak256(abi.encodePacked("DAI")) ||
-            symbolHash == keccak256(abi.encodePacked("USDC")) ||
-            symbolHash == keccak256(abi.encodePacked("USDT")) ||
-            symbolHash == keccak256(abi.encodePacked("frxETH")) ||
-            symbolHash == keccak256(abi.encodePacked("WETH")) ||
-            symbolHash == keccak256(abi.encodePacked("stETH"));
-    }
-
-    /**
-     * @dev asset was pegged to a unit and accrues value in such manner
-     *      that it's price only increases
-     * @param _asset address of the asset
-     */
-    function isUnitPeggedWithPositiveExchange(address _asset) internal view returns (bool) {
-        string memory symbol = Helpers.getSymbol(_asset);
-        bytes32 symbolHash = keccak256(abi.encodePacked(symbol));
-        return
-            // increases in price
-            symbolHash == keccak256(abi.encodePacked("cbETH")) ||
-            // increases in price
-            symbolHash == keccak256(abi.encodePacked("rETH"));
-    }
-
-    /**
-     * @dev returns the oracle price of the asset and hardcodes 1:1 those who
-     *      don't have oracles.
-     * @param _asset address of the asset
-     */
-    function oraclePrice(address asset) internal view returns (uint256 price) {
-        if (
-            // frxETH
-            asset == address(0x5E8422345238F34275888049021821E8E08CAa1f) ||
-            // WETH/ETH
-            asset == address(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2)
-        ) {
-            price = 1e18;
-        } else {
-            price = IOracle(priceProvider).price(asset) * 1e10;
-        }
-
-        if (isUnitPegged(asset)) {
-            require(price <= MAX_DRIFT, "Vault: Price exceeds max");
-            require(price >= MIN_DRIFT, "Vault: Price under min");
-        } else if (isUnitPeggedWithPositiveExchange(asset)) {
-            require(price >= MIN_DRIFT, "Vault: Price under min");
         }
     }
 }

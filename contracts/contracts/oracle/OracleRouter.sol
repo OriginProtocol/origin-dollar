@@ -8,6 +8,7 @@ import { Helpers } from "../utils/Helpers.sol";
 abstract contract OracleRouterBase is IOracle {
     uint256 constant MIN_DRIFT = uint256(70000000);
     uint256 constant MAX_DRIFT = uint256(130000000);
+    address constant FIXED_PRICE = 0x0000000000000000000000000000000000000001;
 
     /**
      * @dev The price feed contract to use for a particular asset.
@@ -24,6 +25,7 @@ abstract contract OracleRouterBase is IOracle {
     function price(address asset) external view virtual override returns (uint256) {
         address _feed = feed(asset);
         require(_feed != address(0), "Asset not available");
+        require(_feed != FIXED_PRICE, "Fixed price feeds not supported");
         (, int256 _iprice, , , ) = AggregatorV3Interface(_feed)
             .latestRoundData();
         uint256 _price = uint256(_iprice);
@@ -98,6 +100,16 @@ contract OracleRouter is OracleRouterBase {
         ) {
             // Chainlink: stETH/ETH
             return address(0x86392dC19c0b719886221c78AB11eb8Cf5c52812);
+        } else if (
+            asset == address(0x5E8422345238F34275888049021821E8E08CAa1f)
+        ) {
+            // FIXED_PRICE: frxETH/ETH
+            return address(FIXED_PRICE);
+        } else if (
+            asset == address(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2)
+        ) {
+            // FIXED_PRICE: WETH/ETH
+            return address(FIXED_PRICE);
         } else {
             revert("Asset not available");
         }
@@ -114,6 +126,9 @@ contract OETHOracleRouter is OracleRouter {
      */
     function price(address asset) external view virtual override returns (uint256) {
         address _feed = feed(asset);
+        if (_feed == FIXED_PRICE) {
+            return 1e8;
+        }
         require(_feed != address(0), "Asset not available");
         (, int256 _iprice, , , ) = AggregatorV3Interface(_feed)
             .latestRoundData();
