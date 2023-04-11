@@ -455,7 +455,7 @@ contract VaultAdmin is VaultStorage {
      * @dev Returns the total price in 18 digit units for a given asset.
      *      Never goes above 1, since that is how we price mints.
      * @param asset address of the asset
-     * @return price uint256: unit (USD / ETH) price of 1 unit of the asset, in 18 decimal fixed
+     * @return price uint256: unit (USD / ETH) price for 1 unit of the asset, in 18 decimal fixed
      */
     function priceUnitMint(address asset) external view returns (uint256 price) {
         uint256 units = _toUnits(1e18, asset);
@@ -466,7 +466,7 @@ contract VaultAdmin is VaultStorage {
      * @dev Returns the total price in 18 digit unit for a given asset.
      *      Never goes below 1, since that is how we price redeems
      * @param asset Address of the asset
-     * @return price uint256: (USD / ETH) price of 1 unit of the asset, in 18 decimal fixed
+     * @return price uint256: unit (USD / ETH) price for 1 unit of the asset, in 18 decimal fixed
      */
     function priceUnitRedeem(address asset) external view returns (uint256 price) {
         uint256 units = _toUnits(1e18, asset);
