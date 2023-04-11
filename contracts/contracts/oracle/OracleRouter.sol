@@ -83,6 +83,21 @@ contract OracleRouter is OracleRouterBase {
         ) {
             // Chainlink: CVX/USD
             return address(0xd962fC30A72A84cE50161031391756Bf2876Af5D);
+        } else if (
+            asset == address(0xae78736Cd615f374D3085123A210448E74Fc6393)
+        ) {
+            // Chainlink: rETH/ETH
+            return address(0x536218f9E9Eb48863970252233c8F271f554C2d0);
+        } else if (
+            asset == address(0xBe9895146f7AF43049ca1c1AE358B0541Ea49704)
+        ) {
+            // Chainlink: cbETH/ETH
+            return address(0xF017fcB346A1885194689bA23Eff2fE6fA5C483b);
+        } else if (
+            asset == address(0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84)
+        ) {
+            // Chainlink: stETH/ETH
+            return address(0x86392dC19c0b719886221c78AB11eb8Cf5c52812);
         } else {
             revert("Asset not available");
         }

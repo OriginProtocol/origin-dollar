@@ -487,15 +487,18 @@ const configureVault = async (harvesterProxy) => {
       await ethers.getContract("VaultProxy")
     ).address
   );
+  console.error("111")
   // Set up supported assets for Vault
   await withConfirmation(
     cVault.connect(sGovernor).supportAsset(assetAddresses.DAI, 0)
   );
+  console.error("2222")
   log("Added DAI asset to Vault");
   await withConfirmation(
     cVault.connect(sGovernor).supportAsset(assetAddresses.USDT, 0)
   );
   log("Added USDT asset to Vault");
+  console.error("333")
   await withConfirmation(
     cVault.connect(sGovernor).supportAsset(assetAddresses.USDC, 0)
   );
