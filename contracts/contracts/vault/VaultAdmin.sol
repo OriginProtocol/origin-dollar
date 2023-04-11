@@ -10,6 +10,7 @@ pragma solidity ^0.8.0;
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import { StableMath } from "../utils/StableMath.sol";
+import { IOracle } from "../interfaces/IOracle.sol";
 import "./VaultStorage.sol";
 
 contract VaultAdmin is VaultStorage {
@@ -180,7 +181,7 @@ contract VaultAdmin is VaultStorage {
 
         // Verify that our oracle supports the asset
         // slither-disable-next-line unused-return
-        _toUnitPrice(_asset, true);
+        IOracle(priceProvider).price(_asset) * 1e10;
 
         emit AssetSupported(_asset);
     }
@@ -445,32 +446,6 @@ contract VaultAdmin is VaultStorage {
     {
         require(!assets[_asset].isSupported, "Only unsupported assets");
         IERC20(_asset).safeTransfer(governor(), _amount);
-    }
-
-    /***************************************
-                    Pricing
-    ****************************************/
-
-    /**
-     * @dev Returns the total price in 18 digit units for a given asset.
-     *      Never goes above 1, since that is how we price mints.
-     * @param asset address of the asset
-     * @return price uint256: unit (USD / ETH) price for 1 unit of the asset, in 18 decimal fixed
-     */
-    function priceUnitMint(address asset) external view returns (uint256 price) {
-        uint256 units = _toUnits(1e18, asset);
-        price =  _toUnitPrice(asset, true);
-    }
-
-    /**
-     * @dev Returns the total price in 18 digit unit for a given asset.
-     *      Never goes below 1, since that is how we price redeems
-     * @param asset Address of the asset
-     * @return price uint256: unit (USD / ETH) price for 1 unit of the asset, in 18 decimal fixed
-     */
-    function priceUnitRedeem(address asset) external view returns (uint256 price) {
-        uint256 units = _toUnits(1e18, asset);
-        price =  _toUnitPrice(asset, false);
     }
 
     /***************************************

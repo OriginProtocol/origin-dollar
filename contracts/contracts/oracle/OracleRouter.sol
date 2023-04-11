@@ -22,7 +22,13 @@ abstract contract OracleRouterBase is IOracle {
      * @param asset address of the asset
      * @return uint256 USD price of 1 of the asset, in 8 decimal fixed
      */
-    function price(address asset) external view virtual override returns (uint256) {
+    function price(address asset)
+        external
+        view
+        virtual
+        override
+        returns (uint256)
+    {
         address _feed = feed(asset);
         require(_feed != address(0), "Asset not available");
         require(_feed != FIXED_PRICE, "Fixed price feeds not supported");
@@ -119,12 +125,18 @@ contract OracleRouter is OracleRouterBase {
 contract OETHOracleRouter is OracleRouter {
     /**
      * @notice Returns the total price in 8 digit USD for a given asset.
-     *         This implementation does not (!) do range checks as the 
+     *         This implementation does not (!) do range checks as the
      *         parent OracleRouter does.
      * @param asset address of the asset
      * @return uint256 USD price of 1 of the asset, in 8 decimal fixed
      */
-    function price(address asset) external view virtual override returns (uint256) {
+    function price(address asset)
+        external
+        view
+        virtual
+        override
+        returns (uint256)
+    {
         address _feed = feed(asset);
         if (_feed == FIXED_PRICE) {
             return 1e8;
