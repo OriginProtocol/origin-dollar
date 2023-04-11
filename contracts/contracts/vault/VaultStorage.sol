@@ -170,7 +170,7 @@ contract VaultStorage is Initializable, Governable {
      *      that it's price only increases
      * @param _asset address of the asset
      */
-    function isPeggedWithPositiveExchange(address _asset) internal view returns (bool) {
+    function isUnitPeggedWithPositiveExchange(address _asset) internal view returns (bool) {
         string memory symbol = Helpers.getSymbol(_asset);
         bytes32 symbolHash = keccak256(abi.encodePacked(symbol));
         return
@@ -200,7 +200,7 @@ contract VaultStorage is Initializable, Governable {
         if (isUnitPegged(asset)) {
             require(price <= MAX_DRIFT, "Vault: Price exceeds max");
             require(price >= MIN_DRIFT, "Vault: Price under min");
-        } else if (isPeggedWithPositiveExchange(asset)) {
+        } else if (isUnitPeggedWithPositiveExchange(asset)) {
             require(price >= MIN_DRIFT, "Vault: Price under min");
         }
     }
