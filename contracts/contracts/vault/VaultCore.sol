@@ -657,7 +657,7 @@ contract VaultCore is VaultStorage {
         }
     }
 
-    function _toUnitPrice(uint256 _price, address _asset)
+    function _toUnitPrice(address _asset)
         internal
         view
         returns (uint256)
@@ -665,11 +665,11 @@ contract VaultCore is VaultStorage {
         UnitConversion conversion = assets[_asset].unitConversion;
         uint256 price = oraclePrice(_asset) * 1e10;
         if (conversion == UnitConversion.DECIMALS) {
-            return _price;
+            return price;
         } else if (conversion == UnitConversion.GETEXCHANGERATE) {
             uint256 exchangeRate = IGetExchangeRateToken(_asset)
                 .getExchangeRate();
-            return (_price * 1e18) / exchangeRate;
+            return (price * 1e18) / exchangeRate;
         } else {
             require(false, "Unsupported conversion type");
         }
