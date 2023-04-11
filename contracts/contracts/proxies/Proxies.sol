@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: agpl-3.0
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
 import { InitializeGovernedUpgradeabilityProxy } from "./InitializeGovernedUpgradeabilityProxy.sol";
@@ -98,5 +98,12 @@ contract MorphoAaveStrategyProxy is InitializeGovernedUpgradeabilityProxy {
  * @notice OETHProxy delegates calls to nowhere for now
  */
 contract OETHProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
+
+/**
+ * @notice WOETHProxy delegates calls to nowhere for now
+ */
+contract WOETHProxy is InitializeGovernedUpgradeabilityProxy {
 
 }

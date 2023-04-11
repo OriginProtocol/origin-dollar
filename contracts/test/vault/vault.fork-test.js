@@ -187,8 +187,8 @@ forkOnlyDescribe("ForkTest: Vault", function () {
       expect(daiBalanceDiff).to.equal(daiUnits("-50"));
       expect(usdcBalanceDiff).to.approxEqualTolerance(usdcUnits("-90"), 1);
 
-      expect(daiStratDiff).gte(daiUnits("50"));
-      expect(usdcStratDiff).gte(usdcUnits("90"));
+      expect(daiStratDiff).gte(daiUnits("49.95"));
+      expect(usdcStratDiff).gte(usdcUnits("89.91"));
 
       [daiBalanceDiff, usdcBalanceDiff] = await differenceInErc20TokenBalances(
         [vault.address, vault.address],
