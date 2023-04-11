@@ -10,7 +10,6 @@ pragma solidity ^0.8.0;
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import { StableMath } from "../utils/StableMath.sol";
-import { IOracle } from "../interfaces/IOracle.sol";
 import "./VaultStorage.sol";
 
 contract VaultAdmin is VaultStorage {
@@ -181,7 +180,7 @@ contract VaultAdmin is VaultStorage {
 
         // Verify that our oracle supports the asset
         // slither-disable-next-line unused-return
-        IOracle(priceProvider).price(_asset);
+        oraclePrice(_asset);
 
         emit AssetSupported(_asset);
     }
@@ -459,7 +458,7 @@ contract VaultAdmin is VaultStorage {
      * @return uint256 USD price of 1 of the asset, in 18 decimal fixed
      */
     function priceUSDMint(address asset) external view returns (uint256) {
-        uint256 price = IOracle(priceProvider).price(asset);
+        uint256 price = oraclePrice(asset);
         require(price >= MINT_MINIMUM_ORACLE, "Asset price below peg");
         if (price > 1e8) {
             price = 1e8;
@@ -475,7 +474,7 @@ contract VaultAdmin is VaultStorage {
      * @return uint256 USD price of 1 of the asset, in 18 decimal fixed
      */
     function priceUSDRedeem(address asset) external view returns (uint256) {
-        uint256 price = IOracle(priceProvider).price(asset);
+        uint256 price = oraclePrice(asset);
         if (price < 1e8) {
             price = 1e8;
         }

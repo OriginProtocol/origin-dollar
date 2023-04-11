@@ -8,7 +8,6 @@ import { Helpers } from "../utils/Helpers.sol";
 abstract contract OracleRouterBase is IOracle {
     uint256 constant MIN_DRIFT = uint256(70000000);
     uint256 constant MAX_DRIFT = uint256(130000000);
-    address constant FIXED_PRICE = 0x0000000000000000000000000000000000000001;
 
     /**
      * @dev The price feed contract to use for a particular asset.
@@ -22,11 +21,8 @@ abstract contract OracleRouterBase is IOracle {
      * @param asset address of the asset
      * @return uint256 USD price of 1 of the asset, in 8 decimal fixed
      */
-    function price(address asset) external view override returns (uint256) {
+    function price(address asset) external view virtual override returns (uint256) {
         address _feed = feed(asset);
-        if (_feed == FIXED_PRICE) {
-            return 1e8;
-        }
         require(_feed != address(0), "Asset not available");
         (, int256 _iprice, , , ) = AggregatorV3Interface(_feed)
             .latestRoundData();
@@ -87,14 +83,26 @@ contract OracleRouter is OracleRouterBase {
         ) {
             // Chainlink: CVX/USD
             return address(0xd962fC30A72A84cE50161031391756Bf2876Af5D);
-        } else if (
-            asset == address(0x5E8422345238F34275888049021821E8E08CAa1f)
-        ) {
-            // FIXED_PRICE: frxETH/ETH
-            return address(FIXED_PRICE);
         } else {
             revert("Asset not available");
         }
+    }
+}
+
+contract OETHOracleRouter is OracleRouter {
+    /**
+     * @notice Returns the total price in 8 digit USD for a given asset.
+     *         This implementation does not (!) do range checks as the 
+     *         parent OracleRouter does.
+     * @param asset address of the asset
+     * @return uint256 USD price of 1 of the asset, in 8 decimal fixed
+     */
+    function price(address asset) external view virtual override returns (uint256) {
+        address _feed = feed(asset);
+        require(_feed != address(0), "Asset not available");
+        (, int256 _iprice, , , ) = AggregatorV3Interface(_feed)
+            .latestRoundData();
+        return uint256(_iprice);
     }
 }
 

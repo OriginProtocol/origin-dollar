@@ -13,6 +13,7 @@ import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 
 import { IStrategy } from "../interfaces/IStrategy.sol";
+import { IOracle } from "../interfaces/IOracle.sol";
 import { Governable } from "../governance/Governable.sol";
 import { OUSD } from "../token/OUSD.sol";
 import { Initializable } from "../utils/Initializable.sol";
@@ -142,5 +143,42 @@ contract VaultStorage is Initializable, Governable {
         assembly {
             sstore(position, newImpl)
         }
+    }
+
+    /**
+     * 
+     */
+    function oraclePrice(address asset) internal view returns (uint256 price) {
+        if (
+            // frxETH
+            asset == address(0x5E8422345238F34275888049021821E8E08CAa1f)
+        ) {
+            price = 1e18;
+        } else if (
+            // WETH/ETH
+            asset == address(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2)
+        ) {
+            price = 1e18;
+        } else if (
+            // rETH/ETH
+            asset == address(0xae78736Cd615f374D3085123A210448E74Fc6393)
+        ) {
+            // feed
+            // 0xF3272CAfe65b190e76caAF483db13424a3e23dD2
+        } else if (
+            // cbETH/ETH
+            asset == address(0xBe9895146f7AF43049ca1c1AE358B0541Ea49704)
+        ) {
+            // feed
+            // 0xF017fcB346A1885194689bA23Eff2fE6fA5C483b
+        } else if (
+            // stETH/ETH
+            asset == address(0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84)
+        ) {
+            // feed
+            // 0x86392dC19c0b719886221c78AB11eb8Cf5c52812
+        }
+        //price = IOracle(priceProvider).price(_asset) * 1e10;
+
     }
 }

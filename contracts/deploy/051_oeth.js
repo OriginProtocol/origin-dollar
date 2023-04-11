@@ -63,7 +63,7 @@ const deployCore = async ({
 
   // Proxies
   await deployWithConfirmation("OETHVaultProxy");
-  await deployWithConfirmation("OracleRouter");
+  await deployWithConfirmation("OETHOracleRouter");
 
   // Main contracts
   const dOETH = await deployWithConfirmation("OETH");
@@ -80,7 +80,7 @@ const deployCore = async ({
   const cOETHProxy = await ethers.getContract("OETHProxy");
   const cVaultProxy = await ethers.getContract("OETHVaultProxy");
   const cOETH = await ethers.getContractAt("OETH", cOETHProxy.address);
-  const cOracleRouter = await ethers.getContract("OracleRouter");
+  const cOETHOracleRouter = await ethers.getContract("OETHOracleRouter");
   const cVault = await ethers.getContractAt("OETHVault", cVaultProxy.address);
 
   // Need to call the initializer on the Vault then upgraded it to the actual
@@ -95,7 +95,7 @@ const deployCore = async ({
   await withConfirmation(
     cVault
       .connect(sDeployer)
-      .initialize(cOracleRouter.address, cOETHProxy.address)
+      .initialize(cOETHOracleRouter.address, cOETHProxy.address)
   );
   console.log("Initialized OETHVault");
 

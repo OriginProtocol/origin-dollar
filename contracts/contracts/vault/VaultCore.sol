@@ -16,7 +16,6 @@ import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 
 import { StableMath } from "../utils/StableMath.sol";
-import { IOracle } from "../interfaces/IOracle.sol";
 import { IVault } from "../interfaces/IVault.sol";
 import { IBuyback } from "../interfaces/IBuyback.sol";
 import { IBasicToken } from "../interfaces/IBasicToken.sol";
@@ -72,7 +71,7 @@ contract VaultCore is VaultStorage {
         require(_amount > 0, "Amount must be greater than 0");
 
         uint256 units = _toUnits(_amount, _asset);
-        uint256 price = IOracle(priceProvider).price(_asset) * 1e10;
+        uint256 price = oraclePrice(_asset) * 1e10;
         uint256 unitPrice = _toUnitPrice(price, _asset);
         if (unitPrice > 1e18) {
             unitPrice = 1e18;
@@ -575,7 +574,7 @@ contract VaultCore is VaultStorage {
         // Calculate totalOutputRatio
         uint256 totalOutputRatio = 0;
         for (uint256 i = 0; i < assetCount; i++) {
-            uint256 price = IOracle(priceProvider).price(allAssets[i]) * 1e10;
+            uint256 price = oraclePrice(allAssets[i]) * 1e10;
             uint256 unitPrice = _toUnitPrice(price, allAssets[i]);
             // Never give out more than one
             // base token per unit of OUSD
