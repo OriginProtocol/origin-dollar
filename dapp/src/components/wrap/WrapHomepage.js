@@ -174,12 +174,6 @@ const WrapHomepage = ({
     const metadata = swapMetadata()
 
     try {
-      analytics.track('Before Wrap Transaction', {
-        category: 'wrap',
-        label: metadata.coinUsed,
-        value: metadata.swapAmount,
-      })
-
       let result
       if (swapMode === 'mint') {
         result = await signer(wousd).deposit(
@@ -206,12 +200,7 @@ const WrapHomepage = ({
       setStoredCoinValuesToZero()
       setInputAmount('')
 
-      const receipt = await rpcProvider.waitForTransaction(result.hash)
-      analytics.track('Wrap succeeded User source', {
-        category: 'wrap',
-        label: getUserSource(),
-        value: metadata.swapAmount,
-      })
+      await rpcProvider.waitForTransaction(result.hash)
       analytics.track('Wrap succeeded', {
         category: 'wrap',
         label: metadata.coinUsed,

@@ -53,7 +53,7 @@ const deployCore = async ({
   withConfirmation,
   ethers,
 }) => {
-  const { deployerAddr } = await getNamedAccounts();
+  const { deployerAddr, strategistAddr } = await getNamedAccounts();
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
   const assetAddresses = await getAssetAddresses(hre.deployments);
@@ -109,20 +109,36 @@ const deployCore = async ({
   );
 
   await withConfirmation(
-    // TODO confirm this value
     cVault
       .connect(sDeployer)
       .setAutoAllocateThreshold(utils.parseUnits("10", 18))
   );
+
   await withConfirmation(
-    // TODO confirm this value
-    cVault.connect(sDeployer).setRebaseThreshold(utils.parseUnits("2", 18))
+    cVault.connect(sDeployer).setRebaseThreshold(utils.parseUnits("1", 18))
   );
 
   await withConfirmation(
-    // TODO is it ok to start with unpaused capital?
-    cVault.connect(sDeployer).unpauseCapital()
+    cVault.connect(sDeployer).setMaxSupplyDiff(utils.parseUnits("3", 16))
   );
+
+  await withConfirmation(
+    cVault.connect(sDeployer).setRedeemFeeBps(50) // 50 BPS = 0.5%
+  );
+
+  await withConfirmation(
+    cVault.connect(sDeployer).setStrategistAddr(strategistAddr)
+  );
+
+  await withConfirmation(
+    cVault.connect(sDeployer).setTrusteeAddress(strategistAddr)
+  );
+
+  await withConfirmation(
+    cVault.connect(sDeployer).setTrusteeFeeBps(2000) // 2000 BPS = 20%
+  );
+
+  await withConfirmation(cVault.connect(sDeployer).unpauseCapital());
 
   await withConfirmation(
     // 0 stands for DECIMAL unit conversion
