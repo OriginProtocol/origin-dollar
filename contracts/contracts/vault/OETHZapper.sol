@@ -31,13 +31,17 @@ contract OETHZapper {
         IOUSD(_oeth).rebaseOptIn(); // Gas savings for every zap
     }
 
-    function zapEthToOETH(uint256 minOETH) external payable returns (uint256) {
-        weth.deposit{ value: msg.value }();
-        emit MintFrom(msg.sender, ETH_MARKER, msg.value);
-        return _mint(address(weth), minOETH);
+    receive() external payable {
+        deposit();
     }
 
-    function zapSFRXETHToOETH(uint256 amount, uint256 minOETH)
+    function deposit() public payable returns (uint256) {
+        weth.deposit{ value: msg.value }();
+        emit MintFrom(msg.sender, ETH_MARKER, msg.value);
+        return _mint(address(weth), msg.value);
+    }
+
+    function depositSFRXETH(uint256 amount, uint256 minOETH)
         external
         returns (uint256)
     {
@@ -51,6 +55,7 @@ contract OETHZapper {
         vault.mint(asset, toMint, minOETH);
         uint256 mintedAmount = oeth.balanceOf(address(this));
         require(mintedAmount >= minOETH, "Zapper: not enough minted");
+        // slither-disable-next-line unchecked-transfer
         oeth.transfer(msg.sender, mintedAmount);
         return mintedAmount;
     }
