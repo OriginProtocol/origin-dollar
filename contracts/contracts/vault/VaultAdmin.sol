@@ -180,7 +180,7 @@ contract VaultAdmin is VaultStorage {
 
         // Verify that our oracle supports the asset
         // slither-disable-next-line unused-return
-        oraclePrice(_asset);
+        _toUnitPrice(_asset, true);
 
         emit AssetSupported(_asset);
     }
@@ -452,34 +452,25 @@ contract VaultAdmin is VaultStorage {
     ****************************************/
 
     /**
-     * @dev Returns the total price in 18 digit USD for a given asset.
-     *      Never goes above 1, since that is how we price mints
+     * @dev Returns the total price in 18 digit units for a given asset.
+     *      Never goes above 1, since that is how we price mints.
      * @param asset address of the asset
-     * @return uint256 USD price of 1 of the asset, in 18 decimal fixed
+     * @return price uint256: unit (USD / ETH) price of 1 unit of the asset, in 18 decimal fixed
      */
-    function priceUSDMint(address asset) external view returns (uint256) {
-        uint256 price = oraclePrice(asset);
-        require(price >= MINT_MINIMUM_ORACLE, "Asset price below peg");
-        if (price > 1e8) {
-            price = 1e8;
-        }
-        // Price from Oracle is returned with 8 decimals so scale to 18
-        return price.scaleBy(18, 8);
+    function priceUnitMint(address asset) external view returns (uint256 price) {
+        uint256 units = _toUnits(1e18, asset);
+        price =  _toUnitPrice(asset, true);
     }
 
     /**
-     * @dev Returns the total price in 18 digit USD for a given asset.
+     * @dev Returns the total price in 18 digit unit for a given asset.
      *      Never goes below 1, since that is how we price redeems
      * @param asset Address of the asset
-     * @return uint256 USD price of 1 of the asset, in 18 decimal fixed
+     * @return price uint256: (USD / ETH) price of 1 unit of the asset, in 18 decimal fixed
      */
-    function priceUSDRedeem(address asset) external view returns (uint256) {
-        uint256 price = oraclePrice(asset);
-        if (price < 1e8) {
-            price = 1e8;
-        }
-        // Price from Oracle is returned with 8 decimals so scale to 18
-        return price.scaleBy(18, 8);
+    function priceUnitRedeem(address asset) external view returns (uint256 price) {
+        uint256 units = _toUnits(1e18, asset);
+        price =  _toUnitPrice(asset, false);
     }
 
     /***************************************

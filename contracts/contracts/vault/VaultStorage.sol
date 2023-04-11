@@ -13,11 +13,13 @@ import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 
 import { IStrategy } from "../interfaces/IStrategy.sol";
+import { IOracle } from "../interfaces/IOracle.sol";
 import { Governable } from "../governance/Governable.sol";
 import { OUSD } from "../token/OUSD.sol";
 import { Initializable } from "../utils/Initializable.sol";
 import "../utils/Helpers.sol";
 import { StableMath } from "../utils/StableMath.sol";
+import { IGetExchangeRateToken } from "../interfaces/IGetExchangeRateToken.sol";
 
 contract VaultStorage is Initializable, Governable {
     using SafeMath for uint256;
@@ -142,5 +144,91 @@ contract VaultStorage is Initializable, Governable {
         assembly {
             sstore(position, newImpl)
         }
+    }
+
+    /**
+     * @dev Convert a quantity of a token into 1e18 fixed decimal "units"
+     * in the underlying base (USD/ETH) used by the vault.
+     * Price is not taken into account, only quantity.
+     *
+     * Examples of this conversion:
+     *
+     * - 1e18 DAI becomes 1e18 units (same decimals)
+     * - 1e6 USDC becomes 1e18 units (decimal conversion)
+     * - 1e18 rETH becomes 1.2e18 units (exchange rate conversion)
+     *
+     * @param _raw Quantity of asset
+     * @param _asset Core Asset address
+     * @return value 1e18 normalized quantity of units
+     */
+    function _toUnits(uint256 _raw, address _asset)
+        internal
+        view
+        returns (uint256)
+    {
+        UnitConversion conversion = assets[_asset].unitConversion;
+        if (conversion == UnitConversion.DECIMALS) {
+            return _raw.scaleBy(18, _getDecimals(_asset));
+        } else if (conversion == UnitConversion.GETEXCHANGERATE) {
+            uint256 exchangeRate = IGetExchangeRateToken(_asset)
+                .getExchangeRate();
+            return (_raw * exchangeRate) / 1e18;
+        } else {
+            require(false, "Unsupported conversion type");
+        }
+    }
+
+    /**
+     * @dev Returns asset's unit price accounting for different asset types
+     *      and takes into account the context in which that price exists -
+     *      - mint or redeem. 
+     * 
+     * Note: since we are returning the price of the unit and not the one of the
+     * asset (see comment above how 1 rETH exchanges for 1.2 units) we need
+     * to make the Oracle price adjustment as well since we are pricing the 
+     * units and not the assets.
+     * 
+     * The price also snaps to a "full unit price" in case a mint or redeem 
+     * action would be unfavourable to the protocol.
+     * 
+     */
+    function _toUnitPrice(address _asset, bool isMint)
+        internal
+        view
+        returns (uint256 price)
+    {
+        UnitConversion conversion = assets[_asset].unitConversion;
+        price = IOracle(priceProvider).price(_asset) * 1e10;
+
+        if (conversion == UnitConversion.GETEXCHANGERATE) {
+            uint256 exchangeRate = IGetExchangeRateToken(_asset)
+                .getExchangeRate();
+            price = (price * 1e18) / exchangeRate;
+        } else if (conversion != UnitConversion.DECIMALS){
+            require(false, "Unsupported conversion type");
+        }
+
+        if (isMint) {
+            /* Never price a normalized unit price for more than one
+             * unit of OETH/OUSD when minting. 
+             */
+            if (price > 1e18) {
+                price = 1e18;
+            }
+            require(price >= MINT_MINIMUM_ORACLE, "Asset price below peg");
+        } else {
+            /* Never give out more than 1 normalized unit amount of assets
+             * for one unit of OETH/OUSD when redeeming.
+             */
+            if (price < 1e18) {
+                price = 1e18;
+            }
+        }
+    }
+
+    function _getDecimals(address _asset) internal view returns (uint256) {
+        uint256 decimals = decimalsCache[_asset];
+        require(decimals > 0, "Decimals Not Cached");
+        return decimals;
     }
 }
