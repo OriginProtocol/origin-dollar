@@ -71,8 +71,7 @@ contract VaultCore is VaultStorage {
         require(_amount > 0, "Amount must be greater than 0");
 
         uint256 units = _toUnits(_amount, _asset);
-        uint256 price = oraclePrice(_asset) * 1e10;
-        uint256 unitPrice = _toUnitPrice(price, _asset);
+        uint256 unitPrice = _toUnitPrice(_asset);
         if (unitPrice > 1e18) {
             unitPrice = 1e18;
         }
@@ -574,8 +573,7 @@ contract VaultCore is VaultStorage {
         // Calculate totalOutputRatio
         uint256 totalOutputRatio = 0;
         for (uint256 i = 0; i < assetCount; i++) {
-            uint256 price = oraclePrice(allAssets[i]) * 1e10;
-            uint256 unitPrice = _toUnitPrice(price, allAssets[i]);
+            uint256 unitPrice = _toUnitPrice(allAssets[i]);
             // Never give out more than one
             // base token per unit of OUSD
             if (unitPrice < 1e18) {
@@ -665,6 +663,7 @@ contract VaultCore is VaultStorage {
         returns (uint256)
     {
         UnitConversion conversion = assets[_asset].unitConversion;
+        uint256 price = oraclePrice(_asset) * 1e10;
         if (conversion == UnitConversion.DECIMALS) {
             return _price;
         } else if (conversion == UnitConversion.GETEXCHANGERATE) {
