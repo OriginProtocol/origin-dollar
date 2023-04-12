@@ -55,7 +55,7 @@ describe("Vault Redeem", function () {
   it("Should mint same at high oracle, positive exchange rate", async () => {
     const { ousd, vault, reth, anna } = fixture;
 
-    await setOracleTokenPriceUsd("RETHETH", "1.6");
+    await setOracleTokenPriceUsd("RETHETH", "1.2");
     await reth.connect(anna).mint(daiUnits("4.0"));
     await reth.connect(anna).approve(vault.address, daiUnits("4.0"));
     await vault.connect(anna).mint(reth.address, daiUnits("4.0"), 0);
@@ -128,6 +128,7 @@ describe("Vault Redeem", function () {
     // 25rETH and 50 DAI
 
     await setOracleTokenPriceUsd("RETHETH", "6.0");
+    await reth.setExchangeRate(daiUnits("6.0"));
     await vault.connect(anna).redeem(daiUnits("200.0"), 0);
     await expect(anna).has.a.balanceOf("25", reth, "RETH");
     await expect(anna).has.a.balanceOf("1050", dai, "USDC");
