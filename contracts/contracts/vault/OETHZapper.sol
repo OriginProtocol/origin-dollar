@@ -26,7 +26,9 @@ contract OETHZapper {
         oeth = IOUSD(_oeth);
         vault = IVault(_vault);
 
+        // slither-disable-next-line unused-return
         weth.approve(address(_vault), type(uint256).max);
+        // slither-disable-next-line unused-return
         IERC20(FRXETH).approve(address(_vault), type(uint256).max);
     }
 
@@ -44,6 +46,7 @@ contract OETHZapper {
         external
         returns (uint256)
     {
+        // slither-disable-next-line unused-return
         sfrxeth.redeem(amount, address(this), msg.sender);
         emit MintFrom(msg.sender, address(sfrxeth), amount);
         return _mint(FRXETH, minOETH);
