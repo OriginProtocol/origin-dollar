@@ -41,6 +41,7 @@ describe("Vault Redeem", function () {
     await vault.connect(anna).mint(reth.address, daiUnits("4.0"), 0);
     await expect(anna).has.a.approxBalanceOf("4.796", ousd);
   });
+
   it("Should revert mint at too low oracle, positive exchange rate", async () => {
     const { vault, reth, anna } = fixture;
 
