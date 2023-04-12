@@ -146,9 +146,45 @@ describe("Vault Redeem", function () {
     await vault.rebase();
     await expect(anna).has.a.balanceOf("200", ousd, "post rebase");
 
-    await setOracleTokenPriceUsd("RETHETH", "1.0");
+    // Contains 100 rETH, (200 units) and 200 DAI (200 units)
+    // After Oracles $154 + $200 = $354
+    //
+    // But since the exchange rate is still 2.0 the RETH unit price
+    // is snapped back to 2.0 when redeeming. Making the calculation:
+    // After Oracles $200 + $200 = $400
+    //
+    // And redeeming 200 is 50% of the vault = 50 RETH & 100 DAI
+
+    await setOracleTokenPriceUsd("RETHETH", "1.54");
     await vault.connect(anna).redeem(daiUnits("200.0"), 0);
     await expect(anna).has.a.balanceOf("50", reth, "RETH");
     await expect(anna).has.a.balanceOf("1100", dai, "USDC");
+  });
+
+  it("Should redeem same at a low oracle v2", async () => {
+    const { ousd, vault, dai, reth, anna } = fixture;
+
+    await setOracleTokenPriceUsd("RETHETH", "2.0");
+    await reth.setExchangeRate(daiUnits("2.0"));
+
+    await reth.connect(anna).mint(daiUnits("100.0"));
+    await reth.connect(anna).approve(vault.address, daiUnits("100.0"));
+    await vault.connect(anna).mint(reth.address, daiUnits("100.0"), 0);
+    await expect(anna).has.a.balanceOf("200", ousd, "post mint");
+    await vault.rebase();
+    await expect(anna).has.a.balanceOf("200", ousd, "post rebase");
+
+    // Contains 100 rETH, (200 units) and 200 DAI (200 units)
+    // After Oracles $100 + $200 = $300
+    //
+    // Redeeming $150 == 1/2 vault
+    // 50rETH and 100 DAI
+
+    await setOracleTokenPriceUsd("RETHETH", "1.0");
+    await reth.setExchangeRate(daiUnits("1.0"));
+
+    await vault.connect(anna).redeem(daiUnits("150.0"), 0);
+    await expect(anna).has.a.approxBalanceOf("50", reth, "RETH");
+    await expect(anna).has.a.approxBalanceOf("1100", dai, "USDC");
   });
 });
