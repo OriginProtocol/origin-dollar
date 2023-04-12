@@ -16,8 +16,8 @@ import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 
 import { StableMath } from "../utils/StableMath.sol";
-import { IOracle } from "../interfaces/IOracle.sol";
 import { IVault } from "../interfaces/IVault.sol";
+import { IOracle } from "../interfaces/IOracle.sol";
 import { IBuyback } from "../interfaces/IBuyback.sol";
 import { IBasicToken } from "../interfaces/IBasicToken.sol";
 import { IGetExchangeRateToken } from "../interfaces/IGetExchangeRateToken.sol";
@@ -72,12 +72,7 @@ contract VaultCore is VaultStorage {
         require(_amount > 0, "Amount must be greater than 0");
 
         uint256 units = _toUnits(_amount, _asset);
-        uint256 price = IOracle(priceProvider).price(_asset) * 1e10;
-        uint256 unitPrice = _toUnitPrice(price, _asset);
-        if (unitPrice > 1e18) {
-            unitPrice = 1e18;
-        }
-        require(unitPrice >= MINT_MINIMUM_UNIT_PRICE, "Asset price below peg");
+        uint256 unitPrice = _toUnitPrice(_asset, true);
         uint256 priceAdjustedDeposit = (units * unitPrice) / 1e18;
 
         if (_minimumOusdAmount > 0) {
@@ -575,13 +570,7 @@ contract VaultCore is VaultStorage {
         // Calculate totalOutputRatio
         uint256 totalOutputRatio = 0;
         for (uint256 i = 0; i < assetCount; i++) {
-            uint256 price = IOracle(priceProvider).price(allAssets[i]) * 1e10;
-            uint256 unitPrice = _toUnitPrice(price, allAssets[i]);
-            // Never give out more than one
-            // base token per unit of OUSD
-            if (unitPrice < 1e18) {
-                unitPrice = 1e18;
-            }
+            uint256 unitPrice = _toUnitPrice(allAssets[i], false);
             uint256 ratio = assetUnits[i].mul(unitPrice).div(totalUnits);
             totalOutputRatio = totalOutputRatio.add(ratio);
         }
@@ -593,40 +582,56 @@ contract VaultCore is VaultStorage {
     }
 
     /***************************************
-                    Utils
+                    Pricing
     ****************************************/
 
     /**
-     * @dev Return the number of assets supported by the Vault.
+     * @dev Returns the total price in 18 digit units for a given asset.
+     *      Never goes above 1, since that is how we price mints.
+     * @param asset address of the asset
+     * @return price uint256: unit (USD / ETH) price for 1 unit of the asset, in 18 decimal fixed
      */
-    function getAssetCount() public view returns (uint256) {
-        return allAssets.length;
+    function priceUnitMint(address asset)
+        external
+        view
+        returns (uint256 price)
+    {
+        /* need to supply 1 asset unit in asset's decimals and can not just hard-code
+         * to 1e18 and ignore calling `_toUnits` since we need to consider assets
+         * with the exchange rate
+         */
+        uint256 units = _toUnits(
+            uint256(1e18).scaleBy(_getDecimals(asset), 18),
+            asset
+        );
+        price = _toUnitPrice(asset, true) * units;
     }
 
     /**
-     * @dev Return all asset addresses in order
+     * @dev Returns the total price in 18 digit unit for a given asset.
+     *      Never goes below 1, since that is how we price redeems
+     * @param asset Address of the asset
+     * @return price uint256: unit (USD / ETH) price for 1 unit of the asset, in 18 decimal fixed
      */
-    function getAllAssets() external view returns (address[] memory) {
-        return allAssets;
+    function priceUnitRedeem(address asset)
+        external
+        view
+        returns (uint256 price)
+    {
+        /* need to supply 1 asset unit in asset's decimals and can not just hard-code
+         * to 1e18 and ignore calling `_toUnits` since we need to consider assets
+         * with the exchange rate
+         */
+        uint256 units = _toUnits(
+            uint256(1e18).scaleBy(_getDecimals(asset), 18),
+            asset
+        );
+        price = _toUnitPrice(asset, false) * units;
     }
 
-    /**
-     * @dev Return the number of strategies active on the Vault.
-     */
-    function getStrategyCount() external view returns (uint256) {
-        return allStrategies.length;
-    }
-
-    /**
-     * @dev Return the array of all strategies
-     */
-    function getAllStrategies() external view returns (address[] memory) {
-        return allStrategies;
-    }
-
-    function isSupportedAsset(address _asset) external view returns (bool) {
-        return assets[_asset].isSupported;
-    }
+    /***************************************
+                    Utils
+    ****************************************/
 
     /**
      * @dev Convert a quantity of a token into 1e18 fixed decimal "units"
@@ -660,20 +665,58 @@ contract VaultCore is VaultStorage {
         }
     }
 
-    function _toUnitPrice(uint256 _price, address _asset)
+    /**
+     * @dev Returns asset's unit price accounting for different asset types
+     *      and takes into account the context in which that price exists -
+     *      - mint or redeem.
+     *
+     * Note: since we are returning the price of the unit and not the one of the
+     * asset (see comment above how 1 rETH exchanges for 1.2 units) we need
+     * to make the Oracle price adjustment as well since we are pricing the
+     * units and not the assets.
+     *
+     * The price also snaps to a "full unit price" in case a mint or redeem
+     * action would be unfavourable to the protocol.
+     *
+     */
+    function _toUnitPrice(address _asset, bool isMint)
         internal
         view
-        returns (uint256)
+        returns (uint256 price)
     {
         UnitConversion conversion = assets[_asset].unitConversion;
-        if (conversion == UnitConversion.DECIMALS) {
-            return _price;
-        } else if (conversion == UnitConversion.GETEXCHANGERATE) {
+        price = IOracle(priceProvider).price(_asset) * 1e10;
+
+        if (conversion == UnitConversion.GETEXCHANGERATE) {
             uint256 exchangeRate = IGetExchangeRateToken(_asset)
                 .getExchangeRate();
-            return (_price * 1e18) / exchangeRate;
-        } else {
+            price = (price * 1e18) / exchangeRate;
+        } else if (conversion != UnitConversion.DECIMALS) {
             require(false, "Unsupported conversion type");
+        }
+
+        /* At this stage the price is already adjusted to the unit
+         * so the price checks are agnostic to underlying asset being
+         * pegged to a USD or to an ETH or having a custom exchange rate.
+         */
+        require(price <= MAX_UNIT_PRICE_DRIFT, "Vault: Price exceeds max");
+        require(price >= MIN_UNIT_PRICE_DRIFT, "Vault: Price under min");
+
+        if (isMint) {
+            /* Never price a normalized unit price for more than one
+             * unit of OETH/OUSD when minting.
+             */
+            if (price > 1e18) {
+                price = 1e18;
+            }
+            require(price >= MINT_MINIMUM_ORACLE, "Asset price below peg");
+        } else {
+            /* Never give out more than 1 normalized unit amount of assets
+             * for one unit of OETH/OUSD when redeeming.
+             */
+            if (price < 1e18) {
+                price = 1e18;
+            }
         }
     }
 
@@ -681,6 +724,38 @@ contract VaultCore is VaultStorage {
         uint256 decimals = decimalsCache[_asset];
         require(decimals > 0, "Decimals Not Cached");
         return decimals;
+    }
+
+    /**
+     * @dev Return the number of assets supported by the Vault.
+     */
+    function getAssetCount() public view returns (uint256) {
+        return allAssets.length;
+    }
+
+    /**
+     * @dev Return all asset addresses in order
+     */
+    function getAllAssets() external view returns (address[] memory) {
+        return allAssets;
+    }
+
+    /**
+     * @dev Return the number of strategies active on the Vault.
+     */
+    function getStrategyCount() external view returns (uint256) {
+        return allStrategies.length;
+    }
+
+    /**
+     * @dev Return the array of all strategies
+     */
+    function getAllStrategies() external view returns (address[] memory) {
+        return allStrategies;
+    }
+
+    function isSupportedAsset(address _asset) external view returns (bool) {
+        return assets[_asset].isSupported;
     }
 
     /**
