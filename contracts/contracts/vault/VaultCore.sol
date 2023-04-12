@@ -599,7 +599,10 @@ contract VaultCore is VaultStorage {
          * to 1e18 and ignore calling `_toUnits` since we need to consider assets
          * with the exchange rate
          */
-        uint256 units = _toUnits(uint256(1e18).scaleBy(_getDecimals(asset), 18), asset);
+        uint256 units = _toUnits(
+            uint256(1e18).scaleBy(_getDecimals(asset), 18),
+            asset
+        );
         price = _toUnitPrice(asset, true) * units;
     }
 
@@ -618,7 +621,10 @@ contract VaultCore is VaultStorage {
          * to 1e18 and ignore calling `_toUnits` since we need to consider assets
          * with the exchange rate
          */
-        uint256 units = _toUnits(uint256(1e18).scaleBy(_getDecimals(asset), 18), asset);
+        uint256 units = _toUnits(
+            uint256(1e18).scaleBy(_getDecimals(asset), 18),
+            asset
+        );
         price = _toUnitPrice(asset, false) * units;
     }
 
@@ -689,7 +695,7 @@ contract VaultCore is VaultStorage {
         }
 
         /* At this stage the price is already adjusted to the unit
-         * so the price checks are agnostic to underlying asset being 
+         * so the price checks are agnostic to underlying asset being
          * pegged to a USD or to an ETH or having a custom exchange rate.
          */
         require(price <= MAX_UNIT_PRICE_DRIFT, "Vault: Price exceeds max");
