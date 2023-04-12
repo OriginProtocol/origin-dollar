@@ -27,8 +27,7 @@ contract OETHZapper {
         vault = IVault(_vault);
 
         weth.approve(address(_vault), type(uint256).max);
-        sfrxeth.approve(address(_vault), type(uint256).max);
-        IOUSD(_oeth).rebaseOptIn(); // Gas savings for every zap
+        IERC20(FRXETH).approve(address(_vault), type(uint256).max);
     }
 
     receive() external payable {
@@ -48,6 +47,10 @@ contract OETHZapper {
         sfrxeth.redeem(amount, address(this), msg.sender);
         emit MintFrom(msg.sender, address(sfrxeth), amount);
         return _mint(FRXETH, minOETH);
+    }
+
+    function rebaseOptIn() external {
+        oeth.rebaseOptIn(); // Gas savings for every zap
     }
 
     function _mint(address asset, uint256 minOETH) internal returns (uint256) {

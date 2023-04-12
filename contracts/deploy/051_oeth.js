@@ -26,7 +26,13 @@ module.exports = deploymentWithGuardianGovernor(
       ethers,
     });
 
-    await deployDripper({ deployWithConfirmation, withConfirmation, ethers });
+    // await deployDripper({ deployWithConfirmation, withConfirmation, ethers });
+
+    await deployZapper({
+      deployWithConfirmation,
+      withConfirmation,
+      ethers,
+    });
 
     actions = actions.concat(
       await deployFraxETHStrategy({
@@ -145,6 +151,11 @@ const deployCore = async ({
     cVault.connect(sDeployer).supportAsset(addresses.mainnet.frxETH, 0)
   );
 
+  // await withConfirmation(
+  //   // 0 stands for DECIMAL unit conversion
+  //   cVault.connect(sDeployer).supportAsset(addresses.mainnet.WETH, 0)
+  // );
+
   console.log("Initialized OETHVaultAdmin implementation");
 
   await withConfirmation(
@@ -212,6 +223,26 @@ const deployDripper = async ({
       .connect(sDeployer)
       ["initialize(address,address,bytes)"](dDripper.address, guardianAddr, [])
   );
+};
+
+const deployZapper = async ({
+  deployWithConfirmation,
+  withConfirmation,
+  ethers,
+}) => {
+  const { deployerAddr } = await getNamedAccounts();
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+
+  const cOETHProxy = await ethers.getContract("OETHProxy");
+  const cVaultProxy = await ethers.getContract("OETHVaultProxy");
+
+  await deployWithConfirmation("OETHZapper", [
+    cOETHProxy.address,
+    cVaultProxy.address,
+  ]);
+
+  // const cOETHZapper = await ethers.getContract("OETHZapper");
+  // await withConfirmation(cOETHZapper.connect(sDeployer).rebaseOptIn());
 };
 
 /**
