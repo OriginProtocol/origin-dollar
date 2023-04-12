@@ -240,9 +240,6 @@ const deployZapper = async ({
     cOETHProxy.address,
     cVaultProxy.address,
   ]);
-
-  // const cOETHZapper = await ethers.getContract("OETHZapper");
-  // await withConfirmation(cOETHZapper.connect(sDeployer).rebaseOptIn());
 };
 
 /**
