@@ -18,7 +18,6 @@ import { OUSD } from "../token/OUSD.sol";
 import { Initializable } from "../utils/Initializable.sol";
 import "../utils/Helpers.sol";
 import { StableMath } from "../utils/StableMath.sol";
-import { IGetExchangeRateToken } from "../interfaces/IGetExchangeRateToken.sol";
 
 contract VaultStorage is Initializable, Governable {
     using SafeMath for uint256;

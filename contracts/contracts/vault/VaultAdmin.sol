@@ -181,7 +181,7 @@ contract VaultAdmin is VaultStorage {
 
         // Verify that our oracle supports the asset
         // slither-disable-next-line unused-return
-        IOracle(priceProvider).price(_asset) * 1e10;
+        IOracle(priceProvider).price(_asset);
 
         emit AssetSupported(_asset);
     }

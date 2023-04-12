@@ -20,6 +20,7 @@ import { IVault } from "../interfaces/IVault.sol";
 import { IOracle } from "../interfaces/IOracle.sol";
 import { IBuyback } from "../interfaces/IBuyback.sol";
 import { IBasicToken } from "../interfaces/IBasicToken.sol";
+import { IGetExchangeRateToken } from "../interfaces/IGetExchangeRateToken.sol";
 import "./VaultStorage.sol";
 
 contract VaultCore is VaultStorage {
