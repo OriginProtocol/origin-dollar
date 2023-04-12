@@ -58,6 +58,7 @@ contract VaultStorage is Initializable, Governable {
         bool isSupported;
         UnitConversion unitConversion;
     }
+    // slither-disable-next-line uninitialized-state
     mapping(address => Asset) internal assets;
     address[] internal allAssets;
 
@@ -70,6 +71,7 @@ contract VaultStorage is Initializable, Governable {
     address[] internal allStrategies;
 
     // Address of the Oracle price provider contract
+    // slither-disable-next-line uninitialized-state
     address public priceProvider;
     // Pausing bools
     bool public rebasePaused = false;
