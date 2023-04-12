@@ -174,10 +174,13 @@ contract VaultAdmin is VaultStorage {
 
         assets[_asset] = Asset({
             isSupported: true,
-            unitConversion: UnitConversion(_unitConversion)
+            unitConversion: UnitConversion(_unitConversion),
+            // will be overwritten in _cacheDecimals
+            decimalsCache: 0
         });
-        allAssets.push(_asset);
+        
         _cacheDecimals(_asset);
+        allAssets.push(_asset);
 
         // Verify that our oracle supports the asset
         // slither-disable-next-line unused-return
@@ -483,11 +486,12 @@ contract VaultAdmin is VaultStorage {
     ****************************************/
 
     function _cacheDecimals(address token) internal {
-        if (decimalsCache[token] != 0) {
+        Asset storage tokenAsset = assets[token];
+        if (tokenAsset.decimalsCache != 0) {
             return;
         }
         uint256 decimals = IBasicToken(token).decimals();
         require(decimals >= 6 && decimals <= 18, "Unexpected precision");
-        decimalsCache[token] = decimals;
+        tokenAsset.decimalsCache = decimals;
     }
 }
