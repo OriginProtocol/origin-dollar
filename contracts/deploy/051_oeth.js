@@ -151,10 +151,10 @@ const deployCore = async ({
     cVault.connect(sDeployer).supportAsset(addresses.mainnet.frxETH, 0)
   );
 
-  // await withConfirmation(
-  //   // 0 stands for DECIMAL unit conversion
-  //   cVault.connect(sDeployer).supportAsset(addresses.mainnet.WETH, 0)
-  // );
+  await withConfirmation(
+    // 0 stands for DECIMAL unit conversion
+    cVault.connect(sDeployer).supportAsset(addresses.mainnet.WETH, 0)
+  );
 
   console.log("Initialized OETHVaultAdmin implementation");
 
