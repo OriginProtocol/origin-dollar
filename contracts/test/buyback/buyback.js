@@ -233,12 +233,52 @@ describe("OGV Buyback", function () {
     ).to.be.revertedWith("Caller is not the Governor");
   });
 
+  it("Should allow Governor to change RewardsSource address", async () => {
+    const { buyback, governor, matt } = await loadFixture(defaultFixture);
+
+    await buyback.connect(governor).setRewardsSource(matt.address);
+
+    expect(await buyback.rewardsSource()).to.equal(matt.address);
+  });
+
+  it("Should not allow anyone else to change RewardsSource address", async () => {
+    const { buyback, strategist, matt, josh } = await loadFixture(
+      defaultFixture
+    );
+
+    for (const user of [strategist, josh]) {
+      expect(
+        buyback.connect(user).setRewardsSource(matt.address)
+      ).to.be.revertedWith("Caller is not the Governor");
+    }
+  });
+
+  it("Should not allow setting RewardsSource address to address(0)", async () => {
+    const { buyback, governor } = await loadFixture(defaultFixture);
+
+    expect(
+      buyback
+        .connect(governor)
+        .setRewardsSource("0x0000000000000000000000000000000000000000")
+    ).to.be.revertedWith("Address not set");
+  });
+
   it("Should allow Governor to change Treasury manager address", async () => {
     const { buyback, governor, matt } = await loadFixture(defaultFixture);
 
     await buyback.connect(governor).setTreasuryManager(matt.address);
 
     expect(await buyback.treasuryManager()).to.equal(matt.address);
+  });
+
+  it("Should not allow setting Treasury manager address to address(0)", async () => {
+    const { buyback, governor } = await loadFixture(defaultFixture);
+
+    expect(
+      buyback
+        .connect(governor)
+        .setTreasuryManager("0x0000000000000000000000000000000000000000")
+    ).to.be.revertedWith("Address not set");
   });
 
   it("Should not allow anyone else to change Treasury manager address", async () => {

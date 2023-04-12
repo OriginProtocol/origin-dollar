@@ -5,15 +5,16 @@ import { Strategizable } from "../governance/Strategizable.sol";
 import "../interfaces/chainlink/AggregatorV3Interface.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import { UniswapV3Router } from "../interfaces/UniswapV3Router.sol";
 
-contract Buyback is Strategizable {
-    using SafeERC20 for IERC20;
-    using SafeMath for uint256;
+import { Initializable } from "../utils/Initializable.sol";
 
-    event UniswapUpdated(address _address);
-    event TreasuryManagerUpdated(address _address);
+contract Buyback is Initializable, Strategizable {
+    using SafeERC20 for IERC20;
+
+    event UniswapUpdated(address indexed _address);
+    event RewardsSourceUpdated(address indexed _address);
+    event TreasuryManagerUpdated(address indexed _address);
     event TreasuryBpsUpdated(uint256 _bps);
     event OUSDSwapped(
         address indexed token,
@@ -26,25 +27,30 @@ contract Buyback is Strategizable {
     address public uniswapAddr;
 
     // Swap from OUSD
-    IERC20 immutable ousd;
+    IERC20 public ousd;
 
     // Swap to OGV
-    IERC20 immutable ogv;
+    IERC20 public ogv;
 
     // USDT for Uniswap path
-    IERC20 immutable usdt;
+    IERC20 public usdt;
 
     // WETH for Uniswap path
-    IERC20 immutable weth9;
+    IERC20 public weth9;
 
     // Address that receives rewards
-    address public immutable rewardsSource;
+    address public rewardsSource;
 
     // Address that receives the treasury's share of OUSD
     address public treasuryManager;
 
     // Treasury's share of OUSD fee
     uint256 public treasuryBps;
+
+    constructor() {
+        // Make sure nobody owns the implementation contract
+        _setGovernor(address(0));
+    }
 
     /**
      * @param _uniswapAddr Address of Uniswap
@@ -57,7 +63,7 @@ contract Buyback is Strategizable {
      * @param _rewardsSource Address of RewardsSource contract
      * @param _treasuryBps Percentage of OUSD balance to be sent to treasury
      */
-    constructor(
+    function initialize(
         address _uniswapAddr,
         address _strategistAddr,
         address _treasuryManagerAddr,
@@ -67,19 +73,16 @@ contract Buyback is Strategizable {
         address _weth9,
         address _rewardsSource,
         uint256 _treasuryBps
-    ) {
-        uniswapAddr = _uniswapAddr;
-        _setStrategistAddr(_strategistAddr);
+    ) external onlyGovernor initializer {
         ousd = IERC20(_ousd);
         ogv = IERC20(_ogv);
         usdt = IERC20(_usdt);
         weth9 = IERC20(_weth9);
-        rewardsSource = _rewardsSource;
 
-        // Give approval to Uniswap router for OUSD, this is handled
-        // by setUniswapAddr in the production contract
-        IERC20(_ousd).safeApprove(uniswapAddr, type(uint256).max);
-        emit UniswapUpdated(_uniswapAddr);
+        _setStrategistAddr(_strategistAddr);
+
+        _setUniswapAddr(_uniswapAddr);
+        _setRewardsSource(_rewardsSource);
 
         _setTreasuryManager(_treasuryManagerAddr);
         _setTreasuryBps(_treasuryBps);
@@ -91,19 +94,32 @@ contract Buyback is Strategizable {
      * @param _address Address of Uniswap
      */
     function setUniswapAddr(address _address) external onlyGovernor {
+        _setUniswapAddr(_address);
+    }
+
+    function _setUniswapAddr(address _address) internal {
         uniswapAddr = _address;
 
         if (uniswapAddr != address(0)) {
-            // OUSD doesn't allow changing allowances.
-            // You have to reset it to zero before you
-            // can give it a different allowance.
-            ousd.safeApprove(uniswapAddr, 0);
-
             // Give Uniswap unlimited OUSD allowance
             ousd.safeApprove(uniswapAddr, type(uint256).max);
         }
 
         emit UniswapUpdated(_address);
+    }
+
+    /**
+     * @dev Sets the address that receives the OGV buyback rewards
+     * @param _address Address
+     */
+    function setRewardsSource(address _address) external onlyGovernor {
+        _setRewardsSource(_address);
+    }
+
+    function _setRewardsSource(address _address) internal {
+        require(_address != address(0), "Address not set");
+        rewardsSource = _address;
+        emit RewardsSourceUpdated(_address);
     }
 
     /**
@@ -159,7 +175,7 @@ contract Buyback is Strategizable {
     {
         require(uniswapAddr != address(0), "Exchange address not set");
 
-        uint256 amountToTransfer = ousdAmount.mul(treasuryBps).div(10000);
+        uint256 amountToTransfer = (ousdAmount * treasuryBps) / 10000;
         uint256 swapAmountIn = ousdAmount - amountToTransfer;
 
         if (swapAmountIn > 0) {

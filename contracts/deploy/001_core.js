@@ -893,18 +893,44 @@ const deployBuyback = async () => {
     ).address
   );
 
-  await deployWithConfirmation("Buyback", [
-    assetAddresses.uniswapRouter,
-    strategistAddr,
-    strategistAddr, // Treasury manager
-    ousd.address,
-    assetAddresses.OGV,
-    assetAddresses.USDT,
-    assetAddresses.WETH,
-    assetAddresses.RewardsSource,
-    "5000", // 50%
-  ]);
-  const cBuyback = await ethers.getContract("Buyback");
+  // Deploy proxy and implementation
+  const dBuybackProxy = await deployWithConfirmation("BuybackProxy");
+  const dBuybackImpl = await deployWithConfirmation("Buyback");
+
+  const cBuybackProxy = await ethers.getContractAt(
+    "BuybackProxy",
+    dBuybackProxy.address
+  );
+
+  // Init proxy to implementation
+  await withConfirmation(
+    cBuybackProxy
+      .connect(sDeployer)
+      ["initialize(address,address,bytes)"](
+        dBuybackImpl.address,
+        deployerAddr,
+        []
+      )
+  );
+
+  const cBuyback = await ethers.getContractAt("Buyback", cBuybackProxy.address);
+
+  // Initialize implementation contract
+  const initFunction =
+    "initialize(address,address,address,address,address,address,address,address,uint256)";
+  await withConfirmation(
+    cBuyback.connect(sDeployer)[initFunction](
+      assetAddresses.uniswapRouter,
+      strategistAddr,
+      strategistAddr, // Treasury manager
+      ousd.address,
+      assetAddresses.OGV,
+      assetAddresses.USDT,
+      assetAddresses.WETH,
+      assetAddresses.RewardsSource,
+      "5000" // 50%
+    )
+  );
 
   await withConfirmation(
     cBuyback.connect(sDeployer).transferGovernance(governorAddr)

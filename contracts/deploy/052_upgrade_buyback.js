@@ -1,9 +1,10 @@
 const { deploymentWithGovernanceProposal } = require("../utils/deploy");
-const addresses = require("../utils/addresses");
+const { getTxOpts } = require("../utils/tx");
+// const addresses = require("../utils/addresses");
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "051_upgrade_buyback",
+    deployName: "052_upgrade_buyback",
     forceDeploy: false,
   },
   async ({
@@ -45,10 +46,38 @@ module.exports = deploymentWithGovernanceProposal(
     );
     const ousdBalance = await cOUSD.balanceOf(recentBuybackAddress);
 
-    // Deploy new Buyback contract
-    await deployWithConfirmation(
+    // Deploy Buyback proxy
+    const dBuybackProxy = await deployWithConfirmation("BuybackProxy");
+    const cBuybackProxy = await ethers.getContractAt(
+      "BuybackProxy",
+      dBuybackProxy.address
+    );
+
+    // Deploy new Buyback implementation contract
+    const dBuybackImpl = await deployWithConfirmation("Buyback");
+
+    // Initialize proxy contract
+    await withConfirmation(
+      cBuybackProxy
+        .connect(sDeployer)
+        ["initialize(address,address,bytes)"](
+          dBuybackImpl.address,
+          deployerAddr,
+          [],
+          await getTxOpts()
+        )
+    );
+
+    const cBuyback = await ethers.getContractAt(
       "Buyback",
-      [
+      cBuybackProxy.address
+    );
+
+    // Initialize implementation contract
+    const initFunction =
+      "initialize(address,address,address,address,address,address,address,address,uint256)";
+    await withConfirmation(
+      cBuyback.connect(sDeployer)[initFunction](
         assetAddresses.uniswapV3Router,
         strategistAddr,
         strategistAddr, // Treasury manager
@@ -58,11 +87,9 @@ module.exports = deploymentWithGovernanceProposal(
         assetAddresses.WETH,
         assetAddresses.RewardsSource,
         "5000", // 50%
-      ],
-      "Buyback",
-      true
+        await getTxOpts()
+      )
     );
-    const cBuyback = await ethers.getContract("Buyback");
 
     // Transfer governance of new contract to the governor
     await withConfirmation(
