@@ -98,9 +98,9 @@ interface IVault {
 
     function transferToken(address _asset, uint256 _amount) external;
 
-    function priceUSDMint(address asset) external view returns (uint256);
+    function priceUnitMint(address asset) external view returns (uint256);
 
-    function priceUSDRedeem(address asset) external view returns (uint256);
+    function priceUnitRedeem(address asset) external view returns (uint256);
 
     function withdrawAllFromStrategy(address _strategyAddr) external;
 

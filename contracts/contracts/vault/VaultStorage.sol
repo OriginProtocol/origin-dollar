@@ -130,7 +130,6 @@ contract VaultStorage is Initializable, Governable {
 
     uint256 constant MIN_UNIT_PRICE_DRIFT = 0.7e18;
     uint256 constant MAX_UNIT_PRICE_DRIFT = 1.3e18;
-    uint256 constant MINT_MINIMUM_ORACLE = 99800000;
 
     /**
      * @dev set the implementation for the admin, this needs to be in a base class else we cannot set it

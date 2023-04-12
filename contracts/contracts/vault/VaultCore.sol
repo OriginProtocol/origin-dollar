@@ -604,7 +604,7 @@ contract VaultCore is VaultStorage {
             uint256(1e18).scaleBy(_getDecimals(asset), 18),
             asset
         );
-        price = _toUnitPrice(asset, true) * units;
+        price = (_toUnitPrice(asset, true) * units) / 1e18;
     }
 
     /**
@@ -626,7 +626,7 @@ contract VaultCore is VaultStorage {
             uint256(1e18).scaleBy(_getDecimals(asset), 18),
             asset
         );
-        price = _toUnitPrice(asset, false) * units;
+        price = (_toUnitPrice(asset, false) * units) / 1e18;
     }
 
     /***************************************
@@ -709,7 +709,7 @@ contract VaultCore is VaultStorage {
             if (price > 1e18) {
                 price = 1e18;
             }
-            require(price >= MINT_MINIMUM_ORACLE, "Asset price below peg");
+            require(price >= MINT_MINIMUM_UNIT_PRICE, "Asset price below peg");
         } else {
             /* Never give out more than 1 normalized unit amount of assets
              * for one unit of OETH/OUSD when redeeming.
