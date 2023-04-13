@@ -35,14 +35,6 @@ module.exports = deploymentWithGuardianGovernor(
       })
     );
 
-    actions = actions.concat(
-      await deployWOETH({
-        deployWithConfirmation,
-        withConfirmation,
-        ethers,
-      })
-    );
-
     // Governance Actions
     // ----------------
     return {
@@ -219,39 +211,6 @@ const deployDripper = async ({
       .connect(sDeployer)
       ["initialize(address,address,bytes)"](dDripper.address, guardianAddr, [])
   );
-};
-
-const deployWOETH = async ({
-  deployWithConfirmation,
-  withConfirmation,
-  ethers,
-}) => {
-  const { deployerAddr } = await getNamedAccounts();
-  const sDeployer = await ethers.provider.getSigner(deployerAddr);
-
-  const cOETHProxy = await ethers.getContract("OETHProxy");
-  const cWOETHProxy = await ethers.getContract("WOETHProxy");
-
-  const dWOETHImpl = await deployWithConfirmation("WOETH", [
-    cOETHProxy.address,
-    "Wrapped OETH",
-    "WOETH",
-  ]);
-
-  const cWOETH = await ethers.getContractAt("WOETH", cWOETHProxy.address);
-
-  return [
-    {
-      contract: cWOETHProxy,
-      signature: "upgradeTo(address)",
-      args: [dWOETHImpl.address],
-    },
-    {
-      contract: cWOETH,
-      signature: "initialize()",
-      args: [],
-    },
-  ];
 };
 
 /**
