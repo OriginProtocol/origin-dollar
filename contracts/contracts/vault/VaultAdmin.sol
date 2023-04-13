@@ -176,7 +176,7 @@ contract VaultAdmin is VaultStorage {
             isSupported: true,
             unitConversion: UnitConversion(_unitConversion),
             // will be overwritten in _cacheDecimals
-            decimalsCache: 0
+            decimals: 0
         });
         
         _cacheDecimals(_asset);
@@ -487,11 +487,11 @@ contract VaultAdmin is VaultStorage {
 
     function _cacheDecimals(address token) internal {
         Asset storage tokenAsset = assets[token];
-        if (tokenAsset.decimalsCache != 0) {
+        if (tokenAsset.decimals != 0) {
             return;
         }
         uint256 decimals = IBasicToken(token).decimals();
         require(decimals >= 6 && decimals <= 18, "Unexpected precision");
-        tokenAsset.decimalsCache = decimals;
+        tokenAsset.decimals = decimals;
     }
 }

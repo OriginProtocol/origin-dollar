@@ -721,8 +721,8 @@ contract VaultCore is VaultStorage {
     }
 
     function _getDecimals(address _asset) internal view returns (uint256) {
-        uint256 decimals = assets[_asset].decimalsCache;
-        require(decimals > 0, "Decimals Not Cached");
+        uint256 decimals = assets[_asset].decimals;
+        require(decimals > 0, "Decimals not cached");
         return decimals;
     }
 
