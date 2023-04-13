@@ -643,7 +643,14 @@ async function getTimelock() {
  * @returns {Object} main object used by hardhat
  */
 function deploymentWithGovernanceProposal(opts, fn) {
-  const { deployName, dependencies, forceDeploy, onlyOnFork, forceSkip, proposalId } = opts;
+  const {
+    deployName,
+    dependencies,
+    forceDeploy,
+    onlyOnFork,
+    forceSkip,
+    proposalId,
+  } = opts;
   const runDeployment = async (hre) => {
     const oracleAddresses = await getOracleAddresses(hre.deployments);
     const assetAddresses = await getAssetAddresses(hre.deployments);
@@ -759,7 +766,7 @@ function deploymentWithGovernanceProposal(opts, fn) {
         const migrations = require(`./../deployments/${networkName}/.migrations.json`);
         return Boolean(migrations[deployName]);
       } else {
-        return onlyOnFork ? true : (!isMainnet || isSmokeTest);
+        return onlyOnFork ? true : !isMainnet || isSmokeTest;
       }
     };
   }
@@ -773,7 +780,14 @@ function deploymentWithGovernanceProposal(opts, fn) {
  * @returns {Object} main object used by hardhat
  */
 function deploymentWithProposal(opts, fn) {
-  const { deployName, dependencies, forceDeploy, forceSkip, onlyOnFork, proposalId } = opts;
+  const {
+    deployName,
+    dependencies,
+    forceDeploy,
+    forceSkip,
+    onlyOnFork,
+    proposalId,
+  } = opts;
   const runDeployment = async (hre) => {
     const oracleAddresses = await getOracleAddresses(hre.deployments);
     const assetAddresses = await getAssetAddresses(hre.deployments);
@@ -877,7 +891,7 @@ function deploymentWithProposal(opts, fn) {
         const migrations = require(`./../deployments/${networkName}/.migrations.json`);
         return Boolean(migrations[deployName]);
       } else {
-        return onlyOnFork ? true : (!isMainnet || isSmokeTest);
+        return onlyOnFork ? true : !isMainnet || isSmokeTest;
       }
     };
   }
@@ -955,7 +969,7 @@ function deploymentWithGuardianGovernor(opts, fn) {
         const migrations = require(`./../deployments/${networkName}/.migrations.json`);
         return Boolean(migrations[deployName]);
       } else {
-        return onlyOnFork ? true : (!isMainnet || isSmokeTest);
+        return onlyOnFork ? true : !isMainnet || isSmokeTest;
       }
     };
   }
