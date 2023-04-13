@@ -57,7 +57,10 @@ contract VaultStorage is Initializable, Governable {
     struct Asset {
         bool isSupported;
         UnitConversion unitConversion;
+        // Cheaper to read decimals locally than to call out each time
+        uint256 decimalsCache;
     }
+
     // slither-disable-next-line uninitialized-state
     mapping(address => Asset) internal assets;
     address[] internal allAssets;
@@ -126,9 +129,6 @@ contract VaultStorage is Initializable, Governable {
 
     // How much net total OUSD is allowed to be minted by all strategies
     uint256 public netOusdMintForStrategyThreshold = 0;
-
-    // Cheaper to read decimals locally than to call out each time
-    mapping(address => uint256) internal decimalsCache; // TODO: Move to Asset struct
 
     uint256 constant MIN_UNIT_PRICE_DRIFT = 0.7e18;
     uint256 constant MAX_UNIT_PRICE_DRIFT = 1.3e18;
