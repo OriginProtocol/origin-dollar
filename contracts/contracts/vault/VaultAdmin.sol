@@ -175,10 +175,9 @@ contract VaultAdmin is VaultStorage {
         assets[_asset] = Asset({
             isSupported: true,
             unitConversion: UnitConversion(_unitConversion),
-            // will be overwritten in _cacheDecimals
-            decimals: 0
+            decimals: 0 // will be overridden in _cacheDecimals
         });
-        
+
         _cacheDecimals(_asset);
         allAssets.push(_asset);
 

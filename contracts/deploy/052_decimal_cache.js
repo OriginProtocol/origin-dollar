@@ -22,24 +22,21 @@ module.exports = deploymentWithGovernanceProposal(
 
     const cVault = await ethers.getContractAt("Vault", cVaultProxy.address);
 
-    const cVaultAdmin = new ethers.Contract(
-      cVaultProxy.address,
-      [
-        {
-          "inputs": [
-            {
-              "internalType": "address",
-              "name": "_asset",
-              "type": "address"
-            }
-          ],
-          "name": "cacheDecimals",
-          "outputs": [],
-          "stateMutability": "nonpayable",
-          "type": "function"
-        }
-      ]
-    );
+    const cVaultAdmin = new ethers.Contract(cVaultProxy.address, [
+      {
+        inputs: [
+          {
+            internalType: "address",
+            name: "_asset",
+            type: "address",
+          },
+        ],
+        name: "cacheDecimals",
+        outputs: [],
+        stateMutability: "nonpayable",
+        type: "function",
+      },
+    ]);
 
     // Governance Actions
     // ----------------
