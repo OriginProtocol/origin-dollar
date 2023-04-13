@@ -155,6 +155,11 @@ const deployCore = async ({
     cVault.connect(sDeployer).supportAsset(addresses.mainnet.WETH, 0)
   );
 
+  await withConfirmation(
+    // 1 stands for GETEXCHANGERATE unit conversion
+    cVault.connect(sDeployer).supportAsset(addresses.mainnet.rETH, 1)
+  );
+
   console.log("Initialized OETHVaultAdmin implementation");
 
   await withConfirmation(
