@@ -18,7 +18,6 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 import { StableMath } from "../utils/StableMath.sol";
 import { IVault } from "../interfaces/IVault.sol";
 import { IOracle } from "../interfaces/IOracle.sol";
-import { IBuyback } from "../interfaces/IBuyback.sol";
 import { IBasicToken } from "../interfaces/IBasicToken.sol";
 import { IGetExchangeRateToken } from "../interfaces/IGetExchangeRateToken.sol";
 import "./VaultStorage.sol";
@@ -354,12 +353,6 @@ contract VaultCore is VaultStorage {
                     allocateAmount
                 );
             }
-        }
-
-        // Trigger OGN Buyback
-        address _trusteeAddress = trusteeAddress; // gas savings
-        if (_trusteeAddress != address(0)) {
-            IBuyback(trusteeAddress).swap();
         }
     }
 
