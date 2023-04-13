@@ -38,7 +38,7 @@ abstract contract OracleRouterBase is IOracle {
         require(_feed != FIXED_PRICE, "Fixed price feeds not supported");
         (, int256 _iprice, , , ) = AggregatorV3Interface(_feed)
             .latestRoundData();
-        uint8 decimals = getDecimals(asset, _feed);
+        uint8 decimals = getDecimals(asset);
 
         uint256 _price = uint256(_iprice).scaleBy(18, decimals);
         if (isStablecoin(asset)) {
@@ -48,7 +48,7 @@ abstract contract OracleRouterBase is IOracle {
         return uint256(_price);
     }
 
-    function getDecimals(address _asset, address _feed)
+    function getDecimals(address _asset)
         internal
         view
         returns (uint8)
@@ -150,7 +150,7 @@ contract OETHOracleRouter is OracleRouter {
         (, int256 _iprice, , , ) = AggregatorV3Interface(_feed)
             .latestRoundData();
 
-        uint8 decimals = getDecimals(asset, _feed);
+        uint8 decimals = getDecimals(asset);
         uint256 _price = uint256(_iprice).scaleBy(18, decimals);
         return _price;
     }
