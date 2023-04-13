@@ -19,7 +19,6 @@ module.exports = deploymentWithGuardianGovernor(
     const { deployerAddr, governorAddr } = await getNamedAccounts();
     const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
-    // actions = actions.concat(actions2)
     let actions = await deployCore({
       deployWithConfirmation,
       withConfirmation,
