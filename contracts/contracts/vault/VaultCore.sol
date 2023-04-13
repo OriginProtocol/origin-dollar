@@ -678,7 +678,7 @@ contract VaultCore is VaultStorage {
         returns (uint256 price)
     {
         UnitConversion conversion = assets[_asset].unitConversion;
-        price = IOracle(priceProvider).price(_asset) * 1e10;
+        price = IOracle(priceProvider).price(_asset);
 
         if (conversion == UnitConversion.GETEXCHANGERATE) {
             uint256 exchangeRate = IGetExchangeRateToken(_asset)

@@ -21,8 +21,18 @@ module.exports = deploymentWithGovernanceProposal(
     // Current contracts
     const cVaultProxy = await ethers.getContract("VaultProxy");
     const dVaultAdmin = await deployWithConfirmation("VaultAdmin");
+    const dOracleRouter = await deployWithConfirmation("OracleRouter");
 
     const cVault = await ethers.getContractAt("Vault", cVaultProxy.address);
+    const cOracleRouter = await ethers.getContract("OracleRouter");
+    await cOracleRouter.cacheDecimals(addresses.mainnet.rETH);
+    await cOracleRouter.cacheDecimals(addresses.mainnet.DAI);
+    await cOracleRouter.cacheDecimals(addresses.mainnet.USDC);
+    await cOracleRouter.cacheDecimals(addresses.mainnet.USDT);
+    await cOracleRouter.cacheDecimals(addresses.mainnet.COMP);
+    await cOracleRouter.cacheDecimals(addresses.mainnet.Aave);
+    await cOracleRouter.cacheDecimals(addresses.mainnet.CRV);
+    await cOracleRouter.cacheDecimals(addresses.mainnet.CVX);
 
     const cVaultAdmin = new ethers.Contract(cVaultProxy.address, [
       {
@@ -34,6 +44,19 @@ module.exports = deploymentWithGovernanceProposal(
           },
         ],
         name: "cacheDecimals",
+        outputs: [],
+        stateMutability: "nonpayable",
+        type: "function",
+      },
+      {
+        inputs: [
+          {
+            internalType: "address",
+            name: "_priceProvider",
+            type: "address",
+          },
+        ],
+        name: "setPriceProvider",
         outputs: [],
         stateMutability: "nonpayable",
         type: "function",
@@ -54,6 +77,11 @@ module.exports = deploymentWithGovernanceProposal(
           contract: cVaultAdmin,
           signature: "cacheDecimals(address)",
           args: [assetAddresses.DAI],
+        },
+        {
+          contract: cVaultAdmin,
+          signature: "setPriceProvider(address)",
+          args: [dOracleRouter.address],
         },
         {
           contract: cVaultAdmin,
