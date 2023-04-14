@@ -823,8 +823,6 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         // Since this is called by the Vault, we cannot pass min redeem amounts
         // without complicating the code of the Vault. So, passing 0 instead.
         (amount0, amount1) = _closePosition(activeTokenId, 0, 0);
-        
-        _depositAll();
 
         // Intentionally skipping TVL check since removing liquidity won't cause it to fail
     }
