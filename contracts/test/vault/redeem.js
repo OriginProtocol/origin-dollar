@@ -80,7 +80,7 @@ describe("Vault Redeem", function () {
     await expect(matt).has.a.balanceOf("100.00", ousd);
     await expect(matt).has.a.balanceOf("900.00", dai);
 
-    await setOracleTokenPriceUsd("DAI", "1.25");
+    await setOracleTokenPriceUsd("DAI", dai.address, "1.25");
     await vault.rebase();
 
     await vault.connect(matt).redeem(ousdUnits("2.0"), 0);
@@ -90,13 +90,17 @@ describe("Vault Redeem", function () {
   });
 
   it("Should allow redeems of non-standard tokens", async () => {
-    const { ousd, vault, anna, governor, nonStandardToken } = await loadFixture(
-      defaultFixture
-    );
+    const { ousd, vault, anna, governor, oracleRouter, nonStandardToken } =
+      await loadFixture(defaultFixture);
 
+    await oracleRouter.cacheDecimals(nonStandardToken.address);
     await vault.connect(governor).supportAsset(nonStandardToken.address, 0);
 
-    await setOracleTokenPriceUsd("NonStandardToken", "1.00");
+    await setOracleTokenPriceUsd(
+      "NonStandardToken",
+      nonStandardToken.address,
+      "1.00"
+    );
 
     await expect(anna).has.a.balanceOf("1000.00", nonStandardToken);
 
@@ -202,8 +206,8 @@ describe("Vault Redeem", function () {
     await vault.connect(anna).mint(dai.address, daiUnits("150.0"), 0);
     await expect(anna).has.a.balanceOf("250.00", ousd);
 
-    await setOracleTokenPriceUsd("USDC", "1.30");
-    await setOracleTokenPriceUsd("DAI", "1.20");
+    await setOracleTokenPriceUsd("USDC", usdc.address, "1.30");
+    await setOracleTokenPriceUsd("DAI", dai.address, "1.20");
     await vault.connect(governor).rebase();
 
     // Anna's balance does not change with the rebase
@@ -252,8 +256,8 @@ describe("Vault Redeem", function () {
     await vault.connect(anna).mint(dai.address, daiUnits("150.0"), 0);
     await expect(anna).has.a.balanceOf("250.00", ousd);
 
-    await setOracleTokenPriceUsd("USDC", "0.90");
-    await setOracleTokenPriceUsd("DAI", "0.80");
+    await setOracleTokenPriceUsd("USDC", usdc.address, "0.90");
+    await setOracleTokenPriceUsd("DAI", dai.address, "0.80");
     await vault.connect(governor).rebase();
 
     // Anna's share of OUSD is unaffected
@@ -342,7 +346,11 @@ describe("Vault Redeem", function () {
     for (const user of users) {
       for (const [asset, units] of assetsWithUnits) {
         for (const price of prices) {
-          await setOracleTokenPriceUsd(await asset.symbol(), price.toString());
+          await setOracleTokenPriceUsd(
+            await asset.symbol(),
+            asset.address,
+            price.toString()
+          );
           // Manually call rebase because not triggered by mint
           await vault.rebase();
           // Rebase could have changed user balance
@@ -387,7 +395,7 @@ describe("Vault Redeem", function () {
     await expect(anna).has.a.balanceOf("3000.00", ousd);
 
     //peturb the oracle a slight bit.
-    await setOracleTokenPriceUsd("USDC", "1.000001");
+    await setOracleTokenPriceUsd("USDC", usdc.address, "1.000001");
     //redeem without rebasing (not over threshold)
     await vault.connect(anna).redeem(ousdUnits("200.00"), 0);
     //redeem with rebasing (over threshold)
@@ -409,8 +417,8 @@ describe("Vault Redeem", function () {
     await expect(anna).has.balanceOf("1000", ousd);
 
     await vault.connect(governor).setRedeemFeeBps("500");
-    await setOracleTokenPriceUsd("USDC", "1.005");
-    await setOracleTokenPriceUsd("DAI", "1");
+    await setOracleTokenPriceUsd("USDC", usdc.address, "1.005");
+    await setOracleTokenPriceUsd("DAI", dai.address, "1");
     await vault.connect(governor).rebase();
 
     await vault.connect(anna).redeemAll(0);

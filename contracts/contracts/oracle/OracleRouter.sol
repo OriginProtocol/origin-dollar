@@ -48,11 +48,7 @@ abstract contract OracleRouterBase is IOracle {
         return uint256(_price);
     }
 
-    function getDecimals(address _asset)
-        internal
-        view
-        returns (uint8)
-    {   
+    function getDecimals(address _asset) internal view returns (uint8) {
         uint8 decimals = decimalsCache[_asset];
         require(decimals > 0, "Oracle: Decimals not cached");
         return decimals;

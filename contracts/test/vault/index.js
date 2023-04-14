@@ -33,6 +33,7 @@ describe("Vault", function () {
     const origAssetCount = await vault.connect(governor).getAssetCount();
     expect(await vault.isSupportedAsset(ousd.address)).to.be.false;
     await oracleRouter.setFeed(ousd.address, oracleAddresses.chainlink.DAI_USD);
+    await oracleRouter.cacheDecimals(ousd.address);
     await expect(vault.connect(governor).supportAsset(ousd.address, 0)).to.emit(
       vault,
       "AssetSupported"
@@ -97,7 +98,7 @@ describe("Vault", function () {
     await expect(anna).has.a.balanceOf("0.00", ousd);
     // We limit to paying to $1 OUSD for for one stable coin,
     // so this will deposit at a rate of $1.
-    await setOracleTokenPriceUsd("DAI", "1.30");
+    await setOracleTokenPriceUsd("DAI", dai.address, "1.30");
     await dai.connect(anna).approve(vault.address, daiUnits("3.0"));
     await vault.connect(anna).mint(dai.address, daiUnits("3.0"), 0);
     await expect(anna).has.a.balanceOf("3.00", ousd);
@@ -106,7 +107,7 @@ describe("Vault", function () {
   it("Should correctly handle a deposit of USDC (6 decimals)", async function () {
     const { ousd, vault, usdc, anna } = await loadFixture(defaultFixture);
     await expect(anna).has.a.balanceOf("0.00", ousd);
-    await setOracleTokenPriceUsd("USDC", "0.998");
+    await setOracleTokenPriceUsd("USDC", usdc.address, "0.998");
     await usdc.connect(anna).approve(vault.address, usdcUnits("50.0"));
     await vault.connect(anna).mint(usdc.address, usdcUnits("50.0"), 0);
     await expect(anna).has.a.balanceOf("49.90", ousd);
@@ -115,7 +116,7 @@ describe("Vault", function () {
   it("Should not allow a below peg deposit", async function () {
     const { ousd, vault, usdc, anna } = await loadFixture(defaultFixture);
     await expect(anna).has.a.balanceOf("0.00", ousd);
-    await setOracleTokenPriceUsd("USDC", "0.95");
+    await setOracleTokenPriceUsd("USDC", usdc.address, "0.95");
     await usdc.connect(anna).approve(vault.address, usdcUnits("50.0"));
     await expect(
       vault.connect(anna).mint(usdc.address, usdcUnits("50.0"), 0)
@@ -123,14 +124,17 @@ describe("Vault", function () {
   });
 
   it("Should correctly handle a deposit failure of Non-Standard ERC20 Token", async function () {
-    const { ousd, vault, anna, nonStandardToken, governor } = await loadFixture(
-      defaultFixture
-    );
+    const { ousd, vault, anna, nonStandardToken, oracleRouter, governor } =
+      await loadFixture(defaultFixture);
 
+    await oracleRouter.cacheDecimals(nonStandardToken.address);
     await vault.connect(governor).supportAsset(nonStandardToken.address, 0);
-
     await expect(anna).has.a.balanceOf("1000.00", nonStandardToken);
-    await setOracleTokenPriceUsd("NonStandardToken", "1.30");
+    await setOracleTokenPriceUsd(
+      "NonStandardToken",
+      nonStandardToken.address,
+      "1.30"
+    );
     await nonStandardToken
       .connect(anna)
       .approve(vault.address, usdtUnits("1500.0"));
@@ -156,13 +160,17 @@ describe("Vault", function () {
   });
 
   it("Should correctly handle a deposit of Non-Standard ERC20 Token", async function () {
-    const { ousd, vault, anna, nonStandardToken, governor } = await loadFixture(
-      defaultFixture
-    );
+    const { ousd, vault, anna, nonStandardToken, oracleRouter, governor } =
+      await loadFixture(defaultFixture);
+    await oracleRouter.cacheDecimals(nonStandardToken.address);
     await vault.connect(governor).supportAsset(nonStandardToken.address, 0);
 
     await expect(anna).has.a.balanceOf("1000.00", nonStandardToken);
-    await setOracleTokenPriceUsd("NonStandardToken", "1.00");
+    await setOracleTokenPriceUsd(
+      "NonStandardToken",
+      nonStandardToken.address,
+      "1.00"
+    );
 
     await nonStandardToken
       .connect(anna)

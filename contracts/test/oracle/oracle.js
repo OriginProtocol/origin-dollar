@@ -23,7 +23,7 @@ describe("Oracle", async () => {
       ];
       for (const test of tests) {
         const [actual, expectedRead] = test;
-        await setOracleTokenPriceUsd("USDT", actual);
+        await setOracleTokenPriceUsd("USDT", usdt.address, actual);
         expect(await vault.priceUnitMint(usdt.address)).to.equal(
           ousdUnits(expectedRead)
         );
@@ -34,7 +34,7 @@ describe("Oracle", async () => {
       const { vault, usdt } = await loadFixture(defaultFixture);
       const prices = ["0.85", "0.997"];
       for (const price of prices) {
-        await setOracleTokenPriceUsd("USDT", price);
+        await setOracleTokenPriceUsd("USDT", usdt.address, price);
         await expect(vault.priceUnitMint(usdt.address)).to.be.revertedWith(
           "Asset price below peg"
         );
@@ -50,7 +50,7 @@ describe("Oracle", async () => {
       ];
       for (const test of tests) {
         const [actual, expectedRead] = test;
-        await setOracleTokenPriceUsd("USDT", actual);
+        await setOracleTokenPriceUsd("USDT", usdt.address, actual);
         expect(await vault.priceUnitRedeem(usdt.address)).to.equal(
           ousdUnits(expectedRead)
         );
@@ -77,7 +77,7 @@ describe("Oracle", async () => {
       const label = `Should ${revertLabel} because of drift at $${price}`;
       it(label, async () => {
         const { vault, usdt } = await loadFixture(defaultFixture);
-        await setOracleTokenPriceUsd("USDT", price);
+        await setOracleTokenPriceUsd("USDT", usdt.address, price);
         if (expectedRevert) {
           const tx = vault.priceUnitRedeem(usdt.address);
           await expect(tx).to.be.revertedWith(expectedRevert);

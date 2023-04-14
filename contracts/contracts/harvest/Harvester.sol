@@ -382,12 +382,13 @@ contract Harvester is Governable {
 
         // This'll revert if there is no price feed
         uint256 oraclePrice = IOracle(priceProvider).price(_swapToken);
-        // Oracle price is 1e8, USDT output is 1e6
+
+        // Oracle price is 1e18, USDT output is 1e6
         uint256 minExpected = (balanceToSwap *
             oraclePrice *
             (1e4 - tokenConfig.allowedSlippageBps)).scaleBy( // max allowed slippage
             6,
-            Helpers.getDecimals(_swapToken) + 8
+            Helpers.getDecimals(_swapToken) + 18
         ) / 1e4; // fix the max slippage decimal position
 
         // Uniswap redemption path
