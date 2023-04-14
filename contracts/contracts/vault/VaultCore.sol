@@ -17,6 +17,8 @@ import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import { StableMath } from "../utils/StableMath.sol";
 import { IOracle } from "../interfaces/IOracle.sol";
 import { IBuyback } from "../interfaces/IBuyback.sol";
+import { IStrategy } from "../interfaces/IStrategy.sol";
+import "../utils/Helpers.sol";
 import "./VaultStorage.sol";
 
 contract VaultCore is VaultStorage {
