@@ -314,8 +314,18 @@ const deployFraxETHStrategy = async ({
   );
   console.log(`FraxETHStrategy transferGovernance(${guardianAddr} called`);
 
+  console.log("Add to vault and set as default strategy for frxeth");
   await withConfirmation(
     cVault.connect(sDeployer).approveStrategy(cFraxETHStrategyProxy.address)
+  );
+
+  await withConfirmation(
+    cVault
+      .connect(sDeployer)
+      .setAssetDefaultStrategy(
+        addresses.mainnet.frxETH,
+        cFraxETHStrategyProxy.address
+      )
   );
 
   return [
