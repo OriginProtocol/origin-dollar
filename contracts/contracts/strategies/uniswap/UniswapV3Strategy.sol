@@ -283,7 +283,7 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
     ) external override onlyVault nonReentrant {
         onlyPoolTokens(_asset);
 
-        require(activeTokenId == 0, "Close active position");
+        require(activeTokenId == 0, "Active position still open");
 
         // Transfer requested amount, will revert when low on balance
         IERC20(_asset).safeTransfer(recipient, amount);

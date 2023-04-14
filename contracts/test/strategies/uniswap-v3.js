@@ -1121,7 +1121,7 @@ describe("Uniswap V3 Strategy", function () {
         await expect(
           // prettier-ignore
           strategy.connect(impersonatedVaultSigner)[withdrawFuncSign](vault.address, usdc.address, "10")
-        ).to.be.revertedWith("Close active position");
+        ).to.be.revertedWith("Active position still open");
       });
 
       it("Only vault can do withdraw/withdrawAll", async () => {
