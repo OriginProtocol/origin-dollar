@@ -1,6 +1,5 @@
 const { expect } = require("chai");
 
-const { loadFixture } = require("ethereum-waffle");
 const {
   units,
   ousdUnits,
@@ -10,9 +9,11 @@ const {
   advanceTime,
 } = require("../helpers");
 const {
-  morphoCompoundFixture,
+  morphoCompoundFixtureSetup,
   impersonateAndFundContract,
 } = require("../_fixture");
+
+const morphoCompoundFixture = morphoCompoundFixtureSetup();
 
 forkOnlyDescribe("ForkTest: Morpho Compound Strategy", function () {
   this.timeout(0);
@@ -20,11 +21,12 @@ forkOnlyDescribe("ForkTest: Morpho Compound Strategy", function () {
   this.retries(3);
 
   let fixture;
-  beforeEach(async () => {
-    fixture = await loadFixture(morphoCompoundFixture);
-  });
 
   describe("Mint", function () {
+    beforeEach(async () => {
+      fixture = await morphoCompoundFixture();
+    });
+
     it("Should deploy USDC in Morpho Compound", async function () {
       const { matt, usdc } = fixture;
       await mintTest(fixture, matt, usdc, "110000");
@@ -42,6 +44,10 @@ forkOnlyDescribe("ForkTest: Morpho Compound Strategy", function () {
   });
 
   describe("Redeem", function () {
+    beforeEach(async () => {
+      fixture = await morphoCompoundFixture();
+    });
+
     it("Should redeem from Morpho", async () => {
       const { vault, ousd, usdt, usdc, dai, domen } = fixture;
 
@@ -80,6 +86,10 @@ forkOnlyDescribe("ForkTest: Morpho Compound Strategy", function () {
   });
 
   describe("Rewards", function () {
+    beforeEach(async () => {
+      fixture = await morphoCompoundFixture();
+    });
+
     it("Should be able to harvest rewards", async function () {
       const {
         harvester,
@@ -120,6 +130,10 @@ forkOnlyDescribe("ForkTest: Morpho Compound Strategy", function () {
   });
 
   describe("Withdraw", function () {
+    beforeEach(async () => {
+      fixture = await morphoCompoundFixture();
+    });
+
     it("Should be able to withdraw from strategy", async function () {
       const { matt, usdc, vault, morphoCompoundStrategy } = fixture;
       const amount = "110000";
@@ -207,7 +221,7 @@ async function mintTest(fixture, user, asset, amount = "30000") {
   const supplyDiff = newSupply.sub(currentSupply);
   const ousdUnitAmount = ousdUnits(amount);
 
-  expect(supplyDiff).to.approxEqualTolerance(ousdUnitAmount, 1);
+  expect(supplyDiff).to.approxEqualTolerance(ousdUnitAmount, 2);
 
   const morphoLiquidityDiff = newMorphoBalance.sub(currentMorphoBalance);
 

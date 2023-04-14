@@ -702,40 +702,41 @@ async function convexMetaVaultFixture() {
 /**
  * Configure a Vault with only the Morpho strategy.
  */
-async function morphoCompoundFixture() {
-  const fixture = await loadFixture(defaultFixture);
+function morphoCompoundFixtureSetup() {
+  return deployments.createFixture(async () => {
+    const fixture = await defaultFixture();
+    const { timelockAddr } = await getNamedAccounts();
+    const sGovernor = await ethers.provider.getSigner(timelockAddr);
 
-  const { timelockAddr } = await getNamedAccounts();
-  const sGovernor = await ethers.provider.getSigner(timelockAddr);
+    if (isFork) {
+      await fixture.vault
+        .connect(sGovernor)
+        .setAssetDefaultStrategy(
+          fixture.usdt.address,
+          fixture.morphoCompoundStrategy.address
+        );
 
-  if (isFork) {
-    await fixture.vault
-      .connect(sGovernor)
-      .setAssetDefaultStrategy(
-        fixture.usdt.address,
-        fixture.morphoCompoundStrategy.address
+      await fixture.vault
+        .connect(sGovernor)
+        .setAssetDefaultStrategy(
+          fixture.usdc.address,
+          fixture.morphoCompoundStrategy.address
+        );
+
+      await fixture.vault
+        .connect(sGovernor)
+        .setAssetDefaultStrategy(
+          fixture.dai.address,
+          fixture.morphoCompoundStrategy.address
+        );
+    } else {
+      throw new Error(
+        "Morpho strategy only supported in forked test environment"
       );
+    }
 
-    await fixture.vault
-      .connect(sGovernor)
-      .setAssetDefaultStrategy(
-        fixture.usdc.address,
-        fixture.morphoCompoundStrategy.address
-      );
-
-    await fixture.vault
-      .connect(sGovernor)
-      .setAssetDefaultStrategy(
-        fixture.dai.address,
-        fixture.morphoCompoundStrategy.address
-      );
-  } else {
-    throw new Error(
-      "Morpho strategy only supported in forked test environment"
-    );
-  }
-
-  return fixture;
+    return fixture;
+  });
 }
 
 /**
@@ -1260,7 +1261,7 @@ module.exports = {
   convexMetaVaultFixture,
   convexGeneralizedMetaForkedFixture,
   convexLUSDMetaVaultFixture,
-  morphoCompoundFixture,
+  morphoCompoundFixtureSetup,
   morphoAaveFixture,
   aaveVaultFixture,
   hackedVaultFixture,
