@@ -146,6 +146,10 @@ const deployCore = async ({
   await withConfirmation(cVault.connect(sDeployer).unpauseCapital());
 
   await withConfirmation(
+    cOETHOracleRouter.cacheDecimals(addresses.mainnet.rETH)
+  );
+
+  await withConfirmation(
     // 0 stands for DECIMAL unit conversion
     cVault.connect(sDeployer).supportAsset(addresses.mainnet.frxETH, 0)
   );

@@ -4,11 +4,15 @@ pragma solidity ^0.8.0;
 import "../interfaces/chainlink/AggregatorV3Interface.sol";
 import { IOracle } from "../interfaces/IOracle.sol";
 import { Helpers } from "../utils/Helpers.sol";
+import { StableMath } from "../utils/StableMath.sol";
 
 abstract contract OracleRouterBase is IOracle {
-    uint256 constant MIN_DRIFT = uint256(70000000);
-    uint256 constant MAX_DRIFT = uint256(130000000);
+    using StableMath for uint256;
+
+    uint256 constant MIN_DRIFT = 0.7e18;
+    uint256 constant MAX_DRIFT = 1.3e18;
     address constant FIXED_PRICE = 0x0000000000000000000000000000000000000001;
+    mapping(address => uint8) internal decimalsCache;
 
     /**
      * @dev The price feed contract to use for a particular asset.
@@ -18,9 +22,9 @@ abstract contract OracleRouterBase is IOracle {
     function feed(address asset) internal view virtual returns (address);
 
     /**
-     * @notice Returns the total price in 8 digit USD for a given asset.
+     * @notice Returns the total price in 18 digit unit for a given asset.
      * @param asset address of the asset
-     * @return uint256 USD price of 1 of the asset, in 8 decimal fixed
+     * @return uint256 unit price for 1 asset unit, in 18 decimal fixed
      */
     function price(address asset)
         external
@@ -34,12 +38,34 @@ abstract contract OracleRouterBase is IOracle {
         require(_feed != FIXED_PRICE, "Fixed price feeds not supported");
         (, int256 _iprice, , , ) = AggregatorV3Interface(_feed)
             .latestRoundData();
-        uint256 _price = uint256(_iprice);
+        uint8 decimals = getDecimals(asset);
+
+        uint256 _price = uint256(_iprice).scaleBy(18, decimals);
         if (isStablecoin(asset)) {
             require(_price <= MAX_DRIFT, "Oracle: Price exceeds max");
             require(_price >= MIN_DRIFT, "Oracle: Price under min");
         }
         return uint256(_price);
+    }
+
+    function getDecimals(address _asset)
+        internal
+        view
+        returns (uint8)
+    {   
+        uint8 decimals = decimalsCache[_asset];
+        require(decimals > 0, "Oracle: Decimals not cached");
+        return decimals;
+    }
+
+    function cacheDecimals(address _asset) external returns (uint8) {
+        address _feed = feed(_asset);
+        require(_feed != address(0), "Asset not available");
+        require(_feed != FIXED_PRICE, "Fixed price feeds not supported");
+
+        uint8 decimals = AggregatorV3Interface(_feed).decimals();
+        decimalsCache[_asset] = decimals;
+        return decimals;
     }
 
     function isStablecoin(address _asset) internal view returns (bool) {
@@ -101,12 +127,14 @@ contract OracleRouter is OracleRouterBase {
 }
 
 contract OETHOracleRouter is OracleRouter {
+    using StableMath for uint256;
+
     /**
-     * @notice Returns the total price in 8 digit USD for a given asset.
+     * @notice Returns the total price in 18 digit units for a given asset.
      *         This implementation does not (!) do range checks as the
      *         parent OracleRouter does.
      * @param asset address of the asset
-     * @return uint256 USD price of 1 of the asset, in 8 decimal fixed
+     * @return uint256 unit price for 1 asset unit, in 18 decimal fixed
      */
     function price(address asset)
         external
@@ -117,12 +145,15 @@ contract OETHOracleRouter is OracleRouter {
     {
         address _feed = feed(asset);
         if (_feed == FIXED_PRICE) {
-            return 1e8;
+            return 1e18;
         }
         require(_feed != address(0), "Asset not available");
         (, int256 _iprice, , , ) = AggregatorV3Interface(_feed)
             .latestRoundData();
-        return uint256(_iprice);
+
+        uint8 decimals = getDecimals(asset);
+        uint256 _price = uint256(_iprice).scaleBy(18, decimals);
+        return _price;
     }
 }
 
