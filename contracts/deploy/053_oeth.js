@@ -150,6 +150,10 @@ const deployCore = async ({
   );
 
   await withConfirmation(
+    cOETHOracleRouter.cacheDecimals(addresses.mainnet.stETH)
+  );
+
+  await withConfirmation(
     // 0 stands for DECIMAL unit conversion
     cVault.connect(sDeployer).supportAsset(addresses.mainnet.frxETH, 0)
   );
@@ -162,6 +166,11 @@ const deployCore = async ({
   await withConfirmation(
     // 1 stands for GETEXCHANGERATE unit conversion
     cVault.connect(sDeployer).supportAsset(addresses.mainnet.rETH, 1)
+  );
+
+  await withConfirmation(
+    // 0 stands for DECIMAL unit conversion
+    cVault.connect(sDeployer).supportAsset(addresses.mainnet.stETH, 0)
   );
 
   console.log("Initialized OETHVaultAdmin implementation");

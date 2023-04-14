@@ -150,5 +150,6 @@ addresses.mainnet.WOETHProxy = "0xDcEe70654261AF21C44c093C300eD3Bb97b78192";
 addresses.mainnet.sfrxETH = "0xac3E018457B222d93114458476f3E3416Abbe38F";
 addresses.mainnet.frxETH = "0x5e8422345238f34275888049021821e8e08caa1f";
 addresses.mainnet.rETH = "0xae78736Cd615f374D3085123A210448E74Fc6393";
+addresses.mainnet.stETH = "0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84";
 
 module.exports = addresses;
