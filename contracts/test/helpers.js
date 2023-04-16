@@ -210,11 +210,10 @@ const getOracleAddress = async (deployments) => {
  * This first sets the ETH price in USD, then token price in ETH
  *
  * @param {string} tokenSymbol: "DAI", USDC", etc...
- * @param {string} tokenAddress: 0x....
  * @param {number} usdPrice: price of the token in USD.
  * @returns {Promise<void>}
  */
-const setOracleTokenPriceUsd = async (tokenSymbol, tokenAddress, usdPrice) => {
+const setOracleTokenPriceUsd = async (tokenSymbol, usdPrice) => {
   if (isMainnetOrFork) {
     throw new Error(
       `setOracleTokenPriceUsd not supported on network ${hre.network.name}`
@@ -227,7 +226,6 @@ const setOracleTokenPriceUsd = async (tokenSymbol, tokenAddress, usdPrice) => {
   const oracleRouter = await ethers.getContract("OracleRouter");
 
   await tokenFeed.setDecimals(18);
-  await oracleRouter.cacheDecimals(tokenAddress);
   await tokenFeed.setPrice(parseUnits(usdPrice, 18));
 };
 

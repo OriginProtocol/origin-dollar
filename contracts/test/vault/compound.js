@@ -104,7 +104,7 @@ describe("Vault with Compound strategy", function () {
     const { anna, ousd, usdc, vault } = await loadFixture(compoundVaultFixture);
     await expect(anna).has.a.balanceOf("0", ousd);
     // The mint process maxes out at a 1.0 price
-    await setOracleTokenPriceUsd("USDC", usdc.address, "1.25");
+    await setOracleTokenPriceUsd("USDC", "1.25");
     await usdc.connect(anna).approve(vault.address, usdcUnits("50"));
     await vault.connect(anna).mint(usdc.address, usdcUnits("50"), 0);
     await expect(anna).has.a.balanceOf("50", ousd);
@@ -402,7 +402,7 @@ describe("Vault with Compound strategy", function () {
     // 100 + 200 + 200
     await expect(matt).has.an.approxBalanceOf("500", ousd, "Initial");
 
-    await setOracleTokenPriceUsd("USDC", usdc.address, "1.30");
+    await setOracleTokenPriceUsd("USDC", "1.30");
     await vault.rebase();
 
     await expectApproxSupply(ousd, ousdUnits("600.0"));
@@ -412,7 +412,7 @@ describe("Vault with Compound strategy", function () {
       "After some assets double"
     );
 
-    await setOracleTokenPriceUsd("USDC", usdc.address, "1.00");
+    await setOracleTokenPriceUsd("USDC", "1.00");
     await vault.rebase();
 
     await expectApproxSupply(ousd, ousdUnits("600.0"));
@@ -434,7 +434,6 @@ describe("Vault with Compound strategy", function () {
 
     await setOracleTokenPriceUsd(
       "NonStandardToken",
-      nonStandardToken.address,
       "1.00"
     );
 
@@ -472,7 +471,6 @@ describe("Vault with Compound strategy", function () {
     await expect(matt).has.an.approxBalanceOf("200", ousd, "After null rebase");
     await setOracleTokenPriceUsd(
       "NonStandardToken",
-      nonStandardToken.address,
       "1.40"
     );
     await vault.rebase();
@@ -761,7 +759,7 @@ describe("Vault with Compound strategy", function () {
 
     // Mock router gives 1:1, if we set this to something high there will be
     // too much slippage
-    await setOracleTokenPriceUsd("COMP", comp.address, "1.3");
+    await setOracleTokenPriceUsd("COMP", "1.3");
 
     const compAmount = utils.parseUnits("100", 18);
     await comp.connect(governor).mint(compAmount);

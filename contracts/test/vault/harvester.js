@@ -233,7 +233,7 @@ describe("Harvester", function () {
       .connect(josh)
       .transfer(mockUniswapRouter.address, usdtUnits("100"));
 
-    await setOracleTokenPriceUsd("COMP", comp.address, "1.0404"); // 1/1.0404 = 0,9611687812
+    await setOracleTokenPriceUsd("COMP", "1.0404"); // 1/1.0404 = 0,9611687812
 
     await harvester
       .connect(governor)
@@ -279,7 +279,7 @@ describe("Harvester", function () {
       .connect(josh)
       .transfer(mockUniswapRouter.address, usdtUnits("100"));
 
-    await setOracleTokenPriceUsd("COMP", comp.address, "1.042"); // 1/1.042 = 0,95969
+    await setOracleTokenPriceUsd("COMP", "1.042"); // 1/1.042 = 0,95969
 
     await harvester
       .connect(governor)
