@@ -232,13 +232,12 @@ const setOracleTokenPriceUsd = async (tokenSymbol, usdPrice) => {
   const tokenFeed = await ethers.getContract(
     "MockChainlinkOracleFeed" + tokenSymbol
   );
-  const oracleRouter = await ethers.getContract("OracleRouter");
 
   const decimals = Object.keys(symbolMap).includes(tokenSymbol)
     ? symbolMap[tokenSymbol]
     : 18;
-  await tokenFeed.setDecimals(18);
-  await tokenFeed.setPrice(parseUnits(usdPrice, 18));
+  await tokenFeed.setDecimals(decimals);
+  await tokenFeed.setPrice(parseUnits(usdPrice, decimals));
 };
 
 const getOracleAddresses = async (deployments) => {

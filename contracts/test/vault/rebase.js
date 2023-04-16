@@ -69,7 +69,7 @@ describe("Vault rebase pausing", async () => {
 
 describe("Vault rebasing", async () => {
   it("Should not alter balances after an asset price change", async () => {
-    let { ousd, vault, dai, matt } = await loadFixture(defaultFixture);
+    let { ousd, vault, matt } = await loadFixture(defaultFixture);
     await expect(matt).has.a.balanceOf("100.00", ousd);
     await vault.rebase();
     await expect(matt).has.a.balanceOf("100.00", ousd);
@@ -83,7 +83,7 @@ describe("Vault rebasing", async () => {
   });
 
   it("Should not alter balances after an asset price change, single", async () => {
-    let { ousd, vault, matt, dai } = await loadFixture(defaultFixture);
+    let { ousd, vault, matt } = await loadFixture(defaultFixture);
     await expect(matt).has.a.balanceOf("100.00", ousd);
     await vault.rebase();
     await expect(matt).has.a.balanceOf("100.00", ousd);
@@ -96,7 +96,7 @@ describe("Vault rebasing", async () => {
   });
 
   it("Should not alter balances after an asset price change with multiple assets", async () => {
-    let { ousd, vault, matt, usdc, dai } = await loadFixture(defaultFixture);
+    let { ousd, vault, matt, usdc } = await loadFixture(defaultFixture);
 
     await usdc.connect(matt).approve(vault.address, usdcUnits("200"));
     await vault.connect(matt).mint(usdc.address, usdcUnits("200"), 0);
