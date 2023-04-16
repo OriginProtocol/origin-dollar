@@ -34,6 +34,12 @@ module.exports = deploymentWithGovernanceProposal(
     await cOracleRouter.cacheDecimals(addresses.mainnet.CRV);
     await cOracleRouter.cacheDecimals(addresses.mainnet.CVX);
 
+    const cHarvesterProxy = await ethers.getContract("HarvesterProxy");
+    const dHarvester = await deployWithConfirmation("Harvester", [
+      cVaultProxy.address,
+      assetAddresses.USDT,
+    ]);
+
     const cVaultAdmin = new ethers.Contract(cVaultProxy.address, [
       {
         inputs: [
@@ -92,6 +98,11 @@ module.exports = deploymentWithGovernanceProposal(
           contract: cVaultAdmin,
           signature: "cacheDecimals(address)",
           args: [assetAddresses.USDC],
+        },
+        {
+          contract: cHarvesterProxy,
+          signature: "upgradeTo(address)",
+          args: [dHarvester.address],
         },
       ],
     };

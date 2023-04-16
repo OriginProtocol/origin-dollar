@@ -677,52 +677,79 @@ const deployOracles = async () => {
   // Not needed in production
   const oracleAddresses = await getOracleAddresses(deployments);
   const assetAddresses = await getAssetAddresses(deployments);
-  withConfirmation(
+  await withConfirmation(
     oracleRouter
       .connect(sDeployer)
       .setFeed(assetAddresses.DAI, oracleAddresses.chainlink.DAI_USD)
   );
-  withConfirmation(
+  await withConfirmation(
+    oracleRouter.connect(sDeployer).cacheDecimals(assetAddresses.DAI)
+  );
+  await withConfirmation(
     oracleRouter
       .connect(sDeployer)
       .setFeed(assetAddresses.USDC, oracleAddresses.chainlink.USDC_USD)
   );
-  withConfirmation(
+  await withConfirmation(
+    oracleRouter.connect(sDeployer).cacheDecimals(assetAddresses.USDC)
+  );
+  await withConfirmation(
     oracleRouter
       .connect(sDeployer)
       .setFeed(assetAddresses.USDT, oracleAddresses.chainlink.USDT_USD)
   );
-  withConfirmation(
+  await withConfirmation(
+    oracleRouter.connect(sDeployer).cacheDecimals(assetAddresses.USDT)
+  );
+  await withConfirmation(
     oracleRouter
       .connect(sDeployer)
       .setFeed(assetAddresses.TUSD, oracleAddresses.chainlink.TUSD_USD)
   );
-  withConfirmation(
+  await withConfirmation(
+    oracleRouter.connect(sDeployer).cacheDecimals(assetAddresses.TUSD)
+  );
+  await withConfirmation(
     oracleRouter
       .connect(sDeployer)
       .setFeed(assetAddresses.COMP, oracleAddresses.chainlink.COMP_USD)
   );
-  withConfirmation(
+  await withConfirmation(
+    oracleRouter.connect(sDeployer).cacheDecimals(assetAddresses.COMP)
+  );
+  await withConfirmation(
     oracleRouter
       .connect(sDeployer)
       .setFeed(assetAddresses.AAVE, oracleAddresses.chainlink.AAVE_USD)
   );
-  withConfirmation(
+  await withConfirmation(
+    oracleRouter.connect(sDeployer).cacheDecimals(assetAddresses.AAVE)
+  );
+  await withConfirmation(
     oracleRouter
       .connect(sDeployer)
       .setFeed(assetAddresses.CRV, oracleAddresses.chainlink.CRV_USD)
   );
-  withConfirmation(
+  await withConfirmation(
+    oracleRouter.connect(sDeployer).cacheDecimals(assetAddresses.CRV)
+  );
+  await withConfirmation(
     oracleRouter
       .connect(sDeployer)
       .setFeed(assetAddresses.CVX, oracleAddresses.chainlink.CVX_USD)
   );
-  withConfirmation(
+  await withConfirmation(
+    oracleRouter.connect(sDeployer).cacheDecimals(assetAddresses.CVX)
+  );
+  await withConfirmation(
     oracleRouter
       .connect(sDeployer)
       .setFeed(assetAddresses.RETH, oracleAddresses.chainlink.RETH_ETH)
   );
-  withConfirmation(
+  await withConfirmation(
+    oracleRouter.connect(sDeployer).cacheDecimals(assetAddresses.RETH)
+  );
+  await withConfirmation(
     oracleRouter
       .connect(sDeployer)
       .setFeed(

@@ -214,6 +214,15 @@ const getOracleAddress = async (deployments) => {
  * @returns {Promise<void>}
  */
 const setOracleTokenPriceUsd = async (tokenSymbol, usdPrice) => {
+  const symbolMap = {
+    USDC: 6,
+    USDT: 6,
+    DAI: 6,
+    COMP: 6,
+    CVX: 6,
+    CRV: 6,
+  };
+
   if (isMainnetOrFork) {
     throw new Error(
       `setOracleTokenPriceUsd not supported on network ${hre.network.name}`
@@ -223,8 +232,12 @@ const setOracleTokenPriceUsd = async (tokenSymbol, usdPrice) => {
   const tokenFeed = await ethers.getContract(
     "MockChainlinkOracleFeed" + tokenSymbol
   );
-  await tokenFeed.setDecimals(8);
-  await tokenFeed.setPrice(parseUnits(usdPrice, 8));
+
+  const decimals = Object.keys(symbolMap).includes(tokenSymbol)
+    ? symbolMap[tokenSymbol]
+    : 18;
+  await tokenFeed.setDecimals(decimals);
+  await tokenFeed.setPrice(parseUnits(usdPrice, decimals));
 };
 
 const getOracleAddresses = async (deployments) => {
