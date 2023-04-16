@@ -96,10 +96,7 @@ describe("Vault Redeem", function () {
     await oracleRouter.cacheDecimals(nonStandardToken.address);
     await vault.connect(governor).supportAsset(nonStandardToken.address, 0);
 
-    await setOracleTokenPriceUsd(
-      "NonStandardToken",
-      "1.00"
-    );
+    await setOracleTokenPriceUsd("NonStandardToken", "1.00");
 
     await expect(anna).has.a.balanceOf("1000.00", nonStandardToken);
 
@@ -345,10 +342,7 @@ describe("Vault Redeem", function () {
     for (const user of users) {
       for (const [asset, units] of assetsWithUnits) {
         for (const price of prices) {
-          await setOracleTokenPriceUsd(
-            await asset.symbol(),
-            price.toString()
-          );
+          await setOracleTokenPriceUsd(await asset.symbol(), price.toString());
           // Manually call rebase because not triggered by mint
           await vault.rebase();
           // Rebase could have changed user balance

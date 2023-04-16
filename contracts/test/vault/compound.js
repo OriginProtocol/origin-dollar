@@ -432,10 +432,7 @@ describe("Vault with Compound strategy", function () {
       await vault.connect(governor).supportAsset(nonStandardToken.address, 0);
     }
 
-    await setOracleTokenPriceUsd(
-      "NonStandardToken",
-      "1.00"
-    );
+    await setOracleTokenPriceUsd("NonStandardToken", "1.00");
 
     await nonStandardToken
       .connect(matt)
@@ -469,10 +466,7 @@ describe("Vault with Compound strategy", function () {
     await expect(matt).has.an.approxBalanceOf("200", ousd, "Initial");
     await vault.rebase();
     await expect(matt).has.an.approxBalanceOf("200", ousd, "After null rebase");
-    await setOracleTokenPriceUsd(
-      "NonStandardToken",
-      "1.40"
-    );
+    await setOracleTokenPriceUsd("NonStandardToken", "1.40");
     await vault.rebase();
 
     await expectApproxSupply(ousd, ousdUnits("300.0"));

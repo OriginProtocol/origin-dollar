@@ -130,10 +130,7 @@ describe("Vault", function () {
     await oracleRouter.cacheDecimals(nonStandardToken.address);
     await vault.connect(governor).supportAsset(nonStandardToken.address, 0);
     await expect(anna).has.a.balanceOf("1000.00", nonStandardToken);
-    await setOracleTokenPriceUsd(
-      "NonStandardToken",
-      "1.30"
-    );
+    await setOracleTokenPriceUsd("NonStandardToken", "1.30");
     await nonStandardToken
       .connect(anna)
       .approve(vault.address, usdtUnits("1500.0"));
@@ -165,10 +162,7 @@ describe("Vault", function () {
     await vault.connect(governor).supportAsset(nonStandardToken.address, 0);
 
     await expect(anna).has.a.balanceOf("1000.00", nonStandardToken);
-    await setOracleTokenPriceUsd(
-      "NonStandardToken",
-      "1.00"
-    );
+    await setOracleTokenPriceUsd("NonStandardToken", "1.00");
 
     await nonStandardToken
       .connect(anna)

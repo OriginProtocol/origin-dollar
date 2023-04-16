@@ -48,7 +48,7 @@ abstract contract OracleRouterBase is IOracle {
         return uint256(_price);
     }
 
-    function getDecimals(address _asset) internal virtual view returns (uint8) {
+    function getDecimals(address _asset) internal view virtual returns (uint8) {
         uint8 decimals = decimalsCache[_asset];
         require(decimals > 0, "Oracle: Decimals not cached");
         return decimals;
@@ -163,7 +163,12 @@ contract OracleRouterDev is OracleRouterBase {
     /*
      * The dev version of the Oracle doesn't need to gas optimize and cache the decimals
      */
-    function getDecimals(address _asset) internal override view returns (uint8) {
+    function getDecimals(address _asset)
+        internal
+        view
+        override
+        returns (uint8)
+    {
         address _feed = feed(_asset);
         require(_feed != address(0), "Asset not available");
         require(_feed != FIXED_PRICE, "Fixed price feeds not supported");
