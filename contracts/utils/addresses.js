@@ -99,6 +99,12 @@ addresses.mainnet.chainlinkUSDC_ETH =
   "0x986b5E1e1755e3C2440e960477f25201B0a8bbD4";
 addresses.mainnet.chainlinkUSDT_ETH =
   "0xEe9F2375b4bdF6387aa8265dD4FB8F16512A1d46";
+addresses.mainnet.chainlinkRETH_ETH =
+  "0x536218f9E9Eb48863970252233c8F271f554C2d0";
+addresses.mainnet.chainlinkstETH_ETH =
+  "0x86392dC19c0b719886221c78AB11eb8Cf5c52812";
+addresses.mainnet.chainlinkcbETH_ETH =
+  "0xF017fcB346A1885194689bA23Eff2fE6fA5C483b";
 
 // WETH Token
 addresses.mainnet.WETH = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2";

@@ -254,6 +254,8 @@ const getOracleAddresses = async (deployments) => {
         CRV_USD: addresses.mainnet.chainlinkCRV_USD,
         CVX_USD: addresses.mainnet.chainlinkCVX_USD,
         OGN_ETH: addresses.mainnet.chainlinkOGN_ETH,
+        RETH_ETH: addresses.mainnet.chainlinkRETH_ETH,
+        stETH_ETH: addresses.mainnet.chainlinkstETH_ETH,
       },
       openOracle: addresses.mainnet.openOracle, // Deprecated
     };
@@ -317,6 +319,10 @@ const getAssetAddresses = async (deployments) => {
       OGN: addresses.mainnet.OGN,
       OGV: addresses.mainnet.OGV,
       RewardsSource: addresses.mainnet.RewardsSource,
+      RETH: addresses.mainnet.rETH,
+      frxETH: addresses.mainnet.frxETH,
+      stETH: addresses.mainnet.stETH,
+      sfrxETH: addresses.mainnet.sfrxETH,
       uniswapRouter: addresses.mainnet.uniswapRouter,
       uniswapV3Router: addresses.mainnet.uniswapV3Router,
       sushiswapRouter: addresses.mainnet.sushiswapRouter,
