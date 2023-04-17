@@ -918,8 +918,6 @@ function deploymentWithGuardianGovernor(opts, fn) {
       getTxOpts,
       withConfirmation,
     };
-    const guardianAddr = addresses.mainnet.Guardian;
-    await impersonateGuardian(guardianAddr);
 
     await sanityCheckOgvGovernance();
     const proposal = await fn(tools);
@@ -932,6 +930,9 @@ function deploymentWithGuardianGovernor(opts, fn) {
         proposal
       );
     } else {
+      const guardianAddr = addresses.mainnet.Guardian;
+      await impersonateGuardian(guardianAddr);
+
       const sGuardian = await ethers.provider.getSigner(guardianAddr);
 
       for (const action of proposal.actions) {
