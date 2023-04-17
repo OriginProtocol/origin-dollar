@@ -12,11 +12,9 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 
-import { IStrategy } from "../interfaces/IStrategy.sol";
 import { Governable } from "../governance/Governable.sol";
 import { OUSD } from "../token/OUSD.sol";
 import { Initializable } from "../utils/Initializable.sol";
-import "../utils/Helpers.sol";
 import { StableMath } from "../utils/StableMath.sol";
 
 contract VaultStorage is Initializable, Governable {

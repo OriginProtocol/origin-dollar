@@ -11,6 +11,7 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 
 import { StableMath } from "../utils/StableMath.sol";
 import { IOracle } from "../interfaces/IOracle.sol";
+import { IStrategy } from "../interfaces/IStrategy.sol";
 import "./VaultStorage.sol";
 
 contract VaultAdmin is VaultStorage {
