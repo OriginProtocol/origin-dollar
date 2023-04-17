@@ -27,7 +27,7 @@ abstract contract OracleRouterBase is IOracle {
      * @return uint256 unit price for 1 asset unit, in 18 decimal fixed
      */
     function price(address asset)
-        external
+        public
         view
         virtual
         override
@@ -133,7 +133,7 @@ contract OETHOracleRouter is OracleRouter {
      * @return uint256 unit price for 1 asset unit, in 18 decimal fixed
      */
     function price(address asset)
-        external
+        public
         view
         virtual
         override
@@ -182,5 +182,24 @@ contract OracleRouterDev is OracleRouterBase {
      */
     function feed(address asset) internal view override returns (address) {
         return assetToFeed[asset];
+    }
+
+    function getFeed(address asset) external view returns (address) {
+        return feed(asset);
+    }
+
+    function price(address asset)
+        public
+        view
+        virtual
+        override
+        returns (uint256)
+    {
+        address _feed = feed(asset);
+        if (_feed == FIXED_PRICE) {
+            return 1e18;
+        }
+        
+        return super.price(asset);
     }
 }

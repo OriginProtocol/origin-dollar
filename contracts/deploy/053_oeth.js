@@ -2,6 +2,7 @@ const { deploymentWithGuardianGovernor } = require("../utils/deploy");
 const addresses = require("../utils/addresses");
 const hre = require("hardhat");
 const { BigNumber, utils } = require("ethers");
+const { parseUnits } = utils;
 const {
   getAssetAddresses,
   getOracleAddresses,
@@ -50,6 +51,153 @@ module.exports = deploymentWithGuardianGovernor(
   }
 );
 
+const deployDevOracle = async ({
+  deployWithConfirmation,
+  withConfirmation,
+  ethers,
+}) => {
+  const { deployerAddr } = await getNamedAccounts();
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+  const deploy = hre.deployments.deploy;
+
+  await deployWithConfirmation("OracleRouterDev");
+  const oracleRouter = await ethers.getContract("OracleRouterDev");
+  const oracleAddresses = await getOracleAddresses(deployments);
+  const assetAddresses = await getAssetAddresses(deployments);
+
+  // Deploy mock chainlink oracle price feeds.
+  const dDaiFeed = await deploy("MockChainlinkOracleFeedDAI", {
+    from: deployerAddr,
+    contract: "MockChainlinkOracleFeed",
+    args: [parseUnits("1", 8).toString(), 8], // 1 DAI = 1 USD, 8 digits decimal.
+  });
+  const dUsdtFeed = await deploy("MockChainlinkOracleFeedUSDT", {
+    from: deployerAddr,
+    contract: "MockChainlinkOracleFeed",
+    args: [parseUnits("1", 8).toString(), 8], // 1 USDT = 1 USD, 8 digits decimal.
+  });
+  const dUSDCFeed = await deploy("MockChainlinkOracleFeedUSDC", {
+    from: deployerAddr,
+    contract: "MockChainlinkOracleFeed",
+    args: [parseUnits("1", 8).toString(), 8], // 1 USDC = 1 USD, 8 digits decimal.
+  });
+  const dTusdFeed = await deploy("MockChainlinkOracleFeedTUSD", {
+    from: deployerAddr,
+    contract: "MockChainlinkOracleFeed",
+    args: [parseUnits("1", 8).toString(), 8], // 1 TUSD = 1 USD, 8 digits decimal.
+  });
+  const dCompFeed = await deploy("MockChainlinkOracleFeedCOMP", {
+    from: deployerAddr,
+    contract: "MockChainlinkOracleFeed",
+    args: [parseUnits("1", 8).toString(), 8], // 1 COMP = 1 USD, 8 digits decimal.
+  });
+  const dAaveFeed = await deploy("MockChainlinkOracleFeedAAVE", {
+    from: deployerAddr,
+    contract: "MockChainlinkOracleFeed",
+    args: [parseUnits("1", 8).toString(), 8], // 1 AAVE = 1 USD, 8 digits decimal.
+  });
+  const dCrvFeed = await deploy("MockChainlinkOracleFeedCRV", {
+    from: deployerAddr,
+    contract: "MockChainlinkOracleFeed",
+    args: [parseUnits("1", 8).toString(), 8], // 1 CRV = 1 USD, 8 digits decimal.
+  });
+  const dCvxFeed = await deploy("MockChainlinkOracleFeedCVX", {
+    from: deployerAddr,
+    contract: "MockChainlinkOracleFeed",
+    args: [parseUnits("1", 8).toString(), 8], // 1 CVX = 1 USD, 8 digits decimal.
+  });
+  const dNonStandardTokenFeed = await deploy("MockChainlinkOracleFeedNonStandardToken", {
+    from: deployerAddr,
+    contract: "MockChainlinkOracleFeed",
+    args: [parseUnits("1", 8).toString(), 8], // 1 = 1 USD, 8 digits decimal.
+  });
+  const dEthFeed = await deploy("MockChainlinkOracleFeedETH", {
+    from: deployerAddr,
+    contract: "MockChainlinkOracleFeed",
+    args: [parseUnits("4000", 8).toString(), 8], // 1 ETH = 4000 USD, 8 digits decimal.
+  });
+  const dOgnEthFeed = await deploy("MockChainlinkOracleFeedOGNETH", {
+    from: deployerAddr,
+    contract: "MockChainlinkOracleFeed",
+    args: [parseUnits("0.1", 18).toString(), 18], // 10 OGN = 1 ETH, 18 digits decimal.
+  });
+  const dRethEthFeed = await deploy("MockChainlinkOracleFeedRETHETH", {
+    from: deployerAddr,
+    contract: "MockChainlinkOracleFeed",
+    args: [parseUnits("1.2", 18).toString(), 18], // 1 RETH = 1.2 ETH , 18 digits decimal.
+  });
+  const dstEthFeed = await deploy("MockChainlinkOracleFeedstETHETH", {
+    from: deployerAddr,
+    contract: "MockChainlinkOracleFeed",
+    args: [parseUnits("1", 18).toString(), 18], // 1 stETH = 1 ETH , 18 digits decimal.
+  });
+
+  await withConfirmation(
+    oracleRouter
+      .connect(sDeployer)
+      .setFeed(assetAddresses.DAI, dDaiFeed.address)
+  );
+  await withConfirmation(
+    oracleRouter
+      .connect(sDeployer)
+      .setFeed(assetAddresses.USDC, dUSDCFeed.address)
+  );
+  await withConfirmation(
+    oracleRouter
+      .connect(sDeployer)
+      .setFeed(assetAddresses.USDT, dUsdtFeed.address)
+  );
+  await withConfirmation(
+    oracleRouter
+      .connect(sDeployer)
+      .setFeed(assetAddresses.COMP, dCompFeed.address)
+  );
+  await withConfirmation(
+    oracleRouter
+      .connect(sDeployer)
+      .setFeed(assetAddresses.AAVE, dAaveFeed.address)
+  );
+  await withConfirmation(
+    oracleRouter
+      .connect(sDeployer)
+      .setFeed(assetAddresses.CRV, dCrvFeed.address)
+  );
+  await withConfirmation(
+    oracleRouter
+      .connect(sDeployer)
+      .setFeed(assetAddresses.CVX, dCvxFeed.address)
+  );
+  await withConfirmation(
+    oracleRouter
+      .connect(sDeployer)
+      .setFeed(assetAddresses.RETH, dRethEthFeed.address)
+  );
+  await withConfirmation(
+    oracleRouter
+      .connect(sDeployer)
+      .setFeed(assetAddresses.stETH, dstEthFeed.address)
+  );
+
+  const FIXED_PRICE = "0x0000000000000000000000000000000000000001";
+  await withConfirmation(
+    oracleRouter
+      .connect(sDeployer)
+      .setFeed(assetAddresses.frxETH, FIXED_PRICE)
+  );
+
+  await withConfirmation(
+    oracleRouter
+      .connect(sDeployer)
+      .setFeed(assetAddresses.WETH, FIXED_PRICE)
+  );
+
+
+  return oracleRouter
+
+  console.log("ROUTER deployed and initialised at: ", oracleRouter.address);
+};
+
+
 /**
  * Deploy the core contracts (Vault and OETH).
  */
@@ -68,7 +216,7 @@ const deployCore = async ({
 
   // Proxies
   await deployWithConfirmation("OETHVaultProxy");
-  await deployWithConfirmation("OETHOracleRouter");
+  //await deployWithConfirmation("OETHOracleRouter");
 
   // Main contracts
   const dOETH = await deployWithConfirmation("OETH");
@@ -85,7 +233,13 @@ const deployCore = async ({
   const cOETHProxy = await ethers.getContract("OETHProxy");
   const cVaultProxy = await ethers.getContract("OETHVaultProxy");
   const cOETH = await ethers.getContractAt("OETH", cOETHProxy.address);
-  const cOETHOracleRouter = await ethers.getContract("OETHOracleRouter");
+  //const cOETHOracleRouter = await ethers.getContract("OETHOracleRouter");
+  const cOETHOracleRouter = await deployDevOracle({
+    deployWithConfirmation,
+    withConfirmation,
+    ethers
+  })
+
   const cVault = await ethers.getContractAt("OETHVault", cVaultProxy.address);
 
   // Need to call the initializer on the Vault then upgraded it to the actual
@@ -144,14 +298,6 @@ const deployCore = async ({
   );
 
   await withConfirmation(cVault.connect(sDeployer).unpauseCapital());
-
-  await withConfirmation(
-    cOETHOracleRouter.cacheDecimals(addresses.mainnet.rETH)
-  );
-
-  await withConfirmation(
-    cOETHOracleRouter.cacheDecimals(addresses.mainnet.stETH)
-  );
 
   await withConfirmation(
     // 0 stands for DECIMAL unit conversion
