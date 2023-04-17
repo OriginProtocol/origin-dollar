@@ -712,6 +712,13 @@ function deploymentWithGovernanceProposal(opts, fn) {
     if (!hre) {
       hre = require("hardhat");
     }
+    if (isFork) {
+      const { deployerAddr } = await getNamedAccounts();
+      await hre.network.provider.request({
+        method: "hardhat_setBalance",
+        params: [deployerAddr, utils.parseEther("1000000").toHexString()],
+      });
+    }
     await runDeployment(hre);
     console.log(`${deployName} deploy done.`);
     return true;
