@@ -1,3 +1,4 @@
+const { isFork } = require("../test/helpers");
 const { deploymentWithGovernanceProposal } = require("../utils/deploy");
 const { getTxOpts } = require("../utils/tx");
 // const addresses = require("../utils/addresses");
@@ -5,7 +6,7 @@ const { getTxOpts } = require("../utils/tx");
 module.exports = deploymentWithGovernanceProposal(
   {
     deployName: "051_upgrade_buyback",
-    forceDeploy: true,
+    forceDeploy: isFork,
   },
   async ({
     withConfirmation,
