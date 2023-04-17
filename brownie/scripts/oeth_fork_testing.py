@@ -45,8 +45,7 @@ with TemporaryFork():
   oeth_vault_admin.withdrawAllFromStrategy(FRAX_ETH_STRATEGY, {'from': DUDE})
   print(frax_eth_strat.checkBalance(frxeth))
 
-# rebase and redeem and check oeth & vault supply
-with TemporaryFork():
+  # rebase and redeem and check oeth & vault supply
   print(oeth.totalSupply())
   print(oeth_vault_core.totalValue())
   oeth_vault_core.rebase({'from': DUDE})
@@ -80,3 +79,21 @@ def mint_redeem_reth_w_oracle_price(amount, price_before_mint, price_before_rede
 mint_redeem_reth_w_oracle_price(1e18, 1.3e18, 1.1e18)
 mint_redeem_reth_w_oracle_price(1e18, 1.2e18, 1.2e18)
 mint_redeem_reth_w_oracle_price(1e18, 1.1e18, 1.3e18)
+
+# mint transfer and redeem
+with TemporaryFork():
+  frxEth_before = frxeth.balanceOf(RETH_DUDE)
+  reth_before = reth.balanceOf(RETH_DUDE)
+  frxEth_before_dude = frxeth.balanceOf(DUDE)
+  reth_before_dude = reth.balanceOf(DUDE)
+  reth.approve(oeth_vault_admin, 1e70, {'from': RETH_DUDE})
+  oeth_vault_core.mint(reth, 1e18, 0, {'from': RETH_DUDE})
+  oeth.transfer(DUDE, oeth.balanceOf(RETH_DUDE), {'from': RETH_DUDE})
+  oeth_vault_core.redeem(1e18, 0, {'from': DUDE})
+  reth_diff = reth.balanceOf(RETH_DUDE) - reth_before
+  frxEth_diff = frxeth.balanceOf(RETH_DUDE) - frxEth_before
+  reth_diff_dude = reth.balanceOf(DUDE) - reth_before_dude
+  frxEth_diff_dude = frxeth.balanceOf(DUDE) - frxEth_before_dude
+  print("RETH DUDE frx_diff & reth_diff", frxEth_diff / 1e18, reth_diff / 1e18)
+  print("DUDE frx_diff & reth_diff", frxEth_diff_dude / 1e18, reth_diff_dude / 1e18)
+
