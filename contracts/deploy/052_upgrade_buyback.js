@@ -137,10 +137,10 @@ module.exports = deploymentWithGovernanceProposal(
           args: [cBuyback.address, ousdBalance],
         },
         {
-          // 7. Transfer OGN balance from Governor to New Contract
+          // 7. Transfer OGN balance from Governor to the Strategist
           contract: cOGN,
           signature: "transfer(address,uint256)",
-          args: [cBuyback.address, ognBalance],
+          args: [strategistAddr, ognBalance],
         },
       ],
     };
