@@ -1,0 +1,99 @@
+{
+  "storage": [
+    {
+      "contract": "Initializable",
+      "label": "initialized",
+      "type": "t_bool",
+      "src": "contracts/utils/Initializable.sol:8"
+    },
+    {
+      "contract": "Initializable",
+      "label": "initializing",
+      "type": "t_bool",
+      "src": "contracts/utils/Initializable.sol:13"
+    },
+    {
+      "contract": "Initializable",
+      "label": "______gap",
+      "type": "t_array(t_uint256)50_storage",
+      "src": "contracts/utils/Initializable.sol:37"
+    },
+    {
+      "contract": "Strategizable",
+      "label": "strategistAddr",
+      "type": "t_address",
+      "src": "contracts/governance/Strategizable.sol:10"
+    },
+    {
+      "contract": "Strategizable",
+      "label": "__gap",
+      "type": "t_array(t_uint256)50_storage",
+      "src": "contracts/governance/Strategizable.sol:13"
+    },
+    {
+      "contract": "Buyback",
+      "label": "uniswapAddr",
+      "type": "t_address",
+      "src": "contracts/buyback/Buyback.sol:27"
+    },
+    {
+      "contract": "Buyback",
+      "label": "ousd",
+      "type": "t_contract(IERC20)623",
+      "src": "contracts/buyback/Buyback.sol:30"
+    },
+    {
+      "contract": "Buyback",
+      "label": "ogv",
+      "type": "t_contract(IERC20)623",
+      "src": "contracts/buyback/Buyback.sol:33"
+    },
+    {
+      "contract": "Buyback",
+      "label": "usdt",
+      "type": "t_contract(IERC20)623",
+      "src": "contracts/buyback/Buyback.sol:36"
+    },
+    {
+      "contract": "Buyback",
+      "label": "weth9",
+      "type": "t_contract(IERC20)623",
+      "src": "contracts/buyback/Buyback.sol:39"
+    },
+    {
+      "contract": "Buyback",
+      "label": "rewardsSource",
+      "type": "t_address",
+      "src": "contracts/buyback/Buyback.sol:42"
+    },
+    {
+      "contract": "Buyback",
+      "label": "treasuryManager",
+      "type": "t_address",
+      "src": "contracts/buyback/Buyback.sol:45"
+    },
+    {
+      "contract": "Buyback",
+      "label": "treasuryBps",
+      "type": "t_uint256",
+      "src": "contracts/buyback/Buyback.sol:48"
+    }
+  ],
+  "types": {
+    "t_address": {
+      "label": "address"
+    },
+    "t_contract(IERC20)623": {
+      "label": "contract IERC20"
+    },
+    "t_uint256": {
+      "label": "uint256"
+    },
+    "t_array(t_uint256)50_storage": {
+      "label": "uint256[50]"
+    },
+    "t_bool": {
+      "label": "bool"
+    }
+  }
+}
