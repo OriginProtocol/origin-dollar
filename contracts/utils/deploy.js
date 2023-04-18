@@ -393,9 +393,6 @@ const submitProposalGnosisSafe = async (
   }
 
   const governorFive = await getGovernorFive();
-  const multisig5of8 = addresses.mainnet.Guardian;
-  const sMultisig5of8 = hre.ethers.provider.getSigner(multisig5of8);
-  await impersonateGuardian(multisig5of8);
 
   log(`Submitting proposal for ${description}`);
   log(`Args: ${JSON.stringify(proposalArgs, null, 2)}`);
