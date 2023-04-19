@@ -1,0 +1,115 @@
+.article p {
+  font-family: 'Inter';
+}
+
+.article h1 {
+  font-family: 'Sailec';
+  font-size: 2.5rem;
+  line-height: 2.5rem;
+}
+
+.article h2 {
+  font-family: 'Sailec';
+  font-size: 2rem;
+  line-height: 2.5rem;
+}
+
+.article h3 {
+  font-family: 'Sailec';
+  font-size: 1.5rem;
+  line-height: 2.25rem;
+}
+
+.article * + h1, .article * + h2, .article * + h3 {
+  margin-top: 3rem;
+}
+
+.article p, .article li {
+  font-size: 1.125rem;
+  font-weight: 300;
+  line-height: 2rem;
+}
+
+.article * + p {
+  margin-top: 1.5rem;
+}
+
+.article h1 + p, .article h2 + p {
+  margin-top: 2.5rem;
+}
+
+.article h3 + p {
+  margin-top: 1.5rem;
+}
+
+.article ul {
+  list-style: disc;
+}
+
+.article li {
+  margin-left: 2rem;
+  line-height: 2rem;
+}
+
+.article li li {
+  margin-left: 2rem;
+}
+
+.article * + ol, .article * + ul {
+  margin-top: 1.5rem;
+}
+
+.article figure {
+  text-align: center;
+}
+
+.article figure img {
+  display: inline !important;
+  margin-top: 0;
+}
+
+.article figure, .article img {
+  margin-top: 1.5rem;
+}
+
+.article a {
+  color: #228dff;
+}
+
+.article strong {
+  font-weight: 700;
+}
+
+@media (max-width: 768px) {
+  .article h1 {
+    font-size: 1.5rem;
+    line-height: 2rem;
+  }
+
+  .article h2 {
+    font-size: 1.375rem;
+    line-height: 2rem;
+  }
+
+  .article h3 {
+    font-size: 1.125rem;
+    line-height: 1.75rem;
+  }
+
+  .article p, .article li {
+    font-size: 1rem;
+    line-height: 1.75rem;
+  }
+
+  .article * + h1, .article * + h2, .article * + h3 {
+    margin-top: 2.5rem;
+  }
+
+  .article h1 + p, .article h2 + p {
+    margin-top: 1.5rem;
+  }
+
+  .article h3 + p {
+    margin-top: 1rem;
+  }
+}

@@ -1,0 +1,9 @@
+export { default as Hero } from "./Hero";
+export { default as Wallet } from "./Wallet";
+export { default as Faq } from "./Faq";
+export { default as Ogv } from "./Ogv";
+export { default as SecretSauce } from "./SecretSauce";
+export { default as Apy } from "./Apy";
+export { default as Allocation } from "./Allocation";
+export { default as Collateral } from "./Collateral";
+export { default as Security } from "./Security";

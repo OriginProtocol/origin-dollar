@@ -1,0 +1,37 @@
+@tailwind base;
+@tailwind utilities;
+@tailwind components;
+
+html {
+  @apply antialiased;
+
+  body {
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  height: stretch;
+  color: #ffffff;
+  background: #1c1c1c;
+  font-size: 1rem;
+
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-corner {
+    background: #141519;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #141519;
+    border-radius: 20px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: #1e1f25;
+    border-radius: 20px;
+    border: 1px #141519;
+  }
+}

@@ -1,0 +1,205 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+ul li {
+  list-style-type: disc;
+  margin-left: 40px;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-corner {
+  background: #141519;
+}
+
+::-webkit-scrollbar-track {
+  background: #141519;
+  border-radius: 20px;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #1e1f25;
+  border-radius: 20px;
+  border: 1px #141519;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+section {
+  color: white;
+  background-color: #1a82ff;
+}
+
+section.intro {
+  background-image: url(/images/splines34.png);
+  background-position: 100% 0;
+  background-repeat: no-repeat;
+}
+
+section.page {
+  background-image: url(/images/splines36.png);
+  background-position: 100% 0;
+  background-repeat: no-repeat;
+}
+
+section.partners {
+  background-image: url(/images/splines-partners.png);
+  background-position: right 0% bottom -400px;
+  background-repeat: no-repeat;
+}
+
+section.burn {
+  background-image: url(/images/flame.svg);
+  background-repeat: no-repeat;
+  background-position: right top;
+  background-size: 70vw;
+}
+
+section.error {
+  background-image: url(/images/splines-404.png);
+  background-repeat: no-repeat;
+  background-position: right bottom;
+}
+
+@media (max-width: 1280px) {
+  section.intro {
+    background-position: 100% 100%;
+    background-size: 200vw;
+  }
+
+  section.burn {
+    background-position: 100% 0%;
+    background-size: 80vw;
+  }
+
+  section.error {
+    background-size: 80vw;
+  }
+}
+
+@media (max-width: 992px) {
+  section.intro {
+    background-image: url(/images/splines35.png);
+    background-position: 100% 100%;
+    background-size: 150vw;
+  }
+
+  section.page {
+    background-image: url(/images/splines37.png);
+    background-position: 100% 0;
+    background-repeat: no-repeat;
+  }
+
+  section.partners {
+    background-position: right bottom;
+    background-size: 100vw;
+  }
+
+  section.burn {
+    background-position: 100% 0%;
+    background-size: 90vw;
+  }
+}
+
+section.dark {
+  background-color: #183140;
+}
+
+section.light {
+  background-color: #fafbfc;
+  color: #183140;
+}
+
+section.black {
+  background-color: #141519;
+  color: #fafbfb;
+}
+
+.bg-gradient2 {
+  background-image: linear-gradient(to top right, var(--tw-gradient-stops));
+  --tw-gradient-from: #b361e6;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+  --tw-gradient-to: #6a36fc;
+}
+
+html,
+body {
+  background-color: #141519;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  line-height: 1.5;
+  font-family: Inter;
+  font-weight: normal;
+  color: #fafbfb;
+  overflow-x: hidden;
+}
+
+.text-gradient2 {
+  background-image: -webkit-linear-gradient(
+    bottom,
+    #b361e6 -28.99%,
+    #6a36fc 144%
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.home-ul li {
+  list-style-image: url(/images/⟶.svg);
+  padding-inline-start: 20px;
+}
+
+.gradient3 {
+  background: -webkit-linear-gradient(90deg, #b361e6 -28.99%, #6a36fc 144.97%);
+}
+
+.bttn {
+  display: inline-block;
+  border: 0;
+  border-radius: 50px;
+  white-space: nowrap;
+  margin: 0px 10px 10px 10px;
+  padding: 20px 80px;
+  text-align: center;
+  cursor: pointer;
+}
+
+.bttn:hover {
+  opacity: 0.9;
+}
+
+.text-gradient1 {
+  background-image: -webkit-linear-gradient(0, #fedba8, #cf75d5 35%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.gradient2 {
+  color: #fafbfb;
+  background-image: -webkit-linear-gradient(
+    left,
+    #8c66fc -28.99%,
+    #0274f1 144.97%
+  );
+}
+
+.gradient4 {
+  color: #fafbfb;
+  background-image: -webkit-linear-gradient(
+    left,
+    #8c66fc33 -28.99%,
+    #0274f133 144.97%
+  );
+}
