@@ -6,15 +6,10 @@
   "scripts": {
     "build:dapp": "(cd dapp && NODE_ENV=development yarn install && yarn build)",
     "build:contracts": "(cd contracts && NODE_ENV=development yarn install && yarn run deploy)",
-    "nx": "nx",
-    "start": "nx serve",
-    "build": "nx build",
-    "test": "nx test",
-    "lint": "nx workspace-lint && nx lint",
-    "affected:apps": "nx affected:apps",
-    "update": "nx migrate latest",
-    "dep-graph": "nx dep-graph",
-    "help": "nx help"
+    "dev:oeth": "nx serve oeth",
+    "dev:oeth-dapp": "nx serve oeth-dapp",
+    "dev:ousd": "nx serve ousd",
+    "dev:ousd-dapp": "nx serve ousd-dapp"
   },
   "dependencies": {
     "@emotion/react": "^11.10.6",
