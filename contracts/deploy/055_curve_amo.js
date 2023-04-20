@@ -172,7 +172,6 @@ const deployCurve = async ({
   const poolCount = parseInt((await cCurveFactory.pool_count()).toString())
   const poolAddress = await cCurveFactory.pool_list(poolCount - 1)
 
-  // hackish :)
   const tokenAddress = "0x" + tx.receipt.logs[1].data.substr(2+24, 40);
   const gaugeTx = await withConfirmation(cCurveGaugeFactory
     .connect(sDeployer)["deploy_gauge(address)"](poolAddress)
@@ -181,25 +180,17 @@ const deployCurve = async ({
   const gaugeAddress = "0x" + gaugeTx.receipt.logs[0].data.substr(2 + 64 * 2 + 24, 40);
   console.log("gaugeAddress", gaugeAddress)
 
-  return []; // Add a return statement so deploy succeeds
-  // FAILS WITH with transaction gas limit surpasses block gas limit
   const gaugeControllerTx = await withConfirmation(gaugeController
+    .connect(sGaugeControllerAdmin)["add_gauge(address,int128)"](gaugeAddress, 0)
+  );
+
+  const gaugeControllerTx2 = await withConfirmation(gaugeController
     .connect(sGaugeControllerAdmin)
-    // add_gauge() fails as well
-    .change_gauge_weight(gaugeAddress, 100)
+    .change_gauge_weight(gaugeAddress, 100, { gasLimit: 2000000 })
   );
 
   console.log("gaugeControllerTx", gaugeControllerTx)
 
-  // const cCurveGauge = new Contract(gaugeAddress, curveGaugeAbi, sDeployer);
-  // console.log("GETTING LP TOKEN")
-  // const lpToken = await cCurveGauge.lp_token();
-  // return [];
-  // console.log("LP TOKEN", lpToken);
-
-  // const convexTx = await withConfirmation(cConvexPoolManager
-  //   .connect(sDeployer)["addPool(address,uint256)"](tokenAddress, 3)
-  // );
   const convexTx = await withConfirmation(cConvexPoolManager
     .connect(sDeployer)["addPool(address)"](gaugeAddress)
   );
