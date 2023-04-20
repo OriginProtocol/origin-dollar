@@ -918,6 +918,7 @@ function deploymentWithGuardianGovernor(opts, fn) {
       getTxOpts,
       withConfirmation,
     };
+
     await sanityCheckOgvGovernance();
     const proposal = await fn(tools);
     const propDescription = proposal.name;
@@ -934,15 +935,26 @@ function deploymentWithGuardianGovernor(opts, fn) {
 
       const sGuardian = await ethers.provider.getSigner(guardianAddr);
 
+      const guardianActions = []
       for (const action of proposal.actions) {
         const { contract, signature, args } = action;
 
         log(`Sending governance action ${signature} to ${contract.address}`);
-        await withConfirmation(
+        const result = await withConfirmation(
           contract.connect(sGuardian)[signature](...args, await getTxOpts())
         );
+        guardianActions.push({
+          sig: signature,
+          args: args,
+          to: contract.address,
+          data: result.data,
+          value: result.value.toString()
+        });
+
         console.log(`... ${signature} completed`);
       }
+
+      console.log("Execute the following actions using guardian safe: ", guardianActions);
     }
   };
 
