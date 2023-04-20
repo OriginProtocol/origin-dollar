@@ -130,6 +130,25 @@ const impersonateGuardian = async (optGuardianAddr = null) => {
   log(`Impersonated Guardian at ${guardianAddr}`);
 };
 
+const impersonateAccount = async (address) => {
+  if (!isFork) {
+    throw new Error("impersonateAccount only works on Fork");
+  }
+  const { findBestMainnetTokenHolder } = require("../utils/funding");
+
+  const bestSigner = await findBestMainnetTokenHolder(null, hre);
+  await bestSigner.sendTransaction({
+    to: address,
+    value: utils.parseEther("100"),
+  });
+
+  await hre.network.provider.request({
+    method: "hardhat_impersonateAccount",
+    params: [address],
+  });
+  log(`Impersonated Account at ${address}`);
+};
+
 /**
  * Execute a proposal on local test network (including on Fork).
  *
@@ -994,6 +1013,7 @@ module.exports = {
   deployWithConfirmation,
   withConfirmation,
   impersonateGuardian,
+  impersonateAccount,
   executeProposal,
   executeProposalOnFork,
   sendProposal,

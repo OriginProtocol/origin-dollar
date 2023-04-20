@@ -123,8 +123,15 @@ contract OETHDripperProxy is InitializeGovernedUpgradeabilityProxy {
 }
 
 /**
- * @notice FraxETHStrategyProxy delegates calls to a FraxETHStrategy implementation
+ * @notice FraxETHStrategyProxy delegates calls to a Generalized4626Strategy implementation
  */
 contract FraxETHStrategyProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
+
+/**
+ * @notice CurveEthStrategyProxy delegates calls to a CurveEthStrategy implementation
+ */
+contract CurveEthStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 
 }

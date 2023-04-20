@@ -1,0 +1,211 @@
+const {
+  deploymentWithGuardianGovernor,
+  impersonateAccount,
+  sleep
+} = require("../utils/deploy");
+const addresses = require("../utils/addresses");
+const hre = require("hardhat");
+const { BigNumber, utils, Contract } = require("ethers");
+const {
+  getAssetAddresses,
+  getOracleAddresses,
+  isMainnet,
+  isFork,
+  isMainnetOrFork
+} = require("../test/helpers.js");
+
+// 5/8 multisig
+const guardianAddr = addresses.mainnet.Guardian;
+
+module.exports = deploymentWithGuardianGovernor(
+  { deployName: "055_curve_amo" },
+  async ({ deployWithConfirmation, ethers, getTxOpts, withConfirmation }) => {
+    const { deployerAddr, governorAddr } = await getNamedAccounts();
+    const sDeployer = await ethers.provider.getSigner(deployerAddr);
+
+    let actions = await deployCurve({
+      deployWithConfirmation,
+      withConfirmation,
+      ethers,
+    });
+
+    // actions = actions.concat(await deployCurveETHStrategy({
+    //     deployWithConfirmation,
+    //     withConfirmation,
+    //     ethers,
+    //   })
+    // );
+
+    // Governance Actions
+    // ----------------
+    return {
+      name: "Deploy WOETH Token",
+      actions,
+    };
+  }
+);
+
+/**
+ * Deploy Frax ETH Strategy
+ */
+const deployCurveETHStrategy = async ({
+  deployWithConfirmation,
+  withConfirmation,
+  ethers,
+}) => {
+  //const assetAddresses = await getAssetAddresses(deplowyments);
+  const { deployerAddr } = await getNamedAccounts();
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+  const cVaultProxy = await ethers.getContract("OETHVaultProxy");
+  const cVault = await ethers.getContractAt("OETHVault", cVaultProxy.address);
+
+  const dCurveEthStrategyProxy = await deployWithConfirmation(
+    "CurveEthStrategyProxy"
+  );
+  const cCurveEthStrategyProxy = await ethers.getContract(
+    "CurveEthStrategyProxy"
+  );
+  const dCurveETHStrategy = await deployWithConfirmation(
+    "CurveEthStrategy"
+  );
+  const cCurveETHStrategy = await ethers.getContractAt(
+    "CurveEthStrategy",
+    dCurveEthStrategyProxy.address
+  );
+  await withConfirmation(
+    cCurveEthStrategyProxy
+      .connect(sDeployer)
+      ["initialize(address,address,bytes)"](
+        dCurveETHStrategy.address,
+        deployerAddr,
+        []
+      )
+  );
+
+  console.log("Initialized CurveETHStrategyProxy");
+  await withConfirmation(
+    cCurveETHStrategy
+      .connect(sDeployer)
+      .initialize(
+        //addresses.mainnet.sfrxETH,
+        cVaultProxy.address,
+        [],
+        //[addresses.mainnet.frxETH],
+        //[addresses.mainnet.sfrxETH]
+      )
+  );
+  console.log("Initialized CurveETHStrategy");
+  await withConfirmation(
+    cCurveETHStrategy.connect(sDeployer).transferGovernance(guardianAddr)
+  );
+  console.log(`CurveETHStrategy transferGovernance(${guardianAddr} called`);
+
+  await withConfirmation(
+    cVault.connect(sDeployer).approveStrategy(cCurveETHStrategyProxy.address)
+  );
+
+  // await withConfirmation(
+  //   cVault
+  //     .connect(sDeployer)
+  //     .setAssetDefaultStrategy(
+  //       addresses.mainnet.frxETH,
+  //       cCurveETHStrategyProxy.address
+  //     )
+  // );
+
+  return [
+    {
+      // Claim Vault governance
+      contract: cCurveETHStrategy,
+      signature: "claimGovernance()",
+      args: [],
+    },
+  ];
+};
+
+const deployCurve = async ({
+  deployWithConfirmation,
+  withConfirmation,
+  ethers,
+}) => {
+  const { deployerAddr } = await getNamedAccounts();
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+  const gaugeControllerAdmin = "0x40907540d8a6C65c637785e8f8B742ae6b0b9968";
+  await impersonateAccount(gaugeControllerAdmin);
+  const sGaugeControllerAdmin = await ethers.provider.getSigner(gaugeControllerAdmin);
+
+  const curveFactoryAbi = [{"name":"CryptoPoolDeployed","inputs":[{"name":"token","type":"address","indexed":false},{"name":"coins","type":"address[2]","indexed":false},{"name":"A","type":"uint256","indexed":false},{"name":"gamma","type":"uint256","indexed":false},{"name":"mid_fee","type":"uint256","indexed":false},{"name":"out_fee","type":"uint256","indexed":false},{"name":"allowed_extra_profit","type":"uint256","indexed":false},{"name":"fee_gamma","type":"uint256","indexed":false},{"name":"adjustment_step","type":"uint256","indexed":false},{"name":"admin_fee","type":"uint256","indexed":false},{"name":"ma_half_time","type":"uint256","indexed":false},{"name":"initial_price","type":"uint256","indexed":false},{"name":"deployer","type":"address","indexed":false}],"anonymous":false,"type":"event"},{"name":"LiquidityGaugeDeployed","inputs":[{"name":"pool","type":"address","indexed":false},{"name":"token","type":"address","indexed":false},{"name":"gauge","type":"address","indexed":false}],"anonymous":false,"type":"event"},{"name":"UpdateFeeReceiver","inputs":[{"name":"_old_fee_receiver","type":"address","indexed":false},{"name":"_new_fee_receiver","type":"address","indexed":false}],"anonymous":false,"type":"event"},{"name":"UpdatePoolImplementation","inputs":[{"name":"_old_pool_implementation","type":"address","indexed":false},{"name":"_new_pool_implementation","type":"address","indexed":false}],"anonymous":false,"type":"event"},{"name":"UpdateTokenImplementation","inputs":[{"name":"_old_token_implementation","type":"address","indexed":false},{"name":"_new_token_implementation","type":"address","indexed":false}],"anonymous":false,"type":"event"},{"name":"UpdateGaugeImplementation","inputs":[{"name":"_old_gauge_implementation","type":"address","indexed":false},{"name":"_new_gauge_implementation","type":"address","indexed":false}],"anonymous":false,"type":"event"},{"name":"TransferOwnership","inputs":[{"name":"_old_owner","type":"address","indexed":false},{"name":"_new_owner","type":"address","indexed":false}],"anonymous":false,"type":"event"},{"stateMutability":"nonpayable","type":"constructor","inputs":[{"name":"_fee_receiver","type":"address"},{"name":"_pool_implementation","type":"address"},{"name":"_token_implementation","type":"address"},{"name":"_gauge_implementation","type":"address"},{"name":"_weth","type":"address"}],"outputs":[]},{"stateMutability":"nonpayable","type":"function","name":"deploy_pool","inputs":[{"name":"_name","type":"string"},{"name":"_symbol","type":"string"},{"name":"_coins","type":"address[2]"},{"name":"A","type":"uint256"},{"name":"gamma","type":"uint256"},{"name":"mid_fee","type":"uint256"},{"name":"out_fee","type":"uint256"},{"name":"allowed_extra_profit","type":"uint256"},{"name":"fee_gamma","type":"uint256"},{"name":"adjustment_step","type":"uint256"},{"name":"admin_fee","type":"uint256"},{"name":"ma_half_time","type":"uint256"},{"name":"initial_price","type":"uint256"}],"outputs":[{"name":"","type":"address"}]},{"stateMutability":"nonpayable","type":"function","name":"deploy_gauge","inputs":[{"name":"_pool","type":"address"}],"outputs":[{"name":"","type":"address"}]},{"stateMutability":"nonpayable","type":"function","name":"set_fee_receiver","inputs":[{"name":"_fee_receiver","type":"address"}],"outputs":[]},{"stateMutability":"nonpayable","type":"function","name":"set_pool_implementation","inputs":[{"name":"_pool_implementation","type":"address"}],"outputs":[]},{"stateMutability":"nonpayable","type":"function","name":"set_token_implementation","inputs":[{"name":"_token_implementation","type":"address"}],"outputs":[]},{"stateMutability":"nonpayable","type":"function","name":"set_gauge_implementation","inputs":[{"name":"_gauge_implementation","type":"address"}],"outputs":[]},{"stateMutability":"nonpayable","type":"function","name":"commit_transfer_ownership","inputs":[{"name":"_addr","type":"address"}],"outputs":[]},{"stateMutability":"nonpayable","type":"function","name":"accept_transfer_ownership","inputs":[],"outputs":[]},{"stateMutability":"view","type":"function","name":"find_pool_for_coins","inputs":[{"name":"_from","type":"address"},{"name":"_to","type":"address"}],"outputs":[{"name":"","type":"address"}]},{"stateMutability":"view","type":"function","name":"find_pool_for_coins","inputs":[{"name":"_from","type":"address"},{"name":"_to","type":"address"},{"name":"i","type":"uint256"}],"outputs":[{"name":"","type":"address"}]},{"stateMutability":"view","type":"function","name":"get_coins","inputs":[{"name":"_pool","type":"address"}],"outputs":[{"name":"","type":"address[2]"}]},{"stateMutability":"view","type":"function","name":"get_decimals","inputs":[{"name":"_pool","type":"address"}],"outputs":[{"name":"","type":"uint256[2]"}]},{"stateMutability":"view","type":"function","name":"get_balances","inputs":[{"name":"_pool","type":"address"}],"outputs":[{"name":"","type":"uint256[2]"}]},{"stateMutability":"view","type":"function","name":"get_coin_indices","inputs":[{"name":"_pool","type":"address"},{"name":"_from","type":"address"},{"name":"_to","type":"address"}],"outputs":[{"name":"","type":"uint256"},{"name":"","type":"uint256"}]},{"stateMutability":"view","type":"function","name":"get_gauge","inputs":[{"name":"_pool","type":"address"}],"outputs":[{"name":"","type":"address"}]},{"stateMutability":"view","type":"function","name":"get_eth_index","inputs":[{"name":"_pool","type":"address"}],"outputs":[{"name":"","type":"uint256"}]},{"stateMutability":"view","type":"function","name":"get_token","inputs":[{"name":"_pool","type":"address"}],"outputs":[{"name":"","type":"address"}]},{"stateMutability":"view","type":"function","name":"admin","inputs":[],"outputs":[{"name":"","type":"address"}]},{"stateMutability":"view","type":"function","name":"future_admin","inputs":[],"outputs":[{"name":"","type":"address"}]},{"stateMutability":"view","type":"function","name":"fee_receiver","inputs":[],"outputs":[{"name":"","type":"address"}]},{"stateMutability":"view","type":"function","name":"pool_implementation","inputs":[],"outputs":[{"name":"","type":"address"}]},{"stateMutability":"view","type":"function","name":"token_implementation","inputs":[],"outputs":[{"name":"","type":"address"}]},{"stateMutability":"view","type":"function","name":"gauge_implementation","inputs":[],"outputs":[{"name":"","type":"address"}]},{"stateMutability":"view","type":"function","name":"pool_count","inputs":[],"outputs":[{"name":"","type":"uint256"}]},{"stateMutability":"view","type":"function","name":"pool_list","inputs":[{"name":"arg0","type":"uint256"}],"outputs":[{"name":"","type":"address"}]}]
+  const convexPoolManagerAbi = [{"inputs":[{"internalType":"address","name":"_pools","type":"address"}],"stateMutability":"nonpayable","type":"constructor"},{"inputs":[{"internalType":"address","name":"_gauge","type":"address"},{"internalType":"uint256","name":"_stashVersion","type":"uint256"}],"name":"addPool","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"_gauge","type":"address"}],"name":"addPool","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"blockList","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"_lptoken","type":"address"},{"internalType":"address","name":"_gauge","type":"address"},{"internalType":"uint256","name":"_stashVersion","type":"uint256"}],"name":"forceAddPool","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"gaugeController","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"operator","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"pools","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"postAddHook","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"_operator","type":"address"}],"name":"setOperator","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"_hook","type":"address"}],"name":"setPostAddHook","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint256","name":"_pid","type":"uint256"}],"name":"shutdownPool","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"}]
+  const curveGaugeFactoryAbi = [{"name":"SetManager","inputs":[{"name":"_manager","type":"address","indexed":true}],"anonymous":false,"type":"event"},{"name":"SetGaugeManager","inputs":[{"name":"_gauge","type":"address","indexed":true},{"name":"_gauge_manager","type":"address","indexed":true}],"anonymous":false,"type":"event"},{"stateMutability":"nonpayable","type":"constructor","inputs":[{"name":"_factory","type":"address"},{"name":"_manager","type":"address"}],"outputs":[]},{"stateMutability":"nonpayable","type":"function","name":"add_reward","inputs":[{"name":"_gauge","type":"address"},{"name":"_reward_token","type":"address"},{"name":"_distributor","type":"address"}],"outputs":[]},{"stateMutability":"nonpayable","type":"function","name":"set_reward_distributor","inputs":[{"name":"_gauge","type":"address"},{"name":"_reward_token","type":"address"},{"name":"_distributor","type":"address"}],"outputs":[]},{"stateMutability":"nonpayable","type":"function","name":"deploy_gauge","inputs":[{"name":"_pool","type":"address"}],"outputs":[{"name":"","type":"address"}]},{"stateMutability":"nonpayable","type":"function","name":"deploy_gauge","inputs":[{"name":"_pool","type":"address"},{"name":"_gauge_manager","type":"address"}],"outputs":[{"name":"","type":"address"}]},{"stateMutability":"nonpayable","type":"function","name":"set_gauge_manager","inputs":[{"name":"_gauge","type":"address"},{"name":"_gauge_manager","type":"address"}],"outputs":[]},{"stateMutability":"nonpayable","type":"function","name":"set_manager","inputs":[{"name":"_manager","type":"address"}],"outputs":[]},{"stateMutability":"pure","type":"function","name":"factory","inputs":[],"outputs":[{"name":"","type":"address"}]},{"stateMutability":"pure","type":"function","name":"owner_proxy","inputs":[],"outputs":[{"name":"","type":"address"}]},{"stateMutability":"view","type":"function","name":"gauge_manager","inputs":[{"name":"arg0","type":"address"}],"outputs":[{"name":"","type":"address"}]},{"stateMutability":"view","type":"function","name":"manager","inputs":[],"outputs":[{"name":"","type":"address"}]}]
+  const curveGaugeAbi = [{"name":"Deposit","inputs":[{"name":"provider","type":"address","indexed":true},{"name":"value","type":"uint256","indexed":false}],"anonymous":false,"type":"event"},{"name":"Withdraw","inputs":[{"name":"provider","type":"address","indexed":true},{"name":"value","type":"uint256","indexed":false}],"anonymous":false,"type":"event"},{"name":"UpdateLiquidityLimit","inputs":[{"name":"user","type":"address","indexed":false},{"name":"original_balance","type":"uint256","indexed":false},{"name":"original_supply","type":"uint256","indexed":false},{"name":"working_balance","type":"uint256","indexed":false},{"name":"working_supply","type":"uint256","indexed":false}],"anonymous":false,"type":"event"},{"name":"CommitOwnership","inputs":[{"name":"admin","type":"address","indexed":false}],"anonymous":false,"type":"event"},{"name":"ApplyOwnership","inputs":[{"name":"admin","type":"address","indexed":false}],"anonymous":false,"type":"event"},{"name":"Transfer","inputs":[{"name":"_from","type":"address","indexed":true},{"name":"_to","type":"address","indexed":true},{"name":"_value","type":"uint256","indexed":false}],"anonymous":false,"type":"event"},{"name":"Approval","inputs":[{"name":"_owner","type":"address","indexed":true},{"name":"_spender","type":"address","indexed":true},{"name":"_value","type":"uint256","indexed":false}],"anonymous":false,"type":"event"},{"stateMutability":"nonpayable","type":"constructor","inputs":[],"outputs":[]},{"stateMutability":"nonpayable","type":"function","name":"initialize","inputs":[{"name":"_lp_token","type":"address"}],"outputs":[],"gas":374587},{"stateMutability":"view","type":"function","name":"decimals","inputs":[],"outputs":[{"name":"","type":"uint256"}],"gas":318},{"stateMutability":"view","type":"function","name":"integrate_checkpoint","inputs":[],"outputs":[{"name":"","type":"uint256"}],"gas":4590},{"stateMutability":"nonpayable","type":"function","name":"user_checkpoint","inputs":[{"name":"addr","type":"address"}],"outputs":[{"name":"","type":"bool"}],"gas":3123886},{"stateMutability":"nonpayable","type":"function","name":"claimable_tokens","inputs":[{"name":"addr","type":"address"}],"outputs":[{"name":"","type":"uint256"}],"gas":3038676},{"stateMutability":"view","type":"function","name":"claimed_reward","inputs":[{"name":"_addr","type":"address"},{"name":"_token","type":"address"}],"outputs":[{"name":"","type":"uint256"}],"gas":3036},{"stateMutability":"view","type":"function","name":"claimable_reward","inputs":[{"name":"_user","type":"address"},{"name":"_reward_token","type":"address"}],"outputs":[{"name":"","type":"uint256"}],"gas":20255},{"stateMutability":"nonpayable","type":"function","name":"set_rewards_receiver","inputs":[{"name":"_receiver","type":"address"}],"outputs":[],"gas":35673},{"stateMutability":"nonpayable","type":"function","name":"claim_rewards","inputs":[],"outputs":[]},{"stateMutability":"nonpayable","type":"function","name":"claim_rewards","inputs":[{"name":"_addr","type":"address"}],"outputs":[]},{"stateMutability":"nonpayable","type":"function","name":"claim_rewards","inputs":[{"name":"_addr","type":"address"},{"name":"_receiver","type":"address"}],"outputs":[]},{"stateMutability":"nonpayable","type":"function","name":"kick","inputs":[{"name":"addr","type":"address"}],"outputs":[],"gas":3137977},{"stateMutability":"nonpayable","type":"function","name":"deposit","inputs":[{"name":"_value","type":"uint256"}],"outputs":[]},{"stateMutability":"nonpayable","type":"function","name":"deposit","inputs":[{"name":"_value","type":"uint256"},{"name":"_addr","type":"address"}],"outputs":[]},{"stateMutability":"nonpayable","type":"function","name":"deposit","inputs":[{"name":"_value","type":"uint256"},{"name":"_addr","type":"address"},{"name":"_claim_rewards","type":"bool"}],"outputs":[]},{"stateMutability":"nonpayable","type":"function","name":"withdraw","inputs":[{"name":"_value","type":"uint256"}],"outputs":[]},{"stateMutability":"nonpayable","type":"function","name":"withdraw","inputs":[{"name":"_value","type":"uint256"},{"name":"_claim_rewards","type":"bool"}],"outputs":[]},{"stateMutability":"nonpayable","type":"function","name":"transfer","inputs":[{"name":"_to","type":"address"},{"name":"_value","type":"uint256"}],"outputs":[{"name":"","type":"bool"}],"gas":18062826},{"stateMutability":"nonpayable","type":"function","name":"transferFrom","inputs":[{"name":"_from","type":"address"},{"name":"_to","type":"address"},{"name":"_value","type":"uint256"}],"outputs":[{"name":"","type":"bool"}],"gas":18100776},{"stateMutability":"nonpayable","type":"function","name":"approve","inputs":[{"name":"_spender","type":"address"},{"name":"_value","type":"uint256"}],"outputs":[{"name":"","type":"bool"}],"gas":38151},{"stateMutability":"nonpayable","type":"function","name":"increaseAllowance","inputs":[{"name":"_spender","type":"address"},{"name":"_added_value","type":"uint256"}],"outputs":[{"name":"","type":"bool"}],"gas":40695},{"stateMutability":"nonpayable","type":"function","name":"decreaseAllowance","inputs":[{"name":"_spender","type":"address"},{"name":"_subtracted_value","type":"uint256"}],"outputs":[{"name":"","type":"bool"}],"gas":40719},{"stateMutability":"nonpayable","type":"function","name":"add_reward","inputs":[{"name":"_reward_token","type":"address"},{"name":"_distributor","type":"address"}],"outputs":[],"gas":115414},{"stateMutability":"nonpayable","type":"function","name":"set_reward_distributor","inputs":[{"name":"_reward_token","type":"address"},{"name":"_distributor","type":"address"}],"outputs":[],"gas":43179},{"stateMutability":"nonpayable","type":"function","name":"deposit_reward_token","inputs":[{"name":"_reward_token","type":"address"},{"name":"_amount","type":"uint256"}],"outputs":[],"gas":1540067},{"stateMutability":"nonpayable","type":"function","name":"set_killed","inputs":[{"name":"_is_killed","type":"bool"}],"outputs":[],"gas":40529},{"stateMutability":"view","type":"function","name":"lp_token","inputs":[],"outputs":[{"name":"","type":"address"}],"gas":3018},{"stateMutability":"view","type":"function","name":"future_epoch_time","inputs":[],"outputs":[{"name":"","type":"uint256"}],"gas":3048},{"stateMutability":"view","type":"function","name":"balanceOf","inputs":[{"name":"arg0","type":"address"}],"outputs":[{"name":"","type":"uint256"}],"gas":3293},{"stateMutability":"view","type":"function","name":"totalSupply","inputs":[],"outputs":[{"name":"","type":"uint256"}],"gas":3108},{"stateMutability":"view","type":"function","name":"allowance","inputs":[{"name":"arg0","type":"address"},{"name":"arg1","type":"address"}],"outputs":[{"name":"","type":"uint256"}],"gas":3568},{"stateMutability":"view","type":"function","name":"name","inputs":[],"outputs":[{"name":"","type":"string"}],"gas":13398},{"stateMutability":"view","type":"function","name":"symbol","inputs":[],"outputs":[{"name":"","type":"string"}],"gas":11151},{"stateMutability":"view","type":"function","name":"working_balances","inputs":[{"name":"arg0","type":"address"}],"outputs":[{"name":"","type":"uint256"}],"gas":3443},{"stateMutability":"view","type":"function","name":"working_supply","inputs":[],"outputs":[{"name":"","type":"uint256"}],"gas":3258},{"stateMutability":"view","type":"function","name":"period","inputs":[],"outputs":[{"name":"","type":"int128"}],"gas":3288},{"stateMutability":"view","type":"function","name":"period_timestamp","inputs":[{"name":"arg0","type":"uint256"}],"outputs":[{"name":"","type":"uint256"}],"gas":3363},{"stateMutability":"view","type":"function","name":"integrate_inv_supply","inputs":[{"name":"arg0","type":"uint256"}],"outputs":[{"name":"","type":"uint256"}],"gas":3393},{"stateMutability":"view","type":"function","name":"integrate_inv_supply_of","inputs":[{"name":"arg0","type":"address"}],"outputs":[{"name":"","type":"uint256"}],"gas":3593},{"stateMutability":"view","type":"function","name":"integrate_checkpoint_of","inputs":[{"name":"arg0","type":"address"}],"outputs":[{"name":"","type":"uint256"}],"gas":3623},{"stateMutability":"view","type":"function","name":"integrate_fraction","inputs":[{"name":"arg0","type":"address"}],"outputs":[{"name":"","type":"uint256"}],"gas":3653},{"stateMutability":"view","type":"function","name":"inflation_rate","inputs":[],"outputs":[{"name":"","type":"uint256"}],"gas":3468},{"stateMutability":"view","type":"function","name":"reward_count","inputs":[],"outputs":[{"name":"","type":"uint256"}],"gas":3498},{"stateMutability":"view","type":"function","name":"reward_tokens","inputs":[{"name":"arg0","type":"uint256"}],"outputs":[{"name":"","type":"address"}],"gas":3573},{"stateMutability":"view","type":"function","name":"reward_data","inputs":[{"name":"arg0","type":"address"}],"outputs":[{"name":"token","type":"address"},{"name":"distributor","type":"address"},{"name":"period_finish","type":"uint256"},{"name":"rate","type":"uint256"},{"name":"last_update","type":"uint256"},{"name":"integral","type":"uint256"}],"gas":15003},{"stateMutability":"view","type":"function","name":"rewards_receiver","inputs":[{"name":"arg0","type":"address"}],"outputs":[{"name":"","type":"address"}],"gas":3803},{"stateMutability":"view","type":"function","name":"reward_integral_for","inputs":[{"name":"arg0","type":"address"},{"name":"arg1","type":"address"}],"outputs":[{"name":"","type":"uint256"}],"gas":4048},{"stateMutability":"view","type":"function","name":"is_killed","inputs":[],"outputs":[{"name":"","type":"bool"}],"gas":3648},{"stateMutability":"view","type":"function","name":"factory","inputs":[],"outputs":[{"name":"","type":"address"}],"gas":3678}]
+  const gaugeControllerAbi = [{"name":"CommitOwnership","inputs":[{"type":"address","name":"admin","indexed":false}],"anonymous":false,"type":"event"},{"name":"ApplyOwnership","inputs":[{"type":"address","name":"admin","indexed":false}],"anonymous":false,"type":"event"},{"name":"AddType","inputs":[{"type":"string","name":"name","indexed":false},{"type":"int128","name":"type_id","indexed":false}],"anonymous":false,"type":"event"},{"name":"NewTypeWeight","inputs":[{"type":"int128","name":"type_id","indexed":false},{"type":"uint256","name":"time","indexed":false},{"type":"uint256","name":"weight","indexed":false},{"type":"uint256","name":"total_weight","indexed":false}],"anonymous":false,"type":"event"},{"name":"NewGaugeWeight","inputs":[{"type":"address","name":"gauge_address","indexed":false},{"type":"uint256","name":"time","indexed":false},{"type":"uint256","name":"weight","indexed":false},{"type":"uint256","name":"total_weight","indexed":false}],"anonymous":false,"type":"event"},{"name":"VoteForGauge","inputs":[{"type":"uint256","name":"time","indexed":false},{"type":"address","name":"user","indexed":false},{"type":"address","name":"gauge_addr","indexed":false},{"type":"uint256","name":"weight","indexed":false}],"anonymous":false,"type":"event"},{"name":"NewGauge","inputs":[{"type":"address","name":"addr","indexed":false},{"type":"int128","name":"gauge_type","indexed":false},{"type":"uint256","name":"weight","indexed":false}],"anonymous":false,"type":"event"},{"outputs":[],"inputs":[{"type":"address","name":"_token"},{"type":"address","name":"_voting_escrow"}],"stateMutability":"nonpayable","type":"constructor"},{"name":"commit_transfer_ownership","outputs":[],"inputs":[{"type":"address","name":"addr"}],"stateMutability":"nonpayable","type":"function","gas":37597},{"name":"apply_transfer_ownership","outputs":[],"inputs":[],"stateMutability":"nonpayable","type":"function","gas":38497},{"name":"gauge_types","outputs":[{"type":"int128","name":""}],"inputs":[{"type":"address","name":"_addr"}],"stateMutability":"view","type":"function","gas":1625},{"name":"add_gauge","outputs":[],"inputs":[{"type":"address","name":"addr"},{"type":"int128","name":"gauge_type"}],"stateMutability":"nonpayable","type":"function"},{"name":"add_gauge","outputs":[],"inputs":[{"type":"address","name":"addr"},{"type":"int128","name":"gauge_type"},{"type":"uint256","name":"weight"}],"stateMutability":"nonpayable","type":"function"},{"name":"checkpoint","outputs":[],"inputs":[],"stateMutability":"nonpayable","type":"function","gas":18033784416},{"name":"checkpoint_gauge","outputs":[],"inputs":[{"type":"address","name":"addr"}],"stateMutability":"nonpayable","type":"function","gas":18087678795},{"name":"gauge_relative_weight","outputs":[{"type":"uint256","name":""}],"inputs":[{"type":"address","name":"addr"}],"stateMutability":"view","type":"function"},{"name":"gauge_relative_weight","outputs":[{"type":"uint256","name":""}],"inputs":[{"type":"address","name":"addr"},{"type":"uint256","name":"time"}],"stateMutability":"view","type":"function"},{"name":"gauge_relative_weight_write","outputs":[{"type":"uint256","name":""}],"inputs":[{"type":"address","name":"addr"}],"stateMutability":"nonpayable","type":"function"},{"name":"gauge_relative_weight_write","outputs":[{"type":"uint256","name":""}],"inputs":[{"type":"address","name":"addr"},{"type":"uint256","name":"time"}],"stateMutability":"nonpayable","type":"function"},{"name":"add_type","outputs":[],"inputs":[{"type":"string","name":"_name"}],"stateMutability":"nonpayable","type":"function"},{"name":"add_type","outputs":[],"inputs":[{"type":"string","name":"_name"},{"type":"uint256","name":"weight"}],"stateMutability":"nonpayable","type":"function"},{"name":"change_type_weight","outputs":[],"inputs":[{"type":"int128","name":"type_id"},{"type":"uint256","name":"weight"}],"stateMutability":"nonpayable","type":"function","gas":36246310050},{"name":"change_gauge_weight","outputs":[],"inputs":[{"type":"address","name":"addr"},{"type":"uint256","name":"weight"}],"stateMutability":"nonpayable","type":"function","gas":36354170809},{"name":"vote_for_gauge_weights","outputs":[],"inputs":[{"type":"address","name":"_gauge_addr"},{"type":"uint256","name":"_user_weight"}],"stateMutability":"nonpayable","type":"function","gas":18142052127},{"name":"get_gauge_weight","outputs":[{"type":"uint256","name":""}],"inputs":[{"type":"address","name":"addr"}],"stateMutability":"view","type":"function","gas":2974},{"name":"get_type_weight","outputs":[{"type":"uint256","name":""}],"inputs":[{"type":"int128","name":"type_id"}],"stateMutability":"view","type":"function","gas":2977},{"name":"get_total_weight","outputs":[{"type":"uint256","name":""}],"inputs":[],"stateMutability":"view","type":"function","gas":2693},{"name":"get_weights_sum_per_type","outputs":[{"type":"uint256","name":""}],"inputs":[{"type":"int128","name":"type_id"}],"stateMutability":"view","type":"function","gas":3109},{"name":"admin","outputs":[{"type":"address","name":""}],"inputs":[],"stateMutability":"view","type":"function","gas":1841},{"name":"future_admin","outputs":[{"type":"address","name":""}],"inputs":[],"stateMutability":"view","type":"function","gas":1871},{"name":"token","outputs":[{"type":"address","name":""}],"inputs":[],"stateMutability":"view","type":"function","gas":1901},{"name":"voting_escrow","outputs":[{"type":"address","name":""}],"inputs":[],"stateMutability":"view","type":"function","gas":1931},{"name":"n_gauge_types","outputs":[{"type":"int128","name":""}],"inputs":[],"stateMutability":"view","type":"function","gas":1961},{"name":"n_gauges","outputs":[{"type":"int128","name":""}],"inputs":[],"stateMutability":"view","type":"function","gas":1991},{"name":"gauge_type_names","outputs":[{"type":"string","name":""}],"inputs":[{"type":"int128","name":"arg0"}],"stateMutability":"view","type":"function","gas":8628},{"name":"gauges","outputs":[{"type":"address","name":""}],"inputs":[{"type":"uint256","name":"arg0"}],"stateMutability":"view","type":"function","gas":2160},{"name":"vote_user_slopes","outputs":[{"type":"uint256","name":"slope"},{"type":"uint256","name":"power"},{"type":"uint256","name":"end"}],"inputs":[{"type":"address","name":"arg0"},{"type":"address","name":"arg1"}],"stateMutability":"view","type":"function","gas":5020},{"name":"vote_user_power","outputs":[{"type":"uint256","name":""}],"inputs":[{"type":"address","name":"arg0"}],"stateMutability":"view","type":"function","gas":2265},{"name":"last_user_vote","outputs":[{"type":"uint256","name":""}],"inputs":[{"type":"address","name":"arg0"},{"type":"address","name":"arg1"}],"stateMutability":"view","type":"function","gas":2449},{"name":"points_weight","outputs":[{"type":"uint256","name":"bias"},{"type":"uint256","name":"slope"}],"inputs":[{"type":"address","name":"arg0"},{"type":"uint256","name":"arg1"}],"stateMutability":"view","type":"function","gas":3859},{"name":"time_weight","outputs":[{"type":"uint256","name":""}],"inputs":[{"type":"address","name":"arg0"}],"stateMutability":"view","type":"function","gas":2355},{"name":"points_sum","outputs":[{"type":"uint256","name":"bias"},{"type":"uint256","name":"slope"}],"inputs":[{"type":"int128","name":"arg0"},{"type":"uint256","name":"arg1"}],"stateMutability":"view","type":"function","gas":3970},{"name":"time_sum","outputs":[{"type":"uint256","name":""}],"inputs":[{"type":"uint256","name":"arg0"}],"stateMutability":"view","type":"function","gas":2370},{"name":"points_total","outputs":[{"type":"uint256","name":""}],"inputs":[{"type":"uint256","name":"arg0"}],"stateMutability":"view","type":"function","gas":2406},{"name":"time_total","outputs":[{"type":"uint256","name":""}],"inputs":[],"stateMutability":"view","type":"function","gas":2321},{"name":"points_type_weight","outputs":[{"type":"uint256","name":""}],"inputs":[{"type":"int128","name":"arg0"},{"type":"uint256","name":"arg1"}],"stateMutability":"view","type":"function","gas":2671},{"name":"time_type_weight","outputs":[{"type":"uint256","name":""}],"inputs":[{"type":"uint256","name":"arg0"}],"stateMutability":"view","type":"function","gas":2490}]
+
+  const cCurveFactory = new Contract("0xF18056Bbd320E96A48e3Fbf8bC061322531aac99", curveFactoryAbi, sDeployer);
+  const cCurveGaugeFactory = new Contract("0x9f99FDe2ED3997EAfE52b78E3981b349fD2Eb8C9", curveGaugeFactoryAbi, sDeployer);
+  const cConvexPoolManager = new Contract("0xc461E1CE3795Ee30bA2EC59843d5fAe14d5782D5", convexPoolManagerAbi, sDeployer);
+  const gaugeController = new Contract("0x2F50D538606Fa9EDD2B11E2446BEb18C9D5846bB", gaugeControllerAbi)
+
+
+
+  const tx = await withConfirmation(cCurveFactory
+    .deploy_pool(
+      "Origin Ether OETH/ETH",
+      "OETH",
+      [
+       "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2", // WETH
+       "0x856c4Efb76C1D1AE02e20CEB03A2A6a08b0b8dC3" // OETH Proxy
+      ],
+      BigNumber.from("20000000"), // A
+      BigNumber.from("10000000000000000"), // gamma
+      BigNumber.from("3000000"), // mid_fee
+      BigNumber.from("45000000"), // out_fee
+      BigNumber.from("10000000000"), // allowed_extra_profit
+      BigNumber.from("300000000000000000"), // fee_gamma
+      BigNumber.from("5500000000000"), // adjustment_step
+      BigNumber.from("5000000000"), // admin_fee
+      BigNumber.from("600"), // ma_half_time
+      BigNumber.from("1000000000000000000") // initial_price
+    )
+  );
+
+  // pool address not really in any of the emitted events. Just read it from the contract
+  const poolCount = parseInt((await cCurveFactory.pool_count()).toString())
+  const poolAddress = await cCurveFactory.pool_list(poolCount - 1)
+
+  // hackish :)
+  const tokenAddress = "0x" + tx.receipt.logs[1].data.substr(2+24, 40);
+  const gaugeTx = await withConfirmation(cCurveGaugeFactory
+    .connect(sDeployer)["deploy_gauge(address)"](poolAddress)
+  );
+
+  const gaugeAddress = "0x" + gaugeTx.receipt.logs[0].data.substr(2 + 64 * 2 + 24, 40);
+  console.log("gaugeAddress", gaugeAddress)
+
+  return []; // Add a return statement so deploy succeeds
+  // FAILS WITH with transaction gas limit surpasses block gas limit
+  const gaugeControllerTx = await withConfirmation(gaugeController
+    .connect(sGaugeControllerAdmin)
+    // add_gauge() fails as well
+    .change_gauge_weight(gaugeAddress, 100)
+  );
+
+  console.log("gaugeControllerTx", gaugeControllerTx)
+
+  // const cCurveGauge = new Contract(gaugeAddress, curveGaugeAbi, sDeployer);
+  // console.log("GETTING LP TOKEN")
+  // const lpToken = await cCurveGauge.lp_token();
+  // return [];
+  // console.log("LP TOKEN", lpToken);
+
+  // const convexTx = await withConfirmation(cConvexPoolManager
+  //   .connect(sDeployer)["addPool(address,uint256)"](tokenAddress, 3)
+  // );
+  const convexTx = await withConfirmation(cConvexPoolManager
+    .connect(sDeployer)["addPool(address)"](gaugeAddress)
+  );
+
+  console.log("convexTx", convexTx);
+
+  return [
+  ];
+};
