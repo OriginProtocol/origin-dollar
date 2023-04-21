@@ -153,6 +153,12 @@ abstract contract UniswapV3StrategyStorage is InitializableAbstractStrategy {
     // Future-proofing
     uint256[100] private __gap;
 
+    constructor() {
+        // Governor address is set on the proxy contract. There's no need to 
+        // set a Governor for the implementation contract
+        _setGovernor(address(0));
+    }
+
     /***************************************
             Modifiers
     ****************************************/
