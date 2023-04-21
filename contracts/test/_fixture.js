@@ -1278,15 +1278,11 @@ function uniswapV3FixtureSetup() {
 
       // Approve Uniswap V3 Strategy
       await _approveStrategy(fixture, UniV3_USDC_USDT_Strategy, true);
-    }
 
-    // Change default strategy to Uniswap V3 for both USDT and USDC
-    await _setDefaultStrategy(fixture, usdc, UniV3_USDC_USDT_Strategy);
-    await _setDefaultStrategy(fixture, usdt, UniV3_USDC_USDT_Strategy);
+      // Change default strategy to reserve strategies for both USDT and USDC
+      await _setDefaultStrategy(fixture, usdc, mockStrategy);
+      await _setDefaultStrategy(fixture, usdt, mockStrategy);
 
-    // await UniV3_USDC_USDT_Strategy.setSwapPriceThreshold(-1000, 1000);
-
-    if (!isFork) {
       // And a different one for DAI
       await _setDefaultStrategy(fixture, dai, mockStrategyDAI);
 
@@ -1300,6 +1296,8 @@ function uniswapV3FixtureSetup() {
         mockStrategy.address
       );
     }
+
+    // await UniV3_USDC_USDT_Strategy.setSwapPriceThreshold(-1000, 1000);
 
     const { governorAddr, timelockAddr } = await getNamedAccounts();
     const sGovernor = await ethers.provider.getSigner(

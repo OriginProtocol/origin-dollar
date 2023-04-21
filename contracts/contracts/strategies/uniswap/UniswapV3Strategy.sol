@@ -37,7 +37,9 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
         address _nonfungiblePositionManager,
         address _helper,
         address _swapRouter,
-        address _operator
+        address _operator,
+        uint256 _maxTVL,
+        uint256 _maxValueLostThreshold
     ) external onlyGovernor initializer {
         // NOTE: _self should always be the address of the proxy.
         // This is used to do `delegatecall` between the this contract and
@@ -68,6 +70,8 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
         );
 
         _setOperator(_operator);
+        _setMaxTVL(_maxTVL);
+        _setMaxPositionValueLostThreshold(_maxValueLostThreshold);
     }
 
     /***************************************
@@ -183,20 +187,38 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
      * @param _maxTVL Maximum amount the strategy can have deployed in the Uniswap pool
      */
     function setMaxTVL(uint256 _maxTVL) external onlyGovernorOrStrategist {
+        _setMaxTVL(_maxTVL);
+    }
+
+    /**
+     * @notice Change the maxTVL amount threshold
+     * @param _maxTVL Maximum amount the strategy can have deployed in the Uniswap pool
+     */
+    function _setMaxTVL(uint256 _maxTVL) internal {
         maxTVL = _maxTVL;
         emit MaxTVLChanged(_maxTVL);
     }
 
     /**
      * @notice Maximum value of loss the LP positions can incur before strategy shuts off rebalances
-     * @param _maxLossThreshold Maximum amount in 18 decimals
+     * @param _maxValueLostThreshold Maximum amount in 18 decimals
      */
-    function setMaxPositionValueLostThreshold(uint256 _maxLossThreshold)
+    function setMaxPositionValueLostThreshold(uint256 _maxValueLostThreshold)
         external
         onlyGovernorOrStrategist
     {
-        maxPositionValueLostThreshold = _maxLossThreshold;
-        emit MaxValueLostThresholdChanged(_maxLossThreshold);
+        _setMaxPositionValueLostThreshold(_maxValueLostThreshold);
+    }
+
+    /**
+     * @notice Maximum value of loss the LP positions can incur before strategy shuts off rebalances
+     * @param _maxValueLostThreshold Maximum amount in 18 decimals
+     */
+    function _setMaxPositionValueLostThreshold(uint256 _maxValueLostThreshold)
+        internal
+    {
+        maxPositionValueLostThreshold = _maxValueLostThreshold;
+        emit MaxValueLostThresholdChanged(_maxValueLostThreshold);
     }
 
     /**
@@ -249,27 +271,30 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
     ****************************************/
 
     /// @inheritdoc InitializableAbstractStrategy
-    function deposit(address _asset, uint256 _amount)
+    function deposit(address, uint256)
         external
         override
         onlyVault
         nonReentrant
     {
-        _onlyPoolTokens(_asset);
-
-        if (
-            _asset == token0
-                ? (_amount > minDepositThreshold0)
-                : (_amount > minDepositThreshold1)
-        ) {
-            IVault(vaultAddress).depositToUniswapV3Reserve(_asset, _amount);
-            // Not emitting Deposit event since the Reserve strategy would do so
-        }
+        /**
+         * Uniswap V3 strategies are never meant to be default strategies.
+         * By design, they cannot hold any funds in the contract. When it needs
+         * funds to provide liquidity, it'll pull the required amounts from the
+         * reserve strategies. So, route any deposits to the reserve strategies
+         */
+        revert("Direct deposits disabled on UniswapV3Strategy");
     }
 
     /// @inheritdoc InitializableAbstractStrategy
     function depositAll() external override onlyVault nonReentrant {
-        _depositAll();
+        /**
+         * Uniswap V3 strategies are never meant to be default strategies.
+         * By design, they cannot hold any funds in the contract. When it needs
+         * funds to provide liquidity, it'll pull the required amounts from the
+         * reserve strategies. So, route any deposits to the reserve strategies
+         */
+        revert("Direct deposits disabled on UniswapV3Strategy");
     }
 
     /// @inheritdoc InitializableAbstractStrategy
@@ -280,27 +305,10 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
     ) external override onlyVault nonReentrant {
         _onlyPoolTokens(_asset);
 
-        IERC20 asset = IERC20(_asset);
-        uint256 selfBalance = asset.balanceOf(address(this));
+        require(activeTokenId == 0, "Active position still open");
 
-        if (selfBalance < amount) {
-            require(activeTokenId > 0, "Liquidity error");
-
-            // Delegatecall to `UniswapV3LiquidityManager` to remove
-            // liquidity from active LP position
-            // solhint-disable-next-line no-unused-vars
-            (bool success, bytes memory data) = address(_self).delegatecall(
-                abi.encodeWithSignature(
-                    "withdrawAssetFromActivePositionOnlyVault(address,uint256)",
-                    _asset,
-                    amount - selfBalance
-                )
-            );
-            require(success, "DelegateCall to close position failed");
-        }
-
-        // Transfer requested amount
-        asset.safeTransfer(recipient, amount);
+        // Transfer requested amount, will revert when low on balance
+        IERC20(_asset).safeTransfer(recipient, amount);
         emit Withdrawal(_asset, _asset, amount);
     }
 
@@ -314,7 +322,7 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
             // liquidity from active LP position
             // solhint-disable-next-line no-unused-vars
             (bool success, bytes memory data) = address(_self).delegatecall(
-                abi.encodeWithSignature("closeActivePositionOnlyVault()")
+                abi.encodeWithSelector(IUniswapV3Strategy.closeActivePositionOnlyVault.selector)
             );
             require(success, "DelegateCall to close position failed");
         }
@@ -497,7 +505,7 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
      * @notice This is a catch all for all functions not declared here
      */
     // solhint-disable-next-line no-complex-fallback
-    fallback() external payable {
+    fallback() external {
         bytes32 slot = LIQUIDITY_MANAGER_IMPL_POSITION;
         // solhint-disable-next-line no-inline-assembly
         assembly {

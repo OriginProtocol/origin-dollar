@@ -9,4 +9,6 @@ interface IUniswapV3Strategy is IStrategy {
     function token1() external view returns (address);
 
     function reserveStrategy(address token) external view returns (address);
+
+    function closeActivePositionOnlyVault() external;
 }
