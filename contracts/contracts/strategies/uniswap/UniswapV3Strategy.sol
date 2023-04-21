@@ -322,7 +322,7 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
             // liquidity from active LP position
             // solhint-disable-next-line no-unused-vars
             (bool success, bytes memory data) = address(_self).delegatecall(
-                abi.encodeWithSignature("closeActivePositionOnlyVault()")
+                abi.encodeWithSelector(IUniswapV3Strategy.closeActivePositionOnlyVault.selector)
             );
             require(success, "DelegateCall to close position failed");
         }
