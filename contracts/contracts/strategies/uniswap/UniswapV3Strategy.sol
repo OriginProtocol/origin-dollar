@@ -42,7 +42,7 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
         uint256 _maxValueLostThreshold
     ) external onlyGovernor initializer {
         // NOTE: _self should always be the address of the proxy.
-        // This is used to do `delegecall` between the this contract and
+        // This is used to do `delegatecall` between the this contract and
         // `UniswapV3LiquidityManager` whenever it's required.
         _self = IUniswapV3Strategy(address(this));
 
@@ -104,7 +104,7 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
         onlyGovernorOrStrategist
         nonReentrant
     {
-        onlyPoolTokens(_asset);
+        _onlyPoolTokens(_asset);
 
         require(
             IVault(vaultAddress).isStrategySupported(_reserveStrategy),
@@ -151,7 +151,7 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
         external
         onlyGovernorOrStrategist
     {
-        onlyPoolTokens(_asset);
+        _onlyPoolTokens(_asset);
 
         if (_asset == token0) {
             minDepositThreshold0 = _minThreshold;
@@ -226,7 +226,7 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
      * @dev Only governor can call it
      */
     function resetLostValue() external onlyGovernor {
-        emit NetLossValueReset(msg.sender);
+        emit NetLostValueReset(msg.sender);
         emit NetLostValueChanged(0);
         netLostValue = 0;
     }
@@ -303,7 +303,7 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
         address _asset,
         uint256 amount
     ) external override onlyVault nonReentrant {
-        onlyPoolTokens(_asset);
+        _onlyPoolTokens(_asset);
 
         require(activeTokenId == 0, "Active position still open");
 
@@ -373,7 +373,7 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
         override
         returns (uint256 balance)
     {
-        onlyPoolTokens(_asset);
+        _onlyPoolTokens(_asset);
         balance = IERC20(_asset).balanceOf(address(this));
 
         if (activeTokenId > 0) {
@@ -393,7 +393,7 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
     /**
      * @dev Ensures that the asset address is either token0 or token1.
      */
-    function onlyPoolTokens(address addr) internal view {
+    function _onlyPoolTokens(address addr) internal view {
         require(addr == token0 || addr == token1, "Unsupported asset");
     }
 
@@ -433,7 +433,8 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
     }
 
     /**
-     * Removes all allowance of both the tokens from NonfungiblePositionManager
+     * Removes all allowance of both the tokens from NonfungiblePositionManager as
+     * well as from the Uniswap V3 Swap Router
      */
     function resetAllowanceOfTokens() external onlyGovernor nonReentrant {
         IERC20(token0).safeApprove(address(positionManager), 0);
@@ -491,7 +492,7 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
             Address.isContract(newImpl),
             "new implementation is not a contract"
         );
-        bytes32 position = liquidityManagerImplPosition;
+        bytes32 position = LIQUIDITY_MANAGER_IMPL_POSITION;
         // solhint-disable-next-line no-inline-assembly
         assembly {
             sstore(position, newImpl)
@@ -505,7 +506,7 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
      */
     // solhint-disable-next-line no-complex-fallback
     fallback() external {
-        bytes32 slot = liquidityManagerImplPosition;
+        bytes32 slot = LIQUIDITY_MANAGER_IMPL_POSITION;
         // solhint-disable-next-line no-inline-assembly
         assembly {
             // Copy msg.data. We take full control of memory in this inline assembly

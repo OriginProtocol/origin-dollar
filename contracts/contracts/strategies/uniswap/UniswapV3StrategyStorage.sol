@@ -13,11 +13,14 @@ import { IUniswapV3Strategy } from "../../interfaces/IUniswapV3Strategy.sol";
 import { ISwapRouter } from "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 
 abstract contract UniswapV3StrategyStorage is InitializableAbstractStrategy {
-    event OperatorChanged(address _address);
-    event LiquidityManagerImplementationUpgraded(address _newImpl);
-    event ReserveStrategyChanged(address asset, address reserveStrategy);
+    event OperatorChanged(address indexed _address);
+    event LiquidityManagerImplementationUpgraded(address indexed _newImpl);
+    event ReserveStrategyChanged(
+        address indexed asset,
+        address reserveStrategy
+    );
     event MinDepositThresholdChanged(
-        address asset,
+        address indexed asset,
         uint256 minDepositThreshold
     );
     event RebalancePauseStatusChanged(bool paused);
@@ -31,7 +34,7 @@ abstract contract UniswapV3StrategyStorage is InitializableAbstractStrategy {
     );
     event MaxTVLChanged(uint256 maxTVL);
     event MaxValueLostThresholdChanged(uint256 amount);
-    event NetLossValueReset(address indexed _by);
+    event NetLostValueReset(address indexed _by);
     event NetLostValueChanged(uint256 currentNetLostValue);
     event PositionValueChanged(
         uint256 indexed tokenId,
@@ -135,23 +138,20 @@ abstract contract UniswapV3StrategyStorage is InitializableAbstractStrategy {
     INonfungiblePositionManager public positionManager;
 
     // A deployed contract that's used to call methods of Uniswap V3's libraries despite version mismatch
-    IUniswapV3Helper internal helper;
+    IUniswapV3Helper public helper;
 
     // Uniswap Swap Router
-    ISwapRouter internal swapRouter;
+    ISwapRouter public swapRouter;
 
     // A lookup table to find token IDs of position using f(lowerTick, upperTick)
-    mapping(int48 => uint256) internal ticksToTokenId;
+    mapping(int48 => uint256) public ticksToTokenId;
 
     // Maps tokenIDs to their Position object
     mapping(uint256 => Position) public tokenIdToPosition;
 
     // keccak256("OUSD.UniswapV3Strategy.LiquidityManager.impl")
-    bytes32 constant liquidityManagerImplPosition =
+    bytes32 constant LIQUIDITY_MANAGER_IMPL_POSITION =
         0xec676d52175f7cbb4e4ea392c6b70f8946575021aad20479602b98adc56ad62d;
-
-    // Future-proofing
-    uint256[100] private __gap;
 
     constructor() {
         // Governor address is set on the proxy contract. There's no need to 
@@ -192,23 +192,17 @@ abstract contract UniswapV3StrategyStorage is InitializableAbstractStrategy {
             Shared functions
     ****************************************/
     /**
-     * @notice Deposits back strategy token balances back to the reserve strategies
+     * @notice Deposits token balances in the contract back to the reserve strategies
      */
     function _depositAll() internal {
         uint256 token0Bal = IERC20(token0).balanceOf(address(this));
         uint256 token1Bal = IERC20(token1).balanceOf(address(this));
         IVault vault = IVault(vaultAddress);
 
-        if (
-            token0Bal > 0 &&
-            (minDepositThreshold0 == 0 || token0Bal >= minDepositThreshold0)
-        ) {
+        if (token0Bal > 0 && token0Bal >= minDepositThreshold0) {
             vault.depositToUniswapV3Reserve(token0, token0Bal);
         }
-        if (
-            token1Bal > 0 &&
-            (minDepositThreshold1 == 0 || token1Bal >= minDepositThreshold1)
-        ) {
+        if (token1Bal > 0 && token1Bal >= minDepositThreshold1) {
             vault.depositToUniswapV3Reserve(token1, token1Bal);
         }
         // Not emitting Deposit events since the Reserve strategies would do so

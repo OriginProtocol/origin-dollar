@@ -440,7 +440,7 @@ describe("Uniswap V3 Strategy", function () {
       it("Should let Governor reset the lost value ", async () => {
         const tx = await strategy.connect(governor).resetLostValue();
 
-        await expect(tx).to.have.emittedEvent("NetLossValueReset", [
+        await expect(tx).to.have.emittedEvent("NetLostValueReset", [
           governor.address,
         ]);
 

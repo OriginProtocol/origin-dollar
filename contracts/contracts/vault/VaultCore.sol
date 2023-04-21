@@ -434,7 +434,7 @@ contract VaultCore is VaultStorage {
 
     /**
      * @dev Internal to calculate total value of all assets held in Vault.
-     * @return value Total value in ETH (1e18)
+     * @return value Total value in USD (1e18)
      */
     function _totalValueInVault() internal view returns (uint256 value) {
         for (uint256 y = 0; y < allAssets.length; y++) {
@@ -449,7 +449,7 @@ contract VaultCore is VaultStorage {
 
     /**
      * @dev Internal to calculate total value of all assets held in Strategies.
-     * @return value Total value in ETH (1e18)
+     * @return value Total value in USD (1e18)
      */
     function _totalValueInStrategies() internal view returns (uint256 value) {
         for (uint256 i = 0; i < allStrategies.length; i++) {
@@ -460,7 +460,7 @@ contract VaultCore is VaultStorage {
     /**
      * @dev Internal to calculate total value of all assets held by strategy.
      * @param _strategyAddr Address of the strategy
-     * @return value Total value in ETH (1e18)
+     * @return value Total value in USD (1e18)
      */
     function _totalValueInStrategy(address _strategyAddr)
         internal
@@ -679,7 +679,7 @@ contract VaultCore is VaultStorage {
      */
     // solhint-disable-next-line no-complex-fallback
     fallback() external payable {
-        bytes32 slot = adminImplPosition;
+        bytes32 slot = ADMIN_IMPL_POSITION;
         // solhint-disable-next-line no-inline-assembly
         assembly {
             // Copy msg.data. We take full control of memory in this inline assembly

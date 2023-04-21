@@ -89,7 +89,7 @@ contract VaultStorage is Initializable, Governable {
     OUSD internal oUSD;
 
     //keccak256("OUSD.vault.governor.admin.impl");
-    bytes32 constant adminImplPosition =
+    bytes32 constant ADMIN_IMPL_POSITION =
         0xa2bd3d3cf188a41358c8b401076eb59066b09dec5775650c0de4c55187d17bd9;
 
     // Address of the contract responsible for post rebase syncs with AMMs
@@ -137,7 +137,7 @@ contract VaultStorage is Initializable, Governable {
             Address.isContract(newImpl),
             "new implementation is not a contract"
         );
-        bytes32 position = adminImplPosition;
+        bytes32 position = ADMIN_IMPL_POSITION;
         // solhint-disable-next-line no-inline-assembly
         assembly {
             sstore(position, newImpl)
