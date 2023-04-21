@@ -132,6 +132,6 @@ contract FraxETHStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 /**
  * @notice CurveEthStrategyProxy delegates calls to a CurveEthStrategy implementation
  */
-contract CurveEthStrategyProxy is InitializeGovernedUpgradeabilityProxy {
+contract ConvexEthMetaStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 
 }

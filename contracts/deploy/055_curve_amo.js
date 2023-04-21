@@ -23,18 +23,21 @@ module.exports = deploymentWithGuardianGovernor(
     const { deployerAddr, governorAddr } = await getNamedAccounts();
     const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
-    let actions = await deployCurve({
+    let { actions, tokenAddress, poolAddress, gaugeAddress } = await deployCurve({
       deployWithConfirmation,
       withConfirmation,
       ethers,
     });
 
-    // actions = actions.concat(await deployCurveETHStrategy({
-    //     deployWithConfirmation,
-    //     withConfirmation,
-    //     ethers,
-    //   })
-    // );
+    actions = actions.concat(await deployConvexETHMetaStrategy({
+        deployWithConfirmation,
+        withConfirmation,
+        ethers,
+        tokenAddress,
+        poolAddress,
+        gaugeAddress
+      })
+    );
 
     // Governance Actions
     // ----------------
@@ -48,75 +51,88 @@ module.exports = deploymentWithGuardianGovernor(
 /**
  * Deploy Frax ETH Strategy
  */
-const deployCurveETHStrategy = async ({
+const deployConvexETHMetaStrategy = async ({
   deployWithConfirmation,
   withConfirmation,
   ethers,
+  tokenAddress,
+  poolAddress,
+  gaugeAddress
 }) => {
-  //const assetAddresses = await getAssetAddresses(deplowyments);
+  const assetAddresses = await getAssetAddresses(hre.deployments);
   const { deployerAddr } = await getNamedAccounts();
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
   const cVaultProxy = await ethers.getContract("OETHVaultProxy");
   const cVault = await ethers.getContractAt("OETHVault", cVaultProxy.address);
 
-  const dCurveEthStrategyProxy = await deployWithConfirmation(
-    "CurveEthStrategyProxy"
+  const dConvexEthMetaStrategyProxy = await deployWithConfirmation(
+    "ConvexEthMetaStrategyProxy"
   );
-  const cCurveEthStrategyProxy = await ethers.getContract(
-    "CurveEthStrategyProxy"
+  const cConvexEthMetaStrategyProxy = await ethers.getContract(
+    "ConvexEthMetaStrategyProxy"
   );
-  const dCurveETHStrategy = await deployWithConfirmation(
-    "CurveEthStrategy"
+  const dConvexETHMetaStrategy = await deployWithConfirmation(
+    "ConvexEthMetaStrategy"
   );
-  const cCurveETHStrategy = await ethers.getContractAt(
-    "CurveEthStrategy",
-    dCurveEthStrategyProxy.address
+  const cConvexETHMetaStrategy = await ethers.getContractAt(
+    "ConvexEthMetaStrategy",
+    dConvexEthMetaStrategyProxy.address
   );
   await withConfirmation(
-    cCurveEthStrategyProxy
+    cConvexEthMetaStrategyProxy
       .connect(sDeployer)
       ["initialize(address,address,bytes)"](
-        dCurveETHStrategy.address,
+        dConvexETHMetaStrategy.address,
         deployerAddr,
         []
       )
   );
 
-  console.log("Initialized CurveETHStrategyProxy");
-  await withConfirmation(
-    cCurveETHStrategy
-      .connect(sDeployer)
-      .initialize(
-        //addresses.mainnet.sfrxETH,
-        cVaultProxy.address,
-        [],
-        //[addresses.mainnet.frxETH],
-        //[addresses.mainnet.sfrxETH]
-      )
-  );
-  console.log("Initialized CurveETHStrategy");
-  await withConfirmation(
-    cCurveETHStrategy.connect(sDeployer).transferGovernance(guardianAddr)
-  );
-  console.log(`CurveETHStrategy transferGovernance(${guardianAddr} called`);
+  console.log("Initialized ConvexETHMetaStrategyProxy");
+  const initFunction =
+      "initialize(address[],address[],address[],(address,address,address,address,address,address,address,uint256))";
 
   await withConfirmation(
-    cVault.connect(sDeployer).approveStrategy(cCurveETHStrategyProxy.address)
+    cConvexETHMetaStrategy
+      .connect(sDeployer)[initFunction](
+        [assetAddresses.CVX, assetAddresses.CRV],
+        [addresses.mainnet.WETH],
+        [tokenAddress],
+        [
+          poolAddress,
+          cVaultProxy.address,
+          addresses.mainnet.CVXBooster,
+          addresses.mainnet.OETHProxy,
+          addresses.mainnet.WETH,
+          addresses.mainnet.CVXRewardsPool,
+          tokenAddress,
+          58 // TODO: depositor token address
+        ]
+      )
   );
+  console.log("Initialized ConvexETHMetaStrategy");
+  await withConfirmation(
+    cConvexETHMetaStrategy.connect(sDeployer).transferGovernance(guardianAddr)
+  );
+  console.log(`ConvexETHMetaStrategy transferGovernance(${guardianAddr} called`);
+
+  // await withConfirmation(
+  //   cVault.connect(sDeployer).approveStrategy(cConvexETHMetaStrategy.address)
+  // );
 
   // await withConfirmation(
   //   cVault
   //     .connect(sDeployer)
   //     .setAssetDefaultStrategy(
   //       addresses.mainnet.frxETH,
-  //       cCurveETHStrategyProxy.address
+  //       cConvexETHMetaStrategyProxy.address
   //     )
   // );
 
   return [
     {
       // Claim Vault governance
-      contract: cCurveETHStrategy,
+      contract: cConvexETHMetaStrategy,
       signature: "claimGovernance()",
       args: [],
     },
@@ -178,7 +194,8 @@ const deployCurve = async ({
   );
 
   const gaugeAddress = "0x" + gaugeTx.receipt.logs[0].data.substr(2 + 64 * 2 + 24, 40);
-  console.log("gaugeAddress", gaugeAddress)
+
+  console.log("Gauge deployed to address: ", gaugeAddress)
 
   const gaugeControllerTx = await withConfirmation(gaugeController
     .connect(sGaugeControllerAdmin)["add_gauge(address,int128)"](gaugeAddress, 0)
@@ -189,14 +206,14 @@ const deployCurve = async ({
     .change_gauge_weight(gaugeAddress, 100, { gasLimit: 2000000 })
   );
 
-  console.log("gaugeControllerTx", gaugeControllerTx)
-
   const convexTx = await withConfirmation(cConvexPoolManager
     .connect(sDeployer)["addPool(address)"](gaugeAddress)
   );
 
-  console.log("convexTx", convexTx);
-
-  return [
-  ];
+  return {
+    actions: [],
+    tokenAddress,
+    poolAddress,
+    gaugeAddress
+  }
 };

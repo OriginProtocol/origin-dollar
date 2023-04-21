@@ -128,6 +128,7 @@ async function defaultFixture() {
     dai,
     tusd,
     usdc,
+    weth,
     ogn,
     ogv,
     rewardsSource,
@@ -175,13 +176,16 @@ async function defaultFixture() {
     cvxBooster,
     cvxRewardPool,
     LUSDMetaStrategyProxy,
-    LUSDMetaStrategy;
+    LUSDMetaStrategy,
+    ConvexEthMetaStrategyProxy,
+    ConvexEthMetaStrategy;
 
   if (isFork) {
     usdt = await ethers.getContractAt(usdtAbi, addresses.mainnet.USDT);
     dai = await ethers.getContractAt(daiAbi, addresses.mainnet.DAI);
     tusd = await ethers.getContractAt(erc20Abi, addresses.mainnet.TUSD);
     usdc = await ethers.getContractAt(erc20Abi, addresses.mainnet.USDC);
+    weth = await ethers.getContractAt(erc20Abi, addresses.mainnet.WETH);
     cusdt = await ethers.getContractAt(erc20Abi, addresses.mainnet.cUSDT);
     cdai = await ethers.getContractAt(erc20Abi, addresses.mainnet.cDAI);
     cusdc = await ethers.getContractAt(erc20Abi, addresses.mainnet.cUSDC);
@@ -248,6 +252,7 @@ async function defaultFixture() {
     dai = await ethers.getContract("MockDAI");
     tusd = await ethers.getContract("MockTUSD");
     usdc = await ethers.getContract("MockUSDC");
+    weth = await ethers.getContract("MockWETH");
     ogn = await ethers.getContract("MockOGN");
     LUSD = await ethers.getContract("MockLUSD");
     ogv = await ethers.getContract("MockOGV");
@@ -323,6 +328,15 @@ async function defaultFixture() {
       LUSDMetaStrategyProxy.address
     );
   }
+
+  ConvexEthMetaStrategyProxy = await ethers.getContract(
+    "ConvexEthMetaStrategyProxy"
+  );
+  ConvexEthMetaStrategy = await ethers.getContractAt(
+    "ConvexEthMetaStrategy",
+    ConvexEthMetaStrategyProxy.address
+  );
+    
   if (!isFork) {
     const assetAddresses = await getAssetAddresses(deployments);
 
@@ -408,6 +422,7 @@ async function defaultFixture() {
     usdc,
     ogn,
     LUSD,
+    weth,
     ogv,
     reth,
     rewardsSource,
@@ -437,6 +452,7 @@ async function defaultFixture() {
     convexStrategy,
     OUSDmetaStrategy,
     LUSDMetaStrategy,
+    ConvexEthMetaStrategy,
     morphoCompoundStrategy,
     morphoAaveStrategy,
     cvx,
@@ -998,12 +1014,34 @@ async function convexLUSDMetaVaultFixture() {
       fixture.LUSDMetaStrategy.address
     );
 
+  return fixture;
+}
+
+/**
+ * Configure a Vault with only the OETH/(W)ETH Curve Metastrategy.
+ */
+async function convexOETHMetaVaultFixture() {
+  const fixture = await loadFixture(defaultFixture);
+
+  const { governorAddr } = await getNamedAccounts();
+  const sGovernor = await ethers.provider.getSigner(governorAddr);
+
+  // Add Convex Meta strategy
+  await fixture.vault
+    .connect(sGovernor)
+    .approveStrategy(fixture.ConvexEthMetaStrategy.address);
+
+  await fixture.harvester
+    .connect(sGovernor)
+    .setSupportedStrategy(fixture.ConvexEthMetaStrategy.address, true);
+
   await fixture.vault
     .connect(sGovernor)
     .setAssetDefaultStrategy(
-      fixture.usdc.address,
-      fixture.LUSDMetaStrategy.address
+      fixture.weth.address,
+      fixture.ConvexEthMetaStrategy.address
     );
+
   return fixture;
 }
 
@@ -1260,6 +1298,7 @@ module.exports = {
   threepoolVaultFixture,
   convexVaultFixture,
   convexMetaVaultFixture,
+  convexOETHMetaVaultFixture,
   convexGeneralizedMetaForkedFixture,
   convexLUSDMetaVaultFixture,
   morphoCompoundFixture,
