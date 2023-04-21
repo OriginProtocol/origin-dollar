@@ -336,7 +336,7 @@ async function defaultFixture() {
     "ConvexEthMetaStrategy",
     ConvexEthMetaStrategyProxy.address
   );
-    
+
   if (!isFork) {
     const assetAddresses = await getAssetAddresses(deployments);
 
@@ -1023,24 +1023,33 @@ async function convexLUSDMetaVaultFixture() {
 async function convexOETHMetaVaultFixture() {
   const fixture = await loadFixture(defaultFixture);
 
-  const { governorAddr } = await getNamedAccounts();
-  const sGovernor = await ethers.provider.getSigner(governorAddr);
+  const { guardianAddr } = await getNamedAccounts();
+  const sGuardian = await ethers.provider.getSigner(guardianAddr);
 
   // Add Convex Meta strategy
-  await fixture.vault
-    .connect(sGovernor)
+  await fixture.oethVault
+    .connect(sGuardian)
     .approveStrategy(fixture.ConvexEthMetaStrategy.address);
 
-  await fixture.harvester
-    .connect(sGovernor)
-    .setSupportedStrategy(fixture.ConvexEthMetaStrategy.address, true);
+  // await fixture.harvester
+  //   .connect(sGuardian)
+  //   .setSupportedStrategy(fixture.ConvexEthMetaStrategy.address, true);
 
-  await fixture.vault
-    .connect(sGovernor)
+  await fixture.oethVault
+    .connect(sGuardian)
     .setAssetDefaultStrategy(
       fixture.weth.address,
       fixture.ConvexEthMetaStrategy.address
     );
+
+  await fixture.oethVault
+      .connect(sGuardian)
+      .setOusdMetaStrategy(fixture.ConvexEthMetaStrategy.address);
+
+    // set OETH mint threshold to 25k
+    await fixture.oethVault
+      .connect(sGuardian)
+      .setNetOusdMintForStrategyThreshold(utils.parseUnits("25", 21));
 
   return fixture;
 }

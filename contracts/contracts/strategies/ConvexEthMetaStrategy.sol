@@ -281,7 +281,7 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         override
         returns (uint256 balance)
     {
-        require(_asset != address(poolWETHToken), "Unsupported asset");
+        require(_asset == address(poolWETHToken), "Unsupported asset");
         // LP tokens in this contract. This should generally be nothing as we
         // should always stake the full balance in the Gauge, but include for
         // safety

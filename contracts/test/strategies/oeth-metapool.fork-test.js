@@ -25,8 +25,10 @@ async function mintTest(fixture, user, asset, amount = "3") {
   const { oethVault, oeth, weth, ConvexEthMetaStrategy, cvxRewardPool } = fixture;
 
   const unitAmount = await units(amount, asset);
-  
+
+  console.error("allocate")
   await oethVault.connect(user).allocate();
+  console.error("allocate2")
   await oethVault.connect(user).rebase();
 
   const currentSupply = await oeth.totalSupply();
