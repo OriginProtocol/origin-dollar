@@ -249,27 +249,30 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
     ****************************************/
 
     /// @inheritdoc InitializableAbstractStrategy
-    function deposit(address _asset, uint256 _amount)
+    function deposit(address, uint256)
         external
         override
         onlyVault
         nonReentrant
     {
-        onlyPoolTokens(_asset);
-
-        if (
-            _asset == token0
-                ? (_amount > minDepositThreshold0)
-                : (_amount > minDepositThreshold1)
-        ) {
-            IVault(vaultAddress).depositToUniswapV3Reserve(_asset, _amount);
-            // Not emitting Deposit event since the Reserve strategy would do so
-        }
+        /**
+         * Uniswap V3 strategies are never meant to be default strategies.
+         * By design, they cannot hold any funds in the contract. When it needs
+         * funds to provide liquidity, it'll pull the required amounts from the
+         * reserve strategies. So, route any deposits to the reserve strategies
+         */
+        revert("Direct deposits disabled on UniswapV3Strategy");
     }
 
     /// @inheritdoc InitializableAbstractStrategy
     function depositAll() external override onlyVault nonReentrant {
-        _depositAll();
+        /**
+         * Uniswap V3 strategies are never meant to be default strategies.
+         * By design, they cannot hold any funds in the contract. When it needs
+         * funds to provide liquidity, it'll pull the required amounts from the
+         * reserve strategies. So, route any deposits to the reserve strategies
+         */
+        revert("Direct deposits disabled on UniswapV3Strategy");
     }
 
     /// @inheritdoc InitializableAbstractStrategy
@@ -280,27 +283,10 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
     ) external override onlyVault nonReentrant {
         onlyPoolTokens(_asset);
 
-        IERC20 asset = IERC20(_asset);
-        uint256 selfBalance = asset.balanceOf(address(this));
+        require(activeTokenId == 0, "Active position still open");
 
-        if (selfBalance < amount) {
-            require(activeTokenId > 0, "Liquidity error");
-
-            // Delegatecall to `UniswapV3LiquidityManager` to remove
-            // liquidity from active LP position
-            // solhint-disable-next-line no-unused-vars
-            (bool success, bytes memory data) = address(_self).delegatecall(
-                abi.encodeWithSignature(
-                    "withdrawAssetFromActivePositionOnlyVault(address,uint256)",
-                    _asset,
-                    amount - selfBalance
-                )
-            );
-            require(success, "DelegateCall to close position failed");
-        }
-
-        // Transfer requested amount
-        asset.safeTransfer(recipient, amount);
+        // Transfer requested amount, will revert when low on balance
+        IERC20(_asset).safeTransfer(recipient, amount);
         emit Withdrawal(_asset, _asset, amount);
     }
 

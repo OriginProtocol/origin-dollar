@@ -761,9 +761,6 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
         const currentSupply = await ousd.totalSupply();
         const ousdBalance = await ousd.balanceOf(user.address);
         const tokenBalance = await asset.balanceOf(user.address);
-        const reserveTokenBalance = await reserveStrategy.checkBalance(
-          asset.address
-        );
 
         // await asset.connect(user).approve(vault.address, tokenAmount)
         await vault.connect(user).mint(asset.address, tokenAmount, 0);
@@ -772,21 +769,6 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
           currentSupply.add(ousdAmount),
           "Total supply mismatch"
         );
-        if (asset == dai) {
-          // DAI is unsupported and should not be deposited in reserve strategy
-          await expect(reserveStrategy).to.have.an.assetBalanceOf(
-            reserveTokenBalance,
-            asset,
-            "Expected reserve strategy to not support DAI"
-          );
-        } else {
-          await expect(reserveStrategy).to.have.an.assetBalanceOf(
-            reserveTokenBalance.add(tokenAmount),
-            asset,
-            "Expected reserve strategy to have received the other token"
-          );
-        }
-
         await expect(user).to.have.an.approxBalanceWithToleranceOf(
           ousdBalance.add(ousdAmount),
           ousd,

@@ -54,107 +54,6 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
     }
 
     /***************************************
-            Withdraw
-    ****************************************/
-    /**
-     * @notice Calculates the amount liquidity that needs to be removed
-     *          to Withdraw specified amount of the given asset.
-     *
-     * @param position  Position object
-     * @param asset    Token needed
-     * @param amount    Minimum amount to liquidate
-     *
-     * @return liquidity    Liquidity to burn
-     * @return minAmount0   Minimum amount0 to expect
-     * @return minAmount1   Minimum amount1 to expect
-     */
-    function _calculateLiquidityToWithdraw(
-        Position memory position,
-        address asset,
-        uint256 amount
-    )
-        internal
-        view
-        returns (
-            uint128 liquidity,
-            uint256 minAmount0,
-            uint256 minAmount1
-        )
-    {
-        (uint160 sqrtRatioX96, , , , , , ) = pool.slot0();
-
-        // Total amount in Liquidity pools
-        (uint256 totalAmount0, uint256 totalAmount1) = helper
-            .getAmountsForLiquidity(
-                sqrtRatioX96,
-                position.sqrtRatioAX96,
-                position.sqrtRatioBX96,
-                position.liquidity
-            );
-
-        if (asset == token0) {
-            minAmount0 = amount;
-            minAmount1 = totalAmount1 / (totalAmount0 / amount);
-            liquidity = helper.getLiquidityForAmounts(
-                sqrtRatioX96,
-                position.sqrtRatioAX96,
-                position.sqrtRatioBX96,
-                amount,
-                minAmount1
-            );
-        } else if (asset == token1) {
-            minAmount0 = totalAmount0 / (totalAmount1 / amount);
-            minAmount1 = amount;
-            liquidity = helper.getLiquidityForAmounts(
-                sqrtRatioX96,
-                position.sqrtRatioAX96,
-                position.sqrtRatioBX96,
-                minAmount0,
-                amount
-            );
-        }
-    }
-
-    /**
-     * @notice Liquidiates active position to remove required amount of give asset
-     * @dev Doesn't have non-Reentrant modifier since it's supposed to be delegatecalled
-     *      only from `UniswapV3Strategy.withdraw` which already has a nonReentrant check
-     *      and the storage is shared between these two contract.
-     *
-     * @param asset Asset address
-     * @param amount Min amount of token to receive
-     */
-    function withdrawAssetFromActivePositionOnlyVault(
-        address asset,
-        uint256 amount
-    ) external onlyVault {
-        Position memory position = tokenIdToPosition[activeTokenId];
-        require(position.exists && position.liquidity > 0, "Liquidity error");
-
-        // Figure out liquidity to burn
-        (
-            uint128 liquidity,
-            uint256 minAmount0,
-            uint256 minAmount1
-        ) = _calculateLiquidityToWithdraw(position, asset, amount);
-
-        // NOTE: The minAmount is calculated using the current pool price.
-        // It can be tilted and a large amount OUSD can be redeemed to make the strategy
-        // liquidate positions on the tilted pool.
-        // However, we don't plan on making this the default strategy. So, this method
-        // would never be invoked on prod.
-        // TODO: Should we still a slippage (just in case it becomes a default strategy in future)?
-
-        // Liquidiate active position
-        _decreasePositionLiquidity(
-            position.tokenId,
-            liquidity,
-            minAmount0,
-            minAmount1
-        );
-    }
-
-    /***************************************
             Rebalance
     ****************************************/
     /// Reverts if active position's value is greater than maxTVL
@@ -820,7 +719,6 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
     {
         // Since this is called by the Vault, we cannot pass min redeem amounts
         // without complicating the code of the Vault. So, passing 0 instead.
-        // A better way
         return _closePosition(activeTokenId, 0, 0);
 
         // Intentionally skipping TVL check since removing liquidity won't cause it to fail
