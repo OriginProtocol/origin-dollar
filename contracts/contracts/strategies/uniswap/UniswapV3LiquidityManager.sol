@@ -443,6 +443,8 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
 
         (tokenId, liquidity, amount0, amount1) = positionManager.mint(params);
 
+        require(!tokenIdToPosition[tokenId].exists, "Duplicate position");
+
         ticksToTokenId[tickKey] = tokenId;
         tokenIdToPosition[tokenId] = Position({
             exists: true,
