@@ -542,7 +542,7 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         // Withdraw enough funds from Reserve strategies
         _ensureAssetBalances(desiredAmount0, desiredAmount1);
 
-        _increasePositionLiquidity(
+        (, amount0, amount1) = _increasePositionLiquidity(
             activeTokenId,
             desiredAmount0,
             desiredAmount1,
