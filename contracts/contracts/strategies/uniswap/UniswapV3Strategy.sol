@@ -37,7 +37,9 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
         address _nonfungiblePositionManager,
         address _helper,
         address _swapRouter,
-        address _operator
+        address _operator,
+        uint256 _maxTVL,
+        uint256 _maxValueLostThreshold
     ) external onlyGovernor initializer {
         // NOTE: _self should always be the address of the proxy.
         // This is used to do `delegecall` between the this contract and
@@ -68,6 +70,8 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
         );
 
         _setOperator(_operator);
+        _setMaxTVL(_maxTVL);
+        _setMaxPositionValueLostThreshold(_maxValueLostThreshold);
     }
 
     /***************************************
@@ -183,20 +187,38 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
      * @param _maxTVL Maximum amount the strategy can have deployed in the Uniswap pool
      */
     function setMaxTVL(uint256 _maxTVL) external onlyGovernorOrStrategist {
+        _setMaxTVL(_maxTVL);
+    }
+
+    /**
+     * @notice Change the maxTVL amount threshold
+     * @param _maxTVL Maximum amount the strategy can have deployed in the Uniswap pool
+     */
+    function _setMaxTVL(uint256 _maxTVL) internal {
         maxTVL = _maxTVL;
         emit MaxTVLChanged(_maxTVL);
     }
 
     /**
      * @notice Maximum value of loss the LP positions can incur before strategy shuts off rebalances
-     * @param _maxLossThreshold Maximum amount in 18 decimals
+     * @param _maxValueLostThreshold Maximum amount in 18 decimals
      */
-    function setMaxPositionValueLostThreshold(uint256 _maxLossThreshold)
+    function setMaxPositionValueLostThreshold(uint256 _maxValueLostThreshold)
         external
         onlyGovernorOrStrategist
     {
-        maxPositionValueLostThreshold = _maxLossThreshold;
-        emit MaxValueLostThresholdChanged(_maxLossThreshold);
+        _setMaxPositionValueLostThreshold(_maxValueLostThreshold);
+    }
+
+    /**
+     * @notice Maximum value of loss the LP positions can incur before strategy shuts off rebalances
+     * @param _maxValueLostThreshold Maximum amount in 18 decimals
+     */
+    function _setMaxPositionValueLostThreshold(uint256 _maxValueLostThreshold)
+        internal
+    {
+        maxPositionValueLostThreshold = _maxValueLostThreshold;
+        emit MaxValueLostThresholdChanged(_maxValueLostThreshold);
     }
 
     /**
