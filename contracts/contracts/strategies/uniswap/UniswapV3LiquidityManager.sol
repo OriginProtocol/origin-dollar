@@ -701,7 +701,9 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
         nonReentrant
         returns (uint256 amount0, uint256 amount1)
     {
-        return _closePosition(tokenId, minAmount0, minAmount1);
+        (amount0, amount1) = _closePosition(tokenId, minAmount0, minAmount1);
+
+        _depositAll();
 
         // Intentionally skipping TVL check since removing liquidity won't cause it to fail
     }
@@ -719,7 +721,7 @@ contract UniswapV3LiquidityManager is UniswapV3StrategyStorage {
     {
         // Since this is called by the Vault, we cannot pass min redeem amounts
         // without complicating the code of the Vault. So, passing 0 instead.
-        return _closePosition(activeTokenId, 0, 0);
+        (amount0, amount1) = _closePosition(activeTokenId, 0, 0);
 
         // Intentionally skipping TVL check since removing liquidity won't cause it to fail
     }
