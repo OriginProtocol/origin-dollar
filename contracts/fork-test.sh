@@ -69,12 +69,15 @@ main()
         cp -r deployments/localhost deployments/hardhat
     fi
 
-    if [ -z "$1" ]; then
-        # Run all files with `.fork-test.js` suffix when no param is given
-        params+="test/**/*.fork-test.js"
+    #if [ -z "$1" ] || [ "$1" = --* ]; then
+    if [ -z "$1" ] || [[ $1 == --* ]]; then
+        # Run all files with `.fork-test.js` suffix when no file name param is given
+        # pass all other params along
+        params+="test/**/*.fork-test.js $@"
     else
         # Run specifc files when a param is given
         params+=($1)
+        params+=" $@"
     fi
 
     FORK=true IS_TEST=true npx --no-install hardhat test ${params[@]}
