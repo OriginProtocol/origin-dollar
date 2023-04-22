@@ -83,6 +83,8 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         wethCoinIndex = uint128(_getCoinIndex(initConfig.wethAddress));
         oethCoinIndex = uint128(_getCoinIndex(initConfig.oethAddress));
 
+        _approveAsset(address(poolOETHToken));
+
         super._initialize(
             initConfig.curvePoolAddress,
             initConfig.vaultAddress,
@@ -151,6 +153,8 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         uint256 minMintAmount = valueInLpTokens.mulTruncate(
             uint256(1e18) - MAX_SLIPPAGE
         );
+
+        uint256 balance = poolOETHToken.balanceOf(address(this));
         // Do the deposit to Curve ETH pool
         uint256 lpDeposited = curvePool.add_liquidity(_amounts, minMintAmount);
         _lpDeposit(lpDeposited);
