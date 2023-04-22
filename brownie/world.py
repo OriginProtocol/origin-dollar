@@ -27,7 +27,9 @@ def load_contract(name, address):
 
 frax = load_contract('ERC20', FRAX)
 busd = load_contract('ERC20', BUSD)
+weth = load_contract('ERC20', WETH)
 ousd = load_contract('ousd', OUSD)
+oeth = load_contract('ousd', OETH)
 usdt = load_contract('usdt', USDT)
 usdc = load_contract('usdc', USDC)
 dai = load_contract('dai', DAI)
