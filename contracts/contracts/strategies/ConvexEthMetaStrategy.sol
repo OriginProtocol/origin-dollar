@@ -40,7 +40,7 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
     int256[50] private __reserved;
 
     // used to circumvent the stack too deep issue
-    struct InitConfig {
+    struct InitialiseConfig {
         address curvePoolAddress; //Address of the Curve pool
         address vaultAddress; //Address of the vault
         address cvxDepositorAddress; //Address of the Convex depositor(AKA booster) for this pool
@@ -65,7 +65,7 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         address[] calldata _rewardTokenAddresses, // CRV + CVX
         address[] calldata _assets,
         address[] calldata _pTokens,
-        InitConfig calldata initConfig
+        InitialiseConfig calldata initConfig
     ) external onlyGovernor initializer {
         require(_assets.length == 1, "Must have exactly one asset");
         // Should be set prior to abstract initialize call otherwise
@@ -83,8 +83,6 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         wethCoinIndex = uint128(_getCoinIndex(initConfig.wethAddress));
         oethCoinIndex = uint128(_getCoinIndex(initConfig.oethAddress));
 
-        _approveAsset(address(poolOETHToken));
-
         super._initialize(
             initConfig.curvePoolAddress,
             initConfig.vaultAddress,
@@ -92,6 +90,11 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
             _assets,
             _pTokens
         );
+
+        /* needs to be called after super._initialize so that the platformAddress
+         * is correctly set
+         */
+         _approveBase();
     }
 
     /**
@@ -156,7 +159,8 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
 
         uint256 balance = poolOETHToken.balanceOf(address(this));
         // Do the deposit to Curve ETH pool
-        uint256 lpDeposited = curvePool.add_liquidity(_amounts, minMintAmount);
+        //uint256 lpDeposited = curvePool.add_liquidity(_amounts, minMintAmount);
+        uint256 lpDeposited = curvePool.add_liquidity(_amounts, uint256(0));
         _lpDeposit(lpDeposited);
     }
 
@@ -339,9 +343,16 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
 
     function _approveAsset(address _asset) internal {
         IERC20 asset = IERC20(_asset);
-        // 3Pool for asset (required for adding liquidity)
+        // curve pool for asset (required for adding liquidity)
         asset.safeApprove(platformAddress, 0);
         asset.safeApprove(platformAddress, type(uint256).max);
+    }
+
+    function _approveBase() internal {
+        _approveAsset(address(poolOETHToken));
+
+        lpToken.safeApprove(cvxDepositorAddress, 0);
+        lpToken.safeApprove(cvxDepositorAddress, type(uint256).max);
     }
 
     /**

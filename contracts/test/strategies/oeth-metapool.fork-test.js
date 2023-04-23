@@ -25,22 +25,22 @@ async function mintTest(fixture, user, asset, amount = "3") {
   const { oethVault, oeth, weth, ConvexEthMetaStrategy, cvxRewardPool } = fixture;
 
   const unitAmount = await units(amount, asset);
-  
-  console.error("rebase")
+
   await oethVault.connect(user).rebase();
-  console.error("allocate")
   await oethVault.connect(user).allocate();
-  console.error("allocate2")
 
   const currentSupply = await oeth.totalSupply();
   const currentBalance = await oeth.connect(user).balanceOf(user.address);
 
   const currentRewardPoolBalance = await cvxRewardPool
     .connect(user)
-    .balanceOf(OUSDmetaStrategy.address);
+    .balanceOf(ConvexEthMetaStrategy.address);
 
+  await asset.connect(user).approve(oethVault.address, unitAmount)
   await oethVault.connect(user).mint(asset.address, unitAmount, 0);
   await oethVault.connect(user).allocate();
+
+  console.error((await oeth.balanceOf(user.address)).toString() )
 }
 
 // 

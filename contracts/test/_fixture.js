@@ -1022,9 +1022,20 @@ async function convexLUSDMetaVaultFixture() {
  */
 async function convexOETHMetaVaultFixture() {
   const fixture = await loadFixture(defaultFixture);
-
   const { guardianAddr } = await getNamedAccounts();
   const sGuardian = await ethers.provider.getSigner(guardianAddr);
+
+  await impersonateAndFundAddress(
+    fixture.weth.address,
+    [
+      "0x7373BD8512d17FC53e9b39c9655A95c9813A0aB1",
+      "0x821A96fbD4465D02726EDbAa936A0d6d1032dE46",
+      "0x4b7fEcEffE3b14fFD522e72b711B087f08BD98Ab",
+      "0x204bcc7A3da640EF95cB01a15c63938C6B878e9e",
+    ],
+    // Josh is loaded with weth
+    fixture.josh.getAddress()
+  );
 
   // Add Convex Meta strategy
   await fixture.oethVault

@@ -29,14 +29,20 @@ module.exports = deploymentWithGuardianGovernor(
       ethers,
     });
 
+    // actions = actions.concat(await reDeployOETH({
+    //   deployWithConfirmation,
+    //   withConfirmation,
+    //   ethers
+    // }));
+
     actions = actions.concat(await deployConvexETHMetaStrategy({
-        deployWithConfirmation,
-        withConfirmation,
-        ethers,
-        tokenAddress,
-        poolAddress,
-        gaugeAddress,
-        poolId
+      deployWithConfirmation,
+      withConfirmation,
+      ethers,
+      tokenAddress,
+      poolAddress,
+      gaugeAddress,
+      poolId
       })
     );
 
@@ -141,6 +147,24 @@ const deployConvexETHMetaStrategy = async ({
   ];
 };
 
+// const reDeployOETH = async ({
+//   deployWithConfirmation,
+//   withConfirmation,
+//   ethers,
+// }) => {
+//   const cOETHProxy = await ethers.getContract("OETHProxy");
+//   const dOETH = await deployWithConfirmation("OETH");
+// 
+//   return [
+//     {
+//       // Upgrade OETH proxy
+//       contract: cOETHProxy,
+//       signature: "upgradeTo(address)",
+//       args: [dOETH.address],
+//     }
+//   ];
+// };
+
 const deployCurve = async ({
   deployWithConfirmation,
   withConfirmation,
@@ -220,13 +244,23 @@ const deployCurve = async ({
   // add liquidity to Curve pool otherwise multiple functions fail when called
   const oeth = new Contract(addresses.mainnet.OETHProxy, erc20Abi);
   const weth = new Contract(addresses.mainnet.WETH, erc20Abi);
+  const reth = new Contract(addresses.mainnet.rETH, erc20Abi);
   const curvePool = new Contract(poolAddress, curvePoolAbi);
   const weth_whale = "0x44cc771fbe10dea3836f37918cf89368589b6316";
+  const reth_whale = "0x5313b39bf226ced2332C81eB97BB28c6fD50d1a3";
+
   await impersonateAccount(weth_whale);
   const sWethWhale = await ethers.provider.getSigner(weth_whale);
+  await impersonateAccount(reth_whale);
+  const sRethWhale = await ethers.provider.getSigner(reth_whale);
 
-  await weth.connect(sWethWhale).approve(cVault.address, utils.parseUnits("1", 50))
-  await cVault.connect(sWethWhale).mint(weth.address, utils.parseUnits("100", 18), 0)
+  await reth.connect(sRethWhale).approve(cVault.address, utils.parseUnits("1", 50))
+  const oethToMint = utils.parseUnits("100", 18)
+  await cVault.connect(sRethWhale).mint(reth.address, oethToMint, 0)
+
+  await oeth.connect(sRethWhale).transfer(weth_whale, oethToMint)
+  // await oeth.connect(sRethWhale).approve(sRethWhale.address, utils.parseUnits("1", 50))
+  // await oeth.connect(sRethWhale).transferFrom(sRethWhale.address, weth_whale, oethToMint)
 
   await weth.connect(sWethWhale).approve(poolAddress, utils.parseUnits("1", 50))
   await oeth.connect(sWethWhale).approve(poolAddress, utils.parseUnits("1", 50))
@@ -243,9 +277,6 @@ const deployCurve = async ({
 
   if (tokenAddress.toLowerCase() !== poolInfo.lptoken.toLowerCase())
     new Error("LP token addresses do not match");
-
-  console.log("poolInfo", poolInfo)
-  console.log("tokenAddress", tokenAddress)
 
   return {
     actions: [],
