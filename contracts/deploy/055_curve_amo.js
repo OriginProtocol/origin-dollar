@@ -240,12 +240,15 @@ const deployCurve = async ({
         "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2", // WETH
         "0x856c4Efb76C1D1AE02e20CEB03A2A6a08b0b8dC3", // OETH Proxy
       ],
-      BigNumber.from("20000000"), // A
-      BigNumber.from("10000000000000000"), // gamma
-      BigNumber.from("3000000"), // mid_fee
+      /* Params copied from cbETH pool:
+       * https://etherscan.io/tx/0xaefdbf284442ae2aab0ce85697246371200809483a383a71d3a68bbc30913d25
+       */
+      BigNumber.from("200000000"), // A
+      BigNumber.from("100000000000000"), // gamma
+      BigNumber.from("5000000"), // mid_fee
       BigNumber.from("45000000"), // out_fee
       BigNumber.from("10000000000"), // allowed_extra_profit
-      BigNumber.from("300000000000000000"), // fee_gamma
+      BigNumber.from("5000000000000000"), // fee_gamma
       BigNumber.from("5500000000000"), // adjustment_step
       BigNumber.from("5000000000"), // admin_fee
       BigNumber.from("600"), // ma_half_time
@@ -315,6 +318,9 @@ const deployCurve = async ({
   await curvePool
     .connect(sWethWhale)
     .add_liquidity([utils.parseUnits("50", 18), utils.parseUnits("50", 18)], 0);
+
+  // const tokenContract = new Contract(tokenAddress, erc20Abi);
+  // console.log("LP RECEIVED:", (await tokenContract.connect(sWethWhale).balanceOf(weth_whale)).toString());
 
   // find out the CVX booster PID
   // prettier-ignore
