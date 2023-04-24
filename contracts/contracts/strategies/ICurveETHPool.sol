@@ -16,6 +16,8 @@ interface ICurveETHPool {
 
     function fee() external view returns (uint256);
 
+    function lp_price() external view returns (uint256);
+
     function price_oracle() external view returns (uint256);
 
     function remove_liquidity_one_coin(

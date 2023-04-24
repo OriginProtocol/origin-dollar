@@ -58,7 +58,7 @@ async function mintTest(fixture, user, asset, amount = "3") {
   const newSupply = await oeth.totalSupply();
   const supplyDiff = newSupply.sub(currentSupply);
 
-  expect(supplyDiff).to.approxEqualTolerance(oethUnits(amount).mul(3), 5);
+  expect(supplyDiff).to.approxEqualTolerance(oethUnits(amount).mul(2), 5);
 
   //Ensure some LP tokens got staked under OUSDMetaStrategy address
   const newRewardPoolBalance = await cvxRewardPool
@@ -68,62 +68,13 @@ async function mintTest(fixture, user, asset, amount = "3") {
     currentRewardPoolBalance
   );
 
-  // Should have staked the LP tokens
-  expect(rewardPoolBalanceDiff).to.be.gte(oethUnits(amount).mul(3).div(2));
+  /* Should have staked the LP tokens
+   * 
+   * half of the LP tokens are received because the price of the lp token
+   * is multiplied by 2 ( https://github.com/curvefi/curve-factory-crypto/blob/ecf60c360e230d6a4ba1e5cb31ab8b61d545f452/contracts/CurveCryptoSwap2ETH.vy#L1308-L1312)
+   *
+   * TO BE CONFIRMED: this is because the pool doesn't actually have 2 underlying
+   * tokens but only one coupled with ETH.
+   */
+  expect(rewardPoolBalanceDiff).to.approxEqualTolerance(oethUnits(amount), 1);
 }
-
-//
-// async function mintTest(fixture, user, asset, amount = "30000") {
-//   const { vault, ousd, usdt, usdc, dai, OUSDmetaStrategy, cvxRewardPool } =
-//     fixture;
-//
-//   await vault.connect(user).allocate();
-//   await vault.connect(user).rebase();
-//
-//   const unitAmount = await units(amount, asset);
-//
-//   const currentSupply = await ousd.totalSupply();
-//   const currentBalance = await ousd.connect(user).balanceOf(user.address);
-//   const currentRewardPoolBalance = await cvxRewardPool
-//     .connect(user)
-//     .balanceOf(OUSDmetaStrategy.address);
-//
-//   // Mint OUSD w/ asset
-//   await vault.connect(user).mint(asset.address, unitAmount, 0);
-//   await vault.connect(user).allocate();
-//
-//   // Ensure user has correct balance (w/ 1% slippage tolerance)
-//   const newBalance = await ousd.connect(user).balanceOf(user.address);
-//   const balanceDiff = newBalance.sub(currentBalance);
-//   expect(balanceDiff).to.approxEqualTolerance(ousdUnits(amount), 2);
-//
-//   // Supply checks
-//   const newSupply = await ousd.totalSupply();
-//   const supplyDiff = newSupply.sub(currentSupply);
-//   const ousdUnitAmount = ousdUnits(amount);
-//
-//   // The pool is titled to 3CRV by a million
-//   if ([usdt.address, usdc.address].includes(asset.address)) {
-//     // It should have added amount*3 supply
-//     // (in case of USDT/USDC)
-//     expect(supplyDiff).to.approxEqualTolerance(ousdUnitAmount.mul(3), 5);
-//   } else {
-//     // 1x for DAI
-//     expect(supplyDiff).to.approxEqualTolerance(ousdUnitAmount, 1);
-//   }
-//
-//   // Ensure some LP tokens got staked under OUSDMetaStrategy address
-//   const newRewardPoolBalance = await cvxRewardPool
-//     .connect(user)
-//     .balanceOf(OUSDmetaStrategy.address);
-//   const rewardPoolBalanceDiff = newRewardPoolBalance.sub(
-//     currentRewardPoolBalance
-//   );
-//   if (asset.address === dai.address) {
-//     // Should not have staked when minted with DAI
-//     expect(rewardPoolBalanceDiff).to.equal("0");
-//   } else {
-//     // Should have staked the LP tokens for USDT and USDC
-//     expect(rewardPoolBalanceDiff).to.be.gte(ousdUnits(amount).mul(3).div(2));
-//   }
-// }

@@ -150,7 +150,7 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         _amounts[oethCoinIndex] = oethToAdd;
 
         uint256 valueInLpTokens = (_wethAmount + oethToAdd).divPrecisely(
-            curvePool.get_virtual_price()
+            curvePool.lp_price()
         );
         uint256 minMintAmount = valueInLpTokens.mulTruncate(
             uint256(1e18) - MAX_SLIPPAGE
@@ -158,8 +158,8 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
 
         uint256 balance = poolOETHToken.balanceOf(address(this));
         // Do the deposit to Curve ETH pool
-        //uint256 lpDeposited = curvePool.add_liquidity(_amounts, minMintAmount);
-        uint256 lpDeposited = curvePool.add_liquidity(_amounts, uint256(0));
+        uint256 lpDeposited = curvePool.add_liquidity(_amounts, minMintAmount);
+        //uint256 lpDeposited = curvePool.add_liquidity(_amounts, uint256(0));
         _lpDeposit(lpDeposited);
     }
 
@@ -302,7 +302,7 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         // safety
         uint256 totalPTokens = lpToken.balanceOf(address(this));
         if (totalPTokens > 0) {
-            uint256 virtual_price = curvePool.get_virtual_price();
+            uint256 virtual_price = curvePool.lp_price();
             uint256 value = totalPTokens.mulTruncate(virtual_price);
             // we know 18
             balance = value / ASSET_COUNT;
