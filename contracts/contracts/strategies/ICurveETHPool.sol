@@ -4,7 +4,9 @@ pragma solidity ^0.8.0;
 interface ICurveETHPool {
     function get_virtual_price() external view returns (uint256);
 
-    function add_liquidity(uint256[2] calldata _amounts, uint256 _min) external returns (uint256);
+    function add_liquidity(uint256[2] calldata _amounts, uint256 _min)
+        external
+        returns (uint256);
 
     function balances(uint256) external view returns (uint256);
 

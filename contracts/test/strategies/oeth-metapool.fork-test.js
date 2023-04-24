@@ -1,28 +1,36 @@
 const { expect } = require("chai");
 
 const { loadFixture } = require("ethereum-waffle");
-const { units, ousdUnits, forkOnlyDescribe } = require("../helpers");
+const { units, oethUnits, forkOnlyDescribe } = require("../helpers");
 const { convexOETHMetaVaultFixture } = require("../_fixture");
 
-forkOnlyDescribe(
-  "ForkTest: OETH Curve Metapool Strategy",
-  function () {
-    this.timeout(0);
-    // due to hardhat forked mode timeouts - retry failed tests up to 3 times
-    this.retries(3);
+forkOnlyDescribe("ForkTest: OETH Curve Metapool Strategy", function () {
+  this.timeout(0);
+  // due to hardhat forked mode timeouts - retry failed tests up to 3 times
+  this.retries(3);
 
-    describe("Mint", function () {
-      it("Should stake WETH in Curve guage via metapool", async function () {
-        const fixture = await loadFixture(convexOETHMetaVaultFixture);
-        const { josh, weth } = fixture;
-        await mintTest(fixture, josh, weth, "5");
-      });
+  describe("Mint", function () {
+    it("Should stake WETH in Curve guage via metapool", async function () {
+      const fixture = await loadFixture(convexOETHMetaVaultFixture);
+      console.log(
+        "fixture.cvxRewardStakerAddress",
+        fixture.cvxRewardStakerAddress
+      );
+      const { josh, weth } = fixture;
+      await mintTest(fixture, josh, weth, "5");
     });
-  }
-);
+  });
+});
 
 async function mintTest(fixture, user, asset, amount = "3") {
-  const { oethVault, oeth, weth, ConvexEthMetaStrategy, cvxRewardPool } = fixture;
+  const {
+    oethVault,
+    oeth,
+    weth,
+    cvxRewardStakerAddress,
+    ConvexEthMetaStrategy,
+    cvxRewardPool,
+  } = fixture;
 
   const unitAmount = await units(amount, asset);
 
@@ -36,43 +44,64 @@ async function mintTest(fixture, user, asset, amount = "3") {
     .connect(user)
     .balanceOf(ConvexEthMetaStrategy.address);
 
-  await asset.connect(user).approve(oethVault.address, unitAmount)
+  // Mint OUSD w/ asset
+  await asset.connect(user).approve(oethVault.address, unitAmount);
   await oethVault.connect(user).mint(asset.address, unitAmount, 0);
   await oethVault.connect(user).allocate();
 
-  console.error((await oeth.balanceOf(user.address)).toString() )
+  // Ensure user has correct balance (w/ 1% slippage tolerance)
+  const newBalance = await oeth.connect(user).balanceOf(user.address);
+  const balanceDiff = newBalance.sub(currentBalance);
+  expect(balanceDiff).to.approxEqualTolerance(oethUnits(amount), 1);
+
+  // Supply checks
+  const newSupply = await oeth.totalSupply();
+  const supplyDiff = newSupply.sub(currentSupply);
+
+  expect(supplyDiff).to.approxEqualTolerance(oethUnits(amount).mul(3), 5);
+
+  //Ensure some LP tokens got staked under OUSDMetaStrategy address
+  const newRewardPoolBalance = await cvxRewardPool
+    .connect(user)
+    .balanceOf(ConvexEthMetaStrategy.address);
+  const rewardPoolBalanceDiff = newRewardPoolBalance.sub(
+    currentRewardPoolBalance
+  );
+
+  // Should have staked the LP tokens
+  expect(rewardPoolBalanceDiff).to.be.gte(oethUnits(amount).mul(3).div(2));
 }
 
-// 
+//
 // async function mintTest(fixture, user, asset, amount = "30000") {
 //   const { vault, ousd, usdt, usdc, dai, OUSDmetaStrategy, cvxRewardPool } =
 //     fixture;
-// 
+//
 //   await vault.connect(user).allocate();
 //   await vault.connect(user).rebase();
-// 
+//
 //   const unitAmount = await units(amount, asset);
-// 
+//
 //   const currentSupply = await ousd.totalSupply();
 //   const currentBalance = await ousd.connect(user).balanceOf(user.address);
 //   const currentRewardPoolBalance = await cvxRewardPool
 //     .connect(user)
 //     .balanceOf(OUSDmetaStrategy.address);
-// 
+//
 //   // Mint OUSD w/ asset
 //   await vault.connect(user).mint(asset.address, unitAmount, 0);
 //   await vault.connect(user).allocate();
-// 
+//
 //   // Ensure user has correct balance (w/ 1% slippage tolerance)
 //   const newBalance = await ousd.connect(user).balanceOf(user.address);
 //   const balanceDiff = newBalance.sub(currentBalance);
 //   expect(balanceDiff).to.approxEqualTolerance(ousdUnits(amount), 2);
-// 
+//
 //   // Supply checks
 //   const newSupply = await ousd.totalSupply();
 //   const supplyDiff = newSupply.sub(currentSupply);
 //   const ousdUnitAmount = ousdUnits(amount);
-// 
+//
 //   // The pool is titled to 3CRV by a million
 //   if ([usdt.address, usdc.address].includes(asset.address)) {
 //     // It should have added amount*3 supply
@@ -82,7 +111,7 @@ async function mintTest(fixture, user, asset, amount = "3") {
 //     // 1x for DAI
 //     expect(supplyDiff).to.approxEqualTolerance(ousdUnitAmount, 1);
 //   }
-// 
+//
 //   // Ensure some LP tokens got staked under OUSDMetaStrategy address
 //   const newRewardPoolBalance = await cvxRewardPool
 //     .connect(user)

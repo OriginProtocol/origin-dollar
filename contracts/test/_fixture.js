@@ -1054,13 +1054,19 @@ async function convexOETHMetaVaultFixture() {
     );
 
   await fixture.oethVault
-      .connect(sGuardian)
-      .setOusdMetaStrategy(fixture.ConvexEthMetaStrategy.address);
+    .connect(sGuardian)
+    .setOusdMetaStrategy(fixture.ConvexEthMetaStrategy.address);
 
-    // set OETH mint threshold to 25k
-    await fixture.oethVault
-      .connect(sGuardian)
-      .setNetOusdMintForStrategyThreshold(utils.parseUnits("25", 21));
+  // set OETH mint threshold to 25k
+  await fixture.oethVault
+    .connect(sGuardian)
+    .setNetOusdMintForStrategyThreshold(utils.parseUnits("25", 21));
+
+  // TODO: hardcode this once deployed to the mainnet
+  fixture.cvxRewardPool = await ethers.getContractAt(
+    "IRewardStaking",
+    await fixture.ConvexEthMetaStrategy.cvxRewardStakerAddress()
+  );
 
   return fixture;
 }

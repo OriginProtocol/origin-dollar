@@ -24,7 +24,8 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
     uint256 internal constant MAX_SLIPPAGE = 1e16; // 1%, same as the Curve UI
     uint256 internal constant ASSET_COUNT = 3;
     address internal cvxDepositorAddress;
-    address internal cvxRewardStakerAddress;
+    // TODO change this to internal once this address is immutable
+    address public cvxRewardStakerAddress;
     uint256 internal cvxDepositorPTokenId;
     ICurveETHPool internal curvePool;
     IERC20 internal lpToken;
@@ -94,7 +95,7 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         /* needs to be called after super._initialize so that the platformAddress
          * is correctly set
          */
-         _approveBase();
+        _approveBase();
     }
 
     /**
@@ -111,9 +112,7 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         _deposit(_weth, _amount);
     }
 
-    function _deposit(address _weth, uint256 _wethAmount)
-        internal
-    {
+    function _deposit(address _weth, uint256 _wethAmount) internal {
         require(_wethAmount > 0, "Must deposit something");
         require(_weth == address(poolWETHToken), "Can only deposit WETH");
 
@@ -124,8 +123,8 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
             _max(
                 0,
                 int256(curvePool.balances(wethCoinIndex)) +
-                int256(_wethAmount) -
-                int256(curvePool.balances(oethCoinIndex)) 
+                    int256(_wethAmount) -
+                    int256(curvePool.balances(oethCoinIndex))
             )
         );
 
@@ -175,11 +174,14 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
     }
 
     function _lpDeposit(uint256 lpToDeposit) internal {
-        require (IConvexDeposits(cvxDepositorAddress).deposit(
-            cvxDepositorPTokenId,
-            lpToDeposit,
-            true // Deposit with staking
-        ), "Depositing LP to Convex not successful");
+        require(
+            IConvexDeposits(cvxDepositorAddress).deposit(
+                cvxDepositorPTokenId,
+                lpToDeposit,
+                true // Deposit with staking
+            ),
+            "Depositing LP to Convex not successful"
+        );
     }
 
     /**
@@ -195,7 +197,7 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
     ) external override onlyVault nonReentrant {
         require(_amount > 0, "Invalid amount");
         require(_weth == address(poolWETHToken), "Can only withdraw WETH");
-        
+
         emit Withdrawal(_weth, address(lpToken), _amount);
         uint256 requiredLpTokens = calcTokenToBurn(_amount);
 
@@ -208,7 +210,11 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         IERC20(_weth).safeTransfer(_recipient, _amount);
     }
 
-    function calcTokenToBurn(uint256 _wethAmount) view internal returns (uint256 lpToBurn) {
+    function calcTokenToBurn(uint256 _wethAmount)
+        internal
+        view
+        returns (uint256 lpToBurn)
+    {
         /* The rate between coins in the pool determines the rate at which pool returns
          * tokens when doing balanced removal (remove_liquidity call). And by knowing how much WETH
          * we want we can determine how much of OETH we receive by removing liquidity.
@@ -237,7 +243,6 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         lpToBurn = diff / 1e36;
     }
 
-
     /**
      * @dev Remove all assets from platform and send them to Vault contract.
      */
@@ -245,10 +250,7 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         _lpWithdrawAll();
 
         // Withdraws are proportional to assets held by 3Pool
-        uint256[2] memory minWithdrawAmounts = [
-            uint256(0),
-            uint256(0)
-        ];
+        uint256[2] memory minWithdrawAmounts = [uint256(0), uint256(0)];
 
         // Remove liquidity
         curvePool.remove_liquidity(
@@ -257,9 +259,14 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         );
 
         // Burn OETH
-        IVault(vaultAddress).burnForStrategy(poolOETHToken.balanceOf(address(this)));
+        IVault(vaultAddress).burnForStrategy(
+            poolOETHToken.balanceOf(address(this))
+        );
         // Transfer assets to the Vault
-        poolWETHToken.safeTransfer(vaultAddress, poolWETHToken.balanceOf(address(this)));
+        poolWETHToken.safeTransfer(
+            vaultAddress,
+            poolWETHToken.balanceOf(address(this))
+        );
     }
 
     function _lpWithdraw(uint256 _wethAmount) internal {
@@ -297,7 +304,7 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         if (totalPTokens > 0) {
             uint256 virtual_price = curvePool.get_virtual_price();
             uint256 value = totalPTokens.mulTruncate(virtual_price);
-            // we know 18 
+            // we know 18
             balance = value / ASSET_COUNT;
         }
     }

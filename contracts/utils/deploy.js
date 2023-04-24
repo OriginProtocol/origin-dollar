@@ -954,7 +954,7 @@ function deploymentWithGuardianGovernor(opts, fn) {
 
       const sGuardian = await ethers.provider.getSigner(guardianAddr);
 
-      const guardianActions = []
+      const guardianActions = [];
       for (const action of proposal.actions) {
         const { contract, signature, args } = action;
 
@@ -967,13 +967,16 @@ function deploymentWithGuardianGovernor(opts, fn) {
           args: args,
           to: contract.address,
           data: result.data,
-          value: result.value.toString()
+          value: result.value.toString(),
         });
 
         console.log(`... ${signature} completed`);
       }
 
-      console.log("Execute the following actions using guardian safe: ", guardianActions);
+      console.log(
+        "Execute the following actions using guardian safe: ",
+        guardianActions
+      );
     }
   };
 
