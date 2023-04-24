@@ -302,9 +302,10 @@ const deployCurve = async ({
   await reth
     .connect(sRethWhale)
     .approve(cVault.address, utils.parseUnits("1", 50));
-  const oethToMint = utils.parseUnits("100", 18);
-  await cVault.connect(sRethWhale).mint(reth.address, oethToMint, 0);
 
+  // mint a bunch of OETH so the tests don't trigger the 3% maxSupplyDiff on redeem
+  const oethToMint = utils.parseUnits("4000", 18);
+  await cVault.connect(sRethWhale).mint(reth.address, oethToMint, 0);
   await oeth.connect(sRethWhale).transfer(weth_whale, oethToMint);
   // await oeth.connect(sRethWhale).approve(sRethWhale.address, utils.parseUnits("1", 50))
   // await oeth.connect(sRethWhale).transferFrom(sRethWhale.address, weth_whale, oethToMint)
@@ -331,8 +332,6 @@ const deployCurve = async ({
   // fetch last pool added
   const poolId = poolLength - 1;
   const poolInfo = await cvxBooster.connect(sWethWhale).poolInfo(poolId);
-
-  console.log("poolInfo", poolInfo);
 
   if (tokenAddress.toLowerCase() !== poolInfo.lptoken.toLowerCase())
     new Error("LP token addresses do not match");

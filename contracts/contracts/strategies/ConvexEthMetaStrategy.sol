@@ -199,15 +199,28 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         require(_weth == address(poolWETHToken), "Can only withdraw WETH");
 
         emit Withdrawal(_weth, address(lpToken), _amount);
+
         uint256 requiredLpTokens = calcTokenToBurn(_amount);
+        // TODO: is the -1 required because of the rounding error. And where to
+        // actually apply it? maybe +1 to the requiredLpTokens?
+        uint256 _roundDownAmount = _amount -1;
 
         _lpWithdraw(requiredLpTokens);
 
-        uint256[2] memory _amounts = [uint256(0), uint256(0)];
-        _amounts[wethCoinIndex] = _amount;
+        /* math in requiredLpTokens should correctly calculate the amount of LP to remove
+         * in that the strategy receives enough WETH on balanced removal
+         */
+        uint256[2] memory _minWithdrawalAmounts = [uint256(0), uint256(0)];
+        _minWithdrawalAmounts[wethCoinIndex] = _roundDownAmount;
 
-        //curvePool.remove_liquidity_imbalance(_amounts, requiredLpTokens);
-        IERC20(_weth).safeTransfer(_recipient, _amount);
+        curvePool.remove_liquidity(requiredLpTokens, _minWithdrawalAmounts);
+
+        // Burn OETH
+        IVault(vaultAddress).burnForStrategy(
+            poolOETHToken.balanceOf(address(this))
+        );
+
+        IERC20(_weth).safeTransfer(_recipient, _roundDownAmount);
     }
 
     function calcTokenToBurn(uint256 _wethAmount)
@@ -297,16 +310,27 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         returns (uint256 balance)
     {
         require(_asset == address(poolWETHToken), "Unsupported asset");
-        // LP tokens in this contract. This should generally be nothing as we
-        // should always stake the full balance in the Gauge, but include for
-        // safety
-        uint256 totalPTokens = lpToken.balanceOf(address(this));
-        if (totalPTokens > 0) {
-            uint256 virtual_price = curvePool.lp_price();
-            uint256 value = totalPTokens.mulTruncate(virtual_price);
-            // we know 18
-            balance = value / ASSET_COUNT;
+        balance = 0;
+
+        /* We intentionally omit the poolLp tokens held by the metastrategyContract
+         * since the contract should never (except in the middle of deposit/withdrawal
+         * transaction) hold any amount of those tokens in normal operation. There
+         * could be tokens sent to it by a 3rd party and we decide to actively ignore
+         * those.
+         */
+        uint256 poolGaugePTokens = IRewardStaking(cvxRewardStakerAddress)
+            .balanceOf(address(this));
+
+        if (poolGaugePTokens > 0) {
+            uint256 value = poolGaugePTokens.mulTruncate(
+                curvePool.lp_price()
+            );
+            balance = value;
         }
+
+        // scale is already at 18 decimals. Just divide by 2 since half of the pool
+        // holdings are represented by WETH asset
+        balance = balance / ASSET_COUNT;
     }
 
     /**

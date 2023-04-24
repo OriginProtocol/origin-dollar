@@ -9,16 +9,61 @@ forkOnlyDescribe("ForkTest: OETH Curve Metapool Strategy", function () {
   // due to hardhat forked mode timeouts - retry failed tests up to 3 times
   this.retries(3);
 
-  describe("Mint", function () {
-    it("Should stake WETH in Curve guage via metapool", async function () {
-      const fixture = await loadFixture(convexOETHMetaVaultFixture);
-      console.log(
-        "fixture.cvxRewardStakerAddress",
-        fixture.cvxRewardStakerAddress
-      );
-      const { josh, weth } = fixture;
-      await mintTest(fixture, josh, weth, "5");
-    });
+
+  it("Should stake WETH in Curve guage via metapool", async function () {
+    // TODO: should have differently balanced metapools
+    const fixture = await loadFixture(convexOETHMetaVaultFixture);
+    console.log(
+      "fixture.cvxRewardStakerAddress",
+      fixture.cvxRewardStakerAddress
+    );
+    const { josh, weth } = fixture;
+    await mintTest(fixture, josh, weth, "5");
+  });
+
+  it("Should redeem", async () => {
+    const { oethVault, oeth, weth, josh, ConvexEthMetaStrategy } =
+      await loadFixture(convexOETHMetaVaultFixture);
+
+    await oethVault.connect(josh).allocate();
+    const supplyBeforeMint = await oeth.totalSupply();
+    const amount = "10";
+    const unitAmount = oethUnits(amount);
+
+    await weth.connect(josh).approve(oethVault.address, unitAmount);
+    await oethVault
+      .connect(josh)
+      .mint(weth.address, unitAmount, 0);
+    await oethVault.connect(josh).allocate();
+
+    const strategyBalance = (
+      await ConvexEthMetaStrategy.checkBalance(weth.address)
+    ).mul(2);
+
+    // 10 WETH + 10 (printed) OETH
+    await expect(strategyBalance).to.be.gte(oethUnits("20"));
+
+    const currentSupply = await oeth.totalSupply();
+    const supplyAdded = currentSupply.sub(supplyBeforeMint);
+    // 10 OETH to josh for minting. And 10 printed into the strategy
+    expect(supplyAdded).to.be.gte(oethUnits("19.98"));
+
+    const currentBalance = await oeth.connect(josh).balanceOf(josh.address);
+
+    // Now try to redeem the amount
+    await oethVault.connect(josh).redeem(oethUnits("8"), 0);
+
+    // User balance should be down by 8 eth
+    const newBalance = await oeth.connect(josh).balanceOf(josh.address);
+    expect(newBalance).to.approxEqualTolerance(
+      currentBalance.sub(oethUnits("8")),
+      1
+    );
+
+    const newSupply = await oeth.totalSupply();
+    const supplyDiff = currentSupply.sub(newSupply);
+
+    expect(supplyDiff).to.be.gte(oethUnits("7.95"));
   });
 });
 
