@@ -158,6 +158,7 @@ const assetMappings = {
   WETH: {
     symbol: 'wETH',
     label: 'Wrapped ETH',
+    imageSrc: '/logos/oeth.png',
   },
 };
 
