@@ -159,8 +159,15 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         uint256 balance = poolOETHToken.balanceOf(address(this));
         // Do the deposit to Curve ETH pool
         uint256 lpDeposited = curvePool.add_liquidity(_amounts, minMintAmount);
-        //uint256 lpDeposited = curvePool.add_liquidity(_amounts, uint256(0));
-        _lpDeposit(lpDeposited);
+
+        require(
+            IConvexDeposits(cvxDepositorAddress).deposit(
+                cvxDepositorPTokenId,
+                lpDeposited,
+                true // Deposit with staking
+            ),
+            "Depositing LP to Convex not successful"
+        );
     }
 
     /**
@@ -171,17 +178,6 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         if (balance > 0) {
             _deposit(address(poolWETHToken), balance);
         }
-    }
-
-    function _lpDeposit(uint256 lpToDeposit) internal {
-        require(
-            IConvexDeposits(cvxDepositorAddress).deposit(
-                cvxDepositorPTokenId,
-                lpToDeposit,
-                true // Deposit with staking
-            ),
-            "Depositing LP to Convex not successful"
-        );
     }
 
     /**
@@ -260,7 +256,10 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
      * @dev Remove all assets from platform and send them to Vault contract.
      */
     function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
-        _lpWithdrawAll();
+        uint256 gaugeTokens = IRewardStaking(cvxRewardStakerAddress).balanceOf(
+            address(this)
+        );
+        _lpWithdraw(gaugeTokens);
 
         // Withdraws are proportional to assets held by 3Pool
         uint256[2] memory minWithdrawAmounts = [uint256(0), uint256(0)];
@@ -282,19 +281,26 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         );
     }
 
+    /**
+     * @dev Collect accumulated CRV and CVX and send to Harvester.
+     */
+    function collectRewardTokens()
+        external
+        override
+        onlyHarvester
+        nonReentrant
+    {
+        // Collect CRV and CVX
+        IRewardStaking(cvxRewardStakerAddress).getReward();
+        _collectRewardTokens();
+    }
+
     function _lpWithdraw(uint256 _wethAmount) internal {
         // withdraw and unwrap with claim takes back the lpTokens and also collects the rewards for deposit
         IRewardStaking(cvxRewardStakerAddress).withdrawAndUnwrap(
             _wethAmount,
             true
         );
-    }
-
-    function _lpWithdrawAll() internal {
-        uint256 gaugeTokens = IRewardStaking(cvxRewardStakerAddress).balanceOf(
-            address(this)
-        );
-        _lpWithdraw(gaugeTokens);
     }
 
     /**
@@ -305,7 +311,6 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
     function checkBalance(address _asset)
         public
         view
-        virtual
         override
         returns (uint256 balance)
     {

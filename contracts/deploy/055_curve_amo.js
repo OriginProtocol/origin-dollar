@@ -36,6 +36,14 @@ module.exports = deploymentWithGuardianGovernor(
       ethers,
     });
 
+    const { cHarvester, actions: harvesterActions } = await deployHarvester({
+      deployWithConfirmation,
+      withConfirmation,
+      ethers,
+    });
+
+    actions = actions.concat(harvesterActions);
+
     // actions = actions.concat(await reDeployOETH({
     //   deployWithConfirmation,
     //   withConfirmation,
@@ -52,6 +60,7 @@ module.exports = deploymentWithGuardianGovernor(
         gaugeAddress,
         poolId,
         crvRewards,
+        cHarvester,
       })
     );
 
@@ -65,7 +74,7 @@ module.exports = deploymentWithGuardianGovernor(
 );
 
 /**
- * Deploy Frax ETH Strategy
+ * Deploy Convex ETH Strategy
  */
 const deployConvexETHMetaStrategy = async ({
   deployWithConfirmation,
@@ -76,6 +85,7 @@ const deployConvexETHMetaStrategy = async ({
   gaugeAddress,
   poolId,
   crvRewards,
+  cHarvester,
 }) => {
   const assetAddresses = await getAssetAddresses(hre.deployments);
   const { deployerAddr } = await getNamedAccounts();
@@ -135,19 +145,6 @@ const deployConvexETHMetaStrategy = async ({
     `ConvexETHMetaStrategy transferGovernance(${guardianAddr} called`
   );
 
-  // await withConfirmation(
-  //   cVault.connect(sDeployer).approveStrategy(cConvexETHMetaStrategy.address)
-  // );
-
-  // await withConfirmation(
-  //   cVault
-  //     .connect(sDeployer)
-  //     .setAssetDefaultStrategy(
-  //       addresses.mainnet.frxETH,
-  //       cConvexETHMetaStrategyProxy.address
-  //     )
-  // );
-
   return [
     {
       // Claim Vault governance
@@ -155,7 +152,68 @@ const deployConvexETHMetaStrategy = async ({
       signature: "claimGovernance()",
       args: [],
     },
+    {
+      // Claim Vault governance
+      contract: cConvexETHMetaStrategy,
+      signature: "setHarvesterAddress(address)",
+      args: [cHarvester.address],
+    },
+    {
+      contract: cHarvester,
+      signature: "setSupportedStrategy(address,bool)",
+      args: [cConvexETHMetaStrategy.address, true],
+    },
   ];
+};
+
+const deployHarvester = async ({
+  deployWithConfirmation,
+  withConfirmation,
+  ethers,
+}) => {
+  const { deployerAddr, governorAddr } = await getNamedAccounts();
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+  const dHarvesterProxy = await deployWithConfirmation("OETHHarvesterProxy");
+  const cVaultProxy = await ethers.getContract("OETHVaultProxy");
+  console.log(`Harvester proxy deployed at: ${dHarvesterProxy.address}`);
+
+  const cHarvesterProxy = await ethers.getContractAt(
+    "OETHHarvesterProxy",
+    dHarvesterProxy.address
+  );
+
+  const dHarvester = await deployWithConfirmation("OETHHarvester", [
+    cVaultProxy.address,
+  ]);
+
+  await withConfirmation(
+    cHarvesterProxy.connect(sDeployer)[
+      // eslint-disable-next-line
+      "initialize(address,address,bytes)"
+    ](dHarvester.address, deployerAddr, [])
+  );
+
+  const cHarvester = await ethers.getContractAt(
+    "OETHHarvester",
+    cHarvesterProxy.address
+  );
+
+  await withConfirmation(
+    cHarvester.connect(sDeployer).transferGovernance(guardianAddr)
+  );
+
+  // Some of the harvester governance actions are executed when deploying Curve
+  // strategy
+  return {
+    actions: [
+      {
+        contract: cHarvester,
+        signature: "claimGovernance()",
+        args: [],
+      },
+    ],
+    cHarvester,
+  };
 };
 
 // const reDeployOETH = async ({

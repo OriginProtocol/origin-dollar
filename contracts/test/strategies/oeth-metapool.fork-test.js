@@ -2,13 +2,15 @@ const { expect } = require("chai");
 
 const { loadFixture } = require("ethereum-waffle");
 const { units, oethUnits, forkOnlyDescribe } = require("../helpers");
-const { convexOETHMetaVaultFixture, impersonateAndFundContract } = require("../_fixture");
+const {
+  convexOETHMetaVaultFixture,
+  impersonateAndFundContract,
+} = require("../_fixture");
 
 forkOnlyDescribe("ForkTest: OETH Curve Metapool Strategy", function () {
   this.timeout(0);
   // due to hardhat forked mode timeouts - retry failed tests up to 3 times
   this.retries(3);
-
 
   it("Should stake WETH in Curve guage via metapool", async function () {
     // TODO: should have differently balanced metapools
@@ -28,9 +30,7 @@ forkOnlyDescribe("ForkTest: OETH Curve Metapool Strategy", function () {
     const unitAmount = oethUnits(amount);
 
     await weth.connect(josh).approve(oethVault.address, unitAmount);
-    await oethVault
-      .connect(josh)
-      .mint(weth.address, unitAmount, 0);
+    await oethVault.connect(josh).mint(weth.address, unitAmount, 0);
     await oethVault.connect(josh).allocate();
 
     // mul by 2 because the other 50% is represented by the OETH balance
@@ -66,9 +66,7 @@ forkOnlyDescribe("ForkTest: OETH Curve Metapool Strategy", function () {
     const unitAmount = oethUnits(amount);
 
     await weth.connect(josh).approve(oethVault.address, unitAmount);
-    await oethVault
-      .connect(josh)
-      .mint(weth.address, unitAmount, 0);
+    await oethVault.connect(josh).mint(weth.address, unitAmount, 0);
     await oethVault.connect(josh).allocate();
 
     // mul by 2 because the other 50% is represented by the OETH balance
@@ -100,6 +98,18 @@ forkOnlyDescribe("ForkTest: OETH Curve Metapool Strategy", function () {
     const supplyDiff = currentSupply.sub(newSupply);
 
     expect(supplyDiff).to.be.gte(oethUnits("7.95"));
+  });
+
+  it("Should be able to harvest the rewards", async function () {
+    const fixture = await loadFixture(convexOETHMetaVaultFixture);
+
+    const { josh, weth, oethHarvester, oethVault, ConvexEthMetaStrategy } =
+      fixture;
+    await mintTest(fixture, josh, weth, "5");
+
+    await oethHarvester
+      .connect(josh)
+      ["harvestAndSwap(address)"](ConvexEthMetaStrategy.address);
   });
 });
 
@@ -150,7 +160,7 @@ async function mintTest(fixture, user, asset, amount = "3") {
   );
 
   /* Should have staked the LP tokens
-   * 
+   *
    * half of the LP tokens are received because the price of the lp token
    * is multiplied by 2 ( https://github.com/curvefi/curve-factory-crypto/blob/ecf60c360e230d6a4ba1e5cb31ab8b61d545f452/contracts/CurveCryptoSwap2ETH.vy#L1308-L1312)
    *

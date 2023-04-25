@@ -40,6 +40,7 @@ async function defaultFixture() {
   const ousdProxy = await ethers.getContract("OUSDProxy");
   const vaultProxy = await ethers.getContract("VaultProxy");
   const harvesterProxy = await ethers.getContract("HarvesterProxy");
+  const oethHarvesterProxy = await ethers.getContract("OETHHarvesterProxy");
   const compoundStrategyProxy = await ethers.getContract(
     "CompoundStrategyProxy"
   );
@@ -58,6 +59,11 @@ async function defaultFixture() {
   const harvester = await ethers.getContractAt(
     "Harvester",
     harvesterProxy.address
+  );
+
+  const oethHarvester = await ethers.getContractAt(
+    "OETHHarvester",
+    oethHarvesterProxy.address
   );
 
   const dripperProxy = await ethers.getContract("DripperProxy");
@@ -403,6 +409,7 @@ async function defaultFixture() {
     ousd,
     vault,
     harvester,
+    oethHarvester,
     dripper,
     mockNonRebasing,
     mockNonRebasingTwo,
