@@ -13,6 +13,7 @@ const {
   isFork,
   isMainnetOrFork,
 } = require("../test/helpers.js");
+const { MAX_UINT256 } = require("../utils/constants");
 
 // 5/8 multisig
 const guardianAddr = addresses.mainnet.Guardian;
@@ -163,6 +164,42 @@ const deployConvexETHMetaStrategy = async ({
       signature: "setSupportedStrategy(address,bool)",
       args: [cConvexETHMetaStrategy.address, true],
     },
+    // Set reward token config
+    {
+      contract: cHarvester,
+      // tokenAddress, allowedSlippageBps, harvestRewardBps, uniswapV2CompatibleAddr, liquidationLimit, doSwapRewardToken
+      signature:
+        "setRewardTokenConfig(address,uint16,uint16,address,uint256,bool)",
+      args: [
+        assetAddresses.CRV,
+        300,
+        100,
+        assetAddresses.sushiswapRouter,
+        MAX_UINT256,
+        true,
+      ],
+    },
+    // Set reward token config
+    {
+      contract: cHarvester,
+      // tokenAddress, allowedSlippageBps, harvestRewardBps, uniswapV2CompatibleAddr, liquidationLimit, doSwapRewardToken
+      signature:
+        "setRewardTokenConfig(address,uint16,uint16,address,uint256,bool)",
+      args: [
+        assetAddresses.CVX,
+        300,
+        100,
+        assetAddresses.sushiswapRouter,
+        MAX_UINT256,
+        true,
+      ],
+    },
+    // Set vault as rewards address
+    {
+      contract: cHarvester,
+      signature: "setRewardsProceedsAddress(address)",
+      args: [cVaultProxy.address],
+    },
   ];
 };
 
@@ -175,6 +212,7 @@ const deployHarvester = async ({
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
   const dHarvesterProxy = await deployWithConfirmation("OETHHarvesterProxy");
   const cVaultProxy = await ethers.getContract("OETHVaultProxy");
+  const cOETHOracleRouter = await ethers.getContract("OETHOracleRouter");
   console.log(`Harvester proxy deployed at: ${dHarvesterProxy.address}`);
 
   const cHarvesterProxy = await ethers.getContractAt(
@@ -196,6 +234,14 @@ const deployHarvester = async ({
   const cHarvester = await ethers.getContractAt(
     "OETHHarvester",
     cHarvesterProxy.address
+  );
+
+  await withConfirmation(
+    cOETHOracleRouter.cacheDecimals(addresses.mainnet.CRV)
+  );
+
+  await withConfirmation(
+    cOETHOracleRouter.cacheDecimals(addresses.mainnet.CVX)
   );
 
   await withConfirmation(

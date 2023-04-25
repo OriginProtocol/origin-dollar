@@ -1044,6 +1044,20 @@ async function convexOETHMetaVaultFixture() {
     fixture.josh.getAddress()
   );
 
+  // Get some 3CRV from most loaded contracts/wallets
+  await impersonateAndFundAddress(
+    addresses.mainnet.CRV,
+    [
+      "0x0A2634885B47F15064fB2B33A86733C614c9950A",
+      "0x34ea4138580435B5A521E460035edb19Df1938c1",
+      "0x28C6c06298d514Db089934071355E5743bf21d60",
+      "0xa6a4d3218BBf0E81B38390396f9EA7eb8B9c9820",
+      "0xb73D8dCE603155e231aAd4381a2F20071Ca4D55c",
+    ],
+    // Josh is loaded with CRV
+    fixture.josh.getAddress()
+  );
+
   // Add Convex Meta strategy
   await fixture.oethVault
     .connect(sGuardian)

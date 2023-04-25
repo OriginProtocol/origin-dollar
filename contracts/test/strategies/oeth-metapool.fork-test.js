@@ -103,13 +103,43 @@ forkOnlyDescribe("ForkTest: OETH Curve Metapool Strategy", function () {
   it("Should be able to harvest the rewards", async function () {
     const fixture = await loadFixture(convexOETHMetaVaultFixture);
 
-    const { josh, weth, oethHarvester, oethVault, ConvexEthMetaStrategy } =
-      fixture;
+    const {
+      josh,
+      weth,
+      oeth,
+      oethHarvester,
+      oethVault,
+      ConvexEthMetaStrategy,
+      crv,
+    } = fixture;
     await mintTest(fixture, josh, weth, "5");
+
+    console.log(
+      "crv.connect(josh)",
+      (await crv.connect(josh).balanceOf(josh.address)).toString()
+    );
+
+    // send some CRV to the strategy to partly simulate reward harvesting
+    await crv
+      .connect(josh)
+      .transfer(ConvexEthMetaStrategy.address, oethUnits("1000"));
+
+    const wethBefore = await weth.balanceOf(oethVault.address);
+    const totalSupply = await oeth.totalSupply();
 
     await oethHarvester
       .connect(josh)
       ["harvestAndSwap(address)"](ConvexEthMetaStrategy.address);
+
+    const wethDiff = (await weth.balanceOf(oethVault.address)).sub(wethBefore);
+    const totalSupplyDiff = (await oeth.totalSupply()).sub(totalSupply);
+    await oethVault.connect(josh).rebase();
+
+    console.log("wethDiff", wethDiff);
+    console.log("totalSupplyDiff", totalSupplyDiff);
+
+    await expect(wethDiff).to.be.gte(oethUnits("1"));
+    await expect(totalSupplyDiff).to.be.gte(oethUnits("1"));
   });
 });
 
