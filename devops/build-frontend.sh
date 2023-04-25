@@ -16,3 +16,5 @@ buildApp() {
   yarn install;
   NODE_ENV=production nx build $APP_ID;
 }
+
+buildApp
