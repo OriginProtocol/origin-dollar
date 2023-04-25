@@ -36,6 +36,7 @@
     "react-minimal-pie-chart": "^8.4.0",
     "react-query": "^3.39.3",
     "react-use": "^17.4.0",
+    "serve": "^14.2.0",
     "tslib": "^2.3.0",
     "wagmi": "^0.12.10"
   },

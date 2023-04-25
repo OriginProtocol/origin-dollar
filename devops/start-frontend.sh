@@ -1,3 +1,2 @@
 #!/bin/sh
-cd dist/apps/$APP_ID;
-yarn run start -- --port $PORT;
+yarn run serve -s -p $PORT dist/apps/$APP_ID/exported;
