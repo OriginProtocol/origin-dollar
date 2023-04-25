@@ -2,7 +2,7 @@ const { expect } = require("chai");
 
 const { loadFixture } = require("ethereum-waffle");
 const { units, oethUnits, forkOnlyDescribe } = require("../helpers");
-const { convexOETHMetaVaultFixture } = require("../_fixture");
+const { convexOETHMetaVaultFixture, impersonateAndFundContract } = require("../_fixture");
 
 forkOnlyDescribe("ForkTest: OETH Curve Metapool Strategy", function () {
   this.timeout(0);
@@ -13,12 +13,47 @@ forkOnlyDescribe("ForkTest: OETH Curve Metapool Strategy", function () {
   it("Should stake WETH in Curve guage via metapool", async function () {
     // TODO: should have differently balanced metapools
     const fixture = await loadFixture(convexOETHMetaVaultFixture);
-    console.log(
-      "fixture.cvxRewardStakerAddress",
-      fixture.cvxRewardStakerAddress
-    );
+
     const { josh, weth } = fixture;
     await mintTest(fixture, josh, weth, "5");
+  });
+
+  it("Should be able to withdraw all", async () => {
+    const { oethVault, oeth, weth, josh, ConvexEthMetaStrategy } =
+      await loadFixture(convexOETHMetaVaultFixture);
+
+    await oethVault.connect(josh).allocate();
+    const supplyBeforeMint = await oeth.totalSupply();
+    const amount = "10";
+    const unitAmount = oethUnits(amount);
+
+    await weth.connect(josh).approve(oethVault.address, unitAmount);
+    await oethVault
+      .connect(josh)
+      .mint(weth.address, unitAmount, 0);
+    await oethVault.connect(josh).allocate();
+
+    // mul by 2 because the other 50% is represented by the OETH balance
+    const strategyBalance = (
+      await ConvexEthMetaStrategy.checkBalance(weth.address)
+    ).mul(2);
+
+    // 10 WETH + 10 (printed) OETH
+    await expect(strategyBalance).to.be.gte(oethUnits("20"));
+
+    const currentSupply = await oeth.totalSupply();
+    const supplyAdded = currentSupply.sub(supplyBeforeMint);
+    // 10 OETH to josh for minting. And 10 printed into the strategy
+    expect(supplyAdded).to.be.gte(oethUnits("19.98"));
+
+    const vaultSigner = await impersonateAndFundContract(oethVault.address);
+    // Now try to redeem the amount
+    await ConvexEthMetaStrategy.connect(vaultSigner).withdrawAll();
+
+    const newSupply = await oeth.totalSupply();
+    const supplyDiff = currentSupply.sub(newSupply);
+
+    expect(supplyDiff).to.be.gte(oethUnits("9.95"));
   });
 
   it("Should redeem", async () => {
@@ -36,6 +71,7 @@ forkOnlyDescribe("ForkTest: OETH Curve Metapool Strategy", function () {
       .mint(weth.address, unitAmount, 0);
     await oethVault.connect(josh).allocate();
 
+    // mul by 2 because the other 50% is represented by the OETH balance
     const strategyBalance = (
       await ConvexEthMetaStrategy.checkBalance(weth.address)
     ).mul(2);
