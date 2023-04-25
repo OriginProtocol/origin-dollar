@@ -150,7 +150,7 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         _amounts[oethCoinIndex] = oethToAdd;
 
         uint256 valueInLpTokens = (_wethAmount + oethToAdd).divPrecisely(
-            curvePool.lp_price()
+            curvePool.get_virtual_price() * 2
         );
         uint256 minMintAmount = valueInLpTokens.mulTruncate(
             uint256(1e18) - MAX_SLIPPAGE
@@ -203,7 +203,7 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         uint256 requiredLpTokens = calcTokenToBurn(_amount);
         // TODO: is the -1 required because of the rounding error. And where to
         // actually apply it? maybe +1 to the requiredLpTokens?
-        uint256 _roundDownAmount = _amount -1;
+        uint256 _roundDownAmount = _amount - 1;
 
         _lpWithdraw(requiredLpTokens);
 
@@ -323,7 +323,7 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
 
         if (poolGaugePTokens > 0) {
             uint256 value = poolGaugePTokens.mulTruncate(
-                curvePool.lp_price()
+                curvePool.get_virtual_price() * 2
             );
             balance = value;
         }
