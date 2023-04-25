@@ -13,8 +13,8 @@ const Settings = () => {
   const [showFrontRunMessage, setShowFrontRun] = useState(true);
 
   const [settings, setSettings] = useState({
-    tolerance: 0.5,
-    gwei: 54,
+    tolerance: 0.5 as number|string,
+    gwei: 54 as number|string,
   });
 
   useClickAway(ref, () => {
@@ -59,7 +59,7 @@ const Settings = () => {
                     onChange={(e) => {
                       setSettings((prev) => ({
                         ...prev,
-                        tolerance: e.target.value || '',
+                        tolerance: e.target.value,
                       }));
                     }}
                     value={settings?.tolerance || ''}
@@ -194,6 +194,7 @@ const Swap = () => {
       to: {
         value: 0,
         balance: 0,
+        asset: ''
       },
     }));
   };
@@ -240,11 +241,11 @@ const Swap = () => {
                         ...prev,
                         from: {
                           ...prev.from,
-                          value: e.target.value,
+                          value: Number(e.target.value),
                         },
                         to: {
                           ...prev.to,
-                          value: e.target.value * 0.8,
+                          value: Number(e.target.value) * 0.8,
                         },
                       }));
                     }}
@@ -323,11 +324,11 @@ const Swap = () => {
                         ...prev,
                         to: {
                           ...prev.to,
-                          value: e.target.value,
+                          value: Number(e.target.value),
                         },
                         from: {
                           ...prev.from,
-                          value: e.target.value * 0.8,
+                          value: Number(e.target.value) * 0.8,
                         },
                       }));
                     }}
