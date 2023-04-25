@@ -8,8 +8,10 @@
     "build:contracts": "(cd contracts && NODE_ENV=development yarn install && yarn run deploy)",
     "dev:oeth": "nx serve oeth",
     "dev:oeth-dapp": "nx serve oeth-dapp",
+    "build": "yarn run build:$APP_ID",
+    "start": "yarn run start:$APP_ID",
     "build:oeth-dapp": "NODE_ENV=production nx build oeth-dapp",
-    "serve:oeth-dapp": "NODE_ENV=production nx serve oeth-dapp",
+    "start:oeth-dapp": "NODE_ENV=production nx serve oeth-dapp",
     "dev:ousd": "nx serve ousd",
     "dev:ousd-dapp": "nx serve ousd-dapp"
   },
