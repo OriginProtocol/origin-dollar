@@ -1,11 +1,8 @@
-const fetchAPY = (req, res) => {
+const fetchOETHPortfolio = (req, res) => {
   try {
+    const { address } = req.params;
     return res.json({
-      '7d': 1.23,
-      '30d': 2.34,
-      '60d': 3.56,
-      '90d': 4.78,
-      '365d': 5.91,
+      address,
     });
   } catch (error) {
     return res.json({
@@ -18,7 +15,7 @@ const handler = async (req, res) => {
   const { method } = req;
   switch (method) {
     case 'GET':
-      return fetchAPY(req, res);
+      return fetchOETHPortfolio(req, res);
     default:
       res.setHeader('Allow', ['POST', 'OPTIONS']);
       res.status(405).end(`Method ${method} Not Allowed`);

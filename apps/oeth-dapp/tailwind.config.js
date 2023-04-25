@@ -31,6 +31,7 @@ module.exports = {
         'origin-dimmed': '#828699',
         'origin-border': '#141519',
         'origin-blue': '#0074f0',
+        'origin-secondary': '#FFDC86',
       },
       fontFamily: {
         primary: ['Inter', 'sans-serif'],

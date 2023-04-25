@@ -34,4 +34,10 @@ html {
     border-radius: 20px;
     border: 1px #141519;
   }
+
+  input::-webkit-outer-spin-button,
+  input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
 }
