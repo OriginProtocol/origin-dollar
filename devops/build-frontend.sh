@@ -16,6 +16,9 @@ buildApp() {
   buildContracts;
   NODE_ENV=development yarn install;
   yarn run nx run $APP_ID:build:production;
+
+  cd dist/apps/$APP_ID;
+  yarn install;
 }
 
 buildApp

@@ -1,3 +1,3 @@
 #!/bin/sh
-
-yarn run nx run $APP_ID:serve:production --port $PORT;
+cd dist/apps/$APP_ID;
+yarn run next serve --port $PORT;
