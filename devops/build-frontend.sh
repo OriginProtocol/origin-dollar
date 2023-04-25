@@ -8,13 +8,14 @@ buildContracts() {
     NODE_ENV=development yarn install;
     yarn run deploy;
     cd --;
+    cp -R dapp/abis apps/$APP_ID/abis
   fi
 }
 
 buildApp() {
   buildContracts;
   NODE_ENV=development yarn install;
-  NODE_ENV=production nx build $APP_ID;
+  yarn run nx run $APP_ID:build:production;
 }
 
 buildApp
