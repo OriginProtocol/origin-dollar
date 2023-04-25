@@ -16,7 +16,7 @@ buildContracts() {
 buildApp() {
   buildContracts;
   NODE_ENV=development yarn install;
-  yarn run nx run $APP_ID:build:production;
+  yarn run nx export $APP_ID;
 
   rm -rf node_modules # Purge
 
