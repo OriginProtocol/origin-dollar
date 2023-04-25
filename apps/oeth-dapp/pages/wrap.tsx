@@ -1,5 +1,5 @@
-import { ErrorBoundary, Layout } from "../src/components";
-import React from "react";
+import { ErrorBoundary, Layout } from '../src/components';
+import React from 'react';
 
 const Wrap = () => (
   <ErrorBoundary>

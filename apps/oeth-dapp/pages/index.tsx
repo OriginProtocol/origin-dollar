@@ -1,9 +1,7 @@
 import { ErrorBoundary, Layout } from '../src/components';
 import React from 'react';
-import { utils } from '@originprotocol/utils';
 
 const Swap = () => {
-  console.log(utils());
   return (
     <ErrorBoundary>
       <Layout>
