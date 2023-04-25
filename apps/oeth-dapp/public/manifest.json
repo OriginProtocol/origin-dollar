@@ -1,0 +1,27 @@
+{
+  "short_name": "OETH",
+  "name": "Origin Ether",
+  "description": "Ethereum Liquid Staking made simple",
+  "iconPath": "logo.svg",
+  "icons": [
+    {
+      "src": "images/favicon.png",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "images/oeth-logo-256x256.png",
+      "type": "image/png",
+      "sizes": "256x256"
+    },
+    {
+      "src": "images/oeth-logo-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "https://app.oeth.com",
+  "display": "standalone",
+  "theme_color": "#183140",
+  "background_color": "#ffffff"
+}
