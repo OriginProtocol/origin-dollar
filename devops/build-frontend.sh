@@ -6,14 +6,14 @@ buildContracts() {
     echo "Building contract for the DApp";
     cd contracts;
     NODE_ENV=development yarn install;
-    yarn build;
+    yarn run deploy;
     cd --;
   fi
 }
 
 buildApp() {
   buildContracts;
-  yarn install;
+  NODE_ENV=development yarn install;
   NODE_ENV=production nx build $APP_ID;
 }
 
