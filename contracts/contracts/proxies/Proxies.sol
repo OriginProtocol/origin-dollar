@@ -127,6 +127,8 @@ contract OETHDripperProxy is InitializeGovernedUpgradeabilityProxy {
  */
 contract FraxETHStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 
+}
+
 /**
  * @notice BuybackProxy delegates calls to Buyback implementation
  */
