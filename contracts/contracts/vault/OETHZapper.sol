@@ -9,18 +9,14 @@ import { ISfrxETH } from "../interfaces/ISfrxETH.sol";
 contract OETHZapper {
     IERC20 immutable oeth;
     IVault immutable vault;
-    
+
     IWETH9 constant weth = IWETH9(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
     IERC20 constant frxeth = IERC20(0x5E8422345238F34275888049021821E8E08CAa1f);
     ISfrxETH constant sfrxeth =
         ISfrxETH(0xac3E018457B222d93114458476f3E3416Abbe38F);
     address constant ETH_MARKER = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
 
-    event MintFrom(
-        address indexed minter,
-        address indexed asset,
-        uint256 amount
-    );
+    event Zap(address indexed minter, address indexed asset, uint256 amount);
 
     constructor(address _oeth, address _vault) {
         oeth = IERC20(_oeth);
@@ -38,7 +34,7 @@ contract OETHZapper {
 
     function deposit() public payable returns (uint256) {
         weth.deposit{ value: msg.value }();
-        emit MintFrom(msg.sender, ETH_MARKER, msg.value);
+        emit Zap(msg.sender, ETH_MARKER, msg.value);
         return _mint(address(weth), msg.value);
     }
 
@@ -48,7 +44,7 @@ contract OETHZapper {
     {
         // slither-disable-next-line unused-return
         sfrxeth.redeem(amount, address(this), msg.sender);
-        emit MintFrom(msg.sender, address(sfrxeth), amount);
+        emit Zap(msg.sender, address(sfrxeth), amount);
         return _mint(address(frxeth), minOETH);
     }
 
