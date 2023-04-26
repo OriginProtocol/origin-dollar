@@ -2,7 +2,7 @@ const { deploymentWithProposal } = require("../utils/deploy");
 const addresses = require("../utils/addresses");
 
 module.exports = deploymentWithProposal(
-  { deployName: "056_oeth_zapper_again", forceDeploy: true },
+  { deployName: "056_oeth_zapper_again", forceDeploy: false },
   async ({ deployWithConfirmation, withConfirmation }) => {
     // Deployer Actions
     // ----------------
