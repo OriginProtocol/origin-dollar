@@ -22,39 +22,57 @@ contract OETHZapper {
         oeth = IERC20(_oeth);
         vault = IVault(_vault);
 
-        // slither-disable-next-line unused-return
         weth.approve(address(_vault), type(uint256).max);
-        // slither-disable-next-line unused-return
         frxeth.approve(address(_vault), type(uint256).max);
     }
 
+    /**
+     * @dev Deposit ETH and receive OETH in return.
+     * Will verify that vault mints 1:1 for ETH.
+     */
     receive() external payable {
         deposit();
     }
 
+    /**
+     * @dev Deposit ETH and receive OETH in return
+     * Will verify that vault mints 1:1 for ETH
+     * @return Amount of OETH sent to user
+     */
     function deposit() public payable returns (uint256) {
-        weth.deposit{ value: msg.value }();
-        emit Zap(msg.sender, ETH_MARKER, msg.value);
-        return _mint(address(weth), msg.value);
+        uint256 balance = address(this).balance;
+        weth.deposit{ value: balance }();
+        emit Zap(msg.sender, ETH_MARKER, balance);
+        return _mint(address(weth), balance);
     }
 
+    /**
+     * @dev Deposit SFRXETH to the vault and receive OETH in return
+     * @param amount Amount of SFRXETH to deposit
+     * @param minOETH Minimum amount of OETH to receive
+     * @return Amount of OETH sent to user
+     */
     function depositSFRXETH(uint256 amount, uint256 minOETH)
         external
         returns (uint256)
     {
-        // slither-disable-next-line unused-return
         sfrxeth.redeem(amount, address(this), msg.sender);
         emit Zap(msg.sender, address(sfrxeth), amount);
         return _mint(address(frxeth), minOETH);
     }
 
+    /**
+     * @dev Internal function to mint OETH from an asset
+     * @param asset Address of asset for the vault to mint from
+     * @param minOETH Minimum amount of OETH to for user to receive
+     * @return Amount of OETH sent to user
+     */
     function _mint(address asset, uint256 minOETH) internal returns (uint256) {
         uint256 toMint = IERC20(asset).balanceOf(address(this));
         vault.mint(asset, toMint, minOETH);
         uint256 mintedAmount = oeth.balanceOf(address(this));
         require(mintedAmount >= minOETH, "Zapper: not enough minted");
-        // slither-disable-next-line unchecked-transfer
-        oeth.transfer(msg.sender, mintedAmount);
+        require(oeth.transfer(msg.sender, mintedAmount));
         return mintedAmount;
     }
 }
