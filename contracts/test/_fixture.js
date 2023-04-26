@@ -122,7 +122,8 @@ async function defaultFixture() {
   );
   const compensationClaims = await ethers.getContract("CompensationClaims");
 
-  const buyback = await ethers.getContract("Buyback");
+  const buybackProxy = await ethers.getContract("BuybackProxy");
+  const buyback = await ethers.getContractAt("Buyback", buybackProxy.address);
 
   let usdt,
     dai,
