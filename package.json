@@ -4,6 +4,8 @@
   "private": true,
   "homepage": "https://github.com/originprotocol/origin-dollar",
   "scripts": {
+    "build": "sh devops/build-frontend.sh",
+    "start": "sh devops/start-frontend.sh",
     "build:dapp": "(cd dapp && NODE_ENV=development yarn install && yarn build)",
     "build:contracts": "(cd contracts && NODE_ENV=development yarn install && yarn run deploy)",
     "dev:oeth": "nx serve oeth",
@@ -34,6 +36,7 @@
     "react-minimal-pie-chart": "^8.4.0",
     "react-query": "^3.39.3",
     "react-use": "^17.4.0",
+    "serve": "^14.2.0",
     "tslib": "^2.3.0",
     "wagmi": "^0.12.10"
   },

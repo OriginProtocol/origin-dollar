@@ -13,8 +13,8 @@ const Settings = () => {
   const [showFrontRunMessage, setShowFrontRun] = useState(true);
 
   const [settings, setSettings] = useState({
-    tolerance: 0.5,
-    gwei: 54,
+    tolerance: 0.5 as number|string,
+    gwei: 54 as number|string,
   });
 
   useClickAway(ref, () => {
@@ -158,6 +158,7 @@ const assetMappings = {
   WETH: {
     symbol: 'wETH',
     label: 'Wrapped ETH',
+    imageSrc: '/logos/oeth.png',
   },
 };
 
@@ -194,6 +195,7 @@ const Wrap = () => {
       to: {
         value: 0,
         balance: 0,
+        asset: ''
       },
     }));
   };
@@ -240,11 +242,11 @@ const Wrap = () => {
                         ...prev,
                         from: {
                           ...prev.from,
-                          value: e.target.value,
+                          value: Number(e.target.value),
                         },
                         to: {
                           ...prev.to,
-                          value: e.target.value * 0.8,
+                          value: Number(e.target.value) * 0.8,
                         },
                       }));
                     }}
@@ -323,11 +325,11 @@ const Wrap = () => {
                         ...prev,
                         to: {
                           ...prev.to,
-                          value: e.target.value,
+                          value: Number(e.target.value),
                         },
                         from: {
                           ...prev.from,
-                          value: e.target.value * 0.8,
+                          value: Number(e.target.value) * 0.8,
                         },
                       }));
                     }}
