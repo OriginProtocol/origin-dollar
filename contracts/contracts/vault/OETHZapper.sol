@@ -7,14 +7,17 @@ import { IWETH9 } from "../interfaces/IWETH9.sol";
 import { ISfrxETH } from "../interfaces/ISfrxETH.sol";
 
 contract OETHZapper {
-    IERC20 immutable oeth;
-    IVault immutable vault;
+    IERC20 public immutable oeth;
+    IVault public immutable vault;
 
-    IWETH9 constant weth = IWETH9(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
-    IERC20 constant frxeth = IERC20(0x5E8422345238F34275888049021821E8E08CAa1f);
-    ISfrxETH constant sfrxeth =
+    IWETH9 public constant weth =
+        IWETH9(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
+    IERC20 public constant frxeth =
+        IERC20(0x5E8422345238F34275888049021821E8E08CAa1f);
+    ISfrxETH public constant sfrxeth =
         ISfrxETH(0xac3E018457B222d93114458476f3E3416Abbe38F);
-    address constant ETH_MARKER = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
+    address private constant ETH_MARKER =
+        0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
 
     event Zap(address indexed minter, address indexed asset, uint256 amount);
 
