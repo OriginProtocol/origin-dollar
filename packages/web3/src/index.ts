@@ -2,7 +2,7 @@ type ContractConfig = {
   name: string;
   address: string;
   abi: any;
-  logoSrc?: string;
+  decimals?: number;
   symbol?: string;
 };
 
@@ -14,8 +14,1552 @@ type Contracts = {
   [key: string]: ChainContracts;
 };
 
+/*
+FraxEthStrategyProxy	0x3fF8654D633D4Ea0faE24c52Aec73B4A20D0d0e5
+Frax Strategy Implementation	0x167747bF5B3B6Bf2F7f7C4CCe32C463E9598D425
+OETH Impl	0x7c1F8b1824f2758060CfC9Dd964C590710367A1E
+OETH Proxy	0x856c4Efb76C1D1AE02e20CEB03A2A6a08b0b8dC3
+OETH Oracle Router	0x60fF8354e9C0E78e032B7daeA8da2c3265287dBd
+Vault	0xe4775E018bFC72CC3c4944E6879d64cDF885c247
+VaultAdmin	0xbA3656713862dF9De5EB3dFEA22141F06d67221c
+VaultCore	0x1091588Cc431275F99DC5Df311fd8E1Ab81c89F3
+VaultProxy	0x39254033945AA2E4809Cc2977E7087BEE48bd7Ab
+Zapper	0x8c135F50C7317A93Cc95bB208A494E5ADe5B66b0
+OUSD Oracle router?	0x06C7a36bfE715479C7f583785b7e9303dfcC89Ff
+Woeth Impl	0x9C5a92AaA2A4373D6bd20F7b45cdEb7A13f9AA79
+Woeth Proxy*	0xDcEe70654261AF21C44c093C300eD3Bb97b78192
+Dripper Proxy	0xc0F42F73b8f01849a2DD99753524d4ba14317EB3
+Dripper IMPL	0x2FDfBb2b905484f1445E23A97C97F65fe0e43dEC
+ */
+
 export const contracts: Contracts = {
   mainnet: {
+    OETHVaultProxy: {
+      name: 'OETHVault',
+      address: '0x39254033945AA2E4809Cc2977E7087BEE48bd7Ab',
+      abi: [
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: false,
+              internalType: 'uint256',
+              name: '_threshold',
+              type: 'uint256',
+            },
+          ],
+          name: 'AllocateThresholdUpdated',
+          type: 'event',
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: false,
+              internalType: 'address',
+              name: '_asset',
+              type: 'address',
+            },
+            {
+              indexed: false,
+              internalType: 'address',
+              name: '_strategy',
+              type: 'address',
+            },
+            {
+              indexed: false,
+              internalType: 'uint256',
+              name: '_amount',
+              type: 'uint256',
+            },
+          ],
+          name: 'AssetAllocated',
+          type: 'event',
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: false,
+              internalType: 'address',
+              name: '_asset',
+              type: 'address',
+            },
+            {
+              indexed: false,
+              internalType: 'address',
+              name: '_strategy',
+              type: 'address',
+            },
+          ],
+          name: 'AssetDefaultStrategyUpdated',
+          type: 'event',
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: false,
+              internalType: 'address',
+              name: '_asset',
+              type: 'address',
+            },
+          ],
+          name: 'AssetSupported',
+          type: 'event',
+        },
+        { anonymous: false, inputs: [], name: 'CapitalPaused', type: 'event' },
+        {
+          anonymous: false,
+          inputs: [],
+          name: 'CapitalUnpaused',
+          type: 'event',
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: true,
+              internalType: 'address',
+              name: 'previousGovernor',
+              type: 'address',
+            },
+            {
+              indexed: true,
+              internalType: 'address',
+              name: 'newGovernor',
+              type: 'address',
+            },
+          ],
+          name: 'GovernorshipTransferred',
+          type: 'event',
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: false,
+              internalType: 'uint256',
+              name: 'maxSupplyDiff',
+              type: 'uint256',
+            },
+          ],
+          name: 'MaxSupplyDiffChanged',
+          type: 'event',
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: false,
+              internalType: 'address',
+              name: '_addr',
+              type: 'address',
+            },
+            {
+              indexed: false,
+              internalType: 'uint256',
+              name: '_value',
+              type: 'uint256',
+            },
+          ],
+          name: 'Mint',
+          type: 'event',
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: false,
+              internalType: 'uint256',
+              name: '_threshold',
+              type: 'uint256',
+            },
+          ],
+          name: 'NetOusdMintForStrategyThresholdChanged',
+          type: 'event',
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: false,
+              internalType: 'address',
+              name: '_ousdMetaStrategy',
+              type: 'address',
+            },
+          ],
+          name: 'OusdMetaStrategyUpdated',
+          type: 'event',
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: true,
+              internalType: 'address',
+              name: 'previousGovernor',
+              type: 'address',
+            },
+            {
+              indexed: true,
+              internalType: 'address',
+              name: 'newGovernor',
+              type: 'address',
+            },
+          ],
+          name: 'PendingGovernorshipTransfer',
+          type: 'event',
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: false,
+              internalType: 'address',
+              name: '_priceProvider',
+              type: 'address',
+            },
+          ],
+          name: 'PriceProviderUpdated',
+          type: 'event',
+        },
+        { anonymous: false, inputs: [], name: 'RebasePaused', type: 'event' },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: false,
+              internalType: 'uint256',
+              name: '_threshold',
+              type: 'uint256',
+            },
+          ],
+          name: 'RebaseThresholdUpdated',
+          type: 'event',
+        },
+        { anonymous: false, inputs: [], name: 'RebaseUnpaused', type: 'event' },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: false,
+              internalType: 'address',
+              name: '_addr',
+              type: 'address',
+            },
+            {
+              indexed: false,
+              internalType: 'uint256',
+              name: '_value',
+              type: 'uint256',
+            },
+          ],
+          name: 'Redeem',
+          type: 'event',
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: false,
+              internalType: 'uint256',
+              name: '_redeemFeeBps',
+              type: 'uint256',
+            },
+          ],
+          name: 'RedeemFeeUpdated',
+          type: 'event',
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: false,
+              internalType: 'address',
+              name: '_address',
+              type: 'address',
+            },
+          ],
+          name: 'StrategistUpdated',
+          type: 'event',
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: false,
+              internalType: 'address',
+              name: '_addr',
+              type: 'address',
+            },
+          ],
+          name: 'StrategyApproved',
+          type: 'event',
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: false,
+              internalType: 'address',
+              name: '_addr',
+              type: 'address',
+            },
+          ],
+          name: 'StrategyRemoved',
+          type: 'event',
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: false,
+              internalType: 'address',
+              name: '_address',
+              type: 'address',
+            },
+          ],
+          name: 'TrusteeAddressChanged',
+          type: 'event',
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: false,
+              internalType: 'uint256',
+              name: '_basis',
+              type: 'uint256',
+            },
+          ],
+          name: 'TrusteeFeeBpsChanged',
+          type: 'event',
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: false,
+              internalType: 'uint256',
+              name: '_vaultBuffer',
+              type: 'uint256',
+            },
+          ],
+          name: 'VaultBufferUpdated',
+          type: 'event',
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: false,
+              internalType: 'address',
+              name: '_to',
+              type: 'address',
+            },
+            {
+              indexed: false,
+              internalType: 'uint256',
+              name: '_yield',
+              type: 'uint256',
+            },
+            {
+              indexed: false,
+              internalType: 'uint256',
+              name: '_fee',
+              type: 'uint256',
+            },
+          ],
+          name: 'YieldDistribution',
+          type: 'event',
+        },
+        { stateMutability: 'payable', type: 'fallback' },
+        {
+          inputs: [],
+          name: 'allocate',
+          outputs: [],
+          stateMutability: 'nonpayable',
+          type: 'function',
+        },
+        {
+          inputs: [{ internalType: 'address', name: '', type: 'address' }],
+          name: 'assetDefaultStrategies',
+          outputs: [{ internalType: 'address', name: '', type: 'address' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'autoAllocateThreshold',
+          outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [
+            { internalType: 'uint256', name: '_amount', type: 'uint256' },
+          ],
+          name: 'burnForStrategy',
+          outputs: [],
+          stateMutability: 'nonpayable',
+          type: 'function',
+        },
+        {
+          inputs: [
+            { internalType: 'uint256', name: '_amount', type: 'uint256' },
+          ],
+          name: 'calculateRedeemOutputs',
+          outputs: [{ internalType: 'uint256[]', name: '', type: 'uint256[]' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'capitalPaused',
+          outputs: [{ internalType: 'bool', name: '', type: 'bool' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [
+            { internalType: 'address', name: '_asset', type: 'address' },
+          ],
+          name: 'checkBalance',
+          outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'claimGovernance',
+          outputs: [],
+          stateMutability: 'nonpayable',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'getAllAssets',
+          outputs: [{ internalType: 'address[]', name: '', type: 'address[]' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'getAllStrategies',
+          outputs: [{ internalType: 'address[]', name: '', type: 'address[]' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'getAssetCount',
+          outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'getStrategyCount',
+          outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'governor',
+          outputs: [{ internalType: 'address', name: '', type: 'address' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'isGovernor',
+          outputs: [{ internalType: 'bool', name: '', type: 'bool' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [
+            { internalType: 'address', name: '_asset', type: 'address' },
+          ],
+          name: 'isSupportedAsset',
+          outputs: [{ internalType: 'bool', name: '', type: 'bool' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'maxSupplyDiff',
+          outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [
+            { internalType: 'address', name: '_asset', type: 'address' },
+            { internalType: 'uint256', name: '_amount', type: 'uint256' },
+            {
+              internalType: 'uint256',
+              name: '_minimumOusdAmount',
+              type: 'uint256',
+            },
+          ],
+          name: 'mint',
+          outputs: [],
+          stateMutability: 'nonpayable',
+          type: 'function',
+        },
+        {
+          inputs: [
+            { internalType: 'uint256', name: '_amount', type: 'uint256' },
+          ],
+          name: 'mintForStrategy',
+          outputs: [],
+          stateMutability: 'nonpayable',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'netOusdMintForStrategyThreshold',
+          outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'netOusdMintedForStrategy',
+          outputs: [{ internalType: 'int256', name: '', type: 'int256' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'ousdMetaStrategy',
+          outputs: [{ internalType: 'address', name: '', type: 'address' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'priceProvider',
+          outputs: [{ internalType: 'address', name: '', type: 'address' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [{ internalType: 'address', name: 'asset', type: 'address' }],
+          name: 'priceUnitMint',
+          outputs: [
+            { internalType: 'uint256', name: 'price', type: 'uint256' },
+          ],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [{ internalType: 'address', name: 'asset', type: 'address' }],
+          name: 'priceUnitRedeem',
+          outputs: [
+            { internalType: 'uint256', name: 'price', type: 'uint256' },
+          ],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'rebase',
+          outputs: [],
+          stateMutability: 'nonpayable',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'rebasePaused',
+          outputs: [{ internalType: 'bool', name: '', type: 'bool' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'rebaseThreshold',
+          outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [
+            { internalType: 'uint256', name: '_amount', type: 'uint256' },
+            {
+              internalType: 'uint256',
+              name: '_minimumUnitAmount',
+              type: 'uint256',
+            },
+          ],
+          name: 'redeem',
+          outputs: [],
+          stateMutability: 'nonpayable',
+          type: 'function',
+        },
+        {
+          inputs: [
+            {
+              internalType: 'uint256',
+              name: '_minimumUnitAmount',
+              type: 'uint256',
+            },
+          ],
+          name: 'redeemAll',
+          outputs: [],
+          stateMutability: 'nonpayable',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'redeemFeeBps',
+          outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [
+            { internalType: 'address', name: 'newImpl', type: 'address' },
+          ],
+          name: 'setAdminImpl',
+          outputs: [],
+          stateMutability: 'nonpayable',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'strategistAddr',
+          outputs: [{ internalType: 'address', name: '', type: 'address' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'totalValue',
+          outputs: [
+            { internalType: 'uint256', name: 'value', type: 'uint256' },
+          ],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [
+            { internalType: 'address', name: '_newGovernor', type: 'address' },
+          ],
+          name: 'transferGovernance',
+          outputs: [],
+          stateMutability: 'nonpayable',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'trusteeAddress',
+          outputs: [{ internalType: 'address', name: '', type: 'address' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'trusteeFeeBps',
+          outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'vaultBuffer',
+          outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+      ],
+    },
+    WOETH: {
+      name: 'Wrapped OETH',
+      symbol: 'WOETH',
+      address: '0xdcee70654261af21c44c093c300ed3bb97b78192',
+      abi: [
+        {
+          inputs: [
+            {
+              internalType: 'contract ERC20',
+              name: 'underlying_',
+              type: 'address',
+            },
+            { internalType: 'string', name: 'name_', type: 'string' },
+            { internalType: 'string', name: 'symbol_', type: 'string' },
+          ],
+          stateMutability: 'nonpayable',
+          type: 'constructor',
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: true,
+              internalType: 'address',
+              name: 'owner',
+              type: 'address',
+            },
+            {
+              indexed: true,
+              internalType: 'address',
+              name: 'spender',
+              type: 'address',
+            },
+            {
+              indexed: false,
+              internalType: 'uint256',
+              name: 'value',
+              type: 'uint256',
+            },
+          ],
+          name: 'Approval',
+          type: 'event',
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: true,
+              internalType: 'address',
+              name: 'caller',
+              type: 'address',
+            },
+            {
+              indexed: true,
+              internalType: 'address',
+              name: 'owner',
+              type: 'address',
+            },
+            {
+              indexed: false,
+              internalType: 'uint256',
+              name: 'assets',
+              type: 'uint256',
+            },
+            {
+              indexed: false,
+              internalType: 'uint256',
+              name: 'shares',
+              type: 'uint256',
+            },
+          ],
+          name: 'Deposit',
+          type: 'event',
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: true,
+              internalType: 'address',
+              name: 'previousGovernor',
+              type: 'address',
+            },
+            {
+              indexed: true,
+              internalType: 'address',
+              name: 'newGovernor',
+              type: 'address',
+            },
+          ],
+          name: 'GovernorshipTransferred',
+          type: 'event',
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: true,
+              internalType: 'address',
+              name: 'previousGovernor',
+              type: 'address',
+            },
+            {
+              indexed: true,
+              internalType: 'address',
+              name: 'newGovernor',
+              type: 'address',
+            },
+          ],
+          name: 'PendingGovernorshipTransfer',
+          type: 'event',
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: true,
+              internalType: 'address',
+              name: 'from',
+              type: 'address',
+            },
+            {
+              indexed: true,
+              internalType: 'address',
+              name: 'to',
+              type: 'address',
+            },
+            {
+              indexed: false,
+              internalType: 'uint256',
+              name: 'value',
+              type: 'uint256',
+            },
+          ],
+          name: 'Transfer',
+          type: 'event',
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: true,
+              internalType: 'address',
+              name: 'caller',
+              type: 'address',
+            },
+            {
+              indexed: true,
+              internalType: 'address',
+              name: 'receiver',
+              type: 'address',
+            },
+            {
+              indexed: true,
+              internalType: 'address',
+              name: 'owner',
+              type: 'address',
+            },
+            {
+              indexed: false,
+              internalType: 'uint256',
+              name: 'assets',
+              type: 'uint256',
+            },
+            {
+              indexed: false,
+              internalType: 'uint256',
+              name: 'shares',
+              type: 'uint256',
+            },
+          ],
+          name: 'Withdraw',
+          type: 'event',
+        },
+        {
+          inputs: [
+            { internalType: 'address', name: 'owner', type: 'address' },
+            { internalType: 'address', name: 'spender', type: 'address' },
+          ],
+          name: 'allowance',
+          outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [
+            { internalType: 'address', name: 'spender', type: 'address' },
+            { internalType: 'uint256', name: 'amount', type: 'uint256' },
+          ],
+          name: 'approve',
+          outputs: [{ internalType: 'bool', name: '', type: 'bool' }],
+          stateMutability: 'nonpayable',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'asset',
+          outputs: [{ internalType: 'address', name: '', type: 'address' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [
+            { internalType: 'address', name: 'account', type: 'address' },
+          ],
+          name: 'balanceOf',
+          outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'claimGovernance',
+          outputs: [],
+          stateMutability: 'nonpayable',
+          type: 'function',
+        },
+        {
+          inputs: [
+            { internalType: 'uint256', name: 'shares', type: 'uint256' },
+          ],
+          name: 'convertToAssets',
+          outputs: [
+            { internalType: 'uint256', name: 'assets', type: 'uint256' },
+          ],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [
+            { internalType: 'uint256', name: 'assets', type: 'uint256' },
+          ],
+          name: 'convertToShares',
+          outputs: [
+            { internalType: 'uint256', name: 'shares', type: 'uint256' },
+          ],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'decimals',
+          outputs: [{ internalType: 'uint8', name: '', type: 'uint8' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [
+            { internalType: 'address', name: 'spender', type: 'address' },
+            {
+              internalType: 'uint256',
+              name: 'subtractedValue',
+              type: 'uint256',
+            },
+          ],
+          name: 'decreaseAllowance',
+          outputs: [{ internalType: 'bool', name: '', type: 'bool' }],
+          stateMutability: 'nonpayable',
+          type: 'function',
+        },
+        {
+          inputs: [
+            { internalType: 'uint256', name: 'assets', type: 'uint256' },
+            { internalType: 'address', name: 'receiver', type: 'address' },
+          ],
+          name: 'deposit',
+          outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+          stateMutability: 'nonpayable',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'governor',
+          outputs: [{ internalType: 'address', name: '', type: 'address' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [
+            { internalType: 'address', name: 'spender', type: 'address' },
+            { internalType: 'uint256', name: 'addedValue', type: 'uint256' },
+          ],
+          name: 'increaseAllowance',
+          outputs: [{ internalType: 'bool', name: '', type: 'bool' }],
+          stateMutability: 'nonpayable',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'initialize',
+          outputs: [],
+          stateMutability: 'nonpayable',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'isGovernor',
+          outputs: [{ internalType: 'bool', name: '', type: 'bool' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [{ internalType: 'address', name: '', type: 'address' }],
+          name: 'maxDeposit',
+          outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [{ internalType: 'address', name: '', type: 'address' }],
+          name: 'maxMint',
+          outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [{ internalType: 'address', name: 'owner', type: 'address' }],
+          name: 'maxRedeem',
+          outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [{ internalType: 'address', name: 'owner', type: 'address' }],
+          name: 'maxWithdraw',
+          outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [
+            { internalType: 'uint256', name: 'shares', type: 'uint256' },
+            { internalType: 'address', name: 'receiver', type: 'address' },
+          ],
+          name: 'mint',
+          outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+          stateMutability: 'nonpayable',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'name',
+          outputs: [{ internalType: 'string', name: '', type: 'string' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [
+            { internalType: 'uint256', name: 'assets', type: 'uint256' },
+          ],
+          name: 'previewDeposit',
+          outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [
+            { internalType: 'uint256', name: 'shares', type: 'uint256' },
+          ],
+          name: 'previewMint',
+          outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [
+            { internalType: 'uint256', name: 'shares', type: 'uint256' },
+          ],
+          name: 'previewRedeem',
+          outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [
+            { internalType: 'uint256', name: 'assets', type: 'uint256' },
+          ],
+          name: 'previewWithdraw',
+          outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [
+            { internalType: 'uint256', name: 'shares', type: 'uint256' },
+            { internalType: 'address', name: 'receiver', type: 'address' },
+            { internalType: 'address', name: 'owner', type: 'address' },
+          ],
+          name: 'redeem',
+          outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+          stateMutability: 'nonpayable',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'symbol',
+          outputs: [{ internalType: 'string', name: '', type: 'string' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'totalAssets',
+          outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'totalSupply',
+          outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [
+            { internalType: 'address', name: 'recipient', type: 'address' },
+            { internalType: 'uint256', name: 'amount', type: 'uint256' },
+          ],
+          name: 'transfer',
+          outputs: [{ internalType: 'bool', name: '', type: 'bool' }],
+          stateMutability: 'nonpayable',
+          type: 'function',
+        },
+        {
+          inputs: [
+            { internalType: 'address', name: 'sender', type: 'address' },
+            { internalType: 'address', name: 'recipient', type: 'address' },
+            { internalType: 'uint256', name: 'amount', type: 'uint256' },
+          ],
+          name: 'transferFrom',
+          outputs: [{ internalType: 'bool', name: '', type: 'bool' }],
+          stateMutability: 'nonpayable',
+          type: 'function',
+        },
+        {
+          inputs: [
+            { internalType: 'address', name: '_newGovernor', type: 'address' },
+          ],
+          name: 'transferGovernance',
+          outputs: [],
+          stateMutability: 'nonpayable',
+          type: 'function',
+        },
+        {
+          inputs: [
+            { internalType: 'address', name: 'asset_', type: 'address' },
+            { internalType: 'uint256', name: 'amount_', type: 'uint256' },
+          ],
+          name: 'transferToken',
+          outputs: [],
+          stateMutability: 'nonpayable',
+          type: 'function',
+        },
+        {
+          inputs: [
+            { internalType: 'uint256', name: 'assets', type: 'uint256' },
+            { internalType: 'address', name: 'receiver', type: 'address' },
+            { internalType: 'address', name: 'owner', type: 'address' },
+          ],
+          name: 'withdraw',
+          outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+          stateMutability: 'nonpayable',
+          type: 'function',
+        },
+      ],
+    },
+    OETH: {
+      name: 'Origin Ether',
+      symbol: 'OETH',
+      address: '0x856c4Efb76C1D1AE02e20CEB03A2A6a08b0b8dC3',
+      abi: [
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: true,
+              internalType: 'address',
+              name: 'owner',
+              type: 'address',
+            },
+            {
+              indexed: true,
+              internalType: 'address',
+              name: 'spender',
+              type: 'address',
+            },
+            {
+              indexed: false,
+              internalType: 'uint256',
+              name: 'value',
+              type: 'uint256',
+            },
+          ],
+          name: 'Approval',
+          type: 'event',
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: true,
+              internalType: 'address',
+              name: 'previousGovernor',
+              type: 'address',
+            },
+            {
+              indexed: true,
+              internalType: 'address',
+              name: 'newGovernor',
+              type: 'address',
+            },
+          ],
+          name: 'GovernorshipTransferred',
+          type: 'event',
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: true,
+              internalType: 'address',
+              name: 'previousGovernor',
+              type: 'address',
+            },
+            {
+              indexed: true,
+              internalType: 'address',
+              name: 'newGovernor',
+              type: 'address',
+            },
+          ],
+          name: 'PendingGovernorshipTransfer',
+          type: 'event',
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: false,
+              internalType: 'uint256',
+              name: 'totalSupply',
+              type: 'uint256',
+            },
+            {
+              indexed: false,
+              internalType: 'uint256',
+              name: 'rebasingCredits',
+              type: 'uint256',
+            },
+            {
+              indexed: false,
+              internalType: 'uint256',
+              name: 'rebasingCreditsPerToken',
+              type: 'uint256',
+            },
+          ],
+          name: 'TotalSupplyUpdatedHighres',
+          type: 'event',
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: true,
+              internalType: 'address',
+              name: 'from',
+              type: 'address',
+            },
+            {
+              indexed: true,
+              internalType: 'address',
+              name: 'to',
+              type: 'address',
+            },
+            {
+              indexed: false,
+              internalType: 'uint256',
+              name: 'value',
+              type: 'uint256',
+            },
+          ],
+          name: 'Transfer',
+          type: 'event',
+        },
+        {
+          inputs: [],
+          name: '_totalSupply',
+          outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [
+            { internalType: 'address', name: '_owner', type: 'address' },
+            { internalType: 'address', name: '_spender', type: 'address' },
+          ],
+          name: 'allowance',
+          outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [
+            { internalType: 'address', name: '_spender', type: 'address' },
+            { internalType: 'uint256', name: '_value', type: 'uint256' },
+          ],
+          name: 'approve',
+          outputs: [{ internalType: 'bool', name: '', type: 'bool' }],
+          stateMutability: 'nonpayable',
+          type: 'function',
+        },
+        {
+          inputs: [
+            { internalType: 'address', name: '_account', type: 'address' },
+          ],
+          name: 'balanceOf',
+          outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [
+            { internalType: 'address', name: 'account', type: 'address' },
+            { internalType: 'uint256', name: 'amount', type: 'uint256' },
+          ],
+          name: 'burn',
+          outputs: [],
+          stateMutability: 'nonpayable',
+          type: 'function',
+        },
+        {
+          inputs: [
+            {
+              internalType: 'uint256',
+              name: '_newTotalSupply',
+              type: 'uint256',
+            },
+          ],
+          name: 'changeSupply',
+          outputs: [],
+          stateMutability: 'nonpayable',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'claimGovernance',
+          outputs: [],
+          stateMutability: 'nonpayable',
+          type: 'function',
+        },
+        {
+          inputs: [
+            { internalType: 'address', name: '_account', type: 'address' },
+          ],
+          name: 'creditsBalanceOf',
+          outputs: [
+            { internalType: 'uint256', name: '', type: 'uint256' },
+            { internalType: 'uint256', name: '', type: 'uint256' },
+          ],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [
+            { internalType: 'address', name: '_account', type: 'address' },
+          ],
+          name: 'creditsBalanceOfHighres',
+          outputs: [
+            { internalType: 'uint256', name: '', type: 'uint256' },
+            { internalType: 'uint256', name: '', type: 'uint256' },
+            { internalType: 'bool', name: '', type: 'bool' },
+          ],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'decimals',
+          outputs: [{ internalType: 'uint8', name: '', type: 'uint8' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [
+            { internalType: 'address', name: '_spender', type: 'address' },
+            {
+              internalType: 'uint256',
+              name: '_subtractedValue',
+              type: 'uint256',
+            },
+          ],
+          name: 'decreaseAllowance',
+          outputs: [{ internalType: 'bool', name: '', type: 'bool' }],
+          stateMutability: 'nonpayable',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'governor',
+          outputs: [{ internalType: 'address', name: '', type: 'address' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [
+            { internalType: 'address', name: '_spender', type: 'address' },
+            { internalType: 'uint256', name: '_addedValue', type: 'uint256' },
+          ],
+          name: 'increaseAllowance',
+          outputs: [{ internalType: 'bool', name: '', type: 'bool' }],
+          stateMutability: 'nonpayable',
+          type: 'function',
+        },
+        {
+          inputs: [
+            { internalType: 'string', name: '_nameArg', type: 'string' },
+            { internalType: 'string', name: '_symbolArg', type: 'string' },
+            { internalType: 'address', name: '_vaultAddress', type: 'address' },
+            {
+              internalType: 'uint256',
+              name: '_initialCreditsPerToken',
+              type: 'uint256',
+            },
+          ],
+          name: 'initialize',
+          outputs: [],
+          stateMutability: 'nonpayable',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'isGovernor',
+          outputs: [{ internalType: 'bool', name: '', type: 'bool' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [{ internalType: 'address', name: '', type: 'address' }],
+          name: 'isUpgraded',
+          outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [
+            { internalType: 'address', name: '_account', type: 'address' },
+            { internalType: 'uint256', name: '_amount', type: 'uint256' },
+          ],
+          name: 'mint',
+          outputs: [],
+          stateMutability: 'nonpayable',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'name',
+          outputs: [{ internalType: 'string', name: '', type: 'string' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [{ internalType: 'address', name: '', type: 'address' }],
+          name: 'nonRebasingCreditsPerToken',
+          outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'nonRebasingSupply',
+          outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'rebaseOptIn',
+          outputs: [],
+          stateMutability: 'nonpayable',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'rebaseOptOut',
+          outputs: [],
+          stateMutability: 'nonpayable',
+          type: 'function',
+        },
+        {
+          inputs: [{ internalType: 'address', name: '', type: 'address' }],
+          name: 'rebaseState',
+          outputs: [
+            {
+              internalType: 'enum OUSD.RebaseOptions',
+              name: '',
+              type: 'uint8',
+            },
+          ],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'rebasingCredits',
+          outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'rebasingCreditsHighres',
+          outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'rebasingCreditsPerToken',
+          outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'rebasingCreditsPerTokenHighres',
+          outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'symbol',
+          outputs: [{ internalType: 'string', name: '', type: 'string' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'totalSupply',
+          outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [
+            { internalType: 'address', name: '_to', type: 'address' },
+            { internalType: 'uint256', name: '_value', type: 'uint256' },
+          ],
+          name: 'transfer',
+          outputs: [{ internalType: 'bool', name: '', type: 'bool' }],
+          stateMutability: 'nonpayable',
+          type: 'function',
+        },
+        {
+          inputs: [
+            { internalType: 'address', name: '_from', type: 'address' },
+            { internalType: 'address', name: '_to', type: 'address' },
+            { internalType: 'uint256', name: '_value', type: 'uint256' },
+          ],
+          name: 'transferFrom',
+          outputs: [{ internalType: 'bool', name: '', type: 'bool' }],
+          stateMutability: 'nonpayable',
+          type: 'function',
+        },
+        {
+          inputs: [
+            { internalType: 'address', name: '_newGovernor', type: 'address' },
+          ],
+          name: 'transferGovernance',
+          outputs: [],
+          stateMutability: 'nonpayable',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'vaultAddress',
+          outputs: [{ internalType: 'address', name: '', type: 'address' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+      ],
+    },
     OGN: {
       name: 'OriginToken',
       address: '0x8207c1ffc5b6804f6024322ccf34f29c3541ae26',
@@ -6138,7 +7682,7 @@ export const contracts: Contracts = {
       ],
     },
     WETH: {
-      name: 'WETH',
+      name: 'Wrapped Ether',
       address: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
       abi: [
         {
@@ -6293,6 +7837,7 @@ export const contracts: Contracts = {
           type: 'event',
         },
       ],
+      symbol: 'WETH',
     },
     VaultProxy: {
       name: 'VaultProxy',
@@ -6719,117 +8264,157 @@ export const contracts: Contracts = {
       address: '0xe75d77b1865ae93c7eaa3040b038d7aa7bc02f70',
       abi: [
         {
-          constant: true,
-          inputs: [],
-          name: 'governor',
-          outputs: [{ internalType: 'address', name: '', type: 'address' }],
-          payable: false,
-          stateMutability: 'view',
-          type: 'function',
-        },
-        {
-          constant: false,
+          anonymous: false,
           inputs: [
             {
+              indexed: false,
+              internalType: 'uint256',
+              name: '_threshold',
+              type: 'uint256',
+            },
+          ],
+          name: 'AllocateThresholdUpdated',
+          type: 'event',
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: false,
               internalType: 'address',
-              name: 'newImplementation',
+              name: '_asset',
+              type: 'address',
+            },
+            {
+              indexed: false,
+              internalType: 'address',
+              name: '_strategy',
+              type: 'address',
+            },
+            {
+              indexed: false,
+              internalType: 'uint256',
+              name: '_amount',
+              type: 'uint256',
+            },
+          ],
+          name: 'AssetAllocated',
+          type: 'event',
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: false,
+              internalType: 'address',
+              name: '_asset',
+              type: 'address',
+            },
+            {
+              indexed: false,
+              internalType: 'address',
+              name: '_strategy',
               type: 'address',
             },
           ],
-          name: 'upgradeTo',
-          outputs: [],
-          payable: false,
-          stateMutability: 'nonpayable',
-          type: 'function',
+          name: 'AssetDefaultStrategyUpdated',
+          type: 'event',
         },
         {
-          constant: false,
+          anonymous: false,
           inputs: [
             {
+              indexed: false,
               internalType: 'address',
-              name: 'newImplementation',
+              name: '_asset',
               type: 'address',
             },
-            { internalType: 'bytes', name: 'data', type: 'bytes' },
           ],
-          name: 'upgradeToAndCall',
-          outputs: [],
-          payable: true,
-          stateMutability: 'payable',
-          type: 'function',
+          name: 'AssetSupported',
+          type: 'event',
         },
+        { anonymous: false, inputs: [], name: 'CapitalPaused', type: 'event' },
         {
-          constant: true,
+          anonymous: false,
           inputs: [],
-          name: 'implementation',
-          outputs: [{ internalType: 'address', name: '', type: 'address' }],
-          payable: false,
-          stateMutability: 'view',
-          type: 'function',
+          name: 'CapitalUnpaused',
+          type: 'event',
         },
-        {
-          constant: false,
-          inputs: [],
-          name: 'claimGovernance',
-          outputs: [],
-          payable: false,
-          stateMutability: 'nonpayable',
-          type: 'function',
-        },
-        {
-          constant: true,
-          inputs: [],
-          name: 'isGovernor',
-          outputs: [{ internalType: 'bool', name: '', type: 'bool' }],
-          payable: false,
-          stateMutability: 'view',
-          type: 'function',
-        },
-        {
-          constant: false,
-          inputs: [
-            { internalType: 'address', name: '_logic', type: 'address' },
-            { internalType: 'address', name: '_initGovernor', type: 'address' },
-            { internalType: 'bytes', name: '_data', type: 'bytes' },
-          ],
-          name: 'initialize',
-          outputs: [],
-          payable: true,
-          stateMutability: 'payable',
-          type: 'function',
-        },
-        {
-          constant: false,
-          inputs: [
-            { internalType: 'address', name: '_newGovernor', type: 'address' },
-          ],
-          name: 'transferGovernance',
-          outputs: [],
-          payable: false,
-          stateMutability: 'nonpayable',
-          type: 'function',
-        },
-        {
-          constant: true,
-          inputs: [],
-          name: 'admin',
-          outputs: [{ internalType: 'address', name: '', type: 'address' }],
-          payable: false,
-          stateMutability: 'view',
-          type: 'function',
-        },
-        { payable: true, stateMutability: 'payable', type: 'fallback' },
         {
           anonymous: false,
           inputs: [
             {
               indexed: true,
               internalType: 'address',
-              name: 'implementation',
+              name: 'previousGovernor',
+              type: 'address',
+            },
+            {
+              indexed: true,
+              internalType: 'address',
+              name: 'newGovernor',
               type: 'address',
             },
           ],
-          name: 'Upgraded',
+          name: 'GovernorshipTransferred',
+          type: 'event',
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: false,
+              internalType: 'uint256',
+              name: 'maxSupplyDiff',
+              type: 'uint256',
+            },
+          ],
+          name: 'MaxSupplyDiffChanged',
+          type: 'event',
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: false,
+              internalType: 'address',
+              name: '_addr',
+              type: 'address',
+            },
+            {
+              indexed: false,
+              internalType: 'uint256',
+              name: '_value',
+              type: 'uint256',
+            },
+          ],
+          name: 'Mint',
+          type: 'event',
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: false,
+              internalType: 'uint256',
+              name: '_threshold',
+              type: 'uint256',
+            },
+          ],
+          name: 'NetOusdMintForStrategyThresholdChanged',
+          type: 'event',
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: false,
+              internalType: 'address',
+              name: '_ousdMetaStrategy',
+              type: 'address',
+            },
+          ],
+          name: 'OusdMetaStrategyUpdated',
           type: 'event',
         },
         {
@@ -6855,20 +8440,447 @@ export const contracts: Contracts = {
           anonymous: false,
           inputs: [
             {
-              indexed: true,
+              indexed: false,
               internalType: 'address',
-              name: 'previousGovernor',
-              type: 'address',
-            },
-            {
-              indexed: true,
-              internalType: 'address',
-              name: 'newGovernor',
+              name: '_priceProvider',
               type: 'address',
             },
           ],
-          name: 'GovernorshipTransferred',
+          name: 'PriceProviderUpdated',
           type: 'event',
+        },
+        { anonymous: false, inputs: [], name: 'RebasePaused', type: 'event' },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: false,
+              internalType: 'uint256',
+              name: '_threshold',
+              type: 'uint256',
+            },
+          ],
+          name: 'RebaseThresholdUpdated',
+          type: 'event',
+        },
+        { anonymous: false, inputs: [], name: 'RebaseUnpaused', type: 'event' },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: false,
+              internalType: 'address',
+              name: '_addr',
+              type: 'address',
+            },
+            {
+              indexed: false,
+              internalType: 'uint256',
+              name: '_value',
+              type: 'uint256',
+            },
+          ],
+          name: 'Redeem',
+          type: 'event',
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: false,
+              internalType: 'uint256',
+              name: '_redeemFeeBps',
+              type: 'uint256',
+            },
+          ],
+          name: 'RedeemFeeUpdated',
+          type: 'event',
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: false,
+              internalType: 'address',
+              name: '_address',
+              type: 'address',
+            },
+          ],
+          name: 'StrategistUpdated',
+          type: 'event',
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: false,
+              internalType: 'address',
+              name: '_addr',
+              type: 'address',
+            },
+          ],
+          name: 'StrategyApproved',
+          type: 'event',
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: false,
+              internalType: 'address',
+              name: '_addr',
+              type: 'address',
+            },
+          ],
+          name: 'StrategyRemoved',
+          type: 'event',
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: false,
+              internalType: 'address',
+              name: '_address',
+              type: 'address',
+            },
+          ],
+          name: 'TrusteeAddressChanged',
+          type: 'event',
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: false,
+              internalType: 'uint256',
+              name: '_basis',
+              type: 'uint256',
+            },
+          ],
+          name: 'TrusteeFeeBpsChanged',
+          type: 'event',
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: false,
+              internalType: 'uint256',
+              name: '_vaultBuffer',
+              type: 'uint256',
+            },
+          ],
+          name: 'VaultBufferUpdated',
+          type: 'event',
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: false,
+              internalType: 'address',
+              name: '_to',
+              type: 'address',
+            },
+            {
+              indexed: false,
+              internalType: 'uint256',
+              name: '_yield',
+              type: 'uint256',
+            },
+            {
+              indexed: false,
+              internalType: 'uint256',
+              name: '_fee',
+              type: 'uint256',
+            },
+          ],
+          name: 'YieldDistribution',
+          type: 'event',
+        },
+        { stateMutability: 'payable', type: 'fallback' },
+        {
+          inputs: [],
+          name: 'allocate',
+          outputs: [],
+          stateMutability: 'nonpayable',
+          type: 'function',
+        },
+        {
+          inputs: [{ internalType: 'address', name: '', type: 'address' }],
+          name: 'assetDefaultStrategies',
+          outputs: [{ internalType: 'address', name: '', type: 'address' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'autoAllocateThreshold',
+          outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [
+            { internalType: 'uint256', name: '_amount', type: 'uint256' },
+          ],
+          name: 'burnForStrategy',
+          outputs: [],
+          stateMutability: 'nonpayable',
+          type: 'function',
+        },
+        {
+          inputs: [
+            { internalType: 'uint256', name: '_amount', type: 'uint256' },
+          ],
+          name: 'calculateRedeemOutputs',
+          outputs: [{ internalType: 'uint256[]', name: '', type: 'uint256[]' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'capitalPaused',
+          outputs: [{ internalType: 'bool', name: '', type: 'bool' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [
+            { internalType: 'address', name: '_asset', type: 'address' },
+          ],
+          name: 'checkBalance',
+          outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'claimGovernance',
+          outputs: [],
+          stateMutability: 'nonpayable',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'getAllAssets',
+          outputs: [{ internalType: 'address[]', name: '', type: 'address[]' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'getAllStrategies',
+          outputs: [{ internalType: 'address[]', name: '', type: 'address[]' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'getAssetCount',
+          outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'getStrategyCount',
+          outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'governor',
+          outputs: [{ internalType: 'address', name: '', type: 'address' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'isGovernor',
+          outputs: [{ internalType: 'bool', name: '', type: 'bool' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [
+            { internalType: 'address', name: '_asset', type: 'address' },
+          ],
+          name: 'isSupportedAsset',
+          outputs: [{ internalType: 'bool', name: '', type: 'bool' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'maxSupplyDiff',
+          outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [
+            { internalType: 'address', name: '_asset', type: 'address' },
+            { internalType: 'uint256', name: '_amount', type: 'uint256' },
+            {
+              internalType: 'uint256',
+              name: '_minimumOusdAmount',
+              type: 'uint256',
+            },
+          ],
+          name: 'mint',
+          outputs: [],
+          stateMutability: 'nonpayable',
+          type: 'function',
+        },
+        {
+          inputs: [
+            { internalType: 'uint256', name: '_amount', type: 'uint256' },
+          ],
+          name: 'mintForStrategy',
+          outputs: [],
+          stateMutability: 'nonpayable',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'netOusdMintForStrategyThreshold',
+          outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'netOusdMintedForStrategy',
+          outputs: [{ internalType: 'int256', name: '', type: 'int256' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'ousdMetaStrategy',
+          outputs: [{ internalType: 'address', name: '', type: 'address' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'priceProvider',
+          outputs: [{ internalType: 'address', name: '', type: 'address' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'rebase',
+          outputs: [],
+          stateMutability: 'nonpayable',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'rebasePaused',
+          outputs: [{ internalType: 'bool', name: '', type: 'bool' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'rebaseThreshold',
+          outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [
+            { internalType: 'uint256', name: '_amount', type: 'uint256' },
+            {
+              internalType: 'uint256',
+              name: '_minimumUnitAmount',
+              type: 'uint256',
+            },
+          ],
+          name: 'redeem',
+          outputs: [],
+          stateMutability: 'nonpayable',
+          type: 'function',
+        },
+        {
+          inputs: [
+            {
+              internalType: 'uint256',
+              name: '_minimumUnitAmount',
+              type: 'uint256',
+            },
+          ],
+          name: 'redeemAll',
+          outputs: [],
+          stateMutability: 'nonpayable',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'redeemFeeBps',
+          outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [
+            { internalType: 'address', name: 'newImpl', type: 'address' },
+          ],
+          name: 'setAdminImpl',
+          outputs: [],
+          stateMutability: 'nonpayable',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'strategistAddr',
+          outputs: [{ internalType: 'address', name: '', type: 'address' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'totalValue',
+          outputs: [
+            { internalType: 'uint256', name: 'value', type: 'uint256' },
+          ],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [
+            { internalType: 'address', name: '_newGovernor', type: 'address' },
+          ],
+          name: 'transferGovernance',
+          outputs: [],
+          stateMutability: 'nonpayable',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'trusteeAddress',
+          outputs: [{ internalType: 'address', name: '', type: 'address' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'trusteeFeeBps',
+          outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'vaultBuffer',
+          outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+          stateMutability: 'view',
+          type: 'function',
         },
       ],
     },
@@ -7359,84 +9371,73 @@ export const contracts: Contracts = {
     },
     cUSDT: {
       name: 'cUSDT',
-      logoSrc: '/tokens/cUSDT.png',
       symbol: 'cUSDT',
       address: '0xf650c3d88d12db855b8bf7d11be6c55a4e07dcc9',
       abi: null,
     },
     cUSDC: {
       name: 'cUSDC',
-      logoSrc: '/tokens/cUSDC.png',
       symbol: 'cUSDC',
       address: '0x39aa39c021dfbae8fac545936693ac917d5e7563',
       abi: null,
     },
     cDAI: {
       name: 'cDAI',
-      logoSrc: '/tokens/cDAI.png',
       symbol: 'cDAI',
       address: '0x5d3a536e4d6dbd6114cc1ead35777bab948e3643',
       abi: null,
     },
     COMP: {
       name: 'COMP',
-      logoSrc: '/tokens/COMP.png',
       symbol: 'COMP',
       address: '0xc00e94Cb662C3520282E6f5717214004A7f26888',
       abi: null,
     },
     Aave: {
       name: 'Aave',
-      logoSrc: '/tokens/Aave.png',
       symbol: 'Aave',
       address: '0x24a42fD28C976A61Df5D00D0599C34c4f90748c8',
       abi: null,
     },
     aTUSD: {
       name: 'aTUSD',
-      logoSrc: '/tokens/aTUSD.png',
+
       symbol: 'aTUSD',
       address: '0x4DA9b813057D04BAef4e5800E36083717b4a0341',
       abi: null,
     },
     aUSDT: {
       name: 'aUSDT',
-      logoSrc: '/tokens/aUSDT.png',
       symbol: 'aUSDT',
       address: '0x71fc860F7D3A592A4a98740e39dB31d25db65ae8',
       abi: null,
     },
     DAI: {
       name: 'DAI',
-      logoSrc: '/tokens/DAI.png',
       symbol: 'DAI',
       address: '0x6b175474e89094c44da98b954eedeac495271d0f',
       abi: null,
     },
     USDC: {
       name: 'USDC',
-      logoSrc: '/tokens/USDC.png',
       symbol: 'USDC',
       address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
       abi: null,
     },
     USDT: {
       name: 'USDT',
-      logoSrc: '/tokens/USDT.png',
       symbol: 'USDT',
       address: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
       abi: null,
     },
     TUSD: {
       name: 'TUSD',
-      logoSrc: '/tokens/TUSD.png',
       symbol: 'TUSD',
       address: '0x0000000000085d4780B73119b644AE5ecd22b376',
       abi: null,
     },
     stETH: {
       name: 'Liquid staked Ether 2.0',
-      logoSrc: '/tokens/stETH.png',
       symbol: 'stETH',
       address: '0xae7ab96520de3a18e5e111b5eaab095312d7fe84',
       abi: [
@@ -8392,7 +10393,6 @@ export const contracts: Contracts = {
     },
     rETH: {
       name: 'Rocket Pool ETH',
-      logoSrc: '/tokens/rETH.jpg',
       symbol: 'rETH',
       address: '0xae78736cd615f374d3085123a210448e74fc6393',
       abi: [
@@ -8730,7 +10730,6 @@ export const contracts: Contracts = {
     },
     sfrxETH: {
       name: 'Staked Frax Ether',
-      logoSrc: '/tokens/sfrxETH.jpg',
       symbol: 'sfrxETH',
       address: '0xac3e018457b222d93114458476f3e3416abbe38f',
       abi: [
@@ -9197,6 +11196,460 @@ export const contracts: Contracts = {
           outputs: [
             { internalType: 'uint256', name: 'shares', type: 'uint256' },
           ],
+          stateMutability: 'nonpayable',
+          type: 'function',
+        },
+      ],
+    },
+    frxETH: {
+      name: 'Frax Ether',
+      symbol: 'frxETH',
+      address: '0x5E8422345238F34275888049021821E8E08CAa1f',
+      abi: [
+        {
+          inputs: [
+            {
+              internalType: 'address',
+              name: '_creator_address',
+              type: 'address',
+            },
+            {
+              internalType: 'address',
+              name: '_timelock_address',
+              type: 'address',
+            },
+          ],
+          stateMutability: 'nonpayable',
+          type: 'constructor',
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: true,
+              internalType: 'address',
+              name: 'owner',
+              type: 'address',
+            },
+            {
+              indexed: true,
+              internalType: 'address',
+              name: 'spender',
+              type: 'address',
+            },
+            {
+              indexed: false,
+              internalType: 'uint256',
+              name: 'value',
+              type: 'uint256',
+            },
+          ],
+          name: 'Approval',
+          type: 'event',
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: false,
+              internalType: 'address',
+              name: 'minter_address',
+              type: 'address',
+            },
+          ],
+          name: 'MinterAdded',
+          type: 'event',
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: false,
+              internalType: 'address',
+              name: 'minter_address',
+              type: 'address',
+            },
+          ],
+          name: 'MinterRemoved',
+          type: 'event',
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: false,
+              internalType: 'address',
+              name: 'oldOwner',
+              type: 'address',
+            },
+            {
+              indexed: false,
+              internalType: 'address',
+              name: 'newOwner',
+              type: 'address',
+            },
+          ],
+          name: 'OwnerChanged',
+          type: 'event',
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: false,
+              internalType: 'address',
+              name: 'newOwner',
+              type: 'address',
+            },
+          ],
+          name: 'OwnerNominated',
+          type: 'event',
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: false,
+              internalType: 'address',
+              name: 'timelock_address',
+              type: 'address',
+            },
+          ],
+          name: 'TimelockChanged',
+          type: 'event',
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: true,
+              internalType: 'address',
+              name: 'from',
+              type: 'address',
+            },
+            {
+              indexed: true,
+              internalType: 'address',
+              name: 'to',
+              type: 'address',
+            },
+            {
+              indexed: false,
+              internalType: 'uint256',
+              name: 'amount',
+              type: 'uint256',
+            },
+          ],
+          name: 'TokenMinterBurned',
+          type: 'event',
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: true,
+              internalType: 'address',
+              name: 'from',
+              type: 'address',
+            },
+            {
+              indexed: true,
+              internalType: 'address',
+              name: 'to',
+              type: 'address',
+            },
+            {
+              indexed: false,
+              internalType: 'uint256',
+              name: 'amount',
+              type: 'uint256',
+            },
+          ],
+          name: 'TokenMinterMinted',
+          type: 'event',
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: true,
+              internalType: 'address',
+              name: 'from',
+              type: 'address',
+            },
+            {
+              indexed: true,
+              internalType: 'address',
+              name: 'to',
+              type: 'address',
+            },
+            {
+              indexed: false,
+              internalType: 'uint256',
+              name: 'value',
+              type: 'uint256',
+            },
+          ],
+          name: 'Transfer',
+          type: 'event',
+        },
+        {
+          inputs: [],
+          name: 'DOMAIN_SEPARATOR',
+          outputs: [{ internalType: 'bytes32', name: '', type: 'bytes32' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'acceptOwnership',
+          outputs: [],
+          stateMutability: 'nonpayable',
+          type: 'function',
+        },
+        {
+          inputs: [
+            {
+              internalType: 'address',
+              name: 'minter_address',
+              type: 'address',
+            },
+          ],
+          name: 'addMinter',
+          outputs: [],
+          stateMutability: 'nonpayable',
+          type: 'function',
+        },
+        {
+          inputs: [
+            { internalType: 'address', name: 'owner', type: 'address' },
+            { internalType: 'address', name: 'spender', type: 'address' },
+          ],
+          name: 'allowance',
+          outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [
+            { internalType: 'address', name: 'spender', type: 'address' },
+            { internalType: 'uint256', name: 'amount', type: 'uint256' },
+          ],
+          name: 'approve',
+          outputs: [{ internalType: 'bool', name: '', type: 'bool' }],
+          stateMutability: 'nonpayable',
+          type: 'function',
+        },
+        {
+          inputs: [
+            { internalType: 'address', name: 'account', type: 'address' },
+          ],
+          name: 'balanceOf',
+          outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [
+            { internalType: 'uint256', name: 'amount', type: 'uint256' },
+          ],
+          name: 'burn',
+          outputs: [],
+          stateMutability: 'nonpayable',
+          type: 'function',
+        },
+        {
+          inputs: [
+            { internalType: 'address', name: 'account', type: 'address' },
+            { internalType: 'uint256', name: 'amount', type: 'uint256' },
+          ],
+          name: 'burnFrom',
+          outputs: [],
+          stateMutability: 'nonpayable',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'decimals',
+          outputs: [{ internalType: 'uint8', name: '', type: 'uint8' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [
+            { internalType: 'address', name: 'spender', type: 'address' },
+            {
+              internalType: 'uint256',
+              name: 'subtractedValue',
+              type: 'uint256',
+            },
+          ],
+          name: 'decreaseAllowance',
+          outputs: [{ internalType: 'bool', name: '', type: 'bool' }],
+          stateMutability: 'nonpayable',
+          type: 'function',
+        },
+        {
+          inputs: [
+            { internalType: 'address', name: 'spender', type: 'address' },
+            { internalType: 'uint256', name: 'addedValue', type: 'uint256' },
+          ],
+          name: 'increaseAllowance',
+          outputs: [{ internalType: 'bool', name: '', type: 'bool' }],
+          stateMutability: 'nonpayable',
+          type: 'function',
+        },
+        {
+          inputs: [
+            { internalType: 'address', name: 'b_address', type: 'address' },
+            { internalType: 'uint256', name: 'b_amount', type: 'uint256' },
+          ],
+          name: 'minter_burn_from',
+          outputs: [],
+          stateMutability: 'nonpayable',
+          type: 'function',
+        },
+        {
+          inputs: [
+            { internalType: 'address', name: 'm_address', type: 'address' },
+            { internalType: 'uint256', name: 'm_amount', type: 'uint256' },
+          ],
+          name: 'minter_mint',
+          outputs: [],
+          stateMutability: 'nonpayable',
+          type: 'function',
+        },
+        {
+          inputs: [{ internalType: 'address', name: '', type: 'address' }],
+          name: 'minters',
+          outputs: [{ internalType: 'bool', name: '', type: 'bool' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+          name: 'minters_array',
+          outputs: [{ internalType: 'address', name: '', type: 'address' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'name',
+          outputs: [{ internalType: 'string', name: '', type: 'string' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [
+            { internalType: 'address', name: '_owner', type: 'address' },
+          ],
+          name: 'nominateNewOwner',
+          outputs: [],
+          stateMutability: 'nonpayable',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'nominatedOwner',
+          outputs: [{ internalType: 'address', name: '', type: 'address' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [{ internalType: 'address', name: 'owner', type: 'address' }],
+          name: 'nonces',
+          outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'owner',
+          outputs: [{ internalType: 'address', name: '', type: 'address' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [
+            { internalType: 'address', name: 'owner', type: 'address' },
+            { internalType: 'address', name: 'spender', type: 'address' },
+            { internalType: 'uint256', name: 'value', type: 'uint256' },
+            { internalType: 'uint256', name: 'deadline', type: 'uint256' },
+            { internalType: 'uint8', name: 'v', type: 'uint8' },
+            { internalType: 'bytes32', name: 'r', type: 'bytes32' },
+            { internalType: 'bytes32', name: 's', type: 'bytes32' },
+          ],
+          name: 'permit',
+          outputs: [],
+          stateMutability: 'nonpayable',
+          type: 'function',
+        },
+        {
+          inputs: [
+            {
+              internalType: 'address',
+              name: 'minter_address',
+              type: 'address',
+            },
+          ],
+          name: 'removeMinter',
+          outputs: [],
+          stateMutability: 'nonpayable',
+          type: 'function',
+        },
+        {
+          inputs: [
+            {
+              internalType: 'address',
+              name: '_timelock_address',
+              type: 'address',
+            },
+          ],
+          name: 'setTimelock',
+          outputs: [],
+          stateMutability: 'nonpayable',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'symbol',
+          outputs: [{ internalType: 'string', name: '', type: 'string' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'timelock_address',
+          outputs: [{ internalType: 'address', name: '', type: 'address' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [],
+          name: 'totalSupply',
+          outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [
+            { internalType: 'address', name: 'to', type: 'address' },
+            { internalType: 'uint256', name: 'amount', type: 'uint256' },
+          ],
+          name: 'transfer',
+          outputs: [{ internalType: 'bool', name: '', type: 'bool' }],
+          stateMutability: 'nonpayable',
+          type: 'function',
+        },
+        {
+          inputs: [
+            { internalType: 'address', name: 'from', type: 'address' },
+            { internalType: 'address', name: 'to', type: 'address' },
+            { internalType: 'uint256', name: 'amount', type: 'uint256' },
+          ],
+          name: 'transferFrom',
+          outputs: [{ internalType: 'bool', name: '', type: 'bool' }],
           stateMutability: 'nonpayable',
           type: 'function',
         },

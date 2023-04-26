@@ -55,18 +55,13 @@ const APY = ({ i18n, stats }) => {
 
   return (
     <div className="flex flex-col w-full h-[300px] bg-origin-bg-lgrey rounded-xl">
-      <Typography.Body
-        className="flex flex-shrink-0 px-10 h-[80px] items-center"
-        as="h2"
-      >
+      <h2 className="flex flex-shrink-0 px-10 h-[80px] items-center">
         {i18n('apy.title')}
-      </Typography.Body>
+      </h2>
       <div className="h-[1px] w-full border-b-[1px] border-origin-bg-dgrey" />
       <div className="flex flex-col px-10 justify-center h-full space-y-2">
         <div className="relative flex flex-row items-center w-full space-x-3">
-          <Typography.H7 className="text-origin-dimmed">
-            {selected?.label}
-          </Typography.H7>
+          <h3 className="text-origin-dimmed text-lg">{selected?.label}</h3>
           <button
             onClick={() => {
               setIsOpen(true);
@@ -104,9 +99,9 @@ const APY = ({ i18n, stats }) => {
             </div>
           )}
         </div>
-        <Typography.Body className="text-4xl font-bold bg-gradient-to-r from-gradient1-from to-gradient1-to inline-block text-transparent bg-clip-text">
+        <h4 className="font-header text-4xl font-bold bg-gradient-to-r from-gradient1-from to-gradient1-to inline-block text-transparent bg-clip-text">
           {data?.[selectedAPY]?.toFixed(2)}%
-        </Typography.Body>
+        </h4>
       </div>
     </div>
   );

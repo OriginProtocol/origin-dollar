@@ -3,16 +3,77 @@ import cx from 'classnames';
 import Image from 'next/image';
 import map from 'lodash/map';
 import { useClickAway } from 'react-use';
-import { Typography } from '@originprotocol/origin-storybook';
+import { useAccount } from '@originprotocol/hooks';
+import TokenImage from './TokenImage';
 import ExternalCTA from '../core/ExternalCTA';
 import SettingsMenu from './SettingsMenu';
 
-const TokenSwap = ({ tokens, i18n, emptyState = null }) => {
+const TokenSelectionModal = ({ isOpen, onClose, tokens, onSelect }) => {
   const ref = useRef(null);
+
+  useClickAway(ref, () => {
+    setTimeout(() => {
+      onClose();
+    }, 100);
+  });
+
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'auto';
+    }
+  }, [isOpen]);
+
+  return (
+    <div className="fixed z-[9999] top-0 left-0 flex flex-col h-[100vh] w-[100vw] items-center justify-center">
+      <div className="absolute top-0 left-0 flex flex-col h-full w-full bg-origin-bg-black bg-opacity-90 z-[1]" />
+      <div
+        ref={ref}
+        className="flex flex-col mx-auto h-[50vh] w-full lg:w-[50vw] z-[2] bg-origin-bg-lgrey rounded-xl p-6 overflow-auto"
+      >
+        {map(tokens, ({ logoSrc, name, symbol, balanceOf }, key) => (
+          <button
+            key={key}
+            className="flex flex-row flex-shrink-0 w-full justify-between p-4 hover:bg-origin-bg-dgrey duration-100 ease-in transition-all rounded-md"
+            onClick={onSelect.bind(null, key)}
+          >
+            <div className="flex flex-row space-x-4 text-left items-center">
+              <div className="flex items-center flex-shrink-0 w-[40px] h-[40px] rounded-full overflow-hidden">
+                <TokenImage
+                  src={logoSrc}
+                  symbol={symbol}
+                  name={name}
+                  height={40}
+                  width={40}
+                />
+              </div>
+              <div className="flex flex-col space-y-2">
+                <p className="focus:outline-none bg-transparent text-2xl font-semibold caret-gradient1-from">
+                  {name}
+                </p>
+                <span className="text-origin-dimmed">{symbol}</span>
+              </div>
+            </div>
+            <div className="flex flex-col space-y-2 justify-end text-right">
+              <p className="focus:outline-none bg-transparent text-2xl font-semibold caret-gradient1-from">
+                {balanceOf}
+              </p>
+              <span className="text-origin-dimmed text-lg">
+                {/*${swap?.from?.value * (conversions[swap.from?.asset] || 0)}*/}
+              </span>
+            </div>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const TokenSwap = ({ tokens, i18n, emptyState = null }) => {
+  const { address, isConnected } = useAccount();
   const [showTokenSelection, setShowTokenSelection] = useState(false);
   const [conversions, setConversions] = useState({});
-
-  console.log(tokens);
 
   const [swap, setSwap] = useState({
     from: {
@@ -30,7 +91,7 @@ const TokenSwap = ({ tokens, i18n, emptyState = null }) => {
   const isDisabled = !swap.from?.value || !swap.to?.value;
   const hasMoreRoutes = false;
 
-  const onSelectToken = (id) => {
+  const onSelectToken = (id: string) => {
     setSwap((prev) => ({
       ...prev,
       from: {
@@ -45,20 +106,6 @@ const TokenSwap = ({ tokens, i18n, emptyState = null }) => {
     }));
   };
 
-  useClickAway(ref, () => {
-    setTimeout(() => {
-      setShowTokenSelection(false);
-    }, 100);
-  });
-
-  useEffect(() => {
-    if (showTokenSelection) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'auto';
-    }
-  }, [showTokenSelection]);
-
   const noValueEntered = !swap?.from?.value;
 
   return (
@@ -67,9 +114,7 @@ const TokenSwap = ({ tokens, i18n, emptyState = null }) => {
         {noValueEntered && emptyState && <ExternalCTA {...emptyState} />}
         <div className="flex flex-col w-full h-[440px] bg-origin-bg-lgrey rounded-xl">
           <div className="flex flex-row flex-shrink-0 items-center justify-between px-10 h-[80px]">
-            <Typography.Body className="flex flex-shrink-0" as="h2">
-              {i18n('title')}
-            </Typography.Body>
+            <h2 className="flex flex-shrink-0">{i18n('title')}</h2>
             <SettingsMenu i18n={i18n} />
           </div>
           <div className="h-[1px] w-full border-b-[1px] border-origin-bg-dgrey" />
@@ -78,7 +123,7 @@ const TokenSwap = ({ tokens, i18n, emptyState = null }) => {
               <div className="flex flex-col w-full">
                 <input
                   className={cx(
-                    'focus:outline-none bg-transparent text-4xl h-[60px] font-semibold text-origin-dimmed caret-gradient1-from',
+                    'font-header focus:outline-none bg-transparent text-4xl h-[60px] text-origin-dimmed caret-gradient1-from',
                     {
                       'text-origin-white': swap.from?.value > 0,
                     }
@@ -103,15 +148,15 @@ const TokenSwap = ({ tokens, i18n, emptyState = null }) => {
                     e.currentTarget.blur();
                   }}
                 />
-                <Typography.Caption className="text-origin-dimmed text-lg">
+                <span className="text-origin-dimmed text-lg">
                   ${swap?.from?.value * (conversions[swap.from?.asset] || 0)}
-                </Typography.Caption>
+                </span>
               </div>
               <div className="flex flex-col flex-shrink-0 space-y-4">
                 <div className="flex flex-row space-x-4 items-center">
-                  <Typography.Body className="text-lg text-origin-dimmed">
+                  <span className="text-lg text-origin-dimmed">
                     {i18n('balance')} -
-                  </Typography.Body>
+                  </span>
                   <button className="flex items-center justify-center px-2 py-1 bg-origin-white bg-opacity-10 text-origin-dimmed rounded-lg">
                     {i18n('max')}
                   </button>
@@ -166,7 +211,7 @@ const TokenSwap = ({ tokens, i18n, emptyState = null }) => {
               <div className="flex flex-col w-full">
                 <input
                   className={cx(
-                    'focus:outline-none bg-transparent text-4xl h-[60px] font-semibold text-origin-dimmed caret-gradient1-from',
+                    'font-header focus:outline-none bg-transparent text-4xl h-[60px] text-origin-dimmed caret-gradient1-from',
                     {
                       'text-origin-white': swap.to?.value > 0,
                     }
@@ -191,15 +236,15 @@ const TokenSwap = ({ tokens, i18n, emptyState = null }) => {
                     e.currentTarget.blur();
                   }}
                 />
-                <Typography.Caption className="text-origin-dimmed text-lg">
+                <span className="text-origin-dimmed text-lg">
                   ${swap?.to?.value * (conversions[swap.to?.asset] || 0)}
-                </Typography.Caption>
+                </span>
               </div>
               <div className="flex flex-col flex-shrink-0 space-y-4">
                 <div className="flex flex-row space-x-4 items-center">
-                  <Typography.Body className="text-lg text-origin-dimmed">
+                  <span className="text-lg text-origin-dimmed">
                     {i18n('balance')} -
-                  </Typography.Body>
+                  </span>
                   <button className="flex items-center justify-center px-2 py-1 bg-origin-white bg-opacity-10 text-origin-dimmed rounded-lg">
                     {i18n('max')}
                   </button>
@@ -226,9 +271,9 @@ const TokenSwap = ({ tokens, i18n, emptyState = null }) => {
           </div>
         </div>
         <div className="flex flex-col w-full bg-origin-bg-lgrey rounded-xl p-10 space-y-6">
-          <Typography.Body className="flex flex-shrink-0 items-center" as="h3">
+          <h3 className="flex flex-shrink-0 items-center">
             {i18n('swapRoutes')}
-          </Typography.Body>
+          </h3>
           <div className="relative flex flex-col space-y-2 py-6 h-full w-full px-10 bg-origin-bg-grey rounded-md">
             <div className="flex flex-row space-x-2">
               <span>0 ETH</span>
@@ -268,46 +313,17 @@ const TokenSwap = ({ tokens, i18n, emptyState = null }) => {
         )}
       </div>
       {showTokenSelection && (
-        <div className="fixed z-[9999] top-0 left-0 flex flex-col h-[100vh] w-[100vw] items-center justify-center">
-          <div className="absolute top-0 left-0 flex flex-col h-full w-full bg-origin-bg-black bg-opacity-90 z-[1]" />
-          <div
-            ref={ref}
-            className="flex flex-col mx-auto h-[50vh] w-full lg:w-[50vw] z-[2] bg-origin-bg-lgrey rounded-xl p-6 overflow-auto"
-          >
-            {map(tokens, ({ logoSrc, name, symbol, balanceOf }, key) => (
-              <button
-                key={key}
-                className="flex flex-row flex-shrink-0 w-full justify-between p-4 hover:bg-origin-bg-dgrey duration-100 ease-in transition-all rounded-md"
-                onClick={() => {
-                  onSelectToken(key);
-                  setShowTokenSelection(false);
-                }}
-              >
-                <div className="flex flex-row space-x-4 text-left items-center">
-                  <div className="flex items-center flex-shrink-0 w-[40px] h-[40px] rounded-full overflow-hidden">
-                    <Image src={logoSrc} height={40} width={40} alt={name} />
-                  </div>
-                  <div className="flex flex-col space-y-2">
-                    <Typography.Body className="focus:outline-none bg-transparent text-2xl font-semibold caret-gradient1-from">
-                      {name}
-                    </Typography.Body>
-                    <Typography.Caption className="text-origin-dimmed">
-                      {symbol}
-                    </Typography.Caption>
-                  </div>
-                </div>
-                <div className="flex flex-col space-y-2 justify-end text-right">
-                  <p className="focus:outline-none bg-transparent text-2xl font-semibold caret-gradient1-from">
-                    {balanceOf}
-                  </p>
-                  <Typography.Caption className="text-origin-dimmed text-lg">
-                    ${swap?.from?.value * (conversions[swap.from?.asset] || 0)}
-                  </Typography.Caption>
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
+        <TokenSelectionModal
+          isOpen={showTokenSelection}
+          onClose={() => {
+            setShowTokenSelection(false);
+          }}
+          tokens={tokens}
+          onSelect={(token: string) => {
+            onSelectToken(token);
+            setShowTokenSelection(false);
+          }}
+        />
       )}
     </>
   );

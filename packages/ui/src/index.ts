@@ -14,5 +14,8 @@ export { default as DappLayout } from './dapp/DappLayout';
 export { default as DappContainer } from './dapp/DappContainer';
 export { default as SettingsMenu } from './dapp/SettingsMenu';
 export { default as TokenSwap } from './dapp/TokenSwap';
+export { default as TokenImage } from './dapp/TokenImage';
+export { default as Portfolio } from './dapp/Portfolio';
+export { default as APY } from './dapp/APY';
 export { default as WrapToken } from './dapp/WrapToken';
 export { default as TransactionHistory } from './dapp/TransactionHistory';

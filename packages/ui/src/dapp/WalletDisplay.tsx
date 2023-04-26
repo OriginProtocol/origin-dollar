@@ -1,13 +1,19 @@
-import { forwardRef, useMemo, useRef, useState } from 'react';
+import React, { forwardRef, useMemo, useRef, useState } from 'react';
 import { useClickAway } from 'react-use';
 import Image from 'next/image';
 import { Typography } from '@originprotocol/origin-storybook';
-import { shortenAddress } from '@originprotocol/utils';
+import { shortenAddress, formatUnits } from '@originprotocol/utils';
+import {
+  useBalance,
+  useAccount,
+  useContractReads,
+  useDisconnect,
+  erc20ABI,
+} from '@originprotocol/hooks';
 import WalletAvatar, { jsNumberForAddress } from 'react-jazzicon';
-import { useAccount, useContractReads, useDisconnect, erc20ABI } from 'wagmi';
 import { useWeb3Modal } from '@web3modal/react';
-import { ethers } from 'ethers';
 import orderBy from 'lodash/orderBy';
+import TokenImage from './TokenImage';
 
 const UserActivity = ({ i18n }) => {
   const ref = useRef(null);
@@ -69,6 +75,10 @@ const UserMenuDropdown = forwardRef(
   ({ address, i18n, tokens, onDisconnect }, ref) => {
     const tokenKeys = Object.keys(tokens);
 
+    const { data: ethBalance } = useBalance({
+      address,
+    });
+
     const { data, isError, isLoading } = useContractReads({
       contracts: tokenKeys.map((key) => {
         const { address: contractAddress, abi = erc20ABI } = tokens[key];
@@ -82,16 +92,24 @@ const UserMenuDropdown = forwardRef(
     });
 
     const balances = useMemo(() => {
-      return tokenKeys.reduce((acc, key, index) => {
-        acc[key] = {
-          ...tokens[key],
-          balanceOf: parseFloat(
-            ethers.utils.formatEther(data?.[index] || ethers.BigNumber.from(0))
-          ),
-        };
-        return acc;
-      }, {});
-    }, [JSON.stringify(tokenKeys), JSON.stringify(data)]);
+      return tokenKeys.reduce(
+        (acc, key, index) => {
+          acc[key] = {
+            ...tokens[key],
+            balanceOf: Number(formatUnits(data?.[index] ?? '0')),
+          };
+          return acc;
+        },
+        {
+          ETH: {
+            name: 'ETH',
+            symbol: 'ETH',
+            balanceOf: Number(ethBalance?.formatted),
+            logoSrc: '/tokens/ETH.png',
+          },
+        }
+      );
+    }, [JSON.stringify(tokenKeys), JSON.stringify(data), ethBalance]);
 
     return (
       <div
@@ -111,6 +129,27 @@ const UserMenuDropdown = forwardRef(
         </div>
         <div className="h-[1px] w-full border-b-[1px] border-origin-bg-dgrey" />
         <div className="flex flex-col justify-center h-full space-y-4 p-6">
+          <div className="flex flex-row items-center justify-between">
+            <div className="flex flex-row items-center space-x-4">
+              <span>TODO</span>
+              <span>{shortenAddress(address)}</span>
+            </div>
+            <a
+              href={`https://etherscan.io/address/${address}`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <Image
+                src="/icons/external.png"
+                height={8}
+                width={8}
+                alt="View address on Etherscan"
+              />
+            </a>
+          </div>
+        </div>
+        <div className="h-[1px] w-full border-b-[1px] border-origin-bg-dgrey" />
+        <div className="flex flex-col justify-center h-full space-y-4 p-6">
           {isError ? (
             <span>Error</span>
           ) : isLoading ? (
@@ -122,13 +161,7 @@ const UserMenuDropdown = forwardRef(
                   key={name}
                   className="flex flex-row items-center space-x-3"
                 >
-                  <Image
-                    className="overflow-hidden rounded-full"
-                    src={logoSrc}
-                    height={32}
-                    width={32}
-                    alt={name}
-                  />
+                  <TokenImage src={logoSrc} symbol={symbol} name={name} />
                   <span>{balanceOf?.toFixed(4)}</span>
                   <span>{symbol}</span>
                 </div>
@@ -151,19 +184,25 @@ const UserMenu = ({ i18n, address, onDisconnect, tokens }) => {
     }, 100);
   });
 
+  if (!address) {
+    return null;
+  }
+
   return (
     <>
-      <button
+      <div
+        role="button"
         onClick={() => {
           setIsOpen(true);
         }}
+        tabIndex={0}
         className="relative flex flex-row space-x-4 items-center pl-2 pr-4 h-[44px] bg-origin-bg-lgrey rounded-full overflow-hidden"
       >
-        <div className="flex items-center flex-shrink-0 w-[30px] h-full">
+        <span className="flex items-center flex-shrink-0 w-[30px] h-full">
           <WalletAvatar diameter={30} seed={jsNumberForAddress(address)} />
-        </div>
+        </span>
         <span>{shortenAddress(address)}</span>
-      </button>
+      </div>
       {isOpen && (
         <UserMenuDropdown
           ref={ref}

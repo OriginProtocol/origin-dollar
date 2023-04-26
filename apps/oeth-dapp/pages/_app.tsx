@@ -5,6 +5,7 @@ import { appWithTranslation, useTranslation } from 'next-i18next';
 import pick from 'lodash/pick';
 import nextI18NextConfig from '../next-i18next.config';
 import '../src/styles/global.scss';
+import { DAPP_TOKENS } from '../src/constants';
 
 const App = ({ Component, pageProps, router }) => {
   const { t } = useTranslation('common');
@@ -32,7 +33,7 @@ const App = ({ Component, pageProps, router }) => {
             label: t('nav.history'),
           },
         ],
-        tokens: pick(contracts?.mainnet, ['stETH', 'rETH', 'sfrxETH']),
+        tokens: pick(contracts?.mainnet, DAPP_TOKENS),
       }}
       stats={{
         queryFn: (props) => {
@@ -41,7 +42,7 @@ const App = ({ Component, pageProps, router }) => {
         },
       }}
       portfolio={{
-        logoSrc: '/images/oeth-logo-256x256.png',
+        token: contracts.mainnet.OETH,
         queryFn: (props) => {
           console.log('props', props);
           return fetch(`/api/portfolio/${address}`).then((res) => res.json());

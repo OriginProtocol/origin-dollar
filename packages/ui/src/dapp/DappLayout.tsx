@@ -1,11 +1,14 @@
 import React, { ReactNode } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Typography } from '@originprotocol/origin-storybook';
+import dynamic from 'next/dynamic';
 import DappNavigation from './DappNavigation';
-import WalletDisplay from './WalletDisplay';
 import Portfolio from './Portfolio';
 import APY from './APY';
+
+const WalletDisplay = dynamic(() => import('./WalletDisplay'), {
+  ssr: false,
+});
 
 type DappProps = {
   config: any;
@@ -37,7 +40,7 @@ const DappLayout = ({
               target="_blank"
               className="hidden md:flex items-center px-6 h-[44px] bg-origin-bg-lgrey rounded-full overflow-hidden"
             >
-              <Typography.Body>{i18n('nav.viewIpfs')}</Typography.Body>
+              <span>{i18n('nav.viewIpfs')}</span>
             </a>
             <WalletDisplay i18n={i18n} tokens={tokens} />
           </div>

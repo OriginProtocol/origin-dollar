@@ -1,7 +1,7 @@
 {
   "title": "Swap",
   "balance": "Balance",
-  "max": "Max",
+  "max": "max",
   "description": "Wrapped wOETH is a non-rebasing tokenized vault that appreciates in value instead of growing in number",
   "learnMore": "Learn More",
   "swapRoutes": "Swap Routes",

@@ -35,7 +35,7 @@ module.exports = {
       },
       fontFamily: {
         primary: ['Inter', 'sans-serif'],
-        header: ['Inter', 'sans-serif'],
+        header: ['Sailec', 'sans-serif'],
       },
     },
   },

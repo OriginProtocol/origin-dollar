@@ -3,15 +3,13 @@ import { contracts } from '@originprotocol/web3';
 import { useTranslation } from 'next-i18next';
 import pick from 'lodash/pick';
 import i18n from '../src/i18n';
+import { DAPP_TOKENS } from '../src/constants';
 
 const Swap = () => {
   const { t } = useTranslation('swap');
   return (
     <ErrorBoundary>
-      <TokenSwap
-        i18n={t}
-        tokens={pick(contracts?.mainnet, ['WETH', 'stETH', 'rETH', 'sfrxETH'])}
-      />
+      <TokenSwap i18n={t} tokens={pick(contracts?.mainnet, DAPP_TOKENS)} />
     </ErrorBoundary>
   );
 };
