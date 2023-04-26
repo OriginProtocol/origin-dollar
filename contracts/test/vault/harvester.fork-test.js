@@ -85,7 +85,11 @@ forkOnlyDescribe("ForkTest: Harvester", function () {
       await harvester.connect(timelock).swap();
     });
 
-    it("Should harvest and swap from all strategies", async () => {
+    it.skip("Should harvest and swap from all strategies", async () => {
+      // Skip this test because we don't call or use this method anywhere.
+      // Also, because this test is flaky at times due to slippage and the
+      // individual `harvest` and `swap` methods for each strategies are 
+      // covered in the tests above this.
       const { harvester, timelock } = fixture;
       await harvester.connect(timelock)["harvestAndSwap()"]();
     });
