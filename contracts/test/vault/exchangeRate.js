@@ -24,7 +24,7 @@ describe("Vault Redeem", function () {
   });
 
   it("Should mint at a positive exchange rate", async () => {
-    const { ousd, vault, reth, oracleRouter, anna } = fixture;
+    const { ousd, vault, reth, anna } = fixture;
 
     await reth.connect(anna).mint(daiUnits("4.0"));
     await reth.connect(anna).approve(vault.address, daiUnits("4.0"));
