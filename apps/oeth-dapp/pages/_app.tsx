@@ -1,73 +1,63 @@
-import seoConfig from '../src/seo';
-import { DefaultSeo } from 'next-seo';
-import { WagmiConfig, createClient, configureChains } from 'wagmi';
-import {
-  EthereumClient,
-  w3mConnectors,
-  w3mProvider,
-} from '@web3modal/ethereum';
-import { Web3Modal } from '@web3modal/react';
-import { mainnet } from 'wagmi/chains';
-import { SafeConnector } from 'wagmi/connectors/safe';
-import { QueryClient, QueryClientProvider } from 'react-query';
-import useAutoConnect from '../src/hooks/useAutoConnect';
+import { DappLayout, SEO, DappContainer } from '@originprotocol/ui';
+import { useAccount, useAutoConnect } from '@originprotocol/hooks';
+import { contracts } from '@originprotocol/web3';
+import { appWithTranslation, useTranslation } from 'next-i18next';
+import pick from 'lodash/pick';
+import nextI18NextConfig from '../next-i18next.config';
 import '../src/styles/global.scss';
 
-const defaultQueryFn = async (url) => fetch(url).then((res) => res.json());
+const App = ({ Component, pageProps, router }) => {
+  const { t } = useTranslation('common');
+  const { address } = useAccount();
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      queryFn: defaultQueryFn,
-    },
-  },
-});
-
-const chains = [mainnet];
-
-const projectId = process.env.NEXT_PUBLIC_WC_PROJECT_ID;
-
-const { provider } = configureChains(chains, [w3mProvider({ projectId })]);
-
-const wagmiClient = createClient({
-  autoConnect: true,
-  connectors: [
-    ...w3mConnectors({ projectId, version: 1, chains }),
-    new SafeConnector({
-      options: {
-        allowedDomains: [/gnosis-safe.io$/, /app.safe.global$/],
-      },
-    }),
-  ],
-  provider,
-});
-
-const ethereumClient = new EthereumClient(wagmiClient, chains);
-
-const RootElement = ({ Component, pageProps, router }) => {
-  const url = `${seoConfig.baseURL}${router.route}`;
   useAutoConnect();
+
   return (
-    <>
-      <DefaultSeo
-        defaultTitle={seoConfig.defaultTitle}
-        titleTemplate={`%s | ${seoConfig.defaultTitle}`}
-        description={seoConfig.description}
-        openGraph={seoConfig.openGraph({ url })}
-        twitter={seoConfig.twitter}
-      />
+    <DappLayout
+      i18n={t}
+      config={{
+        ipfsUrl: 'https://ousd.eth.limo/',
+        logoSrc: '/images/logo.png',
+        links: [
+          {
+            href: '/',
+            label: t('nav.swap'),
+          },
+          {
+            href: '/wrap',
+            label: t('nav.wrap'),
+          },
+          {
+            href: '/history',
+            label: t('nav.history'),
+          },
+        ],
+        tokens: pick(contracts?.mainnet, ['stETH', 'rETH', 'sfrxETH']),
+      }}
+      stats={{
+        queryFn: (props) => {
+          console.log('props', props);
+          return fetch('/api/stats/apy').then((res) => res.json());
+        },
+      }}
+      portfolio={{
+        logoSrc: '/images/oeth-logo-256x256.png',
+        queryFn: (props) => {
+          console.log('props', props);
+          return fetch(`/api/portfolio/${address}`).then((res) => res.json());
+        },
+      }}
+    >
+      <SEO appId="oeth" route={router.route} />
       <Component {...pageProps} />
-    </>
+    </DappLayout>
   );
 };
 
-const CoreApp = (props) => (
-  <QueryClientProvider client={queryClient}>
-    <WagmiConfig client={wagmiClient}>
-      <RootElement {...props} />
-    </WagmiConfig>
-    <Web3Modal projectId={projectId} ethereumClient={ethereumClient} />
-  </QueryClientProvider>
+const OETHDapp = (props) => (
+  <DappContainer>
+    <App {...props} />
+  </DappContainer>
 );
 
-export default CoreApp;
+export default appWithTranslation(OETHDapp, nextI18NextConfig);

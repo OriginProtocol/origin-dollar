@@ -1,1 +1,2 @@
-export * from './lib/utils';
+export * from './web3';
+export * from './math';

@@ -1,0 +1,32 @@
+{
+  "title": "OETH Portfolio",
+  "nav": {
+    "swap": "Swap",
+    "wrap": "Wrap",
+    "history": "History",
+    "viewIpfs": "View on ipfs"
+  },
+  "apy": {
+    "title": "APY",
+    "7dLabel": "7 day trailing",
+    "30dLabel": "30 day trailing",
+    "60dLabel": "60 day trailing",
+    "90dLabel": "90 day trailing",
+    "365dLabel": "1 year trailing"
+  },
+  "wallet": {
+    "connect": "Connect",
+    "disconnect": "Disconnect",
+    "account": "Account"
+  },
+  "portfolio": {
+    "title": "OETH Portfolio",
+    "lifetimeEarnings": "Lifetime earnings",
+    "pendingYield": "Pending yield",
+    "balance": "Balance"
+  },
+  "activity": {
+    "title": "Recent Activity",
+    "noActivity": "No recent activity found"
+  }
+}

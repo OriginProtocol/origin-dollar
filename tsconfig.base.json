@@ -15,8 +15,10 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
+      "@originprotocol/hooks": ["packages/hooks/src/index.ts"],
       "@originprotocol/ui": ["packages/ui/src/index.ts"],
-      "@originprotocol/utils": ["packages/utils/src/index.ts"]
+      "@originprotocol/utils": ["packages/utils/src/index.ts"],
+      "@originprotocol/web3": ["packages/web3/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]
