@@ -10,7 +10,7 @@ const Swap = () => {
     <ErrorBoundary>
       <TokenSwap
         i18n={t}
-        tokens={pick(contracts?.mainnet, ['wETH', 'stETH', 'rETH', 'sfrxETH'])}
+        tokens={pick(contracts?.mainnet, ['WETH', 'stETH', 'rETH', 'sfrxETH'])}
       />
     </ErrorBoundary>
   );

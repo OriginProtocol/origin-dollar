@@ -8,6 +8,9 @@ const nextConfig = {
   nx: {
     svgr: false,
   },
+  images: {
+    unoptimized: true,
+  },
   i18n,
 };
 
