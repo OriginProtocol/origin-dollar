@@ -28,7 +28,7 @@ contract OETHZapper {
 
     /**
      * @dev Deposit ETH and receive OETH in return.
-     * Will verify that vault mints 1:1 for ETH.
+     * Will verify that the user is sent 1:1 for ETH.
      */
     receive() external payable {
         deposit();
@@ -36,7 +36,7 @@ contract OETHZapper {
 
     /**
      * @dev Deposit ETH and receive OETH in return
-     * Will verify that vault mints 1:1 for ETH
+     * Will verify that the user is sent 1:1 for ETH.
      * @return Amount of OETH sent to user
      */
     function deposit() public payable returns (uint256) {
