@@ -1,0 +1,3 @@
+@narya-ai/=node_modules/@narya-ai/
+@openzeppelin/=node_modules/@openzeppelin/
+hardhat=node_modules/hardhat
