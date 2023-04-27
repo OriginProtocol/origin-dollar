@@ -12,4 +12,10 @@ export function shortenAddress(address: string, shorter = false) {
 export const formatWeiBalance = (balance, decimals = 6) =>
   parseFloat(formatUnits(balance ?? 0n)).toFixed(decimals);
 
-export { formatUnits } from 'ethers/lib/utils.js';
+export {
+  formatUnits,
+  parseUnits,
+  parseEther,
+  formatEther,
+  formatBytes32String,
+} from 'ethers/lib/utils.js';

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
-import { useClickAway } from '@originprotocol/hooks';
-import { truncateDecimals } from '@originprotocol/utils';
+import { useClickAway, useFeeData } from '@originprotocol/hooks';
+import { formatUnits, truncateDecimals } from '@originprotocol/utils';
 import NumericInput from '../core/NumericInput';
 
 const SettingsMenu = ({ i18n, onChange, settings }) => {
@@ -9,6 +9,17 @@ const SettingsMenu = ({ i18n, onChange, settings }) => {
 
   const [isOpen, setIsOpen] = useState(false);
   const [showFrontRunMessage, setShowFrontRun] = useState(true);
+
+  const { data: feeData } = useFeeData();
+
+  // Set default gwei based on feeData
+  useEffect(() => {
+    if (!settings?.gwei && feeData?.gasPrice) {
+      onChange({
+        gwei: parseFloat(formatUnits(feeData?.gasPrice, 'gwei')).toFixed(2),
+      });
+    }
+  }, [settings?.gwei, feeData?.gasPrice]);
 
   const handleToleranceChange = (newValue) => {
     const value = Math.min(truncateDecimals(newValue, 2), 50);

@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState, useMemo } from 'react';
 import cx from 'classnames';
 import Image from 'next/image';
 import { find, map, isEmpty } from 'lodash';
+import { ethers } from 'ethers';
 import {
   useAccount,
   useContractReads,
@@ -11,7 +12,7 @@ import {
   useLockBodyScroll,
   useTokenBalances,
 } from '@originprotocol/hooks';
-import { formatWeiBalance } from '@originprotocol/utils';
+import { formatWeiBalance, parseUnits } from '@originprotocol/utils';
 import TokenImage from './TokenImage';
 import ExternalCTA from '../core/ExternalCTA';
 import NumericInput from '../core/NumericInput';
@@ -205,7 +206,7 @@ const SwapForm = ({
   };
 
   const minReceivedEstimate = useMemo(
-    () => formatWeiBalance(estimatedValue ?? 0n) * settings?.tolerance,
+    () => parseFloat(estimatedValue * settings?.tolerance).toFixed(6),
     [estimatedValue, settings?.tolerance]
   );
 
@@ -381,6 +382,128 @@ const matchTokens = (tokens, contractAddress) => {
   );
 };
 
+const useSwapEstimator = ({
+  address,
+  swapTokens,
+  settings,
+  mode,
+  fromToken,
+  toToken,
+  value,
+  estimatesFor,
+}) => {
+  const [estimates, setEstimates] = useState(null);
+
+  const provider = new ethers.providers.StaticJsonRpcProvider(
+    process.env.NEXT_PUBLIC_ETHEREUM_RPC_PROVIDER,
+    { chainId: parseInt(process.env.NEXT_PUBLIC_ETHEREUM_RPC_CHAIN_ID) }
+  );
+
+  const estimateMintSuitabilityVault = async () => {
+    if (!estimatesFor.vault) return;
+
+    const fromTokenContract = new ethers.Contract(
+      fromToken.address,
+      fromToken.abi,
+      provider
+    );
+
+    const vaultContract = new ethers.Contract(
+      estimatesFor.vault.address,
+      estimatesFor.vault.abi,
+      provider
+    );
+
+    try {
+      const [
+        priceUnitMint,
+        rebaseThreshold,
+        autoAllocateThreshold,
+        fromTokenAllowance,
+        fromTokenDecimals,
+      ] = await Promise.all([
+        vaultContract.priceUnitMint(fromToken.address),
+        vaultContract.rebaseThreshold(),
+        vaultContract.autoAllocateThreshold(),
+        fromTokenContract.allowance(address, vaultContract.address),
+        fromTokenContract.decimals(),
+      ]);
+
+      const fromTokenValue = parseUnits(value, fromTokenDecimals);
+      const hasEnoughBalance = fromToken?.balanceOf.gte(fromTokenValue);
+      const hasProvidedAllowance = fromTokenAllowance.gte(fromTokenValue);
+
+      if (!hasEnoughBalance) {
+        return {
+          error: 'NOT_ENOUGH_BALANCE',
+        };
+      } else if (!hasProvidedAllowance) {
+        return {
+          error: 'NOT_ENOUGH_ALLOWANCE',
+        };
+      }
+
+      const receiveAmount = priceUnitMint.mul(fromTokenValue);
+
+      const minimumAmount = fromTokenValue.sub(
+        fromTokenValue.mul(settings?.tolerance * 1000).div(1000)
+      );
+
+      const gasLimit = await vaultContract.estimateGas.mint(
+        fromToken.address,
+        fromTokenValue,
+        minimumAmount
+      );
+
+      return {
+        rebaseThreshold,
+        autoAllocateThreshold,
+        receiveAmount,
+        minimumAmount,
+        gasLimit,
+      };
+    } catch (e) {
+      console.error(`ERROR: Vault swap suitability: ${e.message}`);
+      if (
+        e?.data?.message?.includes('Mint amount lower than minimum') ||
+        e?.message.includes('Mint amount lower than minimum')
+      ) {
+        return {
+          error: 'PRICE_TOO_HIGH',
+        };
+      }
+      return {
+        error: 'UNKNOWN',
+      };
+    }
+  };
+
+  const onFetchEstimations = async () => {
+    setEstimates(null);
+    const vaultEstimate = await estimateMintSuitabilityVault();
+    setEstimates({
+      vaultEstimate,
+    });
+  };
+
+  useEffect(() => {
+    (async function () {
+      if (value && fromToken?.address && toToken?.address) {
+        await onFetchEstimations();
+      }
+    })();
+  }, [
+    value,
+    mode,
+    fromToken?.address,
+    toToken?.address,
+    JSON.stringify(settings),
+    JSON.stringify(swapTokens),
+  ]);
+
+  return { data: estimates, isLoading: estimates === null };
+};
+
 const VaultSwap = ({ tokens, i18n, emptyState = null, vault }) => {
   const { address, isConnected } = useAccount();
 
@@ -391,7 +514,7 @@ const VaultSwap = ({ tokens, i18n, emptyState = null, vault }) => {
 
   const [settings, setSettings] = useState({
     tolerance: 0.1,
-    gwei: 20,
+    gwei: null,
   });
 
   const [swap, setSwap] = useState({
@@ -402,22 +525,57 @@ const VaultSwap = ({ tokens, i18n, emptyState = null, vault }) => {
     estimatedValue: 0,
   });
 
-  const {
-    data: tokensWithBalances,
-    isError: isErrorLoadingBalances,
-    isLoading: isLoadingBalances,
-  } = useTokenBalances({ address, tokens });
-
   const [
     { assetContractAddresses, strategyContractAddresses },
     { onMint, onRedeem },
   ] = useVault({ vault });
 
-  const addressesKey = JSON.stringify(assetContractAddresses);
+  // Retrieve user token balances
+  const {
+    data: tokensWithBalances,
+    isError: isErrorLoadingBalances,
+    isLoading: isLoadingBalances,
+  } = useTokenBalances({
+    address,
+    tokens,
+  });
 
+  // Swappable tokens based on supported vault assets
   const swapTokens = assetContractAddresses?.map(
     matchTokens.bind(null, tokensWithBalances)
   );
+
+  // // Retrieve token allowances for tokens, vault, etc
+  // const {
+  //   data: tokensWithAllowances,
+  //   isError: isErrorLoadingAllowances,
+  //   isLoading: isLoadingAllowances,
+  // } = useTokenAllowances({
+  //   address,
+  //   tokens: swapTokens,
+  //   allowances: {
+  //     vault: vault?.contract,
+  //   },
+  // });
+
+  // Watch for value changes to perform estimates
+  const { data: estimates, isLoading } = useSwapEstimator({
+    address,
+    swapTokens,
+    settings,
+    mode: swap?.type,
+    fromToken: swap?.selectedToken,
+    toToken: swap?.estimatedToken,
+    value: swap?.value,
+    estimatesFor: {
+      vault: vault?.contract,
+    },
+  });
+
+  console.log({
+    estimates,
+    isLoading,
+  });
 
   // Auto select a selected token
   useEffect(() => {
@@ -429,7 +587,11 @@ const VaultSwap = ({ tokens, i18n, emptyState = null, vault }) => {
           matchTokens(tokensWithBalances, assetContractAddresses?.[0]),
       }));
     }
-  }, [addressesKey, swap?.selectedToken, tokensWithBalances]);
+  }, [
+    JSON.stringify(assetContractAddresses),
+    swap?.selectedToken,
+    tokensWithBalances,
+  ]);
 
   return (
     <div className="flex flex-col space-y-8">

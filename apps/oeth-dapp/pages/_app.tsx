@@ -43,9 +43,6 @@ const App = ({ Component, pageProps, router }) => {
         token: isWrap ? contracts.mainnet.woETH : contracts.mainnet.OETH,
         queryFn: ({ queryKey }) => {
           const [, tokenAddress] = queryKey;
-          console.log({
-            qwuery: tokenAddress || contracts.mainnet.OETH.address,
-          });
           return fetch(
             `/api/portfolio/${address}?token=${
               tokenAddress || contracts.mainnet.OETH.address

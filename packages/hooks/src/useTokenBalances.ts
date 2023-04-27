@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 import { useBalance, useContractReads, erc20ABI } from 'wagmi';
-import { formatUnits } from '@originprotocol/utils';
 
 type Token = {
   name: string;
