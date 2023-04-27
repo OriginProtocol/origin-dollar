@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useBalance, useContractReads, erc20ABI } from 'wagmi';
-import { ethers } from 'ethers';
+import { BigNumber } from 'ethers';
 
 type Token = {
   name: string;
@@ -39,7 +39,7 @@ const useTokenBalances = ({ address, tokens }: TokenBalanceProps) => {
       (acc, key, index) => {
         acc[key] = {
           ...tokens[key],
-          balanceOf: data?.[index] ?? ethers.BigNumber.from(0),
+          balanceOf: data?.[index] ?? BigNumber.from(0),
         };
         return acc;
       },
@@ -47,7 +47,7 @@ const useTokenBalances = ({ address, tokens }: TokenBalanceProps) => {
         ETH: {
           name: 'ETH',
           symbol: 'ETH',
-          balanceOf: ethBalance?.value ?? ethers.BigNumber.from(0),
+          balanceOf: ethBalance?.value ?? BigNumber.from(0),
           logoSrc: '/tokens/ETH.png',
         },
       }
