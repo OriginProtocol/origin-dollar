@@ -1,4 +1,4 @@
-import { ethers } from 'ethers';
+import { ethers, BigNumber } from 'ethers';
 import { formatUnits } from 'ethers/lib/utils';
 
 export function shortenAddress(address: string, shorter = false) {
@@ -11,7 +11,7 @@ export function shortenAddress(address: string, shorter = false) {
 }
 
 export const formatWeiBalance = (balance, maxDecimalDigits = 18) =>
-  ethers.FixedNumber.from(formatUnits(balance || 0n, maxDecimalDigits))
+  ethers.FixedNumber.from(formatUnits(balance || BigNumber.from(0), maxDecimalDigits))
     .round(
       maxDecimalDigits ?? ethers.BigNumber.from(maxDecimalDigits).toNumber()
     )
