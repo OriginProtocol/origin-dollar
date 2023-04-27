@@ -32,6 +32,7 @@ const useTokenBalances = ({ address, tokens }: TokenBalanceProps) => {
         args: [address],
       };
     }),
+    watch: true,
   });
 
   const balances = useMemo(() => {

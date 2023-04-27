@@ -13,6 +13,7 @@ const Portfolio = ({ i18n, portfolio }) => {
     abi: token.abi,
     functionName: 'balanceOf',
     args: [address],
+    watch: true,
   });
 
   const { data } = useQuery({

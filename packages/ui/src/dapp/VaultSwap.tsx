@@ -128,6 +128,7 @@ const SwapRoutes = ({ i18n, swap, settings }) => {
 };
 
 const MintableActions = ({ i18n, swap, translationContext, onSuccess }) => {
+  const [error, setError] = useState(null);
   const { value, selectedToken, selectedEstimate } = swap || {};
   const { hasProvidedAllowance, contract, minimumAmount } =
     selectedEstimate || {};
@@ -187,8 +188,23 @@ const MintableActions = ({ i18n, swap, translationContext, onSuccess }) => {
     }
   }, [snapWriteIsSuccess]);
 
+  useEffect(() => {
+    if (swapWriteError) {
+      let error = 'UNPREDICTABLE_GAS_LIMIT';
+      // TODO: Add more error handling
+      setError(error);
+    } else {
+      setError(null);
+    }
+  }, [swapWriteError]);
+
   return (
     <>
+      {error && (
+        <span role="alert" className="text-origin-secondary text-sm">
+          {i18n(`error.${error}`, translationContext)}
+        </span>
+      )}
       {!hasProvidedAllowance && (
         <button
           className="flex items-center justify-center w-full h-[72px] text-xl bg-gradient-to-r from-gradient2-from to-gradient2-to rounded-xl"
@@ -238,6 +254,7 @@ const MintableActions = ({ i18n, swap, translationContext, onSuccess }) => {
 };
 
 const RedeemActions = ({ i18n, swap, translationContext, onSuccess }) => {
+  const [error, setError] = useState(null);
   const { value, selectedEstimate } = swap || {};
   const { contract, minimumAmount } = selectedEstimate || {};
   const weiValue = parseUnits(String(value), 18);
@@ -256,8 +273,6 @@ const RedeemActions = ({ i18n, swap, translationContext, onSuccess }) => {
     write: swapWrite,
   } = useContractWrite(swapWriteConfig);
 
-  const swapWriteDisabled = !!swapWriteError;
-
   const { isLoading: snapWriteIsSubmitted, isSuccess: snapWriteIsSuccess } =
     useWaitForTransaction({
       hash: swapWriteData?.hash,
@@ -269,31 +284,52 @@ const RedeemActions = ({ i18n, swap, translationContext, onSuccess }) => {
     }
   }, [snapWriteIsSuccess]);
 
+  useEffect(() => {
+    if (swapWriteError) {
+      let error = 'UNPREDICTABLE_GAS_LIMIT';
+      if (
+        swapWriteError?.message?.includes('Redeem amount lower than minimum')
+      ) {
+        error = 'REDEEM_TOO_LOW';
+      }
+      setError(error);
+    } else {
+      setError(null);
+    }
+  }, [swapWriteError]);
+
   return (
-    <button
-      className={cx(
-        'flex items-center justify-center w-full h-[72px] text-xl bg-gradient-to-r from-gradient2-from to-gradient2-to rounded-xl',
-        {
-          'opacity-50 cursor-not-allowed': swapWriteDisabled,
-        }
+    <>
+      {error && (
+        <span role="alert" className="text-origin-secondary text-sm">
+          {i18n(`error.${error}`, translationContext)}
+        </span>
       )}
-      onClick={() => {
-        swapWrite?.();
-      }}
-      disabled={swapWriteDisabled}
-    >
-      {(() => {
-        if (swapWriteIsLoading) {
-          return i18n('redeem.PENDING', translationContext);
-        } else if (snapWriteIsSubmitted) {
-          return i18n('redeem.SUBMITTED', translationContext);
-        } else if (snapWriteIsSuccess) {
-          return i18n('redeem.SUCCESS', translationContext);
-        } else {
-          return i18n('redeem.DEFAULT', translationContext);
-        }
-      })()}
-    </button>
+      <button
+        className={cx(
+          'flex items-center justify-center w-full h-[72px] text-xl bg-gradient-to-r from-gradient2-from to-gradient2-to rounded-xl',
+          {
+            'opacity-50 cursor-not-allowed': !!swapWriteError,
+          }
+        )}
+        onClick={() => {
+          swapWrite?.();
+        }}
+        disabled={!!swapWriteError}
+      >
+        {(() => {
+          if (swapWriteIsLoading) {
+            return i18n('redeem.PENDING', translationContext);
+          } else if (snapWriteIsSubmitted) {
+            return i18n('redeem.SUBMITTED', translationContext);
+          } else if (snapWriteIsSuccess) {
+            return i18n('redeem.SUCCESS', translationContext);
+          } else {
+            return i18n('redeem.DEFAULT', translationContext);
+          }
+        })()}
+      </button>
+    </>
   );
 };
 
@@ -930,6 +966,7 @@ const VaultSwap = ({ tokens, i18n, emptyState = null, vault }) => {
     setSwap((prev) => ({
       ...prev,
       forceRefreshBit: prev.forceRefreshBit === 0 ? 1 : 0,
+      value: 0,
     }));
     await onRefreshEstimates();
   };

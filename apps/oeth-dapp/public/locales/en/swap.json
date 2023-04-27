@@ -29,7 +29,9 @@
   "errors": {
     "NOT_ENOUGH_BALANCE": "Insufficient {{sourceTokenName}} balance",
     "NO_INPUT_AMOUNT": "Enter Amount",
-    "UNKNOWN": "Enter Amount"
+    "UNKNOWN": "Enter Amount",
+    "UNPREDICTABLE_GAS_LIMIT": "Error estimating gas for transaction",
+    "REDEEM_TOO_LOW": "Redeem amount lower than minimum, adjust tolerance up"
   },
   "settings": {
     "title": "Settings",
