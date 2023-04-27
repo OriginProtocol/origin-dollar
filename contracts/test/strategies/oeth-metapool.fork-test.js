@@ -127,8 +127,8 @@ forkOnlyDescribe("ForkTest: OETH Curve Metapool Strategy", function () {
       ["harvestAndSwap(address)"](ConvexEthMetaStrategy.address);
 
     const wethDiff = (await weth.balanceOf(oethVault.address)).sub(wethBefore);
-    const totalSupplyDiff = (await oeth.totalSupply()).sub(totalSupply);
     await oethVault.connect(josh).rebase();
+    const totalSupplyDiff = (await oeth.totalSupply()).sub(totalSupply);
 
     await expect(wethDiff).to.be.gte(oethUnits("0.3"));
     // TODO this one fails

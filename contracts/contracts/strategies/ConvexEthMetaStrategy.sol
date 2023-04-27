@@ -22,7 +22,7 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
     using SafeERC20 for IERC20;
 
     uint256 internal constant MAX_SLIPPAGE = 1e16; // 1%, same as the Curve UI
-    uint256 internal constant ASSET_COUNT = 3;
+    uint256 internal constant ASSET_COUNT = 2;
     address internal cvxDepositorAddress;
     // TODO change this to internal once this address is immutable
     address public cvxRewardStakerAddress;
