@@ -12,6 +12,7 @@ abstract contract OracleRouterBase is IOracle {
     uint256 constant MIN_DRIFT = 0.7e18;
     uint256 constant MAX_DRIFT = 1.3e18;
     address constant FIXED_PRICE = 0x0000000000000000000000000000000000000001;
+    address constant ZERO_ADDRESS = 0x0000000000000000000000000000000000000000;
     mapping(address => uint8) internal decimalsCache;
 
     /**
@@ -20,6 +21,18 @@ abstract contract OracleRouterBase is IOracle {
      * @return address address of the price feed for the asset
      */
     function feed(address asset) internal view virtual returns (address);
+
+    /**
+     * @dev The price feed contract to use for a particular asset pair.
+     * @param asset_one address of the first asset
+     * @param asset_two address of the second asset
+     * @return address address of the price feed for the asset pair
+     */
+    function feed(address asset_one, address asset_two)
+        internal
+        view
+        virtual
+        returns (address);
 
     /**
      * @notice Returns the total price in 18 digit unit for a given asset.
@@ -36,31 +49,67 @@ abstract contract OracleRouterBase is IOracle {
         address _feed = feed(asset);
         require(_feed != address(0), "Asset not available");
         require(_feed != FIXED_PRICE, "Fixed price feeds not supported");
+        return _priceForFeedBase(_feed, isStablecoin(asset));
+    }
+
+    /**
+     * @notice Returns the total price in 18 digit unit for a given asset pair.
+     * @param asset_one address of the asset
+     * @param asset_two address of the asset
+     * @return uint256 unit price for 1 asset unit, in 18 decimal fixed
+     */
+    function price(address asset_one, address asset_two)
+        external
+        view
+        virtual
+        override
+        returns (uint256)
+    {
+        address _feed = feed(asset_one, asset_two);
+        require(_feed != address(0), "Asset not available");
+        require(_feed != FIXED_PRICE, "Fixed price feeds not supported");
+        // TODO: should both assets be checked for being a stablecoin?
+        return _priceForFeedBase(_feed, isStablecoin(asset_one));
+    }
+
+    function _priceForFeedBase(address _feed, bool isStablecoin)
+        internal
+        view
+        returns (uint256)
+    {
         (, int256 _iprice, , , ) = AggregatorV3Interface(_feed)
             .latestRoundData();
-        uint8 decimals = getDecimals(asset);
+        uint8 decimals = getDecimals(_feed);
 
         uint256 _price = uint256(_iprice).scaleBy(18, decimals);
-        if (isStablecoin(asset)) {
+        if (isStablecoin) {
             require(_price <= MAX_DRIFT, "Oracle: Price exceeds max");
             require(_price >= MIN_DRIFT, "Oracle: Price under min");
         }
         return uint256(_price);
     }
 
-    function getDecimals(address _asset) internal view virtual returns (uint8) {
-        uint8 decimals = decimalsCache[_asset];
+    function getDecimals(address _feed) internal view virtual returns (uint8) {
+        uint8 decimals = decimalsCache[_feed];
         require(decimals > 0, "Oracle: Decimals not cached");
         return decimals;
     }
 
-    function cacheDecimals(address _asset) external returns (uint8) {
-        address _feed = feed(_asset);
+    function cacheDecimals(address asset_one, address asset_two)
+        external
+        returns (uint8)
+    {
+        address _feed;
+        if (asset_two == ZERO_ADDRESS) {
+            _feed = feed(asset_one);
+        } else {
+            _feed = feed(asset_one, asset_two);
+        }
         require(_feed != address(0), "Asset not available");
         require(_feed != FIXED_PRICE, "Fixed price feeds not supported");
 
         uint8 decimals = AggregatorV3Interface(_feed).decimals();
-        decimalsCache[_asset] = decimals;
+        decimalsCache[_feed] = decimals;
         return decimals;
     }
 
@@ -120,6 +169,17 @@ contract OracleRouter is OracleRouterBase {
             revert("Asset not available");
         }
     }
+
+    function feed(address asset_one, address asset_two)
+        internal
+        pure
+        virtual
+        override
+        returns (address)
+    {
+        // Not yet used in OUSD project
+        revert("Asset not available");
+    }
 }
 
 contract OETHOracleRouter is OracleRouter {
@@ -144,12 +204,70 @@ contract OETHOracleRouter is OracleRouter {
             return 1e18;
         }
         require(_feed != address(0), "Asset not available");
+
+        return _priceForFeed(_feed);
+    }
+
+    /**
+     * @notice Returns the total price in 18 digit units for a given asset pair.
+     *         This implementation does not (!) do range checks as the
+     *         parent OracleRouter does.
+     * @param asset_one address of the first asset
+     * @param asset_two address of the second asset
+     * @return uint256 unit price for 1 asset unit, in 18 decimal fixed
+     */
+    function price(address asset_one, address asset_two)
+        external
+        view
+        virtual
+        override
+        returns (uint256)
+    {
+        address _feed = feed(asset_one, asset_two);
+        if (_feed == FIXED_PRICE) {
+            return 1e18;
+        }
+        require(_feed != address(0), "Asset not available");
+
+        return _priceForFeed(_feed);
+    }
+
+    function _priceForFeed(address _feed) internal view returns (uint256) {
         (, int256 _iprice, , , ) = AggregatorV3Interface(_feed)
             .latestRoundData();
 
-        uint8 decimals = getDecimals(asset);
+        uint8 decimals = getDecimals(_feed);
         uint256 _price = uint256(_iprice).scaleBy(18, decimals);
         return _price;
+    }
+
+    /**
+     * @dev The price feed contract to use for a particular asset pair.
+     * @param asset_one address of the first asset
+     * @param asset_two address of the second asset
+     * @return address address of the price feed for the asset pair
+     */
+    function feed(address asset_one, address asset_two)
+        internal
+        pure
+        override
+        returns (address)
+    {
+        if (
+            asset_one == 0xD533a949740bb3306d119CC777fa900bA034cd52 &&
+            asset_two == 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE
+        ) {
+            // Chainlink: CRV/ETH
+            return 0x8a12Be339B0cD1829b91Adc01977caa5E9ac121e;
+        } else if (
+            asset_one == 0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B &&
+            asset_two == 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE
+        ) {
+            // Chainlink: CVX/ETH
+            return 0xC9CbF687f43176B302F03f5e58470b77D07c61c6;
+        } else {
+            revert("Asset not available");
+        }
     }
 }
 
@@ -163,13 +281,7 @@ contract OracleRouterDev is OracleRouterBase {
     /*
      * The dev version of the Oracle doesn't need to gas optimize and cache the decimals
      */
-    function getDecimals(address _asset)
-        internal
-        view
-        override
-        returns (uint8)
-    {
-        address _feed = feed(_asset);
+    function getDecimals(address _feed) internal view override returns (uint8) {
         require(_feed != address(0), "Asset not available");
         require(_feed != FIXED_PRICE, "Fixed price feeds not supported");
 
@@ -182,5 +294,14 @@ contract OracleRouterDev is OracleRouterBase {
      */
     function feed(address asset) internal view override returns (address) {
         return assetToFeed[asset];
+    }
+
+    function feed(address asset_one, address asset_two)
+        internal
+        view
+        override
+        returns (address)
+    {
+        return assetToFeed[asset_one];
     }
 }

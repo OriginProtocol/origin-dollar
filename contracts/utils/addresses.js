@@ -7,6 +7,7 @@ const addresses = {};
 // Utility addresses
 addresses.zero = "0x0000000000000000000000000000000000000000";
 addresses.dead = "0x0000000000000000000000000000000000000001";
+addresses.ETH = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
 
 addresses.mainnet = {};
 
@@ -106,7 +107,7 @@ addresses.mainnet.chainlinkcbETH_ETH =
   "0xF017fcB346A1885194689bA23Eff2fE6fA5C483b";
 
 // WETH Token
-addresses.mainnet.WETH = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2";
+addresses.mainnet.WETH = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2";
 // Deployed OUSD contracts
 addresses.mainnet.Guardian = "0xbe2AB3d3d8F6a32b96414ebbd865dBD276d3d899"; // ERC 20 owner multisig.
 addresses.mainnet.VaultProxy = "0xe75d77b1865ae93c7eaa3040b038d7aa7bc02f70";
