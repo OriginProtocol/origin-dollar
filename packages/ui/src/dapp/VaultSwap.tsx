@@ -834,6 +834,7 @@ const VaultSwap = ({ tokens, i18n, emptyState = null, vault }) => {
     selectedEstimate: null,
     estimatedToken: null,
     estimates: [],
+    forceRefreshBit: 0,
   });
 
   const [{ assetContractAddresses }] = useVault({
@@ -925,19 +926,16 @@ const VaultSwap = ({ tokens, i18n, emptyState = null, vault }) => {
     }));
   };
 
-  const onSuccess = async (actionType) => {
-    if (actionType === 'MINT' || actionType === 'REDEEM') {
-      setSwap((prev) => ({
-        ...prev,
-        value: 0,
-      }));
-    } else if (actionType === 'ALLOWANCE') {
-      await onRefreshEstimates();
-    }
+  const onSuccess = async () => {
+    setSwap((prev) => ({
+      ...prev,
+      forceRefreshBit: prev.forceRefreshBit === 0 ? 1 : 0,
+    }));
+    await onRefreshEstimates();
   };
 
   return (
-    <div className="flex flex-col space-y-8">
+    <div key={swap?.forceRefreshBit} className="flex flex-col space-y-8">
       {!swap?.value && emptyState && <ExternalCTA {...emptyState} />}
       <SwapForm
         i18n={i18n}
