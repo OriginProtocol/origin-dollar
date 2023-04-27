@@ -4,6 +4,7 @@ import { useClickAway, useFeeData } from '@originprotocol/hooks';
 import { formatUnits, truncateDecimals } from '@originprotocol/utils';
 import NumericInput from '../core/NumericInput';
 
+// @ts-ignore
 const SettingsMenu = ({ i18n, onChange, settings }) => {
   const ref = useRef(null);
 
@@ -21,15 +22,15 @@ const SettingsMenu = ({ i18n, onChange, settings }) => {
     }
   }, [settings?.gwei, feeData?.gasPrice]);
 
-  const handleToleranceChange = (newValue) => {
-    const value = Math.min(truncateDecimals(newValue, 2), 50);
+  const handleToleranceChange = (newValue: number) => {
+    const value = Math.min(Number(truncateDecimals(newValue, 2)), 50);
     setShowFrontRun(value > 1);
     onChange({
       tolerance: value,
     });
   };
 
-  const handleGweiChange = (value) => {
+  const handleGweiChange = (value: string) => {
     onChange({
       gwei: value,
     });
@@ -88,6 +89,7 @@ const SettingsMenu = ({ i18n, onChange, settings }) => {
               </label>
               <div className="flex flex-row space-x-2">
                 <div className="relative flex flex-row items-center px-6 justify-center w-full max-w-[120px] h-[44px] rounded-full overflow-hidden z-[2] bg-origin-blue bg-opacity-5 border border-origin-blue">
+                  {/* @ts-ignore */}
                   <NumericInput
                     id="settings-tolerance"
                     onChange={handleToleranceChange}
@@ -115,6 +117,7 @@ const SettingsMenu = ({ i18n, onChange, settings }) => {
               </label>
               <div className="flex flex-row space-x-2">
                 <div className="relative flex flex-row items-center px-6 justify-center max-w-[160px] w-full h-[44px] rounded-full overflow-hidden z-[2] bg-origin-blue bg-opacity-5 border border-origin-blue">
+                  {/* @ts-ignore */}
                   <NumericInput
                     id="settings-gasPrice"
                     onChange={handleGweiChange}

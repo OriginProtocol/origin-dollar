@@ -7,8 +7,8 @@
  *
  * @returns {String} Truncated decimal value
  */
-export function truncateDecimals(value: number, decimals = 6) {
-  if (!value) return;
+export function truncateDecimals(value: number, decimals = 6): string {
+  if (!value) return '';
   const [whole, fraction] = value.toString().split('.');
   if (!fraction || fraction.length <= decimals) {
     return value.toString();
