@@ -7,11 +7,13 @@
   "swapRoutes": "Swap Routes",
   "enterAmount": "Enter Amount",
   "swap": "Swap",
+  "estimate": "estimate",
+  "minReceived": "Min. received",
   "settings": {
     "title": "Settings",
     "tolerance": "Price Tolerance",
     "auto": "Auto",
-    "frontrun": "Your transaction may be frontrun",
+    "frontRun": "Your transaction may be front run",
     "gasPrice": "Gas Price"
   }
 }

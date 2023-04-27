@@ -16,16 +16,16 @@ const Portfolio = ({ i18n, portfolio }) => {
   });
 
   const { data } = useQuery({
-    queryKey: ['portfolio'],
+    queryKey: ['portfolio', token.address],
     queryFn,
   });
 
-  const { lifetimeEarnings = 0, pendingYield = 0 } = data || {};
+  const { displayValues } = data || {};
 
   return (
     <div className="flex flex-col w-full h-[300px] bg-origin-bg-lgrey rounded-xl">
       <h2 className="flex flex-shrink-0 px-10 h-[80px] items-center">
-        {i18n('portfolio.title')}
+        {token?.symbol} {i18n('portfolio.title')}
       </h2>
       <div className="h-[1px] w-full border-b-[1px] border-origin-bg-dgrey" />
       <div className="grid grid-cols-2 h-full">
@@ -50,18 +50,17 @@ const Portfolio = ({ i18n, portfolio }) => {
         </div>
         <div className="flex flex-col justify-center h-full space-y-2">
           <div className="grid grid-cols-1 h-full w-full">
-            <div className="flex flex-col px-10 w-full h-full justify-center border-b-[1px] border-origin-bg-dgrey space-y-2">
-              <label className="text-origin-dimmed text-sm">
-                {i18n('portfolio.lifetimeEarnings')}
-              </label>
-              <span>{lifetimeEarnings || '-'}</span>
-            </div>
-            <div className="flex flex-col px-10 w-full h-full justify-center space-y-2">
-              <label className="text-origin-dimmed text-sm">
-                {i18n('portfolio.pendingYield')}
-              </label>
-              <span>{pendingYield || '-'}</span>
-            </div>
+            {displayValues?.map((valueKey) => (
+              <div
+                key={valueKey}
+                className="flex flex-col px-10 w-full h-full justify-center border-b-[1px] border-origin-bg-dgrey space-y-2"
+              >
+                <label className="text-origin-dimmed text-sm">
+                  {i18n(`portfolio.${valueKey}`)}
+                </label>
+                <span>${parseFloat(data?.[valueKey]).toFixed(2)}</span>
+              </div>
+            ))}
           </div>
         </div>
       </div>

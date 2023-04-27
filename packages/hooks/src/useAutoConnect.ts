@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useConnect } from 'wagmi';
 
-function useAutoConnect() {
+const useAutoConnect = () => {
   const { connect, connectors } = useConnect();
   useEffect(() => {
     const connectorInstance = connectors.find((c) => c.id === 'safe');
@@ -9,6 +9,6 @@ function useAutoConnect() {
       connect({ connector: connectorInstance });
     }
   }, [connect, connectors]);
-}
+};
 
 export default useAutoConnect;

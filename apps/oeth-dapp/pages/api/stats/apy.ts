@@ -1,11 +1,11 @@
 const fetchAPY = (req, res) => {
   try {
     return res.json({
-      '7d': 1.23,
-      '30d': 2.34,
-      '60d': 3.56,
-      '90d': 4.78,
-      '365d': 5.91,
+      '7d': 0,
+      '30d': 0,
+      '60d': 0,
+      '90d': 0,
+      '365d': 0,
     });
   } catch (error) {
     return res.json({

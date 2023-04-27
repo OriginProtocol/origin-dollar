@@ -1,19 +1,35 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { useClickAway } from '@originprotocol/hooks';
-import { Typography } from '@originprotocol/origin-storybook';
 import { truncateDecimals } from '@originprotocol/utils';
+import NumericInput from '../core/NumericInput';
 
-const SettingsMenu = ({ i18n }) => {
+const SettingsMenu = ({ i18n, onChange, settings }) => {
   const ref = useRef(null);
 
   const [isOpen, setIsOpen] = useState(false);
   const [showFrontRunMessage, setShowFrontRun] = useState(true);
 
-  const [settings, setSettings] = useState({
-    tolerance: 0.1,
-    gwei: 20,
-  });
+  const handleToleranceChange = (newValue) => {
+    const value = Math.min(truncateDecimals(newValue, 2), 50);
+    setShowFrontRun(value > 1);
+    onChange({
+      tolerance: value,
+    });
+  };
+
+  const handleGweiChange = (value) => {
+    onChange({
+      gwei: value,
+    });
+  };
+
+  const handleAutoChange = () => {
+    setShowFrontRun(false);
+    onChange({
+      tolerance: 0.1,
+    });
+  };
 
   useClickAway(ref, (e) => {
     setTimeout(() => {
@@ -22,8 +38,10 @@ const SettingsMenu = ({ i18n }) => {
   });
 
   useEffect(() => {
-    setShowFrontRun(settings.tolerance > 1);
-  }, [settings.tolerance]);
+    if (settings.tolerance) {
+      setShowFrontRun(settings.tolerance > 1);
+    }
+  }, [settings?.tolerance, settings?.gwei]);
 
   return (
     <div className="relative">
@@ -45,36 +63,23 @@ const SettingsMenu = ({ i18n }) => {
           ref={ref}
           className="absolute top-[48px] right-0 flex flex-col w-[300px] bg-origin-bg-lgrey z-[2] shadow-xl border border-[1px] border-origin-bg-dgrey rounded-xl"
         >
-          <Typography.Body
-            className="flex flex-shrink-0 px-6 h-[80px] items-center"
-            as="h2"
-          >
+          <h2 className="flex flex-shrink-0 px-6 h-[80px] items-center">
             {i18n('settings.title')}
-          </Typography.Body>
+          </h2>
           <div className="h-[1px] w-full border-b-[1px] border-origin-bg-dgrey" />
-          <div className="flex flex-col justify-center h-full space-y-2 p-6">
+          <div className="flex flex-col justify-center h-full space-y-4 p-6">
             <div className="flex flex-col space-y-2">
-              <Typography.Caption className="text-origin-dimmed">
+              <label
+                htmlFor="settings-tolerance"
+                className="text-origin-dimmed"
+              >
                 {i18n('settings.tolerance')}
-              </Typography.Caption>
+              </label>
               <div className="flex flex-row space-x-2">
                 <div className="relative flex flex-row items-center px-6 justify-center w-full max-w-[120px] h-[44px] rounded-full overflow-hidden z-[2] bg-origin-blue bg-opacity-5 border border-origin-blue">
-                  <input
-                    onChange={(e) => {
-                      e.preventDefault();
-                      let value = 0;
-                      if (!isNaN(e.target.value)) {
-                        value = Math.min(
-                          truncateDecimals(e.target.value, 2),
-                          50
-                        );
-                        setShowFrontRun(value > 1);
-                        setSettings((prev) => ({
-                          ...prev,
-                          tolerance: value,
-                        }));
-                      }
-                    }}
+                  <NumericInput
+                    id="settings-tolerance"
+                    onChange={handleToleranceChange}
                     value={settings?.tolerance || ''}
                     className="text-right text-origin-dimmed focus:outline-none z-[2] px-2 flex items-center w-full h-full rounded-full bg-transparent"
                   />
@@ -82,36 +87,26 @@ const SettingsMenu = ({ i18n }) => {
                 </div>
                 <button
                   className="flex items-center justify-center flex-shrink-0 h-[44px] px-6 bg-gradient-to-r from-gradient2-from to-gradient2-to rounded-full"
-                  onClick={() => {
-                    setShowFrontRun(false);
-                    setSettings((prev) => ({
-                      ...prev,
-                      tolerance: 0.1,
-                    }));
-                  }}
+                  onClick={handleAutoChange}
                 >
                   {i18n('settings.auto')}
                 </button>
               </div>
               {showFrontRunMessage && (
-                <Typography.Caption className="text-origin-secondary">
+                <span role="alert" className="text-origin-secondary text-sm">
                   {i18n('settings.frontRun')}
-                </Typography.Caption>
+                </span>
               )}
             </div>
             <div className="flex flex-col space-y-2">
-              <Typography.Caption className="text-origin-dimmed">
+              <label htmlFor="settings-gasPrice" className="text-origin-dimmed">
                 {i18n('settings.gasPrice')}
-              </Typography.Caption>
+              </label>
               <div className="flex flex-row space-x-2">
                 <div className="relative flex flex-row items-center px-6 justify-center max-w-[160px] w-full h-[44px] rounded-full overflow-hidden z-[2] bg-origin-blue bg-opacity-5 border border-origin-blue">
-                  <input
-                    onChange={(e) => {
-                      setSettings((prev) => ({
-                        ...prev,
-                        gwei: e.target.value || '',
-                      }));
-                    }}
+                  <NumericInput
+                    id="settings-gasPrice"
+                    onChange={handleGweiChange}
                     type="number"
                     value={settings?.gwei || ''}
                     className="text-right text-origin-dimmed focus:outline-none z-[2] px-2 flex items-center w-full h-full rounded-full bg-transparent"

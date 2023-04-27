@@ -1,14 +1,12 @@
-import React, { forwardRef, useMemo, useRef, useState } from 'react';
+import React, { forwardRef, useRef, useState } from 'react';
 import { useClickAway } from 'react-use';
 import Image from 'next/image';
 import { Typography } from '@originprotocol/origin-storybook';
 import { shortenAddress, formatUnits } from '@originprotocol/utils';
 import {
-  useBalance,
   useAccount,
-  useContractReads,
   useDisconnect,
-  erc20ABI,
+  useTokenBalances,
 } from '@originprotocol/hooks';
 import WalletAvatar, { jsNumberForAddress } from 'react-jazzicon';
 import { useWeb3Modal } from '@web3modal/react';
@@ -45,7 +43,7 @@ const UserActivity = ({ i18n }) => {
       {isOpen && (
         <div
           ref={ref}
-          className="fixed top-[110px] right-[120px] flex flex-col w-[350px] bg-origin-bg-lgrey z-[1] shadow-xl border border-[1px] border-origin-bg-dgrey rounded-xl"
+          className="absolute top-[110px] right-[120px] flex flex-col w-[350px] bg-origin-bg-lgrey z-[1] shadow-xl border border-[1px] border-origin-bg-dgrey rounded-xl"
         >
           <Typography.Body
             className="flex flex-shrink-0 px-6 h-[80px] items-center"
@@ -73,48 +71,11 @@ const UserActivity = ({ i18n }) => {
 
 const UserMenuDropdown = forwardRef(
   ({ address, i18n, tokens, onDisconnect }, ref) => {
-    const tokenKeys = Object.keys(tokens);
-
-    const { data: ethBalance } = useBalance({
-      address,
-    });
-
-    const { data, isError, isLoading } = useContractReads({
-      contracts: tokenKeys.map((key) => {
-        const { address: contractAddress, abi = erc20ABI } = tokens[key];
-        return {
-          address: contractAddress,
-          abi,
-          functionName: 'balanceOf',
-          args: [address],
-        };
-      }),
-    });
-
-    const balances = useMemo(() => {
-      return tokenKeys.reduce(
-        (acc, key, index) => {
-          acc[key] = {
-            ...tokens[key],
-            balanceOf: Number(formatUnits(data?.[index] ?? '0')),
-          };
-          return acc;
-        },
-        {
-          ETH: {
-            name: 'ETH',
-            symbol: 'ETH',
-            balanceOf: Number(ethBalance?.formatted),
-            logoSrc: '/tokens/ETH.png',
-          },
-        }
-      );
-    }, [JSON.stringify(tokenKeys), JSON.stringify(data), ethBalance]);
-
+    const { data, isError, isLoading } = useTokenBalances({ address, tokens });
     return (
       <div
         ref={ref}
-        className="fixed top-[110px] right-[120px] flex flex-col w-[350px] bg-origin-bg-lgrey z-[1] shadow-xl border border-[1px] border-origin-bg-dgrey rounded-xl"
+        className="absolute top-[110px] right-[120px] flex flex-col w-[350px] bg-origin-bg-lgrey z-[1] shadow-xl border border-[1px] border-origin-bg-dgrey rounded-xl"
       >
         <div className="flex flex-row justify-between px-6 h-[80px] items-center">
           <Typography.Body className="flex flex-shrink-0" as="h2">
@@ -155,14 +116,14 @@ const UserMenuDropdown = forwardRef(
           ) : isLoading ? (
             <span>Loading...</span>
           ) : (
-            orderBy(balances, 'balanceOf', 'desc').map(
+            orderBy(data, 'balanceOf', 'desc').map(
               ({ name, symbol, balanceOf, logoSrc }) => (
                 <div
                   key={name}
                   className="flex flex-row items-center space-x-3"
                 >
                   <TokenImage src={logoSrc} symbol={symbol} name={name} />
-                  <span>{balanceOf?.toFixed(4)}</span>
+                  <span>{Number(formatUnits(balanceOf)).toFixed(4)}</span>
                   <span>{symbol}</span>
                 </div>
               )

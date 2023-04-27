@@ -10,6 +10,7 @@ import { DAPP_TOKENS } from '../src/constants';
 const App = ({ Component, pageProps, router }) => {
   const { t } = useTranslation('common');
   const { address } = useAccount();
+  const isWrap = router?.state?.route === '/wrap';
 
   useAutoConnect();
 
@@ -36,16 +37,20 @@ const App = ({ Component, pageProps, router }) => {
         tokens: pick(contracts?.mainnet, DAPP_TOKENS),
       }}
       stats={{
-        queryFn: (props) => {
-          console.log('props', props);
-          return fetch('/api/stats/apy').then((res) => res.json());
-        },
+        queryFn: () => fetch('/api/stats/apy').then((res) => res.json()),
       }}
       portfolio={{
-        token: contracts.mainnet.OETH,
-        queryFn: (props) => {
-          console.log('props', props);
-          return fetch(`/api/portfolio/${address}`).then((res) => res.json());
+        token: isWrap ? contracts.mainnet.woETH : contracts.mainnet.OETH,
+        queryFn: ({ queryKey }) => {
+          const [, tokenAddress] = queryKey;
+          console.log({
+            qwuery: tokenAddress || contracts.mainnet.OETH.address,
+          });
+          return fetch(
+            `/api/portfolio/${address}?token=${
+              tokenAddress || contracts.mainnet.OETH.address
+            }`
+          ).then((res) => res.json());
         },
       }}
     >

@@ -1,4 +1,19 @@
 {
-  "description": "Wrapped wOETH ist ein tokenisierter Tresor ohne Rebasing, der an Wert gewinnt, anstatt an Zahl zuzunehmen.",
-  "learnMore": "Erfahren Sie mehr"
+  "title": "Swap",
+  "balance": "Balance",
+  "max": "max",
+  "description": "Wrapped wOETH is a non-rebasing tokenized vault that appreciates in value instead of growing in number",
+  "learnMore": "Learn More",
+  "swapRoutes": "Swap Routes",
+  "enterAmount": "Enter Amount",
+  "swap": "Swap",
+  "estimate": "estimate",
+  "minReceived": "Min. received",
+  "settings": {
+    "title": "Settings",
+    "tolerance": "Price Tolerance",
+    "auto": "Auto",
+    "frontRun": "Your transaction may be front run",
+    "gasPrice": "Gas Price"
+  }
 }

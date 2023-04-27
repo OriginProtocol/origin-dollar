@@ -3,8 +3,11 @@ import Link from 'next/link';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import DappNavigation from './DappNavigation';
-import Portfolio from './Portfolio';
 import APY from './APY';
+
+const Portfolio = dynamic(() => import('./Portfolio'), {
+  ssr: false,
+});
 
 const WalletDisplay = dynamic(() => import('./WalletDisplay'), {
   ssr: false,

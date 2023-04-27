@@ -1,4 +1,4 @@
-import { ErrorBoundary, TokenSwap } from '@originprotocol/ui';
+import { ErrorBoundary, VaultSwap } from '@originprotocol/ui';
 import { contracts } from '@originprotocol/web3';
 import { useTranslation } from 'next-i18next';
 import pick from 'lodash/pick';
@@ -9,7 +9,14 @@ const Swap = () => {
   const { t } = useTranslation('swap');
   return (
     <ErrorBoundary>
-      <TokenSwap i18n={t} tokens={pick(contracts?.mainnet, DAPP_TOKENS)} />
+      <VaultSwap
+        i18n={t}
+        tokens={pick(contracts.mainnet, DAPP_TOKENS)}
+        vault={{
+          contract: contracts.mainnet.OETHVaultProxy,
+          token: contracts.mainnet.OETH,
+        }}
+      />
     </ErrorBoundary>
   );
 };

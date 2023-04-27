@@ -1,12 +1,9 @@
 import React from 'react';
 import Image from 'next/image';
-import { Typography } from '@originprotocol/origin-storybook';
 
 const ExternalCTA = ({ description, externalHref, cta }) => (
   <div className="flex flex-col w-full items-start justify-center h-[140px] bg-origin-bg-lgrey rounded-xl px-10 space-y-4">
-    <Typography.Body className="text-origin-dimmed">
-      {description}
-    </Typography.Body>
+    <p className="text-sm">{description}</p>
     <span className="inline-block">
       <a
         href={externalHref}

@@ -1,6 +1,6 @@
 type ContractConfig = {
   name: string;
-  address: string;
+  address: `0x${string}`;
   abi: any;
   decimals?: number;
   symbol?: string;
@@ -35,7 +35,7 @@ Dripper IMPL	0x2FDfBb2b905484f1445E23A97C97F65fe0e43dEC
 export const contracts: Contracts = {
   mainnet: {
     OETHVaultProxy: {
-      name: 'OETHVault',
+      name: 'OETHVaultProxy',
       address: '0x39254033945AA2E4809Cc2977E7087BEE48bd7Ab',
       abi: [
         {
@@ -677,9 +677,9 @@ export const contracts: Contracts = {
         },
       ],
     },
-    WOETH: {
+    woETH: {
       name: 'Wrapped OETH',
-      symbol: 'WOETH',
+      symbol: 'woETH',
       address: '0xdcee70654261af21c44c093c300ed3bb97b78192',
       abi: [
         {

@@ -1,8 +1,7 @@
 import React, { useMemo, useRef, useState } from 'react';
 import { useQuery } from 'react-query';
-import { useClickAway } from 'react-use';
-import { Typography } from '@originprotocol/origin-storybook';
 import Image from 'next/image';
+import { useClickAway } from '@originprotocol/hooks';
 
 const APY = ({ i18n, stats }) => {
   const { isLoading, isError, data, error } = useQuery({

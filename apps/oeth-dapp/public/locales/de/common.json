@@ -20,7 +20,8 @@
     "account": "Account"
   },
   "portfolio": {
-    "title": "OETH Portfolio",
+    "title": "Portfolio",
+    "currentValue": "Current value",
     "lifetimeEarnings": "Lifetime earnings",
     "pendingYield": "Pending yield",
     "balance": "Balance"

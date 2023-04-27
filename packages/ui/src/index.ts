@@ -8,12 +8,13 @@ export { default as ErrorBoundary } from './core/ErrorBoundary';
 export { default as ExternalCTA } from './core/ExternalCTA';
 export { default as Wagmi } from './core/Wagmi';
 export { default as SEO } from './core/SEO';
+export { default as NumericInput } from './core/NumericInput';
 
 // Dapp components
 export { default as DappLayout } from './dapp/DappLayout';
 export { default as DappContainer } from './dapp/DappContainer';
 export { default as SettingsMenu } from './dapp/SettingsMenu';
-export { default as TokenSwap } from './dapp/TokenSwap';
+export { default as VaultSwap } from './dapp/VaultSwap';
 export { default as TokenImage } from './dapp/TokenImage';
 export { default as Portfolio } from './dapp/Portfolio';
 export { default as APY } from './dapp/APY';

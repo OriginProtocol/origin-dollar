@@ -1,5 +1,9 @@
-export { useClickAway } from 'react-use';
-export { default as useAutoConnect } from './useAutoConnect';
+export {
+  useClickAway,
+  useKey,
+  useLocalStorage,
+  useLockBodyScroll,
+} from 'react-use';
 export {
   useBalance,
   useAccount,
@@ -8,3 +12,5 @@ export {
   useDisconnect,
   erc20ABI,
 } from 'wagmi';
+export { default as useAutoConnect } from './useAutoConnect';
+export { default as useTokenBalances } from './useTokenBalances';
