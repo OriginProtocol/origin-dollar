@@ -14,6 +14,7 @@ import {
   useDebouncedCallback,
   useContractWrite,
   usePrepareContractWrite,
+  useWaitForTransaction,
 } from '@originprotocol/hooks';
 import {
   formatWeiBalance,
@@ -131,32 +132,52 @@ const SwapRoutes = ({ i18n, swap, settings }) => {
 const WriteableActions = ({ i18n, swap, translationContext }) => {
   const { value, selectedToken, selectedEstimate } = swap || {};
 
-  const { hasProvidedAllowance, contract } = selectedEstimate || {};
+  const { hasProvidedAllowance, contract, minimumAmount } =
+    selectedEstimate || {};
+
+  const weiValue = parseUnits(String(value), 18);
 
   const { config: allowanceWriteConfig, error: allowanceWriteError } =
     usePrepareContractWrite({
       address: selectedToken?.address,
       abi: selectedToken?.abi,
       functionName: 'approve',
-      args: [
-        contract?.address,
-        value ? parseUnits(String(value), 18) : MaxUint256,
-      ],
+      args: [contract?.address, weiValue || MaxUint256],
     });
 
-  const { write: allowanceWrite } = useContractWrite(allowanceWriteConfig);
+  const {
+    data: allowanceWriteData,
+    isLoading: allowanceWriteIsLoading,
+    write: allowanceWrite,
+  } = useContractWrite(allowanceWriteConfig);
 
   const { config: swapWriteConfig, error: swapWriteError } =
     usePrepareContractWrite({
       address: contract?.address,
       abi: contract?.abi,
       functionName: 'mint',
-      args: [selectedToken?.address, 0, 0],
+      args: [selectedToken?.address, weiValue, minimumAmount],
     });
 
-  const { write: swapWrite } = useContractWrite(swapWriteConfig);
+  const {
+    data: swapWriteData,
+    isLoading: swapWriteIsLoading,
+    write: swapWrite,
+  } = useContractWrite(swapWriteConfig);
 
   const swapWriteDisabled = !hasProvidedAllowance || !!swapWriteError;
+
+  const {
+    isLoading: allowanceWriteIsSubmitted,
+    isSuccess: allowanceWriteIsSuccess,
+  } = useWaitForTransaction({
+    hash: allowanceWriteData?.hash,
+  });
+
+  const { isLoading: snapWriteIsSubmitted, isSuccess: snapWriteIsSuccess } =
+    useWaitForTransaction({
+      hash: swapWriteData?.hash,
+    });
 
   return (
     <>
@@ -167,7 +188,17 @@ const WriteableActions = ({ i18n, swap, translationContext }) => {
             allowanceWrite?.();
           }}
         >
-          {i18n('approval', translationContext)}
+          {(() => {
+            if (allowanceWriteIsLoading) {
+              return i18n('approval.PENDING', translationContext);
+            } else if (allowanceWriteIsSubmitted) {
+              return i18n('approval.SUBMITTED', translationContext);
+            } else if (allowanceWriteIsSuccess) {
+              return i18n('approval.SUCCESS', translationContext);
+            } else {
+              return i18n('approval.DEFAULT', translationContext);
+            }
+          })()}
         </button>
       )}
       <button
@@ -182,22 +213,33 @@ const WriteableActions = ({ i18n, swap, translationContext }) => {
         }}
         disabled={swapWriteDisabled}
       >
-        {i18n('swap')}
+        {(() => {
+          if (swapWriteIsLoading) {
+            return i18n('swap.PENDING', translationContext);
+          } else if (snapWriteIsSubmitted) {
+            return i18n('swap.SUBMITTED', translationContext);
+          } else if (snapWriteIsSuccess) {
+            return i18n('swap.SUCCESS', translationContext);
+          } else {
+            return i18n('swap.DEFAULT', translationContext);
+          }
+        })()}
       </button>
     </>
   );
 };
 
 const SwapActions = ({ i18n, swap }) => {
-  const { selectedToken, selectedEstimate, value } = swap || {};
+  const { selectedToken, estimatedToken, selectedEstimate, value } = swap || {};
   const { error } = selectedEstimate || {};
 
   const parsedValue = !value ? 0 : parseFloat(value);
   const invalidInputValue = !parsedValue || isNaN(parsedValue);
 
   const translationContext = {
-    contractName: 'Origin Vault',
-    tokenName: selectedToken?.symbol,
+    targetContractName: 'Origin Vault',
+    sourceTokenName: selectedToken?.symbol,
+    targetTokenName: estimatedToken?.symbol,
   };
 
   return invalidInputValue || error ? (
@@ -426,9 +468,8 @@ const SwapForm = ({
 };
 
 const useVault = ({ vault }) => {
-  const { contract, token } = vault;
-
-  const { data, isError, isLoading } = useContractReads({
+  const { contract } = vault;
+  const { data } = useContractReads({
     contracts: [
       {
         address: contract?.address,
@@ -442,23 +483,11 @@ const useVault = ({ vault }) => {
       },
     ],
   });
-
   const [assetContractAddresses, strategyContractAddresses] = data || [];
-
-  // Take assets into OETH
-  const onMint = () => {};
-
-  // Take assets from OETH into other
-  const onRedeem = () => {};
-
   return [
     {
       assetContractAddresses,
       strategyContractAddresses,
-    },
-    {
-      onMint,
-      onRedeem,
     },
   ];
 };
@@ -473,7 +502,6 @@ const matchTokens = (tokens, contractAddress) => {
 
 const useSwapEstimator = ({
   address,
-  swapTokens,
   settings,
   mode,
   fromToken,
@@ -600,7 +628,6 @@ const useSwapEstimator = ({
     fromToken?.address,
     toToken?.address,
     JSON.stringify(settings),
-    JSON.stringify(swapTokens),
   ]);
 
   return { onFetchEstimations };
@@ -624,14 +651,13 @@ const VaultSwap = ({ tokens, i18n, emptyState = null, vault }) => {
     selectedToken: null,
     value: 0,
     selectedEstimate: null,
-    estimatedToken: vault.token,
+    estimatedToken: null,
     estimates: [],
   });
 
-  const [
-    { assetContractAddresses, strategyContractAddresses },
-    { onMint, onRedeem },
-  ] = useVault({ vault });
+  const [{ assetContractAddresses, strategyContractAddresses }] = useVault({
+    vault,
+  });
 
   // Retrieve user token balances
   const {
@@ -648,10 +674,22 @@ const VaultSwap = ({ tokens, i18n, emptyState = null, vault }) => {
     matchTokens.bind(null, tokensWithBalances)
   );
 
+  const handleEstimate = (newEstimates) => {
+    const { vaultEstimate } = newEstimates;
+    setSwap((prev) => ({
+      ...prev,
+      selectedEstimate: vaultEstimate,
+      estimates: orderBy(
+        newEstimates,
+        ({ receiveAmount }) => formatWeiBalance(receiveAmount),
+        'desc'
+      ),
+    }));
+  };
+
   // Watch for value changes to perform estimates
   useSwapEstimator({
     address,
-    swapTokens,
     settings,
     mode: swap?.type,
     fromToken: swap?.selectedToken,
@@ -660,26 +698,15 @@ const VaultSwap = ({ tokens, i18n, emptyState = null, vault }) => {
     estimatesFor: {
       vault: vault?.contract,
     },
-    onEstimate: (newEstimates) => {
-      const { vaultEstimate } = newEstimates;
-      setSwap((prev) => ({
-        ...prev,
-        selectedEstimate: vaultEstimate,
-        estimates: orderBy(
-          newEstimates,
-          ({ receiveAmount }) =>
-            truncateDecimals(formatWeiBalance(receiveAmount, 18), 18),
-          'desc'
-        ),
-      }));
-    },
+    onEstimate: handleEstimate,
   });
 
-  // Auto select a selected token
+  // Auto select a selected token and corresponding estimated token
   useEffect(() => {
     if (!swap?.selectedToken && !isEmpty(assetContractAddresses)) {
       setSwap((prev) => ({
         ...prev,
+        estimatedToken: matchTokens(tokensWithBalances, vault.token.address),
         selectedToken:
           matchTokens(tokensWithBalances, storedTokenAddress) ||
           matchTokens(tokensWithBalances, assetContractAddresses?.[0]),
@@ -690,8 +717,6 @@ const VaultSwap = ({ tokens, i18n, emptyState = null, vault }) => {
     swap?.selectedToken,
     tokensWithBalances,
   ]);
-
-  console.log(swap);
 
   return (
     <div className="flex flex-col space-y-8">

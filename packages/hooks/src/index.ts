@@ -16,6 +16,7 @@ export {
   useSigner,
   useContractWrite,
   usePrepareContractWrite,
+  useWaitForTransaction,
   erc20ABI,
 } from 'wagmi';
 export { default as useAutoConnect } from './useAutoConnect';

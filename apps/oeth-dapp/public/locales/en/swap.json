@@ -5,10 +5,20 @@
   "description": "Wrapped wOETH is a non-rebasing tokenized vault that appreciates in value instead of growing in number",
   "learnMore": "Learn More",
   "swapRoutes": "Swap Routes",
-  "approval": "Allow {{contractName}} to use your {{tokenName}}",
-  "swap": "Swap",
   "estimate": "estimate",
   "minReceived": "Min. received",
+  "swap": {
+    "DEFAULT": "Swap",
+    "PENDING": "Swapping...",
+    "SUBMITTED": "Awaiting confirmations...",
+    "SUCCESS": "{{sourceTokenName}} swapped for {{targetTokenName}}"
+  },
+  "approval": {
+    "DEFAULT": "Allow {{targetContractName}} to use your {{sourceTokenName}}",
+    "PENDING": "Approving...",
+    "SUBMITTED": "Awaiting confirmations...",
+    "SUCCESS": "Approved {{targetContractName}} for {{sourceTokenName}}"
+  },
   "errors": {
     "NOT_ENOUGH_BALANCE": "Insufficient {{tokenName}} balance",
     "NO_INPUT_AMOUNT": "Enter Amount",
