@@ -508,7 +508,10 @@ const handlePossiblyActiveGovernanceProposal = async (
       proposalState = await getProposalState(proposalIdBn);
     } catch (e) {
       // If proposal is non existent the governor reverts the transaction
-      if (e.message.includes("invalid proposal id")) {
+      if (
+        e.message.includes("invalid proposal id") ||
+        e.message.includes("unknown proposal id")
+      ) {
         proposalState = false;
       } else {
         throw e;
