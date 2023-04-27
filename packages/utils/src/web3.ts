@@ -1,7 +1,10 @@
 import { ethers, BigNumber } from 'ethers';
 import { formatUnits } from 'ethers/lib/utils';
 
-export function shortenAddress(address: string, shorter = false) {
+export function shortenAddress(
+  address: `0x${string}` | string | undefined,
+  shorter = false
+) {
   if (!address || address.length < 10) {
     return address;
   }
@@ -10,8 +13,10 @@ export function shortenAddress(address: string, shorter = false) {
   }`;
 }
 
-export const formatWeiBalance = (balance, maxDecimalDigits = 18) =>
-  ethers.FixedNumber.from(formatUnits(balance || BigNumber.from(0), maxDecimalDigits))
+export const formatWeiBalance = (balance: any, maxDecimalDigits = 18) =>
+  ethers.FixedNumber.from(
+    formatUnits(balance || BigNumber.from(0), maxDecimalDigits)
+  )
     .round(
       maxDecimalDigits ?? ethers.BigNumber.from(maxDecimalDigits).toNumber()
     )

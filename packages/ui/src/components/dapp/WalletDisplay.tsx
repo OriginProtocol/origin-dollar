@@ -1,4 +1,4 @@
-import React, { forwardRef, useRef, useState } from 'react';
+import React, { ForwardedRef, forwardRef, useRef, useState } from 'react';
 import { useClickAway } from 'react-use';
 import Image from 'next/image';
 import { Typography } from '@originprotocol/origin-storybook';
@@ -15,9 +15,13 @@ import {
 import WalletAvatar, { jsNumberForAddress } from 'react-jazzicon';
 import { useWeb3Modal } from '@web3modal/react';
 import orderBy from 'lodash/orderBy';
-import TokenImage from './TokenImage';
+import TokenImage from '../core/TokenImage';
 
-const UserActivity = ({ i18n }) => {
+type UserActivityProps = {
+  i18n: any;
+};
+
+const UserActivity = ({ i18n }: UserActivityProps) => {
   const ref = useRef(null);
   const [isOpen, setIsOpen] = useState(false);
 
@@ -73,80 +77,100 @@ const UserActivity = ({ i18n }) => {
   );
 };
 
-const UserMenuDropdown = forwardRef(
-  ({ address, i18n, tokens, onDisconnect }, ref) => {
-    const { data, isError, isLoading } = useTokenBalances({ address, tokens });
-    return (
-      <div
-        ref={ref}
-        className="absolute top-[110px] right-[120px] flex flex-col w-[350px] bg-origin-bg-lgrey z-[1] shadow-xl border border-[1px] border-origin-bg-dgrey rounded-xl"
-      >
-        <div className="flex flex-row justify-between px-6 h-[80px] items-center">
-          <Typography.Body className="flex flex-shrink-0" as="h2">
-            {i18n('wallet.account')}
-          </Typography.Body>
-          <button
-            className="h-[28px] bg-origin-white bg-opacity-20 rounded-full px-4 text-sm hover:bg-opacity-10 duration-100 ease-in"
-            onClick={onDisconnect}
-          >
-            {i18n('wallet.disconnect')}
-          </button>
-        </div>
-        <div className="h-[1px] w-full border-b-[1px] border-origin-bg-dgrey" />
-        <div className="flex flex-col justify-center h-full space-y-4 p-6">
-          <div className="flex flex-row items-center justify-between">
-            <div className="flex flex-row items-center space-x-4">
-              <span>TODO</span>
-              <span>{shortenAddress(address)}</span>
-            </div>
-            <a
-              href={`https://etherscan.io/address/${address}`}
-              target="_blank"
-              rel="noreferrer"
-            >
-              <Image
-                src="/icons/external.png"
-                height={8}
-                width={8}
-                alt="View address on Etherscan"
-              />
-            </a>
-          </div>
-        </div>
-        <div className="h-[1px] w-full border-b-[1px] border-origin-bg-dgrey" />
-        <div className="flex flex-col justify-center h-full space-y-4 p-6">
-          {isError ? (
-            <span>Error</span>
-          ) : isLoading ? (
-            <span>Loading...</span>
-          ) : (
-            orderBy(
-              data,
-              ({ balanceOf }) => formatWeiBalance(balanceOf),
-              'desc'
-            ).map(({ name, symbol, balanceOf, logoSrc }) => (
-              <div key={name} className="flex flex-row items-center space-x-3">
-                <TokenImage src={logoSrc} symbol={symbol} name={name} />
-                <span>{Number(formatUnits(balanceOf)).toFixed(4)}</span>
-                <span>{symbol}</span>
-              </div>
-            ))
-          )}
-        </div>
-      </div>
-    );
-  }
-);
+interface UserMenuDropdownProps {
+  address: `0x${string}` | string | undefined;
+  i18n: any;
+  tokens: any;
+  onDisconnect: any;
+  onClose: any;
+}
 
-const UserMenu = ({ i18n, address, onDisconnect, tokens }) => {
+const UserMenuDropdown = ({
+  address,
+  i18n,
+  tokens,
+  onDisconnect,
+  onClose,
+}: UserMenuDropdownProps) => {
   const ref = useRef(null);
-  const [isOpen, setIsOpen] = useState(false);
 
   useClickAway(ref, () => {
     setTimeout(() => {
-      setIsOpen(false);
+      onClose();
     }, 100);
   });
+
+  const { data, isError, isLoading } = useTokenBalances({ address, tokens });
+  return (
+    <div
+      ref={ref}
+      className="absolute top-[110px] right-[120px] flex flex-col w-[350px] bg-origin-bg-lgrey z-[1] shadow-xl border border-[1px] border-origin-bg-dgrey rounded-xl"
+    >
+      <div className="flex flex-row justify-between px-6 h-[80px] items-center">
+        <Typography.Body className="flex flex-shrink-0" as="h2">
+          {i18n('wallet.account')}
+        </Typography.Body>
+        <button
+          className="h-[28px] bg-origin-white bg-opacity-20 rounded-full px-4 text-sm hover:bg-opacity-10 duration-100 ease-in"
+          onClick={onDisconnect}
+        >
+          {i18n('wallet.disconnect')}
+        </button>
+      </div>
+      <div className="h-[1px] w-full border-b-[1px] border-origin-bg-dgrey" />
+      <div className="flex flex-col justify-center h-full space-y-4 p-6">
+        <div className="flex flex-row items-center justify-between">
+          <div className="flex flex-row items-center space-x-4">
+            <span>TODO</span>
+            <span>{shortenAddress(address)}</span>
+          </div>
+          <a
+            href={`https://etherscan.io/address/${address}`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            <Image
+              src="/icons/external.png"
+              height={8}
+              width={8}
+              alt="View address on Etherscan"
+            />
+          </a>
+        </div>
+      </div>
+      <div className="h-[1px] w-full border-b-[1px] border-origin-bg-dgrey" />
+      <div className="flex flex-col justify-center h-full space-y-4 p-6">
+        {isError ? (
+          <span>Error</span>
+        ) : isLoading ? (
+          <span>Loading...</span>
+        ) : (
+          orderBy(
+            data,
+            ({ balanceOf }) => formatWeiBalance(balanceOf),
+            'desc'
+          ).map(({ name, symbol, balanceOf, logoSrc }) => (
+            <div key={name} className="flex flex-row items-center space-x-3">
+              <TokenImage src={logoSrc} symbol={symbol} name={name} />
+              <span>{Number(formatUnits(balanceOf)).toFixed(4)}</span>
+              <span>{symbol}</span>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+};
+
+type UserMenuProps = {
+  i18n: any;
+  address: `0x${string}` | string | undefined;
+  onDisconnect: any;
+  tokens: any;
+};
+
+const UserMenu = ({ i18n, address, onDisconnect, tokens }: UserMenuProps) => {
+  const [isOpen, setIsOpen] = useState(false);
 
   if (!address) {
     return null;
@@ -169,18 +193,23 @@ const UserMenu = ({ i18n, address, onDisconnect, tokens }) => {
       </div>
       {isOpen && (
         <UserMenuDropdown
-          ref={ref}
           address={address}
           i18n={i18n}
           tokens={tokens}
           onDisconnect={onDisconnect}
+          onClose={() => setIsOpen(false)}
         />
       )}
     </>
   );
 };
 
-const WalletDisplay = ({ i18n, tokens }) => {
+type WalletDisplayProps = {
+  i18n: any;
+  tokens: any;
+};
+
+const WalletDisplay = ({ i18n, tokens }: WalletDisplayProps) => {
   const { address, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
   const { open } = useWeb3Modal();

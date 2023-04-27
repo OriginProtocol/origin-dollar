@@ -24,6 +24,7 @@ const useTokenAllowances = ({
   const contractReads = useMemo(() => {
     return tokens?.reduce((acc, token) => {
       // Add token decimals fetch
+      // @ts-ignore
       acc.push({
         id: token.symbol,
         address: token.address,
@@ -32,6 +33,7 @@ const useTokenAllowances = ({
       });
       // Add allowances for each provided address
       map(allowances, (allowanceAddress, name) => {
+        // @ts-ignore
         acc.push({
           id: `${token.symbol}_${name}`,
           address: token.address,
@@ -49,7 +51,7 @@ const useTokenAllowances = ({
   });
 
   const allowanceLookup = useMemo(
-    () => (!isLoading ? zipObject(map(contractReads, 'id'), data) : {}),
+    () => (!isLoading ? zipObject(map(contractReads, 'id'), data as []) : {}),
     [JSON.stringify(contractReads), isLoading, JSON.stringify(data)]
   );
 

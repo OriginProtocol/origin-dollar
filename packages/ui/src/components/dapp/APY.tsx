@@ -3,8 +3,13 @@ import { useQuery } from 'react-query';
 import Image from 'next/image';
 import { useClickAway } from '@originprotocol/hooks';
 
-const APY = ({ i18n, stats }) => {
-  const { isLoading, isError, data, error } = useQuery({
+type APYProps = {
+  i18n: any;
+  stats: any;
+};
+
+const APY = ({ i18n, stats }: APYProps) => {
+  const { data } = useQuery({
     queryKey: ['apy'],
     queryFn: stats?.queryFn,
   });
@@ -52,6 +57,7 @@ const APY = ({ i18n, stats }) => {
     return apyOptions.find((item) => item.id === selectedAPY);
   }, [selectedAPY]);
 
+  // @ts-ignore
   return (
     <div className="flex flex-col w-full h-[300px] bg-origin-bg-lgrey rounded-xl">
       <h2 className="flex flex-shrink-0 px-10 h-[80px] items-center">
@@ -99,6 +105,7 @@ const APY = ({ i18n, stats }) => {
           )}
         </div>
         <h4 className="font-header text-4xl font-bold bg-gradient-to-r from-gradient1-from to-gradient1-to inline-block text-transparent bg-clip-text">
+          {/* @ts-ignore */}
           {data?.[selectedAPY]?.toFixed(2)}%
         </h4>
       </div>

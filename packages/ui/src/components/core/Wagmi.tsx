@@ -7,11 +7,12 @@ import {
 import { Web3Modal } from '@web3modal/react';
 import { mainnet } from 'wagmi/chains';
 import { SafeConnector } from 'wagmi/connectors/safe';
+import { ReactNode } from 'react';
 
 const chains = [mainnet];
 
 const useWagmiClient = () => {
-  const projectId = process.env.NEXT_PUBLIC_WC_PROJECT_ID;
+  const projectId = process.env['NEXT_PUBLIC_WC_PROJECT_ID'] || '';
 
   const { provider } = configureChains(chains, [w3mProvider({ projectId })]);
 
@@ -37,7 +38,7 @@ const useWagmiClient = () => {
   };
 };
 
-const Wagmi = ({ children }) => {
+const Wagmi = ({ children }: { children: ReactNode }) => {
   const { projectId, wagmiClient, ethereumClient } = useWagmiClient();
   return (
     <>

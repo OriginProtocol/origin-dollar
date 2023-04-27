@@ -1,18 +1,20 @@
+import { ReactNode } from 'react';
 import { QueryClientProvider, QueryClient } from 'react-query';
 import ErrorBoundary from '../core/ErrorBoundary';
 import Wagmi from '../core/Wagmi';
 
-const defaultQueryFn = async (url) => fetch(url).then((res) => res.json());
+const defaultQueryFn = (url: string) => fetch(url).then((res) => res.json());
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
+      // @ts-ignore
       queryFn: defaultQueryFn,
     },
   },
 });
 
-const DappContainer = ({ children }) => (
+const DappContainer = ({ children }: { children: ReactNode }) => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
       <Wagmi>{children}</Wagmi>

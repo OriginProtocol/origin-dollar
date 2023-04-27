@@ -4,8 +4,13 @@ import { useClickAway, useFeeData } from '@originprotocol/hooks';
 import { formatUnits, truncateDecimals } from '@originprotocol/utils';
 import NumericInput from '../core/NumericInput';
 
-// @ts-ignore
-const SettingsMenu = ({ i18n, onChange, settings }) => {
+type SettingsMenuProps = {
+  i18n: any;
+  onChange: any;
+  settings: any;
+};
+
+const SettingsMenu = ({ i18n, onChange, settings }: SettingsMenuProps) => {
   const ref = useRef(null);
 
   const [isOpen, setIsOpen] = useState(false);
@@ -89,7 +94,6 @@ const SettingsMenu = ({ i18n, onChange, settings }) => {
               </label>
               <div className="flex flex-row space-x-2">
                 <div className="relative flex flex-row items-center px-6 justify-center w-full max-w-[120px] h-[44px] rounded-full overflow-hidden z-[2] bg-origin-blue bg-opacity-5 border border-origin-blue">
-                  {/* @ts-ignore */}
                   <NumericInput
                     id="settings-tolerance"
                     onChange={handleToleranceChange}
@@ -117,7 +121,6 @@ const SettingsMenu = ({ i18n, onChange, settings }) => {
               </label>
               <div className="flex flex-row space-x-2">
                 <div className="relative flex flex-row items-center px-6 justify-center max-w-[160px] w-full h-[44px] rounded-full overflow-hidden z-[2] bg-origin-blue bg-opacity-5 border border-origin-blue">
-                  {/* @ts-ignore */}
                   <NumericInput
                     id="settings-gasPrice"
                     onChange={handleGweiChange}

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, InputHTMLAttributes } from 'react';
 import { isNaN, isNumber, isString } from 'lodash';
 import { useKey } from '@originprotocol/hooks';
 
@@ -7,15 +7,13 @@ const IS_IOS =
     ? navigator.userAgent.match(/iPhone|iPad|iPod/i)
     : false;
 
-const parseText = (text) => {
+const parseText = (text: string): string | number => {
   if (isNumber(text)) return text;
 
   if (isString(text)) {
     text = text.trim();
-
     if (!text) return '';
     const num = parseFloat(text);
-
     if (!isNaN(num)) {
       return num;
     }
@@ -24,8 +22,14 @@ const parseText = (text) => {
   return '';
 };
 
-const changeValue = (mod, value, max, min, step) => {
-  if (value === '') {
+const changeValue = (
+  mod: string,
+  value: number,
+  max: number,
+  min: number,
+  step: number
+) => {
+  if (!value) {
     if (isNumber(min)) return min;
     return '';
   }
@@ -36,6 +40,7 @@ const changeValue = (mod, value, max, min, step) => {
   if (isNumber(min) && value < min) return min;
 
   const p = (step.toString().split('.')[1] || []).length;
+
   if (p) {
     return parseFloat(value.toFixed(p));
   }
@@ -43,8 +48,11 @@ const changeValue = (mod, value, max, min, step) => {
   return value;
 };
 
-const Input = ({ onChange, ...props }) => {
-  function handleChange(e) {
+const Input = ({
+  onChange,
+  ...props
+}: InputHTMLAttributes<HTMLInputElement>) => {
+  function handleChange(e: any) {
     if (onChange) {
       onChange(e.target.value);
     }
@@ -60,33 +68,36 @@ const NumericInput = ({
   onChange,
   enableMobileNumericKeyboard,
   ...props
-}) => {
+}: any) => {
   const [text, setText] = useState(value);
 
   useEffect(() => {
     setText(value);
   }, [value]);
 
-  const handleChange = (text) => {
+  const handleChange = (text: string) => {
     const value = parseText(text);
     setText(text);
     if (onChange) {
+      // @ts-ignore
       onChange(value);
     }
   };
 
-  const handleWheel = (e) => {
+  const handleWheel = (e: any) => {
     e.target.blur();
   };
 
   useKey('ArrowUp', () => {
     if (onChange) {
+      // @ts-ignore
       onChange(changeValue('+', value, max, min, step));
     }
   });
 
   useKey('ArrowDown', () => {
     if (onChange) {
+      // @ts-ignore
       onChange(changeValue('-', value, max, min, step));
     }
   });
@@ -99,16 +110,10 @@ const NumericInput = ({
 
   if (enableMobileNumericKeyboard) {
     return (
+      // @ts-ignore
       <Input
         {...props}
         {...inputProps}
-        styles={{
-          MozAppearance: 'textfield',
-          '&::-webkit-inner-spin-button, &::-webkit-outer-spin-button': {
-            WebkitAppearance: 'none',
-            margin: 0,
-          },
-        }}
         type="number"
         inputMode="numeric"
         pattern={IS_IOS ? `[0-9]*` : ''}
@@ -119,6 +124,7 @@ const NumericInput = ({
     );
   }
 
+  // @ts-ignore
   return <Input {...props} {...inputProps} type="text" />;
 };
 

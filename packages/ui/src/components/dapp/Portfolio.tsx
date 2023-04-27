@@ -1,9 +1,18 @@
 import { useQuery } from 'react-query';
-import TokenImage from './TokenImage';
 import { useAccount, useContractRead } from '@originprotocol/hooks';
 import { formatWeiBalance } from '@originprotocol/utils';
+import TokenImage from '../core/TokenImage';
 
-const Portfolio = ({ i18n, portfolio }) => {
+type PortfolioProps = {
+  i18n: any;
+  portfolio: any;
+};
+
+type PortfolioResponse = {
+  data: any;
+};
+
+const Portfolio = ({ i18n, portfolio }: PortfolioProps) => {
   const { token, queryFn } = portfolio;
 
   const { address } = useAccount();
@@ -16,12 +25,11 @@ const Portfolio = ({ i18n, portfolio }) => {
     watch: true,
   });
 
-  const { data } = useQuery({
+  const { data }: PortfolioResponse = useQuery({
     queryKey: ['portfolio', token.address],
     queryFn,
   });
-  
-  // @ts-ignore
+
   const { displayValues } = data || {};
 
   return (
@@ -58,7 +66,6 @@ const Portfolio = ({ i18n, portfolio }) => {
                 <label className="text-origin-dimmed text-sm">
                   {i18n(`portfolio.${valueKey}`)}
                 </label>
-                {/* @ts-ignore */}
                 <span>${parseFloat(data?.[valueKey]).toFixed(2)}</span>
               </div>
             ))}

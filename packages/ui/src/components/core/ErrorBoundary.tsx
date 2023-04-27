@@ -1,27 +1,28 @@
-import { ErrorBoundary as ReactErrorBoundary } from 'react-error-boundary';
-import { Typography } from '@originprotocol/origin-storybook';
+import { ReactNode } from 'react';
+import {
+  ErrorBoundary as ReactErrorBoundary,
+  FallbackProps,
+} from 'react-error-boundary';
 
-const fallbackRender = ({ resetErrorBoundary }) => {
+type ErrorBoundaryProps = {
+  children: ReactNode;
+};
+
+const fallbackRender = ({ resetErrorBoundary }: FallbackProps) => {
   return (
     <div
       role="alert"
       className="flex flex-col space-y-4 items-center justify-center text-center h-[50vh]"
     >
-      <Typography.H2
-        as="h1"
-        className="text-2xl md:text-7xl text-gradient2 font-bold"
-      >
+      <h1 className="text-2xl md:text-7xl text-gradient2 font-bold">
         Ooops...
-      </Typography.H2>
-      <Typography.H3
-        className="text-xl md:text-2xl"
-        style={{ fontWeight: 400 }}
-      >
+      </h1>
+      <h3 className="text-xl md:text-2xl font-normal">
         Sorry, an error occurred while loading the view.
-      </Typography.H3>
+      </h3>
       <footer>
         <button onClick={resetErrorBoundary}>
-          <Typography.Body2>Please try again</Typography.Body2>
+          <p>Please try again</p>
         </button>
       </footer>
     </div>
@@ -33,7 +34,7 @@ const logError = (error: Error, info: { componentStack: string }) => {
   console.error(error);
 };
 
-const ErrorBoundary = ({ children }) => (
+const ErrorBoundary = ({ children }: ErrorBoundaryProps) => (
   <ReactErrorBoundary fallbackRender={fallbackRender} onError={logError}>
     {children}
   </ReactErrorBoundary>

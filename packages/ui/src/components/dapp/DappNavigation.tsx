@@ -3,7 +3,16 @@ import Link from 'next/link';
 import { Typography } from '@originprotocol/origin-storybook';
 import cx from 'classnames';
 
-const DappNavigation = ({ links }) => {
+type DappLink = {
+  href: string;
+  label: string;
+};
+
+type DappNavigationProps = {
+  links: DappLink[];
+};
+
+const DappNavigation = ({ links }: DappNavigationProps) => {
   const { pathname } = useRouter();
   return (
     <nav className="hidden lg:flex flex-row items-center h-full">

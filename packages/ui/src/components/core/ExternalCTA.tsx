@@ -1,7 +1,12 @@
-import React from 'react';
 import Image from 'next/image';
 
-const ExternalCTA = ({ description, externalHref, cta }) => (
+type ExternalCTAProps = {
+  description: string;
+  externalHref: string;
+  cta: string;
+};
+
+const ExternalCTA = ({ description, externalHref, cta }: ExternalCTAProps) => (
   <div className="flex flex-col w-full items-start justify-center h-[140px] bg-origin-bg-lgrey rounded-xl px-10 space-y-4">
     <p className="text-sm">{description}</p>
     <span className="inline-block">

@@ -1,11 +1,23 @@
-import { DefaultSeo } from 'next-seo';
+import { DefaultSeo, DefaultSeoProps } from 'next-seo';
+import { OpenGraph } from 'next-seo/lib/types';
 
-const seoConfigs = {
+type OpenGraphProps = {
+  route: string;
+};
+
+type SEOConfig = {
+  [key: string]: DefaultSeoProps & {
+    baseURL: string;
+    openGraph: (a: OpenGraphProps) => OpenGraph;
+  };
+};
+
+const seoConfigs: SEOConfig = {
   oeth: {
     baseURL: 'https://app.oeth.com/',
     defaultTitle: 'OETH',
     description: '',
-    openGraph: ({ route }) => ({
+    openGraph: ({ route }: OpenGraphProps): OpenGraph => ({
       type: 'website',
       locale: 'en_EN',
       url: `https://app.oeth.com/${route}`,
@@ -21,7 +33,12 @@ const seoConfigs = {
   },
 };
 
-const SEO = ({ appId, route }) => {
+type SEOProps = {
+  appId: string;
+  route: string;
+};
+
+const SEO = ({ appId, route }: SEOProps) => {
   const config = seoConfigs[appId];
   return config ? (
     <DefaultSeo
