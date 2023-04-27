@@ -19,7 +19,6 @@ import {
 import {
   formatWeiBalance,
   parseUnits,
-  truncateDecimals,
   MaxUint256,
 } from '@originprotocol/utils';
 import TokenImage from './TokenImage';
@@ -30,7 +29,6 @@ import SettingsMenu from './SettingsMenu';
 const SWAP_TYPES = {
   MINT: 'MINT',
   REDEEM: 'REDEEM',
-  SWAP: 'SWAP',
 };
 
 const STORED_TOKEN_LS_KEY = '@oeth-dapp/selectedTokenAddress';
@@ -298,6 +296,7 @@ const SwapForm = ({
   settings,
   onSwap,
   onChangeSettings,
+  onSwitchMode,
   swapTokens,
 }) => {
   const [showTokenSelection, setShowTokenSelection] = useState(false);
@@ -308,7 +307,7 @@ const SwapForm = ({
     });
   };
 
-  const { value, selectedToken, estimatedToken, selectedEstimate } = swap;
+  const { mode, value, selectedToken, estimatedToken, selectedEstimate } = swap;
   const { receiveAmount, minimumAmount } = selectedEstimate || {};
 
   const selectedTokenBalance = useMemo(
@@ -397,12 +396,7 @@ const SwapForm = ({
             {/* Switch toggle */}
             <div className="absolute bottom-[-26px] h-[52px] w-[52px] items-center justify-center">
               <button
-                onClick={() => {
-                  // setSwap((prev) => ({
-                  //   from: prev.to,
-                  //   to: prev.from,
-                  // }));
-                }}
+                onClick={onSwitchMode}
                 className="flex items-center justify-center h-full w-full rounded-full bg-origin-bg-lgrey border border-[2px] border-origin-bg-dgrey"
               >
                 <Image
@@ -718,6 +712,33 @@ const VaultSwap = ({ tokens, i18n, emptyState = null, vault }) => {
     tokensWithBalances,
   ]);
 
+  const onSwap = (changes) => {
+    setSwap((prev) => ({
+      ...prev,
+      ...changes,
+    }));
+    // Persist to local storage
+    if (changes?.selectedToken?.address) {
+      setStoredTokenAddress(changes?.selectedToken?.address);
+    }
+  };
+
+  const onChangeSettings = (settings) => {
+    setSettings((prev) => ({
+      ...prev,
+      ...settings,
+    }));
+  };
+
+  const onSwitchMode = () => {
+    setSwap((prev) => ({
+      ...prev,
+      mode: prev.mode === SWAP_TYPES.MINT ? SWAP_TYPES.REDEEM : SWAP_TYPES.MINT,
+      selectedToken: prev.estimatedToken,
+      estimatedToken: prev.selectedToken,
+    }));
+  };
+
   return (
     <div className="flex flex-col space-y-8">
       {!swap?.value && emptyState && <ExternalCTA {...emptyState} />}
@@ -725,22 +746,9 @@ const VaultSwap = ({ tokens, i18n, emptyState = null, vault }) => {
         i18n={i18n}
         swap={swap}
         settings={settings}
-        onSwap={(changes) => {
-          setSwap((prev) => ({
-            ...prev,
-            ...changes,
-          }));
-          // Persist to local storage
-          if (changes?.selectedToken?.address) {
-            setStoredTokenAddress(changes?.selectedToken?.address);
-          }
-        }}
-        onChangeSettings={(settings) => {
-          setSettings((prev) => ({
-            ...prev,
-            ...settings,
-          }));
-        }}
+        onSwap={onSwap}
+        onChangeSettings={onChangeSettings}
+        onSwitchMode={onSwitchMode}
         swapTokens={swapTokens}
       />
       <SwapRoutes i18n={i18n} swap={swap} settings={settings} />

@@ -1,7 +1,7 @@
 import { useQuery } from 'react-query';
 import TokenImage from './TokenImage';
 import { useAccount, useContractRead } from '@originprotocol/hooks';
-import { formatUnits } from '@originprotocol/utils';
+import { formatWeiBalance } from '@originprotocol/utils';
 
 const Portfolio = ({ i18n, portfolio }) => {
   const { token, queryFn } = portfolio;
@@ -35,9 +35,7 @@ const Portfolio = ({ i18n, portfolio }) => {
           </span>
           <div className="flex flex-row items-center space-x-4 w-full">
             <h3 className="font-header text-4xl">
-              {balance
-                ? parseFloat(formatUnits(balance ?? 0n)).toFixed(4)
-                : '-'}
+              {balance ? parseFloat(formatWeiBalance(balance)).toFixed(6) : '-'}
             </h3>
             <TokenImage
               src={token?.logoSrc}
