@@ -2,7 +2,11 @@ import React, { forwardRef, useRef, useState } from 'react';
 import { useClickAway } from 'react-use';
 import Image from 'next/image';
 import { Typography } from '@originprotocol/origin-storybook';
-import { shortenAddress, formatUnits } from '@originprotocol/utils';
+import {
+  shortenAddress,
+  formatUnits,
+  formatWeiBalance,
+} from '@originprotocol/utils';
 import {
   useAccount,
   useDisconnect,
@@ -116,18 +120,17 @@ const UserMenuDropdown = forwardRef(
           ) : isLoading ? (
             <span>Loading...</span>
           ) : (
-            orderBy(data, 'balanceOf', 'desc').map(
-              ({ name, symbol, balanceOf, logoSrc }) => (
-                <div
-                  key={name}
-                  className="flex flex-row items-center space-x-3"
-                >
-                  <TokenImage src={logoSrc} symbol={symbol} name={name} />
-                  <span>{Number(formatUnits(balanceOf)).toFixed(4)}</span>
-                  <span>{symbol}</span>
-                </div>
-              )
-            )
+            orderBy(
+              data,
+              ({ balanceOf }) => formatWeiBalance(balanceOf),
+              'desc'
+            ).map(({ name, symbol, balanceOf, logoSrc }) => (
+              <div key={name} className="flex flex-row items-center space-x-3">
+                <TokenImage src={logoSrc} symbol={symbol} name={name} />
+                <span>{Number(formatUnits(balanceOf)).toFixed(4)}</span>
+                <span>{symbol}</span>
+              </div>
+            ))
           )}
         </div>
       </div>

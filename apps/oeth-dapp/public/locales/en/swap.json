@@ -7,6 +7,13 @@
   "swapRoutes": "Swap Routes",
   "estimate": "estimate",
   "minReceived": "Min. received",
+  "isLoading": "Loading...",
+  "redeem": {
+    "DEFAULT": "Swap",
+    "PENDING": "Swapping...",
+    "SUBMITTED": "Awaiting confirmations...",
+    "SUCCESS": "{{sourceTokenName}} swapped for {{targetTokenName}}"
+  },
   "swap": {
     "DEFAULT": "Swap",
     "PENDING": "Swapping...",
@@ -20,7 +27,7 @@
     "SUCCESS": "Approved {{targetContractName}} for {{sourceTokenName}}"
   },
   "errors": {
-    "NOT_ENOUGH_BALANCE": "Insufficient {{tokenName}} balance",
+    "NOT_ENOUGH_BALANCE": "Insufficient {{sourceTokenName}} balance",
     "NO_INPUT_AMOUNT": "Enter Amount",
     "UNKNOWN": "Enter Amount"
   },

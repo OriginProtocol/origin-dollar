@@ -31,7 +31,7 @@ const SWAP_TYPES = {
   REDEEM: 'REDEEM',
 };
 
-const STORED_TOKEN_LS_KEY = '@oeth-dapp/selectedTokenAddress';
+const STORED_TOKEN_LS_KEY = '@oeth-dapp/previousTokenAddress';
 
 const TokenSelectionModal = ({ tokens, onClose, onSelect }) => {
   const ref = useRef(null);
@@ -127,12 +127,10 @@ const SwapRoutes = ({ i18n, swap, settings }) => {
   );
 };
 
-const WriteableActions = ({ i18n, swap, translationContext }) => {
+const MintableActions = ({ i18n, swap, translationContext }) => {
   const { value, selectedToken, selectedEstimate } = swap || {};
-
   const { hasProvidedAllowance, contract, minimumAmount } =
     selectedEstimate || {};
-
   const weiValue = parseUnits(String(value), 18);
 
   const { config: allowanceWriteConfig, error: allowanceWriteError } =
@@ -227,10 +225,66 @@ const WriteableActions = ({ i18n, swap, translationContext }) => {
   );
 };
 
+const RedeemActions = ({ i18n, swap, translationContext }) => {
+  const { value, selectedEstimate } = swap || {};
+  const { contract, minimumAmount } = selectedEstimate || {};
+  const weiValue = parseUnits(String(value), 18);
+
+  const { config: swapWriteConfig, error: swapWriteError } =
+    usePrepareContractWrite({
+      address: contract?.address,
+      abi: contract?.abi,
+      functionName: 'redeem',
+      args: [weiValue, minimumAmount],
+    });
+
+  const {
+    data: swapWriteData,
+    isLoading: swapWriteIsLoading,
+    write: swapWrite,
+  } = useContractWrite(swapWriteConfig);
+
+  const swapWriteDisabled = !!swapWriteError;
+
+  const { isLoading: snapWriteIsSubmitted, isSuccess: snapWriteIsSuccess } =
+    useWaitForTransaction({
+      hash: swapWriteData?.hash,
+    });
+
+  return (
+    <button
+      className={cx(
+        'flex items-center justify-center w-full h-[72px] text-xl bg-gradient-to-r from-gradient2-from to-gradient2-to rounded-xl',
+        {
+          'opacity-50 cursor-not-allowed': swapWriteDisabled,
+        }
+      )}
+      onClick={() => {
+        swapWrite?.();
+      }}
+      disabled={swapWriteDisabled}
+    >
+      {(() => {
+        if (swapWriteIsLoading) {
+          return i18n('redeem.PENDING', translationContext);
+        } else if (snapWriteIsSubmitted) {
+          return i18n('redeem.SUBMITTED', translationContext);
+        } else if (snapWriteIsSuccess) {
+          return i18n('redeem.SUCCESS', translationContext);
+        } else {
+          return i18n('redeem.DEFAULT', translationContext);
+        }
+      })()}
+    </button>
+  );
+};
+
 const SwapActions = ({ i18n, swap }) => {
-  const { selectedToken, estimatedToken, selectedEstimate, value } = swap || {};
+  const { mode, selectedToken, estimatedToken, selectedEstimate, value } =
+    swap || {};
   const { error } = selectedEstimate || {};
 
+  const isMint = mode === SWAP_TYPES.MINT;
   const parsedValue = !value ? 0 : parseFloat(value);
   const invalidInputValue = !parsedValue || isNaN(parsedValue);
 
@@ -240,6 +294,8 @@ const SwapActions = ({ i18n, swap }) => {
     targetTokenName: estimatedToken?.symbol,
   };
 
+  console.log(isMint);
+
   return invalidInputValue || error ? (
     <div className="flex items-center justify-center w-full h-[72px] text-xl bg-gradient-to-r from-gradient2-from to-gradient2-to rounded-xl opacity-50 cursor-not-allowed">
       {i18n(
@@ -247,8 +303,14 @@ const SwapActions = ({ i18n, swap }) => {
         translationContext
       )}
     </div>
+  ) : isMint ? (
+    <MintableActions
+      i18n={i18n}
+      swap={swap}
+      translationContext={translationContext}
+    />
   ) : (
-    <WriteableActions
+    <RedeemActions
       i18n={i18n}
       swap={swap}
       translationContext={translationContext}
@@ -298,17 +360,25 @@ const SwapForm = ({
   onChangeSettings,
   onSwitchMode,
   swapTokens,
+  isLoadingEstimate,
 }) => {
   const [showTokenSelection, setShowTokenSelection] = useState(false);
-
-  const onSelectToken = (token) => {
-    onSwap({
-      selectedToken: token,
-    });
-  };
-
   const { mode, value, selectedToken, estimatedToken, selectedEstimate } = swap;
   const { receiveAmount, minimumAmount } = selectedEstimate || {};
+
+  const isMint = mode === SWAP_TYPES.MINT;
+
+  const onSelectToken = (token) => {
+    onSwap(
+      isMint
+        ? {
+            selectedToken: token,
+          }
+        : {
+            estimatedToken: token,
+          }
+    );
+  };
 
   const selectedTokenBalance = useMemo(
     () => formatWeiBalance(selectedToken?.balanceOf),
@@ -390,6 +460,7 @@ const SwapForm = ({
                 <SelectTokenPill
                   onClick={() => setShowTokenSelection(true)}
                   {...selectedToken}
+                  readOnly={!isMint}
                 />
               </div>
             </div>
@@ -411,17 +482,25 @@ const SwapForm = ({
           <div className="h-[1px] w-full border-b-[1px] border-origin-bg-dgrey" />
           <div className="flex flex-row gap-10 h-full w-full items-center px-10">
             <div className="flex flex-col w-full">
-              <NumericInput
-                className={cx(
-                  'font-header focus:outline-none bg-transparent text-4xl h-[60px] text-origin-dimmed caret-gradient1-from',
-                  {
-                    'text-origin-white': receiveAmount?.gt(0),
-                  }
-                )}
-                value={estimatedReceiveAmount}
-                readOnly
-              />
-              <span className="text-origin-dimmed text-lg">$0</span>
+              {isLoadingEstimate ? (
+                <p className="text-sm text-origin-dimmed">
+                  {i18n('isLoading')}
+                </p>
+              ) : (
+                <>
+                  <NumericInput
+                    className={cx(
+                      'font-header focus:outline-none bg-transparent text-4xl h-[60px] text-origin-dimmed caret-gradient1-from',
+                      {
+                        'text-origin-white': receiveAmount?.gt(0),
+                      }
+                    )}
+                    value={estimatedReceiveAmount}
+                    readOnly
+                  />
+                  <span className="text-origin-dimmed text-lg">$0</span>
+                </>
+              )}
             </div>
             <div className="flex flex-col flex-shrink-0 space-y-4">
               <div className="flex flex-row space-x-4 items-center">
@@ -435,7 +514,7 @@ const SwapForm = ({
               <SelectTokenPill
                 onClick={() => setShowTokenSelection(true)}
                 {...estimatedToken}
-                readOnly
+                readOnly={isMint}
               />
               <span className="text-origin-dimmed text-sm">
                 {i18n('minReceived')}:{' '}
@@ -597,7 +676,7 @@ const useSwapEstimator = ({
     }
   };
 
-  const onFetchEstimations = useDebouncedCallback(async () => {
+  const onFetchMintEstimations = useDebouncedCallback(async () => {
     try {
       setIsLoading(true);
       const vaultEstimate = await estimateMintSuitabilityVault();
@@ -610,10 +689,108 @@ const useSwapEstimator = ({
     }
   }, 1000);
 
+  const estimateRedeemSuitabilityVault = async () => {
+    if (!estimatesFor.vault) {
+      return {
+        error: 'UNKNOWN',
+      };
+    }
+
+    const fromTokenContract = new ethers.Contract(
+      fromToken.address,
+      fromToken.abi,
+      provider
+    );
+
+    const vaultContract = new ethers.Contract(
+      estimatesFor.vault.address,
+      estimatesFor.vault.abi,
+      provider
+    );
+
+    try {
+      const [
+        rebaseThreshold,
+        autoAllocateThreshold,
+        fromTokenAllowance,
+        fromTokenDecimals,
+      ] = await Promise.all([
+        vaultContract.rebaseThreshold(),
+        vaultContract.autoAllocateThreshold(),
+        fromTokenContract.allowance(address, vaultContract.address),
+        fromTokenContract.decimals(),
+      ]);
+
+      const fromTokenValue = parseUnits(String(value), fromTokenDecimals);
+      const hasEnoughBalance = fromToken?.balanceOf.gte(fromTokenValue);
+
+      if (!hasEnoughBalance) {
+        return {
+          error: 'NOT_ENOUGH_BALANCE',
+        };
+      }
+
+      const receiveAmount = fromTokenValue;
+
+      const minimumAmount = fromTokenValue.sub(
+        fromTokenValue.mul(settings?.tolerance * 100).div(10000)
+      );
+
+      const hasProvidedAllowance = fromTokenAllowance.gte(fromTokenValue);
+
+      const gasLimit = 200000;
+      // await vaultContract.estimateGas.mint(
+      //   fromToken.address,
+      //   fromTokenValue,
+      //   minimumAmount
+      // );
+
+      return {
+        contract: estimatesFor.vault,
+        rebaseThreshold,
+        autoAllocateThreshold,
+        receiveAmount,
+        minimumAmount,
+        gasLimit,
+        hasProvidedAllowance,
+      };
+    } catch (e) {
+      console.error(`ERROR: Vault swap suitability: ${e.message}`);
+      if (
+        e?.data?.message?.includes('Mint amount lower than minimum') ||
+        e?.message.includes('Mint amount lower than minimum')
+      ) {
+        return {
+          error: 'PRICE_TOO_HIGH',
+        };
+      }
+      return {
+        error: 'UNKNOWN',
+      };
+    }
+  };
+
+  const onFetchRedeemEstimations = useDebouncedCallback(async () => {
+    try {
+      setIsLoading(true);
+      const vaultEstimate = await estimateRedeemSuitabilityVault();
+      setIsLoading(false);
+      onEstimate({
+        vaultEstimate,
+      });
+    } catch (e) {
+      console.error(e);
+    }
+  }, 1000);
+
   useEffect(() => {
     (async function () {
       if (fromToken?.address && toToken?.address) {
-        await onFetchEstimations();
+        if (mode === SWAP_TYPES.MINT) {
+          await onFetchMintEstimations();
+        } else {
+          await onFetchRedeemEstimations();
+        }
       }
     })();
   }, [
@@ -624,7 +801,7 @@ const useSwapEstimator = ({
     JSON.stringify(settings),
   ]);
 
-  return { onFetchEstimations };
+  return { isLoading };
 };
 
 const VaultSwap = ({ tokens, i18n, emptyState = null, vault }) => {
@@ -641,7 +818,7 @@ const VaultSwap = ({ tokens, i18n, emptyState = null, vault }) => {
   });
 
   const [swap, setSwap] = useState({
-    type: SWAP_TYPES.MINT,
+    mode: SWAP_TYPES.MINT,
     selectedToken: null,
     value: 0,
     selectedEstimate: null,
@@ -682,10 +859,10 @@ const VaultSwap = ({ tokens, i18n, emptyState = null, vault }) => {
   };
 
   // Watch for value changes to perform estimates
-  useSwapEstimator({
+  const { isLoading: isLoadingEstimate } = useSwapEstimator({
     address,
     settings,
-    mode: swap?.type,
+    mode: swap?.mode,
     fromToken: swap?.selectedToken,
     toToken: swap?.estimatedToken,
     value: swap?.value,
@@ -750,6 +927,7 @@ const VaultSwap = ({ tokens, i18n, emptyState = null, vault }) => {
         onChangeSettings={onChangeSettings}
         onSwitchMode={onSwitchMode}
         swapTokens={swapTokens}
+        isLoadingEstimate={isLoadingEstimate}
       />
       <SwapRoutes i18n={i18n} swap={swap} settings={settings} />
       <SwapActions i18n={i18n} swap={swap} />
