@@ -127,7 +127,7 @@ const SwapRoutes = ({ i18n, swap, settings }) => {
   );
 };
 
-const MintableActions = ({ i18n, swap, translationContext }) => {
+const MintableActions = ({ i18n, swap, translationContext, onSuccess }) => {
   const { value, selectedToken, selectedEstimate } = swap || {};
   const { hasProvidedAllowance, contract, minimumAmount } =
     selectedEstimate || {};
@@ -170,10 +170,22 @@ const MintableActions = ({ i18n, swap, translationContext }) => {
     hash: allowanceWriteData?.hash,
   });
 
+  useEffect(() => {
+    if (allowanceWriteIsSuccess && onSuccess) {
+      onSuccess('ALLOWANCE', { context: swapWriteData });
+    }
+  }, [allowanceWriteIsSuccess]);
+
   const { isLoading: snapWriteIsSubmitted, isSuccess: snapWriteIsSuccess } =
     useWaitForTransaction({
       hash: swapWriteData?.hash,
     });
+
+  useEffect(() => {
+    if (snapWriteIsSuccess && onSuccess) {
+      onSuccess('MINTED', { context: swapWriteData });
+    }
+  }, [snapWriteIsSuccess]);
 
   return (
     <>
@@ -225,7 +237,7 @@ const MintableActions = ({ i18n, swap, translationContext }) => {
   );
 };
 
-const RedeemActions = ({ i18n, swap, translationContext }) => {
+const RedeemActions = ({ i18n, swap, translationContext, onSuccess }) => {
   const { value, selectedEstimate } = swap || {};
   const { contract, minimumAmount } = selectedEstimate || {};
   const weiValue = parseUnits(String(value), 18);
@@ -250,6 +262,12 @@ const RedeemActions = ({ i18n, swap, translationContext }) => {
     useWaitForTransaction({
       hash: swapWriteData?.hash,
     });
+
+  useEffect(() => {
+    if (snapWriteIsSuccess && onSuccess) {
+      onSuccess('REDEEM', { context: swapWriteData });
+    }
+  }, [snapWriteIsSuccess]);
 
   return (
     <button
@@ -279,7 +297,7 @@ const RedeemActions = ({ i18n, swap, translationContext }) => {
   );
 };
 
-const SwapActions = ({ i18n, swap }) => {
+const SwapActions = ({ i18n, swap, onSuccess }) => {
   const { mode, selectedToken, estimatedToken, selectedEstimate, value } =
     swap || {};
   const { error } = selectedEstimate || {};
@@ -294,8 +312,6 @@ const SwapActions = ({ i18n, swap }) => {
     targetTokenName: estimatedToken?.symbol,
   };
 
-  console.log(isMint);
-
   return invalidInputValue || error ? (
     <div className="flex items-center justify-center w-full h-[72px] text-xl bg-gradient-to-r from-gradient2-from to-gradient2-to rounded-xl opacity-50 cursor-not-allowed">
       {i18n(
@@ -308,12 +324,14 @@ const SwapActions = ({ i18n, swap }) => {
       i18n={i18n}
       swap={swap}
       translationContext={translationContext}
+      onSuccess={onSuccess}
     />
   ) : (
     <RedeemActions
       i18n={i18n}
       swap={swap}
       translationContext={translationContext}
+      onSuccess={onSuccess}
     />
   );
 };
@@ -676,19 +694,6 @@ const useSwapEstimator = ({
     }
   };
 
-  const onFetchMintEstimations = useDebouncedCallback(async () => {
-    try {
-      setIsLoading(true);
-      const vaultEstimate = await estimateMintSuitabilityVault();
-      setIsLoading(false);
-      onEstimate({
-        vaultEstimate,
-      });
-    } catch (e) {
-      console.error(e);
-    }
-  }, 1000);
-
   const estimateRedeemSuitabilityVault = async () => {
     if (!estimatesFor.vault) {
       return {
@@ -770,11 +775,20 @@ const useSwapEstimator = ({
     }
   };
 
-  const onFetchRedeemEstimations = useDebouncedCallback(async () => {
+  const onFetchEstimations = useDebouncedCallback(async () => {
     try {
       setIsLoading(true);
-      const vaultEstimate = await estimateRedeemSuitabilityVault();
+
+      let vaultEstimate;
+
+      if (mode === SWAP_TYPES.MINT) {
+        vaultEstimate = await estimateMintSuitabilityVault();
+      } else {
+        vaultEstimate = await estimateRedeemSuitabilityVault();
+      }
+
       setIsLoading(false);
+
       onEstimate({
         vaultEstimate,
       });
@@ -786,11 +800,7 @@ const useSwapEstimator = ({
   useEffect(() => {
     (async function () {
       if (fromToken?.address && toToken?.address) {
-        if (mode === SWAP_TYPES.MINT) {
-          await onFetchMintEstimations();
-        } else {
-          await onFetchRedeemEstimations();
-        }
+        await onFetchEstimations();
       }
     })();
   }, [
@@ -801,7 +811,7 @@ const useSwapEstimator = ({
     JSON.stringify(settings),
   ]);
 
-  return { isLoading };
+  return { isLoading, onRefreshEstimates: onFetchEstimations };
 };
 
 const VaultSwap = ({ tokens, i18n, emptyState = null, vault }) => {
@@ -826,16 +836,12 @@ const VaultSwap = ({ tokens, i18n, emptyState = null, vault }) => {
     estimates: [],
   });
 
-  const [{ assetContractAddresses, strategyContractAddresses }] = useVault({
+  const [{ assetContractAddresses }] = useVault({
     vault,
   });
 
   // Retrieve user token balances
-  const {
-    data: tokensWithBalances,
-    isError: isErrorLoadingBalances,
-    isLoading: isLoadingBalances,
-  } = useTokenBalances({
+  const { data: tokensWithBalances } = useTokenBalances({
     address,
     tokens,
   });
@@ -846,6 +852,7 @@ const VaultSwap = ({ tokens, i18n, emptyState = null, vault }) => {
   );
 
   const handleEstimate = (newEstimates) => {
+    if (!newEstimates) return;
     const { vaultEstimate } = newEstimates;
     setSwap((prev) => ({
       ...prev,
@@ -859,18 +866,20 @@ const VaultSwap = ({ tokens, i18n, emptyState = null, vault }) => {
   };
 
   // Watch for value changes to perform estimates
-  const { isLoading: isLoadingEstimate } = useSwapEstimator({
-    address,
-    settings,
-    mode: swap?.mode,
-    fromToken: swap?.selectedToken,
-    toToken: swap?.estimatedToken,
-    value: swap?.value,
-    estimatesFor: {
-      vault: vault?.contract,
-    },
-    onEstimate: handleEstimate,
-  });
+  const { isLoading: isLoadingEstimate, onRefreshEstimates } = useSwapEstimator(
+    {
+      address,
+      settings,
+      mode: swap?.mode,
+      fromToken: swap?.selectedToken,
+      toToken: swap?.estimatedToken,
+      value: swap?.value,
+      estimatesFor: {
+        vault: vault?.contract,
+      },
+      onEstimate: handleEstimate,
+    }
+  );
 
   // Auto select a selected token and corresponding estimated token
   useEffect(() => {
@@ -916,6 +925,17 @@ const VaultSwap = ({ tokens, i18n, emptyState = null, vault }) => {
     }));
   };
 
+  const onSuccess = async (actionType) => {
+    if (actionType === 'MINT' || actionType === 'REDEEM') {
+      setSwap((prev) => ({
+        ...prev,
+        value: 0,
+      }));
+    } else if (actionType === 'ALLOWANCE') {
+      await onRefreshEstimates();
+    }
+  };
+
   return (
     <div className="flex flex-col space-y-8">
       {!swap?.value && emptyState && <ExternalCTA {...emptyState} />}
@@ -930,7 +950,7 @@ const VaultSwap = ({ tokens, i18n, emptyState = null, vault }) => {
         isLoadingEstimate={isLoadingEstimate}
       />
       <SwapRoutes i18n={i18n} swap={swap} settings={settings} />
-      <SwapActions i18n={i18n} swap={swap} />
+      <SwapActions i18n={i18n} swap={swap} onSuccess={onSuccess} />
     </div>
   );
 };
