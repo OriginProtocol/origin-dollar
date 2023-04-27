@@ -20,7 +20,8 @@ const Portfolio = ({ i18n, portfolio }) => {
     queryKey: ['portfolio', token.address],
     queryFn,
   });
-
+  
+  // @ts-ignore
   const { displayValues } = data || {};
 
   return (
@@ -49,7 +50,7 @@ const Portfolio = ({ i18n, portfolio }) => {
         </div>
         <div className="flex flex-col justify-center h-full space-y-2">
           <div className="grid grid-cols-1 h-full w-full">
-            {displayValues?.map((valueKey) => (
+            {displayValues?.map((valueKey: string) => (
               <div
                 key={valueKey}
                 className="flex flex-col px-10 w-full h-full justify-center border-b-[1px] border-origin-bg-dgrey space-y-2"
@@ -57,6 +58,7 @@ const Portfolio = ({ i18n, portfolio }) => {
                 <label className="text-origin-dimmed text-sm">
                   {i18n(`portfolio.${valueKey}`)}
                 </label>
+                {/* @ts-ignore */}
                 <span>${parseFloat(data?.[valueKey]).toFixed(2)}</span>
               </div>
             ))}

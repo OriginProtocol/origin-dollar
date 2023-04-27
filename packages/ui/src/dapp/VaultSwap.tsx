@@ -475,6 +475,7 @@ const SwapForm = ({
         <div className="relative flex flex-col justify-center h-full w-full">
           <div className="relative flex flex-row gap-10 h-full w-full items-center justify-center px-10 bg-origin-bg-grey">
             <div className="flex flex-col w-full">
+              {/* @ts-ignore */}
               <NumericInput
                 className={cx(
                   'font-header focus:outline-none bg-transparent text-4xl h-[60px] text-origin-dimmed caret-gradient1-from',
@@ -482,7 +483,7 @@ const SwapForm = ({
                     'text-origin-white': value > 0,
                   }
                 )}
-                onChange={(newValue) =>
+                onChange={(newValue: number) =>
                   onSwap({
                     value: newValue,
                   })
@@ -542,6 +543,7 @@ const SwapForm = ({
                 </p>
               ) : (
                 <>
+                  {/* @ts-ignore */}
                   <NumericInput
                     className={cx(
                       'font-header focus:outline-none bg-transparent text-4xl h-[60px] text-origin-dimmed caret-gradient1-from',
