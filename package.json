@@ -41,6 +41,7 @@
     "react-use": "^17.4.0",
     "serve": "^14.2.0",
     "tslib": "^2.3.0",
+    "use-debounce": "^9.0.4",
     "wagmi": "^0.12.10"
   },
   "engines": {

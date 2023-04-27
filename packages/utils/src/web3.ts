@@ -1,3 +1,4 @@
+import { ethers } from 'ethers';
 import { formatUnits } from 'ethers/lib/utils';
 
 export function shortenAddress(address: string, shorter = false) {
@@ -9,8 +10,12 @@ export function shortenAddress(address: string, shorter = false) {
   }`;
 }
 
-export const formatWeiBalance = (balance, decimals = 6) =>
-  parseFloat(formatUnits(balance ?? 0n)).toFixed(decimals);
+export const formatWeiBalance = (balance, maxDecimalDigits = 18) =>
+  ethers.FixedNumber.from(formatUnits(balance || 0n, maxDecimalDigits))
+    .round(
+      maxDecimalDigits ?? ethers.BigNumber.from(maxDecimalDigits).toNumber()
+    )
+    .toString();
 
 export {
   formatUnits,
@@ -19,3 +24,5 @@ export {
   formatEther,
   formatBytes32String,
 } from 'ethers/lib/utils.js';
+
+export const MaxUint256 = ethers.constants.MaxUint256;
