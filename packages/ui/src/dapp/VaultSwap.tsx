@@ -968,7 +968,6 @@ const VaultSwap = ({ tokens, i18n, emptyState = null, vault }) => {
     setSwap((prev) => ({
       ...prev,
       forceRefreshBit: prev.forceRefreshBit === 0 ? 1 : 0,
-      value: 0,
     }));
     await onRefreshEstimates();
   };
