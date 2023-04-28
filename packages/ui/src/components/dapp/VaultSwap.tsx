@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { find, isEmpty, orderBy } from 'lodash';
+import { isEmpty, orderBy } from 'lodash';
 import {
   useAccount,
   useLocalStorage,
@@ -7,23 +7,11 @@ import {
   useSwapEstimator,
   useVault,
 } from '@originprotocol/hooks';
-import { formatWeiBalance } from '@originprotocol/utils';
+import { formatWeiBalance, findTokenByAddress } from '@originprotocol/utils';
 import { SWAP_TYPES, STORED_TOKEN_LS_KEY } from '../../constants';
 import SwapForm from './SwapForm';
 import SwapRoutes from './SwapRoutes';
 import SwapActions from './SwapActions';
-
-type Token = {
-  address: string;
-};
-
-const matchTokens = (tokens: Token[], contractAddress: string) => {
-  const normalizedAddress = contractAddress?.toLowerCase();
-  return find(
-    tokens,
-    ({ address }) => address?.toLowerCase() === normalizedAddress
-  );
-};
 
 type VaultSwapProps = {
   i18n: any;
@@ -66,7 +54,19 @@ const VaultSwap = ({ tokens, i18n, vault }: VaultSwapProps) => {
   // Swappable tokens based on supported vault assets
   const swapTokens = assetContractAddresses?.map(
     // @ts-ignore
-    matchTokens.bind(null, tokensWithBalances)
+    findTokenByAddress.bind(null, tokensWithBalances)
+  );
+
+  const selectedToken = findTokenByAddress(
+    // @ts-ignore
+    tokensWithBalances,
+    swap?.selectedTokenAddress
+  );
+
+  const estimatedToken = findTokenByAddress(
+    // @ts-ignore
+    tokensWithBalances,
+    swap?.estimatedTokenAddress
   );
 
   const handleEstimate = (newEstimates: { vaultEstimate: any }) => {
@@ -83,18 +83,6 @@ const VaultSwap = ({ tokens, i18n, vault }: VaultSwapProps) => {
       ),
     }));
   };
-
-  const selectedToken = matchTokens(
-    // @ts-ignore
-    tokensWithBalances,
-    swap?.selectedTokenAddress
-  );
-
-  const estimatedToken = matchTokens(
-    // @ts-ignore
-    tokensWithBalances,
-    swap?.estimatedTokenAddress
-  );
 
   // Watch for value changes to perform estimates
   const { isLoading: isLoadingEstimate, onRefreshEstimates } = useSwapEstimator(
@@ -115,8 +103,11 @@ const VaultSwap = ({ tokens, i18n, vault }: VaultSwapProps) => {
   // Auto select a selected token and corresponding estimated token
   useEffect(() => {
     if (!swap?.selectedTokenAddress && !isEmpty(assetContractAddresses)) {
-      // @ts-ignore
-      const hasStored = matchTokens(tokensWithBalances, storedTokenAddress);
+      const hasStored = findTokenByAddress(
+        // @ts-ignore
+        tokensWithBalances,
+        storedTokenAddress
+      );
       // @ts-ignore
       setSwap((prev) => ({
         ...prev,
@@ -195,6 +186,7 @@ const VaultSwap = ({ tokens, i18n, vault }: VaultSwapProps) => {
         swap={swap}
         selectedToken={selectedToken}
         estimatedToken={estimatedToken}
+        targetContract={vault}
         onSuccess={onSuccess}
       />
     </div>

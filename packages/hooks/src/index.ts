@@ -23,4 +23,5 @@ export { default as useAutoConnect } from './useAutoConnect';
 export { default as useTokenAllowances } from './useTokenAllowances';
 export { default as useTokenBalances } from './useTokenBalances';
 export { default as useSwapEstimator } from './useSwapEstimator';
+export { default as useWrapEstimator } from './useWrapEstimator';
 export { default as useVault } from './useVault';

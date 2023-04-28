@@ -13,6 +13,7 @@ type SuccessContext = {
 };
 
 type ActionsProps = {
+  address: `0x${string}` | string | undefined;
   i18n: any;
   swap: any;
   translationContext: any;
@@ -20,16 +21,18 @@ type ActionsProps = {
   selectedToken?: any;
 };
 
-type SwapActionsProps = {
+type WrapActionProps = {
+  address: `0x${string}` | string | undefined;
   i18n: any;
   swap: any;
   selectedToken: any;
   estimatedToken: any;
+  wrappedContract: any;
   onSuccess: (a: string, b: SuccessContext) => void;
-  targetContract: any;
 };
 
-const MintableActions = ({
+const WrappedActions = ({
+  address,
   i18n,
   swap,
   selectedToken,
@@ -59,8 +62,8 @@ const MintableActions = ({
     usePrepareContractWrite({
       address: contract?.address,
       abi: contract?.abi,
-      functionName: 'mint',
-      args: [selectedToken?.address, weiValue, minimumAmount],
+      functionName: 'deposit',
+      args: [weiValue, address],
     });
 
   const {
@@ -91,7 +94,7 @@ const MintableActions = ({
 
   useEffect(() => {
     if (snapWriteIsSuccess && onSuccess) {
-      onSuccess('MINTED', { context: swapWriteData });
+      onSuccess('WRAP', { context: swapWriteData });
     }
   }, [snapWriteIsSuccess]);
 
@@ -147,13 +150,13 @@ const MintableActions = ({
       >
         {(() => {
           if (swapWriteIsLoading) {
-            return i18n('swap.PENDING', translationContext);
+            return i18n('wrap.PENDING', translationContext);
           } else if (snapWriteIsSubmitted) {
-            return i18n('swap.SUBMITTED', translationContext);
+            return i18n('wrap.SUBMITTED', translationContext);
           } else if (snapWriteIsSuccess) {
-            return i18n('swap.SUCCESS', translationContext);
+            return i18n('wrap.SUCCESS', translationContext);
           } else {
-            return i18n('swap.DEFAULT', translationContext);
+            return i18n('wrap.DEFAULT', translationContext);
           }
         })()}
       </button>
@@ -161,7 +164,8 @@ const MintableActions = ({
   );
 };
 
-const RedeemActions = ({
+const UnwrapActions = ({
+  address,
   i18n,
   swap,
   translationContext,
@@ -169,7 +173,7 @@ const RedeemActions = ({
 }: ActionsProps) => {
   const [error, setError] = useState('');
   const { value, selectedEstimate } = swap || {};
-  const { contract, minimumAmount } = selectedEstimate || {};
+  const { contract } = selectedEstimate || {};
   const weiValue = parseUnits(String(value), 18);
 
   const { config: swapWriteConfig, error: swapWriteError } =
@@ -177,7 +181,7 @@ const RedeemActions = ({
       address: contract?.address,
       abi: contract?.abi,
       functionName: 'redeem',
-      args: [weiValue, minimumAmount],
+      args: [weiValue, address, address],
     });
 
   const {
@@ -232,13 +236,13 @@ const RedeemActions = ({
       >
         {(() => {
           if (swapWriteIsLoading) {
-            return i18n('redeem.PENDING', translationContext);
+            return i18n('unwrap.PENDING', translationContext);
           } else if (snapWriteIsSubmitted) {
-            return i18n('redeem.SUBMITTED', translationContext);
+            return i18n('unwrap.SUBMITTED', translationContext);
           } else if (snapWriteIsSuccess) {
-            return i18n('redeem.SUCCESS', translationContext);
+            return i18n('unwrap.SUCCESS', translationContext);
           } else {
-            return i18n('redeem.DEFAULT', translationContext);
+            return i18n('unwrap.DEFAULT', translationContext);
           }
         })()}
       </button>
@@ -246,23 +250,24 @@ const RedeemActions = ({
   );
 };
 
-const SwapActions = ({
+const WrapActions = ({
+  address,
   i18n,
   swap,
   selectedToken,
   estimatedToken,
+  wrappedContract,
   onSuccess,
-  targetContract,
-}: SwapActionsProps) => {
+}: WrapActionProps) => {
   const { mode, selectedEstimate, value } = swap || {};
   const { error } = selectedEstimate || {};
 
-  const isMint = mode === SWAP_TYPES.MINT;
+  const isWrap = mode === SWAP_TYPES.WRAP;
   const parsedValue = !value ? 0 : parseFloat(value);
   const invalidInputValue = !parsedValue || isNaN(parsedValue);
 
   const translationContext = {
-    targetContractName: targetContract.name,
+    targetContractName: wrappedContract.name,
     sourceTokenName: selectedToken?.symbol,
     targetTokenName: estimatedToken?.symbol,
   };
@@ -274,8 +279,9 @@ const SwapActions = ({
         translationContext
       )}
     </div>
-  ) : isMint ? (
-    <MintableActions
+  ) : isWrap ? (
+    <WrappedActions
+      address={address}
       i18n={i18n}
       swap={swap}
       selectedToken={selectedToken}
@@ -283,7 +289,8 @@ const SwapActions = ({
       onSuccess={onSuccess}
     />
   ) : (
-    <RedeemActions
+    <UnwrapActions
+      address={address}
       i18n={i18n}
       swap={swap}
       translationContext={translationContext}
@@ -292,4 +299,4 @@ const SwapActions = ({
   );
 };
 
-export default SwapActions;
+export default WrapActions;

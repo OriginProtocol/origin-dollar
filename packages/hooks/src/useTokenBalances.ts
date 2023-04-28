@@ -12,7 +12,9 @@ type Token = {
 
 type TokenBalanceProps = {
   address: `0x${string}` | string | undefined;
-  tokens: Token[];
+  tokens: {
+    [key: string]: Token;
+  };
 };
 
 const useTokenBalances = ({ address, tokens }: TokenBalanceProps) => {
@@ -24,8 +26,8 @@ const useTokenBalances = ({ address, tokens }: TokenBalanceProps) => {
   });
 
   const { data, isError, isLoading } = useContractReads({
+    // @ts-ignore
     contracts: tokenKeys.map((key) => {
-      // @ts-ignore
       const { address: contractAddress, abi = erc20ABI } = tokens[key];
       return {
         address: contractAddress,

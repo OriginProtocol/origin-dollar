@@ -1,6 +1,5 @@
 import { ErrorBoundary, WrapToken } from '@originprotocol/ui';
 import { useTranslation } from 'next-i18next';
-import pick from 'lodash/pick';
 import { contracts } from '@originprotocol/web3';
 import { getStaticPaths, makeStaticProps } from '../../lib/getStatic';
 
@@ -10,7 +9,8 @@ const Wrap = () => {
     <ErrorBoundary>
       <WrapToken
         i18n={t}
-        tokens={pick(contracts.mainnet, ['OETH', 'woETH'])}
+        unwrappedToken={contracts.mainnet.OETH}
+        wrappedToken={contracts.mainnet.woETH}
         emptyState={{
           description: t('description'),
           cta: t('learnMore'),
