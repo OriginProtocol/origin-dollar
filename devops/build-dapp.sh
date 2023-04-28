@@ -1,6 +1,5 @@
 buildContracts() {
-  if [[ $APP_ID == "ousd-dapp" || $APP_ID == "oeth-dapp" ]]
-  then
+  if [[ $APP_ID == "ousd-dapp" || $APP_ID == "oeth-dapp" ]]; then
     echo "Building contract for the DApp";
     cd contracts;
     NODE_ENV=development yarn install;
@@ -12,8 +11,7 @@ buildContracts() {
 
 buildApp() {
   buildContracts;
-  if [[ $APP_ID == "oeth-dapp" ]]
-  then
+  if [[ $APP_ID == "oeth-dapp" ]]; then
     cd dapp-oeth;
   else
     cd dapp;
