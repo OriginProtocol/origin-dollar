@@ -47,7 +47,7 @@ const useSwapEstimator = ({
   const balances = useStoreState(AccountStore, (s) => s.balances)
 
   const { contract: coinToSwapContract, decimals: coinToSwapDecimals } =
-    coinInfoList[swapMode === 'mint' ? selectedCoin : 'oeth'] || {};
+    coinInfoList[swapMode === 'mint' ? selectedCoin : 'oeth'] || {}
 
   const coinToSwap = swapMode === 'redeem' ? 'oeth' : selectedCoin
 

@@ -85,6 +85,12 @@ const AccountListener = (props) => {
   )
 
   useEffect(() => {
+    console.log({
+      prevActive,
+      active,
+      prevAccount,
+      account,
+    })
     if ((prevActive && !active) || prevAccount !== account) {
       AccountStore.update((s) => {
         s.allowances = {}

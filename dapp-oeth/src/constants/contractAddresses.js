@@ -122,20 +122,19 @@ addresses.mainnet.ChainlinkOracle = '0x8DE3Ac42F800a1186b6D70CB91e0D6876cC36759'
 addresses.mainnet.UniswapOracle = '0xc15169Bad17e676b3BaDb699DEe327423cE6178e'
 addresses.mainnet.CompensationClaims =
   '0x9C94df9d594BA1eb94430C006c269C314B1A8281'
-  melock = "0x35918cDE7233F2dD33fA41ae3Cb6aE0e42E0e69F";
+melock = '0x35918cDE7233F2dD33fA41ae3Cb6aE0e42E0e69F'
 
 // OETH
-addresses.mainnet.OETHProxy = "0x856c4Efb76C1D1AE02e20CEB03A2A6a08b0b8dC3";
-addresses.mainnet.WOETHProxy = "0xDcEe70654261AF21C44c093C300eD3Bb97b78192";
-addresses.mainnet.OETHVaultProxy = "0x39254033945aa2e4809cc2977e7087bee48bd7ab";
-addresses.mainnet.OETHZapper = "0x8c135f50c7317a93cc95bb208a494e5ade5b66b0"
-addresses.mainnet.FraxETHStrategy = "0x3ff8654d633d4ea0fae24c52aec73b4a20d0d0e5"
+addresses.mainnet.OETHProxy = '0x856c4Efb76C1D1AE02e20CEB03A2A6a08b0b8dC3'
+addresses.mainnet.WOETHProxy = '0xDcEe70654261AF21C44c093C300eD3Bb97b78192'
+addresses.mainnet.OETHVaultProxy = '0x39254033945aa2e4809cc2977e7087bee48bd7ab'
+addresses.mainnet.OETHZapper = '0x8c135f50c7317a93cc95bb208a494e5ade5b66b0'
+addresses.mainnet.FraxETHStrategy = '0x3ff8654d633d4ea0fae24c52aec73b4a20d0d0e5'
 
 // Tokens
-addresses.mainnet.sfrxETH = "0xac3E018457B222d93114458476f3E3416Abbe38F";
-addresses.mainnet.frxETH = "0x5e8422345238f34275888049021821e8e08caa1f";
-addresses.mainnet.rETH = "0xae78736Cd615f374D3085123A210448E74Fc6393";
-addresses.mainnet.stETH = "0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84";
-
+addresses.mainnet.sfrxETH = '0xac3E018457B222d93114458476f3E3416Abbe38F'
+addresses.mainnet.frxETH = '0x5e8422345238f34275888049021821e8e08caa1f'
+addresses.mainnet.rETH = '0xae78736Cd615f374D3085123A210448E74Fc6393'
+addresses.mainnet.stETH = '0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84'
 
 module.exports = addresses

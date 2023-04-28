@@ -199,7 +199,7 @@ const useCurrencySwapper = ({
     minSwapAmount,
     txParams = {}
   ) => {
-    const isRedeemAll = Math.abs(swapAmount - balances.ousd) < 1
+    const isRedeemAll = Math.abs(swapAmount - balances.oeth) < 1
     if (isRedeemAll) {
       return await callObject.redeemAll(minSwapAmount, txParams)
     } else {

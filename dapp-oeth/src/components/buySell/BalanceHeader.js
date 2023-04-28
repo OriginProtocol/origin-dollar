@@ -46,20 +46,20 @@ const BalanceHeader = ({
 
   const vault = useStoreState(ContractStore, (s) => _get(s, 'contracts.vault'))
   const ousdContract = useStoreState(ContractStore, (s) =>
-    _get(s, 'contracts.ousd')
+    _get(s, 'contracts.oeth')
   )
-  const ousdBalance = useStoreState(AccountStore, (s) => s.balances['ousd'])
+  const oethBalance = useStoreState(AccountStore, (s) => s.balances['oeth'])
   const lifetimeYield = useStoreState(AccountStore, (s) => s.lifetimeYield)
-  const ousdBalanceLoaded = typeof ousdBalance === 'string'
-  const animatedOusdBalance = useStoreState(
+  const oethBalanceLoaded = typeof oethBalance === 'string'
+  const animatedOethBalance = useStoreState(
     AnimatedOusdStore,
-    (s) => s.animatedOusdBalance
+    (s) => s.animatedOethBalance
   )
   const mintAnimationLimit = 0.5
   const walletConnected = useStoreState(ContractStore, (s) => s.walletConnected)
 
   const [balanceEmphasised, setBalanceEmphasised] = useState(false)
-  const prevOusdBalance = usePrevious(ousdBalance)
+  const prevOethBalance = usePrevious(oethBalance)
   const { animatedExpectedIncrease } = useExpectedYield()
   const normalOusdAnimation = (from, to) => {
     setBalanceEmphasised(true)
@@ -68,13 +68,13 @@ const BalanceHeader = ({
       to: parseFloat(to),
       callbackValue: (val) => {
         AnimatedOusdStore.update((s) => {
-          s.animatedOusdBalance = val
+          s.animatedOethBalance = val
         })
       },
       onCompleteCallback: () => {
         setBalanceEmphasised(false)
       },
-      // non even duration number so more of the decimals in ousdBalance animate
+      // non even duration number so more of the decimals in oethBalance animate
       duration: 1985,
       id: 'header-balance-ousd-animation',
       stepTime: 30,
@@ -82,26 +82,26 @@ const BalanceHeader = ({
   }
 
   useEffect(() => {
-    if (ousdBalanceLoaded) {
-      const ousdBalanceNum = parseFloat(ousdBalance)
-      const prevOusdBalanceNum = parseFloat(prevOusdBalance)
+    if (oethBalanceLoaded) {
+      const oethBalanceNum = parseFloat(oethBalance)
+      const prevOethBalanceNum = parseFloat(prevOethBalance)
       // user must have minted the OUSD
       if (
-        !isNaN(parseFloat(ousdBalanceNum)) &&
-        !isNaN(parseFloat(prevOusdBalanceNum)) &&
-        Math.abs(ousdBalanceNum - prevOusdBalanceNum) > mintAnimationLimit
+        !isNaN(parseFloat(oethBalanceNum)) &&
+        !isNaN(parseFloat(prevOethBalanceNum)) &&
+        Math.abs(oethBalanceNum - prevOethBalanceNum) > mintAnimationLimit
       ) {
-        normalOusdAnimation(prevOusdBalance, ousdBalance)
+        normalOusdAnimation(prevOethBalance, oethBalance)
       } else if (
-        !isNaN(parseFloat(ousdBalanceNum)) &&
-        ousdBalanceNum > mintAnimationLimit
+        !isNaN(parseFloat(oethBalanceNum)) &&
+        oethBalanceNum > mintAnimationLimit
       ) {
-        normalOusdAnimation(0, ousdBalance)
+        normalOusdAnimation(0, oethBalance)
       } else {
-        normalOusdAnimation(prevOusdBalance, 0)
+        normalOusdAnimation(prevOethBalance, 0)
       }
     }
-  }, [ousdBalance])
+  }, [oethBalance])
 
   /*
    * Type: number or percentage
@@ -202,7 +202,7 @@ const BalanceHeader = ({
     )
   }
 
-  const displayedBalance = formatCurrency(animatedOusdBalance || 0, 2)
+  const displayedBalance = formatCurrency(animatedOethBalance || 0, 2)
 
   useEffect(() => {
     localStorage.setItem('last_user_selected_apy', apyDays)
@@ -245,7 +245,7 @@ const BalanceHeader = ({
               value={
                 walletConnected &&
                 !isNaN(parseFloat(displayedBalance)) &&
-                ousdBalanceLoaded
+                oethBalanceLoaded
                   ? displayedBalance
                   : '--.--'
               }

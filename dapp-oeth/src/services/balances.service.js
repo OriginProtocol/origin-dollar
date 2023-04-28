@@ -13,7 +13,6 @@ export default class BalancesService {
   }
 
   async fetchBalancesForProduction(account, contracts) {
-    const { ousd, usdt, dai, usdc, ogn, wousd } = contracts
     const { oeth, reth, weth, steth, frxeth, woeth } = contracts
 
     const allContractData = [
@@ -21,7 +20,12 @@ export default class BalancesService {
       { name: 'reth', decimals: 18, contract: reth, address: reth.address },
       { name: 'weth', decimals: 18, contract: weth, address: weth.address },
       { name: 'steth', decimals: 18, contract: steth, address: steth.address },
-      { name: 'frxeth', decimals: 18, contract: frxeth, address: frxeth.address },
+      {
+        name: 'frxeth',
+        decimals: 18,
+        contract: frxeth,
+        address: frxeth.address,
+      },
       { name: 'woeth', decimals: 18, contract: woeth, address: woeth.address },
     ]
 
@@ -91,7 +95,7 @@ export default class BalancesService {
       rethBalance,
       stethBalance,
       frxethBalance,
-      woethBalance,
+      // woethBalance,
     ] = await Promise.all([
       /* IMPORTANT (!) production uses a different method to load balances. Any changes here need to
        * also happen in production version of this function.
@@ -101,7 +105,7 @@ export default class BalancesService {
       displayCurrency(await reth.balanceOf(account), reth),
       displayCurrency(await steth.balanceOf(account), steth),
       displayCurrency(await frxeth.balanceOf(account), frxeth),
-      displayCurrency(await woeth.balanceOf(account), woeth),
+      // displayCurrency(await woeth.balanceOf(account), woeth),
     ])
 
     return {
@@ -110,7 +114,7 @@ export default class BalancesService {
       reth: rethBalance,
       steth: stethBalance,
       frxeth: frxethBalance,
-      woeth: woethBalance,
+      // woeth: woethBalance,
     }
   }
 }
