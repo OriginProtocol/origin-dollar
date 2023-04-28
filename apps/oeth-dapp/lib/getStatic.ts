@@ -5,18 +5,6 @@ import i18nextConfig from '../next-i18next.config';
 
 type ArrayElementOrSelf<T> = T extends Array<infer U> ? U[] : T[];
 
-export const getI18nPaths = () =>
-  i18nextConfig.i18n.locales.map((lng) => ({
-    params: {
-      locale: lng,
-    },
-  }));
-
-export const getStaticPaths = () => ({
-  fallback: false,
-  paths: getI18nPaths(),
-});
-
 export const i18n = async (
   locale: string,
   namespacesRequired?: ArrayElementOrSelf<Namespace> | undefined,
@@ -31,6 +19,18 @@ export const i18n = async (
     extraLocales
   );
 };
+
+export const getI18nPaths = () =>
+  i18nextConfig.i18n.locales.map((lng) => ({
+    params: {
+      locale: lng,
+    },
+  }));
+
+export const getStaticPaths = () => ({
+  fallback: false,
+  paths: getI18nPaths(),
+});
 
 export async function getI18nProps(ctx, ns = ['common']) {
   const locale = ctx?.params?.locale;
