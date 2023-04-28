@@ -559,6 +559,12 @@ export async function setupContracts(account, library, chainId, fetchId) {
     s.readOnlyProvider = jsonRpcProvider
     s.curveMetapoolUnderlyingCoins = curveUnderlyingCoins
     s.fetchId = fetchId
+
+    s.weth = weth
+    s.reth = reth
+    s.steth = steth
+    s.frxeth = frxeth
+    s.oeth = oeth
   })
 
   if (process.env.NEXT_PUBLIC_ENABLE_LIQUIDITY_MINING === 'true') {

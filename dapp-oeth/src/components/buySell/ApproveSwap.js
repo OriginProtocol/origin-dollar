@@ -66,6 +66,13 @@ const ApproveSwap = ({
     usdc,
     ousd,
     wousd,
+    weth,
+    reth,
+    steth,
+    frxeth,
+    sfrxeth,
+    oeth,
+
   } = useStoreState(ContractStore, (s) => s.contracts || {})
 
   const routeConfig = {
@@ -76,48 +83,48 @@ const ApproveSwap = ({
         done: 'Origin Vault',
       },
     },
-    flipper: {
-      contract: flipper,
-      name: {
-        approving: 'the Flipper',
-        done: 'Flipper',
-      },
-    },
-    uniswap: {
-      contract: uniV3SwapRouter,
-      name: {
-        approving: 'Uniswap',
-        done: 'Uniswap',
-      },
-    },
-    curve: {
-      contract: curveOUSDMetaPool,
-      name: {
-        approving: 'Curve',
-        done: 'Curve',
-      },
-    },
-    uniswapV2: {
-      contract: uniV2Router,
-      name: {
-        approving: 'Uniswap',
-        done: 'Uniswap',
-      },
-    },
-    sushiswap: {
-      contract: sushiRouter,
-      name: {
-        approving: 'Sushi Swap',
-        done: 'Sushi Swap',
-      },
-    },
-    wousd: {
-      contract: wousd,
-      name: {
-        approving: 'wOUSD',
-        done: 'wOUSD',
-      },
-    },
+    // flipper: {
+    //   contract: flipper,
+    //   name: {
+    //     approving: 'the Flipper',
+    //     done: 'Flipper',
+    //   },
+    // },
+    // uniswap: {
+    //   contract: uniV3SwapRouter,
+    //   name: {
+    //     approving: 'Uniswap',
+    //     done: 'Uniswap',
+    //   },
+    // },
+    // curve: {
+    //   contract: curveOUSDMetaPool,
+    //   name: {
+    //     approving: 'Curve',
+    //     done: 'Curve',
+    //   },
+    // },
+    // uniswapV2: {
+    //   contract: uniV2Router,
+    //   name: {
+    //     approving: 'Uniswap',
+    //     done: 'Uniswap',
+    //   },
+    // },
+    // sushiswap: {
+    //   contract: sushiRouter,
+    //   name: {
+    //     approving: 'Sushi Swap',
+    //     done: 'Sushi Swap',
+    //   },
+    // },
+    // wousd: {
+    //   contract: wousd,
+    //   name: {
+    //     approving: 'wOUSD',
+    //     done: 'wOUSD',
+    //   },
+    // },
   }
 
   useEffect(() => {
@@ -134,11 +141,11 @@ const ApproveSwap = ({
   }, [selectedSwap])
 
   useEffect(() => {
-    const coinToContract = { dai, usdt, usdc, ousd, wousd }
+    const coinToContract = { weth, reth, steth, sfrxeth, oeth, frxeth }
     if (Object.keys(coinToContract).includes(stableCoinToApprove)) {
       setContract(coinToContract[stableCoinToApprove])
     }
-  }, [stableCoinToApprove, usdt, dai, usdc, ousd, wousd])
+  }, [stableCoinToApprove, reth, weth, steth, oeth, frxeth])
 
   const ApprovalMessage = ({
     stage,
@@ -256,7 +263,7 @@ const ApproveSwap = ({
 
   return (
     <>
-      {!!visibleConfirmationModal && (
+      {!visibleConfirmationModal ? null : (
         <ConfirmationModal
           description={fbt(
             'Your contract selection has been changed to ' +

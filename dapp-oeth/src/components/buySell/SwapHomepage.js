@@ -55,8 +55,7 @@ const SwapHomepage = ({
   const [selectedBuyCoinAmount, setSelectedBuyCoinAmount] = useState('')
   const [selectedRedeemCoinAmount, setSelectedRedeemCoinAmount] = useState('')
   const [balanceError, setBalanceError] = useState(null)
-  const { setPriceToleranceValue, priceToleranceValue } =
-    usePriceTolerance('mint')
+  const { setPriceToleranceValue, priceToleranceValue } = usePriceTolerance('mint')
 
   const swappingGloballyDisabled =
     process.env.NEXT_PUBLIC_DISABLE_SWAP_BUTTON === 'true'

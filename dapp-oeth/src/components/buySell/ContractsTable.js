@@ -97,24 +97,24 @@ const ContractsTable = () => {
   const { active } = useWeb3React()
 
   const swapContracts = {
-    flipper: {
-      name: fbt('Flipper', 'Contract Table Flipper'),
-    },
+    // flipper: {
+    //   name: fbt('Flipper', 'Contract Table Flipper'),
+    // },
     vault: {
       name: fbt('Origin Vault', 'Contract Table Origin Vault'),
     },
-    uniswap: {
-      name: fbt('Uniswap V3', 'Contract Table Uniswap V3'),
-    },
-    curve: {
-      name: fbt('Curve', 'Contract Table Curve'),
-    },
-    uniswapV2: {
-      name: fbt('Uniswap V2', 'Contract Table Uniswap V2'),
-    },
-    sushiswap: {
-      name: fbt('SushiSwap', 'Contract Table SushiSwap'),
-    },
+    // uniswap: {
+    //   name: fbt('Uniswap V3', 'Contract Table Uniswap V3'),
+    // },
+    // curve: {
+    //   name: fbt('Curve', 'Contract Table Curve'),
+    // },
+    // uniswapV2: {
+    //   name: fbt('Uniswap V2', 'Contract Table Uniswap V2'),
+    // },
+    // sushiswap: {
+    //   name: fbt('SushiSwap', 'Contract Table SushiSwap'),
+    // },
   }
 
   const errorMap = {

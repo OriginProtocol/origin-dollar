@@ -85,12 +85,6 @@ const AccountListener = (props) => {
   )
 
   useEffect(() => {
-    console.log({
-      prevActive,
-      active,
-      prevAccount,
-      account,
-    })
     if ((prevActive && !active) || prevAccount !== account) {
       AccountStore.update((s) => {
         s.allowances = {}
@@ -134,10 +128,10 @@ const AccountListener = (props) => {
     if (!account) {
       return
     }
-    if (!contracts.ogn.provider) {
-      console.warn('Contract provider not yet set')
-      return
-    }
+    // if (!contracts.ogn.provider) {
+    //   console.warn('Contract provider not yet set')
+    //   return
+    // }
     if (!contracts) {
       console.warn('Contracts not yet loaded!')
       return
@@ -146,7 +140,7 @@ const AccountListener = (props) => {
       return
     }
 
-    const { ousd, ogn, ognStakingView } = contracts
+    const { oeth, ogn, ognStakingView } = contracts
 
     const loadPoolRelatedAccountData = async () => {
       if (!account) return
@@ -304,41 +298,6 @@ const AccountListener = (props) => {
       }
     }
 
-    const loadStakingRelatedData = async () => {
-      if (!account) return
-
-      try {
-        /* OgnStakingView is used here instead of ognStaking because the first uses the jsonRpcProvider and
-         * the latter the wallet one. Sometime these are not completely in sync and while the first one might
-         * report a transaction already mined, the second one not yet.
-         *
-         * We use jsonRpcProvider to wait for transactions to be mined, so using the samne provider to fetch the
-         * staking data solves the out of sync problem.
-         */
-        const [stakes, airDropStakeClaimed] = await Promise.all([
-          ognStakingView.getAllStakes(account),
-          ognStakingView.airDroppedStakeClaimed(
-            account,
-            AIR_DROPPED_STAKE_TYPE
-          ),
-        ])
-
-        const decoratedStakes = stakes
-          ? decorateContractStakeInfoWithTxHashes(stakes)
-          : []
-
-        StakeStore.update((s) => {
-          s.stakes = decoratedStakes
-          s.airDropStakeClaimed = airDropStakeClaimed
-        })
-      } catch (e) {
-        console.error(
-          'AccountListener.js error - can not load staking related data: ',
-          e
-        )
-      }
-    }
-
     const loadRebaseStatus = async () => {
       if (!account) return
       // TODO handle other contract types. We only detect Gnosis Safe as having
@@ -347,26 +306,22 @@ const AccountListener = (props) => {
       AccountStore.update((s) => {
         s.isSafe = isSafe
       })
-      const rebaseOptInState = await ousd.rebaseState(account)
+      const rebaseOptInState = await oeth.rebaseState(account)
       AccountStore.update((s) => {
         s.rebaseOptedOut = isSafe && rebaseOptInState === 0
       })
     }
 
-    if (onlyStaking) {
-      await loadStakingRelatedData()
-    } else {
-      balancesQuery.refetch()
-      allowancesQuery.refetch()
-      wousdQuery.refetch()
+    balancesQuery.refetch()
+    allowancesQuery.refetch()
+    // wousdQuery.refetch()
 
-      await Promise.all([
-        loadRebaseStatus(),
-        // TODO maybe do this if only in the LM part of the dapp since it is very heavy
-        loadPoolRelatedAccountData(),
-        loadStakingRelatedData(),
-      ])
-    }
+    await Promise.all([
+      loadRebaseStatus(),
+      // TODO maybe do this if only in the LM part of the dapp since it is very heavy
+      loadPoolRelatedAccountData(),
+      // loadStakingRelatedData(),
+    ])
   }
 
   useEffect(() => {

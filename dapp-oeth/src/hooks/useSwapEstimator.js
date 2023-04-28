@@ -770,7 +770,6 @@ const useSwapEstimator = ({
       const amountReceived =
         amount * parseFloat(ethers.utils.formatUnits(oracleCoinPrice, 18))
 
-      console.log(oracleCoinPrice, amountReceived)
       const approveAllowanceNeeded = allowancesLoaded
         ? parseFloat(allowances[coinToSwap].vault) === 0
         : true
