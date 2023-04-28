@@ -5,7 +5,7 @@
   "homepage": "https://github.com/originprotocol/origin-dollar",
   "scripts": {
     "build": "sh devops/build-frontend.sh",
-    "start": "sh devops/start-frontend.sh",
+    "start": "nx run oeth-dapp:serve:production",
     "build:dapp": "(cd dapp && NODE_ENV=development yarn install && yarn build)",
     "build:contracts": "(cd contracts && NODE_ENV=development yarn install && yarn run deploy)",
     "dev:oeth": "nx serve oeth",
