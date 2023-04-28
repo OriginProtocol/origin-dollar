@@ -262,7 +262,10 @@ export async function setupContracts(account, library, chainId, fetchId) {
   const reth = getContract(addresses.mainnet.rETH, ognAbi)
   const frxeth = getContract(addresses.mainnet.frxETH, ognAbi)
   const steth = getContract(addresses.mainnet.stETH, ognAbi)
-  const oeth = getContract(addresses.mainnet.OETHProxy, network.contracts['OETH'].abi)
+  const oeth = getContract(
+    addresses.mainnet.OETHProxy,
+    network.contracts['OETH'].abi
+  )
   const sfrxeth = getContract(addresses.mainnet.sfrxETH, ognAbi)
 
   uniV3OusdUsdt = getContract(
@@ -340,7 +343,7 @@ export async function setupContracts(account, library, chainId, fetchId) {
       reth,
       frxeth,
       // sfrxeth,
-      steth
+      steth,
     }
     const oethExchangeRates = {
       ...ContractStore.currentState.oethExchangeRates,
