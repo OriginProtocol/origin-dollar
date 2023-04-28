@@ -26,11 +26,6 @@ const Link = ({ children, skipLocaleHandling, ...rest }: LinkProps) => {
         router.pathname.replace('[locale]', locale);
   }
 
-  console.log({
-    href,
-    locale,
-  });
-
   return (
     <NextLink {...rest} href={href}>
       {children}

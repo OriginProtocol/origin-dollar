@@ -17,6 +17,7 @@ type ActionsProps = {
   swap: any;
   translationContext: any;
   onSuccess: (a: string, b: SuccessContext) => void;
+  selectedToken?: any;
 };
 
 type SwapActionsProps = {
@@ -30,22 +31,22 @@ type SwapActionsProps = {
 const MintableActions = ({
   i18n,
   swap,
+  selectedToken,
   translationContext,
   onSuccess,
 }: ActionsProps) => {
   const [error, setError] = useState('');
-  const { value, selectedToken, selectedEstimate } = swap || {};
+  const { value, selectedEstimate } = swap || {};
   const { hasProvidedAllowance, contract, minimumAmount } =
     selectedEstimate || {};
-  const weiValue = parseUnits(String(value), 18);
+  const weiValue = parseUnits(String(value), selectedToken?.decimals || 18);
 
-  const { config: allowanceWriteConfig, error: allowanceWriteError } =
-    usePrepareContractWrite({
-      address: selectedToken?.address,
-      abi: selectedToken?.abi,
-      functionName: 'approve',
-      args: [contract?.address, weiValue || MaxUint256],
-    });
+  const { config: allowanceWriteConfig } = usePrepareContractWrite({
+    address: selectedToken?.address,
+    abi: selectedToken?.abi,
+    functionName: 'approve',
+    args: [contract?.address, weiValue || MaxUint256],
+  });
 
   const {
     data: allowanceWriteData,
@@ -275,6 +276,7 @@ const SwapActions = ({
     <MintableActions
       i18n={i18n}
       swap={swap}
+      selectedToken={selectedToken}
       translationContext={translationContext}
       onSuccess={onSuccess}
     />

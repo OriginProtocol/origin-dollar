@@ -69,18 +69,6 @@ const VaultSwap = ({ tokens, i18n, vault }: VaultSwapProps) => {
     matchTokens.bind(null, tokensWithBalances)
   );
 
-  const selectedToken = matchTokens(
-    // @ts-ignore
-    tokensWithBalances,
-    swap?.selectedTokenAddress
-  );
-
-  const estimatedToken = matchTokens(
-    // @ts-ignore
-    tokensWithBalances,
-    swap?.estimatedTokenAddress
-  );
-
   const handleEstimate = (newEstimates: { vaultEstimate: any }) => {
     if (!newEstimates) return;
     const { vaultEstimate } = newEstimates;
@@ -95,6 +83,18 @@ const VaultSwap = ({ tokens, i18n, vault }: VaultSwapProps) => {
       ),
     }));
   };
+
+  const selectedToken = matchTokens(
+    // @ts-ignore
+    tokensWithBalances,
+    swap?.selectedTokenAddress
+  );
+
+  const estimatedToken = matchTokens(
+    // @ts-ignore
+    tokensWithBalances,
+    swap?.estimatedTokenAddress
+  );
 
   // Watch for value changes to perform estimates
   const { isLoading: isLoadingEstimate, onRefreshEstimates } = useSwapEstimator(
