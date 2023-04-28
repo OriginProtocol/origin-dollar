@@ -23,6 +23,7 @@
     "@web3modal/ethereum": "^2.3.6",
     "@web3modal/react": "^2.3.6",
     "chart.js": "^4.2.1",
+    "classnames": "^2.3.2",
     "dompurify": "^3.0.2",
     "i18next": "^22.4.15",
     "moment": "^2.29.4",
