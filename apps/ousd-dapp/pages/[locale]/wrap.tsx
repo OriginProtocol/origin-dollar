@@ -9,12 +9,12 @@ const Wrap = () => {
     <ErrorBoundary>
       <WrapToken
         i18n={t}
-        unwrappedToken={contracts.mainnet.OETH}
-        wrappedToken={contracts.mainnet.woETH}
+        unwrappedToken={contracts.mainnet.OUSD}
+        wrappedToken={contracts.mainnet.WOUSD}
         emptyState={{
           description: t('description'),
           cta: t('learnMore'),
-          externalHref: 'https://www.oeth.com',
+          externalHref: 'https://www.ousd.com',
         }}
       />
     </ErrorBoundary>

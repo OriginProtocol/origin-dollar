@@ -1,1 +1,1 @@
-export const DAPP_TOKENS = ['OUSD', 'DAI', 'USDT', 'USDC'];
+export const DAPP_TOKENS = ['OUSD', 'WOUSD', 'DAI', 'USDT', 'USDC'];

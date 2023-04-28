@@ -18,7 +18,7 @@ const fetchOETHPortfolio = (req, res) => {
 
     const { symbol } = found;
 
-    if (symbol === 'OETH') {
+    if (symbol === 'OUSD') {
       return res.json({
         token,
         symbol,
@@ -26,7 +26,7 @@ const fetchOETHPortfolio = (req, res) => {
         lifetimeEarnings: 0,
         pendingYield: 0,
       });
-    } else if (symbol === 'woETH') {
+    } else if (symbol === 'WOUSD') {
       return res.json({
         token,
         symbol,

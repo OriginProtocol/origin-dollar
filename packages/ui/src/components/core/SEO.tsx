@@ -13,6 +13,24 @@ type SEOConfig = {
 };
 
 const seoConfigs: SEOConfig = {
+  ousd: {
+    baseURL: 'https://app.ousd.com/',
+    defaultTitle: 'OUSD',
+    description: '',
+    openGraph: ({ route }: OpenGraphProps): OpenGraph => ({
+      type: 'website',
+      locale: 'en_EN',
+      url: `https://app.ousd.com/${route}`,
+      site_name: 'OUSD',
+      title: 'OUSD',
+      description: '',
+      images: [],
+    }),
+    twitter: {
+      handle: '@',
+      cardType: 'summary_large_image',
+    },
+  },
   oeth: {
     baseURL: 'https://app.oeth.com/',
     defaultTitle: 'OETH',

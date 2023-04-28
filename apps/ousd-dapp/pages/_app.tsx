@@ -40,12 +40,12 @@ const App = ({ Component, pageProps, router }) => {
         queryFn: () => fetch('/api/stats/apy').then((res) => res.json()),
       }}
       portfolio={{
-        token: isWrap ? contracts.mainnet.woETH : contracts.mainnet.OETH,
+        token: isWrap ? contracts.mainnet.WOUSD : contracts.mainnet.OUSD,
         queryFn: ({ queryKey }) => {
           const [, tokenAddress] = queryKey;
           return fetch(
             `/api/portfolio/${address}?token=${
-              tokenAddress || contracts.mainnet.OETH.address
+              tokenAddress || contracts.mainnet.OUSD.address
             }`
           ).then((res) => res.json());
         },

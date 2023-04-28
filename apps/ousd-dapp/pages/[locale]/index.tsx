@@ -13,8 +13,8 @@ const Swap = () => {
         i18n={t}
         tokens={pick(contracts.mainnet, DAPP_TOKENS)}
         vault={{
-          contract: contracts.mainnet.OETHVaultProxy,
-          token: contracts.mainnet.OETH,
+          contract: contracts.mainnet.VaultProxy,
+          token: contracts.mainnet.OUSD,
         }}
       />
     </ErrorBoundary>

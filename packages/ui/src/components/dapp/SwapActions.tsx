@@ -6,6 +6,7 @@ import {
   useWaitForTransaction,
 } from '@originprotocol/hooks';
 import { parseUnits, MaxUint256 } from '@originprotocol/utils';
+import { range } from 'lodash';
 import { SWAP_TYPES } from '../../constants';
 
 type SuccessContext = {
