@@ -21,8 +21,8 @@ type Token = {
 
 type WrapTokenProps = {
   i18n: any;
-  unwrappedToken: Token;
-  wrappedToken: Token;
+  unwrappedToken: any;
+  wrappedToken: any;
   emptyState: any;
 };
 

@@ -1,0 +1,43 @@
+{
+  "title": "Swap",
+  "balance": "Balance",
+  "max": "max",
+  "description": "Wrapped wOETH is a non-rebasing tokenized vault that appreciates in value instead of growing in number",
+  "learnMore": "Learn More",
+  "swapRoutes": "Swap Routes",
+  "estimate": "estimate",
+  "minReceived": "Min. received",
+  "isLoading": "Loading...",
+  "redeem": {
+    "DEFAULT": "Swap",
+    "PENDING": "Swapping...",
+    "SUBMITTED": "Awaiting confirmations...",
+    "SUCCESS": "{{sourceTokenName}} swapped for {{targetTokenName}}"
+  },
+  "swap": {
+    "DEFAULT": "Swap",
+    "PENDING": "Swapping...",
+    "SUBMITTED": "Awaiting confirmations...",
+    "SUCCESS": "{{sourceTokenName}} swapped for {{targetTokenName}}"
+  },
+  "approval": {
+    "DEFAULT": "Allow {{targetContractName}} to use your {{sourceTokenName}}",
+    "PENDING": "Approving...",
+    "SUBMITTED": "Awaiting confirmations...",
+    "SUCCESS": "Approved {{targetContractName}} for {{sourceTokenName}}"
+  },
+  "errors": {
+    "NOT_ENOUGH_BALANCE": "Insufficient {{sourceTokenName}} balance",
+    "NO_INPUT_AMOUNT": "Enter Amount",
+    "UNKNOWN": "Enter Amount",
+    "UNPREDICTABLE_GAS_LIMIT": "Error estimating gas for transaction",
+    "REDEEM_TOO_LOW": "Redeem amount lower than minimum, adjust tolerance up"
+  },
+  "settings": {
+    "title": "Settings",
+    "tolerance": "Price Tolerance",
+    "auto": "Auto",
+    "frontRun": "Your transaction may be front run",
+    "gasPrice": "Gas Price"
+  }
+}

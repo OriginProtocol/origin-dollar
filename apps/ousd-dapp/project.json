@@ -30,7 +30,7 @@
         "development": {
           "buildTarget": "ousd-dapp:build:development",
           "dev": true,
-          "port": 4301
+          "port": 4202
         },
         "production": {
           "buildTarget": "ousd-dapp:build:production",
