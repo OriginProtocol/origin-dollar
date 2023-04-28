@@ -128,7 +128,7 @@ const MintableActions = ({
       ) : (
         error && (
           <span role="alert" className="text-origin-secondary text-sm">
-            {i18n(`error.${error}`, translationContext)}
+            {i18n(`errors.${error}`, translationContext)}
           </span>
         )
       )}
@@ -214,7 +214,7 @@ const RedeemActions = ({
     <>
       {error && (
         <span role="alert" className="text-origin-secondary text-sm">
-          {i18n(`error.${error}`, translationContext)}
+          {i18n(`errors.${error}`, translationContext)}
         </span>
       )}
       <button

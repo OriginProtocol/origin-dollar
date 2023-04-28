@@ -166,11 +166,13 @@ const VaultSwap = ({ tokens, i18n, vault }: VaultSwapProps) => {
     }));
   };
 
-  const onSuccess = async () => {
+  const onSuccess = () => {
     setSwap((prev) => ({
       ...prev,
     }));
-    await onRefreshEstimates();
+    setTimeout(async () => {
+      await onRefreshEstimates();
+    }, 500);
   };
 
   return (
