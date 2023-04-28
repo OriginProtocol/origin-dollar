@@ -3,6 +3,7 @@ startApp() {
     cd dapp-oeth;
   else
     cd dapp;
+  fi
   export NODE_ENV=production;
   yarn run start;
 }

@@ -16,6 +16,7 @@ buildApp() {
     cd dapp-oeth;
   else
     cd dapp;
+  fi
   export NODE_ENV=production;
   yarn install;
   yarn run build;
