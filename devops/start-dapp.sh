@@ -1,3 +1,5 @@
+#!/bin/bash
+
 startApp() {
   if [[$APP_ID == 'oeth-dapp']]; then
     cd "dapp-oeth";

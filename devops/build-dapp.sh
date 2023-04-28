@@ -1,3 +1,5 @@
+#!/bin/bash
+
 buildContracts() {
   echo "Building contract for the DApp";
   cd contracts;
