@@ -51,16 +51,16 @@ const App = ({ Component, pageProps, router }) => {
         },
       }}
     >
-      <SEO appId="oeth" route={router.route} />
+      <SEO appId="ousd" route={router.route} />
       <Component {...pageProps} />
     </DappLayout>
   );
 };
 
-const OETHDapp = (props) => (
+const OUSDDapp = (props) => (
   <DappContainer>
     <App {...props} />
   </DappContainer>
 );
 
-export default appWithTranslation(OETHDapp, nextI18NextConfig);
+export default appWithTranslation(OUSDDapp, nextI18NextConfig);
