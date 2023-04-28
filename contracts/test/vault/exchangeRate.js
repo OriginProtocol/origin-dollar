@@ -188,4 +188,68 @@ describe("Vault Redeem", function () {
     await expect(anna).has.a.approxBalanceOf("50", reth, "RETH");
     await expect(anna).has.a.approxBalanceOf("1100", dai, "USDC");
   });
+
+  it("Should handle an exchange rate reedem attack", async () => {
+    const { ousd, vault, reth, anna, matt, governor } = fixture;
+
+    await setOracleTokenPriceUsd("RETHETH", "2.0");
+    await reth.setExchangeRate(daiUnits("2.0"));
+
+    // Old holder with RETH
+    await reth.connect(matt).mint(daiUnits("500.0"));
+    await reth.connect(matt).approve(vault.address, daiUnits("500.0"));
+    await vault.connect(matt).mint(reth.address, daiUnits("500.0"), 0);
+
+    // Attacker Mints before exchange change
+    await reth.connect(anna).mint(daiUnits("500.0"));
+    await reth.connect(anna).approve(vault.address, daiUnits("500.0"));
+    await vault.connect(anna).mint(reth.address, daiUnits("500.0"), 0);
+    await expect(anna).has.a.balanceOf("1000", ousd, "post mint");
+
+    await setOracleTokenPriceUsd("RETHETH", "1.0");
+    await reth.setExchangeRate(daiUnits("1.0"));
+
+    // console.log("----");
+    // console.log((await vault.totalValue()).toString() / 1e18);
+    // console.log((await ousd.totalSupply()).toString() / 1e18);
+
+    // Attacker redeems after exchange change
+    await vault.connect(governor).setMaxSupplyDiff(daiUnits("0.9"));
+    await expect(vault.connect(anna).redeem(daiUnits("1000.0"), 0)).to.be.revertedWith("Backing supply liquidity error");
+
+    // console.log((await vault.totalValue()).toString() / 1e18);
+    // console.log((await ousd.totalSupply()).toString() / 1e18);
+  });
+
+  it("Should handle an exchange rate reedem attack, delayed oracle", async () => {
+    const { ousd, vault, reth, anna, matt, governor } = fixture;
+
+    await setOracleTokenPriceUsd("RETHETH", "2.0");
+    await reth.setExchangeRate(daiUnits("2.0"));
+
+    // Old holder with RETH
+    await reth.connect(matt).mint(daiUnits("500.0"));
+    await reth.connect(matt).approve(vault.address, daiUnits("500.0"));
+    await vault.connect(matt).mint(reth.address, daiUnits("500.0"), 0);
+
+    // Attacker Mints before exchange change
+    await reth.connect(anna).mint(daiUnits("500.0"));
+    await reth.connect(anna).approve(vault.address, daiUnits("500.0"));
+    await vault.connect(anna).mint(reth.address, daiUnits("500.0"), 0);
+    await expect(anna).has.a.balanceOf("1000", ousd, "post mint");
+
+    await setOracleTokenPriceUsd("RETHETH", "1.3");
+    await reth.setExchangeRate(daiUnits("1.0"));
+
+    // console.log("----");
+    // console.log((await vault.totalValue()).toString() / 1e18);
+    // console.log((await ousd.totalSupply()).toString() / 1e18);
+
+    // Attacker redeems after exchange change
+    await vault.connect(governor).setMaxSupplyDiff(daiUnits("0.9"));
+    await expect(vault.connect(anna).redeem(daiUnits("1000.0"), 0)).to.be.revertedWith("Backing supply liquidity error");
+
+    // console.log((await vault.totalValue()).toString() / 1e18);
+    // console.log((await ousd.totalSupply()).toString() / 1e18);
+  });
 });
