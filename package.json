@@ -6,7 +6,7 @@
     "build": "(yarn run build:contracts) && (yarn run build:dapp)",
     "build:dapp": "(cd dapp-oeth && NODE_ENV=development yarn install && yarn build)",
     "build:contracts": "(cd contracts && NODE_ENV=development yarn install && yarn run deploy)",
-    "start": "cd dapp && yarn run start"
+    "start": "cd dapp-oeth && yarn run start"
   },
   "dependencies": {},
   "engines": {
