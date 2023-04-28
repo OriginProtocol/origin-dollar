@@ -14,14 +14,15 @@ export default class BalancesService {
 
   async fetchBalancesForProduction(account, contracts) {
     const { ousd, usdt, dai, usdc, ogn, wousd } = contracts
+    const { oeth, reth, weth, steth, frxeth, woeth } = contracts
 
     const allContractData = [
-      { name: 'ousd', decimals: 18, contract: ousd, address: ousd.address },
-      { name: 'usdt', decimals: 6, contract: usdt, address: usdt.address },
-      { name: 'dai', decimals: 18, contract: dai, address: dai.address },
-      { name: 'usdc', decimals: 6, contract: usdc, address: usdc.address },
-      { name: 'ogn', decimals: 18, contract: ogn, address: ogn.address },
-      { name: 'wousd', decimals: 18, contract: wousd, address: wousd.address },
+      { name: 'oeth', decimals: 18, contract: oeth, address: oeth.address },
+      { name: 'reth', decimals: 18, contract: reth, address: reth.address },
+      { name: 'weth', decimals: 18, contract: weth, address: weth.address },
+      { name: 'steth', decimals: 18, contract: steth, address: steth.address },
+      { name: 'frxeth', decimals: 18, contract: frxeth, address: frxeth.address },
+      { name: 'woeth', decimals: 18, contract: woeth, address: woeth.address },
     ]
 
     const data = {
@@ -82,34 +83,34 @@ export default class BalancesService {
   }
 
   async fetchBalancesForDevelopment(account, contracts) {
-    const { ousd, usdt, dai, usdc, ogn, wousd } = contracts
+    const { oeth, weth, reth, steth, frxeth, woeth } = contracts
 
     const [
-      ousdBalance,
-      usdtBalance,
-      daiBalance,
-      usdcBalance,
-      ognBalance,
-      wousdBalance,
+      oethBalance,
+      wethBalance,
+      rethBalance,
+      stethBalance,
+      frxethBalance,
+      woethBalance,
     ] = await Promise.all([
       /* IMPORTANT (!) production uses a different method to load balances. Any changes here need to
        * also happen in production version of this function.
        */
-      displayCurrency(await ousd.balanceOf(account), ousd),
-      displayCurrency(await usdt.balanceOf(account), usdt),
-      displayCurrency(await dai.balanceOf(account), dai),
-      displayCurrency(await usdc.balanceOf(account), usdc),
-      displayCurrency(await ogn.balanceOf(account), ogn),
-      displayCurrency(await wousd.balanceOf(account), wousd),
+      displayCurrency(await oeth.balanceOf(account), oeth),
+      displayCurrency(await weth.balanceOf(account), weth),
+      displayCurrency(await reth.balanceOf(account), reth),
+      displayCurrency(await steth.balanceOf(account), steth),
+      displayCurrency(await frxeth.balanceOf(account), frxeth),
+      displayCurrency(await woeth.balanceOf(account), woeth),
     ])
 
     return {
-      ousd: ousdBalance,
-      usdt: usdtBalance,
-      dai: daiBalance,
-      usdc: usdcBalance,
-      ogn: ognBalance,
-      wousd: wousdBalance,
+      oeth: oethBalance,
+      weth: wethBalance,
+      reth: rethBalance,
+      steth: stethBalance,
+      frxeth: frxethBalance,
+      woeth: woethBalance,
     }
   }
 }

@@ -60,10 +60,11 @@ const useCurrencySwapper = ({
 
   const allowancesLoaded =
     typeof allowances === 'object' &&
-    allowances.ousd &&
-    allowances.usdt &&
-    allowances.usdc &&
-    allowances.dai
+    allowances.oeth &&
+    allowances.weth &&
+    allowances.reth &&
+    allowances.frxeth &&
+    allowances.steth
 
   const connSigner = (contract) => {
     return contract.connect(library.getSigner(account))

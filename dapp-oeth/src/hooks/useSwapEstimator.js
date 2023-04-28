@@ -192,46 +192,46 @@ const useSwapEstimator = ({
     let usedGasPrice = gasPrice
 
     let vaultResult,
-      flipperResult,
-      uniswapResult,
-      uniswapV2Result,
-      sushiswapResult,
-      curveResult,
+      // flipperResult,
+      // uniswapResult,
+      // uniswapV2Result,
+      // sushiswapResult,
+      // curveResult,
       ethPrice
     if (swapMode === 'mint') {
       ;[
         vaultResult,
-        flipperResult,
-        uniswapResult,
-        uniswapV2Result,
-        sushiswapResult,
-        curveResult,
+        // flipperResult,
+        // uniswapResult,
+        // uniswapV2Result,
+        // sushiswapResult,
+        // curveResult,
         ethPrice,
       ] = await Promise.all([
         estimateMintSuitabilityVault(),
-        estimateSwapSuitabilityFlipper(),
-        estimateSwapSuitabilityUniswapV3(),
-        estimateSwapSuitabilityUniswapV2(),
-        estimateSwapSuitabilitySushiSwap(),
-        estimateSwapSuitabilityCurve(),
+        // estimateSwapSuitabilityFlipper(),
+        // estimateSwapSuitabilityUniswapV3(),
+        // estimateSwapSuitabilityUniswapV2(),
+        // estimateSwapSuitabilitySushiSwap(),
+        // estimateSwapSuitabilityCurve(),
         fetchEthPrice(),
       ])
     } else {
       ;[
         vaultResult,
-        flipperResult,
-        uniswapResult,
-        uniswapV2Result,
-        sushiswapResult,
-        curveResult,
+        // flipperResult,
+        // uniswapResult,
+        // uniswapV2Result,
+        // sushiswapResult,
+        // curveResult,
         ethPrice,
       ] = await Promise.all([
         estimateRedeemSuitabilityVault(),
-        estimateSwapSuitabilityFlipper(),
-        estimateSwapSuitabilityUniswapV3(),
-        estimateSwapSuitabilityUniswapV2(),
-        estimateSwapSuitabilitySushiSwap(),
-        estimateSwapSuitabilityCurve(),
+        // estimateSwapSuitabilityFlipper(),
+        // estimateSwapSuitabilityUniswapV3(),
+        // estimateSwapSuitabilityUniswapV2(),
+        // estimateSwapSuitabilitySushiSwap(),
+        // estimateSwapSuitabilityCurve(),
         fetchEthPrice(),
       ])
     }
@@ -242,11 +242,11 @@ const useSwapEstimator = ({
 
     let estimations = {
       vault: vaultResult,
-      flipper: flipperResult,
-      uniswap: uniswapResult,
-      curve: curveResult,
-      uniswapV2: uniswapV2Result,
-      sushiswap: sushiswapResult,
+      // flipper: flipperResult,
+      // uniswap: uniswapResult,
+      // curve: curveResult,
+      // uniswapV2: uniswapV2Result,
+      // sushiswap: sushiswapResult,
     }
 
     estimations = enrichAndFindTheBest(
@@ -329,11 +329,11 @@ const useSwapEstimator = ({
       return null
     }
 
-    const flooredEth = Math.floor(ethPrice)
+    // const flooredEth = Math.floor(ethPrice)
     const priceInUsd = ethers.utils.formatUnits(
       gasPrice
-        .mul(BigNumber.from(flooredEth))
-        .mul(BigNumber.from(gasLimit))
+        // .mul(BigNumber.from(flooredEth))
+        .mul(BigNumber.from(gasLimit || '0'))
         .toString(),
       18
     )
@@ -770,6 +770,7 @@ const useSwapEstimator = ({
       const amountReceived =
         amount * parseFloat(ethers.utils.formatUnits(oracleCoinPrice, 18))
 
+      console.log(oracleCoinPrice, amountReceived)
       const approveAllowanceNeeded = allowancesLoaded
         ? parseFloat(allowances[coinToSwap].vault) === 0
         : true

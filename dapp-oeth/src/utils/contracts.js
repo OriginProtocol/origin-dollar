@@ -138,7 +138,7 @@ export async function setupContracts(account, library, chainId, fetchId) {
   }
 
   const ousdProxy = contracts['OUSDProxy']
-  const vaultProxy = contracts['VaultProxy']
+  const vaultProxy = contracts['OETHVaultProxy']
   const OGNStakingProxy = contracts['OGNStakingProxy']
   let liquidityRewardOUSD_USDTProxy,
     liquidityRewardOUSD_DAIProxy,
@@ -333,9 +333,14 @@ export async function setupContracts(account, library, chainId, fetchId) {
 
   const fetchExchangeRates = async () => {
     const coins = {
-      dai: dai,
-      usdt: usdt,
-      usdc: usdc,
+      // dai: dai,
+      // usdt: usdt,
+      // usdc: usdc,
+      weth,
+      reth,
+      frxeth,
+      // sfrxeth,
+      steth
     }
     const oethExchangeRates = {
       ...ContractStore.currentState.oethExchangeRates,
