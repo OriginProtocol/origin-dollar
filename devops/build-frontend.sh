@@ -15,13 +15,10 @@ buildContracts() {
 
 buildApp() {
   # buildContracts;
-  NODE_ENV=production yarn install;
-  yarn run nx run oeth-dapp:build:production;
-
-  #rm -rf node_modules # Purge
-
-  #cd dist/apps/$APP_ID;
-  #yarn install;
+  cd apps/$APP_ID;
+  export NODE_ENV=production;
+  yarn install;
+  yarn run build;
 }
 
 buildApp

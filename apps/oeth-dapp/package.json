@@ -1,17 +1,11 @@
 {
-  "name": "origin-dollar",
+  "name": "oeth-dapp",
   "license": "MIT",
   "private": true,
   "homepage": "https://github.com/originprotocol/origin-dollar",
   "scripts": {
-    "build": "sh devops/build-frontend.sh",
-    "start": "sh devops/start-frontend.sh",
-    "build:dapp": "(cd dapp && NODE_ENV=development yarn install && yarn build)",
-    "build:contracts": "(cd contracts && NODE_ENV=development yarn install && yarn run deploy)",
-    "dev:oeth": "nx serve oeth",
-    "dev:oeth-dapp": "nx serve oeth-dapp",
-    "dev:ousd": "nx serve ousd",
-    "dev:ousd-dapp": "nx serve ousd-dapp"
+    "build": "next build",
+    "start": "next start"
   },
   "dependencies": {
     "@emotion/react": "^11.10.6",
