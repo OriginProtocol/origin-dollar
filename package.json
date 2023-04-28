@@ -3,10 +3,11 @@
   "license": "MIT",
   "homepage": "https://github.com/originprotocol/origin-dollar",
   "scripts": {
-    "build": "(yarn run build:contracts) && (yarn run build:dapp)",
-    "build:dapp": "(cd dapp-oeth && NODE_ENV=development yarn install && yarn build)",
+    "build": "sh devops/build-dapp.sh",
+    "build:dapp": "(cd dapp && NODE_ENV=development yarn install && yarn build)",
     "build:contracts": "(cd contracts && NODE_ENV=development yarn install && yarn run deploy)",
-    "start": "cd dapp-oeth && yarn run start"
+    "build:oethdapp": "(cd dapp-oeth && NODE_ENV=development yarn install && yarn build)",
+    "start": "sh devops/build-dapp.sh"
   },
   "dependencies": {},
   "engines": {
