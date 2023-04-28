@@ -1,2 +1,2 @@
 #!/bin/sh
-yarn run nx serve oeth-dapp --port=$PORT
+yarn run nx run oeth-dapp:serve:production --port=$PORT
