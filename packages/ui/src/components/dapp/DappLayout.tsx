@@ -1,7 +1,7 @@
 import React, { ReactNode } from 'react';
-import Link from 'next/link';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
+import Link from '../core/Link';
 import DappNavigation from './DappNavigation';
 import APY from './APY';
 

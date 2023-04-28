@@ -4,7 +4,11 @@ import Image from 'next/image';
 import { useAccount } from 'wagmi';
 import { useWeb3Modal } from '@web3modal/react';
 
-const TransactionHistory = () => {
+type HistoryProps = {
+  i18n: any;
+};
+
+const TransactionHistory = ({ i18n }: HistoryProps) => {
   const { isConnected } = useAccount();
   const { open } = useWeb3Modal();
   return (

@@ -1,7 +1,7 @@
 import { useRouter } from 'next/router';
-import Link from 'next/link';
 import { Typography } from '@originprotocol/origin-storybook';
 import cx from 'classnames';
+import Link from '../core/Link';
 
 type DappLink = {
   href: string;
@@ -13,12 +13,13 @@ type DappNavigationProps = {
 };
 
 const DappNavigation = ({ links }: DappNavigationProps) => {
-  const { pathname } = useRouter();
+  const router = useRouter();
+  const pathWithoutLocale = router?.pathname?.replace('/[locale]', '');
   return (
     <nav className="hidden lg:flex flex-row items-center h-full">
       <ul className="grid grid-cols-3 gap-4 h-[44px] bg-origin-bg-lgrey rounded-full overflow-hidden">
         {links.map(({ href, label }) => {
-          const isActiveLink = pathname === href;
+          const isActiveLink = (pathWithoutLocale || '/') === href;
           return (
             <li
               key={href}

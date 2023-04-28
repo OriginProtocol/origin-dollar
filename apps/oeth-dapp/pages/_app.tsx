@@ -10,7 +10,7 @@ import { DAPP_TOKENS } from '../src/constants';
 const App = ({ Component, pageProps, router }) => {
   const { t } = useTranslation('common');
   const { address } = useAccount();
-  const isWrap = router?.state?.route === '/wrap';
+  const isWrap = router?.state?.route.includes('/wrap');
 
   useAutoConnect();
 

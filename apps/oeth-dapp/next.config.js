@@ -1,5 +1,4 @@
 const { withNx } = require('@nrwl/next/plugins/with-nx');
-const { i18n } = require('./next-i18next.config.js');
 
 /**
  * @type {import('@nrwl/next/plugins/with-nx').WithNxOptions}
@@ -11,7 +10,7 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  i18n,
+  trailingSlash: true,
 };
 
 module.exports = withNx(nextConfig);

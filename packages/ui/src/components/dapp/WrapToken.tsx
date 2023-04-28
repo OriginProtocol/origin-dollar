@@ -3,11 +3,11 @@ import ExternalCTA from '../core/ExternalCTA';
 
 type WrapTokenProps = {
   i18n: any;
-  assets: any;
+  tokens: any;
   emptyState: any;
 };
 
-const WrapToken = ({ i18n, assets, emptyState }: WrapTokenProps) => {
+const WrapToken = ({ i18n, tokens, emptyState }: WrapTokenProps) => {
   const [showingEmptyState] = useState(true);
   return (
     <div className="flex flex-col space-y-8">
