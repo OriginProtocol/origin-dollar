@@ -215,7 +215,9 @@ describe("Vault Redeem", function () {
 
     // Attacker redeems after exchange change
     await vault.connect(governor).setMaxSupplyDiff(daiUnits("0.9"));
-    await expect(vault.connect(anna).redeem(daiUnits("1000.0"), 0)).to.be.revertedWith("Backing supply liquidity error");
+    await expect(
+      vault.connect(anna).redeem(daiUnits("1000.0"), 0)
+    ).to.be.revertedWith("Backing supply liquidity error");
 
     // console.log((await vault.totalValue()).toString() / 1e18);
     // console.log((await ousd.totalSupply()).toString() / 1e18);
@@ -247,7 +249,9 @@ describe("Vault Redeem", function () {
 
     // Attacker redeems after exchange change
     await vault.connect(governor).setMaxSupplyDiff(daiUnits("0.9"));
-    await expect(vault.connect(anna).redeem(daiUnits("1000.0"), 0)).to.be.revertedWith("Backing supply liquidity error");
+    await expect(
+      vault.connect(anna).redeem(daiUnits("1000.0"), 0)
+    ).to.be.revertedWith("Backing supply liquidity error");
 
     // console.log((await vault.totalValue()).toString() / 1e18);
     // console.log((await ousd.totalSupply()).toString() / 1e18);
