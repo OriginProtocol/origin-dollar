@@ -27,8 +27,8 @@ const Link = ({ children, skipLocaleHandling, ...rest }: LinkProps) => {
   }
 
   return (
-    <NextLink {...rest} href={href}>
-      {children}
+    <NextLink href={href} legacyBehavior>
+      <a {...rest}>{children}</a>
     </NextLink>
   );
 };
