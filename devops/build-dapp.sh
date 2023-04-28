@@ -11,7 +11,7 @@ buildContracts() {
     echo "Generating ABI for the OUSD DApp";
     yarn run deploy
   fi
-  cd --;
+  cd ..
   rm -rf contracts/node_modules # Purge
 }
 
