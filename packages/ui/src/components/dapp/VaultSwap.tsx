@@ -186,7 +186,7 @@ const VaultSwap = ({ tokens, i18n, vault }: VaultSwapProps) => {
         swap={swap}
         selectedToken={selectedToken}
         estimatedToken={estimatedToken}
-        targetContract={vault}
+        targetContract={vault.contract}
         onSuccess={onSuccess}
       />
     </div>

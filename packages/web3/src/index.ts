@@ -35,7 +35,7 @@ Dripper IMPL	0x2FDfBb2b905484f1445E23A97C97F65fe0e43dEC
 export const contracts: Contracts = {
   mainnet: {
     OETHVaultProxy: {
-      name: 'OETHVaultProxy',
+      name: 'Origin Vault',
       address: '0x39254033945AA2E4809Cc2977E7087BEE48bd7Ab',
       abi: [
         {
