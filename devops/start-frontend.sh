@@ -1,2 +1,2 @@
 #!/bin/sh
-yarn run serve -s -p $PORT dist/apps/$APP_ID/exported;
+yarn run nx run oeth-dapp:serve:production -p $PORT
