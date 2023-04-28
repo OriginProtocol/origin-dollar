@@ -163,19 +163,14 @@ export function checkValidInputForCoin(amount, coin) {
   let decimals
 
   switch (coin) {
-    case 'usdc':
-      decimals = 6
-      break
-    case 'usdt':
-      decimals = 6
-      break
-    case 'ousd':
-      decimals = 18
-      break
-    case 'dai':
-      decimals = 18
-      break
-    case 'wousd':
+    case 'oeth':
+    case 'weth':
+    case 'eth':
+    case 'reth':
+    case 'steth':
+    case 'frxeth':
+    case 'sfrxeth':
+    case 'woeth':
       decimals = 18
       break
     default:

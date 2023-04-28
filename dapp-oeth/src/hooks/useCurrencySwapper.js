@@ -70,13 +70,13 @@ const useCurrencySwapper = ({
   }
 
   const { contract: coinContract, decimals } =
-    coinInfoList[swapMode === 'mint' ? selectedCoin : 'ousd']
+    coinInfoList[swapMode === 'mint' ? selectedCoin : 'oeth']
 
   let coinToReceiveDecimals, coinToReceiveContract
   // do not enter conditional body when redeeming a mix
   if (!(swapMode === 'redeem' && selectedCoin === 'mix')) {
     ;({ contract: coinToReceiveContract, decimals: coinToReceiveDecimals } =
-      coinInfoList[swapMode === 'redeem' ? selectedCoin : 'ousd'])
+      coinInfoList[swapMode === 'redeem' ? selectedCoin : 'oeth'])
   }
 
   // plain amount as displayed in UI (not in wei format)
@@ -100,16 +100,16 @@ const useCurrencySwapper = ({
 
     const nameMaps = {
       vault: 'vault',
-      flipper: 'flipper',
-      uniswap: 'uniswapV3Router',
-      uniswapV2: 'uniswapV2Router',
-      curve: 'curve',
-      sushiswap: 'sushiRouter',
+      // flipper: 'flipper',
+      // uniswap: 'uniswapV3Router',
+      // uniswapV2: 'uniswapV2Router',
+      // curve: 'curve',
+      // sushiswap: 'sushiRouter',
     }
 
-    const coinNeedingApproval = swapMode === 'mint' ? selectedCoin : 'ousd'
+    const coinNeedingApproval = swapMode === 'mint' ? selectedCoin : 'oeth'
 
-    if (coinNeedingApproval === 'ousd' && selectedSwap.name === 'vault') {
+    if (coinNeedingApproval === 'oeth' && selectedSwap.name === 'vault') {
       setNeedsApproval(false)
     } else {
       if (nameMaps[selectedSwap.name] === undefined) {

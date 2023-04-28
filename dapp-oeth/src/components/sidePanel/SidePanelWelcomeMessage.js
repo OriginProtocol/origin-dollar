@@ -7,14 +7,14 @@ import AccountStore from 'stores/AccountStore'
 import ContractStore from 'stores/ContractStore'
 
 const SidePanelWelcomeMessage = () => {
-  const ousdExchangeRates = useStoreState(
+  const oethExchangeRates = useStoreState(
     ContractStore,
-    (s) => s.ousdExchangeRates
+    (s) => s.oethExchangeRates
   )
   const balances = useStoreState(AccountStore, (s) => s.balances)
 
-  const ousdToBuy = ['dai', 'usdt', 'usdc']
-    .map((coin) => balances[coin] * ousdExchangeRates[coin].mint)
+  const oethToBuy = ['weth', 'frxeth', 'reth', 'steth']
+    .map((coin) => balances[coin] * oethExchangeRates[coin].mint)
     .reduce((a, b) => a + b)
 
   return (
@@ -26,10 +26,10 @@ const SidePanelWelcomeMessage = () => {
             `The Origin Dollar lets you easily convert other stablecoins into OUSD so you can instantly earn yields.`,
             'welcome-message'
           )}{' '}
-          {ousdToBuy > 0 &&
+          {oethToBuy > 0 &&
             fbt(
               'You can buy up to ~' +
-                fbt.param('ousd-coin', formatCurrency(ousdToBuy, 2)) +
+                fbt.param('ousd-coin', formatCurrency(oethToBuy, 2)) +
                 ' OUSD with the ' +
                 fbt.param('usdt-coin', formatCurrency(balances['usdt'], 0)) +
                 ' USDT, ' +

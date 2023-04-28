@@ -258,6 +258,13 @@ export async function setupContracts(account, library, chainId, fetchId) {
   wousd = getContract(addresses.mainnet.WOUSDProxy, wousdJSON.abi)
   flipper = getContract(addresses.mainnet.Flipper, flipperAbi)
 
+  const weth = getContract(addresses.mainnet.WETH, ognAbi)
+  const reth = getContract(addresses.mainnet.rETH, ognAbi)
+  const frxeth = getContract(addresses.mainnet.frxETH, ognAbi)
+  const steth = getContract(addresses.mainnet.stETH, ognAbi)
+  const oeth = getContract(addresses.mainnet.OETHProxy, network.contracts['OETH'].abi)
+  const sfrxeth = getContract(addresses.mainnet.sfrxETH, ognAbi)
+
   uniV3OusdUsdt = getContract(
     addresses.mainnet.uniswapV3OUSD_USDT,
     uniV3PoolJson.abi
@@ -330,8 +337,8 @@ export async function setupContracts(account, library, chainId, fetchId) {
       usdt: usdt,
       usdc: usdc,
     }
-    const ousdExchangeRates = {
-      ...ContractStore.currentState.ousdExchangeRates,
+    const oethExchangeRates = {
+      ...ContractStore.currentState.oethExchangeRates,
     }
     const userActive = AccountStore.currentState.active === 'active'
     // do not fetch anything if the user is not active
@@ -342,14 +349,14 @@ export async function setupContracts(account, library, chainId, fetchId) {
     for (const name in coins) {
       const coin = coins[name]
       try {
-        const priceBNMint = await vault.priceUSDMint(coin.address)
-        const priceBNRedeem = await vault.priceUSDRedeem(coin.address)
+        const priceBNMint = await vault.priceUnitMint(coin.address)
+        const priceBNRedeem = await vault.priceUnitRedeem(coin.address)
         // Oracle returns with 18 decimal places
         // Also, convert that to USD/<coin> format
         const priceMint = Number(priceBNMint.toString()) / 1000000000000000000
         const priceRedeem =
           Number(priceBNRedeem.toString()) / 1000000000000000000
-        ousdExchangeRates[name] = {
+        oethExchangeRates[name] = {
           mint: priceMint,
           redeem: priceRedeem,
         }
@@ -359,7 +366,7 @@ export async function setupContracts(account, library, chainId, fetchId) {
     }
 
     ContractStore.update((store) => {
-      store.ousdExchangeRates = { ...ousdExchangeRates }
+      store.oethExchangeRates = { ...oethExchangeRates }
     })
   }
 
@@ -496,23 +503,38 @@ export async function setupContracts(account, library, chainId, fetchId) {
     curveAddressProvider,
     curveRegistryExchange,
     curveOUSDMetaPool,
+
+    weth,
+    reth,
+    frxeth,
+    steth,
+    oeth,
+    sfrxeth,
   }
 
   const coinInfoList = {
-    usdt: {
-      contract: usdt,
-      decimals: 6,
-    },
-    usdc: {
-      contract: usdc,
-      decimals: 6,
-    },
-    dai: {
-      contract: dai,
+    weth: {
+      contract: weth,
       decimals: 18,
     },
-    ousd: {
-      contract: ousd,
+    reth: {
+      contract: reth,
+      decimals: 18,
+    },
+    frxeth: {
+      contract: frxeth,
+      decimals: 18,
+    },
+    steth: {
+      contract: steth,
+      decimals: 18,
+    },
+    oeth: {
+      contract: oeth,
+      decimals: 18,
+    },
+    sfrxeth: {
+      contract: sfrxeth,
       decimals: 18,
     },
   }

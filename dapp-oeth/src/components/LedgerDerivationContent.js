@@ -27,10 +27,12 @@ const LedgerDerivationContent = ({}) => {
   const contractData = useStoreState(ContractStore, (s) => {
     if (s.coinInfoList) {
       return [
-        s.coinInfoList.usdt,
-        s.coinInfoList.dai,
-        s.coinInfoList.usdc,
-        s.coinInfoList.ousd,
+        s.coinInfoList.eth,
+        s.coinInfoList.weth,
+        s.coinInfoList.reth,
+        s.coinInfoList.frxeth,
+        s.coinInfoList.steth,
+        s.coinInfoList.oeth,
       ]
     }
     return []

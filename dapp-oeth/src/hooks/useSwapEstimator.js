@@ -47,28 +47,30 @@ const useSwapEstimator = ({
   const balances = useStoreState(AccountStore, (s) => s.balances)
 
   const { contract: coinToSwapContract, decimals: coinToSwapDecimals } =
-    coinInfoList[swapMode === 'mint' ? selectedCoin : 'ousd']
-  const coinToSwap = swapMode === 'redeem' ? 'ousd' : selectedCoin
+    coinInfoList[swapMode === 'mint' ? selectedCoin : 'oeth'] || {};
+
+  const coinToSwap = swapMode === 'redeem' ? 'oeth' : selectedCoin
 
   const [selectedCoinPrev, setSelectedCoinPrev] = useState()
 
   let coinToReceiveContract, coinToReceiveDecimals
 
-  const decimals = swapMode === 'redeem' || selectedCoin === 'dai' ? 18 : 6
+  const decimals = 18
 
   // do not enter conditional body when redeeming a mix
   if (!(swapMode === 'redeem' && selectedCoin === 'mix')) {
     ;({ contract: coinToReceiveContract, decimals: coinToReceiveDecimals } =
-      coinInfoList[swapMode === 'redeem' ? selectedCoin : 'ousd'])
+      coinInfoList[swapMode === 'redeem' ? selectedCoin : 'oeth']) || {}
   }
 
   const allowances = useStoreState(AccountStore, (s) => s.allowances)
   const allowancesLoaded =
     typeof allowances === 'object' &&
-    allowances.ousd !== undefined &&
-    allowances.usdt !== undefined &&
-    allowances.usdc !== undefined &&
-    allowances.dai !== undefined
+    allowances.oeth !== undefined &&
+    allowances.frxeth !== undefined &&
+    allowances.reth !== undefined &&
+    allowances.weth !== undefined &&
+    allowances.steth !== undefined
 
   const account = useStoreState(AccountStore, (s) => s.account)
   const [ethPrice, setEthPrice] = useState(false)
@@ -762,7 +764,7 @@ const useSwapEstimator = ({
 
     try {
       // 18 decimals denominated BN exchange rate value
-      const oracleCoinPrice = await contracts.vault.priceUSDMint(
+      const oracleCoinPrice = await contracts.vault.priceUnitMint(
         coinToSwapContract.address
       )
       const amountReceived =

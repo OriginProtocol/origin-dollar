@@ -151,6 +151,9 @@ addresses.mainnet.Timelock = "0x35918cDE7233F2dD33fA41ae3Cb6aE0e42E0e69F";
 // OETH
 addresses.mainnet.OETHProxy = "0x856c4Efb76C1D1AE02e20CEB03A2A6a08b0b8dC3";
 addresses.mainnet.WOETHProxy = "0xDcEe70654261AF21C44c093C300eD3Bb97b78192";
+addresses.mainnet.OETHVaultProxy = "0x39254033945aa2e4809cc2977e7087bee48bd7ab";
+addresses.mainnet.OETHZapper = "0x8c135f50c7317a93cc95bb208a494e5ade5b66b0"
+addresses.mainnet.FraxETHStrategy = "0x3ff8654d633d4ea0fae24c52aec73b4a20d0d0e5"
 
 // Tokens
 addresses.mainnet.sfrxETH = "0xac3E018457B222d93114458476f3E3416Abbe38F";

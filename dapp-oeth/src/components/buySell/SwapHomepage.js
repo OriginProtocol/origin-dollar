@@ -40,12 +40,12 @@ const SwapHomepage = ({
 
   const storedSelectedCoin = process.browser
     ? localStorage.getItem(lastUserSelectedCoinKey)
-    : 'dai'
-  // Just in case inconsistent state happens where selected coin is mix and mode mint, reset selected coin to dai
+    : 'weth'
+  // Just in case inconsistent state happens where selected coin is mix and mode mint, reset selected coin to weth
   const defaultSelectedCoinValue =
     (storedSelectedCoin === 'mix' && swapMode === 'mint'
-      ? 'dai'
-      : storedSelectedCoin) || 'dai'
+      ? 'weth'
+      : storedSelectedCoin) || 'weth'
   const [selectedBuyCoin, setSelectedBuyCoin] = useState(
     defaultSelectedCoinValue
   )
@@ -98,11 +98,7 @@ const SwapHomepage = ({
     needsApproval,
     mintVault,
     redeemVault,
-    swapFlipper,
-    swapUniswap,
-    swapUniswapV2,
-    swapSushiSwap,
-    swapCurve,
+    // swapFlipper,
   } = useCurrencySwapper(
     swapParams(
       swapMode === 'mint' ? selectedBuyCoinAmount : selectedRedeemCoinAmount,
@@ -116,16 +112,16 @@ const SwapHomepage = ({
       : null
 
     if (swapMode === 'mint') {
-      setSelectedRedeemCoin('ousd')
+      setSelectedRedeemCoin('oeth')
       // TODO: when user comes from 'mix' coin introduce the new empty field
       if (lastUserSelectedCoin === 'mix') {
-        lastUserSelectedCoin = 'dai'
-        localStorage.setItem(lastUserSelectedCoinKey, 'dai')
+        lastUserSelectedCoin = 'weth'
+        localStorage.setItem(lastUserSelectedCoinKey, 'weth')
       }
-      setSelectedBuyCoin(lastUserSelectedCoin || 'dai')
+      setSelectedBuyCoin(lastUserSelectedCoin || 'weth')
     } else {
-      setSelectedBuyCoin('ousd')
-      setSelectedRedeemCoin(lastUserSelectedCoin || 'dai')
+      setSelectedBuyCoin('oeth')
+      setSelectedRedeemCoin(lastUserSelectedCoin || 'weth')
     }
 
     // currencies flipped
@@ -142,7 +138,7 @@ const SwapHomepage = ({
 
   const userSelectsBuyCoin = (coin) => {
     // treat it as a flip
-    if (coin === 'ousd') {
+    if (coin === 'oeth') {
       setSwapMode(swapMode === 'mint' ? 'redeem' : 'mint')
       return
     }
@@ -152,7 +148,7 @@ const SwapHomepage = ({
 
   const userSelectsRedeemCoin = (coin) => {
     // treat it as a flip
-    if (coin === 'ousd') {
+    if (coin === 'oeth') {
       setSwapMode(swapMode === 'mint' ? 'redeem' : 'mint')
       return
     }
@@ -190,8 +186,8 @@ const SwapHomepage = ({
   }
 
   const swapMetadata = () => {
-    const coinGiven = swapMode === 'mint' ? selectedBuyCoin : 'ousd'
-    const coinReceived = swapMode === 'mint' ? 'ousd' : selectedRedeemCoin
+    const coinGiven = swapMode === 'mint' ? selectedBuyCoin : 'oeth'
+    const coinReceived = swapMode === 'mint' ? 'oeth' : selectedRedeemCoin
     const swapAmount =
       swapMode === 'mint' ? selectedBuyCoinAmount : selectedRedeemCoinAmount
     const stablecoinUsed =
@@ -218,22 +214,13 @@ const SwapHomepage = ({
 
     try {
       let result, swapAmount, minSwapAmount
-      if (selectedSwap.name === 'flipper') {
-        ;({ result, swapAmount, minSwapAmount } = await swapFlipper())
-      } else if (selectedSwap.name === 'vault') {
+      if (selectedSwap.name === 'vault') {
         if (swapMode === 'mint') {
           ;({ result, swapAmount, minSwapAmount } = await mintVault())
         } else {
           ;({ result, swapAmount, minSwapAmount } = await redeemVault())
         }
-      } else if (selectedSwap.name === 'uniswap') {
-        ;({ result, swapAmount, minSwapAmount } = await swapUniswap())
-      } else if (selectedSwap.name === 'uniswapV2') {
-        ;({ result, swapAmount, minSwapAmount } = await swapUniswapV2())
-      } else if (selectedSwap.name === 'sushiswap') {
-        ;({ result, swapAmount, minSwapAmount } = await swapSushiSwap())
-      } else if (selectedSwap.name === 'curve') {
-        ;({ result, swapAmount, minSwapAmount } = await swapCurve())
+        // TODO: Zapper
       }
       storeTransaction(
         result,
@@ -244,7 +231,7 @@ const SwapHomepage = ({
             swapMode === 'mint'
               ? selectedBuyCoinAmount
               : selectedRedeemCoinAmount,
-          ousd:
+          oeth:
             swapMode === 'mint'
               ? selectedRedeemCoinAmount
               : selectedBuyCoinAmount,
@@ -332,7 +319,7 @@ const SwapHomepage = ({
             />
             <ApproveSwap
               stableCoinToApprove={
-                swapMode === 'mint' ? selectedBuyCoin : 'ousd'
+                swapMode === 'mint' ? selectedBuyCoin : 'oeth'
               }
               needsApproval={needsApproval}
               selectedSwap={selectedSwap}

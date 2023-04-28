@@ -114,7 +114,7 @@ const CoinSelect = ({ selected, onChange, options = [] }) => {
                 <div
                   key={option}
                   className={`${
-                    option === 'ousd' ? 'ousd' : ''
+                    option === 'oeth' ? 'oeth' : ''
                   }  d-flex justify-content-start align-items-center p-5px dropdown-item`}
                   onClick={(e) => {
                     onChange(option)
@@ -238,12 +238,12 @@ const SwapCurrencyPill = ({
 }) => {
   const coinBalances = useStoreState(AccountStore, (s) => s.balances)
   const [error, setError] = useState(null)
-  const stableCoinMintOptions = ['ousd', 'dai', 'usdt', 'usdc']
-  const coinRedeemOptions = ['ousd', 'mix', 'dai', 'usdt', 'usdc']
+  const coinMintOptions = ['oeth', 'weth', 'frxeth', 'reth', 'steth']
+  const coinRedeemOptions = ['oeth', 'mix', 'weth', 'frxeth', 'reth', 'steth']
   const { active } = useWeb3React()
 
   const bottomItem = !topItem
-  const showOusd =
+  const showOeth =
     (swapMode === 'redeem' && topItem) || (swapMode === 'mint' && bottomItem)
 
   const floorTo2to6Decimals = (value) => {
@@ -260,7 +260,7 @@ const SwapCurrencyPill = ({
     }
     if (!active || selectedCoin === 'mix') {
       return null
-    } else if (showOusd) {
+    } else if (showOeth) {
       return {
         coin: 'ousd',
         balance: roundTo2Decimals(coinBalances.ousd),
@@ -276,11 +276,11 @@ const SwapCurrencyPill = ({
   }
 
   const getSelectOptions = () => {
-    if (showOusd) {
+    if (showOeth) {
       return []
     } else {
       if (topItem) {
-        return stableCoinMintOptions
+        return coinMintOptions
       } else {
         return coinRedeemOptions
       }
@@ -323,7 +323,7 @@ const SwapCurrencyPill = ({
       return
     }
 
-    const coin = swapMode === 'mint' ? selectedCoin : 'ousd'
+    const coin = swapMode === 'mint' ? selectedCoin : 'oeth'
 
     setError(parseFloat(coinBalances[coin]) < parseFloat(coinValue))
   }
@@ -380,7 +380,7 @@ const SwapCurrencyPill = ({
         >
           <div className="d-flex flex-column justify-content-between align-items-start h-100">
             <CoinSelect
-              selected={showOusd ? 'ousd' : selectedCoin}
+              selected={showOeth ? 'oeth' : selectedCoin}
               onChange={(coin) => {
                 onSelectChange(coin)
               }}
@@ -441,7 +441,7 @@ const SwapCurrencyPill = ({
                   ? fbt(
                       'Min. received: ' +
                         fbt.param(
-                          'ousd-amount',
+                          'oeth-amount',
                           formatCurrency(minReceived, 2)
                         ) +
                         ' OUSD',

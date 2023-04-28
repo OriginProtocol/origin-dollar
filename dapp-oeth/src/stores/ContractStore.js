@@ -5,16 +5,20 @@ const ContractStore = new Store({
   contracts: {},
   apy: {},
   lastOverride: '',
-  ousdExchangeRates: {
-    dai: {
+  oethExchangeRates: {
+    weth: {
       mint: 1,
       redeem: 1,
     },
-    usdt: {
+    reth: {
       mint: 1,
       redeem: 1,
     },
-    usdc: {
+    frxeth: {
+      mint: 1,
+      redeem: 1,
+    },
+    steth: {
       mint: 1,
       redeem: 1,
     },
@@ -23,19 +27,31 @@ const ContractStore = new Store({
   swapEstimations: null,
   selectedSwap: undefined,
   coinInfoList: {
-    usdt: {
-      contract: null,
-      decimals: 6,
-    },
-    usdc: {
-      contract: null,
-      decimals: 6,
-    },
-    dai: {
+    // eth: {
+    //   contract: null,
+    //   decimals: 18,
+    // },
+    weth: {
       contract: null,
       decimals: 18,
     },
-    ousd: {
+    reth: {
+      contract: null,
+      decimals: 18,
+    },
+    frxeth: {
+      contract: null,
+      decimals: 18,
+    },
+    steth: {
+      contract: null,
+      decimals: 18,
+    },
+    oeth: {
+      contract: null,
+      decimals: 18,
+    },
+    sfrxeth: {
       contract: null,
       decimals: 18,
     },
