@@ -7,7 +7,7 @@ startApp() {
     cd "dapp";
   fi
   export NODE_ENV=production;
-  yarn run start --port $PORT;
+  yarn run start;
 }
 
 startApp
