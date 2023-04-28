@@ -35,7 +35,7 @@ const ApproveSwap = ({
   const [isApproving, setIsApproving] = useState({})
   const web3react = useWeb3React()
   const { library, account, activate, active } = web3react
-  const coinApproved = stage === 'done'
+  const coinApproved = stableCoinToApprove !== 'eth' || stage === 'done'
   const isWrapped =
     selectedSwap &&
     selectedSwap.name === 'wousd' &&
@@ -72,7 +72,7 @@ const ApproveSwap = ({
     frxeth,
     sfrxeth,
     oeth,
-
+    zapper,
   } = useStoreState(ContractStore, (s) => s.contracts || {})
 
   const routeConfig = {
@@ -83,13 +83,13 @@ const ApproveSwap = ({
         done: 'Origin Vault',
       },
     },
-    // flipper: {
-    //   contract: flipper,
-    //   name: {
-    //     approving: 'the Flipper',
-    //     done: 'Flipper',
-    //   },
-    // },
+    zapper: {
+      contract: zapper,
+      name: {
+        approving: 'the Zapper',
+        done: 'Zapper',
+      },
+    },
     // uniswap: {
     //   contract: uniV3SwapRouter,
     //   name: {

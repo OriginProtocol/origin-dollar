@@ -97,9 +97,9 @@ const ContractsTable = () => {
   const { active } = useWeb3React()
 
   const swapContracts = {
-    // flipper: {
-    //   name: fbt('Flipper', 'Contract Table Flipper'),
-    // },
+    zapper: {
+      name: fbt('Zapper', 'Contract Table Zapper'),
+    },
     vault: {
       name: fbt('Origin Vault', 'Contract Table Origin Vault'),
     },
@@ -121,8 +121,8 @@ const ContractsTable = () => {
     unsupported: fbt('Unsupported', 'Swap estimations: unsupported'),
     unexpected_error: fbt('Error', 'Swap estimations: unexpected_error'),
     not_enough_funds_contract: fbt(
-      'Amount too high',
-      'Swap estimations: amount too high'
+      'Liquidity error',
+      'Swap estimations: liquidity error'
     ),
     not_enough_funds_user: fbt(
       'Insufficient balance',

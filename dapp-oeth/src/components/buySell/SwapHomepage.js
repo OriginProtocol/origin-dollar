@@ -55,7 +55,8 @@ const SwapHomepage = ({
   const [selectedBuyCoinAmount, setSelectedBuyCoinAmount] = useState('')
   const [selectedRedeemCoinAmount, setSelectedRedeemCoinAmount] = useState('')
   const [balanceError, setBalanceError] = useState(null)
-  const { setPriceToleranceValue, priceToleranceValue } = usePriceTolerance('mint')
+  const { setPriceToleranceValue, priceToleranceValue } =
+    usePriceTolerance('mint')
 
   const swappingGloballyDisabled =
     process.env.NEXT_PUBLIC_DISABLE_SWAP_BUTTON === 'true'
@@ -97,7 +98,7 @@ const SwapHomepage = ({
     needsApproval,
     mintVault,
     redeemVault,
-    // swapFlipper,
+    swapZapper,
   } = useCurrencySwapper(
     swapParams(
       swapMode === 'mint' ? selectedBuyCoinAmount : selectedRedeemCoinAmount,
@@ -219,8 +220,10 @@ const SwapHomepage = ({
         } else {
           ;({ result, swapAmount, minSwapAmount } = await redeemVault())
         }
-        // TODO: Zapper
+      } else if (selectedSwap.name === 'zapper') {
+        ;({ result, swapAmount, minSwapAmount } = await swapZapper())
       }
+
       storeTransaction(
         result,
         swapMode,

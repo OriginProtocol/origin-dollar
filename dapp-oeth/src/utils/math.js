@@ -163,6 +163,7 @@ export function checkValidInputForCoin(amount, coin) {
   let decimals
 
   switch (coin) {
+    case 'eth':
     case 'oeth':
     case 'weth':
     case 'eth':

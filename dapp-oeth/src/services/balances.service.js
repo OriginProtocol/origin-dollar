@@ -1,4 +1,4 @@
-import { ethers } from 'ethers'
+import { BigNumber, ethers } from 'ethers'
 import { displayCurrency } from 'utils/math'
 import { isProduction } from 'constants/env'
 
@@ -22,6 +22,12 @@ export default class BalancesService {
       { name: 'steth', decimals: 18, contract: steth, address: steth.address },
       {
         name: 'frxeth',
+        decimals: 18,
+        contract: frxeth,
+        address: frxeth.address,
+      },
+      {
+        name: 'sfrxeth',
         decimals: 18,
         contract: frxeth,
         address: frxeth.address,
@@ -59,7 +65,12 @@ export default class BalancesService {
     }
 
     const responseJson = await response.json()
-    const balanceData = {}
+    const balanceData = {
+      eth: ethers.utils.formatUnits(
+        await oeth.provider.getBalance(account),
+        18
+      ),
+    }
 
     allContractData.forEach((contractData) => {
       const balanceResponseData = responseJson.result.tokenBalances.filter(
@@ -90,6 +101,7 @@ export default class BalancesService {
     const { oeth, weth, reth, steth, frxeth, woeth } = contracts
 
     const [
+      ethBalance,
       oethBalance,
       wethBalance,
       rethBalance,
@@ -100,6 +112,7 @@ export default class BalancesService {
       /* IMPORTANT (!) production uses a different method to load balances. Any changes here need to
        * also happen in production version of this function.
        */
+      displayCurrency(await oeth.provider.getBalance(account), oeth),
       displayCurrency(await oeth.balanceOf(account), oeth),
       displayCurrency(await weth.balanceOf(account), weth),
       displayCurrency(await reth.balanceOf(account), reth),
@@ -109,6 +122,7 @@ export default class BalancesService {
     ])
 
     return {
+      eth: ethBalance,
       oeth: oethBalance,
       weth: wethBalance,
       reth: rethBalance,

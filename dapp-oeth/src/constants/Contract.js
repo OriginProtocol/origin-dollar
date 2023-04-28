@@ -1,4 +1,7 @@
 export const currencies = {
+  eth: {
+    localStorageSettingKey: 'eth-manual-setting',
+  },
   weth: {
     localStorageSettingKey: 'weth-manual-setting',
   },
@@ -7,6 +10,9 @@ export const currencies = {
   },
   frxeth: {
     localStorageSettingKey: 'frxeth-manual-setting',
+  },
+  sfrxeth: {
+    localStorageSettingKey: 'sfrxeth-manual-setting',
   },
   steth: {
     localStorageSettingKey: 'steth-manual-setting',

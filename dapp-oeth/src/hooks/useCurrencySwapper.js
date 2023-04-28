@@ -40,6 +40,7 @@ const useCurrencySwapper = ({
     uniV3SwapQuoter,
     curveRegistryExchange,
     curveOUSDMetaPool,
+    zapper,
   } = useStoreState(ContractStore, (s) => s.contracts)
   const curveMetapoolUnderlyingCoins = useStoreState(
     ContractStore,
@@ -64,6 +65,7 @@ const useCurrencySwapper = ({
     allowances.weth &&
     allowances.reth &&
     allowances.frxeth &&
+    allowances.sfrxeth &&
     allowances.steth
 
   const connSigner = (contract) => {
@@ -101,7 +103,7 @@ const useCurrencySwapper = ({
 
     const nameMaps = {
       vault: 'vault',
-      // flipper: 'flipper',
+      zapper: 'zapper',
       // uniswap: 'uniswapV3Router',
       // uniswapV2: 'uniswapV2Router',
       // curve: 'curve',
@@ -242,46 +244,22 @@ const useCurrencySwapper = ({
     }
   }
 
-  const swapFlipper = async () => {
-    // need to calculate these again, since Flipper takes all amount inputs in 18 decimal format
-    const { swapAmount: swapAmountFlipper } = calculateSwapAmounts(
-      inputAmountRaw,
-      18
-    )
+  const swapZapper = async () => {
+    const { swapAmount: amount, minSwapAmount: minAmount } =
+      calculateSwapAmounts(inputAmountRaw, 18)
 
-    let flipperResult
-    if (swapMode === 'mint') {
-      if (selectedCoin === 'dai') {
-        flipperResult = await connSigner(flipper).buyOusdWithDai(
-          swapAmountFlipper
-        )
-      } else if (selectedCoin === 'usdt') {
-        flipperResult = await connSigner(flipper).buyOusdWithUsdt(
-          swapAmountFlipper
-        )
-      } else if (selectedCoin === 'usdc') {
-        flipperResult = await connSigner(flipper).buyOusdWithUsdc(
-          swapAmountFlipper
-        )
-      }
-    } else {
-      if (selectedCoin === 'dai') {
-        flipperResult = await connSigner(flipper).sellOusdForDai(
-          swapAmountFlipper
-        )
-      } else if (selectedCoin === 'usdt') {
-        flipperResult = await connSigner(flipper).sellOusdForUsdt(
-          swapAmountFlipper
-        )
-      } else if (selectedCoin === 'usdc') {
-        flipperResult = await connSigner(flipper).sellOusdForUsdc(
-          swapAmountFlipper
-        )
-      }
+    let zapperResult
+
+    if (selectedCoin === 'eth') {
+      zapperResult = await connSigner(zapper).deposit({
+        value: amount,
+      })
+    } else if (selectedCoin === 'sfrxeth') {
+      zapperResult = await connSigner(zapper).depositSFRXETH(amount, minAmount)
     }
 
     return {
-      result: flipperResult,
+      result: zapperResult,
       swapAmount,
       minSwapAmount,
     }
@@ -654,7 +632,7 @@ const useCurrencySwapper = ({
     mintVaultGasEstimate,
     redeemVault,
     redeemVaultGasEstimate,
-    swapFlipper,
+    swapZapper,
     swapUniswapGasEstimate,
     swapUniswap,
     swapUniswapV2GasEstimate,

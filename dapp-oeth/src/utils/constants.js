@@ -15,6 +15,13 @@ const approveCoinGasLimits = {
   dai: 46000,
   usdt: 48900,
   usdc: 60700,
+
+  // TODO: Update these
+  weth: 64000,
+  reth: 64000,
+  steth: 64000,
+  frxeth: 64000,
+  sfrxeth: 64000,
 }
 const apyDayOptions = [7, 30, 60, 90, 365]
 const DEFAULT_SELECTED_APY = 30

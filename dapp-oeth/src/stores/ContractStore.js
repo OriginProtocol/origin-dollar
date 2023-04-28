@@ -27,10 +27,10 @@ const ContractStore = new Store({
   swapEstimations: null,
   selectedSwap: undefined,
   coinInfoList: {
-    // eth: {
-    //   contract: null,
-    //   decimals: 18,
-    // },
+    eth: {
+      contract: null,
+      decimals: 18,
+    },
     weth: {
       contract: null,
       decimals: 18,

@@ -68,6 +68,7 @@ const useSwapEstimator = ({
     typeof allowances === 'object' &&
     allowances.oeth !== undefined &&
     allowances.frxeth !== undefined &&
+    allowances.sfrxeth !== undefined &&
     allowances.reth !== undefined &&
     allowances.weth !== undefined &&
     allowances.steth !== undefined
@@ -191,50 +192,25 @@ const useSwapEstimator = ({
     })
     let usedGasPrice = gasPrice
 
-    let vaultResult,
-      // flipperResult,
+    const [
+      vaultResult,
+      zapperResult,
       // uniswapResult,
       // uniswapV2Result,
       // sushiswapResult,
       // curveResult,
-      ethPrice
-    if (swapMode === 'mint') {
-      ;[
-        vaultResult,
-        // flipperResult,
-        // uniswapResult,
-        // uniswapV2Result,
-        // sushiswapResult,
-        // curveResult,
-        ethPrice,
-      ] = await Promise.all([
-        estimateMintSuitabilityVault(),
-        // estimateSwapSuitabilityFlipper(),
-        // estimateSwapSuitabilityUniswapV3(),
-        // estimateSwapSuitabilityUniswapV2(),
-        // estimateSwapSuitabilitySushiSwap(),
-        // estimateSwapSuitabilityCurve(),
-        fetchEthPrice(),
-      ])
-    } else {
-      ;[
-        vaultResult,
-        // flipperResult,
-        // uniswapResult,
-        // uniswapV2Result,
-        // sushiswapResult,
-        // curveResult,
-        ethPrice,
-      ] = await Promise.all([
-        estimateRedeemSuitabilityVault(),
-        // estimateSwapSuitabilityFlipper(),
-        // estimateSwapSuitabilityUniswapV3(),
-        // estimateSwapSuitabilityUniswapV2(),
-        // estimateSwapSuitabilitySushiSwap(),
-        // estimateSwapSuitabilityCurve(),
-        fetchEthPrice(),
-      ])
-    }
+      ethPrice,
+    ] = await Promise.all([
+      swapMode === 'mint'
+        ? estimateMintSuitabilityVault()
+        : estimateRedeemSuitabilityVault(),
+      estimateSwapSuitabilityZapper(),
+      // estimateSwapSuitabilityUniswapV3(),
+      // estimateSwapSuitabilityUniswapV2(),
+      // estimateSwapSuitabilitySushiSwap(),
+      // estimateSwapSuitabilityCurve(),
+      fetchEthPrice(),
+    ])
 
     if (!isGasPriceUserOverriden) {
       usedGasPrice = await fetchGasPrice()
@@ -242,7 +218,7 @@ const useSwapEstimator = ({
 
     let estimations = {
       vault: vaultResult,
-      // flipper: flipperResult,
+      zapper: zapperResult,
       // uniswap: uniswapResult,
       // curve: curveResult,
       // uniswapV2: uniswapV2Result,
@@ -345,18 +321,19 @@ const useSwapEstimator = ({
     return parseFloat(balances[coin]) > swapAmount
   }
 
-  /* Gives information on suitability of flipper for this swap
+  /* Gives information on suitability of Zapper for this swap
    */
-  const estimateSwapSuitabilityFlipper = async () => {
+  const estimateSwapSuitabilityZapper = async () => {
     const amount = parseFloat(inputAmountRaw)
-    if (amount > 25000) {
+    if (amount > 2.5) {
+      // TODO: Check value against contract
       return {
         canDoSwap: false,
         error: 'amount_too_high',
       }
     }
 
-    if (swapMode === 'redeem' && selectedCoin === 'mix') {
+    if (swapMode === 'redeem' || !['eth', 'sfrxeth'].includes(selectedCoin)) {
       return {
         canDoSwap: false,
         error: 'unsupported',
@@ -369,7 +346,7 @@ const useSwapEstimator = ({
     )
 
     const contractCoinBalance = await coinToReceiveContract.balanceOf(
-      contracts.flipper.address
+      contracts.zapper.address
     )
 
     if (contractCoinBalance.lt(coinToReceiveBn)) {
@@ -379,8 +356,22 @@ const useSwapEstimator = ({
       }
     }
 
+    if (selectedCoin === 'eth') {
+      const swapGasUsage = 90000 // TODO: Update this
+
+      return {
+        canDoSwap: true,
+        gasUsed: swapGasUsage,
+        swapGasUsage,
+        approveGasUsage: 0,
+        approveAllowanceNeeded: false,
+        inputAmount: parseFloat(inputAmountRaw),
+        amountReceived: amount,
+      }
+    }
+
     const approveAllowanceNeeded = allowancesLoaded
-      ? parseFloat(allowances[coinToSwap].flipper) === 0
+      ? parseFloat(allowances[coinToSwap].zapper) === 0
       : true
     const swapGasUsage = 90000
     const approveGasUsage = approveAllowanceNeeded
@@ -762,6 +753,13 @@ const useSwapEstimator = ({
   const estimateMintSuitabilityVault = async () => {
     const amount = parseFloat(inputAmountRaw)
 
+    if (['eth', 'sfrxeth'].includes(selectedCoin)) {
+      return {
+        canDoSwap: false,
+        error: 'unsupported',
+      }
+    }
+
     try {
       // 18 decimals denominated BN exchange rate value
       const oracleCoinPrice = await contracts.vault.priceUnitMint(
@@ -1082,7 +1080,7 @@ const useSwapEstimator = ({
   }
 
   return {
-    estimateSwapSuitabilityFlipper,
+    estimateSwapSuitabilityZapper,
     estimateMintSuitabilityVault,
     estimateRedeemSuitabilityVault,
     estimateSwapSuitabilityUniswapV3,

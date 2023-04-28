@@ -69,6 +69,7 @@ weth = load_contract('ERC20', WETH)
 reth = load_contract('ERC20', RETH)
 steth = load_contract('ERC20', STETH)
 frxeth = load_contract('ERC20', FRXETH)
+sfrxeth = load_contract('ERC20', SFRXETH)
 oeth_vault_admin = load_contract('vault_admin', OETH_VAULT)
 oeth_vault_core = load_contract('vault_core', OETH_VAULT)
 

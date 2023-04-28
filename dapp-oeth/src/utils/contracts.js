@@ -267,6 +267,10 @@ export async function setupContracts(account, library, chainId, fetchId) {
     network.contracts['OETH'].abi
   )
   const sfrxeth = getContract(addresses.mainnet.sfrxETH, ognAbi)
+  const zapper = getContract(
+    addresses.mainnet.OETHZapper,
+    network.contracts['OETHZapper'].abi
+  )
 
   uniV3OusdUsdt = getContract(
     addresses.mainnet.uniswapV3OUSD_USDT,
@@ -518,9 +522,14 @@ export async function setupContracts(account, library, chainId, fetchId) {
     steth,
     oeth,
     sfrxeth,
+    zapper,
   }
 
   const coinInfoList = {
+    eth: {
+      contract: null,
+      decimals: 18,
+    },
     weth: {
       contract: weth,
       decimals: 18,
@@ -564,7 +573,9 @@ export async function setupContracts(account, library, chainId, fetchId) {
     s.reth = reth
     s.steth = steth
     s.frxeth = frxeth
+    s.sfrxeth = sfrxeth
     s.oeth = oeth
+    s.zapper = zapper
   })
 
   if (process.env.NEXT_PUBLIC_ENABLE_LIQUIDITY_MINING === 'true') {
@@ -598,8 +609,6 @@ const setupCurve = async (curveAddressProvider, getContract, chainId) => {
     curveOUSDMetaPool,
     curveUnderlyingCoins,
   ]
-
-  return []
 }
 
 // calls to be executed only once after setup

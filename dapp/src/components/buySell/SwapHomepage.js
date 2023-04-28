@@ -98,11 +98,11 @@ const SwapHomepage = ({
     needsApproval,
     mintVault,
     redeemVault,
-    swapFlipper,
-    swapUniswap,
-    swapUniswapV2,
-    swapSushiSwap,
-    swapCurve,
+    swapZapper,
+    // swapUniswap,
+    // swapUniswapV2,
+    // swapSushiSwap,
+    // swapCurve,
   } = useCurrencySwapper(
     swapParams(
       swapMode === 'mint' ? selectedBuyCoinAmount : selectedRedeemCoinAmount,
@@ -218,22 +218,22 @@ const SwapHomepage = ({
 
     try {
       let result, swapAmount, minSwapAmount
-      if (selectedSwap.name === 'flipper') {
-        ;({ result, swapAmount, minSwapAmount } = await swapFlipper())
+      if (selectedSwap.name === 'zapper') {
+        ;({ result, swapAmount, minSwapAmount } = await swapZapper())
       } else if (selectedSwap.name === 'vault') {
         if (swapMode === 'mint') {
           ;({ result, swapAmount, minSwapAmount } = await mintVault())
         } else {
           ;({ result, swapAmount, minSwapAmount } = await redeemVault())
         }
-      } else if (selectedSwap.name === 'uniswap') {
-        ;({ result, swapAmount, minSwapAmount } = await swapUniswap())
-      } else if (selectedSwap.name === 'uniswapV2') {
-        ;({ result, swapAmount, minSwapAmount } = await swapUniswapV2())
-      } else if (selectedSwap.name === 'sushiswap') {
-        ;({ result, swapAmount, minSwapAmount } = await swapSushiSwap())
-      } else if (selectedSwap.name === 'curve') {
-        ;({ result, swapAmount, minSwapAmount } = await swapCurve())
+      // } else if (selectedSwap.name === 'uniswap') {
+      //   ;({ result, swapAmount, minSwapAmount } = await swapUniswap())
+      // } else if (selectedSwap.name === 'uniswapV2') {
+      //   ;({ result, swapAmount, minSwapAmount } = await swapUniswapV2())
+      // } else if (selectedSwap.name === 'sushiswap') {
+      //   ;({ result, swapAmount, minSwapAmount } = await swapSushiSwap())
+      // } else if (selectedSwap.name === 'curve') {
+      //   ;({ result, swapAmount, minSwapAmount } = await swapCurve())
       }
       storeTransaction(
         result,
@@ -276,7 +276,7 @@ const SwapHomepage = ({
       }
 
       onMintingError(e)
-      console.error('Error swapping ousd! ', e)
+      console.error('Error swapping oeth! ', e)
     }
   }
 
@@ -332,7 +332,7 @@ const SwapHomepage = ({
             />
             <ApproveSwap
               stableCoinToApprove={
-                swapMode === 'mint' ? selectedBuyCoin : 'ousd'
+                swapMode === 'mint' ? selectedBuyCoin : 'oeth'
               }
               needsApproval={needsApproval}
               selectedSwap={selectedSwap}
