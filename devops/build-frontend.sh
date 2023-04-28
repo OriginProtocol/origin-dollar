@@ -14,9 +14,9 @@ buildContracts() {
 }
 
 buildApp() {
-  buildContracts;
+  # buildContracts;
   NODE_ENV=production yarn install;
-  #yarn run nx build oeth-dapp
+  yarn run nx run oeth-dapp:build:production;
 
   #rm -rf node_modules # Purge
 
