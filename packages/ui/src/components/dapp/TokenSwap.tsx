@@ -151,6 +151,7 @@ const TokenSwap = ({
         estimates: [],
       }));
     }
+    onRefreshBalances();
   };
 
   const onRefresh = async () => {
