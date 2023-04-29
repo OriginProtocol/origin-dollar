@@ -1,8 +1,12 @@
 import { useEffect, useState } from 'react';
 import { ethers, BigNumber } from 'ethers';
-import { parseUnits } from '@originprotocol/utils';
+import {
+  parseUnits,
+  formatUnits,
+  formatWeiBalance,
+} from '@originprotocol/utils';
 import { useDebouncedCallback } from 'use-debounce';
-import { zipObject, reduce } from 'lodash';
+import { zipObject, reduce, orderBy } from 'lodash';
 
 type UseSwapEstimatorProps = {
   address: `0x${string}` | string | undefined;
@@ -13,6 +17,7 @@ type UseSwapEstimatorProps = {
   value: number;
   estimatesBy: any;
   onEstimate: any;
+  ethUsdPrice: number | undefined;
 };
 
 export type SwapEstimate = {
@@ -25,6 +30,7 @@ export type SwapEstimate = {
   contract?: any;
   hasProvidedAllowance?: boolean;
   breakdown: any;
+  value: number;
 };
 
 const providerRpc = process.env['NEXT_PUBLIC_ETHEREUM_RPC_PROVIDER'];
@@ -175,7 +181,7 @@ const estimateVaultMint = async ({
     );
 
     const receiveAmount = parseUnits(
-      String(value * parseFloat(ethers.utils.formatUnits(oracleCoinPrice, 18))),
+      String(value * parseFloat(formatUnits(oracleCoinPrice, 18))),
       toTokenDecimals
     );
 
@@ -213,6 +219,9 @@ const estimateVaultMint = async ({
         minimumAmount,
         hasProvidedAllowance,
         feeData,
+        value,
+        fromToken,
+        toToken,
       };
     }
 
@@ -234,6 +243,9 @@ const estimateVaultMint = async ({
         args: [fromToken?.address, fromTokenValue, minimumAmount],
         staleTime: 2_000,
       },
+      value,
+      fromToken,
+      toToken,
     };
   } catch (e) {
     return handleError(e as EstimateError);
@@ -337,6 +349,9 @@ const estimateVaultRedeem = async ({
         functionName: 'redeem',
         args: [fromTokenValue, minimumAmount],
       },
+      value,
+      fromToken,
+      toToken,
     };
   } catch (e) {
     return handleError(e as EstimateError);
@@ -402,6 +417,9 @@ const estimateZapperMint = async ({
           args: [depositAmount],
           staleTime: 2_000,
         },
+        value,
+        fromToken,
+        toToken,
       };
     }
 
@@ -435,63 +453,65 @@ const estimateZapperMint = async ({
       };
     }
 
-    const oracleCoinPrice = await vaultContract['priceUnitMint'](
-      fromToken.address
-    );
-
-    const receiveAmount = parseUnits(
-      String(value * parseFloat(ethers.utils.formatUnits(oracleCoinPrice, 18))),
-      toTokenDecimals
-    );
-
-    const minimumAmount = fromTokenValue.sub(
-      fromTokenValue.mul(settings?.tolerance * 100).div(10000)
-    );
-
-    const hasProvidedAllowance = fromTokenAllowance.gte(fromTokenValue);
-
-    // Needs approvals, get estimates
-    if (!hasProvidedAllowance) {
-      const [rebaseThreshold, autoAllocateThreshold] = await Promise.all([
-        vaultContract['rebaseThreshold'](),
-        vaultContract['autoAllocateThreshold'](),
-      ]);
-
-      let gasLimit = BigNumber.from(220000);
-
-      if (fromTokenValue.gt(autoAllocateThreshold)) {
-        // https://etherscan.io/tx/0x267da9abae04ae600d33d2c3e0b5772872e6138eaa074ce715afc8975c7f2deb
-        gasLimit = BigNumber.from(2900000);
-      } else if (fromTokenValue.gt(rebaseThreshold)) {
-        // https://etherscan.io/tx/0xc8ac03e33cab4bad9b54a6e6604ef6b8e11126340b93bbca1348167f548ad8fd
-        gasLimit = BigNumber.from(510000);
-      }
-
-      const approveGasLimit = await fromTokenContract
-        .connect(signer)
-        .estimateGas['approve'](vaultContract.address, fromTokenValue);
-
-      return {
-        contract: config.contract,
-        gasLimit: gasLimit.add(approveGasLimit),
-        receiveAmount,
-        minimumAmount,
-        hasProvidedAllowance,
-        feeData,
-      };
-    }
-
-    const gasLimit = await vaultContract
-      .connect(signer)
-      .estimateGas['mint'](fromToken.address, fromTokenValue, minimumAmount);
+    // const oracleCoinPrice = await vaultContract['priceUnitMint'](
+    //   fromToken.address
+    // );
+    //
+    // const receiveAmount = parseUnits(
+    //   String(value * parseFloat(formatUnits(oracleCoinPrice, 18))),
+    //   toTokenDecimals
+    // );
+    //
+    // const minimumAmount = fromTokenValue.sub(
+    //   fromTokenValue.mul(settings?.tolerance * 100).div(10000)
+    // );
+    //
+    // const hasProvidedAllowance = fromTokenAllowance.gte(fromTokenValue);
+    //
+    // // Needs approvals, get estimates
+    // if (!hasProvidedAllowance) {
+    //   const [rebaseThreshold, autoAllocateThreshold] = await Promise.all([
+    //     vaultContract['rebaseThreshold'](),
+    //     vaultContract['autoAllocateThreshold'](),
+    //   ]);
+    //
+    //   let gasLimit = BigNumber.from(220000);
+    //
+    //   if (fromTokenValue.gt(autoAllocateThreshold)) {
+    //     // https://etherscan.io/tx/0x267da9abae04ae600d33d2c3e0b5772872e6138eaa074ce715afc8975c7f2deb
+    //     gasLimit = BigNumber.from(2900000);
+    //   } else if (fromTokenValue.gt(rebaseThreshold)) {
+    //     // https://etherscan.io/tx/0xc8ac03e33cab4bad9b54a6e6604ef6b8e11126340b93bbca1348167f548ad8fd
+    //     gasLimit = BigNumber.from(510000);
+    //   }
+    //
+    //   const approveGasLimit = await fromTokenContract
+    //     .connect(signer)
+    //     .estimateGas['approve'](vaultContract.address, fromTokenValue);
+    //
+    //   return {
+    //     contract: config.contract,
+    //     gasLimit: gasLimit.add(approveGasLimit),
+    //     receiveAmount,
+    //     minimumAmount,
+    //     hasProvidedAllowance,
+    //     feeData,
+    //   };
+    // }
+    //
+    // const gasLimit = await vaultContract
+    //   .connect(signer)
+    //   .estimateGas['mint'](fromToken.address, fromTokenValue, minimumAmount);
 
     return {
       contract: config.contract,
-      gasLimit,
-      receiveAmount,
-      minimumAmount,
-      hasProvidedAllowance,
+      // gasLimit,
+      // receiveAmount,
+      // minimumAmount,
+      // hasProvidedAllowance,
       feeData,
+      fromToken,
+      toToken,
     };
   } catch (e) {
     return handleError(e as EstimateError);
@@ -633,6 +653,42 @@ const estimateSushiSwap = async ({
   }
 };
 
+const enrichAndSortEstimates = (
+  estimates: SwapEstimate[],
+  ethUsdPrice: number | undefined
+) => {
+  return orderBy(
+    estimates
+      .filter(({ error }: SwapEstimate) => !error)
+      .map((estimate: SwapEstimate) => {
+        const { feeData, receiveAmount, gasLimit, value } = estimate;
+        const { gasPrice } = feeData;
+        // gasPrice * gwei * gasLimit * eth cost
+        const gasCostUsd = parseFloat(
+          formatUnits(
+            gasPrice
+              .mul(gasLimit)
+              .mul(BigNumber.from(Math.trunc(ethUsdPrice || 1)))
+              .toString(),
+            18
+          )
+        );
+        const amountReceived = parseFloat(formatWeiBalance(receiveAmount));
+        return {
+          ...estimate,
+          ethUsdPrice,
+          gasCostUsd,
+          valueInUsd: parseFloat(String(value)) * (ethUsdPrice || 1),
+          receiveAmountUsd: amountReceived * (ethUsdPrice || 1),
+          effectivePrice:
+            (parseFloat(String(value)) + gasCostUsd) / amountReceived,
+        };
+      }),
+    'effectivePrice',
+    'asc'
+  );
+};
+
 const useSwapEstimator = ({
   address,
   settings,
@@ -642,6 +698,7 @@ const useSwapEstimator = ({
   value,
   estimatesBy,
   onEstimate,
+  ethUsdPrice,
 }: UseSwapEstimatorProps) => {
   const [isLoading, setIsLoading] = useState(false);
 
@@ -675,13 +732,13 @@ const useSwapEstimator = ({
         )
       );
 
-      console.log({
-        estimates,
-      });
+      const enriched = enrichAndSortEstimates(estimates, ethUsdPrice);
+
+      console.log(enriched);
 
       setIsLoading(false);
 
-      onEstimate(estimates);
+      onEstimate(enriched);
 
       return true;
     } catch (e) {

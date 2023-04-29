@@ -28,6 +28,8 @@ module.exports = {
         'gradient1-to': '#6A36FC',
         'gradient2-from': '#8C66FC',
         'gradient2-to': '#0274F1',
+        'gradient3-from': '#66FE90',
+        'gradient3-to': '#66D9FE',
         'origin-dimmed': '#828699',
         'origin-border': '#141519',
         'origin-blue': '#0074f0',

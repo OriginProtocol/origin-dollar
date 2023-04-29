@@ -74,6 +74,7 @@ const MintableActions = ({
     data: swapWriteData,
     isLoading: swapWriteIsLoading,
     write: swapWrite,
+    // @ts-ignore
   } = useContractWrite(swapWriteConfig);
 
   const swapWriteDisabled = !hasProvidedAllowance || !!swapWriteError;

@@ -117,13 +117,11 @@ const TokenSwap = ({
       estimatedTokenSymbol
     );
 
-  const onSwapEstimates = (newEstimates: any) => {
-    if (isEmpty(newEstimates)) return;
-    const sortedGasEstimates = orderBy(newEstimates, 'effectivePrice', 'asc');
-    // @ts-ignore
+  const onSwapEstimates = (sortedGasEstimates: any) => {
+    if (isEmpty(sortedGasEstimates)) return;
     setSwap((prev) => ({
       ...prev,
-      selectedEstimate: sortedGasEstimates.filter((i) => !i.error)[0],
+      selectedEstimate: sortedGasEstimates[0],
       estimates: sortedGasEstimates,
     }));
   };
@@ -139,6 +137,7 @@ const TokenSwap = ({
       value,
       estimatesBy,
       onEstimate: onSwapEstimates,
+      ethUsdPrice,
     }
   );
 

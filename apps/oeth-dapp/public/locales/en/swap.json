@@ -8,6 +8,9 @@
   "estimate": "estimate",
   "minReceived": "Min. received",
   "isLoading": "Loading...",
+  "effectivePrice": "Effective price",
+  "afterFees": "after fees",
+  "best": "Best",
   "redeem": {
     "DEFAULT": "Swap",
     "PENDING": "Swapping...",
