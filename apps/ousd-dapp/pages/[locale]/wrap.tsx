@@ -2,6 +2,7 @@ import { ErrorBoundary, WrapToken } from '@originprotocol/ui';
 import { useTranslation } from 'next-i18next';
 import { contracts } from '@originprotocol/web3';
 import { getStaticPaths, makeStaticProps } from '../../lib/getStatic';
+import { STORED_WRAPPED_LS_KEY } from '../../src/constants';
 
 const Wrap = () => {
   const { t } = useTranslation('wrap');
@@ -16,6 +17,7 @@ const Wrap = () => {
           cta: t('learnMore'),
           externalHref: 'https://www.ousd.com',
         }}
+        storageKey={STORED_WRAPPED_LS_KEY}
       />
     </ErrorBoundary>
   );

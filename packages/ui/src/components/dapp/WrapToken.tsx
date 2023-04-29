@@ -8,7 +8,7 @@ import {
   useEthUsdPrice,
 } from '@originprotocol/hooks';
 import { findTokenByAddress, formatWeiBalance } from '@originprotocol/utils';
-import { STORED_WRAPPED_LS_KEY, SWAP_TYPES } from '../../constants';
+import { SWAP_TYPES } from '../../constants';
 import ExternalCTA from '../core/ExternalCTA';
 import WrapForm from './WrapForm';
 import WrapActions from './WrapActions';
@@ -18,6 +18,7 @@ type WrapTokenProps = {
   unwrappedToken: any;
   wrappedToken: any;
   emptyState: any;
+  storageKey: string;
 };
 
 const FIELDS_TO_STORE = ['mode', 'value'];
@@ -27,6 +28,7 @@ const WrapToken = ({
   unwrappedToken,
   wrappedToken,
   emptyState,
+  storageKey,
 }: WrapTokenProps) => {
   const { address } = useAccount();
 
@@ -44,12 +46,11 @@ const WrapToken = ({
     selectedTokenAddress,
     estimatedTokenAddress,
     value,
-    selectedEstimate,
     showingEmptyState,
   } = swap;
 
   usePersistState(swap, {
-    storageKey: STORED_WRAPPED_LS_KEY,
+    storageKey: storageKey,
     saveFields: FIELDS_TO_STORE,
     onMount: (storedData: any) => {
       setSwap((prev) => ({

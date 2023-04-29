@@ -9,7 +9,7 @@ import {
   useEthUsdPrice,
 } from '@originprotocol/hooks';
 import { formatWeiBalance, findTokenBySymbol } from '@originprotocol/utils';
-import { SWAP_TYPES, STORED_TOKEN_LS_KEY } from '../../constants';
+import { SWAP_TYPES } from '../../constants';
 import SwapForm from './SwapForm';
 import SwapRoutes from './SwapRoutes';
 import SwapActions from './SwapActions';
@@ -20,6 +20,7 @@ type TokenSwapProps = {
   estimatesBy: any;
   supportedSwapTokens: string[];
   additionalRedeemTokens: any;
+  storageKey: string;
 };
 
 const FIELDS_TO_STORE = [
@@ -35,6 +36,7 @@ const TokenSwap = ({
   estimatesBy,
   supportedSwapTokens,
   additionalRedeemTokens,
+  storageKey,
 }: TokenSwapProps) => {
   const { address } = useAccount();
 
@@ -69,7 +71,7 @@ const TokenSwap = ({
   } = swap;
 
   usePersistState(swap, {
-    storageKey: STORED_TOKEN_LS_KEY,
+    storageKey: storageKey,
     saveFields: FIELDS_TO_STORE,
     onMount: (storedData: any) => {
       setSwap((prev) => ({

@@ -3,7 +3,7 @@ import { contracts } from '@originprotocol/web3';
 import { useTranslation } from 'next-i18next';
 import pick from 'lodash/pick';
 import { getStaticPaths, makeStaticProps } from '../../lib/getStatic';
-import { DAPP_TOKENS } from '../../src/constants';
+import { DAPP_TOKENS, STORED_TOKEN_LS_KEY } from '../../src/constants';
 import { BigNumber } from 'ethers';
 
 const canUseOETHVault = ({ mode, fromToken, toToken }) => {
@@ -69,6 +69,7 @@ const Swap = () => {
             logoSrc: '/tokens/OETH_MIX.png',
           },
         }}
+        storageKey={STORED_TOKEN_LS_KEY}
       />
     </ErrorBoundary>
   );
