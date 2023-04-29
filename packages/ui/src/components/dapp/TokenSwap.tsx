@@ -41,7 +41,7 @@ const TokenSwap = ({
   const { address } = useAccount();
 
   const [settings, setSettings] = useState({
-    tolerance: 0.1,
+    tolerance: 1,
     gwei: 0,
   });
 
@@ -120,7 +120,19 @@ const TokenSwap = ({
     );
 
   const onSwapEstimates = (sortedGasEstimates: any) => {
-    if (isEmpty(sortedGasEstimates)) return;
+    console.log(sortedGasEstimates);
+    if (
+      isEmpty(sortedGasEstimates) ||
+      !sortedGasEstimates.find((estimate: any) => !estimate.error)
+    ) {
+      // @ts-ignore
+      return setSwap((prev) => ({
+        ...prev,
+        selectedEstimate: null,
+        estimates: [],
+      }));
+    }
+    // Update estimates received, auto set the best one
     setSwap((prev) => ({
       ...prev,
       selectedEstimate: sortedGasEstimates[0],
