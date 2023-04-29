@@ -5,6 +5,7 @@ export default class AllowancesService {
   async fetchAllowances(account, contracts) {
     const {
       vault,
+      zapper,
 
       weth,
       reth,
@@ -20,6 +21,7 @@ export default class AllowancesService {
       rethAllowanceVault,
       frxethAllowanceVault,
       sfrxethAllowanceVault,
+      sfrxethAllowanceZapper,
       stethAllowanceVault,
       oethAllowanceVault,
       woethAllowance,
@@ -28,6 +30,7 @@ export default class AllowancesService {
       displayCurrency(await reth.allowance(account, vault.address), reth),
       displayCurrency(await frxeth.allowance(account, vault.address), frxeth),
       displayCurrency(await sfrxeth.allowance(account, vault.address), sfrxeth),
+      displayCurrency(await sfrxeth.allowance(account, zapper.address), sfrxeth),
       displayCurrency(await steth.allowance(account, vault.address), steth),
       displayCurrency(await oeth.allowance(account, vault.address), oeth),
       displayCurrency(await oeth.allowance(account, woeth.address), oeth),
@@ -53,6 +56,7 @@ export default class AllowancesService {
       },
       sfrxeth: {
         vault: sfrxethAllowanceVault,
+        zapper: sfrxethAllowanceZapper,
       },
       steth: {
         vault: stethAllowanceVault,

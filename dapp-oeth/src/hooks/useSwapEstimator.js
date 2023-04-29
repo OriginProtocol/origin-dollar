@@ -354,22 +354,6 @@ const useSwapEstimator = ({
       }
     }
 
-    const coinToReceiveBn = ethers.utils.parseUnits(
-      amount.toString(),
-      coinToReceiveDecimals
-    )
-
-    const contractCoinBalance = await coinToReceiveContract.balanceOf(
-      contracts.zapper.address
-    )
-
-    if (contractCoinBalance.lt(coinToReceiveBn)) {
-      return {
-        canDoSwap: false,
-        error: 'not_enough_funds_contract',
-      }
-    }
-
     const approveAllowanceNeeded = allowancesLoaded
       ? parseFloat(allowances[coinToSwap].zapper) === 0
       : true
