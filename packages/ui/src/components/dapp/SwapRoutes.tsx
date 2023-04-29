@@ -16,15 +16,11 @@ const SwapRoutes = ({ i18n, selectedEstimate, estimates }: SwapRoutesProps) => {
     selectedEstimate?.contract?.address === estimates?.[0]?.contract?.address;
 
   const {
-    feeData,
+    contract,
     receiveAmount,
     effectivePrice,
     gasCostUsd,
-    gasLimit,
-    receiveAmountUsd,
-    ethUsdPrice,
     valueInUsd,
-    fromToken,
     toToken,
   } = selectedEstimate || {};
 
@@ -54,21 +50,40 @@ const SwapRoutes = ({ i18n, selectedEstimate, estimates }: SwapRoutesProps) => {
             <h4 className="text-xl font-header text-[#FF4E4E]">-5.56%</h4>
           )}
         </div>
-        {selectedEstimate ? (
-          <div className="flex flex-row">
-            <span className="text-origin-dimmed min-w-[150px] text-sm">
-              ≈{formatUSD(valueInUsd - gasCostUsd)} {i18n('afterFees')}
+        <div className="flex flex-row w-full justify-between">
+          {selectedEstimate ? (
+            <div className="flex flex-row">
+              <span className="text-origin-dimmed min-w-[150px] text-sm">
+                ≈{formatUSD(valueInUsd - gasCostUsd)} {i18n('afterFees')}
+              </span>
+              <span className="text-origin-dimmed min-w-[150px] text-sm">
+                {i18n('effectivePrice')}: {formatUSD(effectivePrice)}
+              </span>
+            </div>
+          ) : (
+            <div className="flex flex-row">
+              <span className="text-origin-dimmed min-w-[150px] text-sm">
+                -
+              </span>
+              <span className="text-origin-dimmed min-w-[150px] text-sm">
+                -
+              </span>
+            </div>
+          )}
+          <div className="flex flex-row space-x-4">
+            <span className="flex flex-row text-origin-dimmed">
+              <Image
+                className="scale-[80%] mr-1"
+                src="/icons/gas.png"
+                height={14}
+                width={18}
+                alt="Gas price"
+              />
+              {formatUSD(gasCostUsd)}
             </span>
-            <span className="text-origin-dimmed min-w-[150px] text-sm">
-              {i18n('effectivePrice')}: {formatUSD(effectivePrice)}
-            </span>
+            <span className="text-origin-dimmed">{contract?.name}</span>
           </div>
-        ) : (
-          <div className="flex flex-row">
-            <span className="text-origin-dimmed min-w-[150px] text-sm">-</span>
-            <span className="text-origin-dimmed min-w-[150px] text-sm">-</span>
-          </div>
-        )}
+        </div>
       </div>
       {hasMoreRoutes && (
         <div className="flex flex-col w-full items-center justify-center">
