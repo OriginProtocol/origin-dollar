@@ -35,7 +35,7 @@ const ApproveSwap = ({
   const [isApproving, setIsApproving] = useState({})
   const web3react = useWeb3React()
   const { library, account, activate, active } = web3react
-  const coinApproved = stableCoinToApprove !== 'eth' || stage === 'done'
+  const coinApproved = stableCoinToApprove === 'eth' || stage === 'done'
   const isWrapped =
     selectedSwap &&
     selectedSwap.name === 'wousd' &&
