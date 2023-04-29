@@ -735,8 +735,6 @@ const useSwapEstimator = ({
 
       const enriched = enrichAndSortEstimates(estimates, ethUsdPrice);
 
-      console.log(enriched);
-
       setIsLoading(false);
 
       onEstimate(enriched);
