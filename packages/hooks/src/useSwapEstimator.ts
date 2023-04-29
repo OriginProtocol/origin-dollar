@@ -669,20 +669,24 @@ const enrichAndSortEstimates = (
           formatUnits(
             gasPrice
               .mul(gasLimit)
-              .mul(BigNumber.from(Math.trunc(ethUsdPrice || 1)))
+              .mul(BigNumber.from(Math.trunc(ethUsdPrice || 0)))
               .toString(),
             18
           )
         );
+        const valueInUsd = parseFloat(String(value)) * (ethUsdPrice || 0);
         const amountReceived = parseFloat(formatWeiBalance(receiveAmount));
+        const receiveAmountUsd = amountReceived * (ethUsdPrice || 0);
+        const effectivePrice =
+          (parseFloat(String(value)) + parseFloat(String(gasCostUsd))) /
+          amountReceived;
         return {
           ...estimate,
           ethUsdPrice,
           gasCostUsd,
-          valueInUsd: parseFloat(String(value)) * (ethUsdPrice || 1),
-          receiveAmountUsd: amountReceived * (ethUsdPrice || 1),
-          effectivePrice:
-            (parseFloat(String(value)) + gasCostUsd) / amountReceived,
+          valueInUsd,
+          receiveAmountUsd,
+          effectivePrice,
         };
       }),
     'effectivePrice',

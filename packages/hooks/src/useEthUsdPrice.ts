@@ -24,9 +24,8 @@ const useEthUsdPrice = () => {
         provider
       );
       const priceFeed = await chainlinkContract['latestRoundData']();
-      setEthPrice(
-        BigNumber.from(Math.floor(parseFloat(formatUnits(priceFeed.answer, 8))))
-      );
+      const ethPrice = Math.floor(parseFloat(formatUnits(priceFeed.answer, 8)));
+      setEthPrice(BigNumber.from(ethPrice));
     } catch (e) {
       console.error(
         'ERROR: Fetching USD price from chainlink ETH_USD contract',
@@ -41,7 +40,8 @@ const useEthUsdPrice = () => {
       const ethPriceResult = await fetch(CRYPTO_API_URI).then((res) =>
         res.json()
       );
-      setEthPrice(BigNumber.from(Math.floor(ethPriceResult?.USD)));
+      const ethPrice = Math.floor(ethPriceResult?.USD);
+      setEthPrice(BigNumber.from(ethPrice));
     } catch (e) {
       console.error('ERROR: Fetching USD price from crypto api', e);
     }
@@ -49,12 +49,11 @@ const useEthUsdPrice = () => {
   };
 
   const fetchEthPrice = async () => {
-    // if (chain?.id === 1) {
-    //   await fetchEthPriceChainlink();
-    // } else {
-    //   await fetchEthPriceCryptoApi();
-    // }
-    await fetchEthPriceCryptoApi();
+    if (chain?.id === 1) {
+      await fetchEthPriceChainlink();
+    } else {
+      await fetchEthPriceCryptoApi();
+    }
   };
 
   useEffect(() => {
