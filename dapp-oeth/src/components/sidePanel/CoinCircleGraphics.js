@@ -52,41 +52,27 @@ const CoinCircleGraphics = ({
                 )}
               </div>
             )}
-            {(drawType === 'all-same' ||
-              (Array.isArray(coin) && coin.length === 3)) && (
-              <>
+            {Array.isArray(coin) &&
+              coin.length === 4 &&
+              coin.map((c, i) => (
                 <img
-                  className={`coin coin-3-1 ${
+                  key={c}
+                  className={`coin coin-4-${i + 1} ${
                     showInnerContents ? '' : 'hidden'
                   }`}
-                  src={assetRootPath(
-                    `/images/currency/${
-                      Array.isArray(coin) ? coin[0] : coin
-                    }-icon-small.svg`
-                  )}
+                  src={assetRootPath(`/images/currency/${c}-icon-small.svg`)}
                 />
+              ))}
+            {drawType === 'all-same' &&
+              [coin, coin, coin].map((c, i) => (
                 <img
-                  className={`coin coin-3-2 ${
+                  key={c}
+                  className={`coin coin-3-${i + 1} ${
                     showInnerContents ? '' : 'hidden'
                   }`}
-                  src={assetRootPath(
-                    `/images/currency/${
-                      Array.isArray(coin) ? coin[1] : coin
-                    }-icon-small.svg`
-                  )}
+                  src={assetRootPath(`/images/currency/${c}-icon-small.svg`)}
                 />
-                <img
-                  className={`coin coin-3-3 ${
-                    showInnerContents ? '' : 'hidden'
-                  }`}
-                  src={assetRootPath(
-                    `/images/currency/${
-                      Array.isArray(coin) ? coin[2] : coin
-                    }-icon-small.svg`
-                  )}
-                />
-              </>
-            )}
+              ))}
             {drawType === 'per-coin' && coin.length === 2 && (
               <>
                 <img
@@ -190,6 +176,25 @@ const CoinCircleGraphics = ({
         .coin.hidden {
           left: 22.5px;
           top: 22.5px;
+        }
+
+        .coin-4-1 {
+          left: 12px;
+          top: 10.5px;
+        }
+
+        .coin-4-2 {
+          left: 33.5px;
+          top: 10.5px;
+        }
+
+        .coin-4-3 {
+          left: 12px;
+          top: 30px;
+        }
+        .coin-4-4 {
+          left: 33.5px;
+          top: 30px;
         }
 
         .coin-3-1 {
