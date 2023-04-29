@@ -72,10 +72,11 @@ const SidePanelTransactionMessage = ({
 
   const coinDataPresent =
     transaction.data &&
-    transaction.data.ousd !== undefined &&
-    transaction.data.dai !== undefined &&
-    transaction.data.usdt !== undefined &&
-    transaction.data.usdc !== undefined
+    transaction.data.oeth !== undefined &&
+    transaction.data.reth !== undefined &&
+    transaction.data.frxeth !== undefined &&
+    transaction.data.steth !== undefined &&
+    transaction.data.weth !== undefined
   const redeemDataAvailable = isRedeemTransaction && coinDataPresent
   const mintDataAvailable = isMintTransaction && coinDataPresent
 
@@ -151,19 +152,19 @@ const SidePanelTransactionMessage = ({
                 >
                   {!transaction.mined && (
                     <div className="title">
-                      {fbt('Increasing OUSD supply', 'Increasing OUSD supply')}
+                      {fbt('Increasing OETH supply', 'Increasing OETH supply')}
                     </div>
                   )}
                   {transaction.mined && !transaction.isError && (
                     <div className="title">
-                      {fbt('OUSD supply increased', 'OUSD supply increased')}
+                      {fbt('OETH supply increased', 'OETH supply increased')}
                     </div>
                   )}
                   {transaction.mined && transaction.isError && (
                     <div className="title">
                       {fbt(
-                        'Failed to increase OUSD supply',
-                        'Failed to increase OUSD supply'
+                        'Failed to increase OETH supply',
+                        'Failed to increase OETH supply'
                       )}
                     </div>
                   )}
@@ -187,24 +188,24 @@ const SidePanelTransactionMessage = ({
                   {!transaction.mined && (
                     <div className="title">
                       {fbt(
-                        'Opting in to OUSD rebasing',
-                        'Opting in to OUSD rebasing'
+                        'Opting in to OETH rebasing',
+                        'Opting in to OETH rebasing'
                       )}
                     </div>
                   )}
                   {transaction.mined && !transaction.isError && (
                     <div className="title">
                       {fbt(
-                        'Opted in to OUSD rebase',
-                        'Opted in to OUSD rebase'
+                        'Opted in to OETH rebase',
+                        'Opted in to OETH rebase'
                       )}
                     </div>
                   )}
                   {transaction.mined && transaction.isError && (
                     <div className="title">
                       {fbt(
-                        'Failed to opt in to OUSD rebase',
-                        'Failed to opt in to OUSD rebase'
+                        'Failed to opt in to OETH rebase',
+                        'Failed to opt in to OETH rebase'
                       )}
                     </div>
                   )}
@@ -261,7 +262,7 @@ const SidePanelTransactionMessage = ({
                 <div className="d-flex align-items-center">
                   <CoinCircleGraphics
                     transaction={transaction}
-                    coin={'ousd'}
+                    coin={'oeth'}
                     animate={animate}
                     showTxStatusIcon={false}
                     drawType="all-same"
@@ -291,7 +292,9 @@ const SidePanelTransactionMessage = ({
                   <CoinCircleGraphics
                     transaction={transaction}
                     coin={
-                      coin === 'mix' ? ['dai', 'usdt', 'usdc'] : coin.split(',')
+                      coin === 'mix'
+                        ? ['weth', 'reth', 'steth', 'frxeth']
+                        : coin.split(',')
                     }
                     animate={animate}
                     showTxStatusIcon={false}
@@ -306,36 +309,36 @@ const SidePanelTransactionMessage = ({
                   {!transaction.mined && (
                     <div className="title">
                       {fbt(
-                        'Swapping OUSD for ' +
+                        'Swapping OETH for ' +
                           fbt.param(
                             'coin',
                             coin.split(',').join(' & ').toUpperCase()
                           ),
-                        'Swapping OUSD for coins'
+                        'Swapping OETH for coins'
                       )}
                     </div>
                   )}
                   {transaction.mined && !transaction.isError && (
                     <div className="title">
                       {fbt(
-                        'Swapped OUSD for ' +
+                        'Swapped OETH for ' +
                           fbt.param(
                             'coin',
                             coin.split(',').join(' & ').toUpperCase()
                           ),
-                        'Swapped OUSD for coins'
+                        'Swapped OETH for coins'
                       )}
                     </div>
                   )}
                   {transaction.mined && transaction.isError && (
                     <div className="title">
                       {fbt(
-                        'Failed swapping OUSD for ' +
+                        'Failed swapping OETH for ' +
                           fbt.param(
                             'coin',
                             coin.split(',').join(' & ').toUpperCase()
                           ),
-                        'Failed swapping OUSD for coins'
+                        'Failed swapping OETH for coins'
                       )}
                     </div>
                   )}
@@ -376,7 +379,7 @@ const SidePanelTransactionMessage = ({
                   </div>
                   <CoinCircleGraphics
                     transaction={transaction}
-                    coin={'ousd'}
+                    coin={'oeth'}
                     animate={animate}
                     showTxStatusIcon={false}
                     drawType="all-same"
@@ -395,8 +398,8 @@ const SidePanelTransactionMessage = ({
                             'coin',
                             coin.split(',').join(' & ').toUpperCase()
                           ) +
-                          ' for OUSD',
-                        'Swapping coins for OUSD'
+                          ' for OETH',
+                        'Swapping coins for OETH'
                       )}
                     </div>
                   )}
@@ -406,8 +409,8 @@ const SidePanelTransactionMessage = ({
                         fbt.param(
                           'coin',
                           coin.split(',').join(' & ').toUpperCase()
-                        ) + ' swapped for OUSD',
-                        'Swapped coins for OUSD'
+                        ) + ' swapped for OETH',
+                        'Swapped coins for OETH'
                       )}
                     </div>
                   )}
@@ -419,8 +422,8 @@ const SidePanelTransactionMessage = ({
                             'coin',
                             coin.split(',').join(' & ').toUpperCase()
                           ) +
-                          ' for OUSD',
-                        'Failed swapping for OUSD'
+                          ' for OETH',
+                        'Failed swapping for OETH'
                       )}
                     </div>
                   )}
@@ -476,7 +479,7 @@ const SidePanelTransactionMessage = ({
                 <div className="d-flex align-items-center">
                   <CoinCircleGraphics
                     transaction={transaction}
-                    coin={'ousd'}
+                    coin={'oeth'}
                     animate={animate}
                     showTxStatusIcon={false}
                     drawType="all-same"
@@ -506,7 +509,9 @@ const SidePanelTransactionMessage = ({
                   <CoinCircleGraphics
                     transaction={transaction}
                     coin={
-                      coin === 'mix' ? ['dai', 'usdt', 'usdc'] : coin.split(',')
+                      coin === 'mix'
+                        ? ['weth', 'reth', 'steth', 'frxeth']
+                        : coin.split(',')
                     }
                     animate={animate}
                     showTxStatusIcon={false}
@@ -573,7 +578,7 @@ const SidePanelTransactionMessage = ({
                   </div>
                   <CoinCircleGraphics
                     transaction={transaction}
-                    coin={'ousd'}
+                    coin={'oeth'}
                     animate={animate}
                     showTxStatusIcon={false}
                     drawType="all-same"
@@ -622,48 +627,59 @@ const SidePanelTransactionMessage = ({
                     <>
                       <div>
                         {formatCurrencyConditional(
-                          transaction.data.ousd,
+                          transaction.data.oeth,
                           100,
-                          2,
+                          6,
                           0
                         )}{' '}
-                        OUSD
+                        OETH
                       </div>
                     </>
                   )}
                   {mintDataAvailable && (
                     <>
-                      {parseFloat(transaction.data.usdt) > 0 && (
+                      {parseFloat(transaction.data.weth) > 0 && (
                         <div>
                           {formatCurrencyConditional(
-                            transaction.data.usdt,
+                            transaction.data.weth,
                             100,
-                            2,
+                            6,
                             0
                           )}{' '}
-                          USDT
+                          WETH
                         </div>
                       )}
-                      {parseFloat(transaction.data.dai) > 0 && (
+                      {parseFloat(transaction.data.reth) > 0 && (
                         <div>
                           {formatCurrencyConditional(
-                            transaction.data.dai,
+                            transaction.data.reth,
                             100,
-                            2,
+                            6,
                             0
                           )}{' '}
-                          DAI
+                          rETH
                         </div>
                       )}
-                      {parseFloat(transaction.data.usdc) > 0 && (
+                      {parseFloat(transaction.data.steth) > 0 && (
                         <div>
                           {formatCurrencyConditional(
-                            transaction.data.usdc,
+                            transaction.data.steth,
                             100,
-                            2,
+                            6,
                             0
                           )}{' '}
-                          USDC
+                          stETH
+                        </div>
+                      )}
+                      {parseFloat(transaction.data.frxeth) > 0 && (
+                        <div>
+                          {formatCurrencyConditional(
+                            transaction.data.frxeth,
+                            100,
+                            6,
+                            0
+                          )}{' '}
+                          frxETH
                         </div>
                       )}
                     </>
@@ -675,37 +691,48 @@ const SidePanelTransactionMessage = ({
                 <div className="expand-box right d-flex flex-column align-items-center justify-content-center">
                   {redeemDataAvailable && (
                     <>
-                      {parseFloat(transaction.data.usdt) > 0 && (
+                      {parseFloat(transaction.data.weth) > 0 && (
                         <div>
                           {formatCurrencyConditional(
-                            transaction.data.usdt,
+                            transaction.data.weth,
                             100,
-                            2,
+                            6,
                             0
                           )}{' '}
-                          USDT
+                          WETH
                         </div>
                       )}
-                      {parseFloat(transaction.data.dai) > 0 && (
+                      {parseFloat(transaction.data.reth) > 0 && (
                         <div>
                           {formatCurrencyConditional(
-                            transaction.data.dai,
+                            transaction.data.reth,
                             100,
-                            2,
+                            6,
                             0
                           )}{' '}
-                          DAI
+                          rETH
                         </div>
                       )}
-                      {parseFloat(transaction.data.usdc) > 0 && (
+                      {parseFloat(transaction.data.steth) > 0 && (
                         <div>
                           {formatCurrencyConditional(
-                            transaction.data.usdc,
+                            transaction.data.steth,
                             100,
-                            2,
+                            6,
                             0
                           )}{' '}
-                          USDC
+                          stETH
+                        </div>
+                      )}
+                      {parseFloat(transaction.data.frxeth) > 0 && (
+                        <div>
+                          {formatCurrencyConditional(
+                            transaction.data.frxeth,
+                            100,
+                            6,
+                            0
+                          )}{' '}
+                          frxETH
                         </div>
                       )}
                     </>
@@ -714,12 +741,12 @@ const SidePanelTransactionMessage = ({
                     <>
                       <div>
                         {formatCurrencyConditional(
-                          transaction.data.ousd,
+                          transaction.data.oeth,
                           100,
-                          2,
+                          6,
                           0
                         )}{' '}
-                        OUSD
+                        OETH
                       </div>
                     </>
                   )}

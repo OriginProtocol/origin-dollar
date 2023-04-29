@@ -60,14 +60,14 @@ const CoinWithdrawBox = ({
             </div>
           ) : (
             <div className="coin-value d-flex justify-content-center active ml-md-auto">
-              {formatCurrency(animatedAmount, 2)}
+              {formatCurrency(animatedAmount, 6)}
             </div>
           )}
           <div className="exchange-rate d-none d-md-block">
-            {`@ ${formatCurrency(exchangeRate, 4)}/${coin.toUpperCase()}`}
+            {`@ ${formatCurrency(exchangeRate, 6)}/${coin.toUpperCase()}`}
           </div>
           <div className="exchange-rate d-md-none">
-            {`@ ${formatCurrency(exchangeRate, 4)}/${coin.toUpperCase()}`}
+            {`@ ${formatCurrency(exchangeRate, 6)}/${coin.toUpperCase()}`}
           </div>
         </div>
       </div>

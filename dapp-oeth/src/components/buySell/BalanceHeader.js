@@ -241,7 +241,7 @@ const BalanceHeader = ({
           </div>
           <div className="d-flex flex-column flex-md-row align-items-center justify-content-between box box-narrow w-100">
             <Statistic
-              title={fbt('Balance', 'OUSD Balance')}
+              title={fbt('Balance', 'OETH Balance')}
               value={
                 walletConnected &&
                 !isNaN(parseFloat(displayedBalance)) &&
@@ -265,7 +265,7 @@ const BalanceHeader = ({
             <Statistic
               title={fbt(
                 'Lifetime earnings',
-                'Lifetime OUSD balance header earnings'
+                'Lifetime OETH balance header earnings'
               )}
               titleLink={
                 account

@@ -27,38 +27,16 @@ const DappLinks = ({ page }) => {
               page === 'swap' ? 'selected' : ''
             }`}
           >
-            {fbt('Swap OUSD', 'Swap OUSD')}
+            {fbt('Swap OETH', 'Swap OETH')}
           </a>
         </Link>
-        {process.env.NEXT_PUBLIC_ENABLE_LIQUIDITY_MINING === 'true' && (
-          <Link href={adjustLinkHref('/earn')}>
-            <a
-              className={`d-flex align-items-center ${
-                page === 'earn' || page === 'pool-details' ? 'selected' : ''
-              }`}
-            >
-              {fbt('Earn OGN', 'Earn OGN')}
-            </a>
-          </Link>
-        )}
-        {process.env.NEXT_PUBLIC_ENABLE_STAKING === 'true' && (
-          <Link href={adjustLinkHref('/earn')}>
-            <a
-              className={`d-flex align-items-center ${
-                page === 'earn' ? 'selected' : ''
-              }`}
-            >
-              {fbt('Earn OGN', 'Earn OGN')}
-            </a>
-          </Link>
-        )}
         <Link href={adjustLinkHref('/wrap')}>
           <a
             className={`d-flex align-items-center ${
               page === 'wrap' ? 'selected' : ''
             }`}
           >
-            {fbt('Wrap OUSD', 'Wrap OUSD')}
+            {fbt('Wrap OETH', 'Wrap OETH')}
           </a>
         </Link>
         <Link href={adjustLinkHref('/history')}>
@@ -133,9 +111,10 @@ const Nav = ({ isMobile, locale, onLocale, page }) => {
           <Link href={adjustLinkHref('/')}>
             <a className="navbar-brand d-flex flex-column justify-content-center">
               <img
-                src={assetRootPath('/images/origin-dollar-logo.svg')}
+                src={assetRootPath('/images/origin-ether-logo.svg')}
                 className="origin-logo"
-                alt="Origin Dollar logo"
+                alt="OETH logo"
+                width={204}
               />
             </a>
           </Link>

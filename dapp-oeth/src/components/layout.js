@@ -26,7 +26,6 @@ const Layout = ({
   short,
   shorter,
   medium,
-  isStakePage,
   showUniswapNotice,
   storeTransaction,
   storeTransactionError,
@@ -55,47 +54,22 @@ const Layout = ({
     }
   }
 
-  const { pathname } = useRouter()
-  const burnPage = pathname === '/burn'
-  const stakePage = pathname === '/earn'
-  const stakes = useStoreState(StakeStore, (s) => s)
-  const showStakingBanner = !stakePage && stakes.stakes?.length
-
-  const notice = showStakingBanner || burnTimer().days >= 0
-
   return (
     <>
       <Head>
-        <title>OUSD</title>
+        <title>OETH</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        {isStakePage && (
-          <>
-            <meta
-              property="og:image"
-              key="og:image"
-              content="https://ousd.com/images/staking-facebook.png"
-            />
-            <meta
-              name="twitter:image"
-              key="twitter:image"
-              content="https://ousd.com/images/staking-twitter.png"
-            />
-          </>
-        )}
-        {!isStakePage && (
-          <>
-            <meta
-              property="og:image"
-              key="og:image"
-              content="https://ousd.com/images/share-facebook.png"
-            />
-            <meta
-              name="twitter:image"
-              key="twitter:image"
-              content="https://ousd.com/images/share-twitter.png"
-            />
-          </>
-        )}
+
+        <meta
+          property="og:image"
+          key="og:image"
+          content="https://ousd.com/images/share-facebook.png"
+        />
+        <meta
+          name="twitter:image"
+          key="twitter:image"
+          content="https://ousd.com/images/share-twitter.png"
+        />
       </Head>
       <div
         className={classnames(
@@ -134,7 +108,7 @@ const Layout = ({
             className="mb-2 mb-md-0 mr-md-3"
           />
           {fbt(
-            'Gas fees are high right now. It might be cheaper to buy OUSD on Uniswap.',
+            'Gas fees are high right now. It might be cheaper to buy OETH on Uniswap.',
             'Uniswap notice'
           )}
           <a
@@ -147,65 +121,6 @@ const Layout = ({
           </a>
         </div>
       </div>
-      {notice && (
-        <div
-          className={classnames(
-            `notice ${showStakingBanner ? 'staking pt-2' : 'pt-3'} ${
-              burnPage ? 'burn' : ''
-            } text-white text-center pb-3 dapp`
-          )}
-        >
-          <div className="container d-flex flex-column flex-md-row align-items-center">
-            {showStakingBanner ? (
-              <>
-                <div className="d-flex flex-column mt-0 justify-content-center px-4 px-md-0 text-md-left">
-                  <div className="title-text">
-                    {fbt(
-                      'Changes are coming to OGN staking.',
-                      'Changes are coming to OGN staking.'
-                    )}
-                  </div>
-                  <div className="text">
-                    {fbt(
-                      'Your existing stakes will not be impacted. Claim your OGN at the end of your staking period.',
-                      'Your existing stakes will not be impacted. Claim your OGN at the end of your staking period.'
-                    )}
-                  </div>
-                </div>
-                <div className="btn btn-dark mt-2 ml-md-auto">
-                  <Link href={adjustLinkHref('/earn')}>Legacy staking</Link>
-                </div>
-              </>
-            ) : burnPage ? (
-              <>
-                {fbt('OGV airdrop is live!', 'Airdrop notice')}
-                <a
-                  href={process.env.NEXT_PUBLIC_AIRDROP_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn btn-dark mt-3 mt-md-0 ml-md-auto"
-                >
-                  Check eligibility
-                </a>
-              </>
-            ) : (
-              <>
-                {fbt(
-                  'Only ' +
-                    fbt.param('burn-days', burnTimer().days) +
-                    ' days left to claim your OGV before the burn',
-                  'Burn notice'
-                )}
-                <Link href={adjustLinkHref('/burn')}>
-                  <a className="btn btn-dark gradient1 mt-3 mt-md-0 ml-md-auto">
-                    OGV Burn
-                  </a>
-                </Link>
-              </>
-            )}
-          </div>
-        </div>
-      )}
       <main className={classnames('dapp', { short, shorter, medium })}>
         {<div className="container">{children}</div>}
       </main>

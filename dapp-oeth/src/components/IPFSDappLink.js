@@ -7,9 +7,9 @@ export default function IPFSDappLink({ css }) {
 
   useEffect(() => {
     setDisplayIpfsLink(
-      ['app.ousd.com'].includes(window.location.host) ||
+      ['app.oeth.com'].includes(window.location.host) ||
         window.location.host.startsWith('localhost:') ||
-        window.location.host.startsWith('ousd-staging')
+        window.location.host.startsWith('oeth-dapp-staging')
     )
   }, [])
 

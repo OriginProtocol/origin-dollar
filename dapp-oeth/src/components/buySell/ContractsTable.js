@@ -26,11 +26,11 @@ const Info = ({ contract }) => {
             >
               {vault
                 ? fbt(
-                    'The Origin Vault only supports redeeming OUSD for a mix of stablecoins.',
+                    'The Origin Vault only supports redeeming OETH for a mix of altcoins.',
                     'Unsupported-vault-message'
                   )
                 : fbt(
-                    'This route only supports swapping OUSD for a single stablecoin.',
+                    'This route only supports swapping OETH for a single altcoin.',
                     'Unsupported-route-message'
                   )}
             </div>

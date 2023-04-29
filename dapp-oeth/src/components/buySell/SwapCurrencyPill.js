@@ -30,15 +30,19 @@ const CoinImage = ({ small, coin }) => {
         <div className="d-flex align-items-start">
           <img
             className={`${className} mixed coin-1 ${small ? 'small' : ''}`}
-            src={assetRootPath(`/images/currency/dai-icon-small.svg`)}
+            src={assetRootPath(`/images/currency/frxeth-icon-small.svg`)}
           />
           <img
             className={`${className} mixed coin-2 ${small ? 'small' : ''}`}
-            src={assetRootPath(`/images/currency/usdt-icon-small.svg`)}
+            src={assetRootPath(`/images/currency/reth-icon-small.svg`)}
           />
           <img
             className={`${className} mixed coin-3 ${small ? 'small' : ''}`}
-            src={assetRootPath(`/images/currency/usdc-icon-small.svg`)}
+            src={assetRootPath(`/images/currency/steth-icon-small.svg`)}
+          />
+          <img
+            className={`${className} mixed coin-4 ${small ? 'small' : ''}`}
+            src={assetRootPath(`/images/currency/weth-icon-small.svg`)}
           />
         </div>
       )}
@@ -68,6 +72,11 @@ const CoinImage = ({ small, coin }) => {
 
         .coin-3 {
           z-index: 3;
+          margin-left: -9px;
+        }
+
+        .coin-4 {
+          z-index: 4;
           margin-left: -9px;
         }
       `}</style>
