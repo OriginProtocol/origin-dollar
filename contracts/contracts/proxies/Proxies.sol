@@ -142,3 +142,10 @@ contract FraxETHStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 contract ConvexEthMetaStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
+
+/**
+ * @notice BuybackProxy delegates calls to Buyback implementation
+ */
+contract BuybackProxy is InitializeGovernedUpgradeabilityProxy {
+
+}

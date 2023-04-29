@@ -412,9 +412,6 @@ const submitProposalGnosisSafe = async (
   }
 
   const governorFive = await getGovernorFive();
-  const multisig5of8 = addresses.mainnet.Guardian;
-  const sMultisig5of8 = hre.ethers.provider.getSigner(multisig5of8);
-  await impersonateGuardian(multisig5of8);
 
   log(`Submitting proposal for ${description}`);
   log(`Args: ${JSON.stringify(proposalArgs, null, 2)}`);
@@ -738,6 +735,13 @@ function deploymentWithGovernanceProposal(opts, fn) {
     if (!hre) {
       hre = require("hardhat");
     }
+    if (isFork) {
+      const { deployerAddr } = await getNamedAccounts();
+      await hre.network.provider.request({
+        method: "hardhat_setBalance",
+        params: [deployerAddr, utils.parseEther("1000000").toHexString()],
+      });
+    }
     await runDeployment(hre);
     console.log(`${deployName} deploy done.`);
     return true;
@@ -829,6 +833,9 @@ function deploymentWithProposal(opts, fn) {
 
     await sanityCheckOgvGovernance();
     const proposal = await fn(tools);
+    if (proposal.actions.length == 0) {
+      return; // No governance proposal
+    }
     const propDescription = proposal.name;
     const propArgs = await proposeArgs(proposal.actions);
     const propOpts = proposal.opts || {};
