@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { ethers, BigNumber } from 'ethers';
 import { parseUnits } from '@originprotocol/utils';
 import { useDebouncedCallback } from 'use-debounce';
+import { zipObject, reduce } from 'lodash';
 
 type UseSwapEstimatorProps = {
   address: `0x${string}` | string | undefined;
@@ -17,11 +18,13 @@ type UseSwapEstimatorProps = {
 export type SwapEstimate = {
   error?: string;
   feeData?: any;
+  prepareParams: any;
   receiveAmount?: BigNumber;
   minimumAmount?: BigNumber;
   gasLimit?: number;
   contract?: any;
   hasProvidedAllowance?: boolean;
+  breakdown: any;
 };
 
 const providerRpc = process.env['NEXT_PUBLIC_ETHEREUM_RPC_PROVIDER'];
@@ -31,8 +34,6 @@ interface EstimateError extends Error {
     message: string;
   };
 }
-
-const ONE_ETHER_WEI = 1000000000000000000;
 
 const handleError = (e: EstimateError) => {
   console.log(e);
@@ -46,6 +47,18 @@ const handleError = (e: EstimateError) => {
   } else if (errorMessage.includes('Asset price below peg')) {
     return {
       error: 'BELOW_PEG',
+    };
+  } else if (errorMessage.includes('Redeem amount lower than minimum')) {
+    return {
+      error: 'PRICE_TOO_HIGH',
+    };
+  } else if (
+    errorMessage.includes('Redeem failed') ||
+    errorMessage.includes("reverted with reason string '5'") ||
+    errorMessage.includes('Insufficient 3CRV balance')
+  ) {
+    return {
+      error: 'NOT_ENOUGH_LIQUIDITY',
     };
   }
 
@@ -62,6 +75,12 @@ type EstimateToken = {
   balanceOf?: BigNumber;
 };
 
+type CheckEstimateProps = {
+  mode: string;
+  toToken: EstimateToken;
+  fromToken: EstimateToken;
+};
+
 type EstimateFnProps = {
   config: {
     contract: {
@@ -69,7 +88,7 @@ type EstimateFnProps = {
       abi: any;
     };
     token: EstimateToken;
-    tokenPredicate: (a: EstimateToken) => boolean;
+    canEstimateSwap: (a: CheckEstimateProps) => boolean;
   };
   mode: string;
   toToken: EstimateToken;
@@ -96,9 +115,8 @@ const estimateVaultMint = async ({
       error: 'UNSUPPORTED',
     };
   } else if (
-    config.tokenPredicate &&
-    config.tokenPredicate &&
-    !config.tokenPredicate({
+    config.canEstimateSwap &&
+    !config.canEstimateSwap({
       mode,
       fromToken,
       toToken,
@@ -209,6 +227,13 @@ const estimateVaultMint = async ({
       minimumAmount,
       hasProvidedAllowance,
       feeData,
+      prepareParams: {
+        address: config.contract.address,
+        abi: config.contract.abi,
+        functionName: 'mint',
+        args: [fromToken?.address, fromTokenValue, minimumAmount],
+        staleTime: 2_000,
+      },
     };
   } catch (e) {
     return handleError(e as EstimateError);
@@ -229,8 +254,8 @@ const estimateVaultRedeem = async ({
       error: 'UNSUPPORTED',
     };
   } else if (
-    config.tokenPredicate &&
-    !config.tokenPredicate({
+    config.canEstimateSwap &&
+    !config.canEstimateSwap({
       mode,
       fromToken,
       toToken,
@@ -266,6 +291,7 @@ const estimateVaultRedeem = async ({
     ]);
 
     const fromTokenValue = parseUnits(String(value), fromTokenDecimals);
+
     const hasEnoughBalance =
       fromToken?.balanceOf && fromToken?.balanceOf.gte(fromTokenValue);
 
@@ -275,18 +301,42 @@ const estimateVaultRedeem = async ({
       };
     }
 
-    const receiveAmount = fromTokenValue;
+    // Calculate mix splits
+    const [redeemOutputs, allRedeemableAssets] = await Promise.all([
+      vaultContract['calculateRedeemOutputs'](fromTokenValue),
+      vaultContract['getAllAssets'](),
+    ]);
+
+    const mixedAssets = zipObject(allRedeemableAssets, redeemOutputs);
+
+    const receiveAmount = reduce(
+      mixedAssets,
+      (acc, value) => acc.add(value),
+      BigNumber.from(0)
+    );
 
     const minimumAmount = fromTokenValue.sub(
       fromTokenValue.mul(settings?.tolerance * 100).div(10000)
     );
 
+    const gasLimit = await vaultContract
+      .connect(signer)
+      .estimateGas['redeem'](fromTokenValue, minimumAmount);
+
     return {
       contract: config.contract,
       receiveAmount,
+      gasLimit,
       minimumAmount,
       fromTokenValue,
       feeData,
+      breakdown: mixedAssets,
+      prepareParams: {
+        address: config.contract.address,
+        abi: config.contract.abi,
+        functionName: 'redeem',
+        args: [fromTokenValue, minimumAmount],
+      },
     };
   } catch (e) {
     return handleError(e as EstimateError);
@@ -307,8 +357,8 @@ const estimateZapperMint = async ({
       error: 'UNSUPPORTED',
     };
   } else if (
-    config.tokenPredicate &&
-    !config.tokenPredicate({
+    config.canEstimateSwap &&
+    !config.canEstimateSwap({
       mode,
       fromToken,
       toToken,
@@ -326,6 +376,35 @@ const estimateZapperMint = async ({
 
     const feeData = await provider.getFeeData();
 
+    const zapperContract = new ethers.Contract(
+      config.contract.address,
+      config.contract.abi,
+      provider
+    );
+
+    if (fromToken.symbol === 'ETH') {
+      const depositAmount = parseUnits(String(value), 18);
+      const gasLimit = await zapperContract
+        .connect(signer)
+        .estimateGas['deposit']({
+          value: depositAmount,
+        });
+      return {
+        contract: config.contract,
+        gasLimit,
+        receiveAmount: depositAmount,
+        hasProvidedAllowance: true,
+        feeData,
+        prepareParams: {
+          address: config.contract.address,
+          abi: config.contract.abi,
+          functionName: 'deposit',
+          args: [depositAmount],
+          staleTime: 2_000,
+        },
+      };
+    }
+
     const fromTokenContract = new ethers.Contract(
       fromToken.address,
       fromToken.abi,
@@ -338,15 +417,9 @@ const estimateZapperMint = async ({
       provider
     );
 
-    const vaultContract = new ethers.Contract(
-      config.contract.address,
-      config.contract.abi,
-      provider
-    );
-
     const [fromTokenAllowance, fromTokenDecimals, toTokenDecimals] =
       await Promise.all([
-        fromTokenContract['allowance'](address, vaultContract.address),
+        fromTokenContract['allowance'](address, zapperContract.address),
         fromTokenContract['decimals'](),
         toTokenContract['decimals'](),
       ]);
@@ -439,8 +512,8 @@ const estimateFlipperSwap = async ({
       error: 'UNSUPPORTED',
     };
   } else if (
-    config.tokenPredicate &&
-    !config.tokenPredicate({
+    config.canEstimateSwap &&
+    !config.canEstimateSwap({
       mode,
       fromToken,
       toToken,
@@ -466,8 +539,8 @@ const estimateUniswapV2Swap = async ({
       error: 'UNSUPPORTED',
     };
   } else if (
-    config.tokenPredicate &&
-    !config.tokenPredicate({
+    config.canEstimateSwap &&
+    !config.canEstimateSwap({
       mode,
       fromToken,
       toToken,
@@ -493,8 +566,8 @@ const estimateUniswapV3Swap = async ({
       error: 'UNSUPPORTED',
     };
   } else if (
-    config.tokenPredicate &&
-    !config.tokenPredicate({
+    config.canEstimateSwap &&
+    !config.canEstimateSwap({
       mode,
       fromToken,
       toToken,
@@ -520,8 +593,8 @@ const estimateCurveSwap = async ({
       error: 'UNSUPPORTED',
     };
   } else if (
-    config.tokenPredicate &&
-    !config.tokenPredicate({
+    config.canEstimateSwap &&
+    !config.canEstimateSwap({
       mode,
       fromToken,
       toToken,
@@ -547,8 +620,8 @@ const estimateSushiSwap = async ({
       error: 'UNSUPPORTED',
     };
   } else if (
-    config.tokenPredicate &&
-    !config.tokenPredicate({
+    config.canEstimateSwap &&
+    !config.canEstimateSwap({
       mode,
       fromToken,
       toToken,
@@ -575,7 +648,7 @@ const useSwapEstimator = ({
   // Defined swap, mint/redeem estimators
   const estimateLookup = {
     vault: mode === 'MINT' ? estimateVaultMint : estimateVaultRedeem,
-    zapper: mode === 'MINT' ? estimateZapperMint : null,
+    zapper: estimateZapperMint,
     flipper: estimateFlipperSwap,
     uniswapV2: estimateUniswapV2Swap,
     uniswapV3: estimateUniswapV3Swap,
@@ -592,6 +665,7 @@ const useSwapEstimator = ({
           // @ts-ignore
           estimateLookup[estimateKey]?.({
             config: estimatesBy[estimateKey],
+            mode,
             fromToken,
             toToken,
             address,

@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { BigNumber } from 'ethers';
-import { orderBy, isEmpty } from 'lodash';
+import { orderBy, isEmpty, values } from 'lodash';
 import {
   useAccount,
   useTokenBalances,
@@ -91,11 +91,16 @@ const TokenSwap = ({
 
   // Swappable tokens based
   const swapTokens = useMemo(() => {
-    return supportedSwapTokens?.map(
+    let allTokens = supportedSwapTokens?.map(
       // @ts-ignore
       findTokenBySymbol.bind(null, tokensWithBalances)
     );
-  }, [tokensWithBalances]);
+    if (mode === SWAP_TYPES.REDEEM) {
+      // Add in additionalRedeemTokens
+      allTokens = allTokens.concat(values(additionalRedeemTokens));
+    }
+    return allTokens;
+  }, [mode, tokensWithBalances]);
 
   const selectedToken = findTokenBySymbol(
     // @ts-ignore
@@ -103,11 +108,14 @@ const TokenSwap = ({
     selectedTokenSymbol
   );
 
-  const estimatedToken = findTokenBySymbol(
-    // @ts-ignore
-    tokensWithBalances,
-    estimatedTokenSymbol
-  );
+  // Account for additional types of redeem types
+  const estimatedToken =
+    additionalRedeemTokens[estimatedTokenSymbol] ||
+    findTokenBySymbol(
+      // @ts-ignore
+      tokensWithBalances,
+      estimatedTokenSymbol
+    );
 
   const onSwapEstimates = (newEstimates: any) => {
     if (isEmpty(newEstimates)) return;
@@ -115,7 +123,7 @@ const TokenSwap = ({
     // @ts-ignore
     setSwap((prev) => ({
       ...prev,
-      selectedEstimate: sortedGasEstimates[0],
+      selectedEstimate: sortedGasEstimates.filter((i) => !i.error)[0],
       estimates: sortedGasEstimates,
     }));
   };
@@ -163,12 +171,18 @@ const TokenSwap = ({
   };
 
   const onSwitchMode = () => {
-    setSwap((prev) => ({
-      ...prev,
-      mode: prev.mode === SWAP_TYPES.MINT ? SWAP_TYPES.REDEEM : SWAP_TYPES.MINT,
-      selectedTokenSymbol: prev.estimatedTokenSymbol,
-      estimatedTokenSymbol: prev.selectedTokenSymbol,
-    }));
+    setSwap((prev) => {
+      const wasmint = prev.mode === SWAP_TYPES.MINT;
+      return {
+        ...prev,
+        mode: wasmint ? SWAP_TYPES.REDEEM : SWAP_TYPES.MINT,
+        selectedTokenSymbol:
+          !wasmint && additionalRedeemTokens[prev.estimatedTokenSymbol]
+            ? supportedSwapTokens?.[0]
+            : prev.estimatedTokenSymbol,
+        estimatedTokenSymbol: prev.selectedTokenSymbol,
+      };
+    });
   };
 
   const onSelectToken = (tokenSymbol: string) => {

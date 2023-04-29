@@ -4,8 +4,9 @@ import { useTranslation } from 'next-i18next';
 import pick from 'lodash/pick';
 import { getStaticPaths, makeStaticProps } from '../../lib/getStatic';
 import { DAPP_TOKENS } from '../../src/constants';
+import { BigNumber } from 'ethers';
 
-const canUseOETHVault = ({ mode, fromToken }) => {
+const canUseOETHVault = ({ mode, fromToken, toToken }) => {
   if (mode === 'MINT') {
     // Cant use ETH or sfrxETH
     // Can use WETH, stETH, rETH, frxETH
@@ -19,14 +20,18 @@ const canUseOETHVault = ({ mode, fromToken }) => {
       ].includes(fromToken?.symbol)
     );
   } else if (mode === 'REDEEM') {
-    // Cant use anything but MIX
-    return !['MIX'].includes(fromToken?.symbol);
+    // Can only return a MIX of tokens
+    return ['OETH_MIX'].includes(toToken?.symbol);
   }
 };
 
-const canUseZapper = ({ mode, symbol }) =>
-  // Must be minting and needs to be ETH or sfrxETH
-  mode === 'MINT' && ['ETH', contracts.mainnet.sfrxETH.symbol].includes(symbol);
+const canUseZapper = ({ mode, fromToken }) => {
+  // Must be MINT and needs to be ETH or sfrxETH
+  return (
+    mode === 'MINT' &&
+    ['ETH', contracts.mainnet.sfrxETH.symbol].includes(fromToken?.symbol)
+  );
+};
 
 const Swap = () => {
   const { t } = useTranslation('swap');
@@ -39,11 +44,11 @@ const Swap = () => {
           vault: {
             contract: contracts.mainnet.OETHVaultProxy,
             token: contracts.mainnet.OETH,
-            tokenPredicate: canUseOETHVault,
+            canEstimateSwap: canUseOETHVault,
           },
           zapper: {
             contract: contracts.mainnet.OETHZapper,
-            tokenPredicate: canUseZapper,
+            canEstimateSwap: canUseZapper,
           },
         }}
         supportedSwapTokens={[
@@ -56,10 +61,12 @@ const Swap = () => {
           contracts.mainnet.sfrxETH.symbol,
         ]}
         additionalRedeemTokens={{
-          MIX: {
+          OETH_MIX: {
             name: 'Mix',
-            symbol: 'Mix',
+            symbol: 'OETH_MIX',
             tokens: [],
+            balanceOf: BigNumber.from(0),
+            logoSrc: '/tokens/OETH_MIX.png',
           },
         }}
       />

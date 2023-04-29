@@ -47,7 +47,7 @@ const MintableActions = ({
 }: ActionsProps) => {
   const [error, setError] = useState('');
   const { value, selectedEstimate } = swap || {};
-  const { hasProvidedAllowance, contract, minimumAmount } =
+  const { hasProvidedAllowance, contract, prepareParams } =
     selectedEstimate || {};
   const weiValue = parseUnits(String(value), selectedToken?.decimals || 18);
 
@@ -68,14 +68,7 @@ const MintableActions = ({
     config: swapWriteConfig,
     error: swapWriteError,
     refetch: refetchWrite,
-  } = usePrepareContractWrite({
-    address: contract?.address,
-    abi: contract?.abi,
-    functionName: 'mint',
-    args: [selectedToken?.address, weiValue, minimumAmount],
-    chainId: EXPECTED_CHAIN_ID,
-    staleTime: 2_000,
-  });
+  } = usePrepareContractWrite(prepareParams);
 
   const {
     data: swapWriteData,
@@ -189,23 +182,17 @@ const RedeemActions = ({
   onSuccess,
 }: ActionsProps) => {
   const [error, setError] = useState('');
-  const { value, selectedEstimate } = swap || {};
-  const { contract, minimumAmount } = selectedEstimate || {};
-  const weiValue = parseUnits(String(value), 18);
+  const { selectedEstimate } = swap || {};
+  const { prepareParams } = selectedEstimate || {};
 
   const { config: swapWriteConfig, error: swapWriteError } =
-    usePrepareContractWrite({
-      address: contract?.address,
-      abi: contract?.abi,
-      functionName: 'redeem',
-      args: [weiValue, minimumAmount],
-      chainId: EXPECTED_CHAIN_ID,
-    });
+    usePrepareContractWrite(prepareParams);
 
   const {
     data: swapWriteData,
     isLoading: swapWriteIsLoading,
     write: swapWrite,
+    // @ts-ignore
   } = useContractWrite(swapWriteConfig);
 
   const { isLoading: snapWriteIsSubmitted, isSuccess: snapWriteIsSuccess } =
