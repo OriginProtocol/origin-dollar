@@ -495,7 +495,7 @@ const estimateZapperMint = async ({
 
     const gasLimit = await zapperContract
       .connect(signer)
-      .estimateGas['depositSRFXETH'](fromTokenValue, minimumAmount);
+      .estimateGas['depositSFRXETH'](fromTokenValue, minimumAmount);
 
     return {
       contract: config.contract,
@@ -509,7 +509,7 @@ const estimateZapperMint = async ({
       prepareParams: {
         address: config.contract.address,
         abi: config.contract.abi,
-        functionName: 'depositSRFXETH',
+        functionName: 'depositSFRXETH',
         args: [fromTokenValue, minimumAmount],
         staleTime: 2_000,
       },
