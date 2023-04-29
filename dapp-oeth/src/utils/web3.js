@@ -7,7 +7,10 @@ export function isCorrectNetwork(chainId) {
   if (process.env.NODE_ENV === 'production') {
     return chainId === 1
   } else {
-    return chainId === 1337
+    return (
+      chainId ===
+      (parseInt(process.env.NEXT_PUBLIC_ETHEREUM_RPC_CHAIN_ID) || 1337)
+    )
   }
 }
 

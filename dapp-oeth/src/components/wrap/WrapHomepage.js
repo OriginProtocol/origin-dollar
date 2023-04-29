@@ -106,7 +106,7 @@ const WrapHomepage = ({
     wrapEstimate()
     approvalNeeded()
     calculateRate()
-  }, [inputAmount, woeth, allowances])
+  }, [inputAmount, woeth, oeth, allowances, allowancesLoaded])
 
   useEffect(() => {
     // currencies flipped
@@ -179,15 +179,13 @@ const WrapHomepage = ({
       if (swapMode === 'mint') {
         result = await signer(woeth).deposit(
           calculateSwapAmounts(inputAmount, 18).swapAmount,
-          account, 
-          { gasLimit: 300000 }
+          account
         )
       } else {
         result = await signer(woeth).redeem(
           calculateSwapAmounts(inputAmount, 18).swapAmount,
           account,
-          account, 
-          { gasLimit: 300000 }
+          account
         )
       }
 

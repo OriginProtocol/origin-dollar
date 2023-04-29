@@ -56,7 +56,6 @@ const ApproveSwap = ({
 
   const {
     vault,
-    flipper,
     uniV3SwapRouter,
     uniV2Router,
     sushiRouter,
@@ -141,11 +140,11 @@ const ApproveSwap = ({
   }, [selectedSwap])
 
   useEffect(() => {
-    const coinToContract = { weth, reth, steth, sfrxeth, oeth, frxeth }
+    const coinToContract = { weth, reth, steth, sfrxeth, oeth, frxeth, woeth }
     if (Object.keys(coinToContract).includes(stableCoinToApprove)) {
       setContract(coinToContract[stableCoinToApprove])
     }
-  }, [stableCoinToApprove, reth, weth, steth, oeth, frxeth])
+  }, [stableCoinToApprove, reth, weth, steth, oeth, frxeth, woeth])
 
   const ApprovalMessage = ({
     stage,

@@ -16,7 +16,6 @@ import daiAbi from 'constants/mainnetAbi/dai.json'
 import ognAbi from 'constants/mainnetAbi/ogn.json'
 import ogvAbi from 'constants/mainnetAbi/ogv.json'
 import veogvAbi from 'constants/mainnetAbi/veogv.json'
-import flipperAbi from 'constants/mainnetAbi/flipper.json'
 
 const curveFactoryMiniAbi = [
   {
@@ -160,7 +159,6 @@ export async function setupContracts(account, library, chainId, fetchId) {
     ogv,
     veogv,
     wousd,
-    flipper,
     uniV2OusdUsdt,
     uniV2OusdUsdt_iErc20,
     uniV2OusdUsdt_iUniPair,
@@ -256,7 +254,6 @@ export async function setupContracts(account, library, chainId, fetchId) {
   ogv = getContract(addresses.mainnet.OGV, ogvAbi)
   veogv = getContract(addresses.mainnet.veOGV, veogvAbi)
   wousd = getContract(addresses.mainnet.WOUSDProxy, wousdJSON.abi)
-  flipper = getContract(addresses.mainnet.Flipper, flipperAbi)
 
   const weth = getContract(addresses.mainnet.WETH, ognAbi)
   const reth = getContract(addresses.mainnet.rETH, ognAbi)
@@ -514,7 +511,6 @@ export async function setupContracts(account, library, chainId, fetchId) {
     ognStaking,
     ognStakingView,
     compensation,
-    flipper,
     chainlinkEthAggregator,
     chainlinkFastGasAggregator,
     curveAddressProvider,

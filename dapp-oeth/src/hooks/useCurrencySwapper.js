@@ -33,7 +33,6 @@ const useCurrencySwapper = ({
     usdt: usdtContract,
     usdc: usdcContract,
     dai: daiContract,
-    flipper,
     uniV3SwapRouter,
     uniV2Router,
     sushiRouter,

@@ -22,6 +22,7 @@ export default class AllowancesService {
       sfrxethAllowanceVault,
       stethAllowanceVault,
       oethAllowanceVault,
+      woethAllowance,
     ] = await Promise.all([
       displayCurrency(await weth.allowance(account, vault.address), weth),
       displayCurrency(await reth.allowance(account, vault.address), reth),
@@ -29,6 +30,7 @@ export default class AllowancesService {
       displayCurrency(await sfrxeth.allowance(account, vault.address), sfrxeth),
       displayCurrency(await steth.allowance(account, vault.address), steth),
       displayCurrency(await oeth.allowance(account, vault.address), oeth),
+      displayCurrency(await oeth.allowance(account, woeth.address), oeth),
     ])
 
     return {
@@ -38,6 +40,7 @@ export default class AllowancesService {
       },
       oeth: {
         vault: oethAllowanceVault,
+        woeth: woethAllowance,
       },
       weth: {
         vault: wethAllowanceVault,
