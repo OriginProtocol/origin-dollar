@@ -2,6 +2,7 @@ import { useNetwork } from 'wagmi';
 import { useEffect, useState } from 'react';
 import { BigNumber, ethers } from 'ethers';
 import { contracts } from '@originprotocol/web3';
+import { formatUnits } from '@originprotocol/utils';
 
 const providerRpcUrl = process.env['NEXT_PUBLIC_ETHEREUM_RPC_PROVIDER'] || '';
 
@@ -23,7 +24,9 @@ const useEthUsdPrice = () => {
         provider
       );
       const priceFeed = await chainlinkContract['latestRoundData']();
-      setEthPrice(priceFeed.answer);
+      setEthPrice(
+        BigNumber.from(Math.floor(parseFloat(formatUnits(priceFeed.answer, 8))))
+      );
     } catch (e) {
       console.error(
         'ERROR: Fetching USD price from chainlink ETH_USD contract',
