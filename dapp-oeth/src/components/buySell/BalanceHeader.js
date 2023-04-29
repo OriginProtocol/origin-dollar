@@ -55,7 +55,7 @@ const BalanceHeader = ({
     AnimatedOusdStore,
     (s) => s.animatedOethBalance
   )
-  const mintAnimationLimit = 0.5
+  const mintAnimationLimit = 0.00005
   const walletConnected = useStoreState(ContractStore, (s) => s.walletConnected)
 
   const [balanceEmphasised, setBalanceEmphasised] = useState(false)
@@ -101,7 +101,7 @@ const BalanceHeader = ({
         normalOusdAnimation(prevOethBalance, 0)
       }
     }
-  }, [oethBalance])
+  }, [oethBalance, prevOethBalance, oethBalanceLoaded])
 
   /*
    * Type: number or percentage
@@ -202,7 +202,7 @@ const BalanceHeader = ({
     )
   }
 
-  const displayedBalance = formatCurrency(animatedOethBalance || 0, 2)
+  const displayedBalance = formatCurrency(animatedOethBalance || 0, 6)
 
   useEffect(() => {
     localStorage.setItem('last_user_selected_apy', apyDays)

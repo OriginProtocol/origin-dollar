@@ -1,12 +1,12 @@
 import { BigNumber, ethers } from 'ethers'
 import { displayCurrency } from 'utils/math'
-import { isProduction, useAlchemyForBalances } from 'constants/env'
+import { isProduction } from 'constants/env'
 
 let jsonCallId = 1
 
 export default class BalancesService {
   async fetchBalances(account, contracts) {
-    if (isProduction && useAlchemyForBalances) {
+    if (isProduction) {
       return this.fetchBalancesForProduction(account, contracts)
     }
     return this.fetchBalancesForDevelopment(account, contracts)
@@ -16,7 +16,7 @@ export default class BalancesService {
     const { oeth, reth, weth, steth, frxeth, woeth } = contracts
 
     const allContractData = [
-      // { name: 'oeth', decimals: 18, contract: oeth, address: oeth.address },
+      { name: 'oeth', decimals: 18, contract: oeth, address: oeth.address },
       { name: 'reth', decimals: 18, contract: reth, address: reth.address },
       { name: 'weth', decimals: 18, contract: weth, address: weth.address },
       { name: 'steth', decimals: 18, contract: steth, address: steth.address },
@@ -70,11 +70,6 @@ export default class BalancesService {
         await oeth.provider.getBalance(account),
         18
       ),
-      // TODO: Check if Alchemy API returns OETH/WOETH balance as well
-      oeth: ethers.utils.formatUnits(
-        await oeth.balanceOf(account),
-        18
-      )
     }
 
     allContractData.forEach((contractData) => {

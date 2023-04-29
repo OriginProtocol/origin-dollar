@@ -72,7 +72,7 @@ const AccountStatusContent = ({ className, onOpen }) => {
                       }`}
                       key={currency}
                     >
-                      {formatCurrency(get(balances, currency, 0), 2)} {currency}
+                      {formatCurrency(get(balances, currency, 0), 6)} {currency}
                     </div>
                   ))}
                 </div>
