@@ -9,7 +9,7 @@ import ContractStore from 'stores/ContractStore'
 import ErrorModal from 'components/buySell/ErrorModal'
 import { currencies } from '../../constants/Contract'
 import withRpcProvider from 'hoc/withRpcProvider'
-import WrapOusdPill from 'components/wrap/WrapOusdPill'
+import WrapOETHPill from 'components/wrap/WrapOETHPill'
 import PillArrow from 'components/buySell/_PillArrow'
 import withIsMobile from 'hoc/withIsMobile'
 import { getUserSource } from 'utils/user'
@@ -47,7 +47,7 @@ const WrapHomepage = ({
 
   const allowances = useStoreState(AccountStore, (s) => s.allowances)
   const allowancesLoaded =
-    typeof allowances === 'object' && allowances.ousd !== undefined
+    typeof allowances === 'object' && allowances.oeth !== undefined
 
   const [wrapEstimate, setWrapEstimate] = useState('')
   const [needsApproval, setNeedsApproval] = useState()
@@ -57,14 +57,14 @@ const WrapHomepage = ({
   const web3react = useWeb3React()
   const { library } = web3react
 
-  const { ousd, wousd } = useStoreState(ContractStore, (s) => s.contracts)
+  const { oeth, woeth } = useStoreState(ContractStore, (s) => s.contracts)
 
   const signer = (contract) => {
     return contract.connect(library.getSigner(account))
   }
 
   useEffect(() => {
-    if (!wousd) {
+    if (!woeth) {
       return
     }
     const wrapEstimate = async () => {
@@ -73,17 +73,17 @@ const WrapHomepage = ({
         estimate = 0
       } else if (swapMode === 'mint') {
         estimate = await displayCurrency(
-          await wousd.convertToShares(
+          await woeth.convertToShares(
             calculateSwapAmounts(inputAmount, 18).swapAmount
           ),
-          wousd
+          woeth
         )
       } else {
         estimate = await displayCurrency(
-          await wousd.convertToAssets(
+          await woeth.convertToAssets(
             calculateSwapAmounts(inputAmount, 18).swapAmount
           ),
-          ousd
+          oeth
         )
       }
       setWrapEstimate(estimate)
@@ -93,20 +93,20 @@ const WrapHomepage = ({
         return
       }
       setNeedsApproval(
-        parseFloat(allowances.ousd.wousd) < inputAmount ? 'wousd' : ''
+        parseFloat(allowances.oeth.woeth) < inputAmount ? 'woeth' : ''
       )
     }
     const calculateRate = async () => {
       const conversionRate = await displayCurrency(
-        await wousd.convertToAssets(calculateSwapAmounts(1, 18).swapAmount),
-        wousd
+        await woeth.convertToAssets(calculateSwapAmounts(1, 18).swapAmount),
+        woeth
       )
       setRate(conversionRate)
     }
     wrapEstimate()
     approvalNeeded()
     calculateRate()
-  }, [inputAmount, wousd, allowances])
+  }, [inputAmount, woeth, allowances])
 
   useEffect(() => {
     // currencies flipped
@@ -149,10 +149,10 @@ const WrapHomepage = ({
   }
 
   const swapMetadata = () => {
-    const coinGiven = swapMode === 'mint' ? 'wousd' : 'ousd'
-    const coinReceived = swapMode === 'mint' ? 'ousd' : 'wousd'
+    const coinGiven = swapMode === 'mint' ? 'woeth' : 'oeth'
+    const coinReceived = swapMode === 'mint' ? 'oeth' : 'woeth'
     const swapAmount = swapMode === 'mint' ? inputAmount : wrapEstimate
-    const coinUsed = 'wousd'
+    const coinUsed = 'woeth'
     return {
       coinGiven,
       coinReceived,
@@ -161,9 +161,9 @@ const WrapHomepage = ({
     }
   }
 
-  const onWrapOusd = async () => {
+  const onWrapOETH = async () => {
     analytics.track(
-      swapMode === 'mint' ? 'On Wrap to wOUSD' : 'On Unwrap from wOUSD',
+      swapMode === 'mint' ? 'On Wrap to wETH' : 'On Unwrap from wETH',
       {
         category: 'wrap',
         label: swapMetadata.coinUsed,
@@ -175,26 +175,29 @@ const WrapHomepage = ({
 
     try {
       let result
+
       if (swapMode === 'mint') {
-        result = await signer(wousd).deposit(
+        result = await signer(woeth).deposit(
           calculateSwapAmounts(inputAmount, 18).swapAmount,
-          account
+          account, 
+          { gasLimit: 300000 }
         )
       } else {
-        result = await signer(wousd).redeem(
+        result = await signer(woeth).redeem(
           calculateSwapAmounts(inputAmount, 18).swapAmount,
           account,
-          account
+          account, 
+          { gasLimit: 300000 }
         )
       }
 
       storeTransaction(
         result,
         swapMode === 'mint' ? 'unwrap' : 'wrap',
-        'wousd',
+        'woeth',
         {
-          ousd: inputAmount,
-          wousd: inputAmount,
+          oeth: inputAmount,
+          woeth: inputAmount,
         }
       )
       setStoredCoinValuesToZero()
@@ -210,7 +213,7 @@ const WrapHomepage = ({
       const metadata = swapMetadata()
       // 4001 code happens when a user rejects the transaction
       if (e.code !== 4001) {
-        await storeTransactionError(swapMode, 'ousd')
+        await storeTransactionError(swapMode, 'oeth')
         analytics.track('Wrap failed', {
           category: 'wrap',
           label: e.message,
@@ -222,7 +225,7 @@ const WrapHomepage = ({
       }
 
       onMintingError(e)
-      console.error('Error wrapping ousd! ', e)
+      console.error('Error wrapping oeth! ', e)
     }
   }
 
@@ -247,7 +250,7 @@ const WrapHomepage = ({
                 }}
               />
             )}
-            <WrapOusdPill
+            <WrapOETHPill
               swapMode={swapMode}
               onAmountChange={async (amount) => {
                 setInputAmount(amount)
@@ -258,14 +261,14 @@ const WrapHomepage = ({
               onErrorChange={setBalanceError}
             />
             <PillArrow swapMode={swapMode} setSwapMode={setSwapMode} />
-            <WrapOusdPill swapMode={swapMode} wrapEstimate={wrapEstimate} />
+            <WrapOETHPill swapMode={swapMode} wrapEstimate={wrapEstimate} />
             <ApproveSwap
-              stableCoinToApprove={swapMode === 'mint' ? 'ousd' : 'wousd'}
+              stableCoinToApprove={swapMode === 'mint' ? 'oeth' : 'woeth'}
               needsApproval={needsApproval}
-              selectedSwap={{ name: 'wousd' }}
+              selectedSwap={{ name: 'woeth' }}
               inputAmount={inputAmount}
               swapMetadata={swapMetadata()}
-              onSwap={() => onWrapOusd()}
+              onSwap={() => onWrapOETH()}
               allowancesLoaded={allowancesLoaded}
               onMintingError={onMintingError}
               balanceError={balanceError}

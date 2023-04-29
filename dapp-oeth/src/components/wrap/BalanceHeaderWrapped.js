@@ -37,9 +37,9 @@ const BalanceHeaderWrapped = ({
   const walletConnected = useStoreState(ContractStore, (s) => s.walletConnected)
   const { animatedExpectedIncrease } = useExpectedYield(true)
 
-  const wousdBalance = useStoreState(AccountStore, (s) => s.balances['wousd'])
-  const wousdBalanceLoaded = typeof wousdBalance === 'string'
-  const wousdValue = useStoreState(AccountStore, (s) => s.wousdValue)
+  const woethBalance = useStoreState(AccountStore, (s) => s.balances['woeth'])
+  const woethBalanceLoaded = typeof woethBalance === 'string'
+  const woethValue = useStoreState(AccountStore, (s) => s.woethValue)
 
   /*
    * Type: number or percentage
@@ -136,7 +136,7 @@ const BalanceHeaderWrapped = ({
     )
   }
 
-  const displayedWousdBalance = formatCurrency(wousdBalance || 0, 2)
+  const displayedWoethBalance = formatCurrency(woethBalance || 0, 2)
 
   useEffect(() => {
     localStorage.setItem('last_user_selected_apy', apyDays)
@@ -255,29 +255,29 @@ const BalanceHeaderWrapped = ({
           </div>
           <div className="d-flex flex-column flex-md-row align-items-center justify-content-between box box-narrow w-100">
             <Statistic
-              title={fbt('wOUSD Balance', 'wOUSD Balance')}
+              title={fbt('wOETH Balance', 'wOETH Balance')}
               value={
                 walletConnected &&
-                !isNaN(parseFloat(displayedWousdBalance)) &&
-                wousdBalanceLoaded
-                  ? displayedWousdBalance
+                !isNaN(parseFloat(displayedWoethBalance)) &&
+                woethBalanceLoaded
+                  ? displayedWoethBalance
                   : '--.--'
               }
               type={'number'}
               marginBottom={true}
             />
             <Statistic
-              title={fbt('Current Value (OUSD)', 'Current Value (OUSD)')}
+              title={fbt('Current Value (OETH)', 'Current Value (OETH)')}
               value={
-                walletConnected && !isNaN(wousdValue)
-                  ? formatCurrency(wousdValue, 2)
+                walletConnected && !isNaN(woethValue)
+                  ? formatCurrency(woethValue, 2)
                   : '--.--'
               }
               type={'number'}
               marginBottom={true}
             />
             <Statistic
-              title={fbt('Pending yield (OUSD)', 'Pending yield (OUSD)')}
+              title={fbt('Pending yield (OETH)', 'Pending yield (OETH)')}
               value={
                 walletConnected
                   ? formatCurrency(animatedExpectedIncrease, 2)

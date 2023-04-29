@@ -38,8 +38,8 @@ const ApproveSwap = ({
   const coinApproved = stableCoinToApprove === 'eth' || stage === 'done'
   const isWrapped =
     selectedSwap &&
-    selectedSwap.name === 'wousd' &&
-    stableCoinToApprove === 'ousd'
+    selectedSwap.name === 'woeth' &&
+    stableCoinToApprove === 'oeth'
   const approvalNeeded =
     (selectedSwap &&
       !balanceError &&
@@ -65,13 +65,13 @@ const ApproveSwap = ({
     dai,
     usdc,
     ousd,
-    wousd,
     weth,
     reth,
     steth,
     frxeth,
     sfrxeth,
     oeth,
+    woeth,
     zapper,
   } = useStoreState(ContractStore, (s) => s.contracts || {})
 
@@ -118,13 +118,13 @@ const ApproveSwap = ({
     //     done: 'Sushi Swap',
     //   },
     // },
-    // wousd: {
-    //   contract: wousd,
-    //   name: {
-    //     approving: 'wOUSD',
-    //     done: 'wOUSD',
-    //   },
-    // },
+    woeth: {
+      contract: woeth,
+      name: {
+        approving: 'wOETH',
+        done: 'wOETH',
+      },
+    },
   }
 
   useEffect(() => {
@@ -203,8 +203,8 @@ const ApproveSwap = ({
     active,
   }) => {
     const coin =
-      stableCoinToApprove === 'wousd'
-        ? 'wOUSD'
+      stableCoinToApprove === 'woeth'
+        ? 'wOETH'
         : stableCoinToApprove.toUpperCase()
     const noSwapRouteAvailable = swapsLoaded && !selectedSwap
     if (swappingGloballyDisabled) {
@@ -220,7 +220,7 @@ const ApproveSwap = ({
       return fbt('Insufficient liquidity', 'Insufficient liquidity')
     } else if (isWrapped) {
       return fbt('Wrap', 'Wrap')
-    } else if (stableCoinToApprove === 'wousd') {
+    } else if (stableCoinToApprove === 'woeth') {
       return fbt('Unwrap', 'Unwrap')
     } else {
       return fbt('Swap', 'Swap')

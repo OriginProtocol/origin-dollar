@@ -20,7 +20,7 @@ import useBalancesQuery from '../queries/useBalancesQuery'
 import useAllowancesQuery from '../queries/useAllowancesQuery'
 import useApyQuery from '../queries/useApyQuery'
 import useTransactionHistoryPageQuery from '../queries/useTransactionHistoryPageQuery'
-import useWousdQuery from '../queries/useWousdQuery'
+import useWOETHQuery from '../queries/useWOETHQuery'
 import { transactionHistoryItemsPerPage } from 'utils/constants'
 
 const AccountListener = (props) => {
@@ -61,10 +61,10 @@ const AccountListener = (props) => {
     },
   })
 
-  const wousdQuery = useWousdQuery(account, contracts, {
-    onSuccess: (wousdValue) => {
+  const woethQuery = useWOETHQuery(account, contracts, {
+    onSuccess: (woethValue) => {
       AccountStore.update((s) => {
-        s.wousdValue = wousdValue
+        s.woethValue = woethValue
       })
     },
   })
@@ -314,7 +314,7 @@ const AccountListener = (props) => {
 
     balancesQuery.refetch()
     allowancesQuery.refetch()
-    // wousdQuery.refetch()
+    woethQuery.refetch()
 
     await Promise.all([
       loadRebaseStatus(),

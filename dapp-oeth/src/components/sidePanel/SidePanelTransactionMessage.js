@@ -520,19 +520,19 @@ const SidePanelTransactionMessage = ({
                 >
                   {!transaction.mined && (
                     <div className="title">
-                      {fbt('Wrapping OUSD into wOUSD', 'Wrapping OUSD')}
+                      {fbt('Wrapping OETH into wOETH', 'Wrapping OETH')}
                     </div>
                   )}
                   {transaction.mined && !transaction.isError && (
                     <div className="title">
-                      {fbt('Wrapped OUSD into wOUSD', 'Wrapped OUSD')}
+                      {fbt('Wrapped OETH into wOETH', 'Wrapped OETH')}
                     </div>
                   )}
                   {transaction.mined && transaction.isError && (
                     <div className="title">
                       {fbt(
-                        'Failed wrapping OUSD into wOUSD',
-                        'Failed wrapping OUSD'
+                        'Failed wrapping OETH into wOETH',
+                        'Failed wrapping OETH'
                       )}
                     </div>
                   )}
@@ -586,19 +586,19 @@ const SidePanelTransactionMessage = ({
                 >
                   {!transaction.mined && (
                     <div className="title">
-                      {fbt('Unwrapping wOUSD into OUSD', 'Unwrapping wOUSD')}
+                      {fbt('Unwrapping wOETH into OETH', 'Unwrapping wOETH')}
                     </div>
                   )}
                   {transaction.mined && !transaction.isError && (
                     <div className="title">
-                      {fbt('wOUSD unwrapped into OUSD', 'Unwrapped wOUSD')}
+                      {fbt('wOETH unwrapped into OETH', 'Unwrapped wOETH')}
                     </div>
                   )}
                   {transaction.mined && transaction.isError && (
                     <div className="title">
                       {fbt(
-                        'Failed unwrapping wOUSD into OUSD',
-                        'Failed unwrapping wOUSD'
+                        'Failed unwrapping wOETH into OETH',
+                        'Failed unwrapping wOETH'
                       )}
                     </div>
                   )}

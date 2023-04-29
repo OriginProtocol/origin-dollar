@@ -9,5 +9,5 @@ export const QUERY_KEYS = {
     filters,
     { account },
   ],
-  WousdValue: (account) => ['wousdValue', { account }],
+  WOETHValue: (account) => ['woethValue', { account }],
 }

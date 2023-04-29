@@ -266,6 +266,10 @@ export async function setupContracts(account, library, chainId, fetchId) {
     addresses.mainnet.OETHProxy,
     network.contracts['OETH'].abi
   )
+  const woeth = getContract(
+    addresses.mainnet.WOETHProxy,
+    network.contracts['WOETH'].abi
+  )
   const sfrxeth = getContract(addresses.mainnet.sfrxETH, ognAbi)
   const zapper = getContract(
     addresses.mainnet.OETHZapper,
@@ -346,6 +350,7 @@ export async function setupContracts(account, library, chainId, fetchId) {
       weth,
       reth,
       frxeth,
+      // woeth,
       // sfrxeth,
       steth,
     }
@@ -431,9 +436,9 @@ export async function setupContracts(account, library, chainId, fetchId) {
       if (!walletConnected) {
         return
       }
-      const credits = await ousd.creditsBalanceOf(account)
-      const wousdValue = await wousd.maxWithdraw(account)
-      const creditsWrapped = wousdValue.mul(credits[1])
+      const credits = await oeth.creditsBalanceOf(account)
+      const woethValue = await woeth.maxWithdraw(account)
+      const creditsWrapped = woethValue.mul(credits[1])
       AccountStore.update((s) => {
         s.creditsBalanceOf = ethers.utils.formatUnits(credits[0], 18)
         s.creditsWrapped = ethers.utils.formatUnits(creditsWrapped, 36)
@@ -521,6 +526,7 @@ export async function setupContracts(account, library, chainId, fetchId) {
     frxeth,
     steth,
     oeth,
+    woeth,
     sfrxeth,
     zapper,
   }

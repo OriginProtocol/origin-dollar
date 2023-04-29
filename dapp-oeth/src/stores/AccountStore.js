@@ -6,7 +6,7 @@ const AccountStore = new Store({
   refetchStakingData: false,
   allowances: {},
   balances: {},
-  wousdValue: 0,
+  woethValue: 0,
   establishingConnection: true,
   walletSelectModalState: false,
   connectorName: null,

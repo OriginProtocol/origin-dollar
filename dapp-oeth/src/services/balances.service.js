@@ -32,7 +32,7 @@ export default class BalancesService {
         contract: frxeth,
         address: frxeth.address,
       },
-      // { name: 'woeth', decimals: 18, contract: woeth, address: woeth.address },
+      { name: 'woeth', decimals: 18, contract: woeth, address: woeth.address },
     ]
 
     const data = {
@@ -107,7 +107,7 @@ export default class BalancesService {
       rethBalance,
       stethBalance,
       frxethBalance,
-      // woethBalance,
+      woethBalance,
     ] = await Promise.all([
       /* IMPORTANT (!) production uses a different method to load balances. Any changes here need to
        * also happen in production version of this function.
@@ -118,7 +118,7 @@ export default class BalancesService {
       displayCurrency(await reth.balanceOf(account), reth),
       displayCurrency(await steth.balanceOf(account), steth),
       displayCurrency(await frxeth.balanceOf(account), frxeth),
-      // displayCurrency(await woeth.balanceOf(account), woeth),
+      displayCurrency(await woeth.balanceOf(account), woeth),
     ])
 
     return {
@@ -128,7 +128,7 @@ export default class BalancesService {
       reth: rethBalance,
       steth: stethBalance,
       frxeth: frxethBalance,
-      // woeth: woethBalance,
+      woeth: woethBalance,
     }
   }
 }
