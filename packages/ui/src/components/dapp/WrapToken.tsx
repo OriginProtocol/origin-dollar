@@ -118,6 +118,7 @@ const WrapToken = ({
         value: 0,
       }));
     }
+    onRefreshBalances();
   };
 
   const onChangeValue = (value: number) => {
