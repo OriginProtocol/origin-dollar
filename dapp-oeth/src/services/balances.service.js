@@ -13,7 +13,7 @@ export default class BalancesService {
   }
 
   async fetchBalancesForProduction(account, contracts) {
-    const { oeth, reth, weth, steth, frxeth, woeth } = contracts
+    const { oeth, reth, weth, steth, frxeth, sfrxeth, woeth } = contracts
 
     const allContractData = [
       { name: 'oeth', decimals: 18, contract: oeth, address: oeth.address },
@@ -29,8 +29,8 @@ export default class BalancesService {
       {
         name: 'sfrxeth',
         decimals: 18,
-        contract: frxeth,
-        address: frxeth.address,
+        contract: sfrxeth,
+        address: sfrxeth.address,
       },
       { name: 'woeth', decimals: 18, contract: woeth, address: woeth.address },
     ]
