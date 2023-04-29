@@ -10,9 +10,11 @@ type SwapRoutesProps = {
 
 const SwapRoutes = ({ i18n, selectedEstimate, estimates }: SwapRoutesProps) => {
   const hasMoreRoutes = estimates > 1;
+
   const isBest =
+    selectedEstimate &&
     selectedEstimate?.contract?.address === estimates?.[0]?.contract?.address;
-  console.log(selectedEstimate);
+
   const {
     feeData,
     receiveAmount,
@@ -38,26 +40,35 @@ const SwapRoutes = ({ i18n, selectedEstimate, estimates }: SwapRoutesProps) => {
         <div className="flex flex-row w-full justify-between">
           <div className="flex flex-row space-x-2">
             <span className="text-xl font-header font-semibold">
-              {estimatedReceiveAmount} {toToken?.symbol}
+              {estimatedReceiveAmount || '-'} {toToken?.symbol}
             </span>
             <span className="hidden lg:flex text-origin-dimmed text-sm relative top-[4px]">
               ({i18n('estimate')})
             </span>
           </div>
-          {isBest && (
+          {isBest ? (
             <h4 className="text-xl font-header font-bold bg-gradient-to-r from-gradient3-from to-gradient3-to inline-block text-transparent bg-clip-text">
               Best
             </h4>
+          ) : (
+            <h4 className="text-xl font-header text-[#FF4E4E]">-5.56%</h4>
           )}
         </div>
-        <div className="flex flex-row">
-          <span className="text-origin-dimmed min-w-[150px] text-sm">
-            ≈{formatUSD(valueInUsd - gasCostUsd)} {i18n('afterFees')}
-          </span>
-          <span className="text-origin-dimmed min-w-[150px] text-sm">
-            {i18n('effectivePrice')}: {formatUSD(effectivePrice)}
-          </span>
-        </div>
+        {selectedEstimate ? (
+          <div className="flex flex-row">
+            <span className="text-origin-dimmed min-w-[150px] text-sm">
+              ≈{formatUSD(valueInUsd - gasCostUsd)} {i18n('afterFees')}
+            </span>
+            <span className="text-origin-dimmed min-w-[150px] text-sm">
+              {i18n('effectivePrice')}: {formatUSD(effectivePrice)}
+            </span>
+          </div>
+        ) : (
+          <div className="flex flex-row">
+            <span className="text-origin-dimmed min-w-[150px] text-sm">-</span>
+            <span className="text-origin-dimmed min-w-[150px] text-sm">-</span>
+          </div>
+        )}
       </div>
       {hasMoreRoutes && (
         <div className="flex flex-col w-full items-center justify-center">
