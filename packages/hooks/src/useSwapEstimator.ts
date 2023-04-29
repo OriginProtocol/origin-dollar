@@ -415,14 +415,18 @@ const estimateZapperMint = async ({
           address: config.contract.address,
           abi: config.contract.abi,
           functionName: 'deposit',
-          args: [depositAmount],
           staleTime: 2_000,
+          overrides: {
+            value: depositAmount,
+          },
         },
         value,
         fromToken,
         toToken,
       };
     }
+
+    // Process from token (erc20)
 
     const fromTokenContract = new ethers.Contract(
       fromToken.address,
@@ -436,12 +440,10 @@ const estimateZapperMint = async ({
       provider
     );
 
-    const [fromTokenAllowance, fromTokenDecimals, toTokenDecimals] =
-      await Promise.all([
-        fromTokenContract['allowance'](address, zapperContract.address),
-        fromTokenContract['decimals'](),
-        toTokenContract['decimals'](),
-      ]);
+    const [fromTokenDecimals, contractTokenBalance] = await Promise.all([
+      fromTokenContract['decimals'](),
+      toTokenContract['balanceOf'](zapperContract.address),
+    ]);
 
     const fromTokenValue = parseUnits(String(value), fromTokenDecimals);
 
@@ -454,65 +456,63 @@ const estimateZapperMint = async ({
       };
     }
 
-    // const oracleCoinPrice = await vaultContract['priceUnitMint'](
-    //   fromToken.address
-    // );
-    //
-    // const receiveAmount = parseUnits(
-    //   String(value * parseFloat(formatUnits(oracleCoinPrice, 18))),
-    //   toTokenDecimals
-    // );
-    //
-    // const minimumAmount = fromTokenValue.sub(
-    //   fromTokenValue.mul(settings?.tolerance * 100).div(10000)
-    // );
-    //
-    // const hasProvidedAllowance = fromTokenAllowance.gte(fromTokenValue);
-    //
-    // // Needs approvals, get estimates
-    // if (!hasProvidedAllowance) {
-    //   const [rebaseThreshold, autoAllocateThreshold] = await Promise.all([
-    //     vaultContract['rebaseThreshold'](),
-    //     vaultContract['autoAllocateThreshold'](),
-    //   ]);
-    //
-    //   let gasLimit = BigNumber.from(220000);
-    //
-    //   if (fromTokenValue.gt(autoAllocateThreshold)) {
-    //     // https://etherscan.io/tx/0x267da9abae04ae600d33d2c3e0b5772872e6138eaa074ce715afc8975c7f2deb
-    //     gasLimit = BigNumber.from(2900000);
-    //   } else if (fromTokenValue.gt(rebaseThreshold)) {
-    //     // https://etherscan.io/tx/0xc8ac03e33cab4bad9b54a6e6604ef6b8e11126340b93bbca1348167f548ad8fd
-    //     gasLimit = BigNumber.from(510000);
-    //   }
-    //
-    //   const approveGasLimit = await fromTokenContract
-    //     .connect(signer)
-    //     .estimateGas['approve'](vaultContract.address, fromTokenValue);
-    //
-    //   return {
-    //     contract: config.contract,
-    //     gasLimit: gasLimit.add(approveGasLimit),
-    //     receiveAmount,
-    //     minimumAmount,
-    //     hasProvidedAllowance,
-    //     feeData,
-    //   };
-    // }
-    //
-    // const gasLimit = await vaultContract
-    //   .connect(signer)
-    //   .estimateGas['mint'](fromToken.address, fromTokenValue, minimumAmount);
+    const contractHasEnoughTokens =
+      contractTokenBalance && contractTokenBalance.lt(fromTokenValue);
+
+    if (!contractHasEnoughTokens) {
+      return {
+        error: 'NOT_ENOUGH_CONTRACT_FUNDS',
+      };
+    }
+
+    const fromTokenAllowance = await fromTokenContract['allowance'](
+      address,
+      zapperContract.address
+    );
+    const hasProvidedAllowance = fromTokenAllowance.gte(fromTokenValue);
+
+    // Check approvals against zapper for from token
+    if (!hasProvidedAllowance) {
+      const approveGasLimit = await fromTokenContract
+        .connect(signer)
+        .estimateGas['approve'](zapperContract.address, fromTokenValue);
+
+      return {
+        contract: config.contract,
+        gasLimit: approveGasLimit,
+        receiveAmount: fromTokenValue,
+        hasProvidedAllowance,
+        feeData,
+        value,
+        fromToken,
+        toToken,
+      };
+    }
+
+    const minimumAmount = fromTokenValue.sub(
+      fromTokenValue.mul(settings?.tolerance * 100).div(10000)
+    );
+
+    const gasLimit = await zapperContract
+      .connect(signer)
+      .estimateGas['depositSRFXETH'](fromTokenValue, minimumAmount);
 
     return {
       contract: config.contract,
-      // gasLimit,
-      // receiveAmount,
-      // minimumAmount,
-      // hasProvidedAllowance,
+      gasLimit,
+      receiveAmount: fromTokenValue,
+      hasProvidedAllowance,
       feeData,
+      value,
       fromToken,
       toToken,
+      prepareParams: {
+        address: config.contract.address,
+        abi: config.contract.abi,
+        functionName: 'depositSRFXETH',
+        args: [fromTokenValue, minimumAmount],
+        staleTime: 2_000,
+      },
     };
   } catch (e) {
     return handleError(e as EstimateError);

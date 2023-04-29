@@ -46,9 +46,9 @@ const SwapRoutes = ({ i18n, selectedEstimate, estimates }: SwapRoutesProps) => {
             <h4 className="text-xl font-header font-bold bg-gradient-to-r from-gradient3-from to-gradient3-to inline-block text-transparent bg-clip-text">
               Best
             </h4>
-          ) : (
-            <h4 className="text-xl font-header text-[#FF4E4E]">-5.56%</h4>
-          )}
+          ) : selectedEstimate ? (
+            <h4 className="text-xl font-header text-[#FF4E4E]">-</h4>
+          ) : null}
         </div>
         <div className="flex flex-col lg:flex-row w-full justify-between space-y-3">
           {selectedEstimate ? (
@@ -57,7 +57,7 @@ const SwapRoutes = ({ i18n, selectedEstimate, estimates }: SwapRoutesProps) => {
                 ≈{formatUSD(valueInUsd - gasCostUsd)} {i18n('afterFees')}
               </span>
               <span className="text-origin-dimmed min-w-[150px] text-sm">
-                {i18n('effectivePrice')}: {formatUSD(effectivePrice)}
+                {i18n('effectivePrice')}: {formatUSD(effectivePrice || 0)}
               </span>
             </div>
           ) : (
@@ -79,7 +79,7 @@ const SwapRoutes = ({ i18n, selectedEstimate, estimates }: SwapRoutesProps) => {
                 width={18}
                 alt="Gas price"
               />
-              {formatUSD(gasCostUsd)}
+              {formatUSD(gasCostUsd || 0)}
             </span>
             <span className="text-origin-dimmed">{contract?.name}</span>
           </div>
