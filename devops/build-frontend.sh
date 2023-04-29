@@ -15,10 +15,7 @@ buildContracts() {
 
 buildApp() {
   # buildContracts;
-  cd apps/$APP_ID;
-  export NODE_ENV=production;
-  yarn install;
-  yarn run build;
+  npx nx build oeth-dapp --prod
 }
 
 buildApp
