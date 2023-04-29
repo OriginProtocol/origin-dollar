@@ -325,18 +325,32 @@ const useSwapEstimator = ({
    */
   const estimateSwapSuitabilityZapper = async () => {
     const amount = parseFloat(inputAmountRaw)
-    if (amount > 2.5) {
-      // TODO: Check value against contract
-      return {
-        canDoSwap: false,
-        error: 'amount_too_high',
-      }
-    }
+    // if (amount > 2.5) {
+    //   // TODO: Check value against contract
+    //   return {
+    //     canDoSwap: false,
+    //     error: 'amount_too_high',
+    //   }
+    // }
 
     if (swapMode === 'redeem' || !['eth', 'sfrxeth'].includes(selectedCoin)) {
       return {
         canDoSwap: false,
         error: 'unsupported',
+      }
+    }
+
+    if (selectedCoin === 'eth') {
+      const swapGasUsage = 90000 // TODO: Update this
+
+      return {
+        canDoSwap: true,
+        gasUsed: swapGasUsage,
+        swapGasUsage,
+        approveGasUsage: 0,
+        approveAllowanceNeeded: false,
+        inputAmount: parseFloat(inputAmountRaw),
+        amountReceived: amount,
       }
     }
 
@@ -353,20 +367,6 @@ const useSwapEstimator = ({
       return {
         canDoSwap: false,
         error: 'not_enough_funds_contract',
-      }
-    }
-
-    if (selectedCoin === 'eth') {
-      const swapGasUsage = 90000 // TODO: Update this
-
-      return {
-        canDoSwap: true,
-        gasUsed: swapGasUsage,
-        swapGasUsage,
-        approveGasUsage: 0,
-        approveAllowanceNeeded: false,
-        inputAmount: parseFloat(inputAmountRaw),
-        amountReceived: amount,
       }
     }
 
