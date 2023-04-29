@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { BigNumber } from 'ethers';
-import { orderBy, isEmpty, values } from 'lodash';
+import { isEmpty, values } from 'lodash';
 import {
   useAccount,
   useTokenBalances,
@@ -143,6 +143,7 @@ const TokenSwap = ({
 
   const onSuccess = (transactionType: string) => {
     if (transactionType === 'MINTED' || transactionType === 'REDEEM') {
+      // @ts-ignore
       setSwap((prev) => ({
         ...prev,
         value: 0,

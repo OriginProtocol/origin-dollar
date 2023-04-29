@@ -323,6 +323,7 @@ const estimateVaultRedeem = async ({
 
     const receiveAmount = reduce(
       mixedAssets,
+      // @ts-ignore
       (acc, value) => acc.add(value),
       BigNumber.from(0)
     );
