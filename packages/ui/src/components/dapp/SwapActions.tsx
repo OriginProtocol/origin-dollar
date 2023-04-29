@@ -77,8 +77,6 @@ const MintableActions = ({
     // @ts-ignore
   } = useContractWrite(swapWriteConfig);
 
-  const swapWriteDisabled = !hasProvidedAllowance || !!swapWriteError;
-
   const {
     isLoading: allowanceWriteIsSubmitted,
     isSuccess: allowanceWriteIsSuccess,
@@ -118,6 +116,8 @@ const MintableActions = ({
   }, [swapWriteError]);
 
   const isPreparing = swapWriteIsLoading || allowanceWriteIsLoading;
+  const swapWriteDisabled =
+    !hasProvidedAllowance || !!swapWriteError || !swapWrite;
 
   return (
     <>
@@ -221,6 +221,8 @@ const RedeemActions = ({
     }
   }, [swapWriteError]);
 
+  const swapWriteDisabled = !!swapWriteError || !swapWrite;
+
   return (
     <>
       {error && (
@@ -238,7 +240,7 @@ const RedeemActions = ({
         onClick={() => {
           swapWrite?.();
         }}
-        disabled={!!swapWriteError}
+        disabled={swapWriteDisabled}
       >
         {(() => {
           if (swapWriteIsLoading) {
