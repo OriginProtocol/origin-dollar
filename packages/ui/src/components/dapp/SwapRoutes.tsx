@@ -50,7 +50,7 @@ const SwapRoutes = ({ i18n, selectedEstimate, estimates }: SwapRoutesProps) => {
             <h4 className="text-xl font-header text-[#FF4E4E]">-5.56%</h4>
           )}
         </div>
-        <div className="flex flex-row w-full justify-between">
+        <div className="flex flex-col lg:flex-row w-full justify-between space-y-3">
           {selectedEstimate ? (
             <div className="flex flex-row">
               <span className="text-origin-dimmed min-w-[150px] text-sm">
