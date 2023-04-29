@@ -743,6 +743,8 @@ const useSwapEstimator = ({
 
       onEstimate(enriched);
 
+      console.log(enriched);
+
       return true;
     } catch (e) {
       console.error(`ERROR: While fetching estimations`, e);
