@@ -1087,7 +1087,7 @@ async function convexOETHMetaVaultFixture() {
   // TODO: hardcode this once deployed to the mainnet
   fixture.cvxRewardPool = await ethers.getContractAt(
     "IRewardStaking",
-    await fixture.ConvexEthMetaStrategy.cvxRewardStakerAddress()
+    await fixture.ConvexEthMetaStrategy.cvxRewardStaker()
   );
 
   return fixture;

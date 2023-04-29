@@ -354,11 +354,6 @@ const deployCurve = async ({
   // prettier-ignore
   const curvePoolAbi = [{inputs: [{ internalType: "uint256[2]", name: "_amounts", type: "uint256[2]" },{ internalType: "uint256", name: "_min", type: "uint256" },],name: "add_liquidity",outputs: [{ internalType: "uint256", name: "", type: "uint256" }],stateMutability: "nonpayable",type: "function",},{inputs: [{ internalType: "uint256", name: "", type: "uint256" }],name: "balances",outputs: [{ internalType: "uint256", name: "", type: "uint256" }],stateMutability: "view",type: "function",},{inputs: [{ internalType: "uint256[2]", name: "_amounts", type: "uint256[2]" },{ internalType: "bool", name: "_deposit", type: "bool" },],name: "calc_token_amount",outputs: [{ internalType: "uint256", name: "", type: "uint256" }],stateMutability: "nonpayable",type: "function",},{inputs: [{ internalType: "uint256", name: "_amount", type: "uint256" },{ internalType: "int128", name: "_index", type: "int128" },],name: "calc_withdraw_one_coin",outputs: [{ internalType: "uint256", name: "", type: "uint256" }],stateMutability: "view",type: "function",},{inputs: [{ internalType: "uint256", name: "_index", type: "uint256" }],name: "coins",outputs: [{ internalType: "address", name: "", type: "address" }],stateMutability: "view",type: "function",},{inputs: [],name: "fee",outputs: [{ internalType: "uint256", name: "", type: "uint256" }],stateMutability: "view",type: "function",},{inputs: [],name: "get_virtual_price",outputs: [{ internalType: "uint256", name: "", type: "uint256" }],stateMutability: "view",type: "function",},{inputs: [],name: "price_oracle",outputs: [{ internalType: "uint256", name: "", type: "uint256" }],stateMutability: "view",type: "function",},{inputs: [{ internalType: "uint256", name: "_amount", type: "uint256" },{internalType: "uint256[2]",name: "_minWithdrawAmounts",type: "uint256[2]",},],name: "remove_liquidity",outputs: [],stateMutability: "nonpayable",type: "function",},{inputs: [{ internalType: "uint256", name: "_amount", type: "uint256" },{ internalType: "int128", name: "_index", type: "int128" },{ internalType: "uint256", name: "_minAmount", type: "uint256" },],name: "remove_liquidity_one_coin",outputs: [],stateMutability: "nonpayable",type: "function"}];
 
-  const cCurveFactory = new Contract(
-    "0xF18056Bbd320E96A48e3Fbf8bC061322531aac99",
-    curveFactoryAbi,
-    sDeployer
-  );
   const cCurveGaugeFactory = new Contract(
     "0x9f99FDe2ED3997EAfE52b78E3981b349fD2Eb8C9",
     curveGaugeFactoryAbi,
@@ -374,112 +369,89 @@ const deployCurve = async ({
     gaugeControllerAbi
   );
 
-  const poolCountTest = parseInt((await cCurveFactory.pool_count()).toString());
-  const poolAddressTest = await cCurveFactory.pool_list(poolCountTest - 1);
+  const poolAddress = "0x94b17476a93b3262d87b9a326965d1e91f9c13e7";
+  const tokenAddress = "0x94b17476a93b3262d87b9a326965d1e91f9c13e7";
 
-  const tx = await withConfirmation(
-    cCurveFactory.deploy_pool(
-      "Origin Ether OETH/ETH",
-      "OETH",
-      [
-        "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2", // WETH
-        "0x856c4Efb76C1D1AE02e20CEB03A2A6a08b0b8dC3", // OETH Proxy
-      ],
-      /* Params copied from cbETH pool:
-       * https://etherscan.io/tx/0xaefdbf284442ae2aab0ce85697246371200809483a383a71d3a68bbc30913d25
-       */
-      BigNumber.from("200000000"), // A
-      BigNumber.from("100000000000000"), // gamma
-      BigNumber.from("5000000"), // mid_fee
-      BigNumber.from("45000000"), // out_fee
-      BigNumber.from("10000000000"), // allowed_extra_profit
-      BigNumber.from("5000000000000000"), // fee_gamma
-      BigNumber.from("5500000000000"), // adjustment_step
-      BigNumber.from("5000000000"), // admin_fee
-      BigNumber.from("600"), // ma_half_time
-      BigNumber.from("1000000000000000000") // initial_price
-    )
-  );
+  console.log("Pool address", poolAddress);
+  // const gaugeTx = await withConfirmation(
+  //   cCurveGaugeFactory.connect(sDeployer)["deploy_gauge(address)"](poolAddress)
+  // );
 
-  // pool address not really in any of the emitted events. Just read it from the contract
-  const poolCount = parseInt((await cCurveFactory.pool_count()).toString());
-  const poolAddress = await cCurveFactory.pool_list(poolCount - 1);
+  // const gaugeAddress =
+  //   "0x" + gaugeTx.receipt.logs[0].data.substr(2 + 64 * 2 + 24, 40);
 
-  const tokenAddress = "0x" + tx.receipt.logs[1].data.substr(2 + 24, 40);
-  const gaugeTx = await withConfirmation(
-    cCurveGaugeFactory.connect(sDeployer)["deploy_gauge(address)"](poolAddress)
-  );
+  // console.log("Gauge deployed to address: ", gaugeAddress);
 
-  const gaugeAddress =
-    "0x" + gaugeTx.receipt.logs[0].data.substr(2 + 64 * 2 + 24, 40);
+  // const gaugeControllerTx = await withConfirmation(
+  //   gaugeController
+  //     .connect(sGaugeControllerAdmin)
+  //     ["add_gauge(address,int128)"](gaugeAddress, 0)
+  // );
 
-  console.log("Gauge deployed to address: ", gaugeAddress);
+  // const gaugeControllerTx2 = await withConfirmation(
+  //   gaugeController
+  //     .connect(sGaugeControllerAdmin)
+  //     .change_gauge_weight(gaugeAddress, 100, { gasLimit: 2000000 })
+  // );
 
-  const gaugeControllerTx = await withConfirmation(
-    gaugeController
-      .connect(sGaugeControllerAdmin)
-      ["add_gauge(address,int128)"](gaugeAddress, 0)
-  );
+  // const convexTx = await withConfirmation(
+  //   cConvexPoolManager.connect(sDeployer)["addPool(address)"](gaugeAddress)
+  // );
 
-  const gaugeControllerTx2 = await withConfirmation(
-    gaugeController
-      .connect(sGaugeControllerAdmin)
-      .change_gauge_weight(gaugeAddress, 100, { gasLimit: 2000000 })
-  );
+  // // add liquidity to Curve pool otherwise multiple functions fail when called
+  // const oeth = new Contract(addresses.mainnet.OETHProxy, erc20Abi);
+  // const weth = new Contract(addresses.mainnet.WETH, erc20Abi);
+  // const reth = new Contract(addresses.mainnet.rETH, erc20Abi);
+  // const curvePool = new Contract(poolAddress, curvePoolAbi);
+  // const weth_whale = "0x44cc771fbe10dea3836f37918cf89368589b6316";
+  // const reth_whale = "0x5313b39bf226ced2332C81eB97BB28c6fD50d1a3";
 
-  const convexTx = await withConfirmation(
-    cConvexPoolManager.connect(sDeployer)["addPool(address)"](gaugeAddress)
-  );
+  // await impersonateAccount(weth_whale);
+  // const sWethWhale = await ethers.provider.getSigner(weth_whale);
+  // await impersonateAccount(reth_whale);
+  // const sRethWhale = await ethers.provider.getSigner(reth_whale);
 
-  // add liquidity to Curve pool otherwise multiple functions fail when called
-  const oeth = new Contract(addresses.mainnet.OETHProxy, erc20Abi);
-  const weth = new Contract(addresses.mainnet.WETH, erc20Abi);
-  const reth = new Contract(addresses.mainnet.rETH, erc20Abi);
-  const curvePool = new Contract(poolAddress, curvePoolAbi);
-  const weth_whale = "0x44cc771fbe10dea3836f37918cf89368589b6316";
-  const reth_whale = "0x5313b39bf226ced2332C81eB97BB28c6fD50d1a3";
+  // await reth
+  //   .connect(sRethWhale)
+  //   .approve(cVault.address, utils.parseUnits("1", 50));
 
-  await impersonateAccount(weth_whale);
-  const sWethWhale = await ethers.provider.getSigner(weth_whale);
-  await impersonateAccount(reth_whale);
-  const sRethWhale = await ethers.provider.getSigner(reth_whale);
+  // // mint a bunch of OETH so the tests don't trigger the 3% maxSupplyDiff on redeem
+  // const oethToMint = utils.parseUnits("4000", 18);
+  // await cVault.connect(sRethWhale).mint(reth.address, oethToMint, 0);
+  // await oeth.connect(sRethWhale).transfer(weth_whale, oethToMint);
+  // // await oeth.connect(sRethWhale).approve(sRethWhale.address, utils.parseUnits("1", 50))
+  // // await oeth.connect(sRethWhale).transferFrom(sRethWhale.address, weth_whale, oethToMint)
 
-  await reth
-    .connect(sRethWhale)
-    .approve(cVault.address, utils.parseUnits("1", 50));
+  // await weth
+  //   .connect(sWethWhale)
+  //   .approve(poolAddress, utils.parseUnits("1", 50));
+  // await oeth
+  //   .connect(sWethWhale)
+  //   .approve(poolAddress, utils.parseUnits("1", 50));
+  // await curvePool
+  //   .connect(sWethWhale)
+  //   .add_liquidity([utils.parseUnits("50", 18), utils.parseUnits("50", 18)], 0);
 
-  // mint a bunch of OETH so the tests don't trigger the 3% maxSupplyDiff on redeem
-  const oethToMint = utils.parseUnits("4000", 18);
-  await cVault.connect(sRethWhale).mint(reth.address, oethToMint, 0);
-  await oeth.connect(sRethWhale).transfer(weth_whale, oethToMint);
-  // await oeth.connect(sRethWhale).approve(sRethWhale.address, utils.parseUnits("1", 50))
-  // await oeth.connect(sRethWhale).transferFrom(sRethWhale.address, weth_whale, oethToMint)
+  // // const tokenContract = new Contract(tokenAddress, erc20Abi);
+  // // console.log("LP RECEIVED:", (await tokenContract.connect(sWethWhale).balanceOf(weth_whale)).toString());
 
-  await weth
-    .connect(sWethWhale)
-    .approve(poolAddress, utils.parseUnits("1", 50));
-  await oeth
-    .connect(sWethWhale)
-    .approve(poolAddress, utils.parseUnits("1", 50));
-  await curvePool
-    .connect(sWethWhale)
-    .add_liquidity([utils.parseUnits("50", 18), utils.parseUnits("50", 18)], 0);
+  // // find out the CVX booster PID
+  // // prettier-ignore
+  // const cvxBoosterABI = [{inputs: [{ internalType: "address", name: "_staker", type: "address" },{ internalType: "address", name: "_minter", type: "address" },],stateMutability: "nonpayable",type: "constructor",},{anonymous: false,inputs: [{indexed: true,internalType: "address",name: "user",type: "address",},{indexed: true,internalType: "uint256",name: "poolid",type: "uint256",},{indexed: false,internalType: "uint256",name: "amount",type: "uint256",},],name: "Deposited",type: "event",},{anonymous: false,inputs: [{indexed: true,internalType: "address",name: "user",type: "address",},{indexed: true,internalType: "uint256",name: "poolid",type: "uint256",},{indexed: false,internalType: "uint256",name: "amount",type: "uint256",},],name: "Withdrawn",type: "event",},{inputs: [],name: "FEE_DENOMINATOR",outputs: [{ internalType: "uint256", name: "", type: "uint256" }],stateMutability: "view",type: "function",},{inputs: [],name: "MaxFees",outputs: [{ internalType: "uint256", name: "", type: "uint256" }],stateMutability: "view",type: "function",},{inputs: [{ internalType: "address", name: "_lptoken", type: "address" },{ internalType: "address", name: "_gauge", type: "address" },{ internalType: "uint256", name: "_stashVersion", type: "uint256" },],name: "addPool",outputs: [{ internalType: "bool", name: "", type: "bool" }],stateMutability: "nonpayable",type: "function",},{inputs: [{ internalType: "uint256", name: "_pid", type: "uint256" },{ internalType: "address", name: "_gauge", type: "address" },],name: "claimRewards",outputs: [{ internalType: "bool", name: "", type: "bool" }],stateMutability: "nonpayable",type: "function",},{inputs: [],name: "crv",outputs: [{ internalType: "address", name: "", type: "address" }],stateMutability: "view",type: "function",},{inputs: [{ internalType: "uint256", name: "_pid", type: "uint256" },{ internalType: "uint256", name: "_amount", type: "uint256" },{ internalType: "bool", name: "_stake", type: "bool" },],name: "deposit",outputs: [{ internalType: "bool", name: "", type: "bool" }],stateMutability: "nonpayable",type: "function",},{inputs: [{ internalType: "uint256", name: "_pid", type: "uint256" },{ internalType: "bool", name: "_stake", type: "bool" },],name: "depositAll",outputs: [{ internalType: "bool", name: "", type: "bool" }],stateMutability: "nonpayable",type: "function",},{inputs: [],name: "distributionAddressId",outputs: [{ internalType: "uint256", name: "", type: "uint256" }],stateMutability: "view",type: "function",},{inputs: [],name: "earmarkFees",outputs: [{ internalType: "bool", name: "", type: "bool" }],stateMutability: "nonpayable",type: "function",},{inputs: [],name: "earmarkIncentive",outputs: [{ internalType: "uint256", name: "", type: "uint256" }],stateMutability: "view",type: "function",},{inputs: [{ internalType: "uint256", name: "_pid", type: "uint256" }],name: "earmarkRewards",outputs: [{ internalType: "bool", name: "", type: "bool" }],stateMutability: "nonpayable",type: "function",},{inputs: [],name: "feeDistro",outputs: [{ internalType: "address", name: "", type: "address" }],stateMutability: "view",type: "function",},{inputs: [],name: "feeManager",outputs: [{ internalType: "address", name: "", type: "address" }],stateMutability: "view",type: "function",},{inputs: [],name: "feeToken",outputs: [{ internalType: "address", name: "", type: "address" }],stateMutability: "view",type: "function",},{inputs: [{ internalType: "address", name: "", type: "address" }],name: "gaugeMap",outputs: [{ internalType: "bool", name: "", type: "bool" }],stateMutability: "view",type: "function",},{inputs: [],name: "isShutdown",outputs: [{ internalType: "bool", name: "", type: "bool" }],stateMutability: "view",type: "function",},{inputs: [],name: "lockFees",outputs: [{ internalType: "address", name: "", type: "address" }],stateMutability: "view",type: "function",},{inputs: [],name: "lockIncentive",outputs: [{ internalType: "uint256", name: "", type: "uint256" }],stateMutability: "view",type: "function",},{inputs: [],name: "lockRewards",outputs: [{ internalType: "address", name: "", type: "address" }],stateMutability: "view",type: "function",},{inputs: [],name: "minter",outputs: [{ internalType: "address", name: "", type: "address" }],stateMutability: "view",type: "function",},{inputs: [],name: "owner",outputs: [{ internalType: "address", name: "", type: "address" }],stateMutability: "view",type: "function",},{inputs: [],name: "platformFee",outputs: [{ internalType: "uint256", name: "", type: "uint256" }],stateMutability: "view",type: "function",},{inputs: [{ internalType: "uint256", name: "", type: "uint256" }],name: "poolInfo",outputs: [{ internalType: "address", name: "lptoken", type: "address" },{ internalType: "address", name: "token", type: "address" },{ internalType: "address", name: "gauge", type: "address" },{ internalType: "address", name: "crvRewards", type: "address" },{ internalType: "address", name: "stash", type: "address" },{ internalType: "bool", name: "shutdown", type: "bool" },],stateMutability: "view",type: "function",},{inputs: [],name: "poolLength",outputs: [{ internalType: "uint256", name: "", type: "uint256" }],stateMutability: "view",type: "function",},{inputs: [],name: "poolManager",outputs: [{ internalType: "address", name: "", type: "address" }],stateMutability: "view",type: "function",},{inputs: [],name: "registry",outputs: [{ internalType: "address", name: "", type: "address" }],stateMutability: "view",type: "function",},{inputs: [],name: "rewardArbitrator",outputs: [{ internalType: "address", name: "", type: "address" }],stateMutability: "view",type: "function",},{inputs: [{ internalType: "uint256", name: "_pid", type: "uint256" },{ internalType: "address", name: "_address", type: "address" },{ internalType: "uint256", name: "_amount", type: "uint256" },],name: "rewardClaimed",outputs: [{ internalType: "bool", name: "", type: "bool" }],stateMutability: "nonpayable",type: "function",},{inputs: [],name: "rewardFactory",outputs: [{ internalType: "address", name: "", type: "address" }],stateMutability: "view",type: "function",},{inputs: [{ internalType: "address", name: "_arb", type: "address" }],name: "setArbitrator",outputs: [],stateMutability: "nonpayable",type: "function",},{inputs: [{ internalType: "address", name: "_rfactory", type: "address" },{ internalType: "address", name: "_sfactory", type: "address" },{ internalType: "address", name: "_tfactory", type: "address" },],name: "setFactories",outputs: [],stateMutability: "nonpayable",type: "function",},{inputs: [],name: "setFeeInfo",outputs: [],stateMutability: "nonpayable",type: "function",},{inputs: [{ internalType: "address", name: "_feeM", type: "address" }],name: "setFeeManager",outputs: [],stateMutability: "nonpayable",type: "function",},{inputs: [{ internalType: "uint256", name: "_lockFees", type: "uint256" },{ internalType: "uint256", name: "_stakerFees", type: "uint256" },{ internalType: "uint256", name: "_callerFees", type: "uint256" },{ internalType: "uint256", name: "_platform", type: "uint256" },],name: "setFees",outputs: [],stateMutability: "nonpayable",type: "function",},{inputs: [{ internalType: "uint256", name: "_pid", type: "uint256" }],name: "setGaugeRedirect",outputs: [{ internalType: "bool", name: "", type: "bool" }],stateMutability: "nonpayable",type: "function",},{inputs: [{ internalType: "address", name: "_owner", type: "address" }],name: "setOwner",outputs: [],stateMutability: "nonpayable",type: "function",},{inputs: [{ internalType: "address", name: "_poolM", type: "address" }],name: "setPoolManager",outputs: [],stateMutability: "nonpayable",type: "function",},{inputs: [{ internalType: "address", name: "_rewards", type: "address" },{ internalType: "address", name: "_stakerRewards", type: "address" },],name: "setRewardContracts",outputs: [],stateMutability: "nonpayable",type: "function",},{inputs: [{ internalType: "address", name: "_treasury", type: "address" }],name: "setTreasury",outputs: [],stateMutability: "nonpayable",type: "function",},{inputs: [{ internalType: "address", name: "_voteDelegate", type: "address" },],name: "setVoteDelegate",outputs: [],stateMutability: "nonpayable",type: "function",},{inputs: [{ internalType: "uint256", name: "_pid", type: "uint256" }],name: "shutdownPool",outputs: [{ internalType: "bool", name: "", type: "bool" }],stateMutability: "nonpayable",type: "function",},{inputs: [],name: "shutdownSystem",outputs: [],stateMutability: "nonpayable",type: "function",},{inputs: [],name: "staker",outputs: [{ internalType: "address", name: "", type: "address" }],stateMutability: "view",type: "function",},{inputs: [],name: "stakerIncentive",outputs: [{ internalType: "uint256", name: "", type: "uint256" }],stateMutability: "view",type: "function",},{inputs: [],name: "stakerRewards",outputs: [{ internalType: "address", name: "", type: "address" }],stateMutability: "view",type: "function",},{inputs: [],name: "stashFactory",outputs: [{ internalType: "address", name: "", type: "address" }],stateMutability: "view",type: "function",},{inputs: [],name: "tokenFactory",outputs: [{ internalType: "address", name: "", type: "address" }],stateMutability: "view",type: "function",},{inputs: [],name: "treasury",outputs: [{ internalType: "address", name: "", type: "address" }],stateMutability: "view",type: "function",},{inputs: [{ internalType: "uint256", name: "_voteId", type: "uint256" },{ internalType: "address", name: "_votingAddress", type: "address" },{ internalType: "bool", name: "_support", type: "bool" },],name: "vote",outputs: [{ internalType: "bool", name: "", type: "bool" }],stateMutability: "nonpayable",type: "function",},{inputs: [],name: "voteDelegate",outputs: [{ internalType: "address", name: "", type: "address" }],stateMutability: "view",type: "function",},{inputs: [{ internalType: "address[]", name: "_gauge", type: "address[]" },{ internalType: "uint256[]", name: "_weight", type: "uint256[]" },],name: "voteGaugeWeight",outputs: [{ internalType: "bool", name: "", type: "bool" }],stateMutability: "nonpayable",type: "function",},{inputs: [],name: "voteOwnership",outputs: [{ internalType: "address", name: "", type: "address" }],stateMutability: "view",type: "function",},{inputs: [],name: "voteParameter",outputs: [{ internalType: "address", name: "", type: "address" }],stateMutability: "view",type: "function",},{inputs: [{ internalType: "uint256", name: "_pid", type: "uint256" },{ internalType: "uint256", name: "_amount", type: "uint256" },],name: "withdraw",outputs: [{ internalType: "bool", name: "", type: "bool" }],stateMutability: "nonpayable",type: "function",},{inputs: [{ internalType: "uint256", name: "_pid", type: "uint256" }],name: "withdrawAll",outputs: [{ internalType: "bool", name: "", type: "bool" }],stateMutability: "nonpayable",type: "function",},{inputs: [{ internalType: "uint256", name: "_pid", type: "uint256" },{ internalType: "uint256", name: "_amount", type: "uint256" },{ internalType: "address", name: "_to", type: "address" },],name: "withdrawTo",outputs: [{ internalType: "bool", name: "", type: "bool" }],stateMutability: "nonpayable",type: "function",},];
+  // const cvxBooster = new Contract(addresses.mainnet.CVXBooster, cvxBoosterABI);
 
-  // const tokenContract = new Contract(tokenAddress, erc20Abi);
-  // console.log("LP RECEIVED:", (await tokenContract.connect(sWethWhale).balanceOf(weth_whale)).toString());
+  // const poolLength = await cvxBooster.connect(sWethWhale).poolLength();
+  // // fetch last pool added
+  // const poolId = poolLength - 1;
+  // const poolInfo = await cvxBooster.connect(sWethWhale).poolInfo(poolId);
 
-  // find out the CVX booster PID
-  // prettier-ignore
-  const cvxBoosterABI = [{inputs: [{ internalType: "address", name: "_staker", type: "address" },{ internalType: "address", name: "_minter", type: "address" },],stateMutability: "nonpayable",type: "constructor",},{anonymous: false,inputs: [{indexed: true,internalType: "address",name: "user",type: "address",},{indexed: true,internalType: "uint256",name: "poolid",type: "uint256",},{indexed: false,internalType: "uint256",name: "amount",type: "uint256",},],name: "Deposited",type: "event",},{anonymous: false,inputs: [{indexed: true,internalType: "address",name: "user",type: "address",},{indexed: true,internalType: "uint256",name: "poolid",type: "uint256",},{indexed: false,internalType: "uint256",name: "amount",type: "uint256",},],name: "Withdrawn",type: "event",},{inputs: [],name: "FEE_DENOMINATOR",outputs: [{ internalType: "uint256", name: "", type: "uint256" }],stateMutability: "view",type: "function",},{inputs: [],name: "MaxFees",outputs: [{ internalType: "uint256", name: "", type: "uint256" }],stateMutability: "view",type: "function",},{inputs: [{ internalType: "address", name: "_lptoken", type: "address" },{ internalType: "address", name: "_gauge", type: "address" },{ internalType: "uint256", name: "_stashVersion", type: "uint256" },],name: "addPool",outputs: [{ internalType: "bool", name: "", type: "bool" }],stateMutability: "nonpayable",type: "function",},{inputs: [{ internalType: "uint256", name: "_pid", type: "uint256" },{ internalType: "address", name: "_gauge", type: "address" },],name: "claimRewards",outputs: [{ internalType: "bool", name: "", type: "bool" }],stateMutability: "nonpayable",type: "function",},{inputs: [],name: "crv",outputs: [{ internalType: "address", name: "", type: "address" }],stateMutability: "view",type: "function",},{inputs: [{ internalType: "uint256", name: "_pid", type: "uint256" },{ internalType: "uint256", name: "_amount", type: "uint256" },{ internalType: "bool", name: "_stake", type: "bool" },],name: "deposit",outputs: [{ internalType: "bool", name: "", type: "bool" }],stateMutability: "nonpayable",type: "function",},{inputs: [{ internalType: "uint256", name: "_pid", type: "uint256" },{ internalType: "bool", name: "_stake", type: "bool" },],name: "depositAll",outputs: [{ internalType: "bool", name: "", type: "bool" }],stateMutability: "nonpayable",type: "function",},{inputs: [],name: "distributionAddressId",outputs: [{ internalType: "uint256", name: "", type: "uint256" }],stateMutability: "view",type: "function",},{inputs: [],name: "earmarkFees",outputs: [{ internalType: "bool", name: "", type: "bool" }],stateMutability: "nonpayable",type: "function",},{inputs: [],name: "earmarkIncentive",outputs: [{ internalType: "uint256", name: "", type: "uint256" }],stateMutability: "view",type: "function",},{inputs: [{ internalType: "uint256", name: "_pid", type: "uint256" }],name: "earmarkRewards",outputs: [{ internalType: "bool", name: "", type: "bool" }],stateMutability: "nonpayable",type: "function",},{inputs: [],name: "feeDistro",outputs: [{ internalType: "address", name: "", type: "address" }],stateMutability: "view",type: "function",},{inputs: [],name: "feeManager",outputs: [{ internalType: "address", name: "", type: "address" }],stateMutability: "view",type: "function",},{inputs: [],name: "feeToken",outputs: [{ internalType: "address", name: "", type: "address" }],stateMutability: "view",type: "function",},{inputs: [{ internalType: "address", name: "", type: "address" }],name: "gaugeMap",outputs: [{ internalType: "bool", name: "", type: "bool" }],stateMutability: "view",type: "function",},{inputs: [],name: "isShutdown",outputs: [{ internalType: "bool", name: "", type: "bool" }],stateMutability: "view",type: "function",},{inputs: [],name: "lockFees",outputs: [{ internalType: "address", name: "", type: "address" }],stateMutability: "view",type: "function",},{inputs: [],name: "lockIncentive",outputs: [{ internalType: "uint256", name: "", type: "uint256" }],stateMutability: "view",type: "function",},{inputs: [],name: "lockRewards",outputs: [{ internalType: "address", name: "", type: "address" }],stateMutability: "view",type: "function",},{inputs: [],name: "minter",outputs: [{ internalType: "address", name: "", type: "address" }],stateMutability: "view",type: "function",},{inputs: [],name: "owner",outputs: [{ internalType: "address", name: "", type: "address" }],stateMutability: "view",type: "function",},{inputs: [],name: "platformFee",outputs: [{ internalType: "uint256", name: "", type: "uint256" }],stateMutability: "view",type: "function",},{inputs: [{ internalType: "uint256", name: "", type: "uint256" }],name: "poolInfo",outputs: [{ internalType: "address", name: "lptoken", type: "address" },{ internalType: "address", name: "token", type: "address" },{ internalType: "address", name: "gauge", type: "address" },{ internalType: "address", name: "crvRewards", type: "address" },{ internalType: "address", name: "stash", type: "address" },{ internalType: "bool", name: "shutdown", type: "bool" },],stateMutability: "view",type: "function",},{inputs: [],name: "poolLength",outputs: [{ internalType: "uint256", name: "", type: "uint256" }],stateMutability: "view",type: "function",},{inputs: [],name: "poolManager",outputs: [{ internalType: "address", name: "", type: "address" }],stateMutability: "view",type: "function",},{inputs: [],name: "registry",outputs: [{ internalType: "address", name: "", type: "address" }],stateMutability: "view",type: "function",},{inputs: [],name: "rewardArbitrator",outputs: [{ internalType: "address", name: "", type: "address" }],stateMutability: "view",type: "function",},{inputs: [{ internalType: "uint256", name: "_pid", type: "uint256" },{ internalType: "address", name: "_address", type: "address" },{ internalType: "uint256", name: "_amount", type: "uint256" },],name: "rewardClaimed",outputs: [{ internalType: "bool", name: "", type: "bool" }],stateMutability: "nonpayable",type: "function",},{inputs: [],name: "rewardFactory",outputs: [{ internalType: "address", name: "", type: "address" }],stateMutability: "view",type: "function",},{inputs: [{ internalType: "address", name: "_arb", type: "address" }],name: "setArbitrator",outputs: [],stateMutability: "nonpayable",type: "function",},{inputs: [{ internalType: "address", name: "_rfactory", type: "address" },{ internalType: "address", name: "_sfactory", type: "address" },{ internalType: "address", name: "_tfactory", type: "address" },],name: "setFactories",outputs: [],stateMutability: "nonpayable",type: "function",},{inputs: [],name: "setFeeInfo",outputs: [],stateMutability: "nonpayable",type: "function",},{inputs: [{ internalType: "address", name: "_feeM", type: "address" }],name: "setFeeManager",outputs: [],stateMutability: "nonpayable",type: "function",},{inputs: [{ internalType: "uint256", name: "_lockFees", type: "uint256" },{ internalType: "uint256", name: "_stakerFees", type: "uint256" },{ internalType: "uint256", name: "_callerFees", type: "uint256" },{ internalType: "uint256", name: "_platform", type: "uint256" },],name: "setFees",outputs: [],stateMutability: "nonpayable",type: "function",},{inputs: [{ internalType: "uint256", name: "_pid", type: "uint256" }],name: "setGaugeRedirect",outputs: [{ internalType: "bool", name: "", type: "bool" }],stateMutability: "nonpayable",type: "function",},{inputs: [{ internalType: "address", name: "_owner", type: "address" }],name: "setOwner",outputs: [],stateMutability: "nonpayable",type: "function",},{inputs: [{ internalType: "address", name: "_poolM", type: "address" }],name: "setPoolManager",outputs: [],stateMutability: "nonpayable",type: "function",},{inputs: [{ internalType: "address", name: "_rewards", type: "address" },{ internalType: "address", name: "_stakerRewards", type: "address" },],name: "setRewardContracts",outputs: [],stateMutability: "nonpayable",type: "function",},{inputs: [{ internalType: "address", name: "_treasury", type: "address" }],name: "setTreasury",outputs: [],stateMutability: "nonpayable",type: "function",},{inputs: [{ internalType: "address", name: "_voteDelegate", type: "address" },],name: "setVoteDelegate",outputs: [],stateMutability: "nonpayable",type: "function",},{inputs: [{ internalType: "uint256", name: "_pid", type: "uint256" }],name: "shutdownPool",outputs: [{ internalType: "bool", name: "", type: "bool" }],stateMutability: "nonpayable",type: "function",},{inputs: [],name: "shutdownSystem",outputs: [],stateMutability: "nonpayable",type: "function",},{inputs: [],name: "staker",outputs: [{ internalType: "address", name: "", type: "address" }],stateMutability: "view",type: "function",},{inputs: [],name: "stakerIncentive",outputs: [{ internalType: "uint256", name: "", type: "uint256" }],stateMutability: "view",type: "function",},{inputs: [],name: "stakerRewards",outputs: [{ internalType: "address", name: "", type: "address" }],stateMutability: "view",type: "function",},{inputs: [],name: "stashFactory",outputs: [{ internalType: "address", name: "", type: "address" }],stateMutability: "view",type: "function",},{inputs: [],name: "tokenFactory",outputs: [{ internalType: "address", name: "", type: "address" }],stateMutability: "view",type: "function",},{inputs: [],name: "treasury",outputs: [{ internalType: "address", name: "", type: "address" }],stateMutability: "view",type: "function",},{inputs: [{ internalType: "uint256", name: "_voteId", type: "uint256" },{ internalType: "address", name: "_votingAddress", type: "address" },{ internalType: "bool", name: "_support", type: "bool" },],name: "vote",outputs: [{ internalType: "bool", name: "", type: "bool" }],stateMutability: "nonpayable",type: "function",},{inputs: [],name: "voteDelegate",outputs: [{ internalType: "address", name: "", type: "address" }],stateMutability: "view",type: "function",},{inputs: [{ internalType: "address[]", name: "_gauge", type: "address[]" },{ internalType: "uint256[]", name: "_weight", type: "uint256[]" },],name: "voteGaugeWeight",outputs: [{ internalType: "bool", name: "", type: "bool" }],stateMutability: "nonpayable",type: "function",},{inputs: [],name: "voteOwnership",outputs: [{ internalType: "address", name: "", type: "address" }],stateMutability: "view",type: "function",},{inputs: [],name: "voteParameter",outputs: [{ internalType: "address", name: "", type: "address" }],stateMutability: "view",type: "function",},{inputs: [{ internalType: "uint256", name: "_pid", type: "uint256" },{ internalType: "uint256", name: "_amount", type: "uint256" },],name: "withdraw",outputs: [{ internalType: "bool", name: "", type: "bool" }],stateMutability: "nonpayable",type: "function",},{inputs: [{ internalType: "uint256", name: "_pid", type: "uint256" }],name: "withdrawAll",outputs: [{ internalType: "bool", name: "", type: "bool" }],stateMutability: "nonpayable",type: "function",},{inputs: [{ internalType: "uint256", name: "_pid", type: "uint256" },{ internalType: "uint256", name: "_amount", type: "uint256" },{ internalType: "address", name: "_to", type: "address" },],name: "withdrawTo",outputs: [{ internalType: "bool", name: "", type: "bool" }],stateMutability: "nonpayable",type: "function",},];
-  const cvxBooster = new Contract(addresses.mainnet.CVXBooster, cvxBoosterABI);
+  // if (tokenAddress.toLowerCase() !== poolInfo.lptoken.toLowerCase())
+  //   new Error("LP token addresses do not match");
 
-  const poolLength = await cvxBooster.connect(sWethWhale).poolLength();
-  // fetch last pool added
-  const poolId = poolLength - 1;
-  const poolInfo = await cvxBooster.connect(sWethWhale).poolInfo(poolId);
-
-  if (tokenAddress.toLowerCase() !== poolInfo.lptoken.toLowerCase())
-    new Error("LP token addresses do not match");
+  // TODO: Use production gauge
+  const gaugeAddress = poolAddress;
+  const poolId = 1;
+  const poolInfo = { crvRewards: poolAddress };
 
   return {
     actions: [],

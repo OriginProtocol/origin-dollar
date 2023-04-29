@@ -9,11 +9,12 @@ pragma solidity ^0.8.0;
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 
-import { ICurveETHPool } from "./ICurveETHPool.sol";
+import { ICurveETHPoolV1 } from "./ICurveETHPoolV1.sol";
 import { IERC20, InitializableAbstractStrategy } from "../utils/InitializableAbstractStrategy.sol";
 import { StableMath } from "../utils/StableMath.sol";
 import { Helpers } from "../utils/Helpers.sol";
 import { IVault } from "../interfaces/IVault.sol";
+import { IWETH9 } from "../interfaces/IWETH9.sol";
 import { IConvexDeposits } from "./IConvexDeposits.sol";
 import { IRewardStaking } from "./IRewardStaking.sol";
 
@@ -22,23 +23,18 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
     using SafeERC20 for IERC20;
 
     uint256 internal constant MAX_SLIPPAGE = 1e16; // 1%, same as the Curve UI
-    uint256 internal constant ASSET_COUNT = 2;
+    address internal constant ETH_ADDRESS =
+        0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
     address internal cvxDepositorAddress;
-    // TODO change this to internal once this address is immutable
-    address public cvxRewardStakerAddress;
+    IRewardStaking public cvxRewardStaker;
     uint256 internal cvxDepositorPTokenId;
-    ICurveETHPool internal curvePool;
+    ICurveETHPoolV1 internal curvePool;
     IERC20 internal lpToken;
-    IERC20 internal poolOETHToken;
-    IERC20 internal poolWETHToken;
+    IERC20 internal oeth;
+    IWETH9 internal weth;
     // Ordered list of pool assets
-    address[] internal poolAssets;
-    // Max withdrawal slippage denominated in 1e18 (1e18 == 100%)
-    uint256 public maxWithdrawalSlippage;
     uint128 internal oethCoinIndex;
-    uint128 internal wethCoinIndex;
-
-    int256[50] private __reserved;
+    uint128 internal ethCoinIndex;
 
     // used to circumvent the stack too deep issue
     struct InitialiseConfig {
@@ -46,7 +42,7 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         address vaultAddress; //Address of the vault
         address cvxDepositorAddress; //Address of the Convex depositor(AKA booster) for this pool
         address oethAddress; //Address of OETH token
-        address wethAddress; //Address of OETH token
+        address wethAddress; //Address of WETH token
         address cvxRewardStakerAddress; //Address of the CVX rewards staker
         address curvePoolLpToken; //Address of metapool LP token
         uint256 cvxDepositorPTokenId; //Pid of the pool referred to by Depositor and staker
@@ -72,16 +68,13 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         // Should be set prior to abstract initialize call otherwise
         // abstractSetPToken calls will fail
         cvxDepositorAddress = initConfig.cvxDepositorAddress;
-        cvxRewardStakerAddress = initConfig.cvxRewardStakerAddress;
+        cvxRewardStaker = IRewardStaking(initConfig.cvxRewardStakerAddress);
         cvxDepositorPTokenId = initConfig.cvxDepositorPTokenId;
         lpToken = IERC20(initConfig.curvePoolLpToken);
-        curvePool = ICurveETHPool(initConfig.curvePoolAddress);
-        poolOETHToken = IERC20(initConfig.oethAddress);
-        poolWETHToken = IERC20(initConfig.wethAddress);
-        maxWithdrawalSlippage = 1e16;
-
-        poolAssets = [curvePool.coins(0), curvePool.coins(1)];
-        wethCoinIndex = uint128(_getCoinIndex(initConfig.wethAddress));
+        curvePool = ICurveETHPoolV1(initConfig.curvePoolAddress);
+        oeth = IERC20(initConfig.oethAddress);
+        weth = IWETH9(initConfig.wethAddress);
+        ethCoinIndex = uint128(_getCoinIndex(ETH_ADDRESS));
         oethCoinIndex = uint128(_getCoinIndex(initConfig.oethAddress));
 
         super._initialize(
@@ -114,7 +107,8 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
 
     function _deposit(address _weth, uint256 _wethAmount) internal {
         require(_wethAmount > 0, "Must deposit something");
-        require(_weth == address(poolWETHToken), "Can only deposit WETH");
+        require(_weth == address(weth), "Can only deposit WETH");
+        weth.withdraw(_wethAmount);
 
         emit Deposit(_weth, address(lpToken), _wethAmount);
 
@@ -122,7 +116,7 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         uint256 oethToAdd = uint256(
             _max(
                 0,
-                int256(curvePool.balances(wethCoinIndex)) +
+                int256(curvePool.balances(ethCoinIndex)) +
                     int256(_wethAmount) -
                     int256(curvePool.balances(oethCoinIndex))
             )
@@ -146,19 +140,22 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         }
 
         uint256[2] memory _amounts;
-        _amounts[wethCoinIndex] = _wethAmount;
+        _amounts[ethCoinIndex] = _wethAmount;
         _amounts[oethCoinIndex] = oethToAdd;
 
         uint256 valueInLpTokens = (_wethAmount + oethToAdd).divPrecisely(
-            curvePool.get_virtual_price() * 2
+            curvePool.get_virtual_price()
         );
         uint256 minMintAmount = valueInLpTokens.mulTruncate(
             uint256(1e18) - MAX_SLIPPAGE
         );
 
-        uint256 balance = poolOETHToken.balanceOf(address(this));
+        uint256 balance = oeth.balanceOf(address(this));
         // Do the deposit to Curve ETH pool
-        uint256 lpDeposited = curvePool.add_liquidity(_amounts, minMintAmount);
+        uint256 lpDeposited = curvePool.add_liquidity{ value: _wethAmount }(
+            _amounts,
+            minMintAmount
+        );
 
         require(
             IConvexDeposits(cvxDepositorAddress).deposit(
@@ -174,9 +171,9 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
      * @dev Deposit the entire balance of any supported asset into the Curve 3pool
      */
     function depositAll() external override onlyVault nonReentrant {
-        uint256 balance = poolWETHToken.balanceOf(address(this));
+        uint256 balance = weth.balanceOf(address(this));
         if (balance > 0) {
-            _deposit(address(poolWETHToken), balance);
+            _deposit(address(weth), balance);
         }
     }
 
@@ -192,14 +189,11 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         uint256 _amount
     ) external override onlyVault nonReentrant {
         require(_amount > 0, "Invalid amount");
-        require(_weth == address(poolWETHToken), "Can only withdraw WETH");
+        require(_weth == address(weth), "Can only withdraw WETH");
 
         emit Withdrawal(_weth, address(lpToken), _amount);
 
         uint256 requiredLpTokens = calcTokenToBurn(_amount);
-        // TODO: is the -1 required because of the rounding error. And where to
-        // actually apply it? maybe +1 to the requiredLpTokens?
-        uint256 _roundDownAmount = _amount - 1;
 
         _lpWithdraw(requiredLpTokens);
 
@@ -207,16 +201,14 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
          * in that the strategy receives enough WETH on balanced removal
          */
         uint256[2] memory _minWithdrawalAmounts = [uint256(0), uint256(0)];
-        _minWithdrawalAmounts[wethCoinIndex] = _roundDownAmount;
-
+        _minWithdrawalAmounts[ethCoinIndex] = _amount;
         curvePool.remove_liquidity(requiredLpTokens, _minWithdrawalAmounts);
 
         // Burn OETH
-        IVault(vaultAddress).burnForStrategy(
-            poolOETHToken.balanceOf(address(this))
-        );
-
-        IERC20(_weth).safeTransfer(_recipient, _roundDownAmount);
+        IVault(vaultAddress).burnForStrategy(oeth.balanceOf(address(this)));
+        // Transfer WETH
+        weth.deposit{ value: _amount }();
+        weth.transfer(_recipient, _amount);
     }
 
     function calcTokenToBurn(uint256 _wethAmount)
@@ -237,7 +229,7 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
          * created is no longer valid.
          */
 
-        uint256 poolWETHBalance = curvePool.balances(wethCoinIndex);
+        uint256 poolWETHBalance = curvePool.balances(ethCoinIndex);
         /* K is multiplied by 1e36 which is used for higher precision calculation of required
          * pool LP tokens. Without it the end value can have rounding errors up to precision of
          * 10 digits. This way we move the decimal point by 36 places when doing the calculation
@@ -256,9 +248,7 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
      * @dev Remove all assets from platform and send them to Vault contract.
      */
     function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
-        uint256 gaugeTokens = IRewardStaking(cvxRewardStakerAddress).balanceOf(
-            address(this)
-        );
+        uint256 gaugeTokens = cvxRewardStaker.balanceOf(address(this));
         _lpWithdraw(gaugeTokens);
 
         // Withdraws are proportional to assets held by 3Pool
@@ -270,15 +260,14 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
             minWithdrawAmounts
         );
 
-        // Burn OETH
-        IVault(vaultAddress).burnForStrategy(
-            poolOETHToken.balanceOf(address(this))
-        );
-        // Transfer assets to the Vault
-        poolWETHToken.safeTransfer(
-            vaultAddress,
-            poolWETHToken.balanceOf(address(this))
-        );
+        // Burn returned OETH
+        uint256 oethBalance = oeth.balanceOf(address(this));
+        IVault(vaultAddress).burnForStrategy(oethBalance);
+
+        // This sends all WETH and ETH on the contract, including extras
+        weth.deposit{ value: address(this).balance }();
+        uint256 wethBalance = weth.balanceOf(address(this));
+        weth.transfer(vaultAddress, wethBalance);
     }
 
     /**
@@ -291,16 +280,14 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         nonReentrant
     {
         // Collect CRV and CVX
-        IRewardStaking(cvxRewardStakerAddress).getReward();
+        cvxRewardStaker.getReward();
         _collectRewardTokens();
     }
 
     function _lpWithdraw(uint256 _wethAmount) internal {
-        // withdraw and unwrap with claim takes back the lpTokens and also collects the rewards for deposit
-        IRewardStaking(cvxRewardStakerAddress).withdrawAndUnwrap(
-            _wethAmount,
-            true
-        );
+        // withdraw and unwrap with claim takes back the lpTokens
+        // and also collects the rewards for deposit
+        cvxRewardStaker.withdrawAndUnwrap(_wethAmount, true);
     }
 
     /**
@@ -314,28 +301,14 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         override
         returns (uint256 balance)
     {
-        require(_asset == address(poolWETHToken), "Unsupported asset");
-        balance = 0;
+        require(_asset == address(weth), "Unsupported asset");
 
-        /* We intentionally omit the poolLp tokens held by the metastrategyContract
-         * since the contract should never (except in the middle of deposit/withdrawal
-         * transaction) hold any amount of those tokens in normal operation. There
-         * could be tokens sent to it by a 3rd party and we decide to actively ignore
-         * those.
-         */
-        uint256 poolGaugePTokens = IRewardStaking(cvxRewardStakerAddress)
-            .balanceOf(address(this));
-
-        if (poolGaugePTokens > 0) {
-            uint256 value = poolGaugePTokens.mulTruncate(
-                curvePool.get_virtual_price() * 2
-            );
-            balance = value;
+        // Eth balance needed here for the balance check that happens from vault during depositing.
+        balance += address(this).balance;
+        uint256 lpTokens = cvxRewardStaker.balanceOf(address(this));
+        if (lpTokens > 0) {
+            balance += (lpTokens * curvePool.get_virtual_price()) / 1e18;
         }
-
-        // scale is already at 18 decimals. Just divide by 2 since half of the pool
-        // holdings are represented by WETH asset
-        balance = balance / ASSET_COUNT;
     }
 
     /**
@@ -348,7 +321,7 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         override
         returns (bool)
     {
-        return _asset == address(poolWETHToken);
+        return _asset == address(weth);
     }
 
     /**
@@ -361,9 +334,14 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         onlyGovernor
         nonReentrant
     {
-        _approveAsset(address(poolWETHToken));
-        _approveAsset(address(poolOETHToken));
+        _approveAsset(address(weth));
+        _approveAsset(address(oeth));
     }
+
+    /**
+     * @dev Accept unwrapped WETH
+     */
+    receive() external payable {}
 
     /**
      * @dev Call the necessary approvals for the Curve pool and gauge
@@ -385,7 +363,7 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
     }
 
     function _approveBase() internal {
-        _approveAsset(address(poolOETHToken));
+        _approveAsset(address(oeth));
 
         lpToken.safeApprove(cvxDepositorAddress, 0);
         lpToken.safeApprove(cvxDepositorAddress, type(uint256).max);
