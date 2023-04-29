@@ -146,6 +146,8 @@ const TokenSwap = ({
       setSwap((prev) => ({
         ...prev,
         value: 0,
+        selectedEstimate: null,
+        estimates: [],
       }));
     }
   };
