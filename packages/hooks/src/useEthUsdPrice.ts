@@ -49,11 +49,12 @@ const useEthUsdPrice = () => {
   };
 
   const fetchEthPrice = async () => {
-    if (chain?.id === 1) {
-      await fetchEthPriceChainlink();
-    } else {
-      await fetchEthPriceCryptoApi();
-    }
+    // if (chain?.id === 1) {
+    //   await fetchEthPriceChainlink();
+    // } else {
+    //   await fetchEthPriceCryptoApi();
+    // }
+    await fetchEthPriceCryptoApi();
   };
 
   useEffect(() => {
