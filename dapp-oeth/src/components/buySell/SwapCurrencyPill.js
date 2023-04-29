@@ -270,9 +270,9 @@ const SwapCurrencyPill = ({
       return null
     } else if (showOeth) {
       return {
-        coin: 'ousd',
-        balance: roundTo2Decimals(coinBalances.ousd),
-        detailedBalance: coinBalances.ousd || 0,
+        coin: 'oeth',
+        balance: roundTo2Decimals(coinBalances.oeth),
+        detailedBalance: coinBalances.oeth || 0,
       }
     } else {
       return {
@@ -452,8 +452,8 @@ const SwapCurrencyPill = ({
                           'oeth-amount',
                           formatCurrency(minReceived, 2)
                         ) +
-                        ' OUSD',
-                      'Min OUSD amount received'
+                        ' OETH',
+                      'Min OETH amount received'
                     )
                   : topItem
                   ? ''
