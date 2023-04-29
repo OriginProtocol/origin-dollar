@@ -25,3 +25,5 @@ export { default as useTokenBalances } from './useTokenBalances';
 export { default as useSwapEstimator } from './useSwapEstimator';
 export { default as useWrapEstimator } from './useWrapEstimator';
 export { default as useVault } from './useVault';
+export { default as usePersistState } from './usePersistState';
+export { default as useEthUsdPrice } from './useEthUsdPrice';

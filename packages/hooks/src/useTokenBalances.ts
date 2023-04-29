@@ -25,7 +25,7 @@ const useTokenBalances = ({ address, tokens }: TokenBalanceProps) => {
     address,
   });
 
-  const { data, isError, isLoading } = useContractReads({
+  const { data, isError, isLoading, refetch } = useContractReads({
     // @ts-ignore
     contracts: tokenKeys.map((key) => {
       const { address: contractAddress, abi = erc20ABI } = tokens[key];
@@ -61,7 +61,7 @@ const useTokenBalances = ({ address, tokens }: TokenBalanceProps) => {
     );
   }, [JSON.stringify(tokenKeys), JSON.stringify(data), ethBalance]);
 
-  return { data: balances, isError, isLoading };
+  return { data: balances, isError, isLoading, onRefresh: refetch };
 };
 
 export default useTokenBalances;

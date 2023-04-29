@@ -16,7 +16,7 @@ export { default as SelectTokenPill } from './components/core/SelectTokenPill';
 export { default as DappLayout } from './components/dapp/DappLayout';
 export { default as DappContainer } from './components/dapp/DappContainer';
 export { default as SettingsMenu } from './components/dapp/SettingsMenu';
-export { default as VaultSwap } from './components/dapp/VaultSwap';
+export { default as TokenSwap } from './components/dapp/TokenSwap';
 export { default as Portfolio } from './components/dapp/Portfolio';
 export { default as APY } from './components/dapp/APY';
 export { default as WrapToken } from './components/dapp/WrapToken';

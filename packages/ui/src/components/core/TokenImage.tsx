@@ -1,8 +1,25 @@
 import Image from 'next/image';
+import cx from 'classnames';
 
-const TokenImage = ({ src = '', symbol, name, height = 24, width = 24 }) => (
+type TokenImageProps = {
+  className?: string;
+  height?: number;
+  width?: number;
+  src: string;
+  symbol: string;
+  name: string;
+};
+
+const TokenImage = ({
+  className = '',
+  src,
+  symbol,
+  name,
+  height = 24,
+  width = 24,
+}: TokenImageProps) => (
   <Image
-    className="overflow-hidden rounded-full"
+    className={cx('overflow-hidden rounded-full', className)}
     src={src || `/tokens/${symbol}.png`}
     height={height}
     width={width}

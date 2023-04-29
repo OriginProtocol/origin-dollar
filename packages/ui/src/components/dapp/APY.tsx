@@ -57,54 +57,58 @@ const APY = ({ i18n, stats }: APYProps) => {
     return apyOptions.find((item) => item.id === selectedAPY);
   }, [selectedAPY]);
 
-  // @ts-ignore
   return (
-    <div className="flex flex-col w-full h-[300px] bg-origin-bg-lgrey rounded-xl">
-      <h2 className="flex flex-shrink-0 px-10 h-[80px] items-center">
+    <div className="flex flex-col w-full h-[80px] lg:h-[300px] bg-origin-bg-lgrey rounded-xl">
+      <h2 className="hidden lg:flex flex-shrink-0 px-10 h-[80px] items-center">
         {i18n('apy.title')}
       </h2>
-      <div className="h-[1px] w-full border-b-[1px] border-origin-bg-dgrey" />
-      <div className="flex flex-col px-10 justify-center h-full space-y-2">
-        <div className="relative flex flex-row items-center w-full space-x-3">
-          <h3 className="text-origin-dimmed text-lg">{selected?.label}</h3>
-          <button
-            onClick={() => {
-              setIsOpen(true);
-            }}
-            className="flex justify-center items-center w-[22px] h-[22px] bg-origin-white bg-opacity-10 rounded-full overflow-hidden"
-          >
-            <Image
-              className="relative top-[1px]"
-              src="/icons/angledown.png"
-              height={7}
-              width={10}
-              alt="angledown"
-            />
-          </button>
-          {isOpen && (
-            <div
-              ref={ref}
-              className="absolute top-[40px] right-0 flex flex-col bg-origin-bg-lgrey z-[1] shadow-xl border border-[1px] border-origin-bg-dgrey rounded-xl overflow-hidden"
-            >
-              <div className="flex flex-col w-full space-y-2">
-                {apyOptions.map(({ label, value, id }) => (
-                  <button
-                    key={id}
-                    className="flex items-center hover:bg-origin-bg-dgrey w-full h-[35px] px-4"
-                    role="button"
-                    onClick={() => {
-                      setSelectedAPY(id);
-                      setIsOpen(false);
-                    }}
-                  >
-                    {id}
-                  </button>
-                ))}
-              </div>
+      <div className="hidden lg:flex h-[1px] w-full border-b-[1px] border-origin-bg-dgrey" />
+      <div className="flex flex-row lg:flex-col px-6 lg:px-10 items-center lg:items-start justify-center h-full space-y-2">
+        <div className="flex flex-col w-full justify-center">
+          <h2 className="flex lg:hidden flex-shrink-0">{i18n('apy.title')}</h2>
+          <div className="relative flex flex-row items-center w-full space-x-3">
+            <h3 className="text-origin-dimmed text-lg">{selected?.label}</h3>
+            <div className="relative">
+              <button
+                onClick={() => {
+                  setIsOpen(true);
+                }}
+                className="flex justify-center items-center w-[22px] h-[22px] bg-origin-white bg-opacity-10 rounded-full overflow-hidden"
+              >
+                <Image
+                  className="relative top-[1px]"
+                  src="/icons/angledown.png"
+                  height={7}
+                  width={10}
+                  alt="angledown"
+                />
+              </button>
+              {isOpen && (
+                <div
+                  ref={ref}
+                  className="absolute top-[30px] right-[-22px] flex flex-col bg-origin-bg-lgrey z-[9999] shadow-xl border border-[1px] border-origin-bg-dgrey rounded-xl overflow-hidden"
+                >
+                  <div className="flex flex-col w-full space-y-2">
+                    {apyOptions.map(({ label, value, id }) => (
+                      <button
+                        key={id}
+                        className="flex items-center hover:bg-origin-bg-dgrey w-full h-[35px] px-4"
+                        role="button"
+                        onClick={() => {
+                          setSelectedAPY(id);
+                          setIsOpen(false);
+                        }}
+                      >
+                        {id}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
-        <h4 className="font-header text-4xl font-bold bg-gradient-to-r from-gradient1-from to-gradient1-to inline-block text-transparent bg-clip-text">
+        <h4 className="font-header text-2xl lg:text-4xl font-bold bg-gradient-to-r from-gradient1-from to-gradient1-to inline-block text-transparent bg-clip-text">
           {/* @ts-ignore */}
           {data?.[selectedAPY]?.toFixed(2)}%
         </h4>

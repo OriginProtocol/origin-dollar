@@ -5,7 +5,6 @@ export const SWAP_TYPES = {
   UNWRAP: 'UNWRAP',
 };
 
-export const STORED_TOKEN_LS_KEY = '@originprotocol/previousTokenAddress';
+export const STORED_TOKEN_LS_KEY = '@originprotocol/OETH/savedSwap';
 
-export const STORED_WRAPPED_TOKEN_LS_KEY =
-  '@originprotocol/previousWrappedTokenAddress';
+export const STORED_WRAPPED_LS_KEY = '@originprotocol/OETH/savedWrap';

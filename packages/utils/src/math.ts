@@ -7,11 +7,18 @@
  *
  * @returns {String} Truncated decimal value
  */
-export function truncateDecimals(value: number, decimals = 6): string {
+export const truncateDecimals = (value: number, decimals = 6): string => {
   if (!value) return '';
   const [whole, fraction] = value.toString().split('.');
   if (!fraction || fraction.length <= decimals) {
     return value.toString();
   }
   return `${whole}.${fraction.slice(0, decimals)}`;
-}
+};
+
+export const formatUSD = (value: number) => {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+  }).format(value);
+};

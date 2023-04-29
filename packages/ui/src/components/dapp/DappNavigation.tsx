@@ -1,5 +1,4 @@
 import { useRouter } from 'next/router';
-import { Typography } from '@originprotocol/origin-storybook';
 import cx from 'classnames';
 import Link from '../core/Link';
 
@@ -16,7 +15,7 @@ const DappNavigation = ({ links }: DappNavigationProps) => {
   const router = useRouter();
   const pathWithoutLocale = router?.pathname?.replace('/[locale]', '');
   return (
-    <nav className="hidden lg:flex flex-row items-center h-full">
+    <nav className="flex flex-row items-center h-full">
       <ul className="grid grid-cols-3 gap-4 h-[44px] bg-origin-bg-lgrey rounded-full overflow-hidden">
         {links.map(({ href, label }) => {
           const isActiveLink = (pathWithoutLocale || '/') === href;
@@ -27,7 +26,13 @@ const DappNavigation = ({ links }: DappNavigationProps) => {
             >
               <Link
                 href={href}
-                className="relative flex items-center px-6 justify-center w-full h-full rounded-full overflow-hidden"
+                className={cx(
+                  'relative flex items-center px-5 lg:px-6 justify-center w-full h-full rounded-full overflow-hidden',
+                  {
+                    'text-origin-dimmed': !isActiveLink,
+                    'text-origin-white': isActiveLink,
+                  }
+                )}
                 style={
                   isActiveLink
                     ? {
@@ -47,7 +52,7 @@ const DappNavigation = ({ links }: DappNavigationProps) => {
                       isActiveLink,
                   })}
                 />
-                <Typography.Caption>{label}</Typography.Caption>
+                <span className="text-sm">{label}</span>
               </Link>
             </li>
           );

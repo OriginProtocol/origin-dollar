@@ -2,12 +2,14 @@ import Image from 'next/image';
 
 type SwapRoutesProps = {
   i18n: any;
+  selectedEstimate: any;
+  estimates: any;
 };
 
-const SwapRoutes = ({ i18n }: SwapRoutesProps) => {
+const SwapRoutes = ({ i18n, selectedEstimate, estimates }: SwapRoutesProps) => {
   const hasMoreRoutes = false;
   return (
-    <div className="flex flex-col w-full bg-origin-bg-lgrey rounded-xl p-10 space-y-6">
+    <div className="flex flex-col w-full bg-origin-bg-lgrey rounded-xl p-4 lg:p-10 space-y-3 lg:space-y-6">
       <h3 className="flex flex-shrink-0 items-center">{i18n('swapRoutes')}</h3>
       <div className="relative flex flex-col space-y-2 py-6 h-full w-full px-10 bg-origin-bg-grey rounded-md">
         <div className="flex flex-row space-x-2">

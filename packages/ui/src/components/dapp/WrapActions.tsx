@@ -19,6 +19,7 @@ type ActionsProps = {
   translationContext: any;
   onSuccess: (a: string, b: SuccessContext) => void;
   selectedToken?: any;
+  onRefresh: any;
 };
 
 type WrapActionProps = {
@@ -29,7 +30,13 @@ type WrapActionProps = {
   estimatedToken: any;
   wrappedContract: any;
   onSuccess: (a: string, b: SuccessContext) => void;
+  onRefresh: any;
 };
+
+const EXPECTED_CHAIN_ID = parseInt(
+  process.env['NEXT_PUBLIC_ETHEREUM_RPC_CHAIN_ID'] || '1',
+  10
+);
 
 const WrappedActions = ({
   address,
@@ -38,11 +45,11 @@ const WrappedActions = ({
   selectedToken,
   translationContext,
   onSuccess,
+  onRefresh,
 }: ActionsProps) => {
   const [error, setError] = useState('');
   const { value, selectedEstimate } = swap || {};
-  const { hasProvidedAllowance, contract, minimumAmount } =
-    selectedEstimate || {};
+  const { hasProvidedAllowance, contract } = selectedEstimate || {};
   const weiValue = parseUnits(String(value), selectedToken?.decimals || 18);
 
   const { config: allowanceWriteConfig } = usePrepareContractWrite({
@@ -50,6 +57,7 @@ const WrappedActions = ({
     abi: selectedToken?.abi,
     functionName: 'approve',
     args: [contract?.address, weiValue || MaxUint256],
+    chainId: EXPECTED_CHAIN_ID,
   });
 
   const {
@@ -58,13 +66,18 @@ const WrappedActions = ({
     write: allowanceWrite,
   } = useContractWrite(allowanceWriteConfig);
 
-  const { config: swapWriteConfig, error: swapWriteError } =
-    usePrepareContractWrite({
-      address: contract?.address,
-      abi: contract?.abi,
-      functionName: 'deposit',
-      args: [weiValue, address],
-    });
+  const {
+    config: swapWriteConfig,
+    error: swapWriteError,
+    refetch: refetchWrite,
+  } = usePrepareContractWrite({
+    address: contract?.address,
+    abi: contract?.abi,
+    functionName: 'deposit',
+    args: [weiValue, address],
+    chainId: EXPECTED_CHAIN_ID,
+    staleTime: 2_000,
+  });
 
   const {
     data: swapWriteData,
@@ -84,6 +97,8 @@ const WrappedActions = ({
   useEffect(() => {
     if (allowanceWriteIsSuccess && onSuccess) {
       onSuccess('ALLOWANCE', { context: swapWriteData });
+      onRefresh();
+      refetchWrite();
     }
   }, [allowanceWriteIsSuccess]);
 
@@ -94,7 +109,9 @@ const WrappedActions = ({
 
   useEffect(() => {
     if (snapWriteIsSuccess && onSuccess) {
-      onSuccess('WRAP', { context: swapWriteData });
+      onSuccess('WRAPPED', { context: swapWriteData });
+      onRefresh();
+      setError('');
     }
   }, [snapWriteIsSuccess]);
 
@@ -107,6 +124,8 @@ const WrappedActions = ({
       setError('');
     }
   }, [swapWriteError]);
+
+  const isPreparing = swapWriteIsLoading || allowanceWriteIsLoading;
 
   return (
     <>
@@ -130,6 +149,7 @@ const WrappedActions = ({
           })()}
         </button>
       ) : (
+        !isPreparing &&
         error && (
           <span role="alert" className="text-origin-secondary text-sm">
             {i18n(`errors.${error}`, translationContext)}
@@ -170,6 +190,7 @@ const UnwrapActions = ({
   swap,
   translationContext,
   onSuccess,
+  onRefresh,
 }: ActionsProps) => {
   const [error, setError] = useState('');
   const { value, selectedEstimate } = swap || {};
@@ -197,7 +218,9 @@ const UnwrapActions = ({
 
   useEffect(() => {
     if (snapWriteIsSuccess && onSuccess) {
-      onSuccess('REDEEM', { context: swapWriteData });
+      onSuccess('UNWRAPPED', { context: swapWriteData });
+      onRefresh();
+      setError('');
     }
   }, [snapWriteIsSuccess]);
 
@@ -258,10 +281,10 @@ const WrapActions = ({
   estimatedToken,
   wrappedContract,
   onSuccess,
+  onRefresh,
 }: WrapActionProps) => {
   const { mode, selectedEstimate, value } = swap || {};
   const { error } = selectedEstimate || {};
-
   const isWrap = mode === SWAP_TYPES.WRAP;
   const parsedValue = !value ? 0 : parseFloat(value);
   const invalidInputValue = !parsedValue || isNaN(parsedValue);
@@ -287,6 +310,7 @@ const WrapActions = ({
       selectedToken={selectedToken}
       translationContext={translationContext}
       onSuccess={onSuccess}
+      onRefresh={onRefresh}
     />
   ) : (
     <UnwrapActions
@@ -295,6 +319,7 @@ const WrapActions = ({
       swap={swap}
       translationContext={translationContext}
       onSuccess={onSuccess}
+      onRefresh={onRefresh}
     />
   );
 };

@@ -4,6 +4,8 @@ import { find } from 'lodash';
 
 type Token = {
   address: `0x${string}` | string | undefined;
+  name: string;
+  symbol: string;
 };
 
 export function shortenAddress(
@@ -27,14 +29,23 @@ export const formatWeiBalance = (balance: any, maxDecimalDigits = 18) =>
     )
     .toString();
 
+export const isEqualAddress = (
+  addr: `0x${string}` | string | undefined,
+  otherAddr: `0x${string}` | string | undefined
+) => addr?.toLowerCase() === otherAddr?.toLowerCase();
+
+export const findTokenBySymbol = (tokens: Token[], symbol: string) => {
+  return find(tokens, ({ symbol: currentSymbol }) =>
+    isEqualAddress(currentSymbol, symbol)
+  );
+};
+
 export const findTokenByAddress = (
   tokens: Token[],
   contractAddress: string
 ) => {
-  const normalizedAddress = contractAddress?.toLowerCase();
-  return find(
-    tokens,
-    ({ address }) => address?.toLowerCase() === normalizedAddress
+  return find(tokens, ({ address }) =>
+    isEqualAddress(address, contractAddress)
   );
 };
 

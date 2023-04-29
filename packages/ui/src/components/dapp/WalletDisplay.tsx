@@ -34,7 +34,7 @@ const UserActivity = ({ i18n }: UserActivityProps) => {
   const activity = [];
 
   return (
-    <>
+    <div className="relative">
       <button
         onClick={() => {
           setIsOpen(true);
@@ -51,7 +51,7 @@ const UserActivity = ({ i18n }: UserActivityProps) => {
       {isOpen && (
         <div
           ref={ref}
-          className="absolute top-[110px] right-[120px] flex flex-col w-[350px] bg-origin-bg-lgrey z-[1] shadow-xl border border-[1px] border-origin-bg-dgrey rounded-xl"
+          className="absolute top-[50px] right-0 flex flex-col w-[350px] bg-origin-bg-lgrey z-[9999] shadow-xl border border-[1px] border-origin-bg-dgrey rounded-xl"
         >
           <Typography.Body
             className="flex flex-shrink-0 px-6 h-[80px] items-center"
@@ -73,7 +73,7 @@ const UserActivity = ({ i18n }: UserActivityProps) => {
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 };
 
@@ -104,7 +104,7 @@ const UserMenuDropdown = ({
   return (
     <div
       ref={ref}
-      className="absolute top-[110px] right-[120px] flex flex-col w-[350px] bg-origin-bg-lgrey z-[1] shadow-xl border border-[1px] border-origin-bg-dgrey rounded-xl"
+      className="absolute top-[50px] right-0 flex flex-col w-[350px] bg-origin-bg-lgrey z-[9999] shadow-xl border border-[1px] border-origin-bg-dgrey rounded-xl"
     >
       <div className="flex flex-row justify-between px-6 h-[80px] items-center">
         <Typography.Body className="flex flex-shrink-0" as="h2">
@@ -177,19 +177,19 @@ const UserMenu = ({ i18n, address, onDisconnect, tokens }: UserMenuProps) => {
   }
 
   return (
-    <>
+    <div className="relative">
       <div
         role="button"
         onClick={() => {
           setIsOpen(true);
         }}
         tabIndex={0}
-        className="relative flex flex-row space-x-4 items-center pl-2 pr-4 h-[44px] bg-origin-bg-lgrey rounded-full overflow-hidden"
+        className="relative flex flex-row space-x-4 items-center pl-2 pr-2 md:pr-4 h-[44px] bg-origin-bg-lgrey rounded-full overflow-hidden"
       >
         <span className="flex items-center flex-shrink-0 w-[30px] h-full">
           <WalletAvatar diameter={30} seed={jsNumberForAddress(address)} />
         </span>
-        <span>{shortenAddress(address)}</span>
+        <span className="hidden md:flex">{shortenAddress(address)}</span>
       </div>
       {isOpen && (
         <UserMenuDropdown
@@ -200,7 +200,7 @@ const UserMenu = ({ i18n, address, onDisconnect, tokens }: UserMenuProps) => {
           onClose={() => setIsOpen(false)}
         />
       )}
-    </>
+    </div>
   );
 };
 

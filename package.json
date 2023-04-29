@@ -11,7 +11,8 @@
     "dev:oeth": "nx serve oeth",
     "dev:oeth-dapp": "nx serve oeth-dapp",
     "dev:ousd": "nx serve ousd",
-    "dev:ousd-dapp": "nx serve ousd-dapp"
+    "dev:ousd-dapp": "nx serve ousd-dapp",
+    "generate-package-types": "tsc --p tsconfig.base.json"
   },
   "dependencies": {
     "@emotion/react": "^11.10.6",

@@ -1,23 +1,17 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { BigNumber } from 'ethers';
 import {
   useAccount,
-  useLocalStorage,
+  usePersistState,
   useWrapEstimator,
   useTokenBalances,
+  useEthUsdPrice,
 } from '@originprotocol/hooks';
-import { findTokenByAddress } from '@originprotocol/utils';
-import { STORED_WRAPPED_TOKEN_LS_KEY, SWAP_TYPES } from '../../constants';
+import { findTokenByAddress, formatWeiBalance } from '@originprotocol/utils';
+import { STORED_WRAPPED_LS_KEY, SWAP_TYPES } from '../../constants';
 import ExternalCTA from '../core/ExternalCTA';
 import WrapForm from './WrapForm';
 import WrapActions from './WrapActions';
-
-type Token = {
-  name: string;
-  address: `0x${string}` | string | undefined;
-  abi: never;
-  decimals?: number;
-  symbol?: string;
-};
 
 type WrapTokenProps = {
   i18n: any;
@@ -25,6 +19,8 @@ type WrapTokenProps = {
   wrappedToken: any;
   emptyState: any;
 };
+
+const FIELDS_TO_STORE = ['mode', 'value'];
 
 const WrapToken = ({
   i18n,
@@ -34,40 +30,58 @@ const WrapToken = ({
 }: WrapTokenProps) => {
   const { address } = useAccount();
 
-  const [storedTokenAddress, setStoredTokenAddress] = useLocalStorage(
-    STORED_WRAPPED_TOKEN_LS_KEY,
-    null
-  );
-
-  const [showingEmptyState] = useState(true);
-
   const [swap, setSwap] = useState({
-    mode: null,
-    selectedTokenAddress: null,
-    estimatedTokenAddress: null,
+    mode: SWAP_TYPES.WRAP,
+    selectedTokenAddress: unwrappedToken.address,
+    estimatedTokenAddress: wrappedToken.address,
     value: 0,
     selectedEstimate: null,
+    showingEmptyState: true,
   });
 
-  // Retrieve user token balances
-  const { data: tokensWithBalances } = useTokenBalances({
-    address,
-    tokens: {
-      [unwrappedToken?.symbol as string]: unwrappedToken,
-      [wrappedToken?.symbol as string]: wrappedToken,
+  const {
+    mode,
+    selectedTokenAddress,
+    estimatedTokenAddress,
+    value,
+    selectedEstimate,
+    showingEmptyState,
+  } = swap;
+
+  usePersistState(swap, {
+    storageKey: STORED_WRAPPED_LS_KEY,
+    saveFields: FIELDS_TO_STORE,
+    onMount: (storedData: any) => {
+      setSwap((prev) => ({
+        ...prev,
+        ...(storedData ?? {}),
+      }));
     },
   });
+
+  // Get current ETH in USD
+  const [{ formatted: ethUsdPrice }] = useEthUsdPrice();
+
+  // Retrieve user token balances
+  const { data: tokensWithBalances, onRefresh: onRefreshBalances } =
+    useTokenBalances({
+      address,
+      tokens: {
+        [unwrappedToken?.symbol as string]: unwrappedToken,
+        [wrappedToken?.symbol as string]: wrappedToken,
+      },
+    });
 
   const selectedToken = findTokenByAddress(
     // @ts-ignore
     tokensWithBalances,
-    swap?.selectedTokenAddress
+    selectedTokenAddress
   );
 
   const estimatedToken = findTokenByAddress(
     // @ts-ignore
     tokensWithBalances,
-    swap?.estimatedTokenAddress
+    estimatedTokenAddress
   );
 
   const handleEstimate = (selectedEstimate: any) => {
@@ -83,69 +97,37 @@ const WrapToken = ({
   const { isLoading: isLoadingEstimate, onRefreshEstimates } = useWrapEstimator(
     {
       address,
-      mode: swap?.mode,
+      mode,
       fromToken: selectedToken,
       toToken: estimatedToken,
       proxy: wrappedToken,
-      value: swap?.value,
+      value,
       onEstimate: handleEstimate,
     }
   );
 
-  // Auto select a selected token and corresponding estimated token
-  useEffect(() => {
-    if (!swap?.selectedTokenAddress) {
-      const hasStored = findTokenByAddress(
-        // @ts-ignore
-        tokensWithBalances,
-        storedTokenAddress
-      );
+  const onRefresh = async () => {
+    await onRefreshEstimates();
+    onRefreshBalances();
+  };
 
-      let estimatedTokenAddress: string | undefined;
-      let selectedTokenAddress: string | undefined;
-      let mode: string;
-
-      if (hasStored && storedTokenAddress === wrappedToken.address) {
-        selectedTokenAddress = wrappedToken.address;
-        estimatedTokenAddress = unwrappedToken.address;
-        mode = SWAP_TYPES.UNWRAP;
-      } else {
-        selectedTokenAddress = unwrappedToken.address;
-        estimatedTokenAddress = wrappedToken.address;
-        mode = SWAP_TYPES.WRAP;
-      }
-
-      // @ts-ignore
+  const onSuccess = (transactionType: string, { context }: any) => {
+    if (transactionType === 'WRAPPED' || transactionType === 'UNWRAPPED') {
       setSwap((prev) => ({
         ...prev,
-        mode,
-        estimatedTokenAddress,
-        selectedTokenAddress,
+        value: 0,
       }));
-    }
-  }, [swap?.selectedTokenAddress, tokensWithBalances]);
-
-  const onSwap = (changes: {
-    selectedTokenAddress: any;
-    mode?: string;
-    estimatedTokenAddress?: null;
-    value?: number;
-    selectedEstimate?: null;
-    estimates?: never[];
-  }) => {
-    // @ts-ignore
-    setSwap((prev) => ({
-      ...prev,
-      ...changes,
-    }));
-    // Persist to local storage
-    if (changes?.selectedTokenAddress) {
-      setStoredTokenAddress(changes?.selectedTokenAddress);
     }
   };
 
+  const onChangeValue = (value: number) => {
+    setSwap((prev) => ({
+      ...prev,
+      value,
+    }));
+  };
+
   const onSwitchMode = () => {
-    // @ts-ignore
     setSwap((prev) => ({
       ...prev,
       mode: prev.mode === SWAP_TYPES.WRAP ? SWAP_TYPES.UNWRAP : SWAP_TYPES.WRAP,
@@ -154,26 +136,29 @@ const WrapToken = ({
     }));
   };
 
-  const onSuccess = () => {
+  const onSetMax = (maxValue: BigNumber) => {
+    // @ts-ignore
     setSwap((prev) => ({
       ...prev,
+      value: formatWeiBalance(maxValue),
     }));
-    setTimeout(async () => {
-      await onRefreshEstimates();
-    }, 300);
   };
 
   return (
-    <div className="flex flex-col space-y-8">
+    <div className="flex flex-col space-y-4 lg:space-y-8">
       {showingEmptyState && emptyState && <ExternalCTA {...emptyState} />}
       <WrapForm
         i18n={i18n}
         swap={swap}
         selectedToken={selectedToken}
         estimatedToken={estimatedToken}
-        onSwap={onSwap}
-        onSwitchMode={onSwitchMode}
         isLoadingEstimate={isLoadingEstimate}
+        onChangeValue={onChangeValue}
+        onSwitchMode={onSwitchMode}
+        onSetMax={onSetMax}
+        conversions={{
+          ethUsd: ethUsdPrice,
+        }}
       />
       <WrapActions
         address={address}
@@ -183,6 +168,7 @@ const WrapToken = ({
         estimatedToken={estimatedToken}
         wrappedContract={wrappedToken}
         onSuccess={onSuccess}
+        onRefresh={onRefresh}
       />
     </div>
   );

@@ -5,8 +5,8 @@ import {
   usePrepareContractWrite,
   useWaitForTransaction,
 } from '@originprotocol/hooks';
+import { pick } from 'lodash';
 import { parseUnits, MaxUint256 } from '@originprotocol/utils';
-import { range } from 'lodash';
 import { SWAP_TYPES } from '../../constants';
 
 type SuccessContext = {
@@ -18,6 +18,7 @@ type ActionsProps = {
   swap: any;
   translationContext: any;
   onSuccess: (a: string, b: SuccessContext) => void;
+  onRefresh: any;
   selectedToken?: any;
 };
 
@@ -27,8 +28,14 @@ type SwapActionsProps = {
   selectedToken: any;
   estimatedToken: any;
   onSuccess: (a: string, b: SuccessContext) => void;
+  onRefresh: any;
   targetContract: any;
 };
+
+const EXPECTED_CHAIN_ID = parseInt(
+  process.env['NEXT_PUBLIC_ETHEREUM_RPC_CHAIN_ID'] || '1',
+  10
+);
 
 const MintableActions = ({
   i18n,
@@ -36,6 +43,7 @@ const MintableActions = ({
   selectedToken,
   translationContext,
   onSuccess,
+  onRefresh,
 }: ActionsProps) => {
   const [error, setError] = useState('');
   const { value, selectedEstimate } = swap || {};
@@ -44,10 +52,10 @@ const MintableActions = ({
   const weiValue = parseUnits(String(value), selectedToken?.decimals || 18);
 
   const { config: allowanceWriteConfig } = usePrepareContractWrite({
-    address: selectedToken?.address,
-    abi: selectedToken?.abi,
+    ...pick(selectedToken, 'address', 'abi'),
     functionName: 'approve',
     args: [contract?.address, weiValue || MaxUint256],
+    chainId: EXPECTED_CHAIN_ID,
   });
 
   const {
@@ -56,13 +64,18 @@ const MintableActions = ({
     write: allowanceWrite,
   } = useContractWrite(allowanceWriteConfig);
 
-  const { config: swapWriteConfig, error: swapWriteError } =
-    usePrepareContractWrite({
-      address: contract?.address,
-      abi: contract?.abi,
-      functionName: 'mint',
-      args: [selectedToken?.address, weiValue, minimumAmount],
-    });
+  const {
+    config: swapWriteConfig,
+    error: swapWriteError,
+    refetch: refetchWrite,
+  } = usePrepareContractWrite({
+    address: contract?.address,
+    abi: contract?.abi,
+    functionName: 'mint',
+    args: [selectedToken?.address, weiValue, minimumAmount],
+    chainId: EXPECTED_CHAIN_ID,
+    staleTime: 2_000,
+  });
 
   const {
     data: swapWriteData,
@@ -82,6 +95,8 @@ const MintableActions = ({
   useEffect(() => {
     if (allowanceWriteIsSuccess && onSuccess) {
       onSuccess('ALLOWANCE', { context: swapWriteData });
+      onRefresh();
+      refetchWrite();
     }
   }, [allowanceWriteIsSuccess]);
 
@@ -93,6 +108,8 @@ const MintableActions = ({
   useEffect(() => {
     if (snapWriteIsSuccess && onSuccess) {
       onSuccess('MINTED', { context: swapWriteData });
+      onRefresh();
+      setError('');
     }
   }, [snapWriteIsSuccess]);
 
@@ -105,6 +122,8 @@ const MintableActions = ({
       setError('');
     }
   }, [swapWriteError]);
+
+  const isPreparing = swapWriteIsLoading || allowanceWriteIsLoading;
 
   return (
     <>
@@ -128,6 +147,7 @@ const MintableActions = ({
           })()}
         </button>
       ) : (
+        !isPreparing &&
         error && (
           <span role="alert" className="text-origin-secondary text-sm">
             {i18n(`errors.${error}`, translationContext)}
@@ -179,6 +199,7 @@ const RedeemActions = ({
       abi: contract?.abi,
       functionName: 'redeem',
       args: [weiValue, minimumAmount],
+      chainId: EXPECTED_CHAIN_ID,
     });
 
   const {
@@ -254,16 +275,20 @@ const SwapActions = ({
   estimatedToken,
   onSuccess,
   targetContract,
+  onRefresh,
 }: SwapActionsProps) => {
   const { mode, selectedEstimate, value } = swap || {};
   const { error } = selectedEstimate || {};
 
   const isMint = mode === SWAP_TYPES.MINT;
+
   const parsedValue = !value ? 0 : parseFloat(value);
-  const invalidInputValue = !parsedValue || isNaN(parsedValue);
+
+  const invalidInputValue =
+    !parsedValue || isNaN(parsedValue) || !targetContract;
 
   const translationContext = {
-    targetContractName: targetContract.name,
+    targetContractName: targetContract?.name || 'Unknown',
     sourceTokenName: selectedToken?.symbol,
     targetTokenName: estimatedToken?.symbol,
   };
@@ -282,6 +307,7 @@ const SwapActions = ({
       selectedToken={selectedToken}
       translationContext={translationContext}
       onSuccess={onSuccess}
+      onRefresh={onRefresh}
     />
   ) : (
     <RedeemActions
@@ -289,6 +315,7 @@ const SwapActions = ({
       swap={swap}
       translationContext={translationContext}
       onSuccess={onSuccess}
+      onRefresh={onRefresh}
     />
   );
 };

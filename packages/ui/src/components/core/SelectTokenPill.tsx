@@ -6,7 +6,7 @@ type SelectTokenPillProps = {
   symbol: string;
   name: string;
   onClick: MouseEventHandler<HTMLButtonElement>;
-  logoSrc?: string;
+  logoSrc: string;
   readOnly?: boolean;
 };
 

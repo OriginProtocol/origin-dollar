@@ -5,11 +5,11 @@ import {
   w3mProvider,
 } from '@web3modal/ethereum';
 import { Web3Modal } from '@web3modal/react';
-import { mainnet } from 'wagmi/chains';
+import { mainnet, localhost } from 'wagmi/chains';
 import { SafeConnector } from 'wagmi/connectors/safe';
 import { ReactNode } from 'react';
 
-const chains = [mainnet];
+const chains = [mainnet, localhost];
 
 const useWagmiClient = () => {
   const projectId = process.env['NEXT_PUBLIC_WC_PROJECT_ID'] || '';
