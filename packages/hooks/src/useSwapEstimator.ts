@@ -42,6 +42,8 @@ interface EstimateError extends Error {
 }
 
 const handleError = (e: EstimateError, contract: any) => {
+  console.error(e);
+
   const errorMessage = e?.data?.message || e?.message;
 
   if (errorMessage.includes('Mint amount lower than minimum')) {
@@ -183,12 +185,26 @@ const estimateVaultMint = async ({
       };
     }
 
-    const oracleCoinPrice = await vaultContract['priceUnitMint'](
-      fromToken.address
+    const foundConverter = config.contract.abi.find(
+      (item: any) =>
+        item.name === 'priceUnitMint' || item.name === 'priceUSDMint'
     );
 
+    let oracleCoinPrice;
+
+    if (foundConverter) {
+      oracleCoinPrice = await vaultContract[foundConverter.name](
+        fromToken.address
+      );
+    }
+
     const receiveAmount = parseUnits(
-      String(value * parseFloat(formatUnits(oracleCoinPrice, 18))),
+      String(
+        value *
+          (oracleCoinPrice
+            ? parseFloat(formatUnits(oracleCoinPrice, fromTokenDecimals))
+            : 1)
+      ),
       toTokenDecimals
     );
 

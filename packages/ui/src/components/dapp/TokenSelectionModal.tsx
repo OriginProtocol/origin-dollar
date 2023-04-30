@@ -1,19 +1,21 @@
 import { useRef } from 'react';
 import { map, orderBy } from 'lodash';
 import { useClickAway, useKey, useLockBodyScroll } from '@originprotocol/hooks';
-import { formatWeiBalance } from '@originprotocol/utils';
+import { formatWeiBalance, formatUSD } from '@originprotocol/utils';
 import TokenImage from '../core/TokenImage';
 
 type TokenSelectProps = {
   tokens: any;
   onClose: any;
   onSelect: any;
+  conversion: number;
 };
 
 const TokenSelectionModal = ({
   tokens,
   onClose,
   onSelect,
+  conversion,
 }: TokenSelectProps) => {
   const ref = useRef(null);
 
@@ -36,6 +38,7 @@ const TokenSelectionModal = ({
       >
         {map(orderBy(tokens, 'name', 'asc'), (token) => {
           const { logoSrc, name, symbol, symbolAlt, balanceOf, mix } = token;
+          const balanceOfValue = parseFloat(formatWeiBalance(balanceOf));
           return (
             <button
               key={symbol}
@@ -64,12 +67,10 @@ const TokenSelectionModal = ({
               </div>
               <div className="flex flex-col space-y-1 justify-end text-right">
                 <p className="focus:outline-none bg-transparent lg:text-xl font-semibold caret-gradient1-from">
-                  {balanceOf
-                    ? parseFloat(formatWeiBalance(balanceOf)).toFixed(6)
-                    : 0}
+                  {balanceOfValue ? balanceOfValue.toFixed(6) : '-'}
                 </p>
-                <span className="text-origin-dimmed text-lg">
-                  {/*${balanceOf * (conversions[swap.from?.asset] || 0)}*/}
+                <span className="text-origin-dimmed">
+                  {formatUSD(balanceOfValue * (conversion || 1))}
                 </span>
               </div>
             </button>

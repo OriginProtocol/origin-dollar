@@ -19,7 +19,7 @@ type SwapFormProps = {
   isLoadingEstimate: boolean;
   onSelectToken: any;
   onSetMax: any;
-  conversion: number | undefined;
+  conversion: number;
 };
 
 const SwapForm = ({
@@ -95,6 +95,7 @@ const SwapForm = ({
             onSelectToken(token);
             setShowTokenSelection(false);
           }}
+          conversion={conversion}
         />
       )}
     </>

@@ -5,7 +5,6 @@ import pick from 'lodash/pick';
 import { getStaticPaths, makeStaticProps } from '../../lib/getStatic';
 import { DAPP_TOKENS, STORED_TOKEN_LS_KEY } from '../../src/constants';
 import { BigNumber } from 'ethers';
-import { useEthUsdPrice } from '@originprotocol/hooks';
 
 const canUseOUSDVault = ({ mode, fromToken, toToken }) => {
   if (mode === 'MINT') {

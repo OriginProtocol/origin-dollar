@@ -30,6 +30,7 @@ const WrapToken = ({
   wrappedToken,
   emptyState,
   storageKey,
+  usdConversionPrice,
 }: WrapTokenProps) => {
   const { address } = useAccount();
 
@@ -60,9 +61,6 @@ const WrapToken = ({
       }));
     },
   });
-
-  // Get current ETH in USD
-  const [{ formatted: usdConversionPrice }] = useEthUsdPrice();
 
   // Retrieve user token balances
   const { data: tokensWithBalances, onRefresh: onRefreshBalances } =
