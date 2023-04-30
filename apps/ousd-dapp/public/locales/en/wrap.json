@@ -2,7 +2,7 @@
   "title": "Wrap",
   "balance": "Balance",
   "max": "max",
-  "description": "Wrapped wOETH is a non-rebasing tokenized vault that appreciates in value instead of growing in number",
+  "description": "Wrapped WOUSD is a non-rebasing tokenized vault that appreciates in value instead of growing in number",
   "learnMore": "Learn More",
   "enterAmount": "Enter Amount",
   "estimate": "estimate",
@@ -10,19 +10,19 @@
   "isLoading": "Loading...",
   "unwrap": {
     "DEFAULT": "Unwrap",
-    "PENDING": "Unwrapping...",
+    "PENDING": "Confirm unwrap in wallet...",
     "SUBMITTED": "Awaiting confirmations...",
     "SUCCESS": "{{sourceTokenName}} unwrapped for {{targetTokenName}}"
   },
   "wrap": {
     "DEFAULT": "Wrap",
-    "PENDING": "Wrapping...",
+    "PENDING": "Confirm wrap in wallet...",
     "SUBMITTED": "Awaiting confirmations...",
     "SUCCESS": "{{sourceTokenName}} wrapped for {{targetTokenName}}"
   },
   "approval": {
     "DEFAULT": "Allow {{targetContractName}} to use your {{sourceTokenName}}",
-    "PENDING": "Approving...",
+    "PENDING": "Confirm approval in wallet...",
     "SUBMITTED": "Awaiting confirmations...",
     "SUCCESS": "Approved {{targetContractName}} for {{sourceTokenName}}"
   },
