@@ -15,7 +15,7 @@ buildContracts() {
 
 buildApp() {
   # buildContracts;
-  npx nx build oeth-dapp --prod
+  npx nx build $APP_ID --prod
 }
 
 buildApp
