@@ -57,8 +57,8 @@ const SwapForm = ({
             settings={settings}
           />
         </div>
-        <div className="h-[1px] w-full border-b-[1px] border-origin-bg-dgrey" />
         <div className="relative flex flex-col justify-center h-full w-full">
+          <div className="h-[1px] w-full border-b-[1px] border-origin-bg-dgrey" />
           <SwapInputValue
             i18n={i18n}
             value={value}

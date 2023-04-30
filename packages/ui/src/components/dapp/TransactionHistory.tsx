@@ -18,7 +18,7 @@ const TransactionHistory = ({ i18n }: HistoryProps) => {
           <Typography.Body className="flex flex-shrink-0" as="h2">
             History
           </Typography.Body>
-          <div className="flex flex-row items-center space-x-4">
+          <div className="hidden lg:flex flex-row items-center space-x-4">
             <button className="flex flex-row items-center space-x-2 h-[28px] bg-origin-white bg-opacity-10 rounded-full px-4 text-sm hover:bg-opacity-10 duration-100 ease-in">
               <span className="text-origin-dimmed">Yields</span>
               <span className="h-[6px] w-[6px] bg-origin-bg-lgrey rounded-full" />

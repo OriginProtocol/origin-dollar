@@ -123,8 +123,8 @@ const TokenSwap = ({
     // Update estimates received, auto set the best one
     setSwap((prev) => ({
       ...prev,
-      selectedEstimate: sortedGasEstimates[0],
-      estimates: sortedGasEstimates,
+      selectedEstimate: sortedGasEstimates?.[0] || null,
+      estimates: sortedGasEstimates || [],
     }));
   };
 

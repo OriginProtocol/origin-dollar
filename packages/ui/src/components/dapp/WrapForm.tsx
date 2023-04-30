@@ -30,13 +30,13 @@ const WrapForm = ({
   const { receiveAmount } = selectedEstimate || {};
   const conversion = conversions?.ethUsd || 0;
   return (
-    <div className="flex flex-col w-full h-[440px] bg-origin-bg-lgrey rounded-xl">
+    <div className="flex flex-col w-full h-[420px] bg-origin-bg-lgrey rounded-xl">
       <div className="flex flex-row flex-shrink-0 items-center justify-between px-10 h-[80px]">
         <h2 className="flex flex-shrink-0">{i18n('title')}</h2>
       </div>
-      <div className="h-[1px] w-full border-b-[1px] border-origin-bg-dgrey" />
       <div className="relative flex flex-col justify-center h-full w-full">
         <div className="relative flex flex-col justify-center h-full w-full">
+          <div className="h-[1px] w-full border-b-[1px] border-origin-bg-dgrey" />
           <SwapInputValue
             i18n={i18n}
             value={value}
