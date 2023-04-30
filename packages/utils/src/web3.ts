@@ -50,16 +50,19 @@ export const findTokenByAddress = (
 };
 
 export const getProviderName = () => {
+  //@ts-ignore
   if (!process.browser) {
     return null;
   }
 
+  // @ts-ignore
   const { ethereum = {}, web3 = {} } = window;
 
   if (ethereum.isMetaMask) {
     return 'metamask';
   } else if (ethereum.isImToken) {
     return 'imtoken';
+    //@ts-ignore
   } else if (typeof window.__CIPHER__ !== 'undefined') {
     return 'cipher';
   } else if (!web3.currentProvider) {
