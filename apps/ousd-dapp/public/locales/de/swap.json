@@ -4,25 +4,30 @@
   "max": "max",
   "description": "Wrapped wOETH is a non-rebasing tokenized vault that appreciates in value instead of growing in number",
   "learnMore": "Learn More",
-  "swapRoutes": "Swap Routes",
+  "swapRoutes": "Swap Estimates",
   "estimate": "estimate",
   "minReceived": "Min. received",
   "isLoading": "Loading...",
+  "effectivePrice": "Effective price",
+  "afterFees": "after fees",
+  "best": "Best",
+  "showMore": "show more",
+  "showLess": "hide",
   "redeem": {
     "DEFAULT": "Swap",
-    "PENDING": "Swapping...",
+    "PENDING": "Confirm swap in wallet...",
     "SUBMITTED": "Awaiting confirmations...",
     "SUCCESS": "{{sourceTokenName}} swapped for {{targetTokenName}}"
   },
   "swap": {
     "DEFAULT": "Swap",
-    "PENDING": "Swapping...",
+    "PENDING": "Confirm swap in wallet...",
     "SUBMITTED": "Awaiting confirmations...",
     "SUCCESS": "{{sourceTokenName}} swapped for {{targetTokenName}}"
   },
   "approval": {
     "DEFAULT": "Allow {{targetContractName}} to use your {{sourceTokenName}}",
-    "PENDING": "Approving...",
+    "PENDING": "Confirm approval in wallet...",
     "SUBMITTED": "Awaiting confirmations...",
     "SUCCESS": "Approved {{targetContractName}} for {{sourceTokenName}}"
   },
@@ -31,7 +36,9 @@
     "NO_INPUT_AMOUNT": "Enter Amount",
     "UNKNOWN": "Enter Amount",
     "UNPREDICTABLE_GAS_LIMIT": "Error estimating gas for transaction",
-    "REDEEM_TOO_LOW": "Redeem amount lower than minimum, adjust tolerance up"
+    "REDEEM_TOO_LOW": "Redeem amount lower than minimum, adjust tolerance up",
+    "NO_ESTIMATES": "No Estimates",
+    "UNSUPPORTED": "Unsupported"
   },
   "settings": {
     "title": "Settings",

@@ -3,9 +3,14 @@ import { useTranslation } from 'next-i18next';
 import { contracts } from '@originprotocol/web3';
 import { getStaticPaths, makeStaticProps } from '../../lib/getStatic';
 import { STORED_WRAPPED_LS_KEY } from '../../src/constants';
+import { useEthUsdPrice } from '@originprotocol/hooks';
 
 const Wrap = () => {
   const { t } = useTranslation('wrap');
+
+  // Get current ETH in USD
+  const [{ formatted: usdConversionPrice }] = useEthUsdPrice();
+
   return (
     <ErrorBoundary>
       <WrapToken
@@ -18,6 +23,7 @@ const Wrap = () => {
           externalHref: 'https://www.oeth.com',
         }}
         storageKey={STORED_WRAPPED_LS_KEY}
+        usdConversionPrice={usdConversionPrice}
       />
     </ErrorBoundary>
   );

@@ -17,7 +17,7 @@ type UseSwapEstimatorProps = {
   value: number;
   estimatesBy: any;
   onEstimate: any;
-  ethUsdPrice: number | undefined;
+  usdConversionPrice: number | undefined;
 };
 
 export type SwapEstimate = {
@@ -694,7 +694,7 @@ const estimateSushiSwap = async ({
 
 const enrichAndSortEstimates = (
   estimates: SwapEstimate[],
-  ethUsdPrice: number | undefined
+  usdConversionPrice: number | undefined
 ) => {
   return orderBy(
     estimates.map((estimate: SwapEstimate) => {
@@ -717,21 +717,21 @@ const enrichAndSortEstimates = (
         formatUnits(
           gasPrice
             .mul(gasLimit)
-            .mul(BigNumber.from(Math.trunc(ethUsdPrice || 0)))
+            .mul(BigNumber.from(Math.trunc(usdConversionPrice || 0)))
             .toString(),
           18
         )
       );
-      const valueInUsd = parseFloat(String(value)) * (ethUsdPrice || 0);
+      const valueInUsd = parseFloat(String(value)) * (usdConversionPrice || 0);
       const amountReceived = parseFloat(formatWeiBalance(receiveAmount));
-      const receiveAmountUsd = amountReceived * (ethUsdPrice || 0);
+      const receiveAmountUsd = amountReceived * (usdConversionPrice || 0);
       const effectivePrice =
         (parseFloat(String(value)) + parseFloat(String(gasCostUsd))) /
         receiveAmountUsd;
 
       return {
         ...estimate,
-        ethUsdPrice,
+        usdConversionPrice,
         gasCostUsd,
         valueInUsd,
         receiveAmountUsd,
@@ -752,7 +752,7 @@ const useSwapEstimator = ({
   value,
   estimatesBy,
   onEstimate,
-  ethUsdPrice,
+  usdConversionPrice,
 }: UseSwapEstimatorProps) => {
   const [isLoading, setIsLoading] = useState(false);
 
@@ -791,7 +791,7 @@ const useSwapEstimator = ({
         )
       );
 
-      const enriched = enrichAndSortEstimates(estimates, ethUsdPrice);
+      const enriched = enrichAndSortEstimates(estimates, usdConversionPrice);
 
       onEstimate(enriched);
 
@@ -816,7 +816,7 @@ const useSwapEstimator = ({
     JSON.stringify(fromToken),
     JSON.stringify(toToken),
     JSON.stringify(settings),
-    ethUsdPrice,
+    usdConversionPrice,
   ]);
 
   return { isLoading, onRefreshEstimates: onFetchEstimations };

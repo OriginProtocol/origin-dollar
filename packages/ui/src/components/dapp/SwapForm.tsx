@@ -19,9 +19,7 @@ type SwapFormProps = {
   isLoadingEstimate: boolean;
   onSelectToken: any;
   onSetMax: any;
-  conversions: {
-    ethUsd: number | undefined;
-  };
+  conversion: number | undefined;
 };
 
 const SwapForm = ({
@@ -37,7 +35,7 @@ const SwapForm = ({
   onSwitchMode,
   swapTokens,
   isLoadingEstimate,
-  conversions,
+  conversion,
 }: SwapFormProps) => {
   const [showTokenSelection, setShowTokenSelection] = useState(false);
   const { mode, value, selectedEstimate } = swap;
@@ -45,7 +43,6 @@ const SwapForm = ({
   const isMint = mode === SWAP_TYPES.MINT;
   const onShowTokenSelection = () => setShowTokenSelection(true);
   const onCloseTokenSelection = () => setShowTokenSelection(false);
-  const conversion = conversions?.ethUsd || 0;
   return (
     <>
       <div className="flex flex-col w-full min-h-[420px] bg-origin-bg-lgrey rounded-xl">

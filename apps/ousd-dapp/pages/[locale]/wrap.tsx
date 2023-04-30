@@ -18,6 +18,7 @@ const Wrap = () => {
           externalHref: 'https://www.ousd.com',
         }}
         storageKey={STORED_WRAPPED_LS_KEY}
+        usdConversionPrice={1}
       />
     </ErrorBoundary>
   );

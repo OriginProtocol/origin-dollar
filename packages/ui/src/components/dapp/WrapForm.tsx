@@ -10,9 +10,7 @@ type WrapFormProps = {
   onSwitchMode: any;
   onChangeValue: any;
   isLoadingEstimate: boolean;
-  conversions: {
-    ethUsd: number | undefined;
-  };
+  conversion: number | undefined;
 };
 
 const WrapForm = ({
@@ -24,11 +22,10 @@ const WrapForm = ({
   isLoadingEstimate,
   onSetMax,
   onChangeValue,
-  conversions,
+  conversion,
 }: WrapFormProps) => {
   const { value, selectedEstimate } = swap;
   const { receiveAmount } = selectedEstimate || {};
-  const conversion = conversions?.ethUsd || 0;
   return (
     <div className="flex flex-col w-full h-[420px] bg-origin-bg-lgrey rounded-xl">
       <div className="flex flex-row flex-shrink-0 items-center justify-between px-10 h-[80px]">
@@ -45,7 +42,7 @@ const WrapForm = ({
             selectedToken={selectedToken}
             onSwitchMode={onSwitchMode}
             canSelect={false}
-            conversion={conversion}
+            conversion={conversion || 1}
           />
           <div className="h-[1px] w-full border-b-[1px] border-origin-bg-dgrey" />
           <SwapOutputValue
@@ -54,7 +51,7 @@ const WrapForm = ({
             receiveAmount={receiveAmount}
             estimatedToken={estimatedToken}
             canSelect={false}
-            conversion={conversion}
+            conversion={conversion || 1}
           />
         </div>
       </div>

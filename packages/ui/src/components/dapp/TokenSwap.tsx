@@ -1,12 +1,11 @@
 import React, { useMemo, useState } from 'react';
 import { BigNumber } from 'ethers';
-import { isEmpty, values } from 'lodash';
+import { values } from 'lodash';
 import {
   useAccount,
   useTokenBalances,
   useSwapEstimator,
   usePersistState,
-  useEthUsdPrice,
 } from '@originprotocol/hooks';
 import { formatWeiBalance, findTokenBySymbol } from '@originprotocol/utils';
 import { SWAP_TYPES } from '../../constants';
@@ -21,6 +20,7 @@ type TokenSwapProps = {
   supportedSwapTokens: string[];
   additionalRedeemTokens: any;
   storageKey: string;
+  usdConversionPrice: number | undefined;
 };
 
 const FIELDS_TO_STORE = [
@@ -36,6 +36,7 @@ const TokenSwap = ({
   estimatesBy,
   supportedSwapTokens,
   additionalRedeemTokens,
+  usdConversionPrice,
   storageKey,
 }: TokenSwapProps) => {
   const { address } = useAccount();
@@ -80,9 +81,6 @@ const TokenSwap = ({
       }));
     },
   });
-
-  // Get current ETH in USD
-  const [{ formatted: ethUsdPrice }] = useEthUsdPrice();
 
   // Retrieve user token balances
   const { data: tokensWithBalances, onRefresh: onRefreshBalances } =
@@ -139,7 +137,7 @@ const TokenSwap = ({
       value,
       estimatesBy,
       onEstimate: onSwapEstimates,
-      ethUsdPrice,
+      usdConversionPrice,
     }
   );
 
@@ -247,9 +245,7 @@ const TokenSwap = ({
         onChangeSettings={onChangeSettings}
         onSwitchMode={onSwitchMode}
         onSetMax={onSetMax}
-        conversions={{
-          ethUsd: ethUsdPrice,
-        }}
+        conversion={usdConversionPrice}
       />
       {validValue ? (
         <SwapRoutes

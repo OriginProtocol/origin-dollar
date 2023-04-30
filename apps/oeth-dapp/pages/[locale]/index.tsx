@@ -5,6 +5,7 @@ import pick from 'lodash/pick';
 import { getStaticPaths, makeStaticProps } from '../../lib/getStatic';
 import { DAPP_TOKENS, STORED_TOKEN_LS_KEY } from '../../src/constants';
 import { BigNumber } from 'ethers';
+import { useEthUsdPrice } from '@originprotocol/hooks';
 
 const canUseOETHVault = ({ mode, fromToken, toToken }) => {
   if (mode === 'MINT') {
@@ -35,6 +36,10 @@ const canUseZapper = ({ mode, fromToken }) => {
 
 const Swap = () => {
   const { t } = useTranslation('swap');
+
+  // Get current ETH in USD
+  const [{ formatted: usdConversionPrice }] = useEthUsdPrice();
+
   return (
     <ErrorBoundary>
       <TokenSwap
@@ -75,6 +80,7 @@ const Swap = () => {
           },
         }}
         storageKey={STORED_TOKEN_LS_KEY}
+        usdConversionPrice={usdConversionPrice}
       />
     </ErrorBoundary>
   );

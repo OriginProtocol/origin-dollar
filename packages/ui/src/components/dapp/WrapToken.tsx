@@ -19,6 +19,7 @@ type WrapTokenProps = {
   wrappedToken: any;
   emptyState: any;
   storageKey: string;
+  usdConversionPrice: number | undefined;
 };
 
 const FIELDS_TO_STORE = ['mode', 'value'];
@@ -61,7 +62,7 @@ const WrapToken = ({
   });
 
   // Get current ETH in USD
-  const [{ formatted: ethUsdPrice }] = useEthUsdPrice();
+  const [{ formatted: usdConversionPrice }] = useEthUsdPrice();
 
   // Retrieve user token balances
   const { data: tokensWithBalances, onRefresh: onRefreshBalances } =
@@ -158,9 +159,7 @@ const WrapToken = ({
         onChangeValue={onChangeValue}
         onSwitchMode={onSwitchMode}
         onSetMax={onSetMax}
-        conversions={{
-          ethUsd: ethUsdPrice,
-        }}
+        conversion={usdConversionPrice}
       />
       <WrapActions
         address={address}

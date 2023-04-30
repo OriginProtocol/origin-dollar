@@ -4,7 +4,10 @@
     "swap": "Swap",
     "wrap": "Wrap",
     "history": "History",
-    "viewIpfs": "View on ipfs"
+    "viewIpfs": {
+      "mobile": "IPFS",
+      "desktop": "View on IPFS"
+    }
   },
   "apy": {
     "title": "APY",

@@ -5,6 +5,7 @@ import pick from 'lodash/pick';
 import { getStaticPaths, makeStaticProps } from '../../lib/getStatic';
 import { DAPP_TOKENS, STORED_TOKEN_LS_KEY } from '../../src/constants';
 import { BigNumber } from 'ethers';
+import { useEthUsdPrice } from '@originprotocol/hooks';
 
 const canUseOUSDVault = ({ mode, fromToken, toToken }) => {
   if (mode === 'MINT') {
@@ -41,14 +42,19 @@ const Swap = () => {
         ]}
         additionalRedeemTokens={{
           MIX: {
-            name: 'Mix',
+            name: 'Mixed Redeem',
             symbol: 'MIX',
-            tokens: [],
+            symbolAlt: 'Mix',
+            mix: [
+              contracts.mainnet.USDT.symbol,
+              contracts.mainnet.USDC.symbol,
+              contracts.mainnet.DAI.symbol,
+            ],
             balanceOf: BigNumber.from(0),
-            logoSrc: '/tokens/MIX.png',
           },
         }}
         storageKey={STORED_TOKEN_LS_KEY}
+        usdConversionPrice={1}
       />
     </ErrorBoundary>
   );
