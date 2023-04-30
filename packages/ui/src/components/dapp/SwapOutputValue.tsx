@@ -49,8 +49,8 @@ const SwapOutputValue = ({
       <div className="flex flex-col w-[50%]">
         {isLoadingEstimate ? (
           <div className="flex flex-col space-y-2">
-            <span className="animate-pulse inline-block min-h-[24px] w-[240px] bg-current opacity-10 rounded-md" />
-            <span className="animate-pulse inline-block min-h-[18px] w-[80px] bg-current opacity-10 rounded-md" />
+            <span className="animate-pulse inline-block min-h-[22px] w-[180px] bg-current opacity-10 rounded-md" />
+            <span className="animate-pulse inline-block min-h-[16px] w-[80px] bg-current opacity-10 rounded-md" />
           </div>
         ) : (
           <>
