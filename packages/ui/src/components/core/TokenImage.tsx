@@ -21,7 +21,12 @@ const TokenImage = ({
   mix,
 }: TokenImageProps) =>
   mix ? (
-    <div className="relative flex flex-row items-center w-[60px]">
+    <div
+      className="relative flex flex-row items-center"
+      style={{
+        width: width + (mix.length - 1) * 15,
+      }}
+    >
       {mix?.map((mixSymbol, index) => (
         <div
           key={mixSymbol}

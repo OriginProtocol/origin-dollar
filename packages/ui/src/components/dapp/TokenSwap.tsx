@@ -232,8 +232,6 @@ const TokenSwap = ({
   const parsedValue = !value ? 0 : parseFloat(String(value));
   const validValue = parsedValue && parsedValue > 0;
 
-  console.log(estimates, selectedEstimate);
-
   return (
     <div className="flex flex-col space-y-4 lg:space-y-8">
       <SwapForm

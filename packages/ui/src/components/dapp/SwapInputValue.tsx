@@ -41,7 +41,7 @@ const SwapInputValue = ({
     : 0;
 
   return (
-    <div className="relative flex flex-row h-full w-full items-center justify-center px-4 lg:px-10 bg-origin-bg-grey">
+    <div className="relative flex flex-shrink-0 flex-row h-[155px] w-full items-center justify-center px-4 lg:px-10 bg-origin-bg-grey">
       <div className="flex flex-col w-[50%]">
         <NumericInput
           className={cx(

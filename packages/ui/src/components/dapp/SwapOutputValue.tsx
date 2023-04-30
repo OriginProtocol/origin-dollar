@@ -45,7 +45,7 @@ const SwapOutputValue = ({
   );
 
   return (
-    <div className="flex flex-row h-full w-full items-center px-4 lg:px-10">
+    <div className="flex flex-shrink-0 flex-row h-[155px] w-full items-center px-4 lg:px-10">
       <div className="flex flex-col w-[50%]">
         {isLoadingEstimate ? (
           <div className="flex flex-col space-y-2">

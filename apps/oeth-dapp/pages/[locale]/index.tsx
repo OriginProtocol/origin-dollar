@@ -66,9 +66,10 @@ const Swap = () => {
             symbol: 'OETH_MIX',
             symbolAlt: 'Mix',
             mix: [
-              contracts.mainnet.stETH.symbol,
-              contracts.mainnet.rETH.symbol,
               contracts.mainnet.frxETH.symbol,
+              contracts.mainnet.rETH.symbol,
+              contracts.mainnet.stETH.symbol,
+              contracts.mainnet.WETH.symbol,
             ],
             balanceOf: BigNumber.from(0),
           },

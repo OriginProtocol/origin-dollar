@@ -126,7 +126,6 @@ const MintableActions = ({
     !!swapWriteError ||
     !swapWrite;
 
-  console.log(selectedEstimate);
   return (
     <>
       {!hasProvidedAllowance ? (
