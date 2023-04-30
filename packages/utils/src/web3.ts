@@ -56,39 +56,43 @@ export const getProviderName = () => {
   }
 
   // @ts-ignore
-  const { ethereum = {}, web3 = {} } = window;
+  const { ethereum, web3 }: any = window || {};
 
-  if (ethereum.isMetaMask) {
+  if (!ethereum || !web3) {
+    return null;
+  }
+
+  if (ethereum?.isMetaMask) {
     return 'metamask';
-  } else if (ethereum.isImToken) {
+  } else if (ethereum?.isImToken) {
     return 'imtoken';
     //@ts-ignore
   } else if (typeof window.__CIPHER__ !== 'undefined') {
     return 'cipher';
   } else if (!web3.currentProvider) {
     return null;
-  } else if (web3.currentProvider.isToshi) {
+  } else if (web3?.currentProvider.isToshi) {
     return 'coinbase';
-  } else if (web3.currentProvider.isTrust) {
+  } else if (web3?.currentProvider.isTrust) {
     return 'trust';
-  } else if (web3.currentProvider.isGoWallet) {
+  } else if (web3?.currentProvider.isGoWallet) {
     return 'gowallet';
-  } else if (web3.currentProvider.isAlphaWallet) {
+  } else if (web3?.currentProvider.isAlphaWallet) {
     return 'alphawallet';
-  } else if (web3.currentProvider.isStatus) {
+  } else if (web3?.currentProvider.isStatus) {
     return 'status';
-  } else if (web3.currentProvider.constructor.name === 'EthereumProvider') {
+  } else if (web3?.currentProvider.constructor.name === 'EthereumProvider') {
     return 'mist';
-  } else if (web3.currentProvider.constructor.name === 'Web3FrameProvider') {
+  } else if (web3?.currentProvider.constructor.name === 'Web3FrameProvider') {
     return 'parity';
   } else if (
-    web3.currentProvider.host &&
-    web3.currentProvider.host.indexOf('infura') !== -1
+    web3?.currentProvider.host &&
+    web3?.currentProvider.host.indexOf('infura') !== -1
   ) {
     return 'infura';
   } else if (
-    web3.currentProvider.host &&
-    web3.currentProvider.host.indexOf('localhost') !== -1
+    web3?.currentProvider.host &&
+    web3?.currentProvider.host.indexOf('localhost') !== -1
   ) {
     return 'localhost';
   }
