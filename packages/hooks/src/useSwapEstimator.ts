@@ -63,6 +63,7 @@ const handleError = (e: EstimateError, contract: any) => {
     };
   } else if (
     errorMessage.includes('Redeem failed') ||
+    errorMessage.includes('Redeem exceeds balance') ||
     errorMessage.includes("reverted with reason string '5'") ||
     errorMessage.includes('Insufficient 3CRV balance')
   ) {

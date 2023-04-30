@@ -5,7 +5,6 @@ import {
   usePersistState,
   useWrapEstimator,
   useTokenBalances,
-  useEthUsdPrice,
 } from '@originprotocol/hooks';
 import { findTokenByAddress, formatWeiBalance } from '@originprotocol/utils';
 import { SWAP_TYPES } from '../../constants';
@@ -22,7 +21,12 @@ type WrapTokenProps = {
   usdConversionPrice: number | undefined;
 };
 
-const FIELDS_TO_STORE = ['mode', 'value'];
+const FIELDS_TO_STORE = [
+  'mode',
+  'value',
+  'selectedTokenAddress',
+  'estimatedTokenAddress',
+];
 
 const WrapToken = ({
   i18n,

@@ -38,7 +38,8 @@
     "UNPREDICTABLE_GAS_LIMIT": "Error estimating gas for transaction",
     "REDEEM_TOO_LOW": "Redeem amount lower than minimum, adjust tolerance up",
     "NO_ESTIMATES": "No Estimates",
-    "UNSUPPORTED": "Unsupported"
+    "UNSUPPORTED": "Unsupported",
+    "NOT_ENOUGH_LIQUIDITY": "Not enough liquidity"
   },
   "settings": {
     "title": "Settings",

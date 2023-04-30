@@ -240,7 +240,7 @@ const UnwrapActions = ({
 
   return (
     <>
-      {error && (
+      {!swapWriteIsLoading && error && (
         <span role="alert" className="text-origin-secondary text-sm">
           {i18n(`errors.${error}`, translationContext)}
         </span>
