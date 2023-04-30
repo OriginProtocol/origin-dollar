@@ -120,7 +120,6 @@ const TokenSwap = ({
     );
 
   const onSwapEstimates = (sortedGasEstimates: any) => {
-    console.log(sortedGasEstimates);
     if (
       isEmpty(sortedGasEstimates) ||
       !sortedGasEstimates.find((estimate: any) => !estimate.error)
@@ -234,6 +233,8 @@ const TokenSwap = ({
     }));
   };
 
+  const onSelectEstimate = () => {};
+
   return (
     <div className="flex flex-col space-y-4 lg:space-y-8">
       <SwapForm
@@ -257,6 +258,8 @@ const TokenSwap = ({
         i18n={i18n}
         selectedEstimate={selectedEstimate}
         estimates={estimates}
+        isLoadingEstimate={isLoadingEstimate}
+        onSelect={onSelectEstimate}
       />
       <SwapActions
         i18n={i18n}

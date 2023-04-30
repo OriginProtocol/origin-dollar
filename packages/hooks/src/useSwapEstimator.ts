@@ -118,7 +118,8 @@ const estimateVaultMint = async ({
 }: EstimateFnProps) => {
   if (!config.contract) {
     return {
-      error: 'UNSUPPORTED',
+      error: 'UNKNOWN',
+      contract: config.contract,
     };
   } else if (
     config.canEstimateSwap &&
@@ -130,6 +131,7 @@ const estimateVaultMint = async ({
   ) {
     return {
       error: 'UNSUPPORTED',
+      contract: config.contract,
     };
   }
 
@@ -263,7 +265,8 @@ const estimateVaultRedeem = async ({
 }: EstimateFnProps) => {
   if (!config.contract) {
     return {
-      error: 'UNSUPPORTED',
+      error: 'UNKNOWN',
+      contract: config.contract,
     };
   } else if (
     config.canEstimateSwap &&
@@ -275,6 +278,7 @@ const estimateVaultRedeem = async ({
   ) {
     return {
       error: 'UNSUPPORTED',
+      contract: config.contract,
     };
   }
 
@@ -370,7 +374,8 @@ const estimateZapperMint = async ({
 }: EstimateFnProps) => {
   if (!config.contract) {
     return {
-      error: 'UNSUPPORTED',
+      error: 'UNKNOWN',
+      contract: config.contract,
     };
   } else if (
     config.canEstimateSwap &&
@@ -382,6 +387,7 @@ const estimateZapperMint = async ({
   ) {
     return {
       error: 'UNSUPPORTED',
+      contract: config.contract,
     };
   }
 
@@ -530,7 +536,8 @@ const estimateFlipperSwap = async ({
 }: EstimateFnProps) => {
   if (!config.contract) {
     return {
-      error: 'UNSUPPORTED',
+      error: 'UNKNOWN',
+      contract: config.contract,
     };
   } else if (
     config.canEstimateSwap &&
@@ -542,6 +549,7 @@ const estimateFlipperSwap = async ({
   ) {
     return {
       error: 'UNSUPPORTED',
+      contract: config.contract,
     };
   }
 };
@@ -557,7 +565,8 @@ const estimateUniswapV2Swap = async ({
 }: EstimateFnProps) => {
   if (!config.contract) {
     return {
-      error: 'UNSUPPORTED',
+      error: 'UNKNOWN',
+      contract: config.contract,
     };
   } else if (
     config.canEstimateSwap &&
@@ -569,6 +578,7 @@ const estimateUniswapV2Swap = async ({
   ) {
     return {
       error: 'UNSUPPORTED',
+      contract: config.contract,
     };
   }
 };
@@ -584,7 +594,8 @@ const estimateUniswapV3Swap = async ({
 }: EstimateFnProps) => {
   if (!config.contract) {
     return {
-      error: 'UNSUPPORTED',
+      error: 'UNKNOWN',
+      contract: config.contract,
     };
   } else if (
     config.canEstimateSwap &&
@@ -596,6 +607,7 @@ const estimateUniswapV3Swap = async ({
   ) {
     return {
       error: 'UNSUPPORTED',
+      contract: config.contract,
     };
   }
 };
@@ -611,7 +623,8 @@ const estimateCurveSwap = async ({
 }: EstimateFnProps) => {
   if (!config.contract) {
     return {
-      error: 'UNSUPPORTED',
+      error: 'UNKNOWN',
+      contract: config.contract,
     };
   } else if (
     config.canEstimateSwap &&
@@ -623,6 +636,7 @@ const estimateCurveSwap = async ({
   ) {
     return {
       error: 'UNSUPPORTED',
+      contract: config.contract,
     };
   }
 };
@@ -638,7 +652,8 @@ const estimateSushiSwap = async ({
 }: EstimateFnProps) => {
   if (!config.contract) {
     return {
-      error: 'UNSUPPORTED',
+      error: 'UNKNOWN',
+      contract: config.contract,
     };
   } else if (
     config.canEstimateSwap &&
@@ -650,6 +665,7 @@ const estimateSushiSwap = async ({
   ) {
     return {
       error: 'UNSUPPORTED',
+      contract: config.contract,
     };
   }
 };
@@ -659,36 +675,44 @@ const enrichAndSortEstimates = (
   ethUsdPrice: number | undefined
 ) => {
   return orderBy(
-    estimates
-      .filter(({ error }: SwapEstimate) => !error)
-      .map((estimate: SwapEstimate) => {
-        const { feeData, receiveAmount, gasLimit, value } = estimate;
-        const { gasPrice } = feeData;
-        // gasPrice * gwei * gasLimit * eth cost
-        const gasCostUsd = parseFloat(
-          formatUnits(
-            gasPrice
-              .mul(gasLimit)
-              .mul(BigNumber.from(Math.trunc(ethUsdPrice || 0)))
-              .toString(),
-            18
-          )
-        );
-        const valueInUsd = parseFloat(String(value)) * (ethUsdPrice || 0);
-        const amountReceived = parseFloat(formatWeiBalance(receiveAmount));
-        const receiveAmountUsd = amountReceived * (ethUsdPrice || 0);
-        const effectivePrice =
-          (parseFloat(String(value)) + parseFloat(String(gasCostUsd))) /
-          amountReceived;
+    estimates.map((estimate: SwapEstimate) => {
+      const { feeData, receiveAmount, gasLimit, value, error } = estimate;
+
+      if (error) {
         return {
           ...estimate,
-          ethUsdPrice,
-          gasCostUsd,
-          valueInUsd,
-          receiveAmountUsd,
-          effectivePrice,
+          effectivePrice: Infinity,
         };
-      }),
+      }
+
+      const { gasPrice } = feeData;
+
+      // gasPrice * gwei * gasLimit * eth cost
+      const gasCostUsd = parseFloat(
+        formatUnits(
+          gasPrice
+            .mul(gasLimit)
+            .mul(BigNumber.from(Math.trunc(ethUsdPrice || 0)))
+            .toString(),
+          18
+        )
+      );
+      const valueInUsd = parseFloat(String(value)) * (ethUsdPrice || 0);
+      const amountReceived = parseFloat(formatWeiBalance(receiveAmount));
+      const receiveAmountUsd = amountReceived * (ethUsdPrice || 0);
+      const effectivePrice =
+        (parseFloat(String(value)) + parseFloat(String(gasCostUsd))) /
+        receiveAmountUsd;
+
+      return {
+        ...estimate,
+        ethUsdPrice,
+        gasCostUsd,
+        valueInUsd,
+        receiveAmountUsd,
+        effectivePrice,
+      };
+    }),
     'effectivePrice',
     'asc'
   );
@@ -720,7 +744,12 @@ const useSwapEstimator = ({
 
   const onFetchEstimations = useDebouncedCallback(async () => {
     try {
-      setIsLoading(true);
+      const hasValue = parseFloat(String(value)) > 0;
+
+      if (!hasValue) {
+        setIsLoading(false);
+        return onEstimate(null);
+      }
 
       const estimates = await Promise.all(
         Object.keys(estimatesBy).map((estimateKey) =>
@@ -739,27 +768,30 @@ const useSwapEstimator = ({
 
       const enriched = enrichAndSortEstimates(estimates, ethUsdPrice);
 
-      setIsLoading(false);
-
       onEstimate(enriched);
 
-      console.log(enriched);
+      setIsLoading(false);
 
       return true;
     } catch (e) {
       console.error(`ERROR: While fetching estimations`, e);
+      setIsLoading(false);
       return false;
     }
   }, 1000);
 
   useEffect(() => {
-    onFetchEstimations();
+    (async function () {
+      setIsLoading(true);
+      await onFetchEstimations();
+    })();
   }, [
     mode,
     value,
-    fromToken?.address,
-    toToken?.address,
+    JSON.stringify(fromToken),
+    JSON.stringify(toToken),
     JSON.stringify(settings),
+    ethUsdPrice,
   ]);
 
   return { isLoading, onRefreshEstimates: onFetchEstimations };

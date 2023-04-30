@@ -7,7 +7,7 @@ type ExternalCTAProps = {
 };
 
 const ExternalCTA = ({ description, externalHref, cta }: ExternalCTAProps) => (
-  <div className="flex flex-col w-full items-start justify-center h-[140px] bg-origin-bg-lgrey rounded-xl px-10 space-y-4">
+  <div className="flex flex-col w-full items-start justify-center h-[140px] bg-origin-bg-lgrey rounded-xl px-4 lg:px-10 space-y-4">
     <p className="text-sm">{description}</p>
     <span className="inline-block">
       <a

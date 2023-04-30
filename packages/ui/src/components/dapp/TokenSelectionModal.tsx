@@ -35,7 +35,7 @@ const TokenSelectionModal = ({
         className="flex flex-col mx-auto max-h-[60vh] w-[90vw] lg:w-[70vw] max-w-[800px] z-[2] bg-origin-bg-lgrey rounded-xl p-3 lg:p-6 overflow-auto"
       >
         {map(orderBy(tokens, 'name', 'asc'), (token) => {
-          const { logoSrc, name, symbol, balanceOf } = token;
+          const { logoSrc, name, symbol, symbolAlt, balanceOf, mix } = token;
           return (
             <button
               key={symbol}
@@ -43,20 +43,23 @@ const TokenSelectionModal = ({
               onClick={onSelect.bind(null, symbol)}
             >
               <div className="flex flex-row space-x-4 text-left items-center">
-                <div className="flex items-center flex-shrink-0 w-[40px] h-[40px] rounded-full overflow-hidden">
+                <div className="flex items-center flex-shrink-0 px-2">
                   <TokenImage
                     src={logoSrc}
                     symbol={symbol}
                     name={name}
                     height={40}
                     width={40}
+                    mix={mix}
                   />
                 </div>
                 <div className="flex flex-col space-y-1">
                   <p className="focus:outline-none bg-transparent lg:text-2xl font-semibold caret-gradient1-from">
                     {name}
                   </p>
-                  <span className="text-origin-dimmed">{symbol}</span>
+                  <span className="text-origin-dimmed">
+                    {mix?.join(', ') || symbolAlt || symbol}
+                  </span>
                 </div>
               </div>
               <div className="flex flex-col space-y-1 justify-end text-right">

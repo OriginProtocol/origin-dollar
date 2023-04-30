@@ -62,11 +62,15 @@ const Swap = () => {
         ]}
         additionalRedeemTokens={{
           OETH_MIX: {
-            name: 'Mix',
+            name: 'Mixed Redeem',
             symbol: 'OETH_MIX',
-            tokens: [],
+            symbolAlt: 'Mix',
+            mix: [
+              contracts.mainnet.stETH.symbol,
+              contracts.mainnet.rETH.symbol,
+              contracts.mainnet.frxETH.symbol,
+            ],
             balanceOf: BigNumber.from(0),
-            logoSrc: '/tokens/OETH_MIX.png',
           },
         }}
         storageKey={STORED_TOKEN_LS_KEY}

@@ -61,7 +61,7 @@ const SettingsMenu = ({ i18n, onChange, settings }: SettingsMenuProps) => {
   }, [settings?.tolerance, settings?.gwei]);
 
   return (
-    <div className="relative">
+    <div className="relative z-[999]">
       <button
         onClick={(e) => {
           setIsOpen(true);
