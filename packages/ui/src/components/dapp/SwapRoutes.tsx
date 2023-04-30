@@ -8,7 +8,7 @@ type SwapRoutesProps = {
   selectedEstimate: any;
   estimates: any;
   isLoadingEstimate: boolean;
-  bestContractAddress: string;
+  onSelect: any;
 };
 
 type EstimateViewProps = {
@@ -16,6 +16,7 @@ type EstimateViewProps = {
   estimate: any;
   bestContractAddress: string;
   onSelect?: any;
+  isSelected: boolean;
 };
 
 const EstimateView = ({
@@ -23,6 +24,7 @@ const EstimateView = ({
   estimate,
   bestContractAddress,
   onSelect,
+  isSelected,
 }: EstimateViewProps) => {
   const {
     contract,
@@ -47,12 +49,21 @@ const EstimateView = ({
     estimate &&
     estimate?.contract?.address === bestContractAddress;
 
+  const isSelectable = onSelect && !isSelected && !error;
+
   return (
     <div
-      role="button"
-      className="relative flex flex-col space-y-2 py-3 lg:py-6 h-full w-full px-4 lg:px-10 bg-origin-bg-grey rounded-md"
+      role={isSelectable ? 'button' : ''}
+      className={cx(
+        'relative flex flex-col space-y-2 py-3 lg:py-6 h-full w-full px-4 lg:px-10 bg-origin-bg-grey rounded-md',
+        {
+          'cursor-pointer': isSelectable,
+          'cursor-default': !isSelectable,
+        }
+      )}
+      tabIndex={onSelect ? 0 : -1}
       style={
-        hasEstimate
+        isSelected
           ? {
               background:
                 'linear-gradient(#18191C, #18191C) padding-box,linear-gradient(to right, #B361E6 20%, #6A36FC 80%) border-box',
@@ -125,11 +136,11 @@ const EstimateView = ({
 const LoadingEstimate = () => (
   <div className="relative flex flex-col items-center justify-center space-y-2 py-3 lg:py-6 h-[120px] w-full px-4 lg:px-10 bg-origin-bg-grey rounded-md animate-pulse cursor-wait">
     <div className="flex flex-row w-full justify-between">
-      <span className="inline-block min-h-[1em] w-[160px] bg-current opacity-10" />
+      <span className="inline-block min-h-[1em] w-[160px] bg-current opacity-10 rounded-md" />
     </div>
     <div className="flex flex-col lg:flex-row w-full justify-between space-y-2">
-      <span className="inline-block min-h-[1em] w-[290px] bg-current opacity-10" />
-      <span className="inline-block min-h-[1em] w-[225px] bg-current opacity-10" />
+      <span className="inline-block min-h-[1em] w-[290px] bg-current opacity-10 rounded-md" />
+      <span className="inline-block min-h-[1em] w-[225px] bg-current opacity-10 rounded-md" />
     </div>
   </div>
 );
@@ -155,6 +166,7 @@ const SwapRoutes = ({
             i18n={i18n}
             estimate={selectedEstimate}
             bestContractAddress={bestContractAddress}
+            isSelected
           />
           {hasMoreRoutes && (
             <div className="flex flex-col w-full items-center justify-center space-y-4">
@@ -172,6 +184,7 @@ const SwapRoutes = ({
                       estimate={estimate}
                       bestContractAddress={bestContractAddress}
                       onSelect={onSelect}
+                      isSelected={false}
                     />
                   ))}
               <button

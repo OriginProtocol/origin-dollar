@@ -15,19 +15,19 @@
   "showLess": "hide",
   "redeem": {
     "DEFAULT": "Swap",
-    "PENDING": "Swapping...",
+    "PENDING": "Confirm swap in wallet...",
     "SUBMITTED": "Awaiting confirmations...",
     "SUCCESS": "{{sourceTokenName}} swapped for {{targetTokenName}}"
   },
   "swap": {
     "DEFAULT": "Swap",
-    "PENDING": "Swapping...",
+    "PENDING": "Confirm swap in wallet...",
     "SUBMITTED": "Awaiting confirmations...",
     "SUCCESS": "{{sourceTokenName}} swapped for {{targetTokenName}}"
   },
   "approval": {
     "DEFAULT": "Allow {{targetContractName}} to use your {{sourceTokenName}}",
-    "PENDING": "Approving...",
+    "PENDING": "Confirm approval in wallet...",
     "SUBMITTED": "Awaiting confirmations...",
     "SUCCESS": "Approved {{targetContractName}} for {{sourceTokenName}}"
   },

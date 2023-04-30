@@ -235,6 +235,9 @@ const TokenSwap = ({
 
   const onSelectEstimate = () => {};
 
+  const parsedValue = !value ? 0 : parseFloat(String(value));
+  const validValue = parsedValue && parsedValue > 0;
+
   return (
     <div className="flex flex-col space-y-4 lg:space-y-8">
       <SwapForm
@@ -254,13 +257,15 @@ const TokenSwap = ({
           ethUsd: ethUsdPrice,
         }}
       />
-      <SwapRoutes
-        i18n={i18n}
-        selectedEstimate={selectedEstimate}
-        estimates={estimates}
-        isLoadingEstimate={isLoadingEstimate}
-        onSelect={onSelectEstimate}
-      />
+      {validValue && (
+        <SwapRoutes
+          i18n={i18n}
+          selectedEstimate={selectedEstimate}
+          estimates={estimates}
+          isLoadingEstimate={isLoadingEstimate}
+          onSelect={onSelectEstimate}
+        />
+      )}
       <SwapActions
         i18n={i18n}
         swap={swap}
@@ -269,6 +274,7 @@ const TokenSwap = ({
         targetContract={selectedEstimate?.contract}
         onSuccess={onSuccess}
         onRefresh={onRefresh}
+        isLoadingEstimate={isLoadingEstimate}
       />
     </div>
   );

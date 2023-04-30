@@ -20,6 +20,7 @@ type ActionsProps = {
   onSuccess: (a: string, b: SuccessContext) => void;
   onRefresh: any;
   selectedToken?: any;
+  isLoadingEstimate: boolean;
 };
 
 type SwapActionsProps = {
@@ -30,6 +31,7 @@ type SwapActionsProps = {
   onSuccess: (a: string, b: SuccessContext) => void;
   onRefresh: any;
   targetContract: any;
+  isLoadingEstimate: boolean;
 };
 
 const EXPECTED_CHAIN_ID = parseInt(
@@ -44,6 +46,7 @@ const MintableActions = ({
   translationContext,
   onSuccess,
   onRefresh,
+  isLoadingEstimate,
 }: ActionsProps) => {
   const [error, setError] = useState('');
   const { value, selectedEstimate } = swap || {};
@@ -116,8 +119,12 @@ const MintableActions = ({
   }, [swapWriteError]);
 
   const isPreparing = swapWriteIsLoading || allowanceWriteIsLoading;
+
   const swapWriteDisabled =
-    !hasProvidedAllowance || !!swapWriteError || !swapWrite;
+    isLoadingEstimate ||
+    !hasProvidedAllowance ||
+    !!swapWriteError ||
+    !swapWrite;
 
   return (
     <>
@@ -181,6 +188,7 @@ const RedeemActions = ({
   swap,
   translationContext,
   onSuccess,
+  isLoadingEstimate,
 }: ActionsProps) => {
   const [error, setError] = useState('');
   const { selectedEstimate } = swap || {};
@@ -221,7 +229,7 @@ const RedeemActions = ({
     }
   }, [swapWriteError]);
 
-  const swapWriteDisabled = !!swapWriteError || !swapWrite;
+  const swapWriteDisabled = isLoadingEstimate || !!swapWriteError || !swapWrite;
 
   return (
     <>
@@ -234,7 +242,7 @@ const RedeemActions = ({
         className={cx(
           'flex items-center justify-center w-full h-[72px] text-xl bg-gradient-to-r from-gradient2-from to-gradient2-to rounded-xl',
           {
-            'opacity-50 cursor-not-allowed': !!swapWriteError,
+            'opacity-50 cursor-not-allowed': swapWriteDisabled,
           }
         )}
         onClick={() => {
@@ -266,6 +274,7 @@ const SwapActions = ({
   onSuccess,
   targetContract,
   onRefresh,
+  isLoadingEstimate,
 }: SwapActionsProps) => {
   const { mode, selectedEstimate, value } = swap || {};
   const { error } = selectedEstimate || {};
@@ -298,6 +307,7 @@ const SwapActions = ({
       translationContext={translationContext}
       onSuccess={onSuccess}
       onRefresh={onRefresh}
+      isLoadingEstimate={isLoadingEstimate}
     />
   ) : (
     <RedeemActions
@@ -306,6 +316,7 @@ const SwapActions = ({
       translationContext={translationContext}
       onSuccess={onSuccess}
       onRefresh={onRefresh}
+      isLoadingEstimate={isLoadingEstimate}
     />
   );
 };

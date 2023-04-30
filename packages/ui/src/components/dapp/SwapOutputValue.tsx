@@ -48,7 +48,10 @@ const SwapOutputValue = ({
     <div className="flex flex-row h-full w-full items-center px-4 lg:px-10">
       <div className="flex flex-col w-[50%]">
         {isLoadingEstimate ? (
-          <p className="text-sm text-origin-dimmed">{i18n('isLoading')}</p>
+          <div className="flex flex-col space-y-2">
+            <span className="animate-pulse inline-block min-h-[24px] w-[240px] bg-current opacity-10 rounded-md" />
+            <span className="animate-pulse inline-block min-h-[18px] w-[80px] bg-current opacity-10 rounded-md" />
+          </div>
         ) : (
           <>
             <NumericInput

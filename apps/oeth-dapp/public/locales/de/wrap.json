@@ -1,9 +1,35 @@
 {
   "title": "Wrap",
   "balance": "Balance",
-  "max": "Max",
+  "max": "max",
   "description": "Wrapped wOETH is a non-rebasing tokenized vault that appreciates in value instead of growing in number",
   "learnMore": "Learn More",
   "enterAmount": "Enter Amount",
-  "wrap": "Wrap"
+  "estimate": "estimate",
+  "minReceived": "Min. received",
+  "isLoading": "Loading...",
+  "unwrap": {
+    "DEFAULT": "Unwrap",
+    "PENDING": "Unwrapping...",
+    "SUBMITTED": "Awaiting confirmations...",
+    "SUCCESS": "{{sourceTokenName}} unwrapped for {{targetTokenName}}"
+  },
+  "wrap": {
+    "DEFAULT": "Wrap",
+    "PENDING": "Wrapping...",
+    "SUBMITTED": "Awaiting confirmations...",
+    "SUCCESS": "{{sourceTokenName}} wrapped for {{targetTokenName}}"
+  },
+  "approval": {
+    "DEFAULT": "Allow {{targetContractName}} to use your {{sourceTokenName}}",
+    "PENDING": "Approving...",
+    "SUBMITTED": "Awaiting confirmations...",
+    "SUCCESS": "Approved {{targetContractName}} for {{sourceTokenName}}"
+  },
+  "errors": {
+    "NOT_ENOUGH_BALANCE": "Insufficient {{sourceTokenName}} balance",
+    "NO_INPUT_AMOUNT": "Enter Amount",
+    "UNKNOWN": "Enter Amount",
+    "UNPREDICTABLE_GAS_LIMIT": "Error estimating gas for transaction"
+  }
 }
