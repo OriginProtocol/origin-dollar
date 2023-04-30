@@ -257,7 +257,7 @@ const TokenSwap = ({
           ethUsd: ethUsdPrice,
         }}
       />
-      {validValue && (
+      {validValue ? (
         <SwapRoutes
           i18n={i18n}
           selectedEstimate={selectedEstimate}
@@ -265,7 +265,7 @@ const TokenSwap = ({
           isLoadingEstimate={isLoadingEstimate}
           onSelect={onSelectEstimate}
         />
-      )}
+      ) : null}
       <SwapActions
         i18n={i18n}
         swap={swap}
