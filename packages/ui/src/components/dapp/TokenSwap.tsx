@@ -120,17 +120,6 @@ const TokenSwap = ({
     );
 
   const onSwapEstimates = (sortedGasEstimates: any) => {
-    if (
-      isEmpty(sortedGasEstimates) ||
-      !sortedGasEstimates.find((estimate: any) => !estimate.error)
-    ) {
-      // @ts-ignore
-      return setSwap((prev) => ({
-        ...prev,
-        selectedEstimate: null,
-        estimates: [],
-      }));
-    }
     // Update estimates received, auto set the best one
     setSwap((prev) => ({
       ...prev,
@@ -233,10 +222,17 @@ const TokenSwap = ({
     }));
   };
 
-  const onSelectEstimate = () => {};
+  const onSelectEstimate = (estimate: any) => {
+    setSwap((prev) => ({
+      ...prev,
+      selectedEstimate: estimate,
+    }));
+  };
 
   const parsedValue = !value ? 0 : parseFloat(String(value));
   const validValue = parsedValue && parsedValue > 0;
+
+  console.log(estimates, selectedEstimate);
 
   return (
     <div className="flex flex-col space-y-4 lg:space-y-8">

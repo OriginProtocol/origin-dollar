@@ -17,6 +17,7 @@ type EstimateViewProps = {
   bestContractAddress: string;
   onSelect?: any;
   isSelected: boolean;
+  translationContext: any;
 };
 
 const EstimateView = ({
@@ -25,6 +26,7 @@ const EstimateView = ({
   bestContractAddress,
   onSelect,
   isSelected,
+  translationContext,
 }: EstimateViewProps) => {
   const {
     contract,
@@ -49,11 +51,10 @@ const EstimateView = ({
     estimate &&
     estimate?.contract?.address === bestContractAddress;
 
-  const isSelectable = onSelect && !isSelected && !error;
+  const isSelectable = onSelect && hasEstimate && !isSelected && !error;
 
   return (
-    <div
-      role={isSelectable ? 'button' : ''}
+    <button
       className={cx(
         'relative flex flex-col space-y-2 py-3 lg:py-6 h-full w-full px-4 lg:px-10 bg-origin-bg-grey rounded-md',
         {
@@ -73,8 +74,11 @@ const EstimateView = ({
           : {}
       }
       onClick={() => {
-        onSelect(estimate);
+        if (isSelectable) {
+          onSelect(estimate);
+        }
       }}
+      disabled={!isSelectable}
     >
       <div className="flex flex-row w-full justify-between">
         <div className="flex flex-row space-x-2">
@@ -97,8 +101,8 @@ const EstimateView = ({
         ) : diff ? (
           <h4 className="text-xl font-header text-[#FF4E4E]">{diff}%</h4>
         ) : !hasEstimate || error ? (
-          <h4 className="text-xl font-header text-[#FF4E4E]">
-            {i18n(`errors.${error || 'NO_ESTIMATES'}`)}
+          <h4 className="font-header text-[#FF4E4E]">
+            {i18n(`errors.${error || 'NO_ESTIMATES'}`, translationContext)}
           </h4>
         ) : null}
       </div>
@@ -129,7 +133,7 @@ const EstimateView = ({
           <span className="text-origin-dimmed">{contract?.name}</span>
         </div>
       </div>
-    </div>
+    </button>
   );
 };
 
@@ -155,6 +159,14 @@ const SwapRoutes = ({
   const [isShowingMore, setIsShowingMore] = useState(false);
   const hasMoreRoutes = estimates.length > 1;
   const bestContractAddress = estimates?.[0]?.contract?.address;
+  const selectedHasEstimate = selectedEstimate?.receiveAmount?.gt(0);
+
+  const translationContext = {
+    targetContractName: selectedEstimate?.contract?.name || 'Unknown',
+    sourceTokenName: selectedEstimate?.fromToken?.symbol,
+    targetTokenName: selectedEstimate?.toToken?.symbol,
+  };
+
   return (
     <div className="flex flex-col w-full bg-origin-bg-lgrey rounded-xl p-4 lg:p-10 space-y-3 lg:space-y-6">
       <h3 className="flex flex-shrink-0 items-center">{i18n('swapRoutes')}</h3>
@@ -166,7 +178,8 @@ const SwapRoutes = ({
             i18n={i18n}
             estimate={selectedEstimate}
             bestContractAddress={bestContractAddress}
-            isSelected
+            isSelected={selectedHasEstimate}
+            translationContext={translationContext}
           />
           {hasMoreRoutes && (
             <div className="flex flex-col w-full items-center justify-center space-y-4">
@@ -185,6 +198,7 @@ const SwapRoutes = ({
                       bestContractAddress={bestContractAddress}
                       onSelect={onSelect}
                       isSelected={false}
+                      translationContext={translationContext}
                     />
                   ))}
               <button

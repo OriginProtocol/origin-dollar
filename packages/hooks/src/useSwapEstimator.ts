@@ -41,22 +41,23 @@ interface EstimateError extends Error {
   };
 }
 
-const handleError = (e: EstimateError) => {
-  console.log(e);
-
+const handleError = (e: EstimateError, contract: any) => {
   const errorMessage = e?.data?.message || e?.message;
 
   if (errorMessage.includes('Mint amount lower than minimum')) {
     return {
       error: 'PRICE_TOO_HIGH',
+      contract,
     };
   } else if (errorMessage.includes('Asset price below peg')) {
     return {
       error: 'BELOW_PEG',
+      contract,
     };
   } else if (errorMessage.includes('Redeem amount lower than minimum')) {
     return {
       error: 'PRICE_TOO_HIGH',
+      contract,
     };
   } else if (
     errorMessage.includes('Redeem failed') ||
@@ -65,11 +66,13 @@ const handleError = (e: EstimateError) => {
   ) {
     return {
       error: 'NOT_ENOUGH_LIQUIDITY',
+      contract,
     };
   }
 
   return {
     error: 'UNKNOWN',
+    contract,
   };
 };
 
@@ -175,6 +178,8 @@ const estimateVaultMint = async ({
     if (!hasEnoughBalance) {
       return {
         error: 'NOT_ENOUGH_BALANCE',
+        contract: config.contract,
+        fromToken,
       };
     }
 
@@ -250,7 +255,7 @@ const estimateVaultMint = async ({
       toToken,
     };
   } catch (e) {
-    return handleError(e as EstimateError);
+    return handleError(e as EstimateError, config.contract);
   }
 };
 
@@ -314,6 +319,8 @@ const estimateVaultRedeem = async ({
     if (!hasEnoughBalance) {
       return {
         error: 'NOT_ENOUGH_BALANCE',
+        contract: config.contract,
+        fromToken,
       };
     }
 
@@ -359,7 +366,7 @@ const estimateVaultRedeem = async ({
       toToken,
     };
   } catch (e) {
-    return handleError(e as EstimateError);
+    return handleError(e as EstimateError, config.contract);
   }
 };
 
@@ -406,11 +413,23 @@ const estimateZapperMint = async ({
 
     if (fromToken.symbol === 'ETH') {
       const depositAmount = parseUnits(String(value), 18);
+
+      const currentBalanceOf = await provider.getBalance(address);
+
+      if (depositAmount.gt(currentBalanceOf)) {
+        return {
+          error: 'NOT_ENOUGH_BALANCE',
+          contract: config.contract,
+          fromToken,
+        };
+      }
+
       const gasLimit = await zapperContract
         .connect(signer)
         .estimateGas['deposit']({
           value: depositAmount,
         });
+
       return {
         contract: config.contract,
         gasLimit,
@@ -459,6 +478,8 @@ const estimateZapperMint = async ({
     if (!hasEnoughBalance) {
       return {
         error: 'NOT_ENOUGH_BALANCE',
+        contract: config.contract,
+        fromToken,
       };
     }
 
@@ -468,6 +489,7 @@ const estimateZapperMint = async ({
     if (!contractHasEnoughTokens) {
       return {
         error: 'NOT_ENOUGH_CONTRACT_FUNDS',
+        contract: config.contract,
       };
     }
 
@@ -521,7 +543,7 @@ const estimateZapperMint = async ({
       },
     };
   } catch (e) {
-    return handleError(e as EstimateError);
+    return handleError(e as EstimateError, config.contract);
   }
 };
 
@@ -681,7 +703,10 @@ const enrichAndSortEstimates = (
       if (error) {
         return {
           ...estimate,
-          effectivePrice: Infinity,
+          effectivePrice:
+            error === 'UNKNOWN' || error === 'UNSUPPORTED'
+              ? Infinity
+              : 10000000000000, // Arb. large number to move to bottom
         };
       }
 
