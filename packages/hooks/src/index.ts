@@ -9,6 +9,7 @@ export { useDebouncedCallback } from 'use-debounce';
 export {
   useAccount,
   useBalance,
+  useConnect,
   useContractRead,
   useContractReads,
   useDisconnect,

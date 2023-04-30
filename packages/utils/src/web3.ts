@@ -49,6 +49,50 @@ export const findTokenByAddress = (
   );
 };
 
+export const getProviderName = () => {
+  if (!process.browser) {
+    return null;
+  }
+
+  const { ethereum = {}, web3 = {} } = window;
+
+  if (ethereum.isMetaMask) {
+    return 'metamask';
+  } else if (ethereum.isImToken) {
+    return 'imtoken';
+  } else if (typeof window.__CIPHER__ !== 'undefined') {
+    return 'cipher';
+  } else if (!web3.currentProvider) {
+    return null;
+  } else if (web3.currentProvider.isToshi) {
+    return 'coinbase';
+  } else if (web3.currentProvider.isTrust) {
+    return 'trust';
+  } else if (web3.currentProvider.isGoWallet) {
+    return 'gowallet';
+  } else if (web3.currentProvider.isAlphaWallet) {
+    return 'alphawallet';
+  } else if (web3.currentProvider.isStatus) {
+    return 'status';
+  } else if (web3.currentProvider.constructor.name === 'EthereumProvider') {
+    return 'mist';
+  } else if (web3.currentProvider.constructor.name === 'Web3FrameProvider') {
+    return 'parity';
+  } else if (
+    web3.currentProvider.host &&
+    web3.currentProvider.host.indexOf('infura') !== -1
+  ) {
+    return 'infura';
+  } else if (
+    web3.currentProvider.host &&
+    web3.currentProvider.host.indexOf('localhost') !== -1
+  ) {
+    return 'localhost';
+  }
+
+  return 'unknown';
+};
+
 export {
   formatUnits,
   parseUnits,

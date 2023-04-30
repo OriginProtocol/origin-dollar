@@ -48,7 +48,7 @@ const Portfolio = ({ i18n, portfolio }: PortfolioProps) => {
               {balance ? parseFloat(formatWeiBalance(balance)).toFixed(6) : '-'}
             </h3>
             <TokenImage
-              className="order-1 lg:order-2 scale-90 lg:scale-100"
+              className="order-1 lg:order-2 scale-90 lg:scale-100 flex-shrink-0 flex"
               src={token?.logoSrc}
               height={32}
               width={32}

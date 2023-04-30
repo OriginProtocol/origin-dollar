@@ -1,11 +1,11 @@
-import React, { ForwardedRef, forwardRef, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useClickAway } from 'react-use';
 import Image from 'next/image';
-import { Typography } from '@originprotocol/origin-storybook';
 import {
   shortenAddress,
   formatUnits,
   formatWeiBalance,
+  getProviderName,
 } from '@originprotocol/utils';
 import {
   useAccount,
@@ -53,19 +53,16 @@ const UserActivity = ({ i18n }: UserActivityProps) => {
           ref={ref}
           className="absolute top-[50px] right-0 flex flex-col w-[350px] bg-origin-bg-lgrey z-[9999] shadow-xl border border-[1px] border-origin-bg-dgrey rounded-xl"
         >
-          <Typography.Body
-            className="flex flex-shrink-0 px-6 h-[80px] items-center"
-            as="h2"
-          >
+          <h2 className="flex flex-shrink-0 px-6 h-[80px] items-center">
             {i18n('activity.title')}
-          </Typography.Body>
+          </h2>
           <div className="h-[1px] w-full border-b-[1px] border-origin-bg-dgrey" />
           <div className="flex flex-col justify-center h-full space-y-2">
             {activity?.length === 0 ? (
               <div className="flex flex-row items-center p-6">
-                <Typography.Caption className="text-origin-dimmed">
+                <span className="text-origin-dimmed">
                   {i18n('activity.noActivity')}
-                </Typography.Caption>
+                </span>
               </div>
             ) : (
               <span>TODO: Events</span>
@@ -92,6 +89,7 @@ const UserMenuDropdown = ({
   onDisconnect,
   onClose,
 }: UserMenuDropdownProps) => {
+  const providerName = getProviderName();
   const ref = useRef(null);
 
   useClickAway(ref, () => {
@@ -107,9 +105,7 @@ const UserMenuDropdown = ({
       className="absolute top-[50px] right-0 flex flex-col w-[350px] bg-origin-bg-lgrey z-[9999] shadow-xl border border-[1px] border-origin-bg-dgrey rounded-xl"
     >
       <div className="flex flex-row justify-between px-6 h-[80px] items-center">
-        <Typography.Body className="flex flex-shrink-0" as="h2">
-          {i18n('wallet.account')}
-        </Typography.Body>
+        <h2 className="flex flex-shrink-0">{i18n('wallet.account')}</h2>
         <button
           className="h-[28px] bg-origin-white bg-opacity-20 rounded-full px-4 text-sm hover:bg-opacity-10 duration-100 ease-in"
           onClick={onDisconnect}
@@ -121,8 +117,16 @@ const UserMenuDropdown = ({
       <div className="flex flex-col justify-center h-full space-y-4 p-6">
         <div className="flex flex-row items-center justify-between">
           <div className="flex flex-row items-center space-x-4">
-            <span>TODO</span>
-            <span>{shortenAddress(address)}</span>
+            {/* Add other wallet icons and add back in */}
+            {providerName === 'metamask' && (
+              <Image
+                src={`/wallets/${providerName}.png`}
+                height={24}
+                width={24}
+                alt={`${providerName} wallet`}
+              />
+            )}
+            <span className="text-lg">{shortenAddress(address)}</span>
           </div>
           <a
             href={`https://etherscan.io/address/${address}`}
@@ -131,8 +135,8 @@ const UserMenuDropdown = ({
           >
             <Image
               src="/icons/external.png"
-              height={8}
-              width={8}
+              height={10}
+              width={10}
               alt="View address on Etherscan"
             />
           </a>
@@ -150,9 +154,12 @@ const UserMenuDropdown = ({
             ({ balanceOf }) => formatWeiBalance(balanceOf),
             'desc'
           ).map(({ name, symbol, balanceOf, logoSrc }) => (
-            <div key={name} className="flex flex-row items-center space-x-3">
+            <div
+              key={name}
+              className="flex flex-row items-center space-x-3 text-lg"
+            >
               <TokenImage src={logoSrc} symbol={symbol} name={name} />
-              <span>{Number(formatUnits(balanceOf)).toFixed(4)}</span>
+              <span>{Number(formatUnits(balanceOf)).toFixed(6)}</span>
               <span>{symbol}</span>
             </div>
           ))

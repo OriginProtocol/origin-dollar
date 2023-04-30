@@ -1,7 +1,6 @@
 import React from 'react';
-import { Typography } from '@originprotocol/origin-storybook';
 import Image from 'next/image';
-import { useAccount } from 'wagmi';
+import { useAccount } from '@originprotocol/hooks';
 import { useWeb3Modal } from '@web3modal/react';
 
 type HistoryProps = {
@@ -15,9 +14,7 @@ const TransactionHistory = ({ i18n }: HistoryProps) => {
     <div className="flex flex-col space-y-8">
       <div className="flex flex-col w-full min-h-[440px] bg-origin-bg-lgrey rounded-xl">
         <div className="flex flex-row flex-shrink-0 items-center justify-between px-10 h-[80px]">
-          <Typography.Body className="flex flex-shrink-0" as="h2">
-            History
-          </Typography.Body>
+          <h2 className="flex flex-shrink-0">History</h2>
           <div className="hidden lg:flex flex-row items-center space-x-4">
             <button className="flex flex-row items-center space-x-2 h-[28px] bg-origin-white bg-opacity-10 rounded-full px-4 text-sm hover:bg-opacity-10 duration-100 ease-in">
               <span className="text-origin-dimmed">Yields</span>
@@ -44,9 +41,9 @@ const TransactionHistory = ({ i18n }: HistoryProps) => {
         <div className="relative flex flex-col h-full w-full">
           {!isConnected ? (
             <div className="flex flex-col w-full items-center justify-center h-[400px] bg-origin-bg-lgrey rounded-xl px-10 space-y-4">
-              <Typography.Body className="text-origin-dimmed">
+              <span className="text-origin-dimmed">
                 Swap now to start seeing your awards here
-              </Typography.Body>
+              </span>
               <button
                 onClick={() => open()}
                 className="flex items-center h-[44px] px-6 bg-gradient-to-r from-gradient2-from to-gradient2-to rounded-full"
