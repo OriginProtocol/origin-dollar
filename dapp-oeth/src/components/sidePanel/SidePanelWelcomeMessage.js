@@ -29,13 +29,16 @@ const SidePanelWelcomeMessage = () => {
           {oethToBuy > 0 &&
             fbt(
               'You can buy up to ~' +
-                fbt.param('oeth-coin', formatCurrency(oethToBuy 6)) +
+                fbt.param('oeth-coin', formatCurrency(oethToBuy, 6)) +
                 ' OETH with the ' +
                 fbt.param('weth-coin', formatCurrency(balances['weth'], 0)) +
                 ' WETH, ' +
                 fbt.param('reth-coin', formatCurrency(balances['reth'], 0)) +
                 ' rETH, ' +
-                fbt.param('frxeth-coin', formatCurrency(balances['frxeth'], 0)) +
+                fbt.param(
+                  'frxeth-coin',
+                  formatCurrency(balances['frxeth'], 0)
+                ) +
                 ' frxETH, and ' +
                 fbt.param('steth-coin', formatCurrency(balances['steth'], 0)) +
                 ' stETH in your wallet.',
