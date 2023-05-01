@@ -3,7 +3,8 @@ import "./Base.t.sol";
 
 contract UserLockedFundsTest is Base {
     address user;
-    uint userAmount = 10;
+    uint constant userAmount = 10;
+    uint constant agentAmount = 10_000;
     uint minimumVaultDAIBalance;
 
     function setUp() public override {
@@ -22,6 +23,12 @@ contract UserLockedFundsTest is Base {
         vm.stopPrank();
 
         minimumVaultDAIBalance = IERC20(DAI).balanceOf(address(vault));
+
+        address agent = getAgent();
+        getWETH(agent, 100 ether);
+        getDAI(agent, agent, agentAmount);
+        getUSDT(agent, agent, agentAmount);
+        getUSDC(agent, agent, agentAmount);
     }
 
     function testTransfer(uint amount) public {

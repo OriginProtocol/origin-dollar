@@ -1,0 +1,41 @@
+
+import "./Base.t.sol";
+
+contract OwnershipTest is Base {
+    uint constant agentAmount = 10_000;
+
+    function setUp() public override {
+        rpc_url = "https://eth.llamarpc.com";
+        super.setUp();
+
+        address agent = getAgent();
+        getWETH(agent, 100 ether);
+        getDAI(agent, agent, agentAmount);
+        getUSDT(agent, agent, agentAmount);
+        getUSDC(agent, agent, agentAmount);
+    }
+
+    function invariantVaultOwnership() public {
+        require(vault.governor() == owner, "vault owner changed");
+    }
+
+    function invariantVaultAdminOwnership() public {
+        require(admin.governor() == owner, "admin owner changed");
+    }
+
+    function invariantOUSDOwnership() public {
+        require(ousd.governor() == owner, "ousd owner changed");
+    }
+
+    function invariantHarvesterOwnership() public {
+        require(harvester.governor() == owner, "harvester owner changed");
+    }
+
+    function invariantDripperOwnership() public {
+        require(dripper.governor() == owner, "dripper owner changed");
+    }
+
+    function invariantStrategyOwnership() public {
+        require(strategy.governor() == owner, "strategy owner changed");
+    }
+}
