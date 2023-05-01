@@ -1,12 +1,16 @@
 import { apyDayOptions } from 'utils/constants'
 
 export default class ApyService {
+  constructor() {
+    this.baseURL = `${process.env.NEXT_PUBLIC_ANALYTICS_ENDPOINT}/api/v2/oeth/apr/trailing`
+  }
+
   async fetchApy() {
     const dayResults = await Promise.all(
       apyDayOptions.map(async (days) => {
         let endpoint, varName
         if (apyDayOptions.includes(days)) {
-          endpoint = `${process.env.NEXT_PUBLIC_APR_ANALYTICS_ENDPOINT}/${days}`
+          endpoint = `${this.baseURL}/${days}`
           varName = `apy${days}`
         } else {
           throw new Error(`Unexpected days param: ${days}`)
