@@ -136,7 +136,7 @@ const BalanceHeaderWrapped = ({
     )
   }
 
-  const displayedWoethBalance = formatCurrency(woethBalance || 0, 2)
+  const displayedWoethBalance = formatCurrency(woethBalance || 0, 6)
 
   useEffect(() => {
     localStorage.setItem('last_user_selected_apy', apyDays)
@@ -270,7 +270,7 @@ const BalanceHeaderWrapped = ({
               title={fbt('Current Value (OETH)', 'Current Value (OETH)')}
               value={
                 walletConnected && !isNaN(woethValue)
-                  ? formatCurrency(woethValue, 2)
+                  ? formatCurrency(woethValue, 6)
                   : '--.--'
               }
               type={'number'}
@@ -280,7 +280,7 @@ const BalanceHeaderWrapped = ({
               title={fbt('Pending yield (OETH)', 'Pending yield (OETH)')}
               value={
                 walletConnected
-                  ? formatCurrency(animatedExpectedIncrease, 2)
+                  ? formatCurrency(animatedExpectedIncrease, 6)
                   : '--.--'
               }
               type={'number'}
