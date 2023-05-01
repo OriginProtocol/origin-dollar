@@ -119,7 +119,7 @@ contract GovernorInvariants is Base {
 }
 
 contract NaryaPlatform {
-
+    
 }
 
 contract NaryaReward {
