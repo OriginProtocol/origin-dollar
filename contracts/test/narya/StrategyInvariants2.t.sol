@@ -128,8 +128,8 @@ contract StrategyInvariants is Base, ERC4626 {
         vm.warp(block.timestamp + 1 minutes);
         dripper.collect();
 
-        vm.warp(block.timestamp + 1 minutes);
-        dripper.collect();
+        // vm.warp(block.timestamp + 1 minutes);
+        // dripper.collect();
         require(IERC20(USDT).balanceOf(address(vault)) > 0,
             "vault didnt receive funds");
 
