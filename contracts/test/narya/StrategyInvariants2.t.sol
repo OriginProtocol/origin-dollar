@@ -11,6 +11,14 @@ contract StrategyInvariants is Base, ERC4626 {
     address bob;
     address rewardRecipient;
 
+    struct LogInfo {
+        uint state; // 0 deposit, 1 withdrawal, 2 reallocate
+        uint expected;
+        uint balance;
+    }
+
+    LogInfo[] pnmLogs;
+
     constructor() ERC4626(IERC20Metadata(DAI)) ERC20("Narya Platform", "NP") {}
 
     function setUp() public override {
@@ -69,7 +77,7 @@ contract StrategyInvariants is Base, ERC4626 {
 
     
     // Check that we can collect the fees to the harvester, then dripper, then vault
-    function testme(uint amount) public {
+    function testDripper(uint amount) public {
         vm.assume(amount > 10 && amount < 1 ether);
 
         deal(DAI, bob, amount);
@@ -128,5 +136,99 @@ contract StrategyInvariants is Base, ERC4626 {
         // console.log(IERC20(USDT).balanceOf(address(vault)));
 
         vm.stopPrank();
+    }
+
+    function actionDeposit(uint256 amount) public {
+        vm.assume(amount > 0);
+        deal(DAI, address(vault), amount);
+
+        address[] memory assets = new address[](1);
+        assets[0] = DAI;
+
+        uint256[] memory amounts = new uint256[](1);
+        amounts[0] = amount;
+
+        uint oldBalance = strategy.checkBalance(DAI);
+
+        vm.startPrank(strategist);
+        VaultAdmin(address(vault)).depositToStrategy(
+            address(strategy),
+            assets,
+            amounts
+        );
+        vm.stopPrank();
+
+        pnmLogs.push(LogInfo(
+            0,
+            amount,
+            strategy.checkBalance(DAI) - oldBalance
+        ));
+    }
+
+    function actionWithdraw(uint256 amount) public {
+        address[] memory assets = new address[](1);
+        assets[0] = DAI;
+
+        uint256[] memory amounts = new uint256[](1);
+        amounts[0] = amount;
+
+        uint oldBalance = IERC20(DAI).balanceOf(address(strategy));
+        vm.assume(amount > 0 && amount < oldBalance);
+
+        vm.startPrank(strategist);
+        VaultAdmin(address(vault)).withdrawFromStrategy(
+            address(strategy),
+            assets,
+            amounts
+        );
+        vm.stopPrank();
+
+        pnmLogs.push(LogInfo(
+            1,
+            amount,
+            IERC20(DAI).balanceOf(address(strategy)) - oldBalance
+        ));
+    }
+
+    function actionReallocate(uint256 amount) public {
+        vm.assume(amount > 0);
+        
+        address[] memory assets = new address[](1);
+        assets[0] = DAI;
+
+        uint256[] memory amounts = new uint256[](1);
+        amounts[0] = amount;
+
+        uint oldBalance = strategy.checkBalance(DAI);
+
+        vm.startPrank(strategist);
+        VaultAdmin(address(vault)).reallocate(
+            address(strategy),
+            address(strategy),
+            assets,
+            amounts
+        );
+        vm.stopPrank();
+
+        pnmLogs.push(LogInfo(
+            2,
+            oldBalance,
+            strategy.checkBalance(DAI)
+        ));
+    }
+
+    function invariantStrategyAssets() public {
+        for (uint i = 0; i < pnmLogs.length; ++i) {
+            LogInfo memory info = pnmLogs[i];
+            if (info.state == 0) {
+                require(info.expected == info.balance, "strategy deposit failed");
+            } else if (info.state == 1) {
+                require(info.expected == info.balance, "strategy withdrawal failed");
+            } else if (info.state == 2) {
+                require(info.expected == info.balance, "strategy reallocate failed");
+            }
+        }
+
+        delete pnmLogs;
     }
 }
