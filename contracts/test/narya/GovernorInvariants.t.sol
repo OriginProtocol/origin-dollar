@@ -107,7 +107,7 @@ contract GovernorInvariants is Base {
 
     function invariantRewardToken() public {
         address[] memory rewards = strategy.getRewardTokenAddresses();
-        require(rewards.length >= 1 && rewards[0] == reward, 
+        require(rewards.length >= 1 && rewards[0] == address(reward), 
             "rewards token changed");
     }
 
