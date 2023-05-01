@@ -9,10 +9,10 @@ contract OwnershipTest is Base {
         super.setUp();
 
         address agent = getAgent();
-        getWETH(agent, 100 ether);
-        getDAI(agent, agent, agentAmount);
-        getUSDT(agent, agent, agentAmount);
-        getUSDC(agent, agent, agentAmount);
+        deal(WETH, 100 ether);
+        deal(DAI, agent, agentAmount);
+        deal(USDT, agent, agentAmount);
+        deal(USDC, agent, agentAmount);
     }
 
     function invariantVaultOwnership() public {

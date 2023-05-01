@@ -12,8 +12,8 @@ contract UserLockedFundsTest is Base {
         super.setUp();
 
         user = makeAddr("User");
-        getWETH(user, 1 ether);
-        getDAI(user, user, userAmount);
+        deal(WETH, user, 1 ether);
+        deal(DAI, user, userAmount);
 
         vm.startPrank(user);
 
@@ -25,10 +25,10 @@ contract UserLockedFundsTest is Base {
         minimumVaultDAIBalance = IERC20(DAI).balanceOf(address(vault));
 
         address agent = getAgent();
-        getWETH(agent, 100 ether);
-        getDAI(agent, agent, agentAmount);
-        getUSDT(agent, agent, agentAmount);
-        getUSDC(agent, agent, agentAmount);
+        deal(WETH, 100 ether);
+        deal(DAI, agent, agentAmount);
+        deal(USDT, agent, agentAmount);
+        deal(USDC, agent, agentAmount);
     }
 
     function testTransfer(uint amount) public {
@@ -37,8 +37,8 @@ contract UserLockedFundsTest is Base {
         address bob = makeAddr("Bob");
         address alice = makeAddr("Alice");
 
-        getWETH(bob, 1 ether);
-        getDAI(bob, bob, amount);
+        deal(WETH, bob, 1 ether);
+        deal(DAI, bob, amount);
 
         // mint for bob and send to alice
         vm.startPrank(bob);
@@ -79,8 +79,8 @@ contract UserLockedFundsTest is Base {
         require(success && amount >= userAmount * 9/10, "lost locked funds");
 
         // Relock the same amount for next fuzzing call
-        getWETH(user, 1 ether);
-        getDAI(user, user, userAmount);
+        deal(WETH, user, 1 ether);
+        deal(DAI, user, userAmount);
 
         vm.startPrank(user);
         
