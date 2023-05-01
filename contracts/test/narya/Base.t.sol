@@ -116,6 +116,7 @@ contract Base is PTest {
         );
 
         strategy.setHarvesterAddress(address(harvester));
+        harvester.setRewardsProceedsAddress(address(dripper));
 
         address(vault).call(abi.encodeWithSelector(
             VaultAdmin.unpauseCapital.selector

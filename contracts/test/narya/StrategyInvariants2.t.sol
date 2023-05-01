@@ -8,20 +8,21 @@ import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/I
 contract StrategyInvariants is Base, ERC4626 {
     uint constant agentAmount = 10_000;
     address strategist;
-
     address bob;
+    address rewardRecipient;
 
     constructor() ERC4626(IERC20Metadata(DAI)) ERC20("Narya Platform", "NP") {}
 
     function setUp() public override {
         rpc_url = "https://eth.llamarpc.com";
         platformAddress = address(this);
+        dripperToken = USDT;
 
         super.setUp();
 
         bob = makeAddr("Bob");
-
         strategist = makeAddr("Strategist");
+        rewardRecipient = makeAddr("rewardRecipient");
 
         address agent = getAgent();
         deal(WETH, agent, 100 ether);
@@ -30,6 +31,8 @@ contract StrategyInvariants is Base, ERC4626 {
         deal(USDC, agent, agentAmount);
 
         vm.startPrank(owner);
+
+        dripper.setDripDuration(1);
 
         strategy.setPTokenAddress(DAI, address(this));
 
@@ -46,17 +49,27 @@ contract StrategyInvariants is Base, ERC4626 {
         VaultAdmin(address(vault)).approveStrategy(address(strategy));
         VaultAdmin(address(vault)).setAssetDefaultStrategy(DAI, address(strategy));
 
+        harvester.setRewardTokenConfig(
+            USDC,
+            300,
+            100,
+            UNI_ROUTER,
+            type(uint256).max,
+            true
+        );
+
         vm.stopPrank();
     }
 
     // emulate some rewards
     function deposit(uint256 assets, address receiver) public override returns (uint256) {
         super.deposit(assets, receiver);
-        deal(USDC, msg.sender, 3);
+        deal(USDC, msg.sender, 100);
     }
 
-    // check that we can withdraw at anytime from the strategy
-    function testDepositWithdrawStrategy(uint amount) public {
+    
+    // Check that we can collect the fees to the harvester, then dripper, then vault
+    function testme(uint amount) public {
         vm.assume(amount > 10 && amount < 1 ether);
 
         deal(DAI, bob, amount);
@@ -71,7 +84,7 @@ contract StrategyInvariants is Base, ERC4626 {
 
         vault.allocate();
 
-        require(IERC20(USDC).balanceOf(address(strategy)) == 3, 
+        require(IERC20(USDC).balanceOf(address(strategy)) == 100, 
             "no rewards given");
         
         require(balanceOf(address(strategy)) == amount, 
@@ -85,12 +98,34 @@ contract StrategyInvariants is Base, ERC4626 {
         require(IERC20(DAI).balanceOf(address(bob)) >= oldDaiBalance * 9 / 10,
             "Lost more than 90% (accounting for rounding issues)");
 
-        require(IERC20(USDC).balanceOf(address(strategy)) == 3,
+        require(IERC20(USDC).balanceOf(address(strategy)) == 100,
             "rewards disappeared from strategy");
 
         // actually due to known rounding issues, the redeemed ousd
         // won't give you back the same amount as you deposited
         // this means, strategy will have leftover shares
+
+        harvester.harvestAndSwap(address(strategy), rewardRecipient);
+        
+        // console.log("dripper", IERC20(USDT).balanceOf(address(dripper)));
+        // console.log("rewardRecipient", IERC20(USDT).balanceOf(address(rewardRecipient)));
+        
+        
+        require(IERC20(USDT).balanceOf(address(dripper)) > 0,
+            "dripper didnt receive funds");
+
+        require(IERC20(USDT).balanceOf(address(rewardRecipient)) > 0,
+            "rewardRecipient didnt receive funds");
+        
+        vm.warp(block.timestamp + 1 minutes);
+        dripper.collect();
+
+        vm.warp(block.timestamp + 1 minutes);
+        dripper.collect();
+        require(IERC20(USDT).balanceOf(address(vault)) > 0,
+            "vault didnt receive funds");
+
+        // console.log(IERC20(USDT).balanceOf(address(vault)));
 
         vm.stopPrank();
     }
