@@ -21,51 +21,25 @@ const curveFactoryMiniAbi = [
   {
     stateMutability: 'view',
     type: 'function',
-    name: 'get_underlying_coins',
-    inputs: [
-      {
-        name: '_pool',
-        type: 'address',
-      },
-    ],
-    outputs: [
-      {
-        name: '',
-        type: 'address[8]',
-      },
-    ],
+    name: 'get_coins',
+    inputs: [{ name: '_pool', type: 'address' }],
+    outputs: [{ name: '', type: 'address[4]' }],
+    gas: 9164,
   },
 ]
 
-const curveMetapoolMiniAbi = [
+const curvePoolMiniAbi = [
   {
-    name: 'exchange_underlying',
-    outputs: [
-      {
-        type: 'uint256',
-        name: '',
-      },
-    ],
-    inputs: [
-      {
-        type: 'int128',
-        name: 'i',
-      },
-      {
-        type: 'int128',
-        name: 'j',
-      },
-      {
-        type: 'uint256',
-        name: 'dx',
-      },
-      {
-        type: 'uint256',
-        name: 'min_dy',
-      },
-    ],
-    stateMutability: 'nonpayable',
+    stateMutability: 'payable',
     type: 'function',
+    name: 'exchange',
+    inputs: [
+      { name: 'i', type: 'int128' },
+      { name: 'j', type: 'int128' },
+      { name: '_dx', type: 'uint256' },
+      { name: '_min_dy', type: 'uint256' },
+    ],
+    outputs: [{ name: '', type: 'uint256' }],
   },
 ]
 
@@ -458,7 +432,7 @@ export async function setupContracts(account, library, chainId, fetchId) {
 
   callWithDelay()
 
-  const [curveRegistryExchange, curveOUSDMetaPool, curveUnderlyingCoins] =
+  const [curveRegistryExchange, curveOETHPool, curveUnderlyingCoins] =
     await setupCurve(curveAddressProvider, getContract, chainId)
 
   if (ContractStore.currentState.fetchId > fetchId) {
@@ -515,7 +489,7 @@ export async function setupContracts(account, library, chainId, fetchId) {
     chainlinkFastGasAggregator,
     curveAddressProvider,
     curveRegistryExchange,
-    curveOUSDMetaPool,
+    curveOETHPool,
 
     weth,
     reth,
@@ -568,7 +542,7 @@ export async function setupContracts(account, library, chainId, fetchId) {
     s.walletConnected = walletConnected
     s.chainId = chainId
     s.readOnlyProvider = jsonRpcProvider
-    s.curveMetapoolUnderlyingCoins = curveUnderlyingCoins
+    s.curveUnderlyingCoins = curveUnderlyingCoins
     s.fetchId = fetchId
 
     s.weth = weth
@@ -597,18 +571,19 @@ const setupCurve = async (curveAddressProvider, getContract, chainId) => {
 
   const factoryAddress = await curveAddressProvider.get_address(3)
   const factory = getContract(factoryAddress, curveFactoryMiniAbi)
+
   const curveUnderlyingCoins = (
-    await factory.get_underlying_coins(addresses.mainnet.CurveOUSDMetaPool)
+    await factory.get_coins(addresses.mainnet.CurveOETHPool)
   ).map((address) => address.toLowerCase())
 
-  const curveOUSDMetaPool = getContract(
-    addresses.mainnet.CurveOUSDMetaPool,
-    curveMetapoolMiniAbi
+  const curveOETHPool = getContract(
+    addresses.mainnet.CurveOETHPool,
+    curvePoolMiniAbi
   )
 
   return [
     getContract(registryExchangeAddress, registryExchangeJson.abi),
-    curveOUSDMetaPool,
+    curveOETHPool,
     curveUnderlyingCoins,
   ]
 }

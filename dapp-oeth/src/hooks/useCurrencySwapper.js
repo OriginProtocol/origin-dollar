@@ -12,6 +12,7 @@ import {
   sushiswapGasLimitBuffer,
   uniswapV3GasLimitBuffer,
   curveGasLimitBuffer,
+  NullAddress,
 } from 'utils/constants'
 import { useWeb3React } from '@web3-react/core'
 import { find } from 'lodash'
@@ -38,12 +39,12 @@ const useCurrencySwapper = ({
     sushiRouter,
     uniV3SwapQuoter,
     curveRegistryExchange,
-    curveOUSDMetaPool,
+    curveOETHPool,
     zapper,
   } = useStoreState(ContractStore, (s) => s.contracts)
-  const curveMetapoolUnderlyingCoins = useStoreState(
+  const curveUnderlyingCoins = useStoreState(
     ContractStore,
-    (s) => s.curveMetapoolUnderlyingCoins
+    (s) => s.curveUnderlyingCoins
   )
 
   const coinInfoList = useStoreState(ContractStore, (s) => s.coinInfoList)
@@ -105,13 +106,16 @@ const useCurrencySwapper = ({
       zapper: 'zapper',
       // uniswap: 'uniswapV3Router',
       // uniswapV2: 'uniswapV2Router',
-      // curve: 'curve',
+      curve: 'curve',
       // sushiswap: 'sushiRouter',
     }
 
     const coinNeedingApproval = swapMode === 'mint' ? selectedCoin : 'oeth'
 
-    if (coinNeedingApproval === 'oeth' && selectedSwap.name === 'vault') {
+    if (
+      coinNeedingApproval === 'eth' ||
+      (coinNeedingApproval === 'oeth' && selectedSwap.name === 'vault')
+    ) {
       setNeedsApproval(false)
     } else {
       if (nameMaps[selectedSwap.name] === undefined) {
@@ -334,18 +338,29 @@ const useCurrencySwapper = ({
   }
 
   const _swapCurve = async (swapAmount, minSwapAmount, isGasEstimate) => {
+    const nullAddress = NullAddress?.toLowerCase()
+    const fromAddress = coinContract?.address?.toLowerCase() || nullAddress
+    const toAddress =
+      coinToReceiveContract?.address?.toLowerCase() || nullAddress
+
     const swapParams = [
-      curveMetapoolUnderlyingCoins.indexOf(coinContract.address.toLowerCase()),
-      curveMetapoolUnderlyingCoins.indexOf(
-        coinToReceiveContract.address.toLowerCase()
-      ),
+      curveUnderlyingCoins.indexOf(fromAddress),
+      curveUnderlyingCoins.indexOf(toAddress),
       swapAmount,
       minSwapAmount,
     ]
 
+    const overrides =
+      fromAddress === nullAddress
+        ? {
+            value: swapAmount,
+          }
+        : {}
+
     const gasLimit = increaseGasLimitByBuffer(
-      await curveOUSDMetaPool.estimateGas.exchange_underlying(...swapParams, {
+      await curveOETHPool.estimateGas.exchange(...swapParams, {
         from: account,
+        ...overrides,
       }),
       curveGasLimitBuffer
     )
@@ -353,10 +368,10 @@ const useCurrencySwapper = ({
     if (isGasEstimate) {
       return gasLimit
     } else {
-      return await connSigner(curveOUSDMetaPool).exchange_underlying(
-        ...swapParams,
-        { gasLimit }
-      )
+      return await connSigner(curveOETHPool).exchange(...swapParams, {
+        gasLimit,
+        ...overrides,
+      })
     }
   }
 
@@ -379,17 +394,16 @@ const useCurrencySwapper = ({
   }
 
   const quoteCurve = async (swapAmount) => {
-    const coinsReceived = await curveRegistryExchange.get_exchange_amount(
-      addresses.mainnet.CurveOUSDMetaPool,
-      coinContract.address,
-      coinToReceiveContract.address,
+    return curveRegistryExchange.get_exchange_amount(
+      addresses.mainnet.CurveOETHPool,
+      // For Eth support
+      coinContract?.address || NullAddress,
+      coinToReceiveContract?.address || NullAddress,
       swapAmount,
       {
         gasLimit: 1000000,
       }
     )
-
-    return coinsReceived
   }
 
   const _swapUniswap = async (swapAmount, minSwapAmount, isGasEstimate) => {

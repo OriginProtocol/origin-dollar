@@ -130,6 +130,7 @@ addresses.mainnet.WOETHProxy = '0xDcEe70654261AF21C44c093C300eD3Bb97b78192'
 addresses.mainnet.OETHVaultProxy = '0x39254033945aa2e4809cc2977e7087bee48bd7ab'
 addresses.mainnet.OETHZapper = '0x9858e47BCbBe6fBAC040519B02d7cd4B2C470C66'
 addresses.mainnet.FraxETHStrategy = '0x3ff8654d633d4ea0fae24c52aec73b4a20d0d0e5'
+addresses.mainnet.CurveOETHPool = '0x94b17476a93b3262d87b9a326965d1e91f9c13e7'
 
 // Tokens
 addresses.mainnet.sfrxETH = '0xac3E018457B222d93114458476f3E3416Abbe38F'

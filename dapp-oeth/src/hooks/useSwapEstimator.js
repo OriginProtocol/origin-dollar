@@ -198,7 +198,7 @@ const useSwapEstimator = ({
       // uniswapResult,
       // uniswapV2Result,
       // sushiswapResult,
-      // curveResult,
+      curveResult,
       ethPrice,
     ] = await Promise.all([
       swapMode === 'mint'
@@ -208,7 +208,7 @@ const useSwapEstimator = ({
       // estimateSwapSuitabilityUniswapV3(),
       // estimateSwapSuitabilityUniswapV2(),
       // estimateSwapSuitabilitySushiSwap(),
-      // estimateSwapSuitabilityCurve(),
+      estimateSwapSuitabilityCurve(),
       fetchEthPrice(),
     ])
 
@@ -220,7 +220,7 @@ const useSwapEstimator = ({
       vault: vaultResult,
       zapper: zapperResult,
       // uniswap: uniswapResult,
-      // curve: curveResult,
+      curve: curveResult,
       // uniswapV2: uniswapV2Result,
       // sushiswap: sushiswapResult,
     }
@@ -377,6 +377,7 @@ const useSwapEstimator = ({
    */
   const estimateSwapSuitabilityCurve = async () => {
     const isRedeem = swapMode === 'redeem'
+
     if (isRedeem && selectedCoin === 'mix') {
       return {
         canDoSwap: false,
@@ -389,16 +390,31 @@ const useSwapEstimator = ({
       const amountReceived = ethers.utils.formatUnits(
         priceQuoteBn,
         // 18 because ousd has 18 decimals
-        isRedeem ? coinToReceiveDecimals : 18
+        isRedeem ? coinToReceiveDecimals || 18 : 18
       )
 
-      if (
+      const isPriceHigh =
         ethers.utils.formatUnits(swapAmount, decimals) / amountReceived >
         max_price
-      ) {
+
+      if (isPriceHigh) {
         return {
           canDoSwap: false,
           error: 'price_too_high',
+        }
+      }
+
+      if (coinToSwap === 'eth') {
+        const swapGasUsage = 90000 // TODO: Update this
+
+        return {
+          canDoSwap: true,
+          gasUsed: swapGasUsage,
+          swapGasUsage,
+          approveGasUsage: 0,
+          approveAllowanceNeeded: false,
+          inputAmount: parseFloat(inputAmountRaw),
+          amountReceived,
         }
       }
 

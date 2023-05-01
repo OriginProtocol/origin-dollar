@@ -36,6 +36,8 @@ const burnTimer = () => {
   return { days: burnDays, seconds: seconds }
 }
 
+const NullAddress = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
+
 module.exports = {
   mintAbsoluteGasLimitBuffer,
   mintPercentGasLimitBuffer,
@@ -50,4 +52,5 @@ module.exports = {
   transactionHistoryItemsPerPage,
   max_price,
   burnTimer,
+  NullAddress,
 }

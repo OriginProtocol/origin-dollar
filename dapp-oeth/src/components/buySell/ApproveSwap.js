@@ -60,6 +60,7 @@ const ApproveSwap = ({
     uniV2Router,
     sushiRouter,
     curveOUSDMetaPool,
+    curveOETHPool,
     usdt,
     dai,
     usdc,
@@ -96,13 +97,13 @@ const ApproveSwap = ({
     //     done: 'Uniswap',
     //   },
     // },
-    // curve: {
-    //   contract: curveOUSDMetaPool,
-    //   name: {
-    //     approving: 'Curve',
-    //     done: 'Curve',
-    //   },
-    // },
+    curve: {
+      contract: curveOETHPool,
+      name: {
+        approving: 'Curve',
+        done: 'Curve',
+      },
+    },
     // uniswapV2: {
     //   contract: uniV2Router,
     //   name: {

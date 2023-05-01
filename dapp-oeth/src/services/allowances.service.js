@@ -6,7 +6,6 @@ export default class AllowancesService {
     const {
       vault,
       zapper,
-
       weth,
       reth,
       frxeth,
@@ -14,6 +13,7 @@ export default class AllowancesService {
       steth,
       oeth,
       woeth,
+      curveOETHPool,
     } = contracts
 
     const [
@@ -30,19 +30,35 @@ export default class AllowancesService {
       displayCurrency(await reth.allowance(account, vault.address), reth),
       displayCurrency(await frxeth.allowance(account, vault.address), frxeth),
       displayCurrency(await sfrxeth.allowance(account, vault.address), sfrxeth),
-      displayCurrency(await sfrxeth.allowance(account, zapper.address), sfrxeth),
+      displayCurrency(
+        await sfrxeth.allowance(account, zapper.address),
+        sfrxeth
+      ),
       displayCurrency(await steth.allowance(account, vault.address), steth),
       displayCurrency(await oeth.allowance(account, vault.address), oeth),
       displayCurrency(await oeth.allowance(account, woeth.address), oeth),
     ])
 
+    let oethAllowanceCurvePool
+
+    if (curveOETHPool) {
+      ;[oethAllowanceCurvePool] = await Promise.all([
+        displayCurrency(
+          await oeth.allowance(account, curveOETHPool.address),
+          oeth
+        ),
+      ])
+    }
+
     return {
       eth: {
         vault: ethers.constants.MaxUint256,
         zapper: ethers.constants.MaxUint256,
+        curve: ethers.constants.MaxUint256,
       },
       oeth: {
         vault: oethAllowanceVault,
+        curve: oethAllowanceCurvePool,
         woeth: woethAllowance,
       },
       weth: {

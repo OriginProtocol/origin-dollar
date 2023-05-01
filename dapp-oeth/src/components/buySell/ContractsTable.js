@@ -106,9 +106,9 @@ const ContractsTable = () => {
     // uniswap: {
     //   name: fbt('Uniswap V3', 'Contract Table Uniswap V3'),
     // },
-    // curve: {
-    //   name: fbt('Curve', 'Contract Table Curve'),
-    // },
+    curve: {
+      name: fbt('Curve', 'Contract Table Curve'),
+    },
     // uniswapV2: {
     //   name: fbt('Uniswap V2', 'Contract Table Uniswap V2'),
     // },
@@ -318,6 +318,7 @@ const ContractsTable = () => {
         </div>
         {contractOrder.map((contract) => {
           const swapContract = swapContracts[contract]
+
           const estimation = swapEstimationsReady
             ? swapEstimations[contract]
             : null
@@ -357,7 +358,7 @@ const ContractsTable = () => {
               className={`d-flex content-row ${
                 isViableOption ? 'clickable' : ''
               } ${canDoSwap && isSelected ? 'selected' : ''}`}
-              key={swapContract.name}
+              key={swapContract?.name}
               onClick={() => {
                 if (!isViableOption) {
                   return

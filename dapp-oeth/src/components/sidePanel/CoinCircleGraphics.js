@@ -56,7 +56,7 @@ const CoinCircleGraphics = ({
               coin.length === 4 &&
               coin.map((c, i) => (
                 <img
-                  key={c}
+                  key={`${c}_${i}`}
                   className={`coin coin-4-${i + 1} ${
                     showInnerContents ? '' : 'hidden'
                   }`}
@@ -66,7 +66,7 @@ const CoinCircleGraphics = ({
             {drawType === 'all-same' &&
               [coin, coin, coin].map((c, i) => (
                 <img
-                  key={c}
+                  key={`${c}_${i}`}
                   className={`coin coin-3-${i + 1} ${
                     showInnerContents ? '' : 'hidden'
                   }`}

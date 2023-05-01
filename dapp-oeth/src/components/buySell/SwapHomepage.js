@@ -99,6 +99,7 @@ const SwapHomepage = ({
     mintVault,
     redeemVault,
     swapZapper,
+    swapCurve,
   } = useCurrencySwapper(
     swapParams(
       swapMode === 'mint' ? selectedBuyCoinAmount : selectedRedeemCoinAmount,
@@ -200,7 +201,7 @@ const SwapHomepage = ({
     }
   }
 
-  const onSwapOusd = async () => {
+  const onSwapOeth = async () => {
     analytics.track(
       swapMode === 'mint' ? 'On Swap to OETH' : 'On Swap from OETH',
       {
@@ -214,6 +215,7 @@ const SwapHomepage = ({
 
     try {
       let result, swapAmount, minSwapAmount
+
       if (selectedSwap.name === 'vault') {
         if (swapMode === 'mint') {
           ;({ result, swapAmount, minSwapAmount } = await mintVault())
@@ -222,6 +224,8 @@ const SwapHomepage = ({
         }
       } else if (selectedSwap.name === 'zapper') {
         ;({ result, swapAmount, minSwapAmount } = await swapZapper())
+      } else if (selectedSwap.name === 'curve') {
+        ;({ result, swapAmount, minSwapAmount } = await swapCurve())
       }
 
       storeTransaction(
@@ -239,11 +243,13 @@ const SwapHomepage = ({
               : selectedBuyCoinAmount,
         }
       )
+
       setStoredCoinValuesToZero()
       setSelectedBuyCoinAmount('')
       setSelectedRedeemCoinAmount('')
 
       await rpcProvider.waitForTransaction(result.hash)
+
       analytics.track('Swap succeeded', {
         category: 'swap',
         label: metadata.stablecoinUsed,
@@ -326,7 +332,7 @@ const SwapHomepage = ({
               needsApproval={needsApproval}
               selectedSwap={selectedSwap}
               swapMetadata={swapMetadata()}
-              onSwap={() => onSwapOusd()}
+              onSwap={() => onSwapOeth()}
               allowancesLoaded={allowancesLoaded}
               onMintingError={onMintingError}
               balanceError={balanceError}
