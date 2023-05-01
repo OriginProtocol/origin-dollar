@@ -256,7 +256,7 @@ const BalanceHeader = ({
               title={fbt('Pending yield', 'Pending yield')}
               value={
                 overrideAccount || walletConnected
-                  ? formatCurrency(animatedExpectedIncrease, 2)
+                  ? formatCurrency(animatedExpectedIncrease, 6)
                   : '--.--'
               }
               type={'number'}
@@ -276,7 +276,7 @@ const BalanceHeader = ({
               }
               value={
                 (overrideAccount || walletConnected) && lifetimeYield
-                  ? formatCurrency(lifetimeYield, 2)
+                  ? formatCurrency(lifetimeYield, 6)
                   : '--.--'
               }
               type={'number'}

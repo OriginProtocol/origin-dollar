@@ -336,7 +336,7 @@ const AccountListener = (props) => {
       const response = await fetch(
         `${
           process.env.NEXT_PUBLIC_ANALYTICS_ENDPOINT
-        }/api/v1/address/${account.toLowerCase()}/yield`
+        }/api/v2/oeth/address/${account.toLowerCase()}/yield`
       )
 
       if (response !== undefined && response.ok) {

@@ -118,7 +118,7 @@ const WrapOETHPill = ({
 
   const getDisplayBalance = () => {
     const roundTo2Decimals = (value) => {
-      return formatCurrency(parseFloat(value), 2)
+      return formatCurrency(parseFloat(value), 6)
     }
     if (!active) {
       return null
@@ -178,7 +178,7 @@ const WrapOETHPill = ({
   }
 
   const expectedAmount =
-    bottomItem && wrapEstimate && formatCurrency(wrapEstimate, 2)
+    bottomItem && wrapEstimate && formatCurrency(wrapEstimate, 6)
 
   const maxBalanceSet =
     topItem &&
