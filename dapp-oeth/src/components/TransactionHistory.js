@@ -150,15 +150,15 @@ const TransactionHistory = ({ isMobile }) => {
       imageName: 'sent_icon.svg',
       filter: 'sent',
     },
-    swap_give_ousd: {
+    swap_give_oeth: {
       name: fbt('Swap', 'Swap history type'),
-      verboseName: 'Swap give OUSD',
+      verboseName: 'Swap give OETH',
       imageName: 'swap_icon.svg',
       filter: 'swap',
     },
-    swap_gain_ousd: {
+    swap_gain_oeth: {
       name: fbt('Swap', 'Swap history type'),
-      verboseName: 'Swap gain OUSD',
+      verboseName: 'Swap gain OETH',
       imageName: 'swap_icon.svg',
       filter: 'swap',
     },
@@ -311,7 +311,7 @@ const TransactionHistory = ({ isMobile }) => {
                 <FilterButton
                   filterText={fbt('Swap', 'Tx history filter: Swap')}
                   filterImage="swap_icon.svg"
-                  filter={'swap_ousd'}
+                  filter={'swap_oeth'}
                   filters={filters}
                   setFilters={setFilters}
                   currentFilters={receivedFilters}
@@ -357,10 +357,10 @@ const TransactionHistory = ({ isMobile }) => {
                   {fbt('To', 'Transaction history to account')}
                 </div>
                 <div className="col-3 col-md-2 d-flex justify-content-end pr-md-5">
-                  {fbt('Amount', 'Transaction history OUSD amount')}
+                  {fbt('Amount', 'Transaction history OETH amount')}
                 </div>
                 <div className="col-3 col-md-2 d-flex justify-content-end pr-md-5">
-                  {fbt('Balance', 'Transaction history OUSD balance')}
+                  {fbt('Balance', 'Transaction history OETH balance')}
                 </div>
               </div>
               {currentPageHistory.map((tx) => {
