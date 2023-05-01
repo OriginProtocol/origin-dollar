@@ -4,16 +4,13 @@ import "./Base.t.sol";
 contract GovernorInvariants is Base {
     uint constant agentAmount = 10_000;
     address strategist;
-    NaryaPlatform platform;
-    NaryaReward reward;
 
     bytes32 constant adminImplPosition =
         0xa2bd3d3cf188a41358c8b401076eb59066b09dec5775650c0de4c55187d17bd9;
 
     function setUp() public override {
         rpc_url = "https://eth.llamarpc.com";
-        platform = new NaryaPlatform();
-        platformAddress = address(platform);
+        platformAddress = address(0x42);
 
         super.setUp();
 
@@ -29,9 +26,8 @@ contract GovernorInvariants is Base {
 
         strategy.setPTokenAddress(DAI, CDAI);
 
-        reward = new NaryaReward();
         address[] memory rewards = new address[](1);
-        rewards[0] = address(reward);
+        rewards[0] = address(0x43);
         
         strategy.setRewardTokenAddresses(rewards);
         
@@ -107,7 +103,7 @@ contract GovernorInvariants is Base {
 
     function invariantRewardToken() public {
         address[] memory rewards = strategy.getRewardTokenAddresses();
-        require(rewards.length >= 1 && rewards[0] == address(reward), 
+        require(rewards.length >= 1 && rewards[0] == address(0x43), 
             "rewards token changed");
     }
 
@@ -116,11 +112,4 @@ contract GovernorInvariants is Base {
         require(PToken == CDAI, 
             "PToken changed");
     }
-}
-
-contract NaryaPlatform {
-    
-}
-
-contract NaryaReward {
 }

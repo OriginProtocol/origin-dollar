@@ -5,18 +5,17 @@ import { ERC4626 } from "../../lib/openzeppelin/contracts/token/ERC20/extensions
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-contract StrategyInvariants is Base {
+contract StrategyInvariants is Base, ERC4626 {
     uint constant agentAmount = 10_000;
     address strategist;
-    NaryaPlatform platform;
-    NaryaReward reward;
 
     address bob;
 
+    constructor() ERC4626(IERC20Metadata(DAI)) ERC20("Narya Platform", "NP") {}
+
     function setUp() public override {
         rpc_url = "https://eth.llamarpc.com";
-        platform = new NaryaPlatform(/*"Narya Platform", "NP", IERC20Metadata(DAI)*/);
-        platformAddress = address(platform);
+        platformAddress = address(this);
 
         super.setUp();
 
@@ -32,11 +31,11 @@ contract StrategyInvariants is Base {
 
         vm.startPrank(owner);
 
-        strategy.setPTokenAddress(DAI, CDAI);
+        strategy.setPTokenAddress(DAI, address(this));
 
-        reward = new NaryaReward();
+        // reward = new NaryaReward("Narya Reward Token", "NR");
         address[] memory rewards = new address[](1);
-        rewards[0] = address(reward);
+        rewards[0] = address(USDC);
         
         strategy.setRewardTokenAddresses(rewards);
         
@@ -50,38 +49,49 @@ contract StrategyInvariants is Base {
         vm.stopPrank();
     }
 
-    function testme() public {
-        uint amount = 100;
-        deal(WETH, bob, 1 ether);
-        deal(DAI, bob, 1 ether);
+    // emulate some rewards
+    function deposit(uint256 assets, address receiver) public override returns (uint256) {
+        super.deposit(assets, receiver);
+        deal(USDC, msg.sender, 3);
+    }
+
+    // check that we can withdraw at anytime from the strategy
+    function testDepositWithdrawStrategy(uint amount) public {
+        vm.assume(amount > 10 && amount < 1 ether);
+
+        deal(DAI, bob, amount);
 
         // mint for bob and send to alice
         vm.startPrank(bob);
 
+        uint oldDaiBalance = IERC20(DAI).balanceOf(address(bob));
+
         IERC20(DAI).approve(address(vault), amount);
         vault.mint(DAI, amount, 0);
 
-        // console.log(IERC20(DAI).balanceOf(address(vault)));
-        vault.checkBalance(DAI);
-        // console.log(IERC20(DAI).balanceOf(address(vault)));
+        vault.allocate();
 
-        // vault.redeem(ousd.balanceOf(bob), 0);
+        require(IERC20(USDC).balanceOf(address(strategy)) == 3, 
+            "no rewards given");
+        
+        require(balanceOf(address(strategy)) == amount, 
+            "no shares given");
+        
+        require(IERC20(DAI).balanceOf(address(this)) == amount, 
+            "vault didnt receive asset");
+
+        vault.redeem(ousd.balanceOf(bob), 0);
+
+        require(IERC20(DAI).balanceOf(address(bob)) >= oldDaiBalance * 9 / 10,
+            "Lost more than 90% (accounting for rounding issues)");
+
+        require(IERC20(USDC).balanceOf(address(strategy)) == 3,
+            "no rewards minted");
+
+        // actually due to known rounding issues, the redeemed ousd
+        // won't give you back the same amount as you deposited
+        // this means, strategy will have leftover shares
 
         vm.stopPrank();
-    }
-}
-
-contract NaryaPlatform /*is ERC4626*/ {
-    // constructor(string memory name, string memory symbol, IERC20Metadata asset) ERC4626(asset) ERC20(name, symbol) {}
-    function convertToAssets(uint256 shares) external view returns (uint256 assets) {
-        return 0;
-    }
-}
-
-contract NaryaReward {
-    mapping(address => uint256) balances;
-
-    function balanceOf(address who) external view returns (uint256) {
-        return balances[who];
     }
 }
