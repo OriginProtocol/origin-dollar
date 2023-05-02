@@ -8,7 +8,7 @@ contract UserLockedFundsTest is Base {
     uint minimumVaultDAIBalance;
 
     function setUp() public override {
-        rpc_url = "https://eth.llamarpc.com";
+        rpc_url = "https://eth-mainnet.g.alchemy.com/v2/DygkI5MDUDm4BPzEPQ-2919_xvD4H6E4";
         super.setUp();
 
         user = makeAddr("User");
