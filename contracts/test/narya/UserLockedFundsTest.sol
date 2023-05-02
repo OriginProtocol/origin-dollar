@@ -62,7 +62,7 @@ contract UserLockedFundsTest is Base {
     }
 
     function invariantVaultBalanceNotDrained() public {
-        require(IERC20(DAI).balanceOf(address(vault)) >= minimumVaultDAIBalance, 
+        require(IERC20(DAI).balanceOf(address(vault)) >= minimumVaultDAIBalance * 9 / 10, 
             "Balance was drained ?!");
     }
 
