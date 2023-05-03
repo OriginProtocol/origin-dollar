@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useStoreState } from 'pullstate'
 import { fbt } from 'fbt-runtime'
 import { useWeb3React } from '@web3-react/core'
+import { BigNumber } from 'ethers'
 
 import AccountStore from 'stores/AccountStore'
 import Dropdown from 'components/Dropdown'
@@ -259,6 +260,8 @@ const SwapCurrencyPill = ({
   const coinRedeemOptions = ['oeth', 'mix', 'weth', 'frxeth', 'reth', 'steth']
   const { active } = useWeb3React()
 
+  console.log(selectedSwap?.amountReceived)
+
   const bottomItem = !topItem
   const showOeth =
     (swapMode === 'redeem' && topItem) || (swapMode === 'mint' && bottomItem)
@@ -347,10 +350,7 @@ const SwapCurrencyPill = ({
 
   const coinsSelectOptions = getSelectOptions()
   const expectedAmount =
-    bottomItem &&
-    selectedSwap &&
-    selectedSwap.amountReceived &&
-    formatCurrency(selectedSwap.amountReceived, 2)
+    bottomItem && selectedSwap && selectedSwap.amountReceived
 
   const minReceived =
     bottomItem &&
@@ -430,15 +430,19 @@ const SwapCurrencyPill = ({
               </div>
             </div>
           </div>
-          <div className="d-flex flex-column justify-content-between align-items-end h-100 input-holder">
+          <div
+            className={`d-flex flex-column justify-content-between align-items-end h-100 input-holder w-full relative ${
+              bottomItem ? 'max-w-[120px]' : ''
+            }`}
+          >
             {topItem && (
               <input
                 type="text"
-                value={truncateDecimals(coinValue, 6)}
+                value={truncateDecimals(coinValue, 18)}
                 placeholder="0.00"
                 onChange={(e) => {
                   // truncate decimals after 6th position
-                  const value = truncateDecimals(e.target.value, 6)
+                  const value = truncateDecimals(e.target.value, 18)
                   const valueNoCommas = removeCommas(value)
                   if (checkValidInputForCoin(valueNoCommas, selectedCoin)) {
                     onAmountChange(valueNoCommas)
@@ -448,8 +452,12 @@ const SwapCurrencyPill = ({
             )}
             {bottomItem && (
               <div className="expected-value">
-                {expectedAmount ||
-                  (swapsLoading ? fbt('Loading...', 'Swaps Loading...') : '-')}
+                <p className="">
+                  {expectedAmount ||
+                    (swapsLoading
+                      ? fbt('Loading...', 'Swaps Loading...')
+                      : '-')}
+                </p>
               </div>
             )}
             {bottomItem && (
@@ -540,6 +548,7 @@ const SwapCurrencyPill = ({
 
         input {
           border: 0px;
+          max-width: 100%;
           text-align: right;
           font-size: 24px;
           color: #183140;
@@ -548,7 +557,17 @@ const SwapCurrencyPill = ({
 
         .expected-value {
           font-size: 24px;
+          max-width: 100%;
+          text-overflow: ellipsis;
           color: #8293a4;
+        }
+
+        .expected-value p {
+          white-space: nowrap;
+          text-overflow: ellipsis;
+          width: 100%;
+          display: block;
+          overflow: hidden;
         }
 
         .ml-5px {

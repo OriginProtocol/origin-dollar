@@ -116,9 +116,14 @@ const useSwapEstimator = ({
 
     const selectedSwap =
       swapsLoaded &&
-      find(Object.values(swapEstimations), (estimation) =>
-        userSelectionExists ? estimation.userSelected : estimation.isBest
-      )
+      find(Object.values(swapEstimations), (estimation) => {
+        console.log('estimation', estimation)
+
+        return userSelectionExists ? estimation.userSelected : estimation.isBest
+      })
+
+    console.log(swapEstimations)
+    console.log('selectedSwap', selectedSwap)
 
     ContractStore.update((s) => {
       s.selectedSwap = selectedSwap
@@ -231,6 +236,8 @@ const useSwapEstimator = ({
       ethPrice,
       amount
     )
+
+    console.log('here estimatinos', estimations)
 
     ContractStore.update((s) => {
       s.swapEstimations = estimations

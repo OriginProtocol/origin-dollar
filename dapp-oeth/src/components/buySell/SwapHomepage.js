@@ -71,12 +71,12 @@ const SwapHomepage = ({
     }
   }
 
-  const round0to6DecimalsNoCommas = (value) => {
+  const round0to18DecimalsNoCommas = (value) => {
     return removeCommas(
       formatCurrencyMinMaxDecimals(value, {
         minDecimals: 0,
-        maxDecimals: 6,
-        truncate: true,
+        maxDecimals: 18,
+        truncate: false,
       })
     )
   }
@@ -84,10 +84,10 @@ const SwapHomepage = ({
   useSwapEstimator(
     swapParams(
       // This is added so that onBlur on input field (that sometimes adds decimals) doesn't trigger swap estimation
-      round0to6DecimalsNoCommas(
+      round0to18DecimalsNoCommas(
         swapMode === 'mint' ? selectedBuyCoinAmount : selectedRedeemCoinAmount
       ),
-      round0to6DecimalsNoCommas(
+      round0to18DecimalsNoCommas(
         swapMode === 'mint' ? selectedBuyCoinAmount : selectedRedeemCoinAmount
       )
     )
