@@ -4,7 +4,7 @@ import { getEtherscanHost } from 'utils/web3'
 import { useWeb3React } from '@web3-react/core'
 import { useStoreState } from 'pullstate'
 
-import CoinCircleGraphics from 'components/TransactionActivity/CoinCircleGraphics'
+import CoinCircleGraphics from 'components/transactionActivity/CoinCircleGraphics'
 import TransactionStore from 'stores/TransactionStore'
 import { formatCurrency, formatCurrencyConditional } from 'utils/math'
 import { assetRootPath } from 'utils/image'
