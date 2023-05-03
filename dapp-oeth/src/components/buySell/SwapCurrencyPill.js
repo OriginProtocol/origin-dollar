@@ -91,7 +91,7 @@ const TokenSelectionModal = ({ tokens, onClose, onSelect, conversion }) => {
               key={token}
               className={`${
                 token === 'oeth' ? 'oeth' : ''
-              }  d-flex justify-content-start align-items-center p-5px dropdown-item`}
+              }  d-flex justify-content-start align-items-center selectable`}
               onClick={() => {
                 onSelect(token)
                 onClose()
@@ -155,6 +155,17 @@ const TokenSelectionModal = ({ tokens, onClose, onSelect, conversion }) => {
         .coin {
           color: #fafbfb;
           margin-left: 12px;
+        }
+
+        .selectable {
+          border: none;
+          padding: 6px;
+          background-color: transparent;
+          border-radius: 6px;
+        }
+
+        .selectable:hover {
+          background-color: #141519;
         }
       `}</style>
     </>

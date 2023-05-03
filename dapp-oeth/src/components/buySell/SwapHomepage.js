@@ -332,6 +332,11 @@ const SwapHomepage = ({
           </div>
           <ContractsTable />
           <ApproveSwap
+            inputAmount={
+              swapMode === 'mint'
+                ? selectedBuyCoinAmount
+                : selectedRedeemCoinAmount
+            }
             stableCoinToApprove={swapMode === 'mint' ? selectedBuyCoin : 'oeth'}
             needsApproval={needsApproval}
             selectedSwap={selectedSwap}

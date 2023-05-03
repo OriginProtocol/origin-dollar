@@ -263,6 +263,17 @@ const ApproveSwap = ({
     }
   }
 
+  console.log({
+    inputAmount,
+    s: !selectedSwap,
+    balanceError,
+    swappingGloballyDisabled,
+    a: needsApproval && !coinApproved,
+    active,
+  })
+
+  const parsedAmount = parseFloat(inputAmount)
+
   return (
     <>
       {!visibleConfirmationModal ? null : (
@@ -291,7 +302,12 @@ const ApproveSwap = ({
       )}
       <button
         className={`btn-blue buy-button mt-4 mt-md-3 w-100`}
-        hidden={!inputAmount || balanceError || !approvalNeeded}
+        hidden={
+          balanceError ||
+          !approvalNeeded ||
+          isNaN(parsedAmount) ||
+          parsedAmount <= 0
+        }
         disabled={coinApproved}
         onClick={() => {
           if (lastOverride && lastOverride !== selectedSwap?.name) {
