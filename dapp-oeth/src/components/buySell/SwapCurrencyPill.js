@@ -2,10 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useStoreState } from 'pullstate'
 import { fbt } from 'fbt-runtime'
 import { useWeb3React } from '@web3-react/core'
-import { BigNumber } from 'ethers'
-
 import AccountStore from 'stores/AccountStore'
-import Dropdown from 'components/Dropdown'
 import {
   formatCurrency,
   formatCurrencyMinMaxDecimals,
@@ -14,7 +11,6 @@ import {
   removeCommas,
 } from 'utils/math'
 import { assetRootPath } from 'utils/image'
-import { _ } from 'fbt-runtime/lib/fbt'
 
 const CoinImage = ({ small, coin }) => {
   const className = `coin-image`
@@ -48,13 +44,13 @@ const CoinImage = ({ small, coin }) => {
       )}
       <style jsx>{`
         .coin-image {
-          width: 26px;
-          height: 26px;
+          width: 40px;
+          height: 40px;
         }
 
         .coin-image.small {
-          width: 14px;
-          height: 14px;
+          width: 24px;
+          height: 24px;
         }
 
         .mixed {
@@ -67,20 +63,101 @@ const CoinImage = ({ small, coin }) => {
 
         .coin-2 {
           z-index: 2;
-          margin-left: -9px;
+          margin-left: -16px;
         }
 
         .coin-3 {
           z-index: 3;
-          margin-left: -9px;
+          margin-left: -16px;
         }
 
         .coin-4 {
           z-index: 4;
-          margin-left: -9px;
+          margin-left: -16px;
         }
       `}</style>
     </div>
+  )
+}
+
+const TokenSelectionModal = ({ tokens, onClose, onSelect, conversion }) => {
+  return (
+    <>
+      <div className="token-selection-modal">
+        <div className="backdrop" />
+        <div className="container">
+          {tokens.map((token) => (
+            <button
+              key={token}
+              className={`${
+                token === 'oeth' ? 'oeth' : ''
+              }  d-flex justify-content-start align-items-center p-5px dropdown-item`}
+              onClick={() => {
+                onSelect(token)
+                onClose()
+              }}
+            >
+              <CoinImage coin={token} />
+              <div
+                className={`coin ${
+                  token === 'mix' ? 'text-capitalize' : 'text-uppercase'
+                } mr-auto`}
+              >
+                {token}
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+      <style jsx>{`
+        .token-selection-modal {
+          position: fixed;
+          top: 0;
+          left: 0;
+          margin: 0 !important;
+          z-index: 9999;
+          display: flex;
+          flex-direction: column;
+          height: 100vh;
+          width: 100vw;
+          align-items: center;
+          justify-content: center;
+        }
+
+        --bg-opacity: 0.9;
+
+        .token-selection-modal .backdrop {
+          position: absolute;
+          top: 0;
+          left: 0;
+          display: flex;
+          flex-direction: column;
+          height: 100%;
+          width: 100%;
+          background-color: rgb(16 17 19 / var(--bg-opacity));
+        }
+
+        .token-selection-modal .container {
+          display: flex;
+          flex-direction: column;
+          margin: 0 auto;
+          max-height: 60vh;
+          width: 90vw;
+          max-width: 800px;
+          z-index: 2;
+          background-color: #1e1f25;
+          border-radius: 12px;
+          padding: 16px;
+          overflow: auto;
+          color: #fafbfb;
+        }
+
+        .coin {
+          color: #fafbfb;
+          margin-left: 12px;
+        }
+      `}</style>
+    </>
   )
 }
 
@@ -115,75 +192,44 @@ const CoinSelect = ({ selected, onChange, options = [] }) => {
 
   return (
     <>
-      <Dropdown
-        content={
-          <div className="dropdown-menu show wrapper d-flex flex-column">
-            {options.map((option) => {
-              return (
-                <div
-                  key={option}
-                  className={`${
-                    option === 'oeth' ? 'oeth' : ''
-                  }  d-flex justify-content-start align-items-center p-5px dropdown-item`}
-                  onClick={(e) => {
-                    onChange(option)
-                    setOpen(false)
-                  }}
-                >
-                  <CoinImage coin={option} />
-                  <div
-                    className={`coin ${
-                      option === 'mix' ? 'text-capitalize' : 'text-uppercase'
-                    } mr-auto`}
-                  >
-                    {option}
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        }
-        open={open}
-        onClose={() => setOpen(false)}
-      >
-        <div
-          className={`coin-select d-flex align-items-center justify-content-start`}
-          onClick={(e) => {
-            e.preventDefault()
-            setOpen(!open)
+      {open && (
+        <TokenSelectionModal
+          tokens={options}
+          onClose={() => setOpen(false)}
+          onSelect={(option) => {
+            onChange(option)
+            setOpen(false)
           }}
+          conversion={1}
+        />
+      )}
+      <button
+        className={`coin-select d-flex align-items-center justify-content-start`}
+        onClick={(e) => {
+          e.preventDefault()
+          setOpen(!open)
+        }}
+      >
+        <CoinImage coin={selected} />
+        <div
+          className={`coin ${
+            selected === 'mix' ? 'text-capitalize' : 'text-uppercase'
+          } mr-auto`}
         >
-          <CoinImage coin={selected} />
-          <div
-            className={`coin ${
-              selected === 'mix' ? 'text-capitalize' : 'text-uppercase'
-            } mr-auto`}
-          >
-            {selected}
-          </div>
-          <img
-            className="coin-select-icon"
-            src={assetRootPath('/images/downcaret.png')}
-            alt="Coin select arrow"
-          />
+          {selected}
         </div>
-      </Dropdown>
+        <img
+          className="coin-select-icon"
+          src={assetRootPath('/images/downcaret.png')}
+          alt="Coin select arrow"
+        />
+      </button>
       <style jsx>{`
-        .dropdown-menu {
-          padding: 10px;
-          right: auto;
-          left: 0;
-          top: 100%;
-          background-color: #1e1f25;
-          color: #fafbfb;
-          border: solid 1px #141519;
-        }
-
         .coin-select {
           min-width: 160px;
           min-height: 40px;
           padding: 8px;
-          border-radius: 20px;
+          border-radius: 30px;
           border: solid 1px #141519;
           color: #fafbfb;
           background-color: rgba(255, 255, 255, 0.1);
@@ -211,14 +257,6 @@ const CoinSelect = ({ selected, onChange, options = [] }) => {
 
         .cursor-pointer {
           cursor: pointer;
-        }
-
-        .dropdown-item {
-          cursor: pointer;
-        }
-
-        .dropdown-item:hover {
-          background-color: rgba(255, 255, 255, 0.1);
         }
 
         .coin {
