@@ -101,12 +101,12 @@ const CoinSelect = ({ selected, onChange, options = [] }) => {
           .coin-select {
             min-width: 160px;
             min-height: 40px;
-            padding: 7px 20px 7px 7px;
+            padding: 8px;
             font-size: 18px;
           }
 
           .coin {
-            color: black;
+            color: #fafbfb;
             margin-left: 12px;
           }
         `}</style>
@@ -162,7 +162,11 @@ const CoinSelect = ({ selected, onChange, options = [] }) => {
           >
             {selected}
           </div>
-          <DownCaret />
+          <img
+            className="coin-select-icon"
+            src={assetRootPath('/images/downcaret.png')}
+            alt="Coin select arrow"
+          />
         </div>
       </Dropdown>
       <style jsx>{`
@@ -171,20 +175,30 @@ const CoinSelect = ({ selected, onChange, options = [] }) => {
           right: auto;
           left: 0;
           top: 100%;
+          background-color: #1e1f25;
+          color: #fafbfb;
+          border: solid 1px #141519;
         }
 
         .coin-select {
           min-width: 160px;
           min-height: 40px;
-          padding: 7px 20px 7px 7px;
+          padding: 8px;
           border-radius: 20px;
-          border: solid 1px #cdd7e0;
-          background-color: white;
+          border: solid 1px #141519;
+          color: #fafbfb;
+          background-color: rgba(255, 255, 255, 0.1);
           cursor: pointer;
         }
 
         .coin-select:hover {
-          background-color: #f2f3f5;
+          background-color: rgba(255, 255, 255, 0.25);
+        }
+
+        .coin-select-icon {
+          height: 8px;
+          width: 12px;
+          margin-right: 12px;
         }
 
         .p-5px {
@@ -205,11 +219,11 @@ const CoinSelect = ({ selected, onChange, options = [] }) => {
         }
 
         .dropdown-item:hover {
-          background-color: #f2f3f5;
+          background-color: rgba(255, 255, 255, 0.1);
         }
 
         .coin {
-          color: black;
+          color: #fafbfb;
           margin-left: 12px;
         }
 
@@ -217,11 +231,11 @@ const CoinSelect = ({ selected, onChange, options = [] }) => {
           .coin-select {
             min-width: 120px;
             min-height: 32px;
-            padding: 4px 14px 4px 4px;
+            padding: 6px;
           }
 
           .coin {
-            color: black;
+            color: #fafbfb;
             margin-left: 8px;
           }
         }
@@ -259,8 +273,6 @@ const SwapCurrencyPill = ({
   ]
   const coinRedeemOptions = ['oeth', 'mix', 'weth', 'frxeth', 'reth', 'steth']
   const { active } = useWeb3React()
-
-  console.log(selectedSwap?.amountReceived)
 
   const bottomItem = !topItem
   const showOeth =
@@ -395,45 +407,8 @@ const SwapCurrencyPill = ({
         <div
           className={`d-flex align-items-start justify-content-between currency-pill-inner`}
         >
-          <div className="d-flex flex-column justify-content-between align-items-start h-100">
-            <CoinSelect
-              selected={showOeth ? 'oeth' : selectedCoin}
-              onChange={(coin) => {
-                onSelectChange(coin)
-              }}
-              options={coinsSelectOptions}
-            />
-            <div className="d-flex align-items-center">
-              <div
-                className={`d-flex justify-content-between balance mt-auto mr-2 ${
-                  balanceClickable ? 'clickable' : ''
-                }`}
-                onClick={setMaxBalance}
-              >
-                {displayBalance && (
-                  <div>
-                    {fbt(
-                      'Balance: ' +
-                        fbt.param('coin-balance', displayBalance.balance),
-                      'Coin balance'
-                    )}
-                    <span className="text-uppercase ml-1">
-                      {displayBalance.coin}
-                    </span>
-                  </div>
-                )}
-                {balanceClickable && (
-                  <a className="max-link ml-2" onClick={setMaxBalance}>
-                    {fbt('Max', 'Set maximum currency amount')}
-                  </a>
-                )}
-              </div>
-            </div>
-          </div>
           <div
-            className={`d-flex flex-column justify-content-between align-items-end h-100 input-holder w-full relative ${
-              bottomItem ? 'max-w-[120px]' : ''
-            }`}
+            className={`d-flex flex-column justify-content-between input-holder w-full relative`}
           >
             {topItem && (
               <input
@@ -478,6 +453,41 @@ const SwapCurrencyPill = ({
               </div>
             )}
           </div>
+          <div className="d-flex flex-column justify-content-between align-items-start">
+            <div className="d-flex align-items-center">
+              <div
+                className={`d-flex justify-content-between balance mb-2 mr-2 ${
+                  balanceClickable ? 'clickable' : ''
+                }`}
+                onClick={setMaxBalance}
+              >
+                {displayBalance && (
+                  <div>
+                    {fbt(
+                      'Balance: ' +
+                        fbt.param('coin-balance', displayBalance.balance),
+                      'Coin balance'
+                    )}
+                    <span className="text-uppercase ml-1">
+                      {displayBalance.coin}
+                    </span>
+                  </div>
+                )}
+                {balanceClickable && (
+                  <a className="max-link ml-2" onClick={setMaxBalance}>
+                    {fbt('Max', 'Set maximum currency amount')}
+                  </a>
+                )}
+              </div>
+            </div>
+            <CoinSelect
+              selected={showOeth ? 'oeth' : selectedCoin}
+              onChange={(coin) => {
+                onSelectChange(coin)
+              }}
+              options={coinsSelectOptions}
+            />
+          </div>
         </div>
         {coinSplits && (
           <div className="d-flex flex-column multiple-balance-holder">
@@ -500,21 +510,23 @@ const SwapCurrencyPill = ({
       </div>
       <style jsx>{`
         .currency-pill {
-          min-height: 90px;
-          margin-bottom: 10px;
-          padding: 10px 23px 14px 10px;
-          border: solid 1px #cdd7e0;
-          border-radius: 10px;
-          background-color: white;
+          display: flex;
+          justify-content: center;
+          padding: 42px 20px 42px 40px;
+          background-color: #1e1f25;
+        }
+
+        .topItem {
+          background-color: #18191c;
+          border-bottom: solid 1px #141519;
         }
 
         .currency-pill-inner {
-          height: 80px;
         }
 
         .balance {
           font-size: 12px;
-          color: #8293a4;
+          color: #828699;
           margin-left: 4px;
         }
 
@@ -523,7 +535,7 @@ const SwapCurrencyPill = ({
         }
 
         .multiple-balance-holder {
-          border-top: 1px solid #cdd7e0;
+          border-top: 1px solid #141519;
           margin-left: -10px;
           margin-right: -24px;
           padding-left: 10px;
@@ -549,17 +561,17 @@ const SwapCurrencyPill = ({
         input {
           border: 0px;
           max-width: 100%;
-          text-align: right;
-          font-size: 24px;
-          color: #183140;
+          text-align: left;
+          font-size: 32px;
+          color: #fafbfb;
           background-color: transparent;
         }
 
         .expected-value {
-          font-size: 24px;
+          font-size: 32px;
           max-width: 100%;
           text-overflow: ellipsis;
-          color: #8293a4;
+          color: #828699;
         }
 
         .expected-value p {
@@ -585,7 +597,7 @@ const SwapCurrencyPill = ({
 
         .max-link {
           font-size: 12px;
-          color: #8293a4;
+          color: #828699;
           weight: bold;
           cursor: pointer;
         }
@@ -596,15 +608,15 @@ const SwapCurrencyPill = ({
           }
 
           input {
-            font-size: 20px;
+            font-size: 24px;
           }
 
           .expected-value {
-            font-size: 20px;
+            font-size: 24px;
           }
 
           .balance {
-            font-size: 10px;
+            font-size: 12px;
             margin-left: 4px;
             white-space: nowrap;
           }

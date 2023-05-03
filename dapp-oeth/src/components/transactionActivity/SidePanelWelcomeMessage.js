@@ -50,8 +50,8 @@ const SidePanelWelcomeMessage = () => {
         .side-panel-message {
           width: 100%;
           border-radius: 5px;
-          border: solid 1px #cdd7e0;
-          background-color: #ffffff;
+          border: solid 1px #141519;
+          background-color: #1e1f25;
           padding: 15px 20px;
           margin-bottom: 10px;
         }
@@ -60,14 +60,14 @@ const SidePanelWelcomeMessage = () => {
           font-family: Lato;
           font-size: 14px;
           font-weight: bold;
-          color: #183140;
+          color: #fafbfb;
           margin-bottom: 7px;
         }
 
         .side-panel-message .text {
           font-size: 14px;
           line-height: 1.5;
-          color: #8293a4;
+          color: #828699;
         }
       `}</style>
     </>

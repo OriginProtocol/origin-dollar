@@ -67,7 +67,7 @@ const ErrorModal = ({
         .error-modal {
           position: absolute;
           border-radius: 0px 0px 10px 10px;
-          border: solid 1px #cdd7e0;
+          border: solid 1px #141519;
           background-color: rgba(250, 251, 252, 0.6);
           top: -1px;
           right: -1px;
@@ -79,7 +79,7 @@ const ErrorModal = ({
         }
 
         .error-modal-body {
-          background-color: white;
+          background-color: #fafbfb;
           place-self: center;
           padding: 20px;
           margin: auto;

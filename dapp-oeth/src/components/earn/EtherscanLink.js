@@ -31,12 +31,12 @@ export default function EtherscanLink({
         .etherscan-link {
           font-family: Lato;
           font-size: 14px;
-          color: #8293a4;
+          color: #828699;
           font-size: 14px;
         }
 
         .etherscan-link.white {
-          color: white;
+          color: #fafbfb;
           opacity: 0.7;
         }
 
@@ -45,7 +45,7 @@ export default function EtherscanLink({
         }
 
         .etherscan-link.white:hover {
-          border-color: white;
+          border-color: #fafbfb;
         }
 
         .etherscan-icon {

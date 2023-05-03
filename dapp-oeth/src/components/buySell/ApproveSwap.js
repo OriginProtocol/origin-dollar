@@ -36,17 +36,19 @@ const ApproveSwap = ({
   const web3react = useWeb3React()
   const { library, account, activate, active } = web3react
   const coinApproved = stableCoinToApprove === 'eth' || stage === 'done'
+
   const isWrapped =
     selectedSwap &&
     selectedSwap.name === 'woeth' &&
     stableCoinToApprove === 'oeth'
+
   const approvalNeeded =
     (selectedSwap &&
       !balanceError &&
       !swappingGloballyDisabled &&
       allowancesLoaded &&
       needsApproval) ||
-    coinApproved
+    !coinApproved
 
   useEffect(() => {
     ContractStore.update((s) => {

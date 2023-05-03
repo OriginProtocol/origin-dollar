@@ -107,7 +107,7 @@ export default function CircularProgressMeter({
           font-size: 14px;
           font-weight: bold;
           text-align: center;
-          color: white;
+          color: #fafbfb;
           position: relative;
           z-index: 3;
           max-width: 62px;

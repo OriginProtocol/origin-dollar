@@ -168,8 +168,8 @@ const WalletSelectContent = ({ isMobile }) => {
           padding: 34px 34px 46px 34px;
           max-width: 350px;
           min-width: 350px;
-          box-shadow: 0 0 14px 0 rgba(24, 49, 64, 0.1);
-          background-color: white;
+
+          background-color: #fafbfb;
           border-radius: 10px;
         }
 
@@ -188,7 +188,7 @@ const WalletSelectContent = ({ isMobile }) => {
           height: 50px;
           border-radius: 25px;
           border: solid 1px #1a82ff;
-          background-color: white;
+          background-color: #fafbfb;
           font-size: 18px;
           font-weight: bold;
           text-align: center;

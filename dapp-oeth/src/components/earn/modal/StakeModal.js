@@ -373,7 +373,7 @@ const StakeModal = ({
         .small-blue-text {
           font-size: 14px;
           text-align: center;
-          color: #8293a4;
+          color: #828699;
         }
 
         .center-top {
@@ -405,8 +405,8 @@ const StakeModal = ({
         .input-wrapper {
           width: 100%;
           border-radius: 10px;
-          border: solid 1px #cdd7e0;
-          background-color: #fafbfc;
+          border: solid 1px #141519;
+          background-color: #1e1f25;
         }
 
         .mb-48 {
@@ -437,7 +437,7 @@ const StakeModal = ({
         .input-holder {
           flex-grow: 1;
           border-radius: 10px 0px 0px 10px;
-          border-right: 1px solid #cdd7e0;
+          border-right: 1px solid #141519;
         }
 
         .wider-stake-input .input-holder {
@@ -448,7 +448,7 @@ const StakeModal = ({
           padding: 11px 0px 11px 16px;
           border: 0px;
           border-radius: 10px;
-          background-color: #fafbfc;
+          background-color: #1e1f25;
           font-size: 28px;
           color: black;
           width: 186px;

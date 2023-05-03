@@ -4,14 +4,14 @@ import { useStoreState } from 'pullstate'
 import { usePrevious } from 'utils/hooks'
 import analytics from 'utils/analytics'
 
-const DownCaret = ({ swapMode, disableRotation, color = '#8293a4' }) => {
+const DownCaret = ({ swapMode, disableRotation, color = '#828699' }) => {
   return (
     <div
       className={`image-holder ${
         swapMode === 'redeem' && !disableRotation ? '' : 'rotated'
       }`}
     >
-      <div className="image-holder-internal"></div>
+      <div className="image-holder-internal" />
       <svg
         xmlns="http://www.w3.org/2000/svg"
         width="13"
@@ -66,16 +66,16 @@ const PillArrow = ({ swapMode, setSwapMode }) => {
         .pill-arrow {
           width: 40px;
           height: 40px;
-          border: 1px solid #cdd7e0;
-          background-color: #fafbfc;
+          border: 1px solid #141519;
+          background-color: #1e1f25;
           border-radius: 50px;
-          margin-top: -25px;
+          margin-top: -20px;
           z-index: 1;
         }
 
         .border-divider {
           height: 10px;
-          background-color: #fafbfc;
+          background-color: #1e1f25;
           width: 40px;
           z-index: 1;
         }
@@ -83,15 +83,15 @@ const PillArrow = ({ swapMode, setSwapMode }) => {
         .caret-background {
           width: 24px;
           height: 24px;
-          border: solid 1px #cdd7e0;
-          background-color: #f2f3f5;
+          border: solid 1px #141519;
+          background-color: #1e1f25;
           z-index: 2;
           border-radius: 30px;
           cursor: pointer;
         }
 
         .caret-background:hover {
-          background-color: #e2e3e5;
+          background-color: #18191c;
         }
       `}</style>
     </div>

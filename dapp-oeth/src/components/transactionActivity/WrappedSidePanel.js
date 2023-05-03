@@ -1,15 +1,13 @@
 import React, { useState, useEffect } from 'react'
 import { useStoreState } from 'pullstate'
-
-import SidePanelWelcomeMessage from 'components/sidePanel/SidePanelWelcomeMessage'
-import SidePanelTransactionMessage from 'components/sidePanel/SidePanelTransactionMessage'
-import SidePanelInsuranceMessage from 'components/sidePanel/SidePanelInsuranceMessage'
+import SidePanelTransactionMessage from 'components/TransactionActivity/SidePanelTransactionMessage'
+import SidePanelWrapMessage from 'components/TransactionActivity/SidePanelWrapMessage'
 import TransactionStore from 'stores/TransactionStore'
 import { usePrevious } from 'utils/hooks'
 import ContractStore from 'stores/ContractStore'
 import { assetRootPath } from 'utils/image'
 
-const PrimarySidePanel = () => {
+const WrappedSidePanel = () => {
   const showingAllContracts = useStoreState(
     ContractStore,
     (s) => s.showAllContracts
@@ -45,7 +43,7 @@ const PrimarySidePanel = () => {
     })
     const filteredTx = sortedTx.filter((tx) => {
       return (
-        tx.type !== 'approveWrap' && tx.type !== 'wrap' && tx.type !== 'unwrap'
+        tx.type === 'approveWrap' || tx.type === 'wrap' || tx.type === 'unwrap'
       )
     })
     setSortedTransactions(filteredTx)
@@ -58,11 +56,9 @@ const PrimarySidePanel = () => {
         className="primarySidePanel sidepanel-wrapper collapse navbar-collapse"
       >
         <div
-          className={`primary-side-panel d-flex flex-column justify-content-start align-items-center disable-scrollbars
-            ${!showingAllContracts && approvalNeeded ? 'h859' : ''}
-            ${showingAllContracts && !approvalNeeded ? 'h988' : ''}
-            ${showingAllContracts && approvalNeeded ? 'h1053' : ''}
-            `}
+          className={
+            'primary-side-panel d-flex flex-column justify-content-start align-items-center disable-scrollbars'
+          }
         >
           <button
             className="close navbar-toggler d-md-none"
@@ -79,7 +75,7 @@ const PrimarySidePanel = () => {
               loading="lazy"
             />
           </button>
-          <SidePanelInsuranceMessage />
+          <SidePanelWrapMessage />
           {sortedTransactions.map((tx) => (
             <SidePanelTransactionMessage
               key={tx.hash}
@@ -87,7 +83,6 @@ const PrimarySidePanel = () => {
               animate={txHashesToAnimate.includes(tx.hash)}
             />
           ))}
-          <SidePanelWelcomeMessage />
         </div>
       </div>
       <style jsx>{`
@@ -96,29 +91,13 @@ const PrimarySidePanel = () => {
           padding: 10px;
           max-width: 374px;
           min-width: 290px;
-          min-height: 794px;
-          max-height: 794px;
+          min-height: 624px;
+          max-height: 624px;
           border-radius: 10px;
-          background-color: #fafbfc;
-          border: 1px solid #cdd7e0;
+          background-color: #1e1f25;
+          border: 1px solid #141519;
           overflow-y: scroll;
           flex-grow: 1;
-          box-shadow: 0 0 14px 0 rgba(24, 49, 64, 0.1);
-        }
-
-        .primary-side-panel.h859 {
-          min-height: 859px;
-          max-height: 859px;
-        }
-
-        .primary-side-panel.h988 {
-          min-height: 988px;
-          max-height: 988px;
-        }
-
-        .primary-side-panel.h1053 {
-          min-height: 1053px;
-          max-height: 1053px;
         }
 
         @media (min-width: 800px) {
@@ -137,7 +116,7 @@ const PrimarySidePanel = () => {
           -ms-overflow-style: none; /* IE 10+ */
         }
 
-        @media (max-width: 992px) {
+        @media (max-width: 799px) {
           .sidepanel-wrapper {
             position: fixed;
             top: 0;
@@ -181,4 +160,4 @@ const PrimarySidePanel = () => {
   )
 }
 
-export default PrimarySidePanel
+export default WrappedSidePanel

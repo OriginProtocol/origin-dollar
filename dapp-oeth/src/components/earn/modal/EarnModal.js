@@ -94,7 +94,7 @@ const EarnModal = ({
         }
 
         .earn-modal {
-          background-color: white;
+          background-color: #fafbfb;
           place-self: center;
           min-width: 540px;
         }
@@ -111,7 +111,7 @@ const EarnModal = ({
 
         hr {
           width: 100%;
-          border-top: 1px solid #cdd7e0;
+          border-top: 1px solid #141519;
           margin-bottom: 24px;
           margin-top: 27px;
         }
@@ -128,9 +128,9 @@ const EarnModal = ({
 
         .action-body {
           min-height: 111px;
-          background-color: #fafbfc;
+          background-color: #1e1f25;
           border-radius: 0px 0px 20px 20px;
-          border-top: 1px solid #cdd7e0;
+          border-top: 1px solid #141519;
         }
 
         .btn-dark {

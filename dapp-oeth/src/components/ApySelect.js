@@ -55,7 +55,7 @@ const ApySelect = ({ apyDayOptions, apyDays, setApyDays, nav, homepage }) => {
 
         .apy-select.nav {
           background-color: #2f424e;
-          color: white;
+          color: #fafbfb;
           border: solid 1px white;
         }
 
@@ -70,25 +70,25 @@ const ApySelect = ({ apyDayOptions, apyDays, setApyDays, nav, homepage }) => {
 
         .dropdown-menu {
           margin-right: 200px;
-          background-color: white;
+          background-color: #1e1f25;
+          color: #fafbfb;
           font-size: 16px;
-          color: black;
           min-width: 98px;
           top: 100%;
           left: 0;
           padding: 5px;
+          border: solid 1px #141519;
         }
 
         .dropdown-item {
-          background-color: white;
-          color: black;
+          color: #fafbfb;
           padding: 3px 5px 3px 10px;
           line-height: 20px;
           cursor: pointer;
         }
 
         .dropdown-item:hover {
-          background-color: #f2f3f5;
+          background-color: rgba(255, 255, 255, 0.1);
         }
 
         .downcaret {

@@ -136,13 +136,13 @@ export default function Pool({ pool }) {
         }
 
         .chin-box.blue {
-          color: white;
+          color: #fafbfb;
           background-color: #1a82ff;
         }
 
         .chin-box.grey {
           color: black;
-          background-color: #cdd7e0;
+          background-color: #141519;
           color: black;
         }
 
@@ -160,8 +160,8 @@ export default function Pool({ pool }) {
         .pool {
           height: 160px;
           border-radius: 10px;
-          background-color: white;
-          border: solid 1px #cdd7e0;
+          background-color: #fafbfb;
+          border: solid 1px #141519;
         }
 
         .chin-box.green-sytle .pool {
@@ -181,7 +181,7 @@ export default function Pool({ pool }) {
 
         .top {
           border-radius: 10px 10px 0px 0px;
-          border-bottom: solid 1px #cdd7e0;
+          border-bottom: solid 1px #141519;
           padding: 0px 25px 0px 25px;
           height: 80px;
         }
@@ -204,7 +204,7 @@ export default function Pool({ pool }) {
         .chin-box.orange-sytle .bottom,
         .chin-box.green-sytle .bottom,
         .chin-box.blue-sytle .bottom {
-          color: white;
+          color: #fafbfb;
         }
 
         .bottom {
@@ -230,14 +230,14 @@ export default function Pool({ pool }) {
         .bottom .light {
           font-size: 14px;
           font-weight: bold;
-          color: #8293a4;
+          color: #828699;
           margin-right: 16px;
         }
 
         .chin-box.orange-sytle .bottom .light,
         .chin-box.green-sytle .bottom .light,
         .chin-box.blue-sytle .bottom .light {
-          color: white;
+          color: #fafbfb;
           opacity: 0.7;
         }
 

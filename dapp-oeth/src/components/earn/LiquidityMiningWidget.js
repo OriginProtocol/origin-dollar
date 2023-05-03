@@ -255,7 +255,7 @@ const LiquidityMiningWidget = ({ pool, rpcProvider }) => {
 
         .chin-contents {
           opacity: 0;
-          color: white;
+          color: #fafbfb;
           background-color: #1a82ff;
           transition: opacity 0.5s ease 0.3s;
           padding: 45px 50px;
@@ -271,8 +271,8 @@ const LiquidityMiningWidget = ({ pool, rpcProvider }) => {
           height: 100%;
           max-height: 218px;
           border-radius: 10px;
-          border: solid 1px #cdd7e0;
-          background-color: white;
+          border: solid 1px #141519;
+          background-color: #fafbfb;
           transition: height 0.55s ease 0.2s;
         }
 
@@ -295,7 +295,7 @@ const LiquidityMiningWidget = ({ pool, rpcProvider }) => {
         }
 
         .first-part .balance-box .title {
-          color: #8293a4;
+          color: #828699;
         }
 
         .chin-contents .balance-box .title {
@@ -307,7 +307,7 @@ const LiquidityMiningWidget = ({ pool, rpcProvider }) => {
         }
 
         .chin-contents .balance-box .balance {
-          color: white;
+          color: #fafbfb;
         }
 
         .main-body-footer {
@@ -315,15 +315,15 @@ const LiquidityMiningWidget = ({ pool, rpcProvider }) => {
           border-radius: 0px 0px 10px 10px;
           font-size: 14px;
           text-align: center;
-          color: #8293a4;
+          color: #828699;
           transition: border-top 0.55s ease 0s;
           transition: background-color 0.55s ease 0s;
           height: 40px;
         }
 
         .main-body-footer.boredered {
-          border-top: solid 1px #cdd7e0;
-          background-color: #fafbfc;
+          border-top: solid 1px #141519;
+          background-color: #1e1f25;
         }
 
         .mw-191 {

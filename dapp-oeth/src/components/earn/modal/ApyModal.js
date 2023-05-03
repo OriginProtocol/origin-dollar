@@ -43,7 +43,7 @@ const ApyModal = ({ pool, onClose }) => {
       <style jsx>{`
         .title {
           font-size: 28px;
-          color: #8293a4;
+          color: #828699;
         }
 
         .percentage {

@@ -127,8 +127,7 @@ const CoinCircleGraphics = ({
           width: 80px;
           height: 80px;
           border-radius: 34px;
-          border: solid 1px #b5bfc8;
-          background-color: white;
+          background-color: #18191c;
           position: relative;
           transition: max-height 0.4s cubic-bezier(0.5, -0.5, 0.5, 1.5),
             max-width 0.4s cubic-bezier(0.5, -0.5, 0.5, 1.5);

@@ -313,8 +313,8 @@ const LedgerDerivationContent = ({}) => {
           padding: 26px 22px 20px 22px;
           max-width: 500px;
           min-width: 500px;
-          box-shadow: 0 0 14px 0 rgba(24, 49, 64, 0.1);
-          background-color: white;
+
+          background-color: #fafbfb;
           border-radius: 10px;
           align-items: center;
           justify-content: center;
@@ -340,7 +340,7 @@ const LedgerDerivationContent = ({}) => {
           height: 55px;
           border-radius: 50px;
           border: solid 1px #1a82ff;
-          background-color: white;
+          background-color: #fafbfb;
           font-size: 18px;
           font-weight: bold;
           text-align: center;

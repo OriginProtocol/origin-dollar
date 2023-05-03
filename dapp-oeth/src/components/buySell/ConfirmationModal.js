@@ -53,7 +53,7 @@ const ConfirmationModal = ({
           min-height: 95px;
           background-color: #f2f3f5;
           border-radius: 0px 0px 10px 10px;
-          border-top: solid 1px #cdd7e0;
+          border-top: solid 1px #141519;
         }
 
         button {

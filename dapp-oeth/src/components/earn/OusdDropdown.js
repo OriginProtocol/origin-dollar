@@ -87,12 +87,12 @@ const OusdDropdown = ({}) => {
           border: solid 1px #bbc9da;
           height: 30px;
           margin-right: 10px;
-          color: white;
+          color: #fafbfb;
         }
 
         .ousd-pill.open {
           color: #183140;
-          background-color: white;
+          background-color: #fafbfb;
         }
 
         .wrapper {
@@ -100,7 +100,7 @@ const OusdDropdown = ({}) => {
           min-width: 360px;
           width: 360px;
           background-color: #183140;
-          color: white;
+          color: #fafbfb;
           border: 0;
           padding: 0px;
           border-radius: 10px;
@@ -123,7 +123,7 @@ const OusdDropdown = ({}) => {
 
         .balance-holder h1 {
           font-size: 46px;
-          color: white;
+          color: #fafbfb;
         }
 
         .stats-holder {
@@ -146,7 +146,7 @@ const OusdDropdown = ({}) => {
         }
 
         .btn-dark {
-          color: white;
+          color: #fafbfb;
           font-size: 12px;
           height: 30px;
           width: 100%;

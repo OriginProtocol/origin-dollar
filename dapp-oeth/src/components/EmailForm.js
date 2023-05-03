@@ -107,7 +107,7 @@ const EmailForm = ({ footer }) => {
           border-radius: 5px;
           border: solid 1px #4b5764;
           background-color: #000000;
-          color: white;
+          color: #FAFBFB;
           font-size: 1.125rem;
         }
 
@@ -128,7 +128,7 @@ const EmailForm = ({ footer }) => {
         }
 
         ::placeholder {
-          color: #8293a4;
+          color: #828699;
         }
 
         div {

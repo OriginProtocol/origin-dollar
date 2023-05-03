@@ -165,7 +165,7 @@ const StakeDetailsModal = ({ stake, onClose, isMobile }) => {
           border: solid 1px #056ae3;
           background-color: #0d73ed;
           position: relative;
-          color: white;
+          color: #fafbfb;
         }
 
         button.close-button {
@@ -197,7 +197,7 @@ const StakeDetailsModal = ({ stake, onClose, isMobile }) => {
           font-family: Poppins;
           font-size: 38px;
           font-weight: 500;
-          color: white;
+          color: #fafbfb;
         }
 
         .modal-body {
@@ -237,7 +237,7 @@ const StakeDetailsModal = ({ stake, onClose, isMobile }) => {
         }
 
         .status .circle.complete {
-          background-color: white;
+          background-color: #fafbfb;
         }
 
         .mr-30 {

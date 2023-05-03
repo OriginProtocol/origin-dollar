@@ -47,11 +47,11 @@ const FilterButton = ({
       </div>
       <style jsx>{`
         .button {
-          color: #8293a4;
+          color: #828699;
           min-width: 93px;
           min-height: 40px;
           border-radius: 5px;
-          border: solid 1px #cdd7e0;
+          border: solid 1px #141519;
           margin-right: 10px;
           font-family: Lato;
           font-size: 14px;
@@ -61,7 +61,7 @@ const FilterButton = ({
         .button.selected,
         .button.selected:hover {
           background-color: black;
-          color: white;
+          color: #fafbfb;
         }
 
         .button:hover {
@@ -113,7 +113,7 @@ const FormatCurrencyByImportance = ({
 
       <style jsx>{`
         .grayer {
-          color: #8293a4;
+          color: #828699;
         }
       `}</style>
     </>
@@ -514,7 +514,7 @@ const TransactionHistory = ({ isMobile }) => {
           border-radius: 10px;
           box-shadow: 0 0 14px 0 rgba(0, 0, 0, 0.1);
           border: solid 1px #e9eff4;
-          background-color: #fafbfc;
+          background-color: #1e1f25;
           color: black;
         }
 
@@ -522,16 +522,16 @@ const TransactionHistory = ({ isMobile }) => {
           padding-left: 40px;
           padding-right: 40px;
           padding-top: 24px;
-          background-color: white;
+          background-color: #fafbfb;
         }
 
         .grey-font {
-          color: #8293a4;
+          color: #828699;
           font-size: 12px;
         }
 
         .border-bt {
-          border-bottom: 1px solid #cdd7e0;
+          border-bottom: 1px solid #141519;
         }
 
         .pb-10 {
@@ -562,25 +562,25 @@ const TransactionHistory = ({ isMobile }) => {
 
         .filters {
           padding: 40px;
-          background-color: #fafbfc;
+          background-color: #1e1f25;
           border-bottom: solid 1px #e9eff4;
           border-radius: 10px;
         }
 
         .pagination {
           padding: 40px;
-          background-color: #fafbfc;
+          background-color: #1e1f25;
           border-top: solid 1px #e9eff4;
           border-radius: 10px;
         }
 
         .page-number {
           cursor: pointer;
-          color: #8293a4;
+          color: #828699;
           min-width: 40px;
           min-height: 40px;
           border-radius: 5px;
-          border: solid 1px #cdd7e0;
+          border: solid 1px #141519;
           margin-right: 10px;
           font-size: 14px;
           cursor: pointer;
@@ -589,7 +589,7 @@ const TransactionHistory = ({ isMobile }) => {
         }
 
         .page-skip {
-          color: #8293a4;
+          color: #828699;
           margin-right: 10px;
           min-width: 40px;
           min-height: 40px;
@@ -598,7 +598,7 @@ const TransactionHistory = ({ isMobile }) => {
         .page-number.current,
         .page-number.current:hover {
           background-color: black;
-          color: white;
+          color: #fafbfb;
         }
 
         .page-number:hover {

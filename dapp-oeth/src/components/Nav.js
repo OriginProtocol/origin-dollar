@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import classnames from 'classnames'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
@@ -7,8 +7,10 @@ import { useStoreState } from 'pullstate'
 import { useWeb3React } from '@web3-react/core'
 import withIsMobile from 'hoc/withIsMobile'
 import GetOUSD from 'components/GetOUSD'
+import Dropdown from 'components/Dropdown'
 import AccountStatusDropdown from 'components/AccountStatusDropdown'
 import LanguageOptions from 'components/LanguageOptions'
+import TransactionActivity from 'components/transactionActivity/TransactionActivity'
 import IPFSDappLink from 'components/IPFSDappLink'
 import ContractStore from 'stores/ContractStore'
 import AccountStatusPopover from './AccountStatusPopover'
@@ -27,7 +29,7 @@ const DappLinks = ({ page }) => {
               page === 'swap' ? 'selected' : ''
             }`}
           >
-            {fbt('Swap OETH', 'Swap OETH')}
+            {fbt('Swap', 'Swap')}
           </a>
         </Link>
         <Link href={adjustLinkHref('/wrap')}>
@@ -36,7 +38,7 @@ const DappLinks = ({ page }) => {
               page === 'wrap' ? 'selected' : ''
             }`}
           >
-            {fbt('Wrap OETH', 'Wrap OETH')}
+            {fbt('Wrap', 'Wrap')}
           </a>
         </Link>
         <Link href={adjustLinkHref('/history')}>
@@ -53,7 +55,7 @@ const DappLinks = ({ page }) => {
         .dapp-navigation {
           font-family: Lato;
           font-size: 14px;
-          color: white;
+          color: #fafbfb;
           margin-left: 50px;
         }
 
@@ -95,6 +97,83 @@ const DappLinks = ({ page }) => {
   )
 }
 
+const TransactionActivityDropdown = () => {
+  const [open, setOpen] = useState(false)
+  return (
+    <>
+      <Dropdown
+        className="dropdown"
+        content={<TransactionActivity />}
+        open={open}
+        onClose={() => setOpen(false)}
+      >
+        <button
+          className="activity-toggle"
+          onClick={(e) => {
+            setOpen((prev) => !prev)
+          }}
+        >
+          <img
+            className="activity-icon"
+            src={assetRootPath('/images/activity.png')}
+            alt="Transaction activity button"
+          />
+        </button>
+      </Dropdown>
+      <style jsx>{`
+        .activity-toggle {
+          width: 44px;
+          height: 44px;
+          background: #1e1f25;
+          box-shadow: 0px 27px 80px rgba(0, 0, 0, 0.07),
+            0px 6.0308px 17.869px rgba(0, 0, 0, 0.0417275),
+            0px 1.79553px 5.32008px rgba(0, 0, 0, 0.0282725);
+          border-radius: 100px;
+          margin-left: 10px;
+          border: none;
+        }
+
+        .activity-icon {
+          width: 25px;
+          height: 25px;
+        }
+
+        .dropdown-menu {
+          right: 0;
+          left: auto;
+          top: 140%;
+          border-radius: 10px;
+          border: solid 1px #141519;
+          background-color: #1e1f25;
+          color: #fafbfb;
+          padding: 20px 30px 20px 20px;
+          min-width: 170px;
+        }
+
+        .dropdown-menu .dropdown-marble {
+          margin-right: 18px;
+        }
+        .dropdown-menu a:not(:last-child) > div {
+          margin-bottom: 10px;
+        }
+
+        .dropdown-menu a {
+          color: #183140;
+        }
+
+        .dropdown-menu a .active {
+          font-weight: bold;
+        }
+
+        .dropdown-menu a .active .dropdown-marble {
+          font-weight: bold;
+          background-color: #183140;
+        }
+      `}</style>
+    </>
+  )
+}
+
 const Nav = ({ isMobile, locale, onLocale, page }) => {
   const { pathname } = useRouter()
   const { active, account } = useWeb3React()
@@ -118,22 +197,22 @@ const Nav = ({ isMobile, locale, onLocale, page }) => {
               />
             </a>
           </Link>
-          <button
-            className="navbar-toggler d-lg-none ml-auto"
-            type="button"
-            data-toggle="collapse"
-            data-target=".primarySidePanel"
-            aria-controls="primarySidePanel"
-            aria-expanded="false"
-            aria-label="Toggle side panel"
-          >
-            <div className="dropdown-marble">
-              <img
-                src={assetRootPath('/images/bell-icon.svg')}
-                alt="Activity menu"
-              />
-            </div>
-          </button>
+          {/*<button*/}
+          {/*  className="navbar-toggler d-lg-none ml-auto"*/}
+          {/*  type="button"*/}
+          {/*  data-toggle="collapse"*/}
+          {/*  data-target=".primarySidePanel"*/}
+          {/*  aria-controls="primarySidePanel"*/}
+          {/*  aria-expanded="false"*/}
+          {/*  aria-label="Toggle side panel"*/}
+          {/*>*/}
+          {/*  <div className="dropdown-marble">*/}
+          {/*    <img*/}
+          {/*      src={assetRootPath('/images/bell-icon.svg')}*/}
+          {/*      alt="Activity menu"*/}
+          {/*    />*/}
+          {/*  </div>*/}
+          {/*</button>*/}
           <IPFSDappLink css="d-lg-none" />
           {<AccountStatusPopover />}
           {!active && !account && (
@@ -146,12 +225,12 @@ const Nav = ({ isMobile, locale, onLocale, page }) => {
               />
             </div>
           )}
-          <div
-            className="primarySidePanel dark-background collapse"
-            data-toggle="collapse"
-            data-target=".primarySidePanel"
-            aria-controls="primarySidePanel"
-          />
+          {/*<div*/}
+          {/*  className="primarySidePanel dark-background collapse"*/}
+          {/*  data-toggle="collapse"*/}
+          {/*  data-target=".primarySidePanel"*/}
+          {/*  aria-controls="primarySidePanel"*/}
+          {/*/>*/}
           <div
             className="navLinks dark-background collapse"
             data-toggle="collapse"
@@ -217,6 +296,9 @@ const Nav = ({ isMobile, locale, onLocale, page }) => {
               <div className={`d-flex flex-column flex-lg-row-reverse`}>
                 <AccountStatusDropdown />
               </div>
+              <div className="d-flex">
+                <TransactionActivityDropdown />
+              </div>
               <GetOUSD
                 style={{ marginTop: 40 }}
                 className="mt-auto d-lg-none"
@@ -276,7 +358,7 @@ const Nav = ({ isMobile, locale, onLocale, page }) => {
           z-index: 2;
         }
         .navbar a {
-          color: white;
+          color: #fafbfb;
           text-decoration: none;
         }
         .navbar a:hover {
@@ -413,7 +495,7 @@ const Nav = ({ isMobile, locale, onLocale, page }) => {
           }
 
           div.dropdown-marble {
-            border-color: white;
+            border-color: #fafbfb;
             height: 24px;
             width: 24px;
           }
@@ -461,7 +543,7 @@ const Nav = ({ isMobile, locale, onLocale, page }) => {
 
           .navbar .nav-link:hover,
           .navbar .active .nav-link {
-            border-bottom-color: white;
+            border-bottom-color: #fafbfb;
             opacity: 1;
           }
 

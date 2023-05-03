@@ -147,7 +147,7 @@ const Layout = ({
           font-size: 12px;
           height: auto;
           padding: 5px 20px;
-          background-color: white;
+          background-color: #fafbfb;
           color: black;
         }
 
@@ -161,12 +161,12 @@ const Layout = ({
           font-size: 18px;
           font-weight: bold;
           line-height: 1.75;
-          color: white;
+          color: #fafbfb;
         }
 
         .text {
           opacity: 0.8;
-          color: white;
+          color: #fafbfb;
           line-height: normal;
           font-size: 14px;
           max-width: 1000px;

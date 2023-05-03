@@ -79,7 +79,7 @@ const LedgerAccountContent = ({
           height: 55px;
           border-radius: 50px;
           border: solid 1px #1a82ff;
-          background-color: white;
+          background-color: #fafbfb;
           font-size: 16px;
           font-weight: bold;
           text-align: center;

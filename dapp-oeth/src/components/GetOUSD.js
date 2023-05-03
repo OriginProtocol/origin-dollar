@@ -87,7 +87,7 @@ const GetOUSD = ({
         }
 
         .btn-light {
-          background-color: white;
+          background-color: #fafbfb;
         }
 
         .btn-light2 {
@@ -97,7 +97,7 @@ const GetOUSD = ({
         }
 
         .btn-nav {
-          color: white;
+          color: #fafbfb;
           font-size: 0.8125rem;
           font-weight: normal;
           min-height: 0;
@@ -105,7 +105,7 @@ const GetOUSD = ({
         }
 
         .btn-nav:hover {
-          background-color: white;
+          background-color: #fafbfb;
           color: #183140;
           text-decoration: none;
           opacity: 1;
@@ -118,7 +118,7 @@ const GetOUSD = ({
 
           .nav-marble {
             width: auto;
-            color: white;
+            color: #fafbfb;
             font-size: 0.6875rem;
             min-width: auto;
             min-height: auto;

@@ -30,7 +30,7 @@ const AccountStatusContent = ({ className, onOpen }) => {
       <div
         className={`${
           className ? className + ' ' : ''
-        }account-status-content d-flex flex-column justify-content-center`}
+        } account-status-content d-flex flex-column justify-content-center`}
       >
         <div className="drop-container">
           <div className="d-flex align-items-center mb-3">
@@ -196,7 +196,7 @@ const AccountStatusContent = ({ className, onOpen }) => {
         .currency {
           font-family: Lato;
           font-size: 12px;
-          color: #8293a4;
+          color: #828699;
           margin-bottom: 5px;
           text-transform: uppercase;
         }
@@ -207,8 +207,8 @@ const AccountStatusContent = ({ className, onOpen }) => {
 
         .disconnect-box {
           border-radius: 0px 0px 10px 10px;
-          border: solid 1px #cdd7e0;
-          background-color: #fafbfc;
+          border: solid 1px #141519;
+          background-color: #1e1f25;
           margin: 0px -1px -1px -1px;
           padding: 20px;
         }

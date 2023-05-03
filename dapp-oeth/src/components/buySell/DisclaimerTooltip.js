@@ -69,7 +69,7 @@ const DisclaimerTooltip = ({
           width: 280px;
           border-radius: 10px;
           box-shadow: 0 0 34px 0 rgba(24, 49, 64, 0.2);
-          border: solid 1px #cdd7e0;
+          border: solid 1px #141519;
           background-color: #ffffff;
           font-size: 14px;
           line-height: 1.36;

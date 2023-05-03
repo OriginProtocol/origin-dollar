@@ -119,12 +119,12 @@ const OgnDropdown = ({}) => {
           background-color: #1a82ff;
           height: 30px;
           margin-right: 10px;
-          color: white;
+          color: #fafbfb;
         }
 
         .ogn-pill.open {
           color: #183140;
-          background-color: white;
+          background-color: #fafbfb;
         }
 
         .wrapper {
@@ -132,7 +132,7 @@ const OgnDropdown = ({}) => {
           min-width: 360px;
           width: 360px;
           background-color: #1a82ff;
-          color: white;
+          color: #fafbfb;
           border: 0;
           padding: 0px;
           border-radius: 10px;
@@ -156,7 +156,7 @@ const OgnDropdown = ({}) => {
 
         .balance-holder h1 {
           font-size: 46px;
-          color: white;
+          color: #fafbfb;
           margin-bottom: 24px;
         }
 
@@ -205,7 +205,7 @@ const OgnDropdown = ({}) => {
         }
 
         .btn-blue {
-          color: white;
+          color: #fafbfb;
           font-size: 12px;
           height: 30px;
           width: 100%;

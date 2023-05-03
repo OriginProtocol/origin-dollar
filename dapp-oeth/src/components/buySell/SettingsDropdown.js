@@ -18,12 +18,12 @@ const SettingsDropdown = ({ setPriceToleranceValue, priceToleranceValue }) => {
   }, [priceToleranceValue])
 
   return (
-    <div className="dropdown-holder">
+    <>
       <Dropdown
         className="d-flex align-items-center min-h-42"
         content={
           <div className="d-flex flex-column dropdown-menu show">
-            <div className="d-flex justify-content-between align-items-center">
+            <div className="d-flex flex-column">
               <div className="setting-title">
                 {fbt('Price tolerance', 'price tolerance setting')}
               </div>
@@ -31,7 +31,6 @@ const SettingsDropdown = ({ setPriceToleranceValue, priceToleranceValue }) => {
                 <div className="w-50 d-flex align-items-center">
                   <input
                     value={priceToleranceValue}
-                    className="tolerance h-100"
                     onChange={(e) => {
                       e.preventDefault()
                       let value = 0
@@ -44,7 +43,7 @@ const SettingsDropdown = ({ setPriceToleranceValue, priceToleranceValue }) => {
                       }
                     }}
                   />
-                  <div>%</div>
+                  <span className="ml-1">%</span>
                 </div>
                 <button
                   className="w-50 d-flex align-items-center justify-content-center auto"
@@ -60,35 +59,30 @@ const SettingsDropdown = ({ setPriceToleranceValue, priceToleranceValue }) => {
             <div className={`warning ${showWarning ? '' : 'hide'}`}>
               Your transaction may be frontrun
             </div>
-            <div className="d-flex justify-content-between align-items-center margin-top">
+            <div className="d-flex flex-column margin-top">
               <div className="setting-title">
                 {fbt('Gas price', 'Gas price setting')}
               </div>
               <div className="d-flex setting-holder">
-                <div className="w-50">
-                  <input
-                    type="number"
-                    value={Math.floor(gasPrice / Math.pow(10, 9))}
-                    className="w-100 h-100"
-                    onChange={(e) => {
-                      let value = e.target.value
-                      // ensure positive integers
-                      if (value < 0) {
-                        value = 0
-                      }
-                      value = Math.floor(value)
-                      value *= Math.pow(10, 9)
+                <input
+                  type="number"
+                  value={Math.floor(gasPrice / Math.pow(10, 9))}
+                  onChange={(e) => {
+                    let value = e.target.value
+                    // ensure positive integers
+                    if (value < 0) {
+                      value = 0
+                    }
+                    value = Math.floor(value)
+                    value *= Math.pow(10, 9)
 
-                      ContractStore.update((s) => {
-                        s.gasPrice = BigNumber.from(value)
-                        s.isGasPriceUserOverriden = true
-                      })
-                    }}
-                  />
-                </div>
-                <div className="w-50 d-flex align-items-center justify-content-center gwei">
-                  GWEI
-                </div>
+                    ContractStore.update((s) => {
+                      s.gasPrice = BigNumber.from(value)
+                      s.isGasPriceUserOverriden = true
+                    })
+                  }}
+                />
+                <span className="gwei ml-1">GWEI</span>
               </div>
             </div>
           </div>
@@ -114,56 +108,55 @@ const SettingsDropdown = ({ setPriceToleranceValue, priceToleranceValue }) => {
 
         .dropdown-menu {
           top: 115%;
-          left: 0;
-          right: auto;
+          right: 0;
           min-width: 290px;
           padding: 18px 18px 18px 20px;
+
+          border: solid 1px #141519;
+          background-color: #1e1f25;
+          color: #fafbfb;
         }
 
         .settings-icon {
-          width: 18px;
-          height: 18px;
+          width: 22px;
+          height: 22px;
           cursor: pointer;
         }
 
         .setting-title {
           font-size: 14px;
           font-weight: bold;
-          color: #8293a4;
+          color: #828699;
+          margin-bottom: 6px;
         }
 
         .margin-top {
           margin-top: 15px;
         }
 
-        .tolerance {
-          width: 70%;
-        }
-
         .setting-holder {
-          max-width: 120px;
-          min-width: 120px;
+          display: flex;
+          align-items: center;
           max-height: 40px;
           min-height: 40px;
-          border-radius: 5px;
-          border: solid 1px #cdd7e0;
-          background-color: #f2f3f5;
         }
 
         input {
-          max-width: 60px;
-          border: 0px;
+          max-width: 80px;
           font-size: 14px;
           font-weight: normal;
-          color: black;
-          text-align: center;
-          border-radius: 5px 0 0 5px;
-          background-color: #f2f3f5;
+          color: #828699;
+          text-align: right;
+          background-color: transparent;
+          border: 1px solid #0074f0;
+          border-radius: 80px;
+          height: 40px;
+          padding: 0 12px;
         }
 
         .warning {
           font-size: 14px;
-          color: #ff8000;
+          color: #ffdc86;
           margin-top: 10px;
         }
 
@@ -173,36 +166,31 @@ const SettingsDropdown = ({ setPriceToleranceValue, priceToleranceValue }) => {
 
         .gwei {
           font-size: 14px;
-          color: #8293a4;
-          background-color: white;
-          border-radius: 0 5px 5px 0;
-          border-left: solid 1px #cdd7e0;
+          color: #fafbfb;
         }
 
         button.auto {
           font-size: 14px;
-          color: white;
-          background-color: #1a82ff;
-          border-radius: 0 5px 5px 0;
-          border: 0;
-          border-left: solid 1px #cdd7e0;
+          color: #fafbfb;
+          background: linear-gradient(90deg, #8c66fc -28.99%, #0274f1 144.97%);
+          border-radius: 80px;
+          margin-left: 30px;
+          border: none;
+          padding: 0 3px;
+          height: 42px;
         }
 
         @media (max-width: 799px) {
-          .dropdown-holder {
-            top: 7px;
-            right: 7px;
-          }
-
           .dropdown-menu {
             top: 115%;
             right: 0;
             left: auto;
             padding: 12px 12px 12px 14px;
+            border: solid 1px #141519;
           }
         }
       `}</style>
-    </div>
+    </>
   )
 }
 

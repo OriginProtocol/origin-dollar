@@ -4,7 +4,7 @@ import Nav from 'components/Nav'
 
 import BalanceHeader from 'components/buySell/BalanceHeader'
 import MissionControl from 'components/MissionControl'
-import PrimarySidePanel from 'components/sidePanel/PrimarySidePanel'
+import PrimarySidePanel from 'components/TransactionActivity/PrimarySidePanel'
 
 export default function DApp({ locale, onLocale }) {
   return (

@@ -163,7 +163,7 @@ const ClaimStakeModal = ({
         .modal-content .modal-header {
           padding: 25px 0px;
           position: relative;
-          border-bottom: 1px solid #cdd7e0;
+          border-bottom: 1px solid #141519;
           margin: 0px 25px;
         }
 
@@ -195,7 +195,7 @@ const ClaimStakeModal = ({
           margin: 0px; 
           font-family: Lato; 
           font-size: 16px; 
-          color: #8293a4;
+          color: #828699;
         }
 
         .modal-body .staking-options {
@@ -237,8 +237,8 @@ const ClaimStakeModal = ({
         .modal-content .modal-footer {
           margin-top: 10px;
           padding: 25px;
-          background-color: #fafbfc;
-          border-top: 1px solid #cdd7e0;
+          background-color: #1E1F25;
+          border-top: 1px solid #141519;
         }
 
         .modal-content .modal-footer .btn {

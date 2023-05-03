@@ -211,7 +211,7 @@ const BalanceHeader = ({
             }
 
             .value {
-              color: white;
+              color: #fafbfb;
               font-size: 20px;
               width: 45%;
               text-align: left;
@@ -314,7 +314,7 @@ const BalanceHeader = ({
             }
 
             .value {
-              color: white;
+              color: #fafbfb;
               font-size: 20px;
               width: 45%;
               text-align: left;
@@ -440,21 +440,21 @@ const BalanceHeader = ({
         .balance-header .light-grey-label {
           font-size: 14px;
           font-weight: bold;
-          color: #8293a4;
+          color: #828699;
         }
 
         .balance-header .detail {
           font-size: 12px;
-          color: #8293a4;
+          color: #828699;
         }
 
         .balance-header a:hover {
-          color: white;
+          color: #fafbfb;
         }
 
         .balance-header .ousd-value {
           font-size: 14px;
-          color: white;
+          color: #fafbfb;
           text-align: left;
           text-overflow: ellipsis;
           transition: font-size 0.2s cubic-bezier(0.5, -0.5, 0.5, 1.5),
@@ -490,7 +490,7 @@ const BalanceHeader = ({
 
         .balance-header .expected-increase {
           font-size: 12px;
-          color: #8293a4;
+          color: #828699;
         }
 
         .balance-header .expected-increase p {
@@ -514,7 +514,7 @@ const BalanceHeader = ({
           min-width: 210px;
           min-height: 118px;
           border-radius: 10px;
-          color: white;
+          color: #fafbfb;
           background-color: #1e1f25;
         }
 
@@ -577,7 +577,7 @@ const BalanceHeader = ({
           }
 
           .balance-header .ousd-value .grey {
-            color: #8293a4;
+            color: #828699;
           }
 
           .balance-header .ousd-value-holder {
@@ -589,7 +589,7 @@ const BalanceHeader = ({
             font-size: 11px;
             font-weight: bold;
             text-align: center;
-            color: #8293a4;
+            color: #828699;
           }
 
           .balance-header .apy-container .apy-percentage {
@@ -605,7 +605,7 @@ const BalanceHeader = ({
             font-family: Lato;
             font-size: 11px;
             font-weight: bold;
-            color: #8293a4;
+            color: #828699;
             margin-bottom: -2px;
           }
 

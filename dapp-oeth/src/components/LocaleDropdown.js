@@ -71,7 +71,7 @@ const LocaleDropdown = ({
       </Dropdown>
       <style jsx>{`
         .dropdown-marble.footer {
-          border-color: #8293a4;
+          border-color: #828699;
         }
 
         .dropdown-marble.footer:hover {
@@ -80,7 +80,7 @@ const LocaleDropdown = ({
         }
 
         .dropdown-marble.footer.open {
-          background-color: #8293a4;
+          background-color: #828699;
         }
 
         .dropdown-marble.footer.open:hover {

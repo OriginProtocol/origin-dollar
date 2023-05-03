@@ -3,7 +3,7 @@ import Layout from 'components/layout'
 import Nav from 'components/Nav'
 
 import BalanceHeaderWrapped from 'components/wrap/BalanceHeaderWrapped'
-import WrappedSidePanel from 'components/sidePanel/WrappedSidePanel'
+import WrappedSidePanel from 'components/transactionActivity/WrappedSidePanel'
 import WrapHomepage from 'components/wrap/WrapHomepage'
 
 export default function Wrap({ locale, onLocale }) {
@@ -14,10 +14,11 @@ export default function Wrap({ locale, onLocale }) {
         <div className="home d-flex flex-column">
           <BalanceHeaderWrapped />
           <div className="d-flex">
-            <div className="content-holder flex-grow d-flex flex-column shadow-div">
-              <WrapHomepage />
-            </div>
-            <WrappedSidePanel />
+            <WrapHomepage />
+            {/*<div className="content-holder flex-grow d-flex flex-column shadow-div">*/}
+            {/*  */}
+            {/*</div>*/}
+            {/*<WrappedSidePanel />*/}
           </div>
         </div>
       </Layout>
@@ -34,7 +35,6 @@ export default function Wrap({ locale, onLocale }) {
         }
 
         .shadow-div {
-          box-shadow: 0 0 14px 0 rgba(24, 49, 64, 0.1);
         }
 
         .empty-placeholder {

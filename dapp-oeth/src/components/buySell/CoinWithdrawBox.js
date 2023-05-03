@@ -100,7 +100,7 @@ const CoinWithdrawBox = ({
         .exchange-rate {
           font-size: 9px;
           text-align: center;
-          color: #8293a4;
+          color: #828699;
         }
 
         .currency-image {

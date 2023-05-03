@@ -5,7 +5,7 @@ import { assetRootPath } from 'utils/image'
 
 const SidePanelInsuranceMessage = () => {
   const [show, setShow] = useState(true)
-  const localStorageKey = 'HideSidePanelInsuranceMessage'
+  const localStorageKey = 'HideSidePanelWrapMessage'
 
   useEffect(() => {
     setShow(!(localStorage.getItem(localStorageKey) === 'true'))
@@ -27,20 +27,20 @@ const SidePanelInsuranceMessage = () => {
             ×
           </a>
           <img
-            className="insurance-icon"
-            src={assetRootPath('/images/ousd-shield-icon.svg')}
+            className="wousd-icon"
+            src={assetRootPath('/images/currency/wousd-icon-small.svg')}
           />
           <div>
             {fbt(
-              'Get optional smart contract insurance for your OUSD',
-              'Get optional smart contract insurance for your OUSD'
+              'Wrapped OUSD is a non-rebasing tokenized vault that appreciates in value instead of growing in number',
+              'Wrapped OUSD is a non-rebasing tokenized vault that appreciates in value instead of growing in number'
             )}
           </div>
-          <Link href="https://docs.ousd.com/security-and-risks/insurance">
+          <Link href="https://docs.ousd.com/core-concepts/wrapped-ousd">
             <a
               target="_blank"
               rel="noopener noreferrer"
-              className="btn btn-primary btn-insurance"
+              className="btn btn-primary btn-wousd"
             >
               {fbt('Learn more', 'Learn more')}
             </a>
@@ -53,7 +53,7 @@ const SidePanelInsuranceMessage = () => {
           width: 100%;
           border-radius: 5px;
           background-color: #183140;
-          padding: 120px 25px 24px 25px;
+          padding: 95px 27px 24px 27px;
           margin-bottom: 10px;
           background-size: contain;
           font-family: Lato;
@@ -61,17 +61,27 @@ const SidePanelInsuranceMessage = () => {
           font-weight: bold;
           letter-spacing: normal;
           text-align: center;
-          color: white;
+          color: #fafbfb;
+          background-image: radial-gradient(
+              circle at 50% 19%,
+              rgba(255, 255, 255, 0.2),
+              rgba(26, 130, 240, 0) 25%
+            ),
+            radial-gradient(
+              circle at 42% 27.5%,
+              rgba(26, 130, 250, 0.7),
+              rgba(26, 130, 240, 0) 12%
+            );
         }
 
-        .insurance-icon {
+        .wousd-icon {
           position: absolute;
-          height: 185px;
-          top: 0;
+          height: 65px;
+          top: 15px;
           z-index: 1;
         }
 
-        .btn-insurance {
+        .btn-wousd {
           border-radius: 24px;
           padding: 4px 15px 5px 15px;
           font-family: Lato;
@@ -87,7 +97,7 @@ const SidePanelInsuranceMessage = () => {
           top: -10px;
           opacity: 1;
           font-size: 20px;
-          color: white;
+          color: #fafbfb;
           transition: opacity 0.7s ease-out 0.5s;
           padding: 10px;
           cursor: pointer;

@@ -24,7 +24,7 @@ export default function PoolsList({ title, pools, titleStyle }) {
         }
 
         .title.white {
-          color: white;
+          color: #fafbfb;
         }
 
         @media (max-width: 992px) {

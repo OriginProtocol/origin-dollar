@@ -50,12 +50,12 @@ export default function PoolNameAndIcon({
         }
 
         .name.isPoolDetails {
-          color: white;
+          color: #fafbfb;
         }
 
         .name.smallText {
           font-size: 14px;
-          color: #8293a4;
+          color: #828699;
         }
 
         @media (max-width: 992px) {

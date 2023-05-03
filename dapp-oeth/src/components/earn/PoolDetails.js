@@ -157,7 +157,7 @@ export default function PoolDetails({ pool }) {
           position: relative;
           height: 108px;
           border-radius: 10px;
-          border: solid 1px #cdd7e0;
+          border: solid 1px #141519;
           padding: 30px 24px;
           margin: 0px 1%;
           flex: 0 0 32%;
@@ -167,7 +167,7 @@ export default function PoolDetails({ pool }) {
         .pill .header {
           font-size: 14px;
           font-weight: bold;
-          color: #8293a4;
+          color: #828699;
           margin-bottom: 8px;
         }
 
@@ -191,7 +191,7 @@ export default function PoolDetails({ pool }) {
         .pool-header {
           font-size: 18px;
           font-weight: bold;
-          color: #8293a4;
+          color: #828699;
           margin-bottom: 17px;
         }
 
@@ -204,8 +204,8 @@ export default function PoolDetails({ pool }) {
           min-height: 358px;
           padding: 65px;
           border-radius: 10px;
-          border: solid 1px #cdd7e0;
-          background-color: white;
+          border: solid 1px #141519;
+          background-color: #fafbfb;
         }
 
         .header-disconnect {
@@ -219,12 +219,12 @@ export default function PoolDetails({ pool }) {
           position: absolute;
           font-size: 14px;
           top: -30px;
-          color: #8293a4;
+          color: #828699;
           cursor: pointer;
         }
 
         .breadcrum:hover {
-          border-bottom: 1px solid #8293a4;
+          border-bottom: 1px solid #828699;
         }
 
         @media (max-width: 992px) {

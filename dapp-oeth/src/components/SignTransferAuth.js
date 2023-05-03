@@ -103,7 +103,6 @@ const SignTransferAuth = ({}) => {
         }
 
         .shadow-div {
-          box-shadow: 0 0 14px 0 rgba(24, 49, 64, 0.1);
         }
 
         .empty-placeholder {
@@ -111,8 +110,8 @@ const SignTransferAuth = ({}) => {
           height: 100%;
           padding: 70px;
           border-radius: 0 0 10px 10px;
-          border-top: solid 1px #cdd7e0;
-          background-color: #fafbfc;
+          border-top: solid 1px #141519;
+          background-color: #1e1f25;
         }
 
         .header-text {
@@ -128,7 +127,7 @@ const SignTransferAuth = ({}) => {
           font-size: 14px;
           line-height: 1.36;
           text-align: center;
-          color: #8293a4;
+          color: #828699;
           margin-bottom: 50px;
         }
 

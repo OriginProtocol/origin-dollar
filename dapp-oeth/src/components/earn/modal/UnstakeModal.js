@@ -139,7 +139,7 @@ const UnstakeModal = ({ pool, onClose, onUserConfirmedStakeTx, onError }) => {
 
         .grey-text {
           font-size: 14px;
-          color: #8293a4;
+          color: #828699;
         }
 
         @media (max-width: 799px) {

@@ -549,7 +549,7 @@ const StakeUI = ({ rpcProvider, isMobile }) => {
           font-family: Lato;
           font-size: 14px;
           font-weight: bold;
-          color: white;
+          color: #fafbfb;
         }
 
         .previous-lockups .title {
@@ -557,7 +557,7 @@ const StakeUI = ({ rpcProvider, isMobile }) => {
         }
 
         .title.grey {
-          color: #8293a4;
+          color: #828699;
         }
 
         .title.dark {
@@ -577,7 +577,7 @@ const StakeUI = ({ rpcProvider, isMobile }) => {
           width: 100%;
           height: 80px;
           border-radius: 10px;
-          border: solid 1px #cdd7e0;
+          border: solid 1px #141519;
           background-color: #f2f3f5;
         }
 
@@ -620,7 +620,7 @@ const StakeUI = ({ rpcProvider, isMobile }) => {
         .coin-name {
           margin-left: 10px;
           font-size: 14px;
-          color: #8293a4;
+          color: #828699;
         }
 
         .stake-options div:first-child {
@@ -660,13 +660,13 @@ const StakeUI = ({ rpcProvider, isMobile }) => {
           text-align: right;
           padding: 10px;
           cursor: pointer;
-          color: #8293a4;
+          color: #828699;
           background-color: transparent;
         }
 
         .loading-text {
           font-size: 35px;
-          color: white;
+          color: #fafbfb;
           margin-top: 30px;
           margin-bottom: 30px;
         }
@@ -677,7 +677,7 @@ const StakeUI = ({ rpcProvider, isMobile }) => {
           margin-top: 50px;
           padding: 0;
           border-radius: 10px;
-          color: white;
+          color: #fafbfb;
           box-shadow: 0 2px 14px 0 rgba(0, 0, 0, 0.1);
           background-image: linear-gradient(102deg, #1a82ff, #0268e2 100%);
         }
@@ -765,8 +765,8 @@ const StakeUI = ({ rpcProvider, isMobile }) => {
           height: 100%;
           padding: 70px;
           border-radius: 10px;
-          border-top: solid 1px #cdd7e0;
-          background-color: #fafbfc;
+          border-top: solid 1px #141519;
+          background-color: #1e1f25;
         }
 
         .header-text {
@@ -782,7 +782,7 @@ const StakeUI = ({ rpcProvider, isMobile }) => {
           font-size: 14px;
           line-height: 1.36;
           text-align: center;
-          color: #8293a4;
+          color: #828699;
           margin-bottom: 50px;
         }
 

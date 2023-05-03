@@ -51,24 +51,24 @@ main.dapp {
     left bottom,
     color-stop(451px, #101113),
     color-stop(451px, #101113),
-    color-stop(451px, #fafbfc)
+    color-stop(451px, #141519)
   ); /* Chrome, Safari4+ */
   background-image: -webkit-linear-gradient(
     top,
     #101113 451px,
     #101113 451px,
-    #fafbfc 451px
+    #141519 451px
   ); /* Chrome10+, Safari5.1+ */
   background-image: -moz-linear-gradient(
     top,
     #101113 451px,
     #101113 451px,
-    #fafbfc 451px
+    #141519 451px
   ); /* Fx3.6+ */
   background-image: linear-gradient(
     #101113 451px,
     #101113 451px,
-    #fafbfc 451px
+    #141519 451px
   ); /* W3C */
   padding-bottom: 150px;
 }
@@ -80,24 +80,24 @@ main.dapp.medium {
     left bottom,
     color-stop(300px, #101113),
     color-stop(300px, #101113),
-    color-stop(300px, #fafbfc)
+    color-stop(300px, #141519)
   ); /* Chrome, Safari4+ */
   background-image: -webkit-linear-gradient(
     top,
     #101113 300px,
     #101113 300px,
-    #fafbfc 300px
+    #141519 300px
   ); /* Chrome10+, Safari5.1+ */
   background-image: -moz-linear-gradient(
     top,
     #101113 300px,
     #101113 300px,
-    #fafbfc 300px
+    #141519 300px
   ); /* Fx3.6+ */
   background-image: linear-gradient(
     #101113 300px,
     #101113 300px,
-    #fafbfc 300px
+    #141519 300px
   ); /* W3C */
 }
 
@@ -108,24 +108,24 @@ main.dapp.short {
     left bottom,
     color-stop(94px, #101113),
     color-stop(94px, #101113),
-    color-stop(94px, #fafbfc)
+    color-stop(94px, #141519)
   ); /* Chrome, Safari4+ */
   background-image: -webkit-linear-gradient(
     top,
     #101113 94px,
     #101113 94px,
-    #fafbfc 94px
+    #141519 94px
   ); /* Chrome10+, Safari5.1+ */
   background-image: -moz-linear-gradient(
     top,
     #101113 94px,
     #101113 94px,
-    #fafbfc 94px
+    #141519 94px
   ); /* Fx3.6+ */
   background-image: linear-gradient(
     #101113 94px,
     #101113 94px,
-    #fafbfc 94px
+    #141519 94px
   ); /* W3C */
   padding-bottom: 132px;
 }
@@ -137,24 +137,24 @@ main.dapp.shorter {
     left bottom,
     color-stop(282px, #101113),
     color-stop(282px, #101113),
-    color-stop(282px, #fafbfc)
+    color-stop(282px, #141519)
   ); /* Chrome, Safari4+ */
   background-image: -webkit-linear-gradient(
     top,
     #101113 282px,
     #101113 282px,
-    #fafbfc 282px
+    #141519 282px
   ); /* Chrome10+, Safari5.1+ */
   background-image: -moz-linear-gradient(
     top,
     #101113 282px,
     #101113 282px,
-    #fafbfc 282px
+    #141519 282px
   ); /* Fx3.6+ */
   background-image: linear-gradient(
     #101113 282px,
     #101113 282px,
-    #fafbfc 282px
+    #141519 282px
   ); /* W3C */
   padding-bottom: 132px;
 }
@@ -286,9 +286,6 @@ section.dim {
 
 .btn-blue {
   padding: 0px 60px;
-  height: 50px;
-  border-radius: 25px;
-  background-color: #1a82ff;
   font-size: 18px;
   font-weight: bold;
   text-align: center;
@@ -297,6 +294,13 @@ section.dim {
   justify-content: center;
   align-items: center;
   border: 0px;
+  height: 72px;
+  background: linear-gradient(90deg, #8c66fc -28.99%, #0274f1 144.97%);
+  box-shadow: 0px 27px 80px rgba(0, 0, 0, 0.07),
+    0px 6.0308px 17.869px rgba(0, 0, 0, 0.0417275),
+    0px 1.79553px 5.32008px rgba(0, 0, 0, 0.0282725);
+  border-radius: 8px;
+  opacity: 0.9;
 }
 
 .btn-blue:disabled {
@@ -304,7 +308,7 @@ section.dim {
 }
 
 .btn-blue:hover {
-  background-color: #0a72ef;
+  opacity: 1;
 }
 
 .btn-dark {
@@ -442,24 +446,24 @@ section.dim {
       left bottom,
       color-stop(439px, #101113),
       color-stop(439px, #101113),
-      color-stop(439px, #fafbfc)
+      color-stop(439px, #141519)
     ); /* Chrome, Safari4+ */
     background-image: -webkit-linear-gradient(
       top,
       #101113 439px,
       #101113 439px,
-      #fafbfc 439px
+      #141519 439px
     ); /* Chrome10+, Safari5.1+ */
     background-image: -moz-linear-gradient(
       top,
       #101113 439px,
       #101113 439px,
-      #fafbfc 439px
+      #141519 439px
     ); /* Fx3.6+ */
     background-image: linear-gradient(
       #101113 439px,
       #101113 439px,
-      #fafbfc 439px
+      #141519 439px
     ); /* W3C */
     padding-bottom: 132px;
   }

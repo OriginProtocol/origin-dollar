@@ -70,12 +70,12 @@ const CoinSelect = ({ selected }) => {
         .coin-select {
           min-width: 160px;
           min-height: 40px;
-          padding: 7px 20px 7px 7px;
+          padding: 8px;
           font-size: 18px;
         }
 
         .coin {
-          color: black;
+          color: #fafbfb;
           margin-left: 12px;
         }
       `}</style>
@@ -290,9 +290,9 @@ const WrapOETHPill = ({
           min-height: 90px;
           margin-bottom: 10px;
           padding: 10px 23px 14px 10px;
-          border: solid 1px #cdd7e0;
+          border: solid 1px #141519;
           border-radius: 10px;
-          background-color: white;
+          background-color: #fafbfb;
         }
 
         .currency-pill-inner {
@@ -301,7 +301,7 @@ const WrapOETHPill = ({
 
         .balance {
           font-size: 12px;
-          color: #8293a4;
+          color: #828699;
           margin-left: 4px;
         }
 
@@ -329,7 +329,7 @@ const WrapOETHPill = ({
 
         .expected-value {
           font-size: 24px;
-          color: #8293a4;
+          color: #828699;
         }
 
         .ml-5px {
@@ -347,7 +347,7 @@ const WrapOETHPill = ({
 
         .max-link {
           font-size: 12px;
-          color: #8293a4;
+          color: #828699;
           weight: bold;
           cursor: pointer;
         }

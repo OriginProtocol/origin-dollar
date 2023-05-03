@@ -27,8 +27,8 @@ export default function SummaryHeaderStat({
           min-height: 50px;
           padding: 10px 30px;
           border-radius: 5px;
-          border: solid 1px #8293a4;
-          color: white;
+          border: solid 1px #828699;
+          color: #fafbfb;
         }
 
         .title {

@@ -36,7 +36,7 @@ export default function IPFSDappLink({ css }) {
           border-radius: 15px;
           border: solid 1px white;
           margin-right: 10px;
-          color: white;
+          color: #fafbfb;
           padding: 0px 10px;
         }
 

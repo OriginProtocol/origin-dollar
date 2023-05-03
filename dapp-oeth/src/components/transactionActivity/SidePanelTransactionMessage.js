@@ -4,7 +4,7 @@ import { getEtherscanHost } from 'utils/web3'
 import { useWeb3React } from '@web3-react/core'
 import { useStoreState } from 'pullstate'
 
-import CoinCircleGraphics from 'components/sidePanel/CoinCircleGraphics'
+import CoinCircleGraphics from 'components/TransactionActivity/CoinCircleGraphics'
 import TransactionStore from 'stores/TransactionStore'
 import { formatCurrency, formatCurrencyConditional } from 'utils/math'
 import { assetRootPath } from 'utils/image'
@@ -77,6 +77,7 @@ const SidePanelTransactionMessage = ({
     transaction.data.frxeth !== undefined &&
     transaction.data.steth !== undefined &&
     transaction.data.weth !== undefined
+
   const redeemDataAvailable = isRedeemTransaction && coinDataPresent
   const mintDataAvailable = isMintTransaction && coinDataPresent
 
@@ -212,7 +213,6 @@ const SidePanelTransactionMessage = ({
                 </div>
               </>
             )}
-
             {showContents && isApproveTransaction && (
               <>
                 <CoinCircleGraphics
@@ -759,10 +759,8 @@ const SidePanelTransactionMessage = ({
       <style jsx>{`
         .side-panel-message {
           width: 100%;
-          border-radius: 5px;
-          border: solid 1px #cdd7e0;
-          background-color: #ffffff;
-          margin-bottom: 10px;
+          border-bottom: solid 1px #141519;
+          background-color: #1e1f25;
         }
 
         .main-contents {
@@ -772,7 +770,7 @@ const SidePanelTransactionMessage = ({
 
         .small-arrow {
           position: relative;
-          background-color: white;
+          background-color: #fafbfb;
           width: 16px;
           height: 16px;
           border-radius: 8px;
@@ -870,7 +868,7 @@ const SidePanelTransactionMessage = ({
           top: -10px;
           opacity: 1;
           font-size: 20px;
-          color: #8293a4;
+          color: #828699;
           transition: opacity 0.7s ease-out 0.5s;
           padding: 10px;
           cursor: pointer;
@@ -912,7 +910,7 @@ const SidePanelTransactionMessage = ({
           font-size: 14px;
           font-weight: normal;
           text-align: center;
-          color: #183140;
+          color: #fafbfb;
           max-width: 150px;
           line-height: 1.2;
         }
@@ -920,7 +918,7 @@ const SidePanelTransactionMessage = ({
         .line {
           width: 65px;
           height: 1px;
-          background-color: #b5bfc8;
+          background-color: #141519;
           margin-bottom: 14px;
           opacity: 1;
           transition: opacity 0.3s ease-out 0.4s;

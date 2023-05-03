@@ -91,7 +91,7 @@ const CurrentStakeLockup = ({ stake, onDetailsClick, isMobile }) => {
           width: 100%;
           margin-bottom: 20px;
           background-color: #1a82ff;
-          color: white;
+          color: #FAFBFB;
           cursor: pointer;
         }
 
@@ -113,7 +113,7 @@ const CurrentStakeLockup = ({ stake, onDetailsClick, isMobile }) => {
           height: 80px;
           padding-left: 160px;
           font-size: 20px;
-          color: white;
+          color: #FAFBFB;
         }
 
         .bottom .smaller {
@@ -135,14 +135,14 @@ const CurrentStakeLockup = ({ stake, onDetailsClick, isMobile }) => {
           height: 40px;
           font-family: material;
           font-size: 22px;
-          color: white;
+          color: #FAFBFB;
           border: 1px solid white;
           border-radius: 25px;
           background-color: transparent;
         }
 
         .arrow-link:hover {
-          background-color: white;
+          background-color: #FAFBFB;
         }
 
         .caret-left.hover {
@@ -186,7 +186,7 @@ const CurrentStakeLockup = ({ stake, onDetailsClick, isMobile }) => {
         .status-label {
           padding: 4px 13px;
           border-radius: 5px;
-          background-color: white;
+          background-color: #FAFBFB;
           font-size: 12px;
           font-weight: bold;
           text-align: center;

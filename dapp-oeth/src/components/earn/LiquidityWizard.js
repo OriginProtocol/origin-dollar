@@ -211,16 +211,16 @@ export default function LiquidityWizard({ pool, onHideWizzard }) {
         .steps-holder {
           width: 320px;
           min-height: 100%;
-          background-color: white;
+          background-color: #fafbfb;
           border-radius: 10px 0px 0px 10px;
-          border: solid 1px #cdd7e0;
+          border: solid 1px #141519;
           padding: 30px;
         }
 
         .graphic-holder {
           min-height: 100%;
           border-radius: 0px 10px 10px 0px;
-          border: solid 1px #cdd7e0;
+          border: solid 1px #141519;
           border-left: 0px;
           padding: 0xp 49px 30px 49px;
         }
@@ -245,7 +245,7 @@ export default function LiquidityWizard({ pool, onHideWizzard }) {
         }
 
         .steps .step-number {
-          color: white;
+          color: #fafbfb;
           margin-right: 11px;
           font-weight: normal;
           border-radius: 15px;
@@ -343,7 +343,7 @@ export default function LiquidityWizard({ pool, onHideWizzard }) {
         .big-title {
           font-size: 28px;
           text-align: center;
-          color: white;
+          color: #fafbfb;
           max-width: 390px;
           line-height: 1.2;
           margin-bottom: 40px;
@@ -358,7 +358,7 @@ export default function LiquidityWizard({ pool, onHideWizzard }) {
           opacity: 0.8;
           font-size: 18px;
           text-align: center;
-          color: white;
+          color: #fafbfb;
           margin-bottom: 3px;
           max-width: 490px;
           line-height: 1.2;
@@ -379,14 +379,14 @@ export default function LiquidityWizard({ pool, onHideWizzard }) {
 
         .btn-blue.dark:hover {
           background-color: #001120;
-          color: #8293a4;
+          color: #828699;
         }
 
         .link {
           margin-bottom: 35px;
           font-size: 14px;
           text-align: center;
-          color: white;
+          color: #fafbfb;
           opacity: 0.8;
         }
 

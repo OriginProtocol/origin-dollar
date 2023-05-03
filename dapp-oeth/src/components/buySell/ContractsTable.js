@@ -60,6 +60,9 @@ const Info = ({ contract }) => {
           right: auto;
           min-width: 230px;
           padding: 18px 18px 18px 20px;
+          background-color: #1e1f25;
+          color: #fafbfb;
+          border-color: #141519;
         }
 
         .dropdown-menu.short {
@@ -264,26 +267,26 @@ const ContractsTable = () => {
         />
       )}
       <div className="d-flex flex-column">
-        <div className="contracts-table-top">
-          <div className="title">
-            {empty &&
-              fbt(
-                'Best price will be displayed here',
-                'Best price displayed transaction table'
-              )}
-            {loading &&
-              fbt(
-                'Finding you the best price...',
-                'Finding the best price for your transaction'
-              )}
-            {!empty &&
-              !loading &&
-              fbt(
-                'Best price for your transaction',
-                'Contracts table best price for transaction'
-              )}
-          </div>
-        </div>
+        {/*<div className="contracts-table-top">*/}
+        {/*  <div className="title">*/}
+        {/*    {empty &&*/}
+        {/*      fbt(*/}
+        {/*        'Best price will be displayed here',*/}
+        {/*        'Best price displayed transaction table'*/}
+        {/*      )}*/}
+        {/*    {loading &&*/}
+        {/*      fbt(*/}
+        {/*        'Finding you the best price...',*/}
+        {/*        'Finding the best price for your transaction'*/}
+        {/*      )}*/}
+        {/*    {!empty &&*/}
+        {/*      !loading &&*/}
+        {/*      fbt(*/}
+        {/*        'Best price for your transaction',*/}
+        {/*        'Contracts table best price for transaction'*/}
+        {/*      )}*/}
+        {/*  </div>*/}
+        {/*</div>*/}
         {/* <div className="subtitle"> */}
         {/*   {selectedEstimation && */}
         {/*     fbt( */}
@@ -425,44 +428,44 @@ const ContractsTable = () => {
             </div>
           )
         })}
-        <a
-          className="show-more-less text-center"
-          onClick={() => {
-            setShowAllContracts(!showAllContracts)
-            ContractStore.update((s) => {
-              s.showAllContracts = !showAllContracts
-            })
-          }}
-        >
-          {showAllContracts
-            ? fbt('Show less', 'Show less contracts button')
-            : fbt('Show more', 'Show more contracts button')}
-        </a>
+        {/*<a*/}
+        {/*  className="show-more-less text-center"*/}
+        {/*  onClick={() => {*/}
+        {/*    setShowAllContracts(!showAllContracts)*/}
+        {/*    ContractStore.update((s) => {*/}
+        {/*      s.showAllContracts = !showAllContracts*/}
+        {/*    })*/}
+        {/*  }}*/}
+        {/*>*/}
+        {/*  {showAllContracts*/}
+        {/*    ? fbt('Show less', 'Show less contracts button')*/}
+        {/*    : fbt('Show more', 'Show more contracts button')}*/}
+        {/*</a>*/}
       </div>
       <style jsx>{`
         .contracts-table {
-          color: #8293a4;
+          color: #828699;
           font-size: 14px;
           border-radius: 10px;
-          background-color: #fafbfc;
-          box-shadow: 0 0 14px 0 rgba(24, 49, 64, 0.1);
+          background-color: #1e1f25;
+
           margin-top: 20px;
           position: relative;
         }
 
         .contracts-table-top {
           border-radius: 10px 10px 0 0;
-          border: solid 1px #cdd7e0;
+          border: solid 1px #141519;
           padding: 30px 0 0 30px;
           border-bottom: 0px;
-          background-color: white;
+          background-color: #1e1f25;
         }
 
         .contracts-table-bottom {
-          border-radius: 0 0 10px 10px;
-          border: solid 1px #cdd7e0;
+          border-radius: 10px;
+          border: solid 1px #141519;
           padding: 30px;
-          background-color: #fafbfc;
+          background-color: #1e1f25;
         }
 
         .contract-cell {
@@ -474,7 +477,7 @@ const ContractsTable = () => {
         }
 
         .title {
-          color: #8293a4;
+          color: #828699;
           font-size: 16px;
           margin-bottom: 30px;
         }
@@ -488,7 +491,7 @@ const ContractsTable = () => {
         }
 
         .title-row {
-          color: #8293a4;
+          color: #828699;
           font-size: 12px;
           margin-bottom: 18px;
           padding-right: 20px;
@@ -496,22 +499,32 @@ const ContractsTable = () => {
         }
 
         .content-row {
-          color: black;
+          color: #fafbfb;
           font-size: 14px;
           padding: 16px 20px;
-          margin-bottom: 10px;
-          border: solid 1px #cdd7e0;
-          border-radius: 10px;
+          border: solid 1px #141519;
+        }
+
+        .content-row:nth-child(2) {
+          border-bottom: none;
+        }
+
+        .content-row:not(:nth-child(2)):not(:last-child) {
+          border-bottom: none;
         }
 
         .content-row.selected {
-          background-color: white;
-          border: solid 1px black;
-          box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.2);
+          background-color: #18191c;
+          border: 1px solid;
+          border-image-source: linear-gradient(
+            90deg,
+            #b361e6 20.29%,
+            #6a36fc 79.06%
+          );
         }
 
         .red {
-          color: #ff0000;
+          color: #ff4e4e;
         }
 
         .clickable,
@@ -520,16 +533,17 @@ const ContractsTable = () => {
         }
 
         .clickable:hover {
-          background-color: #eaeaea;
+          background-color: #18191c;
         }
 
         .content-row.selected.clickable:hover {
-          background-color: #eae6c9;
+          background-color: #18191c;
         }
 
         .show-more-less {
-          color: #1a82ff;
+          color: #fafbfb;
           cursor: pointer;
+          margin-top: 10px;
         }
 
         .show-more-less:hover {

@@ -324,7 +324,7 @@ const CurveStake = ({ rpcProvider, isMobile }) => {
           border-radius: 10px;
           box-shadow: 0 2px 14px 0 rgba(0, 0, 0, 0.1);
           border: solid 1px #dfe9ee;
-          background-color: white;
+          background-color: #fafbfb;
           padding: 60px 0px 0px 0px;
         }
 
@@ -343,7 +343,7 @@ const CurveStake = ({ rpcProvider, isMobile }) => {
         .crv-body {
           border-radius: 0 0 10px 10px;
           border-top: solid 1px #e9eff4;
-          background-color: #fafbfc;
+          background-color: #1e1f25;
           padding: 40px 30px;
         }
 
@@ -352,7 +352,7 @@ const CurveStake = ({ rpcProvider, isMobile }) => {
           height: 50px;
           border-radius: 25px;
           background-color: #183140;
-          color: white;
+          color: #fafbfb;
           font-size: 18px;
           font-weight: bold;
           margin-bottom: 25px;
@@ -371,7 +371,7 @@ const CurveStake = ({ rpcProvider, isMobile }) => {
           border-radius: 10px;
           border: solid 1px black;
           background-color: #183140;
-          color: white;
+          color: #fafbfb;
           min-height: 126px;
           min-width: 226px;
         }
@@ -414,7 +414,7 @@ const CurveStake = ({ rpcProvider, isMobile }) => {
         }
 
         .border-right2-md {
-          border-right: solid 1px #cdd7e0;
+          border-right: solid 1px #141519;
         }
 
         .border-bottom-sm {
@@ -473,7 +473,7 @@ const CurveStake = ({ rpcProvider, isMobile }) => {
           }
 
           .border-bottom-sm {
-            border-bottom: solid 1px #cdd7e0;
+            border-bottom: solid 1px #141519;
           }
 
           .crv-body {

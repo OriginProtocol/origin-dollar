@@ -91,8 +91,8 @@ export default function Footer({ onLocale, locale }) {
       </footer>
       <style jsx>{`
         footer {
-          background-color: #f2f3f5;
-          color: #8293a4;
+          background-color: #141519;
+          color: #828699;
           font-size: 0.75rem;
           padding: 18px 0;
         }

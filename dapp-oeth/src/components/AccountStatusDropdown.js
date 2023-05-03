@@ -59,9 +59,10 @@ const AccountStatusDropdown = ({ className, showLogin }) => {
           left: auto;
           top: 135%;
           border-radius: 10px;
-          box-shadow: 0 0 14px 0 rgba(24, 49, 64, 0.1);
-          border: solid 1px #cdd7e0;
-          background-color: #ffffff;
+
+          border: solid 1px #141519;
+          background-color: #1e1f25;
+          color: #fafbfb;
           padding: 20px 30px 20px 20px;
           min-width: 170px;
         }
@@ -101,12 +102,12 @@ const AccountStatusDropdown = ({ className, showLogin }) => {
         }
 
         .account-status.open .address {
-          color: white;
+          color: #fafbfb;
         }
 
         .account-status .address {
           font-size: 14px;
-          color: white;
+          color: #fafbfb;
           margin-left: 10px;
           margin-right: 19px;
           margin-bottom: 2px;

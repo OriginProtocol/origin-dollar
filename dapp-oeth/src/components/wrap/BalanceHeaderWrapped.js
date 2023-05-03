@@ -81,7 +81,7 @@ const BalanceHeaderWrapped = ({
           }
 
           .title {
-            color: #8293a4;
+            color: #828699;
             font-size: 14px;
             display: inline;
           }
@@ -92,7 +92,7 @@ const BalanceHeaderWrapped = ({
           }
 
           .value {
-            color: white;
+            color: #fafbfb;
             font-size: 28px;
           }
 
@@ -121,7 +121,7 @@ const BalanceHeaderWrapped = ({
             }
 
             .value {
-              color: white;
+              color: #fafbfb;
               font-size: 20px;
               width: 45%;
               text-align: left;
@@ -180,7 +180,7 @@ const BalanceHeaderWrapped = ({
         </Dropdown>
         <style jsx>{`
           .apy-select {
-            background-color: white;
+            background-color: #fafbfb;
             font-size: 16px;
             font-weight: 500;
             color: black;
@@ -198,17 +198,18 @@ const BalanceHeaderWrapped = ({
 
           .dropdown-menu {
             margin-right: 200px;
-            background-color: white;
+            background-color: #1e1f25;
+            color: #fafbfb;
             font-size: 16px;
-            color: black;
             min-width: 90px;
             top: 100%;
             left: 0;
             padding: 5px;
+            border: solid 1px #141519;
           }
 
           .dropdown-item {
-            background-color: white;
+            background-color: #fafbfb;
             color: black;
             padding: 3px 5px 3px 10px;
             line-height: 20px;
@@ -308,21 +309,21 @@ const BalanceHeaderWrapped = ({
         .balance-header .light-grey-label {
           font-size: 14px;
           font-weight: bold;
-          color: #8293a4;
+          color: #828699;
         }
 
         .balance-header .detail {
           font-size: 12px;
-          color: #8293a4;
+          color: #828699;
         }
 
         .balance-header a:hover {
-          color: white;
+          color: #fafbfb;
         }
 
         .balance-header .ousd-value {
           font-size: 14px;
-          color: white;
+          color: #fafbfb;
           text-align: left;
           text-overflow: ellipsis;
           transition: font-size 0.2s cubic-bezier(0.5, -0.5, 0.5, 1.5),
@@ -358,7 +359,7 @@ const BalanceHeaderWrapped = ({
 
         .balance-header .expected-increase {
           font-size: 12px;
-          color: #8293a4;
+          color: #828699;
         }
 
         .balance-header .expected-increase p {
@@ -385,7 +386,7 @@ const BalanceHeaderWrapped = ({
           border-radius: 10px;
           box-shadow: 0 0 14px 0 rgba(0, 0, 0, 0.1);
           border: solid 1px black;
-          color: white;
+          color: #fafbfb;
         }
 
         .box-narrow {
@@ -433,7 +434,7 @@ const BalanceHeaderWrapped = ({
           }
 
           .balance-header .ousd-value .grey {
-            color: #8293a4;
+            color: #828699;
           }
 
           .balance-header .ousd-value-holder {
@@ -445,7 +446,7 @@ const BalanceHeaderWrapped = ({
             font-size: 11px;
             font-weight: bold;
             text-align: center;
-            color: #8293a4;
+            color: #828699;
           }
 
           .balance-header .apy-container .apy-percentage {
@@ -461,7 +462,7 @@ const BalanceHeaderWrapped = ({
             font-family: Lato;
             font-size: 11px;
             font-weight: bold;
-            color: #8293a4;
+            color: #828699;
             margin-bottom: -2px;
           }
 

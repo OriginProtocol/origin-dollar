@@ -444,7 +444,6 @@ const ContractsTable = () => {
           font-size: 14px;
           border-radius: 10px;
           background-color: #fafbfc;
-          box-shadow: 0 0 14px 0 rgba(24, 49, 64, 0.1);
           margin-top: 20px;
           position: relative;
         }

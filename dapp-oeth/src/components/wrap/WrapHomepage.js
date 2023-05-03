@@ -277,9 +277,9 @@ const WrapHomepage = ({
           <style jsx>{`
             .wrap-homepage {
               margin: 0px -1px -1px -1px;
-              border: solid 1px #cdd7e0;
+              border: solid 1px #141519;
               border-radius: 10px;
-              background-color: #fafbfc;
+              background-color: #1e1f25;
               min-height: 350px;
               padding: 35px 40px 40px 40px;
               position: relative;

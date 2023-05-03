@@ -11,6 +11,7 @@ import useCurrencySwapper from 'hooks/useCurrencySwapper'
 import SwapCurrencyPill from 'components/buySell/SwapCurrencyPill'
 import PillArrow from 'components/buySell/_PillArrow'
 import SettingsDropdown from 'components/buySell/SettingsDropdown'
+import ContractsTable from 'components/buySell/ContractsTable'
 import useSwapEstimator from 'hooks/useSwapEstimator'
 import withIsMobile from 'hoc/withIsMobile'
 import ApproveSwap from 'components/buySell/ApproveSwap'
@@ -286,11 +287,7 @@ const SwapHomepage = ({
     <>
       {process.browser && (
         <>
-          <div className="swap-homepage d-flex flex-column flex-grow">
-            <SettingsDropdown
-              setPriceToleranceValue={setPriceToleranceValue}
-              priceToleranceValue={priceToleranceValue}
-            />
+          <div className="swap-routes d-flex flex-column flex-grow">
             {buyErrorToDisplay && (
               <ErrorModal
                 error={buyErrorToDisplay}
@@ -300,6 +297,13 @@ const SwapHomepage = ({
                 }}
               />
             )}
+            <div className="swap-header">
+              <h2 className="title">{fbt('Swap Routes', 'Swap Routes')}</h2>
+              <SettingsDropdown
+                setPriceToleranceValue={setPriceToleranceValue}
+                priceToleranceValue={priceToleranceValue}
+              />
+            </div>
             <SwapCurrencyPill
               swapMode={swapMode}
               selectedCoin={selectedBuyCoin}
@@ -325,34 +329,47 @@ const SwapHomepage = ({
               selectedCoin={selectedRedeemCoin}
               onSelectChange={userSelectsRedeemCoin}
             />
-            <ApproveSwap
-              stableCoinToApprove={
-                swapMode === 'mint' ? selectedBuyCoin : 'oeth'
-              }
-              needsApproval={needsApproval}
-              selectedSwap={selectedSwap}
-              swapMetadata={swapMetadata()}
-              onSwap={() => onSwapOeth()}
-              allowancesLoaded={allowancesLoaded}
-              onMintingError={onMintingError}
-              balanceError={balanceError}
-              swapsLoaded={swapsLoaded}
-              swappingGloballyDisabled={swappingGloballyDisabled}
-            />
           </div>
+          <ContractsTable />
+          <ApproveSwap
+            stableCoinToApprove={swapMode === 'mint' ? selectedBuyCoin : 'oeth'}
+            needsApproval={needsApproval}
+            selectedSwap={selectedSwap}
+            swapMetadata={swapMetadata()}
+            onSwap={() => onSwapOeth()}
+            allowancesLoaded={allowancesLoaded}
+            onMintingError={onMintingError}
+            balanceError={balanceError}
+            swapsLoaded={swapsLoaded}
+            swappingGloballyDisabled={swappingGloballyDisabled}
+          />
           <style jsx>{`
-            .swap-homepage {
+            .swap-routes {
               margin: 0px -1px -1px -1px;
-              border: solid 1px #cdd7e0;
+              border: solid 1px #141519;
               border-radius: 10px;
-              background-color: #fafbfc;
+              background-color: #1e1f25;
               min-height: 350px;
-              padding: 35px 40px 40px 40px;
               position: relative;
+              overflow: hidden;
+            }
+
+            .swap-header {
+              display: flex;
+              align-center: center;
+              justify-content: space-between;
+              padding: 28px 40px;
+              border-bottom: 1px solid #141519;
+              width: 100%;
+            }
+
+            .title {
+              color: #fafbfb;
+              font-size: 14px;
             }
 
             @media (max-width: 799px) {
-              .swap-homepage {
+              .swap-routes {
                 padding: 23px 20px 20px 20px;
               }
             }

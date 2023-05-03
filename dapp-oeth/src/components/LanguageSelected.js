@@ -15,12 +15,12 @@ const LanguageSelected = ({ locale, open, dark }) => {
       </div>
       <style jsx>{`
         .language-selected {
-          color: white;
+          color: #fafbfb;
           font-size: 0.81rem;
         }
 
         .language-selected.dark {
-          color: #8293a4;
+          color: #828699;
         }
 
         .language-selected.dark:hover {
@@ -28,15 +28,15 @@ const LanguageSelected = ({ locale, open, dark }) => {
         }
 
         .language-selected.open {
-          color: #fafbfc;
+          color: #1e1f25;
         }
 
         .language-selected.open.dark {
-          color: #fafbfc !important;
+          color: #1e1f25 !important;
         }
 
         .language-selected.open.dark:hover {
-          color: white;
+          color: #fafbfb;
         }
 
         @media (max-width: 799px) {

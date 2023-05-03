@@ -25,21 +25,21 @@ export default function UniswapPoolLink({ pool, isPoolDetails }) {
         .uniswap-link {
           font-family: Lato;
           font-size: 14px;
-          color: #8293a4;
+          color: #828699;
           padding-bottom: 3px;
         }
 
         .uniswap-link.white {
-          color: white;
+          color: #fafbfb;
         }
 
         .uniswap-link:hover {
-          border-bottom: 1px solid #8293a4;
+          border-bottom: 1px solid #828699;
           padding-bottom: 2px;
         }
 
         .uniswap-link.white:hover {
-          border-color: white;
+          border-color: #fafbfb;
         }
 
         .uniswap-icon {
