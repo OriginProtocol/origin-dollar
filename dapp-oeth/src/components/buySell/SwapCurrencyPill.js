@@ -6,7 +6,6 @@ import { BigNumber } from 'ethers'
 
 import AccountStore from 'stores/AccountStore'
 import Dropdown from 'components/Dropdown'
-import DownCaret from 'components/DownCaret'
 import {
   formatCurrency,
   formatCurrencyMinMaxDecimals,

@@ -515,12 +515,6 @@ const ContractsTable = () => {
 
         .content-row.selected {
           background-color: #18191c;
-          border: 1px solid;
-          border-image-source: linear-gradient(
-            90deg,
-            #b361e6 20.29%,
-            #6a36fc 79.06%
-          );
         }
 
         .red {

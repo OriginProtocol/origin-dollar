@@ -291,7 +291,7 @@ const ApproveSwap = ({
       )}
       <button
         className={`btn-blue buy-button mt-4 mt-md-3 w-100`}
-        hidden={!approvalNeeded}
+        hidden={!inputAmount || balanceError || !approvalNeeded}
         disabled={coinApproved}
         onClick={() => {
           if (lastOverride && lastOverride !== selectedSwap?.name) {
