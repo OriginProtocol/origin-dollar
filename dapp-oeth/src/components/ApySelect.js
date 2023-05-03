@@ -38,28 +38,19 @@ const ApySelect = ({ apyDayOptions, apyDays, setApyDays, nav, homepage }) => {
             setOpen(!open)
           }}
         >
-          {`${apyDays}${homepage ? ' days' : 'd'}`}
+          {`${apyDays} day trailing`}
           <span className={`downcaret ${homepage ? 'homepage' : ''}`}>
-            <DownCaret color={nav ? 'white' : 'black'} size={26} />
+            <DownCaret size={16} />
           </span>
         </div>
       </Dropdown>
       <style jsx>{`
         .apy-select {
-          background-color: white;
+          background-color: #1e1f25;
           font-size: 16px;
           font-weight: 500;
-          color: black;
-          width: 68px;
-          height: 25px;
-          padding: 0 22px 2px 8px;
-          margin-right: 8px;
-          border-radius: 20px;
+          color: #828699;
           cursor: pointer;
-        }
-
-        .apy-select:hover {
-          background-color: #f2f3f5;
         }
 
         .apy-select.nav {
@@ -101,14 +92,7 @@ const ApySelect = ({ apyDayOptions, apyDays, setApyDays, nav, homepage }) => {
         }
 
         .downcaret {
-          color: red;
-          position: absolute;
-          left: 42px;
-        }
-
-        .downcaret.homepage {
-          position: absolute;
-          left: 62px;
+          margin-left: 8px;
         }
       `}</style>
     </>

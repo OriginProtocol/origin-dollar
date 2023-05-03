@@ -4,7 +4,6 @@ import { useStoreState } from 'pullstate'
 import { get as _get } from 'lodash'
 import { useWeb3React } from '@web3-react/core'
 import withIsMobile from 'hoc/withIsMobile'
-import { useRouter } from 'next/router'
 
 import AccountStore from 'stores/AccountStore'
 import AnimatedOusdStore from 'stores/AnimatedOusdStore'
@@ -20,6 +19,7 @@ import { adjustLinkHref } from 'utils/utils'
 import ApySelect from 'components/ApySelect'
 import { apyDayOptions, DEFAULT_SELECTED_APY } from 'utils/constants'
 import { zipObject } from 'lodash'
+import { assetRootPath } from 'utils/image'
 
 const BalanceHeader = ({
   storeTransaction,
@@ -103,62 +103,86 @@ const BalanceHeader = ({
     }
   }, [oethBalance, prevOethBalance, oethBalanceLoaded])
 
-  /*
-   * Type: number or percentage
-   */
-  const Statistic = ({
-    dropdown,
+  const StatisticPart = ({
     title,
     value,
     type,
-    titleLink,
+    small,
+    smallTop,
     marginBottom = false,
   }) => {
     return (
       <>
         <div
-          className={`d-flex holder flex-row flex-md-column align-items-end align-items-md-start justify-content-start ${
-            marginBottom ? 'margin-bottom' : ''
-          }`}
+          className={`relative ${small ? 'containSmall' : 'containBig'} ${
+            smallTop ? 'containSmallTop' : ''
+          } ${marginBottom ? '' : ''}`}
         >
-          <div className={`value ${type}`}>{value}</div>
-          <div className="flex-row">
-            <span className="dropdown">{dropdown}</span>
-            {titleLink && (
-              <a
-                className={`title link ${type}`}
-                href={adjustLinkHref(titleLink)}
-                rel="noopener noreferrer"
-                target="blank"
-              >
-                {title}
-              </a>
-            )}
-            {!titleLink && <div className="title">{title}</div>}
+          <div className="title">
+            <p className={`${small ? 'small' : 'big'}`}>{title}</p>
+          </div>
+
+          <div className="stat">
+            <div className={`value d-flex ${type} ${small ? 'small' : 'big'}`}>
+              <p>{value}</p>
+              {!small && <img src={assetRootPath(`/images/oeth.svg`)} />}
+            </div>
           </div>
         </div>
         <style jsx>{`
-          .dropdown {
-            display: inline-block;
+          .containSmallTop {
+            border-top: 1px solid #141519;
           }
 
-          .title {
-            color: #8293a4;
-            font-size: 14px;
+          .containSmall {
+            border-left: 1px solid #141519;
+            padding: 17px 40px;
+          }
+
+          .containBig {
+            padding-top: 40px;
+            padding-bottom: 40px;
+          }
+
+          .inline: {
             display: inline;
           }
 
-          .title.link {
-            cursor: pointer;
-            text-decoration: underline;
+          .title {
+            color: #828699;
+            width: 100%;
           }
 
-          .value {
-            color: white;
-            font-size: 28px;
+          .title p {
+            margin-bottom: 0 !important;
           }
 
-          .value.percentage::after {
+          .title .small {
+            font-size: 12px;
+          }
+
+          .title .big {
+            font-size: 16px;
+          }
+
+          .value p {
+            color: #828699;
+            margin-bottom: 0;
+          }
+
+          .stat img {
+            margin-left: 12px;
+          }
+
+          .stat .big {
+            font-size: 32px;
+          }
+
+          .stat .small {
+            font-size: 16px;
+          }
+
+          .value.percentage p::after {
             content: '%';
             padding-left: 2px;
           }
@@ -192,9 +216,108 @@ const BalanceHeader = ({
               width: 45%;
               text-align: left;
             }
+          }
+        `}</style>
+      </>
+    )
+  }
 
-            .margin-bottom {
-              margin-bottom: 20px;
+  /*
+   * Type: number or percentage
+   */
+  const Statistic = ({
+    dropdown,
+    title,
+    value,
+    type,
+    titleLink,
+    marginBottom = false,
+  }) => {
+    return (
+      <>
+        <div className={`relative ${marginBottom ? '' : ''}`}>
+          <div className="title">
+            <p>{title}</p>
+          </div>
+
+          <div className="stat">
+            <div className="flex-row">
+              <span className="dropdown">{dropdown}</span>
+            </div>
+            <div className={`value ${type}`}>
+              <p>{value}</p>
+            </div>
+          </div>
+        </div>
+        <style jsx>{`
+          .dropdown {
+            display: inline-block;
+          }
+
+          .stat {
+            padding: 40px;
+          }
+
+          .title {
+            color: #fafbfb;
+            font-size: 14px;
+            padding-top: 28px;
+            padding-bottom: 28px;
+            padding-left: 40px;
+            padding-right: 40px;
+            border-bottom: 1px solid #141519;
+            width: 100%;
+          }
+
+          .title p {
+            margin-bottom: 0 !important;
+          }
+
+          .value p {
+            background: -webkit-linear-gradient(
+              90deg,
+              #b361e6 -28.99%,
+              #6a36fc 144.97%
+            );
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 32px;
+            margin-bottom: 0;
+          }
+
+          .value.percentage p::after {
+            content: '%';
+            padding-left: 2px;
+          }
+
+          @media (max-width: 767px) {
+            .dropdown {
+              padding-bottom: 10px;
+            }
+
+            .title {
+              width: 55%;
+              text-align: left;
+              margin-bottom: 3px;
+            }
+
+            .title.percentage {
+              margin-bottom: 10px;
+            }
+
+            .holder {
+              width: 100%;
+            }
+
+            .value.percentage {
+              font-size: 32px;
+            }
+
+            .value {
+              color: white;
+              font-size: 20px;
+              width: 45%;
+              text-align: left;
             }
           }
         `}</style>
@@ -213,11 +336,7 @@ const BalanceHeader = ({
       <div className="balance-header d-flex flex-column justify-content-start">
         <div className="d-flex flex-column flex-md-row balance-holder justify-content-start w-100">
           <div className="apy-container d-flex justify-content-center">
-            <div
-              className={`contents d-flex align-items-center justify-content-center box box-black ${
-                isMobile ? 'w-50' : ''
-              }`}
-            >
+            <div className={`box box-black ${isMobile ? 'w-50' : ''}`}>
               <Statistic
                 dropdown={
                   <ApySelect
@@ -226,12 +345,12 @@ const BalanceHeader = ({
                     setApyDays={setApyDays}
                   />
                 }
-                title={fbt('Trailing APY', 'Trailing APY')}
+                title={fbt('APY', 'APY')}
                 titleLink="https://analytics.ousd.com/apy"
                 value={
                   typeof daysToApy[apyDays] === 'number'
                     ? formatCurrency(daysToApy[apyDays] * 100, 2)
-                    : '--.--'
+                    : '0'
                 }
                 type={
                   typeof daysToApy[apyDays] === 'number' ? 'percentage' : ''
@@ -239,52 +358,69 @@ const BalanceHeader = ({
               />
             </div>
           </div>
-          <div className="d-flex flex-column flex-md-row align-items-center justify-content-between box box-narrow w-100">
-            <Statistic
-              title={fbt('Balance', 'OETH Balance')}
-              value={
-                walletConnected &&
-                !isNaN(parseFloat(displayedBalance)) &&
-                oethBalanceLoaded
-                  ? displayedBalance
-                  : '--.--'
-              }
-              type={'number'}
-              marginBottom={true}
-            />
-            <Statistic
-              title={fbt('Pending yield', 'Pending yield')}
-              value={
-                overrideAccount || walletConnected
-                  ? formatCurrency(animatedExpectedIncrease, 6)
-                  : '--.--'
-              }
-              type={'number'}
-              marginBottom={true}
-            />
-            <Statistic
-              title={fbt(
-                'Lifetime earnings',
-                'Lifetime OETH balance header earnings'
-              )}
-              titleLink={
-                account
-                  ? `${
-                      process.env.NEXT_PUBLIC_ANALYTICS_ENDPOINT
-                    }/address/${account.toLowerCase()}`
-                  : false
-              }
-              value={
-                (overrideAccount || walletConnected) && lifetimeYield
-                  ? formatCurrency(lifetimeYield, 6)
-                  : '--.--'
-              }
-              type={'number'}
-            />
+          <div className="box box-narrow w-100">
+            <div className="title">
+              <p>OETH Portfolio</p>
+            </div>
+            <div className="d-flex flex-column flex-md-row align-items-center justify-content-between stats">
+              <StatisticPart
+                title={fbt('Balance', 'OETH Balance')}
+                value={
+                  walletConnected &&
+                  !isNaN(parseFloat(displayedBalance)) &&
+                  oethBalanceLoaded
+                    ? displayedBalance
+                    : '0'
+                }
+                type={'number'}
+                marginBottom={true}
+                small={false}
+              />
+              <div className="rightStats">
+                <StatisticPart
+                  title={fbt(
+                    'Lifetime earnings',
+                    'Lifetime OETH balance header earnings'
+                  )}
+                  small={true}
+                  titleLink={
+                    account
+                      ? `${
+                          process.env.NEXT_PUBLIC_ANALYTICS_ENDPOINT
+                        }/address/${account.toLowerCase()}`
+                      : false
+                  }
+                  value={
+                    (overrideAccount || walletConnected) && lifetimeYield
+                      ? formatCurrency(lifetimeYield, 6)
+                      : '0'
+                  }
+                  type={'number'}
+                />
+                <StatisticPart
+                  title={fbt('Pending yield', 'Pending yield')}
+                  value={
+                    overrideAccount || walletConnected
+                      ? formatCurrency(animatedExpectedIncrease, 6)
+                      : '0'
+                  }
+                  type={'number'}
+                  marginBottom={true}
+                  small={true}
+                  smallTop={true}
+                />
+              </div>
+            </div>
           </div>
         </div>
       </div>
       <style jsx>{`
+        .rightStats {
+          display: flex;
+          flex-direction: column;
+          justify-content: justify-between;
+        }
+
         .balance-header {
           margin-bottom: 19px;
         }
@@ -375,23 +511,35 @@ const BalanceHeader = ({
         }
 
         .box {
-          padding: 30px;
           min-width: 210px;
           min-height: 118px;
           border-radius: 10px;
-          box-shadow: 0 0 14px 0 rgba(0, 0, 0, 0.1);
-          border: solid 1px black;
           color: white;
+          background-color: #1e1f25;
         }
 
         .box-narrow {
-          padding: 30px 50px;
         }
 
         .box.box-black {
-          background-color: black;
+          background-color: #1e1f25;
           margin-right: 10px;
           min-width: 230px;
+        }
+
+        .box .title {
+          border-bottom: 1px solid #141519;
+          font-size: 14px;
+          padding: 28px 40px;
+          width: 100%;
+        }
+
+        .box .title p {
+          margin-bottom: 0;
+        }
+
+        .box .stats {
+          padding-left: 40px;
         }
 
         @media (max-width: 767px) {
