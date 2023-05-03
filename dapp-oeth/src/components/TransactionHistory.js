@@ -88,16 +88,16 @@ const FilterButton = ({
 const FormatCurrencyByImportance = ({
   value,
   isMobile,
-  greaterThanDollarYieldExists,
-  greaterThan10CentYieldExists,
+  hasHigherYield,
+  yieldHigherThanAGwei,
 }) => {
   const negative = value < 0
-  let nrOfDecimals = 4
+  let nrOfDecimals = 8
 
-  if (isMobile || greaterThanDollarYieldExists) {
-    nrOfDecimals = 2
-  } else if (greaterThan10CentYieldExists) {
-    nrOfDecimals = 3
+  if (isMobile || hasHigherYield) {
+    nrOfDecimals = 6
+  } else if (yieldHigherThanAGwei) {
+    nrOfDecimals = 12
   }
 
   const nrOfGreyDecimals = nrOfDecimals - 2
@@ -239,13 +239,13 @@ const TransactionHistory = ({ isMobile }) => {
     setPageNumbers(pageNumbers)
   }, [receivedPage, historyPages])
 
-  const greaterThanDollarYieldExists =
+  const hasHigherYield =
     currentPageHistory.filter(
-      (tx) => tx.type === 'yield' && parseFloat(tx.amount) > 1
+      (tx) => tx.type === 'yield' && parseFloat(tx.amount) > 0.000001
     ).length > 0
-  const greaterThan10CentYieldExists =
+  const yieldHigherThanAGwei =
     currentPageHistory.filter(
-      (tx) => tx.type === 'yield' && parseFloat(tx.amount) > 0.1
+      (tx) => tx.type === 'yield' && parseFloat(tx.amount) > 0.0000000001
     ).length > 0
 
   const exportData = (exportHistory) => {
@@ -344,22 +344,22 @@ const TransactionHistory = ({ isMobile }) => {
               }`}
             >
               <div className="d-flex grey-font border-bt pb-10">
-                <div className="col-3 col-md-2 pl-0">
+                <div className="col-3 col-md-3 pl-0">
                   {fbt('Date', 'Transaction history date')}
                 </div>
-                <div className="col-3 col-md-2">
+                <div className="col-3 col-md-3">
                   {fbt('Type', 'Transaction history type')}
                 </div>
-                <div className="d-none d-md-flex col-2">
+                {/* <div className="d-none d-md-flex col-2">
                   {fbt('From', 'Transaction history from account')}
                 </div>
                 <div className="d-none d-md-flex col-2">
                   {fbt('To', 'Transaction history to account')}
-                </div>
-                <div className="col-3 col-md-2 d-flex justify-content-end pr-md-5">
+                </div> */}
+                <div className="col-3 col-md-3 d-flex justify-content-end pr-md-5">
                   {fbt('Amount', 'Transaction history OETH amount')}
                 </div>
-                <div className="col-3 col-md-2 d-flex justify-content-end pr-md-5">
+                <div className="col-3 col-md-3 d-flex justify-content-end pr-md-5">
                   {fbt('Balance', 'Transaction history OETH balance')}
                 </div>
               </div>
@@ -370,7 +370,7 @@ const TransactionHistory = ({ isMobile }) => {
                     className="d-flex border-bt pb-20 pt-20 history-item"
                   >
                     <div
-                      className="col-3 col-md-2 pl-0"
+                      className="col-3 col-md-3 pl-0"
                       title={
                         dateformat(
                           Date.parse(tx.time),
@@ -385,7 +385,7 @@ const TransactionHistory = ({ isMobile }) => {
                     </div>
                     <div
                       title={txTypeMap[tx.type].verboseName}
-                      className="col-3 col-md-2 d-flex"
+                      className="col-3 col-md-3 d-flex"
                     >
                       <img
                         className="mr-2 mr-md-3 type-icon"
@@ -395,7 +395,7 @@ const TransactionHistory = ({ isMobile }) => {
                       />
                       {txTypeMap[tx.type].name}
                     </div>
-                    <div
+                    {/* <div
                       className={`d-none d-md-flex col-2 ${
                         tx.from_address ? 'clickable' : ''
                       }`}
@@ -426,33 +426,33 @@ const TransactionHistory = ({ isMobile }) => {
                       }}
                     >
                       {tx.to_address ? shortenAddress(tx.to_address) : '-'}
-                    </div>
-                    <div className="col-3 col-md-2 d-flex justify-content-end pr-md-5">
+                    </div> */}
+                    <div className="col-3 col-md-3 d-flex justify-content-end pr-md-5">
                       {tx.amount ? (
                         <FormatCurrencyByImportance
                           value={tx.amount}
                           isMobile={isMobile}
-                          greaterThanDollarYieldExists={
-                            greaterThanDollarYieldExists
+                          hasHigherYield={
+                            hasHigherYield
                           }
-                          greaterThan10CentYieldExists={
-                            greaterThan10CentYieldExists
+                          yieldHigherThanAGwei={
+                            yieldHigherThanAGwei
                           }
                         />
                       ) : (
                         '-'
                       )}
                     </div>
-                    <div className="col-3 col-md-2 d-flex justify-content-end pr-md-5 relative">
+                    <div className="col-3 col-md-3 d-flex justify-content-end pr-md-5 relative">
                       {tx.balance ? (
                         <FormatCurrencyByImportance
                           value={tx.balance}
                           isMobile={isMobile}
-                          greaterThanDollarYieldExists={
-                            greaterThanDollarYieldExists
+                          hasHigherYield={
+                            hasHigherYield
                           }
-                          greaterThan10CentYieldExists={
-                            greaterThan10CentYieldExists
+                          yieldHigherThanAGwei={
+                            yieldHigherThanAGwei
                           }
                         />
                       ) : (
