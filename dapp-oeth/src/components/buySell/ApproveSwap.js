@@ -236,7 +236,7 @@ const ApproveSwap = ({
         const result = await contract
           .connect(library.getSigner(account))
           .approve(
-            routeConfig[needsApproval].contract.address,
+            routeConfig[needsApproval]?.contract?.address,
             ethers.constants.MaxUint256
           )
         storeTransaction(
@@ -303,6 +303,7 @@ const ApproveSwap = ({
       <button
         className={`btn-blue buy-button mt-4 mt-md-3 w-100`}
         hidden={
+          !needsApproval ||
           balanceError ||
           !approvalNeeded ||
           isNaN(parsedAmount) ||
