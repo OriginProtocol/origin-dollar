@@ -135,9 +135,7 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
          * to WETH amount deployed. And never larger than twice the WETH amount deployed even if
          * it would have a further beneficial effect on pool stability.
          */
-        if (oethToAdd > 0) {
-            IVault(vaultAddress).mintForStrategy(oethToAdd);
-        }
+        IVault(vaultAddress).mintForStrategy(oethToAdd);
 
         uint256[2] memory _amounts;
         _amounts[ethCoinIndex] = _wethAmount;
@@ -260,14 +258,13 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
             minWithdrawAmounts
         );
 
-        // Burn returned OETH
+        // Burn all OETH
         uint256 oethBalance = oeth.balanceOf(address(this));
         IVault(vaultAddress).burnForStrategy(oethBalance);
 
-        // This sends all WETH and ETH on the contract, including extras
+        // Send all ETH and WETH on the contract, including extra
         weth.deposit{ value: address(this).balance }();
-        uint256 wethBalance = weth.balanceOf(address(this));
-        weth.transfer(vaultAddress, wethBalance);
+        weth.transfer(vaultAddress, weth.balanceOf(address(this)));
     }
 
     /**
@@ -356,17 +353,15 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
     }
 
     function _approveAsset(address _asset) internal {
-        IERC20 asset = IERC20(_asset);
-        // curve pool for asset (required for adding liquidity)
-        asset.safeApprove(platformAddress, 0);
-        asset.safeApprove(platformAddress, type(uint256).max);
+        // approve curve pool for asset (required for adding liquidity)
+        IERC20(_asset).approve(platformAddress, type(uint256).max);
     }
 
     function _approveBase() internal {
+        // WETH was approved as a supported asset,
+        // so we need seperate OETH approve
         _approveAsset(address(oeth));
-
-        lpToken.safeApprove(cvxDepositorAddress, 0);
-        lpToken.safeApprove(cvxDepositorAddress, type(uint256).max);
+        lpToken.approve(cvxDepositorAddress, type(uint256).max);
     }
 
     /**
