@@ -39,8 +39,10 @@ async function defaultFixture() {
 
   const ousdProxy = await ethers.getContract("OUSDProxy");
   const vaultProxy = await ethers.getContract("VaultProxy");
+
   const harvesterProxy = await ethers.getContract("HarvesterProxy");
-  const oethHarvesterProxy = await ethers.getContract("OETHHarvesterProxy");
+  // Todo:
+  // const oethHarvesterProxy = await ethers.getContract("OETHHarvesterProxy");
   const compoundStrategyProxy = await ethers.getContract(
     "CompoundStrategyProxy"
   );
@@ -61,10 +63,11 @@ async function defaultFixture() {
     harvesterProxy.address
   );
 
-  const oethHarvester = await ethers.getContractAt(
-    "OETHHarvester",
-    oethHarvesterProxy.address
-  );
+  // Todo:
+  // const oethHarvester = await ethers.getContractAt(
+  //   "OETHHarvester",
+  //   oethHarvesterProxy.address
+  // );
 
   const dripperProxy = await ethers.getContract("DripperProxy");
   const dripper = await ethers.getContractAt("Dripper", dripperProxy.address);
@@ -184,7 +187,7 @@ async function defaultFixture() {
     cvxRewardPool,
     LUSDMetaStrategyProxy,
     LUSDMetaStrategy,
-    ConvexEthMetaStrategyProxy,
+    // ConvexEthMetaStrategyProxy,
     ConvexEthMetaStrategy;
 
   if (isFork) {
@@ -336,13 +339,14 @@ async function defaultFixture() {
     );
   }
 
-  ConvexEthMetaStrategyProxy = await ethers.getContract(
-    "ConvexEthMetaStrategyProxy"
-  );
-  ConvexEthMetaStrategy = await ethers.getContractAt(
-    "ConvexEthMetaStrategy",
-    ConvexEthMetaStrategyProxy.address
-  );
+  // Todo:
+  // ConvexEthMetaStrategyProxy = await ethers.getContract(
+  //   "ConvexEthMetaStrategyProxy"
+  // );
+  // ConvexEthMetaStrategy = await ethers.getContractAt(
+  //   "ConvexEthMetaStrategy",
+  //   ConvexEthMetaStrategyProxy.address
+  // );
 
   if (!isFork) {
     const assetAddresses = await getAssetAddresses(deployments);
@@ -410,7 +414,8 @@ async function defaultFixture() {
     ousd,
     vault,
     harvester,
-    oethHarvester,
+    // Todo
+    // oethHarvester,
     dripper,
     mockNonRebasing,
     mockNonRebasingTwo,
@@ -1060,9 +1065,10 @@ async function convexOETHMetaVaultFixture() {
   );
 
   // Add Convex Meta strategy
-  await fixture.oethVault
-    .connect(sGuardian)
-    .approveStrategy(fixture.ConvexEthMetaStrategy.address);
+  // TODO
+  // await fixture.oethVault
+  //   .connect(sGuardian)
+  //   .approveStrategy(fixture.ConvexEthMetaStrategy.address);
 
   // await fixture.harvester
   //   .connect(sGuardian)
@@ -1286,7 +1292,10 @@ async function hackedVaultFixture() {
     evilDAI.address,
     oracleAddresses.chainlink.DAI_USD
   );
-  await oracleRouter.cacheDecimals(evilDAI.address);
+  await oracleRouter.cacheDecimals(
+    evilDAI.address,
+    ethers.constants.AddressZero
+  );
 
   await fixture.vault.connect(sGovernor).supportAsset(evilDAI.address, 0);
 
