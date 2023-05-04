@@ -653,7 +653,13 @@ const SwapCurrencyPill = ({
                     <CoinImage small coin={split.coin} />
                     <div className="text-uppercase ml-5px">{split.coin}</div>
                   </div>
-                  <div>{formatCurrency(split.amount, 2)}</div>
+                  <div>
+                    {formatCurrencyMinMaxDecimals(split.amount, {
+                      minDecimals: 2,
+                      maxDecimals: 18,
+                      truncate: true,
+                    })}
+                  </div>
                 </div>
               )
             })}

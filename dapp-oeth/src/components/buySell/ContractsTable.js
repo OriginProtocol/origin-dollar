@@ -9,6 +9,7 @@ import { assetRootPath } from 'utils/image'
 import ContractStore from 'stores/ContractStore'
 import ConfirmationModal from 'components/buySell/ConfirmationModal'
 import Dropdown from 'components/Dropdown'
+import { formatCurrencyMinMaxDecimals } from '../../utils/math'
 
 const Info = ({ contract }) => {
   const [infoOpen, setInfoOpen] = useState(false)
@@ -385,7 +386,11 @@ const ContractsTable = () => {
               <div className="value-cell d-none d-md-block text-right">
                 {loadingOrEmpty || !canDoSwap
                   ? '-'
-                  : formatCurrency(estimation.amountReceived, 2)}
+                  : formatCurrencyMinMaxDecimals(estimation.amountReceived, {
+                      minDecimals: 2,
+                      maxDecimals: 18,
+                      truncate: true,
+                    })}
               </div>
               <div
                 title={

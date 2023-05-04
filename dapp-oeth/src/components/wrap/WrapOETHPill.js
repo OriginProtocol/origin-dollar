@@ -108,30 +108,34 @@ const WrapOETHPill = ({
   const showOeth =
     (swapMode === 'mint' && topItem) || (swapMode === 'redeem' && bottomItem)
 
-  const floorTo2to6Decimals = (value) => {
+  const floorTo2to18Decimals = (value) => {
     return formatCurrencyMinMaxDecimals(value, {
       minDecimals: 2,
-      maxDecimals: 6,
+      maxDecimals: 18,
       truncate: true,
     })
   }
 
   const getDisplayBalance = () => {
-    const roundTo2Decimals = (value) => {
-      return formatCurrency(parseFloat(value), 6)
+    const roundDecimals = (value) => {
+      return formatCurrencyMinMaxDecimals(parseFloat(value), {
+        minDecimals: 2,
+        maxDecimals: 18,
+        truncate: true,
+      })
     }
     if (!active) {
       return null
     } else if (showOeth) {
       return {
         coin: 'oeth',
-        balance: roundTo2Decimals(coinBalances.oeth),
+        balance: roundDecimals(coinBalances.oeth),
         detailedBalance: coinBalances.oeth || 0,
       }
     } else {
       return {
         coin: 'woeth',
-        balance: roundTo2Decimals(coinBalances.woeth),
+        balance: roundDecimals(coinBalances.woeth),
         detailedBalance: coinBalances.woeth || 0,
       }
     }
@@ -157,13 +161,13 @@ const WrapOETHPill = ({
     if (
       displayBalance &&
       coinValue &&
-      floorTo2to6Decimals(displayBalance.detailedBalance) ===
-        floorTo2to6Decimals(coinValue) &&
+      floorTo2to18Decimals(displayBalance.detailedBalance) ===
+        floorTo2to18Decimals(coinValue) &&
       removeCommas(displayBalance.detailedBalance) !==
         removeCommas(coinValue) &&
       // this bit is required so that zeroes can be added to input when already at max value
       parseFloat(displayBalance.detailedBalance) !==
-        parseFloat(floorTo2to6Decimals(coinValue))
+        parseFloat(floorTo2to18Decimals(coinValue))
     ) {
       setMaxBalance()
     }
@@ -184,8 +188,8 @@ const WrapOETHPill = ({
     topItem &&
     displayBalance &&
     // if balance and input match up to 6th decimal. Consider it effectively as set to max balance
-    floorTo2to6Decimals(displayBalance.detailedBalance) ===
-      floorTo2to6Decimals(coinValue)
+    floorTo2to18Decimals(displayBalance.detailedBalance) ===
+      floorTo2to18Decimals(coinValue)
 
   const balanceClickable =
     topItem &&
@@ -250,11 +254,10 @@ const WrapOETHPill = ({
             {topItem && (
               <input
                 type="text"
-                value={truncateDecimals(coinValue, 6)}
+                value={truncateDecimals(coinValue, 18)}
                 placeholder="0.00"
                 onChange={(e) => {
-                  // truncate decimals after 6th position
-                  const value = truncateDecimals(e.target.value, 6)
+                  const value = truncateDecimals(e.target.value, 18)
                   const valueNoCommas = removeCommas(value)
                   if (checkValidInputForCoin(valueNoCommas, selectedCoin)) {
                     onAmountChange(valueNoCommas)
@@ -292,7 +295,6 @@ const WrapOETHPill = ({
           padding: 10px 23px 14px 10px;
           border: solid 1px #141519;
           border-radius: 10px;
-          background-color: #fafbfb;
         }
 
         .currency-pill-inner {
@@ -323,7 +325,7 @@ const WrapOETHPill = ({
           border: 0px;
           text-align: right;
           font-size: 24px;
-          color: #183140;
+          color: #fafbfb;
           background-color: transparent;
         }
 
