@@ -66,7 +66,7 @@ const TransactionActivity = () => {
             animate={txHashesToAnimate.includes(tx.hash)}
           />
         ))}
-        <SidePanelWelcomeMessage />
+        {/*<SidePanelWelcomeMessage />*/}
       </div>
       <style jsx>{`
         .transaction-activity {
