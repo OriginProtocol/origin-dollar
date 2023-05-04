@@ -302,6 +302,10 @@ section.dim {
   border-radius: 8px;
   opacity: 0.9;
 }
+.btn-blue-sm {
+  height: 54px;
+  font-size: 16px;
+}
 
 .btn-blue:disabled {
   opacity: 0.1;

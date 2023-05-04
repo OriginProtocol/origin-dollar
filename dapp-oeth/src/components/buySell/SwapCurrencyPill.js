@@ -417,30 +417,34 @@ const SwapCurrencyPill = ({
   const showOeth =
     (swapMode === 'redeem' && topItem) || (swapMode === 'mint' && bottomItem)
 
-  const floorTo2to6Decimals = (value) => {
+  const floorTo2to18Decimals = (value) => {
     return formatCurrencyMinMaxDecimals(value, {
       minDecimals: 2,
-      maxDecimals: 6,
+      maxDecimals: 18,
       truncate: true,
     })
   }
 
   const getDisplayBalance = () => {
-    const roundTo2Decimals = (value) => {
-      return formatCurrency(parseFloat(value), 2)
+    const roundDecimals = (value) => {
+      return formatCurrencyMinMaxDecimals(parseFloat(value), {
+        minDecimals: 2,
+        maxDecimals: 8,
+        truncate: true,
+      })
     }
     if (!active || selectedCoin === 'mix') {
       return null
     } else if (showOeth) {
       return {
         coin: 'oeth',
-        balance: roundTo2Decimals(coinBalances.oeth),
+        balance: roundDecimals(coinBalances.oeth),
         detailedBalance: coinBalances.oeth || 0,
       }
     } else {
       return {
         coin: selectedCoin,
-        balance: roundTo2Decimals(coinBalances[selectedCoin]),
+        balance: roundDecimals(coinBalances[selectedCoin]),
         detailedBalance: coinBalances[selectedCoin] || 0,
       }
     }
@@ -478,8 +482,8 @@ const SwapCurrencyPill = ({
     if (
       displayBalance &&
       coinValue &&
-      floorTo2to6Decimals(displayBalance.detailedBalance) ===
-        floorTo2to6Decimals(coinValue) &&
+      floorTo2to18Decimals(displayBalance.detailedBalance) ===
+        floorTo2to18Decimals(coinValue) &&
       removeCommas(displayBalance.detailedBalance) !==
         removeCommas(coinValue) &&
       // this bit is required so that zeroes can be added to input when already at max value
@@ -518,8 +522,8 @@ const SwapCurrencyPill = ({
     topItem &&
     displayBalance &&
     // if balance and input match up to 6th decimal. Consider it effectively as set to max balance
-    floorTo2to6Decimals(displayBalance.detailedBalance) ===
-      floorTo2to6Decimals(coinValue)
+    floorTo2to18Decimals(displayBalance.detailedBalance) ===
+      floorTo2to18Decimals(coinValue)
 
   const balanceClickable =
     topItem &&
@@ -764,6 +768,11 @@ const SwapCurrencyPill = ({
           color: #828699;
           weight: bold;
           cursor: pointer;
+        }
+
+        .input-holder {
+          width: 100%;
+          max-width: 70%;
         }
 
         @media (max-width: 799px) {

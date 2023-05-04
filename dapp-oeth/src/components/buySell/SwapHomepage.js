@@ -306,33 +306,35 @@ const SwapHomepage = ({
                 priceToleranceValue={priceToleranceValue}
               />
             </div>
-            <SwapCurrencyPill
-              swapMode={swapMode}
-              selectedCoin={selectedBuyCoin}
-              onAmountChange={async (amount) => {
-                setSelectedBuyCoinAmount(amount)
-                setSelectedRedeemCoinAmount(amount)
-              }}
-              coinValue={
-                swapMode === 'mint'
-                  ? selectedBuyCoinAmount
-                  : selectedRedeemCoinAmount
-              }
-              onSelectChange={userSelectsBuyCoin}
-              topItem
-              onErrorChange={setBalanceError}
-              ethPrice={ethPrice}
-            />
-            <PillArrow swapMode={swapMode} setSwapMode={setSwapMode} />
-            <SwapCurrencyPill
-              swapMode={swapMode}
-              selectedSwap={selectedSwap}
-              swapsLoading={swapEstimations === 'loading'}
-              priceToleranceValue={priceToleranceValue}
-              selectedCoin={selectedRedeemCoin}
-              onSelectChange={userSelectsRedeemCoin}
-              ethPrice={ethPrice}
-            />
+            <div className="swap-container">
+              <SwapCurrencyPill
+                swapMode={swapMode}
+                selectedCoin={selectedBuyCoin}
+                onAmountChange={async (amount) => {
+                  setSelectedBuyCoinAmount(amount)
+                  setSelectedRedeemCoinAmount(amount)
+                }}
+                coinValue={
+                  swapMode === 'mint'
+                    ? selectedBuyCoinAmount
+                    : selectedRedeemCoinAmount
+                }
+                onSelectChange={userSelectsBuyCoin}
+                topItem
+                onErrorChange={setBalanceError}
+                ethPrice={ethPrice}
+              />
+              <PillArrow swapMode={swapMode} setSwapMode={setSwapMode} />
+              <SwapCurrencyPill
+                swapMode={swapMode}
+                selectedSwap={selectedSwap}
+                swapsLoading={swapEstimations === 'loading'}
+                priceToleranceValue={priceToleranceValue}
+                selectedCoin={selectedRedeemCoin}
+                onSelectChange={userSelectsRedeemCoin}
+                ethPrice={ethPrice}
+              />
+            </div>
           </div>
           <ContractsTable />
           <ApproveSwap
@@ -372,6 +374,13 @@ const SwapHomepage = ({
               width: 100%;
             }
 
+            .swap-container {
+              display: flex;
+              flex-direction: column;
+              width: 100%;
+              height: 100%;
+            }
+
             .title {
               color: #fafbfb;
               font-size: 14px;
@@ -380,6 +389,16 @@ const SwapHomepage = ({
             @media (max-width: 799px) {
               .swap-routes {
                 padding: 23px 20px 20px 20px;
+              }
+            }
+
+            @media (max-width: 1080px) {
+              .swap-left {
+                width: 50%;
+              }
+
+              .swap-right {
+                width: 50%;
               }
             }
           `}</style>

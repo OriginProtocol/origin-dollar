@@ -37,13 +37,15 @@ const AccountStatusContent = ({ className, onOpen }) => {
             {active && !correctNetwork && (
               <>
                 <div className="dot big yellow" />
-                <h2>{fbt('Wrong network', 'Wrong network')}</h2>
+                <h2 className="wrong-network">
+                  {fbt('Wrong network', 'Wrong network')}
+                </h2>
               </>
             )}
             {active && correctNetwork && (
               <>
                 <div className="dot big green" />
-                <h2>
+                <h2 className="connected-to">
                   {fbt(
                     'Connected to ' +
                       fbt.param('network-name', networkIdToName(chainId)),
@@ -91,7 +93,7 @@ const AccountStatusContent = ({ className, onOpen }) => {
         {overrideAccount && (
           <div className="disconnect-box d-flex">
             <a
-              className="btn-clear-blue w-100"
+              className="btn-blue w-100 btn-blue-sm"
               onClick={() => {
                 router.replace('/history')
               }}
@@ -103,7 +105,7 @@ const AccountStatusContent = ({ className, onOpen }) => {
         {active && !overrideAccount && (
           <div className="disconnect-box d-flex">
             <a
-              className="btn-clear-blue w-100"
+              className="btn-blue w-100 btn-blue-sm"
               onClick={(e) => {
                 e.preventDefault()
                 if (onOpen) {
@@ -175,10 +177,12 @@ const AccountStatusContent = ({ className, onOpen }) => {
           margin-left: 0px;
         }
 
+        .wrong-network,
+        .connected-to,
         .address {
           font-family: Lato;
-          font-size: 18px;
-          color: #183140;
+          font-size: 16px;
+          color: #fafbfb;
           margin-bottom: 10px;
         }
 
@@ -213,6 +217,14 @@ const AccountStatusContent = ({ className, onOpen }) => {
           padding: 20px;
         }
 
+        .dropdown-menu {
+          top: 115%;
+          right: 0;
+          border: solid 1px #141519;
+          background-color: #1e1f25;
+          color: #fafbfb;
+        }
+
         .drop-container {
           padding: 0px 20px 0px 20px;
         }
@@ -221,6 +233,7 @@ const AccountStatusContent = ({ className, onOpen }) => {
           padding: 16px 0px 0px 0px;
           min-width: 250px;
           z-index: 4;
+          color: #fafbfb;
         }
 
         @media (max-width: 799px) {

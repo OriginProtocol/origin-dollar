@@ -32,8 +32,8 @@ const Layout = ({
 }) => {
   const { connector, account, library } = useWeb3React()
 
-  const ousdContract = useStoreState(ContractStore, (s) =>
-    get(s, 'contracts.ousd')
+  const oethContract = useStoreState(ContractStore, (s) =>
+    get(s, 'contracts.oeth')
   )
   const rebaseOptedOut = useStoreState(AccountStore, (s) =>
     get(s, 'rebaseOptedOut')
@@ -41,16 +41,16 @@ const Layout = ({
 
   const optIn = async () => {
     try {
-      const result = await ousdContract
+      const result = await oethContract
         .connect(library.getSigner(account))
         .rebaseOptIn()
-      storeTransaction(result, `rebaseOptIn`, 'ousd', {})
+      storeTransaction(result, `rebaseOptIn`, 'oeth', {})
     } catch (error) {
       // 4001 code happens when a user rejects the transaction
       if (error.code !== 4001) {
-        storeTransactionError(`rebaseOptIn`, 'ousd')
+        storeTransactionError(`rebaseOptIn`, 'oeth')
       }
-      console.error('Error OUSD REBASE OPT IN: ', error)
+      console.error('Error OETH REBASE OPT IN: ', error)
     }
   }
 
@@ -79,14 +79,16 @@ const Layout = ({
       >
         <div className="container d-flex flex-column flex-md-row align-items-center">
           <img
-            src={assetRootPath('/images/gnosis-safe-icon.svg')}
+            src={assetRootPath('/images/gnosis-safe-icon.png')}
             className="mb-2 mb-md-0 mr-md-3"
-            style={{ width: '50px' }}
+            style={{ height: '24px' }}
           />
-          {fbt(
-            'It looks like you are minting from a contract and have not opted into yield. You must opt in to receive yield.',
-            'Rebase opt in notice'
-          )}
+          <span className="text">
+            {fbt(
+              'It looks like you are minting from a contract and have not opted into yield. You must opt in to receive yield.',
+              'Rebase opt in notice'
+            )}
+          </span>
           <button
             onClick={optIn}
             rel="noopener noreferrer"
@@ -127,7 +129,7 @@ const Layout = ({
       {<AppFooter locale={locale} onLocale={onLocale} />}
       <style jsx>{`
         .notice {
-          background-color: black;
+          background-color: #0074f0;
           margin-bottom: 0px;
         }
 
@@ -148,28 +150,21 @@ const Layout = ({
           height: auto;
           padding: 5px 20px;
           background-color: #fafbfb;
-          color: black;
+          color: #02080d;
         }
 
         .container {
-          max-width: 940px;
+          max-width: 1180px;
           padding-left: 0px;
           padding-right: 0px;
         }
 
-        .title-text {
-          font-size: 18px;
-          font-weight: bold;
-          line-height: 1.75;
-          color: #fafbfb;
-        }
-
         .text {
-          opacity: 0.8;
           color: #fafbfb;
           line-height: normal;
-          font-size: 14px;
+          font-size: 12px;
           max-width: 1000px;
+          font-weight: 500;
         }
       `}</style>
     </>
