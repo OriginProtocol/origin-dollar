@@ -89,6 +89,7 @@ const coinToName = {
   frxeth: 'Frax Ether',
   woeth: 'Wrapped Origin Ether',
   sfrxeth: 'Staked Frax Ether',
+  mix: 'Redeem Mix',
 }
 
 const TokenSelectionModal = ({
@@ -98,10 +99,6 @@ const TokenSelectionModal = ({
   conversion,
   coinBalances,
 }) => {
-  console.log({
-    conversion,
-    coinBalances,
-  })
   return (
     <>
       <div className="token-selection-modal">
@@ -128,13 +125,15 @@ const TokenSelectionModal = ({
                         token === 'mix' ? 'text-capitalize' : 'text-uppercase'
                       } mr-auto`}
                     >
-                      {token}
+                      {token === 'mix' ? 'frxEth, rETH, stETH, wETH' : token}
                     </span>
                   </div>
                 </div>
                 <div className="balances">
                   <span className="eth">
-                    {parseFloat(coinBalances?.[token])}
+                    {coinBalances?.[token]
+                      ? parseFloat(coinBalances[token])
+                      : 0}
                   </span>
                   <span className="usd">
                     $
@@ -210,14 +209,16 @@ const TokenSelectionModal = ({
           font-size: 16px;
           font-weight: 500;
           color: #fafbfb;
+          text-align: left;
         }
 
-        .token-selection-modal .coin {
+        .token-selection-modal .coin-breakdown .coin {
           display: flex;
           flex-direction: column;
           color: #828699;
           font-size: 12px;
           font-weight: 400;
+          text-align: left;
         }
 
         .token-selection-modal .coin .usd {
