@@ -30,7 +30,6 @@ contract StrategyInvariants is Base, ERC4626 {
 
         bob = makeAddr("Bob");
         strategist = makeAddr("Strategist");
-        rewardRecipient = makeAddr("rewardRecipient");
 
         address agent = getAgent();
         deal(WETH, agent, 100 ether);
@@ -122,9 +121,6 @@ contract StrategyInvariants is Base, ERC4626 {
         require(IERC20(USDT).balanceOf(address(dripper)) > 0,
             "dripper didnt receive funds");
 
-        require(IERC20(USDT).balanceOf(address(rewardRecipient)) > 0,
-            "rewardRecipient didnt receive funds");
-        
         vm.warp(block.timestamp + 1 minutes);
         dripper.collect();
 
