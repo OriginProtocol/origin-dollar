@@ -80,33 +80,73 @@ const CoinImage = ({ small, coin }) => {
   )
 }
 
-const TokenSelectionModal = ({ tokens, onClose, onSelect, conversion }) => {
+const coinToName = {
+  eth: 'ETH',
+  oeth: 'Origin Ether',
+  weth: 'Wrapped Ether',
+  reth: 'Rocket Pool ETH',
+  steth: 'Liquid Staked Ether 2.0',
+  frxeth: 'Frax Ether',
+  woeth: 'Wrapped Origin Ether',
+  sfrxeth: 'Staked Frax Ether',
+}
+
+const TokenSelectionModal = ({
+  tokens,
+  onClose,
+  onSelect,
+  conversion,
+  coinBalances,
+}) => {
+  console.log({
+    conversion,
+    coinBalances,
+  })
   return (
     <>
       <div className="token-selection-modal">
-        <div className="backdrop" onClick={onClose} />
-        <div className="container">
-          {tokens.map((token) => (
-            <button
-              key={token}
-              className={`${
-                token === 'oeth' ? 'oeth' : ''
-              }  d-flex justify-content-start align-items-center selectable`}
-              onClick={() => {
-                onSelect(token)
-                onClose()
-              }}
-            >
-              <CoinImage coin={token} />
-              <div
-                className={`coin ${
-                  token === 'mix' ? 'text-capitalize' : 'text-uppercase'
-                } mr-auto`}
+        <div className="content-backdrop" onClick={onClose} />
+        <div className="content-container">
+          {tokens.map((token) => {
+            return (
+              <button
+                key={token}
+                className={`${
+                  token === 'oeth' ? 'oeth' : ''
+                }  d-flex justify-content-between align-items-center selectable`}
+                onClick={() => {
+                  onSelect(token)
+                  onClose()
+                }}
               >
-                {token}
-              </div>
-            </button>
-          ))}
+                <div className="coin-view">
+                  <CoinImage coin={token} />
+                  <div className="coin-breakdown">
+                    <span className="name">{coinToName[token]}</span>
+                    <span
+                      className={`coin ${
+                        token === 'mix' ? 'text-capitalize' : 'text-uppercase'
+                      } mr-auto`}
+                    >
+                      {token}
+                    </span>
+                  </div>
+                </div>
+                <div className="balances">
+                  <span className="eth">
+                    {parseFloat(coinBalances?.[token])}
+                  </span>
+                  <span className="usd">
+                    $
+                    {formatCurrency(
+                      parseFloat(coinBalances?.[token]) * conversion,
+                      2
+                    )}
+                  </span>
+                </div>
+              </button>
+            )
+          })}
         </div>
       </div>
       <style jsx>{`
@@ -126,7 +166,7 @@ const TokenSelectionModal = ({ tokens, onClose, onSelect, conversion }) => {
 
         --bg-opacity: 0.9;
 
-        .token-selection-modal .backdrop {
+        .token-selection-modal .content-backdrop {
           position: absolute;
           top: 0;
           left: 0;
@@ -137,13 +177,13 @@ const TokenSelectionModal = ({ tokens, onClose, onSelect, conversion }) => {
           background-color: rgb(16 17 19 / var(--bg-opacity));
         }
 
-        .token-selection-modal .container {
+        .token-selection-modal .content-container {
           display: flex;
           flex-direction: column;
           margin: 0 auto;
           max-height: 60vh;
           width: 90vw;
-          max-width: 800px;
+          max-width: 600px;
           z-index: 2;
           background-color: #1e1f25;
           border-radius: 12px;
@@ -152,16 +192,58 @@ const TokenSelectionModal = ({ tokens, onClose, onSelect, conversion }) => {
           color: #fafbfb;
         }
 
-        .coin {
-          color: #fafbfb;
+        .token-selection-modal .coin-view {
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+        }
+
+        .token-selection-modal .coin-breakdown {
+          display: flex;
+          flex-direction: column;
           margin-left: 12px;
+        }
+
+        .coin-breakdown .name {
+          display: flex;
+          flex-direction: column;
+          font-size: 16px;
+          font-weight: 500;
+          color: #fafbfb;
+        }
+
+        .token-selection-modal .coin {
+          display: flex;
+          flex-direction: column;
+          color: #828699;
+          font-size: 12px;
+          font-weight: 400;
+        }
+
+        .token-selection-modal .coin .usd {
+          color: #828699;
+        }
+
+        .token-selection-modal .balances {
+          display: flex;
+          flex-direction: column;
+          color: #fafbfb;
+          font-size: 16px;
+          font-weight: 500;
+          text-align: right;
+        }
+
+        .balances .usd {
+          color: #828699;
+          font-size: 12px;
+          font-weight: 400;
         }
 
         .selectable {
           border: none;
-          padding: 6px;
+          padding: 8px 6px;
           background-color: transparent;
-          border-radius: 6px;
+          border-radius: 8px;
         }
 
         .selectable:hover {
@@ -172,7 +254,13 @@ const TokenSelectionModal = ({ tokens, onClose, onSelect, conversion }) => {
   )
 }
 
-const CoinSelect = ({ selected, onChange, options = [] }) => {
+const CoinSelect = ({
+  selected,
+  onChange,
+  options = [],
+  conversion,
+  coinBalances,
+}) => {
   const [open, setOpen] = useState(false)
 
   if (options.length === 0) {
@@ -211,7 +299,8 @@ const CoinSelect = ({ selected, onChange, options = [] }) => {
             onChange(option)
             setOpen(false)
           }}
-          conversion={1}
+          conversion={conversion}
+          coinBalances={coinBalances}
         />
       )}
       <button
@@ -529,6 +618,8 @@ const SwapCurrencyPill = ({
                 onSelectChange(coin)
               }}
               options={coinsSelectOptions}
+              conversion={ethPrice}
+              coinBalances={coinBalances}
             />
             {bottomItem && (
               <div className="balance mt-auto">
