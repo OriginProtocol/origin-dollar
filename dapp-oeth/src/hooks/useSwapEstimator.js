@@ -74,7 +74,7 @@ const useSwapEstimator = ({
     allowances.steth !== undefined
 
   const account = useStoreState(AccountStore, (s) => s.account)
-  const [ethPrice, setEthPrice] = useState(false)
+  // const [ethPrice, setEthPrice] = useState(false)
   const [estimationCallback, setEstimationCallback] = useState(null)
   const {
     mintVaultGasEstimate,
@@ -117,13 +117,8 @@ const useSwapEstimator = ({
     const selectedSwap =
       swapsLoaded &&
       find(Object.values(swapEstimations), (estimation) => {
-        console.log('estimation', estimation)
-
         return userSelectionExists ? estimation.userSelected : estimation.isBest
       })
-
-    console.log(swapEstimations)
-    console.log('selectedSwap', selectedSwap)
 
     ContractStore.update((s) => {
       s.selectedSwap = selectedSwap
@@ -237,8 +232,6 @@ const useSwapEstimator = ({
       amount
     )
 
-    console.log('here estimatinos', estimations)
-
     ContractStore.update((s) => {
       s.swapEstimations = estimations
     })
@@ -312,10 +305,10 @@ const useSwapEstimator = ({
       return null
     }
 
-    // const flooredEth = Math.floor(ethPrice)
+    const flooredEth = Math.floor(ethPrice)
     const priceInUsd = ethers.utils.formatUnits(
       gasPrice
-        // .mul(BigNumber.from(flooredEth))
+        .mul(BigNumber.from(flooredEth))
         .mul(BigNumber.from(gasLimit || '0'))
         .toString(),
       18
@@ -966,13 +959,8 @@ const useSwapEstimator = ({
       const ethPriceRequest = await fetch(
         'https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=USD'
       )
-
       // floor so we can convert to BN without a problem
-      const ethPrice = BigNumber.from(
-        Math.floor(get(await ethPriceRequest.json(), 'USD'))
-      )
-      setEthPrice(ethPrice)
-      return ethPrice
+      return Math.floor(get(await ethPriceRequest.json(), 'USD'))
     } catch (e) {
       console.error(`Can not fetch eth prices: ${e.message}`)
     }
@@ -1005,10 +993,9 @@ const useSwapEstimator = ({
   const _fetchEthPriceChainlink = async () => {
     try {
       const priceFeed = await contracts.chainlinkEthAggregator.latestRoundData()
-      const ethUsdPrice = parseFloat(
-        ethers.utils.formatUnits(priceFeed.answer, 8)
+      return Math.floor(
+        parseFloat(ethers.utils.formatUnits(priceFeed.answer, 8))
       )
-      return ethUsdPrice
     } catch (e) {
       console.error('Error happened fetching eth usd chainlink data:', e)
     }

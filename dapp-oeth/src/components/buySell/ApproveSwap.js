@@ -263,15 +263,6 @@ const ApproveSwap = ({
     }
   }
 
-  console.log({
-    inputAmount,
-    s: !selectedSwap,
-    balanceError,
-    swappingGloballyDisabled,
-    a: needsApproval && !coinApproved,
-    active,
-  })
-
   const parsedAmount = parseFloat(inputAmount)
 
   return (

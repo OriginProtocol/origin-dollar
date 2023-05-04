@@ -84,7 +84,7 @@ const TokenSelectionModal = ({ tokens, onClose, onSelect, conversion }) => {
   return (
     <>
       <div className="token-selection-modal">
-        <div className="backdrop" />
+        <div className="backdrop" onClick={onClose} />
         <div className="container">
           {tokens.map((token) => (
             <button
