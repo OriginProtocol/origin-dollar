@@ -41,8 +41,8 @@ async function defaultFixture() {
   const vaultProxy = await ethers.getContract("VaultProxy");
 
   const harvesterProxy = await ethers.getContract("HarvesterProxy");
-  // Todo:
-  // const oethHarvesterProxy = await ethers.getContract("OETHHarvesterProxy");
+
+  const oethHarvesterProxy = await ethers.getContract("OETHHarvesterProxy");
   const compoundStrategyProxy = await ethers.getContract(
     "CompoundStrategyProxy"
   );
@@ -63,11 +63,10 @@ async function defaultFixture() {
     harvesterProxy.address
   );
 
-  // Todo:
-  // const oethHarvester = await ethers.getContractAt(
-  //   "OETHHarvester",
-  //   oethHarvesterProxy.address
-  // );
+  const oethHarvester = await ethers.getContractAt(
+    "OETHHarvester",
+    oethHarvesterProxy.address
+  );
 
   const dripperProxy = await ethers.getContract("DripperProxy");
   const dripper = await ethers.getContractAt("Dripper", dripperProxy.address);
@@ -339,14 +338,13 @@ async function defaultFixture() {
     );
   }
 
-  // Todo:
-  // ConvexEthMetaStrategyProxy = await ethers.getContract(
-  //   "ConvexEthMetaStrategyProxy"
-  // );
-  // ConvexEthMetaStrategy = await ethers.getContractAt(
-  //   "ConvexEthMetaStrategy",
-  //   ConvexEthMetaStrategyProxy.address
-  // );
+  ConvexEthMetaStrategyProxy = await ethers.getContract(
+    "ConvexEthMetaStrategyProxy"
+  );
+  ConvexEthMetaStrategy = await ethers.getContractAt(
+    "ConvexEthMetaStrategy",
+    ConvexEthMetaStrategyProxy.address
+  );
 
   if (!isFork) {
     const assetAddresses = await getAssetAddresses(deployments);
@@ -414,8 +412,7 @@ async function defaultFixture() {
     ousd,
     vault,
     harvester,
-    // Todo
-    // oethHarvester,
+    oethHarvester,
     dripper,
     mockNonRebasing,
     mockNonRebasingTwo,
@@ -1065,14 +1062,13 @@ async function convexOETHMetaVaultFixture() {
   );
 
   // Add Convex Meta strategy
-  // TODO
-  // await fixture.oethVault
-  //   .connect(sGuardian)
-  //   .approveStrategy(fixture.ConvexEthMetaStrategy.address);
+  await fixture.oethVault
+    .connect(sGuardian)
+    .approveStrategy(fixture.ConvexEthMetaStrategy.address);
 
-  // await fixture.harvester
-  //   .connect(sGuardian)
-  //   .setSupportedStrategy(fixture.ConvexEthMetaStrategy.address, true);
+  await fixture.oethHarvester
+    .connect(sGuardian)
+    .setSupportedStrategy(fixture.ConvexEthMetaStrategy.address, true);
 
   await fixture.oethVault
     .connect(sGuardian)

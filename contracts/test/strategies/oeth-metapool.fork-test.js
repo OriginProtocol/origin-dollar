@@ -182,13 +182,7 @@ async function mintTest(fixture, user, asset, amount = "3") {
     currentRewardPoolBalance
   );
 
-  /* Should have staked the LP tokens
-   *
-   * half of the LP tokens are received because the price of the lp token
-   * is multiplied by 2 ( https://github.com/curvefi/curve-factory-crypto/blob/ecf60c360e230d6a4ba1e5cb31ab8b61d545f452/contracts/CurveCryptoSwap2ETH.vy#L1308-L1312)
-   *
-   * TO BE CONFIRMED: this is because the pool doesn't actually have 2 underlying
-   * tokens but only one coupled with ETH.
-   */
-  expect(rewardPoolBalanceDiff).to.approxEqualTolerance(oethUnits(amount), 1);
+  // multiplied by 2 because the strategy prints corresponding amount of OETH and 
+  // deploys it in the pool
+  expect(rewardPoolBalanceDiff).to.approxEqualTolerance(oethUnits(amount).mul(2), 1);
 }

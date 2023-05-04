@@ -957,6 +957,7 @@ function deploymentWithGuardianGovernor(opts, fn) {
       await impersonateGuardian(guardianAddr);
 
       const sGuardian = await ethers.provider.getSigner(guardianAddr);
+      console.log("guardianAddr", guardianAddr);
 
       const guardianActions = [];
       for (const action of proposal.actions) {
