@@ -74,7 +74,7 @@ const useSwapEstimator = ({
     allowances.steth !== undefined
 
   const account = useStoreState(AccountStore, (s) => s.account)
-  // const [ethPrice, setEthPrice] = useState(false)
+
   const [estimationCallback, setEstimationCallback] = useState(null)
   const {
     mintVaultGasEstimate,

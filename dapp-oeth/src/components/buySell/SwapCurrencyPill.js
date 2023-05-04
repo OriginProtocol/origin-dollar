@@ -307,6 +307,7 @@ const SwapCurrencyPill = ({
   swapMode,
   onErrorChange,
   coinValue,
+  ethPrice,
 }) => {
   const coinBalances = useStoreState(AccountStore, (s) => s.balances)
   const [error, setError] = useState(null)
@@ -483,23 +484,17 @@ const SwapCurrencyPill = ({
                 </p>
               </div>
             )}
-            {bottomItem && (
-              <div className="balance mt-auto">
-                {minReceived !== null
-                  ? fbt(
-                      'Min. received: ' +
-                        fbt.param(
-                          'oeth-amount',
-                          formatCurrency(minReceived, 2)
-                        ) +
-                        ' OETH',
-                      'Min OETH amount received'
-                    )
-                  : topItem
-                  ? ''
-                  : '-'}
-              </div>
-            )}
+            <div className="usd-balance mt-auto">
+              {bottomItem
+                ? `$${formatCurrency(
+                    truncateDecimals(expectedAmount, 18) * parseFloat(ethPrice),
+                    2
+                  )}`
+                : `$${formatCurrency(
+                    truncateDecimals(coinValue, 18) * parseFloat(ethPrice),
+                    2
+                  )}`}
+            </div>
           </div>
           <div className="d-flex flex-column justify-content-between align-items-start">
             <div className="d-flex align-items-center">
@@ -535,6 +530,23 @@ const SwapCurrencyPill = ({
               }}
               options={coinsSelectOptions}
             />
+            {bottomItem && (
+              <div className="balance mt-auto">
+                {minReceived !== null
+                  ? fbt(
+                      'Min. received: ' +
+                        fbt.param(
+                          'oeth-amount',
+                          formatCurrency(minReceived, 2)
+                        ) +
+                        ' OETH',
+                      'Min OETH amount received'
+                    )
+                  : topItem
+                  ? ''
+                  : '-'}
+              </div>
+            )}
           </div>
         </div>
         {coinSplits && (
@@ -574,6 +586,12 @@ const SwapCurrencyPill = ({
 
         .balance {
           font-size: 12px;
+          color: #828699;
+          margin-left: 4px;
+        }
+
+        .usd-balance {
+          font-size: 16px;
           color: #828699;
           margin-left: 4px;
         }

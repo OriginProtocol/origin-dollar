@@ -8,6 +8,7 @@ import { currencies } from 'constants/Contract'
 import withRpcProvider from 'hoc/withRpcProvider'
 import usePriceTolerance from 'hooks/usePriceTolerance'
 import useCurrencySwapper from 'hooks/useCurrencySwapper'
+import useEthPrice from 'hooks/useEthPrice'
 import SwapCurrencyPill from 'components/buySell/SwapCurrencyPill'
 import PillArrow from 'components/buySell/_PillArrow'
 import SettingsDropdown from 'components/buySell/SettingsDropdown'
@@ -30,6 +31,7 @@ const SwapHomepage = ({
   const swapEstimations = useStoreState(ContractStore, (s) => s.swapEstimations)
   const swapsLoaded = swapEstimations && typeof swapEstimations === 'object'
   const selectedSwap = useStoreState(ContractStore, (s) => s.selectedSwap)
+  const ethPrice = useEthPrice()
 
   // mint / redeem
   const [swapMode, setSwapMode] = useState(
@@ -319,6 +321,7 @@ const SwapHomepage = ({
               onSelectChange={userSelectsBuyCoin}
               topItem
               onErrorChange={setBalanceError}
+              ethPrice={ethPrice}
             />
             <PillArrow swapMode={swapMode} setSwapMode={setSwapMode} />
             <SwapCurrencyPill
@@ -328,6 +331,7 @@ const SwapHomepage = ({
               priceToleranceValue={priceToleranceValue}
               selectedCoin={selectedRedeemCoin}
               onSelectChange={userSelectsRedeemCoin}
+              ethPrice={ethPrice}
             />
           </div>
           <ContractsTable />
