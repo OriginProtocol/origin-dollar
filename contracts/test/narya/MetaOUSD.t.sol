@@ -161,6 +161,9 @@ contract MetaOUSD is Base {
         vault.redeem(3, 0);
 
         vm.stopPrank();
+
+        require(IERC20(DAI).balanceOf(bob) > 0,
+            "did not get back any funds");
     }
 
     function actionDeposit(uint amount, bool isBob) public {
