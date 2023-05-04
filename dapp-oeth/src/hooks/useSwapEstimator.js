@@ -264,6 +264,7 @@ const useSwapEstimator = ({
       const amountReceivedNumber = parseFloat(estimation.amountReceived)
 
       estimation.gasEstimate = gasUsdCost
+
       if (estimation.approveAllowanceNeeded) {
         estimation.gasEstimateSwap = getGasUsdCost(
           estimation.swapGasUsage,
@@ -277,7 +278,8 @@ const useSwapEstimator = ({
         )
       }
       estimation.effectivePrice =
-        (inputAmount + gasUsdCostNumber) / amountReceivedNumber
+        (inputAmount * ethPrice + gasUsdCostNumber) /
+        (amountReceivedNumber * ethPrice)
     })
 
     const best = minBy(canDoSwaps, (estimation) => estimation.effectivePrice)
