@@ -46,7 +46,7 @@ contract MetaOUSD is Base {
     LogInfo[] pnmLogs;
 
     function setUp() public override {
-        rpc_url = "https://eth-mainnet.g.alchemy.com/v2/DygkI5MDUDm4BPzEPQ-2919_xvD4H6E4";
+        rpc_url = "https://eth-mainnet.g.alchemy.com/v2/aWKDYS_qpAtrZb4ao1QYRSQTMA7Hbkcc";
         platformAddress = address(this);
 
         super.setUp();

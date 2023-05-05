@@ -5,7 +5,7 @@ contract OwnershipTest is Base {
     uint constant agentAmount = 10_000;
 
     function setUp() public override {
-        rpc_url = "https://eth-mainnet.g.alchemy.com/v2/DygkI5MDUDm4BPzEPQ-2919_xvD4H6E4";
+        rpc_url = "https://eth-mainnet.g.alchemy.com/v2/aWKDYS_qpAtrZb4ao1QYRSQTMA7Hbkcc";
         super.setUp();
 
         address agent = getAgent();

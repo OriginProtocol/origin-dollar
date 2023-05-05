@@ -9,7 +9,7 @@ contract GovernorInvariants is Base {
         0xa2bd3d3cf188a41358c8b401076eb59066b09dec5775650c0de4c55187d17bd9;
 
     function setUp() public override {
-        rpc_url = "https://eth-mainnet.g.alchemy.com/v2/DygkI5MDUDm4BPzEPQ-2919_xvD4H6E4";
+        rpc_url = "https://eth-mainnet.g.alchemy.com/v2/aWKDYS_qpAtrZb4ao1QYRSQTMA7Hbkcc";
         platformAddress = address(0x42);
 
         super.setUp();

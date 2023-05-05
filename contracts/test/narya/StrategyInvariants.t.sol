@@ -14,7 +14,7 @@ contract StrategyInvariants is Base, ERC4626 {
     constructor() ERC4626(IERC20Metadata(DAI)) ERC20("Narya Platform", "NP") {}
 
     function setUp() public override {
-        rpc_url = "https://eth-mainnet.g.alchemy.com/v2/DygkI5MDUDm4BPzEPQ-2919_xvD4H6E4";
+        rpc_url = "https://eth-mainnet.g.alchemy.com/v2/aWKDYS_qpAtrZb4ao1QYRSQTMA7Hbkcc";
         platformAddress = address(this);
 
         super.setUp();
