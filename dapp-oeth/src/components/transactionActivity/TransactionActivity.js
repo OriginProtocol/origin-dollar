@@ -7,7 +7,15 @@ const TransactionActivity = ({ transactions, animateHashes }) => {
     <>
       <div className="transaction-activity d-flex flex-column justify-content-start align-items-center">
         <div className="transaction-header">
-          <h2 className="title">{fbt('Recent activity', 'Recent activity')}</h2>
+          <h2 className="title">
+            {fbt(
+              `Recent activity ${fbt.param(
+                'activity-count',
+                `(${transactions?.length})`
+              )}`,
+              'Recent activity'
+            )}
+          </h2>
         </div>
         <div className="transaction-messages disable-scrollbars">
           {transactions && transactions.length > 0 ? (

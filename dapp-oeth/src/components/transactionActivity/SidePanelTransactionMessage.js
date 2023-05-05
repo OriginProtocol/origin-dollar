@@ -490,11 +490,7 @@ const WrapTransaction = ({ transaction, coin }) => (
   />
 )
 
-const SidePanelTransactionMessage = ({
-  transaction,
-  dismissTransaction,
-  animate = false,
-}) => {
+const SidePanelTransactionMessage = ({ transaction, animate = false }) => {
   const isApproveTransaction = transaction.type === 'approve'
   const isMintTransaction = transaction.type === 'mint'
   const isRedeemTransaction = transaction.type === 'redeem'
