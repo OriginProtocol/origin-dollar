@@ -5,7 +5,6 @@ import dateformat from 'dateformat'
 import { fbt } from 'fbt-runtime'
 import { useWeb3React } from '@web3-react/core'
 import { formatCurrency } from '../utils/math'
-import { shortenAddress } from '../utils/web3'
 import { exportToCsv } from '../utils/utils'
 import withIsMobile from 'hoc/withIsMobile'
 import { assetRootPath } from 'utils/image'
@@ -39,33 +38,28 @@ const FilterButton = ({
           }
         }}
       >
-        <span className="d-none d-md-flex">{filterText}</span>
-        <img
-          className="d-flex d-md-none"
-          src={assetRootPath(`/images/history/${filterImage}`)}
-        />
+        <span className="status-text d-none d-md-flex">{filterText}</span>
+        <span className="status-circle"></span>
       </div>
       <style jsx>{`
-        .button {
+        .button,
+        .button.selected:hover {
           color: #828699;
-          min-width: 93px;
-          min-height: 40px;
-          border-radius: 5px;
-          border: solid 1px #141519;
+          border-radius: 56px;
           margin-right: 10px;
-          font-family: Inter;
-          font-size: 14px;
+          padding: 4px 16px;
+          font-family: Lato;
+          font-size: 12px;
+          background-color: rgba(255, 255, 255, 0.1);
           cursor: pointer;
         }
 
-        .button.selected,
-        .button.selected:hover {
-          background-color: black;
-          color: #fafbfb;
+        .button.selected {
+          color: #edf2f5;
         }
 
         .button:hover {
-          background-color: #edf2f5;
+          color: #edf2f5;
         }
 
         @media (max-width: 799px) {
@@ -73,9 +67,29 @@ const FilterButton = ({
             min-width: 50px;
             min-height: 35px;
             margin-right: 8px;
-            font-size: 14px;
+            font-size: 12px;
             margin-bottom: 20px;
           }
+        }
+
+        .status-circle {
+          width: 8px;
+          height: 8px;
+          border-radius: 100%;
+          background: #1e1f25;
+        }
+
+        .button.selected:hover .status-circle {
+          background: #1e1f25;
+        }
+
+        .button.selected .status-circle,
+        .button:hover .status-circle {
+          background: linear-gradient(90deg, #b361e6 -28.99%, #6a36fc 144.97%);
+        }
+
+        .status-text {
+          margin-right: 8px;
         }
       `}</style>
     </div>
@@ -100,22 +114,12 @@ const FormatCurrencyByImportance = ({
     nrOfDecimals = 12
   }
 
-  const nrOfGreyDecimals = nrOfDecimals - 2
   value = formatCurrency(Math.abs(value), nrOfDecimals)
-  const first = value.substring(0, value.length - nrOfGreyDecimals)
-  const last = value.substring(value.length - nrOfGreyDecimals)
 
   return (
     <>
       {negative ? '-' : ''}
-      {first}
-      <span className="grayer">{last}</span>
-
-      <style jsx>{`
-        .grayer {
-          color: #828699;
-        }
-      `}</style>
+      {value}
     </>
   )
 }
@@ -334,7 +338,7 @@ const TransactionHistory = ({ isMobile }) => {
                 >
                   {historyQuery.isLoading || historyQuery.isRefetching
                     ? fbt('Exporting...', 'Exporting...')
-                    : fbt('Export', 'Tx history action: Export history')}
+                    : fbt('Export CSV', 'Tx history action: Export history')}
                 </div>
               </div>
             </div>
@@ -357,45 +361,41 @@ const TransactionHistory = ({ isMobile }) => {
                   {fbt('To', 'Transaction history to account')}
                 </div> */}
                 <div className="col-3 col-md-3 d-flex justify-content-end pr-md-5">
-                  {fbt('Amount', 'Transaction history OETH amount')}
+                  {fbt('Change', 'Transaction history OETH amount')}
                 </div>
                 <div className="col-3 col-md-3 d-flex justify-content-end pr-md-5">
-                  {fbt('Balance', 'Transaction history OETH balance')}
+                  {fbt('OETH Balance', 'Transaction history OETH balance')}
                 </div>
               </div>
-              {currentPageHistory.map((tx) => {
-                return (
-                  <div
-                    key={`${tx.tx_hash}-${tx.log_index ? tx.log_index : 0}`}
-                    className="d-flex border-bt pb-20 pt-20 history-item"
-                  >
+              {currentPageHistory
+                .flatMap((r) => Array.from({ length: 7 }).fill(r))
+                .map((tx) => {
+                  return (
                     <div
-                      className="col-3 col-md-3 pl-0"
-                      title={
-                        dateformat(
+                      key={`${tx.tx_hash}-${tx.log_index ? tx.log_index : 0}`}
+                      className="d-flex border-bt pb-20 pt-20 history-item"
+                    >
+                      <div
+                        className="col-3 col-md-3 pl-0"
+                        title={
+                          dateformat(
+                            Date.parse(tx.time),
+                            'mm/dd/yyyy h:MM:ss TT'
+                          ) || ''
+                        }
+                      >
+                        {dateformat(
                           Date.parse(tx.time),
-                          'mm/dd/yyyy h:MM:ss TT'
-                        ) || ''
-                      }
-                    >
-                      {dateformat(
-                        Date.parse(tx.time),
-                        isMobile ? 'mm/dd/yy' : 'mm/dd/yyyy'
-                      ) || ''}
-                    </div>
-                    <div
-                      title={txTypeMap[tx.type].verboseName}
-                      className="col-3 col-md-3 d-flex"
-                    >
-                      <img
-                        className="mr-2 mr-md-3 type-icon"
-                        src={assetRootPath(
-                          `/images/history/${txTypeMap[tx.type].imageName}`
-                        )}
-                      />
-                      {txTypeMap[tx.type].name}
-                    </div>
-                    {/* <div
+                          isMobile ? 'mm/dd/yy' : 'mm/dd/yyyy'
+                        ) || ''}
+                      </div>
+                      <div
+                        title={txTypeMap[tx.type].verboseName}
+                        className="col-3 col-md-3 d-flex"
+                      >
+                        {txTypeMap[tx.type].name}
+                      </div>
+                      {/* <div
                       className={`d-none d-md-flex col-2 ${
                         tx.from_address ? 'clickable' : ''
                       }`}
@@ -427,45 +427,47 @@ const TransactionHistory = ({ isMobile }) => {
                     >
                       {tx.to_address ? shortenAddress(tx.to_address) : '-'}
                     </div> */}
-                    <div className="col-3 col-md-3 d-flex justify-content-end pr-md-5">
-                      {tx.amount ? (
-                        <FormatCurrencyByImportance
-                          value={tx.amount}
-                          isMobile={isMobile}
-                          hasHigherYield={hasHigherYield}
-                          yieldHigherThanAGwei={yieldHigherThanAGwei}
-                        />
-                      ) : (
-                        '-'
-                      )}
-                    </div>
-                    <div className="col-3 col-md-3 d-flex justify-content-end pr-md-5 relative">
-                      {tx.balance ? (
-                        <FormatCurrencyByImportance
-                          value={tx.balance}
-                          isMobile={isMobile}
-                          hasHigherYield={hasHigherYield}
-                          yieldHigherThanAGwei={yieldHigherThanAGwei}
-                        />
-                      ) : (
-                        '-'
-                      )}
-                      <div className="etherscan-link">
-                        <a
-                          href={`https://etherscan.io/tx/${tx.tx_hash}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          <img
-                            className=""
-                            src={assetRootPath('/images/link-icon-grey.svg')}
+                      <div className="col-3 col-md-3 d-flex justify-content-end pr-md-5">
+                        {tx.amount ? (
+                          <FormatCurrencyByImportance
+                            value={tx.amount}
+                            isMobile={isMobile}
+                            hasHigherYield={hasHigherYield}
+                            yieldHigherThanAGwei={yieldHigherThanAGwei}
                           />
-                        </a>
+                        ) : (
+                          '-'
+                        )}
+                      </div>
+                      <div className="col-3 col-md-3 d-flex justify-content-end pr-md-5 relative">
+                        {tx.balance ? (
+                          <FormatCurrencyByImportance
+                            value={tx.balance}
+                            isMobile={isMobile}
+                            hasHigherYield={hasHigherYield}
+                            yieldHigherThanAGwei={yieldHigherThanAGwei}
+                          />
+                        ) : (
+                          '-'
+                        )}
+                        <div className="etherscan-link">
+                          <a
+                            href={`https://etherscan.io/tx/${tx.tx_hash}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <img
+                              className=""
+                              src={assetRootPath(
+                                '/images/link-icon-purple.svg'
+                              )}
+                            />
+                          </a>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )
-              })}
+                  )
+                })}
             </div>
             <div className="pagination d-flex justify-content-center justify-content-md-start">
               {pageNumbers.map((pageNumber, index) => {
@@ -505,16 +507,15 @@ const TransactionHistory = ({ isMobile }) => {
         .holder {
           border-radius: 10px;
           box-shadow: 0 0 14px 0 rgba(0, 0, 0, 0.1);
-          border: solid 1px #e9eff4;
           background-color: #1e1f25;
-          color: black;
+          color: #ebecf2;
         }
 
         .history-holder {
           padding-left: 40px;
           padding-right: 40px;
           padding-top: 24px;
-          background-color: #fafbfb;
+          background-color: #1e1f25;
         }
 
         .grey-font {
@@ -555,14 +556,12 @@ const TransactionHistory = ({ isMobile }) => {
         .filters {
           padding: 40px;
           background-color: #1e1f25;
-          border-bottom: solid 1px #e9eff4;
           border-radius: 10px;
         }
 
         .pagination {
           padding: 40px;
           background-color: #1e1f25;
-          border-top: solid 1px #e9eff4;
           border-radius: 10px;
         }
 
@@ -603,14 +602,13 @@ const TransactionHistory = ({ isMobile }) => {
         }
 
         .button {
-          color: black;
-          min-width: 93px;
-          min-height: 40px;
-          border-radius: 5px;
-          border: solid 1px black;
+          background-color: rgba(255, 255, 255, 0.1);
+          color: white;
+          padding: 4px 20px;
+          border-radius: 28px;
           margin-right: 10px;
-          font-family: Inter;
-          font-size: 14px;
+          font-family: Lato;
+          font-size: 12px;
           cursor: pointer;
         }
 
@@ -621,7 +619,7 @@ const TransactionHistory = ({ isMobile }) => {
         }
 
         .button:hover {
-          background-color: #edf2f5;
+          opacity: 80%;
         }
 
         @media (max-width: 799px) {
