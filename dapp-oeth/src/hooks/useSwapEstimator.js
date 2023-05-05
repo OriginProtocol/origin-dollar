@@ -306,17 +306,12 @@ const useSwapEstimator = ({
     if (!gasPrice || !ethPrice) {
       return null
     }
-
     const flooredEth = Math.floor(ethPrice)
-    const priceInUsd = ethers.utils.formatUnits(
-      gasPrice
-        .mul(BigNumber.from(flooredEth))
-        .mul(BigNumber.from(gasLimit || '0'))
-        .toString(),
-      18
+    const gasInGwei = ethers.utils.formatUnits(gasPrice, 'gwei')
+    // gwei offset
+    return (
+      (parseFloat(gasLimit) * parseFloat(gasInGwei) * flooredEth) / 100000000
     )
-
-    return priceInUsd
   }
 
   const userHasEnoughStablecoin = (coin, swapAmount) => {
