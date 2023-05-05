@@ -251,6 +251,16 @@ const SwapHomepage = ({
       setSelectedBuyCoinAmount('')
       setSelectedRedeemCoinAmount('')
 
+      if (document?.body) {
+        setTimeout(() => {
+          document?.body.scrollTo({
+            top: 0,
+            left: 0,
+            behavior: 'smooth',
+          })
+        }, 100)
+      }
+
       await rpcProvider.waitForTransaction(result.hash)
 
       analytics.track('Swap succeeded', {

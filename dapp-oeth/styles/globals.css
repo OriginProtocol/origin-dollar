@@ -27,6 +27,26 @@ body {
   overflow-x: hidden;
 }
 
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-corner {
+  background: #141519;
+}
+
+::-webkit-scrollbar-track {
+  background: #141519;
+  border-radius: 20px;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #1e1f25;
+  border-radius: 20px;
+  border: 1px #141519;
+}
+
 a {
   color: inherit;
   text-decoration: none;

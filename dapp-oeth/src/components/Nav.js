@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import classnames from 'classnames'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
@@ -16,6 +16,8 @@ import ContractStore from 'stores/ContractStore'
 import AccountStatusPopover from './AccountStatusPopover'
 import { adjustLinkHref } from 'utils/utils'
 import { assetRootPath } from 'utils/image'
+import TransactionStore from 'stores/TransactionStore'
+import { usePrevious } from 'utils/hooks'
 
 const environment = process.env.NODE_ENV
 
@@ -99,11 +101,58 @@ const DappLinks = ({ page }) => {
 
 const TransactionActivityDropdown = () => {
   const [open, setOpen] = useState(false)
+  const transactions = useStoreState(TransactionStore, (s) => s.transactions)
+  const prevTransactions = usePrevious(transactions)
+  const [txHashesToAnimate, setTxHashesToAnimate] = useState([])
+  const [sortedTransactions, setSortedTransactions] = useState([])
+
+  useEffect(() => {
+    // check which transactions have newly arrived
+    if (prevTransactions && prevTransactions.length !== 0) {
+      const prevTxHashes = prevTransactions.map((tx) => tx.hash)
+      setTxHashesToAnimate([
+        ...txHashesToAnimate,
+        ...transactions
+          .filter((tx) => !prevTxHashes.includes(tx.hash))
+          .map((tx) => tx.hash),
+      ])
+    }
+
+    const sortedTx = [...transactions]
+    /* need to create a separate array from `transactions` one, otherwise the
+     * useEffect with the sorted `transactions` as second parameters triggers
+     * on each render.
+     */
+    sortedTx.sort((a, b) => {
+      if (!b.mined && !a.mined) return 0
+      else if (!b.mined) return 10
+      else if (!a.mined) return -10
+      else return b.blockNumber - a.blockNumber
+    })
+    const filteredTx = sortedTx.filter((tx) => {
+      return (
+        tx.type !== 'approveWrap' && tx.type !== 'wrap' && tx.type !== 'unwrap'
+      )
+    })
+    setSortedTransactions(filteredTx)
+  }, [transactions])
+
+  const lastProcessedTransaction = sortedTransactions?.[0]
+
+  const shouldAnimate =
+    lastProcessedTransaction &&
+    txHashesToAnimate?.includes(lastProcessedTransaction.hash)
+
   return (
     <>
       <Dropdown
         className="dropdown"
-        content={<TransactionActivity />}
+        content={
+          <TransactionActivity
+            animateHashes={txHashesToAnimate}
+            transactions={sortedTransactions}
+          />
+        }
         open={open}
         onClose={() => setOpen(false)}
       >
@@ -113,11 +162,34 @@ const TransactionActivityDropdown = () => {
             setOpen((prev) => !prev)
           }}
         >
-          <img
-            className="activity-icon"
-            src={assetRootPath('/images/activity.png')}
-            alt="Transaction activity button"
-          />
+          {shouldAnimate ? (
+            !lastProcessedTransaction?.mined ? (
+              <img
+                className="activity-icon rotating"
+                src={assetRootPath('/images/activity-pending.png')}
+                alt="Transaction activity pending"
+              />
+            ) : lastProcessedTransaction?.mined &&
+              !lastProcessedTransaction?.isError ? (
+              <img
+                className="activity-icon "
+                src={assetRootPath('/images/activity-success.png')}
+                alt="Transaction activity success"
+              />
+            ) : (
+              <img
+                className="activity-icon"
+                src={assetRootPath('/images/activity-failed.png')}
+                alt="Transaction activity failed"
+              />
+            )
+          ) : (
+            <img
+              className="activity-icon"
+              src={assetRootPath('/images/activity.png')}
+              alt="Transaction activity button"
+            />
+          )}
         </button>
       </Dropdown>
       <style jsx>{`
@@ -141,7 +213,7 @@ const TransactionActivityDropdown = () => {
         .dropdown-menu {
           right: 0;
           left: auto;
-          top: 140%;
+          top: 150%;
           border-radius: 10px;
           border: solid 1px #141519;
           background-color: #1e1f25;
@@ -168,6 +240,29 @@ const TransactionActivityDropdown = () => {
         .dropdown-menu a .active .dropdown-marble {
           font-weight: bold;
           background-color: #183140;
+        }
+
+        .rotating {
+          -webkit-animation: spin 2s linear infinite;
+          -moz-animation: spin 2s linear infinite;
+          animation: spin 2s linear infinite;
+        }
+
+        @-moz-keyframes spin {
+          100% {
+            -moz-transform: rotate(360deg);
+          }
+        }
+        @-webkit-keyframes spin {
+          100% {
+            -webkit-transform: rotate(360deg);
+          }
+        }
+        @keyframes spin {
+          100% {
+            -webkit-transform: rotate(360deg);
+            transform: rotate(360deg);
+          }
         }
       `}</style>
     </>

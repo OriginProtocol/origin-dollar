@@ -3,11 +3,492 @@ import { fbt } from 'fbt-runtime'
 import { getEtherscanHost } from 'utils/web3'
 import { useWeb3React } from '@web3-react/core'
 import { useStoreState } from 'pullstate'
-
-import CoinCircleGraphics from 'components/transactionActivity/CoinCircleGraphics'
 import TransactionStore from 'stores/TransactionStore'
 import { formatCurrency, formatCurrencyConditional } from 'utils/math'
 import { assetRootPath } from 'utils/image'
+
+const CoinImage = ({ coin }) => {
+  const coinsToRender =
+    coin === 'mix' ? ['weth', 'reth', 'steth', 'frxeth'] : coin.split(',')
+  const size = 24
+  return (
+    <>
+      <div className="coin-image">
+        {coinsToRender?.map((current, index) => (
+          <img
+            key={`${current}_${index}`}
+            style={{
+              left: index * -1 * (size / 2),
+              zIndex: coinsToRender.length - index,
+            }}
+            src={assetRootPath(`/images/currency/${current}-icon-small.svg`)}
+            alt={current}
+          />
+        ))}
+      </div>
+      <style jsx>
+        {`
+          .coin-image {
+            display: flex;
+            align-items: center;
+            justify-center: center;
+            position: relative;
+            width: ${coinsToRender.length > 1
+              ? size + (coinsToRender.length - 1) * (size / 2) * 1.25
+              : size * 1.25}px;
+            padding: 4px;
+          }
+
+          .coin-image img {
+            position: relative;
+            width: ${size}px;
+            height: ${size}px;
+            transition: left 0.4s cubic-bezier(0.5, -0.5, 0.5, 1.5) 0.5s,
+              top 0.4s cubic-bezier(0.5, -0.5, 0.5, 1.5) 0.5s;
+          }
+        `}
+      </style>
+    </>
+  )
+}
+
+const TransactionImage = ({ from, to }) => (
+  <div className="d-inline-flex align-items-center">
+    <CoinImage coin={from} />
+    {to && (
+      <>
+        <img
+          className="mx-2"
+          src={assetRootPath('/images/arrowRight.png')}
+          alt="arrow"
+        />
+        <CoinImage coin={to} />
+      </>
+    )}
+  </div>
+)
+
+const ActivityItem = ({ transaction, states = {}, visual }) => {
+  const web3react = useWeb3React()
+
+  const etherscanLinkHash = transaction.safeData
+    ? transaction.safeData.txHash
+    : transaction.hash
+
+  const etherscanLink = `${getEtherscanHost(web3react)}/tx/${etherscanLinkHash}`
+  /* failed transactions that have not been mined and shouldn't have a hash
+   * still have a hash for deduplication purposes. This figures out if the hash
+   * is a valid one, and if we should link to etherscan
+   */
+  const isValidHash = transaction.hash && transaction.hash.startsWith('0x')
+
+  const currentState = !transaction.mined
+    ? 'pending'
+    : transaction.mined && !transaction.isError
+    ? 'success'
+    : 'failed'
+
+  return (
+    <>
+      <div className="activity-item">
+        <div className="activity-details">
+          <div className="status-container">
+            <span className="status-icon">
+              {currentState === 'pending' && (
+                <img
+                  className="rotating"
+                  src={assetRootPath('/images/spinner-green.png')}
+                  alt="Pending"
+                />
+              )}
+              {currentState === 'success' && (
+                <img
+                  src={assetRootPath('/images/green-checkmark.png')}
+                  alt="Success"
+                />
+              )}
+              {currentState === 'failed' && (
+                <img
+                  src={assetRootPath('/images/red-x-filled.png')}
+                  alt="Failed"
+                />
+              )}
+            </span>
+            <div className="status-details ml-1">
+              <span className="ml-1 mr-2 description">
+                {states[currentState]?.action}
+              </span>
+              {isValidHash && (
+                <a
+                  className="etherscan-link"
+                  href={etherscanLink}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <img
+                    src={assetRootPath('/images/externalLink.png')}
+                    alt="Navigate to Etherscan"
+                  />
+                </a>
+              )}
+            </div>
+          </div>
+          <span className="info">{states[currentState]?.description}</span>
+        </div>
+        {visual && <div className="activity-images">{visual}</div>}
+      </div>
+      <style jsx>{`
+        .activity-item {
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          justify-content: space-between;
+          padding: 0 18px;
+          width: 100%;
+          background: #1e1f25;
+          color: #fafbfb;
+          height: 78px;
+        }
+
+        .activity-details {
+          display: flex;
+          flex-direction: column;
+        }
+
+        .activity-details .status-container {
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          margin-bottom: 8px;
+        }
+
+        .status-icon {
+          display: flex;
+          align-items: center;
+          flex-shrink: 0;
+          height: 13px;
+          width: 13px;
+        }
+
+        .status-icon img {
+          height: 100%;
+          width: 100%;
+        }
+
+        .status-details {
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          font-size: 14px;
+          width: 100%;
+        }
+
+        .status-details .description {
+          font-size: 14px;
+          color: #fafbfb;
+        }
+
+        .activity-details .info {
+          font-size: 12px;
+          color: #828699;
+          margin-left: 4px;
+          font-family: Sailec;
+        }
+
+        .activity-images {
+          display: flex;
+          align-items: center;
+          justify-content: flex-end;
+          flex-shrink: 0;
+          padding: 8px;
+          background: #18191c;
+          border-radius: 4px;
+          height: 40px;
+        }
+
+        .etherscan-link img {
+          width: 8px;
+          height: 8px;
+        }
+
+        .rotating {
+          -webkit-animation: spin 2s linear infinite;
+          -moz-animation: spin 2s linear infinite;
+          animation: spin 2s linear infinite;
+        }
+
+        @-moz-keyframes spin {
+          100% {
+            -moz-transform: rotate(360deg);
+          }
+        }
+        @-webkit-keyframes spin {
+          100% {
+            -webkit-transform: rotate(360deg);
+          }
+        }
+        @keyframes spin {
+          100% {
+            -webkit-transform: rotate(360deg);
+            transform: rotate(360deg);
+          }
+        }
+      `}</style>
+    </>
+  )
+}
+
+const RebaseTransaction = ({ transaction, coin }) => (
+  <ActivityItem
+    transaction={transaction}
+    coin={coin}
+    states={{
+      pending: {
+        action: fbt('Rebasing', 'Rebasing'),
+        description: fbt('Increasing OETH supply', 'Increasing OETH supply'),
+      },
+      success: {
+        action: fbt('Rebased', 'Rebased'),
+        description: fbt('OETH supply increased', 'OETH supply increased'),
+      },
+      failed: {
+        action: fbt('Failed to rebase', 'Failed to rebase'),
+        description: fbt(
+          'Failed to increase OETH supply',
+          'Failed to increase OETH supply'
+        ),
+      },
+    }}
+    visual={<TransactionImage transaction={transaction} from={coin} />}
+  />
+)
+
+const RebaseOptInTransaction = ({ transaction, coin }) => (
+  <ActivityItem
+    transaction={transaction}
+    coin={coin}
+    states={{
+      pending: {
+        action: fbt('Rebase opt-in pending', 'Rebase opt-in pending'),
+        description: fbt('To receive yield', 'To receive yield'),
+      },
+      success: {
+        action: fbt('Rebase opt-in succeeded', 'Rebase opt-in succeeded'),
+        description: fbt(
+          'You will now receive yield',
+          'You will now receive yield'
+        ),
+      },
+      failed: {
+        action: fbt('Rebase opt-in failed', 'Rebase opt-in failed'),
+        description: fbt('To receive yield', 'To receive yield'),
+      },
+    }}
+    visual={<TransactionImage transaction={transaction} from={coin} />}
+  />
+)
+
+const ApproveTransaction = ({ transaction, coin }) => (
+  <ActivityItem
+    transaction={transaction}
+    coin={coin}
+    states={{
+      pending: {
+        action: fbt('Pending approval', 'Pending approval'),
+        description: fbt(
+          `Approve ${fbt.param(
+            'coin',
+            coin?.split(',').join(' & ').toUpperCase()
+          )} for swapping`,
+          'Pending approval'
+        ),
+      },
+      success: {
+        action: fbt('Approved', 'Approved'),
+        description: fbt(
+          `Approved ${fbt.param(
+            'coin',
+            coin?.split(',').join(' & ').toUpperCase()
+          )} for swapping`,
+          'Approved'
+        ),
+      },
+      failed: {
+        action: fbt('Approval failed', 'Approval failed'),
+        description: fbt(
+          `Approve ${fbt.param(
+            'coin',
+            coin?.split(',').join(' & ').toUpperCase()
+          )} for swapping`,
+          'Approval failed'
+        ),
+      },
+    }}
+    visual={<TransactionImage transaction={transaction} from={coin} />}
+  />
+)
+
+const RedeemTransaction = ({ transaction, coin }) => {
+  const context = transaction?.data || {}
+  const baseDescription = fbt(
+    `${fbt.param('oeth context', context?.oeth || '-')} OETH for ${fbt.param(
+      'lsds context',
+      context?.mix || '-'
+    )} LSDs`,
+    'Swap coins for Redeem'
+  )
+  return (
+    <ActivityItem
+      transaction={transaction}
+      coin={coin}
+      states={{
+        pending: {
+          action: fbt('Pending redeem', 'Pending redeem'),
+          description: baseDescription,
+        },
+        success: {
+          action: fbt('Redeemed', 'Redeemed'),
+          description: baseDescription,
+        },
+        failed: {
+          action: fbt('Redeem failed', 'Redeem failed'),
+          description: baseDescription,
+        },
+      }}
+      visual={
+        <TransactionImage transaction={transaction} from="oeth" to={coin} />
+      }
+    />
+  )
+}
+
+const MintTransaction = ({ transaction, coin }) => {
+  const context = transaction?.data || {}
+  const baseDescription = fbt(
+    `${fbt.param('mint context', context?.[coin] || '-')} ${fbt.param(
+      'coin',
+      coin.toUpperCase()
+    )} for ${fbt.param('oeth context', context?.oeth || '-')} OETH`,
+    'Swap coins for OETH'
+  )
+  return (
+    <ActivityItem
+      transaction={transaction}
+      coin={coin}
+      states={{
+        pending: {
+          action: fbt('Pending swap', 'Pending swap'),
+          description: baseDescription,
+        },
+        success: {
+          action: fbt('Swapped', 'Swapped'),
+          description: baseDescription,
+        },
+        failed: {
+          action: fbt('Swap failed', 'Swap failed'),
+          description: baseDescription,
+        },
+      }}
+      visual={
+        <TransactionImage transaction={transaction} from={coin} to="oeth" />
+      }
+    />
+  )
+}
+
+const ApproveWrapTransaction = ({ transaction, coin }) => (
+  <ActivityItem
+    transaction={transaction}
+    coin={coin}
+    states={{
+      pending: {
+        action: fbt('Pending approval', 'Pending approval'),
+        description: fbt(
+          `Approve ${fbt.param(
+            'coin',
+            coin?.split(',').join(' & ').toUpperCase()
+          )} for swapping`,
+          'Pending approval'
+        ),
+      },
+      success: {
+        action: fbt('Approved', 'Approved'),
+        description: fbt(
+          `Approved ${fbt.param(
+            'coin',
+            coin?.split(',').join(' & ').toUpperCase()
+          )} for swapping`,
+          'Approved'
+        ),
+      },
+      failed: {
+        action: fbt('Approval failed', 'Approval failed'),
+        description: fbt(
+          `Approve ${fbt.param(
+            'coin',
+            coin?.split(',').join(' & ').toUpperCase()
+          )} for swapping`,
+          'Approval failed'
+        ),
+      },
+    }}
+    visual={<TransactionImage transaction={transaction} from={coin} />}
+  />
+)
+
+const ApproveUnWrapTransaction = ({ transaction, coin }) => (
+  <ActivityItem
+    transaction={transaction}
+    coin={coin}
+    states={{
+      pending: {
+        action: fbt('Wrapping', 'Wrapping'),
+        description: fbt('Wrapping OETH into wOETH', 'Wrapping OETH'),
+      },
+      success: {
+        action: fbt('Wrapped', 'Wrapped'),
+        description: fbt('Wrapped OETH into wOETH', 'Wrapped OETH'),
+      },
+      failed: {
+        action: fbt('Failed wrapping', 'Failed wrapping'),
+        description: fbt(
+          'Failed wrapping OETH into wOETH',
+          'Failed wrapping OETH'
+        ),
+      },
+    }}
+    visual={
+      <TransactionImage transaction={transaction} from="oeth" to={coin} />
+    }
+  />
+)
+
+const WrapTransaction = ({ transaction, coin }) => (
+  <ActivityItem
+    transaction={transaction}
+    coin={coin}
+    states={{
+      pending: {
+        action: fbt('Unwrapping', 'Unwrapping'),
+        description: fbt('Unwrapping wOETH into OETH', 'Unwrapping wOETH'),
+      },
+      success: {
+        action: fbt('Unwrapped', 'Unwrapped'),
+        description: fbt('wOETH unwrapped into OETH', 'Unwrapped wOETH'),
+      },
+      failed: {
+        action: fbt('Failed unwrapping', 'Failed unwrapping'),
+        description: fbt(
+          'Failed unwrapping wOETH into OETH',
+          'Failed unwrapping wOETH'
+        ),
+      },
+    }}
+    visual={
+      <TransactionImage transaction={transaction} from="oeth" to={coin} />
+    }
+  />
+)
 
 const SidePanelTransactionMessage = ({
   transaction,
@@ -31,17 +512,6 @@ const SidePanelTransactionMessage = ({
     (s) =>
       s.expandedTransaction && s.expandedTransaction.hash === transaction.hash
   )
-  const web3react = useWeb3React()
-
-  const etherscanLinkHash = transaction.safeData
-    ? transaction.safeData.txHash
-    : transaction.hash
-  const etherscanLink = `${getEtherscanHost(web3react)}/tx/${etherscanLinkHash}`
-  /* failed transactions that have not been mined and shouldn't have a hash
-   * still have a hash for deduplication purposes. This figures out if the hash
-   * is a valid one, and if we should link to etherscan
-   */
-  const isValidHash = transaction.hash && transaction.hash.startsWith('0x')
 
   useEffect(() => {
     if (!isExpanded) {
@@ -91,16 +561,6 @@ const SidePanelTransactionMessage = ({
         }}
       >
         <div className="main-contents">
-          {showContents && isValidHash && (
-            <a
-              className={`etherscan-link ${showInnerContents ? '' : 'hidden'}`}
-              onClick={(e) => {
-                window.open(etherscanLink, '_blank')
-              }}
-            >
-              &nbsp;
-            </a>
-          )}
           {showContents && (mintDataAvailable || redeemDataAvailable) && (
             <a
               className={`expand-link ${showInnerContents ? '' : 'hidden'} ${
@@ -138,477 +598,28 @@ const SidePanelTransactionMessage = ({
             }`}
           >
             {showContents && isRebaseTransaction && (
-              <>
-                <CoinCircleGraphics
-                  transaction={transaction}
-                  coin={coin}
-                  animate={animate}
-                  showTxStatusIcon={true}
-                  drawType="all-same"
-                />
-                <div
-                  className={`title-holder ${
-                    showInnerContents ? '' : 'hidden'
-                  }`}
-                >
-                  {!transaction.mined && (
-                    <div className="title">
-                      {fbt('Increasing OETH supply', 'Increasing OETH supply')}
-                    </div>
-                  )}
-                  {transaction.mined && !transaction.isError && (
-                    <div className="title">
-                      {fbt('OETH supply increased', 'OETH supply increased')}
-                    </div>
-                  )}
-                  {transaction.mined && transaction.isError && (
-                    <div className="title">
-                      {fbt(
-                        'Failed to increase OETH supply',
-                        'Failed to increase OETH supply'
-                      )}
-                    </div>
-                  )}
-                </div>
-              </>
+              <RebaseTransaction transaction={transaction} coin={coin} />
             )}
             {showContents && isRebaseOptInTransaction && (
-              <>
-                <CoinCircleGraphics
-                  transaction={transaction}
-                  coin={coin}
-                  animate={animate}
-                  showTxStatusIcon={true}
-                  drawType="all-same"
-                />
-                <div
-                  className={`title-holder ${
-                    showInnerContents ? '' : 'hidden'
-                  }`}
-                >
-                  {!transaction.mined && (
-                    <div className="title">
-                      {fbt(
-                        'Opting in to OETH rebasing',
-                        'Opting in to OETH rebasing'
-                      )}
-                    </div>
-                  )}
-                  {transaction.mined && !transaction.isError && (
-                    <div className="title">
-                      {fbt(
-                        'Opted in to OETH rebase',
-                        'Opted in to OETH rebase'
-                      )}
-                    </div>
-                  )}
-                  {transaction.mined && transaction.isError && (
-                    <div className="title">
-                      {fbt(
-                        'Failed to opt in to OETH rebase',
-                        'Failed to opt in to OETH rebase'
-                      )}
-                    </div>
-                  )}
-                </div>
-              </>
+              <RebaseOptInTransaction transaction={transaction} coin={coin} />
             )}
             {showContents && isApproveTransaction && (
-              <>
-                <CoinCircleGraphics
-                  transaction={transaction}
-                  coin={coin}
-                  animate={animate}
-                  showTxStatusIcon={true}
-                  drawType="all-same"
-                />
-                <div
-                  className={`title-holder ${
-                    showInnerContents ? '' : 'hidden'
-                  }`}
-                >
-                  {!transaction.mined && (
-                    <div className="title">
-                      {fbt(
-                        'Granting permission to move your ' +
-                          fbt.param('coin', coin.toUpperCase()),
-                        'Granting permission to move your coin'
-                      )}
-                    </div>
-                  )}
-                  {transaction.mined && !transaction.isError && (
-                    <div className="title">
-                      {fbt(
-                        'Permission granted to move your ' +
-                          fbt.param('coin', coin.toUpperCase()),
-                        'Permission granted to move your coin'
-                      )}
-                    </div>
-                  )}
-                  {transaction.mined && transaction.isError && (
-                    <div className="title">
-                      {fbt(
-                        'Failed granting permission to move your ' +
-                          fbt.param('coin', coin.toUpperCase()),
-                        'Failed granting permission to move your coin'
-                      )}
-                    </div>
-                  )}
-                </div>
-              </>
+              <ApproveTransaction transaction={transaction} coin={coin} />
             )}
             {showContents && isRedeemTransaction && (
-              <>
-                <div className="d-flex align-items-center">
-                  <CoinCircleGraphics
-                    transaction={transaction}
-                    coin={'oeth'}
-                    animate={animate}
-                    showTxStatusIcon={false}
-                    drawType="all-same"
-                  />
-                  <div className={`line ${showInnerContents ? '' : 'hidden'}`}>
-                    <div className="completion-indicator">
-                      {!transaction.mined && (
-                        <img
-                          className="waiting-icon rotating"
-                          src={assetRootPath('/images/spinner-green-small.png')}
-                        />
-                      )}
-                      {transaction.mined && !transaction.isError && (
-                        <img
-                          className="waiting-icon"
-                          src={assetRootPath('/images/green-checkmark.svg')}
-                        />
-                      )}
-                      {transaction.mined && transaction.isError && (
-                        <img
-                          className="waiting-icon"
-                          src={assetRootPath('/images/red-x-filled.svg')}
-                        />
-                      )}
-                    </div>
-                  </div>
-                  <CoinCircleGraphics
-                    transaction={transaction}
-                    coin={
-                      coin === 'mix'
-                        ? ['weth', 'reth', 'steth', 'frxeth']
-                        : coin.split(',')
-                    }
-                    animate={animate}
-                    showTxStatusIcon={false}
-                    drawType="per-coin"
-                  />
-                </div>
-                <div
-                  className={`title-holder ${
-                    showInnerContents ? '' : 'hidden'
-                  }`}
-                >
-                  {!transaction.mined && (
-                    <div className="title">
-                      {fbt(
-                        'Swapping OETH for ' +
-                          fbt.param(
-                            'coin',
-                            coin.split(',').join(' & ').toUpperCase()
-                          ),
-                        'Swapping OETH for coins'
-                      )}
-                    </div>
-                  )}
-                  {transaction.mined && !transaction.isError && (
-                    <div className="title">
-                      {fbt(
-                        'Swapped OETH for ' +
-                          fbt.param(
-                            'coin',
-                            coin.split(',').join(' & ').toUpperCase()
-                          ),
-                        'Swapped OETH for coins'
-                      )}
-                    </div>
-                  )}
-                  {transaction.mined && transaction.isError && (
-                    <div className="title">
-                      {fbt(
-                        'Failed swapping OETH for ' +
-                          fbt.param(
-                            'coin',
-                            coin.split(',').join(' & ').toUpperCase()
-                          ),
-                        'Failed swapping OETH for coins'
-                      )}
-                    </div>
-                  )}
-                </div>
-              </>
+              <RedeemTransaction transaction={transaction} coin={coin} />
             )}
             {showContents && isMintTransaction && (
-              <>
-                <div className="d-flex align-items-center">
-                  <CoinCircleGraphics
-                    transaction={transaction}
-                    coin={coin.split(',')}
-                    animate={animate}
-                    showTxStatusIcon={false}
-                    drawType="per-coin"
-                  />
-                  <div className={`line ${showInnerContents ? '' : 'hidden'}`}>
-                    <div className="completion-indicator">
-                      {!transaction.mined && (
-                        <img
-                          className="waiting-icon rotating"
-                          src={assetRootPath('/images/spinner-green-small.png')}
-                        />
-                      )}
-                      {transaction.mined && !transaction.isError && (
-                        <img
-                          className="waiting-icon"
-                          src={assetRootPath('/images/green-checkmark.svg')}
-                        />
-                      )}
-                      {transaction.mined && transaction.isError && (
-                        <img
-                          className="waiting-icon"
-                          src={assetRootPath('/images/red-x-filled.svg')}
-                        />
-                      )}
-                    </div>
-                  </div>
-                  <CoinCircleGraphics
-                    transaction={transaction}
-                    coin={'oeth'}
-                    animate={animate}
-                    showTxStatusIcon={false}
-                    drawType="all-same"
-                  />
-                </div>
-                <div
-                  className={`title-holder ${
-                    showInnerContents ? '' : 'hidden'
-                  }`}
-                >
-                  {!transaction.mined && (
-                    <div className="title">
-                      {fbt(
-                        'Swapping ' +
-                          fbt.param(
-                            'coin',
-                            coin.split(',').join(' & ').toUpperCase()
-                          ) +
-                          ' for OETH',
-                        'Swapping coins for OETH'
-                      )}
-                    </div>
-                  )}
-                  {transaction.mined && !transaction.isError && (
-                    <div className="title">
-                      {fbt(
-                        fbt.param(
-                          'coin',
-                          coin.split(',').join(' & ').toUpperCase()
-                        ) + ' swapped for OETH',
-                        'Swapped coins for OETH'
-                      )}
-                    </div>
-                  )}
-                  {transaction.mined && transaction.isError && (
-                    <div className="title">
-                      {fbt(
-                        'Failed swapping ' +
-                          fbt.param(
-                            'coin',
-                            coin.split(',').join(' & ').toUpperCase()
-                          ) +
-                          ' for OETH',
-                        'Failed swapping for OETH'
-                      )}
-                    </div>
-                  )}
-                </div>
-              </>
+              <MintTransaction transaction={transaction} coin={coin} />
             )}
             {showContents && isApproveWrapTransaction && (
-              <>
-                <CoinCircleGraphics
-                  transaction={transaction}
-                  coin={coin}
-                  animate={animate}
-                  showTxStatusIcon={true}
-                  drawType="all-same"
-                />
-                <div
-                  className={`title-holder ${
-                    showInnerContents ? '' : 'hidden'
-                  }`}
-                >
-                  {!transaction.mined && (
-                    <div className="title">
-                      {fbt(
-                        'Granting permission to move your ' +
-                          fbt.param('coin', coin.toUpperCase()),
-                        'Granting permission to move your coin'
-                      )}
-                    </div>
-                  )}
-                  {transaction.mined && !transaction.isError && (
-                    <div className="title">
-                      {fbt(
-                        'Permission granted to move your ' +
-                          fbt.param('coin', coin.toUpperCase()),
-                        'Permission granted to move your coin'
-                      )}
-                    </div>
-                  )}
-                  {transaction.mined && transaction.isError && (
-                    <div className="title">
-                      {fbt(
-                        'Failed granting permission to move your ' +
-                          fbt.param('coin', coin.toUpperCase()),
-                        'Failed granting permission to move your coin'
-                      )}
-                    </div>
-                  )}
-                </div>
-              </>
+              <ApproveWrapTransaction transaction={transaction} coin={coin} />
             )}
             {showContents && isUnwrapTransaction && (
-              <>
-                <div className="d-flex align-items-center">
-                  <CoinCircleGraphics
-                    transaction={transaction}
-                    coin={'oeth'}
-                    animate={animate}
-                    showTxStatusIcon={false}
-                    drawType="all-same"
-                  />
-                  <div className={`line ${showInnerContents ? '' : 'hidden'}`}>
-                    <div className="completion-indicator">
-                      {!transaction.mined && (
-                        <img
-                          className="waiting-icon rotating"
-                          src={assetRootPath('/images/spinner-green-small.png')}
-                        />
-                      )}
-                      {transaction.mined && !transaction.isError && (
-                        <img
-                          className="waiting-icon"
-                          src={assetRootPath('/images/green-checkmark.svg')}
-                        />
-                      )}
-                      {transaction.mined && transaction.isError && (
-                        <img
-                          className="waiting-icon"
-                          src={assetRootPath('/images/red-x-filled.svg')}
-                        />
-                      )}
-                    </div>
-                  </div>
-                  <CoinCircleGraphics
-                    transaction={transaction}
-                    coin={
-                      coin === 'mix'
-                        ? ['weth', 'reth', 'steth', 'frxeth']
-                        : coin.split(',')
-                    }
-                    animate={animate}
-                    showTxStatusIcon={false}
-                    drawType="per-coin"
-                  />
-                </div>
-                <div
-                  className={`title-holder ${
-                    showInnerContents ? '' : 'hidden'
-                  }`}
-                >
-                  {!transaction.mined && (
-                    <div className="title">
-                      {fbt('Wrapping OETH into wOETH', 'Wrapping OETH')}
-                    </div>
-                  )}
-                  {transaction.mined && !transaction.isError && (
-                    <div className="title">
-                      {fbt('Wrapped OETH into wOETH', 'Wrapped OETH')}
-                    </div>
-                  )}
-                  {transaction.mined && transaction.isError && (
-                    <div className="title">
-                      {fbt(
-                        'Failed wrapping OETH into wOETH',
-                        'Failed wrapping OETH'
-                      )}
-                    </div>
-                  )}
-                </div>
-              </>
+              <ApproveUnWrapTransaction transaction={transaction} coin={coin} />
             )}
             {showContents && isWrapTransaction && (
-              <>
-                <div className="d-flex align-items-center">
-                  <CoinCircleGraphics
-                    transaction={transaction}
-                    coin={coin.split(',')}
-                    animate={animate}
-                    showTxStatusIcon={false}
-                    drawType="per-coin"
-                  />
-                  <div className={`line ${showInnerContents ? '' : 'hidden'}`}>
-                    <div className="completion-indicator">
-                      {!transaction.mined && (
-                        <img
-                          className="waiting-icon rotating"
-                          src={assetRootPath('/images/spinner-green-small.png')}
-                        />
-                      )}
-                      {transaction.mined && !transaction.isError && (
-                        <img
-                          className="waiting-icon"
-                          src={assetRootPath('/images/green-checkmark.svg')}
-                        />
-                      )}
-                      {transaction.mined && transaction.isError && (
-                        <img
-                          className="waiting-icon"
-                          src={assetRootPath('/images/red-x-filled.svg')}
-                        />
-                      )}
-                    </div>
-                  </div>
-                  <CoinCircleGraphics
-                    transaction={transaction}
-                    coin={'oeth'}
-                    animate={animate}
-                    showTxStatusIcon={false}
-                    drawType="all-same"
-                  />
-                </div>
-                <div
-                  className={`title-holder ${
-                    showInnerContents ? '' : 'hidden'
-                  }`}
-                >
-                  {!transaction.mined && (
-                    <div className="title">
-                      {fbt('Unwrapping wOETH into OETH', 'Unwrapping wOETH')}
-                    </div>
-                  )}
-                  {transaction.mined && !transaction.isError && (
-                    <div className="title">
-                      {fbt('wOETH unwrapped into OETH', 'Unwrapped wOETH')}
-                    </div>
-                  )}
-                  {transaction.mined && transaction.isError && (
-                    <div className="title">
-                      {fbt(
-                        'Failed unwrapping wOETH into OETH',
-                        'Failed unwrapping wOETH'
-                      )}
-                    </div>
-                  )}
-                </div>
-              </>
+              <WrapTransaction transaction={transaction} coin={coin} />
             )}
             {/* do not forget about show contents flag when adding new stuff*/}
             {showContents && false}
@@ -764,7 +775,6 @@ const SidePanelTransactionMessage = ({
         }
 
         .main-contents {
-          padding: 15px 20px;
           position: relative;
         }
 
@@ -885,7 +895,6 @@ const SidePanelTransactionMessage = ({
         .contents-body {
           opacity: 1;
           max-height: 300px;
-          margin-top: 12px;
         }
 
         .animate .contents-body.hidden {
@@ -927,34 +936,6 @@ const SidePanelTransactionMessage = ({
 
         .line.hidden {
           opacity: 0;
-        }
-
-        .waiting-icon {
-          width: 25px;
-          height: 25px;
-        }
-
-        .rotating {
-          -webkit-animation: spin 2s linear infinite;
-          -moz-animation: spin 2s linear infinite;
-          animation: spin 2s linear infinite;
-        }
-
-        @-moz-keyframes spin {
-          100% {
-            -moz-transform: rotate(360deg);
-          }
-        }
-        @-webkit-keyframes spin {
-          100% {
-            -webkit-transform: rotate(360deg);
-          }
-        }
-        @keyframes spin {
-          100% {
-            -webkit-transform: rotate(360deg);
-            transform: rotate(360deg);
-          }
         }
 
         .completion-indicator {

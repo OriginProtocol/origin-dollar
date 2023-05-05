@@ -299,11 +299,6 @@ const AccountListener = (props) => {
     }
 
     const loadRebaseStatus = async () => {
-      console.log('loaded rebase status', {
-        account,
-        library,
-      })
-
       if (!account) return
       // TODO handle other contract types. We only detect Gnosis Safe as having
       // opted out here as rebaseState will always be 0 for all EOAs
