@@ -44,6 +44,7 @@ module.exports = deploymentWithGuardianGovernor(
         ethers,
       });
 
+
     actions = actions.concat(harvesterActions);
 
     // actions = actions.concat(await reDeployOETH({
@@ -241,43 +242,23 @@ const deployHarvesterAndOracleRouter = async ({
   );
 
   await withConfirmation(
-    // CRV/USD
-    cOETHOracleRouter.cacheDecimals(addresses.mainnet.CRV, addresses.zero)
-  );
-
-  await withConfirmation(
-    // CVX/USD
-    cOETHOracleRouter.cacheDecimals(addresses.mainnet.CVX, addresses.zero)
-  );
-
-  await withConfirmation(
     // CRV/ETH
-    cOETHOracleRouter.cacheDecimals(addresses.mainnet.CRV, addresses.ETH)
+    cOETHOracleRouter.cacheDecimals(addresses.mainnet.CRV)
   );
 
   await withConfirmation(
     // CVX/ETH
-    cOETHOracleRouter.cacheDecimals(addresses.mainnet.CVX, addresses.ETH)
+    cOETHOracleRouter.cacheDecimals(addresses.mainnet.CVX)
   );
 
-  /* Even though it would seem fitting to have addresses.ETH instead of addresses.zero
-   * here that is not the case. Since the single asset ETH Vault assets are
-   * cached here. Instead of feed(address, address) that is used for reward
-   * tokens.
-   */
   await withConfirmation(
     // rETH/ETH
-    cOETHOracleRouter.cacheDecimals(addresses.mainnet.rETH, addresses.zero)
+    cOETHOracleRouter.cacheDecimals(addresses.mainnet.rETH)
   );
 
-  /* Even though it would seem fitting to have addresses.ETH instead of addresses.zero
-   * here that is not the case. Since the single asset ETH Vault assets are
-   * cached here. Instead of feed(address, address) that is used for reward
-   * tokens.
-   */
   await withConfirmation(
     // stETH/ETH
-    cOETHOracleRouter.cacheDecimals(addresses.mainnet.stETH, addresses.zero)
+    cOETHOracleRouter.cacheDecimals(addresses.mainnet.stETH)
   );
 
   await withConfirmation(

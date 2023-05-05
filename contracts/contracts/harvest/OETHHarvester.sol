@@ -52,10 +52,7 @@ contract OETHHarvester is BaseHarvester {
         uint256 balanceToSwap = Math.min(balance, tokenConfig.liquidationLimit);
 
         // Find reward token price feed paired with (W)ETH
-        uint256 oraclePrice = IOracle(priceProvider).price(
-            _swapToken,
-            0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE
-        );
+        uint256 oraclePrice = IOracle(priceProvider).price(_swapToken);
 
         // Oracle price is in 18 digits, WETH decimals are in 1e18
         uint256 minExpected = (balanceToSwap *
