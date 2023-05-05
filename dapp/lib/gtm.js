@@ -7,3 +7,7 @@ export const pageview = () => {
     pageTitle: document.title,
   })
 }
+
+export const event = (eventData) => {
+  window?.dataLayer?.push(eventData)
+}
