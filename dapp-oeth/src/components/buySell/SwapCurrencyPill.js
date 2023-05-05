@@ -275,7 +275,7 @@ const CoinSelect = ({
         </div>
         <style jsx>{`
           .coin-select {
-            min-width: 160px;
+            min-width: 140px;
             min-height: 40px;
             padding: 8px;
             font-size: 18px;
@@ -344,7 +344,7 @@ const CoinSelect = ({
         .coin-select-icon {
           height: 8px;
           width: 12px;
-          margin-right: 12px;
+          margin: 0 8px;
         }
 
         .p-5px {
@@ -590,14 +590,9 @@ const SwapCurrencyPill = ({
                   )}`}
             </div>
           </div>
-          <div className="d-flex flex-column justify-content-between align-items-start">
+          <div className="d-flex flex-column justify-content-between align-items-end">
             <div className="d-flex align-items-center">
-              <div
-                className={`d-flex justify-content-between balance mb-2 mr-2 ${
-                  balanceClickable ? 'clickable' : ''
-                }`}
-                onClick={setMaxBalance}
-              >
+              <div className="d-flex justify-content-between balance mb-2 mr-2">
                 {displayBalance && (
                   <div>
                     {fbt(
@@ -611,9 +606,9 @@ const SwapCurrencyPill = ({
                   </div>
                 )}
                 {balanceClickable && (
-                  <a className="max-link ml-2" onClick={setMaxBalance}>
-                    {fbt('Max', 'Set maximum currency amount')}
-                  </a>
+                  <button className="max-link ml-2" onClick={setMaxBalance}>
+                    {fbt('max', 'Set maximum currency amount')}
+                  </button>
                 )}
               </div>
             </div>
@@ -627,7 +622,7 @@ const SwapCurrencyPill = ({
               coinBalances={coinBalances}
             />
             {bottomItem && (
-              <div className="balance mt-auto">
+              <div className="balance mt-1">
                 {minReceived !== null
                   ? fbt(
                       'Min. received: ' +
@@ -687,7 +682,7 @@ const SwapCurrencyPill = ({
         }
 
         .balance {
-          font-size: 12px;
+          font-size: 14px;
           color: #828699;
           margin-left: 4px;
         }
@@ -710,6 +705,7 @@ const SwapCurrencyPill = ({
           padding-right: 24px;
           margin-top: 10px;
           padding-top: 4px;
+          font-family: Inter;
         }
 
         .mt-20 {
@@ -727,6 +723,7 @@ const SwapCurrencyPill = ({
         }
 
         input {
+          font-family: Sailec;
           border: 0px;
           max-width: 100%;
           text-align: left;
@@ -756,7 +753,7 @@ const SwapCurrencyPill = ({
 
         .max-link:hover,
         .clickable:hover {
-          text-decoration: underline;
+          background: rgba(250, 251, 251, 0.15);
         }
 
         .clickable {
@@ -764,10 +761,20 @@ const SwapCurrencyPill = ({
         }
 
         .max-link {
+          display: flex;
+          align-items: center;
+          justify-center: center;
+          font-family: Sailec;
+          border: none;
           font-size: 12px;
           color: #828699;
           weight: bold;
           cursor: pointer;
+          width: 32px;
+          height: 18px;
+          padding: 2px 4px;
+          background: rgba(250, 251, 251, 0.1);
+          border-radius: 4px;
         }
 
         .input-holder {
@@ -792,10 +799,6 @@ const SwapCurrencyPill = ({
             font-size: 12px;
             margin-left: 4px;
             white-space: nowrap;
-          }
-
-          .max-link {
-            font-size: 10px;
           }
         }
       `}</style>

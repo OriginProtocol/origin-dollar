@@ -54,12 +54,12 @@ const TransactionActivity = () => {
   return (
     <>
       <div
-        className={`transaction-activity d-flex flex-column justify-content-start align-items-center disable-scrollbars`}
+        className={`transaction-activity d-flex flex-column justify-content-start align-items-center`}
       >
         <div className="transaction-header">
           <h2 className="title">{fbt('Recent activity', 'Recent activity')}</h2>
         </div>
-        <div className="transaction-messages">
+        <div className="transaction-messages disable-scrollbars">
           {sortedTransactions && sortedTransactions.length > 0 ? (
             sortedTransactions.map((tx) => (
               <SidePanelTransactionMessage
@@ -74,8 +74,6 @@ const TransactionActivity = () => {
             </span>
           )}
         </div>
-        {}
-        {/*<SidePanelWelcomeMessage />*/}
       </div>
       <style jsx>{`
         .transaction-activity {
@@ -87,11 +85,15 @@ const TransactionActivity = () => {
           background-color: #1e1f25;
           border: 1px solid #141519;
           flex-grow: 1;
+          max-height: 550px;
+          overflow: hidden;
         }
 
         .transaction-header {
           display: flex;
           align-center: center;
+          position: sticky;
+          top: -1px;
           justify-content: space-between;
           padding: 24px 20px;
           border-bottom: 1px solid #141519;
@@ -109,7 +111,8 @@ const TransactionActivity = () => {
           justify-content: flex-start;
           height: 100%;
           width: 100%;
-          max-height: 550px;
+          max-height: 440px;
+          overflow-y: scroll;
         }
 
         .transaction-messages .no-activity {
