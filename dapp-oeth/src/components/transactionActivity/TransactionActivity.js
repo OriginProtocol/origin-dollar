@@ -59,13 +59,22 @@ const TransactionActivity = () => {
         <div className="transaction-header">
           <h2 className="title">{fbt('Recent activity', 'Recent activity')}</h2>
         </div>
-        {sortedTransactions.map((tx) => (
-          <SidePanelTransactionMessage
-            key={tx.hash}
-            transaction={tx}
-            animate={txHashesToAnimate.includes(tx.hash)}
-          />
-        ))}
+        <div className="transaction-messages">
+          {sortedTransactions && sortedTransactions.length > 0 ? (
+            sortedTransactions.map((tx) => (
+              <SidePanelTransactionMessage
+                key={tx.hash}
+                transaction={tx}
+                animate={txHashesToAnimate.includes(tx.hash)}
+              />
+            ))
+          ) : (
+            <span className="no-activity">
+              {fbt('No transaction activity', 'No activity')}
+            </span>
+          )}
+        </div>
+        {}
         {/*<SidePanelWelcomeMessage />*/}
       </div>
       <style jsx>{`
@@ -74,12 +83,9 @@ const TransactionActivity = () => {
           right: 0;
           max-width: 374px;
           min-width: 290px;
-          min-height: 560px;
-          max-height: 560px;
           border-radius: 10px;
           background-color: #1e1f25;
           border: 1px solid #141519;
-          overflow-y: scroll;
           flex-grow: 1;
         }
 
@@ -95,6 +101,22 @@ const TransactionActivity = () => {
         .transaction-header .title {
           color: #fafbfb;
           font-size: 14px;
+        }
+
+        .transaction-messages {
+          display: flex;
+          flex-direction: column;
+          justify-content: flex-start;
+          height: 100%;
+          width: 100%;
+          max-height: 550px;
+        }
+
+        .transaction-messages .no-activity {
+          color: #828699;
+          font-size: 14px;
+          text-align: left;
+          padding: 15px 20px;
         }
 
         .disable-scrollbars::-webkit-scrollbar {
