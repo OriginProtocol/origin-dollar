@@ -42,7 +42,6 @@ async function defaultFixture() {
 
   const harvesterProxy = await ethers.getContract("HarvesterProxy");
 
-  const oethHarvesterProxy = await ethers.getContract("OETHHarvesterProxy");
   const compoundStrategyProxy = await ethers.getContract(
     "CompoundStrategyProxy"
   );
@@ -61,11 +60,6 @@ async function defaultFixture() {
   const harvester = await ethers.getContractAt(
     "Harvester",
     harvesterProxy.address
-  );
-
-  const oethHarvester = await ethers.getContractAt(
-    "OETHHarvester",
-    oethHarvesterProxy.address
   );
 
   const dripperProxy = await ethers.getContract("DripperProxy");
@@ -186,7 +180,8 @@ async function defaultFixture() {
     cvxRewardPool,
     LUSDMetaStrategyProxy,
     LUSDMetaStrategy,
-    // ConvexEthMetaStrategyProxy,
+    oethHarvester,
+    ConvexEthMetaStrategyProxy,
     ConvexEthMetaStrategy;
 
   if (isFork) {
@@ -256,6 +251,21 @@ async function defaultFixture() {
       "Generalized4626Strategy",
       fraxEthStrategyProxy.address
     );
+
+    const oethHarvesterProxy = await ethers.getContract("OETHHarvesterProxy");
+    oethHarvester = await ethers.getContractAt(
+      "OETHHarvester",
+      oethHarvesterProxy.address
+    );
+
+    ConvexEthMetaStrategyProxy = await ethers.getContract(
+      "ConvexEthMetaStrategyProxy"
+    );
+    ConvexEthMetaStrategy = await ethers.getContractAt(
+      "ConvexEthMetaStrategy",
+      ConvexEthMetaStrategyProxy.address
+    );
+
   } else {
     usdt = await ethers.getContract("MockUSDT");
     dai = await ethers.getContract("MockDAI");
@@ -337,14 +347,6 @@ async function defaultFixture() {
       LUSDMetaStrategyProxy.address
     );
   }
-
-  ConvexEthMetaStrategyProxy = await ethers.getContract(
-    "ConvexEthMetaStrategyProxy"
-  );
-  ConvexEthMetaStrategy = await ethers.getContractAt(
-    "ConvexEthMetaStrategy",
-    ConvexEthMetaStrategyProxy.address
-  );
 
   if (!isFork) {
     const assetAddresses = await getAssetAddresses(deployments);
