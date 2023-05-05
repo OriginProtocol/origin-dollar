@@ -308,13 +308,6 @@ const useSwapEstimator = ({
     }
     const flooredEth = Math.floor(ethPrice)
     const gasInGwei = ethers.utils.formatUnits(gasPrice, 'gwei')
-
-    console.log({
-      gasLimit,
-      gasInGwei,
-      flooredEth,
-    })
-
     // gwei offset
     return (
       (parseFloat(gasLimit) * parseFloat(gasInGwei) * flooredEth) / 100000000

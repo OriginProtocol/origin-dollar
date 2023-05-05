@@ -42,7 +42,7 @@ function App({ Component, pageProps, err }) {
   const address = useStoreState(AccountStore, (s) => s.address)
 
   const canonicalUrl = (
-    `https://app.ousd.com` + (router.asPath === '/' ? '' : router.asPath)
+    `https://app.oeth.com` + (router.asPath === '/' ? '' : router.asPath)
   ).split('?')[0]
 
   useEffect(() => {
