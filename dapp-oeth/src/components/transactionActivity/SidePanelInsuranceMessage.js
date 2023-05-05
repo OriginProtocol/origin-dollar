@@ -56,7 +56,7 @@ const SidePanelInsuranceMessage = () => {
           padding: 120px 25px 24px 25px;
           margin-bottom: 10px;
           background-size: contain;
-          font-family: Lato;
+          font-family: Inter;
           font-size: 14px;
           font-weight: bold;
           letter-spacing: normal;
@@ -74,7 +74,7 @@ const SidePanelInsuranceMessage = () => {
         .btn-insurance {
           border-radius: 24px;
           padding: 4px 15px 5px 15px;
-          font-family: Lato;
+          font-family: Inter;
           font-size: 14px;
           margin-top: 13px;
           font-weight: bold;

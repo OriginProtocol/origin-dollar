@@ -546,7 +546,7 @@ const StakeUI = ({ rpcProvider, isMobile }) => {
         .title {
           margin-top: 44px;
           margin-bottom: 23px;
-          font-family: Lato;
+          font-family: Inter;
           font-size: 14px;
           font-weight: bold;
           color: #fafbfb;

@@ -16,7 +16,7 @@ export default function RewardsBoost({ pool, ml50 }) {
       <style jsx>{`
         .rewards-boost {
           background-color: #fec100;
-          font-family: Lato;
+          font-family: Inter;
           font-size: 14px;
           font-weight: bold;
           color: #183140;

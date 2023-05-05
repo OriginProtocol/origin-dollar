@@ -56,7 +56,7 @@ const SidePanelInsuranceMessage = () => {
           padding: 95px 27px 24px 27px;
           margin-bottom: 10px;
           background-size: contain;
-          font-family: Lato;
+          font-family: Inter;
           font-size: 14px;
           font-weight: bold;
           letter-spacing: normal;
@@ -84,7 +84,7 @@ const SidePanelInsuranceMessage = () => {
         .btn-wousd {
           border-radius: 24px;
           padding: 4px 15px 5px 15px;
-          font-family: Lato;
+          font-family: Inter;
           font-size: 14px;
           margin-top: 13px;
           font-weight: bold;

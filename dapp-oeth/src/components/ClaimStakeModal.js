@@ -168,7 +168,7 @@ const ClaimStakeModal = ({
         }
 
         .modal-header h1 {
-          font-family: Lato;
+          font-family: Inter;
           font-size: 24px;
           font-weight: bold;
           line-height: normal;
@@ -193,7 +193,7 @@ const ClaimStakeModal = ({
 
         .modal-content .modal-body p {
           margin: 0px; 
-          font-family: Lato; 
+          font-family: Inter; 
           font-size: 16px; 
           color: #828699;
         }
@@ -245,7 +245,7 @@ const ClaimStakeModal = ({
           margin: 0px;
           padding: 15px 30px;
           font-size: 18px;
-          font-family: Lato;
+          font-family: Inter;
         }
 
         .error-box {

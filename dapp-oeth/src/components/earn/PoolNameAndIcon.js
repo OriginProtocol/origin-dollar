@@ -44,7 +44,7 @@ export default function PoolNameAndIcon({
 
         .name {
           margin-left: 10px;
-          font-family: Lato;
+          font-family: Inter;
           font-size: 26px;
           color: #1e313f;
         }

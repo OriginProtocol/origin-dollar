@@ -53,7 +53,7 @@ const FilterButton = ({
           border-radius: 5px;
           border: solid 1px #141519;
           margin-right: 10px;
-          font-family: Lato;
+          font-family: Inter;
           font-size: 14px;
           cursor: pointer;
         }
@@ -432,12 +432,8 @@ const TransactionHistory = ({ isMobile }) => {
                         <FormatCurrencyByImportance
                           value={tx.amount}
                           isMobile={isMobile}
-                          hasHigherYield={
-                            hasHigherYield
-                          }
-                          yieldHigherThanAGwei={
-                            yieldHigherThanAGwei
-                          }
+                          hasHigherYield={hasHigherYield}
+                          yieldHigherThanAGwei={yieldHigherThanAGwei}
                         />
                       ) : (
                         '-'
@@ -448,12 +444,8 @@ const TransactionHistory = ({ isMobile }) => {
                         <FormatCurrencyByImportance
                           value={tx.balance}
                           isMobile={isMobile}
-                          hasHigherYield={
-                            hasHigherYield
-                          }
-                          yieldHigherThanAGwei={
-                            yieldHigherThanAGwei
-                          }
+                          hasHigherYield={hasHigherYield}
+                          yieldHigherThanAGwei={yieldHigherThanAGwei}
                         />
                       ) : (
                         '-'
@@ -617,7 +609,7 @@ const TransactionHistory = ({ isMobile }) => {
           border-radius: 5px;
           border: solid 1px black;
           margin-right: 10px;
-          font-family: Lato;
+          font-family: Inter;
           font-size: 14px;
           cursor: pointer;
         }

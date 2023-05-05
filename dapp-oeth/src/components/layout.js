@@ -19,6 +19,8 @@ import { burnTimer } from 'utils/constants'
 const UNISWAP_URL =
   'https://app.uniswap.org/#/swap?inputCurrency=0xdac17f958d2ee523a2206206994597c13d831ec7&outputCurrency=0x2A8e1E676Ec238d8A992307B495b45B3fEAa5e86'
 
+const SHOW_DISCLAIMER = true
+
 const Layout = ({
   locale,
   onLocale,
@@ -71,6 +73,21 @@ const Layout = ({
           content="https://ousd.com/images/share-twitter.png"
         />
       </Head>
+      <div
+        className={classnames(
+          'notice disclaimer text-white text-center p-3 dapp',
+          SHOW_DISCLAIMER ? '' : 'd-none'
+        )}
+      >
+        <div className="container d-flex flex-column flex-md-row align-items-center">
+          <span>
+            {fbt(
+              '⚠️ DO NOT RISK ANY FUNDS. ⚠️ Origin Ether is currently being audited. This dapp is for testing only.',
+              'Disclaimer usage'
+            )}
+          </span>
+        </div>
+      </div>
       <div
         className={classnames(
           'notice text-white text-center p-3 dapp',
@@ -143,6 +160,10 @@ const Layout = ({
 
         .notice.dapp {
           margin-bottom: 0px;
+        }
+
+        .notice.disclaimer {
+          background-color: #ff4e4e;
         }
 
         .notice .btn {

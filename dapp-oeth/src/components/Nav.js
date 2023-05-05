@@ -53,7 +53,7 @@ const DappLinks = ({ page }) => {
       </div>
       <style jsx>{`
         .dapp-navigation {
-          font-family: Lato;
+          font-family: Inter;
           font-size: 14px;
           color: #fafbfb;
           margin-left: 50px;
@@ -296,9 +296,11 @@ const Nav = ({ isMobile, locale, onLocale, page }) => {
               <div className={`d-flex flex-column flex-lg-row-reverse`}>
                 <AccountStatusDropdown />
               </div>
-              <div className="d-flex">
-                <TransactionActivityDropdown />
-              </div>
+              {active && account && (
+                <div className="d-flex">
+                  <TransactionActivityDropdown />
+                </div>
+              )}
               <GetOUSD
                 style={{ marginTop: 40 }}
                 className="mt-auto d-lg-none"

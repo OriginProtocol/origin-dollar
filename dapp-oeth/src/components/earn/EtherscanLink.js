@@ -29,7 +29,7 @@ export default function EtherscanLink({
       </a>
       <style jsx>{`
         .etherscan-link {
-          font-family: Lato;
+          font-family: Inter;
           font-size: 14px;
           color: #828699;
           font-size: 14px;

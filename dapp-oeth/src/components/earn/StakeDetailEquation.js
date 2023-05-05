@@ -62,7 +62,7 @@ const StakeDetailEquation = ({
           padding: 18px 25px;
           border-radius: 10px;
           background-color: #f1f3f6;
-          font-family: Lato;
+          font-family: Inter;
           font-size: 14px;
           color: #183140;
         }

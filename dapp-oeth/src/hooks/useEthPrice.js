@@ -34,21 +34,18 @@ const useEthPrice = () => {
     }
   }
 
-  // Fetches current eth price
-  const fetchEthPrice = async () => {
-    // if production
-    if (chainId === 1) {
-      return await _fetchEthPriceChainlink()
-    } else {
-      return await _fetchEthPriceCryptoApi()
-    }
-  }
-
   React.useEffect(() => {
     ;(async function () {
-      await fetchEthPrice()
+      if (!ethPrice) {
+        if (chainId === 1 && contracts.chainlinkEthAggregator) {
+          return await _fetchEthPriceChainlink()
+        } else {
+          // Fallback
+          return await _fetchEthPriceCryptoApi()
+        }
+      }
     })()
-  }, [])
+  }, [contracts.chainlinkEthAggregator])
 
   return ethPrice
 }

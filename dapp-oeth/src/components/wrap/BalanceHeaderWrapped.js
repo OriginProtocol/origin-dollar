@@ -442,7 +442,7 @@ const BalanceHeaderWrapped = ({
           }
 
           .balance-header .apy-container .apy-label {
-            font-family: Lato;
+            font-family: Inter;
             font-size: 11px;
             font-weight: bold;
             text-align: center;
@@ -450,7 +450,7 @@ const BalanceHeaderWrapped = ({
           }
 
           .balance-header .apy-container .apy-percentage {
-            font-family: Lato;
+            font-family: Inter;
             font-weight: normal;
           }
 
@@ -459,7 +459,7 @@ const BalanceHeaderWrapped = ({
           }
 
           .balance-header .light-grey-label {
-            font-family: Lato;
+            font-family: Inter;
             font-size: 11px;
             font-weight: bold;
             color: #828699;

@@ -57,7 +57,7 @@ const SidePanelWelcomeMessage = () => {
         }
 
         .side-panel-message .title {
-          font-family: Lato;
+          font-family: Inter;
           font-size: 14px;
           font-weight: bold;
           color: #fafbfb;

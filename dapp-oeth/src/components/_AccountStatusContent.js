@@ -180,7 +180,7 @@ const AccountStatusContent = ({ className, onOpen }) => {
         .wrong-network,
         .connected-to,
         .address {
-          font-family: Lato;
+          font-family: Inter;
           font-size: 16px;
           color: #fafbfb;
           margin-bottom: 10px;
@@ -198,7 +198,7 @@ const AccountStatusContent = ({ className, onOpen }) => {
         }
 
         .currency {
-          font-family: Lato;
+          font-family: Inter;
           font-size: 12px;
           color: #828699;
           margin-bottom: 5px;

@@ -23,7 +23,7 @@ export default function UniswapPoolLink({ pool, isPoolDetails }) {
       </a>
       <style jsx>{`
         .uniswap-link {
-          font-family: Lato;
+          font-family: Inter;
           font-size: 14px;
           color: #828699;
           padding-bottom: 3px;
