@@ -295,7 +295,9 @@ const CoinSelect = ({
         >
           <CoinImage coin={selected} />
           <span className="coin mr-auto">
-            {coinToDisplay?.[selected]?.symbol}
+            {selected === 'mix'
+              ? 'Mix LSDs'
+              : coinToDisplay?.[selected]?.symbol}
           </span>
         </div>
         <style jsx>{`
@@ -338,7 +340,7 @@ const CoinSelect = ({
       >
         <CoinImage coin={selected} />
         <span className="coin mr-auto">
-          {coinToDisplay?.[selected]?.symbol}
+          {selected === 'mix' ? 'Mix' : coinToDisplay?.[selected]?.symbol}
         </span>
         <img
           className="coin-select-icon"
