@@ -226,11 +226,26 @@ contract MetaOUSD is Base {
                 require(log.oldOusdBalance < log.newOusdBalance,
                     "didnt mint any ousd");
             } else if (log.state == 2) {
-                require(log.oldStableBalance < log.newStableBalance,
+                require(log.newStableBalance != 0 && log.oldStableBalance < log.newStableBalance,
                     "didnt redeem any stable");
             }
         }
 
         delete pnmLogs;
+    }
+
+    function testMetaOusd_3338710() public {
+      address agent = getAgent();
+      
+      vm.prank(agent);
+      actionDeposit(10, false);
+      vm.setNonce(agent, vm.getNonce(agent) + 1);
+      
+      vm.prank(agent);
+      actionWithdraw(1, false);
+      vm.setNonce(agent, vm.getNonce(agent) + 1);
+      
+      // FIXME: Failed below, result is "Revert"
+      invariantMetaOusd();
     }
 }
