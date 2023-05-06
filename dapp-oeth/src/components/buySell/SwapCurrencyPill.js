@@ -664,7 +664,9 @@ const SwapCurrencyPill = ({
                         fbt.param(
                           'oeth-amount',
                           `${formatCurrency(minReceived, 2)} ${
-                            coinToDisplay?.[selectedCoin]?.symbol
+                            selectedCoin === 'mix'
+                              ? 'Mix LSDs'
+                              : coinToDisplay?.[selectedCoin]?.symbol
                           }`
                         ),
                       'Min amount received'
