@@ -443,10 +443,12 @@ const useSwapEstimator = ({
        *
        * We don't check if positive amount is large enough: since we always approve max_int allowance.
        */
-      if (
-        approveAllowanceNeeded ||
-        !userHasEnoughStablecoin(coinToSwap, parseFloat(inputAmountRaw))
-      ) {
+      const hasEnoughBalance = userHasEnoughStablecoin(
+        coinToSwap,
+        parseFloat(inputAmountRaw)
+      )
+
+      if (approveAllowanceNeeded || !hasEnoughBalance) {
         const swapGasUsage = 350000
         const approveGasUsage = approveAllowanceNeeded
           ? gasLimitForApprovingCoin(coinToSwap)
@@ -466,6 +468,7 @@ const useSwapEstimator = ({
           approveAllowanceNeeded,
           inputAmount: parseFloat(inputAmountRaw),
           amountReceived,
+          hasEnoughBalance,
         }
       }
 
@@ -559,10 +562,12 @@ const useSwapEstimator = ({
 
       const approveAllowanceNeeded = parseFloat(requiredAllowance) === 0
 
-      if (
-        approveAllowanceNeeded ||
-        !userHasEnoughStablecoin(coinToSwap, parseFloat(inputAmountRaw))
-      ) {
+      const hasEnoughBalance = userHasEnoughStablecoin(
+        coinToSwap,
+        parseFloat(inputAmountRaw)
+      )
+
+      if (approveAllowanceNeeded || !hasEnoughBalance) {
         const swapGasUsage = selectedCoin === 'usdt' ? 175000 : 230000
         const approveGasUsage = approveAllowanceNeeded
           ? gasLimitForApprovingCoin(coinToSwap)
@@ -597,6 +602,7 @@ const useSwapEstimator = ({
           approveAllowanceNeeded,
           inputAmount: parseFloat(inputAmountRaw),
           amountReceived,
+          hasEnoughBalance,
         }
       }
 
@@ -690,6 +696,7 @@ const useSwapEstimator = ({
        *
        * We don't check if positive amount is large enough: since we always approve max_int allowance.
        */
+
       if (
         !allowancesLoaded ||
         parseFloat(allowances[coinToSwap].uniswapV3Router) === 0 ||
@@ -787,11 +794,12 @@ const useSwapEstimator = ({
       const approveAllowanceNeeded = allowancesLoaded
         ? parseFloat(allowances[coinToSwap].vault) === 0
         : true
+
       // Check if Vault has allowance to spend coin.
-      if (
-        approveAllowanceNeeded ||
-        !userHasEnoughStablecoin(selectedCoin, amount)
-      ) {
+
+      const hasEnoughBalance = userHasEnoughStablecoin(selectedCoin, amount)
+
+      if (approveAllowanceNeeded || !hasEnoughBalance) {
         const rebaseTreshold = parseFloat(
           ethers.utils.formatUnits(vaultRebaseThreshold, 18)
         )
@@ -819,6 +827,7 @@ const useSwapEstimator = ({
           approveAllowanceNeeded,
           inputAmount: parseFloat(inputAmountRaw),
           amountReceived,
+          hasEnoughBalance,
         }
       }
 
@@ -881,18 +890,23 @@ const useSwapEstimator = ({
     let gasEstimate
     try {
       await loadRedeemFee()
+
       const coinSplits = await _calculateSplits(amount)
+
       const splitsSum = coinSplits
         .map((coin) => parseFloat(coin.amount))
         .reduce((a, b) => a + b, 0)
 
-      if (!userHasEnoughStablecoin('oeth', amount)) {
+      const hasEnoughBalance = userHasEnoughStablecoin('oeth', amount)
+
+      if (!hasEnoughBalance) {
         return {
           canDoSwap: true,
           gasUsed: 1500000,
           inputAmount: parseFloat(inputAmountRaw),
           amountReceived: splitsSum,
           coinSplits,
+          hasEnoughBalance,
         }
       }
 

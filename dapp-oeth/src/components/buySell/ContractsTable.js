@@ -198,8 +198,8 @@ const Estimates = ({ estimates, selected, isLoading, isActive, onSelect }) => {
                       </div>
                       {amountReceived ? (
                         <div className="fees-value">
-                          <span
-                            className="mr-2"
+                          <div
+                            className="d-inline-block mr-2"
                             title={
                               approveAllowanceNeeded
                                 ? `${fbt(
@@ -224,9 +224,11 @@ const Estimates = ({ estimates, selected, isLoading, isActive, onSelect }) => {
                                 )} after fees`
                               )}`,
                               'After Fee Price'
-                            )}{' '}
-                            <span>{approveAllowanceNeeded ? '*' : ''}</span>
-                          </span>
+                            )}
+                            <span className="asterisk">
+                              {approveAllowanceNeeded ? '*' : ''}
+                            </span>
+                          </div>
                           <span>
                             {fbt(
                               `Effective Price: ${fbt.param(

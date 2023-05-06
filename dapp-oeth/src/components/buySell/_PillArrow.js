@@ -3,6 +3,7 @@ import { useStoreState } from 'pullstate'
 
 import { usePrevious } from 'utils/hooks'
 import analytics from 'utils/analytics'
+import { assetRootPath } from '../../utils/image'
 
 const DownCaret = ({ swapMode, disableRotation, color = '#828699' }) => {
   return (
@@ -11,24 +12,7 @@ const DownCaret = ({ swapMode, disableRotation, color = '#828699' }) => {
         swapMode === 'redeem' && !disableRotation ? '' : 'rotated'
       }`}
     >
-      <div className="image-holder-internal" />
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="13"
-        height="13"
-        viewBox="0 1 12 13"
-      >
-        <g fill="none" fillRule="evenodd">
-          <g fill={color} fillRule="nonzero">
-            <g>
-              <path
-                d="M315 338.712L321.012 332.7 319.95 331.638 315.738 335.832 315.738 326.688 314.262 326.688 314.262 335.832 310.086 331.638 308.988 332.7z"
-                transform="translate(-559.000000, -523.000000) translate(250.000000, 197.000000)"
-              />
-            </g>
-          </g>
-        </g>
-      </svg>
+      <img src={assetRootPath('/images/splitarrow.png')} alt="swap arrow" />
       <style jsx>{`
         .image-holder {
           z-index: 3;
@@ -59,17 +43,21 @@ const PillArrow = ({ swapMode, setSwapMode }) => {
             setSwapMode(swapMode === 'mint' ? 'redeem' : 'mint')
           }}
         >
-          <DownCaret disableRotation swapMode={swapMode} />
+          <img
+            src={assetRootPath('/images/splitarrow.png')}
+            alt="swap arrow"
+            style={{ height: 25, width: 14 }}
+          />
         </div>
       </div>
       <style jsx>{`
         .pill-arrow {
-          width: 40px;
-          height: 40px;
+          width: 46px;
+          height: 46px;
           border: 1px solid #141519;
           background-color: #1e1f25;
           border-radius: 50px;
-          margin-top: -20px;
+          margin-top: -23px;
           z-index: 1;
         }
 
@@ -81,12 +69,12 @@ const PillArrow = ({ swapMode, setSwapMode }) => {
         }
 
         .caret-background {
-          width: 24px;
-          height: 24px;
+          width: 46px;
+          height: 46px;
           border: solid 1px #141519;
-          background-color: #1e1f25;
+          background-color: transparent;
           z-index: 2;
-          border-radius: 30px;
+          border-radius: 50px;
           cursor: pointer;
         }
 
