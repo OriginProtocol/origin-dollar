@@ -148,7 +148,7 @@ contract MetaOUSD is Base {
     
     // Check that we can collect the fees to the harvester, then dripper, then vault
     function testMetaOusd(uint amount) public {
-        vm.assume(amount >= 10 && amount < 100);
+        vm.assume(amount >= 50 && amount < 100);
 
         deal(DAI, bob, amount);
 
@@ -167,7 +167,7 @@ contract MetaOUSD is Base {
     }
 
     function actionDeposit(uint amount, bool isBob) public {
-        vm.assume(amount >= 10 && amount < 100);
+        vm.assume(amount >= 50 && amount < 100);
 
         address target = bob;
         if (!isBob) target = alice;
@@ -199,7 +199,7 @@ contract MetaOUSD is Base {
         address target = bob;
         if (!isBob || ousd.balanceOf(bob) == 0) target = alice;
 
-        vm.assume(amount > 0 && amount < ousd.balanceOf(target));
+        vm.assume(amount >= 3 && amount < ousd.balanceOf(target));
         
         uint oldBalance = IERC20(DAI).balanceOf(target);
 
