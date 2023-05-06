@@ -2,13 +2,13 @@
 import "../BaseOnChain.t.sol";
 import "../VaultInvariants/VaultLockedUserInvariants.sol";
 
-contract UserLockedFundsOUSDTest is Base, VaultLockedUserInvariants {
+contract UserLockedFundsOETHTest is Base, VaultLockedUserInvariants {
     uint constant agentAmount = 10_000;
 
     function setUp() public override {
         rpc_url = "https://eth-mainnet.g.alchemy.com/v2/aWKDYS_qpAtrZb4ao1QYRSQTMA7Hbkcc";
-        ousdAddress = 0x2A8e1E676Ec238d8A992307B495b45B3fEAa5e86;
-        vaultAddress = 0xE75D77B1865Ae93c7eaa3040B038D7aA7BC02F70;
+        ousdAddress = 0x856c4Efb76C1D1AE02e20CEB03A2A6a08b0b8dC3;
+        vaultAddress = 0x39254033945AA2E4809Cc2977E7087BEE48bd7Ab;
 
         super.setUp();
 
@@ -23,7 +23,7 @@ contract UserLockedFundsOUSDTest is Base, VaultLockedUserInvariants {
 
     function setUpVaultLockedUserInvariants() public override {
         _lockedUser = makeAddr("LockedUser");
-        _ERC20tokenAddress = DAI;
+        _ERC20tokenAddress = WETH;
         _userAmount = 100;
         lockFunds();
         _minimumVaultValue = getVaultTotalValue();
