@@ -1,6 +1,7 @@
 pragma solidity ^0.8.19;
 
 import {IERC20} from "lib/forge-std/src/interfaces/IERC20.sol";
+import {console} from "lib/forge-std/src/console.sol";
 
 abstract contract VaultLockedUserInvariants {
     address _lockedUser;
@@ -33,14 +34,15 @@ abstract contract VaultLockedUserInvariants {
     function invariantVaultUserLocked() public {
         uint balanceBefore = IERC20(_ERC20tokenAddress).balanceOf(_lockedUser);
 
-        // if funds are locked, user should be able to unlock
         (bool success,) = address(this).call(
             abi.encodeWithSignature("redeem()"));
         
         uint amount = IERC20(_ERC20tokenAddress).balanceOf(_lockedUser) - balanceBefore;
 
         // should be able to get > 90% even despite the rounding issues in Origin
-        require(success && amount >= _userAmount * 9/10, "lost locked funds");
+        require(success, "call failed");
+        console.log(amount);
+        require(amount >= _userAmount * 9/10, "lost locked funds");
 
         // reset state for next call
         lockFunds();

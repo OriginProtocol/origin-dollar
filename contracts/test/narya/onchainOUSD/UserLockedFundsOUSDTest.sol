@@ -25,7 +25,7 @@ contract UserLockedFundsOUSDTest is Base, VaultLockedUserInvariants {
     function setUpVaultLockedUserInvariants() public override {
         _lockedUser = makeAddr("LockedUser");
         _ERC20tokenAddress = DAI;
-        _userAmount = 10;
+        _userAmount = 100;
         lockFunds();
         _minimumVaultValue = getVaultTotalValue();
     }
@@ -38,6 +38,8 @@ contract UserLockedFundsOUSDTest is Base, VaultLockedUserInvariants {
 
         IERC20(DAI).approve(address(vault), _userAmount);
         vault.mint(DAI, _userAmount, 0);
+
+        require(ousd.balanceOf(_lockedUser) > 0, "No shares minted");
 
         vm.stopPrank();
     }
