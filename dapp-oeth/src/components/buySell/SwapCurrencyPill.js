@@ -422,6 +422,7 @@ const SwapCurrencyPill = ({
 }) => {
   const coinBalances = useStoreState(AccountStore, (s) => s.balances)
   const [error, setError] = useState(null)
+
   const coinMintOptions = [
     'oeth',
     'weth',
@@ -431,7 +432,17 @@ const SwapCurrencyPill = ({
     'eth',
     'sfrxeth',
   ]
-  const coinRedeemOptions = ['oeth', 'mix', 'weth', 'frxeth', 'reth', 'steth']
+
+  const coinRedeemOptions = [
+    'oeth',
+    'mix',
+    'weth',
+    'frxeth',
+    'reth',
+    'steth',
+    'eth',
+  ]
+
   const { active } = useWeb3React()
 
   const bottomItem = !topItem
