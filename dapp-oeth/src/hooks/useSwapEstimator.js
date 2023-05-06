@@ -299,12 +299,14 @@ const useSwapEstimator = ({
 
     if (best) {
       best.isBest = true
+
       canDoSwaps.map((estimation) => {
         if (estimation === best) {
           return
         }
 
         estimation.diff = estimation.effectivePrice - best.effectivePrice
+
         estimation.diffPercentage =
           ((best.effectivePrice - estimation.effectivePrice) /
             best.effectivePrice) *

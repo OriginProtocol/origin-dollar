@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useMemo } from 'react'
 import { useWeb3React } from '@web3-react/core'
 import { fbt } from 'fbt-runtime'
 import { find, orderBy, isEmpty, capitalize } from 'lodash'
@@ -8,7 +8,6 @@ import { formatCurrency } from 'utils/math'
 import { assetRootPath } from 'utils/image'
 import ContractStore from 'stores/ContractStore'
 import ConfirmationModal from 'components/buySell/ConfirmationModal'
-import Dropdown from 'components/Dropdown'
 
 const swapContracts = {
   zapper: {
@@ -154,13 +153,14 @@ const Estimates = ({ estimates, selected, isLoading, isActive, onSelect }) => {
                   gasEstimate,
                   gasEstimateApprove,
                   gasEstimateSwap,
+                  diff,
                   diffPercentage,
                   gasEstimateEth,
                   amountReceivedUsd,
                   coinToSwap,
                   swapMode,
                 } = estimate
-                const hasDiff = diffPercentage > 0
+                const hasDiff = diff > 0
                 const isSelected = selected?.name === name
                 const errorDisplay = errorMap?.[error]
                 return (
