@@ -428,8 +428,7 @@ describe("Vault with Compound strategy", function () {
       await loadFixture(compoundVaultFixture);
 
     await oracleRouter.cacheDecimals(
-      nonStandardToken.address,
-      ethers.constants.AddressZero
+      nonStandardToken.address
     );
     if (nonStandardToken) {
       await vault.connect(governor).supportAsset(nonStandardToken.address, 0);

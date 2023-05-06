@@ -128,8 +128,7 @@ describe("Vault", function () {
       await loadFixture(defaultFixture);
 
     await oracleRouter.cacheDecimals(
-      nonStandardToken.address,
-      ethers.constants.AddressZero
+      nonStandardToken.address
     );
     await vault.connect(governor).supportAsset(nonStandardToken.address, 0);
     await expect(anna).has.a.balanceOf("1000.00", nonStandardToken);
@@ -162,8 +161,7 @@ describe("Vault", function () {
     const { ousd, vault, anna, nonStandardToken, oracleRouter, governor } =
       await loadFixture(defaultFixture);
     await oracleRouter.cacheDecimals(
-      nonStandardToken.address,
-      ethers.constants.AddressZero
+      nonStandardToken.address
     );
     await vault.connect(governor).supportAsset(nonStandardToken.address, 0);
 

@@ -94,8 +94,7 @@ describe("Vault Redeem", function () {
       await loadFixture(defaultFixture);
 
     await oracleRouter.cacheDecimals(
-      nonStandardToken.address,
-      ethers.constants.AddressZero
+      nonStandardToken.address
     );
     await vault.connect(governor).supportAsset(nonStandardToken.address, 0);
 
