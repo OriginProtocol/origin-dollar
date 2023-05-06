@@ -3,7 +3,7 @@ import "../BaseOnChain.t.sol";
 import "../VaultInvariants/VaultLockedUserInvariants.sol";
 
 contract UserLockedFundsOETHTest is Base, VaultLockedUserInvariants {
-    uint constant agentAmount = 10_000;
+    uint constant agentAmount = 10 ether;
 
     function setUp() public override {
         rpc_url = "https://eth-mainnet.g.alchemy.com/v2/aWKDYS_qpAtrZb4ao1QYRSQTMA7Hbkcc";
