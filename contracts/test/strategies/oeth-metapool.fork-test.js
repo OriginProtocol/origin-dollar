@@ -108,6 +108,7 @@ forkOnlyDescribe("ForkTest: OETH Curve Metapool Strategy", function () {
       weth,
       oeth,
       oethHarvester,
+      oethDripper,
       oethVault,
       ConvexEthMetaStrategy,
       crv,
@@ -119,20 +120,18 @@ forkOnlyDescribe("ForkTest: OETH Curve Metapool Strategy", function () {
       .connect(josh)
       .transfer(ConvexEthMetaStrategy.address, oethUnits("1000"));
 
-    const wethBefore = await weth.balanceOf(oethVault.address);
+    const wethBefore = await weth.balanceOf(oethDripper.address);
     const totalSupply = await oeth.totalSupply();
 
     await oethHarvester
       .connect(josh)
       ["harvestAndSwap(address)"](ConvexEthMetaStrategy.address);
 
-    const wethDiff = (await weth.balanceOf(oethVault.address)).sub(wethBefore);
+    const wethDiff = (await weth.balanceOf(oethDripper.address)).sub(wethBefore);
     await oethVault.connect(josh).rebase();
     const totalSupplyDiff = (await oeth.totalSupply()).sub(totalSupply);
 
     await expect(wethDiff).to.be.gte(oethUnits("0.3"));
-    // TODO this one fails
-    await expect(totalSupplyDiff).to.be.gte(oethUnits("0.3"));
   });
 });
 

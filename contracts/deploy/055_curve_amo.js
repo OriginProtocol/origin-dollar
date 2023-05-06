@@ -234,12 +234,6 @@ const deployConvexETHMetaStrategy = async ({
         true,
       ],
     },
-    // Set vault as rewards address
-    {
-      contract: cHarvester,
-      signature: "setRewardsProceedsAddress(address)",
-      args: [cVaultProxy.address],
-    },
   ];
 };
 

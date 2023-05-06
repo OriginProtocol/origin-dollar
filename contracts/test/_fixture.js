@@ -181,6 +181,7 @@ async function defaultFixture() {
     LUSDMetaStrategyProxy,
     LUSDMetaStrategy,
     oethHarvester,
+    oethDripper,
     ConvexEthMetaStrategyProxy,
     ConvexEthMetaStrategy;
 
@@ -264,6 +265,12 @@ async function defaultFixture() {
     ConvexEthMetaStrategy = await ethers.getContractAt(
       "ConvexEthMetaStrategy",
       ConvexEthMetaStrategyProxy.address
+    );
+
+    const oethDripperProxy = await ethers.getContract("OETHDripperProxy");
+    oethDripper = await ethers.getContractAt(
+      "OETHDripper",
+      oethDripperProxy.address
     );
 
   } else {
@@ -416,6 +423,7 @@ async function defaultFixture() {
     harvester,
     oethHarvester,
     dripper,
+    oethDripper,
     mockNonRebasing,
     mockNonRebasingTwo,
     // Oracle
