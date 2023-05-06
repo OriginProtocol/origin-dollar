@@ -5,9 +5,9 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { MockRewardPool } from "./MockRewardPool.sol";
 
-import { IRewardStaking } from "../../contracts/strategies/IRewardStaking.sol";
-import { IMintableERC20, MintableERC20, ERC20 } from "../../contracts/mocks/MintableERC20.sol";
-import { IBurnableERC20, BurnableERC20 } from "../../contracts/mocks/BurnableERC20.sol";
+import { IRewardStaking } from "../../../contracts/strategies/IRewardStaking.sol";
+import { IMintableERC20, MintableERC20, ERC20 } from "../../../contracts/mocks/MintableERC20.sol";
+import { IBurnableERC20, BurnableERC20 } from "../../../contracts/mocks/BurnableERC20.sol";
 
 contract MockDepositToken is MintableERC20, BurnableERC20{
     constructor() ERC20("DCVX", "CVX Deposit Token") {}

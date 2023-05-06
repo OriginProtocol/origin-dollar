@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import { MockCurveAbstractMetapool } from "./MockCurveAbstractMetapool.sol";
-import "../../contracts/mocks/MintableERC20.sol";
+import "../../../contracts/mocks/MintableERC20.sol";
 
 contract MockCurveMetapool is MockCurveAbstractMetapool {
     constructor(address[2] memory _coins)

@@ -1,5 +1,6 @@
+pragma solidity ^0.8.19;
 
-import "./Base.t.sol";
+import "../Base.t.sol";
 
 contract GovernorInvariants is Base {
     uint constant agentAmount = 10_000;

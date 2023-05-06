@@ -4,7 +4,6 @@ import {PTest, console} from "@narya-ai/contracts/PTest.sol";
 import {IERC20} from "../../lib/forge-std/src/interfaces/IERC20.sol";
 
 import {OUSD} from "../../contracts/token/OUSD.sol";
-import {OETH} from "../../contracts/token/OETH.sol";
 import {VaultCore} from "../../contracts/vault/VaultCore.sol";
 import {VaultInitializer, VaultAdmin, Vault} from "../../contracts/vault/Vault.sol";
 import {OracleRouter} from "../../contracts/oracle/OracleRouter.sol";
@@ -49,12 +48,6 @@ contract Base is PTest {
     address constant UNI_ROUTER = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
     address constant UNI_V3_ROUTER = 0xE592427A0AEce92De3Edee1F18E0157C05861564;
 
-    address constant OETH_VAULT_LIVE = 0x39254033945AA2E4809Cc2977E7087BEE48bd7Ab;
-    address constant OUSD_VAULT_LIVE = 0xE75D77B1865Ae93c7eaa3040B038D7aA7BC02F70;
-
-    address constant OETH_LIVE = 0x856c4Efb76C1D1AE02e20CEB03A2A6a08b0b8dC3;
-    address constant OUSD_LIVE = 0x2A8e1E676Ec238d8A992307B495b45B3fEAa5e86;
-
     string rpc_url;
 
     address dripperToken;
@@ -93,11 +86,6 @@ contract Base is PTest {
         vm.label(address(harvester), "harvester");
         vm.label(address(dripper), "dripper");
         vm.label(address(strategy), "strategy");
-
-        vm.label(OETH_VAULT_LIVE, "OETH_VAULT_LIVE");
-        vm.label(OUSD_VAULT_LIVE, "OUSD_VAULT_LIVE");
-        vm.label(OETH_LIVE, "OETH_LIVE");
-        vm.label(OUSD_LIVE, "OUSD_LIVE");
         
         vm.stopPrank();
     }
@@ -139,11 +127,6 @@ contract Base is PTest {
         ));
 
         vm.stopPrank();
-
-        // We also want to fuzz these LIVE contracts
-        // Make sure to adapt the invariants to support them
-        targetContract(OETH_VAULT_LIVE);
-        targetContract(OUSD_VAULT_LIVE);
     }
 
     function setUp() public virtual {

@@ -1,20 +1,19 @@
+pragma solidity ^0.8.19;
 
-import "./Base.t.sol";
+import "../Base.t.sol";
 
 contract UserLockedFundsTest is Base {
     address user;
     uint constant userAmount = 10;
     uint constant agentAmount = 10_000;
     uint minimumVaultDAIBalance;
-    uint minimumLiveVaultWETHBalance;
-    uint minimumLiveVaultDAIBalance;
 
     function setUp() public override {
         rpc_url = "https://eth-mainnet.g.alchemy.com/v2/aWKDYS_qpAtrZb4ao1QYRSQTMA7Hbkcc";
         super.setUp();
 
         user = makeAddr("User");
-        deal(WETH, user, 1 ether);
+        deal(WETH, user, userAmount);
         deal(DAI, user, userAmount);
 
         vm.startPrank(user);
@@ -24,57 +23,13 @@ contract UserLockedFundsTest is Base {
 
         vm.stopPrank();
 
-        minimumVaultDAIBalance = vault.checkBalance(DAI);
+        minimumVaultDAIBalance = IERC20(DAI).balanceOf(address(vault));
 
         address agent = getAgent();
-        deal(WETH, 100 ether);
+        deal(WETH, agentAmount);
         deal(DAI, agent, agentAmount);
         deal(USDT, agent, agentAmount);
         deal(USDC, agent, agentAmount);
-
-        liveSetup();
-    }
-
-    function liveSetup() public {
-        // OETH
-        deal(WETH, user, userAmount);
-        deal(DAI, user, userAmount);
-
-        uint balanceBefore = OETH(OETH_LIVE).balanceOf(user);
-
-        vm.startPrank(user);
-
-        IERC20(WETH).approve(OETH_VAULT_LIVE, userAmount);
-        VaultCore(payable(OETH_VAULT_LIVE)).mint(WETH, userAmount, 0);
-
-        require(
-            OETH(OETH_LIVE).balanceOf(user) > balanceBefore,
-            "Didnt mint any OETH from live contract"
-        );
-
-        minimumLiveVaultWETHBalance = VaultCore(payable(OETH_VAULT_LIVE)).checkBalance(WETH);
-
-        vm.stopPrank();
-        
-        // OUSD
-        deal(WETH, user, userAmount);
-        deal(DAI, user, userAmount);
-
-        balanceBefore = OUSD(OUSD_LIVE).balanceOf(user);
-
-        vm.startPrank(user);
-
-        IERC20(DAI).approve(OUSD_VAULT_LIVE, userAmount+100);
-        VaultCore(payable(OUSD_VAULT_LIVE)).mint(DAI, userAmount, 0);
-
-        require(
-            OETH(OUSD_LIVE).balanceOf(user) > balanceBefore,
-            "Didnt mint any OETH from live contract"
-        );
-
-        minimumLiveVaultDAIBalance = VaultCore(payable(OUSD_VAULT_LIVE)).checkBalance(DAI);
-
-        vm.stopPrank();
     }
 
     function testTransfer(uint amount) public {
@@ -108,18 +63,8 @@ contract UserLockedFundsTest is Base {
     }
 
     function invariantVaultBalanceNotDrained() public {
-        require(vault.checkBalance(DAI) >= minimumVaultDAIBalance * 9 / 10, 
+        require(IERC20(DAI).balanceOf(address(vault)) >= minimumVaultDAIBalance * 9 / 10, 
             "Balance was drained ?!");
-        
-        require(
-            VaultCore(payable(OETH_VAULT_LIVE)).checkBalance(WETH) >= minimumLiveVaultWETHBalance * 9 / 10, 
-            "Live OETH vault Balance was drained ?!"
-        );
-
-        require(
-            VaultCore(payable(OUSD_VAULT_LIVE)).checkBalance(DAI) >= minimumLiveVaultDAIBalance * 9 / 10, 
-            "Live OUSD vault Balance was drained ?!"
-        );
     }
 
     function invariantFundsLocked() public {
@@ -144,10 +89,6 @@ contract UserLockedFundsTest is Base {
         vault.mint(DAI, userAmount, 0);
 
         vm.stopPrank();
-
-        // OETH Live
-
-        // OUSD Live
     }
 
     function redeem() public {

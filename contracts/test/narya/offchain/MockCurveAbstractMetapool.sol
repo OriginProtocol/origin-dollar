@@ -3,11 +3,11 @@ pragma solidity ^0.8.0;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import { IMintableERC20 } from "../../contracts/mocks/MintableERC20.sol";
-import { ICurvePool } from "../../contracts/strategies/ICurvePool.sol";
-import { StableMath } from "../../contracts/utils/StableMath.sol";
-import "../../contracts/utils/Helpers.sol";
-import "../../contracts/mocks/MintableERC20.sol";
+import { IMintableERC20 } from "../../../contracts/mocks/MintableERC20.sol";
+import { ICurvePool } from "../../../contracts/strategies/ICurvePool.sol";
+import { StableMath } from "../../../contracts/utils/StableMath.sol";
+import "../../../contracts/utils/Helpers.sol";
+import "../../../contracts/mocks/MintableERC20.sol";
 import {console} from "lib/forge-std/src/console.sol";
 
 abstract contract MockCurveAbstractMetapool is MintableERC20 {
