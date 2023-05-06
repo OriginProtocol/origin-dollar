@@ -80,16 +80,43 @@ const CoinImage = ({ small, coin }) => {
   )
 }
 
-const coinToName = {
-  eth: 'ETH',
-  oeth: 'Origin Ether',
-  weth: 'Wrapped Ether',
-  reth: 'Rocket Pool ETH',
-  steth: 'Liquid Staked Ether 2.0',
-  frxeth: 'Frax Ether',
-  woeth: 'Wrapped Origin Ether',
-  sfrxeth: 'Staked Frax Ether',
-  mix: 'Redeem Mix',
+const coinToDisplay = {
+  eth: {
+    name: 'ETH',
+    symbol: 'ETH',
+  },
+  oeth: {
+    name: 'Origin Ether',
+    symbol: 'OETH',
+  },
+  weth: {
+    name: 'Wrapped Ether',
+    symbol: 'WETH',
+  },
+  reth: {
+    name: 'Rocket Pool ETH',
+    symbol: 'rETH',
+  },
+  steth: {
+    name: 'Liquid Staked Ether 2.0',
+    symbol: 'stETH',
+  },
+  frxeth: {
+    name: 'Frax Ether',
+    symbol: 'frxETH',
+  },
+  woeth: {
+    name: 'Wrapped Origin Ether',
+    symbol: 'WOETH',
+  },
+  sfrxeth: {
+    name: 'Staked Frax Ether',
+    symbol: 'sfrxETH',
+  },
+  mix: {
+    name: 'Redeem Mix',
+    symbol: 'frxEth, rETH, stETH, WETH',
+  },
 }
 
 const TokenSelectionModal = ({
@@ -119,13 +146,9 @@ const TokenSelectionModal = ({
                 <div className="coin-view">
                   <CoinImage coin={token} />
                   <div className="coin-breakdown">
-                    <span className="name">{coinToName[token]}</span>
-                    <span
-                      className={`coin ${
-                        token === 'mix' ? 'text-capitalize' : 'text-uppercase'
-                      } mr-auto`}
-                    >
-                      {token === 'mix' ? 'frxEth, rETH, stETH, wETH' : token}
+                    <span className="name">{coinToDisplay?.[token]?.name}</span>
+                    <span className="coin mr-auto">
+                      {coinToDisplay?.[token]?.symbol}
                     </span>
                   </div>
                 </div>
@@ -271,7 +294,9 @@ const CoinSelect = ({
           className={`coin-select d-flex align-items-center justify-content-start`}
         >
           <CoinImage coin={selected} />
-          <div className="coin text-uppercase mr-auto">{selected}</div>
+          <span className="coin mr-auto">
+            {coinToDisplay?.[selected]?.symbol}
+          </span>
         </div>
         <style jsx>{`
           .coin-select {
@@ -312,13 +337,9 @@ const CoinSelect = ({
         }}
       >
         <CoinImage coin={selected} />
-        <div
-          className={`coin ${
-            selected === 'mix' ? 'text-capitalize' : 'text-uppercase'
-          } mr-auto`}
-        >
-          {selected}
-        </div>
+        <span className="coin mr-auto">
+          {coinToDisplay?.[selected]?.symbol}
+        </span>
         <img
           className="coin-select-icon"
           src={assetRootPath('/images/downcaret.png')}
@@ -570,12 +591,13 @@ const SwapCurrencyPill = ({
             )}
             {bottomItem && (
               <div className="expected-value">
-                <p className="">
-                  {expectedAmount ||
-                    (swapsLoading
-                      ? fbt('Loading...', 'Swaps Loading...')
-                      : '-')}
-                </p>
+                {swapsLoading ? (
+                  <span className="text-loading">
+                    {fbt('Loading...', 'Swaps Loading...')}
+                  </span>
+                ) : (
+                  <span>{expectedAmount || '-'}</span>
+                )}
               </div>
             )}
             <div className="usd-balance mt-auto">
@@ -600,8 +622,8 @@ const SwapCurrencyPill = ({
                         fbt.param('coin-balance', displayBalance.balance),
                       'Coin balance'
                     )}
-                    <span className="text-uppercase ml-1">
-                      {displayBalance.coin}
+                    <span className="ml-1">
+                      {coinToDisplay?.[displayBalance.coin]?.symbol}
                     </span>
                   </div>
                 )}
@@ -628,10 +650,11 @@ const SwapCurrencyPill = ({
                       'Min. received: ' +
                         fbt.param(
                           'oeth-amount',
-                          formatCurrency(minReceived, 2)
-                        ) +
-                        ' OETH',
-                      'Min OETH amount received'
+                          `${formatCurrency(minReceived, 2)} ${
+                            coinToDisplay?.[selectedCoin]?.symbol
+                          }`
+                        ),
+                      'Min amount received'
                     )
                   : topItem
                   ? ''
@@ -650,7 +673,9 @@ const SwapCurrencyPill = ({
                 >
                   <div className="d-flex justify-content-start align-items-center">
                     <CoinImage small coin={split.coin} />
-                    <div className="text-uppercase ml-5px">{split.coin}</div>
+                    <div className="ml-5px">
+                      {coinToDisplay?.[split.coin]?.symbol}
+                    </div>
                   </div>
                   <div>
                     {formatCurrencyMinMaxDecimals(split.amount, {
@@ -737,6 +762,10 @@ const SwapCurrencyPill = ({
           max-width: 100%;
           text-overflow: ellipsis;
           color: #828699;
+        }
+
+        .expected-value .text-loading {
+          font-size: 16px;
         }
 
         .expected-value p {

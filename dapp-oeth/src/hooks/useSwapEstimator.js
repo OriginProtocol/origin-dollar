@@ -249,7 +249,8 @@ const useSwapEstimator = ({
       value.name = estKey
       value.isBest = false
       value.userSelected = false
-
+      value.coinToSwap = swapMode === 'mint' ? 'OETH' : selectedCoin
+      value.swapMode = swapMode
       estimations[estKey] = value
     })
 
@@ -264,6 +265,11 @@ const useSwapEstimator = ({
       const amountReceivedNumber = parseFloat(estimation.amountReceived)
 
       estimation.gasEstimate = gasUsdCost
+
+      estimation.gasEstimateEth =
+        (parseFloat(ethers.utils.formatUnits(gasPrice, 'gwei')) *
+          parseFloat(estimation.gasUsed)) /
+        100000000
 
       if (estimation.approveAllowanceNeeded) {
         estimation.gasEstimateSwap = getGasUsdCost(
@@ -280,6 +286,13 @@ const useSwapEstimator = ({
       estimation.effectivePrice =
         (inputAmount * ethPrice + gasUsdCostNumber) /
         (amountReceivedNumber * ethPrice)
+
+      if (amountReceivedNumber > 0) {
+        const costWithGas = amountReceivedNumber + estimation.gasEstimateEth
+        estimation.costMinusGasFees = costWithGas
+        estimation.costMinusGasFeesUsd = costWithGas * ethPrice
+        estimation.amountReceivedUsd = amountReceivedNumber * ethPrice
+      }
     })
 
     const best = minBy(canDoSwaps, (estimation) => estimation.effectivePrice)
@@ -375,7 +388,10 @@ const useSwapEstimator = ({
   const estimateSwapSuitabilityCurve = async () => {
     const isRedeem = swapMode === 'redeem'
 
-    if (isRedeem && selectedCoin === 'mix') {
+    if (
+      (isRedeem && selectedCoin === 'mix') ||
+      !['eth', 'oeth'].includes(selectedCoin)
+    ) {
       return {
         canDoSwap: false,
         error: 'unsupported',
@@ -384,6 +400,7 @@ const useSwapEstimator = ({
 
     try {
       const priceQuoteBn = await quoteCurve(swapAmount)
+
       const amountReceived = ethers.utils.formatUnits(
         priceQuoteBn,
         // 18 because ousd has 18 decimals

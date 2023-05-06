@@ -357,11 +357,16 @@ const useCurrencySwapper = ({
           }
         : {}
 
-    const gasLimit = increaseGasLimitByBuffer(
-      await curveOETHPool.estimateGas.exchange(...swapParams, {
+    const estimatedGasLimit = await curveOETHPool.estimateGas.exchange(
+      ...swapParams,
+      {
         from: account,
         ...overrides,
-      }),
+      }
+    )
+
+    const gasLimit = increaseGasLimitByBuffer(
+      estimatedGasLimit,
       curveGasLimitBuffer
     )
 

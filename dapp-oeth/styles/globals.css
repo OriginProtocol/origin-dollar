@@ -85,26 +85,26 @@ main.dapp {
     linear,
     left top,
     left bottom,
-    color-stop(451px, #101113),
-    color-stop(451px, #101113),
-    color-stop(451px, #141519)
+    color-stop(381px, #101113),
+    color-stop(381px, #101113),
+    color-stop(381px, #141519)
   ); /* Chrome, Safari4+ */
   background-image: -webkit-linear-gradient(
     top,
-    #101113 451px,
-    #101113 451px,
-    #141519 451px
+    #101113 381px,
+    #101113 381px,
+    #141519 381px
   ); /* Chrome10+, Safari5.1+ */
   background-image: -moz-linear-gradient(
     top,
-    #101113 451px,
-    #101113 451px,
-    #141519 451px
+    #101113 381px,
+    #101113 381px,
+    #141519 381px
   ); /* Fx3.6+ */
   background-image: linear-gradient(
-    #101113 451px,
-    #101113 451px,
-    #141519 451px
+    #101113 381px,
+    #101113 381px,
+    #141519 381px
   ); /* W3C */
   padding-bottom: 150px;
 }

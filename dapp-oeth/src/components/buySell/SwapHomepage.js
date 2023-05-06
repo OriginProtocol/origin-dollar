@@ -299,7 +299,7 @@ const SwapHomepage = ({
     <>
       {process.browser && (
         <>
-          <div className="swap-routes d-flex flex-column flex-grow">
+          <div className="swap-wrapper d-flex flex-column flex-grow">
             {buyErrorToDisplay && (
               <ErrorModal
                 error={buyErrorToDisplay}
@@ -310,13 +310,13 @@ const SwapHomepage = ({
               />
             )}
             <div className="swap-header">
-              <h2 className="title">{fbt('Swap Routes', 'Swap Routes')}</h2>
+              <h2 className="title">{fbt('Swap', 'Swap')}</h2>
               <SettingsDropdown
                 setPriceToleranceValue={setPriceToleranceValue}
                 priceToleranceValue={priceToleranceValue}
               />
             </div>
-            <div className="swap-container">
+            <div className="swap-main">
               <SwapCurrencyPill
                 swapMode={swapMode}
                 selectedCoin={selectedBuyCoin}
@@ -365,14 +365,21 @@ const SwapHomepage = ({
             swappingGloballyDisabled={swappingGloballyDisabled}
           />
           <style jsx>{`
-            .swap-routes {
-              margin: 0px -1px -1px -1px;
+            .swap-wrapper {
+              margin: 18px 0;
               border: solid 1px #141519;
               border-radius: 10px;
               background-color: #1e1f25;
               min-height: 350px;
               position: relative;
               overflow: hidden;
+            }
+
+            .swap-main {
+              display: flex;
+              flex-direction: column;
+              width: 100%;
+              height: 100%;
             }
 
             .swap-header {
@@ -384,20 +391,13 @@ const SwapHomepage = ({
               width: 100%;
             }
 
-            .swap-container {
-              display: flex;
-              flex-direction: column;
-              width: 100%;
-              height: 100%;
-            }
-
             .title {
               color: #fafbfb;
               font-size: 14px;
             }
 
             @media (max-width: 799px) {
-              .swap-routes {
+              .swap-wrapper {
                 padding: 23px 20px 20px 20px;
               }
             }
