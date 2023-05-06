@@ -25,7 +25,7 @@ module.exports = deploymentWithGuardianGovernor(
       ethers,
     });
 
-    // await deployDripper({ deployWithConfirmation, withConfirmation, ethers });
+    await deployDripper({ deployWithConfirmation, withConfirmation, ethers });
 
     await deployZapper({
       deployWithConfirmation,

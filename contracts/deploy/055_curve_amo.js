@@ -54,6 +54,15 @@ module.exports = deploymentWithGuardianGovernor(
     // }));
 
     actions = actions.concat(
+      await configureDripper({
+        deployWithConfirmation,
+        withConfirmation,
+        ethers,
+        cHarvester
+      })
+    );
+
+    actions = actions.concat(
       await deployConvexETHMetaStrategy({
         deployWithConfirmation,
         withConfirmation,
@@ -70,11 +79,40 @@ module.exports = deploymentWithGuardianGovernor(
     // Governance Actions
     // ----------------
     return {
-      name: "Deploy WOETH Token",
+      name: "Deploy Curve AMO, Harvester, Dripper and Oracle Router",
       actions,
     };
   }
 );
+
+const configureDripper = async ({
+  deployWithConfirmation,
+  withConfirmation,
+  ethers,
+  cHarvester
+}) => {
+  const { deployerAddr } = await getNamedAccounts();
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+
+  const cVaultProxy = await ethers.getContract("OETHVaultProxy");
+  const cDripperProxy = await ethers.getContract("OETHDripperProxy");
+  const cDripper = await ethers.getContractAt("OETHDripper", cDripperProxy.address);
+
+  return [
+    {
+      // 1. Configure Dripper to one week
+      contract: cDripper,
+      signature: "setDripDuration(uint256)",
+      args: [7 * 24 * 60 * 60],
+    },
+    {
+      contract: cHarvester,
+      signature: "setRewardsProceedsAddress(address)",
+      args: [cDripper.address],
+    },
+  ]
+};
+
 
 /**
  * Deploy Convex ETH Strategy
