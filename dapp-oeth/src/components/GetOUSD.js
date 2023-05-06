@@ -69,12 +69,10 @@ const GetOUSD = ({
       </button>
       <style jsx>{`
         .btn {
-          min-width: 201px;
-          min-height: 50px;
           font-size: 1.125rem;
           font-weight: bold;
           border-radius: 25px;
-          width: fit-content;
+          padding: 0;
         }
 
         .zIndex2 {
@@ -91,7 +89,6 @@ const GetOUSD = ({
         }
 
         .btn-light2 {
-          border: solid 1px #1a82ff;
           background-color: #ffffff;
           color: #1a82ff;
         }
@@ -100,15 +97,6 @@ const GetOUSD = ({
           color: #fafbfb;
           font-size: 0.8125rem;
           font-weight: normal;
-          min-height: 0;
-          min-width: 0;
-        }
-
-        .btn-nav:hover {
-          background-color: #fafbfb;
-          color: #183140;
-          text-decoration: none;
-          opacity: 1;
         }
 
         @media (max-width: 992px) {

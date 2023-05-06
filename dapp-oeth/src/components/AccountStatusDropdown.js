@@ -21,9 +21,9 @@ const AccountStatusDropdown = ({ className, showLogin }) => {
         onClose={() => setOpen(false)}
       >
         <a
-          className={`account-status d-flex justify-content-center align-items-center clickable ${className} ${
-            open ? 'open' : ''
-          }`}
+          className={`account-status d-flex justify-content-center align-items-center clickable ${
+            active ? 'active' : ''
+          } ${className} ${open ? 'open' : ''}`}
           onClick={async (e) => {
             e.preventDefault()
             if (!active) {
@@ -59,7 +59,6 @@ const AccountStatusDropdown = ({ className, showLogin }) => {
           left: auto;
           top: 135%;
           border-radius: 10px;
-
           border: solid 1px #141519;
           background-color: #1e1f25;
           color: #fafbfb;
@@ -87,10 +86,18 @@ const AccountStatusDropdown = ({ className, showLogin }) => {
         }
 
         .account-status {
-          height: 30px;
-          min-width: 30px;
-          border-radius: 15px;
-          border: solid 1px white;
+          padding: 8px 16px;
+          border-radius: 56px;
+          background-image: linear-gradient(
+            90deg,
+            #8c66fc -28.99%,
+            #0274f1 144.97%
+          );
+        }
+
+        .account-status.active {
+          background-color: #1e1f25;
+          background-image: none;
         }
 
         .account-status.clickable {
@@ -108,14 +115,9 @@ const AccountStatusDropdown = ({ className, showLogin }) => {
         .account-status .address {
           font-size: 14px;
           color: #fafbfb;
-          margin-left: 10px;
-          margin-right: 19px;
-          margin-bottom: 2px;
         }
 
         .account-status:hover {
-          color: inherit;
-          text-decoration: none;
         }
       `}</style>
     </>

@@ -1,7 +1,7 @@
 import React from 'react'
 import { fbt } from 'fbt-runtime'
 import { shortenAddress } from 'utils/web3'
-
+import { assetRootPath } from 'utils/image'
 import { useOverrideAccount } from 'utils/hooks'
 
 const AccountStatusIndicator = ({
@@ -41,7 +41,12 @@ const AccountStatusIndicator = ({
       )}
       {active && correctNetwork && !overrideAccount && (
         <>
-          <div className="dot green" />
+          <img
+            src={assetRootPath('/images/wallet-image.svg')}
+            width="20px"
+            height="20px"
+            className="wallet-img"
+          />
           {withAddress && (
             <div className="address">{shortenAddress(account)}</div>
           )}
@@ -51,15 +56,15 @@ const AccountStatusIndicator = ({
         .address {
           font-size: 14px;
           color: #fafbfb;
-          margin-left: 10px;
-          margin-right: 19px;
-          margin-bottom: 2px;
+        }
+
+        .wallet-img {
+          margin-right: 10px;
         }
 
         .dot {
           width: 10px;
           height: 10px;
-          margin-left: 10px;
           border-radius: 5px;
           background-color: #ed2a28;
         }

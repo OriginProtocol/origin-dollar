@@ -1,17 +1,16 @@
 import React from 'react'
+import AccountStore from 'stores/AccountStore'
 import { useWeb3React } from '@web3-react/core'
 import { useRouter } from 'next/router'
 import { useStoreState } from 'pullstate'
 import { fbt } from 'fbt-runtime'
 import { get } from 'lodash'
-
-import AccountStore from 'stores/AccountStore'
 import { getEtherscanHost } from 'utils/web3'
 import { isCorrectNetwork, truncateAddress, networkIdToName } from 'utils/web3'
 import { useOverrideAccount } from 'utils/hooks'
 import { currencies } from 'constants/Contract'
 import { formatCurrency } from 'utils/math'
-import { connectorNameIconMap, getConnectorIcon } from 'utils/connectors'
+import { getConnectorIcon } from 'utils/connectors'
 import { assetRootPath } from 'utils/image'
 
 const AccountStatusContent = ({ className, onOpen }) => {
@@ -33,7 +32,7 @@ const AccountStatusContent = ({ className, onOpen }) => {
         } account-status-content d-flex flex-column justify-content-center`}
       >
         <div className="drop-container">
-          <div className="d-flex align-items-center mb-3">
+          <div className="d-flex align-items-center">
             {active && !correctNetwork && (
               <>
                 <div className="dot big yellow" />
@@ -43,49 +42,68 @@ const AccountStatusContent = ({ className, onOpen }) => {
               </>
             )}
             {active && correctNetwork && (
-              <>
-                <div className="dot big green" />
-                <h2 className="connected-to">
-                  {fbt(
-                    'Connected to ' +
-                      fbt.param('network-name', networkIdToName(chainId)),
-                    'connected to'
-                  )}
-                </h2>
-              </>
+              <div className="d-flex justify-content-between align-items-center account-contain">
+                <p>Account</p>
+                {!overrideAccount && (
+                  <div className="disconnect-box d-flex">
+                    <a
+                      className=""
+                      onClick={(e) => {
+                        e.preventDefault()
+                        if (onOpen) {
+                          onOpen(false)
+                        }
+                        deactivate()
+                        // To clear state
+                        delete localStorage.walletconnect
+                        localStorage.setItem('eagerConnect', false)
+                      }}
+                    >
+                      {fbt('Disconnect', 'Disconnect')}
+                    </a>
+                  </div>
+                )}
+              </div>
             )}
           </div>
           {active && correctNetwork && (
             <>
-              <hr />
-              <div className="d-flex align-items-start">
+              <div className="d-flex align-items-center account-info-contain">
                 <img
                   className="connector-image"
                   src={assetRootPath(`/images/${connectorIcon}`)}
                 />
-                <div className="d-flex flex-column">
-                  <div className="address">{truncateAddress(account)}</div>
-                  {Object.keys(currencies).map((currency, index) => (
-                    <div
-                      className={`currency ${
-                        index === Object.keys(currencies).length - 1
-                          ? 'last'
-                          : ''
-                      }`}
-                      key={currency}
-                    >
-                      {formatCurrency(get(balances, currency, 0), 6)} {currency}
-                    </div>
-                  ))}
-                </div>
+                <div className="address">{truncateAddress(account)}</div>
+
                 <a
                   href={etherscanLink}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="ml-auto etherscan-icon"
+                  className="etherscan-icon"
                 >
-                  <img src={assetRootPath('/images/etherscan-icon.svg')} />
+                  <img
+                    src={assetRootPath('/images/link-icon-purple.svg')}
+                    width="8"
+                    height="8"
+                  />
                 </a>
+              </div>
+              <div className="d-flex flex-column list-contain">
+                {Object.keys(currencies).map((currency, index) => (
+                  <div
+                    className={`currency d-flex ${
+                      index === Object.keys(currencies).length - 1 ? 'last' : ''
+                    }`}
+                    key={currency}
+                  >
+                    <img
+                      src={assetRootPath(currencies[currency].img)}
+                      width="20"
+                      height="20"
+                    />
+                    {formatCurrency(get(balances, currency, 0), 6)} {currency}
+                  </div>
+                ))}
               </div>
             </>
           )}
@@ -102,28 +120,33 @@ const AccountStatusContent = ({ className, onOpen }) => {
             </a>
           </div>
         )}
-        {active && !overrideAccount && (
-          <div className="disconnect-box d-flex">
-            <a
-              className="btn-blue w-100 btn-blue-sm"
-              onClick={(e) => {
-                e.preventDefault()
-                if (onOpen) {
-                  onOpen(false)
-                }
-                deactivate()
-                // To clear state
-                delete localStorage.walletconnect
-                localStorage.setItem('eagerConnect', false)
-              }}
-            >
-              {fbt('Disconnect', 'Disconnect')}
-            </a>
-          </div>
-        )}
       </div>
 
       <style jsx>{`
+        .account-contain {
+          font-size: 14px;
+          width: 100%;
+          border-bottom: 1px solid black;
+          padding: 30px 20px;
+        }
+
+        .account-info-contain {
+          padding: 26px 22px;
+          border-bottom: 1px solid black;
+        }
+
+        .list-contain {
+          padding: 24px;
+        }
+
+        .list-contain img {
+          margin-right: 8px;
+        }
+
+        .drop-container p {
+          margin-bottom: 0;
+        }
+
         h2 {
           font-size: 17px;
           color: #183140;
@@ -141,40 +164,7 @@ const AccountStatusContent = ({ className, onOpen }) => {
 
         .connector-image {
           height: 20px;
-          margin-right: 12px;
-          margin-top: 3px;
-        }
-
-        .dot {
-          width: 10px;
-          height: 10px;
-          border-radius: 5px;
-          background-color: #ed2a28;
-          margin-left: 13px;
-        }
-
-        .dot.empty {
-          margin-left: 0px;
-        }
-
-        .dot.green {
-          background-color: #00d592;
-        }
-
-        .dot.green.yellow {
-          background-color: #ffce45;
-        }
-
-        .dot.big {
-          width: 16px;
-          height: 16px;
-          border-radius: 8px;
-          margin-right: 12px;
-        }
-
-        .dot.yellow.big,
-        .dot.green.big {
-          margin-left: 0px;
+          margin-right: 10px;
         }
 
         .wrong-network,
@@ -183,38 +173,31 @@ const AccountStatusContent = ({ className, onOpen }) => {
           font-family: Inter;
           font-size: 16px;
           color: #fafbfb;
-          margin-bottom: 10px;
+          margin-right: 4px;
+        }
+
+        .etherscan-icon {
         }
 
         .etherscan-icon img {
           width: 15px;
-          height: 15px;
-        }
-
-        .etherscan-icon {
-          padding: 15px;
-          margin-top: -15px;
-          margin-right: -15px;
         }
 
         .currency {
           font-family: Inter;
-          font-size: 12px;
-          color: #828699;
-          margin-bottom: 5px;
-          text-transform: uppercase;
+          font-size: 14px;
+          color: #fafafb;
+          margin-bottom: 16px;
         }
 
         .currency.last {
-          margin-bottom: 17px;
+          margin-bottom: 0px;
         }
 
         .disconnect-box {
-          border-radius: 0px 0px 10px 10px;
-          border: solid 1px #141519;
-          background-color: #1e1f25;
-          margin: 0px -1px -1px -1px;
-          padding: 20px;
+          background-color: rgba(255, 255, 255, 0.1);
+          padding: 4px 20px;
+          border-radius: 28px;
         }
 
         .dropdown-menu {
@@ -226,11 +209,10 @@ const AccountStatusContent = ({ className, onOpen }) => {
         }
 
         .drop-container {
-          padding: 0px 20px 0px 20px;
         }
 
         .account-status-content {
-          padding: 16px 0px 0px 0px;
+          padding: 0;
           min-width: 250px;
           z-index: 4;
           color: #fafbfb;

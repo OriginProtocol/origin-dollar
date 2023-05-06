@@ -21,23 +21,21 @@ export default function IPFSDappLink({ css }) {
         target="_blank"
         rel="noopener noreferrer"
       >
-        <img
-          className="ipfs-image"
-          src={assetRootPath('/images/folder-icon.svg')}
-        />
         <span className="d-none d-lg-block">
           {fbt('View on IPFS', 'View on IPFS')}
         </span>
       </a>
       <style jsx>{`
         .ipfs-link {
-          height: 30px;
-          min-width: 30px;
-          border-radius: 15px;
-          border: solid 1px white;
+          border-radius: 56px;
           margin-right: 10px;
+          background-color: #1e1f25;
           color: #fafbfb;
           padding: 0px 10px;
+        }
+
+        .ipfs-link span {
+          padding: 8px 24px;
         }
 
         .ipfs-image {

@@ -25,54 +25,69 @@ const DappLinks = ({ page }) => {
   return (
     <>
       <div className="d-flex align-items-center justify-content-center dapp-navigation mr-auto flex-wrap">
-        <Link href={adjustLinkHref('/')}>
-          <a
-            className={`d-flex align-items-center ml-md-0 ${
-              page === 'swap' ? 'selected' : ''
-            }`}
-          >
-            {fbt('Swap', 'Swap')}
-          </a>
-        </Link>
-        <Link href={adjustLinkHref('/wrap')}>
-          <a
-            className={`d-flex align-items-center ${
-              page === 'wrap' ? 'selected' : ''
-            }`}
-          >
-            {fbt('Wrap', 'Wrap')}
-          </a>
-        </Link>
-        <Link href={adjustLinkHref('/history')}>
-          <a
-            className={`d-flex align-items-center ${
-              page === 'history' ? 'selected' : ''
-            }`}
-          >
-            {fbt('History', 'History')}
-          </a>
-        </Link>
-      </div>
+        <div className={`link-contain ${page === 'swap' ? 'selected' : ''}`}>
+          <Link href={adjustLinkHref('/')}>
+            <a
+              className={`d-flex align-items-center ml-md-0 ${
+                page === 'swap' ? 'selected' : ''
+              }`}
+            >
+              {fbt('Swap', 'Swap')}
+            </a>
+          </Link>
+        </div>
+        <div className={`link-contain ${page === 'wrap' ? 'selected' : ''}`}>
+          <Link href={adjustLinkHref('/wrap')}>
+            <a
+              className={`d-flex align-items-center ${
+                page === 'wrap' ? 'selected' : ''
+              }`}
+            >
+              {fbt('Wrap', 'Wrap')}
+            </a>
+          </Link>
+        </div>
+        <div className={`link-contain ${page === 'history' ? 'selected' : ''}`}>
+          <Link href={adjustLinkHref('/history')}>
+            <a
+              className={`d-flex align-items-center ${
+                page === 'history' ? 'selected' : ''
+              }`}
+            >
+              {fbt('History', 'History')}
+            </a>
+          </Link>
+        </div>
+      </div>{' '}
       <style jsx>{`
+        .link-contain {
+          border-radius: 56px;
+        }
+
+        .link-contain.selected {
+          background: linear-gradient(90deg, #b361e6 -28.99%, #6a36fc 144.97%);
+          padding: 1px;
+        }
+
         .dapp-navigation {
           font-family: Inter;
           font-size: 14px;
-          color: #fafbfb;
+          color: #828699;
           margin-left: 50px;
+          background-color: #1e1f25;
+          border-radius: 56px;
         }
 
         .dapp-navigation a {
-          padding: 6px 4px;
-          margin-left: 16px;
-          margin-right: 16px;
           white-space: nowrap;
-          margin-bottom: 1px;
+          padding: 8px 16px;
         }
 
         .dapp-navigation a.selected {
-          border-bottom: solid 1px white;
-          margin-bottom: 0px;
-          font-weight: bold;
+          background: #000000aa;
+          color: #fafafb;
+          padding: 8px 16px;
+          border-radius: 56px;
         }
 
         @media (max-width: 992px) {
