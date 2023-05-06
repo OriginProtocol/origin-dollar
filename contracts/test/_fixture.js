@@ -1285,14 +1285,12 @@ async function hackedVaultFixture() {
   });
 
   const evilDAI = await ethers.getContract("MockEvilDAI");
-
   await oracleRouter.setFeed(
     evilDAI.address,
     oracleAddresses.chainlink.DAI_USD
   );
   await oracleRouter.cacheDecimals(
-    evilDAI.address,
-    ethers.constants.AddressZero
+    evilDAI.address
   );
 
   await fixture.vault.connect(sGovernor).supportAsset(evilDAI.address, 0);

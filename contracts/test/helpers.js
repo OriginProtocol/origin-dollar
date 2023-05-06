@@ -1,7 +1,7 @@
 const hre = require("hardhat");
 const chai = require("chai");
 const mocha = require("mocha");
-const { parseUnits, formatUnits } = require("ethers").utils;
+const { parseUnits, formatUnits, parseEther } = require("ethers").utils;
 const BigNumber = require("ethers").BigNumber;
 const { createFixtureLoader } = require("ethereum-waffle");
 
@@ -399,6 +399,13 @@ const getAssetAddresses = async (deployments) => {
   }
 };
 
+async function fundAccount(address, balance = "1000") {
+  await hre.network.provider.send("hardhat_setBalance", [
+    address,
+    parseEther(balance).toHexString(),
+  ]);
+}
+
 async function changeInBalance(
   functionChangingBalance,
   balanceChangeContract,
@@ -620,4 +627,5 @@ module.exports = {
   differenceInErc20TokenBalance,
   differenceInErc20TokenBalances,
   differenceInStrategyBalance,
+  fundAccount
 };

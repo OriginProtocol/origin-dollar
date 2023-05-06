@@ -56,11 +56,11 @@ abstract contract OracleRouterBase is IOracle {
         return decimals;
     }
 
-    function cacheDecimals(address asset_one)
+    function cacheDecimals(address asset)
         external
         returns (uint8)
     {
-        address _feed = feed(asset_one);
+        address _feed = feed(asset);
         
         require(_feed != address(0), "Asset not available");
         require(_feed != FIXED_PRICE, "Fixed price feeds not supported");
