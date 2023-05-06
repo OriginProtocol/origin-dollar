@@ -303,12 +303,12 @@ section.dim {
   min-height: 35px;
   border-radius: 25px;
   border: solid 1px #1a82ff;
-  background-color: #fafbfc;
+  background-color: transparent;
   font-family: Inter;
   font-size: 14px;
   font-weight: bold;
   text-align: center;
-  color: #1a82ff !important;
+  color: #ffffff !important;
   cursor: pointer;
   display: flex;
   justify-content: center;
@@ -507,6 +507,10 @@ section.dim {
     ); /* W3C */
     padding-bottom: 132px;
   }
+}
+
+.modal-content {
+  background-color: transparent !important;
 }
 
 @media (min-width: 1200px) {

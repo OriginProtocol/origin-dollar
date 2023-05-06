@@ -1,6 +1,7 @@
 import React from 'react'
 import { fbt } from 'fbt-runtime'
 import { Modal } from 'react-bootstrap'
+
 const ConfirmationModal = ({
   onClose,
   onConfirm,
@@ -37,23 +38,26 @@ const ConfirmationModal = ({
       </Modal>
       <style jsx>{`
         .body-content {
-          color: black;
           text-align: center;
           padding: 20px;
+          background-color: #1e1f25;
+          color: #fafbfb;
+          border-radius: 10px 10px 0 0;
         }
 
         .body-content h2 {
           font-size: 25px;
           margin-bottom: 18px;
           font-weight: bold;
-          color: #183140;
+          color: #fafbfb;
         }
 
         .body-actions {
           min-height: 95px;
-          background-color: #f2f3f5;
+          background-color: #1e1f25;
           border-radius: 0px 0px 10px 10px;
           border-top: solid 1px #141519;
+          overflow: hidden;
         }
 
         button {
