@@ -24,7 +24,7 @@ contract UserLockedFundsOUSDTest is Base, VaultLockedUserInvariants {
     function setUpVaultLockedUserInvariants() public override {
         _lockedUser = makeAddr("LockedUser");
         _ERC20tokenAddress = DAI;
-        _userAmount = 100;
+        _userAmount = 10 ether;
         lockFunds();
         _minimumVaultValue = getVaultTotalValue();
     }
@@ -76,6 +76,10 @@ contract UserLockedFundsOUSDTest is Base, VaultLockedUserInvariants {
         uint balanceAfter = IERC20(_ERC20tokenAddress).balanceOf(_lockedUser);
         console.log("DAI balance after redeem", balanceAfter);
         console.log("ousd balance after redeem", ousd.balanceOf(_lockedUser));
+        console.log("USDC balance before mint", IERC20(USDC).balanceOf(_lockedUser));
+        console.log("USDT balance before mint", IERC20(USDT).balanceOf(_lockedUser));
+        console.log("USDT balance before mint", IERC20(WETH).balanceOf(_lockedUser));
+        
 
         require(balanceAfter - balanceBefore >= (_userAmount * 9) / 10,
             "lost funds");

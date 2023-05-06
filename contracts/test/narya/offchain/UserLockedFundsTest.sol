@@ -51,7 +51,7 @@ contract UserLockedFundsTest is Base, VaultLockedUserInvariants {
     function setUpVaultLockedUserInvariants() public override {
         _lockedUser = makeAddr("LockedUser");
         _ERC20tokenAddress = DAI;
-        _userAmount = 100;
+        _userAmount = 10 ether;
         lockFunds();
         _minimumVaultValue = getVaultTotalValue();
     }
