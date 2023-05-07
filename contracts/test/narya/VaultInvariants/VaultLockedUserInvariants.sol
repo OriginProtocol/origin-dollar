@@ -10,6 +10,8 @@ abstract contract VaultLockedUserInvariants {
     uint _userAmount;
     // used by invariantVaultBalanceNotDrained
     uint _minimumVaultValue;
+    // for higher precision
+    uint constant shift = 18;
 
     // called in setUp
     function setUpVaultLockedUserInvariants() public virtual;
@@ -39,7 +41,7 @@ abstract contract VaultLockedUserInvariants {
         uint[] memory balancesBefore = new uint[](_ERC20tokensRedeemed.length);
         for (uint i = 0; i < _ERC20tokensRedeemed.length; ++i) {
             IERC20 _token = IERC20(_ERC20tokensRedeemed[i]);
-            balancesBefore[i] = _token.balanceOf(_lockedUser);
+            balancesBefore[i] = _token.balanceOf(_lockedUser) * (10**(shift-_token.decimals()));
         }
 
         // attempt to redeem which should always work
@@ -52,13 +54,14 @@ abstract contract VaultLockedUserInvariants {
         uint _totalAmount = 0;
         for (uint i = 0; i < _ERC20tokensRedeemed.length; ++i) {
             IERC20 _token = IERC20(_ERC20tokensRedeemed[i]);
-            uint balanceAfter = _token.balanceOf(_lockedUser);
+            uint balanceAfter = _token.balanceOf(_lockedUser) * (10**(shift-_token.decimals()));
             _totalAmount += (balanceAfter - balancesBefore[i]);
         }
 
         // should be able to get > 90% even despite the rounding issues in Origin
         require(success, "redeem failed");
-        require(_totalAmount >= (_userAmount * 9) / 10, "redeemed less than 90%");
+        uint requestedAmount = _userAmount * (10**(shift-IERC20(_ERC20tokenAddress).decimals()));
+        require(_totalAmount >= (requestedAmount * 9) / 10, "redeemed less than 90%");
 
         // reset state for next call
         lockFunds();

