@@ -29,6 +29,7 @@ contract UserLockedFundsOETHTest is Base, VaultLockedUserInvariants {
         _ERC20tokensRedeemed = vault.getAllAssets();
         
         // for invariantVaultBalanceNotDrained
+
         lockFunds();
         _minimumVaultValue = getVaultTotalValue();
     }
@@ -54,5 +55,41 @@ contract UserLockedFundsOETHTest is Base, VaultLockedUserInvariants {
         vm.startPrank(_lockedUser);
         vault.redeem(ousd.balanceOf(_lockedUser), 0);
         vm.stopPrank();
+    }
+
+    function testFlashLoan(uint128 _amountToMint) public {
+        // middle ground to not hit MAX_SUPPLY,
+        // and somehow realistic for a flash loan
+        vm.assume(_amountToMint > 0 && _amountToMint < 1_000_000_000_000 ether);
+        
+        address bob = makeAddr("bob");
+        deal(WETH, bob, _amountToMint);
+
+        address[] memory assets = vault.getAllAssets();
+
+        vm.startPrank(bob);
+
+        IERC20(WETH).approve(address(vault), _amountToMint);
+        vault.mint(WETH, _amountToMint, 0);
+
+        uint[] memory beforeBalances = new uint[](assets.length);
+        for (uint i = 0; i < assets.length; ++i) {
+            beforeBalances[i] = IERC20(assets[i]).balanceOf(bob);
+        }
+
+        vault.redeem(ousd.balanceOf(bob), 0);
+        vm.stopPrank();
+
+        uint totalAmount = 0;
+        for (uint i = 0; i < assets.length; ++i) {
+            IERC20 _token = IERC20(assets[i]);
+            uint exponent = 18-_token.decimals();
+
+            totalAmount += (_token.balanceOf(bob) - beforeBalances[i]) * (10**exponent);
+        }
+
+        uint exponent = 18-IERC20(WETH).decimals();
+        require(totalAmount < (_amountToMint * (10**exponent)),
+            "got more money than deposited");
     }
 }
