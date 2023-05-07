@@ -6,7 +6,9 @@ import {console} from "lib/forge-std/src/console.sol";
 abstract contract VaultLockedUserInvariants {
     address _lockedUser;
     address _ERC20tokenAddress;
+    address[] _ERC20tokensRedeemed;
     uint _userAmount;
+    // used by invariantVaultBalanceNotDrained
     uint _minimumVaultValue;
 
     // called in setUp
@@ -32,17 +34,31 @@ abstract contract VaultLockedUserInvariants {
 
     // A user should be able to reclaim its funds from the vault
     function invariantVaultUserLocked() public {
-        uint balanceBefore = IERC20(_ERC20tokenAddress).balanceOf(_lockedUser);
+        require(_ERC20tokensRedeemed.length > 0, "no redeem token address added");
 
+        uint[] memory balancesBefore = new uint[](_ERC20tokensRedeemed.length);
+        for (uint i = 0; i < _ERC20tokensRedeemed.length; ++i) {
+            IERC20 _token = IERC20(_ERC20tokensRedeemed[i]);
+            balancesBefore[i] = _token.balanceOf(_lockedUser);
+        }
+
+        // attempt to redeem which should always work
         (bool success,) = address(this).call(
             abi.encodeWithSignature("redeem()"));
         
-        uint amount = IERC20(_ERC20tokenAddress).balanceOf(_lockedUser) - balanceBefore;
+        // now because the assets are pegged to stable or OETH
+        // we approximate their values to be kinda equal
+
+        uint _totalAmount = 0;
+        for (uint i = 0; i < _ERC20tokensRedeemed.length; ++i) {
+            IERC20 _token = IERC20(_ERC20tokensRedeemed[i]);
+            uint balanceAfter = _token.balanceOf(_lockedUser);
+            _totalAmount += (balanceAfter - balancesBefore[i]);
+        }
 
         // should be able to get > 90% even despite the rounding issues in Origin
-        require(success, "call failed");
-        console.log(amount);
-        require(amount >= _userAmount * 9/10, "lost locked funds");
+        require(success, "redeem failed");
+        require(_totalAmount >= (_userAmount * 9) / 10, "redeemed less than 90%");
 
         // reset state for next call
         lockFunds();
