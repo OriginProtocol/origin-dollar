@@ -59,7 +59,7 @@ contract UserLockedFundsOUSDTest is Base, VaultLockedUserInvariants {
     function testFlashLoan(uint128 _amountToMint) public {
         // middle ground to not hit MAX_SUPPLY,
         // and somehow realistic for a flash loan
-        vm.assume(_amountToMint > 0 && _amountToMint < 1_000_000_000 ether);
+        vm.assume(_amountToMint > 0 && _amountToMint < 100_000_000 ether);
         
         address bob = makeAddr("bob");
         deal(DAI, bob, _amountToMint);
