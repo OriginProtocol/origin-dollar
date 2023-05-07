@@ -108,10 +108,12 @@ const GetOUSD = ({
             width: auto;
             color: #fafbfb;
             font-size: 0.6875rem;
-            min-width: auto;
-            min-height: auto;
-            border: solid 1px white;
-            border-radius: 15px;
+            border-radius: 56px;
+            background-image: linear-gradient(
+              90deg,
+              #8c66fc -28.99%,
+              #0274f1 144.97%
+            );
             padding: 5px 15px;
           }
         }

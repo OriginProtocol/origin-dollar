@@ -13,7 +13,7 @@ export default function Wrap({ locale, onLocale }) {
         <Nav page={'wrap'} locale={locale} onLocale={onLocale} />
         <div className="home d-flex flex-column">
           <BalanceHeaderWrapped />
-          <div className="d-flex">
+          <div className="d-flex wrap-contain">
             <WrapHomepage />
             {/*<div className="content-holder flex-grow d-flex flex-column shadow-div">*/}
             {/*  */}
@@ -63,9 +63,13 @@ export default function Wrap({ locale, onLocale }) {
           margin-bottom: 50px;
         }
 
-        @media (max-width: 799px) {
+        @media (max-width: 767px) {
           .home {
             padding: 0;
+          }
+
+          .wrap-contain {
+            padding: 0px 20px;
           }
 
           div {

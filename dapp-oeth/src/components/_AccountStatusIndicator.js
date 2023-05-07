@@ -48,7 +48,9 @@ const AccountStatusIndicator = ({
             className="wallet-img"
           />
           {withAddress && (
-            <div className="address">{shortenAddress(account)}</div>
+            <div className="address d-none d-lg-inline">
+              {shortenAddress(account)}
+            </div>
           )}
         </>
       )}
@@ -79,6 +81,12 @@ const AccountStatusIndicator = ({
 
         .dot.green.yellow {
           background-color: #ffce45;
+        }
+
+        @media (max-width: 992px) {
+          .wallet-img {
+            margin-right: 0px;
+          }
         }
       `}</style>
     </>

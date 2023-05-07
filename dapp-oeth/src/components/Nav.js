@@ -96,18 +96,6 @@ const DappLinks = ({ page }) => {
             margin-left: 0px;
             margin-bottom: 10px;
           }
-
-          .dapp-navigation a {
-            margin-left: 24px;
-            margin-right: 24px;
-          }
-        }
-
-        @media (max-width: 485px) {
-          .dapp-navigation a {
-            margin-left: 8px;
-            margin-right: 8px;
-          }
         }
       `}</style>
     </>
@@ -323,18 +311,23 @@ const Nav = ({ isMobile, locale, onLocale, page }) => {
           {/*    />*/}
           {/*  </div>*/}
           {/*</button>*/}
-          <IPFSDappLink css="d-lg-none" />
-          {<AccountStatusPopover />}
-          {!active && !account && (
-            <div className="d-flex d-md-none">
-              <GetOUSD
-                navMarble
-                connect={true}
-                trackSource="Mobile navigation"
-                style={{ marginLeft: 10 }}
-              />
-            </div>
-          )}
+          <div className="d-flex">
+            <IPFSDappLink css="d-lg-none" />
+            {
+              <div className="d-lg-none">
+                <AccountStatusDropdown />
+              </div>
+            }
+            {!active && (
+              <div className="d-flex d-lg-none">
+                <GetOUSD
+                  navMarble
+                  connect={true}
+                  trackSource="Mobile navigation"
+                />
+              </div>
+            )}
+          </div>
           {/*<div*/}
           {/*  className="primarySidePanel dark-background collapse"*/}
           {/*  data-toggle="collapse"*/}

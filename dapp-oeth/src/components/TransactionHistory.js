@@ -623,6 +623,10 @@ const TransactionHistory = ({ isMobile }) => {
         }
 
         @media (max-width: 799px) {
+          .holder {
+            margin: 0 20px;
+          }
+
           .filters {
             padding: 20px;
             padding-bottom: 0;

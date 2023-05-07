@@ -110,9 +110,9 @@ const BalanceHeader = ({
     return (
       <>
         <div
-          className={`relative ${small ? 'containSmall' : 'containBig'} ${
-            smallTop ? 'containSmallTop' : ''
-          } ${marginBottom ? '' : ''}`}
+          className={`relative contain d-flex flex-row flex-md-column ${
+            small ? 'containSmall' : 'containBig'
+          } ${smallTop ? 'containSmallTop' : ''} ${marginBottom ? '' : ''}`}
         >
           <div className="title">
             <p className={`${small ? 'small' : 'big'}`}>{title}</p>
@@ -184,14 +184,22 @@ const BalanceHeader = ({
           }
 
           @media (max-width: 767px) {
-            .dropdown {
-              padding-bottom: 10px;
+            .contain {
+              width: 100%;
+              padding: 16px;
+              justify-content: space-between;
+              align-items: center;
+              border-bottom: 0;
+              border-top: 1px solid black;
+            }
+
+            .containBig .title {
+              color: #fafafb;
             }
 
             .title {
               width: 55%;
               text-align: left;
-              margin-bottom: 3px;
             }
 
             .title.percentage {
@@ -212,6 +220,10 @@ const BalanceHeader = ({
               width: 45%;
               text-align: left;
             }
+
+            .stat .value p {
+              color: #fafafb;
+            }
           }
         `}</style>
       </>
@@ -231,12 +243,13 @@ const BalanceHeader = ({
   }) => {
     return (
       <>
-        <div className={`relative ${marginBottom ? '' : ''}`}>
+        <div className={`relative stat-contain ${marginBottom ? '' : ''}`}>
           <div className="title">
             <p>{title}</p>
+            <span className="dropdown d-md-none">{dropdown}</span>
           </div>
 
-          <div className="stat">
+          <div className="stat d-none d-md-block">
             <div className="flex-row">
               <span className="dropdown">{dropdown}</span>
             </div>
@@ -244,10 +257,18 @@ const BalanceHeader = ({
               <p>{value}</p>
             </div>
           </div>
+
+          <div className={`value d-md-none ${type}`}>
+            <p>{value}</p>
+          </div>
         </div>
         <style jsx>{`
           .dropdown {
             display: inline-block;
+          }
+
+          .stat-contain {
+            display: block;
           }
 
           .stat {
@@ -287,14 +308,17 @@ const BalanceHeader = ({
           }
 
           @media (max-width: 767px) {
-            .dropdown {
-              padding-bottom: 10px;
+            .stat-contain {
+              display: flex;
+              flex-direction: row;
+              justify-content: space-between;
             }
 
             .title {
               width: 55%;
               text-align: left;
-              margin-bottom: 3px;
+              border-bottom: 0;
+              padding: 0;
             }
 
             .title.percentage {
@@ -312,7 +336,6 @@ const BalanceHeader = ({
             .value {
               color: #fafbfb;
               font-size: 20px;
-              width: 45%;
               text-align: left;
             }
           }
@@ -355,7 +378,7 @@ const BalanceHeader = ({
             </div>
           </div>
           <div className="box box-narrow w-100">
-            <div className="title">
+            <div className="title d-none d-md-block">
               <p>OETH Portfolio</p>
             </div>
             <div className="d-flex flex-column flex-md-row align-items-center justify-content-between stats">
@@ -508,7 +531,6 @@ const BalanceHeader = ({
 
         .box {
           min-width: 210px;
-          min-height: 118px;
           border-radius: 10px;
           color: #fafbfb;
           background-color: #1e1f25;
@@ -539,6 +561,18 @@ const BalanceHeader = ({
         }
 
         @media (max-width: 767px) {
+          .rightStats {
+            width: 100%;
+          }
+
+          .box .stats {
+            padding-left: 0px;
+          }
+
+          .box.box-narrow {
+            padding: 0;
+          }
+
           .balance-header {
             align-items: center;
             text-align: center;
@@ -558,9 +592,8 @@ const BalanceHeader = ({
           }
 
           .box {
-            padding: 20px;
-            min-width: auto;
-            min-height: 90px;
+            padding: 16px;
+            border-radius: 4px;
           }
 
           .box.box-black {

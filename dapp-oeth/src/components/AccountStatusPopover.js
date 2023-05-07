@@ -26,7 +26,7 @@ const AccountStatusPopover = ({ className }) => {
         aria-expanded="false"
         aria-label="Toggle account popover"
       >
-        <div className={`dropdown-marble${className ? ' ' + className : ''}`}>
+        <div className={`${className ? ' ' + className : ''}`}>
           <AccountStatusIndicator
             active={active}
             correctNetwork={correctNetwork}
@@ -60,7 +60,9 @@ const AccountStatusPopover = ({ className }) => {
       </div>
       <style jsx>{`
         .navbar-toggler {
-          padding: 0.25rem 10px;
+          padding: 6px 6.75px;
+          background-color: #1e1f25;
+          border-radius: 100%;
         }
 
         .dropdown-marble .dot {

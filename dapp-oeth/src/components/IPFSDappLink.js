@@ -21,9 +21,10 @@ export default function IPFSDappLink({ css }) {
         target="_blank"
         rel="noopener noreferrer"
       >
-        <span className="d-none d-lg-block">
+        <span className="d-none d-md-block">
           {fbt('View on IPFS', 'View on IPFS')}
         </span>
+        <span className="d-md-none">{fbt('IPFS', 'IPFS')}</span>
       </a>
       <style jsx>{`
         .ipfs-link {
@@ -45,16 +46,20 @@ export default function IPFSDappLink({ css }) {
 
         @media (max-width: 992px) {
           .ipfs-link {
-            height: 24px;
-            min-width: 24px;
-            margin-right: 0;
-            margin-left: 10px;
-            padding: 0px;
+            border-radius: 56px;
+            margin-right: 10px;
+            background-color: #1e1f25;
+            color: #fafbfb;
+            padding: 0;
+          }
+
+          .ipfs-link span {
+            padding: 8px 16px;
           }
 
           .ipfs-image {
             height: 10px;
-            margin-right: 0px;
+            margin-right: 7px;
           }
         }
       `}</style>

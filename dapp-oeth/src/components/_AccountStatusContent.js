@@ -208,9 +208,6 @@ const AccountStatusContent = ({ className, onOpen }) => {
           color: #fafbfb;
         }
 
-        .drop-container {
-        }
-
         .account-status-content {
           padding: 0;
           min-width: 250px;
@@ -219,12 +216,8 @@ const AccountStatusContent = ({ className, onOpen }) => {
         }
 
         @media (max-width: 799px) {
-          .account-status-content {
-            height: 100%;
-          }
-
-          .disconnect-box {
-            margin-top: auto;
+          .dropdown-menu {
+            min-width: 75vw;
           }
         }
       `}</style>
