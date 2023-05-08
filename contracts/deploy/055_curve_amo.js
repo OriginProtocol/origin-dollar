@@ -194,11 +194,36 @@ const deployConvexETHMetaStrategy = async ({
       args: [],
     },
     {
-      // Claim Vault governance
+      // Approve strategy
+      contract: cVault,
+      signature: "approveStrategy(address)",
+      args: [cConvexETHMetaStrategy.address],
+    },
+    {
+      // TODO: are we happy with ConvexETH being WETH asset default strategy
+      contract: cVault,
+      signature: "setAssetDefaultStrategy(address,address)",
+      args: [addresses.mainnet.WETH, cConvexETHMetaStrategy.address],
+    },
+    {
+      // Set ConvexEthMeta strategy as the Vault strategy that can print OETH
+      contract: cVault,
+      signature: "setOusdMetaStrategy(address)",
+      args: [cConvexETHMetaStrategy.address],
+    },
+    {
+      // Set OETH mint threshold to 25k
+      contract: cVault,
+      signature: "setNetOusdMintForStrategyThreshold(uint256)",
+      args: [utils.parseUnits("25", 21)],
+    },
+    {
+      // Set harvester address
       contract: cConvexETHMetaStrategy,
       signature: "setHarvesterAddress(address)",
       args: [cHarvester.address],
     },
+      // set ConvexEth strategy as supported one by harvester
     {
       contract: cHarvester,
       signature: "setSupportedStrategy(address,bool)",

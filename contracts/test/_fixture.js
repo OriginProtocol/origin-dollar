@@ -1071,31 +1071,6 @@ async function convexOETHMetaVaultFixture() {
     fixture.josh.getAddress()
   );
 
-  // Add Convex Meta strategy
-  await fixture.oethVault
-    .connect(sGuardian)
-    .approveStrategy(fixture.ConvexEthMetaStrategy.address);
-
-  await fixture.oethHarvester
-    .connect(sGuardian)
-    .setSupportedStrategy(fixture.ConvexEthMetaStrategy.address, true);
-
-  await fixture.oethVault
-    .connect(sGuardian)
-    .setAssetDefaultStrategy(
-      fixture.weth.address,
-      fixture.ConvexEthMetaStrategy.address
-    );
-
-  await fixture.oethVault
-    .connect(sGuardian)
-    .setOusdMetaStrategy(fixture.ConvexEthMetaStrategy.address);
-
-  // set OETH mint threshold to 25k
-  await fixture.oethVault
-    .connect(sGuardian)
-    .setNetOusdMintForStrategyThreshold(utils.parseUnits("25", 21));
-
   // TODO: hardcode this once deployed to the mainnet
   fixture.cvxRewardPool = await ethers.getContractAt(
     "IRewardStaking",
