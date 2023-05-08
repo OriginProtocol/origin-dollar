@@ -187,6 +187,7 @@ const loadFixture = createFixtureLoader(
 );
 
 const advanceTime = async (seconds) => {
+  seconds = Math.floor(seconds);
   await hre.ethers.provider.send("evm_increaseTime", [seconds]);
   await hre.ethers.provider.send("evm_mine");
 };
