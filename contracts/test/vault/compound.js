@@ -691,7 +691,7 @@ describe("Vault with Compound strategy", function () {
 
     const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
 
-    mockUniswapRouter.initialize([comp.address], [usdt.address]);
+    await mockUniswapRouter.initialize([comp.address], [usdt.address]);
 
     const compAmount = utils.parseUnits("100", 18);
     await comp.connect(governor).mint(compAmount);
@@ -751,7 +751,7 @@ describe("Vault with Compound strategy", function () {
 
     const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
 
-    mockUniswapRouter.initialize([comp.address], [usdt.address]);
+    await mockUniswapRouter.initialize([comp.address], [usdt.address]);
 
     // Mock router gives 1:1, if we set this to something high there will be
     // too much slippage
@@ -799,7 +799,7 @@ describe("Vault with Compound strategy", function () {
 
     const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
 
-    mockUniswapRouter.initialize([comp.address], [usdt.address]);
+    await mockUniswapRouter.initialize([comp.address], [usdt.address]);
 
     const compAmount = utils.parseUnits("100", 18);
     await comp.connect(governor).mint(compAmount);

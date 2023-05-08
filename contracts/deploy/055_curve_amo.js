@@ -100,10 +100,10 @@ const configureDripper = async ({
 
   return [
     {
-      // 1. Configure Dripper to one week
+      // 1. Configure Dripper to three days
       contract: cDripper,
       signature: "setDripDuration(uint256)",
-      args: [7 * 24 * 60 * 60],
+      args: [3 * 24 * 60 * 60],
     },
     {
       contract: cHarvester,
@@ -207,31 +207,29 @@ const deployConvexETHMetaStrategy = async ({
     // Set reward token config
     {
       contract: cHarvester,
-      // tokenAddress, allowedSlippageBps, harvestRewardBps, uniswapV2CompatibleAddr, liquidationLimit, doSwapRewardToken
       signature:
         "setRewardTokenConfig(address,uint16,uint16,address,uint256,bool)",
       args: [
-        assetAddresses.CRV,
-        300,
-        100,
-        assetAddresses.sushiswapRouter,
-        MAX_UINT256,
-        true,
+        assetAddresses.CRV, // tokenAddress
+        300, // allowedSlippageBps
+        100, // harvestRewardBps
+        assetAddresses.sushiswapRouter, // uniswapV2CompatibleAddr
+        MAX_UINT256, // liquidationLimit
+        true, // doSwapRewardToken
       ],
     },
     // Set reward token config
     {
       contract: cHarvester,
-      // tokenAddress, allowedSlippageBps, harvestRewardBps, uniswapV2CompatibleAddr, liquidationLimit, doSwapRewardToken
       signature:
         "setRewardTokenConfig(address,uint16,uint16,address,uint256,bool)",
       args: [
-        assetAddresses.CVX,
-        300,
-        100,
-        assetAddresses.sushiswapRouter,
-        MAX_UINT256,
-        true,
+        assetAddresses.CVX, // tokenAddress
+        300, // allowedSlippageBps
+        100, // harvestRewardBps
+        assetAddresses.sushiswapRouter, // uniswapV2CompatibleAddr
+        MAX_UINT256, // liquidationLimit
+        true, // doSwapRewardToken
       ],
     },
   ];
@@ -339,6 +337,11 @@ const deployCurve = async ({
   withConfirmation,
   ethers,
 }) => {
+
+  if (isMainnet) {
+    throw new Error("This shouldn't happen on the mainnet");
+  }
+
   const { deployerAddr } = await getNamedAccounts();
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
   const gaugeControllerAdmin = "0x40907540d8a6C65c637785e8f8B742ae6b0b9968";
