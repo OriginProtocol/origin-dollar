@@ -12,10 +12,6 @@ import {MockCRV} from "../../../contracts/mocks/curve/MockCRV.sol";
 import {MockCurveMetapool} from "./MockCurveMetapool.sol";
 import {MockRewardPool} from "./MockRewardPool.sol";
 
-contract MockDepositToken is MintableERC20 {
-    constructor() ERC20("DCVX", "CVX Deposit Token") {}
-}
-
 contract MetaOUSD is Base {
     uint constant agentAmount = 10 ether;
     address strategist;
@@ -62,13 +58,6 @@ contract MetaOUSD is Base {
         vm.label(ThreePool, "ThreePool");
         vm.label(ThreePoolToken, "ThreePoolToken");
 
-        
-        // address agent = getAgent();
-        // deal(WETH, agent, 100 ether);
-        // deal(DAI, agent, agentAmount);
-        // deal(USDT, agent, agentAmount);
-        // deal(USDC, agent, agentAmount);
-
         vm.startPrank(owner);
 
         meta = new ConvexOUSDMetaStrategy();
@@ -98,15 +87,6 @@ contract MetaOUSD is Base {
         (,,address crvRewards) = mockBooster.poolInfo(56);
         mockRewardPool = MockRewardPool(crvRewards);
 
-        /// created by mock booster
-        // mockRewardPool = new MockRewardPool(
-        //     9,
-        //     ThreePoolToken,
-        //     address(mockCRV),
-        //     address(mockCVX),
-        //     address(mockCRV)
-        // );
-
         // last argument
         BaseConvexMetaStrategy.InitConfig memory initConfig = BaseConvexMetaStrategy.InitConfig(
             ThreePool, // platform
@@ -126,14 +106,10 @@ contract MetaOUSD is Base {
             _pTokens,
             initConfig
         );
-        
-        // strategy.setPTokenAddress(DAI, ThreePoolToken);
 
         address[] memory rewards = new address[](2);
         rewards[0] = address(CVX);
         rewards[1] = address(CRV);
-        
-        // strategy.setRewardTokenAddresses(rewards);
         
         VaultAdmin(address(vault)).setStrategistAddr(strategist);
         
@@ -219,7 +195,7 @@ contract MetaOUSD is Base {
         ));
     }
 
-    function invariantMetaOusd() public {
+    function invariantMetaOusd1() public {
         for (uint i = 0; i < pnmLogs.length; ++i) {
             LogInfo memory log = pnmLogs[i];
             if (log.state == 1) {
