@@ -1034,6 +1034,13 @@ async function convexLUSDMetaVaultFixture() {
       fixture.LUSDMetaStrategy.address
     );
 
+  await fixture.vault
+    .connect(sGovernor)
+    .setAssetDefaultStrategy(
+      fixture.usdc.address,
+      fixture.LUSDMetaStrategy.address
+    );
+
   return fixture;
 }
 
