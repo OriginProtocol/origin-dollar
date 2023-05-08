@@ -23,8 +23,12 @@ contract MetaOUSD is Base {
         address target;
         uint oldOusdBalance;
         uint newOusdBalance;
-        uint oldStableBalance;
-        uint newStableBalance;
+        uint oldDAIStableBalance;
+        uint newDAIStableBalance;
+        uint oldUSDTStableBalance;
+        uint newUSDTStableBalance;
+        uint oldUSDCStableBalance;
+        uint newUSDCStableBalance;
     }
 
     LogInfo[] pnmLogs;
@@ -63,7 +67,7 @@ contract MetaOUSD is Base {
     }
 
     function actionDeposit(uint amount, bool isBob) public {
-        vm.assume(amount >= 10 ether && amount < 100 ether);
+        // vm.assume(amount >= 10 ether && amount < 100 ether);
 
         address target = bob;
         if (!isBob) target = alice;
@@ -85,6 +89,10 @@ contract MetaOUSD is Base {
             oldOusdBalance,
             ousd.balanceOf(target),
             0,
+            0,
+            0,
+            0,
+            0,
             0
         ));
     }
@@ -95,21 +103,30 @@ contract MetaOUSD is Base {
         address target = bob;
         if (!isBob || ousd.balanceOf(bob) == 0) target = alice;
         
-        uint oldBalance = IERC20(DAI).balanceOf(target);
+        uint oldDAIBalance = IERC20(DAI).balanceOf(target);
+        uint oldUSDTBalance = IERC20(USDT).balanceOf(target);
+        uint oldUSDCBalance = IERC20(USDC).balanceOf(target);
 
         vm.startPrank(target);
 
-        vault.redeem(ousd.balanceOf(bob), 0);
+        vault.redeem(ousd.balanceOf(target), 0);
 
         vm.stopPrank();
+
+        IERC20(USDT).balanceOf(target);
+        IERC20(USDC).balanceOf(target);
 
         pnmLogs.push(LogInfo(
             2,
             target,
             0,
             0,
-            oldBalance,
-            IERC20(DAI).balanceOf(target)
+            oldDAIBalance,
+            IERC20(DAI).balanceOf(target),
+            oldUSDTBalance,
+            IERC20(USDT).balanceOf(target),
+            oldUSDCBalance,
+            IERC20(USDC).balanceOf(target)
         ));
     }
 
@@ -120,7 +137,9 @@ contract MetaOUSD is Base {
                 require(log.oldOusdBalance < log.newOusdBalance,
                     "didnt mint any ousd");
             } else if (log.state == 2) {
-                require(log.newStableBalance != 0 && log.oldStableBalance < log.newStableBalance,
+                require(log.oldDAIStableBalance < log.newDAIStableBalance ||
+                    log.oldUSDTStableBalance < log.newUSDTStableBalance ||
+                    log.oldUSDCStableBalance < log.newUSDCStableBalance,
                     "didnt redeem any stable");
             }
         }
