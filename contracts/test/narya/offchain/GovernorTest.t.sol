@@ -2,7 +2,7 @@ pragma solidity ^0.8.19;
 
 import "../Base.t.sol";
 
-contract GovernorInvariants is Base {
+contract GovernorTest is Base {
     uint constant agentAmount = 10 ether;
     address strategist;
 
@@ -58,12 +58,12 @@ contract GovernorInvariants is Base {
     }
 
     function invariantTakeFundsOutOfDripper() public {
-        IERC20 asset = IERC20(DAI);
+        IERC20 asset = IERC20(USDT);
         uint amount = asset.balanceOf(address(dripper));
 
         if (amount > 0) {
             vm.startPrank(owner);
-            dripper.transferToken(DAI, amount);
+            dripper.transferToken(USDT, amount);
             vm.stopPrank();
 
             uint amount2 = asset.balanceOf(address(dripper));
@@ -88,12 +88,12 @@ contract GovernorInvariants is Base {
     }
 
     function invariantTakeFundsOutOfHarvester() public {
-        IERC20 asset = IERC20(DAI);
+        IERC20 asset = IERC20(USDT);
         uint amount = asset.balanceOf(address(harvester));
 
         if (amount > 0) {
             vm.startPrank(owner);
-            harvester.transferToken(DAI, amount);
+            harvester.transferToken(USDT, amount);
             vm.stopPrank();
 
             uint amount2 = asset.balanceOf(address(dripper));

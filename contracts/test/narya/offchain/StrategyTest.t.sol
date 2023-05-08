@@ -5,7 +5,7 @@ import { ERC4626 } from "../../../lib/openzeppelin/contracts/token/ERC20/extensi
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-contract StrategyInvariants is Base, ERC4626 {
+contract StrategyTest is Base, ERC4626 {
     uint constant agentAmount = 10 ether;
     address strategist;
 
