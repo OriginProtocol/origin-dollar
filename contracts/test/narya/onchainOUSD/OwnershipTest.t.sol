@@ -6,7 +6,7 @@ import {Harvester} from "../../../contracts/harvest/Harvester.sol";
 import {Dripper} from "../../../contracts/harvest/Dripper.sol";
 import {InitializableAbstractStrategy} from "../../../contracts/utils/InitializableAbstractStrategy.sol";
 
-contract OwnershipTest is Base {
+contract OwnershipOUSDTest is Base {
     uint constant agentAmount = 10 ether;
 
     bytes32 constant adminImplPosition =
