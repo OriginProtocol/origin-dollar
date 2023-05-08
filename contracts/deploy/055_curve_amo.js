@@ -200,12 +200,6 @@ const deployConvexETHMetaStrategy = async ({
       args: [cConvexETHMetaStrategy.address],
     },
     {
-      // TODO: are we happy with ConvexETH being WETH asset default strategy
-      contract: cVault,
-      signature: "setAssetDefaultStrategy(address,address)",
-      args: [addresses.mainnet.WETH, cConvexETHMetaStrategy.address],
-    },
-    {
       // Set ConvexEthMeta strategy as the Vault strategy that can print OETH
       contract: cVault,
       signature: "setOusdMetaStrategy(address)",

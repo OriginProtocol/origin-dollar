@@ -1071,6 +1071,14 @@ async function convexOETHMetaVaultFixture() {
     fixture.josh.getAddress()
   );
 
+  // Add Convex Meta strategy
+  await fixture.oethVault
+    .connect(sGuardian)
+    .setAssetDefaultStrategy(
+      fixture.weth.address,
+      fixture.ConvexEthMetaStrategy.address
+    );
+
   // TODO: hardcode this once deployed to the mainnet
   fixture.cvxRewardPool = await ethers.getContractAt(
     "IRewardStaking",
