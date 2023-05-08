@@ -17,7 +17,7 @@ contract MockDepositToken is MintableERC20 {
 }
 
 contract MetaOUSD is Base {
-    uint constant agentAmount = 10_000;
+    uint constant agentAmount = 10 ether;
     address strategist;
     address bob;
     address alice;

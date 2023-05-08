@@ -3,7 +3,7 @@ pragma solidity ^0.8.19;
 import "../Base.t.sol";
 
 contract GovernorInvariants is Base {
-    uint constant agentAmount = 10_000;
+    uint constant agentAmount = 10 ether;
     address strategist;
 
     bytes32 constant adminImplPosition =
