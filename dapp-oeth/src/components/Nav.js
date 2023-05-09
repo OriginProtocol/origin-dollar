@@ -47,6 +47,7 @@ const DappLinks = ({ page }) => {
             </a>
           </Link>
         </div>
+        {/*
         <div className={`link-contain ${page === 'history' ? 'selected' : ''}`}>
           <Link href={adjustLinkHref('/history')}>
             <a
@@ -58,6 +59,7 @@ const DappLinks = ({ page }) => {
             </a>
           </Link>
         </div>
+        */}
       </div>{' '}
       <style jsx>{`
         .link-contain {
