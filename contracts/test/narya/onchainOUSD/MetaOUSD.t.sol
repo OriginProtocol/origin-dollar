@@ -67,7 +67,7 @@ contract MetaOUSD is Base {
     }
 
     function actionDeposit(uint amount, bool isBob) public {
-        vm.assume(amount >= 10 ether && amount < 100 ether);
+        // vm.assume(amount >= 10 ether && amount < 100 ether);
 
         address target = bob;
         if (!isBob) target = alice;
@@ -100,8 +100,9 @@ contract MetaOUSD is Base {
     function actionWithdraw(bool isBob) public {
         vm.assume(ousd.balanceOf(bob) > 0 || ousd.balanceOf(alice) > 0);
         
-        address target = bob;
-        if (!isBob || ousd.balanceOf(bob) == 0) target = alice;
+        address target = isBob ? bob : alice;
+        if (ousd.balanceOf(alice) == 0) target = bob;
+        else if (ousd.balanceOf(bob) == 0) target = alice;
         
         uint oldDAIBalance = IERC20(DAI).balanceOf(target);
         uint oldUSDTBalance = IERC20(USDT).balanceOf(target);
