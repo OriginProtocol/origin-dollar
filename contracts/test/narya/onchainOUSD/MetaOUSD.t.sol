@@ -67,7 +67,7 @@ contract MetaOUSD is Base {
     }
 
     function actionDeposit(uint amount, bool isBob) public {
-        // vm.assume(amount >= 10 ether && amount < 100 ether);
+        vm.assume(amount >= 10 ether && amount < 100 ether);
 
         address target = bob;
         if (!isBob) target = alice;
