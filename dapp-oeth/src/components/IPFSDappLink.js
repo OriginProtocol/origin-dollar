@@ -7,7 +7,7 @@ export default function IPFSDappLink({ css }) {
 
   useEffect(() => {
     setDisplayIpfsLink(
-      ['app.oeth.com', '.herokuapp.com'].includes(window.location.host) ||
+      ['app.oeth.com', 'staging.app.oeth.com'].includes(window.location.host) ||
         window.location.host.startsWith('localhost:') ||
         window.location.host.startsWith('oeth-dapp-staging') ||
         window.location.host.startsWith('oeth-dapp')
