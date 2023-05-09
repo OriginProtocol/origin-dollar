@@ -44,14 +44,14 @@ class MyDocument extends Document {
           <meta property="og:title" content="Origin Ether (OETH)" />
           <meta
             property="og:description"
-            content="A fully transparent stablecoin that earns a yield from DeFi"
+            content="An ETH-pegged token that earns yield from all forms of staking"
           />
           <meta name="twitter:card" content="summary_large_image" />
           <meta name="twitter:site" content="@originprotocol" />
           <meta name="twitter:title" content="Origin Ether (OETH)" />
           <meta
             name="twitter:description"
-            content="A fully transparent stablecoin that earns a yield from DeFi"
+            content="An ETH-pegged token that earns yield from all forms of staking"
           />
           {/* If not on localhost and request's protocl was HTTP, redirect to HTTPS */}
           <script
