@@ -148,7 +148,6 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
             uint256(1e18) - MAX_SLIPPAGE
         );
 
-        uint256 balance = oeth.balanceOf(address(this));
         // Do the deposit to Curve ETH pool
         uint256 lpDeposited = curvePool.add_liquidity{ value: _wethAmount }(
             _amounts,

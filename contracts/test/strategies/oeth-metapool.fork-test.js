@@ -106,7 +106,6 @@ forkOnlyDescribe("ForkTest: OETH Curve Metapool Strategy", function () {
     const {
       josh,
       weth,
-      oeth,
       oethHarvester,
       oethDripper,
       oethVault,
@@ -121,31 +120,22 @@ forkOnlyDescribe("ForkTest: OETH Curve Metapool Strategy", function () {
       .transfer(ConvexEthMetaStrategy.address, oethUnits("1000"));
 
     const wethBefore = await weth.balanceOf(oethDripper.address);
-    const totalSupply = await oeth.totalSupply();
 
+    // prettier-ignore
     await oethHarvester
-      .connect(josh)
-      ["harvestAndSwap(address)"](ConvexEthMetaStrategy.address);
+      .connect(josh)["harvestAndSwap(address)"](ConvexEthMetaStrategy.address);
 
     const wethDiff = (await weth.balanceOf(oethDripper.address)).sub(
       wethBefore
     );
     await oethVault.connect(josh).rebase();
-    const totalSupplyDiff = (await oeth.totalSupply()).sub(totalSupply);
 
     await expect(wethDiff).to.be.gte(oethUnits("0.3"));
   });
 });
 
 async function mintTest(fixture, user, asset, amount = "3") {
-  const {
-    oethVault,
-    oeth,
-    weth,
-    cvxRewardStakerAddress,
-    ConvexEthMetaStrategy,
-    cvxRewardPool,
-  } = fixture;
+  const { oethVault, oeth, ConvexEthMetaStrategy, cvxRewardPool } = fixture;
 
   const unitAmount = await units(amount, asset);
 
