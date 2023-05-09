@@ -628,5 +628,5 @@ module.exports = {
   differenceInErc20TokenBalance,
   differenceInErc20TokenBalances,
   differenceInStrategyBalance,
-  fundAccount
+  fundAccount,
 };

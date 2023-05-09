@@ -56,12 +56,9 @@ abstract contract OracleRouterBase is IOracle {
         return decimals;
     }
 
-    function cacheDecimals(address asset)
-        external
-        returns (uint8)
-    {
+    function cacheDecimals(address asset) external returns (uint8) {
         address _feed = feed(asset);
-        
+
         require(_feed != address(0), "Asset not available");
         require(_feed != FIXED_PRICE, "Fixed price feeds not supported");
 
@@ -87,7 +84,13 @@ contract OracleRouter is OracleRouterBase {
      * @dev The price feed contract to use for a particular asset.
      * @param asset address of the asset
      */
-    function feed(address asset) internal pure virtual override returns (address) {
+    function feed(address asset)
+        internal
+        pure
+        virtual
+        override
+        returns (address)
+    {
         if (asset == 0x6B175474E89094C44Da98b954EedeAC495271d0F) {
             // Chainlink: DAI/USD
             return 0xAed0c38402a5d19df6E4c03F4E2DceD6e29c1ee9;
@@ -153,12 +156,7 @@ contract OETHOracleRouter is OracleRouter {
      * @param asset address of the asset
      * @return address address of the price feed for the asset paired with ETH
      */
-    function feed(address asset)
-        internal
-        pure
-        override
-        returns (address)
-    {
+    function feed(address asset) internal pure override returns (address) {
         if (asset == 0xD533a949740bb3306d119CC777fa900bA034cd52) {
             // Chainlink: CRV/ETH
             return 0x8a12Be339B0cD1829b91Adc01977caa5E9ac121e;

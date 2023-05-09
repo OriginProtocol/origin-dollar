@@ -46,7 +46,6 @@ module.exports = deploymentWithGuardianGovernor(
         ethers,
       });
 
-
     actions = actions.concat(harvesterActions);
 
     // actions = actions.concat(await reDeployOETH({
@@ -60,7 +59,7 @@ module.exports = deploymentWithGuardianGovernor(
         deployWithConfirmation,
         withConfirmation,
         ethers,
-        cHarvester
+        cHarvester,
       })
     );
 
@@ -86,14 +85,17 @@ const configureDripper = async ({
   deployWithConfirmation,
   withConfirmation,
   ethers,
-  cHarvester
+  cHarvester,
 }) => {
   const { deployerAddr } = await getNamedAccounts();
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
   const cVaultProxy = await ethers.getContract("OETHVaultProxy");
   const cDripperProxy = await ethers.getContract("OETHDripperProxy");
-  const cDripper = await ethers.getContractAt("OETHDripper", cDripperProxy.address);
+  const cDripper = await ethers.getContractAt(
+    "OETHDripper",
+    cDripperProxy.address
+  );
 
   return [
     {
@@ -107,9 +109,8 @@ const configureDripper = async ({
       signature: "setRewardsProceedsAddress(address)",
       args: [cDripper.address],
     },
-  ]
+  ];
 };
-
 
 /**
  * Deploy Convex ETH Strategy
@@ -154,21 +155,23 @@ const deployConvexETHMetaStrategy = async ({
     "initialize(address[],address[],address[],(address,address,address,address,address,address,address,uint256))";
 
   await withConfirmation(
-    cConvexETHMetaStrategy.connect(sDeployer)[initFunction](
-      [assetAddresses.CVX, assetAddresses.CRV],
-      [addresses.mainnet.WETH],
-      [tokenAddress],
-      [
-        poolAddress,
-        cVaultProxy.address,
-        addresses.mainnet.CVXBooster,
-        addresses.mainnet.OETHProxy,
-        addresses.mainnet.WETH,
-        crvRewards,
-        tokenAddress,
-        oethPoolLpPID,
-      ]
-    )
+    cConvexETHMetaStrategy
+      .connect(sDeployer)
+      [initFunction](
+        [assetAddresses.CVX, assetAddresses.CRV],
+        [addresses.mainnet.WETH],
+        [tokenAddress],
+        [
+          poolAddress,
+          cVaultProxy.address,
+          addresses.mainnet.CVXBooster,
+          addresses.mainnet.OETHProxy,
+          addresses.mainnet.WETH,
+          crvRewards,
+          tokenAddress,
+          oethPoolLpPID,
+        ]
+      )
   );
   console.log("Initialized ConvexETHMetaStrategy");
   await withConfirmation(
@@ -209,7 +212,7 @@ const deployConvexETHMetaStrategy = async ({
       signature: "setHarvesterAddress(address)",
       args: [cHarvester.address],
     },
-      // set ConvexEth strategy as supported one by harvester
+    // set ConvexEth strategy as supported one by harvester
     {
       contract: cHarvester,
       signature: "setSupportedStrategy(address,bool)",
@@ -348,7 +351,6 @@ const deployCurve = async ({
   withConfirmation,
   ethers,
 }) => {
-
   if (isMainnet) {
     throw new Error("This shouldn't happen on the mainnet");
   }
@@ -442,8 +444,12 @@ const deployCurve = async ({
   const oethToMint = utils.parseUnits("4000", 18);
   await cVault.connect(sRethWhale).mint(reth.address, oethToMint, 0);
   await oeth.connect(sRethWhale).transfer(weth_whale, oethToMint);
-  await oeth.connect(sRethWhale).approve(sRethWhale.address, utils.parseUnits("1", 50))
-  await oeth.connect(sRethWhale).transferFrom(sRethWhale.address, weth_whale, oethToMint)
+  await oeth
+    .connect(sRethWhale)
+    .approve(sRethWhale.address, utils.parseUnits("1", 50));
+  await oeth
+    .connect(sRethWhale)
+    .transferFrom(sRethWhale.address, weth_whale, oethToMint);
 
   await weth
     .connect(sWethWhale)
@@ -454,18 +460,20 @@ const deployCurve = async ({
 
   const depositValue = utils.parseUnits("50", 18);
   await curvePool
-    .connect(sWethWhale)["add_liquidity(uint256[2],uint256)"]([depositValue, depositValue], 0, { value: depositValue });
+    .connect(sWethWhale)
+    ["add_liquidity(uint256[2],uint256)"]([depositValue, depositValue], 0, {
+      value: depositValue,
+    });
 
   const tokenContract = new Contract(tokenAddress, erc20Abi);
-  console.log("LP RECEIVED:", (await tokenContract.connect(sWethWhale).balanceOf(weth_whale)).toString());
+  // console.log("LP RECEIVED:", (await tokenContract.connect(sWethWhale).balanceOf(weth_whale)).toString());
 
   // find out the CVX booster PID
   // prettier-ignore
   const cvxBoosterABI = [{inputs: [{ internalType: "address", name: "_staker", type: "address" },{ internalType: "address", name: "_minter", type: "address" },],stateMutability: "nonpayable",type: "constructor",},{anonymous: false,inputs: [{indexed: true,internalType: "address",name: "user",type: "address",},{indexed: true,internalType: "uint256",name: "poolid",type: "uint256",},{indexed: false,internalType: "uint256",name: "amount",type: "uint256",},],name: "Deposited",type: "event",},{anonymous: false,inputs: [{indexed: true,internalType: "address",name: "user",type: "address",},{indexed: true,internalType: "uint256",name: "poolid",type: "uint256",},{indexed: false,internalType: "uint256",name: "amount",type: "uint256",},],name: "Withdrawn",type: "event",},{inputs: [],name: "FEE_DENOMINATOR",outputs: [{ internalType: "uint256", name: "", type: "uint256" }],stateMutability: "view",type: "function",},{inputs: [],name: "MaxFees",outputs: [{ internalType: "uint256", name: "", type: "uint256" }],stateMutability: "view",type: "function",},{inputs: [{ internalType: "address", name: "_lptoken", type: "address" },{ internalType: "address", name: "_gauge", type: "address" },{ internalType: "uint256", name: "_stashVersion", type: "uint256" },],name: "addPool",outputs: [{ internalType: "bool", name: "", type: "bool" }],stateMutability: "nonpayable",type: "function",},{inputs: [{ internalType: "uint256", name: "_pid", type: "uint256" },{ internalType: "address", name: "_gauge", type: "address" },],name: "claimRewards",outputs: [{ internalType: "bool", name: "", type: "bool" }],stateMutability: "nonpayable",type: "function",},{inputs: [],name: "crv",outputs: [{ internalType: "address", name: "", type: "address" }],stateMutability: "view",type: "function",},{inputs: [{ internalType: "uint256", name: "_pid", type: "uint256" },{ internalType: "uint256", name: "_amount", type: "uint256" },{ internalType: "bool", name: "_stake", type: "bool" },],name: "deposit",outputs: [{ internalType: "bool", name: "", type: "bool" }],stateMutability: "nonpayable",type: "function",},{inputs: [{ internalType: "uint256", name: "_pid", type: "uint256" },{ internalType: "bool", name: "_stake", type: "bool" },],name: "depositAll",outputs: [{ internalType: "bool", name: "", type: "bool" }],stateMutability: "nonpayable",type: "function",},{inputs: [],name: "distributionAddressId",outputs: [{ internalType: "uint256", name: "", type: "uint256" }],stateMutability: "view",type: "function",},{inputs: [],name: "earmarkFees",outputs: [{ internalType: "bool", name: "", type: "bool" }],stateMutability: "nonpayable",type: "function",},{inputs: [],name: "earmarkIncentive",outputs: [{ internalType: "uint256", name: "", type: "uint256" }],stateMutability: "view",type: "function",},{inputs: [{ internalType: "uint256", name: "_pid", type: "uint256" }],name: "earmarkRewards",outputs: [{ internalType: "bool", name: "", type: "bool" }],stateMutability: "nonpayable",type: "function",},{inputs: [],name: "feeDistro",outputs: [{ internalType: "address", name: "", type: "address" }],stateMutability: "view",type: "function",},{inputs: [],name: "feeManager",outputs: [{ internalType: "address", name: "", type: "address" }],stateMutability: "view",type: "function",},{inputs: [],name: "feeToken",outputs: [{ internalType: "address", name: "", type: "address" }],stateMutability: "view",type: "function",},{inputs: [{ internalType: "address", name: "", type: "address" }],name: "gaugeMap",outputs: [{ internalType: "bool", name: "", type: "bool" }],stateMutability: "view",type: "function",},{inputs: [],name: "isShutdown",outputs: [{ internalType: "bool", name: "", type: "bool" }],stateMutability: "view",type: "function",},{inputs: [],name: "lockFees",outputs: [{ internalType: "address", name: "", type: "address" }],stateMutability: "view",type: "function",},{inputs: [],name: "lockIncentive",outputs: [{ internalType: "uint256", name: "", type: "uint256" }],stateMutability: "view",type: "function",},{inputs: [],name: "lockRewards",outputs: [{ internalType: "address", name: "", type: "address" }],stateMutability: "view",type: "function",},{inputs: [],name: "minter",outputs: [{ internalType: "address", name: "", type: "address" }],stateMutability: "view",type: "function",},{inputs: [],name: "owner",outputs: [{ internalType: "address", name: "", type: "address" }],stateMutability: "view",type: "function",},{inputs: [],name: "platformFee",outputs: [{ internalType: "uint256", name: "", type: "uint256" }],stateMutability: "view",type: "function",},{inputs: [{ internalType: "uint256", name: "", type: "uint256" }],name: "poolInfo",outputs: [{ internalType: "address", name: "lptoken", type: "address" },{ internalType: "address", name: "token", type: "address" },{ internalType: "address", name: "gauge", type: "address" },{ internalType: "address", name: "crvRewards", type: "address" },{ internalType: "address", name: "stash", type: "address" },{ internalType: "bool", name: "shutdown", type: "bool" },],stateMutability: "view",type: "function",},{inputs: [],name: "poolLength",outputs: [{ internalType: "uint256", name: "", type: "uint256" }],stateMutability: "view",type: "function",},{inputs: [],name: "poolManager",outputs: [{ internalType: "address", name: "", type: "address" }],stateMutability: "view",type: "function",},{inputs: [],name: "registry",outputs: [{ internalType: "address", name: "", type: "address" }],stateMutability: "view",type: "function",},{inputs: [],name: "rewardArbitrator",outputs: [{ internalType: "address", name: "", type: "address" }],stateMutability: "view",type: "function",},{inputs: [{ internalType: "uint256", name: "_pid", type: "uint256" },{ internalType: "address", name: "_address", type: "address" },{ internalType: "uint256", name: "_amount", type: "uint256" },],name: "rewardClaimed",outputs: [{ internalType: "bool", name: "", type: "bool" }],stateMutability: "nonpayable",type: "function",},{inputs: [],name: "rewardFactory",outputs: [{ internalType: "address", name: "", type: "address" }],stateMutability: "view",type: "function",},{inputs: [{ internalType: "address", name: "_arb", type: "address" }],name: "setArbitrator",outputs: [],stateMutability: "nonpayable",type: "function",},{inputs: [{ internalType: "address", name: "_rfactory", type: "address" },{ internalType: "address", name: "_sfactory", type: "address" },{ internalType: "address", name: "_tfactory", type: "address" },],name: "setFactories",outputs: [],stateMutability: "nonpayable",type: "function",},{inputs: [],name: "setFeeInfo",outputs: [],stateMutability: "nonpayable",type: "function",},{inputs: [{ internalType: "address", name: "_feeM", type: "address" }],name: "setFeeManager",outputs: [],stateMutability: "nonpayable",type: "function",},{inputs: [{ internalType: "uint256", name: "_lockFees", type: "uint256" },{ internalType: "uint256", name: "_stakerFees", type: "uint256" },{ internalType: "uint256", name: "_callerFees", type: "uint256" },{ internalType: "uint256", name: "_platform", type: "uint256" },],name: "setFees",outputs: [],stateMutability: "nonpayable",type: "function",},{inputs: [{ internalType: "uint256", name: "_pid", type: "uint256" }],name: "setGaugeRedirect",outputs: [{ internalType: "bool", name: "", type: "bool" }],stateMutability: "nonpayable",type: "function",},{inputs: [{ internalType: "address", name: "_owner", type: "address" }],name: "setOwner",outputs: [],stateMutability: "nonpayable",type: "function",},{inputs: [{ internalType: "address", name: "_poolM", type: "address" }],name: "setPoolManager",outputs: [],stateMutability: "nonpayable",type: "function",},{inputs: [{ internalType: "address", name: "_rewards", type: "address" },{ internalType: "address", name: "_stakerRewards", type: "address" },],name: "setRewardContracts",outputs: [],stateMutability: "nonpayable",type: "function",},{inputs: [{ internalType: "address", name: "_treasury", type: "address" }],name: "setTreasury",outputs: [],stateMutability: "nonpayable",type: "function",},{inputs: [{ internalType: "address", name: "_voteDelegate", type: "address" },],name: "setVoteDelegate",outputs: [],stateMutability: "nonpayable",type: "function",},{inputs: [{ internalType: "uint256", name: "_pid", type: "uint256" }],name: "shutdownPool",outputs: [{ internalType: "bool", name: "", type: "bool" }],stateMutability: "nonpayable",type: "function",},{inputs: [],name: "shutdownSystem",outputs: [],stateMutability: "nonpayable",type: "function",},{inputs: [],name: "staker",outputs: [{ internalType: "address", name: "", type: "address" }],stateMutability: "view",type: "function",},{inputs: [],name: "stakerIncentive",outputs: [{ internalType: "uint256", name: "", type: "uint256" }],stateMutability: "view",type: "function",},{inputs: [],name: "stakerRewards",outputs: [{ internalType: "address", name: "", type: "address" }],stateMutability: "view",type: "function",},{inputs: [],name: "stashFactory",outputs: [{ internalType: "address", name: "", type: "address" }],stateMutability: "view",type: "function",},{inputs: [],name: "tokenFactory",outputs: [{ internalType: "address", name: "", type: "address" }],stateMutability: "view",type: "function",},{inputs: [],name: "treasury",outputs: [{ internalType: "address", name: "", type: "address" }],stateMutability: "view",type: "function",},{inputs: [{ internalType: "uint256", name: "_voteId", type: "uint256" },{ internalType: "address", name: "_votingAddress", type: "address" },{ internalType: "bool", name: "_support", type: "bool" },],name: "vote",outputs: [{ internalType: "bool", name: "", type: "bool" }],stateMutability: "nonpayable",type: "function",},{inputs: [],name: "voteDelegate",outputs: [{ internalType: "address", name: "", type: "address" }],stateMutability: "view",type: "function",},{inputs: [{ internalType: "address[]", name: "_gauge", type: "address[]" },{ internalType: "uint256[]", name: "_weight", type: "uint256[]" },],name: "voteGaugeWeight",outputs: [{ internalType: "bool", name: "", type: "bool" }],stateMutability: "nonpayable",type: "function",},{inputs: [],name: "voteOwnership",outputs: [{ internalType: "address", name: "", type: "address" }],stateMutability: "view",type: "function",},{inputs: [],name: "voteParameter",outputs: [{ internalType: "address", name: "", type: "address" }],stateMutability: "view",type: "function",},{inputs: [{ internalType: "uint256", name: "_pid", type: "uint256" },{ internalType: "uint256", name: "_amount", type: "uint256" },],name: "withdraw",outputs: [{ internalType: "bool", name: "", type: "bool" }],stateMutability: "nonpayable",type: "function",},{inputs: [{ internalType: "uint256", name: "_pid", type: "uint256" }],name: "withdrawAll",outputs: [{ internalType: "bool", name: "", type: "bool" }],stateMutability: "nonpayable",type: "function",},{inputs: [{ internalType: "uint256", name: "_pid", type: "uint256" },{ internalType: "uint256", name: "_amount", type: "uint256" },{ internalType: "address", name: "_to", type: "address" },],name: "withdrawTo",outputs: [{ internalType: "bool", name: "", type: "bool" }],stateMutability: "nonpayable",type: "function",},];
   const cvxBooster = new Contract(addresses.mainnet.CVXBooster, cvxBoosterABI);
 
-
   return {
-    actions: []
+    actions: [],
   };
 };

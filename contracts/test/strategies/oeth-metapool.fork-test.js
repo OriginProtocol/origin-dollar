@@ -127,7 +127,9 @@ forkOnlyDescribe("ForkTest: OETH Curve Metapool Strategy", function () {
       .connect(josh)
       ["harvestAndSwap(address)"](ConvexEthMetaStrategy.address);
 
-    const wethDiff = (await weth.balanceOf(oethDripper.address)).sub(wethBefore);
+    const wethDiff = (await weth.balanceOf(oethDripper.address)).sub(
+      wethBefore
+    );
     await oethVault.connect(josh).rebase();
     const totalSupplyDiff = (await oeth.totalSupply()).sub(totalSupply);
 
@@ -181,7 +183,10 @@ async function mintTest(fixture, user, asset, amount = "3") {
     currentRewardPoolBalance
   );
 
-  // multiplied by 2 because the strategy prints corresponding amount of OETH and 
+  // multiplied by 2 because the strategy prints corresponding amount of OETH and
   // deploys it in the pool
-  expect(rewardPoolBalanceDiff).to.approxEqualTolerance(oethUnits(amount).mul(2), 1);
+  expect(rewardPoolBalanceDiff).to.approxEqualTolerance(
+    oethUnits(amount).mul(2),
+    1
+  );
 }

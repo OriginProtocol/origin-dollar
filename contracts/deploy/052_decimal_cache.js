@@ -20,7 +20,7 @@ module.exports = deploymentWithGovernanceProposal(
     const { deployerAddr, governorAddr } = await getNamedAccounts();
 
     if (isMainnet) {
-      throw new Error("Delete once sure to update OUSD contracts")
+      throw new Error("Delete once sure to update OUSD contracts");
     }
 
     // Current contracts
@@ -114,7 +114,7 @@ module.exports = deploymentWithGovernanceProposal(
           contract: cVaultProxy,
           signature: "upgradeTo(address)",
           args: [dVaultCore.address],
-        }
+        },
       ],
     };
   }

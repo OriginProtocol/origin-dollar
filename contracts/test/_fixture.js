@@ -272,7 +272,6 @@ async function defaultFixture() {
       "OETHDripper",
       oethDripperProxy.address
     );
-
   } else {
     usdt = await ethers.getContract("MockUSDT");
     dai = await ethers.getContract("MockDAI");
@@ -1287,9 +1286,7 @@ async function hackedVaultFixture() {
     evilDAI.address,
     oracleAddresses.chainlink.DAI_USD
   );
-  await oracleRouter.cacheDecimals(
-    evilDAI.address
-  );
+  await oracleRouter.cacheDecimals(evilDAI.address);
 
   await fixture.vault.connect(sGovernor).supportAsset(evilDAI.address, 0);
 

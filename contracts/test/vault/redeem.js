@@ -93,9 +93,7 @@ describe("Vault Redeem", function () {
     const { ousd, vault, anna, governor, oracleRouter, nonStandardToken } =
       await loadFixture(defaultFixture);
 
-    await oracleRouter.cacheDecimals(
-      nonStandardToken.address
-    );
+    await oracleRouter.cacheDecimals(nonStandardToken.address);
     await vault.connect(governor).supportAsset(nonStandardToken.address, 0);
 
     await setOracleTokenPriceUsd("NonStandardToken", "1.00");

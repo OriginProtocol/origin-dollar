@@ -7,7 +7,7 @@ const {
   usdcUnits,
   advanceTime,
   loadFixture,
-  isGanacheFork
+  isGanacheFork,
 } = require("../helpers");
 
 describe("Compensation Claims", function () {
