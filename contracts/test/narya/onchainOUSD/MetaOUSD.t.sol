@@ -98,7 +98,8 @@ contract MetaOUSD is Base {
     }
 
     function actionWithdraw(bool isBob) public {
-        vm.assume(ousd.balanceOf(bob) > 0 || ousd.balanceOf(alice) > 0);
+        // too small and the curve amount to return is too small
+        vm.assume(ousd.balanceOf(bob) > 1 ether || ousd.balanceOf(alice) > 1 ether);
         
         address target = isBob ? bob : alice;
         if (ousd.balanceOf(alice) == 0) target = bob;
@@ -113,9 +114,6 @@ contract MetaOUSD is Base {
         vault.redeem(ousd.balanceOf(target), 0);
 
         vm.stopPrank();
-
-        IERC20(USDT).balanceOf(target);
-        IERC20(USDC).balanceOf(target);
 
         pnmLogs.push(LogInfo(
             2,
