@@ -55,6 +55,17 @@ const CoinImage = ({ small, coin }) => {
   )
 }
 
+const coinToDisplay = {
+  oeth: {
+    name: 'Origin Ether',
+    symbol: 'OETH',
+  },
+  woeth: {
+    name: 'Wrapped Origin Ether',
+    symbol: 'WOETH',
+  },
+}
+
 const CoinSelect = ({ selected }) => {
   return (
     <>
@@ -70,7 +81,7 @@ const CoinSelect = ({ selected }) => {
         .coin-select {
           min-width: 160px;
           min-height: 40px;
-          padding: 8px;
+          padding: 7px 20px 7px 7px;
           font-size: 18px;
         }
 
@@ -96,6 +107,7 @@ const WrapOETHPill = ({
   wrapEstimate,
   swapsLoading,
   rate,
+  ethPrice,
 }) => {
   const coinBalances = useStoreState(AccountStore, (s) => s.balances)
   const [error, setError] = useState(null)
@@ -216,47 +228,16 @@ const WrapOETHPill = ({
         <div
           className={`d-flex align-items-start justify-content-between currency-pill-inner`}
         >
-          <div className="d-flex flex-column justify-content-between align-items-start h-100">
-            {topItem ? (
-              <CoinSelect selected={swapMode === 'mint' ? 'oeth' : 'woeth'} />
-            ) : (
-              <CoinSelect selected={swapMode === 'mint' ? 'woeth' : 'oeth'} />
-            )}
-
-            <div className="d-flex align-items-center">
-              <div
-                className={`d-flex justify-content-between balance mt-auto mr-2 ${
-                  balanceClickable ? 'clickable' : ''
-                }`}
-                onClick={setMaxBalance}
-              >
-                {displayBalance && (
-                  <div>
-                    {fbt(
-                      'Balance: ' +
-                        fbt.param('coin-balance', displayBalance.balance),
-                      'Coin balance'
-                    )}
-                    <span className="ml-1">
-                      {`${displayBalance.coin === 'woeth' ? 'w' : ''}OETH`}
-                    </span>
-                  </div>
-                )}
-                {balanceClickable && (
-                  <a className="max-link ml-2" onClick={setMaxBalance}>
-                    {fbt('Max', 'Set maximum currency amount')}
-                  </a>
-                )}
-              </div>
-            </div>
-          </div>
-          <div className="d-flex flex-column justify-content-between align-items-end h-100 input-holder">
+          <div
+            className={`d-flex flex-column justify-content-between input-holder w-full relative`}
+          >
             {topItem && (
               <input
                 type="text"
                 value={truncateDecimals(coinValue, 18)}
                 placeholder="0.00"
                 onChange={(e) => {
+                  // truncate decimals after 6th position
                   const value = truncateDecimals(e.target.value, 18)
                   const valueNoCommas = removeCommas(value)
                   if (checkValidInputForCoin(valueNoCommas, selectedCoin)) {
@@ -264,6 +245,59 @@ const WrapOETHPill = ({
                   }
                 }}
               />
+            )}
+            {bottomItem && (
+              <div className="expected-value">
+                {swapsLoading ? (
+                  <span className="text-loading">
+                    {fbt('Loading...', 'Swaps Loading...')}
+                  </span>
+                ) : (
+                  <span>{expectedAmount || '-'}</span>
+                )}
+              </div>
+            )}
+            <div className="usd-balance mt-auto">
+              {bottomItem
+                ? `$${formatCurrency(
+                    truncateDecimals(expectedAmount, 18) * parseFloat(ethPrice),
+                    2
+                  )}`
+                : `$${formatCurrency(
+                    truncateDecimals(coinValue, 18) * parseFloat(ethPrice),
+                    2
+                  )}`}
+            </div>
+          </div>
+          <div className="d-flex flex-column justify-content-between align-items-end">
+            <div className="d-flex align-items-center">
+              <div className="d-flex justify-content-between balance mb-2 mr-2">
+                {displayBalance && (
+                  <div>
+                    {fbt(
+                      'Balance: ' +
+                        fbt.param(
+                          'coin-balance',
+                          formatCurrency(displayBalance.balance, 6)
+                        ),
+                      'Coin balance'
+                    )}
+                    <span className="ml-1">
+                      {coinToDisplay?.[displayBalance.coin]?.symbol}
+                    </span>
+                  </div>
+                )}
+                {balanceClickable && (
+                  <button className="max-link ml-2" onClick={setMaxBalance}>
+                    {fbt('max', 'Set maximum currency amount')}
+                  </button>
+                )}
+              </div>
+            </div>
+            {topItem ? (
+              <CoinSelect selected={swapMode === 'mint' ? 'oeth' : 'woeth'} />
+            ) : (
+              <CoinSelect selected={swapMode === 'mint' ? 'woeth' : 'oeth'} />
             )}
             {topItem && (
               <div className="balance mt-auto">
@@ -279,30 +313,33 @@ const WrapOETHPill = ({
                   : '-'}
               </div>
             )}
-            {bottomItem && (
-              <div className="expected-value">
-                {expectedAmount ||
-                  (swapsLoading ? fbt('Loading...', 'Swaps Loading...') : '-')}
-              </div>
-            )}
           </div>
         </div>
       </div>
       <style jsx>{`
         .currency-pill {
-          min-height: 90px;
-          margin-bottom: 10px;
-          padding: 10px 23px 14px 10px;
-          border: solid 1px #141519;
-          border-radius: 10px;
+          display: flex;
+          justify-content: center;
+          padding: 42px 20px 42px 40px;
+          background-color: #1e1f25;
+        }
+
+        .topItem {
+          background-color: #18191c;
+          border-bottom: solid 1px #141519;
         }
 
         .currency-pill-inner {
-          height: 80px;
         }
 
         .balance {
-          font-size: 12px;
+          font-size: 14px;
+          color: #828699;
+          margin-left: 4px;
+        }
+
+        .usd-balance {
+          font-size: 16px;
           color: #828699;
           margin-left: 4px;
         }
@@ -322,16 +359,32 @@ const WrapOETHPill = ({
         }
 
         input {
+          font-family: Sailec;
           border: 0px;
-          text-align: right;
-          font-size: 24px;
+          max-width: 100%;
+          text-align: left;
+          font-size: 32px;
           color: #fafbfb;
           background-color: transparent;
         }
 
         .expected-value {
-          font-size: 24px;
+          font-size: 32px;
+          max-width: 100%;
+          text-overflow: ellipsis;
           color: #828699;
+        }
+
+        .expected-value .text-loading {
+          font-size: 16px;
+        }
+
+        .expected-value p {
+          white-space: nowrap;
+          text-overflow: ellipsis;
+          width: 100%;
+          display: block;
+          overflow: hidden;
         }
 
         .ml-5px {
@@ -340,7 +393,7 @@ const WrapOETHPill = ({
 
         .max-link:hover,
         .clickable:hover {
-          text-decoration: underline;
+          background: rgba(250, 251, 251, 0.15);
         }
 
         .clickable {
@@ -348,10 +401,25 @@ const WrapOETHPill = ({
         }
 
         .max-link {
+          display: flex;
+          align-items: center;
+          justify-center: center;
+          font-family: Sailec;
+          border: none;
           font-size: 12px;
           color: #828699;
           weight: bold;
           cursor: pointer;
+          width: 32px;
+          height: 18px;
+          padding: 2px 4px;
+          background: rgba(250, 251, 251, 0.1);
+          border-radius: 4px;
+        }
+
+        .input-holder {
+          width: 100%;
+          max-width: 70%;
         }
 
         @media (max-width: 799px) {
@@ -360,21 +428,17 @@ const WrapOETHPill = ({
           }
 
           input {
-            font-size: 20px;
+            font-size: 24px;
           }
 
           .expected-value {
-            font-size: 20px;
+            font-size: 24px;
           }
 
           .balance {
-            font-size: 10px;
+            font-size: 12px;
             margin-left: 4px;
             white-space: nowrap;
-          }
-
-          .max-link {
-            font-size: 10px;
           }
         }
       `}</style>

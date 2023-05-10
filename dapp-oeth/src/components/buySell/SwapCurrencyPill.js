@@ -132,6 +132,7 @@ const TokenSelectionModal = ({
         <div className="content-backdrop" onClick={onClose} />
         <div className="content-container">
           {tokens.map((token) => {
+            const balance = parseFloat(coinBalances?.[token] || 0)
             return (
               <button
                 key={token}
@@ -154,9 +155,11 @@ const TokenSelectionModal = ({
                 </div>
                 <div className="balances">
                   <span className="eth">
-                    {coinBalances?.[token]
-                      ? parseFloat(coinBalances[token])
-                      : 0}
+                    {formatCurrencyMinMaxDecimals(balance, {
+                      minDecimals: 2,
+                      maxDecimals: 18,
+                      truncate: true,
+                    })}
                   </span>
                   <span className="usd">
                     $
@@ -602,6 +605,7 @@ const SwapCurrencyPill = ({
                 }}
               />
             )}
+
             {bottomItem && (
               <div className="expected-value">
                 {swapsLoading ? (

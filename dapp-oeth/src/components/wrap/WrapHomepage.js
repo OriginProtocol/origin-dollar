@@ -11,6 +11,7 @@ import { currencies } from '../../constants/Contract'
 import withRpcProvider from 'hoc/withRpcProvider'
 import WrapOETHPill from 'components/wrap/WrapOETHPill'
 import PillArrow from 'components/buySell/_PillArrow'
+import useEthPrice from 'hooks/useEthPrice'
 import withIsMobile from 'hoc/withIsMobile'
 import { getUserSource } from 'utils/user'
 import usePrevious from 'utils/usePrevious'
@@ -42,6 +43,8 @@ const WrapHomepage = ({
 
   const [inputAmount, setInputAmount] = useState('')
   const [balanceError, setBalanceError] = useState(null)
+
+  const ethPrice = useEthPrice()
 
   const wrappingGloballyDisabled = process.env.DISABLE_WRAP_BUTTON === 'true'
 
@@ -248,8 +251,8 @@ const WrapHomepage = ({
   return (
     <>
       {process.browser && (
-        <>
-          <div className="wrap-homepage d-flex flex-column flex-grow">
+        <div className="d-flex flex-column w-100 mt-4">
+          <div className="swap-wrapper d-flex flex-column flex-grow">
             {buyErrorToDisplay && (
               <ErrorModal
                 error={buyErrorToDisplay}
@@ -259,50 +262,66 @@ const WrapHomepage = ({
                 }}
               />
             )}
-            <WrapOETHPill
-              swapMode={swapMode}
-              onAmountChange={async (amount) => {
-                setInputAmount(amount)
-              }}
-              coinValue={inputAmount}
-              rate={rate}
-              topItem
-              onErrorChange={setBalanceError}
-            />
-            <PillArrow swapMode={swapMode} setSwapMode={setSwapMode} />
-            <WrapOETHPill swapMode={swapMode} wrapEstimate={wrapEstimate} />
-            <ApproveSwap
-              stableCoinToApprove={swapMode === 'mint' ? 'oeth' : 'woeth'}
-              needsApproval={needsApproval}
-              selectedSwap={{ name: 'woeth' }}
-              inputAmount={inputAmount}
-              swapMetadata={swapMetadata()}
-              onSwap={() => onWrapOETH()}
-              allowancesLoaded={allowancesLoaded}
-              onMintingError={onMintingError}
-              balanceError={balanceError}
-              swapsLoaded={true}
-              swappingGloballyDisabled={wrappingGloballyDisabled}
-            />
+            <div className="wrap-main">
+              <WrapOETHPill
+                swapMode={swapMode}
+                onAmountChange={async (amount) => {
+                  setInputAmount(amount)
+                }}
+                coinValue={inputAmount}
+                rate={rate}
+                topItem
+                onErrorChange={setBalanceError}
+                ethPrice={ethPrice}
+              />
+              <PillArrow swapMode={swapMode} setSwapMode={setSwapMode} />
+              <WrapOETHPill
+                swapMode={swapMode}
+                wrapEstimate={wrapEstimate}
+                ethPrice={ethPrice}
+              />
+            </div>
           </div>
+          <ApproveSwap
+            stableCoinToApprove={swapMode === 'mint' ? 'oeth' : 'woeth'}
+            needsApproval={needsApproval}
+            selectedSwap={{ name: 'woeth' }}
+            inputAmount={inputAmount}
+            swapMetadata={swapMetadata()}
+            onSwap={() => onWrapOETH()}
+            allowancesLoaded={allowancesLoaded}
+            onMintingError={onMintingError}
+            balanceError={balanceError}
+            swapsLoaded={true}
+            swappingGloballyDisabled={wrappingGloballyDisabled}
+          />
           <style jsx>{`
-            .wrap-homepage {
-              margin: 0px -1px -1px -1px;
+            .wrap-wrapper {
+              margin: 18px 0;
               border: solid 1px #141519;
               border-radius: 10px;
               background-color: #1e1f25;
-              min-height: 350px;
-              padding: 35px 40px 40px 40px;
               position: relative;
+              overflow: hidden;
+              width: 100%;
+            }
+
+            .wrap-main {
+              display: flex;
+              flex-direction: column;
+              width: 100%;
+              height: 100%;
+              border-radius: 10px;
+              overflow: hidden;
             }
 
             @media (max-width: 799px) {
-              .wrap-homepage {
+              .wrap-wrapper {
                 padding: 23px 20px 20px 20px;
               }
             }
           `}</style>
-        </>
+        </div>
       )}
     </>
   )

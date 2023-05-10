@@ -17,6 +17,9 @@ const approveCoinGasLimits = {
   usdc: 60700,
 
   // TODO: Update these
+  eth: 64000,
+  oeth: 64000,
+  woeth: 64000,
   weth: 64000,
   reth: 64000,
   steth: 64000,

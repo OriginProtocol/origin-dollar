@@ -259,6 +259,7 @@ const useSwapEstimator = ({
     )
 
     const inputAmount = parseFloat(inputAmountRaw)
+
     canDoSwaps.map((estimation) => {
       const gasUsdCost = getGasUsdCost(estimation.gasUsed, gasPrice, ethPrice)
       const gasUsdCostNumber = parseFloat(gasUsdCost)
@@ -284,8 +285,7 @@ const useSwapEstimator = ({
         )
       }
       estimation.effectivePrice =
-        (inputAmount * ethPrice + gasUsdCostNumber) /
-        (amountReceivedNumber * ethPrice)
+        (inputAmount + estimation.gasEstimateEth) / amountReceivedNumber
 
       if (amountReceivedNumber > 0) {
         const costWithGas = amountReceivedNumber + estimation.gasEstimateEth
@@ -420,7 +420,7 @@ const useSwapEstimator = ({
         }
       }
 
-      if (coinToSwap === 'eth') {
+      if (coinToSwap === 'eth' && swapMode === 'mint') {
         const swapGasUsage = 90000 // TODO: Update this
 
         return {

@@ -8919,7 +8919,7 @@
       ]
     },
     "Harvester": {
-      "address": "0xb015C7C0e5E4cA8f31f0aF462D0BCA38336f419c",
+      "address": "0x5E72EB0ab74B5B4d2766a7956D210746Ceab96E1",
       "abi": [
         {
           "inputs": [
@@ -18965,7 +18965,7 @@
       ]
     },
     "OracleRouter": {
-      "address": "0x025C4DE2e9f91C39034C9A3661aCA70c55F65242",
+      "address": "0x06C7a36bfE715479C7f583785b7e9303dfcC89Ff",
       "abi": [
         {
           "inputs": [
@@ -22103,7 +22103,7 @@
       ]
     },
     "VaultAdmin": {
-      "address": "0xC83Cb4F34874E0Ef4c58b4e77D4935F8F819d203",
+      "address": "0xb015C7C0e5E4cA8f31f0aF462D0BCA38336f419c",
       "abi": [
         {
           "anonymous": false,
@@ -23077,7 +23077,7 @@
       ]
     },
     "VaultCore": {
-      "address": "0x050c4FcA28725d975c2896682eBD2905D2E58E84",
+      "address": "0x025C4DE2e9f91C39034C9A3661aCA70c55F65242",
       "abi": [
         {
           "anonymous": false,
