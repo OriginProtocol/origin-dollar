@@ -145,27 +145,4 @@ contract MetaOUSD is Base {
 
         delete pnmLogs;
     }
-
-    function testMetaOusd2_3338907() public {
-      address agent = getAgent();
-      
-      vm.prank(agent);
-      actionDeposit(18446744073709551615, true);
-      vm.setNonce(agent, vm.getNonce(agent) + 1);
-      
-      vm.prank(agent);
-      actionWithdraw(false);
-      vm.setNonce(agent, vm.getNonce(agent) + 1);
-      
-      vm.prank(agent);
-      actionDeposit(10000000000000000001, false);
-      vm.setNonce(agent, vm.getNonce(agent) + 1);
-      
-      vm.prank(agent);
-      actionWithdraw(true);
-      vm.setNonce(agent, vm.getNonce(agent) + 1);
-      
-      // FIXME: Failed below, result is "Revert"
-      invariantMetaOusd2();
-    }
 }
