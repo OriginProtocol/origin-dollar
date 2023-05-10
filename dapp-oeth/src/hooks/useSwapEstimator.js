@@ -285,7 +285,8 @@ const useSwapEstimator = ({
         )
       }
       estimation.effectivePrice =
-        (inputAmount + estimation.gasEstimateEth) / amountReceivedNumber
+        ((inputAmount + estimation.gasEstimateEth) / amountReceivedNumber) *
+        ethPrice
 
       if (amountReceivedNumber > 0) {
         const costWithGas = amountReceivedNumber + estimation.gasEstimateEth
