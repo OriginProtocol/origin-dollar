@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import classnames from 'classnames'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
@@ -105,6 +105,7 @@ const DappLinks = ({ page }) => {
 }
 
 const TransactionActivityDropdown = () => {
+  const animationHash = useRef(null)
   const [open, setOpen] = useState(false)
   const transactions = useStoreState(TransactionStore, (s) => s.transactions)
   const prevTransactions = usePrevious(transactions)
@@ -121,6 +122,17 @@ const TransactionActivityDropdown = () => {
           .filter((tx) => !prevTxHashes.includes(tx.hash))
           .map((tx) => tx.hash),
       ])
+
+      if (animationHash.current) {
+        // Clear previous timeout and extend
+        clearTimeout(animationHash.current)
+      }
+
+      // Empty out after ~15 seconds, a bit over last block avg time
+      animationHash.current = setTimeout(() => {
+        setTxHashesToAnimate([])
+        animationHash.current = null
+      }, 15000)
     }
 
     const sortedTx = [...transactions]
