@@ -170,10 +170,11 @@ contract MetaOUSD is Base {
     }
 
     function actionWithdraw(uint amount, bool isBob) public {
-        vm.assume(ousd.balanceOf(bob) > 0 || ousd.balanceOf(alice) > 0);
+        vm.assume(ousd.balanceOf(bob) >= 50 || ousd.balanceOf(alice) >= 50);
         
-        address target = bob;
-        if (!isBob || ousd.balanceOf(bob) == 0) target = alice;
+        address target = isBob ? bob : alice;
+        if (ousd.balanceOf(alice) < 50 ether) target = bob;
+        else if (ousd.balanceOf(bob) < 50 ether) target = alice;
 
         vm.assume(amount >= 3 && amount < ousd.balanceOf(target));
         

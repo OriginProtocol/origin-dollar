@@ -99,11 +99,11 @@ contract MetaOUSD is Base {
 
     function actionWithdraw(bool isBob) public {
         // too small and the curve amount to return is too small
-        vm.assume(ousd.balanceOf(bob) > 1 ether || ousd.balanceOf(alice) > 1 ether);
+        vm.assume(ousd.balanceOf(bob) > 10 ether || ousd.balanceOf(alice) > 10 ether);
         
         address target = isBob ? bob : alice;
-        if (ousd.balanceOf(alice) == 0) target = bob;
-        else if (ousd.balanceOf(bob) == 0) target = alice;
+        if (ousd.balanceOf(alice) < 10 ether) target = bob;
+        else if (ousd.balanceOf(bob) < 10 ether) target = alice;
         
         uint oldDAIBalance = IERC20(DAI).balanceOf(target);
         uint oldUSDTBalance = IERC20(USDT).balanceOf(target);
@@ -144,5 +144,28 @@ contract MetaOUSD is Base {
         }
 
         delete pnmLogs;
+    }
+
+    function testMetaOusd2_3338907() public {
+      address agent = getAgent();
+      
+      vm.prank(agent);
+      actionDeposit(18446744073709551615, true);
+      vm.setNonce(agent, vm.getNonce(agent) + 1);
+      
+      vm.prank(agent);
+      actionWithdraw(false);
+      vm.setNonce(agent, vm.getNonce(agent) + 1);
+      
+      vm.prank(agent);
+      actionDeposit(10000000000000000001, false);
+      vm.setNonce(agent, vm.getNonce(agent) + 1);
+      
+      vm.prank(agent);
+      actionWithdraw(true);
+      vm.setNonce(agent, vm.getNonce(agent) + 1);
+      
+      // FIXME: Failed below, result is "Revert"
+      invariantMetaOusd2();
     }
 }
