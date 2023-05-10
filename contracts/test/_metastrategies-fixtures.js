@@ -7,6 +7,7 @@ const {
   resetAllowance,
   impersonateAndFundContract,
 } = require("./_fixture");
+const addresses = require("../utils/addresses");
 const erc20Abi = require("./abi/erc20.json");
 
 // NOTE: This can cause a change in setup from mainnet.
@@ -25,6 +26,11 @@ async function withDefaultOUSDMetapoolStrategiesSet() {
   await vault
     .connect(timelock)
     .setAssetDefaultStrategy(usdc.address, OUSDmetaStrategy.address);
+
+  fixture.cvxRewardPool = await ethers.getContractAt(
+    "IRewardStaking",
+    addresses.mainnet.CVXRewardsPool
+  );
 
   return fixture;
 }
