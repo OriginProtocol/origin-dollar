@@ -429,23 +429,23 @@ const SwapCurrencyPill = ({
   const [error, setError] = useState(null)
 
   const coinMintOptions = [
-    'oeth',
-    'weth',
-    'frxeth',
-    'reth',
-    'steth',
     'eth',
+    'weth',
+    'oeth',
+    'steth',
+    'reth',
+    'frxeth',
     'sfrxeth',
   ]
 
   const coinRedeemOptions = [
     'oeth',
     'mix',
+    'eth',
     'weth',
     'frxeth',
     'reth',
     'steth',
-    'eth',
   ]
 
   const { active } = useWeb3React()

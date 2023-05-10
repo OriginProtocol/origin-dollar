@@ -43,12 +43,12 @@ const SwapHomepage = ({
 
   const storedSelectedCoin = process.browser
     ? localStorage.getItem(lastUserSelectedCoinKey)
-    : 'weth'
+    : 'eth'
   // Just in case inconsistent state happens where selected coin is mix and mode mint, reset selected coin to weth
   const defaultSelectedCoinValue =
     (storedSelectedCoin === 'mix' && swapMode === 'mint'
-      ? 'weth'
-      : storedSelectedCoin) || 'weth'
+      ? 'eth'
+      : storedSelectedCoin) || 'eth'
   const [selectedBuyCoin, setSelectedBuyCoin] = useState(
     defaultSelectedCoinValue
   )
@@ -119,13 +119,13 @@ const SwapHomepage = ({
       setSelectedRedeemCoin('oeth')
       // TODO: when user comes from 'mix' coin introduce the new empty field
       if (lastUserSelectedCoin === 'mix') {
-        lastUserSelectedCoin = 'weth'
-        localStorage.setItem(lastUserSelectedCoinKey, 'weth')
+        lastUserSelectedCoin = 'eth'
+        localStorage.setItem(lastUserSelectedCoinKey, 'eth')
       }
-      setSelectedBuyCoin(lastUserSelectedCoin || 'weth')
+      setSelectedBuyCoin(lastUserSelectedCoin || 'eth')
     } else {
       setSelectedBuyCoin('oeth')
-      setSelectedRedeemCoin(lastUserSelectedCoin || 'weth')
+      setSelectedRedeemCoin(lastUserSelectedCoin || 'eth')
     }
 
     // currencies flipped
@@ -394,12 +394,6 @@ const SwapHomepage = ({
             .title {
               color: #fafbfb;
               font-size: 14px;
-            }
-
-            @media (max-width: 799px) {
-              .swap-wrapper {
-                padding: 23px 20px 20px 20px;
-              }
             }
 
             @media (max-width: 1080px) {

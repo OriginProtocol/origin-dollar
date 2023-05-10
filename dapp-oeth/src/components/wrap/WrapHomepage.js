@@ -36,8 +36,11 @@ const WrapHomepage = ({
 }) => {
   // mint / redeem
   const [swapMode, setSwapMode] = useState(
-    process.browser ? localStorage.getItem(lastSelectedSwapModeKey) : 'mint'
+    process.browser && localStorage.getItem(lastSelectedSwapModeKey) !== null
+      ? localStorage.getItem(lastSelectedSwapModeKey)
+      : 'mint'
   )
+
   const previousSwapMode = usePrevious(swapMode)
   const [buyErrorToDisplay, setBuyErrorToDisplay] = useState(false)
 
