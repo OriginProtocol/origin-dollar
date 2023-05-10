@@ -102,8 +102,8 @@ contract MetaOUSD is Base {
         vm.assume(ousd.balanceOf(bob) > 10 ether || ousd.balanceOf(alice) > 10 ether);
         
         address target = isBob ? bob : alice;
-        if (ousd.balanceOf(alice) < 10 ether) target = bob;
-        else if (ousd.balanceOf(bob) < 10 ether) target = alice;
+        if (target == alice && ousd.balanceOf(alice) < 10 ether) target = bob;
+        else if (target == bob && ousd.balanceOf(bob) < 10 ether) target = alice;
         
         uint oldDAIBalance = IERC20(DAI).balanceOf(target);
         uint oldUSDTBalance = IERC20(USDT).balanceOf(target);

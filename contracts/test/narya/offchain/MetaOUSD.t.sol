@@ -173,8 +173,8 @@ contract MetaOUSD is Base {
         vm.assume(ousd.balanceOf(bob) >= 50 || ousd.balanceOf(alice) >= 50);
         
         address target = isBob ? bob : alice;
-        if (ousd.balanceOf(alice) < 50 ether) target = bob;
-        else if (ousd.balanceOf(bob) < 50 ether) target = alice;
+        if (target == alice && ousd.balanceOf(alice) < 50) target = bob;
+        else if (target == bob && ousd.balanceOf(bob) < 50) target = alice;
 
         vm.assume(amount >= 3 && amount < ousd.balanceOf(target));
         
