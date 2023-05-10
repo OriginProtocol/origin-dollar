@@ -74,21 +74,7 @@ const Layout = ({
           content="https://ousd.com/images/share-twitter.png"
         />
       </Head>
-      <div
-        className={classnames(
-          'notice disclaimer text-white text-center p-3 dapp',
-          SHOW_DISCLAIMER ? '' : 'd-none'
-        )}
-      >
-        <div className="container d-flex flex-column flex-md-row align-items-center">
-          <span>
-            {fbt(
-              '⚠️ DO NOT RISK ANY FUNDS. ⚠️ Origin Ether is currently being audited. This dapp is for testing only.',
-              'Disclaimer usage'
-            )}
-          </span>
-        </div>
-      </div>
+
       <div
         className={classnames(
           'notice text-white text-center p-3 dapp',

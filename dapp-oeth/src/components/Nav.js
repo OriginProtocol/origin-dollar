@@ -24,7 +24,7 @@ const environment = process.env.NODE_ENV
 const DappLinks = ({ page }) => {
   return (
     <>
-      <div className="d-flex align-items-center justify-content-center dapp-navigation mr-auto flex-wrap">
+      <div className="d-flex align-items-center justify-content-center dapp-navigation flex-wrap">
         <div className={`link-contain ${page === 'swap' ? 'selected' : ''}`}>
           <Link href={adjustLinkHref('/')}>
             <a
@@ -36,7 +36,9 @@ const DappLinks = ({ page }) => {
             </a>
           </Link>
         </div>
-        <div className={`link-contain ${page === 'wrap' ? 'selected' : ''}`}>
+        <div
+          className={`link-contain last ${page === 'wrap' ? 'selected' : ''}`}
+        >
           <Link href={adjustLinkHref('/wrap')}>
             <a
               className={`d-flex align-items-center ${
@@ -63,7 +65,13 @@ const DappLinks = ({ page }) => {
       </div>{' '}
       <style jsx>{`
         .link-contain {
+          font-size: 16px;
           border-radius: 56px;
+          margin-right: 8px;
+        }
+
+        .link-contain.last {
+          margin-right: 0 !important;
         }
 
         .link-contain.selected {
@@ -82,13 +90,13 @@ const DappLinks = ({ page }) => {
 
         .dapp-navigation a {
           white-space: nowrap;
-          padding: 8px 16px;
+          padding: 8px 24px;
         }
 
         .dapp-navigation a.selected {
           background: #000000aa;
           color: #fafafb;
-          padding: 8px 16px;
+          padding: 8px 24px;
           border-radius: 56px;
         }
 
@@ -97,6 +105,16 @@ const DappLinks = ({ page }) => {
             margin-top: -10px;
             margin-left: 0px;
             margin-bottom: 10px;
+          }
+
+          .dapp-navigation a {
+            padding: 8px 16px;
+            font-size: 12px;
+          }
+
+          .dapp-navigation a.selected {
+            padding: 8px 16px;
+            font-size: 12px;
           }
         }
       `}</style>
@@ -220,7 +238,7 @@ const TransactionActivityDropdown = () => {
 
         .activity-icon {
           width: 25px;
-          height: 25px;
+          height: 15px;
         }
 
         .dropdown-menu {
@@ -277,6 +295,13 @@ const TransactionActivityDropdown = () => {
             transform: rotate(360deg);
           }
         }
+
+        @media (max-width: 799px) {
+          .activity-toggle {
+            width: 36px;
+            height: 36px;
+          }
+        }
       `}</style>
     </>
   )
@@ -316,6 +341,7 @@ const useSticky = ({ defaultSticky = false, stickAt = 80 }) => {
 
   return [{ elRef, fromTop, isSticky }]
 }
+const SHOW_DISCLAIMER = true
 
 const Nav = ({ isMobile, locale, onLocale, page }) => {
   const { pathname } = useRouter()
@@ -350,11 +376,16 @@ const Nav = ({ isMobile, locale, onLocale, page }) => {
           </Link>
           <div className="d-flex">
             <IPFSDappLink css="d-lg-none" />
-            {
+            {active && (
               <div className="d-lg-none">
                 <AccountStatusDropdown />
               </div>
-            }
+            )}
+            {active && account && (
+              <div className="d-flex d-lg-none">
+                <TransactionActivityDropdown />
+              </div>
+            )}
             {!active && (
               <div className="d-flex d-lg-none">
                 <GetOUSD
@@ -444,11 +475,49 @@ const Nav = ({ isMobile, locale, onLocale, page }) => {
             </div>
           </div>
         </div>
-        <div className="d-flex d-lg-none">
+        <div className="d-flex d-lg-none justify-content-center dapplinks-contain">
           <DappLinks page={page} />
         </div>
       </nav>
       <style jsx>{`
+        .notice {
+          background-color: #0074f0;
+          margin-bottom: 0px;
+        }
+
+        .notice.burn {
+          background: linear-gradient(90deg, #8c66fc -28.99%, #0274f1 144.97%);
+        }
+
+        .notice.staking {
+          background-color: #1a82ff;
+        }
+
+        .notice.dapp {
+          margin-bottom: 0px;
+        }
+
+        .notice.disclaimer {
+          background-color: #ff4e4e;
+        }
+
+        .notice .btn {
+          font-size: 12px;
+          height: auto;
+          padding: 5px 20px;
+          background-color: #fafbfb;
+          color: #02080d;
+        }
+
+        .navbar-contain {
+          width: 100%;
+          margin-top: 48px !important;
+          margin-bottom: 72px !important;
+          margin: 0 auto;
+          padding: 0 136px;
+          max-width: 89.5rem;
+        }
+
         .banner {
           background-color: transparent;
           font-size: 0.8125rem;
@@ -487,12 +556,19 @@ const Nav = ({ isMobile, locale, onLocale, page }) => {
           min-height: 40px;
         }
 
+        .navbar-brand img {
+          max-height: 24px;
+          width: fit-content;
+        }
+
         .navbar {
           display: flex;
           align-items: center;
           padding: 0;
-          font-size: 0.8125rem;
+          font-size: 16px;
+          font-weight: 500;
           margin-top: 0;
+          padding: 0;
           z-index: 2;
           height: 100px;
         }
@@ -524,6 +600,11 @@ const Nav = ({ isMobile, locale, onLocale, page }) => {
           width: 100%;
           max-width: 100%;
           padding: 0 80px;
+        }
+
+        .navbar .container {
+          margin: 0;
+          width: 100%;
         }
 
         .navbar-toggler {
@@ -598,6 +679,31 @@ const Nav = ({ isMobile, locale, onLocale, page }) => {
           .nav-container {
             padding: 0 30px;
           }
+
+          .dapplinks-contain {
+            width: 100%;
+          }
+
+          .container {
+            width: 100%;
+            max-width: 100%;
+            padding-left: 30px;
+            padding-right: 30px;
+          }
+
+          .navbar-contain {
+            margin-top: 24px !important;
+            margin-bottom: 32px !important;
+            margin: 0 12px;
+            padding: 0;
+            align-items: center;
+            justify-content: space-between;
+          }
+
+          .navbar {
+            font-size: 12px;
+          }
+
           .navbar-collapse {
             background: white;
             font-size: 1.5rem;
@@ -749,6 +855,11 @@ const Nav = ({ isMobile, locale, onLocale, page }) => {
         }
 
         @media (max-width: 992px) {
+          .navbar-brand img {
+            max-height: 16px;
+            width: fit-content;
+          }
+
           .navbar {
             z-index: 100;
           }

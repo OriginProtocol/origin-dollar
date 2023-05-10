@@ -56,7 +56,7 @@ const AccountStatusIndicator = ({
       )}
       <style jsx>{`
         .address {
-          font-size: 14px;
+          font-size: 16px;
           color: #fafbfb;
         }
 

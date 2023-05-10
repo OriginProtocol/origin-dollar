@@ -605,6 +605,7 @@ const SwapCurrencyPill = ({
           >
             {topItem && (
               <input
+                className="action-input"
                 type="text"
                 value={truncateDecimals(coinValue, 18)}
                 placeholder="0.00"
@@ -850,7 +851,7 @@ const SwapCurrencyPill = ({
         }
 
         .input-holder {
-          width: 100%;
+          width: fit-content;
           max-width: 70%;
         }
 
@@ -861,6 +862,7 @@ const SwapCurrencyPill = ({
 
           input {
             font-size: 24px;
+            max-width: 55px;
           }
 
           .expected-value {

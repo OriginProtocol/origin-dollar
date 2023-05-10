@@ -38,7 +38,7 @@ const SwapHomepage = ({
   const [swapMode, setSwapMode] = useState(
     process.browser && localStorage.getItem(lastSelectedSwapModeKey) !== null
       ? localStorage.getItem(lastSelectedSwapModeKey)
-      : 'mint'
+      : 'redeem'
   )
   const [buyErrorToDisplay, setBuyErrorToDisplay] = useState(false)
 
