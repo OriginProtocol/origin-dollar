@@ -240,10 +240,9 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
          * and again by 36 places when we are done with it.
          */
         uint256 k = (1e36 * lpToken.totalSupply()) / poolWETHBalance;
-        // simplifying below to: `uint256 diff = (_wethAmount - 1) * k` causes loss of precision
         // prettier-ignore
         // slither-disable-next-line divide-before-multiply
-        uint256 diff = _wethAmount + 1 * k;
+        uint256 diff = (_wethAmount + 1) * k;
         lpToBurn = diff / 1e36;
     }
 
