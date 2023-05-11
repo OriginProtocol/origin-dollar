@@ -149,6 +149,7 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         );
 
         // Do the deposit to Curve ETH pool
+        // slither-disable-next-line arbitrary-send-eth
         uint256 lpDeposited = curvePool.add_liquidity{ value: _wethAmount }(
             _amounts,
             minMintAmount
