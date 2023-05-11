@@ -207,7 +207,10 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         IVault(vaultAddress).burnForStrategy(oeth.balanceOf(address(this)));
         // Transfer WETH
         weth.deposit{ value: _amount }();
-        weth.safeTransfer(_recipient, _amount);
+        require(
+            weth.transfer(_recipient, _amount),
+            "Transfer of WETH not successful"
+        );
     }
 
     function calcTokenToBurn(uint256 _wethAmount)
@@ -266,7 +269,10 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
 
         // Send all ETH and WETH on the contract, including extra
         weth.deposit{ value: address(this).balance }();
-        weth.safeTransfer(vaultAddress, weth.balanceOf(address(this)));
+        require(
+            weth.transfer(vaultAddress, weth.balanceOf(address(this))),
+            "Transfer of WETH not successful"
+        );
     }
 
     /**
