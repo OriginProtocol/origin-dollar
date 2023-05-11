@@ -149,13 +149,13 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         );
 
         // Do the deposit to Curve ETH pool
-        // slither-disable-next-line arbitrary-send-eth
         uint256 lpDeposited = curvePool.add_liquidity{ value: _wethAmount }(
             _amounts,
             minMintAmount
         );
 
         require(
+            // slither-disable-next-line arbitrary-send-eth
             IConvexDeposits(cvxDepositorAddress).deposit(
                 cvxDepositorPTokenId,
                 lpDeposited,
@@ -200,13 +200,14 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
          */
         uint256[2] memory _minWithdrawalAmounts = [uint256(0), uint256(0)];
         _minWithdrawalAmounts[ethCoinIndex] = _amount;
+        // slither-disable-next-line unused-return
         curvePool.remove_liquidity(requiredLpTokens, _minWithdrawalAmounts);
 
         // Burn OETH
         IVault(vaultAddress).burnForStrategy(oeth.balanceOf(address(this)));
         // Transfer WETH
         weth.deposit{ value: _amount }();
-        weth.transfer(_recipient, _amount);
+        weth.safeTransfer(_recipient, _amount);
     }
 
     function calcTokenToBurn(uint256 _wethAmount)
@@ -253,6 +254,7 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         uint256[2] memory minWithdrawAmounts = [uint256(0), uint256(0)];
 
         // Remove liquidity
+        // slither-disable-next-line unused-return
         curvePool.remove_liquidity(
             lpToken.balanceOf(address(this)),
             minWithdrawAmounts
@@ -264,7 +266,7 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
 
         // Send all ETH and WETH on the contract, including extra
         weth.deposit{ value: address(this).balance }();
-        weth.transfer(vaultAddress, weth.balanceOf(address(this)));
+        weth.safeTransfer(vaultAddress, weth.balanceOf(address(this)));
     }
 
     /**
@@ -354,14 +356,14 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
 
     function _approveAsset(address _asset) internal {
         // approve curve pool for asset (required for adding liquidity)
-        IERC20(_asset).approve(platformAddress, type(uint256).max);
+        IERC20(_asset).safeApprove(platformAddress, type(uint256).max);
     }
 
     function _approveBase() internal {
         // WETH was approved as a supported asset,
         // so we need seperate OETH approve
         _approveAsset(address(oeth));
-        lpToken.approve(cvxDepositorAddress, type(uint256).max);
+        lpToken.safeApprove(cvxDepositorAddress, type(uint256).max);
     }
 
     /**
