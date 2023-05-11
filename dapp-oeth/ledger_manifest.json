@@ -3,7 +3,7 @@
   "name": "OETH",
   "url": "https://dapp-browser.apps.ledger.com",
   "params": {
-    "dappUrl": "http://localhost:3000/?embed=true",
+    "dappUrl": "https://app.oeth.com/?embed=true",
     "nanoApp": "Ethereum",
     "dappName": "Ethereum",
     "networks": [

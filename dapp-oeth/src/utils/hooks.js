@@ -72,7 +72,7 @@ export function useEagerConnect() {
     }
 
     attemptLedgerLiveConnection()
-  }, [process.browser])
+  }, [process.browser, triedSafeMultisig])
 
   // Attempt to use injectedConnector connector
   useEffect(() => {

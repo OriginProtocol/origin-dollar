@@ -7,6 +7,7 @@ import { useRouter } from 'next/router'
 import withWalletSelectModal from 'hoc/withWalletSelectModal'
 import analytics from 'utils/analytics'
 import { walletLogin } from 'utils/account'
+import { ledgerLiveConnector } from 'utils/connectors'
 
 const GetOUSD = ({
   id,
@@ -35,6 +36,7 @@ const GetOUSD = ({
     zIndex2 && 'zIndex2',
     navMarble && 'nav-marble'
   )
+  const ledgerLive = ledgerLiveConnector?.isLedgerApp()
 
   useEffect(() => {
     if (
@@ -61,7 +63,11 @@ const GetOUSD = ({
               category: 'general',
               label: trackSource,
             })
-            walletLogin(showLogin, activate)
+            if (ledgerLive) {
+              activate(ledgerLiveConnector, undefined, true)
+            } else {
+              walletLogin(showLogin, activate)
+            }
           }
         }}
       >
