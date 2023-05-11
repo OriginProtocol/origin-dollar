@@ -105,6 +105,7 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         _deposit(_weth, _amount);
     }
 
+    // slither-disable-next-line arbitrary-send-eth
     function _deposit(address _weth, uint256 _wethAmount) internal {
         require(_wethAmount > 0, "Must deposit something");
         require(_weth == address(weth), "Can only deposit WETH");
