@@ -18,6 +18,7 @@ import { adjustLinkHref } from 'utils/utils'
 import { assetRootPath } from 'utils/image'
 import TransactionStore from 'stores/TransactionStore'
 import { usePrevious } from 'utils/hooks'
+import { ledgerLiveConnector } from 'utils/connectors'
 
 const environment = process.env.NODE_ENV
 
@@ -37,7 +38,7 @@ const DappLinks = ({ page }) => {
           </Link>
         </div>
         <div className={`link-contain ${page === 'wrap' ? 'selected' : ''}`}>
-          <Link href={adjustLinkHref('/wrap')}>
+          <Link href={adjustLinkHref('/wrap')} type="button">
             <a
               className={`d-flex align-items-center ${
                 page === 'wrap' ? 'selected' : ''
@@ -285,6 +286,7 @@ const Nav = ({ isMobile, locale, onLocale, page }) => {
   const { pathname } = useRouter()
   const { active, account } = useWeb3React()
   const apy = useStoreState(ContractStore, (s) => s.apy.apy30 || 0)
+  const ledgerLive = ledgerLiveConnector?.isLedgerApp()
 
   return (
     <>
@@ -322,12 +324,12 @@ const Nav = ({ isMobile, locale, onLocale, page }) => {
           {/*</button>*/}
           <div className="d-flex">
             <IPFSDappLink css="d-lg-none" />
-            {
+            {active && (
               <div className="d-lg-none">
                 <AccountStatusDropdown />
               </div>
-            }
-            {!active && (
+            )}
+            {!active && !ledgerLive && (
               <div className="d-flex d-lg-none">
                 <GetOUSD
                   navMarble

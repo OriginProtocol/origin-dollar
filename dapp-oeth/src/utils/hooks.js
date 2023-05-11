@@ -8,6 +8,7 @@ import {
   injectedConnector,
   gnosisConnector,
   ledgerConnector,
+  ledgerLiveConnector,
 } from './connectors'
 import AccountStore from 'stores/AccountStore'
 import analytics from 'utils/analytics'
@@ -20,6 +21,7 @@ export function useEagerConnect() {
   const [triedEager, setTriedEager] = useState(false)
   const [triedSafeMultisig, setTriedSafeMultisig] = useState(false)
   const [isSafeMultisig, setIsSafeMultisig] = useState(false)
+  const [triedLedgerLive, setTriedLedgerLive] = useState(false)
 
   // Attempt to use Gnosis Safe Multisig if available
   useEffect(() => {
@@ -50,12 +52,34 @@ export function useEagerConnect() {
     attemptSafeConnection()
   }, [process.browser]) // Try this when Safe multisig connector is started
 
+  useEffect(() => {
+    async function attemptLedgerLiveConnection() {
+      try {
+        if (ledgerLiveConnector?.isLedgerApp()) {
+          await activate(ledgerLiveConnector, undefined, true)
+        }
+      } catch (error) {
+        console.debug(error)
+        setTriedLedgerLive(true)
+        return
+      }
+  
+      AccountStore.update((s) => {
+        s.connectorName = 'Ledger'
+      })
+
+      setTriedLedgerLive(true)
+    }
+
+    attemptLedgerLiveConnection()
+  }, [process.browser])
+
   // Attempt to use injectedConnector connector
   useEffect(() => {
     async function attemptEagerConnection() {
       // Must try Safe multisig before injectedConnector connector, don't do anything
       // further if using Safe multisig
-      if (!triedSafeMultisig || isSafeMultisig) return
+      if (!triedSafeMultisig || isSafeMultisig || !triedLedgerLive) return
 
       const eagerConnect = localStorage.getItem('eagerConnect', false)
       // Local storage request we don't try eager connect
