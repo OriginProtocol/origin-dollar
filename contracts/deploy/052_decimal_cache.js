@@ -3,6 +3,11 @@ const addresses = require("../utils/addresses");
 const { isMainnet } = require("../test/helpers.js");
 
 module.exports = deploymentWithGovernanceProposal(
+  /* IMPORTANT (!)
+   *
+   * Once this gets deployed undo the `skip` in the `vault.fork-test.js` under
+   * the "Should have correct Price Oracle address set" scenario.
+   */
   {
     deployName: "052_decimal_cache",
     forceDeploy: false,
