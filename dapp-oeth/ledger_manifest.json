@@ -1,6 +1,6 @@
 {
   "id": "oeth",
-  "name": "OETH",
+  "name": "Origin Ether",
   "url": "https://dapp-browser.apps.ledger.com",
   "params": {
     "dappUrl": "https://app.oeth.com/?embed=true",
