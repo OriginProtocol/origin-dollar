@@ -829,18 +829,18 @@ const deployCore = async () => {
 
   // Initialize OUSD
   /* Set the original resolution to 27 decimals. We used to have it set to 18
-   * decimals at launch and then migrated to 27. Having it set to 27 it will 
+   * decimals at launch and then migrated to 27. Having it set to 27 it will
    * make unit tests run at that resolution that more closely mimics mainnet
    * behaviour.
    *
    * Another reason:
    * Testing Vault value checker with small changes in Vault value and supply
-   * was behaving incorrectly because the rounding error that is present with 
+   * was behaving incorrectly because the rounding error that is present with
    * 18 decimal point resolution, which was interfering with unit test correctness.
-   * Possible solutions were: 
+   * Possible solutions were:
    *  - scale up unit test values so rounding error isn't a problem
    *  - have unit test run in 27 decimal point rebasingCreditsPerToken resolution
-   * 
+   *
    * Latter seems more fitting - due to mimicking production better as already mentioned.
    */
   const resolution = ethers.utils.parseUnits("1", 27);
