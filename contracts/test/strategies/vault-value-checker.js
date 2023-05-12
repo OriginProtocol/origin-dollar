@@ -57,7 +57,12 @@ describe("Check vault value", () => {
       // Verify checkDelta behavior
       const fn = checker
         .connect(matt)
-        .checkDelta(expectedProfit, profitVariance, expectedVaultChange, vaultChangeVariance);
+        .checkDelta(
+          expectedProfit,
+          profitVariance,
+          expectedVaultChange,
+          vaultChangeVariance
+        );
       if (expectedRevert) {
         await expect(fn).to.be.revertedWith(expectedRevert);
       } else {
