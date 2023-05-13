@@ -102,9 +102,9 @@ const DappLinks = ({ page }) => {
 
         @media (max-width: 992px) {
           .dapp-navigation {
-            margin-top: -10px;
+            margin-top: 8px;
             margin-left: 0px;
-            margin-bottom: 10px;
+            margin-bottom: 24px;
           }
 
           .dapp-navigation a {
@@ -517,7 +517,7 @@ const Nav = ({ isMobile, locale, onLocale, page }) => {
           margin-bottom: 72px !important;
           margin: 0 auto;
           padding: 0 136px;
-          max-width: 89.5rem;
+          max-width: 1700px;
         }
 
         .banner {
@@ -696,7 +696,7 @@ const Nav = ({ isMobile, locale, onLocale, page }) => {
 
           .navbar-contain {
             margin-top: 24px !important;
-            margin-bottom: 32px !important;
+            margin-bottom: 24px !important;
             padding: 0 24px !important;
             align-items: center;
             justify-content: space-between;

@@ -84,6 +84,11 @@ const AccountStatusIndicator = ({
         }
 
         @media (max-width: 992px) {
+          .address {
+            font-size: 12px;
+            color: #fafbfb;
+          }
+
           .wallet-img {
             margin-right: 0px;
           }

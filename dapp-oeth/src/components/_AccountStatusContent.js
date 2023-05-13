@@ -216,6 +216,12 @@ const AccountStatusContent = ({ className, onOpen }) => {
         }
 
         @media (max-width: 799px) {
+          .wrong-network,
+          .connected-to,
+          .address {
+            font-size: 12px;
+          }
+
           .dropdown-menu {
             min-width: 75vw;
           }
