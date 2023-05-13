@@ -225,8 +225,8 @@ const TransactionActivityDropdown = () => {
       </Dropdown>
       <style jsx>{`
         .activity-toggle {
-          width: 44px;
-          height: 44px;
+          width: 40px;
+          height: 40px;
           background: #1e1f25;
           box-shadow: 0px 27px 80px rgba(0, 0, 0, 0.07),
             0px 6.0308px 17.869px rgba(0, 0, 0, 0.0417275),
@@ -296,7 +296,7 @@ const TransactionActivityDropdown = () => {
           }
         }
 
-        @media (max-width: 799px) {
+        @media (max-width: 992px) {
           .activity-toggle {
             width: 36px;
             height: 36px;
@@ -446,32 +446,34 @@ const Nav = ({ isMobile, locale, onLocale, page }) => {
                 loading="lazy"
               />
             </button>
-            <div className="d-flex flex-column flex-lg-row mb-auto w-100 align-items-center">
+            <div className="d-flex flex-column flex-lg-row mb-auto w-100 justify-content-between align-items-center">
               <DappLinks page={page} />
-              {environment !== 'production' && (
-                <ul className="navbar-nav">
-                  <li className="nav-item mr-2">
-                    <Link href={adjustLinkHref('/dashboard')}>
-                      <a>{fbt('Debug', 'Debugging dashboard link')}</a>
-                    </Link>
-                  </li>
-                </ul>
-              )}
-              <IPFSDappLink css="d-none d-lg-block" />
-              <div className={`d-flex flex-column flex-lg-row-reverse`}>
-                <AccountStatusDropdown />
-              </div>
-              {active && account && (
-                <div className="d-flex" id="nav-activity">
-                  <TransactionActivityDropdown />
+              <div className="d-flex flex-row">
+                {environment !== 'production' && (
+                  <ul className="navbar-nav">
+                    <li className="nav-item mr-2">
+                      <Link href={adjustLinkHref('/dashboard')}>
+                        <a>{fbt('Debug', 'Debugging dashboard link')}</a>
+                      </Link>
+                    </li>
+                  </ul>
+                )}
+                <IPFSDappLink css="d-none d-lg-block" />
+                <div className={`d-flex flex-column flex-lg-row-reverse`}>
+                  <AccountStatusDropdown />
                 </div>
-              )}
-              <GetOUSD
-                style={{ marginTop: 40 }}
-                className="mt-auto d-lg-none"
-                light2
-                trackSource="Mobile navigation menu"
-              />
+                {active && account && (
+                  <div className="d-flex">
+                    <TransactionActivityDropdown />
+                  </div>
+                )}
+                <GetOUSD
+                  style={{ marginTop: 40 }}
+                  className="mt-auto d-lg-none"
+                  light2
+                  trackSource="Mobile navigation menu"
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -581,6 +583,7 @@ const Nav = ({ isMobile, locale, onLocale, page }) => {
 
         .navbar.lightBg {
           background: #141519;
+          display: block;
         }
 
         .navbar a {
@@ -694,8 +697,7 @@ const Nav = ({ isMobile, locale, onLocale, page }) => {
           .navbar-contain {
             margin-top: 24px !important;
             margin-bottom: 32px !important;
-            margin: 0 12px;
-            padding: 0;
+            padding: 0 24px !important;
             align-items: center;
             justify-content: space-between;
           }
@@ -818,6 +820,10 @@ const Nav = ({ isMobile, locale, onLocale, page }) => {
         }
 
         @media (max-width: 1199px) {
+          .navbar-contain {
+            padding: 0 56px;
+          }
+
           .banner.dapp {
             left: 0;
             border-radius: 0;
