@@ -951,7 +951,7 @@ function deploymentWithGuardianGovernor(opts, fn) {
 
     if (isMainnet) {
       // On Mainnet, only propose. The enqueue and execution are handled manually via multi-sig.
-      log(
+      console.log(
         "Manually create the 5/8 multisig batch transaction with details:",
         proposal
       );
