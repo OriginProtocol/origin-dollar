@@ -10,8 +10,8 @@ export default function IPFSDappLink({ css }) {
       ['app.oeth.com', 'staging.app.oeth.com'].includes(window.location.host) ||
         window.location.host.startsWith('localhost:') ||
         window.location.host.startsWith('oeth-dapp-staging') ||
-        window.location.host.startsWith('oeth-dapp') ||
-        window.location.host.endsWith('.on.fleek.co')
+        window.location.host.endsWith('.on.fleek.co') ||
+        window.location.host.startsWith('oeth-dapp')
     )
   }, [])
 
