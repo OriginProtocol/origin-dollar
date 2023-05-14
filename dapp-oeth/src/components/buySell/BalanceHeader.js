@@ -119,9 +119,24 @@ const BalanceHeader = ({
           </div>
 
           <div className="stat">
-            <div className={`value d-flex ${type} ${small ? 'small' : 'big'}`}>
+            <div
+              className={`value d-flex align-items-center ${type} ${
+                small ? 'small' : 'big'
+              }`}
+            >
+              {!small && (
+                <img
+                  className="mr-2 d-block d-md-none"
+                  src={assetRootPath(`/images/oeth.svg`)}
+                />
+              )}
               <p>{value}</p>
-              {!small && <img src={assetRootPath(`/images/oeth.svg`)} />}
+              {!small && (
+                <img
+                  className="d-none d-md-block"
+                  src={assetRootPath(`/images/oeth.svg`)}
+                />
+              )}
             </div>
           </div>
         </div>
@@ -235,6 +250,11 @@ const BalanceHeader = ({
 
             .stat .small {
               font-size: 14px;
+            }
+
+            .stat img {
+              margin-left: 0;
+              height: 20px;
             }
           }
         `}</style>

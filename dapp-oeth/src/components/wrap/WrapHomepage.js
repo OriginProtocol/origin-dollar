@@ -244,7 +244,7 @@ const WrapHomepage = ({
   return (
     <>
       {process.browser && (
-        <div className="d-flex flex-column w-100 mt-4">
+        <div className="wrap-homepage d-flex flex-column mt-4">
           <div className="swap-wrapper d-flex flex-column flex-grow">
             {buyErrorToDisplay && (
               <ErrorModal
@@ -294,6 +294,14 @@ const WrapHomepage = ({
               border: solid 1px #141519;
               border-radius: 10px;
               background-color: #1e1f25;
+            }
+
+            .wrap-homepage {
+              border: solid 1px #141519;
+              border-radius: 10px;
+              background-color: #1e1f25;
+              padding: 35px 40px 40px 40px;
+              width: 100%;
               position: relative;
               overflow: hidden;
               width: 100%;
@@ -309,7 +317,8 @@ const WrapHomepage = ({
             }
 
             @media (max-width: 799px) {
-              .wrap-wrapper {
+              .wrap-homepage {
+                border-radius: 4px;
                 padding: 23px 20px 20px 20px;
               }
             }

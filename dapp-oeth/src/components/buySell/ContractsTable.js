@@ -223,18 +223,17 @@ const Estimates = ({ estimates, selected, isLoading, isActive, onSelect }) => {
                             {fbt(
                               `${fbt.param(
                                 'afterFeeDisplay',
-                                `≈ $${formatCurrency(
-                                  amountReceivedUsd,
-                                  2
-                                )} after fees`
+                                `≈ $${formatCurrency(amountReceivedUsd, 2)}`
                               )}`,
                               'After Fee Price'
                             )}
+                            <br className="d-block d-sm-none" />
+                            <span className="ml-1">after fees</span>
                             <span className="asterisk">
                               {approveAllowanceNeeded ? '*' : ''}
                             </span>
                           </div>
-                          <span>
+                          <span className="d-none d-md-inline">
                             {fbt(
                               `Effective Price: ${fbt.param(
                                 'effectivePriceDisplay',
@@ -276,6 +275,15 @@ const Estimates = ({ estimates, selected, isLoading, isActive, onSelect }) => {
                           ''
                         )}
                       </span>
+                      <span className="d-block d-md-none effective">
+                        {fbt(
+                          `Effective Price: ${fbt.param(
+                            'effectivePriceDisplay',
+                            `$${formatCurrency(effectivePrice, 2)}`
+                          )}`,
+                          'Effective Price'
+                        )}
+                      </span>
                       <span className="info-value">
                         {error === 'unsupported'
                           ? unsupportedDisplay(name, swapMode)
@@ -291,7 +299,6 @@ const Estimates = ({ estimates, selected, isLoading, isActive, onSelect }) => {
                                     <span>
                                       {parseFloat(gasEstimateEth)?.toFixed(4)}{' '}
                                       ETH{' '}
-                                      {`(≈ $${formatCurrency(gasEstimate, 2)})`}
                                     </span>
                                   </span>
                                 )}
@@ -340,6 +347,12 @@ const Estimates = ({ estimates, selected, isLoading, isActive, onSelect }) => {
       </div>
       <style jsx>
         {`
+          .effective {
+            font-size: 12px;
+            color: #8293a4;
+            margin-top: 8px;
+          }
+
           .estimates-container {
             display: flex;
             flex-direction: column;
@@ -369,7 +382,6 @@ const Estimates = ({ estimates, selected, isLoading, isActive, onSelect }) => {
             display: flex;
             flex-direction: row;
             justify-content: space-between;
-            height: 77px;
             width: 100%;
             background: #18191c;
             border-radius: 4px;
@@ -422,6 +434,7 @@ const Estimates = ({ estimates, selected, isLoading, isActive, onSelect }) => {
             font-weight: 400;
             font-size: 14px;
             line-height: 17px;
+            whitespace: nowrap;
           }
 
           .estimate-help {
@@ -507,7 +520,7 @@ const Estimates = ({ estimates, selected, isLoading, isActive, onSelect }) => {
             justify-content: center;
             align-items: center;
             padding: 4px 19px;
-            margin-top: 20px;
+            margin-top: 16px;
             height: 28px;
             max-width: 120px;
             background: rgba(255, 255, 255, 0.1);
@@ -522,6 +535,18 @@ const Estimates = ({ estimates, selected, isLoading, isActive, onSelect }) => {
             font-size: 12px;
             font-weight: 500;
             border: none;
+          }
+
+          @media (max-width: 799px) {
+            .estimates-container {
+              padding: 0 16px;
+            }
+
+            .estimate-item,
+            .estimates-empty,
+            .estimates-loading {
+              padding: 12px 16px;
+            }
           }
         `}
       </style>
@@ -671,6 +696,7 @@ const ContractsTable = () => {
         .contracts-header .title {
           color: #fafbfb;
           font-size: 14px;
+          margin-bottom: 0;
         }
 
         .contracts-main {
@@ -692,6 +718,13 @@ const ContractsTable = () => {
         }
 
         @media (max-width: 799px) {
+          .contracts-header {
+            padding: 16px;
+          }
+
+          .contracts-main {
+            padding-bottom: 16px;
+          }
         }
       `}</style>
     </div>
