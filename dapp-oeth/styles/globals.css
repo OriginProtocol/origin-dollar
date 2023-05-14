@@ -474,6 +474,10 @@ section.dim {
 }
 
 @media (max-width: 799px) {
+  .btn-blue {
+    height: 48px;
+  }
+
   .container {
     padding-left: 0px;
     padding-right: 0px;
