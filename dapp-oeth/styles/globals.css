@@ -513,10 +513,8 @@ section.dim {
   background-color: transparent !important;
 }
 
-@media (min-width: 1200px) {
-  .container {
-    max-width: 702px !important;
-  }
+.container {
+  max-width: 702px !important;
 }
 
 @media (min-width: 1200px) {

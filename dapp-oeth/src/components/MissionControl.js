@@ -10,7 +10,7 @@ const MissionControl = ({}) => {
         <SwapHomepage />
       </div>
       <style jsx>{`
-        @media (max-width: 799px) {
+        @media (max-width: 767px) {
           .swap-contain {
             padding: 0 20px;
           }

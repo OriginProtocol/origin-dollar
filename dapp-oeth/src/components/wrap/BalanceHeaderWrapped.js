@@ -151,6 +151,10 @@ const BalanceHeaderWrapped = ({
               margin-bottom: 10px;
             }
 
+            .title .big {
+              font-size: 14px;
+            }
+
             .holder {
               width: 100%;
             }
@@ -168,6 +172,14 @@ const BalanceHeaderWrapped = ({
 
             .stat .value p {
               color: #fafafb;
+            }
+
+            .stat .big {
+              font-size: 20px;
+            }
+
+            .stat .small {
+              font-size: 14px;
             }
           }
         `}</style>
@@ -257,6 +269,7 @@ const BalanceHeaderWrapped = ({
               display: flex;
               flex-direction: row;
               justify-content: space-between;
+              align-items: center;
             }
 
             .title {
@@ -282,6 +295,18 @@ const BalanceHeaderWrapped = ({
               color: #fafbfb;
               font-size: 20px;
               text-align: left;
+            }
+
+            .value p {
+              background: -webkit-linear-gradient(
+                90deg,
+                #b361e6 -28.99%,
+                #6a36fc 144.97%
+              );
+              -webkit-background-clip: text;
+              -webkit-text-fill-color: transparent;
+              font-size: 20px;
+              margin-bottom: 0;
             }
           }
         `}</style>

@@ -206,6 +206,10 @@ const BalanceHeader = ({
               margin-bottom: 10px;
             }
 
+            .title .big {
+              font-size: 14px;
+            }
+
             .holder {
               width: 100%;
             }
@@ -227,6 +231,10 @@ const BalanceHeader = ({
 
             .stat .big {
               font-size: 20px;
+            }
+
+            .stat .small {
+              font-size: 14px;
             }
           }
         `}</style>
@@ -316,6 +324,7 @@ const BalanceHeader = ({
               display: flex;
               flex-direction: row;
               justify-content: space-between;
+              align-items: center;
             }
 
             .title {
@@ -457,7 +466,7 @@ const BalanceHeader = ({
         }
 
         .balance-header {
-          margin-bottom: 19px;
+          margin-bottom: 16px;
         }
 
         .balance-header .inaccurate-balance {
