@@ -219,7 +219,7 @@ describe("Vault rebasing", async () => {
   });
 });
 
-describe("Vault yield accrual to OGN", async () => {
+describe("Vault yield accrual to trustee", async () => {
   [
     { _yield: "1000", basis: 100, expectedFee: "10" },
     { _yield: "1000", basis: 5000, expectedFee: "500" },
@@ -249,6 +249,62 @@ describe("Vault yield accrual to OGN", async () => {
       // ogntrustee address increases correctly
       // 1523 * 0.09 = 137.07
       await expect(trustee).has.a.balanceOf("137.07", ousd);
+    });
+  });
+});
+
+describe("Vault protocol reserve accrual", async () => {
+  [
+    {
+      _yield: "1000",
+      reserveBasis: 100,
+      expectedReserveIncrease: "10",
+      expectedRebase: "990",
+    },
+    {
+      _yield: "1000",
+      reserveBasis: 1000,
+      expectedReserveIncrease: "100",
+      expectedRebase: "900",
+    },
+    {
+      _yield: "10000",
+      reserveBasis: 5000,
+      expectedReserveIncrease: "5000",
+      expectedRebase: "5000",
+    },
+  ].forEach((options) => {
+    const { _yield, reserveBasis, expectedReserveIncrease, expectedRebase } =
+      options;
+    it(`should collect ${expectedReserveIncrease} reserve from ${_yield} yield at ${reserveBasis}bp `, async function () {
+      const fixture = await loadFixture(defaultFixture);
+      const { matt, governor, ousd, usdt, vault } = fixture;
+      // const trustee = mockNonRebasing;
+
+      // Setup reserve rate
+      await vault.connect(governor).setProtocolReserveBps(reserveBasis);
+
+      // Create yield for the vault
+      await usdt.connect(matt).mint(usdcUnits(_yield));
+      await usdt.connect(matt).transfer(vault.address, usdcUnits(_yield));
+      // Do rebase
+      const supplyBefore = await ousd.totalSupply();
+      const protocolReserveBefore = await vault.protocolReserve();
+
+      await vault.rebase();
+      // OUSD supply increases correctly
+      await expectApproxSupply(
+        ousd,
+        supplyBefore.add(ousdUnits(expectedRebase)),
+        "Supply"
+      );
+      // Reserve increased
+      const protocolReserveAfter = await vault.protocolReserve();
+      await expect(protocolReserveAfter).to.be.approxEqualTolerance(
+        protocolReserveBefore.add(ousdUnits(expectedReserveIncrease)),
+        1,
+        "Reserve"
+      );
     });
   });
 });

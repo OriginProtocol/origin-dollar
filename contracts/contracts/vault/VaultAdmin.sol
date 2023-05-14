@@ -11,6 +11,7 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 
 import { StableMath } from "../utils/StableMath.sol";
 import { IOracle } from "../interfaces/IOracle.sol";
+import { IStrategy } from "../interfaces/IStrategy.sol";
 import "./VaultStorage.sol";
 
 contract VaultAdmin is VaultStorage {
@@ -353,6 +354,26 @@ contract VaultAdmin is VaultStorage {
     }
 
     /**
+     * @dev Sets the percent of top-line yield that should be
+     * set aside as a reserve.
+     * @param _basis yield reserved, in basis points
+     */
+    function setProtocolReserveBps(uint256 _basis) external onlyGovernor {
+        require(_basis <= 5000, "basis cannot exceed 50%");
+        protocolReserveBps = _basis;
+        emit ProtocolReserveBpsChanged(_basis);
+    }
+
+    /**
+     * @dev Sets the driper duration
+     * @param _durationSeconds length of time to drip out dripper reserves over
+     */
+    function setDripDuration(uint64 _durationSeconds) external onlyGovernor {
+        dripper.dripDuration = _durationSeconds;
+        emit DripperDurationChanged(_durationSeconds);
+    }
+
+    /**
      * @dev Sets the trusteeAddress that can receive a portion of yield.
      *      Setting to the zero address disables this feature.
      */
@@ -434,6 +455,15 @@ contract VaultAdmin is VaultStorage {
         onlyGovernor
     {
         require(!assets[_asset].isSupported, "Only unsupported assets");
+        IERC20(_asset).safeTransfer(governor(), _amount);
+    }
+
+    function spendReserve(address _asset, uint256 _amount)
+        external
+        onlyGovernor
+    {
+        require(assets[_asset].isSupported, "Only supported assets");
+        protocolReserve -= _amount;
         IERC20(_asset).safeTransfer(governor(), _amount);
     }
 

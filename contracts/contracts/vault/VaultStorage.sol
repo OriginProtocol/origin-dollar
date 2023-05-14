@@ -12,11 +12,9 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 
-import { IStrategy } from "../interfaces/IStrategy.sol";
 import { Governable } from "../governance/Governable.sol";
 import { OUSD } from "../token/OUSD.sol";
 import { Initializable } from "../utils/Initializable.sol";
-import "../utils/Helpers.sol";
 import { StableMath } from "../utils/StableMath.sol";
 
 contract VaultStorage is Initializable, Governable {
@@ -44,7 +42,10 @@ contract VaultStorage is Initializable, Governable {
     event RebaseThresholdUpdated(uint256 _threshold);
     event StrategistUpdated(address _address);
     event MaxSupplyDiffChanged(uint256 maxSupplyDiff);
+    event YieldReceived(uint256 _yield);
     event YieldDistribution(address _to, uint256 _yield, uint256 _fee);
+    event ProtocolReserveBpsChanged(uint256 _basis);
+    event DripperDurationChanged(uint256 _seconds);
     event TrusteeFeeBpsChanged(uint256 _basis);
     event TrusteeAddressChanged(address _address);
     event NetOusdMintForStrategyThresholdChanged(uint256 _threshold);
@@ -109,7 +110,7 @@ contract VaultStorage is Initializable, Governable {
     // Deprecated: Tokens that should be swapped for stablecoins
     address[] private _deprecated_swapTokens;
 
-    uint256 constant MINT_MINIMUM_ORACLE = 99800000;
+    uint256 internal constant MINT_MINIMUM_ORACLE = 99800000;
 
     // Meta strategy that is allowed to mint/burn OUSD without changing collateral
     address public ousdMetaStrategy = address(0);
@@ -119,6 +120,23 @@ contract VaultStorage is Initializable, Governable {
 
     // How much net total OUSD is allowed to be minted by all strategies
     uint256 public netOusdMintForStrategyThreshold = 0;
+
+    // Reserve funds held by the protocol
+    uint256 public protocolReserve = 0;
+
+    // Amount of reserve collected in Bps
+    uint256 public protocolReserveBps = 0;
+
+    // Dripper funds held by the protocol
+    uint256 public dripperReserve = 0;
+
+    // Dripper config/state
+    struct Dripper {
+        uint64 lastCollect;
+        uint128 perSecond;
+        uint64 dripDuration;
+    }
+    Dripper public dripper;
 
     /**
      * @dev set the implementation for the admin, this needs to be in a base class else we cannot set it

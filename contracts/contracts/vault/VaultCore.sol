@@ -13,12 +13,12 @@ pragma solidity ^0.8.0;
 
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
-import "@openzeppelin/contracts/utils/Strings.sol";
 
 import { StableMath } from "../utils/StableMath.sol";
 import { IOracle } from "../interfaces/IOracle.sol";
-import { IVault } from "../interfaces/IVault.sol";
 import { IBuyback } from "../interfaces/IBuyback.sol";
+import { IStrategy } from "../interfaces/IStrategy.sol";
+import "../utils/Helpers.sol";
 import "./VaultStorage.sol";
 
 contract VaultCore is VaultStorage {
@@ -26,10 +26,12 @@ contract VaultCore is VaultStorage {
     using StableMath for uint256;
     using SafeMath for uint256;
     // max signed int
-    uint256 constant MAX_INT = 2**255 - 1;
+    uint256 internal constant MAX_INT = 2**255 - 1;
     // max un-signed int
-    uint256 constant MAX_UINT =
+    uint256 internal constant MAX_UINT =
         0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
+    // impl contract address
+    address internal immutable SELF = address(this);
 
     /**
      * @dev Verifies that the rebasing is not paused.
@@ -382,34 +384,102 @@ contract VaultCore is VaultStorage {
     }
 
     /**
-     * @dev Calculate the total value of assets held by the Vault and all
-     *      strategies and update the supply of OUSD, optionally sending a
-     *      portion of the yield to the trustee.
+     * @dev Update the supply of ousd
+     *
+     * 1. Calculate new gains, splitting gains between the dripper and protocol reserve
+     * 2. Drip out from the dripper and update the dripper storage
+     * 3. Distribute yield, splitting between trustee fees and rebasing
+     *    the remaining post dripper funds to users
+     *
+     * After running:
+     *  - If the protocol started solvent then:
+     *      the protocol should end solvent
+     *  - If the protocol started solvent and had yield then:
+     *      ousd supply + reserves should equal vault value.
+     *  - If the protocol started insolvent then:
+     *      no funds should be distributed, or reserves changed
+     *  - All cases:
+     *     ending OUSD total supply should not be less than starting totalSupply
      */
     function _rebase() internal whenNotRebasePaused {
-        uint256 ousdSupply = oUSD.totalSupply();
+        // Load data used for rebasing
+        uint256 ousdSupply = oUSD.totalSupply(); // gas savings
+        uint256 vaultValue = _totalValue(); // gas savings
         if (ousdSupply == 0) {
-            return;
+            return; // If there is no OUSD supply, we will not rebase
         }
-        uint256 vaultValue = _totalValue();
+        if (vaultValue < ousdSupply) {
+            return; // Do not distribute funds if assets < liabilities
+        }
+        uint256 _dripperReserve = dripperReserve; // gas savings
 
-        // Yield fee collection
-        address _trusteeAddress = trusteeAddress; // gas savings
-        if (_trusteeAddress != address(0) && (vaultValue > ousdSupply)) {
-            uint256 yield = vaultValue.sub(ousdSupply);
-            uint256 fee = yield.mul(trusteeFeeBps).div(10000);
-            require(yield > fee, "Fee must not be greater than yield");
-            if (fee > 0) {
+        // 1. Calculate new gains, then split them between the dripper and
+        // protocol reserve
+        uint256 usedValue = ousdSupply + protocolReserve + _dripperReserve;
+        if (vaultValue > usedValue) {
+            uint256 newYield = vaultValue - usedValue;
+            uint256 toProtocolReserve = (newYield * protocolReserveBps) / 10000;
+            protocolReserve += toProtocolReserve;
+            _dripperReserve += newYield - toProtocolReserve;
+            emit YieldReceived(newYield);
+        }
+
+        // 2. Drip out from the dripper and update the dripper storage
+        Dripper memory _dripper = dripper; // gas savings
+        uint256 _dripDuration = _dripper.dripDuration; // gas, not written back
+        if (_dripDuration == 0) {
+            _dripDuration = 1; // Prevent divide by zero later
+            _dripperReserve = 0; // Dripper disabled, distribute all now
+        } else {
+            _dripperReserve -= _dripperAvailableFunds(
+                _dripperReserve,
+                _dripper
+            );
+        }
+
+        // Write dripper state
+        dripperReserve = _dripperReserve;
+        dripper = Dripper({
+            perSecond: uint128(_dripperReserve / _dripDuration),
+            lastCollect: uint64(block.timestamp),
+            dripDuration: _dripper.dripDuration // must use stored value
+        });
+
+        // 3. Distribute fees then rebase to users
+        usedValue = ousdSupply + protocolReserve + _dripperReserve;
+        if (vaultValue > usedValue) {
+            uint256 yield = vaultValue - usedValue;
+
+            // Mint trustee fees
+            address _trusteeAddress = trusteeAddress; // gas savings
+            uint256 fee = 0;
+            if (_trusteeAddress != address(0)) {
+                fee = (yield * trusteeFeeBps) / 10000;
+                require(fee < yield, "Fee must be less than yield");
                 oUSD.mint(_trusteeAddress, fee);
             }
+
+            // Rebase remaining to users
+            // Invariant: must only increase OUSD supply.
+            // Can only increase because:
+            // ousdSupply + yield >= ousdSupply and yield > fee
+            oUSD.changeSupply(ousdSupply + yield);
             emit YieldDistribution(_trusteeAddress, yield, fee);
         }
+    }
 
-        // Only rachet OUSD supply upwards
-        ousdSupply = oUSD.totalSupply(); // Final check should use latest value
-        if (vaultValue > ousdSupply) {
-            oUSD.changeSupply(vaultValue);
-        }
+    function dripperAvailableFunds() external view returns (uint256) {
+        return _dripperAvailableFunds(dripperReserve, dripper);
+    }
+
+    function _dripperAvailableFunds(uint256 _reserve, Dripper memory _drip)
+        internal
+        view
+        returns (uint256)
+    {
+        uint256 elapsed = block.timestamp - _drip.lastCollect;
+        uint256 allowed = (elapsed * _drip.perSecond);
+        return (allowed > _reserve) ? _reserve : allowed;
     }
 
     /**
@@ -432,7 +502,7 @@ contract VaultCore is VaultStorage {
 
     /**
      * @dev Internal to calculate total value of all assets held in Vault.
-     * @return value Total value in ETH (1e18)
+     * @return value Total value in USD (1e18)
      */
     function _totalValueInVault() internal view returns (uint256 value) {
         for (uint256 y = 0; y < allAssets.length; y++) {
@@ -447,7 +517,7 @@ contract VaultCore is VaultStorage {
 
     /**
      * @dev Internal to calculate total value of all assets held in Strategies.
-     * @return value Total value in ETH (1e18)
+     * @return value Total value in USD (1e18)
      */
     function _totalValueInStrategies() internal view returns (uint256 value) {
         for (uint256 i = 0; i < allStrategies.length; i++) {
@@ -504,19 +574,6 @@ contract VaultCore is VaultStorage {
             if (strategy.supportsAsset(_asset)) {
                 balance = balance.add(strategy.checkBalance(_asset));
             }
-        }
-    }
-
-    /**
-     * @notice Get the balance of all assets held in Vault and all strategies.
-     * @return balance Balance of all assets (1e18)
-     */
-    function _checkBalance() internal view returns (uint256 balance) {
-        for (uint256 i = 0; i < allAssets.length; i++) {
-            uint256 assetDecimals = Helpers.getDecimals(allAssets[i]);
-            balance = balance.add(
-                _checkBalance(allAssets[i]).scaleBy(18, assetDecimals)
-            );
         }
     }
 
@@ -677,6 +734,7 @@ contract VaultCore is VaultStorage {
      */
     // solhint-disable-next-line no-complex-fallback
     fallback() external payable {
+        require(SELF != address(this), "Must be proxied");
         bytes32 slot = adminImplPosition;
         // solhint-disable-next-line no-inline-assembly
         assembly {
