@@ -12,7 +12,6 @@ abstract contract OracleRouterBase is IOracle {
     uint256 constant MIN_DRIFT = 0.7e18;
     uint256 constant MAX_DRIFT = 1.3e18;
     address constant FIXED_PRICE = 0x0000000000000000000000000000000000000001;
-    address constant ZERO_ADDRESS = 0x0000000000000000000000000000000000000000;
     mapping(address => uint8) internal decimalsCache;
 
     /**
@@ -58,7 +57,6 @@ abstract contract OracleRouterBase is IOracle {
 
     function cacheDecimals(address asset) external returns (uint8) {
         address _feed = feed(asset);
-
         require(_feed != address(0), "Asset not available");
         require(_feed != FIXED_PRICE, "Fixed price feeds not supported");
 
@@ -181,6 +179,37 @@ contract OETHOracleRouter is OracleRouter {
         } else {
             revert("Asset not available");
         }
+    }
+}
+
+contract OETHOracleRouter is OracleRouter {
+    using StableMath for uint256;
+
+    /**
+     * @notice Returns the total price in 18 digit units for a given asset.
+     *         This implementation does not (!) do range checks as the
+     *         parent OracleRouter does.
+     * @param asset address of the asset
+     * @return uint256 unit price for 1 asset unit, in 18 decimal fixed
+     */
+    function price(address asset)
+        external
+        view
+        virtual
+        override
+        returns (uint256)
+    {
+        address _feed = feed(asset);
+        if (_feed == FIXED_PRICE) {
+            return 1e18;
+        }
+        require(_feed != address(0), "Asset not available");
+        (, int256 _iprice, , , ) = AggregatorV3Interface(_feed)
+            .latestRoundData();
+
+        uint8 decimals = getDecimals(asset);
+        uint256 _price = uint256(_iprice).scaleBy(18, decimals);
+        return _price;
     }
 }
 

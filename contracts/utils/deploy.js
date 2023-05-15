@@ -836,6 +836,9 @@ function deploymentWithProposal(opts, fn) {
 
     await sanityCheckOgvGovernance();
     const proposal = await fn(tools);
+    if (proposal.actions.length == 0) {
+      return; // No governance proposal
+    }
     const propDescription = proposal.name;
     const propArgs = await proposeArgs(proposal.actions);
     const propOpts = proposal.opts || {};
