@@ -370,7 +370,6 @@ const Nav = ({ isMobile, locale, onLocale, page }) => {
                 src={assetRootPath('/images/origin-ether-logo.svg')}
                 className="origin-logo"
                 alt="OETH logo"
-                width={204}
               />
             </a>
           </Link>
@@ -560,7 +559,7 @@ const Nav = ({ isMobile, locale, onLocale, page }) => {
 
         .navbar-brand img {
           max-height: 24px;
-          width: fit-content;
+          max-width: 180px;
         }
 
         .navbar {
@@ -863,7 +862,7 @@ const Nav = ({ isMobile, locale, onLocale, page }) => {
         @media (max-width: 992px) {
           .navbar-brand img {
             max-height: 16px;
-            width: fit-content;
+            max-width: 120px;
           }
 
           .navbar {

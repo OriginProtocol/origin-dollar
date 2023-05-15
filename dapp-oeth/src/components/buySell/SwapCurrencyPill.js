@@ -662,7 +662,7 @@ const SwapCurrencyPill = ({
                   )}`}
             </div>
           </div>
-          <div className="d-flex flex-column justify-content-between align-items-end">
+          <div className="d-flex flex-column justify-content-between align-items-end output-holder">
             <div className="d-flex align-items-center">
               <div className="d-flex justify-content-between balance">
                 {displayBalance && (
@@ -679,12 +679,12 @@ const SwapCurrencyPill = ({
                     )}
                   </div>
                 )}
-                {balanceClickable && (
-                  <button className="max-link ml-2" onClick={setMaxBalance}>
-                    {fbt('max', 'Set maximum currency amount')}
-                  </button>
-                )}
               </div>
+              {balanceClickable && (
+                <button className="max-link ml-2" onClick={setMaxBalance}>
+                  {fbt('max', 'Set maximum currency amount')}
+                </button>
+              )}
             </div>
             <CoinSelect
               selected={showOeth ? 'oeth' : selectedCoin}
@@ -736,6 +736,10 @@ const SwapCurrencyPill = ({
         )}
       </div>
       <style jsx>{`
+        .output-holder {
+          max-width: 50%;
+        }
+
         .currency-pill {
           display: flex;
           justify-content: center;
@@ -869,6 +873,10 @@ const SwapCurrencyPill = ({
             max-width: 50%;
             padding: 32px 0;
             flex: 1;
+          }
+
+          .usd-balance {
+            font-size: 12px;
           }
 
           input {
