@@ -120,7 +120,7 @@ const TransactionActivityDropdown = () => {
       setTxHashesToAnimate((prev) => [
         ...prev,
         ...transactions
-          .filter((tx) => !prevTxHashes.includes(tx.hash))
+          .filter((tx) => !prevTxHashes?.includes(tx.hash))
           .map((tx) => tx.hash),
       ])
 

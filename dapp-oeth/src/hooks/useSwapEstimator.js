@@ -443,7 +443,7 @@ const useSwapEstimator = ({
       }
 
       const approveAllowanceNeeded = allowancesLoaded
-        ? parseFloat(allowances[coinToSwap].curve) < amount
+        ? parseFloat(allowances[coinToSwap].curve) < parseFloat(inputAmountRaw)
         : true
 
       /* Check if Curve router has allowance to spend coin. If not we can not run gas estimation and need
@@ -869,11 +869,6 @@ const useSwapEstimator = ({
         return {
           canDoSwap: false,
           error: 'price_too_high',
-        }
-      } else if (errorIncludes(e, 'TRANSFER_AMOUNT_EXCEEDS_ALLOWANCE')) {
-        return {
-          canDoSwap: false,
-          error: 'liquidity_error',
         }
       }
 
