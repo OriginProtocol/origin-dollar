@@ -168,8 +168,8 @@ const WalletSelectContent = ({ isMobile }) => {
           padding: 34px 34px 46px 34px;
           max-width: 350px;
           min-width: 350px;
-
-          background-color: #fafbfb;
+          background-color: #101113;
+          color: #fafbfb;
           border-radius: 10px;
         }
 
@@ -187,12 +187,12 @@ const WalletSelectContent = ({ isMobile }) => {
           width: 100%;
           height: 50px;
           border-radius: 25px;
-          border: solid 1px #1a82ff;
-          background-color: #fafbfb;
+          border: solid 1px #141519;
+          background-color: #1e1f25;
           font-size: 18px;
           font-weight: bold;
           text-align: center;
-          color: #1a82ff;
+          color: #fafbfb;
         }
 
         .wallet-select-content .connector-button:disabled {
@@ -209,7 +209,7 @@ const WalletSelectContent = ({ isMobile }) => {
         }
 
         .wallet-select-content .connector-button:hover {
-          background-color: #f8f9fa;
+          background-color: #1e1f25;
         }
 
         .wallet-select-content .connector-button:not(:last-child) {

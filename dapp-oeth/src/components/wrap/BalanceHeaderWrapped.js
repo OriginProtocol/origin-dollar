@@ -62,7 +62,11 @@ const BalanceHeaderWrapped = ({
           <div className="stat">
             <div className={`value d-flex ${type} ${small ? 'small' : 'big'}`}>
               <p>{value}</p>
-              {!small && <img src={assetRootPath(`/images/oeth.svg`)} />}
+              {!small && (
+                <img
+                  src={assetRootPath(`/images/currency/woeth-icon-small.svg`)}
+                />
+              )}
             </div>
           </div>
         </div>

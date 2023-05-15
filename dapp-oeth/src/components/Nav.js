@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react'
+import React, { useEffect, useState, useRef, useCallback } from 'react'
 import classnames from 'classnames'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
@@ -281,19 +281,62 @@ const TransactionActivityDropdown = () => {
   )
 }
 
+const useSticky = ({ defaultSticky = false, stickAt = 80 }) => {
+  const [isSticky, setIsSticky] = useState(defaultSticky)
+  const [fromTop, setFromTop] = useState(0)
+
+  const elRef = useRef(null)
+
+  const toggleSticky = useCallback(
+    (e, { top, bottom }) => {
+      if (top <= 0 && bottom > stickAt) {
+        !isSticky && setIsSticky(true)
+      } else {
+        isSticky && setIsSticky(false)
+      }
+      if (document?.body) {
+        setFromTop(document?.body.scrollTop)
+      }
+    },
+    [isSticky]
+  )
+
+  useEffect(() => {
+    const handleScroll = (e) => {
+      if (elRef?.current) {
+        toggleSticky(e, elRef.current.getBoundingClientRect())
+      }
+    }
+    document.body.addEventListener('scroll', handleScroll)
+    return () => {
+      document.body.removeEventListener('scroll', handleScroll)
+    }
+  }, [toggleSticky])
+
+  return [{ elRef, fromTop, isSticky }]
+}
+
 const Nav = ({ isMobile, locale, onLocale, page }) => {
   const { pathname } = useRouter()
   const { active, account } = useWeb3React()
   const apy = useStoreState(ContractStore, (s) => s.apy.apy30 || 0)
 
+  const [{ elRef, isSticky }] = useSticky({
+    defaultSticky: false,
+  })
+
   return (
     <>
       <nav
+        ref={elRef}
         className={classnames(
-          'navbar navbar-expand-lg d-flex justify-content-center flex-column dapp'
+          'navbar navbar-expand-lg d-flex justify-content-center flex-column',
+          {
+            sticky: isSticky,
+          }
         )}
       >
-        <div className="container flex-nowrap">
+        <div className="nav-container flex-nowrap">
           <Link href={adjustLinkHref('/')}>
             <a className="navbar-brand d-flex flex-column justify-content-center">
               <img
@@ -304,22 +347,6 @@ const Nav = ({ isMobile, locale, onLocale, page }) => {
               />
             </a>
           </Link>
-          {/*<button*/}
-          {/*  className="navbar-toggler d-lg-none ml-auto"*/}
-          {/*  type="button"*/}
-          {/*  data-toggle="collapse"*/}
-          {/*  data-target=".primarySidePanel"*/}
-          {/*  aria-controls="primarySidePanel"*/}
-          {/*  aria-expanded="false"*/}
-          {/*  aria-label="Toggle side panel"*/}
-          {/*>*/}
-          {/*  <div className="dropdown-marble">*/}
-          {/*    <img*/}
-          {/*      src={assetRootPath('/images/bell-icon.svg')}*/}
-          {/*      alt="Activity menu"*/}
-          {/*    />*/}
-          {/*  </div>*/}
-          {/*</button>*/}
           <div className="d-flex">
             <IPFSDappLink css="d-lg-none" />
             {
@@ -337,12 +364,6 @@ const Nav = ({ isMobile, locale, onLocale, page }) => {
               </div>
             )}
           </div>
-          {/*<div*/}
-          {/*  className="primarySidePanel dark-background collapse"*/}
-          {/*  data-toggle="collapse"*/}
-          {/*  data-target=".primarySidePanel"*/}
-          {/*  aria-controls="primarySidePanel"*/}
-          {/*/>*/}
           <div
             className="navLinks dark-background collapse"
             data-toggle="collapse"
@@ -466,36 +487,62 @@ const Nav = ({ isMobile, locale, onLocale, page }) => {
         }
 
         .navbar {
-          padding: 35px 0 0 0;
+          display: flex;
+          align-items: center;
+          padding: 0;
           font-size: 0.8125rem;
           margin-top: 0;
           z-index: 2;
+          height: 100px;
         }
+
+        .navbar.sticky {
+          position: sticky;
+          top: 0;
+          background: #101113;
+        }
+
+        .navbar.lightBg {
+          background: #141519;
+        }
+
         .navbar a {
           color: #fafbfb;
           text-decoration: none;
         }
+
         .navbar a:hover {
           opacity: 0.8;
         }
-        .navbar .container {
-          margin-top: 30px;
+
+        .navbar .nav-container {
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          justify-content: space-between;
+          width: 100%;
+          max-width: 100%;
+          padding: 0 80px;
         }
+
         .navbar-toggler {
           margin-left: 10px;
           padding-left: 0;
           padding-right: 0;
         }
+
         .navbar-toggler:focus {
           border-color: transparent;
           outline: none;
           opacity: 0.8;
         }
+
         .nav-item {
           align-items: center;
           display: flex;
           margin-right: 31px;
         }
+
         .debug {
           position: absolute;
           top: 0;
@@ -547,11 +594,8 @@ const Nav = ({ isMobile, locale, onLocale, page }) => {
         }
 
         @media (max-width: 992px) {
-          .container {
-            width: 100%;
-            max-width: 100%;
-            padding-left: 30px;
-            padding-right: 30px;
+          .nav-container {
+            padding: 0 30px;
           }
           .navbar-collapse {
             background: white;
@@ -629,7 +673,7 @@ const Nav = ({ isMobile, locale, onLocale, page }) => {
             display: none;
           }
 
-          .navbar .container {
+          .navbar .nav-container {
             padding-left: 20px !important;
             padding-right: 20px !important;
           }
@@ -708,7 +752,7 @@ const Nav = ({ isMobile, locale, onLocale, page }) => {
             z-index: 100;
           }
 
-          .navbar .container {
+          .navbar .nav-container {
             margin: 1.5rem 0;
             padding: 0 30px;
           }

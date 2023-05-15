@@ -42,7 +42,7 @@ const WalletSelectModal = ({}) => {
           bottom: 0;
           width: 100%;
           height: 100%;
-          background-color: rgba(24, 49, 64, 0.6);
+          background-color: rgba(16, 17, 19, 0.6);
           z-index: 1000;
         }
       `}</style>

@@ -438,15 +438,7 @@ const SwapCurrencyPill = ({
     'sfrxeth',
   ]
 
-  const coinRedeemOptions = [
-    'oeth',
-    'mix',
-    'eth',
-    'weth',
-    'frxeth',
-    'reth',
-    'steth',
-  ]
+  const coinRedeemOptions = ['oeth', 'mix', 'eth']
 
   const { active } = useWeb3React()
 
@@ -667,7 +659,7 @@ const SwapCurrencyPill = ({
                       'Min. received: ' +
                         fbt.param(
                           'oeth-amount',
-                          `${formatCurrency(minReceived, 2)} ${
+                          `${formatCurrency(minReceived, 8)} ${
                             selectedCoin === 'mix'
                               ? 'Mix LSDs'
                               : coinToDisplay?.[selectedCoin]?.symbol

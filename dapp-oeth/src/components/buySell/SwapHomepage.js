@@ -130,12 +130,17 @@ const SwapHomepage = ({
 
     // currencies flipped
     localStorage.setItem(lastSelectedSwapModeKey, swapMode)
+
     if (selectedSwap) {
       const otherCoinAmount =
-        Math.floor(selectedSwap.amountReceived * 1000000) / 1000000
-      setSelectedBuyCoinAmount(Math.floor(otherCoinAmount * 100) / 100)
+        Math.floor(selectedSwap.amountReceived * 10 ** 18) / 10 ** 18
+
+      setSelectedBuyCoinAmount(
+        Math.floor(otherCoinAmount * 10 ** 18) / 10 ** 18
+      )
+
       setSelectedRedeemCoinAmount(
-        Math.floor(selectedSwap.inputAmount * 100) / 100
+        Math.floor(selectedSwap.inputAmount * 10 ** 18) / 10 ** 18
       )
     }
   }, [swapMode])
@@ -251,16 +256,6 @@ const SwapHomepage = ({
       setSelectedBuyCoinAmount('')
       setSelectedRedeemCoinAmount('')
 
-      if (document?.body) {
-        setTimeout(() => {
-          document?.body.scrollTo({
-            top: 0,
-            left: 0,
-            behavior: 'smooth',
-          })
-        }, 100)
-      }
-
       await rpcProvider.waitForTransaction(result.hash)
 
       analytics.track('Swap succeeded', {
@@ -275,7 +270,7 @@ const SwapHomepage = ({
         await storeTransactionError(swapMode, selectedBuyCoin)
         analytics.track('Swap failed', {
           category: 'swap',
-          label: e.message,
+          label: e?.message,
         })
       } else {
         analytics.track('Swap canceled', {

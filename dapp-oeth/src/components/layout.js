@@ -19,12 +19,13 @@ import { burnTimer } from 'utils/constants'
 const UNISWAP_URL =
   'https://app.uniswap.org/#/swap?inputCurrency=0xdac17f958d2ee523a2206206994597c13d831ec7&outputCurrency=0x2A8e1E676Ec238d8A992307B495b45B3fEAa5e86'
 
-const SHOW_DISCLAIMER = true
+const SHOW_DISCLAIMER = false
 
 const Layout = ({
   locale,
   onLocale,
   children,
+  nav,
   short,
   shorter,
   medium,
@@ -141,9 +142,10 @@ const Layout = ({
         </div>
       </div>
       <main className={classnames('dapp', { short, shorter, medium })}>
+        {nav}
         {<div className="container">{children}</div>}
       </main>
-      {<AppFooter locale={locale} onLocale={onLocale} />}
+      {/*{<AppFooter locale={locale} onLocale={onLocale} />}*/}
       <style jsx>{`
         .notice {
           background-color: #0074f0;

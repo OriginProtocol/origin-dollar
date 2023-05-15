@@ -495,7 +495,7 @@ const useSwapEstimator = ({
       }
     } catch (e) {
       console.error(
-        `Unexpected error estimating curve swap suitability: ${e.message}`
+        `Unexpected error estimating curve swap suitability: ${e?.message}`
       )
       return {
         canDoSwap: false,
@@ -640,7 +640,7 @@ const useSwapEstimator = ({
       console.error(
         `Unexpected error estimating ${
           isSushiSwap ? 'sushiSwap' : 'uniswap v2'
-        } swap suitability: ${e.message}`
+        } swap suitability: ${e?.message}`
       )
 
       if (
