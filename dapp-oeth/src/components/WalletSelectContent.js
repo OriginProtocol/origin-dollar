@@ -7,11 +7,11 @@ import { walletConnectConnector } from 'utils/connectors'
 import { myEtherWalletConnector } from 'utils/connectors'
 import { walletlink, resetWalletConnector } from 'utils/connectors'
 import { defiWalletConnector } from 'utils/connectors'
+import { event } from '../../lib/gtm'
 import withIsMobile from 'hoc/withIsMobile'
 
 import AccountStore from 'stores/AccountStore'
 
-import analytics from 'utils/analytics'
 import { assetRootPath } from 'utils/image'
 
 const WalletSelectContent = ({ isMobile }) => {
@@ -65,9 +65,9 @@ const WalletSelectContent = ({ isMobile }) => {
   }
 
   const onConnect = async (name) => {
-    analytics.track(`On Connect Wallet`, {
-      category: 'general',
-      label: name,
+    event({
+      'event': 'connect_modal_click',
+      'wallet_type': name.toLowerCase()
     })
 
     setError(null)
