@@ -114,10 +114,11 @@ const TransactionActivityDropdown = () => {
 
   useEffect(() => {
     // check which transactions have newly arrived
-    if (prevTransactions && prevTransactions.length !== 0) {
-      const prevTxHashes = prevTransactions.map((tx) => tx.hash)
-      setTxHashesToAnimate([
-        ...txHashesToAnimate,
+    if (transactions?.length > 0) {
+      const prevTxHashes = prevTransactions?.map((tx) => tx.hash)
+
+      setTxHashesToAnimate((prev) => [
+        ...prev,
         ...transactions
           .filter((tx) => !prevTxHashes.includes(tx.hash))
           .map((tx) => tx.hash),
@@ -132,7 +133,7 @@ const TransactionActivityDropdown = () => {
       animationHash.current = setTimeout(() => {
         setTxHashesToAnimate([])
         animationHash.current = null
-      }, 15000)
+      }, 8000)
     }
 
     const sortedTx = [...transactions]
