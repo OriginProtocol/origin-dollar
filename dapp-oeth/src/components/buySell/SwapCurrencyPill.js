@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useStoreState } from 'pullstate'
 import { fbt } from 'fbt-runtime'
+import { orderBy } from 'lodash'
 import { useWeb3React } from '@web3-react/core'
 import AccountStore from 'stores/AccountStore'
 import {
@@ -119,6 +120,16 @@ const coinToDisplay = {
   },
 }
 
+const coinOrdering = [
+  'eth',
+  'weth',
+  'oeth',
+  'steth',
+  'reth',
+  'frxeth',
+  'sfrxeth',
+]
+
 const TokenSelectionModal = ({
   tokens,
   onClose,
@@ -126,13 +137,22 @@ const TokenSelectionModal = ({
   conversion,
   coinBalances,
 }) => {
+  const tokenData = orderBy(
+    tokens.map((token) => ({
+      token,
+      balance: parseFloat(coinBalances?.[token] || 0),
+      order: coinOrdering?.findIndex((current) => current === token) || 999,
+    })),
+    ['balance', 'order'],
+    ['desc', 'asc']
+  )
+
   return (
     <>
       <div className="token-selection-modal">
         <div className="content-backdrop" onClick={onClose} />
         <div className="content-container">
-          {tokens.map((token) => {
-            const balance = parseFloat(coinBalances?.[token] || 0)
+          {tokenData.map(({ token, balance }) => {
             return (
               <button
                 key={token}
