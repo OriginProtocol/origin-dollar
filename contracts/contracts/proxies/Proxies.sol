@@ -123,9 +123,23 @@ contract OETHDripperProxy is InitializeGovernedUpgradeabilityProxy {
 }
 
 /**
- * @notice FraxETHStrategyProxy delegates calls to a FraxETHStrategy implementation
+ * @notice OETHHarvesterProxy delegates calls to a Harvester implementation
+ */
+contract OETHHarvesterProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
+
+/**
+ * @notice FraxETHStrategyProxy delegates calls to a Generalized4626Strategy implementation
  */
 contract FraxETHStrategyProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
+
+/**
+ * @notice CurveEthStrategyProxy delegates calls to a CurveEthStrategy implementation
+ */
+contract ConvexEthMetaStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
 

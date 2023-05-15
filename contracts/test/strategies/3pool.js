@@ -170,7 +170,7 @@ describe("3Pool Strategy", function () {
     it("Should collect reward tokens and swap via Uniswap", async () => {
       const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
 
-      mockUniswapRouter.initialize([crv.address], [usdt.address]);
+      await mockUniswapRouter.initialize([crv.address], [usdt.address]);
       await harvester.connect(governor).setRewardTokenConfig(
         crv.address, // reward token
         300, // max slippage bps

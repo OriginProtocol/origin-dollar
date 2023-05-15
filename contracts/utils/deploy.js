@@ -130,6 +130,25 @@ const impersonateGuardian = async (optGuardianAddr = null) => {
   log(`Impersonated Guardian at ${guardianAddr}`);
 };
 
+const impersonateAccount = async (address) => {
+  if (!isFork) {
+    throw new Error("impersonateAccount only works on Fork");
+  }
+  const { findBestMainnetTokenHolder } = require("../utils/funding");
+
+  const bestSigner = await findBestMainnetTokenHolder(null, hre);
+  await bestSigner.sendTransaction({
+    to: address,
+    value: utils.parseEther("100"),
+  });
+
+  await hre.network.provider.request({
+    method: "hardhat_impersonateAccount",
+    params: [address],
+  });
+  log(`Impersonated Account at ${address}`);
+};
+
 /**
  * Execute a proposal on local test network (including on Fork).
  *
@@ -935,7 +954,7 @@ function deploymentWithGuardianGovernor(opts, fn) {
 
     if (isMainnet) {
       // On Mainnet, only propose. The enqueue and execution are handled manually via multi-sig.
-      log(
+      console.log(
         "Manually create the 5/8 multisig batch transaction with details:",
         proposal
       );
@@ -944,6 +963,7 @@ function deploymentWithGuardianGovernor(opts, fn) {
       await impersonateGuardian(guardianAddr);
 
       const sGuardian = await ethers.provider.getSigner(guardianAddr);
+      console.log("guardianAddr", guardianAddr);
 
       const guardianActions = [];
       for (const action of proposal.actions) {
@@ -1007,6 +1027,7 @@ module.exports = {
   deployWithConfirmation,
   withConfirmation,
   impersonateGuardian,
+  impersonateAccount,
   executeProposal,
   executeProposalOnFork,
   sendProposal,
