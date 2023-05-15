@@ -81,15 +81,15 @@ const ApproveSwap = ({
     vault: {
       contract: vault,
       name: {
-        approving: 'the Origin Vault',
-        done: 'Origin Vault',
+        approving: 'the OETH Vault',
+        done: 'OETH Vault',
       },
     },
     zapper: {
       contract: zapper,
       name: {
-        approving: 'the Zapper',
-        done: 'Zapper',
+        approving: 'the Zap + Vault',
+        done: 'Zap + Vault',
       },
     },
     // uniswap: {

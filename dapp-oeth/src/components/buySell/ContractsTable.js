@@ -11,10 +11,10 @@ import ConfirmationModal from 'components/buySell/ConfirmationModal'
 
 const swapContracts = {
   zapper: {
-    name: fbt('Zapper', 'Contract Table Zapper'),
+    name: fbt('Zap + Vault', 'Contract Table Zap + Vault'),
   },
   vault: {
-    name: fbt('Origin Vault', 'Contract Table Origin Vault'),
+    name: fbt('OETH Vault', 'Contract Table OETH Vault'),
   },
   // uniswap: {
   //   name: fbt('Uniswap V3', 'Contract Table Uniswap V3'),
@@ -64,14 +64,14 @@ const unsupportedDisplay = (estimateName, swapMode) => {
   switch (estimateName) {
     case 'vault':
       return fbt(
-        'The Origin Vault only supports redeeming OETH for a mix of LSDs.',
+        'The OETH Vault only supports redeeming OETH for a mix of LSDs.',
         'unsupported-vault-mint'
       )
 
     case 'zapper':
       return swapMode === 'mint'
         ? fbt(
-            'Zapper only supports minting with ETH and sfrxETH.',
+            'The Zap contract only supports minting with ETH and sfrxETH.',
             'unsupported-zapper-mint'
           )
         : fbt('This route does not support OETH redeem.', 'unsupported-redeem')
