@@ -99,6 +99,12 @@ addresses.mainnet.chainlinkUSDC_ETH =
   "0x986b5E1e1755e3C2440e960477f25201B0a8bbD4";
 addresses.mainnet.chainlinkUSDT_ETH =
   "0xEe9F2375b4bdF6387aa8265dD4FB8F16512A1d46";
+addresses.mainnet.chainlinkRETH_ETH =
+  "0x536218f9E9Eb48863970252233c8F271f554C2d0";
+addresses.mainnet.chainlinkstETH_ETH =
+  "0x86392dC19c0b719886221c78AB11eb8Cf5c52812";
+addresses.mainnet.chainlinkcbETH_ETH =
+  "0xF017fcB346A1885194689bA23Eff2fE6fA5C483b";
 
 // WETH Token
 addresses.mainnet.WETH = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2";
@@ -141,4 +147,15 @@ addresses.mainnet.MorphoLens = "0x930f1b46e1d081ec1524efd95752be3ece51ef67";
 // OUSD Governance
 addresses.mainnet.GovernorFive = "0x3cdd07c16614059e66344a7b579dab4f9516c0b6";
 addresses.mainnet.Timelock = "0x35918cDE7233F2dD33fA41ae3Cb6aE0e42E0e69F";
+
+// OETH
+addresses.mainnet.OETHProxy = "0x856c4Efb76C1D1AE02e20CEB03A2A6a08b0b8dC3";
+addresses.mainnet.WOETHProxy = "0xDcEe70654261AF21C44c093C300eD3Bb97b78192";
+
+// Tokens
+addresses.mainnet.sfrxETH = "0xac3E018457B222d93114458476f3E3416Abbe38F";
+addresses.mainnet.frxETH = "0x5e8422345238f34275888049021821e8e08caa1f";
+addresses.mainnet.rETH = "0xae78736Cd615f374D3085123A210448E74Fc6393";
+addresses.mainnet.stETH = "0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84";
+
 module.exports = addresses;

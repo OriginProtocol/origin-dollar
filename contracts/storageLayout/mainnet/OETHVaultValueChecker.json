@@ -1,0 +1,38 @@
+{
+  "storage": [
+    {
+      "contract": "VaultValueChecker",
+      "label": "snapshots",
+      "type": "t_mapping(t_address,t_struct(Snapshot)697_storage)",
+      "src": "contracts/strategies/VaultValueChecker.sol:24"
+    }
+  ],
+  "types": {
+    "t_mapping(t_address,t_struct(Snapshot)697_storage)": {
+      "label": "mapping(address => struct VaultValueChecker.Snapshot)"
+    },
+    "t_address": {
+      "label": "address"
+    },
+    "t_struct(Snapshot)697_storage": {
+      "label": "struct VaultValueChecker.Snapshot",
+      "members": [
+        {
+          "label": "vaultValue",
+          "type": "t_uint256"
+        },
+        {
+          "label": "totalSupply",
+          "type": "t_uint256"
+        },
+        {
+          "label": "time",
+          "type": "t_uint256"
+        }
+      ]
+    },
+    "t_uint256": {
+      "label": "uint256"
+    }
+  }
+}

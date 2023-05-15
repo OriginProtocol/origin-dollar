@@ -32,6 +32,7 @@ library StableMath {
         if (to > from) {
             x = x.mul(10**(to - from));
         } else if (to < from) {
+            // slither-disable-next-line divide-before-multiply
             x = x.div(10**(from - to));
         }
         return x;

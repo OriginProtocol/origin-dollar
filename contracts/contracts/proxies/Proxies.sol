@@ -109,6 +109,27 @@ contract WOETHProxy is InitializeGovernedUpgradeabilityProxy {
 }
 
 /**
+ * @notice OETHVaultProxy delegates calls to a Vault implementation
+ */
+contract OETHVaultProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
+
+/**
+ * @notice OETHDripperProxy delegates calls to a OETHDripper implementation
+ */
+contract OETHDripperProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
+
+/**
+ * @notice FraxETHStrategyProxy delegates calls to a FraxETHStrategy implementation
+ */
+contract FraxETHStrategyProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
+
+/**
  * @notice BuybackProxy delegates calls to Buyback implementation
  */
 contract BuybackProxy is InitializeGovernedUpgradeabilityProxy {

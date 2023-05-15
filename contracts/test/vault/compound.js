@@ -424,12 +424,12 @@ describe("Vault with Compound strategy", function () {
   });
 
   it("Should handle non-standard token deposits", async () => {
-    let { ousd, vault, matt, nonStandardToken, governor } = await loadFixture(
-      compoundVaultFixture
-    );
+    let { ousd, vault, matt, nonStandardToken, oracleRouter, governor } =
+      await loadFixture(compoundVaultFixture);
 
+    await oracleRouter.cacheDecimals(nonStandardToken.address);
     if (nonStandardToken) {
-      await vault.connect(governor).supportAsset(nonStandardToken.address);
+      await vault.connect(governor).supportAsset(nonStandardToken.address, 0);
     }
 
     await setOracleTokenPriceUsd("NonStandardToken", "1.00");
