@@ -836,6 +836,9 @@ function deploymentWithProposal(opts, fn) {
 
     await sanityCheckOgvGovernance();
     const proposal = await fn(tools);
+    if (proposal.actions.length == 0) {
+      return; // No governance proposal
+    }
     const propDescription = proposal.name;
     const propArgs = await proposeArgs(proposal.actions);
     const propOpts = proposal.opts || {};
@@ -951,7 +954,7 @@ function deploymentWithGuardianGovernor(opts, fn) {
 
     if (isMainnet) {
       // On Mainnet, only propose. The enqueue and execution are handled manually via multi-sig.
-      log(
+      console.log(
         "Manually create the 5/8 multisig batch transaction with details:",
         proposal
       );

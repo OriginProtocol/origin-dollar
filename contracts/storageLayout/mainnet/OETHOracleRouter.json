@@ -4,7 +4,7 @@
       "contract": "OracleRouterBase",
       "label": "decimalsCache",
       "type": "t_mapping(t_address,t_uint8)",
-      "src": "contracts/oracle/OracleRouter.sol:16"
+      "src": "contracts/oracle/OracleRouter.sol:15"
     }
   ],
   "types": {
