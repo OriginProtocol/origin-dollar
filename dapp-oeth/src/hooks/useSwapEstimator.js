@@ -381,7 +381,7 @@ const useSwapEstimator = ({
           .priceUnitMint(contracts.frxeth.address)
           .then(parseFloatBN),
       ])
-      // previewDeposit * frx eth price should give a mint estimate receive
+      // previewRedeem * frxETH price should give a mint estimate receive
       amountReceived = estimatedDeposit * frxEthMintPrice
     }
 
