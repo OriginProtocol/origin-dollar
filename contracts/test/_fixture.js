@@ -32,7 +32,7 @@ const sfrxETHAbi = require("./abi/sfrxETH.json");
 
 async function defaultFixture() {
   await deployments.fixture(undefined, {
-    keepExistingDeployments: Boolean(isForkWithLocalNode),
+    keepExistingDeployments: true,
   });
 
   const { governorAddr, timelockAddr } = await getNamedAccounts();
