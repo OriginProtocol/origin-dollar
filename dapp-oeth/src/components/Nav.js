@@ -225,6 +225,9 @@ const TransactionActivityDropdown = () => {
       </Dropdown>
       <style jsx>{`
         .activity-toggle {
+          display: flex;
+          align-items: center;
+          justify-content: center;
           width: 40px;
           height: 40px;
           background: #1e1f25;
@@ -237,8 +240,10 @@ const TransactionActivityDropdown = () => {
         }
 
         .activity-icon {
+          display: flex;
+          flex-shrink: 0;
           width: 25px;
-          height: 15px;
+          height: 25px;
         }
 
         .dropdown-menu {

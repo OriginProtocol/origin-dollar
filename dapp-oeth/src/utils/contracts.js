@@ -16,6 +16,7 @@ import daiAbi from 'constants/mainnetAbi/dai.json'
 import ognAbi from 'constants/mainnetAbi/ogn.json'
 import ogvAbi from 'constants/mainnetAbi/ogv.json'
 import veogvAbi from 'constants/mainnetAbi/veogv.json'
+import sfrxethAbi from 'constants/mainnetAbi/sfrxeth.json'
 
 const curveFactoryMiniAbi = [
   {
@@ -241,7 +242,7 @@ export async function setupContracts(account, library, chainId, fetchId) {
     addresses.mainnet.WOETHProxy,
     network.contracts['WOETH'].abi
   )
-  const sfrxeth = getContract(addresses.mainnet.sfrxETH, ognAbi)
+  const sfrxeth = getContract(addresses.mainnet.sfrxETH, sfrxethAbi)
   const zapper = getContract(
     addresses.mainnet.OETHZapper,
     network.contracts['OETHZapper'].abi

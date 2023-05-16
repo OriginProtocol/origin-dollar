@@ -466,8 +466,6 @@ const SwapCurrencyPill = ({
   const coinBalances = useStoreState(AccountStore, (s) => s.balances)
   const [error, setError] = useState(null)
 
-  console.log(selectedSwap, selectedCoin, swapMode)
-
   const coinMintOptions = [
     'eth',
     'weth',

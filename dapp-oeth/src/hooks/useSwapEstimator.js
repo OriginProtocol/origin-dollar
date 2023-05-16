@@ -3,19 +3,15 @@ import { ethers, BigNumber } from 'ethers'
 import { useStoreState } from 'pullstate'
 import { get, minBy } from 'lodash'
 import AccountStore from 'stores/AccountStore'
-import {
-  mintAbsoluteGasLimitBuffer,
-  mintPercentGasLimitBuffer,
-  redeemPercentGasLimitBuffer,
-  approveCoinGasLimits,
-  max_price,
-} from 'utils/constants'
+import { approveCoinGasLimits, max_price } from 'utils/constants'
 import { usePrevious } from 'utils/hooks'
 import useCurrencySwapper from 'hooks/useCurrencySwapper'
 import ContractStore from 'stores/ContractStore'
-import { calculateSwapAmounts, formatCurrency } from 'utils/math'
+import { calculateSwapAmounts } from 'utils/math'
 import fetchWithTimeout from 'utils/fetchWithTimeout'
 import { find } from 'lodash'
+
+const parseFloatBN = (value) => parseFloat(ethers.utils.formatEther(value))
 
 const errorIncludes = (e, errorTxt) => {
   return (
@@ -374,6 +370,21 @@ const useSwapEstimator = ({
       }
     }
 
+    let amountReceived = amount
+
+    if (coinToSwap === 'sfrxeth') {
+      const [estimatedDeposit, frxEthMintPrice] = await Promise.all([
+        contracts.sfrxeth
+          .previewRedeem(ethers.utils.parseUnits(String(amount)))
+          .then(parseFloatBN),
+        contracts.vault
+          .priceUnitMint(contracts.frxeth.address)
+          .then(parseFloatBN),
+      ])
+      // previewRedeem * frxETH price should give a mint estimate receive
+      amountReceived = estimatedDeposit * frxEthMintPrice
+    }
+
     const approveAllowanceNeeded = allowancesLoaded
       ? parseFloat(allowances[coinToSwap].zapper) < amount
       : true
@@ -389,7 +400,7 @@ const useSwapEstimator = ({
       approveGasUsage,
       approveAllowanceNeeded,
       inputAmount: parseFloat(inputAmountRaw),
-      amountReceived: amount,
+      amountReceived,
     }
   }
 
