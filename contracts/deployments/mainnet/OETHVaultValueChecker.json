@@ -1,0 +1,207 @@
+{
+  "address": "0x31FD8618379D8e473Ec2B1540B906E8e11D2A99b",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_vault",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_ousd",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "int256",
+          "name": "expectedProfit",
+          "type": "int256"
+        },
+        {
+          "internalType": "int256",
+          "name": "profitVariance",
+          "type": "int256"
+        },
+        {
+          "internalType": "int256",
+          "name": "expectedVaultChange",
+          "type": "int256"
+        },
+        {
+          "internalType": "int256",
+          "name": "vaultChangeVariance",
+          "type": "int256"
+        }
+      ],
+      "name": "checkDelta",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "ousd",
+      "outputs": [
+        {
+          "internalType": "contract IOUSD",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "snapshots",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "vaultValue",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "totalSupply",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "time",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "takeSnapshot",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "vault",
+      "outputs": [
+        {
+          "internalType": "contract IVault",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "transactionHash": "0x965bc53474504ee488d4f00c415ddf5ebb38947904ac5638c7bc6f9b6c38e47c",
+  "receipt": {
+    "to": null,
+    "from": "0x69e078EBc4631E1947F0c38Ef0357De7ED064644",
+    "contractAddress": "0x31FD8618379D8e473Ec2B1540B906E8e11D2A99b",
+    "transactionIndex": 16,
+    "gasUsed": "481949",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "blockHash": "0xb9c995e2e96ee49078069b88e0ca3be6591ed136663a9e19a55adcc784cc382d",
+    "transactionHash": "0x965bc53474504ee488d4f00c415ddf5ebb38947904ac5638c7bc6f9b6c38e47c",
+    "logs": [],
+    "blockNumber": 17205144,
+    "cumulativeGasUsed": "2429045",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [
+    "0x39254033945AA2E4809Cc2977E7087BEE48bd7Ab",
+    "0x856c4Efb76C1D1AE02e20CEB03A2A6a08b0b8dC3"
+  ],
+  "solcInputHash": "490dd8e63c32a56c16a9ff12906668d3",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.7+commit.e28d00a7\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_vault\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_ousd\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[{\"internalType\":\"int256\",\"name\":\"expectedProfit\",\"type\":\"int256\"},{\"internalType\":\"int256\",\"name\":\"profitVariance\",\"type\":\"int256\"},{\"internalType\":\"int256\",\"name\":\"expectedVaultChange\",\"type\":\"int256\"},{\"internalType\":\"int256\",\"name\":\"vaultChangeVariance\",\"type\":\"int256\"}],\"name\":\"checkDelta\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"ousd\",\"outputs\":[{\"internalType\":\"contract IOUSD\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"snapshots\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"vaultValue\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"totalSupply\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"time\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"takeSnapshot\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"vault\",\"outputs\":[{\"internalType\":\"contract IVault\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/strategies/VaultValueChecker.sol\":\"OETHVaultValueChecker\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[]},\"sources\":{\"contracts/interfaces/IOUSD.sol\":{\"content\":\"pragma solidity ^0.8.0;\\n\\ninterface IOUSD {\\n    event Approval(\\n        address indexed owner,\\n        address indexed spender,\\n        uint256 value\\n    );\\n    event GovernorshipTransferred(\\n        address indexed previousGovernor,\\n        address indexed newGovernor\\n    );\\n    event PendingGovernorshipTransfer(\\n        address indexed previousGovernor,\\n        address indexed newGovernor\\n    );\\n    event TotalSupplyUpdatedHighres(\\n        uint256 totalSupply,\\n        uint256 rebasingCredits,\\n        uint256 rebasingCreditsPerToken\\n    );\\n    event Transfer(address indexed from, address indexed to, uint256 value);\\n\\n    function _totalSupply() external view returns (uint256);\\n\\n    function allowance(address _owner, address _spender)\\n        external\\n        view\\n        returns (uint256);\\n\\n    function approve(address _spender, uint256 _value) external returns (bool);\\n\\n    function balanceOf(address _account) external view returns (uint256);\\n\\n    function burn(address account, uint256 amount) external;\\n\\n    function changeSupply(uint256 _newTotalSupply) external;\\n\\n    function claimGovernance() external;\\n\\n    function creditsBalanceOf(address _account)\\n        external\\n        view\\n        returns (uint256, uint256);\\n\\n    function creditsBalanceOfHighres(address _account)\\n        external\\n        view\\n        returns (\\n            uint256,\\n            uint256,\\n            bool\\n        );\\n\\n    function decimals() external view returns (uint8);\\n\\n    function decreaseAllowance(address _spender, uint256 _subtractedValue)\\n        external\\n        returns (bool);\\n\\n    function governor() external view returns (address);\\n\\n    function increaseAllowance(address _spender, uint256 _addedValue)\\n        external\\n        returns (bool);\\n\\n    function initialize(\\n        string memory _nameArg,\\n        string memory _symbolArg,\\n        address _vaultAddress\\n    ) external;\\n\\n    function isGovernor() external view returns (bool);\\n\\n    function isUpgraded(address) external view returns (uint256);\\n\\n    function mint(address _account, uint256 _amount) external;\\n\\n    function name() external view returns (string memory);\\n\\n    function nonRebasingCreditsPerToken(address)\\n        external\\n        view\\n        returns (uint256);\\n\\n    function nonRebasingSupply() external view returns (uint256);\\n\\n    function rebaseOptIn() external;\\n\\n    function rebaseOptOut() external;\\n\\n    function rebaseState(address) external view returns (uint8);\\n\\n    function rebasingCredits() external view returns (uint256);\\n\\n    function rebasingCreditsHighres() external view returns (uint256);\\n\\n    function rebasingCreditsPerToken() external view returns (uint256);\\n\\n    function rebasingCreditsPerTokenHighres() external view returns (uint256);\\n\\n    function symbol() external view returns (string memory);\\n\\n    function totalSupply() external view returns (uint256);\\n\\n    function transfer(address _to, uint256 _value) external returns (bool);\\n\\n    function transferFrom(\\n        address _from,\\n        address _to,\\n        uint256 _value\\n    ) external returns (bool);\\n\\n    function transferGovernance(address _newGovernor) external;\\n\\n    function vaultAddress() external view returns (address);\\n}\\n\",\"keccak256\":\"0x91291805f1caa4206bf5df018eccfebba8b37af1fbfa16f7b7e5ab308ebe4415\"},\"contracts/interfaces/IVault.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity ^0.8.0;\\n\\ninterface IVault {\\n    event AssetSupported(address _asset);\\n    event AssetDefaultStrategyUpdated(address _asset, address _strategy);\\n    event AssetAllocated(address _asset, address _strategy, uint256 _amount);\\n    event StrategyApproved(address _addr);\\n    event StrategyRemoved(address _addr);\\n    event Mint(address _addr, uint256 _value);\\n    event Redeem(address _addr, uint256 _value);\\n    event CapitalPaused();\\n    event CapitalUnpaused();\\n    event RebasePaused();\\n    event RebaseUnpaused();\\n    event VaultBufferUpdated(uint256 _vaultBuffer);\\n    event RedeemFeeUpdated(uint256 _redeemFeeBps);\\n    event PriceProviderUpdated(address _priceProvider);\\n    event AllocateThresholdUpdated(uint256 _threshold);\\n    event RebaseThresholdUpdated(uint256 _threshold);\\n    event StrategistUpdated(address _address);\\n    event MaxSupplyDiffChanged(uint256 maxSupplyDiff);\\n    event YieldDistribution(address _to, uint256 _yield, uint256 _fee);\\n    event TrusteeFeeBpsChanged(uint256 _basis);\\n    event TrusteeAddressChanged(address _address);\\n\\n    // Governable.sol\\n    function transferGovernance(address _newGovernor) external;\\n\\n    function claimGovernance() external;\\n\\n    function governor() external view returns (address);\\n\\n    // VaultAdmin.sol\\n    function setPriceProvider(address _priceProvider) external;\\n\\n    function priceProvider() external view returns (address);\\n\\n    function setRedeemFeeBps(uint256 _redeemFeeBps) external;\\n\\n    function redeemFeeBps() external view returns (uint256);\\n\\n    function setVaultBuffer(uint256 _vaultBuffer) external;\\n\\n    function vaultBuffer() external view returns (uint256);\\n\\n    function setAutoAllocateThreshold(uint256 _threshold) external;\\n\\n    function autoAllocateThreshold() external view returns (uint256);\\n\\n    function setRebaseThreshold(uint256 _threshold) external;\\n\\n    function rebaseThreshold() external view returns (uint256);\\n\\n    function setStrategistAddr(address _address) external;\\n\\n    function strategistAddr() external view returns (address);\\n\\n    function setMaxSupplyDiff(uint256 _maxSupplyDiff) external;\\n\\n    function maxSupplyDiff() external view returns (uint256);\\n\\n    function setTrusteeAddress(address _address) external;\\n\\n    function trusteeAddress() external view returns (address);\\n\\n    function setTrusteeFeeBps(uint256 _basis) external;\\n\\n    function trusteeFeeBps() external view returns (uint256);\\n\\n    function ousdMetaStrategy() external view returns (address);\\n\\n    function supportAsset(address _asset, uint8 _supportsAsset) external;\\n\\n    function approveStrategy(address _addr) external;\\n\\n    function removeStrategy(address _addr) external;\\n\\n    function setAssetDefaultStrategy(address _asset, address _strategy)\\n        external;\\n\\n    function assetDefaultStrategies(address _asset)\\n        external\\n        view\\n        returns (address);\\n\\n    function pauseRebase() external;\\n\\n    function unpauseRebase() external;\\n\\n    function rebasePaused() external view returns (bool);\\n\\n    function pauseCapital() external;\\n\\n    function unpauseCapital() external;\\n\\n    function capitalPaused() external view returns (bool);\\n\\n    function transferToken(address _asset, uint256 _amount) external;\\n\\n    function priceUnitMint(address asset) external view returns (uint256);\\n\\n    function priceUnitRedeem(address asset) external view returns (uint256);\\n\\n    function withdrawAllFromStrategy(address _strategyAddr) external;\\n\\n    function withdrawAllFromStrategies() external;\\n\\n    function reallocate(\\n        address _strategyFromAddress,\\n        address _strategyToAddress,\\n        address[] calldata _assets,\\n        uint256[] calldata _amounts\\n    ) external;\\n\\n    function withdrawFromStrategy(\\n        address _strategyFromAddress,\\n        address[] calldata _assets,\\n        uint256[] calldata _amounts\\n    ) external;\\n\\n    function depositToStrategy(\\n        address _strategyToAddress,\\n        address[] calldata _assets,\\n        uint256[] calldata _amounts\\n    ) external;\\n\\n    // VaultCore.sol\\n    function mint(\\n        address _asset,\\n        uint256 _amount,\\n        uint256 _minimumOusdAmount\\n    ) external;\\n\\n    function mintForStrategy(uint256 _amount) external;\\n\\n    function redeem(uint256 _amount, uint256 _minimumUnitAmount) external;\\n\\n    function burnForStrategy(uint256 _amount) external;\\n\\n    function redeemAll(uint256 _minimumUnitAmount) external;\\n\\n    function allocate() external;\\n\\n    function rebase() external;\\n\\n    function totalValue() external view returns (uint256 value);\\n\\n    function checkBalance(address _asset) external view returns (uint256);\\n\\n    function calculateRedeemOutputs(uint256 _amount)\\n        external\\n        view\\n        returns (uint256[] memory);\\n\\n    function getAssetCount() external view returns (uint256);\\n\\n    function getAllAssets() external view returns (address[] memory);\\n\\n    function getStrategyCount() external view returns (uint256);\\n\\n    function getAllStrategies() external view returns (address[] memory);\\n\\n    function isSupportedAsset(address _asset) external view returns (bool);\\n\\n    function netOusdMintForStrategyThreshold() external view returns (uint256);\\n\\n    function setOusdMetaStrategy(address _ousdMetaStrategy) external;\\n\\n    function setNetOusdMintForStrategyThreshold(uint256 _threshold) external;\\n\\n    function netOusdMintedForStrategy() external view returns (int256);\\n}\\n\",\"keccak256\":\"0xb05bdc712c2661e92e351ae0823f0c8fca4249e6cbb43e78b96fafc290bee198\",\"license\":\"MIT\"},\"contracts/strategies/VaultValueChecker.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity ^0.8.0;\\n\\nimport { IOUSD } from \\\"../interfaces/IOUSD.sol\\\";\\nimport { IVault } from \\\"../interfaces/IVault.sol\\\";\\n\\ncontract VaultValueChecker {\\n    IVault public immutable vault;\\n    IOUSD public immutable ousd;\\n    // Snapshot expiration time in seconds.\\n    // Used to prevent accidental use of an old snapshot, but\\n    // is not zero to allow easy testing of strategist actions in fork testing\\n    uint256 constant SNAPSHOT_EXPIRES = 5 * 60;\\n\\n    struct Snapshot {\\n        uint256 vaultValue;\\n        uint256 totalSupply;\\n        uint256 time;\\n    }\\n    // By doing per user snapshots, we prevent a reentrancy attack\\n    // from a third party that updates the snapshot in the middle\\n    // of an allocation process\\n\\n    mapping(address => Snapshot) public snapshots;\\n\\n    constructor(address _vault, address _ousd) {\\n        vault = IVault(_vault);\\n        ousd = IOUSD(_ousd);\\n    }\\n\\n    function takeSnapshot() external {\\n        snapshots[msg.sender] = Snapshot({\\n            vaultValue: vault.totalValue(),\\n            totalSupply: ousd.totalSupply(),\\n            time: block.timestamp\\n        });\\n    }\\n\\n    function checkDelta(\\n        int256 expectedProfit,\\n        int256 profitVariance,\\n        int256 expectedVaultChange,\\n        int256 vaultChangeVariance\\n    ) external {\\n        // Intentionaly not view so that this method shows up in TX builders\\n        Snapshot memory snapshot = snapshots[msg.sender];\\n        int256 vaultChange = toInt256(vault.totalValue()) -\\n            toInt256(snapshot.vaultValue);\\n        int256 supplyChange = toInt256(ousd.totalSupply()) -\\n            toInt256(snapshot.totalSupply);\\n        int256 profit = vaultChange - supplyChange;\\n\\n        require(\\n            snapshot.time >= block.timestamp - SNAPSHOT_EXPIRES,\\n            \\\"Snapshot too old\\\"\\n        );\\n        require(snapshot.time <= block.timestamp, \\\"Snapshot too new\\\");\\n        require(profit >= expectedProfit - profitVariance, \\\"Profit too low\\\");\\n        require(profit <= expectedProfit + profitVariance, \\\"Profit too high\\\");\\n        require(\\n            vaultChange >= expectedVaultChange - vaultChangeVariance,\\n            \\\"Vault value change too low\\\"\\n        );\\n        require(\\n            vaultChange <= expectedVaultChange + vaultChangeVariance,\\n            \\\"Vault value change too high\\\"\\n        );\\n    }\\n\\n    function toInt256(uint256 value) internal pure returns (int256) {\\n        // From openzeppelin math/SafeCast.sol\\n        // Note: Unsafe cast below is okay because `type(int256).max` is guaranteed to be positive\\n        require(\\n            value <= uint256(type(int256).max),\\n            \\\"SafeCast: value doesn't fit in an int256\\\"\\n        );\\n        return int256(value);\\n    }\\n}\\n\\ncontract OETHVaultValueChecker is VaultValueChecker {\\n    constructor(address _vault, address _ousd)\\n        VaultValueChecker(_vault, _ousd)\\n    {}\\n}\\n\",\"keccak256\":\"0x1b3f36a25e7eca473f8c34e04dc02f1387e8ccf025e7a5a0be00133d74c26b48\",\"license\":\"MIT\"}},\"version\":1}",
+  "bytecode": "0x60c060405234801561001057600080fd5b5060405161089a38038061089a83398101604081905261002f91610069565b6001600160601b0319606092831b8116608052911b1660a05261009c565b80516001600160a01b038116811461006457600080fd5b919050565b6000806040838503121561007c57600080fd5b6100858361004d565b91506100936020840161004d565b90509250929050565b60805160601c60a05160601c6107b86100e26000396000818160cd01528181610228015261052b01526000818161010c01528181610174015261049501526107b86000f3fe608060405234801561001057600080fd5b50600436106100575760003560e01c806334b3081f1461005c578063b1d79df5146100ab578063b3d3d37e146100c0578063bebacc8e146100c8578063fbfa77cf14610107575b600080fd5b61008b61006a36600461065a565b60006020819052908152604090208054600182015460029092015490919083565b604080519384526020840192909252908201526060015b60405180910390f35b6100be6100b936600461068a565b61012e565b005b6100be610488565b6100ef7f000000000000000000000000000000000000000000000000000000000000000081565b6040516001600160a01b0390911681526020016100a2565b6100ef7f000000000000000000000000000000000000000000000000000000000000000081565b336000908152602081815260408083208151606081018352815480825260018301549482019490945260029091015491810191909152919061016f906105ec565b6102087f00000000000000000000000000000000000000000000000000000000000000006001600160a01b031663d4c3eea06040518163ffffffff1660e01b815260040160206040518083038186803b1580156101cb57600080fd5b505afa1580156101df573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061020391906106bc565b6105ec565b6102129190610716565b9050600061022383602001516105ec565b61027f7f00000000000000000000000000000000000000000000000000000000000000006001600160a01b03166318160ddd6040518163ffffffff1660e01b815260040160206040518083038186803b1580156101cb57600080fd5b6102899190610716565b905060006102978284610716565b90506102a561012c42610755565b846040015110156102f05760405162461bcd60e51b815260206004820152601060248201526f14db985c1cda1bdd081d1bdbc81bdb1960821b60448201526064015b60405180910390fd5b42846040015111156103375760405162461bcd60e51b815260206004820152601060248201526f536e617073686f7420746f6f206e657760801b60448201526064016102e7565b6103418789610716565b8112156103815760405162461bcd60e51b815260206004820152600e60248201526d50726f66697420746f6f206c6f7760901b60448201526064016102e7565b61038b87896106d5565b8113156103cc5760405162461bcd60e51b815260206004820152600f60248201526e0a0e4deccd2e840e8dede40d0d2ced608b1b60448201526064016102e7565b6103d68587610716565b8312156104255760405162461bcd60e51b815260206004820152601a60248201527f5661756c742076616c7565206368616e676520746f6f206c6f7700000000000060448201526064016102e7565b61042f85876106d5565b83131561047e5760405162461bcd60e51b815260206004820152601b60248201527f5661756c742076616c7565206368616e676520746f6f2068696768000000000060448201526064016102e7565b5050505050505050565b60405180606001604052807f00000000000000000000000000000000000000000000000000000000000000006001600160a01b031663d4c3eea06040518163ffffffff1660e01b815260040160206040518083038186803b1580156104ec57600080fd5b505afa158015610500573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061052491906106bc565b81526020017f00000000000000000000000000000000000000000000000000000000000000006001600160a01b03166318160ddd6040518163ffffffff1660e01b815260040160206040518083038186803b15801561058257600080fd5b505afa158015610596573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906105ba91906106bc565b815242602091820152336000908152808252604090819020835181559183015160018301559190910151600290910155565b60006001600160ff1b038211156106565760405162461bcd60e51b815260206004820152602860248201527f53616665436173743a2076616c756520646f65736e27742066697420696e2061604482015267371034b73a191a9b60c11b60648201526084016102e7565b5090565b60006020828403121561066c57600080fd5b81356001600160a01b038116811461068357600080fd5b9392505050565b600080600080608085870312156106a057600080fd5b5050823594602084013594506040840135936060013592509050565b6000602082840312156106ce57600080fd5b5051919050565b600080821280156001600160ff1b03849003851316156106f7576106f761076c565b600160ff1b83900384128116156107105761071061076c565b50500190565b60008083128015600160ff1b8501841216156107345761073461076c565b6001600160ff1b038401831381161561074f5761074f61076c565b50500390565b6000828210156107675761076761076c565b500390565b634e487b7160e01b600052601160045260246000fdfea2646970667358221220624f9edcb994a02685104eb2bf9beb002b9397a6d28f151dde5d1458f7b85faf64736f6c63430008070033",
+  "deployedBytecode": "0x608060405234801561001057600080fd5b50600436106100575760003560e01c806334b3081f1461005c578063b1d79df5146100ab578063b3d3d37e146100c0578063bebacc8e146100c8578063fbfa77cf14610107575b600080fd5b61008b61006a36600461065a565b60006020819052908152604090208054600182015460029092015490919083565b604080519384526020840192909252908201526060015b60405180910390f35b6100be6100b936600461068a565b61012e565b005b6100be610488565b6100ef7f000000000000000000000000000000000000000000000000000000000000000081565b6040516001600160a01b0390911681526020016100a2565b6100ef7f000000000000000000000000000000000000000000000000000000000000000081565b336000908152602081815260408083208151606081018352815480825260018301549482019490945260029091015491810191909152919061016f906105ec565b6102087f00000000000000000000000000000000000000000000000000000000000000006001600160a01b031663d4c3eea06040518163ffffffff1660e01b815260040160206040518083038186803b1580156101cb57600080fd5b505afa1580156101df573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061020391906106bc565b6105ec565b6102129190610716565b9050600061022383602001516105ec565b61027f7f00000000000000000000000000000000000000000000000000000000000000006001600160a01b03166318160ddd6040518163ffffffff1660e01b815260040160206040518083038186803b1580156101cb57600080fd5b6102899190610716565b905060006102978284610716565b90506102a561012c42610755565b846040015110156102f05760405162461bcd60e51b815260206004820152601060248201526f14db985c1cda1bdd081d1bdbc81bdb1960821b60448201526064015b60405180910390fd5b42846040015111156103375760405162461bcd60e51b815260206004820152601060248201526f536e617073686f7420746f6f206e657760801b60448201526064016102e7565b6103418789610716565b8112156103815760405162461bcd60e51b815260206004820152600e60248201526d50726f66697420746f6f206c6f7760901b60448201526064016102e7565b61038b87896106d5565b8113156103cc5760405162461bcd60e51b815260206004820152600f60248201526e0a0e4deccd2e840e8dede40d0d2ced608b1b60448201526064016102e7565b6103d68587610716565b8312156104255760405162461bcd60e51b815260206004820152601a60248201527f5661756c742076616c7565206368616e676520746f6f206c6f7700000000000060448201526064016102e7565b61042f85876106d5565b83131561047e5760405162461bcd60e51b815260206004820152601b60248201527f5661756c742076616c7565206368616e676520746f6f2068696768000000000060448201526064016102e7565b5050505050505050565b60405180606001604052807f00000000000000000000000000000000000000000000000000000000000000006001600160a01b031663d4c3eea06040518163ffffffff1660e01b815260040160206040518083038186803b1580156104ec57600080fd5b505afa158015610500573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061052491906106bc565b81526020017f00000000000000000000000000000000000000000000000000000000000000006001600160a01b03166318160ddd6040518163ffffffff1660e01b815260040160206040518083038186803b15801561058257600080fd5b505afa158015610596573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906105ba91906106bc565b815242602091820152336000908152808252604090819020835181559183015160018301559190910151600290910155565b60006001600160ff1b038211156106565760405162461bcd60e51b815260206004820152602860248201527f53616665436173743a2076616c756520646f65736e27742066697420696e2061604482015267371034b73a191a9b60c11b60648201526084016102e7565b5090565b60006020828403121561066c57600080fd5b81356001600160a01b038116811461068357600080fd5b9392505050565b600080600080608085870312156106a057600080fd5b5050823594602084013594506040840135936060013592509050565b6000602082840312156106ce57600080fd5b5051919050565b600080821280156001600160ff1b03849003851316156106f7576106f761076c565b600160ff1b83900384128116156107105761071061076c565b50500190565b60008083128015600160ff1b8501841216156107345761073461076c565b6001600160ff1b038401831381161561074f5761074f61076c565b50500390565b6000828210156107675761076761076c565b500390565b634e487b7160e01b600052601160045260246000fdfea2646970667358221220624f9edcb994a02685104eb2bf9beb002b9397a6d28f151dde5d1458f7b85faf64736f6c63430008070033",
+  "devdoc": {
+    "kind": "dev",
+    "methods": {},
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {},
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [
+      {
+        "astId": 702,
+        "contract": "contracts/strategies/VaultValueChecker.sol:OETHVaultValueChecker",
+        "label": "snapshots",
+        "offset": 0,
+        "slot": "0",
+        "type": "t_mapping(t_address,t_struct(Snapshot)697_storage)"
+      }
+    ],
+    "types": {
+      "t_address": {
+        "encoding": "inplace",
+        "label": "address",
+        "numberOfBytes": "20"
+      },
+      "t_mapping(t_address,t_struct(Snapshot)697_storage)": {
+        "encoding": "mapping",
+        "key": "t_address",
+        "label": "mapping(address => struct VaultValueChecker.Snapshot)",
+        "numberOfBytes": "32",
+        "value": "t_struct(Snapshot)697_storage"
+      },
+      "t_struct(Snapshot)697_storage": {
+        "encoding": "inplace",
+        "label": "struct VaultValueChecker.Snapshot",
+        "members": [
+          {
+            "astId": 692,
+            "contract": "contracts/strategies/VaultValueChecker.sol:OETHVaultValueChecker",
+            "label": "vaultValue",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint256"
+          },
+          {
+            "astId": 694,
+            "contract": "contracts/strategies/VaultValueChecker.sol:OETHVaultValueChecker",
+            "label": "totalSupply",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_uint256"
+          },
+          {
+            "astId": 696,
+            "contract": "contracts/strategies/VaultValueChecker.sol:OETHVaultValueChecker",
+            "label": "time",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_uint256"
+          }
+        ],
+        "numberOfBytes": "96"
+      },
+      "t_uint256": {
+        "encoding": "inplace",
+        "label": "uint256",
+        "numberOfBytes": "32"
+      }
+    }
+  }
+}

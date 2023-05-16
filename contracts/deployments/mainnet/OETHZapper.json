@@ -1,0 +1,236 @@
+{
+  "address": "0x9858e47BCbBe6fBAC040519B02d7cd4B2C470C66",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_oeth",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_vault",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "minter",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "asset",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "Zap",
+      "type": "event"
+    },
+    {
+      "inputs": [],
+      "name": "deposit",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "payable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "minOETH",
+          "type": "uint256"
+        }
+      ],
+      "name": "depositSFRXETH",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "frxeth",
+      "outputs": [
+        {
+          "internalType": "contract IERC20",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "oeth",
+      "outputs": [
+        {
+          "internalType": "contract IERC20",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "sfrxeth",
+      "outputs": [
+        {
+          "internalType": "contract ISfrxETH",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "vault",
+      "outputs": [
+        {
+          "internalType": "contract IVault",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "weth",
+      "outputs": [
+        {
+          "internalType": "contract IWETH9",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "stateMutability": "payable",
+      "type": "receive"
+    }
+  ],
+  "transactionHash": "0x3c8a23c2a1fc13cc95adae4afdfe0dc72665b022bcc3b4841bcbfe07c6c9fd95",
+  "receipt": {
+    "to": null,
+    "from": "0x69e078EBc4631E1947F0c38Ef0357De7ED064644",
+    "contractAddress": "0x9858e47BCbBe6fBAC040519B02d7cd4B2C470C66",
+    "transactionIndex": 2,
+    "gasUsed": "495168",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000002000000080000000000000002200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000020000000002000000000800000000000000000000000000040000000000000000000000000000000000000000002000000000000000000000000000000004000010200000000000000000000200000000000000000000000000000000000000",
+    "blockHash": "0xffbfcd626b91a19e152c1135346a0b9c3da58c87e9a835f69131a3f726c9814b",
+    "transactionHash": "0x3c8a23c2a1fc13cc95adae4afdfe0dc72665b022bcc3b4841bcbfe07c6c9fd95",
+    "logs": [
+      {
+        "transactionIndex": 2,
+        "blockNumber": 17132285,
+        "transactionHash": "0x3c8a23c2a1fc13cc95adae4afdfe0dc72665b022bcc3b4841bcbfe07c6c9fd95",
+        "address": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+        "topics": [
+          "0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925",
+          "0x0000000000000000000000009858e47bcbbe6fbac040519b02d7cd4b2c470c66",
+          "0x00000000000000000000000039254033945aa2e4809cc2977e7087bee48bd7ab"
+        ],
+        "data": "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "logIndex": 6,
+        "blockHash": "0xffbfcd626b91a19e152c1135346a0b9c3da58c87e9a835f69131a3f726c9814b"
+      },
+      {
+        "transactionIndex": 2,
+        "blockNumber": 17132285,
+        "transactionHash": "0x3c8a23c2a1fc13cc95adae4afdfe0dc72665b022bcc3b4841bcbfe07c6c9fd95",
+        "address": "0x5E8422345238F34275888049021821E8E08CAa1f",
+        "topics": [
+          "0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925",
+          "0x0000000000000000000000009858e47bcbbe6fbac040519b02d7cd4b2c470c66",
+          "0x00000000000000000000000039254033945aa2e4809cc2977e7087bee48bd7ab"
+        ],
+        "data": "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "logIndex": 7,
+        "blockHash": "0xffbfcd626b91a19e152c1135346a0b9c3da58c87e9a835f69131a3f726c9814b"
+      }
+    ],
+    "blockNumber": 17132285,
+    "cumulativeGasUsed": "727562",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [
+    "0x856c4Efb76C1D1AE02e20CEB03A2A6a08b0b8dC3",
+    "0x39254033945AA2E4809Cc2977E7087BEE48bd7Ab"
+  ],
+  "solcInputHash": "ffc880c9823fb0ee1e4e3ee241f97e93",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.7+commit.e28d00a7\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_oeth\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_vault\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"minter\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"asset\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"Zap\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"deposit\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"minOETH\",\"type\":\"uint256\"}],\"name\":\"depositSFRXETH\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"frxeth\",\"outputs\":[{\"internalType\":\"contract IERC20\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"oeth\",\"outputs\":[{\"internalType\":\"contract IERC20\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"sfrxeth\",\"outputs\":[{\"internalType\":\"contract ISfrxETH\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"vault\",\"outputs\":[{\"internalType\":\"contract IVault\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"weth\",\"outputs\":[{\"internalType\":\"contract IWETH9\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"stateMutability\":\"payable\",\"type\":\"receive\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{\"deposit()\":{\"details\":\"Deposit ETH and receive OETH in return Will verify that the user is sent 1:1 for ETH.\",\"returns\":{\"_0\":\"Amount of OETH sent to user\"}},\"depositSFRXETH(uint256,uint256)\":{\"details\":\"Deposit SFRXETH to the vault and receive OETH in return\",\"params\":{\"amount\":\"Amount of SFRXETH to deposit\",\"minOETH\":\"Minimum amount of OETH to receive\"},\"returns\":{\"_0\":\"Amount of OETH sent to user\"}}},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/vault/OETHZapper.sol\":\"OETHZapper\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[]},\"sources\":{\"@openzeppelin/contracts/token/ERC20/IERC20.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts v4.4.1 (token/ERC20/IERC20.sol)\\n\\npragma solidity ^0.8.0;\\n\\n/**\\n * @dev Interface of the ERC20 standard as defined in the EIP.\\n */\\ninterface IERC20 {\\n    /**\\n     * @dev Returns the amount of tokens in existence.\\n     */\\n    function totalSupply() external view returns (uint256);\\n\\n    /**\\n     * @dev Returns the amount of tokens owned by `account`.\\n     */\\n    function balanceOf(address account) external view returns (uint256);\\n\\n    /**\\n     * @dev Moves `amount` tokens from the caller's account to `recipient`.\\n     *\\n     * Returns a boolean value indicating whether the operation succeeded.\\n     *\\n     * Emits a {Transfer} event.\\n     */\\n    function transfer(address recipient, uint256 amount) external returns (bool);\\n\\n    /**\\n     * @dev Returns the remaining number of tokens that `spender` will be\\n     * allowed to spend on behalf of `owner` through {transferFrom}. This is\\n     * zero by default.\\n     *\\n     * This value changes when {approve} or {transferFrom} are called.\\n     */\\n    function allowance(address owner, address spender) external view returns (uint256);\\n\\n    /**\\n     * @dev Sets `amount` as the allowance of `spender` over the caller's tokens.\\n     *\\n     * Returns a boolean value indicating whether the operation succeeded.\\n     *\\n     * IMPORTANT: Beware that changing an allowance with this method brings the risk\\n     * that someone may use both the old and the new allowance by unfortunate\\n     * transaction ordering. One possible solution to mitigate this race\\n     * condition is to first reduce the spender's allowance to 0 and set the\\n     * desired value afterwards:\\n     * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729\\n     *\\n     * Emits an {Approval} event.\\n     */\\n    function approve(address spender, uint256 amount) external returns (bool);\\n\\n    /**\\n     * @dev Moves `amount` tokens from `sender` to `recipient` using the\\n     * allowance mechanism. `amount` is then deducted from the caller's\\n     * allowance.\\n     *\\n     * Returns a boolean value indicating whether the operation succeeded.\\n     *\\n     * Emits a {Transfer} event.\\n     */\\n    function transferFrom(\\n        address sender,\\n        address recipient,\\n        uint256 amount\\n    ) external returns (bool);\\n\\n    /**\\n     * @dev Emitted when `value` tokens are moved from one account (`from`) to\\n     * another (`to`).\\n     *\\n     * Note that `value` may be zero.\\n     */\\n    event Transfer(address indexed from, address indexed to, uint256 value);\\n\\n    /**\\n     * @dev Emitted when the allowance of a `spender` for an `owner` is set by\\n     * a call to {approve}. `value` is the new allowance.\\n     */\\n    event Approval(address indexed owner, address indexed spender, uint256 value);\\n}\\n\",\"keccak256\":\"0x61437cb513a887a1bbad006e7b1c8b414478427d33de47c5600af3c748f108da\",\"license\":\"MIT\"},\"contracts/interfaces/ISfrxETH.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity ^0.8.0;\\n\\ninterface ISfrxETH {\\n    event Approval(\\n        address indexed owner,\\n        address indexed spender,\\n        uint256 amount\\n    );\\n    event Deposit(\\n        address indexed caller,\\n        address indexed owner,\\n        uint256 assets,\\n        uint256 shares\\n    );\\n    event NewRewardsCycle(uint32 indexed cycleEnd, uint256 rewardAmount);\\n    event Transfer(address indexed from, address indexed to, uint256 amount);\\n    event Withdraw(\\n        address indexed caller,\\n        address indexed receiver,\\n        address indexed owner,\\n        uint256 assets,\\n        uint256 shares\\n    );\\n\\n    function DOMAIN_SEPARATOR() external view returns (bytes32);\\n\\n    function allowance(address, address) external view returns (uint256);\\n\\n    function approve(address spender, uint256 amount) external returns (bool);\\n\\n    function asset() external view returns (address);\\n\\n    function balanceOf(address) external view returns (uint256);\\n\\n    function convertToAssets(uint256 shares) external view returns (uint256);\\n\\n    function convertToShares(uint256 assets) external view returns (uint256);\\n\\n    function decimals() external view returns (uint8);\\n\\n    function deposit(uint256 assets, address receiver)\\n        external\\n        returns (uint256 shares);\\n\\n    function depositWithSignature(\\n        uint256 assets,\\n        address receiver,\\n        uint256 deadline,\\n        bool approveMax,\\n        uint8 v,\\n        bytes32 r,\\n        bytes32 s\\n    ) external returns (uint256 shares);\\n\\n    function lastRewardAmount() external view returns (uint192);\\n\\n    function lastSync() external view returns (uint32);\\n\\n    function maxDeposit(address) external view returns (uint256);\\n\\n    function maxMint(address) external view returns (uint256);\\n\\n    function maxRedeem(address owner) external view returns (uint256);\\n\\n    function maxWithdraw(address owner) external view returns (uint256);\\n\\n    function mint(uint256 shares, address receiver)\\n        external\\n        returns (uint256 assets);\\n\\n    function name() external view returns (string memory);\\n\\n    function nonces(address) external view returns (uint256);\\n\\n    function permit(\\n        address owner,\\n        address spender,\\n        uint256 value,\\n        uint256 deadline,\\n        uint8 v,\\n        bytes32 r,\\n        bytes32 s\\n    ) external;\\n\\n    function previewDeposit(uint256 assets) external view returns (uint256);\\n\\n    function previewMint(uint256 shares) external view returns (uint256);\\n\\n    function previewRedeem(uint256 shares) external view returns (uint256);\\n\\n    function previewWithdraw(uint256 assets) external view returns (uint256);\\n\\n    function pricePerShare() external view returns (uint256);\\n\\n    function redeem(\\n        uint256 shares,\\n        address receiver,\\n        address owner\\n    ) external returns (uint256 assets);\\n\\n    function rewardsCycleEnd() external view returns (uint32);\\n\\n    function rewardsCycleLength() external view returns (uint32);\\n\\n    function symbol() external view returns (string memory);\\n\\n    function syncRewards() external;\\n\\n    function totalAssets() external view returns (uint256);\\n\\n    function totalSupply() external view returns (uint256);\\n\\n    function transfer(address to, uint256 amount) external returns (bool);\\n\\n    function transferFrom(\\n        address from,\\n        address to,\\n        uint256 amount\\n    ) external returns (bool);\\n\\n    function withdraw(\\n        uint256 assets,\\n        address receiver,\\n        address owner\\n    ) external returns (uint256 shares);\\n}\\n\",\"keccak256\":\"0x9ca7bb96b340626c583a783a8629b26f043779f990bfda571718ed563b729015\",\"license\":\"MIT\"},\"contracts/interfaces/IVault.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity ^0.8.0;\\n\\ninterface IVault {\\n    event AssetSupported(address _asset);\\n    event AssetDefaultStrategyUpdated(address _asset, address _strategy);\\n    event AssetAllocated(address _asset, address _strategy, uint256 _amount);\\n    event StrategyApproved(address _addr);\\n    event StrategyRemoved(address _addr);\\n    event Mint(address _addr, uint256 _value);\\n    event Redeem(address _addr, uint256 _value);\\n    event CapitalPaused();\\n    event CapitalUnpaused();\\n    event RebasePaused();\\n    event RebaseUnpaused();\\n    event VaultBufferUpdated(uint256 _vaultBuffer);\\n    event RedeemFeeUpdated(uint256 _redeemFeeBps);\\n    event PriceProviderUpdated(address _priceProvider);\\n    event AllocateThresholdUpdated(uint256 _threshold);\\n    event RebaseThresholdUpdated(uint256 _threshold);\\n    event StrategistUpdated(address _address);\\n    event MaxSupplyDiffChanged(uint256 maxSupplyDiff);\\n    event YieldDistribution(address _to, uint256 _yield, uint256 _fee);\\n    event TrusteeFeeBpsChanged(uint256 _basis);\\n    event TrusteeAddressChanged(address _address);\\n\\n    // Governable.sol\\n    function transferGovernance(address _newGovernor) external;\\n\\n    function claimGovernance() external;\\n\\n    function governor() external view returns (address);\\n\\n    // VaultAdmin.sol\\n    function setPriceProvider(address _priceProvider) external;\\n\\n    function priceProvider() external view returns (address);\\n\\n    function setRedeemFeeBps(uint256 _redeemFeeBps) external;\\n\\n    function redeemFeeBps() external view returns (uint256);\\n\\n    function setVaultBuffer(uint256 _vaultBuffer) external;\\n\\n    function vaultBuffer() external view returns (uint256);\\n\\n    function setAutoAllocateThreshold(uint256 _threshold) external;\\n\\n    function autoAllocateThreshold() external view returns (uint256);\\n\\n    function setRebaseThreshold(uint256 _threshold) external;\\n\\n    function rebaseThreshold() external view returns (uint256);\\n\\n    function setStrategistAddr(address _address) external;\\n\\n    function strategistAddr() external view returns (address);\\n\\n    function setMaxSupplyDiff(uint256 _maxSupplyDiff) external;\\n\\n    function maxSupplyDiff() external view returns (uint256);\\n\\n    function setTrusteeAddress(address _address) external;\\n\\n    function trusteeAddress() external view returns (address);\\n\\n    function setTrusteeFeeBps(uint256 _basis) external;\\n\\n    function trusteeFeeBps() external view returns (uint256);\\n\\n    function ousdMetaStrategy() external view returns (address);\\n\\n    function supportAsset(address _asset, uint8 _supportsAsset) external;\\n\\n    function approveStrategy(address _addr) external;\\n\\n    function removeStrategy(address _addr) external;\\n\\n    function setAssetDefaultStrategy(address _asset, address _strategy)\\n        external;\\n\\n    function assetDefaultStrategies(address _asset)\\n        external\\n        view\\n        returns (address);\\n\\n    function pauseRebase() external;\\n\\n    function unpauseRebase() external;\\n\\n    function rebasePaused() external view returns (bool);\\n\\n    function pauseCapital() external;\\n\\n    function unpauseCapital() external;\\n\\n    function capitalPaused() external view returns (bool);\\n\\n    function transferToken(address _asset, uint256 _amount) external;\\n\\n    function priceUnitMint(address asset) external view returns (uint256);\\n\\n    function priceUnitRedeem(address asset) external view returns (uint256);\\n\\n    function withdrawAllFromStrategy(address _strategyAddr) external;\\n\\n    function withdrawAllFromStrategies() external;\\n\\n    function reallocate(\\n        address _strategyFromAddress,\\n        address _strategyToAddress,\\n        address[] calldata _assets,\\n        uint256[] calldata _amounts\\n    ) external;\\n\\n    function withdrawFromStrategy(\\n        address _strategyFromAddress,\\n        address[] calldata _assets,\\n        uint256[] calldata _amounts\\n    ) external;\\n\\n    function depositToStrategy(\\n        address _strategyToAddress,\\n        address[] calldata _assets,\\n        uint256[] calldata _amounts\\n    ) external;\\n\\n    // VaultCore.sol\\n    function mint(\\n        address _asset,\\n        uint256 _amount,\\n        uint256 _minimumOusdAmount\\n    ) external;\\n\\n    function mintForStrategy(uint256 _amount) external;\\n\\n    function redeem(uint256 _amount, uint256 _minimumUnitAmount) external;\\n\\n    function burnForStrategy(uint256 _amount) external;\\n\\n    function redeemAll(uint256 _minimumUnitAmount) external;\\n\\n    function allocate() external;\\n\\n    function rebase() external;\\n\\n    function totalValue() external view returns (uint256 value);\\n\\n    function checkBalance(address _asset) external view returns (uint256);\\n\\n    function calculateRedeemOutputs(uint256 _amount)\\n        external\\n        view\\n        returns (uint256[] memory);\\n\\n    function getAssetCount() external view returns (uint256);\\n\\n    function getAllAssets() external view returns (address[] memory);\\n\\n    function getStrategyCount() external view returns (uint256);\\n\\n    function getAllStrategies() external view returns (address[] memory);\\n\\n    function isSupportedAsset(address _asset) external view returns (bool);\\n\\n    function netOusdMintForStrategyThreshold() external view returns (uint256);\\n\\n    function setOusdMetaStrategy(address _ousdMetaStrategy) external;\\n\\n    function setNetOusdMintForStrategyThreshold(uint256 _threshold) external;\\n\\n    function netOusdMintedForStrategy() external view returns (int256);\\n}\\n\",\"keccak256\":\"0xb05bdc712c2661e92e351ae0823f0c8fca4249e6cbb43e78b96fafc290bee198\",\"license\":\"MIT\"},\"contracts/interfaces/IWETH9.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity ^0.8.0;\\n\\ninterface IWETH9 {\\n    event Approval(address indexed src, address indexed guy, uint256 wad);\\n    event Deposit(address indexed dst, uint256 wad);\\n    event Transfer(address indexed src, address indexed dst, uint256 wad);\\n    event Withdrawal(address indexed src, uint256 wad);\\n\\n    function allowance(address, address) external view returns (uint256);\\n\\n    function approve(address guy, uint256 wad) external returns (bool);\\n\\n    function balanceOf(address) external view returns (uint256);\\n\\n    function decimals() external view returns (uint8);\\n\\n    function deposit() external payable;\\n\\n    function name() external view returns (string memory);\\n\\n    function symbol() external view returns (string memory);\\n\\n    function totalSupply() external view returns (uint256);\\n\\n    function transfer(address dst, uint256 wad) external returns (bool);\\n\\n    function transferFrom(\\n        address src,\\n        address dst,\\n        uint256 wad\\n    ) external returns (bool);\\n\\n    function withdraw(uint256 wad) external;\\n}\\n\",\"keccak256\":\"0x05b7dce6c24d3cd4e48b5c6346d86e5e40ecc3291bcdf3f3ef091c98fc826519\",\"license\":\"MIT\"},\"contracts/vault/OETHZapper.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity ^0.8.0;\\n\\nimport { IERC20 } from \\\"@openzeppelin/contracts/token/ERC20/IERC20.sol\\\";\\nimport { IVault } from \\\"../interfaces/IVault.sol\\\";\\nimport { IWETH9 } from \\\"../interfaces/IWETH9.sol\\\";\\nimport { ISfrxETH } from \\\"../interfaces/ISfrxETH.sol\\\";\\n\\ncontract OETHZapper {\\n    IERC20 public immutable oeth;\\n    IVault public immutable vault;\\n\\n    IWETH9 public constant weth =\\n        IWETH9(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);\\n    IERC20 public constant frxeth =\\n        IERC20(0x5E8422345238F34275888049021821E8E08CAa1f);\\n    ISfrxETH public constant sfrxeth =\\n        ISfrxETH(0xac3E018457B222d93114458476f3E3416Abbe38F);\\n    address private constant ETH_MARKER =\\n        0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;\\n\\n    event Zap(address indexed minter, address indexed asset, uint256 amount);\\n\\n    constructor(address _oeth, address _vault) {\\n        oeth = IERC20(_oeth);\\n        vault = IVault(_vault);\\n\\n        weth.approve(address(_vault), type(uint256).max);\\n        frxeth.approve(address(_vault), type(uint256).max);\\n    }\\n\\n    /**\\n     * @dev Deposit ETH and receive OETH in return.\\n     * Will verify that the user is sent 1:1 for ETH.\\n     */\\n    receive() external payable {\\n        deposit();\\n    }\\n\\n    /**\\n     * @dev Deposit ETH and receive OETH in return\\n     * Will verify that the user is sent 1:1 for ETH.\\n     * @return Amount of OETH sent to user\\n     */\\n    function deposit() public payable returns (uint256) {\\n        uint256 balance = address(this).balance;\\n        weth.deposit{ value: balance }();\\n        emit Zap(msg.sender, ETH_MARKER, balance);\\n        return _mint(address(weth), balance);\\n    }\\n\\n    /**\\n     * @dev Deposit SFRXETH to the vault and receive OETH in return\\n     * @param amount Amount of SFRXETH to deposit\\n     * @param minOETH Minimum amount of OETH to receive\\n     * @return Amount of OETH sent to user\\n     */\\n    function depositSFRXETH(uint256 amount, uint256 minOETH)\\n        external\\n        returns (uint256)\\n    {\\n        sfrxeth.redeem(amount, address(this), msg.sender);\\n        emit Zap(msg.sender, address(sfrxeth), amount);\\n        return _mint(address(frxeth), minOETH);\\n    }\\n\\n    /**\\n     * @dev Internal function to mint OETH from an asset\\n     * @param asset Address of asset for the vault to mint from\\n     * @param minOETH Minimum amount of OETH to for user to receive\\n     * @return Amount of OETH sent to user\\n     */\\n    function _mint(address asset, uint256 minOETH) internal returns (uint256) {\\n        uint256 toMint = IERC20(asset).balanceOf(address(this));\\n        vault.mint(asset, toMint, minOETH);\\n        uint256 mintedAmount = oeth.balanceOf(address(this));\\n        require(mintedAmount >= minOETH, \\\"Zapper: not enough minted\\\");\\n        require(oeth.transfer(msg.sender, mintedAmount));\\n        return mintedAmount;\\n    }\\n}\\n\",\"keccak256\":\"0xbfa24182c55fc4880986f7ca6898c5458937ca7c2899f6d8ff0b940219db3118\",\"license\":\"MIT\"}},\"version\":1}",
+  "bytecode": "0x60c060405234801561001057600080fd5b5060405161091038038061091083398101604081905261002f91610198565b6001600160601b0319606083811b821660805282901b1660a05260405163095ea7b360e01b81526001600160a01b0382166004820152600019602482015273c02aaa39b223fe8d0a0e5c4f27ead9083c756cc29063095ea7b390604401602060405180830381600087803b1580156100a657600080fd5b505af11580156100ba573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906100de91906101cb565b5060405163095ea7b360e01b81526001600160a01b03821660048201526000196024820152735e8422345238f34275888049021821e8e08caa1f9063095ea7b390604401602060405180830381600087803b15801561013c57600080fd5b505af1158015610150573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061017491906101cb565b5050506101f4565b80516001600160a01b038116811461019357600080fd5b919050565b600080604083850312156101ab57600080fd5b6101b48361017c565b91506101c26020840161017c565b90509250929050565b6000602082840312156101dd57600080fd5b815180151581146101ed57600080fd5b9392505050565b60805160601c60a05160601c6106dc6102346000396000818161019a015261044a015260008181610130015281816104bf01526105b401526106dc6000f3fe6080604052600436106100745760003560e01c8063ccfe2a691161004e578063ccfe2a691461011e578063d0e30db014610152578063d443e97d14610168578063fbfa77cf1461018857600080fd5b80633fc8cef3146100895780636f708a9d146100ce578063a07311af146100f657600080fd5b36610084576100816101bc565b50005b600080fd5b34801561009557600080fd5b506100b173c02aaa39b223fe8d0a0e5c4f27ead9083c756cc281565b6040516001600160a01b0390911681526020015b60405180910390f35b3480156100da57600080fd5b506100b1735e8422345238f34275888049021821e8e08caa1f81565b34801561010257600080fd5b506100b173ac3e018457b222d93114458476f3e3416abbe38f81565b34801561012a57600080fd5b506100b17f000000000000000000000000000000000000000000000000000000000000000081565b61015a6101bc565b6040519081526020016100c5565b34801561017457600080fd5b5061015a610183366004610684565b610299565b34801561019457600080fd5b506100b17f000000000000000000000000000000000000000000000000000000000000000081565b60008047905073c02aaa39b223fe8d0a0e5c4f27ead9083c756cc26001600160a01b031663d0e30db0826040518263ffffffff1660e01b81526004016000604051808303818588803b15801561021157600080fd5b505af1158015610225573d6000803e3d6000fd5b505060405184815273eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee93503392507f9d0b99c299bdb5656c0c9db6e1886c612db5c2881760ea54ab244f6338b4ebd6915060200160405180910390a361029373c02aaa39b223fe8d0a0e5c4f27ead9083c756cc28261039e565b91505090565b604051635d043b2960e11b81526004810183905230602482015233604482015260009073ac3e018457b222d93114458476f3e3416abbe38f9063ba08765290606401602060405180830381600087803b1580156102f557600080fd5b505af1158015610309573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061032d919061066b565b5060405183815273ac3e018457b222d93114458476f3e3416abbe38f9033907f9d0b99c299bdb5656c0c9db6e1886c612db5c2881760ea54ab244f6338b4ebd69060200160405180910390a3610397735e8422345238f34275888049021821e8e08caa1f8361039e565b9392505050565b6040516370a0823160e01b815230600482015260009081906001600160a01b038516906370a082319060240160206040518083038186803b1580156103e257600080fd5b505afa1580156103f6573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061041a919061066b565b604051630ab714fb60e11b81526001600160a01b03868116600483015260248201839052604482018690529192507f00000000000000000000000000000000000000000000000000000000000000009091169063156e29f690606401600060405180830381600087803b15801561049057600080fd5b505af11580156104a4573d6000803e3d6000fd5b50506040516370a0823160e01b8152306004820152600092507f00000000000000000000000000000000000000000000000000000000000000006001600160a01b031691506370a082319060240160206040518083038186803b15801561050a57600080fd5b505afa15801561051e573d6000803e3d6000fd5b505050506040513d601f19601f82011682018060405250810190610542919061066b565b9050838110156105985760405162461bcd60e51b815260206004820152601960248201527f5a61707065723a206e6f7420656e6f756768206d696e74656400000000000000604482015260640160405180910390fd5b60405163a9059cbb60e01b8152336004820152602481018290527f00000000000000000000000000000000000000000000000000000000000000006001600160a01b03169063a9059cbb90604401602060405180830381600087803b15801561060057600080fd5b505af1158015610614573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906106389190610649565b61064157600080fd5b949350505050565b60006020828403121561065b57600080fd5b8151801515811461039757600080fd5b60006020828403121561067d57600080fd5b5051919050565b6000806040838503121561069757600080fd5b5050803592602090910135915056fea2646970667358221220f5f670173d99f62fa4b62b0fa3f719c63e881f37d20d2de7ee51ff7674dfa72664736f6c63430008070033",
+  "deployedBytecode": "0x6080604052600436106100745760003560e01c8063ccfe2a691161004e578063ccfe2a691461011e578063d0e30db014610152578063d443e97d14610168578063fbfa77cf1461018857600080fd5b80633fc8cef3146100895780636f708a9d146100ce578063a07311af146100f657600080fd5b36610084576100816101bc565b50005b600080fd5b34801561009557600080fd5b506100b173c02aaa39b223fe8d0a0e5c4f27ead9083c756cc281565b6040516001600160a01b0390911681526020015b60405180910390f35b3480156100da57600080fd5b506100b1735e8422345238f34275888049021821e8e08caa1f81565b34801561010257600080fd5b506100b173ac3e018457b222d93114458476f3e3416abbe38f81565b34801561012a57600080fd5b506100b17f000000000000000000000000000000000000000000000000000000000000000081565b61015a6101bc565b6040519081526020016100c5565b34801561017457600080fd5b5061015a610183366004610684565b610299565b34801561019457600080fd5b506100b17f000000000000000000000000000000000000000000000000000000000000000081565b60008047905073c02aaa39b223fe8d0a0e5c4f27ead9083c756cc26001600160a01b031663d0e30db0826040518263ffffffff1660e01b81526004016000604051808303818588803b15801561021157600080fd5b505af1158015610225573d6000803e3d6000fd5b505060405184815273eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee93503392507f9d0b99c299bdb5656c0c9db6e1886c612db5c2881760ea54ab244f6338b4ebd6915060200160405180910390a361029373c02aaa39b223fe8d0a0e5c4f27ead9083c756cc28261039e565b91505090565b604051635d043b2960e11b81526004810183905230602482015233604482015260009073ac3e018457b222d93114458476f3e3416abbe38f9063ba08765290606401602060405180830381600087803b1580156102f557600080fd5b505af1158015610309573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061032d919061066b565b5060405183815273ac3e018457b222d93114458476f3e3416abbe38f9033907f9d0b99c299bdb5656c0c9db6e1886c612db5c2881760ea54ab244f6338b4ebd69060200160405180910390a3610397735e8422345238f34275888049021821e8e08caa1f8361039e565b9392505050565b6040516370a0823160e01b815230600482015260009081906001600160a01b038516906370a082319060240160206040518083038186803b1580156103e257600080fd5b505afa1580156103f6573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061041a919061066b565b604051630ab714fb60e11b81526001600160a01b03868116600483015260248201839052604482018690529192507f00000000000000000000000000000000000000000000000000000000000000009091169063156e29f690606401600060405180830381600087803b15801561049057600080fd5b505af11580156104a4573d6000803e3d6000fd5b50506040516370a0823160e01b8152306004820152600092507f00000000000000000000000000000000000000000000000000000000000000006001600160a01b031691506370a082319060240160206040518083038186803b15801561050a57600080fd5b505afa15801561051e573d6000803e3d6000fd5b505050506040513d601f19601f82011682018060405250810190610542919061066b565b9050838110156105985760405162461bcd60e51b815260206004820152601960248201527f5a61707065723a206e6f7420656e6f756768206d696e74656400000000000000604482015260640160405180910390fd5b60405163a9059cbb60e01b8152336004820152602481018290527f00000000000000000000000000000000000000000000000000000000000000006001600160a01b03169063a9059cbb90604401602060405180830381600087803b15801561060057600080fd5b505af1158015610614573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906106389190610649565b61064157600080fd5b949350505050565b60006020828403121561065b57600080fd5b8151801515811461039757600080fd5b60006020828403121561067d57600080fd5b5051919050565b6000806040838503121561069757600080fd5b5050803592602090910135915056fea2646970667358221220f5f670173d99f62fa4b62b0fa3f719c63e881f37d20d2de7ee51ff7674dfa72664736f6c63430008070033",
+  "devdoc": {
+    "kind": "dev",
+    "methods": {
+      "deposit()": {
+        "details": "Deposit ETH and receive OETH in return Will verify that the user is sent 1:1 for ETH.",
+        "returns": {
+          "_0": "Amount of OETH sent to user"
+        }
+      },
+      "depositSFRXETH(uint256,uint256)": {
+        "details": "Deposit SFRXETH to the vault and receive OETH in return",
+        "params": {
+          "amount": "Amount of SFRXETH to deposit",
+          "minOETH": "Minimum amount of OETH to receive"
+        },
+        "returns": {
+          "_0": "Amount of OETH sent to user"
+        }
+      }
+    },
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {},
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [],
+    "types": null
+  }
+}

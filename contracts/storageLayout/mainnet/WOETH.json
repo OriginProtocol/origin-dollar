@@ -1,0 +1,75 @@
+{
+  "storage": [
+    {
+      "contract": "ERC20",
+      "label": "_balances",
+      "type": "t_mapping(t_address,t_uint256)",
+      "src": "@openzeppelin/contracts/token/ERC20/ERC20.sol:36"
+    },
+    {
+      "contract": "ERC20",
+      "label": "_allowances",
+      "type": "t_mapping(t_address,t_mapping(t_address,t_uint256))",
+      "src": "@openzeppelin/contracts/token/ERC20/ERC20.sol:38"
+    },
+    {
+      "contract": "ERC20",
+      "label": "_totalSupply",
+      "type": "t_uint256",
+      "src": "@openzeppelin/contracts/token/ERC20/ERC20.sol:40"
+    },
+    {
+      "contract": "ERC20",
+      "label": "_name",
+      "type": "t_string_storage",
+      "src": "@openzeppelin/contracts/token/ERC20/ERC20.sol:42"
+    },
+    {
+      "contract": "ERC20",
+      "label": "_symbol",
+      "type": "t_string_storage",
+      "src": "@openzeppelin/contracts/token/ERC20/ERC20.sol:43"
+    },
+    {
+      "contract": "Initializable",
+      "label": "initialized",
+      "type": "t_bool",
+      "src": "contracts/utils/Initializable.sol:8"
+    },
+    {
+      "contract": "Initializable",
+      "label": "initializing",
+      "type": "t_bool",
+      "src": "contracts/utils/Initializable.sol:13"
+    },
+    {
+      "contract": "Initializable",
+      "label": "______gap",
+      "type": "t_array(t_uint256)50_storage",
+      "src": "contracts/utils/Initializable.sol:37"
+    }
+  ],
+  "types": {
+    "t_bool": {
+      "label": "bool"
+    },
+    "t_array(t_uint256)50_storage": {
+      "label": "uint256[50]"
+    },
+    "t_uint256": {
+      "label": "uint256"
+    },
+    "t_mapping(t_address,t_uint256)": {
+      "label": "mapping(address => uint256)"
+    },
+    "t_address": {
+      "label": "address"
+    },
+    "t_mapping(t_address,t_mapping(t_address,t_uint256))": {
+      "label": "mapping(address => mapping(address => uint256))"
+    },
+    "t_string_storage": {
+      "label": "string"
+    }
+  }
+}

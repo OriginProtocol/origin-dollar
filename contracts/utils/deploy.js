@@ -130,6 +130,25 @@ const impersonateGuardian = async (optGuardianAddr = null) => {
   log(`Impersonated Guardian at ${guardianAddr}`);
 };
 
+const impersonateAccount = async (address) => {
+  if (!isFork) {
+    throw new Error("impersonateAccount only works on Fork");
+  }
+  const { findBestMainnetTokenHolder } = require("../utils/funding");
+
+  const bestSigner = await findBestMainnetTokenHolder(null, hre);
+  await bestSigner.sendTransaction({
+    to: address,
+    value: utils.parseEther("100"),
+  });
+
+  await hre.network.provider.request({
+    method: "hardhat_impersonateAccount",
+    params: [address],
+  });
+  log(`Impersonated Account at ${address}`);
+};
+
 /**
  * Execute a proposal on local test network (including on Fork).
  *
@@ -393,9 +412,6 @@ const submitProposalGnosisSafe = async (
   }
 
   const governorFive = await getGovernorFive();
-  const multisig5of8 = addresses.mainnet.Guardian;
-  const sMultisig5of8 = hre.ethers.provider.getSigner(multisig5of8);
-  await impersonateGuardian(multisig5of8);
 
   log(`Submitting proposal for ${description}`);
   log(`Args: ${JSON.stringify(proposalArgs, null, 2)}`);
@@ -479,11 +495,11 @@ const sanityCheckOgvGovernance = async () => {
     );
 
     const vaultGovernor = await VaultAdmin.governor();
-    const { governorFiveAddr } = await getNamedAccounts();
+    const { timelockAddr } = await getNamedAccounts();
 
-    if (vaultGovernor.toLowerCase() !== governorFiveAddr.toLowerCase()) {
+    if (vaultGovernor.toLowerCase() !== timelockAddr.toLowerCase()) {
       throw new Error(
-        `Hardhat environment has ${governorFiveAddr} governor address configured which is different from Vault's governor: ${vaultGovernor}`
+        `Hardhat environment has ${timelockAddr} governor address configured which is different from Vault's governor: ${vaultGovernor}`
       );
     }
   }
@@ -511,7 +527,10 @@ const handlePossiblyActiveGovernanceProposal = async (
       proposalState = await getProposalState(proposalIdBn);
     } catch (e) {
       // If proposal is non existent the governor reverts the transaction
-      if (e.message.includes("invalid proposal id")) {
+      if (
+        e.message.includes("invalid proposal id") ||
+        e.message.includes("unknown proposal id")
+      ) {
         proposalState = false;
       } else {
         throw e;
@@ -643,7 +662,14 @@ async function getTimelock() {
  * @returns {Object} main object used by hardhat
  */
 function deploymentWithGovernanceProposal(opts, fn) {
-  const { deployName, dependencies, forceDeploy, forceSkip, proposalId } = opts;
+  const {
+    deployName,
+    dependencies,
+    forceDeploy,
+    onlyOnFork,
+    forceSkip,
+    proposalId,
+  } = opts;
   const runDeployment = async (hre) => {
     const oracleAddresses = await getOracleAddresses(hre.deployments);
     const assetAddresses = await getAssetAddresses(hre.deployments);
@@ -712,6 +738,13 @@ function deploymentWithGovernanceProposal(opts, fn) {
     if (!hre) {
       hre = require("hardhat");
     }
+    if (isFork) {
+      const { deployerAddr } = await getNamedAccounts();
+      await hre.network.provider.request({
+        method: "hardhat_setBalance",
+        params: [deployerAddr, utils.parseEther("1000000").toHexString()],
+      });
+    }
     await runDeployment(hre);
     console.log(`${deployName} deploy done.`);
     return true;
@@ -759,7 +792,7 @@ function deploymentWithGovernanceProposal(opts, fn) {
         const migrations = require(`./../deployments/${networkName}/.migrations.json`);
         return Boolean(migrations[deployName]);
       } else {
-        return !isMainnet || isSmokeTest || isFork;
+        return onlyOnFork ? true : !isMainnet || isSmokeTest;
       }
     };
   }
@@ -773,7 +806,14 @@ function deploymentWithGovernanceProposal(opts, fn) {
  * @returns {Object} main object used by hardhat
  */
 function deploymentWithProposal(opts, fn) {
-  const { deployName, dependencies, forceDeploy, forceSkip, proposalId } = opts;
+  const {
+    deployName,
+    dependencies,
+    forceDeploy,
+    forceSkip,
+    onlyOnFork,
+    proposalId,
+  } = opts;
   const runDeployment = async (hre) => {
     const oracleAddresses = await getOracleAddresses(hre.deployments);
     const assetAddresses = await getAssetAddresses(hre.deployments);
@@ -796,6 +836,9 @@ function deploymentWithProposal(opts, fn) {
 
     await sanityCheckOgvGovernance();
     const proposal = await fn(tools);
+    if (proposal.actions.length == 0) {
+      return; // No governance proposal
+    }
     const propDescription = proposal.name;
     const propArgs = await proposeArgs(proposal.actions);
     const propOpts = proposal.opts || {};
@@ -818,9 +861,7 @@ function deploymentWithProposal(opts, fn) {
 
         log(`Sending governance action ${signature} to ${contract.address}`);
         await withConfirmation(
-          contract
-            .connect(sGovernor)
-            [signature](...args, await getTxOpts(gasLimit))
+          contract.connect(sGovernor)[signature](...args, await getTxOpts())
         );
         console.log(`... ${signature} completed`);
       }
@@ -879,7 +920,101 @@ function deploymentWithProposal(opts, fn) {
         const migrations = require(`./../deployments/${networkName}/.migrations.json`);
         return Boolean(migrations[deployName]);
       } else {
-        return !isMainnet || isSmokeTest || isFork;
+        return onlyOnFork ? true : !isMainnet || isSmokeTest;
+      }
+    };
+  }
+  return main;
+}
+
+/**
+ * Shortcut to create a deployment for hardhat to use where 5/8 multisig is the
+ * governor
+ * @param {Object} options for deployment
+ * @param {Promise<Object>} fn to deploy contracts and return needed proposals
+ * @returns {Object} main object used by hardhat
+ */
+function deploymentWithGuardianGovernor(opts, fn) {
+  const { deployName, dependencies, forceDeploy, onlyOnFork, forceSkip } = opts;
+  const runDeployment = async (hre) => {
+    const oracleAddresses = await getOracleAddresses(hre.deployments);
+    const assetAddresses = await getAssetAddresses(hre.deployments);
+    const tools = {
+      oracleAddresses,
+      assetAddresses,
+      deployWithConfirmation,
+      ethers,
+      getTxOpts,
+      withConfirmation,
+    };
+
+    await sanityCheckOgvGovernance();
+    const proposal = await fn(tools);
+    const propDescription = proposal.name;
+
+    if (isMainnet) {
+      // On Mainnet, only propose. The enqueue and execution are handled manually via multi-sig.
+      console.log(
+        "Manually create the 5/8 multisig batch transaction with details:",
+        proposal
+      );
+    } else {
+      const guardianAddr = addresses.mainnet.Guardian;
+      await impersonateGuardian(guardianAddr);
+
+      const sGuardian = await ethers.provider.getSigner(guardianAddr);
+      console.log("guardianAddr", guardianAddr);
+
+      const guardianActions = [];
+      for (const action of proposal.actions) {
+        const { contract, signature, args } = action;
+
+        log(`Sending governance action ${signature} to ${contract.address}`);
+        const result = await withConfirmation(
+          contract.connect(sGuardian)[signature](...args, await getTxOpts())
+        );
+        guardianActions.push({
+          sig: signature,
+          args: args,
+          to: contract.address,
+          data: result.data,
+          value: result.value.toString(),
+        });
+
+        console.log(`... ${signature} completed`);
+      }
+
+      console.log(
+        "Execute the following actions using guardian safe: ",
+        guardianActions
+      );
+    }
+  };
+
+  const main = async (hre) => {
+    console.log(`Running ${deployName} deployment...`);
+    if (!hre) {
+      hre = require("hardhat");
+    }
+    await runDeployment(hre);
+    console.log(`${deployName} deploy done.`);
+    return true;
+  };
+
+  main.id = deployName;
+  main.dependencies = dependencies;
+  if (forceSkip) {
+    main.skip = () => true;
+  } else if (forceDeploy) {
+    main.skip = () => false;
+  } else {
+    main.skip = async () => {
+      if (isFork) {
+        const networkName = isForkTest ? "hardhat" : "localhost";
+        const migrations = require(`./../deployments/${networkName}/.migrations.json`);
+        return Boolean(migrations[deployName]);
+      } else {
+        return onlyOnFork ? true : !isMainnet || isSmokeTest;
       }
     };
   }
@@ -892,9 +1027,11 @@ module.exports = {
   deployWithConfirmation,
   withConfirmation,
   impersonateGuardian,
+  impersonateAccount,
   executeProposal,
   executeProposalOnFork,
   sendProposal,
   deploymentWithProposal,
   deploymentWithGovernanceProposal,
+  deploymentWithGuardianGovernor,
 };
