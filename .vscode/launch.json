@@ -14,8 +14,7 @@
       "preLaunchTask": "copy-deployment-files",
       "args": [
         "test",
-        // Uncomment if you want to run only a specific file
-        "./test/vault/harvester.fork-test.js"
+        "./test/**/*.fork-test.js"
       ],
       "envFile": "${workspaceFolder}/contracts/.env",
       "env": {
