@@ -375,7 +375,7 @@ const useSwapEstimator = ({
     if (coinToSwap === 'sfrxeth') {
       const [estimatedDeposit, frxEthMintPrice] = await Promise.all([
         contracts.sfrxeth
-          .previewDeposit(ethers.utils.parseUnits(String(amount)))
+          .previewRedeem(ethers.utils.parseUnits(String(amount)))
           .then(parseFloatBN),
         contracts.vault
           .priceUnitMint(contracts.frxeth.address)

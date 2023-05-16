@@ -207,6 +207,7 @@ const SwapHomepage = ({
       coinReceived,
       swapAmount,
       stablecoinUsed,
+      selectedSwap,
     }
   }
 
@@ -239,19 +240,18 @@ const SwapHomepage = ({
         ;({ result, swapAmount, minSwapAmount } = await swapCurve())
       }
 
+      const amountReceived = String(
+        metadata?.selectedSwap?.amountReceived || selectedRedeemCoinAmount
+      )
+
       storeTransaction(
         result,
         swapMode,
         swapMode === 'mint' ? selectedBuyCoin : selectedRedeemCoin,
         {
           [swapMode === 'mint' ? selectedBuyCoin : selectedRedeemCoin]:
-            swapMode === 'mint'
-              ? selectedBuyCoinAmount
-              : selectedRedeemCoinAmount,
-          oeth:
-            swapMode === 'mint'
-              ? selectedRedeemCoinAmount
-              : selectedBuyCoinAmount,
+            swapMode === 'mint' ? selectedBuyCoinAmount : amountReceived,
+          oeth: swapMode === 'mint' ? amountReceived : selectedBuyCoinAmount,
         }
       )
 
