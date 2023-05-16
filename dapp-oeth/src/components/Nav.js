@@ -476,10 +476,10 @@ const Nav = ({ isMobile, locale, onLocale, page }) => {
             </div>
           </div>
         </div>
-        <div className="d-flex d-lg-none justify-content-center dapplinks-contain">
-          <DappLinks page={page} />
-        </div>
-      </nav>
+      </nav>{' '}
+      <div className="d-flex d-lg-none justify-content-center dapplinks-contain">
+        <DappLinks page={page} />
+      </div>
       <style jsx>{`
         .notice {
           background-color: #0074f0;
