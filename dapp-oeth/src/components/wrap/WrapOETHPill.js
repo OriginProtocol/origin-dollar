@@ -317,13 +317,17 @@ const WrapOETHPill = ({
         .currency-pill {
           display: flex;
           justify-content: center;
-          padding: 56px 40px;
+          padding: 24px 40px;
           background-color: #1e1f25;
+          min-height: 150px;
+          border-bottom-left-radius: 10px;
+          border-bottom-right-radius: 10px;
         }
 
         .topItem {
           background-color: #18191c;
           border-bottom: solid 1px #141519;
+          border-radius: 0;
         }
 
         .currency-pill-inner {
