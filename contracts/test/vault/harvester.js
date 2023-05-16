@@ -274,7 +274,7 @@ describe("Harvester", function () {
     await sendRewardsToCompStrategy("10", governor, compoundStrategy, comp);
 
     const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
-    mockUniswapRouter.initialize([comp.address], [usdt.address]);
+    await mockUniswapRouter.initialize([comp.address], [usdt.address]);
     await usdt
       .connect(josh)
       .transfer(mockUniswapRouter.address, usdtUnits("100"));
@@ -410,7 +410,7 @@ describe("Harvester", function () {
     await sendRewardsToCompStrategy("10", governor, compoundStrategy, comp);
 
     const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
-    mockUniswapRouter.initialize([comp.address], [usdt.address]);
+    await mockUniswapRouter.initialize([comp.address], [usdt.address]);
     await usdt
       .connect(josh)
       .transfer(mockUniswapRouter.address, usdtUnits("100"));
@@ -494,7 +494,7 @@ describe("Harvester", function () {
 
     await sendRewardsToCompStrategy("10", governor, compoundStrategy, comp);
     const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
-    mockUniswapRouter.initialize([comp.address], [usdt.address]);
+    await mockUniswapRouter.initialize([comp.address], [usdt.address]);
     await usdt
       .connect(josh)
       .transfer(mockUniswapRouter.address, usdtUnits("100"));

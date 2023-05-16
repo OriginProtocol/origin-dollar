@@ -60,10 +60,21 @@ const BalanceHeaderWrapped = ({
           </div>
 
           <div className="stat">
-            <div className={`value d-flex ${type} ${small ? 'small' : 'big'}`}>
+            <div
+              className={`value d-flex align-items-center ${type} ${
+                small ? 'small' : 'big'
+              }`}
+            >
+              {!small && (
+                <img
+                  className="mr-2 d-block d-md-none"
+                  src={assetRootPath(`/images/currency/woeth-icon-small.svg`)}
+                />
+              )}
               <p>{value}</p>
               {!small && (
                 <img
+                  className="d-none d-md-block"
                   src={assetRootPath(`/images/currency/woeth-icon-small.svg`)}
                 />
               )}
@@ -151,6 +162,10 @@ const BalanceHeaderWrapped = ({
               margin-bottom: 10px;
             }
 
+            .title .big {
+              font-size: 14px;
+            }
+
             .holder {
               width: 100%;
             }
@@ -168,6 +183,19 @@ const BalanceHeaderWrapped = ({
 
             .stat .value p {
               color: #fafafb;
+            }
+
+            .stat .big {
+              font-size: 20px;
+            }
+
+            .stat .small {
+              font-size: 14px;
+            }
+
+            .stat img {
+              margin-left: 0;
+              height: 20px;
             }
           }
         `}</style>
@@ -257,6 +285,7 @@ const BalanceHeaderWrapped = ({
               display: flex;
               flex-direction: row;
               justify-content: space-between;
+              align-items: center;
             }
 
             .title {
@@ -282,6 +311,18 @@ const BalanceHeaderWrapped = ({
               color: #fafbfb;
               font-size: 20px;
               text-align: left;
+            }
+
+            .value p {
+              background: -webkit-linear-gradient(
+                90deg,
+                #b361e6 -28.99%,
+                #6a36fc 144.97%
+              );
+              -webkit-background-clip: text;
+              -webkit-text-fill-color: transparent;
+              font-size: 20px;
+              margin-bottom: 0;
             }
           }
         `}</style>
@@ -377,7 +418,7 @@ const BalanceHeaderWrapped = ({
         }
 
         .balance-header {
-          margin-bottom: 19px;
+          margin-bottom: 16px;
         }
 
         .balance-header .inaccurate-balance {
@@ -477,7 +518,7 @@ const BalanceHeaderWrapped = ({
 
         .box.box-black {
           background-color: #1e1f25;
-          margin-right: 10px;
+          margin-right: 24px;
           min-width: 230px;
         }
 

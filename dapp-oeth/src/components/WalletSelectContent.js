@@ -7,15 +7,15 @@ import { walletConnectConnector } from 'utils/connectors'
 import { myEtherWalletConnector } from 'utils/connectors'
 import { walletlink, resetWalletConnector } from 'utils/connectors'
 import { defiWalletConnector } from 'utils/connectors'
+import { event } from '../../lib/gtm'
 import withIsMobile from 'hoc/withIsMobile'
 
 import AccountStore from 'stores/AccountStore'
 
-import analytics from 'utils/analytics'
 import { assetRootPath } from 'utils/image'
 
 const WalletSelectContent = ({ isMobile }) => {
-  const { connector, activate, deactivate, active } = useWeb3React()
+  const { connector, activate, deactivate, active, account } = useWeb3React()
   const [error, setError] = useState(null)
   const wallets = isMobile
     ? [
@@ -38,6 +38,10 @@ const WalletSelectContent = ({ isMobile }) => {
   useEffect(() => {
     if (active) {
       closeWalletSelectModal()
+      event({
+        'event': 'connect',
+        'connect_address': account
+      })
     }
   }, [active])
 
@@ -65,9 +69,9 @@ const WalletSelectContent = ({ isMobile }) => {
   }
 
   const onConnect = async (name) => {
-    analytics.track(`On Connect Wallet`, {
-      category: 'general',
-      label: name,
+    event({
+      'event': 'connect_modal_click',
+      'connect_modal_wallet': name.toLowerCase()
     })
 
     setError(null)

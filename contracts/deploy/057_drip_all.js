@@ -4,7 +4,7 @@ const { isMainnet } = require("../test/helpers.js");
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "050_drip_all",
+    deployName: "057_drip_all",
     forceDeploy: false,
     //proposalId: "40434364243407050666554191388123037800510237271029051418887027936281231737485"
   },

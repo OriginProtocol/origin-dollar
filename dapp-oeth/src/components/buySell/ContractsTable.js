@@ -8,13 +8,14 @@ import { formatCurrency } from 'utils/math'
 import { assetRootPath } from 'utils/image'
 import ContractStore from 'stores/ContractStore'
 import ConfirmationModal from 'components/buySell/ConfirmationModal'
+import { event } from '../../../lib/gtm'
 
 const swapContracts = {
   zapper: {
-    name: fbt('Zapper', 'Contract Table Zapper'),
+    name: fbt('Zap + Vault', 'Contract Table Zap + Vault'),
   },
   vault: {
-    name: fbt('Origin Vault', 'Contract Table Origin Vault'),
+    name: fbt('OETH Vault', 'Contract Table OETH Vault'),
   },
   // uniswap: {
   //   name: fbt('Uniswap V3', 'Contract Table Uniswap V3'),
@@ -64,14 +65,14 @@ const unsupportedDisplay = (estimateName, swapMode) => {
   switch (estimateName) {
     case 'vault':
       return fbt(
-        'The Origin Vault only supports redeeming OETH for a mix of LSDs.',
+        'The OETH Vault only supports redeeming OETH for a mix of LSDs.',
         'unsupported-vault-mint'
       )
 
     case 'zapper':
       return swapMode === 'mint'
         ? fbt(
-            'Zapper only supports minting with ETH and sfrxETH.',
+            'The Zap contract only supports minting with ETH and sfrxETH.',
             'unsupported-zapper-mint'
           )
         : fbt('This route does not support OETH redeem.', 'unsupported-redeem')
@@ -174,6 +175,10 @@ const Estimates = ({ estimates, selected, isLoading, isActive, onSelect }) => {
                     onClick={() => {
                       if (canDoSwap && !error && !isSelected) {
                         onSelect(estimate)
+                        event({
+                          'event': 'change_swap_route',
+                          'change_route_to': name
+                        })
                       }
                     }}
                     disabled={errorDisplay || isSelected || !isActive}
@@ -218,18 +223,17 @@ const Estimates = ({ estimates, selected, isLoading, isActive, onSelect }) => {
                             {fbt(
                               `${fbt.param(
                                 'afterFeeDisplay',
-                                `≈ $${formatCurrency(
-                                  amountReceivedUsd,
-                                  2
-                                )} after fees`
+                                `≈ $${formatCurrency(amountReceivedUsd, 2)}`
                               )}`,
                               'After Fee Price'
                             )}
+                            <br className="d-block d-sm-none" />
+                            <span className="ml-1">after fees</span>
                             <span className="asterisk">
                               {approveAllowanceNeeded ? '*' : ''}
                             </span>
                           </div>
-                          <span>
+                          <span className="d-none d-md-inline">
                             {fbt(
                               `Effective Price: ${fbt.param(
                                 'effectivePriceDisplay',
@@ -271,6 +275,15 @@ const Estimates = ({ estimates, selected, isLoading, isActive, onSelect }) => {
                           ''
                         )}
                       </span>
+                      <span className="d-block d-md-none effective">
+                        {fbt(
+                          `Effective Price: ${fbt.param(
+                            'effectivePriceDisplay',
+                            `$${formatCurrency(effectivePrice, 2)}`
+                          )}`,
+                          'Effective Price'
+                        )}
+                      </span>
                       <span className="info-value">
                         {error === 'unsupported'
                           ? unsupportedDisplay(name, swapMode)
@@ -286,7 +299,6 @@ const Estimates = ({ estimates, selected, isLoading, isActive, onSelect }) => {
                                     <span>
                                       {parseFloat(gasEstimateEth)?.toFixed(4)}{' '}
                                       ETH{' '}
-                                      {`(≈ $${formatCurrency(gasEstimate, 2)})`}
                                     </span>
                                   </span>
                                 )}
@@ -302,7 +314,11 @@ const Estimates = ({ estimates, selected, isLoading, isActive, onSelect }) => {
                 className="show-hide"
                 onClick={() => {
                   setIsShowingMore((prev) => !prev)
-                }}
+                  if (!isShowingMore) {
+                    event({'event': 'show_swap_routes'})
+                  }
+                }
+              }
               >
                 {isShowingMore ? (
                   <>
@@ -331,6 +347,12 @@ const Estimates = ({ estimates, selected, isLoading, isActive, onSelect }) => {
       </div>
       <style jsx>
         {`
+          .effective {
+            font-size: 12px;
+            color: #8293a4;
+            margin-top: 8px;
+          }
+
           .estimates-container {
             display: flex;
             flex-direction: column;
@@ -360,7 +382,6 @@ const Estimates = ({ estimates, selected, isLoading, isActive, onSelect }) => {
             display: flex;
             flex-direction: row;
             justify-content: space-between;
-            height: 77px;
             width: 100%;
             background: #18191c;
             border-radius: 4px;
@@ -413,6 +434,7 @@ const Estimates = ({ estimates, selected, isLoading, isActive, onSelect }) => {
             font-weight: 400;
             font-size: 14px;
             line-height: 17px;
+            whitespace: nowrap;
           }
 
           .estimate-help {
@@ -498,7 +520,7 @@ const Estimates = ({ estimates, selected, isLoading, isActive, onSelect }) => {
             justify-content: center;
             align-items: center;
             padding: 4px 19px;
-            margin-top: 20px;
+            margin-top: 16px;
             height: 28px;
             max-width: 120px;
             background: rgba(255, 255, 255, 0.1);
@@ -513,6 +535,18 @@ const Estimates = ({ estimates, selected, isLoading, isActive, onSelect }) => {
             font-size: 12px;
             font-weight: 500;
             border: none;
+          }
+
+          @media (max-width: 799px) {
+            .estimates-container {
+              padding: 0 16px;
+            }
+
+            .estimate-item,
+            .estimates-empty,
+            .estimates-loading {
+              padding: 12px 16px;
+            }
           }
         `}
       </style>
@@ -662,6 +696,7 @@ const ContractsTable = () => {
         .contracts-header .title {
           color: #fafbfb;
           font-size: 14px;
+          margin-bottom: 0;
         }
 
         .contracts-main {
@@ -683,6 +718,13 @@ const ContractsTable = () => {
         }
 
         @media (max-width: 799px) {
+          .contracts-header {
+            padding: 16px;
+          }
+
+          .contracts-main {
+            padding-bottom: 16px;
+          }
         }
       `}</style>
     </div>

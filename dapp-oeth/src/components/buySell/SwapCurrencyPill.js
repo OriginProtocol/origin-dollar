@@ -12,6 +12,7 @@ import {
   removeCommas,
 } from 'utils/math'
 import { assetRootPath } from 'utils/image'
+import { event } from '../../../lib/gtm'
 
 const CoinImage = ({ small, coin }) => {
   const className = `coin-image`
@@ -45,8 +46,9 @@ const CoinImage = ({ small, coin }) => {
       )}
       <style jsx>{`
         .coin-image {
-          width: 40px;
-          height: 40px;
+          width: 32px;
+          height: 32px;
+          margin-right: 12px;
         }
 
         .coin-image.small {
@@ -75,6 +77,12 @@ const CoinImage = ({ small, coin }) => {
         .coin-4 {
           z-index: 4;
           margin-left: -16px;
+        }
+
+        @media (max-width: 799px) {
+          .coin-image {
+            margin-right: 8px;
+          }
         }
       `}</style>
     </div>
@@ -325,15 +333,25 @@ const CoinSelect = ({
         </div>
         <style jsx>{`
           .coin-select {
-            min-width: 140px;
-            min-height: 40px;
             padding: 8px;
             font-size: 18px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 30px;
+            margin-top: 12px;
           }
 
           .coin {
             color: #fafbfb;
-            margin-left: 12px;
+            padding-right: 8px;
+          }
+
+          @media (max-width: 799px) {
+            .coin-select {
+              width: fit-content;
+              min-height: 32px;
+              padding: 6px;
+              margin-top: 16px;
+            }
           }
         `}</style>
       </>
@@ -362,7 +380,7 @@ const CoinSelect = ({
         }}
       >
         <CoinImage coin={selected} />
-        <span className="coin mr-auto">
+        <span className="coin">
           {selected === 'mix' ? 'Mix' : coinToDisplay?.[selected]?.symbol}
         </span>
         <img
@@ -373,14 +391,13 @@ const CoinSelect = ({
       </button>
       <style jsx>{`
         .coin-select {
-          min-width: 160px;
-          min-height: 40px;
           padding: 8px;
           border-radius: 30px;
           border: solid 1px #141519;
           color: #fafbfb;
           background-color: rgba(255, 255, 255, 0.1);
           cursor: pointer;
+          margin-top: 12px;
         }
 
         .coin-select:hover {
@@ -390,7 +407,7 @@ const CoinSelect = ({
         .coin-select-icon {
           height: 8px;
           width: 12px;
-          margin: 0 8px;
+          margin-right: 8px;
         }
 
         .p-5px {
@@ -408,19 +425,20 @@ const CoinSelect = ({
 
         .coin {
           color: #fafbfb;
-          margin-left: 12px;
+          margin-right: 12px;
         }
 
         @media (max-width: 799px) {
           .coin-select {
-            min-width: 120px;
+            width: fit-content;
             min-height: 32px;
             padding: 6px;
+            margin-top: 16px;
           }
 
           .coin {
             color: #fafbfb;
-            margin-left: 8px;
+            margin-right: 8px;
           }
         }
       `}</style>
@@ -447,6 +465,8 @@ const SwapCurrencyPill = ({
 }) => {
   const coinBalances = useStoreState(AccountStore, (s) => s.balances)
   const [error, setError] = useState(null)
+
+  console.log(selectedSwap, selectedCoin, swapMode)
 
   const coinMintOptions = [
     'eth',
@@ -597,13 +617,14 @@ const SwapCurrencyPill = ({
         }`}
       >
         <div
-          className={`d-flex align-items-start justify-content-between currency-pill-inner`}
+          className={`d-flex align-items-center align-items-md-start justify-content-between currency-pill-inner`}
         >
           <div
             className={`d-flex flex-column justify-content-between input-holder w-full relative`}
           >
             {topItem && (
               <input
+                className="action-input"
                 type="text"
                 value={truncateDecimals(coinValue, 18)}
                 placeholder="0.00"
@@ -641,9 +662,9 @@ const SwapCurrencyPill = ({
                   )}`}
             </div>
           </div>
-          <div className="d-flex flex-column justify-content-between align-items-end">
+          <div className="d-flex flex-column justify-content-between align-items-end output-holder">
             <div className="d-flex align-items-center">
-              <div className="d-flex justify-content-between balance mb-2 mr-2">
+              <div className="d-flex justify-content-between balance">
                 {displayBalance && (
                   <div>
                     {fbt(
@@ -651,47 +672,40 @@ const SwapCurrencyPill = ({
                         fbt.param('coin-balance', displayBalance.balance),
                       'Coin balance'
                     )}
-                    <span className="ml-1">
-                      {coinToDisplay?.[displayBalance.coin]?.symbol}
-                    </span>
+                    {bottomItem && (
+                      <span className="ml-1">
+                        {coinToDisplay?.[displayBalance.coin]?.symbol}
+                      </span>
+                    )}
                   </div>
                 )}
-                {balanceClickable && (
-                  <button className="max-link ml-2" onClick={setMaxBalance}>
-                    {fbt('max', 'Set maximum currency amount')}
-                  </button>
-                )}
               </div>
+              {balanceClickable && (
+                <button className="max-link ml-2" onClick={setMaxBalance}>
+                  {fbt('max', 'Set maximum currency amount')}
+                </button>
+              )}
             </div>
             <CoinSelect
               selected={showOeth ? 'oeth' : selectedCoin}
               onChange={(coin) => {
                 onSelectChange(coin)
+                if (swapMode === 'mint') {
+                  event({
+                    event: 'change_input_currency',
+                    change_input_to: coin,
+                  })
+                } else {
+                  event({
+                    event: 'change_output_currency',
+                    change_output_to: coin,
+                  })
+                }
               }}
               options={coinsSelectOptions}
               conversion={ethPrice}
               coinBalances={coinBalances}
             />
-            {bottomItem && (
-              <div className="balance mt-1">
-                {minReceived !== null
-                  ? fbt(
-                      'Min. received: ' +
-                        fbt.param(
-                          'oeth-amount',
-                          `${formatCurrency(minReceived, 8)} ${
-                            selectedCoin === 'mix'
-                              ? 'Mix LSDs'
-                              : coinToDisplay?.[selectedCoin]?.symbol
-                          }`
-                        ),
-                      'Min amount received'
-                    )
-                  : topItem
-                  ? ''
-                  : '-'}
-              </div>
-            )}
           </div>
         </div>
         {coinSplits && (
@@ -722,6 +736,10 @@ const SwapCurrencyPill = ({
         )}
       </div>
       <style jsx>{`
+        .output-holder {
+          max-width: 50%;
+        }
+
         .currency-pill {
           display: flex;
           justify-content: center;
@@ -747,6 +765,11 @@ const SwapCurrencyPill = ({
           font-size: 16px;
           color: #828699;
           margin-left: 4px;
+          overflow: hidden;
+          width: 100%;
+          display: block;
+          white-space: nowrap;
+          text-overflow: ellipsis;
         }
 
         .multiple-balance {
@@ -792,7 +815,10 @@ const SwapCurrencyPill = ({
           font-size: 32px;
           max-width: 100%;
           text-overflow: ellipsis;
-          color: #828699;
+          display: block;
+          overflow: hidden;
+          color: #fafafb;
+          font-weight: 700;
         }
 
         .expected-value .text-loading {
@@ -838,17 +864,24 @@ const SwapCurrencyPill = ({
         }
 
         .input-holder {
-          width: 100%;
+          width: fit-content;
           max-width: 70%;
         }
 
         @media (max-width: 799px) {
           .input-holder {
             max-width: 50%;
+            padding: 32px 0;
+            flex: 1;
+          }
+
+          .usd-balance {
+            font-size: 12px;
           }
 
           input {
             font-size: 24px;
+            font-weight: 700;
           }
 
           .expected-value {
@@ -859,6 +892,10 @@ const SwapCurrencyPill = ({
             font-size: 12px;
             margin-left: 4px;
             white-space: nowrap;
+          }
+
+          .currency-pill {
+            padding: 0 16px;
           }
         }
       `}</style>

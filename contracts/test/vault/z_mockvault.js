@@ -5,8 +5,22 @@ const { utils } = require("ethers");
 const { loadFixture } = require("../helpers");
 
 describe("Vault mock with rebase", async () => {
+  let mockVault, matt, ousd, josh, governor;
+  beforeEach(async () => {
+    const fixture = await loadFixture(mockVaultFixture);
+    mockVault = fixture.mockVault;
+    matt = fixture.matt;
+    ousd = fixture.ousd;
+    josh = fixture.josh;
+    governor = fixture.governor;
+
+    // Allow a 10% diff
+    await mockVault
+      .connect(governor)
+      .setMaxSupplyDiff(utils.parseUnits("1", 17));
+  });
+
   it("Should increase users balance on rebase after increased Vault value", async () => {
-    const { mockVault, matt, ousd, josh } = await loadFixture(mockVaultFixture);
     // Total OUSD supply is 200, mock an increase
     await mockVault.setTotalValue(utils.parseUnits("220", 18));
     await mockVault.rebase();
@@ -15,7 +29,6 @@ describe("Vault mock with rebase", async () => {
   });
 
   it("Should not decrease users balance on rebase after decreased Vault value", async () => {
-    const { mockVault, matt, ousd, josh } = await loadFixture(mockVaultFixture);
     // Total OUSD supply is 200, mock a decrease
     await mockVault.setTotalValue(utils.parseUnits("180", 18));
     await mockVault.rebase();
@@ -23,44 +36,73 @@ describe("Vault mock with rebase", async () => {
     await expect(josh).has.an.approxBalanceOf("100.00", ousd);
   });
 
-  it("Should not allow redeem if total supply and value are far apart", async () => {
-    const { mockVault, governor, matt } = await loadFixture(mockVaultFixture);
+  const testSupplyDiff = async ({
+    vaultTotalValue,
+    redeemAmount,
+    revertMessage = false,
+  }) => {
+    /* mockVault doesn't reduce total value while redeeming (as the real Vault does)
+     * for that reason we set an already reduced total value to it
+     */
+    await mockVault.setTotalValue(
+      utils.parseUnits(`${vaultTotalValue - redeemAmount}`, 18)
+    );
+    const promise = expect(
+      mockVault
+        .connect(matt)
+        .redeem(
+          utils.parseUnits(`${redeemAmount}`, 18),
+          utils.parseUnits(`${redeemAmount}`, 18)
+        )
+    );
 
-    // Allow a 10% diff
-    await mockVault
-      .connect(governor)
-      .setMaxSupplyDiff(utils.parseUnits("1", 17));
+    if (revertMessage) {
+      await promise.to.be.revertedWith(revertMessage);
+    } else {
+      await promise.to.not.be.reverted;
+    }
+  };
 
+  it("Should revert when totalValue far exceeding totalSupply", async () => {
     // totalValue far exceeding totalSupply
-    await mockVault.setTotalValue(utils.parseUnits("300", 18));
-    expect(
-      mockVault
-        .connect(matt)
-        .redeem(utils.parseUnits("100", 18), utils.parseUnits("100", 18))
-    ).to.be.revertedWith("Backing supply liquidity error");
+    await testSupplyDiff({
+      vaultTotalValue: 300,
+      redeemAmount: 100,
+      revertMessage: "Backing supply liquidity error",
+      mockVault,
+      matt,
+    });
+  });
 
-    // totalSupply far exceeding totalValue
-    await mockVault.setTotalValue(utils.parseUnits("100", 18));
-    expect(
-      mockVault
-        .connect(matt)
-        .redeem(utils.parseUnits("100", 18), utils.parseUnits("100", 18))
-    ).to.be.revertedWith("Backing supply liquidity error");
+  it("Should revert when totalSupply far exceeding totalValue", async () => {
+    // totalValue far exceeding totalSupply
+    await testSupplyDiff({
+      vaultTotalValue: 170,
+      redeemAmount: 100,
+      revertMessage: "Backing supply liquidity error",
+      mockVault,
+      matt,
+    });
+  });
 
+  it("Should pass when totalValue exceeding totalSupply but within limits", async () => {
     // totalValue exceeding totalSupply but within limits
-    await mockVault.setTotalValue(utils.parseUnits("220", 18));
-    expect(
-      mockVault
-        .connect(matt)
-        .redeem(utils.parseUnits("100", 18), utils.parseUnits("100", 18))
-    ).to.not.be.reverted;
+    await testSupplyDiff({
+      vaultTotalValue: 209, // 209 - 100 = 109 -> 9% over total supply
+      redeemAmount: 100,
+      revertMessage: false,
+      mockVault,
+      matt,
+    });
+  });
 
-    // totalSupply exceeding totalValue but within limits
-    await mockVault.setTotalValue(utils.parseUnits("180", 18));
-    expect(
-      mockVault
-        .connect(matt)
-        .redeem(utils.parseUnits("100", 18), utils.parseUnits("100", 18))
-    ).to.not.be.reverted;
+  it("Should pass when totalSupply exceeding totalValue but within limits", async () => {
+    await testSupplyDiff({
+      vaultTotalValue: 191, // 191 - 100 = 91 -> 9% under total supply
+      redeemAmount: 100,
+      revertMessage: false,
+      mockVault,
+      matt,
+    });
   });
 });
