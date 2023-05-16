@@ -233,9 +233,9 @@ const ApproveSwap = ({
   const startApprovalProcess = async () => {
     if (stage === 'approve' && contract) {
       event({
-        'event': 'approve_started',
-        'approval_type': isWrapped ? 'wrap' : 'swap',
-        'approval_token': stableCoinToApprove
+        event: 'approve_started',
+        approval_type: isWrapped ? 'wrap' : 'swap',
+        approval_token: stableCoinToApprove,
       })
       setStage('waiting-user')
       try {
@@ -257,11 +257,11 @@ const ApproveSwap = ({
         })
         await rpcProvider.waitForTransaction(result.hash)
         event({
-          'event': 'approve_complete',
-          'approval_type': isWrapped ? 'wrap' : 'swap',
-          'approval_token': stableCoinToApprove,
-          'approval_address': '',
-          'approval_tx': ''
+          event: 'approve_complete',
+          approval_type: isWrapped ? 'wrap' : 'swap',
+          approval_token: stableCoinToApprove,
+          approval_address: '',
+          approval_tx: '',
         })
         setIsApproving({})
         setStage('done')
@@ -272,17 +272,17 @@ const ApproveSwap = ({
         if (e.code !== 4001) {
           await storeTransactionError('approve', stableCoinToApprove)
           event({
-            'event': 'approve_failed',
-            'approval_type': isWrapped ? 'wrap' : 'swap',
-            'approval_token': stableCoinToApprove,
-            'approval_address': '',
-            'approval_tx': ''
+            event: 'approve_failed',
+            approval_type: isWrapped ? 'wrap' : 'swap',
+            approval_token: stableCoinToApprove,
+            approval_address: '',
+            approval_tx: '',
           })
         } else {
           event({
-            'event': 'approve_rejected',
-            'approval_type': isWrapped ? 'wrap' : 'swap',
-            'approval_token': stableCoinToApprove
+            event: 'approve_rejected',
+            approval_type: isWrapped ? 'wrap' : 'swap',
+            approval_token: stableCoinToApprove,
           })
         }
       }
@@ -379,6 +379,12 @@ const ApproveSwap = ({
         </button>
       </div>
       <style jsx>{`
+        .btn-blue {
+          padding: 20px 0;
+          font-size: 20px;
+          max-height: none;
+        }
+
         .btn-blue:disabled {
           opacity: 0.4;
         }
@@ -399,6 +405,13 @@ const ApproveSwap = ({
 
         .link-detail:hover {
           color: #3aa2ff;
+        }
+
+        @media (max-width: 799px) {
+          .btn-blue {
+            padding: 10px 0;
+            font-size: 16px;
+          }
         }
       `}</style>
     </>

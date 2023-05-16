@@ -586,7 +586,7 @@ const BalanceHeader = ({
 
         .box.box-black {
           background-color: #1e1f25;
-          margin-right: 10px;
+          margin-right: 24px;
           min-width: 230px;
         }
 

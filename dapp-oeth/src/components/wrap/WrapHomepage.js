@@ -245,34 +245,37 @@ const WrapHomepage = ({
     <>
       {process.browser && (
         <div className="wrap-homepage d-flex flex-column mt-4">
-          <div className="swap-wrapper d-flex flex-column flex-grow">
-            {buyErrorToDisplay && (
-              <ErrorModal
-                error={buyErrorToDisplay}
-                errorMap={errorMap}
-                onClose={() => {
-                  setBuyErrorToDisplay(false)
-                }}
-              />
-            )}
-            <div className="wrap-main">
-              <WrapOETHPill
-                swapMode={swapMode}
-                onAmountChange={async (amount) => {
-                  setInputAmount(amount)
-                }}
-                coinValue={inputAmount}
-                rate={rate}
-                topItem
-                onErrorChange={setBalanceError}
-                ethPrice={ethPrice}
-              />
-              <PillArrow swapMode={swapMode} setSwapMode={setSwapMode} />
-              <WrapOETHPill
-                swapMode={swapMode}
-                wrapEstimate={wrapEstimate}
-                ethPrice={ethPrice}
-              />
+          <div className="wrap-wrapper">
+            <p className="title">Wrap</p>
+            <div className="swap-wrapper d-flex flex-column flex-grow">
+              {buyErrorToDisplay && (
+                <ErrorModal
+                  error={buyErrorToDisplay}
+                  errorMap={errorMap}
+                  onClose={() => {
+                    setBuyErrorToDisplay(false)
+                  }}
+                />
+              )}
+              <div className="wrap-main">
+                <WrapOETHPill
+                  swapMode={swapMode}
+                  onAmountChange={async (amount) => {
+                    setInputAmount(amount)
+                  }}
+                  coinValue={inputAmount}
+                  rate={rate}
+                  topItem
+                  onErrorChange={setBalanceError}
+                  ethPrice={ethPrice}
+                />
+                <PillArrow swapMode={swapMode} setSwapMode={setSwapMode} />
+                <WrapOETHPill
+                  swapMode={swapMode}
+                  wrapEstimate={wrapEstimate}
+                  ethPrice={ethPrice}
+                />
+              </div>
             </div>
           </div>
           <ApproveSwap
@@ -290,7 +293,6 @@ const WrapHomepage = ({
           />
           <style jsx>{`
             .wrap-wrapper {
-              margin: 18px 0;
               border: solid 1px #141519;
               border-radius: 10px;
               background-color: #1e1f25;
@@ -299,12 +301,17 @@ const WrapHomepage = ({
             .wrap-homepage {
               border: solid 1px #141519;
               border-radius: 10px;
-              background-color: #1e1f25;
-              padding: 35px 40px 40px 40px;
               width: 100%;
               position: relative;
               overflow: hidden;
               width: 100%;
+            }
+
+            .wrap-homepage .title {
+              font-size: 14px;
+              padding: 28px 40px;
+              margin: 0;
+              color: #fafafb;
             }
 
             .wrap-main {
@@ -312,14 +319,17 @@ const WrapHomepage = ({
               flex-direction: column;
               width: 100%;
               height: 100%;
-              border-radius: 10px;
               overflow: hidden;
             }
 
             @media (max-width: 799px) {
               .wrap-homepage {
+                margin-top: 16px !important;
                 border-radius: 4px;
-                padding: 23px 20px 20px 20px;
+              }
+
+              .wrap-homepage .title {
+                padding: 16px;
               }
             }
           `}</style>

@@ -60,10 +60,21 @@ const BalanceHeaderWrapped = ({
           </div>
 
           <div className="stat">
-            <div className={`value d-flex ${type} ${small ? 'small' : 'big'}`}>
+            <div
+              className={`value d-flex align-items-center ${type} ${
+                small ? 'small' : 'big'
+              }`}
+            >
+              {!small && (
+                <img
+                  className="mr-2 d-block d-md-none"
+                  src={assetRootPath(`/images/currency/woeth-icon-small.svg`)}
+                />
+              )}
               <p>{value}</p>
               {!small && (
                 <img
+                  className="d-none d-md-block"
                   src={assetRootPath(`/images/currency/woeth-icon-small.svg`)}
                 />
               )}
@@ -180,6 +191,11 @@ const BalanceHeaderWrapped = ({
 
             .stat .small {
               font-size: 14px;
+            }
+
+            .stat img {
+              margin-left: 0;
+              height: 20px;
             }
           }
         `}</style>
@@ -402,7 +418,7 @@ const BalanceHeaderWrapped = ({
         }
 
         .balance-header {
-          margin-bottom: 19px;
+          margin-bottom: 16px;
         }
 
         .balance-header .inaccurate-balance {
@@ -502,7 +518,7 @@ const BalanceHeaderWrapped = ({
 
         .box.box-black {
           background-color: #1e1f25;
-          margin-right: 10px;
+          margin-right: 24px;
           min-width: 230px;
         }
 
