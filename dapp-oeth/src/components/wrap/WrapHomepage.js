@@ -17,6 +17,7 @@ import { getUserSource } from 'utils/user'
 import usePrevious from 'utils/usePrevious'
 import ApproveSwap from 'components/buySell/ApproveSwap'
 import { useWeb3React } from '@web3-react/core'
+import { event } from '../../../lib/gtm'
 
 import analytics from 'utils/analytics'
 import {
@@ -168,14 +169,14 @@ const WrapHomepage = ({
   }
 
   const onWrapOETH = async () => {
-    analytics.track(
-      swapMode === 'mint' ? 'On Wrap to wETH' : 'On Unwrap from wETH',
-      {
-        category: 'wrap',
-        label: swapMetadata.coinUsed,
-        value: swapMetadata.swapAmount,
-      }
-    )
+    const wrapTokenUsed = swapMode === 'mint' ? 'woeth' : 'oeth'
+    const wrapTokenAmount = swapMode === 'mint' ? inputAmount : wrapEstimate
+    // mint = wrap
+    event({
+      'event': 'wrap_started',
+      'wrap_token': wrapTokenUsed,
+      'wrap_amount': wrapTokenAmount
+    })
 
     const metadata = swapMetadata()
 
@@ -208,24 +209,33 @@ const WrapHomepage = ({
       setInputAmount('')
 
       await rpcProvider.waitForTransaction(result.hash)
-
-      analytics.track('Wrap succeeded', {
-        category: 'wrap',
-        label: metadata.coinUsed,
-        value: metadata.swapAmount,
+      event({
+        'event': 'wrap_complete',
+        'wrap_type': swapMode,
+        'wrap_token': wrapTokenUsed,
+        'wrap_amount': wrapTokenAmount,
+        'wrap_address': '',
+        'wrap_tx': ''
       })
     } catch (e) {
       const metadata = swapMetadata()
       // 4001 code happens when a user rejects the transaction
       if (e.code !== 4001) {
         await storeTransactionError(swapMode, 'oeth')
-        analytics.track('Wrap failed', {
-          category: 'wrap',
-          label: e?.message,
+        event({
+          'event': 'wrap_failed',
+          'wrap_type': swapMode,
+          'wrap_token': wrapTokenUsed,
+          'wrap_amount': wrapTokenAmount,
+          'wrap_address' : ''
         })
       } else {
-        analytics.track('Wrap canceled', {
-          category: 'wrap',
+        event({
+          'event': 'wrap_rejected',
+          'wrap_type': swapMode,
+          'wrap_token': wrapTokenUsed,
+          'wrap_amount': wrapTokenAmount,
+          'wrap_address': ''
         })
       }
 

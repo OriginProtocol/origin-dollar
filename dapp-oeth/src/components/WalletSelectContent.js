@@ -40,7 +40,7 @@ const WalletSelectContent = ({ isMobile }) => {
       closeWalletSelectModal()
       event({
         'event': 'connect',
-        'connect_address': account
+        'connect_address': account.slice(2)
       })
     }
   }, [active])
