@@ -9,6 +9,7 @@ import withIsMobile from 'hoc/withIsMobile'
 import ConfirmationModal from './ConfirmationModal'
 import withWalletSelectModal from 'hoc/withWalletSelectModal'
 import { walletLogin } from 'utils/account'
+import { event } from '../../../lib/gtm'
 
 const ApproveSwap = ({
   stableCoinToApprove,
@@ -231,6 +232,11 @@ const ApproveSwap = ({
 
   const startApprovalProcess = async () => {
     if (stage === 'approve' && contract) {
+      event({
+        'event': 'approve_started',
+        'approval_type': isWrapped ? 'wrap' : 'swap',
+        'approval_token': stableCoinToApprove
+      })
       setStage('waiting-user')
       try {
         const result = await contract
@@ -250,6 +256,13 @@ const ApproveSwap = ({
           coin: stableCoinToApprove,
         })
         await rpcProvider.waitForTransaction(result.hash)
+        event({
+          'event': 'approve_complete',
+          'approval_type': isWrapped ? 'wrap' : 'swap',
+          'approval_token': stableCoinToApprove,
+          'approval_address': '',
+          'approval_tx': ''
+        })
         setIsApproving({})
         setStage('done')
       } catch (e) {
@@ -258,6 +271,19 @@ const ApproveSwap = ({
         setStage('approve')
         if (e.code !== 4001) {
           await storeTransactionError('approve', stableCoinToApprove)
+          event({
+            'event': 'approve_failed',
+            'approval_type': isWrapped ? 'wrap' : 'swap',
+            'approval_token': stableCoinToApprove,
+            'approval_address': '',
+            'approval_tx': ''
+          })
+        } else {
+          event({
+            'event': 'approve_rejected',
+            'approval_type': isWrapped ? 'wrap' : 'swap',
+            'approval_token': stableCoinToApprove
+          })
         }
       }
     }

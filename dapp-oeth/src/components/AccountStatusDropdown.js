@@ -6,6 +6,7 @@ import { isCorrectNetwork, switchEthereumChain } from 'utils/web3'
 import withWalletSelectModal from 'hoc/withWalletSelectModal'
 import Content from './_AccountStatusContent'
 import AccountStatusIndicator from './_AccountStatusIndicator'
+import { event } from '../../lib/gtm'
 
 const AccountStatusDropdown = ({ className, showLogin }) => {
   const { active, account, chainId } = useWeb3React()
@@ -35,6 +36,9 @@ const AccountStatusDropdown = ({ className, showLogin }) => {
             } else {
               setOpen(true)
             }
+            event({
+              'event': 'open_account',
+            })
           }}
         >
           {/* The button id is used by StakeBoxBig to trigger connect when no wallet connected */}
