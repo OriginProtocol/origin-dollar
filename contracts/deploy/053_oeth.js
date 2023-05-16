@@ -25,7 +25,7 @@ module.exports = deploymentWithGuardianGovernor(
       ethers,
     });
 
-    // await deployDripper({ deployWithConfirmation, withConfirmation, ethers });
+    await deployDripper({ deployWithConfirmation, withConfirmation, ethers });
 
     await deployZapper({
       deployWithConfirmation,
@@ -44,7 +44,7 @@ module.exports = deploymentWithGuardianGovernor(
     // Governance Actions
     // ----------------
     return {
-      name: "Deploy OETH Vault, Token, Strategies, Harvester and the Dripper",
+      name: "Deploy OETH Vault, Token, Strategies and the Dripper",
       actions,
     };
   }
