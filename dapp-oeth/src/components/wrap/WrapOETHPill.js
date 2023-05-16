@@ -262,7 +262,7 @@ const WrapOETHPill = ({
             )}
           </div>
           <div className="d-flex flex-column justify-content-between align-items-end output-holder">
-            {topItem ? (
+            {topItem && (
               <div className="d-flex align-items-center">
                 <div className="d-flex justify-content-between balance">
                   {displayBalance && (
@@ -286,8 +286,14 @@ const WrapOETHPill = ({
                   )}
                 </div>
               </div>
+            )}
+            {topItem ? (
+              <CoinSelect selected={swapMode === 'mint' ? 'oeth' : 'woeth'} />
             ) : (
-              <div className="balance mt-auto">
+              <CoinSelect selected={swapMode === 'mint' ? 'woeth' : 'oeth'} />
+            )}
+            {topItem && (
+              <div className="balance mt-2">
                 {rate !== null
                   ? fbt(
                       '1 wOETH = ' +
@@ -300,11 +306,6 @@ const WrapOETHPill = ({
                   : '-'}
               </div>
             )}
-            {topItem ? (
-              <CoinSelect selected={swapMode === 'mint' ? 'oeth' : 'woeth'} />
-            ) : (
-              <CoinSelect selected={swapMode === 'mint' ? 'woeth' : 'oeth'} />
-            )}
           </div>
         </div>
       </div>
@@ -316,13 +317,17 @@ const WrapOETHPill = ({
         .currency-pill {
           display: flex;
           justify-content: center;
-          padding: 56px 40px;
+          padding: 24px 40px;
           background-color: #1e1f25;
+          min-height: 150px;
+          border-bottom-left-radius: 10px;
+          border-bottom-right-radius: 10px;
         }
 
         .topItem {
           background-color: #18191c;
           border-bottom: solid 1px #141519;
+          border-radius: 0;
         }
 
         .currency-pill-inner {
