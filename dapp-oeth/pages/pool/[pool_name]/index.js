@@ -16,8 +16,8 @@ export default function PoolDetailsPage({ locale, onLocale }) {
   return (
     process.env.NEXT_PUBLIC_ENABLE_LIQUIDITY_MINING === 'true' && (
       <>
+        <Nav page={'pool-details'} locale={locale} onLocale={onLocale} />
         <Layout onLocale={onLocale} locale={locale} short>
-          <Nav page={'pool-details'} locale={locale} onLocale={onLocale} />
           <div className="home d-flex flex-column">
             {pools.length > 0 && <PoolDetails pool={pool} />}
             {pools.length === 0 && <h1>{fbt('Loading...', 'Loading...')}</h1>}

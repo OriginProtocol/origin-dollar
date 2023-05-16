@@ -449,7 +449,7 @@ const StakeModal = ({
           border: 0px;
           border-radius: 10px;
           background-color: #1e1f25;
-          font-size: 28px;
+          font-size: 24px;
           color: black;
           width: 186px;
         }

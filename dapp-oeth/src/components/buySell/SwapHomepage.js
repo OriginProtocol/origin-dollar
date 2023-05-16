@@ -38,7 +38,7 @@ const SwapHomepage = ({
   const [swapMode, setSwapMode] = useState(
     process.browser && localStorage.getItem(lastSelectedSwapModeKey) !== null
       ? localStorage.getItem(lastSelectedSwapModeKey)
-      : 'mint'
+      : 'redeem'
   )
   const [buyErrorToDisplay, setBuyErrorToDisplay] = useState(false)
 
@@ -211,13 +211,15 @@ const SwapHomepage = ({
   }
 
   const onSwapOeth = async () => {
-    const swapTokenUsed = swapMode === 'mint' ? selectedBuyCoin : selectedRedeemCoin
-    const swapTokenAmount = swapMode === 'mint' ? selectedBuyCoinAmount : selectedRedeemCoinAmount
+    const swapTokenUsed =
+      swapMode === 'mint' ? selectedBuyCoin : selectedRedeemCoin
+    const swapTokenAmount =
+      swapMode === 'mint' ? selectedBuyCoinAmount : selectedRedeemCoinAmount
 
     event({
-      'event': 'swap_started',
-      'swap_token': swapTokenUsed,
-      'swap_amount': swapTokenAmount
+      event: 'swap_started',
+      swap_token: swapTokenUsed,
+      swap_amount: swapTokenAmount,
     })
 
     const metadata = swapMetadata()
@@ -259,12 +261,12 @@ const SwapHomepage = ({
 
       await rpcProvider.waitForTransaction(result.hash)
       event({
-        'event': 'swap_complete',
-        'swap_type': swapMode,
-        'swap_token': swapTokenUsed,
-        'swap_amount': swapTokenAmount,
-        'swap_address': '',
-        'swap_tx': ''
+        event: 'swap_complete',
+        swap_type: swapMode,
+        swap_token: swapTokenUsed,
+        swap_amount: swapTokenAmount,
+        swap_address: '',
+        swap_tx: '',
       })
     } catch (e) {
       const metadata = swapMetadata()
@@ -272,20 +274,20 @@ const SwapHomepage = ({
       if (e.code !== 4001) {
         await storeTransactionError(swapMode, selectedBuyCoin)
         event({
-          'event': 'swap_failed',
-          'swap_type': swapMode,
-          'swap_token': swapTokenUsed,
-          'swap_amount': swapTokenAmount,
-          'swap_address': '',
-          'swap_tx': ''
+          event: 'swap_failed',
+          swap_type: swapMode,
+          swap_token: swapTokenUsed,
+          swap_amount: swapTokenAmount,
+          swap_address: '',
+          swap_tx: '',
         })
       } else {
         event({
-          'event': 'swap_rejected',
-          'swap_type': swapMode,
-          'swap_token': swapTokenUsed,
-          'swap_amount': swapTokenAmount,
-          'swap_address': ''
+          event: 'swap_rejected',
+          swap_type: swapMode,
+          swap_token: swapTokenUsed,
+          swap_amount: swapTokenAmount,
+          swap_address: '',
         })
       }
 
@@ -331,8 +333,8 @@ const SwapHomepage = ({
                   setSelectedRedeemCoinAmount(amount)
                   if (amount > 0) {
                     event({
-                      'event': 'change_input_amount',
-                      'change_amount_to': amount
+                      event: 'change_input_amount',
+                      change_amount_to: amount,
                     })
                   }
                 }}
@@ -378,11 +380,10 @@ const SwapHomepage = ({
           />
           <style jsx>{`
             .swap-wrapper {
-              margin: 18px 0;
+              margin: 16px 0;
               border: solid 1px #141519;
               border-radius: 10px;
               background-color: #1e1f25;
-              min-height: 350px;
               position: relative;
               overflow: hidden;
             }
@@ -406,6 +407,18 @@ const SwapHomepage = ({
             .title {
               color: #fafbfb;
               font-size: 14px;
+              margin-bottom: 0;
+            }
+
+            @media (max-width: 799px) {
+              .swap-wrapper {
+                padding-top: 16px;
+                border-radius: 4px;
+              }
+
+              .swap-header {
+                padding: 0 16px 16px 16px;
+              }
             }
 
             @media (max-width: 1080px) {

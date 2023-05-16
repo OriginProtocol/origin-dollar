@@ -10,6 +10,7 @@ export default function IPFSDappLink({ css }) {
       ['app.oeth.com', 'staging.app.oeth.com'].includes(window.location.host) ||
         window.location.host.startsWith('localhost:') ||
         window.location.host.startsWith('oeth-dapp-staging') ||
+        window.location.host.endsWith('.on.fleek.co') ||
         window.location.host.startsWith('oeth-dapp')
     )
   }, [])
@@ -33,7 +34,6 @@ export default function IPFSDappLink({ css }) {
           margin-right: 10px;
           background-color: #1e1f25;
           color: #fafbfb;
-          padding: 0px 10px;
         }
 
         .ipfs-link span {

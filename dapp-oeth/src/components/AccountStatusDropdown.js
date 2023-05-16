@@ -123,6 +123,12 @@ const AccountStatusDropdown = ({ className, showLogin }) => {
 
         .account-status:hover {
         }
+
+        @media (max-width: 799px) {
+          .account-status {
+            padding: 8px;
+          }
+        }
       `}</style>
     </>
   )
