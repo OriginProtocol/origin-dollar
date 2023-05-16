@@ -431,7 +431,7 @@ const Nav = ({ isMobile, locale, onLocale, page }) => {
                 <AccountStatusDropdown />
               </div>
               {active && account && (
-                <div className="d-flex">
+                <div className="d-flex" id="nav-activity">
                   <TransactionActivityDropdown />
                 </div>
               )}

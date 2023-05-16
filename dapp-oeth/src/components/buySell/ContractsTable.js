@@ -8,6 +8,7 @@ import { formatCurrency } from 'utils/math'
 import { assetRootPath } from 'utils/image'
 import ContractStore from 'stores/ContractStore'
 import ConfirmationModal from 'components/buySell/ConfirmationModal'
+import { event } from '../../../lib/gtm'
 
 const swapContracts = {
   zapper: {
@@ -174,6 +175,10 @@ const Estimates = ({ estimates, selected, isLoading, isActive, onSelect }) => {
                     onClick={() => {
                       if (canDoSwap && !error && !isSelected) {
                         onSelect(estimate)
+                        event({
+                          'event': 'change_swap_route',
+                          'change_route_to': name
+                        })
                       }
                     }}
                     disabled={errorDisplay || isSelected || !isActive}
@@ -302,7 +307,11 @@ const Estimates = ({ estimates, selected, isLoading, isActive, onSelect }) => {
                 className="show-hide"
                 onClick={() => {
                   setIsShowingMore((prev) => !prev)
-                }}
+                  if (!isShowingMore) {
+                    event({'event': 'show_swap_routes'})
+                  }
+                }
+              }
               >
                 {isShowingMore ? (
                   <>

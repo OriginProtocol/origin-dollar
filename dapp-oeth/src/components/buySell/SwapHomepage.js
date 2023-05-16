@@ -18,6 +18,7 @@ import withIsMobile from 'hoc/withIsMobile'
 import ApproveSwap from 'components/buySell/ApproveSwap'
 import analytics from 'utils/analytics'
 import { formatCurrencyMinMaxDecimals, removeCommas } from '../../utils/math'
+import { event } from '../../../lib/gtm'
 
 const lastUserSelectedCoinKey = 'last_user_selected_coin'
 const lastSelectedSwapModeKey = 'last_user_selected_swap_mode'
@@ -210,14 +211,14 @@ const SwapHomepage = ({
   }
 
   const onSwapOeth = async () => {
-    analytics.track(
-      swapMode === 'mint' ? 'On Swap to OETH' : 'On Swap from OETH',
-      {
-        category: 'swap',
-        label: swapMetadata.stablecoinUsed,
-        value: swapMetadata.swapAmount,
-      }
-    )
+    const swapTokenUsed = swapMode === 'mint' ? selectedBuyCoin : selectedRedeemCoin
+    const swapTokenAmount = swapMode === 'mint' ? selectedBuyCoinAmount : selectedRedeemCoinAmount
+
+    event({
+      'event': 'swap_started',
+      'swap_token': swapTokenUsed,
+      'swap_amount': swapTokenAmount
+    })
 
     const metadata = swapMetadata()
 
@@ -257,24 +258,34 @@ const SwapHomepage = ({
       setSelectedRedeemCoinAmount('')
 
       await rpcProvider.waitForTransaction(result.hash)
-
-      analytics.track('Swap succeeded', {
-        category: 'swap',
-        label: metadata.stablecoinUsed,
-        value: metadata.swapAmount,
+      event({
+        'event': 'swap_complete',
+        'swap_type': swapMode,
+        'swap_token': swapTokenUsed,
+        'swap_amount': swapTokenAmount,
+        'swap_address': '',
+        'swap_tx': ''
       })
     } catch (e) {
       const metadata = swapMetadata()
       // 4001 code happens when a user rejects the transaction
       if (e.code !== 4001) {
         await storeTransactionError(swapMode, selectedBuyCoin)
-        analytics.track('Swap failed', {
-          category: 'swap',
-          label: e?.message,
+        event({
+          'event': 'swap_failed',
+          'swap_type': swapMode,
+          'swap_token': swapTokenUsed,
+          'swap_amount': swapTokenAmount,
+          'swap_address': '',
+          'swap_tx': ''
         })
       } else {
-        analytics.track('Swap canceled', {
-          category: 'swap',
+        event({
+          'event': 'swap_rejected',
+          'swap_type': swapMode,
+          'swap_token': swapTokenUsed,
+          'swap_amount': swapTokenAmount,
+          'swap_address': ''
         })
       }
 
@@ -318,6 +329,12 @@ const SwapHomepage = ({
                 onAmountChange={async (amount) => {
                   setSelectedBuyCoinAmount(amount)
                   setSelectedRedeemCoinAmount(amount)
+                  if (amount > 0) {
+                    event({
+                      'event': 'change_input_amount',
+                      'change_amount_to': amount
+                    })
+                  }
                 }}
                 coinValue={
                   swapMode === 'mint'

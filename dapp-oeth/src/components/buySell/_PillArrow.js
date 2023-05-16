@@ -3,6 +3,7 @@ import { useStoreState } from 'pullstate'
 
 import { usePrevious } from 'utils/hooks'
 import analytics from 'utils/analytics'
+import { event } from '../../../lib/gtm'
 import { assetRootPath } from '../../utils/image'
 
 const DownCaret = ({ swapMode, disableRotation, color = '#828699' }) => {
@@ -41,6 +42,7 @@ const PillArrow = ({ swapMode, setSwapMode }) => {
           className="caret-background position-absolute d-flex align-items-center justify-content-center"
           onClick={() => {
             setSwapMode(swapMode === 'mint' ? 'redeem' : 'mint')
+            event({'event': 'change_input_output'})
           }}
         >
           <img

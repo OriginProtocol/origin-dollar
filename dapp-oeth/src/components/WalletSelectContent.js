@@ -15,7 +15,7 @@ import AccountStore from 'stores/AccountStore'
 import { assetRootPath } from 'utils/image'
 
 const WalletSelectContent = ({ isMobile }) => {
-  const { connector, activate, deactivate, active } = useWeb3React()
+  const { connector, activate, deactivate, active, account } = useWeb3React()
   const [error, setError] = useState(null)
   const wallets = isMobile
     ? [
@@ -38,6 +38,10 @@ const WalletSelectContent = ({ isMobile }) => {
   useEffect(() => {
     if (active) {
       closeWalletSelectModal()
+      event({
+        'event': 'connect',
+        'connect_address': account
+      })
     }
   }, [active])
 
@@ -67,7 +71,7 @@ const WalletSelectContent = ({ isMobile }) => {
   const onConnect = async (name) => {
     event({
       'event': 'connect_modal_click',
-      'wallet_type': name.toLowerCase()
+      'connect_modal_wallet': name.toLowerCase()
     })
 
     setError(null)

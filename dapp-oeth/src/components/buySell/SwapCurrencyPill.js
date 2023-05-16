@@ -12,6 +12,7 @@ import {
   removeCommas,
 } from 'utils/math'
 import { assetRootPath } from 'utils/image'
+import { event } from '../../../lib/gtm'
 
 const CoinImage = ({ small, coin }) => {
   const className = `coin-image`
@@ -667,6 +668,17 @@ const SwapCurrencyPill = ({
               selected={showOeth ? 'oeth' : selectedCoin}
               onChange={(coin) => {
                 onSelectChange(coin)
+                if (swapMode === 'mint') {
+                  event({
+                    'event': 'change_input_currency',
+                    'change_input_to': coin
+                  })
+                } else {
+                  event({
+                    'event': 'change_output_currency',
+                    'change_output_to': coin
+                  })
+                }
               }}
               options={coinsSelectOptions}
               conversion={ethPrice}
