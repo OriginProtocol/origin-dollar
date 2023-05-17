@@ -41,7 +41,7 @@ abstract contract OracleRouterBase is IOracle {
             .latestRoundData();
         uint8 decimals = getDecimals(_feed);
 
-        uint256 _price = uint256(_iprice).scaleBy(18, decimals);
+        uint256 _price = toUint256(_iprice).scaleBy(18, decimals);
         if (shouldBePegged(asset)) {
             require(_price <= MAX_DRIFT, "Oracle: Price exceeds max");
             require(_price >= MIN_DRIFT, "Oracle: Price under min");
@@ -72,6 +72,12 @@ abstract contract OracleRouterBase is IOracle {
             symbolHash == keccak256(abi.encodePacked("DAI")) ||
             symbolHash == keccak256(abi.encodePacked("USDC")) ||
             symbolHash == keccak256(abi.encodePacked("USDT"));
+    }
+
+    // from openzepplin utils/math/SafeCast.sol
+    function toUint256(int256 value) internal pure returns (uint256) {
+        require(value >= 0, "SafeCast: value must be positive");
+        return uint256(value);
     }
 }
 
@@ -180,7 +186,6 @@ contract OETHOracleRouter is OracleRouter {
             revert("Asset not available");
         }
     }
-
 }
 
 contract OracleRouterDev is OracleRouterBase {
