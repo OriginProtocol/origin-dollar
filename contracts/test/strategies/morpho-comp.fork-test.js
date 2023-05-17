@@ -79,46 +79,6 @@ forkOnlyDescribe("ForkTest: Morpho Compound Strategy", function () {
     });
   });
 
-  describe("Rewards", function () {
-    it("Should be able to harvest rewards", async function () {
-      const {
-        harvester,
-        daniel,
-        anna,
-        usdc,
-        cusdc,
-        usdt,
-        morphoLens,
-        morphoCompoundStrategy,
-        dripper,
-      } = fixture;
-      await mintTest(fixture, anna, usdc, "110000");
-
-      // harvester always exchanges for USDT and parks the funds in the dripper
-      const usdtBalanceDiff = await differenceInErc20TokenBalance(
-        dripper.address,
-        usdt,
-        async () => {
-          // advance time so that some rewards accrue
-          await advanceTime(3600 * 24 * 100);
-          await advanceBlocks(10000);
-          // check that rewards are there
-          await expect(
-            await morphoLens.getUserUnclaimedRewards(
-              [cusdc.address],
-              morphoCompoundStrategy.address
-            )
-          ).to.be.gte(0);
-          // prettier-ignore
-          await harvester
-            .connect(daniel)["harvestAndSwap(address)"](morphoCompoundStrategy.address);
-        }
-      );
-
-      await expect(usdtBalanceDiff).to.be.gte(0);
-    });
-  });
-
   describe("Withdraw", function () {
     it("Should be able to withdraw from strategy", async function () {
       const { matt, usdc, vault, morphoCompoundStrategy } = fixture;
@@ -172,6 +132,48 @@ forkOnlyDescribe("ForkTest: Morpho Compound Strategy", function () {
 
       expect(vaultUsdcDiff).to.approxEqualTolerance(usdcUnits, 1);
       expect(vaultUsdtDiff).to.approxEqualTolerance(usdtUnits, 1);
+    });
+  });
+
+  // set it as a last test that executes because we advance time and theat
+  // messes with recency of oracle prices
+  describe("Rewards", function () {
+    it("Should be able to harvest rewards", async function () {
+      const {
+        harvester,
+        daniel,
+        anna,
+        usdc,
+        cusdc,
+        usdt,
+        morphoLens,
+        morphoCompoundStrategy,
+        dripper,
+      } = fixture;
+      await mintTest(fixture, anna, usdc, "110000");
+
+      // harvester always exchanges for USDT and parks the funds in the dripper
+      const usdtBalanceDiff = await differenceInErc20TokenBalance(
+        dripper.address,
+        usdt,
+        async () => {
+          // advance time so that some rewards accrue
+          await advanceTime(3600 * 24 * 100);
+          await advanceBlocks(10000);
+          // check that rewards are there
+          await expect(
+            await morphoLens.getUserUnclaimedRewards(
+              [cusdc.address],
+              morphoCompoundStrategy.address
+            )
+          ).to.be.gte(0);
+          // prettier-ignore
+          await harvester
+            .connect(daniel)["harvestAndSwap(address)"](morphoCompoundStrategy.address);
+        }
+      );
+
+      await expect(usdtBalanceDiff).to.be.gte(0);
     });
   });
 });
