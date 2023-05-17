@@ -6,6 +6,7 @@ import { IOracle } from "../interfaces/IOracle.sol";
 import { Helpers } from "../utils/Helpers.sol";
 import { StableMath } from "../utils/StableMath.sol";
 
+// @notice Abstract functionality that is shared between various Oracle Routers
 abstract contract OracleRouterBase is IOracle {
     using StableMath for uint256;
 
@@ -68,6 +69,12 @@ abstract contract OracleRouterBase is IOracle {
         return decimals;
     }
 
+    /**
+     * @notice Before an asset/feed price is fetches for the first time the 
+     *         decimals need to be cached. This is a gas optimization
+     * @param asset address of the asset
+     * @return uint8 corresponding asset decimals
+     */
     function cacheDecimals(address asset) external returns (uint8) {
         (address _feed, ) = feedMetadata(asset);
         require(_feed != address(0), "Asset not available");
@@ -88,8 +95,7 @@ abstract contract OracleRouterBase is IOracle {
     }
 }
 
-/* Oracle Router that denominates all prices in USD
- */
+// @notice Oracle Router that denominates all prices in USD
 contract OracleRouter is OracleRouterBase {
     /**
      * @dev The price feed contract to use for a particular asset.
@@ -145,8 +151,7 @@ contract OracleRouter is OracleRouterBase {
     }
 }
 
-/* Oracle Router that denominates all prices in ETH
- */
+// @notice Oracle Router that denominates all prices in ETH
 contract OETHOracleRouter is OracleRouter {
     using StableMath for uint256;
 
@@ -234,6 +239,7 @@ contract OETHOracleRouter is OracleRouter {
     }
 }
 
+// @notice Oracle Router required for testing environment
 contract OracleRouterDev is OracleRouterBase {
     struct FeedMetadata {
         address feedAddress;
@@ -242,6 +248,11 @@ contract OracleRouterDev is OracleRouterBase {
 
     mapping(address => FeedMetadata) public assetToFeedMetadata;
 
+    /* @dev Override feed and maxStaleness information for a particular asset
+     * @param _asset the asset to override feed for
+     * @param _feed new feed
+     * @param _maxDataStaleness new maximum time allowed for feed data to be stale
+     */
     function setFeed(
         address _asset,
         address _feed,

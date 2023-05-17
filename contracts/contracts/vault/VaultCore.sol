@@ -747,6 +747,11 @@ contract VaultCore is VaultStorage {
         return allStrategies;
     }
 
+    /**
+     * @dev Returns whether the vault supports the asset
+     * @param _asset address of the asset
+     * @return true if supported
+     */
     function isSupportedAsset(address _asset) external view returns (bool) {
         return assets[_asset].isSupported;
     }
