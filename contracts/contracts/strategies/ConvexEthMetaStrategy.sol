@@ -105,7 +105,6 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         _deposit(_weth, _amount);
     }
 
-    // slither-disable-next-line arbitrary-send-eth
     function _deposit(address _weth, uint256 _wethAmount) internal {
         require(_wethAmount > 0, "Must deposit something");
         require(_weth == address(weth), "Can only deposit WETH");
@@ -150,14 +149,13 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         );
 
         // Do the deposit to Curve ETH pool
-        // slither-disable-next-line arbitrary-send-eth
+        // slither-disable-next-line arbitrary-send
         uint256 lpDeposited = curvePool.add_liquidity{ value: _wethAmount }(
             _amounts,
             minMintAmount
         );
 
         require(
-            // slither-disable-next-line arbitrary-send-eth
             IConvexDeposits(cvxDepositorAddress).deposit(
                 cvxDepositorPTokenId,
                 lpDeposited,
