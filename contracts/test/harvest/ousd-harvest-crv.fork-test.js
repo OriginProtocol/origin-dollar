@@ -1,5 +1,5 @@
 const { expect } = require("chai");
-const { parseUnits, formatUnits } = require("ethers").utils;
+const { parseUnits } = require("ethers").utils;
 
 const { loadFixture } = require("ethereum-waffle");
 const { forkOnlyDescribe, usdtUnits } = require("../helpers");
@@ -11,7 +11,6 @@ forkOnlyDescribe("ForkTest: Harvest OUSD", function () {
 
   let fixture;
   beforeEach(async () => {
-    console.log(`load fixture`);
     fixture = await loadFixture(defaultFixture);
   });
 
@@ -19,9 +18,6 @@ forkOnlyDescribe("ForkTest: Harvest OUSD", function () {
     it("config", async function () {
       const { crv, harvester } = fixture;
       const crvTokenConfig = await harvester.rewardTokenConfigs(crv.address);
-      console.log(
-        `CRV swap limit: ${formatUnits(crvTokenConfig.liquidationLimit, 18)}`
-      );
       expect(crvTokenConfig.liquidationLimit).to.be.eq(parseUnits("4000", 18));
     });
     it("should harvest", async function () {
@@ -36,11 +32,7 @@ forkOnlyDescribe("ForkTest: Harvest OUSD", function () {
       const balanceAfterHarvest = await crv.balanceOf(harvester.address);
 
       const crvHarvested = balanceAfterHarvest.sub(balanceBeforeHarvest);
-      console.log(`harvested ${formatUnits(crvHarvested, 18)} CRV`);
-
-      expect(balanceAfterHarvest.sub(balanceBeforeHarvest)).to.be.gt(
-        parseUnits("20000", 18)
-      );
+      expect(crvHarvested).to.be.gt(parseUnits("20000", 18));
     });
     it("should harvest and swap", async function () {
       const { anna, OUSDmetaStrategy, dripper, harvester, usdt } = fixture;
@@ -89,8 +81,6 @@ forkOnlyDescribe("ForkTest: Harvest OUSD", function () {
       const { crv, harvester, timelock } = fixture;
 
       const oldCrvTokenConfig = await harvester.rewardTokenConfigs(crv.address);
-      console.log(`allowed slippage ${oldCrvTokenConfig.allowedSlippageBps}`);
-      console.log(`harvest reward ${oldCrvTokenConfig.harvestRewardBps}`);
 
       await harvester
         .connect(timelock)
@@ -106,7 +96,6 @@ forkOnlyDescribe("ForkTest: Harvest OUSD", function () {
     it("should harvest and swap", async function () {
       const { crv, OUSDmetaStrategy, dripper, harvester, timelock, usdt } =
         fixture;
-      console.log(`CRV swap limit: ${crvLimit}`);
 
       const balanceBeforeDripper = await usdt.balanceOf(dripper.address);
 
@@ -117,15 +106,7 @@ forkOnlyDescribe("ForkTest: Harvest OUSD", function () {
 
       const balanceAfterDripper = await usdt.balanceOf(dripper.address);
       const usdtSwapped = balanceAfterDripper.sub(balanceBeforeDripper);
-      const rate = usdtSwapped
-        .mul(parseUnits("1", 30))
-        .div(parseUnits(crvLimit.toString(), 18));
-      console.log(
-        `swapped ${crvLimit} CRV for ${formatUnits(
-          usdtSwapped,
-          6
-        )} USDT at rate ${formatUnits(rate, 18)} CRV/USDT`
-      );
+
       await expect(usdtSwapped, "USDT received").to.be.gt(
         usdtUnits((crvLimit * 0.79).toString())
       );
