@@ -5,6 +5,7 @@ title "OETH Flow of Value"
 actor "User" as user
 actor "Harvester" as harvUser
 actor "Trustee" as trust <<Origin>> #DeepSkyBlue
+participant "Zapper" as zap <<Origin>> #DeepSkyBlue
 participant "OETH\nVault" as vault <<Origin>> #DeepSkyBlue
 participant "Harvester" as harv <<Origin>> #DeepSkyBlue
 participant "Dripper" as drip <<Origin>> #DeepSkyBlue
@@ -22,6 +23,70 @@ participant "Locked CVX" as icvx <<Convex>>
 
 participant "Uniswap V2" as uni <<Uniswap>>
 
+' Deposit ETH via Zapper
+group User deposit ETH [> 10 OETH]
+user -> zap : ETH
+note left : ETH in user tx
+
+zap -> weth : ETH
+note left : swap ETH for WETH
+weth o-> zap : WETH
+
+vault o-> trust : OETH
+note left : 20% performance\nfee from rebase
+
+zap -> vault : WETH
+
+group Curve AMO Strategy [unallocated WETH in vault]
+vault -> crvStrat : WETH
+note left: > 10 ETH worth so\nallocate to strategy
+crvStrat -x weth : WETH
+weth -> crvStrat : ETH
+
+crvStrat o-> crvStrat : OETH
+note left : mint OETH where WETH <= OETH <= 2x WETH
+crvStrat -> oethCrv : ETH, OETH
+note left : add liquidity to the Metapool
+oethCrv o-> crvStrat : OETHCRV-f
+note left: strategy gets Metapool LP tokens
+
+crvStrat -> oethCvx : OETHCRV-f
+note left : deposit Metapool LP to Convex
+oethCvx o-> cvxRewards : cvxOETHCRV-f
+note left : stake Convex LP tokens
+end
+
+vault o-> user : OETH
+note left : mint OETH\nto match ETH
+end
+
+' Deposit sfrxETH via Zapper
+group User deposit ETH [> 10 OETH]
+note over zap : User approves Zapper to transfer redeem their sfrxETH
+
+user -x sfrxETH : sfrxETH
+note left : redeem sfrxETH for frxETH
+sfrxETH -> zap : frxETH
+
+vault o-> trust : OETH
+note left : 20% performance\nfee from rebase
+
+zap -> vault : frxETH
+
+group FRAX Strategy
+vault -> frxStrat : frxETH
+note left: > 10 ETH worth so\nallocate to strategy
+frxStrat -> sfrxETH : frxETH
+note left : deposit frxETH
+sfrxETH o-> frxStrat : sfrxETH
+note left : get sfrxETH shares
+end 
+
+vault o-> user : OETH
+note left : mint OETH to match\nETH value of frxETH
+end
+
+
 ' Mint
 group User mint [< 10 OETH]
 vault o-> trust : OETH
@@ -30,7 +95,7 @@ note left : 20% performance\nfee from rebase
 user -> vault : frxETH, stETH, rETH or WETH
 note left: Only to vault,\nnot strategy as <10 ETH
 vault o-> user : OETH
-note left : mint OETH to\nUSD value of deposit
+note left : mint OETH to\nETH value of deposit
 end
 
 ' Allocate
