@@ -158,7 +158,7 @@ forkOnlyDescribe("ForkTest: Morpho Compound Strategy", function () {
         usdt,
         async () => {
           // advance time so that some rewards accrue
-          await advanceTime(3600 * 24 * 100);
+          await advanceTime(3600 * 24 * 1);
           await advanceBlocks(10000);
           // check that rewards are there
           await expect(
