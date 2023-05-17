@@ -1282,9 +1282,13 @@ async function hackedVaultFixture() {
   });
 
   const evilDAI = await ethers.getContract("MockEvilDAI");
+  const latestBlock = await ethers.provider.getBlock();
+  const maxStaleness = latestBlock.timestamp + 24 * 60 * 60;
+
   await oracleRouter.setFeed(
     evilDAI.address,
-    oracleAddresses.chainlink.DAI_USD
+    oracleAddresses.chainlink.DAI_USD,
+    maxStaleness
   );
   await oracleRouter.cacheDecimals(evilDAI.address);
 

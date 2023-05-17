@@ -677,57 +677,101 @@ const deployOracles = async () => {
   // Not needed in production
   const oracleAddresses = await getOracleAddresses(deployments);
   const assetAddresses = await getAssetAddresses(deployments);
+  const latestBlock = await ethers.provider.getBlock();
+  /* Mock oracle feeds report 0 for updatedAt data point. Set
+   * maxStaleness to current block time + 1 day to make the Oracle
+   * feeds valid
+   */
+  const maxStaleness = latestBlock.timestamp + 24 * 60 * 60;
+
   await withConfirmation(
     oracleRouter
       .connect(sDeployer)
-      .setFeed(assetAddresses.DAI, oracleAddresses.chainlink.DAI_USD)
+      .setFeed(
+        assetAddresses.DAI,
+        oracleAddresses.chainlink.DAI_USD,
+        maxStaleness
+      )
   );
   await withConfirmation(
     oracleRouter
       .connect(sDeployer)
-      .setFeed(assetAddresses.USDC, oracleAddresses.chainlink.USDC_USD)
+      .setFeed(
+        assetAddresses.USDC,
+        oracleAddresses.chainlink.USDC_USD,
+        maxStaleness
+      )
   );
   await withConfirmation(
     oracleRouter
       .connect(sDeployer)
-      .setFeed(assetAddresses.USDT, oracleAddresses.chainlink.USDT_USD)
+      .setFeed(
+        assetAddresses.USDT,
+        oracleAddresses.chainlink.USDT_USD,
+        maxStaleness
+      )
   );
   await withConfirmation(
     oracleRouter
       .connect(sDeployer)
-      .setFeed(assetAddresses.TUSD, oracleAddresses.chainlink.TUSD_USD)
+      .setFeed(
+        assetAddresses.TUSD,
+        oracleAddresses.chainlink.TUSD_USD,
+        maxStaleness
+      )
   );
   await withConfirmation(
     oracleRouter
       .connect(sDeployer)
-      .setFeed(assetAddresses.COMP, oracleAddresses.chainlink.COMP_USD)
+      .setFeed(
+        assetAddresses.COMP,
+        oracleAddresses.chainlink.COMP_USD,
+        maxStaleness
+      )
   );
   await withConfirmation(
     oracleRouter
       .connect(sDeployer)
-      .setFeed(assetAddresses.AAVE, oracleAddresses.chainlink.AAVE_USD)
+      .setFeed(
+        assetAddresses.AAVE,
+        oracleAddresses.chainlink.AAVE_USD,
+        maxStaleness
+      )
   );
   await withConfirmation(
     oracleRouter
       .connect(sDeployer)
-      .setFeed(assetAddresses.CRV, oracleAddresses.chainlink.CRV_USD)
+      .setFeed(
+        assetAddresses.CRV,
+        oracleAddresses.chainlink.CRV_USD,
+        maxStaleness
+      )
   );
   await withConfirmation(
     oracleRouter
       .connect(sDeployer)
-      .setFeed(assetAddresses.CVX, oracleAddresses.chainlink.CVX_USD)
+      .setFeed(
+        assetAddresses.CVX,
+        oracleAddresses.chainlink.CVX_USD,
+        maxStaleness
+      )
   );
   await withConfirmation(
     oracleRouter
       .connect(sDeployer)
-      .setFeed(assetAddresses.RETH, oracleAddresses.chainlink.RETH_ETH)
+      .setFeed(
+        assetAddresses.RETH,
+        oracleAddresses.chainlink.RETH_ETH,
+        maxStaleness
+      )
   );
   await withConfirmation(
     oracleRouter
       .connect(sDeployer)
       .setFeed(
         assetAddresses.NonStandardToken,
-        oracleAddresses.chainlink.NonStandardToken_USD
+        oracleAddresses.chainlink.NonStandardToken_USD,
+        maxStaleness
       )
   );
 };

@@ -245,9 +245,9 @@ contract OracleRouterDev is OracleRouterBase {
     function setFeed(
         address _asset,
         address _feed,
-        uint256 _updatedAt
+        uint256 _maxDataStaleness
     ) external {
-        assetToFeedMetadata[_asset] = FeedMetadata(_feed, _updatedAt);
+        assetToFeedMetadata[_asset] = FeedMetadata(_feed, _maxDataStaleness);
     }
 
     /*
