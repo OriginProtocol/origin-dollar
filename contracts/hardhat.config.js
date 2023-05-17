@@ -4,6 +4,7 @@ require("@nomiclabs/hardhat-etherscan");
 require("@nomiclabs/hardhat-waffle");
 require("@nomiclabs/hardhat-solhint");
 require("hardhat-deploy");
+require("hardhat-tracer");
 require("hardhat-contract-sizer");
 require("hardhat-deploy-ethers");
 require("solidity-coverage");
@@ -265,7 +266,7 @@ module.exports = {
   },
   mocha: {
     bail: process.env.BAIL === "true",
-    timeout: 40000,
+    timeout: parseInt(process.env.MOCHA_TIMEOUT) || 40000,
   },
   throwOnTransactionFailures: true,
   namedAccounts: {

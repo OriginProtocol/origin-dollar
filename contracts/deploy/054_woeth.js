@@ -28,7 +28,7 @@ module.exports = deploymentWithGuardianGovernor(
     // Governance Actions
     // ----------------
     return {
-      name: "Deploy OETH Vault, Token, Strategies, Harvester and the Dripper",
+      name: "Deploy WOETH Token",
       actions,
     };
   }

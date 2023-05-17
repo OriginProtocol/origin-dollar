@@ -130,6 +130,25 @@ const impersonateGuardian = async (optGuardianAddr = null) => {
   log(`Impersonated Guardian at ${guardianAddr}`);
 };
 
+const impersonateAccount = async (address) => {
+  if (!isFork) {
+    throw new Error("impersonateAccount only works on Fork");
+  }
+  const { findBestMainnetTokenHolder } = require("../utils/funding");
+
+  const bestSigner = await findBestMainnetTokenHolder(null, hre);
+  await bestSigner.sendTransaction({
+    to: address,
+    value: utils.parseEther("100"),
+  });
+
+  await hre.network.provider.request({
+    method: "hardhat_impersonateAccount",
+    params: [address],
+  });
+  log(`Impersonated Account at ${address}`);
+};
+
 /**
  * Execute a proposal on local test network (including on Fork).
  *
@@ -393,9 +412,6 @@ const submitProposalGnosisSafe = async (
   }
 
   const governorFive = await getGovernorFive();
-  const multisig5of8 = addresses.mainnet.Guardian;
-  const sMultisig5of8 = hre.ethers.provider.getSigner(multisig5of8);
-  await impersonateGuardian(multisig5of8);
 
   log(`Submitting proposal for ${description}`);
   log(`Args: ${JSON.stringify(proposalArgs, null, 2)}`);
@@ -511,7 +527,10 @@ const handlePossiblyActiveGovernanceProposal = async (
       proposalState = await getProposalState(proposalIdBn);
     } catch (e) {
       // If proposal is non existent the governor reverts the transaction
-      if (e.message.includes("invalid proposal id")) {
+      if (
+        e.message.includes("invalid proposal id") ||
+        e.message.includes("unknown proposal id")
+      ) {
         proposalState = false;
       } else {
         throw e;
@@ -719,6 +738,13 @@ function deploymentWithGovernanceProposal(opts, fn) {
     if (!hre) {
       hre = require("hardhat");
     }
+    if (isFork) {
+      const { deployerAddr } = await getNamedAccounts();
+      await hre.network.provider.request({
+        method: "hardhat_setBalance",
+        params: [deployerAddr, utils.parseEther("1000000").toHexString()],
+      });
+    }
     await runDeployment(hre);
     console.log(`${deployName} deploy done.`);
     return true;
@@ -810,6 +836,9 @@ function deploymentWithProposal(opts, fn) {
 
     await sanityCheckOgvGovernance();
     const proposal = await fn(tools);
+    if (proposal.actions.length == 0) {
+      return; // No governance proposal
+    }
     const propDescription = proposal.name;
     const propArgs = await proposeArgs(proposal.actions);
     const propOpts = proposal.opts || {};
@@ -918,8 +947,6 @@ function deploymentWithGuardianGovernor(opts, fn) {
       getTxOpts,
       withConfirmation,
     };
-    const guardianAddr = addresses.mainnet.Guardian;
-    await impersonateGuardian(guardianAddr);
 
     await sanityCheckOgvGovernance();
     const proposal = await fn(tools);
@@ -927,22 +954,40 @@ function deploymentWithGuardianGovernor(opts, fn) {
 
     if (isMainnet) {
       // On Mainnet, only propose. The enqueue and execution are handled manually via multi-sig.
-      log(
+      console.log(
         "Manually create the 5/8 multisig batch transaction with details:",
         proposal
       );
     } else {
-      const sGuardian = await ethers.provider.getSigner(guardianAddr);
+      const guardianAddr = addresses.mainnet.Guardian;
+      await impersonateGuardian(guardianAddr);
 
+      const sGuardian = await ethers.provider.getSigner(guardianAddr);
+      console.log("guardianAddr", guardianAddr);
+
+      const guardianActions = [];
       for (const action of proposal.actions) {
         const { contract, signature, args } = action;
 
         log(`Sending governance action ${signature} to ${contract.address}`);
-        await withConfirmation(
+        const result = await withConfirmation(
           contract.connect(sGuardian)[signature](...args, await getTxOpts())
         );
+        guardianActions.push({
+          sig: signature,
+          args: args,
+          to: contract.address,
+          data: result.data,
+          value: result.value.toString(),
+        });
+
         console.log(`... ${signature} completed`);
       }
+
+      console.log(
+        "Execute the following actions using guardian safe: ",
+        guardianActions
+      );
     }
   };
 
@@ -982,6 +1027,7 @@ module.exports = {
   deployWithConfirmation,
   withConfirmation,
   impersonateGuardian,
+  impersonateAccount,
   executeProposal,
   executeProposalOnFork,
   sendProposal,

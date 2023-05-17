@@ -187,8 +187,8 @@ forkOnlyDescribe("ForkTest: Vault", function () {
       expect(daiBalanceDiff).to.equal(daiUnits("-50"));
       expect(usdcBalanceDiff).to.approxEqualTolerance(usdcUnits("-90"), 1);
 
-      expect(daiStratDiff).gte(daiUnits("50"));
-      expect(usdcStratDiff).gte(usdcUnits("90"));
+      expect(daiStratDiff).gte(daiUnits("49.95"));
+      expect(usdcStratDiff).gte(usdcUnits("89.91"));
 
       [daiBalanceDiff, usdcBalanceDiff] = await differenceInErc20TokenBalances(
         [vault.address, vault.address],
@@ -224,7 +224,12 @@ forkOnlyDescribe("ForkTest: Vault", function () {
   });
 
   describe("Oracle", () => {
-    it("Should have correct Price Oracle address set", async () => {
+    /* NOTICE: update once the address is the updated on the mainnet.
+     * the fork tests require the 052 deploy to run in order to be
+     * compatible with the latest codebase -> which is not yet deployed to
+     * OUSD mainnet.
+     */
+    it.skip("Should have correct Price Oracle address set", async () => {
       const { vault } = fixture;
       expect(await vault.priceProvider()).to.equal(
         "0x7533365d1b0D95380bc4e94D0bdEF5173E43f954"

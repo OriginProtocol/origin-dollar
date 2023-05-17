@@ -162,23 +162,7 @@ contract VaultCore is VaultStorage {
      */
     function _redeem(uint256 _amount, uint256 _minimumUnitAmount) internal {
         // Calculate redemption outputs
-        (
-            uint256[] memory outputs,
-            uint256 _backingValue
-        ) = _calculateRedeemOutputs(_amount);
-
-        // Check that OUSD is backed by enough assets
-        uint256 _totalSupply = oUSD.totalSupply();
-        if (maxSupplyDiff > 0) {
-            // Allow a max difference of maxSupplyDiff% between
-            // backing assets value and OUSD total supply
-            uint256 diff = _totalSupply.divPrecisely(_backingValue);
-            require(
-                (diff > 1e18 ? diff.sub(1e18) : uint256(1e18).sub(diff)) <=
-                    maxSupplyDiff,
-                "Backing supply liquidity error"
-            );
-        }
+        uint256[] memory outputs = _calculateRedeemOutputs(_amount);
 
         emit Redeem(msg.sender, _amount);
 
@@ -221,8 +205,23 @@ contract VaultCore is VaultStorage {
         // by withdrawing them, this should be here.
         // It's possible that a strategy was off on its asset total, perhaps
         // a reward token sold for more or for less than anticipated.
+        uint256 totalUnits = 0;
         if (_amount >= rebaseThreshold && !rebasePaused) {
-            _rebase();
+            totalUnits = _rebase();
+        } else {
+            totalUnits = _totalValue();
+        }
+
+        // Check that OUSD is backed by enough assets
+        if (maxSupplyDiff > 0) {
+            // Allow a max difference of maxSupplyDiff% between
+            // backing assets value and OUSD total supply
+            uint256 diff = oUSD.totalSupply().divPrecisely(totalUnits);
+            require(
+                (diff > 1e18 ? diff.sub(1e18) : uint256(1e18).sub(diff)) <=
+                    maxSupplyDiff,
+                "Backing supply liquidity error"
+            );
         }
     }
 
@@ -368,13 +367,14 @@ contract VaultCore is VaultStorage {
      * @dev Calculate the total value of assets held by the Vault and all
      *      strategies and update the supply of OUSD, optionally sending a
      *      portion of the yield to the trustee.
+     * @return totalUnits Total balance of Vault in units
      */
-    function _rebase() internal whenNotRebasePaused {
+    function _rebase() internal whenNotRebasePaused returns (uint256) {
         uint256 ousdSupply = oUSD.totalSupply();
-        if (ousdSupply == 0) {
-            return;
-        }
         uint256 vaultValue = _totalValue();
+        if (ousdSupply == 0) {
+            return vaultValue;
+        }
 
         // Yield fee collection
         address _trusteeAddress = trusteeAddress; // gas savings
@@ -393,6 +393,7 @@ contract VaultCore is VaultStorage {
         if (vaultValue > ousdSupply) {
             oUSD.changeSupply(vaultValue);
         }
+        return vaultValue;
     }
 
     /**
@@ -497,20 +498,18 @@ contract VaultCore is VaultStorage {
         view
         returns (uint256[] memory)
     {
-        (uint256[] memory outputs, ) = _calculateRedeemOutputs(_amount);
-        return outputs;
+        return _calculateRedeemOutputs(_amount);
     }
 
     /**
      * @notice Calculate the outputs for a redeem function, i.e. the mix of
      * coins that will be returned.
      * @return outputs Array of amounts respective to the supported assets
-     * @return totalUnits Total balance of Vault in units
      */
     function _calculateRedeemOutputs(uint256 _amount)
         internal
         view
-        returns (uint256[] memory outputs, uint256 totalUnits)
+        returns (uint256[] memory outputs)
     {
         // We always give out coins in proportion to how many we have,
         // Now if all coins were the same value, this math would easy,
@@ -554,6 +553,7 @@ contract VaultCore is VaultStorage {
 
         // Calculate assets balances and decimals once,
         // for a large gas savings.
+        uint256 totalUnits = 0;
         for (uint256 i = 0; i < assetCount; i++) {
             uint256 balance = _checkBalance(allAssets[i]);
             assetBalances[i] = balance;

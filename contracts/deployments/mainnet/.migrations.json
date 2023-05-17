@@ -43,5 +43,12 @@
   "045_convex_lusd_meta_strategy": 1671543402,
   "046_vault_value_checker": 1669212530,
   "047_morpho_aave_strategy": 1672817148,
-  "048_deposit_withdraw_tooling": 1675100084
+  "048_deposit_withdraw_tooling": 1675100084,
+  "049_oeth_proxy": 1680121187,
+  "050_woeth_proxy": 1680301283,
+  "053_oeth": 1681746345,
+  "054_woeth": 1681746545,
+  "056_oeth_zapper_again": 1682535005,
+  "058_oeth_vault_value_checker": 1683419766,
+  "055_curve_amo": 1683966879
 }

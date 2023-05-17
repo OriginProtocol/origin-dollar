@@ -683,15 +683,9 @@ const deployOracles = async () => {
       .setFeed(assetAddresses.DAI, oracleAddresses.chainlink.DAI_USD)
   );
   await withConfirmation(
-    oracleRouter.connect(sDeployer).cacheDecimals(assetAddresses.DAI)
-  );
-  await withConfirmation(
     oracleRouter
       .connect(sDeployer)
       .setFeed(assetAddresses.USDC, oracleAddresses.chainlink.USDC_USD)
-  );
-  await withConfirmation(
-    oracleRouter.connect(sDeployer).cacheDecimals(assetAddresses.USDC)
   );
   await withConfirmation(
     oracleRouter
@@ -699,15 +693,9 @@ const deployOracles = async () => {
       .setFeed(assetAddresses.USDT, oracleAddresses.chainlink.USDT_USD)
   );
   await withConfirmation(
-    oracleRouter.connect(sDeployer).cacheDecimals(assetAddresses.USDT)
-  );
-  await withConfirmation(
     oracleRouter
       .connect(sDeployer)
       .setFeed(assetAddresses.TUSD, oracleAddresses.chainlink.TUSD_USD)
-  );
-  await withConfirmation(
-    oracleRouter.connect(sDeployer).cacheDecimals(assetAddresses.TUSD)
   );
   await withConfirmation(
     oracleRouter
@@ -715,15 +703,9 @@ const deployOracles = async () => {
       .setFeed(assetAddresses.COMP, oracleAddresses.chainlink.COMP_USD)
   );
   await withConfirmation(
-    oracleRouter.connect(sDeployer).cacheDecimals(assetAddresses.COMP)
-  );
-  await withConfirmation(
     oracleRouter
       .connect(sDeployer)
       .setFeed(assetAddresses.AAVE, oracleAddresses.chainlink.AAVE_USD)
-  );
-  await withConfirmation(
-    oracleRouter.connect(sDeployer).cacheDecimals(assetAddresses.AAVE)
   );
   await withConfirmation(
     oracleRouter
@@ -731,23 +713,14 @@ const deployOracles = async () => {
       .setFeed(assetAddresses.CRV, oracleAddresses.chainlink.CRV_USD)
   );
   await withConfirmation(
-    oracleRouter.connect(sDeployer).cacheDecimals(assetAddresses.CRV)
-  );
-  await withConfirmation(
     oracleRouter
       .connect(sDeployer)
       .setFeed(assetAddresses.CVX, oracleAddresses.chainlink.CVX_USD)
   );
   await withConfirmation(
-    oracleRouter.connect(sDeployer).cacheDecimals(assetAddresses.CVX)
-  );
-  await withConfirmation(
     oracleRouter
       .connect(sDeployer)
       .setFeed(assetAddresses.RETH, oracleAddresses.chainlink.RETH_ETH)
-  );
-  await withConfirmation(
-    oracleRouter.connect(sDeployer).cacheDecimals(assetAddresses.RETH)
   );
   await withConfirmation(
     oracleRouter
@@ -828,7 +801,22 @@ const deployCore = async () => {
   log("Initialized VaultAdmin implementation");
 
   // Initialize OUSD
-  const resolution = ethers.utils.parseUnits("1", 18);
+  /* Set the original resolution to 27 decimals. We used to have it set to 18
+   * decimals at launch and then migrated to 27. Having it set to 27 it will
+   * make unit tests run at that resolution that more closely mimics mainnet
+   * behaviour.
+   *
+   * Another reason:
+   * Testing Vault value checker with small changes in Vault value and supply
+   * was behaving incorrectly because the rounding error that is present with
+   * 18 decimal point resolution, which was interfering with unit test correctness.
+   * Possible solutions were:
+   *  - scale up unit test values so rounding error isn't a problem
+   *  - have unit test run in 27 decimal point rebasingCreditsPerToken resolution
+   *
+   * Latter seems more fitting - due to mimicking production better as already mentioned.
+   */
+  const resolution = ethers.utils.parseUnits("1", 27);
   await withConfirmation(
     cOUSD
       .connect(sGovernor)
@@ -925,16 +913,44 @@ const deployBuyback = async () => {
     ).address
   );
 
-  await deployWithConfirmation("Buyback", [
-    assetAddresses.uniswapRouter,
-    strategistAddr,
-    ousd.address,
-    assetAddresses.OGV,
-    assetAddresses.USDT,
-    assetAddresses.WETH,
-    assetAddresses.RewardsSource,
-  ]);
-  const cBuyback = await ethers.getContract("Buyback");
+  // Deploy proxy and implementation
+  const dBuybackProxy = await deployWithConfirmation("BuybackProxy");
+  const dBuybackImpl = await deployWithConfirmation("Buyback");
+
+  const cBuybackProxy = await ethers.getContractAt(
+    "BuybackProxy",
+    dBuybackProxy.address
+  );
+
+  // Init proxy to implementation
+  await withConfirmation(
+    cBuybackProxy
+      .connect(sDeployer)
+      ["initialize(address,address,bytes)"](
+        dBuybackImpl.address,
+        deployerAddr,
+        []
+      )
+  );
+
+  const cBuyback = await ethers.getContractAt("Buyback", cBuybackProxy.address);
+
+  // Initialize implementation contract
+  const initFunction =
+    "initialize(address,address,address,address,address,address,address,address,uint256)";
+  await withConfirmation(
+    cBuyback.connect(sDeployer)[initFunction](
+      assetAddresses.uniswapRouter,
+      strategistAddr,
+      strategistAddr, // Treasury manager
+      ousd.address,
+      assetAddresses.OGV,
+      assetAddresses.USDT,
+      assetAddresses.WETH,
+      assetAddresses.RewardsSource,
+      "5000" // 50%
+    )
+  );
 
   await withConfirmation(
     cBuyback.connect(sDeployer).transferGovernance(governorAddr)

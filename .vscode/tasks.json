@@ -1,0 +1,13 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "shell",
+			"command": "(rm -rf ./deployments/hardhat) && (source .env) && (cp -r ./deployments/mainnet ./deployments/hardhat)",
+			"label": "copy-deployment-files",
+			"options": {
+				"cwd": "${workspaceFolder}/contracts"
+			}
+		}
+	]
+}
