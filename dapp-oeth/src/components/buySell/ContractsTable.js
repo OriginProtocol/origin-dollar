@@ -112,18 +112,15 @@ const Estimates = ({ estimates, selected, isLoading, isActive, onSelect }) => {
           {isLoading ? (
             <div className="estimates-loading">Loading...</div>
           ) : isEmpty(sortedEstimates) ? (
-            <div className="estimate-item invalid">
-              <img
-                className="mr-2"
-                src={assetRootPath('/images/warn.png')}
-                alt="Warning icon"
-              />
-              <span>
-                {fbt(
-                  'Enter an amount to view swap route estimates.',
-                  'Invalid amount'
-                )}
-              </span>
+            <div className="estimate-item invalid d-block">
+              <div>
+                <span className="big">0 OETH</span>
+                <span className="small">(estimate)</span>
+              </div>
+              <div className="dash d-flex">
+                <div className="dash-child">-</div>
+                <span className="">-</span>
+              </div>
             </div>
           ) : (
             <>
@@ -167,7 +164,7 @@ const Estimates = ({ estimates, selected, isLoading, isActive, onSelect }) => {
                 return (
                   <button
                     key={name}
-                    className={classnames('estimate-item box-highlight', {
+                    className={classnames('box-highlight', {
                       'd-none': !isBest && !isShowingMore,
                       'has-error': errorDisplay,
                       selected: isSelected,
@@ -176,19 +173,19 @@ const Estimates = ({ estimates, selected, isLoading, isActive, onSelect }) => {
                       if (canDoSwap && !error && !isSelected) {
                         onSelect(estimate)
                         event({
-                          'event': 'change_swap_route',
-                          'change_route_to': name
+                          event: 'change_swap_route',
+                          change_route_to: name,
                         })
                       }
                     }}
                     disabled={errorDisplay || isSelected || !isActive}
                   >
-                    <div className="estimate">
+                    <div className="d-flex top">
                       <div className="d-inline-flex align-items-center">
                         {amountReceived ? (
                           <>
                             <span className="estimate-value">
-                              {amountReceived}{' '}
+                              {parseFloat(amountReceived).toFixed(5)}{' '}
                               {coinToSwap === 'mix'
                                 ? 'LSD Mix'
                                 : coinToSwap?.toUpperCase()}
@@ -198,56 +195,9 @@ const Estimates = ({ estimates, selected, isLoading, isActive, onSelect }) => {
                             </span>
                           </>
                         ) : (
-                          <span className="estimate-value">-</span>
+                          <span className="estimate-value">0</span>
                         )}
                       </div>
-                      {amountReceived ? (
-                        <div className="fees-value">
-                          <div
-                            className="d-inline-block mr-2"
-                            title={
-                              approveAllowanceNeeded
-                                ? `${fbt(
-                                    `Includes 2 transactions Approve($${fbt.param(
-                                      'Approve Cost',
-                                      formatCurrency(gasEstimateApprove, 2)
-                                    )}) + Swap($${fbt.param(
-                                      'Swap Cost',
-                                      formatCurrency(gasEstimateSwap, 2)
-                                    )})`,
-                                    'Swap & approve transaction gas estimation'
-                                  )}`
-                                : ''
-                            }
-                          >
-                            {fbt(
-                              `${fbt.param(
-                                'afterFeeDisplay',
-                                `≈ $${formatCurrency(amountReceivedUsd, 2)}`
-                              )}`,
-                              'After Fee Price'
-                            )}
-                            <br className="d-block d-sm-none" />
-                            <span className="ml-1">after fees</span>
-                            <span className="asterisk">
-                              {approveAllowanceNeeded ? '*' : ''}
-                            </span>
-                          </div>
-                          <span className="d-none d-md-inline">
-                            {fbt(
-                              `Effective Price: ${fbt.param(
-                                'effectivePriceDisplay',
-                                `$${formatCurrency(effectivePrice, 2)}`
-                              )}`,
-                              'Effective Price'
-                            )}
-                          </span>
-                        </div>
-                      ) : (
-                        <span className="fees-value">-</span>
-                      )}
-                    </div>
-                    <div className="additional">
                       <span
                         className={classnames('status', {
                           best: isBest,
@@ -275,37 +225,88 @@ const Estimates = ({ estimates, selected, isLoading, isActive, onSelect }) => {
                           ''
                         )}
                       </span>
-                      <span className="d-block d-md-none effective">
-                        {fbt(
-                          `Effective Price: ${fbt.param(
-                            'effectivePriceDisplay',
-                            `$${formatCurrency(effectivePrice, 2)}`
-                          )}`,
-                          'Effective Price'
+                    </div>
+                    <div className="estimate-item">
+                      <div className="estimate">
+                        {amountReceived ? (
+                          <div className="fees-value">
+                            <div
+                              className="d-inline-block mr-2"
+                              title={
+                                approveAllowanceNeeded
+                                  ? `${fbt(
+                                      `Includes 2 transactions Approve($${fbt.param(
+                                        'Approve Cost',
+                                        formatCurrency(gasEstimateApprove, 2)
+                                      )}) + Swap($${fbt.param(
+                                        'Swap Cost',
+                                        formatCurrency(gasEstimateSwap, 2)
+                                      )})`,
+                                      'Swap & approve transaction gas estimation'
+                                    )}`
+                                  : ''
+                              }
+                            >
+                              {fbt(
+                                `${fbt.param(
+                                  'afterFeeDisplay',
+                                  `≈ $${formatCurrency(amountReceivedUsd, 2)}`
+                                )}`,
+                                'After Fee Price'
+                              )}
+                              <br className="d-block d-sm-none" />
+                              <span className="ml-1">after fees</span>
+                              <span className="asterisk">
+                                {approveAllowanceNeeded ? '*' : ''}
+                              </span>
+                            </div>
+                            <span className="d-none d-md-inline">
+                              {fbt(
+                                `Effective Price: ${fbt.param(
+                                  'effectivePriceDisplay',
+                                  `$${formatCurrency(effectivePrice, 2)}`
+                                )}`,
+                                'Effective Price'
+                              )}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="fees-value">-</span>
                         )}
-                      </span>
-                      <span className="info-value">
-                        {error === 'unsupported'
-                          ? unsupportedDisplay(name, swapMode)
-                          : errorDisplay || (
-                              <>
-                                {gasEstimateEth && (
-                                  <span className="mr-2">
-                                    <img
-                                      className="mr-2"
-                                      src={assetRootPath('/images/gas.png')}
-                                      alt="gas price icon"
-                                    />
-                                    <span>
-                                      {parseFloat(gasEstimateEth)?.toFixed(4)}{' '}
-                                      ETH{' '}
+                      </div>
+                      <div className="additional">
+                        <span className="d-block d-md-none effective">
+                          {fbt(
+                            `Effective Price: ${fbt.param(
+                              'effectivePriceDisplay',
+                              `$${formatCurrency(effectivePrice, 2)}`
+                            )}`,
+                            'Effective Price'
+                          )}
+                        </span>
+                        <span className="info-value">
+                          {error === 'unsupported'
+                            ? unsupportedDisplay(name, swapMode)
+                            : errorDisplay || (
+                                <>
+                                  {gasEstimateEth && (
+                                    <span className="mr-2">
+                                      <img
+                                        className="mr-2"
+                                        src={assetRootPath('/images/gas.png')}
+                                        alt="gas price icon"
+                                      />
+                                      <span>
+                                        {parseFloat(gasEstimateEth)?.toFixed(4)}{' '}
+                                        ETH{' '}
+                                      </span>
                                     </span>
-                                  </span>
-                                )}
-                                <span>{capitalize(name)}</span>
-                              </>
-                            )}
-                      </span>
+                                  )}
+                                  <span>{capitalize(name)}</span>
+                                </>
+                              )}
+                        </span>
+                      </div>
                     </div>
                   </button>
                 )
@@ -315,10 +316,9 @@ const Estimates = ({ estimates, selected, isLoading, isActive, onSelect }) => {
                 onClick={() => {
                   setIsShowingMore((prev) => !prev)
                   if (!isShowingMore) {
-                    event({'event': 'show_swap_routes'})
+                    event({ event: 'show_swap_routes' })
                   }
-                }
-              }
+                }}
               >
                 {isShowingMore ? (
                   <>
@@ -347,7 +347,40 @@ const Estimates = ({ estimates, selected, isLoading, isActive, onSelect }) => {
       </div>
       <style jsx>
         {`
-          .effective {
+          .dash {
+            color: #8293a4;
+          }
+
+          .dash-child {
+            margin-right: 133px;
+          }
+
+          .invalid {
+            padding: 16px 24px !important;
+            border-radius: 4px;
+            min-height: 95px;
+          }
+
+          .invalid .big {
+            font-size: 14px;
+            color: #fafafb;
+            margin-right: 6px;
+          }
+
+          .invalid .small {
+            font-size: 12px;
+            color: #8293a4;
+          }
+
+          .top {
+            background-color: #18191c;
+            color: #fafbfb;
+            padding: 16px 12px 0 12px;
+            display: flex;
+            justify-content: space-between;
+          }
+
+          .box-highlight {
             font-size: 12px;
             color: #8293a4;
             margin-top: 8px;
@@ -384,7 +417,6 @@ const Estimates = ({ estimates, selected, isLoading, isActive, onSelect }) => {
             justify-content: space-between;
             width: 100%;
             background: #18191c;
-            border-radius: 4px;
             color: #fafbfb;
             padding: 16px 24px;
             border: none;
@@ -407,9 +439,8 @@ const Estimates = ({ estimates, selected, isLoading, isActive, onSelect }) => {
             font-size: 14px;
           }
 
-          .estimate-item.has-error {
-            opacity: 0.5;
-            pointer: cursor-not-allowed;
+          .box-highlight.has-error {
+            display: none;
           }
 
           .estimate-item .estimate {
@@ -432,7 +463,7 @@ const Estimates = ({ estimates, selected, isLoading, isActive, onSelect }) => {
             font-family: 'Sailec';
             font-style: normal;
             font-weight: 400;
-            font-size: 14px;
+            font-size: 14px !important;
             line-height: 17px;
             whitespace: nowrap;
           }
@@ -457,7 +488,7 @@ const Estimates = ({ estimates, selected, isLoading, isActive, onSelect }) => {
             margin-top: 4px;
           }
 
-          .additional .status {
+          .status {
             font-family: 'Sailec';
             font-style: normal;
             font-weight: 400;
@@ -466,7 +497,7 @@ const Estimates = ({ estimates, selected, isLoading, isActive, onSelect }) => {
             text-align: right;
           }
 
-          .additional .status.best {
+          .status.best {
             background: linear-gradient(
                 97.67deg,
                 #66fe90 -10.09%,
@@ -479,8 +510,8 @@ const Estimates = ({ estimates, selected, isLoading, isActive, onSelect }) => {
             text-fill-color: transparent;
           }
 
-          .additional .status.diff,
-          .additional .status.error {
+          .status.diff,
+          .status.error {
             color: #ff4e4e;
           }
 
@@ -498,6 +529,11 @@ const Estimates = ({ estimates, selected, isLoading, isActive, onSelect }) => {
 
           .box-highlight {
             position: relative;
+            width: 100%;
+            background: #18191c;
+            border-radius: 4px;
+            border: none;
+            padding: 0;
           }
 
           .box-highlight.selected::before,
@@ -539,13 +575,17 @@ const Estimates = ({ estimates, selected, isLoading, isActive, onSelect }) => {
 
           @media (max-width: 799px) {
             .estimates-container {
-              padding: 0 16px;
+              padding: 0 12px;
             }
 
             .estimate-item,
             .estimates-empty,
             .estimates-loading {
-              padding: 12px 16px;
+              padding: 0 12px 16px 12px;
+            }
+
+            .estimate-value {
+              font-size: 14px;
             }
           }
         `}
@@ -719,7 +759,7 @@ const ContractsTable = () => {
 
         @media (max-width: 799px) {
           .contracts-header {
-            padding: 16px;
+            padding: 16px 12px 8px 12px;
           }
 
           .contracts-main {

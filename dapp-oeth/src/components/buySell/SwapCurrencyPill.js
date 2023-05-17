@@ -584,6 +584,7 @@ const SwapCurrencyPill = ({
       : null
 
   const coinSplits = bottomItem && selectedSwap && selectedSwap.coinSplits
+  console.log(bottomItem, selectedSwap)
 
   const maxBalanceSet =
     topItem &&
@@ -644,7 +645,7 @@ const SwapCurrencyPill = ({
                     {fbt('Loading...', 'Swaps Loading...')}
                   </span>
                 ) : (
-                  <span>{expectedAmount || '-'}</span>
+                  <span>{expectedAmount || '0.00'}</span>
                 )}
               </div>
             )}
