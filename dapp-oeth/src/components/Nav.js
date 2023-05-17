@@ -606,6 +606,7 @@ const Nav = ({ isMobile, locale, onLocale, page }) => {
           justify-content: space-between;
           width: 100%;
           max-width: 100%;
+          padding: 0 80px;
         }
 
         .navbar .container {
