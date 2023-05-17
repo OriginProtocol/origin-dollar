@@ -41,7 +41,7 @@ module.exports = deploymentWithGovernanceProposal(
           args: [
             assetAddresses.CRV,
             oldCrvTokenConfig.allowedSlippageBps,
-            oldCrvTokenConfig.harvestRewardBps,
+            200, // harvestRewardBps - increased from 1% to 2%
             oldCrvTokenConfig.uniswapV2CompatibleAddr,
             newCrvSwapLimit,
             oldCrvTokenConfig.doSwapRewardToken,
