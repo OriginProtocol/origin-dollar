@@ -25,9 +25,9 @@ forkOnlyDescribe("ForkTest: Harvest OUSD", function () {
 
       const balanceBeforeHarvest = await crv.balanceOf(harvester.address);
 
+      // prettier-ignore
       await harvester
-        .connect(timelock)
-        ["harvest(address)"](OUSDmetaStrategy.address);
+        .connect(timelock)["harvest(address)"](OUSDmetaStrategy.address);
 
       const balanceAfterHarvest = await crv.balanceOf(harvester.address);
 
@@ -39,9 +39,9 @@ forkOnlyDescribe("ForkTest: Harvest OUSD", function () {
 
       const usdtBalanceBeforeDripper = await usdt.balanceOf(dripper.address);
 
+      // prettier-ignore
       await harvester
-        .connect(anna)
-        ["harvestAndSwap(address)"](OUSDmetaStrategy.address);
+        .connect(anna)["harvestAndSwap(address)"](OUSDmetaStrategy.address);
 
       const usdtBalanceAfterDripper = await usdt.balanceOf(dripper.address);
       const usdtSwapped = usdtBalanceAfterDripper.sub(usdtBalanceBeforeDripper);
@@ -67,9 +67,9 @@ forkOnlyDescribe("ForkTest: Harvest OUSD", function () {
     it("should not harvest and swap", async function () {
       const { anna, OUSDmetaStrategy, harvester } = fixture;
 
+      // prettier-ignore
       const tx = harvester
-        .connect(anna)
-        ["harvestAndSwap(address)"](OUSDmetaStrategy.address);
+        .connect(anna)["harvestAndSwap(address)"](OUSDmetaStrategy.address);
       await expect(tx).to.be.revertedWith(
         "UniswapV2Router: INSUFFICIENT_OUTPUT_AMOUNT"
       );
@@ -99,9 +99,9 @@ forkOnlyDescribe("ForkTest: Harvest OUSD", function () {
 
       const balanceBeforeDripper = await usdt.balanceOf(dripper.address);
 
+      // prettier-ignore
       await harvester
-        .connect(timelock)
-        ["harvest(address)"](OUSDmetaStrategy.address);
+        .connect(timelock)["harvest(address)"](OUSDmetaStrategy.address);
       await harvester.connect(timelock).swapRewardToken(crv.address);
 
       const balanceAfterDripper = await usdt.balanceOf(dripper.address);
