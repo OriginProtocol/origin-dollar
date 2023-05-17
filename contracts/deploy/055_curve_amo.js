@@ -23,7 +23,10 @@ const tokenAddress = "0x94b17476a93b3262d87b9a326965d1e91f9c13e7";
 const guardianAddr = addresses.mainnet.Guardian;
 
 module.exports = deploymentWithGuardianGovernor(
-  { deployName: "055_curve_amo" },
+  {
+    deployName: "055_curve_amo",
+    reduceQueueTime: true,
+  },
   async ({ deployWithConfirmation, ethers, getTxOpts, withConfirmation }) => {
     const { deployerAddr, governorAddr } = await getNamedAccounts();
     const sDeployer = await ethers.provider.getSigner(deployerAddr);
