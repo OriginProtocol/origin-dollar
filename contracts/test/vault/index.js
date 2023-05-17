@@ -40,7 +40,11 @@ describe("Vault", function () {
      */
     const maxStaleness = latestBlock.timestamp + 24 * 60 * 60;
 
-    await oracleRouter.setFeed(ousd.address, oracleAddresses.chainlink.DAI_USD, maxStaleness);
+    await oracleRouter.setFeed(
+      ousd.address,
+      oracleAddresses.chainlink.DAI_USD,
+      maxStaleness
+    );
     await oracleRouter.cacheDecimals(ousd.address);
     await expect(vault.connect(governor).supportAsset(ousd.address, 0)).to.emit(
       vault,
