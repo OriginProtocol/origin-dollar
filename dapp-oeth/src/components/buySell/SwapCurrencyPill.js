@@ -182,20 +182,26 @@ const TokenSelectionModal = ({
                   </div>
                 </div>
                 <div className="balances">
-                  <span className="eth">
-                    {formatCurrencyMinMaxDecimals(balance, {
-                      minDecimals: 2,
-                      maxDecimals: 18,
-                      truncate: true,
-                    })}
-                  </span>
-                  <span className="usd">
-                    $
-                    {formatCurrency(
-                      parseFloat(coinBalances?.[token]) * conversion,
-                      2
-                    )}
-                  </span>
+                  {token === 'mix' ? (
+                    <span className="eth">-</span>
+                  ) : (
+                    <>
+                      <span className="eth">
+                        {formatCurrencyMinMaxDecimals(balance, {
+                          minDecimals: 2,
+                          maxDecimals: 18,
+                          truncate: true,
+                        })}
+                      </span>
+                      <span className="usd">
+                        $
+                        {formatCurrency(
+                          parseFloat(coinBalances?.[token]) * conversion,
+                          2
+                        )}
+                      </span>
+                    </>
+                  )}
                 </div>
               </button>
             )
@@ -584,7 +590,6 @@ const SwapCurrencyPill = ({
       : null
 
   const coinSplits = bottomItem && selectedSwap && selectedSwap.coinSplits
-  console.log(bottomItem, selectedSwap)
 
   const maxBalanceSet =
     topItem &&

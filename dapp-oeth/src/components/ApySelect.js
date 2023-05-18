@@ -88,6 +88,7 @@ const ApySelect = ({ apyDayOptions, apyDays, setApyDays, nav, homepage }) => {
           border: solid 1px #141519;
           padding: 0;
           overflow: hidden;
+          box-shadow: 0px 4px 4px 0px #40;
         }
 
         .dropdown-item {
@@ -98,6 +99,7 @@ const ApySelect = ({ apyDayOptions, apyDays, setApyDays, nav, homepage }) => {
           line-height: 20px;
           cursor: pointer;
           border-bottom: solid 1px #141519;
+          font-size: 12px;
         }
 
         .dropdown-item:nth-child(:last-child) {
