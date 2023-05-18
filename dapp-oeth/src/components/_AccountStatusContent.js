@@ -206,6 +206,7 @@ const AccountStatusContent = ({ className, onOpen }) => {
           border: solid 1px #141519;
           background-color: #1e1f25;
           color: #fafbfb;
+          box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
         }
 
         .account-status-content {

@@ -38,6 +38,7 @@ export default function IPFSDappLink({ css }) {
           font-weight: 500;
           letter-spacing: 0em;
           text-align: left;
+          height: 42px;
         }
 
         .ipfs-link span {

@@ -256,6 +256,7 @@ const TransactionActivityDropdown = () => {
           color: #fafbfb;
           padding: 20px 30px 20px 20px;
           min-width: 170px;
+          box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
         }
 
         .dropdown-menu .dropdown-marble {

@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import classnames from 'classnames'
 import Dropdown from 'components/Dropdown'
 import { assetRootPath } from 'utils/image'
 import { event } from '../../lib/gtm'
@@ -14,7 +15,12 @@ const ApySelect = ({ apyDayOptions, apyDays, setApyDays, nav, homepage }) => {
               return (
                 <div
                   key={days}
-                  className="dropdown-item justify-content-start align-items-center"
+                  className={classnames(
+                    'dropdown-item justify-content-start align-items-center',
+                    {
+                      selected: String(days) === String(apyDays),
+                    }
+                  )}
                   onClick={(e) => {
                     e.preventDefault()
                     setApyDays(days)
@@ -25,7 +31,7 @@ const ApySelect = ({ apyDayOptions, apyDays, setApyDays, nav, homepage }) => {
                     })
                   }}
                 >
-                  {`${days} day trailing`}
+                  {`${days} day trailing APY`}
                 </div>
               )
             })}
@@ -44,7 +50,11 @@ const ApySelect = ({ apyDayOptions, apyDays, setApyDays, nav, homepage }) => {
           }}
         >
           {`${apyDays} day trailing`}
-          <div className="downcaret">
+          <div
+            className={classnames('downcaret', {
+              opened: open,
+            })}
+          >
             <img
               className="apy-select-icon"
               src={assetRootPath('/images/downcaret.png')}
@@ -78,17 +88,17 @@ const ApySelect = ({ apyDayOptions, apyDays, setApyDays, nav, homepage }) => {
         }
 
         .dropdown-menu {
-          margin-right: 200px;
+          margin-right: 0;
           background-color: #1e1f25;
           color: #fafbfb;
           font-size: 16px;
-          min-width: 150px;
-          top: 100%;
-          left: 0;
+          min-width: 140px;
+          top: 115%;
+          left: -20px;
           border: solid 1px #141519;
           padding: 0;
           overflow: hidden;
-          box-shadow: 0px 4px 4px 0px #40;
+          box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
         }
 
         .dropdown-item {
@@ -102,6 +112,9 @@ const ApySelect = ({ apyDayOptions, apyDays, setApyDays, nav, homepage }) => {
           font-size: 12px;
         }
 
+        .dropdown-item.selected {
+          color: #828699;
+        }
         .dropdown-item:nth-child(:last-child) {
           border-bottom: none;
         }
@@ -120,6 +133,11 @@ const ApySelect = ({ apyDayOptions, apyDays, setApyDays, nav, homepage }) => {
           margin: 0 8px;
           background-color: rgba(255, 255, 255, 0.1);
           border-radius: 20px;
+          transition: transform 0.2s ease-in;
+        }
+
+        .downcaret.opened {
+          transform: rotate(180deg);
         }
 
         .apy-select-icon {
