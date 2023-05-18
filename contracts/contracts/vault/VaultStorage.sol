@@ -57,7 +57,7 @@ contract VaultStorage is Initializable, Governable {
     struct Asset {
         bool isSupported;
         UnitConversion unitConversion;
-        uint256 decimals;
+        uint8 decimals;
     }
 
     // slither-disable-next-line uninitialized-state
