@@ -621,7 +621,7 @@ const BalanceHeader = ({
           .balance-header {
             align-items: center;
             text-align: center;
-            padding: 0px 20px;
+            padding: 0px 8px;
             min-height: 80px;
           }
 

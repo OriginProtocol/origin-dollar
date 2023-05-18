@@ -16,7 +16,7 @@ const MissionControl = ({}) => {
 
         @media (max-width: 767px) {
           .swap-contain {
-            padding: 0 20px;
+            padding: 0 8px;
           }
         }
       `}</style>
