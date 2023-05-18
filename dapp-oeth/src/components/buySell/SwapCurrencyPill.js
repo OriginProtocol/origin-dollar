@@ -622,6 +622,7 @@ const SwapCurrencyPill = ({
           >
             {topItem && (
               <input
+                inputMode="numeric"
                 className="action-input"
                 type="text"
                 value={truncateDecimals(coinValue, 18)}

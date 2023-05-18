@@ -20,12 +20,12 @@ const ApySelect = ({ apyDayOptions, apyDays, setApyDays, nav, homepage }) => {
                     setApyDays(days)
                     setOpen(false)
                     event({
-                      'event': 'change_apy',
-                      'change_apy_to': days
+                      event: 'change_apy',
+                      change_apy_to: days,
                     })
                   }}
                 >
-                  {`${days}${homepage ? ' days' : 'd'}`}
+                  {`${days} day trailing`}
                 </div>
               )
             })}
@@ -82,22 +82,30 @@ const ApySelect = ({ apyDayOptions, apyDays, setApyDays, nav, homepage }) => {
           background-color: #1e1f25;
           color: #fafbfb;
           font-size: 16px;
-          min-width: 98px;
+          min-width: 150px;
           top: 100%;
           left: 0;
-          padding: 5px;
           border: solid 1px #141519;
+          padding: 0;
+          overflow: hidden;
         }
 
         .dropdown-item {
+          display: flex;
+          align-items: center;
           color: #fafbfb;
-          padding: 3px 5px 3px 10px;
+          padding: 10px 16px;
           line-height: 20px;
           cursor: pointer;
+          border-bottom: solid 1px #141519;
+        }
+
+        .dropdown-item:nth-child(:last-child) {
+          border-bottom: none;
         }
 
         .dropdown-item:hover {
-          background-color: rgba(255, 255, 255, 0.1);
+          background-color: #24252b;
         }
 
         .downcaret {

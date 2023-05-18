@@ -197,27 +197,27 @@ const TransactionActivityDropdown = () => {
             !lastProcessedTransaction?.mined ? (
               <img
                 className="activity-icon rotating"
-                src={assetRootPath('/images/activity-pending.png')}
+                src={assetRootPath('/images/activity-pending.svg')}
                 alt="Transaction activity pending"
               />
             ) : lastProcessedTransaction?.mined &&
               !lastProcessedTransaction?.isError ? (
               <img
                 className="activity-icon "
-                src={assetRootPath('/images/activity-success.png')}
+                src={assetRootPath('/images/activity-success.svg')}
                 alt="Transaction activity success"
               />
             ) : (
               <img
                 className="activity-icon"
-                src={assetRootPath('/images/activity-failed.png')}
+                src={assetRootPath('/images/activity-failed.svg')}
                 alt="Transaction activity failed"
               />
             )
           ) : (
             <img
               className="activity-icon"
-              src={assetRootPath('/images/activity.png')}
+              src={assetRootPath('/images/activity.svg')}
               alt="Transaction activity button"
             />
           )}

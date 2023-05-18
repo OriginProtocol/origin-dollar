@@ -26,6 +26,7 @@ import {
   displayCurrency,
   calculateSwapAmounts,
 } from '../../utils/math'
+import { assetRootPath } from '../../utils/image'
 
 const lastSelectedSwapModeKey = 'last_user_selected_wrap_mode'
 
@@ -173,9 +174,9 @@ const WrapHomepage = ({
     const wrapTokenAmount = swapMode === 'mint' ? inputAmount : wrapEstimate
     // mint = wrap
     event({
-      'event': 'wrap_started',
-      'wrap_token': wrapTokenUsed,
-      'wrap_amount': wrapTokenAmount
+      event: 'wrap_started',
+      wrap_token: wrapTokenUsed,
+      wrap_amount: wrapTokenAmount,
     })
 
     const metadata = swapMetadata()
@@ -210,12 +211,12 @@ const WrapHomepage = ({
 
       await rpcProvider.waitForTransaction(result.hash)
       event({
-        'event': 'wrap_complete',
-        'wrap_type': swapMode,
-        'wrap_token': wrapTokenUsed,
-        'wrap_amount': wrapTokenAmount,
-        'wrap_address': '',
-        'wrap_tx': ''
+        event: 'wrap_complete',
+        wrap_type: swapMode,
+        wrap_token: wrapTokenUsed,
+        wrap_amount: wrapTokenAmount,
+        wrap_address: '',
+        wrap_tx: '',
       })
     } catch (e) {
       const metadata = swapMetadata()
@@ -223,19 +224,19 @@ const WrapHomepage = ({
       if (e.code !== 4001) {
         await storeTransactionError(swapMode, 'oeth')
         event({
-          'event': 'wrap_failed',
-          'wrap_type': swapMode,
-          'wrap_token': wrapTokenUsed,
-          'wrap_amount': wrapTokenAmount,
-          'wrap_address' : ''
+          event: 'wrap_failed',
+          wrap_type: swapMode,
+          wrap_token: wrapTokenUsed,
+          wrap_amount: wrapTokenAmount,
+          wrap_address: '',
         })
       } else {
         event({
-          'event': 'wrap_rejected',
-          'wrap_type': swapMode,
-          'wrap_token': wrapTokenUsed,
-          'wrap_amount': wrapTokenAmount,
-          'wrap_address': ''
+          event: 'wrap_rejected',
+          wrap_type: swapMode,
+          wrap_token: wrapTokenUsed,
+          wrap_amount: wrapTokenAmount,
+          wrap_address: '',
         })
       }
 
@@ -255,6 +256,25 @@ const WrapHomepage = ({
     <>
       {process.browser && (
         <div className="wrap-homepage d-flex flex-column mt-4">
+          <div className="wrap-help">
+            <p className="info">
+              Wrapped wOETH is a non-rebasing tokenized vault that appreciates
+              in value instead of growing in number.
+            </p>
+            <a
+              href="https://oeth.com"
+              className="btn-blue learn-more"
+              target="_blank"
+              rel="noreferrer"
+            >
+              <span className="text">Learn more</span>
+              <img
+                className="icon"
+                src={assetRootPath('/images/external-link-white.svg')}
+                alt="Navigate to OETH home page"
+              />
+            </a>
+          </div>
           <div className="wrap-wrapper">
             <p className="title">Wrap</p>
             <div className="swap-wrapper d-flex flex-column flex-grow">
@@ -302,6 +322,52 @@ const WrapHomepage = ({
             swappingGloballyDisabled={wrappingGloballyDisabled}
           />
           <style jsx>{`
+            .wrap-help {
+              display: flex;
+              flex-direction: column;
+              justify-content: center;
+              border: solid 1px #141519;
+              border-radius: 10px;
+              background-color: #1e1f25;
+              min-height: 115px;
+              margin: 10px 0 18px 0;
+              color: #fafafb;
+              padding: 28px 40px;
+            }
+
+            .wrap-help .info {
+              font-size: 12px;
+              font-weight: 400;
+              line-height: 20px;
+              letter-spacing: 0em;
+              text-align: left;
+            }
+
+            .wrap-help .learn-more {
+              display: flex;
+              flex-direction: row;
+              align-items: center;
+              justify-content: center;
+              border-radius: 100px;
+              height: 32px;
+              font-size: 12px;
+              font-weight: 500;
+              line-height: 20px;
+              letter-spacing: 0em;
+              text-align: left;
+              width: 113px;
+            }
+
+            .wrap-help .learn-more .text {
+              width: 65px;
+              margin-right: 8px;
+              flex-shrink: 0;
+            }
+
+            .wrap-help .learn-more .icon {
+              flex-shrink: 0;
+            }
+
             .wrap-wrapper {
               border: solid 1px #141519;
               border-radius: 10px;
@@ -339,6 +405,10 @@ const WrapHomepage = ({
               }
 
               .wrap-homepage .title {
+                padding: 16px;
+              }
+
+              .wrap-help {
                 padding: 16px;
               }
             }

@@ -34,6 +34,10 @@ export default function IPFSDappLink({ css }) {
           margin-right: 10px;
           background-color: #1e1f25;
           color: #fafbfb;
+          font-size: 16px;
+          font-weight: 500;
+          letter-spacing: 0em;
+          text-align: left;
         }
 
         .ipfs-link span {

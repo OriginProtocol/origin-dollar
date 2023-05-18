@@ -126,7 +126,7 @@ const ActivityItem = ({ transaction, states = {}, visual }) => {
                   rel="noreferrer"
                 >
                   <img
-                    src={assetRootPath('/images/externalLink.png')}
+                    src={assetRootPath('/images/external-link-white.svg')}
                     alt="Navigate to Etherscan"
                   />
                 </a>

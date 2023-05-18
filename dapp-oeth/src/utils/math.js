@@ -99,6 +99,11 @@ export function formatCurrencyMinMaxDecimals(
  */
 export function truncateDecimals(value, decimals = 6) {
   if (!value) return value
+
+  if (value === '.') {
+    return '0.'
+  }
+
   const [whole, fraction] = value.toString().split('.')
 
   if (!fraction || fraction.length <= decimals) {
