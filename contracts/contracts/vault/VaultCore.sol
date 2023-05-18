@@ -306,7 +306,9 @@ contract VaultCore is VaultStorage {
             // strategies
             vaultBufferModifier = uint256(1e18) - vaultBuffer;
         } else {
-            vaultBufferModifier = vaultBuffer * calculatedTotalValue / vaultValue;
+            vaultBufferModifier =
+                (vaultBuffer * calculatedTotalValue) /
+                vaultValue;
             if (1e18 > vaultBufferModifier) {
                 // E.g. 1e18 - (1e17 * 10e18)/5e18 = 8e17
                 // (5e18 * 8e17) / 1e18 = 4e18 allocated from Vault
@@ -560,13 +562,13 @@ contract VaultCore is VaultStorage {
         uint256 totalOutputRatio = 0;
         for (uint256 i = 0; i < assetCount; i++) {
             uint256 unitPrice = _toUnitPrice(allAssets[i], false);
-            uint256 ratio = assetUnits[i] * unitPrice / totalUnits;
+            uint256 ratio = (assetUnits[i] * unitPrice) / totalUnits;
             totalOutputRatio = totalOutputRatio + ratio;
         }
         // Calculate final outputs
         uint256 factor = _amount.divPrecisely(totalOutputRatio);
         for (uint256 i = 0; i < assetCount; i++) {
-            outputs[i] = assetBalances[i] * factor / totalUnits;
+            outputs[i] = (assetBalances[i] * factor) / totalUnits;
         }
     }
 
