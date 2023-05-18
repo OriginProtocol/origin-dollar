@@ -333,7 +333,7 @@ const CoinSelect = ({
         </div>
         <style jsx>{`
           .coin-select {
-            padding: 8px;
+            padding: 4px;
             font-size: 18px;
             background-color: rgba(255, 255, 255, 0.1);
             border-radius: 30px;
@@ -349,7 +349,7 @@ const CoinSelect = ({
             .coin-select {
               width: fit-content;
               min-height: 32px;
-              padding: 6px;
+              padding: 4px;
               margin-top: 16px;
             }
           }
@@ -391,7 +391,7 @@ const CoinSelect = ({
       </button>
       <style jsx>{`
         .coin-select {
-          padding: 8px;
+          padding: 4px;
           border-radius: 30px;
           border: solid 1px #141519;
           color: #fafbfb;
@@ -432,7 +432,7 @@ const CoinSelect = ({
           .coin-select {
             width: fit-content;
             min-height: 32px;
-            padding: 6px;
+            padding: 4px;
             margin-top: 16px;
           }
 
