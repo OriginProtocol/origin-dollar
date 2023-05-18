@@ -677,12 +677,11 @@ const deployOracles = async () => {
   // Not needed in production
   const oracleAddresses = await getOracleAddresses(deployments);
   const assetAddresses = await getAssetAddresses(deployments);
-  const latestBlock = await ethers.provider.getBlock();
   /* Mock oracle feeds report 0 for updatedAt data point. Set
-   * maxStaleness to current block time + 1 day to make the Oracle
+   * maxStaleness to 100 years from epoch to make the Oracle
    * feeds valid
    */
-  const maxStaleness = latestBlock.timestamp + 24 * 60 * 60;
+  const maxStaleness = 24 * 60 * 60 * 365 * 100;
 
   await withConfirmation(
     oracleRouter

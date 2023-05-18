@@ -1277,8 +1277,11 @@ async function hackedVaultFixture() {
   });
 
   const evilDAI = await ethers.getContract("MockEvilDAI");
-  const latestBlock = await ethers.provider.getBlock();
-  const maxStaleness = latestBlock.timestamp + 24 * 60 * 60;
+  /* Mock oracle feeds report 0 for updatedAt data point. Set
+   * maxStaleness to 100 years from epoch to make the Oracle
+   * feeds valid
+   */
+  const maxStaleness = 24 * 60 * 60 * 365 * 100;
 
   await oracleRouter.setFeed(
     evilDAI.address,

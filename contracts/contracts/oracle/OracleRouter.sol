@@ -18,16 +18,17 @@ abstract contract OracleRouterBase is IOracle {
     mapping(address => uint8) internal decimalsCache;
 
     /**
-     * @dev The price feed contract to use for a particular asset.
+     * @dev The price feed contract to use for a particular asset along with
+     *      maximum data staleness
      * @param asset address of the asset
      * @return feedAddress address of the price feed for the asset
-     *         maxDataStaleness maximum acceptable data staleness duration
+     * @return maxStaleness maximum acceptable data staleness duration
      */
     function feedMetadata(address asset)
         internal
         view
         virtual
-        returns (address feedAddress, uint256 maxDataStaleness);
+        returns (address feedAddress, uint256 maxStaleness);
 
     /**
      * @notice Returns the total price in 18 digit unit for a given asset.
@@ -70,7 +71,7 @@ abstract contract OracleRouterBase is IOracle {
     }
 
     /**
-     * @notice Before an asset/feed price is fetches for the first time the 
+     * @notice Before an asset/feed price is fetches for the first time the
      *         decimals need to be cached. This is a gas optimization
      * @param asset address of the asset
      * @return uint8 corresponding asset decimals
@@ -98,15 +99,18 @@ abstract contract OracleRouterBase is IOracle {
 // @notice Oracle Router that denominates all prices in USD
 contract OracleRouter is OracleRouterBase {
     /**
-     * @dev The price feed contract to use for a particular asset.
+     * @dev The price feed contract to use for a particular asset along with
+     *      maximum data staleness
      * @param asset address of the asset
+     * @return feedAddress address of the price feed for the asset
+     * @return maxStaleness maximum acceptable data staleness duration
      */
     function feedMetadata(address asset)
         internal
         pure
         virtual
         override
-        returns (address feedAddress, uint256 maxDataStaleness)
+        returns (address feedAddress, uint256 maxStaleness)
     {
         /* + STALENESS_BUFFER is added in case Oracle for some reason doesn't
          * update on heartbeat and we add a generous buffer amount.
@@ -115,36 +119,36 @@ contract OracleRouter is OracleRouterBase {
             // https://data.chain.link/ethereum/mainnet/stablecoins/dai-usd
             // Chainlink: DAI/USD
             feedAddress = 0xAed0c38402a5d19df6E4c03F4E2DceD6e29c1ee9;
-            maxDataStaleness = 1 hours + STALENESS_BUFFER;
+            maxStaleness = 1 hours + STALENESS_BUFFER;
         } else if (asset == 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48) {
             // https://data.chain.link/ethereum/mainnet/stablecoins/usdc-usd
             // Chainlink: USDC/USD
             feedAddress = 0x8fFfFfd4AfB6115b954Bd326cbe7B4BA576818f6;
-            maxDataStaleness = 1 days + STALENESS_BUFFER;
+            maxStaleness = 1 days + STALENESS_BUFFER;
         } else if (asset == 0xdAC17F958D2ee523a2206206994597C13D831ec7) {
             // https://data.chain.link/ethereum/mainnet/stablecoins/usdt-usd
             // Chainlink: USDT/USD
             feedAddress = 0x3E7d1eAB13ad0104d2750B8863b489D65364e32D;
-            maxDataStaleness = 1 days + STALENESS_BUFFER;
+            maxStaleness = 1 days + STALENESS_BUFFER;
         } else if (asset == 0xc00e94Cb662C3520282E6f5717214004A7f26888) {
             // https://data.chain.link/ethereum/mainnet/crypto-usd/comp-usd
             // Chainlink: COMP/USD
             feedAddress = 0xdbd020CAeF83eFd542f4De03e3cF0C28A4428bd5;
-            maxDataStaleness = 1 hours + STALENESS_BUFFER;
+            maxStaleness = 1 hours + STALENESS_BUFFER;
         } else if (asset == 0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9) {
             // https://data.chain.link/ethereum/mainnet/crypto-usd/aave-usd
             // Chainlink: AAVE/USD
             feedAddress = 0x547a514d5e3769680Ce22B2361c10Ea13619e8a9;
-            maxDataStaleness = 1 hours + STALENESS_BUFFER;
+            maxStaleness = 1 hours + STALENESS_BUFFER;
         } else if (asset == 0xD533a949740bb3306d119CC777fa900bA034cd52) {
             // https://data.chain.link/ethereum/mainnet/crypto-usd/crv-usd
             // Chainlink: CRV/USD
             feedAddress = 0xCd627aA160A6fA45Eb793D19Ef54f5062F20f33f;
-            maxDataStaleness = 1 days + STALENESS_BUFFER;
+            maxStaleness = 1 days + STALENESS_BUFFER;
         } else if (asset == 0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B) {
             // Chainlink: CVX/USD
             feedAddress = 0xd962fC30A72A84cE50161031391756Bf2876Af5D;
-            maxDataStaleness = 1 days + STALENESS_BUFFER;
+            maxStaleness = 1 days + STALENESS_BUFFER;
         } else {
             revert("Asset not available");
         }
@@ -189,50 +193,51 @@ contract OETHOracleRouter is OracleRouter {
     }
 
     /**
-     * @dev The price feed contract to use for a particular asset paired with ETH
+     * @dev The price feed contract to use for a particular asset along with
+     *      maximum data staleness
      * @param asset address of the asset
-     * @return feedAddress address of the price feed for the asset paired with ETH
-     *         maxDataStaleness maximum acceptable data staleness duration
+     * @return feedAddress address of the price feed for the asset
+     * @return maxStaleness maximum acceptable data staleness duration
      */
     function feedMetadata(address asset)
         internal
         pure
         override
-        returns (address feedAddress, uint256 maxDataStaleness)
+        returns (address feedAddress, uint256 maxStaleness)
     {
         if (asset == 0xD533a949740bb3306d119CC777fa900bA034cd52) {
             // https://data.chain.link/ethereum/mainnet/crypto-eth/crv-eth
             // Chainlink: CRV/ETH
             feedAddress = 0x8a12Be339B0cD1829b91Adc01977caa5E9ac121e;
-            maxDataStaleness = 1 days + STALENESS_BUFFER;
+            maxStaleness = 1 days + STALENESS_BUFFER;
         } else if (asset == 0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B) {
             // https://data.chain.link/ethereum/mainnet/crypto-eth/cvx-eth
             // Chainlink: CVX/ETH
             feedAddress = 0xC9CbF687f43176B302F03f5e58470b77D07c61c6;
-            maxDataStaleness = 1 days + STALENESS_BUFFER;
+            maxStaleness = 1 days + STALENESS_BUFFER;
         } else if (asset == 0xae78736Cd615f374D3085123A210448E74Fc6393) {
             // https://data.chain.link/ethereum/mainnet/crypto-eth/reth-eth
             // Chainlink: rETH/ETH
             feedAddress = 0x536218f9E9Eb48863970252233c8F271f554C2d0;
-            maxDataStaleness = 1 days + STALENESS_BUFFER;
+            maxStaleness = 1 days + STALENESS_BUFFER;
         } else if (asset == 0xBe9895146f7AF43049ca1c1AE358B0541Ea49704) {
             // https://data.chain.link/ethereum/mainnet/crypto-eth/cbeth-eth
             // Chainlink: cbETH/ETH
             feedAddress = 0xF017fcB346A1885194689bA23Eff2fE6fA5C483b;
-            maxDataStaleness = 1 days + STALENESS_BUFFER;
+            maxStaleness = 1 days + STALENESS_BUFFER;
         } else if (asset == 0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84) {
             // https://data.chain.link/ethereum/mainnet/crypto-eth/steth-eth
             // Chainlink: stETH/ETH
             feedAddress = 0x86392dC19c0b719886221c78AB11eb8Cf5c52812;
-            maxDataStaleness = 1 days + STALENESS_BUFFER;
+            maxStaleness = 1 days + STALENESS_BUFFER;
         } else if (asset == 0x5E8422345238F34275888049021821E8E08CAa1f) {
             // FIXED_PRICE: frxETH/ETH
             feedAddress = FIXED_PRICE;
-            maxDataStaleness = 0;
+            maxStaleness = 0;
         } else if (asset == 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2) {
             // FIXED_PRICE: WETH/ETH
             feedAddress = FIXED_PRICE;
-            maxDataStaleness = 0;
+            maxStaleness = 0;
         } else {
             revert("Asset not available");
         }
@@ -243,7 +248,7 @@ contract OETHOracleRouter is OracleRouter {
 contract OracleRouterDev is OracleRouterBase {
     struct FeedMetadata {
         address feedAddress;
-        uint256 maxDataStaleness;
+        uint256 maxStaleness;
     }
 
     mapping(address => FeedMetadata) public assetToFeedMetadata;
@@ -251,14 +256,14 @@ contract OracleRouterDev is OracleRouterBase {
     /* @dev Override feed and maxStaleness information for a particular asset
      * @param _asset the asset to override feed for
      * @param _feed new feed
-     * @param _maxDataStaleness new maximum time allowed for feed data to be stale
+     * @param _maxStaleness new maximum time allowed for feed data to be stale
      */
     function setFeed(
         address _asset,
         address _feed,
-        uint256 _maxDataStaleness
+        uint256 _maxStaleness
     ) external {
-        assetToFeedMetadata[_asset] = FeedMetadata(_feed, _maxDataStaleness);
+        assetToFeedMetadata[_asset] = FeedMetadata(_feed, _maxStaleness);
     }
 
     /*
@@ -272,18 +277,20 @@ contract OracleRouterDev is OracleRouterBase {
     }
 
     /**
-     * @dev The price feed contract to use for a particular asset.
-     * @return feedAddress address of the price feed for the asset paired with ETH
-     *         maxDataStaleness maximum acceptable data staleness duration
+     * @dev The price feed contract to use for a particular asset along with
+     *      maximum data staleness
+     * @param asset address of the asset
+     * @return feedAddress address of the price feed for the asset
+     * @return maxStaleness maximum acceptable data staleness duration
      */
     function feedMetadata(address asset)
         internal
         view
         override
-        returns (address feedAddress, uint256 maxDataStaleness)
+        returns (address feedAddress, uint256 maxStaleness)
     {
         FeedMetadata storage fm = assetToFeedMetadata[asset];
         feedAddress = fm.feedAddress;
-        maxDataStaleness = fm.maxDataStaleness;
+        maxStaleness = fm.maxStaleness;
     }
 }
