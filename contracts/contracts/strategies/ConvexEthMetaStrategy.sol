@@ -37,7 +37,7 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
     uint128 internal ethCoinIndex;
 
     // used to circumvent the stack too deep issue
-    struct InitialiseConfig {
+    struct InitializeConfig {
         address curvePoolAddress; //Address of the Curve pool
         address vaultAddress; //Address of the vault
         address cvxDepositorAddress; //Address of the Convex depositor(AKA booster) for this pool
@@ -62,7 +62,7 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         address[] calldata _rewardTokenAddresses, // CRV + CVX
         address[] calldata _assets,
         address[] calldata _pTokens,
-        InitialiseConfig calldata initConfig
+        InitializeConfig calldata initConfig
     ) external onlyGovernor initializer {
         require(_assets.length == 1, "Must have exactly one asset");
         // Should be set prior to abstract initialize call otherwise
@@ -367,7 +367,7 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
 
     function _approveBase() internal {
         // WETH was approved as a supported asset,
-        // so we need seperate OETH approve
+        // so we need separate OETH approve
         _approveAsset(address(oeth));
         lpToken.safeApprove(cvxDepositorAddress, type(uint256).max);
     }
