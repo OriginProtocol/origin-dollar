@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 /**
- * @title OUSD VaultStorage Contract
+ * @title OToken VaultStorage Contract
  * @notice The VaultStorage contract defines the storage for the Vault contracts
  * @author Origin Protocol Inc
  */
@@ -14,7 +14,7 @@ import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 
 import { IStrategy } from "../interfaces/IStrategy.sol";
 import { Governable } from "../governance/Governable.sol";
-import { OUSD } from "../token/OUSD.sol";
+import { OToken } from "../token/OToken.sol";
 import { Initializable } from "../utils/Initializable.sol";
 import "../utils/Helpers.sol";
 import { StableMath } from "../utils/StableMath.sol";
@@ -37,7 +37,7 @@ contract VaultStorage is Initializable, Governable {
     event RebasePaused();
     event RebaseUnpaused();
     event VaultBufferUpdated(uint256 _vaultBuffer);
-    event OusdMetaStrategyUpdated(address _ousdMetaStrategy);
+    event OTokenMetaStrategyUpdated(address _oTokenMetaStrategy);
     event RedeemFeeUpdated(uint256 _redeemFeeBps);
     event PriceProviderUpdated(address _priceProvider);
     event AllocateThresholdUpdated(uint256 _threshold);
@@ -47,7 +47,7 @@ contract VaultStorage is Initializable, Governable {
     event YieldDistribution(address _to, uint256 _yield, uint256 _fee);
     event TrusteeFeeBpsChanged(uint256 _basis);
     event TrusteeAddressChanged(address _address);
-    event NetOusdMintForStrategyThresholdChanged(uint256 _threshold);
+    event NetOTokenMintForStrategyThresholdChanged(uint256 _threshold);
 
     // Assets supported by the Vault, i.e. Stablecoins
     enum UnitConversion {
@@ -87,9 +87,9 @@ contract VaultStorage is Initializable, Governable {
     // Mints over this amount automatically rebase. 18 decimals.
     uint256 public rebaseThreshold;
 
-    OUSD internal oUSD;
+    OToken internal oToken;
 
-    //keccak256("OUSD.vault.governor.admin.impl");
+    //keccak256("OToken.vault.governor.admin.impl");
     bytes32 constant adminImplPosition =
         0xa2bd3d3cf188a41358c8b401076eb59066b09dec5775650c0de4c55187d17bd9;
 
@@ -120,14 +120,14 @@ contract VaultStorage is Initializable, Governable {
 
     uint256 constant MINT_MINIMUM_UNIT_PRICE = 0.998e18;
 
-    // Meta strategy that is allowed to mint/burn OUSD without changing collateral
-    address public ousdMetaStrategy = address(0);
+    // Meta strategy that is allowed to mint/burn OToken without changing collateral
+    address public oTokenMetaStrategy = address(0);
 
-    // How much OUSD is currently minted by the strategy
-    int256 public netOusdMintedForStrategy = 0;
+    // How much OToken is currently minted by the strategy
+    int256 public netOTokenMintedForStrategy = 0;
 
-    // How much net total OUSD is allowed to be minted by all strategies
-    uint256 public netOusdMintForStrategyThreshold = 0;
+    // How much net total OToken is allowed to be minted by all strategies
+    uint256 public netOTokenMintForStrategyThreshold = 0;
 
     uint256 constant MIN_UNIT_PRICE_DRIFT = 0.7e18;
     uint256 constant MAX_UNIT_PRICE_DRIFT = 1.3e18;

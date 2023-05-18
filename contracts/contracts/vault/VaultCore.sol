@@ -2,12 +2,12 @@
 pragma solidity ^0.8.0;
 
 /**
- * @title OUSD Vault Contract
- * @notice The Vault contract stores assets. On a deposit, OUSD will be minted
-           and sent to the depositor. On a withdrawal, OUSD will be burned and
+ * @title OToken Vault Contract
+ * @notice The Vault contract stores assets. On a deposit, OToken will be minted
+           and sent to the depositor. On a withdrawal, OToken will be burned and
            assets will be sent to the withdrawer. The Vault accepts deposits of
            interest from yield bearing strategies which will modify the supply
-           of OUSD.
+           of OToken.
  * @author Origin Protocol Inc
  */
 
@@ -48,24 +48,24 @@ contract VaultCore is VaultStorage {
         _;
     }
 
-    modifier onlyOusdMetaStrategy() {
+    modifier onlyOTokenMetaStrategy() {
         require(
-            msg.sender == ousdMetaStrategy,
-            "Caller is not the OUSD meta strategy"
+            msg.sender == oTokenMetaStrategy,
+            "Caller is not the OToken meta strategy"
         );
         _;
     }
 
     /**
-     * @dev Deposit a supported asset and mint OUSD.
+     * @dev Deposit a supported asset and mint OToken.
      * @param _asset Address of the asset being deposited
      * @param _amount Amount of the asset being deposited
-     * @param _minimumOusdAmount Minimum OUSD to mint
+     * @param _minimumOTokenAmount Minimum OToken to mint
      */
     function mint(
         address _asset,
         uint256 _amount,
-        uint256 _minimumOusdAmount
+        uint256 _minimumOTokenAmount
     ) external whenNotCapitalPaused nonReentrant {
         require(assets[_asset].isSupported, "Asset is not supported");
         require(_amount > 0, "Amount must be greater than 0");
@@ -74,9 +74,9 @@ contract VaultCore is VaultStorage {
         uint256 unitPrice = _toUnitPrice(_asset, true);
         uint256 priceAdjustedDeposit = (units * unitPrice) / 1e18;
 
-        if (_minimumOusdAmount > 0) {
+        if (_minimumOTokenAmount > 0) {
             require(
-                priceAdjustedDeposit >= _minimumOusdAmount,
+                priceAdjustedDeposit >= _minimumOTokenAmount,
                 "Mint amount lower than minimum"
             );
         }
@@ -88,8 +88,8 @@ contract VaultCore is VaultStorage {
             _rebase();
         }
 
-        // Mint matching OUSD
-        oUSD.mint(msg.sender, priceAdjustedDeposit);
+        // Mint matching OToken
+        oToken.mint(msg.sender, priceAdjustedDeposit);
 
         // Transfer the deposited coins to the vault
         IERC20 asset = IERC20(_asset);
@@ -101,11 +101,11 @@ contract VaultCore is VaultStorage {
     }
 
     /**
-     * @dev Mint OUSD for OUSD Meta Strategy
+     * @dev Mint OToken for OToken Meta Strategy
      * @param _amount Amount of the asset being deposited
      *
      * Notice: can't use `nonReentrant` modifier since the `mint` function can
-     * call `allocate`, and that can trigger `ConvexOUSDMetaStrategy` to call this function
+     * call `allocate`, and that can trigger `ConvexOTokenMetaStrategy` to call this function
      * while the execution of the `mint` has not yet completed -> causing a `nonReentrant` collision.
      *
      * Also important to understand is that this is a limitation imposed by the test suite.
@@ -116,7 +116,7 @@ contract VaultCore is VaultStorage {
     function mintForStrategy(uint256 _amount)
         external
         whenNotCapitalPaused
-        onlyOusdMetaStrategy
+        onlyOTokenMetaStrategy
     {
         require(_amount < MAX_INT, "Amount too high");
 
@@ -129,22 +129,22 @@ contract VaultCore is VaultStorage {
         }
 
         // safe to cast because of the require check at the beginning of the function
-        netOusdMintedForStrategy += int256(_amount);
+        netOTokenMintedForStrategy += int256(_amount);
 
         require(
-            abs(netOusdMintedForStrategy) < netOusdMintForStrategyThreshold,
-            "Minted ousd surpassed netOusdMintForStrategyThreshold."
+            abs(netOTokenMintedForStrategy) < netOTokenMintForStrategyThreshold,
+            "Minted OToken surpassed netOTokenMintForStrategyThreshold."
         );
 
-        // Mint matching OUSD
-        oUSD.mint(msg.sender, _amount);
+        // Mint matching OToken
+        oToken.mint(msg.sender, _amount);
     }
 
     // In memoriam
 
     /**
-     * @dev Withdraw a supported asset and burn OUSD.
-     * @param _amount Amount of OUSD to burn
+     * @dev Withdraw a supported asset and burn OToken.
+     * @param _amount Amount of OToken to burn
      * @param _minimumUnitAmount Minimum stablecoin units to receive in return
      */
     function redeem(uint256 _amount, uint256 _minimumUnitAmount)
@@ -156,8 +156,8 @@ contract VaultCore is VaultStorage {
     }
 
     /**
-     * @dev Withdraw a supported asset and burn OUSD.
-     * @param _amount Amount of OUSD to burn
+     * @dev Withdraw a supported asset and burn OToken.
+     * @param _amount Amount of OToken to burn
      * @param _minimumUnitAmount Minimum stablecoin units to receive in return
      */
     function _redeem(uint256 _amount, uint256 _minimumUnitAmount) internal {
@@ -199,7 +199,7 @@ contract VaultCore is VaultStorage {
             );
         }
 
-        oUSD.burn(msg.sender, _amount);
+        oToken.burn(msg.sender, _amount);
 
         // Until we can prove that we won't affect the prices of our assets
         // by withdrawing them, this should be here.
@@ -212,11 +212,11 @@ contract VaultCore is VaultStorage {
             totalUnits = _totalValue();
         }
 
-        // Check that OUSD is backed by enough assets
+        // Check that OToken is backed by enough assets
         if (maxSupplyDiff > 0) {
             // Allow a max difference of maxSupplyDiff% between
-            // backing assets value and OUSD total supply
-            uint256 diff = oUSD.totalSupply().divPrecisely(totalUnits);
+            // backing assets value and OToken total supply
+            uint256 diff = oToken.totalSupply().divPrecisely(totalUnits);
             require(
                 (diff > 1e18 ? diff.sub(1e18) : uint256(1e18).sub(diff)) <=
                     maxSupplyDiff,
@@ -226,11 +226,11 @@ contract VaultCore is VaultStorage {
     }
 
     /**
-     * @dev Burn OUSD for OUSD Meta Strategy
-     * @param _amount Amount of OUSD to burn
+     * @dev Burn OToken for OToken Meta Strategy
+     * @param _amount Amount of OToken to burn
      *
      * Notice: can't use `nonReentrant` modifier since the `redeem` function could
-     * require withdrawal on `ConvexOUSDMetaStrategy` and that one can call `burnForStrategy`
+     * require withdrawal on `ConvexOTokenMetaStrategy` and that one can call `burnForStrategy`
      * while the execution of the `redeem` has not yet completed -> causing a `nonReentrant` collision.
      *
      * Also important to understand is that this is a limitation imposed by the test suite.
@@ -241,22 +241,22 @@ contract VaultCore is VaultStorage {
     function burnForStrategy(uint256 _amount)
         external
         whenNotCapitalPaused
-        onlyOusdMetaStrategy
+        onlyOTokenMetaStrategy
     {
         require(_amount < MAX_INT, "Amount too high");
 
         emit Redeem(msg.sender, _amount);
 
         // safe to cast because of the require check at the beginning of the function
-        netOusdMintedForStrategy -= int256(_amount);
+        netOTokenMintedForStrategy -= int256(_amount);
 
         require(
-            abs(netOusdMintedForStrategy) < netOusdMintForStrategyThreshold,
-            "Attempting to burn too much OUSD."
+            abs(netOTokenMintedForStrategy) < netOTokenMintForStrategyThreshold,
+            "Attempting to burn too much OToken."
         );
 
-        // Burn OUSD
-        oUSD.burn(msg.sender, _amount);
+        // Burn OToken
+        oToken.burn(msg.sender, _amount);
 
         // Until we can prove that we won't affect the prices of our assets
         // by withdrawing them, this should be here.
@@ -268,7 +268,7 @@ contract VaultCore is VaultStorage {
     }
 
     /**
-     * @notice Withdraw a supported asset and burn all OUSD.
+     * @notice Withdraw a supported asset and burn all OToken.
      * @param _minimumUnitAmount Minimum stablecoin units to receive in return
      */
     function redeemAll(uint256 _minimumUnitAmount)
@@ -276,7 +276,7 @@ contract VaultCore is VaultStorage {
         whenNotCapitalPaused
         nonReentrant
     {
-        _redeem(oUSD.balanceOf(msg.sender), _minimumUnitAmount);
+        _redeem(oToken.balanceOf(msg.sender), _minimumUnitAmount);
     }
 
     /**
@@ -357,7 +357,7 @@ contract VaultCore is VaultStorage {
 
     /**
      * @dev Calculate the total value of assets held by the Vault and all
-     *      strategies and update the supply of OUSD.
+     *      strategies and update the supply of OToken.
      */
     function rebase() external virtual nonReentrant {
         _rebase();
@@ -365,33 +365,33 @@ contract VaultCore is VaultStorage {
 
     /**
      * @dev Calculate the total value of assets held by the Vault and all
-     *      strategies and update the supply of OUSD, optionally sending a
+     *      strategies and update the supply of OToken, optionally sending a
      *      portion of the yield to the trustee.
      * @return totalUnits Total balance of Vault in units
      */
     function _rebase() internal whenNotRebasePaused returns (uint256) {
-        uint256 ousdSupply = oUSD.totalSupply();
+        uint256 oTokenSupply = oToken.totalSupply();
         uint256 vaultValue = _totalValue();
-        if (ousdSupply == 0) {
+        if (oTokenSupply == 0) {
             return vaultValue;
         }
 
         // Yield fee collection
         address _trusteeAddress = trusteeAddress; // gas savings
-        if (_trusteeAddress != address(0) && (vaultValue > ousdSupply)) {
-            uint256 yield = vaultValue.sub(ousdSupply);
+        if (_trusteeAddress != address(0) && (vaultValue > oTokenSupply)) {
+            uint256 yield = vaultValue.sub(oTokenSupply);
             uint256 fee = yield.mul(trusteeFeeBps).div(10000);
             require(yield > fee, "Fee must not be greater than yield");
             if (fee > 0) {
-                oUSD.mint(_trusteeAddress, fee);
+                oToken.mint(_trusteeAddress, fee);
             }
             emit YieldDistribution(_trusteeAddress, yield, fee);
         }
 
-        // Only rachet OUSD supply upwards
-        ousdSupply = oUSD.totalSupply(); // Final check should use latest value
-        if (vaultValue > ousdSupply) {
-            oUSD.changeSupply(vaultValue);
+        // Only rachet OToken supply upwards
+        oTokenSupply = oToken.totalSupply(); // Final check should use latest value
+        if (vaultValue > oTokenSupply) {
+            oToken.changeSupply(vaultValue);
         }
         return vaultValue;
     }
@@ -530,7 +530,7 @@ contract VaultCore is VaultStorage {
         // each coin, times the desired output value, divided by the
         // totalOutputRatio.
         //
-        // For example, withdrawing: 30 OUSD:
+        // For example, withdrawing: 30 OToken:
         // DAI 33% * 30 / 1.02 = 9.80 DAI
         // USDT = 66 % * 30 / 1.02 = 19.60 USDT
         //
@@ -697,7 +697,7 @@ contract VaultCore is VaultStorage {
 
         if (isMint) {
             /* Never price a normalized unit price for more than one
-             * unit of OETH/OUSD when minting.
+             * unit of OETH/OToken when minting.
              */
             if (price > 1e18) {
                 price = 1e18;
@@ -705,7 +705,7 @@ contract VaultCore is VaultStorage {
             require(price >= MINT_MINIMUM_UNIT_PRICE, "Asset price below peg");
         } else {
             /* Never give out more than 1 normalized unit amount of assets
-             * for one unit of OETH/OUSD when redeeming.
+             * for one unit of OETH/OToken when redeeming.
              */
             if (price < 1e18) {
                 price = 1e18;
