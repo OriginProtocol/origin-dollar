@@ -3,4 +3,4 @@ src = "contracts"
 out = "out"
 libs = ["lib"]
 
-solc_version = "0.8.19"
+solc_version = "0.8.7"
