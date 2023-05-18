@@ -104,7 +104,6 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         _deposit(_weth, _amount);
     }
 
-    // slither-disable-next-line arbitrary-send-eth
     function _deposit(address _weth, uint256 _wethAmount) internal {
         require(_wethAmount > 0, "Must deposit something");
         require(_weth == address(weth), "Can only deposit WETH");
@@ -149,14 +148,13 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         );
 
         // Do the deposit to Curve ETH pool
-        // slither-disable-next-line arbitrary-send-eth
+        // slither-disable-next-line arbitrary-send
         uint256 lpDeposited = curvePool.add_liquidity{ value: _wethAmount }(
             _amounts,
             minMintAmount
         );
 
         require(
-            // slither-disable-next-line arbitrary-send-eth
             IConvexDeposits(cvxDepositorAddress).deposit(
                 cvxDepositorPTokenId,
                 lpDeposited,
@@ -348,16 +346,17 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
     receive() external payable {}
 
     /**
-     * @dev Call the necessary approvals for the Curve pool and gauge
+     * @dev Since we are unwrapping WETH before depositing it to Curve
+     *      there is no need to to set an approval for WETH on the Curve
+     *      pool
      * @param _asset Address of the asset
+     * @param _pToken Address of the Curve LP token
      */
     // solhint-disable-next-line no-unused-vars
     function _abstractSetPToken(address _asset, address _pToken)
         internal
         override
-    {
-        _approveAsset(_asset);
-    }
+    {}
 
     function _approveAsset(address _asset) internal {
         // approve curve pool for asset (required for adding liquidity)
