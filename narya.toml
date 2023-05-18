@@ -1,0 +1,15 @@
+# Narya specific configs
+# Don't be confused with the Foundry configs, which should go to the foundry.toml file at the project root.
+# All possible options are listed here.
+
+
+# This defines metadata for your project
+[project]
+
+# This is the base profile for all other profiles. Properties will be inherited.
+# All options can also be defined for individual profiles, unless explicitly noted.
+[profile.default]
+# Relative path from the git repo root to the Ethereum project repo.
+# Use this if you are using mono-repo pattern.
+# Only in default profile.
+root = "./contracts"

@@ -58,7 +58,8 @@
     "solhint": "^3.3.6",
     "solidifier": "^2.1.0",
     "solidity-coverage": "^0.7.17",
-    "web3-utils": "^1.5.2"
+    "web3-utils": "^1.5.2",
+    "@narya-ai/contracts": "0.4.0"
   },
   "husky": {
     "hooks": {
