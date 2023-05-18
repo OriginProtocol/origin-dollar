@@ -476,7 +476,7 @@ const SwapCurrencyPill = ({
     'sfrxeth',
   ]
 
-  const coinRedeemOptions = ['oeth', 'mix', 'eth']
+  const coinRedeemOptions = ['mix', 'eth']
 
   const { active } = useWeb3React()
 
