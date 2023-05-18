@@ -216,7 +216,7 @@ contract VaultCore is VaultStorage {
             // backing assets value and OUSD total supply
             uint256 diff = oUSD.totalSupply().divPrecisely(totalUnits);
             require(
-                (diff > 1e18 ? diff - 1e18 : uint256(1e18) - diff) <=
+                (diff > 1e18 ? diff - 1e18 : 1e18 - diff) <=
                     maxSupplyDiff,
                 "Backing supply liquidity error"
             );
