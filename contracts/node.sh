@@ -25,6 +25,7 @@ main()
         if [ -z "$BLOCK_NUMBER" ]; then
             echo "It is recommended that BLOCK_NUMBER is set to a recent block to improve performance of the fork";
         else
+            echo "Forking from block $BLOCK_NUMBER";
             params+=(--fork-block-number ${BLOCK_NUMBER})
         fi
         if [ -z "$STACK_TRACE" ]; then params+=( --show-stack-traces); fi
