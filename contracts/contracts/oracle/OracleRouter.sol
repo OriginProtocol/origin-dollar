@@ -46,7 +46,7 @@ abstract contract OracleRouterBase is IOracle {
             require(_price <= MAX_DRIFT, "Oracle: Price exceeds max");
             require(_price >= MIN_DRIFT, "Oracle: Price under min");
         }
-        return uint256(_price);
+        return _price;
     }
 
     function getDecimals(address _feed) internal view virtual returns (uint8) {

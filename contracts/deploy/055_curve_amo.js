@@ -166,7 +166,6 @@ const deployConvexETHMetaStrategy = async ({
           cVaultProxy.address,
           addresses.mainnet.CVXBooster,
           addresses.mainnet.OETHProxy,
-          addresses.mainnet.WETH,
           crvRewards,
           tokenAddress,
           oethPoolLpPID,
