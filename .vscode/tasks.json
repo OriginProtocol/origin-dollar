@@ -8,6 +8,14 @@
 			"options": {
 				"cwd": "${workspaceFolder}/contracts"
 			}
+		},
+		{
+			"type": "shell",
+			"command": "(rm -rf ./deployments/hardhat) && (source .env)",
+			"label": "remove-deployment-files",
+			"options": {
+				"cwd": "${workspaceFolder}/contracts"
+			}
 		}
 	]
 }

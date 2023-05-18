@@ -4,12 +4,7 @@ const { ethers } = hre;
 
 const addresses = require("../utils/addresses");
 const { fundAccounts } = require("../utils/funding");
-const {
-  getAssetAddresses,
-  daiUnits,
-  isFork,
-  isForkWithLocalNode,
-} = require("./helpers");
+const { getAssetAddresses, daiUnits, isFork } = require("./helpers");
 const { utils } = require("ethers");
 
 const { airDropPayouts } = require("../scripts/staking/airDrop.js");
