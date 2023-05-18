@@ -654,7 +654,7 @@ contract VaultCore is VaultStorage {
                 .getExchangeRate();
             return (_raw * exchangeRate) / 1e18;
         } else {
-            require(false, "Unsupported conversion type");
+            revert("Unsupported conversion type");
         }
     }
 
@@ -685,7 +685,7 @@ contract VaultCore is VaultStorage {
                 .getExchangeRate();
             price = (price * 1e18) / exchangeRate;
         } else if (conversion != UnitConversion.DECIMALS) {
-            require(false, "Unsupported conversion type");
+            revert("Unsupported conversion type");
         }
 
         /* At this stage the price is already adjusted to the unit
