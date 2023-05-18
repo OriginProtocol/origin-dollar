@@ -45,7 +45,6 @@ Thumbs.db
 # IDEs #
 ########
 .idea
-.vscode
 
 node_modules
 contracts/cache/**
