@@ -35,6 +35,7 @@ module.exports = deploymentWithGovernanceProposal(
       actions: [
         // 1. Update CRV config with new 5k CRV limit
         {
+          name: "Update OUSD Harvester config for CRV",
           contract: cHarvester,
           signature:
             "setRewardTokenConfig(address,uint16,uint16,address,uint256,bool)",
