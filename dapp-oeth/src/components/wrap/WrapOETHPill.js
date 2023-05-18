@@ -256,7 +256,7 @@ const WrapOETHPill = ({
                     {fbt('Loading...', 'Swaps Loading...')}
                   </span>
                 ) : (
-                  <span>{expectedAmount || '-'}</span>
+                  <span>{expectedAmount || '0.00'}</span>
                 )}
               </div>
             )}

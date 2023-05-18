@@ -683,10 +683,6 @@ const Nav = ({ isMobile, locale, onLocale, page }) => {
         }
 
         @media (max-width: 992px) {
-          .nav-container {
-            padding: 0 30px;
-          }
-
           .dapplinks-contain {
             width: 100%;
           }
@@ -787,8 +783,7 @@ const Nav = ({ isMobile, locale, onLocale, page }) => {
           }
 
           .navbar .nav-container {
-            padding-left: 20px !important;
-            padding-right: 20px !important;
+            padding: 0 20px;
           }
 
           .ousd-experimental-notice {
@@ -876,7 +871,6 @@ const Nav = ({ isMobile, locale, onLocale, page }) => {
 
           .navbar .nav-container {
             margin: 1.5rem 0;
-            padding: 0 30px;
           }
 
           .lang-opts {
@@ -888,6 +882,12 @@ const Nav = ({ isMobile, locale, onLocale, page }) => {
           .banner {
             left: 50%;
             transform: translate(-50%, 0);
+          }
+        }
+
+        @media (max-width: 799px) {
+          .navbar .nav-container {
+            padding: 0 8px;
           }
         }
       `}</style>
