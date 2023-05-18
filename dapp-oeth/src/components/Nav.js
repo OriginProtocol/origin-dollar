@@ -546,7 +546,7 @@ const Nav = ({ isMobile, locale, onLocale, page }) => {
         }
 
         .banner.burn {
-          background-color: #141519;
+          background-color: #1e1f25;
           border: solid 1px;
           border-radius: 5px;
         }
@@ -586,7 +586,7 @@ const Nav = ({ isMobile, locale, onLocale, page }) => {
         }
 
         .navbar.lightBg {
-          background: #141519;
+          background: #1e1f25;
           display: block;
         }
 

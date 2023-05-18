@@ -302,7 +302,7 @@ const TokenSelectionModal = ({
         }
 
         .selectable:hover {
-          background-color: #141519;
+          background-color: #1e1f25;
         }
       `}</style>
     </>
