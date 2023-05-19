@@ -4,7 +4,6 @@ import io
 
 from world import *
 
-
 BUYBACK_CONTRACT = buyback
 OGV_CONTRACT = Contract.from_explorer(OGV)
 
@@ -30,7 +29,7 @@ def sim_buyback_ogv(amount):
     with TemporaryFork():
         before = ogv.balanceOf(REWARDS)
         with silent_tx():
-            buyback.swapNow(amount, 1, {"from": STRATEGIST})
+            buyback.distributeAndSwap(amount, 1, {"from": STRATEGIST})
         after = ogv.balanceOf(REWARDS)
         return after - before
 
@@ -45,6 +44,11 @@ def build_buyback_tx(max_dollars=5000, max_slippage=2.0):
       Percentage of slippage from current prices to allow.
     """
     buyback = BUYBACK_CONTRACT
+    treasuryBps = BUYBACK_CONTRACT.treasuryBps()
+    ousd_for_treasury = max_dollars * treasuryBps / 1e4
+    ousd_to_swap = max_dollars - ousd_for_treasury
+
+
 
     # Calculate buyback amount
     ousd_available = ousd.balanceOf(buyback)
@@ -56,9 +60,10 @@ def build_buyback_tx(max_dollars=5000, max_slippage=2.0):
     min_slippage_ogv = no_slippage_ogv * (1.0 - (max_slippage / 100))
 
     # Display buyback amounts
-    print("OUSD available:         {}".format(c18(ousd_available)))
-    print("Maximum buyback amount: {}".format(c18(max_dollars * 1e18)))
-    print("Actual buyback amount:  {}".format(c18(buyback_amount)))
+    print("OUSD available on contract:   {}".format(c18(ousd_available)))
+    print("OUSD to use for transaction:  {}".format(c18(buyback_amount)))
+    print("OUSD send to treasury:        {}".format(c18(ousd_for_treasury * 1e18)))
+    print("OUSD to swap:                 {}".format(c18(ousd_to_swap * 1e18)))
     print("----")
 
     x = no_slippage_ogv
@@ -81,7 +86,7 @@ def build_buyback_tx(max_dollars=5000, max_slippage=2.0):
     # Display transaction data
     with TemporaryFork():
         with silent_tx():
-            tx = buyback.swapNow(buyback_amount, min_slippage_ogv, {"from": STRATEGIST})
+            tx = buyback.distributeAndSwap(buyback_amount, min_slippage_ogv, {"from": STRATEGIST})
     print("")
     print("To: {}".format(tx.receiver))
     print("Data: {}".format(tx.input))
