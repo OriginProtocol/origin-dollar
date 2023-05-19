@@ -1,4 +1,5 @@
-pragma solidity ^0.8.19;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
 
 import "../Base.t.sol";
 import "../VaultInvariants/VaultLockedUserInvariants.sol";

@@ -32,11 +32,11 @@ contract WOETH is ERC4626, Governable, Initializable {
         OETH(address(asset())).rebaseOptIn();
     }
 
-    function name() public view override (ERC20, IERC20Metadata) returns (string memory) {
+    function name() public view override returns (string memory) {
         return "Wrapped OETH";
     }
 
-    function symbol() public view override (ERC20, IERC20Metadata) returns (string memory) {
+    function symbol() public view override returns (string memory) {
         return "WOETH";
     }
 

@@ -1,4 +1,5 @@
-pragma solidity ^0.8.19;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
 
 import {IERC20} from "lib/forge-std/src/interfaces/IERC20.sol";
 import {console} from "lib/forge-std/src/console.sol";
