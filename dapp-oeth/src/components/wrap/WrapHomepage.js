@@ -262,7 +262,7 @@ const WrapHomepage = ({
               in value instead of growing in number.
             </p>
             <a
-              href="https://oeth.com"
+              href="https://docs.oeth.com/core-concepts/wrapped-ousd"
               className="btn-blue learn-more"
               target="_blank"
               rel="noreferrer"
