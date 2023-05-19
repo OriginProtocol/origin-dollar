@@ -110,6 +110,10 @@ const config = {
             key: 'x-ipfs-path',
             value: '/ipns/ousd.eth/',
           },
+          {
+            key: 'Content-Security-Policy',
+            value: "frame-ancestors https://*.ledger.com",
+          },
         ],
       },
     ]

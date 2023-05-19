@@ -90,7 +90,8 @@
     "react-styl": "^0.0.3",
     "react-toastify": "^6.2.0",
     "sass": "^1.39.2",
-    "use-analytics": "^0.0.5"
+    "use-analytics": "^0.0.5",
+    "web3-ledgerhq-frame-connector": "^1.0.1"
   },
   "babel": {
     "presets": [

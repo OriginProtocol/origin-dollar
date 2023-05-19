@@ -5,6 +5,7 @@ import { MewConnectConnector } from '@myetherwallet/mewconnect-connector'
 import { SafeAppConnector } from '@gnosis.pm/safe-apps-web3-react'
 import { LedgerConnector } from 'utils/LedgerConnector'
 import { DeFiWeb3Connector } from 'deficonnect'
+import { LedgerHQFrameConnector } from 'web3-ledgerhq-frame-connector'
 import { get } from 'lodash'
 import { isProduction } from 'constants/env'
 
@@ -68,6 +69,11 @@ export const defiWalletConnector = process.browser
       pollingInterval: POLLING_INTERVAL,
     })
   : {}
+
+export const ledgerLiveConnector = new LedgerHQFrameConnector({
+  targetOrigin: "https://dapp-browser.apps.ledger.com",
+  timeoutMilliseconds: 10000,
+})
 
 export const connectorNameIconMap = {
   MetaMask: 'metamask-icon.svg',
