@@ -393,7 +393,7 @@ const Nav = ({ isMobile, locale, onLocale, page }) => {
                 <TransactionActivityDropdown />
               </div>
             )}
-            {!active && !ledgerLive (
+            {!active && !ledgerLive && (
               <div className="d-flex d-lg-none">
                 <GetOUSD
                   navMarble
