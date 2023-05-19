@@ -391,7 +391,7 @@ const CoinSelect = ({
         </span>
         <img
           className="coin-select-icon"
-          src={assetRootPath('/images/downcaret.png')}
+          src={assetRootPath('/images/downarrow.svg')}
           alt="Coin select arrow"
         />
       </button>

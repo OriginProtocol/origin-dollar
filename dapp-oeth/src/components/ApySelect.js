@@ -57,7 +57,7 @@ const ApySelect = ({ apyDayOptions, apyDays, setApyDays, nav, homepage }) => {
           >
             <img
               className="apy-select-icon"
-              src={assetRootPath('/images/downcaret.png')}
+              src={assetRootPath('/images/downarrow.svg')}
               alt="APY select arrow"
             />
           </div>
@@ -133,7 +133,6 @@ const ApySelect = ({ apyDayOptions, apyDays, setApyDays, nav, homepage }) => {
           margin: 0 8px;
           background-color: rgba(255, 255, 255, 0.1);
           border-radius: 20px;
-          transition: transform 0.2s ease-in;
         }
 
         .downcaret.opened {
