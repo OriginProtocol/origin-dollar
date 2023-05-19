@@ -9,6 +9,7 @@ import withIsMobile from 'hoc/withIsMobile'
 import ConfirmationModal from './ConfirmationModal'
 import withWalletSelectModal from 'hoc/withWalletSelectModal'
 import { walletLogin } from 'utils/account'
+import { event } from '../../../lib/gtm'
 
 const ApproveSwap = ({
   stableCoinToApprove,
@@ -81,15 +82,15 @@ const ApproveSwap = ({
     vault: {
       contract: vault,
       name: {
-        approving: 'the Origin Vault',
-        done: 'Origin Vault',
+        approving: 'the OETH Vault',
+        done: 'OETH Vault',
       },
     },
     zapper: {
       contract: zapper,
       name: {
-        approving: 'the Zapper',
-        done: 'Zapper',
+        approving: 'the Zap + Vault',
+        done: 'Zap + Vault',
       },
     },
     // uniswap: {
@@ -231,6 +232,11 @@ const ApproveSwap = ({
 
   const startApprovalProcess = async () => {
     if (stage === 'approve' && contract) {
+      event({
+        event: 'approve_started',
+        approval_type: isWrapped ? 'wrap' : 'swap',
+        approval_token: stableCoinToApprove,
+      })
       setStage('waiting-user')
       try {
         const result = await contract
@@ -250,6 +256,13 @@ const ApproveSwap = ({
           coin: stableCoinToApprove,
         })
         await rpcProvider.waitForTransaction(result.hash)
+        event({
+          event: 'approve_complete',
+          approval_type: isWrapped ? 'wrap' : 'swap',
+          approval_token: stableCoinToApprove,
+          approval_address: '',
+          approval_tx: '',
+        })
         setIsApproving({})
         setStage('done')
       } catch (e) {
@@ -258,6 +271,19 @@ const ApproveSwap = ({
         setStage('approve')
         if (e.code !== 4001) {
           await storeTransactionError('approve', stableCoinToApprove)
+          event({
+            event: 'approve_failed',
+            approval_type: isWrapped ? 'wrap' : 'swap',
+            approval_token: stableCoinToApprove,
+            approval_address: '',
+            approval_tx: '',
+          })
+        } else {
+          event({
+            event: 'approve_rejected',
+            approval_type: isWrapped ? 'wrap' : 'swap',
+            approval_token: stableCoinToApprove,
+          })
         }
       }
     }
@@ -353,6 +379,12 @@ const ApproveSwap = ({
         </button>
       </div>
       <style jsx>{`
+        .btn-blue {
+          padding: 20px 0;
+          font-size: 20px;
+          max-height: none;
+        }
+
         .btn-blue:disabled {
           opacity: 0.4;
         }
@@ -373,6 +405,13 @@ const ApproveSwap = ({
 
         .link-detail:hover {
           color: #3aa2ff;
+        }
+
+        @media (max-width: 799px) {
+          .btn-blue {
+            padding: 10px 0;
+            font-size: 16px;
+          }
         }
       `}</style>
     </>

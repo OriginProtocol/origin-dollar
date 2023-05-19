@@ -17,6 +17,7 @@ import { getUserSource } from 'utils/user'
 import usePrevious from 'utils/usePrevious'
 import ApproveSwap from 'components/buySell/ApproveSwap'
 import { useWeb3React } from '@web3-react/core'
+import { event } from '../../../lib/gtm'
 
 import analytics from 'utils/analytics'
 import {
@@ -168,14 +169,14 @@ const WrapHomepage = ({
   }
 
   const onWrapOETH = async () => {
-    analytics.track(
-      swapMode === 'mint' ? 'On Wrap to wETH' : 'On Unwrap from wETH',
-      {
-        category: 'wrap',
-        label: swapMetadata.coinUsed,
-        value: swapMetadata.swapAmount,
-      }
-    )
+    const wrapTokenUsed = swapMode === 'mint' ? 'woeth' : 'oeth'
+    const wrapTokenAmount = swapMode === 'mint' ? inputAmount : wrapEstimate
+    // mint = wrap
+    event({
+      'event': 'wrap_started',
+      'wrap_token': wrapTokenUsed,
+      'wrap_amount': wrapTokenAmount
+    })
 
     const metadata = swapMetadata()
 
@@ -207,35 +208,34 @@ const WrapHomepage = ({
       setStoredCoinValuesToZero()
       setInputAmount('')
 
-      if (document?.body) {
-        setTimeout(() => {
-          document?.body.scrollTo({
-            top: 0,
-            left: 0,
-            behavior: 'smooth',
-          })
-        }, 100)
-      }
-
       await rpcProvider.waitForTransaction(result.hash)
-
-      analytics.track('Wrap succeeded', {
-        category: 'wrap',
-        label: metadata.coinUsed,
-        value: metadata.swapAmount,
+      event({
+        'event': 'wrap_complete',
+        'wrap_type': swapMode,
+        'wrap_token': wrapTokenUsed,
+        'wrap_amount': wrapTokenAmount,
+        'wrap_address': '',
+        'wrap_tx': ''
       })
     } catch (e) {
       const metadata = swapMetadata()
       // 4001 code happens when a user rejects the transaction
       if (e.code !== 4001) {
         await storeTransactionError(swapMode, 'oeth')
-        analytics.track('Wrap failed', {
-          category: 'wrap',
-          label: e.message,
+        event({
+          'event': 'wrap_failed',
+          'wrap_type': swapMode,
+          'wrap_token': wrapTokenUsed,
+          'wrap_amount': wrapTokenAmount,
+          'wrap_address' : ''
         })
       } else {
-        analytics.track('Wrap canceled', {
-          category: 'wrap',
+        event({
+          'event': 'wrap_rejected',
+          'wrap_type': swapMode,
+          'wrap_token': wrapTokenUsed,
+          'wrap_amount': wrapTokenAmount,
+          'wrap_address': ''
         })
       }
 
@@ -254,35 +254,38 @@ const WrapHomepage = ({
   return (
     <>
       {process.browser && (
-        <div className="d-flex flex-column w-100 mt-4">
-          <div className="swap-wrapper d-flex flex-column flex-grow">
-            {buyErrorToDisplay && (
-              <ErrorModal
-                error={buyErrorToDisplay}
-                errorMap={errorMap}
-                onClose={() => {
-                  setBuyErrorToDisplay(false)
-                }}
-              />
-            )}
-            <div className="wrap-main">
-              <WrapOETHPill
-                swapMode={swapMode}
-                onAmountChange={async (amount) => {
-                  setInputAmount(amount)
-                }}
-                coinValue={inputAmount}
-                rate={rate}
-                topItem
-                onErrorChange={setBalanceError}
-                ethPrice={ethPrice}
-              />
-              <PillArrow swapMode={swapMode} setSwapMode={setSwapMode} />
-              <WrapOETHPill
-                swapMode={swapMode}
-                wrapEstimate={wrapEstimate}
-                ethPrice={ethPrice}
-              />
+        <div className="wrap-homepage d-flex flex-column mt-4">
+          <div className="wrap-wrapper">
+            <p className="title">Wrap</p>
+            <div className="swap-wrapper d-flex flex-column flex-grow">
+              {buyErrorToDisplay && (
+                <ErrorModal
+                  error={buyErrorToDisplay}
+                  errorMap={errorMap}
+                  onClose={() => {
+                    setBuyErrorToDisplay(false)
+                  }}
+                />
+              )}
+              <div className="wrap-main">
+                <WrapOETHPill
+                  swapMode={swapMode}
+                  onAmountChange={async (amount) => {
+                    setInputAmount(amount)
+                  }}
+                  coinValue={inputAmount}
+                  rate={rate}
+                  topItem
+                  onErrorChange={setBalanceError}
+                  ethPrice={ethPrice}
+                />
+                <PillArrow swapMode={swapMode} setSwapMode={setSwapMode} />
+                <WrapOETHPill
+                  swapMode={swapMode}
+                  wrapEstimate={wrapEstimate}
+                  ethPrice={ethPrice}
+                />
+              </div>
             </div>
           </div>
           <ApproveSwap
@@ -300,13 +303,25 @@ const WrapHomepage = ({
           />
           <style jsx>{`
             .wrap-wrapper {
-              margin: 18px 0;
               border: solid 1px #141519;
               border-radius: 10px;
               background-color: #1e1f25;
+            }
+
+            .wrap-homepage {
+              border: solid 1px #141519;
+              border-radius: 10px;
+              width: 100%;
               position: relative;
               overflow: hidden;
               width: 100%;
+            }
+
+            .wrap-homepage .title {
+              font-size: 14px;
+              padding: 28px 40px;
+              margin: 0;
+              color: #fafafb;
             }
 
             .wrap-main {
@@ -314,13 +329,17 @@ const WrapHomepage = ({
               flex-direction: column;
               width: 100%;
               height: 100%;
-              border-radius: 10px;
               overflow: hidden;
             }
 
             @media (max-width: 799px) {
-              .wrap-wrapper {
-                padding: 23px 20px 20px 20px;
+              .wrap-homepage {
+                margin-top: 16px !important;
+                border-radius: 4px;
+              }
+
+              .wrap-homepage .title {
+                padding: 16px;
               }
             }
           `}</style>

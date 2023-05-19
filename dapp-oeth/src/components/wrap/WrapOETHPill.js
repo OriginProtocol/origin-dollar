@@ -70,24 +70,27 @@ const CoinSelect = ({ selected }) => {
   return (
     <>
       <div
-        className={`coin-select d-flex align-items-center justify-content-start`}
+        className={`coin-select d-flex align-items-center justify-content-end`}
       >
         <CoinImage coin={selected} />
-        <div className="coin mr-auto">{`${
-          selected === 'woeth' ? 'w' : ''
-        }OETH`}</div>
+        <div className="coin">{`${selected === 'woeth' ? 'w' : ''}OETH`}</div>
       </div>
       <style jsx>{`
         .coin-select {
           min-width: 160px;
-          min-height: 40px;
-          padding: 7px 20px 7px 7px;
+          padding: 0 16px;
           font-size: 18px;
         }
 
         .coin {
           color: #fafbfb;
           margin-left: 12px;
+        }
+
+        @media (max-width: 799px) {
+          .coin-select {
+            padding: 0;
+          }
         }
       `}</style>
     </>
@@ -226,7 +229,7 @@ const WrapOETHPill = ({
         }`}
       >
         <div
-          className={`d-flex align-items-start justify-content-between currency-pill-inner`}
+          className={`d-flex align-items-center justify-content-between currency-pill-inner`}
         >
           <div
             className={`d-flex flex-column justify-content-between input-holder w-full relative`}
@@ -253,54 +256,44 @@ const WrapOETHPill = ({
                     {fbt('Loading...', 'Swaps Loading...')}
                   </span>
                 ) : (
-                  <span>{expectedAmount || '-'}</span>
+                  <span>{expectedAmount || '0.00'}</span>
                 )}
               </div>
             )}
-            <div className="usd-balance mt-auto">
-              {bottomItem
-                ? `$${formatCurrency(
-                    truncateDecimals(expectedAmount, 18) * parseFloat(ethPrice),
-                    2
-                  )}`
-                : `$${formatCurrency(
-                    truncateDecimals(coinValue, 18) * parseFloat(ethPrice),
-                    2
-                  )}`}
-            </div>
           </div>
-          <div className="d-flex flex-column justify-content-between align-items-end">
-            <div className="d-flex align-items-center">
-              <div className="d-flex justify-content-between balance mb-2 mr-2">
-                {displayBalance && (
-                  <div>
-                    {fbt(
-                      'Balance: ' +
-                        fbt.param(
-                          'coin-balance',
-                          formatCurrency(displayBalance.balance, 6)
-                        ),
-                      'Coin balance'
-                    )}
-                    <span className="ml-1">
-                      {coinToDisplay?.[displayBalance.coin]?.symbol}
-                    </span>
-                  </div>
-                )}
-                {balanceClickable && (
-                  <button className="max-link ml-2" onClick={setMaxBalance}>
-                    {fbt('max', 'Set maximum currency amount')}
-                  </button>
-                )}
+          <div className="d-flex flex-column justify-content-between align-items-end output-holder">
+            {topItem && (
+              <div className="d-flex align-items-center">
+                <div className="d-flex justify-content-between balance">
+                  {displayBalance && (
+                    <div>
+                      <p className="balance-text">
+                        {fbt(
+                          'Balance: ' +
+                            fbt.param(
+                              'coin-balance',
+                              formatCurrency(displayBalance.balance, 6)
+                            ),
+                          'Coin balance'
+                        )}{' '}
+                      </p>
+                    </div>
+                  )}
+                  {balanceClickable && (
+                    <button className="max-link ml-2" onClick={setMaxBalance}>
+                      {fbt('max', 'Set maximum currency amount')}
+                    </button>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
             {topItem ? (
               <CoinSelect selected={swapMode === 'mint' ? 'oeth' : 'woeth'} />
             ) : (
               <CoinSelect selected={swapMode === 'mint' ? 'woeth' : 'oeth'} />
             )}
             {topItem && (
-              <div className="balance mt-auto">
+              <div className="balance mt-2">
                 {rate !== null
                   ? fbt(
                       '1 wOETH = ' +
@@ -317,16 +310,24 @@ const WrapOETHPill = ({
         </div>
       </div>
       <style jsx>{`
+        .output-holder {
+          max-width: 50%;
+        }
+
         .currency-pill {
           display: flex;
           justify-content: center;
-          padding: 42px 20px 42px 40px;
+          padding: 24px 40px;
           background-color: #1e1f25;
+          min-height: 150px;
+          border-bottom-left-radius: 10px;
+          border-bottom-right-radius: 10px;
         }
 
         .topItem {
           background-color: #18191c;
           border-bottom: solid 1px #141519;
+          border-radius: 0;
         }
 
         .currency-pill-inner {
@@ -336,6 +337,12 @@ const WrapOETHPill = ({
           font-size: 14px;
           color: #828699;
           margin-left: 4px;
+          margin-bottom: 12px;
+        }
+
+        .balance-text {
+          whitespace: nowrap;
+          margin: 0;
         }
 
         .usd-balance {
@@ -372,7 +379,10 @@ const WrapOETHPill = ({
           font-size: 32px;
           max-width: 100%;
           text-overflow: ellipsis;
-          color: #828699;
+          display: block;
+          overflow: hidden;
+          color: #fafafb;
+          font-weight: 700;
         }
 
         .expected-value .text-loading {
@@ -422,12 +432,22 @@ const WrapOETHPill = ({
           max-width: 70%;
         }
 
+        .input-holder input {
+          font-size: 32px;
+          font-weight: 700;
+        }
+
         @media (max-width: 799px) {
-          .input-holder {
-            max-width: 50%;
+          .currency-pill {
+            padding: 0 16px;
           }
 
-          input {
+          .input-holder {
+            max-width: 50%;
+            padding: 32px 0;
+          }
+
+          .input-holder input {
             font-size: 24px;
           }
 
@@ -439,6 +459,7 @@ const WrapOETHPill = ({
             font-size: 12px;
             margin-left: 4px;
             white-space: nowrap;
+            margin-bottom: 16px;
           }
         }
       `}</style>

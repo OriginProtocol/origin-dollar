@@ -5,7 +5,7 @@ import { useWeb3React } from '@web3-react/core'
 import { useRouter } from 'next/router'
 
 import withWalletSelectModal from 'hoc/withWalletSelectModal'
-import analytics from 'utils/analytics'
+import { event } from '../../lib/gtm'
 import { walletLogin } from 'utils/account'
 import { ledgerLiveConnector } from 'utils/connectors'
 
@@ -59,10 +59,7 @@ const GetOUSD = ({
         style={style}
         onClick={() => {
           if (process.browser) {
-            analytics.track('On Connect', {
-              category: 'general',
-              label: trackSource,
-            })
+            event({'event': 'connect_click'})
             if (ledgerLive) {
               activate(ledgerLiveConnector, undefined, true)
             } else {

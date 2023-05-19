@@ -17,7 +17,7 @@ const useEthPrice = () => {
       // floor so we can convert to BN without a problem
       setEthPrice(Math.floor(get(await ethPriceRequest.json(), 'USD')))
     } catch (e) {
-      console.error(`Can not fetch eth prices: ${e.message}`)
+      console.error(`Can not fetch eth prices: ${e?.message}`)
       setEthPrice(0)
     }
   }

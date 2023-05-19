@@ -3,10 +3,14 @@ const addresses = require("../utils/addresses");
 const { isMainnet } = require("../test/helpers.js");
 
 module.exports = deploymentWithGovernanceProposal(
+  /* IMPORTANT (!)
+   *
+   * Once this gets deployed undo the `skip` in the `vault.fork-test.js` under
+   * the "Should have correct Price Oracle address set" scenario.
+   */
   {
     deployName: "052_decimal_cache",
     forceDeploy: false,
-    forceSkip: true,
     onlyOnFork: true, // this is only executed in forked environment
 
     //proposalId: "40434364243407050666554191388123037800510237271029051418887027936281231737485"
@@ -19,14 +23,19 @@ module.exports = deploymentWithGovernanceProposal(
     withConfirmation,
   }) => {
     const { deployerAddr, governorAddr } = await getNamedAccounts();
+
+    if (isMainnet) {
+      throw new Error("Delete once sure to update OUSD contracts");
+    }
+
     // Current contracts
     const cVaultProxy = await ethers.getContract("VaultProxy");
     const dVaultAdmin = await deployWithConfirmation("VaultAdmin");
     const dOracleRouter = await deployWithConfirmation("OracleRouter");
+    const dVaultCore = await deployWithConfirmation("VaultCore");
 
     const cVault = await ethers.getContractAt("Vault", cVaultProxy.address);
     const cOracleRouter = await ethers.getContract("OracleRouter");
-    await cOracleRouter.cacheDecimals(addresses.mainnet.rETH);
     await cOracleRouter.cacheDecimals(addresses.mainnet.DAI);
     await cOracleRouter.cacheDecimals(addresses.mainnet.USDC);
     await cOracleRouter.cacheDecimals(addresses.mainnet.USDT);
@@ -104,6 +113,12 @@ module.exports = deploymentWithGovernanceProposal(
           contract: cHarvesterProxy,
           signature: "upgradeTo(address)",
           args: [dHarvester.address],
+        },
+        {
+          // Set new implementation
+          contract: cVaultProxy,
+          signature: "upgradeTo(address)",
+          args: [dVaultCore.address],
         },
       ],
     };

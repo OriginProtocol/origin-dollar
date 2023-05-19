@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react'
+import React, { useEffect, useState, useRef, useCallback } from 'react'
 import classnames from 'classnames'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
@@ -25,7 +25,7 @@ const environment = process.env.NODE_ENV
 const DappLinks = ({ page }) => {
   return (
     <>
-      <div className="d-flex align-items-center justify-content-center dapp-navigation mr-auto flex-wrap">
+      <div className="d-flex align-items-center justify-content-center dapp-navigation flex-wrap">
         <div className={`link-contain ${page === 'swap' ? 'selected' : ''}`}>
           <Link href={adjustLinkHref('/')}>
             <a
@@ -37,8 +37,10 @@ const DappLinks = ({ page }) => {
             </a>
           </Link>
         </div>
-        <div className={`link-contain ${page === 'wrap' ? 'selected' : ''}`}>
-          <Link href={adjustLinkHref('/wrap')} type="button">
+        <div
+          className={`link-contain last ${page === 'wrap' ? 'selected' : ''}`}
+        >
+          <Link href={adjustLinkHref('/wrap')}>
             <a
               className={`d-flex align-items-center ${
                 page === 'wrap' ? 'selected' : ''
@@ -64,7 +66,13 @@ const DappLinks = ({ page }) => {
       </div>{' '}
       <style jsx>{`
         .link-contain {
+          font-size: 16px;
           border-radius: 56px;
+          margin-right: 8px;
+        }
+
+        .link-contain.last {
+          margin-right: 0 !important;
         }
 
         .link-contain.selected {
@@ -83,21 +91,31 @@ const DappLinks = ({ page }) => {
 
         .dapp-navigation a {
           white-space: nowrap;
-          padding: 8px 16px;
+          padding: 8px 24px;
         }
 
         .dapp-navigation a.selected {
           background: #000000aa;
           color: #fafafb;
-          padding: 8px 16px;
+          padding: 8px 24px;
           border-radius: 56px;
         }
 
         @media (max-width: 992px) {
           .dapp-navigation {
-            margin-top: -10px;
+            margin-top: 8px;
             margin-left: 0px;
-            margin-bottom: 10px;
+            margin-bottom: 24px;
+          }
+
+          .dapp-navigation a {
+            padding: 8px 16px;
+            font-size: 12px;
+          }
+
+          .dapp-navigation a.selected {
+            padding: 8px 16px;
+            font-size: 12px;
           }
         }
       `}</style>
@@ -115,12 +133,13 @@ const TransactionActivityDropdown = () => {
 
   useEffect(() => {
     // check which transactions have newly arrived
-    if (prevTransactions && prevTransactions.length !== 0) {
-      const prevTxHashes = prevTransactions.map((tx) => tx.hash)
-      setTxHashesToAnimate([
-        ...txHashesToAnimate,
+    if (transactions?.length > 0) {
+      const prevTxHashes = prevTransactions?.map((tx) => tx.hash)
+
+      setTxHashesToAnimate((prev) => [
+        ...prev,
         ...transactions
-          .filter((tx) => !prevTxHashes.includes(tx.hash))
+          .filter((tx) => !prevTxHashes?.includes(tx.hash))
           .map((tx) => tx.hash),
       ])
 
@@ -133,7 +152,7 @@ const TransactionActivityDropdown = () => {
       animationHash.current = setTimeout(() => {
         setTxHashesToAnimate([])
         animationHash.current = null
-      }, 15000)
+      }, 8000)
     }
 
     const sortedTx = [...transactions]
@@ -207,8 +226,11 @@ const TransactionActivityDropdown = () => {
       </Dropdown>
       <style jsx>{`
         .activity-toggle {
-          width: 44px;
-          height: 44px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 40px;
+          height: 40px;
           background: #1e1f25;
           box-shadow: 0px 27px 80px rgba(0, 0, 0, 0.07),
             0px 6.0308px 17.869px rgba(0, 0, 0, 0.0417275),
@@ -219,6 +241,8 @@ const TransactionActivityDropdown = () => {
         }
 
         .activity-icon {
+          display: flex;
+          flex-shrink: 0;
           width: 25px;
           height: 25px;
         }
@@ -277,10 +301,53 @@ const TransactionActivityDropdown = () => {
             transform: rotate(360deg);
           }
         }
+
+        @media (max-width: 992px) {
+          .activity-toggle {
+            width: 36px;
+            height: 36px;
+          }
+        }
       `}</style>
     </>
   )
 }
+
+const useSticky = ({ defaultSticky = false, stickAt = 80 }) => {
+  const [isSticky, setIsSticky] = useState(defaultSticky)
+  const [fromTop, setFromTop] = useState(0)
+
+  const elRef = useRef(null)
+
+  const toggleSticky = useCallback(
+    (e, { top, bottom }) => {
+      if (top <= 0 && bottom > stickAt) {
+        !isSticky && setIsSticky(true)
+      } else {
+        isSticky && setIsSticky(false)
+      }
+      if (document?.body) {
+        setFromTop(document?.body.scrollTop)
+      }
+    },
+    [isSticky]
+  )
+
+  useEffect(() => {
+    const handleScroll = (e) => {
+      if (elRef?.current) {
+        toggleSticky(e, elRef.current.getBoundingClientRect())
+      }
+    }
+    document.body.addEventListener('scroll', handleScroll)
+    return () => {
+      document.body.removeEventListener('scroll', handleScroll)
+    }
+  }, [toggleSticky])
+
+  return [{ elRef, fromTop, isSticky }]
+}
+const SHOW_DISCLAIMER = true
 
 const Nav = ({ isMobile, locale, onLocale, page }) => {
   const { pathname } = useRouter()
@@ -288,40 +355,31 @@ const Nav = ({ isMobile, locale, onLocale, page }) => {
   const apy = useStoreState(ContractStore, (s) => s.apy.apy30 || 0)
   const ledgerLive = ledgerLiveConnector?.isLedgerApp()
 
+  const [{ elRef, isSticky }] = useSticky({
+    defaultSticky: false,
+  })
+
   return (
     <>
       <nav
+        ref={elRef}
         className={classnames(
-          'navbar navbar-expand-lg d-flex justify-content-center flex-column dapp'
+          'navbar navbar-expand-lg d-flex justify-content-center flex-column',
+          {
+            sticky: isSticky,
+          }
         )}
       >
-        <div className="container flex-nowrap">
+        <div className="nav-container flex-nowrap">
           <Link href={adjustLinkHref('/')}>
             <a className="navbar-brand d-flex flex-column justify-content-center">
               <img
                 src={assetRootPath('/images/origin-ether-logo.svg')}
                 className="origin-logo"
                 alt="OETH logo"
-                width={204}
               />
             </a>
           </Link>
-          {/*<button*/}
-          {/*  className="navbar-toggler d-lg-none ml-auto"*/}
-          {/*  type="button"*/}
-          {/*  data-toggle="collapse"*/}
-          {/*  data-target=".primarySidePanel"*/}
-          {/*  aria-controls="primarySidePanel"*/}
-          {/*  aria-expanded="false"*/}
-          {/*  aria-label="Toggle side panel"*/}
-          {/*>*/}
-          {/*  <div className="dropdown-marble">*/}
-          {/*    <img*/}
-          {/*      src={assetRootPath('/images/bell-icon.svg')}*/}
-          {/*      alt="Activity menu"*/}
-          {/*    />*/}
-          {/*  </div>*/}
-          {/*</button>*/}
           <div className="d-flex">
             <IPFSDappLink css="d-lg-none" />
             {active && (
@@ -329,7 +387,12 @@ const Nav = ({ isMobile, locale, onLocale, page }) => {
                 <AccountStatusDropdown />
               </div>
             )}
-            {!active && !ledgerLive && (
+            {active && account && (
+              <div className="d-flex d-lg-none">
+                <TransactionActivityDropdown />
+              </div>
+            )}
+            {!active && !ledgerLive (
               <div className="d-flex d-lg-none">
                 <GetOUSD
                   navMarble
@@ -339,12 +402,6 @@ const Nav = ({ isMobile, locale, onLocale, page }) => {
               </div>
             )}
           </div>
-          {/*<div*/}
-          {/*  className="primarySidePanel dark-background collapse"*/}
-          {/*  data-toggle="collapse"*/}
-          {/*  data-target=".primarySidePanel"*/}
-          {/*  aria-controls="primarySidePanel"*/}
-          {/*/>*/}
           <div
             className="navLinks dark-background collapse"
             data-toggle="collapse"
@@ -395,40 +452,80 @@ const Nav = ({ isMobile, locale, onLocale, page }) => {
                 loading="lazy"
               />
             </button>
-            <div className="d-flex flex-column flex-lg-row mb-auto w-100 align-items-center">
+            <div className="d-flex flex-column flex-lg-row mb-auto w-100 justify-content-between align-items-center">
               <DappLinks page={page} />
-              {environment !== 'production' && (
-                <ul className="navbar-nav">
-                  <li className="nav-item mr-2">
-                    <Link href={adjustLinkHref('/dashboard')}>
-                      <a>{fbt('Debug', 'Debugging dashboard link')}</a>
-                    </Link>
-                  </li>
-                </ul>
-              )}
-              <IPFSDappLink css="d-none d-lg-block" />
-              <div className={`d-flex flex-column flex-lg-row-reverse`}>
-                <AccountStatusDropdown />
-              </div>
-              {active && account && (
-                <div className="d-flex">
-                  <TransactionActivityDropdown />
+              <div className="d-flex flex-row">
+                {environment !== 'production' && (
+                  <ul className="navbar-nav">
+                    <li className="nav-item mr-2">
+                      <Link href={adjustLinkHref('/dashboard')}>
+                        <a>{fbt('Debug', 'Debugging dashboard link')}</a>
+                      </Link>
+                    </li>
+                  </ul>
+                )}
+                <IPFSDappLink css="d-none d-lg-block" />
+                <div className={`d-flex flex-column flex-lg-row-reverse`}>
+                  <AccountStatusDropdown />
                 </div>
-              )}
-              <GetOUSD
-                style={{ marginTop: 40 }}
-                className="mt-auto d-lg-none"
-                light2
-                trackSource="Mobile navigation menu"
-              />
+                {active && account && (
+                  <div className="d-flex">
+                    <TransactionActivityDropdown />
+                  </div>
+                )}
+                <GetOUSD
+                  style={{ marginTop: 40 }}
+                  className="mt-auto d-lg-none"
+                  light2
+                  trackSource="Mobile navigation menu"
+                />
+              </div>
             </div>
           </div>
         </div>
-        <div className="d-flex d-lg-none">
-          <DappLinks page={page} />
-        </div>
-      </nav>
+      </nav>{' '}
+      <div className="d-flex d-lg-none justify-content-center dapplinks-contain">
+        <DappLinks page={page} />
+      </div>
       <style jsx>{`
+        .notice {
+          background-color: #0074f0;
+          margin-bottom: 0px;
+        }
+
+        .notice.burn {
+          background: linear-gradient(90deg, #8c66fc -28.99%, #0274f1 144.97%);
+        }
+
+        .notice.staking {
+          background-color: #1a82ff;
+        }
+
+        .notice.dapp {
+          margin-bottom: 0px;
+        }
+
+        .notice.disclaimer {
+          background-color: #ff4e4e;
+        }
+
+        .notice .btn {
+          font-size: 12px;
+          height: auto;
+          padding: 5px 20px;
+          background-color: #fafbfb;
+          color: #02080d;
+        }
+
+        .navbar-contain {
+          width: 100%;
+          margin-top: 48px !important;
+          margin-bottom: 72px !important;
+          margin: 0 auto;
+          padding: 0 136px;
+          max-width: 1700px;
+        }
+
         .banner {
           background-color: transparent;
           font-size: 0.8125rem;
@@ -467,37 +564,76 @@ const Nav = ({ isMobile, locale, onLocale, page }) => {
           min-height: 40px;
         }
 
-        .navbar {
-          padding: 35px 0 0 0;
-          font-size: 0.8125rem;
-          margin-top: 0;
-          z-index: 2;
+        .navbar-brand img {
+          max-height: 24px;
+          max-width: 180px;
         }
+
+        .navbar {
+          display: flex;
+          align-items: center;
+          padding: 0;
+          font-size: 16px;
+          font-weight: 500;
+          margin-top: 0;
+          padding: 0;
+          z-index: 2;
+          height: 100px;
+        }
+
+        .navbar.sticky {
+          position: sticky;
+          top: 0;
+          background: #101113;
+        }
+
+        .navbar.lightBg {
+          background: #141519;
+          display: block;
+        }
+
         .navbar a {
           color: #fafbfb;
           text-decoration: none;
         }
+
         .navbar a:hover {
           opacity: 0.8;
         }
-        .navbar .container {
-          margin-top: 30px;
+
+        .navbar .nav-container {
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          justify-content: space-between;
+          width: 100%;
+          max-width: 100%;
+          padding: 0 80px;
         }
+
+        .navbar .container {
+          margin: 0;
+          width: 100%;
+        }
+
         .navbar-toggler {
           margin-left: 10px;
           padding-left: 0;
           padding-right: 0;
         }
+
         .navbar-toggler:focus {
           border-color: transparent;
           outline: none;
           opacity: 0.8;
         }
+
         .nav-item {
           align-items: center;
           display: flex;
           margin-right: 31px;
         }
+
         .debug {
           position: absolute;
           top: 0;
@@ -549,12 +685,29 @@ const Nav = ({ isMobile, locale, onLocale, page }) => {
         }
 
         @media (max-width: 992px) {
+          .dapplinks-contain {
+            width: 100%;
+          }
+
           .container {
             width: 100%;
             max-width: 100%;
             padding-left: 30px;
             padding-right: 30px;
           }
+
+          .navbar-contain {
+            margin-top: 24px !important;
+            margin-bottom: 24px !important;
+            padding: 0 24px !important;
+            align-items: center;
+            justify-content: space-between;
+          }
+
+          .navbar {
+            font-size: 12px;
+          }
+
           .navbar-collapse {
             background: white;
             font-size: 1.5rem;
@@ -631,9 +784,8 @@ const Nav = ({ isMobile, locale, onLocale, page }) => {
             display: none;
           }
 
-          .navbar .container {
-            padding-left: 20px !important;
-            padding-right: 20px !important;
+          .navbar .nav-container {
+            padding: 0 20px;
           }
 
           .ousd-experimental-notice {
@@ -669,6 +821,10 @@ const Nav = ({ isMobile, locale, onLocale, page }) => {
         }
 
         @media (max-width: 1199px) {
+          .navbar-contain {
+            padding: 0 56px;
+          }
+
           .banner.dapp {
             left: 0;
             border-radius: 0;
@@ -706,13 +862,17 @@ const Nav = ({ isMobile, locale, onLocale, page }) => {
         }
 
         @media (max-width: 992px) {
+          .navbar-brand img {
+            max-height: 16px;
+            max-width: 120px;
+          }
+
           .navbar {
             z-index: 100;
           }
 
-          .navbar .container {
+          .navbar .nav-container {
             margin: 1.5rem 0;
-            padding: 0 30px;
           }
 
           .lang-opts {
@@ -724,6 +884,12 @@ const Nav = ({ isMobile, locale, onLocale, page }) => {
           .banner {
             left: 50%;
             transform: translate(-50%, 0);
+          }
+        }
+
+        @media (max-width: 799px) {
+          .navbar .nav-container {
+            padding: 0 8px;
           }
         }
       `}</style>

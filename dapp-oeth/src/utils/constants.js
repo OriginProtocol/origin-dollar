@@ -26,8 +26,8 @@ const approveCoinGasLimits = {
   frxeth: 64000,
   sfrxeth: 64000,
 }
-const apyDayOptions = [7, 30, 60, 90, 365]
-const DEFAULT_SELECTED_APY = 30
+const apyDayOptions = [7, 30]
+const DEFAULT_SELECTED_APY = 7
 const transactionHistoryItemsPerPage = 50
 const max_price = 1.2
 

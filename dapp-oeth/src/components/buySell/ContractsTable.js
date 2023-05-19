@@ -8,13 +8,14 @@ import { formatCurrency } from 'utils/math'
 import { assetRootPath } from 'utils/image'
 import ContractStore from 'stores/ContractStore'
 import ConfirmationModal from 'components/buySell/ConfirmationModal'
+import { event } from '../../../lib/gtm'
 
 const swapContracts = {
   zapper: {
-    name: fbt('Zapper', 'Contract Table Zapper'),
+    name: fbt('Zap + Vault', 'Contract Table Zap + Vault'),
   },
   vault: {
-    name: fbt('Origin Vault', 'Contract Table Origin Vault'),
+    name: fbt('OETH Vault', 'Contract Table OETH Vault'),
   },
   // uniswap: {
   //   name: fbt('Uniswap V3', 'Contract Table Uniswap V3'),
@@ -64,14 +65,14 @@ const unsupportedDisplay = (estimateName, swapMode) => {
   switch (estimateName) {
     case 'vault':
       return fbt(
-        'The Origin Vault only supports redeeming OETH for a mix of LSDs.',
+        'The OETH Vault only supports redeeming OETH for a mix of LSDs.',
         'unsupported-vault-mint'
       )
 
     case 'zapper':
       return swapMode === 'mint'
         ? fbt(
-            'Zapper only supports minting with ETH and sfrxETH.',
+            'The Zap contract only supports minting with ETH and sfrxETH.',
             'unsupported-zapper-mint'
           )
         : fbt('This route does not support OETH redeem.', 'unsupported-redeem')
@@ -111,18 +112,15 @@ const Estimates = ({ estimates, selected, isLoading, isActive, onSelect }) => {
           {isLoading ? (
             <div className="estimates-loading">Loading...</div>
           ) : isEmpty(sortedEstimates) ? (
-            <div className="estimate-item invalid">
-              <img
-                className="mr-2"
-                src={assetRootPath('/images/warn.png')}
-                alt="Warning icon"
-              />
-              <span>
-                {fbt(
-                  'Enter an amount to view swap route estimates.',
-                  'Invalid amount'
-                )}
-              </span>
+            <div className="estimate-item invalid d-block">
+              <div>
+                <span className="big">0 OETH</span>
+                <span className="small">(estimate)</span>
+              </div>
+              <div className="dash d-flex">
+                <div className="dash-child">-</div>
+                <span className="">-</span>
+              </div>
             </div>
           ) : (
             <>
@@ -164,72 +162,130 @@ const Estimates = ({ estimates, selected, isLoading, isActive, onSelect }) => {
                 const isSelected = selected?.name === name
                 const errorDisplay = errorMap?.[error]
                 return (
-                  <button
-                    key={name}
-                    className={classnames('estimate-item box-highlight', {
+                  <div
+                    className={classnames('box-highlight-container', {
                       'd-none': !isBest && !isShowingMore,
                       'has-error': errorDisplay,
                       selected: isSelected,
                     })}
-                    onClick={() => {
-                      if (canDoSwap && !error && !isSelected) {
-                        onSelect(estimate)
-                      }
-                    }}
-                    disabled={errorDisplay || isSelected || !isActive}
                   >
-                    <div className="estimate">
-                      <div className="d-inline-flex align-items-center">
-                        {amountReceived ? (
-                          <>
-                            <span className="estimate-value">
-                              {amountReceived}{' '}
-                              {coinToSwap === 'mix'
-                                ? 'LSD Mix'
-                                : coinToSwap?.toUpperCase()}
-                            </span>
-                            <span className="estimate-help">
-                              {fbt('(estimate)', 'estimate help')}
-                            </span>
-                          </>
-                        ) : (
-                          <span className="estimate-value">-</span>
-                        )}
+                    <button
+                      key={name}
+                      className={classnames('box-highlight', {
+                        'd-none': !isBest && !isShowingMore,
+                        'has-error': errorDisplay,
+                        selected: isSelected,
+                      })}
+                      onClick={() => {
+                        if (canDoSwap && !error && !isSelected) {
+                          onSelect(estimate)
+                          event({
+                            event: 'change_swap_route',
+                            change_route_to: name,
+                          })
+                        }
+                      }}
+                      disabled={errorDisplay || isSelected || !isActive}
+                    >
+                      <div className="d-flex top">
+                        <div className="d-inline-flex align-items-center">
+                          {amountReceived ? (
+                            <>
+                              <span className="estimate-value">
+                                {parseFloat(amountReceived).toFixed(5)}{' '}
+                                {coinToSwap === 'mix'
+                                  ? 'LSD Mix'
+                                  : coinToSwap?.toUpperCase()}
+                              </span>
+                              <span className="estimate-help">
+                                {fbt('(estimate)', 'estimate help')}
+                              </span>
+                            </>
+                          ) : (
+                            <span className="estimate-value">0</span>
+                          )}
+                        </div>
+                        <span
+                          className={classnames('status', {
+                            best: isBest,
+                            error: !!error,
+                            diff: hasDiff,
+                          })}
+                        >
+                          {isBest ? (
+                            fbt('Best', 'Swap estimations best one')
+                          ) : error === 'unsupported' ? (
+                            <>
+                              <span className="mr-1">{capitalize(name)}</span>
+                              <span>
+                                {fbt(
+                                  'Unsupported',
+                                  'Swap estimate unsupported'
+                                )}
+                              </span>
+                            </>
+                          ) : errorDisplay ? (
+                            <>
+                              <span className="mr-1">{capitalize(name)}</span>
+                              <span>{fbt('Error', 'Swap estimate error')}</span>
+                            </>
+                          ) : hasDiff ? (
+                            `- ${formatCurrency(diffPercentage * -1, 2)}%`
+                          ) : (
+                            ''
+                          )}
+                        </span>
                       </div>
-                      {amountReceived ? (
-                        <div className="fees-value">
-                          <div
-                            className="d-inline-block mr-2"
-                            title={
-                              approveAllowanceNeeded
-                                ? `${fbt(
-                                    `Includes 2 transactions Approve($${fbt.param(
-                                      'Approve Cost',
-                                      formatCurrency(gasEstimateApprove, 2)
-                                    )}) + Swap($${fbt.param(
-                                      'Swap Cost',
-                                      formatCurrency(gasEstimateSwap, 2)
-                                    )})`,
-                                    'Swap & approve transaction gas estimation'
-                                  )}`
-                                : ''
-                            }
-                          >
-                            {fbt(
-                              `${fbt.param(
-                                'afterFeeDisplay',
-                                `≈ $${formatCurrency(
-                                  amountReceivedUsd,
-                                  2
-                                )} after fees`
-                              )}`,
-                              'After Fee Price'
-                            )}
-                            <span className="asterisk">
-                              {approveAllowanceNeeded ? '*' : ''}
-                            </span>
-                          </div>
-                          <span>
+                      <div className="estimate-item">
+                        <div className="estimate">
+                          {amountReceived ? (
+                            <div className="fees-value">
+                              <div
+                                className="d-inline-block mr-2"
+                                title={
+                                  approveAllowanceNeeded
+                                    ? `${fbt(
+                                        `Includes 2 transactions Approve($${fbt.param(
+                                          'Approve Cost',
+                                          formatCurrency(gasEstimateApprove, 2)
+                                        )}) + Swap($${fbt.param(
+                                          'Swap Cost',
+                                          formatCurrency(gasEstimateSwap, 2)
+                                        )})`,
+                                        'Swap & approve transaction gas estimation'
+                                      )}`
+                                    : ''
+                                }
+                              >
+                                {fbt(
+                                  `${fbt.param(
+                                    'afterFeeDisplay',
+                                    `≈ $${formatCurrency(amountReceivedUsd, 2)}`
+                                  )}`,
+                                  'After Fee Price'
+                                )}
+                                <br className="d-block d-sm-none" />
+                                <span className="ml-1">after fees</span>
+                                <span className="asterisk">
+                                  {approveAllowanceNeeded ? '*' : ''}
+                                </span>
+                              </div>
+                              <span className="d-none d-md-inline">
+                                {fbt(
+                                  `Effective Price: ${fbt.param(
+                                    'effectivePriceDisplay',
+                                    `$${formatCurrency(effectivePrice, 2)}`
+                                  )}`,
+                                  'Effective Price'
+                                )}
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="fees-value">-</span>
+                          )}
+                        </div>
+                        <div className="additional">
+                          <span className="d-block d-md-none effective">
                             {fbt(
                               `Effective Price: ${fbt.param(
                                 'effectivePriceDisplay',
@@ -238,99 +294,131 @@ const Estimates = ({ estimates, selected, isLoading, isActive, onSelect }) => {
                               'Effective Price'
                             )}
                           </span>
-                        </div>
-                      ) : (
-                        <span className="fees-value">-</span>
-                      )}
-                    </div>
-                    <div className="additional">
-                      <span
-                        className={classnames('status', {
-                          best: isBest,
-                          error: !!error,
-                          diff: hasDiff,
-                        })}
-                      >
-                        {isBest ? (
-                          fbt('Best', 'Swap estimations best one')
-                        ) : error === 'unsupported' ? (
-                          <>
-                            <span className="mr-1">{capitalize(name)}</span>
-                            <span>
-                              {fbt('Unsupported', 'Swap estimate unsupported')}
-                            </span>
-                          </>
-                        ) : errorDisplay ? (
-                          <>
-                            <span className="mr-1">{capitalize(name)}</span>
-                            <span>{fbt('Error', 'Swap estimate error')}</span>
-                          </>
-                        ) : hasDiff ? (
-                          `- ${formatCurrency(diffPercentage * -1, 2)}%`
-                        ) : (
-                          ''
-                        )}
-                      </span>
-                      <span className="info-value">
-                        {error === 'unsupported'
-                          ? unsupportedDisplay(name, swapMode)
-                          : errorDisplay || (
-                              <>
-                                {gasEstimateEth && (
-                                  <span className="mr-2">
-                                    <img
-                                      className="mr-2"
-                                      src={assetRootPath('/images/gas.png')}
-                                      alt="gas price icon"
-                                    />
-                                    <span>
-                                      {parseFloat(gasEstimateEth)?.toFixed(4)}{' '}
-                                      ETH{' '}
-                                      {`(≈ $${formatCurrency(gasEstimate, 2)})`}
-                                    </span>
-                                  </span>
+                          <span className="info-value">
+                            {error === 'unsupported'
+                              ? unsupportedDisplay(name, swapMode)
+                              : errorDisplay || (
+                                  <>
+                                    {gasEstimateEth && (
+                                      <span className="mr-2">
+                                        <img
+                                          className="mr-2"
+                                          src={assetRootPath('/images/gas.png')}
+                                          alt="gas price icon"
+                                        />
+                                        <span>
+                                          {parseFloat(gasEstimateEth)?.toFixed(
+                                            4
+                                          )}{' '}
+                                          ETH{' '}
+                                        </span>
+                                      </span>
+                                    )}
+                                    <span>{capitalize(name)}</span>
+                                  </>
                                 )}
-                                <span>{capitalize(name)}</span>
-                              </>
-                            )}
-                      </span>
-                    </div>
-                  </button>
+                          </span>
+                        </div>
+                      </div>
+                    </button>
+                  </div>
                 )
               })}
-              <button
-                className="show-hide"
-                onClick={() => {
-                  setIsShowingMore((prev) => !prev)
-                }}
-              >
-                {isShowingMore ? (
-                  <>
-                    <span>{fbt('show less', 'hide')}</span>
-                    <img
-                      className="ml-2"
-                      src={assetRootPath('/images/uparrow.png')}
-                      alt="up arrow icon"
-                    />
-                  </>
-                ) : (
-                  <>
-                    <span>{fbt('show more', 'show more')}</span>
-                    <img
-                      className="ml-2"
-                      style={{ transform: 'rotate(180deg)' }}
-                      src={assetRootPath('/images/uparrow.png')}
-                      alt="up arrow icon"
-                    />
-                  </>
-                )}
-              </button>
+              {sortedEstimates.reduce(
+                (acc, el) => (el.canDoSwap ? ++acc : acc),
+                0
+              ) > 1 && (
+                <button
+                  className="show-hide"
+                  onClick={() => {
+                    setIsShowingMore((prev) => !prev)
+                    if (!isShowingMore) {
+                      event({ event: 'show_swap_routes' })
+                    }
+                  }}
+                >
+                  {isShowingMore ? (
+                    <>
+                      <span>{fbt('show less', 'hide')}</span>
+                      <img
+                        className="ml-2"
+                        src={assetRootPath('/images/uparrow.png')}
+                        alt="up arrow icon"
+                      />
+                    </>
+                  ) : (
+                    <>
+                      <span>{fbt('show more', 'show more')}</span>
+                      <img
+                        className="ml-2"
+                        style={{ transform: 'rotate(180deg)' }}
+                        src={assetRootPath('/images/uparrow.png')}
+                        alt="up arrow icon"
+                      />
+                    </>
+                  )}
+                </button>
+              )}
             </>
           )}
         </div>
       </div>
       <style jsx>
         {`
+          .box-highlight-container {
+            width: 100%;
+            border-radius: 4px;
+            margin-top: 8px;
+            padding: 1px;
+            cursor: pointer;
+          }
+
+          .box-highlight-container.selected,
+          .box-highlight-container:hover .box-highlight-container:hover {
+            background: linear-gradient(90deg, #b361e6 20.29%, #6a36fc 79.06%);
+          }
+
+          .dash {
+            color: #8293a4;
+            padding-top: 5px;
+          }
+
+          .dash-child {
+            margin-right: 133px;
+          }
+
+          .invalid {
+            padding: 16px 24px !important;
+            border-radius: 4px;
+            min-height: 95px;
+          }
+
+          .invalid .big {
+            font-size: 14px;
+            color: #fafafb;
+            margin-right: 6px;
+          }
+
+          .invalid .small {
+            font-size: 12px;
+            color: #8293a4;
+          }
+
+          .top {
+            background-color: #18191c;
+            color: #fafbfb;
+            border-top-left-radius: 4px;
+            border-top-right-radius: 4px;
+            padding: 16px 24px 0 24px;
+            display: flex;
+            justify-content: space-between;
+          }
+
+          .box-highlight {
+            font-size: 12px;
+            color: #8293a4;
+          }
+
           .estimates-container {
             display: flex;
             flex-direction: column;
@@ -360,13 +448,11 @@ const Estimates = ({ estimates, selected, isLoading, isActive, onSelect }) => {
             display: flex;
             flex-direction: row;
             justify-content: space-between;
-            height: 77px;
             width: 100%;
             background: #18191c;
-            border-radius: 4px;
             color: #fafbfb;
-            padding: 16px 24px;
-            border: none;
+            padding: 5px 24px 16px 24px;
+            border-radius: 0 0 4px 4px;
           }
 
           .estimates-loading {
@@ -386,9 +472,8 @@ const Estimates = ({ estimates, selected, isLoading, isActive, onSelect }) => {
             font-size: 14px;
           }
 
-          .estimate-item.has-error {
-            opacity: 0.5;
-            pointer: cursor-not-allowed;
+          .box-highlight.has-error {
+            display: none;
           }
 
           .estimate-item .estimate {
@@ -405,14 +490,15 @@ const Estimates = ({ estimates, selected, isLoading, isActive, onSelect }) => {
             justify-content: center;
           }
 
-          .estimate .estimate-value {
+          .estimate-value {
             display: flex;
             align-items: center;
             font-family: 'Sailec';
             font-style: normal;
             font-weight: 400;
-            font-size: 14px;
+            font-size: 14px !important;
             line-height: 17px;
+            whitespace: nowrap;
           }
 
           .estimate-help {
@@ -435,7 +521,7 @@ const Estimates = ({ estimates, selected, isLoading, isActive, onSelect }) => {
             margin-top: 4px;
           }
 
-          .additional .status {
+          .status {
             font-family: 'Sailec';
             font-style: normal;
             font-weight: 400;
@@ -444,7 +530,7 @@ const Estimates = ({ estimates, selected, isLoading, isActive, onSelect }) => {
             text-align: right;
           }
 
-          .additional .status.best {
+          .status.best {
             background: linear-gradient(
                 97.67deg,
                 #66fe90 -10.09%,
@@ -457,8 +543,8 @@ const Estimates = ({ estimates, selected, isLoading, isActive, onSelect }) => {
             text-fill-color: transparent;
           }
 
-          .additional .status.diff,
-          .additional .status.error {
+          .status.diff,
+          .status.error {
             color: #ff4e4e;
           }
 
@@ -476,20 +562,15 @@ const Estimates = ({ estimates, selected, isLoading, isActive, onSelect }) => {
 
           .box-highlight {
             position: relative;
+            width: 100%;
+            background: #18191c !important;
+            border-radius: 4px;
+            border: none;
+            padding: 0;
           }
 
-          .box-highlight.selected::before,
-          .box-highlight:not(.has-error):hover::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            border-radius: 4px;
-            border: 1px solid transparent;
-            background: linear-gradient(90deg, #b361e6 20.29%, #6a36fc 79.06%);
-            -webkit-mask: linear-gradient(#fff 0 0) content-box,
-              linear-gradient(#fff 0 0);
-            -webkit-mask-composite: xor;
-            mask-composite: exclude;
+          .box-highlight.selected:hover {
+            opacity: 1;
           }
 
           .show-hide {
@@ -498,7 +579,7 @@ const Estimates = ({ estimates, selected, isLoading, isActive, onSelect }) => {
             justify-content: center;
             align-items: center;
             padding: 4px 19px;
-            margin-top: 20px;
+            margin-top: 16px;
             height: 28px;
             max-width: 120px;
             background: rgba(255, 255, 255, 0.1);
@@ -513,6 +594,26 @@ const Estimates = ({ estimates, selected, isLoading, isActive, onSelect }) => {
             font-size: 12px;
             font-weight: 500;
             border: none;
+          }
+
+          @media (max-width: 799px) {
+            .estimates-container {
+              padding: 0 12px;
+            }
+
+            .estimate-item,
+            .estimates-empty,
+            .estimates-loading {
+              padding: 0 12px 16px 12px;
+            }
+
+            .estimate-value {
+              font-size: 14px;
+            }
+
+            .top {
+              padding: 16px 12px 0 12px;
+            }
           }
         `}
       </style>
@@ -662,6 +763,7 @@ const ContractsTable = () => {
         .contracts-header .title {
           color: #fafbfb;
           font-size: 14px;
+          margin-bottom: 0;
         }
 
         .contracts-main {
@@ -683,6 +785,13 @@ const ContractsTable = () => {
         }
 
         @media (max-width: 799px) {
+          .contracts-header {
+            padding: 16px 12px;
+          }
+
+          .contracts-main {
+            padding-bottom: 16px;
+          }
         }
       `}</style>
     </div>

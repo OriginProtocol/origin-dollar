@@ -7,15 +7,15 @@ import { walletConnectConnector } from 'utils/connectors'
 import { myEtherWalletConnector } from 'utils/connectors'
 import { walletlink, resetWalletConnector } from 'utils/connectors'
 import { defiWalletConnector } from 'utils/connectors'
+import { event } from '../../lib/gtm'
 import withIsMobile from 'hoc/withIsMobile'
 
 import AccountStore from 'stores/AccountStore'
 
-import analytics from 'utils/analytics'
 import { assetRootPath } from 'utils/image'
 
 const WalletSelectContent = ({ isMobile }) => {
-  const { connector, activate, deactivate, active } = useWeb3React()
+  const { connector, activate, deactivate, active, account } = useWeb3React()
   const [error, setError] = useState(null)
   const wallets = isMobile
     ? [
@@ -38,6 +38,10 @@ const WalletSelectContent = ({ isMobile }) => {
   useEffect(() => {
     if (active) {
       closeWalletSelectModal()
+      event({
+        'event': 'connect',
+        'connect_address': account?.slice(2)
+      })
     }
   }, [active])
 
@@ -65,9 +69,9 @@ const WalletSelectContent = ({ isMobile }) => {
   }
 
   const onConnect = async (name) => {
-    analytics.track(`On Connect Wallet`, {
-      category: 'general',
-      label: name,
+    event({
+      'event': 'connect_modal_click',
+      'connect_modal_wallet': name.toLowerCase()
     })
 
     setError(null)
@@ -168,8 +172,8 @@ const WalletSelectContent = ({ isMobile }) => {
           padding: 34px 34px 46px 34px;
           max-width: 350px;
           min-width: 350px;
-
-          background-color: #fafbfb;
+          background-color: #101113;
+          color: #fafbfb;
           border-radius: 10px;
         }
 
@@ -187,12 +191,12 @@ const WalletSelectContent = ({ isMobile }) => {
           width: 100%;
           height: 50px;
           border-radius: 25px;
-          border: solid 1px #1a82ff;
-          background-color: #fafbfb;
+          border: solid 1px #141519;
+          background-color: #1e1f25;
           font-size: 18px;
           font-weight: bold;
           text-align: center;
-          color: #1a82ff;
+          color: #fafbfb;
         }
 
         .wallet-select-content .connector-button:disabled {
@@ -209,7 +213,7 @@ const WalletSelectContent = ({ isMobile }) => {
         }
 
         .wallet-select-content .connector-button:hover {
-          background-color: #f8f9fa;
+          background-color: #1e1f25;
         }
 
         .wallet-select-content .connector-button:not(:last-child) {

@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import Dropdown from 'components/Dropdown'
-import DownCaret from 'components/DownCaret'
+import { assetRootPath } from 'utils/image'
+import { event } from '../../lib/gtm'
 
 const ApySelect = ({ apyDayOptions, apyDays, setApyDays, nav, homepage }) => {
   const [open, setOpen] = useState(false)
@@ -18,6 +19,10 @@ const ApySelect = ({ apyDayOptions, apyDays, setApyDays, nav, homepage }) => {
                     e.preventDefault()
                     setApyDays(days)
                     setOpen(false)
+                    event({
+                      'event': 'change_apy',
+                      'change_apy_to': days
+                    })
                   }}
                 >
                   {`${days}${homepage ? ' days' : 'd'}`}
@@ -39,9 +44,13 @@ const ApySelect = ({ apyDayOptions, apyDays, setApyDays, nav, homepage }) => {
           }}
         >
           {`${apyDays} day trailing`}
-          <span className={`downcaret ${homepage ? 'homepage' : ''}`}>
-            <DownCaret size={16} />
-          </span>
+          <div className="downcaret">
+            <img
+              className="apy-select-icon"
+              src={assetRootPath('/images/downcaret.png')}
+              alt="APY select arrow"
+            />
+          </div>
         </div>
       </Dropdown>
       <style jsx>{`
@@ -92,7 +101,25 @@ const ApySelect = ({ apyDayOptions, apyDays, setApyDays, nav, homepage }) => {
         }
 
         .downcaret {
-          margin-left: 8px;
+          position: relative;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          height: 22px;
+          width: 22px;
+          margin: 0 8px;
+          background-color: rgba(255, 255, 255, 0.1);
+          border-radius: 20px;
+        }
+
+        .apy-select-icon {
+          position: relative;
+          top: 1px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          height: 8px;
+          width: 12px;
         }
       `}</style>
     </>

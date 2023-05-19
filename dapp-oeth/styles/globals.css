@@ -474,6 +474,10 @@ section.dim {
 }
 
 @media (max-width: 799px) {
+  .btn-blue {
+    height: 48px;
+  }
+
   .container {
     padding-left: 0px;
     padding-right: 0px;
@@ -513,10 +517,8 @@ section.dim {
   background-color: transparent !important;
 }
 
-@media (min-width: 1200px) {
-  .container {
-    max-width: 940px !important;
-  }
+.container {
+  max-width: 702px !important;
 }
 
 @media (min-width: 1200px) {

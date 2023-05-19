@@ -1,30 +1,25 @@
 import React from 'react'
 import classnames from 'classnames'
 import Head from 'next/head'
-import Link from 'next/link'
-import { useRouter } from 'next/router'
+import AccountStore from 'stores/AccountStore'
+import ContractStore from 'stores/ContractStore'
+import withRpcProvider from 'hoc/withRpcProvider'
 import { useStoreState } from 'pullstate'
 import { fbt } from 'fbt-runtime'
 import { useWeb3React } from '@web3-react/core'
 import { get } from 'lodash'
-import AccountStore from 'stores/AccountStore'
-import ContractStore from 'stores/ContractStore'
-import StakeStore from 'stores/StakeStore'
-import withRpcProvider from 'hoc/withRpcProvider'
-import AppFooter from './AppFooter'
-import { adjustLinkHref } from 'utils/utils'
 import { assetRootPath } from 'utils/image'
-import { burnTimer } from 'utils/constants'
 
 const UNISWAP_URL =
   'https://app.uniswap.org/#/swap?inputCurrency=0xdac17f958d2ee523a2206206994597c13d831ec7&outputCurrency=0x2A8e1E676Ec238d8A992307B495b45B3fEAa5e86'
 
-const SHOW_DISCLAIMER = true
+const SHOW_DISCLAIMER = false
 
 const Layout = ({
   locale,
   onLocale,
   children,
+  nav,
   short,
   shorter,
   medium,
@@ -73,21 +68,7 @@ const Layout = ({
           content="https://ousd.com/images/share-twitter.png"
         />
       </Head>
-      <div
-        className={classnames(
-          'notice disclaimer text-white text-center p-3 dapp',
-          SHOW_DISCLAIMER ? '' : 'd-none'
-        )}
-      >
-        <div className="container d-flex flex-column flex-md-row align-items-center">
-          <span>
-            {fbt(
-              '⚠️ DO NOT RISK ANY FUNDS. ⚠️ Origin Ether is currently being audited. This dapp is for testing only.',
-              'Disclaimer usage'
-            )}
-          </span>
-        </div>
-      </div>
+
       <div
         className={classnames(
           'notice text-white text-center p-3 dapp',
@@ -141,9 +122,10 @@ const Layout = ({
         </div>
       </div>
       <main className={classnames('dapp', { short, shorter, medium })}>
+        {nav}
         {<div className="container">{children}</div>}
       </main>
-      {<AppFooter locale={locale} onLocale={onLocale} />}
+      {/*{<AppFooter locale={locale} onLocale={onLocale} />}*/}
       <style jsx>{`
         .notice {
           background-color: #0074f0;

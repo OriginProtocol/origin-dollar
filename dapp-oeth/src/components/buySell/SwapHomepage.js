@@ -18,6 +18,7 @@ import withIsMobile from 'hoc/withIsMobile'
 import ApproveSwap from 'components/buySell/ApproveSwap'
 import analytics from 'utils/analytics'
 import { formatCurrencyMinMaxDecimals, removeCommas } from '../../utils/math'
+import { event } from '../../../lib/gtm'
 
 const lastUserSelectedCoinKey = 'last_user_selected_coin'
 const lastSelectedSwapModeKey = 'last_user_selected_swap_mode'
@@ -37,7 +38,7 @@ const SwapHomepage = ({
   const [swapMode, setSwapMode] = useState(
     process.browser && localStorage.getItem(lastSelectedSwapModeKey) !== null
       ? localStorage.getItem(lastSelectedSwapModeKey)
-      : 'mint'
+      : 'redeem'
   )
   const [buyErrorToDisplay, setBuyErrorToDisplay] = useState(false)
 
@@ -130,12 +131,17 @@ const SwapHomepage = ({
 
     // currencies flipped
     localStorage.setItem(lastSelectedSwapModeKey, swapMode)
+
     if (selectedSwap) {
       const otherCoinAmount =
-        Math.floor(selectedSwap.amountReceived * 1000000) / 1000000
-      setSelectedBuyCoinAmount(Math.floor(otherCoinAmount * 100) / 100)
+        Math.floor(selectedSwap.amountReceived * 10 ** 18) / 10 ** 18
+
+      setSelectedBuyCoinAmount(
+        Math.floor(otherCoinAmount * 10 ** 18) / 10 ** 18
+      )
+
       setSelectedRedeemCoinAmount(
-        Math.floor(selectedSwap.inputAmount * 100) / 100
+        Math.floor(selectedSwap.inputAmount * 10 ** 18) / 10 ** 18
       )
     }
   }, [swapMode])
@@ -201,18 +207,21 @@ const SwapHomepage = ({
       coinReceived,
       swapAmount,
       stablecoinUsed,
+      selectedSwap,
     }
   }
 
   const onSwapOeth = async () => {
-    analytics.track(
-      swapMode === 'mint' ? 'On Swap to OETH' : 'On Swap from OETH',
-      {
-        category: 'swap',
-        label: swapMetadata.stablecoinUsed,
-        value: swapMetadata.swapAmount,
-      }
-    )
+    const swapTokenUsed =
+      swapMode === 'mint' ? selectedBuyCoin : selectedRedeemCoin
+    const swapTokenAmount =
+      swapMode === 'mint' ? selectedBuyCoinAmount : selectedRedeemCoinAmount
+
+    event({
+      event: 'swap_started',
+      swap_token: swapTokenUsed,
+      swap_amount: swapTokenAmount,
+    })
 
     const metadata = swapMetadata()
 
@@ -231,19 +240,18 @@ const SwapHomepage = ({
         ;({ result, swapAmount, minSwapAmount } = await swapCurve())
       }
 
+      const amountReceived = String(
+        metadata?.selectedSwap?.amountReceived || selectedRedeemCoinAmount
+      )
+
       storeTransaction(
         result,
         swapMode,
         swapMode === 'mint' ? selectedBuyCoin : selectedRedeemCoin,
         {
           [swapMode === 'mint' ? selectedBuyCoin : selectedRedeemCoin]:
-            swapMode === 'mint'
-              ? selectedBuyCoinAmount
-              : selectedRedeemCoinAmount,
-          oeth:
-            swapMode === 'mint'
-              ? selectedRedeemCoinAmount
-              : selectedBuyCoinAmount,
+            swapMode === 'mint' ? selectedBuyCoinAmount : amountReceived,
+          oeth: swapMode === 'mint' ? amountReceived : selectedBuyCoinAmount,
         }
       )
 
@@ -251,35 +259,35 @@ const SwapHomepage = ({
       setSelectedBuyCoinAmount('')
       setSelectedRedeemCoinAmount('')
 
-      if (document?.body) {
-        setTimeout(() => {
-          document?.body.scrollTo({
-            top: 0,
-            left: 0,
-            behavior: 'smooth',
-          })
-        }, 100)
-      }
-
       await rpcProvider.waitForTransaction(result.hash)
-
-      analytics.track('Swap succeeded', {
-        category: 'swap',
-        label: metadata.stablecoinUsed,
-        value: metadata.swapAmount,
+      event({
+        event: 'swap_complete',
+        swap_type: swapMode,
+        swap_token: swapTokenUsed,
+        swap_amount: swapTokenAmount,
+        swap_address: '',
+        swap_tx: '',
       })
     } catch (e) {
       const metadata = swapMetadata()
       // 4001 code happens when a user rejects the transaction
       if (e.code !== 4001) {
         await storeTransactionError(swapMode, selectedBuyCoin)
-        analytics.track('Swap failed', {
-          category: 'swap',
-          label: e.message,
+        event({
+          event: 'swap_failed',
+          swap_type: swapMode,
+          swap_token: swapTokenUsed,
+          swap_amount: swapTokenAmount,
+          swap_address: '',
+          swap_tx: '',
         })
       } else {
-        analytics.track('Swap canceled', {
-          category: 'swap',
+        event({
+          event: 'swap_rejected',
+          swap_type: swapMode,
+          swap_token: swapTokenUsed,
+          swap_amount: swapTokenAmount,
+          swap_address: '',
         })
       }
 
@@ -323,6 +331,12 @@ const SwapHomepage = ({
                 onAmountChange={async (amount) => {
                   setSelectedBuyCoinAmount(amount)
                   setSelectedRedeemCoinAmount(amount)
+                  if (amount > 0) {
+                    event({
+                      event: 'change_input_amount',
+                      change_amount_to: amount,
+                    })
+                  }
                 }}
                 coinValue={
                   swapMode === 'mint'
@@ -366,11 +380,10 @@ const SwapHomepage = ({
           />
           <style jsx>{`
             .swap-wrapper {
-              margin: 18px 0;
+              margin: 16px 0;
               border: solid 1px #141519;
               border-radius: 10px;
               background-color: #1e1f25;
-              min-height: 350px;
               position: relative;
               overflow: hidden;
             }
@@ -394,6 +407,18 @@ const SwapHomepage = ({
             .title {
               color: #fafbfb;
               font-size: 14px;
+              margin-bottom: 0;
+            }
+
+            @media (max-width: 799px) {
+              .swap-wrapper {
+                padding-top: 16px;
+                border-radius: 4px;
+              }
+
+              .swap-header {
+                padding: 0 16px 16px 16px;
+              }
             }
 
             @media (max-width: 1080px) {

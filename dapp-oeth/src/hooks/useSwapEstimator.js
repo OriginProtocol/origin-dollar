@@ -3,19 +3,22 @@ import { ethers, BigNumber } from 'ethers'
 import { useStoreState } from 'pullstate'
 import { get, minBy } from 'lodash'
 import AccountStore from 'stores/AccountStore'
-import {
-  mintAbsoluteGasLimitBuffer,
-  mintPercentGasLimitBuffer,
-  redeemPercentGasLimitBuffer,
-  approveCoinGasLimits,
-  max_price,
-} from 'utils/constants'
+import { approveCoinGasLimits, max_price } from 'utils/constants'
 import { usePrevious } from 'utils/hooks'
 import useCurrencySwapper from 'hooks/useCurrencySwapper'
 import ContractStore from 'stores/ContractStore'
-import { calculateSwapAmounts, formatCurrency } from 'utils/math'
+import { calculateSwapAmounts } from 'utils/math'
 import fetchWithTimeout from 'utils/fetchWithTimeout'
 import { find } from 'lodash'
+
+const parseFloatBN = (value) => parseFloat(ethers.utils.formatEther(value))
+
+const errorIncludes = (e, errorTxt) => {
+  return (
+    (e.data && e.data.message && e.data.message.includes(errorTxt)) ||
+    e.message.includes(errorTxt)
+  )
+}
 
 /* Swap estimator listens for input changes of the currency and amount users is attempting
  * to swap and with some delay (to not cause too many calls) kicks off swap estimations.
@@ -367,8 +370,23 @@ const useSwapEstimator = ({
       }
     }
 
+    let amountReceived = amount
+
+    if (coinToSwap === 'sfrxeth') {
+      const [estimatedDeposit, frxEthMintPrice] = await Promise.all([
+        contracts.sfrxeth
+          .previewRedeem(ethers.utils.parseUnits(String(amount)))
+          .then(parseFloatBN),
+        contracts.vault
+          .priceUnitMint(contracts.frxeth.address)
+          .then(parseFloatBN),
+      ])
+      // previewRedeem * frxETH price should give a mint estimate receive
+      amountReceived = estimatedDeposit * frxEthMintPrice
+    }
+
     const approveAllowanceNeeded = allowancesLoaded
-      ? parseFloat(allowances[coinToSwap].zapper) === 0
+      ? parseFloat(allowances[coinToSwap].zapper) < amount
       : true
     const swapGasUsage = 90000
     const approveGasUsage = approveAllowanceNeeded
@@ -382,7 +400,7 @@ const useSwapEstimator = ({
       approveGasUsage,
       approveAllowanceNeeded,
       inputAmount: parseFloat(inputAmountRaw),
-      amountReceived: amount,
+      amountReceived,
     }
   }
 
@@ -436,7 +454,7 @@ const useSwapEstimator = ({
       }
 
       const approveAllowanceNeeded = allowancesLoaded
-        ? parseFloat(allowances[coinToSwap].curve) === 0
+        ? parseFloat(allowances[coinToSwap].curve) < parseFloat(inputAmountRaw)
         : true
 
       /* Check if Curve router has allowance to spend coin. If not we can not run gas estimation and need
@@ -495,7 +513,7 @@ const useSwapEstimator = ({
       }
     } catch (e) {
       console.error(
-        `Unexpected error estimating curve swap suitability: ${e.message}`
+        `Unexpected error estimating curve swap suitability: ${e?.message}`
       )
       return {
         canDoSwap: false,
@@ -640,7 +658,7 @@ const useSwapEstimator = ({
       console.error(
         `Unexpected error estimating ${
           isSushiSwap ? 'sushiSwap' : 'uniswap v2'
-        } swap suitability: ${e.message}`
+        } swap suitability: ${e?.message}`
       )
 
       if (
@@ -793,7 +811,7 @@ const useSwapEstimator = ({
         amount * parseFloat(ethers.utils.formatUnits(oracleCoinPrice, 18))
 
       const approveAllowanceNeeded = allowancesLoaded
-        ? parseFloat(allowances[coinToSwap].vault) === 0
+        ? parseFloat(allowances[coinToSwap].vault) < amount
         : true
 
       // Check if Vault has allowance to spend coin.
@@ -804,11 +822,13 @@ const useSwapEstimator = ({
         const rebaseTreshold = parseFloat(
           ethers.utils.formatUnits(vaultRebaseThreshold, 18)
         )
+
         const allocateThreshold = parseFloat(
           ethers.utils.formatUnits(vaultAllocateThreshold, 18)
         )
 
         let swapGasUsage = 220000
+
         if (amount > allocateThreshold) {
           // https://etherscan.io/tx/0x267da9abae04ae600d33d2c3e0b5772872e6138eaa074ce715afc8975c7f2deb
           swapGasUsage = 2900000
@@ -820,6 +840,7 @@ const useSwapEstimator = ({
         const approveGasUsage = approveAllowanceNeeded
           ? gasLimitForApprovingCoin(coinToSwap)
           : 0
+
         return {
           canDoSwap: true,
           gasUsed: swapGasUsage + approveGasUsage,
@@ -846,7 +867,6 @@ const useSwapEstimator = ({
       return {
         canDoSwap: true,
         gasUsed: gasEstimate,
-        // TODO: should this be rather done with BigNumbers instead?
         inputAmount: parseFloat(inputAmountRaw),
         amountReceived,
       }
@@ -856,12 +876,7 @@ const useSwapEstimator = ({
       )
 
       // local node and mainnet return errors in different formats, this handles both cases
-      if (
-        (e.data &&
-          e.data.message &&
-          e.data.message.includes('Mint amount lower than minimum')) ||
-        e.message.includes('Mint amount lower than minimum')
-      ) {
+      if (errorIncludes(e, 'Mint amount lower than minimum')) {
         return {
           canDoSwap: false,
           error: 'price_too_high',
@@ -930,15 +945,8 @@ const useSwapEstimator = ({
     } catch (e) {
       console.error(`Can not estimate contract call gas used: ${e.message}`)
 
-      const errorIncludes = (errorTxt) => {
-        return (
-          (e.data && e.data.message && e.data.message.includes(errorTxt)) ||
-          e.message.includes(errorTxt)
-        )
-      }
-
       // local node and mainnet return errors in different formats, this handles both cases
-      if (errorIncludes('Redeem amount lower than minimum')) {
+      if (errorIncludes(e, 'Redeem amount lower than minimum')) {
         return {
           canDoSwap: false,
           error: 'price_too_high',
@@ -950,9 +958,9 @@ const useSwapEstimator = ({
          * - "Insufficient 3CRV balance" -> Convex
          */
       } else if (
-        errorIncludes('Redeem failed') ||
-        errorIncludes(`reverted with reason string '5'`) ||
-        errorIncludes('Insufficient 3CRV balance')
+        errorIncludes(e, 'Redeem failed') ||
+        errorIncludes(e, `reverted with reason string '5'`) ||
+        errorIncludes(e, 'Insufficient 3CRV balance')
       ) {
         return {
           canDoSwap: false,
