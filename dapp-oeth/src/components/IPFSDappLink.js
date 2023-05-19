@@ -15,7 +15,7 @@ export default function IPFSDappLink({ css }) {
   }
 
   return (
-    <div className={`${css}`}>
+    <div className={css}>
       <a
         className={`ipfs-link d-flex justify-content-center align-items-center`}
         href={process.env.NEXT_PUBLIC_IPFS_DAPP_URL}
