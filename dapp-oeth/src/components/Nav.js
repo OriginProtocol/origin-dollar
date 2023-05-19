@@ -18,6 +18,7 @@ import { adjustLinkHref } from 'utils/utils'
 import { assetRootPath } from 'utils/image'
 import TransactionStore from 'stores/TransactionStore'
 import { usePrevious } from 'utils/hooks'
+import { ledgerLiveConnector } from 'utils/connectors'
 
 const environment = process.env.NODE_ENV
 
@@ -353,6 +354,7 @@ const Nav = ({ isMobile, locale, onLocale, page }) => {
   const { pathname } = useRouter()
   const { active, account } = useWeb3React()
   const apy = useStoreState(ContractStore, (s) => s.apy.apy30 || 0)
+  const ledgerLive = ledgerLiveConnector?.isLedgerApp()
 
   const [{ elRef, isSticky }] = useSticky({
     defaultSticky: false,
@@ -391,7 +393,7 @@ const Nav = ({ isMobile, locale, onLocale, page }) => {
                 <TransactionActivityDropdown />
               </div>
             )}
-            {!active && (
+            {!active && !ledgerLive (
               <div className="d-flex d-lg-none">
                 <GetOUSD
                   navMarble

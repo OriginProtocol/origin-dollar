@@ -7,6 +7,7 @@ import { useRouter } from 'next/router'
 import withWalletSelectModal from 'hoc/withWalletSelectModal'
 import { event } from '../../lib/gtm'
 import { walletLogin } from 'utils/account'
+import { ledgerLiveConnector } from 'utils/connectors'
 
 const GetOUSD = ({
   id,
@@ -35,6 +36,7 @@ const GetOUSD = ({
     zIndex2 && 'zIndex2',
     navMarble && 'nav-marble'
   )
+  const ledgerLive = ledgerLiveConnector?.isLedgerApp()
 
   useEffect(() => {
     if (
@@ -57,8 +59,12 @@ const GetOUSD = ({
         style={style}
         onClick={() => {
           if (process.browser) {
-            event({ event: 'connect_click' })
-            walletLogin(showLogin, activate)
+            event({'event': 'connect_click'})
+            if (ledgerLive) {
+              activate(ledgerLiveConnector, undefined, true)
+            } else {
+              walletLogin(showLogin, activate)
+            }
           }
         }}
       >

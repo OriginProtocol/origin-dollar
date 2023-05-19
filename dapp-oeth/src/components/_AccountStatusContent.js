@@ -10,7 +10,7 @@ import { isCorrectNetwork, truncateAddress, networkIdToName } from 'utils/web3'
 import { useOverrideAccount } from 'utils/hooks'
 import { currencies } from 'constants/Contract'
 import { formatCurrency } from 'utils/math'
-import { getConnectorIcon } from 'utils/connectors'
+import { getConnectorIcon, ledgerLiveConnector } from 'utils/connectors'
 import { assetRootPath } from 'utils/image'
 
 const AccountStatusContent = ({ className, onOpen }) => {
@@ -23,6 +23,8 @@ const AccountStatusContent = ({ className, onOpen }) => {
   const connectorIcon = getConnectorIcon(connectorName)
   const { overrideAccount } = useOverrideAccount()
   const router = useRouter()
+
+  const ledgerLive = ledgerLiveConnector?.isLedgerApp()
 
   return (
     <>
@@ -44,7 +46,7 @@ const AccountStatusContent = ({ className, onOpen }) => {
             {active && correctNetwork && (
               <div className="d-flex justify-content-between align-items-center account-contain">
                 <p>Account</p>
-                {!overrideAccount && (
+                {!overrideAccount && !ledgerLive && (
                   <div className="disconnect-box d-flex">
                     <a
                       className=""
