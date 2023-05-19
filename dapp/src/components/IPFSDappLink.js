@@ -7,7 +7,9 @@ export default function IPFSDappLink({ css }) {
 
   useEffect(() => {
     setDisplayIpfsLink(
-      process.env.DEPLOY_MODE !== 'ipfs'
+      ['app.ousd.com'].includes(window.location.host) ||
+        window.location.host.startsWith('localhost:') ||
+        window.location.host.startsWith('ousd-staging')
     )
   }, [])
 
