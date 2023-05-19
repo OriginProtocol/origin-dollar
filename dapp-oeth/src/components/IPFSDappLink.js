@@ -1,22 +1,21 @@
 import React, { useEffect, useState } from 'react'
 import { fbt } from 'fbt-runtime'
-import { assetRootPath } from 'utils/image'
 
 export default function IPFSDappLink({ css }) {
   const [displayIpfsLink, setDisplayIpfsLink] = useState(false)
 
   useEffect(() => {
     setDisplayIpfsLink(
-      ['app.oeth.com', 'staging.app.oeth.com'].includes(window.location.host) ||
-        window.location.host.startsWith('localhost:') ||
-        window.location.host.startsWith('oeth-dapp-staging') ||
-        window.location.host.endsWith('.on.fleek.co') ||
-        window.location.host.startsWith('oeth-dapp')
+      process.env.DEPLOY_MODE !== 'ipfs'
     )
   }, [])
 
+  if (!displayIpfsLink) {
+    return null;
+  }
+
   return (
-    <div className={`${!displayIpfsLink || css}`}>
+    <div className={css}>
       <a
         className={`ipfs-link d-flex justify-content-center align-items-center`}
         href={process.env.NEXT_PUBLIC_IPFS_DAPP_URL}
