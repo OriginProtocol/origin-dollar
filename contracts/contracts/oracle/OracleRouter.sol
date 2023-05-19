@@ -180,7 +180,6 @@ contract OETHOracleRouter is OracleRouter {
             revert("Asset not available");
         }
     }
-
 }
 
 contract OracleRouterDev is OracleRouterBase {
