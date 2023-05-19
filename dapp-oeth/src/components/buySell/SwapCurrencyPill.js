@@ -182,20 +182,26 @@ const TokenSelectionModal = ({
                   </div>
                 </div>
                 <div className="balances">
-                  <span className="eth">
-                    {formatCurrencyMinMaxDecimals(balance, {
-                      minDecimals: 2,
-                      maxDecimals: 18,
-                      truncate: true,
-                    })}
-                  </span>
-                  <span className="usd">
-                    $
-                    {formatCurrency(
-                      parseFloat(coinBalances?.[token]) * conversion,
-                      2
-                    )}
-                  </span>
+                  {token === 'mix' ? (
+                    <span className="eth">-</span>
+                  ) : (
+                    <>
+                      <span className="eth">
+                        {formatCurrencyMinMaxDecimals(balance, {
+                          minDecimals: 2,
+                          maxDecimals: 18,
+                          truncate: true,
+                        })}
+                      </span>
+                      <span className="usd">
+                        $
+                        {formatCurrency(
+                          parseFloat(coinBalances?.[token]) * conversion,
+                          2
+                        )}
+                      </span>
+                    </>
+                  )}
                 </div>
               </button>
             )
@@ -302,7 +308,7 @@ const TokenSelectionModal = ({
         }
 
         .selectable:hover {
-          background-color: #141519;
+          background-color: #1e1f25;
         }
       `}</style>
     </>
@@ -333,7 +339,7 @@ const CoinSelect = ({
         </div>
         <style jsx>{`
           .coin-select {
-            padding: 8px;
+            padding: 4px;
             font-size: 18px;
             background-color: rgba(255, 255, 255, 0.1);
             border-radius: 30px;
@@ -349,7 +355,7 @@ const CoinSelect = ({
             .coin-select {
               width: fit-content;
               min-height: 32px;
-              padding: 6px;
+              padding: 4px;
               margin-top: 16px;
             }
           }
@@ -391,7 +397,7 @@ const CoinSelect = ({
       </button>
       <style jsx>{`
         .coin-select {
-          padding: 8px;
+          padding: 4px;
           border-radius: 30px;
           border: solid 1px #141519;
           color: #fafbfb;
@@ -432,7 +438,7 @@ const CoinSelect = ({
           .coin-select {
             width: fit-content;
             min-height: 32px;
-            padding: 6px;
+            padding: 4px;
             margin-top: 16px;
           }
 
@@ -476,7 +482,7 @@ const SwapCurrencyPill = ({
     'sfrxeth',
   ]
 
-  const coinRedeemOptions = ['oeth', 'mix', 'eth']
+  const coinRedeemOptions = ['mix', 'eth']
 
   const { active } = useWeb3React()
 
@@ -584,7 +590,6 @@ const SwapCurrencyPill = ({
       : null
 
   const coinSplits = bottomItem && selectedSwap && selectedSwap.coinSplits
-  console.log(bottomItem, selectedSwap)
 
   const maxBalanceSet =
     topItem &&
@@ -623,6 +628,7 @@ const SwapCurrencyPill = ({
           >
             {topItem && (
               <input
+                inputMode="numeric"
                 className="action-input"
                 type="text"
                 value={truncateDecimals(coinValue, 18)}

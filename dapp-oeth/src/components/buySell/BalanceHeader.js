@@ -71,7 +71,7 @@ const BalanceHeader = ({
         setBalanceEmphasised(false)
       },
       // non even duration number so more of the decimals in oethBalance animate
-      duration: 1985,
+      duration: 0,
       id: 'header-balance-ousd-animation',
       stepTime: 30,
     })

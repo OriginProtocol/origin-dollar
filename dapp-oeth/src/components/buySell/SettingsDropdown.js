@@ -98,8 +98,8 @@ const SettingsDropdown = ({ setPriceToleranceValue, priceToleranceValue }) => {
             const newOpenState = !settingsOpen
             setSettingsOpen(newOpenState)
             if (!settingsOpen) {
-              event({ 
-                'event': 'open_settings'
+              event({
+                event: 'open_settings',
               })
             }
           }}
@@ -121,6 +121,7 @@ const SettingsDropdown = ({ setPriceToleranceValue, priceToleranceValue }) => {
           border: solid 1px #141519;
           background-color: #1e1f25;
           color: #fafbfb;
+          box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
         }
 
         .settings-icon {

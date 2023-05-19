@@ -42,11 +42,11 @@ const PillArrow = ({ swapMode, setSwapMode }) => {
           className="caret-background position-absolute d-flex align-items-center justify-content-center"
           onClick={() => {
             setSwapMode(swapMode === 'mint' ? 'redeem' : 'mint')
-            event({'event': 'change_input_output'})
+            event({ event: 'change_input_output' })
           }}
         >
           <img
-            src={assetRootPath('/images/splitarrow.png')}
+            src={assetRootPath('/images/splitarrow.svg')}
             alt="swap arrow"
             style={{ height: 25, width: 14 }}
           />

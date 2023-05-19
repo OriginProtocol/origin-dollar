@@ -198,27 +198,27 @@ const TransactionActivityDropdown = () => {
             !lastProcessedTransaction?.mined ? (
               <img
                 className="activity-icon rotating"
-                src={assetRootPath('/images/activity-pending.png')}
+                src={assetRootPath('/images/activity-pending.svg')}
                 alt="Transaction activity pending"
               />
             ) : lastProcessedTransaction?.mined &&
               !lastProcessedTransaction?.isError ? (
               <img
                 className="activity-icon "
-                src={assetRootPath('/images/activity-success.png')}
+                src={assetRootPath('/images/activity-success.svg')}
                 alt="Transaction activity success"
               />
             ) : (
               <img
                 className="activity-icon"
-                src={assetRootPath('/images/activity-failed.png')}
+                src={assetRootPath('/images/activity-failed.svg')}
                 alt="Transaction activity failed"
               />
             )
           ) : (
             <img
               className="activity-icon"
-              src={assetRootPath('/images/activity.png')}
+              src={assetRootPath('/images/activity.svg')}
               alt="Transaction activity button"
             />
           )}
@@ -257,6 +257,7 @@ const TransactionActivityDropdown = () => {
           color: #fafbfb;
           padding: 20px 30px 20px 20px;
           min-width: 170px;
+          box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
         }
 
         .dropdown-menu .dropdown-marble {
@@ -548,7 +549,7 @@ const Nav = ({ isMobile, locale, onLocale, page }) => {
         }
 
         .banner.burn {
-          background-color: #141519;
+          background-color: #1e1f25;
           border: solid 1px;
           border-radius: 5px;
         }
@@ -588,7 +589,7 @@ const Nav = ({ isMobile, locale, onLocale, page }) => {
         }
 
         .navbar.lightBg {
-          background: #141519;
+          background: #1e1f25;
           display: block;
         }
 

@@ -126,7 +126,7 @@ const ActivityItem = ({ transaction, states = {}, visual }) => {
                   rel="noreferrer"
                 >
                   <img
-                    src={assetRootPath('/images/externalLink.png')}
+                    src={assetRootPath('/images/external-link-white.svg')}
                     alt="Navigate to Etherscan"
                   />
                 </a>
@@ -923,7 +923,7 @@ const SidePanelTransactionMessage = ({ transaction, animate = false }) => {
         .line {
           width: 65px;
           height: 1px;
-          background-color: #141519;
+          background-color: #1e1f25;
           margin-bottom: 14px;
           opacity: 1;
           transition: opacity 0.3s ease-out 0.4s;

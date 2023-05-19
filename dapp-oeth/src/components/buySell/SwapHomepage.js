@@ -16,7 +16,6 @@ import ContractsTable from 'components/buySell/ContractsTable'
 import useSwapEstimator from 'hooks/useSwapEstimator'
 import withIsMobile from 'hoc/withIsMobile'
 import ApproveSwap from 'components/buySell/ApproveSwap'
-import analytics from 'utils/analytics'
 import { formatCurrencyMinMaxDecimals, removeCommas } from '../../utils/math'
 import { event } from '../../../lib/gtm'
 
@@ -38,7 +37,7 @@ const SwapHomepage = ({
   const [swapMode, setSwapMode] = useState(
     process.browser && localStorage.getItem(lastSelectedSwapModeKey) !== null
       ? localStorage.getItem(lastSelectedSwapModeKey)
-      : 'redeem'
+      : 'mint'
   )
   const [buyErrorToDisplay, setBuyErrorToDisplay] = useState(false)
 

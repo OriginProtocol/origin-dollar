@@ -98,8 +98,10 @@ const GetOUSD = ({
 
         .btn-nav {
           color: #fafbfb;
-          font-size: 0.8125rem;
-          font-weight: normal;
+          font-size: 16px;
+          font-weight: 500;
+          letter-spacing: 0em;
+          text-align: left;
         }
 
         @media (max-width: 992px) {
