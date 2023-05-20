@@ -288,7 +288,7 @@ contract VaultAdmin is VaultStorage {
         address _strategyToAddress,
         address[] calldata _assets,
         uint256[] calldata _amounts
-    ) external onlyGovernorOrStrategist {
+    ) external onlyGovernorOrStrategist nonReentrant {
         _depositToStrategy(_strategyToAddress, _assets, _amounts);
     }
 
@@ -325,7 +325,7 @@ contract VaultAdmin is VaultStorage {
         address _strategyFromAddress,
         address[] calldata _assets,
         uint256[] calldata _amounts
-    ) external onlyGovernorOrStrategist {
+    ) external onlyGovernorOrStrategist nonReentrant {
         _withdrawFromStrategy(
             address(this),
             _strategyFromAddress,
