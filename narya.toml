@@ -2,7 +2,6 @@
 # Don't be confused with the Foundry configs, which should go to the foundry.toml file at the project root.
 # All possible options are listed here.
 
-
 # This defines metadata for your project
 [project]
 
