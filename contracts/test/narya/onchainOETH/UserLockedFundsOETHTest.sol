@@ -82,16 +82,16 @@ contract UserLockedFundsOETHTest is Base, VaultLockedUserInvariants {
         vault.redeem(ousd.balanceOf(bob), 0);
         vm.stopPrank();
 
-        uint totalAmount = 0;
+        uint256 totalAmount = 0;
+        uint256 exponent;
         for (uint i = 0; i < assets.length; ++i) {
             IERC20 _token = IERC20(assets[i]);
-            uint exponent = 18-_token.decimals();
-
-            totalAmount += (_token.balanceOf(bob) - beforeBalances[i]) * (10**exponent);
+            exponent = 18 - _token.decimals();
+            totalAmount += (_token.balanceOf(bob) - beforeBalances[i]) * (10 ** exponent);
         }
 
-        uint exponent = 18-IERC20(WETH).decimals();
-        require(totalAmount < (_amountToMint * (10**exponent)),
+        exponent = 18 - IERC20(WETH).decimals();
+        require(totalAmount < (_amountToMint * (10 ** exponent)),
             "got more money than deposited");
     }
 }
