@@ -12,7 +12,6 @@ pragma solidity ^0.8.0;
  */
 
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 import { StableMath } from "../utils/StableMath.sol";
 import { IOracle } from "../interfaces/IOracle.sol";
@@ -22,7 +21,6 @@ import "./VaultStorage.sol";
 contract VaultCore is VaultStorage {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
-    using SafeMath for uint256;
     // max signed int
     uint256 constant MAX_INT = 2**255 - 1;
     // max un-signed int
@@ -215,7 +213,7 @@ contract VaultCore is VaultStorage {
             // backing assets value and OUSD total supply
             uint256 diff = oUSD.totalSupply().divPrecisely(totalUnits);
             require(
-                (diff > 1e18 ? diff.sub(1e18) : uint256(1e18).sub(diff)) <=
+                (diff > 1e18 ? diff - 1e18 : 1e18 - diff) <=
                     maxSupplyDiff,
                 "Backing supply liquidity error"
             );
@@ -294,7 +292,7 @@ contract VaultCore is VaultStorage {
         if (vaultValue == 0) return;
         uint256 strategiesValue = _totalValueInStrategies();
         // We have a method that does the same as this, gas optimisation
-        uint256 calculatedTotalValue = vaultValue.add(strategiesValue);
+        uint256 calculatedTotalValue = vaultValue + strategiesValue;
 
         // We want to maintain a buffer on the Vault so calculate a percentage
         // modifier to multiply each amount being allocated by to enforce the
@@ -303,15 +301,15 @@ contract VaultCore is VaultStorage {
         if (strategiesValue == 0) {
             // Nothing in Strategies, allocate 100% minus the vault buffer to
             // strategies
-            vaultBufferModifier = uint256(1e18).sub(vaultBuffer);
+            vaultBufferModifier = uint256(1e18) - vaultBuffer;
         } else {
-            vaultBufferModifier = vaultBuffer.mul(calculatedTotalValue).div(
-                vaultValue
-            );
+            vaultBufferModifier =
+                (vaultBuffer * calculatedTotalValue) /
+                vaultValue;
             if (1e18 > vaultBufferModifier) {
                 // E.g. 1e18 - (1e17 * 10e18)/5e18 = 8e17
                 // (5e18 * 8e17) / 1e18 = 4e18 allocated from Vault
-                vaultBufferModifier = uint256(1e18).sub(vaultBufferModifier);
+                vaultBufferModifier = uint256(1e18) - vaultBufferModifier;
             } else {
                 // We need to let the buffer fill
                 return;
@@ -376,8 +374,8 @@ contract VaultCore is VaultStorage {
         // Yield fee collection
         address _trusteeAddress = trusteeAddress; // gas savings
         if (_trusteeAddress != address(0) && (vaultValue > ousdSupply)) {
-            uint256 yield = vaultValue.sub(ousdSupply);
-            uint256 fee = yield.mul(trusteeFeeBps).div(10000);
+            uint256 yield = vaultValue - ousdSupply;
+            uint256 fee = yield.mulTruncateScale(trusteeFeeBps, 1e4);
             require(yield > fee, "Fee must not be greater than yield");
             if (fee > 0) {
                 oUSD.mint(_trusteeAddress, fee);
@@ -414,7 +412,7 @@ contract VaultCore is VaultStorage {
      * @return value Total value in USD (1e18)
      */
     function _totalValue() internal view virtual returns (uint256 value) {
-        return _totalValueInVault().add(_totalValueInStrategies());
+        return _totalValueInVault() + _totalValueInStrategies();
     }
 
     /**
@@ -437,7 +435,7 @@ contract VaultCore is VaultStorage {
      */
     function _totalValueInStrategies() internal view returns (uint256 value) {
         for (uint256 i = 0; i < allStrategies.length; i++) {
-            value = value.add(_totalValueInStrategy(allStrategies[i]));
+            value = value + _totalValueInStrategy(allStrategies[i]);
         }
     }
 
@@ -487,7 +485,7 @@ contract VaultCore is VaultStorage {
         for (uint256 i = 0; i < allStrategies.length; i++) {
             IStrategy strategy = IStrategy(allStrategies[i]);
             if (strategy.supportsAsset(_asset)) {
-                balance = balance.add(strategy.checkBalance(_asset));
+                balance = balance + strategy.checkBalance(_asset);
             }
         }
     }
@@ -550,8 +548,8 @@ contract VaultCore is VaultStorage {
 
         // Calculate redeem fee
         if (redeemFeeBps > 0) {
-            uint256 redeemFee = _amount.mul(redeemFeeBps).div(10000);
-            _amount = _amount.sub(redeemFee);
+            uint256 redeemFee = _amount.mulTruncateScale(redeemFeeBps, 1e4);
+            _amount = _amount - redeemFee;
         }
 
         // Calculate assets balances and decimals once,
@@ -561,19 +559,19 @@ contract VaultCore is VaultStorage {
             uint256 balance = _checkBalance(allAssets[i]);
             assetBalances[i] = balance;
             assetUnits[i] = _toUnits(balance, allAssets[i]);
-            totalUnits = totalUnits.add(assetUnits[i]);
+            totalUnits = totalUnits + assetUnits[i];
         }
         // Calculate totalOutputRatio
         uint256 totalOutputRatio = 0;
         for (uint256 i = 0; i < assetCount; i++) {
             uint256 unitPrice = _toUnitPrice(allAssets[i], false);
-            uint256 ratio = assetUnits[i].mul(unitPrice).div(totalUnits);
-            totalOutputRatio = totalOutputRatio.add(ratio);
+            uint256 ratio = (assetUnits[i] * unitPrice) / totalUnits;
+            totalOutputRatio = totalOutputRatio + ratio;
         }
         // Calculate final outputs
         uint256 factor = _amount.divPrecisely(totalOutputRatio);
         for (uint256 i = 0; i < assetCount; i++) {
-            outputs[i] = assetBalances[i].mul(factor).div(totalUnits);
+            outputs[i] = (assetBalances[i] * factor) / totalUnits;
         }
     }
 
