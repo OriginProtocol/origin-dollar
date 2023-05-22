@@ -12,7 +12,6 @@ import "@openzeppelin/contracts/utils/math/Math.sol";
 import { ICurveETHPoolV1 } from "./ICurveETHPoolV1.sol";
 import { IERC20, InitializableAbstractStrategy } from "../utils/InitializableAbstractStrategy.sol";
 import { StableMath } from "../utils/StableMath.sol";
-import { Helpers } from "../utils/Helpers.sol";
 import { IVault } from "../interfaces/IVault.sol";
 import { IWETH9 } from "../interfaces/IWETH9.sol";
 import { IConvexDeposits } from "./IConvexDeposits.sol";
