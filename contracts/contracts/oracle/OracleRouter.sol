@@ -5,9 +5,11 @@ import "../interfaces/chainlink/AggregatorV3Interface.sol";
 import { IOracle } from "../interfaces/IOracle.sol";
 import { Helpers } from "../utils/Helpers.sol";
 import { StableMath } from "../utils/StableMath.sol";
+import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 abstract contract OracleRouterBase is IOracle {
     using StableMath for uint256;
+    using SafeCast for int256;
 
     uint256 constant MIN_DRIFT = 0.7e18;
     uint256 constant MAX_DRIFT = 1.3e18;
@@ -41,12 +43,12 @@ abstract contract OracleRouterBase is IOracle {
             .latestRoundData();
         uint8 decimals = getDecimals(_feed);
 
-        uint256 _price = uint256(_iprice).scaleBy(18, decimals);
+        uint256 _price = _iprice.toUint256().scaleBy(18, decimals);
         if (shouldBePegged(asset)) {
             require(_price <= MAX_DRIFT, "Oracle: Price exceeds max");
             require(_price >= MIN_DRIFT, "Oracle: Price under min");
         }
-        return uint256(_price);
+        return _price;
     }
 
     function getDecimals(address _feed) internal view virtual returns (uint8) {
