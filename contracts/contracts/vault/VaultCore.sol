@@ -12,12 +12,9 @@ pragma solidity ^0.8.0;
  */
 
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/utils/Strings.sol";
 
 import { StableMath } from "../utils/StableMath.sol";
-import { IVault } from "../interfaces/IVault.sol";
 import { IOracle } from "../interfaces/IOracle.sol";
-import { IBasicToken } from "../interfaces/IBasicToken.sol";
 import { IGetExchangeRateToken } from "../interfaces/IGetExchangeRateToken.sol";
 import "./VaultStorage.sol";
 
@@ -399,7 +396,13 @@ contract VaultCore is VaultStorage {
      *         strategies.
      * @return value Total value in USD (1e18)
      */
-    function totalValue() external view virtual returns (uint256 value) {
+    function totalValue()
+        external
+        view
+        virtual
+        nonReentrantView
+        returns (uint256 value)
+    {
         value = _totalValue();
     }
 
