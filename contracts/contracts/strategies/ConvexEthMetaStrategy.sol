@@ -41,7 +41,6 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         address vaultAddress; //Address of the vault
         address cvxDepositorAddress; //Address of the Convex depositor(AKA booster) for this pool
         address oethAddress; //Address of OETH token
-        address wethAddress; //Address of WETH token
         address cvxRewardStakerAddress; //Address of the CVX rewards staker
         address curvePoolLpToken; //Address of metapool LP token
         uint256 cvxDepositorPTokenId; //Pid of the pool referred to by Depositor and staker
@@ -72,7 +71,7 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         lpToken = IERC20(initConfig.curvePoolLpToken);
         curvePool = ICurveETHPoolV1(initConfig.curvePoolAddress);
         oeth = IERC20(initConfig.oethAddress);
-        weth = IWETH9(initConfig.wethAddress);
+        weth = IWETH9(_assets[0]); // WETH address
         ethCoinIndex = uint128(_getCoinIndex(ETH_ADDRESS));
         oethCoinIndex = uint128(_getCoinIndex(initConfig.oethAddress));
 
