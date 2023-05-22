@@ -45,25 +45,25 @@ def build_buyback_tx(max_dollars=5000, max_slippage=2.0):
     """
     buyback = BUYBACK_CONTRACT
     treasuryBps = BUYBACK_CONTRACT.treasuryBps()
-    ousd_for_treasury = max_dollars * treasuryBps / 1e4
+    ousd_for_treasury = max_dollars * treasuryBps / 10**4
     ousd_to_swap = max_dollars - ousd_for_treasury
 
 
 
     # Calculate buyback amount
     ousd_available = ousd.balanceOf(buyback)
-    buyback_amount = min(ousd_available, int(max_dollars * 1e18))
+    buyback_amount = min(ousd_available, int(max_dollars * 10**18))
 
     # Calculate returned OGV
-    no_slippage_ogv = sim_buyback_ogv(1e18) * buyback_amount / 1e18
+    no_slippage_ogv = sim_buyback_ogv(10**18) * buyback_amount / 10**18
     expected_slippage_ogv = sim_buyback_ogv(buyback_amount)
     min_slippage_ogv = no_slippage_ogv * (1.0 - (max_slippage / 100))
 
     # Display buyback amounts
     print("OUSD available on contract:   {}".format(c18(ousd_available)))
     print("OUSD to use for transaction:  {}".format(c18(buyback_amount)))
-    print("OUSD send to treasury:        {}".format(c18(ousd_for_treasury * 1e18)))
-    print("OUSD to swap:                 {}".format(c18(ousd_to_swap * 1e18)))
+    print("OUSD send to treasury:        {}".format(c18(ousd_for_treasury * 10**18)))
+    print("OUSD to swap:                 {}".format(c18(ousd_to_swap * 10**18)))
     print("----")
 
     x = no_slippage_ogv
