@@ -639,6 +639,23 @@ async function convexVaultFixture() {
   return fixture;
 }
 
+async function fundWith3Crv(address, maxAmount) {
+  // Get some 3CRV from most loaded contracts/wallets
+  await impersonateAndFundAddress(
+      addresses.mainnet.ThreePoolToken,
+      [
+        "0xceaf7747579696a2f0bb206a14210e3c9e6fb269",
+        "0xd632f22692fac7611d2aa1c0d552930d43caed3b",
+        "0xbfcf63294ad7105dea65aa58f8ae5be2d9d0952a",
+        "0xed279fdd11ca84beef15af5d39bb4d4bee23f0ca",
+        "0x43b4fdfd4ff969587185cdb6f0bd875c5fc83f8c",
+      ],
+      address,
+      30, // balanceToUse
+      maxAmount
+    );
+}
+
 /**
  * Configure a Vault with only the Meta strategy.
  */
@@ -664,19 +681,8 @@ async function convexMetaVaultFixture() {
     );
     // const curveFactory = await ethers.getContractAt(curveFactoryAbi, curveFactoryAddress)
 
-    // Get some 3CRV from most loaded contracts/wallets
-    await impersonateAndFundAddress(
-      addresses.mainnet.ThreePoolToken,
-      [
-        "0xceaf7747579696a2f0bb206a14210e3c9e6fb269",
-        "0xd632f22692fac7611d2aa1c0d552930d43caed3b",
-        "0xbfcf63294ad7105dea65aa58f8ae5be2d9d0952a",
-        "0xed279fdd11ca84beef15af5d39bb4d4bee23f0ca",
-        "0x43b4fdfd4ff969587185cdb6f0bd875c5fc83f8c",
-      ],
-      // Domen is loaded with 3CRV
-      domen.getAddress()
-    );
+    // Domen is loaded with 3CRV
+    await fundWith3Crv(domen.getAddress(), ethers.BigNumber.from("0")); 
 
     for (const user of [josh, matt, anna, domen, daniel, franck]) {
       // Approve OUSD MetaPool contract to move funds
@@ -960,12 +966,14 @@ async function impersonateAndFundAddress(
   tokenAddress,
   contractAddresses,
   toAddress,
-  balanceToUse = 30 // 30%
+  balanceToUse = 30, // 30%
+  maxAmount = ethers.BigNumber.from(0),
 ) {
   if (!Array.isArray(contractAddresses)) {
     contractAddresses = [contractAddresses];
   }
 
+  let amountTransfered = ethers.BigNumber.from("0");
   for (const contractAddress of contractAddresses) {
     const impersonatedSigner = await impersonateAndFundContract(
       contractAddress
@@ -975,10 +983,27 @@ async function impersonateAndFundAddress(
 
     const balance = await tokenContract
       .connect(impersonatedSigner)
-      .balanceOf(contractAddress);
+      .balanceOf(contractAddress);  
+
+
+    const amount = balance.mul(balanceToUse).div(100);
+    // consider max amount
+    if (maxAmount.gt(ethers.BigNumber.from("0"))) {
+      if (amountTransfered.add(amount).gt(maxAmount)) {
+        await tokenContract
+          .connect(impersonatedSigner)
+          .transfer(toAddress, maxAmount.sub(amountTransfered));
+
+        // max amount already transferred
+        return;
+      }
+
+      amountTransfered.add(amount);
+    }
+
     await tokenContract
       .connect(impersonatedSigner)
-      .transfer(toAddress, balance.mul(balanceToUse).div(100));
+      .transfer(toAddress, amount);
   }
 }
 
@@ -1331,6 +1356,7 @@ async function rebornFixture() {
 }
 
 module.exports = {
+  fundWith3Crv,
   resetAllowance,
   defaultFixture,
   mockVaultFixture,

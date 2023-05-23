@@ -6,6 +6,7 @@ const {
   convexMetaVaultFixture,
   resetAllowance,
   impersonateAndFundContract,
+  fundWith3Crv,
 } = require("./_fixture");
 const addresses = require("../utils/addresses");
 const erc20Abi = require("./abi/erc20.json");
@@ -70,6 +71,7 @@ async function _balanceMetaPool(fixture, metapool) {
 
   const exchangeSign = "exchange(int128,int128,uint256,uint256)";
   const metapoolSigner = await impersonateAndFundContract(metapool.address);
+  const vaultSigner = await impersonateAndFundContract(vault.address);
   /* let metapool perform the exchange on itself. This is somewhat dirty, but is also the
    * best assurance that the liquidity of both coins for balancing are going to be
    * available.
@@ -79,6 +81,15 @@ async function _balanceMetaPool(fixture, metapool) {
   await resetAllowance(coinTwoContract, metapoolSigner, metapool.address);
 
   if (mainCoinValue.gt(crv3Value)) {
+    // way too little Crv liquidity
+    if (mainCoinValue.gt(crv3Value.mul(18).div(10))) { // == mul(1.8)
+      crvAmount = mainCoinValue.sub(crv3Value)
+      await fundWith3Crv(domen.address, crvAmount);
+      await metapool.connect(domen)['add_liquidity(uint256[2],uint256)']([0,crvAmount], 0)
+
+      await metapool.connect(metapoolSigner)[exchangeSign];
+    }
+
     const diffInDollars = mainCoinValue.sub(crv3Value);
     const liquidityDiff = await _getCoinLiquidity(
       metapool,
@@ -90,6 +101,7 @@ async function _balanceMetaPool(fixture, metapool) {
   } else if (crv3Value.gt(mainCoinValue)) {
     const diffInDollars = crv3Value.sub(mainCoinValue);
     const liquidityDiff = await get3CRVLiquidity(fixture, diffInDollars.div(2));
+
     // Tilt to Main Token
     await exchangeMethod(0, 1, liquidityDiff, 0);
   }
@@ -137,7 +149,6 @@ async function tiltTo3CRV_Metapool_automatic(fixture) {
       // eslint-disable-next-line
       "add_liquidity(uint256[2],uint256)"
     ]([0, shareOfThreePoolCoinBalance], 0);
-
     acc = acc.add(shareOfThreePoolCoinBalance);
   }
 }
@@ -178,7 +189,6 @@ async function tiltTo3CRV_Metapool(fixture, metapool, amount) {
 
   // Balance metapool
   await _balanceMetaPool(fixture, metapool);
-
   amount = amount || ousdUnits("1000000");
 
   // Tilt to 3CRV by a million
