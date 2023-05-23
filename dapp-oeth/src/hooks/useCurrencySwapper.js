@@ -439,12 +439,6 @@ const useCurrencySwapper = ({
         throw new Error('No curve route found for contract address pair')
       }
 
-      console.log({
-        routes: routes.join(','),
-        swapParams: swapParams.map((i) => i.map((i) => i.toNumber())),
-        swapAmount: swapAmount.toString(),
-      })
-
       return curveRegistryExchange[
         'get_exchange_multiple_amount(address[9],uint256[3][4],uint256)'
       ](routes, swapParams, swapAmount, {
