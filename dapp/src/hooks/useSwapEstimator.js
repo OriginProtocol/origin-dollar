@@ -873,7 +873,7 @@ const useSwapEstimator = ({
       if (!userHasEnoughStablecoin('ousd', amount)) {
         return {
           canDoSwap: true,
-          gasUsed: 400000,
+          gasUsed: 1500000,
           inputAmount: parseFloat(inputAmountRaw),
           amountReceived: splitsSum,
           coinSplits,

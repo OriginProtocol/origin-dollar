@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import { useStoreState } from 'pullstate'
 
-import SidePanelWelcomeMessage from 'components/TransactionActivity/SidePanelWelcomeMessage'
-import SidePanelTransactionMessage from 'components/TransactionActivity/SidePanelTransactionMessage'
-import SidePanelInsuranceMessage from 'components/TransactionActivity/SidePanelInsuranceMessage'
+import SidePanelWelcomeMessage from 'components/sidePanel/SidePanelWelcomeMessage'
+import SidePanelTransactionMessage from 'components/sidePanel/SidePanelTransactionMessage'
+import SidePanelInsuranceMessage from 'components/sidePanel/SidePanelInsuranceMessage'
 import TransactionStore from 'stores/TransactionStore'
 import { usePrevious } from 'utils/hooks'
 import ContractStore from 'stores/ContractStore'
