@@ -71,7 +71,6 @@ async function _balanceMetaPool(fixture, metapool) {
 
   const exchangeSign = "exchange(int128,int128,uint256,uint256)";
   const metapoolSigner = await impersonateAndFundContract(metapool.address);
-  const vaultSigner = await impersonateAndFundContract(vault.address);
   /* let metapool perform the exchange on itself. This is somewhat dirty, but is also the
    * best assurance that the liquidity of both coins for balancing are going to be
    * available.
@@ -82,10 +81,13 @@ async function _balanceMetaPool(fixture, metapool) {
 
   if (mainCoinValue.gt(crv3Value)) {
     // way too little Crv liquidity
-    if (mainCoinValue.gt(crv3Value.mul(18).div(10))) { // == mul(1.8)
-      crvAmount = mainCoinValue.sub(crv3Value)
+    if (mainCoinValue.gt(crv3Value.mul(18).div(10))) {
+      // == mul(1.8)
+      const crvAmount = mainCoinValue.sub(crv3Value);
       await fundWith3Crv(domen.address, crvAmount);
-      await metapool.connect(domen)['add_liquidity(uint256[2],uint256)']([0,crvAmount], 0)
+      // prettier-ignore
+      await metapool
+        .connect(domen)["add_liquidity(uint256[2],uint256)"]([0, crvAmount], 0);
 
       await metapool.connect(metapoolSigner)[exchangeSign];
     }
