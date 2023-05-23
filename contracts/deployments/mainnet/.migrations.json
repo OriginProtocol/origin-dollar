@@ -49,5 +49,7 @@
   "053_oeth": 1681746345,
   "054_woeth": 1681746545,
   "056_oeth_zapper_again": 1682535005,
-  "058_oeth_vault_value_checker": 1683419766
+  "058_oeth_vault_value_checker": 1683419766,
+  "055_curve_amo": 1683966879,
+  "056_harvest_crv_limit": 17287144
 }

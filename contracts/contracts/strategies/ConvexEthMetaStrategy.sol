@@ -12,7 +12,6 @@ import "@openzeppelin/contracts/utils/math/Math.sol";
 import { ICurveETHPoolV1 } from "./ICurveETHPoolV1.sol";
 import { IERC20, InitializableAbstractStrategy } from "../utils/InitializableAbstractStrategy.sol";
 import { StableMath } from "../utils/StableMath.sol";
-import { Helpers } from "../utils/Helpers.sol";
 import { IVault } from "../interfaces/IVault.sol";
 import { IWETH9 } from "../interfaces/IWETH9.sol";
 import { IConvexDeposits } from "./IConvexDeposits.sol";
@@ -37,12 +36,11 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
     uint128 internal ethCoinIndex;
 
     // used to circumvent the stack too deep issue
-    struct InitialiseConfig {
+    struct InitializeConfig {
         address curvePoolAddress; //Address of the Curve pool
         address vaultAddress; //Address of the vault
         address cvxDepositorAddress; //Address of the Convex depositor(AKA booster) for this pool
         address oethAddress; //Address of OETH token
-        address wethAddress; //Address of WETH token
         address cvxRewardStakerAddress; //Address of the CVX rewards staker
         address curvePoolLpToken; //Address of metapool LP token
         uint256 cvxDepositorPTokenId; //Pid of the pool referred to by Depositor and staker
@@ -62,7 +60,7 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         address[] calldata _rewardTokenAddresses, // CRV + CVX
         address[] calldata _assets,
         address[] calldata _pTokens,
-        InitialiseConfig calldata initConfig
+        InitializeConfig calldata initConfig
     ) external onlyGovernor initializer {
         require(_assets.length == 1, "Must have exactly one asset");
         // Should be set prior to abstract initialize call otherwise
@@ -73,7 +71,7 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         lpToken = IERC20(initConfig.curvePoolLpToken);
         curvePool = ICurveETHPoolV1(initConfig.curvePoolAddress);
         oeth = IERC20(initConfig.oethAddress);
-        weth = IWETH9(initConfig.wethAddress);
+        weth = IWETH9(_assets[0]); // WETH address
         ethCoinIndex = uint128(_getCoinIndex(ETH_ADDRESS));
         oethCoinIndex = uint128(_getCoinIndex(initConfig.oethAddress));
 
@@ -105,7 +103,6 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         _deposit(_weth, _amount);
     }
 
-    // slither-disable-next-line arbitrary-send-eth
     function _deposit(address _weth, uint256 _wethAmount) internal {
         require(_wethAmount > 0, "Must deposit something");
         require(_weth == address(weth), "Can only deposit WETH");
@@ -150,14 +147,13 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         );
 
         // Do the deposit to Curve ETH pool
-        // slither-disable-next-line arbitrary-send-eth
+        // slither-disable-next-line arbitrary-send
         uint256 lpDeposited = curvePool.add_liquidity{ value: _wethAmount }(
             _amounts,
             minMintAmount
         );
 
         require(
-            // slither-disable-next-line arbitrary-send-eth
             IConvexDeposits(cvxDepositorAddress).deposit(
                 cvxDepositorPTokenId,
                 lpDeposited,
@@ -349,16 +345,17 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
     receive() external payable {}
 
     /**
-     * @dev Call the necessary approvals for the Curve pool and gauge
+     * @dev Since we are unwrapping WETH before depositing it to Curve
+     *      there is no need to to set an approval for WETH on the Curve
+     *      pool
      * @param _asset Address of the asset
+     * @param _pToken Address of the Curve LP token
      */
     // solhint-disable-next-line no-unused-vars
     function _abstractSetPToken(address _asset, address _pToken)
         internal
         override
-    {
-        _approveAsset(_asset);
-    }
+    {}
 
     function _approveAsset(address _asset) internal {
         // approve curve pool for asset (required for adding liquidity)
@@ -367,7 +364,7 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
 
     function _approveBase() internal {
         // WETH was approved as a supported asset,
-        // so we need seperate OETH approve
+        // so we need separate OETH approve
         _approveAsset(address(oeth));
         lpToken.safeApprove(cvxDepositorAddress, type(uint256).max);
     }
