@@ -366,7 +366,7 @@ const SwapHomepage = ({
                 ? selectedBuyCoinAmount
                 : selectedRedeemCoinAmount
             }
-            stableCoinToApprove={swapMode === 'mint' ? selectedBuyCoin : 'oeth'}
+            coinToApprove={swapMode === 'mint' ? selectedBuyCoin : 'oeth'}
             needsApproval={needsApproval}
             selectedSwap={selectedSwap}
             swapMetadata={swapMetadata()}

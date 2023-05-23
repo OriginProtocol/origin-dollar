@@ -14,6 +14,7 @@ export default class AllowancesService {
       oeth,
       woeth,
       curveOETHPool,
+      curveRegistryExchange,
     } = contracts
 
     const [
@@ -40,12 +41,38 @@ export default class AllowancesService {
     ])
 
     let oethAllowanceCurvePool
+    let stethAllowanceCurvePool
+    let wethAllowanceCurvePool
+    let rethAllowanceCurvePool
+    let frxethAllowanceCurvePool
 
     if (curveOETHPool) {
-      ;[oethAllowanceCurvePool] = await Promise.all([
+      ;[
+        oethAllowanceCurvePool,
+        stethAllowanceCurvePool,
+        wethAllowanceCurvePool,
+        rethAllowanceCurvePool,
+        frxethAllowanceCurvePool,
+      ] = await Promise.all([
         displayCurrency(
           await oeth.allowance(account, curveOETHPool.address),
           oeth
+        ),
+        displayCurrency(
+          await steth.allowance(account, curveRegistryExchange.address),
+          steth
+        ),
+        displayCurrency(
+          await weth.allowance(account, curveRegistryExchange.address),
+          weth
+        ),
+        displayCurrency(
+          await reth.allowance(account, curveRegistryExchange.address),
+          reth
+        ),
+        displayCurrency(
+          await frxeth.allowance(account, curveRegistryExchange.address),
+          frxeth
         ),
       ])
     }
@@ -63,12 +90,15 @@ export default class AllowancesService {
       },
       weth: {
         vault: wethAllowanceVault,
+        curve: wethAllowanceCurvePool,
       },
       reth: {
         vault: rethAllowanceVault,
+        curve: rethAllowanceCurvePool,
       },
       frxeth: {
         vault: frxethAllowanceVault,
+        curve: frxethAllowanceCurvePool,
       },
       sfrxeth: {
         vault: sfrxethAllowanceVault,
@@ -76,6 +106,7 @@ export default class AllowancesService {
       },
       steth: {
         vault: stethAllowanceVault,
+        curve: stethAllowanceCurvePool,
       },
     }
   }

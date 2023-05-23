@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { ethers, BigNumber } from 'ethers'
 import { useStoreState } from 'pullstate'
-
 import ContractStore from 'stores/ContractStore'
 import AccountStore from 'stores/AccountStore'
 import {
@@ -17,6 +16,7 @@ import {
 import { useWeb3React } from '@web3-react/core'
 import { find } from 'lodash'
 import addresses from 'constants/contractAddresses'
+import curveRoutes from 'constants/curveRoutes'
 
 import { calculateSwapAmounts } from 'utils/math'
 
@@ -338,45 +338,76 @@ const useCurrencySwapper = ({
   }
 
   const _swapCurve = async (swapAmount, minSwapAmount, isGasEstimate) => {
-    const nullAddress = NullAddress?.toLowerCase()
-    const fromAddress = coinContract?.address?.toLowerCase() || nullAddress
-    const toAddress =
-      coinToReceiveContract?.address?.toLowerCase() || nullAddress
+    // Handle stETH, rETH, WETH, frxETH
+    if (coinContract?.address && coinToReceiveContract?.address) {
+      const { routes, swapParams } =
+        curveRoutes[coinContract?.address]?.[coinToReceiveContract?.address]
 
-    const swapParams = [
-      curveUnderlyingCoins.indexOf(fromAddress),
-      curveUnderlyingCoins.indexOf(toAddress),
-      swapAmount,
-      minSwapAmount,
-    ]
-
-    const overrides =
-      fromAddress === nullAddress
-        ? {
-            value: swapAmount,
-          }
-        : {}
-
-    const estimatedGasLimit = await curveOETHPool.estimateGas.exchange(
-      ...swapParams,
-      {
-        from: account,
-        ...overrides,
+      if (!routes) {
+        throw new Error('No curve route found for contract address pair')
       }
-    )
 
-    const gasLimit = increaseGasLimitByBuffer(
-      estimatedGasLimit,
-      curveGasLimitBuffer
-    )
-
-    if (isGasEstimate) {
-      return gasLimit
-    } else {
-      return await connSigner(curveOETHPool).exchange(...swapParams, {
-        gasLimit,
-        ...overrides,
+      const estimatedGasLimit = await curveRegistryExchange.estimateGas[
+        'exchange_multiple(address[9],uint256[3][4],uint256,uint256)'
+      ](routes, swapParams, swapAmount, minSwapAmount, {
+        from: account,
       })
+
+      const gasLimit = increaseGasLimitByBuffer(
+        estimatedGasLimit,
+        curveGasLimitBuffer
+      )
+
+      if (isGasEstimate) {
+        return gasLimit
+      } else {
+        return await connSigner(curveRegistryExchange)[
+          'exchange_multiple(address[9],uint256[3][4],uint256,uint256)'
+        ](routes, swapParams, swapAmount, minSwapAmount, {
+          gasLimit,
+        })
+      }
+    } else {
+      const nullAddress = NullAddress?.toLowerCase()
+      const fromAddress = coinContract?.address?.toLowerCase() || nullAddress
+      const toAddress =
+        coinToReceiveContract?.address?.toLowerCase() || nullAddress
+
+      const swapParams = [
+        curveUnderlyingCoins.indexOf(fromAddress),
+        curveUnderlyingCoins.indexOf(toAddress),
+        swapAmount,
+        minSwapAmount,
+      ]
+
+      const overrides =
+        fromAddress === nullAddress
+          ? {
+              value: swapAmount,
+            }
+          : {}
+
+      const estimatedGasLimit = await curveOETHPool.estimateGas.exchange(
+        ...swapParams,
+        {
+          from: account,
+          ...overrides,
+        }
+      )
+
+      const gasLimit = increaseGasLimitByBuffer(
+        estimatedGasLimit,
+        curveGasLimitBuffer
+      )
+
+      if (isGasEstimate) {
+        return gasLimit
+      } else {
+        return await connSigner(curveOETHPool).exchange(...swapParams, {
+          gasLimit,
+          ...overrides,
+        })
+      }
     }
   }
 
@@ -399,16 +430,39 @@ const useCurrencySwapper = ({
   }
 
   const quoteCurve = async (swapAmount) => {
-    return curveRegistryExchange.get_exchange_amount(
-      addresses.mainnet.CurveOETHPool,
-      // For Eth support
-      coinContract?.address || NullAddress,
-      coinToReceiveContract?.address || NullAddress,
-      swapAmount,
-      {
-        gasLimit: 1000000,
+    // Not a ETH/OETH swap
+    if (coinContract?.address && coinToReceiveContract?.address) {
+      const { routes, swapParams } =
+        curveRoutes[coinContract?.address]?.[coinToReceiveContract?.address]
+
+      if (!routes) {
+        throw new Error('No curve route found for contract address pair')
       }
-    )
+
+      console.log({
+        routes: routes.join(','),
+        swapParams: swapParams.map((i) => i.map((i) => i.toNumber())),
+        swapAmount: swapAmount.toString(),
+      })
+
+      return curveRegistryExchange[
+        'get_exchange_multiple_amount(address[9],uint256[3][4],uint256)'
+      ](routes, swapParams, swapAmount, {
+        gasLimit: 1000000,
+      })
+    } else {
+      // ETH
+      return curveRegistryExchange['get_exchange_amount'](
+        addresses.mainnet.CurveOETHPool,
+        // For Eth support
+        coinContract?.address || NullAddress,
+        coinToReceiveContract?.address || NullAddress,
+        swapAmount,
+        {
+          gasLimit: 1000000,
+        }
+      )
+    }
   }
 
   const _swapUniswap = async (swapAmount, minSwapAmount, isGasEstimate) => {
