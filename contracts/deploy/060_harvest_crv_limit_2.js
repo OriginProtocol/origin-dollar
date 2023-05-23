@@ -1,10 +1,14 @@
 const { parseUnits, formatUnits } = require("ethers").utils;
 const { deploymentWithGovernanceProposal, log } = require("../utils/deploy");
 
+/* The 059 harvest change proposal has timed out. This just re-submits it.
+ */
 module.exports = deploymentWithGovernanceProposal(
   {
     deployName: "060_harvest_crv_limit_2",
     forceDeploy: false,
+    proposalId:
+      "19517057494793169051021794342486874975141107655269915104229644719251875808935",
   },
   async ({ assetAddresses, ethers }) => {
     // Current contracts
