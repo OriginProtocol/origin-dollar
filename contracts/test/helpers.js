@@ -1,18 +1,27 @@
 const hre = require("hardhat");
 const chai = require("chai");
 const mocha = require("mocha");
-const { parseUnits, formatUnits } = require("ethers").utils;
+const { parseUnits, formatUnits, parseEther } = require("ethers").utils;
 const BigNumber = require("ethers").BigNumber;
 const { createFixtureLoader } = require("ethereum-waffle");
 
 const addresses = require("../utils/addresses");
 
+/**
+ * Checks if the actual value is approximately equal to the expected value
+ * within 0.99999 to 1.00001 tolerance.
+ */
 chai.Assertion.addMethod("approxEqual", function (expected, message) {
   const actual = this._obj;
   chai.expect(actual, message).gte(expected.mul("99999").div("100000"));
   chai.expect(actual, message).lte(expected.mul("100001").div("100000"));
 });
 
+/**
+ * Checks if the actual value is approximately equal to the expected value
+ * within a specified percentage tolerance.
+ * @param {number} [maxTolerancePct=1] - The maximum percentage tolerance allowed for the comparison (default is 1%).
+ */
 chai.Assertion.addMethod(
   "approxEqualTolerance",
   function (expected, maxTolerancePct = 1, message = undefined) {
@@ -69,6 +78,12 @@ chai.Assertion.addMethod(
   }
 );
 
+/**
+ * Checks if the actual balance of the user or contract address is equal to
+ * the expected value, converted to the appropriate unit of account.
+ *
+ * @param {Contract} contract - The token contract to check the balance of.
+ */
 chai.Assertion.addMethod(
   "approxBalanceWithToleranceOf",
   async function (expected, contract, tolerancePct = 1, message = undefined) {
@@ -130,6 +145,11 @@ chai.Assertion.addMethod("emittedEvent", async function (eventName, args) {
   }
 });
 
+/**
+ * Returns the number of decimal places used by the given token contract.
+ * Uses a cache to avoid making unnecessary contract calls for the same contract address.
+ * @param {Contract} contract - The token contract to get the decimal places for.
+ */
 const DECIMAL_CACHE = {};
 async function decimalsFor(contract) {
   if (DECIMAL_CACHE[contract.address] != undefined) {
@@ -143,6 +163,11 @@ async function decimalsFor(contract) {
   return decimals;
 }
 
+/**
+ * Converts an amount in the base unit of a contract to the standard decimal unit for the contract.
+ * @param {string} amount - The amount to convert, represented as a string in the base unit of the contract.
+ * @param {Contract} contract - The token contract to get the decimal places for.
+ */
 async function units(amount, contract) {
   return parseUnits(amount, await decimalsFor(contract));
 }
@@ -155,10 +180,22 @@ function ousdUnits(amount) {
   return parseUnits(amount, 18);
 }
 
+function oethUnits(amount) {
+  return parseUnits(amount, 18);
+}
+
+function frxETHUnits(amount) {
+  return parseUnits(amount, 18);
+}
+
 function fraxUnits(amount) {
   return parseUnits(amount, 18);
 }
 
+/**
+ * Converts an amount in wei to a 18 decimal places string.
+ * @param {BigNumberish} amount - The amount to convert, in wei
+ */
 function ousdUnitsFormat(amount) {
   return formatUnits(amount, 18);
 }
@@ -207,6 +244,11 @@ function cUsdcUnits(amount) {
   return parseUnits(amount, 8);
 }
 
+/**
+ * Asserts that the total supply of a contract is approximately equal to an expected value, with a tolerance of 0.1%.
+ * @param {Contract} contract - The token contract to check the total supply of.
+ * @param {BigNumber|string} expected - The expected total supply, represented as a BigNumber or a string.
+ */
 async function expectApproxSupply(contract, expected, message) {
   const balance = await contract.totalSupply();
   // shortcuts the 0 case, since that's neither gt or lt
@@ -217,6 +259,11 @@ async function expectApproxSupply(contract, expected, message) {
   chai.expect(balance, message).lt(expected.mul("1001").div("1000"));
 }
 
+/**
+ * Retrieves the user's or contract's token balance formatted as a string with 2 decimal places
+ * @param {ethers.Signer | ethers.Contract} user - The user or contract whose balance to retrieve
+ * @param {ethers.Contract} contract - The contract to retrieve the balance from
+ */
 async function humanBalance(user, contract) {
   let address = user.address || user.getAddress(); // supports contracts too
   const balance = await contract.balanceOf(address);
@@ -251,15 +298,19 @@ const loadFixture = createFixtureLoader(
   hre.ethers.provider
 );
 
+/// Advances the EVM time by the given number of seconds
 const advanceTime = async (seconds) => {
+  seconds = Math.floor(seconds);
   await hre.ethers.provider.send("evm_increaseTime", [seconds]);
   await hre.ethers.provider.send("evm_mine");
 };
 
+/// Gets the timestamp of the latest block
 const getBlockTimestamp = async () => {
   return (await hre.ethers.provider.getBlock("latest")).timestamp;
 };
 
+/// Advances the blockchain forward by the specified number of blocks
 const advanceBlocks = async (numBlocks) => {
   for (let i = 0; i < numBlocks; i++) {
     await hre.ethers.provider.send("evm_mine");
@@ -279,6 +330,15 @@ const getOracleAddress = async (deployments) => {
  * @returns {Promise<void>}
  */
 const setOracleTokenPriceUsd = async (tokenSymbol, usdPrice) => {
+  const symbolMap = {
+    USDC: 6,
+    USDT: 6,
+    DAI: 6,
+    COMP: 6,
+    CVX: 6,
+    CRV: 6,
+  };
+
   if (isMainnetOrFork) {
     throw new Error(
       `setOracleTokenPriceUsd not supported on network ${hre.network.name}`
@@ -288,8 +348,12 @@ const setOracleTokenPriceUsd = async (tokenSymbol, usdPrice) => {
   const tokenFeed = await ethers.getContract(
     "MockChainlinkOracleFeed" + tokenSymbol
   );
-  await tokenFeed.setDecimals(8);
-  await tokenFeed.setPrice(parseUnits(usdPrice, 8));
+
+  const decimals = Object.keys(symbolMap).includes(tokenSymbol)
+    ? symbolMap[tokenSymbol]
+    : 18;
+  await tokenFeed.setDecimals(decimals);
+  await tokenFeed.setPrice(parseUnits(usdPrice, decimals));
 };
 
 const getOracleAddresses = async (deployments) => {
@@ -306,6 +370,8 @@ const getOracleAddresses = async (deployments) => {
         CRV_USD: addresses.mainnet.chainlinkCRV_USD,
         CVX_USD: addresses.mainnet.chainlinkCVX_USD,
         OGN_ETH: addresses.mainnet.chainlinkOGN_ETH,
+        RETH_ETH: addresses.mainnet.chainlinkRETH_ETH,
+        stETH_ETH: addresses.mainnet.chainlinkstETH_ETH,
       },
       openOracle: addresses.mainnet.openOracle, // Deprecated
     };
@@ -328,6 +394,8 @@ const getOracleAddresses = async (deployments) => {
         CRV_USD: (await deployments.get("MockChainlinkOracleFeedCRV")).address,
         CVX_USD: (await deployments.get("MockChainlinkOracleFeedCVX")).address,
         OGN_ETH: (await deployments.get("MockChainlinkOracleFeedOGNETH"))
+          .address,
+        RETH_ETH: (await deployments.get("MockChainlinkOracleFeedRETHETH"))
           .address,
         NonStandardToken_USD: (
           await deployments.get("MockChainlinkOracleFeedNonStandardToken")
@@ -367,6 +435,10 @@ const getAssetAddresses = async (deployments) => {
       OGN: addresses.mainnet.OGN,
       OGV: addresses.mainnet.OGV,
       RewardsSource: addresses.mainnet.RewardsSource,
+      RETH: addresses.mainnet.rETH,
+      frxETH: addresses.mainnet.frxETH,
+      stETH: addresses.mainnet.stETH,
+      sfrxETH: addresses.mainnet.sfrxETH,
       uniswapRouter: addresses.mainnet.uniswapRouter,
       uniswapV3Router: addresses.mainnet.uniswapV3Router,
       sushiswapRouter: addresses.mainnet.sushiswapRouter,
@@ -402,6 +474,7 @@ const getAssetAddresses = async (deployments) => {
       STKAAVE: (await deployments.get("MockStkAave")).address,
       OGN: (await deployments.get("MockOGN")).address,
       OGV: (await deployments.get("MockOGV")).address,
+      RETH: (await deployments.get("MockRETH")).address,
       // Note: This is only used to transfer the swapped OGV in `Buyback` contract.
       // So, as long as this is a valid address, it should be fine.
       RewardsSource: addresses.dead,
@@ -452,6 +525,19 @@ const getAssetAddresses = async (deployments) => {
   }
 };
 
+async function fundAccount(address, balance = "1000") {
+  await hre.network.provider.send("hardhat_setBalance", [
+    address,
+    parseEther(balance).toHexString(),
+  ]);
+}
+
+/**
+ * Calculates the change in balance after a function has been executed on a contract
+ * @param {Function} functionChangingBalance - The function that changes the balance
+ * @param {Object} balanceChangeContract - The token contract
+ * @param {string} balanceChangeAccount - The account for which the balance is being changed
+ **/
 async function changeInBalance(
   functionChangingBalance,
   balanceChangeContract,
@@ -628,6 +714,7 @@ const forkOnlyDescribe = (title, fn) =>
 
 module.exports = {
   ousdUnits,
+  oethUnits,
   usdtUnits,
   usdcUnits,
   tusdUnits,
@@ -638,6 +725,7 @@ module.exports = {
   oracleUnits,
   cDaiUnits,
   cUsdcUnits,
+  frxETHUnits,
   units,
   daiUnitsFormat,
   ousdUnitsFormat,
@@ -671,4 +759,5 @@ module.exports = {
   differenceInErc20TokenBalance,
   differenceInErc20TokenBalances,
   differenceInStrategyBalance,
+  fundAccount,
 };

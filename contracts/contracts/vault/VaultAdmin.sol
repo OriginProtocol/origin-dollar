@@ -180,10 +180,19 @@ contract VaultAdmin is VaultStorage {
      *         to mint OUSD.
      * @param _asset Address of asset
      */
-    function supportAsset(address _asset) external onlyGovernor {
+    function supportAsset(address _asset, uint8 _unitConversion)
+        external
+        onlyGovernor
+    {
         require(!assets[_asset].isSupported, "Asset already supported");
 
-        assets[_asset] = Asset({ isSupported: true });
+        assets[_asset] = Asset({
+            isSupported: true,
+            unitConversion: UnitConversion(_unitConversion),
+            decimals: 0 // will be overridden in _cacheDecimals
+        });
+
+        _cacheDecimals(_asset);
         allAssets.push(_asset);
 
         // Verify that our oracle supports the asset
@@ -191,6 +200,10 @@ contract VaultAdmin is VaultStorage {
         IOracle(priceProvider).price(_asset);
 
         emit AssetSupported(_asset);
+    }
+
+    function cacheDecimals(address _asset) external onlyGovernor {
+        _cacheDecimals(_asset);
     }
 
     /**
@@ -322,7 +335,7 @@ contract VaultAdmin is VaultStorage {
         address _strategyToAddress,
         address[] calldata _assets,
         uint256[] calldata _amounts
-    ) external onlyGovernorOrStrategist {
+    ) external onlyGovernorOrStrategist nonReentrant {
         _depositToStrategy(_strategyToAddress, _assets, _amounts);
     }
 
@@ -359,7 +372,7 @@ contract VaultAdmin is VaultStorage {
         address _strategyFromAddress,
         address[] calldata _assets,
         uint256[] calldata _amounts
-    ) external onlyGovernorOrStrategist {
+    ) external onlyGovernorOrStrategist nonReentrant {
         _withdrawFromStrategy(
             address(this),
             _strategyFromAddress,
@@ -485,41 +498,6 @@ contract VaultAdmin is VaultStorage {
     }
 
     /***************************************
-                    Pricing
-    ****************************************/
-
-    /**
-     * @dev Returns the total price in 18 digit USD for a given asset.
-     *      Never goes above 1, since that is how we price mints
-     * @param asset address of the asset
-     * @return uint256 USD price of 1 of the asset, in 18 decimal fixed
-     */
-    function priceUSDMint(address asset) external view returns (uint256) {
-        uint256 price = IOracle(priceProvider).price(asset);
-        require(price >= MINT_MINIMUM_ORACLE, "Asset price below peg");
-        if (price > 1e8) {
-            price = 1e8;
-        }
-        // Price from Oracle is returned with 8 decimals so scale to 18
-        return price.scaleBy(18, 8);
-    }
-
-    /**
-     * @dev Returns the total price in 18 digit USD for a given asset.
-     *      Never goes below 1, since that is how we price redeems
-     * @param asset Address of the asset
-     * @return uint256 USD price of 1 of the asset, in 18 decimal fixed
-     */
-    function priceUSDRedeem(address asset) external view returns (uint256) {
-        uint256 price = IOracle(priceProvider).price(asset);
-        if (price < 1e8) {
-            price = 1e8;
-        }
-        // Price from Oracle is returned with 8 decimals so scale to 18
-        return price.scaleBy(18, 8);
-    }
-
-    /***************************************
              Strategies Admin
     ****************************************/
 
@@ -615,5 +593,19 @@ contract VaultAdmin is VaultStorage {
         reserveStrategy.withdraw(msg.sender, asset, amount);
 
         emit AssetTransferredToUniswapV3Strategy(msg.sender, asset, amount);
+    }
+
+    /***************************************
+                    Utils
+    ****************************************/
+
+    function _cacheDecimals(address token) internal {
+        Asset storage tokenAsset = assets[token];
+        if (tokenAsset.decimals != 0) {
+            return;
+        }
+        uint256 decimals = IBasicToken(token).decimals();
+        require(decimals >= 6 && decimals <= 18, "Unexpected precision");
+        tokenAsset.decimals = decimals;
     }
 }

@@ -56,9 +56,17 @@ contract VaultStorage is Initializable, Governable {
     );
 
     // Assets supported by the Vault, i.e. Stablecoins
+    enum UnitConversion {
+        DECIMALS,
+        GETEXCHANGERATE
+    }
     struct Asset {
         bool isSupported;
+        UnitConversion unitConversion;
+        uint256 decimals;
     }
+
+    // slither-disable-next-line uninitialized-state
     mapping(address => Asset) internal assets;
     address[] internal allAssets;
 
@@ -73,6 +81,7 @@ contract VaultStorage is Initializable, Governable {
     address[] internal allStrategies;
 
     // Address of the Oracle price provider contract
+    // slither-disable-next-line uninitialized-state
     address public priceProvider;
     // Pausing bools
     bool public rebasePaused = false;
@@ -117,7 +126,7 @@ contract VaultStorage is Initializable, Governable {
     // Deprecated: Tokens that should be swapped for stablecoins
     address[] private _deprecated_swapTokens;
 
-    uint256 constant MINT_MINIMUM_ORACLE = 99800000;
+    uint256 constant MINT_MINIMUM_UNIT_PRICE = 0.998e18;
 
     // Meta strategy that is allowed to mint/burn OUSD without changing collateral
     address public ousdMetaStrategy = address(0);
@@ -127,6 +136,9 @@ contract VaultStorage is Initializable, Governable {
 
     // How much net total OUSD is allowed to be minted by all strategies
     uint256 public netOusdMintForStrategyThreshold = 0;
+
+    uint256 constant MIN_UNIT_PRICE_DRIFT = 0.7e18;
+    uint256 constant MAX_UNIT_PRICE_DRIFT = 1.3e18;
 
     /**
      * @dev set the implementation for the admin, this needs to be in a base class else we cannot set it

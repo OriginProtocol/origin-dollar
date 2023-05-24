@@ -116,6 +116,41 @@ contract WOETHProxy is InitializeGovernedUpgradeabilityProxy {
 }
 
 /**
+ * @notice OETHVaultProxy delegates calls to a Vault implementation
+ */
+contract OETHVaultProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
+
+/**
+ * @notice OETHDripperProxy delegates calls to a OETHDripper implementation
+ */
+contract OETHDripperProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
+
+/**
+ * @notice OETHHarvesterProxy delegates calls to a Harvester implementation
+ */
+contract OETHHarvesterProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
+
+/**
+ * @notice FraxETHStrategyProxy delegates calls to a Generalized4626Strategy implementation
+ */
+contract FraxETHStrategyProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
+
+/**
+ * @notice CurveEthStrategyProxy delegates calls to a CurveEthStrategy implementation
+ */
+contract ConvexEthMetaStrategyProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
+
+/**
  * @notice BuybackProxy delegates calls to Buyback implementation
  */
 contract BuybackProxy is InitializeGovernedUpgradeabilityProxy {

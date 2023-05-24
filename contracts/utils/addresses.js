@@ -7,6 +7,7 @@ const addresses = {};
 // Utility addresses
 addresses.zero = "0x0000000000000000000000000000000000000000";
 addresses.dead = "0x0000000000000000000000000000000000000001";
+addresses.ETH = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
 
 addresses.mainnet = {};
 
@@ -50,7 +51,6 @@ addresses.mainnet.ThreePoolToken = "0x6c3f90f043a72fa612cbac8115ee7e52bde6e490";
 addresses.mainnet.ThreePoolGauge = "0xbFcF63294aD7105dEa65aA58F8AE5BE2D9d0952A";
 // CVX
 addresses.mainnet.CVX = "0x4e3fbd56cd56c3e72c1403e103b45db9da5b9d2b";
-addresses.mainnet.CRVRewardsPool = "0x689440f2ff927e1f24c72f1087e1faf471ece1c8";
 addresses.mainnet.CVXBooster = "0xF403C135812408BFbE8713b5A23a04b3D48AAE31";
 addresses.mainnet.CVXRewardsPool = "0x7D536a737C13561e0D2Decf1152a653B4e615158";
 // Open Oracle
@@ -99,9 +99,15 @@ addresses.mainnet.chainlinkUSDC_ETH =
   "0x986b5E1e1755e3C2440e960477f25201B0a8bbD4";
 addresses.mainnet.chainlinkUSDT_ETH =
   "0xEe9F2375b4bdF6387aa8265dD4FB8F16512A1d46";
+addresses.mainnet.chainlinkRETH_ETH =
+  "0x536218f9E9Eb48863970252233c8F271f554C2d0";
+addresses.mainnet.chainlinkstETH_ETH =
+  "0x86392dC19c0b719886221c78AB11eb8Cf5c52812";
+addresses.mainnet.chainlinkcbETH_ETH =
+  "0xF017fcB346A1885194689bA23Eff2fE6fA5C483b";
 
 // WETH Token
-addresses.mainnet.WETH = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2";
+addresses.mainnet.WETH = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2";
 // Deployed OUSD contracts
 addresses.mainnet.Guardian = "0xbe2AB3d3d8F6a32b96414ebbd865dBD276d3d899"; // ERC 20 owner multisig.
 addresses.mainnet.VaultProxy = "0xe75d77b1865ae93c7eaa3040b038d7aa7bc02f70";
@@ -129,7 +135,6 @@ addresses.mainnet.MorphoStrategyProxy =
 addresses.mainnet.MorphoAaveStrategyProxy =
   "0x79F2188EF9350A1dC11A062cca0abE90684b0197";
 
-addresses.mainnet.MixOracle = "0x4d4f5e7a1FE57F5cEB38BfcE8653EFFa5e584458";
 addresses.mainnet.UniswapOracle = "0xc15169Bad17e676b3BaDb699DEe327423cE6178e";
 addresses.mainnet.CompensationClaims =
   "0x9C94df9d594BA1eb94430C006c269C314B1A8281";
@@ -148,4 +153,15 @@ addresses.mainnet.UniV3SwapRouter =
 // OUSD Governance
 addresses.mainnet.GovernorFive = "0x3cdd07c16614059e66344a7b579dab4f9516c0b6";
 addresses.mainnet.Timelock = "0x35918cDE7233F2dD33fA41ae3Cb6aE0e42E0e69F";
+
+// OETH
+addresses.mainnet.OETHProxy = "0x856c4Efb76C1D1AE02e20CEB03A2A6a08b0b8dC3";
+addresses.mainnet.WOETHProxy = "0xDcEe70654261AF21C44c093C300eD3Bb97b78192";
+
+// Tokens
+addresses.mainnet.sfrxETH = "0xac3E018457B222d93114458476f3E3416Abbe38F";
+addresses.mainnet.frxETH = "0x5e8422345238f34275888049021821e8e08caa1f";
+addresses.mainnet.rETH = "0xae78736Cd615f374D3085123A210448E74Fc6393";
+addresses.mainnet.stETH = "0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84";
+
 module.exports = addresses;

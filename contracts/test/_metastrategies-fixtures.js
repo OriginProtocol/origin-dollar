@@ -6,7 +6,9 @@ const {
   convexMetaVaultFixture,
   resetAllowance,
   impersonateAndFundContract,
+  fundWith3Crv,
 } = require("./_fixture");
+const addresses = require("../utils/addresses");
 const erc20Abi = require("./abi/erc20.json");
 
 // NOTE: This can cause a change in setup from mainnet.
@@ -25,6 +27,11 @@ async function withDefaultOUSDMetapoolStrategiesSet() {
   await vault
     .connect(timelock)
     .setAssetDefaultStrategy(usdc.address, OUSDmetaStrategy.address);
+
+  fixture.cvxRewardPool = await ethers.getContractAt(
+    "IRewardStaking",
+    addresses.mainnet.CVXRewardsPool
+  );
 
   return fixture;
 }
@@ -73,6 +80,18 @@ async function _balanceMetaPool(fixture, metapool) {
   await resetAllowance(coinTwoContract, metapoolSigner, metapool.address);
 
   if (mainCoinValue.gt(crv3Value)) {
+    // way too little Crv liquidity
+    if (mainCoinValue.gt(crv3Value.mul(18).div(10))) {
+      // == mul(1.8)
+      const crvAmount = mainCoinValue.sub(crv3Value);
+      await fundWith3Crv(domen.address, crvAmount);
+      // prettier-ignore
+      await metapool
+        .connect(domen)["add_liquidity(uint256[2],uint256)"]([0, crvAmount], 0);
+
+      await metapool.connect(metapoolSigner)[exchangeSign];
+    }
+
     const diffInDollars = mainCoinValue.sub(crv3Value);
     const liquidityDiff = await _getCoinLiquidity(
       metapool,
@@ -84,6 +103,7 @@ async function _balanceMetaPool(fixture, metapool) {
   } else if (crv3Value.gt(mainCoinValue)) {
     const diffInDollars = crv3Value.sub(mainCoinValue);
     const liquidityDiff = await get3CRVLiquidity(fixture, diffInDollars.div(2));
+
     // Tilt to Main Token
     await exchangeMethod(0, 1, liquidityDiff, 0);
   }
@@ -131,7 +151,6 @@ async function tiltTo3CRV_Metapool_automatic(fixture) {
       // eslint-disable-next-line
       "add_liquidity(uint256[2],uint256)"
     ]([0, shareOfThreePoolCoinBalance], 0);
-
     acc = acc.add(shareOfThreePoolCoinBalance);
   }
 }
@@ -172,7 +191,6 @@ async function tiltTo3CRV_Metapool(fixture, metapool, amount) {
 
   // Balance metapool
   await _balanceMetaPool(fixture, metapool);
-
   amount = amount || ousdUnits("1000000");
 
   // Tilt to 3CRV by a million

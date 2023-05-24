@@ -23,6 +23,8 @@ const ousdMetapoolAbi = require("./abi/ousdMetapool.json");
 const threepoolLPAbi = require("./abi/threepoolLP.json");
 const threepoolSwapAbi = require("./abi/threepoolSwap.json");
 
+const sfrxETHAbi = require("./abi/sfrxETH.json");
+
 async function defaultFixture() {
   await deployments.fixture(
     isFork
@@ -39,17 +41,29 @@ async function defaultFixture() {
 
   const ousdProxy = await ethers.getContract("OUSDProxy");
   const vaultProxy = await ethers.getContract("VaultProxy");
+
   const harvesterProxy = await ethers.getContract("HarvesterProxy");
+
   const compoundStrategyProxy = await ethers.getContract(
     "CompoundStrategyProxy"
   );
 
   const ousd = await ethers.getContractAt("OUSD", ousdProxy.address);
   const vault = await ethers.getContractAt("IVault", vaultProxy.address);
+
+  let oethProxy, OETHVaultProxy, oeth, oethVault;
+  if (isFork) {
+    oethProxy = await ethers.getContract("OETHProxy");
+    OETHVaultProxy = await ethers.getContract("OETHVaultProxy");
+    oeth = await ethers.getContractAt("OETH", oethProxy.address);
+    oethVault = await ethers.getContractAt("IVault", OETHVaultProxy.address);
+  }
+
   const harvester = await ethers.getContractAt(
     "Harvester",
     harvesterProxy.address
   );
+
   const dripperProxy = await ethers.getContract("DripperProxy");
   const dripper = await ethers.getContractAt("Dripper", dripperProxy.address);
   const wousdProxy = await ethers.getContract("WrappedOUSDProxy");
@@ -146,6 +160,7 @@ async function defaultFixture() {
     dai,
     tusd,
     usdc,
+    weth,
     ogn,
     ogv,
     rewardsSource,
@@ -161,6 +176,9 @@ async function defaultFixture() {
     aaveToken,
     stkAave,
     aaveIncentivesController,
+    reth,
+    frxETH,
+    sfrxETH,
     mockNonRebasing,
     mockNonRebasingTwo,
     LUSD;
@@ -177,6 +195,7 @@ async function defaultFixture() {
     metapoolToken,
     morpho,
     morphoCompoundStrategy,
+    fraxEthStrategy,
     morphoAaveStrategy,
     morphoLens,
     LUSDMetapoolToken,
@@ -195,13 +214,18 @@ async function defaultFixture() {
     UniV3SwapRouter,
     mockStrategy,
     mockStrategy2,
-    mockStrategyDAI;
+    mockStrategyDAI,
+    oethHarvester,
+    oethDripper,
+    ConvexEthMetaStrategyProxy,
+    ConvexEthMetaStrategy;
 
   if (isFork) {
     usdt = await ethers.getContractAt(usdtAbi, addresses.mainnet.USDT);
     dai = await ethers.getContractAt(daiAbi, addresses.mainnet.DAI);
     tusd = await ethers.getContractAt(erc20Abi, addresses.mainnet.TUSD);
     usdc = await ethers.getContractAt(erc20Abi, addresses.mainnet.USDC);
+    weth = await ethers.getContractAt(erc20Abi, addresses.mainnet.WETH);
     cusdt = await ethers.getContractAt(erc20Abi, addresses.mainnet.cUSDT);
     cdai = await ethers.getContractAt(erc20Abi, addresses.mainnet.cDAI);
     cusdc = await ethers.getContractAt(erc20Abi, addresses.mainnet.cUSDC);
@@ -214,6 +238,8 @@ async function defaultFixture() {
     ausdt = await ethers.getContractAt(erc20Abi, addresses.mainnet.aUSDT);
     ausdc = await ethers.getContractAt(erc20Abi, addresses.mainnet.aUSDC);
     adai = await ethers.getContractAt(erc20Abi, addresses.mainnet.aDAI);
+    frxETH = await ethers.getContractAt(erc20Abi, addresses.mainnet.frxETH);
+    sfrxETH = await ethers.getContractAt(sfrxETHAbi, addresses.mainnet.sfrxETH);
     morpho = await ethers.getContractAt(morphoAbi, addresses.mainnet.Morpho);
     morphoLens = await ethers.getContractAt(
       morphoLensAbi,
@@ -268,14 +294,44 @@ async function defaultFixture() {
       "ISwapRouter",
       addresses.mainnet.UniV3SwapRouter
     );
+
+    const fraxEthStrategyProxy = await ethers.getContract(
+      "FraxETHStrategyProxy"
+    );
+    fraxEthStrategy = await ethers.getContractAt(
+      "Generalized4626Strategy",
+      fraxEthStrategyProxy.address
+    );
+
+    const oethHarvesterProxy = await ethers.getContract("OETHHarvesterProxy");
+    oethHarvester = await ethers.getContractAt(
+      "OETHHarvester",
+      oethHarvesterProxy.address
+    );
+
+    ConvexEthMetaStrategyProxy = await ethers.getContract(
+      "ConvexEthMetaStrategyProxy"
+    );
+    ConvexEthMetaStrategy = await ethers.getContractAt(
+      "ConvexEthMetaStrategy",
+      ConvexEthMetaStrategyProxy.address
+    );
+
+    const oethDripperProxy = await ethers.getContract("OETHDripperProxy");
+    oethDripper = await ethers.getContractAt(
+      "OETHDripper",
+      oethDripperProxy.address
+    );
   } else {
     usdt = await ethers.getContract("MockUSDT");
     dai = await ethers.getContract("MockDAI");
     tusd = await ethers.getContract("MockTUSD");
     usdc = await ethers.getContract("MockUSDC");
+    weth = await ethers.getContract("MockWETH");
     ogn = await ethers.getContract("MockOGN");
     LUSD = await ethers.getContract("MockLUSD");
     ogv = await ethers.getContract("MockOGV");
+    reth = await ethers.getContract("MockRETH");
     nonStandardToken = await ethers.getContract("MockNonStandardToken");
 
     cdai = await ethers.getContract("MockCDAI");
@@ -357,13 +413,14 @@ async function defaultFixture() {
 
     UniV3SwapRouter = await ethers.getContract("MockUniswapRouter");
   }
+
   if (!isFork) {
     const assetAddresses = await getAssetAddresses(deployments);
 
     const sGovernor = await ethers.provider.getSigner(governorAddr);
 
     // Add TUSD in fixture, it is disabled by default in deployment
-    await vault.connect(sGovernor).supportAsset(assetAddresses.TUSD);
+    await vault.connect(sGovernor).supportAsset(assetAddresses.TUSD, 0);
 
     // Enable capital movement
     await vault.connect(sGovernor).unpauseCapital();
@@ -392,6 +449,10 @@ async function defaultFixture() {
       // Approve Vault to move funds
       for (const asset of [ousd, usdt, usdc, dai]) {
         await resetAllowance(asset, user, vault.address);
+      }
+
+      for (const asset of [oeth, frxETH]) {
+        await resetAllowance(asset, user, oethVault.address);
       }
     }
   } else {
@@ -422,7 +483,9 @@ async function defaultFixture() {
     ousd,
     vault,
     harvester,
+    oethHarvester,
     dripper,
+    oethDripper,
     mockNonRebasing,
     mockNonRebasingTwo,
     // Oracle
@@ -441,7 +504,9 @@ async function defaultFixture() {
     usdc,
     ogn,
     LUSD,
+    weth,
     ogv,
+    reth,
     rewardsSource,
     nonStandardToken,
     // cTokens
@@ -469,6 +534,7 @@ async function defaultFixture() {
     convexStrategy,
     OUSDmetaStrategy,
     LUSDMetaStrategy,
+    ConvexEthMetaStrategy,
     morphoCompoundStrategy,
     morphoAaveStrategy,
     cvx,
@@ -499,6 +565,13 @@ async function defaultFixture() {
     mockStrategy,
     mockStrategyDAI,
     mockStrategy2,
+
+    //OETH
+    oethVault,
+    oeth,
+    frxETH,
+    sfrxETH,
+    fraxEthStrategy,
   };
 }
 
@@ -645,6 +718,23 @@ async function convexVaultFixture() {
   return fixture;
 }
 
+async function fundWith3Crv(address, maxAmount) {
+  // Get some 3CRV from most loaded contracts/wallets
+  await impersonateAndFundAddress(
+    addresses.mainnet.ThreePoolToken,
+    [
+      "0xceaf7747579696a2f0bb206a14210e3c9e6fb269",
+      "0xd632f22692fac7611d2aa1c0d552930d43caed3b",
+      "0xbfcf63294ad7105dea65aa58f8ae5be2d9d0952a",
+      "0xed279fdd11ca84beef15af5d39bb4d4bee23f0ca",
+      "0x43b4fdfd4ff969587185cdb6f0bd875c5fc83f8c",
+    ],
+    address,
+    30, // balanceToUse
+    maxAmount
+  );
+}
+
 /**
  * Configure a Vault with only the Meta strategy.
  */
@@ -670,19 +760,8 @@ async function convexMetaVaultFixture() {
     );
     // const curveFactory = await ethers.getContractAt(curveFactoryAbi, curveFactoryAddress)
 
-    // Get some 3CRV from most loaded contracts/wallets
-    await impersonateAndFundAddress(
-      addresses.mainnet.ThreePoolToken,
-      [
-        "0xceaf7747579696a2f0bb206a14210e3c9e6fb269",
-        "0xd632f22692fac7611d2aa1c0d552930d43caed3b",
-        "0xbfcf63294ad7105dea65aa58f8ae5be2d9d0952a",
-        "0xed279fdd11ca84beef15af5d39bb4d4bee23f0ca",
-        "0x43b4fdfd4ff969587185cdb6f0bd875c5fc83f8c",
-      ],
-      // Domen is loaded with 3CRV
-      domen.getAddress()
-    );
+    // Domen is loaded with 3CRV
+    await fundWith3Crv(domen.getAddress(), ethers.BigNumber.from("0"));
 
     for (const user of [josh, matt, anna, domen, daniel, franck]) {
       // Approve OUSD MetaPool contract to move funds
@@ -816,6 +895,40 @@ async function morphoAaveFixture() {
 }
 
 /**
+ * FraxETHStrategy fixture that works only in forked environment
+ *
+ */
+async function fraxETHStrategyForkedFixture() {
+  const fixture = await loadFixture(defaultFixture);
+
+  const sGuardian = await ethers.provider.getSigner(addresses.mainnet.Guardian);
+  const { daniel } = fixture;
+
+  // Get some frxETH from most wealthy contracts/wallets
+  await impersonateAndFundAddress(
+    addresses.mainnet.frxETH,
+    [
+      "0x5Ae5eC04170E0dedC00b0Cfae3B8E7821C630AFA",
+      "0x2F08F4645d2fA1fB12D2db8531c0c2EA0268BdE2",
+      "0x8a15b2Dc9c4f295DCEbB0E7887DD25980088fDCB",
+      "0xce4DbAF3fa72C962Ee1F371694109fc2a80B03f5",
+      "0x4E30fc7ccD2dF3ddCA39a69d2085334Ee63b9c96",
+    ],
+    // Daniel is loaded with fraxETH
+    daniel.getAddress()
+  );
+
+  await fixture.oethVault
+    .connect(sGuardian)
+    .setAssetDefaultStrategy(
+      fixture.frxETH.address,
+      fixture.fraxEthStrategy.address
+    );
+
+  return fixture;
+}
+
+/**
  * Generalized strategy fixture that works only in forked environment
  *
  * @param metapoolAddress -> the address of the metapool
@@ -934,12 +1047,14 @@ async function impersonateAndFundAddress(
   tokenAddress,
   contractAddresses,
   toAddress,
-  balanceToUse = 30 // 30%
+  balanceToUse = 30, // 30%
+  maxAmount = ethers.BigNumber.from(0)
 ) {
   if (!Array.isArray(contractAddresses)) {
     contractAddresses = [contractAddresses];
   }
 
+  let amountTransfered = ethers.BigNumber.from("0");
   for (const contractAddress of contractAddresses) {
     const impersonatedSigner = await impersonateAndFundContract(
       contractAddress
@@ -950,9 +1065,23 @@ async function impersonateAndFundAddress(
     const balance = await tokenContract
       .connect(impersonatedSigner)
       .balanceOf(contractAddress);
-    await tokenContract
-      .connect(impersonatedSigner)
-      .transfer(toAddress, balance.mul(balanceToUse).div(100));
+
+    const amount = balance.mul(balanceToUse).div(100);
+    // consider max amount
+    if (maxAmount.gt(ethers.BigNumber.from("0"))) {
+      if (amountTransfered.add(amount).gt(maxAmount)) {
+        await tokenContract
+          .connect(impersonatedSigner)
+          .transfer(toAddress, maxAmount.sub(amountTransfered));
+
+        // max amount already transferred
+        return;
+      }
+
+      amountTransfered.add(amount);
+    }
+
+    await tokenContract.connect(impersonatedSigner).transfer(toAddress, amount);
   }
 }
 
@@ -1008,6 +1137,58 @@ async function convexLUSDMetaVaultFixture() {
       fixture.usdc.address,
       fixture.LUSDMetaStrategy.address
     );
+
+  return fixture;
+}
+
+/**
+ * Configure a Vault with only the OETH/(W)ETH Curve Metastrategy.
+ */
+async function convexOETHMetaVaultFixture() {
+  const fixture = await loadFixture(defaultFixture);
+  const { guardianAddr } = await getNamedAccounts();
+  const sGuardian = await ethers.provider.getSigner(guardianAddr);
+
+  await impersonateAndFundAddress(
+    fixture.weth.address,
+    [
+      "0x7373BD8512d17FC53e9b39c9655A95c9813A0aB1",
+      "0x821A96fbD4465D02726EDbAa936A0d6d1032dE46",
+      "0x4b7fEcEffE3b14fFD522e72b711B087f08BD98Ab",
+      "0x204bcc7A3da640EF95cB01a15c63938C6B878e9e",
+    ],
+    // Josh is loaded with weth
+    fixture.josh.getAddress()
+  );
+
+  // Get some 3CRV from most loaded contracts/wallets
+  await impersonateAndFundAddress(
+    addresses.mainnet.CRV,
+    [
+      "0x0A2634885B47F15064fB2B33A86733C614c9950A",
+      "0x34ea4138580435B5A521E460035edb19Df1938c1",
+      "0x28C6c06298d514Db089934071355E5743bf21d60",
+      "0xa6a4d3218BBf0E81B38390396f9EA7eb8B9c9820",
+      "0xb73D8dCE603155e231aAd4381a2F20071Ca4D55c",
+    ],
+    // Josh is loaded with CRV
+    fixture.josh.getAddress()
+  );
+
+  // Add Convex Meta strategy
+  await fixture.oethVault
+    .connect(sGuardian)
+    .setAssetDefaultStrategy(
+      fixture.weth.address,
+      fixture.ConvexEthMetaStrategy.address
+    );
+
+  // TODO: hardcode this once deployed to the mainnet
+  fixture.cvxRewardPool = await ethers.getContractAt(
+    "IRewardStaking",
+    await fixture.ConvexEthMetaStrategy.cvxRewardStaker()
+  );
+
   return fixture;
 }
 
@@ -1199,12 +1380,13 @@ async function hackedVaultFixture() {
   });
 
   const evilDAI = await ethers.getContract("MockEvilDAI");
-
   await oracleRouter.setFeed(
     evilDAI.address,
     oracleAddresses.chainlink.DAI_USD
   );
-  await fixture.vault.connect(sGovernor).supportAsset(evilDAI.address);
+  await oracleRouter.cacheDecimals(evilDAI.address);
+
+  await fixture.vault.connect(sGovernor).supportAsset(evilDAI.address, 0);
 
   fixture.evilDAI = evilDAI;
 
@@ -1364,6 +1546,7 @@ async function _setDefaultStrategy(fixture, asset, strategy) {
 }
 
 module.exports = {
+  fundWith3Crv,
   resetAllowance,
   defaultFixture,
   mockVaultFixture,
@@ -1374,6 +1557,7 @@ module.exports = {
   threepoolVaultFixture,
   convexVaultFixture,
   convexMetaVaultFixture,
+  convexOETHMetaVaultFixture,
   convexGeneralizedMetaForkedFixture,
   convexLUSDMetaVaultFixture,
   morphoCompoundFixture,
@@ -1386,4 +1570,5 @@ module.exports = {
   withImpersonatedAccount,
   impersonateAndFundContract,
   impersonateAccount,
+  fraxETHStrategyForkedFixture,
 };

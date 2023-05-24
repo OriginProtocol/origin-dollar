@@ -9,6 +9,6 @@
     "start": "cd dapp && yarn run start"
   },
   "engines": {
-    "node": "16.x"
+    "node": ">=16"
   }
 }

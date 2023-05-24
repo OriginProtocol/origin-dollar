@@ -70,7 +70,7 @@ interface IVault {
 
     function ousdMetaStrategy() external view returns (address);
 
-    function supportAsset(address _asset) external;
+    function supportAsset(address _asset, uint8 _supportsAsset) external;
 
     function approveStrategy(address _addr) external;
 
@@ -102,9 +102,9 @@ interface IVault {
 
     function transferToken(address _asset, uint256 _amount) external;
 
-    function priceUSDMint(address asset) external view returns (uint256);
+    function priceUnitMint(address asset) external view returns (uint256);
 
-    function priceUSDRedeem(address asset) external view returns (uint256);
+    function priceUnitRedeem(address asset) external view returns (uint256);
 
     function withdrawAllFromStrategy(address _strategyAddr) external;
 

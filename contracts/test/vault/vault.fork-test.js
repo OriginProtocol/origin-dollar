@@ -224,7 +224,12 @@ forkOnlyDescribe("ForkTest: Vault", function () {
   });
 
   describe("Oracle", () => {
-    it("Should have correct Price Oracle address set", async () => {
+    /* NOTICE: update once the address is the updated on the mainnet.
+     * the fork tests require the 052 deploy to run in order to be
+     * compatible with the latest codebase -> which is not yet deployed to
+     * OUSD mainnet.
+     */
+    it.skip("Should have correct Price Oracle address set", async () => {
       const { vault } = fixture;
       expect(await vault.priceProvider()).to.equal(
         "0x7533365d1b0D95380bc4e94D0bdEF5173E43f954"
@@ -233,34 +238,34 @@ forkOnlyDescribe("ForkTest: Vault", function () {
 
     it("Should return a price for minting with USDT", async () => {
       const { vault, usdt } = fixture;
-      await vault.priceUSDMint(usdt.address);
+      await vault.priceUnitMint(usdt.address);
     });
 
     it("Should return a price for minting with DAI", async () => {
       const { vault, dai } = fixture;
-      await vault.priceUSDMint(dai.address);
+      await vault.priceUnitMint(dai.address);
     });
 
     it("Should return a price for minting with USDC", async () => {
       const { vault, usdc } = fixture;
-      await vault.priceUSDMint(usdc.address);
+      await vault.priceUnitMint(usdc.address);
     });
 
     it("Should return a price for redeem with USDT", async () => {
       const { vault, usdt } = fixture;
-      const price = await vault.priceUSDRedeem(usdt.address);
+      const price = await vault.priceUnitRedeem(usdt.address);
       expect(price).to.be.gte(utils.parseEther("1"));
     });
 
     it("Should return a price for redeem with DAI", async () => {
       const { vault, dai } = fixture;
-      const price = await vault.priceUSDRedeem(dai.address);
+      const price = await vault.priceUnitRedeem(dai.address);
       expect(price).to.be.gte(utils.parseEther("1"));
     });
 
     it("Should return a price for redeem with USDC", async () => {
       const { vault, usdc } = fixture;
-      const price = await vault.priceUSDRedeem(usdc.address);
+      const price = await vault.priceUnitRedeem(usdc.address);
       expect(price).to.be.gte(utils.parseEther("1"));
     });
   });

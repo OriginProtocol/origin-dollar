@@ -28,10 +28,37 @@ describe("Harvester", function () {
     await comp.connect(governor).transfer(compoundStrategy.address, compAmount);
   };
 
+  let fixture;
+
+  beforeEach(async function () {
+    fixture = await loadFixture(compoundVaultFixture);
+
+    /* Ethereum Waffle caches fixtures and uses evm snapshot and evm revert:
+     * https://github.com/TrueFiEng/Waffle/blob/f0d78cd5529684f2f377aaa0025c33aed52e268e/waffle-provider/src/fixtures.ts#L18-L32
+     *
+     * to optimize the speed of test execution. Somewhere in the caching
+     * there is a bug where Harvester tests fail if they are ran within the whole
+     * unit test suite and succeed if they are ran by themselves. This is a bit
+     * of a nasty workaround.
+     */
+    const { governorAddr } = await getNamedAccounts();
+    const sGovernor = await ethers.provider.getSigner(governorAddr);
+
+    try {
+      await fixture.vault
+        .connect(sGovernor)
+        .approveStrategy(fixture.compoundStrategy.address);
+    } catch (e) {
+      // ignore the strategy already approved exception
+    }
+
+    await fixture.harvester
+      .connect(sGovernor)
+      .setSupportedStrategy(fixture.compoundStrategy.address, true);
+  });
+
   it("Should correctly set reward token config and have correct allowances set for Uniswap like routers", async () => {
-    const { harvester, governor, comp } = await loadFixture(
-      compoundVaultFixture
-    );
+    const { harvester, governor, comp } = fixture;
     const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
 
     await harvester
@@ -87,9 +114,7 @@ describe("Harvester", function () {
   });
 
   it("Should fail when calling harvest or harvestAndSwap with the non valid strategy address", async () => {
-    const { harvester, governor, anna } = await loadFixture(
-      compoundVaultFixture
-    );
+    const { harvester, governor, anna } = fixture;
     const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
 
     // prettier-ignore
@@ -113,7 +138,7 @@ describe("Harvester", function () {
   });
 
   it("Should not allow adding reward token config without price feed", async () => {
-    const { harvester, governor } = await loadFixture(compoundVaultFixture);
+    const { harvester, governor } = fixture;
 
     await expect(
       harvester
@@ -130,7 +155,7 @@ describe("Harvester", function () {
   });
 
   it("Should not allow non-Governor to set reward token config", async () => {
-    const { harvester, anna, comp } = await loadFixture(compoundVaultFixture);
+    const { harvester, anna, comp } = fixture;
 
     await expect(
       // Use the vault address for an address that definitely won't have a price
@@ -149,9 +174,7 @@ describe("Harvester", function () {
   });
 
   it("Should allow Governor to set reward token config", async () => {
-    const { harvester, governor, comp } = await loadFixture(
-      compoundVaultFixture
-    );
+    const { harvester, governor, comp } = fixture;
 
     await harvester
       .connect(governor)
@@ -167,7 +190,7 @@ describe("Harvester", function () {
 
   it("Should skip swapping when token configuration is missing and leave harvested funds on harvester", async () => {
     const { harvester, governor, comp, compoundStrategy, anna, usdt, vault } =
-      await loadFixture(compoundVaultFixture);
+      fixture;
 
     await sendRewardsToCompStrategy("100", governor, compoundStrategy, comp);
 
@@ -200,12 +223,12 @@ describe("Harvester", function () {
       josh,
       usdt,
       vault,
-    } = await loadFixture(compoundVaultFixture);
+    } = fixture;
 
     await sendRewardsToCompStrategy("10", governor, compoundStrategy, comp);
 
     const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
-    mockUniswapRouter.initialize([comp.address], [usdt.address]);
+    await mockUniswapRouter.initialize([comp.address], [usdt.address]);
     await usdt
       .connect(josh)
       .transfer(mockUniswapRouter.address, usdtUnits("100"));
@@ -226,7 +249,7 @@ describe("Harvester", function () {
     // prettier-ignore
     const annaBalanceChange = await changeInBalance(
       async () => {
-        harvester
+        await harvester
           .connect(anna)["harvestAndSwap(address)"](compoundStrategy.address);
       },
       usdt,
@@ -246,12 +269,12 @@ describe("Harvester", function () {
 
   it("Should fail when slippage is just over threshold", async () => {
     const { harvester, governor, comp, compoundStrategy, anna, josh, usdt } =
-      await loadFixture(compoundVaultFixture);
+      fixture;
 
     await sendRewardsToCompStrategy("10", governor, compoundStrategy, comp);
 
     const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
-    mockUniswapRouter.initialize([comp.address], [usdt.address]);
+    await mockUniswapRouter.initialize([comp.address], [usdt.address]);
     await usdt
       .connect(josh)
       .transfer(mockUniswapRouter.address, usdtUnits("100"));
@@ -286,12 +309,12 @@ describe("Harvester", function () {
       josh,
       usdt,
       vault,
-    } = await loadFixture(compoundVaultFixture);
+    } = fixture;
 
     await sendRewardsToCompStrategy("10", governor, compoundStrategy, comp);
 
     const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
-    mockUniswapRouter.initialize([comp.address], [usdt.address]);
+    await mockUniswapRouter.initialize([comp.address], [usdt.address]);
     await usdt
       .connect(josh)
       .transfer(mockUniswapRouter.address, usdtUnits("100"));
@@ -310,7 +333,7 @@ describe("Harvester", function () {
     // prettier-ignore
     const annaBalanceChange = await changeInBalance(
       async () => {
-        harvester
+        await harvester
           .connect(anna)["harvestAndSwap(address)"](compoundStrategy.address);
       },
       usdt,
@@ -329,9 +352,7 @@ describe("Harvester", function () {
   });
 
   it("Should fail setting rewards percentage to 11%", async () => {
-    const { harvester, governor, comp } = await loadFixture(
-      compoundVaultFixture
-    );
+    const { harvester, governor, comp } = fixture;
 
     const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
     await expect(
@@ -349,9 +370,7 @@ describe("Harvester", function () {
   });
 
   it("Should fail setting rewards percentage to a negative value", async () => {
-    const { harvester, governor, comp } = await loadFixture(
-      compoundVaultFixture
-    );
+    const { harvester, governor, comp } = fixture;
 
     const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
 
@@ -386,12 +405,12 @@ describe("Harvester", function () {
       josh,
       usdt,
       vault,
-    } = await loadFixture(compoundVaultFixture);
+    } = fixture;
 
     await sendRewardsToCompStrategy("10", governor, compoundStrategy, comp);
 
     const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
-    mockUniswapRouter.initialize([comp.address], [usdt.address]);
+    await mockUniswapRouter.initialize([comp.address], [usdt.address]);
     await usdt
       .connect(josh)
       .transfer(mockUniswapRouter.address, usdtUnits("100"));
@@ -410,7 +429,7 @@ describe("Harvester", function () {
     // prettier-ignore
     const annaBalanceChange = await changeInBalance(
       async () => {
-        harvester
+        await harvester
           .connect(anna)["harvestAndSwap(address)"](compoundStrategy.address);
       },
       usdt,
@@ -429,9 +448,7 @@ describe("Harvester", function () {
   });
 
   it("Should fail when setting setSupportedStrategy from a non vault/governor address", async () => {
-    const { harvester, anna, compoundStrategy } = await loadFixture(
-      compoundVaultFixture
-    );
+    const { harvester, anna, compoundStrategy } = fixture;
 
     // prettier-ignore
     await expect(
@@ -441,9 +458,7 @@ describe("Harvester", function () {
   });
 
   it("Should succeed when governor sets a supported strategy address", async () => {
-    const { harvester, governor, compoundStrategy } = await loadFixture(
-      compoundVaultFixture
-    );
+    const { harvester, governor, compoundStrategy } = fixture;
 
     // prettier-ignore
     await harvester
@@ -463,7 +478,7 @@ describe("Harvester", function () {
       vault,
       dai,
       threePoolStrategy,
-    } = await loadFixture(compoundVaultFixture);
+    } = fixture;
     // load another strategy to override default asset strategies to lift restriction of removing compound strategy
     await vault.connect(governor).approveStrategy(threePoolStrategy.address);
 
@@ -479,7 +494,7 @@ describe("Harvester", function () {
 
     await sendRewardsToCompStrategy("10", governor, compoundStrategy, comp);
     const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
-    mockUniswapRouter.initialize([comp.address], [usdt.address]);
+    await mockUniswapRouter.initialize([comp.address], [usdt.address]);
     await usdt
       .connect(josh)
       .transfer(mockUniswapRouter.address, usdtUnits("100"));
@@ -500,7 +515,7 @@ describe("Harvester", function () {
     // prettier-ignore
     const annaBalanceChange = await changeInBalance(
       async () => {
-        harvester
+        await harvester
           .connect(anna)["harvestAndSwap(address)"](compoundStrategy.address);
       },
       usdt,
@@ -519,9 +534,7 @@ describe("Harvester", function () {
   });
 
   it("Should fail harvestAndSwap when governor sets a strategy as not supported one", async () => {
-    const { harvester, governor, anna, compoundStrategy } = await loadFixture(
-      compoundVaultFixture
-    );
+    const { harvester, governor, anna, compoundStrategy } = fixture;
 
     // prettier-ignore
     await harvester
@@ -544,12 +557,12 @@ describe("Harvester", function () {
       josh,
       usdt,
       vault,
-    } = await loadFixture(compoundVaultFixture);
+    } = fixture;
 
     await sendRewardsToCompStrategy("10", governor, compoundStrategy, comp);
 
     const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
-    mockUniswapRouter.initialize([comp.address], [usdt.address]);
+    await mockUniswapRouter.initialize([comp.address], [usdt.address]);
     await usdt
       .connect(josh)
       .transfer(mockUniswapRouter.address, usdtUnits("100"));
@@ -572,7 +585,7 @@ describe("Harvester", function () {
       async () => {
         annaBalanceChange = await changeInBalance(
           async () => {
-            harvester
+            await harvester
               .connect(anna)["harvestAndSwap(address)"](compoundStrategy.address);
           },
           usdt,
@@ -604,12 +617,12 @@ describe("Harvester", function () {
       josh,
       usdt,
       vault,
-    } = await loadFixture(compoundVaultFixture);
+    } = fixture;
 
     await sendRewardsToCompStrategy("10", governor, compoundStrategy, comp);
 
     const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
-    mockUniswapRouter.initialize([comp.address], [usdt.address]);
+    await mockUniswapRouter.initialize([comp.address], [usdt.address]);
     await usdt
       .connect(josh)
       .transfer(mockUniswapRouter.address, usdtUnits("100"));
@@ -632,7 +645,7 @@ describe("Harvester", function () {
       async () => {
         annaBalanceChange = await changeInBalance(
           async () => {
-            harvester
+            await harvester
               .connect(anna)["harvestAndSwap(address,address)"](compoundStrategy.address, anna.address);
           },
           usdt,
@@ -664,12 +677,12 @@ describe("Harvester", function () {
       josh,
       usdt,
       vault,
-    } = await loadFixture(compoundVaultFixture);
+    } = fixture;
 
     await sendRewardsToCompStrategy("10", governor, compoundStrategy, comp);
 
     const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
-    mockUniswapRouter.initialize([comp.address], [usdt.address]);
+    await mockUniswapRouter.initialize([comp.address], [usdt.address]);
     await usdt
       .connect(josh)
       .transfer(mockUniswapRouter.address, usdtUnits("100"));
@@ -692,7 +705,7 @@ describe("Harvester", function () {
       async () => {
         joshBalanceChange = await changeInBalance(
           async () => {
-            harvester
+            await harvester
               .connect(anna)["harvestAndSwap(address,address)"](compoundStrategy.address, josh.address);
           },
           usdt,
@@ -716,12 +729,12 @@ describe("Harvester", function () {
 
   it("Should correctly distribute rewards to a changed proceeds address", async () => {
     const { harvester, governor, comp, compoundStrategy, anna, josh, usdt } =
-      await loadFixture(compoundVaultFixture);
+      fixture;
 
     await sendRewardsToCompStrategy("10", governor, compoundStrategy, comp);
 
     const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
-    mockUniswapRouter.initialize([comp.address], [usdt.address]);
+    await mockUniswapRouter.initialize([comp.address], [usdt.address]);
     await usdt
       .connect(josh)
       .transfer(mockUniswapRouter.address, usdtUnits("100"));
@@ -745,7 +758,7 @@ describe("Harvester", function () {
       async () => {
         annaBalanceChange = await changeInBalance(
           async () => {
-            harvester
+            await harvester
               .connect(anna)["harvestAndSwap(address)"](compoundStrategy.address);
           },
           usdt,

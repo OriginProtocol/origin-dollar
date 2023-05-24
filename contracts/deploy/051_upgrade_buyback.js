@@ -6,6 +6,9 @@ module.exports = deploymentWithGovernanceProposal(
   {
     deployName: "051_upgrade_buyback",
     forceDeploy: false,
+    // Tx: https://etherscan.io/tx/0xeeec3baa4b10c5d86c9509855ee18bb0233f7670b4f7f5015d3183f310083146
+    proposalId:
+      "11060872832795277890772053218701033437014632045687048548761976103550865282731",
   },
   async ({
     withConfirmation,

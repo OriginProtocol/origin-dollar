@@ -214,7 +214,7 @@ describe("Convex Strategy", function () {
     it("Should collect reward tokens and swap via Uniswap", async () => {
       const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
 
-      mockUniswapRouter.initialize(
+      await mockUniswapRouter.initialize(
         [crv.address, cvx.address],
         [usdt.address, usdt.address]
       );
@@ -279,7 +279,7 @@ describe("Convex Strategy", function () {
 
     const harvestAndSwapTokens = async (callAsGovernor) => {
       const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
-      mockUniswapRouter.initialize(
+      await mockUniswapRouter.initialize(
         [crv.address, cvx.address],
         [usdt.address, usdt.address]
       );
