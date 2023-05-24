@@ -1,9 +1,9 @@
-const { deploymentWithGuardianGovernor } = require("../utils/deploy");
+const { deploymentWithProposal } = require("../utils/deploy");
 const addresses = require("../utils/addresses");
 const ethers = require("ethers");
 
-module.exports = deploymentWithGuardianGovernor(
-  { deployName: "061_oeth_timelock_part_1" },
+module.exports = deploymentWithProposal(
+  { deployName: "062_oeth_timelock_part_2" },
   async ({ deployWithConfirmation, ethers, getTxOpts, withConfirmation }) => {
     const cFraxETHStrategyProxy = await ethers.getContract(
       "FraxETHStrategyProxy"
@@ -15,47 +15,54 @@ module.exports = deploymentWithGuardianGovernor(
     const cConvexEthMetaStrategyProxy = await ethers.getContract(
       "ConvexEthMetaStrategyProxy"
     );
+    //addresses.mainnet.OldTimelock
     const cOETHHarvesterProxy = await ethers.getContract("OETHHarvesterProxy");
+    const cOldTimelock = await ethers.getContract("Governor");
 
     // Governance Actions
     // ----------------
     return {
-      name: "Transfer governance to the Old OUSD Timelock",
+      name: "Claim governance by the Old OUSD Timelock",
       actions: [
         {
+          contract: cOldTimelock,
+          signature: "setDelay(uint256)",
+          args: [60 * 60 * 24], // 1 day
+        },
+        {
           contract: cOETHVaultProxy,
-          signature: "transferGovernance(address)",
-          args: [addresses.mainnet.OldTimelock],
+          signature: "claimGovernance()",
+          args: [],
         },
         {
           contract: cFraxETHStrategyProxy,
-          signature: "transferGovernance(address)",
-          args: [addresses.mainnet.OldTimelock],
+          signature: "claimGovernance()",
+          args: [],
         },
         {
           contract: cOETHProxy,
-          signature: "transferGovernance(address)",
-          args: [addresses.mainnet.OldTimelock],
+          signature: "claimGovernance()",
+          args: [],
         },
         {
           contract: cWOETHProxy,
-          signature: "transferGovernance(address)",
-          args: [addresses.mainnet.OldTimelock],
+          signature: "claimGovernance()",
+          args: [],
         },
         {
           contract: cOETHDripperProxy,
-          signature: "transferGovernance(address)",
-          args: [addresses.mainnet.OldTimelock],
+          signature: "claimGovernance()",
+          args: [],
         },
         {
           contract: cConvexEthMetaStrategyProxy,
-          signature: "transferGovernance(address)",
-          args: [addresses.mainnet.OldTimelock],
+          signature: "claimGovernance()",
+          args: [],
         },
         {
           contract: cOETHHarvesterProxy,
-          signature: "transferGovernance(address)",
-          args: [addresses.mainnet.OldTimelock],
+          signature: "claimGovernance()",
+          args: [],
         },
       ],
     };
