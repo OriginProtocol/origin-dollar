@@ -48,16 +48,38 @@ contract VaultStorage is Initializable, Governable {
     event TrusteeFeeBpsChanged(uint256 _basis);
     event TrusteeAddressChanged(address _address);
     event NetOusdMintForStrategyThresholdChanged(uint256 _threshold);
+    event Swapped(
+        address indexed fromAsset,
+        address indexed toAsset,
+        uint256 fromAssetAmount,
+        uint256 toAssetAmount
+    );
 
     // Assets supported by the Vault, i.e. Stablecoins
     enum UnitConversion {
         DECIMALS,
         GETEXCHANGERATE
     }
+    // TODO need to reset all configured Assets on upgrade as the storage has changed from 2 slots to just 1.
     struct Asset {
         bool isSupported;
         UnitConversion unitConversion;
-        uint256 decimals;
+        uint8 decimals;
+        // Max allowed slippage when swapping collateral assets in basis points. eg 40 == 0.4% slippage
+        uint16 allowedSwapSlippageBps;
+    }
+    /**
+     * @param FromAsset The token address of the asset being sold by the vault.
+     * @param toAsset The token address of the asset being purchased by the vault.
+     * @param fromAssetAmount The amount of assets being sold by the vault.
+     * @param data tx.data returned from 1Inch's /v5.0/1/swap API
+     */
+    struct Swap {
+        address fromAsset;
+        uint256 fromAssetAmount;
+        address toAsset;
+        uint256 minToAssetAmmount;
+        bytes data;
     }
 
     /// @dev mapping of supported vault assets to their configuration
@@ -139,6 +161,10 @@ contract VaultStorage is Initializable, Governable {
 
     uint256 constant MIN_UNIT_PRICE_DRIFT = 0.7e18;
     uint256 constant MAX_UNIT_PRICE_DRIFT = 1.3e18;
+
+    /// @notice 1Inch router contract to give allowance to perform swaps
+    address public constant SWAP_ROUTER =
+        0x1111111254EEB25477B68fb85Ed929f73A960582;
 
     /**
      * @notice set the implementation for the admin, this needs to be in a base class else we cannot set it
