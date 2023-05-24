@@ -2,7 +2,6 @@ const { expect } = require("chai");
 
 const { defaultFixture } = require("./../_fixture");
 const addresses = require("../../utils/addresses");
-const { utils } = require("ethers");
 const { loadFixture, forkOnlyDescribe } = require("./../helpers");
 
 forkOnlyDescribe("ForkTest: Vault", function () {
