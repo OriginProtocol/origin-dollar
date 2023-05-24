@@ -1,12 +1,14 @@
 const { parseUnits, formatUnits } = require("ethers").utils;
 const { deploymentWithGovernanceProposal, log } = require("../utils/deploy");
 
+/* The 059 harvest change proposal has timed out. This just re-submits it.
+ */
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "059_harvest_crv_limit",
+    deployName: "060_harvest_crv_limit_2",
     forceDeploy: false,
     proposalId:
-      "26783105168642592474007511733360276114258114993021495026000012638512598264582",
+      "19517057494793169051021794342486874975141107655269915104229644719251875808935",
   },
   async ({ assetAddresses, ethers }) => {
     // Current contracts
@@ -33,7 +35,7 @@ module.exports = deploymentWithGovernanceProposal(
     // Governance Actions
     // ----------------
     return {
-      name: "Update OUSD Harvester config for CRV\n\
+      name: "Update OUSD Harvester config for CRV - again\n\
 \n\
 The OUSD Harvester is currently failing as there is not enough liquidity in the SushiSwap CRV/ETH pool to swap 26,476 CRV to ETH and then ETH to USDT. The harvester will revert the swap if there is more than 3% slippage which is the case for 26,476 CRV. \n\
 \n\
