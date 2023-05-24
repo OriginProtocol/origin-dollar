@@ -1,0 +1,57 @@
+@startuml
+
+title "OETH Collateral Swaps using 1Inch Pathfinder"
+
+actor "Strategist\nSigners" as signer
+participant "1Inch\nAPI" as 1inch_api <<1Inch>>
+
+participant "Multisig\nAPI" as multi_api <<Safe>>
+
+box Mainnet
+participant "Multisig\nContract" as multi_contract <<Safe>>
+participant "OETH\nVault" as vault <<Origin>>
+participant "1Inch\nRouter" as 1c  <<1Inch>>
+participant "OETH from\nCollateral " as o1 <<Token>>
+participant "OETH to\nCollateral" as o2 <<Token>>
+participant "DEX" as dex
+
+end box
+
+signer -> 1inch_api : Swap (from, to, amount)
+activate 1inch_api
+return : swap tx (to, data)
+
+signer -> multi_api : build tx (vault, swap data)
+activate multi_api
+return tx id
+
+signer -> multi_api : sign (tx id)
+activate multi_api
+return
+
+signer -> multi_contract : execute (tx id, swap data, signer sigs)
+activate multi_contract
+multi_contract -> vault : swap(\nfrom,\nto,\nfrom amount,\n1Inch data)
+activate vault
+vault -> o1 : approve(\nrouter,\nfrom amount)
+activate o1
+return
+vault -> 1c : swap(\n1Inch data)
+activate 1c
+1c -> o1 : transferFrom (\nvault,\nrouter,\nfrom amount)
+activate o1
+return
+1c -> dex : swap (from, to, from amount)
+activate dex
+dex -> o1 : transferFrom(\nrouter, dex, from amount)
+activate o1
+return
+dex -> o2 : transfer(\nvault, to amount)
+activate o2
+return
+return
+return to amount
+return to amount
+return
+
+@enduml

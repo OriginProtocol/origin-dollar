@@ -16,6 +16,8 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { StableMath } from "../utils/StableMath.sol";
 import { IOracle } from "../interfaces/IOracle.sol";
 import { IGetExchangeRateToken } from "../interfaces/IGetExchangeRateToken.sol";
+import { IAggregationExecutor, IOneInchRouter, SwapDescription } from "../interfaces/IOneInch.sol";
+
 import "./VaultStorage.sol";
 
 contract VaultCore is VaultStorage {
@@ -388,6 +390,87 @@ contract VaultCore is VaultStorage {
             oUSD.changeSupply(vaultValue);
         }
         return vaultValue;
+    }
+
+    /**
+     * @notice Strategist swaps collateral assets sitting in the vault.
+     * @return toAssetAmount The amount of toAssets that was received from the swap
+     */
+    function swapCollateral(Swap calldata swap)
+        external
+        whenNotRebasePaused
+        nonReentrant
+        returns (uint256 toAssetAmount)
+    {
+        require(msg.sender == strategistAddr, "Caller is not the Strategist");
+
+        // Check fromAsset and toAsset are valid
+        Asset memory fromAssetConfig = assets[swap.fromAsset];
+        Asset memory toAssetConfig = assets[swap.toAsset];
+        require(fromAssetConfig.isSupported, "From asset is not supported");
+        require(toAssetConfig.isSupported, "To asset is not supported");
+
+        uint256 toAssetBalBefore = IERC20(swap.toAsset).balanceOf(
+            address(this)
+        );
+
+        // Approve 1Inch to spend fromAsset
+        IERC20(swap.fromAsset).safeIncreaseAllowance(
+            SWAP_ROUTER,
+            swap.fromAssetAmount
+        );
+
+        // use the redeem price for the from asset as we are converting to ETH
+        uint256 fromAssetPrice = _toUnitPrice(swap.fromAsset, false);
+        // use the mint price for the to asset as we are converting from ETH
+        uint256 toAssetPrice = _toUnitPrice(swap.toAsset, true);
+
+        // to asset amount = from asset amount * from asset price / to asset price
+        uint256 minToAssetAmount = (swap.fromAssetAmount *
+            (1e4 - fromAssetConfig.allowedSwapSlippageBps) *
+            (1e4 - toAssetConfig.allowedSwapSlippageBps) *
+            fromAssetPrice) /
+            toAssetPrice /
+            1e4; // fix the max slippage decimal position
+
+        SwapDescription memory swapDesc = SwapDescription({
+            srcToken: IERC20(swap.fromAsset),
+            dstToken: IERC20(swap.toAsset),
+            srcReceiver: payable(address(this)),
+            dstReceiver: payable(address(this)),
+            amount: swap.fromAssetAmount,
+            minReturnAmount: swap.minToAssetAmmount,
+            flags: 0 // no special swaps needed
+        });
+        (toAssetAmount, ) = IOneInchRouter(SWAP_ROUTER).swap(
+            IAggregationExecutor(address(this)),
+            swapDesc,
+            "0x", // we are not approving tx via signatures so it is not necessary
+            swap.data
+        );
+
+        // Check the swapper returned the correct amount of assets
+        require(
+            IERC20(swap.toAsset).balanceOf(address(this)) - toAssetBalBefore >=
+                toAssetAmount
+        );
+        // Check the to assets returns is above slippage amount specified by the strategist
+        require(
+            toAssetAmount >= swap.minToAssetAmmount,
+            "Strategist slippage limit exceeded"
+        );
+        // Check the slippage against the Oracle in case the strategist made a mistake or has become malicious.
+        require(
+            toAssetAmount >= minToAssetAmount,
+            "Oracle slippage limit exceeded"
+        );
+
+        emit Swapped(
+            swap.fromAsset,
+            swap.toAsset,
+            swap.fromAssetAmount,
+            toAssetAmount
+        );
     }
 
     /**

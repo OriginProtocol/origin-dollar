@@ -175,7 +175,8 @@ contract VaultAdmin is VaultStorage {
         assets[_asset] = Asset({
             isSupported: true,
             unitConversion: UnitConversion(_unitConversion),
-            decimals: 0 // will be overridden in _cacheDecimals
+            decimals: 0, // will be overridden in _cacheDecimals
+            allowedSwapSlippageBps: 0 // 0% by default
         });
 
         _cacheDecimals(_asset);
@@ -494,7 +495,7 @@ contract VaultAdmin is VaultStorage {
         if (tokenAsset.decimals != 0) {
             return;
         }
-        uint256 decimals = IBasicToken(token).decimals();
+        uint8 decimals = IBasicToken(token).decimals();
         require(decimals >= 6 && decimals <= 18, "Unexpected precision");
         tokenAsset.decimals = decimals;
     }
