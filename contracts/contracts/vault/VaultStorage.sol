@@ -68,19 +68,6 @@ contract VaultStorage is Initializable, Governable {
         // Max allowed slippage when swapping collateral assets in basis points. eg 40 == 0.4% slippage
         uint16 allowedSwapSlippageBps;
     }
-    /**
-     * @param FromAsset The token address of the asset being sold by the vault.
-     * @param toAsset The token address of the asset being purchased by the vault.
-     * @param fromAssetAmount The amount of assets being sold by the vault.
-     * @param data tx.data returned from 1Inch's /v5.0/1/swap API
-     */
-    struct Swap {
-        address fromAsset;
-        uint256 fromAssetAmount;
-        address toAsset;
-        uint256 minToAssetAmmount;
-        bytes data;
-    }
 
     // slither-disable-next-line uninitialized-state
     mapping(address => Asset) internal assets;
