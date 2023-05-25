@@ -27,9 +27,9 @@ contract VaultCore is VaultStorage {
     using StableMath for uint256;
     using SafeMath for uint256;
     // max signed int
-    uint256 private constant MAX_INT = 2**255 - 1;
+    uint256 internal constant MAX_INT = 2**255 - 1;
     // max un-signed int
-    uint256 private constant MAX_UINT =
+    uint256 internal constant MAX_UINT =
         0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
 
     /**
