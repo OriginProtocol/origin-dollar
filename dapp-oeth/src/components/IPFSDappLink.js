@@ -5,13 +5,11 @@ export default function IPFSDappLink({ css }) {
   const [displayIpfsLink, setDisplayIpfsLink] = useState(false)
 
   useEffect(() => {
-    setDisplayIpfsLink(
-      process.env.DEPLOY_MODE !== 'ipfs'
-    )
+    setDisplayIpfsLink(process.env.DEPLOY_MODE !== 'ipfs')
   }, [])
 
   if (!displayIpfsLink) {
-    return null;
+    return null
   }
 
   return (

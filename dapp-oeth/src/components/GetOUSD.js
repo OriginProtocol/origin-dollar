@@ -59,7 +59,7 @@ const GetOUSD = ({
         style={style}
         onClick={() => {
           if (process.browser) {
-            event({'event': 'connect_click'})
+            event({ event: 'connect_click' })
             if (ledgerLive) {
               activate(ledgerLiveConnector, undefined, true)
             } else {

@@ -63,7 +63,7 @@ export function useEagerConnect() {
         setTriedLedgerLive(true)
         return
       }
-  
+
       AccountStore.update((s) => {
         s.connectorName = 'Ledger'
       })
