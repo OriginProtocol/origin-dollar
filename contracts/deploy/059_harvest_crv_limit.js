@@ -3,8 +3,10 @@ const { deploymentWithGovernanceProposal, log } = require("../utils/deploy");
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "056_harvest_crv_limit",
+    deployName: "059_harvest_crv_limit",
     forceDeploy: false,
+    proposalId:
+      "26783105168642592474007511733360276114258114993021495026000012638512598264582",
   },
   async ({ assetAddresses, ethers }) => {
     // Current contracts
@@ -31,11 +33,18 @@ module.exports = deploymentWithGovernanceProposal(
     // Governance Actions
     // ----------------
     return {
-      name: "Update OUSD Harvester config for CRV",
+      name: "Update OUSD Harvester config for CRV\n\
+\n\
+The OUSD Harvester is currently failing as there is not enough liquidity in the SushiSwap CRV/ETH pool to swap 26,476 CRV to ETH and then ETH to USDT. The harvester will revert the swap if there is more than 3% slippage which is the case for 26,476 CRV. \n\
+\n\
+This proposal limits the amount of CRV that can be liquidated by the Harvester at one time to 4,000 CRV. That is a small enough amount to be under the 3% slippage requirement. \n\
+\n\
+The other Harvester config change is changing the harvester rewards for liquidating CRV from 1% to 2%. 2% is enough to cover costs when the gas price is 40 Gwei.\n\
+\n\
+Code PR: #1492",
       actions: [
         // 1. Update CRV config with new 5k CRV limit
         {
-          name: "Update OUSD Harvester config for CRV",
           contract: cHarvester,
           signature:
             "setRewardTokenConfig(address,uint16,uint16,address,uint256,bool)",

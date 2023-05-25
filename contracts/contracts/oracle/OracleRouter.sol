@@ -5,16 +5,18 @@ import "../interfaces/chainlink/AggregatorV3Interface.sol";
 import { IOracle } from "../interfaces/IOracle.sol";
 import { Helpers } from "../utils/Helpers.sol";
 import { StableMath } from "../utils/StableMath.sol";
+import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 // @notice Abstract functionality that is shared between various Oracle Routers
 abstract contract OracleRouterBase is IOracle {
     using StableMath for uint256;
+    using SafeCast for int256;
 
-    uint256 constant MIN_DRIFT = 0.7e18;
-    uint256 constant MAX_DRIFT = 1.3e18;
-    address constant FIXED_PRICE = 0x0000000000000000000000000000000000000001;
+    uint256 internal constant MIN_DRIFT = 0.7e18;
+    uint256 internal constant MAX_DRIFT = 1.3e18;
+    address internal constant FIXED_PRICE = 0x0000000000000000000000000000000000000001;
     // Maximum allowed staleness buffer above normal Oracle maximum staleness
-    uint256 constant STALENESS_BUFFER = 1 days;
+    uint256 internal constant STALENESS_BUFFER = 1 days;
     mapping(address => uint8) internal decimalsCache;
 
     /**
@@ -56,12 +58,12 @@ abstract contract OracleRouterBase is IOracle {
 
         uint8 decimals = getDecimals(_feed);
 
-        uint256 _price = uint256(_iprice).scaleBy(18, decimals);
+        uint256 _price = _iprice.toUint256().scaleBy(18, decimals);
         if (shouldBePegged(asset)) {
             require(_price <= MAX_DRIFT, "Oracle: Price exceeds max");
             require(_price >= MIN_DRIFT, "Oracle: Price under min");
         }
-        return uint256(_price);
+        return _price;
     }
 
     function getDecimals(address _feed) internal view virtual returns (uint8) {
