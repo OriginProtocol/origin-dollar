@@ -13,9 +13,8 @@ const {
   impersonateAndFundContract,
 } = require("../_fixture");
 
-
 forkOnlyDescribe("ForkTest: Morpho Aave OETH Strategy", function () {
-  const oethMorphoAaveFixture = oethMorphoAaveFixtureSetup()
+  const oethMorphoAaveFixture = oethMorphoAaveFixtureSetup();
 
   after(async () => {
     // This is needed to revert fixtures
@@ -34,7 +33,6 @@ forkOnlyDescribe("ForkTest: Morpho Aave OETH Strategy", function () {
   beforeEach(async () => {
     fixture = await oethMorphoAaveFixture();
   });
-  
 
   describe("Mint", function () {
     it("Should deploy WETH in Morpho Aave", async function () {
@@ -49,15 +47,15 @@ forkOnlyDescribe("ForkTest: Morpho Aave OETH Strategy", function () {
 
       // Mint some ETH
       const amount = "1.23";
-      const amountUnits = oethUnits(amount)
-      await oethVault
-        .connect(daniel)
-        .mint(weth.address, amountUnits, 0);
+      const amountUnits = oethUnits(amount);
+      await oethVault.connect(daniel).mint(weth.address, amountUnits, 0);
       await oethVault.connect(daniel).allocate();
       await oethVault.connect(daniel).rebase();
 
       const currentSupply = await oeth.totalSupply();
-      const currentBalance = await oeth.connect(daniel).balanceOf(daniel.address);
+      const currentBalance = await oeth
+        .connect(daniel)
+        .balanceOf(daniel.address);
 
       // Now try to redeem 1.23 OETH
       await oethVault.connect(daniel).redeem(amountUnits, 0);
@@ -84,12 +82,16 @@ forkOnlyDescribe("ForkTest: Morpho Aave OETH Strategy", function () {
       const { josh, weth, oethMorphoAaveStrategy } = fixture;
       await mintTest(fixture, josh, weth, "2.3333444");
 
-      const currentBalance = await oethMorphoAaveStrategy.checkBalance(weth.address);
+      const currentBalance = await oethMorphoAaveStrategy.checkBalance(
+        weth.address
+      );
 
       await advanceTime(60 * 60 * 24 * 365);
       await advanceBlocks(10000);
 
-      const balanceAfter1Y = await oethMorphoAaveStrategy.checkBalance(weth.address);
+      const balanceAfter1Y = await oethMorphoAaveStrategy.checkBalance(
+        weth.address
+      );
 
       const diff = balanceAfter1Y.sub(currentBalance);
       expect(diff).to.be.gt(0);
@@ -104,7 +106,9 @@ forkOnlyDescribe("ForkTest: Morpho Aave OETH Strategy", function () {
 
     it("Should be able to withdrawAll from strategy", async function () {
       const { franck, weth, oethVault, oethMorphoAaveStrategy } = fixture;
-      const oethVaultSigner = await impersonateAndFundContract(oethVault.address);
+      const oethVaultSigner = await impersonateAndFundContract(
+        oethVault.address
+      );
       const amount = "1.121314";
 
       // Remove funds so no residual funds get allocated
@@ -120,8 +124,9 @@ forkOnlyDescribe("ForkTest: Morpho Aave OETH Strategy", function () {
 
       await oethMorphoAaveStrategy.connect(oethVaultSigner).withdrawAll();
 
-      const oethVaultWETHDiff =
-        (await weth.balanceOf(oethVault.address)).sub(oethVaultWETHBefore);
+      const oethVaultWETHDiff = (await weth.balanceOf(oethVault.address)).sub(
+        oethVaultWETHBefore
+      );
 
       expect(oethVaultWETHDiff).to.approxEqualTolerance(wethUnits, 1);
     });
@@ -148,7 +153,9 @@ async function mintTest(fixture, user, asset, amount = "0.34") {
 
   const newBalance = await oeth.connect(user).balanceOf(user.address);
   const newSupply = await oeth.totalSupply();
-  const newMorphoBalance = await oethMorphoAaveStrategy.checkBalance(asset.address);
+  const newMorphoBalance = await oethMorphoAaveStrategy.checkBalance(
+    asset.address
+  );
 
   const balanceDiff = newBalance.sub(currentBalance);
   // Ensure user has correct balance (w/ 1% slippage tolerance)

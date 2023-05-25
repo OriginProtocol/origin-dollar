@@ -502,7 +502,7 @@ async function defaultFixture() {
     frxETH,
     sfrxETH,
     fraxEthStrategy,
-    oethMorphoAaveStrategy
+    oethMorphoAaveStrategy,
   };
 }
 
@@ -517,18 +517,18 @@ async function oethDefaultFixture() {
   const fixture = await defaultFixture();
 
   if (isFork) {
-    const { weth, matt, josh, domen, daniel, franck, oethVault } = fixture
-  
+    const { weth, matt, josh, domen, daniel, franck, oethVault } = fixture;
+
     for (const user of [matt, josh, domen, daniel, franck]) {
       // Everyone gets free WETH
-      await mintWETH(weth, user)
-  
+      await mintWETH(weth, user);
+
       // And vault can rug them all
-      await resetAllowance(weth, user, oethVault.address)
+      await resetAllowance(weth, user, oethVault.address);
     }
   }
 
-  return fixture
+  return fixture;
 }
 
 async function oethDefaultFixtureSetup() {
@@ -864,8 +864,10 @@ function oethMorphoAaveFixtureSetup() {
     const fixture = await oethDefaultFixture();
 
     if (isFork) {
-      const sGuardian = await ethers.provider.getSigner(addresses.mainnet.Guardian);
-  
+      const sGuardian = await ethers.provider.getSigner(
+        addresses.mainnet.Guardian
+      );
+
       await fixture.oethVault
         .connect(sGuardian)
         .setAssetDefaultStrategy(
@@ -877,9 +879,9 @@ function oethMorphoAaveFixtureSetup() {
         "Morpho strategy only supported in forked test environment"
       );
     }
-  
+
     return fixture;
-  })
+  });
 }
 
 /**
@@ -1023,15 +1025,19 @@ async function _hardhatSetBalance(address, amount = "10000") {
     method: "hardhat_setBalance",
     params: [
       address,
-      utils.parseEther(amount).toHexString().replace(/^0x0+/, "0x").replace(/0$/, "1"),
-    ]
+      utils
+        .parseEther(amount)
+        .toHexString()
+        .replace(/^0x0+/, "0x")
+        .replace(/0$/, "1"),
+    ],
   });
 }
 
 async function impersonateAndFundContract(address, amount = "100000") {
   await impersonateAccount(address);
 
-  await _hardhatSetBalance(address, amount)
+  await _hardhatSetBalance(address, amount);
 
   return await ethers.provider.getSigner(address);
 }
@@ -1089,10 +1095,10 @@ async function resetAllowance(
 }
 
 async function mintWETH(weth, recipient, amount = "100") {
-  await _hardhatSetBalance(recipient.address, (Number(amount) * 2).toString())
+  await _hardhatSetBalance(recipient.address, (Number(amount) * 2).toString());
   await weth.connect(recipient).deposit({
-    value: utils.parseEther(amount)
-  })
+    value: utils.parseEther(amount),
+  });
 }
 
 async function withImpersonatedAccount(address, cb) {
@@ -1459,5 +1465,5 @@ module.exports = {
   impersonateAndFundContract,
   impersonateAccount,
   fraxETHStrategyForkedFixture,
-  oethMorphoAaveFixtureSetup
+  oethMorphoAaveFixtureSetup,
 };
