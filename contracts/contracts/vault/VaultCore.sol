@@ -17,6 +17,7 @@ import { StableMath } from "../utils/StableMath.sol";
 import { IOracle } from "../interfaces/IOracle.sol";
 import { IGetExchangeRateToken } from "../interfaces/IGetExchangeRateToken.sol";
 import { IAggregationExecutor, IOneInchRouter, SwapDescription } from "../interfaces/IOneInch.sol";
+import { ISwapExecuter } from "../interfaces/ISwapExecuter.sol";
 
 import "./VaultStorage.sol";
 
@@ -393,7 +394,7 @@ contract VaultCore is VaultStorage {
         Swap calldata swap
     )
         external
-        whenNotRebasePaused
+        whenNotCapitalPaused
         nonReentrant
         returns (uint256 toAssetAmount)
     {
@@ -466,6 +467,67 @@ contract VaultCore is VaultStorage {
             swap.fromAssetAmount,
             toAssetAmount
         );
+    }
+
+    /**
+     * @notice Approved Swapper contract initiates swap of collateral assets sitting in the vault.
+     * @return toAssetAmount The amount of toAssets that was received from the swap
+     */
+    function prepareSwap(
+        address fromAsset,
+        address toAsset,
+        uint256 fromAssetAmount
+    )
+        external
+        whenNotCapitalPaused
+        nonReentrant
+        returns (uint256 toAssetAmount)
+    {
+        // validate from the swapper
+        require(msg.sender == swapperAddr, "Caller is not the Swapper");
+
+        // Load the asset config from storage
+        Asset memory fromAssetConfig = assets[fromAsset];
+        Asset memory toAssetConfig = assets[toAsset];
+
+        // Validate the from and to assets
+        require(fromAssetConfig.isSupported, "From asset is not supported");
+        require(toAssetConfig.isSupported, "To asset is not supported");
+
+        // Get the balance of the to assets so we can validate the swap
+        uint256 toAssetBalBefore = IERC20(toAsset).balanceOf(address(this));
+
+        // Transfer the from asset to the swapper contract
+        IERC20(fromAsset).safeTransfer(swapperAddr, fromAssetAmount);
+
+        // use the redeem price for the from asset as we are converting to ETH
+        uint256 fromAssetPrice = _toUnitPrice(fromAsset, false);
+        // use the mint price for the to asset as we are converting from ETH
+        uint256 toAssetPrice = _toUnitPrice(toAsset, true);
+
+        // Callback to the swapper to do the actual swap
+        ISwapExecuter(swapperAddr).executeSwap();
+
+        // to asset amount = from asset amount * from asset price / to asset price
+        uint256 minToAssetAmount = (fromAssetAmount *
+            (1e4 - fromAssetConfig.allowedSwapSlippageBps) *
+            (1e4 - toAssetConfig.allowedSwapSlippageBps) *
+            fromAssetPrice) /
+            toAssetPrice /
+            1e4; // fix the max slippage decimal position
+
+        // Calculate how many to assets the swapper has returned
+        toAssetAmount =
+            IERC20(toAsset).balanceOf(address(this)) -
+            toAssetBalBefore;
+
+        // Validate the slippage against the Oracle prices in case the strategist made a mistake or has become malicious.
+        require(
+            toAssetAmount >= minToAssetAmount,
+            "Oracle slippage limit exceeded"
+        );
+
+        emit Swapped(fromAsset, toAsset, fromAssetAmount, toAssetAmount);
     }
 
     /**
