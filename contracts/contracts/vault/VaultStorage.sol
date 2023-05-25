@@ -157,6 +157,8 @@ contract VaultStorage is Initializable, Governable {
     /// @notice 1Inch router contract to give allowance to perform swaps
     address public constant SWAP_ROUTER =
         0x1111111254EEB25477B68fb85Ed929f73A960582;
+    /// @notice Contract that is allowed to swap collateral assets
+    address public swapperAddr = address(0);
 
     /**
      * @dev set the implementation for the admin, this needs to be in a base class else we cannot set it
