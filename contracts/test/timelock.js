@@ -30,8 +30,8 @@ describe("Governor's Timelock controls oracleRouter", function () {
     const args = [
       {
         contract: oracle,
-        signature: "setFeed(address,address)",
-        args: [WETH, WETH],
+        signature: "setFeed(address,address,uint256)",
+        args: [WETH, WETH, 0],
       },
     ];
     proposalId = await propose(fixture, args, "Set Feed");
@@ -54,7 +54,7 @@ describe("Governor's Timelock controls oracleRouter", function () {
   });
 
   it("Should have changed the oracle price", async () => {
-    expect(await oracle.assetToFeed(WETH)).to.eq(WETH);
+    expect((await oracle.assetToFeedMetadata(WETH))[0]).to.eq(WETH);
   });
 });
 

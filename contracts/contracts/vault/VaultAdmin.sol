@@ -188,6 +188,11 @@ contract VaultAdmin is VaultStorage {
         emit AssetSupported(_asset);
     }
 
+    /**
+     * @dev Cache decimals on OracleRouter for a particular asset. This action
+     *      is required before that asset's price can be accessed.
+     * @param _asset Address of asset
+     */
     function cacheDecimals(address _asset) external onlyGovernor {
         _cacheDecimals(_asset);
     }
