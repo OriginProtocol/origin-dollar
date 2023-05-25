@@ -39,8 +39,8 @@ export default function History({ locale, onLocale }) {
           }}
         />
       )}
+      <Nav page={'history'} locale={locale} onLocale={onLocale} />
       <Layout locale={locale} onLocale={onLocale}>
-        <Nav page={'history'} locale={locale} onLocale={onLocale} />
         <div className="home d-flex flex-column">
           <BalanceHeader />
           {(overrideAccount || active) && <TransactionHistory />}

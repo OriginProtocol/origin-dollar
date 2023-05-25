@@ -295,6 +295,8 @@ const TransactionHistory = ({ isMobile }) => {
         ) : (
           <>
             <div className="filters d-flex justify-content-between">
+              <p className="title">History</p>
+
               <div className="d-flex justify-content-start flex-wrap flex-md-nowrap">
                 <FilterButton
                   filterText={fbt('Received', 'Tx history filter: Received')}
@@ -347,7 +349,7 @@ const TransactionHistory = ({ isMobile }) => {
                 historyPageQuery.isPreviousData ? 'grey-font' : ''
               }`}
             >
-              <div className="d-flex grey-font border-bt pb-10">
+              <div className="d-flex grey-font border-bt">
                 <div className="col-3 col-md-3 pl-0">
                   {fbt('Date', 'Transaction history date')}
                 </div>
@@ -367,35 +369,33 @@ const TransactionHistory = ({ isMobile }) => {
                   {fbt('OETH Balance', 'Transaction history OETH balance')}
                 </div>
               </div>
-              {currentPageHistory
-                .flatMap((r) => Array.from({ length: 7 }).fill(r))
-                .map((tx) => {
-                  return (
+              {currentPageHistory.map((tx) => {
+                return (
+                  <div
+                    key={`${tx.tx_hash}-${tx.log_index ? tx.log_index : 0}`}
+                    className="d-flex border-bt pb-20 pt-20 history-item"
+                  >
                     <div
-                      key={`${tx.tx_hash}-${tx.log_index ? tx.log_index : 0}`}
-                      className="d-flex border-bt pb-20 pt-20 history-item"
-                    >
-                      <div
-                        className="col-3 col-md-3 pl-0"
-                        title={
-                          dateformat(
-                            Date.parse(tx.time),
-                            'mm/dd/yyyy h:MM:ss TT'
-                          ) || ''
-                        }
-                      >
-                        {dateformat(
+                      className="col-3 col-md-3 pl-0"
+                      title={
+                        dateformat(
                           Date.parse(tx.time),
-                          isMobile ? 'mm/dd/yy' : 'mm/dd/yyyy'
-                        ) || ''}
-                      </div>
-                      <div
-                        title={txTypeMap[tx.type].verboseName}
-                        className="col-3 col-md-3 d-flex"
-                      >
-                        {txTypeMap[tx.type].name}
-                      </div>
-                      {/* <div
+                          'mm/dd/yyyy h:MM:ss TT'
+                        ) || ''
+                      }
+                    >
+                      {dateformat(
+                        Date.parse(tx.time),
+                        isMobile ? 'mm/dd/yy' : 'mm/dd/yyyy'
+                      ) || ''}
+                    </div>
+                    <div
+                      title={txTypeMap[tx.type].verboseName}
+                      className="col-3 col-md-3 d-flex"
+                    >
+                      {txTypeMap[tx.type].name}
+                    </div>
+                    {/* <div
                       className={`d-none d-md-flex col-2 ${
                         tx.from_address ? 'clickable' : ''
                       }`}
@@ -427,47 +427,45 @@ const TransactionHistory = ({ isMobile }) => {
                     >
                       {tx.to_address ? shortenAddress(tx.to_address) : '-'}
                     </div> */}
-                      <div className="col-3 col-md-3 d-flex justify-content-end pr-md-5">
-                        {tx.amount ? (
-                          <FormatCurrencyByImportance
-                            value={tx.amount}
-                            isMobile={isMobile}
-                            hasHigherYield={hasHigherYield}
-                            yieldHigherThanAGwei={yieldHigherThanAGwei}
+                    <div className="col-3 col-md-3 d-flex justify-content-end pr-md-5">
+                      {tx.amount ? (
+                        <FormatCurrencyByImportance
+                          value={tx.amount}
+                          isMobile={isMobile}
+                          hasHigherYield={hasHigherYield}
+                          yieldHigherThanAGwei={yieldHigherThanAGwei}
+                        />
+                      ) : (
+                        '-'
+                      )}
+                    </div>
+                    <div className="col-3 col-md-3 d-flex justify-content-end pr-md-5 relative">
+                      {tx.balance ? (
+                        <FormatCurrencyByImportance
+                          value={tx.balance}
+                          isMobile={isMobile}
+                          hasHigherYield={hasHigherYield}
+                          yieldHigherThanAGwei={yieldHigherThanAGwei}
+                        />
+                      ) : (
+                        '-'
+                      )}
+                      <div className="etherscan-link">
+                        <a
+                          href={`https://etherscan.io/tx/${tx.tx_hash}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <img
+                            className=""
+                            src={assetRootPath('/images/link-icon-purple.svg')}
                           />
-                        ) : (
-                          '-'
-                        )}
-                      </div>
-                      <div className="col-3 col-md-3 d-flex justify-content-end pr-md-5 relative">
-                        {tx.balance ? (
-                          <FormatCurrencyByImportance
-                            value={tx.balance}
-                            isMobile={isMobile}
-                            hasHigherYield={hasHigherYield}
-                            yieldHigherThanAGwei={yieldHigherThanAGwei}
-                          />
-                        ) : (
-                          '-'
-                        )}
-                        <div className="etherscan-link">
-                          <a
-                            href={`https://etherscan.io/tx/${tx.tx_hash}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            <img
-                              className=""
-                              src={assetRootPath(
-                                '/images/link-icon-purple.svg'
-                              )}
-                            />
-                          </a>
-                        </div>
+                        </a>
                       </div>
                     </div>
-                  )
-                })}
+                  </div>
+                )
+              })}
             </div>
             <div className="pagination d-flex justify-content-center justify-content-md-start">
               {pageNumbers.map((pageNumber, index) => {
@@ -511,10 +509,13 @@ const TransactionHistory = ({ isMobile }) => {
           color: #ebecf2;
         }
 
+        .title {
+          font-size: 14px;
+          margin: 0;
+          color: #fafafb;
+        }
+
         .history-holder {
-          padding-left: 40px;
-          padding-right: 40px;
-          padding-top: 24px;
           background-color: #1e1f25;
         }
 
@@ -554,9 +555,12 @@ const TransactionHistory = ({ isMobile }) => {
         }
 
         .filters {
-          padding: 40px;
+          padding: 28px 40px;
+          margin: 0 0;
           background-color: #1e1f25;
-          border-radius: 10px;
+          border-top-left-radius: 10px;
+          border-top-right-radius: 10px;
+          border-bottom: solid 1px #141519;
         }
 
         .pagination {
@@ -606,7 +610,6 @@ const TransactionHistory = ({ isMobile }) => {
           color: white;
           padding: 4px 20px;
           border-radius: 28px;
-          margin-right: 10px;
           font-family: Lato;
           font-size: 12px;
           cursor: pointer;

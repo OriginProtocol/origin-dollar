@@ -104,7 +104,12 @@ export function truncateDecimals(value, decimals = 6) {
     return '0.'
   }
 
-  const [whole, fraction] = value.toString().split('.')
+  const [whole, fraction] = value
+    .toLocaleString(undefined, {
+      useGrouping: false,
+      maximumFractionDigits: 20,
+    })
+    .split('.')
 
   if (!fraction || fraction.length <= decimals) {
     // No change
