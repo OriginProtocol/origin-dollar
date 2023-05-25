@@ -1069,8 +1069,8 @@ async function convexLUSDMetaVaultFixture() {
  */
 async function convexOETHMetaVaultFixture() {
   const fixture = await loadFixture(defaultFixture);
-  const { guardianAddr } = await getNamedAccounts();
-  const sGuardian = await ethers.provider.getSigner(guardianAddr);
+  const { governorAddr } = await getNamedAccounts();
+  const sGovernor = await ethers.provider.getSigner(governorAddr);
 
   await impersonateAndFundAddress(
     fixture.weth.address,
@@ -1100,7 +1100,7 @@ async function convexOETHMetaVaultFixture() {
 
   // Add Convex Meta strategy
   await fixture.oethVault
-    .connect(sGuardian)
+    .connect(sGovernor)
     .setAssetDefaultStrategy(
       fixture.weth.address,
       fixture.ConvexEthMetaStrategy.address
