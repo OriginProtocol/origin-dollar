@@ -11,9 +11,10 @@ abstract contract OracleRouterBase is IOracle {
     using StableMath for uint256;
     using SafeCast for int256;
 
-    uint256 constant MIN_DRIFT = 0.7e18;
-    uint256 constant MAX_DRIFT = 1.3e18;
-    address constant FIXED_PRICE = 0x0000000000000000000000000000000000000001;
+    uint256 internal constant MIN_DRIFT = 0.7e18;
+    uint256 internal constant MAX_DRIFT = 1.3e18;
+    address internal constant FIXED_PRICE =
+        0x0000000000000000000000000000000000000001;
     mapping(address => uint8) internal decimalsCache;
 
     /**
