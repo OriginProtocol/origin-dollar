@@ -1,0 +1,203 @@
+@startuml
+
+title "Vault Collateral Swaps Calls"
+
+actor "Strategist" as strategist
+participant "OETH\nVault" as vault <<Origin>>
+participant "Swapper" as swapper <<Origin>>
+participant "1Inch\nRouter" as router  <<1Inch>>
+participant "from\nasset" as fromAsset <<Token>>
+participant "to\nasset" as toAsset <<Token>>
+participant "DEX" as dex
+
+' group Option 4
+strategist -> vault : swapCollateral(\nfrom asset,\nto asset,\nfrom amount,\nmin to amount\n1Inch data)
+activate vault
+
+vault -> vault: validate
+note right
+only strategist or governor
+not capital paused
+from and to assets
+end note
+
+vault -> toAsset : balanceOf(vault)
+activate toAsset
+return before swap to asset balance
+
+vault -> fromAsset : increaseAllowance(\nrouter, from amount)
+activate fromAsset
+note left : approve 1Inch Router\nto transfer from assets
+return
+
+vault -> swapper : swap(\nfrom asset,\nto asset,\nfrom amount,\nmin to amount\n1Inch data)
+activate swapper
+
+swapper -> router : swap(\n1Inch swap data)
+activate router
+router -> fromAsset : transferFrom (\nvault,\nrouter,\nfrom amount)
+activate fromAsset
+return
+router -> dex : swap (from, to, from amount)
+activate dex
+dex -> fromAsset : transferFrom(\nrouter, dex, from amount)
+activate fromAsset
+return
+dex -> toAsset : transfer(\nvault, to amount)
+activate toAsset
+return
+return
+return to amount
+return
+
+vault -> toAsset : balanceOf(vault)
+activate toAsset
+return after swap to asset balance
+
+vault -> vault : calc actual to amount
+note right : after balance - before balance
+
+vault -> vault : validate 
+note right
+actual to assets > slippage from Oracle
+actual to amount > min to amount
+end note
+
+return
+
+' end group
+
+' group Option 1
+' strategist -> vault : swapCollateral(\nfrom asset,\nto asset,\nfrom amount,\nmin to amount\n1Inch data)
+' activate vault
+
+' vault -> vault: validate
+' note right
+' only strategist or governor
+' not capital paused
+' from and to assets
+' end note
+
+' vault -> toAsset : balanceOf(vault)
+' activate toAsset
+' return before swap to asset balance
+
+' vault -> fromAsset : increaseAllowance(\nrouter, from amount)
+' activate fromAsset
+' note left : approve 1Inch Router\nto transfer from assets
+' return
+
+' vault -> router : swap(1Inch swap data)
+' activate router
+' router -> fromAsset : transferFrom (\nswapper,\nrouter,\nfrom amount)
+' activate fromAsset
+' return
+' router -> dex : swap (from, to, from amount)
+' activate dex
+' dex -> fromAsset : transferFrom(\nrouter, dex, from amount)
+' activate fromAsset
+' return
+' dex -> toAsset : transfer(\nvault, to amount)
+' activate toAsset
+' return
+' return
+' return to amount
+
+' vault -> toAsset : balanceOf(vault)
+' activate toAsset
+' return after swap to asset balance
+
+' vault -> vault : calc actual to amount
+' note right : after balance - before balance
+
+' vault -> vault : validate 
+' note right
+' actual to assets > slippage from Oracle
+' actual to amount > min to amount
+' end note
+
+' return
+
+' end group
+
+' group Option 2
+' strategist -> swapper : swap(\nasset holder\nfrom asset,\nto asset,\nfrom amount,\nmin to amount\n1Inch data)
+' activate swapper
+
+' swapper -> swapper : validate
+' note right
+' only strategist or governor
+' swap not already in progress
+' end note
+' swapper -> swapper : store swap data
+' note right : save tx swap data to storage
+
+' swapper -> vault : prepareSwap(\nfrom asset,\nto asset,\nfrom amount)
+' activate vault
+
+' vault -> vault: validate
+' note right
+' only swapper
+' not capital paused
+' from and to assets
+' end note
+
+' vault -> toAsset : balanceOf(vault)
+' activate toAsset
+' return before swap to asset balance
+
+' vault -> fromAsset : transfer(swapper, from amount)
+' activate fromAsset
+' note left : transfer from asset\nfrom vault\nto swapper
+' return
+
+' vault -> swapper : executeSwap()
+' activate swapper
+' note left : callback from\nasset holder
+
+' swapper -> swapper : load swap data
+
+' swapper -> swapper : validate
+' note right : caller is asset holder
+
+' swapper -> router : swap(1Inch swap data)
+' activate router
+' router -> fromAsset : transferFrom (\nswapper,\nrouter,\nfrom amount)
+' activate fromAsset
+' return
+' router -> dex : swap (from, to, from amount)
+' activate dex
+' dex -> fromAsset : transferFrom(\nrouter, dex, from amount)
+' activate fromAsset
+' return
+' dex -> toAsset : transfer(\nvault, to amount)
+' activate toAsset
+' return
+' return
+' return to amount
+
+' swapper -> swapper : validate
+' note right : to amount >\nmin to amount
+
+' return
+' note left : callback completed\nreturn control to\nasset holder
+
+' vault -> toAsset : balanceOf(vault)
+' activate toAsset
+' return after swap to asset balance
+
+' vault -> vault : calc actual to amount
+' note right : after balance - before balance
+
+' vault -> vault : validate 
+' note right : actual to assets > slippage from Oracle
+
+' return
+
+' swapper -> swapper : delete swap data
+' note right : clear tx swap data from storage
+
+' return
+' end group
+
+@enduml
