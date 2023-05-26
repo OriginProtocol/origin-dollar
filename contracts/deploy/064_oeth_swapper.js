@@ -3,7 +3,7 @@ const addresses = require("../utils/addresses");
 
 module.exports = deploymentWithProposal(
   { deployName: "064_oeth_swapper", forceDeploy: false, reduceQueueTime: true },
-  async ({ deployWithConfirmation, assetAddresses }) => {
+  async ({ assetAddresses, deployWithConfirmation, withConfirmation }) => {
     // Deployer Actions
     // ----------------
 
@@ -31,6 +31,16 @@ module.exports = deploymentWithProposal(
 
     // 3. Deploy new Swapper contract for 1Inch V5
     const dSwapper = await deployWithConfirmation("Swapper1InchV5");
+    const cSwapper = await ethers.getContract("Swapper1InchV5");
+
+    await withConfirmation(
+      cSwapper.approveAssets([
+        assetAddresses.RETH,
+        assetAddresses.stETH,
+        assetAddresses.WETH,
+        assetAddresses.frxETH,
+      ])
+    );
 
     // Governance Actions
     // ----------------

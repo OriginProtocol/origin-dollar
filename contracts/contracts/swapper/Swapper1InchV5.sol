@@ -18,6 +18,8 @@ contract Swapper1InchV5 is ISwapper {
     /// @notice 1Inch router contract to give allowance to perform swaps
     address public constant SWAP_ROUTER =
         0x1111111254EEB25477B68fb85Ed929f73A960582;
+    address public constant EXECUTER =
+        0x1136B25047E142Fa3018184793aEc68fBB173cE4;
 
     /**
      * @notice Strategist swaps assets sitting in the contract of the `assetHolder`.
@@ -45,7 +47,7 @@ contract Swapper1InchV5 is ISwapper {
             flags: 0 // no special swaps needed
         });
         (toAssetAmount, ) = IOneInchRouter(SWAP_ROUTER).swap(
-            IAggregationExecutor(address(this)),
+            IAggregationExecutor(EXECUTER),
             swapDesc,
             "0x", // we are not approving tx via signatures so it is not necessary
             data
