@@ -41,6 +41,7 @@ export default class AllowancesService {
     ])
 
     let oethAllowanceCurvePool
+    let oethRegistryAllowanceCurvePool
     let stethAllowanceCurvePool
     let wethAllowanceCurvePool
     let rethAllowanceCurvePool
@@ -49,6 +50,7 @@ export default class AllowancesService {
     if (curveOETHPool) {
       ;[
         oethAllowanceCurvePool,
+        oethRegistryAllowanceCurvePool,
         stethAllowanceCurvePool,
         wethAllowanceCurvePool,
         rethAllowanceCurvePool,
@@ -56,6 +58,10 @@ export default class AllowancesService {
       ] = await Promise.all([
         displayCurrency(
           await oeth.allowance(account, curveOETHPool.address),
+          oeth
+        ),
+        displayCurrency(
+          await oeth.allowance(account, curveRegistryExchange.address),
           oeth
         ),
         displayCurrency(
@@ -86,6 +92,7 @@ export default class AllowancesService {
       oeth: {
         vault: oethAllowanceVault,
         curve: oethAllowanceCurvePool,
+        curve_registry: oethRegistryAllowanceCurvePool,
         woeth: woethAllowance,
       },
       weth: {

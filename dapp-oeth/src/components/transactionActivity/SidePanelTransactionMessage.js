@@ -9,7 +9,7 @@ import { assetRootPath } from 'utils/image'
 
 const CoinImage = ({ coin }) => {
   const coinsToRender =
-    coin === 'mix' ? ['weth', 'reth', 'steth', 'frxeth'] : coin.split(',')
+    coin === 'mix' ? ['weth', 'retFh', 'steth', 'frxeth'] : coin.split(',')
   const size = 24
   return (
     <>

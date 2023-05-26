@@ -152,7 +152,7 @@ const TransactionActivityDropdown = () => {
       animationHash.current = setTimeout(() => {
         setTxHashesToAnimate([])
         animationHash.current = null
-      }, 8000)
+      }, 13000)
     }
 
     const sortedTx = [...transactions]

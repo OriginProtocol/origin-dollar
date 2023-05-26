@@ -69,6 +69,8 @@ const ApproveSwap = ({
     zapper,
   } = useStoreState(ContractStore, (s) => s.contracts || {})
 
+  const curveRegistryCoins = ['steth', 'weth', 'reth', 'frxeth']
+
   const routeConfig = {
     vault: {
       contract: vault,
@@ -85,9 +87,14 @@ const ApproveSwap = ({
       },
     },
     curve: {
-      contract: ['steth', 'weth', 'reth', 'frxeth'].includes(coinToApprove)
-        ? curveRegistryExchange
-        : curveOETHPool,
+      contract:
+        // Use router address for LSDs, and if OETH is going to LSD via curve
+        curveRegistryCoins.includes(coinToApprove) ||
+        (coinToApprove === 'oeth' &&
+          curveRegistryCoins.includes(selectedSwap?.coinToSwap) &&
+          selectedSwap.name === 'curve')
+          ? curveRegistryExchange
+          : curveOETHPool,
       name: {
         approving: 'Curve',
         done: 'Curve',

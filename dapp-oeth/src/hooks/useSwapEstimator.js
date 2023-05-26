@@ -399,10 +399,11 @@ const useSwapEstimator = ({
    */
   const estimateSwapSuitabilityCurve = async () => {
     const isRedeem = swapMode === 'redeem'
+    const curveRegistryCoins = ['steth', 'reth', 'weth', 'frxeth']
 
     if (
       (isRedeem && selectedCoin === 'mix') ||
-      !['eth', 'oeth', 'steth', 'reth', 'weth', 'frxeth'].includes(selectedCoin)
+      !['eth', 'oeth', ...curveRegistryCoins].includes(selectedCoin)
     ) {
       return {
         canDoSwap: false,
@@ -450,9 +451,15 @@ const useSwapEstimator = ({
        * We don't check if positive amount is large enough: since we always approve max_int allowance.
        */
 
+      const allowanceCheckKey =
+        selectedCoin === 'oeth' && curveRegistryCoins.includes(coinToSwap)
+          ? 'curve_registry'
+          : 'curve'
+
       // ETH / OETH mint flow
       const approveAllowanceNeeded = allowancesLoaded
-        ? parseFloat(allowances[coinToSwap].curve) < parseFloat(inputAmountRaw)
+        ? parseFloat(allowances[coinToSwap]?.[allowanceCheckKey]) <
+          parseFloat(inputAmountRaw)
         : true
 
       const hasEnoughBalance = userHasEnoughStablecoin(
