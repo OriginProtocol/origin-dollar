@@ -62,7 +62,7 @@ contract VaultStorage is Initializable, Governable {
         DECIMALS,
         GETEXCHANGERATE
     }
-    // TODO need to reset all configured Assets on upgrade as the storage has changed from 2 slots to just 1.
+    // Changed to fit into a single storage slot so the decimals needs to be recached
     struct Asset {
         bool isSupported;
         UnitConversion unitConversion;
