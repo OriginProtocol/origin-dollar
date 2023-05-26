@@ -69,10 +69,9 @@ contract VaultAdmin is VaultStorage {
      * redemptions without needing to spend gas unwinding assets from a Strategy.
      * @param _vaultBuffer Percentage using 18 decimals. 100% = 1e18.
      */
-    function setVaultBuffer(uint256 _vaultBuffer)
-        external
-        onlyGovernorOrStrategist
-    {
+    function setVaultBuffer(
+        uint256 _vaultBuffer
+    ) external onlyGovernorOrStrategist {
         require(_vaultBuffer <= 1e18, "Invalid value");
         vaultBuffer = _vaultBuffer;
         emit VaultBufferUpdated(_vaultBuffer);
@@ -83,10 +82,9 @@ contract VaultAdmin is VaultStorage {
      * automatic allocation of funds afterwords.
      * @param _threshold OToken amount with 18 fixed decimals.
      */
-    function setAutoAllocateThreshold(uint256 _threshold)
-        external
-        onlyGovernor
-    {
+    function setAutoAllocateThreshold(
+        uint256 _threshold
+    ) external onlyGovernor {
         autoAllocateThreshold = _threshold;
         emit AllocateThresholdUpdated(_threshold);
     }
@@ -116,10 +114,10 @@ contract VaultAdmin is VaultStorage {
      * @param _asset Address of the asset
      * @param _strategy Address of the Strategy
      */
-    function setAssetDefaultStrategy(address _asset, address _strategy)
-        external
-        onlyGovernorOrStrategist
-    {
+    function setAssetDefaultStrategy(
+        address _asset,
+        address _strategy
+    ) external onlyGovernorOrStrategist {
         emit AssetDefaultStrategyUpdated(_asset, _strategy);
         // If its a zero address being passed for the strategy we are removing
         // the default strategy
@@ -141,10 +139,9 @@ contract VaultAdmin is VaultStorage {
      * to strategy (used only by ConvexOUSDMetaStrategy for now).
      * @param _threshold OToken amount with 18 fixed decimals.
      */
-    function setNetOusdMintForStrategyThreshold(uint256 _threshold)
-        external
-        onlyGovernor
-    {
+    function setNetOusdMintForStrategyThreshold(
+        uint256 _threshold
+    ) external onlyGovernor {
         /**
          * Because `netOusdMintedForStrategy` check in vault core works both ways
          * (positive and negative) the actual impact of the amount of OToken minted
@@ -165,14 +162,23 @@ contract VaultAdmin is VaultStorage {
     }
 
     /**
+     * @dev Set the contract the performs swaps of collateral assets.
+     * @param _swapperAddr Address of the Swapper contract that implements the ISwapper interface.
+     */
+    function setSwapper(address _swapperAddr) external onlyGovernor {
+        swapper = _swapperAddr;
+        emit SwapperChanged(_swapperAddr);
+    }
+
+    /**
      * @notice Add a supported asset to the contract, i.e. one that can be
      *         to mint OTokens.
      * @param _asset Address of asset
      */
-    function supportAsset(address _asset, uint8 _unitConversion)
-        external
-        onlyGovernor
-    {
+    function supportAsset(
+        address _asset,
+        uint8 _unitConversion
+    ) external onlyGovernor {
         require(!assets[_asset].isSupported, "Asset already supported");
 
         assets[_asset] = Asset({
@@ -371,10 +377,9 @@ contract VaultAdmin is VaultStorage {
      * @notice Set OToken Metapool strategy
      * @param _ousdMetaStrategy Address of OToken metapool strategy
      */
-    function setOusdMetaStrategy(address _ousdMetaStrategy)
-        external
-        onlyGovernor
-    {
+    function setOusdMetaStrategy(
+        address _ousdMetaStrategy
+    ) external onlyGovernor {
         ousdMetaStrategy = _ousdMetaStrategy;
         emit OusdMetaStrategyUpdated(_ousdMetaStrategy);
     }
@@ -425,10 +430,10 @@ contract VaultAdmin is VaultStorage {
      * @param _asset Address for the asset
      * @param _amount Amount of the asset to transfer
      */
-    function transferToken(address _asset, uint256 _amount)
-        external
-        onlyGovernor
-    {
+    function transferToken(
+        address _asset,
+        uint256 _amount
+    ) external onlyGovernor {
         require(!assets[_asset].isSupported, "Only unsupported assets");
         IERC20(_asset).safeTransfer(governor(), _amount);
     }
@@ -441,10 +446,9 @@ contract VaultAdmin is VaultStorage {
      * @notice Withdraws all assets from the strategy and sends assets to the Vault.
      * @param _strategyAddr Strategy address.
      */
-    function withdrawAllFromStrategy(address _strategyAddr)
-        external
-        onlyGovernorOrStrategist
-    {
+    function withdrawAllFromStrategy(
+        address _strategyAddr
+    ) external onlyGovernorOrStrategist {
         require(
             strategies[_strategyAddr].isSupported,
             "Strategy is not supported"
