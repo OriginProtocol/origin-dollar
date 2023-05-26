@@ -2,25 +2,31 @@ const { deploymentWithProposal } = require("../utils/deploy");
 const addresses = require("../utils/addresses");
 
 module.exports = deploymentWithProposal(
-  { deployName: "064_oeth_swapper", forceDeploy: false },
+  { deployName: "064_oeth_swapper", forceDeploy: false, reduceQueueTime: true },
   async ({ deployWithConfirmation, assetAddresses }) => {
     // Deployer Actions
     // ----------------
 
-    // 1. Deploy new OETH Vault implementation
+    // 1. Deploy new OETH Vault Core and Admin implementations
     // Need to override the storage safety check as we are repacking the
     // internal assets mapping to just use 1 storage slot
-    const dOETHVaultImpl = await deployWithConfirmation(
-      "OETHVault",
+    const dVaultCore = await deployWithConfirmation(
+      "OETHVaultCore",
+      [],
+      null,
+      true
+    );
+    const dVaultAdmin = await deployWithConfirmation(
+      "OETHVaultAdmin",
       [],
       null,
       true
     );
 
     // 2. Connect to the OETH Vault as its governor via the proxy
-    const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
-    const cOETHVault = (
-      await ethers.getContractAt("OETHVault", cOETHVaultProxy.address)
+    const cVaultProxy = await ethers.getContract("OETHVaultProxy");
+    const cVault = (
+      await ethers.getContractAt("OETHVault", cVaultProxy.address)
     ).connect(addresses.mainnet.OldTimelock);
 
     // 3. Deploy new Swapper contract for 1Inch V5
@@ -29,59 +35,65 @@ module.exports = deploymentWithProposal(
     // Governance Actions
     // ----------------
     return {
-      name: "Deploy OETH collateral swaps",
+      name: "Upgrade OETH Vault to support collateral swaps",
       actions: [
-        // 1. Upgrade the OETH Vault proxy to the new implementation
+        // 1. Upgrade the OETH Vault proxy to the new core vault implementation
         {
-          contract: cOETHVaultProxy,
+          contract: cVaultProxy,
           signature: "upgradeTo(address)",
-          args: [dOETHVaultImpl.address],
+          args: [dVaultCore.address],
         },
-        // 2. Set the Swapper on the OETH Vault
+        // 2. set OETH Vault proxy to the new admin vault implementation
         {
-          contract: cOETHVault,
+          contract: cVault,
+          signature: "setAdminImpl(address)",
+          args: [dVaultAdmin.address],
+        },
+        // 3. Set the Swapper on the OETH Vault
+        {
+          contract: cVault,
           signature: "setSwapper(address)",
           args: [dSwapper.address],
         },
-        // 3. Reset the cached asset decimals as the storage slot has been changed
+        // 4. Reset the cached asset decimals as the storage slot has been changed
         {
-          contract: cOETHVault,
+          contract: cVault,
           signature: "cacheDecimals(address)",
           args: [assetAddresses.RETH],
         },
         {
-          contract: cOETHVault,
+          contract: cVault,
           signature: "cacheDecimals(address)",
           args: [assetAddresses.stETH],
         },
         {
-          contract: cOETHVault,
+          contract: cVault,
           signature: "cacheDecimals(address)",
           args: [assetAddresses.WETH],
         },
         {
-          contract: cOETHVault,
+          contract: cVault,
           signature: "cacheDecimals(address)",
           args: [assetAddresses.frxETH],
         },
-        // 4. Set the allowed swap slippages for each vault collateral asset
+        // 5. Set the allowed swap slippages for each vault collateral asset
         {
-          contract: cOETHVault,
+          contract: cVault,
           signature: "setSwapSlippage(address,uint16)",
           args: [assetAddresses.RETH, 200], // 2% Oracle deviation threshold
         },
         {
-          contract: cOETHVault,
+          contract: cVault,
           signature: "setSwapSlippage(address,uint16)",
           args: [assetAddresses.stETH, 70], // 0.2% + 0.5% Oracle deviation threshold
         },
         {
-          contract: cOETHVault,
+          contract: cVault,
           signature: "setSwapSlippage(address,uint16)",
           args: [assetAddresses.WETH, 20], // 0.2%
         },
         {
-          contract: cOETHVault,
+          contract: cVault,
           signature: "setSwapSlippage(address,uint16)",
           args: [assetAddresses.frxETH, 20], // 0.2%
         },

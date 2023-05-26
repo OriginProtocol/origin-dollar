@@ -3,6 +3,7 @@ const { expect } = require("chai");
 const { defaultFixture } = require("./../_fixture");
 const addresses = require("../../utils/addresses");
 const { loadFixture, forkOnlyDescribe } = require("./../helpers");
+const { parseUnits } = require("ethers/lib/utils");
 
 forkOnlyDescribe("ForkTest: OETH Vault", function () {
   this.timeout(0);
@@ -15,32 +16,80 @@ forkOnlyDescribe("ForkTest: OETH Vault", function () {
   });
 
   describe("OETH Vault", () => {
-    it("Should have the correct governor address set", async () => {
-      const {
-        oethVault,
-        oethDripper,
-        ConvexEthMetaStrategy,
-        fraxEthStrategy,
-        oeth,
-        woeth,
-        oethHarvester,
-      } = fixture;
+    describe("post deployment", () => {
+      it("Should have the correct governor address set", async () => {
+        const {
+          oethVault,
+          oethDripper,
+          ConvexEthMetaStrategy,
+          fraxEthStrategy,
+          oeth,
+          woeth,
+          oethHarvester,
+        } = fixture;
 
-      const oethContracts = [
-        oethVault,
-        oethDripper,
-        ConvexEthMetaStrategy,
-        fraxEthStrategy,
-        oeth,
-        woeth,
-        oethHarvester,
-      ];
+        const oethContracts = [
+          oethVault,
+          oethDripper,
+          ConvexEthMetaStrategy,
+          fraxEthStrategy,
+          oeth,
+          woeth,
+          oethHarvester,
+        ];
 
-      for (let i = 0; i < oethContracts.length; i++) {
-        expect(await oethContracts[i].governor()).to.equal(
-          addresses.mainnet.OldTimelock
-        );
-      }
+        for (let i = 0; i < oethContracts.length; i++) {
+          expect(await oethContracts[i].governor()).to.equal(
+            addresses.mainnet.OldTimelock
+          );
+        }
+      });
+      it("assets should have allowed slippage", async () => {
+        const { oethVault, weth, reth, stETH, frxETH } = fixture;
+
+        const assets = [weth, stETH, reth, frxETH];
+        const expectedConversions = [0, 0, 1, 0];
+        const expectedSlippage = [20, 70, 200, 20];
+
+        for (let i = 0; i < assets.length; i++) {
+          const config = await oethVault.getAssetConfig(assets[i].address);
+
+          expect(config.decimals, `decimals ${i}`).to.equal(18);
+          expect(config.isSupported, `isSupported ${i}`).to.be.true;
+          expect(config.unitConversion, `unitConversion ${i}`).to.be.equal(
+            expectedConversions[i]
+          );
+          expect(
+            config.allowedSwapSlippageBps,
+            `allowedSwapSlippageBps ${i}`
+          ).to.equal(expectedSlippage[i]);
+        }
+      });
+    });
+    describe("Collateral swaps", () => {
+      it("should be able to swap WETH for rETH", async () => {
+        const { oethVault, reth, weth, strategist } = fixture;
+        const fromAmount = parseUnits("100", 18);
+        const minToAssetAmount = parseUnits("98", 18);
+        // from address vault 0x39254033945AA2E4809Cc2977E7087BEE48bd7Ab
+        // Swapper1InchV5 address: 0xF4632427B2877c4c12670B5c75F794BCe16281FA
+        const data = `0x12aa3caf0000000000000000000000001136b25047e142fa3018184793aec68fbb173ce4000000000000000000000000c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2000000000000000000000000ae78736cd615f374d3085123a210448e74fc63930000000000000000000000001136b25047e142fa3018184793aec68fbb173ce4000000000000000000000000${
+          // swapper address
+          "F4632427B2877c4c12670B5c75F794BCe16281FA"
+        }0000000000000000000000000000000000000000000000056bc75e2d631000000000000000000000000000000000000000000000000000048c9ccb06af73a5ae000000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000001400000000000000000000000000000000000000000000000000000000000000160000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000bc00000000000000000000000000000000000000009e00007000005600003c4101c02aaa39b223fe8d0a0e5c4f27ead9083c756cc200042e1a7d4d000000000000000000000000000000000000000000000000000000000000000040e0dd3f50f8a6cafbe9b31a427582963f465e745af8d0e30db00020d6bdbf78ae78736cd615f374d3085123a210448e74fc639380a06c4eca27ae78736cd615f374d3085123a210448e74fc63931111111254eeb25477b68fb85ed929f73a96058200000000cfee7c08`;
+
+        await oethVault
+          .connect(strategist)
+          .swapCollateral(
+            weth.address,
+            reth.address,
+            fromAmount,
+            minToAssetAmount,
+            data
+          );
+      });
+      it("should be able to swap WETH for stETH", async () => {});
+      it("should be able to swap WETH for frxETH", async () => {});
     });
   });
 });
