@@ -626,7 +626,7 @@ const handlePossiblyActiveGovernanceProposal = async (
 
     if (["Pending", "Active", "Succeeded", "Queued"].includes(proposalState)) {
       console.log(
-        `Found proposal id: ${proposalId} on forked network. Executing proposal containing deployment of: ${deployName}`
+        `Found proposal id: ${proposalId} on forked network with ${proposalState} state. Executing proposal containing deployment of: ${deployName}`
       );
 
       await executeGovernanceProposalOnFork({

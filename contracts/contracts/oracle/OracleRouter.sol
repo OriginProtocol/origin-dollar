@@ -14,7 +14,8 @@ abstract contract OracleRouterBase is IOracle {
 
     uint256 internal constant MIN_DRIFT = 0.7e18;
     uint256 internal constant MAX_DRIFT = 1.3e18;
-    address internal constant FIXED_PRICE = 0x0000000000000000000000000000000000000001;
+    address internal constant FIXED_PRICE =
+        0x0000000000000000000000000000000000000001;
     // Maximum allowed staleness buffer above normal Oracle maximum staleness
     uint256 internal constant STALENESS_BUFFER = 1 days;
     mapping(address => uint8) internal decimalsCache;
