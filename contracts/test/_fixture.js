@@ -114,6 +114,8 @@ const defaultFixture = deployments.createFixture(async () => {
   const buybackProxy = await ethers.getContract("BuybackProxy");
   const buyback = await ethers.getContractAt("Buyback", buybackProxy.address);
 
+  const swapper = await ethers.getContract("Swapper1InchV5");
+
   let usdt,
     dai,
     tusd,
@@ -495,6 +497,7 @@ const defaultFixture = deployments.createFixture(async () => {
     liquidityRewardOUSD_USDT,
     flipper,
     buyback,
+    swapper,
     wousd,
     //OETH
     oethVault,
