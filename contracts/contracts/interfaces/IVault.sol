@@ -167,6 +167,8 @@ interface IVault {
 
     function getStrategyCount() external view returns (uint256);
 
+    function swapper() external view returns (address);
+
     function getAllStrategies() external view returns (address[] memory);
 
     function isSupportedAsset(address _asset) external view returns (bool);
