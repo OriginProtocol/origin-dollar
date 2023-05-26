@@ -162,6 +162,15 @@ contract VaultAdmin is VaultStorage {
     }
 
     /**
+     * @dev Set the contract the performs swaps of collateral assets.
+     * @param _swapperAddr Address of the Swapper contract that implements the ISwapper interface.
+     */
+    function setSwapper(address _swapperAddr) external onlyGovernor {
+        swapper = _swapperAddr;
+        emit SwapperChanged(_swapperAddr);
+    }
+
+    /**
      * @dev Add a supported asset to the contract, i.e. one that can be
      *         to mint OUSD.
      * @param _asset Address of asset
