@@ -44,6 +44,11 @@ forkOnlyDescribe("ForkTest: Vault", function () {
           );
         }
       });
+      it("shold have swapper set", async () => {
+        const { oethVault, swapper } = fixture;
+
+        expect(await oethVault.swapper()).to.equal(swapper.address);
+      });
       it("assets should have allowed slippage", async () => {
         const { oethVault, weth, reth, stETH, frxETH } = fixture;
 

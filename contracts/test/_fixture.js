@@ -126,6 +126,8 @@ async function defaultFixture() {
   const buybackProxy = await ethers.getContract("BuybackProxy");
   const buyback = await ethers.getContractAt("Buyback", buybackProxy.address);
 
+  const swapper = await ethers.getContract("Swapper1InchV5");
+
   let usdt,
     dai,
     tusd,
@@ -506,6 +508,7 @@ async function defaultFixture() {
     compensationClaims,
     flipper,
     buyback,
+    swapper,
     wousd,
     //OETH
     oethVault,
