@@ -8,8 +8,8 @@ export function isCorrectNetwork(chainId) {
     return chainId === 1
   } else {
     return (
-      chainId ===
-      (parseInt(process.env.NEXT_PUBLIC_ETHEREUM_RPC_CHAIN_ID)) || 1337
+      chainId === parseInt(process.env.NEXT_PUBLIC_ETHEREUM_RPC_CHAIN_ID) ||
+      1337
     )
   }
 }

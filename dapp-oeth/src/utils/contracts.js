@@ -17,6 +17,7 @@ import ognAbi from 'constants/mainnetAbi/ogn.json'
 import ogvAbi from 'constants/mainnetAbi/ogv.json'
 import veogvAbi from 'constants/mainnetAbi/veogv.json'
 import sfrxethAbi from 'constants/mainnetAbi/sfrxeth.json'
+import registryExchangeJson from '../../abis/CurveRegistryExchange.json'
 
 const curveFactoryMiniAbi = [
   {
@@ -570,6 +571,11 @@ const setupCurve = async (curveAddressProvider, getContract, chainId) => {
   const registryExchangeAddress = await curveAddressProvider.get_address(2)
   const registryExchangeJson = require('../../abis/CurveRegistryExchange.json')
 
+  const curveRegistryExchange = getContract(
+    registryExchangeAddress,
+    registryExchangeJson.abi
+  )
+
   const factoryAddress = await curveAddressProvider.get_address(3)
   const factory = getContract(factoryAddress, curveFactoryMiniAbi)
 
@@ -582,11 +588,7 @@ const setupCurve = async (curveAddressProvider, getContract, chainId) => {
     curvePoolMiniAbi
   )
 
-  return [
-    getContract(registryExchangeAddress, registryExchangeJson.abi),
-    curveOETHPool,
-    curveUnderlyingCoins,
-  ]
+  return [curveRegistryExchange, curveOETHPool, curveUnderlyingCoins]
 }
 
 // calls to be executed only once after setup

@@ -71,7 +71,7 @@ export const defiWalletConnector = process.browser
   : {}
 
 export const ledgerLiveConnector = new LedgerHQFrameConnector({
-  targetOrigin: "https://dapp-browser.apps.ledger.com",
+  targetOrigin: 'https://dapp-browser.apps.ledger.com',
   timeoutMilliseconds: 10000,
 })
 

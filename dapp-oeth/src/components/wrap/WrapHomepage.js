@@ -309,7 +309,7 @@ const WrapHomepage = ({
             </div>
           </div>
           <ApproveSwap
-            stableCoinToApprove={swapMode === 'mint' ? 'oeth' : 'woeth'}
+            coinToApprove={swapMode === 'mint' ? 'oeth' : 'woeth'}
             needsApproval={needsApproval}
             selectedSwap={{ name: 'woeth' }}
             inputAmount={inputAmount}

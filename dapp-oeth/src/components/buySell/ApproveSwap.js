@@ -12,7 +12,7 @@ import { walletLogin } from 'utils/account'
 import { event } from '../../../lib/gtm'
 
 const ApproveSwap = ({
-  stableCoinToApprove,
+  coinToApprove,
   needsApproval,
   selectedSwap,
   inputAmount,
@@ -36,12 +36,10 @@ const ApproveSwap = ({
   const [isApproving, setIsApproving] = useState({})
   const web3react = useWeb3React()
   const { library, account, activate, active } = web3react
-  const coinApproved = stableCoinToApprove === 'eth' || stage === 'done'
+  const coinApproved = coinToApprove === 'eth' || stage === 'done'
 
   const isWrapped =
-    selectedSwap &&
-    selectedSwap.name === 'woeth' &&
-    stableCoinToApprove === 'oeth'
+    selectedSwap && selectedSwap.name === 'woeth' && coinToApprove === 'oeth'
 
   const approvalNeeded =
     (selectedSwap &&
@@ -59,15 +57,8 @@ const ApproveSwap = ({
 
   const {
     vault,
-    uniV3SwapRouter,
-    uniV2Router,
-    sushiRouter,
-    curveOUSDMetaPool,
     curveOETHPool,
-    usdt,
-    dai,
-    usdc,
-    ousd,
+    curveRegistryExchange,
     weth,
     reth,
     steth,
@@ -77,6 +68,8 @@ const ApproveSwap = ({
     woeth,
     zapper,
   } = useStoreState(ContractStore, (s) => s.contracts || {})
+
+  const curveRegistryCoins = ['steth', 'weth', 'reth', 'frxeth']
 
   const routeConfig = {
     vault: {
@@ -93,39 +86,25 @@ const ApproveSwap = ({
         done: 'Zap + Vault',
       },
     },
-    // uniswap: {
-    //   contract: uniV3SwapRouter,
-    //   name: {
-    //     approving: 'Uniswap',
-    //     done: 'Uniswap',
-    //   },
-    // },
     curve: {
-      contract: curveOETHPool,
+      contract:
+        // Use router address for LSDs, and if OETH is going to LSD via curve
+        curveRegistryCoins.includes(coinToApprove) ||
+        (coinToApprove === 'oeth' &&
+          curveRegistryCoins.includes(selectedSwap?.coinToSwap) &&
+          selectedSwap.name === 'curve')
+          ? curveRegistryExchange
+          : curveOETHPool,
       name: {
         approving: 'Curve',
         done: 'Curve',
       },
     },
-    // uniswapV2: {
-    //   contract: uniV2Router,
-    //   name: {
-    //     approving: 'Uniswap',
-    //     done: 'Uniswap',
-    //   },
-    // },
-    // sushiswap: {
-    //   contract: sushiRouter,
-    //   name: {
-    //     approving: 'Sushi Swap',
-    //     done: 'Sushi Swap',
-    //   },
-    // },
     woeth: {
       contract: woeth,
       name: {
-        approving: 'wOETH',
-        done: 'wOETH',
+        approving: 'wOETH contract',
+        done: 'wOETH contract',
       },
     },
   }
@@ -134,26 +113,26 @@ const ApproveSwap = ({
     if (selectedSwap) {
       if (
         isApproving.contract === selectedSwap.name &&
-        isApproving.coin === stableCoinToApprove
+        isApproving.coin === coinToApprove
       ) {
         setStage('waiting-network')
         return
       }
     }
     setStage('approve')
-  }, [selectedSwap])
+  }, [JSON.stringify(selectedSwap), JSON.stringify(isApproving)])
 
   useEffect(() => {
     const coinToContract = { weth, reth, steth, sfrxeth, oeth, frxeth, woeth }
-    if (Object.keys(coinToContract).includes(stableCoinToApprove)) {
-      setContract(coinToContract[stableCoinToApprove])
+    if (Object.keys(coinToContract).includes(coinToApprove)) {
+      setContract(coinToContract[coinToApprove])
     }
-  }, [stableCoinToApprove, reth, weth, steth, oeth, frxeth, woeth])
+  }, [coinToApprove, reth, weth, steth, oeth, frxeth, woeth])
 
   const ApprovalMessage = ({
     stage,
     selectedSwap,
-    stableCoinToApprove,
+    coinToApprove,
     isMobile,
   }) => {
     if (stage === 'waiting-user') {
@@ -182,7 +161,7 @@ const ApproveSwap = ({
 
     const route = `${
       routeConfig[selectedSwap.name].name.approving
-    } to use your ${stableCoinToApprove.toUpperCase()}`
+    } to use your ${coinToApprove.toUpperCase()}`
     const routeMobile = `${routeConfig[selectedSwap.name].name.approving}`
 
     return (
@@ -199,16 +178,14 @@ const ApproveSwap = ({
 
   const SwapMessage = ({
     balanceError,
-    stableCoinToApprove,
+    coinToApprove,
     swapsLoaded,
     selectedSwap,
     swappingGloballyDisabled,
     active,
   }) => {
     const coin =
-      stableCoinToApprove === 'woeth'
-        ? 'wOETH'
-        : stableCoinToApprove.toUpperCase()
+      coinToApprove === 'woeth' ? 'wOETH' : coinToApprove.toUpperCase()
     const noSwapRouteAvailable = swapsLoaded && !selectedSwap
     if (swappingGloballyDisabled) {
       return process.env.NEXT_PUBLIC_DISABLE_SWAP_BUTTON_MESSAGE
@@ -223,7 +200,7 @@ const ApproveSwap = ({
       return fbt('Insufficient liquidity', 'Insufficient liquidity')
     } else if (isWrapped) {
       return fbt('Wrap', 'Wrap')
-    } else if (stableCoinToApprove === 'woeth') {
+    } else if (coinToApprove === 'woeth') {
       return fbt('Unwrap', 'Unwrap')
     } else {
       return fbt('Swap', 'Swap')
@@ -235,7 +212,7 @@ const ApproveSwap = ({
       event({
         event: 'approve_started',
         approval_type: isWrapped ? 'wrap' : 'swap',
-        approval_token: stableCoinToApprove,
+        approval_token: coinToApprove,
       })
       setStage('waiting-user')
       try {
@@ -248,18 +225,18 @@ const ApproveSwap = ({
         storeTransaction(
           result,
           isWrapped ? 'approveWrap' : 'approve',
-          stableCoinToApprove
+          coinToApprove
         )
         setStage('waiting-network')
         setIsApproving({
           contract: needsApproval,
-          coin: stableCoinToApprove,
+          coin: coinToApprove,
         })
         await rpcProvider.waitForTransaction(result.hash)
         event({
           event: 'approve_complete',
           approval_type: isWrapped ? 'wrap' : 'swap',
-          approval_token: stableCoinToApprove,
+          approval_token: coinToApprove,
           approval_address: '',
           approval_tx: '',
         })
@@ -270,11 +247,11 @@ const ApproveSwap = ({
         console.error('Exception happened: ', e)
         setStage('approve')
         if (e.code !== 4001) {
-          await storeTransactionError('approve', stableCoinToApprove)
+          await storeTransactionError('approve', coinToApprove)
           event({
             event: 'approve_failed',
             approval_type: isWrapped ? 'wrap' : 'swap',
-            approval_token: stableCoinToApprove,
+            approval_token: coinToApprove,
             approval_address: '',
             approval_tx: '',
           })
@@ -282,7 +259,7 @@ const ApproveSwap = ({
           event({
             event: 'approve_rejected',
             approval_type: isWrapped ? 'wrap' : 'swap',
-            approval_token: stableCoinToApprove,
+            approval_token: coinToApprove,
           })
         }
       }
@@ -341,7 +318,7 @@ const ApproveSwap = ({
               <ApprovalMessage
                 stage={stage}
                 selectedSwap={selectedSwap}
-                stableCoinToApprove={stableCoinToApprove}
+                coinToApprove={coinToApprove}
                 isMobile={isMobile}
               />
             )}
@@ -370,7 +347,7 @@ const ApproveSwap = ({
         >
           <SwapMessage
             balanceError={balanceError}
-            stableCoinToApprove={stableCoinToApprove}
+            coinToApprove={coinToApprove}
             swapsLoaded={swapsLoaded}
             selectedSwap={selectedSwap}
             swappingGloballyDisabled={swappingGloballyDisabled}

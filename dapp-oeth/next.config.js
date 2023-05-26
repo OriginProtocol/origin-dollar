@@ -59,7 +59,7 @@ const config = {
 
     if (!isServer) {
       config.resolve.alias['@sentry/node'] = '@sentry/browser'
-    }  
+    }
 
     return config
   },
@@ -71,22 +71,22 @@ const config = {
       {
         source: '/swap',
         destination: '/',
-        permanent: true
+        permanent: true,
       },
       {
         source: '/dapp',
         destination: '/',
-        permanent: true
+        permanent: true,
       },
       {
         source: '/mint',
         destination: '/',
-        permanent: true
+        permanent: true,
       },
       {
         source: '/stake',
         destination: '/earn',
-        permanent: true
+        permanent: true,
       },
     ]
   },
@@ -112,7 +112,7 @@ const config = {
           },
           {
             key: 'Content-Security-Policy',
-            value: "frame-ancestors https://*.ledger.com",
+            value: 'frame-ancestors https://*.ledger.com',
           },
         ],
       },

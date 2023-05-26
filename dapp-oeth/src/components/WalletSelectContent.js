@@ -39,8 +39,8 @@ const WalletSelectContent = ({ isMobile }) => {
     if (active) {
       closeWalletSelectModal()
       event({
-        'event': 'connect',
-        'connect_address': account?.slice(2)
+        event: 'connect',
+        connect_address: account?.slice(2),
       })
     }
   }, [active])
@@ -70,8 +70,8 @@ const WalletSelectContent = ({ isMobile }) => {
 
   const onConnect = async (name) => {
     event({
-      'event': 'connect_modal_click',
-      'connect_modal_wallet': name.toLowerCase()
+      event: 'connect_modal_click',
+      connect_modal_wallet: name.toLowerCase(),
     })
 
     setError(null)

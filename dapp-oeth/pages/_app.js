@@ -43,11 +43,11 @@ function App({ Component, pageProps, err }) {
   ).split('?')[0]
 
   useEffect(() => {
-    router.events.on("routeChangeComplete", pageview);
+    router.events.on('routeChangeComplete', pageview)
     return () => {
-      router.events.off("routeChangeComplete", pageview);
-    };
-  }, [router.events]);
+      router.events.off('routeChangeComplete', pageview)
+    }
+  }, [router.events])
 
   useEffect(() => {
     // Update account info when connection already established
