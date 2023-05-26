@@ -767,10 +767,13 @@ contract VaultCore is VaultStorage {
         }
     }
 
-    function _getDecimals(address _asset) internal view returns (uint256) {
-        uint256 decimals = assets[_asset].decimals;
+    function _getDecimals(address _asset)
+        internal
+        view
+        returns (uint256 decimals)
+    {
+        decimals = assets[_asset].decimals;
         require(decimals > 0, "Decimals not cached");
-        return decimals;
     }
 
     /**
@@ -787,6 +790,14 @@ contract VaultCore is VaultStorage {
      */
     function getAssetCount() public view returns (uint256) {
         return allAssets.length;
+    }
+
+    function getAssetConfig(address _asset)
+        public
+        view
+        returns (Asset memory config)
+    {
+        config = assets[_asset];
     }
 
     /**
