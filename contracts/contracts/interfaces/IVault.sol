@@ -72,6 +72,11 @@ interface IVault {
 
     function ousdMetaStrategy() external view returns (address);
 
+    function setSwapper(address _swapperAddr) external;
+
+    function setSwapSlippage(address _asset, uint16 _allowedSwapSlippageBps)
+        external;
+
     function supportAsset(address _asset, uint8 _supportsAsset) external;
 
     function approveStrategy(address _addr) external;
