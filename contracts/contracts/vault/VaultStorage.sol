@@ -48,6 +48,7 @@ contract VaultStorage is Initializable, Governable {
     event TrusteeFeeBpsChanged(uint256 _basis);
     event TrusteeAddressChanged(address _address);
     event NetOusdMintForStrategyThresholdChanged(uint256 _threshold);
+    event SwapperChanged(address _address);
     event Swapped(
         address indexed fromAsset,
         address indexed toAsset,
@@ -144,8 +145,8 @@ contract VaultStorage is Initializable, Governable {
     /// @notice 1Inch router contract to give allowance to perform swaps
     address public constant SWAP_ROUTER =
         0x1111111254EEB25477B68fb85Ed929f73A960582;
-    /// @notice Contract that is allowed to swap collateral assets
-    address public swapperAddr = address(0);
+    /// @notice Contract that swaps the vault's collateral assets
+    address public swapper = address(0);
 
     /**
      * @dev set the implementation for the admin, this needs to be in a base class else we cannot set it
