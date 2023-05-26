@@ -44,11 +44,14 @@ async function defaultFixture() {
   const ousd = await ethers.getContractAt("OUSD", ousdProxy.address);
   const vault = await ethers.getContractAt("IVault", vaultProxy.address);
 
-  let oethProxy, OETHVaultProxy, oeth, oethVault;
+  let oethProxy, OETHVaultProxy, oeth, woeth, woethProxy, oethVault;
   if (isFork) {
     oethProxy = await ethers.getContract("OETHProxy");
+    woethProxy = await ethers.getContract("WOETHProxy");
     OETHVaultProxy = await ethers.getContract("OETHVaultProxy");
     oeth = await ethers.getContractAt("OETH", oethProxy.address);
+    woeth = await ethers.getContractAt("WOETH", woethProxy.address);
+
     oethVault = await ethers.getContractAt("IVault", OETHVaultProxy.address);
   }
 
@@ -415,9 +418,7 @@ async function defaultFixture() {
     ousd,
     vault,
     harvester,
-    oethHarvester,
     dripper,
-    oethDripper,
     mockNonRebasing,
     mockNonRebasingTwo,
     // Oracle
@@ -466,7 +467,6 @@ async function defaultFixture() {
     convexStrategy,
     OUSDmetaStrategy,
     LUSDMetaStrategy,
-    ConvexEthMetaStrategy,
     morphoCompoundStrategy,
     morphoAaveStrategy,
     cvx,
@@ -493,6 +493,10 @@ async function defaultFixture() {
     frxETH,
     sfrxETH,
     fraxEthStrategy,
+    woeth,
+    ConvexEthMetaStrategy,
+    oethDripper,
+    oethHarvester,
   };
 }
 
