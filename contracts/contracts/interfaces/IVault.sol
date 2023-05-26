@@ -139,6 +139,14 @@ interface IVault {
 
     function rebase() external;
 
+    function swapCollateral(
+        address fromAsset,
+        address toAsset,
+        uint256 fromAssetAmount,
+        uint256 minToAssetAmount,
+        bytes calldata data
+    ) external returns (uint256 toAssetAmount);
+
     function totalValue() external view returns (uint256 value);
 
     function checkBalance(address _asset) external view returns (uint256);
