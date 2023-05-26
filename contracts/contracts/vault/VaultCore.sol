@@ -423,7 +423,7 @@ contract VaultCore is VaultStorage {
         IERC20(fromAsset).safeTransfer(SWAP_ROUTER, fromAssetAmount);
 
         // Call to the Swapper contract to do the actual swap
-        toAssetAmount = ISwapper(swapperAddr).swap(
+        toAssetAmount = ISwapper(swapper).swap(
             fromAsset,
             toAsset,
             fromAssetAmount,
