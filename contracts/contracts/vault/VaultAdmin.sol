@@ -171,8 +171,23 @@ contract VaultAdmin is VaultStorage {
     }
 
     /**
-     * @dev Add a supported asset to the contract, i.e. one that can be
-     *         to mint OUSD.
+     * @dev Set the allowed slippage for collateral asset swaps.
+     * @param _asset Address of the asset token.
+     * @param _allowedSwapSlippageBps allowed slippage in basis points. eg 20 = 0.2%
+     */
+    function setSwapSlippage(address _asset, uint16 _allowedSwapSlippageBps)
+        external
+        onlyGovernor
+    {
+        require(assets[_asset].isSupported, "Asset not supported");
+
+        assets[_asset].allowedSwapSlippageBps = _allowedSwapSlippageBps;
+
+        emit SwapSlippageChanged(_asset, _allowedSwapSlippageBps);
+    }
+
+    /**
+     * @dev Add a supported asset to the vault, i.e. one that can mint.
      * @param _asset Address of asset
      */
     function supportAsset(address _asset, uint8 _unitConversion)
@@ -201,7 +216,7 @@ contract VaultAdmin is VaultStorage {
     /**
      * @dev Cache decimals on OracleRouter for a particular asset. This action
      *      is required before that asset's price can be accessed.
-     * @param _asset Address of asset
+     * @param _asset Address of asset token
      */
     function cacheDecimals(address _asset) external onlyGovernor {
         _cacheDecimals(_asset);
