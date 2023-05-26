@@ -14,7 +14,6 @@ import {
   NullAddress,
 } from 'utils/constants'
 import { useWeb3React } from '@web3-react/core'
-import { find } from 'lodash'
 import addresses from 'constants/contractAddresses'
 import curveRoutes from 'constants/curveRoutes'
 

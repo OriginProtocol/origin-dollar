@@ -120,7 +120,7 @@ const ApproveSwap = ({
       }
     }
     setStage('approve')
-  }, [selectedSwap])
+  }, [JSON.stringify(selectedSwap), JSON.stringify(isApproving)])
 
   useEffect(() => {
     const coinToContract = { weth, reth, steth, sfrxeth, oeth, frxeth, woeth }
