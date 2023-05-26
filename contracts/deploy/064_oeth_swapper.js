@@ -1,4 +1,5 @@
 const { deploymentWithProposal } = require("../utils/deploy");
+const addresses = require("../utils/addresses");
 
 module.exports = deploymentWithProposal(
   { deployName: "064_oeth_swapper", forceDeploy: false },
@@ -6,7 +7,7 @@ module.exports = deploymentWithProposal(
     // Deployer Actions
     // ----------------
 
-    // 2. Deploy new OETH Vault implementation
+    // 1. Deploy new OETH Vault implementation
     // Need to override the storage safety check as we are repacking the
     // internal assets mapping to just use 1 storage slot
     const dOETHVaultImpl = await deployWithConfirmation(
@@ -16,13 +17,13 @@ module.exports = deploymentWithProposal(
       true
     );
 
+    // 2. Connect to the OETH Vault as its governor via the proxy
     const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
-    const cOETHVault = await ethers.getContractAt(
-      "OETHVault",
-      cOETHVaultProxy.address
-    );
+    const cOETHVault = (
+      await ethers.getContractAt("OETHVault", cOETHVaultProxy.address)
+    ).connect(addresses.mainnet.OldTimelock);
 
-    // 2. Deploy new Swapper
+    // 3. Deploy new Swapper contract for 1Inch V5
     const dSwapper = await deployWithConfirmation("Swapper1InchV5");
 
     // Governance Actions
