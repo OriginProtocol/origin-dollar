@@ -1,12 +1,9 @@
-const { deploymentWithGuardianGovernor } = require("../utils/deploy");
+const { deploymentWithProposal } = require("../utils/deploy");
 const addresses = require("../utils/addresses");
 
-// 5 of 8
-const guardianAddr = addresses.mainnet.Guardian;
-
-module.exports = deploymentWithGuardianGovernor(
+module.exports = deploymentWithProposal(
   {
-    deployName: "061_oeth_morpho_aave_v2",
+    deployName: "064_oeth_morpho_aave_v2",
     forceDeploy: false,
     // proposalId: ,
   },
@@ -77,7 +74,7 @@ module.exports = deploymentWithGuardianGovernor(
     await withConfirmation(
       cMorphoAaveStrategy
         .connect(sDeployer)
-        .transferGovernance(guardianAddr, await getTxOpts())
+        .transferGovernance(addresses.mainnet.OldTimelock, await getTxOpts())
     );
 
     console.log(
@@ -88,6 +85,7 @@ module.exports = deploymentWithGuardianGovernor(
     // ----------------
     return {
       name: "Deploy new OUSD Morpho Aave strategy",
+      governorAddr: addresses.mainnet.OldTimelock,
       actions: [
         // 1. Accept governance of new MorphoAaveStrategy
         {
