@@ -124,11 +124,28 @@ const useCurrencySwapper = ({
         )
       }
 
+      const curveRegistryCoins = ['steth', 'weth', 'reth', 'frxeth']
+
+      let allowanceCheckKey = nameMaps[selectedSwap.name]
+
+      if (selectedSwap.name === 'curve') {
+        allowanceCheckKey =
+          (swapMode === 'mint' &&
+            selectedCoin === 'oeth' &&
+            curveRegistryCoins.includes(coinNeedingApproval)) ||
+          (swapMode === 'redeem' &&
+            coinNeedingApproval === 'oeth' &&
+            curveRegistryCoins.includes(selectedCoin))
+            ? 'curve_registry'
+            : 'curve'
+      }
+
+      const allowance = parseFloat(
+        allowances[coinNeedingApproval][allowanceCheckKey]
+      )
+
       setNeedsApproval(
-        Object.keys(allowances).length > 0 &&
-          parseFloat(
-            allowances[coinNeedingApproval][nameMaps[selectedSwap.name]]
-          ) < amount
+        Object.keys(allowances).length > 0 && allowance < amount
           ? selectedSwap.name
           : false
       )

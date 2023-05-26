@@ -10,7 +10,6 @@ import ContractStore from 'stores/ContractStore'
 import { calculateSwapAmounts } from 'utils/math'
 import fetchWithTimeout from 'utils/fetchWithTimeout'
 import { find } from 'lodash'
-import curveRoutes from 'constants/curveRoutes'
 
 const parseFloatBN = (value) => parseFloat(ethers.utils.formatEther(value))
 
@@ -452,7 +451,12 @@ const useSwapEstimator = ({
        */
 
       const allowanceCheckKey =
-        selectedCoin === 'oeth' && curveRegistryCoins.includes(coinToSwap)
+        (swapMode === 'mint' &&
+          selectedCoin === 'oeth' &&
+          curveRegistryCoins.includes(coinToSwap)) ||
+        (swapMode === 'redeem' &&
+          coinToSwap === 'oeth' &&
+          curveRegistryCoins.includes(selectedCoin))
           ? 'curve_registry'
           : 'curve'
 
@@ -472,6 +476,7 @@ const useSwapEstimator = ({
         const approveGasUsage = approveAllowanceNeeded
           ? gasLimitForApprovingCoin(coinToSwap)
           : 0
+
         return {
           canDoSwap: true,
           /* This estimate is from the few ones observed on the mainnet:
