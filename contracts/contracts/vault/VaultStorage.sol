@@ -49,6 +49,7 @@ contract VaultStorage is Initializable, Governable {
     event TrusteeAddressChanged(address _address);
     event NetOusdMintForStrategyThresholdChanged(uint256 _threshold);
     event SwapperChanged(address _address);
+    event SwapSlippageChanged(address _asset, uint256 _basis);
     event Swapped(
         address indexed fromAsset,
         address indexed toAsset,
