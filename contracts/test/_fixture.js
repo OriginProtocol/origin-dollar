@@ -28,7 +28,8 @@ async function defaultFixture() {
     keepExistingDeployments: true,
   });
 
-  const { governorAddr, timelockAddr } = await getNamedAccounts();
+  const { governorAddr, strategistAddr, timelockAddr } =
+    await getNamedAccounts();
 
   const ousdProxy = await ethers.getContract("OUSDProxy");
   const vaultProxy = await ethers.getContract("VaultProxy");
@@ -124,6 +125,7 @@ async function defaultFixture() {
     stkAave,
     aaveIncentivesController,
     reth,
+    stETH,
     frxETH,
     sfrxETH,
     mockNonRebasing,
@@ -180,6 +182,8 @@ async function defaultFixture() {
     ausdt = await ethers.getContractAt(erc20Abi, addresses.mainnet.aUSDT);
     ausdc = await ethers.getContractAt(erc20Abi, addresses.mainnet.aUSDC);
     adai = await ethers.getContractAt(erc20Abi, addresses.mainnet.aDAI);
+    reth = await ethers.getContractAt(erc20Abi, addresses.mainnet.rETH);
+    stETH = await ethers.getContractAt(erc20Abi, addresses.mainnet.stETH);
     frxETH = await ethers.getContractAt(erc20Abi, addresses.mainnet.frxETH);
     sfrxETH = await ethers.getContractAt(sfrxETHAbi, addresses.mainnet.sfrxETH);
     morpho = await ethers.getContractAt(morphoAbi, addresses.mainnet.Morpho);
@@ -356,15 +360,20 @@ async function defaultFixture() {
 
   const signers = await hre.ethers.getSigners();
   let governor = signers[1];
-  const strategist = signers[0];
+  let strategist = signers[0];
   const adjuster = signers[0];
   let timelock;
+  let oldTimelock;
 
   const [matt, josh, anna, domen, daniel, franck] = signers.slice(4);
 
   if (isFork) {
     governor = await impersonateAndFundContract(governorAddr);
+    strategist = await impersonateAndFundContract(strategistAddr);
     timelock = await impersonateAndFundContract(timelockAddr);
+    oldTimelock = await impersonateAndFundContract(
+      addresses.mainnet.OldTimelock
+    );
   }
   await fundAccounts();
   if (isFork) {
@@ -401,6 +410,7 @@ async function defaultFixture() {
     daniel,
     franck,
     timelock,
+    oldTimelock,
     // Contracts
     ousd,
     vault,
@@ -427,6 +437,7 @@ async function defaultFixture() {
     weth,
     ogv,
     reth,
+    stETH,
     rewardsSource,
     nonStandardToken,
     // cTokens

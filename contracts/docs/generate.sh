@@ -90,7 +90,7 @@ sol2uml .. -s -d 0 -b WOETH -o WOETHSquashed.svg
 sol2uml storage .. -c WOETH -o WOETHStorage.svg
 
 # contracts/vault
-sol2uml .. -v -hv -hf -he -hs -hl -b VaultCore -o VaultHierarchy.svg
+sol2uml .. -v -hv -hf -he -hs -hl -b VaultCore,VaultAdmin -o VaultHierarchy.svg
 sol2uml .. -s -d 0 -b VaultCore -o VaultSquashed.svg
 sol2uml storage .. -c VaultCore -o VaultStorage.svg
 
