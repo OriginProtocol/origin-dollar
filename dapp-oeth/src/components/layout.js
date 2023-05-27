@@ -68,7 +68,18 @@ const Layout = ({
           content="https://ousd.com/images/share-twitter.png"
         />
       </Head>
-
+      <div
+        className={classnames(
+          'notice text-white text-center p-3 dapp layout-none d-none'
+        )}
+      >
+        <div className="container d-flex flex-column flex-md-row align-items-center justify-content-center">
+          <span className="text">
+            OETH has been paused as a security precaution. Minting and redeeming
+            is disabled temporarily.
+          </span>
+        </div>
+      </div>
       <div
         className={classnames(
           'notice text-white text-center p-3 dapp',

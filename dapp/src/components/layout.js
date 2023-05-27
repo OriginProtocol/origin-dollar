@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import classnames from 'classnames'
 import Head from 'next/head'
 import Link from 'next/link'
@@ -97,6 +97,18 @@ const Layout = ({
           </>
         )}
       </Head>
+
+      <div
+        className={classnames('notice text-white text-center p-3 dapp d-none')}
+      >
+        <div className="container d-flex flex-column flex-md-row align-items-center justify-content-center">
+          <span className="text">
+            OETH has been paused as a security precaution. Minting and redeeming
+            is disabled temporarily.
+          </span>
+        </div>
+      </div>
+
       <div
         className={classnames(
           'notice text-white text-center p-3 dapp',
