@@ -40,11 +40,11 @@ contract Swapper1InchV5 is ISwapper {
             srcToken: IERC20(fromAsset),
             dstToken: IERC20(toAsset),
             // TODO could set to caller (Vault) to save transfer to this Swapper contract
-            srcReceiver: payable(address(this)),
+            srcReceiver: payable(EXECUTER),
             dstReceiver: payable(msg.sender),
             amount: fromAssetAmount,
             minReturnAmount: minToAssetAmmount,
-            flags: 0 // no special swaps needed
+            flags: 0 // _REQUIRES_EXTRA_ETH is second bit. _PARTIAL_FILL is first bit
         });
         (toAssetAmount, ) = IOneInchRouter(SWAP_ROUTER).swap(
             IAggregationExecutor(EXECUTER),

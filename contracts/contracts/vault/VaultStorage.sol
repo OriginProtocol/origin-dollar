@@ -151,9 +151,6 @@ contract VaultStorage is Initializable, Governable {
     uint256 constant MIN_UNIT_PRICE_DRIFT = 0.7e18;
     uint256 constant MAX_UNIT_PRICE_DRIFT = 1.3e18;
 
-    /// @notice 1Inch router contract to give allowance to perform swaps
-    address public constant SWAP_ROUTER =
-        0x1111111254EEB25477B68fb85Ed929f73A960582;
     /// @notice Contract that swaps the vault's collateral assets
     address public swapper = address(0);
 
