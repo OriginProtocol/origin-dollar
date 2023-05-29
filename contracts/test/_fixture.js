@@ -104,8 +104,6 @@ async function defaultFixture() {
   const buybackProxy = await ethers.getContract("BuybackProxy");
   const buyback = await ethers.getContractAt("Buyback", buybackProxy.address);
 
-  const swapper = await ethers.getContract("Swapper1InchV5");
-
   let usdt,
     dai,
     tusd,
@@ -163,6 +161,7 @@ async function defaultFixture() {
     LUSDMetaStrategy,
     oethHarvester,
     oethDripper,
+    swapper,
     ConvexEthMetaStrategyProxy,
     ConvexEthMetaStrategy;
 
@@ -263,6 +262,8 @@ async function defaultFixture() {
       "OETHDripper",
       oethDripperProxy.address
     );
+
+    swapper = await ethers.getContract("Swapper1InchV5");
   } else {
     usdt = await ethers.getContract("MockUSDT");
     dai = await ethers.getContract("MockDAI");
