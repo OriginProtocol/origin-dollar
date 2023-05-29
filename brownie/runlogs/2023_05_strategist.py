@@ -262,3 +262,62 @@ safe = ApeSafe('0xF14BBdf064E3F67f51cd9BD646aE3716aD938FDC')
 safe_tx = safe.multisend_from_receipts(txs)
 safe.sign_with_frame(safe_tx)
 r = safe.post_transaction(safe_tx)
+
+
+# --------------------------------
+# May 22, 2023 - AMO Balance OUSD - DRAFT
+# 
+
+from addresses import *
+from world import *
+from allocations import *
+from ape_safe import ApeSafe
+
+votes = """
+Morpho Aave USDT  66.61%
+Morpho Aave DAI 8.06%
+Morpho Aave USDC  7.97%
+Convex DAI+USDC+USDT  7.71%
+Aave DAI  7.4%
+Convex OUSD+3Crv  1.84%
+Convex LUSD+3Crv  0.39%
+Existing Allocation 0%
+Aave USDC 0%
+Aave USDT 0%
+Compound DAI  0%
+Compound USDC 0%
+Compound USDT 0%
+Morpho Compound DAI 0%
+Morpho Compound USDC  0%
+Morpho Compound USDT  0%
+"""
+
+
+with TemporaryForkWithVaultStats(votes):
+    before_votes = with_target_allocations(load_from_blockchain(), votes)
+    print(c18(ousd_metapool.balances(0)))
+    print(c18(ousd_metapool.balances(1)))
+
+    txs = []
+    txs.extend(auto_take_snapshot())
+
+    # Moves
+    txs.append(from_strat(MORPHO_AAVE_STRAT, [[2_000_000, dai],[2_000_000, usdc],[4_000_000, usdt]]))
+    txs.append(to_strat(OUSD_METASTRAT, [[2_000_000, dai],[2_000_000, usdc],[4_000_000, usdt]]))
+    txs.append(vault_admin.withdrawAllFromStrategy(OUSD_METASTRAT, {'from': STRATEGIST}))
+    txs.append(to_strat(OUSD_METASTRAT, [[600_000, dai],[600_000, usdc],[800_000, usdt]]))
+    txs.append(vault_core.allocate({'from': STRATEGIST}))
+    
+
+    txs.extend(auto_check_snapshot())
+
+    print(c18(ousd_metapool.balances(0)))
+    print(c18(ousd_metapool.balances(1)))
+    
+print("Est Gas Max: {:,}".format(1.10*sum([x.gas_used for x in txs])))
+
+
+safe = ApeSafe('0xF14BBdf064E3F67f51cd9BD646aE3716aD938FDC')
+safe_tx = safe.multisend_from_receipts(txs)
+safe.sign_with_frame(safe_tx)
+r = safe.post_transaction(safe_tx)
