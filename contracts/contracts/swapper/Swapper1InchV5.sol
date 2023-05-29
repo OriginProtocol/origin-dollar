@@ -36,6 +36,16 @@ contract Swapper1InchV5 is ISwapper {
         uint256 minToAssetAmmount,
         bytes calldata data
     ) external override returns (uint256 toAssetAmount) {
+        require(
+            IERC20(fromAsset).balanceOf(msg.sender) >= fromAssetAmount,
+            "Insufficient balance"
+        );
+        require(
+            IERC20(fromAsset).allowance(address(this), SWAP_ROUTER) >=
+                fromAssetAmount,
+            "Insufficient allowance"
+        );
+
         SwapDescription memory swapDesc = SwapDescription({
             srcToken: IERC20(fromAsset),
             dstToken: IERC20(toAsset),
@@ -44,12 +54,12 @@ contract Swapper1InchV5 is ISwapper {
             dstReceiver: payable(msg.sender),
             amount: fromAssetAmount,
             minReturnAmount: minToAssetAmmount,
-            flags: 0 // _REQUIRES_EXTRA_ETH is second bit. _PARTIAL_FILL is first bit
+            flags: 4 // _REQUIRES_EXTRA_ETH is second bit. _PARTIAL_FILL is first bit
         });
-        (toAssetAmount, ) = IOneInchRouter(SWAP_ROUTER).swap(
+        (, toAssetAmount) = IOneInchRouter(SWAP_ROUTER).swap(
             IAggregationExecutor(EXECUTER),
             swapDesc,
-            "0x", // we are not approving tx via signatures so it is not necessary
+            hex"",
             data
         );
     }
