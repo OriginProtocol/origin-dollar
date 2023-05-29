@@ -68,13 +68,6 @@ module.exports = deploymentWithProposal(
       )
     );
 
-    // 5. Transfer governance
-    // await withConfirmation(
-    //   cMorphoAaveStrategy
-    //     .connect(sDeployer)
-    //     .transferGovernance(addresses.mainnet.OldTimelock, await getTxOpts())
-    // );
-
     console.log(
       "OUSD Morpho Aave strategy address: ",
       cMorphoAaveStrategy.address
@@ -86,13 +79,7 @@ module.exports = deploymentWithProposal(
       name: "Deploy new OUSD Morpho Aave strategy",
       governorAddr: addresses.mainnet.OldTimelock,
       actions: [
-        // // 1. Accept governance of new MorphoAaveStrategy
-        // {
-        //   contract: cMorphoAaveStrategy,
-        //   signature: "claimGovernance()",
-        //   args: [],
-        // },
-        // 2. Add new Morpho strategy to vault
+        // 1. Add new Morpho strategy to vault
         {
           contract: cVaultAdmin,
           signature: "approveStrategy(address)",
