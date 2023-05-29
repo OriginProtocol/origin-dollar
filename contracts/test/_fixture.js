@@ -166,6 +166,7 @@ async function defaultFixture() {
     morphoCompoundStrategy,
     fraxEthStrategy,
     morphoAaveStrategy,
+    oethMorphoAaveStrategy,
     morphoLens,
     LUSDMetapoolToken,
     threePoolGauge,
@@ -188,7 +189,7 @@ async function defaultFixture() {
     dai = await ethers.getContractAt(daiAbi, addresses.mainnet.DAI);
     tusd = await ethers.getContractAt(erc20Abi, addresses.mainnet.TUSD);
     usdc = await ethers.getContractAt(erc20Abi, addresses.mainnet.USDC);
-    weth = await ethers.getContractAt(erc20Abi, addresses.mainnet.WETH);
+    weth = await ethers.getContractAt("IWETH9", addresses.mainnet.WETH);
     cusdt = await ethers.getContractAt(erc20Abi, addresses.mainnet.cUSDT);
     cdai = await ethers.getContractAt(erc20Abi, addresses.mainnet.cDAI);
     cusdc = await ethers.getContractAt(erc20Abi, addresses.mainnet.cUSDC);
@@ -241,6 +242,14 @@ async function defaultFixture() {
     morphoAaveStrategy = await ethers.getContractAt(
       "MorphoAaveStrategy",
       morphoAaveStrategyProxy.address
+    );
+
+    const oethMorphoAaveStrategyProxy = await ethers.getContract(
+      "OETHMorphoAaveStrategyProxy"
+    );
+    oethMorphoAaveStrategy = await ethers.getContractAt(
+      "MorphoAaveStrategy",
+      oethMorphoAaveStrategyProxy.address
     );
 
     const fraxEthStrategyProxy = await ethers.getContract(
@@ -493,11 +502,43 @@ async function defaultFixture() {
     frxETH,
     sfrxETH,
     fraxEthStrategy,
+    oethMorphoAaveStrategy,
     woeth,
     ConvexEthMetaStrategy,
     oethDripper,
     oethHarvester,
   };
+}
+
+function defaultFixtureSetup() {
+  return deployments.createFixture(async () => {
+    return await defaultFixture();
+  });
+}
+
+async function oethDefaultFixture() {
+  // TODO: Trim it down to only do OETH things
+  const fixture = await defaultFixture();
+
+  if (isFork) {
+    const { weth, matt, josh, domen, daniel, franck, oethVault } = fixture;
+
+    for (const user of [matt, josh, domen, daniel, franck]) {
+      // Everyone gets free WETH
+      await mintWETH(weth, user);
+
+      // And vault can rug them all
+      await resetAllowance(weth, user, oethVault.address);
+    }
+  }
+
+  return fixture;
+}
+
+async function oethDefaultFixtureSetup() {
+  return deployments.createFixture(async () => {
+    return await oethDefaultFixture();
+  });
 }
 
 /**
@@ -820,6 +861,33 @@ async function morphoAaveFixture() {
 }
 
 /**
+ * Configure a Vault with only the Morpho strategy.
+ */
+function oethMorphoAaveFixtureSetup() {
+  return deployments.createFixture(async () => {
+    const fixture = await oethDefaultFixture();
+
+    if (isFork) {
+      const { governorAddr } = await getNamedAccounts();
+      let sGovernor = await ethers.provider.getSigner(governorAddr);
+
+      await fixture.oethVault
+        .connect(sGovernor)
+        .setAssetDefaultStrategy(
+          fixture.weth.address,
+          fixture.oethMorphoAaveStrategy.address
+        );
+    } else {
+      throw new Error(
+        "Morpho strategy only supported in forked test environment"
+      );
+    }
+
+    return fixture;
+  });
+}
+
+/**
  * FraxETHStrategy fixture that works only in forked environment
  *
  */
@@ -955,13 +1023,24 @@ async function impersonateAccount(address) {
   });
 }
 
-async function impersonateAndFundContract(address) {
+async function _hardhatSetBalance(address, amount = "10000") {
+  await hre.network.provider.request({
+    method: "hardhat_setBalance",
+    params: [
+      address,
+      utils
+        .parseEther(amount)
+        .toHexString()
+        .replace(/^0x0+/, "0x")
+        .replace(/0$/, "1"),
+    ],
+  });
+}
+
+async function impersonateAndFundContract(address, amount = "100000") {
   await impersonateAccount(address);
 
-  await hre.network.provider.send("hardhat_setBalance", [
-    address,
-    utils.parseEther("1000000").toHexString(),
-  ]);
+  await _hardhatSetBalance(address, amount);
 
   return await ethers.provider.getSigner(address);
 }
@@ -1016,6 +1095,13 @@ async function resetAllowance(
 ) {
   await tokenContract.connect(signer).approve(toAddress, "0");
   await tokenContract.connect(signer).approve(toAddress, allowance);
+}
+
+async function mintWETH(weth, recipient, amount = "100") {
+  await _hardhatSetBalance(recipient.address, (Number(amount) * 2).toString());
+  await weth.connect(recipient).deposit({
+    value: utils.parseEther(amount),
+  });
 }
 
 async function withImpersonatedAccount(address, cb) {
@@ -1367,6 +1453,8 @@ module.exports = {
   fundWith3Crv,
   resetAllowance,
   defaultFixture,
+  defaultFixtureSetup,
+  oethDefaultFixtureSetup,
   mockVaultFixture,
   compoundFixture,
   compoundVaultFixture,
@@ -1387,4 +1475,5 @@ module.exports = {
   impersonateAndFundContract,
   impersonateAccount,
   fraxETHStrategyForkedFixture,
+  oethMorphoAaveFixtureSetup,
 };
