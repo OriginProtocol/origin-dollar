@@ -11,6 +11,8 @@ participant "Harvester" as harv <<Origin>> #DeepSkyBlue
 participant "Dripper" as drip <<Origin>> #DeepSkyBlue
 
 participant "FRAX\nStrategy" as frxStrat <<Origin>> #DeepSkyBlue
+participant "WETH FRAX\nStrategy" as wethFrxStrat <<Origin>> #DeepSkyBlue
+participant "FRAX ETH" as frxETH <<FRAX>><<frxETH>>
 participant "Staked\nFRAX ETH" as sfrxETH <<FRAX>><<sfrxETH>>
 
 participant "Curve AMO\nStrategy" as crvStrat <<Origin>> #DeepSkyBlue
@@ -101,12 +103,23 @@ end
 ' Allocate
 group Vault allocate [anyone can call]
 
-group FRAX Strategy [unallocated frxETH in vault]
+group FRAX Strategy for frxETH [unallocated frxETH in vault]
 vault -> frxStrat : frxETH
 frxStrat -> sfrxETH : frxETH
 note left : deposit frxETH
 sfrxETH o-> frxStrat : sfrxETH
 note left : get sfrxETH shares
+end
+
+group FRAX Strategy for WETH [unallocated frxETH in vault]
+vault -> wethFrxStrat : WETH
+wethFrxStrat -x weth : WETH
+note left : withdraw ETH from WETH
+weth -> wethFrxStrat : ETH
+wethFrxStrat -> frxETH : ETH
+note left : Deposit and stake ETH for sfrxETH
+frxETH -> sfrxETH : frxETH
+sfrxETH o-> wethFrxStrat : sfrxETH
 end
 
 group Curve AMO Strategy [unallocated WETH in vault]
