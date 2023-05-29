@@ -44,11 +44,14 @@ async function defaultFixture() {
   const ousd = await ethers.getContractAt("OUSD", ousdProxy.address);
   const vault = await ethers.getContractAt("IVault", vaultProxy.address);
 
-  let oethProxy, OETHVaultProxy, oeth, oethVault;
+  let oethProxy, OETHVaultProxy, oeth, woeth, woethProxy, oethVault;
   if (isFork) {
     oethProxy = await ethers.getContract("OETHProxy");
+    woethProxy = await ethers.getContract("WOETHProxy");
     OETHVaultProxy = await ethers.getContract("OETHVaultProxy");
     oeth = await ethers.getContractAt("OETH", oethProxy.address);
+    woeth = await ethers.getContractAt("WOETH", woethProxy.address);
+
     oethVault = await ethers.getContractAt("IVault", OETHVaultProxy.address);
   }
 
@@ -424,9 +427,7 @@ async function defaultFixture() {
     ousd,
     vault,
     harvester,
-    oethHarvester,
     dripper,
-    oethDripper,
     mockNonRebasing,
     mockNonRebasingTwo,
     // Oracle
@@ -475,7 +476,6 @@ async function defaultFixture() {
     convexStrategy,
     OUSDmetaStrategy,
     LUSDMetaStrategy,
-    ConvexEthMetaStrategy,
     morphoCompoundStrategy,
     morphoAaveStrategy,
     cvx,
@@ -503,6 +503,10 @@ async function defaultFixture() {
     sfrxETH,
     fraxEthStrategy,
     oethMorphoAaveStrategy,
+    woeth,
+    ConvexEthMetaStrategy,
+    oethDripper,
+    oethHarvester,
   };
 }
 
@@ -1152,8 +1156,8 @@ async function convexLUSDMetaVaultFixture() {
  */
 async function convexOETHMetaVaultFixture() {
   const fixture = await loadFixture(defaultFixture);
-  const { guardianAddr } = await getNamedAccounts();
-  const sGuardian = await ethers.provider.getSigner(guardianAddr);
+  const { governorAddr } = await getNamedAccounts();
+  const sGovernor = await ethers.provider.getSigner(governorAddr);
 
   await impersonateAndFundAddress(
     fixture.weth.address,
@@ -1183,7 +1187,7 @@ async function convexOETHMetaVaultFixture() {
 
   // Add Convex Meta strategy
   await fixture.oethVault
-    .connect(sGuardian)
+    .connect(sGovernor)
     .setAssetDefaultStrategy(
       fixture.weth.address,
       fixture.ConvexEthMetaStrategy.address
@@ -1386,9 +1390,16 @@ async function hackedVaultFixture() {
   });
 
   const evilDAI = await ethers.getContract("MockEvilDAI");
+  /* Mock oracle feeds report 0 for updatedAt data point. Set
+   * maxStaleness to 100 years from epoch to make the Oracle
+   * feeds valid
+   */
+  const maxStaleness = 24 * 60 * 60 * 365 * 100;
+
   await oracleRouter.setFeed(
     evilDAI.address,
-    oracleAddresses.chainlink.DAI_USD
+    oracleAddresses.chainlink.DAI_USD,
+    maxStaleness
   );
   await oracleRouter.cacheDecimals(evilDAI.address);
 
