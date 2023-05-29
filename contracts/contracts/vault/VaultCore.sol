@@ -420,7 +420,7 @@ contract VaultCore is VaultStorage {
         uint256 toAssetBalBefore = IERC20(toAsset).balanceOf(address(this));
 
         // Transfer from assets to the swapper contract
-        IERC20(fromAsset).safeTransfer(SWAP_ROUTER, fromAssetAmount);
+        IERC20(fromAsset).safeTransfer(swapper, fromAssetAmount);
 
         // Call to the Swapper contract to do the actual swap
         toAssetAmount = ISwapper(swapper).swap(
