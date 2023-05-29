@@ -46,25 +46,9 @@ contract Swapper1InchV5 is ISwapper {
             "Insufficient allowance"
         );
 
-        (
-            address executer,
-            SwapDescription memory decodedDesc,
-            ,
-            bytes memory executerData
-        ) = abi.decode(_data[4:], (address, SwapDescription, bytes, bytes));
-
-        require(
-            decodedDesc.srcToken == IERC20(_fromAsset),
-            "fromAsset missmatch"
-        );
-        require(decodedDesc.dstToken == IERC20(_toAsset), "toAsset missmatch");
-        require(
-            decodedDesc.amount == _fromAssetAmount,
-            "fromAssetAmount missmatch"
-        );
-        require(
-            decodedDesc.minReturnAmount == _minToAssetAmount,
-            "minToAssetAmount missmatch"
+        (address executer, , , bytes memory executerData) = abi.decode(
+            _data[4:],
+            (address, SwapDescription, bytes, bytes)
         );
 
         SwapDescription memory swapDesc = SwapDescription({

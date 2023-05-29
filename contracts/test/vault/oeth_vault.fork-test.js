@@ -72,7 +72,7 @@ forkOnlyDescribe("ForkTest: OETH Vault", function () {
       });
     });
     describe("Collateral swaps", () => {
-      it.only("should be able to swap WETH for rETH", async () => {
+      it("should be able to swap WETH for rETH", async () => {
         const { oethVault, reth, weth, strategist } = fixture;
         const fromAmount = parseUnits("100", 18);
         const minToAssetAmount = "92280577666624314114"; // parseUnits("99", 18);
@@ -90,19 +90,48 @@ forkOnlyDescribe("ForkTest: OETH Vault", function () {
 
         console.log(`swap executor ${swapData.executor}`);
         console.log(`swap desc ${swapData.desc}`);
-        console.log(`swap permit ${swapData.permit}`);
         console.log(`swap data ${swapData.data}`);
 
-        await oethVault.connect(strategist).swapCollateral(
-          weth.address,
-          reth.address,
-          fromAmount,
-          minToAssetAmount,
-          apiData
-          // swapData.data
-        );
+        await oethVault
+          .connect(strategist)
+          .swapCollateral(
+            weth.address,
+            reth.address,
+            fromAmount,
+            minToAssetAmount,
+            apiData
+          );
       });
-      it("should be able to swap WETH for stETH", async () => {});
+      it("should be able to swap WETH for stETH", async () => {
+        const { oethVault, stETH, weth, strategist } = fixture;
+        const fromAmount = parseUnits("100", 18);
+        const minToAssetAmount = parseUnits("90", 18);
+        const apiData =
+          "0x12aa3caf0000000000000000000000001136b25047e142fa3018184793aec68fbb173ce4000000000000000000000000c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2000000000000000000000000ae7ab96520de3a18e5e111b5eaab095312d7fe840000000000000000000000001136b25047e142fa3018184793aec68fbb173ce400000000000000000000000039254033945aa2e4809cc2977e7087bee48bd7ab0000000000000000000000000000000000000000000000056bc75e2d631000000000000000000000000000000000000000000000000000055e1c867fd240a6950000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000014000000000000000000000000000000000000000000000000000000000000001600000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000013e0000000000000000000000000000000000000001200000f20000d800003c4101c02aaa39b223fe8d0a0e5c4f27ead9083c756cc200042e1a7d4d00000000000000000000000000000000000000000000000000000000000000004160dc24316b9ae028f1497c275eb9192a3ea0f6702200443df021240000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000055e1c867fd240a6950020d6bdbf78ae7ab96520de3a18e5e111b5eaab095312d7fe8480a06c4eca27ae7ab96520de3a18e5e111b5eaab095312d7fe841111111254eeb25477b68fb85ed929f73a9605820000cfee7c08";
+
+        const c1InchRouter = await ethers.getContractAt(
+          "IOneInchRouter",
+          "0x1111111254EEB25477B68fb85Ed929f73A960582"
+        );
+        const swapData = await c1InchRouter.interface.decodeFunctionData(
+          "swap",
+          apiData
+        );
+
+        console.log(`swap executor ${swapData.executor}`);
+        console.log(`swap desc ${swapData.desc}`);
+        console.log(`swap data ${swapData.data}`);
+
+        await oethVault
+          .connect(strategist)
+          .swapCollateral(
+            weth.address,
+            stETH.address,
+            fromAmount,
+            minToAssetAmount,
+            apiData
+          );
+      });
       it("should be able to swap WETH for frxETH", async () => {});
     });
   });
