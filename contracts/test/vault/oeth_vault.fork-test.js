@@ -72,12 +72,13 @@ forkOnlyDescribe("ForkTest: Vault", function () {
       });
     });
     describe("Collateral swaps", () => {
-      it("should be able to swap WETH for rETH", async () => {
+      it.only("should be able to swap WETH for rETH", async () => {
         const { oethVault, reth, weth, strategist } = fixture;
         const fromAmount = parseUnits("100", 18);
-        const minToAssetAmount = parseUnits("98", 18);
+        const minToAssetAmount = "92280577666624314114"; // parseUnits("99", 18);
         const apiData =
           "0x12aa3caf0000000000000000000000001136b25047e142fa3018184793aec68fbb173ce4000000000000000000000000c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2000000000000000000000000ae78736cd615f374d3085123a210448e74fc63930000000000000000000000001136b25047e142fa3018184793aec68fbb173ce400000000000000000000000039254033945aa2e4809cc2977e7087bee48bd7ab0000000000000000000000000000000000000000000000056bc75e2d6310000000000000000000000000000000000000000000000000000500a67876defcdb02000000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000001400000000000000000000000000000000000000000000000000000000000000160000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000bc00000000000000000000000000000000000000009e00007000005600003c4101c02aaa39b223fe8d0a0e5c4f27ead9083c756cc200042e1a7d4d000000000000000000000000000000000000000000000000000000000000000040e0dd3f50f8a6cafbe9b31a427582963f465e745af8d0e30db00020d6bdbf78ae78736cd615f374d3085123a210448e74fc639380a06c4eca27ae78736cd615f374d3085123a210448e74fc63931111111254eeb25477b68fb85ed929f73a96058200000000cfee7c08";
+
         const c1InchRouter = await ethers.getContractAt(
           "IOneInchRouter",
           "0x1111111254EEB25477B68fb85Ed929f73A960582"
@@ -92,15 +93,14 @@ forkOnlyDescribe("ForkTest: Vault", function () {
         console.log(`swap permit ${swapData.permit}`);
         console.log(`swap data ${swapData.data}`);
 
-        await oethVault
-          .connect(strategist)
-          .swapCollateral(
-            weth.address,
-            reth.address,
-            fromAmount,
-            minToAssetAmount,
-            swapData.data
-          );
+        await oethVault.connect(strategist).swapCollateral(
+          weth.address,
+          reth.address,
+          fromAmount,
+          minToAssetAmount,
+          apiData
+          // swapData.data
+        );
       });
       it("should be able to swap WETH for stETH", async () => {});
       it("should be able to swap WETH for frxETH", async () => {});
