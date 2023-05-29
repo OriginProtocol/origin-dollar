@@ -10,11 +10,13 @@ participant "OETH\nVault" as vault <<Origin>> #DeepSkyBlue
 participant "Harvester" as harv <<Origin>> #DeepSkyBlue
 participant "Dripper" as drip <<Origin>> #DeepSkyBlue
 
+participant "Wrapped ETH" as weth <<DappHub>><<WETH>>
+
 participant "FRAX\nStrategy" as frxStrat <<Origin>> #DeepSkyBlue
+participant "FRAX ETH" as frxETH <<FRAX>><<frxETH>>
 participant "Staked\nFRAX ETH" as sfrxETH <<FRAX>><<sfrxETH>>
 
 participant "Curve AMO\nStrategy" as crvStrat <<Origin>> #DeepSkyBlue
-participant "Wrapped ETH" as weth <<DappHub>><<WETH>>
 participant "OETH\nMetapool" as oethCrv <<Curve>>
 participant "OETH\nPool" as oethCvx <<Convex>>
 participant "Rewards\nPool" as cvxRewards <<Convex>>
@@ -88,13 +90,25 @@ end
 ' Allocate
 group Vault allocate [anyone can call]
 
-' FRAX Strategy
-group Deposit to FRAX Strategy [unallocated frxETH in vault]
+' FRAX Strategy for frxETH
+group Deposit frxETH to FRAX Strategy [unallocated frxETH in vault]
 vault -> frxStrat : frxETH
 frxStrat -> sfrxETH : frxETH
 note left : deposit frxETH
 sfrxETH o-> frxStrat : sfrxETH
 note left : get sfrxETH shares
+end
+
+' FRAX Strategy for WETH
+group Deposit WETH to FRAX Strategy [unallocated WETH in vault]
+vault -> frxStrat : WETH
+frxStrat -x weth : WETH
+note left : withdraw ETH from WETH
+weth -> frxStrat : ETH
+frxStrat -> frxETH : ETH
+note left : Deposit and stake ETH for sfrxETH
+frxETH -> sfrxETH : frxETH
+sfrxETH o-> frxStrat : sfrxETH
 end
 
 ' Curve AMO Strategy
@@ -145,6 +159,10 @@ note over vault : 0.5% fee applied to redeemed assets.\nThis adds to the yield i
 
 ' FRAX Strategy
 group Withdraw from FRAX Strategy [not enough frxETH in vault]
+note over frxStrat
+can only redeem frxETH.
+depositted WETH is removed as frxETH.
+end note
 frxStrat -x sfrxETH : sfrxETH
 note left : redeem sfrxETH shares
 sfrxETH -> user : frxETH
