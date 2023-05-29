@@ -6,7 +6,7 @@ module.exports = deploymentWithProposal(
     deployName: "064_oeth_morpho_aave_v2",
     forceDeploy: false,
     reduceQueueTime: true,
-    // proposalId: ,
+    proposalId: 52,
   },
   async ({
     assetAddresses,
