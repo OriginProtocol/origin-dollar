@@ -34,7 +34,7 @@ forkOnlyDescribe("ForkTest: Harvest OUSD", function () {
       const crvHarvested = balanceAfterHarvest.sub(balanceBeforeHarvest);
       expect(crvHarvested).to.be.gt(parseUnits("20000", 18));
     });
-    it.only("should harvest and swap", async function () {
+    it("should harvest and swap", async function () {
       const { anna, OUSDmetaStrategy, dripper, harvester, usdt } = fixture;
 
       const usdtBalanceBeforeDripper = await usdt.balanceOf(dripper.address);
