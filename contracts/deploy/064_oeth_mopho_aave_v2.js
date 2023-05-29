@@ -5,6 +5,7 @@ module.exports = deploymentWithProposal(
   {
     deployName: "064_oeth_morpho_aave_v2",
     forceDeploy: false,
+    reduceQueueTime: true,
     // proposalId: ,
   },
   async ({
@@ -14,7 +15,7 @@ module.exports = deploymentWithProposal(
     getTxOpts,
     withConfirmation,
   }) => {
-    const { deployerAddr, governorAddr } = await getNamedAccounts();
+    const { deployerAddr } = await getNamedAccounts();
     const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
     // Current contracts
@@ -46,54 +47,40 @@ module.exports = deploymentWithProposal(
       cOETHMorphoAaveStrategyProxy.address
     );
 
-    // 3. Init the proxy to point at the implementation
-    await withConfirmation(
-      cOETHMorphoAaveStrategyProxy
-        .connect(sDeployer)
-        ["initialize(address,address,bytes)"](
-          cMorphoAaveStrategyImpl.address,
-          deployerAddr,
-          [],
-          await getTxOpts()
-        )
-    );
-
-    // 4. Init and configure new Morpho strategy
-    const initFunction = "initialize(address,address[],address[],address[])";
-    await withConfirmation(
-      cMorphoAaveStrategy.connect(sDeployer)[initFunction](
+    // 3. Construct initialize call data to init and configure the new Morpho strategy
+    const initData = cMorphoAaveStrategyImpl.interface.encodeFunctionData(
+      "initialize(address,address[],address[],address[])",
+      [
         cVaultProxy.address,
         [], // reward token addresses
         [assetAddresses.WETH], // asset token addresses
         [assetAddresses.aWETH], // platform tokens addresses
-        await getTxOpts()
-      )
+      ]
     );
 
-    // 5. Transfer governance
+    // 4. Init the proxy to point at the implementation, set the governor, and call initialize
+    const initFunction = "initialize(address,address,bytes)";
     await withConfirmation(
-      cMorphoAaveStrategy
-        .connect(sDeployer)
-        .transferGovernance(addresses.mainnet.OldTimelock, await getTxOpts())
+      cOETHMorphoAaveStrategyProxy.connect(sDeployer)[initFunction](
+        cMorphoAaveStrategyImpl.address,
+        addresses.mainnet.OldTimelock, // governor
+        initData, // data for call to the initialize function on the Morpho strategy
+        await getTxOpts()
+      )
     );
 
     console.log(
       "OUSD Morpho Aave strategy address: ",
       cMorphoAaveStrategy.address
     );
+
     // Governance Actions
     // ----------------
     return {
       name: "Deploy new OUSD Morpho Aave strategy",
       governorAddr: addresses.mainnet.OldTimelock,
       actions: [
-        // 1. Accept governance of new MorphoAaveStrategy
-        {
-          contract: cMorphoAaveStrategy,
-          signature: "claimGovernance()",
-          args: [],
-        },
-        // 2. Add new Morpho strategy to vault
+        // 1. Add new Morpho strategy to vault
         {
           contract: cVaultAdmin,
           signature: "approveStrategy(address)",

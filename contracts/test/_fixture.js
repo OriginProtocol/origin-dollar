@@ -868,12 +868,11 @@ function oethMorphoAaveFixtureSetup() {
     const fixture = await oethDefaultFixture();
 
     if (isFork) {
-      const sGuardian = await ethers.provider.getSigner(
-        addresses.mainnet.Guardian
-      );
+      const { governorAddr } = await getNamedAccounts();
+      let sGovernor = await ethers.provider.getSigner(governorAddr);
 
       await fixture.oethVault
-        .connect(sGuardian)
+        .connect(sGovernor)
         .setAssetDefaultStrategy(
           fixture.weth.address,
           fixture.oethMorphoAaveStrategy.address
