@@ -23,44 +23,64 @@ contract Swapper1InchV5 is ISwapper {
 
     /**
      * @notice Strategist swaps assets sitting in the contract of the `assetHolder`.
-     * @param fromAsset The token address of the asset being sold by the vault.
-     * @param toAsset The token address of the asset being purchased by the vault.
-     * @param fromAssetAmount The amount of assets being sold by the vault.
-     * @param minToAssetAmmount The minimum amount of assets to be purchased.
-     * @param data tx.data returned from 1Inch's /v5.0/1/swap API
+     * @param _fromAsset The token address of the asset being sold by the vault.
+     * @param _toAsset The token address of the asset being purchased by the vault.
+     * @param _fromAssetAmount The amount of assets being sold by the vault.
+     * @param _minToAssetAmount The minimum amount of assets to be purchased.
+     * @param _data tx.data returned from 1Inch's /v5.0/1/swap API
      */
     function swap(
-        address fromAsset,
-        address toAsset,
-        uint256 fromAssetAmount,
-        uint256 minToAssetAmmount,
-        bytes calldata data
+        address _fromAsset,
+        address _toAsset,
+        uint256 _fromAssetAmount,
+        uint256 _minToAssetAmount,
+        bytes calldata _data
     ) external override returns (uint256 toAssetAmount) {
         require(
-            IERC20(fromAsset).balanceOf(msg.sender) >= fromAssetAmount,
+            IERC20(_fromAsset).balanceOf(msg.sender) >= _fromAssetAmount,
             "Insufficient balance"
         );
         require(
-            IERC20(fromAsset).allowance(address(this), SWAP_ROUTER) >=
-                fromAssetAmount,
+            IERC20(_fromAsset).allowance(address(this), SWAP_ROUTER) >=
+                _fromAssetAmount,
             "Insufficient allowance"
         );
 
+        (
+            address executer,
+            SwapDescription memory decodedDesc,
+            ,
+            bytes memory executerData
+        ) = abi.decode(_data[4:], (address, SwapDescription, bytes, bytes));
+
+        require(
+            decodedDesc.srcToken == IERC20(_fromAsset),
+            "fromAsset missmatch"
+        );
+        require(decodedDesc.dstToken == IERC20(_toAsset), "toAsset missmatch");
+        require(
+            decodedDesc.amount == _fromAssetAmount,
+            "fromAssetAmount missmatch"
+        );
+        require(
+            decodedDesc.minReturnAmount == _minToAssetAmount,
+            "minToAssetAmount missmatch"
+        );
+
         SwapDescription memory swapDesc = SwapDescription({
-            srcToken: IERC20(fromAsset),
-            dstToken: IERC20(toAsset),
-            // TODO could set to caller (Vault) to save transfer to this Swapper contract
-            srcReceiver: payable(EXECUTER),
+            srcToken: IERC20(_fromAsset),
+            dstToken: IERC20(_toAsset),
+            srcReceiver: payable(executer),
             dstReceiver: payable(msg.sender),
-            amount: fromAssetAmount,
-            minReturnAmount: minToAssetAmmount,
+            amount: _fromAssetAmount,
+            minReturnAmount: _minToAssetAmount,
             flags: 4 // _REQUIRES_EXTRA_ETH is second bit. _PARTIAL_FILL is first bit
         });
-        (, toAssetAmount) = IOneInchRouter(SWAP_ROUTER).swap(
-            IAggregationExecutor(EXECUTER),
+        (toAssetAmount, ) = IOneInchRouter(SWAP_ROUTER).swap(
+            IAggregationExecutor(executer),
             swapDesc,
             hex"",
-            data
+            executerData
         );
     }
 
