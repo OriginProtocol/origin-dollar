@@ -431,7 +431,7 @@ contract VaultCore is VaultStorage {
 
         // Check the swapper returned the correct amount of assets
         require(
-            IERC20(_toAsset).balanceOf(address(this)) - toAssetBalBefore >=
+            IERC20(_toAsset).balanceOf(address(this)) - toAssetBalBefore + 1 >=
                 toAssetAmount,
             "Not enough swapped assets"
         );
@@ -441,20 +441,18 @@ contract VaultCore is VaultStorage {
             "Strategist slippage limit"
         );
 
-        // // Check the slippage against the Oracle in case the strategist made a mistake or has become malicious.
-        // // to asset amount = from asset amount * from asset price / to asset price
-        // uint256 minOracleToAssetAmount = (_fromAssetAmount *
-        //     (1e4 - fromAssetConfig.allowedSwapSlippageBps) *
-        //     (1e4 - toAssetConfig.allowedSwapSlippageBps) *
-        //     // use the redeem price for the from asset as we are converting to ETH
-        //     _toUnitPrice(_fromAsset, false)) /
-        //     // use the mint price for the to asset as we are converting from ETH
-        //     _toUnitPrice(_toAsset, true) /
-        //     1e4; // fix the max slippage decimal position
-        // require(
-        //     toAssetAmount >= minOracleToAssetAmount,
-        //     "Oracle slippage limit exceeded"
-        // );
+        // Check the slippage against the Oracle in case the strategist made a mistake or has become malicious.
+        // to asset amount = from asset amount * from asset price / to asset price
+        uint256 minOracleToAssetAmount = (_fromAssetAmount *
+            (1e4 - fromAssetConfig.allowedSwapSlippageBps) *
+            IOracle(priceProvider).price(_fromAsset)) /
+            (IOracle(priceProvider).price(_toAsset) *
+                (1e4 + toAssetConfig.allowedSwapSlippageBps));
+
+        require(
+            toAssetAmount >= minOracleToAssetAmount,
+            "Oracle slippage limit exceeded"
+        );
 
         emit Swapped(_fromAsset, _toAsset, _fromAssetAmount, toAssetAmount);
     }
