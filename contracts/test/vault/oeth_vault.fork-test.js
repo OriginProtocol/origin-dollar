@@ -3,7 +3,7 @@ const { expect } = require("chai");
 const { defaultFixture } = require("./../_fixture");
 const addresses = require("../../utils/addresses");
 const { getIInchSwapData, recodeSwapData } = require("../../utils/1Inch");
-const { loadFixture, forkOnlyDescribe } = require("./../helpers");
+const { loadFixture, forkOnlyDescribe, resolveAsset } = require("./../helpers");
 const { parseUnits } = require("ethers/lib/utils");
 
 forkOnlyDescribe("ForkTest: OETH Vault", function () {
@@ -72,14 +72,17 @@ forkOnlyDescribe("ForkTest: OETH Vault", function () {
         }
       });
     });
-    const assertSwap = async (
+    const assertSwap = async ({
       fromAsset,
       toAsset,
       fromAmount,
       minToAssetAmount,
-      slippage
-    ) => {
+      slippage,
+    }) => {
       const { oethVault, strategist, swapper } = fixture;
+
+      fromAmount = parseUnits(fromAmount.toString(), 18);
+      minToAssetAmount = parseUnits(minToAssetAmount.toString(), 18);
 
       const apiEncodedData = await getIInchSwapData({
         vault: oethVault,
@@ -125,27 +128,38 @@ forkOnlyDescribe("ForkTest: OETH Vault", function () {
         minToAssetAmount
       );
     };
-    describe("Collateral swaps", () => {
-      it("should be able to swap WETH for rETH", async () => {
-        const { reth, weth } = fixture;
-        const fromAmount = parseUnits("100", 18);
-        const minToAssetAmount = "92280577666624314114"; // parseUnits("99", 18);
-        await assertSwap(weth, reth, fromAmount, minToAssetAmount);
-      });
-      it("should be able to swap WETH for stETH", async () => {
-        const { stETH, weth } = fixture;
-        const fromAmount = parseUnits("100", 18);
-        const minToAssetAmount = parseUnits("90", 18);
-
-        await assertSwap(weth, stETH, fromAmount, minToAssetAmount);
-      });
-      it("should be able to swap WETH for frxETH", async () => {
-        const { frxETH, weth } = fixture;
-        const fromAmount = parseUnits("100", 18);
-        const minToAssetAmount = parseUnits("90", 18);
-
-        await assertSwap(weth, frxETH, fromAmount, minToAssetAmount);
-      });
+    describe("Collateral swaps", async () => {
+      const tests = [
+        {
+          from: "WETH",
+          to: "rETH",
+          fromAmount: 100,
+          minToAssetAmount: 90,
+        },
+        {
+          from: "WETH",
+          to: "stETH",
+          fromAmount: 100,
+          minToAssetAmount: 90,
+        },
+        {
+          from: "WETH",
+          to: "frxETH",
+          fromAmount: 100,
+          minToAssetAmount: 95,
+        },
+      ];
+      for (const test of tests) {
+        it(`should be able to swap ${test.from} for ${test.to}`, async () => {
+          const fromAsset = await resolveAsset(test.from);
+          const toAsset = await resolveAsset(test.to);
+          await assertSwap({
+            ...test,
+            fromAsset,
+            toAsset,
+          });
+        });
+      }
     });
   });
 });
