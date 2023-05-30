@@ -46,9 +46,11 @@ contract Swapper1InchV5 is ISwapper {
             "Insufficient allowance"
         );
 
-        (address executer, , , bytes memory executerData) = abi.decode(
-            _data[4:],
-            (address, SwapDescription, bytes, bytes)
+        // Decode the executer address and data from RLP encoded _data param
+        // Note this does NOT include a 4 byte function selector
+        (address executer, bytes memory executerData) = abi.decode(
+            _data,
+            (address, bytes)
         );
 
         SwapDescription memory swapDesc = SwapDescription({
