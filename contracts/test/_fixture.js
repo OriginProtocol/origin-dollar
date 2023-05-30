@@ -550,7 +550,7 @@ async function oethDefaultFixture() {
   return fixture;
 }
 
-async function oethDefaultFixtureSetup() {
+function oethDefaultFixtureSetup() {
   return deployments.createFixture(async () => {
     return await oethDefaultFixture();
   });

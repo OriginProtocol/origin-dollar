@@ -1,10 +1,18 @@
 const { expect } = require("chai");
+const { parseUnits, formatUnits } = require("ethers/lib/utils");
 
-const { defaultFixture } = require("./../_fixture");
-const addresses = require("../../utils/addresses");
+const {
+  defaultFixtureSetup,
+  oethDefaultFixtureSetup,
+  impersonateAndFundAddress,
+} = require("./../_fixture");
 const { getIInchSwapData, recodeSwapData } = require("../../utils/1Inch");
-const { loadFixture, forkOnlyDescribe, resolveAsset } = require("./../helpers");
-const { parseUnits } = require("ethers/lib/utils");
+const addresses = require("../../utils/addresses");
+const { forkOnlyDescribe, resolveAsset } = require("./../helpers");
+
+const log = require("../../utils/logger")("test:fork:oeth:vault");
+
+const defaultFixture = oethDefaultFixtureSetup();
 
 forkOnlyDescribe("ForkTest: Vault", function () {
   this.timeout(0);
@@ -13,7 +21,15 @@ forkOnlyDescribe("ForkTest: Vault", function () {
 
   let fixture;
   beforeEach(async () => {
-    fixture = await loadFixture(defaultFixture);
+    fixture = await defaultFixture();
+  });
+
+  after(async () => {
+    // This is needed to revert fixtures
+    // The other tests as of now don't use proper fixtures
+    // Rel: https://github.com/OriginProtocol/origin-dollar/issues/1259
+    const f = defaultFixtureSetup();
+    await f();
   });
 
   describe("OETH Vault", () => {
@@ -45,7 +61,7 @@ forkOnlyDescribe("ForkTest: Vault", function () {
           );
         }
       });
-      it("shold have swapper set", async () => {
+      it("should have swapper set", async () => {
         const { oethVault, swapper } = fixture;
 
         expect(await oethVault.swapper()).to.equal(swapper.address);
@@ -96,6 +112,7 @@ forkOnlyDescribe("ForkTest: Vault", function () {
       const swapData = await recodeSwapData(apiEncodedData);
 
       const fromBalanceBefore = await fromAsset.balanceOf(oethVault.address);
+      log(`from asset balance before ${formatUnits(fromBalanceBefore, 18)}`);
       const toBalanceBefore = await toAsset.balanceOf(oethVault.address);
 
       const tx = await oethVault
@@ -148,9 +165,66 @@ forkOnlyDescribe("ForkTest: Vault", function () {
           fromAmount: 100,
           minToAssetAmount: 95,
         },
+        {
+          from: "rETH",
+          to: "stETH",
+          fromAmount: 10,
+          minToAssetAmount: "10.5",
+          slippage: 10,
+        },
+        {
+          from: "rETH",
+          to: "frxETH",
+          fromAmount: 10,
+          minToAssetAmount: "10.5",
+          slippage: 10,
+        },
+        {
+          from: "rETH",
+          to: "WETH",
+          fromAmount: 10,
+          minToAssetAmount: "10.5",
+          slippage: 10,
+        },
+        {
+          from: "stETH",
+          to: "rETH",
+          fromAmount: 100,
+          minToAssetAmount: 93,
+        },
+        {
+          from: "stETH",
+          to: "frxETH",
+          fromAmount: 10,
+          minToAssetAmount: 98,
+        },
+        {
+          from: "stETH",
+          to: "WETH",
+          fromAmount: 10,
+          minToAssetAmount: 98,
+        },
+        {
+          from: "frxETH",
+          to: "rETH",
+          fromAmount: 10,
+          minToAssetAmount: 9,
+        },
+        {
+          from: "frxETH",
+          to: "stETH",
+          fromAmount: 10,
+          minToAssetAmount: 9.5,
+        },
+        {
+          from: "frxETH",
+          to: "WETH",
+          fromAmount: 10,
+          minToAssetAmount: 9.9,
+        },
       ];
       for (const test of tests) {
-        it(`should be able to swap ${test.from} for ${test.to}`, async () => {
+        it(`should be able to swap ${test.fromAmount} ${test.from} for ${test.to}`, async () => {
           const fromAsset = await resolveAsset(test.from);
           const toAsset = await resolveAsset(test.to);
           await assertSwap({
