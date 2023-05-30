@@ -51,10 +51,10 @@ contract VaultStorage is Initializable, Governable {
     event SwapperChanged(address _address);
     event SwapSlippageChanged(address _asset, uint256 _basis);
     event Swapped(
-        address indexed fromAsset,
-        address indexed toAsset,
-        uint256 fromAssetAmount,
-        uint256 toAssetAmount
+        address indexed _fromAsset,
+        address indexed _toAsset,
+        uint256 _fromAssetAmount,
+        uint256 _toAssetAmount
     );
 
     // Assets supported by the Vault, i.e. Stablecoins
