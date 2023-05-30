@@ -82,10 +82,8 @@ interface IVault {
 
     function setSwapper(address _swapperAddr) external;
 
-    function setSwapSlippage(
-        address _asset,
-        uint16 _allowedSwapSlippageBps
-    ) external;
+    function setSwapSlippage(address _asset, uint16 _allowedSwapSlippageBps)
+        external;
 
     function supportAsset(address _asset, uint8 _supportsAsset) external;
 
@@ -93,14 +91,13 @@ interface IVault {
 
     function removeStrategy(address _addr) external;
 
-    function setAssetDefaultStrategy(
-        address _asset,
-        address _strategy
-    ) external;
+    function setAssetDefaultStrategy(address _asset, address _strategy)
+        external;
 
-    function assetDefaultStrategies(
-        address _asset
-    ) external view returns (address);
+    function assetDefaultStrategies(address _asset)
+        external
+        view
+        returns (address);
 
     function pauseRebase() external;
 
@@ -174,15 +171,17 @@ interface IVault {
 
     function checkBalance(address _asset) external view returns (uint256);
 
-    function calculateRedeemOutputs(
-        uint256 _amount
-    ) external view returns (uint256[] memory);
+    function calculateRedeemOutputs(uint256 _amount)
+        external
+        view
+        returns (uint256[] memory);
 
     function getAssetCount() external view returns (uint256);
 
-    function getAssetConfig(
-        address _asset
-    ) external view returns (VaultStorage.Asset memory config);
+    function getAssetConfig(address _asset)
+        external
+        view
+        returns (VaultStorage.Asset memory config);
 
     function getAllAssets() external view returns (address[] memory);
 
