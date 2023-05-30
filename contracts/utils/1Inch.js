@@ -2,6 +2,7 @@ const axios = require("axios");
 const { defaultAbiCoder } = require("ethers/lib/utils");
 
 const addresses = require("./addresses");
+const log = require("./logger")("utils:1inch");
 
 const ONE_INCH_API = "https://api.1inch.io/v5.0/1/swap";
 
@@ -11,19 +12,24 @@ const ONE_INCH_API = "https://api.1inch.io/v5.0/1/swap";
  * @returns {string} encoded executer address and data for vault collateral swaps
  */
 const recodeSwapData = async (apiEncodedData) => {
-  const c1InchRouter = await ethers.getContractAt(
-    "IOneInchRouter",
-    addresses.mainnet.oneInchRouterV5
-  );
-  const apiDecodedData = await c1InchRouter.interface.decodeFunctionData(
-    "swap",
-    apiEncodedData
-  );
+  try {
+    const c1InchRouter = await ethers.getContractAt(
+      "IOneInchRouter",
+      addresses.mainnet.oneInchRouterV5
+    );
+    const apiDecodedData = await c1InchRouter.interface.decodeFunctionData(
+      "swap",
+      apiEncodedData
+    );
 
-  return defaultAbiCoder.encode(
-    ["address", "bytes"],
-    [apiDecodedData.executor, apiDecodedData.data]
-  );
+    return defaultAbiCoder.encode(
+      ["address", "bytes"],
+      [apiDecodedData.executor, apiDecodedData.data]
+    );
+  } catch (err) {
+    console.error(`apiEncodedData: ${apiEncodedData}`);
+    throw Error(`Failed to recode 1Inch swap data: ${err.message}`);
+  }
 };
 
 const getIInchSwapData = async ({
@@ -45,6 +51,7 @@ const getIInchSwapData = async ({
     disableEstimate: true,
     allowPartialFill: false,
   };
+  log("swap API params: ", params);
 
   try {
     const response = await axios.get(ONE_INCH_API, { params });
@@ -52,6 +59,8 @@ const getIInchSwapData = async ({
     if (!response.data.tx || !response.data.tx.data) {
       throw Error("response is missing tx.data");
     }
+
+    log("swap API tx.data: ", response.data.tx.data);
 
     return response.data.tx.data;
   } catch (err) {
