@@ -83,7 +83,7 @@ const findBestMainnetTokenHolderAndImpersonate = async (contract, hre) => {
 };
 
 const fundAccounts = async () => {
-  let usdt, dai, tusd, usdc, nonStandardToken;
+  let usdt, dai, tusd, usdc, nonStandardToken, ogn;
   if (isFork) {
     usdt = await ethers.getContractAt(usdtAbi, addresses.mainnet.USDT);
     dai = await ethers.getContractAt(daiAbi, addresses.mainnet.DAI);
@@ -100,7 +100,6 @@ const fundAccounts = async () => {
   }
 
   const signers = await hre.ethers.getSigners();
-  const { governorAddr } = await getNamedAccounts();
 
   const addressPromises = new Array(10)
     .fill(0)
