@@ -27,7 +27,7 @@ contract Swapper1InchV5 is ISwapper {
      * @param _toAsset The token address of the asset being purchased by the vault.
      * @param _fromAssetAmount The amount of assets being sold by the vault.
      * @param _minToAssetAmount The minimum amount of assets to be purchased.
-     * @param _data tx.data returned from 1Inch's /v5.0/1/swap API
+     * @param _data RLP encoded executer address and bytes data. This is re-encoded tx.data from 1Inch swap API
      */
     function swap(
         address _fromAsset,
