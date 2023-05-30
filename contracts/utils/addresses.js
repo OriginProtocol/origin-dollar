@@ -168,4 +168,8 @@ addresses.mainnet.rETH = "0xae78736Cd615f374D3085123A210448E74Fc6393";
 addresses.mainnet.stETH = "0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84";
 addresses.mainnet.FraxETHMinter = "0xbAFA44EFE7901E04E39Dad13167D089C559c1138";
 
+// 1Inch
+addresses.mainnet.oneInchRouterV5 =
+  "0x1111111254EEB25477B68fb85Ed929f73A960582";
+
 module.exports = addresses;
