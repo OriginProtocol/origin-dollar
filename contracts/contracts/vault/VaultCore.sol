@@ -407,7 +407,10 @@ contract VaultCore is VaultStorage {
         nonReentrant
         returns (uint256 toAssetAmount)
     {
-        require(msg.sender == strategistAddr, "Caller is not the Strategist");
+        require(
+            msg.sender == strategistAddr || isGovernor(),
+            "not Strategist or Governor"
+        );
 
         // Check fromAsset and toAsset are valid
         Asset memory fromAssetConfig = assets[address(_fromAsset)];
