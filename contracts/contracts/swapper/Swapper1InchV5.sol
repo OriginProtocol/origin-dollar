@@ -37,7 +37,7 @@ contract Swapper1InchV5 is ISwapper {
         bytes calldata _data
     ) external override returns (uint256 toAssetAmount) {
         require(
-            IERC20(_fromAsset).balanceOf(msg.sender) >= _fromAssetAmount,
+            IERC20(_fromAsset).balanceOf(address(this)) >= _fromAssetAmount,
             "Insufficient balance"
         );
         require(
