@@ -70,14 +70,14 @@ module.exports = deploymentWithProposal(
     );
 
     console.log(
-      "OUSD Morpho Aave strategy address: ",
+      "OETH Morpho Aave strategy address: ",
       cMorphoAaveStrategy.address
     );
 
     // Governance Actions
     // ----------------
     return {
-      name: "Deploy new OUSD Morpho Aave strategy",
+      name: "Deploy new OETH Morpho Aave strategy",
       governorAddr: addresses.mainnet.OldTimelock,
       actions: [
         // 1. Add new Morpho strategy to vault
