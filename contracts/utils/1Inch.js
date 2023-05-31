@@ -5,6 +5,9 @@ const addresses = require("./addresses");
 const log = require("./logger")("utils:1inch");
 
 const ONE_INCH_API = "https://api.1inch.io/v5.0/1/swap";
+const SWAP_SELECTOR = "0x12aa3caf"; // swap(address,(address,address,address,address,uint256,uint256,uint256),bytes,bytes)
+const UNISWAP_SELECTOR = "0x0502b1c5"; // unoswap(address,uint256,uint256,uint256[])
+const UNISWAPV3_SELECTOR = "0xbc80f1a8"; // uniswapV3SwapTo(address,uint256,uint256,uint256[])
 
 /**
  * Re-encodes the 1Inch swap data to be used by the vault's swapper.
@@ -27,14 +30,18 @@ const recodeSwapData = async (apiEncodedData) => {
     });
 
     let encodedData;
-    if (swapTx.sighash === "0x12aa3caf") {
+    if (swapTx.sighash === SWAP_SELECTOR) {
       // If swap(IAggregationExecutor executor, SwapDescription calldata desc, bytes calldata permit, bytes calldata data)
       encodedData = defaultAbiCoder.encode(
         ["bytes4", "address", "bytes"],
         [swapTx.sighash, swapTx.args[0], swapTx.args[3]]
       );
-    } else if (swapTx.sighash === "0xbc80f1a8") {
+    } else if (
+      swapTx.sighash === UNISWAP_SELECTOR ||
+      swapTx.sighash === UNISWAPV3_SELECTOR
+    ) {
       // If uniswapV3SwapTo(address payable recipient, uint256 amount, uint256 minReturn, uint256[] calldata pools)
+      // or uniswapV3SwapTo(address,uint256,uint256,uint256[])
       encodedData = defaultAbiCoder.encode(
         ["bytes4", "uint256[]"],
         [swapTx.sighash, swapTx.args[3]]
