@@ -21,7 +21,8 @@ contract Swapper1InchV5 is ISwapper {
     address public constant EXECUTER =
         0x1136B25047E142Fa3018184793aEc68fBB173cE4;
     bytes4 internal constant SWAP_SELECTOR = 0x12aa3caf; // swap(address,(address,address,address,address,uint256,uint256,uint256),bytes,bytes)
-    bytes4 internal constant UNISWAP_SELECTOR = 0xbc80f1a8; // uniswapV3SwapTo(address,uint256,uint256,uint256[])
+    bytes4 internal constant UNISWAP_SELECTOR = 0x0502b1c5; // unoswap(address,uint256,uint256,uint256[])
+    bytes4 internal constant UNISWAPV3_SELECTOR = 0xbc80f1a8; // uniswapV3SwapTo(address,uint256,uint256,uint256[])
 
     /**
      * @notice Strategist swaps assets sitting in the contract of the `assetHolder`.
@@ -73,6 +74,16 @@ contract Swapper1InchV5 is ISwapper {
                 executerData
             );
         } else if (swapSelector == UNISWAP_SELECTOR) {
+            // Need to get the Uniswap pools data from the _data param
+            (, uint256[] memory pools) = abi.decode(_data, (bytes4, uint256[]));
+            toAssetAmount = IOneInchRouter(SWAP_ROUTER).unoswapTo(
+                payable(msg.sender),
+                IERC20(_fromAsset),
+                _fromAssetAmount,
+                _minToAssetAmount,
+                pools
+            );
+        } else if (swapSelector == UNISWAPV3_SELECTOR) {
             // Need to get the Uniswap pools data from the _data param
             (, uint256[] memory pools) = abi.decode(_data, (bytes4, uint256[]));
             toAssetAmount = IOneInchRouter(SWAP_ROUTER).uniswapV3SwapTo(
