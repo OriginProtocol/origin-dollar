@@ -54,6 +54,14 @@ contract VaultCore is VaultStorage {
         _;
     }
 
+    modifier onlyGovernorOrStrategist() {
+        require(
+            msg.sender == strategistAddr || isGovernor(),
+            "Caller is not the Strategist or Governor"
+        );
+        _;
+    }
+
     /**
      * @notice Deposit a supported asset and mint OTokens.
      * @param _asset Address of the asset being deposited
@@ -405,13 +413,9 @@ contract VaultCore is VaultStorage {
         external
         whenNotCapitalPaused
         nonReentrant
+        onlyGovernorOrStrategist
         returns (uint256 toAssetAmount)
     {
-        require(
-            msg.sender == strategistAddr || isGovernor(),
-            "not Strategist or Governor"
-        );
-
         // Check fromAsset and toAsset are valid
         Asset memory fromAssetConfig = assets[address(_fromAsset)];
         Asset memory toAssetConfig = assets[_toAsset];
@@ -427,7 +431,7 @@ contract VaultCore is VaultStorage {
         toAssetAmount = ISwapper(swapper).swap(
             _fromAsset,
             _toAsset,
-            _fromAssetAmount,
+            _fromAssetAmount - 1,
             _minToAssetAmount,
             _data
         );
