@@ -18,9 +18,9 @@ contract MockSwapper {
         bytes calldata _data
     ) external returns (uint256 toAssetAmount) {
         toAssetAmount = (nextOutAmount > 0) ? nextOutAmount : _minToAssetAmount;
+        nextOutAmount = 0;
         IMintableERC20(_toAsset).mint(toAssetAmount);
         IERC20(_toAsset).transfer(msg.sender, toAssetAmount);
-        nextOutAmount = 0;
     }
 
     function setNextOutAmount(uint256 _nextOutAmount) public {

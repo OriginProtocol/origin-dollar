@@ -336,11 +336,11 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
   });
 
   await deploy("MockSwapper", {
-    from: deployerAddr
-  })
+    from: deployerAddr,
+  });
   await deploy("Mock1InchSwapRouter", {
-    from: deployerAddr
-  })
+    from: deployerAddr,
+  });
 
   console.log("000_mock deploy done.");
 

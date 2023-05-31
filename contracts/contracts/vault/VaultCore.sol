@@ -437,7 +437,9 @@ contract VaultCore is VaultStorage {
         );
 
         // Compute the change in asset balance held by the Vault
-        toAssetAmount = IERC20(_toAsset).balanceOf(address(this)) - toAssetBalBefore;
+        toAssetAmount =
+            IERC20(_toAsset).balanceOf(address(this)) -
+            toAssetBalBefore;
 
         // Check the to assets returned is above slippage amount specified by the strategist
         require(

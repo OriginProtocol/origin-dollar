@@ -45,10 +45,12 @@ async function defaultFixture() {
   const ousd = await ethers.getContractAt("OUSD", ousdProxy.address);
   const vault = await ethers.getContractAt("IVault", vaultProxy.address);
 
-  
   const oethProxy = await ethers.getContract("OETHProxy");
   const OETHVaultProxy = await ethers.getContract("OETHVaultProxy");
-  const oethVault = await ethers.getContractAt("IVault", OETHVaultProxy.address);
+  const oethVault = await ethers.getContractAt(
+    "IVault",
+    OETHVaultProxy.address
+  );
   const oeth = await ethers.getContractAt("OETH", oethProxy.address);
 
   let woeth, woethProxy;
@@ -572,21 +574,26 @@ function oethDefaultFixtureSetup() {
 
 function oeth1InchSwapperFixtureSetup() {
   return deployments.createFixture(async () => {
-    fixture = await oethDefaultFixture()
-    const { strategist, mock1InchSwapRouter } = fixture
+    const fixture = await oethDefaultFixture();
+    const { strategist, mock1InchSwapRouter } = fixture;
 
     const swapRouterAddr = "0x1111111254EEB25477B68fb85Ed929f73A960582";
-    const mockCode = await strategist.provider.getCode(mock1InchSwapRouter.address);
+    const mockCode = await strategist.provider.getCode(
+      mock1InchSwapRouter.address
+    );
 
     await hre.network.provider.request({
       method: "hardhat_setCode",
       params: [swapRouterAddr, mockCode],
     });
 
-    const stubbedRouterContract = await hre.ethers.getContractAt("Mock1InchSwapRouter", swapRouterAddr)
-    fixture.mock1InchSwapRouter = stubbedRouterContract
+    const stubbedRouterContract = await hre.ethers.getContractAt(
+      "Mock1InchSwapRouter",
+      swapRouterAddr
+    );
+    fixture.mock1InchSwapRouter = stubbedRouterContract;
 
-    return fixture
+    return fixture;
   });
 }
 

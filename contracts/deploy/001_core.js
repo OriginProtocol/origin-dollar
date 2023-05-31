@@ -531,11 +531,9 @@ const configureOETHVault = async () => {
     ).address
   );
   // Set up supported assets for Vault
-  const { WETH, RETH, stETH, frxETH } = assetAddresses
+  const { WETH, RETH, stETH, frxETH } = assetAddresses;
   for (const asset of [WETH, RETH, stETH, frxETH]) {
-    await withConfirmation(
-      cVault.connect(sGovernor).supportAsset(asset, 0)
-    );
+    await withConfirmation(cVault.connect(sGovernor).supportAsset(asset, 0));
   }
   log("Added assets to OETH Vault");
 
@@ -711,8 +709,10 @@ const deployOracles = async () => {
   const oracleContract = isMainnet ? "OracleRouter" : "OracleRouterDev";
   await deployWithConfirmation("OracleRouter", [], oracleContract);
   const oracleRouter = await ethers.getContract("OracleRouter");
-  
-  const oethOracleContract = isMainnet ? "OETHOracleRouter" : "OETHOracleRouterDev";
+
+  const oethOracleContract = isMainnet
+    ? "OETHOracleRouter"
+    : "OETHOracleRouterDev";
   await deployWithConfirmation("OETHOracleRouter", [], oethOracleContract);
   const oethOracleRouter = await ethers.getContract("OETHOracleRouter");
 
@@ -841,10 +841,10 @@ const deployCore = async () => {
   const dVault = await deployWithConfirmation("Vault");
   const dVaultCore = await deployWithConfirmation("VaultCore");
   const dVaultAdmin = await deployWithConfirmation("VaultAdmin");
-  
+
   const dOETH = await deployWithConfirmation("OETH");
   const dOETHVault = await deployWithConfirmation("OETHVault");
-  
+
   await deployWithConfirmation("Governor", [governorAddr, 60]);
 
   // Get contract instances
@@ -853,12 +853,15 @@ const deployCore = async () => {
   const cOUSD = await ethers.getContractAt("OUSD", cOUSDProxy.address);
   const cOracleRouter = await ethers.getContract("OracleRouter");
   const cVault = await ethers.getContractAt("Vault", cVaultProxy.address);
-  
+
   const cOETHProxy = await ethers.getContract("OETHProxy");
   const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
   const cOETH = await ethers.getContractAt("OETH", cOETHProxy.address);
   const cOETHOracleRouter = await ethers.getContract("OETHOracleRouter");
-  const cOETHVault = await ethers.getContractAt("Vault", cOETHVaultProxy.address);
+  const cOETHVault = await ethers.getContractAt(
+    "Vault",
+    cOETHVaultProxy.address
+  );
 
   await withConfirmation(
     cOUSDProxy["initialize(address,address,bytes)"](
@@ -1152,26 +1155,28 @@ const deployOETHSwapper = async () => {
 
   const vaultProxy = await ethers.getContract("OETHVaultProxy");
   const vault = await ethers.getContractAt("IVault", vaultProxy.address);
-  
+
   const mockSwapper = await ethers.getContract("MockSwapper");
 
   await deployWithConfirmation("Swapper1InchV5");
   const cSwapper = await ethers.getContract("Swapper1InchV5");
 
-  cSwapper.connect(sDeployer).approveAssets([
-    assetAddresses.RETH,
-    assetAddresses.stETH,
-    assetAddresses.WETH,
-    assetAddresses.frxETH,
-  ])
+  cSwapper
+    .connect(sDeployer)
+    .approveAssets([
+      assetAddresses.RETH,
+      assetAddresses.stETH,
+      assetAddresses.WETH,
+      assetAddresses.frxETH,
+    ]);
 
-  await vault.connect(sGovernor).setSwapper(mockSwapper.address)
+  await vault.connect(sGovernor).setSwapper(mockSwapper.address);
 
-  await vault.connect(sGovernor).setSwapSlippage(assetAddresses.RETH, 200)
-  await vault.connect(sGovernor).setSwapSlippage(assetAddresses.stETH, 70)
-  await vault.connect(sGovernor).setSwapSlippage(assetAddresses.WETH, 20)
-  await vault.connect(sGovernor).setSwapSlippage(assetAddresses.frxETH, 20)
-}
+  await vault.connect(sGovernor).setSwapSlippage(assetAddresses.RETH, 200);
+  await vault.connect(sGovernor).setSwapSlippage(assetAddresses.stETH, 70);
+  await vault.connect(sGovernor).setSwapSlippage(assetAddresses.WETH, 20);
+  await vault.connect(sGovernor).setSwapSlippage(assetAddresses.frxETH, 20);
+};
 
 const main = async () => {
   console.log("Running 001_core deployment...");
