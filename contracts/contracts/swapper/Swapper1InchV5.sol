@@ -20,6 +20,8 @@ contract Swapper1InchV5 is ISwapper {
         0x1111111254EEB25477B68fb85Ed929f73A960582;
     address public constant EXECUTER =
         0x1136B25047E142Fa3018184793aEc68fBB173cE4;
+    bytes4 internal constant SWAP_SELECTOR = 0x12aa3caf; // swap(address,(address,address,address,address,uint256,uint256,uint256),bytes,bytes)
+    bytes4 internal constant UNISWAP_SELECTOR = 0xbc80f1a8; // uniswapV3SwapTo(address,uint256,uint256,uint256[])
 
     /**
      * @notice Strategist swaps assets sitting in the contract of the `assetHolder`.
@@ -46,28 +48,40 @@ contract Swapper1InchV5 is ISwapper {
             "Insufficient allowance"
         );
 
-        // Decode the executer address and data from RLP encoded _data param
-        // Note this does NOT include a 4 byte function selector
-        (address executer, bytes memory executerData) = abi.decode(
-            _data,
-            (address, bytes)
-        );
+        // Decode the function selector from the RLP encoded _data param
+        bytes4 swapSelector = bytes4(_data[:4]);
 
-        SwapDescription memory swapDesc = SwapDescription({
-            srcToken: IERC20(_fromAsset),
-            dstToken: IERC20(_toAsset),
-            srcReceiver: payable(executer),
-            dstReceiver: payable(msg.sender),
-            amount: _fromAssetAmount,
-            minReturnAmount: _minToAssetAmount,
-            flags: 4 // _REQUIRES_EXTRA_ETH is second bit. _PARTIAL_FILL is first bit
-        });
-        (toAssetAmount, ) = IOneInchRouter(SWAP_ROUTER).swap(
-            IAggregationExecutor(executer),
-            swapDesc,
-            hex"",
-            executerData
-        );
+        if (swapSelector == SWAP_SELECTOR) {
+            // Decode the executer address and data from the RLP encoded _data param
+            (, address executer, bytes memory executerData) = abi.decode(
+                _data,
+                (bytes4, address, bytes)
+            );
+            SwapDescription memory swapDesc = SwapDescription({
+                srcToken: IERC20(_fromAsset),
+                dstToken: IERC20(_toAsset),
+                srcReceiver: payable(executer),
+                dstReceiver: payable(msg.sender),
+                amount: _fromAssetAmount,
+                minReturnAmount: _minToAssetAmount,
+                flags: 4 // _REQUIRES_EXTRA_ETH is second bit. _PARTIAL_FILL is first bit
+            });
+            (toAssetAmount, ) = IOneInchRouter(SWAP_ROUTER).swap(
+                IAggregationExecutor(executer),
+                swapDesc,
+                hex"",
+                executerData
+            );
+        } else if (swapSelector == UNISWAP_SELECTOR) {
+            // Need to get the Uniswap pools data from the _data param
+            (, uint256[] memory pools) = abi.decode(_data, (bytes4, uint256[]));
+            toAssetAmount = IOneInchRouter(SWAP_ROUTER).uniswapV3SwapTo(
+                payable(msg.sender),
+                _fromAssetAmount,
+                _minToAssetAmount,
+                pools
+            );
+        }
     }
 
     function approveAssets(address[] memory _assets) external {
