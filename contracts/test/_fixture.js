@@ -45,15 +45,16 @@ async function defaultFixture() {
   const ousd = await ethers.getContractAt("OUSD", ousdProxy.address);
   const vault = await ethers.getContractAt("IVault", vaultProxy.address);
 
-  let oethProxy, OETHVaultProxy, oeth, woeth, woethProxy, oethVault;
-  if (isFork) {
-    oethProxy = await ethers.getContract("OETHProxy");
-    woethProxy = await ethers.getContract("WOETHProxy");
-    OETHVaultProxy = await ethers.getContract("OETHVaultProxy");
-    oeth = await ethers.getContractAt("OETH", oethProxy.address);
-    woeth = await ethers.getContractAt("WOETH", woethProxy.address);
+  
+  const oethProxy = await ethers.getContract("OETHProxy");
+  const OETHVaultProxy = await ethers.getContract("OETHVaultProxy");
+  const oethVault = await ethers.getContractAt("IVault", OETHVaultProxy.address);
+  const oeth = await ethers.getContractAt("OETH", oethProxy.address);
 
-    oethVault = await ethers.getContractAt("IVault", OETHVaultProxy.address);
+  let woeth, woethProxy;
+  if (isFork) {
+    woethProxy = await ethers.getContract("WOETHProxy");
+    woeth = await ethers.getContractAt("WOETH", woethProxy.address);
   }
 
   const harvester = await ethers.getContractAt(
@@ -184,6 +185,9 @@ async function defaultFixture() {
     oethHarvester,
     oethDripper,
     swapper,
+    mockSwapper,
+    swapper1Inch,
+    mock1InchSwapRouter,
     ConvexEthMetaStrategyProxy,
     ConvexEthMetaStrategy;
 
@@ -296,6 +300,8 @@ async function defaultFixture() {
     LUSD = await ethers.getContract("MockLUSD");
     ogv = await ethers.getContract("MockOGV");
     reth = await ethers.getContract("MockRETH");
+    frxETH = await ethers.getContract("MockfrxETH");
+    stETH = await ethers.getContract("MockstETH");
     nonStandardToken = await ethers.getContract("MockNonStandardToken");
 
     cdai = await ethers.getContract("MockCDAI");
@@ -366,6 +372,11 @@ async function defaultFixture() {
       "ConvexGeneralizedMetaStrategy",
       LUSDMetaStrategyProxy.address
     );
+
+    swapper = await ethers.getContract("MockSwapper");
+    mockSwapper = await ethers.getContract("MockSwapper");
+    swapper1Inch = await ethers.getContract("Swapper1InchV5");
+    mock1InchSwapRouter = await ethers.getContract("Mock1InchSwapRouter");
   }
 
   if (!isFork) {
@@ -509,7 +520,6 @@ async function defaultFixture() {
     compensationClaims,
     flipper,
     buyback,
-    swapper,
     wousd,
     //OETH
     oethVault,
@@ -522,6 +532,10 @@ async function defaultFixture() {
     ConvexEthMetaStrategy,
     oethDripper,
     oethHarvester,
+    swapper,
+    mockSwapper,
+    swapper1Inch,
+    mock1InchSwapRouter,
   };
 }
 
@@ -553,6 +567,26 @@ async function oethDefaultFixture() {
 function oethDefaultFixtureSetup() {
   return deployments.createFixture(async () => {
     return await oethDefaultFixture();
+  });
+}
+
+function oeth1InchSwapperFixtureSetup() {
+  return deployments.createFixture(async () => {
+    fixture = await oethDefaultFixture()
+    const { strategist, mock1InchSwapRouter } = fixture
+
+    const swapRouterAddr = "0x1111111254EEB25477B68fb85Ed929f73A960582";
+    const mockCode = await strategist.provider.getCode(mock1InchSwapRouter.address);
+
+    await hre.network.provider.request({
+      method: "hardhat_setCode",
+      params: [swapRouterAddr, mockCode],
+    });
+
+    const stubbedRouterContract = await hre.ethers.getContractAt("Mock1InchSwapRouter", swapRouterAddr)
+    fixture.mock1InchSwapRouter = stubbedRouterContract
+
+    return fixture
   });
 }
 
@@ -1491,4 +1525,5 @@ module.exports = {
   impersonateAccount,
   fraxETHStrategyForkedFixture,
   oethMorphoAaveFixtureSetup,
+  oeth1InchSwapperFixtureSetup,
 };

@@ -30,14 +30,6 @@ contract VaultAdmin is VaultStorage {
         _;
     }
 
-    modifier onlyGovernorOrStrategist() {
-        require(
-            msg.sender == strategistAddr || isGovernor(),
-            "Caller is not the Strategist or Governor"
-        );
-        _;
-    }
-
     /***************************************
                  Configuration
     ****************************************/

@@ -54,14 +54,6 @@ contract VaultCore is VaultStorage {
         _;
     }
 
-    modifier onlyGovernorOrStrategist() {
-        require(
-            msg.sender == strategistAddr || isGovernor(),
-            "Caller is not the Strategist or Governor"
-        );
-        _;
-    }
-
     /**
      * @dev Deposit a supported asset and mint OUSD.
      * @param _asset Address of the asset being deposited
@@ -435,7 +427,8 @@ contract VaultCore is VaultStorage {
         IERC20(_fromAsset).safeTransfer(swapper, _fromAssetAmount);
 
         // Call to the Swapper contract to do the actual swap
-        toAssetAmount = ISwapper(swapper).swap(
+        // slither-disable-next-line unused-return
+        ISwapper(swapper).swap(
             _fromAsset,
             _toAsset,
             _fromAssetAmount - 1,
@@ -443,13 +436,10 @@ contract VaultCore is VaultStorage {
             _data
         );
 
-        // Check the swapper returned the correct amount of assets
-        require(
-            IERC20(_toAsset).balanceOf(address(this)) - toAssetBalBefore + 1 >=
-                toAssetAmount,
-            "Not enough swapped assets"
-        );
-        // Check the to assets returns is above slippage amount specified by the strategist
+        // Compute the change in asset balance held by the Vault
+        toAssetAmount = IERC20(_toAsset).balanceOf(address(this)) - toAssetBalBefore;
+
+        // Check the to assets returned is above slippage amount specified by the strategist
         require(
             toAssetAmount >= _minToAssetAmount,
             "Strategist slippage limit"
