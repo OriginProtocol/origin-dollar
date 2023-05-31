@@ -21,6 +21,7 @@ interface IAggregationExecutor {
 }
 
 interface IOneInchRouter {
+    /// @notice Performs a swap, delegating all calls encoded in `data` to `executor`.
     function swap(
         IAggregationExecutor executor,
         SwapDescription calldata desc,
@@ -28,10 +29,22 @@ interface IOneInchRouter {
         bytes calldata data
     ) external returns (uint256 returnAmount, uint256 spentAmount);
 
+    /// @notice Performs swap using Uniswap exchange. Wraps and unwraps ETH if required.
+    function unoswapTo(
+        address payable recipient,
+        IERC20 srcToken,
+        uint256 amount,
+        uint256 minReturn,
+        uint256[] calldata pools
+    ) external payable returns(uint256 returnAmount);
+
+    /// @notice Performs swap using Uniswap V3 exchange. Wraps and unwraps ETH if required.
     function uniswapV3SwapTo(
         address payable recipient,
         uint256 amount,
         uint256 minReturn,
         uint256[] calldata pools
     ) external payable returns (uint256 returnAmount);
+
+
 }
