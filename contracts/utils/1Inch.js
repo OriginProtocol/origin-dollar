@@ -1,5 +1,5 @@
 const axios = require("axios");
-const { defaultAbiCoder } = require("ethers/lib/utils");
+const { defaultAbiCoder, formatUnits } = require("ethers/lib/utils");
 
 const addresses = require("./addresses");
 const log = require("./logger")("utils:1inch");
@@ -13,7 +13,7 @@ const UNISWAPV3_SELECTOR = "0xbc80f1a8"; // uniswapV3SwapTo(address,uint256,uint
  * Re-encodes the 1Inch swap data to be used by the vault's swapper.
  * The first 4 bytes are the function selector to call on 1Inch's router.
  * If calling the swap function, the next 20 bytes is the executer's address and data.
- * If calling the uniswapV3SwapTo function, an array of Uniswap V3 pools are encoded.
+ * If calling the unoswap or uniswapV3SwapTo functions, an array of Uniswap pools are encoded.
  * @param {string} apiEncodedData tx.data from 1inch's /v5.0/1/swap API
  * @returns {string} RLP encoded data for the Vault's `swapCollateral` function
  */
@@ -89,6 +89,8 @@ const getIInchSwapData = async ({
       throw Error("response is missing tx.data");
     }
 
+    log("swap API toTokenAmount: ", formatUnits(response.data.toTokenAmount));
+    log("swap API swap paths: ", JSON.stringify(response.data.protocols));
     log("swap API tx.data: ", response.data.tx.data);
 
     return response.data.tx.data;
