@@ -36,7 +36,7 @@ interface IOneInchRouter {
         uint256 amount,
         uint256 minReturn,
         uint256[] calldata pools
-    ) external payable returns(uint256 returnAmount);
+    ) external payable returns (uint256 returnAmount);
 
     /// @notice Performs swap using Uniswap V3 exchange. Wraps and unwraps ETH if required.
     function uniswapV3SwapTo(
@@ -45,6 +45,4 @@ interface IOneInchRouter {
         uint256 minReturn,
         uint256[] calldata pools
     ) external payable returns (uint256 returnAmount);
-
-
 }
