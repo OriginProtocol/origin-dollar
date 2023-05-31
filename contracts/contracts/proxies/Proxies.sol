@@ -149,3 +149,10 @@ contract ConvexEthMetaStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 contract BuybackProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
+
+/**
+ * @notice OETHMorphoAaveStrategyProxy delegates calls to a MorphoAaveStrategy implementation
+ */
+contract OETHMorphoAaveStrategyProxy is InitializeGovernedUpgradeabilityProxy {
+
+}

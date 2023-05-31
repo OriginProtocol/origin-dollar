@@ -32,7 +32,18 @@ describe("Vault", function () {
     const oracleAddresses = await getOracleAddresses(hre.deployments);
     const origAssetCount = await vault.connect(governor).getAssetCount();
     expect(await vault.isSupportedAsset(ousd.address)).to.be.false;
-    await oracleRouter.setFeed(ousd.address, oracleAddresses.chainlink.DAI_USD);
+
+    /* Mock oracle feeds report 0 for updatedAt data point. Set
+     * maxStaleness to 100 years from epoch to make the Oracle
+     * feeds valid
+     */
+    const maxStaleness = 24 * 60 * 60 * 365 * 100;
+
+    await oracleRouter.setFeed(
+      ousd.address,
+      oracleAddresses.chainlink.DAI_USD,
+      maxStaleness
+    );
     await oracleRouter.cacheDecimals(ousd.address);
     await expect(vault.connect(governor).supportAsset(ousd.address, 0)).to.emit(
       vault,
