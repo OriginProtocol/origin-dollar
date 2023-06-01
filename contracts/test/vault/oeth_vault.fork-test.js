@@ -4,6 +4,7 @@ const { parseUnits, formatUnits } = require("ethers/lib/utils");
 const {
   defaultFixtureSetup,
   oethDefaultFixtureSetup,
+  oethCollateralSwapFixtureSetup,
 } = require("./../_fixture");
 const { getIInchSwapData, recodeSwapData } = require("../../utils/1Inch");
 const addresses = require("../../utils/addresses");
@@ -12,6 +13,7 @@ const { forkOnlyDescribe, resolveAsset } = require("./../helpers");
 const log = require("../../utils/logger")("test:fork:oeth:vault");
 
 const defaultFixture = oethDefaultFixtureSetup();
+const collateralSwapFixture = oethCollateralSwapFixtureSetup();
 
 forkOnlyDescribe("ForkTest: OETH Vault", function () {
   this.timeout(0);
@@ -19,9 +21,6 @@ forkOnlyDescribe("ForkTest: OETH Vault", function () {
   // this.retries(3);
 
   let fixture;
-  beforeEach(async () => {
-    fixture = await defaultFixture();
-  });
 
   after(async () => {
     // This is needed to revert fixtures
@@ -33,6 +32,10 @@ forkOnlyDescribe("ForkTest: OETH Vault", function () {
 
   describe("OETH Vault", () => {
     describe("post deployment", () => {
+      beforeEach(async () => {
+        fixture = await defaultFixture();
+      });
+
       it("Should have the correct governor address set", async () => {
         const {
           oethVault,
@@ -87,6 +90,7 @@ forkOnlyDescribe("ForkTest: OETH Vault", function () {
         }
       });
     });
+
     const assertSwap = async ({
       fromAsset,
       toAsset,
@@ -116,7 +120,7 @@ forkOnlyDescribe("ForkTest: OETH Vault", function () {
       log(`from asset balance before ${formatUnits(fromBalanceBefore, 18)}`);
       const toBalanceBefore = await toAsset.balanceOf(oethVault.address);
 
-      const tx = await oethVault
+      const tx = oethVault
         .connect(strategist)
         .swapCollateral(
           fromAsset.address,
@@ -127,12 +131,12 @@ forkOnlyDescribe("ForkTest: OETH Vault", function () {
         );
 
       // Asset events
-      expect(tx).to.emit(oethVault, "Swapped").withNamedArgs({
+      await expect(tx).to.emit(oethVault, "Swapped").withNamedArgs({
         _fromAsset: fromAsset.address,
         _toAsset: toAsset.address,
         _fromAssetAmount: fromAmount,
       });
-      expect(tx)
+      await expect(tx)
         .to.emit(fromAsset, "Transfer")
         .withArgs(oethVault.address, swapper.address, fromAmount);
 
@@ -146,7 +150,12 @@ forkOnlyDescribe("ForkTest: OETH Vault", function () {
         minToAssetAmount
       );
     };
+
     describe("Collateral swaps", async () => {
+      beforeEach(async () => {
+        fixture = await collateralSwapFixture();
+      });
+
       const tests = [
         {
           from: "WETH",
