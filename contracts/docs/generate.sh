@@ -67,6 +67,11 @@ sol2uml .. -v -hv -hf -he -hs -hl -b MorphoCompoundStrategy -o MorphoCompStrateg
 sol2uml .. -s -d 0 -b MorphoCompoundStrategy -o MorphoCompStrategySquashed.svg
 sol2uml storage .. -c MorphoCompoundStrategy -o MorphoCompStrategyStorage.svg
 
+# contracts/swapper
+sol2uml .. -v -hv -hf -he -hs -hl -b Swapper1InchV5 -o Swapper1InchV5Hierarchy.svg
+sol2uml .. -s -d 0 -b Swapper1InchV5 -o Swapper1InchV5Squashed.svg
+sol2uml storage .. -c Swapper1InchV5 -o Swapper1InchV5Storage.svg
+
 # contracts/timelock
 sol2uml .. -v -hv -hf -he -hs -hl -b Timelock -o TimelockHierarchy.svg
 sol2uml .. -s -d 0 -b Timelock -o TimelockSquashed.svg
