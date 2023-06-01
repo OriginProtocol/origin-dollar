@@ -1,10 +1,12 @@
 from brownie import Contract
 from contextlib import redirect_stdout, contextmanager
+import os
 import io
 import requests
 
 from world import *
 
+COINMARKETCAP_API_KEY = os.getenv('CMC_API_KEY')
 OETH_ORACLE_ROUTER_ADDRESS = vault_oeth_admin.priceProvider()
 oeth_oracle_router = load_contract('oracle_router_v2', OETH_ORACLE_ROUTER_ADDRESS)
 
@@ -35,6 +37,35 @@ def get_1inch_quote(from_token, to_token, from_amount):
 
     result = req.json()
     return int(result['toTokenAmount'])
+
+# get quote from Coinmarketcap
+def get_cmc_quote(from_token, to_token, from_amount):
+    idMap = {
+        WETH: 2396,
+        RETH: 15060,
+        STETH: 8085,
+        FRXETH: 23225,
+        SFRXETH: 23177,
+        CBETH: 21535
+    }
+
+
+    req = requests.get('https://pro-api.coinmarketcap.com/v2/cryptocurrency/quotes/latest', params={
+        'id': idMap[from_token],
+        'convert_id': idMap[to_token]
+    }, headers={
+        'accept': 'application/json',
+        'X-CMC_PRO_API_KEY': COINMARKETCAP_API_KEY
+    })
+
+    if req.status_code != 200:
+        print(req.json())
+        raise Exception("Error accessing 1inch api")
+
+    result = req.json()
+
+    return result["data"][str(idMap[from_token])]["quote"][str(idMap[to_token])]["price"] * from_amount
+
 
 def get_coingecko_quote(from_token, to_token, from_amount):
     idMap = {
@@ -109,12 +140,16 @@ def get_oracle_router_quote(from_token, to_token, from_amount):
 #                 2 = 2%
 #   - partial_fill -> are partial fills allowed
 def build_swap_tx(from_token, to_token, from_amount, slippage, partial_fill = False):
+    if COINMARKETCAP_API_KEY is None:
+        raise Exception("Set coinmarketcap api key by setting CMC_API_KEY variable. Free plan key will suffice: https://coinmarketcap.com/api/pricing/")
+
     min_slippage_amount = 10**16
     quote_1inch_min_swap_amount_price = get_1inch_quote(from_token, to_token, min_slippage_amount)
     quote_1inch_min_swap_amount = quote_1inch_min_swap_amount_price / min_slippage_amount * from_amount
     quote_1inch = get_1inch_quote(from_token, to_token, from_amount)
     quote_oracles = get_oracle_router_quote(from_token, to_token, from_amount)
     quote_coingecko = get_coingecko_quote(from_token, to_token, from_amount)
+    quote_cmc = get_cmc_quote(from_token, to_token, from_amount)
     min_expected_amount = quote_oracles * slippage / 100
 
     print("------ Price Quotes ------")
@@ -122,25 +157,25 @@ def build_swap_tx(from_token, to_token, from_amount, slippage, partial_fill = Fa
     print("1Inch expected tokens (min swap amount): {:.6f}".format(quote_1inch_min_swap_amount / 10**18))
     print("Oracle expected tokens:                  {:.6f}".format(quote_oracles / 10**18))
     print("Coingecko expected tokens:               {:.6f}".format(quote_coingecko / 10**18))
+    print("CoinmarketCap expected tokens:           {:.6f}".format(quote_cmc / 10**18))
     print("       ------------       ")
     print("1Inch to Oracle Difference:              {:.6f}%".format((quote_1inch - quote_oracles) / quote_1inch))
     print("1Inch to Coingecko Difference:           {:.6f}%".format((quote_1inch - quote_coingecko) / quote_1inch))
     print("Minimum expected amount:                 {:.6f}%".format(min_expected_amount))
 
 
-build_swap_tx(WETH, RETH, 10**18, 1)
+build_swap_tx(WETH, RETH, 100 * 10**18, 1)
 
 
 
 # TODO
-# - coingecko
-# - coinmarketcap
 # - 1inch quote small amounts
 
 build_swap_tx(WETH, RETH, 10**18, 1)
 
 get_1inch_swap(WETH, RETH, 10**18, 1, False)
 get_coingecko_quote(WETH, RETH)
+get_cmc_quote(WETH, RETH, 10**18)
 
 
 
