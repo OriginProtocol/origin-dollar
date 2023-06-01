@@ -1,7 +1,9 @@
 import React, { useEffect, useState, useMemo } from 'react'
-import { useRouter } from 'next/router'
+import GetOUSD from 'components/GetOUSD'
+import useTransactionHistoryPageQuery from '../queries/useTransactionHistoryPageQuery'
+import useTransactionHistoryQuery from '../queries/useTransactionHistoryQuery'
 import dateformat from 'dateformat'
-
+import { useRouter } from 'next/router'
 import { fbt } from 'fbt-runtime'
 import { useWeb3React } from '@web3-react/core'
 import { formatCurrency } from '../utils/math'
@@ -9,9 +11,6 @@ import { exportToCsv } from '../utils/utils'
 import withIsMobile from 'hoc/withIsMobile'
 import { assetRootPath } from 'utils/image'
 import { transactionHistoryItemsPerPage } from 'utils/constants'
-
-import useTransactionHistoryPageQuery from '../queries/useTransactionHistoryPageQuery'
-import useTransactionHistoryQuery from '../queries/useTransactionHistoryQuery'
 
 const itemsPerPage = transactionHistoryItemsPerPage
 
@@ -328,6 +327,37 @@ const TransactionHistory = ({ isMobile }) => {
     )
   }
 
+  const EmptyPlaceholder = ({ children }) => {
+    return (
+      <>
+        <div className="empty-placeholder d-flex flex-column align-items-center justify-content-center">
+          {children}
+        </div>
+        <style jsx>
+          {`
+            .empty-placeholder {
+              height: 370px;
+              padding: 40px;
+              border-radius: 10px;
+              background-color: #1e1f25;
+              border-bottom-left-radius: 8px;
+              border-bottom-right-radius: 8px;
+            }
+
+            @media (max-width: 799px) {
+              .empty-placeholder {
+                height: 220px;
+                padding: 16px;
+                border-bottom-left-radius: 4px;
+                border-bottom-right-radius: 4px;
+              }
+            }
+          `}
+        </style>
+      </>
+    )
+  }
+
   return (
     <>
       <div className="d-flex holder flex-column justify-content-start">
@@ -361,57 +391,61 @@ const TransactionHistory = ({ isMobile }) => {
                 historyPageQuery.isPreviousData ? 'grey-font' : ''
               }`}
             >
-              <div className="d-flex justify-content-between grey-font border-bt title-row">
-                <div className="col-3 col-md-3 d-none d-md-block">
-                  {fbt('Date', 'Transaction history date')}
-                </div>
-                <div className="col-3 col-md-3 d-block d-md-none">
-                  Date/Type
-                </div>
-                <div className="col-3 col-md-3 d-none d-md-block">
-                  {fbt('Type', 'Transaction history type')}
-                </div>
-                {/* <div className="d-none d-md-flex col-2">
+              {(overrideAccount || active) && (
+                <>
+                  <div className="d-flex justify-content-between grey-font border-bt title-row">
+                    <div className="col-3 col-md-3 d-none d-md-block">
+                      {fbt('Date', 'Transaction history date')}
+                    </div>
+                    <div className="col-3 col-md-3 d-block d-md-none">
+                      Date/Type
+                    </div>
+                    <div className="col-3 col-md-3 d-none d-md-block">
+                      {fbt('Type', 'Transaction history type')}
+                    </div>
+                    {/* <div className="d-none d-md-flex col-2">
                   {fbt('From', 'Transaction history from account')}
                 </div>
                 <div className="d-none d-md-flex col-2">
                   {fbt('To', 'Transaction history to account')}
                 </div> */}
-                <div className="col-3 col-md-3">
-                  {fbt('Change', 'Transaction history OETH amount')}
-                </div>
-                <div className="col-3 col-md-3 oeth-balance">
-                  {fbt('OETH Balance', 'Transaction history OETH balance')}
-                </div>
-              </div>
-              {currentPageHistory.map((tx) => {
-                return (
-                  <div
-                    key={`${tx.tx_hash}-${tx.log_index ? tx.log_index : 0}`}
-                    className="d-flex border-bt history-item"
-                  >
-                    <div
-                      className="col-3 col-md-3 first-history-item"
-                      title={
-                        dateformat(
-                          Date.parse(tx.time),
-                          'mm/dd/yyyy h:MM:ss TT'
-                        ) || ''
-                      }
-                    >
-                      {dateformat(
-                        Date.parse(tx.time),
-                        isMobile ? 'mm/dd/yy' : 'mm/dd/yyyy'
-                      ) || ''}
-                      <div>{txTypeMap[tx.type].name}</div>
+                    <div className="col-3 col-md-3">
+                      {fbt('Change', 'Transaction history OETH amount')}
                     </div>
-                    <div
-                      title={txTypeMap[tx.type].verboseName}
-                      className="col-3 col-md-3 d-none d-md-block"
-                    >
-                      {txTypeMap[tx.type].name}
+                    <div className="col-3 col-md-3 oeth-balance">
+                      {fbt('OETH Balance', 'Transaction history OETH balance')}
                     </div>
-                    {/* <div
+                  </div>
+                  {currentPageHistory.map((tx) => {
+                    return (
+                      <div
+                        key={`${tx.tx_hash}-${tx.log_index ? tx.log_index : 0}`}
+                        className="d-flex border-bt history-item"
+                      >
+                        <div
+                          className="col-3 col-md-3"
+                          title={
+                            dateformat(
+                              Date.parse(tx.time),
+                              'mm/dd/yyyy h:MM:ss TT'
+                            ) || ''
+                          }
+                        >
+                          {dateformat(
+                            Date.parse(tx.time),
+                            isMobile ? 'mm/dd/yy' : 'mm/dd/yyyy'
+                          ) || ''}
+                          <div className="d-block d-md-none">
+                            {txTypeMap[tx.type].name}
+                          </div>
+                        </div>
+                        <div
+                          title={txTypeMap[tx.type].verboseName}
+                          className="col-3 col-md-3 d-none d-md-block"
+                        >
+                          {txTypeMap[tx.type].name}
+                        </div>
+                        {/* <div
                       className={`d-none d-md-flex col-2 ${
                         tx.from_address ? 'clickable' : ''
                       }`}
@@ -443,82 +477,106 @@ const TransactionHistory = ({ isMobile }) => {
                     >
                       {tx.to_address ? shortenAddress(tx.to_address) : '-'}
                     </div> */}
-                    <div className="col-3 col-md-3">
-                      {tx.amount ? (
-                        <FormatCurrencyByImportance
-                          value={tx.amount}
-                          isMobile={isMobile}
-                          hasHigherYield={hasHigherYield}
-                          yieldHigherThanAGwei={yieldHigherThanAGwei}
-                        />
-                      ) : (
-                        '-'
-                      )}
-                    </div>
-                    <div className="col-3 col-md-3">
-                      {tx.balance ? (
-                        <FormatCurrencyByImportance
-                          value={tx.balance}
-                          isMobile={isMobile}
-                          hasHigherYield={hasHigherYield}
-                          yieldHigherThanAGwei={yieldHigherThanAGwei}
-                        />
-                      ) : (
-                        '-'
-                      )}
-                      <div className="etherscan-link">
-                        <a
-                          href={`https://etherscan.io/tx/${tx.tx_hash}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          <img
-                            className=""
-                            src={assetRootPath('/images/link-icon-purple.svg')}
-                          />
-                        </a>
+                        <div className="col-3 col-md-3">
+                          {tx.amount ? (
+                            <FormatCurrencyByImportance
+                              value={tx.amount}
+                              isMobile={isMobile}
+                              hasHigherYield={hasHigherYield}
+                              yieldHigherThanAGwei={yieldHigherThanAGwei}
+                            />
+                          ) : (
+                            '-'
+                          )}
+                        </div>
+                        <div className="col-3 col-md-3">
+                          {tx.balance ? (
+                            <FormatCurrencyByImportance
+                              value={tx.balance}
+                              isMobile={isMobile}
+                              hasHigherYield={hasHigherYield}
+                              yieldHigherThanAGwei={yieldHigherThanAGwei}
+                            />
+                          ) : (
+                            '-'
+                          )}
+                          <div className="etherscan-link">
+                            <a
+                              href={`https://etherscan.io/tx/${tx.tx_hash}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              <img
+                                className=""
+                                src={assetRootPath(
+                                  '/images/link-icon-purple.svg'
+                                )}
+                              />
+                            </a>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                )
-              })}
+                    )
+                  })}
+                </>
+              )}
+              {!overrideAccount && !active && (
+                <EmptyPlaceholder>
+                  <span className="connect-text">
+                    Connect your wallet to see your history
+                  </span>
+                  <GetOUSD
+                    className="py-2 px-4 max-w-107"
+                    gradient
+                    connect
+                    trackSource="Dapp widget body"
+                  />
+                </EmptyPlaceholder>
+              )}
             </div>
-            <div className="pagination d-flex justify-content-center justify-content-md-start">
-              {pageNumbers.map((pageNumber, index) => {
-                const isCurrent =
-                  pageNumber === historyPageQuery.data.page.current //currentPage
-                const skippedAPage =
-                  index > 0 && pageNumber - pageNumbers[index - 1] !== 1
+            {overrideAccount ||
+              (active && (
+                <div className="pagination d-flex justify-content-center justify-content-md-start">
+                  {pageNumbers.map((pageNumber, index) => {
+                    const isCurrent =
+                      pageNumber === historyPageQuery.data.page.current //currentPage
+                    const skippedAPage =
+                      index > 0 && pageNumber - pageNumbers[index - 1] !== 1
 
-                return (
-                  <div className="d-flex" key={pageNumber}>
-                    {skippedAPage && (
-                      <div className="page-skip d-flex align-items-center justify-content-center">
-                        ...
+                    return (
+                      <div className="d-flex" key={pageNumber}>
+                        {skippedAPage && (
+                          <div className="page-skip d-flex align-items-center justify-content-center">
+                            ...
+                          </div>
+                        )}
+                        <div
+                          className={`page-number ${
+                            isCurrent ? 'current' : ''
+                          } d-flex align-items-center justify-content-center`}
+                          onClick={() => {
+                            if (isCurrent) {
+                              return
+                            }
+                            setCurrentPage(pageNumber)
+                          }}
+                        >
+                          {pageNumber}
+                        </div>
                       </div>
-                    )}
-                    <div
-                      className={`page-number ${
-                        isCurrent ? 'current' : ''
-                      } d-flex align-items-center justify-content-center`}
-                      onClick={() => {
-                        if (isCurrent) {
-                          return
-                        }
-                        setCurrentPage(pageNumber)
-                      }}
-                    >
-                      {pageNumber}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
+                    )
+                  })}
+                </div>
+              ))}
           </>
         )}
       </div>
       <style jsx>{`
-        .oeth-balance {
+        .connect-text {
+          font-size: 14px;
+          line-height: 23px;
+          margin-bottom: 16px;
+          color: #828699;
         }
 
         .title-row {
@@ -558,6 +616,7 @@ const TransactionHistory = ({ isMobile }) => {
 
         .history-holder {
           background-color: #1e1f25;
+          border-radius: 0 0 8px 8px;
         }
 
         .grey-font {
@@ -667,8 +726,17 @@ const TransactionHistory = ({ isMobile }) => {
         }
 
         @media (max-width: 799px) {
+          .connect-text {
+            font-size: 12px;
+            line-height: 20px;
+          }
+
           .grey-font {
             font-size: 12px;
+          }
+
+          .empty-placeholder {
+            height: 220px;
           }
 
           .title-row {
@@ -725,6 +793,10 @@ const TransactionHistory = ({ isMobile }) => {
             padding: 4px 19px;
             font-size: 12px;
             margin-bottom: 20px;
+          }
+
+          .history-holder {
+            border-radius: 0 0 4px 4px;
           }
         }
       `}</style>
