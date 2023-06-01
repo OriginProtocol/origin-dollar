@@ -399,6 +399,8 @@ const getAssetAddresses = async (deployments) => {
       OGN: (await deployments.get("MockOGN")).address,
       OGV: (await deployments.get("MockOGV")).address,
       RETH: (await deployments.get("MockRETH")).address,
+      stETH: (await deployments.get("MockstETH")).address,
+      frxETH: (await deployments.get("MockfrxETH")).address,
       // Note: This is only used to transfer the swapped OGV in `Buyback` contract.
       // So, as long as this is a valid address, it should be fine.
       RewardsSource: addresses.dead,
