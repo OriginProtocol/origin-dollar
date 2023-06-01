@@ -223,7 +223,6 @@ forkOnlyDescribe("ForkTest: OETH Vault", function () {
           fromAmount: 10,
           minToAssetAmount: 9.9,
         },
-        // Use Uniswap V2
         {
           from: "WETH",
           to: "stETH",
@@ -231,9 +230,18 @@ forkOnlyDescribe("ForkTest: OETH Vault", function () {
           minToAssetAmount: 0.9,
           protocols: "UNISWAP_V2",
         },
+        {
+          from: "WETH",
+          to: "frxETH",
+          fromAmount: 1,
+          minToAssetAmount: 0.9,
+          protocols: "UNISWAP_V3",
+        },
       ];
       for (const test of tests) {
-        it(`should be able to swap ${test.fromAmount} ${test.from} for ${test.to}`, async () => {
+        it(`should be able to swap ${test.fromAmount} ${test.from} for ${
+          test.to
+        } using ${test.protocols || "all"} protocols`, async () => {
           const fromAsset = await resolveAsset(test.from);
           const toAsset = await resolveAsset(test.to);
           await assertSwap({
