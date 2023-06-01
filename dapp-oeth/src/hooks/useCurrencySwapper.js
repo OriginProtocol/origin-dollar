@@ -140,7 +140,8 @@ const useCurrencySwapper = ({
       }
 
       const allowance = parseFloat(
-        get(allowances, 'coinNeedingApproval[allowanceCheckKey]')
+        get(allowances, `${coinNeedingApproval}.${allowanceCheckKey}`)
+
       )
 
       setNeedsApproval(
