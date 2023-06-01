@@ -335,6 +335,13 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     args: [factory.address, weth.address],
   });
 
+  await deploy("MockSwapper", {
+    from: deployerAddr,
+  });
+  await deploy("Mock1InchSwapRouter", {
+    from: deployerAddr,
+  });
+
   console.log("000_mock deploy done.");
 
   return true;

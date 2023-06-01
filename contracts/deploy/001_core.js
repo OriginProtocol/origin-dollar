@@ -890,7 +890,7 @@ const deployCore = async () => {
       []
     )
   );
-  log("Initialized OUSD VaultProxy");
+  log("Initialized OETHVaultProxy");
   await withConfirmation(
     cOETHVaultProxy["initialize(address,address,bytes)"](
       dOETHVault.address,
@@ -1123,6 +1123,7 @@ const deployWOusd = async () => {
   const { deployerAddr, governorAddr } = await getNamedAccounts();
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
   const sGovernor = await ethers.provider.getSigner(governorAddr);
+
   const ousd = await ethers.getContract("OUSDProxy");
   const dWrappedOusdImpl = await deployWithConfirmation("WrappedOusd", [
     ousd.address,
@@ -1143,6 +1144,38 @@ const deployWOusd = async () => {
   await wousd.connect(sDeployer)["initialize()"]();
   await wousd.connect(sDeployer).transferGovernance(governorAddr);
   await wousd.connect(sGovernor).claimGovernance();
+};
+
+const deployOETHSwapper = async () => {
+  const { deployerAddr, governorAddr } = await getNamedAccounts();
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+  const sGovernor = await ethers.provider.getSigner(governorAddr);
+
+  const assetAddresses = await getAssetAddresses(deployments);
+
+  const vaultProxy = await ethers.getContract("OETHVaultProxy");
+  const vault = await ethers.getContractAt("IVault", vaultProxy.address);
+
+  const mockSwapper = await ethers.getContract("MockSwapper");
+
+  await deployWithConfirmation("Swapper1InchV5");
+  const cSwapper = await ethers.getContract("Swapper1InchV5");
+
+  cSwapper
+    .connect(sDeployer)
+    .approveAssets([
+      assetAddresses.RETH,
+      assetAddresses.stETH,
+      assetAddresses.WETH,
+      assetAddresses.frxETH,
+    ]);
+
+  await vault.connect(sGovernor).setSwapper(mockSwapper.address);
+
+  await vault.connect(sGovernor).setSwapSlippage(assetAddresses.RETH, 200);
+  await vault.connect(sGovernor).setSwapSlippage(assetAddresses.stETH, 70);
+  await vault.connect(sGovernor).setSwapSlippage(assetAddresses.WETH, 20);
+  await vault.connect(sGovernor).setSwapSlippage(assetAddresses.frxETH, 20);
 };
 
 const main = async () => {
@@ -1167,6 +1200,7 @@ const main = async () => {
   await deployUniswapV3Pool();
   await deployVaultValueChecker();
   await deployWOusd();
+  await deployOETHSwapper();
   console.log("001_core deploy done.");
   return true;
 };
