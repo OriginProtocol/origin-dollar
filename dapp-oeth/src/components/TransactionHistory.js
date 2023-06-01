@@ -38,7 +38,7 @@ const FilterButton = ({
           }
         }}
       >
-        <span className="status-text d-none d-md-flex">{filterText}</span>
+        <span className="status-text">{filterText}</span>
         <span className="status-circle"></span>
       </div>
       <style jsx>{`
@@ -62,16 +62,6 @@ const FilterButton = ({
           color: #edf2f5;
         }
 
-        @media (max-width: 799px) {
-          .button {
-            min-width: 50px;
-            min-height: 35px;
-            margin-right: 8px;
-            font-size: 12px;
-            margin-bottom: 20px;
-          }
-        }
-
         .status-circle {
           width: 8px;
           height: 8px;
@@ -90,6 +80,18 @@ const FilterButton = ({
 
         .status-text {
           margin-right: 8px;
+        }
+
+        @media (max-width: 799px) {
+          .button {
+            padding: 4px 12px;
+            margin-right: 8px;
+            font-size: 11px;
+          }
+
+          .status-text {
+            margin-right: 4px;
+          }
         }
       `}</style>
     </div>
@@ -287,6 +289,45 @@ const TransactionHistory = ({ isMobile }) => {
     }
   }, [historyQuery.isLoading, historyQuery.isRefetching])
 
+  const Filters = () => {
+    return (
+      <div className="d-flex justify-content-start flex-wrap flex-md-nowrap">
+        <FilterButton
+          filterText={fbt('Received', 'Tx history filter: Received')}
+          filterImage="received_icon.svg"
+          filter="transfer_in"
+          filters={filters}
+          setFilters={setFilters}
+          currentFilters={receivedFilters}
+        />
+        <FilterButton
+          filterText={fbt('Sent', 'Tx history filter: Sent')}
+          filterImage="sent_icon.svg"
+          filter="transfer_out"
+          filters={filters}
+          setFilters={setFilters}
+          currentFilters={receivedFilters}
+        />
+        <FilterButton
+          filterText={fbt('Swap', 'Tx history filter: Swap')}
+          filterImage="swap_icon.svg"
+          filter={'swap_oeth'}
+          filters={filters}
+          setFilters={setFilters}
+          currentFilters={receivedFilters}
+        />
+        <FilterButton
+          filterText={fbt('Yield', 'Tx history filter: Yield')}
+          filterImage="yield_icon.svg"
+          filter="yield"
+          filters={filters}
+          setFilters={setFilters}
+          currentFilters={receivedFilters}
+        />
+      </div>
+    )
+  }
+
   return (
     <>
       <div className="d-flex holder flex-column justify-content-start">
@@ -296,40 +337,8 @@ const TransactionHistory = ({ isMobile }) => {
           <>
             <div className="filters d-flex justify-content-between">
               <p className="title">History</p>
-
-              <div className="d-flex justify-content-start flex-wrap flex-md-nowrap">
-                <FilterButton
-                  filterText={fbt('Received', 'Tx history filter: Received')}
-                  filterImage="received_icon.svg"
-                  filter="transfer_in"
-                  filters={filters}
-                  setFilters={setFilters}
-                  currentFilters={receivedFilters}
-                />
-                <FilterButton
-                  filterText={fbt('Sent', 'Tx history filter: Sent')}
-                  filterImage="sent_icon.svg"
-                  filter="transfer_out"
-                  filters={filters}
-                  setFilters={setFilters}
-                  currentFilters={receivedFilters}
-                />
-                <FilterButton
-                  filterText={fbt('Swap', 'Tx history filter: Swap')}
-                  filterImage="swap_icon.svg"
-                  filter={'swap_oeth'}
-                  filters={filters}
-                  setFilters={setFilters}
-                  currentFilters={receivedFilters}
-                />
-                <FilterButton
-                  filterText={fbt('Yield', 'Tx history filter: Yield')}
-                  filterImage="yield_icon.svg"
-                  filter="yield"
-                  filters={filters}
-                  setFilters={setFilters}
-                  currentFilters={receivedFilters}
-                />
+              <div className="d-none d-md-block">
+                <Filters />
               </div>
               <div className="d-flex">
                 <div
@@ -344,16 +353,22 @@ const TransactionHistory = ({ isMobile }) => {
                 </div>
               </div>
             </div>
+            <div className="d-md-none d-block mobile-filters">
+              <Filters />
+            </div>
             <div
               className={`history-holder ${
                 historyPageQuery.isPreviousData ? 'grey-font' : ''
               }`}
             >
-              <div className="d-flex grey-font border-bt">
-                <div className="col-3 col-md-3 pl-0">
+              <div className="d-flex justify-content-between grey-font border-bt title-row">
+                <div className="col-3 col-md-3 d-none d-md-block">
                   {fbt('Date', 'Transaction history date')}
                 </div>
-                <div className="col-3 col-md-3">
+                <div className="col-3 col-md-3 d-block d-md-none">
+                  Date/Type
+                </div>
+                <div className="col-3 col-md-3 d-none d-md-block">
                   {fbt('Type', 'Transaction history type')}
                 </div>
                 {/* <div className="d-none d-md-flex col-2">
@@ -362,10 +377,10 @@ const TransactionHistory = ({ isMobile }) => {
                 <div className="d-none d-md-flex col-2">
                   {fbt('To', 'Transaction history to account')}
                 </div> */}
-                <div className="col-3 col-md-3 d-flex justify-content-end pr-md-5">
+                <div className="col-3 col-md-3">
                   {fbt('Change', 'Transaction history OETH amount')}
                 </div>
-                <div className="col-3 col-md-3 d-flex justify-content-end pr-md-5">
+                <div className="col-3 col-md-3 oeth-balance">
                   {fbt('OETH Balance', 'Transaction history OETH balance')}
                 </div>
               </div>
@@ -373,10 +388,10 @@ const TransactionHistory = ({ isMobile }) => {
                 return (
                   <div
                     key={`${tx.tx_hash}-${tx.log_index ? tx.log_index : 0}`}
-                    className="d-flex border-bt pb-20 pt-20 history-item"
+                    className="d-flex border-bt history-item"
                   >
                     <div
-                      className="col-3 col-md-3 pl-0"
+                      className="col-3 col-md-3 first-history-item"
                       title={
                         dateformat(
                           Date.parse(tx.time),
@@ -388,10 +403,11 @@ const TransactionHistory = ({ isMobile }) => {
                         Date.parse(tx.time),
                         isMobile ? 'mm/dd/yy' : 'mm/dd/yyyy'
                       ) || ''}
+                      <div>{txTypeMap[tx.type].name}</div>
                     </div>
                     <div
                       title={txTypeMap[tx.type].verboseName}
-                      className="col-3 col-md-3 d-flex"
+                      className="col-3 col-md-3 d-none d-md-block"
                     >
                       {txTypeMap[tx.type].name}
                     </div>
@@ -427,7 +443,7 @@ const TransactionHistory = ({ isMobile }) => {
                     >
                       {tx.to_address ? shortenAddress(tx.to_address) : '-'}
                     </div> */}
-                    <div className="col-3 col-md-3 d-flex justify-content-end pr-md-5">
+                    <div className="col-3 col-md-3">
                       {tx.amount ? (
                         <FormatCurrencyByImportance
                           value={tx.amount}
@@ -439,7 +455,7 @@ const TransactionHistory = ({ isMobile }) => {
                         '-'
                       )}
                     </div>
-                    <div className="col-3 col-md-3 d-flex justify-content-end pr-md-5 relative">
+                    <div className="col-3 col-md-3">
                       {tx.balance ? (
                         <FormatCurrencyByImportance
                           value={tx.balance}
@@ -502,6 +518,29 @@ const TransactionHistory = ({ isMobile }) => {
         )}
       </div>
       <style jsx>{`
+        .oeth-balance {
+        }
+
+        .title-row {
+          padding: 24px 40px;
+          width: 100%;
+        }
+
+        .title-row div {
+          padding: 0;
+          width: 25%;
+        }
+
+        .history-item div {
+          width: 25%;
+          padding: 0;
+        }
+
+        .history-item {
+          padding: 24px 40px;
+          font-size: 14px;
+        }
+
         .holder {
           border-radius: 10px;
           box-shadow: 0 0 14px 0 rgba(0, 0, 0, 0.1);
@@ -512,6 +551,8 @@ const TransactionHistory = ({ isMobile }) => {
         .title {
           font-size: 14px;
           margin: 0;
+          padding: 0;
+          height: 23px;
           color: #fafafb;
         }
 
@@ -521,7 +562,7 @@ const TransactionHistory = ({ isMobile }) => {
 
         .grey-font {
           color: #828699;
-          font-size: 12px;
+          font-size: 14px;
         }
 
         .border-bt {
@@ -540,18 +581,13 @@ const TransactionHistory = ({ isMobile }) => {
           padding-top: 20px;
         }
 
-        .history-item {
-          font-size: 14px;
-        }
-
         .type-icon {
           width: 11px;
         }
 
         .etherscan-link {
-          position: absolute;
-          right: 12px;
-          top: 0;
+          display: inline;
+          margin-left: 10px;
         }
 
         .filters {
@@ -625,20 +661,31 @@ const TransactionHistory = ({ isMobile }) => {
           opacity: 80%;
         }
 
+        .mobile-filters {
+          padding: 16px;
+          border-bottom: solid 1px #141519;
+        }
+
         @media (max-width: 799px) {
+          .grey-font {
+            font-size: 12px;
+          }
+
+          .title-row {
+            padding: 16px;
+          }
+
+          .title-row div {
+            min-width: 33%;
+          }
+
           .holder {
-            margin: 0 20px;
+            margin: 0 8px;
+            border-radius: 4px;
           }
 
           .filters {
-            padding: 20px;
-            padding-bottom: 0;
-          }
-
-          .history-holder {
-            padding-left: 20px;
-            padding-right: 20px;
-            padding-top: 20px;
+            padding: 16px;
           }
 
           .etherscan-link {
@@ -663,11 +710,20 @@ const TransactionHistory = ({ isMobile }) => {
             padding: 20px;
           }
 
+          .history-item {
+            width: 100%;
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+          }
+
+          .history-item div {
+            min-width: 33%;
+          }
+
           .button {
-            min-width: 80px;
-            min-height: 35px;
-            margin-right: 8px;
-            font-size: 14px;
+            padding: 4px 19px;
+            font-size: 12px;
             margin-bottom: 20px;
           }
         }
