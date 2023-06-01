@@ -46,6 +46,8 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     "MockOGV",
     "MockAave",
     "MockRETH",
+    "MockstETH",
+    "MockfrxETH",
   ];
   for (const contract of assetContracts) {
     await deploy(contract, { from: deployerAddr });
@@ -331,6 +333,13 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
       bytecode: QUOTER_BYTECODE,
     },
     args: [factory.address, weth.address],
+  });
+
+  await deploy("MockSwapper", {
+    from: deployerAddr,
+  });
+  await deploy("Mock1InchSwapRouter", {
+    from: deployerAddr,
   });
 
   console.log("000_mock deploy done.");
