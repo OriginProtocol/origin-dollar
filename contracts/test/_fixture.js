@@ -179,6 +179,9 @@ const defaultFixture = deployments.createFixture(async () => {
     oethHarvester,
     oethDripper,
     swapper,
+    mockSwapper,
+    swapper1Inch,
+    mock1InchSwapRouter,
     ConvexEthMetaStrategyProxy,
     ConvexEthMetaStrategy;
 
@@ -386,6 +389,10 @@ const defaultFixture = deployments.createFixture(async () => {
       "FraxETHStrategy",
       fraxEthStrategyProxy.address
     );
+    swapper = await ethers.getContract("MockSwapper");
+    mockSwapper = await ethers.getContract("MockSwapper");
+    swapper1Inch = await ethers.getContract("Swapper1InchV5");
+    mock1InchSwapRouter = await ethers.getContract("Mock1InchSwapRouter");
   }
 
   if (!isFork) {
@@ -526,7 +533,6 @@ const defaultFixture = deployments.createFixture(async () => {
     liquidityRewardOUSD_USDT,
     flipper,
     buyback,
-    swapper,
     wousd,
     //OETH
     oethVault,
@@ -539,6 +545,10 @@ const defaultFixture = deployments.createFixture(async () => {
     ConvexEthMetaStrategy,
     oethDripper,
     oethHarvester,
+    swapper,
+    mockSwapper,
+    swapper1Inch,
+    mock1InchSwapRouter,
   };
 });
 
@@ -606,6 +616,31 @@ async function oethDefaultFixture() {
 function oethDefaultFixtureSetup() {
   return deployments.createFixture(async () => {
     return await oethDefaultFixture();
+  });
+}
+
+function oeth1InchSwapperFixtureSetup() {
+  return deployments.createFixture(async () => {
+    const fixture = await oethDefaultFixture();
+    const { strategist, mock1InchSwapRouter } = fixture;
+
+    const swapRouterAddr = "0x1111111254EEB25477B68fb85Ed929f73A960582";
+    const mockCode = await strategist.provider.getCode(
+      mock1InchSwapRouter.address
+    );
+
+    await hre.network.provider.request({
+      method: "hardhat_setCode",
+      params: [swapRouterAddr, mockCode],
+    });
+
+    const stubbedRouterContract = await hre.ethers.getContractAt(
+      "Mock1InchSwapRouter",
+      swapRouterAddr
+    );
+    fixture.mock1InchSwapRouter = stubbedRouterContract;
+
+    return fixture;
   });
 }
 
@@ -1564,4 +1599,5 @@ module.exports = {
   oethMorphoAaveFixtureSetup,
   mintWETH,
   replaceContractAt,
+  oeth1InchSwapperFixtureSetup,
 };

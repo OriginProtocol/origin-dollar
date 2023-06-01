@@ -169,4 +169,15 @@ contract VaultStorage is Initializable, Governable {
             sstore(position, newImpl)
         }
     }
+
+    /**
+     * @dev Verifies that the caller is the Governor, or Strategist.
+     */
+    modifier onlyGovernorOrStrategist() {
+        require(
+            msg.sender == strategistAddr || isGovernor(),
+            "Caller is not the Strategist or Governor"
+        );
+        _;
+    }
 }
