@@ -93,6 +93,7 @@ forkOnlyDescribe("ForkTest: Vault", function () {
       fromAmount,
       minToAssetAmount,
       slippage,
+      protocols,
     }) => {
       const { oethVault, strategist, swapper } = fixture;
 
@@ -105,6 +106,7 @@ forkOnlyDescribe("ForkTest: Vault", function () {
         toAsset,
         fromAmount,
         slippage,
+        protocols,
       });
 
       // re-encode the 1Inch tx.data from their swap API to the executer data
@@ -220,6 +222,14 @@ forkOnlyDescribe("ForkTest: Vault", function () {
           to: "WETH",
           fromAmount: 10,
           minToAssetAmount: 9.9,
+        },
+        // Use Uniswap V2
+        {
+          from: "WETH",
+          to: "stETH",
+          fromAmount: 1,
+          minToAssetAmount: 0.9,
+          protocols: "UNISWAP_V2",
         },
       ];
       for (const test of tests) {

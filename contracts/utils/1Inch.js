@@ -6,7 +6,7 @@ const log = require("./logger")("utils:1inch");
 
 const ONE_INCH_API = "https://api.1inch.io/v5.0/1/swap";
 const SWAP_SELECTOR = "0x12aa3caf"; // swap(address,(address,address,address,address,uint256,uint256,uint256),bytes,bytes)
-const UNISWAP_SELECTOR = "0x0502b1c5"; // unoswap(address,uint256,uint256,uint256[])
+const UNISWAP_SELECTOR = "0xf78dc253"; // unoswapTo(address,address,uint256,uint256,uint256[])
 const UNISWAPV3_SELECTOR = "0xbc80f1a8"; // uniswapV3SwapTo(address,uint256,uint256,uint256[])
 
 /**
@@ -29,6 +29,8 @@ const recodeSwapData = async (apiEncodedData) => {
       data: apiEncodedData,
     });
 
+    log(`parsed tx ${JSON.stringify(swapTx)}}`);
+
     let encodedData;
     if (swapTx.sighash === SWAP_SELECTOR) {
       // If swap(IAggregationExecutor executor, SwapDescription calldata desc, bytes calldata permit, bytes calldata data)
@@ -36,12 +38,14 @@ const recodeSwapData = async (apiEncodedData) => {
         ["bytes4", "address", "bytes"],
         [swapTx.sighash, swapTx.args[0], swapTx.args[3]]
       );
-    } else if (
-      swapTx.sighash === UNISWAP_SELECTOR ||
-      swapTx.sighash === UNISWAPV3_SELECTOR
-    ) {
-      // If uniswapV3SwapTo(address payable recipient, uint256 amount, uint256 minReturn, uint256[] calldata pools)
-      // or uniswapV3SwapTo(address,uint256,uint256,uint256[])
+    } else if (swapTx.sighash === UNISWAP_SELECTOR) {
+      // If unoswapTo(address,address,uint256,uint256,uint256[])
+      encodedData = defaultAbiCoder.encode(
+        ["bytes4", "uint256[]"],
+        [swapTx.sighash, swapTx.args[4]]
+      );
+    } else if (swapTx.sighash === UNISWAPV3_SELECTOR) {
+      // If uniswapV3SwapTo(address,uint256,uint256,uint256[])
       encodedData = defaultAbiCoder.encode(
         ["bytes4", "uint256[]"],
         [swapTx.sighash, swapTx.args[3]]
@@ -50,16 +54,25 @@ const recodeSwapData = async (apiEncodedData) => {
       throw Error(`Unknown 1Inch tx signature ${swapTx.sighash}`);
     }
 
-    log(`encoded collateral swap data ${encodedData}`);
+    // log(`encoded collateral swap data ${encodedData}`);
 
     return encodedData;
   } catch (err) {
-    throw Error(`Failed to recode 1Inch swap data: ${err.message}`);
+    throw Error(`Failed to recode 1Inch swap data: ${err.message}`, {
+      cause: err,
+    });
   }
 };
 
 /**
  * Gets the tx.data in the response of 1inch's V5 swap API
+ * @param vault The Origin vault contract address. eg OUSD or OETH Vaults
+ * @param fromAsset The address of the asset to swap from.
+ * @param toAsset The address of the asset to swap to.
+ * @param fromAmount The unit amount of fromAsset to swap. eg 1.1 WETH = 1.1e18
+ * @param slippage as a percentage. eg 0.5 is 0.5%
+ * @param protocols The 1Inch liquidity sources as a comma separated list. eg UNISWAP_V1,UNISWAP_V2,SUSHI,CURVE,ONE_INCH_LIMIT_ORDER
+ * See https://api.1inch.io/v5.0/1/liquidity-sources
  */
 const getIInchSwapData = async ({
   vault,
@@ -67,6 +80,7 @@ const getIInchSwapData = async ({
   toAsset,
   fromAmount,
   slippage,
+  protocols,
 }) => {
   const swapper = await ethers.getContract("Swapper1InchV5");
 
@@ -76,9 +90,11 @@ const getIInchSwapData = async ({
     amount: fromAmount.toString(),
     fromAddress: swapper.address,
     destReceiver: vault.address,
-    slippage: slippage ?? 1,
+    slippage: slippage ?? 0.5,
     disableEstimate: true,
     allowPartialFill: false,
+    // add protocols property if it exists
+    ...(protocols && { protocols }),
   };
   log("swap API params: ", params);
 
