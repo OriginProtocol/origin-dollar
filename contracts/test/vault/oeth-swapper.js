@@ -266,7 +266,7 @@ describe("OETH Vault - Swapper", () => {
       const data = utils.defaultAbiCoder.encode(
         ["bytes4", "uint256[]"],
         [
-          utils.arrayify("0x0502b1c5"),
+          utils.arrayify("0xf78dc253"),
           [BigNumber.from("123"), BigNumber.from("456")],
         ]
       );
