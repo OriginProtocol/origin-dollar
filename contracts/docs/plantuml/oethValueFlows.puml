@@ -9,6 +9,7 @@ participant "Zapper" as zap <<Origin>> #DeepSkyBlue
 participant "OETH\nVault" as vault <<Origin>> #DeepSkyBlue
 participant "Harvester" as harv <<Origin>> #DeepSkyBlue
 participant "Dripper" as drip <<Origin>> #DeepSkyBlue
+participant "Swapper" as swapper <<Origin>> #DeepSkyBlue
 
 participant "FRAX\nStrategy" as frxStrat <<Origin>> #DeepSkyBlue
 participant "WETH FRAX\nStrategy" as wethFrxStrat <<Origin>> #DeepSkyBlue
@@ -24,6 +25,7 @@ participant "Rewards\nPool" as cvxRewards <<Convex>>
 participant "Locked CVX" as icvx <<Convex>>
 
 participant "Uniswap V2" as uni <<Uniswap>>
+participant "1Inch\nRouter" as 1r <<1Inch>>
 
 ' Deposit ETH via Zapper
 group User deposit ETH [> 10 OETH]
@@ -230,6 +232,14 @@ trust -> icvx : CVX
 note left : lock CVX for delegated voting power
 icvx -> trust : vlCVX
 
+end
+
+' Swap vault collateral assets
+group Trustee swaps collateral assets [WETH for rETH]
+vault -> swapper : WETH
+note left : swap WETH for rETH
+swapper -> 1r : WETH
+1r -> vault : rETH
 end
 
 @enduml
