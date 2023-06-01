@@ -556,6 +556,49 @@ function oethDefaultFixtureSetup() {
   });
 }
 
+function oethCollateralSwapFixtureSetup() {
+  return deployments.createFixture(async () => {
+    const fixture = await oethDefaultFixture();
+
+    const { weth, reth, stETH, frxETH, matt, strategist, oethVault } = fixture;
+    const zeroAddr = "0x0000000000000000000000000000000000000000";
+
+    for (const token of [weth, reth, stETH, frxETH]) {
+      const defaultStrategy = await oethVault.assetDefaultStrategies(
+        token.address
+      );
+
+      if (defaultStrategy != zeroAddr) {
+        // Set it to null
+        await oethVault
+          .connect(strategist)
+          .setAssetDefaultStrategy(token.address, zeroAddr);
+      }
+
+      await token
+        .connect(matt)
+        .approve(
+          oethVault.address,
+          utils.parseEther("100000000000000000000000000000000000").toString()
+        );
+
+      // Mint some tokens, so it ends up in Vault
+      await oethVault
+        .connect(matt)
+        .mint(token.address, utils.parseEther("25"), "0");
+
+      if (defaultStrategy != zeroAddr) {
+        // Set it back
+        await oethVault
+          .connect(strategist)
+          .setAssetDefaultStrategy(token.address, defaultStrategy);
+      }
+    }
+
+    return fixture;
+  });
+}
+
 function oeth1InchSwapperFixtureSetup() {
   return deployments.createFixture(async () => {
     const fixture = await oethDefaultFixture();
@@ -1534,4 +1577,5 @@ module.exports = {
   mintWETH,
   replaceContractAt,
   oeth1InchSwapperFixtureSetup,
+  oethCollateralSwapFixtureSetup,
 };
