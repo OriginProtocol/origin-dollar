@@ -29,7 +29,7 @@ const recodeSwapData = async (apiEncodedData) => {
       data: apiEncodedData,
     });
 
-    log(`parsed tx ${JSON.stringify(swapTx)}}`);
+    // log(`parsed tx ${JSON.stringify(swapTx)}}`);
 
     let encodedData;
     if (swapTx.sighash === SWAP_SELECTOR) {
@@ -107,7 +107,7 @@ const getIInchSwapData = async ({
 
     log("swap API toTokenAmount: ", formatUnits(response.data.toTokenAmount));
     log("swap API swap paths: ", JSON.stringify(response.data.protocols));
-    log("swap API tx.data: ", response.data.tx.data);
+    // log("swap API tx.data: ", response.data.tx.data);
 
     return response.data.tx.data;
   } catch (err) {
