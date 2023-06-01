@@ -359,6 +359,12 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     from: deployerAddr,
     args: [(await ethers.getContract("MocksfrxETH")).address],
   });
+  await deploy("MockSwapper", {
+    from: deployerAddr,
+  });
+  await deploy("Mock1InchSwapRouter", {
+    from: deployerAddr,
+  });
 
   console.log("000_mock deploy done.");
 
