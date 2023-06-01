@@ -87,6 +87,7 @@ contract Swapper1InchV5 is ISwapper {
             );
         } else if (swapSelector == UNISWAPV3_SELECTOR) {
             // Need to get the Uniswap pools data from the _data param
+            // slither-disable-next-line uninitialized-storage
             (, uint256[] memory pools) = abi.decode(_data, (bytes4, uint256[]));
             toAssetAmount = IOneInchRouter(SWAP_ROUTER).uniswapV3SwapTo(
                 payable(msg.sender),
