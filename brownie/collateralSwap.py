@@ -9,6 +9,8 @@ from world import *
 COINMARKETCAP_API_KEY = os.getenv('CMC_API_KEY')
 OETH_ORACLE_ROUTER_ADDRESS = vault_oeth_admin.priceProvider()
 oeth_oracle_router = load_contract('oracle_router_v2', OETH_ORACLE_ROUTER_ADDRESS)
+# TODO update once deployed
+swapper_address = VAULT_OETH_PROXY_ADDRESS
 
 @contextmanager
 def silent_tx():
@@ -101,7 +103,7 @@ def get_coingecko_quote(from_token, to_token, from_amount):
 def get_1inch_swap(from_token, to_token, from_amount, slippage, allowPartialFill):
     req = requests.get('https://api.1inch.io/v5.0/1/swap', params={
         'fromTokenAddress': from_token,
-        'fromAddress': VAULT_OETH_PROXY_ADDRESS,
+        'fromAddress': swapper_address,
         'toTokenAddress': to_token,
         'amount': str(from_amount),
         'allowPartialFill': allowPartialFill,
@@ -117,6 +119,8 @@ def get_1inch_swap(from_token, to_token, from_amount, slippage, allowPartialFill
 
     result = req.json()
     return int(result['toTokenAmount'])
+
+build_swap_tx(WETH, RETH, 100 * 10**18, 1)
 
 # using oracle router calculate what the expected `toTokenAmount` should be
 # this function fails if Oracle data is too stale    
@@ -139,7 +143,7 @@ def get_oracle_router_quote(from_token, to_token, from_amount):
 #   - slippage -> allowed slippage when swapping expressed in percentage points
 #                 2 = 2%
 #   - partial_fill -> are partial fills allowed
-def build_swap_tx(from_token, to_token, from_amount, slippage, partial_fill = False):
+def build_swap_tx(from_token, to_token, from_amount, slippage):
     if COINMARKETCAP_API_KEY is None:
         raise Exception("Set coinmarketcap api key by setting CMC_API_KEY variable. Free plan key will suffice: https://coinmarketcap.com/api/pricing/")
 
@@ -163,19 +167,11 @@ def build_swap_tx(from_token, to_token, from_amount, slippage, partial_fill = Fa
     print("1Inch to Coingecko Difference:           {:.6f}%".format((quote_1inch - quote_coingecko) / quote_1inch))
     print("Minimum expected amount:                 {:.6f}%".format(min_expected_amount))
 
+    get_1inch_swap(WETH, RETH, 100 * 10**18, 0.5, False)
 
 build_swap_tx(WETH, RETH, 100 * 10**18, 1)
 
 
-
-# TODO
-# - 1inch quote small amounts
-
-build_swap_tx(WETH, RETH, 10**18, 1)
-
-get_1inch_swap(WETH, RETH, 10**18, 1, False)
-get_coingecko_quote(WETH, RETH)
-get_cmc_quote(WETH, RETH, 10**18)
 
 
 
