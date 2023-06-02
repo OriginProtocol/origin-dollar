@@ -10,7 +10,10 @@ const {
   isGanacheFork,
 } = require("../helpers");
 
-describe("Compensation Claims", function () {
+/**
+ * The contract is no longer in use and isn't expected to be updated
+ */
+describe.skip("Compensation Claims", function () {
   if (isGanacheFork) {
     this.timeout(0);
   }

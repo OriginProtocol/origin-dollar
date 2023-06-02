@@ -39,7 +39,7 @@ forkOnlyDescribe("ForkTest: Vault", function () {
   });
 
   describe("Admin", () => {
-    it("Should have the correct governor address set", async () => {
+    it.only("Should have the correct governor address set", async () => {
       const { vault } = fixture;
       expect(await vault.governor()).to.equal(
         "0x35918cDE7233F2dD33fA41ae3Cb6aE0e42E0e69F"

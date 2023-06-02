@@ -1,4 +1,4 @@
-name: OUSD
+name: DeFi
 on: 
   pull_request:
     types: [opened, reopened]
@@ -48,8 +48,14 @@ jobs:
       - run: yarn install --frozen-lockfile
         working-directory: ./contracts
 
-      - run: yarn run test
+      - name: Run Tests
+        run: yarn run test:coverage
         working-directory: ./contracts
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: unit-test-coverage-${{ github.head_ref }}-${{ github.sha }}
+          path: ./coverage.json
 
   contracts-forktest:
     name: "Contracts Fork Tests"
@@ -78,11 +84,35 @@ jobs:
       - run: yarn install --frozen-lockfile
         working-directory: ./contracts
 
-      - run: yarn run test:fork
+      - run: yarn run test:coverage:fork
         working-directory: ./contracts
 
+      - uses: actions/upload-artifact@v3
+        with:
+          name: fork-test-coverage-${{ github.head_ref }}-${{ github.sha }}
+          path: ./coverage.json
+
+  coverage-uploader:
+    name: "Upload Coverage Reports"
+    runs-on: ubuntu-latest
+    needs:
+      - contracts-test
+      - contracts-forktest
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: fork-test-coverage-${{ github.head_ref }}-${{ github.sha }}
+          path: ./fork-coverage
+      - uses: actions/download-artifact@v3
+        with:
+          name: unit-test-coverage-${{ github.head_ref }}-${{ github.sha }}
+          path: ./unit-coverage
+      - uses: codecov/codecov-action@v3
+        with:
+          files: ./fork-coverage/coverage.json,./unit-coverage/coverage.json
+
   dapp-lint:
-    name: "DApp Linter"
+    name: "OUSD DApp Linter"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3

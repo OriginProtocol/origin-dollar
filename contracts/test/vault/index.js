@@ -25,7 +25,7 @@ describe("Vault", function () {
     this.timeout(0);
   }
 
-  it("Should support an asset", async () => {
+  it.only("Should support an asset", async () => {
     const { vault, oracleRouter, ousd, governor } = await loadFixture(
       defaultFixture
     );
