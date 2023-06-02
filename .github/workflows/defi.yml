@@ -55,7 +55,7 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           name: unit-test-coverage-${{ github.head_ref }}-${{ github.sha }}
-          path: ./coverage.json
+          path: ./contracts/coverage.json
 
   contracts-forktest:
     name: "Contracts Fork Tests"
@@ -90,7 +90,7 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           name: fork-test-coverage-${{ github.head_ref }}-${{ github.sha }}
-          path: ./coverage.json
+          path: ./contracts/coverage.json
 
   coverage-uploader:
     name: "Upload Coverage Reports"
