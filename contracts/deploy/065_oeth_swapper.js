@@ -1,7 +1,7 @@
 const { deploymentWithProposal } = require("../utils/deploy");
 
 module.exports = deploymentWithProposal(
-  { deployName: "064_oeth_swapper", forceDeploy: false, reduceQueueTime: true },
+  { deployName: "065_oeth_swapper", forceDeploy: false, reduceQueueTime: true },
   async ({ assetAddresses, deployWithConfirmation, withConfirmation }) => {
     // Deployer Actions
     // ----------------
