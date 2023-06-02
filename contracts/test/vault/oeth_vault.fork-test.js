@@ -164,6 +164,44 @@ forkOnlyDescribe("ForkTest: Vault", function () {
         minToAssetAmount
       );
     };
+    const assertFailedSwap = async ({
+      fromAsset,
+      toAsset,
+      fromAmount,
+      minToAssetAmount,
+      slippage,
+      protocols,
+      error,
+    }) => {
+      const { oethVault, strategist } = fixture;
+
+      fromAmount = parseUnits(fromAmount.toString(), 18);
+      minToAssetAmount = parseUnits(minToAssetAmount.toString(), 18);
+
+      const apiEncodedData = await getIInchSwapData({
+        vault: oethVault,
+        fromAsset,
+        toAsset,
+        fromAmount,
+        slippage,
+        protocols,
+      });
+
+      // re-encode the 1Inch tx.data from their swap API to the executer data
+      const swapData = await recodeSwapData(apiEncodedData);
+
+      const tx = oethVault
+        .connect(strategist)
+        .swapCollateral(
+          fromAsset.address,
+          toAsset.address,
+          fromAmount,
+          minToAssetAmount,
+          swapData
+        );
+
+      await expect(tx).to.be.revertedWith(error);
+    };
 
     describe("Collateral swaps", async () => {
       beforeEach(async () => {
@@ -306,6 +344,89 @@ forkOnlyDescribe("ForkTest: Vault", function () {
           const fromAsset = await resolveAsset(test.from);
           const toAsset = await resolveAsset(test.to);
           await assertSwap({
+            ...test,
+            fromAsset,
+            toAsset,
+          });
+        });
+      }
+    });
+
+    describe("Collateral swaps", async () => {
+      beforeEach(async () => {
+        fixture = await collateralSwapFixture();
+      });
+
+      const tests = [
+        {
+          error: "",
+          from: "WETH",
+          to: "frxETH",
+          fromAmount: 100,
+          minToAssetAmount: 105,
+        },
+        {
+          error: "",
+          from: "WETH",
+          to: "stETH",
+          fromAmount: 100,
+          minToAssetAmount: 90,
+          protocols: "UNISWAP_V3",
+        },
+        {
+          error: "Oracle slippage limit exceeded",
+          from: "WETH",
+          to: "stETH",
+          fromAmount: 100,
+          minToAssetAmount: 90,
+          protocols: "UNISWAP_V2",
+        },
+        {
+          error: "To asset is not supported",
+          from: "WETH",
+          to: "USDT",
+          fromAmount: 20,
+          minToAssetAmount: 1,
+        },
+        {
+          error: "ERC20: transfer amount exceeds balance",
+          from: "frxETH",
+          to: "WETH",
+          fromAmount: 1000,
+          minToAssetAmount: 990,
+        },
+        {
+          error: "SafeERC20: low-level call failed",
+          from: "WETH",
+          to: "frxETH",
+          fromAmount: 3000,
+          minToAssetAmount: 2990,
+        },
+        {
+          error: "BALANCE_EXCEEDED",
+          from: "stETH",
+          to: "WETH",
+          fromAmount: 1000,
+          minToAssetAmount: 990,
+        },
+        {
+          error: "ERC20: transfer amount exceeds balance",
+          from: "rETH",
+          to: "WETH",
+          fromAmount: 1000,
+          minToAssetAmount: 990,
+        },
+      ];
+
+      for (const test of tests) {
+        it(`should fail to swap ${test.fromAmount} ${test.from} for ${
+          test.to
+        } using ${test.protocols || "all"} protocols: error ${
+          test.error
+        }`, async () => {
+          const fromAsset = await resolveAsset(test.from);
+          const toAsset = await resolveAsset(test.to);
+          await assertFailedSwap({
             ...test,
             fromAsset,
             toAsset,
