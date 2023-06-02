@@ -9,8 +9,7 @@ from world import *
 COINMARKETCAP_API_KEY = os.getenv('CMC_API_KEY')
 OETH_ORACLE_ROUTER_ADDRESS = vault_oeth_admin.priceProvider()
 oeth_oracle_router = load_contract('oracle_router_v2', OETH_ORACLE_ROUTER_ADDRESS)
-# TODO update once deployed
-swapper_address = VAULT_OETH_PROXY_ADDRESS
+swapper_address = SWAPPER_1INCH
 
 @contextmanager
 def silent_tx():
@@ -107,7 +106,7 @@ def get_1inch_swap(from_token, to_token, from_amount, slippage, allowPartialFill
         'toTokenAddress': to_token,
         'amount': str(from_amount),
         'allowPartialFill': allowPartialFill,
-        'disableEstimate': True,
+        'disableEstimate': 'true',
         'slippage': slippage
     }, headers={
         'accept': 'application/json'
@@ -118,9 +117,7 @@ def get_1inch_swap(from_token, to_token, from_amount, slippage, allowPartialFill
         raise Exception("Error calling 1inch api")
 
     result = req.json()
-    return int(result['toTokenAmount'])
-
-build_swap_tx(WETH, RETH, 100 * 10**18, 1)
+    print("RESULT", result)
 
 # using oracle router calculate what the expected `toTokenAmount` should be
 # this function fails if Oracle data is too stale    
