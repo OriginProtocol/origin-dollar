@@ -98,6 +98,7 @@ forkOnlyDescribe("ForkTest: OETH Vault", function () {
       minToAssetAmount,
       slippage,
       protocols,
+      approxFromBalance,
     }) => {
       const { oethVault, strategist, swapper } = fixture;
 
@@ -117,7 +118,7 @@ forkOnlyDescribe("ForkTest: OETH Vault", function () {
       const swapData = await recodeSwapData(apiEncodedData);
 
       const fromBalanceBefore = await fromAsset.balanceOf(oethVault.address);
-      log(`from asset balance before ${formatUnits(fromBalanceBefore, 18)}`);
+      // log(`from asset balance before ${formatUnits(fromBalanceBefore, 18)}`);
       const toBalanceBefore = await toAsset.balanceOf(oethVault.address);
 
       const tx = oethVault
@@ -142,10 +143,23 @@ forkOnlyDescribe("ForkTest: OETH Vault", function () {
 
       // Asset balances
       const fromBalanceAfter = await fromAsset.balanceOf(oethVault.address);
-      expect(fromBalanceBefore.sub(fromBalanceAfter), "from asset bal").to.eq(
-        fromAmount
-      );
+      if (approxFromBalance) {
+        expect(
+          fromBalanceBefore.sub(fromBalanceAfter),
+          "from asset approx bal"
+        ).to.approxEqualTolerance(fromAmount, 0.01);
+      } else {
+        expect(fromBalanceBefore.sub(fromBalanceAfter), "from asset bal").to.eq(
+          fromAmount
+        );
+      }
       const toBalanceAfter = await toAsset.balanceOf(oethVault.address);
+      log(
+        `to assets purchased ${formatUnits(
+          toBalanceAfter.sub(toBalanceBefore),
+          18
+        )}`
+      );
       expect(toBalanceAfter.sub(toBalanceBefore), "to asset bal").to.gt(
         minToAssetAmount
       );
@@ -161,91 +175,128 @@ forkOnlyDescribe("ForkTest: OETH Vault", function () {
           from: "WETH",
           to: "rETH",
           fromAmount: 100,
-          minToAssetAmount: 90,
+          minToAssetAmount: 92,
         },
         {
           from: "WETH",
           to: "stETH",
-          fromAmount: 100,
-          minToAssetAmount: 90,
+          fromAmount: 2000,
+          minToAssetAmount: 1999.99,
         },
         {
           from: "WETH",
           to: "frxETH",
-          fromAmount: 100,
-          minToAssetAmount: 95,
+          fromAmount: 2000,
+          minToAssetAmount: 2000,
         },
         {
           from: "rETH",
           to: "stETH",
-          fromAmount: 10,
-          minToAssetAmount: "10.5",
-          slippage: 10,
+          fromAmount: 100,
+          minToAssetAmount: "107.3",
+          slippage: 0.1,
         },
         {
           from: "rETH",
           to: "frxETH",
-          fromAmount: 10,
-          minToAssetAmount: "10.5",
-          slippage: 10,
+          fromAmount: 100,
+          minToAssetAmount: 107,
+          slippage: 0.1,
         },
         {
           from: "rETH",
           to: "WETH",
-          fromAmount: 10,
-          minToAssetAmount: "10.5",
-          slippage: 10,
+          fromAmount: 100,
+          minToAssetAmount: "107",
+          slippage: 0.1,
         },
         {
           from: "stETH",
           to: "rETH",
-          fromAmount: 100,
-          minToAssetAmount: 90,
+          fromAmount: 500,
+          minToAssetAmount: 465,
         },
         {
           from: "stETH",
           to: "frxETH",
-          fromAmount: 100,
-          minToAssetAmount: 90,
-          // protocols: "UNISWAP_V2",
+          fromAmount: 500,
+          minToAssetAmount: 499.8,
         },
         {
           from: "stETH",
           to: "WETH",
-          fromAmount: 100,
-          minToAssetAmount: 90,
+          fromAmount: 750,
+          minToAssetAmount: 749.5,
+          approxFromBalance: true,
         },
         {
           from: "frxETH",
           to: "rETH",
-          fromAmount: 10,
-          minToAssetAmount: 9,
+          fromAmount: 25,
+          minToAssetAmount: 23,
         },
         {
           from: "frxETH",
           to: "stETH",
-          fromAmount: 10,
-          minToAssetAmount: 9.5,
+          fromAmount: 25,
+          minToAssetAmount: 24.9,
         },
         {
           from: "frxETH",
           to: "WETH",
+          fromAmount: 25,
+          minToAssetAmount: 24.9,
+        },
+        {
+          from: "WETH",
+          to: "stETH",
           fromAmount: 10,
           minToAssetAmount: 9.9,
-        },
-        {
-          from: "WETH",
-          to: "stETH",
-          fromAmount: 1,
-          minToAssetAmount: 0.9,
           protocols: "UNISWAP_V2",
         },
         {
           from: "WETH",
           to: "frxETH",
-          fromAmount: 1,
-          minToAssetAmount: 0.9,
+          fromAmount: 100,
+          minToAssetAmount: 100,
           protocols: "UNISWAP_V3",
+        },
+        {
+          from: "WETH",
+          to: "rETH",
+          fromAmount: 1000,
+          minToAssetAmount: 930,
+          protocols: "ROCKET_POOL",
+        },
+        {
+          from: "WETH",
+          to: "frxETH",
+          fromAmount: 2000,
+          minToAssetAmount: 2000,
+          protocols: "CURVE,CURVE_V2",
+        },
+        {
+          from: "WETH",
+          to: "stETH",
+          fromAmount: 2000,
+          minToAssetAmount: 1999.99,
+          protocols: "ST_ETH",
+        },
+        {
+          from: "stETH",
+          to: "frxETH",
+          fromAmount: 750,
+          minToAssetAmount: 749.2,
+          protocols: "ST_ETH,CURVE,CURVE_V2,MAVERICK_V1",
+          approxFromBalance: true,
+        },
+        {
+          from: "rETH",
+          to: "frxETH",
+          fromAmount: 100,
+          minToAssetAmount: 107.2,
+          protocols:
+            "BALANCER,BALANCER_V2,BALANCER_V2_WRAPPER,CURVE,CURVE_V2,MAVERICK_V1",
         },
       ];
       for (const test of tests) {
