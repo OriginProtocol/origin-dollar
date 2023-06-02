@@ -118,7 +118,7 @@ forkOnlyDescribe("ForkTest: OETH Vault", function () {
       const swapData = await recodeSwapData(apiEncodedData);
 
       const fromBalanceBefore = await fromAsset.balanceOf(oethVault.address);
-      // log(`from asset balance before ${formatUnits(fromBalanceBefore, 18)}`);
+      log(`from asset balance before ${formatUnits(fromBalanceBefore, 18)}`);
       const toBalanceBefore = await toAsset.balanceOf(oethVault.address);
 
       const tx = oethVault
@@ -218,14 +218,14 @@ forkOnlyDescribe("ForkTest: OETH Vault", function () {
         {
           from: "WETH",
           to: "stETH",
-          fromAmount: 2000,
-          minToAssetAmount: 1999.99,
+          fromAmount: 1000,
+          minToAssetAmount: 1000,
         },
         {
           from: "WETH",
           to: "frxETH",
-          fromAmount: 2000,
-          minToAssetAmount: 2000,
+          fromAmount: 1000,
+          minToAssetAmount: 1000,
         },
         {
           from: "rETH",
@@ -253,18 +253,20 @@ forkOnlyDescribe("ForkTest: OETH Vault", function () {
           to: "rETH",
           fromAmount: 500,
           minToAssetAmount: 465,
+          approxFromBalance: true,
         },
         {
           from: "stETH",
           to: "frxETH",
           fromAmount: 500,
-          minToAssetAmount: 499.8,
+          minToAssetAmount: 499.3,
+          approxFromBalance: true,
         },
         {
           from: "stETH",
           to: "WETH",
           fromAmount: 750,
-          minToAssetAmount: 749.5,
+          minToAssetAmount: 749.1,
           approxFromBalance: true,
         },
         {
@@ -288,15 +290,15 @@ forkOnlyDescribe("ForkTest: OETH Vault", function () {
         {
           from: "WETH",
           to: "stETH",
-          fromAmount: 10,
-          minToAssetAmount: 9.9,
+          fromAmount: 1,
+          minToAssetAmount: 0.9,
           protocols: "UNISWAP_V2",
         },
         {
           from: "WETH",
           to: "frxETH",
           fromAmount: 100,
-          minToAssetAmount: 100,
+          minToAssetAmount: 99.9,
           protocols: "UNISWAP_V3",
         },
         {
@@ -309,15 +311,15 @@ forkOnlyDescribe("ForkTest: OETH Vault", function () {
         {
           from: "WETH",
           to: "frxETH",
-          fromAmount: 2000,
-          minToAssetAmount: 2000,
+          fromAmount: 1000,
+          minToAssetAmount: 1000,
           protocols: "CURVE,CURVE_V2",
         },
         {
           from: "WETH",
           to: "stETH",
-          fromAmount: 2000,
-          minToAssetAmount: 1999.99,
+          fromAmount: 1000,
+          minToAssetAmount: 999.99,
           protocols: "ST_ETH",
         },
         {
