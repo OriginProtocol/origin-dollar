@@ -99,17 +99,20 @@ jobs:
       - contracts-test
       - contracts-forktest
     steps:
-      - uses: actions/download-artifact@v3
-        with:
-          name: fork-test-coverage-${{ github.head_ref }}-${{ github.sha }}
-          path: ./fork-coverage
+      # - uses: actions/download-artifact@v3
+      #   with:
+      #     name: fork-test-coverage-${{ github.head_ref }}-${{ github.sha }}
+      #     path: ./fork-coverage
       - uses: actions/download-artifact@v3
         with:
           name: unit-test-coverage-${{ github.head_ref }}-${{ github.sha }}
           path: ./unit-coverage
+      # - uses: codecov/codecov-action@v3
+      #   with:
+      #     files: ./fork-coverage/coverage.json,./unit-coverage/coverage.json
       - uses: codecov/codecov-action@v3
         with:
-          files: ./fork-coverage/coverage.json,./unit-coverage/coverage.json
+          files: ./unit-coverage/coverage.json
 
   dapp-lint:
     name: "OUSD DApp Linter"
