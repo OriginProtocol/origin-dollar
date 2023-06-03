@@ -97,7 +97,7 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - contracts-test
-      - contracts-forktest
+      # - contracts-forktest
     steps:
       # - uses: actions/download-artifact@v3
       #   with:
