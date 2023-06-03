@@ -15,7 +15,7 @@ const log = require("../../utils/logger")("test:fork:oeth:vault");
 const defaultFixture = oethDefaultFixtureSetup();
 const collateralSwapFixture = oethCollateralSwapFixtureSetup();
 
-forkOnlyDescribe("ForkTest: Vault", function () {
+forkOnlyDescribe("ForkTest: OETH Vault", function () {
   this.timeout(0);
   // due to hardhat forked mode timeouts - retry failed tests up to 3 times
   // this.retries(3);

@@ -52,12 +52,15 @@ jobs:
         run: yarn run test:coverage
         working-directory: ./contracts
 
-      # - uses: actions/upload-artifact@v3
-      #   with:
-      #     name: unit-test-coverage-${{ github.head_ref }}-${{ github.sha }}
-      #     path: ./contracts/coverage.json
+      - uses: actions/upload-artifact@v3
+        with:
+          name: unit-test-coverage-${{ github.head_ref }}-${{ github.sha }}
+          path: | 
+            ./contracts/coverage.json
+            ./contracts/coverage/**/*
+          retention-days: 1
 
-      - uses: codecov/codecov-action@v3
+      # - uses: codecov/codecov-action@v3
 
   contracts-forktest:
     name: "Contracts Fork Tests"
@@ -92,29 +95,28 @@ jobs:
       # - uses: actions/upload-artifact@v3
       #   with:
       #     name: fork-test-coverage-${{ github.head_ref }}-${{ github.sha }}
-      #     path: ./contracts/coverage.json
+      #     path: | 
+      #       ./contracts/coverage.json
+      #       ./contracts/coverage/**/*
+      #     retention-days: 1
 
-  # coverage-uploader:
-  #   name: "Upload Coverage Reports"
-  #   runs-on: ubuntu-latest
-  #   needs:
-  #     - contracts-test
-  #     # - contracts-forktest
-  #   steps:
-  #     # - uses: actions/download-artifact@v3
-  #     #   with:
-  #     #     name: fork-test-coverage-${{ github.head_ref }}-${{ github.sha }}
-  #     #     path: ./fork-coverage
-  #     - uses: actions/download-artifact@v3
-  #       with:
-  #         name: unit-test-coverage-${{ github.head_ref }}-${{ github.sha }}
-  #         path: ./unit-coverage
-  #     # - uses: codecov/codecov-action@v3
-  #     #   with:
-  #     #     files: ./fork-coverage/coverage.json,./unit-coverage/coverage.json
-  #     - uses: codecov/codecov-action@v3
-  #       with:
-  #         files: ./unit-coverage/coverage.json
+  coverage-uploader:
+    name: "Upload Coverage Reports"
+    runs-on: ubuntu-latest
+    needs:
+      - contracts-test
+      # - contracts-forktest
+    steps:
+      # - uses: actions/download-artifact@v3
+      #   with:
+      #     name: fork-test-coverage-${{ github.head_ref }}-${{ github.sha }}
+      #     path: ./fork-coverage
+      - uses: actions/download-artifact@v3
+        with:
+          name: unit-test-coverage-${{ github.head_ref }}-${{ github.sha }}
+          path: ./unit-coverage
+
+      - uses: codecov/codecov-action@v3
 
   dapp-lint:
     name: "OUSD DApp Linter"
