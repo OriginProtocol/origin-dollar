@@ -66,6 +66,7 @@ for idx, item in enumerate(txs):
   print("To: ", item.receiver)
   print("Data (Hex encoded): ", item.input, "\n")
 
+
 # --------------------------------
 # June 2, 2023 - OUSD Aave Withdraw all
 # --------------------------------
@@ -73,15 +74,36 @@ for idx, item in enumerate(txs):
 from addresses import *
 from world import *
 from allocations import *
-from ape_safe import ApeSafe
 
-with TemporaryForkWithVaultStats(votes):
-    txs = []
+txs = []
+with TemporaryFork():
     txs.extend(auto_take_snapshot())
 
     txs.append(world.vault_admin.withdrawAllFromStrategy(MORPHO_AAVE_STRAT, {"from": world.STRATEGIST}))
 
     txs.extend(auto_check_snapshot())
+    
+print("Est Gas Max: {:,}".format(1.10*sum([x.gas_used for x in txs])))
+
+print("Schedule the following transactions on Gnosis Safe")
+for idx, item in enumerate(txs):
+  print("Transaction ", idx)
+  print("To: ", item.receiver)
+  print("Data (Hex encoded): ", item.input, "\n")
+
+
+
+# --------------------------------
+# June 2, 2023 - OUSD set vault buffer to 100%
+# --------------------------------
+
+from addresses import *
+from world import *
+from allocations import *
+
+txs = []
+with TemporaryFork():
+    txs.append(world.vault_admin.setVaultBuffer(10**18, {"from": world.STRATEGIST}))
     
 print("Est Gas Max: {:,}".format(1.10*sum([x.gas_used for x in txs])))
 
