@@ -11,6 +11,7 @@ COINMARKETCAP_API_KEY = os.getenv('CMC_API_KEY')
 OETH_ORACLE_ROUTER_ADDRESS = vault_oeth_admin.priceProvider()
 oeth_oracle_router = load_contract('oracle_router_v2', OETH_ORACLE_ROUTER_ADDRESS)
 swapper_address = SWAPPER_1INCH
+vault_core_w_swap_collateral = load_contract('vault_core_w_swap_collateral', VAULT_PROXY_ADDRESS)
 
 @contextmanager
 def silent_tx():
@@ -128,7 +129,7 @@ def get_1inch_swap(from_token, to_token, from_amount, slippage, allowPartialFill
     input_decoded = router_1inch.decode_input(result['tx']['data'])
     print("input_decoded", input_decoded)
 
-    data = '';
+    data = ''
     # Swap selector
     if result['tx']['data'].startswith(SWAP_SELECTOR):
         data += SWAP_SELECTOR + eth_abi.encode_abi(['address', 'bytes'], [input_decoded[1][0], input_decoded[1][3]]).hex()
@@ -139,8 +140,16 @@ def get_1inch_swap(from_token, to_token, from_amount, slippage, allowPartialFill
     else: 
         raise Exception("Unrecognised 1inch swap selector")
 
+    
+    swap_collateral_data = vault_core_w_swap_collateral.swapCollateral.encode_input(
+        result['fromToken']['address'],
+        result['toToken']['address'],
+        result['fromTokenAmount'],
+        result['toTokenAmount'], # TODO needs to be min amount with slippage
+        data
+    )
 
-    print("data", data)
+    print("swap_collateral_data", swap_collateral_data)
 
 build_swap_tx(WETH, RETH, 100 * 10**18, 1)
 
