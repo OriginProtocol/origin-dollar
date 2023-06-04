@@ -3,6 +3,7 @@ from contextlib import redirect_stdout, contextmanager
 import os
 import io
 import requests
+import eth_abi
 
 from world import *
 
@@ -100,6 +101,12 @@ def get_coingecko_quote(from_token, to_token, from_amount):
     return get_price(from_token, True) * get_price(to_token, False) / 1e18 * from_amount / 1e18
 
 def get_1inch_swap(from_token, to_token, from_amount, slippage, allowPartialFill):
+    router_1inch = load_contract('router_1inch_v5', ROUTER_1INCH_V5)
+    SWAP_SELECTOR = "0x12aa3caf" #swap(address,(address,address,address,address,uint256,uint256,uint256),bytes,bytes)
+    UNISWAP_SELECTOR = "0x0502b1c5" #unoswap(address,uint256,uint256,uint256[])
+    UNISWAPV3_SELECTOR = "0xbc80f1a8" #uniswapV3SwapTo(address,uint256,uint256,uint256[])
+
+
     req = requests.get('https://api.1inch.io/v5.0/1/swap', params={
         'fromTokenAddress': from_token,
         'fromAddress': swapper_address,
@@ -118,6 +125,24 @@ def get_1inch_swap(from_token, to_token, from_amount, slippage, allowPartialFill
 
     result = req.json()
     print("RESULT", result)
+    input_decoded = router_1inch.decode_input(result['tx']['data'])
+    print("input_decoded", input_decoded)
+
+    data = '';
+    # Swap selector
+    if result['tx']['data'].startswith(SWAP_SELECTOR):
+        data += SWAP_SELECTOR + eth_abi.encode_abi(['address', 'bytes'], [input_decoded[1][0], input_decoded[1][3]]).hex()
+    elif result['tx']['data'].startswith(UNISWAP_SELECTOR):
+        data += UNISWAP_SELECTOR + eth_abi.encode_abi(['uint256[]'], [input_decoded[1][3]]).hex()
+    elif result['tx']['data'].startswith(UNISWAPV3_SELECTOR):
+        data += UNISWAPV3_SELECTOR + eth_abi.encode_abi(['uint256[]'], [input_decoded[1][3]]).hex()
+    else: 
+        raise Exception("Unrecognised 1inch swap selector")
+
+
+    print("data", data)
+
+build_swap_tx(WETH, RETH, 100 * 10**18, 1)
 
 # using oracle router calculate what the expected `toTokenAmount` should be
 # this function fails if Oracle data is too stale    
