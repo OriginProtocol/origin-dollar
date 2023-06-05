@@ -41,8 +41,7 @@ const FilterButton = ({
         <span className="status-circle"></span>
       </div>
       <style jsx>{`
-        .button,
-        .button.selected:hover {
+        .button {
           color: #828699;
           border-radius: 56px;
           margin-right: 10px;
@@ -57,10 +56,6 @@ const FilterButton = ({
           color: #edf2f5;
         }
 
-        .button:hover {
-          color: #edf2f5;
-        }
-
         .status-circle {
           width: 8px;
           height: 8px;
@@ -68,12 +63,7 @@ const FilterButton = ({
           background: #1e1f25;
         }
 
-        .button.selected:hover .status-circle {
-          background: #1e1f25;
-        }
-
-        .button.selected .status-circle,
-        .button:hover .status-circle {
+        .button.selected .status-circle {
           background: linear-gradient(90deg, #b361e6 -28.99%, #6a36fc 144.97%);
         }
 
@@ -372,7 +362,9 @@ const TransactionHistory = ({ isMobile }) => {
               </div>
               <div className="d-flex">
                 <div
-                  className="button d-flex align-items-center justify-content-center mb-auto"
+                  className={`button d-flex align-items-center justify-content-center mb-auto ${
+                    !overrideAccount && !active ? 'disabled' : ''
+                  }`}
                   onClick={() => {
                     historyQuery.refetch()
                   }}
@@ -435,7 +427,7 @@ const TransactionHistory = ({ isMobile }) => {
                             Date.parse(tx.time),
                             isMobile ? 'mm/dd/yy' : 'mm/dd/yyyy'
                           ) || ''}
-                          <div className="d-block d-md-none">
+                          <div className="type d-block d-md-none">
                             {txTypeMap[tx.type].name}
                           </div>
                         </div>
@@ -572,6 +564,11 @@ const TransactionHistory = ({ isMobile }) => {
         )}
       </div>
       <style jsx>{`
+        .disabled {
+          cursor: not-allowed !important;
+          color: #828699 !important;
+        }
+
         .connect-text {
           font-size: 14px;
           line-height: 23px;
@@ -645,8 +642,14 @@ const TransactionHistory = ({ isMobile }) => {
         }
 
         .etherscan-link {
-          display: inline;
-          margin-left: 10px;
+          position: absolute;
+          width: fit-content !important;
+          right: 0;
+          top: 0;
+        }
+
+        .etherscan-link a {
+          padding: 2px;
         }
 
         .filters {
@@ -757,9 +760,8 @@ const TransactionHistory = ({ isMobile }) => {
           }
 
           .etherscan-link {
-            position: absolute;
-            right: -4px;
-            top: 0;
+            min-width: 0 !important;
+            margin-left: 10px;
           }
 
           .page-skip {
@@ -783,6 +785,12 @@ const TransactionHistory = ({ isMobile }) => {
             padding: 16px;
             display: flex;
             justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+          }
+
+          .history-item .type {
+            font-size: 11px;
           }
 
           .history-item div {
