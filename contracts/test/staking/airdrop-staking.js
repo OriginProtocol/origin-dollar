@@ -6,7 +6,10 @@ const { advanceTime, loadFixture, isFork } = require("../helpers");
 const day = 24 * 60 * 60;
 const year = 360 * day;
 
-describe("Airdropped Staking", function () {
+/**
+ * The contract is no longer in use and isn't expected to be updated
+ */
+describe.skip("Airdropped Staking", function () {
   if (isFork) {
     this.timeout(0);
   }

@@ -75,3 +75,5 @@ contracts/.last_confs
 # Coverage #
 coverage
 coverage.json
+fork-coverage
+unit-coverage

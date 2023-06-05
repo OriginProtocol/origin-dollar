@@ -7,8 +7,6 @@ const { fundAccounts } = require("../utils/funding");
 const { getAssetAddresses, daiUnits, isFork } = require("./helpers");
 const { utils } = require("ethers");
 
-const { airDropPayouts } = require("../scripts/staking/airDrop.js");
-const testPayouts = require("../scripts/staking/rawAccountsToBeCompensated.json");
 const { loadFixture, getOracleAddresses } = require("./helpers");
 
 const daiAbi = require("./abi/dai.json").abi;
@@ -104,27 +102,7 @@ async function defaultFixture() {
     aaveStrategyProxy.address
   );
 
-  const ognStaking = await ethers.getContractAt(
-    "SingleAssetStaking",
-    (
-      await ethers.getContract("OGNStakingProxy")
-    ).address
-  );
-
   const oracleRouter = await ethers.getContract("OracleRouter");
-
-  const testPayoutsModified = {
-    ...testPayouts,
-    payouts: testPayouts.payouts.map((each) => {
-      return { address: each[0], ogn_compensation: each[1] };
-    }),
-  };
-
-  const signedPayouts = await airDropPayouts(
-    ognStaking.address,
-    testPayoutsModified
-  );
-  const compensationClaims = await ethers.getContract("CompensationClaims");
 
   const buybackProxy = await ethers.getContract("BuybackProxy");
   const buyback = await ethers.getContractAt("Buyback", buybackProxy.address);
@@ -517,9 +495,6 @@ async function defaultFixture() {
     stkAave,
     uniswapPairOUSD_USDT,
     liquidityRewardOUSD_USDT,
-    ognStaking,
-    signedPayouts,
-    compensationClaims,
     flipper,
     buyback,
     wousd,

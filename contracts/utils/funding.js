@@ -135,7 +135,9 @@ const fundAccounts = async () => {
           .transfer(
             address,
             utils.parseUnits(
-              tokenContract in ousdCoins ? "1000000" : "200",
+              ousdCoins.find((x) => x.address == tokenContract.address)
+                ? "1000000"
+                : "200",
               await tokenContract.decimals()
             )
           );
