@@ -366,7 +366,7 @@ const TransactionHistory = ({ isMobile }) => {
                     !overrideAccount && !active ? 'disabled' : ''
                   }`}
                   onClick={() => {
-                    historyQuery.refetch()
+                    !overrideAccount && !active ? null : historyQuery.refetch()
                   }}
                 >
                   {historyQuery.isLoading || historyQuery.isRefetching
