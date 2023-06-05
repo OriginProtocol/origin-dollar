@@ -8,6 +8,8 @@ object "OETHZapper" as zap <<Origin>> #DeepSkyBlue {
 object "OETHDripper" as drip <<Origin>><<Proxy>> #DeepSkyBlue {
 }
 
+object "OETHVaultValueChecker" as checker <<Origin>> #DeepSkyBlue {
+}
 
 object "WOETH" as woeth <<Origin>><<Proxy>> #DeepSkyBlue {
     asset: OETH
@@ -20,10 +22,14 @@ object "OETH" as oeth <<Origin>><<Proxy>> #DeepSkyBlue {
     name: Origin Ether
 }
 
-object "OETHVaultCore" as oethv <<Origin>><<Proxy>> #DeepSkyBlue {
+object "OETH Vault" as oethv <<Origin>><<Proxy>> #DeepSkyBlue {
 }
+' object "OETHVaultCore" as corev <<Origin>><<Proxy>> #DeepSkyBlue {
+' }
+' object "OETHVaultAdmin" as adminv <<Origin>> #DeepSkyBlue {
+' }
 
-object "OETHHarvester" as harv <<Origin>><<Proxy>> #DeepSkyBlue {
+object "OETHHarvester" as harv <<Origin>> #DeepSkyBlue {
 }
 
 ' Oracle
@@ -41,6 +47,7 @@ object "UniswapV2Router02" as sushi <<SushiSwap>> {
 ' Strategies
 
 object "Generalized4626Strategy" as frxethstrat <<Origin>><<Proxy>> #DeepSkyBlue {
+    asset: frxETH
 }
 
 object "sfrxETH" as sfrxeth <<FRAX>> {
@@ -50,7 +57,8 @@ object "sfrxETH" as sfrxeth <<FRAX>> {
 }
 
 ' Curve
-object "ConvexEthMetaStrategy" as cvxStat <<Origin>><<Proxy>> #DeepSkyBlue {
+object "ConvexEthMetaStrategy" as cvxStrat <<Origin>><<Proxy>> #DeepSkyBlue {
+    asset: WETH
 }
 object "Gauge" as gauge <<Curve>> {
     asset: OETHCRV-f
@@ -70,6 +78,24 @@ object "BaseRewardPool" as cvxPool <<Convex>> {
 object "DepositToken" as cvxPoolLp <<Convex>> {
     symbol: cvxOUSD3CRV-f
     name: Origin Dollar Convex Deposit
+}
+
+' Aave Morpho
+object "MorphoAaveStrategy" as morphAaveStrat <<Origin>><<Proxy>> #DeepSkyBlue {
+    asset: WETH
+}
+object "Morpho\nAave V2" as morphoV2 <<Morpho>> {
+}
+object "Morpho\nLens" as morphoLens <<Morpho>> {
+}
+
+object "aWETH" as aweth <<Aave>> {
+    symbol: aWETH
+    name: Aave interest bearing WETH
+}
+object "variableDebtWETH" as vdweth <<Aave>> {
+    symbol: variableDebtWETH
+    name: Aave variable debt bearing WETH
 }
 
 ' Assets
@@ -110,45 +136,60 @@ zap ....> sfrxeth
 zap .....> frxeth
 zap .....> weth
 
-drip ...> weth
+drip ....> weth
 oethv <.. drip
 
-harv .> oethv
+checker ..> oeth
+checker ..> oethv
+
+oethv <.. harv 
 harv ...> sushi
-harv ....> cvx
-harv ....> crv
+harv ...> cvx
+harv ...> crv
 
 woeth ..> oeth
 oeth <.> oethv
 oethv ..> oracle
-oracle ..> chain
+oracle ...> chain
+
+' oethv <|.. corev
+' oethv <|.. adminv
 
 ' Staked FRAX ETH Strategy
-oethv ..> frxethstrat
+oethv ...> frxethstrat
 frxethstrat ..> sfrxeth
 
 ' Convex ETH Metapool Strategy
-harv <..> cvxStat
-oethv <..> cvxStat
-oeth <.. cvxStat
-' cvxStat ..> cvxBoost
+harv <..> cvxStrat
+oethv <...> cvxStrat
+oeth <... cvxStrat
+' cvxStrat ..> cvxBoost
 ' cvxBoost .[hidden]> cvxPool
-cvxStat ..> crvPool
-cvxStat ..> cvxPool
-cvxStat ...> weth
-cvxStat ...> cvx
-cvxStat ...> crv
+cvxStrat ..> crvPool
+cvxStrat ..> cvxPool
+cvxStrat ...> weth
+cvxStrat ...> cvx
+cvxStrat ...> crv
 cvxPool ..> cvxPoolLp
 cvxPool ..> crv
 cvxPool .> gauge
 gauge .> crvPool
 oeth <... crvPool
 
+' Morpho Aave Strategy
+oethv <...> morphAaveStrat
+oeth <... morphAaveStrat
+morphAaveStrat ..> morphoV2
+morphAaveStrat ..> morphoLens
+morphoLens .> morphoV2
+morphoV2 ..> aweth
+morphoV2 ..> vdweth
+
 ' Vault to Assets
-oethv ....> frxeth
-oethv ....> weth
-oethv ....> reth
-oethv ....> steth
+oethv .....> frxeth
+oethv .....> weth
+oethv .....> reth
+oethv .....> steth
 
 sfrxeth ..> frxeth
 
