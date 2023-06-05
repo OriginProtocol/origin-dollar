@@ -1,4 +1,5 @@
 from brownie import Contract
+from brownie.convert.datatypes import HexString
 from contextlib import redirect_stdout, contextmanager
 import os
 import io
@@ -11,7 +12,10 @@ COINMARKETCAP_API_KEY = os.getenv('CMC_API_KEY')
 OETH_ORACLE_ROUTER_ADDRESS = vault_oeth_admin.priceProvider()
 oeth_oracle_router = load_contract('oracle_router_v2', OETH_ORACLE_ROUTER_ADDRESS)
 swapper_address = SWAPPER_1INCH
-vault_core_w_swap_collateral = load_contract('vault_core_w_swap_collateral', VAULT_PROXY_ADDRESS)
+vault_core_w_swap_collateral = load_contract('vault_core_w_swap_collateral', VAULT_OETH_PROXY_ADDRESS)
+# what is the allowed price deviation between 1inch, oracles & coingecko and coinmarketcap
+# 2 = 2%
+MAX_PRICE_DEVIATION = 2
 
 @contextmanager
 def silent_tx():
@@ -101,7 +105,7 @@ def get_coingecko_quote(from_token, to_token, from_amount):
 
     return get_price(from_token, True) * get_price(to_token, False) / 1e18 * from_amount / 1e18
 
-def get_1inch_swap(from_token, to_token, from_amount, slippage, allowPartialFill):
+def get_1inch_swap(from_token, to_token, from_amount, slippage, allowPartialFill, min_expected_amount):
     router_1inch = load_contract('router_1inch_v5', ROUTER_1INCH_V5)
     SWAP_SELECTOR = "0x12aa3caf" #swap(address,(address,address,address,address,uint256,uint256,uint256),bytes,bytes)
     UNISWAP_SELECTOR = "0x0502b1c5" #unoswap(address,uint256,uint256,uint256[])
@@ -125,33 +129,42 @@ def get_1inch_swap(from_token, to_token, from_amount, slippage, allowPartialFill
         raise Exception("Error calling 1inch api")
 
     result = req.json()
-    print("RESULT", result)
+
     input_decoded = router_1inch.decode_input(result['tx']['data'])
-    print("input_decoded", input_decoded)
 
-    data = ''
+    selector = result['tx']['data'][:10]
+    data = '0x'
     # Swap selector
-    if result['tx']['data'].startswith(SWAP_SELECTOR):
-        data += SWAP_SELECTOR + eth_abi.encode_abi(['address', 'bytes'], [input_decoded[1][0], input_decoded[1][3]]).hex()
-    elif result['tx']['data'].startswith(UNISWAP_SELECTOR):
-        data += UNISWAP_SELECTOR + eth_abi.encode_abi(['uint256[]'], [input_decoded[1][3]]).hex()
-    elif result['tx']['data'].startswith(UNISWAPV3_SELECTOR):
-        data += UNISWAPV3_SELECTOR + eth_abi.encode_abi(['uint256[]'], [input_decoded[1][3]]).hex()
-    else: 
-        raise Exception("Unrecognised 1inch swap selector")
+    if selector == SWAP_SELECTOR:
+        data += eth_abi.encode_abi(['bytes4', 'address', 'bytes'], [HexString(selector, "bytes4"), input_decoded[1][0], input_decoded[1][3]]).hex()
+    elif selector == UNISWAP_SELECTOR or selector == UNISWAPV3_SELECTOR:
+        data += eth_abi.encode_abi(['bytes4', 'uint256[]'], [HexString(selector, "bytes4"), input_decoded[1][3]]).hex()
 
-    
+    else: 
+        raise Exception("Unrecognized 1Inch swap selector")
+
     swap_collateral_data = vault_core_w_swap_collateral.swapCollateral.encode_input(
         result['fromToken']['address'],
         result['toToken']['address'],
         result['fromTokenAmount'],
-        result['toTokenAmount'], # TODO needs to be min amount with slippage
+        min_expected_amount,
         data
     )
 
-    print("swap_collateral_data", swap_collateral_data)
+    # # TEST THE TX on the Vault
+    # accounts[0].transfer(STRATEGIST, "10 ether")
+    # tx1 = web3.eth.sendTransaction({
+    #     "from": STRATEGIST,
+    #     "to": VAULT_OETH_PROXY_ADDRESS,
+    #     "value": 0,
+    #     "gas": 2001000,
+    #     "data": swap_collateral_data,
+    #     "gasPrice": 123
+    # })
 
-build_swap_tx(WETH, RETH, 100 * 10**18, 1)
+    print("Execute the swap transaction on the Vault")
+    print("to: {}".format(VAULT_OETH_PROXY_ADDRESS))
+    print("data: {}".format(swap_collateral_data))
 
 # using oracle router calculate what the expected `toTokenAmount` should be
 # this function fails if Oracle data is too stale    
@@ -166,43 +179,76 @@ def get_oracle_router_quote(from_token, to_token, from_amount):
 
     return from_price * to_price * from_amount / 10**18
 
+console_colors = {}
+console_colors["ENDC"] = '\033[0m'
+console_colors["FAIL"] = '\033[91m'
+console_colors["WARNING"] = '\033[93m'
+
+
 # create a swap transaction
 # params: 
 #   - from_token -> address of token to swap
 #   - to_token -> address of token to swap to
 #   - from_amount -> amount of token 1 to swap
-#   - slippage -> allowed slippage when swapping expressed in percentage points
+#   - max_slippage -> allowed slippage when swapping expressed in percentage points
 #                 2 = 2%
 #   - partial_fill -> are partial fills allowed
-def build_swap_tx(from_token, to_token, from_amount, slippage):
+def build_swap_tx(from_token, to_token, from_amount, max_slippage, allow_partial_fill):
     if COINMARKETCAP_API_KEY is None:
         raise Exception("Set coinmarketcap api key by setting CMC_API_KEY variable. Free plan key will suffice: https://coinmarketcap.com/api/pricing/")
 
-    min_slippage_amount = 10**16
+    min_slippage_amount = 10**18
+    quote_1inch = get_1inch_quote(from_token, to_token, from_amount)
     quote_1inch_min_swap_amount_price = get_1inch_quote(from_token, to_token, min_slippage_amount)
     quote_1inch_min_swap_amount = quote_1inch_min_swap_amount_price / min_slippage_amount * from_amount
-    quote_1inch = get_1inch_quote(from_token, to_token, from_amount)
     quote_oracles = get_oracle_router_quote(from_token, to_token, from_amount)
     quote_coingecko = get_coingecko_quote(from_token, to_token, from_amount)
     quote_cmc = get_cmc_quote(from_token, to_token, from_amount)
-    min_expected_amount = quote_oracles * slippage / 100
+
+    # subtract the max slippage from minimum slippage query
+    min_tokens_with_slippage = quote_1inch_min_swap_amount_price * (100 - max_slippage) / 100 * from_amount / 1e18
+    coingecko_to_1inch_diff = (quote_1inch - quote_coingecko) / quote_1inch
+    oracle_to_1inch_diff = (quote_1inch - quote_oracles) / quote_1inch
+    cmc_to_1inch_diff = (quote_1inch - quote_cmc) / quote_1inch
+
+    actual_slippage = (quote_1inch_min_swap_amount - quote_1inch) / quote_1inch
 
     print("------ Price Quotes ------")
     print("1Inch expected tokens:                   {:.6f}".format(quote_1inch / 10**18))
-    print("1Inch expected tokens (min swap amount): {:.6f}".format(quote_1inch_min_swap_amount / 10**18))
+    print("1Inch expected tokens (no slippage):     {:.6f}".format(quote_1inch_min_swap_amount / 10**18))
     print("Oracle expected tokens:                  {:.6f}".format(quote_oracles / 10**18))
     print("Coingecko expected tokens:               {:.6f}".format(quote_coingecko / 10**18))
     print("CoinmarketCap expected tokens:           {:.6f}".format(quote_cmc / 10**18))
-    print("       ------------       ")
-    print("1Inch to Oracle Difference:              {:.6f}%".format((quote_1inch - quote_oracles) / quote_1inch))
-    print("1Inch to Coingecko Difference:           {:.6f}%".format((quote_1inch - quote_coingecko) / quote_1inch))
-    print("Minimum expected amount:                 {:.6f}%".format(min_expected_amount))
+    print("Tokens expected (with {:.2f}% slippage)    {:.6f}".format(max_slippage, min_tokens_with_slippage / 10**18))
+    print("")
+    print("------ Price Diffs -------")
+    print("1Inch to Oracle Difference:              {:.6f}%".format(oracle_to_1inch_diff * 100))
+    print("1Inch to Coingecko Difference:           {:.6f}%".format(coingecko_to_1inch_diff * 100))
+    print("1Inch to CoinmarketCap Difference:       {:.6f}%".format(cmc_to_1inch_diff * 100))
+    print("")
+    print("-------- Slippage --------")
+    print("Current market Slippage:                 {:.6f}%".format(actual_slippage * 100))
+    print("Transaction Slippage:                    {:.6f}%".format(max_slippage))
+    print("Slippage diff:                           {:.6f}%".format(max_slippage - actual_slippage * 100))
+    print("")
 
-    get_1inch_swap(WETH, RETH, 100 * 10**18, 0.5, False)
+    if (abs(actual_slippage * 100) > max_slippage):
+        error = "Slippage larger than expected: {:.6f}%".format(actual_slippage * 100)
+        print(console_colors["FAIL"] + error + console_colors["ENDC"])
+        raise Exception(error)
 
-build_swap_tx(WETH, RETH, 100 * 10**18, 1)
+    for protocol, price_diff in {
+            "Oracle": oracle_to_1inch_diff,
+            "Coingecko": coingecko_to_1inch_diff,
+            "CoinmarketCap": cmc_to_1inch_diff
+        }.items():
+        if (abs(price_diff * 100) > MAX_PRICE_DEVIATION):
+            error = "1Inch and {} have too large price deviation: {:.6f}%".format(protocol, price_diff * 100)
+            print(console_colors["FAIL"] + error + console_colors["ENDC"])
+            raise Exception(error)
 
+    get_1inch_swap(from_token, to_token, from_amount, max_slippage, allow_partial_fill, min_tokens_with_slippage)
 
-
-
+# from_token, to_token, from_token_amount, slippage, allow_partial_fill
+#build_swap_tx(WETH, FRXETH, 300 * 10**18, 1, False)
 
