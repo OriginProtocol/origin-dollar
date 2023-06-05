@@ -123,7 +123,12 @@ const fundAccounts = async () => {
           .connect(signer)
           .transfer(
             address,
-            utils.parseUnits("1000000", await tokenContract.decimals())
+            utils.parseUnits(
+              ousdCoins.find((x) => x.address == tokenContract.address)
+                ? "1000000"
+                : "200",
+              await tokenContract.decimals()
+            )
           );
       }
     } else {

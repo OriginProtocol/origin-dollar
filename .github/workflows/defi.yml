@@ -1,4 +1,4 @@
-name: OUSD
+name: DeFi
 on: 
   pull_request:
     types: [opened, reopened]
@@ -19,7 +19,7 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: "14.x"
+          node-version: "16.x"
           cache: "yarn"
           cache-dependency-path: contracts/yarn.lock
 
@@ -41,15 +41,26 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: "14.x"
+          node-version: "16.x"
           cache: "yarn"
           cache-dependency-path: contracts/yarn.lock
 
       - run: yarn install --frozen-lockfile
         working-directory: ./contracts
 
-      - run: yarn run test
+      - name: Run Tests
+        run: yarn run test:coverage
         working-directory: ./contracts
+
+      # - uses: actions/upload-artifact@v3
+      #   with:
+      #     name: unit-test-coverage-${{ github.head_ref }}-${{ github.sha }}
+      #     path: | 
+      #       ./contracts/coverage.json
+      #       ./contracts/coverage/**/*
+      #     retention-days: 1
+
+      - uses: codecov/codecov-action@v3
 
   contracts-forktest:
     name: "Contracts Fork Tests"
@@ -63,7 +74,7 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: "14.x"
+          node-version: "16.x"
           cache: "yarn"
           cache-dependency-path: contracts/yarn.lock
 
@@ -78,11 +89,37 @@ jobs:
       - run: yarn install --frozen-lockfile
         working-directory: ./contracts
 
-      - run: yarn run test:fork
+      - run: yarn run test:coverage:fork
         working-directory: ./contracts
 
+      # - uses: actions/upload-artifact@v3
+      #   with:
+      #     name: fork-test-coverage-${{ github.head_ref }}-${{ github.sha }}
+      #     path: | 
+      #       ./contracts/coverage.json
+      #       ./contracts/coverage/**/*
+      #     retention-days: 1
+
+  # coverage-uploader:
+  #   name: "Upload Coverage Reports"
+  #   runs-on: ubuntu-latest
+  #   needs:
+  #     - contracts-test
+  #     - contracts-forktest
+  #   steps:
+  #     - uses: actions/download-artifact@v3
+  #       with:
+  #         name: fork-test-coverage-${{ github.head_ref }}-${{ github.sha }}
+  #         path: ./fork-coverage
+  #     - uses: actions/download-artifact@v3
+  #       with:
+  #         name: unit-test-coverage-${{ github.head_ref }}-${{ github.sha }}
+  #         path: ./unit-coverage
+
+  #     - uses: codecov/codecov-action@v3
+
   dapp-lint:
-    name: "DApp Linter"
+    name: "OUSD DApp Linter"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3

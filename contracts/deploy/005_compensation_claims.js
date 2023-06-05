@@ -77,6 +77,10 @@ const compensationClaimsDeploy = async ({ getNamedAccounts }) => {
 
 compensationClaimsDeploy.id = deployName;
 compensationClaimsDeploy.dependencies = ["core"];
-compensationClaimsDeploy.skip = () => isFork;
+
+/**
+ * The contract is no longer in use and isn't expected to be updated
+ */
+compensationClaimsDeploy.skip = () => true;
 
 module.exports = compensationClaimsDeploy;
