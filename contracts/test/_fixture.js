@@ -1272,6 +1272,11 @@ async function convexOETHMetaVaultFixture() {
     await fixture.ConvexEthMetaStrategy.cvxRewardStaker()
   );
 
+  fixture.oethMetaPool = await ethers.getContractAt(
+    ousdMetapoolAbi,
+    addresses.mainnet.CurveOETHMetaPool
+  );
+
   return fixture;
 }
 
