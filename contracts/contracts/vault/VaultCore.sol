@@ -16,6 +16,9 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { StableMath } from "../utils/StableMath.sol";
 import { IOracle } from "../interfaces/IOracle.sol";
 import { IGetExchangeRateToken } from "../interfaces/IGetExchangeRateToken.sol";
+import { IAggregationExecutor, IOneInchRouter, SwapDescription } from "../interfaces/IOneInch.sol";
+import { ISwapper } from "../interfaces/ISwapper.sol";
+
 import "./VaultStorage.sol";
 
 contract VaultCore is VaultStorage {
@@ -391,6 +394,76 @@ contract VaultCore is VaultStorage {
     }
 
     /**
+     * @notice Strategist swaps collateral assets sitting in the vault.
+     * @param _fromAsset The token address of the asset being sold by the vault.
+     * @param _toAsset The token address of the asset being purchased by the vault.
+     * @param _fromAssetAmount The amount of assets being sold by the vault.
+     * @param _minToAssetAmount The minimum amount of assets to be purchased.
+     * @param _data implementation specific data. eg 1Inch swap data
+     * @return toAssetAmount The amount of toAssets that was received from the swap
+     */
+    function swapCollateral(
+        address _fromAsset,
+        address _toAsset,
+        uint256 _fromAssetAmount,
+        uint256 _minToAssetAmount,
+        bytes calldata _data
+    )
+        external
+        whenNotCapitalPaused
+        nonReentrant
+        onlyGovernorOrStrategist
+        returns (uint256 toAssetAmount)
+    {
+        // Check fromAsset and toAsset are valid
+        Asset memory fromAssetConfig = assets[address(_fromAsset)];
+        Asset memory toAssetConfig = assets[_toAsset];
+        require(fromAssetConfig.isSupported, "From asset is not supported");
+        require(toAssetConfig.isSupported, "To asset is not supported");
+
+        uint256 toAssetBalBefore = IERC20(_toAsset).balanceOf(address(this));
+
+        // Transfer from assets to the swapper contract
+        IERC20(_fromAsset).safeTransfer(swapper, _fromAssetAmount);
+
+        // Call to the Swapper contract to do the actual swap
+        // slither-disable-next-line unused-return
+        ISwapper(swapper).swap(
+            _fromAsset,
+            _toAsset,
+            _fromAssetAmount - 1,
+            _minToAssetAmount,
+            _data
+        );
+
+        // Compute the change in asset balance held by the Vault
+        toAssetAmount =
+            IERC20(_toAsset).balanceOf(address(this)) -
+            toAssetBalBefore;
+
+        // Check the to assets returned is above slippage amount specified by the strategist
+        require(
+            toAssetAmount >= _minToAssetAmount,
+            "Strategist slippage limit"
+        );
+
+        // Check the slippage against the Oracle in case the strategist made a mistake or has become malicious.
+        // to asset amount = from asset amount * from asset price / to asset price
+        uint256 minOracleToAssetAmount = (_fromAssetAmount *
+            (1e4 - fromAssetConfig.allowedSwapSlippageBps) *
+            IOracle(priceProvider).price(_fromAsset)) /
+            (IOracle(priceProvider).price(_toAsset) *
+                (1e4 + toAssetConfig.allowedSwapSlippageBps));
+
+        require(
+            toAssetAmount >= minOracleToAssetAmount,
+            "Oracle slippage limit exceeded"
+        );
+
+        emit Swapped(_fromAsset, _toAsset, _fromAssetAmount, toAssetAmount);
+    }
+
+    /**
      * @dev Determine the total value of assets held by the vault and its
      *         strategies.
      * @return value Total value in USD (1e18)
@@ -713,10 +786,13 @@ contract VaultCore is VaultStorage {
         }
     }
 
-    function _getDecimals(address _asset) internal view returns (uint256) {
-        uint256 decimals = assets[_asset].decimals;
+    function _getDecimals(address _asset)
+        internal
+        view
+        returns (uint256 decimals)
+    {
+        decimals = assets[_asset].decimals;
         require(decimals > 0, "Decimals not cached");
-        return decimals;
     }
 
     /**
@@ -724,6 +800,14 @@ contract VaultCore is VaultStorage {
      */
     function getAssetCount() public view returns (uint256) {
         return allAssets.length;
+    }
+
+    function getAssetConfig(address _asset)
+        public
+        view
+        returns (Asset memory config)
+    {
+        config = assets[_asset];
     }
 
     /**

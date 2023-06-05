@@ -48,16 +48,27 @@ contract VaultStorage is Initializable, Governable {
     event TrusteeFeeBpsChanged(uint256 _basis);
     event TrusteeAddressChanged(address _address);
     event NetOusdMintForStrategyThresholdChanged(uint256 _threshold);
+    event SwapperChanged(address _address);
+    event SwapSlippageChanged(address _asset, uint256 _basis);
+    event Swapped(
+        address indexed _fromAsset,
+        address indexed _toAsset,
+        uint256 _fromAssetAmount,
+        uint256 _toAssetAmount
+    );
 
     // Assets supported by the Vault, i.e. Stablecoins
     enum UnitConversion {
         DECIMALS,
         GETEXCHANGERATE
     }
+    // Changed to fit into a single storage slot so the decimals needs to be recached
     struct Asset {
         bool isSupported;
         UnitConversion unitConversion;
-        uint256 decimals;
+        uint8 decimals;
+        // Max allowed slippage when swapping collateral assets in basis points. eg 40 == 0.4% slippage
+        uint16 allowedSwapSlippageBps;
     }
 
     // slither-disable-next-line uninitialized-state
@@ -132,6 +143,9 @@ contract VaultStorage is Initializable, Governable {
     uint256 constant MIN_UNIT_PRICE_DRIFT = 0.7e18;
     uint256 constant MAX_UNIT_PRICE_DRIFT = 1.3e18;
 
+    /// @notice Contract that swaps the vault's collateral assets
+    address public swapper = address(0);
+
     /**
      * @dev set the implementation for the admin, this needs to be in a base class else we cannot set it
      * @param newImpl address of the implementation
@@ -146,5 +160,16 @@ contract VaultStorage is Initializable, Governable {
         assembly {
             sstore(position, newImpl)
         }
+    }
+
+    /**
+     * @dev Verifies that the caller is the Governor, or Strategist.
+     */
+    modifier onlyGovernorOrStrategist() {
+        require(
+            msg.sender == strategistAddr || isGovernor(),
+            "Caller is not the Strategist or Governor"
+        );
+        _;
     }
 }

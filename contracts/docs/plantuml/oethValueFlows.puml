@@ -9,8 +9,11 @@ participant "Zapper" as zap <<Origin>> #DeepSkyBlue
 participant "OETH\nVault" as vault <<Origin>> #DeepSkyBlue
 participant "Harvester" as harv <<Origin>> #DeepSkyBlue
 participant "Dripper" as drip <<Origin>> #DeepSkyBlue
+participant "Swapper" as swapper <<Origin>> #DeepSkyBlue
 
 participant "FRAX\nStrategy" as frxStrat <<Origin>> #DeepSkyBlue
+participant "WETH FRAX\nStrategy" as wethFrxStrat <<Origin>> #DeepSkyBlue
+participant "FRAX ETH" as frxETH <<FRAX>><<frxETH>>
 participant "Staked\nFRAX ETH" as sfrxETH <<FRAX>><<sfrxETH>>
 
 participant "Curve AMO\nStrategy" as crvStrat <<Origin>> #DeepSkyBlue
@@ -22,6 +25,7 @@ participant "Rewards\nPool" as cvxRewards <<Convex>>
 participant "Locked CVX" as icvx <<Convex>>
 
 participant "Uniswap V2" as uni <<Uniswap>>
+participant "1Inch\nRouter" as 1r <<1Inch>>
 
 ' Deposit ETH via Zapper
 group User deposit ETH [> 10 OETH]
@@ -101,12 +105,23 @@ end
 ' Allocate
 group Vault allocate [anyone can call]
 
-group FRAX Strategy [unallocated frxETH in vault]
+group FRAX Strategy for frxETH [unallocated frxETH in vault]
 vault -> frxStrat : frxETH
 frxStrat -> sfrxETH : frxETH
 note left : deposit frxETH
 sfrxETH o-> frxStrat : sfrxETH
 note left : get sfrxETH shares
+end
+
+group FRAX Strategy for WETH [unallocated frxETH in vault]
+vault -> wethFrxStrat : WETH
+wethFrxStrat -x weth : WETH
+note left : withdraw ETH from WETH
+weth -> wethFrxStrat : ETH
+wethFrxStrat -> frxETH : ETH
+note left : Deposit and stake ETH for sfrxETH
+frxETH -> sfrxETH : frxETH
+sfrxETH o-> wethFrxStrat : sfrxETH
 end
 
 group Curve AMO Strategy [unallocated WETH in vault]
@@ -217,6 +232,14 @@ trust -> icvx : CVX
 note left : lock CVX for delegated voting power
 icvx -> trust : vlCVX
 
+end
+
+' Swap vault collateral assets
+group Trustee swaps collateral assets [WETH for rETH]
+vault -> swapper : WETH
+note left : swap WETH for rETH
+swapper -> 1r : WETH
+1r -> vault : rETH
 end
 
 @enduml

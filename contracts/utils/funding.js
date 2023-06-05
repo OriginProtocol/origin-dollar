@@ -23,18 +23,21 @@ const {
  * returns signer object of the most appropriate token/ETH holder
  */
 const findBestMainnetTokenHolder = async (contract, hre) => {
-  const binanceAddresses = addresses.mainnet.BinanceAll.split(",");
+  const whaleAddresses = [
+    ...addresses.mainnet.BinanceAll.split(","),
+    ...addresses.mainnet.WhaleAddresses.split(","),
+  ];
   const { isFork } = require("../test/helpers");
 
-  const binanceSigners = await Promise.all(
-    binanceAddresses.map((binanceAddress) => {
+  const whaleSigners = await Promise.all(
+    whaleAddresses.map((binanceAddress) => {
       return hre.ethers.provider.getSigner(binanceAddress);
     })
   );
 
   if (isFork) {
     await Promise.all(
-      binanceAddresses.map(async (binanceAddress) => {
+      whaleAddresses.map(async (binanceAddress) => {
         return hre.network.provider.request({
           method: "hardhat_impersonateAccount",
           params: [binanceAddress],
@@ -44,7 +47,7 @@ const findBestMainnetTokenHolder = async (contract, hre) => {
   }
 
   let balances = await Promise.all(
-    binanceSigners.map(async (binanceSigner) => {
+    whaleSigners.map(async (binanceSigner) => {
       if (!contract) {
         return await hre.ethers.provider.getBalance(binanceSigner._address);
       }
@@ -64,7 +67,7 @@ const findBestMainnetTokenHolder = async (contract, hre) => {
     }
   }
 
-  return binanceSigners[largestBalanceIndex];
+  return whaleSigners[largestBalanceIndex];
 };
 
 const findBestMainnetTokenHolderAndImpersonate = async (contract, hre) => {
@@ -83,13 +86,18 @@ const findBestMainnetTokenHolderAndImpersonate = async (contract, hre) => {
 };
 
 const fundAccounts = async () => {
-  let usdt, dai, tusd, usdc, nonStandardToken;
+  let usdt, dai, tusd, usdc, nonStandardToken, ogn, weth, rETH, stETH, frxETH;
   if (isFork) {
     usdt = await ethers.getContractAt(usdtAbi, addresses.mainnet.USDT);
     dai = await ethers.getContractAt(daiAbi, addresses.mainnet.DAI);
     tusd = await ethers.getContractAt(tusdAbi, addresses.mainnet.TUSD);
     usdc = await ethers.getContractAt(usdcAbi, addresses.mainnet.USDC);
     ogn = await ethers.getContractAt(ognAbi, addresses.mainnet.OGN);
+
+    weth = await ethers.getContractAt(daiAbi, addresses.mainnet.WETH);
+    rETH = await ethers.getContractAt(daiAbi, addresses.mainnet.rETH);
+    stETH = await ethers.getContractAt(daiAbi, addresses.mainnet.stETH);
+    frxETH = await ethers.getContractAt(daiAbi, addresses.mainnet.frxETH);
   } else {
     usdt = await ethers.getContract("MockUSDT");
     dai = await ethers.getContract("MockDAI");
@@ -99,8 +107,11 @@ const fundAccounts = async () => {
     nonStandardToken = await ethers.getContract("MockNonStandardToken");
   }
 
+  const ousdCoins = [dai, usdc, usdt, tusd, ogn];
+  const oethCoins = [weth, rETH, stETH, frxETH];
+  const allCoins = [...ousdCoins, ...oethCoins];
+
   const signers = await hre.ethers.getSigners();
-  const { governorAddr } = await getNamedAccounts();
 
   const addressPromises = new Array(10)
     .fill(0)
@@ -114,7 +125,7 @@ const fundAccounts = async () => {
         utils.parseEther("1000000").toHexString(),
       ]);
 
-      for (const tokenContract of [dai, usdc, usdt, tusd, ogn]) {
+      for (const tokenContract of allCoins) {
         const signer = await findBestMainnetTokenHolderAndImpersonate(
           tokenContract,
           hre
@@ -123,7 +134,10 @@ const fundAccounts = async () => {
           .connect(signer)
           .transfer(
             address,
-            utils.parseUnits("1000000", await tokenContract.decimals())
+            utils.parseUnits(
+              tokenContract in ousdCoins ? "1000000" : "200",
+              await tokenContract.decimals()
+            )
           );
       }
     } else {
