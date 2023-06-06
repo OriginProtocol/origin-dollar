@@ -66,7 +66,6 @@ const DappLinks = ({ page }) => {
         .link-contain {
           font-size: 16px;
           border-radius: 56px;
-          margin-right: 8px;
         }
 
         .link-contain.last {

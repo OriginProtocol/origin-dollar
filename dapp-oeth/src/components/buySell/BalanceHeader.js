@@ -34,11 +34,7 @@ const BalanceHeader = ({
     })
   )
   const daysToApy = zipObject(apyDayOptions, apyOptions)
-  const [apyDays, setApyDays] = useState(
-    process.browser && localStorage.getItem('last_user_selected_apy') !== null
-      ? localStorage.getItem('last_user_selected_apy')
-      : DEFAULT_SELECTED_APY
-  )
+  const [apyDays, setApyDays] = useState(DEFAULT_SELECTED_APY)
 
   const vault = useStoreState(ContractStore, (s) => _get(s, 'contracts.vault'))
   const ousdContract = useStoreState(ContractStore, (s) =>

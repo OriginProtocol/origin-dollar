@@ -13,6 +13,7 @@ import withRpcProvider from 'hoc/withRpcProvider'
 import ApySelect from 'components/ApySelect'
 import { zipObject } from 'lodash'
 import { assetRootPath } from 'utils/image'
+import { DEFAULT_SELECTED_APY } from 'utils/constants'
 
 const BalanceHeaderWrapped = ({
   storeTransaction,
@@ -20,18 +21,13 @@ const BalanceHeaderWrapped = ({
   rpcProvider,
   isMobile,
 }) => {
-  const DEFAULT_SELECTED_APY = 365
   const apyOptions = useStoreState(ContractStore, (s) =>
     apyDayOptions.map((d) => {
       return s.apy[`apy${d}`] || 0
     })
   )
   const daysToApy = zipObject(apyDayOptions, apyOptions)
-  const [apyDays, setApyDays] = useState(
-    process.browser && localStorage.getItem('last_user_selected_apy') !== null
-      ? localStorage.getItem('last_user_selected_apy')
-      : DEFAULT_SELECTED_APY
-  )
+  const [apyDays, setApyDays] = useState(DEFAULT_SELECTED_APY)
 
   const walletConnected = useStoreState(ContractStore, (s) => s.walletConnected)
   const { animatedExpectedIncrease } = useExpectedYield(true)
