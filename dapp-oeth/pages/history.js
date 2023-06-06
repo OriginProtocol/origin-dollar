@@ -6,8 +6,6 @@ import Layout from 'components/layout'
 import Nav from 'components/Nav'
 import BalanceHeader from 'components/buySell/BalanceHeader'
 import TransactionHistory from 'components/TransactionHistory'
-import GetOUSD from 'components/GetOUSD'
-import { assetRootPath } from 'utils/image'
 import { useOverrideAccount } from '../src/utils/hooks'
 import ErrorModal from '../src/components/buySell/ErrorModal'
 
@@ -39,38 +37,14 @@ export default function History({ locale, onLocale }) {
           }}
         />
       )}
+      <Nav page={'history'} locale={locale} onLocale={onLocale} />
       <Layout locale={locale} onLocale={onLocale}>
-        <Nav page={'history'} locale={locale} onLocale={onLocale} />
         <div className="home d-flex flex-column">
           <BalanceHeader />
-          {(overrideAccount || active) && <TransactionHistory />}
-          {!overrideAccount && !active && (
-            <div className="empty-placeholder d-flex flex-column align-items-center justify-content-start">
-              <img src={assetRootPath('/images/wallet-icons.svg')} />
-              <div className="header-text">
-                {fbt('No wallet connected', 'Disconnected dapp message')}
-              </div>
-              <div className="subtext">
-                {fbt(
-                  'Please connect an Ethereum wallet',
-                  'Disconnected dapp subtext'
-                )}
-              </div>
-              <GetOUSD primary connect trackSource="Dapp widget body" />
-            </div>
-          )}
+          <TransactionHistory />
         </div>
       </Layout>
       <style jsx>{`
-        .empty-placeholder {
-          min-height: 470px;
-          height: 100%;
-          padding: 70px;
-          border-radius: 10px;
-          border-top: solid 1px #cdd7e0;
-          background-color: #fafbfc;
-        }
-
         .header-text {
           font-size: 22px;
           line-height: 0.86;
