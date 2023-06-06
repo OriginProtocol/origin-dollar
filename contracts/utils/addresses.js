@@ -131,6 +131,8 @@ addresses.mainnet.CurveUSDTStrategy =
   "0x75Bc09f72db1663Ed35925B89De2b5212b9b6Cb3";
 addresses.mainnet.CurveOUSDMetaPool =
   "0x87650D7bbfC3A9F10587d7778206671719d9910D";
+addresses.mainnet.CurveOETHMetaPool =
+  "0x94B17476A93b3262d87B9a326965D1E91f9c13E7";
 addresses.mainnet.CurveLUSDMetaPool =
   "0x7A192DD9Cc4Ea9bdEdeC9992df74F1DA55e60a19";
 addresses.mainnet.MorphoStrategyProxy =
