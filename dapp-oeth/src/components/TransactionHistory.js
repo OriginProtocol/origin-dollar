@@ -1,7 +1,9 @@
 import React, { useEffect, useState, useMemo } from 'react'
-import { useRouter } from 'next/router'
+import GetOUSD from 'components/GetOUSD'
+import useTransactionHistoryPageQuery from '../queries/useTransactionHistoryPageQuery'
+import useTransactionHistoryQuery from '../queries/useTransactionHistoryQuery'
 import dateformat from 'dateformat'
-
+import { useRouter } from 'next/router'
 import { fbt } from 'fbt-runtime'
 import { useWeb3React } from '@web3-react/core'
 import { formatCurrency } from '../utils/math'
@@ -9,9 +11,6 @@ import { exportToCsv } from '../utils/utils'
 import withIsMobile from 'hoc/withIsMobile'
 import { assetRootPath } from 'utils/image'
 import { transactionHistoryItemsPerPage } from 'utils/constants'
-
-import useTransactionHistoryPageQuery from '../queries/useTransactionHistoryPageQuery'
-import useTransactionHistoryQuery from '../queries/useTransactionHistoryQuery'
 
 const itemsPerPage = transactionHistoryItemsPerPage
 
@@ -38,12 +37,11 @@ const FilterButton = ({
           }
         }}
       >
-        <span className="status-text d-none d-md-flex">{filterText}</span>
+        <span className="status-text">{filterText}</span>
         <span className="status-circle"></span>
       </div>
       <style jsx>{`
-        .button,
-        .button.selected:hover {
+        .button {
           color: #828699;
           border-radius: 56px;
           margin-right: 10px;
@@ -58,20 +56,6 @@ const FilterButton = ({
           color: #edf2f5;
         }
 
-        .button:hover {
-          color: #edf2f5;
-        }
-
-        @media (max-width: 799px) {
-          .button {
-            min-width: 50px;
-            min-height: 35px;
-            margin-right: 8px;
-            font-size: 12px;
-            margin-bottom: 20px;
-          }
-        }
-
         .status-circle {
           width: 8px;
           height: 8px;
@@ -79,17 +63,24 @@ const FilterButton = ({
           background: #1e1f25;
         }
 
-        .button.selected:hover .status-circle {
-          background: #1e1f25;
-        }
-
-        .button.selected .status-circle,
-        .button:hover .status-circle {
+        .button.selected .status-circle {
           background: linear-gradient(90deg, #b361e6 -28.99%, #6a36fc 144.97%);
         }
 
         .status-text {
           margin-right: 8px;
+        }
+
+        @media (max-width: 799px) {
+          .button {
+            padding: 4px 12px;
+            margin-right: 8px;
+            font-size: 11px;
+          }
+
+          .status-text {
+            margin-right: 4px;
+          }
         }
       `}</style>
     </div>
@@ -287,6 +278,76 @@ const TransactionHistory = ({ isMobile }) => {
     }
   }, [historyQuery.isLoading, historyQuery.isRefetching])
 
+  const Filters = () => {
+    return (
+      <div className="d-flex justify-content-start flex-wrap flex-md-nowrap">
+        <FilterButton
+          filterText={fbt('Received', 'Tx history filter: Received')}
+          filterImage="received_icon.svg"
+          filter="transfer_in"
+          filters={filters}
+          setFilters={setFilters}
+          currentFilters={receivedFilters}
+        />
+        <FilterButton
+          filterText={fbt('Sent', 'Tx history filter: Sent')}
+          filterImage="sent_icon.svg"
+          filter="transfer_out"
+          filters={filters}
+          setFilters={setFilters}
+          currentFilters={receivedFilters}
+        />
+        <FilterButton
+          filterText={fbt('Swap', 'Tx history filter: Swap')}
+          filterImage="swap_icon.svg"
+          filter={'swap_oeth'}
+          filters={filters}
+          setFilters={setFilters}
+          currentFilters={receivedFilters}
+        />
+        <FilterButton
+          filterText={fbt('Yield', 'Tx history filter: Yield')}
+          filterImage="yield_icon.svg"
+          filter="yield"
+          filters={filters}
+          setFilters={setFilters}
+          currentFilters={receivedFilters}
+        />
+      </div>
+    )
+  }
+
+  const EmptyPlaceholder = ({ children }) => {
+    return (
+      <>
+        <div className="empty-placeholder d-flex flex-column align-items-center justify-content-center">
+          {children}
+        </div>
+        <style jsx>
+          {`
+            .empty-placeholder {
+              height: 370px;
+              padding: 40px;
+              border-radius: 10px;
+              background-color: #1e1f25;
+              border-bottom-left-radius: 8px;
+              border-bottom-right-radius: 8px;
+            }
+
+            @media (max-width: 799px) {
+              .empty-placeholder {
+                height: 220px;
+                padding: 16px;
+                border-bottom-left-radius: 4px;
+                border-bottom-right-radius: 4px;
+              }
+            }
+          `}
+        </style>
+      </>
+    )
+  }
+
   return (
     <>
       <div className="d-flex holder flex-column justify-content-start">
@@ -295,45 +356,17 @@ const TransactionHistory = ({ isMobile }) => {
         ) : (
           <>
             <div className="filters d-flex justify-content-between">
-              <div className="d-flex justify-content-start flex-wrap flex-md-nowrap">
-                <FilterButton
-                  filterText={fbt('Received', 'Tx history filter: Received')}
-                  filterImage="received_icon.svg"
-                  filter="transfer_in"
-                  filters={filters}
-                  setFilters={setFilters}
-                  currentFilters={receivedFilters}
-                />
-                <FilterButton
-                  filterText={fbt('Sent', 'Tx history filter: Sent')}
-                  filterImage="sent_icon.svg"
-                  filter="transfer_out"
-                  filters={filters}
-                  setFilters={setFilters}
-                  currentFilters={receivedFilters}
-                />
-                <FilterButton
-                  filterText={fbt('Swap', 'Tx history filter: Swap')}
-                  filterImage="swap_icon.svg"
-                  filter={'swap_oeth'}
-                  filters={filters}
-                  setFilters={setFilters}
-                  currentFilters={receivedFilters}
-                />
-                <FilterButton
-                  filterText={fbt('Yield', 'Tx history filter: Yield')}
-                  filterImage="yield_icon.svg"
-                  filter="yield"
-                  filters={filters}
-                  setFilters={setFilters}
-                  currentFilters={receivedFilters}
-                />
+              <p className="title">History</p>
+              <div className="d-none d-md-block">
+                <Filters />
               </div>
               <div className="d-flex">
                 <div
-                  className="button d-flex align-items-center justify-content-center mb-auto"
+                  className={`button d-flex align-items-center justify-content-center mb-auto ${
+                    !overrideAccount && !active ? 'disabled' : ''
+                  }`}
                   onClick={() => {
-                    historyQuery.refetch()
+                    !overrideAccount && !active ? null : historyQuery.refetch()
                   }}
                 >
                   {historyQuery.isLoading || historyQuery.isRefetching
@@ -342,60 +375,69 @@ const TransactionHistory = ({ isMobile }) => {
                 </div>
               </div>
             </div>
+            <div className="d-md-none d-block mobile-filters">
+              <Filters />
+            </div>
             <div
               className={`history-holder ${
                 historyPageQuery.isPreviousData ? 'grey-font' : ''
               }`}
             >
-              <div className="d-flex grey-font border-bt pb-10">
-                <div className="col-3 col-md-3 pl-0">
-                  {fbt('Date', 'Transaction history date')}
-                </div>
-                <div className="col-3 col-md-3">
-                  {fbt('Type', 'Transaction history type')}
-                </div>
-                {/* <div className="d-none d-md-flex col-2">
+              {(overrideAccount || active) && (
+                <>
+                  <div className="d-flex justify-content-between grey-font border-bt title-row">
+                    <div className="col-3 col-md-3 d-none d-md-block">
+                      {fbt('Date', 'Transaction history date')}
+                    </div>
+                    <div className="col-3 col-md-3 d-block d-md-none">
+                      Date/Type
+                    </div>
+                    <div className="col-3 col-md-3 d-none d-md-block">
+                      {fbt('Type', 'Transaction history type')}
+                    </div>
+                    {/* <div className="d-none d-md-flex col-2">
                   {fbt('From', 'Transaction history from account')}
                 </div>
                 <div className="d-none d-md-flex col-2">
                   {fbt('To', 'Transaction history to account')}
                 </div> */}
-                <div className="col-3 col-md-3 d-flex justify-content-end pr-md-5">
-                  {fbt('Change', 'Transaction history OETH amount')}
-                </div>
-                <div className="col-3 col-md-3 d-flex justify-content-end pr-md-5">
-                  {fbt('OETH Balance', 'Transaction history OETH balance')}
-                </div>
-              </div>
-              {currentPageHistory
-                .flatMap((r) => Array.from({ length: 7 }).fill(r))
-                .map((tx) => {
-                  return (
-                    <div
-                      key={`${tx.tx_hash}-${tx.log_index ? tx.log_index : 0}`}
-                      className="d-flex border-bt pb-20 pt-20 history-item"
-                    >
+                    <div className="col-3 col-md-3">
+                      {fbt('Change', 'Transaction history OETH amount')}
+                    </div>
+                    <div className="col-3 col-md-3 oeth-balance">
+                      {fbt('OETH Balance', 'Transaction history OETH balance')}
+                    </div>
+                  </div>
+                  {currentPageHistory.map((tx) => {
+                    return (
                       <div
-                        className="col-3 col-md-3 pl-0"
-                        title={
-                          dateformat(
+                        key={`${tx.tx_hash}-${tx.log_index ? tx.log_index : 0}`}
+                        className="d-flex border-bt history-item"
+                      >
+                        <div
+                          className="col-3 col-md-3"
+                          title={
+                            dateformat(
+                              Date.parse(tx.time),
+                              'mm/dd/yyyy h:MM:ss TT'
+                            ) || ''
+                          }
+                        >
+                          {dateformat(
                             Date.parse(tx.time),
-                            'mm/dd/yyyy h:MM:ss TT'
-                          ) || ''
-                        }
-                      >
-                        {dateformat(
-                          Date.parse(tx.time),
-                          isMobile ? 'mm/dd/yy' : 'mm/dd/yyyy'
-                        ) || ''}
-                      </div>
-                      <div
-                        title={txTypeMap[tx.type].verboseName}
-                        className="col-3 col-md-3 d-flex"
-                      >
-                        {txTypeMap[tx.type].name}
-                      </div>
-                      {/* <div
+                            isMobile ? 'mm/dd/yy' : 'mm/dd/yyyy'
+                          ) || ''}
+                          <div className="type d-block d-md-none">
+                            {txTypeMap[tx.type].name}
+                          </div>
+                        </div>
+                        <div
+                          title={txTypeMap[tx.type].verboseName}
+                          className="col-3 col-md-3 d-none d-md-block"
+                        >
+                          {txTypeMap[tx.type].name}
+                        </div>
+                        {/* <div
                       className={`d-none d-md-flex col-2 ${
                         tx.from_address ? 'clickable' : ''
                       }`}
@@ -427,83 +469,133 @@ const TransactionHistory = ({ isMobile }) => {
                     >
                       {tx.to_address ? shortenAddress(tx.to_address) : '-'}
                     </div> */}
-                      <div className="col-3 col-md-3 d-flex justify-content-end pr-md-5">
-                        {tx.amount ? (
-                          <FormatCurrencyByImportance
-                            value={tx.amount}
-                            isMobile={isMobile}
-                            hasHigherYield={hasHigherYield}
-                            yieldHigherThanAGwei={yieldHigherThanAGwei}
-                          />
-                        ) : (
-                          '-'
-                        )}
-                      </div>
-                      <div className="col-3 col-md-3 d-flex justify-content-end pr-md-5 relative">
-                        {tx.balance ? (
-                          <FormatCurrencyByImportance
-                            value={tx.balance}
-                            isMobile={isMobile}
-                            hasHigherYield={hasHigherYield}
-                            yieldHigherThanAGwei={yieldHigherThanAGwei}
-                          />
-                        ) : (
-                          '-'
-                        )}
-                        <div className="etherscan-link">
-                          <a
-                            href={`https://etherscan.io/tx/${tx.tx_hash}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            <img
-                              className=""
-                              src={assetRootPath(
-                                '/images/link-icon-purple.svg'
-                              )}
+                        <div className="col-3 col-md-3">
+                          {tx.amount ? (
+                            <FormatCurrencyByImportance
+                              value={tx.amount}
+                              isMobile={isMobile}
+                              hasHigherYield={hasHigherYield}
+                              yieldHigherThanAGwei={yieldHigherThanAGwei}
                             />
-                          </a>
+                          ) : (
+                            '-'
+                          )}
+                        </div>
+                        <div className="col-3 col-md-3">
+                          {tx.balance ? (
+                            <FormatCurrencyByImportance
+                              value={tx.balance}
+                              isMobile={isMobile}
+                              hasHigherYield={hasHigherYield}
+                              yieldHigherThanAGwei={yieldHigherThanAGwei}
+                            />
+                          ) : (
+                            '-'
+                          )}
+                          <div className="etherscan-link">
+                            <a
+                              href={`https://etherscan.io/tx/${tx.tx_hash}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              <img
+                                className=""
+                                src={assetRootPath(
+                                  '/images/link-icon-purple.svg'
+                                )}
+                              />
+                            </a>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  )
-                })}
+                    )
+                  })}
+                </>
+              )}
+              {!overrideAccount && !active && (
+                <EmptyPlaceholder>
+                  <span className="connect-text">
+                    Connect your wallet to see your history
+                  </span>
+                  <GetOUSD
+                    className="py-2 px-4 max-w-107"
+                    gradient
+                    connect
+                    trackSource="Dapp widget body"
+                  />
+                </EmptyPlaceholder>
+              )}
             </div>
-            <div className="pagination d-flex justify-content-center justify-content-md-start">
-              {pageNumbers.map((pageNumber, index) => {
-                const isCurrent =
-                  pageNumber === historyPageQuery.data.page.current //currentPage
-                const skippedAPage =
-                  index > 0 && pageNumber - pageNumbers[index - 1] !== 1
+            {overrideAccount ||
+              (active && (
+                <div className="pagination d-flex justify-content-center justify-content-md-start">
+                  {pageNumbers.map((pageNumber, index) => {
+                    const isCurrent =
+                      pageNumber === historyPageQuery.data.page.current //currentPage
+                    const skippedAPage =
+                      index > 0 && pageNumber - pageNumbers[index - 1] !== 1
 
-                return (
-                  <div className="d-flex" key={pageNumber}>
-                    {skippedAPage && (
-                      <div className="page-skip d-flex align-items-center justify-content-center">
-                        ...
+                    return (
+                      <div className="d-flex" key={pageNumber}>
+                        {skippedAPage && (
+                          <div className="page-skip d-flex align-items-center justify-content-center">
+                            ...
+                          </div>
+                        )}
+                        <div
+                          className={`page-number ${
+                            isCurrent ? 'current' : ''
+                          } d-flex align-items-center justify-content-center`}
+                          onClick={() => {
+                            if (isCurrent) {
+                              return
+                            }
+                            setCurrentPage(pageNumber)
+                          }}
+                        >
+                          {pageNumber}
+                        </div>
                       </div>
-                    )}
-                    <div
-                      className={`page-number ${
-                        isCurrent ? 'current' : ''
-                      } d-flex align-items-center justify-content-center`}
-                      onClick={() => {
-                        if (isCurrent) {
-                          return
-                        }
-                        setCurrentPage(pageNumber)
-                      }}
-                    >
-                      {pageNumber}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
+                    )
+                  })}
+                </div>
+              ))}
           </>
         )}
       </div>
       <style jsx>{`
+        .disabled {
+          cursor: not-allowed !important;
+          color: #828699 !important;
+        }
+
+        .connect-text {
+          font-size: 14px;
+          line-height: 23px;
+          margin-bottom: 16px;
+          color: #828699;
+        }
+
+        .title-row {
+          padding: 24px 40px;
+          width: 100%;
+        }
+
+        .title-row div {
+          padding: 0;
+          width: 25%;
+        }
+
+        .history-item div {
+          width: 25%;
+          padding: 0;
+        }
+
+        .history-item {
+          padding: 24px 40px;
+          font-size: 14px;
+        }
+
         .holder {
           border-radius: 10px;
           box-shadow: 0 0 14px 0 rgba(0, 0, 0, 0.1);
@@ -511,16 +603,22 @@ const TransactionHistory = ({ isMobile }) => {
           color: #ebecf2;
         }
 
+        .title {
+          font-size: 14px;
+          margin: 0;
+          padding: 0;
+          height: 23px;
+          color: #fafafb;
+        }
+
         .history-holder {
-          padding-left: 40px;
-          padding-right: 40px;
-          padding-top: 24px;
           background-color: #1e1f25;
+          border-radius: 0 0 8px 8px;
         }
 
         .grey-font {
           color: #828699;
-          font-size: 12px;
+          font-size: 14px;
         }
 
         .border-bt {
@@ -539,24 +637,28 @@ const TransactionHistory = ({ isMobile }) => {
           padding-top: 20px;
         }
 
-        .history-item {
-          font-size: 14px;
-        }
-
         .type-icon {
           width: 11px;
         }
 
         .etherscan-link {
           position: absolute;
-          right: 12px;
+          width: fit-content !important;
+          right: 0;
           top: 0;
         }
 
+        .etherscan-link a {
+          padding: 2px;
+        }
+
         .filters {
-          padding: 40px;
+          padding: 28px 40px;
+          margin: 0 0;
           background-color: #1e1f25;
-          border-radius: 10px;
+          border-top-left-radius: 10px;
+          border-top-right-radius: 10px;
+          border-bottom: solid 1px #141519;
         }
 
         .pagination {
@@ -606,7 +708,6 @@ const TransactionHistory = ({ isMobile }) => {
           color: white;
           padding: 4px 20px;
           border-radius: 28px;
-          margin-right: 10px;
           font-family: Lato;
           font-size: 12px;
           cursor: pointer;
@@ -622,26 +723,45 @@ const TransactionHistory = ({ isMobile }) => {
           opacity: 80%;
         }
 
+        .mobile-filters {
+          padding: 16px;
+          border-bottom: solid 1px #141519;
+        }
+
         @media (max-width: 799px) {
+          .connect-text {
+            font-size: 12px;
+            line-height: 20px;
+          }
+
+          .grey-font {
+            font-size: 12px;
+          }
+
+          .empty-placeholder {
+            height: 220px;
+          }
+
+          .title-row {
+            padding: 16px;
+          }
+
+          .title-row div {
+            min-width: 33%;
+          }
+
           .holder {
-            margin: 0 20px;
+            margin: 0 8px;
+            border-radius: 4px;
           }
 
           .filters {
-            padding: 20px;
-            padding-bottom: 0;
-          }
-
-          .history-holder {
-            padding-left: 20px;
-            padding-right: 20px;
-            padding-top: 20px;
+            padding: 16px;
           }
 
           .etherscan-link {
-            position: absolute;
-            right: -4px;
-            top: 0;
+            min-width: 0 !important;
+            margin-left: 10px;
           }
 
           .page-skip {
@@ -660,12 +780,31 @@ const TransactionHistory = ({ isMobile }) => {
             padding: 20px;
           }
 
+          .history-item {
+            width: 100%;
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+          }
+
+          .history-item .type {
+            font-size: 11px;
+          }
+
+          .history-item div {
+            min-width: 33%;
+          }
+
           .button {
-            min-width: 80px;
-            min-height: 35px;
-            margin-right: 8px;
-            font-size: 14px;
+            padding: 4px 19px;
+            font-size: 12px;
             margin-bottom: 20px;
+          }
+
+          .history-holder {
+            border-radius: 0 0 4px 4px;
           }
         }
       `}</style>

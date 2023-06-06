@@ -16,7 +16,7 @@ import {
 import { useWeb3React } from '@web3-react/core'
 import addresses from 'constants/contractAddresses'
 import curveRoutes from 'constants/curveRoutes'
-
+import { get } from 'lodash'
 import { calculateSwapAmounts } from 'utils/math'
 
 const useCurrencySwapper = ({
@@ -140,7 +140,8 @@ const useCurrencySwapper = ({
       }
 
       const allowance = parseFloat(
-        allowances[coinNeedingApproval][allowanceCheckKey]
+        get(allowances, `${coinNeedingApproval}.${allowanceCheckKey}`)
+
       )
 
       setNeedsApproval(

@@ -19,6 +19,7 @@ const GetOUSD = ({
   showLogin,
   trackSource,
   light2,
+  gradient,
   zIndex2,
   navMarble,
 }) => {
@@ -33,6 +34,7 @@ const GetOUSD = ({
     light && 'btn-light',
     light2 && 'btn-light2',
     primary && 'btn-primary',
+    gradient && 'btn-gradient',
     zIndex2 && 'zIndex2',
     navMarble && 'nav-marble'
   )
@@ -72,10 +74,19 @@ const GetOUSD = ({
       </button>
       <style jsx>{`
         .btn {
-          font-size: 1.125rem;
+          font-size: 1rem;
           font-weight: bold;
           border-radius: 25px;
           padding: 0;
+        }
+
+        .btn-gradient {
+          background-image: linear-gradient(
+            90deg,
+            #8c66fc -28.99%,
+            #0274f1 144.97%
+          );
+          color: white;
         }
 
         .zIndex2 {
@@ -107,6 +118,10 @@ const GetOUSD = ({
         @media (max-width: 992px) {
           .btn {
             width: 100%;
+          }
+
+          .max-w-107 {
+            max-width: 107px;
           }
 
           .nav-marble {
