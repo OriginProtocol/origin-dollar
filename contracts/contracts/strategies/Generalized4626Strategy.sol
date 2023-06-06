@@ -13,8 +13,8 @@ import { IERC20, InitializableAbstractStrategy } from "../utils/InitializableAbs
 contract Generalized4626Strategy is InitializableAbstractStrategy {
     using SafeERC20 for IERC20;
 
-    IERC20 shareToken;
-    IERC20 assetToken;
+    IERC20 internal shareToken;
+    IERC20 internal assetToken;
 
     /**
      * @dev Deposit assets by converting them to shares

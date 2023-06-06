@@ -22,9 +22,9 @@ contract VaultCore is VaultStorage {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
     // max signed int
-    uint256 constant MAX_INT = 2**255 - 1;
+    uint256 internal constant MAX_INT = 2**255 - 1;
     // max un-signed int
-    uint256 constant MAX_UINT =
+    uint256 internal constant MAX_UINT =
         0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
 
     /**
@@ -213,8 +213,7 @@ contract VaultCore is VaultStorage {
             // backing assets value and OUSD total supply
             uint256 diff = oUSD.totalSupply().divPrecisely(totalUnits);
             require(
-                (diff > 1e18 ? diff - 1e18 : 1e18 - diff) <=
-                    maxSupplyDiff,
+                (diff > 1e18 ? diff - 1e18 : 1e18 - diff) <= maxSupplyDiff,
                 "Backing supply liquidity error"
             );
         }
@@ -748,6 +747,11 @@ contract VaultCore is VaultStorage {
         return allStrategies;
     }
 
+    /**
+     * @dev Returns whether the vault supports the asset
+     * @param _asset address of the asset
+     * @return true if supported
+     */
     function isSupportedAsset(address _asset) external view returns (bool) {
         return assets[_asset].isSupported;
     }
