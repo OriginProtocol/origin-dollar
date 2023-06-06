@@ -1505,12 +1505,6 @@ async function rebornFixture() {
   return fixture;
 }
 
-function defaultFixtureSetup() {
-  return deployments.createFixture(async () => {
-    return await defaultFixture();
-  });
-}
-
 function uniswapV3FixtureSetup() {
   return deployments.createFixture(async () => {
     const fixture = await defaultFixture();
@@ -1640,7 +1634,6 @@ module.exports = {
   hackedVaultFixture,
   rebornFixture,
   uniswapV3FixtureSetup,
-  defaultFixtureSetup,
   withImpersonatedAccount,
   impersonateAndFundContract,
   impersonateAccount,

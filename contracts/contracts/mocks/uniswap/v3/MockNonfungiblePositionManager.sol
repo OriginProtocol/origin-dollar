@@ -6,7 +6,7 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 
 import { IUniswapV3Helper } from "../../../interfaces/uniswap/v3/IUniswapV3Helper.sol";
 import { IMockUniswapV3Pool } from "./MockUniswapV3Pool.sol";
-
+// solhint-disable-next-line no-console
 import "hardhat/console.sol";
 
 contract MockNonfungiblePositionManager {
