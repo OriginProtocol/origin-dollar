@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import { IVault } from "../interfaces/IVault.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+// solhint-disable-next-line no-console
 import "hardhat/console.sol";
 
 contract Sanctum {
@@ -111,6 +112,7 @@ contract Reborner {
 
     function log(string memory message) internal view {
         if (logging) {
+            // solhint-disable-next-line no-console
             console.log(message);
         }
     }
