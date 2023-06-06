@@ -158,6 +158,7 @@ const impersonateAccount = async (address) => {
  * @param {opts} Options
  *   governorAddr: address of the governor contract to send the proposal to
  *   guardianAddr: address of the guardian (aka the governor's admin) to use for sending the queue and execute tx
+ *   reduceQueueTime: reduce queue proposal time to 60 seconds
  * @returns {Promise<void>}
  */
 const executeProposal = async (proposalArgs, description, opts = {}) => {
@@ -190,6 +191,24 @@ const executeProposal = async (proposalArgs, description, opts = {}) => {
     `Using governor contract at ${governorContract.address} with admin ${admin}`
   );
 
+  // only works on hardhat network that supports `hardhat_setStorageAt`
+  if (opts.reduceQueueTime) {
+    log(`Reducing required queue time to 60 seconds`);
+    await hre.network.provider.request({
+      method: "hardhat_setStorageAt",
+      /* contracts/timelock/Timelock.sol storage slot layout:
+       * slot[0] address admin
+       * slot[1] address pendingAdmin
+       * slot[2] uint256 delay
+       */
+      params: [
+        governorContract.address,
+        "0x2",
+        "0x000000000000000000000000000000000000000000000000000000000000003c", // 60 seconds
+      ], // address, storageSlot, newValue
+    });
+  }
+
   const txOpts = await getTxOpts();
 
   log(`Submitting proposal for ${description}`);
@@ -206,8 +225,13 @@ const executeProposal = async (proposalArgs, description, opts = {}) => {
   );
   log(`Proposal ${proposalId} queued`);
 
-  log("Advancing time by 48 hours + 1 second for TimeLock delay.");
-  await advanceTime(172801);
+  if (opts.reduceQueueTime) {
+    log("Advancing time by 61 seconds for TimeLock delay.");
+    await advanceTime(61);
+  } else {
+    log("Advancing time by 48 hours + 1 second for TimeLock delay.");
+    await advanceTime(172801);
+  }
 
   await withConfirmation(
     governorContract.connect(sGuardian).execute(proposalId, txOpts)
@@ -308,6 +332,11 @@ const executeGovernanceProposalOnFork = async ({
     }
 
     const votingPeriod = Number((await governorFive.votingPeriod()).toString());
+    log(
+      `Advancing ${
+        votingPeriod + 1
+      } blocks to make transaction for from Active to Succeeded`
+    );
     // advance to the end of voting period
     await advanceBlocks(votingPeriod + 1);
 
@@ -339,6 +368,7 @@ const executeGovernanceProposalOnFork = async ({
    */
   if (proposalState === "Queued") {
     const queuePeriod = Number((await timelock.getMinDelay()).toString());
+    log(`Advancing queue period (minDelay on the timelock) to ${queuePeriod}`);
     // advance to the end of queue period
     await advanceTime(queuePeriod + 1);
   }
@@ -439,6 +469,8 @@ const submitProposalGnosisSafe = async (
  *
  * @param {Array<Object>} proposalArgs
  * @param {string} description
+ * @param {opts} Options
+ *   reduceQueueTime: reduce queue proposal time to 60 seconds
  * @returns {Promise<void>}
  */
 const submitProposalToOgvGovernance = async (
@@ -453,12 +485,57 @@ const submitProposalToOgvGovernance = async (
   }
 
   const governorFive = await getGovernorFive();
+  const timelock = await getTimelock();
   const multisig5of8 = addresses.mainnet.Guardian;
   const sMultisig5of8 = hre.ethers.provider.getSigner(multisig5of8);
   await impersonateGuardian(multisig5of8);
 
   log(`Submitting proposal for ${description}`);
   log(`Args: ${JSON.stringify(proposalArgs, null, 2)}`);
+
+  if (opts.reduceQueueTime) {
+    log(
+      `Reducing required voting delay to 1 block and voting period to 60 blocks ` +
+        `vote extension on late vote to 0 and timelock min delay to 5 seconds`
+    );
+
+    // slot[4] uint256 votingDelay
+    await hre.network.provider.request({
+      method: "hardhat_setStorageAt",
+      params: [
+        governorFive.address,
+        "0x4",
+        "0x0000000000000000000000000000000000000000000000000000000000000001", // 1 block
+      ], // address, storageSlot, newValue
+    });
+    // slot[5] uint256 votingPeriod
+    await hre.network.provider.request({
+      method: "hardhat_setStorageAt",
+      params: [
+        governorFive.address,
+        "0x5",
+        "0x000000000000000000000000000000000000000000000000000000000000003c", // 60 blocks
+      ], // address, storageSlot, newValue
+    });
+    // slot[11]uint256 lateQuoruVoteExtension
+    await hre.network.provider.request({
+      method: "hardhat_setStorageAt",
+      params: [
+        governorFive.address,
+        "0xB", // 11
+        "0x0000000000000000000000000000000000000000000000000000000000000000", // 0 blocks
+      ], // address, storageSlot, newValue
+    });
+    // slot[2]uint256 _minDelay
+    await hre.network.provider.request({
+      method: "hardhat_setStorageAt",
+      params: [
+        timelock.address,
+        "0x2",
+        "0x0000000000000000000000000000000000000000000000000000000000000005", // 5 seconds
+      ], // address, storageSlot, newValue
+    });
+  }
 
   const result = await withConfirmation(
     governorFive
@@ -519,7 +596,8 @@ const sanityCheckOgvGovernance = async () => {
 const handlePossiblyActiveGovernanceProposal = async (
   proposalId,
   deployName,
-  governorFive
+  governorFive,
+  reduceQueueTime
 ) => {
   if (isFork && proposalId) {
     let proposalState;
@@ -549,7 +627,7 @@ const handlePossiblyActiveGovernanceProposal = async (
 
     if (["Pending", "Active", "Succeeded", "Queued"].includes(proposalState)) {
       console.log(
-        `Found proposal id: ${proposalId} on forked network. Executing proposal containing deployment of: ${deployName}`
+        `Found proposal id: ${proposalId} on forked network with ${proposalState} state. Executing proposal containing deployment of: ${deployName}`
       );
 
       await executeGovernanceProposalOnFork({
@@ -638,6 +716,7 @@ async function getGovernorFive() {
 
 async function getProposalState(proposalIdBn) {
   const governorFive = await getGovernorFive();
+
   return [
     "Pending",
     "Active",
@@ -670,6 +749,7 @@ function deploymentWithGovernanceProposal(opts, fn) {
     onlyOnFork,
     forceSkip,
     proposalId,
+    reduceQueueTime = false,
   } = opts;
   const runDeployment = async (hre) => {
     const oracleAddresses = await getOracleAddresses(hre.deployments);
@@ -694,7 +774,8 @@ function deploymentWithGovernanceProposal(opts, fn) {
       await handlePossiblyActiveGovernanceProposal(
         proposalId,
         deployName,
-        governorFive
+        governorFive,
+        reduceQueueTime
       )
     ) {
       return;
@@ -715,6 +796,7 @@ function deploymentWithGovernanceProposal(opts, fn) {
     } else if (isFork) {
       // On Fork we can send the proposal then impersonate the guardian to execute it.
       log("Sending the governance proposal to OGV governance");
+      propOpts.reduceQueueTime = reduceQueueTime;
       const { proposalState, proposalId, proposalIdBn } =
         await submitProposalToOgvGovernance(
           propArgs,
@@ -807,6 +889,12 @@ function deploymentWithGovernanceProposal(opts, fn) {
  * @returns {Object} main object used by hardhat
  */
 function deploymentWithProposal(opts, fn) {
+  /* When `reduceQueueTime` is set to true the Timelock delay is overriden to
+   * 60 seconds and blockchain also advances only minimally when passing proposals.
+   *
+   * This is required because in some cases we need minimal chain advancement e.g.
+   * when Oracle data would become stale too quickly.
+   */
   const {
     deployName,
     dependencies,
@@ -814,6 +902,7 @@ function deploymentWithProposal(opts, fn) {
     forceSkip,
     onlyOnFork,
     proposalId,
+    reduceQueueTime,
   } = opts;
   const runDeployment = async (hre) => {
     const oracleAddresses = await getOracleAddresses(hre.deployments);
@@ -852,6 +941,7 @@ function deploymentWithProposal(opts, fn) {
     } else if (isFork) {
       // On Fork we can send the proposal then impersonate the guardian to execute it.
       log("Sending and executing proposal...");
+      propOpts.reduceQueueTime = reduceQueueTime;
       await executeProposal(propArgs, propDescription, propOpts);
       log("Proposal executed.");
     } else {

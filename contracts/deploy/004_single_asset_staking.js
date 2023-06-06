@@ -192,6 +192,9 @@ const singleAssetStaking = async ({ getNamedAccounts, deployments }) => {
 singleAssetStaking.id = deployName;
 singleAssetStaking.dependencies = ["core"];
 singleAssetStaking.tags = ["unit_tests"];
-singleAssetStaking.skip = () => isFork;
+/**
+ * The contract is no longer in use and isn't expected to be updated
+ */
+singleAssetStaking.skip = () => true;
 
 module.exports = singleAssetStaking;

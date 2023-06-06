@@ -1,5 +1,4 @@
 const { utils } = require("ethers");
-const { formatUnits } = utils;
 
 const addresses = require("../utils/addresses");
 
