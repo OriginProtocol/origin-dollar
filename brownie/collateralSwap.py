@@ -17,6 +17,14 @@ vault_core_w_swap_collateral = load_contract('vault_core_w_swap_collateral', VAU
 # 2 = 2%
 MAX_PRICE_DEVIATION = 2
 
+console_colors = {}
+console_colors["ENDC"] = '\033[0m'
+console_colors["FAIL"] = '\033[91m'
+console_colors["WARNING"] = '\033[93m'
+console_colors["OKGREEN"] = '\033[92m'
+console_colors["OKCYAN"] = '\033[96m'
+
+
 @contextmanager
 def silent_tx():
     """
@@ -105,6 +113,30 @@ def get_coingecko_quote(from_token, to_token, from_amount):
 
     return get_price(from_token, True) * get_price(to_token, False) / 1e18 * from_amount / 1e18
 
+def print_out_protocols_used(protocols):
+    asset_map = {
+        '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2' : 'WETH',
+        '0xae7ab96520de3a18e5e111b5eaab095312d7fe84' : 'STETH',
+        '0xae78736cd615f374d3085123a210448e74fc6393' : 'RETH',
+        '0x5e8422345238f34275888049021821e8e08caa1f' : 'FRXETH',
+        '0xac3e018457b222d93114458476f3e3416abbe38f' : 'SFRXETH',
+        '0xbe9895146f7af43049ca1c1ae358b0541ea49704' : 'CBETH',
+        '0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0' : 'WSTETH',
+        '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee' : 'ETH'
+    }
+
+    print("------- Swap path used -------")
+    print("")
+
+    for protocol_step in protocols:
+        for swap_set in protocol_step:
+            for swap in swap_set:
+                print("name: {} {} {} \t {}->{} share: {}{:.1f}%{}".format(console_colors['OKGREEN'], swap['name'], console_colors['ENDC'], asset_map[swap['fromTokenAddress']], asset_map[swap['toTokenAddress']], console_colors['OKCYAN'], swap['part'], console_colors['ENDC']))
+            print("----")
+        print("----------------------------------")
+
+
+
 def get_1inch_swap(from_token, to_token, from_amount, slippage, allowPartialFill, min_expected_amount):
     router_1inch = load_contract('router_1inch_v5', ROUTER_1INCH_V5)
     SWAP_SELECTOR = "0x12aa3caf" #swap(address,(address,address,address,address,uint256,uint256,uint256),bytes,bytes)
@@ -129,7 +161,7 @@ def get_1inch_swap(from_token, to_token, from_amount, slippage, allowPartialFill
         raise Exception("Error calling 1inch api")
 
     result = req.json()
-
+    print_out_protocols_used(result['protocols'])
     input_decoded = router_1inch.decode_input(result['tx']['data'])
 
     selector = result['tx']['data'][:10]
@@ -162,9 +194,11 @@ def get_1inch_swap(from_token, to_token, from_amount, slippage, allowPartialFill
     #     "gasPrice": 123
     # })
 
+    print("-------- Transaction --------")
     print("Execute the swap transaction on the Vault")
     print("to: {}".format(VAULT_OETH_PROXY_ADDRESS))
     print("data: {}".format(swap_collateral_data))
+    print("")
 
 # using oracle router calculate what the expected `toTokenAmount` should be
 # this function fails if Oracle data is too stale    
@@ -178,11 +212,6 @@ def get_oracle_router_quote(from_token, to_token, from_amount):
     to_price = 10**18 / oeth_oracle_router.price(to_token)
 
     return from_price * to_price * from_amount / 10**18
-
-console_colors = {}
-console_colors["ENDC"] = '\033[0m'
-console_colors["FAIL"] = '\033[91m'
-console_colors["WARNING"] = '\033[93m'
 
 
 # create a swap transaction
@@ -250,5 +279,7 @@ def build_swap_tx(from_token, to_token, from_amount, max_slippage, allow_partial
     get_1inch_swap(from_token, to_token, from_amount, max_slippage, allow_partial_fill, min_tokens_with_slippage)
 
 # from_token, to_token, from_token_amount, slippage, allow_partial_fill
-#build_swap_tx(WETH, FRXETH, 300 * 10**18, 1, False)
-
+# build_swap_tx(WETH, FRXETH, 300 * 10**18, 1, False)
+# build_swap_tx(RETH, FRXETH, 300 * 10**18, 1, False)
+# build_swap_tx(RETH, STETH, 5000 * 10**18, 1, False)
+# build_swap_tx(RETH, STETH, 5000 * 10**18, 1, False)
