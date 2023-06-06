@@ -3,7 +3,7 @@ const { utils } = require("ethers");
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "051_uniswap_usdc_usdt_strategy",
+    deployName: "065_uniswap_usdc_usdt_strategy",
     forceDeploy: false,
   },
   async ({
