@@ -87,7 +87,9 @@ metastrategies.forEach(
               currentRewardPoolBalance
             );
 
-            if ((await vault.vaultBuffer()).toString() == "1000000000000000000") {
+            if (
+              (await vault.vaultBuffer()).toString() == "1000000000000000000"
+            ) {
               // If Vault Buffer is 100%, shouldn't deposit anything to strategy
               expect(rewardPoolBalanceDiff).to.equal("0");
             } else if (asset.address === dai.address) {
