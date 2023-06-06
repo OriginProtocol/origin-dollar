@@ -81,3 +81,5 @@ coverage.json
 out
 pnm-cov.json
 reports
+fork-coverage
+unit-coverage

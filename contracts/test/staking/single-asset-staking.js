@@ -9,7 +9,10 @@ const sixMonth = 180 * day;
 const halfYear = 180 * day;
 const year = 360 * day;
 
-describe("Single Asset Staking", function () {
+/**
+ * The contract is no longer in use and isn't expected to be updated
+ */
+describe.skip("Single Asset Staking", function () {
   if (isFork) {
     this.timeout(0);
   }
