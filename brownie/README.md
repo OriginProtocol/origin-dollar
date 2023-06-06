@@ -51,3 +51,20 @@ If using Brownie console calls to your node timeout a lot you can reconnect to t
 ```
 web3.connect('http://127.0.0.1:8545', 120)
 ```
+
+### Perform Vault Collateral Swaps
+
+Start a brownie console
+```
+brownie console --network hardhat
+```
+
+Build a swap transaction: 
+```
+# import collateral Swap script
+from collateralSwap import *
+
+# from_token, to_token, from_token_amount, slippage, allow_partial_fill
+build_swap_tx(WETH, FRXETH, 300 * 10**18, 1, False)
+
+```
