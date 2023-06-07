@@ -182,6 +182,7 @@ async function defaultFixture() {
     adai = await ethers.getContractAt(erc20Abi, addresses.mainnet.aDAI);
     frxETH = await ethers.getContractAt(erc20Abi, addresses.mainnet.frxETH);
     sfrxETH = await ethers.getContractAt(sfrxETHAbi, addresses.mainnet.sfrxETH);
+    reth = await ethers.getContractAt(erc20Abi, addresses.mainnet.rETH);
     morpho = await ethers.getContractAt(morphoAbi, addresses.mainnet.Morpho);
     morphoLens = await ethers.getContractAt(
       morphoLensAbi,
@@ -234,7 +235,7 @@ async function defaultFixture() {
       "FraxETHStrategyProxy"
     );
     fraxEthStrategy = await ethers.getContractAt(
-      "Generalized4626Strategy",
+      "FraxETHStrategy",
       fraxEthStrategyProxy.address
     );
 
@@ -866,34 +867,44 @@ function oethMorphoAaveFixtureSetup() {
  * FraxETHStrategy fixture that works only in forked environment
  *
  */
-async function fraxETHStrategyForkedFixture() {
-  const fixture = await loadFixture(defaultFixture);
+function fraxETHStrategyFixtureSetup() {
+  return deployments.createFixture(async () => {
+    const fixture = await oethDefaultFixture();
 
-  const sGuardian = await ethers.provider.getSigner(addresses.mainnet.Guardian);
-  const { daniel } = fixture;
+    const sTimelock = await ethers.provider.getSigner(
+      addresses.mainnet.OldTimelock
+    );
+    const { daniel, oethVault, frxETH, fraxEthStrategy } = fixture;
 
-  // Get some frxETH from most wealthy contracts/wallets
-  await impersonateAndFundAddress(
-    addresses.mainnet.frxETH,
-    [
-      "0x5Ae5eC04170E0dedC00b0Cfae3B8E7821C630AFA",
-      "0x2F08F4645d2fA1fB12D2db8531c0c2EA0268BdE2",
-      "0x8a15b2Dc9c4f295DCEbB0E7887DD25980088fDCB",
-      "0xce4DbAF3fa72C962Ee1F371694109fc2a80B03f5",
-      "0x4E30fc7ccD2dF3ddCA39a69d2085334Ee63b9c96",
-    ],
-    // Daniel is loaded with fraxETH
-    daniel.getAddress()
-  );
+    // TODO: Undo the funding things once the changes in Collateral Swap branch is merged
 
-  await fixture.oethVault
-    .connect(sGuardian)
-    .setAssetDefaultStrategy(
-      fixture.frxETH.address,
-      fixture.fraxEthStrategy.address
+    // Get some frxETH from most wealthy contracts/wallets
+    await impersonateAndFundAddress(
+      addresses.mainnet.frxETH,
+      [
+        "0x5Ae5eC04170E0dedC00b0Cfae3B8E7821C630AFA",
+        "0x2F08F4645d2fA1fB12D2db8531c0c2EA0268BdE2",
+        "0x8a15b2Dc9c4f295DCEbB0E7887DD25980088fDCB",
+        "0xce4DbAF3fa72C962Ee1F371694109fc2a80B03f5",
+        "0x4E30fc7ccD2dF3ddCA39a69d2085334Ee63b9c96",
+      ],
+      // Daniel is loaded with fraxETH
+      daniel.getAddress()
     );
 
-  return fixture;
+    await frxETH
+      .connect(daniel)
+      .approve(
+        oethVault.address,
+        utils.parseEther("10000000000000000000000000")
+      );
+
+    await oethVault
+      .connect(sTimelock)
+      .setAssetDefaultStrategy(frxETH.address, fraxEthStrategy.address);
+
+    return fixture;
+  });
 }
 
 /**
@@ -1449,6 +1460,7 @@ module.exports = {
   withImpersonatedAccount,
   impersonateAndFundContract,
   impersonateAccount,
-  fraxETHStrategyForkedFixture,
+  fraxETHStrategyFixtureSetup,
   oethMorphoAaveFixtureSetup,
+  mintWETH,
 };
