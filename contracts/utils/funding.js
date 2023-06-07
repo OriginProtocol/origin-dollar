@@ -17,7 +17,7 @@ const {
   isFork,
 } = require("../test/helpers");
 
-const log = require("./logger")("test:utils:funding");
+const log = require("./logger")("utils:funding");
 
 /* Used for funding accounts in forked mode. Find the holder that has the most ETH or ERC20 token amounts.
  * param contract: address of ERC20 token. If null the account with the most ETH shall be returned
