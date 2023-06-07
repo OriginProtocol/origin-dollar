@@ -17,6 +17,8 @@ const {
   isFork,
 } = require("../test/helpers");
 
+const log = require("./logger")("test:utils:funding");
+
 /* Used for funding accounts in forked mode. Find the holder that has the most ETH or ERC20 token amounts.
  * param contract: address of ERC20 token. If null the account with the most ETH shall be returned
  *
@@ -130,12 +132,17 @@ const fundAccounts = async () => {
           tokenContract,
           hre
         );
+        // If the token is USD, transfer 1M, otherwise 1K
+        const amount = ousdCoins.includes(tokenContract) ? "1000000" : "1000";
         await tokenContract
           .connect(signer)
           .transfer(
             address,
-            utils.parseUnits("1000000", await tokenContract.decimals())
+            utils.parseUnits(amount, await tokenContract.decimals())
           );
+        log(
+          `funded ${amount} ${await tokenContract.symbol()} from signer ${await signer.getAddress()} to ${address}`
+        );
       }
     } else {
       const signer = await ethers.provider.getSigner(address);
