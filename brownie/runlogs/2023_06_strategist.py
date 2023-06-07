@@ -90,3 +90,55 @@ for idx, item in enumerate(txs):
   print("Transaction ", idx)
   print("To: ", item.receiver)
   print("Data (Hex encoded): ", item.input, "\n")
+
+
+# --------------------------------
+# June 6, 2023 - OUSD Deposit to Aave
+# --------------------------------
+
+from addresses import *
+from world import *
+from allocations import *
+from ape_safe import ApeSafe
+
+votes = """
+Morpho Aave USDT  66.61%
+Morpho Aave DAI 8.06%
+Morpho Aave USDC  7.97%
+Convex DAI+USDC+USDT  7.71%
+Aave DAI  7.4%
+Convex OUSD+3Crv  1.84%
+Convex LUSD+3Crv  0.39%
+Existing Allocation 0%
+Aave USDC 0%
+Aave USDT 0%
+Compound DAI  0%
+Compound USDC 0%
+Compound USDT 0%
+Morpho Compound DAI 0%
+Morpho Compound USDC  0%
+Morpho Compound USDT  0%
+"""
+
+with TemporaryForkWithVaultStats(votes):
+    txs = []
+    txs.extend(auto_take_snapshot())
+    txs.append(to_strat(AAVE_STRAT, [[2_250_000, dai],[2_000_000, usdc],[14_740_000, usdt]]))
+
+    txs.append(vault_admin.setVaultBuffer(0, {'from':STRATEGIST}))
+
+    # Defaults
+    txs.append(vault_admin.setAssetDefaultStrategy(dai, AAVE_STRAT,{'from':STRATEGIST}))
+    txs.append(vault_admin.setAssetDefaultStrategy(usdc, AAVE_STRAT,{'from':STRATEGIST}))
+    txs.append(vault_admin.setAssetDefaultStrategy(usdt, AAVE_STRAT,{'from':STRATEGIST}))
+
+    txs.extend(auto_check_snapshot())
+    
+print("Est Gas Max: {:,}".format(1.10*sum([x.gas_used for x in txs])))
+
+print("Schedule the following transactions on Gnosis Safe")
+for idx, item in enumerate(txs):
+  print("Transaction ", idx)
+  print("To: ", item.receiver)
+  print("Data (Hex encoded): ", item.input, "\n")
+
