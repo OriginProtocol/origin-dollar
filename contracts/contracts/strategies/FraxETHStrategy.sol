@@ -16,32 +16,29 @@ import { Generalized4626Strategy } from "./Generalized4626Strategy.sol";
 contract FraxETHStrategy is Generalized4626Strategy {
     using SafeERC20 for IERC20;
 
-    IWETH9 public constant weth =
-        IWETH9(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
+    address public constant weth = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
 
     IFraxETHMinter public constant fraxETHMinter =
         IFraxETHMinter(0xbAFA44EFE7901E04E39Dad13167D089C559c1138);
 
     function _deposit(address _asset, uint256 _amount) internal override {
         require(_amount > 0, "Must deposit something");
-        require(
-            _asset == address(weth) || _asset == address(assetToken),
-            "Unexpected asset address"
-        );
 
-        if (_asset == address(weth)) {
+        if (_asset == weth) {
             // Unwrap WETH
-            weth.withdraw(_amount);
+            IWETH9(weth).withdraw(_amount);
 
-            // Deposit ETH for frxETH
+            // Deposit ETH for frxETH and stake it
             // slither-disable-next-line unused-return
-            fraxETHMinter.submitAndDeposit{ value: address(this).balance }(
+            fraxETHMinter.submitAndDeposit{ value: _amount }(
                 address(this)
             );
-        } else {
+        } else if (_asset == address(assetToken)) {
             // Stake frxETH
             // slither-disable-next-line unused-return
             IERC4626(platformAddress).deposit(_amount, address(this));
+        } else {
+            revert("Unexpected asset address");
         }
 
         emit Deposit(_asset, address(shareToken), _amount);
@@ -57,7 +54,7 @@ contract FraxETHStrategy is Generalized4626Strategy {
         override
         returns (bool)
     {
-        return _asset == address(assetToken) || _asset == address(weth);
+        return _asset == address(assetToken) || _asset == weth;
     }
 
     /**
@@ -72,7 +69,7 @@ contract FraxETHStrategy is Generalized4626Strategy {
         override
         returns (uint256 balance)
     {
-        if (_asset == address(weth)) {
+        if (_asset == weth) {
             // For WETH, it's always 0
             return 0;
         }
@@ -100,11 +97,17 @@ contract FraxETHStrategy is Generalized4626Strategy {
             _deposit(address(assetToken), balance);
         }
 
-        // ETH + WETH balance
-        uint256 ethBalance = address(this).balance +
-            weth.balanceOf(address(this));
+        // Wrap any ETH balance to WETH
+        // Wrapping here and unwrapping in `_deposit` isn't gas efficient,
+        // But `depositAll` isn't called frequently; only during reallocation.
+        uint256 ethBalance = address(this).balance;
         if (ethBalance > 0) {
-            _deposit(address(weth), ethBalance);
+            IWETH9(weth).deposit{ value: ethBalance }();
+        }
+
+        uint256 wethBalance = IWETH9(weth).balanceOf(address(this));
+        if (wethBalance > 0) {
+            _deposit(weth, wethBalance);
         }
     }
 
