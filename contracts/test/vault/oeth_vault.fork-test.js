@@ -415,8 +415,8 @@ forkOnlyDescribe("ForkTest: OETH Vault", function () {
           error: "ERC20: transfer amount exceeds balance",
           from: "rETH",
           to: "WETH",
-          fromAmount: 1000,
-          minToAssetAmount: 990,
+          fromAmount: 10000,
+          minToAssetAmount: 9900,
         },
       ];
 
