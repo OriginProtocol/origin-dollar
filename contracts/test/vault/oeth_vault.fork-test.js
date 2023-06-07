@@ -230,22 +230,22 @@ forkOnlyDescribe("ForkTest: OETH Vault", function () {
         {
           from: "rETH",
           to: "stETH",
-          fromAmount: 100,
-          minToAssetAmount: "107.3",
+          fromAmount: 10,
+          minToAssetAmount: "10.73",
           slippage: 0.1,
         },
         {
           from: "rETH",
           to: "frxETH",
-          fromAmount: 100,
-          minToAssetAmount: 107,
+          fromAmount: 10,
+          minToAssetAmount: 10.7,
           slippage: 0.1,
         },
         {
           from: "rETH",
           to: "WETH",
-          fromAmount: 100,
-          minToAssetAmount: "107",
+          fromAmount: 10,
+          minToAssetAmount: "10.7",
           slippage: 0.1,
         },
         {
