@@ -62,9 +62,35 @@ brownie console --network hardhat
 Build a swap transaction: 
 ```
 # import collateral Swap script
-from collateralSwap import *
+from collateral_swap import *
 
 # from_token, to_token, from_token_amount, slippage, allow_partial_fill
 build_swap_tx(WETH, FRXETH, 300 * 10**18, 1, False)
 
 ```
+
+### Run collateral swap brownie test
+TODO: consider adding this to CI
+
+Prepare environment:
+```
+# set infura env var
+export WEB3_INFURA_PROJECT_ID
+
+# (only once) create virtual environment if not already created called "env-brownie"
+# virtual environment ensures that python3 is the default runtime. Also packaged installed
+# in virtual environment will only be visible within that environment.
+#
+python3 -m venv env-brownie
+
+# install eth_abi (if not yet installed)
+pip install eth_abi
+
+# enter python virtual environment
+source env-brownie/bin/activate
+
+# run test script
+brownie run collateral_swap_test --network mainnet-fork
+
+```
+
