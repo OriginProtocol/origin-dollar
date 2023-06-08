@@ -311,8 +311,8 @@ forkOnlyDescribe("ForkTest: OETH Vault", function () {
         {
           from: "WETH",
           to: "frxETH",
-          fromAmount: 1000,
-          minToAssetAmount: 1000,
+          fromAmount: 100,
+          minToAssetAmount: 100,
           protocols: "CURVE,CURVE_V2",
         },
         {
