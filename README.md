@@ -5,9 +5,9 @@ Checkout our [docs](https://docs.ousd.com) for more details about the product.
 
 | Branch    | CI/CD Status                                                                                                                                                                                                      |
 | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `master`  | [![OUSD](https://github.com/OriginProtocol/origin-dollar/actions/workflows/ousd.yml/badge.svg)](https://github.com/OriginProtocol/origin-dollar/actions/workflows/ousd.yml)                                       |
-| `staging` | [![OUSD](https://github.com/OriginProtocol/origin-dollar/actions/workflows/ousd.yml/badge.svg?branch=staging)](https://github.com/OriginProtocol/origin-dollar/actions/workflows/ousd.yml?query=branch%3Astaging) |
-| `stable`  | [![OUSD](https://github.com/OriginProtocol/origin-dollar/actions/workflows/ousd.yml/badge.svg?branch=stable)](https://github.com/OriginProtocol/origin-dollar/actions/workflows/ousd.yml?query=branch%3Astable)   |
+| `master`  | [![Origin DeFi](https://github.com/OriginProtocol/origin-dollar/actions/workflows/defi.yml/badge.svg)](https://github.com/OriginProtocol/origin-dollar/actions/workflows/defi.yml)                                       |
+| `staging` | [![Origin DeFi](https://github.com/OriginProtocol/origin-dollar/actions/workflows/defi.yml/badge.svg?branch=staging)](https://github.com/OriginProtocol/origin-dollar/actions/workflows/defi.yml?query=branch%3Astaging) |
+| `stable`  | [![Origin DeFi](https://github.com/OriginProtocol/origin-dollar/actions/workflows/defi.yml/badge.svg?branch=stable)](https://github.com/OriginProtocol/origin-dollar/actions/workflows/defi.yml?query=branch%3Astable)   |
 
 ## Requirements
 
