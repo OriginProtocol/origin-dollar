@@ -429,6 +429,7 @@ contract VaultCore is VaultStorage {
         IERC20(_fromAsset).safeTransfer(swapper, _fromAssetAmount);
 
         // Call to the Swapper contract to do the actual swap
+        // The -1 is required for stETH which sometimes transfers 1 wei less than what was specified.
         // slither-disable-next-line unused-return
         ISwapper(swapper).swap(
             _fromAsset,
