@@ -160,13 +160,14 @@ contract VaultAdmin is VaultStorage {
     /**
      * @dev Set the allowed slippage for collateral asset swaps.
      * @param _asset Address of the asset token.
-     * @param _allowedSwapSlippageBps allowed slippage in basis points. eg 20 = 0.2%
+     * @param _allowedSwapSlippageBps allowed slippage in basis points. eg 20 = 0.2%. Max 10%.
      */
     function setSwapSlippage(
         address _asset,
         uint16 _allowedSwapSlippageBps
     ) external onlyGovernor {
         require(assets[_asset].isSupported, "Asset not supported");
+        require(_allowedSwapSlippageBps < 1000, "Slippage too high");
 
         assets[_asset].allowedSwapSlippageBps = _allowedSwapSlippageBps;
 
