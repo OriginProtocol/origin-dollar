@@ -47,6 +47,15 @@ describe("OETH Vault - Swapper", () => {
       }
     });
 
+    it("Should not allow Governor to set slippage above 10%", async () => {
+      const { governor, oethVault, weth } = fixture;
+
+      const tx = oethVault
+        .connect(governor)
+        .setSwapSlippage(weth.address, 1100);
+      await expect(tx).to.be.revertedWith("Slippage too high");
+    });
+
     it("Should allow to change Swapper address", async () => {
       const { governor, oethVault, weth } = fixture;
 
