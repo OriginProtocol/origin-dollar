@@ -129,10 +129,7 @@ contract Generalized4626Strategy is InitializableAbstractStrategy {
          * should not result in assetToken being unused and owned by this strategy
          * contract.
          */
-        return
-            IERC4626(platformAddress).convertToAssets(
-                shareToken.balanceOf(address(this))
-            );
+        return IERC4626(platformAddress).maxWithdraw(address(this));
     }
 
     /**

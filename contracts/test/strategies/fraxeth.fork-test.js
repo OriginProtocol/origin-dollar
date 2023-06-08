@@ -66,14 +66,6 @@ forkOnlyDescribe("ForkTest: FraxETH Strategy", function () {
         .to.emit(fraxEthStrategy, "Deposit")
         .withArgs(weth.address, sfrxETH.address, oethUnits(amount));
     });
-
-    it("Should deposit all ETH, WETH and frxETH in the contract", async () => {
-      const { fraxEthStrategy, weth } = fixture;
-      expect(await fraxEthStrategy.checkBalance(weth.address)).to.eq(0);
-
-      // Mint some WETH to strategy
-      await impersonateAndFundContract(fraxEthStrategy.address);
-    });
   });
 
   describe("Withdraw", function () {

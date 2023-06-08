@@ -30,9 +30,7 @@ contract FraxETHStrategy is Generalized4626Strategy {
 
             // Deposit ETH for frxETH and stake it
             // slither-disable-next-line unused-return
-            fraxETHMinter.submitAndDeposit{ value: _amount }(
-                address(this)
-            );
+            fraxETHMinter.submitAndDeposit{ value: _amount }(address(this));
         } else if (_asset == address(assetToken)) {
             // Stake frxETH
             // slither-disable-next-line unused-return
@@ -82,10 +80,7 @@ contract FraxETHStrategy is Generalized4626Strategy {
          * should not result in assetToken being unused and owned by this strategy
          * contract.
          */
-        return
-            IERC4626(platformAddress).convertToAssets(
-                shareToken.balanceOf(address(this))
-            );
+        return IERC4626(platformAddress).maxWithdraw(address(this));
     }
 
     /**
@@ -95,14 +90,6 @@ contract FraxETHStrategy is Generalized4626Strategy {
         uint256 balance = assetToken.balanceOf(address(this));
         if (balance > 0) {
             _deposit(address(assetToken), balance);
-        }
-
-        // Wrap any ETH balance to WETH
-        // Wrapping here and unwrapping in `_deposit` isn't gas efficient,
-        // But `depositAll` isn't called frequently; only during reallocation.
-        uint256 ethBalance = address(this).balance;
-        if (ethBalance > 0) {
-            IWETH9(weth).deposit{ value: ethBalance }();
         }
 
         uint256 wethBalance = IWETH9(weth).balanceOf(address(this));
