@@ -158,6 +158,7 @@ const liquidityReward = async ({ getNamedAccounts, deployments }) => {
 
 liquidityReward.id = deployName;
 liquidityReward.dependencies = ["core"];
+liquidityReward.tags = ["unit_tests"];
 
 // Liquidity mining will get deployed to Mainnet at a later date.
 liquidityReward.skip = () => isMainnet || isFork;

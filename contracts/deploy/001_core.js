@@ -510,6 +510,43 @@ const configureVault = async (harvesterProxy) => {
 };
 
 /**
+ * Configure OETH Vault by adding supported assets and Strategies.
+ */
+const configureOETHVault = async () => {
+  const assetAddresses = await getAssetAddresses(deployments);
+  const { governorAddr, strategistAddr } = await getNamedAccounts();
+  // Signers
+  const sGovernor = await ethers.provider.getSigner(governorAddr);
+
+  await ethers.getContractAt(
+    "VaultInitializer",
+    (
+      await ethers.getContract("OETHVaultProxy")
+    ).address
+  );
+  const cVault = await ethers.getContractAt(
+    "VaultAdmin",
+    (
+      await ethers.getContract("OETHVaultProxy")
+    ).address
+  );
+  // Set up supported assets for Vault
+  const { WETH, RETH, stETH, frxETH } = assetAddresses;
+  for (const asset of [WETH, RETH, stETH, frxETH]) {
+    await withConfirmation(cVault.connect(sGovernor).supportAsset(asset, 0));
+  }
+  log("Added assets to OETH Vault");
+
+  // Unpause deposits
+  await withConfirmation(cVault.connect(sGovernor).unpauseCapital());
+  log("Unpaused deposits on OETH Vault");
+  // Set Strategist address.
+  await withConfirmation(
+    cVault.connect(sGovernor).setStrategistAddr(strategistAddr)
+  );
+};
+
+/**
  * Deploy Harvester
  */
 const deployHarvester = async () => {
@@ -673,6 +710,12 @@ const deployOracles = async () => {
   await deployWithConfirmation("OracleRouter", [], oracleContract);
   const oracleRouter = await ethers.getContract("OracleRouter");
 
+  const oethOracleContract = isMainnet
+    ? "OETHOracleRouter"
+    : "OETHOracleRouterDev";
+  await deployWithConfirmation("OETHOracleRouter", [], oethOracleContract);
+  const oethOracleRouter = await ethers.getContract("OETHOracleRouter");
+
   // Register feeds
   // Not needed in production
   const oracleAddresses = await getOracleAddresses(deployments);
@@ -790,12 +833,17 @@ const deployCore = async () => {
   // Proxies
   await deployWithConfirmation("OUSDProxy");
   await deployWithConfirmation("VaultProxy");
+  await deployWithConfirmation("OETHProxy");
+  await deployWithConfirmation("OETHVaultProxy");
 
   // Main contracts
   const dOUSD = await deployWithConfirmation("OUSD");
   const dVault = await deployWithConfirmation("Vault");
   const dVaultCore = await deployWithConfirmation("VaultCore");
   const dVaultAdmin = await deployWithConfirmation("VaultAdmin");
+
+  const dOETH = await deployWithConfirmation("OETH");
+  const dOETHVault = await deployWithConfirmation("OETHVault");
 
   await deployWithConfirmation("Governor", [governorAddr, 60]);
 
@@ -806,6 +854,15 @@ const deployCore = async () => {
   const cOracleRouter = await ethers.getContract("OracleRouter");
   const cVault = await ethers.getContractAt("Vault", cVaultProxy.address);
 
+  const cOETHProxy = await ethers.getContract("OETHProxy");
+  const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
+  const cOETH = await ethers.getContractAt("OETH", cOETHProxy.address);
+  const cOETHOracleRouter = await ethers.getContract("OETHOracleRouter");
+  const cOETHVault = await ethers.getContractAt(
+    "Vault",
+    cOETHVaultProxy.address
+  );
+
   await withConfirmation(
     cOUSDProxy["initialize(address,address,bytes)"](
       dOUSD.address,
@@ -814,6 +871,15 @@ const deployCore = async () => {
     )
   );
   log("Initialized OUSDProxy");
+
+  await withConfirmation(
+    cOETHProxy["initialize(address,address,bytes)"](
+      dOETH.address,
+      governorAddr,
+      []
+    )
+  );
+  log("Initialized OETHProxy");
 
   // Need to call the initializer on the Vault then upgraded it to the actual
   // VaultCore implementation
@@ -824,7 +890,15 @@ const deployCore = async () => {
       []
     )
   );
-  log("Initialized VaultProxy");
+  log("Initialized OUSD VaultProxy");
+  await withConfirmation(
+    cOETHVaultProxy["initialize(address,address,bytes)"](
+      dOETHVault.address,
+      governorAddr,
+      []
+    )
+  );
+  log("Initialized OETHVaultProxy");
 
   await withConfirmation(
     cVault
@@ -832,14 +906,26 @@ const deployCore = async () => {
       .initialize(cOracleRouter.address, cOUSDProxy.address)
   );
   log("Initialized Vault");
+  await withConfirmation(
+    cOETHVault
+      .connect(sGovernor)
+      .initialize(cOETHOracleRouter.address, cOETHProxy.address)
+  );
+  log("Initialized OETHVault");
 
   await withConfirmation(
     cVaultProxy.connect(sGovernor).upgradeTo(dVaultCore.address)
+  );
+  await withConfirmation(
+    cOETHVaultProxy.connect(sGovernor).upgradeTo(dVaultCore.address)
   );
   log("Upgraded VaultCore implementation");
 
   await withConfirmation(
     cVault.connect(sGovernor).setAdminImpl(dVaultAdmin.address)
+  );
+  await withConfirmation(
+    cOETHVault.connect(sGovernor).setAdminImpl(dVaultAdmin.address)
   );
   log("Initialized VaultAdmin implementation");
 
@@ -865,8 +951,14 @@ const deployCore = async () => {
       .connect(sGovernor)
       .initialize("Origin Dollar", "OUSD", cVaultProxy.address, resolution)
   );
-
   log("Initialized OUSD");
+
+  await withConfirmation(
+    cOETH
+      .connect(sGovernor)
+      .initialize("Origin Ether", "OETH", cOETHVaultProxy.address, resolution)
+  );
+  log("Initialized OETH");
 };
 
 // deploy curve metapool mocks
@@ -1017,7 +1109,7 @@ const deployBuyback = async () => {
   return cBuyback;
 };
 
-const deployVaultVaultChecker = async () => {
+const deployVaultValueChecker = async () => {
   const vault = await ethers.getContract("VaultProxy");
   const ousd = await ethers.getContract("OUSDProxy");
 
@@ -1067,19 +1159,20 @@ const main = async () => {
   await deployConvexLUSDMetaStrategy();
   const harvesterProxy = await deployHarvester();
   await configureVault(harvesterProxy);
+  await configureOETHVault();
   await configureStrategies(harvesterProxy);
   await deployDripper();
   await deployFlipper();
   await deployBuyback();
   await deployUniswapV3Pool();
-  await deployVaultVaultChecker();
+  await deployVaultValueChecker();
   await deployWOusd();
   console.log("001_core deploy done.");
   return true;
 };
 
 main.id = "001_core";
-main.dependencies = ["mocks"];
+main.dependencies = ["mocks", "unit_tests"];
 main.skip = () => isFork;
 
 module.exports = main;
