@@ -3,7 +3,7 @@
 //
 
 const hre = require("hardhat");
-const { utils } = require("ethers");
+const { BigNumber, utils } = require("ethers");
 
 const {
   advanceTime,
