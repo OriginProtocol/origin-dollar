@@ -252,10 +252,24 @@ module.exports = {
             initialBaseFeePerGas: 0,
             gas: 7000000,
             gasPrice: 1000,
+            ...(process.env.FORKED_LOCAL_TEST
+              ? {
+                  timeout: 0,
+                  forking: {
+                    enabled: true,
+                    url: `${
+                      process.env.LOCAL_PROVIDER_URL || process.env.PROVIDER_URL
+                    }`,
+                    blockNumber:
+                      Number(process.env.FORK_BLOCK_NUMBER) || undefined,
+                    timeout: 0,
+                  },
+                }
+              : {}),
           }),
     },
     localhost: {
-      timeout: 60000,
+      timeout: 0,
     },
     mainnet: {
       url: `${process.env.PROVIDER_URL}`,
