@@ -70,6 +70,16 @@ governor = load_contract('governor', GOVERNOR)
 governor_five = load_contract('governor_five', GOVERNOR_FIVE)
 rewards_source = load_contract('rewards_source', REWARDS_SOURCE)
 
+
+oeth = load_contract('ERC20', OETH)
+weth = load_contract('ERC20', WETH)
+reth = load_contract('ERC20', RETH)
+steth = load_contract('ERC20', STETH)
+frxeth = load_contract('ERC20', FRXETH)
+sfrxeth = load_contract('ERC20', SFRXETH)
+oeth_vault_admin = load_contract('vault_admin', OETH_VAULT)
+oeth_vault_core = load_contract('vault_core', OETH_VAULT)
+
 CONTRACT_ADDRESSES = {}
 CONTRACT_ADDRESSES[VAULT_PROXY_ADDRESS.lower()] = {'name': 'Vault'}
 CONTRACT_ADDRESSES[HARVESTER.lower()] = {'name': 'Harvester'}
@@ -123,6 +133,14 @@ def show_transfers(tx):
 # unlock an address to issue transactions as that address
 def unlock(address):
     brownie.network.web3.provider.make_request('hardhat_impersonateAccount', [address])
+
+def fund_eth(address, balance):
+    brownie.network.web3.provider.make_request('hardhat_setBalance', [address, balance])
+
+
+
+def mine_block():
+    brownie.network.web3.provider.make_request('evm_mine', [])
 
 def leading_whitespace(s, desired = 16):
     return ' ' * (desired-len(s)) + s

@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="141" height="141" viewBox="0 0 141 141">
+    <g fill="none" fill-rule="evenodd">
+        <path stroke="#FFF" stroke-linecap="round" stroke-linejoin="round" d="M85.687 2.446C81.639 1.518 77.506.928 73.205.759"/>
+        <path stroke="#00D592" d="M67.301.759C30.193 2.277.675 32.807.675 70.253c0 38.458 31.12 69.578 69.578 69.578s69.578-31.12 69.578-69.578c0-31.12-20.41-57.434-48.494-66.373"/>
+        <g stroke-linejoin="round">
+            <g fill="#183140" fill-rule="nonzero" stroke="#00D592">
+                <path d="M11.217 25.723L.169 19.313.169 6.494 11.217 12.904zM11.217 25.723L22.349 19.313 22.349 6.494 11.217 12.904z" transform="translate(27.831 21.928) translate(31.205)"/>
+                <path d="M22.349 6.494L11.217 12.904 0.169 6.494 11.217 0.169z" transform="translate(27.831 21.928) translate(31.205)"/>
+            </g>
+            <g fill="#183140" fill-rule="nonzero" stroke="#00D592">
+                <path d="M11.723 25.723L.675 19.313.675 6.578 11.723 12.904zM11.723 25.723L22.855 19.313 22.855 6.578 11.723 12.904z" transform="translate(27.831 21.928) translate(0 17.71)"/>
+                <path d="M22.855 6.578L11.723 12.904 0.675 6.578 11.723 0.169z" transform="translate(27.831 21.928) translate(0 17.71)"/>
+            </g>
+            <g fill="#183140" fill-rule="nonzero" stroke="#00D592">
+                <path d="M11.554 25.723L.506 19.398.506 6.578 11.554 12.988zM11.554 25.723L22.687 19.398 22.687 6.578 11.554 12.988z" transform="translate(27.831 21.928) translate(61.566 53.133)"/>
+                <path d="M22.687 6.578L11.554 12.988 0.506 6.578 11.554 0.169z" transform="translate(27.831 21.928) translate(61.566 53.133)"/>
+            </g>
+            <g fill="#183140" fill-rule="nonzero" stroke="#00D592">
+                <path d="M11.554 25.723L.506 19.313.506 6.578 11.554 12.904zM11.554 25.723L22.687 19.313 22.687 6.578 11.554 12.904z" transform="translate(27.831 21.928) translate(61.566 17.71)"/>
+                <path d="M22.687 6.578L11.554 12.904 0.506 6.578 11.554 0.169z" transform="translate(27.831 21.928) translate(61.566 17.71)"/>
+            </g>
+            <g fill="#183140" fill-rule="nonzero" stroke="#00D592">
+                <path d="M11.723 25.723L.675 19.398.675 6.578 11.723 12.988zM11.723 25.723L22.855 19.398 22.855 6.578 11.723 12.988z" transform="translate(27.831 21.928) translate(0 53.133)"/>
+                <path d="M22.855 6.578L11.723 12.988 0.675 6.578 11.723 0.169z" transform="translate(27.831 21.928) translate(0 53.133)"/>
+            </g>
+            <g fill="#183140" fill-rule="nonzero" stroke="#00D592">
+                <path d="M11.217 25.807L.169 19.398.169 6.578 11.217 12.988zM11.217 25.807L22.349 19.398 22.349 6.578 11.217 12.988z" transform="translate(27.831 21.928) translate(31.205 70.843)"/>
+                <path d="M22.349 6.578L11.217 12.988 0.169 6.578 11.217 0.169z" transform="translate(27.831 21.928) translate(31.205 70.843)"/>
+            </g>
+            <g stroke="#FFF" stroke-linecap="round">
+                <path d="M19.651 45.711L.084 34.41.084 11.723 19.651 23.108zM19.651 45.711L39.301 34.41 39.301 11.723 19.651 23.108z" transform="translate(27.831 21.928) translate(22.771 25.301)"/>
+                <path d="M39.301 11.723L19.651 23.108 0.084 11.723 19.651 0.422z" transform="translate(27.831 21.928) translate(22.771 25.301)"/>
+            </g>
+        </g>
+    </g>
+</svg>
