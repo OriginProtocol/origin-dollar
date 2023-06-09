@@ -14,12 +14,16 @@ participant "FRAX\nStrategy" as frxStrat <<Origin>> #DeepSkyBlue
 participant "Staked\nFRAX ETH" as sfrxETH <<FRAX>><<sfrxETH>>
 
 participant "Curve AMO\nStrategy" as crvStrat <<Origin>> #DeepSkyBlue
-
 participant "Wrapped ETH" as weth <<DappHub>><<WETH>>
 participant "OETH\nMetapool" as oethCrv <<Curve>>
 participant "OETH\nPool" as oethCvx <<Convex>>
 participant "Rewards\nPool" as cvxRewards <<Convex>>
 participant "Locked CVX" as icvx <<Convex>>
+
+participant "Morpho Aave\nStrategy" as morphAaveStrat <<Origin>> #DeepSkyBlue
+participant "Morpho\nAave V2" as morpho <<Morpho>>
+participant "interst\nbearing\nWETH" as aweth <<Aave>><<aWETH>>
+participant "variable\ndebt WETH" as vdweth <<Aave>><<varDebtWETH>>
 
 participant "Uniswap V2" as uni <<Uniswap>>
 
@@ -37,32 +41,15 @@ note left : 20% performance\nfee from rebase
 
 zap -> vault : WETH
 
-group Curve AMO Strategy [unallocated WETH in vault]
-vault -> crvStrat : WETH
-note left: > 10 ETH worth so\nallocate to strategy
-crvStrat -x weth : WETH
-weth -> crvStrat : ETH
-
-crvStrat o-> crvStrat : OETH
-note left : mint OETH where WETH <= OETH <= 2x WETH
-crvStrat -> oethCrv : ETH, OETH
-note left : add liquidity to the Metapool
-oethCrv o-> crvStrat : OETHCRV-f
-note left: strategy gets Metapool LP tokens
-
-crvStrat -> oethCvx : OETHCRV-f
-note left : deposit Metapool LP to Convex
-oethCvx o-> cvxRewards : cvxOETHCRV-f
-note left : stake Convex LP tokens
-end
+note over vault : Currently no default WETH strategy\nso there is no auto allocation.
 
 vault o-> user : OETH
 note left : mint OETH\nto match ETH
 end
 
 ' Deposit sfrxETH via Zapper
-group User deposit ETH [> 10 OETH]
-note over zap : User approves Zapper to transfer redeem their sfrxETH
+group User deposit sfrxETH [> 10 OETH]
+note over zap : User approves Zapper to transfer their sfrxETH
 
 user -x sfrxETH : sfrxETH
 note left : redeem sfrxETH for frxETH
@@ -75,7 +62,7 @@ zap -> vault : frxETH
 
 group FRAX Strategy
 vault -> frxStrat : frxETH
-note left: > 10 ETH worth so\nallocate to strategy
+note left: > 10 ETH worth so allocate\nto default frxETH strategy
 frxStrat -> sfrxETH : frxETH
 note left : deposit frxETH
 sfrxETH o-> frxStrat : sfrxETH
@@ -101,7 +88,8 @@ end
 ' Allocate
 group Vault allocate [anyone can call]
 
-group FRAX Strategy [unallocated frxETH in vault]
+' FRAX Strategy
+group Deposit to FRAX Strategy [unallocated frxETH in vault]
 vault -> frxStrat : frxETH
 frxStrat -> sfrxETH : frxETH
 note left : deposit frxETH
@@ -109,11 +97,11 @@ sfrxETH o-> frxStrat : sfrxETH
 note left : get sfrxETH shares
 end
 
-group Curve AMO Strategy [unallocated WETH in vault]
+' Curve AMO Strategy
+group Deposit to Curve AMO Strategy [unallocated WETH in vault]
 vault -> crvStrat : WETH
 crvStrat -x weth : WETH
 weth -> crvStrat : ETH
-
 
 crvStrat o-> crvStrat : OETH
 note left : mint OETH where WETH <= OETH <= 2x WETH
@@ -127,6 +115,22 @@ note left : deposit Metapool LP to Convex
 oethCvx o-> cvxRewards : cvxOETHCRV-f
 note left : stake Convex LP tokens
 end
+
+' Morpho Aave Strategy
+group Deposit to Morpho Aave Strategy [unallocated WETH in vault]
+vault -> morphAaveStrat : WETH
+morphAaveStrat -> morpho : WETH
+morpho -> aweth : WETH
+
+alt Morpho has more borrows than deposits
+morpho -x vdweth : varDebtWETH
+note left : repay borrowed WETH from Aave
+else Morpho has more deposits than borrows
+aweth o-> morpho  : aWETH
+note left : deposit WETH to Aave
+end
+end
+
 end
 
 ' Redeem
@@ -140,16 +144,17 @@ note left : burn User's OETH
 note over vault : 0.5% fee applied to redeemed assets.\nThis adds to the yield in the next rebase.
 
 ' FRAX Strategy
-group FRAX Strategy [not enough frxETH in vault]
+group Withdraw from FRAX Strategy [not enough frxETH in vault]
 frxStrat -x sfrxETH : sfrxETH
 note left : redeem sfrxETH shares
-' sfrxETH -> frxStrat : frxETH
 sfrxETH -> user : frxETH
 note left : transfer directly to user
+' sfrxETH -> vault : frxETH
+' note left : transfer to vault
 end
 
 ' Curve AMO Strategy
-group Curve AMO Strategy [not enough WETH in vault]
+group Withdraw from Curve AMO Strategy [not enough WETH in vault]
 cvxRewards -x oethCvx : cvxOETHCRV-f
 note left : unstake and burn Convex LP tokens
 oethCvx -> crvStrat : OETHCRV-f
@@ -166,6 +171,24 @@ note left : burn OETH withdrawn from Curve
 crvStrat -> weth : ETH
 note left : deposit ETH into Wrapped ETH
 weth o-> user : WETH
+note left : transfer directly to user
+' weth o-> vault : WETH
+' note left : transfer to vault
+end
+
+' Morpho Aave Strategy
+group Withdraw from Morpho Aave Strategy [not enough WETH in vault]
+alt Morpho has more borrows than deposits
+vdweth o-> morpho : varDebtWETH
+note left : borrow WETH from Aave
+else Morpho has more deposits than borrows
+morpho -x aweth : aWETH
+note left : withdraw WETH deposit from Aave
+end
+aweth -> morpho : WETH
+morpho -> morphAaveStrat : WETH
+' morphAaveStrat -> vault : WETH
+morphAaveStrat -> user : WETH
 note left : transfer directly to user
 end
 
