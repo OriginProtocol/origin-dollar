@@ -1172,7 +1172,8 @@ const main = async () => {
 };
 
 main.id = "001_core";
-main.dependencies = ["mocks", "unit_tests"];
+main.dependencies = ["mocks"];
+main.tags = ["unit_tests"];
 main.skip = () => isFork;
 
 module.exports = main;
