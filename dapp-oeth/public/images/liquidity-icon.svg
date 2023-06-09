@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="104" height="92" viewBox="0 0 104 92">
+    <defs>
+        <path id="to6djx3bca" d="M0 79.756C0 65.802 25.04.139 50.327 0c25.795-.141 51.848 65.523 51.848 79.756 0 28.26-102.175 28.26-102.175 0z"/>
+    </defs>
+    <g fill="none" fill-rule="evenodd">
+        <g>
+            <g>
+                <path fill="#1A82FF" fill-rule="nonzero" stroke="#FFF" stroke-width=".5" d="M0 79.758c0-28.187 102.175-28.187 102.175 0 0 28.26-102.175 28.26-102.175 0z" transform="translate(-668 -2683) translate(669 2673)"/>
+                <g transform="translate(-668 -2683) translate(669 2673) translate(0 .002)">
+                    <mask id="t6csvk41pb" fill="#fff">
+                        <use xlink:href="#to6djx3bca"/>
+                    </mask>
+                    <circle cx="51.458" cy="35.797" r="25.122" fill="#1A82FF" fill-rule="nonzero" stroke="#FFF" stroke-width=".809" mask="url(#t6csvk41pb)" opacity=".3"/>
+                    <circle cx="51.458" cy="52.545" r="25.122" fill="#1A82FF" fill-rule="nonzero" stroke="#FFF" stroke-width=".809" mask="url(#t6csvk41pb)" opacity=".5"/>
+                    <circle cx="51.458" cy="69.293" r="25.122" fill="#1A82FF" fill-rule="nonzero" stroke="#FFF" stroke-width=".809" mask="url(#t6csvk41pb)" opacity=".7"/>
+                    <circle cx="51.919" cy="85.664" r="24.745" fill="#FFF" fill-rule="nonzero" stroke="#FFF" stroke-width=".809" mask="url(#t6csvk41pb)"/>
+                </g>
+                <path fill-rule="nonzero" stroke="#FFF" stroke-width=".5" d="M87.74 95.064c-17.914 7.232-48.524 7.802-68.44 1.71" transform="translate(-668 -2683) translate(669 2673)"/>
+            </g>
+        </g>
+    </g>
+</svg>

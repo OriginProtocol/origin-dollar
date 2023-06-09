@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="402" height="281" viewBox="0 0 402 281">
+    <g fill="none" fill-rule="evenodd" stroke="#1A82FF" stroke-width=".5" transform="translate(1 -1)">
+        <path fill="#F4F4F4" fill-rule="nonzero" d="M78.856 231.17c0-66.844 242.31-66.844 242.31 0 0 67.019-242.31 67.019-242.31 0z"/>
+        <path d="M147.614 23.165L252.231 23.165 252.231 127.782 147.614 127.782z" transform="rotate(-45 199.923 75.474)"/>
+        <path fill="#FFF" fill-rule="nonzero" d="M126.03 75.374L200.011 1.393 200.011 75.374z"/>
+        <path fill="#F4F4F4" fill-rule="nonzero" d="M273.993 75.374L200.011 149.356 200.011 75.374z"/>
+        <circle cx="30.289" cy="148.659" r="30.115" fill="#FAFBFC" fill-rule="nonzero" opacity=".1"/>
+        <circle cx="76.941" cy="158.756" r="30.115" fill="#FAFBFC" fill-rule="nonzero" opacity=".325"/>
+        <circle cx="110.189" cy="184.519" r="30.115" fill="#FAFBFC" fill-rule="nonzero" opacity=".55"/>
+        <circle cx="129.685" cy="218.811" r="30.115" fill="#FAFBFC" fill-rule="nonzero" opacity=".775"/>
+        <path fill="#FAFBFC" fill-rule="nonzero" d="M136.3 224.73c-16.537 0-30.115 13.403-30.115 30.114 0 3.83.696 7.312 1.915 10.619 12.881 5.918 29.07 10.096 46.826 12.881 6.963-5.57 11.315-13.925 11.315-23.5 0-16.71-13.404-30.114-29.941-30.114z"/>
+        <circle cx="370.604" cy="148.659" r="30.115" fill="#FAFBFC" fill-rule="nonzero" opacity=".1"/>
+        <circle cx="323.778" cy="158.756" r="30.115" fill="#FAFBFC" fill-rule="nonzero" opacity=".325"/>
+        <circle cx="290.704" cy="184.519" r="30.115" fill="#FAFBFC" fill-rule="nonzero" opacity=".55"/>
+        <circle cx="271.033" cy="218.811" r="30.115" fill="#FAFBFC" fill-rule="nonzero" opacity=".775"/>
+        <path fill="#FAFBFC" fill-rule="nonzero" d="M264.419 224.73c-16.538 0-30.115 13.403-30.115 30.114 0 9.4 4.352 17.93 11.14 23.326 17.93-2.785 34.293-7.137 47.175-13.23 1.218-3.133 1.74-6.614 1.74-10.096.174-16.71-13.23-30.114-29.94-30.114z"/>
+        <g fill="#F4F4F4" fill-rule="nonzero">
+            <path d="M.87 8.878L18.278 8.878M9.574.174L9.574 17.581" transform="translate(168.852 13.926)"/>
+        </g>
+        <path fill="#F4F4F4" fill-rule="nonzero" d="M170.419 136.996L170.419 168.852M214.459 163.63L214.459 195.485M198.793 190.263L198.793 222.293M181.385 155.448L181.385 187.478M226.122 141.522L226.122 173.552"/>
+    </g>
+</svg>
