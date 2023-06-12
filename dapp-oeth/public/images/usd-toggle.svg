@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="47" height="16" viewBox="0 0 47 16">
+    <g fill="none" fill-rule="evenodd">
+        <g>
+            <g>
+                <path fill="#BBC9DA" d="M8 0h31c4.418 0 8 3.582 8 8s-3.582 8-8 8H8c-4.418 0-8-3.582-8-8s3.582-8 8-8z" transform="translate(-46 -43) translate(46 43)"/>
+                <path fill="#FFF" d="M9.158 3L6 5.631l3.158 2.632V6.158h5.79V5.105h-5.79V3zm2.63 6.842H6v1.053h5.789V13l3.158-2.632-3.158-2.631v2.105z" transform="translate(-46 -43) translate(46 43)"/>
+                <text fill="#FFF" font-family="Lato-Bold, Lato" font-size="11" font-weight="bold" transform="translate(-46 -43) translate(46 43)">
+                    <tspan x="19" y="12">USD</tspan>
+                </text>
+            </g>
+        </g>
+    </g>
+</svg>

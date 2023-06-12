@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="52" height="52" viewBox="0 0 52 52">
+    <defs>
+        <filter id="404e9p477a" width="153.3%" height="153.3%" x="-26.7%" y="-26.7%" filterUnits="objectBoundingBox">
+            <feMorphology in="SourceAlpha" operator="dilate" radius=".5" result="shadowSpreadOuter1"/>
+            <feOffset in="shadowSpreadOuter1" result="shadowOffsetOuter1"/>
+            <feGaussianBlur in="shadowOffsetOuter1" result="shadowBlurOuter1" stdDeviation="2.5"/>
+            <feComposite in="shadowBlurOuter1" in2="SourceAlpha" operator="out" result="shadowBlurOuter1"/>
+            <feColorMatrix in="shadowBlurOuter1" values="0 0 0 0 0.509803922 0 0 0 0 0.576470588 0 0 0 0 0.643137255 0 0 0 1 0"/>
+        </filter>
+        <path id="f00pmoeuib" d="M25 10c8.284 0 15 6.716 15 15 0 8.284-6.716 15-15 15-8.284 0-15-6.716-15-15 0-8.284 6.716-15 15-15z"/>
+    </defs>
+    <g fill="none" fill-rule="evenodd" transform="translate(1 1)">
+        <path fill="#BBC9DA" stroke="#BBC9DA" d="M25 0c13.807 0 25 11.193 25 25S38.807 50 25 50 0 38.807 0 25 11.193 0 25 0z"/>
+        <use fill="#000" filter="url(#404e9p477a)" xlink:href="#f00pmoeuib"/>
+        <use fill="#FFF" stroke="#CDD7E0" xlink:href="#f00pmoeuib"/>
+        <path fill="#BBC9DA" d="M27.402 24.282l-2.393-2.394-2.154 2.394h-5.026l7.18-8.017 7.419 8.017h-5.026zM25.01 14L14 25l.013.004L25.009 36l10.996-10.996.013-.004-11.01-11z"/>
+    </g>
+</svg>
