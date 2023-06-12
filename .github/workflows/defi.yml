@@ -2,6 +2,11 @@ name: DeFi
 on: 
   pull_request:
     types: [opened, reopened, synchronize]
+  push:
+    branches:
+      - 'master'
+      - 'staging'
+      - 'stable'
   workflow_dispatch:
 
 concurrency:
@@ -155,6 +160,25 @@ jobs:
 
       - run: yarn prettier:check
         working-directory: ./dapp
+
+  dapp-oeth-lint:
+    name: "OETH DApp Linter"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Use Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "16.x"
+          cache: "yarn"
+          cache-dependency-path: dapp-oeth/yarn.lock
+
+      - run: yarn install --frozen-lockfile
+        working-directory: ./dapp-oeth
+
+      - run: yarn prettier:check
+        working-directory: ./dapp-oeth
 
   slither:
     name: "Slither"

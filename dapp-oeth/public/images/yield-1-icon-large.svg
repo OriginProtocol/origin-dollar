@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="316" height="316" viewBox="0 0 316 316">
+    <g fill="none" fill-rule="evenodd" stroke-width=".5">
+        <path stroke="#1E313F" stroke-linecap="round" stroke-linejoin="round" d="M192.646 3.95C183.508 1.854 174.18.522 164.472.141" transform="translate(0 1)"/>
+        <path stroke="#1A82FF" d="M151.337.142C67.578 3.57.952 72.48.952 157c0 86.805 70.243 157.048 157.048 157.048S315.048 243.805 315.048 157c0-70.243-46.067-129.636-109.458-149.814" transform="translate(0 1)"/>
+        <g fill="#FAFBFC" fill-rule="nonzero" transform="translate(0 1) translate(49.494 50.398)">
+            <circle cx="25.318" cy="106.983" r="23.605" stroke="#1A82FF" opacity=".1"/>
+            <circle cx="30.458" cy="79.571" r="23.605" stroke="#1A82FF" opacity=".212"/>
+            <circle cx="45.877" cy="52.54" r="23.605" stroke="#1A82FF" opacity=".325"/>
+            <circle cx="71.766" cy="31.981" r="23.605" stroke="#1A82FF" opacity=".438"/>
+            <circle cx="108.696" cy="23.795" r="23.605" stroke="#1A82FF" opacity=".55"/>
+            <circle cx="145.246" cy="31.79" r="23.605" stroke="#1A82FF" opacity=".662"/>
+            <circle cx="186.364" cy="133.824" r="23.605" stroke="#1E313F" opacity=".212"/>
+            <circle cx="170.945" cy="51.969" r="23.605" stroke="#1A82FF" opacity=".775"/>
+            <circle cx="186.364" cy="78.81" r="23.605" stroke="#1A82FF" opacity=".887"/>
+            <circle cx="191.504" cy="106.983" r="23.605" stroke="#1A82FF"/>
+            <circle cx="191.504" cy="106.602" r="23.605" stroke="#1A82FF" opacity=".1"/>
+            <circle cx="170.945" cy="160.855" r="23.605" stroke="#1E313F" opacity=".325"/>
+            <circle cx="145.055" cy="181.414" r="23.605" stroke="#1E313F" opacity=".438"/>
+            <circle cx="108.125" cy="189.6" r="23.605" stroke="#1E313F" opacity=".55"/>
+            <circle cx="71.576" cy="181.605" r="23.605" stroke="#1E313F" opacity=".662"/>
+            <circle cx="45.877" cy="161.427" r="23.605" stroke="#1E313F" opacity=".775"/>
+            <circle cx="30.458" cy="134.586" r="23.605" stroke="#1E313F" opacity=".887"/>
+            <circle cx="25.318" cy="106.602" r="23.605" stroke="#1E313F"/>
+        </g>
+    </g>
+</svg>

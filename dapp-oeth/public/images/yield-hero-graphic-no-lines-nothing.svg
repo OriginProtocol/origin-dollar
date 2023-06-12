@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="310" height="451" viewBox="0 0 310 451">
+    <defs>
+        <linearGradient id="saxktm2llb" x1="50.008%" x2="50.008%" y1="105.96%" y2="66.408%">
+            <stop offset="0%" stop-color="#0B1A22"/>
+            <stop offset="100%" stop-color="#183140"/>
+        </linearGradient>
+        <linearGradient id="mwee4qchoc" x1="50.898%" x2="41.036%" y1="79.568%" y2="-11.87%">
+            <stop offset=".058%" stop-color="#FFF"/>
+            <stop offset="100%" stop-color="#1E313F"/>
+        </linearGradient>
+        <linearGradient id="epnjm20x5d" x1="48.094%" x2="58.005%" y1="17.958%" y2="112.287%">
+            <stop offset=".058%" stop-color="#FFF"/>
+            <stop offset="99.67%" stop-color="#4E5A64"/>
+        </linearGradient>
+        <radialGradient id="07xc792kea" cx="50%" cy="50%" r="50.013%" fx="50%" fy="50%">
+            <stop offset="0%" stop-color="#45525B"/>
+            <stop offset="100%" stop-color="#183140"/>
+        </radialGradient>
+        <path id="e0w8ybidhe" d="M0 0L26.635 0 26.635 26.635 0 26.635z"/>
+    </defs>
+    <g fill="none" fill-rule="evenodd">
+    </g>
+</svg>

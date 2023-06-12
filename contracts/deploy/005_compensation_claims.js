@@ -82,5 +82,6 @@ compensationClaimsDeploy.dependencies = ["core"];
  * The contract is no longer in use and isn't expected to be updated
  */
 compensationClaimsDeploy.skip = () => true;
+compensationClaimsDeploy.tags = ["unit_tests"];
 
 module.exports = compensationClaimsDeploy;
