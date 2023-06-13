@@ -46,6 +46,8 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     "MockOGV",
     "MockAave",
     "MockRETH",
+    "MockstETH",
+    "MockfrxETH",
   ];
   for (const contract of assetContracts) {
     await deploy(contract, { from: deployerAddr });
@@ -339,7 +341,7 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
 };
 
 deployMocks.id = "000_mock";
-deployMocks.tags = ["mocks"];
+deployMocks.tags = ["mocks", "unit_tests"];
 deployMocks.skip = () => isMainnetOrFork;
 
 module.exports = deployMocks;

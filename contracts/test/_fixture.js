@@ -23,10 +23,17 @@ const threepoolSwapAbi = require("./abi/threepoolSwap.json");
 
 const sfrxETHAbi = require("./abi/sfrxETH.json");
 
-async function defaultFixture() {
-  await deployments.fixture(undefined, {
-    keepExistingDeployments: true,
-  });
+const defaultFixture = deployments.createFixture(async () => {
+  await deployments.fixture(
+    isFork
+      ? undefined
+      : process.env.FORKED_LOCAL_TEST
+      ? ["none"]
+      : ["unit_tests"],
+    {
+      keepExistingDeployments: true,
+    }
+  );
 
   const { governorAddr, timelockAddr } = await getNamedAccounts();
 
@@ -41,16 +48,19 @@ async function defaultFixture() {
 
   const ousd = await ethers.getContractAt("OUSD", ousdProxy.address);
   const vault = await ethers.getContractAt("IVault", vaultProxy.address);
+  const oethProxy = await ethers.getContract("OETHProxy");
+  const OETHVaultProxy = await ethers.getContract("OETHVaultProxy");
+  const oethVault = await ethers.getContractAt(
+    "IVault",
+    OETHVaultProxy.address
+  );
+  const oeth = await ethers.getContractAt("OETH", oethProxy.address);
 
-  let oethProxy, OETHVaultProxy, oeth, woeth, woethProxy, oethVault;
+  let woeth, woethProxy;
+
   if (isFork) {
-    oethProxy = await ethers.getContract("OETHProxy");
     woethProxy = await ethers.getContract("WOETHProxy");
-    OETHVaultProxy = await ethers.getContract("OETHVaultProxy");
-    oeth = await ethers.getContractAt("OETH", oethProxy.address);
     woeth = await ethers.getContractAt("WOETH", woethProxy.address);
-
-    oethVault = await ethers.getContractAt("IVault", OETHVaultProxy.address);
   }
 
   const harvester = await ethers.getContractAt(
@@ -124,6 +134,7 @@ async function defaultFixture() {
     stkAave,
     aaveIncentivesController,
     reth,
+    stETH,
     frxETH,
     sfrxETH,
     mockNonRebasing,
@@ -182,6 +193,8 @@ async function defaultFixture() {
     adai = await ethers.getContractAt(erc20Abi, addresses.mainnet.aDAI);
     frxETH = await ethers.getContractAt(erc20Abi, addresses.mainnet.frxETH);
     sfrxETH = await ethers.getContractAt(sfrxETHAbi, addresses.mainnet.sfrxETH);
+    reth = await ethers.getContractAt(erc20Abi, addresses.mainnet.rETH);
+    stETH = await ethers.getContractAt(erc20Abi, addresses.mainnet.stETH);
     morpho = await ethers.getContractAt(morphoAbi, addresses.mainnet.Morpho);
     morphoLens = await ethers.getContractAt(
       morphoLensAbi,
@@ -267,6 +280,8 @@ async function defaultFixture() {
     LUSD = await ethers.getContract("MockLUSD");
     ogv = await ethers.getContract("MockOGV");
     reth = await ethers.getContract("MockRETH");
+    frxETH = await ethers.getContract("MockfrxETH");
+    stETH = await ethers.getContract("MockstETH");
     nonStandardToken = await ethers.getContract("MockNonStandardToken");
 
     cdai = await ethers.getContract("MockCDAI");
@@ -427,6 +442,7 @@ async function defaultFixture() {
     weth,
     ogv,
     reth,
+    stETH,
     rewardsSource,
     nonStandardToken,
     // cTokens
@@ -483,7 +499,7 @@ async function defaultFixture() {
     oethDripper,
     oethHarvester,
   };
-}
+});
 
 function defaultFixtureSetup() {
   return deployments.createFixture(async () => {
@@ -510,7 +526,7 @@ async function oethDefaultFixture() {
   return fixture;
 }
 
-async function oethDefaultFixtureSetup() {
+function oethDefaultFixtureSetup() {
   return deployments.createFixture(async () => {
     return await oethDefaultFixture();
   });
@@ -867,33 +883,33 @@ function oethMorphoAaveFixtureSetup() {
  *
  */
 async function fraxETHStrategyForkedFixture() {
-  const fixture = await loadFixture(defaultFixture);
+  return deployments.createFixture(async () => {
+    const fixture = await oethDefaultFixture();
 
-  const sGuardian = await ethers.provider.getSigner(addresses.mainnet.Guardian);
-  const { daniel } = fixture;
+    if (isFork) {
+      const sTimelock = await ethers.provider.getSigner(
+        addresses.mainnet.OldTimelock
+      );
+      const { oethVault, frxETH, fraxEthStrategy } = fixture;
 
-  // Get some frxETH from most wealthy contracts/wallets
-  await impersonateAndFundAddress(
-    addresses.mainnet.frxETH,
-    [
-      "0x5Ae5eC04170E0dedC00b0Cfae3B8E7821C630AFA",
-      "0x2F08F4645d2fA1fB12D2db8531c0c2EA0268BdE2",
-      "0x8a15b2Dc9c4f295DCEbB0E7887DD25980088fDCB",
-      "0xce4DbAF3fa72C962Ee1F371694109fc2a80B03f5",
-      "0x4E30fc7ccD2dF3ddCA39a69d2085334Ee63b9c96",
-    ],
-    // Daniel is loaded with fraxETH
-    daniel.getAddress()
-  );
+      await oethVault
+        .connect(sTimelock)
+        .setAssetDefaultStrategy(frxETH.address, fraxEthStrategy.address);
+    } else {
+      const { governorAddr } = await getNamedAccounts();
+      const { oethVault, weth, frxETH, fraxEthStrategy } = fixture;
+      const sGovernor = await ethers.provider.getSigner(governorAddr);
 
-  await fixture.oethVault
-    .connect(sGuardian)
-    .setAssetDefaultStrategy(
-      fixture.frxETH.address,
-      fixture.fraxEthStrategy.address
-    );
+      // Replace WETH contract with MockWETH
+      await replaceContractAt(fixture, addresses.mainnet.WETH, weth);
 
-  return fixture;
+      await oethVault
+        .connect(sGovernor)
+        .setAssetDefaultStrategy(frxETH.address, fraxEthStrategy.address);
+    }
+
+    return fixture;
+  });
 }
 
 /**
@@ -1173,6 +1189,11 @@ async function convexOETHMetaVaultFixture() {
     await fixture.ConvexEthMetaStrategy.cvxRewardStaker()
   );
 
+  fixture.oethMetaPool = await ethers.getContractAt(
+    ousdMetapoolAbi,
+    addresses.mainnet.CurveOETHMetaPool
+  );
+
   return fixture;
 }
 
@@ -1424,6 +1445,16 @@ async function rebornFixture() {
   return fixture;
 }
 
+async function replaceContractAt(fixture, targetAddress, mockContract) {
+  const { strategist } = fixture;
+  const mockCode = await strategist.provider.getCode(mockContract.address);
+
+  await hre.network.provider.request({
+    method: "hardhat_setCode",
+    params: [targetAddress, mockCode],
+  });
+}
+
 module.exports = {
   fundWith3Crv,
   resetAllowance,
@@ -1451,4 +1482,6 @@ module.exports = {
   impersonateAccount,
   fraxETHStrategyForkedFixture,
   oethMorphoAaveFixtureSetup,
+  mintWETH,
+  replaceContractAt,
 };

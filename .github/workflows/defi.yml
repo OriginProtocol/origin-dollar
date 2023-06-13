@@ -2,6 +2,11 @@ name: DeFi
 on: 
   pull_request:
     types: [opened, reopened, synchronize]
+  push:
+    branches:
+      - 'master'
+      - 'staging'
+      - 'stable'
   workflow_dispatch:
 
 concurrency:

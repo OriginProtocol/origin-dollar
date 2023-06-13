@@ -196,5 +196,6 @@ singleAssetStaking.dependencies = ["core"];
  * The contract is no longer in use and isn't expected to be updated
  */
 singleAssetStaking.skip = () => true;
+singleAssetStaking.tags = ["unit_tests"];
 
 module.exports = singleAssetStaking;
