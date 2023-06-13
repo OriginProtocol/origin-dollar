@@ -297,27 +297,3 @@ contract OracleRouterDev is OracleRouterBase {
         maxStaleness = fm.maxStaleness;
     }
 }
-
-// @notice Oracle Router that denominates all prices in ETH
-contract OETHOracleRouterDev is OETHOracleRouter {
-    using StableMath for uint256;
-
-    /**
-     * @notice Returns the total price in 18 digit units for a given asset.
-     *         This implementation does not (!) do range checks as the
-     *         parent OracleRouter does.
-     * @param asset address of the asset
-     * @return uint256 unit price for 1 asset unit, in 18 decimal fixed
-     */
-    // solhint-disable-next-line no-unused-vars
-    function price(address asset)
-        external
-        view
-        virtual
-        override
-        returns (uint256)
-    {
-        // TODO: Update this to test on unit tests
-        return 1e18;
-    }
-}

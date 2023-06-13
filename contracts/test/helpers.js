@@ -404,6 +404,12 @@ const getOracleAddresses = async (deployments) => {
           .address,
         RETH_ETH: (await deployments.get("MockChainlinkOracleFeedRETHETH"))
           .address,
+        stETH_ETH: (await deployments.get("MockChainlinkOracleFeedstETHETH"))
+          .address,
+        WETH_ETH: (await deployments.get("MockChainlinkOracleFeedWETHETH"))
+          .address,
+        frxETH_ETH: (await deployments.get("MockChainlinkOracleFeedfrxETHETH"))
+          .address,
         NonStandardToken_USD: (
           await deployments.get("MockChainlinkOracleFeedNonStandardToken")
         ).address,

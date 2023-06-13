@@ -685,9 +685,9 @@ const deployDripper = async () => {
     cVaultProxy.address,
     assetAddresses.USDT,
   ]);
-  const dDripperProxy = await deployWithConfirmation("DripperProxy");
+  await deployWithConfirmation("DripperProxy");
   // Deploy Dripper Proxy
-  cDripperProxy = await ethers.getContract("DripperProxy");
+  const cDripperProxy = await ethers.getContract("DripperProxy");
   await withConfirmation(
     cDripperProxy["initialize(address,address,bytes)"](
       dDripper.address,
@@ -710,9 +710,7 @@ const deployOracles = async () => {
   await deployWithConfirmation("OracleRouter", [], oracleContract);
   const oracleRouter = await ethers.getContract("OracleRouter");
 
-  const oethOracleContract = isMainnet
-    ? "OETHOracleRouter"
-    : "OETHOracleRouterDev";
+  const oethOracleContract = isMainnet ? "OETHOracleRouter" : "OracleRouterDev";
   await deployWithConfirmation("OETHOracleRouter", [], oethOracleContract);
   const oethOracleRouter = await ethers.getContract("OETHOracleRouter");
 
@@ -799,11 +797,38 @@ const deployOracles = async () => {
       )
   );
   await withConfirmation(
-    oracleRouter
+    oethOracleRouter
       .connect(sDeployer)
       .setFeed(
         assetAddresses.RETH,
         oracleAddresses.chainlink.RETH_ETH,
+        maxStaleness
+      )
+  );
+  await withConfirmation(
+    oethOracleRouter
+      .connect(sDeployer)
+      .setFeed(
+        assetAddresses.stETH,
+        oracleAddresses.chainlink.stETH_ETH,
+        maxStaleness
+      )
+  );
+  await withConfirmation(
+    oethOracleRouter
+      .connect(sDeployer)
+      .setFeed(
+        assetAddresses.WETH,
+        oracleAddresses.chainlink.WETH_ETH,
+        maxStaleness
+      )
+  );
+  await withConfirmation(
+    oethOracleRouter
+      .connect(sDeployer)
+      .setFeed(
+        assetAddresses.frxETH,
+        oracleAddresses.chainlink.frxETH_ETH,
         maxStaleness
       )
   );

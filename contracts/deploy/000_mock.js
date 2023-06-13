@@ -199,6 +199,21 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     contract: "MockChainlinkOracleFeed",
     args: [parseUnits("1.2", 18).toString(), 18], // 1 RETH = 1.2 ETH , 18 digits decimal.
   });
+  await deploy("MockChainlinkOracleFeedstETHETH", {
+    from: deployerAddr,
+    contract: "MockChainlinkOracleFeed",
+    args: [parseUnits("0.998", 18).toString(), 18], // 1 stETH = 0.998 ETH , 18 digits decimal.
+  });
+  await deploy("MockChainlinkOracleFeedWETHETH", {
+    from: deployerAddr,
+    contract: "MockChainlinkOracleFeed",
+    args: [parseUnits("1", 18).toString(), 18], // 1 WETH = 1 ETH , 18 digits decimal.
+  });
+  await deploy("MockChainlinkOracleFeedfrxETHETH", {
+    from: deployerAddr,
+    contract: "MockChainlinkOracleFeed",
+    args: [parseUnits("1", 18).toString(), 18], // 1 frxETH = 1 ETH , 18 digits decimal.
+  });
 
   // Deploy mock Uniswap router
   await deploy("MockUniswapRouter", {
