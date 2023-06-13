@@ -16,6 +16,9 @@ contract Generalized4626Strategy is InitializableAbstractStrategy {
     IERC20 internal shareToken;
     IERC20 internal assetToken;
 
+    // For future use
+    uint256[50] private __gap;
+
     /**
      * @dev Deposit assets by converting them to shares
      * @param _asset Address of asset to deposit

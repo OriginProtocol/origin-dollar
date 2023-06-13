@@ -6,6 +6,4 @@ interface IFraxETHMinter {
         external
         payable
         returns (uint256 shares);
-
-    function submit() external payable;
 }

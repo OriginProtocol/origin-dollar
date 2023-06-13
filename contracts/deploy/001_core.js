@@ -469,7 +469,7 @@ const deployConvexOUSDMetaStrategy = async () => {
 /**
  * Configure Vault by adding supported assets and Strategies.
  */
-const configureVault = async (harvesterProxy) => {
+const configureVault = async () => {
   const assetAddresses = await getAssetAddresses(deployments);
   const { governorAddr, strategistAddr } = await getNamedAccounts();
   // Signers
@@ -531,7 +531,7 @@ const configureOETHVault = async () => {
     ).address
   );
   // Set up supported assets for Vault
-  const { WETH, RETH, stETH, frxETH } = assetAddresses;
+  const { stubbedWETH: WETH, RETH, stETH, frxETH } = assetAddresses;
   for (const asset of [WETH, RETH, stETH, frxETH]) {
     await withConfirmation(cVault.connect(sGovernor).supportAsset(asset, 0));
   }
@@ -549,7 +549,7 @@ const configureOETHVault = async () => {
 /**
  * Deploy Harvester
  */
-const deployHarvester = async () => {
+const deployHarvesters = async () => {
   const assetAddresses = await getAssetAddresses(deployments);
   const { governorAddr, deployerAddr } = await getNamedAccounts();
   // Signers
@@ -557,20 +557,34 @@ const deployHarvester = async () => {
   const sGovernor = await ethers.provider.getSigner(governorAddr);
 
   const cVaultProxy = await ethers.getContract("VaultProxy");
+  const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
 
   const dHarvesterProxy = await deployWithConfirmation(
     "HarvesterProxy",
     [],
     "InitializeGovernedUpgradeabilityProxy"
   );
+  const dOETHHarvesterProxy = await deployWithConfirmation(
+    "OETHHarvesterProxy",
+    [],
+    "InitializeGovernedUpgradeabilityProxy"
+  );
   const cHarvesterProxy = await ethers.getContract("HarvesterProxy");
+  const cOETHHarvesterProxy = await ethers.getContract("OETHHarvesterProxy");
   const dHarvester = await deployWithConfirmation("Harvester", [
     cVaultProxy.address,
     assetAddresses.USDT,
   ]);
+  const dOETHHarvester = await deployWithConfirmation("OETHHarvester", [
+    cOETHVaultProxy.address,
+  ]);
   const cHarvester = await ethers.getContractAt(
     "Harvester",
     dHarvesterProxy.address
+  );
+  const cOETHHarvester = await ethers.getContractAt(
+    "OETHHarvester",
+    dOETHHarvesterProxy.address
   );
   await withConfirmation(
     cHarvesterProxy["initialize(address,address,bytes)"](
@@ -579,13 +593,23 @@ const deployHarvester = async () => {
       []
     )
   );
-
-  log("Initialized HarvesterProxy");
+  await withConfirmation(
+    cOETHHarvesterProxy["initialize(address,address,bytes)"](
+      dOETHHarvester.address,
+      deployerAddr,
+      []
+    )
+  );
+  log("Initialized OETHHarvesterProxy");
 
   await withConfirmation(
     cHarvester.connect(sDeployer).transferGovernance(governorAddr)
   );
   log(`Harvester transferGovernance(${governorAddr} called`);
+  await withConfirmation(
+    cOETHHarvester.connect(sDeployer).transferGovernance(governorAddr)
+  );
+  log(`OETHHarvester transferGovernance(${governorAddr} called`);
 
   // On Mainnet the governance transfer gets executed separately, via the
   // multi-sig wallet. On other networks, this migration script can claim
@@ -603,15 +627,28 @@ const deployHarvester = async () => {
         .connect(sGovernor)
         .setRewardsProceedsAddress(cVaultProxy.address)
     );
+
+    await withConfirmation(
+      cOETHHarvester
+        .connect(sGovernor) // Claim governance with governor
+        .claimGovernance()
+    );
+    log("Claimed governance for Harvester");
+
+    await withConfirmation(
+      cHarvester
+        .connect(sGovernor)
+        .setRewardsProceedsAddress(cOETHVaultProxy.address)
+    );
   }
 
-  return dHarvesterProxy;
+  return [dHarvesterProxy, dOETHHarvesterProxy];
 };
 
 /**
  * Configure Strategies by setting the Harvester address
  */
-const configureStrategies = async (harvesterProxy) => {
+const configureStrategies = async (harvesterProxy, oethHarvesterProxy) => {
   const { governorAddr } = await getNamedAccounts();
   // Signers
   const sGovernor = await ethers.provider.getSigner(governorAddr);
@@ -672,6 +709,18 @@ const configureStrategies = async (harvesterProxy) => {
   await withConfirmation(
     threePool.connect(sGovernor).setHarvesterAddress(harvesterProxy.address)
   );
+
+  // OETH Strategies
+  const fraxEthStrategyProxy = await ethers.getContract("FraxETHStrategyProxy");
+  const fraxEthStrategy = await ethers.getContractAt(
+    "FraxETHStrategy",
+    fraxEthStrategyProxy.address
+  );
+  await withConfirmation(
+    fraxEthStrategy
+      .connect(sGovernor)
+      .setHarvesterAddress(oethHarvesterProxy.address)
+  );
 };
 
 const deployDripper = async () => {
@@ -698,6 +747,70 @@ const deployDripper = async () => {
 };
 
 /**
+ * Deploy FraxETHStrategy
+ * Deploys a proxy, the actual strategy, initializes the proxy and initializes
+ * the strategy.
+ */
+const deployFraxEthStrategy = async () => {
+  const assetAddresses = await getAssetAddresses(deployments);
+  const { deployerAddr, governorAddr } = await getNamedAccounts();
+  // Signers
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+  const sGovernor = await ethers.provider.getSigner(governorAddr);
+
+  const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
+
+  const dFraxETHStrategyProxy = await deployWithConfirmation(
+    "FraxETHStrategyProxy"
+  );
+  const cFraxETHStrategyProxy = await ethers.getContract(
+    "FraxETHStrategyProxy"
+  );
+  const dFraxETHStrategy = await deployWithConfirmation("FraxETHStrategy");
+  const cFraxETHStrategy = await ethers.getContractAt(
+    "FraxETHStrategy",
+    dFraxETHStrategyProxy.address
+  );
+  await withConfirmation(
+    cFraxETHStrategyProxy["initialize(address,address,bytes)"](
+      dFraxETHStrategy.address,
+      deployerAddr,
+      []
+    )
+  );
+  log("Initialized FraxETHStrategyProxy");
+  await withConfirmation(
+    cFraxETHStrategy
+      .connect(sDeployer)
+      .initialize(
+        assetAddresses.sfrxETH,
+        cOETHVaultProxy.address,
+        [],
+        [assetAddresses.frxETH],
+        [assetAddresses.sfrxETH]
+      )
+  );
+  log("Initialized FraxETHStrategy");
+  await withConfirmation(
+    cFraxETHStrategy.connect(sDeployer).transferGovernance(governorAddr)
+  );
+  log(`FraxETHStrategy transferGovernance(${governorAddr} called`);
+
+  // On Mainnet the governance transfer gets executed separately, via the
+  // multi-sig wallet. On other networks, this migration script can claim
+  // governance by the governor.
+  if (!isMainnet) {
+    await withConfirmation(
+      cFraxETHStrategy
+        .connect(sGovernor) // Claim governance with governor
+        .claimGovernance()
+    );
+    log("Claimed governance for FraxETHStrategy");
+  }
+  return cFraxETHStrategy;
+};
+
+/**
  * Deploy the OracleRouter and initialise it with Chainlink sources.
  */
 const deployOracles = async () => {
@@ -706,15 +819,9 @@ const deployOracles = async () => {
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
   // TODO: Change this to intelligently decide which router contract to deploy?
-  const oracleContract = isMainnet ? "OracleRouter" : "OracleRouterDev";
+  const oracleContract = isMainnet ? "OracleRouter" : "MockOracleRouter";
   await deployWithConfirmation("OracleRouter", [], oracleContract);
   const oracleRouter = await ethers.getContract("OracleRouter");
-
-  const oethOracleContract = isMainnet
-    ? "OETHOracleRouter"
-    : "OETHOracleRouterDev";
-  await deployWithConfirmation("OETHOracleRouter", [], oethOracleContract);
-  const oethOracleRouter = await ethers.getContract("OETHOracleRouter");
 
   // Register feeds
   // Not needed in production
@@ -726,96 +833,30 @@ const deployOracles = async () => {
    */
   const maxStaleness = 24 * 60 * 60 * 365 * 100;
 
-  await withConfirmation(
-    oracleRouter
-      .connect(sDeployer)
-      .setFeed(
-        assetAddresses.DAI,
-        oracleAddresses.chainlink.DAI_USD,
-        maxStaleness
-      )
-  );
-  await withConfirmation(
-    oracleRouter
-      .connect(sDeployer)
-      .setFeed(
-        assetAddresses.USDC,
-        oracleAddresses.chainlink.USDC_USD,
-        maxStaleness
-      )
-  );
-  await withConfirmation(
-    oracleRouter
-      .connect(sDeployer)
-      .setFeed(
-        assetAddresses.USDT,
-        oracleAddresses.chainlink.USDT_USD,
-        maxStaleness
-      )
-  );
-  await withConfirmation(
-    oracleRouter
-      .connect(sDeployer)
-      .setFeed(
-        assetAddresses.TUSD,
-        oracleAddresses.chainlink.TUSD_USD,
-        maxStaleness
-      )
-  );
-  await withConfirmation(
-    oracleRouter
-      .connect(sDeployer)
-      .setFeed(
-        assetAddresses.COMP,
-        oracleAddresses.chainlink.COMP_USD,
-        maxStaleness
-      )
-  );
-  await withConfirmation(
-    oracleRouter
-      .connect(sDeployer)
-      .setFeed(
-        assetAddresses.AAVE,
-        oracleAddresses.chainlink.AAVE_USD,
-        maxStaleness
-      )
-  );
-  await withConfirmation(
-    oracleRouter
-      .connect(sDeployer)
-      .setFeed(
-        assetAddresses.CRV,
-        oracleAddresses.chainlink.CRV_USD,
-        maxStaleness
-      )
-  );
-  await withConfirmation(
-    oracleRouter
-      .connect(sDeployer)
-      .setFeed(
-        assetAddresses.CVX,
-        oracleAddresses.chainlink.CVX_USD,
-        maxStaleness
-      )
-  );
-  await withConfirmation(
-    oracleRouter
-      .connect(sDeployer)
-      .setFeed(
-        assetAddresses.RETH,
-        oracleAddresses.chainlink.RETH_ETH,
-        maxStaleness
-      )
-  );
-  await withConfirmation(
-    oracleRouter
-      .connect(sDeployer)
-      .setFeed(
-        assetAddresses.NonStandardToken,
-        oracleAddresses.chainlink.NonStandardToken_USD,
-        maxStaleness
-      )
-  );
+  const oracleFeeds = [
+    [assetAddresses.DAI, oracleAddresses.chainlink.DAI_USD],
+    [assetAddresses.USDC, oracleAddresses.chainlink.USDC_USD],
+    [assetAddresses.USDT, oracleAddresses.chainlink.USDT_USD],
+    [assetAddresses.TUSD, oracleAddresses.chainlink.TUSD_USD],
+    [assetAddresses.COMP, oracleAddresses.chainlink.COMP_USD],
+    [assetAddresses.AAVE, oracleAddresses.chainlink.AAVE_USD],
+    [assetAddresses.CRV, oracleAddresses.chainlink.CRV_USD],
+    [assetAddresses.CVX, oracleAddresses.chainlink.CVX_USD],
+    [assetAddresses.RETH, oracleAddresses.chainlink.RETH_ETH],
+    [assetAddresses.WETH, oracleAddresses.chainlink.WETH_ETH],
+    [assetAddresses.stETH, oracleAddresses.chainlink.STETH_ETH],
+    [assetAddresses.frxETH, oracleAddresses.chainlink.FRXETH_ETH],
+    [
+      assetAddresses.NonStandardToken,
+      oracleAddresses.chainlink.NonStandardToken_USD,
+    ],
+  ];
+
+  for (const [asset, oracle] of oracleFeeds) {
+    await withConfirmation(
+      oracleRouter.connect(sDeployer).setFeed(asset, oracle, maxStaleness)
+    );
+  }
 };
 
 /**
@@ -857,7 +898,9 @@ const deployCore = async () => {
   const cOETHProxy = await ethers.getContract("OETHProxy");
   const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
   const cOETH = await ethers.getContractAt("OETH", cOETHProxy.address);
-  const cOETHOracleRouter = await ethers.getContract("OETHOracleRouter");
+  const cOETHOracleRouter = isMainnet
+    ? await ethers.getContract("OETHOracleRouter")
+    : cOracleRouter;
   const cOETHVault = await ethers.getContractAt(
     "Vault",
     cOETHVaultProxy.address
@@ -1157,10 +1200,11 @@ const main = async () => {
   await deployConvexStrategy();
   await deployConvexOUSDMetaStrategy();
   await deployConvexLUSDMetaStrategy();
-  const harvesterProxy = await deployHarvester();
-  await configureVault(harvesterProxy);
+  await deployFraxEthStrategy();
+  const [harvesterProxy, oethHarvesterProxy] = await deployHarvesters();
+  await configureVault();
   await configureOETHVault();
-  await configureStrategies(harvesterProxy);
+  await configureStrategies(harvesterProxy, oethHarvesterProxy);
   await deployDripper();
   await deployFlipper();
   await deployBuyback();

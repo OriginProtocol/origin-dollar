@@ -608,8 +608,12 @@ describe("Vault with Compound strategy", function () {
     for (const [user, startBalance] of usersWithBalances) {
       for (const [asset, units] of assetsWithUnits) {
         for (const amount of [5.09, 10.32, 20.99, 100.01]) {
-          asset.connect(user).approve(vault.address, units(amount.toString()));
-          vault.connect(user).mint(asset.address, units(amount.toString()), 0);
+          asset
+            .connect(user)
+            .approve(vault.address, await units(amount.toString()));
+          vault
+            .connect(user)
+            .mint(asset.address, await units(amount.toString()), 0);
           await expect(user).has.an.approxBalanceOf(
             (startBalance + amount).toString(),
             ousd

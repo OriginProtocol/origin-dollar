@@ -38,9 +38,13 @@ describe("Aave Strategy", function () {
   };
 
   const mint = async (amount, asset) => {
-    await asset.connect(anna).mint(units(amount, asset));
-    await asset.connect(anna).approve(vault.address, units(amount, asset));
-    await vault.connect(anna).mint(asset.address, units(amount, asset), 0);
+    await asset.connect(anna).mint(await units(amount, asset));
+    await asset
+      .connect(anna)
+      .approve(vault.address, await units(amount, asset));
+    await vault
+      .connect(anna)
+      .mint(asset.address, await units(amount, asset), 0);
   };
 
   beforeEach(async function () {

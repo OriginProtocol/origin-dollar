@@ -14,6 +14,7 @@ const {
   usdcUnits,
   tusdUnits,
   ognUnits,
+  oethUnits,
   isFork,
 } = require("../test/helpers");
 
@@ -88,7 +89,17 @@ const findBestMainnetTokenHolderAndImpersonate = async (contract, hre) => {
 };
 
 const fundAccounts = async () => {
-  let usdt, dai, tusd, usdc, nonStandardToken, ogn, weth, rETH, stETH, frxETH;
+  let usdt,
+    dai,
+    tusd,
+    usdc,
+    nonStandardToken,
+    ogn,
+    weth,
+    rETH,
+    stETH,
+    frxETH,
+    sfrxETH;
   if (isFork) {
     usdt = await ethers.getContractAt(usdtAbi, addresses.mainnet.USDT);
     dai = await ethers.getContractAt(daiAbi, addresses.mainnet.DAI);
@@ -106,6 +117,13 @@ const fundAccounts = async () => {
     tusd = await ethers.getContract("MockTUSD");
     usdc = await ethers.getContract("MockUSDC");
     ogn = await ethers.getContract("MockOGN");
+
+    weth = await ethers.getContract("MockWETH");
+    rETH = await ethers.getContract("MockRETH");
+    stETH = await ethers.getContract("MockstETH");
+    frxETH = await ethers.getContract("MockfrxETH");
+    sfrxETH = await ethers.getContract("MocksfrxETH");
+
     nonStandardToken = await ethers.getContract("MockNonStandardToken");
   }
 
@@ -152,6 +170,11 @@ const fundAccounts = async () => {
       await tusd.connect(signer).mint(tusdUnits("1000"));
       await ogn.connect(signer).mint(ognUnits("1000"));
       await nonStandardToken.connect(signer).mint(usdtUnits("1000"));
+      await weth.connect(signer).mint(oethUnits("1000"));
+      await rETH.connect(signer).mint(oethUnits("1000"));
+      await stETH.connect(signer).mint(oethUnits("1000"));
+      await frxETH.connect(signer).mint(oethUnits("1000"));
+      await sfrxETH.connect(signer).mint(oethUnits("1000"));
     }
   }
 
