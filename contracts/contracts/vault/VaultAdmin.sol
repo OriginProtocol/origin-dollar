@@ -172,20 +172,20 @@ contract VaultAdmin is VaultStorage {
     }
 
     /**
-     * @dev Set the allowed slippage for collateral asset swaps.
+     * @dev Set the allowed slippage from the Oracle price for collateral asset swaps.
      * @param _asset Address of the asset token.
-     * @param _allowedSwapSlippageBps allowed slippage in basis points. eg 20 = 0.2%. Max 10%.
+     * @param _allowedOracleSlippageBps allowed slippage from Oracle in basis points. eg 20 = 0.2%. Max 10%.
      */
-    function setSwapSlippage(
+    function setOracleSlippage(
         address _asset,
-        uint16 _allowedSwapSlippageBps
+        uint16 _allowedOracleSlippageBps
     ) external onlyGovernor {
         require(assets[_asset].isSupported, "Asset not supported");
-        require(_allowedSwapSlippageBps < 1000, "Slippage too high");
+        require(_allowedOracleSlippageBps < 1000, "Slippage too high");
 
-        assets[_asset].allowedSwapSlippageBps = _allowedSwapSlippageBps;
+        assets[_asset].allowedOracleSlippageBps = _allowedOracleSlippageBps;
 
-        emit SwapSlippageChanged(_asset, _allowedSwapSlippageBps);
+        emit SwapSlippageChanged(_asset, _allowedOracleSlippageBps);
     }
 
     /**
@@ -203,7 +203,7 @@ contract VaultAdmin is VaultStorage {
             isSupported: true,
             unitConversion: UnitConversion(_unitConversion),
             decimals: 0, // will be overridden in _cacheDecimals
-            allowedSwapSlippageBps: 0 // 0% by default
+            allowedOracleSlippageBps: 0 // 0% by default
         });
 
         _cacheDecimals(_asset);
@@ -336,10 +336,10 @@ contract VaultAdmin is VaultStorage {
         // Check the slippage against the Oracle in case the strategist made a mistake or has become malicious.
         // to asset amount = from asset amount * from asset price / to asset price
         uint256 minOracleToAssetAmount = (_fromAssetAmount *
-            (1e4 - fromAssetConfig.allowedSwapSlippageBps) *
+            (1e4 - fromAssetConfig.allowedOracleSlippageBps) *
             IOracle(priceProvider).price(_fromAsset)) /
             (IOracle(priceProvider).price(_toAsset) *
-                (1e4 + toAssetConfig.allowedSwapSlippageBps));
+                (1e4 + toAssetConfig.allowedOracleSlippageBps));
 
         require(
             toAssetAmount >= minOracleToAssetAmount,
