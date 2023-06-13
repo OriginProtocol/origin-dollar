@@ -16,8 +16,6 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { StableMath } from "../utils/StableMath.sol";
 import { IOracle } from "../interfaces/IOracle.sol";
 import { IGetExchangeRateToken } from "../interfaces/IGetExchangeRateToken.sol";
-import { IAggregationExecutor, IOneInchRouter, SwapDescription } from "../interfaces/IOneInch.sol";
-import { ISwapper } from "../interfaces/ISwapper.sol";
 
 import "./VaultStorage.sol";
 
@@ -35,14 +33,6 @@ contract VaultCore is VaultStorage {
      */
     modifier whenNotRebasePaused() {
         require(!rebasePaused, "Rebasing paused");
-        _;
-    }
-
-    /**
-     * @dev Verifies that the deposits are not paused.
-     */
-    modifier whenNotCapitalPaused() {
-        require(!capitalPaused, "Capital paused");
         _;
     }
 
@@ -771,11 +761,9 @@ contract VaultCore is VaultStorage {
         }
     }
 
-    function _getDecimals(address _asset)
-        internal
-        view
-        returns (uint256 decimals)
-    {
+    function _getDecimals(
+        address _asset
+    ) internal view returns (uint256 decimals) {
         decimals = assets[_asset].decimals;
         require(decimals > 0, "Decimals not cached");
     }
@@ -796,11 +784,9 @@ contract VaultCore is VaultStorage {
         return allAssets.length;
     }
 
-    function getAssetConfig(address _asset)
-        public
-        view
-        returns (Asset memory config)
-    {
+    function getAssetConfig(
+        address _asset
+    ) public view returns (Asset memory config) {
         config = assets[_asset];
     }
 
