@@ -531,7 +531,7 @@ const configureOETHVault = async () => {
     ).address
   );
   // Set up supported assets for Vault
-  const { stubbedWETH: WETH, RETH, stETH, frxETH } = assetAddresses;
+  const { WETH, RETH, stETH, frxETH } = assetAddresses;
   for (const asset of [WETH, RETH, stETH, frxETH]) {
     await withConfirmation(cVault.connect(sGovernor).supportAsset(asset, 0));
   }
@@ -844,6 +844,7 @@ const deployOracles = async () => {
     [assetAddresses.CVX, oracleAddresses.chainlink.CVX_USD],
     [assetAddresses.RETH, oracleAddresses.chainlink.RETH_ETH],
     [assetAddresses.WETH, oracleAddresses.chainlink.WETH_ETH],
+    [addresses.mainnet.WETH, oracleAddresses.chainlink.WETH_ETH],
     [assetAddresses.stETH, oracleAddresses.chainlink.STETH_ETH],
     [assetAddresses.frxETH, oracleAddresses.chainlink.FRXETH_ETH],
     [

@@ -521,7 +521,7 @@ async function oethDefaultFixture() {
   const fixture = await defaultFixture();
 
   const { weth, reth, stETH, frxETH, sfrxETH } = fixture;
-  const { matt, josh, domen, daniel, franck, oethVault } = fixture;
+  const { matt, josh, domen, daniel, franck, governor, oethVault } = fixture;
 
   if (isFork) {
     for (const user of [matt, josh, domen, daniel, franck]) {
@@ -554,6 +554,9 @@ async function oethDefaultFixture() {
 
     // And Fund it
     _hardhatSetBalance(mockedWETH.address, "999999999999999");
+
+    // And make sure vault knows about it
+    await oethVault.connect(governor).supportAsset(mockedWETH.address, 0);
 
     for (const user of [matt, josh, domen, daniel, franck]) {
       await mockedWETH.connect(user).mint(oethUnits("1000"));

@@ -461,7 +461,6 @@ const getAssetAddresses = async (deployments) => {
       cUSDT: (await deployments.get("MockCUSDT")).address,
       NonStandardToken: (await deployments.get("MockNonStandardToken")).address,
       WETH: (await deployments.get("MockWETH")).address,
-      stubbedWETH: addresses.mainnet.WETH,
       COMP: (await deployments.get("MockCOMP")).address,
       ThreePool: (await deployments.get("MockCurvePool")).address,
       ThreePoolToken: (await deployments.get("Mock3CRV")).address,
