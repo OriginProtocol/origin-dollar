@@ -41,16 +41,6 @@ contract Swapper1InchV5 is ISwapper {
         uint256 _minToAssetAmount,
         bytes calldata _data
     ) external override returns (uint256 toAssetAmount) {
-        require(
-            IERC20(_fromAsset).balanceOf(address(this)) >= _fromAssetAmount,
-            "Insufficient balance"
-        );
-        require(
-            IERC20(_fromAsset).allowance(address(this), SWAP_ROUTER) >=
-                _fromAssetAmount,
-            "Insufficient allowance"
-        );
-
         // Decode the function selector from the RLP encoded _data param
         bytes4 swapSelector = bytes4(_data[:4]);
 

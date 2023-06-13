@@ -263,7 +263,7 @@ describe("OETH Vault - Swapper", () => {
       );
 
       const r = await (await tx).wait();
-      expect(r.logs[0].data).to.equal(
+      expect(r.logs[2].data).to.equal(
         "0x00000000000000000000000011111111112222222222333333333344444444440000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000008000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002dead000000000000000000000000000000000000000000000000000000000000"
       );
     });
@@ -357,7 +357,9 @@ describe("OETH Vault - Swapper", () => {
         .connect(strategist)
         .swap(weth.address, frxETH.address, fromAmount, toAmount, data);
 
-      await expect(tx).to.be.revertedWith("Insufficient balance");
+      await expect(tx).to.be.revertedWith(
+        "ERC20: transfer amount exceeds balance"
+      );
     });
 
     it("Should revert swap if router allowance is insufficient ", async () => {
@@ -390,7 +392,9 @@ describe("OETH Vault - Swapper", () => {
         .connect(strategist)
         .swap(weth.address, frxETH.address, fromAmount, toAmount, data);
 
-      await expect(tx).to.be.revertedWith("Insufficient allowance");
+      await expect(tx).to.be.revertedWith(
+        "ERC20: transfer amount exceeds allowance"
+      );
     });
   });
 });
