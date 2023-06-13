@@ -57,7 +57,7 @@ contract Swapper1InchV5 is ISwapper {
                 dstReceiver: payable(msg.sender),
                 amount: _fromAssetAmount,
                 minReturnAmount: _minToAssetAmount,
-                flags: 4 // _REQUIRES_EXTRA_ETH is second bit. _PARTIAL_FILL is first bit
+                flags: 4 // _SHOULD_CLAIM is the third bit. _REQUIRES_EXTRA_ETH is second bit. _PARTIAL_FILL is first bit
             });
             (toAssetAmount, ) = IOneInchRouter(SWAP_ROUTER).swap(
                 IAggregationExecutor(executer),
