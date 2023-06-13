@@ -27,7 +27,9 @@ describe("OETH Vault - Swapper", () => {
     it("Should allow Governor to set slippage for assets", async () => {
       const { governor, oethVault, weth } = fixture;
 
-      const tx = oethVault.connect(governor).setOracleSlippage(weth.address, 123);
+      const tx = oethVault
+        .connect(governor)
+        .setOracleSlippage(weth.address, 123);
       await expect(tx)
         .to.emit(oethVault, "SwapSlippageChanged")
         .withArgs(weth.address, 123);
@@ -36,7 +38,9 @@ describe("OETH Vault - Swapper", () => {
     it("Should not allow Governor to set slippage for unsupported assets", async () => {
       const { governor, oethVault, dai } = fixture;
 
-      const tx = oethVault.connect(governor).setOracleSlippage(dai.address, 123);
+      const tx = oethVault
+        .connect(governor)
+        .setOracleSlippage(dai.address, 123);
       await expect(tx).to.be.revertedWith("Asset not supported");
     });
 
@@ -183,19 +187,23 @@ describe("OETH Vault - Swapper", () => {
       await expect(tx).to.be.revertedWith("To asset is not supported");
     });
 
-    it("Should revert if capital is paused", async () => {
+    it("Should swap if capital is paused", async () => {
       const { weth, stETH, oethVault, strategist } = fixture;
       const fromAmount = utils.parseEther("100");
       const toAmount = utils.parseEther("100");
 
+      // Fund Vault with some assets
+      const vaultSigner = await impersonateAndFundContract(oethVault.address);
+      await weth.connect(vaultSigner).mint(fromAmount);
+
       await oethVault.connect(strategist).pauseCapital();
 
       // Call swap method
-      const tx = oethVault
+      const tx = await oethVault
         .connect(strategist)
         .swapCollateral(weth.address, stETH.address, fromAmount, toAmount, []);
 
-      await expect(tx).to.be.revertedWith("Capital paused");
+      expect(tx).to.emit(oethVault, "Swapped");
     });
 
     it("Should revert if not called by Governor or Strategist", async () => {
