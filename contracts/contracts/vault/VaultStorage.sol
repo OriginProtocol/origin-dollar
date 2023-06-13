@@ -67,8 +67,9 @@ contract VaultStorage is Initializable, Governable {
         bool isSupported;
         UnitConversion unitConversion;
         uint8 decimals;
-        // Max allowed slippage when swapping collateral assets in basis points. eg 40 == 0.4% slippage
-        uint16 allowedSwapSlippageBps;
+        // Max allowed slippage from the Oracle price when swapping collateral assets in basis points.
+        // For example 40 == 0.4% slippage
+        uint16 allowedOracleSlippageBps;
     }
 
     /// @dev mapping of supported vault assets to their configuration

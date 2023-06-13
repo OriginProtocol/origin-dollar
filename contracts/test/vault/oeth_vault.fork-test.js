@@ -84,8 +84,8 @@ forkOnlyDescribe("ForkTest: OETH Vault", function () {
             expectedConversions[i]
           );
           expect(
-            config.allowedSwapSlippageBps,
-            `allowedSwapSlippageBps ${i}`
+            config.allowedOracleSlippageBps,
+            `allowedOracleSlippageBps ${i}`
           ).to.equal(expectedSlippage[i]);
         }
       });
