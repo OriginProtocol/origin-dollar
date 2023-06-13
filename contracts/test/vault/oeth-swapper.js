@@ -27,7 +27,7 @@ describe("OETH Vault - Swapper", () => {
     it("Should allow Governor to set slippage for assets", async () => {
       const { governor, oethVault, weth } = fixture;
 
-      const tx = oethVault.connect(governor).setSwapSlippage(weth.address, 123);
+      const tx = oethVault.connect(governor).setOracleSlippage(weth.address, 123);
       await expect(tx)
         .to.emit(oethVault, "SwapSlippageChanged")
         .withArgs(weth.address, 123);
@@ -36,7 +36,7 @@ describe("OETH Vault - Swapper", () => {
     it("Should not allow Governor to set slippage for unsupported assets", async () => {
       const { governor, oethVault, dai } = fixture;
 
-      const tx = oethVault.connect(governor).setSwapSlippage(dai.address, 123);
+      const tx = oethVault.connect(governor).setOracleSlippage(dai.address, 123);
       await expect(tx).to.be.revertedWith("Asset not supported");
     });
 
@@ -44,7 +44,7 @@ describe("OETH Vault - Swapper", () => {
       const { strategist, josh, oethVault, weth } = fixture;
 
       for (const user of [strategist, josh]) {
-        const tx = oethVault.connect(user).setSwapSlippage(weth.address, 123);
+        const tx = oethVault.connect(user).setOracleSlippage(weth.address, 123);
         await expect(tx).to.be.revertedWith("Caller is not the Governor");
       }
     });
@@ -54,7 +54,7 @@ describe("OETH Vault - Swapper", () => {
 
       const tx = oethVault
         .connect(governor)
-        .setSwapSlippage(weth.address, 1100);
+        .setOracleSlippage(weth.address, 1100);
       await expect(tx).to.be.revertedWith("Slippage too high");
     });
 

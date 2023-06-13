@@ -82,22 +82,22 @@ module.exports = deploymentWithProposal(
         // 5. Set the allowed swap slippages for each vault collateral asset
         {
           contract: cVault,
-          signature: "setSwapSlippage(address,uint16)",
+          signature: "setOracleSlippage(address,uint16)",
           args: [assetAddresses.RETH, 200], // 2% Oracle deviation threshold
         },
         {
           contract: cVault,
-          signature: "setSwapSlippage(address,uint16)",
+          signature: "setOracleSlippage(address,uint16)",
           args: [assetAddresses.stETH, 70], // 0.2% + 0.5% Oracle deviation threshold
         },
         {
           contract: cVault,
-          signature: "setSwapSlippage(address,uint16)",
+          signature: "setOracleSlippage(address,uint16)",
           args: [assetAddresses.WETH, 20], // 0.2%
         },
         {
           contract: cVault,
-          signature: "setSwapSlippage(address,uint16)",
+          signature: "setOracleSlippage(address,uint16)",
           args: [assetAddresses.frxETH, 20], // 0.2%
         },
       ],
