@@ -82,8 +82,10 @@ interface IVault {
 
     function setSwapper(address _swapperAddr) external;
 
-    function setSwapSlippage(address _asset, uint16 _allowedSwapSlippageBps)
-        external;
+    function setOracleSlippage(
+        address _asset,
+        uint16 _allowedOracleSlippageBps
+    ) external;
 
     function supportAsset(address _asset, uint8 _supportsAsset) external;
 

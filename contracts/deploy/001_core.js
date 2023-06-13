@@ -1206,10 +1206,10 @@ const deployOETHSwapper = async () => {
 
   await vault.connect(sGovernor).setSwapper(mockSwapper.address);
 
-  await vault.connect(sGovernor).setSwapSlippage(assetAddresses.RETH, 200);
-  await vault.connect(sGovernor).setSwapSlippage(assetAddresses.stETH, 70);
-  await vault.connect(sGovernor).setSwapSlippage(assetAddresses.WETH, 20);
-  await vault.connect(sGovernor).setSwapSlippage(assetAddresses.frxETH, 20);
+  await vault.connect(sGovernor).setOracleSlippage(assetAddresses.RETH, 200);
+  await vault.connect(sGovernor).setOracleSlippage(assetAddresses.stETH, 70);
+  await vault.connect(sGovernor).setOracleSlippage(assetAddresses.WETH, 20);
+  await vault.connect(sGovernor).setOracleSlippage(assetAddresses.frxETH, 20);
 };
 
 const main = async () => {
