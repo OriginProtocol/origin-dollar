@@ -28,11 +28,11 @@ object "Vault" as vault <<Origin>><<Proxy>> #DeepSkyBlue {
     assets: DAI, USDC, USDT  
 }
 
-object "Harvester" as harv <<Origin>> #DeepSkyBlue {
+object "Harvester" as harv <<Origin>><<Proxy>> #DeepSkyBlue {
     rewards: CRV, CVX
 }
 
-object "Buyback" as buy <<Origin>> #DeepSkyBlue {
+object "Buyback" as buy <<Origin>><<Proxy>> #DeepSkyBlue {
 swap OUSD for OGV
 }
 
