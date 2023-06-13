@@ -935,6 +935,15 @@ const deployOracles = async () => {
       )
   );
   await withConfirmation(
+    oracleRouter
+      .connect(sDeployer)
+      .setFeed(
+        assetAddresses.RETH,
+        oracleAddresses.chainlink.RETH_ETH,
+        maxStaleness
+      )
+  );
+  await withConfirmation(
     oethOracleRouter
       .connect(sDeployer)
       .setFeed(
