@@ -171,13 +171,10 @@ contract VaultStorage is Initializable, Governable {
     }
 
     /**
-     * @dev Verifies that the caller is the Governor, or Strategist.
+     * @dev Verifies that the deposits are not paused.
      */
-    modifier onlyGovernorOrStrategist() {
-        require(
-            msg.sender == strategistAddr || isGovernor(),
-            "Caller is not the Strategist or Governor"
-        );
+    modifier whenNotCapitalPaused() {
+        require(!capitalPaused, "Capital paused");
         _;
     }
 }
