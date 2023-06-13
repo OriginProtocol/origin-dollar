@@ -32,7 +32,7 @@ assets:
   rETH
 }
 
-object "OETHHarvester" as harv <<Origin>> #DeepSkyBlue {
+object "OETHHarvester" as harv <<Origin>><<Proxy>> #DeepSkyBlue {
     rewards: CRV, CVX
 }
 
