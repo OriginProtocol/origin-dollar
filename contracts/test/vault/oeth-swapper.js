@@ -10,6 +10,8 @@ const { utils, BigNumber } = require("ethers");
 const runFixture = oethDefaultFixtureSetup();
 const run1InchFixture = oeth1InchSwapperFixtureSetup();
 
+const log = require("../../utils/logger")("test:oeth:swapper");
+
 describe("OETH Vault - Swapper", () => {
   after(async () => {
     await defaultFixture();
@@ -82,15 +84,18 @@ describe("OETH Vault - Swapper", () => {
       const vaultSigner = await impersonateAndFundContract(oethVault.address);
 
       for (const asset of [weth, reth, stETH, frxETH]) {
-        // Fund Vault with some of the asset
-        await asset.connect(vaultSigner).mint(utils.parseEther("100"));
+        // Fund Vault with some assets
+        const fromAmount = utils.parseEther("100");
+        await asset.connect(vaultSigner).mint(fromAmount);
 
         const toAsset = asset.address === weth.address ? stETH : weth;
-        const fromAmount = utils.parseEther("100");
-        const toAmount = utils.parseEther("100");
+        const toAmount = utils.parseEther("120");
+        log(
+          `swapping 100 ${await asset.symbol()} to ${await toAsset.symbol()}`
+        );
 
         // Call swap method
-        const tx = oethVault
+        const tx = await oethVault
           .connect(strategist)
           .swapCollateral(
             asset.address,
@@ -100,7 +105,7 @@ describe("OETH Vault - Swapper", () => {
             []
           );
 
-        await expect(tx)
+        expect(tx)
           .to.emit(oethVault, "Swapped")
           .withArgs(asset.address, toAsset.address, fromAmount, toAmount);
       }

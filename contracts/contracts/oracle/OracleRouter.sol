@@ -27,24 +27,18 @@ abstract contract OracleRouterBase is IOracle {
      * @return feedAddress address of the price feed for the asset
      * @return maxStaleness maximum acceptable data staleness duration
      */
-    function feedMetadata(address asset)
-        internal
-        view
-        virtual
-        returns (address feedAddress, uint256 maxStaleness);
+    function feedMetadata(
+        address asset
+    ) internal view virtual returns (address feedAddress, uint256 maxStaleness);
 
     /**
      * @notice Returns the total price in 18 digit unit for a given asset.
      * @param asset address of the asset
      * @return uint256 unit price for 1 asset unit, in 18 decimal fixed
      */
-    function price(address asset)
-        external
-        view
-        virtual
-        override
-        returns (uint256)
-    {
+    function price(
+        address asset
+    ) external view virtual override returns (uint256) {
         (address _feed, uint256 maxStaleness) = feedMetadata(asset);
         require(_feed != address(0), "Asset not available");
         require(_feed != FIXED_PRICE, "Fixed price feeds not supported");
@@ -108,7 +102,9 @@ contract OracleRouter is OracleRouterBase {
      * @return feedAddress address of the price feed for the asset
      * @return maxStaleness maximum acceptable data staleness duration
      */
-    function feedMetadata(address asset)
+    function feedMetadata(
+        address asset
+    )
         internal
         pure
         virtual
@@ -169,13 +165,9 @@ contract OETHOracleRouter is OracleRouter {
      * @param asset address of the asset
      * @return uint256 unit price for 1 asset unit, in 18 decimal fixed
      */
-    function price(address asset)
-        external
-        view
-        virtual
-        override
-        returns (uint256)
-    {
+    function price(
+        address asset
+    ) external view virtual override returns (uint256) {
         (address _feed, uint256 maxStaleness) = feedMetadata(asset);
         if (_feed == FIXED_PRICE) {
             return 1e18;
@@ -202,7 +194,9 @@ contract OETHOracleRouter is OracleRouter {
      * @return feedAddress address of the price feed for the asset
      * @return maxStaleness maximum acceptable data staleness duration
      */
-    function feedMetadata(address asset)
+    function feedMetadata(
+        address asset
+    )
         internal
         pure
         virtual
