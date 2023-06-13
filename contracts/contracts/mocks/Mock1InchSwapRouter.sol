@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import { IMintableERC20 } from "./MintableERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import { IAggregationExecutor, IOneInchRouter, SwapDescription } from "../interfaces/IOneInch.sol";
+import { SwapDescription } from "../interfaces/IOneInch.sol";
 
 contract Mock1InchSwapRouter {
+    using SafeERC20 for IERC20;
+
     event MockSwap(address executor, bytes permitData, bytes executorData);
 
     event MockSwapDesc(
@@ -40,6 +42,13 @@ contract Mock1InchSwapRouter {
         bytes calldata permitData,
         bytes calldata executorData
     ) public returns (uint256 returnAmount, uint256 spentAmount) {
+        // Transfer the source tokens to the receiver contract
+        IERC20(desc.srcToken).safeTransferFrom(
+            msg.sender,
+            desc.srcReceiver,
+            desc.amount
+        );
+
         emit MockSwap(executor, permitData, executorData);
         _swapDesc(desc);
         returnAmount = 0;
