@@ -7,6 +7,19 @@
         {
             "type": "node",
             "request": "launch",
+            "name": "Unit tests",
+            "cwd": "${workspaceFolder}/contracts",
+            "program": "${workspaceFolder}/contracts/node_modules/.bin/hardhat",
+            "runtimeExecutable": "/usr/local/bin/node",
+            "preLaunchTask": "remove-deployment-files",
+            "args": [
+                "test"
+            ],
+            "envFile": "${workspaceFolder}/contracts/.env",
+        },
+        {
+            "type": "node",
+            "request": "launch",
             "name": "Unit tests - OETH Swapper",
             "cwd": "${workspaceFolder}/contracts",
             "program": "${workspaceFolder}/contracts/node_modules/.bin/hardhat",
