@@ -297,7 +297,6 @@ contract VaultAdmin is VaultStorage {
         bytes calldata _data
     )
         external
-        whenNotCapitalPaused
         nonReentrant
         onlyGovernorOrStrategist
         returns (uint256 toAssetAmount)
