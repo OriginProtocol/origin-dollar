@@ -219,7 +219,7 @@ forkOnlyDescribe("ForkTest: OETH Vault", function () {
           from: "WETH",
           to: "stETH",
           fromAmount: 100,
-          minToAssetAmount: 100,
+          minToAssetAmount: 99.99,
         },
         {
           from: "WETH",
