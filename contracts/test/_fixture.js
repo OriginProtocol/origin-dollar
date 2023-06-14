@@ -3,7 +3,10 @@ const hre = require("hardhat");
 const { ethers } = hre;
 
 const addresses = require("../utils/addresses");
-const { fundAccounts } = require("../utils/funding");
+const {
+  fundAccounts,
+  fundAccountsForOETHUnitTests,
+} = require("../utils/funding");
 const { getAssetAddresses, daiUnits, isFork, oethUnits } = require("./helpers");
 const { utils } = require("ethers");
 
@@ -558,6 +561,10 @@ async function oethDefaultFixture() {
     // And make sure vault knows about it
     await oethVault.connect(governor).supportAsset(mockedWETH.address, 0);
 
+    // Fund all with mockTokens
+    await fundAccountsForOETHUnitTests();
+
+    // Reset allowances
     for (const user of [matt, josh, domen, daniel, franck]) {
       await mockedWETH.connect(user).mint(oethUnits("1000"));
       for (const asset of [mockedWETH, reth, stETH, frxETH, sfrxETH]) {
@@ -1501,25 +1508,6 @@ async function replaceContractAt(fixture, targetAddress, mockContract) {
   });
 }
 
-async function replaceAddressOnContract(
-  fixture,
-  targetAddress,
-  find,
-  replaceWith
-) {
-  const { strategist } = fixture;
-  let mockCode = await strategist.provider.getCode(targetAddress);
-  mockCode = mockCode.replace(
-    new RegExp(find.replace("0x", ""), "gi"),
-    replaceWith
-  );
-
-  await hre.network.provider.request({
-    method: "hardhat_setCode",
-    params: [targetAddress, mockCode],
-  });
-}
-
 module.exports = {
   fundWith3Crv,
   resetAllowance,
@@ -1549,5 +1537,4 @@ module.exports = {
   oethMorphoAaveFixtureSetup,
   mintWETH,
   replaceContractAt,
-  replaceAddressOnContract,
 };

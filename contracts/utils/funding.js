@@ -88,6 +88,36 @@ const findBestMainnetTokenHolderAndImpersonate = async (contract, hre) => {
   return signer;
 };
 
+const fundAccountsForOETHUnitTests = async () => {
+  if (isFork) {
+    return;
+  }
+
+  let weth, rETH, stETH, frxETH, sfrxETH;
+
+  weth = await ethers.getContract("MockWETH");
+  rETH = await ethers.getContract("MockRETH");
+  stETH = await ethers.getContract("MockstETH");
+  frxETH = await ethers.getContract("MockfrxETH");
+  sfrxETH = await ethers.getContract("MocksfrxETH");
+
+  const signers = await hre.ethers.getSigners();
+
+  const addressPromises = new Array(10)
+    .fill(0)
+    .map((_, i) => signers[i].getAddress());
+  const signerAddresses = await Promise.all(addressPromises);
+
+  for (const address of signerAddresses) {
+    const signer = await ethers.provider.getSigner(address);
+    await weth.connect(signer).mint(oethUnits("1000"));
+    await rETH.connect(signer).mint(oethUnits("1000"));
+    await stETH.connect(signer).mint(oethUnits("1000"));
+    await frxETH.connect(signer).mint(oethUnits("1000"));
+    await sfrxETH.connect(signer).mint(oethUnits("1000"));
+  }
+};
+
 const fundAccounts = async () => {
   let usdt,
     dai,
@@ -170,11 +200,6 @@ const fundAccounts = async () => {
       await tusd.connect(signer).mint(tusdUnits("1000"));
       await ogn.connect(signer).mint(ognUnits("1000"));
       await nonStandardToken.connect(signer).mint(usdtUnits("1000"));
-      await weth.connect(signer).mint(oethUnits("1000"));
-      await rETH.connect(signer).mint(oethUnits("1000"));
-      await stETH.connect(signer).mint(oethUnits("1000"));
-      await frxETH.connect(signer).mint(oethUnits("1000"));
-      await sfrxETH.connect(signer).mint(oethUnits("1000"));
     }
   }
 
@@ -188,5 +213,6 @@ const fundAccounts = async () => {
 
 module.exports = {
   fundAccounts,
+  fundAccountsForOETHUnitTests,
   findBestMainnetTokenHolder,
 };
