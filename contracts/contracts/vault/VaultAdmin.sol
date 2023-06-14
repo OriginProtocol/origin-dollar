@@ -9,14 +9,12 @@ pragma solidity ^0.8.0;
 
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import { StableMath } from "../utils/StableMath.sol";
 import { IOracle } from "../interfaces/IOracle.sol";
 import { ISwapper } from "../interfaces/ISwapper.sol";
 import "./VaultStorage.sol";
 
 contract VaultAdmin is VaultStorage {
     using SafeERC20 for IERC20;
-    using StableMath for uint256;
 
     /**
      * @dev Verifies that the caller is the Governor or Strategist.
