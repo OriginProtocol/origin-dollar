@@ -1,8 +1,4 @@
-const {
-  defaultFixture,
-  compoundVaultFixture,
-  multiStrategyVaultFixture,
-} = require("../_fixture");
+const { defaultFixture, compoundVaultFixture } = require("../_fixture");
 const { expect } = require("chai");
 const { utils } = require("ethers");
 const { MAX_UINT256 } = require("../../utils/constants");
