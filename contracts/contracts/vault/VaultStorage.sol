@@ -9,7 +9,6 @@ pragma solidity ^0.8.0;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 
 import { IStrategy } from "../interfaces/IStrategy.sol";
@@ -20,9 +19,6 @@ import "../utils/Helpers.sol";
 import { StableMath } from "../utils/StableMath.sol";
 
 contract VaultStorage is Initializable, Governable {
-    using SafeMath for uint256;
-    using StableMath for uint256;
-    using SafeMath for int256;
     using SafeERC20 for IERC20;
 
     event AssetSupported(address _asset);
