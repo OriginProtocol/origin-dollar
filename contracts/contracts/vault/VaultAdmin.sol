@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 /**
- * @title OUSD Vault Admin Contract
+ * @title OToken VaultAdmin contract
  * @notice The VaultAdmin contract makes configuration and admin calls on the vault.
  * @author Origin Protocol Inc
  */
@@ -76,9 +76,9 @@ contract VaultAdmin is VaultStorage {
     }
 
     /**
-     * @dev Sets the minimum amount of OUSD in a mint to trigger an
+     * @dev Sets the minimum amount of OTokens in a mint to trigger an
      * automatic allocation of funds afterwords.
-     * @param _threshold OUSD amount with 18 fixed decimals.
+     * @param _threshold OToken amount with 18 fixed decimals.
      */
     function setAutoAllocateThreshold(uint256 _threshold)
         external
@@ -89,9 +89,9 @@ contract VaultAdmin is VaultStorage {
     }
 
     /**
-     * @dev Set a minimum amount of OUSD in a mint or redeem that triggers a
+     * @dev Set a minimum amount of OTokens in a mint or redeem that triggers a
      * rebase
-     * @param _threshold OUSD amount with 18 fixed decimals.
+     * @param _threshold OToken amount with 18 fixed decimals.
      */
     function setRebaseThreshold(uint256 _threshold) external onlyGovernor {
         rebaseThreshold = _threshold;
@@ -134,9 +134,9 @@ contract VaultAdmin is VaultStorage {
     }
 
     /**
-     * @dev Set maximum amount of OUSD that can at any point be minted and deployed
+     * @dev Set maximum amount of OTokens that can at any point be minted and deployed
      * to strategy (used only by ConvexOUSDMetaStrategy for now).
-     * @param _threshold OUSD amount with 18 fixed decimals.
+     * @param _threshold OToken amount with 18 fixed decimals.
      */
     function setNetOusdMintForStrategyThreshold(uint256 _threshold)
         external
@@ -144,11 +144,11 @@ contract VaultAdmin is VaultStorage {
     {
         /**
          * Because `netOusdMintedForStrategy` check in vault core works both ways
-         * (positive and negative) the actual impact of the amount of OUSD minted
+         * (positive and negative) the actual impact of the amount of OToken minted
          * could be double the threshold. E.g.:
          *  - contract has threshold set to 100
          *  - state of netOusdMinted is -90
-         *  - in effect it can mint 190 OUSD and still be within limits
+         *  - in effect it can mint 190 OToken and still be within limits
          *
          * We are somewhat mitigating this behaviour by resetting the netOusdMinted
          * counter whenever new threshold is set. So it can only move one threshold
@@ -163,7 +163,7 @@ contract VaultAdmin is VaultStorage {
 
     /**
      * @dev Add a supported asset to the contract, i.e. one that can be
-     *         to mint OUSD.
+     *         to mint OTokens.
      * @param _asset Address of asset
      */
     function supportAsset(address _asset, uint8 _unitConversion)
@@ -400,8 +400,8 @@ contract VaultAdmin is VaultStorage {
     }
 
     /**
-     * @dev Set OUSD Meta strategy
-     * @param _ousdMetaStrategy Address of ousd meta strategy
+     * @dev Set OToken Metapool strategy
+     * @param _ousdMetaStrategy Address of OToken metapool strategy
      */
     function setOusdMetaStrategy(address _ousdMetaStrategy)
         external
