@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import { VaultStorage } from "../vault/VaultStorage.sol";
+
 interface IVault {
     event AssetSupported(address _asset);
     event AssetDefaultStrategyUpdated(address _asset, address _strategy);
@@ -147,6 +149,11 @@ interface IVault {
         returns (uint256[] memory);
 
     function getAssetCount() external view returns (uint256);
+
+    function getAssetConfig(address _asset)
+        external
+        view
+        returns (VaultStorage.Asset memory config);
 
     function getAllAssets() external view returns (address[] memory);
 

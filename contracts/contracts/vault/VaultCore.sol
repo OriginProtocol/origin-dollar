@@ -727,6 +727,14 @@ contract VaultCore is VaultStorage {
         return decimals;
     }
 
+    function getAssetConfig(address _asset)
+        public
+        view
+        returns (Asset memory config)
+    {
+        config = assets[_asset];
+    }
+
     /**
      * @dev Return the number of assets supported by the Vault.
      */
