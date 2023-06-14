@@ -16,7 +16,6 @@ import { Governable } from "../governance/Governable.sol";
 import { OUSD } from "../token/OUSD.sol";
 import { Initializable } from "../utils/Initializable.sol";
 import "../utils/Helpers.sol";
-import { StableMath } from "../utils/StableMath.sol";
 
 contract VaultStorage is Initializable, Governable {
     using SafeERC20 for IERC20;
