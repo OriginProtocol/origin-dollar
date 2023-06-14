@@ -121,13 +121,6 @@ interface IVault {
 
     function withdrawAllFromStrategies() external;
 
-    function reallocate(
-        address _strategyFromAddress,
-        address _strategyToAddress,
-        address[] calldata _assets,
-        uint256[] calldata _amounts
-    ) external;
-
     function withdrawFromStrategy(
         address _strategyFromAddress,
         address[] calldata _assets,

@@ -336,42 +336,6 @@ contract VaultAdmin is VaultStorage {
     }
 
     /**
-     * @dev Move assets from one Strategy to another
-     * @param _strategyFromAddress Address of Strategy to move assets from.
-     * @param _strategyToAddress Address of Strategy to move assets to.
-     * @param _assets Array of asset address that will be moved
-     * @param _amounts Array of amounts of each corresponding asset to move.
-     */
-    function reallocate(
-        address _strategyFromAddress,
-        address _strategyToAddress,
-        address[] calldata _assets,
-        uint256[] calldata _amounts
-    ) external onlyGovernorOrStrategist {
-        require(
-            strategies[_strategyToAddress].isSupported,
-            "Invalid to Strategy"
-        );
-        require(_assets.length == _amounts.length, "Parameter length mismatch");
-        _withdrawFromStrategy(
-            _strategyToAddress,
-            _strategyFromAddress,
-            _assets,
-            _amounts
-        );
-
-        uint256 assetCount = _assets.length;
-        for (uint256 i = 0; i < assetCount; ++i) {
-            require(
-                IStrategy(_strategyToAddress).supportsAsset(_assets[i]),
-                "Asset unsupported"
-            );
-        }
-        // Tell new Strategy to deposit into protocol
-        IStrategy(_strategyToAddress).depositAll();
-    }
-
-    /**
      * @dev Deposit multiple assets from the vault into the strategy.
      * @param _strategyToAddress Address of the Strategy to deposit assets into.
      * @param _assets Array of asset address that will be deposited into the strategy.
