@@ -162,20 +162,21 @@ contract VaultCore is VaultStorage {
         emit Redeem(msg.sender, _amount);
 
         // Send outputs
-        for (uint256 i = 0; i < allAssets.length; i++) {
+        uint256 assetCount = allAssets.length;
+        for (uint256 i = 0; i < assetCount; ++i) {
             if (outputs[i] == 0) continue;
 
-            IERC20 asset = IERC20(allAssets[i]);
+            address assetAddr = allAssets[i];
 
-            if (asset.balanceOf(address(this)) >= outputs[i]) {
+            if (IERC20(assetAddr).balanceOf(address(this)) >= outputs[i]) {
                 // Use Vault funds first if sufficient
-                asset.safeTransfer(msg.sender, outputs[i]);
+                IERC20(assetAddr).safeTransfer(msg.sender, outputs[i]);
             } else {
-                address strategyAddr = assetDefaultStrategies[allAssets[i]];
+                address strategyAddr = assetDefaultStrategies[assetAddr];
                 if (strategyAddr != address(0)) {
                     // Nothing in Vault, but something in Strategy, send from there
                     IStrategy strategy = IStrategy(strategyAddr);
-                    strategy.withdraw(msg.sender, allAssets[i], outputs[i]);
+                    strategy.withdraw(msg.sender, assetAddr, outputs[i]);
                 } else {
                     // Cant find funds anywhere
                     revert("Liquidity error");
@@ -185,7 +186,7 @@ contract VaultCore is VaultStorage {
 
         if (_minimumUnitAmount > 0) {
             uint256 unitTotal = 0;
-            for (uint256 i = 0; i < outputs.length; i++) {
+            for (uint256 i = 0; i < outputs.length; ++i) {
                 unitTotal += _toUnits(outputs[i], allAssets[i]);
             }
             require(
@@ -318,7 +319,8 @@ contract VaultCore is VaultStorage {
 
         // Iterate over all assets in the Vault and allocate to the appropriate
         // strategy
-        for (uint256 i = 0; i < allAssets.length; i++) {
+        uint256 assetCount = allAssets.length;
+        for (uint256 i = 0; i < assetCount; ++i) {
             IERC20 asset = IERC20(allAssets[i]);
             uint256 assetBalance = asset.balanceOf(address(this));
             // No balance, nothing to do here
@@ -419,11 +421,12 @@ contract VaultCore is VaultStorage {
      * @return value Total value in ETH (1e18)
      */
     function _totalValueInVault() internal view returns (uint256 value) {
-        for (uint256 y = 0; y < allAssets.length; y++) {
-            IERC20 asset = IERC20(allAssets[y]);
-            uint256 balance = asset.balanceOf(address(this));
+        uint256 assetCount = allAssets.length;
+        for (uint256 y = 0; y < assetCount; ++y) {
+            address assetAddr = allAssets[y];
+            uint256 balance = IERC20(assetAddr).balanceOf(address(this));
             if (balance > 0) {
-                value += _toUnits(balance, allAssets[y]);
+                value += _toUnits(balance, assetAddr);
             }
         }
     }
@@ -433,7 +436,8 @@ contract VaultCore is VaultStorage {
      * @return value Total value in ETH (1e18)
      */
     function _totalValueInStrategies() internal view returns (uint256 value) {
-        for (uint256 i = 0; i < allStrategies.length; i++) {
+        uint256 stratCount = allStrategies.length;
+        for (uint256 i = 0; i < stratCount; ++i) {
             value = value + _totalValueInStrategy(allStrategies[i]);
         }
     }
@@ -449,11 +453,13 @@ contract VaultCore is VaultStorage {
         returns (uint256 value)
     {
         IStrategy strategy = IStrategy(_strategyAddr);
-        for (uint256 y = 0; y < allAssets.length; y++) {
-            if (strategy.supportsAsset(allAssets[y])) {
-                uint256 balance = strategy.checkBalance(allAssets[y]);
+        uint256 assetCount = allAssets.length;
+        for (uint256 y = 0; y < assetCount; ++y) {
+            address assetAddr = allAssets[y];
+            if (strategy.supportsAsset(assetAddr)) {
+                uint256 balance = strategy.checkBalance(assetAddr);
                 if (balance > 0) {
-                    value += _toUnits(balance, allAssets[y]);
+                    value += _toUnits(balance, assetAddr);
                 }
             }
         }
@@ -481,7 +487,8 @@ contract VaultCore is VaultStorage {
     {
         IERC20 asset = IERC20(_asset);
         balance = asset.balanceOf(address(this));
-        for (uint256 i = 0; i < allStrategies.length; i++) {
+        uint256 stratCount = allStrategies.length;
+        for (uint256 i = 0; i < stratCount; ++i) {
             IStrategy strategy = IStrategy(allStrategies[i]);
             if (strategy.supportsAsset(_asset)) {
                 balance = balance + strategy.checkBalance(_asset);
@@ -554,22 +561,23 @@ contract VaultCore is VaultStorage {
         // Calculate assets balances and decimals once,
         // for a large gas savings.
         uint256 totalUnits = 0;
-        for (uint256 i = 0; i < assetCount; i++) {
-            uint256 balance = _checkBalance(allAssets[i]);
+        for (uint256 i = 0; i < assetCount; ++i) {
+            address assetAddr = allAssets[i];
+            uint256 balance = _checkBalance(assetAddr);
             assetBalances[i] = balance;
-            assetUnits[i] = _toUnits(balance, allAssets[i]);
+            assetUnits[i] = _toUnits(balance, assetAddr);
             totalUnits = totalUnits + assetUnits[i];
         }
         // Calculate totalOutputRatio
         uint256 totalOutputRatio = 0;
-        for (uint256 i = 0; i < assetCount; i++) {
+        for (uint256 i = 0; i < assetCount; ++i) {
             uint256 unitPrice = _toUnitPrice(allAssets[i], false);
             uint256 ratio = (assetUnits[i] * unitPrice) / totalUnits;
             totalOutputRatio = totalOutputRatio + ratio;
         }
         // Calculate final outputs
         uint256 factor = _amount.divPrecisely(totalOutputRatio);
-        for (uint256 i = 0; i < assetCount; i++) {
+        for (uint256 i = 0; i < assetCount; ++i) {
             outputs[i] = (assetBalances[i] * factor) / totalUnits;
         }
     }
