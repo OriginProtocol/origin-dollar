@@ -96,9 +96,13 @@ sol2uml storage .. -c WOETH -o WOETHStorage.svg
 
 # contracts/vault
 sol2uml .. -v -hv -hf -he -hs -hl -b VaultCore,VaultAdmin -o VaultHierarchy.svg
-sol2uml .. -s -d 0 -b VaultCore -o VaultSquashed.svg
-sol2uml storage .. -c VaultCore -o VaultStorage.svg
+sol2uml .. -s -d 0 -b VaultCore -o VaultCoreSquashed.svg
+sol2uml storage .. -c VaultCore -o VaultCoreStorage.svg
+sol2uml .. -s -d 0 -b VaultAdmin -o VaultAdminSquashed.svg
+sol2uml storage .. -c VaultAdmin -o VaultAdminStorage.svg
 
 sol2uml .. -v -hv -hf -he -hs -hl -b OETHVaultCore -o OETHVaultHierarchy.svg
-sol2uml .. -s -d 0 -b OETHVaultCore -o OETHVaultSquashed.svg
-sol2uml storage .. -c OETHVaultCore -o OETHVaultStorage.svg
+sol2uml .. -s -d 0 -b OETHVaultCore -o OETHVaultCoreSquashed.svg
+sol2uml storage .. -c OETHVaultCore -o OETHVaultCoreStorage.svg
+sol2uml .. -s -d 0 -b OETHVaultAdmin -o OETHVaultAdminSquashed.svg
+sol2uml storage .. -c OETHVaultAdmin -o OETHVaultAdminStorage.svg
