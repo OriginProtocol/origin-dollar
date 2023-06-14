@@ -7,7 +7,7 @@ const {
   fundAccounts,
   fundAccountsForOETHUnitTests,
 } = require("../utils/funding");
-const { getAssetAddresses, daiUnits, isFork, oethUnits } = require("./helpers");
+const { getAssetAddresses, daiUnits, isFork } = require("./helpers");
 const { utils } = require("ethers");
 
 const { loadFixture, getOracleAddresses } = require("./helpers");
@@ -566,7 +566,6 @@ async function oethDefaultFixture() {
 
     // Reset allowances
     for (const user of [matt, josh, domen, daniel, franck]) {
-      await mockedWETH.connect(user).mint(oethUnits("1000"));
       for (const asset of [mockedWETH, reth, stETH, frxETH, sfrxETH]) {
         await resetAllowance(asset, user, oethVault.address);
       }

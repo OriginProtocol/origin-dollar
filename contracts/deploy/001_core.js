@@ -636,7 +636,7 @@ const deployHarvesters = async () => {
     log("Claimed governance for Harvester");
 
     await withConfirmation(
-      cHarvester
+      cOETHHarvester
         .connect(sGovernor)
         .setRewardsProceedsAddress(cOETHVaultProxy.address)
     );

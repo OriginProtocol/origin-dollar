@@ -95,7 +95,7 @@ const fundAccountsForOETHUnitTests = async () => {
 
   let weth, rETH, stETH, frxETH, sfrxETH;
 
-  weth = await ethers.getContract("MockWETH");
+  weth = await ethers.getContractAt("MockWETH", addresses.mainnet.WETH);
   rETH = await ethers.getContract("MockRETH");
   stETH = await ethers.getContract("MockstETH");
   frxETH = await ethers.getContract("MockfrxETH");
@@ -148,7 +148,7 @@ const fundAccounts = async () => {
     usdc = await ethers.getContract("MockUSDC");
     ogn = await ethers.getContract("MockOGN");
 
-    weth = await ethers.getContract("MockWETH");
+    weth = await ethers.getContractAt("MockWETH", addresses.mainnet.WETH);
     rETH = await ethers.getContract("MockRETH");
     stETH = await ethers.getContract("MockstETH");
     frxETH = await ethers.getContract("MockfrxETH");
