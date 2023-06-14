@@ -161,10 +161,10 @@ contract VaultAdmin is VaultStorage {
      * @param _asset Address of the asset token.
      * @param _allowedOracleSlippageBps allowed slippage from Oracle in basis points. eg 20 = 0.2%. Max 10%.
      */
-    function setOracleSlippage(address _asset, uint16 _allowedOracleSlippageBps)
-        external
-        onlyGovernor
-    {
+    function setOracleSlippage(
+        address _asset,
+        uint16 _allowedOracleSlippageBps
+    ) external onlyGovernor {
         require(assets[_asset].isSupported, "Asset not supported");
         require(_allowedOracleSlippageBps < 1000, "Slippage too high");
 
