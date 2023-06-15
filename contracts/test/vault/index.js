@@ -586,9 +586,9 @@ describe("Vault", function () {
 
     await vault
       .connect(governor)
-      .setNetOusdMintForStrategyThreshold(ousdUnits("10"));
+      .setNetMintForStrategyThreshold(ousdUnits("10"));
     // Approve anna address as an address allowed to mint OUSD without backing
-    await vault.connect(governor).setOusdMetaStrategy(anna.address);
+    await vault.connect(governor).setMetaStrategy(anna.address);
 
     await expect(
       vault.connect(anna).mintForStrategy(ousdUnits("11"))
@@ -610,10 +610,10 @@ describe("Vault", function () {
 
     await vault
       .connect(governor)
-      .setNetOusdMintForStrategyThreshold(ousdUnits("10"));
+      .setNetMintForStrategyThreshold(ousdUnits("10"));
 
     // Approve anna address as an address allowed to mint OUSD without backing
-    await vault.connect(governor).setOusdMetaStrategy(anna.address);
+    await vault.connect(governor).setMetaStrategy(anna.address);
     await vault.connect(anna).mintForStrategy(ousdUnits("9"));
 
     // netOusdMintedForStrategy should be equal to amount minted
@@ -623,7 +623,7 @@ describe("Vault", function () {
 
     await vault
       .connect(governor)
-      .setNetOusdMintForStrategyThreshold(ousdUnits("10"));
+      .setNetMintForStrategyThreshold(ousdUnits("10"));
 
     // netOusdMintedForStrategy should be reset back to 0
     await expect(await vault.netOusdMintedForStrategy()).to.equal(
