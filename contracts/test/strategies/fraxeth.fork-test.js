@@ -158,7 +158,6 @@ async function mintTest(fixture, user, asset, amount = "10.34") {
   const currentFrxETHBalance = await fraxEthStrategy.checkBalance(
     frxETH.address
   );
-  const currentWETHBalance = await fraxEthStrategy.checkBalance(weth.address);
 
   // Mint OETH w/ asset
   await oethVault.connect(user).mint(asset.address, unitAmount, 0);
@@ -194,8 +193,7 @@ async function mintTest(fixture, user, asset, amount = "10.34") {
     // Should have staked it in the Vault
     expect(frxETHBalDiff).to.approxEqualTolerance(oethUnits(amount), 1);
   } else {
-    // Should deposit WETH by default
-    expect(newStrategyFrxETHBal).to.equal(currentFrxETHBalance);
-    expect(newStrategyWETHBal).to.equal(currentWETHBalance);
+    // Should not deposit WETH by default
+    expect(newStrategyWETHBal).to.equal("0");
   }
 }
