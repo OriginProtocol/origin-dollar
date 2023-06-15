@@ -205,6 +205,7 @@ contract OETHOracleRouter is OracleRouter {
     function feedMetadata(address asset)
         internal
         pure
+        virtual
         override
         returns (address feedAddress, uint256 maxStaleness)
     {

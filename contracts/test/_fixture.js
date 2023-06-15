@@ -25,6 +25,7 @@ const threepoolLPAbi = require("./abi/threepoolLP.json");
 const threepoolSwapAbi = require("./abi/threepoolSwap.json");
 
 const sfrxETHAbi = require("./abi/sfrxETH.json");
+const { deployWithConfirmation } = require("../utils/deploy");
 
 const defaultFixture = deployments.createFixture(async () => {
   await deployments.fixture(
@@ -273,6 +274,12 @@ const defaultFixture = deployments.createFixture(async () => {
       "OETHDripper",
       oethDripperProxy.address
     );
+
+    // Replace OracelRouter to disable staleness
+    const dMockOracleRouterForFork = await deployWithConfirmation(
+      "MockOracleRouterForFork"
+    );
+    await replaceContractAt(oracleRouter.address, dMockOracleRouterForFork);
   } else {
     usdt = await ethers.getContract("MockUSDT");
     dai = await ethers.getContract("MockDAI");
@@ -537,7 +544,6 @@ async function oethDefaultFixture() {
   } else {
     // Replace frxETHMinter
     await replaceContractAt(
-      fixture,
       addresses.mainnet.FraxETHMinter,
       await ethers.getContract("MockFrxETHMinter")
     );
@@ -548,7 +554,7 @@ async function oethDefaultFixture() {
     await mockedMinter.connect(franck).setAssetAddress(fixture.sfrxETH.address);
 
     // Replace WETH contract with MockWETH
-    await replaceContractAt(fixture, addresses.mainnet.WETH, weth);
+    await replaceContractAt(addresses.mainnet.WETH, weth);
     const mockedWETH = await ethers.getContractAt(
       "MockWETH",
       addresses.mainnet.WETH
@@ -1497,9 +1503,9 @@ async function rebornFixture() {
   return fixture;
 }
 
-async function replaceContractAt(fixture, targetAddress, mockContract) {
-  const { strategist } = fixture;
-  const mockCode = await strategist.provider.getCode(mockContract.address);
+async function replaceContractAt(targetAddress, mockContract) {
+  const signer = (await hre.ethers.getSigners())[0];
+  const mockCode = await signer.provider.getCode(mockContract.address);
 
   await hre.network.provider.request({
     method: "hardhat_setCode",
