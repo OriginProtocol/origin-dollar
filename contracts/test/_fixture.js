@@ -113,6 +113,7 @@ const defaultFixture = deployments.createFixture(async () => {
   );
 
   const oracleRouter = await ethers.getContract("OracleRouter");
+  const oethOracleRouter = await ethers.getContract("OETHOracleRouter");
 
   const buybackProxy = await ethers.getContract("BuybackProxy");
   const buyback = await ethers.getContractAt("Buyback", buybackProxy.address);
@@ -279,7 +280,14 @@ const defaultFixture = deployments.createFixture(async () => {
     const dMockOracleRouterForFork = await deployWithConfirmation(
       "MockOracleRouterForFork"
     );
+    const dMockOETHOracleRouterForFork = await deployWithConfirmation(
+      "MockOETHOracleRouterForFork"
+    );
     await replaceContractAt(oracleRouter.address, dMockOracleRouterForFork);
+    await replaceContractAt(
+      oethOracleRouter.address,
+      dMockOETHOracleRouterForFork
+    );
   } else {
     usdt = await ethers.getContract("MockUSDT");
     dai = await ethers.getContract("MockDAI");
