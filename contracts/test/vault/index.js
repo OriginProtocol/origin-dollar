@@ -605,7 +605,7 @@ describe("Vault", function () {
     await expect(await ousd.balanceOf(anna.address)).to.equal(ousdUnits("9"));
   });
 
-  it("Should reset netMintedForStrategy when new threshold is set", async () => {
+  it("Should reset netOusdMintedForStrategy when new threshold is set", async () => {
     const { vault, governor, anna } = await loadFixture(defaultFixture);
 
     await vault
@@ -616,8 +616,8 @@ describe("Vault", function () {
     await vault.connect(governor).setMetaStrategy(anna.address);
     await vault.connect(anna).mintForStrategy(ousdUnits("9"));
 
-    // netMintedForStrategy should be equal to amount minted
-    await expect(await vault.netMintedForStrategy()).to.equal(
+    // netOusdMintedForStrategy should be equal to amount minted
+    await expect(await vault.netOusdMintedForStrategy()).to.equal(
       ousdUnits("9")
     );
 
@@ -625,8 +625,8 @@ describe("Vault", function () {
       .connect(governor)
       .setNetMintForStrategyThreshold(ousdUnits("10"));
 
-    // netMintedForStrategy should be reset back to 0
-    await expect(await vault.netMintedForStrategy()).to.equal(
+    // netOusdMintedForStrategy should be reset back to 0
+    await expect(await vault.netOusdMintedForStrategy()).to.equal(
       ousdUnits("0")
     );
   });
