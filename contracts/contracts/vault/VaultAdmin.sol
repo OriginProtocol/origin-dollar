@@ -216,7 +216,8 @@ contract VaultAdmin is VaultStorage {
     function removeStrategy(address _addr) external onlyGovernor {
         require(strategies[_addr].isSupported, "Strategy not approved");
 
-        for (uint256 i = 0; i < allAssets.length; i++) {
+        uint256 assetCount = allAssets.length;
+        for (uint256 i = 0; i < assetCount; ++i) {
             require(
                 assetDefaultStrategies[allAssets[i]] != _addr,
                 "Strategy is default for an asset"
@@ -225,18 +226,17 @@ contract VaultAdmin is VaultStorage {
 
         // Initialize strategyIndex with out of bounds result so function will
         // revert if no valid index found
-        uint256 strategyIndex = allStrategies.length;
-        for (uint256 i = 0; i < allStrategies.length; i++) {
+        uint256 stratCount = allStrategies.length;
+        uint256 strategyIndex = stratCount;
+        for (uint256 i = 0; i < stratCount; ++i) {
             if (allStrategies[i] == _addr) {
                 strategyIndex = i;
                 break;
             }
         }
 
-        if (strategyIndex < allStrategies.length) {
-            allStrategies[strategyIndex] = allStrategies[
-                allStrategies.length - 1
-            ];
+        if (strategyIndex < stratCount) {
+            allStrategies[strategyIndex] = allStrategies[stratCount - 1];
             allStrategies.pop();
 
             // Mark the strategy as not supported
@@ -275,12 +275,15 @@ contract VaultAdmin is VaultStorage {
             _amounts
         );
 
-        IStrategy strategyTo = IStrategy(_strategyToAddress);
-        for (uint256 i = 0; i < _assets.length; i++) {
-            require(strategyTo.supportsAsset(_assets[i]), "Asset unsupported");
+        uint256 assetCount = _assets.length;
+        for (uint256 i = 0; i < assetCount; ++i) {
+            require(
+                IStrategy(_strategyToAddress).supportsAsset(_assets[i]),
+                "Asset unsupported"
+            );
         }
         // Tell new Strategy to deposit into protocol
-        strategyTo.depositAll();
+        IStrategy(_strategyToAddress).depositAll();
     }
 
     /**
@@ -308,16 +311,19 @@ contract VaultAdmin is VaultStorage {
         );
         require(_assets.length == _amounts.length, "Parameter length mismatch");
 
-        IStrategy strategyTo = IStrategy(_strategyToAddress);
-
-        for (uint256 i = 0; i < _assets.length; i++) {
-            require(strategyTo.supportsAsset(_assets[i]), "Asset unsupported");
+        uint256 assetCount = _assets.length;
+        for (uint256 i = 0; i < assetCount; ++i) {
+            address assetAddr = _assets[i];
+            require(
+                IStrategy(_strategyToAddress).supportsAsset(assetAddr),
+                "Asset unsupported"
+            );
             // Send required amount of funds to the strategy
-            IERC20(_assets[i]).safeTransfer(_strategyToAddress, _amounts[i]);
+            IERC20(assetAddr).safeTransfer(_strategyToAddress, _amounts[i]);
         }
 
         // Deposit all the funds that have been sent to the strategy
-        strategyTo.depositAll();
+        IStrategy(_strategyToAddress).depositAll();
     }
 
     /**
@@ -354,10 +360,14 @@ contract VaultAdmin is VaultStorage {
         );
         require(_assets.length == _amounts.length, "Parameter length mismatch");
 
-        IStrategy strategyFrom = IStrategy(_strategyFromAddress);
-        for (uint256 i = 0; i < _assets.length; i++) {
+        uint256 assetCount = _assets.length;
+        for (uint256 i = 0; i < assetCount; ++i) {
             // Withdraw from Strategy to the recipient
-            strategyFrom.withdraw(_recipient, _assets[i], _amounts[i]);
+            IStrategy(_strategyFromAddress).withdraw(
+                _recipient,
+                _assets[i],
+                _amounts[i]
+            );
         }
     }
 
@@ -479,9 +489,9 @@ contract VaultAdmin is VaultStorage {
      * @dev Withdraws all assets from all the strategies and sends assets to the Vault.
      */
     function withdrawAllFromStrategies() external onlyGovernorOrStrategist {
-        for (uint256 i = 0; i < allStrategies.length; i++) {
-            IStrategy strategy = IStrategy(allStrategies[i]);
-            strategy.withdrawAll();
+        uint256 stratCount = allStrategies.length;
+        for (uint256 i = 0; i < stratCount; ++i) {
+            IStrategy(allStrategies[i]).withdrawAll();
         }
     }
 
