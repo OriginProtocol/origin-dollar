@@ -9,7 +9,7 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { OracleRouter, OETHOracleRouter } from "../oracle/OracleRouter.sol";
 
 // @notice Oracle Router used to bypass staleness
-contract MockOracleRouterForFork is OracleRouter {
+contract MockOracleRouterNoStale is OracleRouter {
     function feedMetadata(address asset)
         internal
         pure
@@ -18,12 +18,12 @@ contract MockOracleRouterForFork is OracleRouter {
         returns (address feedAddress, uint256 maxStaleness)
     {
         (feedAddress, ) = super.feedMetadata(asset);
-        maxStaleness = 0;
+        maxStaleness = 365 days;
     }
 }
 
 // @notice Oracle Router used to bypass staleness
-contract MockOETHOracleRouterForFork is OETHOracleRouter {
+contract MockOETHOracleRouterNoStale is OETHOracleRouter {
     function feedMetadata(address asset)
         internal
         pure
@@ -32,6 +32,6 @@ contract MockOETHOracleRouterForFork is OETHOracleRouter {
         returns (address feedAddress, uint256 maxStaleness)
     {
         (feedAddress, ) = super.feedMetadata(asset);
-        maxStaleness = 0;
+        maxStaleness = 365 days;
     }
 }

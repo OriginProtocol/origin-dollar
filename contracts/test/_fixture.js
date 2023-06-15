@@ -113,7 +113,7 @@ const defaultFixture = deployments.createFixture(async () => {
   );
 
   const oracleRouter = await ethers.getContract("OracleRouter");
-  const oethOracleRouter = await ethers.getContract("OETHOracleRouter");
+  const oethOracleRouter = await ethers.getContract(isFork ? "OETHOracleRouter" : "OracleRouter");
 
   const buybackProxy = await ethers.getContract("BuybackProxy");
   const buyback = await ethers.getContractAt("Buyback", buybackProxy.address);
@@ -277,16 +277,16 @@ const defaultFixture = deployments.createFixture(async () => {
     );
 
     // Replace OracelRouter to disable staleness
-    const dMockOracleRouterForFork = await deployWithConfirmation(
-      "MockOracleRouterForFork"
+    const dMockOracleRouterNoStale = await deployWithConfirmation(
+      "MockOracleRouterNoStale"
     );
-    const dMockOETHOracleRouterForFork = await deployWithConfirmation(
-      "MockOETHOracleRouterForFork"
+    const dMockOETHOracleRouterNoStale = await deployWithConfirmation(
+      "MockOETHOracleRouterNoStale"
     );
-    await replaceContractAt(oracleRouter.address, dMockOracleRouterForFork);
+    await replaceContractAt(oracleRouter.address, dMockOracleRouterNoStale);
     await replaceContractAt(
       oethOracleRouter.address,
-      dMockOETHOracleRouterForFork
+      dMockOETHOracleRouterNoStale
     );
   } else {
     usdt = await ethers.getContract("MockUSDT");
