@@ -113,7 +113,9 @@ const defaultFixture = deployments.createFixture(async () => {
   );
 
   const oracleRouter = await ethers.getContract("OracleRouter");
-  const oethOracleRouter = await ethers.getContract(isFork ? "OETHOracleRouter" : "OracleRouter");
+  const oethOracleRouter = await ethers.getContract(
+    isFork ? "OETHOracleRouter" : "OracleRouter"
+  );
 
   const buybackProxy = await ethers.getContract("BuybackProxy");
   const buyback = await ethers.getContractAt("Buyback", buybackProxy.address);
