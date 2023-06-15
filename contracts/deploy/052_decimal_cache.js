@@ -11,7 +11,8 @@ module.exports = deploymentWithGovernanceProposal(
   {
     deployName: "052_decimal_cache",
     forceDeploy: false,
-    onlyOnFork: true, // this is only executed in forked environment
+    forceSkip: true,
+    // onlyOnFork: true, // this is only executed in forked environment
     reduceQueueTime: true,
   },
   async ({
