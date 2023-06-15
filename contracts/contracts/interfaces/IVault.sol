@@ -165,9 +165,9 @@ interface IVault {
 
     function netOusdMintForStrategyThreshold() external view returns (uint256);
 
-    function setOusdMetaStrategy(address _ousdMetaStrategy) external;
+    function setMetaStrategy(address _strategy) external;
 
-    function setNetOusdMintForStrategyThreshold(uint256 _threshold) external;
+    function setNetMintForStrategyThreshold(uint256 _threshold) external;
 
     function netOusdMintedForStrategy() external view returns (int256);
 }

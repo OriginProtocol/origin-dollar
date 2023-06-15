@@ -136,7 +136,7 @@ contract VaultAdmin is VaultStorage {
      * to strategy (used only by ConvexOUSDMetaStrategy for now).
      * @param _threshold OToken amount with 18 fixed decimals.
      */
-    function setNetOusdMintForStrategyThreshold(
+    function setNetMintForStrategyThreshold(
         uint256 _threshold
     ) external onlyGovernor {
         /**
@@ -155,7 +155,7 @@ contract VaultAdmin is VaultStorage {
          */
         netOusdMintedForStrategy = 0;
         netOusdMintForStrategyThreshold = _threshold;
-        emit NetOusdMintForStrategyThresholdChanged(_threshold);
+        emit NetMintForStrategyThresholdChanged(_threshold);
     }
 
     /**
@@ -362,13 +362,11 @@ contract VaultAdmin is VaultStorage {
 
     /**
      * @dev Set OToken Metapool strategy
-     * @param _ousdMetaStrategy Address of OToken metapool strategy
+     * @param _metaStrategy Address of OToken metapool strategy
      */
-    function setOusdMetaStrategy(
-        address _ousdMetaStrategy
-    ) external onlyGovernor {
-        ousdMetaStrategy = _ousdMetaStrategy;
-        emit OusdMetaStrategyUpdated(_ousdMetaStrategy);
+    function setMetaStrategy(address _metaStrategy) external onlyGovernor {
+        ousdMetaStrategy = _metaStrategy;
+        emit MetaStrategyUpdated(_metaStrategy);
     }
 
     /***************************************

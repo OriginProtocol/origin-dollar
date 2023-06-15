@@ -742,12 +742,12 @@ async function convexMetaVaultFixture() {
     // set meta strategy on vault so meta strategy is allowed to mint OUSD
     await fixture.vault
       .connect(sGovernor)
-      .setOusdMetaStrategy(fixture.OUSDmetaStrategy.address);
+      .setMetaStrategy(fixture.OUSDmetaStrategy.address);
 
-    // set OUSD mint threshold to 50 million
+    // set mint threshold to 50 million
     await fixture.vault
       .connect(sGovernor)
-      .setNetOusdMintForStrategyThreshold(utils.parseUnits("50", 24));
+      .setNetMintForStrategyThreshold(utils.parseUnits("50", 24));
 
     await fixture.harvester
       .connect(sGovernor)
