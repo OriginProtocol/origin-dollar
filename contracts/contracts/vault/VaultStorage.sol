@@ -101,6 +101,7 @@ contract VaultStorage is Initializable, Governable {
     uint256 public rebaseThreshold;
 
     /// @dev Address of the OToken token. eg OUSD or OETH.
+    // slither-disable-next-line uninitialized-state
     OUSD internal oUSD;
 
     //keccak256("OUSD.vault.governor.admin.impl");

@@ -769,21 +769,15 @@ contract VaultCore is VaultStorage {
     }
 
     /**
-     * @notice Gets the vault configuration of a supported asset.
-     */
-    function getAssetConfig(
-        address _asset
-    ) public view returns (Asset memory config) {
-        config = assets[_asset];
-    }
-
-    /**
      * @notice Return the number of assets supported by the Vault.
      */
     function getAssetCount() public view returns (uint256) {
         return allAssets.length;
     }
 
+    /**
+     * @notice Gets the vault configuration of a supported asset.
+     */
     function getAssetConfig(
         address _asset
     ) public view returns (Asset memory config) {
