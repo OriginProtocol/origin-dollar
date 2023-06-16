@@ -202,3 +202,93 @@ for idx, item in enumerate(txs):
   print("To: ", item.receiver)
   print("Data (Hex encoded): ", item.input, "\n")
 
+
+
+# --------------------------------
+# June 15th, 2023 - OUSD handle USDC de-peg
+# --------------------------------
+
+from addresses import *
+from world import *
+from allocations import *
+from ape_safe import ApeSafe
+
+votes = """
+Morpho Aave USDT  40.23%
+Morpho Aave DAI 0%
+Morpho Aave USDC  0%
+Convex DAI+USDC+USDT  0.56%
+Convex OUSD+3Crv  7.05%
+Convex LUSD+3Crv  0.02%
+Existing Allocation 0%
+Aave DAI  1.16%
+Aave USDC 7.25%
+Aave USDT 4.02%
+Compound DAI  0%
+Compound USDC 0%
+Compound USDT 0%
+Morpho Compound DAI 0%
+Morpho Compound USDC  0%
+Morpho Compound USDT  39.71%
+"""
+
+with TemporaryForkWithVaultStats(votes):
+    txs = []
+    txs.extend(auto_take_snapshot())
+
+    # Withdraw funds
+    txs.append(vault_admin.withdrawAllFromStrategies({'from': STRATEGIST}))
+
+    txs.append(flipper.withdrawAll({'from': STRATEGIST}))
+  
+    txs.extend(auto_check_snapshot())
+    
+print("Est Gas Max: {:,}".format(1.10*sum([x.gas_used for x in txs])))
+
+print("Schedule the following transactions on Gnosis Safe")
+for idx, item in enumerate(txs):
+  print("Transaction ", idx)
+  print("To: ", item.receiver)
+  print("Data (Hex encoded): ", item.input, "\n")
+
+
+# --------------------------------
+# June 15th, 2023 - OUSD handle USDC de-peg. Allocation buffer to 100%
+# --------------------------------
+
+from addresses import *
+from world import *
+from allocations import *
+from ape_safe import ApeSafe
+
+votes = """
+Morpho Aave USDT  40.23%
+Morpho Aave DAI 0%
+Morpho Aave USDC  0%
+Convex DAI+USDC+USDT  0.56%
+Convex OUSD+3Crv  7.05%
+Convex LUSD+3Crv  0.02%
+Existing Allocation 0%
+Aave DAI  1.16%
+Aave USDC 7.25%
+Aave USDT 4.02%
+Compound DAI  0%
+Compound USDC 0%
+Compound USDT 0%
+Morpho Compound DAI 0%
+Morpho Compound USDC  0%
+Morpho Compound USDT  39.71%
+"""
+
+with TemporaryForkWithVaultStats(votes):
+    txs = []
+    # Withdraw funds
+    txs.append(vault_admin.setVaultBuffer(10**18, {'from': STRATEGIST}))
+    
+print("Est Gas Max: {:,}".format(1.10*sum([x.gas_used for x in txs])))
+
+print("Schedule the following transactions on Gnosis Safe")
+for idx, item in enumerate(txs):
+  print("Transaction ", idx)
+  print("To: ", item.receiver)
+  print("Data (Hex encoded): ", item.input, "\n")
