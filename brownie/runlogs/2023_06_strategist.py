@@ -280,6 +280,7 @@ Existing Allocation 0%
 
 with TemporaryForkWithVaultStats(votes):
     txs = []
+    txs.extend(auto_take_snapshot())
     # APE into Convex and withdraw to balance the pool - somewhat
     txs.append(to_strat(OUSD_METASTRAT, [[558_520, dai], [558_920, usdc], [2_125_338, usdt]]))
     # since we burn more OUSD when withdrawing we are left with less LP tokens to withdraw stables
@@ -289,6 +290,8 @@ with TemporaryForkWithVaultStats(votes):
     txs.append(to_strat(AAVE_STRAT, [[160_000, dai], [2_149_000, usdc], [372_000, usdt]]))    
     txs.append(to_strat(MORPHO_AAVE_STRAT, [[21_157_000, usdt]]))
 
+    txs.extend(auto_check_snapshot())
+    
     # Set vault buffer to 0%
     txs.append(vault_admin.setVaultBuffer(0, {'from': STRATEGIST}))
 
