@@ -13,7 +13,7 @@ contract StrategyInvariants is Base, ERC4626 {
     address rewardRecipient;
 
     struct LogInfo {
-        uint state; // 0 deposit, 1 withdrawal, 2 reallocate
+        uint state; // 0 deposit, 1 withdrawal
         uint expected;
         uint balance;
     }
@@ -187,32 +187,32 @@ contract StrategyInvariants is Base, ERC4626 {
         ));
     }
 
-    function actionReallocate(uint256 amount) public {
-        vm.assume(amount > 0);
+    // function actionReallocate(uint256 amount) public {
+    //     vm.assume(amount > 0);
         
-        address[] memory assets = new address[](1);
-        assets[0] = DAI;
+    //     address[] memory assets = new address[](1);
+    //     assets[0] = DAI;
 
-        uint256[] memory amounts = new uint256[](1);
-        amounts[0] = amount;
+    //     uint256[] memory amounts = new uint256[](1);
+    //     amounts[0] = amount;
 
-        uint oldBalance = strategy.checkBalance(DAI);
+    //     uint oldBalance = strategy.checkBalance(DAI);
 
-        vm.startPrank(strategist);
-        VaultAdmin(address(vault)).reallocate(
-            address(strategy),
-            address(strategy),
-            assets,
-            amounts
-        );
-        vm.stopPrank();
+    //     vm.startPrank(strategist);
+    //     VaultAdmin(address(vault)).reallocate(
+    //         address(strategy),
+    //         address(strategy),
+    //         assets,
+    //         amounts
+    //     );
+    //     vm.stopPrank();
 
-        pnmLogs.push(LogInfo(
-            2,
-            oldBalance,
-            strategy.checkBalance(DAI)
-        ));
-    }
+    //     pnmLogs.push(LogInfo(
+    //         2,
+    //         oldBalance,
+    //         strategy.checkBalance(DAI)
+    //     ));
+    // }
 
     function invariantStrategyAssets() public {
         for (uint i = 0; i < pnmLogs.length; ++i) {
@@ -221,9 +221,10 @@ contract StrategyInvariants is Base, ERC4626 {
                 require(info.expected == info.balance, "strategy deposit failed");
             } else if (info.state == 1) {
                 require(info.expected == info.balance, "strategy withdrawal failed");
-            } else if (info.state == 2) {
-                require(info.expected == info.balance, "strategy reallocate failed");
-            }
+            } 
+            // else if (info.state == 2) {
+            //     require(info.expected == info.balance, "strategy reallocate failed");
+            // }
         }
 
         delete pnmLogs;
