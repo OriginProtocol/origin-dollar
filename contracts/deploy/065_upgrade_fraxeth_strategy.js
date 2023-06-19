@@ -6,12 +6,9 @@ module.exports = deploymentWithProposal(
     deployName: "065_upgrade_fraxeth_strategy",
     forceDeploy: false,
     reduceQueueTime: true,
-    proposalId: 53
+    proposalId: 53,
   },
-  async ({
-    deployWithConfirmation,
-    ethers,
-  }) => {
+  async ({ deployWithConfirmation, ethers }) => {
     // Current contracts
     const cFraxETHStrategyProxy = await ethers.getContract(
       "FraxETHStrategyProxy"
