@@ -49,6 +49,12 @@ contract Mock1InchSwapRouter {
             desc.amount
         );
 
+        // Transfer the source tokens to the receiver contract
+        IERC20(desc.dstToken).safeTransfer(
+            desc.dstReceiver,
+            desc.minReturnAmount
+        );
+
         emit MockSwap(executor, permitData, executorData);
         _swapDesc(desc);
         returnAmount = 0;
