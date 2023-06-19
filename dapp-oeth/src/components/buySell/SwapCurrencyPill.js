@@ -81,6 +81,8 @@ const CoinImage = ({ small, coin }) => {
 
         @media (max-width: 799px) {
           .coin-image {
+            width: 24px;
+            height: 24px;
             margin-right: 8px;
           }
         }
@@ -353,9 +355,10 @@ const CoinSelect = ({
 
           @media (max-width: 799px) {
             .coin-select {
+              font-size: 16px;
               width: fit-content;
               min-height: 32px;
-              padding: 4px;
+              padding: 6px 4px;
               margin-top: 16px;
             }
           }
@@ -399,7 +402,7 @@ const CoinSelect = ({
         .coin-select {
           padding: 4px;
           border-radius: 30px;
-          border: solid 1px #141519;
+          border: solid 0px;
           color: #fafbfb;
           background-color: rgba(255, 255, 255, 0.1);
           cursor: pointer;
@@ -436,15 +439,17 @@ const CoinSelect = ({
 
         @media (max-width: 799px) {
           .coin-select {
+            font-size: 16px;
             width: fit-content;
             min-height: 32px;
-            padding: 4px;
+            padding: 6px 4px;
             margin-top: 16px;
           }
 
           .coin {
             color: #fafbfb;
             margin-right: 8px;
+            font-size: 16px;
           }
         }
       `}</style>
@@ -814,6 +819,7 @@ const SwapCurrencyPill = ({
           font-size: 32px;
           color: #fafbfb;
           background-color: transparent;
+          padding: 0;
         }
 
         .expected-value {

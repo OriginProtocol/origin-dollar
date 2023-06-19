@@ -48,14 +48,14 @@ const PillArrow = ({ swapMode, setSwapMode }) => {
           <img
             src={assetRootPath('/images/splitarrow.svg')}
             alt="swap arrow"
-            style={{ height: 25, width: 14 }}
+            style={{ height: 23, width: 12 }}
           />
         </div>
       </div>
       <style jsx>{`
         .pill-arrow {
-          width: 46px;
-          height: 46px;
+          width: 32px;
+          height: 32px;
           border: 1px solid #141519;
           background-color: #1e1f25;
           border-radius: 50px;
@@ -66,13 +66,13 @@ const PillArrow = ({ swapMode, setSwapMode }) => {
         .border-divider {
           height: 10px;
           background-color: #1e1f25;
-          width: 40px;
+          width: 24px;
           z-index: 1;
         }
 
         .caret-background {
-          width: 46px;
-          height: 46px;
+          width: 32px;
+          height: 32px;
           border: solid 1px #141519;
           background-color: transparent;
           z-index: 2;

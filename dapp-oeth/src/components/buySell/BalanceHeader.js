@@ -205,7 +205,18 @@ const BalanceHeader = ({
               justify-content: space-between;
               align-items: center;
               border-bottom: 0;
-              border-top: 1px solid black;
+            }
+
+            .containBig {
+              border-radius: 4px 4px 0 0;
+            }
+
+            .containSmall {
+              border-top: 1px solid #101113;
+            }
+
+            .containSmallTop {
+              border-radius: 0 0 4px 4px;
             }
 
             .containBig .title {
@@ -245,7 +256,7 @@ const BalanceHeader = ({
             }
 
             .stat .big {
-              font-size: 20px;
+              font-size: 24px;
             }
 
             .stat .small {
@@ -380,7 +391,7 @@ const BalanceHeader = ({
               );
               -webkit-background-clip: text;
               -webkit-text-fill-color: transparent;
-              font-size: 20px;
+              font-size: 24px;
               margin-bottom: 0;
             }
           }
@@ -621,7 +632,7 @@ const BalanceHeader = ({
           .balance-header {
             align-items: center;
             text-align: center;
-            padding: 0px 8px;
+            padding: 0px 12px;
             min-height: 80px;
           }
 

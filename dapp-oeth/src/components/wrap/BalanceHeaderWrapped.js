@@ -186,7 +186,7 @@ const BalanceHeaderWrapped = ({
             }
 
             .stat .big {
-              font-size: 20px;
+              font-size: 24px;
             }
 
             .stat .small {
@@ -321,7 +321,7 @@ const BalanceHeaderWrapped = ({
               );
               -webkit-background-clip: text;
               -webkit-text-fill-color: transparent;
-              font-size: 20px;
+              font-size: 24px;
               margin-bottom: 0;
             }
           }

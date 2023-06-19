@@ -125,8 +125,8 @@ const SettingsDropdown = ({ setPriceToleranceValue, priceToleranceValue }) => {
         }
 
         .settings-icon {
-          width: 22px;
-          height: 22px;
+          width: 16px;
+          height: 16px;
           cursor: pointer;
         }
 
