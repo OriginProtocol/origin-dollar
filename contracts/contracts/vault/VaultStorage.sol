@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 /**
- * @title OUSD VaultStorage Contract
+ * @title OToken VaultStorage contract
  * @notice The VaultStorage contract defines the storage for the Vault contracts
  * @author Origin Protocol Inc
  */
@@ -120,13 +120,13 @@ contract VaultStorage is Initializable, Governable {
 
     uint256 constant MINT_MINIMUM_UNIT_PRICE = 0.998e18;
 
-    // Meta strategy that is allowed to mint/burn OUSD without changing collateral
+    // Metapool strategy that is allowed to mint/burn OTokens without changing collateral
     address public ousdMetaStrategy = address(0);
 
-    // How much OUSD is currently minted by the strategy
+    // How much OTokens are currently minted by the strategy
     int256 public netOusdMintedForStrategy = 0;
 
-    // How much net total OUSD is allowed to be minted by all strategies
+    // How much net total OTokens are allowed to be minted by all strategies
     uint256 public netOusdMintForStrategyThreshold = 0;
 
     uint256 constant MIN_UNIT_PRICE_DRIFT = 0.7e18;
