@@ -241,3 +241,70 @@ for idx, item in enumerate(txs):
   print("Transaction ", idx)
   print("To: ", item.receiver)
   print("Data (Hex encoded): ", item.input, "\n")
+
+
+
+# --------------------------------
+# June 19th, 2023 - OUSD allocation, vaultBuffer to 0%
+# --------------------------------
+
+from addresses import *
+from world import *
+from allocations import *
+from ape_safe import ApeSafe
+
+votes = """
+Aave DAI  0.66%
+Aave USDC 8.81%
+Aave USDT 1.52%
+Compound DAI  0%
+Compound USDC 0%
+Compound USDT 0%
+Convex DAI+USDC+USDT  0%
+Convex LUSD+3Crv  0%
+Convex OUSD+3Crv  0%
+Morpho Aave DAI 0%
+Morpho Aave USDC  0%
+Morpho Aave USDT  61.17%
+Morpho Compound DAI 0%
+Morpho Compound USDC  0%
+Morpho Compound USDT  27.84%
+Existing Allocation 0%
+"""
+
+# Attempting to withdraw 5201460815648380432173116, metapoolLP but only 3484897209287545919066860 available.
+
+with TemporaryForkWithVaultStats(votes):
+    txs = []
+    txs.extend(auto_take_snapshot())
+
+    # From strategies
+    txs.append(from_strat(MORPHO_AAVE_STRAT, [[2_125_338, usdt]]))
+    txs.append(from_strat(AAVE_STRAT, [[558_520, dai], [558_920, usdc]]))
+
+    # APE into Convex and withdraw to balance the pool - somewhat
+    txs.append(to_strat(OUSD_METASTRAT, [[558_520, dai], [558_920, usdc], [2_125_338, usdt]]))
+    # since we burn more OUSD when withdrawing we are left with less LP tokens to withdraw stables
+    txs.append(from_strat(OUSD_METASTRAT, [[160_000, dai], [648_920, usdc], [1_720_338, usdt]]))
+
+    # To strategies
+    txs.append(to_strat(AAVE_STRAT, [[160_000, dai], [648_000, usdc], [372_000, usdt]]))    
+    txs.append(to_strat(MORPHO_AAVE_STRAT, [[1_348_000, usdt]]))
+
+    txs.extend(auto_check_snapshot())
+    
+    # Set vault buffer to 0%
+    txs.append(vault_admin.setVaultBuffer(0, {'from': STRATEGIST}))
+
+    ousd_balance = ousd_metapool.balances(0)
+    threePool_balance = ousd_metapool.balances(1)
+    total_balance = ousd_balance + threePool_balance
+    print("OUSD metapool token ratio, OUSD share: {:.3f}% 3pool share: {:.3f}%".format(ousd_balance/total_balance, threePool_balance/total_balance))
+
+print("Est Gas Max: {:,}".format(1.10*sum([x.gas_used for x in txs])))
+
+print("Schedule the following transactions on Gnosis Safe")
+for idx, item in enumerate(txs):
+  print("Transaction ", idx)
+  print("To: ", item.receiver)
+  print("Data (Hex encoded): ", item.input, "\n")
