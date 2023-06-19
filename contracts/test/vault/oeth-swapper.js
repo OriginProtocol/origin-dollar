@@ -248,7 +248,9 @@ describe("OETH Vault - Swapper", () => {
         .mintTo(swapper1Inch.address, fromAmount.mul(2));
       await frxETH
         .connect(strategist)
-        .mintTo(swapper1Inch.address, toAmount.mul(2));
+        .mintTo(mock1InchSwapRouter.address, toAmount.mul(2));
+
+      await swapper1Inch.approveAssets([weth.address]);
 
       const tx = swapper1Inch
         .connect(strategist)
@@ -276,7 +278,7 @@ describe("OETH Vault - Swapper", () => {
       );
 
       const r = await (await tx).wait();
-      expect(r.logs[2].data).to.equal(
+      expect(r.logs[3].data).to.equal(
         "0x00000000000000000000000011111111112222222222333333333344444444440000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000008000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002dead000000000000000000000000000000000000000000000000000000000000"
       );
     });
