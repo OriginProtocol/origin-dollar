@@ -29,6 +29,14 @@ contract VaultCore is VaultStorage {
         0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
 
     /**
+     * @dev Verifies that the deposits are not paused.
+     */
+    modifier whenNotCapitalPaused() {
+        require(!capitalPaused, "Capital paused");
+        _;
+    }
+
+    /**
      * @dev Verifies that the rebasing is not paused.
      */
     modifier whenNotRebasePaused() {
@@ -388,13 +396,7 @@ contract VaultCore is VaultStorage {
      *         strategies.
      * @return value Total value in USD (1e18)
      */
-    function totalValue()
-        external
-        view
-        virtual
-        nonReentrantView
-        returns (uint256 value)
-    {
+    function totalValue() external view virtual returns (uint256 value) {
         value = _totalValue();
     }
 
