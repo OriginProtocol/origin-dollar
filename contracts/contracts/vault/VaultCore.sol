@@ -23,7 +23,7 @@ contract VaultCore is VaultStorage {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
     // max signed int
-    uint256 internal constant MAX_INT = 2 ** 255 - 1;
+    uint256 internal constant MAX_INT = 2**255 - 1;
     // max un-signed int
     uint256 internal constant MAX_UINT =
         0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
@@ -101,9 +101,11 @@ contract VaultCore is VaultStorage {
      * that are moving funds between the Vault and end user wallets can influence strategies
      * utilizing this function.
      */
-    function mintForStrategy(
-        uint256 _amount
-    ) external whenNotCapitalPaused onlyOusdMetaStrategy {
+    function mintForStrategy(uint256 _amount)
+        external
+        whenNotCapitalPaused
+        onlyOusdMetaStrategy
+    {
         require(_amount < MAX_INT, "Amount too high");
 
         emit Mint(msg.sender, _amount);
@@ -133,10 +135,11 @@ contract VaultCore is VaultStorage {
      * @param _amount Amount of OTokens to burn
      * @param _minimumUnitAmount Minimum stablecoin units to receive in return
      */
-    function redeem(
-        uint256 _amount,
-        uint256 _minimumUnitAmount
-    ) external whenNotCapitalPaused nonReentrant {
+    function redeem(uint256 _amount, uint256 _minimumUnitAmount)
+        external
+        whenNotCapitalPaused
+        nonReentrant
+    {
         _redeem(_amount, _minimumUnitAmount);
     }
 
@@ -223,9 +226,11 @@ contract VaultCore is VaultStorage {
      * that are moving funds between the Vault and end user wallets can influence strategies
      * utilizing this function.
      */
-    function burnForStrategy(
-        uint256 _amount
-    ) external whenNotCapitalPaused onlyOusdMetaStrategy {
+    function burnForStrategy(uint256 _amount)
+        external
+        whenNotCapitalPaused
+        onlyOusdMetaStrategy
+    {
         require(_amount < MAX_INT, "Amount too high");
 
         emit Redeem(msg.sender, _amount);
@@ -254,9 +259,11 @@ contract VaultCore is VaultStorage {
      * @notice Withdraw a supported asset and burn all OTokens.
      * @param _minimumUnitAmount Minimum stablecoin units to receive in return
      */
-    function redeemAll(
-        uint256 _minimumUnitAmount
-    ) external whenNotCapitalPaused nonReentrant {
+    function redeemAll(uint256 _minimumUnitAmount)
+        external
+        whenNotCapitalPaused
+        nonReentrant
+    {
         _redeem(oUSD.balanceOf(msg.sender), _minimumUnitAmount);
     }
 
@@ -431,9 +438,11 @@ contract VaultCore is VaultStorage {
      * @param _strategyAddr Address of the strategy
      * @return value Total value in ETH (1e18)
      */
-    function _totalValueInStrategy(
-        address _strategyAddr
-    ) internal view returns (uint256 value) {
+    function _totalValueInStrategy(address _strategyAddr)
+        internal
+        view
+        returns (uint256 value)
+    {
         IStrategy strategy = IStrategy(_strategyAddr);
         uint256 assetCount = allAssets.length;
         for (uint256 y = 0; y < assetCount; ++y) {
@@ -461,9 +470,12 @@ contract VaultCore is VaultStorage {
      * @param _asset Address of asset
      * @return balance Balance of asset in decimals of asset
      */
-    function _checkBalance(
-        address _asset
-    ) internal view virtual returns (uint256 balance) {
+    function _checkBalance(address _asset)
+        internal
+        view
+        virtual
+        returns (uint256 balance)
+    {
         IERC20 asset = IERC20(_asset);
         balance = asset.balanceOf(address(this));
         uint256 stratCount = allStrategies.length;
@@ -479,9 +491,11 @@ contract VaultCore is VaultStorage {
      * @notice Calculate the outputs for a redeem function, i.e. the mix of
      * coins that will be returned
      */
-    function calculateRedeemOutputs(
-        uint256 _amount
-    ) external view returns (uint256[] memory) {
+    function calculateRedeemOutputs(uint256 _amount)
+        external
+        view
+        returns (uint256[] memory)
+    {
         return _calculateRedeemOutputs(_amount);
     }
 
@@ -490,9 +504,11 @@ contract VaultCore is VaultStorage {
      * coins that will be returned.
      * @return outputs Array of amounts respective to the supported assets
      */
-    function _calculateRedeemOutputs(
-        uint256 _amount
-    ) internal view returns (uint256[] memory outputs) {
+    function _calculateRedeemOutputs(uint256 _amount)
+        internal
+        view
+        returns (uint256[] memory outputs)
+    {
         // We always give out coins in proportion to how many we have,
         // Now if all coins were the same value, this math would easy,
         // just take the percentage of each coin, and multiply by the
@@ -567,9 +583,11 @@ contract VaultCore is VaultStorage {
      * @param asset address of the asset
      * @return price uint256: unit (USD / ETH) price for 1 unit of the asset, in 18 decimal fixed
      */
-    function priceUnitMint(
-        address asset
-    ) external view returns (uint256 price) {
+    function priceUnitMint(address asset)
+        external
+        view
+        returns (uint256 price)
+    {
         /* need to supply 1 asset unit in asset's decimals and can not just hard-code
          * to 1e18 and ignore calling `_toUnits` since we need to consider assets
          * with the exchange rate
@@ -587,9 +605,11 @@ contract VaultCore is VaultStorage {
      * @param asset Address of the asset
      * @return price uint256: unit (USD / ETH) price for 1 unit of the asset, in 18 decimal fixed
      */
-    function priceUnitRedeem(
-        address asset
-    ) external view returns (uint256 price) {
+    function priceUnitRedeem(address asset)
+        external
+        view
+        returns (uint256 price)
+    {
         /* need to supply 1 asset unit in asset's decimals and can not just hard-code
          * to 1e18 and ignore calling `_toUnits` since we need to consider assets
          * with the exchange rate
@@ -620,10 +640,11 @@ contract VaultCore is VaultStorage {
      * @param _asset Core Asset address
      * @return value 1e18 normalized quantity of units
      */
-    function _toUnits(
-        uint256 _raw,
-        address _asset
-    ) internal view returns (uint256) {
+    function _toUnits(uint256 _raw, address _asset)
+        internal
+        view
+        returns (uint256)
+    {
         UnitConversion conversion = assets[_asset].unitConversion;
         if (conversion == UnitConversion.DECIMALS) {
             return _raw.scaleBy(18, _getDecimals(_asset));
@@ -650,10 +671,11 @@ contract VaultCore is VaultStorage {
      * action would be unfavourable to the protocol.
      *
      */
-    function _toUnitPrice(
-        address _asset,
-        bool isMint
-    ) internal view returns (uint256 price) {
+    function _toUnitPrice(address _asset, bool isMint)
+        internal
+        view
+        returns (uint256 price)
+    {
         UnitConversion conversion = assets[_asset].unitConversion;
         price = IOracle(priceProvider).price(_asset);
 
@@ -690,9 +712,11 @@ contract VaultCore is VaultStorage {
         }
     }
 
-    function _getDecimals(
-        address _asset
-    ) internal view returns (uint256 decimals) {
+    function _getDecimals(address _asset)
+        internal
+        view
+        returns (uint256 decimals)
+    {
         decimals = assets[_asset].decimals;
         require(decimals > 0, "Decimals not cached");
     }
@@ -707,9 +731,11 @@ contract VaultCore is VaultStorage {
     /**
      * @notice Gets the vault configuration of a supported asset.
      */
-    function getAssetConfig(
-        address _asset
-    ) public view returns (Asset memory config) {
+    function getAssetConfig(address _asset)
+        public
+        view
+        returns (Asset memory config)
+    {
         config = assets[_asset];
     }
 
