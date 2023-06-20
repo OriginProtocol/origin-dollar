@@ -14,6 +14,7 @@ const {
   usdcUnits,
   tusdUnits,
   ognUnits,
+  oethUnits,
   isFork,
 } = require("../test/helpers");
 
@@ -87,8 +88,48 @@ const findBestMainnetTokenHolderAndImpersonate = async (contract, hre) => {
   return signer;
 };
 
+const fundAccountsForOETHUnitTests = async () => {
+  if (isFork) {
+    return;
+  }
+
+  let weth, rETH, stETH, frxETH, sfrxETH;
+
+  weth = await ethers.getContractAt("MockWETH", addresses.mainnet.WETH);
+  rETH = await ethers.getContract("MockRETH");
+  stETH = await ethers.getContract("MockstETH");
+  frxETH = await ethers.getContract("MockfrxETH");
+  sfrxETH = await ethers.getContract("MocksfrxETH");
+
+  const signers = await hre.ethers.getSigners();
+
+  const addressPromises = new Array(10)
+    .fill(0)
+    .map((_, i) => signers[i].getAddress());
+  const signerAddresses = await Promise.all(addressPromises);
+
+  for (const address of signerAddresses) {
+    const signer = await ethers.provider.getSigner(address);
+    await weth.connect(signer).mint(oethUnits("1000"));
+    await rETH.connect(signer).mint(oethUnits("1000"));
+    await stETH.connect(signer).mint(oethUnits("1000"));
+    await frxETH.connect(signer).mint(oethUnits("1000"));
+    await sfrxETH.connect(signer).mint(oethUnits("1000"));
+  }
+};
+
 const fundAccounts = async () => {
-  let usdt, dai, tusd, usdc, nonStandardToken, ogn, weth, rETH, stETH, frxETH;
+  let usdt,
+    dai,
+    tusd,
+    usdc,
+    nonStandardToken,
+    ogn,
+    weth,
+    rETH,
+    stETH,
+    frxETH,
+    sfrxETH;
   if (isFork) {
     usdt = await ethers.getContractAt(usdtAbi, addresses.mainnet.USDT);
     dai = await ethers.getContractAt(daiAbi, addresses.mainnet.DAI);
@@ -106,6 +147,13 @@ const fundAccounts = async () => {
     tusd = await ethers.getContract("MockTUSD");
     usdc = await ethers.getContract("MockUSDC");
     ogn = await ethers.getContract("MockOGN");
+
+    weth = await ethers.getContractAt("MockWETH", addresses.mainnet.WETH);
+    rETH = await ethers.getContract("MockRETH");
+    stETH = await ethers.getContract("MockstETH");
+    frxETH = await ethers.getContract("MockfrxETH");
+    sfrxETH = await ethers.getContract("MocksfrxETH");
+
     nonStandardToken = await ethers.getContract("MockNonStandardToken");
   }
 
@@ -165,5 +213,6 @@ const fundAccounts = async () => {
 
 module.exports = {
   fundAccounts,
+  fundAccountsForOETHUnitTests,
   findBestMainnetTokenHolder,
 };

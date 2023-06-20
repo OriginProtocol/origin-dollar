@@ -141,6 +141,8 @@ jobs:
           path: ./unit-coverage
 
       - uses: codecov/codecov-action@v3
+        with:
+          fail_ci_if_error: true
 
   dapp-lint:
     name: "OUSD DApp Linter"

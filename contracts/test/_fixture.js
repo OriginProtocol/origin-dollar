@@ -3,7 +3,10 @@ const hre = require("hardhat");
 const { ethers } = hre;
 
 const addresses = require("../utils/addresses");
-const { fundAccounts } = require("../utils/funding");
+const {
+  fundAccounts,
+  fundAccountsForOETHUnitTests,
+} = require("../utils/funding");
 const { getAssetAddresses, daiUnits, isFork } = require("./helpers");
 const { utils } = require("ethers");
 
@@ -22,6 +25,7 @@ const threepoolLPAbi = require("./abi/threepoolLP.json");
 const threepoolSwapAbi = require("./abi/threepoolSwap.json");
 
 const sfrxETHAbi = require("./abi/sfrxETH.json");
+const { deployWithConfirmation } = require("../utils/deploy");
 
 const defaultFixture = deployments.createFixture(async () => {
   await deployments.fixture(
@@ -109,6 +113,9 @@ const defaultFixture = deployments.createFixture(async () => {
   );
 
   const oracleRouter = await ethers.getContract("OracleRouter");
+  const oethOracleRouter = await ethers.getContract(
+    isFork ? "OETHOracleRouter" : "OracleRouter"
+  );
 
   const buybackProxy = await ethers.getContract("BuybackProxy");
   const buyback = await ethers.getContractAt("Buyback", buybackProxy.address);
@@ -247,7 +254,7 @@ const defaultFixture = deployments.createFixture(async () => {
       "FraxETHStrategyProxy"
     );
     fraxEthStrategy = await ethers.getContractAt(
-      "Generalized4626Strategy",
+      "FraxETHStrategy",
       fraxEthStrategyProxy.address
     );
 
@@ -270,6 +277,19 @@ const defaultFixture = deployments.createFixture(async () => {
       "OETHDripper",
       oethDripperProxy.address
     );
+
+    // Replace OracelRouter to disable staleness
+    const dMockOracleRouterNoStale = await deployWithConfirmation(
+      "MockOracleRouterNoStale"
+    );
+    const dMockOETHOracleRouterNoStale = await deployWithConfirmation(
+      "MockOETHOracleRouterNoStale"
+    );
+    await replaceContractAt(oracleRouter.address, dMockOracleRouterNoStale);
+    await replaceContractAt(
+      oethOracleRouter.address,
+      dMockOETHOracleRouterNoStale
+    );
   } else {
     usdt = await ethers.getContract("MockUSDT");
     dai = await ethers.getContract("MockDAI");
@@ -281,6 +301,7 @@ const defaultFixture = deployments.createFixture(async () => {
     ogv = await ethers.getContract("MockOGV");
     reth = await ethers.getContract("MockRETH");
     frxETH = await ethers.getContract("MockfrxETH");
+    sfrxETH = await ethers.getContract("MocksfrxETH");
     stETH = await ethers.getContract("MockstETH");
     nonStandardToken = await ethers.getContract("MockNonStandardToken");
 
@@ -351,6 +372,14 @@ const defaultFixture = deployments.createFixture(async () => {
     LUSDMetaStrategy = await ethers.getContractAt(
       "ConvexGeneralizedMetaStrategy",
       LUSDMetaStrategyProxy.address
+    );
+
+    const fraxEthStrategyProxy = await ethers.getContract(
+      "FraxETHStrategyProxy"
+    );
+    fraxEthStrategy = await ethers.getContractAt(
+      "FraxETHStrategy",
+      fraxEthStrategyProxy.address
     );
   }
 
@@ -511,15 +540,51 @@ async function oethDefaultFixture() {
   // TODO: Trim it down to only do OETH things
   const fixture = await defaultFixture();
 
-  if (isFork) {
-    const { weth, matt, josh, domen, daniel, franck, oethVault } = fixture;
+  const { weth, reth, stETH, frxETH, sfrxETH } = fixture;
+  const { matt, josh, domen, daniel, franck, governor, oethVault } = fixture;
 
+  if (isFork) {
     for (const user of [matt, josh, domen, daniel, franck]) {
       // Everyone gets free WETH
       await mintWETH(weth, user);
 
       // And vault can rug them all
       await resetAllowance(weth, user, oethVault.address);
+    }
+  } else {
+    // Replace frxETHMinter
+    await replaceContractAt(
+      addresses.mainnet.FraxETHMinter,
+      await ethers.getContract("MockFrxETHMinter")
+    );
+    const mockedMinter = await ethers.getContractAt(
+      "MockFrxETHMinter",
+      addresses.mainnet.FraxETHMinter
+    );
+    await mockedMinter.connect(franck).setAssetAddress(fixture.sfrxETH.address);
+
+    // Replace WETH contract with MockWETH
+    await replaceContractAt(addresses.mainnet.WETH, weth);
+    const mockedWETH = await ethers.getContractAt(
+      "MockWETH",
+      addresses.mainnet.WETH
+    );
+    fixture.weth = mockedWETH;
+
+    // And Fund it
+    _hardhatSetBalance(mockedWETH.address, "999999999999999");
+
+    // And make sure vault knows about it
+    await oethVault.connect(governor).supportAsset(mockedWETH.address, 0);
+
+    // Fund all with mockTokens
+    await fundAccountsForOETHUnitTests();
+
+    // Reset allowances
+    for (const user of [matt, josh, domen, daniel, franck]) {
+      for (const asset of [mockedWETH, reth, stETH, frxETH, sfrxETH]) {
+        await resetAllowance(asset, user, oethVault.address);
+      }
     }
   }
 
@@ -879,10 +944,10 @@ function oethMorphoAaveFixtureSetup() {
 }
 
 /**
- * FraxETHStrategy fixture that works only in forked environment
+ * FraxETHStrategy fixture
  *
  */
-async function fraxETHStrategyForkedFixture() {
+function fraxETHStrategyFixtureSetup() {
   return deployments.createFixture(async () => {
     const fixture = await oethDefaultFixture();
 
@@ -897,12 +962,15 @@ async function fraxETHStrategyForkedFixture() {
         .setAssetDefaultStrategy(frxETH.address, fraxEthStrategy.address);
     } else {
       const { governorAddr } = await getNamedAccounts();
-      const { oethVault, weth, frxETH, fraxEthStrategy } = fixture;
+      const { oethVault, frxETH, fraxEthStrategy } = fixture;
       const sGovernor = await ethers.provider.getSigner(governorAddr);
 
-      // Replace WETH contract with MockWETH
-      await replaceContractAt(fixture, addresses.mainnet.WETH, weth);
+      // Approve Strategy
+      await oethVault
+        .connect(sGovernor)
+        .approveStrategy(fraxEthStrategy.address);
 
+      // Set as default
       await oethVault
         .connect(sGovernor)
         .setAssetDefaultStrategy(frxETH.address, fraxEthStrategy.address);
@@ -1445,9 +1513,9 @@ async function rebornFixture() {
   return fixture;
 }
 
-async function replaceContractAt(fixture, targetAddress, mockContract) {
-  const { strategist } = fixture;
-  const mockCode = await strategist.provider.getCode(mockContract.address);
+async function replaceContractAt(targetAddress, mockContract) {
+  const signer = (await hre.ethers.getSigners())[0];
+  const mockCode = await signer.provider.getCode(mockContract.address);
 
   await hre.network.provider.request({
     method: "hardhat_setCode",
@@ -1480,7 +1548,7 @@ module.exports = {
   withImpersonatedAccount,
   impersonateAndFundContract,
   impersonateAccount,
-  fraxETHStrategyForkedFixture,
+  fraxETHStrategyFixtureSetup,
   oethMorphoAaveFixtureSetup,
   mintWETH,
   replaceContractAt,
