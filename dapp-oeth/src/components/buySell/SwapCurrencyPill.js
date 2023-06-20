@@ -16,12 +16,22 @@ import { event } from '../../../lib/gtm'
 
 const CoinImage = ({ small, coin }) => {
   const className = `coin-image`
+
+  const coinExt = {
+    reth: 'png',
+    weth: 'png',
+  }
+
   return (
     <div className="d-flex align-items-center">
       {coin !== 'mix' && (
         <img
           className={`${className} ${small ? 'small' : ''}`}
-          src={assetRootPath(`/images/currency/${coin}-icon-small.svg`)}
+          src={assetRootPath(
+            `/images/currency/${coin}-icon-small.${
+              coinExt[coin] ? coinExt[coin] : 'svg'
+            }`
+          )}
         />
       )}
       {coin === 'mix' && (
@@ -32,7 +42,7 @@ const CoinImage = ({ small, coin }) => {
           />
           <img
             className={`${className} mixed coin-2 ${small ? 'small' : ''}`}
-            src={assetRootPath(`/images/currency/reth-icon-small.svg`)}
+            src={assetRootPath(`/images/currency/reth-icon-small.png`)}
           />
           <img
             className={`${className} mixed coin-3 ${small ? 'small' : ''}`}
@@ -650,7 +660,7 @@ const SwapCurrencyPill = ({
             )}
 
             {bottomItem && (
-              <div className="expected-value">
+              <div className={`expected-value ${expectedAmount ? '' : 'grey'}`}>
                 {swapsLoading ? (
                   <span className="text-loading">
                     {fbt('Loading...', 'Swaps Loading...')}
@@ -746,6 +756,10 @@ const SwapCurrencyPill = ({
         )}
       </div>
       <style jsx>{`
+        .grey {
+          color: #828699 !important;
+        }
+
         .output-holder {
           max-width: 50%;
         }
@@ -774,7 +788,6 @@ const SwapCurrencyPill = ({
         .usd-balance {
           font-size: 16px;
           color: #828699;
-          margin-left: 4px;
           overflow: hidden;
           width: 100%;
           display: block;
@@ -820,6 +833,21 @@ const SwapCurrencyPill = ({
           color: #fafbfb;
           background-color: transparent;
           padding: 0;
+        }
+
+        input::placeholder {
+          /* Chrome, Firefox, Opera, Safari 10.1+ */
+          color: #828699;
+        }
+
+        input:-ms-input-placeholder {
+          /* Internet Explorer 10-11 */
+          color: #828699;
+        }
+
+        input::-ms-input-placeholder {
+          /* Microsoft Edge */
+          color: #828699;
         }
 
         .expected-value {

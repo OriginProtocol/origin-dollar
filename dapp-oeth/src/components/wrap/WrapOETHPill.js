@@ -251,7 +251,7 @@ const WrapOETHPill = ({
               />
             )}
             {bottomItem && (
-              <div className="expected-value">
+              <div className={`expected-value ${expectedAmount ? '' : 'grey'}`}>
                 {swapsLoading ? (
                   <span className="text-loading">
                     {fbt('Loading...', 'Swaps Loading...')}
@@ -311,6 +311,10 @@ const WrapOETHPill = ({
         </div>
       </div>
       <style jsx>{`
+        .grey {
+          color: #828699 !important;
+        }
+
         .output-holder {
           max-width: 50%;
         }
@@ -349,7 +353,6 @@ const WrapOETHPill = ({
         .usd-balance {
           font-size: 16px;
           color: #828699;
-          margin-left: 4px;
         }
 
         .mt-20 {
@@ -374,6 +377,21 @@ const WrapOETHPill = ({
           font-size: 32px;
           color: #fafbfb;
           background-color: transparent;
+        }
+
+        input::placeholder {
+          /* Chrome, Firefox, Opera, Safari 10.1+ */
+          color: #828699;
+        }
+
+        input:-ms-input-placeholder {
+          /* Internet Explorer 10-11 */
+          color: #828699;
+        }
+
+        input::-ms-input-placeholder {
+          /* Microsoft Edge */
+          color: #828699;
         }
 
         .expected-value {

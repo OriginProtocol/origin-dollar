@@ -54,10 +54,12 @@ export default function IPFSDappLink({ css }) {
             background-color: #1e1f25;
             color: #fafbfb;
             padding: 0;
+            height: 36px;
           }
 
           .ipfs-link span {
             padding: 8px 16px;
+            font-size: 12px;
           }
 
           .ipfs-image {

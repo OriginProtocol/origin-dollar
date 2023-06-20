@@ -54,12 +54,12 @@ const PillArrow = ({ swapMode, setSwapMode }) => {
       </div>
       <style jsx>{`
         .pill-arrow {
-          width: 32px;
-          height: 32px;
+          width: 48px;
+          height: 48px;
           border: 1px solid #141519;
           background-color: #1e1f25;
           border-radius: 50px;
-          margin-top: -23px;
+          transform: translateY(-50%);
           z-index: 1;
         }
 
@@ -71,8 +71,8 @@ const PillArrow = ({ swapMode, setSwapMode }) => {
         }
 
         .caret-background {
-          width: 32px;
-          height: 32px;
+          width: 48px;
+          height: 48px;
           border: solid 1px #141519;
           background-color: transparent;
           z-index: 2;
@@ -82,6 +82,18 @@ const PillArrow = ({ swapMode, setSwapMode }) => {
 
         .caret-background:hover {
           background-color: #18191c;
+        }
+
+        @media (max-width: 799px) {
+          .caret-background {
+            width: 32px;
+            height: 32px;
+          }
+
+          .pill-arrow {
+            width: 32px;
+            height: 32px;
+          }
         }
       `}</style>
     </div>

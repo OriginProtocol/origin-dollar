@@ -161,6 +161,18 @@ const SettingsDropdown = ({ setPriceToleranceValue, priceToleranceValue }) => {
           padding: 0 12px;
         }
 
+        /* Chrome, Safari, Edge, Opera */
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+
+        /* Firefox */
+        input[type='number'] {
+          -moz-appearance: textfield;
+        }
+
         .warning {
           font-size: 14px;
           color: #ffdc86;
