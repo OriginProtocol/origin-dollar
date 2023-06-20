@@ -18,15 +18,15 @@
 
 ### Hierarchy
 
-![Compound Strategy Hierarchy](../../docs/CompStragegyHierarchy.svg)
+![Compound Strategy Hierarchy](../../docs/CompStrategyHierarchy.svg)
 
 ### Squashed
 
-![Compound Strategy Squashed](../../docs/CompStragegySquashed.svg)
+![Compound Strategy Squashed](../../docs/CompStrategySquashed.svg)
 
 ### Storage
 
-![Compound Strategy Storage](../../docs/CompStragegyStorage.svg)
+![Compound Strategy Storage](../../docs/CompStrategyStorage.svg)
 
 ## Convex ETH Metapool Strategy
 
@@ -42,19 +42,19 @@
 
 ![Convex ETH Metapool Strategy Storage](../../docs/ConvexEthMetaStrategyStorage.svg) -->
 
-## Generalized 4626 Strategy
+## Frax ETH Strategy
 
 ### Hierarchy
 
-![Generalized 4626 Strategy Hierarchy](../../docs/Gen4626StrategyHierarchy.svg)
+![Frax ETH Strategy Hierarchy](../../docs/FraxETHStrategyHierarchy.svg)
 
 ### Squashed
 
-![Generalized 4626 Strategy Squashed](../../docs/Gen4626StrategySquashed.svg)
+![Frax ETH Strategy Squashed](../../docs/FraxETHStrategySquashed.svg)
 
 <!-- ### Storage
 
-![Generalized 4626 Strategy Storage](../../docs/Gen4626StrategyStorage.svg) -->
+![Frax ETH Strategy Storage](../../docs/FraxETHStrategyStorage.svg) -->
 
 ## Morpho Aave Strategy
 
