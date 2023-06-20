@@ -54,10 +54,10 @@ sol2uml .. -v -hv -hf -he -hs -hl -b ConvexEthMetaStrategy -o ConvexEthMetaStrat
 sol2uml .. -s -d 0 -b ConvexEthMetaStrategy -o ConvexEthMetaStrategySquashed.svg
 sol2uml storage .. -c ConvexEthMetaStrategy -o ConvexEthMetaStrategyStorage.svg
 
-sol2uml .. -v -hv -hf -he -hs -hl -b Generalized4626Strategy -o Gen4626StrategyHierarchy.svg
-sol2uml .. -s -d 0 -b Generalized4626Strategy -o Gen4626StrategySquashed.svg
+sol2uml .. -v -hv -hf -he -hs -hl -b FraxETHStrategy -o FraxETHStrategyHierarchy.svg
+sol2uml .. -s -d 0 -b FraxETHStrategy -o FraxETHStrategySquashed.svg
 ## TODO fix sol2uml "Failed to find user defined type "IERC20" in attribute "shareToken" of type "1"""
-sol2uml storage .. -c Generalized4626Strategy -o Gen4626StrategyStorage.svg
+sol2uml storage .. -c FraxETHStrategy -o FraxETHStrategyStorage.svg
 
 sol2uml .. -v -hv -hf -he -hs -hl -b MorphoAaveStrategy -o MorphoAaveStrategyHierarchy.svg
 sol2uml .. -s -d 0 -b MorphoAaveStrategy -o MorphoAaveStrategySquashed.svg
