@@ -57,5 +57,6 @@
   "061_oeth_timelock_part_1": 1685054965,
   "062_oeth_timelock_part_2": 1685054965,
   "063_oeth_harvest_crv_limit": 1685178827,
-  "064_oeth_morpho_aave_v2": 1685393284
+  "064_oeth_morpho_aave_v2": 1685393284,
+  "065_upgrade_fraxeth_strategy": 1687175786
 }
