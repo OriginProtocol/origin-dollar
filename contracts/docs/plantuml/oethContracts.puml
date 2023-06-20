@@ -37,8 +37,8 @@ object "OETHHarvester" as harv <<Origin>><<Proxy>> #DeepSkyBlue {
 }
 
 ' Strategies
-object "Generalized4626Strategy" as frxethstrat <<Origin>><<Proxy>> #DeepSkyBlue {
-    asset: frxETH
+object "FraxETHStrategy" as frxethstrat <<Origin>><<Proxy>> #DeepSkyBlue {
+    asset: frxETH, WETH
     vault: sfrxETH
 }
 object "ConvexEthMetaStrategy" as cvxStrat <<Origin>><<Proxy>> #DeepSkyBlue {
