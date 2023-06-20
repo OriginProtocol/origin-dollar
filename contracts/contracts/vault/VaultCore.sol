@@ -52,7 +52,7 @@ contract VaultCore is VaultStorage {
     }
 
     /**
-     * @dev Deposit a supported asset and mint OTokens.
+     * @notice Deposit a supported asset and mint OTokens.
      * @param _asset Address of the asset being deposited
      * @param _amount Amount of the asset being deposited
      * @param _minimumOusdAmount Minimum OTokens to mint
@@ -96,7 +96,7 @@ contract VaultCore is VaultStorage {
     }
 
     /**
-     * @dev Mint OTokens for a Metapool Strategy
+     * @notice Mint OTokens for a Metapool Strategy
      * @param _amount Amount of the asset being deposited
      *
      * Notice: can't use `nonReentrant` modifier since the `mint` function can
@@ -138,7 +138,7 @@ contract VaultCore is VaultStorage {
     // In memoriam
 
     /**
-     * @dev Withdraw a supported asset and burn OTokens.
+     * @notice Withdraw a supported asset and burn OTokens.
      * @param _amount Amount of OTokens to burn
      * @param _minimumUnitAmount Minimum stablecoin units to receive in return
      */
@@ -151,7 +151,7 @@ contract VaultCore is VaultStorage {
     }
 
     /**
-     * @dev Withdraw a supported asset and burn OTokens.
+     * @notice Withdraw a supported asset and burn OTokens.
      * @param _amount Amount of OTokens to burn
      * @param _minimumUnitAmount Minimum stablecoin units to receive in return
      */
@@ -221,10 +221,10 @@ contract VaultCore is VaultStorage {
     }
 
     /**
-     * @dev Burn OTokens for Metapool Strategy
+     * @notice Burn OTokens for Metapool Strategy
      * @param _amount Amount of OUSD to burn
      *
-     * Notice: can't use `nonReentrant` modifier since the `redeem` function could
+     * @dev Notice: can't use `nonReentrant` modifier since the `redeem` function could
      * require withdrawal on `ConvexOUSDMetaStrategy` and that one can call `burnForStrategy`
      * while the execution of the `redeem` has not yet completed -> causing a `nonReentrant` collision.
      *
@@ -276,14 +276,12 @@ contract VaultCore is VaultStorage {
 
     /**
      * @notice Allocate unallocated funds on Vault to strategies.
-     * @dev Allocate unallocated funds on Vault to strategies.
      **/
     function allocate() external whenNotCapitalPaused nonReentrant {
         _allocate();
     }
 
     /**
-     * @notice Allocate unallocated funds on Vault to strategies.
      * @dev Allocate unallocated funds on Vault to strategies.
      **/
     function _allocate() internal {
@@ -352,7 +350,7 @@ contract VaultCore is VaultStorage {
     }
 
     /**
-     * @dev Calculate the total value of assets held by the Vault and all
+     * @notice Calculate the total value of assets held by the Vault and all
      *      strategies and update the supply of OTokens.
      */
     function rebase() external virtual nonReentrant {
@@ -393,7 +391,7 @@ contract VaultCore is VaultStorage {
     }
 
     /**
-     * @dev Determine the total value of assets held by the vault and its
+     * @notice Determine the total value of assets held by the vault and its
      *         strategies.
      * @return value Total value in USD (1e18)
      */
@@ -509,7 +507,7 @@ contract VaultCore is VaultStorage {
     }
 
     /**
-     * @notice Calculate the outputs for a redeem function, i.e. the mix of
+     * @dev Calculate the outputs for a redeem function, i.e. the mix of
      * coins that will be returned.
      * @return outputs Array of amounts respective to the supported assets
      */
@@ -587,7 +585,7 @@ contract VaultCore is VaultStorage {
     ****************************************/
 
     /**
-     * @dev Returns the total price in 18 digit units for a given asset.
+     * @notice Returns the total price in 18 digit units for a given asset.
      *      Never goes above 1, since that is how we price mints.
      * @param asset address of the asset
      * @return price uint256: unit (USD / ETH) price for 1 unit of the asset, in 18 decimal fixed
@@ -609,7 +607,7 @@ contract VaultCore is VaultStorage {
     }
 
     /**
-     * @dev Returns the total price in 18 digit unit for a given asset.
+     * @notice Returns the total price in 18 digit unit for a given asset.
      *      Never goes below 1, since that is how we price redeems
      * @param asset Address of the asset
      * @return price uint256: unit (USD / ETH) price for 1 unit of the asset, in 18 decimal fixed
@@ -727,6 +725,9 @@ contract VaultCore is VaultStorage {
         return decimals;
     }
 
+    /**
+     * @notice Gets the vault configuration of a supported asset.
+     */
     function getAssetConfig(address _asset)
         public
         view
@@ -736,35 +737,35 @@ contract VaultCore is VaultStorage {
     }
 
     /**
-     * @dev Return the number of assets supported by the Vault.
+     * @notice Return the number of assets supported by the Vault.
      */
     function getAssetCount() public view returns (uint256) {
         return allAssets.length;
     }
 
     /**
-     * @dev Return all asset addresses in order
+     * @notice Return all vault asset addresses in order
      */
     function getAllAssets() external view returns (address[] memory) {
         return allAssets;
     }
 
     /**
-     * @dev Return the number of strategies active on the Vault.
+     * @notice Return the number of strategies active on the Vault.
      */
     function getStrategyCount() external view returns (uint256) {
         return allStrategies.length;
     }
 
     /**
-     * @dev Return the array of all strategies
+     * @notice Return the array of all strategies
      */
     function getAllStrategies() external view returns (address[] memory) {
         return allStrategies;
     }
 
     /**
-     * @dev Returns whether the vault supports the asset
+     * @notice Returns whether the vault supports the asset
      * @param _asset address of the asset
      * @return true if supported
      */
