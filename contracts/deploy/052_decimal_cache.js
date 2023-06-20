@@ -14,15 +14,7 @@ module.exports = deploymentWithGovernanceProposal(
     onlyOnFork: true, // this is only executed in forked environment
     reduceQueueTime: true,
   },
-  async ({
-    assetAddresses,
-    deployWithConfirmation,
-    ethers,
-    getTxOpts,
-    withConfirmation,
-  }) => {
-    const { deployerAddr, governorAddr } = await getNamedAccounts();
-
+  async ({ assetAddresses, deployWithConfirmation, ethers }) => {
     if (isMainnet) {
       throw new Error("Delete once sure to update OUSD contracts");
     }
