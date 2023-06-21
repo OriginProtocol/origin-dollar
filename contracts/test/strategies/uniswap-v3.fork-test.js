@@ -634,6 +634,11 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
       const lowerTick = activeTick;
       const upperTick = activeTick + 1;
 
+      const slot0 = await hre.network.provider.request({
+        method: "eth_getStorageAt",
+        params: [pool.address, "0x0"],
+      });
+
       // Mint position
       const amount = "100000";
       const { tokenId, tx, amount0Minted, amount1Minted, liquidityMinted } =
@@ -644,15 +649,18 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
       expect(await strategy.activeTokenId()).to.equal(tokenId);
       expect(await strategy.netLostValue()).to.equal(0);
 
-      // Do some big swaps to move active tick
-      await _swap(matt, "100000", false);
-      await _swap(josh, "100000", false);
-      await _swap(franck, "100000", false);
-      await _swap(daniel, "100000", false);
-      await _swap(domen, "100000", false);
+      // Change active tick
+      await hre.network.provider.request({
+        method: "hardhat_setStorageAt",
+        params: [
+          pool.address,
+          "0x0",
+          `${slot0.slice(0, 20)}f111110000000000000000000000000000000000000000`,
+        ],
+      });
 
       // Set threshold to a low value to see if it throws
-      await setMaxPositionValueLostThreshold("0.01");
+      await setMaxPositionValueLostThreshold("0.00000000000001");
       await expect(
         strategy
           .connect(operator)
@@ -691,6 +699,11 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
       const lowerTick = activeTick;
       const upperTick = activeTick + 1;
 
+      const slot0 = await hre.network.provider.request({
+        method: "eth_getStorageAt",
+        params: [pool.address, "0x0"],
+      });
+
       // Mint position
       const amount = "100000";
       const { tokenId, tx } = await mintLiquidity(
@@ -705,15 +718,18 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
       expect(await strategy.activeTokenId()).to.equal(tokenId);
       expect(await strategy.netLostValue()).to.equal(0);
 
-      // Do some big swaps to move active tick
-      await _swap(matt, "100000", false);
-      await _swap(josh, "100000", false);
-      await _swap(franck, "100000", false);
-      await _swap(daniel, "100000", false);
-      await _swap(domen, "100000", false);
+      // Change active tick
+      await hre.network.provider.request({
+        method: "hardhat_setStorageAt",
+        params: [
+          pool.address,
+          "0x0",
+          `${slot0.slice(0, 20)}f111110000000000000000000000000000000000000000`,
+        ],
+      });
 
       // Set threshold to a low value to see if it throws
-      await setMaxPositionValueLostThreshold("0.01");
+      await setMaxPositionValueLostThreshold("0.00000000000001");
       await expect(
         strategy
           .connect(operator)
@@ -721,7 +737,7 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
       ).to.be.revertedWith("Over max value loss threshold");
 
       // should still be allowed to close the position
-      strategy.connect(operator).closePosition(tokenId, "0", "0");
+      await strategy.connect(operator).closePosition(tokenId, "0", "0");
     });
 
     it("netLostValue will catch possible pool tilts", async () => {
