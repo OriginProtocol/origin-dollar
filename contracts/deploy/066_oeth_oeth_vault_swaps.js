@@ -96,6 +96,12 @@ module.exports = deploymentWithProposal(
           signature: "setOracleSlippage(address,uint16)",
           args: [assetAddresses.frxETH, 20], // 0.2%
         },
+        // 6. Set max allowed percentage the vault total value can drop below the OToken total supply when executing collateral swaps.
+        {
+          contract: cVault,
+          signature: "setSwapAllowedUndervalue(uint16)",
+          args: [50], // 0.5%
+        },
       ],
     };
   }
