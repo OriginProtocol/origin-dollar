@@ -21,8 +21,7 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
     // This is needed to revert fixtures
     // The other tests as of now don't use proper fixtures
     // Rel: https://github.com/OriginProtocol/origin-dollar/issues/1259
-    const f = defaultFixture();
-    await f();
+    await defaultFixture();
   });
 
   this.timeout(0);
