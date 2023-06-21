@@ -1,11 +1,17 @@
+const { expect } = require("chai");
+const { utils, BigNumber } = require("ethers");
+
 const {
   defaultFixture,
   oethDefaultFixtureSetup,
   oeth1InchSwapperFixtureSetup,
   impersonateAndFundContract,
 } = require("../_fixture");
-const { expect } = require("chai");
-const { utils, BigNumber } = require("ethers");
+const {
+  SWAP_SELECTOR,
+  UNISWAP_SELECTOR,
+  UNISWAPV3_SELECTOR,
+} = require("../../utils/1Inch");
 
 const runFixture = oethDefaultFixtureSetup();
 const run1InchFixture = oeth1InchSwapperFixtureSetup();
@@ -73,7 +79,7 @@ describe("OETH Vault - Swapper", () => {
         .withArgs(weth.address);
     });
 
-    it("Should not allow anyone else to set slippage for assets", async () => {
+    it("Should not allow anyone else to set swapper address", async () => {
       const { strategist, josh, oethVault, weth } = fixture;
 
       for (const user of [strategist, josh]) {
@@ -237,7 +243,7 @@ describe("OETH Vault - Swapper", () => {
 
       const data = utils.defaultAbiCoder.encode(
         ["bytes4", "address", "bytes"],
-        [utils.arrayify("0x12aa3caf"), deadAddr, utils.arrayify("0xdead")]
+        [utils.arrayify(SWAP_SELECTOR), deadAddr, utils.arrayify("0xdead")]
       );
 
       const fromAmount = utils.parseEther("100");
@@ -290,7 +296,7 @@ describe("OETH Vault - Swapper", () => {
       const data = utils.defaultAbiCoder.encode(
         ["bytes4", "uint256[]"],
         [
-          utils.arrayify("0xf78dc253"),
+          utils.arrayify(UNISWAP_SELECTOR),
           [BigNumber.from("123"), BigNumber.from("456")],
         ]
       );
@@ -304,6 +310,8 @@ describe("OETH Vault - Swapper", () => {
       await frxETH
         .connect(strategist)
         .mintTo(swapper1Inch.address, toAmount.mul(2));
+
+      await swapper1Inch.approveAssets([weth.address]);
 
       const tx = swapper1Inch
         .connect(strategist)
@@ -324,7 +332,7 @@ describe("OETH Vault - Swapper", () => {
       const data = utils.defaultAbiCoder.encode(
         ["bytes4", "uint256[]"],
         [
-          utils.arrayify("0xbc80f1a8"),
+          utils.arrayify(UNISWAPV3_SELECTOR),
           [BigNumber.from("123"), BigNumber.from("456")],
         ]
       );
@@ -358,7 +366,7 @@ describe("OETH Vault - Swapper", () => {
 
       const data = utils.defaultAbiCoder.encode(
         ["bytes4", "address", "bytes"],
-        [utils.arrayify("0x12aa3caf"), deadAddr, utils.arrayify("0xdead")]
+        [utils.arrayify(SWAP_SELECTOR), deadAddr, utils.arrayify("0xdead")]
       );
 
       const fromAmount = utils.parseEther("100");
@@ -385,7 +393,7 @@ describe("OETH Vault - Swapper", () => {
 
       const data = utils.defaultAbiCoder.encode(
         ["bytes4", "address", "bytes"],
-        [utils.arrayify("0x12aa3caf"), deadAddr, utils.arrayify("0xdead")]
+        [utils.arrayify(SWAP_SELECTOR), deadAddr, utils.arrayify("0xdead")]
       );
 
       const fromAmount = utils.parseEther("100");

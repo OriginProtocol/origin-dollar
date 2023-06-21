@@ -122,4 +122,7 @@ const getIInchSwapData = async ({
 module.exports = {
   recodeSwapData,
   getIInchSwapData,
+  SWAP_SELECTOR,
+  UNISWAP_SELECTOR,
+  UNISWAPV3_SELECTOR,
 };
