@@ -57,8 +57,8 @@ module.exports = deploymentWithGovernanceProposal(
       dUniV3_USDC_USDT_Proxy.address
     );
 
-    const cMorphoAaveProxy = await ethers.getContract(
-      "MorphoAaveStrategyProxy"
+    const cAaveProxy = await ethers.getContract(
+      "AaveStrategyProxy"
     );
 
     const cHarvesterProxy = await ethers.getContract("HarvesterProxy");
@@ -159,13 +159,13 @@ module.exports = deploymentWithGovernanceProposal(
         {
           contract: cUniV3_USDC_USDT_Strategy,
           signature: "setReserveStrategy(address,address)",
-          args: [assetAddresses.USDC, cMorphoAaveProxy.address],
+          args: [assetAddresses.USDC, cAaveProxy.address],
         },
         // 6. Set Reserve Strategy for USDT
         {
           contract: cUniV3_USDC_USDT_Strategy,
           signature: "setReserveStrategy(address,address)",
-          args: [assetAddresses.USDT, cMorphoAaveProxy.address],
+          args: [assetAddresses.USDT, cAaveProxy.address],
         },
         // 7. Set Minimum Deposit threshold for USDC
         {
