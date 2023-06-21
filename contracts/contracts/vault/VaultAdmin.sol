@@ -18,19 +18,6 @@ contract VaultAdmin is VaultStorage {
     using StableMath for uint256;
 
     /**
-     * @dev Verifies that the caller is the Vault, Governor, or Strategist.
-     */
-    modifier onlyVaultOrGovernorOrStrategist() {
-        require(
-            msg.sender == address(this) ||
-                msg.sender == strategistAddr ||
-                isGovernor(),
-            "Caller is not the Vault, Governor, or Strategist"
-        );
-        _;
-    }
-
-    /**
      * @dev Verifies that the caller is the Governor or Strategist.
      */
     modifier onlyGovernorOrStrategist() {
