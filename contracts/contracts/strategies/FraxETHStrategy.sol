@@ -13,8 +13,6 @@ import { IWETH9 } from "../interfaces/IWETH9.sol";
 import { IFraxETHMinter } from "../interfaces/IFraxETHMinter.sol";
 import { Generalized4626Strategy } from "./Generalized4626Strategy.sol";
 
-// import "hardhat/console.sol";
-
 contract FraxETHStrategy is Generalized4626Strategy {
     using SafeERC20 for IERC20;
 
@@ -34,11 +32,6 @@ contract FraxETHStrategy is Generalized4626Strategy {
             // slither-disable-next-line unused-return
             fraxETHMinter.submitAndDeposit{ value: _amount }(address(this));
         } else if (_asset == address(assetToken)) {
-            // console.log("Platform: %s", platformAddress);
-            // console.log("frxETH balance: %s", IERC20(assetToken).balanceOf(address(this)));
-            // console.log("frxETH allowance: %s", IERC20(assetToken).allowance(address(this), address(shareToken)));
-            // console.log("amount: %s", _amount);
-
             // Stake frxETH
             // slither-disable-next-line unused-return
             IERC4626(platformAddress).deposit(_amount, address(this));
