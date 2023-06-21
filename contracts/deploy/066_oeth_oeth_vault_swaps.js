@@ -1,5 +1,4 @@
 const { deploymentWithProposal } = require("../utils/deploy");
-const addresses = require("../utils/addresses");
 
 module.exports = deploymentWithProposal(
   {
@@ -29,10 +28,7 @@ module.exports = deploymentWithProposal(
 
     // 2. Connect to the OETH Vault as its governor via the proxy
     const cVaultProxy = await ethers.getContract("OETHVaultProxy");
-    const cVault = (
-      await ethers.getContractAt("OETHVault", cVaultProxy.address)
-    ).connect(addresses.mainnet.OldTimelock);
-
+    const cVault = await ethers.getContractAt("OETHVault", cVaultProxy.address);
     const cSwapper = await ethers.getContract("Swapper1InchV5");
 
     // Governance Actions
