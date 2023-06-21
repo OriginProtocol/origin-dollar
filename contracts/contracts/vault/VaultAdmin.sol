@@ -250,10 +250,9 @@ contract VaultAdmin is VaultStorage {
         // Check the vault's total value hasn't gone below the OToken total supply
         // by more than the allowed percentage.
         require(
-            (IVault(address(this)).totalValue() *
-                (1e4 + config.allowedUndervalueBps)) /
-                1e4 >=
-                oUSD.totalSupply(),
+            IVault(address(this)).totalValue() >=
+                (oUSD.totalSupply() * ((1e4 - config.allowedUndervalueBps))) /
+                    1e4,
             "Allowed value < supply"
         );
     }
@@ -282,6 +281,7 @@ contract VaultAdmin is VaultStorage {
      * @param _basis Percentage in basis points. eg 100 == 1%
      */
     function setSwapAllowedUndervalue(uint16 _basis) external onlyGovernor {
+        require(_basis < 10001, "Invalid basis points");
         swapConfig.allowedUndervalueBps = _basis;
         emit SwapAllowedUndervalueChanged(_basis);
     }

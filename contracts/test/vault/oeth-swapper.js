@@ -111,6 +111,29 @@ describe("OETH Vault - Swapper", () => {
       }
     });
 
+    it("Should allow the governor to set allowed swap undervalue to 100%", async () => {
+      const { governor, oethVault } = fixture;
+
+      const hundredPercent = 10000;
+      const tx = oethVault
+        .connect(governor)
+        .setSwapAllowedUndervalue(hundredPercent);
+
+      await expect(tx)
+        .to.emit(oethVault, "SwapAllowedUndervalueChanged")
+        .withArgs(hundredPercent);
+
+      expect(await oethVault.allowedSwapUndervalue()).to.equal(hundredPercent);
+    });
+
+    it("Should not allow setting undervalue percentage over 100%", async () => {
+      const { governor, oethVault } = fixture;
+
+      const tx = oethVault.connect(governor).setSwapAllowedUndervalue(10001);
+
+      await expect(tx).to.be.revertedWith("Invalid basis points");
+    });
+
     it("Should allow to swap tokens", async () => {
       const { weth, reth, stETH, frxETH, oethVault, strategist } = fixture;
 
