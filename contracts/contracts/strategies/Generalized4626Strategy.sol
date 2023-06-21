@@ -16,6 +16,9 @@ contract Generalized4626Strategy is InitializableAbstractStrategy {
     IERC20 internal shareToken;
     IERC20 internal assetToken;
 
+    // For future use
+    uint256[50] private __gap;
+
     /**
      * @dev Deposit assets by converting them to shares
      * @param _asset Address of asset to deposit
@@ -35,7 +38,7 @@ contract Generalized4626Strategy is InitializableAbstractStrategy {
      * @param _asset Address of asset to deposit
      * @param _amount Amount of asset to deposit
      */
-    function _deposit(address _asset, uint256 _amount) internal {
+    function _deposit(address _asset, uint256 _amount) internal virtual {
         require(_amount > 0, "Must deposit something");
         require(_asset == address(assetToken), "Unexpected asset address");
 
@@ -47,7 +50,7 @@ contract Generalized4626Strategy is InitializableAbstractStrategy {
     /**
      * @dev Deposit the entire balance of assetToken to gain shareToken
      */
-    function depositAll() external override onlyVault nonReentrant {
+    function depositAll() external virtual override onlyVault nonReentrant {
         uint256 balance = assetToken.balanceOf(address(this));
         if (balance > 0) {
             _deposit(address(assetToken), balance);
@@ -64,7 +67,7 @@ contract Generalized4626Strategy is InitializableAbstractStrategy {
         address _recipient,
         address _asset,
         uint256 _amount
-    ) external override onlyVault nonReentrant {
+    ) external virtual override onlyVault nonReentrant {
         require(_amount > 0, "Must withdraw something");
         require(_recipient != address(0), "Must specify recipient");
         require(_asset == address(assetToken), "Unexpected asset address");
@@ -81,6 +84,7 @@ contract Generalized4626Strategy is InitializableAbstractStrategy {
      */
     function _abstractSetPToken(address _asset, address _pToken)
         internal
+        virtual
         override
     {
         shareToken = IERC20(_pToken);
@@ -94,7 +98,13 @@ contract Generalized4626Strategy is InitializableAbstractStrategy {
     /**
      * @dev Remove all assets from platform and send them to Vault contract.
      */
-    function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
+    function withdrawAll()
+        external
+        virtual
+        override
+        onlyVaultOrGovernor
+        nonReentrant
+    {
         uint256 shareBalance = shareToken.balanceOf(address(this));
         uint256 assetAmount = IERC4626(platformAddress).redeem(
             shareBalance,
@@ -112,6 +122,7 @@ contract Generalized4626Strategy is InitializableAbstractStrategy {
     function checkBalance(address _asset)
         external
         view
+        virtual
         override
         returns (uint256 balance)
     {
@@ -121,10 +132,7 @@ contract Generalized4626Strategy is InitializableAbstractStrategy {
          * should not result in assetToken being unused and owned by this strategy
          * contract.
          */
-        return
-            IERC4626(platformAddress).convertToAssets(
-                shareToken.balanceOf(address(this))
-            );
+        return IERC4626(platformAddress).maxWithdraw(address(this));
     }
 
     /**
@@ -143,6 +151,7 @@ contract Generalized4626Strategy is InitializableAbstractStrategy {
     function supportsAsset(address _asset)
         external
         view
+        virtual
         override
         returns (bool)
     {

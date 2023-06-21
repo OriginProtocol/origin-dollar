@@ -2,12 +2,12 @@
 pragma solidity ^0.8.0;
 
 /**
- * @title OUSD Vault Contract
- * @notice The Vault contract stores assets. On a deposit, OUSD will be minted
-           and sent to the depositor. On a withdrawal, OUSD will be burned and
+ * @title OToken VaultCore contract
+ * @notice The Vault contract stores assets. On a deposit, OTokens will be minted
+           and sent to the depositor. On a withdrawal, OTokens will be burned and
            assets will be sent to the withdrawer. The Vault accepts deposits of
            interest from yield bearing strategies which will modify the supply
-           of OUSD.
+           of OTokens.
  * @author Origin Protocol Inc
  */
 
@@ -52,10 +52,10 @@ contract VaultCore is VaultStorage {
     }
 
     /**
-     * @dev Deposit a supported asset and mint OUSD.
+     * @notice Deposit a supported asset and mint OTokens.
      * @param _asset Address of the asset being deposited
      * @param _amount Amount of the asset being deposited
-     * @param _minimumOusdAmount Minimum OUSD to mint
+     * @param _minimumOusdAmount Minimum OTokens to mint
      */
     function mint(
         address _asset,
@@ -83,7 +83,7 @@ contract VaultCore is VaultStorage {
             _rebase();
         }
 
-        // Mint matching OUSD
+        // Mint matching amount of OTokens
         oUSD.mint(msg.sender, priceAdjustedDeposit);
 
         // Transfer the deposited coins to the vault
@@ -96,7 +96,7 @@ contract VaultCore is VaultStorage {
     }
 
     /**
-     * @dev Mint OUSD for OUSD Meta Strategy
+     * @notice Mint OTokens for a Metapool Strategy
      * @param _amount Amount of the asset being deposited
      *
      * Notice: can't use `nonReentrant` modifier since the `mint` function can
@@ -131,15 +131,15 @@ contract VaultCore is VaultStorage {
             "Minted ousd surpassed netOusdMintForStrategyThreshold."
         );
 
-        // Mint matching OUSD
+        // Mint matching amount of OTokens
         oUSD.mint(msg.sender, _amount);
     }
 
     // In memoriam
 
     /**
-     * @dev Withdraw a supported asset and burn OUSD.
-     * @param _amount Amount of OUSD to burn
+     * @notice Withdraw a supported asset and burn OTokens.
+     * @param _amount Amount of OTokens to burn
      * @param _minimumUnitAmount Minimum stablecoin units to receive in return
      */
     function redeem(uint256 _amount, uint256 _minimumUnitAmount)
@@ -151,8 +151,8 @@ contract VaultCore is VaultStorage {
     }
 
     /**
-     * @dev Withdraw a supported asset and burn OUSD.
-     * @param _amount Amount of OUSD to burn
+     * @notice Withdraw a supported asset and burn OTokens.
+     * @param _amount Amount of OTokens to burn
      * @param _minimumUnitAmount Minimum stablecoin units to receive in return
      */
     function _redeem(uint256 _amount, uint256 _minimumUnitAmount) internal {
@@ -208,7 +208,7 @@ contract VaultCore is VaultStorage {
             totalUnits = _totalValue();
         }
 
-        // Check that OUSD is backed by enough assets
+        // Check that the OTokens are backed by enough assets
         if (maxSupplyDiff > 0) {
             // Allow a max difference of maxSupplyDiff% between
             // backing assets value and OUSD total supply
@@ -221,10 +221,10 @@ contract VaultCore is VaultStorage {
     }
 
     /**
-     * @dev Burn OUSD for OUSD Meta Strategy
+     * @notice Burn OTokens for Metapool Strategy
      * @param _amount Amount of OUSD to burn
      *
-     * Notice: can't use `nonReentrant` modifier since the `redeem` function could
+     * @dev Notice: can't use `nonReentrant` modifier since the `redeem` function could
      * require withdrawal on `ConvexOUSDMetaStrategy` and that one can call `burnForStrategy`
      * while the execution of the `redeem` has not yet completed -> causing a `nonReentrant` collision.
      *
@@ -250,7 +250,7 @@ contract VaultCore is VaultStorage {
             "Attempting to burn too much OUSD."
         );
 
-        // Burn OUSD
+        // Burn OTokens
         oUSD.burn(msg.sender, _amount);
 
         // Until we can prove that we won't affect the prices of our assets
@@ -263,7 +263,7 @@ contract VaultCore is VaultStorage {
     }
 
     /**
-     * @notice Withdraw a supported asset and burn all OUSD.
+     * @notice Withdraw a supported asset and burn all OTokens.
      * @param _minimumUnitAmount Minimum stablecoin units to receive in return
      */
     function redeemAll(uint256 _minimumUnitAmount)
@@ -276,14 +276,12 @@ contract VaultCore is VaultStorage {
 
     /**
      * @notice Allocate unallocated funds on Vault to strategies.
-     * @dev Allocate unallocated funds on Vault to strategies.
      **/
     function allocate() external whenNotCapitalPaused nonReentrant {
         _allocate();
     }
 
     /**
-     * @notice Allocate unallocated funds on Vault to strategies.
      * @dev Allocate unallocated funds on Vault to strategies.
      **/
     function _allocate() internal {
@@ -352,8 +350,8 @@ contract VaultCore is VaultStorage {
     }
 
     /**
-     * @dev Calculate the total value of assets held by the Vault and all
-     *      strategies and update the supply of OUSD.
+     * @notice Calculate the total value of assets held by the Vault and all
+     *      strategies and update the supply of OTokens.
      */
     function rebase() external virtual nonReentrant {
         _rebase();
@@ -361,7 +359,7 @@ contract VaultCore is VaultStorage {
 
     /**
      * @dev Calculate the total value of assets held by the Vault and all
-     *      strategies and update the supply of OUSD, optionally sending a
+     *      strategies and update the supply of OTokens, optionally sending a
      *      portion of the yield to the trustee.
      * @return totalUnits Total balance of Vault in units
      */
@@ -384,7 +382,7 @@ contract VaultCore is VaultStorage {
             emit YieldDistribution(_trusteeAddress, yield, fee);
         }
 
-        // Only rachet OUSD supply upwards
+        // Only rachet OToken supply upwards
         ousdSupply = oUSD.totalSupply(); // Final check should use latest value
         if (vaultValue > ousdSupply) {
             oUSD.changeSupply(vaultValue);
@@ -393,7 +391,7 @@ contract VaultCore is VaultStorage {
     }
 
     /**
-     * @dev Determine the total value of assets held by the vault and its
+     * @notice Determine the total value of assets held by the vault and its
      *         strategies.
      * @return value Total value in USD (1e18)
      */
@@ -509,7 +507,7 @@ contract VaultCore is VaultStorage {
     }
 
     /**
-     * @notice Calculate the outputs for a redeem function, i.e. the mix of
+     * @dev Calculate the outputs for a redeem function, i.e. the mix of
      * coins that will be returned.
      * @return outputs Array of amounts respective to the supported assets
      */
@@ -587,7 +585,7 @@ contract VaultCore is VaultStorage {
     ****************************************/
 
     /**
-     * @dev Returns the total price in 18 digit units for a given asset.
+     * @notice Returns the total price in 18 digit units for a given asset.
      *      Never goes above 1, since that is how we price mints.
      * @param asset address of the asset
      * @return price uint256: unit (USD / ETH) price for 1 unit of the asset, in 18 decimal fixed
@@ -609,7 +607,7 @@ contract VaultCore is VaultStorage {
     }
 
     /**
-     * @dev Returns the total price in 18 digit unit for a given asset.
+     * @notice Returns the total price in 18 digit unit for a given asset.
      *      Never goes below 1, since that is how we price redeems
      * @param asset Address of the asset
      * @return price uint256: unit (USD / ETH) price for 1 unit of the asset, in 18 decimal fixed
@@ -728,35 +726,46 @@ contract VaultCore is VaultStorage {
     }
 
     /**
-     * @dev Return the number of assets supported by the Vault.
+     * @notice Gets the vault configuration of a supported asset.
+     */
+    function getAssetConfig(address _asset)
+        public
+        view
+        returns (Asset memory config)
+    {
+        config = assets[_asset];
+    }
+
+    /**
+     * @notice Return the number of assets supported by the Vault.
      */
     function getAssetCount() public view returns (uint256) {
         return allAssets.length;
     }
 
     /**
-     * @dev Return all asset addresses in order
+     * @notice Return all vault asset addresses in order
      */
     function getAllAssets() external view returns (address[] memory) {
         return allAssets;
     }
 
     /**
-     * @dev Return the number of strategies active on the Vault.
+     * @notice Return the number of strategies active on the Vault.
      */
     function getStrategyCount() external view returns (uint256) {
         return allStrategies.length;
     }
 
     /**
-     * @dev Return the array of all strategies
+     * @notice Return the array of all strategies
      */
     function getAllStrategies() external view returns (address[] memory) {
         return allStrategies;
     }
 
     /**
-     * @dev Returns whether the vault supports the asset
+     * @notice Returns whether the vault supports the asset
      * @param _asset address of the asset
      * @return true if supported
      */

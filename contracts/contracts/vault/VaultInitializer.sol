@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 /**
- * @title OUSD VaultInitializer Contract
+ * @title OToken VaultInitializer contract
  * @notice The Vault contract initializes the vault.
  * @author Origin Protocol Inc
  */

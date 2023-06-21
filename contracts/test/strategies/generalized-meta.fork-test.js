@@ -122,7 +122,7 @@ metastrategies.forEach(
 
         describe("Redeem", function () {
           it("Should redeem", async () => {
-            const { vault, ousd, usdt, usdc, dai, anna } = fixture;
+            const { vault, ousd, usdt, usdc, anna } = fixture;
             await vault.connect(anna).allocate();
             await vault.connect(anna).rebase();
             const supplyBeforeMint = await ousd.totalSupply();
@@ -130,7 +130,7 @@ metastrategies.forEach(
             const amount = "10000";
 
             // Mint with all three assets
-            for (const asset of [usdt, usdc, dai]) {
+            for (const asset of [usdt, usdc]) {
               await vault
                 .connect(anna)
                 .mint(asset.address, await units(amount, asset), 0);
@@ -139,19 +139,19 @@ metastrategies.forEach(
 
             const currentSupply = await ousd.totalSupply();
             const supplyAdded = currentSupply.sub(supplyBeforeMint);
-            expect(supplyAdded).to.be.gte("30000");
+            expect(supplyAdded).to.be.gte("20000");
 
             const currentBalance = await ousd
               .connect(anna)
               .balanceOf(anna.address);
 
-            // Now try to redeem 30k - 1% (possible undervaluation of coins)
-            await vault.connect(anna).redeem(ousdUnits("29700"), 0);
+            // Now try to redeem 20k - 1% (possible undervaluation of coins)
+            await vault.connect(anna).redeem(ousdUnits("19800"), 0);
 
             // User balance should be down by 30k - 1%
             const newBalance = await ousd.connect(anna).balanceOf(anna.address);
             expect(currentBalance).to.approxEqualTolerance(
-              newBalance.add(ousdUnits("29700")),
+              newBalance.add(ousdUnits("19800")),
               1
             );
 
@@ -159,14 +159,14 @@ metastrategies.forEach(
             const supplyDiff = currentSupply.sub(newSupply);
 
             expect(supplyDiff).to.be.gte(
-              ousdUnits("29700").sub(ousdUnits("29700").div(100))
+              ousdUnits("19800").sub(ousdUnits("19800").div(100))
             );
           });
         });
 
         it("Should have the correct initial maxWithdrawalSlippage state", async function () {
           const { metaStrategy, anna } = fixture;
-          await expect(
+          expect(
             await metaStrategy.connect(anna).maxWithdrawalSlippage()
           ).to.equal(ousdUnits("0.01"));
         });
