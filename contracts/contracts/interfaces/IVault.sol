@@ -26,6 +26,7 @@ interface IVault {
     event TrusteeFeeBpsChanged(uint256 _basis);
     event TrusteeAddressChanged(address _address);
     event SwapperChanged(address _address);
+    event SwapAllowedUndervalueChanged(uint256 _basis);
     event SwapSlippageChanged(address _asset, uint256 _basis);
     event Swapped(
         address indexed _fromAsset,
@@ -81,6 +82,8 @@ interface IVault {
     function ousdMetaStrategy() external view returns (address);
 
     function setSwapper(address _swapperAddr) external;
+
+    function setSwapAllowedUndervalue(uint16 _percentageBps) external;
 
     function setOracleSlippage(address _asset, uint16 _allowedOracleSlippageBps)
         external;
@@ -181,6 +184,8 @@ interface IVault {
     function getStrategyCount() external view returns (uint256);
 
     function swapper() external view returns (address);
+
+    function allowedSwapUndervalue() external view returns (uint256);
 
     function getAllStrategies() external view returns (address[] memory);
 

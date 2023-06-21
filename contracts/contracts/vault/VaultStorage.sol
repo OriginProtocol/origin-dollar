@@ -44,6 +44,7 @@ contract VaultStorage is Initializable, Governable {
     event TrusteeAddressChanged(address _address);
     event NetOusdMintForStrategyThresholdChanged(uint256 _threshold);
     event SwapperChanged(address _address);
+    event SwapAllowedUndervalueChanged(uint256 _basis);
     event SwapSlippageChanged(address _asset, uint256 _basis);
     event Swapped(
         address indexed _fromAsset,
@@ -148,8 +149,16 @@ contract VaultStorage is Initializable, Governable {
     uint256 constant MIN_UNIT_PRICE_DRIFT = 0.7e18;
     uint256 constant MAX_UNIT_PRICE_DRIFT = 1.3e18;
 
-    /// @notice Contract that swaps the vault's collateral assets
-    address public swapper = address(0);
+    /// @notice Collateral swap configuration.
+    /// @dev is packed into a single storage slot to save gas.
+    struct SwapConfig {
+        // Contract that swaps the vault's collateral assets
+        address swapper;
+        // Max allowed percentage the total value can drop below the total supply in basis points.
+        // For example 100 == 1%
+        uint16 allowedUndervalueBps;
+    }
+    SwapConfig internal swapConfig = SwapConfig(address(0), 0);
 
     /**
      * @notice set the implementation for the admin, this needs to be in a base class else we cannot set it
@@ -165,13 +174,5 @@ contract VaultStorage is Initializable, Governable {
         assembly {
             sstore(position, newImpl)
         }
-    }
-
-    /**
-     * @dev Verifies that the deposits are not paused.
-     */
-    modifier whenNotCapitalPaused() {
-        require(!capitalPaused, "Capital paused");
-        _;
     }
 }

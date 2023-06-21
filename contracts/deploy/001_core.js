@@ -1174,7 +1174,7 @@ const deployWOusd = async () => {
     "Wrapped OUSD IMPL",
     "WOUSD IMPL",
   ]);
-  const dWrappedOusdProxy = await deployWithConfirmation("WrappedOUSDProxy");
+  await deployWithConfirmation("WrappedOUSDProxy");
   const wousdProxy = await ethers.getContract("WrappedOUSDProxy");
   const wousd = await ethers.getContractAt("WrappedOusd", wousdProxy.address);
 
@@ -1215,6 +1215,7 @@ const deployOETHSwapper = async () => {
     ]);
 
   await vault.connect(sGovernor).setSwapper(mockSwapper.address);
+  await vault.connect(sGovernor).setSwapAllowedUndervalue(100);
 
   await vault.connect(sGovernor).setOracleSlippage(assetAddresses.RETH, 200);
   await vault.connect(sGovernor).setOracleSlippage(assetAddresses.stETH, 70);

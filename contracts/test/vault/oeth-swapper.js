@@ -3,7 +3,7 @@ const { utils, BigNumber } = require("ethers");
 
 const {
   defaultFixture,
-  oethDefaultFixtureSetup,
+  oethCollateralSwapFixtureSetup,
   oeth1InchSwapperFixtureSetup,
   impersonateAndFundContract,
 } = require("../_fixture");
@@ -13,7 +13,7 @@ const {
   UNISWAPV3_SELECTOR,
 } = require("../../utils/1Inch");
 
-const runFixture = oethDefaultFixtureSetup();
+const runFixture = oethCollateralSwapFixtureSetup();
 const run1InchFixture = oeth1InchSwapperFixtureSetup();
 
 const log = require("../../utils/logger")("test:oeth:swapper");
@@ -77,6 +77,8 @@ describe("OETH Vault - Swapper", () => {
       await expect(tx)
         .to.emit(oethVault, "SwapperChanged")
         .withArgs(weth.address);
+
+      expect(await oethVault.swapper()).to.equal(weth.address);
     });
 
     it("Should not allow anyone else to set swapper address", async () => {
@@ -88,27 +90,67 @@ describe("OETH Vault - Swapper", () => {
       }
     });
 
+    it("Should allow the governor to change allowed swap undervalue", async () => {
+      const { governor, oethVault } = fixture;
+
+      const tx = oethVault.connect(governor).setSwapAllowedUndervalue(10);
+
+      await expect(tx)
+        .to.emit(oethVault, "SwapAllowedUndervalueChanged")
+        .withArgs(10);
+
+      expect(await oethVault.allowedSwapUndervalue()).to.equal(10);
+    });
+
+    it("Should not allow anyone else to set allowed swap undervalue", async () => {
+      const { strategist, josh, oethVault } = fixture;
+
+      for (const user of [strategist, josh]) {
+        const tx = oethVault.connect(user).setSwapAllowedUndervalue(10);
+        await expect(tx).to.be.revertedWith("Caller is not the Governor");
+      }
+    });
+
+    it("Should allow the governor to set allowed swap undervalue to 100%", async () => {
+      const { governor, oethVault } = fixture;
+
+      const hundredPercent = 10000;
+      const tx = oethVault
+        .connect(governor)
+        .setSwapAllowedUndervalue(hundredPercent);
+
+      await expect(tx)
+        .to.emit(oethVault, "SwapAllowedUndervalueChanged")
+        .withArgs(hundredPercent);
+
+      expect(await oethVault.allowedSwapUndervalue()).to.equal(hundredPercent);
+    });
+
+    it("Should not allow setting undervalue percentage over 100%", async () => {
+      const { governor, oethVault } = fixture;
+
+      const tx = oethVault.connect(governor).setSwapAllowedUndervalue(10001);
+
+      await expect(tx).to.be.revertedWith("Invalid basis points");
+    });
+
     it("Should allow to swap tokens", async () => {
       const { weth, reth, stETH, frxETH, oethVault, strategist } = fixture;
 
-      const vaultSigner = await impersonateAndFundContract(oethVault.address);
+      const fromAmount = utils.parseEther("20");
 
-      for (const asset of [weth, reth, stETH, frxETH]) {
-        // Fund Vault with some assets
-        const fromAmount = utils.parseEther("100");
-        await asset.connect(vaultSigner).mint(fromAmount);
-
-        const toAsset = asset.address === weth.address ? stETH : weth;
-        const toAmount = utils.parseEther("120");
+      for (const fromAsset of [weth, reth, stETH, frxETH]) {
+        const toAsset = fromAsset.address === weth.address ? stETH : weth;
+        const toAmount = utils.parseEther("24");
         log(
-          `swapping 100 ${await asset.symbol()} to ${await toAsset.symbol()}`
+          `swapping 20 ${await fromAsset.symbol()} to ${await toAsset.symbol()}`
         );
 
         // Call swap method
         const tx = await oethVault
           .connect(strategist)
           .swapCollateral(
-            asset.address,
+            fromAsset.address,
             toAsset.address,
             fromAmount,
             toAmount,
@@ -117,7 +159,7 @@ describe("OETH Vault - Swapper", () => {
 
         expect(tx)
           .to.emit(oethVault, "Swapped")
-          .withArgs(asset.address, toAsset.address, fromAmount, toAmount);
+          .withArgs(fromAsset.address, toAsset.address, fromAmount, toAmount);
       }
     });
 
@@ -127,14 +169,10 @@ describe("OETH Vault - Swapper", () => {
       // Mock to return lower than slippage next time
       await mockSwapper
         .connect(strategist)
-        .setNextOutAmount(utils.parseEther("98"));
+        .setNextOutAmount(utils.parseEther("18"));
 
-      // Fund Vault with some WETH
-      const vaultSigner = await impersonateAndFundContract(oethVault.address);
-      await weth.connect(vaultSigner).mint(utils.parseEther("100"));
-
-      const fromAmount = utils.parseEther("100");
-      const toAmount = utils.parseEther("100");
+      const fromAmount = utils.parseEther("20");
+      const toAmount = utils.parseEther("20");
 
       // Call swap method
       const tx = oethVault
@@ -145,19 +183,10 @@ describe("OETH Vault - Swapper", () => {
     });
 
     it("Should revert swap if received less tokens than Oracle slippage", async () => {
-      const { weth, stETH, oethVault, strategist, mockSwapper } = fixture;
+      const { weth, stETH, oethVault, strategist } = fixture;
 
-      // Mock to return lower than slippage next time
-      await mockSwapper
-        .connect(strategist)
-        .setNextOutAmount(utils.parseEther("50"));
-
-      // Fund Vault with some WETH
-      const vaultSigner = await impersonateAndFundContract(oethVault.address);
-      await weth.connect(vaultSigner).mint(utils.parseEther("100"));
-
-      const fromAmount = utils.parseEther("100");
-      const toAmount = utils.parseEther("30");
+      const fromAmount = utils.parseEther("20");
+      const toAmount = utils.parseEther("16");
 
       // Call swap method
       const tx = oethVault
@@ -165,6 +194,77 @@ describe("OETH Vault - Swapper", () => {
         .swapCollateral(weth.address, stETH.address, fromAmount, toAmount, []);
 
       await expect(tx).to.be.revertedWith("Oracle slippage limit exceeded");
+    });
+
+    it("Should revert swap if value is under supply", async () => {
+      const {
+        weth,
+        stETH,
+        oeth,
+        oethVault,
+        governor,
+        strategist,
+        mockSwapper,
+      } = fixture;
+
+      // Mock to return lower than slippage next time
+      await mockSwapper
+        .connect(strategist)
+        .setNextOutAmount(utils.parseEther("18"));
+      // increase the allowed Oracle slippage per asset to 9.99%
+      await oethVault.connect(governor).setOracleSlippage(weth.address, 999);
+      await oethVault.connect(governor).setOracleSlippage(stETH.address, 999);
+
+      const fromAmount = utils.parseEther("20");
+      const toAmount = utils.parseEther("17");
+
+      log(`total supply: ${await oeth.totalSupply()}`);
+      log(`total value : ${await oethVault.totalValue()}`);
+
+      // Call swap method
+      const tx = oethVault
+        .connect(strategist)
+        .swapCollateral(weth.address, stETH.address, fromAmount, toAmount, []);
+
+      await expect(tx).to.be.revertedWith("Allowed value < supply");
+
+      log(`total supply: ${await oeth.totalSupply()}`);
+      log(`total value : ${await oethVault.totalValue()}`);
+    });
+    it("Should allow swap if value is under supply by less than the allowed percentage", async () => {
+      const {
+        weth,
+        stETH,
+        oeth,
+        oethVault,
+        governor,
+        strategist,
+        mockSwapper,
+      } = fixture;
+
+      // Mock to return lower than slippage next time
+      await mockSwapper
+        .connect(strategist)
+        .setNextOutAmount(utils.parseEther("19"));
+      // increase the allowed Oracle slippage per asset to 9.99%
+      await oethVault.connect(governor).setOracleSlippage(weth.address, 999);
+      await oethVault.connect(governor).setOracleSlippage(stETH.address, 999);
+
+      const fromAmount = utils.parseEther("20");
+      const toAmount = utils.parseEther("17");
+
+      log(`total supply: ${await oeth.totalSupply()}`);
+      log(`total value : ${await oethVault.totalValue()}`);
+
+      // Call swap method
+      const tx = await oethVault
+        .connect(strategist)
+        .swapCollateral(weth.address, stETH.address, fromAmount, toAmount, []);
+
+      await expect(tx).to.emit(oethVault, "Swapped");
+
+      log(`total supply: ${await oeth.totalSupply()}`);
+      log(`total value : ${await oethVault.totalValue()}`);
     });
 
     it("Should revert if fromAsset is not supported", async () => {
