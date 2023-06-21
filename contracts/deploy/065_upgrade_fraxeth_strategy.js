@@ -4,9 +4,9 @@ const addresses = require("../utils/addresses");
 module.exports = deploymentWithProposal(
   {
     deployName: "065_upgrade_fraxeth_strategy",
-    forceDeploy: false,
+    forceDeploy: true,
     reduceQueueTime: true,
-    proposalId: 53,
+    // proposalId: 53,
   },
   async ({ deployWithConfirmation, ethers }) => {
     // Current contracts
