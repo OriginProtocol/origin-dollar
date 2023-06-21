@@ -57,9 +57,7 @@ module.exports = deploymentWithGovernanceProposal(
       dUniV3_USDC_USDT_Proxy.address
     );
 
-    const cAaveProxy = await ethers.getContract(
-      "AaveStrategyProxy"
-    );
+    const cAaveProxy = await ethers.getContract("AaveStrategyProxy");
 
     const cHarvesterProxy = await ethers.getContract("HarvesterProxy");
     const cHarvester = await ethers.getContractAt(

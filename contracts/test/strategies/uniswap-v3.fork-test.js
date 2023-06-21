@@ -39,7 +39,7 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
 
   beforeEach(async () => {
     fixture = await uniswapV3Fixture();
-    reserveStrategy = fixture.morphoAaveStrategy;
+    reserveStrategy = fixture.aaveStrategy;
     strategy = fixture.UniV3_USDC_USDT_Strategy;
     pool = fixture.UniV3_USDC_USDT_Pool;
     positionManager = fixture.UniV3PositionManager;

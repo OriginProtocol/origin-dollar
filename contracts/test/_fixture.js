@@ -1599,7 +1599,14 @@ function uniswapV3FixtureSetup() {
       mockStrategy,
       mockStrategy2,
       mockStrategyDAI,
+      vault,
+      aaveStrategy,
     } = fixture;
+
+    const { governorAddr, timelockAddr } = await getNamedAccounts();
+    const sGovernor = await ethers.provider.getSigner(
+      isFork ? timelockAddr : governorAddr
+    );
 
     if (!isFork) {
       // Approve mockStrategy
@@ -1626,14 +1633,19 @@ function uniswapV3FixtureSetup() {
         usdt.address,
         mockStrategy.address
       );
+    } else {
+      // Withdraw everything to Vault
+      await vault.connect(sGovernor).withdrawAllFromStrategies();
+
+      await _setDefaultStrategy(fixture, usdc, aaveStrategy);
+      await _setDefaultStrategy(fixture, usdt, aaveStrategy);
+      await _setDefaultStrategy(fixture, dai, aaveStrategy);
+
+      await vault.connect(sGovernor).allocate();
+      await vault.connect(sGovernor).rebase();
     }
 
     // await UniV3_USDC_USDT_Strategy.setSwapPriceThreshold(-1000, 1000);
-
-    const { governorAddr, timelockAddr } = await getNamedAccounts();
-    const sGovernor = await ethers.provider.getSigner(
-      isFork ? timelockAddr : governorAddr
-    );
 
     if (!isFork) {
       UniV3_USDC_USDT_Strategy.connect(sGovernor)
