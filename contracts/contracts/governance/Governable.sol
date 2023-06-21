@@ -45,7 +45,7 @@ contract Governable {
     }
 
     /**
-     * @dev Returns the address of the current Governor.
+     * @notice Returns the address of the current Governor.
      */
     function governor() public view returns (address) {
         return _governor();
@@ -86,7 +86,7 @@ contract Governable {
     }
 
     /**
-     * @dev Returns true if the caller is the current Governor.
+     * @notice Returns true if the caller is the current Governor.
      */
     function isGovernor() public view returns (bool) {
         return msg.sender == _governor();
@@ -163,7 +163,7 @@ contract Governable {
     }
 
     /**
-     * @dev Transfers Governance of the contract to a new account (`newGovernor`).
+     * @notice Transfers Governance of the contract to a new account (`newGovernor`).
      * Can only be called by the current Governor. Must be claimed for this to complete
      * @param _newGovernor Address of the new Governor
      */
@@ -173,7 +173,7 @@ contract Governable {
     }
 
     /**
-     * @dev Claim Governance of the contract to a new account (`newGovernor`).
+     * @notice Claim Governance of the contract to a new account (`newGovernor`).
      * Can only be called by the new Governor.
      */
     function claimGovernance() external {

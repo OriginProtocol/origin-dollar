@@ -137,7 +137,7 @@ contract OETHHarvesterProxy is InitializeGovernedUpgradeabilityProxy {
 }
 
 /**
- * @notice FraxETHStrategyProxy delegates calls to a Generalized4626Strategy implementation
+ * @notice FraxETHStrategyProxy delegates calls to a FraxETHStrategy implementation
  */
 contract FraxETHStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 

@@ -47,10 +47,17 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     "MockOGV",
     "MockAave",
     "MockRETH",
+    "MockstETH",
+    "MockfrxETH",
   ];
   for (const contract of assetContracts) {
     await deploy(contract, { from: deployerAddr });
   }
+
+  await deploy("MocksfrxETH", {
+    from: deployerAddr,
+    args: [(await ethers.getContract("MockfrxETH")).address],
+  });
 
   await deploy("MockOGN", {
     from: deployerAddr,
@@ -198,6 +205,21 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     contract: "MockChainlinkOracleFeed",
     args: [parseUnits("1.2", 18).toString(), 18], // 1 RETH = 1.2 ETH , 18 digits decimal.
   });
+  await deploy("MockChainlinkOracleFeedstETHETH", {
+    from: deployerAddr,
+    contract: "MockChainlinkOracleFeed",
+    args: [parseUnits("1", 18).toString(), 18], // 1 stETH = 1 ETH , 18 digits decimal.
+  });
+  await deploy("MockChainlinkOracleFeedfrxETHETH", {
+    from: deployerAddr,
+    contract: "MockChainlinkOracleFeed",
+    args: [parseUnits("1", 18).toString(), 18], // 1 frxETH = 1 ETH , 18 digits decimal.
+  });
+  await deploy("MockChainlinkOracleFeedWETHETH", {
+    from: deployerAddr,
+    contract: "MockChainlinkOracleFeed",
+    args: [parseUnits("1", 18).toString(), 18], // 1 WETH = 1 ETH , 18 digits decimal.
+  });
 
   // Deploy mock Uniswap router
   await deploy("MockUniswapRouter", {
@@ -337,6 +359,11 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
   // This is completely unrelated to the Uniswap V3 mocks above.
   // This one focuses only on Uniswap V3 strategies
   await deployMocksForUniswapV3Strategy(deploy, deployerAddr);
+
+  await deploy("MockFrxETHMinter", {
+    from: deployerAddr,
+    args: [(await ethers.getContract("MocksfrxETH")).address],
+  });
 
   console.log("000_mock deploy done.");
 

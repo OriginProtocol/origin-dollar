@@ -14,8 +14,11 @@ const {
   usdcUnits,
   tusdUnits,
   ognUnits,
+  oethUnits,
   isFork,
 } = require("../test/helpers");
+
+const log = require("./logger")("utils:funding");
 
 /* Used for funding accounts in forked mode. Find the holder that has the most ETH or ERC20 token amounts.
  * param contract: address of ERC20 token. If null the account with the most ETH shall be returned
@@ -23,18 +26,21 @@ const {
  * returns signer object of the most appropriate token/ETH holder
  */
 const findBestMainnetTokenHolder = async (contract, hre) => {
-  const binanceAddresses = addresses.mainnet.BinanceAll.split(",");
+  const whaleAddresses = [
+    ...addresses.mainnet.BinanceAll.split(","),
+    ...addresses.mainnet.WhaleAddresses.split(","),
+  ];
   const { isFork } = require("../test/helpers");
 
-  const binanceSigners = await Promise.all(
-    binanceAddresses.map((binanceAddress) => {
+  const whaleSigners = await Promise.all(
+    whaleAddresses.map((binanceAddress) => {
       return hre.ethers.provider.getSigner(binanceAddress);
     })
   );
 
   if (isFork) {
     await Promise.all(
-      binanceAddresses.map(async (binanceAddress) => {
+      whaleAddresses.map(async (binanceAddress) => {
         return hre.network.provider.request({
           method: "hardhat_impersonateAccount",
           params: [binanceAddress],
@@ -44,7 +50,7 @@ const findBestMainnetTokenHolder = async (contract, hre) => {
   }
 
   let balances = await Promise.all(
-    binanceSigners.map(async (binanceSigner) => {
+    whaleSigners.map(async (binanceSigner) => {
       if (!contract) {
         return await hre.ethers.provider.getBalance(binanceSigner._address);
       }
@@ -64,7 +70,7 @@ const findBestMainnetTokenHolder = async (contract, hre) => {
     }
   }
 
-  return binanceSigners[largestBalanceIndex];
+  return whaleSigners[largestBalanceIndex];
 };
 
 const findBestMainnetTokenHolderAndImpersonate = async (contract, hre) => {
@@ -82,25 +88,80 @@ const findBestMainnetTokenHolderAndImpersonate = async (contract, hre) => {
   return signer;
 };
 
+const fundAccountsForOETHUnitTests = async () => {
+  if (isFork) {
+    return;
+  }
+
+  let weth, rETH, stETH, frxETH, sfrxETH;
+
+  weth = await ethers.getContractAt("MockWETH", addresses.mainnet.WETH);
+  rETH = await ethers.getContract("MockRETH");
+  stETH = await ethers.getContract("MockstETH");
+  frxETH = await ethers.getContract("MockfrxETH");
+  sfrxETH = await ethers.getContract("MocksfrxETH");
+
+  const signers = await hre.ethers.getSigners();
+
+  const addressPromises = new Array(10)
+    .fill(0)
+    .map((_, i) => signers[i].getAddress());
+  const signerAddresses = await Promise.all(addressPromises);
+
+  for (const address of signerAddresses) {
+    const signer = await ethers.provider.getSigner(address);
+    await weth.connect(signer).mint(oethUnits("1000"));
+    await rETH.connect(signer).mint(oethUnits("1000"));
+    await stETH.connect(signer).mint(oethUnits("1000"));
+    await frxETH.connect(signer).mint(oethUnits("1000"));
+    await sfrxETH.connect(signer).mint(oethUnits("1000"));
+  }
+};
+
 const fundAccounts = async () => {
-  let usdt, dai, tusd, usdc, nonStandardToken;
+  let usdt,
+    dai,
+    tusd,
+    usdc,
+    nonStandardToken,
+    ogn,
+    weth,
+    rETH,
+    stETH,
+    frxETH,
+    sfrxETH;
   if (isFork) {
     usdt = await ethers.getContractAt(usdtAbi, addresses.mainnet.USDT);
     dai = await ethers.getContractAt(daiAbi, addresses.mainnet.DAI);
     tusd = await ethers.getContractAt(tusdAbi, addresses.mainnet.TUSD);
     usdc = await ethers.getContractAt(usdcAbi, addresses.mainnet.USDC);
     ogn = await ethers.getContractAt(ognAbi, addresses.mainnet.OGN);
+
+    weth = await ethers.getContractAt(daiAbi, addresses.mainnet.WETH);
+    rETH = await ethers.getContractAt(daiAbi, addresses.mainnet.rETH);
+    stETH = await ethers.getContractAt(daiAbi, addresses.mainnet.stETH);
+    frxETH = await ethers.getContractAt(daiAbi, addresses.mainnet.frxETH);
   } else {
     usdt = await ethers.getContract("MockUSDT");
     dai = await ethers.getContract("MockDAI");
     tusd = await ethers.getContract("MockTUSD");
     usdc = await ethers.getContract("MockUSDC");
     ogn = await ethers.getContract("MockOGN");
+
+    weth = await ethers.getContractAt("MockWETH", addresses.mainnet.WETH);
+    rETH = await ethers.getContract("MockRETH");
+    stETH = await ethers.getContract("MockstETH");
+    frxETH = await ethers.getContract("MockfrxETH");
+    sfrxETH = await ethers.getContract("MocksfrxETH");
+
     nonStandardToken = await ethers.getContract("MockNonStandardToken");
   }
 
+  const ousdCoins = [dai, usdc, usdt, tusd, ogn];
+  const oethCoins = [weth, rETH, stETH, frxETH];
+  const allCoins = [...ousdCoins, ...oethCoins];
+
   const signers = await hre.ethers.getSigners();
-  const { governorAddr } = await getNamedAccounts();
 
   const addressPromises = new Array(10)
     .fill(0)
@@ -114,17 +175,22 @@ const fundAccounts = async () => {
         utils.parseEther("1000000").toHexString(),
       ]);
 
-      for (const tokenContract of [dai, usdc, usdt, tusd, ogn]) {
+      for (const tokenContract of allCoins) {
         const signer = await findBestMainnetTokenHolderAndImpersonate(
           tokenContract,
           hre
         );
+        // If the token is USD, transfer 1M, otherwise 1K
+        const amount = ousdCoins.includes(tokenContract) ? "1000000" : "1000";
         await tokenContract
           .connect(signer)
           .transfer(
             address,
-            utils.parseUnits("1000000", await tokenContract.decimals())
+            utils.parseUnits(amount, await tokenContract.decimals())
           );
+        log(
+          `funded ${amount} ${await tokenContract.symbol()} from signer ${await signer.getAddress()} to ${address}`
+        );
       }
     } else {
       const signer = await ethers.provider.getSigner(address);
@@ -147,5 +213,6 @@ const fundAccounts = async () => {
 
 module.exports = {
   fundAccounts,
+  fundAccountsForOETHUnitTests,
   findBestMainnetTokenHolder,
 };

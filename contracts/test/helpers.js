@@ -113,6 +113,42 @@ chai.Assertion.addMethod(
 );
 
 chai.Assertion.addMethod(
+  "approxBalanceWithToleranceOf",
+  async function (expected, contract, tolerancePct = 1, message = undefined) {
+    const user = this._obj;
+    const address = user.address || user.getAddress(); // supports contracts too
+    const actual = await contract.balanceOf(address);
+    if (!BigNumber.isBigNumber(expected)) {
+      expected = parseUnits(expected, await decimalsFor(contract));
+    }
+    chai
+      .expect(actual)
+      .to.approxEqualTolerance(expected, tolerancePct, message);
+  }
+);
+
+chai.Assertion.addMethod("totalSupplyOf", async function (expected, message) {
+  const contract = this._obj;
+  const actual = await contract.totalSupply();
+  if (!BigNumber.isBigNumber(expected)) {
+    expected = parseUnits(expected, await decimalsFor(contract));
+  }
+  chai.expect(actual).to.equal(expected, message);
+});
+
+chai.Assertion.addMethod(
+  "approxTotalSupplyOf",
+  async function (expected, message) {
+    const contract = this._obj;
+    const actual = await contract.totalSupply();
+    if (!BigNumber.isBigNumber(expected)) {
+      expected = parseUnits(expected, await decimalsFor(contract));
+    }
+    chai.expect(actual).to.approxEqualTolerance(expected, 1, message);
+  }
+);
+
+chai.Assertion.addMethod(
   "assetBalanceOf",
   async function (expected, asset, message) {
     const strategy = this._obj;
@@ -397,6 +433,12 @@ const getOracleAddresses = async (deployments) => {
           .address,
         RETH_ETH: (await deployments.get("MockChainlinkOracleFeedRETHETH"))
           .address,
+        STETH_ETH: (await deployments.get("MockChainlinkOracleFeedstETHETH"))
+          .address,
+        FRXETH_ETH: (await deployments.get("MockChainlinkOracleFeedfrxETHETH"))
+          .address,
+        WETH_ETH: (await deployments.get("MockChainlinkOracleFeedWETHETH"))
+          .address,
         NonStandardToken_USD: (
           await deployments.get("MockChainlinkOracleFeedNonStandardToken")
         ).address,
@@ -476,6 +518,9 @@ const getAssetAddresses = async (deployments) => {
       OGN: (await deployments.get("MockOGN")).address,
       OGV: (await deployments.get("MockOGV")).address,
       RETH: (await deployments.get("MockRETH")).address,
+      stETH: (await deployments.get("MockstETH")).address,
+      frxETH: (await deployments.get("MockfrxETH")).address,
+      sfrxETH: (await deployments.get("MocksfrxETH")).address,
       // Note: This is only used to transfer the swapped OGV in `Buyback` contract.
       // So, as long as this is a valid address, it should be fine.
       RewardsSource: addresses.dead,

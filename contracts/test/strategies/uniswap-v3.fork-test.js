@@ -2,7 +2,7 @@ const { expect } = require("chai");
 const {
   uniswapV3FixtureSetup,
   impersonateAndFundContract,
-  defaultFixtureSetup,
+  defaultFixture,
 } = require("../_fixture");
 const {
   forkOnlyDescribe,
@@ -21,7 +21,7 @@ forkOnlyDescribe("Uniswap V3 Strategy", function () {
     // This is needed to revert fixtures
     // The other tests as of now don't use proper fixtures
     // Rel: https://github.com/OriginProtocol/origin-dollar/issues/1259
-    const f = defaultFixtureSetup();
+    const f = defaultFixture();
     await f();
   });
 

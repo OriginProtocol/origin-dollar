@@ -3,7 +3,7 @@
 //
 
 const hre = require("hardhat");
-const { utils } = require("ethers");
+const { BigNumber, utils } = require("ethers");
 
 const {
   advanceTime,
@@ -551,7 +551,7 @@ const submitProposalToOgvGovernance = async (
 
   log(`Submitted governance proposal to OGV governance ${proposalId}`);
   await advanceBlocks(1);
-  const proposalIdBn = ethers.BigNumber.from(proposalId);
+  const proposalIdBn = BigNumber.from(proposalId);
   const proposalState = await getProposalState(proposalIdBn);
 
   return {

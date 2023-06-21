@@ -13,15 +13,12 @@ import UserActivityListener from 'components/UserActivityListener'
 import TransactionListener from 'components/TransactionListener'
 import withWeb3Provider from 'hoc/withWeb3Provider'
 import setUtilLocale from 'utils/setLocale'
-import { setUserSource } from 'utils/user'
 import { useEagerConnect } from 'utils/hooks'
 import { login } from 'utils/account'
 import WalletSelectModal from 'components/WalletSelectModal'
 import { ToastContainer } from 'react-toastify'
 import { pageview } from '../lib/gtm'
 
-import analytics from 'utils/analytics'
-import { AnalyticsProvider } from 'use-analytics'
 import { initSentry } from 'utils/sentry'
 
 import 'react-toastify/scss/main.scss'
@@ -66,57 +63,6 @@ function App({ Component, pageProps, err }) {
     }
   }, [])
 
-  const trackPageView = (url, lastURL) => {
-    const data = {
-      toURL: url,
-    }
-
-    if (lastURL) {
-      data.fromURL = lastURL
-    }
-
-    analytics.page(data)
-
-    if (url.indexOf('?') > 0) {
-      const searchParams = new URLSearchParams(url.substr(url.indexOf('?') + 1))
-      const utmSource = searchParams.get('utm_source')
-      if (utmSource) {
-        setUserSource(utmSource)
-      }
-    } else {
-      /* if first page load is not equipped with the 'utm_source' we permanently mark
-       * user source as unknown
-       */
-      setUserSource('unknown')
-    }
-  }
-
-  useEffect(() => {
-    let lastURL = window.location.pathname + window.location.search
-
-    // track initial page load
-    trackPageView(lastURL)
-
-    const handleRouteChange = (url) => {
-      /* There is this weird behaviour with react router where `routeChangeComplete` gets triggered
-       * on initial load only if URL contains search parameters. And without this check and search
-       * parameters present the inital page view would be tracked twice.
-       */
-      if (url === lastURL) {
-        return
-      }
-      // track when user navigates to a new page
-      trackPageView(url, lastURL)
-      lastURL = url
-    }
-
-    router.events.on('routeChangeComplete', handleRouteChange)
-
-    return () => {
-      router.events.off('routeChangeComplete', handleRouteChange)
-    }
-  }, [])
-
   const onLocale = async (newLocale) => {
     const locale = await setUtilLocale(newLocale)
     setLocale(locale)
@@ -129,28 +75,26 @@ function App({ Component, pageProps, err }) {
         <link rel="canonical" href={canonicalUrl} />
       </Head>
       <QueryClientProvider client={queryClient}>
-        <AnalyticsProvider instance={analytics}>
-          <AccountListener />
-          <TransactionListener />
-          <UserActivityListener />
-          <WalletSelectModal />
-          <ToastContainer
-            position="bottom-right"
-            autoClose={5000}
-            hideProgressBar={false}
-            newestOnTop={false}
-            closeOnClick
-            rtl={false}
-            pauseOnFocusLoss
-            pauseOnHover
-          />
-          <Component
-            locale={locale}
-            onLocale={onLocale}
-            {...pageProps}
-            err={err}
-          />
-        </AnalyticsProvider>
+        <AccountListener />
+        <TransactionListener />
+        <UserActivityListener />
+        <WalletSelectModal />
+        <ToastContainer
+          position="bottom-right"
+          autoClose={5000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          pauseOnHover
+        />
+        <Component
+          locale={locale}
+          onLocale={onLocale}
+          {...pageProps}
+          err={err}
+        />
         <ReactQueryDevtools initialIsOpen={false} />
       </QueryClientProvider>
     </>
