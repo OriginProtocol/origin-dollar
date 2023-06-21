@@ -36,6 +36,9 @@ contract Mock1InchSwapRouter {
         uint256[] pools
     );
 
+    /**
+     * @dev transfers the shource asset and returns the minReturnAmount of the destination asset.
+     */
     function swap(
         address executor,
         SwapDescription calldata desc,
@@ -49,7 +52,7 @@ contract Mock1InchSwapRouter {
             desc.amount
         );
 
-        // Transfer the source tokens to the receiver contract
+        // Transfer the destination tokens to the recipient
         IERC20(desc.dstToken).safeTransfer(
             desc.dstReceiver,
             desc.minReturnAmount
@@ -73,6 +76,10 @@ contract Mock1InchSwapRouter {
         );
     }
 
+    /**
+     * @dev only transfers the source asset to this contract.
+     * Ideally it would return the destination asset but that's encoded in the pools array.
+     */
     function unoswapTo(
         address payable recipient,
         address srcToken,
@@ -80,10 +87,16 @@ contract Mock1InchSwapRouter {
         uint256 minReturn,
         uint256[] calldata pools
     ) public returns (uint256 returnAmount) {
+        // transfer the from asset from the caller
+        IERC20(srcToken).safeTransferFrom(msg.sender, address(this), amount);
+
         emit MockUnoswapTo(recipient, srcToken, amount, minReturn, pools);
         returnAmount = 0;
     }
 
+    /**
+     * @dev does not do any transfers. Just emits MockUniswapV3SwapTo.
+     */
     function uniswapV3SwapTo(
         address payable recipient,
         uint256 amount,
