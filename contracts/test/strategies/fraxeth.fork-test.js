@@ -29,7 +29,7 @@ forkOnlyDescribe("ForkTest: FraxETH Strategy", function () {
     await f();
   });
 
-  describe.only("Mint", function () {
+  describe("Mint", function () {
     it("Should allow mint with frxETH", async () => {
       const { daniel, frxETH } = fixture;
 
