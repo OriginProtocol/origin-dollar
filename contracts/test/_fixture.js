@@ -7,7 +7,7 @@ const {
   fundAccounts,
   fundAccountsForOETHUnitTests,
 } = require("../utils/funding");
-const { getAssetAddresses, daiUnits, isFork } = require("./helpers");
+const { getAssetAddresses, daiUnits, isFork, oethUnits } = require("./helpers");
 const { utils } = require("ethers");
 
 const { loadFixture, getOracleAddresses } = require("./helpers");
@@ -625,20 +625,18 @@ function oethCollateralSwapFixtureSetup() {
     const fixture = await oethDefaultFixture();
 
     const { weth, reth, stETH, frxETH, matt, strategist, oethVault } = fixture;
-    const zeroAddr = "0x0000000000000000000000000000000000000000";
+
+    const bufferBps = await oethVault.vaultBuffer();
+    const shouldChangeBuffer = bufferBps.lt(oethUnits("1"));
+
+    if (shouldChangeBuffer) {
+      // If it's not 100% already, set it to 100%
+      await oethVault.connect(strategist).setVaultBuffer(
+        oethUnits("1") // 100%
+      );
+    }
 
     for (const token of [weth, reth, stETH, frxETH]) {
-      const defaultStrategy = await oethVault.assetDefaultStrategies(
-        token.address
-      );
-
-      if (defaultStrategy != zeroAddr) {
-        // Set it to null
-        await oethVault
-          .connect(strategist)
-          .setAssetDefaultStrategy(token.address, zeroAddr);
-      }
-
       await token
         .connect(matt)
         .approve(
@@ -650,13 +648,11 @@ function oethCollateralSwapFixtureSetup() {
       await oethVault
         .connect(matt)
         .mint(token.address, utils.parseEther("25"), "0");
+    }
 
-      if (defaultStrategy != zeroAddr) {
-        // Set it back
-        await oethVault
-          .connect(strategist)
-          .setAssetDefaultStrategy(token.address, defaultStrategy);
-      }
+    if (shouldChangeBuffer) {
+      // Set it back
+      await oethVault.connect(strategist).setVaultBuffer(bufferBps);
     }
 
     return fixture;
