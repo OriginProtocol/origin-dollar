@@ -151,7 +151,7 @@ contract VaultAdmin is VaultStorage {
     }
 
     /**
-     * @dev Set the contract the performs swaps of collateral assets.
+     * @notice Set the contract the performs swaps of collateral assets.
      * @param _swapperAddr Address of the Swapper contract that implements the ISwapper interface.
      */
     function setSwapper(address _swapperAddr) external onlyGovernor {
@@ -160,7 +160,7 @@ contract VaultAdmin is VaultStorage {
     }
 
     /**
-     * @dev Set the allowed slippage from the Oracle price for collateral asset swaps.
+     * @notice Set the allowed slippage from the Oracle price for collateral asset swaps.
      * @param _asset Address of the asset token.
      * @param _allowedOracleSlippageBps allowed slippage from Oracle in basis points. eg 20 = 0.2%. Max 10%.
      */
@@ -288,7 +288,7 @@ contract VaultAdmin is VaultStorage {
         returns (uint256 toAssetAmount)
     {
         // Check fromAsset and toAsset are valid
-        Asset memory fromAssetConfig = assets[address(_fromAsset)];
+        Asset memory fromAssetConfig = assets[_fromAsset];
         Asset memory toAssetConfig = assets[_toAsset];
         require(fromAssetConfig.isSupported, "From asset is not supported");
         require(toAssetConfig.isSupported, "To asset is not supported");

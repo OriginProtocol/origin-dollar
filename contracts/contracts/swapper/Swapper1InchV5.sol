@@ -90,8 +90,14 @@ contract Swapper1InchV5 is ISwapper {
         }
     }
 
+    /**
+     * @notice Approve assets for swapping.
+     * @param _assets Array of token addresses to approve.
+     * @dev unlimited approval is used as no tokens sit in this contract outside a transaction.
+     */
     function approveAssets(address[] memory _assets) external {
         for (uint256 i = 0; i < _assets.length; ++i) {
+            // Give the 1Inch router approval to transfer unlimited assets
             IERC20(_assets[i]).safeApprove(SWAP_ROUTER, type(uint256).max);
         }
     }
