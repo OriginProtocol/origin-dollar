@@ -16,11 +16,9 @@ import { IUniswapV3Helper } from "../../interfaces/uniswap/v3/IUniswapV3Helper.s
 import { IUniswapV3Pool } from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import { IUniswapV3Strategy } from "../../interfaces/IUniswapV3Strategy.sol";
 import { ISwapRouter } from "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
-import { StableMath } from "../../utils/StableMath.sol";
 
 contract UniswapV3Strategy is UniswapV3StrategyStorage {
     using SafeERC20 for IERC20;
-    using StableMath for uint256;
 
     /**
      * @dev Initialize the contract
