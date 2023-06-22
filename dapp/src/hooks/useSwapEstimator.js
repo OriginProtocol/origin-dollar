@@ -48,6 +48,7 @@ const useSwapEstimator = ({
 
   const { contract: coinToSwapContract, decimals: coinToSwapDecimals } =
     coinInfoList[swapMode === 'mint' ? selectedCoin : 'ousd']
+
   const coinToSwap = swapMode === 'redeem' ? 'ousd' : selectedCoin
 
   const [selectedCoinPrev, setSelectedCoinPrev] = useState()

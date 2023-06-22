@@ -29,7 +29,7 @@ const WalletSelectModal = ({}) => {
             close()
           }}
         >
-          {modalState === 'Wallet' && <WalletSelectContent />}
+          {modalState === 'Wallet' && <WalletSelectContent onClose={close} />}
           {modalState === 'LedgerDerivation' && <LedgerDerivationContent />}
         </div>
       )}

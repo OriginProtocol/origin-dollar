@@ -6,7 +6,6 @@ import {
   injectedConnector,
   walletConnectConnector,
   walletConnectV2Connector,
-  myEtherWalletConnector,
   walletlink,
   resetWalletConnector,
 } from 'utils/connectors'
@@ -21,20 +20,13 @@ const WalletSelectContent = ({ isMobile, onClose }) => {
   const { activate, active, account } = useWeb3React()
   const [error, setError] = useState(null)
   const wallets = isMobile
-    ? [
-        'Wallet Connect V2',
-        'Coinbase Wallet',
-        'MetaMask',
-        'MyEtherWallet',
-        'Ledger',
-      ]
+    ? ['Wallet Connect V2', 'Coinbase Wallet', 'MetaMask', 'Ledger']
     : [
         'MetaMask',
         'Ledger',
         'Exodus',
         'Coinbase Wallet',
         'Wallet Connect V2',
-        'MyEtherWallet',
         'DeFi Wallet',
       ]
 
@@ -83,8 +75,6 @@ const WalletSelectContent = ({ isMobile, onClose }) => {
         s.walletSelectModalState = 'LedgerDerivation'
       })
       return
-    } else if (name === 'MyEtherWallet') {
-      connector = myEtherWalletConnector
     } else if (name === 'WalletConnect') {
       connector = walletConnectConnector
     } else if (name === 'Wallet Connect V2') {

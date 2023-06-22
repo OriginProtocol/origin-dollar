@@ -1,7 +1,6 @@
 import { InjectedConnector } from '@web3-react/injected-connector'
 import { WalletConnectConnector } from '@web3-react/walletconnect-connector'
 import { WalletLinkConnector } from '@web3-react/walletlink-connector'
-import { MewConnectConnector } from '@myetherwallet/mewconnect-connector'
 import { SafeAppConnector } from '@gnosis.pm/safe-apps-web3-react'
 import { LedgerConnector } from 'utils/LedgerConnector'
 import { DeFiWeb3Connector } from 'deficonnect'
@@ -27,10 +26,6 @@ export const gnosisConnector = () => {
   if (!gnosisConnectorCache) gnosisConnectorCache = new SafeAppConnector()
   return gnosisConnectorCache
 }
-
-export const myEtherWalletConnector = new MewConnectConnector({
-  url: WS_PROVIDER,
-})
 
 export const walletConnectConnector = new WalletConnectConnector({
   rpc: {

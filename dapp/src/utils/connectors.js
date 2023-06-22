@@ -1,11 +1,9 @@
 import { InjectedConnector } from '@web3-react/injected-connector'
 import { WalletConnectConnector } from '@web3-react/walletconnect-connector'
 import { WalletLinkConnector } from '@web3-react/walletlink-connector'
-import { MewConnectConnector } from '@myetherwallet/mewconnect-connector'
 import { SafeAppConnector } from '@gnosis.pm/safe-apps-web3-react'
 import { LedgerConnector } from 'utils/LedgerConnector'
 import { DeFiWeb3Connector } from 'deficonnect'
-import { LedgerHQFrameConnector } from 'web3-ledgerhq-frame-connector'
 import { get } from 'lodash'
 import { isProduction } from 'constants/env'
 import { initializeConnector } from 'web3-react-v8'
@@ -27,10 +25,6 @@ export const gnosisConnector = () => {
   if (!gnosisConnectorCache) gnosisConnectorCache = new SafeAppConnector()
   return gnosisConnectorCache
 }
-
-export const myEtherWalletConnector = new MewConnectConnector({
-  url: WS_PROVIDER,
-})
 
 export const walletConnectConnector = new WalletConnectConnector({
   rpc: {
@@ -88,11 +82,6 @@ export const defiWalletConnector = process.browser
       pollingInterval: POLLING_INTERVAL,
     })
   : {}
-
-export const ledgerLiveConnector = new LedgerHQFrameConnector({
-  targetOrigin: 'https://dapp-browser.apps.ledger.com',
-  timeoutMilliseconds: 10000,
-})
 
 export const connectorNameIconMap = {
   MetaMask: 'metamask-icon.svg',

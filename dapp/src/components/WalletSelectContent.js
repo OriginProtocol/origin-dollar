@@ -6,7 +6,6 @@ import {
   injectedConnector,
   walletConnectConnector,
   walletConnectV2Connector,
-  myEtherWalletConnector,
   walletlink,
   resetWalletConnector,
 } from 'utils/connectors'
@@ -21,20 +20,13 @@ const WalletSelectContent = ({ isMobile, onClose }) => {
   const { activate, active, account } = useWeb3React()
   const [error, setError] = useState(null)
   const wallets = isMobile
-    ? [
-        'Wallet Connect V2',
-        'Coinbase Wallet',
-        'MetaMask',
-        'MyEtherWallet',
-        'Ledger',
-      ]
+    ? ['Wallet Connect V2', 'Coinbase Wallet', 'MetaMask', 'Ledger']
     : [
         'MetaMask',
         'Ledger',
         'Exodus',
         'Coinbase Wallet',
         'Wallet Connect V2',
-        'MyEtherWallet',
         'DeFi Wallet',
       ]
 
@@ -83,8 +75,6 @@ const WalletSelectContent = ({ isMobile, onClose }) => {
         s.walletSelectModalState = 'LedgerDerivation'
       })
       return
-    } else if (name === 'MyEtherWallet') {
-      connector = myEtherWalletConnector
     } else if (name === 'WalletConnect') {
       connector = walletConnectConnector
     } else if (name === 'Wallet Connect V2') {
@@ -173,8 +163,8 @@ const WalletSelectContent = ({ isMobile, onClose }) => {
           padding: 34px 34px 46px 34px;
           max-width: 360px;
           min-width: 360px;
-          background-color: #101113;
-          color: #fafbfb;
+          box-shadow: 0 0 14px 0 rgba(24, 49, 64, 0.1);
+          background-color: white;
           border-radius: 10px;
         }
 
@@ -192,12 +182,12 @@ const WalletSelectContent = ({ isMobile, onClose }) => {
           width: 100%;
           height: 50px;
           border-radius: 25px;
-          border: solid 1px #141519;
-          background-color: #1e1f25;
+          border: solid 1px #1a82ff;
+          background-color: white;
           font-size: 18px;
           font-weight: bold;
           text-align: center;
-          color: #fafbfb;
+          color: #1a82ff;
         }
 
         .wallet-select-content .connector-button:disabled {
@@ -214,7 +204,7 @@ const WalletSelectContent = ({ isMobile, onClose }) => {
         }
 
         .wallet-select-content .connector-button:hover {
-          background-color: #1e1f25;
+          background-color: #f8f9fa;
         }
 
         .wallet-select-content .connector-button:not(:last-child) {
