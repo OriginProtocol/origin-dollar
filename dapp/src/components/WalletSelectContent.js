@@ -1,25 +1,28 @@
 import React, { useState, useEffect } from 'react'
-
 import { fbt } from 'fbt-runtime'
 import { useWeb3React } from '@web3-react/core'
-import { injectedConnector } from 'utils/connectors'
-import { walletConnectConnector } from 'utils/connectors'
-import { myEtherWalletConnector } from 'utils/connectors'
-import { walletlink, resetWalletConnector } from 'utils/connectors'
-import { defiWalletConnector } from 'utils/connectors'
+import {
+  defiWalletConnector,
+  injectedConnector,
+  walletConnectConnector,
+  walletConnectV2Connector,
+  myEtherWalletConnector,
+  walletlink,
+  resetWalletConnector,
+} from 'utils/connectors'
+import { event } from '../../lib/gtm'
 import withIsMobile from 'hoc/withIsMobile'
 
 import AccountStore from 'stores/AccountStore'
 
-import analytics from 'utils/analytics'
 import { assetRootPath } from 'utils/image'
 
-const WalletSelectContent = ({ isMobile }) => {
-  const { connector, activate, deactivate, active } = useWeb3React()
+const WalletSelectContent = ({ isMobile, onClose }) => {
+  const { activate, active, account } = useWeb3React()
   const [error, setError] = useState(null)
   const wallets = isMobile
     ? [
-        'WalletConnect',
+        'Wallet Connect V2',
         'Coinbase Wallet',
         'MetaMask',
         'MyEtherWallet',
@@ -30,22 +33,20 @@ const WalletSelectContent = ({ isMobile }) => {
         'Ledger',
         'Exodus',
         'Coinbase Wallet',
-        'WalletConnect',
+        'Wallet Connect V2',
         'MyEtherWallet',
         'DeFi Wallet',
       ]
 
   useEffect(() => {
     if (active) {
-      closeWalletSelectModal()
+      onClose()
+      event({
+        event: 'connect',
+        connect_address: account?.slice(2),
+      })
     }
   }, [active])
-
-  const closeWalletSelectModal = () => {
-    AccountStore.update((s) => {
-      s.walletSelectModalState = false
-    })
-  }
 
   const errorMessageMap = (error) => {
     if (error === 'ledger-error') {
@@ -65,9 +66,9 @@ const WalletSelectContent = ({ isMobile }) => {
   }
 
   const onConnect = async (name) => {
-    analytics.track(`On Connect Wallet`, {
-      category: 'general',
-      label: name,
+    event({
+      event: 'connect_modal_click',
+      connect_modal_wallet: name.toLowerCase(),
     })
 
     setError(null)
@@ -86,11 +87,15 @@ const WalletSelectContent = ({ isMobile }) => {
       connector = myEtherWalletConnector
     } else if (name === 'WalletConnect') {
       connector = walletConnectConnector
+    } else if (name === 'Wallet Connect V2') {
+      connector = walletConnectV2Connector
+      onClose()
     } else if (name === 'Coinbase Wallet') {
       connector = walletlink
     } else if (name === 'DeFi Wallet') {
       connector = defiWalletConnector
     }
+
     // fix wallet connect bug: if you click the button and close the modal you wouldn't be able to open it again
     if (name === 'WalletConnect') {
       resetWalletConnector(connector)
@@ -143,7 +148,7 @@ const WalletSelectContent = ({ isMobile }) => {
                 }
               }}
             >
-              <div className="col-2">
+              <div className="col-1">
                 <img
                   src={assetRootPath(
                     `/images/${name.toLowerCase().replace(/\s+/g, '')}-icon.${
@@ -152,8 +157,8 @@ const WalletSelectContent = ({ isMobile }) => {
                   )}
                 />
               </div>
-              <div className="col-8">{name}</div>
-              <div className="col-2"></div>
+              <div className="col-10">{name}</div>
+              <div className="col-1"></div>
             </button>
           )
         })}
@@ -166,10 +171,10 @@ const WalletSelectContent = ({ isMobile }) => {
       <style jsx>{`
         .wallet-select-content {
           padding: 34px 34px 46px 34px;
-          max-width: 350px;
-          min-width: 350px;
-          box-shadow: 0 0 14px 0 rgba(24, 49, 64, 0.1);
-          background-color: white;
+          max-width: 360px;
+          min-width: 360px;
+          background-color: #101113;
+          color: #fafbfb;
           border-radius: 10px;
         }
 
@@ -187,12 +192,12 @@ const WalletSelectContent = ({ isMobile }) => {
           width: 100%;
           height: 50px;
           border-radius: 25px;
-          border: solid 1px #1a82ff;
-          background-color: white;
+          border: solid 1px #141519;
+          background-color: #1e1f25;
           font-size: 18px;
           font-weight: bold;
           text-align: center;
-          color: #1a82ff;
+          color: #fafbfb;
         }
 
         .wallet-select-content .connector-button:disabled {
@@ -209,7 +214,7 @@ const WalletSelectContent = ({ isMobile }) => {
         }
 
         .wallet-select-content .connector-button:hover {
-          background-color: #f8f9fa;
+          background-color: #1e1f25;
         }
 
         .wallet-select-content .connector-button:not(:last-child) {

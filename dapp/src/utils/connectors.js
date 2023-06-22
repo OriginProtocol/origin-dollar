@@ -5,8 +5,11 @@ import { MewConnectConnector } from '@myetherwallet/mewconnect-connector'
 import { SafeAppConnector } from '@gnosis.pm/safe-apps-web3-react'
 import { LedgerConnector } from 'utils/LedgerConnector'
 import { DeFiWeb3Connector } from 'deficonnect'
+import { LedgerHQFrameConnector } from 'web3-ledgerhq-frame-connector'
 import { get } from 'lodash'
 import { isProduction } from 'constants/env'
+import { initializeConnector } from 'web3-react-v8'
+import { WalletConnect as WalletConnectConnectorV2 } from '@web3-react/walletconnect-v2'
 
 import { providerName } from 'utils/web3'
 
@@ -35,6 +38,23 @@ export const walletConnectConnector = new WalletConnectConnector({
   },
   pollingInterval: POLLING_INTERVAL,
 })
+
+export const [walletConnectV2Connector] = initializeConnector(
+  (actions) =>
+    new WalletConnectConnectorV2({
+      actions,
+      options: {
+        projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_V2_PROJECT_ID,
+        chains: [
+          {
+            1: RPC_PROVIDER,
+          },
+        ],
+        showQrModal: true,
+        pollingInterval: POLLING_INTERVAL,
+      },
+    })
+)
 
 //coinbase
 export const walletlink = new WalletLinkConnector({
@@ -69,12 +89,18 @@ export const defiWalletConnector = process.browser
     })
   : {}
 
+export const ledgerLiveConnector = new LedgerHQFrameConnector({
+  targetOrigin: 'https://dapp-browser.apps.ledger.com',
+  timeoutMilliseconds: 10000,
+})
+
 export const connectorNameIconMap = {
   MetaMask: 'metamask-icon.svg',
   Ledger: 'ledger-icon.svg',
   Exodus: 'exodus-icon.svg',
   MyEtherWallet: 'myetherwallet-icon.svg',
   WalletConnect: 'walletconnect-icon.svg',
+  'Wallet Connect V2': 'walletconnect-icon.svg',
 }
 
 export const getConnectorIcon = (name) =>
