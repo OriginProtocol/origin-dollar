@@ -306,7 +306,7 @@ forkOnlyDescribe("ForkTest: Vault", function () {
         "0x79F2188EF9350A1dC11A062cca0abE90684b0197", // MorphoAaveStrategy
         // TODO: Hard-code these after deploy
         //"0x7A192DD9Cc4Ea9bdEdeC9992df74F1DA55e60a19", // LUSD MetaStrategy
-        "0x050c4FcA28725d975c2896682eBD2905D2E58E84", // USDC<>USDT Uniswap V3 Strategy
+        "0xF4632427B2877c4c12670B5c75F794BCe16281FA", // USDC<>USDT Uniswap V3 Strategy
       ];
 
       for (const s of strategies) {
