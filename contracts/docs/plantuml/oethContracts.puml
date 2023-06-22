@@ -1,0 +1,207 @@
+@startuml
+
+title "Origin Ether Contract Dependencies"
+
+object "OETHZapper" as zap <<Origin>> #DeepSkyBlue {
+    assets: ETH, sfrxETH
+}
+
+object "OETHDripper" as drip <<Origin>><<Proxy>> #DeepSkyBlue {
+    asset: WETH
+}
+
+object "OETHVaultValueChecker" as checker <<Origin>> #DeepSkyBlue {
+}
+
+object "WOETH" as woeth <<Origin>><<Proxy>> #DeepSkyBlue {
+    asset: OETH
+    symbol: WOETH
+    name: Wrapped OETH
+}
+
+object "OETH" as oeth <<Origin>><<Proxy>> #DeepSkyBlue {
+    symbol: OETH
+    name: Origin Ether
+}
+
+object "OETH Vault" as oethv <<Origin>><<Proxy>> #DeepSkyBlue {
+assets:
+  WETH
+  frxETH
+  stETH
+  rETH
+}
+
+object "OETHHarvester" as harv <<Origin>><<Proxy>> #DeepSkyBlue {
+    rewards: CRV, CVX
+}
+
+' Strategies
+object "FraxETHStrategy" as frxethstrat <<Origin>><<Proxy>> #DeepSkyBlue {
+    asset: frxETH, WETH
+    vault: sfrxETH
+}
+object "ConvexEthMetaStrategy" as cvxStrat <<Origin>><<Proxy>> #DeepSkyBlue {
+    asset: WETH
+    Curve metapool: OETHCRV-f
+    Convex pool: cvxOETHCRV-f
+}
+object "MorphoAaveStrategy" as morphAaveStrat <<Origin>><<Proxy>> #DeepSkyBlue {
+    asset: WETH
+    Aave token: aWETH
+}
+
+' Oracle
+object "OETHOracleRouter" as oracle <<Origin>> #DeepSkyBlue {
+pairs:
+    stETH/ETH
+    rETH/ETH
+    CRV/ETH
+    CVX/ETH 
+}
+
+' object "EACAggregatorProxy" as chain <<Chainlink>> {
+'     prices: CVX/ETH, CRV/ETH,\nrETH/ETH, stETH/ETH, frxETH/ETH,\nWETH/ETH 
+' }
+
+' ' SushiSwap
+' object "UniswapV2Router02" as sushi <<SushiSwap>> {
+'     pairs: CRV/ETH, CVX/ETH
+' }
+
+' ' Curve
+' object "Gauge" as gauge <<Curve>> {
+'     asset: OETHCRV-f
+'     symbol: OETHCRV-f-gauge
+'     name: Curve.fi OETHCRV-f Gauge Deposit
+' }
+' object "StableSwap" as crvPool <<Curve>> {
+'     assets: [ETH, OETH]
+'     symbol: OETHCRV-f
+'     name: Curve.fi Factory Pool: OETH
+' }
+' ' Convex
+' ' object "Booster" as cvxBoost <<Convex>> {
+' ' }
+' object "BaseRewardPool" as cvxPool <<Convex>> {
+' }
+' object "DepositToken" as cvxPoolLp <<Convex>> {
+'     symbol: cvxOUSD3CRV-f
+'     name: Origin Dollar Convex Deposit
+' }
+
+' ' Aave Morpho
+' object "Morpho\nAave V2" as morphoV2 <<Morpho>> {
+' }
+' object "Morpho\nLens" as morphoLens <<Morpho>> {
+' }
+
+' object "aWETH" as aweth <<Aave>> {
+'     symbol: aWETH
+'     name: Aave interest bearing WETH
+' }
+' object "variableDebtWETH" as vdweth <<Aave>> {
+'     symbol: variableDebtWETH
+'     name: Aave variable debt bearing WETH
+' }
+
+' ' Assets
+
+' object "sfrxETH" as sfrxeth <<FRAX>> {
+'     asset: frxETH
+'     symbol: sfrxETH
+'     name: Staked Frax Ether
+' }
+
+' object "frxETH" as frxeth <<FRAX>> {
+'     symbol: frxETH
+'     name: Frax Ether
+' }
+
+' object "WETH9" as weth <<Dapphub>> {
+'     symbol: WETH
+'     name: Wrapped Ether
+' }
+
+' object "RocketTokenRETH" as reth <<Rocket Pool>> {
+'     symbol: rETH
+'     name: Rocket Pool ETH
+' }
+
+' object "Lido" as steth <<Lido>><<Proxy>> {
+'     symbol: stETH
+'     name: Liquid staked Ether 2.0
+' }
+
+' ' Rewards 
+' object "ConvexToken" as cvx <<Convex>> {
+'     symbol: CVX
+'     name: Convex Token
+' }
+
+' object "Curve DAO Token" as crv <<Convex>> {
+'     symbol: CRV
+'     name: Curve DAO Token
+' }
+
+zap ..> oeth
+zap ..> oethv
+' zap ....> sfrxeth
+' zap .....> frxeth
+' zap .....> weth
+
+' drip .....> weth
+oethv <. drip
+
+checker ..> oeth
+checker ..> oethv
+
+oethv <.. harv 
+' harv ...> sushi
+' harv ...> cvx
+' harv ...> crv
+
+woeth ..> oeth
+oeth <.> oethv
+oethv ..> oracle
+' oracle ...> chain
+
+
+' Staked FRAX ETH Strategy
+oethv ...> frxethstrat
+' frxethstrat ..> sfrxeth
+
+' Convex ETH Metapool Strategy
+harv <..> cvxStrat
+oethv <...> cvxStrat
+oeth <... cvxStrat
+
+' cvxStrat ..> crvPool
+' cvxStrat ..> cvxPool
+' cvxStrat ...> weth
+' cvxStrat ...> cvx
+' cvxStrat ...> crv
+' cvxPool ..> cvxPoolLp
+' cvxPool ..> crv
+' cvxPool .> gauge
+' gauge .> crvPool
+' oeth <... crvPool
+
+' Morpho Aave Strategy
+oethv <...> morphAaveStrat
+oeth <... morphAaveStrat
+' morphAaveStrat ..> morphoV2
+' morphAaveStrat ..> morphoLens
+' morphoLens .> morphoV2
+' morphoV2 ..> aweth
+' morphoV2 ..> vdweth
+
+' ' Vault to Assets
+' oethv .....> frxeth
+' oethv .....> weth
+' oethv .....> reth
+' oethv .....> steth
+
+' sfrxeth ..> frxeth
+
+@enduml

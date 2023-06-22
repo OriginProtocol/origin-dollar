@@ -13,15 +13,9 @@ import PillArrow from 'components/buySell/_PillArrow'
 import SettingsDropdown from 'components/buySell/SettingsDropdown'
 import useSwapEstimator from 'hooks/useSwapEstimator'
 import withIsMobile from 'hoc/withIsMobile'
-import { getUserSource } from 'utils/user'
 import ApproveSwap from 'components/buySell/ApproveSwap'
 import analytics from 'utils/analytics'
 import { formatCurrencyMinMaxDecimals, removeCommas } from '../../utils/math'
-
-let ReactPixel
-if (process.browser) {
-  ReactPixel = require('react-facebook-pixel').default
-}
 
 const lastUserSelectedCoinKey = 'last_user_selected_coin'
 const lastSelectedSwapModeKey = 'last_user_selected_swap_mode'
@@ -223,12 +217,6 @@ const SwapHomepage = ({
     const metadata = swapMetadata()
 
     try {
-      analytics.track('Before Swap Transaction', {
-        category: 'swap',
-        label: metadata.stablecoinUsed,
-        value: metadata.swapAmount,
-      })
-
       let result, swapAmount, minSwapAmount
       if (selectedSwap.name === 'flipper') {
         ;({ result, swapAmount, minSwapAmount } = await swapFlipper())
@@ -266,31 +254,12 @@ const SwapHomepage = ({
       setSelectedBuyCoinAmount('')
       setSelectedRedeemCoinAmount('')
 
-      const receipt = await rpcProvider.waitForTransaction(result.hash)
-      analytics.track('Swap succeeded User source', {
-        category: 'swap',
-        label: getUserSource(),
-        value: metadata.swapAmount,
-      })
+      await rpcProvider.waitForTransaction(result.hash)
       analytics.track('Swap succeeded', {
         category: 'swap',
         label: metadata.stablecoinUsed,
         value: metadata.swapAmount,
       })
-
-      if (swapMode === 'mint') {
-        ReactPixel.track('InitiateCheckout', {
-          value: selectedRedeemCoinAmount,
-          currency: 'usd',
-        })
-
-        if (typeof twttr !== 'undefined') {
-          twttr.conversion.trackPid('o73z1', {
-            tw_sale_amount: selectedRedeemCoinAmount,
-            tw_order_quantity: 1,
-          })
-        }
-      }
     } catch (e) {
       const metadata = swapMetadata()
       // 4001 code happens when a user rejects the transaction

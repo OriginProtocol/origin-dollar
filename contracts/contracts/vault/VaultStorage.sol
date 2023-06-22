@@ -1,8 +1,8 @@
-// SPDX-License-Identifier: agpl-3.0
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
 /**
- * @title OUSD VaultStorage Contract
+ * @title OToken VaultStorage contract
  * @notice The VaultStorage contract defines the storage for the Vault contracts
  * @author Origin Protocol Inc
  */
@@ -50,10 +50,20 @@ contract VaultStorage is Initializable, Governable {
     event NetOusdMintForStrategyThresholdChanged(uint256 _threshold);
 
     // Assets supported by the Vault, i.e. Stablecoins
+    enum UnitConversion {
+        DECIMALS,
+        GETEXCHANGERATE
+    }
     struct Asset {
         bool isSupported;
+        UnitConversion unitConversion;
+        uint256 decimals;
     }
+
+    /// @dev mapping of supported vault assets to their configuration
+    // slither-disable-next-line uninitialized-state
     mapping(address => Asset) internal assets;
+    /// @dev list of all assets supported by the vault.
     address[] internal allAssets;
 
     // Strategies approved for use by the Vault
@@ -61,23 +71,29 @@ contract VaultStorage is Initializable, Governable {
         bool isSupported;
         uint256 _deprecated; // Deprecated storage slot
     }
+    /// @dev mapping of strategy contracts to their configiration
     mapping(address => Strategy) internal strategies;
+    /// @dev list of all vault strategies
     address[] internal allStrategies;
 
-    // Address of the Oracle price provider contract
+    /// @notice Address of the Oracle price provider contract
+    // slither-disable-next-line uninitialized-state
     address public priceProvider;
-    // Pausing bools
+    /// @notice pause rebasing if true
     bool public rebasePaused = false;
+    /// @notice pause operations that change the OToken supply.
+    /// eg mint, redeem, allocate, mint/burn for strategy
     bool public capitalPaused = true;
-    // Redemption fee in basis points
+    /// @notice Redemption fee in basis points. eg 50 = 0.5%
     uint256 public redeemFeeBps;
-    // Buffer of assets to keep in Vault to handle (most) withdrawals
+    /// @notice Percentage of assets to keep in Vault to handle (most) withdrawals. 100% = 1e18.
     uint256 public vaultBuffer;
-    // Mints over this amount automatically allocate funds. 18 decimals.
+    /// @notice OToken mints over this amount automatically allocate funds. 18 decimals.
     uint256 public autoAllocateThreshold;
-    // Mints over this amount automatically rebase. 18 decimals.
+    /// @notice OToken mints over this amount automatically rebase. 18 decimals.
     uint256 public rebaseThreshold;
 
+    /// @dev Address of the OToken token. eg OUSD or OETH.
     OUSD internal oUSD;
 
     //keccak256("OUSD.vault.governor.admin.impl");
@@ -91,37 +107,41 @@ contract VaultStorage is Initializable, Governable {
     // slither-disable-next-line constable-states
     address private _deprecated_uniswapAddr = address(0);
 
-    // Address of the Strategist
+    /// @notice Address of the Strategist
     address public strategistAddr = address(0);
 
-    // Mapping of asset address to the Strategy that they should automatically
+    /// @notice Mapping of asset address to the Strategy that they should automatically
     // be allocated to
     mapping(address => address) public assetDefaultStrategies;
 
+    /// @notice Max difference between total supply and total value of assets. 18 decimals.
     uint256 public maxSupplyDiff;
 
-    // Trustee contract that can collect a percentage of yield
+    /// @notice Trustee contract that can collect a percentage of yield
     address public trusteeAddress;
 
-    // Amount of yield collected in basis points
+    /// @notice Amount of yield collected in basis points. eg 2000 = 20%
     uint256 public trusteeFeeBps;
 
-    // Deprecated: Tokens that should be swapped for stablecoins
+    /// @dev Deprecated: Tokens that should be swapped for stablecoins
     address[] private _deprecated_swapTokens;
 
-    uint256 constant MINT_MINIMUM_ORACLE = 99800000;
+    uint256 constant MINT_MINIMUM_UNIT_PRICE = 0.998e18;
 
-    // Meta strategy that is allowed to mint/burn OUSD without changing collateral
+    /// @notice Metapool strategy that is allowed to mint/burn OTokens without changing collateral
     address public ousdMetaStrategy = address(0);
 
-    // How much OUSD is currently minted by the strategy
+    /// @notice How much OTokens are currently minted by the strategy
     int256 public netOusdMintedForStrategy = 0;
 
-    // How much net total OUSD is allowed to be minted by all strategies
+    /// @notice How much net total OTokens are allowed to be minted by all strategies
     uint256 public netOusdMintForStrategyThreshold = 0;
 
+    uint256 constant MIN_UNIT_PRICE_DRIFT = 0.7e18;
+    uint256 constant MAX_UNIT_PRICE_DRIFT = 1.3e18;
+
     /**
-     * @dev set the implementation for the admin, this needs to be in a base class else we cannot set it
+     * @notice set the implementation for the admin, this needs to be in a base class else we cannot set it
      * @param newImpl address of the implementation
      */
     function setAdminImpl(address newImpl) external onlyGovernor {

@@ -1,17 +1,13 @@
 import React, { useState } from 'react'
 import { useWeb3React } from '@web3-react/core'
-
 import Dropdown from 'components/Dropdown'
 import GetOUSD from 'components/GetOUSD'
 import { isCorrectNetwork, switchEthereumChain } from 'utils/web3'
-
 import withWalletSelectModal from 'hoc/withWalletSelectModal'
-import analytics from 'utils/analytics'
-
 import Content from './_AccountStatusContent'
 import AccountStatusIndicator from './_AccountStatusIndicator'
 
-const AccountStatusDropdown = ({ className, showLogin, dapp }) => {
+const AccountStatusDropdown = ({ className, showLogin }) => {
   const { active, account, chainId } = useWeb3React()
   const [open, setOpen] = useState(false)
   const correctNetwork = isCorrectNetwork(chainId)
@@ -30,25 +26,21 @@ const AccountStatusDropdown = ({ className, showLogin, dapp }) => {
           }`}
           onClick={async (e) => {
             e.preventDefault()
-            if (dapp && !active) {
+            if (!active) {
               showLogin()
             } else if (active && !correctNetwork) {
-              analytics.track('On Change network', {
-                category: 'settings',
-              })
               // open the dropdown to allow disconnecting, while also requesting an auto switch to mainnet
               await switchEthereumChain()
               setOpen(true)
-            } else if (dapp) {
+            } else {
               setOpen(true)
             }
           }}
         >
           {/* The button id is used by StakeBoxBig to trigger connect when no wallet connected */}
-          {((!active && !account) || (!dapp && active && correctNetwork)) && (
+          {!active && !account && (
             <GetOUSD
               id="main-dapp-nav-connect-wallet-button"
-              connect={dapp}
               className="btn-nav"
               trackSource="Account dropdown"
             />
@@ -57,7 +49,6 @@ const AccountStatusDropdown = ({ className, showLogin, dapp }) => {
             active={active}
             correctNetwork={correctNetwork}
             account={account}
-            dapp={dapp}
             withAddress
           />
         </a>

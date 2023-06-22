@@ -139,11 +139,6 @@
   dependencies:
     "@analytics/global-storage-utils" "^0.1.2"
 
-"@analytics/mixpanel@^0.3.1":
-  version "0.3.1"
-  resolved "https://registry.yarnpkg.com/@analytics/mixpanel/-/mixpanel-0.3.1.tgz#d14264774302b1b2039115ebe3d5dbe838376081"
-  integrity sha512-zYtzBUdcza/tAT1if6CN0s+BAqtrA2k17WoMFfi6nrLYEj8V60h/o3l+6RUDyIfIg1GkoUhiAJVxJvxW+CMnCw==
-
 "@analytics/storage-utils@^0.2.14":
   version "0.2.14"
   resolved "https://registry.yarnpkg.com/@analytics/storage-utils/-/storage-utils-0.2.14.tgz#7af47c8e6320726433275b35bf16cf289f0ff061"
@@ -10315,11 +10310,6 @@ mixme@^0.5.1:
   resolved "https://registry.yarnpkg.com/mixme/-/mixme-0.5.4.tgz#8cb3bd0cd32a513c161bf1ca99d143f0bcf2eff3"
   integrity sha512-3KYa4m4Vlqx98GPdOHghxSdNtTvcP8E0kkaJ5Dlh+h2DRzF7zpuVVcA8B0QpKd11YJeP9QQ7ASkKzOeu195Wzw==
 
-mixpanel-browser@^2.41.0:
-  version "2.42.0"
-  resolved "https://registry.yarnpkg.com/mixpanel-browser/-/mixpanel-browser-2.42.0.tgz#85c056577875f6624358bf0d7dcd13678c8277db"
-  integrity sha512-9IC/+BYVIG3PfLn1ubkLsQdXc5dKot3sIXHf56GqssyLCOPPwlZfwhZqg1t8HC/sxGqLCL/HON3YbR7oiXMbeg==
-
 mkdirp-classic@^0.5.2, mkdirp-classic@^0.5.3:
   version "0.5.3"
   resolved "https://registry.yarnpkg.com/mkdirp-classic/-/mkdirp-classic-0.5.3.tgz#fa10c9115cc6d8865be221ba47ee9bed78601113"
@@ -12654,11 +12644,6 @@ react-dom@^17.0.2:
     loose-envify "^1.1.0"
     object-assign "^4.1.1"
     scheduler "^0.20.2"
-
-react-facebook-pixel@^1.0.4:
-  version "1.0.4"
-  resolved "https://registry.yarnpkg.com/react-facebook-pixel/-/react-facebook-pixel-1.0.4.tgz#4760b60dc0451e345649d9710152b4b5419cf989"
-  integrity sha512-givZY8MS0v/mdbRzvcvouBo/j0TtDiu/93f4gIjJXwDDgwlf6bYUiQvb2qcqjluOOD/hIKUQHNYLNsSOnoEklg==
 
 react-is@16.13.1, react-is@^16.3.2, react-is@^16.6.0, react-is@^16.7.0, react-is@^16.8.1:
   version "16.13.1"

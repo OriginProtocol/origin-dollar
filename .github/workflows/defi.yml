@@ -1,0 +1,231 @@
+name: DeFi
+on: 
+  pull_request:
+    types: [opened, reopened, synchronize]
+  push:
+    branches:
+      - 'master'
+      - 'staging'
+      - 'stable'
+  workflow_dispatch:
+
+concurrency:
+  cancel-in-progress: true
+  group: ${{ github.ref_name }}
+
+jobs:
+  contracts-lint:
+    name: "Contracts Linter"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "16.x"
+          cache: "yarn"
+          cache-dependency-path: contracts/yarn.lock
+
+      - run: yarn install --frozen-lockfile
+        working-directory: ./contracts
+
+      - run: yarn run lint
+        working-directory: ./contracts
+
+      - run: yarn prettier:check
+        working-directory: ./contracts
+
+  contracts-test:
+    name: "Contracts Unit Tests"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "16.x"
+          cache: "yarn"
+          cache-dependency-path: contracts/yarn.lock
+
+      - run: yarn install --frozen-lockfile
+        working-directory: ./contracts
+
+      - name: Run Tests
+        run: yarn run test:coverage
+        working-directory: ./contracts
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: unit-test-coverage-${{ github.sha }}
+          path: | 
+            ./contracts/coverage.json
+            ./contracts/coverage/**/*
+          retention-days: 1
+
+      # - uses: codecov/codecov-action@v3
+
+  contracts-forktest:
+    name: "Contracts Fork Tests"
+    runs-on: ubuntu-latest
+    env:
+      HARDHAT_CACHE_DIR: ./cache
+      PROVIDER_URL: ${{ secrets.PROVIDER_URL }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "16.x"
+          cache: "yarn"
+          cache-dependency-path: contracts/yarn.lock
+
+      - uses: actions/cache@v3
+        id: hardhat-cache
+        with:
+          path: contracts/cache
+          key: ${{ runner.os }}-hardhat-${{ hashFiles('contracts/cache/*.json') }}
+          restore-keys: |
+            ${{ runner.os }}-hardhat-cache
+
+      - run: yarn install --frozen-lockfile
+        working-directory: ./contracts
+
+      - run: yarn run test:coverage:fork
+        working-directory: ./contracts
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: fork-test-coverage-${{ github.sha }}
+          path: | 
+            ./contracts/coverage.json
+            ./contracts/coverage/**/*
+          retention-days: 1
+
+  coverage-uploader:
+    name: "Upload Coverage Reports"
+    runs-on: ubuntu-latest
+    needs:
+      - contracts-test
+      - contracts-forktest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Use Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "16.x"
+          cache: "yarn"
+          cache-dependency-path: contracts/yarn.lock
+
+      - uses: actions/cache@v3
+        id: hardhat-cache
+        with:
+          path: contracts/cache
+          key: ${{ runner.os }}-hardhat-${{ hashFiles('contracts/cache/*.json') }}
+          restore-keys: |
+            ${{ runner.os }}-hardhat-cache
+
+      - run: yarn install --frozen-lockfile
+        working-directory: ./contracts
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: fork-test-coverage-${{ github.sha }}
+          path: ./fork-coverage
+      - uses: actions/download-artifact@v3
+        with:
+          name: unit-test-coverage-${{ github.sha }}
+          path: ./unit-coverage
+
+      - uses: codecov/codecov-action@v3
+        with:
+          fail_ci_if_error: true
+
+  dapp-lint:
+    name: "OUSD DApp Linter"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "16.x"
+          cache: "yarn"
+          cache-dependency-path: dapp/yarn.lock
+
+      - run: yarn install --frozen-lockfile
+        working-directory: ./dapp
+
+      - run: yarn prettier:check
+        working-directory: ./dapp
+
+  dapp-oeth-lint:
+    name: "OETH DApp Linter"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Use Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "16.x"
+          cache: "yarn"
+          cache-dependency-path: dapp-oeth/yarn.lock
+
+      - run: yarn install --frozen-lockfile
+        working-directory: ./dapp-oeth
+
+      - run: yarn prettier:check
+        working-directory: ./dapp-oeth
+
+  slither:
+    name: "Slither"
+    # As long as we need Python 3.6 here in the test, we can only use up to Ubuntu 20.
+    # https://github.com/rwth-i6/returnn/issues/1226
+    runs-on: ubuntu-20.04
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python 3.6
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.6
+
+      - name: Install dependencies
+        run: |
+          wget https://github.com/ethereum/solidity/releases/download/v0.5.11/solc-static-linux
+          chmod +x solc-static-linux
+          sudo mv solc-static-linux /usr/local/bin/solc
+          pip3 install slither-analyzer
+
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "16.x"
+          cache: "yarn"
+          cache-dependency-path: contracts/yarn.lock
+
+      - run: yarn install --frozen-lockfile
+        working-directory: ./contracts
+
+      - name: Test with Slither
+        working-directory: ./contracts
+        run: yarn run slither
+
+  snyk:
+    name: "Snyk"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: Run Snyk to check for vulnerabilities
+        uses: snyk/actions/node@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high  --all-projects

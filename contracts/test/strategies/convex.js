@@ -33,11 +33,13 @@ describe("Convex Strategy", function () {
     dai;
 
   const mint = async (amount, asset) => {
-    await asset.connect(anna).mint(units(amount, asset));
-    await asset.connect(anna).approve(vault.address, units(amount, asset));
+    await asset.connect(anna).mint(await units(amount, asset));
+    await asset
+      .connect(anna)
+      .approve(vault.address, await units(amount, asset));
     return await vault
       .connect(anna)
-      .mint(asset.address, units(amount, asset), 0);
+      .mint(asset.address, await units(amount, asset), 0);
   };
 
   beforeEach(async function () {
@@ -214,7 +216,7 @@ describe("Convex Strategy", function () {
     it("Should collect reward tokens and swap via Uniswap", async () => {
       const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
 
-      mockUniswapRouter.initialize(
+      await mockUniswapRouter.initialize(
         [crv.address, cvx.address],
         [usdt.address, usdt.address]
       );
@@ -279,7 +281,7 @@ describe("Convex Strategy", function () {
 
     const harvestAndSwapTokens = async (callAsGovernor) => {
       const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
-      mockUniswapRouter.initialize(
+      await mockUniswapRouter.initialize(
         [crv.address, cvx.address],
         [usdt.address, usdt.address]
       );

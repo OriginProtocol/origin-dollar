@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: agpl-3.0
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
 import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
@@ -32,6 +32,7 @@ library StableMath {
         if (to > from) {
             x = x.mul(10**(to - from));
         } else if (to < from) {
+            // slither-disable-next-line divide-before-multiply
             x = x.div(10**(from - to));
         }
         return x;

@@ -1,22 +1,17 @@
-import React, { useState } from 'react'
+import React from 'react'
 import classnames from 'classnames'
 import Head from 'next/head'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useStoreState } from 'pullstate'
-import { useEffect, useRef } from 'react'
-import { useCookies } from 'react-cookie'
 import { fbt } from 'fbt-runtime'
 import { useWeb3React } from '@web3-react/core'
 import { get } from 'lodash'
-
-import { useEagerConnect } from 'utils/hooks'
 import AccountStore from 'stores/AccountStore'
 import ContractStore from 'stores/ContractStore'
 import StakeStore from 'stores/StakeStore'
 import withRpcProvider from 'hoc/withRpcProvider'
 import AppFooter from './AppFooter'
-import MarketingFooter from './MarketingFooter'
 import { adjustLinkHref } from 'utils/utils'
 import { assetRootPath } from 'utils/image'
 import { burnTimer } from 'utils/constants'
@@ -28,7 +23,6 @@ const Layout = ({
   locale,
   onLocale,
   children,
-  dapp,
   short,
   shorter,
   medium,
@@ -65,7 +59,7 @@ const Layout = ({
   const burnPage = pathname === '/burn'
   const stakePage = pathname === '/earn'
   const stakes = useStoreState(StakeStore, (s) => s)
-  const showStakingBanner = dapp && !stakePage && stakes.stakes?.length
+  const showStakingBanner = !stakePage && stakes.stakes?.length
 
   const notice = showStakingBanner || burnTimer().days >= 0
 
@@ -105,10 +99,7 @@ const Layout = ({
       </Head>
       <div
         className={classnames(
-          'notice text-white text-center p-3',
-          {
-            dapp,
-          },
+          'notice text-white text-center p-3 dapp',
           rebaseOptedOut ? '' : 'd-none'
         )}
       >
@@ -133,10 +124,7 @@ const Layout = ({
       </div>
       <div
         className={classnames(
-          'notice text-white text-center p-3',
-          {
-            dapp,
-          },
+          'notice text-white text-center p-3 dapp',
           showUniswapNotice ? '' : 'd-none'
         )}
       >
@@ -164,17 +152,10 @@ const Layout = ({
           className={classnames(
             `notice ${showStakingBanner ? 'staking pt-2' : 'pt-3'} ${
               burnPage ? 'burn' : ''
-            } ${dapp ? '' : 'px-lg-5'} text-white text-center pb-3`,
-            {
-              dapp,
-            }
+            } text-white text-center pb-3 dapp`
           )}
         >
-          <div
-            className={`container d-flex flex-column flex-md-row align-items-center ${
-              dapp ? '' : 'nav px-lg-5'
-            }`}
-          >
+          <div className="container d-flex flex-column flex-md-row align-items-center">
             {showStakingBanner ? (
               <>
                 <div className="d-flex flex-column mt-0 justify-content-center px-4 px-md-0 text-md-left">
@@ -225,12 +206,10 @@ const Layout = ({
           </div>
         </div>
       )}
-      <main className={classnames({ dapp, short, shorter, medium })}>
-        {dapp && <div className="container">{children}</div>}
-        {!dapp && children}
+      <main className={classnames('dapp', { short, shorter, medium })}>
+        {<div className="container">{children}</div>}
       </main>
-      {!dapp && <MarketingFooter locale={locale} />}
-      {dapp && <AppFooter dapp={dapp} locale={locale} onLocale={onLocale} />}
+      {<AppFooter locale={locale} onLocale={onLocale} />}
       <style jsx>{`
         .notice {
           background-color: black;

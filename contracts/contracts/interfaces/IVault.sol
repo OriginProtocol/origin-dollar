@@ -1,5 +1,7 @@
-// SPDX-License-Identifier: agpl-3.0
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
+
+import { VaultStorage } from "../vault/VaultStorage.sol";
 
 interface IVault {
     event AssetSupported(address _asset);
@@ -70,7 +72,7 @@ interface IVault {
 
     function ousdMetaStrategy() external view returns (address);
 
-    function supportAsset(address _asset) external;
+    function supportAsset(address _asset, uint8 _supportsAsset) external;
 
     function approveStrategy(address _addr) external;
 
@@ -98,20 +100,13 @@ interface IVault {
 
     function transferToken(address _asset, uint256 _amount) external;
 
-    function priceUSDMint(address asset) external view returns (uint256);
+    function priceUnitMint(address asset) external view returns (uint256);
 
-    function priceUSDRedeem(address asset) external view returns (uint256);
+    function priceUnitRedeem(address asset) external view returns (uint256);
 
     function withdrawAllFromStrategy(address _strategyAddr) external;
 
     function withdrawAllFromStrategies() external;
-
-    function reallocate(
-        address _strategyFromAddress,
-        address _strategyToAddress,
-        address[] calldata _assets,
-        uint256[] calldata _amounts
-    ) external;
 
     function withdrawFromStrategy(
         address _strategyFromAddress,
@@ -154,6 +149,11 @@ interface IVault {
         returns (uint256[] memory);
 
     function getAssetCount() external view returns (uint256);
+
+    function getAssetConfig(address _asset)
+        external
+        view
+        returns (VaultStorage.Asset memory config);
 
     function getAllAssets() external view returns (address[] memory);
 
