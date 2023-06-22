@@ -29,18 +29,18 @@ contract VaultCore is VaultStorage {
         0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
 
     /**
-     * @dev Verifies that the deposits are not paused.
-     */
-    modifier whenNotCapitalPaused() {
-        require(!capitalPaused, "Capital paused");
-        _;
-    }
-
-    /**
      * @dev Verifies that the rebasing is not paused.
      */
     modifier whenNotRebasePaused() {
         require(!rebasePaused, "Rebasing paused");
+        _;
+    }
+
+    /**
+     * @dev Verifies that the deposits are not paused.
+     */
+    modifier whenNotCapitalPaused() {
+        require(!capitalPaused, "Capital paused");
         _;
     }
 
