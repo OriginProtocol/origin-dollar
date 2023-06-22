@@ -1,4 +1,4 @@
-{
+hardhat-trace{
   "name": "origin-dollar-contracts",
   "version": "0.1.0",
   "description": "Origin Dollar Contracts",
@@ -71,9 +71,5 @@
     "hooks": {
       "pre-push": "yarn run prettier:check"
     }
-  },
-  "dependencies": {
-    "hardhat-gas-reporter": "^1.0.9",
-    "hardhat-tracer": "^2.2.2"
   }
 }
