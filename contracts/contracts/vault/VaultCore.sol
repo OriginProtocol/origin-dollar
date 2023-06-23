@@ -411,7 +411,7 @@ contract VaultCore is VaultStorage {
 
     /**
      * @dev Internal to calculate total value of all assets held in Vault.
-     * @return value Total value in ETH (1e18)
+     * @return value Total value in base currency. eg USD or ETH (1e18)
      */
     function _totalValueInVault() internal view returns (uint256 value) {
         uint256 assetCount = allAssets.length;
@@ -426,7 +426,7 @@ contract VaultCore is VaultStorage {
 
     /**
      * @dev Internal to calculate total value of all assets held in Strategies.
-     * @return value Total value in ETH (1e18)
+     * @return value Total value in base currency. eg USD or ETH (1e18)
      */
     function _totalValueInStrategies() internal view returns (uint256 value) {
         uint256 stratCount = allStrategies.length;
@@ -438,7 +438,7 @@ contract VaultCore is VaultStorage {
     /**
      * @dev Internal to calculate total value of all assets held by strategy.
      * @param _strategyAddr Address of the strategy
-     * @return value Total value in ETH (1e18)
+     * @return value Total value in base currency. eg USD or ETH (1e18)
      */
     function _totalValueInStrategy(address _strategyAddr)
         internal
