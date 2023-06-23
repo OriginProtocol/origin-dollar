@@ -21,8 +21,19 @@ module.exports = deploymentWithGovernanceProposal(
 
     // Deploy VaultAdmin and VaultCore contracts
     const cVaultProxy = await ethers.getContract("VaultProxy");
-    const dVaultAdmin = await deployWithConfirmation("VaultAdmin");
-    const dVaultCore = await deployWithConfirmation("VaultCore");
+    const dVaultAdmin = await deployWithConfirmation(
+      "VaultAdmin",
+      [],
+      undefined,
+      true // incompatible storage layout
+    );
+    const dVaultCore = await deployWithConfirmation(
+      "VaultCore",
+      [],
+      undefined,
+      true // incompatible storage layout
+    );
+
     const cVault = await ethers.getContractAt("Vault", cVaultProxy.address);
 
     // Deploy Oracle Router

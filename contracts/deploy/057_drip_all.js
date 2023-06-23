@@ -23,8 +23,18 @@ module.exports = deploymentWithGovernanceProposal(
     const cVaultProxy = await ethers.getContract("VaultProxy");
     // const cHarvester = await ethers.getContract("Harvester");
 
-    const dVaultCore = await deployWithConfirmation("VaultCore");
-    const dVaultAdmin = await deployWithConfirmation("VaultAdmin");
+    const dVaultAdmin = await deployWithConfirmation(
+      "VaultAdmin",
+      [],
+      undefined,
+      true // incompatible storage layout
+    );
+    const dVaultCore = await deployWithConfirmation(
+      "VaultCore",
+      [],
+      undefined,
+      true // incompatible storage layout
+    );
 
     const cVaultCore = await ethers.getContract(
       "VaultCore",
