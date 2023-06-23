@@ -367,7 +367,7 @@ contract VaultAdmin is VaultStorage {
      */
     function approveStrategy(address _addr) external onlyGovernor {
         require(!strategies[_addr].isSupported, "Strategy already approved");
-        strategies[_addr] = Strategy({ isSupported: true, _deprecated: 0 });
+        strategies[_addr] = Strategy({ isSupported: true });
         allStrategies.push(_addr);
         emit StrategyApproved(_addr);
     }

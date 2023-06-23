@@ -77,7 +77,6 @@ contract VaultStorage is Initializable, Governable {
     // Strategies approved for use by the Vault
     struct Strategy {
         bool isSupported;
-        uint256 _deprecated; // Deprecated storage slot
     }
     /// @dev mapping of strategy contracts to their configiration
     mapping(address => Strategy) internal strategies;
