@@ -71,7 +71,7 @@ const BalanceHeaderWrapped = ({
                   src={assetRootPath(`/images/currency/woeth-icon-small.svg`)}
                 />
               )}
-              <p>{value}</p>
+              <p className={`${value != 0 ? 'white' : ''}`}>{value}</p>
               {!small && (
                 <img
                   className="d-none d-md-block"
@@ -82,6 +82,10 @@ const BalanceHeaderWrapped = ({
           </div>
         </div>
         <style jsx>{`
+          .white {
+            color: #fafafb !important;
+          }
+
           .containSmallTop {
             border-top: 1px solid #141519;
           }
@@ -186,7 +190,7 @@ const BalanceHeaderWrapped = ({
             }
 
             .stat .big {
-              font-size: 20px;
+              font-size: 24px;
             }
 
             .stat .small {
@@ -321,7 +325,7 @@ const BalanceHeaderWrapped = ({
               );
               -webkit-background-clip: text;
               -webkit-text-fill-color: transparent;
-              font-size: 20px;
+              font-size: 24px;
               margin-bottom: 0;
             }
           }

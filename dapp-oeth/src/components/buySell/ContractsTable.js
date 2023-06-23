@@ -792,6 +792,10 @@ const ContractsTable = () => {
           .contracts-main {
             padding-bottom: 16px;
           }
+
+          .contracts-wrapper {
+            border-radius: 4px;
+          }
         }
       `}</style>
     </div>

@@ -60,12 +60,12 @@ const Layout = ({
         <meta
           property="og:image"
           key="og:image"
-          content="https://ousd.com/images/share-facebook.png"
+          content={assetRootPath('/images/share-facebook.png')}
         />
         <meta
           name="twitter:image"
           key="twitter:image"
-          content="https://ousd.com/images/share-twitter.png"
+          content={assetRootPath('/images/share-twitter.png')}
         />
       </Head>
 

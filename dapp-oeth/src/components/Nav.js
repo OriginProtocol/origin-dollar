@@ -66,7 +66,6 @@ const DappLinks = ({ page }) => {
         .link-contain {
           font-size: 16px;
           border-radius: 56px;
-          margin-right: 8px;
         }
 
         .link-contain.last {
@@ -888,7 +887,7 @@ const Nav = ({ isMobile, locale, onLocale, page }) => {
 
         @media (max-width: 799px) {
           .navbar .nav-container {
-            padding: 0 8px;
+            padding: 0 12px;
           }
         }
       `}</style>

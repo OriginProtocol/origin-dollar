@@ -125,8 +125,8 @@ const SettingsDropdown = ({ setPriceToleranceValue, priceToleranceValue }) => {
         }
 
         .settings-icon {
-          width: 22px;
-          height: 22px;
+          width: 16px;
+          height: 16px;
           cursor: pointer;
         }
 
@@ -159,6 +159,18 @@ const SettingsDropdown = ({ setPriceToleranceValue, priceToleranceValue }) => {
           border-radius: 80px;
           height: 40px;
           padding: 0 12px;
+        }
+
+        /* Chrome, Safari, Edge, Opera */
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+
+        /* Firefox */
+        input[type='number'] {
+          -moz-appearance: textfield;
         }
 
         .warning {
