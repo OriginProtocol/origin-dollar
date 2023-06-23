@@ -91,24 +91,33 @@ abstract contract UniswapV3StrategyStorage is InitializableAbstractStrategy {
         uint256 netValue; // Last recorded net value of the position
     }
 
-    // Set to the proxy address when initialized
+    /// @notice The strategy's proxy contract address
+    /// @dev is set when initialized
     IUniswapV3Strategy public _self;
 
-    // The address that can manage the positions on Uniswap V3
+    /// @notice The address that can manage the positions on Uniswap V3
     address public operatorAddr;
-    address public token0; // Token0 of Uniswap V3 Pool
-    address public token1; // Token1 of Uniswap V3 Pool
+    /// @notice Token0 of Uniswap V3 Pool
+    address public token0;
+    /// @notice Token1 of Uniswap V3 Pool
+    address public token1;
 
     // When the funds are not deployed in Uniswap V3 Pool, they will
     // be deposited to these reserve strategies
-    IStrategy public reserveStrategy0; // Reserve strategy for token0
-    IStrategy public reserveStrategy1; // Reserve strategy for token1
+    /// @notice Reserve strategy for token0
+    IStrategy public reserveStrategy0;
+    /// @notice Reserve strategy for token1
+    IStrategy public reserveStrategy1;
 
-    uint24 public poolFee; // Uniswap V3 Pool Fee
-    bool public swapsPaused = false; // True if Swaps are paused
-    bool public rebalancePaused = false; // True if Swaps are paused
+    /// @notice Uniswap V3 Pool Fee
+    uint24 public poolFee;
+    /// @notice True if Swaps are paused
+    bool public swapsPaused = false;
+    /// @notice True if liquidity rebalances are paused
+    bool public rebalancePaused = false;
 
-    uint256 public maxTVL; // In USD, 18 decimals
+    /// @notice Maximum amount the strategy can have deployed in the Uniswap pool. In OTokens to 18 decimals
+    uint256 public maxTVL;
 
     // Deposits to reserve strategy when contract balance exceeds this amount
     uint256 public minDepositThreshold0;
@@ -122,34 +131,34 @@ abstract contract UniswapV3StrategyStorage is InitializableAbstractStrategy {
     uint160 public minSwapPriceX96;
     uint160 public maxSwapPriceX96;
 
-    // Token ID of active Position on the pool. zero, if there are no active LP position
+    /// @notice Token ID of active Position on the pool. zero, if there are no active LP position
     uint256 public activeTokenId;
 
-    // Sum of loss in value of tokens deployed to the pool
+    /// @notice Sum of loss in value of tokens deployed to the pool
     uint256 public netLostValue;
 
-    // Max value loss threshold after which rebalances aren't allowed
+    /// @notice Max value loss threshold after which rebalances aren't allowed
     uint256 public maxPositionValueLostThreshold;
 
-    // Uniswap V3's Pool
+    /// @notice Uniswap V3's Pool
     IUniswapV3Pool public pool;
 
-    // Uniswap V3's PositionManager
+    /// @notice Uniswap V3's PositionManager
     INonfungiblePositionManager public positionManager;
 
-    // A deployed contract that's used to call methods of Uniswap V3's libraries despite version mismatch
+    /// @notice A deployed contract that's used to call methods of Uniswap V3's libraries despite version mismatch
     IUniswapV3Helper public helper;
 
-    // Uniswap Swap Router
+    /// @notice Uniswap Swap Router
     ISwapRouter public swapRouter;
 
-    // A lookup table to find token IDs of position using f(lowerTick, upperTick)
+    /// @notice A lookup table to find token IDs of position using f(lowerTick, upperTick)
     mapping(int48 => uint256) public ticksToTokenId;
 
-    // Maps tokenIDs to their Position object
+    /// @notice Maps tokenIDs to their Position object
     mapping(uint256 => Position) public tokenIdToPosition;
 
-    // keccak256("OUSD.UniswapV3Strategy.LiquidityManager.impl")
+    /// @notice keccak256("OUSD.UniswapV3Strategy.LiquidityManager.impl")
     bytes32 constant LIQUIDITY_MANAGER_IMPL_POSITION =
         0xec676d52175f7cbb4e4ea392c6b70f8946575021aad20479602b98adc56ad62d;
 
@@ -192,7 +201,7 @@ abstract contract UniswapV3StrategyStorage is InitializableAbstractStrategy {
             Shared functions
     ****************************************/
     /**
-     * @notice Deposits token balances in the contract back to the reserve strategies
+     * @dev Deposits token balances in the contract back to the reserve strategies
      */
     function _depositAll() internal {
         uint256 token0Bal = IERC20(token0).balanceOf(address(this));
@@ -209,7 +218,7 @@ abstract contract UniswapV3StrategyStorage is InitializableAbstractStrategy {
     }
 
     /**
-     * @notice Returns the balance of both tokens in a given position (including fees)
+     * @dev Returns the balance of both tokens in a given position (including fees)
      * @param tokenId tokenID of the Position NFT
      * @return amount0 Amount of token0 in position
      * @return amount1 Amount of token1 in position
@@ -230,7 +239,7 @@ abstract contract UniswapV3StrategyStorage is InitializableAbstractStrategy {
     }
 
     /**
-     * @notice Returns the balance of both tokens in a given position (without fees)
+     * @dev Returns the balance of both tokens in a given position (without fees)
      * @param tokenId tokenID of the Position NFT
      * @return amount0 Amount of token0 in position
      * @return amount1 Amount of token1 in position

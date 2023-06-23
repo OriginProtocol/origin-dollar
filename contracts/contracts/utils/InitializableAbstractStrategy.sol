@@ -103,7 +103,7 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
     }
 
     /**
-     * @dev Collect accumulated reward token and send to Harvester.
+     * @notice Collect accumulated reward token and send to Harvester.
      */
     function collectRewardTokens() external virtual onlyHarvester nonReentrant {
         _collectRewardTokens();
@@ -163,7 +163,7 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
     }
 
     /**
-     * @dev Set the reward token addresses.
+     * @notice Set the reward token addresses.
      * @param _rewardTokenAddresses Address array of the reward token
      */
     function setRewardTokenAddresses(address[] calldata _rewardTokenAddresses)
@@ -185,7 +185,7 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
     }
 
     /**
-     * @dev Get the reward token addresses.
+     * @notice Get the reward token addresses.
      * @return address[] the reward token addresses.
      */
     function getRewardTokenAddresses()
@@ -197,7 +197,7 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
     }
 
     /**
-     * @dev Provide support for asset by passing its pToken address.
+     * @notice Provide support for asset by passing its pToken address.
      *      This method can only be called by the system Governor
      * @param _asset    Address for the asset
      * @param _pToken   Address for the corresponding platform token
@@ -211,7 +211,7 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
     }
 
     /**
-     * @dev Remove a supported asset by passing its index.
+     * @notice Remove a supported asset by passing its index.
      *      This method can only be called by the system Governor
      * @param _assetIndex Index of the asset to be removed
      */
@@ -252,7 +252,7 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
     }
 
     /**
-     * @dev Transfer token to governor. Intended for recovering tokens stuck in
+     * @notice Transfer token to governor. Intended for recovering tokens stuck in
      *      strategy contracts, i.e. mistaken sends.
      * @param _asset Address for the asset
      * @param _amount Amount of the asset to transfer
@@ -265,7 +265,7 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
     }
 
     /**
-     * @dev Set the reward token addresses.
+     * @notice Set the reward token addresses.
      * @param _harvesterAddress Address of the harvester
      */
     function setHarvesterAddress(address _harvesterAddress)
@@ -291,25 +291,25 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
         virtual;
 
     /**
-     * @dev Approve all the assets supported by the strategy
+     * @notice Approve all the assets supported by the strategy
      *      to be moved around the platform.
      */
     function safeApproveAllTokens() external virtual;
 
     /**
-     * @dev Deposit an amount of asset into the platform
+     * @notice Deposit an amount of asset into the platform
      * @param _asset               Address for the asset
      * @param _amount              Units of asset to deposit
      */
     function deposit(address _asset, uint256 _amount) external virtual;
 
     /**
-     * @dev Deposit balance of all supported assets into the platform
+     * @notice Deposit balance of all supported assets into the platform
      */
     function depositAll() external virtual;
 
     /**
-     * @dev Withdraw an amount of asset from the platform.
+     * @notice Withdraw an amount of asset from the platform.
      * @param _recipient         Address to which the asset should be sent
      * @param _asset             Address of the asset
      * @param _amount            Units of asset to withdraw
@@ -321,7 +321,7 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
     ) external virtual;
 
     /**
-     * @dev Withdraw all assets from strategy sending assets to Vault.
+     * @notice Withdraw all assets from strategy sending assets to Vault.
      */
     function withdrawAll() external virtual;
 
@@ -338,7 +338,7 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
         returns (uint256 balance);
 
     /**
-     * @dev Check if an asset is supported.
+     * @notice Check if an asset is supported.
      * @param _asset    Address of the asset
      * @return bool     Whether asset is supported
      */
