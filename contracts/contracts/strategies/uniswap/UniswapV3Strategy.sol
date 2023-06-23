@@ -16,11 +16,9 @@ import { IUniswapV3Helper } from "../../interfaces/uniswap/v3/IUniswapV3Helper.s
 import { IUniswapV3Pool } from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import { IUniswapV3Strategy } from "../../interfaces/IUniswapV3Strategy.sol";
 import { ISwapRouter } from "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
-import { StableMath } from "../../utils/StableMath.sol";
 
 contract UniswapV3Strategy is UniswapV3StrategyStorage {
     using SafeERC20 for IERC20;
-    using StableMath for uint256;
 
     /**
      * @dev Initialize the contract
@@ -365,7 +363,7 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
     }
 
     /**
-     * @dev Only checks the active LP position and undeployed/undeposited balance held by the contract.
+     * @notice Only checks the active LP position and undeployed/undeposited balance held by the contract.
      *      Doesn't return the balance held in the reserve strategies.
      * @inheritdoc InitializableAbstractStrategy
      */
@@ -403,7 +401,7 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
             ERC721 management
     ****************************************/
 
-    /// Callback function for whenever a NFT is transferred to this contract
+    /// @notice Callback function for whenever a NFT is transferred to this contract
     // solhint-disable-next-line max-line-length
     /// Ref: https://docs.openzeppelin.com/contracts/3.x/api/token/erc721#IERC721Receiver-onERC721Received-address-address-uint256-bytes-
     function onERC721Received(
@@ -435,7 +433,7 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
     }
 
     /**
-     * Removes all allowance of both the tokens from NonfungiblePositionManager as
+     * @notice Removes all allowance of both the tokens from NonfungiblePositionManager as
      * well as from the Uniswap V3 Swap Router
      */
     function resetAllowanceOfTokens() external onlyGovernor nonReentrant {
@@ -486,7 +484,7 @@ contract UniswapV3Strategy is UniswapV3StrategyStorage {
             Proxy to liquidity management
     ****************************************/
     /**
-     * @dev Sets the implementation for the liquidity manager
+     * @notice Sets the implementation for the liquidity manager
      * @param newImpl address of the implementation
      */
     function setLiquidityManagerImpl(address newImpl) external onlyGovernor {
