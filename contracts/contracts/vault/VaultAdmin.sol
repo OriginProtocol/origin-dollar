@@ -182,55 +182,36 @@ contract VaultAdmin is VaultStorage {
         require(fromAssetConfig.isSupported, "From asset is not supported");
         require(toAssetConfig.isSupported, "To asset is not supported");
 
-        uint256 toAssetBalBefore = IERC20(_toAsset).balanceOf(address(this));
-
         // Load swap config into memory to avoid separate SLOADs
         SwapConfig memory config = swapConfig;
 
-        // Transfer from assets to the swapper contract
-        IERC20(_fromAsset).safeTransfer(config.swapper, _fromAssetAmount);
+        // Scope a new block to remove toAssetBalBefore from the scope of swapCollateral.
+        // This avoids a stack too deep error.
+        {
+            uint256 toAssetBalBefore = IERC20(_toAsset).balanceOf(
+                address(this)
+            );
 
-        // Call to the Swapper contract to do the actual swap
-        // The -1 is required for stETH which sometimes transfers 1 wei less than what was specified.
-        // slither-disable-next-line unused-return
-        ISwapper(config.swapper).swap(
-            _fromAsset,
-            _toAsset,
-            _fromAssetAmount - 1,
-            _minToAssetAmount,
-            _data
-        );
+            // Transfer from assets to the swapper contract
+            IERC20(_fromAsset).safeTransfer(config.swapper, _fromAssetAmount);
 
-        // Compute the change in asset balance held by the Vault
-        toAssetAmount =
-            IERC20(_toAsset).balanceOf(address(this)) -
-            toAssetBalBefore;
+            // Call to the Swapper contract to do the actual swap
+            // The -1 is required for stETH which sometimes transfers 1 wei less than what was specified.
+            // slither-disable-next-line unused-return
+            ISwapper(config.swapper).swap(
+                _fromAsset,
+                _toAsset,
+                _fromAssetAmount - 1,
+                _minToAssetAmount,
+                _data
+            );
 
-        // Moved to a separate function to avoid stack too deep errors
-        _postSwapChecks(
-            _fromAsset,
-            _fromAssetAmount,
-            fromAssetConfig,
-            _toAsset,
-            toAssetAmount,
-            _minToAssetAmount,
-            toAssetConfig,
-            config
-        );
+            // Compute the change in asset balance held by the Vault
+            toAssetAmount =
+                IERC20(_toAsset).balanceOf(address(this)) -
+                toAssetBalBefore;
+        }
 
-        emit Swapped(_fromAsset, _toAsset, _fromAssetAmount, toAssetAmount);
-    }
-
-    function _postSwapChecks(
-        address _fromAsset,
-        uint256 _fromAssetAmount,
-        Asset memory fromAssetConfig,
-        address _toAsset,
-        uint256 toAssetAmount,
-        uint256 _minToAssetAmount,
-        Asset memory toAssetConfig,
-        SwapConfig memory config
-    ) internal view {
         // Check the to assets returned is above slippage amount specified by the strategist
         require(
             toAssetAmount >= _minToAssetAmount,
@@ -258,6 +239,8 @@ contract VaultAdmin is VaultStorage {
                     1e4,
             "Allowed value < supply"
         );
+
+        emit Swapped(_fromAsset, _toAsset, _fromAssetAmount, toAssetAmount);
     }
 
     /***************************************
