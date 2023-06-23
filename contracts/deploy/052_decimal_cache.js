@@ -29,9 +29,19 @@ module.exports = deploymentWithGovernanceProposal(
 
     // Current contracts
     const cVaultProxy = await ethers.getContract("VaultProxy");
-    const dVaultAdmin = await deployWithConfirmation("VaultAdmin");
+    const dVaultAdmin = await deployWithConfirmation(
+      "VaultAdmin",
+      [],
+      undefined,
+      true // incompatible storage layout
+    );
     const dOracleRouter = await deployWithConfirmation("OracleRouter");
-    const dVaultCore = await deployWithConfirmation("VaultCore");
+    const dVaultCore = await deployWithConfirmation(
+      "VaultCore",
+      [],
+      undefined,
+      true // incompatible storage layout
+    );
 
     const cVault = await ethers.getContractAt("Vault", cVaultProxy.address);
     const cOracleRouter = await ethers.getContract("OracleRouter");
