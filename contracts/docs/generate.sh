@@ -67,6 +67,11 @@ sol2uml .. -v -hv -hf -he -hs -hl -b MorphoCompoundStrategy -o MorphoCompStrateg
 sol2uml .. -s -d 0 -b MorphoCompoundStrategy -o MorphoCompStrategySquashed.svg
 sol2uml storage .. -c MorphoCompoundStrategy -o MorphoCompStrategyStorage.svg
 
+# contracts/strategies/uniswap/v3
+sol2uml .. -v -hv -hf -he -hs -hl -hi -b UniswapV3Strategy,UniswapV3LiquidityManager -o UniswapV3StrategyHierarchy.svg
+sol2uml .. -s -d 0 -b UniswapV3Strategy -o UniswapV3StrategySquashed.svg
+sol2uml storage .. -c UniswapV3Strategy -o UniswapV3StrategyStorage.svg
+
 # contracts/timelock
 sol2uml .. -v -hv -hf -he -hs -hl -b Timelock -o TimelockHierarchy.svg
 sol2uml .. -s -d 0 -b Timelock -o TimelockSquashed.svg
