@@ -4,6 +4,9 @@ pragma solidity ^0.8.0;
 /**
  * @notice 1Inch Pathfinder V5 implementation of the general ISwapper interface.
  * @author Origin Protocol Inc
+ * @dev It is possible that dust token amounts are left in this contract after a swap.
+ * This can happen with some tokens that don't send the full transfer amount.
+ * These dust amounts can build up over time and be used by anyone who calls the `swap` function.
  */
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
