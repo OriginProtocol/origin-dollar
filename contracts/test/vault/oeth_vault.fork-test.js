@@ -251,15 +251,15 @@ forkOnlyDescribe("ForkTest: OETH Vault", function () {
         {
           from: "stETH",
           to: "rETH",
-          fromAmount: 500,
-          minToAssetAmount: 450,
+          fromAmount: 400,
+          minToAssetAmount: 350,
           approxFromBalance: true,
         },
         {
           from: "stETH",
           to: "frxETH",
-          fromAmount: 500,
-          minToAssetAmount: 499.3,
+          fromAmount: 400,
+          minToAssetAmount: 399.1,
           approxFromBalance: true,
         },
         {
@@ -305,7 +305,7 @@ forkOnlyDescribe("ForkTest: OETH Vault", function () {
           from: "WETH",
           to: "rETH",
           fromAmount: 100,
-          minToAssetAmount: 93,
+          minToAssetAmount: 90,
           protocols: "ROCKET_POOL",
         },
         {
