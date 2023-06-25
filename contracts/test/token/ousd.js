@@ -620,9 +620,7 @@ describe("Token", function () {
           await anna.getAddress(),
           ousdUnits("100")
         )
-    ).to.be.revertedWith(
-      "Arithmetic operation underflowed or overflowed outside of an unchecked block"
-    );
+    ).to.be.revertedWith("panic code 0x11");
   });
 
   it("Should allow to increase/decrease allowance", async () => {
