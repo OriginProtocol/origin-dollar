@@ -3,7 +3,7 @@ const { deploymentWithProposal } = require("../utils/deploy");
 module.exports = deploymentWithProposal(
   {
     deployName: "066_oeth_vault_swaps",
-    forceDeploy: true,
+    forceDeploy: false,
     reduceQueueTime: true,
     proposalId: 54,
   },
