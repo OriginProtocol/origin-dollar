@@ -30,6 +30,12 @@ jobs:
       - run: yarn install --frozen-lockfile
         working-directory: ./contracts
 
+      # this will compile and output the contract sizes
+      - run: npx hardhat compile
+        env:
+          CONTRACT_SIZE: true
+        working-directory: ./contracts
+
       - run: yarn run lint
         working-directory: ./contracts
 
@@ -39,9 +45,6 @@ jobs:
   contracts-test:
     name: "Contracts Unit Tests"
     runs-on: ubuntu-latest
-    env:
-      GAS_REPORT: true
-      CONTRACT_SIZE: true
     steps:
       - uses: actions/checkout@v3
 
@@ -55,7 +58,14 @@ jobs:
       - run: yarn install --frozen-lockfile
         working-directory: ./contracts
 
-      - name: Run Tests
+      # this will run the unit tests and report the gas usage
+      - name: Run Unit Tests
+        env:
+          REPORT_GAS: true
+        run: yarn run test
+        working-directory: ./contracts
+
+      - name: Run Unit Coverage
         run: yarn run test:coverage
         working-directory: ./contracts
 
@@ -67,15 +77,12 @@ jobs:
             ./contracts/coverage/**/*
           retention-days: 1
 
-      # - uses: codecov/codecov-action@v3
-
   contracts-forktest:
     name: "Contracts Fork Tests"
     runs-on: ubuntu-latest
     env:
       HARDHAT_CACHE_DIR: ./cache
       PROVIDER_URL: ${{ secrets.PROVIDER_URL }}
-      GAS_REPORT: true
     steps:
       - uses: actions/checkout@v3
 
