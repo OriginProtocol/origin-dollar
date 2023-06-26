@@ -37,16 +37,17 @@ object "OETHHarvester" as harv <<Origin>><<Proxy>> #DeepSkyBlue {
 }
 
 ' Strategies
-object "FraxETHStrategy" as frxethstrat <<Origin>><<Proxy>> #DeepSkyBlue {
+
+object "FraxETHStrategy" as frxethstrat <<Origin>><<Proxy>> #a88ff2 {
     asset: frxETH, WETH
     vault: sfrxETH
 }
-object "ConvexEthMetaStrategy" as cvxStrat <<Origin>><<Proxy>> #DeepSkyBlue {
+object "ConvexEthMetaStrategy" as cvxStrat <<Origin>><<Proxy>> #a88ff2 {
     asset: WETH
     Curve metapool: OETHCRV-f
     Convex pool: cvxOETHCRV-f
 }
-object "MorphoAaveStrategy" as morphAaveStrat <<Origin>><<Proxy>> #DeepSkyBlue {
+object "MorphoAaveStrategy" as morphAaveStrat <<Origin>><<Proxy>> #a88ff2 {
     asset: WETH
     Aave token: aWETH
 }
@@ -145,35 +146,35 @@ pairs:
 ' }
 
 zap ..> oeth
-zap ..> oethv
+zap --> oethv
 ' zap ....> sfrxeth
 ' zap .....> frxeth
 ' zap .....> weth
 
 ' drip .....> weth
-oethv <. drip
+oethv <-r- drip
 
 checker ..> oeth
 checker ..> oethv
 
-oethv <.. harv 
+drip <-- harv 
 ' harv ...> sushi
 ' harv ...> cvx
 ' harv ...> crv
 
 woeth ..> oeth
 oeth <.> oethv
-oethv ..> oracle
+oethv .u.> oracle
 ' oracle ...> chain
 
 
 ' Staked FRAX ETH Strategy
-oethv ...> frxethstrat
+oethv <--> frxethstrat
 ' frxethstrat ..> sfrxeth
 
 ' Convex ETH Metapool Strategy
 harv <..> cvxStrat
-oethv <...> cvxStrat
+oethv <---> cvxStrat
 oeth <... cvxStrat
 
 ' cvxStrat ..> crvPool
@@ -188,8 +189,7 @@ oeth <... cvxStrat
 ' oeth <... crvPool
 
 ' Morpho Aave Strategy
-oethv <...> morphAaveStrat
-oeth <... morphAaveStrat
+oethv <---> morphAaveStrat
 ' morphAaveStrat ..> morphoV2
 ' morphAaveStrat ..> morphoLens
 ' morphoLens .> morphoV2
