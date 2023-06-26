@@ -68,7 +68,7 @@ contract EchidnaHelper is EchidnaSetup {
         total += ousd.balanceOf(ADDRESS_CONTRACT1);
     }
 
-    function getTotalNonRebasingBalance() public  returns (uint256 total) {
+    function getTotalNonRebasingBalance() public returns (uint256 total) {
         total += ousd._isNonRebasingAccountEchidna(ADDRESS_VAULT)
             ? ousd.balanceOf(ADDRESS_VAULT)
             : 0;

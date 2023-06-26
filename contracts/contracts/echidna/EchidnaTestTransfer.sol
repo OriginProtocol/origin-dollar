@@ -117,7 +117,8 @@ contract EchidnaTestTransfer is EchidnaDebug {
         assert(fromBalAfter >= fromBalBefore - amount);
     }
 
-    // The receiving account's balance after a transfer must not increase by less than the amount transferred (minus rounding error)
+    // The receiving account's balance after a transfer must not increase
+    // by less than the amount transferred (minus rounding error)
     function testTransferBalanceReceivedLessRounding(
         uint8 fromAcc,
         uint8 toAcc,
@@ -149,7 +150,8 @@ contract EchidnaTestTransfer is EchidnaDebug {
         assert(error <= int256(TRANSFER_ROUNDING_ERROR));
     }
 
-    // The sending account's balance after a transfer must not decrease by less than the amount transferred (minus rounding error)
+    // The sending account's balance after a transfer must not decrease by less
+    // than the amount transferred (minus rounding error)
     function testTransferBalanceSentLessRounding(
         uint8 fromAcc,
         uint8 toAcc,

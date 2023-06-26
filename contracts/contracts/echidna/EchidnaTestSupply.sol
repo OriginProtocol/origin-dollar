@@ -4,14 +4,15 @@ pragma solidity ^0.8.0;
 import "./EchidnaDebug.sol";
 import "./EchidnaTestTransfer.sol";
 
-import {StableMath} from "../utils/StableMath.sol";
+import { StableMath } from "../utils/StableMath.sol";
 
 contract EchidnaTestSupply is EchidnaTestTransfer {
     using StableMath for uint256;
 
     uint256 prevRebasingCreditsPerToken = type(uint256).max;
 
-    // After a `changeSupply`, the total supply should exactly match the target total supply. (This is needed to ensure successive rebases are correct).
+    // After a `changeSupply`, the total supply should exactly match the target
+    // total supply. (This is needed to ensure successive rebases are correct).
     //
     // testChangeSupply(uint256): failed!💥
     //   Call sequence:
@@ -69,7 +70,8 @@ contract EchidnaTestSupply is EchidnaTestTransfer {
 
     // Global `rebasingCreditsPerToken` should never increase
     //
-    // 💥 Known to break when manually calling `changeSupply`. This can be reproduced by toggling `TOGGLE_CHANGESUPPLY_LIMIT`.
+    // 💥 Known to break when manually calling `changeSupply`.
+    // This can be reproduced by toggling `TOGGLE_CHANGESUPPLY_LIMIT`.
     //
     // Call sequence:
     //   testRebasingCreditsPerTokenNotIncreased()
