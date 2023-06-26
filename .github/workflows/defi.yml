@@ -65,6 +65,22 @@ jobs:
         run: yarn run test
         working-directory: ./contracts
 
+  contracts-unit-coverage:
+    name: "Contracts Unit Coverage"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "16.x"
+          cache: "yarn"
+          cache-dependency-path: contracts/yarn.lock
+
+      - run: yarn install --frozen-lockfile
+        working-directory: ./contracts
+
       - name: Run Unit Coverage
         run: yarn run test:coverage
         working-directory: ./contracts
