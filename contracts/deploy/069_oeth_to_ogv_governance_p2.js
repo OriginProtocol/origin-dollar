@@ -23,7 +23,9 @@ module.exports = deploymentWithGovernanceProposal(
     return {
       name: "OETH governance contracts have been owned by the OUSD 5 of 8 multi-sig.\n\
       \n\
-      Now that these governance contracts have been proven out, it's time for them to be directly owned by the community",
+      Now that these governance contracts have been proven out, it's time for them to be directly owned by the community\n\
+      \n\
+      Code PR: #1654",
       actions: [
         // Claim governance by the OGV Timelock
         {
