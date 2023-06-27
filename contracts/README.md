@@ -185,6 +185,8 @@ There are separate actions for:
 
 ## Coverage
 
+The Hardhat plug-in [solidity-coverage](https://github.com/sc-forks/solidity-coverage#solidity-coverage) is used to gather Solidity code coverage. The configuration is in [.solcover.js](./.solcover.js). The coverage output is written to `coverage.json`.
+
 [Codecov](https://about.codecov.io/) is used to report Solidity code coverage. The coverage reports for this repository can be found [here](https://app.codecov.io/gh/OriginProtocol/origin-dollar).
 
 ```
