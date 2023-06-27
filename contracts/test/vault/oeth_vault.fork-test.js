@@ -93,6 +93,23 @@ forkOnlyDescribe("ForkTest: OETH Vault", function () {
           .redeem(oethWhaleBalance, 0);
         await expect(tx).to.revertedWith("Liquidity error");
       });
+      it("OETH whale can redeem after withdraw from all strategies", async () => {
+        const { oeth, oethVault, oldTimelock } = fixture;
+
+        const oethWhaleBalance = await oeth.balanceOf(oethWhaleAddress);
+        expect(oethWhaleBalance, "no longer an OETH whale").to.gt(
+          parseUnits("100", 18)
+        );
+
+        await oethVault.connect(oldTimelock).withdrawAllFromStrategies();
+
+        const tx = await oethVault
+          .connect(oethWhaleSigner)
+          .redeem(oethWhaleBalance, 0);
+        await expect(tx)
+          .to.emit(oethVault, "Redeem")
+          .withNamedArgs({ _addr: oethWhaleAddress });
+      });
       it("OETH whale redeem 100 OETH", async () => {
         const { oethVault } = fixture;
 
