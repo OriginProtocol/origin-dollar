@@ -96,14 +96,18 @@ const WrapHomepage = ({
       }
       setWrapEstimate(estimate)
     }
+
     const approvalNeeded = () => {
       if (!allowancesLoaded) {
         return
       }
-      setNeedsApproval(
-        parseFloat(allowances.oeth.woeth) < inputAmount ? 'woeth' : ''
-      )
+      if (swapMode === 'mint') {
+        setNeedsApproval(
+          parseFloat(allowances.oeth.woeth) < inputAmount ? 'woeth' : ''
+        )
+      }
     }
+
     const calculateRate = async () => {
       const conversionRate = await displayCurrency(
         await woeth.convertToAssets(calculateSwapAmounts(1, 18).swapAmount),

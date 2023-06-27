@@ -9,7 +9,6 @@ pragma solidity ^0.8.0;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 
 import { IStrategy } from "../interfaces/IStrategy.sol";
@@ -17,12 +16,8 @@ import { Governable } from "../governance/Governable.sol";
 import { OUSD } from "../token/OUSD.sol";
 import { Initializable } from "../utils/Initializable.sol";
 import "../utils/Helpers.sol";
-import { StableMath } from "../utils/StableMath.sol";
 
 contract VaultStorage is Initializable, Governable {
-    using SafeMath for uint256;
-    using StableMath for uint256;
-    using SafeMath for int256;
     using SafeERC20 for IERC20;
 
     event AssetSupported(address _asset);
@@ -48,16 +43,29 @@ contract VaultStorage is Initializable, Governable {
     event TrusteeFeeBpsChanged(uint256 _basis);
     event TrusteeAddressChanged(address _address);
     event NetOusdMintForStrategyThresholdChanged(uint256 _threshold);
+    event SwapperChanged(address _address);
+    event SwapAllowedUndervalueChanged(uint256 _basis);
+    event SwapSlippageChanged(address _asset, uint256 _basis);
+    event Swapped(
+        address indexed _fromAsset,
+        address indexed _toAsset,
+        uint256 _fromAssetAmount,
+        uint256 _toAssetAmount
+    );
 
     // Assets supported by the Vault, i.e. Stablecoins
     enum UnitConversion {
         DECIMALS,
         GETEXCHANGERATE
     }
+    // Changed to fit into a single storage slot so the decimals needs to be recached
     struct Asset {
         bool isSupported;
         UnitConversion unitConversion;
-        uint256 decimals;
+        uint8 decimals;
+        // Max allowed slippage from the Oracle price when swapping collateral assets in basis points.
+        // For example 40 == 0.4% slippage
+        uint16 allowedOracleSlippageBps;
     }
 
     /// @dev mapping of supported vault assets to their configuration
@@ -94,6 +102,7 @@ contract VaultStorage is Initializable, Governable {
     uint256 public rebaseThreshold;
 
     /// @dev Address of the OToken token. eg OUSD or OETH.
+    // slither-disable-next-line uninitialized-state
     OUSD internal oUSD;
 
     //keccak256("OUSD.vault.governor.admin.impl");
@@ -139,6 +148,17 @@ contract VaultStorage is Initializable, Governable {
 
     uint256 constant MIN_UNIT_PRICE_DRIFT = 0.7e18;
     uint256 constant MAX_UNIT_PRICE_DRIFT = 1.3e18;
+
+    /// @notice Collateral swap configuration.
+    /// @dev is packed into a single storage slot to save gas.
+    struct SwapConfig {
+        // Contract that swaps the vault's collateral assets
+        address swapper;
+        // Max allowed percentage the total value can drop below the total supply in basis points.
+        // For example 100 == 1%
+        uint16 allowedUndervalueBps;
+    }
+    SwapConfig internal swapConfig = SwapConfig(address(0), 0);
 
     /**
      * @notice set the implementation for the admin, this needs to be in a base class else we cannot set it

@@ -734,9 +734,9 @@ const deployDripper = async () => {
     cVaultProxy.address,
     assetAddresses.USDT,
   ]);
-  const dDripperProxy = await deployWithConfirmation("DripperProxy");
+  await deployWithConfirmation("DripperProxy");
   // Deploy Dripper Proxy
-  cDripperProxy = await ethers.getContract("DripperProxy");
+  const cDripperProxy = await ethers.getContract("DripperProxy");
   await withConfirmation(
     cDripperProxy["initialize(address,address,bytes)"](
       dDripper.address,
@@ -934,7 +934,7 @@ const deployCore = async () => {
       []
     )
   );
-  log("Initialized OUSD VaultProxy");
+  log("Initialized OETHVaultProxy");
   await withConfirmation(
     cOETHVaultProxy["initialize(address,address,bytes)"](
       dOETHVault.address,
@@ -1167,13 +1167,14 @@ const deployWOusd = async () => {
   const { deployerAddr, governorAddr } = await getNamedAccounts();
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
   const sGovernor = await ethers.provider.getSigner(governorAddr);
+
   const ousd = await ethers.getContract("OUSDProxy");
   const dWrappedOusdImpl = await deployWithConfirmation("WrappedOusd", [
     ousd.address,
     "Wrapped OUSD IMPL",
     "WOUSD IMPL",
   ]);
-  const dWrappedOusdProxy = await deployWithConfirmation("WrappedOUSDProxy");
+  await deployWithConfirmation("WrappedOUSDProxy");
   const wousdProxy = await ethers.getContract("WrappedOUSDProxy");
   const wousd = await ethers.getContractAt("WrappedOusd", wousdProxy.address);
 
@@ -1187,6 +1188,39 @@ const deployWOusd = async () => {
   await wousd.connect(sDeployer)["initialize()"]();
   await wousd.connect(sDeployer).transferGovernance(governorAddr);
   await wousd.connect(sGovernor).claimGovernance();
+};
+
+const deployOETHSwapper = async () => {
+  const { deployerAddr, governorAddr } = await getNamedAccounts();
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+  const sGovernor = await ethers.provider.getSigner(governorAddr);
+
+  const assetAddresses = await getAssetAddresses(deployments);
+
+  const vaultProxy = await ethers.getContract("OETHVaultProxy");
+  const vault = await ethers.getContractAt("IVault", vaultProxy.address);
+
+  const mockSwapper = await ethers.getContract("MockSwapper");
+
+  await deployWithConfirmation("Swapper1InchV5");
+  const cSwapper = await ethers.getContract("Swapper1InchV5");
+
+  cSwapper
+    .connect(sDeployer)
+    .approveAssets([
+      assetAddresses.RETH,
+      assetAddresses.stETH,
+      assetAddresses.WETH,
+      assetAddresses.frxETH,
+    ]);
+
+  await vault.connect(sGovernor).setSwapper(mockSwapper.address);
+  await vault.connect(sGovernor).setSwapAllowedUndervalue(100);
+
+  await vault.connect(sGovernor).setOracleSlippage(assetAddresses.RETH, 200);
+  await vault.connect(sGovernor).setOracleSlippage(assetAddresses.stETH, 70);
+  await vault.connect(sGovernor).setOracleSlippage(assetAddresses.WETH, 20);
+  await vault.connect(sGovernor).setOracleSlippage(assetAddresses.frxETH, 20);
 };
 
 const main = async () => {
@@ -1212,6 +1246,7 @@ const main = async () => {
   await deployUniswapV3Pool();
   await deployVaultValueChecker();
   await deployWOusd();
+  await deployOETHSwapper();
   console.log("001_core deploy done.");
   return true;
 };
