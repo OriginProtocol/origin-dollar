@@ -157,6 +157,7 @@ checker ..> oeth
 checker ..> oethv
 
 oethv <.. harv 
+drip <.. harv 
 ' harv ...> sushi
 ' harv ...> cvx
 ' harv ...> crv
