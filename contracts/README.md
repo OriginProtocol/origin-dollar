@@ -151,6 +151,22 @@ This is not enabled by default. To enable, export the `CONTRACT_SIZE` environmen
 export CONTRACT_SIZE=true
 ```
 
+The contract sizes will be output after the contracts are compiled. Here's a sample of the first few.
+
+```
+Compiled 155 Solidity files successfully
+ ·-----------------------------------------|--------------------------------|--------------------------------·
+ |  Solc version: 0.8.7                    ·  Optimizer enabled: true       ·  Runs: 200                     │
+ ··········································|································|·································
+ |  Contract Name                          ·  Deployed size (KiB) (change)  ·  Initcode size (KiB) (change)  │
+ ··········································|································|·································
+ |  AaveStrategy                           ·                     11.427 ()  ·                     11.583 ()  │
+ ··········································|································|·································
+ |  AaveStrategyProxy                      ·                      2.438 ()  ·                      2.591 ()  │
+ ··········································|································|·································
+ |  Address                                ·                      0.084 ()  ·                      0.138 ()  │
+```
+
 ## Gas Usage
 
 The Hardhat plug-in [hardhat-gas-reporter](https://github.com/cgewecke/hardhat-gas-reporter#hardhat-gas-reporter) is used to report gas usage of unit and fork tests.
@@ -159,6 +175,35 @@ This is not enabled by default. To enable, export the `REPORT_GAS` environment v
 
 ```
 export REPORT_GAS=true
+```
+
+If enabled, the gas usage will be output in a table after the tests have executed. For example
+
+```
+·--------------------------------|---------------------------|-------------|-----------------------------·
+|      Solc version: 0.8.7       ·  Optimizer enabled: true  ·  Runs: 200  ·  Block limit: 30000000 gas  │
+·································|···························|·············|······························
+|  Methods                                                                                               │
+··············|··················|·············|·············|·············|···············|··············
+|  Contract   ·  Method          ·  Min        ·  Max        ·  Avg        ·  # calls      ·  eur (avg)  │
+··············|··················|·············|·············|·············|···············|··············
+|  ERC20      ·  approve         ·      26080  ·      65406  ·      39783  ·           96  ·          -  │
+··············|··················|·············|·············|·············|···············|··············
+|  ERC20      ·  transfer        ·      51427  ·      88327  ·      61066  ·           90  ·          -  │
+··············|··················|·············|·············|·············|···············|··············
+|  MockVault  ·  mint            ·     554883  ·     576124  ·     564880  ·            4  ·          -  │
+··············|··················|·············|·············|·············|···············|··············
+|  MockWETH   ·  deposit         ·          -  ·          -  ·      27938  ·           10  ·          -  │
+··············|··················|·············|·············|·············|···············|··············
+|  OETHVault  ·  setVaultBuffer  ·      34984  ·      56956  ·      45970  ·            2  ·          -  │
+··············|··················|·············|·············|·············|···············|··············
+|  OETHVault  ·  swapCollateral  ·     482418  ·    1018400  ·     705017  ·           57  ·          -  │
+··············|··················|·············|·············|·············|···············|··············
+|  Deployments                   ·                                         ·  % of limit   ·             │
+·································|·············|·············|·············|···············|··············
+|  MockOETHOracleRouterNoStale   ·          -  ·          -  ·     529194  ·        1.8 %  ·          -  │
+·································|·············|·············|·············|···············|··············
+|  MockOracleRouterNoStale       ·          -  ·          -  ·     743016  ·        2.5 %  ·          -  │
 ```
 
 ## Contract Verification
@@ -173,7 +218,7 @@ npx hardhat --network mainnet verify --contract contracts/vault/VaultAdmin.sol:V
 
 ## Continuous Integration
 
-[GitHub Actions](https://github.com/features/actions) are used for the build. The configuration for GitHub Actions is in [.github/workflows/defi.yml](../.github/workflows/defi.yml).
+[GitHub Actions](https://github.com/features/actions) are used for the build. The configuration for GitHub Actions is in [.github/workflows/defi.yml](../.github/workflows/defi.yml). The action workflows can be found at https://github.com/OriginProtocol/origin-dollar/actions.
 
 There are separate actions for:
 
