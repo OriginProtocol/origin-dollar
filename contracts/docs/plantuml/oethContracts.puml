@@ -32,6 +32,10 @@ assets:
   rETH
 }
 
+object "Swapper1InchV5" as swap <<Origin>> #DeepSkyBlue {
+    asset: any
+}
+
 object "OETHHarvester" as harv <<Origin>><<Proxy>> #DeepSkyBlue {
     rewards: CRV, CVX
 }
@@ -165,6 +169,7 @@ drip <.. harv
 woeth ..> oeth
 oeth <.> oethv
 oethv ..> oracle
+oethv .> swap
 ' oracle ...> chain
 
 
