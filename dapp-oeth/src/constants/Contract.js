@@ -5,11 +5,11 @@ export const currencies = {
   },
   weth: {
     localStorageSettingKey: 'weth-manual-setting',
-    img: '/images/weth.svg',
+    img: '/images/weth.png',
   },
   reth: {
     localStorageSettingKey: 'reth-manual-setting',
-    img: '/images/reth.svg',
+    img: '/images/reth.png',
   },
   frxeth: {
     localStorageSettingKey: 'frxeth-manual-setting',

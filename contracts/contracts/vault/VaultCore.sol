@@ -16,6 +16,7 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { StableMath } from "../utils/StableMath.sol";
 import { IOracle } from "../interfaces/IOracle.sol";
 import { IGetExchangeRateToken } from "../interfaces/IGetExchangeRateToken.sol";
+
 import "./VaultStorage.sol";
 
 contract VaultCore is VaultStorage {
@@ -395,13 +396,7 @@ contract VaultCore is VaultStorage {
      *         strategies.
      * @return value Total value in USD (1e18)
      */
-    function totalValue()
-        external
-        view
-        virtual
-        nonReentrantView
-        returns (uint256 value)
-    {
+    function totalValue() external view virtual returns (uint256 value) {
         value = _totalValue();
     }
 
@@ -719,10 +714,20 @@ contract VaultCore is VaultStorage {
         }
     }
 
-    function _getDecimals(address _asset) internal view returns (uint256) {
-        uint256 decimals = assets[_asset].decimals;
+    function _getDecimals(address _asset)
+        internal
+        view
+        returns (uint256 decimals)
+    {
+        decimals = assets[_asset].decimals;
         require(decimals > 0, "Decimals not cached");
-        return decimals;
+    }
+
+    /**
+     * @notice Return the number of assets supported by the Vault.
+     */
+    function getAssetCount() public view returns (uint256) {
+        return allAssets.length;
     }
 
     /**
@@ -734,13 +739,6 @@ contract VaultCore is VaultStorage {
         returns (Asset memory config)
     {
         config = assets[_asset];
-    }
-
-    /**
-     * @notice Return the number of assets supported by the Vault.
-     */
-    function getAssetCount() public view returns (uint256) {
-        return allAssets.length;
     }
 
     /**

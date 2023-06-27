@@ -341,10 +341,13 @@ module.exports = {
   },
   contractSizer: {
     alphaSort: true,
-    runOnCompile: true,
+    runOnCompile: process.env.CONTRACT_SIZE ? true : false,
   },
   etherscan: {
     apiKey: process.env.ETHERSCAN_API_KEY,
+  },
+  gasReporter: {
+    enabled: process.env.REPORT_GAS ? true : false,
   },
   paths: process.env.HARDHAT_CACHE_DIR
     ? {

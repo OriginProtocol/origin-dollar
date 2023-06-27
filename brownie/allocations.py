@@ -285,10 +285,10 @@ def auto_check_snapshot():
 
     return [
         world.vault_value_checker.checkDelta(
-            vault_change - 500 * int(1e18),
-            vault_change + 1000 * int(1e18),
-            supply_change - 1000 * int(1e18),
-            supply_change + 500 * int(1e18),
+            vault_change, # expectedProfit
+            500 * int(1e18), # profitVariance
+            supply_change, # expectedVaultChange
+            500 * int(1e18), # vaultChangeVariance
             {"from": world.STRATEGIST},
         )
     ]

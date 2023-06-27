@@ -630,4 +630,18 @@ describe("Vault", function () {
       ousdUnits("0")
     );
   });
+  it("Should re-cache decimals", async () => {
+    const { vault, governor, usdc } = await loadFixture(defaultFixture);
+
+    const beforeAssetConfig = await vault.getAssetConfig(usdc.address);
+    expect(beforeAssetConfig.decimals).to.equal(6);
+
+    // cacheDecimals is not on IVault so we need to use the admin contract
+    const vaultAdmin = await ethers.getContractAt("VaultAdmin", vault.address);
+
+    await vaultAdmin.connect(governor).cacheDecimals(usdc.address);
+
+    const afterAssetConfig = await vault.getAssetConfig(usdc.address);
+    expect(afterAssetConfig.decimals).to.equal(6);
+  });
 });

@@ -184,9 +184,7 @@ describe.skip("Compensation Claims", function () {
       await compensationClaims.connect(governor).unlockAdjuster();
       await expect(
         compensationClaims.connect(adjuster).setClaims(accounts, amounts)
-      ).to.be.revertedWith(
-        "Arithmetic operation underflowed or overflowed outside of an unchecked block"
-      );
+      ).to.be.revertedWith("panic code 0x11");
     });
     it("should not be able to set mismatching addresses and amounts", async () => {
       const accounts = [await anna.getAddress()];

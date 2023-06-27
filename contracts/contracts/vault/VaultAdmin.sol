@@ -9,13 +9,13 @@ pragma solidity ^0.8.0;
 
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import { StableMath } from "../utils/StableMath.sol";
 import { IOracle } from "../interfaces/IOracle.sol";
+import { ISwapper } from "../interfaces/ISwapper.sol";
+import { IVault } from "../interfaces/IVault.sol";
 import "./VaultStorage.sol";
 
 contract VaultAdmin is VaultStorage {
     using SafeERC20 for IERC20;
-    using StableMath for uint256;
 
     /**
      * @dev Verifies that the caller is the Governor or Strategist.
@@ -151,6 +151,158 @@ contract VaultAdmin is VaultStorage {
         emit NetOusdMintForStrategyThresholdChanged(_threshold);
     }
 
+    /***************************************
+                    Swaps
+    ****************************************/
+
+    /**
+     * @notice Strategist swaps collateral assets sitting in the vault.
+     * @param _fromAsset The token address of the asset being sold by the vault.
+     * @param _toAsset The token address of the asset being purchased by the vault.
+     * @param _fromAssetAmount The amount of assets being sold by the vault.
+     * @param _minToAssetAmount The minimum amount of assets to be purchased.
+     * @param _data implementation specific data. eg 1Inch swap data
+     * @return toAssetAmount The amount of toAssets that was received from the swap
+     */
+    function swapCollateral(
+        address _fromAsset,
+        address _toAsset,
+        uint256 _fromAssetAmount,
+        uint256 _minToAssetAmount,
+        bytes calldata _data
+    )
+        external
+        nonReentrant
+        onlyGovernorOrStrategist
+        returns (uint256 toAssetAmount)
+    {
+        // Check fromAsset and toAsset are valid
+        Asset memory fromAssetConfig = assets[address(_fromAsset)];
+        Asset memory toAssetConfig = assets[_toAsset];
+        require(fromAssetConfig.isSupported, "From asset is not supported");
+        require(toAssetConfig.isSupported, "To asset is not supported");
+
+        // Load swap config into memory to avoid separate SLOADs
+        SwapConfig memory config = swapConfig;
+
+        // Scope a new block to remove toAssetBalBefore from the scope of swapCollateral.
+        // This avoids a stack too deep error.
+        {
+            uint256 toAssetBalBefore = IERC20(_toAsset).balanceOf(
+                address(this)
+            );
+
+            // Transfer from assets to the swapper contract
+            IERC20(_fromAsset).safeTransfer(config.swapper, _fromAssetAmount);
+
+            // Call to the Swapper contract to do the actual swap
+            // The -1 is required for stETH which sometimes transfers 1 wei less than what was specified.
+            // slither-disable-next-line unused-return
+            ISwapper(config.swapper).swap(
+                _fromAsset,
+                _toAsset,
+                _fromAssetAmount - 1,
+                _minToAssetAmount,
+                _data
+            );
+
+            // Compute the change in asset balance held by the Vault
+            toAssetAmount =
+                IERC20(_toAsset).balanceOf(address(this)) -
+                toAssetBalBefore;
+        }
+
+        // Check the to assets returned is above slippage amount specified by the strategist
+        require(
+            toAssetAmount >= _minToAssetAmount,
+            "Strategist slippage limit"
+        );
+
+        // Check the slippage against the Oracle in case the strategist made a mistake or has become malicious.
+        // to asset amount = from asset amount * from asset price / to asset price
+        uint256 minOracleToAssetAmount = (_fromAssetAmount *
+            (1e4 - fromAssetConfig.allowedOracleSlippageBps) *
+            IOracle(priceProvider).price(_fromAsset)) /
+            (IOracle(priceProvider).price(_toAsset) *
+                (1e4 + toAssetConfig.allowedOracleSlippageBps));
+
+        require(
+            toAssetAmount >= minOracleToAssetAmount,
+            "Oracle slippage limit exceeded"
+        );
+
+        // Check the vault's total value hasn't gone below the OToken total supply
+        // by more than the allowed percentage.
+        require(
+            IVault(address(this)).totalValue() >=
+                (oUSD.totalSupply() * ((1e4 - config.allowedUndervalueBps))) /
+                    1e4,
+            "Allowed value < supply"
+        );
+
+        emit Swapped(_fromAsset, _toAsset, _fromAssetAmount, toAssetAmount);
+    }
+
+    /***************************************
+                    Swap Config
+    ****************************************/
+
+    /**
+     * @notice Set the contract the performs swaps of collateral assets.
+     * @param _swapperAddr Address of the Swapper contract that implements the ISwapper interface.
+     */
+    function setSwapper(address _swapperAddr) external onlyGovernor {
+        swapConfig.swapper = _swapperAddr;
+        emit SwapperChanged(_swapperAddr);
+    }
+
+    /// @notice Contract that swaps the vault's collateral assets
+    function swapper() external view returns (address swapper_) {
+        swapper_ = swapConfig.swapper;
+    }
+
+    /**
+     * @notice Set max allowed percentage the vault total value can drop below the OToken total supply in basis points
+     * when executing collateral swaps.
+     * @param _basis Percentage in basis points. eg 100 == 1%
+     */
+    function setSwapAllowedUndervalue(uint16 _basis) external onlyGovernor {
+        require(_basis < 10001, "Invalid basis points");
+        swapConfig.allowedUndervalueBps = _basis;
+        emit SwapAllowedUndervalueChanged(_basis);
+    }
+
+    /**
+     * @notice Max allowed percentage the vault total value can drop below the OToken total supply in basis points
+     * when executing a collateral swap.
+     * For example 100 == 1%
+     * @return value Percentage in basis points.
+     */
+    function allowedSwapUndervalue() external view returns (uint256 value) {
+        value = swapConfig.allowedUndervalueBps;
+    }
+
+    /**
+     * @notice Set the allowed slippage from the Oracle price for collateral asset swaps.
+     * @param _asset Address of the asset token.
+     * @param _allowedOracleSlippageBps allowed slippage from Oracle in basis points. eg 20 = 0.2%. Max 10%.
+     */
+    function setOracleSlippage(address _asset, uint16 _allowedOracleSlippageBps)
+        external
+        onlyGovernor
+    {
+        require(assets[_asset].isSupported, "Asset not supported");
+        require(_allowedOracleSlippageBps < 1000, "Slippage too high");
+
+        assets[_asset].allowedOracleSlippageBps = _allowedOracleSlippageBps;
+
+        emit SwapSlippageChanged(_asset, _allowedOracleSlippageBps);
+    }
+
+    /***************************************
+                Asset Config
+    ****************************************/
+
     /**
      * @notice Add a supported asset to the contract, i.e. one that can be
      *         to mint OTokens.
@@ -165,7 +317,8 @@ contract VaultAdmin is VaultStorage {
         assets[_asset] = Asset({
             isSupported: true,
             unitConversion: UnitConversion(_unitConversion),
-            decimals: 0 // will be overridden in _cacheDecimals
+            decimals: 0, // will be overridden in _cacheDecimals
+            allowedOracleSlippageBps: 0 // 0% by default
         });
 
         _cacheDecimals(_asset);
@@ -181,11 +334,15 @@ contract VaultAdmin is VaultStorage {
     /**
      * @notice Cache decimals on OracleRouter for a particular asset. This action
      *      is required before that asset's price can be accessed.
-     * @param _asset Address of asset
+     * @param _asset Address of asset token
      */
     function cacheDecimals(address _asset) external onlyGovernor {
         _cacheDecimals(_asset);
     }
+
+    /***************************************
+                Strategy Config
+    ****************************************/
 
     /**
      * @notice Add a strategy to the Vault.
@@ -239,6 +396,10 @@ contract VaultAdmin is VaultStorage {
             emit StrategyRemoved(_addr);
         }
     }
+
+    /***************************************
+                Strategies
+    ****************************************/
 
     /**
      * @notice Deposit multiple assets from the vault into the strategy.
@@ -458,7 +619,7 @@ contract VaultAdmin is VaultStorage {
         if (tokenAsset.decimals != 0) {
             return;
         }
-        uint256 decimals = IBasicToken(token).decimals();
+        uint8 decimals = IBasicToken(token).decimals();
         require(decimals >= 6 && decimals <= 18, "Unexpected precision");
         tokenAsset.decimals = decimals;
     }
