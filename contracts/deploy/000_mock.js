@@ -207,7 +207,7 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
   await deploy("MockChainlinkOracleFeedstETHETH", {
     from: deployerAddr,
     contract: "MockChainlinkOracleFeed",
-    args: [parseUnits("1", 18).toString(), 18], // 1 stETH = 1 ETH , 18 digits decimal.
+    args: [parseUnits("0.998", 18).toString(), 18], // 1 stETH = 0.998 ETH , 18 digits decimal.
   });
   await deploy("MockChainlinkOracleFeedfrxETHETH", {
     from: deployerAddr,
@@ -218,6 +218,11 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     from: deployerAddr,
     contract: "MockChainlinkOracleFeed",
     args: [parseUnits("1", 18).toString(), 18], // 1 WETH = 1 ETH , 18 digits decimal.
+  });
+  await deploy("MockChainlinkOracleFeedfrxETHETH", {
+    from: deployerAddr,
+    contract: "MockChainlinkOracleFeed",
+    args: [parseUnits("1", 18).toString(), 18], // 1 frxETH = 1 ETH , 18 digits decimal.
   });
 
   // Deploy mock Uniswap router
@@ -358,6 +363,12 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
   await deploy("MockFrxETHMinter", {
     from: deployerAddr,
     args: [(await ethers.getContract("MocksfrxETH")).address],
+  });
+  await deploy("MockSwapper", {
+    from: deployerAddr,
+  });
+  await deploy("Mock1InchSwapRouter", {
+    from: deployerAddr,
   });
 
   console.log("000_mock deploy done.");

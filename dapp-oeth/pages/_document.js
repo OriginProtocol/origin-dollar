@@ -36,10 +36,10 @@ class MyDocument extends Document {
           <meta
             name="image"
             content={
-              'https://cmsmediaproduction.s3.amazonaws.com/meta_9121c5630d.jpeg'
+              'https://cmsmediaproduction.s3.amazonaws.com/thumbnail_oeth_meta_ed53499f08.png'
             }
           />
-          <meta property="og:url" content="https://ousd.com" />
+          <meta property="og:url" content="https://oeth.com" />
           <meta property="og:type" content="website" />
           <meta property="og:title" content="Origin Ether (OETH)" />
           <meta
