@@ -116,6 +116,7 @@ def get_1inch_swap(from_token, to_token, from_amount, slippage, allowPartialFill
     req = requests.get('https://api.1inch.io/v5.0/1/swap', params={
         'fromTokenAddress': from_token,
         'fromAddress': swapper_address,
+        'destReceiver': VAULT_OETH_PROXY_ADDRESS,
         'toTokenAddress': to_token,
         'amount': str(from_amount),
         'allowPartialFill': allowPartialFill,
