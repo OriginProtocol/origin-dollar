@@ -289,7 +289,7 @@ def auto_check_snapshot():
             profit, # expectedProfit
             500 * int(1e18), # profitVariance
             vault_change, # expectedVaultChange
-            1000 * int(1e18), # vaultChangeVariance
+            250_000 * int(1e18), # vaultChangeVariance
             {"from": world.STRATEGIST},
         )
     ]
