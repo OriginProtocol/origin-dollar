@@ -9,8 +9,8 @@ const log = require("./logger")(logModule);
  * @param {*} coin0 token symbol of Curve Metapool coin at index 0
  * @param {*} coin1 token symbol of Curve Metapool coin at index 1
  */
-const logCurvePool = async (pool, coin0, coin1) => {
-  const balances = await pool.get_balances();
+const logCurvePool = async (pool, coin0, coin1, blockTag) => {
+  const balances = await pool.get_balances({ blockTag });
 
   const totalBalances = balances[0].add(balances[1]);
   const ethBasisPoints = balances[0].mul(10000).div(totalBalances);
@@ -29,22 +29,28 @@ const logCurvePool = async (pool, coin0, coin1) => {
   );
 
   log(
-    `LP virtual price: ${formatUnits(await pool.get_virtual_price())} ${coin1}`
+    `LP virtual price: ${formatUnits(
+      await pool.get_virtual_price({ blockTag })
+    )} ${coin1}`
   );
 
-  const buyPrice = await pool["get_dy(int128,int128,uint256)"](
+  // swap 1 OETH for ETH (OETH/ETH)
+  const price1 = await pool["get_dy(int128,int128,uint256)"](
     1,
     0,
-    parseUnits("1")
+    parseUnits("1"),
+    { blockTag }
   );
-  log(`${coin0} buy price : ${formatUnits(buyPrice)} ${coin1}`);
+  log(`${coin0}/${coin1} price : ${formatUnits(price1)}`);
 
-  const sellPrice = await pool["get_dy(int128,int128,uint256)"](
+  // swap 1 ETH for OETH (ETH/OETH)
+  const price2 = await pool["get_dy(int128,int128,uint256)"](
     0,
     1,
-    parseUnits("1")
+    parseUnits("1"),
+    { blockTag }
   );
-  log(`${coin0} sell price : ${formatUnits(sellPrice)} ${coin1}`);
+  log(`${coin1}/${coin0} price : ${formatUnits(price2)}`);
 };
 
 module.exports = {

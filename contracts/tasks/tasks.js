@@ -1,4 +1,4 @@
-const { task } = require("hardhat/config");
+const { task, types } = require("hardhat/config");
 
 const { fund, mint, redeem, redeemFor, transfer } = require("./account");
 const { debug } = require("./debug");
@@ -155,6 +155,7 @@ task("showStorageLayout", "Visually show the storage layout of the contract")
   .setAction(showStorageLayout);
 
 // Curve Pools
-task("curvePool", "Dumps the current state of a Curve pool").setAction(
-  curvePool
-);
+task("curvePool", "Dumps the current state of a Curve pool")
+  .addParam("pool", "Symbol of the curve Metapool. OUSD or OETH")
+  .addOptionalParam("block", "Block number. default latest", 0, types.int)
+  .setAction(curvePool);
