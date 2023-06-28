@@ -4,6 +4,7 @@ module.exports = deploymentWithGovernanceProposal(
   {
     deployName: "069_oeth_to_ogv_governance_p2",
     forceDeploy: false,
+    deployerIsProposer: true,
   },
   async ({ ethers }) => {
     const cOETHProxy = await ethers.getContract("OETHProxy");

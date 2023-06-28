@@ -477,17 +477,14 @@ const submitProposalToOgvGovernance = async (
   description,
   opts = {}
 ) => {
-  if (!isFork) {
+  if (!isFork && !isMainnet) {
     throw new Error(
-      "submitProposalToOgvGovernance only works on Fork networks"
+      "submitProposalToOgvGovernance only works on Fork & Mainnet networks"
     );
   }
 
   const governorFive = await getGovernorFive();
   const timelock = await getTimelock();
-  const multisig5of8 = addresses.mainnet.Guardian;
-  const sMultisig5of8 = hre.ethers.provider.getSigner(multisig5of8);
-  await impersonateGuardian(multisig5of8);
 
   log(`Submitting proposal for ${description}`);
   log(`Args: ${JSON.stringify(proposalArgs, null, 2)}`);
@@ -536,9 +533,19 @@ const submitProposalToOgvGovernance = async (
     });
   }
 
+  let signer;
+  // we are submitting proposal using the deployer
+  if (isMainnet) {
+    const { deployerAddr } = await getNamedAccounts();
+    signer = hre.ethers.provider.getSigner(deployerAddr);
+  } else {
+    const multisig5of8 = addresses.mainnet.Guardian;
+    signer = hre.ethers.provider.getSigner(multisig5of8);
+    await impersonateGuardian(multisig5of8);
+  }
   const result = await withConfirmation(
     governorFive
-      .connect(sMultisig5of8)
+      .connect(signer)
       ["propose(address[],uint256[],string[],bytes[],string)"](
         ...proposalArgs,
         description,
@@ -549,7 +556,9 @@ const submitProposalToOgvGovernance = async (
   const proposalId = result.receipt.parsedLogs[0].args[0].toString();
 
   log(`Submitted governance proposal to OGV governance ${proposalId}`);
-  await advanceBlocks(1);
+  if (!isMainnet) {
+    await advanceBlocks(1);
+  }
   const proposalIdBn = BigNumber.from(proposalId);
   const proposalState = await getProposalState(proposalIdBn);
 
@@ -748,7 +757,8 @@ function deploymentWithGovernanceProposal(opts, fn) {
     onlyOnFork,
     forceSkip,
     proposalId,
-    reduceQueueTime = false,
+    deployerIsProposer = false, // The deployer issues the propose to OGV Governor
+    reduceQueueTime = false, // reduce governance queue times
   } = opts;
   const runDeployment = async (hre) => {
     const oracleAddresses = await getOracleAddresses(hre.deployments);
@@ -790,7 +800,15 @@ function deploymentWithGovernanceProposal(opts, fn) {
     if (isMainnet) {
       // On Mainnet, only build the propose transaction for OGV governance
       log("Building OGV governance proposal...");
-      await submitProposalGnosisSafe(propArgs, propDescription, propOpts);
+      if (deployerIsProposer) {
+        await submitProposalToOgvGovernance(
+          propArgs,
+          propDescription,
+          propOpts
+        );
+      } else {
+        await submitProposalGnosisSafe(propArgs, propDescription, propOpts);
+      }
       log("Proposal sent.");
     } else if (isFork) {
       // On Fork we can send the proposal then impersonate the guardian to execute it.
