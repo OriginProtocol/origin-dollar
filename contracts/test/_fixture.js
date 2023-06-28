@@ -7,7 +7,7 @@ const {
   fundAccounts,
   fundAccountsForOETHUnitTests,
 } = require("../utils/funding");
-const { getAssetAddresses, daiUnits, isFork } = require("./helpers");
+const { getAssetAddresses, daiUnits, isFork, oethUnits } = require("./helpers");
 const { utils } = require("ethers");
 
 const { loadFixture, getOracleAddresses } = require("./helpers");
@@ -39,7 +39,8 @@ const defaultFixture = deployments.createFixture(async () => {
     }
   );
 
-  const { governorAddr, timelockAddr } = await getNamedAccounts();
+  const { governorAddr, strategistAddr, timelockAddr } =
+    await getNamedAccounts();
 
   const ousdProxy = await ethers.getContract("OUSDProxy");
   const vaultProxy = await ethers.getContract("VaultProxy");
@@ -177,6 +178,10 @@ const defaultFixture = deployments.createFixture(async () => {
     LUSDMetaStrategy,
     oethHarvester,
     oethDripper,
+    swapper,
+    mockSwapper,
+    swapper1Inch,
+    mock1InchSwapRouter,
     ConvexEthMetaStrategyProxy,
     ConvexEthMetaStrategy;
 
@@ -198,6 +203,8 @@ const defaultFixture = deployments.createFixture(async () => {
     ausdt = await ethers.getContractAt(erc20Abi, addresses.mainnet.aUSDT);
     ausdc = await ethers.getContractAt(erc20Abi, addresses.mainnet.aUSDC);
     adai = await ethers.getContractAt(erc20Abi, addresses.mainnet.aDAI);
+    reth = await ethers.getContractAt(erc20Abi, addresses.mainnet.rETH);
+    stETH = await ethers.getContractAt(erc20Abi, addresses.mainnet.stETH);
     frxETH = await ethers.getContractAt(erc20Abi, addresses.mainnet.frxETH);
     sfrxETH = await ethers.getContractAt(sfrxETHAbi, addresses.mainnet.sfrxETH);
     reth = await ethers.getContractAt(erc20Abi, addresses.mainnet.rETH);
@@ -290,6 +297,7 @@ const defaultFixture = deployments.createFixture(async () => {
       oethOracleRouter.address,
       dMockOETHOracleRouterNoStale
     );
+    swapper = await ethers.getContract("Swapper1InchV5");
   } else {
     usdt = await ethers.getContract("MockUSDT");
     dai = await ethers.getContract("MockDAI");
@@ -381,6 +389,10 @@ const defaultFixture = deployments.createFixture(async () => {
       "FraxETHStrategy",
       fraxEthStrategyProxy.address
     );
+    swapper = await ethers.getContract("MockSwapper");
+    mockSwapper = await ethers.getContract("MockSwapper");
+    swapper1Inch = await ethers.getContract("Swapper1InchV5");
+    mock1InchSwapRouter = await ethers.getContract("Mock1InchSwapRouter");
   }
 
   if (!isFork) {
@@ -400,15 +412,20 @@ const defaultFixture = deployments.createFixture(async () => {
 
   const signers = await hre.ethers.getSigners();
   let governor = signers[1];
-  const strategist = signers[0];
+  let strategist = signers[0];
   const adjuster = signers[0];
   let timelock;
+  let oldTimelock;
 
   const [matt, josh, anna, domen, daniel, franck] = signers.slice(4);
 
   if (isFork) {
     governor = await impersonateAndFundContract(governorAddr);
+    strategist = await impersonateAndFundContract(strategistAddr);
     timelock = await impersonateAndFundContract(timelockAddr);
+    oldTimelock = await impersonateAndFundContract(
+      addresses.mainnet.OldTimelock
+    );
   }
   await fundAccounts();
   if (isFork) {
@@ -445,6 +462,7 @@ const defaultFixture = deployments.createFixture(async () => {
     daniel,
     franck,
     timelock,
+    oldTimelock,
     // Contracts
     ousd,
     vault,
@@ -527,6 +545,10 @@ const defaultFixture = deployments.createFixture(async () => {
     ConvexEthMetaStrategy,
     oethDripper,
     oethHarvester,
+    swapper,
+    mockSwapper,
+    swapper1Inch,
+    mock1InchSwapRouter,
   };
 });
 
@@ -564,25 +586,26 @@ async function oethDefaultFixture() {
     await mockedMinter.connect(franck).setAssetAddress(fixture.sfrxETH.address);
 
     // Replace WETH contract with MockWETH
-    await replaceContractAt(addresses.mainnet.WETH, weth);
-    const mockedWETH = await ethers.getContractAt(
+    const mockWETH = await ethers.getContract("MockWETH");
+    await replaceContractAt(addresses.mainnet.WETH, mockWETH);
+    const stubbedWETH = await ethers.getContractAt(
       "MockWETH",
       addresses.mainnet.WETH
     );
-    fixture.weth = mockedWETH;
+    fixture.weth = stubbedWETH;
 
     // And Fund it
-    _hardhatSetBalance(mockedWETH.address, "999999999999999");
+    _hardhatSetBalance(stubbedWETH.address, "999999999999999");
 
     // And make sure vault knows about it
-    await oethVault.connect(governor).supportAsset(mockedWETH.address, 0);
+    await oethVault.connect(governor).supportAsset(addresses.mainnet.WETH, 0);
 
     // Fund all with mockTokens
     await fundAccountsForOETHUnitTests();
 
     // Reset allowances
     for (const user of [matt, josh, domen, daniel, franck]) {
-      for (const asset of [mockedWETH, reth, stETH, frxETH, sfrxETH]) {
+      for (const asset of [stubbedWETH, reth, stETH, frxETH, sfrxETH]) {
         await resetAllowance(asset, user, oethVault.address);
       }
     }
@@ -594,6 +617,63 @@ async function oethDefaultFixture() {
 function oethDefaultFixtureSetup() {
   return deployments.createFixture(async () => {
     return await oethDefaultFixture();
+  });
+}
+
+function oethCollateralSwapFixtureSetup() {
+  return deployments.createFixture(async () => {
+    const fixture = await oethDefaultFixture();
+
+    const { weth, reth, stETH, frxETH, matt, strategist, oethVault } = fixture;
+
+    const bufferBps = await oethVault.vaultBuffer();
+    const shouldChangeBuffer = bufferBps.lt(oethUnits("1"));
+
+    if (shouldChangeBuffer) {
+      // If it's not 100% already, set it to 100%
+      await oethVault.connect(strategist).setVaultBuffer(
+        oethUnits("1") // 100%
+      );
+    }
+
+    for (const token of [weth, reth, stETH, frxETH]) {
+      await token
+        .connect(matt)
+        .approve(
+          oethVault.address,
+          utils.parseEther("100000000000000000000000000000000000").toString()
+        );
+
+      // Mint some tokens, so it ends up in Vault
+      await oethVault
+        .connect(matt)
+        .mint(token.address, utils.parseEther("25"), "0");
+    }
+
+    if (shouldChangeBuffer) {
+      // Set it back
+      await oethVault.connect(strategist).setVaultBuffer(bufferBps);
+    }
+
+    return fixture;
+  });
+}
+
+function oeth1InchSwapperFixtureSetup() {
+  return deployments.createFixture(async () => {
+    const fixture = await oethDefaultFixture();
+    const { mock1InchSwapRouter } = fixture;
+
+    const swapRouterAddr = "0x1111111254EEB25477B68fb85Ed929f73A960582";
+    await replaceContractAt(swapRouterAddr, mock1InchSwapRouter);
+
+    const stubbedRouterContract = await hre.ethers.getContractAt(
+      "Mock1InchSwapRouter",
+      swapRouterAddr
+    );
+    fixture.mock1InchSwapRouter = stubbedRouterContract;
+
+    return fixture;
   });
 }
 
@@ -1552,4 +1632,6 @@ module.exports = {
   oethMorphoAaveFixtureSetup,
   mintWETH,
   replaceContractAt,
+  oeth1InchSwapperFixtureSetup,
+  oethCollateralSwapFixtureSetup,
 };

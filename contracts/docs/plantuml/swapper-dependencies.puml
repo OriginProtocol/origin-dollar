@@ -1,0 +1,67 @@
+@startuml
+
+title "Swapper Contract Dependencies"
+
+
+object "OETH Vault" as oethv <<Origin>> #DeepSkyBlue {
+}
+' object "OETH Harvester" as oethh <<Origin>> #DeepSkyBlue {
+' }
+
+object "OUSD Vault" as ousdv <<Origin>> #DeepSkyBlue {
+}
+' object "OUSD Harvester" as ousdh <<Origin>> #DeepSkyBlue {
+' }
+
+' option 2
+object "Swapper" as swapper <<Origin>> #DeepSkyBlue {
+}
+
+' option 3
+' object "Vault Swapper" as vaultSwapper <<Origin>> #DeepSkyBlue {
+' }
+' object "Harvester Swapper" as harvesterSwapper <<Origin>> #DeepSkyBlue {
+' }
+
+object "1Inch Router" as router <<1Inch>> {
+}
+
+object "UniSwap" as dex1 {
+}
+object "Curve" as dex2 {
+}
+object "Balancer" as dex3 {
+}
+object "Maverick" as dex4 {
+}
+object "Solidly" as dex5 {
+}
+
+' option 2
+oethv ..> swapper
+' oethh ..> swapper
+ousdv ..> swapper
+' ousdh ..> swapper
+swapper ..> router
+
+' option 3
+' oethv <.. vaultSwapper
+' oethh <.. harvesterSwapper
+' ousdv <.. vaultSwapper
+' ousdh <.. harvesterSwapper
+' vaultSwapper ..> router
+' harvesterSwapper ..> router
+
+' option 1
+' oethv ..> router
+' oethh ..> router
+' ousdv ..> router
+' ousdh ..> router
+
+router ..> dex1
+router ..> dex2
+router ..> dex3
+router ..> dex4
+router ..> dex5
+
+@enduml

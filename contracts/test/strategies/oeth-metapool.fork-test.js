@@ -1,16 +1,109 @@
 const { expect } = require("chai");
-
+const { formatUnits, parseUnits } = require("ethers/lib/utils");
 const { loadFixture } = require("ethereum-waffle");
+
 const { units, oethUnits, forkOnlyDescribe } = require("../helpers");
 const {
   convexOETHMetaVaultFixture,
   impersonateAndFundContract,
 } = require("../_fixture");
+const { logCurvePool } = require("../../utils/curve");
+
+const log = require("../../utils/logger")("test:fork:oeth:metapool");
 
 forkOnlyDescribe("ForkTest: OETH Curve Metapool Strategy", function () {
   this.timeout(0);
   // due to hardhat forked mode timeouts - retry failed tests up to 3 times
   this.retries(3);
+
+  it("should rebalance Metapool", async () => {
+    const {
+      oeth,
+      oethVault,
+      oethMetaPool,
+      oldTimelock,
+      ConvexEthMetaStrategy,
+      weth,
+    } = await loadFixture(convexOETHMetaVaultFixture);
+
+    // STEP 1 - rebase
+    await oethVault.rebase();
+
+    // STEP 2 - take snapshot
+    const cChecker = await ethers.getContract("OETHVaultValueChecker");
+    await cChecker.connect(oldTimelock).takeSnapshot();
+    const snapshot = await cChecker.snapshots(await oldTimelock.getAddress());
+    log(`before vault value : ${formatUnits(snapshot.vaultValue)}`);
+    log(`before vault supply: ${formatUnits(snapshot.totalSupply)}`);
+    log(
+      `before vault WETH  : ${formatUnits(
+        await weth.balanceOf(oethVault.address)
+      )}`
+    );
+
+    await logCurvePool(oethMetaPool, "ETH ", "OETH");
+
+    // STEP 3 - Withdraw from strategy
+    const withdrawTx = await oethVault
+      .connect(oldTimelock)
+      .withdrawAllFromStrategy(ConvexEthMetaStrategy.address);
+    // Get WETH's Deposit event
+    // remove OETH/ETH liquidity from pool and deposit ETH to get WETH to transfer to the Vault.
+    const withdrawReceipt = await withdrawTx.wait();
+    const depositLogs = withdrawReceipt.logs.filter(
+      (l) =>
+        l.address === weth.address &&
+        l.topics[0] ===
+          weth.interface.encodeFilterTopics("Deposit", []).toString()
+    );
+    const depositEvent = weth.interface.parseLog(depositLogs[0]);
+    const wethWithdrawn = depositEvent.args.wad;
+    log(`Withdrew ${formatUnits(wethWithdrawn)} WETH from strategy`);
+
+    // STEP 4 - Deposit to strategy
+    const additionAmount = 660;
+    const depositAmount = wethWithdrawn.add(
+      parseUnits(additionAmount.toString())
+    );
+    await oethVault
+      .connect(oldTimelock)
+      .depositToStrategy(
+        ConvexEthMetaStrategy.address,
+        [weth.address],
+        [depositAmount]
+      );
+    log(
+      `Deposited ${additionAmount} + ${formatUnits(
+        wethWithdrawn
+      )} = ${formatUnits(depositAmount)} WETH to strategy`
+    );
+
+    // STEP 5 - log results
+    const valueAfter = await oethVault.totalValue();
+    const valueChange = valueAfter.sub(snapshot.vaultValue);
+    log(`after vault value : ${formatUnits(valueAfter)}`);
+    const supplyAfter = await oeth.totalSupply();
+    const supplyChange = supplyAfter.sub(snapshot.totalSupply);
+    log(`after vault supply: ${formatUnits(supplyAfter)}`);
+    log(
+      `after vault WETH  : ${formatUnits(
+        await weth.balanceOf(oethVault.address)
+      )}`
+    );
+
+    log(`value change : ${formatUnits(valueChange)}`);
+    log(`supply change: ${formatUnits(supplyChange)}`);
+    const profit = valueChange.sub(supplyChange);
+    log(`profit       : ${formatUnits(profit)}`);
+
+    await logCurvePool(oethMetaPool, "ETH ", "OETH");
+
+    // STEP 6 - check delta
+    const variance = parseUnits("1", 15);
+    await cChecker
+      .connect(oldTimelock)
+      .checkDelta(profit, variance, valueChange, variance);
+  });
 
   it("Should stake WETH in Curve guage via metapool", async function () {
     // TODO: should have differently balanced metapools
@@ -180,3 +273,12 @@ async function mintTest(fixture, user, asset, amount = "3") {
     1
   );
 }
+
+// 183753347564551101
+// 183750000000000000
+//     10000000000000
+// -1634.632766188072688943
+// -1634.632766000000000000
+//            1000000000000
+// 1580.000000000000000000
+// 1580.000000000000000000
