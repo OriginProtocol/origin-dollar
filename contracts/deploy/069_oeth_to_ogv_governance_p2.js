@@ -25,9 +25,9 @@ module.exports = deploymentWithGovernanceProposal(
     // Governance Actions
     // ----------------
     return {
-      name: "OETH governance contracts have been owned by the OUSD 5 of 8 multi-sig.\n\
+      name: "Transfer ownership of OETH contracts to OGV governance.\n\
       \n\
-      Now that these governance contracts have been proven out, it's time for them to be directly owned by the community\n\
+      OETH has been owned by Origin 5/8 multi-sig wallet. The protocol has been proven, and it is time to move the ownership to the community.\n\
       \n\
       Code PR: #1654",
       actions: [
