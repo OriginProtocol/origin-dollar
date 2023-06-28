@@ -109,7 +109,6 @@ def get_1inch_swap(from_token, to_token, from_amount, slippage, allowPartialFill
     router_1inch = load_contract('router_1inch_v5', ROUTER_1INCH_V5)
     SWAP_SELECTOR = "0x12aa3caf" #swap(address,(address,address,address,address,uint256,uint256,uint256),bytes,bytes)
     UNISWAP_SELECTOR = "0xf78dc253" #unoswapTo(address,address,uint256,uint256,uint256[])
-    UNISWAPV3_SWAP_SELECTOR = "0xe449022e" #uniswapV3Swap(uint256,minReturn)
     UNISWAPV3_SWAP_TO_SELECTOR = "0xbc80f1a8" #uniswapV3SwapTo(address,uint256,uint256,uint256[])
 
 
