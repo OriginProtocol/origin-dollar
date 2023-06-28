@@ -21,6 +21,7 @@ const {
   supplyStakingContractWithOGN,
 } = require("./compensation");
 const { allocate, capital, harvest, rebase, yield } = require("./vault");
+const { curvePool } = require("./curve");
 
 // Environment tasks.
 task("env", "Check env vars are properly set for a Mainnet deployment", env);
@@ -152,3 +153,8 @@ task(
 task("showStorageLayout", "Visually show the storage layout of the contract")
   .addParam("name", "Name of the contract.")
   .setAction(showStorageLayout);
+
+// Curve Pools
+task("curvePool", "Dumps the current state of a Curve pool").setAction(
+  curvePool
+);

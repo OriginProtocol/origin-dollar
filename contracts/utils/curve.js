@@ -1,6 +1,7 @@
 const { formatUnits, parseUnits } = require("ethers/lib/utils");
 
-const log = require("./logger")("utils:curve");
+const logModule = "utils:curve";
+const log = require("./logger")(logModule);
 
 /**
  *
@@ -27,17 +28,26 @@ const logCurvePool = async (pool, coin0, coin1) => {
     )}%`
   );
 
-  log(`virtual price: ${formatUnits(await pool.get_virtual_price())}`);
+  log(
+    `LP virtual price: ${formatUnits(await pool.get_virtual_price())} ${coin1}`
+  );
 
-  // price 1 OETH to ETH
-  const price = await pool["get_dy(int128,int128,uint256)"](
+  const buyPrice = await pool["get_dy(int128,int128,uint256)"](
     1,
     0,
     parseUnits("1")
   );
-  log(`${coin1}/${coin0} price: ${formatUnits(price)}`);
+  log(`${coin0} buy price : ${formatUnits(buyPrice)} ${coin1}`);
+
+  const sellPrice = await pool["get_dy(int128,int128,uint256)"](
+    0,
+    1,
+    parseUnits("1")
+  );
+  log(`${coin0} sell price : ${formatUnits(sellPrice)} ${coin1}`);
 };
 
 module.exports = {
   logCurvePool,
+  log,
 };
