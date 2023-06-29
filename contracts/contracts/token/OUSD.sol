@@ -404,31 +404,32 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
         }
 
         bool isNonRebasingAccount = _isNonRebasingAccount(_account);
+        // creditAmount is rounded down, so may remove fewer credits
         uint256 creditAmount = _amount.mulTruncate(_creditsPerToken(_account));
         uint256 currentCredits = _creditBalances[_account];
 
-        // Remove the credits, burning rounding errors
-        if (
-            currentCredits == creditAmount || currentCredits - 1 == creditAmount
-        ) {
-            // Handle dust from rounding
+        
+        if (_amount == balanceOf(_account)) {
+            // Remove all account credits, burning rounding dust
             _creditBalances[_account] = 0;
         } else if (currentCredits > creditAmount) {
-            _creditBalances[_account] = _creditBalances[_account].sub(
-                creditAmount
-            );
+            _creditBalances[_account] -= creditAmount;
         } else {
             revert("Remove exceeds balance");
         }
 
         // Remove from the credit tallies and non-rebasing supply
         if (isNonRebasingAccount) {
-            nonRebasingSupply = nonRebasingSupply.sub(_amount);
+            nonRebasingSupply -= _amount;
         } else {
-            _rebasingCredits = _rebasingCredits.sub(creditAmount);
+            // Given that creditAmount could be rounded down, this could leave
+            // the contract with slightly more rebasing credits. This is the
+            // best side to round to, since this slows rebasing rather than
+            // speed it up
+            _rebasingCredits -= creditAmount;
         }
 
-        _totalSupply = _totalSupply.sub(_amount);
+        _totalSupply -= _amount;
 
         emit Transfer(_account, address(0), _amount);
     }
