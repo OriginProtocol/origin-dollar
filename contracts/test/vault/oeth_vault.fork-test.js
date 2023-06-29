@@ -9,7 +9,8 @@ const {
 } = require("./../_fixture");
 const { getIInchSwapData, recodeSwapData } = require("../../utils/1Inch");
 const addresses = require("../../utils/addresses");
-const { forkOnlyDescribe, resolveAsset } = require("./../helpers");
+const { forkOnlyDescribe } = require("../helpers");
+const { resolveAsset } = require("../../utils/assets");
 
 const log = require("../../utils/logger")("test:fork:oeth:vault");
 

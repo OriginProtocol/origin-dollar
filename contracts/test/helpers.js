@@ -532,28 +532,6 @@ const getAssetAddresses = async (deployments) => {
   }
 };
 
-/**
- * Resolves a token symbol to a ERC20 token contract.
- * @param {string} symbol token symbol of the asset. eg OUSD, USDT, stETH, CRV...
- */
-const resolveAsset = async (symbol) => {
-  if (isMainnetOrFork) {
-    if (!addresses.mainnet[symbol]) {
-      throw Error(`Failed to resolve symbol "${symbol}" to an address`);
-    }
-    const asset = await ethers.getContractAt(
-      "IERC20",
-      addresses.mainnet[symbol]
-    );
-    return asset;
-  }
-  const asset = await ethers.getContract("Mock" + symbol);
-  if (!asset) {
-    throw Error(`Failed to resolve symbol "${symbol}" to a mock contract`);
-  }
-  return asset;
-};
-
 async function fundAccount(address, balance = "1000") {
   await hre.network.provider.send("hardhat_setBalance", [
     address,
@@ -777,7 +755,6 @@ module.exports = {
   setOracleTokenPriceUsd,
   getOracleAddresses,
   getAssetAddresses,
-  resolveAsset,
   governorArgs,
   proposeArgs,
   propose,

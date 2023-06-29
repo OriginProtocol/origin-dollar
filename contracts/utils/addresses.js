@@ -56,6 +56,8 @@ addresses.mainnet.ThreePoolGauge = "0xbFcF63294aD7105dEa65aA58F8AE5BE2D9d0952A";
 addresses.mainnet.CVX = "0x4e3fbd56cd56c3e72c1403e103b45db9da5b9d2b";
 addresses.mainnet.CVXBooster = "0xF403C135812408BFbE8713b5A23a04b3D48AAE31";
 addresses.mainnet.CVXRewardsPool = "0x7D536a737C13561e0D2Decf1152a653B4e615158";
+addresses.mainnet.CVXETHRewardsPool =
+  "0x24b65DC1cf053A8D96872c323d29e86ec43eB33A";
 // Open Oracle
 addresses.mainnet.openOracle = "0x922018674c12a7f0d394ebeef9b58f186cde13c1";
 // OGN
@@ -135,6 +137,10 @@ addresses.mainnet.CurveOETHMetaPool =
   "0x94B17476A93b3262d87B9a326965D1E91f9c13E7";
 addresses.mainnet.CurveLUSDMetaPool =
   "0x7A192DD9Cc4Ea9bdEdeC9992df74F1DA55e60a19";
+addresses.mainnet.ConvexOUSDAMOStrategy =
+  "0x89eb88fedc50fc77ae8a18aad1ca0ac27f777a90";
+addresses.mainnet.ConvexOETHAMOStrategy =
+  "0x1827F9eA98E0bf96550b2FC20F7233277FcD7E63";
 addresses.mainnet.CurveOETHMetaPool =
   "0x94B17476A93b3262d87B9a326965D1E91f9c13E7";
 addresses.mainnet.MorphoStrategyProxy =

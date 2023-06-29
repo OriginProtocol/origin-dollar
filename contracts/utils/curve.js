@@ -28,11 +28,8 @@ const logCurvePool = async (pool, coin0, coin1, blockTag) => {
     )}%`
   );
 
-  log(
-    `LP virtual price: ${formatUnits(
-      await pool.get_virtual_price({ blockTag })
-    )} ${coin1}`
-  );
+  const virtualPrice = await pool.get_virtual_price({ blockTag });
+  log(`LP virtual price: ${formatUnits(virtualPrice)} ${coin1}`);
 
   // swap 1 OETH for ETH (OETH/ETH)
   const price1 = await pool["get_dy(int128,int128,uint256)"](
@@ -41,7 +38,7 @@ const logCurvePool = async (pool, coin0, coin1, blockTag) => {
     parseUnits("1"),
     { blockTag }
   );
-  log(`${coin0}/${coin1} price : ${formatUnits(price1)}`);
+  log(`${coin1}/${coin0} price : ${formatUnits(price1)}`);
 
   // swap 1 ETH for OETH (ETH/OETH)
   const price2 = await pool["get_dy(int128,int128,uint256)"](
@@ -50,7 +47,9 @@ const logCurvePool = async (pool, coin0, coin1, blockTag) => {
     parseUnits("1"),
     { blockTag }
   );
-  log(`${coin1}/${coin0} price : ${formatUnits(price2)}`);
+  log(`${coin0}/${coin1} price : ${formatUnits(price2)}`);
+
+  return { balances, virtualPrice };
 };
 
 module.exports = {
