@@ -7,7 +7,7 @@ import withIsMobile from 'hoc/withIsMobile'
 import AccountStore from 'stores/AccountStore'
 import ContractStore from 'stores/ContractStore'
 import { formatCurrency } from 'utils/math'
-import { apyDayOptions } from 'utils/constants'
+import { apyDayOptions, DEFAULT_SELECTED_APY } from 'utils/constants'
 import useExpectedYield from 'utils/useExpectedYield'
 import withRpcProvider from 'hoc/withRpcProvider'
 import ApySelect from 'components/ApySelect'
@@ -20,7 +20,6 @@ const BalanceHeaderWrapped = ({
   rpcProvider,
   isMobile,
 }) => {
-  const DEFAULT_SELECTED_APY = 365
   const apyOptions = useStoreState(ContractStore, (s) =>
     apyDayOptions.map((d) => {
       return s.apy[`apy${d}`] || 0
