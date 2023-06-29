@@ -291,6 +291,19 @@
       "inputs": [
         {
           "indexed": false,
+          "internalType": "uint256",
+          "name": "_basis",
+          "type": "uint256"
+        }
+      ],
+      "name": "SwapAllowedUndervalueChanged",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
           "internalType": "address",
           "name": "_asset",
           "type": "address"
@@ -412,6 +425,19 @@
       ],
       "name": "YieldDistribution",
       "type": "event"
+    },
+    {
+      "inputs": [],
+      "name": "allowedSwapUndervalue",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "value",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
     },
     {
       "inputs": [
@@ -620,34 +646,6 @@
       "type": "function"
     },
     {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "_strategyFromAddress",
-          "type": "address"
-        },
-        {
-          "internalType": "address",
-          "name": "_strategyToAddress",
-          "type": "address"
-        },
-        {
-          "internalType": "address[]",
-          "name": "_assets",
-          "type": "address[]"
-        },
-        {
-          "internalType": "uint256[]",
-          "name": "_amounts",
-          "type": "uint256[]"
-        }
-      ],
-      "name": "reallocate",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
       "inputs": [],
       "name": "rebasePaused",
       "outputs": [
@@ -773,6 +771,24 @@
       "inputs": [
         {
           "internalType": "address",
+          "name": "_asset",
+          "type": "address"
+        },
+        {
+          "internalType": "uint16",
+          "name": "_allowedOracleSlippageBps",
+          "type": "uint16"
+        }
+      ],
+      "name": "setOracleSlippage",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
           "name": "_ousdMetaStrategy",
           "type": "address"
         }
@@ -837,17 +853,12 @@
     {
       "inputs": [
         {
-          "internalType": "address",
-          "name": "_asset",
-          "type": "address"
-        },
-        {
           "internalType": "uint16",
-          "name": "_allowedSwapSlippageBps",
+          "name": "_basis",
           "type": "uint16"
         }
       ],
-      "name": "setSwapSlippage",
+      "name": "setSwapAllowedUndervalue",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -936,12 +947,51 @@
       "type": "function"
     },
     {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_fromAsset",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_toAsset",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_fromAssetAmount",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_minToAssetAmount",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bytes",
+          "name": "_data",
+          "type": "bytes"
+        }
+      ],
+      "name": "swapCollateral",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "toAssetAmount",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
       "inputs": [],
       "name": "swapper",
       "outputs": [
         {
           "internalType": "address",
-          "name": "",
+          "name": "swapper_",
           "type": "address"
         }
       ],
