@@ -395,6 +395,8 @@ def show_governance_action(i, to, sig, data):
   print("{}) {}".format(i+1, nice_contract_address(to)))
   print("     "+ORANGE+sig+ENDC)
   # print("Post Sig Data: ", data)
+  if re.match(".*\(\)", sig):
+    return
   stypes = re.split(",|\)|\(", sig)[1:-1]
   decodes = abi.decode_abi(stypes, data)
   for j in range(0, len(stypes)):
