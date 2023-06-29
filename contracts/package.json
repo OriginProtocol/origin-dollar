@@ -7,7 +7,7 @@
     "deploy": "(npx hardhat deploy --export '../dapp/network.json') && yarn run copy-interface-artifacts",
     "deploy:mainnet": "(npx hardhat deploy --network mainnet --verbose --export '../dapp/network.mainnet.json') && yarn run copy-interface-artifacts",
     "deploy:oeth": "(npx hardhat deploy --export '../dapp-oeth/network.json') && yarn run copy-interface-artifacts:oeth",
-    "deploy:oeth:mainnet": "(npx hardhat deploy --network mainnet --verbose --export '../dapp-oeth/network.mainnet.json') && yarn run copy-interface-artifacts",
+    "deploy:oeth:mainnet": "(npx hardhat deploy --network mainnet --verbose --export '../dapp-oeth/network.mainnet.json') && yarn run copy-interface-artifacts:oeth",
     "node": "yarn run node:fork",
     "node:fork": "./node.sh fork",
     "lint": "yarn run lint:js && yarn run lint:sol",
