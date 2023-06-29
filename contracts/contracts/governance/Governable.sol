@@ -45,7 +45,7 @@ contract Governable {
     }
 
     /**
-     * @dev Returns the address of the current Governor.
+     * @notice Returns the address of the current Governor.
      */
     function governor() public view returns (address) {
         return _governor();
@@ -86,7 +86,7 @@ contract Governable {
     }
 
     /**
-     * @dev Returns true if the caller is the current Governor.
+     * @notice Returns true if the caller is the current Governor.
      */
     function isGovernor() public view returns (bool) {
         return msg.sender == _governor();
@@ -134,26 +134,6 @@ contract Governable {
         }
     }
 
-    /**
-     * @dev Prevents a view contract function from being called
-     * while the contract is inside a reentrant protected method.
-     * This can prevent third party contracts from being attacked
-     * via working with partially updated data.
-     */
-    modifier nonReentrantView() {
-        bytes32 position = reentryStatusPosition;
-        uint256 _reentry_status;
-        // solhint-disable-next-line no-inline-assembly
-        assembly {
-            _reentry_status := sload(position)
-        }
-
-        // On the first call to nonReentrant, _notEntered will be true
-        require(_reentry_status != _ENTERED, "Reentrant call");
-
-        _;
-    }
-
     function _setPendingGovernor(address newGovernor) internal {
         bytes32 position = pendingGovernorPosition;
         // solhint-disable-next-line no-inline-assembly
@@ -163,7 +143,7 @@ contract Governable {
     }
 
     /**
-     * @dev Transfers Governance of the contract to a new account (`newGovernor`).
+     * @notice Transfers Governance of the contract to a new account (`newGovernor`).
      * Can only be called by the current Governor. Must be claimed for this to complete
      * @param _newGovernor Address of the new Governor
      */
@@ -173,7 +153,7 @@ contract Governable {
     }
 
     /**
-     * @dev Claim Governance of the contract to a new account (`newGovernor`).
+     * @notice Claim Governance of the contract to a new account (`newGovernor`).
      * Can only be called by the new Governor.
      */
     function claimGovernance() external {

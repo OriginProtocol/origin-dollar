@@ -282,13 +282,14 @@ def auto_check_snapshot():
     print(snapshot)
     vault_change = world.vault_core.totalValue() - snapshot[0]
     supply_change = world.ousd.totalSupply() - snapshot[1]
+    profit = vault_change - supply_change
 
     return [
         world.vault_value_checker.checkDelta(
-            vault_change - 500 * int(1e18),
-            vault_change + 1000 * int(1e18),
-            supply_change - 1000 * int(1e18),
-            supply_change + 500 * int(1e18),
+            profit, # expectedProfit
+            500 * int(1e18), # profitVariance
+            vault_change, # expectedVaultChange
+            250_000 * int(1e18), # vaultChangeVariance
             {"from": world.STRATEGIST},
         )
     ]

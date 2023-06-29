@@ -3,7 +3,7 @@
 //
 
 const hre = require("hardhat");
-const { utils, BigNumber } = require("ethers");
+const { BigNumber, utils } = require("ethers");
 
 const {
   advanceTime,
@@ -92,6 +92,12 @@ const withConfirmation = async (
     NUM_CONFIRMATIONS
   );
 
+  // Transaction is initializing upgradeable proxy "initialize(address,address,bytes)"
+  // second address parameter is the initial governor
+  if (result.data && result.data.startsWith("0xcf7a1d77") && isMainnetOrFork) {
+    _verifyProxyInitializedWithCorrectGovernor(result.data);
+  }
+
   if (logContractAbi) {
     let contractInterface = new ethers.utils.Interface(logContractAbi);
     receipt.parsedLogs = receipt.logs.map((log) =>
@@ -101,6 +107,22 @@ const withConfirmation = async (
 
   result.receipt = receipt;
   return result;
+};
+
+const _verifyProxyInitializedWithCorrectGovernor = (transactionData) => {
+  const initProxyGovernor = (
+    "0x" + transactionData.slice(10 + 64 + 24, 10 + 64 + 64)
+  ).toLowerCase();
+  if (
+    ![
+      addresses.mainnet.Timelock.toLowerCase(),
+      addresses.mainnet.OldTimelock.toLowerCase(),
+    ].includes(initProxyGovernor)
+  ) {
+    throw new Error(
+      `Proxy contract initialised with unexpected governor: ${initProxyGovernor}`
+    );
+  }
 };
 
 /**
@@ -550,7 +572,7 @@ const submitProposalToOgvGovernance = async (
 
   log(`Submitted governance proposal to OGV governance ${proposalId}`);
   await advanceBlocks(1);
-  const proposalIdBn = ethers.BigNumber.from(proposalId);
+  const proposalIdBn = BigNumber.from(proposalId);
   const proposalState = await getProposalState(proposalIdBn);
 
   return {

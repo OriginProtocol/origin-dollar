@@ -54,10 +54,10 @@ sol2uml .. -v -hv -hf -he -hs -hl -b ConvexEthMetaStrategy -o ConvexEthMetaStrat
 sol2uml .. -s -d 0 -b ConvexEthMetaStrategy -o ConvexEthMetaStrategySquashed.svg
 sol2uml storage .. -c ConvexEthMetaStrategy -o ConvexEthMetaStrategyStorage.svg
 
-sol2uml .. -v -hv -hf -he -hs -hl -b Generalized4626Strategy -o Gen4626StrategyHierarchy.svg
-sol2uml .. -s -d 0 -b Generalized4626Strategy -o Gen4626StrategySquashed.svg
+sol2uml .. -v -hv -hf -he -hs -hl -b FraxETHStrategy -o FraxETHStrategyHierarchy.svg
+sol2uml .. -s -d 0 -b FraxETHStrategy -o FraxETHStrategySquashed.svg
 ## TODO fix sol2uml "Failed to find user defined type "IERC20" in attribute "shareToken" of type "1"""
-sol2uml storage .. -c Generalized4626Strategy -o Gen4626StrategyStorage.svg
+sol2uml storage .. -c FraxETHStrategy -o FraxETHStrategyStorage.svg
 
 sol2uml .. -v -hv -hf -he -hs -hl -b MorphoAaveStrategy -o MorphoAaveStrategyHierarchy.svg
 sol2uml .. -s -d 0 -b MorphoAaveStrategy -o MorphoAaveStrategySquashed.svg
@@ -66,6 +66,11 @@ sol2uml storage .. -c MorphoAaveStrategy -o MorphoAaveStrategyStorage.svg
 sol2uml .. -v -hv -hf -he -hs -hl -b MorphoCompoundStrategy -o MorphoCompStrategyHierarchy.svg
 sol2uml .. -s -d 0 -b MorphoCompoundStrategy -o MorphoCompStrategySquashed.svg
 sol2uml storage .. -c MorphoCompoundStrategy -o MorphoCompStrategyStorage.svg
+
+# contracts/swapper
+sol2uml .. -v -hv -hf -he -hs -hl -b Swapper1InchV5 -o Swapper1InchV5Hierarchy.svg
+sol2uml .. -s -d 0 -b Swapper1InchV5 -o Swapper1InchV5Squashed.svg
+sol2uml storage .. -c Swapper1InchV5 -o Swapper1InchV5Storage.svg
 
 # contracts/timelock
 sol2uml .. -v -hv -hf -he -hs -hl -b Timelock -o TimelockHierarchy.svg
@@ -90,10 +95,12 @@ sol2uml .. -s -d 0 -b WOETH -o WOETHSquashed.svg
 sol2uml storage .. -c WOETH -o WOETHStorage.svg
 
 # contracts/vault
-sol2uml .. -v -hv -hf -he -hs -hl -b VaultCore -o VaultHierarchy.svg
-sol2uml .. -s -d 0 -b VaultCore -o VaultSquashed.svg
+sol2uml .. -v -hv -hf -he -hs -hl -b VaultCore,VaultAdmin -o VaultHierarchy.svg
+sol2uml .. -s -d 0 -b VaultCore -o VaultCoreSquashed.svg
+sol2uml .. -s -d 0 -b VaultAdmin -o VaultAdminSquashed.svg
 sol2uml storage .. -c VaultCore -o VaultStorage.svg
 
 sol2uml .. -v -hv -hf -he -hs -hl -b OETHVaultCore -o OETHVaultHierarchy.svg
-sol2uml .. -s -d 0 -b OETHVaultCore -o OETHVaultSquashed.svg
+sol2uml .. -s -d 0 -b OETHVaultCore -o OETHVaultCoreSquashed.svg
+sol2uml .. -s -d 0 -b OETHVaultAdmin -o OETHVaultAdminSquashed.svg
 sol2uml storage .. -c OETHVaultCore -o OETHVaultStorage.svg

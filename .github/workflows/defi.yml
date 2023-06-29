@@ -2,6 +2,11 @@ name: DeFi
 on: 
   pull_request:
     types: [opened, reopened, synchronize]
+  push:
+    branches:
+      - 'master'
+      - 'staging'
+      - 'stable'
   workflow_dispatch:
 
 concurrency:
@@ -16,13 +21,19 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Use Node.js
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
           node-version: "16.x"
           cache: "yarn"
           cache-dependency-path: contracts/yarn.lock
 
       - run: yarn install --frozen-lockfile
+        working-directory: ./contracts
+
+      # this will compile and output the contract sizes
+      - run: npx hardhat compile
+        env:
+          CONTRACT_SIZE: true
         working-directory: ./contracts
 
       - run: yarn run lint
@@ -38,7 +49,7 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Use Node.js
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
           node-version: "16.x"
           cache: "yarn"
@@ -47,7 +58,30 @@ jobs:
       - run: yarn install --frozen-lockfile
         working-directory: ./contracts
 
-      - name: Run Tests
+      # this will run the unit tests and report the gas usage
+      - name: Run Unit Tests
+        env:
+          REPORT_GAS: true
+        run: yarn run test
+        working-directory: ./contracts
+
+  contracts-unit-coverage:
+    name: "Contracts Unit Coverage"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "16.x"
+          cache: "yarn"
+          cache-dependency-path: contracts/yarn.lock
+
+      - run: yarn install --frozen-lockfile
+        working-directory: ./contracts
+
+      - name: Run Unit Coverage
         run: yarn run test:coverage
         working-directory: ./contracts
 
@@ -59,8 +93,6 @@ jobs:
             ./contracts/coverage/**/*
           retention-days: 1
 
-      # - uses: codecov/codecov-action@v3
-
   contracts-forktest:
     name: "Contracts Fork Tests"
     runs-on: ubuntu-latest
@@ -71,7 +103,7 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Use Node.js
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
           node-version: "16.x"
           cache: "yarn"
@@ -136,6 +168,8 @@ jobs:
           path: ./unit-coverage
 
       - uses: codecov/codecov-action@v3
+        with:
+          fail_ci_if_error: true
 
   dapp-lint:
     name: "OUSD DApp Linter"
@@ -144,7 +178,7 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Use Node.js
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
           node-version: "16.x"
           cache: "yarn"
@@ -156,6 +190,25 @@ jobs:
       - run: yarn prettier:check
         working-directory: ./dapp
 
+  dapp-oeth-lint:
+    name: "OETH DApp Linter"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Use Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "16.x"
+          cache: "yarn"
+          cache-dependency-path: dapp-oeth/yarn.lock
+
+      - run: yarn install --frozen-lockfile
+        working-directory: ./dapp-oeth
+
+      - run: yarn prettier:check
+        working-directory: ./dapp-oeth
+
   slither:
     name: "Slither"
     # As long as we need Python 3.6 here in the test, we can only use up to Ubuntu 20.
@@ -166,7 +219,7 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Set up Python 3.6
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: 3.6
 
@@ -178,7 +231,7 @@ jobs:
           pip3 install slither-analyzer
 
       - name: Use Node.js
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
           node-version: "16.x"
           cache: "yarn"

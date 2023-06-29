@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="203" height="143" viewBox="0 0 203 143">
+    <g fill="none" fill-rule="evenodd">
+        <g>
+            <g transform="translate(-927 -719) translate(927 719)">
+                <path fill="#142A38" fill-rule="nonzero" stroke="#FFF" d="M40.146 116.405c0-33.66 122.014-33.66 122.014 0 0 33.747-122.014 33.747-122.014 0z"/>
+                <path fill="#1F3B4B" stroke="#9F5DFF" stroke-linejoin="round" d="M74.772 11.662L127.452 11.662 127.452 64.341 74.772 64.341z" transform="rotate(-45 101.112 38.001)"/>
+                <path fill="#254558" fill-rule="nonzero" stroke="#9F5DFF" stroke-linejoin="round" d="M63.9 37.954L101.153 0.701 101.153 37.954z"/>
+                <path fill="#183140" fill-rule="nonzero" stroke="#9F5DFF" stroke-linejoin="round" d="M138.406 37.954L101.153 75.207 101.153 37.954z"/>
+                <circle cx="15.69" cy="74.857" r="15.164" fill="#183140" fill-rule="nonzero" stroke="#FAFBFC" stroke-width=".5" opacity=".1"/>
+                <circle cx="39.181" cy="79.941" r="15.164" fill="#183140" fill-rule="nonzero" stroke="#FAFBFC" opacity=".325"/>
+                <circle cx="55.923" cy="92.914" r="15.164" fill="#183140" fill-rule="nonzero" stroke="#FAFBFC" opacity=".55"/>
+                <circle cx="65.741" cy="110.181" r="15.164" fill="#183140" fill-rule="nonzero" stroke="#FAFBFC" opacity=".775"/>
+                <path fill="#183140" fill-rule="nonzero" stroke="#FAFBFC" d="M69.072 113.162c-8.328 0-15.165 6.75-15.165 15.164 0 1.928.351 3.681.965 5.347 6.486 2.98 14.638 5.084 23.579 6.486 3.506-2.805 5.697-7.012 5.697-11.833 0-8.415-6.75-15.164-15.076-15.164z"/>
+                <circle cx="187.054" cy="74.857" r="15.164" fill="#183140" fill-rule="nonzero" stroke="#FAFBFC" opacity=".1"/>
+                <circle cx="163.475" cy="79.941" r="15.164" fill="#183140" fill-rule="nonzero" stroke="#FAFBFC" opacity=".325"/>
+                <circle cx="146.821" cy="92.914" r="15.164" fill="#183140" fill-rule="nonzero" stroke="#FAFBFC" opacity=".55"/>
+                <circle cx="136.916" cy="110.181" r="15.164" fill="#183140" fill-rule="nonzero" stroke="#FAFBFC" opacity=".775"/>
+                <path fill="#183140" fill-rule="nonzero" stroke="#FAFBFC" d="M133.585 113.162c-8.327 0-15.164 6.75-15.164 15.164 0 4.733 2.191 9.028 5.61 11.746 9.028-1.403 17.268-3.594 23.754-6.662.614-1.578.877-3.331.877-5.084.087-8.415-6.662-15.164-15.077-15.164z"/>
+                <g stroke="#F4F4F4" stroke-width=".5">
+                    <path d="M0 4.47L8.765 4.47M4.383.088L4.383 8.853" transform="translate(85.901 7.012)"/>
+                </g>
+                <path stroke="#F4F4F4" d="M86.252 68.984L86.252 85.025M108.428 82.395L108.428 98.436M100.54 95.806L100.54 111.935M91.774 78.275L91.774 94.404M114.301 71.263L114.301 87.391"/>
+            </g>
+        </g>
+    </g>
+</svg>

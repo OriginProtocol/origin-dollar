@@ -105,30 +105,36 @@ forkOnlyDescribe("ForkTest: Morpho Aave OETH Strategy", function () {
     });
 
     it("Should be able to withdrawAll from strategy", async function () {
-      const { franck, weth, oethVault, oethMorphoAaveStrategy } = fixture;
+      const { weth, oethVault, oethMorphoAaveStrategy } = fixture;
       const oethVaultSigner = await impersonateAndFundContract(
         oethVault.address
       );
-      const amount = "1.121314";
 
-      // Remove funds so no residual funds get allocated
-      await weth
-        .connect(oethVaultSigner)
-        .transfer(franck.address, await weth.balanceOf(oethVault.address));
+      // The strategy already has some funds allocated on Mainnet,
+      // so the following lines are unnecessary
 
-      // Mint some OETH
-      await mintTest(fixture, franck, weth, amount);
+      // // Remove funds so no residual funds get allocated
+      // await weth
+      //   .connect(oethVaultSigner)
+      //   .transfer(franck.address, await weth.balanceOf(oethVault.address));
 
-      const wethUnits = await units(amount, weth);
-      const oethVaultWETHBefore = await weth.balanceOf(oethVault.address);
+      // // Mint some OETH
+      // await mintTest(fixture, franck, weth, amount);
+
+      const existingBalance = await oethMorphoAaveStrategy.checkBalance(
+        weth.address
+      );
+      const oethVaultWETHBefore = (await weth.balanceOf(oethVault.address)).add(
+        existingBalance
+      );
 
       await oethMorphoAaveStrategy.connect(oethVaultSigner).withdrawAll();
 
-      const oethVaultWETHDiff = (await weth.balanceOf(oethVault.address)).sub(
-        oethVaultWETHBefore
+      const oethVaultWETHAfter = await weth.balanceOf(oethVault.address);
+      expect(oethVaultWETHAfter).to.approxEqualTolerance(
+        oethVaultWETHBefore,
+        1
       );
-
-      expect(oethVaultWETHDiff).to.approxEqualTolerance(wethUnits, 1);
     });
   });
 });

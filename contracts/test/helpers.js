@@ -21,11 +21,18 @@ chai.Assertion.addMethod("approxEqual", function (expected, message) {
  * Checks if the actual value is approximately equal to the expected value
  * within a specified percentage tolerance.
  * @param {number} [maxTolerancePct=1] - The maximum percentage tolerance allowed for the comparison (default is 1%).
+ * @examples
+ *   expect(1010).to.approxEqualTolerance(1000, 1); // true
+ *   expect(1011).to.approxEqualTolerance(1000, 1); // false
+ *   expect(1000).to.approxEqualTolerance(1011, 1); // true
+ *   expect(1000).to.approxEqualTolerance(1012, 1); // false
+ *   expect(1001).to.approxEqualTolerance(1000, 0.1); // true
  */
 chai.Assertion.addMethod(
   "approxEqualTolerance",
   function (expected, maxTolerancePct = 1, message = undefined) {
     const actual = this._obj;
+    expected = BigNumber.from(expected);
     if (expected.gte(BigNumber.from(0))) {
       chai
         .expect(actual, message)
@@ -47,10 +54,12 @@ chai.Assertion.addMethod(
 chai.Assertion.addMethod(
   "approxBalanceOf",
   async function (expected, contract, message) {
-    var user = this._obj;
-    var address = user.address || user.getAddress(); // supports contracts too
+    const user = this._obj;
+    const address = user.address || user.getAddress(); // supports contracts too
     const actual = await contract.balanceOf(address);
-    expected = parseUnits(expected, await decimalsFor(contract));
+    if (!BigNumber.isBigNumber(expected)) {
+      expected = parseUnits(expected, await decimalsFor(contract));
+    }
     chai.expect(actual).to.approxEqual(expected, message);
   }
 );
@@ -64,13 +73,84 @@ chai.Assertion.addMethod(
 chai.Assertion.addMethod(
   "balanceOf",
   async function (expected, contract, message) {
-    var user = this._obj;
-    var address = user.address || user.getAddress(); // supports contracts too
+    const user = this._obj;
+    const address = user.address || user.getAddress(); // supports contracts too
     const actual = await contract.balanceOf(address);
-    expected = parseUnits(expected, await decimalsFor(contract));
+    if (!BigNumber.isBigNumber(expected)) {
+      expected = parseUnits(expected, await decimalsFor(contract));
+    }
     chai.expect(actual).to.equal(expected, message);
   }
 );
+
+chai.Assertion.addMethod(
+  "approxBalanceWithToleranceOf",
+  async function (expected, contract, tolerancePct = 1, message = undefined) {
+    const user = this._obj;
+    const address = user.address || user.getAddress(); // supports contracts too
+    const actual = await contract.balanceOf(address);
+    if (!BigNumber.isBigNumber(expected)) {
+      expected = parseUnits(expected, await decimalsFor(contract));
+    }
+    chai
+      .expect(actual)
+      .to.approxEqualTolerance(expected, tolerancePct, message);
+  }
+);
+
+chai.Assertion.addMethod("totalSupplyOf", async function (expected, message) {
+  const contract = this._obj;
+  const actual = await contract.totalSupply();
+  if (!BigNumber.isBigNumber(expected)) {
+    expected = parseUnits(expected, await decimalsFor(contract));
+  }
+  chai.expect(actual).to.equal(expected, message);
+});
+
+chai.Assertion.addMethod(
+  "approxTotalSupplyOf",
+  async function (expected, message) {
+    const contract = this._obj;
+    const actual = await contract.totalSupply();
+    if (!BigNumber.isBigNumber(expected)) {
+      expected = parseUnits(expected, await decimalsFor(contract));
+    }
+    chai.expect(actual).to.approxEqualTolerance(expected, 1, message);
+  }
+);
+
+chai.Assertion.addMethod(
+  "assetBalanceOf",
+  async function (expected, asset, message) {
+    const strategy = this._obj;
+    const assetAddress = asset.address || asset.getAddress();
+    const actual = await strategy.checkBalance(assetAddress);
+    if (!BigNumber.isBigNumber(expected)) {
+      expected = parseUnits(expected, await decimalsFor(asset));
+    }
+    chai.expect(actual).to.approxEqualTolerance(expected, 1, message);
+  }
+);
+
+chai.Assertion.addMethod("emittedEvent", async function (eventName, args) {
+  const tx = this._obj;
+  const { events } = await tx.wait();
+  const log = events.find((e) => e.event == eventName);
+  chai.expect(log).to.not.be.undefined;
+
+  if (Array.isArray(args)) {
+    chai
+      .expect(log.args.length)
+      .to.equal(args.length, "Invalid event arg count");
+    for (let i = 0; i < args.length; i++) {
+      if (typeof args[i] == "function") {
+        args[i](log.args[i]);
+      } else {
+        chai.expect(log.args[i]).to.equal(args[i]);
+      }
+    }
+  }
+});
 
 /**
  * Returns the number of decimal places used by the given token contract.
@@ -324,6 +404,12 @@ const getOracleAddresses = async (deployments) => {
           .address,
         RETH_ETH: (await deployments.get("MockChainlinkOracleFeedRETHETH"))
           .address,
+        STETH_ETH: (await deployments.get("MockChainlinkOracleFeedstETHETH"))
+          .address,
+        FRXETH_ETH: (await deployments.get("MockChainlinkOracleFeedfrxETHETH"))
+          .address,
+        WETH_ETH: (await deployments.get("MockChainlinkOracleFeedWETHETH"))
+          .address,
         NonStandardToken_USD: (
           await deployments.get("MockChainlinkOracleFeedNonStandardToken")
         ).address,
@@ -399,6 +485,9 @@ const getAssetAddresses = async (deployments) => {
       OGN: (await deployments.get("MockOGN")).address,
       OGV: (await deployments.get("MockOGV")).address,
       RETH: (await deployments.get("MockRETH")).address,
+      stETH: (await deployments.get("MockstETH")).address,
+      frxETH: (await deployments.get("MockfrxETH")).address,
+      sfrxETH: (await deployments.get("MocksfrxETH")).address,
       // Note: This is only used to transfer the swapped OGV in `Buyback` contract.
       // So, as long as this is a valid address, it should be fine.
       RewardsSource: addresses.dead,
@@ -441,6 +530,28 @@ const getAssetAddresses = async (deployments) => {
 
     return addressMap;
   }
+};
+
+/**
+ * Resolves a token symbol to a ERC20 token contract.
+ * @param {string} symbol token symbol of the asset. eg OUSD, USDT, stETH, CRV...
+ */
+const resolveAsset = async (symbol) => {
+  if (isMainnetOrFork) {
+    if (!addresses.mainnet[symbol]) {
+      throw Error(`Failed to resolve symbol "${symbol}" to an address`);
+    }
+    const asset = await ethers.getContractAt(
+      "IERC20",
+      addresses.mainnet[symbol]
+    );
+    return asset;
+  }
+  const asset = await ethers.getContract("Mock" + symbol);
+  if (!asset) {
+    throw Error(`Failed to resolve symbol "${symbol}" to a mock contract`);
+  }
+  return asset;
 };
 
 async function fundAccount(address, balance = "1000") {
@@ -666,6 +777,7 @@ module.exports = {
   setOracleTokenPriceUsd,
   getOracleAddresses,
   getAssetAddresses,
+  resolveAsset,
   governorArgs,
   proposeArgs,
   propose,

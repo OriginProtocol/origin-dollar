@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import { VaultStorage } from "../vault/VaultStorage.sol";
+
 interface IVault {
     event AssetSupported(address _asset);
     event AssetDefaultStrategyUpdated(address _asset, address _strategy);
@@ -23,6 +25,15 @@ interface IVault {
     event YieldDistribution(address _to, uint256 _yield, uint256 _fee);
     event TrusteeFeeBpsChanged(uint256 _basis);
     event TrusteeAddressChanged(address _address);
+    event SwapperChanged(address _address);
+    event SwapAllowedUndervalueChanged(uint256 _basis);
+    event SwapSlippageChanged(address _asset, uint256 _basis);
+    event Swapped(
+        address indexed _fromAsset,
+        address indexed _toAsset,
+        uint256 _fromAssetAmount,
+        uint256 _toAssetAmount
+    );
 
     // Governable.sol
     function transferGovernance(address _newGovernor) external;
@@ -70,6 +81,13 @@ interface IVault {
 
     function ousdMetaStrategy() external view returns (address);
 
+    function setSwapper(address _swapperAddr) external;
+
+    function setSwapAllowedUndervalue(uint16 _percentageBps) external;
+
+    function setOracleSlippage(address _asset, uint16 _allowedOracleSlippageBps)
+        external;
+
     function supportAsset(address _asset, uint8 _supportsAsset) external;
 
     function approveStrategy(address _addr) external;
@@ -106,13 +124,6 @@ interface IVault {
 
     function withdrawAllFromStrategies() external;
 
-    function reallocate(
-        address _strategyFromAddress,
-        address _strategyToAddress,
-        address[] calldata _assets,
-        uint256[] calldata _amounts
-    ) external;
-
     function withdrawFromStrategy(
         address _strategyFromAddress,
         address[] calldata _assets,
@@ -144,6 +155,14 @@ interface IVault {
 
     function rebase() external;
 
+    function swapCollateral(
+        address fromAsset,
+        address toAsset,
+        uint256 fromAssetAmount,
+        uint256 minToAssetAmount,
+        bytes calldata data
+    ) external returns (uint256 toAssetAmount);
+
     function totalValue() external view returns (uint256 value);
 
     function checkBalance(address _asset) external view returns (uint256);
@@ -155,9 +174,18 @@ interface IVault {
 
     function getAssetCount() external view returns (uint256);
 
+    function getAssetConfig(address _asset)
+        external
+        view
+        returns (VaultStorage.Asset memory config);
+
     function getAllAssets() external view returns (address[] memory);
 
     function getStrategyCount() external view returns (uint256);
+
+    function swapper() external view returns (address);
+
+    function allowedSwapUndervalue() external view returns (uint256);
 
     function getAllStrategies() external view returns (address[] memory);
 

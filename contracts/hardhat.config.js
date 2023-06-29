@@ -43,14 +43,7 @@ const {
   checkOUSDBalances,
   supplyStakingContractWithOGN,
 } = require("./tasks/compensation");
-const {
-  allocate,
-  capital,
-  harvest,
-  reallocate,
-  rebase,
-  yield,
-} = require("./tasks/vault");
+const { allocate, capital, harvest, rebase, yield } = require("./tasks/vault");
 
 const MAINNET_DEPLOYER =
   process.env.MAINNET_DEPLOYER_OVERRIDE ||
@@ -127,12 +120,6 @@ task("capital", "Set the Vault's pauseCapital flag", capital);
 task("harvest", "Call harvest() on Vault", harvest);
 task("rebase", "Call rebase() on the Vault", rebase);
 task("yield", "Artificially generate yield on the Vault", yield);
-task("reallocate", "Allocate assets from one Strategy to another")
-  .addParam("from", "Address to withdraw asset from")
-  .addParam("to", "Address to deposit asset to")
-  .addParam("assets", "Address of asset to reallocate")
-  .addParam("amounts", "Amount of asset to reallocate")
-  .setAction(reallocate);
 
 // Governance tasks
 task("execute", "Execute a governance proposal")
@@ -252,10 +239,24 @@ module.exports = {
             initialBaseFeePerGas: 0,
             gas: 7000000,
             gasPrice: 1000,
+            ...(process.env.FORKED_LOCAL_TEST
+              ? {
+                  timeout: 0,
+                  forking: {
+                    enabled: true,
+                    url: `${
+                      process.env.LOCAL_PROVIDER_URL || process.env.PROVIDER_URL
+                    }`,
+                    blockNumber:
+                      Number(process.env.FORK_BLOCK_NUMBER) || undefined,
+                    timeout: 0,
+                  },
+                }
+              : {}),
           }),
     },
     localhost: {
-      timeout: 60000,
+      timeout: 0,
     },
     mainnet: {
       url: `${process.env.PROVIDER_URL}`,
@@ -340,10 +341,13 @@ module.exports = {
   },
   contractSizer: {
     alphaSort: true,
-    runOnCompile: true,
+    runOnCompile: process.env.CONTRACT_SIZE ? true : false,
   },
   etherscan: {
     apiKey: process.env.ETHERSCAN_API_KEY,
+  },
+  gasReporter: {
+    enabled: process.env.REPORT_GAS ? true : false,
   },
   paths: process.env.HARDHAT_CACHE_DIR
     ? {

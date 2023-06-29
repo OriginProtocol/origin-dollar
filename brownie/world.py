@@ -1,7 +1,10 @@
-import  brownie
-from addresses import *
+import brownie
 import json
 import time
+import re
+from eth_abi import abi
+from addresses import *
+import addresses # We want to be able to get to addresses as a dict
 std = {'from': STRATEGIST}
 
 # ousd = Contract.from_explorer(OUSD, as_proxy_for=OUSD_IMPL)
@@ -50,7 +53,7 @@ vault_core = load_contract('vault_core', VAULT_PROXY_ADDRESS)
 vault_oeth_admin = load_contract('vault_admin', VAULT_OETH_PROXY_ADDRESS)
 vault_oeth_core = load_contract('vault_core', VAULT_OETH_PROXY_ADDRESS)
 vault_value_checker = load_contract('vault_value_checker', VAULT_VALUE_CHECKER)
-oeth_vault_value_checker = load_contract('OETHVaultValueChecker', OETH_VAULT_VALUE_CHECKER)
+oeth_vault_value_checker = load_contract('vault_value_checker', OETH_VAULT_VALUE_CHECKER)
 dripper = load_contract('dripper', DRIPPER)
 harvester = load_contract('harvester', HARVESTER)
 ousd_usdt = load_contract('ousd_usdt', OUSD_USDT)
@@ -71,15 +74,28 @@ aave_incentives_controller = load_contract('aave_incentives_controller', '0xd784
 stkaave = load_contract('stkaave', '0x4da27a545c0c5B758a6BA100e3a049001de870f5')
 
 strategist = brownie.accounts.at(STRATEGIST, force=True)
+timelock = brownie.accounts.at(TIMELOCK, force=True)
 gova = brownie.accounts.at(GOVERNOR, force=True)
 governor = load_contract('governor', GOVERNOR)
 governor_five = load_contract('governor_five', GOVERNOR_FIVE)
 rewards_source = load_contract('rewards_source', REWARDS_SOURCE)
 
+
+oeth = load_contract('ERC20', OETH)
+weth = load_contract('ERC20', WETH)
+reth = load_contract('ERC20', RETH)
+steth = load_contract('ERC20', STETH)
+frxeth = load_contract('ERC20', FRXETH)
+sfrxeth = load_contract('ERC20', SFRXETH)
+oeth_vault_admin = load_contract('vault_admin', OETH_VAULT)
+oeth_vault_core = load_contract('vault_core', OETH_VAULT)
+
 CONTRACT_ADDRESSES = {}
 CONTRACT_ADDRESSES[VAULT_PROXY_ADDRESS.lower()] = {'name': 'Vault'}
 CONTRACT_ADDRESSES[HARVESTER.lower()] = {'name': 'Harvester'}
 CONTRACT_ADDRESSES[DRIPPER.lower()] = {'name': 'Dripper'}
+
+inv_contracts_map = {v.lower(): k.lower() for k, v in addresses.__dict__.items() if not (k.startswith('__') or k.startswith('_'))}
 
 COINS = {
     '0xd533a949740bb3306d119cc777fa900ba034cd52': {'name': 'CRV', 'decimals': 18},
@@ -99,6 +115,11 @@ threepool = brownie.Contract.from_abi(
         "0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7",
         [{"name":"TokenExchange","inputs":[{"type":"address","name":"buyer","indexed":True},{"type":"int128","name":"sold_id","indexed":False},{"type":"uint256","name":"tokens_sold","indexed":False},{"type":"int128","name":"bought_id","indexed":False},{"type":"uint256","name":"tokens_bought","indexed":False}],"anonymous":False,"type":"event"},{"name":"AddLiquidity","inputs":[{"type":"address","name":"provider","indexed":True},{"type":"uint256[3]","name":"token_amounts","indexed":False},{"type":"uint256[3]","name":"fees","indexed":False},{"type":"uint256","name":"invariant","indexed":False},{"type":"uint256","name":"token_supply","indexed":False}],"anonymous":False,"type":"event"},{"name":"RemoveLiquidity","inputs":[{"type":"address","name":"provider","indexed":True},{"type":"uint256[3]","name":"token_amounts","indexed":False},{"type":"uint256[3]","name":"fees","indexed":False},{"type":"uint256","name":"token_supply","indexed":False}],"anonymous":False,"type":"event"},{"name":"RemoveLiquidityOne","inputs":[{"type":"address","name":"provider","indexed":True},{"type":"uint256","name":"token_amount","indexed":False},{"type":"uint256","name":"coin_amount","indexed":False}],"anonymous":False,"type":"event"},{"name":"RemoveLiquidityImbalance","inputs":[{"type":"address","name":"provider","indexed":True},{"type":"uint256[3]","name":"token_amounts","indexed":False},{"type":"uint256[3]","name":"fees","indexed":False},{"type":"uint256","name":"invariant","indexed":False},{"type":"uint256","name":"token_supply","indexed":False}],"anonymous":False,"type":"event"},{"name":"CommitNewAdmin","inputs":[{"type":"uint256","name":"deadline","indexed":True},{"type":"address","name":"admin","indexed":True}],"anonymous":False,"type":"event"},{"name":"NewAdmin","inputs":[{"type":"address","name":"admin","indexed":True}],"anonymous":False,"type":"event"},{"name":"CommitNewFee","inputs":[{"type":"uint256","name":"deadline","indexed":True},{"type":"uint256","name":"fee","indexed":False},{"type":"uint256","name":"admin_fee","indexed":False}],"anonymous":False,"type":"event"},{"name":"NewFee","inputs":[{"type":"uint256","name":"fee","indexed":False},{"type":"uint256","name":"admin_fee","indexed":False}],"anonymous":False,"type":"event"},{"name":"RampA","inputs":[{"type":"uint256","name":"old_A","indexed":False},{"type":"uint256","name":"new_A","indexed":False},{"type":"uint256","name":"initial_time","indexed":False},{"type":"uint256","name":"future_time","indexed":False}],"anonymous":False,"type":"event"},{"name":"StopRampA","inputs":[{"type":"uint256","name":"A","indexed":False},{"type":"uint256","name":"t","indexed":False}],"anonymous":False,"type":"event"},{"outputs":[],"inputs":[{"type":"address","name":"_owner"},{"type":"address[3]","name":"_coins"},{"type":"address","name":"_pool_token"},{"type":"uint256","name":"_A"},{"type":"uint256","name":"_fee"},{"type":"uint256","name":"_admin_fee"}],"stateMutability":"nonpayable","type":"constructor"},{"name":"A","outputs":[{"type":"uint256","name":""}],"inputs":[],"stateMutability":"view","type":"function","gas":5227},{"name":"get_virtual_price","outputs":[{"type":"uint256","name":""}],"inputs":[],"stateMutability":"view","type":"function","gas":1133537},{"name":"calc_token_amount","outputs":[{"type":"uint256","name":""}],"inputs":[{"type":"uint256[3]","name":"amounts"},{"type":"bool","name":"deposit"}],"stateMutability":"view","type":"function","gas":4508776},{"name":"add_liquidity","outputs":[],"inputs":[{"type":"uint256[3]","name":"amounts"},{"type":"uint256","name":"min_mint_amount"}],"stateMutability":"nonpayable","type":"function","gas":6954858},{"name":"get_dy","outputs":[{"type":"uint256","name":""}],"inputs":[{"type":"int128","name":"i"},{"type":"int128","name":"j"},{"type":"uint256","name":"dx"}],"stateMutability":"view","type":"function","gas":2673791},{"name":"get_dy_underlying","outputs":[{"type":"uint256","name":""}],"inputs":[{"type":"int128","name":"i"},{"type":"int128","name":"j"},{"type":"uint256","name":"dx"}],"stateMutability":"view","type":"function","gas":2673474},{"name":"exchange","outputs":[],"inputs":[{"type":"int128","name":"i"},{"type":"int128","name":"j"},{"type":"uint256","name":"dx"},{"type":"uint256","name":"min_dy"}],"stateMutability":"nonpayable","type":"function","gas":2818066},{"name":"remove_liquidity","outputs":[],"inputs":[{"type":"uint256","name":"_amount"},{"type":"uint256[3]","name":"min_amounts"}],"stateMutability":"nonpayable","type":"function","gas":192846},{"name":"remove_liquidity_imbalance","outputs":[],"inputs":[{"type":"uint256[3]","name":"amounts"},{"type":"uint256","name":"max_burn_amount"}],"stateMutability":"nonpayable","type":"function","gas":6951851},{"name":"calc_withdraw_one_coin","outputs":[{"type":"uint256","name":""}],"inputs":[{"type":"uint256","name":"_token_amount"},{"type":"int128","name":"i"}],"stateMutability":"view","type":"function","gas":1102},{"name":"remove_liquidity_one_coin","outputs":[],"inputs":[{"type":"uint256","name":"_token_amount"},{"type":"int128","name":"i"},{"type":"uint256","name":"min_amount"}],"stateMutability":"nonpayable","type":"function","gas":4025523},{"name":"ramp_A","outputs":[],"inputs":[{"type":"uint256","name":"_future_A"},{"type":"uint256","name":"_future_time"}],"stateMutability":"nonpayable","type":"function","gas":151919},{"name":"stop_ramp_A","outputs":[],"inputs":[],"stateMutability":"nonpayable","type":"function","gas":148637},{"name":"commit_new_fee","outputs":[],"inputs":[{"type":"uint256","name":"new_fee"},{"type":"uint256","name":"new_admin_fee"}],"stateMutability":"nonpayable","type":"function","gas":110461},{"name":"apply_new_fee","outputs":[],"inputs":[],"stateMutability":"nonpayable","type":"function","gas":97242},{"name":"revert_new_parameters","outputs":[],"inputs":[],"stateMutability":"nonpayable","type":"function","gas":21895},{"name":"commit_transfer_ownership","outputs":[],"inputs":[{"type":"address","name":"_owner"}],"stateMutability":"nonpayable","type":"function","gas":74572},{"name":"apply_transfer_ownership","outputs":[],"inputs":[],"stateMutability":"nonpayable","type":"function","gas":60710},{"name":"revert_transfer_ownership","outputs":[],"inputs":[],"stateMutability":"nonpayable","type":"function","gas":21985},{"name":"admin_balances","outputs":[{"type":"uint256","name":""}],"inputs":[{"type":"uint256","name":"i"}],"stateMutability":"view","type":"function","gas":3481},{"name":"withdraw_admin_fees","outputs":[],"inputs":[],"stateMutability":"nonpayable","type":"function","gas":21502},{"name":"donate_admin_fees","outputs":[],"inputs":[],"stateMutability":"nonpayable","type":"function","gas":111389},{"name":"kill_me","outputs":[],"inputs":[],"stateMutability":"nonpayable","type":"function","gas":37998},{"name":"unkill_me","outputs":[],"inputs":[],"stateMutability":"nonpayable","type":"function","gas":22135},{"name":"coins","outputs":[{"type":"address","name":""}],"inputs":[{"type":"uint256","name":"arg0"}],"stateMutability":"view","type":"function","gas":2220},{"name":"balances","outputs":[{"type":"uint256","name":""}],"inputs":[{"type":"uint256","name":"arg0"}],"stateMutability":"view","type":"function","gas":2250},{"name":"fee","outputs":[{"type":"uint256","name":""}],"inputs":[],"stateMutability":"view","type":"function","gas":2171},{"name":"admin_fee","outputs":[{"type":"uint256","name":""}],"inputs":[],"stateMutability":"view","type":"function","gas":2201},{"name":"owner","outputs":[{"type":"address","name":""}],"inputs":[],"stateMutability":"view","type":"function","gas":2231},{"name":"initial_A","outputs":[{"type":"uint256","name":""}],"inputs":[],"stateMutability":"view","type":"function","gas":2261},{"name":"future_A","outputs":[{"type":"uint256","name":""}],"inputs":[],"stateMutability":"view","type":"function","gas":2291},{"name":"initial_A_time","outputs":[{"type":"uint256","name":""}],"inputs":[],"stateMutability":"view","type":"function","gas":2321},{"name":"future_A_time","outputs":[{"type":"uint256","name":""}],"inputs":[],"stateMutability":"view","type":"function","gas":2351},{"name":"admin_actions_deadline","outputs":[{"type":"uint256","name":""}],"inputs":[],"stateMutability":"view","type":"function","gas":2381},{"name":"transfer_ownership_deadline","outputs":[{"type":"uint256","name":""}],"inputs":[],"stateMutability":"view","type":"function","gas":2411},{"name":"future_fee","outputs":[{"type":"uint256","name":""}],"inputs":[],"stateMutability":"view","type":"function","gas":2441},{"name":"future_admin_fee","outputs":[{"type":"uint256","name":""}],"inputs":[],"stateMutability":"view","type":"function","gas":2471},{"name":"future_owner","outputs":[{"type":"address","name":""}],"inputs":[],"stateMutability":"view","type":"function","gas":2501}]
     )
+
+GREEN = '\033[92m'
+CYAN = '\033[96m'
+ORANGE = '\033[93m'
+ENDC = '\033[0m'
 
 def get_erc20_name(address):
     return load_contract('ERC20', address).name()
@@ -129,6 +150,14 @@ def show_transfers(tx):
 # unlock an address to issue transactions as that address
 def unlock(address):
     brownie.network.web3.provider.make_request('hardhat_impersonateAccount', [address])
+
+def fund_eth(address, balance):
+    brownie.network.web3.provider.make_request('hardhat_setBalance', [address, balance])
+
+
+
+def mine_block():
+    brownie.network.web3.provider.make_request('evm_mine', [])
 
 def leading_whitespace(s, desired = 16):
     return ' ' * (desired-len(s)) + s
@@ -359,6 +388,43 @@ def show_proposals(n=3):
     cnt = governor.proposalCount()
     for id in range(cnt,cnt-n, -1):
         show_proposal(id)
+
+def nice_contract_address(address):
+  address = address.lower()
+  if address in inv_contracts_map:
+    return "%s   %s" % (ORANGE+inv_contracts_map[address]+ENDC, CYAN+address+ENDC)
+  else:
+    return address
+
+
+def show_governance_action(i, to, sig, data):
+  print("{}) {}".format(i+1, nice_contract_address(to)))
+  print("     "+ORANGE+sig+ENDC)
+  # print("Post Sig Data: ", data)
+  stypes = re.split(",|\)|\(", sig)[1:-1]
+  decodes = abi.decode_abi(stypes, data)
+  for j in range(0, len(stypes)):
+    v = decodes[j]
+    if stypes[j] == "address":
+      print(" >> ", nice_contract_address(v))
+    else:
+      print(" >> ", ORANGE+str(v)+ENDC)
+  
+
+def show_governor_four_proposal_actions(proposal_id):
+  actions = governor.getActions(proposal_id)
+  for i in range(0, len(actions[0])):
+    print("")
+    show_governance_action(i=i, to=actions[0][i], sig=actions[1][i], data=actions[2][i])
+
+
+def show_governor_five_proposal_actions(proposal_id):
+  actions = governor_five.getActions(proposal_id)
+  for i in range(0, len(actions[0])):
+    print("")
+    show_governance_action(i=i, to=actions[0][i], sig=actions[2][i], data=actions[3][i])
+    if actions[1][i] != 0:
+        print("    TRANSFERS ETH!!! %d !!!", actions[1][i])
 
 # set as an asset default strategy
 def asset_default_strategy(strategy, asset):

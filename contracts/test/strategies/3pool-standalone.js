@@ -33,20 +33,20 @@ describe("3Pool Strategy Standalone", function () {
   const deposit = async (amount, asset) => {
     await asset
       .connect(governor)
-      .transfer(threePoolStrategy.address, units(amount, asset));
-    await threePoolStrategy.deposit(asset.address, units(amount, asset));
+      .transfer(threePoolStrategy.address, await units(amount, asset));
+    await threePoolStrategy.deposit(asset.address, await units(amount, asset));
   };
 
   it("Should deposit all", async function () {
     await dai
       .connect(governor)
-      .transfer(threePoolStrategy.address, units("100", dai));
+      .transfer(threePoolStrategy.address, await units("100", dai));
     await usdt
       .connect(governor)
-      .transfer(threePoolStrategy.address, units("200", usdt));
+      .transfer(threePoolStrategy.address, await units("200", usdt));
     await usdc
       .connect(governor)
-      .transfer(threePoolStrategy.address, units("300", usdc));
+      .transfer(threePoolStrategy.address, await units("300", usdc));
     await threePoolStrategy.depositAll();
     await expect(await threePoolGauge.balanceOf(threePoolStrategy.address)).eq(
       utils.parseUnits("600", 18)
@@ -61,13 +61,13 @@ describe("3Pool Strategy Standalone", function () {
 
     await dai
       .connect(governor)
-      .transfer(threePoolStrategy.address, units("100", dai));
+      .transfer(threePoolStrategy.address, await units("100", dai));
     await usdt
       .connect(governor)
-      .transfer(threePoolStrategy.address, units("200", usdt));
+      .transfer(threePoolStrategy.address, await units("200", usdt));
     await usdc
       .connect(governor)
-      .transfer(threePoolStrategy.address, units("300", usdc));
+      .transfer(threePoolStrategy.address, await units("300", usdc));
     await threePoolStrategy.depositAll();
 
     await expect(await dai.balanceOf(governorAddress)).eq(

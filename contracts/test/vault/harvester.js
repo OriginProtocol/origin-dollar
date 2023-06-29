@@ -200,17 +200,15 @@ describe("Harvester", function () {
       .connect(anna)["harvestAndSwap(address)"](compoundStrategy.address);
     const balanceAfterAnna = await usdt.balanceOf(anna.address);
 
-    await expect(await comp.balanceOf(compoundStrategy.address)).to.be.equal(
-      "0"
-    );
-    await expect(balanceAfterAnna - balanceBeforeAnna).to.be.equal(
+    expect(await comp.balanceOf(compoundStrategy.address)).to.be.equal("0");
+    expect(balanceAfterAnna - balanceBeforeAnna).to.be.equal(
       utils.parseUnits("0", 6)
     );
-    await expect(await usdt.balanceOf(vault.address)).to.be.equal("0");
-    await expect(await comp.balanceOf(harvester.address)).to.be.equal(
+    expect(await usdt.balanceOf(vault.address)).to.be.equal("0");
+    expect(await comp.balanceOf(harvester.address)).to.be.equal(
       utils.parseUnits("100", 18)
     );
-    await expect(await usdt.balanceOf(harvester.address)).to.be.equal("0");
+    expect(await usdt.balanceOf(harvester.address)).to.be.equal("0");
   });
 
   it("Should swap when slippage is just under threshold", async () => {
@@ -256,15 +254,13 @@ describe("Harvester", function () {
       anna.address
     );
 
-    await expect(await comp.balanceOf(compoundStrategy.address)).to.be.equal(
-      "0"
-    );
-    await expect(annaBalanceChange).to.be.equal(utils.parseUnits("0.1", 6));
-    await expect(await usdt.balanceOf(vault.address)).to.be.equal(
+    expect(await comp.balanceOf(compoundStrategy.address)).to.be.equal("0");
+    expect(annaBalanceChange).to.be.equal(utils.parseUnits("0.1", 6));
+    expect(await usdt.balanceOf(vault.address)).to.be.equal(
       utils.parseUnits("9.9", 6)
     );
-    await expect(await comp.balanceOf(harvester.address)).to.be.equal("0");
-    await expect(await usdt.balanceOf(harvester.address)).to.be.equal("0");
+    expect(await comp.balanceOf(harvester.address)).to.be.equal("0");
+    expect(await usdt.balanceOf(harvester.address)).to.be.equal("0");
   });
 
   it("Should fail when slippage is just over threshold", async () => {
@@ -340,15 +336,13 @@ describe("Harvester", function () {
       anna.address
     );
 
-    await expect(await comp.balanceOf(compoundStrategy.address)).to.be.equal(
-      "0"
-    );
-    await expect(annaBalanceChange).to.be.equal(utils.parseUnits("0.1", 6));
-    await expect(await usdt.balanceOf(vault.address)).to.be.equal(
+    expect(await comp.balanceOf(compoundStrategy.address)).to.be.equal("0");
+    expect(annaBalanceChange).to.be.equal(utils.parseUnits("0.1", 6));
+    expect(await usdt.balanceOf(vault.address)).to.be.equal(
       utils.parseUnits("9.9", 6)
     );
-    await expect(await comp.balanceOf(harvester.address)).to.be.equal("0");
-    await expect(await usdt.balanceOf(harvester.address)).to.be.equal("0");
+    expect(await comp.balanceOf(harvester.address)).to.be.equal("0");
+    expect(await usdt.balanceOf(harvester.address)).to.be.equal("0");
   });
 
   it("Should fail setting rewards percentage to 11%", async () => {
@@ -436,15 +430,13 @@ describe("Harvester", function () {
       anna.address
     );
 
-    await expect(await comp.balanceOf(compoundStrategy.address)).to.be.equal(
-      "0"
-    );
-    await expect(annaBalanceChange).to.be.equal(utils.parseUnits("0.9", 6));
-    await expect(await usdt.balanceOf(vault.address)).to.be.equal(
+    expect(await comp.balanceOf(compoundStrategy.address)).to.be.equal("0");
+    expect(annaBalanceChange).to.be.equal(utils.parseUnits("0.9", 6));
+    expect(await usdt.balanceOf(vault.address)).to.be.equal(
       utils.parseUnits("9.1", 6)
     );
-    await expect(await comp.balanceOf(harvester.address)).to.be.equal("0");
-    await expect(await usdt.balanceOf(harvester.address)).to.be.equal("0");
+    expect(await comp.balanceOf(harvester.address)).to.be.equal("0");
+    expect(await usdt.balanceOf(harvester.address)).to.be.equal("0");
   });
 
   it("Should fail when setting setSupportedStrategy from a non vault/governor address", async () => {
@@ -522,15 +514,13 @@ describe("Harvester", function () {
       anna.address
     );
 
-    await expect(await comp.balanceOf(compoundStrategy.address)).to.be.equal(
-      "0"
-    );
-    await expect(annaBalanceChange).to.be.equal(utils.parseUnits("0.1", 6));
-    await expect(await usdt.balanceOf(vault.address)).to.be.equal(
+    expect(await comp.balanceOf(compoundStrategy.address)).to.be.equal("0");
+    expect(annaBalanceChange).to.be.equal(utils.parseUnits("0.1", 6));
+    expect(await usdt.balanceOf(vault.address)).to.be.equal(
       utils.parseUnits("9.9", 6)
     );
-    await expect(await comp.balanceOf(harvester.address)).to.be.equal("0");
-    await expect(await usdt.balanceOf(harvester.address)).to.be.equal("0");
+    expect(await comp.balanceOf(harvester.address)).to.be.equal("0");
+    expect(await usdt.balanceOf(harvester.address)).to.be.equal("0");
   });
 
   it("Should fail harvestAndSwap when governor sets a strategy as not supported one", async () => {
@@ -596,15 +586,13 @@ describe("Harvester", function () {
       vault.address
     );
 
-    await expect(await comp.balanceOf(compoundStrategy.address)).to.be.equal(
-      "0"
-    );
-    await expect(annaBalanceChange).to.be.equal(0);
-    await expect(vaultBalanceChange).to.be.equal(0);
-    await expect(await comp.balanceOf(harvester.address)).to.be.equal(
+    expect(await comp.balanceOf(compoundStrategy.address)).to.be.equal("0");
+    expect(annaBalanceChange).to.be.equal(0);
+    expect(vaultBalanceChange).to.be.equal(0);
+    expect(await comp.balanceOf(harvester.address)).to.be.equal(
       utils.parseUnits("10", 18)
     );
-    await expect(await usdt.balanceOf(harvester.address)).to.be.equal("0");
+    expect(await usdt.balanceOf(harvester.address)).to.be.equal("0");
   });
 
   it("Should correctly swap coins when liquidation limit is set", async () => {
@@ -656,15 +644,13 @@ describe("Harvester", function () {
       vault.address
     );
 
-    await expect(await comp.balanceOf(compoundStrategy.address)).to.be.equal(
-      "0"
-    );
-    await expect(annaBalanceChange).to.be.equal(utils.parseUnits("0.03", 6));
-    await expect(vaultBalanceChange).to.be.equal(utils.parseUnits("2.97", 6));
-    await expect(await comp.balanceOf(harvester.address)).to.be.equal(
+    expect(await comp.balanceOf(compoundStrategy.address)).to.be.equal("0");
+    expect(annaBalanceChange).to.be.equal(utils.parseUnits("0.03", 6));
+    expect(vaultBalanceChange).to.be.equal(utils.parseUnits("2.97", 6));
+    expect(await comp.balanceOf(harvester.address)).to.be.equal(
       utils.parseUnits("7", 18)
     );
-    await expect(await usdt.balanceOf(harvester.address)).to.be.equal("0");
+    expect(await usdt.balanceOf(harvester.address)).to.be.equal("0");
   });
 
   it("Should correctly swap coins and set rewards when rewardTo is non caller address", async () => {
@@ -716,15 +702,13 @@ describe("Harvester", function () {
       vault.address
     );
 
-    await expect(await comp.balanceOf(compoundStrategy.address)).to.be.equal(
-      "0"
-    );
-    await expect(joshBalanceChange).to.be.equal(utils.parseUnits("0.03", 6));
-    await expect(vaultBalanceChange).to.be.equal(utils.parseUnits("2.97", 6));
-    await expect(await comp.balanceOf(harvester.address)).to.be.equal(
+    expect(await comp.balanceOf(compoundStrategy.address)).to.be.equal("0");
+    expect(joshBalanceChange).to.be.equal(utils.parseUnits("0.03", 6));
+    expect(vaultBalanceChange).to.be.equal(utils.parseUnits("2.97", 6));
+    expect(await comp.balanceOf(harvester.address)).to.be.equal(
       utils.parseUnits("7", 18)
     );
-    await expect(await usdt.balanceOf(harvester.address)).to.be.equal("0");
+    expect(await usdt.balanceOf(harvester.address)).to.be.equal("0");
   });
 
   it("Should correctly distribute rewards to a changed proceeds address", async () => {
@@ -769,12 +753,10 @@ describe("Harvester", function () {
       josh.address
     );
 
-    await expect(await comp.balanceOf(compoundStrategy.address)).to.be.equal(
-      "0"
-    );
-    await expect(annaBalanceChange).to.be.equal(utils.parseUnits("0.1", 6));
-    await expect(joshBalanceChange).to.be.equal(utils.parseUnits("9.9", 6));
-    await expect(await comp.balanceOf(harvester.address)).to.be.equal("0");
-    await expect(await usdt.balanceOf(harvester.address)).to.be.equal("0");
+    expect(await comp.balanceOf(compoundStrategy.address)).to.be.equal("0");
+    expect(annaBalanceChange).to.be.equal(utils.parseUnits("0.1", 6));
+    expect(joshBalanceChange).to.be.equal(utils.parseUnits("9.9", 6));
+    expect(await comp.balanceOf(harvester.address)).to.be.equal("0");
+    expect(await usdt.balanceOf(harvester.address)).to.be.equal("0");
   });
 });
