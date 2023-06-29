@@ -94,7 +94,7 @@ const withConfirmation = async (
 
   // Transaction is initializing upgradeable proxy "initialize(address,address,bytes)"
   // second address parameter is the initial governor
-  if (result.data && result.data.startsWith("0xcf7a1d77")) {
+  if (result.data && result.data.startsWith("0xcf7a1d77") && isMainnetOrFork) {
     _verifyProxyInitializedWithCorrectGovernor(result.data);
   }
 
