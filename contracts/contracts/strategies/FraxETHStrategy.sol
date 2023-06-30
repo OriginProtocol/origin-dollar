@@ -2,8 +2,8 @@
 pragma solidity ^0.8.0;
 
 /**
- * @title OETH Generalized 4626 Strategy
- * @notice Investment strategy for vaults supporting ERC4626
+ * @title OETH FraxETH Strategy
+ * @notice Investment WETH and FraxETH into the sFraxETH staking contract
  * @author Origin Protocol Inc
  */
 import { IERC4626 } from "../../lib/openzeppelin/interfaces/IERC4626.sol";
