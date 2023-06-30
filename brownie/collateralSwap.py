@@ -53,13 +53,13 @@ def get_cmc_quote(from_token, to_token, from_amount):
         STETH: 8085,
         FRXETH: 23225,
         SFRXETH: 23177,
-        CBETH: 21535
+        #CBETH: 21535
     }
 
 
     req = requests.get('https://pro-api.coinmarketcap.com/v2/cryptocurrency/quotes/latest', params={
-        'id': idMap[from_token],
-        'convert_id': idMap[to_token]
+        'id': idMap[from_token.lower()],
+        'convert_id': idMap[to_token.lower()]
     }, headers={
         'accept': 'application/json',
         'X-CMC_PRO_API_KEY': COINMARKETCAP_API_KEY
@@ -81,7 +81,7 @@ def get_coingecko_quote(from_token, to_token, from_amount):
         STETH: 'staked-ether',
         FRXETH: 'frax-ether',
         SFRXETH: 'staked-frax-ether',
-        CBETH: 'coinbase-wrapped-staked-eth'
+        #CBETH: 'coinbase-wrapped-staked-eth'
     }
 
     # to_eth bool: when true the ticker returns TOKEN/ETH price and
@@ -108,13 +108,14 @@ def get_coingecko_quote(from_token, to_token, from_amount):
 def get_1inch_swap(from_token, to_token, from_amount, slippage, allowPartialFill, min_expected_amount):
     router_1inch = load_contract('router_1inch_v5', ROUTER_1INCH_V5)
     SWAP_SELECTOR = "0x12aa3caf" #swap(address,(address,address,address,address,uint256,uint256,uint256),bytes,bytes)
-    UNISWAP_SELECTOR = "0x0502b1c5" #unoswap(address,uint256,uint256,uint256[])
-    UNISWAPV3_SELECTOR = "0xbc80f1a8" #uniswapV3SwapTo(address,uint256,uint256,uint256[])
+    UNISWAP_SELECTOR = "0xf78dc253" #unoswapTo(address,address,uint256,uint256,uint256[])
+    UNISWAPV3_SWAP_TO_SELECTOR = "0xbc80f1a8" #uniswapV3SwapTo(address,uint256,uint256,uint256[])
 
 
     req = requests.get('https://api.1inch.io/v5.0/1/swap', params={
         'fromTokenAddress': from_token,
         'fromAddress': swapper_address,
+        'destReceiver': VAULT_OETH_PROXY_ADDRESS,
         'toTokenAddress': to_token,
         'amount': str(from_amount),
         'allowPartialFill': allowPartialFill,
@@ -137,11 +138,11 @@ def get_1inch_swap(from_token, to_token, from_amount, slippage, allowPartialFill
     # Swap selector
     if selector == SWAP_SELECTOR:
         data += eth_abi.encode_abi(['bytes4', 'address', 'bytes'], [HexString(selector, "bytes4"), input_decoded[1][0], input_decoded[1][3]]).hex()
-    elif selector == UNISWAP_SELECTOR or selector == UNISWAPV3_SELECTOR:
+    elif selector == UNISWAP_SELECTOR or selector == UNISWAPV3_SWAP_TO_SELECTOR:
         data += eth_abi.encode_abi(['bytes4', 'uint256[]'], [HexString(selector, "bytes4"), input_decoded[1][3]]).hex()
 
     else: 
-        raise Exception("Unrecognized 1Inch swap selector")
+        raise Exception("Unrecognized 1Inch swap selector {}".format(selector))
 
     swap_collateral_data = vault_core_w_swap_collateral.swapCollateral.encode_input(
         result['fromToken']['address'],
@@ -165,6 +166,8 @@ def get_1inch_swap(from_token, to_token, from_amount, slippage, allowPartialFill
     print("Execute the swap transaction on the Vault")
     print("to: {}".format(VAULT_OETH_PROXY_ADDRESS))
     print("data: {}".format(swap_collateral_data))
+
+    return VAULT_OETH_PROXY_ADDRESS, swap_collateral_data
 
 # using oracle router calculate what the expected `toTokenAmount` should be
 # this function fails if Oracle data is too stale    
@@ -197,6 +200,8 @@ def build_swap_tx(from_token, to_token, from_amount, max_slippage, allow_partial
     if COINMARKETCAP_API_KEY is None:
         raise Exception("Set coinmarketcap api key by setting CMC_API_KEY variable. Free plan key will suffice: https://coinmarketcap.com/api/pricing/")
 
+    from_token = from_token.lower()
+    to_token = to_token.lower()
     min_slippage_amount = 10**18
     quote_1inch = get_1inch_quote(from_token, to_token, from_amount)
     quote_1inch_min_swap_amount_price = get_1inch_quote(from_token, to_token, min_slippage_amount)
@@ -247,7 +252,9 @@ def build_swap_tx(from_token, to_token, from_amount, max_slippage, allow_partial
             print(console_colors["FAIL"] + error + console_colors["ENDC"])
             raise Exception(error)
 
-    get_1inch_swap(from_token, to_token, from_amount, max_slippage, allow_partial_fill, min_tokens_with_slippage)
+    to, data = get_1inch_swap(from_token, to_token, from_amount, max_slippage, allow_partial_fill, min_tokens_with_slippage)
+
+    return to, data
 
 # from_token, to_token, from_token_amount, slippage, allow_partial_fill
 #build_swap_tx(WETH, FRXETH, 300 * 10**18, 1, False)

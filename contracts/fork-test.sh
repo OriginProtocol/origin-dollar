@@ -85,10 +85,11 @@ main()
         params+="$1"
     fi
 
-    if $is_coverage; then
+    if [ $is_coverage == "true" ]; then
         echo "Running tests and generating coverage reports..."
         FORK=true IS_TEST=true npx --no-install hardhat coverage --testfiles "test/**/*.fork-test.js"
     else
+        echo "Running fork tests..."
         FORK=true IS_TEST=true npx --no-install hardhat test ${params[@]}
     fi
 

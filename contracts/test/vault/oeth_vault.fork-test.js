@@ -5,6 +5,7 @@ const {
   defaultFixtureSetup,
   oethDefaultFixtureSetup,
   oethCollateralSwapFixtureSetup,
+  impersonateAccount,
 } = require("./../_fixture");
 const { getIInchSwapData, recodeSwapData } = require("../../utils/1Inch");
 const addresses = require("../../utils/addresses");
@@ -14,6 +15,8 @@ const log = require("../../utils/logger")("test:fork:oeth:vault");
 
 const defaultFixture = oethDefaultFixtureSetup();
 const collateralSwapFixture = oethCollateralSwapFixtureSetup();
+
+const oethWhaleAddress = "0x70fCE97d671E81080CA3ab4cc7A59aAc2E117137";
 
 forkOnlyDescribe("ForkTest: OETH Vault", function () {
   this.timeout(0);
@@ -31,7 +34,97 @@ forkOnlyDescribe("ForkTest: OETH Vault", function () {
   });
 
   describe("OETH Vault", () => {
-    describe("post deployment", () => {
+    describe("user operations", () => {
+      let oethWhaleSigner;
+      beforeEach(async () => {
+        fixture = await collateralSwapFixture();
+
+        await impersonateAccount(oethWhaleAddress);
+        oethWhaleSigner = await ethers.provider.getSigner(oethWhaleAddress);
+      });
+
+      it("should mint using each asset", async () => {
+        const { oethVault, weth, frxETH, stETH, reth, josh } = fixture;
+
+        const amount = parseUnits("1", 18);
+        const minOeth = parseUnits("0.8", 18);
+
+        for (const asset of [weth, frxETH, stETH, reth]) {
+          await asset.connect(josh).approve(oethVault.address, amount);
+          const tx = await oethVault
+            .connect(josh)
+            .mint(asset.address, amount, minOeth);
+
+          if (asset === weth || asset === frxETH) {
+            await expect(tx)
+              .to.emit(oethVault, "Mint")
+              .withArgs(josh.address, amount);
+          } else {
+            // Oracle price means 1 asset != 1 OETH
+            await expect(tx)
+              .to.emit(oethVault, "Mint")
+              .withNamedArgs({ _addr: josh.address });
+          }
+        }
+      });
+      it("should partially redeem", async () => {
+        const { oeth, oethVault, matt } = fixture;
+
+        expect(await oeth.balanceOf(matt.address)).to.gt(10);
+
+        const amount = parseUnits("10", 18);
+        const minEth = parseUnits("9.94", 18);
+
+        const tx = await oethVault.connect(matt).redeem(amount, minEth);
+        await expect(tx)
+          .to.emit(oethVault, "Redeem")
+          .withNamedArgs({ _addr: matt.address });
+      });
+      it("OETH whale can not full redeem due to liquidity", async () => {
+        const { oeth, oethVault } = fixture;
+
+        const oethWhaleBalance = await oeth.balanceOf(oethWhaleAddress);
+        expect(oethWhaleBalance, "no longer an OETH whale").to.gt(
+          parseUnits("100", 18)
+        );
+
+        const tx = oethVault
+          .connect(oethWhaleSigner)
+          .redeem(oethWhaleBalance, 0);
+        await expect(tx).to.revertedWith("Liquidity error");
+      });
+      it("OETH whale can redeem after withdraw from all strategies", async () => {
+        const { oeth, oethVault, oldTimelock } = fixture;
+
+        const oethWhaleBalance = await oeth.balanceOf(oethWhaleAddress);
+        expect(oethWhaleBalance, "no longer an OETH whale").to.gt(
+          parseUnits("100", 18)
+        );
+
+        await oethVault.connect(oldTimelock).withdrawAllFromStrategies();
+
+        const tx = await oethVault
+          .connect(oethWhaleSigner)
+          .redeem(oethWhaleBalance, 0);
+        await expect(tx)
+          .to.emit(oethVault, "Redeem")
+          .withNamedArgs({ _addr: oethWhaleAddress });
+      });
+      it("OETH whale redeem 100 OETH", async () => {
+        const { oethVault } = fixture;
+
+        const amount = parseUnits("100", 18);
+        const minEth = parseUnits("99.4", 18);
+
+        const tx = await oethVault
+          .connect(oethWhaleSigner)
+          .redeem(amount, minEth);
+        await expect(tx)
+          .to.emit(oethVault, "Redeem")
+          .withNamedArgs({ _addr: oethWhaleAddress });
+      });
+    });
+    describe("post swap deployment", () => {
       beforeEach(async () => {
         fixture = await defaultFixture();
       });
