@@ -1,0 +1,27 @@
+[
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "joinKind",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "bptAmountOut",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "enterTokenIndex",
+        "type": "uint256"
+      }
+    ],
+    "name": "userDataTokenInExactBPTOut",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }
+]
