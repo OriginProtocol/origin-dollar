@@ -1,16 +1,14 @@
 import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
-import { useWeb3React } from '@web3-react/core'
+import { useAccount, useNetwork, useSigner } from 'wagmi'
 import withRpcProvider from 'hoc/withRpcProvider'
 import { ethers } from 'ethers'
 import dateformat from 'dateformat'
-
 import withIsMobile from 'hoc/withIsMobile'
 import ContractStore from 'stores/ContractStore'
 import StakeStore from 'stores/StakeStore'
 import AccountStore from 'stores/AccountStore'
-import SummaryHeaderStat from 'components/earn/SummaryHeaderStat'
 import CurrentStakeLockup from 'components/earn/CurrentStakeLockup'
 import EtherscanLink from 'components/earn/EtherscanLink'
 import ClaimModal from 'components/earn/modal/ClaimModal'
@@ -20,14 +18,17 @@ import { enrichStakeData, durationToDays, formatRate } from 'utils/stake'
 import StakeModal from 'components/earn/modal/StakeModal'
 import StakeDetailsModal from 'components/earn/modal/StakeDetailsModal'
 import SpinningLoadingCircle from 'components/SpinningLoadingCircle'
-import { refetchUserData, refetchStakingData } from 'utils/account'
+import { refetchStakingData } from 'utils/account'
 import { addStakeTxHashToWaitingBuffer } from 'utils/stake'
 import StakeDetailEquation from 'components/earn/StakeDetailEquation'
 import { assetRootPath } from 'utils/image'
 import GetOUSD from 'components/GetOUSD'
 
 const StakeUI = ({ rpcProvider, isMobile }) => {
-  const { active, library } = useWeb3React()
+  const { chain } = useNetwork()
+  const { address: account } = useAccount()
+  const chainId = chain?.id
+  const { data: signer } = useSigner()
 
   const [showClaimModal, setShowClaimModal] = useState(false)
   const [ognStakingHidden, setOgnStakingHidden] = useState(false)
@@ -42,7 +43,6 @@ const StakeUI = ({ rpcProvider, isMobile }) => {
   const [waitingForStakeTxDuration, setWaitingForStakeTxDuration] =
     useState(false)
   const { ogn: ognBalance } = useStoreState(AccountStore, (s) => s.balances)
-  const account = useStoreState(AccountStore, (s) => s.address)
   const [stakes, setStakes] = useState(null)
   const [nonClaimedActiveStakes, setNonClaimedActiveStakes] = useState(null)
   const [pastStakes, setPastStakes] = useState(null)
@@ -65,7 +65,7 @@ const StakeUI = ({ rpcProvider, isMobile }) => {
   }
 
   const connSigner = (contract) => {
-    return contract.connect(library.getSigner(account))
+    return contract.connect(signer)
   }
 
   const recalculateStakeData = () => {

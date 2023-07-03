@@ -62,7 +62,6 @@ const useCurrencySwapper = ({
     allowances.steth
 
   const connSigner = (contract) => {
-    console.log(signer)
     return contract.connect(signer)
   }
 

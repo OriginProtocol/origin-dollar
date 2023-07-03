@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
-import { useWeb3React } from '@web3-react/core'
+import { useAccount } from 'wagmi'
 import withIsMobile from 'hoc/withIsMobile'
 import GetOUSD from 'components/GetOUSD'
 import AccountStatusDropdown from 'components/AccountStatusDropdown'
@@ -117,10 +117,8 @@ const DappLinks = ({ page }) => {
   )
 }
 
-const Nav = ({ isMobile, locale, onLocale, page }) => {
-  const { pathname } = useRouter()
-  const { active, account } = useWeb3React()
-  const apy = useStoreState(ContractStore, (s) => s.apy.apy30 || 0)
+const Nav = ({ locale, onLocale, page }) => {
+  const { address: account, isConnected: active } = useAccount()
 
   return (
     <>

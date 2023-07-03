@@ -48,6 +48,9 @@ const config = {
         http: false,
         https: false,
         os: false,
+        zlib: false,
+        net: false,
+        tls: false,
       }
       config.resolve.alias['@sentry/node'] = '@sentry/browser'
     }

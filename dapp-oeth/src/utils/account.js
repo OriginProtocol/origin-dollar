@@ -1,20 +1,4 @@
 import AccountStore from 'stores/AccountStore'
-import { providerName } from 'utils/web3'
-import { isMobileMetaMask } from 'utils/device'
-
-export const walletLogin = (showLogin, activate) => {
-  const provider = providerName() || ''
-  if (
-    provider.match(
-      'coinbase|imtoken|cipher|alphawallet|gowallet|trust|status|mist|parity'
-    ) ||
-    isMobileMetaMask()
-  ) {
-    activate(injectedConnector)
-  } else if (showLogin) {
-    showLogin()
-  }
-}
 
 export const login = (address) => {
   AccountStore.update((s) => {

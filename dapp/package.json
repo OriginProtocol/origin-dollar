@@ -41,23 +41,11 @@
     "@ethersproject/providers": "^5.4.3",
     "@ethersproject/units": "^5.0.2",
     "@fbtjs/default-collection-transform": "^1.0.0",
-    "@gnosis.pm/safe-apps-web3-react": "^0.6.2",
-    "@ledgerhq/hw-transport-webusb": "^6.11.2",
-    "@myetherwallet/mewconnect-connector": "^0.1.8",
     "@rainbow-me/rainbowkit": "^0.12.16",
     "@sentry/browser": "^5.22.3",
     "@sentry/integrations": "^5.22.3",
     "@sentry/node": "^5.22.3",
     "@sentry/webpack-plugin": "^1.17.2",
-    "@walletconnect/ethereum-provider": "^2.8.1",
-    "@walletconnect/modal": "^2.5.2",
-    "@walletconnect/web3-provider": "^1.8.0",
-    "@web3-react/core": "^6.1.9",
-    "@web3-react/injected-connector": "^6.0.7",
-    "@web3-react/ledger-connector": "^6.1.9",
-    "@web3-react/walletconnect-connector": "^6.2.4",
-    "@web3-react/walletconnect-v2": "^8.3.3",
-    "@web3-react/walletlink-connector": "^6.2.12",
     "@zeit/next-css": "^1.0.1",
     "@zeit/next-source-maps": "^0.0.3",
     "analytics": "^0.7.15",
@@ -95,8 +83,7 @@
     "react-toastify": "^6.2.0",
     "sass": "^1.39.2",
     "use-analytics": "^0.0.5",
-    "wagmi": "^0.12.18",
-    "web3-react-v8": "npm:@web3-react/core@^8.2.0"
+    "wagmi": "^0.12.18"
   },
   "husky": {
     "hooks": {

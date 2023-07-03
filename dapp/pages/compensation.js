@@ -16,7 +16,6 @@ import { useAnalytics } from 'use-analytics'
 import useStake from 'hooks/useStake'
 import useCompensation from 'hooks/useCompensation'
 import { formatCurrency } from 'utils/math'
-import { walletLogin } from 'utils/account'
 import { assetRootPath } from 'utils/image'
 
 function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
@@ -55,8 +54,6 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
       track('Connect', {
         source: 'Compensation page',
       })
-
-      walletLogin(showLogin, activate)
     }
   }
 

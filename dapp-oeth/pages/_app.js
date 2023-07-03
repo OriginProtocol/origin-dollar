@@ -31,16 +31,9 @@ import {
   mewWallet,
   okxWallet,
 } from '@rainbow-me/rainbowkit/wallets'
-import {
-  WagmiConfig,
-  createClient,
-  configureChains,
-  useNetwork,
-  useAccount,
-} from 'wagmi'
+import { WagmiConfig, createClient, configureChains, useAccount } from 'wagmi'
 import { mainnet, localhost } from 'wagmi/chains'
 import { publicProvider } from 'wagmi/providers/public'
-
 import '@rainbow-me/rainbowkit/styles.css'
 import 'react-toastify/scss/main.scss'
 import '../node_modules/bootstrap/dist/css/bootstrap.min.css'
@@ -91,10 +84,9 @@ const client = createClient({
 function App({ Component, pageProps, err }) {
   const { address: account, isConnected: active } = useAccount()
   const [locale, setLocale] = useState('en_US')
-  const [setCookie] = useCookies(['loggedIn'])
+  const [, setCookie] = useCookies(['loggedIn'])
   const router = useRouter()
   const address = useStoreState(AccountStore, (s) => s.address)
-
   const canonicalUrl = (
     `https://app.oeth.com` + (router.asPath === '/' ? '' : router.asPath)
   ).split('?')[0]

@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { useWeb3React } from '@web3-react/core'
+import { useAccount, useSigner } from 'wagmi'
 import { useStoreState } from 'pullstate'
 import { fbt } from 'fbt-runtime'
 
@@ -10,7 +10,8 @@ import GetOUSD from 'components/GetOUSD'
 import { assetRootPath } from 'utils/image'
 
 const SignTransferAuth = ({}) => {
-  const { account, active, library } = useWeb3React()
+  const { address: account, isConnected: active } = useAccount()
+  const { data: signer } = useSigner()
   const [dstAddress, setDstAddress] = useState('')
   const [sig, setSig] = useState(null)
   const [error, setError] = useState(null)
@@ -39,7 +40,6 @@ const SignTransferAuth = ({}) => {
                   }
 
                   const { utils } = ethers
-                  const signer = library.getSigner()
 
                   const s = await signer.signMessage(
                     utils.arrayify(

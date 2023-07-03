@@ -7,8 +7,6 @@ import withRpcProvider from 'hoc/withRpcProvider'
 import { ethers } from 'ethers'
 import withIsMobile from 'hoc/withIsMobile'
 import ConfirmationModal from './ConfirmationModal'
-
-import { walletLogin } from 'utils/account'
 import { event } from '../../../lib/gtm'
 
 const ApproveSwap = ({

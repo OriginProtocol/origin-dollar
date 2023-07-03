@@ -18,13 +18,13 @@ export async function switchEthereumChain() {
   })
 }
 
-export function getEtherscanHost(web3React) {
+export function getEtherscanHost(chainId) {
   const chainIdToEtherscan = {
     1: 'https://etherscan.io',
   }
 
-  if (chainIdToEtherscan[web3React.chainId]) {
-    return chainIdToEtherscan[web3React.chainId]
+  if (chainIdToEtherscan[chainId]) {
+    return chainIdToEtherscan[chainId]
   } else {
     // by default just return mainNet url
     return chainIdToEtherscan[1]

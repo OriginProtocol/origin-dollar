@@ -75,7 +75,7 @@ const curveMetapoolMiniAbi = [
  * that the call issued first (for example with not yet signed in account) finishes after the second
  * call. We must make sure that previous calls to setupContracts don't override later calls Stores
  */
-export async function setupContracts(account, library, chainId, fetchId) {
+export async function setupContracts(account, chainId, fetchId) {
   /* Using StaticJsonRpcProvider instead of JsonRpcProvider so it doesn't constantly query
    * the network for the current chainId. In case chainId changes, we rerun setupContracts
    * anyway. And StaticJsonRpcProvider also prevents "detected network changed" errors when
@@ -88,7 +88,7 @@ export async function setupContracts(account, library, chainId, fetchId) {
 
   let provider = jsonRpcProvider
 
-  let walletConnected = account && library
+  let walletConnected = account
 
   const getContract = (address, abi, overrideProvider) => {
     try {
