@@ -1,14 +1,15 @@
 import React from 'react'
-import { useWeb3React } from '@web3-react/core'
-
 import { isCorrectNetwork } from 'utils/web3'
-import withWalletSelectModal from 'hoc/withWalletSelectModal'
 import Content from './_AccountStatusContent'
 import { assetRootPath } from 'utils/image'
 import AccountStatusIndicator from './_AccountStatusIndicator'
+import { useAccount, useNetwork } from 'wagmi'
 
 const AccountStatusPopover = ({ className }) => {
-  const { active, account, chainId } = useWeb3React()
+  const { chain } = useNetwork()
+  const { address: account, isConnected: active } = useAccount()
+  const chainId = chain?.id
+
   const correctNetwork = isCorrectNetwork(chainId)
 
   if (!active && !account) {
@@ -123,4 +124,4 @@ const AccountStatusPopover = ({ className }) => {
   )
 }
 
-export default withWalletSelectModal(AccountStatusPopover)
+export default AccountStatusPopover

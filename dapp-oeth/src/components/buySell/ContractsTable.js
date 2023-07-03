@@ -1,9 +1,9 @@
 import React, { useState, useMemo } from 'react'
-import { useWeb3React } from '@web3-react/core'
 import { fbt } from 'fbt-runtime'
 import { find, orderBy, isEmpty, capitalize } from 'lodash'
 import { useStoreState } from 'pullstate'
 import classnames from 'classnames'
+import { useAccount } from 'wagmi'
 import { formatCurrency } from 'utils/math'
 import { assetRootPath } from 'utils/image'
 import ContractStore from 'stores/ContractStore'
@@ -618,7 +618,7 @@ const Estimates = ({ estimates, selected, isLoading, isActive, onSelect }) => {
   )
 }
 const ContractsTable = () => {
-  const { active } = useWeb3React()
+  const { isConnected: active } = useAccount()
 
   const swapEstimations = useStoreState(ContractStore, (s) => s.swapEstimations)
 

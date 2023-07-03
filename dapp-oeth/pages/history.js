@@ -1,7 +1,5 @@
-import React, { useEffect, useState } from 'react'
-import { useWeb3React } from '@web3-react/core'
+import React, { useState } from 'react'
 import { fbt } from 'fbt-runtime'
-
 import Layout from 'components/layout'
 import Nav from 'components/Nav'
 import BalanceHeader from 'components/buySell/BalanceHeader'
@@ -22,8 +20,7 @@ const errorMap = [
 ]
 
 export default function History({ locale, onLocale }) {
-  const { active } = useWeb3React()
-  const { overrideAccount, isValid } = useOverrideAccount()
+  const { isValid } = useOverrideAccount()
   const [showErrorModal, setShowErrorModal] = useState(true)
 
   return (

@@ -44,6 +44,7 @@
     "@gnosis.pm/safe-apps-web3-react": "^0.6.2",
     "@ledgerhq/hw-transport-webusb": "^6.11.2",
     "@myetherwallet/mewconnect-connector": "^0.1.8",
+    "@rainbow-me/rainbowkit": "^0.12.16",
     "@sentry/browser": "^5.22.3",
     "@sentry/integrations": "^5.22.3",
     "@sentry/node": "^5.22.3",
@@ -95,6 +96,7 @@
     "react-toastify": "^6.2.0",
     "sass": "^1.39.2",
     "use-analytics": "^0.0.5",
+    "wagmi": "^0.12.18",
     "web3-ledgerhq-frame-connector": "^1.0.1",
     "web3-react-v8": "npm:@web3-react/core@^8.2.0"
   },

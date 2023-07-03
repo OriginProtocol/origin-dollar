@@ -2,7 +2,7 @@ import React from 'react'
 import { useWeb3React } from '@web3-react/core'
 
 import { isCorrectNetwork } from 'utils/web3'
-import withWalletSelectModal from 'hoc/withWalletSelectModal'
+
 import Content from './_AccountStatusContent'
 import { assetRootPath } from 'utils/image'
 import AccountStatusIndicator from './_AccountStatusIndicator'
@@ -121,4 +121,4 @@ const AccountStatusPopover = ({ className }) => {
   )
 }
 
-export default withWalletSelectModal(AccountStatusPopover)
+export default AccountStatusPopover

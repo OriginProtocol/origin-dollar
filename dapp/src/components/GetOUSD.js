@@ -4,7 +4,6 @@ import { fbt } from 'fbt-runtime'
 import { useWeb3React } from '@web3-react/core'
 import { useRouter } from 'next/router'
 
-import withWalletSelectModal from 'hoc/withWalletSelectModal'
 import analytics from 'utils/analytics'
 import { walletLogin } from 'utils/account'
 
@@ -132,4 +131,4 @@ const GetOUSD = ({
   )
 }
 
-export default withWalletSelectModal(GetOUSD)
+export default GetOUSD

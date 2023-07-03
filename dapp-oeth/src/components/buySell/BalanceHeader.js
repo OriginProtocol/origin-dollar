@@ -9,13 +9,13 @@ import ContractStore from 'stores/ContractStore'
 import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
 import { get as _get } from 'lodash'
-import { useWeb3React } from '@web3-react/core'
 import { formatCurrency } from 'utils/math'
 import { animateValue } from 'utils/animation'
 import { usePrevious, useOverrideAccount } from 'utils/hooks'
 import { apyDayOptions, DEFAULT_SELECTED_APY } from 'utils/constants'
 import { zipObject } from 'lodash'
 import { assetRootPath } from 'utils/image'
+import { useAccount } from 'wagmi'
 
 const BalanceHeader = ({
   storeTransaction,
@@ -23,8 +23,7 @@ const BalanceHeader = ({
   rpcProvider,
   isMobile,
 }) => {
-  const { connector, account: web3Account } = useWeb3React()
-
+  const { address: web3Account } = useAccount()
   const { overrideAccount } = useOverrideAccount()
   const account = overrideAccount || web3Account
 

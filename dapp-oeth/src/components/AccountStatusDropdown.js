@@ -1,15 +1,20 @@
 import React, { useState } from 'react'
-import { useWeb3React } from '@web3-react/core'
+import { useAccount, useNetwork, useSwitchNetwork } from 'wagmi'
 import Dropdown from 'components/Dropdown'
 import GetOUSD from 'components/GetOUSD'
-import { isCorrectNetwork, switchEthereumChain } from 'utils/web3'
-import withWalletSelectModal from 'hoc/withWalletSelectModal'
+import { isCorrectNetwork } from 'utils/web3'
+
 import Content from './_AccountStatusContent'
 import AccountStatusIndicator from './_AccountStatusIndicator'
 import { event } from '../../lib/gtm'
 
-const AccountStatusDropdown = ({ className, showLogin }) => {
-  const { active, account, chainId } = useWeb3React()
+const AccountStatusDropdown = ({ className }) => {
+  const { chain } = useNetwork()
+  const { address: account, isConnected: active } = useAccount()
+  const { switchNetwork } = useSwitchNetwork()
+
+  const chainId = chain?.id
+
   const [open, setOpen] = useState(false)
   const correctNetwork = isCorrectNetwork(chainId)
 
@@ -27,11 +32,9 @@ const AccountStatusDropdown = ({ className, showLogin }) => {
           } ${className} ${open ? 'open' : ''}`}
           onClick={async (e) => {
             e.preventDefault()
-            if (!active) {
-              showLogin()
-            } else if (active && !correctNetwork) {
+            if (active && !correctNetwork) {
               // open the dropdown to allow disconnecting, while also requesting an auto switch to mainnet
-              await switchEthereumChain()
+              await switchNetwork(correctNetwork)
               setOpen(true)
             } else {
               setOpen(true)
@@ -135,4 +138,4 @@ const AccountStatusDropdown = ({ className, showLogin }) => {
   )
 }
 
-export default withWalletSelectModal(AccountStatusDropdown)
+export default AccountStatusDropdown

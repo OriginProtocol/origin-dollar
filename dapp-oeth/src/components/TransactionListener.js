@@ -1,13 +1,11 @@
 import React, { useEffect, useState } from 'react'
 import { ethers } from 'ethers'
 import { useStoreState } from 'pullstate'
-
 import TransactionStore, { initialState } from 'stores/TransactionStore'
 import ContractStore from 'stores/ContractStore'
-import { usePrevious } from 'utils/hooks'
-import { useWeb3React } from '@web3-react/core'
 import withRpcProvider from 'hoc/withRpcProvider'
 import { sleep } from 'utils/utils'
+import { useAccount } from 'wagmi'
 
 /**
  * Currently we do not have a centralised solution to fetch all the events
@@ -19,7 +17,8 @@ import { sleep } from 'utils/utils'
  * shall not be present.
  */
 const TransactionListener = ({ rpcProvider }) => {
-  const { connector, account } = useWeb3React()
+  const { connector, address: account } = useAccount()
+
   const [wsProvider, setWsProvider] = useState(null)
 
   const transactions = useStoreState(TransactionStore, (s) => s.transactions)
@@ -272,7 +271,9 @@ const TransactionListener = ({ rpcProvider }) => {
         // TODO handle a 404 here. We need to retry. A refresh is required to
         // get this to retry at the moment.
         try {
-          safeData = await connector.sdk.txs.getBySafeTxHash(t.hash)
+          // TODO
+          console.log(connector)
+          // safeData = await connector.sdk.txs.getBySafeTxHash(t.hash)
         } catch (e) {
           console.error('Gnosis safe SDK call failed: ', e)
         }

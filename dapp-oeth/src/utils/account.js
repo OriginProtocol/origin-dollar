@@ -1,7 +1,4 @@
 import AccountStore from 'stores/AccountStore'
-
-import analytics from './analytics'
-import { injectedConnector } from 'utils/connectors'
 import { providerName } from 'utils/web3'
 import { isMobileMetaMask } from 'utils/device'
 

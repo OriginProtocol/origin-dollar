@@ -3,7 +3,7 @@ import { useWeb3React } from '@web3-react/core'
 import Dropdown from 'components/Dropdown'
 import GetOUSD from 'components/GetOUSD'
 import { isCorrectNetwork, switchEthereumChain } from 'utils/web3'
-import withWalletSelectModal from 'hoc/withWalletSelectModal'
+
 import Content from './_AccountStatusContent'
 import AccountStatusIndicator from './_AccountStatusIndicator'
 
@@ -121,4 +121,4 @@ const AccountStatusDropdown = ({ className, showLogin }) => {
   )
 }
 
-export default withWalletSelectModal(AccountStatusDropdown)
+export default AccountStatusDropdown

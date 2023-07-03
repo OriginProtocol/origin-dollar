@@ -7,7 +7,7 @@ import withRpcProvider from 'hoc/withRpcProvider'
 import { ethers } from 'ethers'
 import withIsMobile from 'hoc/withIsMobile'
 import ConfirmationModal from './ConfirmationModal'
-import withWalletSelectModal from 'hoc/withWalletSelectModal'
+
 import { walletLogin } from 'utils/account'
 
 const ApproveSwap = ({
@@ -362,4 +362,4 @@ const ApproveSwap = ({
   )
 }
 
-export default withWalletSelectModal(withIsMobile(withRpcProvider(ApproveSwap)))
+export default withIsMobile(withRpcProvider(ApproveSwap))

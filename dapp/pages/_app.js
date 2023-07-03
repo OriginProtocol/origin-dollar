@@ -15,7 +15,7 @@ import withWeb3Provider from 'hoc/withWeb3Provider'
 import setUtilLocale from 'utils/setLocale'
 import { useEagerConnect } from 'utils/hooks'
 import { login } from 'utils/account'
-import WalletSelectModal from 'components/WalletSelectModal'
+
 import { ToastContainer } from 'react-toastify'
 import { pageview } from '../lib/gtm'
 
@@ -78,7 +78,6 @@ function App({ Component, pageProps, err }) {
         <AccountListener />
         <TransactionListener />
         <UserActivityListener />
-        <WalletSelectModal />
         <ToastContainer
           position="bottom-right"
           autoClose={5000}
