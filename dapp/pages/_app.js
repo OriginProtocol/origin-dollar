@@ -9,7 +9,6 @@ import AccountStore from 'stores/AccountStore'
 import AccountListener from 'components/AccountListener'
 import UserActivityListener from 'components/UserActivityListener'
 import TransactionListener from 'components/TransactionListener'
-import withWeb3Provider from 'hoc/withWeb3Provider'
 import setUtilLocale from 'utils/setLocale'
 import { login } from 'utils/account'
 import { ToastContainer } from 'react-toastify'
@@ -160,4 +159,4 @@ function App({ Component, pageProps, err }) {
   )
 }
 
-export default withWeb3Provider(App)
+export default App

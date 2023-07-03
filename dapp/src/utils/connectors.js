@@ -8,4 +8,4 @@ export const connectorNameIconMap = {
 }
 
 export const getConnectorIcon = (name) =>
-  get(connectorNameIconMap, name, 'default-wallet-icon.svg')
+  connectorNameIconMap?.[name] || 'default-wallet-icon.svg'

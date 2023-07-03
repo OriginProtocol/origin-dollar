@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { BigNumber } from 'ethers'
 import { useCookies } from 'react-cookie'
-import { useWeb3React } from '@web3-react/core'
-import _ from 'lodash'
-
 import AccountStore from 'stores/AccountStore'
 import ContractStore from 'stores/ContractStore'
 import PoolStore from 'stores/PoolStore'

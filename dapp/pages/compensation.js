@@ -1,15 +1,12 @@
 import React, { useEffect, useState } from 'react'
 import { fbt } from 'fbt-runtime'
-import { useWeb3React } from '@web3-react/core'
+import { useAccount, useNetwork } from 'wagmi'
 import { useStoreState } from 'pullstate'
 import withRpcProvider from 'hoc/withRpcProvider'
-
 import ContractStore from 'stores/ContractStore'
-
 import Layout from 'components/layout'
 import Nav from 'components/Nav'
 import ClaimStakeModal from 'components/ClaimStakeModal'
-import WarningAlert from 'components/WarningAlert'
 import { sleep } from 'utils/utils'
 import SpinningLoadingCircle from 'components/SpinningLoadingCircle'
 import { useAnalytics } from 'use-analytics'
@@ -18,16 +15,14 @@ import useCompensation from 'hooks/useCompensation'
 import { formatCurrency } from 'utils/math'
 import { assetRootPath } from 'utils/image'
 
-function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
+function Compensation({ locale, onLocale, rpcProvider }) {
   const { stakeOptions } = useStake()
-  const { activate, active, account } = useWeb3React()
+  const { address: account, isConnected: active } = useAccount()
   const [showModal, setShowModal] = useState(false)
-  const [displayAdjustmentWarning, setDisplayAdjustmentWarning] = useState(true)
   const [accountConnected, setAccountConnected] = useState(false)
   const [waitingForTransaction, setWaitingForTransaction] = useState(false)
-  const [error, setError] = useState(null)
+  const [, setError] = useState(null)
   const {
-    blockNumber,
     eligibleOusdBalance,
     compensationData,
     ognCompensationAmount,
