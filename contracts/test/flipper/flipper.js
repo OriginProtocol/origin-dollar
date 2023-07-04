@@ -8,7 +8,7 @@ const {
   loadFixture,
   isFork,
 } = require("../helpers");
-const ethers = require("ethers");
+const { parseUnits } = require("ethers/lib/utils");
 
 describe("Flipper", function () {
   if (isFork) {
@@ -70,7 +70,7 @@ describe("Flipper", function () {
       const { matt, flipper, stablecoin, titleName } = fixture;
       await stablecoin
         .connect(matt)
-        .mint(ethers.utils.parseUnits("30000", await stablecoin.decimals()));
+        .mint(parseUnits("30000", await stablecoin.decimals()));
 
       // Buy should fail, over max
       const buy = flipper.connect(matt)[
