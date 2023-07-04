@@ -1,10 +1,20 @@
-# Brownie project to to help running / validating various contract states
+# Brownie project to help running / validating various contract states
 
 ## Install brownie
 
 https://eth-brownie.readthedocs.io/en/stable/index.html
 
-pip install eth-brownie
+Brownie does not work with Python 3.11 so make sure you have Python 3.9 installed as that is what the other developers are using.
+
+```
+python3.9 -m pip install eth-brownie
+```
+
+You also need to install Ganache globally:
+
+```
+npm install ganache --global
+```
 
 ## Usage
 
@@ -15,7 +25,7 @@ export WEB3_INFURA_PROJECT_ID={API_KEY}
 Start console and connect to forked hardhat:
 `brownie console --network hardhat`
 
-Or connect to a direct forked of mainnet: 
+Or connect to a direct fork of mainnet:
 
 `brownie console --network mainnet-fork`
 
@@ -26,14 +36,14 @@ Or run brownie scripts:
 
 #### Configuration
 
-OUSD & Generalized metastrategy both have their corresponding deploy scripts that need to be
-have `forceDeploy` set to `true`. Node will emit addresses of the deployed OUSD & FRAX strategy
-in console. Copy those and set them in the `brownie/metastrategy.py` configuration section under
-`OUSD_META_STRATEGY` & `FRAX_STRATEGY` variables. Also set which one of those you want to act as a
+OUSD & Generalized metastrategy both have their corresponding deploy scripts that need to
+have `forceDeploy` set to `true`. The node will emit addresses of the deployed OUSD & FRAX strategy
+in the console. Copy those and set them in the `brownie/metastrategy.py` configuration section under
+`OUSD_META_STRATEGY` & `FRAX_STRATEGY` variables. Also, set which one of those you want to act as a
 default USDT asset strategy under `USDT_DEFAULT_META_STRATEGY`. This way minting (using USDT asset) will
 directly fund configured strategy.
 
-(Note most of the configuration section shall be deleted once these strategies are deployed to mainnet.) 
+(Note most of the configuration section shall be deleted once these strategies are deployed to mainnet.)
 
 #### Notes
 
@@ -42,11 +52,11 @@ and funds for easier testing of metastrategy
 
 Inspect available functions under `brownie/metastrategy.py` and also `brownie/world.py`.
 
-For some ideas how to create test cases check out `brownie/scripts/metapool/*`
+For some ideas on how to create test cases check out `brownie/scripts/metapool/*`
 
-### Miscellaneous 
+### Miscellaneous
 
-If using Brownie console calls to your node timeout a lot you can reconnect to the provider with a higher timeout. E.g. connecting to localhost with 120 seconds timeout: 
+If using Brownie console calls to your node timeout a lot you can reconnect to the provider with a higher timeout. E.g. connecting to localhost with 120 seconds timeout:
 
 ```
 web3.connect('http://127.0.0.1:8545', 120)
@@ -55,11 +65,13 @@ web3.connect('http://127.0.0.1:8545', 120)
 ### Perform Vault Collateral Swaps
 
 Start a brownie console
+
 ```
 brownie console --network hardhat
 ```
 
-Build a swap transaction: 
+Build a swap transaction:
+
 ```
 # import collateral Swap script
 from collateralSwap import *
