@@ -16,21 +16,47 @@ You also need to install Ganache globally:
 npm install ganache --global
 ```
 
+## Create a Virtual Environment
+
+```
+cd brownie
+python3.9 -m venv env-brownie
+```
+
+This will create a `env-brownie` folder with all the dependencies installed.
+
 ## Usage
 
-Set etherscan env variable token
+Set [Etherscan](https://docs.etherscan.io/) and [Infura](https://docs.infura.io/getting-started) env variables
+
+```
 export ETHERSCAN_TOKEN={TOKEN_VALUE}
 export WEB3_INFURA_PROJECT_ID={API_KEY}
+```
 
-Start console and connect to forked hardhat:
-`brownie console --network hardhat`
+Activate the virtual environment:
+
+```
+source ./env-brownie/bin/activate
+```
+
+Start console and connect to a forked hardhat:
+
+```
+brownie console --network hardhat
+```
 
 Or connect to a direct fork of mainnet:
 
-`brownie console --network mainnet-fork`
+```
+brownie console --network mainnet-fork
+```
 
 Or run brownie scripts:
-`brownie run spell_apy --network hardhat`
+
+```
+brownie run spell_apy --network hardhat
+```
 
 ### (OUSD/Generalized) Metastrategy usage
 
@@ -47,7 +73,7 @@ directly fund configured strategy.
 
 #### Notes
 
-Once brownie console is started run `from metastrategy import *` to import helper functions
+Once Brownie console is started run `from metastrategy import *` to import helper functions
 and funds for easier testing of metastrategy
 
 Inspect available functions under `brownie/metastrategy.py` and also `brownie/world.py`.
@@ -64,6 +90,12 @@ web3.connect('http://127.0.0.1:8545', 120)
 
 ### Perform Vault Collateral Swaps
 
+Set the [CoinMarketCap](https://coinmarketcap.com/api/documentation/v1/) API key:
+
+```
+export CMC_API_KEY={API_KEY}
+```
+
 Start a brownie console
 
 ```
@@ -78,5 +110,4 @@ from collateralSwap import *
 
 # from_token, to_token, from_token_amount, slippage, allow_partial_fill
 build_swap_tx(WETH, FRXETH, 300 * 10**18, 1, False)
-
 ```
