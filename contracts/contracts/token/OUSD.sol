@@ -399,36 +399,23 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
      */
     function _burn(address _account, uint256 _amount) internal nonReentrant {
         require(_account != address(0), "Burn from the zero address");
-        if (_amount == 0) {
-            return;
-        }
+
+        uint256 oldBalance = balanceOf(_account);
+        require(oldBalance >= _amount, "Remove exceeds balance");
+        uint256 newBalance = oldBalance - _amount;
 
         bool isNonRebasingAccount = _isNonRebasingAccount(_account);
-        uint256 creditAmount = _amount.mulTruncate(_creditsPerToken(_account));
-        uint256 currentCredits = _creditBalances[_account];
-
-        // Remove the credits, burning rounding errors
-        if (
-            currentCredits == creditAmount || currentCredits - 1 == creditAmount
-        ) {
-            // Handle dust from rounding
-            _creditBalances[_account] = 0;
-        } else if (currentCredits > creditAmount) {
-            _creditBalances[_account] = _creditBalances[_account].sub(
-                creditAmount
-            );
-        } else {
-            revert("Remove exceeds balance");
-        }
-
-        // Remove from the credit tallies and non-rebasing supply
         if (isNonRebasingAccount) {
-            nonRebasingSupply = nonRebasingSupply.sub(_amount);
+            nonRebasingCreditsPerToken[_account] = 1e18;
+            _creditBalances[_account] = newBalance;
+            nonRebasingSupply -= _amount;
         } else {
-            _rebasingCredits = _rebasingCredits.sub(creditAmount);
+            uint256 oldCredits = _creditBalances[_account];
+            uint256 newCredits = (newBalance * _rebasingCreditsPerToken) / 1e18;
+            _creditBalances[_account] = newCredits;
+            _rebasingCredits = _rebasingCredits + newCredits - oldCredits;
         }
-
-        _totalSupply = _totalSupply.sub(_amount);
+        _totalSupply -= _amount;
 
         emit Transfer(_account, address(0), _amount);
     }
