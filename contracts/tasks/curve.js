@@ -114,6 +114,19 @@ async function curvePool(taskArguments, hre) {
     )} ${assetSymbol}`
   );
 
+  // Strategies redeemable asset amount
+  const strategy = await impersonateAccount(strategyAddr);
+  const strategyRedeemableAssets = await pool
+    .connect(strategy)
+    .callStatic.remove_liquidity(vaultLPs, [0, 0], {
+      blockTag,
+    });
+  console.log(
+    `strategy redeemable assets: ${formatUnits(
+      strategyRedeemableAssets
+    )} ${assetSymbol}`
+  );
+
   // Assets sent to the strategy
   const strategyAssetsSent = await assetInStrategy(
     vaultAddr,
@@ -282,4 +295,19 @@ async function sumTransfers(token, fromAddr, toAddr, startBlock, endBlock) {
 
 module.exports = {
   curvePool,
+};
+
+const impersonateAccount = async (address) => {
+  const { findBestMainnetTokenHolder } = require("../utils/funding");
+
+  const bestSigner = await findBestMainnetTokenHolder(null, hre);
+  await bestSigner.sendTransaction({
+    to: address,
+    value: ethers.utils.parseEther("100"),
+  });
+
+  await hre.network.provider.request({
+    method: "hardhat_impersonateAccount",
+    params: [address],
+  });
 };
