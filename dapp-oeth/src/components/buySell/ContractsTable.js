@@ -266,9 +266,6 @@ const Estimates = ({ estimates, selected, isLoading, isActive, onSelect }) => {
                                 )}
                                 <br className="d-block d-sm-none" />
                                 <span className="ml-1">after fees</span>
-                                <span className="asterisk">
-                                  {approveAllowanceNeeded ? '*' : ''}
-                                </span>
                               </div>
                               <span className="d-none d-md-inline">
                                 {fbt(

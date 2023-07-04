@@ -5,6 +5,7 @@ module.exports = deploymentWithProposal(
     deployName: "066_oeth_vault_swaps",
     forceDeploy: false,
     reduceQueueTime: true,
+    proposalId: 54,
   },
   async ({ assetAddresses, deployWithConfirmation }) => {
     // Deployer Actions
