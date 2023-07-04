@@ -212,6 +212,17 @@ Head over to [contracts/fork-test.md](contracts/fork-test.md)
 
 ---
 
+## Running Echidna
+
+We have two sets of echinda fuzzing tests covering the OUSD/OETH token. From the contracts direcrtory
+
+- `yarn run echidna` runs a basic set of ERC20 property tests created by Trail of Bits
+- `yarn run echidna-advanced` runs a suite of custom tests around OUSD's rebasing behavior.
+
+The file `EchidnaConfig` allows you to change the behavior of the advanced tests. By default these properties check the behavior of the oToken as it is. For example that all rounding errors are withen known and expected limits. By toggling `TOGGLE_KNOWN_ISSUES` in that file, you can check OUSD's behavior against idealized perfect properties. Some of these stricter tests will fail.
+
+---
+
 ## Contributing
 
 Want to contribute to OUSD? Awesome!

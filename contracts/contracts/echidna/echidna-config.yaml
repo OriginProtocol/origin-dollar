@@ -1,0 +1,26 @@
+# multi-abi: true
+
+workers: 2
+symExec: true
+
+testMode: assertion
+# testMode: optimization
+
+prefix: echidna_
+corpusDir: echidna-corpus
+
+testLimit: 100000000000
+# testLimit: 10000 # 10K
+# testLimit: 10000000 # 10M
+# testLimit: 100000000 # 100M
+
+# shrinkLimit: 100000000000
+# shrinkLimit: 100000 # 100K
+
+sender: [
+    "0x10000", # vault
+    "0x20000", # outsider
+    "0x30000", # user0
+    "0x40000", # user1
+  ]
+
