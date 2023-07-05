@@ -143,6 +143,29 @@ async function curvePool(taskArguments, hre) {
     )} ${oTokenSymbol}`
   );
 
+  // Adjusted strategy value = strategy assets value - strategy OTokens
+  // Assume all OETH owned by the strategy will be burned after withdrawing
+  // so are just left with the assets backing circulating OETH
+  const strategyAdjustedValue = strategyAssetsValue.sub(strategyOTokensInPool);
+  console.log(
+    `\nstrategy adjusted value  : ${formatUnits(
+      strategyAdjustedValue
+    )} ${assetSymbol}`
+  );
+  const strategyOwnedVAdjustedValueDiff = strategyAssetsInPool.sub(
+    strategyAdjustedValue
+  );
+  const strategyAdjustedValueVActualAssetsDiffBps =
+    strategyOwnedVAdjustedValueDiff.mul(10000).div(strategyAssetsInPool);
+  console.log(
+    `owned v adjusted value   : ${formatUnits(
+      strategyOwnedVAdjustedValueDiff
+    )} ${assetSymbol} ${formatUnits(
+      strategyAdjustedValueVActualAssetsDiffBps,
+      2
+    )}%`
+  );
+
   // Assets sent to the strategy
   const strategyAssetsSent = await assetInStrategy(
     vaultAddr,
