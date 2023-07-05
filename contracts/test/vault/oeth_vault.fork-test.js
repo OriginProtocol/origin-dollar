@@ -152,7 +152,7 @@ forkOnlyDescribe("ForkTest: OETH Vault", function () {
 
         for (let i = 0; i < oethContracts.length; i++) {
           expect(await oethContracts[i].governor()).to.equal(
-            addresses.mainnet.OldTimelock
+            addresses.mainnet.Timelock
           );
         }
       });
