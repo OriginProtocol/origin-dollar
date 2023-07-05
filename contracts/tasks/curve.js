@@ -40,6 +40,10 @@ async function curvePool(taskArguments, hre) {
     oTokenSymbol === "OETH"
       ? addresses.mainnet.ConvexOETHAMOStrategy
       : addresses.mainnet.ConvexOUSDAMOStrategy;
+  const curveGaugeAddr =
+    oTokenSymbol === "OETH"
+      ? addresses.mainnet.CurveOETHGauge
+      : addresses.mainnet.CurveOUSDGauge;
   const convexRewardsPoolAddr =
     oTokenSymbol === "OETH"
       ? addresses.mainnet.CVXETHRewardsPool
@@ -116,16 +120,27 @@ async function curvePool(taskArguments, hre) {
   );
 
   // Strategies redeemable asset amount
-  const strategy = await impersonateAndFund(strategyAddr);
+  // Note there is no Metapool fee as its a proportional withdraw
+  const gauge = await impersonateAndFund(curveGaugeAddr);
   const strategyRedeemableAssets = await pool
-    .connect(strategy)
-    .callStatic["remove_liquidity(uint256,uint256[2])"](vaultLPs, [2, 3], {
-      blockTag,
-    });
+    .connect(gauge)
+    .callStatic["remove_liquidity(uint256,uint256[2],address)"](
+      vaultLPs,
+      [2, 3],
+      strategyAddr,
+      {
+        blockTag,
+      }
+    );
   console.log(
-    `strategy redeemable assets: ${formatUnits(
-      strategyRedeemableAssets
+    `strat redeemable assets  : ${formatUnits(
+      strategyRedeemableAssets[0]
     )} ${assetSymbol}`
+  );
+  console.log(
+    `strat redeemable OTokens : ${formatUnits(
+      strategyRedeemableAssets[1]
+    )} ${oTokenSymbol}`
   );
 
   // Assets sent to the strategy

@@ -137,10 +137,12 @@ addresses.mainnet.CurveLUSDMetaPool =
   "0x7A192DD9Cc4Ea9bdEdeC9992df74F1DA55e60a19";
 addresses.mainnet.ConvexOUSDAMOStrategy =
   "0x89eb88fedc50fc77ae8a18aad1ca0ac27f777a90";
+addresses.mainnet.CurveOUSDGauge = "0x25f0cE4E2F8dbA112D9b115710AC297F816087CD";
 addresses.mainnet.ConvexOETHAMOStrategy =
   "0x1827F9eA98E0bf96550b2FC20F7233277FcD7E63";
 addresses.mainnet.CurveOETHMetaPool =
   "0x94B17476A93b3262d87B9a326965D1E91f9c13E7";
+addresses.mainnet.CurveOETHGauge = "0xd03BE91b1932715709e18021734fcB91BB431715";
 addresses.mainnet.MorphoStrategyProxy =
   "0x5A4eEe58744D1430876d5cA93cAB5CcB763C037D";
 addresses.mainnet.MorphoAaveStrategyProxy =
