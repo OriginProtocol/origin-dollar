@@ -9,6 +9,21 @@ STD = {"from": vault_oeth_admin}
 #whale = accounts.at(eth_whale, force=True)
 
 
+# export enum WeightedPoolJoinKind {
+#   INIT = 0,
+#   EXACT_TOKENS_IN_FOR_BPT_OUT, #User sends precise quantities of tokens, and receives an estimated but unknown (computed at run time) quantity of BPT.
+#   TOKEN_IN_FOR_EXACT_BPT_OUT, #User sends an estimated but unknown (computed at run time) quantity of a single token, and receives a precise quantity of BPT.
+#   ALL_TOKENS_IN_FOR_EXACT_BPT_OUT, # User sends estimated but unknown (computed at run time) quantities of tokens, and receives precise quantity of BPT
+#   ADD_TOKEN,
+# }
+
+# export enum ExitKind {
+#     EXACT_BPT_IN_FOR_ONE_TOKEN_OUT, #([EXACT_BPT_IN_FOR_ONE_TOKEN_OUT, bptAmountIn, exitTokenIndex]) User sends a precise quantity of BPT, and receives an estimated but unknown (computed at run time) quantity of a single token
+#     EXACT_BPT_IN_FOR_TOKENS_OUT, #User sends a precise quantity of BPT, and receives an estimated but unknown (computed at run time) quantities of all tokens
+#     BPT_IN_FOR_EXACT_TOKENS_OUT, # User sends an estimated but unknown (computed at run time) quantity of BPT, and receives precise quantities of specified tokens
+#     MANAGEMENT_FEE_TOKENS_OUT // for InvestmentPool
+# }
+
 # wstETH / WETH
 pool_id = "0x32296969ef14eb0c6d29669c550d4a0449130230000200000000000000000080"
 ba_vault=Contract.from_explorer("0xBA12222222228d8Ba445958a75a0704d566BF2C8")
@@ -18,6 +33,8 @@ wstETHPool = Contract.from_explorer("0x32296969ef14eb0c6d29669c550d4a0449130230"
 balancerUserDataEncoder = load_contract('balancerUserData', vault_oeth_admin.address)
 # get it via coordinator: https://etherscan.io/address/0xaA54f3b282805822419265208e669d12372a3811
 booster = load_contract('balancer_booster', "0xA57b8d98dAE62B26Ec3bcC4a365338157060B234")
+
+# DEPOSIT INTO META STABLE POOL
 
 #rewards contract & depositor
 rewardPool = Contract.from_explorer("0x59d66c58e83a26d6a0e35114323f65c3945c89c1")
@@ -70,40 +87,12 @@ wstETHPool.approve(rewardPool, 1e50, STD)
 rewardPool.deposit(bpt_balance, oeth_vault_admin, STD)
 # WITHDRAW FROM AURA
 rewardPool.withdraw(10000000000000000000, oeth_vault_admin, oeth_vault_admin, STD)
+# END OF DEPOSIT INTO META STABLE POOL
 
 
 
-userData = balancerUserDataEncoder.userDataTokenInExactBPTOut.encode_input(2, 5*10**18, 1)
-
-0x32296969ef14eb0c6d29669c550d4a0449130230000200000000000000000080
-0x39254033945AA2E4809Cc2977E7087BEE48bd7Ab
-0x39254033945AA2E4809Cc2977E7087BEE48bd7Ab
-{"assets": ["0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0", "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"], "maxAmountsIn": ["10000000000000000000", "10000000000000000000"], "userData": "0x00000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000004563918244f400000000000000000000000000000000000000000000000000000000000000000001", "fromInternalBalance": false}
+# DEPOSIT INTO COMPOSABLE POOL
 
 
 
-export enum WeightedPoolJoinKind {
-  INIT = 0,
-  EXACT_TOKENS_IN_FOR_BPT_OUT, #User sends precise quantities of tokens, and receives an estimated but unknown (computed at run time) quantity of BPT.
-  TOKEN_IN_FOR_EXACT_BPT_OUT, #User sends an estimated but unknown (computed at run time) quantity of a single token, and receives a precise quantity of BPT.
-  ALL_TOKENS_IN_FOR_EXACT_BPT_OUT, # User sends estimated but unknown (computed at run time) quantities of tokens, and receives precise quantity of BPT
-  ADD_TOKEN,
-}
-
-export enum ExitKind {
-    EXACT_BPT_IN_FOR_ONE_TOKEN_OUT, #([EXACT_BPT_IN_FOR_ONE_TOKEN_OUT, bptAmountIn, exitTokenIndex]) User sends a precise quantity of BPT, and receives an estimated but unknown (computed at run time) quantity of a single token
-    EXACT_BPT_IN_FOR_TOKENS_OUT, #User sends a precise quantity of BPT, and receives an estimated but unknown (computed at run time) quantities of all tokens
-    BPT_IN_FOR_EXACT_TOKENS_OUT, # User sends an estimated but unknown (computed at run time) quantity of BPT, and receives precise quantities of specified tokens
-    MANAGEMENT_FEE_TOKENS_OUT // for InvestmentPool
-}
-
-
-
-# bpt = "0x5aEe1e99fE86960377DE9f88689616916D5DcaBe"
-# reth.approve(ba_vault, 10**50, {"from": vault_oeth_core})
-
-# # 1 stands for EXACT_TOKENS_IN_FOR_BPT_OUT
-# join_request = ([bpt, wsteth, sfrxeth, reth], [0, 0, 0, 10**18], 1 , False)
-# ba_vault.joinPool(pool_id, vault_oeth_core, vault_oeth_core, join_request, {"from": vault_oeth_core})
-
-# # do the same steps as in the SDK and join the pool
+# END DEPOSIT INTO COMPOSABLE POOL
