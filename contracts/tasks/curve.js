@@ -1,18 +1,14 @@
-const { logCurvePool, log } = require("../utils/curve");
-const { formatUnits } = require("ethers/lib/utils");
+const { formatUnits, parseUnits } = require("ethers/lib/utils");
 
-const addresses = require("../utils/addresses");
-const { impersonateAndFund } = require("../utils/signers");
 const poolAbi = require("../test/abi/ousdMetapool.json");
+const addresses = require("../utils/addresses");
 const { resolveAsset } = require("../utils/assets");
+const { impersonateAndFund } = require("../utils/signers");
 
 /**
  * Dumps the current state of a Curve Metapool pool used for AMO
  */
 async function curvePool(taskArguments, hre) {
-  // explicitly enable logging
-  log.enabled = true;
-
   const oTokenSymbol = taskArguments.pool;
   const assetSymbol = oTokenSymbol === "OETH" ? "ETH " : "3CRV";
   const poolAddr =
@@ -41,23 +37,39 @@ async function curvePool(taskArguments, hre) {
       ? addresses.mainnet.CVXETHRewardsPool
       : addresses.mainnet.CVXRewardsPool;
   const poolLPSymbol = oTokenSymbol === "OETH" ? "OETHCRV-f" : "OUSD3CRV-f";
+  // TODO condition to set to WETH or 3CRV
+  const asset = await resolveAsset("WETH");
 
   // Load all the contracts
   const pool = await hre.ethers.getContractAt(poolAbi, poolAddr);
-  const { balances: poolBalances } = await logCurvePool(
-    pool,
-    assetSymbol,
-    oTokenSymbol,
-    blockTag
-  );
   const cvxRewardPool = await ethers.getContractAt(
     "IRewardStaking",
     convexRewardsPoolAddr
   );
   const amoStrategy = await ethers.getContractAt("IStrategy", strategyAddr);
 
-  // Assets sent to strategy
-  const asset = await resolveAsset("WETH");
+  // Get Metapool data
+  const poolBalances = await pool.get_balances({ blockTag });
+  const virtualPrice = await pool.get_virtual_price({ blockTag });
+  console.log(`LP virtual price: ${formatUnits(virtualPrice)} ${oTokenSymbol}`);
+
+  // swap 1 OETH for ETH (OETH/ETH)
+  const price1 = await pool["get_dy(int128,int128,uint256)"](
+    1,
+    0,
+    parseUnits("1"),
+    { blockTag }
+  );
+  console.log(`${oTokenSymbol}/${assetSymbol} price : ${formatUnits(price1)}`);
+
+  // swap 1 ETH for OETH (ETH/OETH)
+  const price2 = await pool["get_dy(int128,int128,uint256)"](
+    0,
+    1,
+    parseUnits("1"),
+    { blockTag }
+  );
+  console.log(`${assetSymbol}/${oTokenSymbol} price : ${formatUnits(price2)}`);
 
   // Get the Strategy's Metapool LPs in the Convex pool
   const vaultLPs = await cvxRewardPool.balanceOf(strategyAddr, { blockTag });
