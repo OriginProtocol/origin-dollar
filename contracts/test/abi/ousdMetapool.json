@@ -309,27 +309,6 @@
     "type": "function"
   },
   {
-    "name": "remove_liquidity",
-    "outputs": [
-      {
-        "type": "uint256[2]",
-        "name": ""
-      }
-    ],
-    "inputs": [
-      {
-        "type": "uint256",
-        "name": "_burn_amount"
-      },
-      {
-        "type": "uint256[2]",
-        "name": "_min_amounts"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
     "inputs": [
       { "name": "i", "type": "int128" },
       { "name": "j", "type": "int128" },

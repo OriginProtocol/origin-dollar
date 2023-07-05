@@ -2,6 +2,7 @@ const { logCurvePool, log } = require("../utils/curve");
 const { formatUnits } = require("ethers/lib/utils");
 
 const addresses = require("../utils/addresses");
+const { impersonateAndFund } = require("../utils/signers");
 const poolAbi = require("../test/abi/ousdMetapool.json");
 const { resolveAsset } = require("../utils/assets");
 const { BigNumber } = require("ethers");
@@ -115,10 +116,10 @@ async function curvePool(taskArguments, hre) {
   );
 
   // Strategies redeemable asset amount
-  const strategy = await impersonateAccount(strategyAddr);
+  const strategy = await impersonateAndFund(strategyAddr);
   const strategyRedeemableAssets = await pool
     .connect(strategy)
-    .callStatic.remove_liquidity(vaultLPs, [0, 0], {
+    .callStatic["remove_liquidity(uint256,uint256[2])"](vaultLPs, [2, 3], {
       blockTag,
     });
   console.log(
@@ -295,19 +296,4 @@ async function sumTransfers(token, fromAddr, toAddr, startBlock, endBlock) {
 
 module.exports = {
   curvePool,
-};
-
-const impersonateAccount = async (address) => {
-  const { findBestMainnetTokenHolder } = require("../utils/funding");
-
-  const bestSigner = await findBestMainnetTokenHolder(null, hre);
-  await bestSigner.sendTransaction({
-    to: address,
-    value: ethers.utils.parseEther("100"),
-  });
-
-  await hre.network.provider.request({
-    method: "hardhat_impersonateAccount",
-    params: [address],
-  });
 };
