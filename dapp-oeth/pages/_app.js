@@ -12,7 +12,6 @@ import TransactionListener from 'components/TransactionListener'
 import setUtilLocale from 'utils/setLocale'
 import { login } from 'utils/account'
 import { ToastContainer } from 'react-toastify'
-import { pageview } from '../lib/gtm'
 import { initSentry } from 'utils/sentry'
 import {
   getDefaultWallets,
@@ -89,13 +88,6 @@ function App({ Component, pageProps, err }) {
   const canonicalUrl = (
     `https://app.oeth.com` + (router.asPath === '/' ? '' : router.asPath)
   ).split('?')[0]
-
-  useEffect(() => {
-    router.events.on('routeChangeComplete', pageview)
-    return () => {
-      router.events.off('routeChangeComplete', pageview)
-    }
-  }, [router.events])
 
   useEffect(() => {
     // Update account info when connection already established

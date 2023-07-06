@@ -21,7 +21,7 @@ forkOnlyDescribe("ForkTest: OETH Curve Metapool Strategy", function () {
       oeth,
       oethVault,
       oethMetaPool,
-      oldTimelock,
+      timelock,
       ConvexEthMetaStrategy,
       weth,
     } = await loadFixture(convexOETHMetaVaultFixture);
@@ -31,8 +31,8 @@ forkOnlyDescribe("ForkTest: OETH Curve Metapool Strategy", function () {
 
     // STEP 2 - take snapshot
     const cChecker = await ethers.getContract("OETHVaultValueChecker");
-    await cChecker.connect(oldTimelock).takeSnapshot();
-    const snapshot = await cChecker.snapshots(await oldTimelock.getAddress());
+    await cChecker.connect(timelock).takeSnapshot();
+    const snapshot = await cChecker.snapshots(await timelock.getAddress());
     log(`before vault value : ${formatUnits(snapshot.vaultValue)}`);
     log(`before vault supply: ${formatUnits(snapshot.totalSupply)}`);
     log(
@@ -45,7 +45,7 @@ forkOnlyDescribe("ForkTest: OETH Curve Metapool Strategy", function () {
 
     // STEP 3 - Withdraw from strategy
     const withdrawTx = await oethVault
-      .connect(oldTimelock)
+      .connect(timelock)
       .withdrawAllFromStrategy(ConvexEthMetaStrategy.address);
     // Get WETH's Deposit event
     // remove OETH/ETH liquidity from pool and deposit ETH to get WETH to transfer to the Vault.
@@ -66,7 +66,7 @@ forkOnlyDescribe("ForkTest: OETH Curve Metapool Strategy", function () {
       parseUnits(additionAmount.toString())
     );
     await oethVault
-      .connect(oldTimelock)
+      .connect(timelock)
       .depositToStrategy(
         ConvexEthMetaStrategy.address,
         [weth.address],
@@ -101,7 +101,7 @@ forkOnlyDescribe("ForkTest: OETH Curve Metapool Strategy", function () {
     // STEP 6 - check delta
     const variance = parseUnits("1", 15);
     await cChecker
-      .connect(oldTimelock)
+      .connect(timelock)
       .checkDelta(profit, variance, valueChange, variance);
   });
 
