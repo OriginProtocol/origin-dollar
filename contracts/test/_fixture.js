@@ -1032,13 +1032,9 @@ function fraxETHStrategyFixtureSetup() {
     const fixture = await oethDefaultFixture();
 
     if (isFork) {
-      const sTimelock = await ethers.provider.getSigner(
-        addresses.mainnet.OldTimelock
-      );
-      const { oethVault, frxETH, fraxEthStrategy } = fixture;
-
+      const { oethVault, frxETH, fraxEthStrategy, timelock } = fixture;
       await oethVault
-        .connect(sTimelock)
+        .connect(timelock)
         .setAssetDefaultStrategy(frxETH.address, fraxEthStrategy.address);
     } else {
       const { governorAddr } = await getNamedAccounts();
