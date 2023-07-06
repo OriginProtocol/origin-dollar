@@ -29,3 +29,41 @@ with TemporaryFork():
     print("Transaction ", idx)
     print("To: ", item.receiver)
     print("Data (Hex encoded): ", item.input, "\n")
+
+# -------------------------------------------
+# July 5, 2023 - OUSD Curve Pool Rebalancing
+# -------------------------------------------
+from world import *
+
+txs = []
+
+def main():
+  with TemporaryFork():
+    # Before
+    txs.append(vault_core.rebase({'from':STRATEGIST}))
+    txs.append(vault_value_checker.takeSnapshot({'from':STRATEGIST}))
+
+    # Withdraw 19.2M USDT from Morpho Aave
+    txs.append(vault_admin.withdrawFromStrategy(MORPHO_AAVE_STRAT, [usdt], [19218884.27*10**6], {'from': STRATEGIST}))
+    # Deposit it to MetaStrategy
+    txs.append(vault_admin.depositToStrategy(OUSD_METASTRAT, [usdt], [19218884.27*10**6], {'from': STRATEGIST}))
+    # Withdraw 17.8M USDT from Curve AMO
+    txs.append(vault_admin.withdrawFromStrategy(OUSD_METASTRAT, [usdt], [17884615.2*10**6], {'from': STRATEGIST}))
+    # Deposit it to MetaStrategy
+    txs.append(vault_admin.depositToStrategy(MORPHO_AAVE_STRAT, [usdt], [17884615.2*10**6], {'from': STRATEGIST}))
+
+    # After
+    vault_change = vault_core.totalValue() - vault_value_checker.snapshots(STRATEGIST)[0]
+    supply_change = ousd.totalSupply() - vault_value_checker.snapshots(STRATEGIST)[1]
+    profit = vault_change - supply_change
+
+    txs.append(vault_value_checker.checkDelta(profit, (500 * 10**18), vault_change, (500 * 10**18), {'from': STRATEGIST}))
+    print("-----")
+    print("Profit", "{:.6f}".format(profit / 10**18), profit)
+    print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
+
+    print("Schedule the following transactions on Gnosis Safe")
+    for idx, item in enumerate(txs):
+      print("Transaction ", idx)
+      print("To: ", item.receiver)
+      print("Data (Hex encoded): ", item.input, "\n")
