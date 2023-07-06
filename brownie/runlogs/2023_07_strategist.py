@@ -69,7 +69,7 @@ def main():
       print("Data (Hex encoded): ", item.input, "\n")
 
 # -----------------------------------
-# July 5, 2023 - Collateral Swap Test
+# July 6, 2023 - Collateral Swap Test
 # -----------------------------------
 from collateralSwap import *
 
@@ -86,6 +86,9 @@ def main():
     decoded_input = vault_core_w_swap_collateral.swapCollateral.decode_input(swap_data)
     txs.append(
       vault_core_w_swap_collateral.swapCollateral(*decoded_input, {'from':STRATEGIST})
+    )
+    txs.append(
+      oeth_vault_core.allocate({'from':STRATEGIST})
     )
 
     # After
