@@ -922,25 +922,25 @@ async function convexMetaVaultFixture() {
 async function morphoCompoundFixture() {
   const fixture = await loadFixture(defaultFixture);
 
-  const { timelockAddr } = fixture;
+  const { timelock } = fixture;
 
   if (isFork) {
     await fixture.vault
-      .connect(timelockAddr)
+      .connect(timelock)
       .setAssetDefaultStrategy(
         fixture.usdt.address,
         fixture.morphoCompoundStrategy.address
       );
 
     await fixture.vault
-      .connect(timelockAddr)
+      .connect(timelock)
       .setAssetDefaultStrategy(
         fixture.usdc.address,
         fixture.morphoCompoundStrategy.address
       );
 
     await fixture.vault
-      .connect(timelockAddr)
+      .connect(timelock)
       .setAssetDefaultStrategy(
         fixture.dai.address,
         fixture.morphoCompoundStrategy.address
