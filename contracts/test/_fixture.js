@@ -922,26 +922,25 @@ async function convexMetaVaultFixture() {
 async function morphoCompoundFixture() {
   const fixture = await loadFixture(defaultFixture);
 
-  const { timelockAddr } = await getNamedAccounts();
-  const sGovernor = await ethers.provider.getSigner(timelockAddr);
+  const { timelock } = fixture;
 
   if (isFork) {
     await fixture.vault
-      .connect(sGovernor)
+      .connect(timelock)
       .setAssetDefaultStrategy(
         fixture.usdt.address,
         fixture.morphoCompoundStrategy.address
       );
 
     await fixture.vault
-      .connect(sGovernor)
+      .connect(timelock)
       .setAssetDefaultStrategy(
         fixture.usdc.address,
         fixture.morphoCompoundStrategy.address
       );
 
     await fixture.vault
-      .connect(sGovernor)
+      .connect(timelock)
       .setAssetDefaultStrategy(
         fixture.dai.address,
         fixture.morphoCompoundStrategy.address
@@ -961,28 +960,25 @@ async function morphoCompoundFixture() {
 async function morphoAaveFixture() {
   const fixture = await loadFixture(defaultFixture);
 
-  const { governorAddr, timelockAddr } = await getNamedAccounts();
-  let sGovernor = await ethers.provider.getSigner(governorAddr);
+  const { timelock } = fixture;
 
   if (isFork) {
-    sGovernor = await ethers.provider.getSigner(timelockAddr);
-
     await fixture.vault
-      .connect(sGovernor)
+      .connect(timelock)
       .setAssetDefaultStrategy(
         fixture.usdt.address,
         fixture.morphoAaveStrategy.address
       );
 
     await fixture.vault
-      .connect(sGovernor)
+      .connect(timelock)
       .setAssetDefaultStrategy(
         fixture.usdc.address,
         fixture.morphoAaveStrategy.address
       );
 
     await fixture.vault
-      .connect(sGovernor)
+      .connect(timelock)
       .setAssetDefaultStrategy(
         fixture.dai.address,
         fixture.morphoAaveStrategy.address
@@ -1004,15 +1000,11 @@ function oethMorphoAaveFixtureSetup() {
     const fixture = await oethDefaultFixture();
 
     if (isFork) {
-      const { governorAddr } = await getNamedAccounts();
-      let sGovernor = await ethers.provider.getSigner(governorAddr);
+      const { oethVault, timelock, weth, oethMorphoAaveStrategy } = fixture;
 
-      await fixture.oethVault
-        .connect(sGovernor)
-        .setAssetDefaultStrategy(
-          fixture.weth.address,
-          fixture.oethMorphoAaveStrategy.address
-        );
+      await oethVault
+        .connect(timelock)
+        .setAssetDefaultStrategy(weth.address, oethMorphoAaveStrategy.address);
     } else {
       throw new Error(
         "Morpho strategy only supported in forked test environment"
@@ -1032,13 +1024,9 @@ function fraxETHStrategyFixtureSetup() {
     const fixture = await oethDefaultFixture();
 
     if (isFork) {
-      const sTimelock = await ethers.provider.getSigner(
-        addresses.mainnet.OldTimelock
-      );
-      const { oethVault, frxETH, fraxEthStrategy } = fixture;
-
+      const { oethVault, frxETH, fraxEthStrategy, timelock } = fixture;
       await oethVault
-        .connect(sTimelock)
+        .connect(timelock)
         .setAssetDefaultStrategy(frxETH.address, fraxEthStrategy.address);
     } else {
       const { governorAddr } = await getNamedAccounts();
@@ -1294,8 +1282,7 @@ async function convexLUSDMetaVaultFixture() {
  */
 async function convexOETHMetaVaultFixture() {
   const fixture = await loadFixture(defaultFixture);
-  const { governorAddr } = await getNamedAccounts();
-  const sGovernor = await ethers.provider.getSigner(governorAddr);
+  const { timelock } = fixture;
 
   await impersonateAndFundAddress(
     fixture.weth.address,
@@ -1325,7 +1312,7 @@ async function convexOETHMetaVaultFixture() {
 
   // Add Convex Meta strategy
   await fixture.oethVault
-    .connect(sGovernor)
+    .connect(timelock)
     .setAssetDefaultStrategy(
       fixture.weth.address,
       fixture.ConvexEthMetaStrategy.address
