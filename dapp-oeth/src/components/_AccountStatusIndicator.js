@@ -48,9 +48,9 @@ const AccountStatusIndicator = ({
             className="wallet-img"
           />
           {withAddress && (
-            <div className="address d-none d-lg-inline">
+            <span className="address d-none d-lg-inline">
               {shortenAddress(account)}
-            </div>
+            </span>
           )}
         </>
       )}

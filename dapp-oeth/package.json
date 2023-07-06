@@ -42,6 +42,7 @@
     "@ethersproject/units": "^5.0.2",
     "@fbtjs/default-collection-transform": "^1.0.0",
     "@rainbow-me/rainbowkit": "^0.12.16",
+    "@safe-global/safe-apps-sdk": "^8.0.0",
     "@sentry/browser": "^5.22.3",
     "@sentry/integrations": "^5.22.3",
     "@sentry/node": "^5.22.3",

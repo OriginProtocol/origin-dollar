@@ -114,7 +114,8 @@ const config = {
           },
           {
             key: 'Content-Security-Policy',
-            value: 'frame-ancestors https://*.ledger.com',
+            value:
+              'frame-ancestors https://*.ledger.com *.safe.global *.5afe.dev',
           },
         ],
       },

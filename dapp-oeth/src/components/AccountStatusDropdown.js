@@ -26,39 +26,41 @@ const AccountStatusDropdown = ({ className }) => {
         open={open}
         onClose={() => setOpen(false)}
       >
-        <a
-          className={`account-status d-flex justify-content-center align-items-center clickable ${
-            active ? 'active' : ''
-          } ${className} ${open ? 'open' : ''}`}
-          onClick={async (e) => {
-            e.preventDefault()
-            if (active && !correctNetwork) {
-              // open the dropdown to allow disconnecting, while also requesting an auto switch to mainnet
-              await switchNetwork(correctNetwork)
-              setOpen(true)
-            } else {
-              setOpen(true)
-            }
-            event({
-              event: 'open_account',
-            })
-          }}
-        >
-          {/* The button id is used by StakeBoxBig to trigger connect when no wallet connected */}
-          {!active && !account && (
+        {!active || !account ? (
+          <div className="not-logged-in">
             <GetOUSD
               id="main-dapp-nav-connect-wallet-button"
               className="btn-nav"
               trackSource="Account dropdown"
             />
-          )}
-          <AccountStatusIndicator
-            active={active}
-            correctNetwork={correctNetwork}
-            account={account}
-            withAddress
-          />
-        </a>
+          </div>
+        ) : (
+          <a
+            className={`account-status d-flex justify-content-center align-items-center clickable ${
+              active ? 'active' : ''
+            } ${className} ${open ? 'open' : ''}`}
+            onClick={async (e) => {
+              e.preventDefault()
+              if (active && !correctNetwork) {
+                // open the dropdown to allow disconnecting, while also requesting an auto switch to mainnet
+                await switchNetwork(correctNetwork)
+                setOpen(true)
+              } else if (account) {
+                setOpen(true)
+              }
+              event({
+                event: 'open_account',
+              })
+            }}
+          >
+            <AccountStatusIndicator
+              active={active}
+              correctNetwork={correctNetwork}
+              account={account}
+              withAddress
+            />
+          </a>
+        )}
       </Dropdown>
       <style jsx>{`
         .dropdown-menu {
@@ -93,7 +95,7 @@ const AccountStatusDropdown = ({ className }) => {
           background-color: #183140;
         }
 
-        .account-status {
+        .not-logged-in {
           padding: 8px 16px;
           border-radius: 56px;
           background-image: linear-gradient(
@@ -103,7 +105,9 @@ const AccountStatusDropdown = ({ className }) => {
           );
         }
 
-        .account-status.active {
+        .account-status {
+          padding: 8px 16px;
+          border-radius: 56px;
           background-color: #1e1f25;
           background-image: none;
         }

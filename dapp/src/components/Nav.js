@@ -1,21 +1,27 @@
 import React from 'react'
 import classnames from 'classnames'
 import Link from 'next/link'
-import { useRouter } from 'next/router'
 import { fbt } from 'fbt-runtime'
-import { useStoreState } from 'pullstate'
 import { useAccount } from 'wagmi'
+import dynamic from 'next/dynamic'
 import withIsMobile from 'hoc/withIsMobile'
-import GetOUSD from 'components/GetOUSD'
-import AccountStatusDropdown from 'components/AccountStatusDropdown'
 import LanguageOptions from 'components/LanguageOptions'
 import IPFSDappLink from 'components/IPFSDappLink'
-import ContractStore from 'stores/ContractStore'
-import AccountStatusPopover from './AccountStatusPopover'
 import { adjustLinkHref } from 'utils/utils'
 import { assetRootPath } from 'utils/image'
 
 const environment = process.env.NODE_ENV
+
+const GetOUSD = dynamic(() => import('components/GetOUSD'), {
+  ssr: false,
+})
+
+const AccountStatusDropdown = dynamic(
+  () => import('components/AccountStatusDropdown'),
+  {
+    ssr: false,
+  }
+)
 
 const DappLinks = ({ page }) => {
   return (

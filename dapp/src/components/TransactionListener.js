@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { ethers } from 'ethers'
 import { useStoreState } from 'pullstate'
-
+import SafeAppsSDK from '@safe-global/safe-apps-sdk'
 import TransactionStore, { initialState } from 'stores/TransactionStore'
 import ContractStore from 'stores/ContractStore'
 import { useAccount } from 'wagmi'
@@ -271,9 +271,11 @@ const TransactionListener = ({ rpcProvider }) => {
         // TODO handle a 404 here. We need to retry. A refresh is required to
         // get this to retry at the moment.
         try {
-          // TODO
-          console.log(connector)
-          // safeData = await connector.sdk.txs.getBySafeTxHash(t.hash)
+          const sdk = new SafeAppsSDK({
+            allowedDomains: [/gnosis-safe.io$/, /app.safe.global$/],
+            debug: false,
+          })
+          safeData = await sdk.txs.getBySafeTxHash(t.hash)
         } catch (e) {
           console.error('Gnosis safe SDK call failed: ', e)
         }

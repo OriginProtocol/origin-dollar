@@ -338,7 +338,8 @@ const AccountListener = (props) => {
       if (!account) return
       // TODO handle other contract types. We only detect Gnosis Safe as having
       // opted out here as rebaseState will always be 0 for all EOAs
-      const isSafe = activeConnector?.name === 'safe'
+      const isSafe = activeConnector?.id === 'safe'
+
       AccountStore.update((s) => {
         s.isSafe = isSafe
       })
