@@ -25,7 +25,7 @@ const SignTransferAuth = ({}) => {
     <>
       <div>
         <div className="content-holder flex-grow d-flex flex-column shadow-div">
-          {active && (
+          {active && ognStaking && (
             <div>
               {' '}
               on {ognStaking.address} Transfer stakes from {account} to:
