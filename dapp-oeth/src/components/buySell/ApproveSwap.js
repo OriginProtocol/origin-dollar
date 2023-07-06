@@ -237,8 +237,6 @@ const ApproveSwap = ({
           event: 'approve_complete',
           approval_type: isWrapped ? 'wrap' : 'swap',
           approval_token: coinToApprove,
-          approval_address: '',
-          approval_tx: '',
         })
         setIsApproving({})
         setStage('done')
@@ -252,8 +250,6 @@ const ApproveSwap = ({
             event: 'approve_failed',
             approval_type: isWrapped ? 'wrap' : 'swap',
             approval_token: coinToApprove,
-            approval_address: '',
-            approval_tx: '',
           })
         } else {
           event({

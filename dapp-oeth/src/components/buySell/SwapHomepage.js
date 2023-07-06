@@ -264,8 +264,6 @@ const SwapHomepage = ({
         swap_type: swapMode,
         swap_token: swapTokenUsed,
         swap_amount: swapTokenAmount,
-        swap_address: '',
-        swap_tx: '',
       })
     } catch (e) {
       const metadata = swapMetadata()
@@ -277,8 +275,6 @@ const SwapHomepage = ({
           swap_type: swapMode,
           swap_token: swapTokenUsed,
           swap_amount: swapTokenAmount,
-          swap_address: '',
-          swap_tx: '',
         })
       } else {
         event({
@@ -286,7 +282,6 @@ const SwapHomepage = ({
           swap_type: swapMode,
           swap_token: swapTokenUsed,
           swap_amount: swapTokenAmount,
-          swap_address: '',
         })
       }
 

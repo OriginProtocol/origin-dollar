@@ -219,8 +219,6 @@ const WrapHomepage = ({
         wrap_type: swapMode,
         wrap_token: wrapTokenUsed,
         wrap_amount: wrapTokenAmount,
-        wrap_address: '',
-        wrap_tx: '',
       })
     } catch (e) {
       const metadata = swapMetadata()
@@ -232,7 +230,6 @@ const WrapHomepage = ({
           wrap_type: swapMode,
           wrap_token: wrapTokenUsed,
           wrap_amount: wrapTokenAmount,
-          wrap_address: '',
         })
       } else {
         event({
@@ -240,7 +237,6 @@ const WrapHomepage = ({
           wrap_type: swapMode,
           wrap_token: wrapTokenUsed,
           wrap_amount: wrapTokenAmount,
-          wrap_address: '',
         })
       }
 
