@@ -160,7 +160,7 @@ const Nav = ({ locale, onLocale, page }) => {
             </div>
           </button>
           <IPFSDappLink css="d-lg-none" />
-          {<AccountStatusPopover />}
+          <AccountStatusDropdown />
           {!active && !account && (
             <div className="d-flex d-md-none">
               <GetOUSD
