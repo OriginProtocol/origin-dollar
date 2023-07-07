@@ -1,4 +1,5 @@
 const { formatUnits, parseUnits } = require("ethers/lib/utils");
+const { BigNumber } = require("ethers");
 
 const poolAbi = require("../test/abi/ousdMetapool.json");
 const addresses = require("../utils/addresses");
@@ -84,17 +85,17 @@ async function curvePool(taskArguments, hre) {
 
   // Total Metapool assets
   const totalBalances = poolBalances[0].add(poolBalances[1]);
-  const ethBasisPoints = poolBalances[0].mul(10000).div(totalBalances);
-  const oethBasisPoints = poolBalances[1].mul(10000).div(totalBalances);
+  const ethBasisPoints = poolBalances[0].mul(1000000).div(totalBalances);
+  const oethBasisPoints = poolBalances[1].mul(1000000).div(totalBalances);
   console.log(
     `\ntotal assets in pool     : ${formatUnits(
       poolBalances[0]
-    )} ${assetSymbol} ${formatUnits(ethBasisPoints, 2)}%`
+    )} ${assetSymbol} ${formatUnits(ethBasisPoints, 4)}%`
   );
   console.log(
     `total OTokens in pool    : ${formatUnits(
       poolBalances[1]
-    )} ${oTokenSymbol} ${formatUnits(oethBasisPoints, 2)}%`
+    )} ${oTokenSymbol} ${formatUnits(oethBasisPoints, 4)}%`
   );
 
   // Strategy's share of the assets in the pool
@@ -123,6 +124,20 @@ async function curvePool(taskArguments, hre) {
     )} ${assetSymbol}`
   );
 
+  // Vault's total value
+  const vaultTotalValue = await vault.totalValue({ blockTag });
+  console.log(
+    `\nvault assets value       : ${formatUnits(
+      vaultTotalValue
+    )} ${assetSymbol}`
+  );
+  const vaultAdjustedTotalValue = vaultTotalValue.sub(strategyOTokensInPool);
+  console.log(
+    `vault value less OETH    : ${formatUnits(
+      vaultAdjustedTotalValue
+    )} ${assetSymbol}`
+  );
+
   // Adjusted strategy value = strategy assets value - strategy OTokens
   // Assume all OETH owned by the strategy will be burned after withdrawing
   // so are just left with the assets backing circulating OETH
@@ -135,20 +150,23 @@ async function curvePool(taskArguments, hre) {
   const strategyOwnedVAdjustedValueDiff = strategyAssetsInPool.sub(
     strategyAdjustedValue
   );
-  const strategyAdjustedValueVActualAssetsDiffBps =
-    strategyOwnedVAdjustedValueDiff.mul(10000).div(strategyAssetsInPool);
+  const strategyAdjustedValueVActualAssetsDiffBps = strategyAssetsInPool.gt(0)
+    ? strategyOwnedVAdjustedValueDiff.mul(1000000).div(strategyAssetsInPool)
+    : BigNumber.from(0);
   console.log(
     `owned v value less OETH  : ${formatUnits(
       strategyOwnedVAdjustedValueDiff
     )} ${assetSymbol} ${formatUnits(
       strategyAdjustedValueVActualAssetsDiffBps,
-      2
+      4
     )}%`
   );
 
-  const netMintedForStrategy = await vault.netOusdMintedForStrategy();
+  const netMintedForStrategy = await vault.netOusdMintedForStrategy({
+    blockTag,
+  });
   const netMintedForStrategyThreshold =
-    await vault.netOusdMintForStrategyThreshold();
+    await vault.netOusdMintForStrategyThreshold({ blockTag });
   const netMintedForStrategyDiff =
     netMintedForStrategyThreshold.sub(netMintedForStrategy);
   console.log(
