@@ -38,6 +38,10 @@ async function curvePool(taskArguments, hre) {
     oTokenSymbol === "OETH"
       ? addresses.mainnet.OETHVaultProxy
       : addresses.mainnet.VaultProxy;
+  const oTokenAddr =
+    oTokenSymbol === "OETH"
+      ? addresses.mainnet.OETHProxy
+      : addresses.mainnet.OUSDProxy;
   // TODO condition to set to WETH or 3CRV
   const asset = await resolveAsset("WETH");
 
@@ -48,6 +52,7 @@ async function curvePool(taskArguments, hre) {
     convexRewardsPoolAddr
   );
   const amoStrategy = await ethers.getContractAt("IStrategy", strategyAddr);
+  const oToken = await ethers.getContractAt("IERC20", oTokenAddr);
   const vault = await ethers.getContractAt("IVault", vaultAddr);
 
   // Get Metapool data
@@ -98,18 +103,37 @@ async function curvePool(taskArguments, hre) {
     )} ${oTokenSymbol} ${formatUnits(oethBasisPoints, 4)}%`
   );
 
-  // Strategy's share of the assets in the pool
+  // Get vault value, supply
+  const vaultTotalValue = await vault.totalValue({ blockTag });
+  const oTokenSupply = await oToken.totalSupply({ blockTag });
   const strategyAssetsInPool = poolBalances[0].mul(vaultLPs).div(totalLPs);
   const strategyOTokensInPool = poolBalances[1].mul(vaultLPs).div(totalLPs);
+  const vaultAdjustedTotalValue = vaultTotalValue.sub(strategyOTokensInPool);
+
+  // Strategy's share of the assets in the pool
+  const strategyAssets_v_VaultVault_BasisPoints = strategyAssetsInPool
+    .mul(10000)
+    .div(vaultAdjustedTotalValue);
   console.log(
     `\nassets owned by strategy : ${formatUnits(
       strategyAssetsInPool
-    )} ${assetSymbol} (${formatUnits(vaultBasisPoints, 2)}% of pool)`
+    )} ${assetSymbol} ${formatUnits(
+      strategyAssets_v_VaultVault_BasisPoints,
+      2
+    )}% of adjusted vault value`
   );
+
+  // Strategy's share of the oTokens in the pool
+  const strategyOTokens_v_Supply_BasisPoints = strategyOTokensInPool
+    .mul(10000)
+    .div(oTokenSupply);
   console.log(
     `OTokens owned by strategy: ${formatUnits(
       strategyOTokensInPool
-    )} ${oTokenSymbol} (${formatUnits(vaultBasisPoints, 2)}% of pool)`
+    )} ${oTokenSymbol} ${formatUnits(
+      strategyOTokens_v_Supply_BasisPoints,
+      2
+    )}% of OToken supply`
   );
   const stratTotalInPool = strategyAssetsInPool.add(strategyOTokensInPool);
   console.log(`both owned by strategy   : ${formatUnits(stratTotalInPool)}`);
@@ -124,26 +148,12 @@ async function curvePool(taskArguments, hre) {
     )} ${assetSymbol}`
   );
 
-  // Vault's total value
-  const vaultTotalValue = await vault.totalValue({ blockTag });
-  console.log(
-    `\nvault assets value       : ${formatUnits(
-      vaultTotalValue
-    )} ${assetSymbol}`
-  );
-  const vaultAdjustedTotalValue = vaultTotalValue.sub(strategyOTokensInPool);
-  console.log(
-    `vault value less OETH    : ${formatUnits(
-      vaultAdjustedTotalValue
-    )} ${assetSymbol}`
-  );
-
   // Adjusted strategy value = strategy assets value - strategy OTokens
   // Assume all OETH owned by the strategy will be burned after withdrawing
   // so are just left with the assets backing circulating OETH
   const strategyAdjustedValue = strategyAssetsValue.sub(strategyOTokensInPool);
   console.log(
-    `\nstrategy value less OETH : ${formatUnits(
+    `\nstrategy adjusted value  : ${formatUnits(
       strategyAdjustedValue
     )} ${assetSymbol}`
   );
@@ -154,12 +164,25 @@ async function curvePool(taskArguments, hre) {
     ? strategyOwnedVAdjustedValueDiff.mul(1000000).div(strategyAssetsInPool)
     : BigNumber.from(0);
   console.log(
-    `owned v value less OETH  : ${formatUnits(
+    `owned v adjusted value   : ${formatUnits(
       strategyOwnedVAdjustedValueDiff
     )} ${assetSymbol} ${formatUnits(
       strategyAdjustedValueVActualAssetsDiffBps,
       4
     )}%`
+  );
+
+  // Vault's total value
+  console.log(
+    `\nOToken total supply      : ${formatUnits(oTokenSupply)} ${oTokenSymbol}`
+  );
+  console.log(
+    `vault assets value       : ${formatUnits(vaultTotalValue)} ${assetSymbol}`
+  );
+  console.log(
+    `vault adjusted value     : ${formatUnits(
+      vaultAdjustedTotalValue
+    )} ${assetSymbol}`
   );
 
   const netMintedForStrategy = await vault.netOusdMintedForStrategy({
