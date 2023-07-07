@@ -9,13 +9,6 @@ const { impersonateAndFund } = require("../utils/signers");
  * Dumps the current state of a Curve Metapool pool used for AMO
  */
 async function curvePool(taskArguments, hre) {
-  const oTokenSymbol = taskArguments.pool;
-  const assetSymbol = oTokenSymbol === "OETH" ? "ETH " : "3CRV";
-  const poolAddr =
-    oTokenSymbol === "OETH"
-      ? addresses.mainnet.CurveOETHMetaPool
-      : addresses.mainnet.CurveOUSDMetaPool;
-
   // Get the block to get all the data from
   const blockTag =
     taskArguments.block === 0
@@ -23,7 +16,15 @@ async function curvePool(taskArguments, hre) {
       : taskArguments.block;
   console.log(`block: ${blockTag}`);
 
+  // Get symbols of tokens in the pool
+  const oTokenSymbol = taskArguments.pool;
+  const assetSymbol = oTokenSymbol === "OETH" ? "ETH " : "3CRV";
+
   // Get the contract addresses
+  const poolAddr =
+    oTokenSymbol === "OETH"
+      ? addresses.mainnet.CurveOETHMetaPool
+      : addresses.mainnet.CurveOUSDMetaPool;
   const strategyAddr =
     oTokenSymbol === "OETH"
       ? addresses.mainnet.ConvexOETHAMOStrategy
@@ -37,6 +38,10 @@ async function curvePool(taskArguments, hre) {
       ? addresses.mainnet.CVXETHRewardsPool
       : addresses.mainnet.CVXRewardsPool;
   const poolLPSymbol = oTokenSymbol === "OETH" ? "OETHCRV-f" : "OUSD3CRV-f";
+  const vaultAddr =
+    oTokenSymbol === "OETH"
+      ? addresses.mainnet.OETHVaultProxy
+      : addresses.mainnet.VaultProxy;
   // TODO condition to set to WETH or 3CRV
   const asset = await resolveAsset("WETH");
 
@@ -47,6 +52,7 @@ async function curvePool(taskArguments, hre) {
     convexRewardsPoolAddr
   );
   const amoStrategy = await ethers.getContractAt("IStrategy", strategyAddr);
+  const vault = await ethers.getContractAt("IVault", vaultAddr);
 
   // Get Metapool data
   const poolBalances = await pool.get_balances({ blockTag });
@@ -167,6 +173,21 @@ async function curvePool(taskArguments, hre) {
       strategyAdjustedValueVActualAssetsDiffBps,
       2
     )}%`
+  );
+
+  const netMintedForStrategy = await vault.netOusdMintedForStrategy();
+  const netMintedForStrategyThreshold =
+    await vault.netOusdMintForStrategyThreshold();
+  const netMintedForStrategyDiff =
+    netMintedForStrategyThreshold.sub(netMintedForStrategy);
+  console.log(
+    `\nNet minted for strategy  : ${formatUnits(netMintedForStrategy)}`
+  );
+  console.log(
+    `Net minted threshold     : ${formatUnits(netMintedForStrategyThreshold)}`
+  );
+  console.log(
+    `Net minted for strat diff: ${formatUnits(netMintedForStrategyDiff)}`
   );
 }
 
