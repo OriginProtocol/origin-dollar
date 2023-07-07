@@ -43,7 +43,7 @@ forkOnlyDescribe("ForkTest: Morpho Compound Strategy", function () {
 
   describe("Redeem", function () {
     it("Should redeem from Morpho", async () => {
-      const { vault, ousd, usdt, usdc, dai, anna } = fixture;
+      const { vault, ousd, usdt, usdc, dai, domen } = fixture;
 
       const supplyBeforeMint = await ousd.totalSupply();
 
@@ -52,7 +52,7 @@ forkOnlyDescribe("ForkTest: Morpho Compound Strategy", function () {
       // Mint with all three assets
       for (const asset of [usdt, usdc, dai]) {
         await vault
-          .connect(anna)
+          .connect(domen)
           .mint(asset.address, await units(amount, asset), 0);
       }
 
@@ -60,13 +60,13 @@ forkOnlyDescribe("ForkTest: Morpho Compound Strategy", function () {
       const supplyAdded = currentSupply.sub(supplyBeforeMint);
       expect(supplyAdded).to.approxEqualTolerance(ousdUnits("30000"), 1);
 
-      const currentBalance = await ousd.connect(anna).balanceOf(anna.address);
+      const currentBalance = await ousd.connect(domen).balanceOf(domen.address);
 
       // Now try to redeem 30k
-      await vault.connect(anna).redeem(ousdUnits("30000"), 0);
+      await vault.connect(domen).redeem(ousdUnits("30000"), 0);
 
       // User balance should be down by 30k
-      const newBalance = await ousd.connect(anna).balanceOf(anna.address);
+      const newBalance = await ousd.connect(domen).balanceOf(domen.address);
       expect(newBalance).to.approxEqualTolerance(
         currentBalance.sub(ousdUnits("30000")),
         1
@@ -79,96 +79,102 @@ forkOnlyDescribe("ForkTest: Morpho Compound Strategy", function () {
     });
   });
 
-  it("Should be able to harvest rewards", async function () {
-    const {
-      harvester,
-      daniel,
-      anna,
-      usdc,
-      cusdc,
-      usdt,
-      morphoLens,
-      morphoCompoundStrategy,
-      dripper,
-    } = fixture;
-    await mintTest(fixture, anna, usdc, "110000");
+  describe("Withdraw", function () {
+    it("Should be able to withdraw from strategy", async function () {
+      const { matt, usdc, vault, morphoCompoundStrategy } = fixture;
+      const amount = "110000";
+      await mintTest(fixture, matt, usdc, amount);
 
-    // harvester always exchanges for USDT and parks the funds in the dripper
-    const usdtBalanceDiff = await differenceInErc20TokenBalance(
-      dripper.address,
-      usdt,
-      async () => {
-        // advance time so that some rewards accrue
-        await advanceTime(3600 * 24 * 100);
-        await advanceBlocks(10000);
-        // check that rewards are there
-        await expect(
-          await morphoLens.getUserUnclaimedRewards(
-            [cusdc.address],
-            morphoCompoundStrategy.address
-          )
-        ).to.be.gte(0);
-        // prettier-ignore
-        await harvester
-          .connect(daniel)["harvestAndSwap(address)"](morphoCompoundStrategy.address);
-      }
-    );
+      const usdcUnits = await units(amount, usdc);
+      const vaultUsdcBefore = await usdc.balanceOf(vault.address);
+      const vaultSigner = await impersonateAndFundContract(vault.address);
 
-    await expect(usdtBalanceDiff).to.be.gte(0);
+      await morphoCompoundStrategy
+        .connect(vaultSigner)
+        .withdraw(vault.address, usdc.address, usdcUnits);
+      const vaultUsdcDiff =
+        (await usdc.balanceOf(vault.address)) - vaultUsdcBefore;
+
+      expect(vaultUsdcDiff).to.approxEqualTolerance(usdcUnits, 1);
+    });
+
+    it("Should be able to withdrawAll from strategy", async function () {
+      const { matt, usdc, vault, usdt, morphoCompoundStrategy } = fixture;
+      const vaultSigner = await impersonateAndFundContract(vault.address);
+      const amount = "110000";
+
+      const removeFundsFromVault = async () => {
+        await usdc
+          .connect(vaultSigner)
+          .transfer(matt.address, usdc.balanceOf(vault.address));
+        await usdt
+          .connect(vaultSigner)
+          .transfer(matt.address, usdt.balanceOf(vault.address));
+      };
+
+      // remove funds so no residual funds get allocated
+      await removeFundsFromVault();
+
+      await mintTest(fixture, matt, usdc, amount);
+      await mintTest(fixture, matt, usdt, amount);
+
+      const usdcUnits = await units(amount, usdc);
+      const usdtUnits = await units(amount, usdt);
+      const vaultUsdtBefore = await usdt.balanceOf(vault.address);
+      const vaultUsdcBefore = await usdc.balanceOf(vault.address);
+
+      await morphoCompoundStrategy.connect(vaultSigner).withdrawAll();
+
+      const vaultUsdtDiff =
+        (await usdt.balanceOf(vault.address)) - vaultUsdtBefore;
+      const vaultUsdcDiff =
+        (await usdc.balanceOf(vault.address)) - vaultUsdcBefore;
+
+      expect(vaultUsdcDiff).to.approxEqualTolerance(usdcUnits, 1);
+      expect(vaultUsdtDiff).to.approxEqualTolerance(usdtUnits, 1);
+    });
   });
 
-  it("Should be able to withdraw from strategy", async function () {
-    const { matt, usdc, vault, morphoCompoundStrategy } = fixture;
-    const amount = "110000";
-    await mintTest(fixture, matt, usdc, amount);
+  // set it as a last test that executes because we advance time and theat
+  // messes with recency of oracle prices
+  describe("Rewards", function () {
+    it("Should be able to harvest rewards", async function () {
+      const {
+        harvester,
+        daniel,
+        anna,
+        usdc,
+        cusdc,
+        usdt,
+        morphoLens,
+        morphoCompoundStrategy,
+        dripper,
+      } = fixture;
+      await mintTest(fixture, anna, usdc, "110000");
 
-    const usdcUnits = await units(amount, usdc);
-    const vaultUsdcBefore = await usdc.balanceOf(vault.address);
-    const vaultSigner = await impersonateAndFundContract(vault.address);
+      // harvester always exchanges for USDT and parks the funds in the dripper
+      const usdtBalanceDiff = await differenceInErc20TokenBalance(
+        dripper.address,
+        usdt,
+        async () => {
+          // advance time so that some rewards accrue
+          await advanceTime(3600 * 24 * 1);
+          await advanceBlocks(100);
+          // check that rewards are there
+          await expect(
+            await morphoLens.getUserUnclaimedRewards(
+              [cusdc.address],
+              morphoCompoundStrategy.address
+            )
+          ).to.be.gte(0);
+          // prettier-ignore
+          await harvester
+            .connect(daniel)["harvestAndSwap(address)"](morphoCompoundStrategy.address);
+        }
+      );
 
-    await morphoCompoundStrategy
-      .connect(vaultSigner)
-      .withdraw(vault.address, usdc.address, usdcUnits);
-    const vaultUsdcDiff =
-      (await usdc.balanceOf(vault.address)) - vaultUsdcBefore;
-
-    expect(vaultUsdcDiff).to.approxEqualTolerance(usdcUnits, 1);
-  });
-
-  it("Should be able to withdrawAll from strategy", async function () {
-    const { matt, usdc, vault, usdt, morphoCompoundStrategy } = fixture;
-    const vaultSigner = await impersonateAndFundContract(vault.address);
-    const amount = "110000";
-
-    const removeFundsFromVault = async () => {
-      await usdc
-        .connect(vaultSigner)
-        .transfer(matt.address, usdc.balanceOf(vault.address));
-      await usdt
-        .connect(vaultSigner)
-        .transfer(matt.address, usdt.balanceOf(vault.address));
-    };
-
-    // remove funds so no residual funds get allocated
-    await removeFundsFromVault();
-
-    await mintTest(fixture, matt, usdc, amount);
-    await mintTest(fixture, matt, usdt, amount);
-
-    const usdcUnits = await units(amount, usdc);
-    const usdtUnits = await units(amount, usdt);
-    const vaultUsdtBefore = await usdt.balanceOf(vault.address);
-    const vaultUsdcBefore = await usdc.balanceOf(vault.address);
-
-    await morphoCompoundStrategy.connect(vaultSigner).withdrawAll();
-
-    const vaultUsdtDiff =
-      (await usdt.balanceOf(vault.address)) - vaultUsdtBefore;
-    const vaultUsdcDiff =
-      (await usdc.balanceOf(vault.address)) - vaultUsdcBefore;
-
-    expect(vaultUsdcDiff).to.approxEqualTolerance(usdcUnits, 1);
-    expect(vaultUsdtDiff).to.approxEqualTolerance(usdtUnits, 1);
+      await expect(usdtBalanceDiff).to.be.gte(0);
+    });
   });
 });
 

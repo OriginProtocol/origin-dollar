@@ -3,18 +3,18 @@
     {
       "contract": "VaultValueChecker",
       "label": "snapshots",
-      "type": "t_mapping(t_address,t_struct(Snapshot)20639_storage)",
-      "src": "contracts/strategies/VaultValueChecker.sol:19"
+      "type": "t_mapping(t_address,t_struct(Snapshot)19970_storage)",
+      "src": "contracts/strategies/VaultValueChecker.sol:24"
     }
   ],
   "types": {
-    "t_mapping(t_address,t_struct(Snapshot)20639_storage)": {
+    "t_mapping(t_address,t_struct(Snapshot)19970_storage)": {
       "label": "mapping(address => struct VaultValueChecker.Snapshot)"
     },
     "t_address": {
       "label": "address"
     },
-    "t_struct(Snapshot)20639_storage": {
+    "t_struct(Snapshot)19970_storage": {
       "label": "struct VaultValueChecker.Snapshot",
       "members": [
         {
@@ -23,6 +23,10 @@
         },
         {
           "label": "totalSupply",
+          "type": "t_uint256"
+        },
+        {
+          "label": "time",
           "type": "t_uint256"
         }
       ]

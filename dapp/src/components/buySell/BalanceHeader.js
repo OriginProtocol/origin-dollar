@@ -270,7 +270,7 @@ const BalanceHeader = ({
               titleLink={
                 account
                   ? `${
-                      process.env.ANALYTICS_ENDPOINT
+                      process.env.NEXT_PUBLIC_ANALYTICS_ENDPOINT
                     }/address/${account.toLowerCase()}`
                   : false
               }

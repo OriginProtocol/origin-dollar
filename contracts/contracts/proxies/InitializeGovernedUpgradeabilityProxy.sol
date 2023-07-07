@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: agpl-3.0
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
@@ -41,12 +41,12 @@ contract InitializeGovernedUpgradeabilityProxy is Governable {
             IMPLEMENTATION_SLOT ==
                 bytes32(uint256(keccak256("eip1967.proxy.implementation")) - 1)
         );
-        _changeGovernor(_initGovernor);
         _setImplementation(_logic);
         if (_data.length > 0) {
             (bool success, ) = _logic.delegatecall(_data);
             require(success);
         }
+        _changeGovernor(_initGovernor);
     }
 
     /**

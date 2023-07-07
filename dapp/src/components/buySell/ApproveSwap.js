@@ -3,7 +3,6 @@ import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
 import { useWeb3React } from '@web3-react/core'
 import ContractStore from 'stores/ContractStore'
-import analytics from 'utils/analytics'
 import withRpcProvider from 'hoc/withRpcProvider'
 import { ethers } from 'ethers'
 import withIsMobile from 'hoc/withIsMobile'
@@ -202,7 +201,7 @@ const ApproveSwap = ({
         : stableCoinToApprove.toUpperCase()
     const noSwapRouteAvailable = swapsLoaded && !selectedSwap
     if (swappingGloballyDisabled) {
-      return process.env.DISABLE_SWAP_BUTTON_MESSAGE
+      return process.env.NEXT_PUBLIC_DISABLE_SWAP_BUTTON_MESSAGE
     } else if (!active) {
       return fbt('Connect Wallet', 'Connect Wallet')
     } else if (balanceError) {
@@ -223,11 +222,6 @@ const ApproveSwap = ({
 
   const startApprovalProcess = async () => {
     if (stage === 'approve' && contract) {
-      analytics.track('On Approve Coin', {
-        category: isWrapped ? 'wrap' : 'swap',
-        label: swapMetadata.coinGiven,
-        value: parseInt(swapMetadata.swapAmount),
-      })
       setStage('waiting-user')
       try {
         const result = await contract
@@ -246,12 +240,7 @@ const ApproveSwap = ({
           contract: needsApproval,
           coin: stableCoinToApprove,
         })
-        const receipt = await rpcProvider.waitForTransaction(result.hash)
-        analytics.track('Approval Successful', {
-          category: 'swap',
-          label: swapMetadata.coinGiven,
-          value: parseInt(swapMetadata.swapAmount),
-        })
+        await rpcProvider.waitForTransaction(result.hash)
         setIsApproving({})
         setStage('done')
       } catch (e) {
@@ -260,14 +249,6 @@ const ApproveSwap = ({
         setStage('approve')
         if (e.code !== 4001) {
           await storeTransactionError('approve', stableCoinToApprove)
-          analytics.track(`Approval failed`, {
-            category: isWrapped ? 'wrap' : 'swap',
-            label: e.message,
-          })
-        } else {
-          analytics.track(`Approval canceled`, {
-            category: isWrapped ? 'wrap' : 'swap',
-          })
         }
       }
     }

@@ -1,8 +1,4 @@
-const {
-  defaultFixture,
-  compoundVaultFixture,
-  multiStrategyVaultFixture,
-} = require("../_fixture");
+const { defaultFixture, compoundVaultFixture } = require("../_fixture");
 const { expect } = require("chai");
 const { utils } = require("ethers");
 const { MAX_UINT256 } = require("../../utils/constants");
@@ -424,12 +420,12 @@ describe("Vault with Compound strategy", function () {
   });
 
   it("Should handle non-standard token deposits", async () => {
-    let { ousd, vault, matt, nonStandardToken, governor } = await loadFixture(
-      compoundVaultFixture
-    );
+    let { ousd, vault, matt, nonStandardToken, oracleRouter, governor } =
+      await loadFixture(compoundVaultFixture);
 
+    await oracleRouter.cacheDecimals(nonStandardToken.address);
     if (nonStandardToken) {
-      await vault.connect(governor).supportAsset(nonStandardToken.address);
+      await vault.connect(governor).supportAsset(nonStandardToken.address, 0);
     }
 
     await setOracleTokenPriceUsd("NonStandardToken", "1.00");
@@ -608,8 +604,12 @@ describe("Vault with Compound strategy", function () {
     for (const [user, startBalance] of usersWithBalances) {
       for (const [asset, units] of assetsWithUnits) {
         for (const amount of [5.09, 10.32, 20.99, 100.01]) {
-          asset.connect(user).approve(vault.address, units(amount.toString()));
-          vault.connect(user).mint(asset.address, units(amount.toString()), 0);
+          asset
+            .connect(user)
+            .approve(vault.address, await units(amount.toString()));
+          vault
+            .connect(user)
+            .mint(asset.address, await units(amount.toString()), 0);
           await expect(user).has.an.approxBalanceOf(
             (startBalance + amount).toString(),
             ousd
@@ -689,7 +689,7 @@ describe("Vault with Compound strategy", function () {
 
     const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
 
-    mockUniswapRouter.initialize([comp.address], [usdt.address]);
+    await mockUniswapRouter.initialize([comp.address], [usdt.address]);
 
     const compAmount = utils.parseUnits("100", 18);
     await comp.connect(governor).mint(compAmount);
@@ -749,7 +749,7 @@ describe("Vault with Compound strategy", function () {
 
     const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
 
-    mockUniswapRouter.initialize([comp.address], [usdt.address]);
+    await mockUniswapRouter.initialize([comp.address], [usdt.address]);
 
     // Mock router gives 1:1, if we set this to something high there will be
     // too much slippage
@@ -797,7 +797,7 @@ describe("Vault with Compound strategy", function () {
 
     const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
 
-    mockUniswapRouter.initialize([comp.address], [usdt.address]);
+    await mockUniswapRouter.initialize([comp.address], [usdt.address]);
 
     const compAmount = utils.parseUnits("100", 18);
     await comp.connect(governor).mint(compAmount);
@@ -942,107 +942,5 @@ describe("Vault auto allocation", function () {
     const { vault, anna } = await loadFixture(defaultFixture);
     await expect(vault.connect(anna).setAutoAllocateThreshold(10000)).to.be
       .reverted;
-  });
-});
-
-describe("Vault with two Compound strategies", function () {
-  if (isFork) {
-    this.timeout(0);
-  }
-
-  it("Should reallocate from one strategy to another", async () => {
-    const { vault, dai, governor, compoundStrategy, strategyTwo } =
-      await loadFixture(multiStrategyVaultFixture);
-
-    expect(await vault.totalValue()).to.approxEqual(
-      utils.parseUnits("200", 18)
-    );
-
-    await vault.allocate();
-
-    expect(await compoundStrategy.checkBalance(dai.address)).to.equal(
-      daiUnits("0")
-    );
-    expect(await strategyTwo.checkBalance(dai.address)).to.equal(
-      daiUnits("200")
-    );
-
-    await vault
-      .connect(governor)
-      .reallocate(
-        strategyTwo.address,
-        compoundStrategy.address,
-        [dai.address],
-        [daiUnits("200")]
-      );
-
-    expect(await compoundStrategy.checkBalance(dai.address)).to.equal(
-      daiUnits("200")
-    );
-    expect(await strategyTwo.checkBalance(dai.address)).to.equal(daiUnits("0"));
-  });
-
-  it("Should not reallocate to a strategy that does not support the asset", async () => {
-    const { vault, usdt, josh, governor, compoundStrategy, strategyTwo } =
-      await loadFixture(multiStrategyVaultFixture);
-
-    expect(await vault.totalValue()).to.approxEqual(
-      utils.parseUnits("200", 18)
-    );
-
-    // CompoundStrategy supports DAI, USDT and USDC but StrategyTwo only
-    // supports DAI and USDC, see compoundVaultFixture() and
-    // multiStrategyVaultFixture() in test/_fixture.js
-
-    // Stick 200 USDT in CompoundStrategy via mint and allocate
-    await usdt.connect(josh).approve(vault.address, usdtUnits("200"));
-    await vault.connect(josh).mint(usdt.address, usdtUnits("200"), 0);
-    await vault.allocate();
-
-    expect(await compoundStrategy.checkBalance(usdt.address)).to.equal(
-      usdtUnits("200")
-    );
-
-    await expect(
-      vault
-        .connect(governor)
-        .reallocate(
-          compoundStrategy.address,
-          strategyTwo.address,
-          [usdt.address],
-          [usdtUnits("200")]
-        )
-    ).to.be.revertedWith("Asset unsupported");
-  });
-
-  it("Should not reallocate to strategy that has not been added to the Vault", async () => {
-    const { vault, dai, governor, compoundStrategy, strategyThree } =
-      await loadFixture(multiStrategyVaultFixture);
-
-    await expect(
-      vault
-        .connect(governor)
-        .reallocate(
-          compoundStrategy.address,
-          strategyThree.address,
-          [dai.address],
-          [daiUnits("200")]
-        )
-    ).to.be.revertedWith("Invalid to Strategy");
-  });
-
-  it("Should not reallocate from strategy that has not been added to the Vault", async () => {
-    const { vault, dai, governor, compoundStrategy, strategyThree } =
-      await loadFixture(multiStrategyVaultFixture);
-    await expect(
-      vault
-        .connect(governor)
-        .reallocate(
-          strategyThree.address,
-          compoundStrategy.address,
-          [dai.address],
-          [daiUnits("200")]
-        )
-    ).to.be.revertedWith("Invalid from Strategy");
   });
 });

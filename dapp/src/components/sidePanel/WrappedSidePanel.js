@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react'
 import { useStoreState } from 'pullstate'
-
-import SidePanelStakeMessage from 'components/sidePanel/SidePanelStakeMessage'
 import SidePanelTransactionMessage from 'components/sidePanel/SidePanelTransactionMessage'
 import SidePanelWrapMessage from 'components/sidePanel/SidePanelWrapMessage'
 import TransactionStore from 'stores/TransactionStore'
@@ -78,7 +76,6 @@ const WrappedSidePanel = () => {
             />
           </button>
           <SidePanelWrapMessage />
-          <SidePanelStakeMessage />
           {sortedTransactions.map((tx) => (
             <SidePanelTransactionMessage
               key={tx.hash}

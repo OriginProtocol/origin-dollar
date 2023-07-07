@@ -87,7 +87,12 @@ metastrategies.forEach(
               currentRewardPoolBalance
             );
 
-            if (asset.address === dai.address) {
+            if (
+              (await vault.vaultBuffer()).toString() == "1000000000000000000"
+            ) {
+              // If Vault Buffer is 100%, shouldn't deposit anything to strategy
+              expect(rewardPoolBalanceDiff).to.equal("0");
+            } else if (asset.address === dai.address) {
               // Should not have staked when minted with DAI
               expect(rewardPoolBalanceDiff).to.equal("0");
             } else {
@@ -99,17 +104,17 @@ metastrategies.forEach(
             }
           }
 
-          it("Should NOT stake DAI in Cruve guage via metapool", async function () {
+          it("Should NOT stake DAI in Curve guage via metapool", async function () {
             const { anna, dai } = fixture;
             await mintTest(anna, dai, "432000");
           });
 
-          it("Should stake USDT in Cruve guage via metapool", async function () {
+          it("Should stake USDT in Curve guage via metapool", async function () {
             const { josh, usdt } = fixture;
             await mintTest(josh, usdt, "100000");
           });
 
-          it("Should stake USDC in Cruve guage via metapool", async function () {
+          it("Should stake USDC in Curve guage via metapool", async function () {
             const { matt, usdc } = fixture;
             await mintTest(matt, usdc, "345000");
           });
@@ -117,7 +122,7 @@ metastrategies.forEach(
 
         describe("Redeem", function () {
           it("Should redeem", async () => {
-            const { vault, ousd, usdt, usdc, dai, anna } = fixture;
+            const { vault, ousd, usdt, usdc, anna } = fixture;
             await vault.connect(anna).allocate();
             await vault.connect(anna).rebase();
             const supplyBeforeMint = await ousd.totalSupply();
@@ -125,7 +130,7 @@ metastrategies.forEach(
             const amount = "10000";
 
             // Mint with all three assets
-            for (const asset of [usdt, usdc, dai]) {
+            for (const asset of [usdt, usdc]) {
               await vault
                 .connect(anna)
                 .mint(asset.address, await units(amount, asset), 0);
@@ -134,19 +139,19 @@ metastrategies.forEach(
 
             const currentSupply = await ousd.totalSupply();
             const supplyAdded = currentSupply.sub(supplyBeforeMint);
-            expect(supplyAdded).to.be.gte("30000");
+            expect(supplyAdded).to.be.gte("20000");
 
             const currentBalance = await ousd
               .connect(anna)
               .balanceOf(anna.address);
 
-            // Now try to redeem 30k - 1% (possible undervaluation of coins)
-            await vault.connect(anna).redeem(ousdUnits("29700"), 0);
+            // Now try to redeem 20k - 1% (possible undervaluation of coins)
+            await vault.connect(anna).redeem(ousdUnits("19800"), 0);
 
             // User balance should be down by 30k - 1%
             const newBalance = await ousd.connect(anna).balanceOf(anna.address);
             expect(currentBalance).to.approxEqualTolerance(
-              newBalance.add(ousdUnits("29700")),
+              newBalance.add(ousdUnits("19800")),
               1
             );
 
@@ -154,14 +159,14 @@ metastrategies.forEach(
             const supplyDiff = currentSupply.sub(newSupply);
 
             expect(supplyDiff).to.be.gte(
-              ousdUnits("29700").sub(ousdUnits("29700").div(100))
+              ousdUnits("19800").sub(ousdUnits("19800").div(100))
             );
           });
         });
 
         it("Should have the correct initial maxWithdrawalSlippage state", async function () {
           const { metaStrategy, anna } = fixture;
-          await expect(
+          expect(
             await metaStrategy.connect(anna).maxWithdrawalSlippage()
           ).to.equal(ousdUnits("0.01"));
         });
@@ -172,8 +177,8 @@ metastrategies.forEach(
               this.skip();
               return;
             }
-            const { governorAddr } = await getNamedAccounts();
-            const sGovernor = await ethers.provider.getSigner(governorAddr);
+            const { timelockAddr } = await getNamedAccounts();
+            const sGovernor = await ethers.provider.getSigner(timelockAddr);
 
             const { vault, usdt, anna } = fixture;
 
@@ -236,8 +241,8 @@ metastrategies.forEach(
               this.skip();
               return;
             }
-            const { governorAddr } = await getNamedAccounts();
-            const sGovernor = await ethers.provider.getSigner(governorAddr);
+            const { timelockAddr } = await getNamedAccounts();
+            const sGovernor = await ethers.provider.getSigner(timelockAddr);
 
             const { vault, usdt, anna } = fixture;
 

@@ -1,5 +1,4 @@
 const { utils } = require("ethers");
-const { formatUnits } = utils;
 
 const addresses = require("../utils/addresses");
 
@@ -175,140 +174,10 @@ async function capital(taskArguments, hre) {
   }
 }
 
-/**
- * Reallocate assets from one Strategy to another.
- */
-async function reallocate(taskArguments, hre) {
-  const { isFork, isMainnet } = require("../test/helpers");
-  const { formatUnits } = hre.ethers.utils;
-
-  if (isMainnet) {
-    throw new Error("reallocate task can not be used on Mainnet");
-  }
-
-  const { strategistAddr } = await getNamedAccounts();
-  const sStrategist = hre.ethers.provider.getSigner(strategistAddr);
-
-  const vaultProxy = await hre.ethers.getContract("VaultProxy");
-  const vault = await hre.ethers.getContractAt("IVault", vaultProxy.address);
-
-  const allAssets = [
-    {
-      symbol: "DAI",
-      address: addresses.mainnet.DAI,
-      decimals: 18,
-    },
-    {
-      symbol: "USDC",
-      address: addresses.mainnet.USDC,
-      decimals: 6,
-    },
-    {
-      symbol: "USDT",
-      address: addresses.mainnet.USDT,
-      decimals: 6,
-    },
-  ];
-
-  const assets = allAssets.filter((a) =>
-    taskArguments.assets
-      .split(",")
-      .map((b) => b.toLowerCase())
-      .includes(a.address.toLowerCase())
-  );
-  const amounts = taskArguments.amounts.split(",");
-
-  const fromStrategy = await hre.ethers.getContractAt(
-    "IStrategy",
-    taskArguments.from
-  );
-  const toStrategy = await hre.ethers.getContractAt(
-    "IStrategy",
-    taskArguments.to
-  );
-
-  for (const asset of assets) {
-    if (!(await fromStrategy.supportsAsset(asset.address))) {
-      throw new Error(
-        `From strategy ${taskArguments.from} does not support ${asset.address}`
-      );
-    }
-    if (!(await toStrategy.supportsAsset(asset.address))) {
-      throw new Error(
-        `To strategy ${taskArguments.to} does not support ${asset.address}`
-      );
-    }
-  }
-
-  console.log(
-    "Vault totalValue():\t",
-    formatUnits((await vault.totalValue()).toString(), 18)
-  );
-
-  // Print balances before
-  const printBalances = async (assets) => {
-    for (const asset of assets) {
-      if (await fromStrategy.supportsAsset(asset.address)) {
-        const balanceFromRaw = await fromStrategy.checkBalance(asset.address);
-        const balanceFrom = formatUnits(
-          balanceFromRaw.toString(),
-          asset.decimals
-        );
-        console.log(`From Strategy ${asset.symbol}:\t balance=${balanceFrom}`);
-      }
-    }
-    for (const asset of assets) {
-      if (await toStrategy.supportsAsset(asset.address)) {
-        const balanceToRaw = await toStrategy.checkBalance(asset.address);
-        const balanceTo = formatUnits(balanceToRaw.toString(), asset.decimals);
-        console.log(`To Strategy ${asset.symbol}:\t balance=${balanceTo}`);
-      }
-    }
-  };
-
-  await printBalances(allAssets);
-
-  if (isFork) {
-    await hre.network.provider.request({
-      method: "hardhat_impersonateAccount",
-      params: [addresses.mainnet.Binance],
-    });
-    const binanceSigner = await hre.ethers.provider.getSigner(
-      addresses.mainnet.Binance
-    );
-    // Send some Ethereum to Governor
-    await binanceSigner.sendTransaction({
-      to: strategistAddr,
-      value: utils.parseEther("100"),
-    });
-    await hre.network.provider.request({
-      method: "hardhat_impersonateAccount",
-      params: [strategistAddr],
-    });
-  }
-
-  console.log("Reallocating assets...");
-
-  await vault.connect(sStrategist).reallocate(
-    taskArguments.from,
-    taskArguments.to,
-    assets.map((a) => a.address),
-    amounts
-  );
-
-  console.log(
-    "Vault totalValue():\t",
-    formatUnits((await vault.totalValue()).toString(), 18)
-  );
-
-  await printBalances(allAssets);
-}
-
 module.exports = {
   allocate,
   capital,
   harvest,
-  reallocate,
   rebase,
   yield,
 };

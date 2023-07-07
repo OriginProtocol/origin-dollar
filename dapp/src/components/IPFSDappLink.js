@@ -2,22 +2,22 @@ import React, { useEffect, useState } from 'react'
 import { fbt } from 'fbt-runtime'
 import { assetRootPath } from 'utils/image'
 
-export default function IPFSDappLink({ dapp, css }) {
+export default function IPFSDappLink({ css }) {
   const [displayIpfsLink, setDisplayIpfsLink] = useState(false)
 
   useEffect(() => {
     setDisplayIpfsLink(
-      ['ousd.com', 'www.ousd.com'].includes(window.location.host) ||
+      ['app.ousd.com'].includes(window.location.host) ||
         window.location.host.startsWith('localhost:') ||
         window.location.host.startsWith('ousd-staging')
     )
   }, [])
 
   return (
-    <div className={`${!displayIpfsLink || !dapp ? 'd-none' : css}`}>
+    <div className={`${!displayIpfsLink || css}`}>
       <a
         className={`ipfs-link d-flex justify-content-center align-items-center`}
-        href={process.env.IPFS_DAPP_URL}
+        href={process.env.NEXT_PUBLIC_IPFS_DAPP_URL}
         target="_blank"
         rel="noopener noreferrer"
       >

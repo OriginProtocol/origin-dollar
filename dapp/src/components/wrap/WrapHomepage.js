@@ -25,11 +25,6 @@ import {
   calculateSwapAmounts,
 } from '../../utils/math'
 
-let ReactPixel
-if (process.browser) {
-  ReactPixel = require('react-facebook-pixel').default
-}
-
 const lastSelectedSwapModeKey = 'last_user_selected_wrap_mode'
 
 const WrapHomepage = ({
@@ -179,12 +174,6 @@ const WrapHomepage = ({
     const metadata = swapMetadata()
 
     try {
-      analytics.track('Before Wrap Transaction', {
-        category: 'wrap',
-        label: metadata.coinUsed,
-        value: metadata.swapAmount,
-      })
-
       let result
       if (swapMode === 'mint') {
         result = await signer(wousd).deposit(
@@ -211,12 +200,7 @@ const WrapHomepage = ({
       setStoredCoinValuesToZero()
       setInputAmount('')
 
-      const receipt = await rpcProvider.waitForTransaction(result.hash)
-      analytics.track('Wrap succeeded User source', {
-        category: 'wrap',
-        label: getUserSource(),
-        value: metadata.swapAmount,
-      })
+      await rpcProvider.waitForTransaction(result.hash)
       analytics.track('Wrap succeeded', {
         category: 'wrap',
         label: metadata.coinUsed,

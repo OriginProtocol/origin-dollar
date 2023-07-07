@@ -7,6 +7,7 @@ const addresses = {};
 // Utility addresses
 addresses.zero = "0x0000000000000000000000000000000000000000";
 addresses.dead = "0x0000000000000000000000000000000000000001";
+addresses.ETH = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
 
 addresses.mainnet = {};
 
@@ -19,6 +20,8 @@ addresses.mainnet.Binance = "0xf977814e90da44bfa03b6295a0616a897441acec";
  */
 addresses.mainnet.BinanceAll =
   "0x564286362092d8e7936f0549571a803b203aaced,0xbe0eb53f46cd790cd13851d5eff43d12404d33e8,0xf977814e90da44bfa03b6295a0616a897441acec,0x28c6c06298d514db089934071355e5743bf21d60,0xdfd5293d8e347dfe59e90efd55b2956a1343963d,0x56eddb7aa87536c09ccc2793473599fd21a8b17f,0x21a31ee1afc51d94c2efccaa2092ad1028285549,0x9696f59e4d72e237be84ffd425dcad154bf96976,0x001866ae5b3de6caa5a51543fd9fb64f524f5478,0xab83d182f3485cf1d6ccdd34c7cfef95b4c08da4,0x8b99f3660622e21f2910ecca7fbe51d654a1517d,0x4d9ff50ef4da947364bb9650892b2554e7be5e2b,0xb8c77482e45f1f44de1745f52c74426c631bdd52,0x61189da79177950a7272c88c6058b96d4bcd6be2,0x0681d8db095565fe8a346fa0277bffde9c0edbbf,0x4e9ce36e442e55ecd9025b9a6e0d88485d628a67,0x85b931a32a0725be14285b66f1a22178c672d69b,0x8f22f2063d253846b53609231ed80fa571bc0c8f,0xe0f0cfde7ee664943906f17f7f14342e76a5cec7,0x708396f17127c42383e3b9014072679b2f60b82f,0xd551234ae421e3bcba99a0da6d736074f22192ff,0xfe9e8709d3215310075d67e3ed32a380ccf451c8,0x3f5ce5fbfe3e9af3971dd833d26ba9b5c936f0be,0x40ec5b33f54e0e8a33a975908c5ba1c14e5bbbdf";
+addresses.mainnet.WhaleAddresses =
+  "0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0,0xf04a5cc80b1e94c69b48f5ee68a08cd2f09a7c3e,0xac3e018457b222d93114458476f3e3416abbe38f,0xc6424e862f1462281b0a5fac078e4b63006bdebf,0xba12222222228d8ba445958a75a0704d566bf2c8";
 
 // Native stablecoins
 addresses.mainnet.DAI = "0x6b175474e89094c44da98b954eedeac495271d0f";
@@ -33,6 +36,7 @@ addresses.mainnet.aTUSD = "--"; // Todo: use v2
 addresses.mainnet.aUSDT = "0x3Ed3B47Dd13EC9a98b44e6204A523E766B225811"; // v2
 addresses.mainnet.aDAI = "0x028171bca77440897b824ca71d1c56cac55b68a3"; // v2
 addresses.mainnet.aUSDC = "0xBcca60bB61934080951369a648Fb03DF4F96263C"; // v2
+addresses.mainnet.aWETH = "0x030ba81f1c18d280636f32af80b9aad02cf0854e"; // v2
 addresses.mainnet.STKAAVE = "0x4da27a545c0c5b758a6ba100e3a049001de870f5"; // v1-v2
 addresses.mainnet.AAVE_INCENTIVES_CONTROLLER =
   "0xd784927Ff2f95ba542BfC824c8a8a98F3495f6b5"; // v2
@@ -50,7 +54,6 @@ addresses.mainnet.ThreePoolToken = "0x6c3f90f043a72fa612cbac8115ee7e52bde6e490";
 addresses.mainnet.ThreePoolGauge = "0xbFcF63294aD7105dEa65aA58F8AE5BE2D9d0952A";
 // CVX
 addresses.mainnet.CVX = "0x4e3fbd56cd56c3e72c1403e103b45db9da5b9d2b";
-addresses.mainnet.CRVRewardsPool = "0x689440f2ff927e1f24c72f1087e1faf471ece1c8";
 addresses.mainnet.CVXBooster = "0xF403C135812408BFbE8713b5A23a04b3D48AAE31";
 addresses.mainnet.CVXRewardsPool = "0x7D536a737C13561e0D2Decf1152a653B4e615158";
 // Open Oracle
@@ -99,9 +102,15 @@ addresses.mainnet.chainlinkUSDC_ETH =
   "0x986b5E1e1755e3C2440e960477f25201B0a8bbD4";
 addresses.mainnet.chainlinkUSDT_ETH =
   "0xEe9F2375b4bdF6387aa8265dD4FB8F16512A1d46";
+addresses.mainnet.chainlinkRETH_ETH =
+  "0x536218f9E9Eb48863970252233c8F271f554C2d0";
+addresses.mainnet.chainlinkstETH_ETH =
+  "0x86392dC19c0b719886221c78AB11eb8Cf5c52812";
+addresses.mainnet.chainlinkcbETH_ETH =
+  "0xF017fcB346A1885194689bA23Eff2fE6fA5C483b";
 
 // WETH Token
-addresses.mainnet.WETH = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2";
+addresses.mainnet.WETH = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2";
 // Deployed OUSD contracts
 addresses.mainnet.Guardian = "0xbe2AB3d3d8F6a32b96414ebbd865dBD276d3d899"; // ERC 20 owner multisig.
 addresses.mainnet.VaultProxy = "0xe75d77b1865ae93c7eaa3040b038d7aa7bc02f70";
@@ -122,14 +131,17 @@ addresses.mainnet.CurveUSDTStrategy =
   "0x75Bc09f72db1663Ed35925B89De2b5212b9b6Cb3";
 addresses.mainnet.CurveOUSDMetaPool =
   "0x87650D7bbfC3A9F10587d7778206671719d9910D";
+addresses.mainnet.CurveOETHMetaPool =
+  "0x94B17476A93b3262d87B9a326965D1E91f9c13E7";
 addresses.mainnet.CurveLUSDMetaPool =
   "0x7A192DD9Cc4Ea9bdEdeC9992df74F1DA55e60a19";
+addresses.mainnet.CurveOETHMetaPool =
+  "0x94B17476A93b3262d87B9a326965D1E91f9c13E7";
 addresses.mainnet.MorphoStrategyProxy =
   "0x5A4eEe58744D1430876d5cA93cAB5CcB763C037D";
 addresses.mainnet.MorphoAaveStrategyProxy =
   "0x79F2188EF9350A1dC11A062cca0abE90684b0197";
 
-addresses.mainnet.MixOracle = "0x4d4f5e7a1FE57F5cEB38BfcE8653EFFa5e584458";
 addresses.mainnet.UniswapOracle = "0xc15169Bad17e676b3BaDb699DEe327423cE6178e";
 addresses.mainnet.CompensationClaims =
   "0x9C94df9d594BA1eb94430C006c269C314B1A8281";
@@ -137,5 +149,29 @@ addresses.mainnet.Flipper = "0xcecaD69d7D4Ed6D52eFcFA028aF8732F27e08F70";
 
 addresses.mainnet.Morpho = "0x8888882f8f843896699869179fB6E4f7e3B58888";
 addresses.mainnet.MorphoLens = "0x930f1b46e1d081ec1524efd95752be3ece51ef67";
+
+// OUSD Governance
+addresses.mainnet.GovernorFive = "0x3cdd07c16614059e66344a7b579dab4f9516c0b6";
+addresses.mainnet.Timelock = "0x35918cDE7233F2dD33fA41ae3Cb6aE0e42E0e69F";
+addresses.mainnet.OldTimelock = "0x72426BA137DEC62657306b12B1E869d43FeC6eC7";
+
+// OETH
+addresses.mainnet.OETHProxy = "0x856c4Efb76C1D1AE02e20CEB03A2A6a08b0b8dC3";
+addresses.mainnet.WOETHProxy = "0xDcEe70654261AF21C44c093C300eD3Bb97b78192";
+addresses.mainnet.OETHVaultProxy = "0x39254033945aa2e4809cc2977e7087bee48bd7ab";
+addresses.mainnet.OETHZapper = "0x9858e47BCbBe6fBAC040519B02d7cd4B2C470C66";
+addresses.mainnet.FraxETHStrategy =
+  "0x3ff8654d633d4ea0fae24c52aec73b4a20d0d0e5";
+
+// Tokens
+addresses.mainnet.sfrxETH = "0xac3E018457B222d93114458476f3E3416Abbe38F";
+addresses.mainnet.frxETH = "0x5E8422345238F34275888049021821E8E08CAa1f";
+addresses.mainnet.rETH = "0xae78736Cd615f374D3085123A210448E74Fc6393";
+addresses.mainnet.stETH = "0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84";
+addresses.mainnet.FraxETHMinter = "0xbAFA44EFE7901E04E39Dad13167D089C559c1138";
+
+// 1Inch
+addresses.mainnet.oneInchRouterV5 =
+  "0x1111111254EEB25477B68fb85Ed929f73A960582";
 
 module.exports = addresses;

@@ -32,8 +32,20 @@ describe("Vault", function () {
     const oracleAddresses = await getOracleAddresses(hre.deployments);
     const origAssetCount = await vault.connect(governor).getAssetCount();
     expect(await vault.isSupportedAsset(ousd.address)).to.be.false;
-    await oracleRouter.setFeed(ousd.address, oracleAddresses.chainlink.DAI_USD);
-    await expect(vault.connect(governor).supportAsset(ousd.address)).to.emit(
+
+    /* Mock oracle feeds report 0 for updatedAt data point. Set
+     * maxStaleness to 100 years from epoch to make the Oracle
+     * feeds valid
+     */
+    const maxStaleness = 24 * 60 * 60 * 365 * 100;
+
+    await oracleRouter.setFeed(
+      ousd.address,
+      oracleAddresses.chainlink.DAI_USD,
+      maxStaleness
+    );
+    await oracleRouter.cacheDecimals(ousd.address);
+    await expect(vault.connect(governor).supportAsset(ousd.address, 0)).to.emit(
       vault,
       "AssetSupported"
     );
@@ -48,13 +60,13 @@ describe("Vault", function () {
     const { vault, usdt, governor } = await loadFixture(defaultFixture);
     expect(await vault.isSupportedAsset(usdt.address)).to.be.true;
     await expect(
-      vault.connect(governor).supportAsset(usdt.address)
+      vault.connect(governor).supportAsset(usdt.address, 0)
     ).to.be.revertedWith("Asset already supported");
   });
 
   it("Should revert when attempting to support an asset and not governor", async function () {
     const { vault, usdt } = await loadFixture(defaultFixture);
-    await expect(vault.supportAsset(usdt.address)).to.be.revertedWith(
+    await expect(vault.supportAsset(usdt.address, 0)).to.be.revertedWith(
       "Caller is not the Governor"
     );
   });
@@ -123,12 +135,11 @@ describe("Vault", function () {
   });
 
   it("Should correctly handle a deposit failure of Non-Standard ERC20 Token", async function () {
-    const { ousd, vault, anna, nonStandardToken, governor } = await loadFixture(
-      defaultFixture
-    );
+    const { ousd, vault, anna, nonStandardToken, oracleRouter, governor } =
+      await loadFixture(defaultFixture);
 
-    await vault.connect(governor).supportAsset(nonStandardToken.address);
-
+    await oracleRouter.cacheDecimals(nonStandardToken.address);
+    await vault.connect(governor).supportAsset(nonStandardToken.address, 0);
     await expect(anna).has.a.balanceOf("1000.00", nonStandardToken);
     await setOracleTokenPriceUsd("NonStandardToken", "1.30");
     await nonStandardToken
@@ -156,10 +167,10 @@ describe("Vault", function () {
   });
 
   it("Should correctly handle a deposit of Non-Standard ERC20 Token", async function () {
-    const { ousd, vault, anna, nonStandardToken, governor } = await loadFixture(
-      defaultFixture
-    );
-    await vault.connect(governor).supportAsset(nonStandardToken.address);
+    const { ousd, vault, anna, nonStandardToken, oracleRouter, governor } =
+      await loadFixture(defaultFixture);
+    await oracleRouter.cacheDecimals(nonStandardToken.address);
+    await vault.connect(governor).supportAsset(nonStandardToken.address, 0);
 
     await expect(anna).has.a.balanceOf("1000.00", nonStandardToken);
     await setOracleTokenPriceUsd("NonStandardToken", "1.00");
@@ -353,8 +364,39 @@ describe("Vault", function () {
     ).to.be.revertedWith("Caller is not the Governor");
   });
 
-  it("Should allow the Governor to call reallocate", async () => {
-    const { vault, governor, dai, josh, compoundStrategy, aaveStrategy } =
+  it("Should allow the Governor to call withdraw and then deposit", async () => {
+    const { vault, governor, dai, josh, compoundStrategy } = await loadFixture(
+      defaultFixture
+    );
+
+    await vault.connect(governor).approveStrategy(compoundStrategy.address);
+    // Send all DAI to Compound
+    await vault
+      .connect(governor)
+      .setAssetDefaultStrategy(dai.address, compoundStrategy.address);
+    await dai.connect(josh).approve(vault.address, daiUnits("200"));
+    await vault.connect(josh).mint(dai.address, daiUnits("200"), 0);
+    await vault.connect(governor).allocate();
+
+    await vault
+      .connect(governor)
+      .withdrawFromStrategy(
+        compoundStrategy.address,
+        [dai.address],
+        [daiUnits("200")]
+      );
+
+    await vault
+      .connect(governor)
+      .depositToStrategy(
+        compoundStrategy.address,
+        [dai.address],
+        [daiUnits("200")]
+      );
+  });
+
+  it("Should allow the Strategist to call withdrawFromStrategy and then depositToStrategy", async () => {
+    const { vault, governor, dai, josh, strategist, compoundStrategy } =
       await loadFixture(defaultFixture);
 
     await vault.connect(governor).approveStrategy(compoundStrategy.address);
@@ -365,54 +407,107 @@ describe("Vault", function () {
     await dai.connect(josh).approve(vault.address, daiUnits("200"));
     await vault.connect(josh).mint(dai.address, daiUnits("200"), 0);
     await vault.connect(governor).allocate();
-    await vault.connect(governor).approveStrategy(aaveStrategy.address);
 
     await vault
-      .connect(governor)
-      .reallocate(
+      .connect(strategist)
+      .withdrawFromStrategy(
         compoundStrategy.address,
-        aaveStrategy.address,
+        [dai.address],
+        [daiUnits("200")]
+      );
+
+    await vault
+      .connect(strategist)
+      .depositToStrategy(
+        compoundStrategy.address,
         [dai.address],
         [daiUnits("200")]
       );
   });
 
-  it("Should allow the Strategist to call reallocate", async () => {
-    const { vault, governor, dai, josh, compoundStrategy, aaveStrategy } =
-      await loadFixture(defaultFixture);
-
-    await vault.connect(governor).setStrategistAddr(await josh.getAddress());
-    await vault.connect(governor).approveStrategy(compoundStrategy.address);
-    // Send all DAI to Compound
-    await vault
-      .connect(governor)
-      .setAssetDefaultStrategy(dai.address, compoundStrategy.address);
-    await dai.connect(josh).approve(vault.address, daiUnits("200"));
-    await vault.connect(josh).mint(dai.address, daiUnits("200"), 0);
-    await vault.connect(governor).allocate();
-    await vault.connect(governor).approveStrategy(aaveStrategy.address);
-
-    await vault
-      .connect(josh)
-      .reallocate(
-        compoundStrategy.address,
-        aaveStrategy.address,
-        [dai.address],
-        [daiUnits("200")]
-      );
-  });
-
-  it("Should not allow non-Governor and non-Strategist to call reallocate", async () => {
+  it("Should not allow non-Governor and non-Strategist to call withdrawFromStrategy or depositToStrategy", async () => {
     const { vault, dai, josh } = await loadFixture(defaultFixture);
 
     await expect(
-      vault.connect(josh).reallocate(
+      vault.connect(josh).withdrawFromStrategy(
         vault.address, // Args don't matter because it doesn't reach checks
-        vault.address,
         [dai.address],
         [daiUnits("200")]
       )
     ).to.be.revertedWith("Caller is not the Strategist or Governor");
+
+    await expect(
+      vault.connect(josh).depositToStrategy(
+        vault.address, // Args don't matter because it doesn't reach checks
+        [dai.address],
+        [daiUnits("200")]
+      )
+    ).to.be.revertedWith("Caller is not the Strategist or Governor");
+  });
+
+  it("Should withdrawFromStrategy the correct amount for multiple assests and redeploy them using depositToStrategy", async () => {
+    const {
+      vault,
+      governor,
+      dai,
+      usdc,
+      cusdc,
+      josh,
+      strategist,
+      compoundStrategy,
+    } = await loadFixture(defaultFixture);
+
+    await vault.connect(governor).approveStrategy(compoundStrategy.address);
+    // Send all DAI to Compound
+    await vault
+      .connect(governor)
+      .setAssetDefaultStrategy(dai.address, compoundStrategy.address);
+
+    // Add USDC
+    await compoundStrategy
+      .connect(governor)
+      .setPTokenAddress(usdc.address, cusdc.address);
+
+    // Send all USDC to Compound
+    await vault
+      .connect(governor)
+      .setAssetDefaultStrategy(usdc.address, compoundStrategy.address);
+
+    await dai.connect(josh).approve(vault.address, daiUnits("200"));
+    await vault.connect(josh).mint(dai.address, daiUnits("200"), 0);
+    await usdc.connect(josh).approve(vault.address, usdcUnits("90"));
+    await vault.connect(josh).mint(usdc.address, usdcUnits("90"), 0);
+    await vault.connect(governor).allocate();
+
+    await vault
+      .connect(strategist)
+      .withdrawFromStrategy(
+        compoundStrategy.address,
+        [dai.address, usdc.address],
+        [daiUnits("50"), usdcUnits("90")]
+      );
+
+    // correct balances at the end
+    const expectedVaultDaiBalance = daiUnits("50");
+    await expect(await dai.balanceOf(vault.address)).to.equal(
+      expectedVaultDaiBalance
+    );
+    const expectedVaultUsdcBalance = usdcUnits("90");
+    await expect(await usdc.balanceOf(vault.address)).to.equal(
+      expectedVaultUsdcBalance
+    );
+
+    await vault
+      .connect(strategist)
+      .depositToStrategy(
+        compoundStrategy.address,
+        [dai.address, usdc.address],
+        [daiUnits("50"), usdcUnits("90")]
+      );
+
+    // correct balances after depositing back
+    await expect(await dai.balanceOf(vault.address)).to.equal(daiUnits("0"));
+    await expect(await usdc.balanceOf(vault.address)).to.equal(usdcUnits("0"));
   });
 
   it("Should allow Governor and Strategist to set vaultBuffer", async () => {
@@ -534,5 +629,19 @@ describe("Vault", function () {
     await expect(await vault.netOusdMintedForStrategy()).to.equal(
       ousdUnits("0")
     );
+  });
+  it("Should re-cache decimals", async () => {
+    const { vault, governor, usdc } = await loadFixture(defaultFixture);
+
+    const beforeAssetConfig = await vault.getAssetConfig(usdc.address);
+    expect(beforeAssetConfig.decimals).to.equal(6);
+
+    // cacheDecimals is not on IVault so we need to use the admin contract
+    const vaultAdmin = await ethers.getContractAt("VaultAdmin", vault.address);
+
+    await vaultAdmin.connect(governor).cacheDecimals(usdc.address);
+
+    const afterAssetConfig = await vault.getAssetConfig(usdc.address);
+    expect(afterAssetConfig.decimals).to.equal(6);
   });
 });

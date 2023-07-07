@@ -1,0 +1,74 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Unit tests",
+            "cwd": "${workspaceFolder}/contracts",
+            "program": "${workspaceFolder}/contracts/node_modules/.bin/hardhat",
+            "runtimeExecutable": "/usr/local/bin/node",
+            "preLaunchTask": "remove-deployment-files",
+            "args": [
+                "test"
+            ],
+            "envFile": "${workspaceFolder}/contracts/.env",
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Unit tests - OETH Swapper",
+            "cwd": "${workspaceFolder}/contracts",
+            "program": "${workspaceFolder}/contracts/node_modules/.bin/hardhat",
+            "runtimeExecutable": "/usr/local/bin/node",
+            "preLaunchTask": "remove-deployment-files",
+            "args": [
+                "test",
+                "test/vault/oeth-swapper.js"
+            ],
+            "envFile": "${workspaceFolder}/contracts/.env",
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Harvester fork tests",
+            "cwd": "${workspaceFolder}/contracts",
+            "program": "${workspaceFolder}/contracts/node_modules/.bin/hardhat",
+            "runtimeExecutable": "/usr/local/bin/node",
+            "preLaunchTask": "copy-deployment-files",
+            "args": [
+                "test",
+                // VS Code does not support wildcards like ./test/**/*.fork-test.js
+                // so replace with the test you want to run
+                "./test/harvest/ousd-harvest-crv.fork-test.js"
+            ],
+            "envFile": "${workspaceFolder}/contracts/.env",
+            "env": {
+                "FORK": "true",
+                "IS_TEST": "true",
+            },
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Harvester fork tests against local node",
+            "cwd": "${workspaceFolder}/contracts",
+            "program": "${workspaceFolder}/contracts/node_modules/.bin/hardhat",
+            "runtimeExecutable": "/usr/local/bin/node",
+            "preLaunchTask": "copy-deployment-files",
+            "args": [
+                "test",
+                "./test/harvest/ousd-harvest-crv.fork-test.js"
+            ],
+            "envFile": "${workspaceFolder}/contracts/.env",
+            "env": {
+                "FORK": "true",
+                "IS_TEST": "true",
+                "LOCAL_PROVIDER_URL": "http://localhost:8545"
+            },
+        }
+    ]
+}
