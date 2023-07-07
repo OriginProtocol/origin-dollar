@@ -3,7 +3,6 @@ const { formatUnits, parseUnits } = require("ethers/lib/utils");
 const poolAbi = require("../test/abi/ousdMetapool.json");
 const addresses = require("../utils/addresses");
 const { resolveAsset } = require("../utils/assets");
-const { impersonateAndFund } = require("../utils/signers");
 
 /**
  * Dumps the current state of a Curve Metapool pool used for AMO
@@ -29,10 +28,6 @@ async function curvePool(taskArguments, hre) {
     oTokenSymbol === "OETH"
       ? addresses.mainnet.ConvexOETHAMOStrategy
       : addresses.mainnet.ConvexOUSDAMOStrategy;
-  const curveGaugeAddr =
-    oTokenSymbol === "OETH"
-      ? addresses.mainnet.CurveOETHGauge
-      : addresses.mainnet.CurveOUSDGauge;
   const convexRewardsPoolAddr =
     oTokenSymbol === "OETH"
       ? addresses.mainnet.CVXETHRewardsPool
@@ -128,36 +123,12 @@ async function curvePool(taskArguments, hre) {
     )} ${assetSymbol}`
   );
 
-  // Strategies redeemable asset amount
-  // Note there is no Metapool fee as its a proportional withdraw
-  const gauge = await impersonateAndFund(curveGaugeAddr);
-  const strategyRedeemableAssets = await pool
-    .connect(gauge)
-    .callStatic["remove_liquidity(uint256,uint256[2],address)"](
-      vaultLPs,
-      [2, 3],
-      strategyAddr,
-      {
-        blockTag,
-      }
-    );
-  console.log(
-    `strat redeemable assets  : ${formatUnits(
-      strategyRedeemableAssets[0]
-    )} ${assetSymbol}`
-  );
-  console.log(
-    `strat redeemable OTokens : ${formatUnits(
-      strategyRedeemableAssets[1]
-    )} ${oTokenSymbol}`
-  );
-
   // Adjusted strategy value = strategy assets value - strategy OTokens
   // Assume all OETH owned by the strategy will be burned after withdrawing
   // so are just left with the assets backing circulating OETH
   const strategyAdjustedValue = strategyAssetsValue.sub(strategyOTokensInPool);
   console.log(
-    `\nstrategy adjusted value  : ${formatUnits(
+    `\nstrategy value less OETH : ${formatUnits(
       strategyAdjustedValue
     )} ${assetSymbol}`
   );
@@ -167,7 +138,7 @@ async function curvePool(taskArguments, hre) {
   const strategyAdjustedValueVActualAssetsDiffBps =
     strategyOwnedVAdjustedValueDiff.mul(10000).div(strategyAssetsInPool);
   console.log(
-    `owned v adjusted value   : ${formatUnits(
+    `owned v value less OETH  : ${formatUnits(
       strategyOwnedVAdjustedValueDiff
     )} ${assetSymbol} ${formatUnits(
       strategyAdjustedValueVActualAssetsDiffBps,
