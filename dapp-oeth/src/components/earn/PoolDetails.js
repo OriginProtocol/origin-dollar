@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { fbt } from 'fbt-runtime'
 import { formatCurrency } from 'utils/math'
-import { useWeb3React } from '@web3-react/core'
-
 import PoolNameAndIcon from 'components/earn/PoolNameAndIcon'
 import UniswapPoolLink from 'components/earn/UniswapPoolLink'
 import Link from 'next/link'
@@ -13,9 +11,10 @@ import ApyModal from 'components/earn/modal/ApyModal'
 import GetOUSD from 'components/GetOUSD'
 import { assetRootPath } from 'utils/image'
 import { adjustLinkHref } from 'utils/utils'
+import { useAccount } from 'wagmi'
 
 export default function PoolDetails({ pool }) {
-  const { account, active } = useWeb3React()
+  const { address: account, isConnected: active } = useAccount()
   const [showWizzard, setShowWizzard] = useState(false)
   const [poolRateIsOgn, setPoolRateIsOgn] = useState(true)
   const [poolDepositIsDollar, setPoolDepositIsDollar] = useState(true)

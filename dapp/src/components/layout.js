@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useStoreState } from 'pullstate'
 import { fbt } from 'fbt-runtime'
-import { useWeb3React } from '@web3-react/core'
+import { useSigner } from 'wagmi'
 import { get } from 'lodash'
 import AccountStore from 'stores/AccountStore'
 import ContractStore from 'stores/ContractStore'
@@ -31,7 +31,7 @@ const Layout = ({
   storeTransaction,
   storeTransactionError,
 }) => {
-  const { connector, account, library } = useWeb3React()
+  const { data: signer } = useSigner()
 
   const ousdContract = useStoreState(ContractStore, (s) =>
     get(s, 'contracts.ousd')
@@ -42,9 +42,7 @@ const Layout = ({
 
   const optIn = async () => {
     try {
-      const result = await ousdContract
-        .connect(library.getSigner(account))
-        .rebaseOptIn()
+      const result = await ousdContract.connect(signer).rebaseOptIn()
       storeTransaction(result, `rebaseOptIn`, 'ousd', {})
     } catch (error) {
       // 4001 code happens when a user rejects the transaction

@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from 'react'
-import { ethers, BigNumber } from 'ethers'
+import { BigNumber } from 'ethers'
 import { useCookies } from 'react-cookie'
-import { useWeb3React } from '@web3-react/core'
-import _ from 'lodash'
-
 import AccountStore from 'stores/AccountStore'
 import ContractStore from 'stores/ContractStore'
 import PoolStore from 'stores/PoolStore'
@@ -15,7 +12,8 @@ import { setupContracts } from 'utils/contracts'
 import { login } from 'utils/account'
 import { decorateContractStakeInfoWithTxHashes } from 'utils/stake'
 import { displayCurrency } from 'utils/math'
-import { isProduction, isDevelopment } from 'constants/env'
+import { isDevelopment } from 'constants/env'
+import { useAccount, useNetwork } from 'wagmi'
 import useBalancesQuery from '../queries/useBalancesQuery'
 import useAllowancesQuery from '../queries/useAllowancesQuery'
 import useApyQuery from '../queries/useApyQuery'
@@ -24,16 +22,19 @@ import useWousdQuery from '../queries/useWousdQuery'
 import { transactionHistoryItemsPerPage } from 'utils/constants'
 
 const AccountListener = (props) => {
-  const web3react = useWeb3React()
-  const { account: web3Account, chainId, library, active } = web3react
-
+  const { chain } = useNetwork()
+  const {
+    connector: activeConnector,
+    address: web3Account,
+    isConnected: active,
+  } = useAccount()
+  const chainId = chain?.id
   const { overrideAccount } = useOverrideAccount()
   const account = overrideAccount || web3Account
-
   const prevAccount = usePrevious(account)
   const prevActive = usePrevious(active)
   const [contracts, setContracts] = useState(null)
-  const [cookies, setCookie, removeCookie] = useCookies(['loggedIn'])
+  const [, setCookie] = useCookies(['loggedIn'])
   const {
     active: userActive,
     refetchUserData,
@@ -337,7 +338,8 @@ const AccountListener = (props) => {
       if (!account) return
       // TODO handle other contract types. We only detect Gnosis Safe as having
       // opted out here as rebaseState will always be 0 for all EOAs
-      const isSafe = !!_.get(library, 'provider.safe.safeAddress', false)
+      const isSafe = activeConnector?.id === 'safe'
+
       AccountStore.update((s) => {
         s.isSafe = isSafe
       })
@@ -397,13 +399,11 @@ const AccountListener = (props) => {
        * logged in with a web3 provider.
        *
        */
-      let usedChainId, usedLibrary
+      let usedChainId
       if (chainId && isCorrectNetwork(chainId)) {
         usedChainId = chainId
-        usedLibrary = library
       } else {
         usedChainId = parseInt(process.env.NEXT_PUBLIC_ETHEREUM_RPC_CHAIN_ID)
-        usedLibrary = null
       }
 
       window.fetchId = window.fetchId ? window.fetchId : 0
@@ -412,7 +412,6 @@ const AccountListener = (props) => {
 
       const contracts = await setupContracts(
         account,
-        usedLibrary,
         usedChainId,
         window.fetchId
       )

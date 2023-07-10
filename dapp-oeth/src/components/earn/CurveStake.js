@@ -1,17 +1,15 @@
 import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
-import { useWeb3React } from '@web3-react/core'
 import { useStoreState } from 'pullstate'
-import { ethers, Contract, BigNumber } from 'ethers'
-
+import { Contract, BigNumber } from 'ethers'
 import withIsMobile from 'hoc/withIsMobile'
-import analytics from 'utils/analytics'
 import { formatCurrency } from 'utils/math'
 import ContractStore from 'stores/ContractStore'
 import CoinStore from 'stores/CoinStore'
 import addresses from 'constants/contractAddresses'
 import useCurveStaking from 'hooks/useCurveStaking'
 import { assetRootPath } from 'utils/image'
+import { useAccount } from 'wagmi'
 
 // Just adding the methods we are using
 const gaugeMiniAbi = [
@@ -72,7 +70,6 @@ const gaugeControllerMiniAbi = [
 ]
 
 const CurveStake = ({ rpcProvider, isMobile }) => {
-  const { active } = useWeb3React()
   const [crvBaseApy, setCrvBaseApy] = useState(false)
   const [crvBoostedApy, setCrvBoostedApy] = useState(false)
   const [ognApy, setOgnApy] = useState(false)

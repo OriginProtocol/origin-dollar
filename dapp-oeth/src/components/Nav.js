@@ -1,26 +1,41 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react'
 import classnames from 'classnames'
 import Link from 'next/link'
-import { useRouter } from 'next/router'
 import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
-import { useWeb3React } from '@web3-react/core'
+import dynamic from 'next/dynamic'
 import withIsMobile from 'hoc/withIsMobile'
-import GetOUSD from 'components/GetOUSD'
-import Dropdown from 'components/Dropdown'
-import AccountStatusDropdown from 'components/AccountStatusDropdown'
 import LanguageOptions from 'components/LanguageOptions'
-import TransactionActivity from 'components/transactionActivity/TransactionActivity'
 import IPFSDappLink from 'components/IPFSDappLink'
-import ContractStore from 'stores/ContractStore'
-import AccountStatusPopover from './AccountStatusPopover'
 import { adjustLinkHref } from 'utils/utils'
 import { assetRootPath } from 'utils/image'
 import TransactionStore from 'stores/TransactionStore'
 import { usePrevious } from 'utils/hooks'
-import { ledgerLiveConnector } from 'utils/connectors'
+import { useAccount } from 'wagmi'
 
 const environment = process.env.NODE_ENV
+
+const Dropdown = dynamic(() => import('components/Dropdown'), {
+  ssr: false,
+})
+
+const GetOUSD = dynamic(() => import('components/GetOUSD'), {
+  ssr: false,
+})
+
+const AccountStatusDropdown = dynamic(
+  () => import('components/AccountStatusDropdown'),
+  {
+    ssr: false,
+  }
+)
+
+const TransactionActivity = dynamic(
+  () => import('components/transactionActivity/TransactionActivity'),
+  {
+    ssr: false,
+  }
+)
 
 const DappLinks = ({ page }) => {
   return (
@@ -345,13 +360,9 @@ const useSticky = ({ defaultSticky = false, stickAt = 80 }) => {
 
   return [{ elRef, fromTop, isSticky }]
 }
-const SHOW_DISCLAIMER = true
 
-const Nav = ({ isMobile, locale, onLocale, page }) => {
-  const { pathname } = useRouter()
-  const { active, account } = useWeb3React()
-  const apy = useStoreState(ContractStore, (s) => s.apy.apy30 || 0)
-  const ledgerLive = ledgerLiveConnector?.isLedgerApp()
+const Nav = ({ locale, onLocale, page }) => {
+  const { address: account, isConnected: active } = useAccount()
 
   const [{ elRef, isSticky }] = useSticky({
     defaultSticky: false,
@@ -390,7 +401,7 @@ const Nav = ({ isMobile, locale, onLocale, page }) => {
                 <TransactionActivityDropdown />
               </div>
             )}
-            {!active && !ledgerLive && (
+            {!active && (
               <div className="d-flex d-lg-none">
                 <GetOUSD
                   navMarble
@@ -481,7 +492,7 @@ const Nav = ({ isMobile, locale, onLocale, page }) => {
             </div>
           </div>
         </div>
-      </nav>{' '}
+      </nav>
       <div className="d-flex d-lg-none justify-content-center dapplinks-contain">
         <DappLinks page={page} />
       </div>

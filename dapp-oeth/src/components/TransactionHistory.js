@@ -5,19 +5,18 @@ import useTransactionHistoryQuery from '../queries/useTransactionHistoryQuery'
 import dateformat from 'dateformat'
 import { useRouter } from 'next/router'
 import { fbt } from 'fbt-runtime'
-import { useWeb3React } from '@web3-react/core'
 import { formatCurrency } from '../utils/math'
 import { exportToCsv } from '../utils/utils'
 import withIsMobile from 'hoc/withIsMobile'
 import { assetRootPath } from 'utils/image'
 import { transactionHistoryItemsPerPage } from 'utils/constants'
+import { useAccount } from 'wagmi'
 
 const itemsPerPage = transactionHistoryItemsPerPage
 
 const FilterButton = ({
   filter,
   filterText,
-  filterImage,
   filters,
   setFilters,
   currentFilters,
@@ -31,14 +30,14 @@ const FilterButton = ({
         }`}
         onClick={() => {
           if (selected) {
-            setFilters(filters.filter((ft) => ft != filter))
+            setFilters(filters.filter((ft) => ft !== filter))
           } else {
             setFilters([...filters, filter])
           }
         }}
       >
         <span className="status-text">{filterText}</span>
-        <span className="status-circle"></span>
+        <span className="status-circle" />
       </div>
       <style jsx>{`
         .button {
@@ -116,9 +115,8 @@ const FormatCurrencyByImportance = ({
 }
 
 const TransactionHistory = ({ isMobile }) => {
-  const web3react = useWeb3React()
   const router = useRouter()
-  const { account: web3Account, active } = web3react
+  const { address: web3Account, isConnected: active } = useAccount()
   const [filters, _setFilters] = useState([])
   const [currentPage, setCurrentPage] = useState(1)
   const [pageNumbers, setPageNumbers] = useState([])

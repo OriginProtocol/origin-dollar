@@ -2,18 +2,14 @@ import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
 import { get as _get } from 'lodash'
-import { useWeb3React } from '@web3-react/core'
+import { useAccount } from 'wagmi'
 import withIsMobile from 'hoc/withIsMobile'
-import { useRouter } from 'next/router'
-
 import AccountStore from 'stores/AccountStore'
 import AnimatedOusdStore from 'stores/AnimatedOusdStore'
 import ContractStore from 'stores/ContractStore'
 import { formatCurrency } from 'utils/math'
 import { animateValue } from 'utils/animation'
 import { usePrevious, useOverrideAccount } from 'utils/hooks'
-import DisclaimerTooltip from 'components/buySell/DisclaimerTooltip'
-import LinkIcon from 'components/buySell/_LinkIcon'
 import useExpectedYield from 'utils/useExpectedYield'
 import withRpcProvider from 'hoc/withRpcProvider'
 import { adjustLinkHref } from 'utils/utils'
@@ -27,8 +23,7 @@ const BalanceHeader = ({
   rpcProvider,
   isMobile,
 }) => {
-  const { connector, account: web3Account } = useWeb3React()
-
+  const { address: web3Account } = useAccount()
   const { overrideAccount } = useOverrideAccount()
   const account = overrideAccount || web3Account
 

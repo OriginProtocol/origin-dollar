@@ -1,21 +1,27 @@
 import React from 'react'
 import classnames from 'classnames'
 import Link from 'next/link'
-import { useRouter } from 'next/router'
 import { fbt } from 'fbt-runtime'
-import { useStoreState } from 'pullstate'
-import { useWeb3React } from '@web3-react/core'
+import { useAccount } from 'wagmi'
+import dynamic from 'next/dynamic'
 import withIsMobile from 'hoc/withIsMobile'
-import GetOUSD from 'components/GetOUSD'
-import AccountStatusDropdown from 'components/AccountStatusDropdown'
 import LanguageOptions from 'components/LanguageOptions'
 import IPFSDappLink from 'components/IPFSDappLink'
-import ContractStore from 'stores/ContractStore'
-import AccountStatusPopover from './AccountStatusPopover'
 import { adjustLinkHref } from 'utils/utils'
 import { assetRootPath } from 'utils/image'
 
 const environment = process.env.NODE_ENV
+
+const GetOUSD = dynamic(() => import('components/GetOUSD'), {
+  ssr: false,
+})
+
+const AccountStatusDropdown = dynamic(
+  () => import('components/AccountStatusDropdown'),
+  {
+    ssr: false,
+  }
+)
 
 const DappLinks = ({ page }) => {
   return (
@@ -117,10 +123,8 @@ const DappLinks = ({ page }) => {
   )
 }
 
-const Nav = ({ isMobile, locale, onLocale, page }) => {
-  const { pathname } = useRouter()
-  const { active, account } = useWeb3React()
-  const apy = useStoreState(ContractStore, (s) => s.apy.apy30 || 0)
+const Nav = ({ locale, onLocale, page }) => {
+  const { address: account, isConnected: active } = useAccount()
 
   return (
     <>
@@ -156,7 +160,7 @@ const Nav = ({ isMobile, locale, onLocale, page }) => {
             </div>
           </button>
           <IPFSDappLink css="d-lg-none" />
-          {<AccountStatusPopover />}
+          <AccountStatusDropdown />
           {!active && !account && (
             <div className="d-flex d-md-none">
               <GetOUSD

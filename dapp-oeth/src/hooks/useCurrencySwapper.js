@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { ethers, BigNumber } from 'ethers'
+import { BigNumber } from 'ethers'
 import { useStoreState } from 'pullstate'
 import ContractStore from 'stores/ContractStore'
 import AccountStore from 'stores/AccountStore'
@@ -13,7 +13,7 @@ import {
   curveGasLimitBuffer,
   NullAddress,
 } from 'utils/constants'
-import { useWeb3React } from '@web3-react/core'
+import { useSigner } from 'wagmi'
 import addresses from 'constants/contractAddresses'
 import curveRoutes from 'constants/curveRoutes'
 import { get } from 'lodash'
@@ -47,17 +47,11 @@ const useCurrencySwapper = ({
   )
 
   const coinInfoList = useStoreState(ContractStore, (s) => s.coinInfoList)
-
   const allowances = useStoreState(AccountStore, (s) => s.allowances)
   const balances = useStoreState(AccountStore, (s) => s.balances)
   const account = useStoreState(AccountStore, (s) => s.address)
-  const connectorName = useStoreState(AccountStore, (s) => s.connectorName)
-  const swapEstimations = useStoreState(ContractStore, (s) => s.swapEstimations)
-  const swapsLoaded = swapEstimations && typeof swapEstimations === 'object'
   const selectedSwap = useStoreState(ContractStore, (s) => s.selectedSwap)
-  const web3react = useWeb3React()
-  const { library } = web3react
-
+  const { data: signer } = useSigner()
   const allowancesLoaded =
     typeof allowances === 'object' &&
     allowances.oeth &&
@@ -68,7 +62,7 @@ const useCurrencySwapper = ({
     allowances.steth
 
   const connSigner = (contract) => {
-    return contract.connect(library.getSigner(account))
+    return contract.connect(signer)
   }
 
   const { contract: coinContract, decimals } =

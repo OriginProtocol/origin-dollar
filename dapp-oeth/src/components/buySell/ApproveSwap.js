@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
-import { useWeb3React } from '@web3-react/core'
+import { useAccount, useConnect, useSigner } from 'wagmi'
 import ContractStore from 'stores/ContractStore'
 import withRpcProvider from 'hoc/withRpcProvider'
 import { ethers } from 'ethers'
 import withIsMobile from 'hoc/withIsMobile'
 import ConfirmationModal from './ConfirmationModal'
-import withWalletSelectModal from 'hoc/withWalletSelectModal'
-import { walletLogin } from 'utils/account'
 import { event } from '../../../lib/gtm'
 
 const ApproveSwap = ({
@@ -34,8 +32,11 @@ const ApproveSwap = ({
   const [stage, setStage] = useState('approve')
   const [contract, setContract] = useState(null)
   const [isApproving, setIsApproving] = useState({})
-  const web3react = useWeb3React()
-  const { library, account, activate, active } = web3react
+
+  const { address: account, isConnected: active } = useAccount()
+  const { connect: activate } = useConnect()
+  const { data: signer } = useSigner()
+
   const coinApproved = coinToApprove === 'eth' || stage === 'done'
 
   const isWrapped =
@@ -217,7 +218,7 @@ const ApproveSwap = ({
       setStage('waiting-user')
       try {
         const result = await contract
-          .connect(library.getSigner(account))
+          .connect(signer)
           .approve(
             routeConfig[needsApproval]?.contract?.address,
             ethers.constants.MaxUint256
@@ -332,9 +333,7 @@ const ApproveSwap = ({
             active
           }
           onClick={() => {
-            if (!active) {
-              walletLogin(showLogin, activate)
-            } else if (lastOverride && lastOverride !== selectedSwap?.name) {
+            if (lastOverride && lastOverride !== selectedSwap?.name) {
               setVisibleConfirmationModal(2)
             } else {
               onSwap()
@@ -391,4 +390,4 @@ const ApproveSwap = ({
   )
 }
 
-export default withWalletSelectModal(withIsMobile(withRpcProvider(ApproveSwap)))
+export default withIsMobile(withRpcProvider(ApproveSwap))
