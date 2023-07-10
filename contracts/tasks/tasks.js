@@ -157,5 +157,16 @@ task("showStorageLayout", "Visually show the storage layout of the contract")
 // Curve Pools
 task("curvePool", "Dumps the current state of a Curve pool")
   .addParam("pool", "Symbol of the curve Metapool. OUSD or OETH")
-  .addOptionalParam("block", "Block number. default latest", 0, types.int)
+  .addOptionalParam(
+    "block",
+    "Block number. (default: latest)",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "fromBlock",
+    "Block number to compare back to. (default: no diff)",
+    undefined,
+    types.int
+  )
   .setAction(curvePool);
