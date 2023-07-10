@@ -172,6 +172,11 @@ async function curvePool(taskArguments, hre) {
     )}%`
   );
 
+  const assetsInVault = await asset.balanceOf(vaultAddr, { blockTag });
+  console.log(
+    `\nAssets in vault          : ${formatUnits(assetsInVault)} ${assetSymbol}`
+  );
+
   // Vault's total value
   console.log(
     `\nOToken total supply      : ${formatUnits(oTokenSupply)} ${oTokenSymbol}`
