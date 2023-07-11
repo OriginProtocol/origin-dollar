@@ -11,7 +11,9 @@ export default class TransactionHistoryPageService {
     }, '')
     const filter_param = filter ? `&filter=${filter}` : ''
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_ANALYTICS_ENDPOINT}/api/v2/${token}/address/${account.toLowerCase()}/history?per_page=${transactionHistoryItemsPerPage}&page=${page}${filter_param}`
+      `${
+        process.env.NEXT_PUBLIC_ANALYTICS_ENDPOINT
+      }/api/v2/${token}/address/${account.toLowerCase()}/history?per_page=${transactionHistoryItemsPerPage}&page=${page}${filter_param}`
     )
 
     if (!response || !response.ok) {

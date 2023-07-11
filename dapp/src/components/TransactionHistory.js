@@ -285,7 +285,7 @@ const TransactionHistory = ({ setWousdBalanceHeader, isMobile }) => {
     currentPage,
     filters
   )
-  
+
   const historyQuery = useTransactionHistoryQuery(token, account, filters)
 
   const historyPages = useMemo(

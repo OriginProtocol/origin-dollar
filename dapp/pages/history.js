@@ -44,7 +44,9 @@ export default function History({ locale, onLocale }) {
         <Nav page={'history'} locale={locale} onLocale={onLocale} />
         <div className="home d-flex flex-column">
           {wousdBalanceHeader ? <BalanceHeaderWrapped /> : <BalanceHeader />}
-          {(overrideAccount || active) && <TransactionHistory setWousdBalanceHeader={setWousdBalanceHeader} />}
+          {(overrideAccount || active) && (
+            <TransactionHistory setWousdBalanceHeader={setWousdBalanceHeader} />
+          )}
           {!overrideAccount && !active && (
             <div className="empty-placeholder d-flex flex-column align-items-center justify-content-start">
               <img src={assetRootPath('/images/wallet-icons.svg')} />
