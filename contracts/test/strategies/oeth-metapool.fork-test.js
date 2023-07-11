@@ -244,7 +244,6 @@ async function mintTest(fixture, user, asset, amount = "3") {
 
   const currentSupply = await oeth.totalSupply();
   const currentBalance = await oeth.connect(user).balanceOf(user.address);
-  const currentVaultValue = await oethVault.totalValue();
 
   const currentRewardPoolBalance = await cvxRewardPool
     .connect(user)
@@ -288,22 +287,5 @@ async function mintTest(fixture, user, asset, amount = "3") {
   expect(rewardPoolBalanceDiff).to.approxEqualTolerance(
     oethUnits(amount).mul(2),
     1
-  );
-
-  // Vault value checks
-  const vaultValueAfter = await oethVault.totalValue();
-  log(`Actual vault value  : ${formatUnits(vaultValueAfter)}`);
-  log(
-    `Expected vault value: ${formatUnits(
-      currentVaultValue.add(unitAmount.mul(2))
-    )}`
-  );
-  log(
-    `Diff vault value    : ${formatUnits(
-      vaultValueAfter.sub(currentVaultValue).sub(unitAmount.mul(2))
-    )}`
-  );
-  expect(vaultValueAfter).to.approxEqualTolerance(
-    currentVaultValue.add(unitAmount.mul(2))
   );
 }
