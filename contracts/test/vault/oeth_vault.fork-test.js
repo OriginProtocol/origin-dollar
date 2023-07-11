@@ -9,14 +9,15 @@ const {
 } = require("./../_fixture");
 const { getIInchSwapData, recodeSwapData } = require("../../utils/1Inch");
 const addresses = require("../../utils/addresses");
-const { forkOnlyDescribe, resolveAsset } = require("./../helpers");
+const { forkOnlyDescribe } = require("../helpers");
+const { resolveAsset } = require("../../utils/assets");
 
 const log = require("../../utils/logger")("test:fork:oeth:vault");
 
 const defaultFixture = oethDefaultFixtureSetup();
 const collateralSwapFixture = oethCollateralSwapFixtureSetup();
 
-const oethWhaleAddress = "0x70fCE97d671E81080CA3ab4cc7A59aAc2E117137";
+const oethWhaleAddress = "0xEADB3840596cabF312F2bC88A4Bb0b93A4E1FF5F";
 
 forkOnlyDescribe("ForkTest: OETH Vault", function () {
   this.timeout(0);

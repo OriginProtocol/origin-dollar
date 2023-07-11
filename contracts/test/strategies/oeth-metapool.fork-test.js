@@ -11,12 +11,12 @@ const { logCurvePool } = require("../../utils/curve");
 
 const log = require("../../utils/logger")("test:fork:oeth:metapool");
 
-forkOnlyDescribe("ForkTest: OETH Curve Metapool Strategy", function () {
+forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
   this.timeout(0);
   // due to hardhat forked mode timeouts - retry failed tests up to 3 times
   this.retries(3);
 
-  it("should rebalance Metapool", async () => {
+  it("Should rebalance Metapool", async () => {
     const {
       oeth,
       oethVault,
@@ -105,12 +105,13 @@ forkOnlyDescribe("ForkTest: OETH Curve Metapool Strategy", function () {
       .checkDelta(profit, variance, valueChange, variance);
   });
 
-  it("Should stake WETH in Curve guage via metapool", async function () {
+  it("Should deposit to Metapool", async function () {
     // TODO: should have differently balanced metapools
     const fixture = await loadFixture(convexOETHMetaVaultFixture);
 
     const { josh, weth } = fixture;
-    await mintTest(fixture, josh, weth, "5");
+
+    await mintTest(fixture, josh, weth, "5000");
   });
 
   it("Should be able to withdraw all", async () => {
@@ -228,7 +229,13 @@ forkOnlyDescribe("ForkTest: OETH Curve Metapool Strategy", function () {
 });
 
 async function mintTest(fixture, user, asset, amount = "3") {
-  const { oethVault, oeth, ConvexEthMetaStrategy, cvxRewardPool } = fixture;
+  const {
+    oethVault,
+    oeth,
+    ConvexEthMetaStrategy,
+    cvxRewardPool,
+    oethMetaPool,
+  } = fixture;
 
   const unitAmount = await units(amount, asset);
 
@@ -237,15 +244,25 @@ async function mintTest(fixture, user, asset, amount = "3") {
 
   const currentSupply = await oeth.totalSupply();
   const currentBalance = await oeth.connect(user).balanceOf(user.address);
+  const currentVaultValue = await oethVault.totalValue();
 
   const currentRewardPoolBalance = await cvxRewardPool
     .connect(user)
     .balanceOf(ConvexEthMetaStrategy.address);
 
+  log("Before mint");
+  await logCurvePool(oethMetaPool, "ETH ", "OETH");
+  log(
+    `netOusdMintedForStrategy ${await oethVault.netOusdMintedForStrategy()}}`
+  );
+
   // Mint OUSD w/ asset
   await asset.connect(user).approve(oethVault.address, unitAmount);
   await oethVault.connect(user).mint(asset.address, unitAmount, 0);
   await oethVault.connect(user).allocate();
+
+  log("After mint");
+  await logCurvePool(oethMetaPool, "ETH ", "OETH");
 
   // Ensure user has correct balance (w/ 1% slippage tolerance)
   const newBalance = await oeth.connect(user).balanceOf(user.address);
@@ -272,13 +289,21 @@ async function mintTest(fixture, user, asset, amount = "3") {
     oethUnits(amount).mul(2),
     1
   );
-}
 
-// 183753347564551101
-// 183750000000000000
-//     10000000000000
-// -1634.632766188072688943
-// -1634.632766000000000000
-//            1000000000000
-// 1580.000000000000000000
-// 1580.000000000000000000
+  // Vault value checks
+  const vaultValueAfter = await oethVault.totalValue();
+  log(`Actual vault value  : ${formatUnits(vaultValueAfter)}`);
+  log(
+    `Expected vault value: ${formatUnits(
+      currentVaultValue.add(unitAmount.mul(2))
+    )}`
+  );
+  log(
+    `Diff vault value    : ${formatUnits(
+      vaultValueAfter.sub(currentVaultValue).sub(unitAmount.mul(2))
+    )}`
+  );
+  expect(vaultValueAfter).to.approxEqualTolerance(
+    currentVaultValue.add(unitAmount.mul(2))
+  );
+}

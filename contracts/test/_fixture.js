@@ -8,7 +8,6 @@ const {
   fundAccountsForOETHUnitTests,
 } = require("../utils/funding");
 const { getAssetAddresses, daiUnits, isFork, oethUnits } = require("./helpers");
-const { utils } = require("ethers");
 
 const { loadFixture, getOracleAddresses } = require("./helpers");
 
@@ -26,6 +25,7 @@ const threepoolSwapAbi = require("./abi/threepoolSwap.json");
 
 const sfrxETHAbi = require("./abi/sfrxETH.json");
 const { deployWithConfirmation } = require("../utils/deploy");
+const { defaultAbiCoder, parseUnits, parseEther } = require("ethers/lib/utils");
 
 const defaultFixture = deployments.createFixture(async () => {
   await deployments.fixture(
@@ -641,13 +641,11 @@ function oethCollateralSwapFixtureSetup() {
         .connect(matt)
         .approve(
           oethVault.address,
-          utils.parseEther("100000000000000000000000000000000000").toString()
+          parseEther("100000000000000000000000000000000000").toString()
         );
 
       // Mint some tokens, so it ends up in Vault
-      await oethVault
-        .connect(matt)
-        .mint(token.address, utils.parseEther("25"), "0");
+      await oethVault.connect(matt).mint(token.address, parseEther("25"), "0");
     }
 
     if (shouldChangeBuffer) {
@@ -892,7 +890,7 @@ async function convexMetaVaultFixture() {
     // set OUSD mint threshold to 50 million
     await fixture.vault
       .connect(sGovernor)
-      .setNetOusdMintForStrategyThreshold(utils.parseUnits("50", 24));
+      .setNetOusdMintForStrategyThreshold(parseUnits("50", 24));
 
     await fixture.harvester
       .connect(sGovernor)
@@ -1155,8 +1153,7 @@ async function _hardhatSetBalance(address, amount = "10000") {
     method: "hardhat_setBalance",
     params: [
       address,
-      utils
-        .parseEther(amount)
+      parseEther(amount)
         .toHexString()
         .replace(/^0x0+/, "0x")
         .replace(/0$/, "1"),
@@ -1227,7 +1224,7 @@ async function resetAllowance(
 async function mintWETH(weth, recipient, amount = "100") {
   await _hardhatSetBalance(recipient.address, (Number(amount) * 2).toString());
   await weth.connect(recipient).deposit({
-    value: utils.parseEther(amount),
+    value: parseEther(amount),
   });
 }
 
@@ -1282,21 +1279,22 @@ async function convexLUSDMetaVaultFixture() {
  */
 async function convexOETHMetaVaultFixture() {
   const fixture = await loadFixture(defaultFixture);
-  const { timelock } = fixture;
+  const { ConvexEthMetaStrategy, oethVault, josh, timelock, weth } = fixture;
 
   await impersonateAndFundAddress(
-    fixture.weth.address,
+    weth.address,
     [
-      "0x7373BD8512d17FC53e9b39c9655A95c9813A0aB1",
-      "0x821A96fbD4465D02726EDbAa936A0d6d1032dE46",
-      "0x4b7fEcEffE3b14fFD522e72b711B087f08BD98Ab",
-      "0x204bcc7A3da640EF95cB01a15c63938C6B878e9e",
+      "0x8EB8a3b98659Cce290402893d0123abb75E3ab28",
+      "0x741AA7CFB2c7bF2A1E7D4dA2e3Df6a56cA4131F3",
+      "0x57757E3D981446D585Af0D9Ae4d7DF6D64647806",
+      "0x2fEb1512183545f48f6b9C5b4EbfCaF49CfCa6F3",
+      "0x6B44ba0a126a2A1a8aa6cD1AdeeD002e141Bcd44",
     ],
     // Josh is loaded with weth
-    fixture.josh.getAddress()
+    josh.getAddress()
   );
 
-  // Get some 3CRV from most loaded contracts/wallets
+  // Get some CRV from most loaded contracts/wallets
   await impersonateAndFundAddress(
     addresses.mainnet.CRV,
     [
@@ -1307,21 +1305,23 @@ async function convexOETHMetaVaultFixture() {
       "0xb73D8dCE603155e231aAd4381a2F20071Ca4D55c",
     ],
     // Josh is loaded with CRV
-    fixture.josh.getAddress()
+    josh.getAddress()
   );
 
   // Add Convex Meta strategy
-  await fixture.oethVault
+  await oethVault
     .connect(timelock)
-    .setAssetDefaultStrategy(
-      fixture.weth.address,
-      fixture.ConvexEthMetaStrategy.address
-    );
+    .setAssetDefaultStrategy(weth.address, ConvexEthMetaStrategy.address);
 
-  // TODO: hardcode this once deployed to the mainnet
+  // Update the strategy threshold to 100k ETH
+  await oethVault
+    .connect(timelock)
+    .setNetOusdMintForStrategyThreshold(parseUnits("100", 21));
+
+  // Convex pool that records the deposited balances
   fixture.cvxRewardPool = await ethers.getContractAt(
     "IRewardStaking",
-    await fixture.ConvexEthMetaStrategy.cvxRewardStaker()
+    await ConvexEthMetaStrategy.cvxRewardStaker()
   );
 
   fixture.oethMetaPool = await ethers.getContractAt(
@@ -1388,7 +1388,7 @@ async function compoundFixture() {
 
   await fixture.usdc.transfer(
     await fixture.matt.getAddress(),
-    utils.parseUnits("1000", 6)
+    parseUnits("1000", 6)
   );
 
   return fixture;
@@ -1557,7 +1557,7 @@ async function rebornFixture() {
 
   const sanctum = await ethers.getContract("Sanctum");
 
-  const encodedCallbackAddress = utils.defaultAbiCoder
+  const encodedCallbackAddress = defaultAbiCoder
     .encode(["address"], [sanctum.address])
     .slice(2);
   const initCode = (await ethers.getContractFactory("Reborner")).bytecode;
