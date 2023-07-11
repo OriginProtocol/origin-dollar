@@ -106,3 +106,45 @@ def main():
       print("Transaction ", idx)
       print("To: ", item.receiver)
       print("Data (Hex encoded): ", item.input, "\n")
+
+
+# -----------------------------------
+# July 11, 2023 - rETH Collateral Swap Test
+# -----------------------------------
+from collateralSwap import *
+
+txs = []
+
+def main():
+  with TemporaryFork():
+    # Before
+    txs.append(oeth_vault_core.rebase({'from':STRATEGIST}))
+    txs.append(oeth_vault_value_checker.takeSnapshot({'from':STRATEGIST}))
+
+    # Swap 900 rETH for WETH with 0.1% tolerance
+    _, swap_data = build_swap_tx(RETH, WETH, 900 * 10**18, 0.1, False)
+    decoded_input = vault_core_w_swap_collateral.swapCollateral.decode_input(swap_data)
+    txs.append(
+      vault_core_w_swap_collateral.swapCollateral(*decoded_input, {'from':STRATEGIST})
+    )
+
+    # ~968 WETH from swap
+    # 1,946 WETH in the vault
+    # Deposit 2900 WETH to Convex OETH-ETH strategy
+    txs.append(vault_oeth_admin.depositToStrategy(OETH_CONVEX_OETH_ETH_STRAT, [WETH], [2900*1e18], {'from': STRATEGIST}))
+
+    # After
+    vault_change = oeth_vault_core.totalValue() - oeth_vault_value_checker.snapshots(STRATEGIST)[0]
+    supply_change = oeth.totalSupply() - oeth_vault_value_checker.snapshots(STRATEGIST)[1]
+    profit = vault_change - supply_change
+
+    txs.append(oeth_vault_value_checker.checkDelta(profit, (0.1 * 10**18), vault_change, (0.1 * 10**18), {'from': STRATEGIST}))
+    print("-----")
+    print("Profit", "{:.6f}".format(profit / 10**18), profit)
+    print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
+
+    print("Schedule the following transactions on Gnosis Safe")
+    for idx, item in enumerate(txs):
+      print("Transaction ", idx)
+      print("To: ", item.receiver)
+      print("Data (Hex encoded): ", item.input, "\n")
