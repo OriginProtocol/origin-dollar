@@ -2,8 +2,8 @@
 pragma solidity ^0.8.0;
 
 /**
- * @title Curve 3Pool Strategy
- * @notice Investment strategy for investing stablecoins via Curve 3Pool
+ * @title Curve Metapool Strategy
+ * @notice Investment strategy for investing ether in a Curve Metapool
  * @author Origin Protocol Inc
  */
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -90,9 +90,9 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @dev Deposit asset into the Curve ETH pool
-     * @param _weth Address of WETH
-     * @param _amount Amount of asset to deposit
+     * @notice Deposit WETH into the Curve ETH Metapool
+     * @param _weth Address of Wrapped ETH (WETH) contract.
+     * @param _amount Amount of WETH to deposit.
      */
     function deposit(address _weth, uint256 _amount)
         external
@@ -164,7 +164,7 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @dev Deposit the entire balance of any supported asset into the Curve 3pool
+     * @notice Deposit the strategy's entire balance of any ETH or WETH into the Curve Metapool
      */
     function depositAll() external override onlyVault nonReentrant {
         uint256 balance = weth.balanceOf(address(this));
@@ -174,10 +174,11 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @dev Withdraw asset from Curve ETH pool
-     * @param _recipient Address to receive withdrawn asset
-     * @param _weth Address of asset to withdraw
-     * @param _amount Amount of asset to withdraw
+     * @notice Withdraw ETH and OETH from the Curve Metapool, burn the OETH,
+     * convert the ETH to WETH and transfer to the recipient.
+     * @param _recipient Address to receive withdrawn asset which is normally the Vault.
+     * @param _weth Address of the Wrapped ETH (WETH) contract.
+     * @param _amount Amount of WETH to withdraw.
      */
     function withdraw(
         address _recipient,
@@ -201,9 +202,9 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         // slither-disable-next-line unused-return
         curvePool.remove_liquidity(requiredLpTokens, _minWithdrawalAmounts);
 
-        // Burn OETH
+        // Burn all the removed OETH and any that was left in the strategy
         IVault(vaultAddress).burnForStrategy(oeth.balanceOf(address(this)));
-        // Transfer WETH
+        // Transfer WETH to the recipient
         weth.deposit{ value: _amount }();
         require(
             weth.transfer(_recipient, _amount),
@@ -243,7 +244,8 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @dev Remove all assets from platform and send them to Vault contract.
+     * @notice Remove all ETH and OETH from the Metapool, burn the OETH,
+     * convert the ETH to WETH and transfer to the Vault contract.
      */
     function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
         uint256 gaugeTokens = cvxRewardStaker.balanceOf(address(this));
@@ -263,16 +265,22 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         uint256 oethBalance = oeth.balanceOf(address(this));
         IVault(vaultAddress).burnForStrategy(oethBalance);
 
-        // Send all ETH and WETH on the contract, including extra
-        weth.deposit{ value: address(this).balance }();
+        // Get the strategy contract's ether balance.
+        // This includes all that was removed from the Metapool and
+        // any ether that was sitting in the strategy contract before the removal.
+        uint256 ethBalance = address(this).balance;
+        // Convert all the strategy contract's ether to WETH and transfer to the vault.
+        weth.deposit{ value: ethBalance }();
         require(
-            weth.transfer(vaultAddress, weth.balanceOf(address(this))),
+            weth.transfer(vaultAddress, ethBalance),
             "Transfer of WETH not successful"
         );
+
+        emit Withdrawal(address(weth), address(lpToken), ethBalance);
     }
 
     /**
-     * @dev Collect accumulated CRV and CVX and send to Harvester.
+     * @notice Collect accumulated CRV and CVX rewards and send to the Harvester.
      */
     function collectRewardTokens()
         external
@@ -292,7 +300,7 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @dev Get the total asset value held in the platform
+     * @notice Get the total asset value held in the platform
      * @param _asset      Address of the asset
      * @return balance    Total value of the asset in the platform
      */
@@ -313,7 +321,7 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @dev Retuns bool indicating whether asset is supported by strategy
+     * @notice Returns bool indicating whether asset is supported by strategy
      * @param _asset Address of the asset
      */
     function supportsAsset(address _asset)
@@ -326,7 +334,7 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @dev Approve the spending of all assets by their corresponding pool tokens,
+     * @notice Approve the spending of all assets by their corresponding pool tokens,
      *      if for some reason is it necessary.
      */
     function safeApproveAllTokens()
@@ -340,7 +348,7 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @dev Accept unwrapped WETH
+     * @notice Accept unwrapped WETH
      */
     receive() external payable {}
 
