@@ -41,18 +41,12 @@
     "@ethersproject/providers": "^5.4.3",
     "@ethersproject/units": "^5.0.2",
     "@fbtjs/default-collection-transform": "^1.0.0",
-    "@gnosis.pm/safe-apps-web3-react": "^0.6.2",
-    "@ledgerhq/hw-transport-webusb": "^6.11.2",
-    "@myetherwallet/mewconnect-connector": "^0.1.8",
+    "@rainbow-me/rainbowkit": "^0.12.16",
+    "@safe-global/safe-apps-sdk": "^8.0.0",
     "@sentry/browser": "^5.22.3",
     "@sentry/integrations": "^5.22.3",
     "@sentry/node": "^5.22.3",
     "@sentry/webpack-plugin": "^1.17.2",
-    "@web3-react/core": "^6.1.9",
-    "@web3-react/injected-connector": "^6.0.7",
-    "@web3-react/ledger-connector": "^6.1.9",
-    "@web3-react/walletconnect-connector": "^6.2.4",
-    "@web3-react/walletlink-connector": "^6.2.12",
     "@zeit/next-css": "^1.0.1",
     "@zeit/next-source-maps": "^0.0.3",
     "analytics": "^0.7.15",
@@ -61,6 +55,7 @@
     "babel-plugin-fbt": "^0.20.3",
     "babel-plugin-fbt-runtime": "^0.9.17",
     "babel-plugin-module-resolver": "^4.1.0",
+    "bignumber.js": "^9.1.1",
     "classnames": "^2.3.1",
     "dateformat": "^4.6.1",
     "deficonnect": "1.6.14-dev.2",
@@ -70,14 +65,14 @@
     "file-loader": "6.2.0",
     "lodash": "^4.17.21",
     "moment": "^2.29.4",
-    "next": "10.2.3",
+    "next": "11.1.0",
     "next-cookies": "^2.0.3",
     "per-env": "^1.0.2",
     "postcss-flexbugs-fixes": "^5.0.0",
     "postcss-preset-env": "^6.7.0",
     "prettier": "^2.4.0",
     "pullstate": "^1.23.0",
-    "react": "^16.14.0",
+    "react": "^17.0.1",
     "react-autosize-textarea": "^7.1.0",
     "react-bootstrap": "^1.6.2",
     "react-cookie": "^4.1.0",
@@ -89,30 +84,8 @@
     "react-styl": "^0.0.3",
     "react-toastify": "^6.2.0",
     "sass": "^1.39.2",
-    "use-analytics": "^0.0.5"
-  },
-  "babel": {
-    "presets": [
-      "next/babel"
-    ],
-    "plugins": [
-      [
-        "module-resolver",
-        {
-          "alias": {
-            "components": "./src/components",
-            "constants": "./src/constants",
-            "utils": "./src/utils",
-            "pages": "./src/pages",
-            "hoc": "./src/hoc",
-            "stores": "./src/stores",
-            "hooks": "./src/hooks"
-          }
-        }
-      ],
-      "babel-plugin-fbt",
-      "babel-plugin-fbt-runtime"
-    ]
+    "use-analytics": "^0.0.5",
+    "wagmi": "^0.12.18"
   },
   "husky": {
     "hooks": {

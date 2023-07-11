@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
-
-import { ethers, BigNumber } from 'ethers'
-
 import AccountStore from 'stores/AccountStore'
 import ContractStore from 'stores/ContractStore'
 import ErrorModal from 'components/buySell/ErrorModal'
@@ -13,20 +10,12 @@ import WrapOETHPill from 'components/wrap/WrapOETHPill'
 import PillArrow from 'components/buySell/_PillArrow'
 import useEthPrice from 'hooks/useEthPrice'
 import withIsMobile from 'hoc/withIsMobile'
-import { getUserSource } from 'utils/user'
 import usePrevious from 'utils/usePrevious'
 import ApproveSwap from 'components/buySell/ApproveSwap'
-import { useWeb3React } from '@web3-react/core'
 import { event } from '../../../lib/gtm'
-
-import analytics from 'utils/analytics'
-import {
-  formatCurrencyMinMaxDecimals,
-  removeCommas,
-  displayCurrency,
-  calculateSwapAmounts,
-} from '../../utils/math'
+import { displayCurrency, calculateSwapAmounts } from '../../utils/math'
 import { assetRootPath } from '../../utils/image'
+import { useAccount, useSigner } from 'wagmi'
 
 const lastSelectedSwapModeKey = 'last_user_selected_wrap_mode'
 
@@ -61,14 +50,13 @@ const WrapHomepage = ({
   const [needsApproval, setNeedsApproval] = useState()
   const [rate, setRate] = useState()
 
-  const account = useStoreState(AccountStore, (s) => s.address)
-  const web3react = useWeb3React()
-  const { library } = web3react
+  const { data: activeSigner } = useSigner()
+  const { address: account } = useAccount()
 
   const { oeth, woeth } = useStoreState(ContractStore, (s) => s.contracts)
 
   const signer = (contract) => {
-    return contract.connect(library.getSigner(account))
+    return contract.connect(activeSigner)
   }
 
   useEffect(() => {
@@ -96,14 +84,18 @@ const WrapHomepage = ({
       }
       setWrapEstimate(estimate)
     }
+
     const approvalNeeded = () => {
       if (!allowancesLoaded) {
         return
       }
-      setNeedsApproval(
-        parseFloat(allowances.oeth.woeth) < inputAmount ? 'woeth' : ''
-      )
+      if (swapMode === 'mint') {
+        setNeedsApproval(
+          parseFloat(allowances.oeth.woeth) < inputAmount ? 'woeth' : ''
+        )
+      }
     }
+
     const calculateRate = async () => {
       const conversionRate = await displayCurrency(
         await woeth.convertToAssets(calculateSwapAmounts(1, 18).swapAmount),
@@ -215,8 +207,6 @@ const WrapHomepage = ({
         wrap_type: swapMode,
         wrap_token: wrapTokenUsed,
         wrap_amount: wrapTokenAmount,
-        wrap_address: '',
-        wrap_tx: '',
       })
     } catch (e) {
       const metadata = swapMetadata()
@@ -228,7 +218,6 @@ const WrapHomepage = ({
           wrap_type: swapMode,
           wrap_token: wrapTokenUsed,
           wrap_amount: wrapTokenAmount,
-          wrap_address: '',
         })
       } else {
         event({
@@ -236,7 +225,6 @@ const WrapHomepage = ({
           wrap_type: swapMode,
           wrap_token: wrapTokenUsed,
           wrap_amount: wrapTokenAmount,
-          wrap_address: '',
         })
       }
 

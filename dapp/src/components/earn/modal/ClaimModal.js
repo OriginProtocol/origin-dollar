@@ -1,12 +1,10 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { fbt } from 'fbt-runtime'
-import { get } from 'lodash'
-
 import EarnModal from 'components/earn/modal/EarnModal'
 import { formatCurrency } from 'utils/math'
 import AccountStore from 'stores/AccountStore'
 import { useStoreState } from 'pullstate'
-import { connectorNameIconMap, getConnectorIcon } from 'utils/connectors'
+import { getConnectorIcon } from 'utils/connectors'
 import { assetRootPath } from 'utils/image'
 
 const ClaimModal = ({

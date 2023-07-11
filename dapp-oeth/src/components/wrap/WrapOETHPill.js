@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useStoreState } from 'pullstate'
 import { fbt } from 'fbt-runtime'
-import { useWeb3React } from '@web3-react/core'
-
 import AccountStore from 'stores/AccountStore'
 import {
   formatCurrency,
@@ -12,7 +10,7 @@ import {
   removeCommas,
 } from 'utils/math'
 import { assetRootPath } from 'utils/image'
-import { _ } from 'fbt-runtime/lib/fbt'
+import { useAccount } from 'wagmi'
 
 const CoinImage = ({ small, coin }) => {
   const className = `coin-image`
@@ -114,7 +112,7 @@ const WrapOETHPill = ({
 }) => {
   const coinBalances = useStoreState(AccountStore, (s) => s.balances)
   const [error, setError] = useState(null)
-  const { active } = useWeb3React()
+  const { isConnected: active } = useAccount()
 
   const bottomItem = !topItem
 

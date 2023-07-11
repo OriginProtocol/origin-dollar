@@ -2,8 +2,6 @@ import React, { useEffect, useState } from 'react'
 import { useStoreState } from 'pullstate'
 import { ethers, BigNumber } from 'ethers'
 import { get } from 'lodash'
-import { useWeb3React } from '@web3-react/core'
-
 import Layout from 'components/layout'
 import Nav from 'components/Nav'
 import AccountStore from 'stores/AccountStore'
@@ -14,6 +12,7 @@ import { formatCurrency } from 'utils/math'
 import { displayCurrency } from 'utils/math'
 import { encodePriceSqrt } from 'utils/uniswapHelper'
 import { isProduction } from 'constants/env'
+import { useAccount, useNetwork } from 'wagmi'
 
 const governorAddress = '0xeAD9C93b79Ae7C1591b1FB5323BD777E86e150d4'
 
@@ -22,8 +21,9 @@ const Dashboard = ({ locale, onLocale }) => {
   const balances = useStoreState(AccountStore, (s) => s.balances)
   const pools = useStoreState(PoolStore, (s) => s.pools)
 
-  const account = useStoreState(AccountStore, (s) => s.address)
-  const { chainId } = useWeb3React()
+  const { chain } = useNetwork()
+  const { address: account } = useAccount()
+  const chainId = chain?.id
 
   const {
     vault,

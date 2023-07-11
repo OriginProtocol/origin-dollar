@@ -1,13 +1,12 @@
-import React, { useEffect, useState } from 'react'
-import { useWeb3React } from '@web3-react/core'
+import React, { useState } from 'react'
 import { fbt } from 'fbt-runtime'
-
 import Layout from 'components/layout'
 import Nav from 'components/Nav'
 import BalanceHeader from 'components/buySell/BalanceHeader'
 import TransactionHistory from 'components/TransactionHistory'
 import GetOUSD from 'components/GetOUSD'
 import { assetRootPath } from 'utils/image'
+import { useAccount } from 'wagmi'
 import { useOverrideAccount } from '../src/utils/hooks'
 import ErrorModal from '../src/components/buySell/ErrorModal'
 
@@ -24,7 +23,7 @@ const errorMap = [
 ]
 
 export default function History({ locale, onLocale }) {
-  const { active } = useWeb3React()
+  const { isConnected: active } = useAccount()
   const { overrideAccount, isValid } = useOverrideAccount()
   const [showErrorModal, setShowErrorModal] = useState(true)
 

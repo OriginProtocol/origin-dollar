@@ -1,5 +1,5 @@
 import React from 'react'
-import { useWeb3React } from '@web3-react/core'
+import { useAccount, useNetwork, useDisconnect } from 'wagmi'
 import { useRouter } from 'next/router'
 import { useStoreState } from 'pullstate'
 import { fbt } from 'fbt-runtime'
@@ -11,16 +11,23 @@ import { isCorrectNetwork, truncateAddress, networkIdToName } from 'utils/web3'
 import { useOverrideAccount } from 'utils/hooks'
 import { currencies } from 'constants/Contract'
 import { formatCurrency } from 'utils/math'
-import { connectorNameIconMap, getConnectorIcon } from 'utils/connectors'
+import { getConnectorIcon } from 'utils/connectors'
 import { assetRootPath } from 'utils/image'
 
 const AccountStatusContent = ({ className, onOpen }) => {
-  const web3react = useWeb3React()
-  const { connector, deactivate, active, account, chainId } = web3react
+  const { chain } = useNetwork()
+  const {
+    connector: activeConnector,
+    address: account,
+    isConnected: active,
+  } = useAccount()
+  const { disconnect: deactivate } = useDisconnect()
+
+  const chainId = chain?.id
   const correctNetwork = isCorrectNetwork(chainId)
   const balances = useStoreState(AccountStore, (s) => s.balances)
-  const etherscanLink = `${getEtherscanHost(web3react)}/address/${account}`
-  const connectorName = useStoreState(AccountStore, (s) => s.connectorName)
+  const etherscanLink = `${getEtherscanHost(chainId)}/address/${account}`
+  const connectorName = activeConnector?.name
   const connectorIcon = getConnectorIcon(connectorName)
   const { overrideAccount } = useOverrideAccount()
   const router = useRouter()
@@ -106,12 +113,11 @@ const AccountStatusContent = ({ className, onOpen }) => {
               className="btn-clear-blue w-100"
               onClick={(e) => {
                 e.preventDefault()
+                e.stopPropagation()
                 if (onOpen) {
                   onOpen(false)
                 }
                 deactivate()
-                // To clear state
-                delete localStorage.walletconnect
                 localStorage.setItem('eagerConnect', false)
               }}
             >

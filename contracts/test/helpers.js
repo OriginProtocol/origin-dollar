@@ -21,11 +21,18 @@ chai.Assertion.addMethod("approxEqual", function (expected, message) {
  * Checks if the actual value is approximately equal to the expected value
  * within a specified percentage tolerance.
  * @param {number} [maxTolerancePct=1] - The maximum percentage tolerance allowed for the comparison (default is 1%).
+ * @examples
+ *   expect(1010).to.approxEqualTolerance(1000, 1); // true
+ *   expect(1011).to.approxEqualTolerance(1000, 1); // false
+ *   expect(1000).to.approxEqualTolerance(1011, 1); // true
+ *   expect(1000).to.approxEqualTolerance(1012, 1); // false
+ *   expect(1001).to.approxEqualTolerance(1000, 0.1); // true
  */
 chai.Assertion.addMethod(
   "approxEqualTolerance",
   function (expected, maxTolerancePct = 1, message = undefined) {
     const actual = this._obj;
+    expected = BigNumber.from(expected);
     if (expected.gte(BigNumber.from(0))) {
       chai
         .expect(actual, message)

@@ -16631,7 +16631,7 @@
       ]
     },
     "OETHVaultAdmin": {
-      "address": "0xbA3656713862dF9De5EB3dFEA22141F06d67221c",
+      "address": "0x31a91336414d3B955E494E7d485a6B06b55FC8fB",
       "abi": [
         {
           "anonymous": false,
@@ -16925,6 +16925,82 @@
           "inputs": [
             {
               "indexed": false,
+              "internalType": "uint256",
+              "name": "_basis",
+              "type": "uint256"
+            }
+          ],
+          "name": "SwapAllowedUndervalueChanged",
+          "type": "event"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "internalType": "address",
+              "name": "_asset",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "internalType": "uint256",
+              "name": "_basis",
+              "type": "uint256"
+            }
+          ],
+          "name": "SwapSlippageChanged",
+          "type": "event"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "_fromAsset",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "_toAsset",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "internalType": "uint256",
+              "name": "_fromAssetAmount",
+              "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "internalType": "uint256",
+              "name": "_toAssetAmount",
+              "type": "uint256"
+            }
+          ],
+          "name": "Swapped",
+          "type": "event"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "internalType": "address",
+              "name": "_address",
+              "type": "address"
+            }
+          ],
+          "name": "SwapperChanged",
+          "type": "event"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
               "internalType": "address",
               "name": "_address",
               "type": "address"
@@ -16983,6 +17059,19 @@
           ],
           "name": "YieldDistribution",
           "type": "event"
+        },
+        {
+          "inputs": [],
+          "name": "allowedSwapUndervalue",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "value",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
         },
         {
           "inputs": [
@@ -17191,34 +17280,6 @@
           "type": "function"
         },
         {
-          "inputs": [
-            {
-              "internalType": "address",
-              "name": "_strategyFromAddress",
-              "type": "address"
-            },
-            {
-              "internalType": "address",
-              "name": "_strategyToAddress",
-              "type": "address"
-            },
-            {
-              "internalType": "address[]",
-              "name": "_assets",
-              "type": "address[]"
-            },
-            {
-              "internalType": "uint256[]",
-              "name": "_amounts",
-              "type": "uint256[]"
-            }
-          ],
-          "name": "reallocate",
-          "outputs": [],
-          "stateMutability": "nonpayable",
-          "type": "function"
-        },
-        {
           "inputs": [],
           "name": "rebasePaused",
           "outputs": [
@@ -17344,6 +17405,24 @@
           "inputs": [
             {
               "internalType": "address",
+              "name": "_asset",
+              "type": "address"
+            },
+            {
+              "internalType": "uint16",
+              "name": "_allowedOracleSlippageBps",
+              "type": "uint16"
+            }
+          ],
+          "name": "setOracleSlippage",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
               "name": "_ousdMetaStrategy",
               "type": "address"
             }
@@ -17401,6 +17480,32 @@
             }
           ],
           "name": "setStrategistAddr",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint16",
+              "name": "_basis",
+              "type": "uint16"
+            }
+          ],
+          "name": "setSwapAllowedUndervalue",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "_swapperAddr",
+              "type": "address"
+            }
+          ],
+          "name": "setSwapper",
           "outputs": [],
           "stateMutability": "nonpayable",
           "type": "function"
@@ -17473,6 +17578,58 @@
           "name": "supportAsset",
           "outputs": [],
           "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "_fromAsset",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "_toAsset",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "_fromAssetAmount",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "_minToAssetAmount",
+              "type": "uint256"
+            },
+            {
+              "internalType": "bytes",
+              "name": "_data",
+              "type": "bytes"
+            }
+          ],
+          "name": "swapCollateral",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "toAssetAmount",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "swapper",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "swapper_",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
           "type": "function"
         },
         {
@@ -17605,7 +17762,7 @@
       ]
     },
     "OETHVaultCore": {
-      "address": "0x1091588Cc431275F99DC5Df311fd8E1Ab81c89F3",
+      "address": "0xEA24e9Bac006DE9635Ac7fA4D767fFb64FB5645c",
       "abi": [
         {
           "anonymous": false,
@@ -17899,6 +18056,82 @@
           "inputs": [
             {
               "indexed": false,
+              "internalType": "uint256",
+              "name": "_basis",
+              "type": "uint256"
+            }
+          ],
+          "name": "SwapAllowedUndervalueChanged",
+          "type": "event"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "internalType": "address",
+              "name": "_asset",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "internalType": "uint256",
+              "name": "_basis",
+              "type": "uint256"
+            }
+          ],
+          "name": "SwapSlippageChanged",
+          "type": "event"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "_fromAsset",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "_toAsset",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "internalType": "uint256",
+              "name": "_fromAssetAmount",
+              "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "internalType": "uint256",
+              "name": "_toAssetAmount",
+              "type": "uint256"
+            }
+          ],
+          "name": "Swapped",
+          "type": "event"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "internalType": "address",
+              "name": "_address",
+              "type": "address"
+            }
+          ],
+          "name": "SwapperChanged",
+          "type": "event"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
               "internalType": "address",
               "name": "_address",
               "type": "address"
@@ -18093,6 +18326,47 @@
               "internalType": "address[]",
               "name": "",
               "type": "address[]"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "_asset",
+              "type": "address"
+            }
+          ],
+          "name": "getAssetConfig",
+          "outputs": [
+            {
+              "components": [
+                {
+                  "internalType": "bool",
+                  "name": "isSupported",
+                  "type": "bool"
+                },
+                {
+                  "internalType": "enum VaultStorage.UnitConversion",
+                  "name": "unitConversion",
+                  "type": "uint8"
+                },
+                {
+                  "internalType": "uint8",
+                  "name": "decimals",
+                  "type": "uint8"
+                },
+                {
+                  "internalType": "uint16",
+                  "name": "allowedOracleSlippageBps",
+                  "type": "uint16"
+                }
+              ],
+              "internalType": "struct VaultStorage.Asset",
+              "name": "config",
+              "type": "tuple"
             }
           ],
           "stateMutability": "view",
@@ -22310,6 +22584,76 @@
             }
           ],
           "stateMutability": "view",
+          "type": "function"
+        }
+      ]
+    },
+    "Swapper1InchV5": {
+      "address": "0xcD0fcF8a31Bc78ec07752e9CCD3960E936D18366",
+      "abi": [
+        {
+          "inputs": [],
+          "name": "SWAP_ROUTER",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address[]",
+              "name": "_assets",
+              "type": "address[]"
+            }
+          ],
+          "name": "approveAssets",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "_fromAsset",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "_toAsset",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "_fromAssetAmount",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "_minToAssetAmount",
+              "type": "uint256"
+            },
+            {
+              "internalType": "bytes",
+              "name": "_data",
+              "type": "bytes"
+            }
+          ],
+          "name": "swap",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "toAssetAmount",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "nonpayable",
           "type": "function"
         }
       ]

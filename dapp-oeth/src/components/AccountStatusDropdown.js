@@ -1,15 +1,20 @@
 import React, { useState } from 'react'
-import { useWeb3React } from '@web3-react/core'
+import { useAccount, useNetwork, useSwitchNetwork } from 'wagmi'
 import Dropdown from 'components/Dropdown'
 import GetOUSD from 'components/GetOUSD'
-import { isCorrectNetwork, switchEthereumChain } from 'utils/web3'
-import withWalletSelectModal from 'hoc/withWalletSelectModal'
+import { isCorrectNetwork } from 'utils/web3'
+
 import Content from './_AccountStatusContent'
 import AccountStatusIndicator from './_AccountStatusIndicator'
 import { event } from '../../lib/gtm'
 
-const AccountStatusDropdown = ({ className, showLogin }) => {
-  const { active, account, chainId } = useWeb3React()
+const AccountStatusDropdown = ({ className }) => {
+  const { chain } = useNetwork()
+  const { address: account, isConnected: active } = useAccount()
+  const { switchNetwork } = useSwitchNetwork()
+
+  const chainId = chain?.id
+
   const [open, setOpen] = useState(false)
   const correctNetwork = isCorrectNetwork(chainId)
 
@@ -21,41 +26,41 @@ const AccountStatusDropdown = ({ className, showLogin }) => {
         open={open}
         onClose={() => setOpen(false)}
       >
-        <a
-          className={`account-status d-flex justify-content-center align-items-center clickable ${
-            active ? 'active' : ''
-          } ${className} ${open ? 'open' : ''}`}
-          onClick={async (e) => {
-            e.preventDefault()
-            if (!active) {
-              showLogin()
-            } else if (active && !correctNetwork) {
-              // open the dropdown to allow disconnecting, while also requesting an auto switch to mainnet
-              await switchEthereumChain()
-              setOpen(true)
-            } else {
-              setOpen(true)
-            }
-            event({
-              event: 'open_account',
-            })
-          }}
-        >
-          {/* The button id is used by StakeBoxBig to trigger connect when no wallet connected */}
-          {!active && !account && (
+        {!active || !account ? (
+          <div className="not-logged-in">
             <GetOUSD
               id="main-dapp-nav-connect-wallet-button"
               className="btn-nav"
               trackSource="Account dropdown"
             />
-          )}
-          <AccountStatusIndicator
-            active={active}
-            correctNetwork={correctNetwork}
-            account={account}
-            withAddress
-          />
-        </a>
+          </div>
+        ) : (
+          <a
+            className={`account-status d-flex justify-content-center align-items-center clickable ${
+              active ? 'active' : ''
+            } ${className} ${open ? 'open' : ''}`}
+            onClick={async (e) => {
+              e.preventDefault()
+              if (active && !correctNetwork) {
+                // open the dropdown to allow disconnecting, while also requesting an auto switch to mainnet
+                await switchNetwork(correctNetwork)
+                setOpen(true)
+              } else if (account) {
+                setOpen(true)
+              }
+              event({
+                event: 'open_account',
+              })
+            }}
+          >
+            <AccountStatusIndicator
+              active={active}
+              correctNetwork={correctNetwork}
+              account={account}
+              withAddress
+            />
+          </a>
+        )}
       </Dropdown>
       <style jsx>{`
         .dropdown-menu {
@@ -90,7 +95,7 @@ const AccountStatusDropdown = ({ className, showLogin }) => {
           background-color: #183140;
         }
 
-        .account-status {
+        .not-logged-in {
           padding: 8px 16px;
           border-radius: 56px;
           background-image: linear-gradient(
@@ -100,7 +105,9 @@ const AccountStatusDropdown = ({ className, showLogin }) => {
           );
         }
 
-        .account-status.active {
+        .account-status {
+          padding: 8px 16px;
+          border-radius: 56px;
           background-color: #1e1f25;
           background-image: none;
         }
@@ -135,4 +142,4 @@ const AccountStatusDropdown = ({ className, showLogin }) => {
   )
 }
 
-export default withWalletSelectModal(AccountStatusDropdown)
+export default AccountStatusDropdown

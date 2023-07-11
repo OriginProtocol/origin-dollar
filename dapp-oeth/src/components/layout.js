@@ -6,18 +6,14 @@ import ContractStore from 'stores/ContractStore'
 import withRpcProvider from 'hoc/withRpcProvider'
 import { useStoreState } from 'pullstate'
 import { fbt } from 'fbt-runtime'
-import { useWeb3React } from '@web3-react/core'
 import { get } from 'lodash'
 import { assetRootPath } from 'utils/image'
+import { useSigner } from 'wagmi'
 
 const UNISWAP_URL =
   'https://app.uniswap.org/#/swap?inputCurrency=0xdac17f958d2ee523a2206206994597c13d831ec7&outputCurrency=0x2A8e1E676Ec238d8A992307B495b45B3fEAa5e86'
 
-const SHOW_DISCLAIMER = false
-
 const Layout = ({
-  locale,
-  onLocale,
   children,
   nav,
   short,
@@ -27,8 +23,7 @@ const Layout = ({
   storeTransaction,
   storeTransactionError,
 }) => {
-  const { connector, account, library } = useWeb3React()
-
+  const { data: signer } = useSigner()
   const oethContract = useStoreState(ContractStore, (s) =>
     get(s, 'contracts.oeth')
   )
@@ -38,9 +33,7 @@ const Layout = ({
 
   const optIn = async () => {
     try {
-      const result = await oethContract
-        .connect(library.getSigner(account))
-        .rebaseOptIn()
+      const result = await oethContract.connect(signer).rebaseOptIn()
       storeTransaction(result, `rebaseOptIn`, 'oeth', {})
     } catch (error) {
       // 4001 code happens when a user rejects the transaction

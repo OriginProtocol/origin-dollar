@@ -134,26 +134,6 @@ contract Governable {
         }
     }
 
-    /**
-     * @dev Prevents a view contract function from being called
-     * while the contract is inside a reentrant protected method.
-     * This can prevent third party contracts from being attacked
-     * via working with partially updated data.
-     */
-    modifier nonReentrantView() {
-        bytes32 position = reentryStatusPosition;
-        uint256 _reentry_status;
-        // solhint-disable-next-line no-inline-assembly
-        assembly {
-            _reentry_status := sload(position)
-        }
-
-        // On the first call to nonReentrant, _notEntered will be true
-        require(_reentry_status != _ENTERED, "Reentrant call");
-
-        _;
-    }
-
     function _setPendingGovernor(address newGovernor) internal {
         bytes32 position = pendingGovernorPosition;
         // solhint-disable-next-line no-inline-assembly
