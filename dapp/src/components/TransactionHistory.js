@@ -9,7 +9,6 @@ import { exportToCsv } from '../utils/utils'
 import withIsMobile from 'hoc/withIsMobile'
 import { assetRootPath } from 'utils/image'
 import { transactionHistoryItemsPerPage } from 'utils/constants'
-
 import useTransactionHistoryPageQuery from '../queries/useTransactionHistoryPageQuery'
 import useTransactionHistoryQuery from '../queries/useTransactionHistoryQuery'
 
@@ -119,10 +118,102 @@ const FormatCurrencyByImportance = ({
   )
 }
 
-const TransactionHistory = ({ isMobile }) => {
+const CoinToggle = ({ setFilters, isOusd, setIsOusd }) => {
+  return (
+    <>
+      <div className="d-flex">
+        <div key="ousd">
+          <div
+            className={`button ousd d-flex align-items-center justify-content-center ${
+              isOusd ? 'selected' : ''
+            }`}
+            onClick={() => {
+              if (!isOusd) {
+                setIsOusd(true)
+                setFilters([])
+              }
+            }}
+          >
+            <span className="d-none d-md-flex">
+              {fbt('OUSD', 'Tx history filter: OUSD')}
+            </span>
+            <img
+              className="d-flex d-md-none"
+              src={assetRootPath(`/images/history/mint_icon.svg`)}
+            />
+          </div>
+        </div>
+        <div key="wousd">
+          <div
+            className={`button wousd d-flex align-items-center justify-content-center ${
+              !isOusd ? 'selected' : ''
+            }`}
+            onClick={() => {
+              if (isOusd) {
+                setIsOusd(false)
+                setFilters([])
+              }
+            }}
+          >
+            <span className="d-none d-md-flex">
+              {fbt('wOUSD', 'Tx history filter: wOUSD')}
+            </span>
+            <img
+              className="d-flex d-md-none"
+              src={assetRootPath(`/images/history/redeem_icon.svg`)}
+            />
+          </div>
+        </div>
+      </div>
+      <style jsx>{`
+        .button {
+          color: #8293a4;
+          min-height: 40px;
+          border-radius: 5px;
+          border: solid 1px #cdd7e0;
+          font-family: Lato;
+          font-size: 14px;
+          cursor: pointer;
+        }
+        .ousd {
+          min-width: 93px;
+          border-radius: 5px 0 0 5px;
+          margin-right: 0;
+        }
+        .wousd {
+          min-width: 92px;
+          border-radius: 0 5px 5px 0;
+          border-left: 0;
+          margin-right: 35px;
+          margin-left: 0;
+        }
+        .button.selected,
+        .button.selected:hover {
+          background-color: black;
+          color: white;
+        }
+        .button:hover {
+          background-color: #edf2f5;
+        }
+        @media (max-width: 799px) {
+          .button {
+            min-width: 50px;
+            min-height: 35px;
+            margin-right: 8px;
+            font-size: 14px;
+            margin-bottom: 20px;
+          }
+        }
+      `}</style>
+    </>
+  )
+}
+
+const TransactionHistory = ({ setWousdBalanceHeader, isMobile }) => {
   const { address: web3Account, isConnected: active } = useAccount()
   const router = useRouter()
   const [filters, _setFilters] = useState([])
+  const [isOusd, setIsOusd] = useState(true)
   const [currentPage, setCurrentPage] = useState(1)
   const [pageNumbers, setPageNumbers] = useState([])
 
@@ -185,13 +276,17 @@ const TransactionHistory = ({ isMobile }) => {
     setCurrentPage(1)
   }
 
+  const token = isOusd ? 'ousd' : 'wousd'
+
   const historyPageQuery = useTransactionHistoryPageQuery(
+    token,
     account,
     itemsPerPage,
     currentPage,
     filters
   )
-  const historyQuery = useTransactionHistoryQuery(account, filters)
+  
+  const historyQuery = useTransactionHistoryQuery(token, account, filters)
 
   const historyPages = useMemo(
     () => (historyPageQuery.isSuccess ? historyPageQuery.data.page.pages : 0),
@@ -206,6 +301,10 @@ const TransactionHistory = ({ isMobile }) => {
     : 1
 
   useEffect(() => {
+    setWousdBalanceHeader(!isOusd)
+  }, [isOusd])
+
+  useEffect(() => {
     const dataRefetch =
       (JSON.stringify(receivedFilters) !== JSON.stringify(filters) ||
         receivedPage !== currentPage) &&
@@ -215,7 +314,7 @@ const TransactionHistory = ({ isMobile }) => {
 
   const currentPageHistory = useMemo(
     () => (historyPageQuery.data ? historyPageQuery.data.history : []),
-    [historyPageQuery.data]
+    [isOusd, historyPageQuery.data]
   )
 
   useEffect(() => {
@@ -290,6 +389,11 @@ const TransactionHistory = ({ isMobile }) => {
           <>
             <div className="filters d-flex justify-content-between">
               <div className="d-flex justify-content-start flex-wrap flex-md-nowrap">
+                <CoinToggle
+                  setFilters={setFilters}
+                  isOusd={isOusd}
+                  setIsOusd={setIsOusd}
+                />
                 <FilterButton
                   filterText={fbt('Received', 'Tx history filter: Received')}
                   filterImage="received_icon.svg"
@@ -309,19 +413,21 @@ const TransactionHistory = ({ isMobile }) => {
                 <FilterButton
                   filterText={fbt('Swap', 'Tx history filter: Swap')}
                   filterImage="swap_icon.svg"
-                  filter={'swap_ousd'}
+                  filter={isOusd ? 'swap_ousd' : 'swap_wousd'}
                   filters={filters}
                   setFilters={setFilters}
                   currentFilters={receivedFilters}
                 />
-                <FilterButton
-                  filterText={fbt('Yield', 'Tx history filter: Yield')}
-                  filterImage="yield_icon.svg"
-                  filter="yield"
-                  filters={filters}
-                  setFilters={setFilters}
-                  currentFilters={receivedFilters}
-                />
+                {isOusd && (
+                  <FilterButton
+                    filterText={fbt('Yield', 'Tx history filter: Yield')}
+                    filterImage="yield_icon.svg"
+                    filter="yield"
+                    filters={filters}
+                    setFilters={setFilters}
+                    currentFilters={receivedFilters}
+                  />
+                )}
               </div>
               <div className="d-flex">
                 <div

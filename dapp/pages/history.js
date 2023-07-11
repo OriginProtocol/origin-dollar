@@ -3,6 +3,7 @@ import { fbt } from 'fbt-runtime'
 import Layout from 'components/layout'
 import Nav from 'components/Nav'
 import BalanceHeader from 'components/buySell/BalanceHeader'
+import BalanceHeaderWrapped from 'components/wrap/BalanceHeaderWrapped'
 import TransactionHistory from 'components/TransactionHistory'
 import GetOUSD from 'components/GetOUSD'
 import { assetRootPath } from 'utils/image'
@@ -26,6 +27,7 @@ export default function History({ locale, onLocale }) {
   const { isConnected: active } = useAccount()
   const { overrideAccount, isValid } = useOverrideAccount()
   const [showErrorModal, setShowErrorModal] = useState(true)
+  const [wousdBalanceHeader, setWousdBalanceHeader] = useState()
 
   return (
     <>
@@ -41,8 +43,8 @@ export default function History({ locale, onLocale }) {
       <Layout locale={locale} onLocale={onLocale}>
         <Nav page={'history'} locale={locale} onLocale={onLocale} />
         <div className="home d-flex flex-column">
-          <BalanceHeader />
-          {(overrideAccount || active) && <TransactionHistory />}
+          {wousdBalanceHeader ? <BalanceHeaderWrapped /> : <BalanceHeader />}
+          {(overrideAccount || active) && <TransactionHistory setWousdBalanceHeader={setWousdBalanceHeader} />}
           {!overrideAccount && !active && (
             <div className="empty-placeholder d-flex flex-column align-items-center justify-content-start">
               <img src={assetRootPath('/images/wallet-icons.svg')} />

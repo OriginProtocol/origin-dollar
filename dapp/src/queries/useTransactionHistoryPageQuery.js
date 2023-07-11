@@ -5,6 +5,7 @@ import { QUERY_KEYS } from '../constants/queryKeys'
 import { transactionHistoryPageService } from '../services/transaction-history-page.service'
 
 const useTransactionHistoryPageQuery = (
+  token,
   account,
   transactionHistoryItemsPerPage,
   page,
@@ -12,9 +13,10 @@ const useTransactionHistoryPageQuery = (
   options
 ) => {
   return useQuery(
-    QUERY_KEYS.TransactionHistoryPage(page, filters, account),
+    QUERY_KEYS.TransactionHistoryPage(token, page, filters, account),
     () =>
       transactionHistoryPageService.fetchHistory(
+        token,
         account,
         transactionHistoryItemsPerPage,
         page,

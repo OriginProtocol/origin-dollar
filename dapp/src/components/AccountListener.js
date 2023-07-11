@@ -78,7 +78,16 @@ const AccountListener = (props) => {
     },
   })
 
-  const historyPageQuery = useTransactionHistoryPageQuery(
+  const ousdHistoryPageQuery = useTransactionHistoryPageQuery(
+    'ousd',
+    account,
+    transactionHistoryItemsPerPage,
+    1,
+    []
+  )
+
+  const wousdHistoryPageQuery = useTransactionHistoryPageQuery(
+    'wousd',
     account,
     transactionHistoryItemsPerPage,
     1,
@@ -368,7 +377,8 @@ const AccountListener = (props) => {
   useEffect(() => {
     if (account) {
       login(account, setCookie)
-      historyPageQuery.refetch()
+      ousdHistoryPageQuery.refetch()
+      wousdHistoryPageQuery.refetch()
     }
 
     const loadLifetimeEarnings = async () => {

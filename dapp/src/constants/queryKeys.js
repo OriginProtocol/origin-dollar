@@ -3,8 +3,9 @@ export const QUERY_KEYS = {
   Apy: () => ['apy'],
   Balances: (account) => ['balances', { account }],
   TransactionHistory: (account) => ['transactionHistory', { account }],
-  TransactionHistoryPage: (page, filters, account) => [
+  TransactionHistoryPage: (token, page, filters, account) => [
     'transactionHistoryPage',
+    token,
     page,
     filters,
     { account },
