@@ -1,6 +1,7 @@
 const { formatUnits, parseUnits } = require("ethers/lib/utils");
 
-const log = require("./logger")("utils:curve");
+const logModule = "utils:curve";
+const log = require("./logger")(logModule);
 
 /**
  *
@@ -8,8 +9,8 @@ const log = require("./logger")("utils:curve");
  * @param {*} coin0 token symbol of Curve Metapool coin at index 0
  * @param {*} coin1 token symbol of Curve Metapool coin at index 1
  */
-const logCurvePool = async (pool, coin0, coin1) => {
-  const balances = await pool.get_balances();
+const logCurvePool = async (pool, coin0, coin1, blockTag) => {
+  const balances = await pool.get_balances({ blockTag });
 
   const totalBalances = balances[0].add(balances[1]);
   const ethBasisPoints = balances[0].mul(10000).div(totalBalances);
@@ -27,17 +28,31 @@ const logCurvePool = async (pool, coin0, coin1) => {
     )}%`
   );
 
-  log(`virtual price: ${formatUnits(await pool.get_virtual_price())}`);
+  const virtualPrice = await pool.get_virtual_price({ blockTag });
+  log(`LP virtual price: ${formatUnits(virtualPrice)} ${coin1}`);
 
-  // price 1 OETH to ETH
-  const price = await pool["get_dy(int128,int128,uint256)"](
+  // swap 1 OETH for ETH (OETH/ETH)
+  const price1 = await pool["get_dy(int128,int128,uint256)"](
     1,
     0,
-    parseUnits("1")
+    parseUnits("1"),
+    { blockTag }
   );
-  log(`${coin1}/${coin0} price: ${formatUnits(price)}`);
+  log(`${coin1}/${coin0} price : ${formatUnits(price1)}`);
+
+  // swap 1 ETH for OETH (ETH/OETH)
+  const price2 = await pool["get_dy(int128,int128,uint256)"](
+    0,
+    1,
+    parseUnits("1"),
+    { blockTag }
+  );
+  log(`${coin0}/${coin1} price : ${formatUnits(price2)}`);
+
+  return { balances, virtualPrice };
 };
 
 module.exports = {
   logCurvePool,
+  log,
 };

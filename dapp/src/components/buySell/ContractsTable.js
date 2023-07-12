@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from 'react'
-import { useWeb3React } from '@web3-react/core'
+import React, { useState } from 'react'
+import { useAccount } from 'wagmi'
 import { fbt } from 'fbt-runtime'
 import { find, sortBy } from 'lodash'
 import { useStoreState } from 'pullstate'
 import { formatCurrency } from 'utils/math'
 import { assetRootPath } from 'utils/image'
-
 import ContractStore from 'stores/ContractStore'
 import ConfirmationModal from 'components/buySell/ConfirmationModal'
 import Dropdown from 'components/Dropdown'
@@ -94,7 +93,7 @@ const ContractsTable = () => {
     setAlternateRouteEstimationSelected,
   ] = useState(null)
   const [showAllContracts, setShowAllContracts] = useState(false)
-  const { active } = useWeb3React()
+  const { isConnected: active } = useAccount()
 
   const swapContracts = {
     flipper: {

@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react'
 import { useStoreState } from 'pullstate'
 import { fbt } from 'fbt-runtime'
 import { orderBy } from 'lodash'
-import { useWeb3React } from '@web3-react/core'
 import AccountStore from 'stores/AccountStore'
 import {
   formatCurrency,
@@ -13,6 +12,7 @@ import {
 } from 'utils/math'
 import { assetRootPath } from 'utils/image'
 import { event } from '../../../lib/gtm'
+import { useAccount } from 'wagmi'
 
 const CoinImage = ({ small, coin }) => {
   const className = `coin-image`
@@ -499,7 +499,7 @@ const SwapCurrencyPill = ({
 
   const coinRedeemOptions = ['mix', 'eth', 'weth', 'steth', 'reth', 'frxeth']
 
-  const { active } = useWeb3React()
+  const { isConnected: active } = useAccount()
 
   const bottomItem = !topItem
   const showOeth =

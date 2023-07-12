@@ -32,25 +32,6 @@ try {
 
 const config = {
   webpack: (config, { isServer, buildId }) => {
-    // Fixes npm packages that depend on `fs` module
-    config.node = {
-      fs: 'empty',
-    }
-    /**
-     * Returns environment variables as an object
-     */
-    const env = Object.keys(process.env).reduce((acc, curr) => {
-      acc[`process.env.${curr}`] = JSON.stringify(process.env[curr])
-      return acc
-    }, {})
-
-    //console.log("CONFIG: ", JSON.stringify(config.module.rules))
-
-    /** Allows you to create global constants which can be configured
-     * at compile time, which in our case is our environment variables
-     */
-    config.plugins.push(new webpack.DefinePlugin(env))
-
     config.plugins.push(
       new webpack.DefinePlugin({
         'process.env.SENTRY_RELEASE': JSON.stringify(buildId),
@@ -58,13 +39,34 @@ const config = {
     )
 
     if (!isServer) {
+      // Fixes npm packages that depend on node modules
+      config.resolve.fallback = {
+        fs: false,
+        crypto: false,
+        stream: false,
+        path: false,
+        http: false,
+        https: false,
+        os: false,
+        zlib: false,
+        net: false,
+        tls: false,
+      }
       config.resolve.alias['@sentry/node'] = '@sentry/browser'
     }
 
+    config.resolve.alias = {
+      ...(config.resolve?.alias ?? {}),
+      components: path.resolve(__dirname, 'src/components'),
+      constants: path.resolve(__dirname, 'src/constants'),
+      utils: path.resolve(__dirname, 'src/utils'),
+      pages: path.resolve(__dirname, 'src/pages'),
+      hoc: path.resolve(__dirname, 'src/hoc'),
+      stores: path.resolve(__dirname, 'src/stores'),
+      hooks: path.resolve(__dirname, 'src/hooks'),
+    }
+
     return config
-  },
-  cssLoaderOptions: {
-    url: false,
   },
   async redirects() {
     return [
@@ -112,7 +114,8 @@ const config = {
           },
           {
             key: 'Content-Security-Policy',
-            value: 'frame-ancestors https://*.ledger.com',
+            value:
+              'frame-ancestors https://*.ledger.com *.safe.global *.5afe.dev',
           },
         ],
       },

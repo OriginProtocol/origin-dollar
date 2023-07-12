@@ -1,13 +1,98 @@
 import React, { useState, useEffect } from 'react'
 import classnames from 'classnames'
 import { fbt } from 'fbt-runtime'
-import { useWeb3React } from '@web3-react/core'
+import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { useRouter } from 'next/router'
-
-import withWalletSelectModal from 'hoc/withWalletSelectModal'
 import { event } from '../../lib/gtm'
-import { walletLogin } from 'utils/account'
-import { ledgerLiveConnector } from 'utils/connectors'
+import { useAccount } from 'wagmi'
+
+const CustomConnectButton = ({ id, className, onClick, style }) => {
+  return (
+    <ConnectButton.Custom>
+      {({
+        account,
+        chain,
+        openAccountModal,
+        openChainModal,
+        openConnectModal,
+        authenticationStatus,
+        mounted,
+      }) => {
+        // Note: If your app doesn't use authentication, you
+        // can remove all 'authenticationStatus' checks
+        const ready = mounted && authenticationStatus !== 'loading'
+        const connected =
+          ready &&
+          account &&
+          chain &&
+          (!authenticationStatus || authenticationStatus === 'authenticated')
+
+        return (
+          <div
+            {...(!ready && {
+              'aria-hidden': true,
+              style: {
+                opacity: 0,
+                pointerEvents: 'none',
+                userSelect: 'none',
+              },
+            })}
+          >
+            {(() => {
+              if (!connected) {
+                return (
+                  <button
+                    id={id}
+                    className={classnames(
+                      'bg-transparent border-0 text-white',
+                      className
+                    )}
+                    style={style}
+                    onClick={() => {
+                      openConnectModal()
+                      onClick()
+                    }}
+                    type="button"
+                  >
+                    {fbt('Connect', 'Connect button')}
+                  </button>
+                )
+              }
+
+              if (chain.unsupported) {
+                return (
+                  <button
+                    id={id}
+                    className={className}
+                    style={style}
+                    onClick={openChainModal}
+                    type="button"
+                  >
+                    {fbt('Wrong Network', 'Wrong Network')}
+                  </button>
+                )
+              }
+
+              return (
+                <button
+                  onClick={openAccountModal}
+                  type="button"
+                  className={classnames(
+                    'bg-transparent border-0 text-white',
+                    className
+                  )}
+                  style={style}
+                >
+                  {account.displayName}
+                </button>
+              )
+            })()}
+          </div>
+        )
+      }}
+    </ConnectButton.Custom>
+  )
+}
 
 const GetOUSD = ({
   id,
@@ -23,22 +108,25 @@ const GetOUSD = ({
   zIndex2,
   navMarble,
 }) => {
-  const { activate, active } = useWeb3React()
+  const { isConnected: active } = useAccount()
   const [userAlreadyConnectedWallet, setUserAlreadyConnectedWallet] =
     useState(false)
+
   const router = useRouter()
-  const classList = classnames(
-    'btn d-flex align-items-center justify-content-center',
-    className,
-    dark && 'btn-dark',
-    light && 'btn-light',
-    light2 && 'btn-light2',
-    primary && 'btn-primary',
-    gradient && 'btn-gradient',
-    zIndex2 && 'zIndex2',
-    navMarble && 'nav-marble'
-  )
-  const ledgerLive = ledgerLiveConnector?.isLedgerApp()
+
+  const classList = classnames(className)
+
+  // classnames(
+  //   'btn d-flex align-items-center justify-content-center',
+  //   className,
+  //   dark && 'btn-dark',
+  //   light && 'btn-light',
+  //   light2 && 'btn-light2',
+  //   primary && 'btn-primary',
+  //   gradient && 'btn-gradient',
+  //   zIndex2 && 'zIndex2',
+  //   navMarble && 'nav-marble'
+  // )
 
   useEffect(() => {
     if (
@@ -55,23 +143,16 @@ const GetOUSD = ({
 
   return (
     <>
-      <button
-        className={classList}
+      <CustomConnectButton
         id={id}
+        className={classList}
         style={style}
         onClick={() => {
           if (process.browser) {
             event({ event: 'connect_click' })
-            if (ledgerLive) {
-              activate(ledgerLiveConnector, undefined, true)
-            } else {
-              walletLogin(showLogin, activate)
-            }
           }
         }}
-      >
-        {fbt('Connect', 'Connect button')}
-      </button>
+      />
       <style jsx>{`
         .btn {
           font-size: 1rem;
@@ -142,4 +223,4 @@ const GetOUSD = ({
   )
 }
 
-export default withWalletSelectModal(GetOUSD)
+export default GetOUSD

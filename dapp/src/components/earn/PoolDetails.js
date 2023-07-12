@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { fbt } from 'fbt-runtime'
 import { formatCurrency } from 'utils/math'
-import { useWeb3React } from '@web3-react/core'
-
+import { useAccount } from 'wagmi'
 import PoolNameAndIcon from 'components/earn/PoolNameAndIcon'
 import UniswapPoolLink from 'components/earn/UniswapPoolLink'
 import Link from 'next/link'
@@ -15,7 +14,7 @@ import { assetRootPath } from 'utils/image'
 import { adjustLinkHref } from 'utils/utils'
 
 export default function PoolDetails({ pool }) {
-  const { account, active } = useWeb3React()
+  const { address: account, isConnected: active } = useAccount()
   const [showWizzard, setShowWizzard] = useState(false)
   const [poolRateIsOgn, setPoolRateIsOgn] = useState(true)
   const [poolDepositIsDollar, setPoolDepositIsDollar] = useState(true)

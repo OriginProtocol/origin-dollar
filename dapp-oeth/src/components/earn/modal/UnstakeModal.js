@@ -6,7 +6,7 @@ import { get } from 'lodash'
 import EarnModal from 'components/earn/modal/EarnModal'
 import { formatCurrency } from 'utils/math'
 import AccountStore from 'stores/AccountStore'
-import { connectorNameIconMap, getConnectorIcon } from 'utils/connectors'
+import { getConnectorIcon } from 'utils/connectors'
 import { assetRootPath } from 'utils/image'
 
 const UnstakeModal = ({ pool, onClose, onUserConfirmedStakeTx, onError }) => {

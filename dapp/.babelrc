@@ -1,0 +1,21 @@
+{
+  "presets": ["next/babel"],
+  "plugins": [
+    [
+      "module-resolver",
+      {
+        "alias": {
+          "components": "./src/components",
+          "constants": "./src/constants",
+          "utils": "./src/utils",
+          "pages": "./src/pages",
+          "hoc": "./src/hoc",
+          "stores": "./src/stores",
+          "hooks": "./src/hooks"
+        }
+      }
+    ],
+    "babel-plugin-fbt",
+    "babel-plugin-fbt-runtime"
+  ]
+}
