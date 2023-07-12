@@ -35,6 +35,17 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
     uint128 internal oethCoinIndex;
     uint128 internal ethCoinIndex;
 
+    /**
+     * @dev Verifies that the caller is the Strategist.
+     */
+    modifier onlyStrategist() {
+        require(
+            msg.sender == IVault(vaultAddress).strategistAddr(),
+            "Caller is not the Strategist"
+        );
+        _;
+    }
+
     // used to circumvent the stack too deep issue
     struct InitializeConfig {
         address curvePoolAddress; //Address of the Curve pool
@@ -88,6 +99,10 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
          */
         _approveBase();
     }
+
+    /***************************************
+                    Deposit
+    ****************************************/
 
     /**
      * @notice Deposit WETH into the Curve ETH Metapool
@@ -172,6 +187,10 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
             _deposit(address(weth), balance);
         }
     }
+
+    /***************************************
+                    Withdraw
+    ****************************************/
 
     /**
      * @notice Withdraw ETH and OETH from the Curve Metapool, burn the OETH,
@@ -279,6 +298,118 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         emit Withdrawal(address(weth), address(lpToken), ethBalance);
     }
 
+    /***************************************
+            Metapool Rebalancing
+    ****************************************/
+
+    /**
+     * @notice One-sided remove of OTokens from the Metapool which are then burned.
+     * This is used when the Metapool has too many OTokens and not enough ETH.
+     * The amount of assets in the vault is unchanged.
+     * The total supply of OTokens is reduced.
+     * The asset value of the strategy and vault is reduced.
+     * @param _lpTokens The amount of Metapool LP tokens to be burned for OTokens.
+     * @param _minOTokens The minimum amount of OTokens to removed from the Metapool.
+     */
+    function removeAndBurnOTokens(uint256 _lpTokens, uint256 _minOTokens)
+        external
+        onlyStrategist
+    {
+        // Withdraw Metapool LP tokens from Convex pool
+        _lpWithdraw(_lpTokens);
+
+        // Remove just the OTokens from the Metapool
+        uint256 oTokens = curvePool.remove_liquidity_one_coin(
+            _lpTokens,
+            int128(oethCoinIndex),
+            _minOTokens,
+            vaultAddress
+        );
+
+        // The vault burns the OTokens from this strategy
+        IVault(vaultAddress).burnForStrategy(oTokens);
+
+        emit Withdrawal(address(oeth), address(lpToken), oTokens);
+    }
+
+    /**
+     * @notice Mint OTokens and one-sided add to the Metapool.
+     * This is used when the Metapool has not enough OTokens and too many ETH.
+     * The OToken/Asset, eg OETH/ETH, price with increase.
+     * The amount of assets in the vault is unchanged.
+     * The total supply of OTokens is increased.
+     * The asset value of the strategy and vault is increased.
+     * @param _oTokens The amount of OTokens to be minted and added to the pool.
+     * @param _minLpTokens The minimum amount of Metapool LP tokens for the OTokens.
+     */
+    function mintAndAddOTokens(uint256 _oTokens, uint256 _minLpTokens)
+        external
+        onlyStrategist
+    {
+        IVault(vaultAddress).mintForStrategy(_oTokens);
+
+        uint256 lpDeposited = curvePool.add_liquidity(
+            [0, _oTokens],
+            _minLpTokens
+        );
+
+        require(
+            IConvexDeposits(cvxDepositorAddress).deposit(
+                cvxDepositorPTokenId,
+                lpDeposited,
+                true // Deposit with staking
+            ),
+            "Failed to Deposit LP to Convex"
+        );
+    }
+
+    /**
+     * @notice One-sided remove of ETH from the Metapool, convert to WETH
+     * and transfer to the vault.
+     * This is used when the Metapool has not enough OTokens and too many ETH.
+     * The OToken/Asset, eg OETH/ETH, price with decrease.
+     * The amount of assets in the vault increases.
+     * The total supply of OTokens does not change.
+     * The asset value of the strategy reduces.
+     * The asset value of the vault should be close to the same.
+     * @param _lpTokens The amount of Metapool LP tokens to be burned for ETH.
+     * @param _minAssets The minimum amount of ETH to removed from the Metapool.
+     * @dev Metapool LP tokens is used rather than WETH assets as Curve does not
+     * have a way to accurately calculate the amount of LP tokens for a required
+     * amount of ETH. Curve's `calc_token_amount` functioun does not include fees.
+     * A 3rd party libary can be used that takes into account the fees, but this
+     * is a gas intensive process. It's easier for the trusted strategist to
+     * caclulate the amount of Metapool LP tokens required off-chain.
+     */
+    function removeOnlyAssets(uint256 _lpTokens, uint256 _minAssets)
+        external
+        onlyStrategist
+    {
+        // Withdraw Metapool LP tokens from Convex pool
+        _lpWithdraw(_lpTokens);
+
+        // Remove just the assets from the Metapool
+        uint256 ethAmount = curvePool.remove_liquidity_one_coin(
+            _lpTokens,
+            int128(ethCoinIndex),
+            _minAssets,
+            vaultAddress
+        );
+
+        // Convert ETH to WETH and tansfer to the vault
+        weth.deposit{ value: ethAmount }();
+        require(
+            weth.transfer(vaultAddress, ethAmount),
+            "Transfer of WETH not successful"
+        );
+
+        emit Withdrawal(address(weth), address(lpToken), ethAmount);
+    }
+
+    /***************************************
+                Assets and Rewards
+    ****************************************/
+
     /**
      * @notice Collect accumulated CRV and CVX rewards and send to the Harvester.
      */
@@ -332,6 +463,10 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
     {
         return _asset == address(weth);
     }
+
+    /***************************************
+                    Approvals
+    ****************************************/
 
     /**
      * @notice Approve the spending of all assets by their corresponding pool tokens,

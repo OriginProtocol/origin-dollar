@@ -12,7 +12,10 @@ module.exports = deploymentWithGovernanceProposal(
     );
 
     const dConvexETHMetaStrategy = await deployWithConfirmation(
-      "ConvexEthMetaStrategy"
+      "ConvexEthMetaStrategy",
+      [],
+      null,
+      true // force deploy as storage slots have changed
     );
 
     // Governance Actions

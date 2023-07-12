@@ -249,18 +249,13 @@ async function mintTest(fixture, user, asset, amount = "3") {
     .connect(user)
     .balanceOf(ConvexEthMetaStrategy.address);
 
-  log("Before mint");
   await logCurvePool(oethMetaPool, "ETH ", "OETH");
-  log(
-    `netOusdMintedForStrategy ${await oethVault.netOusdMintedForStrategy()}}`
-  );
 
   // Mint OUSD w/ asset
   await asset.connect(user).approve(oethVault.address, unitAmount);
   await oethVault.connect(user).mint(asset.address, unitAmount, 0);
   await oethVault.connect(user).allocate();
 
-  log("After mint");
   await logCurvePool(oethMetaPool, "ETH ", "OETH");
 
   // Ensure user has correct balance (w/ 1% slippage tolerance)
