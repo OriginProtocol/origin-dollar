@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import { IERC20 } from "../utils/InitializableAbstractStrategy.sol";
+import { IERC20 } from "../../utils/InitializableAbstractStrategy.sol";
 
 interface IAsset {
     // solhint-disable-previous-line no-empty-blocks

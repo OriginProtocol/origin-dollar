@@ -6,8 +6,11 @@ pragma solidity ^0.8.0;
  * @author Origin Protocol Inc
  */
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { IERC20, InitializableAbstractStrategy } from "../utils/InitializableAbstractStrategy.sol";
-import { IBalancerVault } from "../interfaces/IBalancerVault.sol";
+import { IERC20, InitializableAbstractStrategy } from "../../utils/InitializableAbstractStrategy.sol";
+import { IBalancerVault } from "../../interfaces/balancer/IBalancerVault.sol";
+import { IRateProvider } from "../../interfaces/balancer/IRateProvider.sol";
+import { IOracle } from "../../interfaces/IOracle.sol";
+import { IVault } from "../../interfaces/IVault.sol";
 
 abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
     using SafeERC20 for IERC20;
@@ -26,6 +29,15 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         uint256 _newMaxSlippagePercentage
     );
 
+    struct InitConfig {
+        address platformAddress; // platformAddress Address of the Balancer's pool
+        address vaultAddress; // vaultAddress Address of the vault
+        address auraDepositorAddress; // auraDepositorAddress Address of the Auraa depositor(AKA booster) for this pool
+        address auraRewardStakerAddress; // auraRewardStakerAddress Address of the Aura rewards staker
+        uint256 auraDepositorPTokenId; // auraDepositorPTokenId Address of the Aura rewards staker
+        bytes32 balancerPoolId; // balancerPoolId bytes32 poolId
+    }
+
     /**
      * Initializer for setting up strategy internal state. This overrides the
      * InitializableAbstractStrategy initializer as Balancer's strategies don't fit
@@ -35,33 +47,31 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
      *                order as returned by coins on the pool contract, i.e.
      *                WETH, stETH
      * @param _pTokens Platform Token corresponding addresses
-     * @param platformAddress Address of the Balancer's 3pool
-     * @param vaultAddress Address of the vault
-     * @param auraDepositorAddress Address of the Auraa depositor(AKA booster) for this pool
-     * @param auraRewardStakerAddress Address of the Aura rewards staker
-     * @param auraDepositorPTokenId Address of the Aura rewards staker
+     * @param initConfig additional configuration
      */
     function initialize(
         address[] calldata _rewardTokenAddresses, // BAL & AURA
         address[] calldata _assets,
         address[] calldata _pTokens,
-        address platformAddress,
-        address vaultAddress,
-        address auraDepositorAddress,
-        address auraRewardStakerAddress,
-        uint256 auraDepositorPTokenId,
-        bytes32 balancerPoolId
+        InitConfig calldata initConfig
     ) external onlyGovernor initializer {
-        auraDepositorAddress = auraDepositorAddress;
-        auraRewardStakerAddress = auraRewardStakerAddress;
-        auraDepositorPTokenId = auraDepositorPTokenId;
+        auraDepositorAddress = initConfig.auraDepositorAddress;
+        auraRewardStakerAddress = initConfig.auraRewardStakerAddress;
+        auraDepositorPTokenId = initConfig.auraDepositorPTokenId;
         pTokenAddress = _pTokens[0];
         maxWithdrawalSlippage = 1e15;
-        balancerPoolId = balancerPoolId;
+        balancerPoolId = initConfig.balancerPoolId;
+        
+        IERC20[] memory poolAssets = getPoolAssets();
+        uint256 assetsLength = _assets.length;
+        require (poolAssets.length == assetsLength, "Pool assets and _assets should be the same length.");
+        for (uint256 i = 0; i < assetsLength; ++i) {
+            require(_assets[i] == address(poolAssets[i]), "Pool assets and _assets should all have the same numerical order.");
+        }
 
         super._initialize(
-            platformAddress,
-            vaultAddress,
+            initConfig.platformAddress,
+            initConfig.vaultAddress,
             _rewardTokenAddresses,
             _assets,
             _pTokens
@@ -100,7 +110,36 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         }
     }
 
-    
+
+
+    function getMinBPTExpected(address _asset, uint256 _amount)
+        internal
+        view
+        virtual
+        returns (uint256 minBptAmount)
+    {
+        address priceProvider = IVault(vaultAddress).priceProvider();
+        uint256 marketPrice = IOracle(priceProvider).price(_asset);
+        uint256 rateProviderRate = getRateProviderRate(_asset);
+
+        // TODO: account for some slippage?
+        return marketPrice / rateProviderRate;
+    }
+
+    function getRateProviderRate(address _asset) internal virtual view returns(uint256);
+
+    /**
+     * Balancer returns assets and rateProviders for corresponding assets ordered 
+     * by numerical order.
+     */
+    function getPoolAssets()
+        internal
+        view
+        returns(IERC20[] memory assets)
+    {
+        (IERC20[] memory tokens, uint256[] memory balances, uint256 lastChangeBlock) = balancerVault.getPoolTokens(balancerPoolId);
+        return tokens;
+    }
 
     /**
      * @dev Sets max withdrawal slippage that is considered when removing
