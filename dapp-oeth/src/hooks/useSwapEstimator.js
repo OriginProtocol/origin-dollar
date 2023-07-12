@@ -349,11 +349,13 @@ const useSwapEstimator = ({
     }
 
     if (selectedCoin === 'eth') {
-      const swapGasUsage = await contracts.zapper
-        .connect(signer)
-        .estimateGas.deposit({
-          value: ethers.utils.parseEther(String(amount)),
-        })
+      const hasEnoughBalance = parseFloat(balances?.eth) > amount
+
+      const swapGasUsage = hasEnoughBalance
+        ? await contracts.zapper.connect(signer).estimateGas.deposit({
+            value: ethers.utils.parseEther(String(amount)),
+          })
+        : 200000
 
       return {
         canDoSwap: true,
@@ -442,11 +444,15 @@ const useSwapEstimator = ({
         priceToleranceValue
       )
 
+      const hasEnoughBalance = userHasEnoughStablecoin(
+        coinToSwap,
+        parseFloat(inputAmountRaw)
+      )
+
       if (coinToSwap === 'eth' && swapMode === 'mint') {
-        const swapGasUsage = await swapCurveGasEstimate(
-          swapAmount,
-          minSwapAmountQuoted
-        )
+        const swapGasUsage = hasEnoughBalance
+          ? await swapCurveGasEstimate(swapAmount, minSwapAmountQuoted)
+          : 180000
 
         return {
           canDoSwap: true,
@@ -480,11 +486,6 @@ const useSwapEstimator = ({
         ? parseFloat(allowances[coinToSwap]?.[allowanceCheckKey]) <
           parseFloat(inputAmountRaw)
         : true
-
-      const hasEnoughBalance = userHasEnoughStablecoin(
-        coinToSwap,
-        parseFloat(inputAmountRaw)
-      )
 
       if (approveAllowanceNeeded || !hasEnoughBalance) {
         const swapGasUsage = 350000
