@@ -32,8 +32,8 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
     IERC20 internal oeth;
     IWETH9 internal weth;
     // Ordered list of pool assets
-    uint128 internal oethCoinIndex;
-    uint128 internal ethCoinIndex;
+    uint128 constant oethCoinIndex = 1;
+    uint128 constant ethCoinIndex = 0;
 
     /**
      * @dev Verifies that the caller is the Strategist.
@@ -83,8 +83,6 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         curvePool = ICurveETHPoolV1(initConfig.curvePoolAddress);
         oeth = IERC20(initConfig.oethAddress);
         weth = IWETH9(_assets[0]); // WETH address
-        ethCoinIndex = uint128(_getCoinIndex(ETH_ADDRESS));
-        oethCoinIndex = uint128(_getCoinIndex(initConfig.oethAddress));
 
         super._initialize(
             initConfig.curvePoolAddress,
@@ -510,16 +508,6 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         // so we need separate OETH approve
         _approveAsset(address(oeth));
         lpToken.safeApprove(cvxDepositorAddress, type(uint256).max);
-    }
-
-    /**
-     * @dev Get the index of the coin
-     */
-    function _getCoinIndex(address _asset) internal view returns (uint256) {
-        for (uint256 i = 0; i < 2; i++) {
-            if (curvePool.coins(i) == _asset) return i;
-        }
-        revert("Invalid curve pool asset");
     }
 
     /**

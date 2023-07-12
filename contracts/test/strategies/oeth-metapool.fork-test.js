@@ -150,6 +150,20 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
     expect(supplyDiff).to.be.gte(oethUnits("9.95"));
   });
 
+  it("Should be able to check balance", async () => {
+    const { weth, josh, ConvexEthMetaStrategy } = await loadFixture(
+      convexOETHMetaVaultFixture
+    );
+
+    expect(await ConvexEthMetaStrategy.checkBalance(weth.address)).eq(0);
+
+    // This uses a transaction to call a view function so the gas usage can be reported.
+    const tx = await ConvexEthMetaStrategy.connect(
+      josh
+    ).populateTransaction.checkBalance(weth.address);
+    await josh.sendTransaction(tx);
+  });
+
   it("Should redeem", async () => {
     const { oethVault, oeth, weth, josh, ConvexEthMetaStrategy } =
       await loadFixture(convexOETHMetaVaultFixture);
