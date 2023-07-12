@@ -10,6 +10,7 @@ import ContractStore from 'stores/ContractStore'
 import { calculateSwapAmounts } from 'utils/math'
 import fetchWithTimeout from 'utils/fetchWithTimeout'
 import { find } from 'lodash'
+import { useSigner } from 'wagmi'
 
 const parseFloatBN = (value) => parseFloat(ethers.utils.formatEther(value))
 
@@ -47,6 +48,7 @@ const useSwapEstimator = ({
     (s) => s.isGasPriceUserOverriden
   )
 
+  const { data: signer } = useSigner()
   const balances = useStoreState(AccountStore, (s) => s.balances)
 
   const { contract: coinToSwapContract, decimals: coinToSwapDecimals } =
@@ -263,7 +265,7 @@ const useSwapEstimator = ({
       estimation.gasEstimateEth =
         (parseFloat(ethers.utils.formatUnits(gasPrice, 'gwei')) *
           parseFloat(estimation.gasUsed)) /
-        100000000
+        1000000000
 
       if (estimation.approveAllowanceNeeded) {
         estimation.gasEstimateSwap = getGasUsdCost(
@@ -319,7 +321,7 @@ const useSwapEstimator = ({
     const gasInGwei = ethers.utils.formatUnits(gasPrice, 'gwei')
     // gwei offset
     return (
-      (parseFloat(gasLimit) * parseFloat(gasInGwei) * flooredEth) / 100000000
+      (parseFloat(gasLimit) * parseFloat(gasInGwei) * flooredEth) / 1000000000
     )
   }
 
@@ -347,7 +349,11 @@ const useSwapEstimator = ({
     }
 
     if (selectedCoin === 'eth') {
-      const swapGasUsage = 90000 // TODO: Update this
+      const swapGasUsage = await contracts.zapper
+        .connect(signer)
+        .estimateGas.deposit({
+          value: ethers.utils.parseEther(String(amount)),
+        })
 
       return {
         canDoSwap: true,
@@ -430,8 +436,17 @@ const useSwapEstimator = ({
         }
       }
 
+      const { minSwapAmount: minSwapAmountQuoted } = calculateSwapAmounts(
+        amountReceived,
+        coinToReceiveDecimals,
+        priceToleranceValue
+      )
+
       if (coinToSwap === 'eth' && swapMode === 'mint') {
-        const swapGasUsage = 90000 // TODO: Update this
+        const swapGasUsage = await swapCurveGasEstimate(
+          swapAmount,
+          minSwapAmountQuoted
+        )
 
         return {
           canDoSwap: true,
@@ -494,15 +509,6 @@ const useSwapEstimator = ({
           hasEnoughBalance,
         }
       }
-
-      const {
-        swapAmount: swapAmountQuoted,
-        minSwapAmount: minSwapAmountQuoted,
-      } = calculateSwapAmounts(
-        amountReceived,
-        coinToReceiveDecimals,
-        priceToleranceValue
-      )
 
       const gasEstimate = await swapCurveGasEstimate(
         swapAmount,
