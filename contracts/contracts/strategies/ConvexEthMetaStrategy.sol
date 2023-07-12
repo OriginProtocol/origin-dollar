@@ -21,19 +21,19 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
     using StableMath for uint256;
     using SafeERC20 for IERC20;
 
-    uint256 internal constant MAX_SLIPPAGE = 1e16; // 1%, same as the Curve UI
-    address internal constant ETH_ADDRESS =
+    uint256 public constant MAX_SLIPPAGE = 1e16; // 1%, same as the Curve UI
+    address public constant ETH_ADDRESS =
         0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
-    address immutable cvxDepositorAddress;
+    address public immutable cvxDepositorAddress;
     IRewardStaking public immutable cvxRewardStaker;
-    uint256 immutable cvxDepositorPTokenId;
-    ICurveETHPoolV1 immutable curvePool;
-    IERC20 immutable lpToken;
-    IERC20 immutable oeth;
-    IWETH9 immutable weth;
+    uint256 public immutable cvxDepositorPTokenId;
+    ICurveETHPoolV1 public immutable curvePool;
+    IERC20 public immutable lpToken;
+    IERC20 public immutable oeth;
+    IWETH9 public immutable weth;
     // Ordered list of pool assets
-    uint128 constant oethCoinIndex = 1;
-    uint128 constant ethCoinIndex = 0;
+    uint128 public constant oethCoinIndex = 1;
+    uint128 public constant ethCoinIndex = 0;
 
     /**
      * @dev Verifies that the caller is the Strategist.
