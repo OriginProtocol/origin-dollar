@@ -105,6 +105,22 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
       .checkDelta(profit, variance, valueChange, variance);
   });
 
+  it("Should be able to check balance", async () => {
+    const { weth, josh, ConvexEthMetaStrategy } = await loadFixture(
+      convexOETHMetaVaultFixture
+    );
+
+    const balance = await ConvexEthMetaStrategy.checkBalance(weth.address);
+    log(`check balance ${balance}`);
+    expect(balance).gt(0);
+
+    // This uses a transaction to call a view function so the gas usage can be reported.
+    const tx = await ConvexEthMetaStrategy.connect(
+      josh
+    ).populateTransaction.checkBalance(weth.address);
+    await josh.sendTransaction(tx);
+  });
+
   it("Should deposit to Metapool", async function () {
     // TODO: should have differently balanced metapools
     const fixture = await loadFixture(convexOETHMetaVaultFixture);
@@ -148,20 +164,6 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
     const supplyDiff = currentSupply.sub(newSupply);
 
     expect(supplyDiff).to.be.gte(oethUnits("9.95"));
-  });
-
-  it("Should be able to check balance", async () => {
-    const { weth, josh, ConvexEthMetaStrategy } = await loadFixture(
-      convexOETHMetaVaultFixture
-    );
-
-    expect(await ConvexEthMetaStrategy.checkBalance(weth.address)).eq(0);
-
-    // This uses a transaction to call a view function so the gas usage can be reported.
-    const tx = await ConvexEthMetaStrategy.connect(
-      josh
-    ).populateTransaction.checkBalance(weth.address);
-    await josh.sendTransaction(tx);
   });
 
   it("Should redeem", async () => {
