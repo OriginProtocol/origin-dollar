@@ -111,17 +111,6 @@ const GetOUSD = ({
   const [userAlreadyConnectedWallet, setUserAlreadyConnectedWallet] =
     useState(false)
 
-  const classList = classnames(
-    'btn d-flex align-items-center justify-content-center',
-    className,
-    dark && 'btn-dark',
-    light && 'btn-light',
-    light2 && 'btn-light2',
-    primary && 'btn-primary',
-    zIndex2 && 'zIndex2',
-    navMarble && 'nav-marble'
-  )
-
   useEffect(() => {
     if (
       !userAlreadyConnectedWallet &&
@@ -139,7 +128,7 @@ const GetOUSD = ({
     <>
       <CustomConnectButton
         id={id}
-        className={classList}
+        className={className}
         style={style}
         onClick={() => {
           if (process.browser) {
