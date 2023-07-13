@@ -148,3 +148,98 @@ def main():
       print("Transaction ", idx)
       print("To: ", item.receiver)
       print("Data (Hex encoded): ", item.input, "\n")
+
+# -------------------------------
+# July 13, 2023 - OUSD Allocation
+# -------------------------------
+from world import *
+
+txs = []
+with TemporaryFork():
+  # Before
+  txs.append(vault_core.rebase({'from': STRATEGIST}))
+  txs.append(vault_value_checker.takeSnapshot({'from': STRATEGIST}))
+
+  # Withdraw all from Aave
+  txs.append(
+    vault_admin.withdrawAllFromStrategy(AAVE_STRAT, {'from': STRATEGIST})
+  )
+
+  # Deposit 610k USDC and 116k USDT to Morpho Compound
+  txs.append(
+    vault_admin.depositToStrategy(
+      MORPHO_COMP_STRAT,
+      [usdc, usdt],
+      [610430.4 * 10**6, 116194.6 * 10**6],
+      {'from': STRATEGIST}
+    )
+  )
+
+  # Withdraw all from Morpho Aave
+  txs.append(
+    vault_admin.withdrawAllFromStrategy(MORPHO_AAVE_STRAT, {'from': STRATEGIST})
+  )
+
+  print(
+    usdc.balanceOf(VAULT_PROXY_ADDRESS),
+    usdt.balanceOf(VAULT_PROXY_ADDRESS)
+  )
+
+  # Deposit 1.3M USDC and 17.9M USDT to Curve AMO
+  txs.append(
+    vault_admin.depositToStrategy(
+      OUSD_METASTRAT,
+      [usdc, usdt],
+      [1347281.17 * 10**6, 17905997.31 * 10**6],
+      {'from': STRATEGIST}
+    )
+  )
+
+  # Withdraw 15.9M USDT and 1.29M DAI from Curve AMO
+  txs.append(
+    vault_admin.withdrawFromStrategy(
+      OUSD_METASTRAT,
+      [usdt, dai],
+      [15941377.71 * 10**6, 1294804.37 * 10**18],
+      {'from': STRATEGIST}
+    )
+  )
+
+  # Deposit all DAI to Morpho Compound
+  txs.append(
+    vault_admin.depositToStrategy(
+      MORPHO_COMP_STRAT,
+      [dai],
+      [dai.balanceOf(VAULT_PROXY_ADDRESS)],
+      {'from': STRATEGIST}
+    )
+  )
+
+  # Deposit all USDT to Morpho Aave
+  txs.append(
+    vault_admin.depositToStrategy(
+      MORPHO_AAVE_STRAT,
+      [usdt],
+      [usdt.balanceOf(VAULT_PROXY_ADDRESS)],
+      {'from': STRATEGIST}
+    )
+  )
+
+  # Finish it off with a rebase
+  txs.append(vault_core.rebase({'from': STRATEGIST}))
+
+  # After
+  vault_change = vault_core.totalValue() - vault_value_checker.snapshots(STRATEGIST)[0]
+  supply_change = ousd.totalSupply() - vault_value_checker.snapshots(STRATEGIST)[1]
+  profit = vault_change - supply_change
+
+  txs.append(vault_value_checker.checkDelta(profit, (500 * 10**18), vault_change, (500 * 10**18), {'from': STRATEGIST}))
+  print("-----")
+  print("Profit", "{:.6f}".format(profit / 10**18), profit)
+  print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
+
+  print("Schedule the following transactions on Gnosis Safe")
+  for idx, item in enumerate(txs):
+    print("Transaction ", idx)
+    print("To: ", item.receiver)
+    print("Data (Hex encoded): ", item.input, "\n")
