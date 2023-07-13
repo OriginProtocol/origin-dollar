@@ -26,7 +26,7 @@ import GetOUSD from 'components/GetOUSD'
 
 const StakeUI = ({ rpcProvider, isMobile }) => {
   const { chain } = useNetwork()
-  const { address: account } = useAccount()
+  const { address: account, isConnected: active } = useAccount()
   const chainId = chain?.id
   const { data: signer } = useSigner()
 
