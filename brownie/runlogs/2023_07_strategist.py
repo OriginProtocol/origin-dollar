@@ -148,14 +148,34 @@ def main():
       print("Transaction ", idx)
       print("To: ", item.receiver)
       print("Data (Hex encoded): ", item.input, "\n")
-
 # -------------------------------
 # July 13, 2023 - OUSD Allocation
 # -------------------------------
 from world import *
+from allocations import *
 
 txs = []
-with TemporaryFork():
+
+votes = """
+Morpho Aave USDT  79.46%
+Convex OUSD+3Crv  9.93%
+Morpho Compound DAI 7.06%
+Morpho Compound USDC 2.99%
+Morpho Compound USDT 0.57%
+Morpho Aave DAI 0%
+Morpho Aave USDC  0%
+Convex DAI+USDC+USDT  0%
+Aave DAI  0%
+Convex LUSD+3Crv  0%
+Existing Allocation 0%
+Aave USDC 0%
+Aave USDT 0%
+Compound DAI  0%
+Compound USDC 0%
+Compound USDT 0%
+"""
+
+with TemporaryForkWithVaultStats(votes=votes):
   # Before
   txs.append(vault_core.rebase({'from': STRATEGIST}))
   txs.append(vault_value_checker.takeSnapshot({'from': STRATEGIST}))
@@ -167,11 +187,12 @@ with TemporaryFork():
 
   # Deposit 610k USDC and 116k USDT to Morpho Compound
   txs.append(
-    vault_admin.depositToStrategy(
+    to_strat(
       MORPHO_COMP_STRAT,
-      [usdc, usdt],
-      [610430.4 * 10**6, 116194.6 * 10**6],
-      {'from': STRATEGIST}
+      [
+        [610_430.4, usdc],
+        [116_194.6, usdt],
+      ]
     )
   )
 
@@ -180,54 +201,44 @@ with TemporaryFork():
     vault_admin.withdrawAllFromStrategy(MORPHO_AAVE_STRAT, {'from': STRATEGIST})
   )
 
-  print(
-    usdc.balanceOf(VAULT_PROXY_ADDRESS),
-    usdt.balanceOf(VAULT_PROXY_ADDRESS)
-  )
-
   # Deposit 3.61M USDT and USDC to Curve AMO
   txs.append(
-    vault_admin.depositToStrategy(
+    to_strat(
       OUSD_METASTRAT,
-      [usdc, usdt],
-      [1335700 * 10**6, 2274300 * 10**6],
-      {'from': STRATEGIST}
+      [
+        [1_335_700, usdc],
+        [2_274_300, usdt],
+      ]
     )
   )
 
-  net_held_by_amo = ousd_meta_strat.checkBalance(usdt) + ousd_meta_strat.checkBalance(usdc) + (ousd_meta_strat.checkBalance(dai) / 10**12)
-  # Withdraw 80% in USDT and rest in DAI from Curve AMO
+  # Withdraw 20% in USDT and rest in DAI from Curve AMO
   txs.append(
-    vault_admin.withdrawFromStrategy(
+    from_strat(
       OUSD_METASTRAT,
-      [usdt, dai],
-      [net_held_by_amo * 0.8 / 10**12, net_held_by_amo * 0.2],
-      {'from': STRATEGIST}
+      [
+        [200_000, usdt],
+        [800_000, dai],
+      ]
     )
   )
 
   # Deposit all DAI to Morpho Compound
   txs.append(
-    vault_admin.depositToStrategy(
-      MORPHO_COMP_STRAT,
-      [dai],
-      [dai.balanceOf(VAULT_PROXY_ADDRESS)],
-      {'from': STRATEGIST}
-    )
+    to_strat(MORPHO_COMP_STRAT, [[944_382, dai]])
   )
 
   # Deposit all USDT to Morpho Aave
   txs.append(
-    vault_admin.depositToStrategy(
-      MORPHO_AAVE_STRAT,
-      [usdt],
-      [usdt.balanceOf(VAULT_PROXY_ADDRESS)],
-      {'from': STRATEGIST}
-    )
+    to_strat(MORPHO_AAVE_STRAT, [[16_094_394, usdt]])
   )
 
   # Finish it off with a rebase
   txs.append(vault_core.rebase({'from': STRATEGIST}))
+
+  # Set default strategies
+  txs.append(vault_admin.setAssetDefaultStrategy(usdc, MORPHO_COMP_STRAT,{'from' :STRATEGIST}))
+  txs.append(vault_admin.setAssetDefaultStrategy(dai, MORPHO_COMP_STRAT,{'from': STRATEGIST}))
 
   # After
   vault_change = vault_core.totalValue() - vault_value_checker.snapshots(STRATEGIST)[0]
