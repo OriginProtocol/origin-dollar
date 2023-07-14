@@ -185,22 +185,23 @@ with TemporaryFork():
     usdt.balanceOf(VAULT_PROXY_ADDRESS)
   )
 
-  # Deposit 1.3M USDC and 17.9M USDT to Curve AMO
+  # Deposit 3.61M USDT and USDC to Curve AMO
   txs.append(
     vault_admin.depositToStrategy(
       OUSD_METASTRAT,
       [usdc, usdt],
-      [1347281.17 * 10**6, 17905997.31 * 10**6],
+      [1335700 * 10**6, 2274300 * 10**6],
       {'from': STRATEGIST}
     )
   )
 
-  # Withdraw 15.9M USDT and 1.29M DAI from Curve AMO
+  net_held_by_amo = ousd_meta_strat.checkBalance(usdt) + ousd_meta_strat.checkBalance(usdc) + (ousd_meta_strat.checkBalance(dai) / 10**12)
+  # Withdraw 80% in USDT and rest in DAI from Curve AMO
   txs.append(
     vault_admin.withdrawFromStrategy(
       OUSD_METASTRAT,
       [usdt, dai],
-      [15941377.71 * 10**6, 1294804.37 * 10**18],
+      [net_held_by_amo * 0.8 / 10**12, net_held_by_amo * 0.2],
       {'from': STRATEGIST}
     )
   )
