@@ -34,10 +34,10 @@ module.exports = deploymentWithGovernanceProposal(
     // 1. Deploy new proxy
     // New strategy will be living at a clean address
     const dOETHBalancerMetaPoolStrategyProxy = await deployWithConfirmation(
-      "OETHBalancerMetaPoolStrategyProxy"
+      "OETHBalancerMetaPoolWstEthWethStrategyProxy"
     );
     const cOETHBalancerMetaPoolStrategyProxy = await ethers.getContractAt(
-      "OETHBalancerMetaPoolStrategyProxy",
+      "OETHBalancerMetaPoolWstEthWethStrategyProxy",
       dOETHBalancerMetaPoolStrategyProxy.address
     );
 

@@ -162,6 +162,7 @@ const defaultFixture = deployments.createFixture(async () => {
     morpho,
     morphoCompoundStrategy,
     fraxEthStrategy,
+    balancerWstEthWethStrategy,
     morphoAaveStrategy,
     oethMorphoAaveStrategy,
     morphoLens,
@@ -263,6 +264,14 @@ const defaultFixture = deployments.createFixture(async () => {
     fraxEthStrategy = await ethers.getContractAt(
       "FraxETHStrategy",
       fraxEthStrategyProxy.address
+    );
+
+    const balancerWstEthWethStrategyProxy = await ethers.getContract(
+      "OETHBalancerMetaPoolWstEthWethStrategyProxy"
+    );
+    balancerWstEthWethStrategy = await ethers.getContractAt(
+      "OETHBalancerMetaPoolStrategy",
+      balancerWstEthWethStrategyProxy.address
     );
 
     const oethHarvesterProxy = await ethers.getContract("OETHHarvesterProxy");
@@ -540,6 +549,7 @@ const defaultFixture = deployments.createFixture(async () => {
     frxETH,
     sfrxETH,
     fraxEthStrategy,
+    balancerWstEthWethStrategy,
     oethMorphoAaveStrategy,
     woeth,
     ConvexEthMetaStrategy,
@@ -814,6 +824,42 @@ async function convexVaultFixture() {
     .setAssetDefaultStrategy(
       fixture.usdc.address,
       fixture.convexStrategy.address
+    );
+  return fixture;
+}
+
+/**
+ * Configure a Vault with only the balancerWstEthWethStrategy
+ */
+async function balancerWstEthWethFixture() {
+  const fixture = await loadFixture(defaultFixture);
+  const { oethVault, timelock, weth, balancerWstEthWethStrategy } = fixture;
+
+  const sTimelock = await ethers.provider.getSigner(timelock);
+
+  await fixture.oethVault
+    .connect(sTimelock)
+    .setAssetDefaultStrategy(
+      fixture.weth.address,
+      fixture.balancerWstEthWethStrategy.address
+    );
+  await fixture.oethVault
+    .connect(sTimelock)
+    .setAssetDefaultStrategy(
+      fixture.stETH.address,
+      fixture.balancerWstEthWethStrategy.address
+    );
+  await fixture.oethVault
+    .connect(sTimelock)
+    .setAssetDefaultStrategy(
+      fixture.weth.address,
+      fixture.balancerWstEthWethStrategy.address
+    );
+  await fixture.oethVault
+    .connect(sTimelock)
+    .setAssetDefaultStrategy(
+      fixture.stETH.address,
+      fixture.balancerWstEthWethStrategy.address
     );
   return fixture;
 }
