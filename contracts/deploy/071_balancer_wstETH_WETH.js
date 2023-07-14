@@ -56,48 +56,39 @@ module.exports = deploymentWithGovernanceProposal(
       cOETHHarvesterProxy.address
     );
 
-    // 3. Init the proxy to point at the implementation
+    // 3. Encode the init data
+    const initFunction =
+      "initialize(address[],address[],address[],(address,address,address,address,uint256,bytes32))";
+    const initData = cOETHBalancerMetaPoolStrategy.interface.encodeFunctionData(initFunction, [
+      [addresses.mainnet.BAL, addresses.mainnet.AURA],
+      [addresses.mainnet.stETH, addresses.mainnet.WETH],
+      [
+        addresses.mainnet.wstETH_WETH_BPT,
+        addresses.mainnet.wstETH_WETH_BPT
+      ],
+      [
+        addresses.mainnet.wstETH_WETH_BPT,
+        cOETHVaultProxy.address,
+        addresses.mainnet.aureDepositor, // auraDepositorAddress,
+        addresses.mainnet.CurveOUSDMetaPool, // auraRewardStakerAddress
+        balancerWstEthWethPID, // auraDepositorPTokenId
+        "0x32296969ef14eb0c6d29669c550d4a0449130230000200000000000000000080"
+      ]
+    ]);
+
+    // 4. Init the proxy to point at the implementation
     await withConfirmation(
       cOETHBalancerMetaPoolStrategyProxy
         .connect(sDeployer)
         ["initialize(address,address,bytes)"](
           dOETHBalancerMetaPoolStrategyImpl.address,
-          sDeployer.address,
-          [],
+          addresses.mainnet.Timelock,
+          initData,
           await getTxOpts()
         )
     );
 
-    // 4. Init and configure new Convex OUSD Meta strategy
-    const initFunction =
-      "initialize(address[],address[],address[],(address,address,address,address,uint256,bytes32))";
-    await withConfirmation(
-      cOETHBalancerMetaPoolStrategy.connect(sDeployer)[initFunction](
-        [addresses.mainnet.BAL, addresses.mainnet.AURA],
-        [addresses.mainnet.stETH, addresses.mainnet.WETH],
-        [
-          addresses.mainnet.wstETH_WETH_BPT,
-          addresses.mainnet.wstETH_WETH_BPT
-        ],
-        [
-          addresses.mainnet.wstETH_WETH_BPT,
-          cOETHVaultProxy.address,
-          addresses.mainnet.aureDepositor, // auraDepositorAddress,
-          addresses.mainnet.CurveOUSDMetaPool, // auraRewardStakerAddress
-          balancerWstEthWethPID, // auraDepositorPTokenId
-          "0x32296969ef14eb0c6d29669c550d4a0449130230000200000000000000000080"
-        ],
-        await getTxOpts()
-      )
-    );
-
     console.log("INIT DONE");
-
-    await withConfirmation(
-      cOETHBalancerMetaPoolStrategy
-        .connect(sDeployer)
-        .transferGovernance(addresses.mainnet.Timelock, await getTxOpts())
-    );
 
     console.log(
       "BALANCER STRATEGY ADDRESS",
@@ -109,31 +100,19 @@ module.exports = deploymentWithGovernanceProposal(
     return {
       name: "Deploy new Balancer MetaPool strategy",
       actions: [
-        // 1. Accept governance of the new strategy
-        {
-          contract: cOETHBalancerMetaPoolStrategy,
-          signature: "claimGovernance()",
-          args: [],
-        },
-        // 2. Add new strategy to the vault
+        // 1. Add new strategy to the vault
         {
           contract: cOETHVaultAdmin,
           signature: "approveStrategy(address)",
           args: [cOETHBalancerMetaPoolStrategy.address],
         },
-        // 3. Set OUSD meta strategy on Vault Admin contract
-        {
-          contract: cOETHVaultAdmin,
-          signature: "setOusdMetaStrategy(address)",
-          args: [cOETHBalancerMetaPoolStrategy.address],
-        },
-        // 4. Set supported strategy on Harvester
+        // 2. Set supported strategy on Harvester
         {
           contract: cOETHHarvester,
           signature: "setSupportedStrategy(address,bool)",
           args: [cOETHBalancerMetaPoolStrategy.address, true],
         },
-        // 5. Set harvester address
+        // 3. Set harvester address
         {
           contract: cOETHBalancerMetaPoolStrategy,
           signature: "setHarvesterAddress(address)",

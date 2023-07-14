@@ -17,12 +17,13 @@ import "hardhat/console.sol";
 
 abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
     using SafeERC20 for IERC20;
+    IBalancerVault internal immutable balancerVault = IBalancerVault(0xBA12222222228d8Ba445958a75a0704d566BF2C8);
+
     address internal auraDepositorAddress;
     address internal auraRewardStakerAddress;
     uint256 internal auraDepositorPTokenId;
     address internal pTokenAddress;
     bytes32 internal balancerPoolId;
-    IBalancerVault internal balancerVault = IBalancerVault(0xBA12222222228d8Ba445958a75a0704d566BF2C8);
     // Max withdrawal slippage denominated in 1e18 (1e18 == 100%)
     uint256 public maxWithdrawalSlippage;
     int256[50] private __reserved;
@@ -58,22 +59,20 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         address[] calldata _pTokens,
         InitConfig calldata initConfig
     ) external onlyGovernor initializer {
-        console.log("sol 1");
         auraDepositorAddress = initConfig.auraDepositorAddress;
         auraRewardStakerAddress = initConfig.auraRewardStakerAddress;
         auraDepositorPTokenId = initConfig.auraDepositorPTokenId;
         pTokenAddress = _pTokens[0];
         maxWithdrawalSlippage = 1e15;
         balancerPoolId = initConfig.balancerPoolId;
-        console.log("sol 2");
         IERC20[] memory poolAssets = getPoolAssets();
         uint256 assetsLength = _assets.length;
         require (poolAssets.length == assetsLength, "Pool assets and _assets should be the same length.");
         for (uint256 i = 0; i < assetsLength; ++i) {
-            require(_assets[i] == address(poolAssets[i]), "Pool assets and _assets should all have the same numerical order.");
+            (address strategyAsset, ) = fromPoolAsset(address(poolAssets[i]), 0);
+            require(_assets[i] == strategyAsset, "Pool assets and _assets should all have the same numerical order.");
         }
 
-        console.log("sol 3");
         super._initialize(
             initConfig.platformAddress,
             initConfig.vaultAddress,
