@@ -3,11 +3,22 @@ pragma solidity ^0.8.0;
 
 import { IERC20 } from "../../utils/InitializableAbstractStrategy.sol";
 
-interface IAsset {
-    // solhint-disable-previous-line no-empty-blocks
-}
-
 interface IBalancerVault {
+    enum WeightedPoolJoinKind {
+      INIT,
+      EXACT_TOKENS_IN_FOR_BPT_OUT,
+      TOKEN_IN_FOR_EXACT_BPT_OUT,
+      ALL_TOKENS_IN_FOR_EXACT_BPT_OUT,
+      ADD_TOKEN
+    }
+
+    enum WeightedPoolExitKind {
+      EXACT_BPT_IN_FOR_ONE_TOKEN_OUT,
+      EXACT_BPT_IN_FOR_TOKENS_OUT,
+      BPT_IN_FOR_EXACT_TOKENS_OUT,
+      REMOVE_TOKEN
+    }
+
     /**
      * @dev Called by users to join a Pool, which transfers tokens from `sender` into the Pool's balance. This will
      * trigger custom Pool behavior, which will typically grant something in return to `recipient` - often tokenized
@@ -48,7 +59,7 @@ interface IBalancerVault {
     ) external payable;
 
     struct JoinPoolRequest {
-        IAsset[] assets;
+        address[] assets;
         uint256[] maxAmountsIn;
         bytes userData;
         bool fromInternalBalance;
@@ -97,7 +108,7 @@ interface IBalancerVault {
     ) external;
 
     struct ExitPoolRequest {
-        IAsset[] assets;
+        address[] assets;
         uint256[] minAmountsOut;
         bytes userData;
         bool toInternalBalance;

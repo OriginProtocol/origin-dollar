@@ -2,6 +2,7 @@ const threeCRVPid = 9;
 const metapoolLPCRVPid = 56;
 const lusdMetapoolLPCRVPid = 33;
 const oethPoolLpPID = 174;
+const balancerWstEthWethPID = 115;
 const { BigNumber } = require("ethers");
 const MAX_UINT256 = BigNumber.from(
   "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
@@ -13,6 +14,7 @@ module.exports = {
   lusdMetapoolLPCRVPid,
   oethPoolLpPID,
   MAX_UINT256,
+  balancerWstEthWethPID
 };
 
 // These are all the metapool ids. For easier future reference

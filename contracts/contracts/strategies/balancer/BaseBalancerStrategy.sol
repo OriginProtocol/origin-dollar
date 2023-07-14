@@ -11,6 +11,9 @@ import { IBalancerVault } from "../../interfaces/balancer/IBalancerVault.sol";
 import { IRateProvider } from "../../interfaces/balancer/IRateProvider.sol";
 import { IOracle } from "../../interfaces/IOracle.sol";
 import { IVault } from "../../interfaces/IVault.sol";
+import { IWstETH } from "../../interfaces/IWstETH.sol";
+import { IERC4626 } from "../../../lib/openzeppelin/interfaces/IERC4626.sol";
+import "hardhat/console.sol";
 
 abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
     using SafeERC20 for IERC20;
@@ -19,10 +22,10 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
     uint256 internal auraDepositorPTokenId;
     address internal pTokenAddress;
     bytes32 internal balancerPoolId;
+    IBalancerVault internal balancerVault = IBalancerVault(0xBA12222222228d8Ba445958a75a0704d566BF2C8);
     // Max withdrawal slippage denominated in 1e18 (1e18 == 100%)
     uint256 public maxWithdrawalSlippage;
     int256[50] private __reserved;
-    IBalancerVault private balancerVault = IBalancerVault(0xBA12222222228d8Ba445958a75a0704d566BF2C8);
 
     event MaxWithdrawalSlippageUpdated(
         uint256 _prevMaxSlippagePercentage,
@@ -55,13 +58,14 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         address[] calldata _pTokens,
         InitConfig calldata initConfig
     ) external onlyGovernor initializer {
+        console.log("sol 1");
         auraDepositorAddress = initConfig.auraDepositorAddress;
         auraRewardStakerAddress = initConfig.auraRewardStakerAddress;
         auraDepositorPTokenId = initConfig.auraDepositorPTokenId;
         pTokenAddress = _pTokens[0];
         maxWithdrawalSlippage = 1e15;
         balancerPoolId = initConfig.balancerPoolId;
-        
+        console.log("sol 2");
         IERC20[] memory poolAssets = getPoolAssets();
         uint256 assetsLength = _assets.length;
         require (poolAssets.length == assetsLength, "Pool assets and _assets should be the same length.");
@@ -69,6 +73,7 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
             require(_assets[i] == address(poolAssets[i]), "Pool assets and _assets should all have the same numerical order.");
         }
 
+        console.log("sol 3");
         super._initialize(
             initConfig.platformAddress,
             initConfig.vaultAddress,
@@ -128,6 +133,16 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
 
     function getRateProviderRate(address _asset) internal virtual view returns(uint256);
 
+    function _lpDepositAll() internal virtual
+    {
+
+    }
+
+    function _lpWithdrawAll() internal virtual
+    {
+        
+    }
+
     /**
      * Balancer returns assets and rateProviders for corresponding assets ordered 
      * by numerical order.
@@ -139,6 +154,53 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
     {
         (IERC20[] memory tokens, uint256[] memory balances, uint256 lastChangeBlock) = balancerVault.getPoolTokens(balancerPoolId);
         return tokens;
+    }
+
+    /**
+     * Balancer pools might have wrapped versions of assets that the strategy
+     * is handling. This function takes care of the conversion: 
+     * strategy asset -> pool asset
+     */
+    function toPoolAsset(address asset, uint256 amount)
+        view
+        internal
+        returns(address poolAsset, uint256 poolAmount)
+    {
+        // if stEth
+        if (asset == 0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84) {
+            // wstEth
+            poolAsset = 0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0;
+            poolAmount = IWstETH(0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0).getWstETHByStETH(amount);
+        // if frxEth
+        } else if (asset == 0x5E8422345238F34275888049021821E8E08CAa1f) {
+            // sfrxEth
+            poolAsset = 0xac3E018457B222d93114458476f3E3416Abbe38F;
+            poolAmount = IERC4626(0xac3E018457B222d93114458476f3E3416Abbe38F).convertToShares(amount);
+        } else {
+            poolAsset = asset;
+            poolAmount = amount;
+        }
+    }
+
+    function fromPoolAsset(address asset, uint256 amount)
+        view
+        internal
+        returns(address strategyAsset, uint256 strategyAmount)
+    {
+        // if wstEth
+        if (asset == 0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0) {
+            // stEth
+            strategyAsset = 0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84;
+            strategyAmount = IWstETH(0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0).getStETHByWstETH(amount);
+        // if frxEth
+        } else if (asset == 0xac3E018457B222d93114458476f3E3416Abbe38F) {
+            // sfrxEth
+            strategyAsset = 0x5E8422345238F34275888049021821E8E08CAa1f;
+            strategyAmount = IERC4626(0xac3E018457B222d93114458476f3E3416Abbe38F).convertToAssets(amount);
+        } else {
+            strategyAsset = asset;
+            strategyAmount = amount;
+        }
     }
 
     /**

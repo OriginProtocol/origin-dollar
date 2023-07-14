@@ -156,3 +156,10 @@ contract BuybackProxy is InitializeGovernedUpgradeabilityProxy {
 contract OETHMorphoAaveStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
+
+/**
+ * @notice OETHBalancerMetaPoolStrategyProxy delegates calls to a BalancerMetaPoolStrategy implementation
+ */
+contract OETHBalancerMetaPoolStrategyProxy is InitializeGovernedUpgradeabilityProxy {
+
+}

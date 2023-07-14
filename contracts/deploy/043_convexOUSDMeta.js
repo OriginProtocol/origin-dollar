@@ -99,7 +99,7 @@ module.exports = deploymentWithProposal(
     await withConfirmation(
       cConvexOUSDMetaStrategy
         .connect(sDeployer)
-        .transferGovernance(governorAddr, await getTxOpts())
+        .transferGovernance(addresses.mainnet.Timelock, await getTxOpts())
     );
 
     console.log(
