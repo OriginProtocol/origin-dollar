@@ -21,19 +21,19 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
     using StableMath for uint256;
     using SafeERC20 for IERC20;
 
-    uint256 internal constant MAX_SLIPPAGE = 1e16; // 1%, same as the Curve UI
-    address internal constant ETH_ADDRESS =
+    uint256 public constant MAX_SLIPPAGE = 1e16; // 1%, same as the Curve UI
+    address public constant ETH_ADDRESS =
         0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
-    address internal cvxDepositorAddress;
-    IRewardStaking public cvxRewardStaker;
-    uint256 internal cvxDepositorPTokenId;
-    ICurveETHPoolV1 internal curvePool;
-    IERC20 internal lpToken;
-    IERC20 internal oeth;
-    IWETH9 internal weth;
+    address public immutable cvxDepositorAddress;
+    IRewardStaking public immutable cvxRewardStaker;
+    uint256 public immutable cvxDepositorPTokenId;
+    ICurveETHPoolV1 public immutable curvePool;
+    IERC20 public immutable lpToken;
+    IERC20 public immutable oeth;
+    IWETH9 public immutable weth;
     // Ordered list of pool assets
-    uint128 internal oethCoinIndex;
-    uint128 internal ethCoinIndex;
+    uint128 public constant oethCoinIndex = 1;
+    uint128 public constant ethCoinIndex = 0;
 
     /**
      * @dev Verifies that the caller is the Strategist.
@@ -55,6 +55,17 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         address cvxRewardStakerAddress; //Address of the CVX rewards staker
         address curvePoolLpToken; //Address of metapool LP token
         uint256 cvxDepositorPTokenId; //Pid of the pool referred to by Depositor and staker
+        address wethAddress; //Address of WETH
+    }
+
+    constructor(InitializeConfig memory initConfig) {
+        cvxDepositorAddress = initConfig.cvxDepositorAddress;
+        cvxRewardStaker = IRewardStaking(initConfig.cvxRewardStakerAddress);
+        cvxDepositorPTokenId = initConfig.cvxDepositorPTokenId;
+        lpToken = IERC20(initConfig.curvePoolLpToken);
+        curvePool = ICurveETHPoolV1(initConfig.curvePoolAddress);
+        oeth = IERC20(initConfig.oethAddress);
+        weth = IWETH9(initConfig.wethAddress);
     }
 
     /**
@@ -65,33 +76,24 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
      * @param _assets Addresses of supported assets. MUST be passed in the same
      *                order as returned by coins on the pool contract, i.e.
      *                WETH
-     * @param initConfig Various addresses and info for initialization state
+     * @param _vaultAddress address of the vault proxy contract.
      */
     function initialize(
         address[] calldata _rewardTokenAddresses, // CRV + CVX
         address[] calldata _assets,
-        address[] calldata _pTokens,
-        InitializeConfig calldata initConfig
+        address _vaultAddress
     ) external onlyGovernor initializer {
         require(_assets.length == 1, "Must have exactly one asset");
-        // Should be set prior to abstract initialize call otherwise
-        // abstractSetPToken calls will fail
-        cvxDepositorAddress = initConfig.cvxDepositorAddress;
-        cvxRewardStaker = IRewardStaking(initConfig.cvxRewardStakerAddress);
-        cvxDepositorPTokenId = initConfig.cvxDepositorPTokenId;
-        lpToken = IERC20(initConfig.curvePoolLpToken);
-        curvePool = ICurveETHPoolV1(initConfig.curvePoolAddress);
-        oeth = IERC20(initConfig.oethAddress);
-        weth = IWETH9(_assets[0]); // WETH address
-        ethCoinIndex = uint128(_getCoinIndex(ETH_ADDRESS));
-        oethCoinIndex = uint128(_getCoinIndex(initConfig.oethAddress));
+
+        address[] memory pTokens = new address[](1);
+        pTokens[0] = address(curvePool);
 
         super._initialize(
-            initConfig.curvePoolAddress,
-            initConfig.vaultAddress,
+            address(curvePool),
+            _vaultAddress,
             _rewardTokenAddresses,
             _assets,
-            _pTokens
+            pTokens
         );
 
         /* needs to be called after super._initialize so that the platformAddress
@@ -510,16 +512,6 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         // so we need separate OETH approve
         _approveAsset(address(oeth));
         lpToken.safeApprove(cvxDepositorAddress, type(uint256).max);
-    }
-
-    /**
-     * @dev Get the index of the coin
-     */
-    function _getCoinIndex(address _asset) internal view returns (uint256) {
-        for (uint256 i = 0; i < 2; i++) {
-            if (curvePool.coins(i) == _asset) return i;
-        }
-        revert("Invalid curve pool asset");
     }
 
     /**

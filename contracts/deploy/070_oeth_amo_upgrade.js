@@ -1,3 +1,5 @@
+const addresses = require("../utils/addresses");
+const { oethPoolLpPID } = require("../utils/constants");
 const { deploymentWithGovernanceProposal } = require("../utils/deploy");
 
 module.exports = deploymentWithGovernanceProposal(
@@ -11,9 +13,21 @@ module.exports = deploymentWithGovernanceProposal(
       "ConvexEthMetaStrategyProxy"
     );
 
+    // Deploy and set the immutable variables
     const dConvexETHMetaStrategy = await deployWithConfirmation(
       "ConvexEthMetaStrategy",
-      [],
+      [
+        [
+          addresses.mainnet.CurveOETHMetaPool,
+          addresses.mainnet.OETHVaultProxy,
+          addresses.mainnet.CVXBooster,
+          addresses.mainnet.OETHProxy,
+          addresses.mainnet.CVXETHRewardsPool,
+          addresses.mainnet.CurveOETHMetaPool,
+          oethPoolLpPID,
+          addresses.mainnet.WETH,
+        ],
+      ],
       null,
       true // force deploy as storage slots have changed
     );
@@ -21,7 +35,7 @@ module.exports = deploymentWithGovernanceProposal(
     // Governance Actions
     // ----------------
     return {
-      name: "Upgrade the OETH AMO.\n\
+      name: "Upgrade the OETH AMO strategy.\n\
       \n\
       Code PR: #",
       actions: [
