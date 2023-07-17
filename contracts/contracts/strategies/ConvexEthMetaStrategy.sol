@@ -208,9 +208,9 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
                 ),
                 "Failed to Deposit LP to Convex"
             );
+        } else {
+            revert("Can only deposit WETH or OETH");
         }
-
-        revert("Can only deposit WETH or OETH");
     }
 
     /**
@@ -290,9 +290,9 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
             IVault(vaultAddress).burnForStrategy(oTokens);
 
             emit Withdrawal(address(oeth), address(lpToken), oTokens);
+        } else {
+            revert("Can only withdraw WETH or OETH");
         }
-
-        revert("Can only withdraw WETH or OETH");
     }
 
     function calcTokenToBurn(uint256 _wethAmount)
