@@ -273,7 +273,7 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
             // If withdrawing OETH
 
             // Calculate the amount of pool LP tokens to withdraw to get the required amount of OETH tokens.
-            uint256 lpTokens = _calcWithdraw(_amount, oethCoinIndex);
+            uint256 lpTokens = calcWithdraw(_amount, oethCoinIndex);
 
             // Withdraw Metapool LP tokens from Convex pool
             _lpWithdraw(lpTokens);
@@ -480,18 +480,19 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
     ****************************************/
 
     /**
-     * @dev Calculates the amount of liquidity provider tokens (OETHCRV-f) to burn for receiving a fixed amount of pool tokens.
+     * @dev Calculates the amount of Curve metapool liquidity provider tokens (OETHCRV-f) to burn
+     * for receiving a fixed amount of pool tokens.
      * @param _tokenAmount The amount of coins, eg ETH or OETH, required to receive.
      * @param _coinIndex The index of the coin in the pool to withdraw. 0 = ETH, 1 = OETH.
-     * @return burnAmount_ The amount of liquidity provider tokens (OETHCRV-f) to burn.
+     * @return burnAmount_ The amount of Metapool LP tokens (OETHCRV-f) to burn.
      */
-    function _calcWithdraw(uint256 _tokenAmount, uint256 _coinIndex)
-        internal
+    function calcWithdraw(uint256 _tokenAmount, uint256 _coinIndex)
+        public
         view
         returns (uint256 burnAmount_)
     {
         uint256 totalLpSupply = lpToken.totalSupply();
-        require(totalLpSupply > 0, "empty FraxBP");
+        require(totalLpSupply > 0, "empty pool");
 
         // Get balance of each stablecoin in the FraxBP
         uint256[N_COINS] memory oldBalances = [
@@ -510,18 +511,14 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
             _coinIndex == 0 ? oldBalances[0] - _tokenAmount : oldBalances[0],
             _coinIndex == 1 ? oldBalances[1] - _tokenAmount : oldBalances[1]
         ];
-        // Scale USDC from 6 decimals up to 18 decimals
-        uint256[N_COINS] memory newBalancesScaled = [
-            newBalances[0],
-            newBalances[1] * 1e12
-        ];
 
         // Invariant after withdraw
-        uint256 invariantAfterWithdraw = _getD(newBalancesScaled, Ann);
+        uint256 invariantAfterWithdraw = _getD(newBalances, Ann);
 
         // We need to recalculate the invariant accounting for fees
         // to calculate fair user's share
         // _fee: uint256 = self.fee * N_COINS / (4 * (N_COINS - 1))
+        // slither-disable-next-line divide-before-multiply
         uint256 fee = curvePool.fee() / 2;
 
         // ETH at index 0
@@ -530,7 +527,7 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         uint256 differenceScaled = idealBalanceScaled > newBalances[0]
             ? idealBalanceScaled - newBalances[0]
             : newBalances[0] - idealBalanceScaled;
-        newBalancesScaled[0] =
+        newBalances[0] =
             newBalances[0] -
             ((fee * differenceScaled) / CURVE_FEE_SCALE);
 
@@ -541,14 +538,14 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         differenceScaled = idealBalanceScaled > newBalances[1]
             ? idealBalanceScaled - newBalances[1]
             : newBalances[1] - idealBalanceScaled;
-        newBalancesScaled[1] = (newBalances[1] -
+        newBalances[1] = (newBalances[1] -
             (fee * differenceScaled) /
             CURVE_FEE_SCALE);
 
         // Calculate how much pool tokens to burn
         // LP tokens to burn = total LP tokens * (ETH value before - ETH value after) / ETH value before
         burnAmount_ =
-            ((totalLpSupply * (invariant - _getD(newBalancesScaled, Ann))) /
+            ((totalLpSupply * (invariant - _getD(newBalances, Ann))) /
                 invariant) +
             1;
     }
@@ -558,6 +555,7 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
      * @param xp  The scaled balances of the coins in the FraxBP.
      * @param Ann The amplitude coefficient multiplied by the number of coins in the pool (A * N_COINS).
      * @return D  The StableSwap invariant
+     * @dev This is a gas-optimized, Solidity port of Curve Metapool's `get_D` Vyper function
      */
     function _getD(uint256[N_COINS] memory xp, uint256 Ann)
         internal
@@ -574,10 +572,11 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         uint256 Dprev = 0;
         D = S;
         uint256 D_P;
-        for (uint256 i; i < 255; ) {
+        for (uint256 i = 0; i < 255; ) {
             // D_P: uint256 = D
             // for _x in xp:
-            //     D_P = D_P * D / (_x * N_COINS)  # If division by 0, this will be borked: only withdrawal will work. And that is good
+            //     D_P = D_P * D / (_x * N_COINS)  # If division by 0, this will be borked: only withdrawal will work.
+            // slither-disable-next-line divide-before-multiply
             D_P = (((D * D) / xp0) * D) / xp1;
 
             Dprev = D;
