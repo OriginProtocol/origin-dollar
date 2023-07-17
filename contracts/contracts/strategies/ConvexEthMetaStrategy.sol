@@ -39,17 +39,6 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
     /// @notice Scale of the Curve.fi metapool fee. 100% = 1e10, 0.04% = 4e6.
     uint256 public constant CURVE_FEE_SCALE = 1e10;
 
-    /**
-     * @dev Verifies that the caller is the Strategist.
-     */
-    modifier onlyStrategist() {
-        require(
-            msg.sender == IVault(vaultAddress).strategistAddr(),
-            "Caller is not the Strategist"
-        );
-        _;
-    }
-
     // used to circumvent the stack too deep issue
     struct InitializeConfig {
         address curvePoolAddress; //Address of the Curve pool
