@@ -2,12 +2,11 @@ import React, { useState } from 'react'
 import { useAccount, useNetwork, useSwitchNetwork } from 'wagmi'
 import Dropdown from 'components/Dropdown'
 import GetOUSD from 'components/GetOUSD'
-import { isCorrectNetwork, switchEthereumChain } from 'utils/web3'
-
+import { isCorrectNetwork } from 'utils/web3'
 import Content from './_AccountStatusContent'
 import AccountStatusIndicator from './_AccountStatusIndicator'
 
-const AccountStatusDropdown = ({ className, showLogin }) => {
+const AccountStatusDropdown = ({ className }) => {
   const { chain } = useNetwork()
   const { address: account, isConnected: active } = useAccount()
   const { switchNetwork } = useSwitchNetwork()
@@ -85,6 +84,14 @@ const AccountStatusDropdown = ({ className, showLogin }) => {
         .dropdown-menu a .active .dropdown-marble {
           font-weight: bold;
           background-color: #183140;
+        }
+
+        .not-logged-in {
+          height: 30px;
+          line-height: 24px;
+          padding: 0 10px;
+          border-radius: 56px;
+          border: solid 1px white;
         }
 
         .account-status {

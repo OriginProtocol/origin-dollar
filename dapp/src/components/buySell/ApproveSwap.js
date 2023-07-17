@@ -339,7 +339,11 @@ const ApproveSwap = ({
       ) : (
         <div className="d-flex flex-column align-items-center justify-content-center justify-content-md-between flex-md-row mt-md-3 mt-2">
           <div className={`btn-blue buy-button mt-2 mt-md-0 w-100`}>
-            <GetOUSD trackSource="Swap connect wallet" />
+            <GetOUSD
+              containerClassName="w-100 h-100 d-flex align-items-center justify-content-center"
+              className="w-100 h-100"
+              trackSource="Swap connect wallet"
+            />
           </div>
         </div>
       )}

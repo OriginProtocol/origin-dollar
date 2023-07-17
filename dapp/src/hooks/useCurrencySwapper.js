@@ -24,6 +24,7 @@ const useCurrencySwapper = ({
   priceToleranceValue,
 }) => {
   const [needsApproval, setNeedsApproval] = useState(false)
+
   const {
     vault: vaultContract,
     ousd: ousdContract,
@@ -38,6 +39,7 @@ const useCurrencySwapper = ({
     curveRegistryExchange,
     curveOUSDMetaPool,
   } = useStoreState(ContractStore, (s) => s.contracts)
+
   const curveMetapoolUnderlyingCoins = useStoreState(
     ContractStore,
     (s) => s.curveMetapoolUnderlyingCoins
@@ -64,13 +66,13 @@ const useCurrencySwapper = ({
   }
 
   const { contract: coinContract, decimals } =
-    coinInfoList[swapMode === 'mint' ? selectedCoin : 'ousd']
+    coinInfoList?.[swapMode === 'mint' ? selectedCoin : 'ousd'] || {}
 
   let coinToReceiveDecimals, coinToReceiveContract
   // do not enter conditional body when redeeming a mix
   if (!(swapMode === 'redeem' && selectedCoin === 'mix')) {
     ;({ contract: coinToReceiveContract, decimals: coinToReceiveDecimals } =
-      coinInfoList[swapMode === 'redeem' ? selectedCoin : 'ousd'])
+      coinInfoList?.[swapMode === 'redeem' ? selectedCoin : 'ousd'] || {})
   }
 
   // plain amount as displayed in UI (not in wei format)

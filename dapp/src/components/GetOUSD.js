@@ -5,7 +5,13 @@ import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { useAccount } from 'wagmi'
 import analytics from 'utils/analytics'
 
-const CustomConnectButton = ({ id, className, onClick, style }) => {
+const CustomConnectButton = ({
+  id,
+  containerClassName = '',
+  className,
+  onClick,
+  style,
+}) => {
   return (
     <ConnectButton.Custom>
       {({
@@ -28,6 +34,7 @@ const CustomConnectButton = ({ id, className, onClick, style }) => {
 
         return (
           <div
+            className={containerClassName}
             {...(!ready && {
               'aria-hidden': true,
               style: {
@@ -93,19 +100,7 @@ const CustomConnectButton = ({ id, className, onClick, style }) => {
   )
 }
 
-const GetOUSD = ({
-  id,
-  className,
-  style,
-  dark,
-  light,
-  primary,
-  showLogin,
-  trackSource,
-  light2,
-  zIndex2,
-  navMarble,
-}) => {
+const GetOUSD = ({ id, className, containerClassName, style, trackSource }) => {
   const { isConnected: active } = useAccount()
 
   const [userAlreadyConnectedWallet, setUserAlreadyConnectedWallet] =
@@ -128,6 +123,7 @@ const GetOUSD = ({
     <>
       <CustomConnectButton
         id={id}
+        containerClassName={containerClassName}
         className={className}
         style={style}
         onClick={() => {
