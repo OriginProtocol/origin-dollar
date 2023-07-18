@@ -567,19 +567,14 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         // Sum the balances
         uint256 S = xp[0] + xp[1];
 
-        // Do these multiplications here rather than in each loop
-        uint256 xp0 = xp[0] * N_COINS;
-        uint256 xp1 = xp[1] * N_COINS;
-
         uint256 Dprev = 0;
         D = S;
         uint256 D_P;
         for (uint256 i = 0; i < 255; ) {
-            // D_P: uint256 = D
-            // for _x in xp:
-            //     D_P = D_P * D / (_x * N_COINS)  # If division by 0, this will be borked: only withdrawal will work.
+            // D_P: uint256 = D * D / _xp[0] * D / _xp[1] / (N_COINS)**2
+            // (N_COINS)**2 = 4
             // slither-disable-next-line divide-before-multiply
-            D_P = (((D * D) / xp0) * D) / xp1;
+            D_P = (((D * D) / xp[0]) * D) / xp[1] / 4;
 
             Dprev = D;
             D =
