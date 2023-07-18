@@ -13,10 +13,13 @@ import { IOracle } from "../../interfaces/IOracle.sol";
 import { IVault } from "../../interfaces/IVault.sol";
 import { IWstETH } from "../../interfaces/IWstETH.sol";
 import { IERC4626 } from "../../../lib/openzeppelin/interfaces/IERC4626.sol";
+import { StableMath } from "../../utils/StableMath.sol";
+
 import "hardhat/console.sol";
 
 abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
     using SafeERC20 for IERC20;
+    using StableMath for uint256;
     IBalancerVault internal immutable balancerVault = IBalancerVault(0xBA12222222228d8Ba445958a75a0704d566BF2C8);
 
     address internal auraDepositorAddress;
@@ -127,7 +130,7 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         uint256 rateProviderRate = getRateProviderRate(_asset);
 
         // TODO: account for some slippage?
-        return marketPrice / rateProviderRate;
+        return marketPrice.divPrecisely(rateProviderRate);
     }
 
     function getRateProviderRate(address _asset) internal virtual view returns(uint256);
@@ -178,6 +181,36 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         } else {
             poolAsset = asset;
             poolAmount = amount;
+        }
+    }
+
+    function wrapPoolAsset(address asset, uint256 amount)
+        internal
+        returns(uint256 wrappedAmount)
+    {
+        // if stEth
+        if (asset == 0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84) {
+            wrappedAmount = IWstETH(0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0).wrap(amount);
+        // if frxEth
+        } else if (asset == 0x5E8422345238F34275888049021821E8E08CAa1f) {
+            wrappedAmount = IERC4626(0xac3E018457B222d93114458476f3E3416Abbe38F).deposit(amount, address(this));
+        } else {
+            wrappedAmount = amount;
+        }
+    }
+
+    function unwrapPoolAsset(address asset, uint256 amount)
+        internal
+        returns(uint256 wrappedAmount)
+    {
+        // if stEth
+        if (asset == 0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84) {
+            wrappedAmount = IWstETH(0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0).unwrap(amount);
+        // if frxEth
+        } else if (asset == 0x5E8422345238F34275888049021821E8E08CAa1f) {
+            wrappedAmount = IERC4626(0xac3E018457B222d93114458476f3E3416Abbe38F).withdraw(amount, address(this), address(this));
+        } else {
+            wrappedAmount = amount;
         }
     }
 

@@ -270,7 +270,7 @@ const defaultFixture = deployments.createFixture(async () => {
       "OETHBalancerMetaPoolWstEthWethStrategyProxy"
     );
     balancerWstEthWethStrategy = await ethers.getContractAt(
-      "OETHBalancerMetaPoolStrategy",
+      "BalancerMetaPoolStrategy",
       balancerWstEthWethStrategyProxy.address
     );
 
@@ -835,28 +835,26 @@ async function balancerWstEthWethFixture() {
   const fixture = await loadFixture(defaultFixture);
   const { oethVault, timelock, weth, balancerWstEthWethStrategy } = fixture;
 
-  const sTimelock = await ethers.provider.getSigner(timelock);
-
   await fixture.oethVault
-    .connect(sTimelock)
+    .connect(timelock)
     .setAssetDefaultStrategy(
       fixture.weth.address,
       fixture.balancerWstEthWethStrategy.address
     );
   await fixture.oethVault
-    .connect(sTimelock)
+    .connect(timelock)
     .setAssetDefaultStrategy(
       fixture.stETH.address,
       fixture.balancerWstEthWethStrategy.address
     );
   await fixture.oethVault
-    .connect(sTimelock)
+    .connect(timelock)
     .setAssetDefaultStrategy(
       fixture.weth.address,
       fixture.balancerWstEthWethStrategy.address
     );
   await fixture.oethVault
-    .connect(sTimelock)
+    .connect(timelock)
     .setAssetDefaultStrategy(
       fixture.stETH.address,
       fixture.balancerWstEthWethStrategy.address
@@ -1662,6 +1660,7 @@ module.exports = {
   impersonateAndFundContract,
   impersonateAccount,
   fraxETHStrategyFixtureSetup,
+  balancerWstEthWethFixture,
   oethMorphoAaveFixtureSetup,
   mintWETH,
   replaceContractAt,

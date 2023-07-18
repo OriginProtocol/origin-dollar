@@ -88,10 +88,8 @@ module.exports = deploymentWithGovernanceProposal(
         )
     );
 
-    console.log("INIT DONE");
-
     console.log(
-      "BALANCER STRATEGY ADDRESS",
+      "Balancer strategy address:",
       dOETHBalancerMetaPoolStrategyProxy.address
     );
 
