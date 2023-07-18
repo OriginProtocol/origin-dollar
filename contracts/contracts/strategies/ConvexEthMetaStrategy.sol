@@ -182,19 +182,21 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         } else if (_asset == address(oeth)) {
             // If depositing OETH
 
+            // Convert ETH amount to Metapool LP tokens
             uint256 valueInLpTokens = _amount.divPrecisely(
                 curvePool.get_virtual_price()
             );
-            uint256 minMintAmount = valueInLpTokens.mulTruncate(
+            // Apply slippage to Metapool LP tokens
+            uint256 minLPTokens = valueInLpTokens.mulTruncate(
                 uint256(1e18) - MAX_SLIPPAGE
             );
 
             emit Deposit(address(oeth), address(lpToken), _amount);
 
-            // Deposit just OETH to Curve ETH pool
+            // Deposit just OETH to Curve Metapool
             uint256 lpDeposited = curvePool.add_liquidity(
                 [0, _amount],
-                minMintAmount
+                minLPTokens
             );
 
             require(
@@ -230,14 +232,15 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
     ****************************************/
 
     /**
-     * @notice Withdraw ETH and/or OETH from the Curve Metapool.
-     * If withdrawing WETH, remove ETH and OETH from the Curve Metapool, burn the OETH,
-     * convert the ETH to WETH and transfer to the recipient.
-     * If withdrawing OETH, one-sided remove of OETH from the Metapool which are then burned. This is
-     * used when the Metapool has not enough ETH and too much OETH.
+     * @notice Withdraw WETH from the strategy or burn OETH from the Curve Metapool.
+     * If withdrawing WETH from the strategy, remove ETH and OETH from the Curve Metapool, burn the OETH,
+     * convert the ETH to WETH and transfer to the recipient, which is normally the Vault.
+     * If burning OETH from the Metapool, one-sided remove of OETH from the Metapool which are then burned.
+     * This is used when the Metapool has not enough ETH and too much OETH.
      * @param _recipient Address to receive withdrawn asset which is normally the Vault.
-     * @param _asset Address of the Wrapped ETH (WETH) or Origin ETH (OETH) contracts.
-     * @param _amount Amount of WETH to withdraw.
+     * @param _asset Address of the Wrapped ETH (WETH) token if withdrawing WETH from the strategy.
+     * Address of the Metapool LP token (OETHCRV-f) if withdrawing just OETH from the Metapool.
+     * @param _amount Amount of WETH to withdraw or amount of Metapool LP tokens to burn for OETH.
      */
     function withdraw(
         address _recipient,
@@ -271,21 +274,27 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
                 weth.transfer(_recipient, _amount),
                 "Transfer of WETH not successful"
             );
-        } else if (_asset == address(oeth)) {
-            // If withdrawing OETH
-
-            // Calculate the amount of pool LP tokens to withdraw to get the required amount of OETH tokens.
-            uint256 lpTokens = calcWithdraw(_amount, oethCoinIndex);
+        } else if (_asset == address(lpToken)) {
+            // If burning OETH using Metapool LP tokens
 
             // Withdraw Metapool LP tokens from Convex pool
-            _lpWithdraw(lpTokens);
+            _lpWithdraw(_amount);
 
-            // Remove just the OETH from the Metapool
+            // Convert Metapool LP tokens to ETH value
+            uint256 valueInEth = _amount.mulTruncate(
+                curvePool.get_virtual_price()
+            );
+            // Apply slippage to ETH value
+            uint256 minOethAmount = valueInEth.mulTruncate(
+                uint256(1e18) - MAX_SLIPPAGE
+            );
+
+            // Remove just OETH from the Metapool
             uint256 oTokens = curvePool.remove_liquidity_one_coin(
-                lpTokens,
-                int128(oethCoinIndex),
                 _amount,
-                vaultAddress
+                int128(oethCoinIndex),
+                minOethAmount,
+                address(this)
             );
 
             // The vault burns all the OETH withdrawn from the pool
@@ -293,7 +302,7 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
 
             emit Withdrawal(address(oeth), address(lpToken), oTokens);
         } else {
-            revert("Can only withdraw WETH or OETH");
+            revert("Only withdraw WETH or burn OETH");
         }
     }
 
@@ -475,120 +484,5 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
      */
     function _max(int256 a, int256 b) internal pure returns (int256) {
         return a >= b ? a : b;
-    }
-
-    /***************************************
-            Curve Metapool Calculations
-    ****************************************/
-
-    /**
-     * @dev Calculates the amount of Curve metapool liquidity provider tokens (OETHCRV-f) to burn
-     * for receiving a fixed amount of pool tokens.
-     * @param _tokenAmount The amount of coins, eg ETH or OETH, required to receive.
-     * @param _coinIndex The index of the coin in the pool to withdraw. 0 = ETH, 1 = OETH.
-     * @return burnAmount_ The amount of Metapool LP tokens (OETHCRV-f) to burn.
-     */
-    function calcWithdraw(uint256 _tokenAmount, uint256 _coinIndex)
-        public
-        view
-        returns (uint256 burnAmount_)
-    {
-        uint256 totalLpSupply = lpToken.totalSupply();
-        require(totalLpSupply > 0, "empty pool");
-
-        // Get balance of each stablecoin in the FraxBP
-        uint256[N_COINS] memory oldBalances = [
-            curvePool.balances(0),
-            curvePool.balances(1)
-        ];
-
-        // Get pool amplitude coefficient (A)
-        uint256 Ann = curvePool.A() * A_PRECISION * N_COINS;
-
-        // ETH value before withdraw
-        uint256 invariant = _getD(oldBalances, Ann);
-
-        // Remove withdraw from corresponding balance
-        uint256[N_COINS] memory newBalances = [
-            _coinIndex == 0 ? oldBalances[0] - _tokenAmount : oldBalances[0],
-            _coinIndex == 1 ? oldBalances[1] - _tokenAmount : oldBalances[1]
-        ];
-
-        // Invariant after withdraw
-        uint256 invariantAfterWithdraw = _getD(newBalances, Ann);
-
-        // We need to recalculate the invariant accounting for fees
-        // to calculate fair user's share
-        // _fee: uint256 = self.fee * N_COINS / (4 * (N_COINS - 1))
-        // slither-disable-next-line divide-before-multiply
-        uint256 fee = curvePool.fee() / 2;
-
-        // ETH at index 0
-        uint256 idealBalanceScaled = (invariantAfterWithdraw * oldBalances[0]) /
-            invariant;
-        uint256 differenceScaled = idealBalanceScaled > newBalances[0]
-            ? idealBalanceScaled - newBalances[0]
-            : newBalances[0] - idealBalanceScaled;
-        newBalances[0] =
-            newBalances[0] -
-            ((fee * differenceScaled) / CURVE_FEE_SCALE);
-
-        // OETH at index 1
-        idealBalanceScaled =
-            (invariantAfterWithdraw * oldBalances[1]) /
-            invariant;
-        differenceScaled = idealBalanceScaled > newBalances[1]
-            ? idealBalanceScaled - newBalances[1]
-            : newBalances[1] - idealBalanceScaled;
-        newBalances[1] = (newBalances[1] -
-            (fee * differenceScaled) /
-            CURVE_FEE_SCALE);
-
-        // Calculate how much pool tokens to burn
-        // LP tokens to burn = total LP tokens * (ETH value before - ETH value after) / ETH value before
-        burnAmount_ =
-            ((totalLpSupply * (invariant - _getD(newBalances, Ann))) /
-                invariant) +
-            1;
-    }
-
-    /**
-     * @notice Uses Newton’s Method to iteratively solve the StableSwap invariant (D).
-     * @param xp  The scaled balances of the coins in the FraxBP.
-     * @param Ann The amplitude coefficient multiplied by the number of coins in the pool (A * N_COINS).
-     * @return D  The StableSwap invariant
-     * @dev This is a gas-optimized, Solidity port of Curve Metapool's `get_D` Vyper function
-     */
-    function _getD(uint256[N_COINS] memory xp, uint256 Ann)
-        internal
-        pure
-        returns (uint256 D)
-    {
-        // Sum the balances
-        uint256 S = xp[0] + xp[1];
-
-        uint256 Dprev = 0;
-        D = S;
-        uint256 D_P;
-        for (uint256 i = 0; i < 255; ) {
-            // D_P: uint256 = D * D / _xp[0] * D / _xp[1] / (N_COINS)**2
-            // (N_COINS)**2 = 4
-            // slither-disable-next-line divide-before-multiply
-            D_P = (((D * D) / xp[0]) * D) / xp[1] / 4;
-
-            Dprev = D;
-            D =
-                (((Ann * S) / A_PRECISION + D_P * N_COINS) * D) /
-                (((Ann - A_PRECISION) * D) / A_PRECISION + (N_COINS + 1) * D_P);
-            // Equality with the precision of 1
-            if (D > Dprev) {
-                if (D - Dprev <= 1) break;
-            } else {
-                if (Dprev - D <= 1) break;
-            }
-            unchecked {
-                ++i;
-            }
-        }
     }
 }
