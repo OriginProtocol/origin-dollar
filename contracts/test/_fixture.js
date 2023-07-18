@@ -1329,6 +1329,10 @@ async function convexOETHMetaVaultFixture() {
     addresses.mainnet.CurveOETHMetaPool
   );
 
+  fixture.oethGaugeSigner = await impersonateAndFundContract(
+    addresses.mainnet.CurveOETHGauge
+  );
+
   return fixture;
 }
 

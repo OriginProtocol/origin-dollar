@@ -223,6 +223,19 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
       );
   });
 
+  it("Strategist should be able to remove OETH from pool", async () => {
+    const { oethVault, oeth, timelock, ConvexEthMetaStrategy } =
+      await loadFixture(convexOETHMetaVaultFixture);
+
+    await oethVault
+      .connect(timelock)
+      .withdrawFromStrategy(
+        ConvexEthMetaStrategy.address,
+        [oeth.address],
+        [parseUnits("100")]
+      );
+  });
+
   it("Should be able to harvest the rewards", async function () {
     const fixture = await loadFixture(convexOETHMetaVaultFixture);
 
@@ -254,6 +267,43 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
     await oethVault.connect(josh).rebase();
 
     await expect(wethDiff).to.be.gte(oethUnits("0.3"));
+  });
+
+  it("AMO strategy's calcWithdraw should match Metapool's remove_liquidity_one_coin", async () => {
+    const fixture = await loadFixture(convexOETHMetaVaultFixture);
+    const { oethGaugeSigner, oethMetaPool, ConvexEthMetaStrategy } = fixture;
+
+    const oethRequired = oethUnits("100");
+
+    const calculatedLPs = await ConvexEthMetaStrategy.calcWithdraw(
+      oethRequired,
+      1
+    );
+    log(
+      `Calculated ${formatUnits(calculatedLPs)} OETHCRV-f LPs for ${formatUnits(
+        oethRequired
+      )} OETH}`
+    );
+    log(
+      `LP whale balance: ${formatUnits(
+        await oethMetaPool.balanceOf(ConvexEthMetaStrategy.address)
+      )}`
+    );
+
+    const oethExpected = await oethMetaPool[
+      "calc_withdraw_one_coin(uint256,int128)"
+    ](calculatedLPs, 1);
+
+    const oethActual = await oethMetaPool
+      .connect(oethGaugeSigner)
+      .callStatic["remove_liquidity_one_coin(uint256,int128,uint256)"](
+        calculatedLPs,
+        1, // index
+        0 // min OETH
+      );
+
+    expect(oethActual).to.equal(oethExpected);
+    expect(oethActual).to.equal(oethRequired);
   });
 });
 
