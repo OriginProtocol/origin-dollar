@@ -1,0 +1,39 @@
+name: DeFi
+on: 
+  push:
+    branches:
+      - 'master'
+      # TODO: Remove before merging
+      - 'shah/abi-gh-action'
+  workflow_dispatch:
+
+concurrency:
+  cancel-in-progress: true
+  group: ${{ github.ref_name }}
+
+jobs:
+  abi-gen:
+    name: "Generate and publish ABI"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "16.x"
+          cache: "yarn"
+          cache-dependency-path: contracts/yarn.lock
+
+      - run: yarn install --frozen-lockfile
+        working-directory: ./contracts
+
+      - name: "Generate ABI files"
+        run: (npx hardhat deploy --export "./dist") && (cp ../package.json ./dist/package.json)
+        env:
+          CONTRACT_SIZE: true
+        working-directory: ./contracts
+      
+      - name: "Publish"
+        run: npm publish --access public
+        working-directory: ./contracts/dist
