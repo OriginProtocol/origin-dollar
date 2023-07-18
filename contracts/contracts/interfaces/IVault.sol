@@ -120,6 +120,11 @@ interface IVault {
 
     function priceUnitRedeem(address asset) external view returns (uint256);
 
+    // The following two function definitions exist for backward compatibility
+    function priceUSDMint(address asset) external view returns (uint256);
+
+    function priceUSDRedeem(address asset) external view returns (uint256);
+
     function withdrawAllFromStrategy(address _strategyAddr) external;
 
     function withdrawAllFromStrategies() external;
