@@ -29,7 +29,7 @@ jobs:
         working-directory: ./contracts
 
       - name: "Generate ABI files"
-        run: (npx hardhat deploy --export "./dist") && (cp ../package.json ./dist/package.json)
+        run: yarn run generate-abi && (cp ../package.json ./dist)
         env:
           CONTRACT_SIZE: true
         working-directory: ./contracts
