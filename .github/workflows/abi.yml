@@ -29,7 +29,7 @@ jobs:
         working-directory: ./contracts
 
       - name: "Generate ABI files"
-        run: yarn run generate-abi && (cp ../package.json ./dist)
+        run: (yarn run abi:generate) && (yarn run abi:dist)
         env:
           CONTRACT_SIZE: true
         working-directory: ./contracts
