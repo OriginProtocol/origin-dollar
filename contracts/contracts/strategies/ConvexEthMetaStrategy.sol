@@ -182,9 +182,6 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         } else if (_asset == address(oeth)) {
             // If depositing OETH
 
-            // Mint OETH from the Vault
-            IVault(vaultAddress).mintForStrategy(_amount);
-
             uint256 valueInLpTokens = _amount.divPrecisely(
                 curvePool.get_virtual_price()
             );
@@ -220,6 +217,11 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         uint256 balance = weth.balanceOf(address(this));
         if (balance > 0) {
             _deposit(address(weth), balance);
+        }
+
+        balance = oeth.balanceOf(address(this));
+        if (balance > 0) {
+            _deposit(address(oeth), balance);
         }
     }
 

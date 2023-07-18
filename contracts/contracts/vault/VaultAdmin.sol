@@ -429,12 +429,17 @@ contract VaultAdmin is VaultStorage {
         uint256 assetCount = _assets.length;
         for (uint256 i = 0; i < assetCount; ++i) {
             address assetAddr = _assets[i];
-            require(
-                IStrategy(_strategyToAddress).supportsAsset(assetAddr),
-                "Asset unsupported"
-            );
-            // Send required amount of funds to the strategy
-            IERC20(assetAddr).safeTransfer(_strategyToAddress, _amounts[i]);
+            if (assetAddr == address(oUSD)) {
+                // mint oTokens to the strategy
+                oUSD.mint(_strategyToAddress, _amounts[i]);
+            } else {
+                require(
+                    IStrategy(_strategyToAddress).supportsAsset(assetAddr),
+                    "Asset unsupported"
+                );
+                // Send required amount of funds to the strategy
+                IERC20(assetAddr).safeTransfer(_strategyToAddress, _amounts[i]);
+            }
         }
 
         // Deposit all the funds that have been sent to the strategy

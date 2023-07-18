@@ -210,6 +210,19 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
     expect(supplyDiff).to.be.gte(oethUnits("7.95"));
   });
 
+  it("Strategist should be able to add OETH to pool", async () => {
+    const { oethVault, oeth, timelock, ConvexEthMetaStrategy } =
+      await loadFixture(convexOETHMetaVaultFixture);
+
+    await oethVault
+      .connect(timelock)
+      .depositToStrategy(
+        ConvexEthMetaStrategy.address,
+        [oeth.address],
+        [parseUnits("100")]
+      );
+  });
+
   it("Should be able to harvest the rewards", async function () {
     const fixture = await loadFixture(convexOETHMetaVaultFixture);
 

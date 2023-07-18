@@ -9,11 +9,13 @@ module.exports = deploymentWithGovernanceProposal(
     deployerIsProposer: true,
   },
   async ({ ethers, deployWithConfirmation }) => {
+    // STEP 1. Upgrade the OETH AMO strategy
+
     const cConvexEthMetaStrategyProxy = await ethers.getContract(
       "ConvexEthMetaStrategyProxy"
     );
 
-    // Deploy and set the immutable variables
+    // Deploy and set the immutable variables for the new AMO strategy implementation
     const dConvexETHMetaStrategy = await deployWithConfirmation(
       "ConvexEthMetaStrategy",
       [
@@ -32,10 +34,19 @@ module.exports = deploymentWithGovernanceProposal(
       true // force deploy as storage slots have changed
     );
 
+    // STEP 2. Upgrade the OETH Vault
+
+    // Deploy new Vault Admin
+    const dVaultAdmin = await deployWithConfirmation("OETHVaultAdmin");
+
+    // 2. Connect to the OETH Vault Proxy to the vault implementation
+    const cVaultProxy = await ethers.getContract("OETHVaultProxy");
+    const cVault = await ethers.getContractAt("OETHVault", cVaultProxy.address);
+
     // Governance Actions
     // ----------------
     return {
-      name: "Upgrade the OETH AMO strategy.\n\
+      name: "Upgrade the OETH AMO strategy and OETH Vault.\n\
       \n\
       Code PR: #",
       actions: [
@@ -44,6 +55,12 @@ module.exports = deploymentWithGovernanceProposal(
           contract: cConvexEthMetaStrategyProxy,
           signature: "upgradeTo(address)",
           args: [dConvexETHMetaStrategy.address],
+        },
+        // 2. set OETH Vault proxy to the new admin vault implementation
+        {
+          contract: cVault,
+          signature: "setAdminImpl(address)",
+          args: [dVaultAdmin.address],
         },
       ],
     };
