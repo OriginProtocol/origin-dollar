@@ -31,7 +31,7 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
     await f();
   });
 
-  it.only("Should rebalance Metapool", async () => {
+  it("Should rebalance Metapool", async () => {
     const {
       oeth,
       oethVault,
@@ -80,22 +80,18 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
       )}`
     );
     // STEP 4 - Deposit to strategy
-    const additionAmount = 660;
-    const depositAmount = wethWithdrawn.add(
-      parseUnits(additionAmount.toString())
-    );
-    log(`about to deposit ${formatUnits(depositAmount)} WETH`);
+    log(`about to deposit ${formatUnits(wethWithdrawn)} WETH`);
     await oethVault
       .connect(timelock)
       .depositToStrategy(
         ConvexEthMetaStrategy.address,
         [weth.address],
-        [depositAmount]
+        [wethWithdrawn]
       );
     log(
-      `Deposited ${additionAmount} + ${formatUnits(
+      `Deposited ${wethWithdrawn} + ${formatUnits(
         wethWithdrawn
-      )} = ${formatUnits(depositAmount)} WETH to strategy`
+      )} = ${formatUnits(wethWithdrawn)} WETH to strategy`
     );
 
     // STEP 5 - log results
@@ -258,7 +254,7 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
       ConvexEthMetaStrategy,
       crv,
     } = fixture;
-    await mintTest(fixture, josh, weth, "5");
+    await mintTest(fixture, josh, weth, "50");
 
     // send some CRV to the strategy to partly simulate reward harvesting
     await crv
@@ -287,6 +283,7 @@ async function mintTest(fixture, user, asset, amount = "3") {
     ConvexEthMetaStrategy,
     cvxRewardPool,
     oethMetaPool,
+    weth,
   } = fixture;
 
   const unitAmount = await units(amount, asset);
@@ -294,45 +291,85 @@ async function mintTest(fixture, user, asset, amount = "3") {
   await oethVault.connect(user).rebase();
   await oethVault.connect(user).allocate();
 
-  const currentSupply = await oeth.totalSupply();
-  const currentBalance = await oeth.connect(user).balanceOf(user.address);
+  const totalSupplyBefore = await oeth.totalSupply();
+  log(`total supply before ${formatUnits(totalSupplyBefore)}`);
+  const userBalanceBefore = await oeth.connect(user).balanceOf(user.address);
+  const wethVaultBalanceBefore = await weth.balanceOf(oethVault.address);
+  log(`WETH in vault before ${formatUnits(wethVaultBalanceBefore)}`);
 
-  const currentRewardPoolBalance = await cvxRewardPool
+  const poolBalancesBefore = await oethMetaPool.get_balances();
+
+  const rewardPoolBalanceBefore = await cvxRewardPool
     .connect(user)
     .balanceOf(ConvexEthMetaStrategy.address);
+  log(
+    `strategy LP tokens in Convex before ${formatUnits(
+      rewardPoolBalanceBefore
+    )}}`
+  );
 
   await logCurvePool(oethMetaPool, "ETH ", "OETH");
 
-  // Mint OUSD w/ asset
+  // Mint OUSD w/ asset and auto allocate to strategy
+  log(`About to mint using ${amount} ${await asset.symbol()}`);
   await asset.connect(user).approve(oethVault.address, unitAmount);
   await oethVault.connect(user).mint(asset.address, unitAmount, 0);
-  await oethVault.connect(user).allocate();
 
   await logCurvePool(oethMetaPool, "ETH ", "OETH");
 
-  // Ensure user has correct balance (w/ 1% slippage tolerance)
-  const newBalance = await oeth.connect(user).balanceOf(user.address);
-  const balanceDiff = newBalance.sub(currentBalance);
-  expect(balanceDiff).to.approxEqualTolerance(oethUnits(amount), 1);
+  // Ensure user has correct balance after mint (w/ 1% slippage tolerance)
+  const userBalanceAfter = await oeth.connect(user).balanceOf(user.address);
+  const userBalanceDiffAfter = userBalanceAfter.sub(userBalanceBefore);
+  expect(userBalanceDiffAfter).to.approxEqualTolerance(unitAmount, 1);
 
-  // Supply checks
-  const newSupply = await oeth.totalSupply();
-  const supplyDiff = newSupply.sub(currentSupply);
+  const expectedSupplyDiff = calcExpetedSupplyDiff(
+    poolBalancesBefore,
+    unitAmount
+  );
 
-  expect(supplyDiff).to.approxEqualTolerance(oethUnits(amount).mul(2), 5);
+  // Supply checks after deposit
+  const totalSupplyAfter = await oeth.totalSupply();
+  const totalSupplyDiffAfter = totalSupplyAfter.sub(totalSupplyBefore);
+  log(
+    `total supply after ${formatUnits(totalSupplyAfter)} diff ${formatUnits(
+      totalSupplyDiffAfter
+    )}`
+  );
+  expect(totalSupplyDiffAfter).to.equal(expectedSupplyDiff);
 
-  //Ensure some LP tokens got staked under OUSDMetaStrategy address
-  const newRewardPoolBalance = await cvxRewardPool
+  // Ensure some LP tokens got staked under OUSDMetaStrategy address
+  const rewardPoolBalanceAfter = await cvxRewardPool
     .connect(user)
     .balanceOf(ConvexEthMetaStrategy.address);
-  const rewardPoolBalanceDiff = newRewardPoolBalance.sub(
-    currentRewardPoolBalance
+  const rewardPoolBalanceDiff = rewardPoolBalanceAfter.sub(
+    rewardPoolBalanceBefore
+  );
+  log(
+    `strategy LP tokens in Convex after deposit ${formatUnits(
+      rewardPoolBalanceAfter
+    )} diff ${formatUnits(rewardPoolBalanceDiff)}`
   );
 
-  // multiplied by 2 because the strategy prints corresponding amount of OETH and
-  // deploys it in the pool
+  // Ensure the strategy's Metapool LP balance has increased
   expect(rewardPoolBalanceDiff).to.approxEqualTolerance(
-    oethUnits(amount).mul(2),
-    1
+    expectedSupplyDiff,
+    1 // percent
   );
+}
+
+function calcExpetedSupplyDiff(poolBalancesBefore, unitAmount) {
+  // multiply by 2 because the strategy prints corresponding amount of OETH
+  // multiply by 3 if more ETH as the OETH amount will be 2x the ETH amount
+  const balanceDiff = poolBalancesBefore[0]
+    .add(unitAmount)
+    .sub(poolBalancesBefore[1]);
+  log(`pool balance diff after adding ETH ${formatUnits(balanceDiff)}`);
+  const expectedSupplyDiff = balanceDiff.lte(0)
+    ? unitAmount.mul(2)
+    : balanceDiff.gt(unitAmount.mul(2))
+    ? unitAmount.mul(3)
+    : unitAmount.add(balanceDiff);
+  log(`expected total supply diff ${formatUnits(expectedSupplyDiff)}`);
+
+  return expectedSupplyDiff;
 }
