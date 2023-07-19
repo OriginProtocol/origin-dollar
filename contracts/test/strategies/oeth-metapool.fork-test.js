@@ -31,7 +31,7 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
     await f();
   });
 
-  it("Should rebalance Metapool", async () => {
+  it.only("Should rebalance Metapool", async () => {
     const {
       oeth,
       oethVault,
@@ -74,12 +74,17 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
     const depositEvent = weth.interface.parseLog(depositLogs[0]);
     const wethWithdrawn = depositEvent.args.wad;
     log(`Withdrew ${formatUnits(wethWithdrawn)} WETH from strategy`);
-
+    log(
+      `after withdraw vault WETH  : ${formatUnits(
+        await weth.balanceOf(oethVault.address)
+      )}`
+    );
     // STEP 4 - Deposit to strategy
     const additionAmount = 660;
     const depositAmount = wethWithdrawn.add(
       parseUnits(additionAmount.toString())
     );
+    log(`about to deposit ${formatUnits(depositAmount)} WETH`);
     await oethVault
       .connect(timelock)
       .depositToStrategy(
