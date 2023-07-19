@@ -1,0 +1,101 @@
+const {
+  deploymentWithGovernanceProposal,
+  deployWithConfirmation,
+  withConfirmation,
+} = require("../utils/deploy");
+const addresses = require("../utils/addresses");
+const { getTxOpts } = require("../utils/tx");
+
+module.exports = deploymentWithGovernanceProposal(
+  {
+    deployName: "070_flux_strategy",
+    forceDeploy: false,
+    deployerIsProposer: true,
+  },
+  async ({ ethers }) => {
+    const { deployerAddr, governorAddr } = await getNamedAccounts();
+
+    const sDeployer = await ethers.provider.getSigner(deployerAddr);
+
+    const cVaultProxy = await ethers.getContractAt(
+      "IVault",
+      addresses.mainnet.VaultProxy
+    );
+    const cVaultAdmin = await ethers.getContractAt(
+      "VaultAdmin",
+      addresses.mainnet.VaultProxy
+    );
+
+    const cHarvesterProxy = await ethers.getContract("HarvesterProxy");
+    const cHarvester = await ethers.getContractAt(
+      "Harvester",
+      cHarvesterProxy.address
+    );
+
+    const dFluxStrategyProxy = await deployWithConfirmation(
+      "FluxStrategyProxy"
+    );
+    const cFluxStrategyProxy = await ethers.getContract("FluxStrategyProxy");
+
+    const dFluxStrategy = await deployWithConfirmation("CompoundStrategy");
+    const cFluxStrategyImpl = await ethers.getContractAt(
+      "CompoundStrategy",
+      dFluxStrategy.address
+    );
+    const cFluxStrategy = await ethers.getContractAt(
+      "CompoundStrategy",
+      dFluxStrategyProxy.address
+    );
+
+    // Construct initialize call data to init and configure the new strategy
+    const initData = cFluxStrategyImpl.interface.encodeFunctionData(
+      "initialize(address,address,address[],address[],address[])",
+      [
+        addresses.dead,
+        cVaultProxy.address,
+        [], // reward token addresses
+        [addresses.mainnet.DAI, addresses.mainnet.USDC, addresses.mainnet.USDT],
+        [
+          addresses.mainnet.fDAI,
+          addresses.mainnet.fUSDC,
+          addresses.mainnet.fUSDT,
+        ],
+      ]
+    );
+
+    await withConfirmation(
+      cFluxStrategyProxy
+        .connect(sDeployer)
+        ["initialize(address,address,bytes)"](
+          dFluxStrategy.address,
+          governorAddr,
+          initData,
+          await getTxOpts()
+        )
+    );
+    console.log("Initialized FluxStrategy");
+
+    // Governance Actions
+    // ----------------
+    return {
+      name: "Add Flux Strategy",
+      actions: [
+        {
+          contract: cVaultAdmin,
+          signature: "approveStrategy(address)",
+          args: [cFluxStrategyProxy.address],
+        },
+        {
+          contract: cHarvester,
+          signature: "setSupportedStrategy(address,bool)",
+          args: [cFluxStrategyProxy.address, true],
+        },
+        // {
+        //   contract: cFluxStrategy,
+        //   signature: "setHarvesterAddress(address)",
+        //   args: [cHarvesterProxy.address],
+        // },
+      ],
+    };
+  }
+);

@@ -180,4 +180,9 @@ addresses.mainnet.FraxETHMinter = "0xbAFA44EFE7901E04E39Dad13167D089C559c1138";
 addresses.mainnet.oneInchRouterV5 =
   "0x1111111254EEB25477B68fb85Ed929f73A960582";
 
+// Flux Strategy
+addresses.mainnet.fDAI = "0xe2bA8693cE7474900A045757fe0efCa900F6530b";
+addresses.mainnet.fUSDC = "0x465a5a630482f3abD6d3b84B39B29b07214d19e5";
+addresses.mainnet.fUSDT = "0x81994b9607e06ab3d5cF3AffF9a67374f05F27d7";
+
 module.exports = addresses;
