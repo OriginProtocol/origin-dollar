@@ -20,12 +20,20 @@ const crvMinterAbi = require("./abi/crvMinter.json");
 
 // const curveFactoryAbi = require("./abi/curveFactory.json")
 const ousdMetapoolAbi = require("./abi/ousdMetapool.json");
+const oethMetapoolAbi = require("./abi/oethMetapool.json");
 const threepoolLPAbi = require("./abi/threepoolLP.json");
 const threepoolSwapAbi = require("./abi/threepoolSwap.json");
 
 const sfrxETHAbi = require("./abi/sfrxETH.json");
 const { deployWithConfirmation } = require("../utils/deploy");
-const { defaultAbiCoder, parseUnits, parseEther } = require("ethers/lib/utils");
+const {
+  defaultAbiCoder,
+  formatUnits,
+  parseUnits,
+  parseEther,
+} = require("ethers/lib/utils");
+
+const log = require("../utils/logger")("test:fixture");
 
 const defaultFixture = deployments.createFixture(async () => {
   await deployments.fixture(
@@ -1277,75 +1285,106 @@ async function convexLUSDMetaVaultFixture() {
 /**
  * Configure a Vault with only the OETH/(W)ETH Curve Metastrategy.
  */
+async function convexOETHMetaVaultFixture() {
+  const fixture = await oethDefaultFixture();
+
+  const { ConvexEthMetaStrategy, oethVault, josh, timelock, weth } = fixture;
+
+  await impersonateAndFundAddress(
+    weth.address,
+    [
+      "0x8EB8a3b98659Cce290402893d0123abb75E3ab28",
+      "0x741AA7CFB2c7bF2A1E7D4dA2e3Df6a56cA4131F3",
+      "0x57757E3D981446D585Af0D9Ae4d7DF6D64647806",
+      "0x2fEb1512183545f48f6b9C5b4EbfCaF49CfCa6F3",
+      "0x6B44ba0a126a2A1a8aa6cD1AdeeD002e141Bcd44",
+    ],
+    // Josh is loaded with weth
+    josh.getAddress()
+  );
+
+  // Get some CRV from most loaded contracts/wallets
+  await impersonateAndFundAddress(
+    addresses.mainnet.CRV,
+    [
+      "0x0A2634885B47F15064fB2B33A86733C614c9950A",
+      "0x34ea4138580435B5A521E460035edb19Df1938c1",
+      "0x28C6c06298d514Db089934071355E5743bf21d60",
+      "0xa6a4d3218BBf0E81B38390396f9EA7eb8B9c9820",
+      "0xb73D8dCE603155e231aAd4381a2F20071Ca4D55c",
+    ],
+    // Josh is loaded with CRV
+    josh.getAddress()
+  );
+
+  // Add Convex Meta strategy
+  await oethVault
+    .connect(timelock)
+    .setAssetDefaultStrategy(weth.address, ConvexEthMetaStrategy.address);
+
+  // Update the strategy threshold to 100k ETH
+  await oethVault
+    .connect(timelock)
+    .setNetOusdMintForStrategyThreshold(parseUnits("100", 21));
+
+  // Convex pool that records the deposited balances
+  fixture.cvxRewardPool = await ethers.getContractAt(
+    "IRewardStaking",
+    await ConvexEthMetaStrategy.cvxRewardStaker()
+  );
+
+  fixture.oethMetaPool = await ethers.getContractAt(
+    oethMetapoolAbi,
+    addresses.mainnet.CurveOETHMetaPool
+  );
+
+  fixture.oethGaugeSigner = await impersonateAndFundContract(
+    addresses.mainnet.CurveOETHGauge
+  );
+
+  return fixture;
+}
+
 function convexOETHMetaVaultFixtureSetup() {
   return deployments.createFixture(async () => {
-    const fixture = await oethDefaultFixture();
-
-    const { ConvexEthMetaStrategy, oethVault, josh, timelock, weth } = fixture;
-
-    await impersonateAndFundAddress(
-      weth.address,
-      [
-        "0x8EB8a3b98659Cce290402893d0123abb75E3ab28",
-        "0x741AA7CFB2c7bF2A1E7D4dA2e3Df6a56cA4131F3",
-        "0x57757E3D981446D585Af0D9Ae4d7DF6D64647806",
-        "0x2fEb1512183545f48f6b9C5b4EbfCaF49CfCa6F3",
-        "0x6B44ba0a126a2A1a8aa6cD1AdeeD002e141Bcd44",
-      ],
-      // Josh is loaded with weth
-      josh.getAddress()
-    );
-
-    // Get some CRV from most loaded contracts/wallets
-    await impersonateAndFundAddress(
-      addresses.mainnet.CRV,
-      [
-        "0x0A2634885B47F15064fB2B33A86733C614c9950A",
-        "0x34ea4138580435B5A521E460035edb19Df1938c1",
-        "0x28C6c06298d514Db089934071355E5743bf21d60",
-        "0xa6a4d3218BBf0E81B38390396f9EA7eb8B9c9820",
-        "0xb73D8dCE603155e231aAd4381a2F20071Ca4D55c",
-      ],
-      // Josh is loaded with CRV
-      josh.getAddress()
-    );
-
-    // Add Convex Meta strategy
-    await oethVault
-      .connect(timelock)
-      .setAssetDefaultStrategy(weth.address, ConvexEthMetaStrategy.address);
-
-    // Update the strategy threshold to 100k ETH
-    await oethVault
-      .connect(timelock)
-      .setNetOusdMintForStrategyThreshold(parseUnits("100", 21));
-
-    // Convex pool that records the deposited balances
-    fixture.cvxRewardPool = await ethers.getContractAt(
-      "IRewardStaking",
-      await ConvexEthMetaStrategy.cvxRewardStaker()
-    );
-
-    fixture.oethMetaPool = await ethers.getContractAt(
-      ousdMetapoolAbi,
-      addresses.mainnet.CurveOETHMetaPool
-    );
-
-    fixture.oethGaugeSigner = await impersonateAndFundContract(
-      addresses.mainnet.CurveOETHGauge
-    );
-
-    return fixture;
+    return await convexOETHMetaVaultFixture();
   });
 }
 
 function oethTiltedConvexOETHMetaVaultFixtureSetup() {
   return deployments.createFixture(async () => {
-    const fixture = await convexOETHMetaVaultFixtureSetup();
+    const fixture = await convexOETHMetaVaultFixture();
 
-    const { oethMetaPool } = fixture;
+    const { oeth, oethMetaPool } = fixture;
 
-    await oethMetaPool.add_liquidity([], 0);
+    const oethWhaleAddress = "0xEADB3840596cabF312F2bC88A4Bb0b93A4E1FF5F";
+    fixture.oethWhale = await impersonateAndFundContract(oethWhaleAddress);
+
+    const oethAmount = await oeth.balanceOf(oethWhaleAddress);
+    log(`OETH whale has ${formatUnits(oethAmount)} OETH`);
+    await oeth
+      .connect(fixture.oethWhale)
+      .approve(oethMetaPool.address, oethAmount);
+    // prettier-ignore
+    await oethMetaPool
+      .connect(fixture.oethWhale)["add_liquidity(uint256[2],uint256)"]([0, oethAmount], 0);
+
+    return fixture;
+  });
+}
+
+function ethTiltedConvexOETHMetaVaultFixtureSetup() {
+  return deployments.createFixture(async () => {
+    const fixture = await convexOETHMetaVaultFixture();
+
+    const { josh, oethMetaPool } = fixture;
+
+    await _hardhatSetBalance(await josh.getAddress(), "100000");
+
+    const ethAmount = parseUnits("20000", 18);
+    // prettier-ignore
+    await oethMetaPool
+      .connect(josh)["add_liquidity(uint256[2],uint256)"]([ethAmount, 0], 0, {value: ethAmount});
 
     return fixture;
   });
@@ -1625,6 +1664,7 @@ module.exports = {
   convexMetaVaultFixture,
   convexOETHMetaVaultFixtureSetup,
   oethTiltedConvexOETHMetaVaultFixtureSetup,
+  ethTiltedConvexOETHMetaVaultFixtureSetup,
   convexGeneralizedMetaForkedFixture,
   convexLUSDMetaVaultFixture,
   morphoCompoundFixture,
