@@ -24,6 +24,8 @@ STD = {"from": vault_oeth_admin}
 #     MANAGEMENT_FEE_TOKENS_OUT // for InvestmentPool
 # }
 
+#addresses.mainnet.aureDepositor = "0x59d66c58e83a26d6a0e35114323f65c3945c89c1";
+
 # wstETH / WETH
 pool_id = "0x32296969ef14eb0c6d29669c550d4a0449130230000200000000000000000080"
 ba_vault=Contract.from_explorer("0xBA12222222228d8Ba445958a75a0704d566BF2C8")
@@ -46,24 +48,39 @@ wsteth.wrap(10 * 10**18, STD)
 weth.approve(ba_vault, 10**36, STD)
 wsteth.approve(ba_vault, 10**36, STD)
 
-# Enter the pool
-ba_vault.joinPool(
-	pool_id,
-	vault_oeth_admin.address, #sender
-	vault_oeth_admin.address, #recipient
-	[
-		# tokens need to be sorted numerically
-		[wsteth.address, weth.address], # assets
-		# indexes match above assets
-		[10*10**18, 10*10**18], # min amounts in
-		 # userData = balancerUserDataEncoder.userDataTokenInExactBPTOut.encode_input(2, 5*10**18, 1)
-		'0x00000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000004563918244f400000000000000000000000000000000000000000000000000000000000000000001', # userData
-		False, #fromInternalBalance
-	],
-	STD
-)
+with TemporaryFork():
+	# Enter the pool
+	ba_vault.joinPool(
+		pool_id,
+		vault_oeth_admin.address, #sender
+		vault_oeth_admin.address, #recipient
+		[
+			# tokens need to be sorted numerically
+			[wsteth.address, weth.address], # assets
+			# indexes match above assets
+			[0, 36523558823496626525], # min amounts in
+			 # balancerUserDataEncoder.userDataTokenInExactBPTOut.encode_input(2, 36158323235261660260, 1)[10:]
+			 # balancerUserDataEncoder.userDataTokenInExactBPTOut.encode_input(2, 123, 1)[10:]
+			balancerUserDataEncoder.userDataTokenInExactBPTOut.encode_input(2, 36158323235261660260 * 0.97, 1)[10:],
+			False, #fromInternalBalance
+		],
+		STD
+	)
+	bpt_balance = wstETHPool.balanceOf(vault_oeth_admin)
+	print("BPT BALANCE: ", bpt_balance)
 
-bpt_balance = wstETHPool.balanceOf(vault_oeth_admin)
+	wstETHPool.approve(rewardPool.address, 1e50, STD)
+	rewardPool.deposit(bpt_balance, oeth_vault_admin, STD)
+
+	aura_balance = rewardPool.balanceOf(vault_oeth_admin.address, STD)
+	print("BPT BALANCE AURA: ", aura_balance)
+
+	# WITHDRAW FROM AURA
+	rewardPool.withdraw(aura_balance, oeth_vault_admin, oeth_vault_admin, STD)
+
+	bpt_balance = wstETHPool.balanceOf(vault_oeth_admin)
+	print("BPT BALANCE AFTER AURA: ", bpt_balance)
+
 
 # Exit the pool
 ba_vault.exitPool(

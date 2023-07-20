@@ -5,18 +5,18 @@ import { IERC20 } from "../../utils/InitializableAbstractStrategy.sol";
 
 interface IBalancerVault {
     enum WeightedPoolJoinKind {
-      INIT,
-      EXACT_TOKENS_IN_FOR_BPT_OUT,
-      TOKEN_IN_FOR_EXACT_BPT_OUT,
-      ALL_TOKENS_IN_FOR_EXACT_BPT_OUT,
-      ADD_TOKEN
+        INIT,
+        EXACT_TOKENS_IN_FOR_BPT_OUT,
+        TOKEN_IN_FOR_EXACT_BPT_OUT,
+        ALL_TOKENS_IN_FOR_EXACT_BPT_OUT,
+        ADD_TOKEN
     }
 
     enum WeightedPoolExitKind {
-      EXACT_BPT_IN_FOR_ONE_TOKEN_OUT,
-      EXACT_BPT_IN_FOR_TOKENS_OUT,
-      BPT_IN_FOR_EXACT_TOKENS_OUT,
-      REMOVE_TOKEN
+        EXACT_BPT_IN_FOR_ONE_TOKEN_OUT,
+        EXACT_BPT_IN_FOR_TOKENS_OUT,
+        BPT_IN_FOR_EXACT_TOKENS_OUT,
+        REMOVE_TOKEN
     }
 
     /**

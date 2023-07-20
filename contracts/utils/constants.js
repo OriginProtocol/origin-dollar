@@ -14,7 +14,7 @@ module.exports = {
   lusdMetapoolLPCRVPid,
   oethPoolLpPID,
   MAX_UINT256,
-  balancerWstEthWethPID
+  balancerWstEthWethPID,
 };
 
 // These are all the metapool ids. For easier future reference

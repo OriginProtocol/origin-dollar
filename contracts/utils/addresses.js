@@ -171,8 +171,9 @@ addresses.mainnet.FraxETHStrategy =
 addresses.mainnet.BAL = "0xba100000625a3754423978a60c9317c58a424e3D";
 addresses.mainnet.AURA = "0xc0c293ce456ff0ed870add98a0828dd4d2903dbf";
 addresses.mainnet.wstETH = "0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0";
-addresses.mainnet.wstETH_WETH_BPT = "0x32296969ef14eb0c6d29669c550d4a0449130230";
-addresses.mainnet.aureDepositor = "0x59d66c58e83a26d6a0e35114323f65c3945c89c1";
+addresses.mainnet.wstETH_WETH_BPT =
+  "0x32296969ef14eb0c6d29669c550d4a0449130230";
+addresses.mainnet.auraRewardPool = "0x59d66c58e83a26d6a0e35114323f65c3945c89c1";
 
 // Tokens
 addresses.mainnet.sfrxETH = "0xac3E018457B222d93114458476f3E3416Abbe38F";

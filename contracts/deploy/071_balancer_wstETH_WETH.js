@@ -7,6 +7,7 @@ module.exports = deploymentWithGovernanceProposal(
   {
     deployName: "071_balancer_wstETH_WETH",
     forceDeploy: false,
+    //forceSkip: true,
     deployerIsProposer: true,
     //proposalId: ,
   },
@@ -26,7 +27,10 @@ module.exports = deploymentWithGovernanceProposal(
       "OETHVaultAdmin",
       cOETHVaultProxy.address
     );
-    const cOETHVault = await ethers.getContractAt("OETHVault", cOETHVaultProxy.address);
+    const cOETHVault = await ethers.getContractAt(
+      "OETHVault",
+      cOETHVaultProxy.address
+    );
 
     // Deployer Actions
     // ----------------
@@ -59,22 +63,22 @@ module.exports = deploymentWithGovernanceProposal(
     // 3. Encode the init data
     const initFunction =
       "initialize(address[],address[],address[],(address,address,address,address,uint256,bytes32))";
-    const initData = cOETHBalancerMetaPoolStrategy.interface.encodeFunctionData(initFunction, [
-      [addresses.mainnet.BAL, addresses.mainnet.AURA],
-      [addresses.mainnet.stETH, addresses.mainnet.WETH],
+    const initData = cOETHBalancerMetaPoolStrategy.interface.encodeFunctionData(
+      initFunction,
       [
-        addresses.mainnet.wstETH_WETH_BPT,
-        addresses.mainnet.wstETH_WETH_BPT
-      ],
-      [
-        addresses.mainnet.wstETH_WETH_BPT,
-        cOETHVaultProxy.address,
-        addresses.mainnet.aureDepositor, // auraDepositorAddress,
-        addresses.mainnet.CurveOUSDMetaPool, // auraRewardStakerAddress
-        balancerWstEthWethPID, // auraDepositorPTokenId
-        "0x32296969ef14eb0c6d29669c550d4a0449130230000200000000000000000080"
+        [addresses.mainnet.BAL, addresses.mainnet.AURA],
+        [addresses.mainnet.stETH, addresses.mainnet.WETH],
+        [addresses.mainnet.wstETH_WETH_BPT, addresses.mainnet.wstETH_WETH_BPT],
+        [
+          addresses.mainnet.wstETH_WETH_BPT,
+          cOETHVaultProxy.address,
+          addresses.mainnet.auraRewardPool,
+          addresses.mainnet.CurveOUSDMetaPool, // auraRewardStakerAddress
+          balancerWstEthWethPID, // auraDepositorPTokenId
+          "0x32296969ef14eb0c6d29669c550d4a0449130230000200000000000000000080",
+        ],
       ]
-    ]);
+    );
 
     // 4. Init the proxy to point at the implementation
     await withConfirmation(

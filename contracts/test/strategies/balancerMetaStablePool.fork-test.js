@@ -8,60 +8,78 @@ const {
   advanceBlocks,
   advanceTime,
 } = require("../helpers");
+const { BigNumber } = require("ethers");
 const {
   balancerWstEthWethFixture,
   impersonateAndFundContract,
 } = require("../_fixture");
 
-forkOnlyDescribe("ForkTest: Balancer MetaStablePool stWeth/WETH Strategy", function () {
-  this.timeout(0);
-  // due to hardhat forked mode timeouts - retry failed tests up to 3 times
-  this.retries(3);
+forkOnlyDescribe(
+  "ForkTest: Balancer MetaStablePool stWeth/WETH Strategy",
+  function () {
+    this.timeout(0);
+    // due to hardhat forked mode timeouts - retry failed tests up to 3 times
+    // this.retries(3);
 
-  let fixture;
-  beforeEach(async () => {
-    fixture = await loadFixture(balancerWstEthWethFixture);
-  });
-
-  describe.only("Mint", function () {
-    it("Should deploy WETH in Balancer MetaStablePool strategy", async function () {
-      const { josh, weth } = fixture;
-      await mintTest(fixture, josh, weth, "30");
+    let fixture;
+    beforeEach(async () => {
+      fixture = await loadFixture(balancerWstEthWethFixture);
     });
 
-    it("Should deploy stETH in Balancer MetaStablePool strategy", async function () {
-      const { josh, stETH } = fixture;
-      await mintTest(fixture, josh, stETH, "30");
+    describe.only("Mint", function () {
+      it.only("Should deploy WETH in Balancer MetaStablePool strategy", async function () {
+        const { josh, weth, stETH } = fixture;
+        await mintTest(fixture, josh, weth, "30", [weth, stETH]);
+      });
+
+      it("Should deploy stETH in Balancer MetaStablePool strategy", async function () {
+        const { josh, stETH, weth } = fixture;
+        await mintTest(fixture, josh, stETH, "30", [weth, stETH]);
+      });
     });
-  });
 
-  // set it as a last test that executes because we advance time and theat
-  // messes with recency of oracle prices
-  describe("Supply Revenue", function () {
+    // set it as a last test that executes because we advance time and theat
+    // messes with recency of oracle prices
+    describe("Supply Revenue", function () {});
+  }
+);
 
-  });
-});
+async function getPoolBalance(strategy, allAssets) {
+  let currentBalancerBalance = BigNumber.from(0);
 
-async function mintTest(fixture, user, asset, amount = "30000") {
+  for (const asset of allAssets) {
+    currentBalancerBalance = currentBalancerBalance.add(
+      await strategy.checkBalance(asset.address)
+    );
+  }
+
+  return currentBalancerBalance;
+}
+
+async function mintTest(fixture, user, asset, amount, allAssets) {
   const { oethVault, oeth, balancerWstEthWethStrategy } = fixture;
 
   await oethVault.connect(user).allocate();
-
   const unitAmount = await units(amount, asset);
 
   const currentSupply = await oeth.totalSupply();
   const currentBalance = await oeth.connect(user).balanceOf(user.address);
-  const currentBalancerBalance = await balancerWstEthWethStrategy.checkBalance(
-    asset.address
+  const currentBalancerBalance = await getPoolBalance(
+    balancerWstEthWethStrategy,
+    allAssets
   );
 
   // Mint OETH w/ asset
+  await asset.connect(user).approve(oethVault.address, unitAmount);
   await oethVault.connect(user).mint(asset.address, unitAmount, 0);
   await oethVault.connect(user).allocate();
 
   const newBalance = await oeth.connect(user).balanceOf(user.address);
   const newSupply = await oeth.totalSupply();
-  const newBalancerBalance = await balancerWstEthWethStrategy.checkBalance(asset.address);
+  const newBalancerBalance = await getPoolBalance(
+    balancerWstEthWethStrategy,
+    allAssets
+  );
 
   const balanceDiff = newBalance.sub(currentBalance);
   // Ensure user has correct balance (w/ 1% slippage tolerance)
@@ -81,4 +99,3 @@ async function mintTest(fixture, user, asset, amount = "30000") {
     1
   );
 }
-

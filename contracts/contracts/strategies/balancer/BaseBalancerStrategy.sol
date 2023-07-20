@@ -20,14 +20,22 @@ import "hardhat/console.sol";
 abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
-    IBalancerVault internal immutable balancerVault = IBalancerVault(0xBA12222222228d8Ba445958a75a0704d566BF2C8);
+    IBalancerVault internal immutable balancerVault =
+        IBalancerVault(0xBA12222222228d8Ba445958a75a0704d566BF2C8);
+    address internal immutable stEth =
+        0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84;
+    address internal immutable wstEth =
+        0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0;
+    address internal immutable frxEth =
+        0x5E8422345238F34275888049021821E8E08CAa1f;
+    address internal immutable sfrxEth =
+        0xac3E018457B222d93114458476f3E3416Abbe38F;
 
-    address internal auraDepositorAddress;
-    address internal auraRewardStakerAddress;
-    uint256 internal auraDepositorPTokenId;
     address internal pTokenAddress;
     bytes32 internal balancerPoolId;
-    // Max withdrawal slippage denominated in 1e18 (1e18 == 100%)
+    // Full list of all assets as they are present in the Balancer pool
+    address[] internal poolAssetsMapped;
+    // Max withdrawal slippage denominated in 1e18 (1e18 == 100%) - TODO better name also considered with deposits
     uint256 public maxWithdrawalSlippage;
     int256[50] private __reserved;
 
@@ -35,56 +43,6 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         uint256 _prevMaxSlippagePercentage,
         uint256 _newMaxSlippagePercentage
     );
-
-    struct InitConfig {
-        address platformAddress; // platformAddress Address of the Balancer's pool
-        address vaultAddress; // vaultAddress Address of the vault
-        address auraDepositorAddress; // auraDepositorAddress Address of the Auraa depositor(AKA booster) for this pool
-        address auraRewardStakerAddress; // auraRewardStakerAddress Address of the Aura rewards staker
-        uint256 auraDepositorPTokenId; // auraDepositorPTokenId Address of the Aura rewards staker
-        bytes32 balancerPoolId; // balancerPoolId bytes32 poolId
-    }
-
-    /**
-     * Initializer for setting up strategy internal state. This overrides the
-     * InitializableAbstractStrategy initializer as Balancer's strategies don't fit
-     * well within that abstraction.
-     * @param _rewardTokenAddresses Address of BAL & AURA
-     * @param _assets Addresses of supported assets. MUST be passed in the same
-     *                order as returned by coins on the pool contract, i.e.
-     *                WETH, stETH
-     * @param _pTokens Platform Token corresponding addresses
-     * @param initConfig additional configuration
-     */
-    function initialize(
-        address[] calldata _rewardTokenAddresses, // BAL & AURA
-        address[] calldata _assets,
-        address[] calldata _pTokens,
-        InitConfig calldata initConfig
-    ) external onlyGovernor initializer {
-        auraDepositorAddress = initConfig.auraDepositorAddress;
-        auraRewardStakerAddress = initConfig.auraRewardStakerAddress;
-        auraDepositorPTokenId = initConfig.auraDepositorPTokenId;
-        pTokenAddress = _pTokens[0];
-        maxWithdrawalSlippage = 1e15;
-        balancerPoolId = initConfig.balancerPoolId;
-        IERC20[] memory poolAssets = getPoolAssets();
-        uint256 assetsLength = _assets.length;
-        require (poolAssets.length == assetsLength, "Pool assets and _assets should be the same length.");
-        for (uint256 i = 0; i < assetsLength; ++i) {
-            (address strategyAsset, ) = fromPoolAsset(address(poolAssets[i]), 0);
-            require(_assets[i] == strategyAsset, "Pool assets and _assets should all have the same numerical order.");
-        }
-
-        super._initialize(
-            initConfig.platformAddress,
-            initConfig.vaultAddress,
-            _rewardTokenAddresses,
-            _assets,
-            _pTokens
-        );
-        _approveBase();
-    }
 
     /**
      * @dev Returns bool indicating whether asset is supported by strategy
@@ -102,82 +60,122 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
     function checkBalance(address _asset)
         external
         view
+        virtual
         override
         returns (uint256)
     {
-        (IERC20[] memory tokens, uint256[] memory balances, uint256 lastChangeBlock) = balancerVault.getPoolTokens(balancerPoolId);
-        // TODO: override in AURA implementation
-        uint256 yourPoolShare = IERC20(pTokenAddress).balanceOf(address(this)) / IERC20(pTokenAddress).totalSupply();
-        
+        (
+            IERC20[] memory tokens,
+            uint256[] memory balances,
+            uint256 lastChangeBlock
+        ) = balancerVault.getPoolTokens(balancerPoolId);
+        // yourPoolShare denominated in 1e18. (1e18 == 100%)
+        uint256 yourPoolShare = IERC20(pTokenAddress)
+            .balanceOf(address(this))
+            .divPrecisely(IERC20(pTokenAddress).totalSupply());
+
         uint256 balancesLength = balances.length;
-        for (uint256 i=0; i < balances.length; ++i){
-            if(address(tokens[i]) == _asset) {
-                return balances[i] * yourPoolShare;
+        for (uint256 i = 0; i < balances.length; ++i) {
+            (address poolAsset, ) = toPoolAsset(_asset, 0);
+
+            if (address(tokens[i]) == poolAsset) {
+                return balances[i].mulTruncate(yourPoolShare);
             }
         }
     }
 
+    function getMinBPTExpected(
+        address _asset,
+        uint256 _amount,
+        address _poolAsset,
+        uint256 _poolAmount
+    ) internal view virtual returns (uint256 minBptAmount) {
+        /* minBPT price is calculated by dividing the pool (sometimes wrapped) market price by the
+         * rateProviderRate of that asset:
+         *
+         * minBptPrice = pool_a_oracle_price / pool_a_rate
+         *
+         * Since we only have oracle prices for the unwrapped version of the assets the equation
+         * turns into:
+         *
+         * minBptPrice = from_pool_token(asset_oracle_price) / pool_a_rate
+         *
+         */
+        console.log("getMinBPTExpected function");
+        console.log("_poolAsset");
+        console.log(_poolAsset);
+        uint256 rateProviderRate = getRateProviderRate(_poolAsset);
+        address priceProvider = IVault(vaultAddress).priceProvider();
+        uint256 marketPrice = IOracle(priceProvider).price(_asset);
 
+        console.log("market price");
+        console.log(marketPrice); // 1000000000000000000
+        console.log("rate provider price");
+        console.log(rateProviderRate); // 1000000000000000000
+        (, uint256 assetAmount) = fromPoolAsset(_poolAsset, 1e18);
+        console.log("fromPoolAsset assetAmount");
+        console.log(assetAmount);
+        uint256 minBPTnoSlippage = assetAmount
+            .mulTruncate(marketPrice)
+            .divPrecisely(rateProviderRate)
+            .mulTruncate(_amount);
+        console.log("minBPTnoSlippage");
+        console.log(minBPTnoSlippage);
+        minBptAmount =
+            minBPTnoSlippage -
+            minBPTnoSlippage.mulTruncate(maxWithdrawalSlippage);
+        console.log("minBptAmount with slippage");
+        console.log(minBptAmount);
+    }
 
-    function getMinBPTExpected(address _asset, uint256 _amount)
+    function getRateProviderRate(address _asset)
         internal
         view
         virtual
-        returns (uint256 minBptAmount)
-    {
-        address priceProvider = IVault(vaultAddress).priceProvider();
-        uint256 marketPrice = IOracle(priceProvider).price(_asset);
-        uint256 rateProviderRate = getRateProviderRate(_asset);
+        returns (uint256);
 
-        // TODO: account for some slippage?
-        return marketPrice.divPrecisely(rateProviderRate);
-    }
+    function _lpDepositAll() internal virtual {}
 
-    function getRateProviderRate(address _asset) internal virtual view returns(uint256);
-
-    function _lpDepositAll() internal virtual
-    {
-
-    }
-
-    function _lpWithdrawAll() internal virtual
-    {
-        
-    }
+    function _lpWithdrawAll() internal virtual {}
 
     /**
-     * Balancer returns assets and rateProviders for corresponding assets ordered 
+     * Balancer returns assets and rateProviders for corresponding assets ordered
      * by numerical order.
      */
-    function getPoolAssets()
-        internal
-        view
-        returns(IERC20[] memory assets)
-    {
-        (IERC20[] memory tokens, uint256[] memory balances, uint256 lastChangeBlock) = balancerVault.getPoolTokens(balancerPoolId);
+    function getPoolAssets() internal view returns (IERC20[] memory assets) {
+        (
+            IERC20[] memory tokens,
+            uint256[] memory balances,
+            uint256 lastChangeBlock
+        ) = balancerVault.getPoolTokens(balancerPoolId);
         return tokens;
     }
 
     /**
      * Balancer pools might have wrapped versions of assets that the strategy
-     * is handling. This function takes care of the conversion: 
+     * is handling. This function takes care of the conversion:
      * strategy asset -> pool asset
      */
     function toPoolAsset(address asset, uint256 amount)
-        view
         internal
-        returns(address poolAsset, uint256 poolAmount)
+        view
+        returns (address poolAsset, uint256 poolAmount)
     {
+        poolAmount = 0;
         // if stEth
-        if (asset == 0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84) {
+        if (asset == stEth) {
             // wstEth
-            poolAsset = 0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0;
-            poolAmount = IWstETH(0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0).getWstETHByStETH(amount);
-        // if frxEth
-        } else if (asset == 0x5E8422345238F34275888049021821E8E08CAa1f) {
+            poolAsset = wstEth;
+            if (amount > 0) {
+                poolAmount = IWstETH(wstEth).getWstETHByStETH(amount);
+            }
+            // if frxEth
+        } else if (asset == frxEth) {
             // sfrxEth
-            poolAsset = 0xac3E018457B222d93114458476f3E3416Abbe38F;
-            poolAmount = IERC4626(0xac3E018457B222d93114458476f3E3416Abbe38F).convertToShares(amount);
+            poolAsset = sfrxEth;
+            if (amount > 0) {
+                poolAmount = IERC4626(sfrxEth).convertToShares(amount);
+            }
         } else {
             poolAsset = asset;
             poolAmount = amount;
@@ -186,14 +184,14 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
 
     function wrapPoolAsset(address asset, uint256 amount)
         internal
-        returns(uint256 wrappedAmount)
+        returns (uint256 wrappedAmount)
     {
         // if stEth
-        if (asset == 0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84) {
-            wrappedAmount = IWstETH(0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0).wrap(amount);
-        // if frxEth
-        } else if (asset == 0x5E8422345238F34275888049021821E8E08CAa1f) {
-            wrappedAmount = IERC4626(0xac3E018457B222d93114458476f3E3416Abbe38F).deposit(amount, address(this));
+        if (asset == stEth) {
+            wrappedAmount = IWstETH(wstEth).wrap(amount);
+            // if frxEth
+        } else if (asset == frxEth) {
+            wrappedAmount = IERC4626(sfrxEth).deposit(amount, address(this));
         } else {
             wrappedAmount = amount;
         }
@@ -201,37 +199,46 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
 
     function unwrapPoolAsset(address asset, uint256 amount)
         internal
-        returns(uint256 wrappedAmount)
+        returns (uint256 wrappedAmount)
     {
         // if stEth
-        if (asset == 0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84) {
-            wrappedAmount = IWstETH(0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0).unwrap(amount);
-        // if frxEth
-        } else if (asset == 0x5E8422345238F34275888049021821E8E08CAa1f) {
-            wrappedAmount = IERC4626(0xac3E018457B222d93114458476f3E3416Abbe38F).withdraw(amount, address(this), address(this));
+        if (asset == stEth) {
+            wrappedAmount = IWstETH(wstEth).unwrap(amount);
+            // if frxEth
+        } else if (asset == frxEth) {
+            wrappedAmount = IERC4626(sfrxEth).withdraw(
+                amount,
+                address(this),
+                address(this)
+            );
         } else {
             wrappedAmount = amount;
         }
     }
 
-    function fromPoolAsset(address asset, uint256 amount)
-        view
+    function fromPoolAsset(address poolAsset, uint256 poolAmount)
         internal
-        returns(address strategyAsset, uint256 strategyAmount)
+        view
+        returns (address asset, uint256 amount)
     {
+        amount = 0;
         // if wstEth
-        if (asset == 0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0) {
+        if (poolAsset == wstEth) {
             // stEth
-            strategyAsset = 0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84;
-            strategyAmount = IWstETH(0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0).getStETHByWstETH(amount);
-        // if frxEth
-        } else if (asset == 0xac3E018457B222d93114458476f3E3416Abbe38F) {
+            asset = stEth;
+            if (poolAmount > 0) {
+                amount = IWstETH(wstEth).getStETHByWstETH(poolAmount);
+            }
+            // if frxEth
+        } else if (poolAsset == sfrxEth) {
             // sfrxEth
-            strategyAsset = 0x5E8422345238F34275888049021821E8E08CAa1f;
-            strategyAmount = IERC4626(0xac3E018457B222d93114458476f3E3416Abbe38F).convertToAssets(amount);
+            asset = frxEth;
+            if (poolAmount > 0) {
+                amount = IERC4626(sfrxEth).convertToAssets(poolAmount);
+            }
         } else {
-            strategyAsset = asset;
-            strategyAmount = amount;
+            asset = poolAsset;
+            amount = poolAmount;
         }
     }
 
@@ -260,15 +267,10 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         maxWithdrawalSlippage = _maxWithdrawalSlippage;
     }
 
-    function _approveBase() internal {
+    function _approveBase() internal virtual {
         IERC20 pToken = IERC20(pTokenAddress);
         // Balancer vault for BPT token (required for removing liquidity)
         pToken.safeApprove(address(balancerVault), 0);
         pToken.safeApprove(address(balancerVault), type(uint256).max);
-
-        // Gauge for LP token
-        pToken.safeApprove(auraDepositorAddress, 0);
-        pToken.safeApprove(auraDepositorAddress, type(uint256).max);
     }
-
 }
