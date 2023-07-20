@@ -169,4 +169,10 @@ task("curvePool", "Dumps the current state of a Curve pool")
     undefined,
     types.int
   )
+  .addOptionalParam(
+    "user",
+    "Address of user adding, removing or swapping tokens. (default: no user)",
+    undefined,
+    types.string
+  )
   .setAction(curvePool);

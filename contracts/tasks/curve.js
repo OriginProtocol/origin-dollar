@@ -329,6 +329,36 @@ async function curvePool(taskArguments, hre) {
     )}`
   );
 
+  // User balances
+  if (taskArguments.user) {
+    const user = taskArguments.user;
+
+    // Report asset (ETH or 3CRV) balance
+    const userAssetBalanceBefore =
+      oTokenSymbol === "OETH"
+        ? await hre.ethers.provider.getBalance(user, fromBlockTag)
+        : await asset.balanceOf(user, { blockTag: fromBlockTag });
+    const userAssetBalance =
+      oTokenSymbol === "OETH"
+        ? await hre.ethers.provider.getBalance(user, blockTag)
+        : await asset.balanceOf(user, { blockTag });
+    console.log(
+      `\nUser asset balance       : ${formatUnits(
+        userAssetBalance
+      )}  ${displayDiff(diffBlocks, userAssetBalance, userAssetBalanceBefore)}`
+    );
+
+    const userOTokenBalanceBefore =
+      diffBlocks && (await oToken.balanceOf(user, { blockTag: fromBlockTag }));
+    const userOTokenBalance = await oToken.balanceOf(user, { blockTag });
+    console.log(
+      `User OToken balance      : ${formatUnits(
+        userOTokenBalance
+      )} ${displayDiff(diffBlocks, userOTokenBalance, userOTokenBalanceBefore)}`
+    );
+  }
+
+  // Strategy's net minted and threshold
   const netMintedForStrategy = await vault.netOusdMintedForStrategy({
     blockTag,
   });
