@@ -66,13 +66,13 @@ const useCurrencySwapper = ({
   }
 
   const { contract: coinContract, decimals } =
-    coinInfoList[swapMode === 'mint' ? selectedCoin : 'oeth']
+    coinInfoList?.[swapMode === 'mint' ? selectedCoin : 'oeth'] || {}
 
   let coinToReceiveDecimals, coinToReceiveContract
   // do not enter conditional body when redeeming a mix
   if (!(swapMode === 'redeem' && selectedCoin === 'mix')) {
     ;({ contract: coinToReceiveContract, decimals: coinToReceiveDecimals } =
-      coinInfoList[swapMode === 'redeem' ? selectedCoin : 'oeth'])
+      coinInfoList?.[swapMode === 'redeem' ? selectedCoin : 'oeth'] || {})
   }
 
   // plain amount as displayed in UI (not in wei format)
