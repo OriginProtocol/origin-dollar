@@ -277,8 +277,8 @@ def main():
       vault_core_w_swap_collateral.swapCollateral(*decoded_input, {'from':STRATEGIST})
     )
 
-    # Deposit 2500 WETH to Convex OETH-ETH strategy
-    txs.append(vault_oeth_admin.depositToStrategy(OETH_CONVEX_OETH_ETH_STRAT, [WETH], [2500*1e18], {'from': STRATEGIST}))
+    # Deposit 2700 WETH to Convex OETH-ETH strategy
+    txs.append(vault_oeth_admin.depositToStrategy(OETH_CONVEX_OETH_ETH_STRAT, [WETH], [2700*1e18], {'from': STRATEGIST}))
 
     # After
     vault_change = oeth_vault_core.totalValue() - oeth_vault_value_checker.snapshots(STRATEGIST)[0]
