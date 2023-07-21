@@ -295,3 +295,11 @@ def main():
       print("Transaction ", idx)
       print("To: ", item.receiver)
       print("Data (Hex encoded): ", item.input, "\n")
+
+# -----------------------------------
+# July 21, 2023 - OGV Buyback
+# -----------------------------------
+from buyback import *
+
+def main():
+  build_buyback_tx(max_dollars=2750, max_slippage=2)
