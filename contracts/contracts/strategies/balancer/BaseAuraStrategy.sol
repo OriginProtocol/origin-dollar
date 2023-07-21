@@ -10,6 +10,7 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { IERC20 } from "../../utils/InitializableAbstractStrategy.sol";
 import { IERC4626 } from "../../../lib/openzeppelin/interfaces/IERC4626.sol";
 import { StableMath } from "../../utils/StableMath.sol";
+import { IRewardStaking } from "../IRewardStaking.sol";
 
 import "hardhat/console.sol";
 
@@ -52,7 +53,7 @@ abstract contract BaseAuraStrategy is BaseBalancerStrategy {
         auraRewardStakerAddress = initConfig.auraRewardStakerAddress;
         auraDepositorPTokenId = initConfig.auraDepositorPTokenId;
         pTokenAddress = _pTokens[0];
-        maxWithdrawalSlippage = 10e16;
+        maxWithdrawalSlippage = 1e15;
         balancerPoolId = initConfig.balancerPoolId;
         IERC20[] memory poolAssets = getPoolAssets();
         uint256 assetsLength = _assets.length;
@@ -86,10 +87,9 @@ abstract contract BaseAuraStrategy is BaseBalancerStrategy {
     }
 
     function _lpWithdraw(uint256 numBPTTokens) internal virtual override {
-        IERC4626(auraRewardPoolAddress).withdraw(
+        IRewardStaking(auraRewardPoolAddress).withdrawAndUnwrap(
             numBPTTokens,
-            address(this),
-            address(this)
+            true // also claim reward tokens
         );
     }
 
@@ -97,11 +97,23 @@ abstract contract BaseAuraStrategy is BaseBalancerStrategy {
         uint256 bptBalance = IERC4626(auraRewardPoolAddress).balanceOf(
             address(this)
         );
-        IERC4626(auraRewardPoolAddress).withdraw(
+
+        IRewardStaking(auraRewardPoolAddress).withdrawAndUnwrap(
             bptBalance,
-            address(this),
-            address(this)
+            true // also claim reward tokens
         );
+    }
+
+    function collectRewardTokens()
+        external
+        virtual
+        override
+        onlyHarvester
+        nonReentrant
+    {
+        // Collect CRV and CVX
+        IRewardStaking(auraRewardPoolAddress).getReward();
+        _collectRewardTokens();
     }
 
     function checkBalance(address _asset)

@@ -90,7 +90,15 @@ forkOnlyDescribe(
       });
     });
 
-    describe("Harvest rewards", function () {});
+    describe.only("Harvest rewards", function () {
+      it("Should be able to collect reward tokens", async function () {
+        const { josh, balancerWstEthWethStrategy, oethHarvester } = fixture;
+
+        await oethHarvester
+          .connect(josh)
+          ["harvestAndSwap(address)"](balancerWstEthWethStrategy.address);
+      });
+    });
   }
 );
 

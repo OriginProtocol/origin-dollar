@@ -102,14 +102,10 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
 
         wrapPoolAsset(_asset, _amount);
 
-        uint256 minBPT = getMinBPTExpected(_asset, _amount, poolAsset);
-        // TODO: figure out why the slippage is so high
+        uint256 minBPT = getBPTExpected(_asset, _amount, poolAsset);
         uint256 minBPTwSlippage = minBPT.mulTruncate(
             1e18 - maxWithdrawalSlippage
         );
-
-        // console.log("Min BPT expected");
-        // console.log(minBPTwSlippage);
 
         /* TOKEN_IN_FOR_EXACT_BPT_OUT:
          * User sends an estimated but unknown (computed at run time) quantity of a single token,
@@ -144,9 +140,8 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
     ) external override onlyVault nonReentrant {
         (address poolAsset, uint256 poolAmount) = toPoolAsset(_asset, _amount);
 
-        uint256 BPTtoWithdraw = getMinBPTExpected(_asset, _amount, poolAsset);
+        uint256 BPTtoWithdraw = getBPTExpected(_asset, _amount, poolAsset);
         // adjust for slippage
-        // TODO: why slippage so high
         BPTtoWithdraw = BPTtoWithdraw.mulTruncate(1e18 + maxWithdrawalSlippage);
 
         _lpWithdraw(BPTtoWithdraw);

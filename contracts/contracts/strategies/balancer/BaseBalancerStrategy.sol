@@ -14,7 +14,6 @@ import { IVault } from "../../interfaces/IVault.sol";
 import { IWstETH } from "../../interfaces/IWstETH.sol";
 import { IERC4626 } from "../../../lib/openzeppelin/interfaces/IERC4626.sol";
 import { StableMath } from "../../utils/StableMath.sol";
-
 import "hardhat/console.sol";
 
 abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
@@ -69,46 +68,72 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
             uint256[] memory balances,
             uint256 lastChangeBlock
         ) = balancerVault.getPoolTokens(balancerPoolId);
+
         // yourPoolShare denominated in 1e18. (1e18 == 100%)
         uint256 yourPoolShare = IERC20(pTokenAddress)
             .balanceOf(address(this))
             .divPrecisely(IERC20(pTokenAddress).totalSupply());
 
         uint256 balancesLength = balances.length;
-        for (uint256 i = 0; i < balances.length; ++i) {
+        for (uint256 i = 0; i < balancesLength; ++i) {
             (address poolAsset, ) = toPoolAsset(_asset, 0);
 
             if (address(tokens[i]) == poolAsset) {
-                return balances[i].mulTruncate(yourPoolShare);
+                (, uint256 assetAmount) = fromPoolAsset(
+                    poolAsset,
+                    balances[i].mulTruncate(yourPoolShare)
+                );
+                return assetAmount;
             }
         }
     }
 
-    function getMinBPTExpected(
+    function getBPTExpected(
         address _asset,
         uint256 _amount,
         address _poolAsset
-    ) internal view virtual returns (uint256 minBptAmount) {
-        /* minBPT price is calculated by dividing the pool (sometimes wrapped) market price by the
-         * rateProviderRate of that asset:
+    ) internal view virtual returns (uint256 bptExpected) {
+        /* BPT price is calculated by dividing the pool (sometimes wrapped) market price by the
+         * rateProviderRate of that asset. To get BPT expected we need to multiply that by underlying
+         * asset amount divided by BPT token rate. BPT token rate is similar to Curve's virtual_price
+         * and expresses how much has the price of BPT appreciated in relation to the underlying assets.
          *
-         * minBptPrice = pool_a_oracle_price / pool_a_rate
+         * bptPrice = pool_a_oracle_price / pool_a_rate
          *
          * Since we only have oracle prices for the unwrapped version of the assets the equation
          * turns into:
          *
-         * minBptPrice = from_pool_token(asset_oracle_price) / pool_a_rate
+         * bptPrice = from_pool_token(asset_amount).amount * oracle_price / pool_a_rate
+         *
+         * bptExpected = bptPrice(in relation to specified asset) * asset_amount / BPT_token_rate
          *
          */
-        uint256 rateProviderRate = getRateProviderRate(_poolAsset);
+        uint256 poolTokenRate = getRateProviderRate(_poolAsset);
         address priceProvider = IVault(vaultAddress).priceProvider();
-        uint256 marketPrice = IOracle(priceProvider).price(_asset);
+        uint256 strategyAssetMarketPrice = IOracle(priceProvider).price(_asset);
+        uint256 bptRate = IRateProvider(platformAddress).getRate();
 
-        (, uint256 assetAmount) = fromPoolAsset(_poolAsset, 1e18);
-        minBptAmount = assetAmount
-            .mulTruncate(marketPrice)
-            .divPrecisely(rateProviderRate)
-            .mulTruncate(_amount);
+        (, uint256 strategyAssetPerPoolToken) = fromPoolAsset(_poolAsset, 1e18);
+        bptExpected = strategyAssetPerPoolToken
+            .mulTruncate(_amount)
+            .mulTruncate(strategyAssetMarketPrice)
+            .divPrecisely(bptRate)
+            .divPrecisely(poolTokenRate);
+
+        // console.log("getBPTExpected START");
+        // console.log("_asset");
+        // console.log(_asset);
+        // console.log("_amount");
+        // console.log(_amount);
+        // console.log("poolTokenRate");
+        // console.log(poolTokenRate);
+        // console.log("strategyAssetMarketPrice");
+        // console.log(strategyAssetMarketPrice);
+        // console.log("bptExpected");
+        // console.log(bptExpected);
+        // console.log("bptRate");
+        // console.log(bptRate);
+        // console.log("getBPTExpected END");
     }
 
     function getRateProviderRate(address _asset)
