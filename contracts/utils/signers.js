@@ -1,6 +1,38 @@
-const { parseEther } = require("ethers").utils;
+const { parseEther, Wallet } = require("ethers").utils;
+const { ethereumAddress, privateKey } = require("./regex");
 
 const log = require("./logger")("utils:signers");
+
+async function getSigner() {
+  const pk = process.env.DEPLOYER_PK || process.env.GOVERNOR_PK;
+  if (pk) {
+    if (!pk.match(privateKey)) {
+      throw Error(`Invalid format of private key`);
+    }
+    const wallet = new Wallet(pk, hre.ethers.provider);
+    log(`Using signer ${await wallet.getAddress()} from private key`);
+    return wallet;
+  }
+
+  if (process.env.FORK === "true" && process.env.IMPERSONATE) {
+    let address = process.env.IMPERSONATE;
+    if (!address.match(ethereumAddress)) {
+      throw Error(
+        `Environment variable IMPERSONATE is an invalid Ethereum address or contract name`
+      );
+    }
+    log(
+      `Impersonating account ${address} from IMPERSONATE environment variable`
+    );
+    return await impersonateAccount(address);
+  }
+
+  const signers = await hre.ethers.getSigners();
+  const signer = signers[0];
+  log(`Using signer ${await signer.getAddress()}`);
+
+  return signer;
+}
 
 /**
  * Impersonate an account when connecting to a forked node.
@@ -47,6 +79,7 @@ async function impersonateAndFund(account, amount = "100") {
 }
 
 module.exports = {
+  getSigner,
   impersonateAccount,
   impersonateAndFund,
 };

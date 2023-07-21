@@ -21,7 +21,7 @@ const {
   supplyStakingContractWithOGN,
 } = require("./compensation");
 const { allocate, capital, harvest, rebase, yield } = require("./vault");
-const { curvePool } = require("./curve");
+const { curvePool, curveAdd, curveRemove, curveSwap } = require("./curve");
 
 // Environment tasks.
 task("env", "Check env vars are properly set for a Mainnet deployment", env);
@@ -176,3 +176,54 @@ task("curvePool", "Dumps the current state of a Curve pool")
     types.string
   )
   .setAction(curvePool);
+
+task("curveAdd", "Add liquidity to Curve Metapool")
+  .addOptionalParam(
+    "symbol",
+    "Symbol of the OToken. eg OETH or OUSD",
+    "OETH",
+    types.string
+  )
+  .addParam("otokens", "Amount of OTokens. eg OETH or OUSD", 0, types.float)
+  .addParam("assets", "Amount of assets. eg ETH or 3CRV", 0, types.float)
+  .addOptionalParam(
+    "slippage",
+    "Max allowed slippage as a percentage to 2 decimal places.",
+    1.0,
+    types.float
+  )
+  .setAction(curveAdd);
+
+task("curveRemove", "Remove liquidity from Curve Metapool")
+  .addOptionalParam(
+    "symbol",
+    "Symbol of the OToken. eg OETH or OUSD",
+    "OETH",
+    types.string
+  )
+  .addParam("otokens", "Amount of OTokens. eg OETH or OUSD", 0, types.float)
+  .addParam("assets", "Amount of assets. eg ETH or 3CRV", 0, types.float)
+  .addOptionalParam(
+    "slippage",
+    "Max allowed slippage as a percentage to 2 decimal places.",
+    1.0,
+    types.float
+  )
+  .setAction(curveRemove);
+
+task("curveSwap", "Swap Metapool tokens")
+  .addOptionalParam(
+    "symbol",
+    "Symbol of the OToken. eg OETH or OUSD",
+    "OETH",
+    types.string
+  )
+  .addParam(
+    "from",
+    "Symbol of the from token. eg OETH, ETH, 3CRV, OUSD",
+    undefined,
+    types.string
+  )
+  .addParam("amount", "Amount of from tokens.", 0, types.float)
+  .addOptionalParam("min", "Min tokens out.", 0, types.float)
+  .setAction(curveSwap);

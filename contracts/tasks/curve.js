@@ -1,9 +1,13 @@
 const { formatUnits, parseUnits } = require("ethers/lib/utils");
 const { BigNumber } = require("ethers");
 
-const poolAbi = require("../test/abi/ousdMetapool.json");
+const ousdPoolAbi = require("../test/abi/ousdMetapool.json");
+const oethPoolAbi = require("../test/abi/oethMetapool.json");
 const addresses = require("../utils/addresses");
 const { resolveAsset } = require("../utils/assets");
+const { getSigner } = require("../utils/signers");
+
+const log = require("../utils/logger")("task:curve");
 
 /**
  * Dumps the current state of a Curve Metapool pool used for AMO
@@ -17,46 +21,18 @@ async function curvePool(taskArguments, hre) {
   const fromBlockTag = taskArguments.fromBlock || 0;
   const diffBlocks = fromBlockTag > 0;
 
-  // Get symbols of tokens in the pool
-  const oTokenSymbol = taskArguments.pool;
-  const assetSymbol = oTokenSymbol === "OETH" ? "ETH " : "3CRV";
-
-  // Get the contract addresses
-  const poolAddr =
-    oTokenSymbol === "OETH"
-      ? addresses.mainnet.CurveOETHMetaPool
-      : addresses.mainnet.CurveOUSDMetaPool;
-  const strategyAddr =
-    oTokenSymbol === "OETH"
-      ? addresses.mainnet.ConvexOETHAMOStrategy
-      : addresses.mainnet.ConvexOUSDAMOStrategy;
-  const convexRewardsPoolAddr =
-    oTokenSymbol === "OETH"
-      ? addresses.mainnet.CVXETHRewardsPool
-      : addresses.mainnet.CVXRewardsPool;
-  const poolLPSymbol = oTokenSymbol === "OETH" ? "OETHCRV-f" : "OUSD3CRV-f";
-  const vaultAddr =
-    oTokenSymbol === "OETH"
-      ? addresses.mainnet.OETHVaultProxy
-      : addresses.mainnet.VaultProxy;
-  const oTokenAddr =
-    oTokenSymbol === "OETH"
-      ? addresses.mainnet.OETHProxy
-      : addresses.mainnet.OUSDProxy;
-  const asset =
-    oTokenSymbol === "OETH"
-      ? await resolveAsset("WETH")
-      : await resolveAsset("3CRV");
-
-  // Load all the contracts
-  const pool = await hre.ethers.getContractAt(poolAbi, poolAddr);
-  const cvxRewardPool = await ethers.getContractAt(
-    "IRewardStaking",
-    convexRewardsPoolAddr
-  );
-  const amoStrategy = await ethers.getContractAt("IStrategy", strategyAddr);
-  const oToken = await ethers.getContractAt("IERC20", oTokenAddr);
-  const vault = await ethers.getContractAt("IVault", vaultAddr);
+  // Get symbols and contracts
+  const {
+    oTokenSymbol,
+    assetSymbol,
+    poolLPSymbol,
+    asset,
+    oToken,
+    pool,
+    cvxRewardPool,
+    amoStrategy,
+    vault,
+  } = await curveContracts(taskArguments.pool);
 
   // Get Metapool data
   const totalLPsBefore =
@@ -138,8 +114,12 @@ async function curvePool(taskArguments, hre) {
   // Get the Strategy's Metapool LPs in the Convex pool
   const vaultLPsBefore =
     diffBlocks &&
-    (await cvxRewardPool.balanceOf(strategyAddr, { blockTag: fromBlockTag }));
-  const vaultLPs = await cvxRewardPool.balanceOf(strategyAddr, { blockTag });
+    (await cvxRewardPool.balanceOf(amoStrategy.address, {
+      blockTag: fromBlockTag,
+    }));
+  const vaultLPs = await cvxRewardPool.balanceOf(amoStrategy.address, {
+    blockTag,
+  });
   console.log(
     `\nvault Metapool LPs       : ${displayPortion(
       vaultLPs,
@@ -276,10 +256,10 @@ async function curvePool(taskArguments, hre) {
 
   const assetsInVaultBefore =
     diffBlocks &&
-    (await asset.balanceOf(vaultAddr, {
+    (await asset.balanceOf(vault.address, {
       blockTag: fromBlockTag,
     }));
-  const assetsInVault = await asset.balanceOf(vaultAddr, { blockTag });
+  const assetsInVault = await asset.balanceOf(vault.address, { blockTag });
   displayProperty(
     "Assets in vault",
     assetSymbol,
@@ -446,6 +426,177 @@ function displayRatio(a, b, aBefore, bBefore, precision = 6) {
   )}% ${diffBeforeDisplay}`;
 }
 
+/************************************
+    Curve functions that write
+ ************************************/
+
+async function curveAdd(taskArguments) {
+  const { assets, otokens, slippage, symbol } = taskArguments;
+
+  // Get symbols and contracts
+  const { assetSymbol, oTokenSymbol, oToken, pool, poolLPSymbol } =
+    await curveContracts(symbol);
+
+  const signer = await getSigner();
+
+  const oTokenAmount = parseUnits(otokens.toString());
+  const assetAmount = parseUnits(assets.toString());
+  log(
+    `Adding ${formatUnits(oTokenAmount)} ${oTokenSymbol} and ${formatUnits(
+      assetAmount
+    )} ${assetSymbol} to ${poolLPSymbol}`
+  );
+
+  const virtualPrice = await pool.get_virtual_price();
+  // 3Crv = USD / virtual price
+  const estimatedLpTokens = oTokenAmount.add(assetAmount).div(virtualPrice);
+  const slippageScaled = slippage * 100;
+  const minLpTokens = estimatedLpTokens.mul(10000 - slippageScaled).div(10000);
+  console.log(`min LP tokens: ${formatUnits(minLpTokens)}`);
+
+  if (oTokenAmount.gt(0)) {
+    await oToken.connect(signer).approve(pool.address, oTokenAmount);
+  }
+
+  const override = oTokenSymbol === "OETH" ? { value: assetAmount } : {};
+  // prettier-ignore
+  await pool
+    .connect(signer)["add_liquidity(uint256[2],uint256)"](
+      [assetAmount, oTokenAmount],
+      minLpTokens, override
+    );
+
+  // TODO get LPs minted amount
+}
+
+async function curveRemove(taskArguments) {
+  const { assets, otokens, slippage, symbol } = taskArguments;
+
+  // Get symbols and contracts
+  const { assetSymbol, oTokenSymbol, oToken, pool, poolLPSymbol } =
+    await curveContracts(symbol);
+
+  const signer = await getSigner();
+
+  const oTokenAmount = parseUnits(otokens.toString());
+  const assetAmount = parseUnits(assets.toString());
+  log(
+    `Adding ${formatUnits(oTokenAmount)} ${oTokenSymbol} and ${formatUnits(
+      assetAmount
+    )} ${assetSymbol} to ${poolLPSymbol}`
+  );
+
+  const virtualPrice = await pool.get_virtual_price();
+  // 3Crv = USD / virtual price
+  const estimatedLpTokens = oTokenAmount.add(assetAmount).div(virtualPrice);
+  const slippageScaled = slippage * 100;
+  const maxLpTokens = estimatedLpTokens.mul(10000 + slippageScaled).div(10000);
+  console.log(`min LP tokens: ${formatUnits(maxLpTokens)}`);
+
+  if (oTokenAmount.gt(0)) {
+    await oToken.connect(signer).approve(pool.address, oTokenAmount);
+  }
+
+  const override = oTokenSymbol === "OETH" ? { value: assetAmount } : {};
+  // prettier-ignore
+  await pool
+    .connect(signer)["remove_liquidity_imbalance(uint256[2],uint256)"](
+      [assetAmount, oTokenAmount],
+      maxLpTokens, override
+    );
+
+  // TODO get LPs burned
+}
+
+async function curveSwap(taskArguments) {
+  const { amount, from, min, symbol } = taskArguments;
+
+  // Get symbols and contracts
+  const { pool } = await curveContracts(symbol);
+
+  const signer = await getSigner();
+
+  const fromAmount = parseUnits(from.toString());
+  const minAmount = parseUnits(min.toString());
+  log(`Swapping ${formatUnits(fromAmount)} ${from}`);
+
+  const fromIndex = from === "ETH" || from === "3CRV" ? 0 : 1;
+  const toIndex = from === "ETH" || from === "3CRV" ? 1 : 0;
+
+  const override = from === "ETH" ? { value: amount } : {};
+  // prettier-ignore
+  await pool
+    .connect(signer).exchange(
+          fromIndex,
+          toIndex,
+          fromAmount,
+          minAmount,
+          override
+    );
+
+  // TODO get LPs burned
+}
+
+async function curveContracts(oTokenSymbol) {
+  // Get symbols of tokens in the pool
+  const assetSymbol = oTokenSymbol === "OETH" ? "ETH " : "3CRV";
+
+  // Get the contract addresses
+  const poolAddr =
+    oTokenSymbol === "OETH"
+      ? addresses.mainnet.CurveOETHMetaPool
+      : addresses.mainnet.CurveOUSDMetaPool;
+  const strategyAddr =
+    oTokenSymbol === "OETH"
+      ? addresses.mainnet.ConvexOETHAMOStrategy
+      : addresses.mainnet.ConvexOUSDAMOStrategy;
+  const convexRewardsPoolAddr =
+    oTokenSymbol === "OETH"
+      ? addresses.mainnet.CVXETHRewardsPool
+      : addresses.mainnet.CVXRewardsPool;
+  const poolLPSymbol = oTokenSymbol === "OETH" ? "OETHCRV-f" : "OUSD3CRV-f";
+  const vaultAddr =
+    oTokenSymbol === "OETH"
+      ? addresses.mainnet.OETHVaultProxy
+      : addresses.mainnet.VaultProxy;
+  const oTokenAddr =
+    oTokenSymbol === "OETH"
+      ? addresses.mainnet.OETHProxy
+      : addresses.mainnet.OUSDProxy;
+
+  // Load all the contracts
+  const asset =
+    oTokenSymbol === "OETH"
+      ? await resolveAsset("WETH")
+      : await resolveAsset("3CRV");
+  const pool =
+    oTokenSymbol === "OETH"
+      ? await hre.ethers.getContractAt(oethPoolAbi, poolAddr)
+      : await hre.ethers.getContractAt(ousdPoolAbi, poolAddr);
+  const cvxRewardPool = await ethers.getContractAt(
+    "IRewardStaking",
+    convexRewardsPoolAddr
+  );
+  const amoStrategy = await ethers.getContractAt("IStrategy", strategyAddr);
+  const oToken = await ethers.getContractAt("IERC20", oTokenAddr);
+  const vault = await ethers.getContractAt("IVault", vaultAddr);
+
+  return {
+    oTokenSymbol,
+    assetSymbol,
+    poolLPSymbol,
+    pool,
+    cvxRewardPool,
+    amoStrategy,
+    oToken,
+    asset,
+    vault,
+  };
+}
+
 module.exports = {
   curvePool,
+  curveAdd,
+  curveRemove,
+  curveSwap,
 };
