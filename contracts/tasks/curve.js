@@ -43,8 +43,10 @@ async function curvePool(taskArguments, hre) {
     oTokenSymbol === "OETH"
       ? addresses.mainnet.OETHProxy
       : addresses.mainnet.OUSDProxy;
-  // TODO condition to set to WETH or 3CRV
-  const asset = await resolveAsset("WETH");
+  const asset =
+    oTokenSymbol === "OETH"
+      ? await resolveAsset("WETH")
+      : await resolveAsset("3CRV");
 
   // Load all the contracts
   const pool = await hre.ethers.getContractAt(poolAbi, poolAddr);
@@ -57,28 +59,41 @@ async function curvePool(taskArguments, hre) {
   const vault = await ethers.getContractAt("IVault", vaultAddr);
 
   // Get Metapool data
-  const poolBalancesBefore =
-    diffBlocks &&
-    (await pool.get_balances({
-      blockTag: fromBlockTag,
-    }));
-  const poolBalances = await pool.get_balances({ blockTag });
+  const totalLPsBefore =
+    diffBlocks && (await pool.totalSupply({ blockTag: fromBlockTag }));
+  const totalLPs = await pool.totalSupply({ blockTag });
   const virtualPriceBefore =
     diffBlocks &&
     (await pool.get_virtual_price({
       blockTag: fromBlockTag,
     }));
   const virtualPrice = await pool.get_virtual_price({ blockTag });
-  console.log(
-    `LP virtual price: ${formatUnits(
-      virtualPrice
-    )} ${oTokenSymbol} ${displayDiff(
-      diffBlocks,
-      virtualPrice,
-      virtualPriceBefore,
-      6
-    )}`
+  const invariant = virtualPrice.mul(totalLPs).div(parseUnits("1"));
+  const invariantBefore =
+    diffBlocks && virtualPriceBefore.mul(totalLPsBefore).div(parseUnits("1"));
+  displayProperty(
+    "Pool LP total supply",
+    poolLPSymbol,
+    totalLPs,
+    totalLPsBefore,
+    6
   );
+  displayProperty("Invariant (D) ", "", invariant, invariantBefore, 6);
+  displayProperty(
+    "LP virtual price",
+    assetSymbol,
+    virtualPrice,
+    virtualPriceBefore,
+    6
+  );
+
+  // Pool balances
+  const poolBalancesBefore =
+    diffBlocks &&
+    (await pool.get_balances({
+      blockTag: fromBlockTag,
+    }));
+  const poolBalances = await pool.get_balances({ blockTag });
 
   // swap 1 OETH for ETH (OETH/ETH)
   const price1Before =
@@ -92,10 +107,12 @@ async function curvePool(taskArguments, hre) {
     parseUnits("1"),
     { blockTag }
   );
-  console.log(
-    `${oTokenSymbol}/${assetSymbol} price : ${formatUnits(
-      price1
-    )} ${displayDiff(diffBlocks, price1, price1Before, 6)}`
+  displayProperty(
+    `${oTokenSymbol} price`,
+    `${oTokenSymbol}/${assetSymbol}`,
+    price1,
+    price1Before,
+    6
   );
 
   // swap 1 ETH for OETH (ETH/OETH)
@@ -110,10 +127,12 @@ async function curvePool(taskArguments, hre) {
     parseUnits("1"),
     { blockTag }
   );
-  console.log(
-    `${assetSymbol}/${oTokenSymbol} price : ${formatUnits(
-      price2
-    )} ${displayDiff(diffBlocks, price2, price2Before, 6)}`
+  displayProperty(
+    `${assetSymbol} price`,
+    `${assetSymbol}/${oTokenSymbol}`,
+    price2,
+    price2Before,
+    6
   );
 
   // Get the Strategy's Metapool LPs in the Convex pool
@@ -121,11 +140,8 @@ async function curvePool(taskArguments, hre) {
     diffBlocks &&
     (await cvxRewardPool.balanceOf(strategyAddr, { blockTag: fromBlockTag }));
   const vaultLPs = await cvxRewardPool.balanceOf(strategyAddr, { blockTag });
-  const totalLPsBefore =
-    diffBlocks && (await pool.totalSupply({ blockTag: fromBlockTag }));
-  const totalLPs = await pool.totalSupply({ blockTag });
   console.log(
-    `vault Metapool LPs       : ${displayPortion(
+    `\nvault Metapool LPs       : ${displayPortion(
       vaultLPs,
       totalLPs,
       poolLPSymbol,
@@ -264,34 +280,25 @@ async function curvePool(taskArguments, hre) {
       blockTag: fromBlockTag,
     }));
   const assetsInVault = await asset.balanceOf(vaultAddr, { blockTag });
-  console.log(
-    `\nAssets in vault          : ${formatUnits(
-      assetsInVault
-    )} ${assetSymbol} ${displayDiff(
-      diffBlocks,
-      assetsInVault,
-      assetsInVaultBefore
-    )}`
+  displayProperty(
+    "Assets in vault",
+    assetSymbol,
+    assetsInVault,
+    assetsInVaultBefore
   );
-
   // Vault's total value v total supply
-  console.log(
-    `\nOToken total supply      : ${formatUnits(
-      oTokenSupply
-    )} ${oTokenSymbol} ${displayDiff(
-      diffBlocks,
-      oTokenSupply,
-      oTokenSupplyBefore
-    )}`
+  console.log("");
+  displayProperty(
+    "OToken total supply",
+    oTokenSymbol,
+    oTokenSupply,
+    oTokenSupplyBefore
   );
-  console.log(
-    `vault assets value       : ${formatUnits(
-      vaultTotalValue
-    )} ${assetSymbol} ${displayDiff(
-      diffBlocks,
-      vaultTotalValue,
-      vaultTotalValueBefore
-    )}`
+  displayProperty(
+    "vault assets value",
+    assetSymbol,
+    vaultTotalValue,
+    vaultTotalValueBefore
   );
   console.log(
     `total value - supply     : ${displayRatio(
@@ -302,23 +309,17 @@ async function curvePool(taskArguments, hre) {
     )}`
   );
   // Adjusted total value v total supply
-  console.log(
-    `OToken adjust supply     : ${formatUnits(
-      vaultAdjustedTotalSupply
-    )} ${oTokenSymbol} ${displayDiff(
-      diffBlocks,
-      vaultAdjustedTotalSupply,
-      vaultAdjustedTotalSupplyBefore
-    )}`
+  displayProperty(
+    "OToken adjust supply",
+    oTokenSymbol,
+    vaultAdjustedTotalSupply,
+    vaultAdjustedTotalSupplyBefore
   );
-  console.log(
-    `vault adjusted value     : ${formatUnits(
-      vaultAdjustedTotalValue
-    )} ${assetSymbol} ${displayDiff(
-      diffBlocks,
-      vaultAdjustedTotalValue,
-      vaultAdjustedTotalValueBefore
-    )}`
+  displayProperty(
+    "vault adjusted value",
+    assetSymbol,
+    vaultAdjustedTotalValue,
+    vaultAdjustedTotalValueBefore
   );
   console.log(
     `adjusted value - supply  : ${displayRatio(
@@ -342,19 +343,22 @@ async function curvePool(taskArguments, hre) {
       oTokenSymbol === "OETH"
         ? await hre.ethers.provider.getBalance(user, blockTag)
         : await asset.balanceOf(user, { blockTag });
-    console.log(
-      `\nUser asset balance       : ${formatUnits(
-        userAssetBalance
-      )}  ${displayDiff(diffBlocks, userAssetBalance, userAssetBalanceBefore)}`
+    console.log("");
+    displayProperty(
+      "User asset balance",
+      assetSymbol,
+      userAssetBalance,
+      userAssetBalanceBefore
     );
 
     const userOTokenBalanceBefore =
       diffBlocks && (await oToken.balanceOf(user, { blockTag: fromBlockTag }));
     const userOTokenBalance = await oToken.balanceOf(user, { blockTag });
-    console.log(
-      `User OToken balance      : ${formatUnits(
-        userOTokenBalance
-      )} ${displayDiff(diffBlocks, userOTokenBalance, userOTokenBalanceBefore)}`
+    displayProperty(
+      "User OToken balance",
+      oTokenSymbol,
+      userOTokenBalance,
+      userOTokenBalanceBefore
     );
   }
 
@@ -366,14 +370,17 @@ async function curvePool(taskArguments, hre) {
     await vault.netOusdMintForStrategyThreshold({ blockTag });
   const netMintedForStrategyDiff =
     netMintedForStrategyThreshold.sub(netMintedForStrategy);
-  console.log(
-    `\nNet minted for strategy  : ${formatUnits(netMintedForStrategy)}`
+  console.log("");
+  displayProperty("Net minted for strategy", assetSymbol, netMintedForStrategy);
+  displayProperty(
+    "Net minted threshold",
+    assetSymbol,
+    netMintedForStrategyThreshold
   );
-  console.log(
-    `Net minted threshold     : ${formatUnits(netMintedForStrategyThreshold)}`
-  );
-  console.log(
-    `Net minted for strat diff: ${formatUnits(netMintedForStrategyDiff)}`
+  displayProperty(
+    "Net minted for strat diff",
+    assetSymbol,
+    netMintedForStrategyDiff
   );
 }
 
@@ -393,6 +400,23 @@ function displayDiff(diffBlocks, newValue, oldValue, precision = 2) {
   return `\t${diff.gt(0) ? "+" : ""}${formatUnits(
     newValue.sub(oldValue)
   )}${displayPercentage}`;
+}
+
+function displayProperty(
+  desc,
+  unitDesc,
+  currentValue,
+  oldValue = false,
+  decimals
+) {
+  console.log(
+    `${desc.padEnd(25)}: ${formatUnits(currentValue)} ${unitDesc} ${displayDiff(
+      oldValue != false,
+      currentValue,
+      oldValue,
+      decimals
+    )}`
+  );
 }
 
 function displayPortion(amount, total, units, comparison, precision = 2) {
