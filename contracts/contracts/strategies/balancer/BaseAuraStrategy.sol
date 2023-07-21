@@ -8,12 +8,14 @@ pragma solidity ^0.8.0;
 import { BaseBalancerStrategy } from "./BaseBalancerStrategy.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IERC20 } from "../../utils/InitializableAbstractStrategy.sol";
-import { IERC4626 } from "../../../lib/openzeppelin/interfaces/IERC4626.sol";"
+import { IERC4626 } from "../../../lib/openzeppelin/interfaces/IERC4626.sol";
+import { StableMath } from "../../utils/StableMath.sol";
 
 import "hardhat/console.sol";
 
 abstract contract BaseAuraStrategy is BaseBalancerStrategy {
     using SafeERC20 for IERC20;
+    using StableMath for uint256;
 
     address internal auraRewardPoolAddress;
     address internal auraRewardStakerAddress;
@@ -54,10 +56,16 @@ abstract contract BaseAuraStrategy is BaseBalancerStrategy {
         balancerPoolId = initConfig.balancerPoolId;
         IERC20[] memory poolAssets = getPoolAssets();
         uint256 assetsLength = _assets.length;
-        require (poolAssets.length == assetsLength, "Pool assets and _assets should be the same length.");
+        require(
+            poolAssets.length == assetsLength,
+            "Pool assets and _assets should be the same length."
+        );
         for (uint256 i = 0; i < assetsLength; ++i) {
             (address asset, ) = fromPoolAsset(address(poolAssets[i]), 0);
-            require(_assets[i] == asset, "Pool assets and _assets should all have the same numerical order.");
+            require(
+                _assets[i] == asset,
+                "Pool assets and _assets should all have the same numerical order."
+            );
             // TODO: double check if this fits in here
             poolAssetsMapped.push(address(poolAssets[i]));
         }
@@ -72,33 +80,55 @@ abstract contract BaseAuraStrategy is BaseBalancerStrategy {
         _approveBase();
     }
 
-    function _lpDepositAll() internal virtual override
-    {
+    function _lpDepositAll() internal virtual override {
         uint256 bptBalance = IERC20(platformAddress).balanceOf(address(this));
-        IERC4626(auraRewardPoolAddress).deposit(bptBalance);
+        IERC4626(auraRewardPoolAddress).deposit(bptBalance, address(this));
     }
 
-    function _lpWithdrawAll() internal virtual override
-    {
-        
+    function _lpWithdraw(uint256 numBPTTokens) internal virtual override {
+        IERC4626(auraRewardPoolAddress).withdraw(
+            numBPTTokens,
+            address(this),
+            address(this)
+        );
+    }
+
+    function _lpWithdrawAll() internal virtual override {
+        uint256 bptBalance = IERC4626(auraRewardPoolAddress).balanceOf(
+            address(this)
+        );
+        IERC4626(auraRewardPoolAddress).withdraw(
+            bptBalance,
+            address(this),
+            address(this)
+        );
     }
 
     function checkBalance(address _asset)
         external
         view
-        override
         virtual
+        override
         returns (uint256)
     {
-        (IERC20[] memory tokens, uint256[] memory balances, uint256 lastChangeBlock) = balancerVault.getPoolTokens(balancerPoolId);
-        uint256 bptBalance = IERC20(pTokenAddress).balanceOf(address(this)) + IERC4626(auraRewardPoolAddress).balanceOf(address(this));
+        (
+            IERC20[] memory tokens,
+            uint256[] memory balances,
+            uint256 lastChangeBlock
+        ) = balancerVault.getPoolTokens(balancerPoolId);
+        // pool balance + aura balance
+        uint256 bptBalance = IERC20(pTokenAddress).balanceOf(address(this)) +
+            IERC4626(auraRewardPoolAddress).balanceOf(address(this));
+
         // yourPoolShare denominated in 1e18. (1e18 == 100%)
-        uint256 yourPoolShare = IERC20(pTokenAddress).balanceOf(address(this)).divPrecisely(IERC20(pTokenAddress).totalSupply());
-        
+        uint256 yourPoolShare = bptBalance.divPrecisely(
+            IERC20(pTokenAddress).totalSupply()
+        );
+
         uint256 balancesLength = balances.length;
-        for (uint256 i=0; i < balances.length; ++i){
-            (address poolAsset,) = toPoolAsset(_asset, 0);
-            if(address(tokens[i]) == poolAsset) {
+        for (uint256 i = 0; i < balances.length; ++i) {
+            (address poolAsset, ) = toPoolAsset(_asset, 0);
+            if (address(tokens[i]) == poolAsset) {
                 return balances[i].mulTruncate(yourPoolShare);
             }
         }

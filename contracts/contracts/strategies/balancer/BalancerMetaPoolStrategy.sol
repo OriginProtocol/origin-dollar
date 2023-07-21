@@ -10,11 +10,14 @@ import { IBalancerVault } from "../../interfaces/balancer/IBalancerVault.sol";
 import { IRateProvider } from "../../interfaces/balancer/IRateProvider.sol";
 import { IMetaStablePool } from "../../interfaces/balancer/IMetaStablePool.sol";
 import { IERC20 } from "../../utils/InitializableAbstractStrategy.sol";
+import { StableMath } from "../../utils/StableMath.sol";
 
 import "hardhat/console.sol";
 
 contract BalancerMetaPoolStrategy is BaseAuraStrategy {
     using SafeERC20 for IERC20;
+    using StableMath for uint256;
+
     address internal immutable stETH =
         0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84;
     address internal immutable wstETH =
@@ -49,14 +52,6 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         require(false, "Can not find rateProvider");
     }
 
-    function withdraw(
-        address _recipient,
-        address _asset,
-        uint256 _amount
-    ) external override onlyVault nonReentrant {}
-
-    function withdrawAll() external override onlyVaultOrGovernor nonReentrant {}
-
     function deposit(address _asset, uint256 _amount)
         external
         override
@@ -86,6 +81,8 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
             return;
         }
 
+        emit Deposit(_asset, pTokenAddress, _amount);
+
         (address poolAsset, uint256 poolAmount) = toPoolAsset(_asset, _amount);
 
         (IERC20[] memory tokens, , ) = balancerVault.getPoolTokens(
@@ -105,23 +102,14 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
 
         wrapPoolAsset(_asset, _amount);
 
-        // console.log("xxx");
-        // console.log(uint256(IBalancerVault.WeightedPoolJoinKind.TOKEN_IN_FOR_EXACT_BPT_OUT)); // 2
-        // console.log(_amount); // 36523558823496626525
-        // console.log(_asset); // 0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2
-        // console.log("Max amounts in");
-        // console.log(maxAmountsIn[0]); // 0
-        // console.log(maxAmountsIn[1]); // 36523558823496626525
-
+        uint256 minBPT = getMinBPTExpected(_asset, _amount, poolAsset);
         // TODO: figure out why the slippage is so high
-        uint256 minBPT = getMinBPTExpected(
-            _asset,
-            _amount,
-            poolAsset,
-            poolAmount
+        uint256 minBPTwSlippage = minBPT.mulTruncate(
+            1e18 - maxWithdrawalSlippage
         );
+
         // console.log("Min BPT expected");
-        // console.log(minBPT);
+        // console.log(minBPTwSlippage);
 
         /* TOKEN_IN_FOR_EXACT_BPT_OUT:
          * User sends an estimated but unknown (computed at run time) quantity of a single token,
@@ -132,14 +120,13 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
          */
         bytes memory userData = abi.encode(
             IBalancerVault.WeightedPoolJoinKind.TOKEN_IN_FOR_EXACT_BPT_OUT,
-            minBPT,
+            minBPTwSlippage,
             assetIndex
         );
-        //bytes memory userData = abi.encode(IBalancerVault.WeightedPoolJoinKind.TOKEN_IN_FOR_EXACT_BPT_OUT, 0, assetIndex);
 
         IBalancerVault.JoinPoolRequest memory request = IBalancerVault
             .JoinPoolRequest(poolAssetsMapped, maxAmountsIn, userData, false);
-        console.log(IERC20(platformAddress).balanceOf(address(this)));
+
         balancerVault.joinPool(
             balancerPoolId,
             address(this),
@@ -148,6 +135,127 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         );
 
         _lpDepositAll();
+    }
+
+    function withdraw(
+        address _recipient,
+        address _asset,
+        uint256 _amount
+    ) external override onlyVault nonReentrant {
+        (address poolAsset, uint256 poolAmount) = toPoolAsset(_asset, _amount);
+
+        uint256 BPTtoWithdraw = getMinBPTExpected(_asset, _amount, poolAsset);
+        // adjust for slippage
+        // TODO: why slippage so high
+        BPTtoWithdraw = BPTtoWithdraw.mulTruncate(1e18 + maxWithdrawalSlippage);
+
+        _lpWithdraw(BPTtoWithdraw);
+
+        // TODO refactor this bit
+        (IERC20[] memory tokens, , ) = balancerVault.getPoolTokens(
+            balancerPoolId
+        );
+        uint256 tokensLength = tokens.length;
+        uint256[] memory minAmountsOut = new uint256[](tokensLength);
+        uint256 assetIndex = 0;
+        for (uint256 i = 0; i < tokensLength; ++i) {
+            if (address(tokens[i]) == poolAsset) {
+                minAmountsOut[i] = poolAmount;
+                assetIndex = i;
+            } else {
+                minAmountsOut[i] = 0;
+            }
+        }
+
+        /* Single asset exit: EXACT_BPT_IN_FOR_ONE_TOKEN_OUT:
+         * User sends a precise quantity of BPT, and receives an estimated but unknown
+         * (computed at run time) quantity of a single token
+         *
+         * ['uint256', 'uint256', 'uint256']
+         * [EXACT_BPT_IN_FOR_ONE_TOKEN_OUT, bptAmountIn, exitTokenIndex]
+         */
+        bytes memory userData = abi.encode(
+            IBalancerVault.WeightedPoolExitKind.EXACT_BPT_IN_FOR_ONE_TOKEN_OUT,
+            BPTtoWithdraw,
+            assetIndex
+        );
+
+        IBalancerVault.ExitPoolRequest memory request = IBalancerVault
+            .ExitPoolRequest(poolAssetsMapped, minAmountsOut, userData, false);
+
+        balancerVault.exitPool(
+            balancerPoolId,
+            address(this),
+            // TODO: this is incorrect and should be altered when/if we intend to support
+            // pools that deal with native ETH
+            payable(address(this)),
+            request
+        );
+
+        unwrapPoolAsset(_asset, poolAmount);
+        IERC20(_asset).safeTransfer(_recipient, _amount);
+    }
+
+    function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
+        _lpWithdrawAll();
+
+        uint256 BPTtoWithdraw = IERC20(platformAddress).balanceOf(
+            address(this)
+        );
+
+        // TODO refactor this bit
+        (IERC20[] memory tokens, uint256[] memory balances, ) = balancerVault
+            .getPoolTokens(balancerPoolId);
+
+        uint256 yourPoolShare = BPTtoWithdraw.divPrecisely(
+            IERC20(pTokenAddress).totalSupply()
+        );
+
+        uint256 assetsMappedLength = balances.length;
+        uint256[] memory minAmountsOut = new uint256[](assetsMappedLength);
+        for (uint256 i = 0; i < assetsMappedLength; ++i) {
+            (address poolAsset, ) = toPoolAsset(assetsMapped[i], 0);
+
+            if (address(tokens[i]) == poolAsset) {
+                minAmountsOut[i] = balances[i]
+                    .mulTruncate(yourPoolShare)
+                    .mulTruncate(1e18 - maxWithdrawalSlippage);
+            }
+        }
+
+        /* Proportional exit: EXACT_BPT_IN_FOR_TOKENS_OUT:
+         * User sends a precise quantity of BPT, and receives an estimated but unknown
+         * (computed at run time) quantity of a single token
+         *
+         * ['uint256', 'uint256']
+         * [EXACT_BPT_IN_FOR_TOKENS_OUT, bptAmountIn]
+         */
+        bytes memory userData = abi.encode(
+            IBalancerVault.WeightedPoolExitKind.EXACT_BPT_IN_FOR_TOKENS_OUT,
+            BPTtoWithdraw
+        );
+
+        IBalancerVault.ExitPoolRequest memory request = IBalancerVault
+            .ExitPoolRequest(poolAssetsMapped, minAmountsOut, userData, false);
+
+        balancerVault.exitPool(
+            balancerPoolId,
+            address(this),
+            // TODO: this is incorrect and should be altered when/if we intend to support
+            // pools that deal with native ETH
+            payable(address(this)),
+            request
+        );
+
+        for (uint256 i = 0; i < assetsMappedLength; ++i) {
+            address asset = assetsMapped[i];
+            (address poolAsset, ) = toPoolAsset(assetsMapped[i], 0);
+            unwrapPoolAsset(asset, IERC20(poolAsset).balanceOf(address(this)));
+
+            uint256 transferAmount = IERC20(asset).balanceOf(address(this));
+            IERC20(asset).safeTransfer(vaultAddress, transferAmount);
+            emit Withdrawal(asset, pTokenAddress, transferAmount);
+        }
     }
 
     function safeApproveAllTokens()

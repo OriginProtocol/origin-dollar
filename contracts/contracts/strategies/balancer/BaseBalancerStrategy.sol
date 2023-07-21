@@ -87,8 +87,7 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
     function getMinBPTExpected(
         address _asset,
         uint256 _amount,
-        address _poolAsset,
-        uint256 _poolAmount
+        address _poolAsset
     ) internal view virtual returns (uint256 minBptAmount) {
         /* minBPT price is calculated by dividing the pool (sometimes wrapped) market price by the
          * rateProviderRate of that asset:
@@ -101,31 +100,15 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
          * minBptPrice = from_pool_token(asset_oracle_price) / pool_a_rate
          *
          */
-        console.log("getMinBPTExpected function");
-        console.log("_poolAsset");
-        console.log(_poolAsset);
         uint256 rateProviderRate = getRateProviderRate(_poolAsset);
         address priceProvider = IVault(vaultAddress).priceProvider();
         uint256 marketPrice = IOracle(priceProvider).price(_asset);
 
-        console.log("market price");
-        console.log(marketPrice); // 1000000000000000000
-        console.log("rate provider price");
-        console.log(rateProviderRate); // 1000000000000000000
         (, uint256 assetAmount) = fromPoolAsset(_poolAsset, 1e18);
-        console.log("fromPoolAsset assetAmount");
-        console.log(assetAmount);
-        uint256 minBPTnoSlippage = assetAmount
+        minBptAmount = assetAmount
             .mulTruncate(marketPrice)
             .divPrecisely(rateProviderRate)
             .mulTruncate(_amount);
-        console.log("minBPTnoSlippage");
-        console.log(minBPTnoSlippage);
-        minBptAmount =
-            minBPTnoSlippage -
-            minBPTnoSlippage.mulTruncate(maxWithdrawalSlippage);
-        console.log("minBptAmount with slippage");
-        console.log(minBptAmount);
     }
 
     function getRateProviderRate(address _asset)
@@ -134,9 +117,11 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         virtual
         returns (uint256);
 
-    function _lpDepositAll() internal virtual {}
+    function _lpDepositAll() internal virtual;
 
-    function _lpWithdrawAll() internal virtual {}
+    function _lpWithdraw(uint256 numBPTTokens) internal virtual;
+
+    function _lpWithdrawAll() internal virtual;
 
     /**
      * Balancer returns assets and rateProviders for corresponding assets ordered
