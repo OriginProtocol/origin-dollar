@@ -63,7 +63,7 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         override
         returns (uint256)
     {
-        (IERC20[] memory tokens, uint256[] memory balances) = balancerVault
+        (IERC20[] memory tokens, uint256[] memory balances, ) = balancerVault
             .getPoolTokens(balancerPoolId);
 
         // yourPoolShare denominated in 1e18. (1e18 == 100%)
@@ -87,50 +87,37 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
 
     function getBPTExpected(
         address _asset,
-        uint256 _amount,
-        address _poolAsset
+        uint256 _amount
     ) internal view virtual returns (uint256 bptExpected) {
         /* BPT price is calculated by dividing the pool (sometimes wrapped) market price by the
          * rateProviderRate of that asset. To get BPT expected we need to multiply that by underlying
          * asset amount divided by BPT token rate. BPT token rate is similar to Curve's virtual_price
          * and expresses how much has the price of BPT appreciated in relation to the underlying assets.
          *
-         * bptPrice = pool_a_oracle_price / pool_a_rate
+         * bptPrice = pool_asset_oracle_price / pool_asset_rate
          *
          * Since we only have oracle prices for the unwrapped version of the assets the equation
          * turns into:
          *
-         * bptPrice = from_pool_token(asset_amount).amount * oracle_price / pool_a_rate
+         * bptPrice = from_pool_token(asset_amount).amount * oracle_price / pool_asset_rate
          *
          * bptExpected = bptPrice(in relation to specified asset) * asset_amount / BPT_token_rate
          *
+         * and since from_pool_token(asset_amount).amount and pool_asset_rate cancel each-other out
+         * this makes the final equation:
+         *
+         * bptExpected = oracle_price * asset_amount / BPT_token_rate
+         *
+         * more explanation here:
+         * https://www.notion.so/originprotocol/Support-Balancer-OETH-strategy-9becdea132704e588782a919d7d471eb?pvs=4#382834f9815e46a7937f3acca0f637c5
          */
-        uint256 poolTokenRate = getRateProviderRate(_poolAsset);
         address priceProvider = IVault(vaultAddress).priceProvider();
         uint256 strategyAssetMarketPrice = IOracle(priceProvider).price(_asset);
         uint256 bptRate = IRateProvider(platformAddress).getRate();
 
-        (, uint256 strategyAssetPerPoolToken) = fromPoolAsset(_poolAsset, 1e18);
-        bptExpected = strategyAssetPerPoolToken
-            .mulTruncate(_amount)
+        bptExpected = _amount
             .mulTruncate(strategyAssetMarketPrice)
-            .divPrecisely(bptRate)
-            .divPrecisely(poolTokenRate);
-
-        // console.log("getBPTExpected START");
-        // console.log("_asset");
-        // console.log(_asset);
-        // console.log("_amount");
-        // console.log(_amount);
-        // console.log("poolTokenRate");
-        // console.log(poolTokenRate);
-        // console.log("strategyAssetMarketPrice");
-        // console.log(strategyAssetMarketPrice);
-        // console.log("bptExpected");
-        // console.log(bptExpected);
-        // console.log("bptRate");
-        // console.log(bptRate);
-        // console.log("getBPTExpected END");
+            .divPrecisely(bptRate);
     }
 
     function getRateProviderRate(address _asset)

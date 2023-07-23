@@ -104,7 +104,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
 
         wrapPoolAsset(_asset, _amount);
 
-        uint256 minBPT = getBPTExpected(_asset, _amount, poolAsset);
+        uint256 minBPT = getBPTExpected(_asset, _amount);
         uint256 minBPTwSlippage = minBPT.mulTruncate(
             1e18 - maxWithdrawalSlippage
         );
@@ -142,7 +142,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
     ) external override onlyVault nonReentrant {
         (address poolAsset, uint256 poolAmount) = toPoolAsset(_asset, _amount);
 
-        uint256 BPTtoWithdraw = getBPTExpected(_asset, _amount, poolAsset);
+        uint256 BPTtoWithdraw = getBPTExpected(_asset, _amount);
         // adjust for slippage
         BPTtoWithdraw = BPTtoWithdraw.mulTruncate(1e18 + maxWithdrawalSlippage);
 
