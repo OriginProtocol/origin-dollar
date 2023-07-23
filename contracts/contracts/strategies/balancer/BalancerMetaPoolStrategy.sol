@@ -55,13 +55,20 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
     function deposit(address _asset, uint256 _amount)
         external
         override
+        whenNotInVaultContext
         onlyVault
         nonReentrant
     {
         _deposit(_asset, _amount);
     }
 
-    function depositAll() external override onlyVault nonReentrant {
+    function depositAll()
+        external
+        override
+        whenNotInVaultContext
+        onlyVault
+        nonReentrant
+    {
         uint256 assetsLength = assetsMapped.length;
         for (uint256 i = 0; i < assetsLength; ++i) {
             uint256 balance = IERC20(assetsMapped[i]).balanceOf(address(this));
@@ -139,7 +146,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         address _recipient,
         address _asset,
         uint256 _amount
-    ) external override onlyVault nonReentrant {
+    ) external override whenNotInVaultContext onlyVault nonReentrant {
         (address poolAsset, uint256 poolAmount) = toPoolAsset(_asset, _amount);
 
         uint256 BPTtoWithdraw = getBPTExpected(_asset, _amount);
@@ -195,7 +202,13 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         IERC20(_asset).safeTransfer(_recipient, _amount);
     }
 
-    function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
+    function withdrawAll()
+        external
+        override
+        whenNotInVaultContext
+        onlyVaultOrGovernor
+        nonReentrant
+    {
         _lpWithdrawAll();
 
         uint256 BPTtoWithdraw = IERC20(platformAddress).balanceOf(

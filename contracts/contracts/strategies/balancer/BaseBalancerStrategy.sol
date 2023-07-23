@@ -9,6 +9,7 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { IERC20, InitializableAbstractStrategy } from "../../utils/InitializableAbstractStrategy.sol";
 import { IBalancerVault } from "../../interfaces/balancer/IBalancerVault.sol";
 import { IRateProvider } from "../../interfaces/balancer/IRateProvider.sol";
+import { VaultReentrancyLib } from "./VaultReentrancyLib.sol";
 import { IOracle } from "../../interfaces/IOracle.sol";
 import { IVault } from "../../interfaces/IVault.sol";
 import { IWstETH } from "../../interfaces/IWstETH.sol";
@@ -42,6 +43,19 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         uint256 _prevMaxSlippagePercentage,
         uint256 _newMaxSlippagePercentage
     );
+
+    /**
+     * @dev Ensure we are not in a Vault context when this function is called, by attempting a no-op internal
+     * balance operation. If we are already in a Vault transaction (e.g., a swap, join, or exit), the Vault's
+     * reentrancy protection will cause this function to revert.
+     *
+     * Use this modifier with any function that can cause a state change in a pool and is either public itself,
+     * or called by a public function *outside* a Vault operation (e.g., join, exit, or swap).
+     */
+    modifier whenNotInVaultContext() {
+        VaultReentrancyLib.ensureNotInVaultContext(balancerVault);
+        _;
+    }
 
     /**
      * @dev Returns bool indicating whether asset is supported by strategy
@@ -85,10 +99,12 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         }
     }
 
-    function getBPTExpected(
-        address _asset,
-        uint256 _amount
-    ) internal view virtual returns (uint256 bptExpected) {
+    function getBPTExpected(address _asset, uint256 _amount)
+        internal
+        view
+        virtual
+        returns (uint256 bptExpected)
+    {
         /* BPT price is calculated by dividing the pool (sometimes wrapped) market price by the
          * rateProviderRate of that asset. To get BPT expected we need to multiply that by underlying
          * asset amount divided by BPT token rate. BPT token rate is similar to Curve's virtual_price
@@ -144,9 +160,9 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * Balancer pools might have wrapped versions of assets that the strategy
-     * is handling. This function takes care of the conversion:
-     * strategy asset -> pool asset
+     * If an asset is rebasing the Balancer pools have a wrapped versions of assets
+     * that the strategy supports. This function converts the pool(wrapped) asset
+     * and corresponding amount to strategy asset.
      */
     function toPoolAsset(address asset, uint256 amount)
         internal
@@ -174,6 +190,9 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         }
     }
 
+    /**
+     * Converts rebasing asset to its wrapped counterpart.
+     */
     function wrapPoolAsset(address asset, uint256 amount)
         internal
         returns (uint256 wrappedAmount)
@@ -189,6 +208,9 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         }
     }
 
+    /**
+     * Converts wrapped asset to its rebasing counterpart.
+     */
     function unwrapPoolAsset(address asset, uint256 amount)
         internal
         returns (uint256 wrappedAmount)
@@ -208,6 +230,11 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         }
     }
 
+    /**
+     * If an asset is rebasing the Balancer pools have a wrapped versions of assets
+     * that the strategy supports. This function converts the rebasing strategy asset
+     * and corresponding amount to wrapped(pool) asset.
+     */
     function fromPoolAsset(address poolAsset, uint256 poolAmount)
         internal
         view
