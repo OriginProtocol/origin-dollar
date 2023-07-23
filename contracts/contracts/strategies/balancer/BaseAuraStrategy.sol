@@ -21,7 +21,8 @@ abstract contract BaseAuraStrategy is BaseBalancerStrategy {
     address internal auraRewardPoolAddress;
     address internal auraRewardStakerAddress;
     uint256 internal auraDepositorPTokenId;
-    int256[50] private __reserved;
+    // renamed from __reserved to not shadow BaseBalancerStrategy.__reserved,
+    int256[50] private __reserved_2;
 
     struct InitConfig {
         address platformAddress; // platformAddress Address of the Balancer's pool
@@ -123,11 +124,8 @@ abstract contract BaseAuraStrategy is BaseBalancerStrategy {
         override
         returns (uint256)
     {
-        (
-            IERC20[] memory tokens,
-            uint256[] memory balances,
-            uint256 lastChangeBlock
-        ) = balancerVault.getPoolTokens(balancerPoolId);
+        (IERC20[] memory tokens, uint256[] memory balances, ) = balancerVault
+            .getPoolTokens(balancerPoolId);
         // pool balance + aura balance
         uint256 bptBalance = IERC20(pTokenAddress).balanceOf(address(this)) +
             IERC4626(auraRewardPoolAddress).balanceOf(address(this));
@@ -138,7 +136,7 @@ abstract contract BaseAuraStrategy is BaseBalancerStrategy {
         );
 
         uint256 balancesLength = balances.length;
-        for (uint256 i = 0; i < balances.length; ++i) {
+        for (uint256 i = 0; i < balancesLength; ++i) {
             (address poolAsset, ) = toPoolAsset(_asset, 0);
             if (address(tokens[i]) == poolAsset) {
                 return balances[i].mulTruncate(yourPoolShare);

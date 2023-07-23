@@ -1,13 +1,7 @@
 const { expect } = require("chai");
 
 const { loadFixture } = require("ethereum-waffle");
-const {
-  units,
-  ousdUnits,
-  forkOnlyDescribe,
-  advanceBlocks,
-  advanceTime,
-} = require("../helpers");
+const { units, ousdUnits, forkOnlyDescribe } = require("../helpers");
 const { BigNumber } = require("ethers");
 const {
   balancerWstEthWethFixture,
@@ -94,9 +88,10 @@ forkOnlyDescribe(
       it("Should be able to collect reward tokens", async function () {
         const { josh, balancerWstEthWethStrategy, oethHarvester } = fixture;
 
-        await oethHarvester
-          .connect(josh)
-          ["harvestAndSwap(address)"](balancerWstEthWethStrategy.address);
+        await oethHarvester.connect(josh)[
+          // eslint-disable-next-line
+          "harvestAndSwap(address)"
+        ](balancerWstEthWethStrategy.address);
       });
     });
   }

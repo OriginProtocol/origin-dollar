@@ -833,32 +833,21 @@ async function convexVaultFixture() {
  */
 async function balancerWstEthWethFixture() {
   const fixture = await loadFixture(defaultFixture);
-  const { oethVault, timelock, weth, balancerWstEthWethStrategy } = fixture;
+  const { oethVault, timelock, weth, stETH, balancerWstEthWethStrategy } =
+    fixture;
 
-  await fixture.oethVault
+  await oethVault
     .connect(timelock)
-    .setAssetDefaultStrategy(
-      fixture.weth.address,
-      fixture.balancerWstEthWethStrategy.address
-    );
-  await fixture.oethVault
+    .setAssetDefaultStrategy(weth.address, balancerWstEthWethStrategy.address);
+  await oethVault
     .connect(timelock)
-    .setAssetDefaultStrategy(
-      fixture.stETH.address,
-      fixture.balancerWstEthWethStrategy.address
-    );
-  await fixture.oethVault
+    .setAssetDefaultStrategy(stETH.address, balancerWstEthWethStrategy.address);
+  await oethVault
     .connect(timelock)
-    .setAssetDefaultStrategy(
-      fixture.weth.address,
-      fixture.balancerWstEthWethStrategy.address
-    );
-  await fixture.oethVault
+    .setAssetDefaultStrategy(weth.address, balancerWstEthWethStrategy.address);
+  await oethVault
     .connect(timelock)
-    .setAssetDefaultStrategy(
-      fixture.stETH.address,
-      fixture.balancerWstEthWethStrategy.address
-    );
+    .setAssetDefaultStrategy(stETH.address, balancerWstEthWethStrategy.address);
   return fixture;
 }
 

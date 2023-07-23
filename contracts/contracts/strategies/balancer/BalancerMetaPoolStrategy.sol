@@ -81,6 +81,8 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
             return;
         }
 
+        //TODO: re-entrency protection
+
         emit Deposit(_asset, pTokenAddress, _amount);
 
         (address poolAsset, uint256 poolAmount) = toPoolAsset(_asset, _amount);
@@ -146,6 +148,8 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
 
         _lpWithdraw(BPTtoWithdraw);
 
+        //TODO: re-entrency protection
+
         // TODO refactor this bit
         (IERC20[] memory tokens, , ) = balancerVault.getPoolTokens(
             balancerPoolId
@@ -197,6 +201,8 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         uint256 BPTtoWithdraw = IERC20(platformAddress).balanceOf(
             address(this)
         );
+
+        //TODO: re-entrency protection
 
         // TODO refactor this bit
         (IERC20[] memory tokens, uint256[] memory balances, ) = balancerVault
@@ -265,6 +271,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         _approveBase();
     }
 
+    // solhint-disable-next-line no-unused-vars
     function _abstractSetPToken(address _asset, address _pToken)
         internal
         override

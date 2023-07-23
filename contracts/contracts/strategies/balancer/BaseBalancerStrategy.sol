@@ -63,11 +63,8 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         override
         returns (uint256)
     {
-        (
-            IERC20[] memory tokens,
-            uint256[] memory balances,
-            uint256 lastChangeBlock
-        ) = balancerVault.getPoolTokens(balancerPoolId);
+        (IERC20[] memory tokens, uint256[] memory balances) = balancerVault
+            .getPoolTokens(balancerPoolId);
 
         // yourPoolShare denominated in 1e18. (1e18 == 100%)
         uint256 yourPoolShare = IERC20(pTokenAddress)
@@ -153,11 +150,9 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
      * by numerical order.
      */
     function getPoolAssets() internal view returns (IERC20[] memory assets) {
-        (
-            IERC20[] memory tokens,
-            uint256[] memory balances,
-            uint256 lastChangeBlock
-        ) = balancerVault.getPoolTokens(balancerPoolId);
+        (IERC20[] memory tokens, , ) = balancerVault.getPoolTokens(
+            balancerPoolId
+        );
         return tokens;
     }
 
