@@ -20,7 +20,7 @@ const {
   checkOUSDBalances,
   supplyStakingContractWithOGN,
 } = require("./compensation");
-const { allocate, capital, harvest, rebase, yield } = require("./vault");
+const { allocate, capital, rebase, yield } = require("./vault");
 const {
   amoStrategyTask,
   curveAddTask,
@@ -71,11 +71,37 @@ task("balance", "Get OUSD balance of an account")
   .setAction(balance);
 
 // Vault tasks.
-task("allocate", "Call allocate() on the Vault", allocate);
-task("capital", "Set the Vault's pauseCapital flag", capital);
-task("harvest", "Call harvest() on Vault", harvest);
-task("rebase", "Call rebase() on the Vault", rebase);
-task("yield", "Artificially generate yield on the Vault", yield);
+task("allocate", "Call allocate() on the Vault")
+  .addOptionalParam(
+    "symbol",
+    "Symbol of the OToken. eg OETH or OUSD",
+    "OETH",
+    types.string
+  )
+  .setAction(allocate);
+task("capital", "Set the Vault's pauseCapital flag")
+  .addOptionalParam(
+    "symbol",
+    "Symbol of the OToken. eg OETH or OUSD",
+    "OETH",
+    types.string
+  )
+  .addParam(
+    "pause",
+    "Whether to pause or unpause the capital allocation",
+    "true",
+    types.boolean
+  )
+  .setAction(capital);
+task("rebase", "Call rebase() on the Vault")
+  .addOptionalParam(
+    "symbol",
+    "Symbol of the OToken. eg OETH or OUSD",
+    "OETH",
+    types.string
+  )
+  .setAction(rebase);
+task("yield", "Artificially generate yield on the OUSD Vault", yield);
 
 // Governance tasks
 task("execute", "Execute a governance proposal")
