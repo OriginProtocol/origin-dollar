@@ -39,6 +39,7 @@ const {
   withdrawAllFromStrategies,
   yield,
 } = require("./vault");
+const { checkDelta, getDelta, takeSnapshot } = require("./valueChecker");
 const {
   amoStrategyTask,
   curveAddTask,
@@ -80,6 +81,12 @@ subtask("allowance", "Get the token allowance an owner has given to a spender")
     "owner",
     "The address of the account or contract allowing the spending. Default to the signer"
   )
+  .addOptionalParam(
+    "block",
+    "Block number. (default: latest)",
+    undefined,
+    types.int
+  )
   .setAction(tokenAllowance);
 task("allowance").setAction(async (_, __, runSuper) => {
   return runSuper();
@@ -95,6 +102,12 @@ subtask("balance", "Get the token balance of an account or contract")
   .addOptionalParam(
     "account",
     "The address of the account or contract. Default to the signer"
+  )
+  .addOptionalParam(
+    "block",
+    "Block number. (default: latest)",
+    undefined,
+    types.int
   )
   .setAction(tokenBalance);
 task("balance").setAction(async (_, __, runSuper) => {
@@ -575,5 +588,62 @@ subtask("curveSwap", "Swap Metapool tokens")
   .addOptionalParam("min", "Min tokens out.", 0, types.float)
   .setAction(curveSwapTask);
 task("curveSwap").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+// Vault Value Checker
+subtask("vaultDelta", "Get a vaults's delta values")
+  .addOptionalParam(
+    "symbol",
+    "Symbol of the OToken. eg OETH or OUSD",
+    "OETH",
+    types.string
+  )
+  .addOptionalParam(
+    "block",
+    "Block number. (default: latest)",
+    undefined,
+    types.int
+  )
+  .setAction(getDelta);
+task("vaultDelta").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("takeSnapshot", "Takes a snapshot of a vault's values")
+  .addOptionalParam(
+    "symbol",
+    "Symbol of the OToken. eg OETH or OUSD",
+    "OETH",
+    types.string
+  )
+  .setAction(takeSnapshot);
+task("takeSnapshot").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("checkDelta", "Checks a vault's delta values")
+  .addOptionalParam(
+    "symbol",
+    "Symbol of the OToken. eg OETH or OUSD",
+    "OETH",
+    types.string
+  )
+  .addParam("profit", "Expected profit", undefined, types.float)
+  .addParam("profitVariance", "Allowed profit variance", undefined, types.float)
+  .addParam(
+    "vaultChange",
+    "Expected change in total supply ",
+    undefined,
+    types.float
+  )
+  .addParam(
+    "vaultChangeVariance",
+    "Allowed total supply variance",
+    undefined,
+    types.float
+  )
+  .setAction(checkDelta);
+task("checkDelta").setAction(async (_, __, runSuper) => {
   return runSuper();
 });

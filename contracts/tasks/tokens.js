@@ -4,29 +4,38 @@ const { resolveAsset } = require("../utils/assets");
 const { getSigner } = require("../utils/signers");
 const { logTxDetails } = require("../utils/txLogger");
 const { ethereumAddress } = require("../utils/regex");
+const { getBlock } = require("./block");
 
 const log = require("../utils/logger")("task:tokens");
 
 async function tokenBalance(taskArguments) {
-  const { account, symbol } = taskArguments;
+  const { account, block, symbol } = taskArguments;
   const signer = await getSigner();
 
   const asset = await resolveAsset(symbol);
   const accountAddr = account || (await signer.getAddress());
 
-  const balance = await asset.connect(signer).balanceOf(accountAddr);
+  const blockTag = await getBlock(block);
+
+  const balance = await asset
+    .connect(signer)
+    .balanceOf(accountAddr, { blockTag });
 
   const decimals = await asset.decimals();
   console.log(`${accountAddr} has ${formatUnits(balance, decimals)} ${symbol}`);
 }
 async function tokenAllowance(taskArguments) {
-  const { owner, spender, symbol } = taskArguments;
+  const { block, owner, spender, symbol } = taskArguments;
   const signer = await getSigner();
 
   const asset = await resolveAsset(symbol);
   const ownerAddr = owner || (await signer.getAddress());
 
-  const balance = await asset.connect(signer).allowance(ownerAddr, spender);
+  const blockTag = await getBlock(block);
+
+  const balance = await asset
+    .connect(signer)
+    .allowance(ownerAddr, spender, { blockTag });
 
   const decimals = await asset.decimals();
   console.log(
