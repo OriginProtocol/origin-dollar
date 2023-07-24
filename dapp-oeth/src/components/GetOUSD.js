@@ -95,7 +95,7 @@ const CustomConnectButton = ({ id, buttonText, className, onClick, style }) => {
 }
 
 const GetOUSD = ({ id, buttonText, className, style }) => {
-  const { isConnected: active } = useAccount()
+  const { isConnected: active, address, connector } = useAccount()
   const [userAlreadyConnectedWallet, setUserAlreadyConnectedWallet] =
     useState(false)
 
@@ -109,6 +109,11 @@ const GetOUSD = ({ id, buttonText, className, style }) => {
 
     if (!userAlreadyConnectedWallet && active) {
       localStorage.setItem('userConnectedWallet', 'true')
+      event({
+        event: 'connect',
+        connect_address: address?.slice(2),
+        connect_wallet: connector?.name.toLowerCase(),
+      })
     }
   }, [active])
 
