@@ -35,6 +35,8 @@ const {
   redeem,
   redeemAll,
   withdrawFromStrategy,
+  withdrawAllFromStrategy,
+  withdrawAllFromStrategies,
   yield,
 } = require("./vault");
 const {
@@ -324,6 +326,39 @@ subtask("withdrawFromStrategy", "Withdraw assets from a vault strategy")
   )
   .setAction(withdrawFromStrategy);
 task("withdrawFromStrategy").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("withdrawAllFromStrategy", "Withdraw all assets from a vault strategy")
+  .addOptionalParam(
+    "symbol",
+    "Symbol of the OToken. eg OETH or OUSD",
+    "OETH",
+    types.string
+  )
+  .addParam(
+    "strategy",
+    "Address or contract name of the strategy",
+    undefined,
+    types.string
+  )
+  .setAction(withdrawAllFromStrategy);
+task("withdrawAllFromStrategy").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "withdrawAllFromStrategies",
+  "Withdraw all assets from all of a vault's strategies"
+)
+  .addOptionalParam(
+    "symbol",
+    "Symbol of the OToken. eg OETH or OUSD",
+    "OETH",
+    types.string
+  )
+  .setAction(withdrawAllFromStrategies);
+task("withdrawAllFromStrategies").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 

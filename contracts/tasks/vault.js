@@ -278,6 +278,30 @@ async function withdrawFromStrategy(taskArguments, hre) {
   await logTxDetails(tx, "withdrawFromStrategy");
 }
 
+async function withdrawAllFromStrategy(taskArguments, hre) {
+  const { symbol, strategy } = taskArguments;
+  const signer = await getSigner();
+
+  const { vault } = await getContract(hre, symbol);
+
+  const strategyAddr = await resolveStrategyAddress(strategy, hre);
+
+  log(`About to withdraw all from the ${strategy} strategy`);
+  const tx = await vault.connect(signer).withdrawAllFromStrategy(strategyAddr);
+  await logTxDetails(tx, "withdrawAllFromStrategy");
+}
+
+async function withdrawAllFromStrategies(taskArguments, hre) {
+  const { symbol } = taskArguments;
+  const signer = await getSigner();
+
+  const { vault } = await getContract(hre, symbol);
+
+  log(`About to withdraw all from all strategies`);
+  const tx = await vault.connect(signer).withdrawAllFromStrategies();
+  await logTxDetails(tx, "withdrawAllFromStrategies");
+}
+
 module.exports = {
   allocate,
   capital,
@@ -287,5 +311,7 @@ module.exports = {
   redeem,
   redeemAll,
   withdrawFromStrategy,
+  withdrawAllFromStrategy,
+  withdrawAllFromStrategies,
   yield,
 };
