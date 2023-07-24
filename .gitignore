@@ -76,5 +76,11 @@ contracts/.last_confs
 # Coverage #
 coverage
 coverage.json
+
+# Narya files #
+###############
+out
+pnm-cov.json
+reports
 fork-coverage
 unit-coverage
