@@ -4,7 +4,6 @@ const { fund, transfer } = require("./account");
 const { debug } = require("./debug");
 const { env } = require("./env");
 const { execute, executeOnFork, proposal, governors } = require("./governance");
-const { balance } = require("./ousd");
 const { smokeTest, smokeTestCheck } = require("./smokeTest");
 const {
   storeStorageLayoutForAllContracts,
@@ -20,6 +19,13 @@ const {
   checkOUSDBalances,
   supplyStakingContractWithOGN,
 } = require("./compensation");
+const {
+  tokenAllowance,
+  tokenBalance,
+  tokenApprove,
+  tokenTransfer,
+  tokenTransferFrom,
+} = require("./tokens");
 const {
   allocate,
   capital,
@@ -55,14 +61,80 @@ task("fund", "Fund accounts on local or fork")
 task("debug", "Print info about contracts and their configs", debug);
 
 // Token tasks.
-task("balance", "Get token balance of an account")
-  .addParam("account", "The account's address")
-  .setAction(balance);
-task("transfer", "Transfer tokens")
-  .addParam("index", "Account  index")
-  .addParam("amount", "Amount of OUSD to transfer")
-  .addParam("to", "Destination address")
-  .setAction(transfer);
+task("allowance", "Get the token allowance an owner has given to a spender")
+  .addParam(
+    "symbol",
+    "Symbol of the token. eg OETH, WETH, USDT or OGV",
+    undefined,
+    types.string
+  )
+  .addParam(
+    "spender",
+    "The address of the account or contract that can spend the tokens"
+  )
+  .addOptionalParam(
+    "owner",
+    "The address of the account or contract allowing the spending. Default to the signer"
+  )
+  .setAction(tokenAllowance);
+task("balance", "Get the token balance of an account or contract")
+  .addParam(
+    "symbol",
+    "Symbol of the token. eg OETH, WETH, USDT or OGV",
+    undefined,
+    types.string
+  )
+  .addOptionalParam(
+    "account",
+    "The address of the account or contract. Default to the signer"
+  )
+  .setAction(tokenBalance);
+task("approve", "Approve an account or contract to spend tokens")
+  .addParam(
+    "symbol",
+    "Symbol of the token. eg OETH, WETH, USDT or OGV",
+    undefined,
+    types.string
+  )
+  .addParam(
+    "amount",
+    "Amount of tokens that can be spent",
+    undefined,
+    types.float
+  )
+  .addParam(
+    "spender",
+    "Address of the account or contract that can spend the tokens",
+    undefined,
+    types.string
+  )
+  .setAction(tokenApprove);
+task("transfer", "Transfer tokens to an account or contract")
+  .addParam(
+    "symbol",
+    "Symbol of the token. eg OETH, WETH, USDT or OGV",
+    undefined,
+    types.string
+  )
+  .addParam("amount", "Amount of tokens to transfer", undefined, types.float)
+  .addParam("to", "Destination address", undefined, types.string)
+  .setAction(tokenTransfer);
+task("transferFrom", "Transfer tokens from an account or contract")
+  .addParam(
+    "symbol",
+    "Symbol of the token. eg OETH, WETH, USDT or OGV",
+    undefined,
+    types.string
+  )
+  .addParam("amount", "Amount of tokens to transfer", undefined, types.float)
+  .addParam("from", "Source address", undefined, types.string)
+  .addOptionalParam(
+    "to",
+    "Destination address. Default to signer",
+    undefined,
+    types.string
+  )
+  .setAction(tokenTransferFrom);
 
 // Vault tasks.
 task("allocate", "Call allocate() on the Vault")
