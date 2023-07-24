@@ -30,6 +30,25 @@ forkOnlyDescribe(
         const { josh, stETH, weth } = fixture;
         await mintTest(fixture, josh, stETH, "30", [weth, stETH]);
       });
+
+      it("Should have the correct initial maxDepositSlippage state", async function () {
+        const { balancerWstEthWethStrategy, josh } = fixture;
+        expect(
+          await balancerWstEthWethStrategy.connect(josh).maxDepositSlippage()
+        ).to.equal(ousdUnits("0.001"));
+      });
+
+      it("Should be able to deposit with higher deposit slippage", async function () {});
+
+      it("Should revert when read-only re-entrancy is triggered", async function () {
+        /* - needs to be an asset default strategy
+         * - needs pool that supports native ETH
+         * - attacker needs to try to deposit to balancer pool and withdraw
+         * - while withdrawing and receiving ETH attacker should take over the execution flow
+         *   and try calling mint/redeem with the strategy default asset on the OethVault
+         * - transaction should revert because of the `whenNotInVaultContext` modifier
+         */
+      });
     });
 
     describe.only("Withdraw", function () {
@@ -82,6 +101,15 @@ forkOnlyDescribe(
         expect(wethBalanceDiff).to.be.gte(await units("15", weth), 1);
         expect(stEthBalanceDiff).to.be.gte(await units("15", stETH), 1);
       });
+
+      it("Should have the correct initial maxWithdrawalSlippage state", async function () {
+        const { balancerWstEthWethStrategy, josh } = fixture;
+        expect(
+          await balancerWstEthWethStrategy.connect(josh).maxWithdrawalSlippage()
+        ).to.equal(ousdUnits("0.001"));
+      });
+
+      it("Should be able to withdraw with higher withdrawal slippage", async function () {});
     });
 
     describe.only("Harvest rewards", function () {
@@ -136,7 +164,7 @@ async function mintTest(fixture, user, asset, amount, allAssets) {
 
   const balanceDiff = newBalance.sub(currentBalance);
   // Ensure user has correct balance (w/ 1% slippage tolerance)
-  expect(balanceDiff).to.approxEqualTolerance(ousdUnits(amount), 2);
+  expect(balanceDiff).to.approxEqualTolerance(ousdUnits(amount), 1);
 
   // Supply checks
   const supplyDiff = newSupply.sub(currentSupply);
@@ -146,9 +174,9 @@ async function mintTest(fixture, user, asset, amount, allAssets) {
 
   const balancerLiquidityDiff = newBalancerBalance.sub(currentBalancerBalance);
 
-  // Should have liquidity in Morpho
+  // Should have liquidity in Balancer
   expect(balancerLiquidityDiff).to.approxEqualTolerance(
     await units(amount, asset),
-    15 // TODO why such high slippage
+    1
   );
 }

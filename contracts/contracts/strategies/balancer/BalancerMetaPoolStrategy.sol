@@ -88,8 +88,6 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
             return;
         }
 
-        //TODO: re-entrency protection
-
         emit Deposit(_asset, pTokenAddress, _amount);
 
         (address poolAsset, uint256 poolAmount) = toPoolAsset(_asset, _amount);
@@ -97,6 +95,8 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         (IERC20[] memory tokens, , ) = balancerVault.getPoolTokens(
             balancerPoolId
         );
+
+        // TODO: refactor this bit and withdrawal bit to create amounts for in/out array
         uint256 tokensLength = tokens.length;
         uint256[] memory maxAmountsIn = new uint256[](tokensLength);
         uint256 assetIndex = 0;
@@ -112,9 +112,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         wrapPoolAsset(_asset, _amount);
 
         uint256 minBPT = getBPTExpected(_asset, _amount);
-        uint256 minBPTwSlippage = minBPT.mulTruncate(
-            1e18 - maxWithdrawalSlippage
-        );
+        uint256 minBPTwSlippage = minBPT.mulTruncate(1e18 - maxDepositSlippage);
 
         /* TOKEN_IN_FOR_EXACT_BPT_OUT:
          * User sends an estimated but unknown (computed at run time) quantity of a single token,
@@ -155,9 +153,6 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
 
         _lpWithdraw(BPTtoWithdraw);
 
-        //TODO: re-entrency protection
-
-        // TODO refactor this bit
         (IERC20[] memory tokens, , ) = balancerVault.getPoolTokens(
             balancerPoolId
         );
@@ -215,9 +210,6 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
             address(this)
         );
 
-        //TODO: re-entrency protection
-
-        // TODO refactor this bit
         (IERC20[] memory tokens, uint256[] memory balances, ) = balancerVault
             .getPoolTokens(balancerPoolId);
 

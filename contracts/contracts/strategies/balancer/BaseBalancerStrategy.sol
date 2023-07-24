@@ -35,11 +35,17 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
     bytes32 internal balancerPoolId;
     // Full list of all assets as they are present in the Balancer pool
     address[] internal poolAssetsMapped;
-    // Max withdrawal slippage denominated in 1e18 (1e18 == 100%) - TODO better name also considered with deposits
+    // Max withdrawal slippage denominated in 1e18 (1e18 == 100%)
     uint256 public maxWithdrawalSlippage;
+    // Max deposit slippage denominated in 1e18 (1e18 == 100%)
+    uint256 public maxDepositSlippage;
     int256[50] private __reserved;
 
     event MaxWithdrawalSlippageUpdated(
+        uint256 _prevMaxSlippagePercentage,
+        uint256 _newMaxSlippagePercentage
+    );
+    event MaxDepositSlippageUpdated(
         uint256 _prevMaxSlippagePercentage,
         uint256 _newMaxSlippagePercentage
     );
@@ -284,6 +290,28 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
             _maxWithdrawalSlippage
         );
         maxWithdrawalSlippage = _maxWithdrawalSlippage;
+    }
+
+    /**
+     * @dev Sets max deposit slippage that is considered when adding
+     * liquidity to Balancer pools.
+     * @param _maxDepositSlippage Max deposit slippage denominated in
+     *        wad (number with 18 decimals): 1e18 == 100%, 1e16 == 1%
+     *
+     * IMPORTANT Minimum maxDepositSlippage should actually be 0.1% (1e15)
+     * for production usage. Contract allows as low value as 0% for confirming
+     * correct behavior in test suite.
+     */
+    function setMaxDepositSlippage(uint256 _maxDepositSlippage)
+        external
+        onlyVaultOrGovernorOrStrategist
+    {
+        require(
+            _maxDepositSlippage <= 1e18,
+            "Max deposit slippage needs to be between 0% - 100%"
+        );
+        emit MaxDepositSlippageUpdated(maxDepositSlippage, _maxDepositSlippage);
+        maxDepositSlippage = _maxDepositSlippage;
     }
 
     function _approveBase() internal virtual {

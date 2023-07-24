@@ -55,6 +55,7 @@ abstract contract BaseAuraStrategy is BaseBalancerStrategy {
         auraDepositorPTokenId = initConfig.auraDepositorPTokenId;
         pTokenAddress = _pTokens[0];
         maxWithdrawalSlippage = 1e15;
+        maxDepositSlippage = 1e15;
         balancerPoolId = initConfig.balancerPoolId;
         IERC20[] memory poolAssets = getPoolAssets();
         uint256 assetsLength = _assets.length;
@@ -68,7 +69,6 @@ abstract contract BaseAuraStrategy is BaseBalancerStrategy {
                 _assets[i] == asset,
                 "Pool assets and _assets should all have the same numerical order."
             );
-            // TODO: double check if this fits in here
             poolAssetsMapped.push(address(poolAssets[i]));
         }
 
