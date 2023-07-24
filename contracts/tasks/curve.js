@@ -9,10 +9,7 @@ const { getSigner } = require("../utils/signers");
 
 const log = require("../utils/logger")("task:curve");
 
-/**
- * Dumps the current state of a Curve Metapool pool used for AMO
- */
-async function curvePool(taskArguments, hre) {
+async function getBlock(taskArguments, hre) {
   // Get the block to get all the data from
   const blockTag = !taskArguments.block
     ? await hre.ethers.provider.getBlockNumber()
@@ -21,18 +18,44 @@ async function curvePool(taskArguments, hre) {
   const fromBlockTag = taskArguments.fromBlock || 0;
   const diffBlocks = fromBlockTag > 0;
 
+  return {
+    diffBlocks,
+    blockTag,
+    fromBlockTag,
+  };
+}
+
+/**
+ * Hardhat task to dump the current state of a Curve Metapool pool used for AMO
+ */
+async function curvePoolTask(taskArguments, hre) {
+  const poolOTokenSymbol = taskArguments.pool;
+
+  const { blockTag, fromBlockTag, diffBlocks } = await getBlock(
+    taskArguments,
+    hre
+  );
+
+  await curvePool({
+    poolOTokenSymbol,
+    diffBlocks,
+    blockTag,
+    fromBlockTag,
+  });
+}
+
+/**
+ * Dumps the current state of a Curve Metapool pool used for AMO
+ */
+async function curvePool({
+  poolOTokenSymbol,
+  diffBlocks = false,
+  blockTag,
+  fromBlockTag,
+}) {
   // Get symbols and contracts
-  const {
-    oTokenSymbol,
-    assetSymbol,
-    poolLPSymbol,
-    asset,
-    oToken,
-    pool,
-    cvxRewardPool,
-    amoStrategy,
-    vault,
-  } = await curveContracts(taskArguments.pool);
+  const { oTokenSymbol, assetSymbol, poolLPSymbol, pool } =
+    await curveContracts(poolOTokenSymbol);
 
   // Get Metapool data
   const totalLPsBefore =
@@ -47,6 +70,7 @@ async function curvePool(taskArguments, hre) {
   const invariant = virtualPrice.mul(totalLPs).div(parseUnits("1"));
   const invariantBefore =
     diffBlocks && virtualPriceBefore.mul(totalLPsBefore).div(parseUnits("1"));
+
   displayProperty(
     "Pool LP total supply",
     poolLPSymbol,
@@ -111,28 +135,10 @@ async function curvePool(taskArguments, hre) {
     6
   );
 
-  // Get the Strategy's Metapool LPs in the Convex pool
-  const vaultLPsBefore =
-    diffBlocks &&
-    (await cvxRewardPool.balanceOf(amoStrategy.address, {
-      blockTag: fromBlockTag,
-    }));
-  const vaultLPs = await cvxRewardPool.balanceOf(amoStrategy.address, {
-    blockTag,
-  });
-  console.log(
-    `\nvault Metapool LPs       : ${displayPortion(
-      vaultLPs,
-      totalLPs,
-      poolLPSymbol,
-      "total supply"
-    )} ${displayDiff(diffBlocks, vaultLPs, vaultLPsBefore)}`
-  );
-
   // Total Metapool assets
   const totalBalances = poolBalances[0].add(poolBalances[1]);
   console.log(
-    `\ntotal assets in pool     : ${displayPortion(
+    `total assets in pool     : ${displayPortion(
       poolBalances[0],
       totalBalances,
       assetSymbol,
@@ -150,6 +156,55 @@ async function curvePool(taskArguments, hre) {
     )} ${displayDiff(diffBlocks, poolBalances[1], poolBalancesBefore[1])}`
   );
 
+  return {
+    totalLPsBefore,
+    totalLPs,
+    poolBalancesBefore,
+    poolBalances,
+    totalBalances,
+  };
+}
+
+/**
+ * hardhat task that dumps the current state of a AMO Strategy
+ */
+async function amoStrategyTask(taskArguments, hre) {
+  const poolOTokenSymbol = taskArguments.pool;
+
+  const { blockTag, fromBlockTag, diffBlocks } = await getBlock(
+    taskArguments,
+    hre
+  );
+
+  const { totalLPsBefore, totalLPs, poolBalancesBefore, poolBalances } =
+    await curvePool({
+      poolOTokenSymbol,
+      diffBlocks,
+      blockTag,
+      fromBlockTag,
+    });
+
+  // Get symbols and contracts
+  const {
+    oTokenSymbol,
+    assetSymbol,
+    poolLPSymbol,
+    asset,
+    oToken,
+    cvxRewardPool,
+    amoStrategy,
+    vault,
+  } = await curveContracts(poolOTokenSymbol);
+
+  // Strategy's Metapool LPs in the Convex pool
+  const vaultLPsBefore =
+    diffBlocks &&
+    (await cvxRewardPool.balanceOf(amoStrategy.address, {
+      blockTag: fromBlockTag,
+    }));
+  const vaultLPs = await cvxRewardPool.balanceOf(amoStrategy.address, {
+    blockTag,
+  });
   // total vault value
   const vaultTotalValueBefore =
     diffBlocks && (await vault.totalValue({ blockTag: fromBlockTag }));
@@ -175,9 +230,18 @@ async function curvePool(taskArguments, hre) {
     diffBlocks && oTokenSupplyBefore.sub(strategyOTokensInPoolBefore);
   const vaultAdjustedTotalSupply = oTokenSupply.sub(strategyOTokensInPool);
 
+  // Strategy's Metapool LPs in the Convex pool
+  console.log(
+    `\nvault Metapool LPs       : ${displayPortion(
+      vaultLPs,
+      totalLPs,
+      poolLPSymbol,
+      "total supply"
+    )} ${displayDiff(diffBlocks, vaultLPs, vaultLPsBefore)}`
+  );
   // Strategy's share of the assets in the pool
   console.log(
-    `\nassets owned by strategy : ${displayPortion(
+    `assets owned by strategy : ${displayPortion(
       strategyAssetsInPool,
       vaultAdjustedTotalValue,
       assetSymbol,
@@ -430,14 +494,15 @@ function displayRatio(a, b, aBefore, bBefore, precision = 6) {
     Curve functions that write
  ************************************/
 
-async function curveAdd(taskArguments) {
-  const { assets, otokens, slippage, symbol } = taskArguments;
+async function curveAddTask(taskArguments) {
+  const { assets, min, otokens, slippage, symbol } = taskArguments;
 
   // Get symbols and contracts
   const { assetSymbol, oTokenSymbol, oToken, pool, poolLPSymbol } =
     await curveContracts(symbol);
 
   const signer = await getSigner();
+  const signerAddress = await signer.getAddress();
 
   const oTokenAmount = parseUnits(otokens.toString());
   const assetAmount = parseUnits(assets.toString());
@@ -447,12 +512,26 @@ async function curveAdd(taskArguments) {
     )} ${assetSymbol} to ${poolLPSymbol}`
   );
 
-  const virtualPrice = await pool.get_virtual_price();
-  // 3Crv = USD / virtual price
-  const estimatedLpTokens = oTokenAmount.add(assetAmount).div(virtualPrice);
-  const slippageScaled = slippage * 100;
-  const minLpTokens = estimatedLpTokens.mul(10000 - slippageScaled).div(10000);
-  console.log(`min LP tokens: ${formatUnits(minLpTokens)}`);
+  const assetBalance = await hre.ethers.provider.getBalance(signerAddress);
+  const oTokenBalance = await oToken.balanceOf(signerAddress);
+  log(
+    `Signer balances ${signerAddress}\n${formatUnits(
+      assetBalance
+    )} ${assetSymbol}`
+  );
+  log(`${formatUnits(oTokenBalance)} ${oTokenSymbol}`);
+
+  let minLpTokens;
+  if (min != undefined) {
+    minLpTokens = parseUnits(min.toString());
+  } else {
+    const virtualPrice = await pool.get_virtual_price();
+    // 3Crv = USD / virtual price
+    const estimatedLpTokens = oTokenAmount.add(assetAmount).div(virtualPrice);
+    const slippageScaled = slippage * 100;
+    minLpTokens = estimatedLpTokens.mul(10000 - slippageScaled).div(10000);
+  }
+  log(`min LP tokens: ${formatUnits(minLpTokens)}`);
 
   if (oTokenAmount.gt(0)) {
     await oToken.connect(signer).approve(pool.address, oTokenAmount);
@@ -460,16 +539,26 @@ async function curveAdd(taskArguments) {
 
   const override = oTokenSymbol === "OETH" ? { value: assetAmount } : {};
   // prettier-ignore
-  await pool
+  const tx = await pool
     .connect(signer)["add_liquidity(uint256[2],uint256)"](
       [assetAmount, oTokenAmount],
       minLpTokens, override
     );
 
-  // TODO get LPs minted amount
+  // get event data
+  const receipt = await tx.wait();
+  log(`${receipt.events.length} events emitted`);
+  const event = receipt.events?.find((e) => e.event === "AddLiquidity");
+  log(`invariant ${formatUnits(event.args.invariant)}`);
+  log(
+    `fees ${formatUnits(event.args.fees[0])} ${assetSymbol} ${formatUnits(
+      event.args.fees[1]
+    )} ${oTokenSymbol}`
+  );
+  log(`token_supply ${formatUnits(event.args.token_supply)}`);
 }
 
-async function curveRemove(taskArguments) {
+async function curveRemoveTask(taskArguments) {
   const { assets, otokens, slippage, symbol } = taskArguments;
 
   // Get symbols and contracts
@@ -508,7 +597,7 @@ async function curveRemove(taskArguments) {
   // TODO get LPs burned
 }
 
-async function curveSwap(taskArguments) {
+async function curveSwapTask(taskArguments) {
   const { amount, from, min, symbol } = taskArguments;
 
   // Get symbols and contracts
@@ -595,8 +684,9 @@ async function curveContracts(oTokenSymbol) {
 }
 
 module.exports = {
-  curvePool,
-  curveAdd,
-  curveRemove,
-  curveSwap,
+  amoStrategyTask,
+  curvePoolTask,
+  curveAddTask,
+  curveRemoveTask,
+  curveSwapTask,
 };

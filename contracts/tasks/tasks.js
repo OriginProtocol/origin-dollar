@@ -21,7 +21,13 @@ const {
   supplyStakingContractWithOGN,
 } = require("./compensation");
 const { allocate, capital, harvest, rebase, yield } = require("./vault");
-const { curvePool, curveAdd, curveRemove, curveSwap } = require("./curve");
+const {
+  amoStrategyTask,
+  curveAddTask,
+  curveRemoveTask,
+  curveSwapTask,
+  curvePoolTask,
+} = require("./curve");
 
 // Environment tasks.
 task("env", "Check env vars are properly set for a Mainnet deployment", env);
@@ -175,7 +181,30 @@ task("curvePool", "Dumps the current state of a Curve pool")
     undefined,
     types.string
   )
-  .setAction(curvePool);
+  .setAction(curvePoolTask);
+
+// Curve Pools
+task("amoStrat", "Dumps the current state of a AMO strategy")
+  .addParam("pool", "Symbol of the curve Metapool. OUSD or OETH")
+  .addOptionalParam(
+    "block",
+    "Block number. (default: latest)",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "fromBlock",
+    "Block number to compare back to. (default: no diff)",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "user",
+    "Address of user adding, removing or swapping tokens. (default: no user)",
+    undefined,
+    types.string
+  )
+  .setAction(amoStrategyTask);
 
 task("curveAdd", "Add liquidity to Curve Metapool")
   .addOptionalParam(
@@ -192,7 +221,13 @@ task("curveAdd", "Add liquidity to Curve Metapool")
     1.0,
     types.float
   )
-  .setAction(curveAdd);
+  .addOptionalParam(
+    "min",
+    "Min Metapool LP tokens to be minted.",
+    undefined,
+    types.float
+  )
+  .setAction(curveAddTask);
 
 task("curveRemove", "Remove liquidity from Curve Metapool")
   .addOptionalParam(
@@ -209,7 +244,7 @@ task("curveRemove", "Remove liquidity from Curve Metapool")
     1.0,
     types.float
   )
-  .setAction(curveRemove);
+  .setAction(curveRemoveTask);
 
 task("curveSwap", "Swap Metapool tokens")
   .addOptionalParam(
@@ -226,4 +261,4 @@ task("curveSwap", "Swap Metapool tokens")
   )
   .addParam("amount", "Amount of from tokens.", 0, types.float)
   .addOptionalParam("min", "Min tokens out.", 0, types.float)
-  .setAction(curveSwap);
+  .setAction(curveSwapTask);
