@@ -1,6 +1,6 @@
 const { task, types } = require("hardhat/config");
 
-const { fund, mint, redeem, redeemFor, transfer } = require("./account");
+const { fund, transfer } = require("./account");
 const { debug } = require("./debug");
 const { env } = require("./env");
 const { execute, executeOnFork, proposal, governors } = require("./governance");
@@ -20,7 +20,15 @@ const {
   checkOUSDBalances,
   supplyStakingContractWithOGN,
 } = require("./compensation");
-const { allocate, capital, rebase, yield } = require("./vault");
+const {
+  allocate,
+  capital,
+  mint,
+  rebase,
+  redeem,
+  redeemAll,
+  yield,
+} = require("./vault");
 const {
   amoStrategyTask,
   curveAddTask,
@@ -42,33 +50,19 @@ task("fund", "Fund accounts on local or fork")
     "Fund accounts from the .env file instead of mnemonic"
   )
   .setAction(fund);
-task("mint", "Mint OUSD on local or fork")
-  .addOptionalParam("num", "Number of accounts to mint for")
-  .addOptionalParam("index", "Account start index")
-  .addOptionalParam("amount", "Amount of OUSD to mint")
-  .setAction(mint);
-task("redeem", "Redeem OUSD on local or fork")
-  .addOptionalParam("num", "Number of accounts to redeem for")
-  .addOptionalParam("index", "Account start index")
-  .addOptionalParam("amount", "Amount of OUSD to redeem")
-  .setAction(redeem);
-task("redeemFor", "Redeem OUSD on local or fork")
-  .addOptionalParam("account", "Account that calls the redeem")
-  .addOptionalParam("amount", "Amount of OUSD to redeem")
-  .setAction(redeemFor);
-task("transfer", "Transfer OUSD")
-  .addParam("index", "Account  index")
-  .addParam("amount", "Amount of OUSD to transfer")
-  .addParam("to", "Destination address")
-  .setAction(transfer);
 
 // Debug tasks.
 task("debug", "Print info about contracts and their configs", debug);
 
-// OUSD tasks.
-task("balance", "Get OUSD balance of an account")
+// Token tasks.
+task("balance", "Get token balance of an account")
   .addParam("account", "The account's address")
   .setAction(balance);
+task("transfer", "Transfer tokens")
+  .addParam("index", "Account  index")
+  .addParam("amount", "Amount of OUSD to transfer")
+  .addParam("to", "Destination address")
+  .setAction(transfer);
 
 // Vault tasks.
 task("allocate", "Call allocate() on the Vault")
@@ -102,6 +96,56 @@ task("rebase", "Call rebase() on the Vault")
   )
   .setAction(rebase);
 task("yield", "Artificially generate yield on the OUSD Vault", yield);
+task("mint", "Mint OTokens from the Vault using collateral assets")
+  .addParam(
+    "asset",
+    "Symbol of the collateral asset to deposit. eg WETH, frxETH, USDT, DAI",
+    undefined,
+    types.string
+  )
+  .addParam(
+    "amount",
+    "Amount of collateral assets to deposit",
+    undefined,
+    types.float
+  )
+  .addOptionalParam(
+    "symbol",
+    "Symbol of the OToken. eg OETH or OUSD",
+    "OETH",
+    types.string
+  )
+  .addOptionalParam("min", "Minimum amount of OTokens to mint", 0, types.float)
+  .setAction(mint);
+task("redeem", "Redeem OTokens for collateral assets from the Vault")
+  .addParam("amount", "Amount of OTokens to burn", undefined, types.float)
+  .addOptionalParam(
+    "symbol",
+    "Symbol of the OToken. eg OETH or OUSD",
+    "OETH",
+    types.string
+  )
+  .addOptionalParam(
+    "min",
+    "Minimum amount of collateral to receive",
+    0,
+    types.float
+  )
+  .setAction(redeem);
+task("redeemAll", "Redeem all OTokens for collateral assets from the Vault")
+  .addOptionalParam(
+    "symbol",
+    "Symbol of the OToken. eg OETH or OUSD",
+    "OETH",
+    types.string
+  )
+  .addOptionalParam(
+    "min",
+    "Minimum amount of collateral to receive",
+    0,
+    types.float
+  )
+  .setAction(redeemAll);
 
 // Governance tasks
 task("execute", "Execute a governance proposal")

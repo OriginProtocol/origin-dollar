@@ -1,4 +1,7 @@
+const { parseUnits } = require("ethers/lib/utils");
+
 const addresses = require("../utils/addresses");
+const { resolveAsset } = require("../utils/assets");
 const { getSigner } = require("../utils/signers");
 const { logTxDetails } = require("../utils/txLogger");
 
@@ -135,9 +138,58 @@ async function capital(taskArguments, hre) {
   }
 }
 
+async function mint(taskArguments, hre) {
+  const { amount, asset, symbol, min } = taskArguments;
+  const signer = await getSigner();
+
+  const { vault } = await getContract(hre, symbol);
+
+  const cAsset = await resolveAsset(asset);
+  const assetUnits = parseUnits(amount.toString(), await cAsset.decimals());
+  const minUnits = parseUnits(min.toString());
+
+  await cAsset.connect(signer).approve(vault.address, assetUnits);
+
+  log(`About to mint ${symbol} using ${amount} ${asset}`);
+  const tx = await vault
+    .connect(signer)
+    .mint(cAsset.address, assetUnits, minUnits);
+  await logTxDetails(tx, "mint");
+}
+
+async function redeem(taskArguments, hre) {
+  const { amount, min, symbol } = taskArguments;
+  const signer = await getSigner();
+
+  const { vault } = await getContract(hre, symbol);
+
+  const oTokenUnits = parseUnits(amount.toString());
+  const minUnits = parseUnits(min.toString());
+
+  log(`About to redeem ${amount} ${symbol}`);
+  const tx = await vault.connect(signer).redeem(oTokenUnits, minUnits);
+  await logTxDetails(tx, "redeem");
+}
+
+async function redeemAll(taskArguments, hre) {
+  const { amount, min, symbol } = taskArguments;
+  const signer = await getSigner();
+
+  const { vault } = await getContract(hre, symbol);
+
+  const minUnits = parseUnits(min.toString());
+
+  log(`About to redeem all ${symbol} tokens`);
+  const tx = await vault.connect(signer).redeemAll(minUnits);
+  await logTxDetails(tx, "redeemAll");
+}
+
 module.exports = {
   allocate,
   capital,
+  mint,
   rebase,
+  redeem,
+  redeemAll,
   yield,
 };
