@@ -37,3 +37,5 @@ jobs:
       - name: "Publish"
         run: npm publish --access public
         working-directory: ./contracts/dist
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN_ORIGIN_DEFI}}
