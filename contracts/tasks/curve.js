@@ -5,25 +5,10 @@ const ousdPoolAbi = require("../test/abi/ousdMetapool.json");
 const oethPoolAbi = require("../test/abi/oethMetapool.json");
 const addresses = require("../utils/addresses");
 const { resolveAsset } = require("../utils/assets");
+const { getDiffBlocks } = require("./block");
 const { getSigner } = require("../utils/signers");
 
 const log = require("../utils/logger")("task:curve");
-
-async function getBlock(taskArguments, hre) {
-  // Get the block to get all the data from
-  const blockTag = !taskArguments.block
-    ? await hre.ethers.provider.getBlockNumber()
-    : taskArguments.block;
-  console.log(`block: ${blockTag}`);
-  const fromBlockTag = taskArguments.fromBlock || 0;
-  const diffBlocks = fromBlockTag > 0;
-
-  return {
-    diffBlocks,
-    blockTag,
-    fromBlockTag,
-  };
-}
 
 /**
  * Hardhat task to dump the current state of a Curve Metapool pool used for AMO
@@ -31,7 +16,7 @@ async function getBlock(taskArguments, hre) {
 async function curvePoolTask(taskArguments, hre) {
   const poolOTokenSymbol = taskArguments.pool;
 
-  const { blockTag, fromBlockTag, diffBlocks } = await getBlock(
+  const { blockTag, fromBlockTag, diffBlocks } = await getDiffBlocks(
     taskArguments,
     hre
   );
@@ -171,7 +156,7 @@ async function curvePool({
 async function amoStrategyTask(taskArguments, hre) {
   const poolOTokenSymbol = taskArguments.pool;
 
-  const { blockTag, fromBlockTag, diffBlocks } = await getBlock(
+  const { blockTag, fromBlockTag, diffBlocks } = await getDiffBlocks(
     taskArguments,
     hre
   );

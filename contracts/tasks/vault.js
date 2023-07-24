@@ -5,7 +5,6 @@ const { resolveAsset } = require("../utils/assets");
 const { getSigner } = require("../utils/signers");
 const { logTxDetails } = require("../utils/txLogger");
 const { ethereumAddress } = require("../utils/regex");
-const { get } = require("lodash");
 
 const log = require("../utils/logger")("task:vault");
 
