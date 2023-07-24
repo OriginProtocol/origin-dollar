@@ -43,7 +43,7 @@ forkOnlyDescribe(
       it("Should revert when read-only re-entrancy is triggered", async function () {
         /* - needs to be an asset default strategy
          * - needs pool that supports native ETH
-         * - attacker needs to try to deposit to balancer pool and withdraw
+         * - attacker needs to try to deposit to Balancer pool and withdraw
          * - while withdrawing and receiving ETH attacker should take over the execution flow
          *   and try calling mint/redeem with the strategy default asset on the OethVault
          * - transaction should revert because of the `whenNotInVaultContext` modifier

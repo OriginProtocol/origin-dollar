@@ -139,7 +139,11 @@ abstract contract BaseAuraStrategy is BaseBalancerStrategy {
         for (uint256 i = 0; i < balancesLength; ++i) {
             (address poolAsset, ) = toPoolAsset(_asset, 0);
             if (address(tokens[i]) == poolAsset) {
-                return balances[i].mulTruncate(yourPoolShare);
+                (, uint256 assetAmount) = fromPoolAsset(
+                    poolAsset,
+                    balances[i].mulTruncate(yourPoolShare)
+                );
+                return assetAmount;
             }
         }
     }
