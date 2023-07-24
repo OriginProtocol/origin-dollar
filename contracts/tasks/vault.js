@@ -4,6 +4,8 @@ const addresses = require("../utils/addresses");
 const { resolveAsset } = require("../utils/assets");
 const { getSigner } = require("../utils/signers");
 const { logTxDetails } = require("../utils/txLogger");
+const { ethereumAddress } = require("../utils/regex");
+const { get } = require("lodash");
 
 const log = require("../utils/logger")("task:vault");
 
@@ -13,9 +15,11 @@ async function getContract(hre, symbol) {
     `${contractPrefix}VaultProxy`
   );
   const vault = await hre.ethers.getContractAt("IVault", vaultProxy.address);
+  log(`Resolved ${symbol} Vault to address ${vault.address}`);
 
   const oTokenProxy = await ethers.getContract(`${symbol}Proxy`);
   const oToken = await ethers.getContractAt(symbol, oTokenProxy.address);
+  log(`Resolved ${symbol} OToken to address ${oToken.address}`);
 
   return {
     vault,
@@ -184,12 +188,104 @@ async function redeemAll(taskArguments, hre) {
   await logTxDetails(tx, "redeemAll");
 }
 
+async function resolveStrategyAddress(strategy, hre) {
+  let strategyAddr = strategy;
+  if (!strategy.match(ethereumAddress)) {
+    const strategyContract = await hre.ethers.getContract(strategy);
+    if (!strategyContract?.address) {
+      throw Error(`Invalid strategy address or contract name: ${strategy}`);
+    }
+    strategyAddr = strategyContract.address;
+  }
+  log(`Resolve ${strategy} strategy to address: ${strategyAddr}`);
+
+  return strategyAddr;
+}
+
+async function resolveAssets(assets) {
+  if (!assets) {
+    throw Error(
+      `Invalid assets list: ${assets}. Must be a comma separated list of token symbols. eg DAI,USDT,USDC or WETH`
+    );
+  }
+  const assetsSymbols = assets.split(",");
+  const assetContracts = await Promise.all(
+    assetsSymbols.map(async (symbol) => resolveAsset(symbol))
+  );
+  const assetAddresses = assetContracts.map((contract) => contract.address);
+
+  log(`${assetAddresses.length} addresses: ${assetAddresses}`);
+
+  return { assetAddresses, assetContracts };
+}
+
+async function resolveAmounts(amounts, assetContracts) {
+  if (!amounts) {
+    throw Error(
+      `Invalid amounts list: ${amounts}. Must be a comma separated list of floating points numbers`
+    );
+  }
+  const amountsArr = amounts.split(",");
+  const amountUnits = await Promise.all(
+    amountsArr.map(async (amount, i) =>
+      parseUnits(amount, await assetContracts[i].decimals())
+    )
+  );
+  log(`${amountUnits.length} amounts: ${amountUnits}`);
+
+  return amountUnits;
+}
+
+async function depositToStrategy(taskArguments, hre) {
+  const { amounts, assets, symbol, strategy } = taskArguments;
+  const signer = await getSigner();
+
+  const { vault } = await getContract(hre, symbol);
+
+  const strategyAddr = await resolveStrategyAddress(strategy, hre);
+
+  const { assetAddresses, assetContracts } = await resolveAssets(assets);
+
+  const amountUnits = await resolveAmounts(amounts, assetContracts);
+
+  log(
+    `About to deposit to the ${strategy} strategy, amounts ${amounts} for assets ${assets}`
+  );
+  const tx = await vault
+    .connect(signer)
+    .depositToStrategy(strategyAddr, assetAddresses, amountUnits);
+  await logTxDetails(tx, "depositToStrategy");
+}
+
+async function withdrawFromStrategy(taskArguments, hre) {
+  const { amounts, assets, symbol, strategy } = taskArguments;
+  const signer = await getSigner();
+
+  const { vault } = await getContract(hre, symbol);
+
+  const strategyAddr = await resolveStrategyAddress(strategy, hre);
+
+  const { assetAddresses, assetContracts } = await resolveAssets(assets);
+
+  const amountUnits = await resolveAmounts(amounts, assetContracts);
+
+  log(
+    `About to withdraw from the ${strategy} strategy, amounts ${amounts} for assets ${assets}`
+  );
+  const tx = await vault
+    .connect(signer)
+    .withdrawFromStrategy(strategyAddr, assetAddresses, amountUnits);
+  await logTxDetails(tx, "withdrawFromStrategy");
+}
+
 module.exports = {
   allocate,
   capital,
+  depositToStrategy,
   mint,
   rebase,
   redeem,
   redeemAll,
+  withdrawFromStrategy,
   yield,
 };

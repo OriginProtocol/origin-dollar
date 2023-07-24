@@ -1,4 +1,4 @@
-const { task, types } = require("hardhat/config");
+const { subtask, task, types } = require("hardhat/config");
 
 const { fund, transfer } = require("./account");
 const { debug } = require("./debug");
@@ -29,10 +29,12 @@ const {
 const {
   allocate,
   capital,
+  depositToStrategy,
   mint,
   rebase,
   redeem,
   redeemAll,
+  withdrawFromStrategy,
   yield,
 } = require("./vault");
 const {
@@ -61,7 +63,7 @@ task("fund", "Fund accounts on local or fork")
 task("debug", "Print info about contracts and their configs", debug);
 
 // Token tasks.
-task("allowance", "Get the token allowance an owner has given to a spender")
+subtask("allowance", "Get the token allowance an owner has given to a spender")
   .addParam(
     "symbol",
     "Symbol of the token. eg OETH, WETH, USDT or OGV",
@@ -77,7 +79,11 @@ task("allowance", "Get the token allowance an owner has given to a spender")
     "The address of the account or contract allowing the spending. Default to the signer"
   )
   .setAction(tokenAllowance);
-task("balance", "Get the token balance of an account or contract")
+task("allowance").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("balance", "Get the token balance of an account or contract")
   .addParam(
     "symbol",
     "Symbol of the token. eg OETH, WETH, USDT or OGV",
@@ -89,7 +95,11 @@ task("balance", "Get the token balance of an account or contract")
     "The address of the account or contract. Default to the signer"
   )
   .setAction(tokenBalance);
-task("approve", "Approve an account or contract to spend tokens")
+task("balance").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("approve", "Approve an account or contract to spend tokens")
   .addParam(
     "symbol",
     "Symbol of the token. eg OETH, WETH, USDT or OGV",
@@ -109,7 +119,11 @@ task("approve", "Approve an account or contract to spend tokens")
     types.string
   )
   .setAction(tokenApprove);
-task("transfer", "Transfer tokens to an account or contract")
+task("approve").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("transfer", "Transfer tokens to an account or contract")
   .addParam(
     "symbol",
     "Symbol of the token. eg OETH, WETH, USDT or OGV",
@@ -119,7 +133,11 @@ task("transfer", "Transfer tokens to an account or contract")
   .addParam("amount", "Amount of tokens to transfer", undefined, types.float)
   .addParam("to", "Destination address", undefined, types.string)
   .setAction(tokenTransfer);
-task("transferFrom", "Transfer tokens from an account or contract")
+task("transfer").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("transferFrom", "Transfer tokens from an account or contract")
   .addParam(
     "symbol",
     "Symbol of the token. eg OETH, WETH, USDT or OGV",
@@ -135,6 +153,9 @@ task("transferFrom", "Transfer tokens from an account or contract")
     types.string
   )
   .setAction(tokenTransferFrom);
+task("transferFrom").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
 
 // Vault tasks.
 task("allocate", "Call allocate() on the Vault")
@@ -145,6 +166,10 @@ task("allocate", "Call allocate() on the Vault")
     types.string
   )
   .setAction(allocate);
+task("allocate").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
 task("capital", "Set the Vault's pauseCapital flag")
   .addOptionalParam(
     "symbol",
@@ -159,6 +184,10 @@ task("capital", "Set the Vault's pauseCapital flag")
     types.boolean
   )
   .setAction(capital);
+task("capital").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
 task("rebase", "Call rebase() on the Vault")
   .addOptionalParam(
     "symbol",
@@ -167,8 +196,13 @@ task("rebase", "Call rebase() on the Vault")
     types.string
   )
   .setAction(rebase);
+task("rebase").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
 task("yield", "Artificially generate yield on the OUSD Vault", yield);
-task("mint", "Mint OTokens from the Vault using collateral assets")
+
+subtask("mint", "Mint OTokens from the Vault using collateral assets")
   .addParam(
     "asset",
     "Symbol of the collateral asset to deposit. eg WETH, frxETH, USDT, DAI",
@@ -189,7 +223,11 @@ task("mint", "Mint OTokens from the Vault using collateral assets")
   )
   .addOptionalParam("min", "Minimum amount of OTokens to mint", 0, types.float)
   .setAction(mint);
-task("redeem", "Redeem OTokens for collateral assets from the Vault")
+task("mint").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("redeem", "Redeem OTokens for collateral assets from the Vault")
   .addParam("amount", "Amount of OTokens to burn", undefined, types.float)
   .addOptionalParam(
     "symbol",
@@ -204,7 +242,11 @@ task("redeem", "Redeem OTokens for collateral assets from the Vault")
     types.float
   )
   .setAction(redeem);
-task("redeemAll", "Redeem all OTokens for collateral assets from the Vault")
+task("redeem").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("redeemAll", "Redeem all OTokens for collateral assets from the Vault")
   .addOptionalParam(
     "symbol",
     "Symbol of the OToken. eg OETH or OUSD",
@@ -218,22 +260,103 @@ task("redeemAll", "Redeem all OTokens for collateral assets from the Vault")
     types.float
   )
   .setAction(redeemAll);
+task("redeemAll").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "depositToStrategy",
+  "Deposits vault collateral assets to a vault strategy"
+)
+  .addOptionalParam(
+    "symbol",
+    "Symbol of the OToken. eg OETH or OUSD",
+    "OETH",
+    types.string
+  )
+  .addParam(
+    "strategy",
+    "Address or contract name of the strategy",
+    undefined,
+    types.string
+  )
+  .addParam(
+    "assets",
+    "Comma separated list of token symbols with no spaces. eg DAI,USDT,USDC or WETH",
+    undefined,
+    types.string
+  )
+  .addParam(
+    "amounts",
+    "Comma separated list of token amounts with no spaces. eg 1000.123456789,2000.89,5000.123456 or 23.987",
+    undefined,
+    types.string
+  )
+  .setAction(depositToStrategy);
+task("depositToStrategy").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("withdrawFromStrategy", "Withdraw assets from a vault strategy")
+  .addOptionalParam(
+    "symbol",
+    "Symbol of the OToken. eg OETH or OUSD",
+    "OETH",
+    types.string
+  )
+  .addParam(
+    "strategy",
+    "Address or contract name of the strategy",
+    undefined,
+    types.string
+  )
+  .addParam(
+    "assets",
+    "Comma separated list of token symbols with no spaces. eg DAI,USDT,USDC or WETH",
+    undefined,
+    types.string
+  )
+  .addParam(
+    "amounts",
+    "Comma separated list of token amounts with no spaces. eg 1000.123456789,2000.89,5000.123456 or 23.987",
+    undefined,
+    types.string
+  )
+  .setAction(withdrawFromStrategy);
+task("withdrawFromStrategy").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
 
 // Governance tasks
-task("execute", "Execute a governance proposal")
+subtask("execute", "Execute a governance proposal")
   .addParam("id", "Proposal ID")
   .addOptionalParam("governor", "Override Governor address")
   .setAction(execute);
-task("executeOnFork", "Enqueue and execute a proposal on the Fork")
+task("execute").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("executeOnFork", "Enqueue and execute a proposal on the Fork")
   .addParam("id", "Id of the proposal")
   .addOptionalParam("gaslimit", "Execute proposal gas limit")
   .setAction(executeOnFork);
-task("proposal", "Dumps the state of a proposal")
+task("executeOnFork").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("proposal", "Dumps the state of a proposal")
   .addParam("id", "Id of the proposal")
   .setAction(proposal);
-task("governors", "Get list of governors for all contracts").setAction(
+task("proposal").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("governors", "Get list of governors for all contracts").setAction(
   governors
 );
+task("governors").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
 
 // Compensation tasks
 task("isAdjusterLocked", "Is adjuster on Compensation claims locked").setAction(
@@ -303,7 +426,7 @@ task("showStorageLayout", "Visually show the storage layout of the contract")
   .setAction(showStorageLayout);
 
 // Curve Pools
-task("curvePool", "Dumps the current state of a Curve pool")
+subtask("curvePool", "Dumps the current state of a Curve pool")
   .addParam("pool", "Symbol of the curve Metapool. OUSD or OETH")
   .addOptionalParam(
     "block",
@@ -324,9 +447,12 @@ task("curvePool", "Dumps the current state of a Curve pool")
     types.string
   )
   .setAction(curvePoolTask);
+task("curvePool").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
 
 // Curve Pools
-task("amoStrat", "Dumps the current state of a AMO strategy")
+subtask("amoStrat", "Dumps the current state of a AMO strategy")
   .addParam("pool", "Symbol of the curve Metapool. OUSD or OETH")
   .addOptionalParam(
     "block",
@@ -347,8 +473,11 @@ task("amoStrat", "Dumps the current state of a AMO strategy")
     types.string
   )
   .setAction(amoStrategyTask);
+task("amoStrat").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
 
-task("curveAdd", "Add liquidity to Curve Metapool")
+subtask("curveAdd", "Add liquidity to Curve Metapool")
   .addOptionalParam(
     "symbol",
     "Symbol of the OToken. eg OETH or OUSD",
@@ -370,8 +499,11 @@ task("curveAdd", "Add liquidity to Curve Metapool")
     types.float
   )
   .setAction(curveAddTask);
+task("curveAdd").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
 
-task("curveRemove", "Remove liquidity from Curve Metapool")
+subtask("curveRemove", "Remove liquidity from Curve Metapool")
   .addOptionalParam(
     "symbol",
     "Symbol of the OToken. eg OETH or OUSD",
@@ -387,8 +519,11 @@ task("curveRemove", "Remove liquidity from Curve Metapool")
     types.float
   )
   .setAction(curveRemoveTask);
+task("curveRemove").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
 
-task("curveSwap", "Swap Metapool tokens")
+subtask("curveSwap", "Swap Metapool tokens")
   .addOptionalParam(
     "symbol",
     "Symbol of the OToken. eg OETH or OUSD",
@@ -404,3 +539,6 @@ task("curveSwap", "Swap Metapool tokens")
   .addParam("amount", "Amount of from tokens.", 0, types.float)
   .addOptionalParam("min", "Min tokens out.", 0, types.float)
   .setAction(curveSwapTask);
+task("curveSwap").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
