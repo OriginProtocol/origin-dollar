@@ -1,18 +1,17 @@
 import React, { useState } from 'react'
-import { useWeb3React } from '@web3-react/core'
-
+import { useAccount, useNetwork, useSwitchNetwork } from 'wagmi'
 import Dropdown from 'components/Dropdown'
 import GetOUSD from 'components/GetOUSD'
-import { isCorrectNetwork, switchEthereumChain } from 'utils/web3'
-
-import withWalletSelectModal from 'hoc/withWalletSelectModal'
-import analytics from 'utils/analytics'
-
+import { isCorrectNetwork } from 'utils/web3'
 import Content from './_AccountStatusContent'
 import AccountStatusIndicator from './_AccountStatusIndicator'
 
-const AccountStatusDropdown = ({ className, showLogin, dapp }) => {
-  const { active, account, chainId } = useWeb3React()
+const AccountStatusDropdown = ({ className }) => {
+  const { chain } = useNetwork()
+  const { address: account, isConnected: active } = useAccount()
+  const { switchNetwork } = useSwitchNetwork()
+
+  const chainId = chain?.id
   const [open, setOpen] = useState(false)
   const correctNetwork = isCorrectNetwork(chainId)
 
@@ -24,43 +23,36 @@ const AccountStatusDropdown = ({ className, showLogin, dapp }) => {
         open={open}
         onClose={() => setOpen(false)}
       >
-        <a
-          className={`account-status d-flex justify-content-center align-items-center clickable ${className} ${
-            open ? 'open' : ''
-          }`}
-          onClick={async (e) => {
-            e.preventDefault()
-            if (dapp && !active) {
-              showLogin()
-            } else if (active && !correctNetwork) {
-              analytics.track('On Change network', {
-                category: 'settings',
-              })
-              // open the dropdown to allow disconnecting, while also requesting an auto switch to mainnet
-              await switchEthereumChain()
-              setOpen(true)
-            } else if (dapp) {
-              setOpen(true)
-            }
-          }}
-        >
-          {/* The button id is used by StakeBoxBig to trigger connect when no wallet connected */}
-          {((!active && !account) || (!dapp && active && correctNetwork)) && (
+        {!active || !account ? (
+          <div className="not-logged-in">
             <GetOUSD
               id="main-dapp-nav-connect-wallet-button"
-              connect={dapp}
               className="btn-nav"
               trackSource="Account dropdown"
             />
-          )}
-          <AccountStatusIndicator
-            active={active}
-            correctNetwork={correctNetwork}
-            account={account}
-            dapp={dapp}
-            withAddress
-          />
-        </a>
+          </div>
+        ) : (
+          <a
+            className={`account-status d-flex justify-content-center align-items-center clickable ${className} ${
+              open ? 'open' : ''
+            }`}
+            onClick={async (e) => {
+              e.preventDefault()
+              if (active && !correctNetwork) {
+                // open the dropdown to allow disconnecting, while also requesting an auto switch to mainnet
+                await switchNetwork(correctNetwork)
+              }
+              setOpen(true)
+            }}
+          >
+            <AccountStatusIndicator
+              active={active}
+              correctNetwork={correctNetwork}
+              account={account}
+              withAddress
+            />
+          </a>
+        )}
       </Dropdown>
       <style jsx>{`
         .dropdown-menu {
@@ -92,6 +84,14 @@ const AccountStatusDropdown = ({ className, showLogin, dapp }) => {
         .dropdown-menu a .active .dropdown-marble {
           font-weight: bold;
           background-color: #183140;
+        }
+
+        .not-logged-in {
+          height: 30px;
+          line-height: 24px;
+          padding: 0 10px;
+          border-radius: 56px;
+          border: solid 1px white;
         }
 
         .account-status {
@@ -130,4 +130,4 @@ const AccountStatusDropdown = ({ className, showLogin, dapp }) => {
   )
 }
 
-export default withWalletSelectModal(AccountStatusDropdown)
+export default AccountStatusDropdown

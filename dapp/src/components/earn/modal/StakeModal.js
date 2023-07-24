@@ -1,17 +1,13 @@
 import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
 import { ethers } from 'ethers'
-import { get } from 'lodash'
-
 import withRpcProvider from 'hoc/withRpcProvider'
 import EarnModal from 'components/earn/modal/EarnModal'
 import { formatCurrency, formatCurrencyMinMaxDecimals } from 'utils/math'
 import AccountStore from 'stores/AccountStore'
 import { useStoreState } from 'pullstate'
 import SpinningLoadingCircle from 'components/SpinningLoadingCircle'
-import analytics from 'utils/analytics'
-import { connectorNameIconMap, getConnectorIcon } from 'utils/connectors'
-import { getUserSource } from 'utils/user'
+import { getConnectorIcon } from 'utils/connectors'
 import { assetRootPath } from 'utils/image'
 
 const StakeModal = ({
@@ -69,12 +65,6 @@ const StakeModal = ({
                 onUserConfirmedStakeTx(result, {
                   stakeAmount,
                 })
-                analytics.track('Stake', {
-                  amount: tokensToStake,
-                  // we already store utm_source as user property. This is for easier analytics
-                  utm_source: getUserSource(),
-                  token_name: stakeTokenName,
-                })
                 onClose()
               } else {
                 setModalState('approve-tokens')
@@ -113,12 +103,6 @@ const StakeModal = ({
               const result = await stakeFunctionCall(stakeAmount)
               onUserConfirmedStakeTx(result, {
                 stakeAmount,
-              })
-              analytics.track('Stake', {
-                amount: tokensToStake,
-                // we already store utm_source as user property. This is for easier analytics
-                utm_source: getUserSource(),
-                token_name: stakeTokenName,
               })
               onClose()
             } catch (e) {

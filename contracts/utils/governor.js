@@ -1,3 +1,5 @@
+const BigNumber = require("ethers").BigNumber;
+
 async function _governorArgs({ contract, signature, args = [] }) {
   const method = signature;
   if (!contract.populateTransaction[method]) {
@@ -28,6 +30,23 @@ async function proposeArgs(governorArgsArray) {
   return [targets, sigs, datas];
 }
 
+/**
+ * Utility to build the arguments to pass to the OGV governor's propose method.
+ * @param governorArgsArray
+ * @returns {Promise<*[]>}
+ */
+async function proposeGovernanceArgs(governorArgsArray) {
+  const [targets, sigs, calldata] = await proposeArgs(governorArgsArray);
+
+  return [
+    targets,
+    Array(governorArgsArray.length).fill(BigNumber.from(0)),
+    sigs,
+    calldata,
+  ];
+}
+
 module.exports = {
   proposeArgs,
+  proposeGovernanceArgs,
 };

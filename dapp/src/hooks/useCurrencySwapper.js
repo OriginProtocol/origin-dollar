@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react'
-import { ethers, BigNumber } from 'ethers'
+import { BigNumber } from 'ethers'
 import { useStoreState } from 'pullstate'
-
 import ContractStore from 'stores/ContractStore'
 import AccountStore from 'stores/AccountStore'
 import {
@@ -13,10 +12,8 @@ import {
   uniswapV3GasLimitBuffer,
   curveGasLimitBuffer,
 } from 'utils/constants'
-import { useWeb3React } from '@web3-react/core'
-import { find } from 'lodash'
+import { useSigner } from 'wagmi'
 import addresses from 'constants/contractAddresses'
-
 import { calculateSwapAmounts } from 'utils/math'
 
 const useCurrencySwapper = ({
@@ -27,6 +24,7 @@ const useCurrencySwapper = ({
   priceToleranceValue,
 }) => {
   const [needsApproval, setNeedsApproval] = useState(false)
+
   const {
     vault: vaultContract,
     ousd: ousdContract,
@@ -41,6 +39,7 @@ const useCurrencySwapper = ({
     curveRegistryExchange,
     curveOUSDMetaPool,
   } = useStoreState(ContractStore, (s) => s.contracts)
+
   const curveMetapoolUnderlyingCoins = useStoreState(
     ContractStore,
     (s) => s.curveMetapoolUnderlyingCoins
@@ -51,12 +50,9 @@ const useCurrencySwapper = ({
   const allowances = useStoreState(AccountStore, (s) => s.allowances)
   const balances = useStoreState(AccountStore, (s) => s.balances)
   const account = useStoreState(AccountStore, (s) => s.address)
-  const connectorName = useStoreState(AccountStore, (s) => s.connectorName)
   const swapEstimations = useStoreState(ContractStore, (s) => s.swapEstimations)
-  const swapsLoaded = swapEstimations && typeof swapEstimations === 'object'
   const selectedSwap = useStoreState(ContractStore, (s) => s.selectedSwap)
-  const web3react = useWeb3React()
-  const { library } = web3react
+  const { data: signer } = useSigner()
 
   const allowancesLoaded =
     typeof allowances === 'object' &&
@@ -66,17 +62,17 @@ const useCurrencySwapper = ({
     allowances.dai
 
   const connSigner = (contract) => {
-    return contract.connect(library.getSigner(account))
+    return contract.connect(signer)
   }
 
   const { contract: coinContract, decimals } =
-    coinInfoList[swapMode === 'mint' ? selectedCoin : 'ousd']
+    coinInfoList?.[swapMode === 'mint' ? selectedCoin : 'ousd'] || {}
 
   let coinToReceiveDecimals, coinToReceiveContract
   // do not enter conditional body when redeeming a mix
   if (!(swapMode === 'redeem' && selectedCoin === 'mix')) {
     ;({ contract: coinToReceiveContract, decimals: coinToReceiveDecimals } =
-      coinInfoList[swapMode === 'redeem' ? selectedCoin : 'ousd'])
+      coinInfoList?.[swapMode === 'redeem' ? selectedCoin : 'ousd'] || {})
   }
 
   // plain amount as displayed in UI (not in wei format)

@@ -1,42 +1,110 @@
 import React, { useState, useEffect } from 'react'
 import classnames from 'classnames'
 import { fbt } from 'fbt-runtime'
-import { useWeb3React } from '@web3-react/core'
-import { useRouter } from 'next/router'
-
-import withWalletSelectModal from 'hoc/withWalletSelectModal'
+import { ConnectButton } from '@rainbow-me/rainbowkit'
+import { useAccount } from 'wagmi'
 import analytics from 'utils/analytics'
-import { walletLogin } from 'utils/account'
-import { adjustLinkHref } from 'utils/utils'
 
-const GetOUSD = ({
+const CustomConnectButton = ({
   id,
+  containerClassName = '',
   className,
+  onClick,
   style,
-  dark,
-  light,
-  primary,
-  showLogin,
-  trackSource,
-  light2,
-  zIndex2,
-  navMarble,
-  connect,
 }) => {
-  const { activate, active } = useWeb3React()
+  return (
+    <ConnectButton.Custom>
+      {({
+        account,
+        chain,
+        openAccountModal,
+        openChainModal,
+        openConnectModal,
+        authenticationStatus,
+        mounted,
+      }) => {
+        // Note: If your app doesn't use authentication, you
+        // can remove all 'authenticationStatus' checks
+        const ready = mounted && authenticationStatus !== 'loading'
+        const connected =
+          ready &&
+          account &&
+          chain &&
+          (!authenticationStatus || authenticationStatus === 'authenticated')
+
+        return (
+          <div
+            className={containerClassName}
+            {...(!ready && {
+              'aria-hidden': true,
+              style: {
+                opacity: 0,
+                pointerEvents: 'none',
+                userSelect: 'none',
+              },
+            })}
+          >
+            {(() => {
+              if (!connected) {
+                return (
+                  <button
+                    id={id}
+                    className={classnames(
+                      'bg-transparent border-0 text-white',
+                      className
+                    )}
+                    style={style}
+                    onClick={() => {
+                      openConnectModal()
+                      onClick()
+                    }}
+                    type="button"
+                  >
+                    {fbt('Connect', 'Connect button')}
+                  </button>
+                )
+              }
+
+              if (chain.unsupported) {
+                return (
+                  <button
+                    id={id}
+                    className={className}
+                    style={style}
+                    onClick={openChainModal}
+                    type="button"
+                  >
+                    {fbt('Wrong Network', 'Wrong Network')}
+                  </button>
+                )
+              }
+
+              return (
+                <button
+                  onClick={openAccountModal}
+                  type="button"
+                  className={classnames(
+                    'bg-transparent border-0 text-white',
+                    className
+                  )}
+                  style={style}
+                >
+                  {account.displayName}
+                </button>
+              )
+            })()}
+          </div>
+        )
+      }}
+    </ConnectButton.Custom>
+  )
+}
+
+const GetOUSD = ({ id, className, containerClassName, style, trackSource }) => {
+  const { isConnected: active } = useAccount()
+
   const [userAlreadyConnectedWallet, setUserAlreadyConnectedWallet] =
     useState(false)
-  const router = useRouter()
-  const classList = classnames(
-    'btn d-flex align-items-center justify-content-center',
-    className,
-    dark && 'btn-dark',
-    light && 'btn-light',
-    light2 && 'btn-light2',
-    primary && 'btn-primary',
-    zIndex2 && 'zIndex2',
-    navMarble && 'nav-marble'
-  )
 
   useEffect(() => {
     if (
@@ -53,31 +121,20 @@ const GetOUSD = ({
 
   return (
     <>
-      <button
-        className={classList}
+      <CustomConnectButton
         id={id}
+        containerClassName={containerClassName}
+        className={className}
         style={style}
         onClick={() => {
           if (process.browser) {
-            if (connect) {
-              analytics.track('On Connect', {
-                category: 'general',
-                label: trackSource,
-              })
-              walletLogin(showLogin, activate)
-            } else {
-              analytics.track('On Get OUSD', {
-                category: 'navigation',
-                label: trackSource,
-              })
-              router.push(adjustLinkHref('/swap'))
-            }
+            analytics.track('On Connect', {
+              category: 'general',
+              label: trackSource,
+            })
           }
         }}
-      >
-        {!connect && fbt('Get OUSD', 'Get OUSD button')}
-        {connect && fbt('Connect', 'Connect button')}
-      </button>
+      />
       <style jsx>{`
         .btn {
           min-width: 201px;
@@ -143,4 +200,4 @@ const GetOUSD = ({
   )
 }
 
-export default withWalletSelectModal(GetOUSD)
+export default GetOUSD

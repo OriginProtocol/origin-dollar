@@ -1,0 +1,273 @@
+@startuml
+
+title "OETH Flow of Value"
+
+actor "User" as user
+actor "Harvester" as harvUser
+actor "Trustee" as trust <<Origin>> #DeepSkyBlue
+participant "Zapper" as zap <<Origin>> #DeepSkyBlue
+participant "OETH\nVault" as vault <<Origin>> #DeepSkyBlue
+participant "Harvester" as harv <<Origin>> #DeepSkyBlue
+participant "Dripper" as drip <<Origin>> #DeepSkyBlue
+participant "Swapper" as swapper <<Origin>> #DeepSkyBlue
+
+participant "Wrapped ETH" as weth <<DappHub>><<WETH>>
+
+participant "FRAX\nStrategy" as frxStrat <<Origin>> #DeepSkyBlue
+participant "FRAX ETH" as frxETH <<FRAX>><<frxETH>>
+participant "Staked\nFRAX ETH" as sfrxETH <<FRAX>><<sfrxETH>>
+
+participant "Curve AMO\nStrategy" as crvStrat <<Origin>> #DeepSkyBlue
+participant "OETH\nMetapool" as oethCrv <<Curve>>
+participant "OETH\nPool" as oethCvx <<Convex>>
+participant "Rewards\nPool" as cvxRewards <<Convex>>
+participant "Locked CVX" as icvx <<Convex>>
+
+participant "Morpho Aave\nStrategy" as morphAaveStrat <<Origin>> #DeepSkyBlue
+participant "Morpho\nAave V2" as morpho <<Morpho>>
+participant "interst\nbearing\nWETH" as aweth <<Aave>><<aWETH>>
+participant "variable\ndebt WETH" as vdweth <<Aave>><<varDebtWETH>>
+
+participant "Uniswap V2" as uni <<Uniswap>>
+participant "1Inch\nRouter" as 1r <<1Inch>>
+
+' Deposit ETH via Zapper
+group User deposit ETH [> 10 OETH]
+user -> zap : ETH
+note left : ETH in user tx
+
+zap -> weth : ETH
+note left : swap ETH for WETH
+weth o-> zap : WETH
+
+vault o-> trust : OETH
+note left : 20% performance\nfee from rebase
+
+zap -> vault : WETH
+
+note over vault : Currently no default WETH strategy\nso there is no auto allocation.
+
+vault o-> user : OETH
+note left : mint OETH\nto match ETH
+end
+
+' Deposit sfrxETH via Zapper
+group User deposit sfrxETH [> 10 OETH]
+note over zap : User approves Zapper to transfer their sfrxETH
+
+user -x sfrxETH : sfrxETH
+note left : redeem sfrxETH for frxETH
+sfrxETH -> zap : frxETH
+
+vault o-> trust : OETH
+note left : 20% performance\nfee from rebase
+
+zap -> vault : frxETH
+
+group FRAX Strategy
+vault -> frxStrat : frxETH
+note left: > 10 ETH worth so allocate\nto default frxETH strategy
+frxStrat -> sfrxETH : frxETH
+note left : deposit frxETH
+sfrxETH o-> frxStrat : sfrxETH
+note left : get sfrxETH shares
+end 
+
+vault o-> user : OETH
+note left : mint OETH to match\nETH value of frxETH
+end
+
+
+' Mint
+group User mint [< 10 OETH]
+vault o-> trust : OETH
+note left : 20% performance\nfee from rebase
+
+user -> vault : frxETH, stETH, rETH or WETH
+note left: Only to vault,\nnot strategy as <10 ETH
+vault o-> user : OETH
+note left : mint OETH to\nETH value of deposit
+end
+
+' Allocate
+group Vault allocate [anyone can call]
+
+' FRAX Strategy for frxETH
+group Deposit frxETH to FRAX Strategy [unallocated frxETH in vault]
+vault -> frxStrat : frxETH
+frxStrat -> sfrxETH : frxETH
+note left : deposit frxETH
+sfrxETH o-> frxStrat : sfrxETH
+note left : get sfrxETH shares
+end
+
+' FRAX Strategy for WETH
+group Deposit WETH to FRAX Strategy [unallocated WETH in vault]
+vault -> frxStrat : WETH
+frxStrat -x weth : WETH
+note left : withdraw ETH from WETH
+weth -> frxStrat : ETH
+frxStrat -> frxETH : ETH
+note left : Deposit and stake ETH for sfrxETH
+frxETH -> sfrxETH : frxETH
+sfrxETH o-> frxStrat : sfrxETH
+end
+
+' Curve AMO Strategy
+group Deposit to Curve AMO Strategy [unallocated WETH in vault]
+vault -> crvStrat : WETH
+crvStrat -x weth : WETH
+weth -> crvStrat : ETH
+
+crvStrat o-> crvStrat : OETH
+note left : mint OETH where WETH <= OETH <= 2x WETH
+crvStrat -> oethCrv : ETH, OETH
+note left : add liquidity to the Metapool
+oethCrv o-> crvStrat : OETHCRV-f
+note left: strategy gets Metapool LP tokens
+
+crvStrat -> oethCvx : OETHCRV-f
+note left : deposit Metapool LP to Convex
+oethCvx o-> cvxRewards : cvxOETHCRV-f
+note left : stake Convex LP tokens
+end
+
+' Morpho Aave Strategy
+group Deposit to Morpho Aave Strategy [unallocated WETH in vault]
+vault -> morphAaveStrat : WETH
+morphAaveStrat -> morpho : WETH
+morpho -> aweth : WETH
+
+alt Morpho has more borrows than deposits
+morpho -x vdweth : varDebtWETH
+note left : repay borrowed WETH from Aave
+else Morpho has more deposits than borrows
+aweth o-> morpho  : aWETH
+note left : deposit WETH to Aave
+end
+end
+
+end
+
+' Redeem
+group User redeem OETH
+vault o-> trust : OETH
+note left : 20% performance\nfee from rebase
+
+user -x vault : OETH
+note left : burn User's OETH
+
+note over vault : 0.5% fee applied to redeemed assets.\nThis adds to the yield in the next rebase.
+
+' FRAX Strategy
+group Withdraw from FRAX Strategy [not enough frxETH in vault]
+note over frxStrat
+can only redeem frxETH.
+depositted WETH is removed as frxETH.
+end note
+frxStrat -x sfrxETH : sfrxETH
+note left : redeem sfrxETH shares
+sfrxETH -> user : frxETH
+note left : transfer directly to user
+' sfrxETH -> vault : frxETH
+' note left : transfer to vault
+end
+
+' Curve AMO Strategy
+group Withdraw from Curve AMO Strategy [not enough WETH in vault]
+cvxRewards -x oethCvx : cvxOETHCRV-f
+note left : unstake and burn Convex LP tokens
+oethCvx -> crvStrat : OETHCRV-f
+note left : withdraw Metapool LP tokens
+
+crvStrat -x oethCrv : OETHCRV-f
+note left : burn Metapool LP tokens
+oethCrv -> crvStrat : ETH, OETH
+note left : remove liquidity to the Metapool
+
+crvStrat -x crvStrat : OETH
+note left : burn OETH withdrawn from Curve
+
+crvStrat -> weth : ETH
+note left : deposit ETH into Wrapped ETH
+weth o-> user : WETH
+note left : transfer directly to user
+' weth o-> vault : WETH
+' note left : transfer to vault
+end
+
+' Morpho Aave Strategy
+group Withdraw from Morpho Aave Strategy [not enough WETH in vault]
+alt Morpho has more borrows than deposits
+vdweth o-> morpho : varDebtWETH
+note left : borrow WETH from Aave
+else Morpho has more deposits than borrows
+morpho -x aweth : aWETH
+note left : withdraw WETH deposit from Aave
+end
+aweth -> morpho : WETH
+morpho -> morphAaveStrat : WETH
+' morphAaveStrat -> vault : WETH
+morphAaveStrat -> user : WETH
+note left : transfer directly to user
+end
+
+note over vault : no strategy so comes from vault
+vault -> user : stETH
+vault -> user : rETH
+end
+
+' Harvest and Swap
+group Harvest and Swap [can be called by anyone]
+
+cvxRewards -> harv : CVX & CRV
+note left : collect Convex rewards
+
+harv -> uni : CVX
+note left : swap CVX for ETH
+uni -> harv : WETH
+harv -> drip : WETH
+note left : 99% of WETH to Dripper
+harv -> harvUser : WETH
+note left : 1% of WETH\nto Harvest caller
+
+harv -> uni : CRV
+note left : swap CRV for ETH
+uni -> harv : WETH
+harv -> drip : WETH
+note left : 99% of WETH to Dripper
+harv -> harvUser : WETH
+note left : 1% of WETH\nto Harvest caller
+end
+
+' Collect and Rebase
+group Collect and Rebase [can be called by anyone]
+
+drip -> vault : WETH
+note left : stream WETH to vault
+
+vault o-> trust : OETH
+note left : 20% performance\nfee from rebase
+end
+
+group Trustee buys and locks CVX for voting power
+
+trust -> uni : OETH
+note left : swap for CVX using Uniswap
+uni -> trust : CVX
+
+trust -> icvx : CVX
+note left : lock CVX for delegated voting power
+icvx -> trust : vlCVX
+
+end
+
+' Swap vault collateral assets
+group Trustee swaps collateral assets [WETH for rETH]
+vault -> swapper : WETH
+note left : swap WETH for rETH
+swapper -> 1r : WETH
+1r -> vault : rETH
+end
+
+@enduml

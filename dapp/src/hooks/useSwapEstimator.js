@@ -3,17 +3,11 @@ import { ethers, BigNumber } from 'ethers'
 import { useStoreState } from 'pullstate'
 import { get, minBy } from 'lodash'
 import AccountStore from 'stores/AccountStore'
-import {
-  mintAbsoluteGasLimitBuffer,
-  mintPercentGasLimitBuffer,
-  redeemPercentGasLimitBuffer,
-  approveCoinGasLimits,
-  max_price,
-} from 'utils/constants'
+import { approveCoinGasLimits, max_price } from 'utils/constants'
 import { usePrevious } from 'utils/hooks'
 import useCurrencySwapper from 'hooks/useCurrencySwapper'
 import ContractStore from 'stores/ContractStore'
-import { calculateSwapAmounts, formatCurrency } from 'utils/math'
+import { calculateSwapAmounts } from 'utils/math'
 import fetchWithTimeout from 'utils/fetchWithTimeout'
 import { find } from 'lodash'
 
@@ -47,7 +41,8 @@ const useSwapEstimator = ({
   const balances = useStoreState(AccountStore, (s) => s.balances)
 
   const { contract: coinToSwapContract, decimals: coinToSwapDecimals } =
-    coinInfoList[swapMode === 'mint' ? selectedCoin : 'ousd']
+    coinInfoList?.[swapMode === 'mint' ? selectedCoin : 'ousd'] || {}
+
   const coinToSwap = swapMode === 'redeem' ? 'ousd' : selectedCoin
 
   const [selectedCoinPrev, setSelectedCoinPrev] = useState()
@@ -59,7 +54,7 @@ const useSwapEstimator = ({
   // do not enter conditional body when redeeming a mix
   if (!(swapMode === 'redeem' && selectedCoin === 'mix')) {
     ;({ contract: coinToReceiveContract, decimals: coinToReceiveDecimals } =
-      coinInfoList[swapMode === 'redeem' ? selectedCoin : 'ousd'])
+      coinInfoList?.[swapMode === 'redeem' ? selectedCoin : 'ousd'] || {})
   }
 
   const allowances = useStoreState(AccountStore, (s) => s.allowances)
@@ -1012,17 +1007,14 @@ const useSwapEstimator = ({
   // Fetches current gas price
   const fetchGasPrice = async () => {
     try {
-      const gasPriceRequest = await fetchWithTimeout(
-        `https://ethgasstation.info/api/ethgasAPI.json?api-key=${process.env.DEFI_PULSE_API_KEY}`,
-        // allow for 5 seconds timeout before falling back to chainlink
-        {
-          timeout: 5000,
-        }
+      const provider = new ethers.providers.StaticJsonRpcProvider(
+        process.env.NEXT_PUBLIC_ETHEREUM_RPC_PROVIDER,
+        { chainId: parseInt(process.env.NEXT_PUBLIC_ETHEREUM_RPC_CHAIN_ID) }
       )
 
-      const gasPrice = BigNumber.from(
-        get(await gasPriceRequest.json(), 'average') + '00000000'
-      )
+      const data = await provider.getFeeData()
+
+      const gasPrice = data?.gasPrice
 
       if (!isGasPriceUserOverriden) {
         ContractStore.update((s) => {

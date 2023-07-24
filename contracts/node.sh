@@ -6,8 +6,15 @@ nodeWaitTimeout=1200
 RED='\033[0;31m'
 NO_COLOR='\033[0m'
 
+
 main()
 {   
+    NETWORK_FILE="../dapp/network.json"
+
+    if [[ $APP_ID == "oeth-dapp" ]]; then
+      NETWORK_FILE="../dapp-oeth/network.json";
+    fi
+
     rm -rf deployments/localhost
     if  [[ $1 == "fork" ]]
     then
@@ -25,6 +32,7 @@ main()
         if [ -z "$BLOCK_NUMBER" ]; then
             echo "It is recommended that BLOCK_NUMBER is set to a recent block to improve performance of the fork";
         else
+            echo "Forking from block $BLOCK_NUMBER";
             params+=(--fork-block-number ${BLOCK_NUMBER})
         fi
         if [ -z "$STACK_TRACE" ]; then params+=( --show-stack-traces); fi
@@ -33,7 +41,7 @@ main()
 
         nodeOutput=$(mktemp "${TMPDIR:-/tmp/}$(basename 0).XXX")
         # the --no-install is here so npx doesn't download some package on its own if it can not find one in the repo
-        FORK=true npx --no-install hardhat node --no-reset --export '../dapp/network.json' ${params[@]} > $nodeOutput 2>&1 &
+        FORK=true npx --no-install hardhat node --no-reset --export ${NETWORK_FILE} ${params[@]} > $nodeOutput 2>&1 &
 
         tail -f $nodeOutput &
 
@@ -62,7 +70,7 @@ main()
 
 
     else
-        npx --no-install hardhat node --export '../dapp/network.json'
+        npx --no-install hardhat node --export ${NETWORK_FILE}
     fi
 }
 

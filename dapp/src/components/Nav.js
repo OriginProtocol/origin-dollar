@@ -1,115 +1,82 @@
 import React from 'react'
 import classnames from 'classnames'
 import Link from 'next/link'
-import { useRouter } from 'next/router'
 import { fbt } from 'fbt-runtime'
-import { useStoreState } from 'pullstate'
-import { useWeb3React } from '@web3-react/core'
-
+import { useAccount } from 'wagmi'
+import dynamic from 'next/dynamic'
 import withIsMobile from 'hoc/withIsMobile'
-
-import GetOUSD from 'components/GetOUSD'
-import AccountStatusDropdown from 'components/AccountStatusDropdown'
-import { formatCurrency } from 'utils/math'
-import { getDocsLink } from 'utils/getDocsLink'
 import LanguageOptions from 'components/LanguageOptions'
-import LanguageSelected from 'components/LanguageSelected'
-import LocaleDropdown from 'components/LocaleDropdown'
-import OusdDropdown from 'components/earn/OusdDropdown'
-import OgnDropdown from 'components/earn/OgnDropdown'
 import IPFSDappLink from 'components/IPFSDappLink'
-import ContractStore from 'stores/ContractStore'
-import AccountStore from 'stores/AccountStore'
-
-import Languages from '../constants/Languages'
-import AccountStatusPopover from './AccountStatusPopover'
 import { adjustLinkHref } from 'utils/utils'
 import { assetRootPath } from 'utils/image'
 
 const environment = process.env.NODE_ENV
-const showExperimentalSoftwareNotice = false
-const DappLinks = ({ dapp, page }) => {
-  const ousdBalance = useStoreState(AccountStore, (s) => s.balances['ousd'])
-  const lifetimeYield = useStoreState(AccountStore, (s) => s.lifetimeYield)
 
+const GetOUSD = dynamic(() => import('components/GetOUSD'), {
+  ssr: false,
+})
+
+const AccountStatusDropdown = dynamic(
+  () => import('components/AccountStatusDropdown'),
+  {
+    ssr: false,
+  }
+)
+
+const DappLinks = ({ page }) => {
   return (
     <>
-      {!dapp && (
-        <a
-          href={adjustLinkHref('https://analytics.ousd.com/apy')}
-          rel="noopener noreferrer"
-          target="blank"
-        >
-          <div
-            className={classnames(
-              'banner align-items-center justify-content-center',
-              { dapp }
-            )}
+      <div className="d-flex align-items-center justify-content-center dapp-navigation mr-auto flex-wrap">
+        <Link href={adjustLinkHref('/')}>
+          <a
+            className={`d-flex align-items-center ml-md-0 ${
+              page === 'swap' ? 'selected' : ''
+            }`}
           >
-            <div className="triangle d-none d-xl-block"></div>
-            {fbt(
-              `Trailing 30-day APY: ${fbt.param(
-                'APY',
-                formatCurrency(apy * 100, 2) + '%'
-              )}`,
-              'Current APY banner'
-            )}
-          </div>
-        </a>
-      )}
-      {dapp && (
-        <div className="d-flex align-items-center justify-content-center dapp-navigation mr-auto flex-wrap">
-          <Link href={adjustLinkHref('/')}>
-            <a
-              className={`d-flex align-items-center ml-md-0 ${
-                page === 'swap' ? 'selected' : ''
-              }`}
-            >
-              {fbt('Swap OUSD', 'Swap OUSD')}
-            </a>
-          </Link>
-          {process.env.NEXT_PUBLIC_ENABLE_LIQUIDITY_MINING === 'true' && (
-            <Link href={adjustLinkHref('/earn')}>
-              <a
-                className={`d-flex align-items-center ${
-                  page === 'earn' || page === 'pool-details' ? 'selected' : ''
-                }`}
-              >
-                {fbt('Earn OGN', 'Earn OGN')}
-              </a>
-            </Link>
-          )}
-          {process.env.NEXT_PUBLIC_ENABLE_STAKING === 'true' && (
-            <Link href={adjustLinkHref('/earn')}>
-              <a
-                className={`d-flex align-items-center ${
-                  page === 'earn' ? 'selected' : ''
-                }`}
-              >
-                {fbt('Earn OGN', 'Earn OGN')}
-              </a>
-            </Link>
-          )}
-          <Link href={adjustLinkHref('/wrap')}>
+            {fbt('Swap OUSD', 'Swap OUSD')}
+          </a>
+        </Link>
+        {process.env.NEXT_PUBLIC_ENABLE_LIQUIDITY_MINING === 'true' && (
+          <Link href={adjustLinkHref('/earn')}>
             <a
               className={`d-flex align-items-center ${
-                page === 'wrap' ? 'selected' : ''
+                page === 'earn' || page === 'pool-details' ? 'selected' : ''
               }`}
             >
-              {fbt('Wrap OUSD', 'Wrap OUSD')}
+              {fbt('Earn OGN', 'Earn OGN')}
             </a>
           </Link>
-          <Link href={adjustLinkHref('/history')}>
+        )}
+        {process.env.NEXT_PUBLIC_ENABLE_STAKING === 'true' && (
+          <Link href={adjustLinkHref('/earn')}>
             <a
               className={`d-flex align-items-center ${
-                page === 'history' ? 'selected' : ''
+                page === 'earn' ? 'selected' : ''
               }`}
             >
-              {fbt('History', 'History')}
+              {fbt('Earn OGN', 'Earn OGN')}
             </a>
           </Link>
-        </div>
-      )}
+        )}
+        <Link href={adjustLinkHref('/wrap')}>
+          <a
+            className={`d-flex align-items-center ${
+              page === 'wrap' ? 'selected' : ''
+            }`}
+          >
+            {fbt('Wrap OUSD', 'Wrap OUSD')}
+          </a>
+        </Link>
+        <Link href={adjustLinkHref('/history')}>
+          <a
+            className={`d-flex align-items-center ${
+              page === 'history' ? 'selected' : ''
+            }`}
+          >
+            {fbt('History', 'History')}
+          </a>
+        </Link>
+      </div>
       <style jsx>{`
         .dapp-navigation {
           font-family: Lato;
@@ -156,30 +123,19 @@ const DappLinks = ({ dapp, page }) => {
   )
 }
 
-const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
-  const { pathname } = useRouter()
-  const { active, account } = useWeb3React()
-  const apy = useStoreState(ContractStore, (s) => s.apy.apy30 || 0)
+const Nav = ({ locale, onLocale, page }) => {
+  const { address: account, isConnected: active } = useAccount()
 
   return (
     <>
       <nav
         className={classnames(
-          'navbar navbar-expand-lg d-flex justify-content-center flex-column',
-          { dapp }
+          'navbar navbar-expand-lg d-flex justify-content-center flex-column dapp'
         )}
       >
-        <div
-          className={`container ${
-            dapp ? '' : 'nav pl-lg-5 pr-lg-5'
-          } flex-nowrap`}
-        >
+        <div className="container flex-nowrap">
           <Link href={adjustLinkHref('/')}>
-            <a
-              className={`navbar-brand d-flex flex-column justify-content-center ${
-                dapp ? '' : 'ml-lg-5'
-              }`}
-            >
+            <a className="navbar-brand d-flex flex-column justify-content-center">
               <img
                 src={assetRootPath('/images/origin-dollar-logo.svg')}
                 className="origin-logo"
@@ -187,52 +143,26 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
               />
             </a>
           </Link>
-          {dapp && (
-            <button
-              className="navbar-toggler d-lg-none ml-auto"
-              type="button"
-              data-toggle="collapse"
-              data-target=".primarySidePanel"
-              aria-controls="primarySidePanel"
-              aria-expanded="false"
-              aria-label="Toggle side panel"
-            >
-              <div className="dropdown-marble">
-                <img
-                  src={assetRootPath('/images/bell-icon.svg')}
-                  alt="Activity menu"
-                />
-              </div>
-            </button>
-          )}
-          <IPFSDappLink dapp={dapp} css="d-lg-none" />
-          {!dapp && (
-            <button
-              className="navbar-toggler d-lg-none ml-4"
-              type="button"
-              data-toggle="collapse"
-              data-target=".navLinks"
-              aria-controls="navLinks"
-              aria-expanded="false"
-              aria-label="Toggle menu side panel"
-            >
+          <button
+            className="navbar-toggler d-lg-none ml-auto"
+            type="button"
+            data-toggle="collapse"
+            data-target=".primarySidePanel"
+            aria-controls="primarySidePanel"
+            aria-expanded="false"
+            aria-label="Toggle side panel"
+          >
+            <div className="dropdown-marble">
               <img
-                src={assetRootPath('/images/menu-icon.svg')}
+                src={assetRootPath('/images/bell-icon.svg')}
                 alt="Activity menu"
               />
-            </button>
-          )}
-          {dapp && <AccountStatusPopover dapp={dapp} />}
-          {dapp && !active && !account && (
-            <div className="d-flex d-md-none">
-              <GetOUSD
-                navMarble
-                connect={true}
-                trackSource="Mobile navigation"
-                style={{ marginLeft: 10 }}
-              />
             </div>
-          )}
+          </button>
+          <IPFSDappLink css="d-lg-none" />
+          <div className="d-lg-none ml-auto">
+            <AccountStatusDropdown />
+          </div>
           <div
             className="primarySidePanel dark-background collapse"
             data-toggle="collapse"
@@ -270,9 +200,9 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
             <LanguageOptions locale={locale} onLocale={onLocale} />
           </div>
           <div
-            className={`navLinks collapse navbar-collapse justify-content-end flex-column flex-lg-row d-flex ${
-              dapp ? '' : 'mr-lg-5'
-            }`}
+            className={
+              'navLinks collapse navbar-collapse justify-content-end flex-column flex-lg-row d-flex'
+            }
           >
             <button
               className="close navbar-toggler"
@@ -290,56 +220,8 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
               />
             </button>
             <div className="d-flex flex-column flex-lg-row mb-auto w-100 align-items-center">
-              {!dapp && (
-                <ul className={`navbar-nav ${!dapp ? 'ml-auto' : ''}`}>
-                  <li
-                    className={classnames('nav-item', {
-                      active: pathname === '/',
-                    })}
-                  >
-                    <Link href={adjustLinkHref('/')}>
-                      <a className="nav-link">
-                        {fbt('Home', 'Home page link')}{' '}
-                        <span className="sr-only">(current)</span>
-                      </a>
-                    </Link>
-                  </li>
-                  <li
-                    className={classnames('nav-item', {
-                      active: pathname === '/earn-info',
-                    })}
-                  >
-                    <Link href={adjustLinkHref('/earn-info')}>
-                      <a className="nav-link">
-                        {fbt('Earn', 'Earn info page link')}
-                      </a>
-                    </Link>
-                  </li>
-                  <li
-                    className={classnames('nav-item', {
-                      active: pathname === '/governance',
-                    })}
-                  >
-                    <Link href={adjustLinkHref('/governance')}>
-                      <a className="nav-link">
-                        {fbt('Governance', 'Governance page link')}
-                      </a>
-                    </Link>
-                  </li>
-                  <li className="nav-item">
-                    <a
-                      href={getDocsLink(locale)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="nav-link"
-                    >
-                      {fbt('Docs', 'Documentation link')}
-                    </a>
-                  </li>
-                </ul>
-              )}
-              <DappLinks dapp={dapp} page={page} />
-              {dapp && environment !== 'production' && (
+              <DappLinks page={page} />
+              {environment !== 'production' && (
                 <ul className="navbar-nav">
                   <li className="nav-item mr-2">
                     <Link href={adjustLinkHref('/dashboard')}>
@@ -348,40 +230,32 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
                   </li>
                 </ul>
               )}
-              <IPFSDappLink dapp={dapp} css="d-none d-lg-block" />
-              <div
-                className={`d-flex flex-column ${
-                  dapp ? 'flex-lg-row-reverse' : 'flex-lg-row'
-                }`}
-              >
-                {!dapp && (
-                  <LocaleDropdown
-                    locale={locale}
-                    onLocale={onLocale}
-                    outerClassName={`${dapp ? 'ml-2' : ''}`}
-                    className="nav-dropdown"
-                    useNativeSelectbox={false}
-                  />
+              <IPFSDappLink css="d-none d-lg-block" />
+              <div className="d-none d-lg-block">
+                {account && active ? (
+                  <AccountStatusDropdown />
+                ) : (
+                  <div className="not-logged-in">
+                    <GetOUSD trackSource="Connect button" />
+                  </div>
                 )}
-                <AccountStatusDropdown
-                  dapp={dapp}
-                  className={dapp ? '' : 'ml-2'}
-                />
               </div>
-              <GetOUSD
-                style={{ marginTop: 40 }}
-                className="mt-auto d-lg-none"
-                light2
-                trackSource="Mobile navigation menu"
-              />
             </div>
           </div>
         </div>
         <div className="d-flex d-lg-none">
-          <DappLinks dapp={dapp} page={page} />
+          <DappLinks page={page} />
         </div>
       </nav>
       <style jsx>{`
+        .not-logged-in {
+          height: 30px;
+          line-height: 24px;
+          padding: 0 10px;
+          border-radius: 56px;
+          border: solid 1px white;
+        }
+
         .banner {
           background-color: transparent;
           font-size: 0.8125rem;

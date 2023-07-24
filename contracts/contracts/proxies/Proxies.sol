@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: agpl-3.0
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
 import { InitializeGovernedUpgradeabilityProxy } from "./InitializeGovernedUpgradeabilityProxy.sol";
@@ -91,5 +91,68 @@ contract ConvexLUSDMetaStrategyProxy is InitializeGovernedUpgradeabilityProxy {
  * @notice MorphoAaveStrategyProxy delegates calls to a MorphoCompoundStrategy implementation
  */
 contract MorphoAaveStrategyProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
+
+/**
+ * @notice OETHProxy delegates calls to nowhere for now
+ */
+contract OETHProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
+
+/**
+ * @notice WOETHProxy delegates calls to nowhere for now
+ */
+contract WOETHProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
+
+/**
+ * @notice OETHVaultProxy delegates calls to a Vault implementation
+ */
+contract OETHVaultProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
+
+/**
+ * @notice OETHDripperProxy delegates calls to a OETHDripper implementation
+ */
+contract OETHDripperProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
+
+/**
+ * @notice OETHHarvesterProxy delegates calls to a Harvester implementation
+ */
+contract OETHHarvesterProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
+
+/**
+ * @notice FraxETHStrategyProxy delegates calls to a FraxETHStrategy implementation
+ */
+contract FraxETHStrategyProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
+
+/**
+ * @notice CurveEthStrategyProxy delegates calls to a CurveEthStrategy implementation
+ */
+contract ConvexEthMetaStrategyProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
+
+/**
+ * @notice BuybackProxy delegates calls to Buyback implementation
+ */
+contract BuybackProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
+
+/**
+ * @notice OETHMorphoAaveStrategyProxy delegates calls to a MorphoAaveStrategy implementation
+ */
+contract OETHMorphoAaveStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 
 }

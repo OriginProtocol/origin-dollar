@@ -15,6 +15,8 @@ main()
         is_local=false
     fi
 
+    is_coverage=("$REPORT_COVERAGE" == "true");
+
     if $is_local; then
         # When not running on CI/CD, make sure there's an env file
         if [ ! -f "$ENV_FILE" ]; then
@@ -45,7 +47,6 @@ main()
     if [ -z "$LOCAL_PROVIDER_URL" ]; then
         cp -r deployments/mainnet deployments/hardhat
         echo "No running node detected spinning up a fresh one"
-        params+="--deploy-fixture "
     else
         if ! command -v jq &> /dev/null
         then
@@ -69,15 +70,28 @@ main()
         cp -r deployments/localhost deployments/hardhat
     fi
 
-    if [ -z "$1" ]; then
-        # Run all files with `.fork-test.js` suffix when no param is given
-        params+="test/**/*.fork-test.js"
+    if [ -z "$1" ] || [[ $1 == --* ]]; then
+        # Run all files with `.fork-test.js` suffix when no file name param is given
+        # pass all other params along
+        if $is_coverage; then
+            # TODO: Debug this later
+            # params+="--testfiles 'test/**/*.fork-test.js'"
+            params+=""
+        else
+            params+="test/**/*.fork-test.js"
+        fi
     else
         # Run specifc files when a param is given
-        params+=($1)
+        params+="$1"
     fi
 
-    FORK=true IS_TEST=true npx --no-install hardhat test ${params[@]}
+    if [ $is_coverage == "true" ]; then
+        echo "Running tests and generating coverage reports..."
+        FORK=true IS_TEST=true npx --no-install hardhat coverage --testfiles "test/**/*.fork-test.js"
+    else
+        echo "Running fork tests..."
+        FORK=true IS_TEST=true npx --no-install hardhat test ${params[@]}
+    fi
 
     if [ ! $? -eq 0 ] && $is_ci; then
         echo "Test suite has failed"

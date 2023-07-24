@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
 import { getEtherscanHost } from 'utils/web3'
-import { useWeb3React } from '@web3-react/core'
 import { useStoreState } from 'pullstate'
-
 import CoinCircleGraphics from 'components/sidePanel/CoinCircleGraphics'
 import TransactionStore from 'stores/TransactionStore'
-import { formatCurrency, formatCurrencyConditional } from 'utils/math'
+import { formatCurrencyConditional } from 'utils/math'
 import { assetRootPath } from 'utils/image'
 
 const SidePanelTransactionMessage = ({
@@ -31,12 +29,11 @@ const SidePanelTransactionMessage = ({
     (s) =>
       s.expandedTransaction && s.expandedTransaction.hash === transaction.hash
   )
-  const web3react = useWeb3React()
 
   const etherscanLinkHash = transaction.safeData
     ? transaction.safeData.txHash
     : transaction.hash
-  const etherscanLink = `${getEtherscanHost(web3react)}/tx/${etherscanLinkHash}`
+  const etherscanLink = `${getEtherscanHost()}/tx/${etherscanLinkHash}`
   /* failed transactions that have not been mined and shouldn't have a hash
    * still have a hash for deduplication purposes. This figures out if the hash
    * is a valid one, and if we should link to etherscan

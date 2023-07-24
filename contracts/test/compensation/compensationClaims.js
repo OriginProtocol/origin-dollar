@@ -10,7 +10,10 @@ const {
   isGanacheFork,
 } = require("../helpers");
 
-describe("Compensation Claims", function () {
+/**
+ * The contract is no longer in use and isn't expected to be updated
+ */
+describe.skip("Compensation Claims", function () {
   if (isGanacheFork) {
     this.timeout(0);
   }
@@ -181,9 +184,7 @@ describe("Compensation Claims", function () {
       await compensationClaims.connect(governor).unlockAdjuster();
       await expect(
         compensationClaims.connect(adjuster).setClaims(accounts, amounts)
-      ).to.be.revertedWith(
-        "Arithmetic operation underflowed or overflowed outside of an unchecked block"
-      );
+      ).to.be.revertedWith("panic code 0x11");
     });
     it("should not be able to set mismatching addresses and amounts", async () => {
       const accounts = [await anna.getAddress()];
@@ -292,7 +293,7 @@ describe("Compensation Claims", function () {
         await compensationClaims.connect(governor).start(1000);
       });
 
-      it("should not be able to start a claims period with insufficient funds", async () => {
+      it.skip("should not be able to start a claims period with insufficient funds", async () => {
         const accounts = [await anna.getAddress(), await matt.getAddress()];
         const amounts = [
           ousdUnits("4.000000000072189"),

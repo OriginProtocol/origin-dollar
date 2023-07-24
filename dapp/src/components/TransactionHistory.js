@@ -1,9 +1,8 @@
 import React, { useEffect, useState, useMemo } from 'react'
 import { useRouter } from 'next/router'
 import dateformat from 'dateformat'
-
 import { fbt } from 'fbt-runtime'
-import { useWeb3React } from '@web3-react/core'
+import { useAccount } from 'wagmi'
 import { formatCurrency } from '../utils/math'
 import { shortenAddress } from '../utils/web3'
 import { exportToCsv } from '../utils/utils'
@@ -33,7 +32,7 @@ const FilterButton = ({
         }`}
         onClick={() => {
           if (selected) {
-            setFilters(filters.filter((ft) => ft != filter))
+            setFilters(filters.filter((ft) => ft !== filter))
           } else {
             setFilters([...filters, filter])
           }
@@ -121,9 +120,8 @@ const FormatCurrencyByImportance = ({
 }
 
 const TransactionHistory = ({ isMobile }) => {
-  const web3react = useWeb3React()
+  const { address: web3Account, isConnected: active } = useAccount()
   const router = useRouter()
-  const { account: web3Account, active } = web3react
   const [filters, _setFilters] = useState([])
   const [currentPage, setCurrentPage] = useState(1)
   const [pageNumbers, setPageNumbers] = useState([])

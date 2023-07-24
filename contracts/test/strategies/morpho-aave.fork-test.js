@@ -78,23 +78,6 @@ forkOnlyDescribe("ForkTest: Morpho Aave Strategy", function () {
     });
   });
 
-  describe("Supply Revenue", function () {
-    it("Should get supply interest", async function () {
-      const { anna, dai, morphoAaveStrategy } = fixture;
-      await mintTest(fixture, anna, dai, "110000");
-
-      const currentBalance = await morphoAaveStrategy.checkBalance(dai.address);
-
-      await advanceTime(60 * 60 * 24 * 365);
-      await advanceBlocks(10000);
-
-      const balanceAfter1Y = await morphoAaveStrategy.checkBalance(dai.address);
-
-      const diff = balanceAfter1Y.sub(currentBalance);
-      expect(diff).to.be.gt(0);
-    });
-  });
-
   describe("Withdraw", function () {
     it("Should be able to withdraw from DAI strategy", async function () {
       const { domen, dai } = fixture;
@@ -145,6 +128,25 @@ forkOnlyDescribe("ForkTest: Morpho Aave Strategy", function () {
 
       expect(vaultUsdcDiff).to.approxEqualTolerance(usdcUnits, 1);
       expect(vaultUsdtDiff).to.approxEqualTolerance(usdtUnits, 1);
+    });
+  });
+
+  // set it as a last test that executes because we advance time and theat
+  // messes with recency of oracle prices
+  describe("Supply Revenue", function () {
+    it("Should get supply interest", async function () {
+      const { anna, dai, morphoAaveStrategy } = fixture;
+      await mintTest(fixture, anna, dai, "110000");
+
+      const currentBalance = await morphoAaveStrategy.checkBalance(dai.address);
+
+      await advanceTime(60 * 60 * 24 * 365);
+      await advanceBlocks(10000);
+
+      const balanceAfter1Y = await morphoAaveStrategy.checkBalance(dai.address);
+
+      const diff = balanceAfter1Y.sub(currentBalance);
+      expect(diff).to.be.gt(0);
     });
   });
 });

@@ -1,34 +1,27 @@
 import React, { useEffect, useState } from 'react'
 import { fbt } from 'fbt-runtime'
-import { useWeb3React } from '@web3-react/core'
+import { useAccount, useNetwork } from 'wagmi'
 import { useStoreState } from 'pullstate'
 import withRpcProvider from 'hoc/withRpcProvider'
-
 import ContractStore from 'stores/ContractStore'
-import withWalletSelectModal from 'hoc/withWalletSelectModal'
 import Layout from 'components/layout'
 import Nav from 'components/Nav'
 import ClaimStakeModal from 'components/ClaimStakeModal'
-import WarningAlert from 'components/WarningAlert'
 import { sleep } from 'utils/utils'
 import SpinningLoadingCircle from 'components/SpinningLoadingCircle'
-import { useAnalytics } from 'use-analytics'
 import useStake from 'hooks/useStake'
 import useCompensation from 'hooks/useCompensation'
 import { formatCurrency } from 'utils/math'
-import { walletLogin } from 'utils/account'
 import { assetRootPath } from 'utils/image'
 
-function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
+function Compensation({ locale, onLocale, rpcProvider }) {
   const { stakeOptions } = useStake()
-  const { activate, active, account } = useWeb3React()
+  const { address: account, isConnected: active } = useAccount()
   const [showModal, setShowModal] = useState(false)
-  const [displayAdjustmentWarning, setDisplayAdjustmentWarning] = useState(true)
   const [accountConnected, setAccountConnected] = useState(false)
   const [waitingForTransaction, setWaitingForTransaction] = useState(false)
-  const [error, setError] = useState(null)
+  const [, setError] = useState(null)
   const {
-    blockNumber,
     eligibleOusdBalance,
     compensationData,
     ognCompensationAmount,
@@ -39,7 +32,7 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
     remainingOUSDCompensation,
     ognClaimed,
   } = useCompensation()
-  const { track } = useAnalytics()
+
   const { compensation: compensationContract } = useStoreState(
     ContractStore,
     (s) => {
@@ -50,24 +43,14 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
     }
   )
 
-  const loginConnect = () => {
-    if (process.browser) {
-      track('Connect', {
-        source: 'Compensation page',
-      })
-
-      walletLogin(showLogin, activate)
-    }
-  }
-
   useEffect(() => {
     setAccountConnected(active && account)
   }, [active, account])
 
   return (
     <>
-      <Layout locale={locale} onLocale={onLocale} dapp medium>
-        <Nav dapp page={'compensation'} locale={locale} onLocale={onLocale} />
+      <Layout locale={locale} onLocale={onLocale} medium>
+        <Nav page={'compensation'} locale={locale} onLocale={onLocale} />
         <div className="home d-flex flex-column">
           <div className="d-flex align-items-center flex-column flex-md-row">
             <div className="bold-text mr-md-3">
@@ -99,12 +82,6 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
                       'Connect a cryptowallet to see your compensation'
                     )}
                   </h3>
-                  <button
-                    className="btn btn-primary"
-                    onClick={async () => loginConnect()}
-                  >
-                    {fbt('Connect', 'Connect')}
-                  </button>
                 </div>
               ) : compensationData ? (
                 <>
@@ -528,4 +505,4 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
   )
 }
 
-export default withRpcProvider(withWalletSelectModal(Compensation))
+export default withRpcProvider(Compensation)

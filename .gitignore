@@ -46,6 +46,7 @@ Thumbs.db
 ########
 .idea
 
+bin
 node_modules
 contracts/cache/**
 contracts/.env
@@ -64,6 +65,7 @@ website/network.json
 /playground/public/build/
 
 todo.txt
+brownie/env-brownie/
 
 crytic-export
 
@@ -74,3 +76,5 @@ contracts/.last_confs
 # Coverage #
 coverage
 coverage.json
+fork-coverage
+unit-coverage

@@ -1,15 +1,13 @@
 import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
-import { useWeb3React } from '@web3-react/core'
+import { useAccount, useConnect, useSigner } from 'wagmi'
 import ContractStore from 'stores/ContractStore'
-import analytics from 'utils/analytics'
 import withRpcProvider from 'hoc/withRpcProvider'
 import { ethers } from 'ethers'
 import withIsMobile from 'hoc/withIsMobile'
 import ConfirmationModal from './ConfirmationModal'
-import withWalletSelectModal from 'hoc/withWalletSelectModal'
-import { walletLogin } from 'utils/account'
+import GetOUSD from '../GetOUSD'
 
 const ApproveSwap = ({
   stableCoinToApprove,
@@ -34,8 +32,11 @@ const ApproveSwap = ({
   const [stage, setStage] = useState('approve')
   const [contract, setContract] = useState(null)
   const [isApproving, setIsApproving] = useState({})
-  const web3react = useWeb3React()
-  const { library, account, activate, active } = web3react
+
+  const { address: account, isConnected: active } = useAccount()
+  const { connect: activate } = useConnect()
+  const { data: signer } = useSigner()
+
   const coinApproved = stage === 'done'
   const isWrapped =
     selectedSwap &&
@@ -223,15 +224,10 @@ const ApproveSwap = ({
 
   const startApprovalProcess = async () => {
     if (stage === 'approve' && contract) {
-      analytics.track('On Approve Coin', {
-        category: isWrapped ? 'wrap' : 'swap',
-        label: swapMetadata.coinGiven,
-        value: parseInt(swapMetadata.swapAmount),
-      })
       setStage('waiting-user')
       try {
         const result = await contract
-          .connect(library.getSigner(account))
+          .connect(signer)
           .approve(
             routeConfig[needsApproval].contract.address,
             ethers.constants.MaxUint256
@@ -246,12 +242,7 @@ const ApproveSwap = ({
           contract: needsApproval,
           coin: stableCoinToApprove,
         })
-        const receipt = await rpcProvider.waitForTransaction(result.hash)
-        analytics.track('Approval Successful', {
-          category: 'swap',
-          label: swapMetadata.coinGiven,
-          value: parseInt(swapMetadata.swapAmount),
-        })
+        await rpcProvider.waitForTransaction(result.hash)
         setIsApproving({})
         setStage('done')
       } catch (e) {
@@ -260,14 +251,6 @@ const ApproveSwap = ({
         setStage('approve')
         if (e.code !== 4001) {
           await storeTransactionError('approve', stableCoinToApprove)
-          analytics.track(`Approval failed`, {
-            category: isWrapped ? 'wrap' : 'swap',
-            label: e.message,
-          })
-        } else {
-          analytics.track(`Approval canceled`, {
-            category: isWrapped ? 'wrap' : 'swap',
-          })
         }
       }
     }
@@ -324,36 +307,46 @@ const ApproveSwap = ({
           </>
         )}
       </button>
-      <div className="d-flex flex-column align-items-center justify-content-center justify-content-md-between flex-md-row mt-md-3 mt-2">
-        <button
-          className={`btn-blue buy-button mt-2 mt-md-0 w-100`}
-          disabled={
-            (!selectedSwap ||
-              balanceError ||
-              swappingGloballyDisabled ||
-              (needsApproval && !coinApproved)) &&
-            active
-          }
-          onClick={() => {
-            if (!active) {
-              walletLogin(showLogin, activate)
-            } else if (lastOverride && lastOverride !== selectedSwap?.name) {
-              setVisibleConfirmationModal(2)
-            } else {
-              onSwap()
+      {active ? (
+        <div className="d-flex flex-column align-items-center justify-content-center justify-content-md-between flex-md-row mt-md-3 mt-2">
+          <button
+            className={`btn-blue buy-button mt-2 mt-md-0 w-100`}
+            disabled={
+              (!selectedSwap ||
+                balanceError ||
+                swappingGloballyDisabled ||
+                (needsApproval && !coinApproved)) &&
+              active
             }
-          }}
-        >
-          <SwapMessage
-            balanceError={balanceError}
-            stableCoinToApprove={stableCoinToApprove}
-            swapsLoaded={swapsLoaded}
-            selectedSwap={selectedSwap}
-            swappingGloballyDisabled={swappingGloballyDisabled}
-            active={active}
-          />
-        </button>
-      </div>
+            onClick={() => {
+              if (lastOverride && lastOverride !== selectedSwap?.name) {
+                setVisibleConfirmationModal(2)
+              } else {
+                onSwap()
+              }
+            }}
+          >
+            <SwapMessage
+              balanceError={balanceError}
+              stableCoinToApprove={stableCoinToApprove}
+              swapsLoaded={swapsLoaded}
+              selectedSwap={selectedSwap}
+              swappingGloballyDisabled={swappingGloballyDisabled}
+              active={active}
+            />
+          </button>
+        </div>
+      ) : (
+        <div className="d-flex flex-column align-items-center justify-content-center justify-content-md-between flex-md-row mt-md-3 mt-2">
+          <div className={`btn-blue buy-button mt-2 mt-md-0 w-100`}>
+            <GetOUSD
+              containerClassName="w-100 h-100 d-flex align-items-center justify-content-center"
+              className="w-100 h-100"
+              trackSource="Swap connect wallet"
+            />
+          </div>
+        </div>
+      )}
       <style jsx>{`
         .btn-blue:disabled {
           opacity: 0.4;
@@ -381,4 +374,4 @@ const ApproveSwap = ({
   )
 }
 
-export default withWalletSelectModal(withIsMobile(withRpcProvider(ApproveSwap)))
+export default withIsMobile(withRpcProvider(ApproveSwap))
