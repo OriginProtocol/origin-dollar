@@ -1,7 +1,7 @@
 const { deploymentWithGovernanceProposal } = require("../utils/deploy");
 const addresses = require("../utils/addresses");
-const { BigNumber } = require("ethers");
 const { balancerWstEthWethPID } = require("../utils/constants");
+const { add } = require("lodash");
 
 module.exports = deploymentWithGovernanceProposal(
   {
@@ -11,24 +11,14 @@ module.exports = deploymentWithGovernanceProposal(
     deployerIsProposer: true,
     //proposalId: ,
   },
-  async ({
-    assetAddresses,
-    deployWithConfirmation,
-    ethers,
-    getTxOpts,
-    withConfirmation,
-  }) => {
-    const { deployerAddr, governorAddr } = await getNamedAccounts();
+  async ({ deployWithConfirmation, ethers, getTxOpts, withConfirmation }) => {
+    const { deployerAddr } = await getNamedAccounts();
     const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
     // Current contracts
     const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
     const cOETHVaultAdmin = await ethers.getContractAt(
       "OETHVaultAdmin",
-      cOETHVaultProxy.address
-    );
-    const cOETHVault = await ethers.getContractAt(
-      "OETHVault",
       cOETHVaultProxy.address
     );
 
@@ -45,9 +35,30 @@ module.exports = deploymentWithGovernanceProposal(
       dOETHBalancerMetaPoolStrategyProxy.address
     );
 
+    // address stEthAddress; // Address of the stETH token
+    // address wstEthAddress; // Address of the wstETH token
+    // address frxEthAddress; // Address of the frxEth token
+    // address sfrxEthAddress; // Address of the sfrxEth token
+
     // 2. Deploy new implementation
     const dOETHBalancerMetaPoolStrategyImpl = await deployWithConfirmation(
-      "BalancerMetaPoolStrategy"
+      "BalancerMetaPoolStrategy",
+      [
+        [
+          addresses.mainnet.stETH,
+          addresses.mainnet.wstETH,
+          addresses.mainnet.frxETH,
+          addresses.mainnet.sfrxETH,
+          "0xBA12222222228d8Ba445958a75a0704d566BF2C8", // Address of the Balancer vault
+          addresses.mainnet.wstETH_WETH_BPT, // Address of the Balancer pool
+          "0x32296969ef14eb0c6d29669c550d4a0449130230000200000000000000000080",
+        ],
+        [
+          addresses.mainnet.auraRewardPool,
+          addresses.mainnet.CurveOUSDMetaPool, // auraRewardStakerAddress
+          balancerWstEthWethPID, // auraDepositorPTokenId]
+        ],
+      ]
     );
     const cOETHBalancerMetaPoolStrategy = await ethers.getContractAt(
       "BalancerMetaPoolStrategy",
@@ -61,30 +72,22 @@ module.exports = deploymentWithGovernanceProposal(
     );
 
     // 3. Encode the init data
-    const initFunction =
-      "initialize(address[],address[],address[],(address,address,address,address,uint256,bytes32))";
+    const initFunction = "initialize(address[],address[],address[],address)";
     const initData = cOETHBalancerMetaPoolStrategy.interface.encodeFunctionData(
       initFunction,
       [
         [addresses.mainnet.BAL, addresses.mainnet.AURA],
         [addresses.mainnet.stETH, addresses.mainnet.WETH],
         [addresses.mainnet.wstETH_WETH_BPT, addresses.mainnet.wstETH_WETH_BPT],
-        [
-          addresses.mainnet.wstETH_WETH_BPT,
-          cOETHVaultProxy.address,
-          addresses.mainnet.auraRewardPool,
-          addresses.mainnet.CurveOUSDMetaPool, // auraRewardStakerAddress
-          balancerWstEthWethPID, // auraDepositorPTokenId
-          "0x32296969ef14eb0c6d29669c550d4a0449130230000200000000000000000080",
-        ],
+        cOETHVaultProxy.address,
       ]
     );
 
     // 4. Init the proxy to point at the implementation
+    // prettier-ignore
     await withConfirmation(
       cOETHBalancerMetaPoolStrategyProxy
-        .connect(sDeployer)
-        ["initialize(address,address,bytes)"](
+        .connect(sDeployer)["initialize(address,address,bytes)"](
           dOETHBalancerMetaPoolStrategyImpl.address,
           addresses.mainnet.Timelock,
           initData,

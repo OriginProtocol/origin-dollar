@@ -12,20 +12,14 @@ import { IMetaStablePool } from "../../interfaces/balancer/IMetaStablePool.sol";
 import { IERC20 } from "../../utils/InitializableAbstractStrategy.sol";
 import { StableMath } from "../../utils/StableMath.sol";
 
-import "hardhat/console.sol";
-
 contract BalancerMetaPoolStrategy is BaseAuraStrategy {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
 
-    address internal immutable stETH =
-        0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84;
-    address internal immutable wstETH =
-        0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0;
-    address internal immutable frxETH =
-        0x5E8422345238F34275888049021821E8E08CAa1f;
-    address internal immutable sfrxETH =
-        0xac3E018457B222d93114458476f3E3416Abbe38F;
+    constructor(
+        BaseBalancerConfig memory baseConfig,
+        AuraConfig memory auraConfig
+    ) BaseAuraStrategy(baseConfig, auraConfig) {}
 
     function getRateProviderRate(address _asset)
         internal
@@ -84,7 +78,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
          *
          * TODO: solve this (only a problem when it is a default strategy for stETH)
          */
-        if (_asset == stEth && _amount < 20) {
+        if (_asset == stETH && _amount < 20) {
             return;
         }
 
@@ -282,10 +276,10 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         override
     {
         (address poolAsset, ) = toPoolAsset(_asset, 0);
-        // stEth
+        // stETH
         if (_asset == stETH) {
             IERC20(stETH).approve(wstETH, 1e50);
-            // if frxEth
+            // if frxETH
         } else if (_asset == frxETH) {
             IERC20(frxETH).approve(sfrxETH, 1e50);
         }

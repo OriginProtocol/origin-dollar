@@ -20,26 +20,35 @@ import "hardhat/console.sol";
 abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
-    IBalancerVault internal immutable balancerVault =
-        IBalancerVault(0xBA12222222228d8Ba445958a75a0704d566BF2C8);
-    address internal immutable stEth =
-        0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84;
-    address internal immutable wstEth =
-        0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0;
-    address internal immutable frxEth =
-        0x5E8422345238F34275888049021821E8E08CAa1f;
-    address internal immutable sfrxEth =
-        0xac3E018457B222d93114458476f3E3416Abbe38F;
 
-    address internal pTokenAddress;
-    bytes32 internal balancerPoolId;
+    address public immutable stETH;
+    address public immutable wstETH;
+    address public immutable frxETH;
+    address public immutable sfrxETH;
+
+    IBalancerVault public immutable balancerVault;
+    address public immutable pTokenAddress;
+    bytes32 public immutable balancerPoolId;
+
     // Full list of all assets as they are present in the Balancer pool
-    address[] internal poolAssetsMapped;
+    address[] public poolAssetsMapped;
+
     // Max withdrawal slippage denominated in 1e18 (1e18 == 100%)
     uint256 public maxWithdrawalSlippage;
     // Max deposit slippage denominated in 1e18 (1e18 == 100%)
     uint256 public maxDepositSlippage;
+
     int256[50] private __reserved;
+
+    struct BaseBalancerConfig {
+        address stEthAddress; // Address of the stETH token
+        address wstEthAddress; // Address of the wstETH token
+        address frxEthAddress; // Address of the frxEth token
+        address sfrxEthAddress; // Address of the sfrxEth token
+        address balancerVaultAddress; // Address of the Balancer vault
+        address platformAddress; // Address of the Balancer pool
+        bytes32 balancerPoolId; // Balancer pool identifier
+    }
 
     event MaxWithdrawalSlippageUpdated(
         uint256 _prevMaxSlippagePercentage,
@@ -49,6 +58,17 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         uint256 _prevMaxSlippagePercentage,
         uint256 _newMaxSlippagePercentage
     );
+
+    constructor(BaseBalancerConfig memory config) {
+        stETH = config.stEthAddress;
+        wstETH = config.wstEthAddress;
+        frxETH = config.frxEthAddress;
+        sfrxETH = config.sfrxEthAddress;
+
+        balancerVault = IBalancerVault(config.balancerVaultAddress);
+        pTokenAddress = config.platformAddress;
+        balancerPoolId = config.balancerPoolId;
+    }
 
     /**
      * @dev Ensure we are not in a Vault context when this function is called, by attempting a no-op internal
@@ -177,18 +197,18 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
     {
         poolAmount = 0;
         // if stEth
-        if (asset == stEth) {
+        if (asset == stETH) {
             // wstEth
-            poolAsset = wstEth;
+            poolAsset = wstETH;
             if (amount > 0) {
-                poolAmount = IWstETH(wstEth).getWstETHByStETH(amount);
+                poolAmount = IWstETH(wstETH).getWstETHByStETH(amount);
             }
             // if frxEth
-        } else if (asset == frxEth) {
+        } else if (asset == frxETH) {
             // sfrxEth
-            poolAsset = sfrxEth;
+            poolAsset = sfrxETH;
             if (amount > 0) {
-                poolAmount = IERC4626(sfrxEth).convertToShares(amount);
+                poolAmount = IERC4626(sfrxETH).convertToShares(amount);
             }
         } else {
             poolAsset = asset;
@@ -204,11 +224,11 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         returns (uint256 wrappedAmount)
     {
         // if stEth
-        if (asset == stEth) {
-            wrappedAmount = IWstETH(wstEth).wrap(amount);
+        if (asset == stETH) {
+            wrappedAmount = IWstETH(wstETH).wrap(amount);
             // if frxEth
-        } else if (asset == frxEth) {
-            wrappedAmount = IERC4626(sfrxEth).deposit(amount, address(this));
+        } else if (asset == frxETH) {
+            wrappedAmount = IERC4626(sfrxETH).deposit(amount, address(this));
         } else {
             wrappedAmount = amount;
         }
@@ -222,11 +242,11 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         returns (uint256 wrappedAmount)
     {
         // if stEth
-        if (asset == stEth) {
-            wrappedAmount = IWstETH(wstEth).unwrap(amount);
+        if (asset == stETH) {
+            wrappedAmount = IWstETH(wstETH).unwrap(amount);
             // if frxEth
-        } else if (asset == frxEth) {
-            wrappedAmount = IERC4626(sfrxEth).withdraw(
+        } else if (asset == frxETH) {
+            wrappedAmount = IERC4626(sfrxETH).withdraw(
                 amount,
                 address(this),
                 address(this)
@@ -248,18 +268,18 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
     {
         amount = 0;
         // if wstEth
-        if (poolAsset == wstEth) {
+        if (poolAsset == wstETH) {
             // stEth
-            asset = stEth;
+            asset = stETH;
             if (poolAmount > 0) {
-                amount = IWstETH(wstEth).getStETHByWstETH(poolAmount);
+                amount = IWstETH(wstETH).getStETHByWstETH(poolAmount);
             }
             // if frxEth
-        } else if (poolAsset == sfrxEth) {
+        } else if (poolAsset == sfrxETH) {
             // sfrxEth
-            asset = frxEth;
+            asset = frxETH;
             if (poolAmount > 0) {
-                amount = IERC4626(sfrxEth).convertToAssets(poolAmount);
+                amount = IERC4626(sfrxETH).convertToAssets(poolAmount);
             }
         } else {
             asset = poolAsset;

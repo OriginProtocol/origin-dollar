@@ -18,19 +18,26 @@ abstract contract BaseAuraStrategy is BaseBalancerStrategy {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
 
-    address internal auraRewardPoolAddress;
-    address internal auraRewardStakerAddress;
-    uint256 internal auraDepositorPTokenId;
+    address public immutable auraRewardPoolAddress;
+    address public immutable auraRewardStakerAddress;
+    uint256 public immutable auraDepositorPTokenId;
+
     // renamed from __reserved to not shadow BaseBalancerStrategy.__reserved,
     int256[50] private __reserved_2;
 
-    struct InitConfig {
-        address platformAddress; // platformAddress Address of the Balancer's pool
-        address vaultAddress; // vaultAddress Address of the vault
-        address auraRewardPoolAddress; // auraRewardPoolAddress Address of the Aura rewards pool
-        address auraRewardStakerAddress; // auraRewardStakerAddress Address of the Aura rewards staker
-        uint256 auraDepositorPTokenId; // auraDepositorPTokenId Address of the Aura rewards staker
-        bytes32 balancerPoolId; // balancerPoolId bytes32 poolId
+    struct AuraConfig {
+        address auraRewardPoolAddress; // Address of the Aura rewards pool
+        address auraRewardStakerAddress; // Address of the Aura rewards staker
+        uint256 auraDepositorPTokenId; // The Aura rewards staker
+    }
+
+    constructor(
+        BaseBalancerConfig memory baseConfig,
+        AuraConfig memory auraConfig
+    ) BaseBalancerStrategy(baseConfig) {
+        auraRewardPoolAddress = auraConfig.auraRewardPoolAddress;
+        auraRewardStakerAddress = auraConfig.auraRewardStakerAddress;
+        auraDepositorPTokenId = auraConfig.auraDepositorPTokenId;
     }
 
     /**
@@ -42,21 +49,17 @@ abstract contract BaseAuraStrategy is BaseBalancerStrategy {
      *                order as returned by coins on the pool contract, i.e.
      *                WETH, stETH
      * @param _pTokens Platform Token corresponding addresses
-     * @param initConfig additional configuration
+     * @param vaultAddress Address of the OToken's vault
      */
     function initialize(
         address[] calldata _rewardTokenAddresses, // BAL & AURA
         address[] calldata _assets,
         address[] calldata _pTokens,
-        InitConfig calldata initConfig
+        address vaultAddress
     ) external onlyGovernor initializer {
-        auraRewardPoolAddress = initConfig.auraRewardPoolAddress;
-        auraRewardStakerAddress = initConfig.auraRewardStakerAddress;
-        auraDepositorPTokenId = initConfig.auraDepositorPTokenId;
-        pTokenAddress = _pTokens[0];
         maxWithdrawalSlippage = 1e15;
         maxDepositSlippage = 1e15;
-        balancerPoolId = initConfig.balancerPoolId;
+
         IERC20[] memory poolAssets = getPoolAssets();
         uint256 assetsLength = _assets.length;
         require(
@@ -73,8 +76,8 @@ abstract contract BaseAuraStrategy is BaseBalancerStrategy {
         }
 
         super._initialize(
-            initConfig.platformAddress,
-            initConfig.vaultAddress,
+            pTokenAddress,
+            vaultAddress,
             _rewardTokenAddresses,
             _assets,
             _pTokens
