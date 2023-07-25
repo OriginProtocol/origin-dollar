@@ -70,7 +70,7 @@ const GeoFenceCheck = () => {
             </div>
           </div>
           <footer className="footer">
-            <a className="footer-action" href="https://oeth.com">
+            <a className="footer-action" href="https://ousd.com">
               leave site
             </a>
             <button
