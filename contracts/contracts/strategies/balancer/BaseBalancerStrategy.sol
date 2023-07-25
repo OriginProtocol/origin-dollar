@@ -171,12 +171,6 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
             .divPrecisely(bptRate);
     }
 
-    function getRateProviderRate(address _asset)
-        internal
-        view
-        virtual
-        returns (uint256);
-
     function _lpDepositAll() internal virtual;
 
     function _lpWithdraw(uint256 numBPTTokens) internal virtual;

@@ -22,31 +22,6 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         AuraConfig memory auraConfig
     ) BaseAuraStrategy(baseConfig, auraConfig) {}
 
-    function getRateProviderRate(address _asset)
-        internal
-        view
-        override
-        returns (uint256)
-    {
-        IMetaStablePool pool = IMetaStablePool(platformAddress);
-        IRateProvider[] memory providers = pool.getRateProviders();
-
-        uint256 assetesLength = assetsMapped.length;
-        for (uint256 i = 0; i < assetesLength; ++i) {
-            // assets and corresponding rate providers are all in the same order
-            if (assetsMapped[i] == _asset) {
-                // rate provider doesn't exist, defaults to 1e18
-                if (address(providers[i]) == address(0)) {
-                    return 1e18;
-                }
-                return providers[i].getRate();
-            }
-        }
-
-        // should never happen
-        revert("Can not find rateProvider");
-    }
-
     /**
      * @notice Deposits an `_amount` of vault collateral assets to
      * a Balancer pool.
