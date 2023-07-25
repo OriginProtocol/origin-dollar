@@ -66,9 +66,10 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
     {
         uint256 assetsLength = assetsMapped.length;
         for (uint256 i = 0; i < assetsLength; ++i) {
-            uint256 balance = IERC20(assetsMapped[i]).balanceOf(address(this));
+            address asset = assetsMapped[i];
+            uint256 balance = IERC20(asset).balanceOf(address(this));
             if (balance > 0) {
-                _deposit(assetsMapped[i], balance);
+                _deposit(asset, balance);
             }
         }
     }
@@ -250,7 +251,8 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
 
         for (uint256 i = 0; i < assetsMappedLength; ++i) {
             address asset = assetsMapped[i];
-            (address poolAsset, ) = toPoolAsset(assetsMapped[i], 0);
+            // slither-disable-next-line uninitialized-local
+            (address poolAsset, ) = toPoolAsset(asset, 0);
             unwrapPoolAsset(asset, IERC20(poolAsset).balanceOf(address(this)));
 
             uint256 transferAmount = IERC20(asset).balanceOf(address(this));
@@ -265,7 +267,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         onlyGovernor
         nonReentrant
     {
-        for (uint256 i = 0; i < assetsMapped.length; i++) {
+        for (uint256 i = 0; i < assetsMapped.length; ++i) {
             _approveAsset(assetsMapped[i]);
         }
         _approveBase();
@@ -277,12 +279,10 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         override
     {
         (address poolAsset, ) = toPoolAsset(_asset, 0);
-        // stETH
         if (_asset == stETH) {
-            IERC20(stETH).approve(wstETH, 1e50);
-            // if frxETH
+            IERC20(stETH).safeApprove(wstETH, 1e50);
         } else if (_asset == frxETH) {
-            IERC20(frxETH).approve(sfrxETH, 1e50);
+            IERC20(frxETH).safeApprove(sfrxETH, 1e50);
         }
         _approveAsset(poolAsset);
     }

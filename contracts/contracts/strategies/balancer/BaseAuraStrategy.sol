@@ -82,6 +82,7 @@ abstract contract BaseAuraStrategy is BaseBalancerStrategy {
 
     function _lpDepositAll() internal virtual override {
         uint256 bptBalance = IERC20(platformAddress).balanceOf(address(this));
+        // slither-disable-next-line unused-return
         IERC4626(auraRewardPoolAddress).deposit(bptBalance, address(this));
     }
 
