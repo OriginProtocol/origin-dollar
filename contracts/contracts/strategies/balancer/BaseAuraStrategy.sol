@@ -78,12 +78,21 @@ abstract contract BaseAuraStrategy is BaseBalancerStrategy {
         _approveBase();
     }
 
+    /**
+     * @dev Deposit all Balancer Pool Tokens (BPT) in this strategy contract
+     * to the Aura rewards pool.
+     */
     function _lpDepositAll() internal virtual override {
         uint256 bptBalance = IERC20(platformAddress).balanceOf(address(this));
         // slither-disable-next-line unused-return
         IERC4626(auraRewardPoolAddress).deposit(bptBalance, address(this));
     }
 
+    /**
+     * @dev Withdraw `numBPTTokens` Balancer Pool Tokens (BPT) from
+     * the Aura rewards pool to this strategy contract.
+     * @param numBPTTokens Number of Balancer Pool Tokens (BPT) to withdraw
+     */
     function _lpWithdraw(uint256 numBPTTokens) internal virtual override {
         IRewardStaking(auraRewardPoolAddress).withdrawAndUnwrap(
             numBPTTokens,
@@ -91,6 +100,10 @@ abstract contract BaseAuraStrategy is BaseBalancerStrategy {
         );
     }
 
+    /**
+     * @dev Withdraw all Balancer Pool Tokens (BPT) from
+     * the Aura rewards pool to this strategy contract.
+     */
     function _lpWithdrawAll() internal virtual override {
         uint256 bptBalance = IERC4626(auraRewardPoolAddress).balanceOf(
             address(this)
@@ -102,6 +115,9 @@ abstract contract BaseAuraStrategy is BaseBalancerStrategy {
         );
     }
 
+    /**
+     * @notice Collects BAL and AURA tokens from the rewards pool.
+     */
     function collectRewardTokens()
         external
         virtual
@@ -109,38 +125,47 @@ abstract contract BaseAuraStrategy is BaseBalancerStrategy {
         onlyHarvester
         nonReentrant
     {
-        // Collect CRV and CVX
+        // Collect BAL and AURA
         IRewardStaking(auraRewardPoolAddress).getReward();
         _collectRewardTokens();
     }
 
+    /**
+     * @notice Get the total asset value held in the Balancer pool
+     * and the Aura rewards pool.
+     * @param _asset  Address of the Vault collateral asset
+     * @return value  Total value of the asset
+     */
     function checkBalance(address _asset)
         external
         view
         virtual
         override
-        returns (uint256)
+        returns (uint256 value)
     {
+        // Get the total balance of each of the Balancer pool assets
         (IERC20[] memory tokens, uint256[] memory balances, ) = balancerVault
             .getPoolTokens(balancerPoolId);
-        // pool balance + aura balance
+
+        // Balancer Pool Tokens (BPT) in the Balancer pool and Aura rewards pool.
         uint256 bptBalance = IERC20(pTokenAddress).balanceOf(address(this)) +
             IERC4626(auraRewardPoolAddress).balanceOf(address(this));
 
-        // yourPoolShare denominated in 1e18. (1e18 == 100%)
-        uint256 yourPoolShare = bptBalance.divPrecisely(
+        // The strategy's shares of the assets in the Balancer pool
+        // denominated in 1e18. (1e18 == 100%)
+        uint256 strategyShare = bptBalance.divPrecisely(
             IERC20(pTokenAddress).totalSupply()
         );
 
-        uint256 balancesLength = balances.length;
-        for (uint256 i = 0; i < balancesLength; ++i) {
-            (address poolAsset, ) = toPoolAsset(_asset, 0);
+        for (uint256 i = 0; i < balances.length; ++i) {
+            address poolAsset = toPoolAsset(_asset);
             if (address(tokens[i]) == poolAsset) {
-                (, uint256 assetAmount) = fromPoolAsset(
+                // convert Balancer pool asset value to Vault asset value
+                (, value) = fromPoolAsset(
                     poolAsset,
-                    balances[i].mulTruncate(yourPoolShare)
+                    balances[i].mulTruncate(strategyShare)
                 );
-                return assetAmount;
+                return value;
             }
         }
     }
@@ -149,7 +174,6 @@ abstract contract BaseAuraStrategy is BaseBalancerStrategy {
         super._approveBase();
 
         IERC20 pToken = IERC20(pTokenAddress);
-        // Gauge for LP token
         pToken.safeApprove(auraRewardPoolAddress, 0);
         pToken.safeApprove(auraRewardPoolAddress, type(uint256).max);
     }

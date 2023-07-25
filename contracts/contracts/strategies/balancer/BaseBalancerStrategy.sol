@@ -25,8 +25,11 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
     address public immutable frxETH;
     address public immutable sfrxETH;
 
+    /// @notice Address of the Balancer vault
     IBalancerVault public immutable balancerVault;
+    /// @notice Address of the Balancer pool
     address public immutable pTokenAddress;
+    /// @notice Balancer pool identifier
     bytes32 public immutable balancerPoolId;
 
     // Max withdrawal slippage denominated in 1e18 (1e18 == 100%)
@@ -92,31 +95,37 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         return assetToPToken[_asset] != address(0);
     }
 
+    /**
+     * @notice Get the total asset value held in the Balancer pool.
+     * @param _asset  Address of the Vault collateral asset
+     * @return value  Total value of the asset
+     */
     function checkBalance(address _asset)
         external
         view
         virtual
         override
-        returns (uint256)
+        returns (uint256 value)
     {
+        // Get the total balance of each of the Balancer pool assets
         (IERC20[] memory tokens, uint256[] memory balances, ) = balancerVault
             .getPoolTokens(balancerPoolId);
 
-        // yourPoolShare denominated in 1e18. (1e18 == 100%)
-        uint256 yourPoolShare = IERC20(pTokenAddress)
+        // The strategy's sahres of the assets in the Balancer pool
+        // denominated in 1e18. (1e18 == 100%)
+        uint256 strategyShare = IERC20(pTokenAddress)
             .balanceOf(address(this))
             .divPrecisely(IERC20(pTokenAddress).totalSupply());
 
-        uint256 balancesLength = balances.length;
-        for (uint256 i = 0; i < balancesLength; ++i) {
-            (address poolAsset, ) = toPoolAsset(_asset, 0);
-
+        for (uint256 i = 0; i < balances.length; ++i) {
+            address poolAsset = toPoolAsset(_asset);
             if (address(tokens[i]) == poolAsset) {
-                (, uint256 assetAmount) = fromPoolAsset(
+                // convert Balancer pool asset value to Vault asset value
+                (, value) = fromPoolAsset(
                     poolAsset,
-                    balances[i].mulTruncate(yourPoolShare)
+                    balances[i].mulTruncate(strategyShare)
                 );
-                return assetAmount;
+                return value;
             }
         }
     }
@@ -211,6 +220,21 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
             poolAsset = asset;
             poolAmount = amount;
         }
+    }
+
+    /**
+     * @dev Converts a Vault collateral asset to a Balancer pool asset.
+     * stETH becomes wstETH, frxETH becomes sfrxETH and everything else stays the same.
+     * @param asset Address of the Vault collateral asset.
+     * @return Address of the Balancer pool asset.
+     */
+    function toPoolAsset(address asset) internal view returns (address) {
+        if (asset == stETH) {
+            return wstETH;
+        } else if (asset == frxETH) {
+            return sfrxETH;
+        }
+        return asset;
     }
 
     /**

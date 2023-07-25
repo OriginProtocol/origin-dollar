@@ -179,4 +179,11 @@ async function mintTest(fixture, user, asset, amount, allAssets) {
     await units(amount, asset),
     1
   );
+
+  // Check balance in a transaction so the gas usage can be measured
+  await balancerWstEthWethStrategy.checkBalance(asset.address);
+  const tx = await balancerWstEthWethStrategy
+    .connect(user)
+    .populateTransaction.checkBalance(asset.address);
+  await user.sendTransaction(tx);
 }

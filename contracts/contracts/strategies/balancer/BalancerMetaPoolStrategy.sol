@@ -47,6 +47,12 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         revert("Can not find rateProvider");
     }
 
+    /**
+     * @notice Deposits an `_amount` of vault collateral assets to
+     * a Balancer pool.
+     * @param _asset Address of the Vault collateral asset
+     * @param _amount The amount of Vault collateral assets to deposit
+     */
     function deposit(address _asset, uint256 _amount)
         external
         override
@@ -57,6 +63,10 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         _deposit(_asset, _amount);
     }
 
+    /**
+     * @notice Deposits all supported assets in the strategy contract
+     * to the Balancer pool.
+     */
     function depositAll()
         external
         override
@@ -136,6 +146,12 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         _lpDepositAll();
     }
 
+    /**
+     * @notice Withdraws Vault collateral assets from the Balancer pool.
+     * @param _recipient Address to receive the Vault collateral assets. Typically is the Vault.
+     * @param _asset Address of the Vault collateral asset
+     * @param _amount The amount of Vault collateral assets to withdraw
+     */
     function withdraw(
         address _recipient,
         address _asset,
@@ -194,6 +210,9 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         IERC20(_asset).safeTransfer(_recipient, _amount);
     }
 
+    /**
+     * @notice Withdraws all supported Vault collateral assets from the Balancer pool.
+     */
     function withdrawAll()
         external
         override
@@ -251,7 +270,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         for (uint256 i = 0; i < tokens.length; ++i) {
             address asset = assetsMapped[i];
             // slither-disable-next-line uninitialized-local
-            (address poolAsset, ) = toPoolAsset(asset, 0);
+            address poolAsset = toPoolAsset(asset);
             uint256 poolBalance = IERC20(poolAsset).balanceOf(address(this));
             if (poolBalance > 0) {
                 unwrapPoolAsset(asset, poolBalance);
@@ -282,7 +301,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         internal
         override
     {
-        (address poolAsset, ) = toPoolAsset(_asset, 0);
+        address poolAsset = toPoolAsset(_asset);
         if (_asset == stETH) {
             IERC20(stETH).safeApprove(wstETH, 1e50);
         } else if (_asset == frxETH) {
@@ -291,9 +310,12 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         _approveAsset(poolAsset);
     }
 
+    /**
+     * @dev Approves the Balancer Vault to transfer assets from
+     * this strategy.
+     */
     function _approveAsset(address _asset) internal {
         IERC20 asset = IERC20(_asset);
-        // 3Pool for asset (required for adding liquidity)
         asset.safeApprove(address(balancerVault), 0);
         asset.safeApprove(address(balancerVault), type(uint256).max);
     }
