@@ -12,8 +12,6 @@ import { IERC4626 } from "../../../lib/openzeppelin/interfaces/IERC4626.sol";
 import { StableMath } from "../../utils/StableMath.sol";
 import { IRewardStaking } from "../IRewardStaking.sol";
 
-import "hardhat/console.sol";
-
 abstract contract BaseAuraStrategy is BaseBalancerStrategy {
     using SafeERC20 for IERC20;
     using StableMath for uint256;

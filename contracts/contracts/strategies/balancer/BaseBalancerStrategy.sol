@@ -15,7 +15,6 @@ import { IVault } from "../../interfaces/IVault.sol";
 import { IWstETH } from "../../interfaces/IWstETH.sol";
 import { IERC4626 } from "../../../lib/openzeppelin/interfaces/IERC4626.sol";
 import { StableMath } from "../../utils/StableMath.sol";
-import "hardhat/console.sol";
 
 abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
     using SafeERC20 for IERC20;
@@ -125,7 +124,9 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         }
     }
 
-    /** @notice BPT price is calculated by dividing the pool (sometimes wrapped) market price by the
+    /* solhint-disable max-line-length */
+    /**
+     * @notice BPT price is calculated by dividing the pool (sometimes wrapped) market price by the
      * rateProviderRate of that asset. To get BPT expected we need to multiply that by underlying
      * asset amount divided by BPT token rate. BPT token rate is similar to Curve's virtual_price
      * and expresses how much has the price of BPT appreciated in relation to the underlying assets.
@@ -148,6 +149,7 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
      * more explanation here:
      * https://www.notion.so/originprotocol/Support-Balancer-OETH-strategy-9becdea132704e588782a919d7d471eb?pvs=4#382834f9815e46a7937f3acca0f637c5
      */
+    /* solhint-enable max-line-length */
     function getBPTExpected(address _asset, uint256 _amount)
         internal
         view
