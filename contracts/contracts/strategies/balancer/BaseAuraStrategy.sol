@@ -64,14 +64,11 @@ abstract contract BaseAuraStrategy is BaseBalancerStrategy {
         uint256 assetsLength = _assets.length;
         require(
             poolAssets.length == assetsLength,
-            "Pool assets and _assets should be the same length."
+            "Pool assets length mismatch"
         );
         for (uint256 i = 0; i < assetsLength; ++i) {
             (address asset, ) = fromPoolAsset(address(poolAssets[i]), 0);
-            require(
-                _assets[i] == asset,
-                "Pool assets and _assets should all have the same numerical order."
-            );
+            require(_assets[i] == asset, "Pool assets mismatch");
             poolAssetsMapped.push(address(poolAssets[i]));
         }
 

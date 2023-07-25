@@ -43,7 +43,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         }
 
         // should never happen
-        require(false, "Can not find rateProvider");
+        revert("Can not find rateProvider");
     }
 
     function deposit(address _asset, uint256 _amount)
