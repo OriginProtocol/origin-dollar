@@ -1,8 +1,8 @@
 const { deploymentWithGovernanceProposal } = require("../utils/deploy");
 const addresses = require("../utils/addresses");
 const {
-  auraWstEthWethPID,
-  balancerWstEthWethPID,
+  aura_stETH_WETH_PID,
+  balancer_wstETH_WETH_PID,
 } = require("../utils/constants");
 
 module.exports = deploymentWithGovernanceProposal(
@@ -48,12 +48,12 @@ module.exports = deploymentWithGovernanceProposal(
           addresses.mainnet.sfrxETH,
           addresses.mainnet.balancerVault, // Address of the Balancer vault
           addresses.mainnet.wstETH_WETH_BPT, // Address of the Balancer pool
-          balancerWstEthWethPID, // Pool ID of the Balancer pool
+          balancer_wstETH_WETH_PID, // Pool ID of the Balancer pool
         ],
         [
           addresses.mainnet.auraRewardPool,
           addresses.mainnet.CurveOUSDMetaPool, // auraRewardStakerAddress
-          auraWstEthWethPID, // auraDepositorPTokenId
+          aura_stETH_WETH_PID, // auraDepositorPTokenId
         ],
       ]
     );
