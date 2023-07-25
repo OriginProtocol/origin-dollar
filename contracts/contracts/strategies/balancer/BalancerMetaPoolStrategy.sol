@@ -223,7 +223,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
             request
         );
 
-        for (uint256 i = 0; i < assetsMappedLength; ++i) {
+        for (uint256 i = 0; i < tokens.length; ++i) {
             address asset = assetsMapped[i];
             // slither-disable-next-line uninitialized-local
             (address poolAsset, ) = toPoolAsset(asset, 0);
