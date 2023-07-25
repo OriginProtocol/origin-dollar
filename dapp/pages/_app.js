@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
+import dynamic from 'next/dynamic'
 import Head from 'next/head'
 import { useCookies } from 'react-cookie'
 import { useStoreState } from 'pullstate'

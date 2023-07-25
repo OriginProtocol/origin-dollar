@@ -85,8 +85,8 @@ const GeoFenceCheck = () => {
       </Modal>
       <style jsx>{`
         .geofence-modal {
-          background-color: #1e1f25;
-          color: #fafbfb;
+          background-color: #ffffff;
+          color: #000000;
           border-radius: 8px;
           max-width: 469px;
           width: 100%;
@@ -97,7 +97,7 @@ const GeoFenceCheck = () => {
           display: flex;
           align-items: center;
           height: 72px;
-          border-bottom: 1px solid #101113;
+          border-bottom: 1px solid #cfd7df;
           padding: 0 24px;
         }
 
@@ -116,13 +116,9 @@ const GeoFenceCheck = () => {
           cursor: pointer;
           padding: 8px 16px;
           border-radius: 56px;
-          background-image: linear-gradient(
-            90deg,
-            #8c66fc -28.99%,
-            #0274f1 144.97%
-          );
+          background-color: #3d80f7;
           border: none;
-          color: #fafbfb;
+          color: #ffffff;
           width: 100%;
         }
 
@@ -136,13 +132,14 @@ const GeoFenceCheck = () => {
         }
 
         .geofence-modal .title {
-          color: #fafbfb;
-          font-family: Inter;
+          color: #000000;
+          font-family: Poppins;
           font-size: 16px;
           font-weight: 700;
           line-height: 28px;
           letter-spacing: 0em;
           text-align: left;
+          margin: 0;
         }
 
         .geofence-modal .body {
@@ -151,7 +148,7 @@ const GeoFenceCheck = () => {
         }
 
         .geofence-modal .info {
-          font-family: Inter;
+          font-family: Poppins;
           font-size: 14px;
           font-weight: 500;
           line-height: 23px;
@@ -160,7 +157,7 @@ const GeoFenceCheck = () => {
         }
 
         .geofence-modal .info.sub {
-          font-family: Inter;
+          font-family: Poppins;
           font-size: 12px;
           font-weight: 400;
           line-height: 20px;
@@ -171,8 +168,8 @@ const GeoFenceCheck = () => {
         .geofence-modal .accept-criteria {
           padding: 12px 24px 12px 24px;
           border-radius: 4px;
-          background-color: #51546633;
-          font-family: Inter;
+          background-color: #fafbfc;
+          font-family: Poppins;
           font-size: 12px;
           font-weight: 400;
           line-height: 20px;
@@ -198,7 +195,7 @@ const GeoFenceCheck = () => {
         .geofence-modal .ack .ack-label {
           display: inline-flex;
           align-items: center;
-          font-family: Inter;
+          font-family: Poppins;
           font-size: 12px;
           font-weight: 400;
           line-height: 20px;

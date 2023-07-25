@@ -143,6 +143,7 @@ const GeoFenceCheck = () => {
           line-height: 28px;
           letter-spacing: 0em;
           text-align: left;
+          margin: 0;
         }
 
         .geofence-modal .body {
@@ -215,6 +216,8 @@ const GeoFenceCheck = () => {
           height: 24px;
           border-radius: 4px;
           overflow: hidden;
+          border: 1px solid #000000;
+          background-color: #fafbfb;
         }
 
         .geofence-modal .ack .ack-checkbox {
