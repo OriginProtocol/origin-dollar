@@ -84,7 +84,7 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @dev Returns bool indicating whether asset is supported by strategy
+     * @notice Returns bool indicating whether asset is supported by strategy
      * @param _asset Address of the asset
      */
     function supportsAsset(address _asset)
@@ -125,34 +125,35 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         }
     }
 
+    /** @notice BPT price is calculated by dividing the pool (sometimes wrapped) market price by the
+     * rateProviderRate of that asset. To get BPT expected we need to multiply that by underlying
+     * asset amount divided by BPT token rate. BPT token rate is similar to Curve's virtual_price
+     * and expresses how much has the price of BPT appreciated in relation to the underlying assets.
+     *
+     * @dev
+     * bptPrice = pool_asset_oracle_price / pool_asset_rate
+     *
+     * Since we only have oracle prices for the unwrapped version of the assets the equation
+     * turns into:
+     *
+     * bptPrice = from_pool_token(asset_amount).amount * oracle_price / pool_asset_rate
+     *
+     * bptExpected = bptPrice(in relation to specified asset) * asset_amount / BPT_token_rate
+     *
+     * and since from_pool_token(asset_amount).amount and pool_asset_rate cancel each-other out
+     * this makes the final equation:
+     *
+     * bptExpected = oracle_price * asset_amount / BPT_token_rate
+     *
+     * more explanation here:
+     * https://www.notion.so/originprotocol/Support-Balancer-OETH-strategy-9becdea132704e588782a919d7d471eb?pvs=4#382834f9815e46a7937f3acca0f637c5
+     */
     function getBPTExpected(address _asset, uint256 _amount)
         internal
         view
         virtual
         returns (uint256 bptExpected)
     {
-        /* BPT price is calculated by dividing the pool (sometimes wrapped) market price by the
-         * rateProviderRate of that asset. To get BPT expected we need to multiply that by underlying
-         * asset amount divided by BPT token rate. BPT token rate is similar to Curve's virtual_price
-         * and expresses how much has the price of BPT appreciated in relation to the underlying assets.
-         *
-         * bptPrice = pool_asset_oracle_price / pool_asset_rate
-         *
-         * Since we only have oracle prices for the unwrapped version of the assets the equation
-         * turns into:
-         *
-         * bptPrice = from_pool_token(asset_amount).amount * oracle_price / pool_asset_rate
-         *
-         * bptExpected = bptPrice(in relation to specified asset) * asset_amount / BPT_token_rate
-         *
-         * and since from_pool_token(asset_amount).amount and pool_asset_rate cancel each-other out
-         * this makes the final equation:
-         *
-         * bptExpected = oracle_price * asset_amount / BPT_token_rate
-         *
-         * more explanation here:
-         * https://www.notion.so/originprotocol/Support-Balancer-OETH-strategy-9becdea132704e588782a919d7d471eb?pvs=4#382834f9815e46a7937f3acca0f637c5
-         */
         address priceProvider = IVault(vaultAddress).priceProvider();
         uint256 strategyAssetMarketPrice = IOracle(priceProvider).price(_asset);
         uint256 bptRate = IRateProvider(platformAddress).getRate();
@@ -175,18 +176,15 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
     function _lpWithdrawAll() internal virtual;
 
     /**
-     * Balancer returns assets and rateProviders for corresponding assets ordered
+     * @notice Balancer returns assets and rateProviders for corresponding assets ordered
      * by numerical order.
      */
     function getPoolAssets() internal view returns (IERC20[] memory assets) {
-        (IERC20[] memory tokens, , ) = balancerVault.getPoolTokens(
-            balancerPoolId
-        );
-        return tokens;
+        (assets, , ) = balancerVault.getPoolTokens(balancerPoolId);
     }
 
     /**
-     * If an asset is rebasing the Balancer pools have a wrapped versions of assets
+     * @dev If an asset is rebasing the Balancer pools have a wrapped versions of assets
      * that the strategy supports. This function converts the pool(wrapped) asset
      * and corresponding amount to strategy asset.
      */
@@ -217,16 +215,14 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * Converts rebasing asset to its wrapped counterpart.
+     * @dev Converts rebasing asset to its wrapped counterpart.
      */
     function wrapPoolAsset(address asset, uint256 amount)
         internal
         returns (uint256 wrappedAmount)
     {
-        // if stEth
         if (asset == stETH) {
             wrappedAmount = IWstETH(wstETH).wrap(amount);
-            // if frxEth
         } else if (asset == frxETH) {
             wrappedAmount = IERC4626(sfrxETH).deposit(amount, address(this));
         } else {
@@ -235,16 +231,14 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * Converts wrapped asset to its rebasing counterpart.
+     * @dev Converts wrapped asset to its rebasing counterpart.
      */
     function unwrapPoolAsset(address asset, uint256 amount)
         internal
         returns (uint256 wrappedAmount)
     {
-        // if stEth
         if (asset == stETH) {
             wrappedAmount = IWstETH(wstETH).unwrap(amount);
-            // if frxEth
         } else if (asset == frxETH) {
             wrappedAmount = IERC4626(sfrxETH).withdraw(
                 amount,
@@ -257,7 +251,7 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * If an asset is rebasing the Balancer pools have a wrapped versions of assets
+     * @dev If an asset is rebasing the Balancer pools have a wrapped versions of assets
      * that the strategy supports. This function converts the rebasing strategy asset
      * and corresponding amount to wrapped(pool) asset.
      */
@@ -267,16 +261,12 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         returns (address asset, uint256 amount)
     {
         amount = 0;
-        // if wstEth
         if (poolAsset == wstETH) {
-            // stEth
             asset = stETH;
             if (poolAmount > 0) {
                 amount = IWstETH(wstETH).getStETHByWstETH(poolAmount);
             }
-            // if frxEth
         } else if (poolAsset == sfrxETH) {
-            // sfrxEth
             asset = frxETH;
             if (poolAmount > 0) {
                 amount = IERC4626(sfrxETH).convertToAssets(poolAmount);
@@ -288,7 +278,7 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @dev Sets max withdrawal slippage that is considered when removing
+     * @notice Sets max withdrawal slippage that is considered when removing
      * liquidity from Balancer pools.
      * @param _maxWithdrawalSlippage Max withdrawal slippage denominated in
      *        wad (number with 18 decimals): 1e18 == 100%, 1e16 == 1%
@@ -313,7 +303,7 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @dev Sets max deposit slippage that is considered when adding
+     * @notice Sets max deposit slippage that is considered when adding
      * liquidity to Balancer pools.
      * @param _maxDepositSlippage Max deposit slippage denominated in
      *        wad (number with 18 decimals): 1e18 == 100%, 1e16 == 1%
