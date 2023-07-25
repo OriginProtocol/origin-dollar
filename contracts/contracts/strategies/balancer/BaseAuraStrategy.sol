@@ -59,15 +59,13 @@ abstract contract BaseAuraStrategy is BaseBalancerStrategy {
         maxDepositSlippage = 1e15;
 
         IERC20[] memory poolAssets = getPoolAssets();
-        uint256 assetsLength = _assets.length;
         require(
-            poolAssets.length == assetsLength,
+            poolAssets.length == _assets.length,
             "Pool assets length mismatch"
         );
-        for (uint256 i = 0; i < assetsLength; ++i) {
+        for (uint256 i = 0; i < _assets.length; ++i) {
             (address asset, ) = fromPoolAsset(address(poolAssets[i]), 0);
             require(_assets[i] == asset, "Pool assets mismatch");
-            poolAssetsMapped.push(address(poolAssets[i]));
         }
 
         super._initialize(

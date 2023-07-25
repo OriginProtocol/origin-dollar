@@ -29,9 +29,6 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
     address public immutable pTokenAddress;
     bytes32 public immutable balancerPoolId;
 
-    // Full list of all assets as they are present in the Balancer pool
-    address[] public poolAssetsMapped;
-
     // Max withdrawal slippage denominated in 1e18 (1e18 == 100%)
     uint256 public maxWithdrawalSlippage;
     // Max deposit slippage denominated in 1e18 (1e18 == 100%)
@@ -164,12 +161,6 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
             .mulTruncate(strategyAssetMarketPrice)
             .divPrecisely(bptRate);
     }
-
-    function getRateProviderRate(address _asset)
-        internal
-        view
-        virtual
-        returns (uint256);
 
     function _lpDepositAll() internal virtual;
 

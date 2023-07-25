@@ -22,31 +22,6 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         AuraConfig memory auraConfig
     ) BaseAuraStrategy(baseConfig, auraConfig) {}
 
-    function getRateProviderRate(address _asset)
-        internal
-        view
-        override
-        returns (uint256)
-    {
-        IMetaStablePool pool = IMetaStablePool(platformAddress);
-        IRateProvider[] memory providers = pool.getRateProviders();
-
-        uint256 providersLength = providers.length;
-        for (uint256 i = 0; i < providersLength; ++i) {
-            // _assets and corresponding rate providers are all in the same order
-            if (poolAssetsMapped[i] == _asset) {
-                // rate provider doesn't exist, defaults to 1e18
-                if (address(providers[i]) == address(0)) {
-                    return 1e18;
-                }
-                return providers[i].getRate();
-            }
-        }
-
-        // should never happen
-        revert("Can not find rateProvider");
-    }
-
     function deposit(address _asset, uint256 _amount)
         external
         override
@@ -92,11 +67,11 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
             balancerPoolId
         );
 
-        // TODO: refactor this bit and withdrawal bit to create amounts for in/out array
-        uint256 tokensLength = tokens.length;
-        uint256[] memory maxAmountsIn = new uint256[](tokensLength);
+        uint256[] memory maxAmountsIn = new uint256[](tokens.length);
+        address[] memory poolAssets = new address[](tokens.length);
         uint256 assetIndex = 0;
-        for (uint256 i = 0; i < tokensLength; ++i) {
+        for (uint256 i = 0; i < tokens.length; ++i) {
+            poolAssets[i] = address(tokens[i]);
             if (address(tokens[i]) == poolAsset) {
                 maxAmountsIn[i] = poolAmount;
                 assetIndex = i;
@@ -124,7 +99,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         );
 
         IBalancerVault.JoinPoolRequest memory request = IBalancerVault
-            .JoinPoolRequest(poolAssetsMapped, maxAmountsIn, userData, false);
+            .JoinPoolRequest(poolAssets, maxAmountsIn, userData, false);
 
         balancerVault.joinPool(
             balancerPoolId,
@@ -152,10 +127,11 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         (IERC20[] memory tokens, , ) = balancerVault.getPoolTokens(
             balancerPoolId
         );
-        uint256 tokensLength = tokens.length;
-        uint256[] memory minAmountsOut = new uint256[](tokensLength);
+        uint256[] memory minAmountsOut = new uint256[](tokens.length);
+        address[] memory poolAssets = new address[](tokens.length);
         uint256 assetIndex = 0;
-        for (uint256 i = 0; i < tokensLength; ++i) {
+        for (uint256 i = 0; i < tokens.length; ++i) {
+            poolAssets[i] = address(tokens[i]);
             if (address(tokens[i]) == poolAsset) {
                 minAmountsOut[i] = poolAmount;
                 assetIndex = i;
@@ -178,7 +154,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         );
 
         IBalancerVault.ExitPoolRequest memory request = IBalancerVault
-            .ExitPoolRequest(poolAssetsMapped, minAmountsOut, userData, false);
+            .ExitPoolRequest(poolAssets, minAmountsOut, userData, false);
 
         balancerVault.exitPool(
             balancerPoolId,
@@ -209,20 +185,18 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         (IERC20[] memory tokens, uint256[] memory balances, ) = balancerVault
             .getPoolTokens(balancerPoolId);
 
-        uint256 yourPoolShare = BPTtoWithdraw.divPrecisely(
+        // the strategy's share of the pool assets
+        uint256 strategyShare = BPTtoWithdraw.divPrecisely(
             IERC20(pTokenAddress).totalSupply()
         );
 
-        uint256 assetsMappedLength = balances.length;
-        uint256[] memory minAmountsOut = new uint256[](assetsMappedLength);
-        for (uint256 i = 0; i < assetsMappedLength; ++i) {
-            (address poolAsset, ) = toPoolAsset(assetsMapped[i], 0);
-
-            if (address(tokens[i]) == poolAsset) {
-                minAmountsOut[i] = balances[i]
-                    .mulTruncate(yourPoolShare)
-                    .mulTruncate(1e18 - maxWithdrawalSlippage);
-            }
+        uint256[] memory minAmountsOut = new uint256[](tokens.length);
+        address[] memory poolAssets = new address[](tokens.length);
+        for (uint256 i = 0; i < tokens.length; ++i) {
+            poolAssets[i] = address(tokens[i]);
+            minAmountsOut[i] = balances[i]
+                .mulTruncate(strategyShare)
+                .mulTruncate(1e18 - maxWithdrawalSlippage);
         }
 
         /* Proportional exit: EXACT_BPT_IN_FOR_TOKENS_OUT:
@@ -238,7 +212,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         );
 
         IBalancerVault.ExitPoolRequest memory request = IBalancerVault
-            .ExitPoolRequest(poolAssetsMapped, minAmountsOut, userData, false);
+            .ExitPoolRequest(poolAssets, minAmountsOut, userData, false);
 
         balancerVault.exitPool(
             balancerPoolId,
@@ -249,7 +223,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
             request
         );
 
-        for (uint256 i = 0; i < assetsMappedLength; ++i) {
+        for (uint256 i = 0; i < tokens.length; ++i) {
             address asset = assetsMapped[i];
             // slither-disable-next-line uninitialized-local
             (address poolAsset, ) = toPoolAsset(asset, 0);
