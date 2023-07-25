@@ -11,7 +11,7 @@
     "node": "yarn run node:fork",
     "node:fork": "./node.sh fork",
     "lint": "yarn run lint:js && yarn run lint:sol",
-    "lint:js": "eslint \"test/**/*.js\"",
+    "lint:js": "eslint \"test/**/*.js\" \"tasks/**/*.js\"",
     "lint:sol": "solhint \"contracts/**/*.sol\"",
     "prettier": "yarn run prettier:js && yarn run prettier:sol",
     "prettier:check": "prettier -c \"*.js\" \"deploy/**/*.js\"  \"scripts/**/*.js\" \"smoke/**/*.js\" \"scripts/**/*.js\" \"tasks/**/*.js\" \"test/**/*.js\" \"utils/**/*.js\"",
