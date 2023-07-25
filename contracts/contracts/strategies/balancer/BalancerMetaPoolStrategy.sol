@@ -227,11 +227,16 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
             address asset = assetsMapped[i];
             // slither-disable-next-line uninitialized-local
             (address poolAsset, ) = toPoolAsset(asset, 0);
-            unwrapPoolAsset(asset, IERC20(poolAsset).balanceOf(address(this)));
+            uint256 poolBalance = IERC20(poolAsset).balanceOf(address(this));
+            if (poolBalance > 0) {
+                unwrapPoolAsset(asset, poolBalance);
+            }
 
             uint256 transferAmount = IERC20(asset).balanceOf(address(this));
-            IERC20(asset).safeTransfer(vaultAddress, transferAmount);
-            emit Withdrawal(asset, pTokenAddress, transferAmount);
+            if (transferAmount > 0) {
+                IERC20(asset).safeTransfer(vaultAddress, transferAmount);
+                emit Withdrawal(asset, pTokenAddress, transferAmount);
+            }
         }
     }
 
