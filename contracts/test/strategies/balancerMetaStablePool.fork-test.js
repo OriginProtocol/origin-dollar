@@ -20,7 +20,7 @@ forkOnlyDescribe(
       fixture = await loadFixture(balancerWstEthWethFixture);
     });
 
-    describe.only("Mint", function () {
+    describe("Mint", function () {
       it("Should deploy WETH in Balancer MetaStablePool strategy", async function () {
         const { josh, weth, stETH } = fixture;
         await mintTest(fixture, josh, weth, "30", [weth, stETH]);
@@ -51,7 +51,7 @@ forkOnlyDescribe(
       });
     });
 
-    describe.only("Withdraw", function () {
+    describe("Withdraw", function () {
       it("Should be able to withdraw some amount of pool liquidity", async function () {
         const { josh, weth, stETH, balancerWstEthWethStrategy, oethVault } =
           fixture;
@@ -112,7 +112,7 @@ forkOnlyDescribe(
       it("Should be able to withdraw with higher withdrawal slippage", async function () {});
     });
 
-    describe.only("Harvest rewards", function () {
+    describe("Harvest rewards", function () {
       it("Should be able to collect reward tokens", async function () {
         const { josh, balancerWstEthWethStrategy, oethHarvester } = fixture;
 
