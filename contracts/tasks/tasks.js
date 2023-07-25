@@ -20,7 +20,7 @@ const {
   checkOUSDBalances,
   supplyStakingContractWithOGN,
 } = require("./compensation");
-const { allocate, capital, harvest, rebase, yield } = require("./vault");
+const { allocate, capital, harvest, rebase, yieldTask } = require("./vault");
 const { curvePool } = require("./curve");
 
 // Environment tasks.
@@ -69,7 +69,7 @@ task("allocate", "Call allocate() on the Vault", allocate);
 task("capital", "Set the Vault's pauseCapital flag", capital);
 task("harvest", "Call harvest() on Vault", harvest);
 task("rebase", "Call rebase() on the Vault", rebase);
-task("yield", "Artificially generate yield on the Vault", yield);
+task("yield", "Artificially generate yield on the Vault", yieldTask);
 
 // Governance tasks
 task("execute", "Execute a governance proposal")

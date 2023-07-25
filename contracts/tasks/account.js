@@ -1,5 +1,3 @@
-const _ = require("lodash");
-
 // USDT has its own ABI because of non standard returns
 const usdtAbi = require("../test/abi/usdt.json").abi;
 const daiAbi = require("../test/abi/erc20.json");
@@ -55,7 +53,6 @@ async function fund(taskArguments, hre) {
     usdtUnits,
     daiUnits,
     usdcUnits,
-    tusdUnits,
     isFork,
     isLocalhost,
   } = require("../test/helpers");
@@ -178,7 +175,7 @@ async function fund(taskArguments, hre) {
  */
 async function mint(taskArguments, hre) {
   const addresses = require("../utils/addresses");
-  const { usdtUnits, isFork, isLocalhost } = require("../test/helpers");
+  const { usdtUnits, isFork } = require("../test/helpers");
 
   if (!isFork) {
     throw new Error("Task can only be used on fork");
@@ -252,7 +249,6 @@ async function redeemFor(taskArguments, hre) {
     usdcUnitsFormat,
     usdtUnitsFormat,
     isFork,
-    isLocalhost,
   } = require("../test/helpers");
 
   if (!isFork) {
