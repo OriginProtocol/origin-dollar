@@ -19,7 +19,6 @@ def silent_tx():
     with redirect_stdout(f):
         yield
 
-
 def sim_buyback_ogv(amount):
     """
     Run a simulated buyback, and return how much OGV we get back.
@@ -34,7 +33,7 @@ def sim_buyback_ogv(amount):
         return after - before
 
 
-def build_buyback_tx(max_dollars=5000, max_slippage=2.0):
+def build_buyback_tx(max_dollars=5000, max_slippage=2.0, with_fork=True):
     """
     Build a buyback transaction and print a varity of information about it.
 
@@ -83,12 +82,17 @@ def build_buyback_tx(max_dollars=5000, max_slippage=2.0):
             "Minimum slippage less expected slippage. Transaction would fail."
         )
 
-    # Display transaction data
-    with TemporaryFork():
-        with silent_tx():
-            tx = buyback.distributeAndSwap(buyback_amount, min_slippage_ogv, {"from": STRATEGIST})
-    print("")
-    print("To: {}".format(tx.receiver))
-    print("Data: {}".format(tx.input))
-    print(tx.error())
+    if with_fork:
+        # Display transaction data
+        with TemporaryFork():
+            with silent_tx():
+                tx = buyback.distributeAndSwap(buyback_amount, min_slippage_ogv, {"from": STRATEGIST})
+
+        print("")
+        print("To: {}".format(tx.receiver))
+        print("Data: {}".format(tx.input))
+        print(tx.error())
+    else:
+        tx = buyback.distributeAndSwap(buyback_amount, min_slippage_ogv, {"from": STRATEGIST})
+
     return tx
