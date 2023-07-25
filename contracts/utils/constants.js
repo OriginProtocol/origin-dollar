@@ -4,7 +4,9 @@ const threeCRVPid = 9;
 const metapoolLPCRVPid = 56;
 const lusdMetapoolLPCRVPid = 33;
 const oethPoolLpPID = 174;
-const balancerWstEthWethPID = 115;
+const auraWstEthWethPID = 115;
+const balancerWstEthWethPID =
+  "0x32296969ef14eb0c6d29669c550d4a0449130230000200000000000000000080";
 const MAX_UINT256 = BigNumber.from(
   "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
 );
@@ -15,6 +17,7 @@ module.exports = {
   lusdMetapoolLPCRVPid,
   oethPoolLpPID,
   MAX_UINT256,
+  auraWstEthWethPID,
   balancerWstEthWethPID,
 };
 

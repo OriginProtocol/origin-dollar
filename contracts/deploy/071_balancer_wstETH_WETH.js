@@ -1,7 +1,9 @@
 const { deploymentWithGovernanceProposal } = require("../utils/deploy");
 const addresses = require("../utils/addresses");
-const { balancerWstEthWethPID } = require("../utils/constants");
-const { add } = require("lodash");
+const {
+  auraWstEthWethPID,
+  balancerWstEthWethPID,
+} = require("../utils/constants");
 
 module.exports = deploymentWithGovernanceProposal(
   {
@@ -35,11 +37,6 @@ module.exports = deploymentWithGovernanceProposal(
       dOETHBalancerMetaPoolStrategyProxy.address
     );
 
-    // address stEthAddress; // Address of the stETH token
-    // address wstEthAddress; // Address of the wstETH token
-    // address frxEthAddress; // Address of the frxEth token
-    // address sfrxEthAddress; // Address of the sfrxEth token
-
     // 2. Deploy new implementation
     const dOETHBalancerMetaPoolStrategyImpl = await deployWithConfirmation(
       "BalancerMetaPoolStrategy",
@@ -49,14 +46,14 @@ module.exports = deploymentWithGovernanceProposal(
           addresses.mainnet.wstETH,
           addresses.mainnet.frxETH,
           addresses.mainnet.sfrxETH,
-          "0xBA12222222228d8Ba445958a75a0704d566BF2C8", // Address of the Balancer vault
+          addresses.mainnet.balancerVault, // Address of the Balancer vault
           addresses.mainnet.wstETH_WETH_BPT, // Address of the Balancer pool
-          "0x32296969ef14eb0c6d29669c550d4a0449130230000200000000000000000080",
+          balancerWstEthWethPID, // Pool ID of the Balancer pool
         ],
         [
           addresses.mainnet.auraRewardPool,
           addresses.mainnet.CurveOUSDMetaPool, // auraRewardStakerAddress
-          balancerWstEthWethPID, // auraDepositorPTokenId]
+          auraWstEthWethPID, // auraDepositorPTokenId
         ],
       ]
     );
