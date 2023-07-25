@@ -1,10 +1,17 @@
 import React from 'react'
-import Layout from 'components/layout'
-import Nav from 'components/Nav'
+import dynamic from 'next/dynamic'
 
 import BalanceHeader from 'components/buySell/BalanceHeader'
 import MissionControl from 'components/MissionControl'
 import PrimarySidePanel from 'components/sidePanel/PrimarySidePanel'
+
+const Layout = dynamic(() => import('components/layout'), {
+  ssr: false,
+})
+
+const Nav = dynamic(() => import('components/Nav'), {
+  ssr: false,
+})
 
 export default function DApp({ locale, onLocale }) {
   return (

@@ -52,7 +52,7 @@ const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_V2_PROJECT_ID
 
 // Rainbow kit init
 const { wallets } = getDefaultWallets({
-  appName: 'OETH Dapp',
+  appName: 'OUSD',
   projectId,
   chains,
 })

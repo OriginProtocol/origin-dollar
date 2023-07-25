@@ -6,7 +6,7 @@ import { useRouter } from 'next/router'
 import { event } from '../../lib/gtm'
 import { useAccount } from 'wagmi'
 
-const CustomConnectButton = ({ id, className, onClick, style }) => {
+const CustomConnectButton = ({ id, buttonText, className, onClick, style }) => {
   return (
     <ConnectButton.Custom>
       {({
@@ -54,7 +54,7 @@ const CustomConnectButton = ({ id, className, onClick, style }) => {
                     }}
                     type="button"
                   >
-                    {fbt('Connect', 'Connect button')}
+                    {buttonText || fbt('Connect', 'Connect button')}
                   </button>
                 )
               }
@@ -94,39 +94,10 @@ const CustomConnectButton = ({ id, className, onClick, style }) => {
   )
 }
 
-const GetOUSD = ({
-  id,
-  className,
-  style,
-  dark,
-  light,
-  primary,
-  showLogin,
-  trackSource,
-  light2,
-  gradient,
-  zIndex2,
-  navMarble,
-}) => {
+const GetOUSD = ({ id, buttonText, className, style }) => {
   const { isConnected: active } = useAccount()
   const [userAlreadyConnectedWallet, setUserAlreadyConnectedWallet] =
     useState(false)
-
-  const router = useRouter()
-
-  const classList = classnames(className)
-
-  // classnames(
-  //   'btn d-flex align-items-center justify-content-center',
-  //   className,
-  //   dark && 'btn-dark',
-  //   light && 'btn-light',
-  //   light2 && 'btn-light2',
-  //   primary && 'btn-primary',
-  //   gradient && 'btn-gradient',
-  //   zIndex2 && 'zIndex2',
-  //   navMarble && 'nav-marble'
-  // )
 
   useEffect(() => {
     if (
@@ -145,7 +116,8 @@ const GetOUSD = ({
     <>
       <CustomConnectButton
         id={id}
-        className={classList}
+        className={className}
+        buttonText={buttonText}
         style={style}
         onClick={() => {
           if (process.browser) {
