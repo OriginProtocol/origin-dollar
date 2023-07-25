@@ -80,6 +80,10 @@ const client = createClient({
   connectors,
 })
 
+const GeoFenceCheck = dynamic(() => import('components/GeoFenceCheck'), {
+  ssr: false,
+})
+
 function App({ Component, pageProps, err }) {
   const [locale, setLocale] = useState('en_US')
   const { address: account, isConnected: active } = useAccount()
@@ -133,6 +137,7 @@ function App({ Component, pageProps, err }) {
           <link rel="canonical" href={canonicalUrl} />
         </Head>
         <QueryClientProvider client={queryClient}>
+          <GeoFenceCheck />
           <AccountListener />
           <TransactionListener />
           <UserActivityListener />
