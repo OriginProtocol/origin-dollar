@@ -24,25 +24,24 @@ const GeoFenceCheck = () => {
       >
         <div className="d-flex flex-column geofence-modal">
           <header className="header">
-            <h1 className="title">Not supported in the United States</h1>
+            <h1 className="title">Restricted Access</h1>
           </header>
           <div className="body">
             <p className="info">
               The Origin Ether dapp is not available to restricted
-              jurisdictions. Before proceeding, please carefully read and
-              confirm the following:
+              jurisdictions. Before proceeding, please carefully read the
+              following:
             </p>
             <div className="accept-criteria">
               <ul className="list">
                 <li className="item">
-                  By accessing and using the Origin Ether dapp, you confirm that
-                  you are not a resident of, citizen of, located in,
-                  incorporated in, or have a registered office in the United
-                  States, Canada, Iran, Cuba, North Korea, Syria, Myanmar
-                  (Burma), the regions of Crimea, Donetsk or Luhansk, or any
-                  other country or region that is the subject of comprehensive
-                  country-wide or region-wide economic sanctions by the United
-                  States.
+                  You confirm that you are not a resident of, citizen of,
+                  located in, incorporated in, or have a registered office in
+                  the United States, Canada, Iran, Cuba, North Korea, Syria,
+                  Myanmar (Burma), the regions of Crimea, Donetsk or Luhansk, or
+                  any other country or region that is the subject of
+                  comprehensive country-wide or region-wide economic sanctions
+                  by the United States.
                 </li>
                 <li className="item">
                   Furthermore, you affirm that you are not a subject of economic
