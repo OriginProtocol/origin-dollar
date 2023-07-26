@@ -28,25 +28,21 @@ const GeoFenceCheck = () => {
           </header>
           <div className="body">
             <p className="info">
-              It appears that you are accessing the Origin Ether interface from
-              inside the united states.
-            </p>
-            <p className="info sub">
-              The OETH interface is not available to persons or entities who
-              reside in, are citizens of, are located in, are incorporated in,
-              or have a registered office in the United States of America.
+              The Origin Ether dapp is not available to restricted jurisdictions. Before proceeding, please carefully read and confirm the following:
             </p>
             <div className="accept-criteria">
               <ul className="list">
                 <li className="item">
-                  Only continue if you are not a person or company who is a
-                  resident of, or is located, incorporated or has a registered
-                  agent in the United States.
+                  By accessing and using the Origin Ether dapp, you confirm that you are not a resident of, citizen of, located in, incorporated in, or have a registered office in the United States, Canada, Iran, Cuba, North Korea, Syria, Myanmar (Burma), the regions of Crimea, Donetsk or Luhansk, or any other country or region that is the subject of comprehensive country-wide or region-wide economic sanctions by the United States.
                 </li>
                 <li className="item">
-                  You are lawfully permitted to access this site and trade OETH
-                  under the laws of the jurisdiction in which you reside and are
-                  located.
+                  Furthermore, you affirm that you are not a subject of economic or trade sanctions administered or enforced by any governmental authority or otherwise designated on any list of prohibited or restricted parties, including the list maintained by the Office of Foreign Assets Control of the U.S. Department of the Treasury.
+                </li>
+                <li className="item">
+                  You agree not to use any VPN or other privacy or anonymization tools or techniques to attempt to circumvent the eligibility restrictions and access the Origin Ethereum dapp.
+                </li>
+                <li className="item">
+                  You are lawfully permitted to access this site and understand the risks associated with Origin Ether.
                 </li>
               </ul>
             </div>
