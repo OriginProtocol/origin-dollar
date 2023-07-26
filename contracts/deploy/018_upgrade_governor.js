@@ -6,12 +6,10 @@ const { isMainnet, isFork, isSmokeTest } = require("../test/helpers.js");
 const {
   log,
   deployWithConfirmation,
-  withConfirmation,
   executeProposal,
   sendProposal,
 } = require("../utils/deploy");
 const { proposeArgs } = require("../utils/governor");
-const { getTxOpts } = require("../utils/tx");
 const addresses = require("../utils/addresses");
 
 const deployName = "018_upgrade_governor";

@@ -60,6 +60,7 @@ const deployAaveStrategy = async () => {
   await withConfirmation(
     cAaveStrategy
       .connect(sDeployer)
+      // eslint-disable-next-line no-unexpected-multiline
       [initFunctionName](
         assetAddresses.AAVE_ADDRESS_PROVIDER,
         cVaultProxy.address,
@@ -189,23 +190,10 @@ const deployThreePoolStrategy = async () => {
   // Initialize Strategies
   const cVaultProxy = await ethers.getContract("VaultProxy");
   await withConfirmation(
-    cThreePoolStrategy
-      .connect(sDeployer)
-      [
-        "initialize(address,address,address[],address[],address[],address,address)"
-      ](
-        assetAddresses.ThreePool,
-        cVaultProxy.address,
-        [assetAddresses.CRV],
-        [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT],
-        [
-          assetAddresses.ThreePoolToken,
-          assetAddresses.ThreePoolToken,
-          assetAddresses.ThreePoolToken,
-        ],
-        assetAddresses.ThreePoolGauge,
-        assetAddresses.CRVMinter
-      )
+    cThreePoolStrategy.connect(sDeployer)[
+      // eslint-disable-next-line no-unexpected-multiline
+      "initialize(address,address,address[],address[],address[],address,address)"
+    ](assetAddresses.ThreePool, cVaultProxy.address, [assetAddresses.CRV], [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT], [assetAddresses.ThreePoolToken, assetAddresses.ThreePoolToken, assetAddresses.ThreePoolToken], assetAddresses.ThreePoolGauge, assetAddresses.CRVMinter)
   );
   log("Initialized ThreePoolStrategy");
 
@@ -261,24 +249,23 @@ const deployConvexStrategy = async () => {
   const mockBooster = await ethers.getContract("MockBooster");
   const mockRewardPool = await ethers.getContract("MockRewardPool");
   await withConfirmation(
-    cConvexStrategy
-      .connect(sDeployer)
+    cConvexStrategy.connect(sDeployer)[
+      // eslint-disable-next-line no-unexpected-multiline
+      "initialize(address,address,address[],address[],address[],address,address,uint256)"
+    ](
+      assetAddresses.ThreePool,
+      cVaultProxy.address,
+      [assetAddresses.CRV, assetAddresses.CVX],
+      [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT],
       [
-        "initialize(address,address,address[],address[],address[],address,address,uint256)"
-      ](
-        assetAddresses.ThreePool,
-        cVaultProxy.address,
-        [assetAddresses.CRV, assetAddresses.CVX],
-        [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT],
-        [
-          assetAddresses.ThreePoolToken,
-          assetAddresses.ThreePoolToken,
-          assetAddresses.ThreePoolToken,
-        ],
-        mockBooster.address, // _cvxDepositorAddress,
-        mockRewardPool.address, // _cvxRewardStakerAddress,
-        9 // _cvxDepositorPTokenId
-      )
+        assetAddresses.ThreePoolToken,
+        assetAddresses.ThreePoolToken,
+        assetAddresses.ThreePoolToken,
+      ],
+      mockBooster.address, // _cvxDepositorAddress,
+      mockRewardPool.address, // _cvxRewardStakerAddress,
+      9 // _cvxDepositorPTokenId
+    )
   );
   log("Initialized ConvexStrategy");
 
@@ -339,29 +326,28 @@ const deployConvexLUSDMetaStrategy = async () => {
 
   const LUSD = await ethers.getContract("MockLUSD");
   await withConfirmation(
-    cConvexLUSDMetaStrategy
-      .connect(sDeployer)
+    cConvexLUSDMetaStrategy.connect(sDeployer)[
+      // eslint-disable-next-line no-unexpected-multiline
+      "initialize(address[],address[],address[],(address,address,address,address,address,address,address,uint256))"
+    ](
+      [assetAddresses.CVX, assetAddresses.CRV],
+      [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT],
       [
-        "initialize(address[],address[],address[],(address,address,address,address,address,address,address,uint256))"
-      ](
-        [assetAddresses.CVX, assetAddresses.CRV],
-        [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT],
-        [
-          assetAddresses.ThreePoolToken,
-          assetAddresses.ThreePoolToken,
-          assetAddresses.ThreePoolToken,
-        ],
-        [
-          assetAddresses.ThreePool,
-          cVaultProxy.address,
-          mockBooster.address, // _cvxDepositorAddress,
-          assetAddresses.ThreePoolLUSDMetapool, // metapool address,
-          LUSD.address, // LUSD
-          mockRewardPool.address, // _cvxRewardStakerAddress,
-          assetAddresses.LUSDMetapoolToken, // metapoolLpToken
-          lusdMetapoolLPCRVPid, // _cvxDepositorPTokenId
-        ]
-      )
+        assetAddresses.ThreePoolToken,
+        assetAddresses.ThreePoolToken,
+        assetAddresses.ThreePoolToken,
+      ],
+      [
+        assetAddresses.ThreePool,
+        cVaultProxy.address,
+        mockBooster.address, // _cvxDepositorAddress,
+        assetAddresses.ThreePoolLUSDMetapool, // metapool address,
+        LUSD.address, // LUSD
+        mockRewardPool.address, // _cvxRewardStakerAddress,
+        assetAddresses.LUSDMetapoolToken, // metapoolLpToken
+        lusdMetapoolLPCRVPid, // _cvxDepositorPTokenId
+      ]
+    )
   );
   log("Initialized ConvexLUSDMetaStrategy");
 
@@ -422,29 +408,28 @@ const deployConvexOUSDMetaStrategy = async () => {
   const ousd = await ethers.getContract("OUSDProxy");
 
   await withConfirmation(
-    cConvexOUSDMetaStrategy
-      .connect(sDeployer)
+    cConvexOUSDMetaStrategy.connect(sDeployer)[
+      // eslint-disable-next-line no-unexpected-multiline
+      "initialize(address[],address[],address[],(address,address,address,address,address,address,address,uint256))"
+    ](
+      [assetAddresses.CVX, assetAddresses.CRV],
+      [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT],
       [
-        "initialize(address[],address[],address[],(address,address,address,address,address,address,address,uint256))"
-      ](
-        [assetAddresses.CVX, assetAddresses.CRV],
-        [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT],
-        [
-          assetAddresses.ThreePoolToken,
-          assetAddresses.ThreePoolToken,
-          assetAddresses.ThreePoolToken,
-        ],
-        [
-          assetAddresses.ThreePool,
-          cVaultProxy.address,
-          mockBooster.address, // _cvxDepositorAddress,
-          assetAddresses.ThreePoolOUSDMetapool, // metapool address,
-          ousd.address, // _ousdAddress,
-          mockRewardPool.address, // _cvxRewardStakerAddress,
-          assetAddresses.ThreePoolOUSDMetapool, // metapoolLpToken (metapool address),
-          metapoolLPCRVPid, // _cvxDepositorPTokenId
-        ]
-      )
+        assetAddresses.ThreePoolToken,
+        assetAddresses.ThreePoolToken,
+        assetAddresses.ThreePoolToken,
+      ],
+      [
+        assetAddresses.ThreePool,
+        cVaultProxy.address,
+        mockBooster.address, // _cvxDepositorAddress,
+        assetAddresses.ThreePoolOUSDMetapool, // metapool address,
+        ousd.address, // _ousdAddress,
+        mockRewardPool.address, // _cvxRewardStakerAddress,
+        assetAddresses.ThreePoolOUSDMetapool, // metapoolLpToken (metapool address),
+        metapoolLPCRVPid, // _cvxDepositorPTokenId
+      ]
+    )
   );
   log("Initialized ConvexOUSDMetaStrategy");
 
@@ -1103,13 +1088,10 @@ const deployBuyback = async () => {
 
   // Init proxy to implementation
   await withConfirmation(
-    cBuybackProxy
-      .connect(sDeployer)
-      ["initialize(address,address,bytes)"](
-        dBuybackImpl.address,
-        deployerAddr,
-        []
-      )
+    cBuybackProxy.connect(sDeployer)[
+      // eslint-disable-next-line no-unexpected-multiline
+      "initialize(address,address,bytes)"
+    ](dBuybackImpl.address, deployerAddr, [])
   );
 
   const cBuyback = await ethers.getContractAt("Buyback", cBuybackProxy.address);
@@ -1178,13 +1160,10 @@ const deployWOusd = async () => {
   const wousdProxy = await ethers.getContract("WrappedOUSDProxy");
   const wousd = await ethers.getContractAt("WrappedOusd", wousdProxy.address);
 
-  await wousdProxy
-    .connect(sDeployer)
-    ["initialize(address,address,bytes)"](
-      dWrappedOusdImpl.address,
-      deployerAddr,
-      []
-    );
+  await wousdProxy.connect(sDeployer)[
+    // eslint-disable-next-line no-unexpected-multiline
+    "initialize(address,address,bytes)"
+  ](dWrappedOusdImpl.address, deployerAddr, []);
   await wousd.connect(sDeployer)["initialize()"]();
   await wousd.connect(sDeployer).transferGovernance(governorAddr);
   await wousd.connect(sGovernor).claimGovernance();
