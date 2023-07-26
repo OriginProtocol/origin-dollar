@@ -188,6 +188,8 @@ addresses.mainnet.balancerVault = "0xBA12222222228d8Ba445958a75a0704d566BF2C8";
 addresses.mainnet.wstETH_WETH_BPT =
   "0x32296969Ef14EB0c6d29669C550D4a0449130230";
 
+addresses.mainnet.wstETH_rETH_sfrxETH_BPT = "0x42ED016F826165C2e5976fe5bC3df540C5aD0Af7";
+
 // Aura
 addresses.mainnet.AURA = "0xC0c293ce456fF0ED870ADd98a0828Dd4d2903DBF";
 addresses.mainnet.auraRewardPool = "0x59D66C58E83A26d6a0E35114323f65c3945c89c1";

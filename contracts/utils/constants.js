@@ -9,7 +9,7 @@ const aura_wstETH_sfrxETH_rETH_PID = 50;
 const balancer_wstETH_WETH_PID =
   "0x32296969ef14eb0c6d29669c550d4a0449130230000200000000000000000080";
 const balancer_wstETH_sfrxETH_rETH_PID =
-  "0x5aee1e99fe86960377de9f88689616916d5dcabe000000000000000000000467";
+  "0x42ed016f826165c2e5976fe5bc3df540c5ad0af700000000000000000000058b";
 const MAX_UINT256 = BigNumber.from(
   "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
 );

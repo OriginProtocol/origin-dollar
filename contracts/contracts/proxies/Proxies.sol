@@ -158,9 +158,18 @@ contract OETHMorphoAaveStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 }
 
 /**
- * @notice OETHBalancerMetaPoolStrategyProxy delegates calls to a BalancerMetaPoolStrategy implementation
+ * @notice OETHBalancerMetaPoolWstEthWethStrategyProxy delegates calls to a BalancerMetaPoolStrategy implementation
  */
 contract OETHBalancerMetaPoolWstEthWethStrategyProxy is
+    InitializeGovernedUpgradeabilityProxy
+{
+
+}
+
+/**
+ * @notice OETHBalancerMetaPoolWstEthSfrxEthREthStrategyProxy delegates calls to a BalancerMetaPoolStrategy implementation
+ */
+contract OETHBalancerMetaPoolWstEthSfrxEthREthStrategyProxy is
     InitializeGovernedUpgradeabilityProxy
 {
 
