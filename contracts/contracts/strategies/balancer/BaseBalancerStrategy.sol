@@ -27,8 +27,6 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
 
     /// @notice Address of the Balancer vault
     IBalancerVault public immutable balancerVault;
-    /// @notice Address of the Balancer pool
-    address public immutable pTokenAddress;
     /// @notice Balancer pool identifier
     bytes32 public immutable balancerPoolId;
 
@@ -45,7 +43,6 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         address frxEthAddress; // Address of the frxEth token
         address sfrxEthAddress; // Address of the sfrxEth token
         address balancerVaultAddress; // Address of the Balancer vault
-        address platformAddress; // Address of the Balancer pool
         bytes32 balancerPoolId; // Balancer pool identifier
     }
 
@@ -58,15 +55,14 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         uint256 _newMaxSlippagePercentage
     );
 
-    constructor(BaseBalancerConfig memory config) {
-        stETH = config.stEthAddress;
-        wstETH = config.wstEthAddress;
-        frxETH = config.frxEthAddress;
-        sfrxETH = config.sfrxEthAddress;
+    constructor(BaseBalancerConfig memory _balancerConfig) {
+        stETH = _balancerConfig.stEthAddress;
+        wstETH = _balancerConfig.wstEthAddress;
+        frxETH = _balancerConfig.frxEthAddress;
+        sfrxETH = _balancerConfig.sfrxEthAddress;
 
-        balancerVault = IBalancerVault(config.balancerVaultAddress);
-        pTokenAddress = config.platformAddress;
-        balancerPoolId = config.balancerPoolId;
+        balancerVault = IBalancerVault(_balancerConfig.balancerVaultAddress);
+        balancerPoolId = _balancerConfig.balancerPoolId;
     }
 
     /**
@@ -111,11 +107,11 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         (IERC20[] memory tokens, uint256[] memory balances, ) = balancerVault
             .getPoolTokens(balancerPoolId);
 
-        // The strategy's sahres of the assets in the Balancer pool
+        // The strategy's shares of the assets in the Balancer pool
         // denominated in 1e18. (1e18 == 100%)
-        uint256 strategyShare = IERC20(pTokenAddress)
+        uint256 strategyShare = IERC20(platformAddress)
             .balanceOf(address(this))
-            .divPrecisely(IERC20(pTokenAddress).totalSupply());
+            .divPrecisely(IERC20(platformAddress).totalSupply());
 
         for (uint256 i = 0; i < balances.length; ++i) {
             address poolAsset = toPoolAsset(_asset);
@@ -342,7 +338,7 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
     }
 
     function _approveBase() internal virtual {
-        IERC20 pToken = IERC20(pTokenAddress);
+        IERC20 pToken = IERC20(platformAddress);
         // Balancer vault for BPT token (required for removing liquidity)
         pToken.safeApprove(address(balancerVault), 0);
         pToken.safeApprove(address(balancerVault), type(uint256).max);

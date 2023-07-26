@@ -41,13 +41,13 @@ module.exports = deploymentWithGovernanceProposal(
     const dOETHBalancerMetaPoolStrategyImpl = await deployWithConfirmation(
       "BalancerMetaPoolStrategy",
       [
+        [addresses.mainnet.wstETH_WETH_BPT, cOETHVaultProxy.address],
         [
           addresses.mainnet.stETH,
           addresses.mainnet.wstETH,
           addresses.mainnet.frxETH,
           addresses.mainnet.sfrxETH,
           addresses.mainnet.balancerVault, // Address of the Balancer vault
-          addresses.mainnet.wstETH_WETH_BPT, // Address of the Balancer pool
           balancer_wstETH_WETH_PID, // Pool ID of the Balancer pool
         ],
         [
@@ -69,14 +69,13 @@ module.exports = deploymentWithGovernanceProposal(
     );
 
     // 3. Encode the init data
-    const initFunction = "initialize(address[],address[],address[],address)";
+    const initFunction = "initialize(address[],address[],address[])";
     const initData = cOETHBalancerMetaPoolStrategy.interface.encodeFunctionData(
       initFunction,
       [
         [addresses.mainnet.BAL, addresses.mainnet.AURA],
         [addresses.mainnet.stETH, addresses.mainnet.WETH],
         [addresses.mainnet.wstETH_WETH_BPT, addresses.mainnet.wstETH_WETH_BPT],
-        cOETHVaultProxy.address,
       ]
     );
 
