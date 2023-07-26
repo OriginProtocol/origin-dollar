@@ -645,7 +645,7 @@ function oethCollateralSwapFixtureSetup() {
         );
 
       // Mint some tokens, so it ends up in Vault
-      await oethVault.connect(matt).mint(token.address, parseEther("25"), "0");
+      await oethVault.connect(matt).mint(token.address, parseEther("200"), "0");
     }
 
     if (shouldChangeBuffer) {

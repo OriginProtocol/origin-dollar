@@ -5,7 +5,13 @@ import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { useAccount } from 'wagmi'
 import analytics from 'utils/analytics'
 
-const CustomConnectButton = ({ id, className, onClick, style }) => {
+const CustomConnectButton = ({
+  id,
+  containerClassName = '',
+  className,
+  onClick,
+  style,
+}) => {
   return (
     <ConnectButton.Custom>
       {({
@@ -28,6 +34,7 @@ const CustomConnectButton = ({ id, className, onClick, style }) => {
 
         return (
           <div
+            className={containerClassName}
             {...(!ready && {
               'aria-hidden': true,
               style: {
@@ -93,34 +100,11 @@ const CustomConnectButton = ({ id, className, onClick, style }) => {
   )
 }
 
-const GetOUSD = ({
-  id,
-  className,
-  style,
-  dark,
-  light,
-  primary,
-  showLogin,
-  trackSource,
-  light2,
-  zIndex2,
-  navMarble,
-}) => {
+const GetOUSD = ({ id, className, containerClassName, style, trackSource }) => {
   const { isConnected: active } = useAccount()
 
   const [userAlreadyConnectedWallet, setUserAlreadyConnectedWallet] =
     useState(false)
-
-  const classList = classnames(
-    'btn d-flex align-items-center justify-content-center',
-    className,
-    dark && 'btn-dark',
-    light && 'btn-light',
-    light2 && 'btn-light2',
-    primary && 'btn-primary',
-    zIndex2 && 'zIndex2',
-    navMarble && 'nav-marble'
-  )
 
   useEffect(() => {
     if (
@@ -139,7 +123,8 @@ const GetOUSD = ({
     <>
       <CustomConnectButton
         id={id}
-        className={classList}
+        containerClassName={containerClassName}
+        className={className}
         style={style}
         onClick={() => {
           if (process.browser) {

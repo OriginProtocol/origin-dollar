@@ -8,11 +8,7 @@
  *    param receives return value of `beforeDeploy` function. `beforeDeployData` can be used to validate
  *    that the state change is ok
  */
-const {
-  getDeployScripts,
-  getLastDeployScript,
-  getFilesInFolder,
-} = require("../utils/fileSystem");
+const { getDeployScripts, getFilesInFolder } = require("../utils/fileSystem");
 const readline = require("readline");
 readline.emitKeypressEvents(process.stdin);
 
@@ -51,7 +47,7 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function smokeTestCheck(taskArguments, hre) {
+async function smokeTestCheck(taskArguments) {
   const deployId = taskArguments.deployid;
 
   if (!deployId) {
