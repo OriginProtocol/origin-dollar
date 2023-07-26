@@ -133,7 +133,7 @@ const GeoFenceCheck = () => {
 
         .geofence-modal .title {
           color: #000000;
-          font-family: Poppins;
+          font-family: Lato;
           font-size: 16px;
           font-weight: 700;
           line-height: 28px;
@@ -148,7 +148,7 @@ const GeoFenceCheck = () => {
         }
 
         .geofence-modal .info {
-          font-family: Poppins;
+          font-family: Lato;
           font-size: 14px;
           font-weight: 500;
           line-height: 23px;
@@ -157,7 +157,7 @@ const GeoFenceCheck = () => {
         }
 
         .geofence-modal .info.sub {
-          font-family: Poppins;
+          font-family: Lato;
           font-size: 12px;
           font-weight: 400;
           line-height: 20px;
@@ -169,7 +169,7 @@ const GeoFenceCheck = () => {
           padding: 12px 24px 12px 24px;
           border-radius: 4px;
           background-color: #fafbfc;
-          font-family: Poppins;
+          font-family: Lato;
           font-size: 12px;
           font-weight: 400;
           line-height: 20px;
@@ -195,7 +195,7 @@ const GeoFenceCheck = () => {
         .geofence-modal .ack .ack-label {
           display: inline-flex;
           align-items: center;
-          font-family: Poppins;
+          font-family: Lato;
           font-size: 12px;
           font-weight: 400;
           line-height: 20px;
