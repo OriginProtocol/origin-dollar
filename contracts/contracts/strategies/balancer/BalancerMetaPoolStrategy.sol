@@ -186,7 +186,10 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
     }
 
     /**
-     * @notice Withdraws all supported Vault collateral assets from the Balancer pool.
+     * @notice Withdraws all supported Vault collateral assets from the Balancer pool
+     * and send to the OToken's Vault.
+     *
+     * Is only executable by the OToken's Vault or the Governor.
      */
     function withdrawAll()
         external
@@ -259,13 +262,23 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         }
     }
 
+    /**
+     * @notice Approves the Balancer pool to transfer all supported
+     * assets from this strategy.
+     * Also approve any suppered assets that are wrapped in the Balancer pool
+     * like stETH and frxETH, to be transferred from this strategy to their
+     * respective wrapper contracts. eg wstETH and sfrxETH.
+     *
+     * Is only executable by the Governor.
+     */
     function safeApproveAllTokens()
         external
         override
         onlyGovernor
         nonReentrant
     {
-        for (uint256 i = 0; i < assetsMapped.length; ++i) {
+        uint256 assetCount = assetsMapped.length;
+        for (uint256 i = 0; i < assetCount; ++i) {
             _approveAsset(assetsMapped[i]);
         }
         _approveBase();
@@ -286,8 +299,10 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
     }
 
     /**
-     * @dev Approves the Balancer Vault to transfer assets from
-     * this strategy.
+     * @dev Approves the Balancer Vault to transfer an asset from
+     * this strategy. The assets could be a Vault collateral asset
+     * like WETH or rETH; or a Balancer pool asset that wraps the vault asset
+     * like wstETH or sfrxETH.
      */
     function _approveAsset(address _asset) internal {
         IERC20 asset = IERC20(_asset);
