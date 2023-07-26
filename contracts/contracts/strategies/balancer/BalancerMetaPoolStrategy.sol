@@ -6,11 +6,11 @@ pragma solidity ^0.8.0;
  * @author Origin Protocol Inc
  */
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { BaseAuraStrategy } from "./BaseAuraStrategy.sol";
+import { BaseAuraStrategy, BaseBalancerStrategy } from "./BaseAuraStrategy.sol";
 import { IBalancerVault } from "../../interfaces/balancer/IBalancerVault.sol";
 import { IRateProvider } from "../../interfaces/balancer/IRateProvider.sol";
 import { IMetaStablePool } from "../../interfaces/balancer/IMetaStablePool.sol";
-import { IERC20 } from "../../utils/InitializableAbstractStrategy.sol";
+import { IERC20, InitializableAbstractStrategy } from "../../utils/InitializableAbstractStrategy.sol";
 import { StableMath } from "../../utils/StableMath.sol";
 
 contract BalancerMetaPoolStrategy is BaseAuraStrategy {
@@ -18,9 +18,14 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
     using StableMath for uint256;
 
     constructor(
-        BaseBalancerConfig memory baseConfig,
-        AuraConfig memory auraConfig
-    ) BaseAuraStrategy(baseConfig, auraConfig) {}
+        BaseStrategyConfig memory _stratConfig,
+        BaseBalancerConfig memory _balancerConfig,
+        AuraConfig memory _auraConfig
+    )
+        InitializableAbstractStrategy(_stratConfig)
+        BaseBalancerStrategy(_balancerConfig)
+        BaseAuraStrategy(_auraConfig)
+    {}
 
     /**
      * @notice Deposits an `_amount` of vault collateral assets to
@@ -69,7 +74,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
             return;
         }
 
-        emit Deposit(_asset, pTokenAddress, _amount);
+        emit Deposit(_asset, platformAddress, _amount);
 
         (address poolAsset, uint256 poolAmount) = toPoolAsset(_asset, _amount);
 
@@ -209,7 +214,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
 
         // the strategy's share of the pool assets
         uint256 strategyShare = BPTtoWithdraw.divPrecisely(
-            IERC20(pTokenAddress).totalSupply()
+            IERC20(platformAddress).totalSupply()
         );
 
         uint256[] memory minAmountsOut = new uint256[](tokens.length);
@@ -257,7 +262,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
             uint256 transferAmount = IERC20(asset).balanceOf(address(this));
             if (transferAmount > 0) {
                 IERC20(asset).safeTransfer(vaultAddress, transferAmount);
-                emit Withdrawal(asset, pTokenAddress, transferAmount);
+                emit Withdrawal(asset, platformAddress, transferAmount);
             }
         }
     }
@@ -284,11 +289,8 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         _approveBase();
     }
 
-    // solhint-disable-next-line no-unused-vars
-    function _abstractSetPToken(address _asset, address _pToken)
-        internal
-        override
-    {
+    // solhin t-disable-next-line no-unused-vars
+    function _abstractSetPToken(address _asset, address) internal override {
         address poolAsset = toPoolAsset(_asset);
         if (_asset == stETH) {
             IERC20(stETH).safeApprove(wstETH, 1e50);

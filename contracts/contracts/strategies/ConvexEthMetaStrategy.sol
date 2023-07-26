@@ -38,13 +38,16 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
     // used to circumvent the stack too deep issue
     struct InitializeConfig {
         address curvePoolAddress; //Address of the Curve pool
-        address vaultAddress; //Address of the vault
         address cvxDepositorAddress; //Address of the Convex depositor(AKA booster) for this pool
         address oethAddress; //Address of OETH token
         address cvxRewardStakerAddress; //Address of the CVX rewards staker
         address curvePoolLpToken; //Address of metapool LP token
         uint256 cvxDepositorPTokenId; //Pid of the pool referred to by Depositor and staker
     }
+
+    constructor(BaseStrategyConfig memory _stratConfig)
+        InitializableAbstractStrategy(_stratConfig)
+    {}
 
     /**
      * Initializer for setting up strategy internal state. This overrides the
@@ -75,13 +78,7 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         ethCoinIndex = uint128(_getCoinIndex(ETH_ADDRESS));
         oethCoinIndex = uint128(_getCoinIndex(initConfig.oethAddress));
 
-        super._initialize(
-            initConfig.curvePoolAddress,
-            initConfig.vaultAddress,
-            _rewardTokenAddresses,
-            _assets,
-            _pTokens
-        );
+        super._initialize(_rewardTokenAddresses, _assets, _pTokens);
 
         /* needs to be called after super._initialize so that the platformAddress
          * is correctly set

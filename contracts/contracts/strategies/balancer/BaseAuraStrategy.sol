@@ -29,13 +29,10 @@ abstract contract BaseAuraStrategy is BaseBalancerStrategy {
         uint256 auraDepositorPTokenId; // The Aura rewards staker
     }
 
-    constructor(
-        BaseBalancerConfig memory baseConfig,
-        AuraConfig memory auraConfig
-    ) BaseBalancerStrategy(baseConfig) {
-        auraRewardPoolAddress = auraConfig.auraRewardPoolAddress;
-        auraRewardStakerAddress = auraConfig.auraRewardStakerAddress;
-        auraDepositorPTokenId = auraConfig.auraDepositorPTokenId;
+    constructor(AuraConfig memory _auraConfig) {
+        auraRewardPoolAddress = _auraConfig.auraRewardPoolAddress;
+        auraRewardStakerAddress = _auraConfig.auraRewardStakerAddress;
+        auraDepositorPTokenId = _auraConfig.auraDepositorPTokenId;
     }
 
     /**
@@ -47,14 +44,12 @@ abstract contract BaseAuraStrategy is BaseBalancerStrategy {
      *                order as returned by coins on the pool contract, i.e.
      *                WETH, stETH
      * @param _pTokens Platform Token corresponding addresses
-     * @param vaultAddress Address of the OToken's vault
      */
     function initialize(
         address[] calldata _rewardTokenAddresses, // BAL & AURA
         address[] calldata _assets,
-        address[] calldata _pTokens,
-        address vaultAddress
-    ) external onlyGovernor initializer {
+        address[] calldata _pTokens
+    ) external override onlyGovernor initializer {
         maxWithdrawalSlippage = 1e15;
         maxDepositSlippage = 1e15;
 
@@ -68,13 +63,7 @@ abstract contract BaseAuraStrategy is BaseBalancerStrategy {
             require(_assets[i] == asset, "Pool assets mismatch");
         }
 
-        super._initialize(
-            pTokenAddress,
-            vaultAddress,
-            _rewardTokenAddresses,
-            _assets,
-            _pTokens
-        );
+        super._initialize(_rewardTokenAddresses, _assets, _pTokens);
         _approveBase();
     }
 
@@ -148,13 +137,13 @@ abstract contract BaseAuraStrategy is BaseBalancerStrategy {
             .getPoolTokens(balancerPoolId);
 
         // Balancer Pool Tokens (BPT) in the Balancer pool and Aura rewards pool.
-        uint256 bptBalance = IERC20(pTokenAddress).balanceOf(address(this)) +
+        uint256 bptBalance = IERC20(platformAddress).balanceOf(address(this)) +
             IERC4626(auraRewardPoolAddress).balanceOf(address(this));
 
         // The strategy's shares of the assets in the Balancer pool
         // denominated in 1e18. (1e18 == 100%)
         uint256 strategyShare = bptBalance.divPrecisely(
-            IERC20(pTokenAddress).totalSupply()
+            IERC20(platformAddress).totalSupply()
         );
 
         for (uint256 i = 0; i < balances.length; ++i) {
@@ -173,7 +162,7 @@ abstract contract BaseAuraStrategy is BaseBalancerStrategy {
     function _approveBase() internal virtual override {
         super._approveBase();
 
-        IERC20 pToken = IERC20(pTokenAddress);
+        IERC20 pToken = IERC20(platformAddress);
         pToken.safeApprove(auraRewardPoolAddress, 0);
         pToken.safeApprove(auraRewardPoolAddress, type(uint256).max);
     }
