@@ -424,6 +424,7 @@ section.dim {
 
 .modal-content {
   background-color: transparent !important;
+  border: none !important;
 }
 
 @media (max-width: 992px) {
