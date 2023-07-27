@@ -20,11 +20,11 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
     constructor(
         BaseStrategyConfig memory _stratConfig,
         BaseBalancerConfig memory _balancerConfig,
-        AuraConfig memory _auraConfig
+        address _auraRewardPoolAddress
     )
         InitializableAbstractStrategy(_stratConfig)
         BaseBalancerStrategy(_balancerConfig)
-        BaseAuraStrategy(_auraConfig)
+        BaseAuraStrategy(_auraRewardPoolAddress)
     {}
 
     /**

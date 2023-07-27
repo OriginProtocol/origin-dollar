@@ -16,23 +16,14 @@ abstract contract BaseAuraStrategy is BaseBalancerStrategy {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
 
+    /// @notice Address of the Aura rewards pool
     address public immutable auraRewardPoolAddress;
-    address public immutable auraRewardStakerAddress;
-    uint256 public immutable auraDepositorPTokenId;
 
     // renamed from __reserved to not shadow BaseBalancerStrategy.__reserved,
     int256[50] private __reserved_2;
 
-    struct AuraConfig {
-        address auraRewardPoolAddress; // Address of the Aura rewards pool
-        address auraRewardStakerAddress; // Address of the Aura rewards staker
-        uint256 auraDepositorPTokenId; // The Aura rewards staker
-    }
-
-    constructor(AuraConfig memory _auraConfig) {
-        auraRewardPoolAddress = _auraConfig.auraRewardPoolAddress;
-        auraRewardStakerAddress = _auraConfig.auraRewardStakerAddress;
-        auraDepositorPTokenId = _auraConfig.auraDepositorPTokenId;
+    constructor(address _auraRewardPoolAddress) {
+        auraRewardPoolAddress = _auraRewardPoolAddress;
     }
 
     /**

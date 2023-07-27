@@ -1,10 +1,6 @@
 const { deploymentWithGovernanceProposal } = require("../utils/deploy");
 const addresses = require("../utils/addresses");
-const {
-  aura_rETH_WETH_PID,
-  aura_rETH_WETH_rewards,
-  balancer_rETH_WETH_PID,
-} = require("../utils/constants");
+const { balancer_rETH_WETH_PID } = require("../utils/constants");
 
 const platformAddress = addresses.mainnet.rETH_WETH_BPT;
 
@@ -53,11 +49,7 @@ module.exports = deploymentWithGovernanceProposal(
           addresses.mainnet.balancerVault, // Address of the Balancer vault
           balancer_rETH_WETH_PID, // Pool ID of the Balancer pool
         ],
-        [
-          aura_rETH_WETH_rewards,
-          addresses.mainnet.CurveOUSDMetaPool, // auraRewardStakerAddress
-          aura_rETH_WETH_PID, // auraDepositorPTokenId
-        ],
+        addresses.mainnet.rETH_WETH_AuraRewards, // Address of the Aura rewards contract
       ]
     );
     const cOETHBalancerMetaPoolStrategy = await ethers.getContractAt(

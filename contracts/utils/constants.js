@@ -10,20 +10,16 @@ const oethPoolLpPID = 174;
 
 // stETH/WETH
 const aura_stETH_WETH_PID = 115;
-const aura_stETH_WETH_rewards = "0x59D66C58E83A26d6a0E35114323f65c3945c89c1";
 const balancer_stETH_WETH_PID =
   "0x32296969ef14eb0c6d29669c550d4a0449130230000200000000000000000080";
 
 // wstETH/sfrcETH/rETH
 const aura_wstETH_sfrxETH_rETH_PID = 50;
-const aura_wstETH_sfrxETH_rETH_rewards =
-  "0xd26948e7a0223700e3c3cdea21ca2471abcb8d47";
 const balancer_wstETH_sfrxETH_rETH_PID =
-  "0x5aee1e99fe86960377de9f88689616916d5dcabe000000000000000000000467";
+  "0x42ed016f826165c2e5976fe5bc3df540c5ad0af700000000000000000000058b";
 
 // rETH/WETH
 const aura_rETH_WETH_PID = 109;
-const aura_rETH_WETH_rewards = "0xdd1fe5ad401d4777ce89959b7fa587e569bf125d";
 const balancer_rETH_WETH_PID =
   "0x1e19cf2d73a72ef1332c882f20534b6519be0276000200000000000000000112";
 
@@ -34,13 +30,10 @@ module.exports = {
   oethPoolLpPID,
   MAX_UINT256,
   aura_stETH_WETH_PID,
-  aura_stETH_WETH_rewards,
   balancer_stETH_WETH_PID,
   aura_wstETH_sfrxETH_rETH_PID,
-  aura_wstETH_sfrxETH_rETH_rewards,
   balancer_wstETH_sfrxETH_rETH_PID,
   aura_rETH_WETH_PID,
-  aura_rETH_WETH_rewards,
   balancer_rETH_WETH_PID,
 };
 

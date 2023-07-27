@@ -185,10 +185,20 @@ addresses.mainnet.oneInchRouterV5 =
 // Balancer
 addresses.mainnet.BAL = "0xba100000625a3754423978a60c9317c58a424e3D";
 addresses.mainnet.balancerVault = "0xBA12222222228d8Ba445958a75a0704d566BF2C8";
+// wstETH/WETH
 addresses.mainnet.wstETH_WETH_BPT =
   "0x32296969Ef14EB0c6d29669C550D4a0449130230";
-addresses.mainnet.rETH_WETH_BPT =
-  "0x1e19cf2d73a72ef1332c882f20534b6519be0276";
+addresses.mainnet.wstETH_WETH_AuraRewards =
+  "0x59D66C58E83A26d6a0E35114323f65c3945c89c1";
+// rETH/WETH
+addresses.mainnet.rETH_WETH_BPT = "0x1e19cf2d73a72ef1332c882f20534b6519be0276";
+addresses.mainnet.rETH_WETH_AuraRewards =
+  "0xdd1fe5ad401d4777ce89959b7fa587e569bf125d";
+// wstETH/sfrxETH/rETH
+addresses.mainnet.wstETH_sfrxETH_rETH_BPT =
+  "0x42ed016f826165c2e5976fe5bc3df540c5ad0af7";
+addresses.mainnet.wstETH_sfrxETH_rETH_AuraRewards =
+  "0xd26948e7a0223700e3c3cdea21ca2471abcb8d47";
 
 // Aura
 addresses.mainnet.AURA = "0xC0c293ce456fF0ED870ADd98a0828Dd4d2903DBF";
