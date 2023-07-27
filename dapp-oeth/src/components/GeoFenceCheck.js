@@ -192,7 +192,7 @@ const GeoFenceCheck = () => {
         }
 
         .geofence-modal .accept-criteria .list {
-          padding: 24px 0px 24px 16px;
+          padding: 24px 0px 24px 20px;
           margin: 0;
         }
 
