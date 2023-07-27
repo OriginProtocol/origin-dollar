@@ -175,7 +175,7 @@ const GeoFenceCheck = () => {
         }
 
         .geofence-modal .accept-criteria {
-          padding: 12px 24px 12px 24px;
+          padding: 0;
           border-radius: 4px;
           background-color: #fafbfc;
           font-family: Lato;
@@ -187,7 +187,7 @@ const GeoFenceCheck = () => {
         }
 
         .geofence-modal .accept-criteria .list {
-          padding: 0 0 0 24px;
+          padding: 24px 24px 24px 36px;
           margin: 0;
         }
 
@@ -198,7 +198,7 @@ const GeoFenceCheck = () => {
         .geofence-modal .ack {
           display: inline-flex;
           align-items: center;
-          margin: 18px 0;
+          margin: 24px 0;
         }
 
         .geofence-modal .ack .ack-label {
@@ -210,6 +210,7 @@ const GeoFenceCheck = () => {
           line-height: 20px;
           letter-spacing: 0em;
           text-align: left;
+          margin: 0;
         }
 
         .geofence-modal .ack .label-text {
