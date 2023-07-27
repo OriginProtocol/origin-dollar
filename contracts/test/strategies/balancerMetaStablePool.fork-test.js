@@ -1,8 +1,10 @@
 const { expect } = require("chai");
-
-const { loadFixture } = require("ethereum-waffle");
-const { units, oethUnits, forkOnlyDescribe } = require("../helpers");
+const { formatUnits } = require("ethers/lib/utils");
 const { BigNumber } = require("ethers");
+const { loadFixture } = require("ethereum-waffle");
+
+const addresses = require("../../utils/addresses");
+const { units, oethUnits, forkOnlyDescribe } = require("../helpers");
 const {
   balancerREthFixture,
   impersonateAndFundContract,
@@ -22,22 +24,37 @@ forkOnlyDescribe(
       fixture = await loadFixture(balancerREthFixture);
     });
 
-    describe("Mint", function () {
-      it("Should deploy WETH in Balancer MetaStablePool strategy", async function () {
-        const { josh, weth, reth } = fixture;
-        await mintTest(fixture, josh, weth, "10", [weth, reth]);
+    describe("Post deployment", () => {
+      it("Should have the correct initial state", async function () {
+        const { balancerREthStrategy } = fixture;
+
+        expect(await balancerREthStrategy.maxDepositSlippage()).to.equal(
+          oethUnits("0.001")
+        );
+        expect(await balancerREthStrategy.maxWithdrawalSlippage()).to.equal(
+          oethUnits("0.001")
+        );
+      });
+    });
+
+    describe("Deposit", function () {
+      beforeEach(async () => {
+        const { timelock, reth, weth, oethVault } = fixture;
+        await oethVault
+          .connect(timelock)
+          .setAssetDefaultStrategy(reth.address, addresses.zero);
+        await oethVault
+          .connect(timelock)
+          .setAssetDefaultStrategy(weth.address, addresses.zero);
+      });
+      it("Should deposit 12 WETH in Balancer MetaStablePool strategy", async function () {
+        const { reth, rEthBPT, weth } = fixture;
+        await depositTest(fixture, weth, "12", [weth, reth], rEthBPT);
       });
 
-      it("Should deploy rETH in Balancer MetaStablePool strategy", async function () {
-        const { josh, reth, weth } = fixture;
-        await mintTest(fixture, josh, reth, "30", [weth, reth]);
-      });
-
-      it("Should have the correct initial maxDepositSlippage state", async function () {
-        const { balancerREthStrategy, josh } = fixture;
-        expect(
-          await balancerREthStrategy.connect(josh).maxDepositSlippage()
-        ).to.equal(oethUnits("0.001"));
+      it("Should deposit 30 rETH in Balancer MetaStablePool strategy", async function () {
+        const { reth, rEthBPT, weth } = fixture;
+        await depositTest(fixture, reth, "30", [weth, reth], rEthBPT);
       });
 
       it("Should be able to deposit with higher deposit slippage", async function () {});
@@ -51,12 +68,23 @@ forkOnlyDescribe(
          * - transaction should revert because of the `whenNotInVaultContext` modifier
          */
       });
+
+      it("Should check balance for gas usage", async () => {
+        const { balancerREthStrategy, josh, weth } = fixture;
+
+        // Check balance in a transaction so the gas usage can be measured
+        await balancerREthStrategy.checkBalance(weth.address);
+        const tx = await balancerREthStrategy
+          .connect(josh)
+          .populateTransaction.checkBalance(weth.address);
+        await josh.sendTransaction(tx);
+      });
     });
 
     describe("Withdraw", function () {
       it("Should be able to withdraw some amount of pool liquidity", async function () {
-        const { josh, weth, reth, balancerREthStrategy, oethVault } = fixture;
-        await mintTest(fixture, josh, weth, "30", [weth, reth]);
+        const { weth, balancerREthStrategy, oethVault } = fixture;
+        // await mintTest(fixture, josh, weth, "30", [weth, reth], rEthBPT);
 
         const wethBalanceBeforeVault = await weth.balanceOf(oethVault.address);
         const wethToWithdraw = await units("10", weth);
@@ -76,8 +104,7 @@ forkOnlyDescribe(
       });
 
       it("Should be able to withdraw all of pool liquidity", async function () {
-        const { josh, weth, reth, balancerREthStrategy, oethVault } = fixture;
-        await mintTest(fixture, josh, weth, "30", [weth, reth]);
+        const { oethVault, weth, reth, balancerREthStrategy } = fixture;
 
         const wethBalanceBefore = await balancerREthStrategy.checkBalance(
           weth.address
@@ -126,61 +153,112 @@ forkOnlyDescribe(
   }
 );
 
-async function getPoolBalance(strategy, allAssets) {
-  let currentBalancerBalance = BigNumber.from(0);
+async function getPoolValues(strategy, allAssets) {
+  const result = {
+    total: BigNumber.from(0),
+  };
 
   for (const asset of allAssets) {
-    currentBalancerBalance = currentBalancerBalance.add(
-      await strategy.checkBalance(asset.address)
-    );
+    const assetSymbol = await asset.symbol();
+    const strategyAssetValue = await strategy.checkBalance(asset.address);
+    result.total = result.total.add(strategyAssetValue);
+    log(`Balancer ${assetSymbol} value: ${formatUnits(strategyAssetValue)}`);
+    result[assetSymbol] = strategyAssetValue;
   }
+  log(`Balancer total value: ${formatUnits(result.total)}`);
 
-  return currentBalancerBalance;
+  return result;
 }
 
-async function mintTest(fixture, user, asset, amount, allAssets) {
-  const { oethVault, oeth, balancerREthStrategy } = fixture;
+async function getPoolBalances(balancerVault, pid) {
+  const result = {};
+  const { tokens, balances } = await balancerVault.getPoolTokens(pid);
+  let i = 0;
+  for (const balance of balances) {
+    const assetAddr = tokens[i++];
+    log(`${assetAddr} pool balance: ${formatUnits(balance)}`);
+    result[assetAddr] = balance;
+  }
+  return result;
+}
 
-  await oethVault.connect(user).allocate();
+async function depositTest(fixture, asset, amount, allAssets, bpt) {
+  const {
+    oethVault,
+    oeth,
+    balancerREthStrategy,
+    balancerVault,
+    balancerREthPID,
+    reth,
+    strategist,
+    weth,
+  } = fixture;
+  const logParams = {
+    oeth,
+    oethVault,
+    asset,
+    bpt,
+    balancerVault,
+    balancerREthStrategy,
+    allAssets,
+    pid: balancerREthPID,
+  };
+
   const unitAmount = await units(amount, asset);
 
-  const currentSupply = await oeth.totalSupply();
-  const currentBalance = await oeth.connect(user).balanceOf(user.address);
-  const currentBalancerBalance = await getPoolBalance(
-    balancerREthStrategy,
-    allAssets
-  );
+  log(`WETH in vault ${formatUnits(await weth.balanceOf(oethVault.address))}`);
+  log(`rETH in vault ${formatUnits(await reth.balanceOf(oethVault.address))}`);
 
-  // Mint OETH w/ asset
-  await asset.connect(user).approve(oethVault.address, unitAmount);
-  await oethVault.connect(user).mint(asset.address, unitAmount, 0);
-  await oethVault.connect(user).allocate();
+  const before = await logBalances(logParams);
 
-  const newBalance = await oeth.connect(user).balanceOf(user.address);
-  const newSupply = await oeth.totalSupply();
-  const newBalancerBalance = await getPoolBalance(
-    balancerREthStrategy,
-    allAssets
-  );
+  await oethVault
+    .connect(strategist)
+    .depositToStrategy(
+      balancerREthStrategy.address,
+      [asset.address],
+      [unitAmount]
+    );
 
-  const balanceDiff = newBalance.sub(currentBalance);
-  // Ensure user has correct balance (w/ 1% slippage tolerance)
-  expect(balanceDiff).to.approxEqualTolerance(unitAmount, 1);
-
-  // Supply checks
-  const supplyDiff = newSupply.sub(currentSupply);
-
-  expect(supplyDiff).to.approxEqualTolerance(unitAmount, 1);
-
-  const balancerLiquidityDiff = newBalancerBalance.sub(currentBalancerBalance);
+  const after = await logBalances(logParams);
 
   // Should have liquidity in Balancer
-  expect(balancerLiquidityDiff).to.approxEqualTolerance(unitAmount, 1);
+  const strategyValuesDiff = after.strategyValues.total.sub(
+    before.strategyValues.total
+  );
+  expect(strategyValuesDiff).to.approxEqualTolerance(unitAmount, 1);
+}
 
-  // Check balance in a transaction so the gas usage can be measured
-  await balancerREthStrategy.checkBalance(asset.address);
-  const tx = await balancerREthStrategy
-    .connect(user)
-    .populateTransaction.checkBalance(asset.address);
-  await user.sendTransaction(tx);
+async function logBalances({
+  oeth,
+  oethVault,
+  asset,
+  bpt,
+  balancerVault,
+  pid,
+  balancerREthStrategy,
+  allAssets,
+}) {
+  const oethSupply = await oeth.totalSupply();
+  const bptSupply = await bpt.totalSupply();
+  const vaultAssets = await asset.balanceOf(oethVault.address);
+
+  log(`\nOETH total supply: ${formatUnits(oethSupply)}`);
+  log(`BPT total supply : ${formatUnits(bptSupply)}`);
+  log(`Vault assets     : ${formatUnits(vaultAssets)}`);
+
+  const strategyValues = await getPoolValues(
+    balancerREthStrategy,
+    allAssets,
+    balancerVault
+  );
+
+  const poolBalances = await getPoolBalances(balancerVault, pid);
+
+  return {
+    oethSupply,
+    bptSupply,
+    vaultAssets,
+    strategyValues,
+    poolBalances,
+  };
 }

@@ -3,6 +3,7 @@ const hre = require("hardhat");
 const { ethers } = hre;
 
 const addresses = require("../utils/addresses");
+const { balancer_rETH_WETH_PID } = require("../utils/constants");
 const {
   fundAccounts,
   fundAccountsForOETHUnitTests,
@@ -833,7 +834,8 @@ async function convexVaultFixture() {
  */
 async function balancerREthFixture() {
   const fixture = await loadFixture(defaultFixture);
-  const { oethVault, timelock, weth, reth, balancerREthStrategy } = fixture;
+  const { oethVault, timelock, weth, reth, balancerREthStrategy, josh } =
+    fixture;
 
   await oethVault
     .connect(timelock)
@@ -841,6 +843,20 @@ async function balancerREthFixture() {
   await oethVault
     .connect(timelock)
     .setAssetDefaultStrategy(weth.address, balancerREthStrategy.address);
+
+  fixture.rEthBPT = await ethers.getContractAt(
+    "IERC20Metadata",
+    addresses.mainnet.rETH_WETH_BPT,
+    josh
+  );
+  fixture.balancerREthPID = balancer_rETH_WETH_PID;
+
+  fixture.balancerVault = await ethers.getContractAt(
+    "IBalancerVault",
+    addresses.mainnet.balancerVault,
+    josh
+  );
+
   return fixture;
 }
 
