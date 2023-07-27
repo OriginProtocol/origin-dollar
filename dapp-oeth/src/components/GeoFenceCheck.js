@@ -180,7 +180,7 @@ const GeoFenceCheck = () => {
         }
 
         .geofence-modal .accept-criteria {
-          padding: 12px 24px 12px 24px;
+          padding: 0;
           border-radius: 4px;
           background-color: #51546633;
           font-family: Inter;
@@ -192,7 +192,7 @@ const GeoFenceCheck = () => {
         }
 
         .geofence-modal .accept-criteria .list {
-          padding: 24px 0px 24px 20px;
+          padding: 24px 24px 24px 36px;
           margin: 0;
         }
 
@@ -215,6 +215,7 @@ const GeoFenceCheck = () => {
           line-height: 20px;
           letter-spacing: 0em;
           text-align: left;
+          margin: 0;
         }
 
         .geofence-modal .ack .label-text {
