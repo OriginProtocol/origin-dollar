@@ -162,7 +162,7 @@ const defaultFixture = deployments.createFixture(async () => {
     morpho,
     morphoCompoundStrategy,
     fraxEthStrategy,
-    balancerWstEthWethStrategy,
+    balancerREthStrategy,
     morphoAaveStrategy,
     oethMorphoAaveStrategy,
     morphoLens,
@@ -266,12 +266,12 @@ const defaultFixture = deployments.createFixture(async () => {
       fraxEthStrategyProxy.address
     );
 
-    const balancerWstEthWethStrategyProxy = await ethers.getContract(
-      "OETHBalancerMetaPoolWstEthWethStrategyProxy"
+    const balancerRethStrategyProxy = await ethers.getContract(
+      "OETHBalancerMetaPoolrEthStrategyProxy"
     );
-    balancerWstEthWethStrategy = await ethers.getContractAt(
+    balancerREthStrategy = await ethers.getContractAt(
       "BalancerMetaPoolStrategy",
-      balancerWstEthWethStrategyProxy.address
+      balancerRethStrategyProxy.address
     );
 
     const oethHarvesterProxy = await ethers.getContract("OETHHarvesterProxy");
@@ -549,7 +549,7 @@ const defaultFixture = deployments.createFixture(async () => {
     frxETH,
     sfrxETH,
     fraxEthStrategy,
-    balancerWstEthWethStrategy,
+    balancerREthStrategy,
     oethMorphoAaveStrategy,
     woeth,
     ConvexEthMetaStrategy,
@@ -829,25 +829,18 @@ async function convexVaultFixture() {
 }
 
 /**
- * Configure a Vault with only the balancerWstEthWethStrategy
+ * Configure a Vault with only the balancerREthStrategy
  */
-async function balancerWstEthWethFixture() {
+async function balancerREthFixture() {
   const fixture = await loadFixture(defaultFixture);
-  const { oethVault, timelock, weth, stETH, balancerWstEthWethStrategy } =
-    fixture;
+  const { oethVault, timelock, weth, reth, balancerREthStrategy } = fixture;
 
   await oethVault
     .connect(timelock)
-    .setAssetDefaultStrategy(weth.address, balancerWstEthWethStrategy.address);
+    .setAssetDefaultStrategy(reth.address, balancerREthStrategy.address);
   await oethVault
     .connect(timelock)
-    .setAssetDefaultStrategy(stETH.address, balancerWstEthWethStrategy.address);
-  await oethVault
-    .connect(timelock)
-    .setAssetDefaultStrategy(weth.address, balancerWstEthWethStrategy.address);
-  await oethVault
-    .connect(timelock)
-    .setAssetDefaultStrategy(stETH.address, balancerWstEthWethStrategy.address);
+    .setAssetDefaultStrategy(weth.address, balancerREthStrategy.address);
   return fixture;
 }
 
@@ -1649,7 +1642,7 @@ module.exports = {
   impersonateAndFundContract,
   impersonateAccount,
   fraxETHStrategyFixtureSetup,
-  balancerWstEthWethFixture,
+  balancerREthFixture,
   oethMorphoAaveFixtureSetup,
   mintWETH,
   replaceContractAt,

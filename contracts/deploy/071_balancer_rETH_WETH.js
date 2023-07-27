@@ -1,13 +1,16 @@
 const { deploymentWithGovernanceProposal } = require("../utils/deploy");
 const addresses = require("../utils/addresses");
 const {
-  aura_stETH_WETH_PID,
-  balancer_wstETH_WETH_PID,
+  aura_rETH_WETH_PID,
+  aura_rETH_WETH_rewards,
+  balancer_rETH_WETH_PID,
 } = require("../utils/constants");
+
+const platformAddress = addresses.mainnet.rETH_WETH_BPT;
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "071_balancer_wstETH_WETH",
+    deployName: "071_balancer_rETH_WETH",
     forceDeploy: false,
     //forceSkip: true,
     deployerIsProposer: true,
@@ -30,10 +33,10 @@ module.exports = deploymentWithGovernanceProposal(
     // 1. Deploy new proxy
     // New strategy will be living at a clean address
     const dOETHBalancerMetaPoolStrategyProxy = await deployWithConfirmation(
-      "OETHBalancerMetaPoolWstEthWethStrategyProxy"
+      "OETHBalancerMetaPoolrEthStrategyProxy"
     );
     const cOETHBalancerMetaPoolStrategyProxy = await ethers.getContractAt(
-      "OETHBalancerMetaPoolWstEthWethStrategyProxy",
+      "OETHBalancerMetaPoolrEthStrategyProxy",
       dOETHBalancerMetaPoolStrategyProxy.address
     );
 
@@ -41,19 +44,19 @@ module.exports = deploymentWithGovernanceProposal(
     const dOETHBalancerMetaPoolStrategyImpl = await deployWithConfirmation(
       "BalancerMetaPoolStrategy",
       [
-        [addresses.mainnet.wstETH_WETH_BPT, cOETHVaultProxy.address],
+        [platformAddress, cOETHVaultProxy.address],
         [
           addresses.mainnet.stETH,
           addresses.mainnet.wstETH,
           addresses.mainnet.frxETH,
           addresses.mainnet.sfrxETH,
           addresses.mainnet.balancerVault, // Address of the Balancer vault
-          balancer_wstETH_WETH_PID, // Pool ID of the Balancer pool
+          balancer_rETH_WETH_PID, // Pool ID of the Balancer pool
         ],
         [
-          addresses.mainnet.auraRewardPool,
+          aura_rETH_WETH_rewards,
           addresses.mainnet.CurveOUSDMetaPool, // auraRewardStakerAddress
-          aura_stETH_WETH_PID, // auraDepositorPTokenId
+          aura_rETH_WETH_PID, // auraDepositorPTokenId
         ],
       ]
     );
@@ -74,8 +77,8 @@ module.exports = deploymentWithGovernanceProposal(
       initFunction,
       [
         [addresses.mainnet.BAL, addresses.mainnet.AURA],
-        [addresses.mainnet.stETH, addresses.mainnet.WETH],
-        [addresses.mainnet.wstETH_WETH_BPT, addresses.mainnet.wstETH_WETH_BPT],
+        [addresses.mainnet.rETH, addresses.mainnet.WETH],
+        [platformAddress, platformAddress],
       ]
     );
 
