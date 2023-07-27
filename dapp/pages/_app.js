@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
+import dynamic from 'next/dynamic'
 import Head from 'next/head'
 import { useCookies } from 'react-cookie'
 import { useStoreState } from 'pullstate'
@@ -80,6 +81,10 @@ const client = createClient({
   connectors,
 })
 
+const GeoFenceCheck = dynamic(() => import('components/GeoFenceCheck'), {
+  ssr: false,
+})
+
 function App({ Component, pageProps, err }) {
   const [locale, setLocale] = useState('en_US')
   const { address: account, isConnected: active } = useAccount()
@@ -133,6 +138,7 @@ function App({ Component, pageProps, err }) {
           <link rel="canonical" href={canonicalUrl} />
         </Head>
         <QueryClientProvider client={queryClient}>
+          <GeoFenceCheck />
           <AccountListener />
           <TransactionListener />
           <UserActivityListener />

@@ -45,33 +45,117 @@ main {
 }
 
 main.dapp {
-  background-image: -webkit-gradient( linear, left top, left bottom, color-stop( 451px, #183140 ), color-stop( 451px,  #183140 ), color-stop( 451px, #fafbfc ) ); /* Chrome, Safari4+ */
-  background-image: -webkit-linear-gradient( top, #183140 451px, #183140 451px, #fafbfc 451px ); /* Chrome10+, Safari5.1+ */    
-  background-image:    -moz-linear-gradient( top, #183140 451px, #183140 451px, #fafbfc 451px ); /* Fx3.6+ */   
-  background-image:         linear-gradient(      #183140 451px, #183140 451px, #fafbfc 451px ); /* W3C */
+  background-image: -webkit-gradient(
+    linear,
+    left top,
+    left bottom,
+    color-stop(451px, #183140),
+    color-stop(451px, #183140),
+    color-stop(451px, #fafbfc)
+  ); /* Chrome, Safari4+ */
+  background-image: -webkit-linear-gradient(
+    top,
+    #183140 451px,
+    #183140 451px,
+    #fafbfc 451px
+  ); /* Chrome10+, Safari5.1+ */
+  background-image: -moz-linear-gradient(
+    top,
+    #183140 451px,
+    #183140 451px,
+    #fafbfc 451px
+  ); /* Fx3.6+ */
+  background-image: linear-gradient(
+    #183140 451px,
+    #183140 451px,
+    #fafbfc 451px
+  ); /* W3C */
   padding-bottom: 150px;
 }
 
 main.dapp.medium {
-  background-image: -webkit-gradient( linear, left top, left bottom, color-stop( 300px, #183140 ), color-stop( 300px,  #183140 ), color-stop( 300px, #fafbfc ) ); /* Chrome, Safari4+ */
-  background-image: -webkit-linear-gradient( top, #183140 300px, #183140 300px, #fafbfc 300px ); /* Chrome10+, Safari5.1+ */    
-  background-image:    -moz-linear-gradient( top, #183140 300px, #183140 300px, #fafbfc 300px ); /* Fx3.6+ */   
-  background-image:         linear-gradient(      #183140 300px, #183140 300px, #fafbfc 300px ); /* W3C */
+  background-image: -webkit-gradient(
+    linear,
+    left top,
+    left bottom,
+    color-stop(300px, #183140),
+    color-stop(300px, #183140),
+    color-stop(300px, #fafbfc)
+  ); /* Chrome, Safari4+ */
+  background-image: -webkit-linear-gradient(
+    top,
+    #183140 300px,
+    #183140 300px,
+    #fafbfc 300px
+  ); /* Chrome10+, Safari5.1+ */
+  background-image: -moz-linear-gradient(
+    top,
+    #183140 300px,
+    #183140 300px,
+    #fafbfc 300px
+  ); /* Fx3.6+ */
+  background-image: linear-gradient(
+    #183140 300px,
+    #183140 300px,
+    #fafbfc 300px
+  ); /* W3C */
 }
 
 main.dapp.short {
-  background-image: -webkit-gradient( linear, left top, left bottom, color-stop( 94px, #183140 ), color-stop( 94px,  #183140 ), color-stop( 94px, #fafbfc ) ); /* Chrome, Safari4+ */
-  background-image: -webkit-linear-gradient( top, #183140 94px, #183140 94px, #fafbfc 94px ); /* Chrome10+, Safari5.1+ */    
-  background-image:    -moz-linear-gradient( top, #183140 94px, #183140 94px, #fafbfc 94px ); /* Fx3.6+ */   
-  background-image:         linear-gradient(      #183140 94px, #183140 94px, #fafbfc 94px ); /* W3C */
+  background-image: -webkit-gradient(
+    linear,
+    left top,
+    left bottom,
+    color-stop(94px, #183140),
+    color-stop(94px, #183140),
+    color-stop(94px, #fafbfc)
+  ); /* Chrome, Safari4+ */
+  background-image: -webkit-linear-gradient(
+    top,
+    #183140 94px,
+    #183140 94px,
+    #fafbfc 94px
+  ); /* Chrome10+, Safari5.1+ */
+  background-image: -moz-linear-gradient(
+    top,
+    #183140 94px,
+    #183140 94px,
+    #fafbfc 94px
+  ); /* Fx3.6+ */
+  background-image: linear-gradient(
+    #183140 94px,
+    #183140 94px,
+    #fafbfc 94px
+  ); /* W3C */
   padding-bottom: 132px;
 }
 
 main.dapp.shorter {
-  background-image: -webkit-gradient( linear, left top, left bottom, color-stop( 282px, #183140 ), color-stop( 282px,  #183140 ), color-stop( 282px, #fafbfc ) ); /* Chrome, Safari4+ */
-  background-image: -webkit-linear-gradient( top, #183140 282px, #183140 282px, #fafbfc 282px ); /* Chrome10+, Safari5.1+ */    
-  background-image:    -moz-linear-gradient( top, #183140 282px, #183140 282px, #fafbfc 282px ); /* Fx3.6+ */   
-  background-image:         linear-gradient(      #183140 282px, #183140 282px, #fafbfc 282px ); /* W3C */
+  background-image: -webkit-gradient(
+    linear,
+    left top,
+    left bottom,
+    color-stop(282px, #183140),
+    color-stop(282px, #183140),
+    color-stop(282px, #fafbfc)
+  ); /* Chrome, Safari4+ */
+  background-image: -webkit-linear-gradient(
+    top,
+    #183140 282px,
+    #183140 282px,
+    #fafbfc 282px
+  ); /* Chrome10+, Safari5.1+ */
+  background-image: -moz-linear-gradient(
+    top,
+    #183140 282px,
+    #183140 282px,
+    #fafbfc 282px
+  ); /* Fx3.6+ */
+  background-image: linear-gradient(
+    #183140 282px,
+    #183140 282px,
+    #fafbfc 282px
+  ); /* W3C */
   padding-bottom: 132px;
 }
 
@@ -105,33 +189,57 @@ section.dim {
 
 .gradient1 {
   color: #141519;
-  background-image: -webkit-linear-gradient(left, #fedba8 -3.29%, #cf75d5 106.42%);
+  background-image: -webkit-linear-gradient(
+    left,
+    #fedba8 -3.29%,
+    #cf75d5 106.42%
+  );
 }
 
 .text-gradient1 {
-  background-image: -webkit-linear-gradient(left, #fedba8 -3.29%, #cf75d5 106.42%);
+  background-image: -webkit-linear-gradient(
+    left,
+    #fedba8 -3.29%,
+    #cf75d5 106.42%
+  );
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 .gradient2 {
   color: #fafbfb;
-  background-image: -webkit-linear-gradient(left, #8C66FC -28.99%, #0274F1 144.97%);
+  background-image: -webkit-linear-gradient(
+    left,
+    #8c66fc -28.99%,
+    #0274f1 144.97%
+  );
 }
 
 .text-gradient2 {
-  background-image: -webkit-linear-gradient(left, #8C66FC -28.99%, #0274F1 144.97%);
+  background-image: -webkit-linear-gradient(
+    left,
+    #8c66fc -28.99%,
+    #0274f1 144.97%
+  );
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 .gradient3 {
-  background-image: -webkit-linear-gradient(left, #B361E6 -28.99%, #6A36FC 144.97%);
+  background-image: -webkit-linear-gradient(
+    left,
+    #b361e6 -28.99%,
+    #6a36fc 144.97%
+  );
 }
 
 .gradient4 {
   color: #fafbfb;
-  background-image: -webkit-linear-gradient(left, #0d0033 -28.99%, #001124 144.97%);
+  background-image: -webkit-linear-gradient(
+    left,
+    #0d0033 -28.99%,
+    #001124 144.97%
+  );
 }
 
 .mono {
@@ -312,7 +420,10 @@ section.dim {
 }
 
 .Toastify__toast--error {
-  
+}
+
+.modal-content {
+  background-color: transparent !important;
 }
 
 @media (max-width: 992px) {
@@ -329,10 +440,31 @@ section.dim {
   }
 
   main.dapp.shorter {
-    background-image: -webkit-gradient( linear, left top, left bottom, color-stop( 439px, #183140 ), color-stop( 439px,  #183140 ), color-stop( 439px, #fafbfc ) ); /* Chrome, Safari4+ */
-    background-image: -webkit-linear-gradient( top, #183140 439px, #183140 439px, #fafbfc 439px ); /* Chrome10+, Safari5.1+ */    
-    background-image:    -moz-linear-gradient( top, #183140 439px, #183140 439px, #fafbfc 439px ); /* Fx3.6+ */   
-    background-image:         linear-gradient(      #183140 439px, #183140 439px, #fafbfc 439px ); /* W3C */
+    background-image: -webkit-gradient(
+      linear,
+      left top,
+      left bottom,
+      color-stop(439px, #183140),
+      color-stop(439px, #183140),
+      color-stop(439px, #fafbfc)
+    ); /* Chrome, Safari4+ */
+    background-image: -webkit-linear-gradient(
+      top,
+      #183140 439px,
+      #183140 439px,
+      #fafbfc 439px
+    ); /* Chrome10+, Safari5.1+ */
+    background-image: -moz-linear-gradient(
+      top,
+      #183140 439px,
+      #183140 439px,
+      #fafbfc 439px
+    ); /* Fx3.6+ */
+    background-image: linear-gradient(
+      #183140 439px,
+      #183140 439px,
+      #fafbfc 439px
+    ); /* W3C */
     padding-bottom: 132px;
   }
 }
