@@ -84,14 +84,18 @@ forkOnlyDescribe(
           .connect(timelock)
           .setAssetDefaultStrategy(weth.address, addresses.zero);
       });
+      it("Should deposit 5 WETH and 5 rETH in Balancer MetaStablePool strategy", async function () {
+        const { reth, rEthBPT, weth } = fixture;
+        await depositTest(fixture, [5, 5], [weth, reth], rEthBPT);
+      });
       it("Should deposit 12 WETH in Balancer MetaStablePool strategy", async function () {
         const { reth, rEthBPT, weth } = fixture;
-        await depositTest(fixture, weth, "12", [weth, reth], rEthBPT);
+        await depositTest(fixture, [12, 0], [weth, reth], rEthBPT);
       });
 
       it("Should deposit 30 rETH in Balancer MetaStablePool strategy", async function () {
         const { reth, rEthBPT, weth } = fixture;
-        await depositTest(fixture, reth, "30", [weth, reth], rEthBPT);
+        await depositTest(fixture, [0, 30], [weth, reth], rEthBPT);
       });
 
       it("Should be able to deposit with higher deposit slippage", async function () {});
@@ -218,7 +222,7 @@ async function getPoolBalances(balancerVault, pid) {
   return result;
 }
 
-async function depositTest(fixture, asset, amount, allAssets, bpt) {
+async function depositTest(fixture, amounts, allAssets, bpt) {
   const {
     oethVault,
     oeth,
@@ -227,12 +231,10 @@ async function depositTest(fixture, asset, amount, allAssets, bpt) {
     balancerREthPID,
     reth,
     strategist,
-    weth,
   } = fixture;
   const logParams = {
     oeth,
     oethVault,
-    asset,
     bpt,
     balancerVault,
     balancerREthStrategy,
@@ -240,24 +242,26 @@ async function depositTest(fixture, asset, amount, allAssets, bpt) {
     pid: balancerREthPID,
   };
 
-  const unitAmount = await oethUnits(amount);
-  const ethAmount =
-    asset.address === reth.address
-      ? await reth.getEthValue(unitAmount)
-      : unitAmount;
-
-  log(`WETH in vault ${formatUnits(await weth.balanceOf(oethVault.address))}`);
-  log(`rETH in vault ${formatUnits(await reth.balanceOf(oethVault.address))}`);
+  const unitAmounts = amounts.map((amount) => oethUnits(amount.toString()));
+  const ethAmounts = await Promise.all(
+    allAssets.map((asset, i) =>
+      asset.address === reth.address
+        ? reth.getEthValue(unitAmounts[i])
+        : unitAmounts[i]
+    )
+  );
+  const sumEthAmounts = ethAmounts.reduce(
+    (a, b) => a.add(b),
+    BigNumber.from(0)
+  );
 
   const before = await logBalances(logParams);
 
-  await oethVault
-    .connect(strategist)
-    .depositToStrategy(
-      balancerREthStrategy.address,
-      [asset.address],
-      [unitAmount]
-    );
+  await oethVault.connect(strategist).depositToStrategy(
+    balancerREthStrategy.address,
+    allAssets.map((asset) => asset.address),
+    unitAmounts
+  );
 
   const after = await logBalances(logParams);
 
@@ -265,13 +269,12 @@ async function depositTest(fixture, asset, amount, allAssets, bpt) {
   const strategyValuesDiff = after.strategyValues.total.sub(
     before.strategyValues.total
   );
-  expect(strategyValuesDiff).to.approxEqualTolerance(ethAmount, 1);
+  expect(strategyValuesDiff).to.approxEqualTolerance(sumEthAmounts, 1);
 }
 
 async function logBalances({
   oeth,
   oethVault,
-  asset,
   bpt,
   balancerVault,
   pid,
@@ -280,11 +283,14 @@ async function logBalances({
 }) {
   const oethSupply = await oeth.totalSupply();
   const bptSupply = await bpt.totalSupply();
-  const vaultAssets = await asset.balanceOf(oethVault.address);
 
   log(`\nOETH total supply: ${formatUnits(oethSupply)}`);
   log(`BPT total supply : ${formatUnits(bptSupply)}`);
-  log(`Vault assets     : ${formatUnits(vaultAssets)}`);
+
+  for (const asset of allAssets) {
+    const vaultAssets = await asset.balanceOf(oethVault.address);
+    log(`${await asset.symbol()} in vault ${formatUnits(vaultAssets)}`);
+  }
 
   const strategyValues = await getPoolValues(
     balancerREthStrategy,
@@ -297,7 +303,6 @@ async function logBalances({
   return {
     oethSupply,
     bptSupply,
-    vaultAssets,
     strategyValues,
     poolBalances,
   };
