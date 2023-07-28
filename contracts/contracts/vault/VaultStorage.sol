@@ -81,6 +81,7 @@ contract VaultStorage is Initializable, Governable {
         bool isMultiAssets; // supports deposit and withdraw of mutliple assets
     }
     /// @dev mapping of strategy contracts to their configiration
+    // slither-disable-next-line uninitialized-state
     mapping(address => Strategy) internal strategies;
     /// @dev list of all vault strategies
     address[] internal allStrategies;
