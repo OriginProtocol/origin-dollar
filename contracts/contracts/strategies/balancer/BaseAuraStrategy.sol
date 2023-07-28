@@ -114,58 +114,16 @@ abstract contract BaseAuraStrategy is BaseBalancerStrategy {
         _collectRewardTokens();
     }
 
-    /**
-     * @notice Get the total asset value held in the Balancer pool
-     * and the Aura rewards pool.
-     * @param _asset  Address of the Vault collateral asset
-     * @return value  Total value of the asset
-     */
-    function checkBalance(address _asset)
-        external
+    /// @notice Balancer Pool Tokens (BPT) in the Balancer pool and the Aura rewards pool.
+    function _getBalancerPoolTokens()
+        internal
         view
-        virtual
         override
-        returns (uint256 value)
+        returns (uint256 balancerPoolTokens)
     {
-        // Get the total balance of each of the Balancer pool assets
-        (IERC20[] memory tokens, uint256[] memory balances, ) = balancerVault
-            .getPoolTokens(balancerPoolId);
-
-        // Balancer Pool Tokens (BPT) in the Balancer pool and Aura rewards pool.
-        uint256 bptBalance = IERC20(platformAddress).balanceOf(address(this)) +
+        balancerPoolTokens =
+            IERC20(platformAddress).balanceOf(address(this)) +
             IERC4626(auraRewardPoolAddress).balanceOf(address(this));
-
-        // The strategy's shares of the assets in the Balancer pool
-        // denominated in 1e18. (1e18 == 100%)
-        uint256 strategyShare = bptBalance.divPrecisely(
-            IERC20(platformAddress).totalSupply()
-        );
-        address poolAsset = toPoolAsset(_asset);
-        for (uint256 i = 0; i < balances.length; ++i) {
-            if (address(tokens[i]) == poolAsset) {
-                // convert Balancer pool asset value to Vault asset value
-                (, value) = fromPoolAsset(
-                    poolAsset,
-                    balances[i].mulTruncate(strategyShare)
-                );
-                return value;
-            }
-        }
-    }
-
-    /**
-     * @notice Get the total asset value held in the Balancer pool
-     * and the Aura rewards pool.
-     */
-    function checkBalance() external view virtual returns (uint256 value) {
-        // Balancer Pool Tokens (BPT) in the Balancer pool and Aura rewards pool.
-        uint256 bptBalance = IERC20(platformAddress).balanceOf(address(this)) +
-            IERC4626(auraRewardPoolAddress).balanceOf(address(this));
-
-        // Convert BPT to ETH value
-        value = bptBalance.mulTruncate(
-            IRateProvider(platformAddress).getRate()
-        );
     }
 
     function _approveBase() internal virtual override {

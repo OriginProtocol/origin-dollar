@@ -113,9 +113,9 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
 
         // The strategy's shares of the assets in the Balancer pool
         // denominated in 1e18. (1e18 == 100%)
-        uint256 strategyShare = IERC20(platformAddress)
-            .balanceOf(address(this))
-            .divPrecisely(IERC20(platformAddress).totalSupply());
+        uint256 strategyShare = _getBalancerPoolTokens().divPrecisely(
+            IERC20(platformAddress).totalSupply()
+        );
 
         for (uint256 i = 0; i < balances.length; ++i) {
             address poolAsset = toPoolAsset(_asset);
@@ -128,6 +128,28 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
                 return value;
             }
         }
+    }
+
+    /**
+     * @notice Get the total asset value held in the Balancer pool.
+     */
+    function checkBalance() external view virtual returns (uint256 value) {
+        uint256 bptBalance = _getBalancerPoolTokens();
+
+        // Convert BPT to ETH value
+        value = bptBalance.mulTruncate(
+            IRateProvider(platformAddress).getRate()
+        );
+    }
+
+    /// @notice Balancer Pool Tokens (BPT) in the Balancer pool.
+    function _getBalancerPoolTokens()
+        internal
+        view
+        virtual
+        returns (uint256 balancerPoolTokens)
+    {
+        balancerPoolTokens = IERC20(platformAddress).balanceOf(address(this));
     }
 
     /* solhint-disable max-line-length */
