@@ -4,6 +4,7 @@ const { BigNumber } = require("ethers");
 const { loadFixture } = require("ethereum-waffle");
 
 const addresses = require("../../utils/addresses");
+const { balancer_rETH_WETH_PID } = require("../../utils/constants");
 const { units, oethUnits, forkOnlyDescribe } = require("../helpers");
 const {
   balancerREthFixture,
@@ -26,7 +27,27 @@ forkOnlyDescribe(
 
     describe("Post deployment", () => {
       it("Should have the correct initial state", async function () {
-        const { balancerREthStrategy } = fixture;
+        const { balancerREthStrategy, oethVault } = fixture;
+
+        // Platform and OToken Vault
+        expect(await balancerREthStrategy.platformAddress()).to.equal(
+          addresses.mainnet.rETH_WETH_BPT
+        );
+        expect(await balancerREthStrategy.vaultAddress()).to.equal(
+          oethVault.address
+        );
+
+        // Balancer and Aura config
+        expect(await balancerREthStrategy.balancerVault()).to.equal(
+          addresses.mainnet.balancerVault
+        );
+        expect(await balancerREthStrategy.balancerPoolId()).to.equal(
+          balancer_rETH_WETH_PID
+        );
+        expect(await balancerREthStrategy.auraRewardPoolAddress()).to.equal(
+          addresses.mainnet.rETH_WETH_AuraRewards
+        );
+
         // Check slippage values
         expect(await balancerREthStrategy.maxDepositSlippage()).to.equal(
           oethUnits("0.001")
