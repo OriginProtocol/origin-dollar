@@ -380,6 +380,20 @@ contract VaultAdmin is VaultStorage {
     }
 
     /**
+     * @notice Set multi assets support for a strategy.
+     * @param _strategy Address of the strategy contract.
+     * @param _isMultiAssets If the strategy supports deposit and withdraw of multiple assets.
+     */
+    function setStrategyMultiAssets(address _strategy, bool _isMultiAssets)
+        external
+        onlyGovernor
+    {
+        require(strategies[_strategy].isSupported, "Strategy unsupported");
+        strategies[_strategy].isMultiAssets = _isMultiAssets;
+        emit StrategyMultiAssetsChanged(_strategy, _isMultiAssets);
+    }
+
+    /**
      * @notice Remove a strategy from the Vault.
      * @param _addr Address of the strategy to remove
      */
