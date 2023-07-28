@@ -7,6 +7,7 @@ pragma solidity ^0.8.0;
  */
 import { BaseBalancerStrategy } from "./BaseBalancerStrategy.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { IRateProvider } from "../../interfaces/balancer/IRateProvider.sol";
 import { IERC20 } from "../../utils/InitializableAbstractStrategy.sol";
 import { IERC4626 } from "../../../lib/openzeppelin/interfaces/IERC4626.sol";
 import { StableMath } from "../../utils/StableMath.sol";
@@ -150,6 +151,21 @@ abstract contract BaseAuraStrategy is BaseBalancerStrategy {
                 return value;
             }
         }
+    }
+
+    /**
+     * @notice Get the total asset value held in the Balancer pool
+     * and the Aura rewards pool.
+     */
+    function checkBalance() external view virtual returns (uint256 value) {
+        // Balancer Pool Tokens (BPT) in the Balancer pool and Aura rewards pool.
+        uint256 bptBalance = IERC20(platformAddress).balanceOf(address(this)) +
+            IERC4626(auraRewardPoolAddress).balanceOf(address(this));
+
+        // Convert BPT to ETH value
+        value = bptBalance.mulTruncate(
+            IRateProvider(platformAddress).getRate()
+        );
     }
 
     function _approveBase() internal virtual override {

@@ -114,10 +114,10 @@ forkOnlyDescribe(
         const { balancerREthStrategy, josh, weth } = fixture;
 
         // Check balance in a transaction so the gas usage can be measured
-        await balancerREthStrategy.checkBalance(weth.address);
+        await balancerREthStrategy["checkBalance(address)"](weth.address);
         const tx = await balancerREthStrategy
           .connect(josh)
-          .populateTransaction.checkBalance(weth.address);
+          .populateTransaction["checkBalance(address)"](weth.address);
         await josh.sendTransaction(tx);
       });
     });
@@ -146,12 +146,12 @@ forkOnlyDescribe(
       it("Should be able to withdraw all of pool liquidity", async function () {
         const { oethVault, weth, reth, balancerREthStrategy } = fixture;
 
-        const wethBalanceBefore = await balancerREthStrategy.checkBalance(
-          weth.address
-        );
-        const stEthBalanceBefore = await balancerREthStrategy.checkBalance(
-          reth.address
-        );
+        const wethBalanceBefore = await balancerREthStrategy[
+          "checkBalance(address)"
+        ](weth.address);
+        const stEthBalanceBefore = await balancerREthStrategy[
+          "checkBalance(address)"
+        ](reth.address);
 
         const oethVaultSigner = await impersonateAndFundContract(
           oethVault.address
@@ -160,10 +160,10 @@ forkOnlyDescribe(
         await balancerREthStrategy.connect(oethVaultSigner).withdrawAll();
 
         const wethBalanceDiff = wethBalanceBefore.sub(
-          await balancerREthStrategy.checkBalance(weth.address)
+          await balancerREthStrategy["checkBalance(address)"](weth.address)
         );
         const stEthBalanceDiff = stEthBalanceBefore.sub(
-          await balancerREthStrategy.checkBalance(reth.address)
+          await balancerREthStrategy["checkBalance(address)"](reth.address)
         );
 
         expect(wethBalanceDiff).to.be.gte(await units("15", weth), 1);
@@ -195,17 +195,22 @@ forkOnlyDescribe(
 
 async function getPoolValues(strategy, allAssets) {
   const result = {
-    total: BigNumber.from(0),
+    sum: BigNumber.from(0),
   };
 
   for (const asset of allAssets) {
     const assetSymbol = await asset.symbol();
-    const strategyAssetValue = await strategy.checkBalance(asset.address);
-    result.total = result.total.add(strategyAssetValue);
+    const strategyAssetValue = await strategy["checkBalance(address)"](
+      asset.address
+    );
+    result.sum = result.sum.add(strategyAssetValue);
     log(`Balancer ${assetSymbol} value: ${formatUnits(strategyAssetValue)}`);
     result[assetSymbol] = strategyAssetValue;
   }
-  log(`Balancer total value: ${formatUnits(result.total)}`);
+  log(`Balancer sum value: ${formatUnits(result.sum)}`);
+
+  result.value = await strategy["checkBalance()"]();
+  log(`Balancer value: ${formatUnits(result.value)}`);
 
   return result;
 }
@@ -266,10 +271,14 @@ async function depositTest(fixture, amounts, allAssets, bpt) {
   const after = await logBalances(logParams);
 
   // Should have liquidity in Balancer
-  const strategyValuesDiff = after.strategyValues.total.sub(
-    before.strategyValues.total
+  const strategyValuesDiff = after.strategyValues.sum.sub(
+    before.strategyValues.sum
   );
   expect(strategyValuesDiff).to.approxEqualTolerance(sumEthAmounts, 1);
+  expect(
+    after.strategyValues.value,
+    "strategy total value = sum of asset values"
+  ).to.approxEqualTolerance(after.strategyValues.sum, 1);
 }
 
 async function logBalances({
