@@ -310,6 +310,10 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
      */
     function deposit(address _asset, uint256 _amount) external virtual;
 
+    // This can only be added once all the strategies implement it, until then
+    // it will be commented out.
+    // function deposit(address[] memory _asset, uint256[] memory _amount) external virtual;
+
     /**
      * @notice Deposit all supported assets in this strategy contract to the platform
      */

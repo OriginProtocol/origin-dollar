@@ -23,8 +23,15 @@ module.exports = deploymentWithGovernanceProposal(
     const cVaultProxy = await ethers.getContract("VaultProxy");
     // const cHarvester = await ethers.getContract("Harvester");
 
-    const dVaultCore = await deployWithConfirmation("VaultCore");
-    const dVaultAdmin = await deployWithConfirmation("VaultAdmin");
+    // Need to override the storage safety check as we are
+    // adding isMultiAssets to the Strategy struct used in the strategies mapping
+    await deployWithConfirmation("VaultAdmin", [], undefined, true);
+    const dVaultCore = await deployWithConfirmation(
+      "VaultCore",
+      [],
+      undefined,
+      true
+    );
 
     const cVaultCore = await ethers.getContract(
       "VaultCore",

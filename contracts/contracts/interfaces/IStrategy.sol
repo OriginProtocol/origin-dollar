@@ -2,24 +2,32 @@
 pragma solidity ^0.8.0;
 
 /**
- * @title Platform interface to integrate with lending platform like Compound, AAVE etc.
+ * @title Platform interface to underlying platforms like Compound, AAVE, Curve, Balancer and Morpho
  */
 interface IStrategy {
     /**
-     * @dev Deposit the given asset to platform
-     * @param _asset asset address
+     * @notice Deposit the given asset from this strategy contract to the underlying platform
+     * @param _asset Address of the address to deposit
      * @param _amount Amount to deposit
      */
     function deposit(address _asset, uint256 _amount) external;
 
     /**
-     * @dev Deposit the entire balance of all supported assets in the Strategy
-     *      to the platform
+     * @notice Deposit multiple assets from this strategy contract to the underlying platform.
+     * @param _assets Addresses of the assets. eg USDC, WETH, stETH
+     * @param _amounts Amounts to deposit for each asset
+     */
+    function deposit(address[] memory _assets, uint256[] memory _amounts)
+        external;
+
+    /**
+     * @notice Deposit the entire balance of all supported assets in this strategy contract
+     *      to the underlying platform
      */
     function depositAll() external;
 
     /**
-     * @dev Withdraw given asset from Lending platform
+     * @notice Withdraw the given amount of assets from the underlying platform
      */
     function withdraw(
         address _recipient,
@@ -28,12 +36,24 @@ interface IStrategy {
     ) external;
 
     /**
-     * @dev Liquidate all assets in strategy and return them to Vault.
+     * @notice Withdraw multiple asset amounts from the underlying platform
+     */
+    function withdraw(
+        address _recipient,
+        address[] memory _assets,
+        uint256[] memory _amounts
+    ) external;
+
+    /**
+     * @notice Withdraw all assets from the underlying platform and return them to Vault.
      */
     function withdrawAll() external;
 
     /**
-     * @dev Returns the current balance of the given asset.
+     * @notice Returns the current value of the given asset.
+     * The value is not necessarily the amount of assets.
+     * For exmaple, stETH and rETH amounts will be converted to ETH amounts.
+     * @return balance is USD for OSUD and ETH for OETH strategies
      */
     function checkBalance(address _asset)
         external
@@ -41,17 +61,23 @@ interface IStrategy {
         returns (uint256 balance);
 
     /**
-     * @dev Returns bool indicating whether strategy supports asset.
+     * @notice Returns the value of all assets managed by the strategy.
+     * @return balance is USD for OSUD and ETH for OETH strategies
+     */
+    function checkBalance() external view returns (uint256 balance);
+
+    /**
+     * @notice Returns bool indicating whether strategy supports asset.
      */
     function supportsAsset(address _asset) external view returns (bool);
 
     /**
-     * @dev Collect reward tokens from the Strategy.
+     * @notice Collect reward tokens from the underlying platform.
      */
     function collectRewardTokens() external;
 
     /**
-     * @dev The address array of the reward tokens for the Strategy.
+     * @notice The address array of the reward tokens for the strategy.
      */
     function getRewardTokenAddresses() external view returns (address[] memory);
 }

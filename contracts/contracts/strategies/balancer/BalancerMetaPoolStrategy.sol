@@ -28,8 +28,8 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
     {}
 
     /**
-     * @notice Deposits an `_amount` of vault collateral assets to
-     * a Balancer pool.
+     * @notice Deposits an `_amount` of vault collateral assets
+     * from the this strategy contract to the Balancer pool.
      * @param _asset Address of the Vault collateral asset
      * @param _amount The amount of Vault collateral assets to deposit
      */
@@ -41,6 +41,21 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         nonReentrant
     {
         _deposit(_asset, _amount);
+    }
+
+    /**
+     * @notice Deposits specified vault collateral assets
+     * from the this strategy contract to the Balancer pool.
+     * @param _assets Address of the Vault collateral assets
+     * @param _amounts The amount of each asset to deposit
+     */
+    function deposit(address[] memory _assets, uint256[] memory _amounts)
+        external
+        whenNotInVaultContext
+        onlyVault
+        nonReentrant
+    {
+        _deposit(_assets, _amounts);
     }
 
     /**
@@ -64,6 +79,10 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         }
     }
 
+    /**
+     * @param _asset Address of the vault collateral asset that is being deposited. This is converted to the pool asset.
+     * @param _amount the max amount of vault assets that can be deposited.
+     */
     function _deposit(address _asset, uint256 _amount) internal {
         /* dust rounding issues with stETH. When allocate is called it tries
          * to deposit 1-2 wei of stETH and the deposit fails with BPT amount check.
@@ -76,7 +95,10 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
 
         emit Deposit(_asset, platformAddress, _amount);
 
-        (address poolAsset, uint256 poolAmount) = toPoolAsset(_asset, _amount);
+        (address poolAsset, uint256 poolAmount) = wrapPoolAsset(
+            _asset,
+            _amount
+        );
 
         (IERC20[] memory tokens, , ) = balancerVault.getPoolTokens(
             balancerPoolId
@@ -95,8 +117,9 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
             }
         }
 
-        wrapPoolAsset(_asset, _amount);
-
+        // Although we receive the exact BPT amount from the join,
+        // we have need to reduce this by the max slippage so we don't exceed the
+        // computed amount of pool assets that are deposited to the balancer pool.
         uint256 minBPT = getBPTExpected(_asset, _amount);
         uint256 minBPTwSlippage = minBPT.mulTruncate(1e18 - maxDepositSlippage);
 
@@ -123,6 +146,80 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
             request
         );
 
+        // Deposit the BPT tokens into Aura
+        _lpDepositAll();
+    }
+
+    function _deposit(address[] memory _assets, uint256[] memory _amounts)
+        internal
+    {
+        (IERC20[] memory tokens, , ) = balancerVault.getPoolTokens(
+            balancerPoolId
+        );
+
+        uint256[] memory mappedAmounts = new uint256[](tokens.length);
+        address[] memory mappedAssets = new address[](tokens.length);
+        for (uint256 i = 0; i < _assets.length; ++i) {
+            address asset = _assets[i];
+            uint256 amount = _amounts[i];
+            /* dust rounding issues with stETH. When allocate is called it tries
+             * to deposit 1-2 wei of stETH and the deposit fails with BPT amount check.
+             *
+             * TODO: solve this (only a problem when it is a default strategy for stETH)
+             */
+            if (_assets[i] == stETH && _amounts[i] < 20) {
+                continue;
+            }
+
+            emit Deposit(asset, platformAddress, amount);
+
+            // wrap rebasing assets like stETH and frxETH to wstETH and sfrxETH
+            (mappedAssets[i], mappedAmounts[i]) = wrapPoolAsset(asset, amount);
+        }
+
+        uint256[] memory amountsIn = new uint256[](tokens.length);
+        address[] memory poolAssets = new address[](tokens.length);
+        for (uint256 i = 0; i < tokens.length; ++i) {
+            // Convert IERC20 type to address
+            poolAssets[i] = address(tokens[i]);
+
+            // For each of the mapped assets
+            for (uint256 j = 0; j < mappedAssets.length; ++j) {
+                // If the pool asset is the same as the mapped asset
+                if (poolAssets[i] == mappedAssets[j]) {
+                    amountsIn[i] = mappedAmounts[j];
+                }
+            }
+        }
+
+        uint256 minBPT = getBPTExpected(_assets, _amounts);
+        uint256 minBPTwSlippage = minBPT.mulTruncate(1e18 - maxDepositSlippage);
+
+        /* EXACT_TOKENS_IN_FOR_BPT_OUT:
+         * User sends precise quantities of tokens, and receives an
+         * estimated but unknown (computed at run time) quantity of BPT.
+         *
+         * ['uint256', 'uint256[]', 'uint256']
+         * [EXACT_TOKENS_IN_FOR_BPT_OUT, amountsIn, minimumBPT]
+         */
+        bytes memory userData = abi.encode(
+            IBalancerVault.WeightedPoolJoinKind.EXACT_TOKENS_IN_FOR_BPT_OUT,
+            amountsIn,
+            minBPTwSlippage
+        );
+
+        IBalancerVault.JoinPoolRequest memory request = IBalancerVault
+            .JoinPoolRequest(poolAssets, amountsIn, userData, false);
+
+        // Add the pool assets in this strategy to the balancer pool
+        balancerVault.joinPool(
+            balancerPoolId,
+            address(this),
+            address(this),
+            request
+        );
+
+        // Deposit the BPT tokens into Aura
         _lpDepositAll();
     }
 

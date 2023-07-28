@@ -21,8 +21,20 @@ module.exports = deploymentWithGovernanceProposal(
 
     // Deploy VaultAdmin and VaultCore contracts
     const cVaultProxy = await ethers.getContract("VaultProxy");
-    const dVaultAdmin = await deployWithConfirmation("VaultAdmin");
-    const dVaultCore = await deployWithConfirmation("VaultCore");
+    // Need to override the storage safety check as we are
+    // adding isMultiAssets to the Strategy struct used in the strategies mapping
+    const dVaultAdmin = await deployWithConfirmation(
+      "VaultAdmin",
+      [],
+      undefined,
+      true
+    );
+    const dVaultCore = await deployWithConfirmation(
+      "VaultCore",
+      [],
+      undefined,
+      true
+    );
     const cVault = await ethers.getContractAt("Vault", cVaultProxy.address);
 
     // Deploy Oracle Router

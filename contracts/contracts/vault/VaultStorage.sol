@@ -24,6 +24,7 @@ contract VaultStorage is Initializable, Governable {
     event AssetDefaultStrategyUpdated(address _asset, address _strategy);
     event AssetAllocated(address _asset, address _strategy, uint256 _amount);
     event StrategyApproved(address _addr);
+    event StrategyMultiAssetsChanged(address _strategy, bool _isMultiAsset);
     event StrategyRemoved(address _addr);
     event Mint(address _addr, uint256 _value);
     event Redeem(address _addr, uint256 _value);
@@ -74,10 +75,10 @@ contract VaultStorage is Initializable, Governable {
     /// @dev list of all assets supported by the vault.
     address[] internal allAssets;
 
-    // Strategies approved for use by the Vault
+    // Strategy configuration
     struct Strategy {
-        bool isSupported;
-        uint256 _deprecated; // Deprecated storage slot
+        bool isSupported; // is the strategy approved for use by the Vault
+        bool isMultiAssets; // supports deposit and withdraw of mutliple assets
     }
     /// @dev mapping of strategy contracts to their configiration
     mapping(address => Strategy) internal strategies;

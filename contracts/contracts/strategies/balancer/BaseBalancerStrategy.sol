@@ -171,6 +171,30 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
             .divPrecisely(bptRate);
     }
 
+    function getBPTExpected(address[] memory _assets, uint256[] memory _amounts)
+        internal
+        view
+        virtual
+        returns (uint256 bptExpected)
+    {
+        // Get the oracle from the OETH Vault
+        address priceProvider = IVault(vaultAddress).priceProvider();
+
+        for (uint256 i = 0; i < _assets.length; ++i) {
+            uint256 strategyAssetMarketPrice = IOracle(priceProvider).price(
+                _assets[i]
+            );
+            // convert asset amount to ETH amount
+            bptExpected =
+                bptExpected +
+                _amounts[i].mulTruncate(strategyAssetMarketPrice);
+        }
+
+        uint256 bptRate = IRateProvider(platformAddress).getRate();
+        // Convert ETH amount to BPT amount
+        bptExpected = bptExpected.divPrecisely(bptRate);
+    }
+
     function _lpDepositAll() internal virtual;
 
     function _lpWithdraw(uint256 numBPTTokens) internal virtual;
@@ -235,13 +259,16 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
      */
     function wrapPoolAsset(address asset, uint256 amount)
         internal
-        returns (uint256 wrappedAmount)
+        returns (address wrappedAsset, uint256 wrappedAmount)
     {
         if (asset == stETH) {
+            wrappedAsset = wstETH;
             wrappedAmount = IWstETH(wstETH).wrap(amount);
         } else if (asset == frxETH) {
+            wrappedAsset = sfrxETH;
             wrappedAmount = IERC4626(sfrxETH).deposit(amount, address(this));
         } else {
+            wrappedAsset = asset;
             wrappedAmount = amount;
         }
     }
