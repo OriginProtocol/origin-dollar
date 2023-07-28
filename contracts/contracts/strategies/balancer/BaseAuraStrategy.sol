@@ -64,8 +64,11 @@ abstract contract BaseAuraStrategy is BaseBalancerStrategy {
      */
     function _lpDepositAll() internal virtual override {
         uint256 bptBalance = IERC20(platformAddress).balanceOf(address(this));
-        // slither-disable-next-line unused-return
-        IERC4626(auraRewardPoolAddress).deposit(bptBalance, address(this));
+        uint256 auraLp = IERC4626(auraRewardPoolAddress).deposit(
+            bptBalance,
+            address(this)
+        );
+        require(bptBalance == auraLp, "Aura LP != BPT");
     }
 
     /**
@@ -136,9 +139,8 @@ abstract contract BaseAuraStrategy is BaseBalancerStrategy {
         uint256 strategyShare = bptBalance.divPrecisely(
             IERC20(platformAddress).totalSupply()
         );
-
+        address poolAsset = toPoolAsset(_asset);
         for (uint256 i = 0; i < balances.length; ++i) {
-            address poolAsset = toPoolAsset(_asset);
             if (address(tokens[i]) == poolAsset) {
                 // convert Balancer pool asset value to Vault asset value
                 (, value) = fromPoolAsset(

@@ -42,6 +42,7 @@ module.exports = deploymentWithGovernanceProposal(
       [
         [platformAddress, cOETHVaultProxy.address],
         [
+          addresses.mainnet.rETH,
           addresses.mainnet.stETH,
           addresses.mainnet.wstETH,
           addresses.mainnet.frxETH,

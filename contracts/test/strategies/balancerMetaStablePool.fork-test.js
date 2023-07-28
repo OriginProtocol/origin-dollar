@@ -27,12 +27,28 @@ forkOnlyDescribe(
     describe("Post deployment", () => {
       it("Should have the correct initial state", async function () {
         const { balancerREthStrategy } = fixture;
-
+        // Check slippage values
         expect(await balancerREthStrategy.maxDepositSlippage()).to.equal(
           oethUnits("0.001")
         );
         expect(await balancerREthStrategy.maxWithdrawalSlippage()).to.equal(
           oethUnits("0.001")
+        );
+        // Check addresses
+        expect(await balancerREthStrategy.rETH()).to.equal(
+          addresses.mainnet.rETH
+        );
+        expect(await balancerREthStrategy.wstETH()).to.equal(
+          addresses.mainnet.wstETH
+        );
+        expect(await balancerREthStrategy.stETH()).to.equal(
+          addresses.mainnet.stETH
+        );
+        expect(await balancerREthStrategy.sfrxETH()).to.equal(
+          addresses.mainnet.sfrxETH
+        );
+        expect(await balancerREthStrategy.frxETH()).to.equal(
+          addresses.mainnet.frxETH
         );
       });
     });
@@ -84,7 +100,6 @@ forkOnlyDescribe(
     describe("Withdraw", function () {
       it("Should be able to withdraw some amount of pool liquidity", async function () {
         const { weth, balancerREthStrategy, oethVault } = fixture;
-        // await mintTest(fixture, josh, weth, "30", [weth, reth], rEthBPT);
 
         const wethBalanceBeforeVault = await weth.balanceOf(oethVault.address);
         const wethToWithdraw = await units("10", weth);
@@ -204,7 +219,11 @@ async function depositTest(fixture, asset, amount, allAssets, bpt) {
     pid: balancerREthPID,
   };
 
-  const unitAmount = await units(amount, asset);
+  const unitAmount = await oethUnits(amount);
+  const ethAmount =
+    asset.address === reth.address
+      ? await reth.getEthValue(unitAmount)
+      : unitAmount;
 
   log(`WETH in vault ${formatUnits(await weth.balanceOf(oethVault.address))}`);
   log(`rETH in vault ${formatUnits(await reth.balanceOf(oethVault.address))}`);
@@ -225,7 +244,7 @@ async function depositTest(fixture, asset, amount, allAssets, bpt) {
   const strategyValuesDiff = after.strategyValues.total.sub(
     before.strategyValues.total
   );
-  expect(strategyValuesDiff).to.approxEqualTolerance(unitAmount, 1);
+  expect(strategyValuesDiff).to.approxEqualTolerance(ethAmount, 1);
 }
 
 async function logBalances({

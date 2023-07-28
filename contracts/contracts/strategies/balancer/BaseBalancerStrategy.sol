@@ -12,6 +12,7 @@ import { IRateProvider } from "../../interfaces/balancer/IRateProvider.sol";
 import { VaultReentrancyLib } from "./VaultReentrancyLib.sol";
 import { IOracle } from "../../interfaces/IOracle.sol";
 import { IVault } from "../../interfaces/IVault.sol";
+import { IRETH } from "../../interfaces/IRETH.sol";
 import { IWstETH } from "../../interfaces/IWstETH.sol";
 import { IERC4626 } from "../../../lib/openzeppelin/interfaces/IERC4626.sol";
 import { StableMath } from "../../utils/StableMath.sol";
@@ -20,6 +21,7 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
 
+    address public immutable rETH;
     address public immutable stETH;
     address public immutable wstETH;
     address public immutable frxETH;
@@ -38,6 +40,7 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
     int256[50] private __reserved;
 
     struct BaseBalancerConfig {
+        address rEthAddress; // Address of the rETH token
         address stEthAddress; // Address of the stETH token
         address wstEthAddress; // Address of the wstETH token
         address frxEthAddress; // Address of the frxEth token
@@ -56,6 +59,7 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
     );
 
     constructor(BaseBalancerConfig memory _balancerConfig) {
+        rETH = _balancerConfig.rEthAddress;
         stETH = _balancerConfig.stEthAddress;
         wstETH = _balancerConfig.wstEthAddress;
         frxETH = _balancerConfig.frxEthAddress;
@@ -192,16 +196,15 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         returns (address poolAsset, uint256 poolAmount)
     {
         poolAmount = 0;
-        // if stEth
-        if (asset == stETH) {
-            // wstEth
+        if (asset == rETH) {
+            poolAsset = rETH;
+            poolAmount = IRETH(rETH).getEthValue(amount);
+        } else if (asset == stETH) {
             poolAsset = wstETH;
             if (amount > 0) {
                 poolAmount = IWstETH(wstETH).getWstETHByStETH(amount);
             }
-            // if frxEth
         } else if (asset == frxETH) {
-            // sfrxEth
             poolAsset = sfrxETH;
             if (amount > 0) {
                 poolAmount = IERC4626(sfrxETH).convertToShares(amount);
@@ -274,7 +277,12 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         returns (address asset, uint256 amount)
     {
         amount = 0;
-        if (poolAsset == wstETH) {
+        if (poolAsset == rETH) {
+            asset = rETH;
+            if (poolAmount > 0) {
+                amount = IRETH(rETH).getEthValue(poolAmount);
+            }
+        } else if (poolAsset == wstETH) {
             asset = stETH;
             if (poolAmount > 0) {
                 amount = IWstETH(wstETH).getStETHByWstETH(poolAmount);
