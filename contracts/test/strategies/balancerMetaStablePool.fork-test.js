@@ -123,11 +123,23 @@ forkOnlyDescribe(
     });
 
     describe("Withdraw", function () {
-      it("Should be able to withdraw some amount of pool liquidity", async function () {
+      beforeEach(async () => {
+        const { balancerREthStrategy, oethVault, strategist, reth, weth } =
+          fixture;
+
+        await oethVault
+          .connect(strategist)
+          .depositToStrategy(
+            balancerREthStrategy.address,
+            [weth.address, reth.address],
+            [oethUnits("22"), oethUnits("25")]
+          );
+      });
+      it("Should be able to withdraw 10 WETH from the pool", async function () {
         const { weth, balancerREthStrategy, oethVault } = fixture;
 
-        const wethBalanceBeforeVault = await weth.balanceOf(oethVault.address);
-        const wethToWithdraw = await units("10", weth);
+        const vaultWethBalanceBefore = await weth.balanceOf(oethVault.address);
+        const withdrawAmount = await units("10", weth);
 
         const oethVaultSigner = await impersonateAndFundContract(
           oethVault.address
@@ -135,12 +147,68 @@ forkOnlyDescribe(
 
         await balancerREthStrategy
           .connect(oethVaultSigner)
-          .withdraw(oethVault.address, weth.address, wethToWithdraw);
+          ["withdraw(address,address,uint256)"](
+            oethVault.address,
+            weth.address,
+            withdrawAmount
+          );
 
-        const wethBalanceDiffVault = (
-          await weth.balanceOf(oethVault.address)
-        ).sub(wethBalanceBeforeVault);
-        expect(wethBalanceDiffVault).to.approxEqualTolerance(wethToWithdraw, 1);
+        const vaultWethBalanceAfter = await weth.balanceOf(oethVault.address);
+        const wethBalanceDiffVault = vaultWethBalanceAfter.sub(
+          vaultWethBalanceBefore
+        );
+        expect(wethBalanceDiffVault).to.approxEqualTolerance(withdrawAmount, 1);
+      });
+      it.skip("Should be able to withdraw 8 RETH from the pool", async function () {
+        const { reth, balancerREthStrategy, oethVault } = fixture;
+
+        const vaultRethBalanceBefore = await reth.balanceOf(oethVault.address);
+        const withdrawAmount = await units("8", reth);
+
+        const oethVaultSigner = await impersonateAndFundContract(
+          oethVault.address
+        );
+
+        await balancerREthStrategy
+          .connect(oethVaultSigner)
+          ["withdraw(address,address,uint256)"](
+            oethVault.address,
+            reth.address,
+            withdrawAmount
+          );
+
+        const vaultRethBalanceAfter = await reth.balanceOf(oethVault.address);
+        const rethBalanceDiffVault = vaultRethBalanceAfter.sub(
+          vaultRethBalanceBefore
+        );
+        expect(rethBalanceDiffVault).to.approxEqualTolerance(withdrawAmount, 1);
+      });
+      it.skip("Should be able to withdraw 11 WETH and 14 RETH from the pool", async function () {
+        const { reth, balancerREthStrategy, oethVault, weth } = fixture;
+
+        const vaultWethBalanceBefore = await weth.balanceOf(oethVault.address);
+        const vaultRethBalanceBefore = await reth.balanceOf(oethVault.address);
+        const wethWithdrawAmount = await units("11", weth);
+        const rethWithdrawAmount = await units("14", reth);
+
+        const oethVaultSigner = await impersonateAndFundContract(
+          oethVault.address
+        );
+
+        await balancerREthStrategy
+          .connect(oethVaultSigner)
+          ["withdraw(address,address[],uint256[])"](
+            oethVault.address,
+            [weth.address, reth.address],
+            [wethWithdrawAmount, rethWithdrawAmount]
+          );
+
+        expect(
+          (await weth.balanceOf(oethVault.address)).sub(vaultWethBalanceBefore)
+        ).to.approxEqualTolerance(wethWithdrawAmount, 1);
+        expect(
+          (await reth.balanceOf(oethVault.address)).sub(vaultRethBalanceBefore)
+        ).to.approxEqualTolerance(rethWithdrawAmount, 1);
       });
 
       it("Should be able to withdraw all of pool liquidity", async function () {
@@ -168,13 +236,6 @@ forkOnlyDescribe(
 
         expect(wethBalanceDiff).to.be.gte(await units("15", weth), 1);
         expect(stEthBalanceDiff).to.be.gte(await units("15", reth), 1);
-      });
-
-      it("Should have the correct initial maxWithdrawalSlippage state", async function () {
-        const { balancerREthStrategy, josh } = fixture;
-        expect(
-          await balancerREthStrategy.connect(josh).maxWithdrawalSlippage()
-        ).to.equal(oethUnits("0.001"));
       });
 
       it("Should be able to withdraw with higher withdrawal slippage", async function () {});

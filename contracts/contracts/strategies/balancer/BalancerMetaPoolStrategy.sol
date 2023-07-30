@@ -64,8 +64,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
     }
 
     /**
-     * @notice Deposits all supported assets in the strategy contract
-     * to the Balancer pool.
+     * @notice Deposits all supported assets in this strategy contract to the Balancer pool.
      */
     function depositAll()
         external
@@ -78,8 +77,10 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         address[] memory assets = new address[](assetsLength);
         uint256[] memory amounts = new uint256[](assetsLength);
 
+        // For each vault collateral asset
         for (uint256 i = 0; i < assetsLength; ++i) {
             assets[i] = assetsMapped[i];
+            // Get the asset balance in this strategy contract
             amounts[i] = IERC20(assets[i]).balanceOf(address(this));
         }
         _deposit(assets, amounts);
@@ -97,14 +98,6 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         for (uint256 i = 0; i < _assets.length; ++i) {
             address asset = _assets[i];
             uint256 amount = _amounts[i];
-            /* dust rounding issues with stETH. When allocate is called it tries
-             * to deposit 1-2 wei of stETH and the deposit fails with BPT amount check.
-             *
-             * TODO: solve this (only a problem when it is a default strategy for stETH)
-             */
-            if (_assets[i] == stETH && _amounts[i] < 20) {
-                continue;
-            }
 
             emit Deposit(asset, platformAddress, amount);
 
@@ -112,6 +105,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
             (mappedAssets[i], mappedAmounts[i]) = wrapPoolAsset(asset, amount);
         }
 
+        // TODO move this loop into the previous loop
         uint256[] memory amountsIn = new uint256[](tokens.length);
         address[] memory poolAssets = new address[](tokens.length);
         for (uint256 i = 0; i < tokens.length; ++i) {
@@ -154,12 +148,12 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
             request
         );
 
-        // Deposit the BPT tokens into Aura
+        // Deposit the Balancer Pool Tokens (BPT) into Aura
         _lpDepositAll();
     }
 
     /**
-     * @notice Withdraws Vault collateral assets from the Balancer pool.
+     * @notice Withdraw a Vault collateral asset from the Balancer pool.
      * @param _recipient Address to receive the Vault collateral assets. Typically is the Vault.
      * @param _asset Address of the Vault collateral asset
      * @param _amount The amount of Vault collateral assets to withdraw
@@ -169,45 +163,105 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         address _asset,
         uint256 _amount
     ) external override whenNotInVaultContext onlyVault nonReentrant {
-        (address poolAsset, uint256 poolAmount) = toPoolAsset(_asset, _amount);
+        address[] memory assets = new address[](1);
+        uint256[] memory amounts = new uint256[](1);
+        assets[0] = _asset;
+        amounts[0] = _amount;
 
-        uint256 BPTtoWithdraw = getBPTExpected(_asset, _amount);
-        // adjust for slippage
-        BPTtoWithdraw = BPTtoWithdraw.mulTruncate(1e18 + maxWithdrawalSlippage);
+        _withdraw(_recipient, assets, amounts);
+    }
 
-        _lpWithdraw(BPTtoWithdraw);
+    /**
+     * @notice Withdraw multiple Vault collateral asset from the Balancer pool.
+     * @param _recipient Address to receive the Vault collateral assets. Typically is the Vault.
+     * @param _assets Addresses of the Vault collateral assets
+     * @param _amounts The amounts of Vault collateral assets to withdraw
+     */
+    function withdraw(
+        address _recipient,
+        address[] memory _assets,
+        uint256[] memory _amounts
+    ) external whenNotInVaultContext onlyVault nonReentrant {
+        _withdraw(_recipient, _assets, _amounts);
+    }
 
+    /**
+     * @dev Withdraw multiple Vault collateral asset from the Balancer pool.
+     * @param _recipient Address to receive the Vault collateral assets. Typically is the Vault.
+     * @param _assets Addresses of the Vault collateral assets
+     * @param _amounts The amounts of Vault collateral assets to withdraw
+     */
+    function _withdraw(
+        address _recipient,
+        address[] memory _assets,
+        uint256[] memory _amounts
+    ) internal {
+        require(_assets.length == _amounts.length, "Invalid input arrays");
+
+        // STEP 1 - Calculate the max about of Balancer Pool Tokens (BPT) to withdraw
+
+        // Estimate the required amount of Balancer Pool Tokens (BPT) for the assets
+        uint256 maxBPTtoWithdraw = getBPTExpected(_assets, _amounts);
+        // Get the BPTs left in this strategy contract from previous withdrawals
+        uint256 BPTinStrategy = IERC20(platformAddress).balanceOf(
+            address(this)
+        );
+        // Increase BPTs by the max allowed slippage
+        // Any excess BPTs will be left in this strategy contract
+        maxBPTtoWithdraw = (maxBPTtoWithdraw - BPTinStrategy).mulTruncate(
+            1e18 + maxWithdrawalSlippage
+        );
+
+        // STEP 2  - Withdraw the Balancer Pool Tokens (BPT) from Aura to this strategy contract
+
+        _lpWithdraw(maxBPTtoWithdraw);
+
+        // STEP 3 - Calculate the Balancer pool assets and amounts from the vault collateral assets
+
+        // Get all the supported balancer pool assets
         (IERC20[] memory tokens, , ) = balancerVault.getPoolTokens(
             balancerPoolId
         );
-        uint256[] memory minAmountsOut = new uint256[](tokens.length);
+        // Calculate the balancer pool assets and amounts to withdraw
+        uint256[] memory poolAmountsOut = new uint256[](tokens.length);
         address[] memory poolAssets = new address[](tokens.length);
-        uint256 assetIndex = 0;
+        uint256[] memory mappedAssetAmounts = new uint256[](_assets.length);
+        // For each of the Balancer pool assets
         for (uint256 i = 0; i < tokens.length; ++i) {
             poolAssets[i] = address(tokens[i]);
-            if (address(tokens[i]) == poolAsset) {
-                minAmountsOut[i] = poolAmount;
-                assetIndex = i;
-            } else {
-                minAmountsOut[i] = 0;
+
+            // for each of the vault assets
+            for (uint256 j = 0; j < _assets.length; ++j) {
+                // Convert the Balancer pool asset to the vault collateral asset
+                address vaultAsset = fromPoolAsset(poolAssets[i]);
+
+                if (_assets[j] == vaultAsset) {
+                    (, poolAmountsOut[i]) = toPoolAsset(
+                        vaultAsset,
+                        _amounts[j]
+                    );
+                    mappedAssetAmounts[j] = poolAmountsOut[i];
+                }
             }
         }
 
-        /* Single asset exit: EXACT_BPT_IN_FOR_ONE_TOKEN_OUT:
-         * User sends a precise quantity of BPT, and receives an estimated but unknown
-         * (computed at run time) quantity of a single token
+        // STEP 4 - Withdraw the balancer pool assets from the pool
+
+        /* Custom asset exit: BPT_IN_FOR_EXACT_TOKENS_OUT:
+         * User sends an estimated but unknown (computed at run time) quantity of BPT,
+         * and receives precise quantities of specified tokens.
          *
-         * ['uint256', 'uint256', 'uint256']
-         * [EXACT_BPT_IN_FOR_ONE_TOKEN_OUT, bptAmountIn, exitTokenIndex]
+         * ['uint256', 'uint256[]', 'uint256']
+         * [BPT_IN_FOR_EXACT_TOKENS_OUT, amountsOut, maxBPTAmountIn]
          */
         bytes memory userData = abi.encode(
-            IBalancerVault.WeightedPoolExitKind.EXACT_BPT_IN_FOR_ONE_TOKEN_OUT,
-            BPTtoWithdraw,
-            assetIndex
+            IBalancerVault.WeightedPoolExitKind.BPT_IN_FOR_EXACT_TOKENS_OUT,
+            poolAmountsOut,
+            maxBPTtoWithdraw
         );
 
         IBalancerVault.ExitPoolRequest memory request = IBalancerVault
-            .ExitPoolRequest(poolAssets, minAmountsOut, userData, false);
+            .ExitPoolRequest(poolAssets, poolAmountsOut, userData, false);
 
         balancerVault.exitPool(
             balancerPoolId,
@@ -218,8 +272,26 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
             request
         );
 
-        unwrapPoolAsset(_asset, poolAmount);
-        IERC20(_asset).safeTransfer(_recipient, _amount);
+        // STEP 5 - Unswap balancer pool assets to vault collateral assets and sent to the vault.
+
+        // For each of the specified assets
+        for (uint256 i = 0; i < _assets.length; ++i) {
+            // Unwrap assets like wstETH and sfrxETH to rebasing assets stETH and frxETH
+            uint256 assetAmount = 0;
+            if (mappedAssetAmounts[i] > 0) {
+                assetAmount = unwrapPoolAsset(
+                    _assets[i],
+                    mappedAssetAmounts[i]
+                );
+            }
+
+            // Transfer the vault collateral assets to the recipient, which is typically the vault
+            if (assetAmount > 0) {
+                IERC20(_assets[i]).safeTransfer(_recipient, assetAmount);
+
+                emit Withdrawal(_assets[i], platformAddress, assetAmount);
+            }
+        }
     }
 
     /**
@@ -235,12 +307,18 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         onlyVaultOrGovernor
         nonReentrant
     {
+        // STEP 1 - Withdraw all Balancer Pool Tokens (BPT) from Aura to this strategy contract
+
         _lpWithdrawAll();
 
+        // STEP 2 - Calculate the minumum amount of pool assets to accept for the BPTs
+
+        // Get the BPTs withdrawn from Aura plus any that were already in this strategy contract
         uint256 BPTtoWithdraw = IERC20(platformAddress).balanceOf(
             address(this)
         );
 
+        // Get the balancer pool assets and their total balances
         (IERC20[] memory tokens, uint256[] memory balances, ) = balancerVault
             .getPoolTokens(balancerPoolId);
 
@@ -257,6 +335,8 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
                 .mulTruncate(strategyShare)
                 .mulTruncate(1e18 - maxWithdrawalSlippage);
         }
+
+        // STEP 3 - Withdraw the Balancer pool assets from the pool
 
         /* Proportional exit: EXACT_BPT_IN_FOR_TOKENS_OUT:
          * User sends a precise quantity of BPT, and receives an estimated but unknown
@@ -282,19 +362,28 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
             request
         );
 
+        // STEP 4 - Convert the balancer pool assets to the vault collateral assets and send to the vault
+
+        // For each of the Balancer pool assets
         for (uint256 i = 0; i < tokens.length; ++i) {
-            address asset = assetsMapped[i];
-            // slither-disable-next-line uninitialized-local
-            address poolAsset = toPoolAsset(asset);
-            uint256 poolBalance = IERC20(poolAsset).balanceOf(address(this));
-            if (poolBalance > 0) {
-                unwrapPoolAsset(asset, poolBalance);
+            address poolAsset = address(tokens[i]);
+            // Convert the balancer pool asset to the vault collateral asset
+            address asset = fromPoolAsset(poolAsset);
+            // Get the balancer pool assets withdraw from the pool plus any that were already in this strategy contract
+            uint256 poolAssetAmount = IERC20(poolAsset).balanceOf(
+                address(this)
+            );
+
+            // Unwrap assets like wstETH and sfrxETH to rebasing assets stETH and frxETH
+            uint256 assetAmount = 0;
+            if (poolAssetAmount > 0) {
+                assetAmount = unwrapPoolAsset(asset, poolAssetAmount);
             }
 
-            uint256 transferAmount = IERC20(asset).balanceOf(address(this));
-            if (transferAmount > 0) {
-                IERC20(asset).safeTransfer(vaultAddress, transferAmount);
-                emit Withdrawal(asset, platformAddress, transferAmount);
+            // Transfer the vault collateral assets to the vault
+            if (assetAmount > 0) {
+                IERC20(asset).safeTransfer(vaultAddress, assetAmount);
+                emit Withdrawal(asset, platformAddress, assetAmount);
             }
         }
     }

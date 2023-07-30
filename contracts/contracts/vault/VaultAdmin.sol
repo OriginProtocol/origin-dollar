@@ -517,14 +517,24 @@ contract VaultAdmin is VaultStorage {
         );
         require(_assets.length == _amounts.length, "Parameter length mismatch");
 
-        uint256 assetCount = _assets.length;
-        for (uint256 i = 0; i < assetCount; ++i) {
-            // Withdraw from Strategy to the recipient
+        if (strategies[_strategyFromAddress].isMultiAssets) {
+            // Withdraw from the strategy to the recipient, which is typically this Vault, in one call.
             IStrategy(_strategyFromAddress).withdraw(
                 _recipient,
-                _assets[i],
-                _amounts[i]
+                _assets,
+                _amounts
             );
+        } else {
+            // For each asset, withdraw from the strategy in separate calls.
+            uint256 assetCount = _assets.length;
+            for (uint256 i = 0; i < assetCount; ++i) {
+                // Withdraw from the strategy to the recipient, which is typically this Vault.
+                IStrategy(_strategyFromAddress).withdraw(
+                    _recipient,
+                    _assets[i],
+                    _amounts[i]
+                );
+            }
         }
     }
 

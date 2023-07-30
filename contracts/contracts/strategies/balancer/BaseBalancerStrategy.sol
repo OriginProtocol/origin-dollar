@@ -347,6 +347,22 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         }
     }
 
+    function fromPoolAsset(address poolAsset)
+        internal
+        view
+        returns (address asset)
+    {
+        if (poolAsset == rETH) {
+            asset = rETH;
+        } else if (poolAsset == wstETH) {
+            asset = stETH;
+        } else if (poolAsset == sfrxETH) {
+            asset = frxETH;
+        } else {
+            asset = poolAsset;
+        }
+    }
+
     /**
      * @notice Sets max withdrawal slippage that is considered when removing
      * liquidity from Balancer pools.
