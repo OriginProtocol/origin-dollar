@@ -403,7 +403,7 @@ forkOnlyDescribe(
         );
         expect(wethBalanceDiffVault).to.approxEqualTolerance(withdrawAmount, 1);
       });
-      it.only("Should be able to withdraw 8 stETH from the pool", async function () {
+      it("Should be able to withdraw 8 stETH from the pool", async function () {
         const { stETH, balancerWstEthStrategy, oethVault } = fixture;
 
         const vaultstETHBalanceBefore = await stETH.balanceOf(
