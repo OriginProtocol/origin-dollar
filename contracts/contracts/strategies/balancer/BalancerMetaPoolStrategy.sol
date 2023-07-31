@@ -239,7 +239,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
 
                 // If the vault asset equals the vault asset mapped from the Balancer pool asset
                 if (_assets[j] == vaultAsset) {
-                    poolAmountsOut[i] = previewUnwrapPoolAsset(
+                    (, poolAmountsOut[i]) = toPoolAsset(
                         vaultAsset,
                         _amounts[j]
                     );

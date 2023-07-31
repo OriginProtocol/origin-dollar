@@ -96,16 +96,17 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @notice Get the total asset value held in the Balancer pool.
+     * @notice Get strategy's share of an assets in the Balancer pool.
+     * This is not the value (OSUD or ETH) of the assets in the Balancer pool.
      * @param _asset  Address of the Vault collateral asset
-     * @return value  Total value of the asset
+     * @return amount  the amount of vault collateral assets
      */
     function checkBalance(address _asset)
         external
         view
         virtual
         override
-        returns (uint256 value)
+        returns (uint256 amount)
     {
         // Get the total balance of each of the Balancer pool assets
         (IERC20[] memory tokens, uint256[] memory balances, ) = balancerVault
@@ -120,18 +121,22 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         for (uint256 i = 0; i < balances.length; ++i) {
             address poolAsset = toPoolAsset(_asset);
             if (address(tokens[i]) == poolAsset) {
-                // convert Balancer pool asset value to Vault asset value
-                (, value) = fromPoolAsset(
+                // convert Balancer pool asset amount to Vault asset amount.
+                // eg wstETH -> stETH or sfrxETH -> frxETH
+                (, amount) = fromPoolAsset(
                     poolAsset,
                     balances[i].mulTruncate(strategyShare)
                 );
-                return value;
+                return amount;
             }
         }
     }
 
     /**
-     * @notice Get the total asset value held in the Balancer pool.
+     * @notice Returns the value of all assets managed by this strategy.
+     * Uses the Balancer pool's rate (virtual price) to convert the strategy's
+     * Balancer Pool Tokens (BPT) to ETH value.
+     * @return value The ETH value
      */
     function checkBalance() external view virtual returns (uint256 value) {
         uint256 bptBalance = _getBalancerPoolTokens();
@@ -242,10 +247,7 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         returns (address poolAsset, uint256 poolAmount)
     {
         poolAmount = 0;
-        if (asset == rETH) {
-            poolAsset = rETH;
-            poolAmount = IRETH(rETH).getEthValue(amount);
-        } else if (asset == stETH) {
+        if (asset == stETH) {
             poolAsset = wstETH;
             if (amount > 0) {
                 poolAmount = IWstETH(wstETH).getWstETHByStETH(amount);
@@ -296,24 +298,6 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @dev Calculates how many wrapped Balancer pool tokens, eg wstETH or sfrxETH, are required
-     * to withdraw the specified amount of vault collateral asset, eg stETH or frxETH.
-     */
-    function previewUnwrapPoolAsset(address asset, uint256 assetAmount)
-        internal
-        view
-        returns (uint256 wrappedAmount)
-    {
-        if (asset == stETH) {
-            wrappedAmount = IWstETH(wstETH).getWstETHByStETH(assetAmount);
-        } else if (asset == frxETH) {
-            wrappedAmount = IERC4626(sfrxETH).previewWithdraw(assetAmount);
-        } else {
-            wrappedAmount = assetAmount;
-        }
-    }
-
-    /**
      * @dev Converts wrapped asset to its rebasing counterpart.
      */
     function unwrapPoolAsset(address asset, uint256 amount)
@@ -344,12 +328,7 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         returns (address asset, uint256 amount)
     {
         amount = 0;
-        if (poolAsset == rETH) {
-            asset = rETH;
-            if (poolAmount > 0) {
-                amount = IRETH(rETH).getEthValue(poolAmount);
-            }
-        } else if (poolAsset == wstETH) {
+        if (poolAsset == wstETH) {
             asset = stETH;
             if (poolAmount > 0) {
                 amount = IWstETH(wstETH).getStETHByWstETH(poolAmount);
@@ -370,9 +349,7 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         view
         returns (address asset)
     {
-        if (poolAsset == rETH) {
-            asset = rETH;
-        } else if (poolAsset == wstETH) {
+        if (poolAsset == wstETH) {
             asset = stETH;
         } else if (poolAsset == sfrxETH) {
             asset = frxETH;

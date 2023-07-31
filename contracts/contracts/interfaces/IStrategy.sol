@@ -50,10 +50,9 @@ interface IStrategy {
     function withdrawAll() external;
 
     /**
-     * @notice Returns the current value of the given asset.
-     * The value is not necessarily the amount of assets.
-     * For exmaple, stETH and rETH amounts will be converted to ETH amounts.
-     * @return balance is USD for OSUD and ETH for OETH strategies
+     * @notice Returns the amout of a given asset.
+     * For exmaple, stETH and rETH amounts will be returned, not the ETH value.
+     * @return balance the amount of the given asset
      */
     function checkBalance(address _asset)
         external
@@ -62,9 +61,9 @@ interface IStrategy {
 
     /**
      * @notice Returns the value of all assets managed by the strategy.
-     * @return balance is USD for OSUD and ETH for OETH strategies
+     * @return value is USD for OSUD and ETH for OETH strategies
      */
-    function checkBalance() external view returns (uint256 balance);
+    function checkBalance() external view returns (uint256 value);
 
     /**
      * @notice Returns bool indicating whether strategy supports asset.

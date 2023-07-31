@@ -92,7 +92,6 @@ forkOnlyDescribe(
         const { reth, rEthBPT, weth } = fixture;
         await depositTest(fixture, [12, 0], [weth, reth], rEthBPT);
       });
-
       it("Should deposit 30 rETH in Balancer MetaStablePool strategy", async function () {
         const { reth, rEthBPT, weth } = fixture;
         await depositTest(fixture, [0, 30], [weth, reth], rEthBPT);
@@ -254,21 +253,28 @@ forkOnlyDescribe(
   }
 );
 
-async function getPoolValues(strategy, allAssets) {
+async function getPoolValues(strategy, allAssets, reth) {
   const result = {
     sum: BigNumber.from(0),
   };
 
   for (const asset of allAssets) {
     const assetSymbol = await asset.symbol();
-    const strategyAssetValue = await strategy["checkBalance(address)"](
+    const strategyAssetBalance = await strategy["checkBalance(address)"](
       asset.address
     );
+    log(
+      `Balancer ${assetSymbol} balance: ${formatUnits(strategyAssetBalance)}`
+    );
+    const strategyAssetValue =
+      asset.address === reth.address
+        ? await reth.getEthValue(strategyAssetBalance)
+        : strategyAssetBalance;
     result.sum = result.sum.add(strategyAssetValue);
     log(`Balancer ${assetSymbol} value: ${formatUnits(strategyAssetValue)}`);
-    result[assetSymbol] = strategyAssetValue;
+    result[assetSymbol] = strategyAssetBalance;
   }
-  log(`Balancer sum value: ${formatUnits(result.sum)}`);
+  log(`Balancer sum values: ${formatUnits(result.sum)}`);
 
   result.value = await strategy["checkBalance()"]();
   log(`Balancer value: ${formatUnits(result.value)}`);
@@ -306,6 +312,7 @@ async function depositTest(fixture, amounts, allAssets, bpt) {
     balancerREthStrategy,
     allAssets,
     pid: balancerREthPID,
+    reth,
   };
 
   const unitAmounts = amounts.map((amount) => oethUnits(amount.toString()));
@@ -350,6 +357,7 @@ async function logBalances({
   pid,
   balancerREthStrategy,
   allAssets,
+  reth,
 }) {
   const oethSupply = await oeth.totalSupply();
   const bptSupply = await bpt.totalSupply();
@@ -365,7 +373,7 @@ async function logBalances({
   const strategyValues = await getPoolValues(
     balancerREthStrategy,
     allAssets,
-    balancerVault
+    reth
   );
 
   const poolBalances = await getPoolBalances(balancerVault, pid);
