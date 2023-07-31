@@ -446,9 +446,6 @@ contract VaultCore is VaultStorage {
         returns (uint256 value)
     {
         IStrategy strategy = IStrategy(_strategyAddr);
-        if (strategies[_strategyAddr].isMultiAssets) {
-            return strategy.checkBalance();
-        }
         uint256 assetCount = allAssets.length;
         for (uint256 y = 0; y < assetCount; ++y) {
             address assetAddr = allAssets[y];

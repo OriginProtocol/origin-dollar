@@ -346,51 +346,13 @@ contract VaultAdmin is VaultStorage {
 
     /**
      * @notice Add a strategy to the Vault.
-     * @param _strategy Address of the strategy contract.
-     * @param _isMultiAssets If the strategy supports deposit and withdraw of multiple assets.
+     * @param _addr Address of the strategy to add
      */
-    function approveStrategy(address _strategy, bool _isMultiAssets)
-        external
-        onlyGovernor
-    {
-        _approveStrategy(_strategy, _isMultiAssets);
-    }
-
-    /**
-     * @notice Add a strategy to the Vault.
-     * By default, the strategy will not support deposit and withdraw of multiple assets.
-     * @param _strategy Address of the strategy contract.
-     */
-    function approveStrategy(address _strategy) external onlyGovernor {
-        _approveStrategy(_strategy, false);
-    }
-
-    function _approveStrategy(address _strategy, bool _isMultiAssets) internal {
-        require(
-            !strategies[_strategy].isSupported,
-            "Strategy already approved"
-        );
-        strategies[_strategy] = Strategy({
-            isSupported: true,
-            isMultiAssets: _isMultiAssets
-        });
-        allStrategies.push(_strategy);
-        emit StrategyApproved(_strategy);
-        emit StrategyMultiAssetsChanged(_strategy, _isMultiAssets);
-    }
-
-    /**
-     * @notice Set multi assets support for a strategy.
-     * @param _strategy Address of the strategy contract.
-     * @param _isMultiAssets If the strategy supports deposit and withdraw of multiple assets.
-     */
-    function setStrategyMultiAssets(address _strategy, bool _isMultiAssets)
-        external
-        onlyGovernor
-    {
-        require(strategies[_strategy].isSupported, "Strategy unsupported");
-        strategies[_strategy].isMultiAssets = _isMultiAssets;
-        emit StrategyMultiAssetsChanged(_strategy, _isMultiAssets);
+    function approveStrategy(address _addr) external onlyGovernor {
+        require(!strategies[_addr].isSupported, "Strategy already approved");
+        strategies[_addr] = Strategy({ isSupported: true, _deprecated: 0 });
+        allStrategies.push(_addr);
+        emit StrategyApproved(_addr);
     }
 
     /**
@@ -458,8 +420,10 @@ contract VaultAdmin is VaultStorage {
         address[] calldata _assets,
         uint256[] calldata _amounts
     ) internal {
-        Strategy memory stratConfig = strategies[_strategyToAddress];
-        require(stratConfig.isSupported, "Invalid to Strategy");
+        require(
+            strategies[_strategyToAddress].isSupported,
+            "Invalid to Strategy"
+        );
         require(_assets.length == _amounts.length, "Parameter length mismatch");
 
         uint256 assetCount = _assets.length;
@@ -473,14 +437,8 @@ contract VaultAdmin is VaultStorage {
             IERC20(assetAddr).safeTransfer(_strategyToAddress, _amounts[i]);
         }
 
-        if (stratConfig.isMultiAssets) {
-            // Deposit the assets from to the strategy to the underlying platform in one call.
-            IStrategy(_strategyToAddress).deposit(_assets, _amounts);
-        } else {
-            // Deposit all the assets that have been sent to the strategy to the underlying platform.
-            // This loops through each asset and adds them separately.
-            IStrategy(_strategyToAddress).depositAll();
-        }
+        // Deposit all the funds that have been sent to the strategy
+        IStrategy(_strategyToAddress).depositAll();
     }
 
     /**
@@ -517,24 +475,14 @@ contract VaultAdmin is VaultStorage {
         );
         require(_assets.length == _amounts.length, "Parameter length mismatch");
 
-        if (strategies[_strategyFromAddress].isMultiAssets) {
-            // Withdraw from the strategy to the recipient, which is typically this Vault, in one call.
+        uint256 assetCount = _assets.length;
+        for (uint256 i = 0; i < assetCount; ++i) {
+            // Withdraw from Strategy to the recipient
             IStrategy(_strategyFromAddress).withdraw(
                 _recipient,
-                _assets,
-                _amounts
+                _assets[i],
+                _amounts[i]
             );
-        } else {
-            // For each asset, withdraw from the strategy in separate calls.
-            uint256 assetCount = _assets.length;
-            for (uint256 i = 0; i < assetCount; ++i) {
-                // Withdraw from the strategy to the recipient, which is typically this Vault.
-                IStrategy(_strategyFromAddress).withdraw(
-                    _recipient,
-                    _assets[i],
-                    _amounts[i]
-                );
-            }
         }
     }
 

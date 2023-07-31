@@ -104,10 +104,46 @@ forkOnlyDescribe(
         const { reth, rEthBPT, weth } = fixture;
         await depositTest(fixture, [12, 0], [weth, reth], rEthBPT);
       });
-
       it("Should deposit 30 rETH in Balancer MetaStablePool strategy", async function () {
         const { reth, rEthBPT, weth } = fixture;
         await depositTest(fixture, [0, 30], [weth, reth], rEthBPT);
+      });
+      it("Should deposit all WETH and rETH in strategy to pool", async function () {
+        const { balancerREthStrategy, oethVault, reth, weth } = fixture;
+
+        const rethInVaultBefore = await reth.balanceOf(oethVault.address);
+        const wethInVaultBefore = await weth.balanceOf(oethVault.address);
+        const strategyValueBefore = await balancerREthStrategy[
+          "checkBalance()"
+        ]();
+
+        const oethVaultSigner = await impersonateAndFundContract(
+          oethVault.address
+        );
+
+        const rethUnits = oethUnits("7");
+        const rethValue = await reth.getEthValue(rethUnits);
+        await reth
+          .connect(oethVaultSigner)
+          .transfer(balancerREthStrategy.address, rethUnits);
+        const wethUnits = oethUnits("8");
+        await weth
+          .connect(oethVaultSigner)
+          .transfer(balancerREthStrategy.address, wethUnits);
+
+        await balancerREthStrategy.connect(oethVaultSigner).depositAll();
+
+        const rethInVaultAfter = await reth.balanceOf(oethVault.address);
+        const wethInVaultAfter = await weth.balanceOf(oethVault.address);
+        const strategyValueAfter = await balancerREthStrategy[
+          "checkBalance()"
+        ]();
+
+        expect(rethInVaultBefore.sub(rethInVaultAfter)).to.equal(rethUnits);
+        expect(wethInVaultBefore.sub(wethInVaultAfter)).to.equal(wethUnits);
+        expect(
+          strategyValueAfter.sub(strategyValueBefore)
+        ).to.approxEqualTolerance(rethValue.add(wethUnits), 0.01);
       });
 
       it("Should be able to deposit with higher deposit slippage", async function () {});
@@ -169,7 +205,10 @@ forkOnlyDescribe(
         const wethBalanceDiffVault = vaultWethBalanceAfter.sub(
           vaultWethBalanceBefore
         );
-        expect(wethBalanceDiffVault).to.approxEqualTolerance(withdrawAmount, 1);
+        expect(wethBalanceDiffVault).to.approxEqualTolerance(
+          withdrawAmount,
+          0.01
+        );
       });
       it("Should be able to withdraw 8 RETH from the pool", async function () {
         const { reth, balancerREthStrategy, oethVault } = fixture;
@@ -193,7 +232,10 @@ forkOnlyDescribe(
         const rethBalanceDiffVault = vaultRethBalanceAfter.sub(
           vaultRethBalanceBefore
         );
-        expect(rethBalanceDiffVault).to.approxEqualTolerance(withdrawAmount, 1);
+        expect(rethBalanceDiffVault).to.approxEqualTolerance(
+          withdrawAmount,
+          0.01
+        );
       });
       it("Should be able to withdraw 11 WETH and 14 RETH from the pool", async function () {
         const { reth, balancerREthStrategy, oethVault, weth } = fixture;
@@ -217,10 +259,10 @@ forkOnlyDescribe(
 
         expect(
           (await weth.balanceOf(oethVault.address)).sub(vaultWethBalanceBefore)
-        ).to.approxEqualTolerance(wethWithdrawAmount, 1);
+        ).to.approxEqualTolerance(wethWithdrawAmount, 0.01);
         expect(
           (await reth.balanceOf(oethVault.address)).sub(vaultRethBalanceBefore)
-        ).to.approxEqualTolerance(rethWithdrawAmount, 1);
+        ).to.approxEqualTolerance(rethWithdrawAmount, 0.01);
       });
 
       it("Should be able to withdraw all of pool liquidity", async function () {
@@ -455,21 +497,28 @@ forkOnlyDescribe(
   }
 )
 
-async function getPoolValues(strategy, allAssets) {
+async function getPoolValues(strategy, allAssets, reth) {
   const result = {
     sum: BigNumber.from(0),
   };
 
   for (const asset of allAssets) {
     const assetSymbol = await asset.symbol();
-    const strategyAssetValue = await strategy["checkBalance(address)"](
+    const strategyAssetBalance = await strategy["checkBalance(address)"](
       asset.address
     );
+    log(
+      `Balancer ${assetSymbol} balance: ${formatUnits(strategyAssetBalance)}`
+    );
+    const strategyAssetValue =
+      asset.address === reth.address
+        ? await reth.getEthValue(strategyAssetBalance)
+        : strategyAssetBalance;
     result.sum = result.sum.add(strategyAssetValue);
     log(`Balancer ${assetSymbol} value: ${formatUnits(strategyAssetValue)}`);
-    result[assetSymbol] = strategyAssetValue;
+    result[assetSymbol] = strategyAssetBalance;
   }
-  log(`Balancer sum value: ${formatUnits(result.sum)}`);
+  log(`Balancer sum values: ${formatUnits(result.sum)}`);
 
   result.value = await strategy["checkBalance()"]();
   log(`Balancer value: ${formatUnits(result.value)}`);
@@ -507,6 +556,7 @@ async function depositTest(fixture, amounts, allAssets, bpt) {
     strategy: balancerREthStrategy,
     allAssets,
     pid: balancerREthPID,
+    reth,
   };
 
   const unitAmounts = amounts.map((amount) => oethUnits(amount.toString()));
@@ -536,11 +586,11 @@ async function depositTest(fixture, amounts, allAssets, bpt) {
   const strategyValuesDiff = after.strategyValues.sum.sub(
     before.strategyValues.sum
   );
-  expect(strategyValuesDiff).to.approxEqualTolerance(sumEthAmounts, 1);
+  expect(strategyValuesDiff).to.approxEqualTolerance(sumEthAmounts, 0.1);
   expect(
     after.strategyValues.value,
     "strategy total value = sum of asset values"
-  ).to.approxEqualTolerance(after.strategyValues.sum, 1);
+  ).to.approxEqualTolerance(after.strategyValues.sum, 0.01);
 }
 
 async function wstETHDepositTest(fixture, amounts, allAssets, bpt) {
@@ -551,6 +601,7 @@ async function wstETHDepositTest(fixture, amounts, allAssets, bpt) {
     balancerVault,
     balancerWstEthPID,
     strategist,
+    reth,
   } = fixture;
   const logParams = {
     oeth,
@@ -560,6 +611,7 @@ async function wstETHDepositTest(fixture, amounts, allAssets, bpt) {
     strategy: balancerWstEthStrategy,
     allAssets,
     pid: balancerWstEthPID,
+    reth,
   };
 
   const unitAmounts = amounts.map((amount) => oethUnits(amount.toString()));
@@ -598,6 +650,7 @@ async function logBalances({
   pid,
   strategy,
   allAssets,
+  reth,
 }) {
   const oethSupply = await oeth.totalSupply();
   const bptSupply = await bpt.totalSupply();
@@ -613,7 +666,7 @@ async function logBalances({
   const strategyValues = await getPoolValues(
     strategy,
     allAssets,
-    balancerVault
+    reth
   );
 
   const poolBalances = await getPoolBalances(balancerVault, pid);
