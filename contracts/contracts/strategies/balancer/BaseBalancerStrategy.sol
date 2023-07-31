@@ -287,10 +287,14 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
     {
         if (asset == stETH) {
             wrappedAsset = wstETH;
-            wrappedAmount = IWstETH(wstETH).wrap(amount);
+            if (amount > 0) {
+                wrappedAmount = IWstETH(wstETH).wrap(amount);
+            }
         } else if (asset == frxETH) {
             wrappedAsset = sfrxETH;
-            wrappedAmount = IERC4626(sfrxETH).deposit(amount, address(this));
+            if (amount > 0) {
+                wrappedAmount = IERC4626(sfrxETH).deposit(amount, address(this));
+            }
         } else {
             wrappedAsset = asset;
             wrappedAmount = amount;
