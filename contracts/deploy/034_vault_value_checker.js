@@ -2,13 +2,7 @@ const { deploymentWithProposal } = require("../utils/deploy");
 
 module.exports = deploymentWithProposal(
   { deployName: "034_vault_value_checker", forceDeploy: false },
-  async ({
-    assetAddresses,
-    deployWithConfirmation,
-    ethers,
-    getTxOpts,
-    withConfirmation,
-  }) => {
+  async ({ deployWithConfirmation, ethers }) => {
     // Current contracts
     const cVaultProxy = await ethers.getContract("VaultProxy");
 
@@ -16,10 +10,7 @@ module.exports = deploymentWithProposal(
     // ----------------
 
     // 1. Deploy new vault value checker
-    const dVaultValueChecker = await deployWithConfirmation(
-      "VaultValueChecker",
-      [cVaultProxy.address]
-    );
+    await deployWithConfirmation("VaultValueChecker", [cVaultProxy.address]);
     const vaultValueChecker = await ethers.getContract("VaultValueChecker");
 
     // Governance Actions
