@@ -145,9 +145,9 @@ forkOnlyDescribe(
           oethVault.address
         );
 
+        // prettier-ignore
         await balancerREthStrategy
-          .connect(oethVaultSigner)
-          ["withdraw(address,address,uint256)"](
+          .connect(oethVaultSigner)["withdraw(address,address,uint256)"](
             oethVault.address,
             weth.address,
             withdrawAmount
@@ -169,9 +169,9 @@ forkOnlyDescribe(
           oethVault.address
         );
 
+        // prettier-ignore
         await balancerREthStrategy
-          .connect(oethVaultSigner)
-          ["withdraw(address,address,uint256)"](
+          .connect(oethVaultSigner)["withdraw(address,address,uint256)"](
             oethVault.address,
             reth.address,
             withdrawAmount
@@ -195,9 +195,9 @@ forkOnlyDescribe(
           oethVault.address
         );
 
+        // prettier-ignore
         await balancerREthStrategy
-          .connect(oethVaultSigner)
-          ["withdraw(address,address[],uint256[])"](
+          .connect(oethVaultSigner)["withdraw(address,address[],uint256[])"](
             oethVault.address,
             [weth.address, reth.address],
             [wethWithdrawAmount, rethWithdrawAmount]
