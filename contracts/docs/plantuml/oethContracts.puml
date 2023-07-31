@@ -57,9 +57,8 @@ object "MorphoAaveStrategy" as morphAaveStrat <<Origin>><<Proxy>> #DeepSkyBlue {
 }
 
 object "BalancerMetaPoolStrategy" as balancerStrat <<Origin>><<Proxy>> #DeepSkyBlue {
-    asset: stETH, WETH
-    Balancer assets: wstETH, WETH
-    Balancer Pool Token: B-stETH-STABLE
+    asset: rETH, WETH
+    Balancer Pool Token: B-rETH-STABLE
     Rewards: BAL, AURA
 }
 
