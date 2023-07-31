@@ -193,19 +193,10 @@ const deployThreePoolStrategy = async () => {
   log("Initialized ThreePoolStrategyProxy");
 
   await withConfirmation(
-    cThreePoolStrategy
-      .connect(sDeployer)
-      ["initialize(address[],address[],address[],address,address)"](
-        [assetAddresses.CRV],
-        [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT],
-        [
-          assetAddresses.ThreePoolToken,
-          assetAddresses.ThreePoolToken,
-          assetAddresses.ThreePoolToken,
-        ],
-        assetAddresses.ThreePoolGauge,
-        assetAddresses.CRVMinter
-      )
+    cThreePoolStrategy.connect(sDeployer)[
+      // eslint-disable-next-line no-unexpected-multiline
+      "initialize(address[],address[],address[],address,address)"
+    ]([assetAddresses.CRV], [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT], [assetAddresses.ThreePoolToken, assetAddresses.ThreePoolToken, assetAddresses.ThreePoolToken], assetAddresses.ThreePoolGauge, assetAddresses.CRVMinter)
   );
   log("Initialized ThreePoolStrategy");
 
@@ -264,20 +255,21 @@ const deployConvexStrategy = async () => {
   const mockBooster = await ethers.getContract("MockBooster");
   const mockRewardPool = await ethers.getContract("MockRewardPool");
   await withConfirmation(
-    cConvexStrategy
-      .connect(sDeployer)
-      ["initialize(address[],address[],address[],address,address,uint256)"](
-        [assetAddresses.CRV, assetAddresses.CVX],
-        [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT],
-        [
-          assetAddresses.ThreePoolToken,
-          assetAddresses.ThreePoolToken,
-          assetAddresses.ThreePoolToken,
-        ],
-        mockBooster.address, // _cvxDepositorAddress,
-        mockRewardPool.address, // _cvxRewardStakerAddress,
-        9 // _cvxDepositorPTokenId
-      )
+    cConvexStrategy.connect(sDeployer)[
+      // eslint-disable-next-line no-unexpected-multiline
+      "initialize(address[],address[],address[],address,address,uint256)"
+    ](
+      [assetAddresses.CRV, assetAddresses.CVX],
+      [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT],
+      [
+        assetAddresses.ThreePoolToken,
+        assetAddresses.ThreePoolToken,
+        assetAddresses.ThreePoolToken,
+      ],
+      mockBooster.address, // _cvxDepositorAddress,
+      mockRewardPool.address, // _cvxRewardStakerAddress,
+      9 // _cvxDepositorPTokenId
+    )
   );
   log("Initialized ConvexStrategy");
 
