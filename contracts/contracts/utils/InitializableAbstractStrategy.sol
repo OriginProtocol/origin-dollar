@@ -29,10 +29,18 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
         address _newHarvesterAddress
     );
 
-    // Core address for the given platform
-    address public platformAddress;
+    /// @notice Address of the underlying platform
+    address public immutable platformAddress;
+    /// @notice Address of the OToken vault
+    address public immutable vaultAddress;
 
-    address public vaultAddress;
+    /// @dev Replaced with an immutable variable
+    // slither-disable-next-line constable-states
+    address private _deprecated_platformAddress;
+
+    /// @dev Replaced with an immutable
+    // slither-disable-next-line constable-states
+    address private _deprecated_vaultAddress;
 
     // asset => pToken (Platform Specific Token Address)
     mapping(address => address) public assetToPToken;
@@ -60,24 +68,31 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
      */
     int256[98] private _reserved;
 
+    struct BaseStrategyConfig {
+        address platformAddress; // Address of the underlying platform
+        address vaultAddress; // Address of the OToken's Vault
+    }
+
     /**
-     * @dev Internal initialize function, to set up initial internal state
-     * @param _platformAddress Generic platform address
-     * @param _vaultAddress Address of the Vault
+     * @param _config The platform and OToken vault addresses
+     */
+    constructor(BaseStrategyConfig memory _config) {
+        platformAddress = _config.platformAddress;
+        vaultAddress = _config.vaultAddress;
+    }
+
+    /**
+     * @notice Internal initialize function, to set up initial internal state
      * @param _rewardTokenAddresses Address of reward token for platform
      * @param _assets Addresses of initial supported assets
      * @param _pTokens Platform Token corresponding addresses
      */
     function initialize(
-        address _platformAddress,
-        address _vaultAddress,
         address[] calldata _rewardTokenAddresses,
         address[] calldata _assets,
         address[] calldata _pTokens
-    ) external onlyGovernor initializer {
+    ) external virtual onlyGovernor initializer {
         InitializableAbstractStrategy._initialize(
-            _platformAddress,
-            _vaultAddress,
             _rewardTokenAddresses,
             _assets,
             _pTokens
@@ -85,14 +100,10 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
     }
 
     function _initialize(
-        address _platformAddress,
-        address _vaultAddress,
         address[] calldata _rewardTokenAddresses,
         address[] memory _assets,
         address[] memory _pTokens
     ) internal {
-        platformAddress = _platformAddress;
-        vaultAddress = _vaultAddress;
         rewardTokenAddresses = _rewardTokenAddresses;
 
         uint256 assetCount = _assets.length;

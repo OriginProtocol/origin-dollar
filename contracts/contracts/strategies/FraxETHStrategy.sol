@@ -8,10 +8,9 @@ pragma solidity ^0.8.0;
  */
 import { IERC4626 } from "../../lib/openzeppelin/interfaces/IERC4626.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { IERC20 } from "../utils/InitializableAbstractStrategy.sol";
 import { IWETH9 } from "../interfaces/IWETH9.sol";
 import { IFraxETHMinter } from "../interfaces/IFraxETHMinter.sol";
-import { Generalized4626Strategy } from "./Generalized4626Strategy.sol";
+import { Generalized4626Strategy, IERC20 } from "./Generalized4626Strategy.sol";
 
 contract FraxETHStrategy is Generalized4626Strategy {
     using SafeERC20 for IERC20;
@@ -20,6 +19,10 @@ contract FraxETHStrategy is Generalized4626Strategy {
 
     IFraxETHMinter public constant fraxETHMinter =
         IFraxETHMinter(0xbAFA44EFE7901E04E39Dad13167D089C559c1138);
+
+    constructor(BaseStrategyConfig memory _stratConfig)
+        Generalized4626Strategy(_stratConfig)
+    {}
 
     function _deposit(address _asset, uint256 _amount) internal override {
         require(_amount > 0, "Must deposit something");

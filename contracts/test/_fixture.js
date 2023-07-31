@@ -1369,18 +1369,24 @@ async function compoundFixture() {
   await deploy("StandaloneCompound", {
     from: governorAddr,
     contract: "CompoundStrategy",
+    args: [
+      [
+        addresses.dead,
+        governorAddr, // Using Governor in place of Vault here
+      ],
+    ],
   });
 
   fixture.cStandalone = await ethers.getContract("StandaloneCompound");
 
   // Set governor as vault
-  await fixture.cStandalone.connect(sGovernor).initialize(
-    addresses.dead,
-    governorAddr, // Using Governor in place of Vault here
-    [assetAddresses.COMP],
-    [assetAddresses.DAI, assetAddresses.USDC],
-    [assetAddresses.cDAI, assetAddresses.cUSDC]
-  );
+  await fixture.cStandalone
+    .connect(sGovernor)
+    .initialize(
+      [assetAddresses.COMP],
+      [assetAddresses.DAI, assetAddresses.USDC],
+      [assetAddresses.cDAI, assetAddresses.cUSDC]
+    );
 
   await fixture.cStandalone
     .connect(sGovernor)
@@ -1407,6 +1413,12 @@ async function threepoolFixture() {
   await deploy("StandaloneThreePool", {
     from: governorAddr,
     contract: "ThreePoolStrategy",
+    args: [
+      [
+        assetAddresses.ThreePool,
+        governorAddr, // Using Governor in place of Vault here
+      ],
+    ],
   });
 
   fixture.tpStandalone = await ethers.getContract("StandaloneThreePool");
@@ -1414,20 +1426,8 @@ async function threepoolFixture() {
   // Set governor as vault
   await fixture.tpStandalone.connect(sGovernor)[
     // eslint-disable-next-line
-    "initialize(address,address,address[],address[],address[],address,address)"
-  ](
-    assetAddresses.ThreePool,
-    governorAddr, // Using Governor in place of Vault here
-    [assetAddresses.CRV],
-    [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT],
-    [
-      assetAddresses.ThreePoolToken,
-      assetAddresses.ThreePoolToken,
-      assetAddresses.ThreePoolToken,
-    ],
-    assetAddresses.ThreePoolGauge,
-    assetAddresses.CRVMinter
-  );
+    "initialize(address[],address[],address[],address,address)"
+  ]([assetAddresses.CRV], [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT], [assetAddresses.ThreePoolToken, assetAddresses.ThreePoolToken, assetAddresses.ThreePoolToken], assetAddresses.ThreePoolGauge, assetAddresses.CRVMinter);
 
   return fixture;
 }
