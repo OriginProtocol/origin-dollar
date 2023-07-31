@@ -225,51 +225,49 @@
 <!-- 4 -->
 <g id="node5" class="node">
 <title>4</title>
-<polygon fill="#f2f2f2" stroke="black" points="1614.44,-371.1 1614.44,-470.3 2023.7,-470.3 2023.7,-371.1 1614.44,-371.1"/>
-<text text-anchor="middle" x="1819.07" y="-453.7" font-family="Courier New" font-size="14.00">Strategy &lt;&lt;Struct&gt;&gt;</text>
-<polyline fill="none" stroke="black" points="1614.44,-445.5 2023.7,-445.5 "/>
-<text text-anchor="middle" x="1647.64" y="-428.9" font-family="Courier New" font-size="14.00">offset</text>
-<polyline fill="none" stroke="black" points="1614.44,-420.7 1680.85,-420.7 "/>
-<text text-anchor="middle" x="1647.64" y="-404.1" font-family="Courier New" font-size="14.00">0</text>
-<polyline fill="none" stroke="black" points="1614.44,-395.9 1680.85,-395.9 "/>
-<text text-anchor="middle" x="1647.64" y="-379.3" font-family="Courier New" font-size="14.00">1</text>
-<polyline fill="none" stroke="black" points="1680.85,-371.1 1680.85,-445.5 "/>
-<text text-anchor="middle" x="1852.27" y="-428.9" font-family="Courier New" font-size="14.00">type: variable (bytes)</text>
-<polyline fill="none" stroke="black" points="1680.85,-420.7 2023.7,-420.7 "/>
-<text text-anchor="middle" x="1756.06" y="-404.1" font-family="Courier New" font-size="14.00">unallocated (31)</text>
-<polyline fill="none" stroke="black" points="1831.27,-395.9 1831.27,-420.7 "/>
-<text text-anchor="middle" x="1927.48" y="-404.1" font-family="Courier New" font-size="14.00">bool: isSupported (1)</text>
-<polyline fill="none" stroke="black" points="1680.85,-395.9 2023.7,-395.9 "/>
-<text text-anchor="middle" x="1851.87" y="-379.3" font-family="Courier New" font-size="14.00">uint256: _deprecated (32)</text>
+<polygon fill="#f2f2f2" stroke="black" points="1509.82,-395.5 1509.82,-469.9 2128.31,-469.9 2128.31,-395.5 1509.82,-395.5"/>
+<text text-anchor="middle" x="1819.07" y="-453.3" font-family="Courier New" font-size="14.00">Strategy &lt;&lt;Struct&gt;&gt;</text>
+<polyline fill="none" stroke="black" points="1509.82,-445.1 2128.31,-445.1 "/>
+<text text-anchor="middle" x="1543.03" y="-428.5" font-family="Courier New" font-size="14.00">offset</text>
+<polyline fill="none" stroke="black" points="1509.82,-420.3 1576.23,-420.3 "/>
+<text text-anchor="middle" x="1543.03" y="-403.7" font-family="Courier New" font-size="14.00">0</text>
+<polyline fill="none" stroke="black" points="1576.23,-395.5 1576.23,-445.1 "/>
+<text text-anchor="middle" x="1852.27" y="-428.5" font-family="Courier New" font-size="14.00">type: variable (bytes)</text>
+<polyline fill="none" stroke="black" points="1576.23,-420.3 2128.31,-420.3 "/>
+<text text-anchor="middle" x="1651.44" y="-403.7" font-family="Courier New" font-size="14.00">unallocated (30)</text>
+<polyline fill="none" stroke="black" points="1726.65,-395.5 1726.65,-420.3 "/>
+<text text-anchor="middle" x="1831.27" y="-403.7" font-family="Courier New" font-size="14.00">bool: isMultiAssets (1)</text>
+<polyline fill="none" stroke="black" points="1935.89,-395.5 1935.89,-420.3 "/>
+<text text-anchor="middle" x="2032.1" y="-403.7" font-family="Courier New" font-size="14.00">bool: isSupported (1)</text>
 </g>
 <!-- 8&#45;&gt;4 -->
 <g id="edge4" class="edge">
 <title>8:18&#45;&gt;4</title>
-<path fill="none" stroke="black" d="M1180.58,-509.7C1201.41,-509.7 1197.37,-487.74 1216.58,-479.7 1338.38,-428.74 1485.77,-413.62 1604.16,-411.42"/>
-<polygon fill="black" stroke="black" points="1604.49,-414.92 1614.43,-411.26 1604.38,-407.92 1604.49,-414.92"/>
+<path fill="none" stroke="black" d="M1180.58,-509.7C1201.41,-509.7 1197.29,-487.55 1216.58,-479.7 1304.46,-443.95 1405.45,-427.61 1499.27,-421.43"/>
+<polygon fill="black" stroke="black" points="1499.73,-424.91 1509.49,-420.79 1499.3,-417.92 1499.73,-424.91"/>
 </g>
 <!-- 5 -->
 <g id="node6" class="node">
 <title>5</title>
-<polygon fill="#f2f2f2" stroke="black" points="1533.82,-261.1 1533.82,-352.3 2104.31,-352.3 2104.31,-261.1 1533.82,-261.1"/>
-<text text-anchor="middle" x="1819.07" y="-335.7" font-family="Courier New" font-size="14.00">address[]: allStrategies &lt;&lt;Array&gt;&gt;</text>
-<text text-anchor="middle" x="1819.07" y="-318.9" font-family="Courier New" font-size="14.00">0x4a11f94e20a93c79f6ec743a1954ec4fc2c08429ae2122118bf234b2185c81b8</text>
-<polyline fill="none" stroke="black" points="1533.82,-310.7 2104.31,-310.7 "/>
-<text text-anchor="middle" x="1626.03" y="-294.1" font-family="Courier New" font-size="14.00">offset</text>
-<polyline fill="none" stroke="black" points="1533.82,-285.9 1718.23,-285.9 "/>
-<text text-anchor="middle" x="1626.03" y="-269.3" font-family="Courier New" font-size="14.00">0</text>
-<polyline fill="none" stroke="black" points="1718.23,-261.1 1718.23,-310.7 "/>
-<text text-anchor="middle" x="1910.85" y="-294.1" font-family="Courier New" font-size="14.00">type: variable (bytes)</text>
-<polyline fill="none" stroke="black" points="1718.23,-285.9 2103.47,-285.9 "/>
-<text text-anchor="middle" x="1822.94" y="-269.3" font-family="Courier New" font-size="14.00">unallocated (12)</text>
-<polyline fill="none" stroke="black" points="1927.65,-261.1 1927.65,-285.9 "/>
-<text text-anchor="middle" x="2015.56" y="-269.3" font-family="Courier New" font-size="14.00">address (20)</text>
+<polygon fill="#f2f2f2" stroke="black" points="1533.82,-285.1 1533.82,-376.3 2104.31,-376.3 2104.31,-285.1 1533.82,-285.1"/>
+<text text-anchor="middle" x="1819.07" y="-359.7" font-family="Courier New" font-size="14.00">address[]: allStrategies &lt;&lt;Array&gt;&gt;</text>
+<text text-anchor="middle" x="1819.07" y="-342.9" font-family="Courier New" font-size="14.00">0x4a11f94e20a93c79f6ec743a1954ec4fc2c08429ae2122118bf234b2185c81b8</text>
+<polyline fill="none" stroke="black" points="1533.82,-334.7 2104.31,-334.7 "/>
+<text text-anchor="middle" x="1626.03" y="-318.1" font-family="Courier New" font-size="14.00">offset</text>
+<polyline fill="none" stroke="black" points="1533.82,-309.9 1718.23,-309.9 "/>
+<text text-anchor="middle" x="1626.03" y="-293.3" font-family="Courier New" font-size="14.00">0</text>
+<polyline fill="none" stroke="black" points="1718.23,-285.1 1718.23,-334.7 "/>
+<text text-anchor="middle" x="1910.85" y="-318.1" font-family="Courier New" font-size="14.00">type: variable (bytes)</text>
+<polyline fill="none" stroke="black" points="1718.23,-309.9 2103.47,-309.9 "/>
+<text text-anchor="middle" x="1822.94" y="-293.3" font-family="Courier New" font-size="14.00">unallocated (12)</text>
+<polyline fill="none" stroke="black" points="1927.65,-285.1 1927.65,-309.9 "/>
+<text text-anchor="middle" x="2015.56" y="-293.3" font-family="Courier New" font-size="14.00">address (20)</text>
 </g>
 <!-- 8&#45;&gt;5 -->
 <g id="edge5" class="edge">
 <title>8:20&#45;&gt;5</title>
-<path fill="none" stroke="black" d="M1180.58,-484.7C1237.54,-484.7 1172.6,-397.9 1216.58,-361.7 1300.98,-292.23 1416.38,-270.22 1523.54,-268.54"/>
-<polygon fill="black" stroke="black" points="1523.59,-272.04 1533.55,-268.44 1523.52,-265.04 1523.59,-272.04"/>
+<path fill="none" stroke="black" d="M1180.58,-484.7C1227.4,-484.7 1179.5,-414.28 1216.58,-385.7 1302.47,-319.5 1417.12,-297.81 1523.28,-295.48"/>
+<polygon fill="black" stroke="black" points="1523.59,-298.97 1533.53,-295.31 1523.47,-291.97 1523.59,-298.97"/>
 </g>
 <!-- 6 -->
 <g id="node7" class="node">
