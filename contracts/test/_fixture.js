@@ -3,7 +3,10 @@ const hre = require("hardhat");
 const { ethers } = hre;
 
 const addresses = require("../utils/addresses");
-const { balancer_rETH_WETH_PID, balancer_stETH_WETH_PID } = require("../utils/constants");
+const {
+  balancer_rETH_WETH_PID,
+  balancer_stETH_WETH_PID,
+} = require("../utils/constants");
 const {
   fundAccounts,
   fundAccountsForOETHUnitTests,
@@ -858,7 +861,7 @@ function balancerREthFixtureSetup() {
     );
 
     return fixture;
-  })
+  });
 }
 
 /**
@@ -875,26 +878,29 @@ function balancerWstEthFixtureSetup() {
         deployerIsProposer: true,
       },
       proxyContractName: "OETHBalancerMetaPoolwstEthStrategyProxy",
-    
+
       platformAddress: addresses.mainnet.wstETH_WETH_BPT,
       poolId: balancer_stETH_WETH_PID,
-    
+
       auraRewardsContractAddress: addresses.mainnet.wstETH_WETH_AuraRewards,
-    
+
       rewardTokenAddresses: [addresses.mainnet.BAL, addresses.mainnet.AURA],
       assets: [addresses.mainnet.stETH, addresses.mainnet.WETH],
-    })
+    });
 
-    await d(hre)
+    await d(hre);
 
+    const balancerWstEthStrategyProxy = await ethers.getContract(
+      "OETHBalancerMetaPoolwstEthStrategyProxy"
+    );
+    const balancerWstEthStrategy = await ethers.getContractAt(
+      "BalancerMetaPoolStrategy",
+      balancerWstEthStrategyProxy.address
+    );
 
-    const balancerWstEthStrategyProxy = await ethers.getContract("OETHBalancerMetaPoolwstEthStrategyProxy")
-    const balancerWstEthStrategy = await ethers.getContractAt("BalancerMetaPoolStrategy", balancerWstEthStrategyProxy.address)
+    fixture.balancerWstEthStrategy = balancerWstEthStrategy;
 
-    fixture.balancerWstEthStrategy = balancerWstEthStrategy
-
-    const { oethVault, timelock, weth, stETH, josh } =
-      fixture;
+    const { oethVault, timelock, weth, stETH, josh } = fixture;
 
     await oethVault
       .connect(timelock)
@@ -917,7 +923,7 @@ function balancerWstEthFixtureSetup() {
     );
 
     return fixture;
-  })
+  });
 }
 
 async function fundWith3Crv(address, maxAmount) {

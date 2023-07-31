@@ -1,11 +1,10 @@
-const { deploymentWithGovernanceProposal } = require("./deploy")
+const { deploymentWithGovernanceProposal } = require("./deploy");
 const addresses = require("../utils/addresses");
 
 module.exports = ({
   deploymentOpts,
 
   proxyContractName,
-  baseContractName,
 
   platformAddress, // Address of the Balancer pool
   poolId, // Pool ID of the Balancer pool
@@ -15,24 +14,22 @@ module.exports = ({
   rewardTokenAddresses,
   assets,
 }) => {
-  baseContractName = baseContractName || "BalancerMetaPoolStrategy"
-
   return deploymentWithGovernanceProposal(
     deploymentOpts,
     async ({ deployWithConfirmation, ethers, getTxOpts, withConfirmation }) => {
       const { deployerAddr } = await getNamedAccounts();
       const sDeployer = await ethers.provider.getSigner(deployerAddr);
-  
+
       // Current contracts
       const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
       const cOETHVaultAdmin = await ethers.getContractAt(
         "OETHVaultAdmin",
         cOETHVaultProxy.address
       );
-  
+
       // Deployer Actions
       // ----------------
-  
+
       // 1. Deploy new proxy
       // New strategy will be living at a clean address
       const dOETHBalancerMetaPoolStrategyProxy = await deployWithConfirmation(
@@ -42,7 +39,7 @@ module.exports = ({
         proxyContractName,
         dOETHBalancerMetaPoolStrategyProxy.address
       );
-  
+
       // 2. Deploy new implementation
       const dOETHBalancerMetaPoolStrategyImpl = await deployWithConfirmation(
         "BalancerMetaPoolStrategy",
@@ -57,15 +54,17 @@ module.exports = ({
             addresses.mainnet.balancerVault, // Address of the Balancer vault
             poolId, // Pool ID of the Balancer pool
           ],
-          auraRewardsContractAddress
+          auraRewardsContractAddress,
         ]
       );
       const cOETHBalancerMetaPoolStrategy = await ethers.getContractAt(
         "BalancerMetaPoolStrategy",
         dOETHBalancerMetaPoolStrategyProxy.address
       );
-  
-      const cOETHHarvesterProxy = await ethers.getContract("OETHHarvesterProxy");
+
+      const cOETHHarvesterProxy = await ethers.getContract(
+        "OETHHarvesterProxy"
+      );
       const cOETHHarvester = await ethers.getContractAt(
         "OETHHarvester",
         cOETHHarvesterProxy.address
@@ -73,15 +72,12 @@ module.exports = ({
 
       // 3. Encode the init data
       const initFunction = "initialize(address[],address[],address[])";
-      const initData = cOETHBalancerMetaPoolStrategy.interface.encodeFunctionData(
-        initFunction,
-        [
-          rewardTokenAddresses,
-          assets,
-          [platformAddress, platformAddress]
-        ]
-      );
-  
+      const initData =
+        cOETHBalancerMetaPoolStrategy.interface.encodeFunctionData(
+          initFunction,
+          [rewardTokenAddresses, assets, [platformAddress, platformAddress]]
+        );
+
       // 4. Init the proxy to point at the implementation
       // prettier-ignore
       await withConfirmation(
@@ -98,7 +94,7 @@ module.exports = ({
         "Balancer strategy address:",
         dOETHBalancerMetaPoolStrategyProxy.address
       );
-  
+
       // Governance Actions
       // ----------------
       return {
@@ -125,5 +121,5 @@ module.exports = ({
         ],
       };
     }
-  )
-}
+  );
+};

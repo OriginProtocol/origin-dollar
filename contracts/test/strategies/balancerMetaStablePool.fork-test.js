@@ -14,8 +14,8 @@ const {
 
 const log = require("../../utils/logger")("test:fork:strategy:balancer");
 
-const balancerREthFixture = balancerREthFixtureSetup()
-const balancerWstEthFixture = balancerWstEthFixtureSetup()
+const balancerREthFixture = balancerREthFixtureSetup();
+const balancerWstEthFixture = balancerWstEthFixtureSetup();
 
 forkOnlyDescribe(
   "ForkTest: Balancer MetaStablePool rETH/WETH Strategy",
@@ -311,7 +311,6 @@ forkOnlyDescribe(
 forkOnlyDescribe(
   "ForkTest: Balancer MetaStablePool wstETH/WETH Strategy",
   function () {
-
     let fixture;
     beforeEach(async () => {
       fixture = await balancerWstEthFixture();
@@ -374,11 +373,11 @@ forkOnlyDescribe(
             [weth.address, stETH.address],
             [oethUnits("25"), oethUnits("25")]
           );
-        
+
         // TODO: Check slippage errors
         await balancerWstEthStrategy
-            .connect(strategist)
-            .setMaxWithdrawalSlippage(oethUnits("0.01"))
+          .connect(strategist)
+          .setMaxWithdrawalSlippage(oethUnits("0.01"));
       });
       it("Should be able to withdraw 10 WETH from the pool", async function () {
         const { weth, balancerWstEthStrategy, oethVault } = fixture;
@@ -404,10 +403,12 @@ forkOnlyDescribe(
         );
         expect(wethBalanceDiffVault).to.approxEqualTolerance(withdrawAmount, 1);
       });
-      it("Should be able to withdraw 8 stETH from the pool", async function () {
+      it.only("Should be able to withdraw 8 stETH from the pool", async function () {
         const { stETH, balancerWstEthStrategy, oethVault } = fixture;
 
-        const vaultstETHBalanceBefore = await stETH.balanceOf(oethVault.address);
+        const vaultstETHBalanceBefore = await stETH.balanceOf(
+          oethVault.address
+        );
         const withdrawAmount = await units("8", stETH);
 
         const oethVaultSigner = await impersonateAndFundContract(
@@ -426,13 +427,18 @@ forkOnlyDescribe(
         const stETHBalanceDiffVault = vaultstETHBalanceAfter.sub(
           vaultstETHBalanceBefore
         );
-        expect(stETHBalanceDiffVault).to.approxEqualTolerance(withdrawAmount, 1);
+        expect(stETHBalanceDiffVault).to.approxEqualTolerance(
+          withdrawAmount,
+          1
+        );
       });
       it("Should be able to withdraw 11 WETH and 14 stETH from the pool", async function () {
         const { stETH, balancerWstEthStrategy, oethVault, weth } = fixture;
 
         const vaultWethBalanceBefore = await weth.balanceOf(oethVault.address);
-        const vaultstEthBalanceBefore = await stETH.balanceOf(oethVault.address);
+        const vaultstEthBalanceBefore = await stETH.balanceOf(
+          oethVault.address
+        );
         const wethWithdrawAmount = await units("11", weth);
         const stETHWithdrawAmount = await units("14", stETH);
 
@@ -452,7 +458,9 @@ forkOnlyDescribe(
           (await weth.balanceOf(oethVault.address)).sub(vaultWethBalanceBefore)
         ).to.approxEqualTolerance(wethWithdrawAmount, 1);
         expect(
-          (await stETH.balanceOf(oethVault.address)).sub(vaultstEthBalanceBefore)
+          (await stETH.balanceOf(oethVault.address)).sub(
+            vaultstEthBalanceBefore
+          )
         ).to.approxEqualTolerance(stETHWithdrawAmount, 1);
       });
 
@@ -495,7 +503,7 @@ forkOnlyDescribe(
       });
     });
   }
-)
+);
 
 async function getPoolValues(strategy, allAssets, reth) {
   const result = {
@@ -615,7 +623,7 @@ async function wstETHDepositTest(fixture, amounts, allAssets, bpt) {
   };
 
   const unitAmounts = amounts.map((amount) => oethUnits(amount.toString()));
-  const ethAmounts = unitAmounts
+  const ethAmounts = unitAmounts;
   const sumEthAmounts = ethAmounts.reduce(
     (a, b) => a.add(b),
     BigNumber.from(0)
@@ -663,11 +671,7 @@ async function logBalances({
     log(`${await asset.symbol()} in vault ${formatUnits(vaultAssets)}`);
   }
 
-  const strategyValues = await getPoolValues(
-    strategy,
-    allAssets,
-    reth
-  );
+  const strategyValues = await getPoolValues(strategy, allAssets, reth);
 
   const poolBalances = await getPoolBalances(balancerVault, pid);
 
