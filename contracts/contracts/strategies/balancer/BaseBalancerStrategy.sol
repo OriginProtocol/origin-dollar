@@ -296,6 +296,24 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
     }
 
     /**
+     * @dev Calculates how many wrapped Balancer pool tokens, eg wstETH or sfrxETH, are required
+     * to withdraw the specified amount of vault collateral asset, eg stETH or frxETH.
+     */
+    function previewUnwrapPoolAsset(address asset, uint256 assetAmount)
+        internal
+        view
+        returns (uint256 wrappedAmount)
+    {
+        if (asset == stETH) {
+            wrappedAmount = IWstETH(wstETH).getWstETHByStETH(assetAmount);
+        } else if (asset == frxETH) {
+            wrappedAmount = IERC4626(sfrxETH).previewWithdraw(assetAmount);
+        } else {
+            wrappedAmount = assetAmount;
+        }
+    }
+
+    /**
      * @dev Converts wrapped asset to its rebasing counterpart.
      */
     function unwrapPoolAsset(address asset, uint256 amount)

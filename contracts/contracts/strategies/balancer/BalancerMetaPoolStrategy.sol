@@ -202,19 +202,18 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
 
         // Estimate the required amount of Balancer Pool Tokens (BPT) for the assets
         uint256 maxBPTtoWithdraw = getBPTExpected(_assets, _amounts);
-        // Get the BPTs left in this strategy contract from previous withdrawals
-        uint256 BPTinStrategy = IERC20(platformAddress).balanceOf(
-            address(this)
-        );
         // Increase BPTs by the max allowed slippage
         // Any excess BPTs will be left in this strategy contract
-        maxBPTtoWithdraw = (maxBPTtoWithdraw - BPTinStrategy).mulTruncate(
+        maxBPTtoWithdraw = maxBPTtoWithdraw.mulTruncate(
             1e18 + maxWithdrawalSlippage
         );
 
         // STEP 2  - Withdraw the Balancer Pool Tokens (BPT) from Aura to this strategy contract
 
-        _lpWithdraw(maxBPTtoWithdraw);
+        // Withdraw BPT from Aura allowing for BPTs left in this strategy contract from previous withdrawals
+        _lpWithdraw(
+            maxBPTtoWithdraw - IERC20(platformAddress).balanceOf(address(this))
+        );
 
         // STEP 3 - Calculate the Balancer pool assets and amounts from the vault collateral assets
 
@@ -225,22 +224,26 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         // Calculate the balancer pool assets and amounts to withdraw
         uint256[] memory poolAmountsOut = new uint256[](tokens.length);
         address[] memory poolAssets = new address[](tokens.length);
-        uint256[] memory mappedAssetAmounts = new uint256[](_assets.length);
+        // Is the wrapped asset amount indexed by the assets array, not the order of the Balancer pool tokens
+        // eg wstETH and sfrxETH amounts, not the stETH and frxETH amounts
+        uint256[] memory wrappedAssetAmounts = new uint256[](_assets.length);
+
         // For each of the Balancer pool assets
         for (uint256 i = 0; i < tokens.length; ++i) {
             poolAssets[i] = address(tokens[i]);
 
             // for each of the vault assets
             for (uint256 j = 0; j < _assets.length; ++j) {
-                // Convert the Balancer pool asset to the vault collateral asset
+                // Convert the Balancer pool asset back to a vault collateral asset
                 address vaultAsset = fromPoolAsset(poolAssets[i]);
 
+                // If the vault asset equals the vault asset mapped from the Balancer pool asset
                 if (_assets[j] == vaultAsset) {
-                    (, poolAmountsOut[i]) = toPoolAsset(
+                    poolAmountsOut[i] = previewUnwrapPoolAsset(
                         vaultAsset,
                         _amounts[j]
                     );
-                    mappedAssetAmounts[j] = poolAmountsOut[i];
+                    wrappedAssetAmounts[j] = poolAmountsOut[i];
                 }
             }
         }
@@ -278,18 +281,18 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         for (uint256 i = 0; i < _assets.length; ++i) {
             // Unwrap assets like wstETH and sfrxETH to rebasing assets stETH and frxETH
             uint256 assetAmount = 0;
-            if (mappedAssetAmounts[i] > 0) {
+            if (wrappedAssetAmounts[i] > 0) {
                 assetAmount = unwrapPoolAsset(
                     _assets[i],
-                    mappedAssetAmounts[i]
+                    wrappedAssetAmounts[i]
                 );
             }
 
             // Transfer the vault collateral assets to the recipient, which is typically the vault
-            if (assetAmount > 0) {
-                IERC20(_assets[i]).safeTransfer(_recipient, assetAmount);
+            if (_amounts[i] > 0) {
+                IERC20(_assets[i]).safeTransfer(_recipient, _amounts[i]);
 
-                emit Withdrawal(_assets[i], platformAddress, assetAmount);
+                emit Withdrawal(_assets[i], platformAddress, _amounts[i]);
             }
         }
     }

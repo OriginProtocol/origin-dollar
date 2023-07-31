@@ -159,7 +159,7 @@ forkOnlyDescribe(
         );
         expect(wethBalanceDiffVault).to.approxEqualTolerance(withdrawAmount, 1);
       });
-      it.skip("Should be able to withdraw 8 RETH from the pool", async function () {
+      it("Should be able to withdraw 8 RETH from the pool", async function () {
         const { reth, balancerREthStrategy, oethVault } = fixture;
 
         const vaultRethBalanceBefore = await reth.balanceOf(oethVault.address);
@@ -183,7 +183,7 @@ forkOnlyDescribe(
         );
         expect(rethBalanceDiffVault).to.approxEqualTolerance(withdrawAmount, 1);
       });
-      it.skip("Should be able to withdraw 11 WETH and 14 RETH from the pool", async function () {
+      it("Should be able to withdraw 11 WETH and 14 RETH from the pool", async function () {
         const { reth, balancerREthStrategy, oethVault, weth } = fixture;
 
         const vaultWethBalanceBefore = await weth.balanceOf(oethVault.address);
