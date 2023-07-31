@@ -98,11 +98,14 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         for (uint256 i = 0; i < _assets.length; ++i) {
             address asset = _assets[i];
             uint256 amount = _amounts[i];
+            mappedAssets[i] = toPoolAsset(_assets[i]);
 
-            emit Deposit(asset, platformAddress, amount);
+            if (amount > 0) {
+                emit Deposit(asset, platformAddress, amount);
 
-            // wrap rebasing assets like stETH and frxETH to wstETH and sfrxETH
-            (mappedAssets[i], mappedAmounts[i]) = wrapPoolAsset(asset, amount);
+                // wrap rebasing assets like stETH and frxETH to wstETH and sfrxETH
+                (, mappedAmounts[i]) = wrapPoolAsset(asset, amount);
+            }
         }
 
         // TODO move this loop into the previous loop
