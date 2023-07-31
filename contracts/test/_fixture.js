@@ -3,7 +3,7 @@ const hre = require("hardhat");
 const { ethers } = hre;
 
 const addresses = require("../utils/addresses");
-const { balancer_rETH_WETH_PID } = require("../utils/constants");
+const { balancer_rETH_WETH_PID, balancer_stETH_WETH_PID } = require("../utils/constants");
 const {
   fundAccounts,
   fundAccountsForOETHUnitTests,
@@ -27,6 +27,7 @@ const threepoolSwapAbi = require("./abi/threepoolSwap.json");
 const sfrxETHAbi = require("./abi/sfrxETH.json");
 const { deployWithConfirmation } = require("../utils/deploy");
 const { defaultAbiCoder, parseUnits, parseEther } = require("ethers/lib/utils");
+const balancerStrategyDeployment = require("../utils/balancerStrategyDeployment");
 
 const defaultFixture = deployments.createFixture(async () => {
   await deployments.fixture(
@@ -828,7 +829,7 @@ async function convexVaultFixture() {
 }
 
 /**
- * Configure a Vault with only the balancerREthStrategy
+ * Configure a Vault with the balancerREthStrategy
  */
 function balancerREthFixtureSetup() {
   return deployments.createFixture(async () => {
@@ -849,6 +850,65 @@ function balancerREthFixtureSetup() {
       josh
     );
     fixture.balancerREthPID = balancer_rETH_WETH_PID;
+
+    fixture.balancerVault = await ethers.getContractAt(
+      "IBalancerVault",
+      addresses.mainnet.balancerVault,
+      josh
+    );
+
+    return fixture;
+  })
+}
+
+/**
+ * Configure a Vault with the balancer strategy for wstETH/WETH pool
+ */
+function balancerWstEthFixtureSetup() {
+  return deployments.createFixture(async () => {
+    const fixture = await defaultFixture();
+
+    const d = balancerStrategyDeployment({
+      deploymentOpts: {
+        deployName: "99999_balancer_wstETH_WETH",
+        forceDeploy: true,
+        deployerIsProposer: true,
+      },
+      proxyContractName: "OETHBalancerMetaPoolwstEthStrategyProxy",
+    
+      platformAddress: addresses.mainnet.wstETH_WETH_BPT,
+      poolId: balancer_stETH_WETH_PID,
+    
+      auraRewardsContractAddress: addresses.mainnet.wstETH_WETH_AuraRewards,
+    
+      rewardTokenAddresses: [addresses.mainnet.BAL, addresses.mainnet.AURA],
+      assets: [addresses.mainnet.stETH, addresses.mainnet.WETH],
+    })
+
+    await d(hre)
+
+
+    const balancerWstEthStrategyProxy = await ethers.getContract("OETHBalancerMetaPoolwstEthStrategyProxy")
+    const balancerWstEthStrategy = await ethers.getContractAt("BalancerMetaPoolStrategy", balancerWstEthStrategyProxy.address)
+
+    fixture.balancerWstEthStrategy = balancerWstEthStrategy
+
+    const { oethVault, timelock, weth, stETH, josh } =
+      fixture;
+
+    await oethVault
+      .connect(timelock)
+      .setAssetDefaultStrategy(stETH.address, balancerWstEthStrategy.address);
+    await oethVault
+      .connect(timelock)
+      .setAssetDefaultStrategy(weth.address, balancerWstEthStrategy.address);
+
+    fixture.stEthBPT = await ethers.getContractAt(
+      "IERC20Metadata",
+      addresses.mainnet.wstETH_WETH_BPT,
+      josh
+    );
+    fixture.balancerWstEthPID = balancer_stETH_WETH_PID;
 
     fixture.balancerVault = await ethers.getContractAt(
       "IBalancerVault",
@@ -1659,6 +1719,7 @@ module.exports = {
   impersonateAccount,
   fraxETHStrategyFixtureSetup,
   balancerREthFixtureSetup,
+  balancerWstEthFixtureSetup,
   oethMorphoAaveFixtureSetup,
   mintWETH,
   replaceContractAt,
