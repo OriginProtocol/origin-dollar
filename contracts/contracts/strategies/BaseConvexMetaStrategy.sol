@@ -18,6 +18,7 @@ import { Helpers } from "../utils/Helpers.sol";
 abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
     using StableMath for uint256;
     using SafeERC20 for IERC20;
+
     event MaxWithdrawalSlippageUpdated(
         uint256 _prevMaxSlippagePercentage,
         uint256 _newMaxSlippagePercentage
@@ -25,8 +26,6 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
 
     // used to circumvent the stack too deep issue
     struct InitConfig {
-        address platformAddress; //Address of the Curve 3pool
-        address vaultAddress; //Address of the vault
         address cvxDepositorAddress; //Address of the Convex depositor(AKA booster) for this pool
         address metapoolAddress; //Address of the Curve MetaPool
         address metapoolMainToken; //Address of Main metapool token
@@ -82,13 +81,7 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
         metapoolAssets = [metapool.coins(0), metapool.coins(1)];
         crvCoinIndex = _getMetapoolCoinIndex(pTokenAddress);
         mainCoinIndex = _getMetapoolCoinIndex(initConfig.metapoolMainToken);
-        super._initialize(
-            initConfig.platformAddress,
-            initConfig.vaultAddress,
-            _rewardTokenAddresses,
-            _assets,
-            _pTokens
-        );
+        super._initialize(_rewardTokenAddresses, _assets, _pTokens);
         _approveBase();
     }
 

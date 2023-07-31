@@ -4,6 +4,10 @@ const { ethers } = hre;
 
 const addresses = require("../utils/addresses");
 const {
+  balancer_rETH_WETH_PID,
+  balancer_stETH_WETH_PID,
+} = require("../utils/constants");
+const {
   fundAccounts,
   fundAccountsForOETHUnitTests,
 } = require("../utils/funding");
@@ -26,6 +30,7 @@ const threepoolSwapAbi = require("./abi/threepoolSwap.json");
 const sfrxETHAbi = require("./abi/sfrxETH.json");
 const { deployWithConfirmation } = require("../utils/deploy");
 const { defaultAbiCoder, parseUnits, parseEther } = require("ethers/lib/utils");
+const balancerStrategyDeployment = require("../utils/balancerStrategyDeployment");
 
 const defaultFixture = deployments.createFixture(async () => {
   await deployments.fixture(
@@ -162,7 +167,7 @@ const defaultFixture = deployments.createFixture(async () => {
     morpho,
     morphoCompoundStrategy,
     fraxEthStrategy,
-    balancerWstEthWethStrategy,
+    balancerREthStrategy,
     morphoAaveStrategy,
     oethMorphoAaveStrategy,
     morphoLens,
@@ -204,12 +209,10 @@ const defaultFixture = deployments.createFixture(async () => {
     ausdt = await ethers.getContractAt(erc20Abi, addresses.mainnet.aUSDT);
     ausdc = await ethers.getContractAt(erc20Abi, addresses.mainnet.aUSDC);
     adai = await ethers.getContractAt(erc20Abi, addresses.mainnet.aDAI);
-    reth = await ethers.getContractAt(erc20Abi, addresses.mainnet.rETH);
+    reth = await ethers.getContractAt("IRETH", addresses.mainnet.rETH);
     stETH = await ethers.getContractAt(erc20Abi, addresses.mainnet.stETH);
     frxETH = await ethers.getContractAt(erc20Abi, addresses.mainnet.frxETH);
     sfrxETH = await ethers.getContractAt(sfrxETHAbi, addresses.mainnet.sfrxETH);
-    reth = await ethers.getContractAt(erc20Abi, addresses.mainnet.rETH);
-    stETH = await ethers.getContractAt(erc20Abi, addresses.mainnet.stETH);
     morpho = await ethers.getContractAt(morphoAbi, addresses.mainnet.Morpho);
     morphoLens = await ethers.getContractAt(
       morphoLensAbi,
@@ -266,12 +269,12 @@ const defaultFixture = deployments.createFixture(async () => {
       fraxEthStrategyProxy.address
     );
 
-    const balancerWstEthWethStrategyProxy = await ethers.getContract(
-      "OETHBalancerMetaPoolWstEthWethStrategyProxy"
+    const balancerRethStrategyProxy = await ethers.getContract(
+      "OETHBalancerMetaPoolrEthStrategyProxy"
     );
-    balancerWstEthWethStrategy = await ethers.getContractAt(
+    balancerREthStrategy = await ethers.getContractAt(
       "BalancerMetaPoolStrategy",
-      balancerWstEthWethStrategyProxy.address
+      balancerRethStrategyProxy.address
     );
 
     const oethHarvesterProxy = await ethers.getContract("OETHHarvesterProxy");
@@ -549,7 +552,7 @@ const defaultFixture = deployments.createFixture(async () => {
     frxETH,
     sfrxETH,
     fraxEthStrategy,
-    balancerWstEthWethStrategy,
+    balancerREthStrategy,
     oethMorphoAaveStrategy,
     woeth,
     ConvexEthMetaStrategy,
@@ -829,26 +832,98 @@ async function convexVaultFixture() {
 }
 
 /**
- * Configure a Vault with only the balancerWstEthWethStrategy
+ * Configure a Vault with the balancerREthStrategy
  */
-async function balancerWstEthWethFixture() {
-  const fixture = await loadFixture(defaultFixture);
-  const { oethVault, timelock, weth, stETH, balancerWstEthWethStrategy } =
-    fixture;
+function balancerREthFixtureSetup() {
+  return deployments.createFixture(async () => {
+    const fixture = await defaultFixture();
+    const { oethVault, timelock, weth, reth, balancerREthStrategy, josh } =
+      fixture;
 
-  await oethVault
-    .connect(timelock)
-    .setAssetDefaultStrategy(weth.address, balancerWstEthWethStrategy.address);
-  await oethVault
-    .connect(timelock)
-    .setAssetDefaultStrategy(stETH.address, balancerWstEthWethStrategy.address);
-  await oethVault
-    .connect(timelock)
-    .setAssetDefaultStrategy(weth.address, balancerWstEthWethStrategy.address);
-  await oethVault
-    .connect(timelock)
-    .setAssetDefaultStrategy(stETH.address, balancerWstEthWethStrategy.address);
-  return fixture;
+    await oethVault
+      .connect(timelock)
+      .setAssetDefaultStrategy(reth.address, balancerREthStrategy.address);
+    await oethVault
+      .connect(timelock)
+      .setAssetDefaultStrategy(weth.address, balancerREthStrategy.address);
+
+    fixture.rEthBPT = await ethers.getContractAt(
+      "IERC20Metadata",
+      addresses.mainnet.rETH_WETH_BPT,
+      josh
+    );
+    fixture.balancerREthPID = balancer_rETH_WETH_PID;
+
+    fixture.balancerVault = await ethers.getContractAt(
+      "IBalancerVault",
+      addresses.mainnet.balancerVault,
+      josh
+    );
+
+    return fixture;
+  });
+}
+
+/**
+ * Configure a Vault with the balancer strategy for wstETH/WETH pool
+ */
+function balancerWstEthFixtureSetup() {
+  return deployments.createFixture(async () => {
+    const fixture = await defaultFixture();
+
+    const d = balancerStrategyDeployment({
+      deploymentOpts: {
+        deployName: "99999_balancer_wstETH_WETH",
+        forceDeploy: true,
+        deployerIsProposer: true,
+      },
+      proxyContractName: "OETHBalancerMetaPoolwstEthStrategyProxy",
+
+      platformAddress: addresses.mainnet.wstETH_WETH_BPT,
+      poolId: balancer_stETH_WETH_PID,
+
+      auraRewardsContractAddress: addresses.mainnet.wstETH_WETH_AuraRewards,
+
+      rewardTokenAddresses: [addresses.mainnet.BAL, addresses.mainnet.AURA],
+      assets: [addresses.mainnet.stETH, addresses.mainnet.WETH],
+    });
+
+    await d(hre);
+
+    const balancerWstEthStrategyProxy = await ethers.getContract(
+      "OETHBalancerMetaPoolwstEthStrategyProxy"
+    );
+    const balancerWstEthStrategy = await ethers.getContractAt(
+      "BalancerMetaPoolStrategy",
+      balancerWstEthStrategyProxy.address
+    );
+
+    fixture.balancerWstEthStrategy = balancerWstEthStrategy;
+
+    const { oethVault, timelock, weth, stETH, josh } = fixture;
+
+    await oethVault
+      .connect(timelock)
+      .setAssetDefaultStrategy(stETH.address, balancerWstEthStrategy.address);
+    await oethVault
+      .connect(timelock)
+      .setAssetDefaultStrategy(weth.address, balancerWstEthStrategy.address);
+
+    fixture.stEthBPT = await ethers.getContractAt(
+      "IERC20Metadata",
+      addresses.mainnet.wstETH_WETH_BPT,
+      josh
+    );
+    fixture.balancerWstEthPID = balancer_stETH_WETH_PID;
+
+    fixture.balancerVault = await ethers.getContractAt(
+      "IBalancerVault",
+      addresses.mainnet.balancerVault,
+      josh
+    );
+
+    return fixture;
+  });
 }
 
 async function fundWith3Crv(address, maxAmount) {
@@ -1402,18 +1477,24 @@ async function compoundFixture() {
   await deploy("StandaloneCompound", {
     from: governorAddr,
     contract: "CompoundStrategy",
+    args: [
+      [
+        addresses.dead,
+        governorAddr, // Using Governor in place of Vault here
+      ],
+    ],
   });
 
   fixture.cStandalone = await ethers.getContract("StandaloneCompound");
 
   // Set governor as vault
-  await fixture.cStandalone.connect(sGovernor).initialize(
-    addresses.dead,
-    governorAddr, // Using Governor in place of Vault here
-    [assetAddresses.COMP],
-    [assetAddresses.DAI, assetAddresses.USDC],
-    [assetAddresses.cDAI, assetAddresses.cUSDC]
-  );
+  await fixture.cStandalone
+    .connect(sGovernor)
+    .initialize(
+      [assetAddresses.COMP],
+      [assetAddresses.DAI, assetAddresses.USDC],
+      [assetAddresses.cDAI, assetAddresses.cUSDC]
+    );
 
   await fixture.cStandalone
     .connect(sGovernor)
@@ -1440,6 +1521,12 @@ async function threepoolFixture() {
   await deploy("StandaloneThreePool", {
     from: governorAddr,
     contract: "ThreePoolStrategy",
+    args: [
+      [
+        assetAddresses.ThreePool,
+        governorAddr, // Using Governor in place of Vault here
+      ],
+    ],
   });
 
   fixture.tpStandalone = await ethers.getContract("StandaloneThreePool");
@@ -1447,20 +1534,8 @@ async function threepoolFixture() {
   // Set governor as vault
   await fixture.tpStandalone.connect(sGovernor)[
     // eslint-disable-next-line
-    "initialize(address,address,address[],address[],address[],address,address)"
-  ](
-    assetAddresses.ThreePool,
-    governorAddr, // Using Governor in place of Vault here
-    [assetAddresses.CRV],
-    [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT],
-    [
-      assetAddresses.ThreePoolToken,
-      assetAddresses.ThreePoolToken,
-      assetAddresses.ThreePoolToken,
-    ],
-    assetAddresses.ThreePoolGauge,
-    assetAddresses.CRVMinter
-  );
+    "initialize(address[],address[],address[],address,address)"
+  ]([assetAddresses.CRV], [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT], [assetAddresses.ThreePoolToken, assetAddresses.ThreePoolToken, assetAddresses.ThreePoolToken], assetAddresses.ThreePoolGauge, assetAddresses.CRVMinter);
 
   return fixture;
 }
@@ -1649,7 +1724,8 @@ module.exports = {
   impersonateAndFundContract,
   impersonateAccount,
   fraxETHStrategyFixtureSetup,
-  balancerWstEthWethFixture,
+  balancerREthFixtureSetup,
+  balancerWstEthFixtureSetup,
   oethMorphoAaveFixtureSetup,
   mintWETH,
   replaceContractAt,

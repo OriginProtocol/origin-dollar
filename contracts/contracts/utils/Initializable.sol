@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+/**
+ * @title Base contract any contracts that need to initialize state after deployment.
+ * @author Origin Protocol Inc
+ */
 abstract contract Initializable {
     /**
      * @dev Indicates that the contract has been initialized.

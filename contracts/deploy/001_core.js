@@ -37,7 +37,9 @@ const deployAaveStrategy = async () => {
     "InitializeGovernedUpgradeabilityProxy"
   );
   const cAaveStrategyProxy = await ethers.getContract("AaveStrategyProxy");
-  const dAaveStrategy = await deployWithConfirmation("AaveStrategy");
+  const dAaveStrategy = await deployWithConfirmation("AaveStrategy", [
+    [assetAddresses.AAVE_ADDRESS_PROVIDER, cVaultProxy.address],
+  ]);
   const cAaveStrategy = await ethers.getContractAt(
     "AaveStrategy",
     dAaveStrategyProxy.address
@@ -56,13 +58,11 @@ const deployAaveStrategy = async () => {
 
   log("Initialized AaveStrategyProxy");
   const initFunctionName =
-    "initialize(address,address,address[],address[],address[],address,address)";
+    "initialize(address[],address[],address[],address,address)";
   await withConfirmation(
     cAaveStrategy
       .connect(sDeployer)
       [initFunctionName](
-        assetAddresses.AAVE_ADDRESS_PROVIDER,
-        cVaultProxy.address,
         [assetAddresses.AAVE_TOKEN],
         [assetAddresses.DAI],
         [assetAddresses.aDAI],
@@ -111,7 +111,9 @@ const deployCompoundStrategy = async () => {
   const cCompoundStrategyProxy = await ethers.getContract(
     "CompoundStrategyProxy"
   );
-  const dCompoundStrategy = await deployWithConfirmation("CompoundStrategy");
+  const dCompoundStrategy = await deployWithConfirmation("CompoundStrategy", [
+    [addresses.dead, cVaultProxy.address],
+  ]);
   const cCompoundStrategy = await ethers.getContractAt(
     "CompoundStrategy",
     dCompoundStrategyProxy.address
@@ -128,8 +130,6 @@ const deployCompoundStrategy = async () => {
     cCompoundStrategy
       .connect(sDeployer)
       .initialize(
-        addresses.dead,
-        cVaultProxy.address,
         [assetAddresses.COMP],
         [assetAddresses.DAI],
         [assetAddresses.cDAI]
@@ -166,12 +166,17 @@ const deployThreePoolStrategy = async () => {
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
   const sGovernor = await ethers.provider.getSigner(governorAddr);
 
+  // Initialize Strategies
+  const cVaultProxy = await ethers.getContract("VaultProxy");
+
   await deployWithConfirmation("ThreePoolStrategyProxy");
   const cThreePoolStrategyProxy = await ethers.getContract(
     "ThreePoolStrategyProxy"
   );
 
-  const dThreePoolStrategy = await deployWithConfirmation("ThreePoolStrategy");
+  const dThreePoolStrategy = await deployWithConfirmation("ThreePoolStrategy", [
+    [assetAddresses.ThreePool, cVaultProxy.address],
+  ]);
   const cThreePoolStrategy = await ethers.getContractAt(
     "ThreePoolStrategy",
     cThreePoolStrategyProxy.address
@@ -186,16 +191,10 @@ const deployThreePoolStrategy = async () => {
   );
   log("Initialized ThreePoolStrategyProxy");
 
-  // Initialize Strategies
-  const cVaultProxy = await ethers.getContract("VaultProxy");
   await withConfirmation(
     cThreePoolStrategy
       .connect(sDeployer)
-      [
-        "initialize(address,address,address[],address[],address[],address,address)"
-      ](
-        assetAddresses.ThreePool,
-        cVaultProxy.address,
+      ["initialize(address[],address[],address[],address,address)"](
         [assetAddresses.CRV],
         [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT],
         [
@@ -238,10 +237,14 @@ const deployConvexStrategy = async () => {
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
   const sGovernor = await ethers.provider.getSigner(governorAddr);
 
+  const cVaultProxy = await ethers.getContract("VaultProxy");
+
   await deployWithConfirmation("ConvexStrategyProxy");
   const cConvexStrategyProxy = await ethers.getContract("ConvexStrategyProxy");
 
-  const dConvexStrategy = await deployWithConfirmation("ConvexStrategy");
+  const dConvexStrategy = await deployWithConfirmation("ConvexStrategy", [
+    [assetAddresses.ThreePool, cVaultProxy.address],
+  ]);
   const cConvexStrategy = await ethers.getContractAt(
     "ConvexStrategy",
     cConvexStrategyProxy.address
@@ -257,17 +260,12 @@ const deployConvexStrategy = async () => {
   log("Initialized ConvexStrategyProxy");
 
   // Initialize Strategies
-  const cVaultProxy = await ethers.getContract("VaultProxy");
   const mockBooster = await ethers.getContract("MockBooster");
   const mockRewardPool = await ethers.getContract("MockRewardPool");
   await withConfirmation(
     cConvexStrategy
       .connect(sDeployer)
-      [
-        "initialize(address,address,address[],address[],address[],address,address,uint256)"
-      ](
-        assetAddresses.ThreePool,
-        cVaultProxy.address,
+      ["initialize(address[],address[],address[],address,address,uint256)"](
         [assetAddresses.CRV, assetAddresses.CVX],
         [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT],
         [
@@ -310,13 +308,16 @@ const deployConvexLUSDMetaStrategy = async () => {
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
   const sGovernor = await ethers.provider.getSigner(governorAddr);
 
+  const cVaultProxy = await ethers.getContract("VaultProxy");
+
   await deployWithConfirmation("ConvexLUSDMetaStrategyProxy");
   const cConvexLUSDMetaStrategyProxy = await ethers.getContract(
     "ConvexLUSDMetaStrategyProxy"
   );
 
   const dConvexLUSDMetaStrategy = await deployWithConfirmation(
-    "ConvexGeneralizedMetaStrategy"
+    "ConvexGeneralizedMetaStrategy",
+    [[assetAddresses.ThreePool, cVaultProxy.address]]
   );
   const cConvexLUSDMetaStrategy = await ethers.getContractAt(
     "ConvexGeneralizedMetaStrategy",
@@ -333,7 +334,6 @@ const deployConvexLUSDMetaStrategy = async () => {
   log("Initialized ConvexLUSDMetaStrategyProxy");
 
   // Initialize Strategies
-  const cVaultProxy = await ethers.getContract("VaultProxy");
   const mockBooster = await ethers.getContract("MockBooster");
   const mockRewardPool = await ethers.getContract("MockRewardPool");
 
@@ -342,7 +342,7 @@ const deployConvexLUSDMetaStrategy = async () => {
     cConvexLUSDMetaStrategy
       .connect(sDeployer)
       [
-        "initialize(address[],address[],address[],(address,address,address,address,address,address,address,uint256))"
+        "initialize(address[],address[],address[],(address,address,address,address,address,uint256))"
       ](
         [assetAddresses.CVX, assetAddresses.CRV],
         [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT],
@@ -352,8 +352,6 @@ const deployConvexLUSDMetaStrategy = async () => {
           assetAddresses.ThreePoolToken,
         ],
         [
-          assetAddresses.ThreePool,
-          cVaultProxy.address,
           mockBooster.address, // _cvxDepositorAddress,
           assetAddresses.ThreePoolLUSDMetapool, // metapool address,
           LUSD.address, // LUSD
@@ -393,13 +391,16 @@ const deployConvexOUSDMetaStrategy = async () => {
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
   const sGovernor = await ethers.provider.getSigner(governorAddr);
 
+  const cVaultProxy = await ethers.getContract("VaultProxy");
+
   await deployWithConfirmation("ConvexOUSDMetaStrategyProxy");
   const cConvexOUSDMetaStrategyProxy = await ethers.getContract(
     "ConvexOUSDMetaStrategyProxy"
   );
 
   const dConvexOUSDMetaStrategy = await deployWithConfirmation(
-    "ConvexOUSDMetaStrategy"
+    "ConvexOUSDMetaStrategy",
+    [[assetAddresses.ThreePool, cVaultProxy.address]]
   );
   const cConvexOUSDMetaStrategy = await ethers.getContractAt(
     "ConvexOUSDMetaStrategy",
@@ -416,7 +417,6 @@ const deployConvexOUSDMetaStrategy = async () => {
   log("Initialized ConvexOUSDMetaStrategyProxy");
 
   // Initialize Strategies
-  const cVaultProxy = await ethers.getContract("VaultProxy");
   const mockBooster = await ethers.getContract("MockBooster");
   const mockRewardPool = await ethers.getContract("MockRewardPool");
   const ousd = await ethers.getContract("OUSDProxy");
@@ -425,7 +425,7 @@ const deployConvexOUSDMetaStrategy = async () => {
     cConvexOUSDMetaStrategy
       .connect(sDeployer)
       [
-        "initialize(address[],address[],address[],(address,address,address,address,address,address,address,uint256))"
+        "initialize(address[],address[],address[],(address,address,address,address,address,uint256))"
       ](
         [assetAddresses.CVX, assetAddresses.CRV],
         [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT],
@@ -435,8 +435,6 @@ const deployConvexOUSDMetaStrategy = async () => {
           assetAddresses.ThreePoolToken,
         ],
         [
-          assetAddresses.ThreePool,
-          cVaultProxy.address,
           mockBooster.address, // _cvxDepositorAddress,
           assetAddresses.ThreePoolOUSDMetapool, // metapool address,
           ousd.address, // _ousdAddress,
@@ -766,7 +764,9 @@ const deployFraxEthStrategy = async () => {
   const cFraxETHStrategyProxy = await ethers.getContract(
     "FraxETHStrategyProxy"
   );
-  const dFraxETHStrategy = await deployWithConfirmation("FraxETHStrategy");
+  const dFraxETHStrategy = await deployWithConfirmation("FraxETHStrategy", [
+    [assetAddresses.sfrxETH, cOETHVaultProxy.address],
+  ]);
   const cFraxETHStrategy = await ethers.getContractAt(
     "FraxETHStrategy",
     dFraxETHStrategyProxy.address
@@ -782,13 +782,7 @@ const deployFraxEthStrategy = async () => {
   await withConfirmation(
     cFraxETHStrategy
       .connect(sDeployer)
-      .initialize(
-        assetAddresses.sfrxETH,
-        cOETHVaultProxy.address,
-        [],
-        [assetAddresses.frxETH],
-        [assetAddresses.sfrxETH]
-      )
+      .initialize([], [assetAddresses.frxETH], [assetAddresses.sfrxETH])
   );
   log("Initialized FraxETHStrategy");
   await withConfirmation(

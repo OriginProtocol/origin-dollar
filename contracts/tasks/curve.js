@@ -212,12 +212,15 @@ async function curvePool(taskArguments, hre) {
   // Strategies assets value
   const strategyAssetsValueBefore =
     diffBlocks &&
-    (await amoStrategy.checkBalance(asset.address, {
+    (await amoStrategy["checkBalance(address)"](asset.address, {
       blockTag: fromBlockTag,
     }));
-  const strategyAssetsValue = await amoStrategy.checkBalance(asset.address, {
-    blockTag,
-  });
+  const strategyAssetsValue = await amoStrategy["checkBalance(address)"](
+    asset.address,
+    {
+      blockTag,
+    }
+  );
   console.log(
     `strategy assets value    : ${displayPortion(
       strategyAssetsValue,

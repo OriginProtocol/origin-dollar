@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 /**
- * @title OUSD Governable Contract
+ * @title Base for contracts that are managed by the Origin Protocol's Governor.
  * @dev Copy of the openzeppelin Ownable.sol contract with nomenclature change
  *      from owner to governor and renounce methods removed. Does not use
  *      Context.sol like Ownable.sol does for simplification.

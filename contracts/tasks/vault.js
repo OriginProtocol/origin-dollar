@@ -1,5 +1,3 @@
-const { utils } = require("ethers");
-
 const addresses = require("../utils/addresses");
 
 async function allocate(taskArguments, hre) {
@@ -73,7 +71,7 @@ async function rebase(taskArguments, hre) {
 /**
  * Artificially generate yield on the vault by sending it USDT.
  */
-async function yield(taskArguments, hre) {
+async function yieldTask(taskArguments, hre) {
   const usdtAbi = require("../test/abi/usdt.json").abi;
   const {
     ousdUnitsFormat,
@@ -179,5 +177,5 @@ module.exports = {
   capital,
   harvest,
   rebase,
-  yield,
+  yieldTask,
 };

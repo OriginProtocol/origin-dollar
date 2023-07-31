@@ -1,24 +1,19 @@
 const { deploymentWithGovernanceProposal } = require("../utils/deploy");
 const addresses = require("../utils/addresses");
-const { BigNumber } = require("ethers");
-const { balancerWstEthWethPID } = require("../utils/constants");
+const { balancer_rETH_WETH_PID } = require("../utils/constants");
+
+const platformAddress = addresses.mainnet.rETH_WETH_BPT;
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "071_balancer_wstETH_WETH",
+    deployName: "071_balancer_rETH_WETH",
     forceDeploy: false,
     //forceSkip: true,
     deployerIsProposer: true,
     //proposalId: ,
   },
-  async ({
-    assetAddresses,
-    deployWithConfirmation,
-    ethers,
-    getTxOpts,
-    withConfirmation,
-  }) => {
-    const { deployerAddr, governorAddr } = await getNamedAccounts();
+  async ({ deployWithConfirmation, ethers, getTxOpts, withConfirmation }) => {
+    const { deployerAddr } = await getNamedAccounts();
     const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
     // Current contracts
@@ -27,27 +22,36 @@ module.exports = deploymentWithGovernanceProposal(
       "OETHVaultAdmin",
       cOETHVaultProxy.address
     );
-    const cOETHVault = await ethers.getContractAt(
-      "OETHVault",
-      cOETHVaultProxy.address
-    );
 
     // Deployer Actions
     // ----------------
 
-    // 1. Deploy new proxy
+    // 1. Deploy new proxy for the Balancer strategy
     // New strategy will be living at a clean address
     const dOETHBalancerMetaPoolStrategyProxy = await deployWithConfirmation(
-      "OETHBalancerMetaPoolWstEthWethStrategyProxy"
+      "OETHBalancerMetaPoolrEthStrategyProxy"
     );
     const cOETHBalancerMetaPoolStrategyProxy = await ethers.getContractAt(
-      "OETHBalancerMetaPoolWstEthWethStrategyProxy",
+      "OETHBalancerMetaPoolrEthStrategyProxy",
       dOETHBalancerMetaPoolStrategyProxy.address
     );
 
-    // 2. Deploy new implementation
+    // 2. Deploy new Balancer strategy implementation
     const dOETHBalancerMetaPoolStrategyImpl = await deployWithConfirmation(
-      "BalancerMetaPoolStrategy"
+      "BalancerMetaPoolStrategy",
+      [
+        [platformAddress, cOETHVaultProxy.address],
+        [
+          addresses.mainnet.rETH,
+          addresses.mainnet.stETH,
+          addresses.mainnet.wstETH,
+          addresses.mainnet.frxETH,
+          addresses.mainnet.sfrxETH,
+          addresses.mainnet.balancerVault, // Address of the Balancer vault
+          balancer_rETH_WETH_PID, // Pool ID of the Balancer pool
+        ],
+        addresses.mainnet.rETH_WETH_AuraRewards, // Address of the Aura rewards contract
+      ]
     );
     const cOETHBalancerMetaPoolStrategy = await ethers.getContractAt(
       "BalancerMetaPoolStrategy",
@@ -61,30 +65,21 @@ module.exports = deploymentWithGovernanceProposal(
     );
 
     // 3. Encode the init data
-    const initFunction =
-      "initialize(address[],address[],address[],(address,address,address,address,uint256,bytes32))";
+    const initFunction = "initialize(address[],address[],address[])";
     const initData = cOETHBalancerMetaPoolStrategy.interface.encodeFunctionData(
       initFunction,
       [
         [addresses.mainnet.BAL, addresses.mainnet.AURA],
-        [addresses.mainnet.stETH, addresses.mainnet.WETH],
-        [addresses.mainnet.wstETH_WETH_BPT, addresses.mainnet.wstETH_WETH_BPT],
-        [
-          addresses.mainnet.wstETH_WETH_BPT,
-          cOETHVaultProxy.address,
-          addresses.mainnet.auraRewardPool,
-          addresses.mainnet.CurveOUSDMetaPool, // auraRewardStakerAddress
-          balancerWstEthWethPID, // auraDepositorPTokenId
-          "0x32296969ef14eb0c6d29669c550d4a0449130230000200000000000000000080",
-        ],
+        [addresses.mainnet.rETH, addresses.mainnet.WETH],
+        [platformAddress, platformAddress],
       ]
     );
 
     // 4. Init the proxy to point at the implementation
+    // prettier-ignore
     await withConfirmation(
       cOETHBalancerMetaPoolStrategyProxy
-        .connect(sDeployer)
-        ["initialize(address,address,bytes)"](
+        .connect(sDeployer)["initialize(address,address,bytes)"](
           dOETHBalancerMetaPoolStrategyImpl.address,
           addresses.mainnet.Timelock,
           initData,
