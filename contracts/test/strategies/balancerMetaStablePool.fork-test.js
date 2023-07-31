@@ -320,7 +320,7 @@ forkOnlyDescribe(
       });
     });
 
-    describe.skip("Withdraw", function () {
+    describe("Withdraw", function () {
       beforeEach(async () => {
         const { balancerWstEthStrategy, oethVault, strategist, stETH, weth } =
           fixture;
@@ -332,6 +332,11 @@ forkOnlyDescribe(
             [weth.address, stETH.address],
             [oethUnits("25"), oethUnits("25")]
           );
+        
+        // TODO: Check slippage errors
+        await balancerWstEthStrategy
+            .connect(strategist)
+            .setMaxWithdrawalSlippage(oethUnits("0.01"))
       });
       it("Should be able to withdraw 10 WETH from the pool", async function () {
         const { weth, balancerWstEthStrategy, oethVault } = fixture;
