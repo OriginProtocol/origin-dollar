@@ -18,25 +18,15 @@ module.exports = deploymentWithGovernanceProposal(
 
     // Current contracts
     const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
-
-    // Deployer Actions
-    // ----------------
-
-    // 1. Deploy new Vault Admin implementation
-    // Need to override the storage safety check as we are
-    // adding isMultiAssets to the Strategy struct used in the strategies mapping
-    const dVaultAdmin = await deployWithConfirmation(
-      "OETHVaultAdmin",
-      [],
-      undefined,
-      true
-    );
     const cOETHVaultAdmin = await ethers.getContractAt(
       "OETHVaultAdmin",
       cOETHVaultProxy.address
     );
 
-    // 2. Deploy new proxy for the Balancer strategy
+    // Deployer Actions
+    // ----------------
+
+    // 1. Deploy new proxy for the Balancer strategy
     // New strategy will be living at a clean address
     const dOETHBalancerMetaPoolStrategyProxy = await deployWithConfirmation(
       "OETHBalancerMetaPoolrEthStrategyProxy"
@@ -46,7 +36,7 @@ module.exports = deploymentWithGovernanceProposal(
       dOETHBalancerMetaPoolStrategyProxy.address
     );
 
-    // 3. Deploy new Balancer strategy implementation
+    // 2. Deploy new Balancer strategy implementation
     const dOETHBalancerMetaPoolStrategyImpl = await deployWithConfirmation(
       "BalancerMetaPoolStrategy",
       [
@@ -107,25 +97,19 @@ module.exports = deploymentWithGovernanceProposal(
     return {
       name: "Deploy new Balancer MetaPool strategy",
       actions: [
-        // 1. set the new admin vault implementation
+        // 1. Add new strategy to the vault
         {
           contract: cOETHVaultAdmin,
-          signature: "setAdminImpl(address)",
-          args: [dVaultAdmin.address],
+          signature: "approveStrategy(address)",
+          args: [cOETHBalancerMetaPoolStrategy.address],
         },
-        // 2. Add new strategy to the vault
-        {
-          contract: cOETHVaultAdmin,
-          signature: "approveStrategy(address,bool)",
-          args: [cOETHBalancerMetaPoolStrategy.address, true],
-        },
-        // 3. Set supported strategy on Harvester
+        // 2. Set supported strategy on Harvester
         {
           contract: cOETHHarvester,
           signature: "setSupportedStrategy(address,bool)",
           args: [cOETHBalancerMetaPoolStrategy.address, true],
         },
-        // 4. Set harvester address
+        // 3. Set harvester address
         {
           contract: cOETHBalancerMetaPoolStrategy,
           signature: "setHarvesterAddress(address)",
