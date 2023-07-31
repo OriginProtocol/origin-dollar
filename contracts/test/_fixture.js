@@ -830,32 +830,34 @@ async function convexVaultFixture() {
 /**
  * Configure a Vault with only the balancerREthStrategy
  */
-async function balancerREthFixture() {
-  const fixture = await loadFixture(defaultFixture);
-  const { oethVault, timelock, weth, reth, balancerREthStrategy, josh } =
-    fixture;
+function balancerREthFixtureSetup() {
+  return deployments.createFixture(async () => {
+    const fixture = await defaultFixture();
+    const { oethVault, timelock, weth, reth, balancerREthStrategy, josh } =
+      fixture;
 
-  await oethVault
-    .connect(timelock)
-    .setAssetDefaultStrategy(reth.address, balancerREthStrategy.address);
-  await oethVault
-    .connect(timelock)
-    .setAssetDefaultStrategy(weth.address, balancerREthStrategy.address);
+    await oethVault
+      .connect(timelock)
+      .setAssetDefaultStrategy(reth.address, balancerREthStrategy.address);
+    await oethVault
+      .connect(timelock)
+      .setAssetDefaultStrategy(weth.address, balancerREthStrategy.address);
 
-  fixture.rEthBPT = await ethers.getContractAt(
-    "IERC20Metadata",
-    addresses.mainnet.rETH_WETH_BPT,
-    josh
-  );
-  fixture.balancerREthPID = balancer_rETH_WETH_PID;
+    fixture.rEthBPT = await ethers.getContractAt(
+      "IERC20Metadata",
+      addresses.mainnet.rETH_WETH_BPT,
+      josh
+    );
+    fixture.balancerREthPID = balancer_rETH_WETH_PID;
 
-  fixture.balancerVault = await ethers.getContractAt(
-    "IBalancerVault",
-    addresses.mainnet.balancerVault,
-    josh
-  );
+    fixture.balancerVault = await ethers.getContractAt(
+      "IBalancerVault",
+      addresses.mainnet.balancerVault,
+      josh
+    );
 
-  return fixture;
+    return fixture;
+  })
 }
 
 async function fundWith3Crv(address, maxAmount) {
@@ -1656,7 +1658,7 @@ module.exports = {
   impersonateAndFundContract,
   impersonateAccount,
   fraxETHStrategyFixtureSetup,
-  balancerREthFixture,
+  balancerREthFixtureSetup,
   oethMorphoAaveFixtureSetup,
   mintWETH,
   replaceContractAt,

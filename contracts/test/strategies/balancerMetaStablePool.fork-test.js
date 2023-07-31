@@ -7,11 +7,13 @@ const addresses = require("../../utils/addresses");
 const { balancer_rETH_WETH_PID } = require("../../utils/constants");
 const { units, oethUnits, forkOnlyDescribe } = require("../helpers");
 const {
-  balancerREthFixture,
+  balancerREthFixtureSetup,
   impersonateAndFundContract,
 } = require("../_fixture");
 
 const log = require("../../utils/logger")("test:fork:strategy:balancer");
+
+const balancerREthFixture = balancerREthFixtureSetup()
 
 forkOnlyDescribe(
   "ForkTest: Balancer MetaStablePool rETH/WETH Strategy",
@@ -22,7 +24,7 @@ forkOnlyDescribe(
 
     let fixture;
     beforeEach(async () => {
-      fixture = await loadFixture(balancerREthFixture);
+      fixture = await balancerREthFixture();
     });
 
     describe("Post deployment", () => {
