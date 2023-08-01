@@ -52,7 +52,7 @@ const useSwapEstimator = ({
   const balances = useStoreState(AccountStore, (s) => s.balances)
 
   const { contract: coinToSwapContract, decimals: coinToSwapDecimals } =
-    coinInfoList[swapMode === 'mint' ? selectedCoin : 'oeth'] || {}
+    coinInfoList?.[swapMode === 'mint' ? selectedCoin : 'oeth'] || {}
 
   const coinToSwap = swapMode === 'redeem' ? 'oeth' : selectedCoin
 
@@ -65,7 +65,7 @@ const useSwapEstimator = ({
   // do not enter conditional body when redeeming a mix
   if (!(swapMode === 'redeem' && selectedCoin === 'mix')) {
     ;({ contract: coinToReceiveContract, decimals: coinToReceiveDecimals } =
-      coinInfoList[swapMode === 'redeem' ? selectedCoin : 'oeth']) || {}
+      coinInfoList?.[swapMode === 'redeem' ? selectedCoin : 'oeth']) || {}
   }
 
   const allowances = useStoreState(AccountStore, (s) => s.allowances)
@@ -349,11 +349,13 @@ const useSwapEstimator = ({
     }
 
     if (selectedCoin === 'eth') {
-      const swapGasUsage = await contracts.zapper
-        .connect(signer)
-        .estimateGas.deposit({
-          value: ethers.utils.parseEther(String(amount)),
-        })
+      const hasEnoughBalance = parseFloat(balances?.eth) > amount
+
+      const swapGasUsage = hasEnoughBalance
+        ? await contracts.zapper.connect(signer).estimateGas.deposit({
+            value: ethers.utils.parseEther(String(inputAmountRaw)),
+          })
+        : 200000
 
       return {
         canDoSwap: true,
@@ -442,11 +444,15 @@ const useSwapEstimator = ({
         priceToleranceValue
       )
 
+      const hasEnoughBalance = userHasEnoughStablecoin(
+        coinToSwap,
+        parseFloat(inputAmountRaw)
+      )
+
       if (coinToSwap === 'eth' && swapMode === 'mint') {
-        const swapGasUsage = await swapCurveGasEstimate(
-          swapAmount,
-          minSwapAmountQuoted
-        )
+        const swapGasUsage = hasEnoughBalance
+          ? await swapCurveGasEstimate(swapAmount, minSwapAmountQuoted)
+          : 180000
 
         return {
           canDoSwap: true,
@@ -480,11 +486,6 @@ const useSwapEstimator = ({
         ? parseFloat(allowances[coinToSwap]?.[allowanceCheckKey]) <
           parseFloat(inputAmountRaw)
         : true
-
-      const hasEnoughBalance = userHasEnoughStablecoin(
-        coinToSwap,
-        parseFloat(inputAmountRaw)
-      )
 
       if (approveAllowanceNeeded || !hasEnoughBalance) {
         const swapGasUsage = 350000

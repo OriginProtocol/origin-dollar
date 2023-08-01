@@ -210,13 +210,13 @@ describe("OETH Vault - Swapper", () => {
       // Mock to return lower than slippage next time
       await mockSwapper
         .connect(strategist)
-        .setNextOutAmount(utils.parseEther("18"));
+        .setNextOutAmount(utils.parseEther("180"));
       // increase the allowed Oracle slippage per asset to 9.99%
       await oethVault.connect(governor).setOracleSlippage(weth.address, 999);
       await oethVault.connect(governor).setOracleSlippage(stETH.address, 999);
 
-      const fromAmount = utils.parseEther("20");
-      const toAmount = utils.parseEther("17");
+      const fromAmount = utils.parseEther("200");
+      const toAmount = utils.parseEther("170");
 
       log(`total supply: ${await oeth.totalSupply()}`);
       log(`total value : ${await oethVault.totalValue()}`);

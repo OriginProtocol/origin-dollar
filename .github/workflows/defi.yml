@@ -99,6 +99,7 @@ jobs:
     env:
       HARDHAT_CACHE_DIR: ./cache
       PROVIDER_URL: ${{ secrets.PROVIDER_URL }}
+      ONEINCH_API: ${{ secrets.ONEINCH_API }}
     steps:
       - uses: actions/checkout@v3
 

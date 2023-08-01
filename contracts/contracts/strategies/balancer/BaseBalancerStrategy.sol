@@ -293,7 +293,10 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         } else if (asset == frxETH) {
             wrappedAsset = sfrxETH;
             if (amount > 0) {
-                wrappedAmount = IERC4626(sfrxETH).deposit(amount, address(this));
+                wrappedAmount = IERC4626(sfrxETH).deposit(
+                    amount,
+                    address(this)
+                );
             }
         } else {
             wrappedAsset = asset;

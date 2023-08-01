@@ -4,7 +4,8 @@ const { defaultAbiCoder, formatUnits } = require("ethers/lib/utils");
 const addresses = require("./addresses");
 const log = require("./logger")("utils:1inch");
 
-const ONE_INCH_API = "https://api.1inch.io/v5.0/1/swap";
+const ONE_INCH_API =
+  process.env.ONEINCH_API || "https://api.1inch.io/v5.0/1/swap";
 const SWAP_SELECTOR = "0x12aa3caf"; // swap(address,(address,address,address,address,uint256,uint256,uint256),bytes,bytes)
 const UNISWAP_SELECTOR = "0xf78dc253"; // unoswapTo(address,address,uint256,uint256,uint256[])
 const UNISWAPV3_SELECTOR = "0xbc80f1a8"; // uniswapV3SwapTo(address,uint256,uint256,uint256[])
