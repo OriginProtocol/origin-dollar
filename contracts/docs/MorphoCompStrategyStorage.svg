@@ -51,13 +51,13 @@
 <polyline fill="none" stroke="black" points="74.81,-642.5 862.93,-642.5 "/>
 <text text-anchor="middle" x="468.44" y="-625.9" font-family="Courier New" font-size="14.00">uint256[50]: Initializable.______gap (1600)</text>
 <polyline fill="none" stroke="black" points="74.81,-617.7 862.93,-617.7 "/>
-<text text-anchor="middle" x="181.52" y="-601.1" font-family="Courier New" font-size="14.00">unallocated (12)</text>
-<polyline fill="none" stroke="black" points="288.23,-592.9 288.23,-617.7 "/>
-<text text-anchor="middle" x="575.57" y="-601.1" font-family="Courier New" font-size="14.00">address: InitializableAbstractStrategy.platformAddress (20)</text>
+<text text-anchor="middle" x="156.02" y="-601.1" font-family="Courier New" font-size="14.00">unallocated (12)</text>
+<polyline fill="none" stroke="black" points="237.23,-592.9 237.23,-617.7 "/>
+<text text-anchor="middle" x="549.98" y="-601.1" font-family="Courier New" font-size="14.00">address: InitializableAbstractStrategy._deprecated_platformAddress (20)</text>
 <polyline fill="none" stroke="black" points="74.81,-592.9 862.93,-592.9 "/>
-<text text-anchor="middle" x="187.52" y="-576.3" font-family="Courier New" font-size="14.00">unallocated (12)</text>
-<polyline fill="none" stroke="black" points="300.23,-568.1 300.23,-592.9 "/>
-<text text-anchor="middle" x="581.47" y="-576.3" font-family="Courier New" font-size="14.00">address: InitializableAbstractStrategy.vaultAddress (20)</text>
+<text text-anchor="middle" x="162.52" y="-576.3" font-family="Courier New" font-size="14.00">unallocated (12)</text>
+<polyline fill="none" stroke="black" points="250.23,-568.1 250.23,-592.9 "/>
+<text text-anchor="middle" x="556.38" y="-576.3" font-family="Courier New" font-size="14.00">address: InitializableAbstractStrategy._deprecated_vaultAddress (20)</text>
 <polyline fill="none" stroke="black" points="74.81,-568.1 862.93,-568.1 "/>
 <text text-anchor="middle" x="468.86" y="-551.5" font-family="Courier New" font-size="14.00">mapping(address=&gt;address): InitializableAbstractStrategy.assetToPToken (32)</text>
 <polyline fill="none" stroke="black" points="74.81,-543.3 862.93,-543.3 "/>
