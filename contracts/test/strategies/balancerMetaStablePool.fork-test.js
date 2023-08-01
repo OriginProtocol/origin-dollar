@@ -377,7 +377,7 @@ forkOnlyDescribe(
             [withdrawAmountUnits, withdrawAmountUnits]
           );
         log(
-          `Vault withdraws ${withdrawAmount} WETH and ${depositAmount} RETH together`
+          `Vault withdraws ${withdrawAmount} WETH and ${withdrawAmount} RETH together`
         );
 
         const stratValueAfter = await oethVault.totalValue();
