@@ -860,6 +860,11 @@ function balancerREthFixtureSetup(config = { defaultStrategy: true }) {
     );
     fixture.balancerREthPID = balancer_rETH_WETH_PID;
 
+    fixture.auraPool = await ethers.getContractAt(
+      "IERC4626",
+      addresses.mainnet.rETH_WETH_AuraRewards
+    );
+
     fixture.balancerVault = await ethers.getContractAt(
       "IBalancerVault",
       addresses.mainnet.balancerVault,

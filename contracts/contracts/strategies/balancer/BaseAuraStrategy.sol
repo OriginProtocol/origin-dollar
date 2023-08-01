@@ -5,6 +5,8 @@ pragma solidity ^0.8.0;
  * @title OETH Base Balancer Abstract Strategy
  * @author Origin Protocol Inc
  */
+
+import "@openzeppelin/contracts/utils/math/Math.sol";
 import { BaseBalancerStrategy } from "./BaseBalancerStrategy.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IRateProvider } from "../../interfaces/balancer/IRateProvider.sol";
@@ -78,8 +80,13 @@ abstract contract BaseAuraStrategy is BaseBalancerStrategy {
      * @param numBPTTokens Number of Balancer Pool Tokens (BPT) to withdraw
      */
     function _lpWithdraw(uint256 numBPTTokens) internal virtual override {
+        // Get all the strategy's BPTs in Aura
+        uint256 maxBPTTokens = IERC4626(auraRewardPoolAddress).maxRedeem(
+            address(this)
+        );
+
         IRewardStaking(auraRewardPoolAddress).withdrawAndUnwrap(
-            numBPTTokens,
+            Math.min(numBPTTokens, maxBPTTokens),
             true // also claim reward tokens
         );
     }
@@ -89,7 +96,8 @@ abstract contract BaseAuraStrategy is BaseBalancerStrategy {
      * the Aura rewards pool to this strategy contract.
      */
     function _lpWithdrawAll() internal virtual override {
-        uint256 bptBalance = IERC4626(auraRewardPoolAddress).balanceOf(
+        // Get all the strategy's BPTs in Aura
+        uint256 bptBalance = IERC4626(auraRewardPoolAddress).maxRedeem(
             address(this)
         );
 
@@ -123,7 +131,7 @@ abstract contract BaseAuraStrategy is BaseBalancerStrategy {
     {
         balancerPoolTokens =
             IERC20(platformAddress).balanceOf(address(this)) +
-            IERC4626(auraRewardPoolAddress).balanceOf(address(this));
+            IERC4626(auraRewardPoolAddress).maxRedeem(address(this));
     }
 
     function _approveBase() internal virtual override {

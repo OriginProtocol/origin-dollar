@@ -1,5 +1,5 @@
 const { expect } = require("chai");
-const { formatUnits } = require("ethers/lib/utils");
+const { formatUnits, parseUnits } = require("ethers").utils;
 const { BigNumber } = require("ethers");
 
 const addresses = require("../../utils/addresses");
@@ -362,7 +362,7 @@ forkOnlyDescribe(
       it(`withdraw close to ${depositAmount} of both assets using multi asset withdraw`, async () => {
         const { balancerREthStrategy, oethVault, reth, weth } = fixture;
 
-        const withdrawAmount = 29950;
+        const withdrawAmount = 29999;
         const withdrawAmountUnits = oethUnits(withdrawAmount.toString(), 18);
 
         const stratValueBefore = await oethVault.totalValue();
@@ -394,18 +394,30 @@ forkOnlyDescribe(
         );
       });
       it(`withdraw ${depositAmount} of each asset in separate calls`, async () => {
-        const { balancerREthStrategy, oethVault, timelock, reth, weth } =
-          fixture;
+        const {
+          balancerREthStrategy,
+          rEthBPT,
+          oethVault,
+          timelock,
+          reth,
+          weth,
+          auraPool,
+        } = fixture;
 
         const stratValueBefore = await oethVault.totalValue();
         log(`Vault total value before: ${formatUnits(stratValueBefore)}`);
 
-        const withdrawAmount = 15000;
+        const bptBefore = await auraPool.balanceOf(
+          balancerREthStrategy.address
+        );
+        log(`Aura BPTs before: ${formatUnits(bptBefore)}`);
+
+        const withdrawAmount = 29996;
         const withdrawAmountUnits = oethUnits(withdrawAmount.toString(), 18);
 
         await balancerREthStrategy
           .connect(timelock)
-          .setMaxWithdrawalSlippage(oethUnits("1", 17));
+          .setMaxWithdrawalSlippage(parseUnits("1", 16)); // 1%
 
         // Withdraw WETH
         // prettier-ignore
@@ -424,6 +436,15 @@ forkOnlyDescribe(
             stratValueAfterWeth
           )}`
         );
+        const bptAfterWeth = await auraPool.balanceOf(
+          balancerREthStrategy.address
+        );
+        log(`Aura BPTs after WETH withdraw: ${formatUnits(bptAfterWeth)}`);
+        log(
+          `Strategy BPTs after WETH withdraw: ${formatUnits(
+            await rEthBPT.balanceOf(balancerREthStrategy.address)
+          )}`
+        );
 
         // Withdraw RETH
         // prettier-ignore
@@ -440,6 +461,15 @@ forkOnlyDescribe(
         log(
           `Vault total value after RETH withdraw: ${formatUnits(
             stratValueAfterReth
+          )}`
+        );
+        const bptAfterReth = await auraPool.balanceOf(
+          balancerREthStrategy.address
+        );
+        log(`Aura BPTs after RETH withdraw: ${formatUnits(bptAfterReth)}`);
+        log(
+          `Strategy BPTs after RETH withdraw: ${formatUnits(
+            await rEthBPT.balanceOf(balancerREthStrategy.address)
           )}`
         );
 
