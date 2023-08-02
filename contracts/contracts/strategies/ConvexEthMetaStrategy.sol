@@ -24,6 +24,20 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
     uint256 public constant MAX_SLIPPAGE = 1e16; // 1%, same as the Curve UI
     address public constant ETH_ADDRESS =
         0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
+
+    // The following slots have been deprecated with immutable variables
+    address private _deprecated_cvxDepositorAddress;
+    address private _deprecated_cvxRewardStaker;
+    uint256 private _deprecated_cvxDepositorPTokenId;
+    address private _deprecated_curvePool;
+    address private _deprecated_lpToken;
+    address private _deprecated_oeth;
+    address private _deprecated_weth;
+    // Ordered list of pool assets
+    uint128 private _deprecated_oethCoinIndex = 1;
+    uint128 private _deprecated_ethCoinIndex = 0;
+
+    // New immutable variables that must be set in the constructor
     address public immutable cvxDepositorAddress;
     IRewardStaking public immutable cvxRewardStaker;
     uint256 public immutable cvxDepositorPTokenId;
@@ -31,6 +45,7 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
     IERC20 public immutable lpToken;
     IERC20 public immutable oeth;
     IWETH9 public immutable weth;
+
     // Ordered list of pool assets
     uint128 public constant oethCoinIndex = 1;
     uint128 public constant ethCoinIndex = 0;
@@ -46,30 +61,28 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         _;
     }
 
-    // used to circumvent the stack too deep issue
-    struct InitializeConfig {
-        address curvePoolAddress; //Address of the Curve pool
+    // Used to circumvent the stack too deep issue
+    struct ConvexEthMetaConfig {
         address cvxDepositorAddress; //Address of the Convex depositor(AKA booster) for this pool
-        address oethAddress; //Address of OETH token
         address cvxRewardStakerAddress; //Address of the CVX rewards staker
-        address curvePoolLpToken; //Address of metapool LP token
         uint256 cvxDepositorPTokenId; //Pid of the pool referred to by Depositor and staker
+        address oethAddress; //Address of OETH token
         address wethAddress; //Address of WETH
     }
 
-    constructor(InitializeConfig memory initConfig) {
-        cvxDepositorAddress = initConfig.cvxDepositorAddress;
-        cvxRewardStaker = IRewardStaking(initConfig.cvxRewardStakerAddress);
-        cvxDepositorPTokenId = initConfig.cvxDepositorPTokenId;
-        lpToken = IERC20(initConfig.curvePoolLpToken);
-        curvePool = ICurveETHPoolV1(initConfig.curvePoolAddress);
-        oeth = IERC20(initConfig.oethAddress);
-        weth = IWETH9(initConfig.wethAddress);
-    }
+    constructor(
+        BaseStrategyConfig memory _baseConfig,
+        ConvexEthMetaConfig memory _convexConfig
+    ) InitializableAbstractStrategy(_baseConfig) {
+        lpToken = IERC20(_baseConfig.platformAddress);
+        curvePool = ICurveETHPoolV1(_baseConfig.platformAddress);
 
-    constructor(BaseStrategyConfig memory _stratConfig)
-        InitializableAbstractStrategy(_stratConfig)
-    {}
+        cvxDepositorAddress = _convexConfig.cvxDepositorAddress;
+        cvxRewardStaker = IRewardStaking(_convexConfig.cvxRewardStakerAddress);
+        cvxDepositorPTokenId = _convexConfig.cvxDepositorPTokenId;
+        oeth = IERC20(_convexConfig.oethAddress);
+        weth = IWETH9(_convexConfig.wethAddress);
+    }
 
     /**
      * Initializer for setting up strategy internal state. This overrides the
@@ -79,19 +92,17 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
      * @param _assets Addresses of supported assets. MUST be passed in the same
      *                order as returned by coins on the pool contract, i.e.
      *                WETH
-     * @param _vaultAddress address of the vault proxy contract.
      */
     function initialize(
         address[] calldata _rewardTokenAddresses, // CRV + CVX
-        address[] calldata _assets,
-        address _vaultAddress
+        address[] calldata _assets
     ) external onlyGovernor initializer {
         require(_assets.length == 1, "Must have exactly one asset");
 
         address[] memory pTokens = new address[](1);
         pTokens[0] = address(curvePool);
 
-        super._initialize(_rewardTokenAddresses, _assets, _pTokens);
+        super._initialize(_rewardTokenAddresses, _assets, pTokens);
 
         /* needs to be called after super._initialize so that the platformAddress
          * is correctly set

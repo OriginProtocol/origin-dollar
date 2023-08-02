@@ -17,14 +17,12 @@ module.exports = deploymentWithGovernanceProposal(
     const dConvexETHMetaStrategy = await deployWithConfirmation(
       "ConvexEthMetaStrategy",
       [
+        [addresses.mainnet.CurveOETHMetaPool, addresses.mainnet.OETHVaultProxy],
         [
-          addresses.mainnet.CurveOETHMetaPool,
-          addresses.mainnet.OETHVaultProxy,
           addresses.mainnet.CVXBooster,
-          addresses.mainnet.OETHProxy,
           addresses.mainnet.CVXETHRewardsPool,
-          addresses.mainnet.CurveOETHMetaPool,
           oethPoolLpPID,
+          addresses.mainnet.OETHProxy,
           addresses.mainnet.WETH,
         ],
       ],

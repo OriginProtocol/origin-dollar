@@ -2,6 +2,8 @@ const { expect } = require("chai");
 const { formatUnits, parseUnits } = require("ethers/lib/utils");
 const { loadFixture } = require("ethereum-waffle");
 
+const addresses = require("../../utils/addresses");
+const { oethPoolLpPID } = require("../../utils/constants");
 const { units, oethUnits, forkOnlyDescribe } = require("../helpers");
 const {
   convexOETHMetaVaultFixture,
@@ -15,6 +17,37 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
   this.timeout(0);
   // due to hardhat forked mode timeouts - retry failed tests up to 3 times
   this.retries(3);
+
+  it("Should have constants and immutables set", async () => {
+    const { ConvexEthMetaStrategy } = await loadFixture(
+      convexOETHMetaVaultFixture
+    );
+
+    expect(await ConvexEthMetaStrategy.MAX_SLIPPAGE()).to.equal(
+      parseUnits("0.01", 18)
+    );
+    expect(await ConvexEthMetaStrategy.ETH_ADDRESS()).to.equal(addresses.ETH);
+
+    expect(await ConvexEthMetaStrategy.cvxDepositorAddress()).to.equal(
+      addresses.mainnet.CVXBooster
+    );
+    expect(await ConvexEthMetaStrategy.cvxRewardStaker()).to.equal(
+      addresses.mainnet.CVXETHRewardsPool
+    );
+    expect(await ConvexEthMetaStrategy.cvxDepositorPTokenId()).to.equal(
+      oethPoolLpPID
+    );
+    expect(await ConvexEthMetaStrategy.curvePool()).to.equal(
+      addresses.mainnet.CurveOETHMetaPool
+    );
+    expect(await ConvexEthMetaStrategy.lpToken()).to.equal(
+      addresses.mainnet.CurveOETHMetaPool
+    );
+    expect(await ConvexEthMetaStrategy.oeth()).to.equal(
+      addresses.mainnet.OETHProxy
+    );
+    expect(await ConvexEthMetaStrategy.weth()).to.equal(addresses.mainnet.WETH);
+  });
 
   it("Should rebalance Metapool", async () => {
     const {
