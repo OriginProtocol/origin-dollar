@@ -1277,7 +1277,7 @@ async function convexLUSDMetaVaultFixture() {
 /**
  * Configure a Vault with only the OETH/(W)ETH Curve Metastrategy.
  */
-async function convexOETHMetaVaultFixture() {
+async function convexOETHMetaVaultFixture(config = { wethMintAmount: 0 }) {
   const fixture = await oethDefaultFixture();
 
   const { convexEthMetaStrategy, oethVault, josh, timelock, weth } = fixture;
@@ -1327,13 +1327,21 @@ async function convexOETHMetaVaultFixture() {
     addresses.mainnet.CurveOETHMetaPool
   );
 
-  return fixture;
-}
+  // mint some OETH using WETH is configured
+  if (config?.wethMintAmount > 0) {
+    const wethAmount = parseUnits(config.wethMintAmount.toString());
+    await oethVault.connect(josh).rebase();
+    await oethVault.connect(josh).allocate();
 
-function convexOETHMetaVaultFixtureSetup() {
-  return deployments.createFixture(async () => {
-    return await convexOETHMetaVaultFixture();
-  });
+    // Approve the Vault to transfer WETH
+    await weth.connect(josh).approve(oethVault.address, wethAmount);
+
+    // Mint OETH with WETH
+    // This will sit in the vault, not the strategy
+    await oethVault.connect(josh).mint(weth.address, wethAmount, 0);
+  }
+
+  return fixture;
 }
 
 /**
@@ -1594,7 +1602,14 @@ async function replaceContractAt(targetAddress, mockContract) {
   });
 }
 
+function createFixture(fixture, config) {
+  return deployments.createFixture(async () => {
+    return await fixture(config);
+  });
+}
+
 module.exports = {
+  createFixture,
   fundWith3Crv,
   resetAllowance,
   defaultFixture,
@@ -1609,7 +1624,6 @@ module.exports = {
   convexVaultFixture,
   convexMetaVaultFixture,
   convexOETHMetaVaultFixture,
-  convexOETHMetaVaultFixtureSetup,
   convexGeneralizedMetaForkedFixture,
   convexLUSDMetaVaultFixture,
   morphoCompoundFixture,
