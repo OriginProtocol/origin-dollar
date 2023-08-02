@@ -106,6 +106,7 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         view
         virtual
         override
+        whenNotInVaultContext
         returns (uint256 amount)
     {
         // Get the total balance of each of the Balancer pool assets
@@ -138,7 +139,13 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
      * Balancer Pool Tokens (BPT) to ETH value.
      * @return value The ETH value
      */
-    function checkBalance() external view virtual returns (uint256 value) {
+    function checkBalance()
+        external
+        view
+        virtual
+        whenNotInVaultContext
+        returns (uint256 value)
+    {
         uint256 bptBalance = _getBalancerPoolTokens();
 
         // Convert BPT to ETH value

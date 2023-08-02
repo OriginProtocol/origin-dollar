@@ -23,10 +23,10 @@ contract MockEvilReentrantContract {
     bytes32 public immutable balancerPoolId;
 
     constructor(
-        address _balancerVault, 
-        address _oethVault, 
-        address _reth, 
-        address _weth, 
+        address _balancerVault,
+        address _oethVault,
+        address _reth,
+        address _weth,
         address _poolAddress,
         bytes32 _poolId
     ) {
@@ -43,7 +43,7 @@ contract MockEvilReentrantContract {
         uint256 rethPrice = IOracle(priceProvider).price(address(reth));
 
         // 1. Join pool
-        uint256[] memory amounts = new uint256[](2); 
+        uint256[] memory amounts = new uint256[](2);
         amounts[0] = uint256(10 ether);
         amounts[1] = rethPrice * 10;
 
@@ -60,7 +60,7 @@ contract MockEvilReentrantContract {
             amounts,
             minBPT
         );
-        
+
         IBalancerVault.JoinPoolRequest memory joinRequest = IBalancerVault
             .JoinPoolRequest(assets, amounts, joinUserData, false);
 
@@ -132,7 +132,7 @@ contract MockEvilReentrantContract {
 
     receive() external payable {
         console.log("Received ETH");
-        
+
         // 3. Try to mint OETH
         oethVault.mint(address(weth), 1 ether, 0.9 ether);
 

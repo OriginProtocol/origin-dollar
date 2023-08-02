@@ -2,7 +2,12 @@ const hre = require("hardhat");
 const { ethers } = hre;
 const { expect } = require("chai");
 const { forkOnlyDescribe } = require("../helpers");
-const { defaultFixtureSetup, balancerREthFixtureSetup, mintWETH, impersonateAndFundContract } = require("../_fixture");
+const {
+  defaultFixtureSetup,
+  balancerREthFixtureSetup,
+  mintWETH,
+  impersonateAndFundContract,
+} = require("../_fixture");
 const { deployWithConfirmation } = require("../../utils/deploy");
 const { utils } = require("ethers");
 const { findBestMainnetTokenHolder } = require("../../utils/funding");
@@ -25,46 +30,44 @@ forkOnlyDescribe(
       await f();
     });
 
-    it("Should not allow read-only reentrancy", async () => {
-      const {
-        oeth,
-        weth,
-        reth,
-        oethVault,
-        rEthBPT,
-        balancerREthPID,
-        daniel
-      } = await balancerREthFixture()
+    it.only("Should not allow read-only reentrancy", async () => {
+      const { weth, reth, oethVault, rEthBPT, balancerREthPID, daniel } =
+        await balancerREthFixture();
 
       // Deploy the attacking contract
-      const dEvilContract = await deployWithConfirmation("MockEvilReentrantContract", [
-        addresses.mainnet.balancerVault,
-        oethVault.address,
-        reth.address,
-        weth.address,
-        rEthBPT.address,
-        balancerREthPID
-      ])
-      const cEvilContract = await ethers.getContractAt("MockEvilReentrantContract", dEvilContract.address)
+      const dEvilContract = await deployWithConfirmation(
+        "MockEvilReentrantContract",
+        [
+          addresses.mainnet.balancerVault,
+          oethVault.address,
+          reth.address,
+          weth.address,
+          rEthBPT.address,
+          balancerREthPID,
+        ]
+      );
+      const cEvilContract = await ethers.getContractAt(
+        "MockEvilReentrantContract",
+        dEvilContract.address
+      );
 
       // Approve movement of tokens
-      await cEvilContract.connect(daniel).approveAllTokens()
+      await cEvilContract.connect(daniel).approveAllTokens();
 
       // Fund the attacking contract with WETH
-      await mintWETH(weth, await impersonateAndFundContract(cEvilContract.address), "100000")
+      await mintWETH(
+        weth,
+        await impersonateAndFundContract(cEvilContract.address),
+        "100000"
+      );
       // ... and rETH
-      const rethHolder = await findBestMainnetTokenHolder(
-        reth,
-        hre
-      )
+      const rethHolder = await findBestMainnetTokenHolder(reth, hre);
       await reth
         .connect(rethHolder)
-        .transfer(cEvilContract.address, utils.parseEther("1000"))
+        .transfer(cEvilContract.address, utils.parseEther("1000"));
 
       // Do Evil Stuff
-      await expect(
-        cEvilContract.doEvilStuff()
-      ).to.be.reverted;
-    })
+      await expect(cEvilContract.doEvilStuff()).to.be.reverted;
+    });
   }
-)
+);
