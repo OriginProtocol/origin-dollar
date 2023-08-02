@@ -84,7 +84,7 @@ abstract contract BaseAuraStrategy is BaseBalancerStrategy {
             true // also claim reward tokens
         );
     }
-
+    
     /**
      * @dev Withdraw all Balancer Pool Tokens (BPT) from
      * the Aura rewards pool to this strategy contract.

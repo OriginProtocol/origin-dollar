@@ -101,6 +101,9 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
      * @param _asset  Address of the Vault collateral asset
      * @return amount  the amount of vault collateral assets
      * 
+     * IMPORTANT if this function is overridden it needs to have a whenNotInVaultContext
+     * modifier on it or it is susceptible to read-only re-entrancy attack 
+     *
      * @dev it is important that this function is not affected by reporting inflated
      * values of assets in case of any pool manipulation. Such a manipulation could easily
      * exploit the protocol by: 
@@ -115,6 +118,7 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         view
         virtual
         override
+        whenNotInVaultContext
         returns (uint256 amount)
     {
         // Get the total balance of each of the Balancer pool assets
@@ -161,8 +165,17 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
      * Uses the Balancer pool's rate (virtual price) to convert the strategy's
      * Balancer Pool Tokens (BPT) to ETH value.
      * @return value The ETH value
+     * 
+     * IMPORTANT if this function is overridden it needs to have a whenNotInVaultContext
+     * modifier on it or it is susceptible to read-only re-entrancy attack 
      */
-    function checkBalance() external view virtual returns (uint256 value) {
+    function checkBalance()
+        external
+        view
+        virtual
+        whenNotInVaultContext
+        returns (uint256 value)
+    {
         uint256 bptBalance = _getBalancerPoolTokens();
 
         // Convert BPT to ETH value

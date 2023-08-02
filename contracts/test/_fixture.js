@@ -1298,7 +1298,9 @@ async function impersonateAndFundContract(address, amount = "100000") {
 
   await _hardhatSetBalance(address, amount);
 
-  return await ethers.provider.getSigner(address);
+  const signer = await ethers.provider.getSigner(address);
+  signer.address = address;
+  return signer;
 }
 
 async function impersonateAndFundAddress(
