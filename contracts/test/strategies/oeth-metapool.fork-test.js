@@ -178,17 +178,42 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
           );
       });
       it("Should be able to withdraw all", async () => {
-        const { convexEthMetaStrategy, oeth, vaultSigner } = fixture;
+        const { convexEthMetaStrategy, oethMetaPool, oeth, vaultSigner } =
+          fixture;
 
+        const {
+          oethBurnAmount,
+          ethWithdrawAmount,
+          curveBalances: curveBalancesBefore,
+        } = await calcWithdrawAllAmounts(fixture);
         const oethSupplyBefore = await oeth.totalSupply();
+
+        log("Before withdraw all from strategy");
+        await logCurvePool(oethMetaPool, "ETH ", "OETH");
 
         // Now try to withdraw all the WETH from the strategy
         await convexEthMetaStrategy.connect(vaultSigner).withdrawAll();
 
-        const oethSupplyAfter = await oeth.totalSupply();
-        const oethSupplyDiff = oethSupplyBefore.sub(oethSupplyAfter);
+        log("After withdraw all from strategy");
+        await logCurvePool(oethMetaPool, "ETH ", "OETH");
 
-        expect(oethSupplyDiff).to.be.gte(oethUnits("9.95"));
+        // Check the ETH and OETH balances in the Curve Metapool
+        const curveBalancesAfter = await oethMetaPool.get_balances();
+        expect(curveBalancesAfter[0]).to.approxEqualTolerance(
+          curveBalancesBefore[0].sub(ethWithdrawAmount),
+          0.01 // 0.01% or 1 basis point
+        );
+        expect(curveBalancesAfter[1]).to.approxEqualTolerance(
+          curveBalancesBefore[1].sub(oethBurnAmount),
+          0.01 // 0.01%
+        );
+
+        // Check the OETH total supply decrease
+        const oethSupplyAfter = await oeth.totalSupply();
+        expect(oethSupplyAfter).to.approxEqualTolerance(
+          oethSupplyBefore.sub(oethBurnAmount),
+          0.01 // 0.01% or 1 basis point
+        );
       });
 
       it("Should be able to withdraw some", async () => {
@@ -201,10 +226,13 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
           weth,
         } = fixture;
 
+        const withdrawAmount = oethUnits("1000");
+
+        const { oethBurnAmount, curveBalances: curveBalancesBefore } =
+          await calcOethBurnAmount(fixture, withdrawAmount);
         const oethSupplyBefore = await oeth.totalSupply();
 
-        const withdrawAmount = oethUnits("9");
-
+        log("Before withdraw from strategy");
         await logCurvePool(oethMetaPool, "ETH ", "OETH");
 
         // Now try to withdraw the WETH from the strategy
@@ -212,12 +240,26 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
           .connect(vaultSigner)
           .withdraw(oethVault.address, weth.address, withdrawAmount);
 
+        log("After withdraw from strategy");
         await logCurvePool(oethMetaPool, "ETH ", "OETH");
 
-        const oethSupplyAfter = await oeth.totalSupply();
-        const oethSupplyDiff = oethSupplyBefore.sub(oethSupplyAfter);
+        // Check the ETH and OETH balances in the Curve Metapool
+        const curveBalancesAfter = await oethMetaPool.get_balances();
+        expect(curveBalancesAfter[0]).to.approxEqualTolerance(
+          curveBalancesBefore[0].sub(withdrawAmount),
+          0.01 // 0.01% or 1 basis point
+        );
+        expect(curveBalancesAfter[1]).to.approxEqualTolerance(
+          curveBalancesBefore[1].sub(oethBurnAmount),
+          0.01 // 0.01%
+        );
 
-        expect(oethSupplyDiff).to.be.gte(oethUnits("8.95"));
+        // Check the OETH total supply decrease
+        const oethSupplyAfter = await oeth.totalSupply();
+        expect(oethSupplyAfter).to.approxEqualTolerance(
+          oethSupplyBefore.sub(oethBurnAmount),
+          0.01 // 0.01% or 1 basis point
+        );
       });
     });
   });
@@ -245,4 +287,47 @@ async function calcOethMintAmount(fixture, wethDepositAmount) {
   log(`OETH mint amount : ${formatUnits(oethMintAmount)}`);
 
   return { oethMintAmount, curveBalances };
+}
+
+// Calculate the OETH mint amount
+async function calcOethBurnAmount(fixture, wethWithdrawAmount) {
+  const { oethMetaPool } = fixture;
+
+  // Get the ETH and OETH balances in the Curve Metapool
+  const curveBalances = await oethMetaPool.get_balances();
+
+  // OETH to burn = WETH withdrawn * OETH pool balance / ETH pool balance
+  const oethBurnAmount = wethWithdrawAmount
+    .mul(curveBalances[1])
+    .div(curveBalances[0]);
+
+  log(`OETH burn amount : ${formatUnits(oethBurnAmount)}`);
+
+  return { oethBurnAmount, curveBalances };
+}
+
+// Calculate the OETH mint amount
+async function calcWithdrawAllAmounts(fixture) {
+  const { convexEthMetaStrategy, cvxRewardPool, oethMetaPool } = fixture;
+
+  // Get the ETH and OETH balances in the Curve Metapool
+  const curveBalances = await oethMetaPool.get_balances();
+  const strategyLpAmount = await cvxRewardPool.balanceOf(
+    convexEthMetaStrategy.address
+  );
+  const totalLpSupply = await oethMetaPool.totalSupply();
+
+  // OETH to burn = OETH pool balance * strategy LP amount / total pool LP amount
+  const oethBurnAmount = curveBalances[1]
+    .mul(strategyLpAmount)
+    .div(totalLpSupply);
+  // ETH to withdraw = ETH pool balance * strategy LP amount / total pool LP amount
+  const ethWithdrawAmount = curveBalances[0]
+    .mul(strategyLpAmount)
+    .div(totalLpSupply);
+
+  log(`OETH burn amount    : ${formatUnits(oethBurnAmount)}`);
+  log(`ETH withdraw amount : ${formatUnits(ethWithdrawAmount)}`);
+
+  return { oethBurnAmount, ethWithdrawAmount, curveBalances };
 }

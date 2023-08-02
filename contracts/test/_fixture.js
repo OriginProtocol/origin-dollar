@@ -1319,7 +1319,7 @@ async function convexOETHMetaVaultFixture(config = { wethMintAmount: 0 }) {
   // Convex pool that records the deposited balances
   fixture.cvxRewardPool = await ethers.getContractAt(
     "IRewardStaking",
-    await convexEthMetaStrategy.cvxRewardStaker()
+    addresses.mainnet.CVXETHRewardsPool
   );
 
   fixture.oethMetaPool = await ethers.getContractAt(
