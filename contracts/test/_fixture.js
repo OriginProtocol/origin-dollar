@@ -182,8 +182,8 @@ const defaultFixture = deployments.createFixture(async () => {
     mockSwapper,
     swapper1Inch,
     mock1InchSwapRouter,
-    ConvexEthMetaStrategyProxy,
-    ConvexEthMetaStrategy;
+    convexEthMetaStrategyProxy,
+    convexEthMetaStrategy;
 
   if (isFork) {
     usdt = await ethers.getContractAt(usdtAbi, addresses.mainnet.USDT);
@@ -271,12 +271,12 @@ const defaultFixture = deployments.createFixture(async () => {
       oethHarvesterProxy.address
     );
 
-    ConvexEthMetaStrategyProxy = await ethers.getContract(
+    convexEthMetaStrategyProxy = await ethers.getContract(
       "ConvexEthMetaStrategyProxy"
     );
-    ConvexEthMetaStrategy = await ethers.getContractAt(
+    convexEthMetaStrategy = await ethers.getContractAt(
       "ConvexEthMetaStrategy",
-      ConvexEthMetaStrategyProxy.address
+      convexEthMetaStrategyProxy.address
     );
 
     const oethDripperProxy = await ethers.getContract("OETHDripperProxy");
@@ -542,7 +542,7 @@ const defaultFixture = deployments.createFixture(async () => {
     fraxEthStrategy,
     oethMorphoAaveStrategy,
     woeth,
-    ConvexEthMetaStrategy,
+    convexEthMetaStrategy,
     oethDripper,
     oethHarvester,
     swapper,
@@ -1278,8 +1278,9 @@ async function convexLUSDMetaVaultFixture() {
  * Configure a Vault with only the OETH/(W)ETH Curve Metastrategy.
  */
 async function convexOETHMetaVaultFixture() {
-  const fixture = await loadFixture(defaultFixture);
-  const { ConvexEthMetaStrategy, oethVault, josh, timelock, weth } = fixture;
+  const fixture = await oethDefaultFixture();
+
+  const { convexEthMetaStrategy, oethVault, josh, timelock, weth } = fixture;
 
   await impersonateAndFundAddress(
     weth.address,
@@ -1308,20 +1309,17 @@ async function convexOETHMetaVaultFixture() {
     josh.getAddress()
   );
 
-  // Add Convex Meta strategy
-  await oethVault
-    .connect(timelock)
-    .setAssetDefaultStrategy(weth.address, ConvexEthMetaStrategy.address);
-
   // Update the strategy threshold to 100k ETH
   await oethVault
     .connect(timelock)
     .setNetOusdMintForStrategyThreshold(parseUnits("100", 21));
 
+  fixture.vaultSigner = await impersonateAndFundContract(oethVault.address);
+
   // Convex pool that records the deposited balances
   fixture.cvxRewardPool = await ethers.getContractAt(
     "IRewardStaking",
-    await ConvexEthMetaStrategy.cvxRewardStaker()
+    await convexEthMetaStrategy.cvxRewardStaker()
   );
 
   fixture.oethMetaPool = await ethers.getContractAt(
@@ -1330,6 +1328,12 @@ async function convexOETHMetaVaultFixture() {
   );
 
   return fixture;
+}
+
+function convexOETHMetaVaultFixtureSetup() {
+  return deployments.createFixture(async () => {
+    return await convexOETHMetaVaultFixture();
+  });
 }
 
 /**
@@ -1605,6 +1609,7 @@ module.exports = {
   convexVaultFixture,
   convexMetaVaultFixture,
   convexOETHMetaVaultFixture,
+  convexOETHMetaVaultFixtureSetup,
   convexGeneralizedMetaForkedFixture,
   convexLUSDMetaVaultFixture,
   morphoCompoundFixture,
