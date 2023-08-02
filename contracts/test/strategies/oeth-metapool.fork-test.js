@@ -3,20 +3,20 @@ const { formatUnits, parseUnits } = require("ethers/lib/utils");
 
 const addresses = require("../../utils/addresses");
 const { oethPoolLpPID } = require("../../utils/constants");
+const { logCurvePool } = require("../../utils/curve");
 const { units, oethUnits, forkOnlyDescribe } = require("../helpers");
 const {
   createFixture,
   defaultFixtureSetup,
   convexOETHMetaVaultFixture,
 } = require("../_fixture");
-const { logCurvePool } = require("../../utils/curve");
-
-const log = require("../../utils/logger")("test:fork:oeth:metapool");
 
 const defaultFixturePromise = createFixture(convexOETHMetaVaultFixture);
 const mintedFixturePromise = createFixture(convexOETHMetaVaultFixture, {
   wethMintAmount: 5000,
 });
+
+const log = require("../../utils/logger")("test:fork:oeth:metapool");
 
 forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
   this.timeout(0);
