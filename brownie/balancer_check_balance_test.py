@@ -34,9 +34,10 @@ def print_state(state_name, print_states):
   [token,balances,last_change] = ba_vault.getPoolTokens(pool_id)
   reth_balance = balancer_reth_strat.checkBalance(reth) * reth.getExchangeRate() / 1e36
   weth_balance = balancer_reth_strat.checkBalance(weth) / 1e18
+  eth_balance = balancer_reth_strat.checkBalance() / 1e18
 
-  reth_balance_2 = balancer_reth_strat.checkBalance2(reth) * reth.getExchangeRate() / 1e36
-  weth_balance_2 = balancer_reth_strat.checkBalance2(weth) / 1e18
+  # reth_balance_2 = balancer_reth_strat.checkBalance2(reth) * reth.getExchangeRate() / 1e36
+  # weth_balance_2 = balancer_reth_strat.checkBalance2(weth) / 1e18
 
   print("State: {0}".format(state_name))
   print("")
@@ -44,10 +45,11 @@ def print_state(state_name, print_states):
   print("WETH balance: {:0.2f}".format(weth_balance))
   print("RETH balance (normalized exhange rate): {:0.2f}".format(reth_balance))
   print("Combined ETH balance: {:0.2f}".format(reth_balance + weth_balance))
-  print("WETH balance 2: {:0.2f}".format(weth_balance_2))
-  print("RETH balance 2(normalized exhange rate): {:0.2f}".format(reth_balance_2))
-  print("Combined ETH balance 2: {:0.2f}".format(reth_balance_2 + weth_balance_2))
-  print("Total asset balance: {:0.2f}".format(balancer_reth_strat.checkBalance() / 1e18))
+  print("ETH denominated balance: {:0.2f}".format(eth_balance))
+  # print("WETH balance 2: {:0.2f}".format(weth_balance_2))
+  # print("RETH balance 2(normalized exhange rate): {:0.2f}".format(reth_balance_2))
+  # print("Combined ETH balance 2: {:0.2f}".format(reth_balance_2 + weth_balance_2))
+  # print("Total asset balance: {:0.2f}".format(balancer_reth_strat.checkBalance() / 1e18))
   print("BPT balance: {:0.2f}".format(rewardPool.balanceOf(balancer_reth_strat) / 1e18))
   print("")
   print("Pool:")
@@ -78,8 +80,8 @@ def redeem(amount):
 def deposit_withdrawal_test(amount, print_states = False): 
   print_state("initial state", print_states)
 
-  mint(400, weth)
-  print_state("whale minted", print_states)
+  # mint(400, weth)
+  # print_state("whale minted", print_states)
 
   vault_value_checker.takeSnapshot(STD)
 
@@ -105,7 +107,7 @@ def deposit_withdrawal_test(amount, print_states = False):
   ## attempt to mint - fails with Bal208 -> BPT_OUT_MIN_AMOUNT (Slippage/front-running protection check failed on a pool join)
   #mint(1, weth)
   ## attempt to redeem
-  redeem(400)
+  #redeem(400)
 
   bpt_balance = pool.balanceOf(weth_whale)
   pool.approve(ba_vault, 10**50, WSTD)
