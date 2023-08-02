@@ -19,26 +19,22 @@ contract MorphoAaveStrategy is InitializableAbstractStrategy {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
 
+    constructor(BaseStrategyConfig memory _stratConfig)
+        InitializableAbstractStrategy(_stratConfig)
+    {}
+
     /**
      * @dev Initialize function, to set up initial internal state
-     * @param _vaultAddress Address of the Vault
      * @param _rewardTokenAddresses Address of reward token for platform
      * @param _assets Addresses of initial supported assets
      * @param _pTokens Platform Token corresponding addresses
      */
     function initialize(
-        address _vaultAddress,
         address[] calldata _rewardTokenAddresses,
         address[] calldata _assets,
         address[] calldata _pTokens
-    ) external onlyGovernor initializer {
-        super._initialize(
-            MORPHO,
-            _vaultAddress,
-            _rewardTokenAddresses,
-            _assets,
-            _pTokens
-        );
+    ) external override onlyGovernor initializer {
+        super._initialize(_rewardTokenAddresses, _assets, _pTokens);
     }
 
     /**

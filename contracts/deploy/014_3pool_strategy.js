@@ -70,23 +70,10 @@ const runDeployment = async (hre) => {
 
   // Initialize 3Pool implementation.
   await withConfirmation(
-    cThreePoolStrategy
-      .connect(sDeployer)
-      [
-        "initialize(address,address,address,address[],address[],address,address)"
-      ](
-        assetAddresses.ThreePool,
-        cVaultProxy.address,
-        assetAddresses.CRV,
-        [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT],
-        [
-          assetAddresses.ThreePoolToken,
-          assetAddresses.ThreePoolToken,
-          assetAddresses.ThreePoolToken,
-        ],
-        assetAddresses.ThreePoolGauge,
-        assetAddresses.CRVMinter
-      )
+    cThreePoolStrategy.connect(sDeployer)[
+      // eslint-disable-next-line
+      "initialize(address,address,address,address[],address[],address,address)"
+    ](assetAddresses.ThreePool, cVaultProxy.address, assetAddresses.CRV, [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT], [assetAddresses.ThreePoolToken, assetAddresses.ThreePoolToken, assetAddresses.ThreePoolToken], assetAddresses.ThreePoolGauge, assetAddresses.CRVMinter)
   );
   log("Initialized ThreePoolStrategy");
 
@@ -140,18 +127,13 @@ const runDeployment = async (hre) => {
     log("Proposal executed.");
   } else {
     await withConfirmation(
-      cThreePoolStrategy
-        .connect(sGovernor)
-        .claimGovernance(await getTxOpts(gasLimit))
+      cThreePoolStrategy.connect(sGovernor).claimGovernance(await getTxOpts())
     );
     log("Claimed governance of ThreePoolStrategy");
     await withConfirmation(
       cVault
         .connect(sGovernor)
-        .approveStrategy(
-          cThreePoolStrategyProxy.address,
-          await getTxOpts(gasLimit)
-        )
+        .approveStrategy(cThreePoolStrategyProxy.address, await getTxOpts())
     );
     log("Approved ThreePoolStrategy on Vault");
   }

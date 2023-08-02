@@ -411,11 +411,9 @@ const deployVault = async () => {
 };
 
 const upgradeAndResetOUSD = async () => {
-  const { depoyerAddr, governorAddr, v1GovernorAddr } =
-    await hre.getNamedAccounts();
+  const { governorAddr, v1GovernorAddr } = await hre.getNamedAccounts();
 
   // Signers
-  const sDeployer = await ethers.provider.getSigner(depoyerAddr);
   const sGovernor = await ethers.provider.getSigner(governorAddr);
 
   // Temporary OUSD for running a reset

@@ -52,7 +52,7 @@ const useSwapEstimator = ({
   const balances = useStoreState(AccountStore, (s) => s.balances)
 
   const { contract: coinToSwapContract, decimals: coinToSwapDecimals } =
-    coinInfoList[swapMode === 'mint' ? selectedCoin : 'oeth'] || {}
+    coinInfoList?.[swapMode === 'mint' ? selectedCoin : 'oeth'] || {}
 
   const coinToSwap = swapMode === 'redeem' ? 'oeth' : selectedCoin
 
@@ -65,7 +65,7 @@ const useSwapEstimator = ({
   // do not enter conditional body when redeeming a mix
   if (!(swapMode === 'redeem' && selectedCoin === 'mix')) {
     ;({ contract: coinToReceiveContract, decimals: coinToReceiveDecimals } =
-      coinInfoList[swapMode === 'redeem' ? selectedCoin : 'oeth']) || {}
+      coinInfoList?.[swapMode === 'redeem' ? selectedCoin : 'oeth']) || {}
   }
 
   const allowances = useStoreState(AccountStore, (s) => s.allowances)
@@ -353,7 +353,7 @@ const useSwapEstimator = ({
 
       const swapGasUsage = hasEnoughBalance
         ? await contracts.zapper.connect(signer).estimateGas.deposit({
-            value: ethers.utils.parseEther(String(amount)),
+            value: ethers.utils.parseEther(String(inputAmountRaw)),
           })
         : 200000
 
