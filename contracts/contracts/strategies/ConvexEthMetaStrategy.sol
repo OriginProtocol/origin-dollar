@@ -61,6 +61,38 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         _;
     }
 
+    /**
+     * @dev Checks the Metapools balances have improved and the balances
+     * have not tipped to the other side.
+     */
+    modifier improveMetapoolBalance() {
+        // Get the asset and OToken balances in the Curve Metapool
+        uint256[2] memory balancesBefore = curvePool.get_balances();
+        // diff = ETH balance - OETH balance
+        int256 diffBefore = int256(balancesBefore[ethCoinIndex]) -
+            int256(balancesBefore[oethCoinIndex]);
+
+        _;
+
+        // Get the asset and OToken balances in the Curve Metapool
+        uint256[2] memory balancesAfter = curvePool.get_balances();
+        // diff = ETH balance - OETH balance
+        int256 diffAfter = int256(balancesAfter[ethCoinIndex]) -
+            int256(balancesAfter[oethCoinIndex]);
+
+        if (diffBefore <= 0) {
+            // If the pool was originally imbalanced in favor of OETH, then
+            // we want to check that the pool is now more balanced
+            require(diffAfter <= 0, "OTokens overshot peg");
+            require(diffBefore < diffAfter, "OToken balance worse");
+        } else {
+            // If the pool was originally imbalanced in favor of ETH, then
+            // we want to check that the pool is now more balanced
+            require(diffAfter >= 0, "Assets overshot peg");
+            require(diffAfter < diffBefore, "Asset balance worse");
+        }
+    }
+
     // Used to circumvent the stack too deep issue
     struct ConvexEthMetaConfig {
         address cvxDepositorAddress; //Address of the Convex depositor(AKA booster) for this pool
@@ -135,13 +167,15 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
 
         emit Deposit(_weth, address(lpToken), _wethAmount);
 
+        // Get the asset and OToken balances in the Curve Metapool
+        uint256[2] memory balances = curvePool.get_balances();
         // safe to cast since min value is at least 0
         uint256 oethToAdd = uint256(
             _max(
                 0,
-                int256(curvePool.balances(ethCoinIndex)) +
+                int256(balances[ethCoinIndex]) +
                     int256(_wethAmount) -
-                    int256(curvePool.balances(oethCoinIndex))
+                    int256(balances[oethCoinIndex])
             )
         );
 
@@ -321,7 +355,11 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
      * The asset value of the strategy and vault is reduced.
      * @param _lpTokens The amount of Metapool LP tokens to be burned for OTokens.
      */
-    function removeAndBurnOTokens(uint256 _lpTokens) external onlyStrategist {
+    function removeAndBurnOTokens(uint256 _lpTokens)
+        external
+        onlyStrategist
+        improveMetapoolBalance
+    {
         // Withdraw Metapool LP tokens from Convex pool
         _lpWithdraw(_lpTokens);
 
@@ -357,7 +395,11 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
      * The asset value of the strategy and vault is increased.
      * @param _oTokens The amount of OTokens to be minted and added to the pool.
      */
-    function mintAndAddOTokens(uint256 _oTokens) external onlyStrategist {
+    function mintAndAddOTokens(uint256 _oTokens)
+        external
+        onlyStrategist
+        improveMetapoolBalance
+    {
         IVault(vaultAddress).mintForStrategy(_oTokens);
 
         // Convert OETH to Metapool LP tokens
@@ -403,7 +445,11 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
      * is a gas intensive process. It's easier for the trusted strategist to
      * caclulate the amount of Metapool LP tokens required off-chain.
      */
-    function removeOnlyAssets(uint256 _lpTokens) external onlyStrategist {
+    function removeOnlyAssets(uint256 _lpTokens)
+        external
+        onlyStrategist
+        improveMetapoolBalance
+    {
         // Withdraw Metapool LP tokens from Convex pool
         _lpWithdraw(_lpTokens);
 
