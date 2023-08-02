@@ -30,7 +30,7 @@ forkOnlyDescribe(
       await f();
     });
 
-    it.only("Should not allow read-only reentrancy", async () => {
+    it("Should not allow read-only reentrancy", async () => {
       const { weth, reth, oethVault, rEthBPT, balancerREthPID, daniel } =
         await balancerREthFixture();
 
