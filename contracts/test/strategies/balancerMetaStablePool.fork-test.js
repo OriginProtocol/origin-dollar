@@ -369,7 +369,7 @@ forkOnlyDescribe(
           weth,
         } = fixture;
 
-        const withdrawAmount = 29996;
+        const withdrawAmount = 29950;
         const withdrawAmountUnits = oethUnits(withdrawAmount.toString(), 18);
 
         const stratValueBefore = await oethVault.totalValue();
@@ -429,7 +429,7 @@ forkOnlyDescribe(
         );
         log(`Aura BPTs before: ${formatUnits(bptBefore)}`);
 
-        const withdrawAmount = 29996;
+        const withdrawAmount = 29800;
         const withdrawAmountUnits = oethUnits(withdrawAmount.toString(), 18);
 
         await balancerREthStrategy
