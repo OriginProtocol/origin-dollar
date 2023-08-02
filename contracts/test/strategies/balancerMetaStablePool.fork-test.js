@@ -360,9 +360,16 @@ forkOnlyDescribe(
         );
       });
       it(`withdraw close to ${depositAmount} of both assets using multi asset withdraw`, async () => {
-        const { balancerREthStrategy, oethVault, reth, weth } = fixture;
+        const {
+          auraPool,
+          balancerREthStrategy,
+          rEthBPT,
+          oethVault,
+          reth,
+          weth,
+        } = fixture;
 
-        const withdrawAmount = 29999;
+        const withdrawAmount = 29996;
         const withdrawAmountUnits = oethUnits(withdrawAmount.toString(), 18);
 
         const stratValueBefore = await oethVault.totalValue();
@@ -378,6 +385,16 @@ forkOnlyDescribe(
           );
         log(
           `Vault withdraws ${withdrawAmount} WETH and ${withdrawAmount} RETH together`
+        );
+
+        const bptAfterReth = await auraPool.balanceOf(
+          balancerREthStrategy.address
+        );
+        log(`Aura BPTs after withdraw: ${formatUnits(bptAfterReth)}`);
+        log(
+          `Strategy BPTs after withdraw: ${formatUnits(
+            await rEthBPT.balanceOf(balancerREthStrategy.address)
+          )}`
         );
 
         const stratValueAfter = await oethVault.totalValue();
@@ -457,12 +474,6 @@ forkOnlyDescribe(
 
         log(`Vault withdraws ${withdrawAmount} RETH`);
 
-        const stratValueAfterReth = await oethVault.totalValue();
-        log(
-          `Vault total value after RETH withdraw: ${formatUnits(
-            stratValueAfterReth
-          )}`
-        );
         const bptAfterReth = await auraPool.balanceOf(
           balancerREthStrategy.address
         );
@@ -470,6 +481,13 @@ forkOnlyDescribe(
         log(
           `Strategy BPTs after RETH withdraw: ${formatUnits(
             await rEthBPT.balanceOf(balancerREthStrategy.address)
+          )}`
+        );
+
+        const stratValueAfterReth = await oethVault.totalValue();
+        log(
+          `Vault total value after RETH withdraw: ${formatUnits(
+            stratValueAfterReth
           )}`
         );
 
