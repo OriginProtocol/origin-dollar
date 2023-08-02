@@ -184,6 +184,7 @@ const defaultFixture = deployments.createFixture(async () => {
     LUSDMetaStrategy,
     oethHarvester,
     oethDripper,
+    oethZapper,
     swapper,
     mockSwapper,
     swapper1Inch,
@@ -296,6 +297,8 @@ const defaultFixture = deployments.createFixture(async () => {
       "OETHDripper",
       oethDripperProxy.address
     );
+
+    oethZapper = await ethers.getContract("OETHZapper");
 
     // Replace OracelRouter to disable staleness
     const dMockOracleRouterNoStale = await deployWithConfirmation(
@@ -558,6 +561,7 @@ const defaultFixture = deployments.createFixture(async () => {
     ConvexEthMetaStrategy,
     oethDripper,
     oethHarvester,
+    oethZapper,
     swapper,
     mockSwapper,
     swapper1Inch,
@@ -834,18 +838,20 @@ async function convexVaultFixture() {
 /**
  * Configure a Vault with the balancerREthStrategy
  */
-function balancerREthFixtureSetup() {
+function balancerREthFixtureSetup(config = { defaultStrategy: true }) {
   return deployments.createFixture(async () => {
     const fixture = await defaultFixture();
     const { oethVault, timelock, weth, reth, balancerREthStrategy, josh } =
       fixture;
 
-    await oethVault
-      .connect(timelock)
-      .setAssetDefaultStrategy(reth.address, balancerREthStrategy.address);
-    await oethVault
-      .connect(timelock)
-      .setAssetDefaultStrategy(weth.address, balancerREthStrategy.address);
+    if (config.defaultStrategy) {
+      await oethVault
+        .connect(timelock)
+        .setAssetDefaultStrategy(reth.address, balancerREthStrategy.address);
+      await oethVault
+        .connect(timelock)
+        .setAssetDefaultStrategy(weth.address, balancerREthStrategy.address);
+    }
 
     fixture.rEthBPT = await ethers.getContractAt(
       "IERC20Metadata",
@@ -854,10 +860,28 @@ function balancerREthFixtureSetup() {
     );
     fixture.balancerREthPID = balancer_rETH_WETH_PID;
 
+    fixture.auraPool = await ethers.getContractAt(
+      "IERC4626",
+      addresses.mainnet.rETH_WETH_AuraRewards
+    );
+
     fixture.balancerVault = await ethers.getContractAt(
       "IBalancerVault",
       addresses.mainnet.balancerVault,
       josh
+    );
+
+    // Get some rETH from most loaded contracts/wallets
+    await impersonateAndFundAddress(
+      addresses.mainnet.rETH,
+      [
+        "0xCc9EE9483f662091a1de4795249E24aC0aC2630f",
+        "0xC6424e862f1462281B0a5FAc078e4b63006bDEBF",
+        "0x7d6149aD9A573A6E2Ca6eBf7D4897c1B766841B4",
+        "0x7C5aaA2a20b01df027aD032f7A768aC015E77b86",
+        "0x1BeE69b7dFFfA4E2d53C2a2Df135C388AD25dCD2",
+      ],
+      josh.getAddress()
     );
 
     return fixture;
