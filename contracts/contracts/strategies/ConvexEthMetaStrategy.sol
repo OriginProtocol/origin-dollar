@@ -171,13 +171,14 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
             uint256(1e18) - MAX_SLIPPAGE
         );
 
-        // Do the deposit to Curve ETH pool
+        // Do the deposit to the Curve Metapool
         // slither-disable-next-line arbitrary-send
         uint256 lpDeposited = curvePool.add_liquidity{ value: _wethAmount }(
             _amounts,
             minMintAmount
         );
 
+        // Deposit the Metapool LP tokens to the Convex rewards pool
         require(
             IConvexDeposits(cvxDepositorAddress).deposit(
                 cvxDepositorPTokenId,
@@ -319,21 +320,26 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
      * The total supply of OTokens is reduced.
      * The asset value of the strategy and vault is reduced.
      * @param _lpTokens The amount of Metapool LP tokens to be burned for OTokens.
-     * @param _minOTokens The minimum amount of OTokens to removed from the Metapool.
      */
-    function removeAndBurnOTokens(uint256 _lpTokens, uint256 _minOTokens)
-        external
-        onlyStrategist
-    {
+    function removeAndBurnOTokens(uint256 _lpTokens) external onlyStrategist {
         // Withdraw Metapool LP tokens from Convex pool
         _lpWithdraw(_lpTokens);
+
+        // Convert Metapool LP tokens to ETH value
+        uint256 valueInEth = _lpTokens.mulTruncate(
+            curvePool.get_virtual_price()
+        );
+        // Apply slippage to ETH value
+        uint256 minOethAmount = valueInEth.mulTruncate(
+            uint256(1e18) - MAX_SLIPPAGE
+        );
 
         // Remove just the OTokens from the Metapool
         uint256 oTokens = curvePool.remove_liquidity_one_coin(
             _lpTokens,
             int128(oethCoinIndex),
-            _minOTokens,
-            vaultAddress
+            minOethAmount,
+            address(this)
         );
 
         // The vault burns the OTokens from this strategy
@@ -350,19 +356,26 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
      * The total supply of OTokens is increased.
      * The asset value of the strategy and vault is increased.
      * @param _oTokens The amount of OTokens to be minted and added to the pool.
-     * @param _minLpTokens The minimum amount of Metapool LP tokens for the OTokens.
      */
-    function mintAndAddOTokens(uint256 _oTokens, uint256 _minLpTokens)
-        external
-        onlyStrategist
-    {
+    function mintAndAddOTokens(uint256 _oTokens) external onlyStrategist {
         IVault(vaultAddress).mintForStrategy(_oTokens);
 
-        uint256 lpDeposited = curvePool.add_liquidity(
-            [0, _oTokens],
-            _minLpTokens
+        // Convert OETH to Metapool LP tokens
+        uint256 valueInLpTokens = (_oTokens).divPrecisely(
+            curvePool.get_virtual_price()
+        );
+        // Apply slippage to LP tokens
+        uint256 minMintAmount = valueInLpTokens.mulTruncate(
+            uint256(1e18) - MAX_SLIPPAGE
         );
 
+        // Add the minted OTokens to the Curve Metapool
+        uint256 lpDeposited = curvePool.add_liquidity(
+            [0, _oTokens],
+            minMintAmount
+        );
+
+        // Deposit the Metapool LP tokens to the Convex rewards pool
         require(
             IConvexDeposits(cvxDepositorAddress).deposit(
                 cvxDepositorPTokenId,
@@ -383,7 +396,6 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
      * The asset value of the strategy reduces.
      * The asset value of the vault should be close to the same.
      * @param _lpTokens The amount of Metapool LP tokens to be burned for ETH.
-     * @param _minAssets The minimum amount of ETH to removed from the Metapool.
      * @dev Metapool LP tokens is used rather than WETH assets as Curve does not
      * have a way to accurately calculate the amount of LP tokens for a required
      * amount of ETH. Curve's `calc_token_amount` functioun does not include fees.
@@ -391,19 +403,25 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
      * is a gas intensive process. It's easier for the trusted strategist to
      * caclulate the amount of Metapool LP tokens required off-chain.
      */
-    function removeOnlyAssets(uint256 _lpTokens, uint256 _minAssets)
-        external
-        onlyStrategist
-    {
+    function removeOnlyAssets(uint256 _lpTokens) external onlyStrategist {
         // Withdraw Metapool LP tokens from Convex pool
         _lpWithdraw(_lpTokens);
 
-        // Remove just the assets from the Metapool
+        // Convert Metapool LP tokens to ETH value
+        uint256 valueInEth = _lpTokens.mulTruncate(
+            curvePool.get_virtual_price()
+        );
+        // Apply slippage to ETH value
+        uint256 minEthAmount = valueInEth.mulTruncate(
+            uint256(1e18) - MAX_SLIPPAGE
+        );
+
+        // Remove just the ETH from the Metapool
         uint256 ethAmount = curvePool.remove_liquidity_one_coin(
             _lpTokens,
             int128(ethCoinIndex),
-            _minAssets,
-            vaultAddress
+            minEthAmount,
+            address(this)
         );
 
         // Convert ETH to WETH and tansfer to the vault

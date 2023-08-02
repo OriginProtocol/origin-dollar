@@ -20,6 +20,7 @@ const crvMinterAbi = require("./abi/crvMinter.json");
 
 // const curveFactoryAbi = require("./abi/curveFactory.json")
 const ousdMetapoolAbi = require("./abi/ousdMetapool.json");
+const oethMetapoolAbi = require("./abi/oethMetapool.json");
 const threepoolLPAbi = require("./abi/threepoolLP.json");
 const threepoolSwapAbi = require("./abi/threepoolSwap.json");
 
@@ -1277,10 +1278,13 @@ async function convexLUSDMetaVaultFixture() {
 /**
  * Configure a Vault with only the OETH/(W)ETH Curve Metastrategy.
  */
-async function convexOETHMetaVaultFixture(config = { wethMintAmount: 0 }) {
+async function convexOETHMetaVaultFixture(
+  config = { wethMintAmount: 0, depositToStrategy: false }
+) {
   const fixture = await oethDefaultFixture();
 
-  const { convexEthMetaStrategy, oethVault, josh, timelock, weth } = fixture;
+  const { convexEthMetaStrategy, oethVault, josh, strategist, timelock, weth } =
+    fixture;
 
   await impersonateAndFundAddress(
     weth.address,
@@ -1314,7 +1318,12 @@ async function convexOETHMetaVaultFixture(config = { wethMintAmount: 0 }) {
     .connect(timelock)
     .setNetOusdMintForStrategyThreshold(parseUnits("100", 21));
 
+  // Impersonate the OETH Vault
   fixture.vaultSigner = await impersonateAndFundContract(oethVault.address);
+  // Impersonate the Curve gauge that holds all the LP tokens
+  fixture.oethGaugeSigner = await impersonateAndFundContract(
+    addresses.mainnet.CurveOETHGauge
+  );
 
   // Convex pool that records the deposited balances
   fixture.cvxRewardPool = await ethers.getContractAt(
@@ -1323,7 +1332,7 @@ async function convexOETHMetaVaultFixture(config = { wethMintAmount: 0 }) {
   );
 
   fixture.oethMetaPool = await ethers.getContractAt(
-    ousdMetapoolAbi,
+    oethMetapoolAbi,
     addresses.mainnet.CurveOETHMetaPool
   );
 
@@ -1339,6 +1348,17 @@ async function convexOETHMetaVaultFixture(config = { wethMintAmount: 0 }) {
     // Mint OETH with WETH
     // This will sit in the vault, not the strategy
     await oethVault.connect(josh).mint(weth.address, wethAmount, 0);
+
+    if (config?.depositToStrategy) {
+      // The strategist deposits the WETH to the AMO strategy
+      await oethVault
+        .connect(strategist)
+        .depositToStrategy(
+          convexEthMetaStrategy.address,
+          [weth.address],
+          [wethAmount]
+        );
+    }
   }
 
   return fixture;
