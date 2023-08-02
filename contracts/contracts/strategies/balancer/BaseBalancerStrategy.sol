@@ -97,9 +97,18 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
 
     /**
      * @notice Get strategy's share of an assets in the Balancer pool.
-     * This is not the value (OSUD or ETH) of the assets in the Balancer pool.
+     * This is not denominated in OUSD/ETH value of the assets in the Balancer pool.
      * @param _asset  Address of the Vault collateral asset
      * @return amount  the amount of vault collateral assets
+     * 
+     * @dev it is important that this function is not affected by reporting inflated
+     * values of assets in case of any pool manipulation. Such a manipulation could easily
+     * exploit the protocol by: 
+     *  - minting OETH
+     *  - tilting Balancer pool to report higher balances of assets
+     *  - rebasing() -> all that extra token balances get distributed to OETH holders
+     *  - tilting pool back
+     *  - redeeming OETH
      */
     function checkBalance(address _asset)
         external
@@ -109,27 +118,42 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         returns (uint256 amount)
     {
         // Get the total balance of each of the Balancer pool assets
-        (IERC20[] memory tokens, uint256[] memory balances, ) = balancerVault
-            .getPoolTokens(balancerPoolId);
-
-        // The strategy's shares of the assets in the Balancer pool
-        // denominated in 1e18. (1e18 == 100%)
-        uint256 strategyShare = _getBalancerPoolTokens().divPrecisely(
-            IERC20(platformAddress).totalSupply()
+        (IERC20[] memory tokens, , ) = balancerVault.getPoolTokens(
+            balancerPoolId
         );
 
-        for (uint256 i = 0; i < balances.length; ++i) {
-            address poolAsset = toPoolAsset(_asset);
-            if (address(tokens[i]) == poolAsset) {
-                // convert Balancer pool asset amount to Vault asset amount.
-                // eg wstETH -> stETH or sfrxETH -> frxETH
-                (, amount) = fromPoolAsset(
-                    poolAsset,
-                    balances[i].mulTruncate(strategyShare)
-                );
-                return amount;
+        uint256 bptBalance = _getBalancerPoolTokens();
+
+        // sum of all of the token's inverted rates
+        uint256 invertedRateAccumulator = 0;
+        // queried asset inverted rate
+        uint256 assetInvertedRate = 0;
+        uint256 assetRate = 0;
+        for (uint256 i = 0; i < tokens.length; ++i) {
+            uint256 rate = getRateProviderRate(address(tokens[i]));
+            uint256 rateInverted = uint256(1e18).divPrecisely(rate);
+            invertedRateAccumulator += rateInverted;
+            if (toPoolAsset(_asset) == address(tokens[i])) {
+                assetInvertedRate = rateInverted;
+                assetRate = rate;
             }
         }
+
+        /* To calculate the worth of queried asset in accordance with pool token
+         *    rates (provided by asset rateProvider)
+         *  - convert complete balance of BPT to underlying tokens ETH denominated amount
+         *  - take in consideration pool's tokens and their exchangeRates. For the queried asset
+         *    deduce what a share of that asset should be in the pool in case of pool being
+         *    completely balanced. To get to this we are using inverted exchange rate accumulator
+         *    and queried asset inverted exchange rate.
+         *  - divide the amount of the previous step with assetRate to convert the ETH
+         *    denominated representation to asset denominated
+         */
+        amount = ((bptBalance.mulTruncate(
+            IRateProvider(platformAddress).getRate()
+        ) * assetInvertedRate) / invertedRateAccumulator).divPrecisely(
+                assetRate
+            );
     }
 
     /**
@@ -418,4 +442,10 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         pToken.safeApprove(address(balancerVault), 0);
         pToken.safeApprove(address(balancerVault), type(uint256).max);
     }
+
+    function getRateProviderRate(address _asset)
+        internal
+        view
+        virtual
+        returns (uint256);
 }
