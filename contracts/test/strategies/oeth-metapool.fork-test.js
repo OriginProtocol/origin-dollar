@@ -11,8 +11,8 @@ const {
   convexOETHMetaVaultFixture,
 } = require("../_fixture");
 
-const defaultFixturePromise = createFixture(convexOETHMetaVaultFixture);
-const mintedFixturePromise = createFixture(convexOETHMetaVaultFixture, {
+const oethAmoFixturePromise = createFixture(convexOETHMetaVaultFixture);
+const mintOethAmoFixturePromise = createFixture(convexOETHMetaVaultFixture, {
   wethMintAmount: 5000,
 });
 
@@ -34,7 +34,7 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
 
   describe("with mainnet data", () => {
     beforeEach(async () => {
-      fixture = await defaultFixturePromise();
+      fixture = await oethAmoFixturePromise();
     });
     it("Should have constants and immutables set", async () => {
       const { convexEthMetaStrategy } = fixture;
@@ -112,7 +112,7 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
 
   describe("with some WETH in the vault", () => {
     beforeEach(async () => {
-      fixture = await mintedFixturePromise();
+      fixture = await mintOethAmoFixturePromise();
     });
     it("Strategist should deposit to Metapool", async function () {
       const {
