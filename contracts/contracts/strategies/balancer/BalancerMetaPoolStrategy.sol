@@ -438,4 +438,40 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         asset.safeApprove(address(balancerVault), 0);
         asset.safeApprove(address(balancerVault), type(uint256).max);
     }
+
+    /**
+     * @notice Returns the rate supplied by the Balancer configured rate
+     * provider. Rate is used to normalize the token to common underlying
+     * pool denominator. (ETH for ETH Liquid staking derivatives)
+     *
+     * @param _asset Address of the Balancer pool asset
+     * @return rate of the corresponding asset
+     */
+    function getRateProviderRate(address _asset)
+        internal
+        view
+        override
+        returns (uint256)
+    {
+        IMetaStablePool pool = IMetaStablePool(platformAddress);
+        IRateProvider[] memory providers = pool.getRateProviders();
+        (IERC20[] memory tokens, , ) = balancerVault.getPoolTokens(
+            balancerPoolId
+        );
+
+        uint256 providersLength = providers.length;
+        for (uint256 i = 0; i < providersLength; ++i) {
+            // _assets and corresponding rate providers are all in the same order
+            if (address(tokens[i]) == _asset) {
+                // rate provider doesn't exist, defaults to 1e18
+                if (address(providers[i]) == address(0)) {
+                    return 1e18;
+                }
+                return providers[i].getRate();
+            }
+        }
+
+        // should never happen
+        assert(false);
+    }
 }

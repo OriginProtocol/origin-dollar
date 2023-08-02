@@ -133,6 +133,50 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
     }
 
     /**
+     * @notice Get strategy's share of an assets in the Balancer pool.
+     * This is not the value (OSUD or ETH) of the assets in the Balancer pool.
+     * @param _asset  Address of the Vault collateral asset
+     * @return amount The amount of vault collateral assets
+     */
+    function checkBalance2(address _asset)
+        external
+        view
+        returns (uint256 amount)
+    {
+        // Get the total balance of each of the Balancer pool assets
+        (IERC20[] memory tokens, uint256[] memory balances, ) = balancerVault
+            .getPoolTokens(balancerPoolId);
+
+        uint256 bptBalance = _getBalancerPoolTokens();
+
+        uint256 unitsAccumulator = 0;
+        uint256 assetUnits = 0;
+        uint256 assetRate = 0;
+        for (uint256 i = 0; i < tokens.length; ++i) {
+            // Balance represented and denominated in units (i.e. ETH for ETH based pools)
+            uint256 rate = getRateProviderRate(address(tokens[i]));
+            uint256 unitBalance = balances[i].mulTruncate(rate);
+            unitsAccumulator += unitBalance;
+            if (toPoolAsset(_asset) == address(tokens[i])) {
+                assetUnits = unitBalance;
+                assetRate = rate;
+            }
+        }
+
+        /* To calculate the worth of queried asset in accordance of BPT token balance:
+         *  - convert complete balance of BPT to underlying tokens ETH denominated
+         *  - take in consideration pool's ETH denominated balances and apply rate between
+         *    those balances to previous step. At this point the amount expresses the amount
+         *    of _asset BPT tokens are representing denominated in ETH.
+         *  - divide the amount of the previous step with assetRate to convert the ETH
+         *    denominated representation to asset denominated
+         */
+        amount = ((bptBalance.mulTruncate(
+            IRateProvider(platformAddress).getRate()
+        ) * assetUnits) / unitsAccumulator).divPrecisely(assetRate);
+    }
+
+    /**
      * @notice Returns the value of all assets managed by this strategy.
      * Uses the Balancer pool's rate (virtual price) to convert the strategy's
      * Balancer Pool Tokens (BPT) to ETH value.
@@ -418,4 +462,10 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         pToken.safeApprove(address(balancerVault), 0);
         pToken.safeApprove(address(balancerVault), type(uint256).max);
     }
+
+    function getRateProviderRate(address _asset)
+        internal
+        view
+        virtual
+        returns (uint256);
 }
