@@ -81,6 +81,7 @@ abstract contract BaseAuraStrategy is BaseBalancerStrategy {
      */
     function _lpWithdraw(uint256 numBPTTokens) internal virtual override {
         // Get all the strategy's BPTs in Aura
+        // maxRedeem is implemented as balanceOf(address) in Aura
         uint256 maxBPTTokens = IERC4626(auraRewardPoolAddress).maxRedeem(
             address(this)
         );
@@ -97,6 +98,7 @@ abstract contract BaseAuraStrategy is BaseBalancerStrategy {
      */
     function _lpWithdrawAll() internal virtual override {
         // Get all the strategy's BPTs in Aura
+        // maxRedeem is implemented as balanceOf(address) in Aura
         uint256 bptBalance = IERC4626(auraRewardPoolAddress).maxRedeem(
             address(this)
         );
@@ -131,6 +133,7 @@ abstract contract BaseAuraStrategy is BaseBalancerStrategy {
     {
         balancerPoolTokens =
             IERC20(platformAddress).balanceOf(address(this)) +
+            // maxRedeem is implemented as balanceOf(address) in Aura
             IERC4626(auraRewardPoolAddress).maxRedeem(address(this));
     }
 
