@@ -1,4 +1,6 @@
 const hre = require("hardhat");
+const { expect } = require("chai");
+const { formatUnits } = require("ethers/lib/utils");
 
 const { ethers } = hre;
 
@@ -7,9 +9,16 @@ const {
   fundAccounts,
   fundAccountsForOETHUnitTests,
 } = require("../utils/funding");
-const { getAssetAddresses, daiUnits, isFork, oethUnits } = require("./helpers");
+const {
+  getAssetAddresses,
+  daiUnits,
+  isFork,
+  oethUnits,
+  loadFixture,
+  getOracleAddresses,
+} = require("./helpers");
 
-const { loadFixture, getOracleAddresses } = require("./helpers");
+const log = require("../utils/logger")("test:fixtures");
 
 const daiAbi = require("./abi/dai.json").abi;
 const usdtAbi = require("./abi/usdt.json").abi;
@@ -1279,12 +1288,24 @@ async function convexLUSDMetaVaultFixture() {
  * Configure a Vault with only the OETH/(W)ETH Curve Metastrategy.
  */
 async function convexOETHMetaVaultFixture(
-  config = { wethMintAmount: 0, depositToStrategy: false }
+  config = {
+    wethMintAmount: 0,
+    depositToStrategy: false,
+    poolAddEthAmount: 0,
+    poolAddOethAmount: 0,
+  }
 ) {
   const fixture = await oethDefaultFixture();
 
-  const { convexEthMetaStrategy, oethVault, josh, strategist, timelock, weth } =
-    fixture;
+  const {
+    convexEthMetaStrategy,
+    oeth,
+    oethVault,
+    josh,
+    strategist,
+    timelock,
+    weth,
+  } = fixture;
 
   await impersonateAndFundAddress(
     weth.address,
@@ -1349,6 +1370,7 @@ async function convexOETHMetaVaultFixture(
     // This will sit in the vault, not the strategy
     await oethVault.connect(josh).mint(weth.address, wethAmount, 0);
 
+    // Add ETH to the Metapool
     if (config?.depositToStrategy) {
       // The strategist deposits the WETH to the AMO strategy
       await oethVault
@@ -1359,6 +1381,42 @@ async function convexOETHMetaVaultFixture(
           [wethAmount]
         );
     }
+  }
+
+  // Add ETH to the Metapool
+  if (config?.poolAddEthAmount > 0) {
+    // Fund Josh with ETH plus some extra for gas fees
+    const fundAmount = config.poolAddEthAmount + 1;
+    await _hardhatSetBalance(await josh.getAddress(), fundAmount.toString());
+
+    const ethAmount = parseUnits(config.poolAddEthAmount.toString(), 18);
+    // prettier-ignore
+    await fixture.oethMetaPool
+      .connect(josh)["add_liquidity(uint256[2],uint256)"]([ethAmount, 0], 0, {
+        value: ethAmount,
+      });
+  }
+
+  const oethWhaleAddress = "0xEADB3840596cabF312F2bC88A4Bb0b93A4E1FF5F";
+  fixture.oethWhale = await impersonateAndFundContract(oethWhaleAddress);
+
+  // Add OETH to the Metapool
+  if (config?.poolAddOethAmount > 0) {
+    const poolAddOethAmountUnits = parseUnits(
+      config.poolAddOethAmount.toString()
+    );
+
+    const oethAmount = await oeth.balanceOf(oethWhaleAddress);
+    log(`OETH whale balance     : ${formatUnits(oethAmount)}`);
+    log(`OETH to add to Metapool: ${formatUnits(poolAddOethAmountUnits)}`);
+    expect(oethAmount).to.be.gte(poolAddOethAmountUnits);
+    await oeth
+      .connect(fixture.oethWhale)
+      .approve(fixture.oethMetaPool.address, poolAddOethAmountUnits);
+
+    // prettier-ignore
+    await fixture.oethMetaPool
+      .connect(fixture.oethWhale)["add_liquidity(uint256[2],uint256)"]([0, poolAddOethAmountUnits], 0);
   }
 
   return fixture;

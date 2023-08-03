@@ -16,6 +16,8 @@ const log = require("../utils/logger")("task:curve");
 async function curvePoolTask(taskArguments, hre) {
   const poolOTokenSymbol = taskArguments.pool;
 
+  const output = taskArguments.output ? console.log : log;
+
   const { blockTag, fromBlockTag, diffBlocks } = await getDiffBlocks(
     taskArguments,
     hre
@@ -26,6 +28,7 @@ async function curvePoolTask(taskArguments, hre) {
     diffBlocks,
     blockTag,
     fromBlockTag,
+    output,
   });
 }
 
@@ -37,6 +40,7 @@ async function curvePool({
   diffBlocks = false,
   blockTag,
   fromBlockTag,
+  output = console.log,
 }) {
   // Get symbols and contracts
   const { oTokenSymbol, assetSymbol, poolLPSymbol, pool } =
@@ -56,20 +60,26 @@ async function curvePool({
   const invariantBefore =
     diffBlocks && virtualPriceBefore.mul(totalLPsBefore).div(parseUnits("1"));
 
-  displayProperty(
-    "Pool LP total supply",
-    poolLPSymbol,
-    totalLPs,
-    totalLPsBefore,
-    6
+  output(
+    displayProperty(
+      "Pool LP total supply",
+      poolLPSymbol,
+      totalLPs,
+      totalLPsBefore,
+      6
+    )
   );
-  displayProperty("Invariant (D) ", "", invariant, invariantBefore, 6);
-  displayProperty(
-    "LP virtual price",
-    assetSymbol,
-    virtualPrice,
-    virtualPriceBefore,
-    6
+
+  output(displayProperty("Invariant (D) ", "", invariant, invariantBefore, 6));
+
+  output(
+    displayProperty(
+      "LP virtual price",
+      assetSymbol,
+      virtualPrice,
+      virtualPriceBefore,
+      6
+    )
   );
 
   // Pool balances
@@ -92,12 +102,15 @@ async function curvePool({
     parseUnits("1"),
     { blockTag }
   );
-  displayProperty(
-    `${oTokenSymbol} price`,
-    `${oTokenSymbol}/${assetSymbol}`,
-    price1,
-    price1Before,
-    6
+
+  output(
+    displayProperty(
+      `${oTokenSymbol} price`,
+      `${oTokenSymbol}/${assetSymbol}`,
+      price1,
+      price1Before,
+      6
+    )
   );
 
   // swap 1 ETH for OETH (ETH/OETH)
@@ -112,17 +125,20 @@ async function curvePool({
     parseUnits("1"),
     { blockTag }
   );
-  displayProperty(
-    `${assetSymbol} price`,
-    `${assetSymbol}/${oTokenSymbol}`,
-    price2,
-    price2Before,
-    6
+
+  output(
+    displayProperty(
+      `${assetSymbol} price`,
+      `${assetSymbol}/${oTokenSymbol}`,
+      price2,
+      price2Before,
+      6
+    )
   );
 
   // Total Metapool assets
   const totalBalances = poolBalances[0].add(poolBalances[1]);
-  console.log(
+  output(
     `total assets in pool     : ${displayPortion(
       poolBalances[0],
       totalBalances,
@@ -131,7 +147,7 @@ async function curvePool({
       4
     )} ${displayDiff(diffBlocks, poolBalances[0], poolBalancesBefore[0])}`
   );
-  console.log(
+  output(
     `total OTokens in pool    : ${displayPortion(
       poolBalances[1],
       totalBalances,
@@ -156,6 +172,8 @@ async function curvePool({
 async function amoStrategyTask(taskArguments, hre) {
   const poolOTokenSymbol = taskArguments.pool;
 
+  const output = taskArguments.output ? console.log : log;
+
   const { blockTag, fromBlockTag, diffBlocks } = await getDiffBlocks(
     taskArguments,
     hre
@@ -167,6 +185,7 @@ async function amoStrategyTask(taskArguments, hre) {
       diffBlocks,
       blockTag,
       fromBlockTag,
+      output,
     });
 
   // Get symbols and contracts
@@ -216,7 +235,7 @@ async function amoStrategyTask(taskArguments, hre) {
   const vaultAdjustedTotalSupply = oTokenSupply.sub(strategyOTokensInPool);
 
   // Strategy's Metapool LPs in the Convex pool
-  console.log(
+  output(
     `\nvault Metapool LPs       : ${displayPortion(
       vaultLPs,
       totalLPs,
@@ -225,7 +244,7 @@ async function amoStrategyTask(taskArguments, hre) {
     )} ${displayDiff(diffBlocks, vaultLPs, vaultLPsBefore)}`
   );
   // Strategy's share of the assets in the pool
-  console.log(
+  output(
     `assets owned by strategy : ${displayPortion(
       strategyAssetsInPool,
       vaultAdjustedTotalValue,
@@ -239,7 +258,7 @@ async function amoStrategyTask(taskArguments, hre) {
   );
 
   // Strategy's share of the oTokens in the pool
-  console.log(
+  output(
     `OTokens owned by strategy: ${displayPortion(
       strategyOTokensInPool,
       vaultAdjustedTotalValue,
@@ -252,7 +271,7 @@ async function amoStrategyTask(taskArguments, hre) {
     )}`
   );
   const stratTotalInPool = strategyAssetsInPool.add(strategyOTokensInPool);
-  console.log(`both owned by strategy   : ${formatUnits(stratTotalInPool)}`);
+  output(`both owned by strategy   : ${formatUnits(stratTotalInPool)}`);
 
   // Strategies assets value
   const strategyAssetsValueBefore =
@@ -263,7 +282,7 @@ async function amoStrategyTask(taskArguments, hre) {
   const strategyAssetsValue = await amoStrategy.checkBalance(asset.address, {
     blockTag,
   });
-  console.log(
+  output(
     `strategy assets value    : ${displayPortion(
       strategyAssetsValue,
       vaultTotalValue,
@@ -282,7 +301,7 @@ async function amoStrategyTask(taskArguments, hre) {
   const strategyAdjustedValueBefore =
     diffBlocks && strategyAssetsValueBefore.sub(strategyOTokensInPoolBefore);
   const strategyAdjustedValue = strategyAssetsValue.sub(strategyOTokensInPool);
-  console.log(
+  output(
     `strategy adjusted value  : ${displayPortion(
       strategyAdjustedValue,
       vaultAdjustedTotalValue,
@@ -294,7 +313,7 @@ async function amoStrategyTask(taskArguments, hre) {
       strategyAdjustedValueBefore
     )}`
   );
-  console.log(
+  output(
     `owned - adjusted value   : ${displayRatio(
       strategyAssetsInPool,
       strategyAdjustedValue,
@@ -309,27 +328,33 @@ async function amoStrategyTask(taskArguments, hre) {
       blockTag: fromBlockTag,
     }));
   const assetsInVault = await asset.balanceOf(vault.address, { blockTag });
-  displayProperty(
-    "Assets in vault",
-    assetSymbol,
-    assetsInVault,
-    assetsInVaultBefore
+  output(
+    displayProperty(
+      "Assets in vault",
+      assetSymbol,
+      assetsInVault,
+      assetsInVaultBefore
+    )
   );
   // Vault's total value v total supply
-  console.log("");
-  displayProperty(
-    "OToken total supply",
-    oTokenSymbol,
-    oTokenSupply,
-    oTokenSupplyBefore
+  // output("");
+  output(
+    displayProperty(
+      "\nOToken total supply",
+      oTokenSymbol,
+      oTokenSupply,
+      oTokenSupplyBefore
+    )
   );
-  displayProperty(
-    "vault assets value",
-    assetSymbol,
-    vaultTotalValue,
-    vaultTotalValueBefore
+  output(
+    displayProperty(
+      "vault assets value",
+      assetSymbol,
+      vaultTotalValue,
+      vaultTotalValueBefore
+    )
   );
-  console.log(
+  output(
     `total value - supply     : ${displayRatio(
       vaultTotalValue,
       oTokenSupply,
@@ -338,19 +363,23 @@ async function amoStrategyTask(taskArguments, hre) {
     )}`
   );
   // Adjusted total value v total supply
-  displayProperty(
-    "OToken adjust supply",
-    oTokenSymbol,
-    vaultAdjustedTotalSupply,
-    vaultAdjustedTotalSupplyBefore
+  output(
+    displayProperty(
+      "OToken adjust supply",
+      oTokenSymbol,
+      vaultAdjustedTotalSupply,
+      vaultAdjustedTotalSupplyBefore
+    )
   );
-  displayProperty(
-    "vault adjusted value",
-    assetSymbol,
-    vaultAdjustedTotalValue,
-    vaultAdjustedTotalValueBefore
+  output(
+    displayProperty(
+      "vault adjusted value",
+      assetSymbol,
+      vaultAdjustedTotalValue,
+      vaultAdjustedTotalValueBefore
+    )
   );
-  console.log(
+  output(
     `adjusted value - supply  : ${displayRatio(
       vaultAdjustedTotalValue,
       vaultAdjustedTotalSupply,
@@ -372,22 +401,27 @@ async function amoStrategyTask(taskArguments, hre) {
       oTokenSymbol === "OETH"
         ? await hre.ethers.provider.getBalance(user, blockTag)
         : await asset.balanceOf(user, { blockTag });
-    console.log("");
-    displayProperty(
-      "User asset balance",
-      assetSymbol,
-      userAssetBalance,
-      userAssetBalanceBefore
+    // output("");
+    output(
+      displayProperty(
+        "\nUser asset balance",
+        assetSymbol,
+        userAssetBalance,
+        userAssetBalanceBefore
+      )
     );
 
     const userOTokenBalanceBefore =
       diffBlocks && (await oToken.balanceOf(user, { blockTag: fromBlockTag }));
     const userOTokenBalance = await oToken.balanceOf(user, { blockTag });
-    displayProperty(
-      "User OToken balance",
-      oTokenSymbol,
-      userOTokenBalance,
-      userOTokenBalanceBefore
+
+    output(
+      displayProperty(
+        "User OToken balance",
+        oTokenSymbol,
+        userOTokenBalance,
+        userOTokenBalanceBefore
+      )
     );
   }
 
@@ -399,17 +433,28 @@ async function amoStrategyTask(taskArguments, hre) {
     await vault.netOusdMintForStrategyThreshold({ blockTag });
   const netMintedForStrategyDiff =
     netMintedForStrategyThreshold.sub(netMintedForStrategy);
-  console.log("");
-  displayProperty("Net minted for strategy", assetSymbol, netMintedForStrategy);
-  displayProperty(
-    "Net minted threshold",
-    assetSymbol,
-    netMintedForStrategyThreshold
+  output("");
+
+  output(
+    displayProperty(
+      "Net minted for strategy",
+      assetSymbol,
+      netMintedForStrategy
+    )
   );
-  displayProperty(
-    "Net minted for strat diff",
-    assetSymbol,
-    netMintedForStrategyDiff
+  output(
+    displayProperty(
+      "Net minted threshold",
+      assetSymbol,
+      netMintedForStrategyThreshold
+    )
+  );
+  output(
+    displayProperty(
+      "Net minted for strat diff",
+      assetSymbol,
+      netMintedForStrategyDiff
+    )
   );
 }
 
@@ -438,14 +483,14 @@ function displayProperty(
   oldValue = false,
   decimals
 ) {
-  console.log(
-    `${desc.padEnd(25)}: ${formatUnits(currentValue)} ${unitDesc} ${displayDiff(
-      oldValue != false,
-      currentValue,
-      oldValue,
-      decimals
-    )}`
-  );
+  return `${desc.padEnd(25)}: ${formatUnits(
+    currentValue
+  )} ${unitDesc} ${displayDiff(
+    oldValue != false,
+    currentValue,
+    oldValue,
+    decimals
+  )}`;
 }
 
 function displayPortion(amount, total, units, comparison, precision = 2) {

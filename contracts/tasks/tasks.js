@@ -494,6 +494,12 @@ subtask("curvePool", "Dumps the current state of a Curve pool")
     undefined,
     types.string
   )
+  .addOptionalParam(
+    "output",
+    "true will output to the console. false will use debug logs.",
+    true,
+    types.boolean
+  )
   .setAction(curvePoolTask);
 task("curvePool").setAction(async (_, __, runSuper) => {
   return runSuper();
@@ -519,6 +525,12 @@ subtask("amoStrat", "Dumps the current state of a AMO strategy")
     "Address of user adding, removing or swapping tokens. (default: no user)",
     undefined,
     types.string
+  )
+  .addOptionalParam(
+    "output",
+    "true will output to the console. false will use debug logs.",
+    true,
+    types.boolean
   )
   .setAction(amoStrategyTask);
 task("amoStrat").setAction(async (_, __, runSuper) => {
