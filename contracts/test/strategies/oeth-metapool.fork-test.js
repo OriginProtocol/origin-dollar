@@ -182,6 +182,50 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
         vaultWethBalanceBefore.sub(wethDepositAmount)
       );
     });
+    it("Only vault can deposit some WETH to AMO strategy", async function () {
+      const {
+        convexEthMetaStrategy,
+        oethVaultSigner,
+        strategist,
+        timelock,
+        josh,
+        weth,
+      } = fixture;
+
+      const depositAmount = parseUnits("50");
+      await weth
+        .connect(oethVaultSigner)
+        .transfer(convexEthMetaStrategy.address, depositAmount);
+
+      for (const signer of [strategist, timelock, josh]) {
+        const tx = convexEthMetaStrategy
+          .connect(signer)
+          .deposit(weth.address, depositAmount);
+
+        await expect(tx).to.revertedWith("Caller is not the Vault");
+      }
+    });
+    it("Only vault can deposit all WETH to AMO strategy", async function () {
+      const {
+        convexEthMetaStrategy,
+        oethVaultSigner,
+        strategist,
+        timelock,
+        josh,
+        weth,
+      } = fixture;
+
+      const depositAmount = parseUnits("50");
+      await weth
+        .connect(oethVaultSigner)
+        .transfer(convexEthMetaStrategy.address, depositAmount);
+
+      for (const signer of [strategist, timelock, josh]) {
+        const tx = convexEthMetaStrategy.connect(signer).depositAll();
+
+        await expect(tx).to.revertedWith("Caller is not the Vault");
+      }
+    });
   });
 
   describe("with the strategy having some OETH and ETH in the Metapool", () => {
@@ -195,9 +239,14 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
     beforeEach(async () => {
       fixture = await depositOethAmoFixturePromise();
     });
-    it("Should be able to withdraw all", async () => {
-      const { convexEthMetaStrategy, oethMetaPool, oeth, vaultSigner, weth } =
-        fixture;
+    it("Strategist should be able to withdraw all", async () => {
+      const {
+        convexEthMetaStrategy,
+        oethMetaPool,
+        oeth,
+        oethVaultSigner,
+        weth,
+      } = fixture;
 
       const {
         oethBurnAmount,
@@ -214,7 +263,9 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
       });
 
       // Now try to withdraw all the WETH from the strategy
-      const tx = await convexEthMetaStrategy.connect(vaultSigner).withdrawAll();
+      const tx = await convexEthMetaStrategy
+        .connect(oethVaultSigner)
+        .withdrawAll();
 
       const receipt = await tx.wait();
 
@@ -248,13 +299,13 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
         0.01 // 0.01% or 1 basis point
       );
     });
-    it("Should be able to withdraw some", async () => {
+    it("Strategist should be able to withdraw some", async () => {
       const {
         convexEthMetaStrategy,
         oeth,
         oethMetaPool,
         oethVault,
-        vaultSigner,
+        oethVaultSigner,
         weth,
       } = fixture;
 
@@ -273,7 +324,7 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
 
       // Now try to withdraw the WETH from the strategy
       const tx = await convexEthMetaStrategy
-        .connect(vaultSigner)
+        .connect(oethVaultSigner)
         .withdraw(oethVault.address, weth.address, withdrawAmount);
 
       const receipt = await tx.wait();
@@ -312,6 +363,37 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
       expect(await weth.balanceOf(oethVault.address)).to.equal(
         vaultWethBalanceBefore.add(withdrawAmount)
       );
+    });
+    it("Only vault can withdraw some WETH from AMO strategy", async function () {
+      const {
+        convexEthMetaStrategy,
+        oethVault,
+        strategist,
+        timelock,
+        josh,
+        weth,
+      } = fixture;
+
+      for (const signer of [strategist, timelock, josh]) {
+        const tx = convexEthMetaStrategy
+          .connect(signer)
+          .withdraw(oethVault.address, weth.address, parseUnits("50"));
+
+        await expect(tx).to.revertedWith("Caller is not the Vault");
+      }
+    });
+    it("Only vault and governor can withdraw all WETH from AMO strategy", async function () {
+      const { convexEthMetaStrategy, strategist, timelock, josh } = fixture;
+
+      for (const signer of [strategist, josh]) {
+        const tx = convexEthMetaStrategy.connect(signer).withdrawAll();
+
+        await expect(tx).to.revertedWith("Caller is not the Vault or Governor");
+      }
+
+      // Governor can withdraw all
+      const tx = convexEthMetaStrategy.connect(timelock).withdrawAll();
+      await expect(tx).to.emit(convexEthMetaStrategy, "Withdrawal");
     });
   });
 
@@ -372,6 +454,26 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
         oethSupplyBefore.sub(oethBurnAmount),
         0.01 // 0.01% or 1 basis point
       );
+    });
+    it("Strategist should fail to add even more OETH to the Metapool", async () => {
+      const { convexEthMetaStrategy, strategist } = fixture;
+
+      // Mint and add OETH to the Metapool
+      const tx = convexEthMetaStrategy
+        .connect(strategist)
+        .mintAndAddOTokens(parseUnits("1"));
+
+      await expect(tx).to.be.revertedWith("OTokens balance worse");
+    });
+    it("Strategist should fail to remove the little ETH from the Metapool", async () => {
+      const { convexEthMetaStrategy, strategist } = fixture;
+
+      // Remove ETH form the Metapool
+      const tx = convexEthMetaStrategy
+        .connect(strategist)
+        .removeOnlyAssets(parseUnits("1"));
+
+      await expect(tx).to.be.revertedWith("OTokens balance worse");
     });
   });
 
@@ -512,6 +614,68 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
       );
 
       // TODO check the slippage
+    });
+    it("Strategist should fail to remove the little OETH from the Metapool", async () => {
+      const { convexEthMetaStrategy, strategist } = fixture;
+
+      // Remove ETH from the Metapool
+      const tx = convexEthMetaStrategy
+        .connect(strategist)
+        .removeAndBurnOTokens(parseUnits("1"));
+
+      await expect(tx).to.be.revertedWith("Assets balance worse");
+    });
+  });
+
+  describe("with a little more ETH in the Metapool", () => {
+    const fixturePromise = createFixture(convexOETHMetaVaultFixture, {
+      wethMintAmount: 5000,
+      depositToStrategy: false,
+      poolAddEthAmount: 3000,
+    });
+    beforeEach(async () => {
+      fixture = await fixturePromise();
+    });
+    it("Strategist should fail to add too much OETH to the Metapool", async () => {
+      const { convexEthMetaStrategy, strategist } = fixture;
+
+      // Add OETH to the Metapool
+      const tx = convexEthMetaStrategy
+        .connect(strategist)
+        .mintAndAddOTokens(parseUnits("5000"));
+
+      await expect(tx).to.be.revertedWith("Assets overshot peg");
+    });
+    it("Strategist should fail to remove too much ETH from the Metapool", async () => {
+      const { convexEthMetaStrategy, strategist } = fixture;
+
+      // Remove ETH from the Metapool
+      const tx = convexEthMetaStrategy
+        .connect(strategist)
+        .removeOnlyAssets(parseUnits("5000"));
+
+      await expect(tx).to.be.revertedWith("Assets overshot peg");
+    });
+  });
+
+  describe("with a little more OETH in the Metapool", () => {
+    const fixturePromise = createFixture(convexOETHMetaVaultFixture, {
+      wethMintAmount: 5000,
+      depositToStrategy: false,
+      poolAddOethAmount: 3000,
+    });
+    beforeEach(async () => {
+      fixture = await fixturePromise();
+    });
+    it("Strategist should fail to remove too much OETH from the Metapool", async () => {
+      const { convexEthMetaStrategy, strategist } = fixture;
+
+      // Remove OETH from the Metapool
+      const tx = convexEthMetaStrategy
+        .connect(strategist)
+        .removeAndBurnOTokens(parseUnits("5000"));
+
+      await expect(tx).to.be.revertedWith("OTokens overshot peg");
     });
   });
 });

@@ -1340,7 +1340,7 @@ async function convexOETHMetaVaultFixture(
     .setNetOusdMintForStrategyThreshold(parseUnits("100", 21));
 
   // Impersonate the OETH Vault
-  fixture.vaultSigner = await impersonateAndFundContract(oethVault.address);
+  fixture.oethVaultSigner = await impersonateAndFundContract(oethVault.address);
   // Impersonate the Curve gauge that holds all the LP tokens
   fixture.oethGaugeSigner = await impersonateAndFundContract(
     addresses.mainnet.CurveOETHGauge

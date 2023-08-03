@@ -94,12 +94,12 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
             // If the pool was originally imbalanced in favor of OETH, then
             // we want to check that the pool is now more balanced
             require(diffAfter <= 0, "OTokens overshot peg");
-            require(diffBefore < diffAfter, "OToken balance worse");
+            require(diffBefore < diffAfter, "OTokens balance worse");
         } else {
             // If the pool was originally imbalanced in favor of ETH, then
             // we want to check that the pool is now more balanced
             require(diffAfter >= 0, "Assets overshot peg");
-            require(diffAfter < diffBefore, "Asset balance worse");
+            require(diffAfter < diffBefore, "Assets balance worse");
         }
     }
 
