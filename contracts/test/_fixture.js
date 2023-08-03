@@ -1334,10 +1334,10 @@ async function convexOETHMetaVaultFixture(
     josh.getAddress()
   );
 
-  // Update the strategy threshold to 100k ETH
+  // Update the strategy threshold to 500k ETH
   await oethVault
     .connect(timelock)
-    .setNetOusdMintForStrategyThreshold(parseUnits("100", 21));
+    .setNetOusdMintForStrategyThreshold(parseUnits("500", 21));
 
   // Impersonate the OETH Vault
   fixture.oethVaultSigner = await impersonateAndFundContract(oethVault.address);

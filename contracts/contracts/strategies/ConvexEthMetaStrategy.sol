@@ -131,13 +131,11 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
      * InitializableAbstractStrategy initializer as Curve strategies don't fit
      * well within that abstraction.
      * @param _rewardTokenAddresses Address of CRV & CVX
-     * @param _assets Addresses of supported assets. MUST be passed in the same
-     *                order as returned by coins on the pool contract, i.e.
-     *                WETH
+     * @param _assets Addresses of supported assets. eg WETH
      */
     function initialize(
         address[] calldata _rewardTokenAddresses, // CRV + CVX
-        address[] calldata _assets
+        address[] calldata _assets // WETH
     ) external onlyGovernor initializer {
         require(_assets.length == 1, "Must have exactly one asset");
 
@@ -146,9 +144,6 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
 
         super._initialize(_rewardTokenAddresses, _assets, pTokens);
 
-        /* needs to be called after super._initialize so that the platformAddress
-         * is correctly set
-         */
         _approveBase();
     }
 
@@ -436,6 +431,8 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
             ),
             "Failed to Deposit LP to Convex"
         );
+
+        emit Deposit(address(oeth), address(lpToken), _oTokens);
     }
 
     /**
@@ -562,7 +559,6 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         onlyGovernor
         nonReentrant
     {
-        _approveAsset(address(weth));
         _approveBase();
     }
 
@@ -584,16 +580,11 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         override
     {}
 
-    function _approveAsset(address _asset) internal {
-        // Approve Curve Metapool for asset (required for adding liquidity)
-        IERC20(_asset).safeApprove(platformAddress, 0);
-        IERC20(_asset).safeApprove(platformAddress, type(uint256).max);
-    }
-
     function _approveBase() internal {
-        // WETH was approved as a supported asset,
-        // so we need separate OETH approve
-        _approveAsset(address(oeth));
+        // Approve Curve Metapool for OETH (required for adding liquidity)
+        // No approval is needed for ETH
+        oeth.safeApprove(platformAddress, 0);
+        oeth.safeApprove(platformAddress, type(uint256).max);
 
         // Approve Convex deposit contract to transfer Curve Metapool LP tokens
         // This is needed for deposits if Metapool LP tokens into the Convex rewards pool

@@ -337,7 +337,6 @@ async function amoStrategyTask(taskArguments, hre) {
     )
   );
   // Vault's total value v total supply
-  // output("");
   output(
     displayProperty(
       "\nOToken total supply",
@@ -401,7 +400,6 @@ async function amoStrategyTask(taskArguments, hre) {
       oTokenSymbol === "OETH"
         ? await hre.ethers.provider.getBalance(user, blockTag)
         : await asset.balanceOf(user, { blockTag });
-    // output("");
     output(
       displayProperty(
         "\nUser asset balance",
@@ -433,11 +431,10 @@ async function amoStrategyTask(taskArguments, hre) {
     await vault.netOusdMintForStrategyThreshold({ blockTag });
   const netMintedForStrategyDiff =
     netMintedForStrategyThreshold.sub(netMintedForStrategy);
-  output("");
 
   output(
     displayProperty(
-      "Net minted for strategy",
+      "\nNet minted for strategy",
       assetSymbol,
       netMintedForStrategy
     )
