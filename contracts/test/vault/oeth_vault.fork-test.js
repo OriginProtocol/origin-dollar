@@ -134,7 +134,7 @@ forkOnlyDescribe("ForkTest: OETH Vault", function () {
         const {
           oethVault,
           oethDripper,
-          ConvexEthMetaStrategy,
+          convexEthMetaStrategy,
           fraxEthStrategy,
           oeth,
           woeth,
@@ -144,7 +144,7 @@ forkOnlyDescribe("ForkTest: OETH Vault", function () {
         const oethContracts = [
           oethVault,
           oethDripper,
-          ConvexEthMetaStrategy,
+          convexEthMetaStrategy,
           fraxEthStrategy,
           oeth,
           woeth,

@@ -26,19 +26,26 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
 
     // The following slots have been deprecated with immutable variables
-    // slither-disable-strart constable-states
+    // slither-disable-next-line constable-states
     address private _deprecated_cvxDepositorAddress;
+    // slither-disable-next-line constable-states
     address private _deprecated_cvxRewardStaker;
+    // slither-disable-next-line constable-states
     uint256 private _deprecated_cvxDepositorPTokenId;
+    // slither-disable-next-line constable-states
     address private _deprecated_curvePool;
+    // slither-disable-next-line constable-states
     address private _deprecated_lpToken;
+    // slither-disable-next-line constable-states
     address private _deprecated_oeth;
+    // slither-disable-next-line constable-states
     address private _deprecated_weth;
 
     // Ordered list of pool assets
+    // slither-disable-next-line constable-states
     uint128 private _deprecated_oethCoinIndex = 1;
+    // slither-disable-next-line constable-states
     uint128 private _deprecated_ethCoinIndex = 0;
-    // slither-disable-end constable-states
 
     // New immutable variables that must be set in the constructor
     address public immutable cvxDepositorAddress;
