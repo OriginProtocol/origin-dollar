@@ -139,22 +139,25 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
     beforeEach(async () => {
       fixture = await fixturePromise();
     });
-    it("Strategist should deposit WETH to AMO strategy", async function () {
+    it("Vault should deposit some WETH to AMO strategy", async function () {
       const {
         convexEthMetaStrategy,
         oeth,
         oethMetaPool,
-        oethVault,
-        strategist,
+        oethVaultSigner,
         weth,
       } = fixture;
 
       const wethDepositAmount = await units("5000", weth);
 
+      // Vault transfers WETH to strategy
+      await weth
+        .connect(oethVaultSigner)
+        .transfer(convexEthMetaStrategy.address, wethDepositAmount);
+
       const { oethMintAmount, curveBalances: curveBalancesBefore } =
         await calcOethMintAmount(fixture, wethDepositAmount);
       const oethSupplyBefore = await oeth.totalSupply();
-      const vaultWethBalanceBefore = await weth.balanceOf(oethVault.address);
 
       log("Before deposit to strategy");
       await run("amoStrat", {
@@ -162,13 +165,9 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
         output: false,
       });
 
-      const tx = await oethVault
-        .connect(strategist)
-        .depositToStrategy(
-          convexEthMetaStrategy.address,
-          [weth.address],
-          [wethDepositAmount]
-        );
+      const tx = await convexEthMetaStrategy
+        .connect(oethVaultSigner)
+        .deposit(weth.address, wethDepositAmount);
 
       const receipt = await tx.wait();
 
@@ -200,11 +199,6 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
       expect(oethSupplyAfter).to.approxEqualTolerance(
         oethSupplyBefore.add(oethMintAmount),
         0.01 // 0.01% or 1 basis point
-      );
-
-      // Check the WETH balance in the Vault
-      expect(await weth.balanceOf(oethVault.address)).to.equal(
-        vaultWethBalanceBefore.sub(wethDepositAmount)
       );
     });
     it("Only vault can deposit some WETH to AMO strategy", async function () {
@@ -250,6 +244,11 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
 
         await expect(tx).to.revertedWith("Caller is not the Vault");
       }
+
+      const tx = await convexEthMetaStrategy
+        .connect(oethVaultSigner)
+        .depositAll();
+      await expect(tx).to.emit(convexEthMetaStrategy, "Deposit");
     });
   });
 
@@ -264,7 +263,7 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
     beforeEach(async () => {
       fixture = await depositOethAmoFixturePromise();
     });
-    it("Strategist should be able to withdraw all", async () => {
+    it("Vault should be able to withdraw all", async () => {
       const {
         convexEthMetaStrategy,
         oethMetaPool,
@@ -324,7 +323,7 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
         0.01 // 0.01% or 1 basis point
       );
     });
-    it("Strategist should be able to withdraw some", async () => {
+    it("Vault should be able to withdraw some", async () => {
       const {
         convexEthMetaStrategy,
         oeth,
