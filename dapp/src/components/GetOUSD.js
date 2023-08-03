@@ -3,7 +3,7 @@ import classnames from 'classnames'
 import { fbt } from 'fbt-runtime'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { useAccount } from 'wagmi'
-import analytics from 'utils/analytics'
+import { event } from '../../lib/gtm'
 
 const CustomConnectButton = ({
   id,
@@ -101,8 +101,7 @@ const CustomConnectButton = ({
 }
 
 const GetOUSD = ({ id, className, containerClassName, style, trackSource }) => {
-  const { isConnected: active } = useAccount()
-
+  const { isConnected: active, address, connector } = useAccount()
   const [userAlreadyConnectedWallet, setUserAlreadyConnectedWallet] =
     useState(false)
 
@@ -116,6 +115,11 @@ const GetOUSD = ({ id, className, containerClassName, style, trackSource }) => {
 
     if (!userAlreadyConnectedWallet && active) {
       localStorage.setItem('userConnectedWallet', 'true')
+      event({
+        event: 'connect',
+        connect_address: address?.slice(2),
+        connect_wallet: connector?.name.toLowerCase(),
+      })
     }
   }, [active])
 
@@ -128,10 +132,7 @@ const GetOUSD = ({ id, className, containerClassName, style, trackSource }) => {
         style={style}
         onClick={() => {
           if (process.browser) {
-            analytics.track('On Connect', {
-              category: 'general',
-              label: trackSource,
-            })
+            event({ event: 'connect_click' })
           }
         }}
       />

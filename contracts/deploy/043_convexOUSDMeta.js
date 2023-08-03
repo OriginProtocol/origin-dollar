@@ -59,14 +59,10 @@ module.exports = deploymentWithProposal(
 
     // 3. Init the proxy to point at the implementation
     await withConfirmation(
-      cConvexOUSDMetaStrategyProxy
-        .connect(sDeployer)
-        ["initialize(address,address,bytes)"](
-          dConvexOUSDMetaStrategyImpl.address,
-          deployerAddr,
-          [],
-          await getTxOpts()
-        )
+      cConvexOUSDMetaStrategyProxy.connect(sDeployer)[
+        // eslint-disable-next-line no-unexpected-multiline
+        "initialize(address,address,bytes)"
+      ](dConvexOUSDMetaStrategyImpl.address, deployerAddr, [], await getTxOpts())
     );
 
     // 4. Init and configure new Convex OUSD Meta strategy

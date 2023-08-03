@@ -1,14 +1,13 @@
 const { deploymentWithProposal } = require("../utils/deploy");
-const addresses = require("../utils/addresses");
 
 module.exports = deploymentWithProposal(
   { deployName: "056_oeth_zapper_again", forceDeploy: false },
-  async ({ deployWithConfirmation, withConfirmation }) => {
+  async ({ deployWithConfirmation }) => {
     // Deployer Actions
     // ----------------
 
     // 1. Deploy new Zapper
-    const dOETHZapper = await deployWithConfirmation(
+    await deployWithConfirmation(
       "OETHZapper",
       [
         "0x856c4Efb76C1D1AE02e20CEB03A2A6a08b0b8dC3",

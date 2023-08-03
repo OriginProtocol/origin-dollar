@@ -5,6 +5,7 @@ import GetOUSD from 'components/GetOUSD'
 import { isCorrectNetwork } from 'utils/web3'
 import Content from './_AccountStatusContent'
 import AccountStatusIndicator from './_AccountStatusIndicator'
+import { event } from '../../lib/gtm'
 
 const AccountStatusDropdown = ({ className }) => {
   const { chain } = useNetwork()
@@ -43,6 +44,9 @@ const AccountStatusDropdown = ({ className }) => {
                 await switchNetwork(correctNetwork)
               }
               setOpen(true)
+              event({
+                event: 'open_account',
+              })
             }}
           >
             <AccountStatusIndicator

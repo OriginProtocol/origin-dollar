@@ -105,7 +105,7 @@ const runDeployment = async (hre) => {
     );
     log("Upgrade VaultCore implementation");
     await withConfirmation(
-      cBuyback.connect(sGovernor).claimGovernance(await getTxOpts(gasLimit))
+      cBuyback.connect(sGovernor).claimGovernance(await getTxOpts())
     );
     log("Claimed governance of Buyback contract");
     await withConfirmation(
