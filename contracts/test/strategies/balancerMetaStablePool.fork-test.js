@@ -429,7 +429,7 @@ forkOnlyDescribe(
         );
         log(`Aura BPTs before: ${formatUnits(bptBefore)}`);
 
-        const withdrawAmount = 29800;
+        const withdrawAmount = 29700;
         const withdrawAmountUnits = oethUnits(withdrawAmount.toString(), 18);
 
         await balancerREthStrategy

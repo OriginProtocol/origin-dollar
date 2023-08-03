@@ -100,13 +100,13 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
      * This is not denominated in OUSD/ETH value of the assets in the Balancer pool.
      * @param _asset  Address of the Vault collateral asset
      * @return amount  the amount of vault collateral assets
-     * 
+     *
      * IMPORTANT if this function is overridden it needs to have a whenNotInVaultContext
-     * modifier on it or it is susceptible to read-only re-entrancy attack 
+     * modifier on it or it is susceptible to read-only re-entrancy attack
      *
      * @dev it is important that this function is not affected by reporting inflated
      * values of assets in case of any pool manipulation. Such a manipulation could easily
-     * exploit the protocol by: 
+     * exploit the protocol by:
      *  - minting OETH
      *  - tilting Balancer pool to report higher balances of assets
      *  - rebasing() -> all that extra token balances get distributed to OETH holders
@@ -128,21 +128,6 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
 
         uint256 bptBalance = _getBalancerPoolTokens();
 
-        // sum of all of the token's inverted rates
-        uint256 invertedRateAccumulator = 0;
-        // queried asset inverted rate
-        uint256 assetInvertedRate = 0;
-        uint256 assetRate = 0;
-        for (uint256 i = 0; i < tokens.length; ++i) {
-            uint256 rate = getRateProviderRate(address(tokens[i]));
-            uint256 rateInverted = uint256(1e18).divPrecisely(rate);
-            invertedRateAccumulator += rateInverted;
-            if (toPoolAsset(_asset) == address(tokens[i])) {
-                assetInvertedRate = rateInverted;
-                assetRate = rate;
-            }
-        }
-
         /* To calculate the worth of queried asset in accordance with pool token
          *    rates (provided by asset rateProvider)
          *  - convert complete balance of BPT to underlying tokens ETH denominated amount
@@ -153,11 +138,19 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
          *  - divide the amount of the previous step with assetRate to convert the ETH
          *    denominated representation to asset denominated
          */
-        amount = ((bptBalance.mulTruncate(
+        amount = (bptBalance.mulTruncate(
             IRateProvider(platformAddress).getRate()
-        ) * assetInvertedRate) / invertedRateAccumulator).divPrecisely(
-                assetRate
-            );
+        ) / tokens.length);
+
+        /* If pool asset is equals _asset it means a rate provider for that asset
+         * exists and that asset is not necessarily pegged to a unit (ETH).
+         *
+         * Because this function returns the balance of the asset not denominated in
+         * ETH units we need to convert the amount to asset amount.
+         */
+        if (toPoolAsset(_asset) == _asset) {
+            amount = amount.divPrecisely(getRateProviderRate(_asset));
+        }
     }
 
     /**
@@ -165,9 +158,9 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
      * Uses the Balancer pool's rate (virtual price) to convert the strategy's
      * Balancer Pool Tokens (BPT) to ETH value.
      * @return value The ETH value
-     * 
+     *
      * IMPORTANT if this function is overridden it needs to have a whenNotInVaultContext
-     * modifier on it or it is susceptible to read-only re-entrancy attack 
+     * modifier on it or it is susceptible to read-only re-entrancy attack
      */
     function checkBalance()
         external
