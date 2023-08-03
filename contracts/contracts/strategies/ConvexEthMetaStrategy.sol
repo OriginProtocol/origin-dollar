@@ -161,10 +161,12 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
      * @param _weth Address of Wrapped ETH (WETH) contract.
      * @param _amount Amount of WETH to deposit.
      */
-    function deposit(
-        address _weth,
-        uint256 _amount
-    ) external override onlyVault nonReentrant {
+    function deposit(address _weth, uint256 _amount)
+        external
+        override
+        onlyVault
+        nonReentrant
+    {
         _deposit(_weth, _amount);
     }
 
@@ -284,9 +286,11 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         );
     }
 
-    function calcTokenToBurn(
-        uint256 _wethAmount
-    ) internal view returns (uint256 lpToBurn) {
+    function calcTokenToBurn(uint256 _wethAmount)
+        internal
+        view
+        returns (uint256 lpToBurn)
+    {
         /* The rate between coins in the pool determines the rate at which pool returns
          * tokens when doing balanced removal (remove_liquidity call). And by knowing how much WETH
          * we want we can determine how much of OETH we receive by removing liquidity.
@@ -361,9 +365,11 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
      * The asset value of the strategy and vault is reduced.
      * @param _lpTokens The amount of Metapool LP tokens to be burned for OTokens.
      */
-    function removeAndBurnOTokens(
-        uint256 _lpTokens
-    ) external onlyStrategist improveMetapoolBalance {
+    function removeAndBurnOTokens(uint256 _lpTokens)
+        external
+        onlyStrategist
+        improveMetapoolBalance
+    {
         // Withdraw Metapool LP tokens from Convex pool
         _lpWithdraw(_lpTokens);
 
@@ -399,9 +405,11 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
      * The asset value of the strategy and vault is increased.
      * @param _oTokens The amount of OTokens to be minted and added to the pool.
      */
-    function mintAndAddOTokens(
-        uint256 _oTokens
-    ) external onlyStrategist improveMetapoolBalance {
+    function mintAndAddOTokens(uint256 _oTokens)
+        external
+        onlyStrategist
+        improveMetapoolBalance
+    {
         IVault(vaultAddress).mintForStrategy(_oTokens);
 
         // Convert OETH to Metapool LP tokens
@@ -447,9 +455,11 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
      * is a gas intensive process. It's easier for the trusted strategist to
      * caclulate the amount of Metapool LP tokens required off-chain.
      */
-    function removeOnlyAssets(
-        uint256 _lpTokens
-    ) external onlyStrategist improveMetapoolBalance {
+    function removeOnlyAssets(uint256 _lpTokens)
+        external
+        onlyStrategist
+        improveMetapoolBalance
+    {
         // Withdraw Metapool LP tokens from Convex pool
         _lpWithdraw(_lpTokens);
 
@@ -509,9 +519,12 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
      * @param _asset      Address of the asset
      * @return balance    Total value of the asset in the platform
      */
-    function checkBalance(
-        address _asset
-    ) public view override returns (uint256 balance) {
+    function checkBalance(address _asset)
+        public
+        view
+        override
+        returns (uint256 balance)
+    {
         require(_asset == address(weth), "Unsupported asset");
 
         // Eth balance needed here for the balance check that happens from vault during depositing.
@@ -526,9 +539,12 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
      * @notice Returns bool indicating whether asset is supported by strategy
      * @param _asset Address of the asset
      */
-    function supportsAsset(
-        address _asset
-    ) external view override returns (bool) {
+    function supportsAsset(address _asset)
+        external
+        view
+        override
+        returns (bool)
+    {
         return _asset == address(weth);
     }
 
@@ -547,7 +563,7 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         nonReentrant
     {
         _approveAsset(address(weth));
-        _approveAsset(address(oeth));
+        _approveBase();
     }
 
     /**
@@ -563,13 +579,14 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
      * @param _pToken Address of the Curve LP token
      */
     // solhint-disable-next-line no-unused-vars
-    function _abstractSetPToken(
-        address _asset,
-        address _pToken
-    ) internal override {}
+    function _abstractSetPToken(address _asset, address _pToken)
+        internal
+        override
+    {}
 
     function _approveAsset(address _asset) internal {
-        // approve curve pool for asset (required for adding liquidity)
+        // Approve Curve Metapool for asset (required for adding liquidity)
+        IERC20(_asset).safeApprove(platformAddress, 0);
         IERC20(_asset).safeApprove(platformAddress, type(uint256).max);
     }
 
@@ -577,6 +594,10 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         // WETH was approved as a supported asset,
         // so we need separate OETH approve
         _approveAsset(address(oeth));
+
+        // Approve Convex deposit contract to transfer Curve Metapool LP tokens
+        // This is needed for deposits if Metapool LP tokens into the Convex rewards pool
+        lpToken.safeApprove(cvxDepositorAddress, 0);
         lpToken.safeApprove(cvxDepositorAddress, type(uint256).max);
     }
 

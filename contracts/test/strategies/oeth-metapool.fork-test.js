@@ -104,6 +104,31 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
 
       await expect(wethDiff).to.be.gte(parseUnits("0.3"));
     });
+    it("Only Governor can approve all tokens", async () => {
+      const {
+        timelock,
+        strategist,
+        josh,
+        oethVaultSigner,
+        convexEthMetaStrategy,
+        weth,
+        oeth,
+        oethMetaPool,
+      } = fixture;
+
+      // Governor can approve all tokens
+      const tx = await convexEthMetaStrategy
+        .connect(timelock)
+        .safeApproveAllTokens();
+      await expect(tx).to.emit(weth, "Approval");
+      await expect(tx).to.emit(oeth, "Approval");
+      await expect(tx).to.emit(oethMetaPool, "Approval");
+
+      for (const signer of [strategist, josh, oethVaultSigner]) {
+        const tx = convexEthMetaStrategy.connect(signer).safeApproveAllTokens();
+        await expect(tx).to.be.revertedWith("Caller is not the Governor");
+      }
+    });
   });
 
   describe("with some WETH in the vault", () => {
