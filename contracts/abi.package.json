@@ -1,5 +1,6 @@
 {
   "name": "@origin/defi",
+  "version": "RELEASE_VERSION",
   "license": "MIT",
   "homepage": "https://github.com/originprotocol/origin-dollar",
   "engines": {

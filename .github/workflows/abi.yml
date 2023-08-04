@@ -2,9 +2,11 @@ name: DeFi
 on: 
   push:
     branches:
-      - 'master'
+      # - 'master'
       # TODO: Remove before merging
       - 'shah/abi-gh-action'
+    tags:
+      - v*
   workflow_dispatch:
 
 concurrency:
@@ -33,7 +35,18 @@ jobs:
         env:
           CONTRACT_SIZE: true
         working-directory: ./contracts
-      
+
+      - name: Update version from tag
+        working-directory: ./contracts/dist
+        run: |
+          VERSION="0.1.0"
+          if [ "${{ env.GITHUB_REF_TYPE }}" = "tag" ]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          fi
+
+          echo "Version set to $VERSION"
+          sed -i -e "s/RELEASE_VERSION/$VERSION/g" package.json
+
       - name: "Publish"
         run: npm publish --access public
         working-directory: ./contracts/dist
