@@ -159,8 +159,8 @@ const fundAccounts = async () => {
 
   const ousdCoins = [dai, usdc, usdt, tusd, ogn];
   const oethCoins = [weth, rETH, stETH, frxETH];
-  const skipOUSDCoins = !!process.env.SKIP_OUSD_COINS;
-  const skipOETHCoins = !!process.env.SKIP_OETH_COINS;
+  const skipOUSDCoins = process.env.SKIP_OUSD_COINS == "true";
+  const skipOETHCoins = process.env.SKIP_OETH_COINS == "true";
   let allCoins = [];
   if (!skipOUSDCoins) {
     allCoins = [...allCoins, ...ousdCoins];

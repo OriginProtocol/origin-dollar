@@ -574,15 +574,21 @@ forkOnlyDescribe(
 
     describe("Withdraw", function () {
       beforeEach(async () => {
-        const { balancerWstEthStrategy, oethVault, strategist, stETH, weth } =
-          fixture;
+        const {
+          balancerWstEthStrategy,
+          oethVault,
+          strategist,
+          stETH,
+          weth,
+          auraPool,
+        } = fixture;
 
         await oethVault
           .connect(strategist)
           .depositToStrategy(
             balancerWstEthStrategy.address,
             [weth.address, stETH.address],
-            [oethUnits("25"), oethUnits("25")]
+            [units("25", weth), oethUnits("25")]
           );
 
         // TODO: Check slippage errors
@@ -590,6 +596,7 @@ forkOnlyDescribe(
           .connect(strategist)
           .setMaxWithdrawalSlippage(oethUnits("0.01"));
       });
+
       it("Should be able to withdraw 10 WETH from the pool", async function () {
         const { weth, balancerWstEthStrategy, oethVault } = fixture;
 
@@ -614,6 +621,7 @@ forkOnlyDescribe(
         );
         expect(wethBalanceDiffVault).to.approxEqualTolerance(withdrawAmount, 1);
       });
+
       it("Should be able to withdraw 8 stETH from the pool", async function () {
         const { stETH, balancerWstEthStrategy, oethVault } = fixture;
 

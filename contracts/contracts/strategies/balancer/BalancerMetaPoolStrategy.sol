@@ -247,6 +247,19 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
                         _amounts[j]
                     );
                     wrappedAssetAmounts[j] = poolAmountsOut[i];
+
+                    /* Because of the potential Balancer rounding error mentioned below
+                     * the contract might receive 1-2 WEI smaller amount than required
+                     * in the withdraw user data encoding. If slightly lesser token amount
+                     * is received the strategy can not unwrap the pool asset as it is
+                     * smaller than expected.
+                     *
+                     * For that reason we `overshoot` the required tokens expected to
+                     * circumvent the error
+                     */
+                    if (poolAmountsOut[i] > 0) {
+                        poolAmountsOut[i] += 2;
+                    }
                 }
             }
         }
@@ -267,7 +280,19 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         );
 
         IBalancerVault.ExitPoolRequest memory request = IBalancerVault
-            .ExitPoolRequest(poolAssets, poolAmountsOut, userData, false);
+            .ExitPoolRequest(
+                poolAssets,
+                /* We specify the exact amount of a tokens we are expecting in the encoded
+                 * userData, for that reason we don't need to specify the amountsOut here.
+                 *
+                 * Also Balancer has a rounding issue that can make a transaction fail:
+                 * https://github.com/balancer/balancer-v2-monorepo/issues/2541
+                 * which is an extra reason why this field is empty.
+                 */
+                new uint256[](tokens.length),
+                userData,
+                false
+            );
 
         balancerVault.exitPool(
             balancerPoolId,
