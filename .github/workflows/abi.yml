@@ -1,13 +1,8 @@
 name: DeFi
 on: 
   push:
-    branches:
-      # - 'master'
-      # TODO: Remove before merging
-      - 'shah/abi-gh-action'
     tags:
       - v*
-  workflow_dispatch:
 
 concurrency:
   cancel-in-progress: true
