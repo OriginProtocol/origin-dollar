@@ -425,7 +425,7 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
     const fixturePromise = createFixture(convexOETHMetaVaultFixture, {
       wethMintAmount: 5000,
       depositToStrategy: false,
-      poolAddOethAmount: 5000,
+      poolAddOethAmount: 4000,
     });
     beforeEach(async () => {
       fixture = await fixturePromise();
@@ -552,7 +552,7 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
     const fixturePromise = createFixture(convexOETHMetaVaultFixture, {
       wethMintAmount: 5000,
       depositToStrategy: false,
-      poolAddOethAmount: 3000,
+      poolAddOethAmount: 100,
     });
     beforeEach(async () => {
       fixture = await fixturePromise();

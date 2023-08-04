@@ -583,13 +583,11 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
     function _approveBase() internal {
         // Approve Curve Metapool for OETH (required for adding liquidity)
         // No approval is needed for ETH
-        oeth.safeApprove(platformAddress, 0);
-        oeth.safeApprove(platformAddress, type(uint256).max);
+        oeth.approve(platformAddress, type(uint256).max);
 
         // Approve Convex deposit contract to transfer Curve Metapool LP tokens
         // This is needed for deposits if Metapool LP tokens into the Convex rewards pool
-        lpToken.safeApprove(cvxDepositorAddress, 0);
-        lpToken.safeApprove(cvxDepositorAddress, type(uint256).max);
+        lpToken.approve(cvxDepositorAddress, type(uint256).max);
     }
 
     /**
