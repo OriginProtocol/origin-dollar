@@ -17,6 +17,7 @@ jobs:
   abi-gen:
     name: "Generate and publish ABI"
     runs-on: ubuntu-latest
+    environment: master
     steps:
       - uses: actions/checkout@v3
 
@@ -51,4 +52,4 @@ jobs:
         run: npm publish --access public
         working-directory: ./contracts/dist
         env:
-          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN_ORIGIN_DEFI}}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN_ORIGIN_DEFI }}
