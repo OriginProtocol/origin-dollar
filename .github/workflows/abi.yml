@@ -35,11 +35,7 @@ jobs:
       - name: Update version from tag
         working-directory: ./contracts/dist
         run: |
-          VERSION="0.1.0"
-          if [ "${{ env.GITHUB_REF_TYPE }}" = "tag" ]; then
-            VERSION="${GITHUB_REF_NAME#v}"
-          fi
-
+          VERSION=${GITHUB_REF_NAME#v}
           echo "Version set to $VERSION"
           sed -i -e "s/RELEASE_VERSION/$VERSION/g" package.json
 
