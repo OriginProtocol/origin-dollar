@@ -521,12 +521,6 @@ subtask("amoStrat", "Dumps the current state of a AMO strategy")
     types.int
   )
   .addOptionalParam(
-    "user",
-    "Address of user adding, removing or swapping tokens. (default: no user)",
-    undefined,
-    types.string
-  )
-  .addOptionalParam(
     "output",
     "true will output to the console. false will use debug logs.",
     true,

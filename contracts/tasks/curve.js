@@ -7,6 +7,7 @@ const addresses = require("../utils/addresses");
 const { resolveAsset } = require("../utils/assets");
 const { getDiffBlocks } = require("./block");
 const { getSigner } = require("../utils/signers");
+const { scaleAmount } = require("../utils/units");
 
 const log = require("../utils/logger")("task:curve");
 
@@ -193,7 +194,7 @@ async function amoStrategyTask(taskArguments, hre) {
     oTokenSymbol,
     assetSymbol,
     poolLPSymbol,
-    asset,
+    assets,
     oToken,
     cvxRewardPool,
     amoStrategy,
@@ -273,25 +274,54 @@ async function amoStrategyTask(taskArguments, hre) {
   const stratTotalInPool = strategyAssetsInPool.add(strategyOTokensInPool);
   output(`both owned by strategy   : ${formatUnits(stratTotalInPool)}`);
 
-  // Strategies assets value
-  const strategyAssetsValueBefore =
-    diffBlocks &&
-    (await amoStrategy.checkBalance(asset.address, {
-      blockTag: fromBlockTag,
-    }));
-  const strategyAssetsValue = await amoStrategy.checkBalance(asset.address, {
-    blockTag,
-  });
-  output(
-    `strategy assets value    : ${displayPortion(
+  // Strategy asset values
+  let totalStrategyAssetsValueBefore = BigNumber.from(0);
+  let totalStrategyAssetsValue = BigNumber.from(0);
+  for (const asset of assets) {
+    const symbol = await asset.symbol();
+    const strategyAssetsValueBefore =
+      diffBlocks &&
+      (await amoStrategy.checkBalance(asset.address, {
+        blockTag: fromBlockTag,
+      }));
+    const strategyAssetsValueBeforeScaled =
+      diffBlocks && (await scaleAmount(strategyAssetsValueBefore, asset));
+    totalStrategyAssetsValueBefore =
+      diffBlocks &&
+      totalStrategyAssetsValueBefore.add(strategyAssetsValueBeforeScaled);
+    const strategyAssetsValue = await amoStrategy.checkBalance(asset.address, {
+      blockTag,
+    });
+    const strategyAssetsValueScaled = await scaleAmount(
       strategyAssetsValue,
+      asset
+    );
+    totalStrategyAssetsValue = totalStrategyAssetsValue.add(
+      strategyAssetsValueScaled
+    );
+    output(
+      `strategy ${symbol.padEnd(4)} value      : ${displayPortion(
+        strategyAssetsValueScaled,
+        vaultTotalValue,
+        symbol,
+        "vault value"
+      )} ${displayDiff(
+        diffBlocks,
+        strategyAssetsValueScaled,
+        strategyAssetsValueBeforeScaled
+      )}`
+    );
+  }
+  output(
+    `strategy total value     : ${displayPortion(
+      totalStrategyAssetsValue,
       vaultTotalValue,
       assetSymbol,
       "vault value"
     )} ${displayDiff(
       diffBlocks,
-      strategyAssetsValue,
-      strategyAssetsValueBefore
+      totalStrategyAssetsValue,
+      totalStrategyAssetsValueBefore
     )}`
   );
 
@@ -299,8 +329,11 @@ async function amoStrategyTask(taskArguments, hre) {
   // Assume all OETH owned by the strategy will be burned after withdrawing
   // so are just left with the assets backing circulating OETH
   const strategyAdjustedValueBefore =
-    diffBlocks && strategyAssetsValueBefore.sub(strategyOTokensInPoolBefore);
-  const strategyAdjustedValue = strategyAssetsValue.sub(strategyOTokensInPool);
+    diffBlocks &&
+    totalStrategyAssetsValueBefore.sub(strategyOTokensInPoolBefore);
+  const strategyAdjustedValue = totalStrategyAssetsValue.sub(
+    strategyOTokensInPool
+  );
   output(
     `strategy adjusted value  : ${displayPortion(
       strategyAdjustedValue,
@@ -322,20 +355,26 @@ async function amoStrategyTask(taskArguments, hre) {
     )}`
   );
 
-  const assetsInVaultBefore =
-    diffBlocks &&
-    (await asset.balanceOf(vault.address, {
-      blockTag: fromBlockTag,
-    }));
-  const assetsInVault = await asset.balanceOf(vault.address, { blockTag });
-  output(
-    displayProperty(
-      "Assets in vault",
-      assetSymbol,
-      assetsInVault,
-      assetsInVaultBefore
-    )
-  );
+  for (const asset of assets) {
+    const assetsInVaultBefore =
+      diffBlocks &&
+      (await asset.balanceOf(vault.address, {
+        blockTag: fromBlockTag,
+      }));
+    const assetsInVaultBeforeScaled =
+      diffBlocks && (await scaleAmount(assetsInVaultBefore, asset));
+    const assetsInVault = await asset.balanceOf(vault.address, { blockTag });
+    const assetsInVaultScaled = await scaleAmount(assetsInVault, asset);
+    const symbol = await asset.symbol();
+    output(
+      displayProperty(
+        `${symbol.padEnd(4)} in vault`,
+        symbol,
+        assetsInVaultScaled,
+        assetsInVaultBeforeScaled
+      )
+    );
+  }
   // Vault's total value v total supply
   output(
     displayProperty(
@@ -349,15 +388,15 @@ async function amoStrategyTask(taskArguments, hre) {
     displayProperty(
       "vault assets value",
       assetSymbol,
-      vaultTotalValue,
-      vaultTotalValueBefore
+      totalStrategyAssetsValue,
+      totalStrategyAssetsValueBefore
     )
   );
   output(
     `total value - supply     : ${displayRatio(
-      vaultTotalValue,
+      totalStrategyAssetsValue,
       oTokenSupply,
-      vaultTotalValueBefore,
+      totalStrategyAssetsValueBefore,
       oTokenSupplyBefore
     )}`
   );
@@ -386,42 +425,6 @@ async function amoStrategyTask(taskArguments, hre) {
       vaultAdjustedTotalSupplyBefore
     )}`
   );
-
-  // User balances
-  if (taskArguments.user) {
-    const user = taskArguments.user;
-
-    // Report asset (ETH or 3CRV) balance
-    const userAssetBalanceBefore =
-      oTokenSymbol === "OETH"
-        ? await hre.ethers.provider.getBalance(user, fromBlockTag)
-        : await asset.balanceOf(user, { blockTag: fromBlockTag });
-    const userAssetBalance =
-      oTokenSymbol === "OETH"
-        ? await hre.ethers.provider.getBalance(user, blockTag)
-        : await asset.balanceOf(user, { blockTag });
-    output(
-      displayProperty(
-        "\nUser asset balance",
-        assetSymbol,
-        userAssetBalance,
-        userAssetBalanceBefore
-      )
-    );
-
-    const userOTokenBalanceBefore =
-      diffBlocks && (await oToken.balanceOf(user, { blockTag: fromBlockTag }));
-    const userOTokenBalance = await oToken.balanceOf(user, { blockTag });
-
-    output(
-      displayProperty(
-        "User OToken balance",
-        oTokenSymbol,
-        userOTokenBalance,
-        userOTokenBalanceBefore
-      )
-    );
-  }
 
   // Strategy's net minted and threshold
   const netMintedForStrategy = await vault.netOusdMintedForStrategy({
@@ -655,7 +658,7 @@ async function curveSwapTask(taskArguments) {
 
 async function curveContracts(oTokenSymbol) {
   // Get symbols of tokens in the pool
-  const assetSymbol = oTokenSymbol === "OETH" ? "ETH " : "3CRV";
+  const assetSymbol = oTokenSymbol === "OETH" ? "ETH " : "USD";
 
   // Get the contract addresses
   const poolAddr =
@@ -681,10 +684,14 @@ async function curveContracts(oTokenSymbol) {
       : addresses.mainnet.OUSDProxy;
 
   // Load all the contracts
-  const asset =
+  const assets =
     oTokenSymbol === "OETH"
-      ? await resolveAsset("WETH")
-      : await resolveAsset("3CRV");
+      ? [await resolveAsset("WETH")]
+      : [
+          await resolveAsset("DAI"),
+          await resolveAsset("USDC"),
+          await resolveAsset("USDT"),
+        ];
   const pool =
     oTokenSymbol === "OETH"
       ? await hre.ethers.getContractAt(oethPoolAbi, poolAddr)
@@ -705,7 +712,7 @@ async function curveContracts(oTokenSymbol) {
     cvxRewardPool,
     amoStrategy,
     oToken,
-    asset,
+    assets,
     vault,
   };
 }
