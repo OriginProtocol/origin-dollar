@@ -1,3 +1,7 @@
+# -------------------------------------
+# Aug 1, 2023 - OETH back into earning
+# ------------------------------------
+
 from world import *
 
 
@@ -20,6 +24,58 @@ with TemporaryForkForReallocations() as txs:
   print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
   print("-----")
 
+  
+# -------------------------------------
+# Aug 2, 2023 - OETH back into earning
+# ------------------------------------
+
+from world import *
+
+with TemporaryForkForReallocations() as txs:
+  # Before
+  txs.append(vault_oeth_core.rebase({'from':STRATEGIST}))
+  txs.append(oeth_vault_value_checker.takeSnapshot({'from':STRATEGIST}))
+
+  # Strategist
+  txs.append(vault_oeth_admin.depositToStrategy(OETH_CONVEX_OETH_ETH_STRAT, [weth], [1_952*1e18], {'from': STRATEGIST}))
+
+  #After
+  vault_change = vault_oeth_core.totalValue() - oeth_vault_value_checker.snapshots(STRATEGIST)[0]
+  supply_change = oeth.totalSupply() - oeth_vault_value_checker.snapshots(STRATEGIST)[1]
+  profit = vault_change - supply_change
+  txs.append(oeth_vault_value_checker.checkDelta(profit, (0.1 * 10**18), vault_change, (1000 * 10**18), {'from': STRATEGIST}))
+  print("-----")
+  print("Profit", "{:.6f}".format(profit / 10**18), profit)
+  print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
+  print("-----")
+
+  
+# -------------------------------------
+# Aug 2, 2023 - Remaining OETH back into earning
+# ------------------------------------
+
+from world import *
+
+with TemporaryForkForReallocations() as txs:
+  # Before
+  txs.append(vault_oeth_core.rebase({'from':STRATEGIST}))
+  txs.append(oeth_vault_value_checker.takeSnapshot({'from':STRATEGIST}))
+
+  # Strategist
+  vault_weth = weth.balanceOf(vault_oeth_admin)
+  txs.append(vault_oeth_admin.depositToStrategy(OETH_CONVEX_OETH_ETH_STRAT, [weth], [vault_weth-int(100*1e18)], {'from': STRATEGIST}))
+
+  #After
+  vault_change = vault_oeth_core.totalValue() - oeth_vault_value_checker.snapshots(STRATEGIST)[0]
+  supply_change = oeth.totalSupply() - oeth_vault_value_checker.snapshots(STRATEGIST)[1]
+  profit = vault_change - supply_change
+  txs.append(oeth_vault_value_checker.checkDelta(profit, (0.1 * 10**18), vault_change, (1000 * 10**18), {'from': STRATEGIST}))
+  print("-----")
+  print("Profit", "{:.6f}".format(profit / 10**18), profit)
+  print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
+  print("-----")
+
+  
 # -----------------------------------
 # August 03, 2023 - OGV Buyback
 # -----------------------------------
@@ -28,6 +84,7 @@ from buyback import *
 def main():
   build_buyback_tx(max_dollars=2250, max_slippage=1.5, with_fork=True)
 
+  
 # -----------------------------------
 # August 03, 2023 - CVX Buyback
 # -----------------------------------
@@ -85,3 +142,4 @@ from buyback import *
 txs = []
 def main():
   build_buyback_tx(max_slippage=1.5, with_fork=True)
+
