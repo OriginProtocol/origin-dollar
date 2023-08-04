@@ -580,7 +580,6 @@ forkOnlyDescribe(
           strategist,
           stETH,
           weth,
-          auraPool,
         } = fixture;
 
         await oethVault
