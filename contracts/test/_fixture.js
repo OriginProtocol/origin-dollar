@@ -940,6 +940,11 @@ function balancerWstEthFixtureSetup() {
     );
     fixture.balancerWstEthPID = balancer_stETH_WETH_PID;
 
+    fixture.auraPool = await ethers.getContractAt(
+      "IERC4626",
+      addresses.mainnet.wstETH_WETH_AuraRewards
+    );
+
     fixture.balancerVault = await ethers.getContractAt(
       "IBalancerVault",
       addresses.mainnet.balancerVault,

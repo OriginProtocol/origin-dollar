@@ -77,17 +77,16 @@ def redeem(amount):
   oeth_vault_core.redeem(amount*1e18, amount*1e18*0.95, WSTD)
   oeth_vault_core.rebase(WSTD)
 
-def deposit_withdrawal_test(amount, print_states = False): 
+def deposit_withdrawal_test(amount, _outputAmount, print_states = False): 
   print_state("initial state", print_states)
 
   # mint(400, weth)
   # print_state("whale minted", print_states)
 
-  vault_value_checker.takeSnapshot(STD)
-
   weth_balance_before_whale = weth.balanceOf(weth_whale)
   # Enter the pool
-  ba_vault.joinPool(
+  amountsIn = [amount * 10**18, amount * 10**18]
+  tx_join = ba_vault.joinPool(
     pool_id,
     weth_whale, #sender
     weth_whale, #recipient
@@ -95,13 +94,13 @@ def deposit_withdrawal_test(amount, print_states = False):
       # tokens need to be sorted numerically
       [reth.address, weth.address], # assets
       # indexes match above assets
-      [0, amount * 10**18], # min amounts in
-      balancerUserDataEncoder.userDataExactTokenInForBPTOut.encode_input(1, [0, amount * 10**18], amount * 10**18 * 0.85)[10:],
+      amountsIn, # min amounts in
+      balancerUserDataEncoder.userDataExactTokenInForBPTOut.encode_input(1, amountsIn, amount * 10**18 * 0.9)[10:],
       False, #fromInternalBalance
     ],
     WSTD
   )
-
+  
   print_state("after manipulation", print_states)
 
   ## attempt to mint - fails with Bal208 -> BPT_OUT_MIN_AMOUNT (Slippage/front-running protection check failed on a pool join)
@@ -112,7 +111,38 @@ def deposit_withdrawal_test(amount, print_states = False):
   bpt_balance = pool.balanceOf(weth_whale)
   pool.approve(ba_vault, 10**50, WSTD)
 
-  ba_vault.exitPool(
+  # EXACT_BPT_IN_FOR_ONE_TOKEN_OUT - single asset exit
+  # user data [EXACT_BPT_IN_FOR_ONE_TOKEN_OUT, bptAmountIn, exitTokenIndex]
+  # ba_vault.exitPool(
+  #   pool_id,
+  #   weth_whale, #sender
+  #   weth_whale, #recipient
+  #   [
+  #     # tokens need to be sorted numerically
+  #     # we should account for some slippage here since it comes down to balance amounts in the pool
+  #     [reth.address, weth.address], # assets
+  #     #[0, 177_972 * 10**18], # min amounts out
+  #     [0, 0], # min amounts out - no MEWS on local network no need to calculate exaclty
+  #     balancerUserDataEncoder.userDataTokenInExactBPTOut.encode_input(0, bpt_balance, 1)[10:],
+  #     False, #fromInternalBalance
+  #   ],
+  #   WSTD
+  # )
+
+  # BPT_IN_FOR_EXACT_TOKENS_OUT
+  # User sends an estimated but unknown (computed at run time) quantity of BPT, and receives precise quantities of specified tokens
+  # user data [BPT_IN_FOR_EXACT_TOKENS_OUT, amountsOut, maxBPTAmountIn]
+  # weth_exit_before = weth.balanceOf(weth_whale)
+  # reth_exit_before = reth.balanceOf(weth_whale)
+
+  # bpt_balance = 9742858928635020293
+  #outputAmounts = [_outputAmount * 10**18, _outputAmount * 10**18]
+  outputAmounts = [_outputAmount * 10**18, 0]
+  # print("OUTPUT amounts")
+  # print(outputAmounts[0])
+  # print(outputAmounts[1])
+  bpt_balance = _outputAmount * 10**18 * 1.15
+  tx_exit = ba_vault.exitPool(
     pool_id,
     weth_whale, #sender
     weth_whale, #recipient
@@ -121,24 +151,32 @@ def deposit_withdrawal_test(amount, print_states = False):
       # we should account for some slippage here since it comes down to balance amounts in the pool
       [reth.address, weth.address], # assets
       #[0, 177_972 * 10**18], # min amounts out
-      [0, 0], # min amounts out - no MEWS on local network no need to calculate exaclty
-      balancerUserDataEncoder.userDataTokenInExactBPTOut.encode_input(0, bpt_balance, 1)[10:],
+      #outputAmounts, # min amounts out - no MEWS on local network no need to calculate exaclty
+      [_outputAmount * 10**18 - 10**9,0],
+      balancerUserDataEncoder.userDataExactTokenInForBPTOut.encode_input(2, outputAmounts, bpt_balance)[10:],
       False, #fromInternalBalance
     ],
     WSTD
   )
+  print("user data", balancerUserDataEncoder.userDataExactTokenInForBPTOut.encode_input(2, outputAmounts, bpt_balance)[10:])
 
   weth_balance_diff_whale = (weth_balance_before_whale - weth.balanceOf(weth_whale))/weth_balance_before_whale
-
-  vault_value_checker.checkDelta(0, 0.5*10**18, 0, 0.5*10**18, STD)
   print_state("after exit", print_states)
+  print("weth_balance_diff_whale", weth_balance_diff_whale)
 
+  # weth_exit_diff = weth.balanceOf(weth_whale) - weth_exit_before
+  # reth_exit_diff = reth.balanceOf(weth_whale) - reth_exit_before
+  # print("weth_exit_diff", weth_exit_diff)
+  # print("reth_exit_diff", reth_exit_diff)
   return {
-    "whale_weth_diff": weth_balance_diff_whale
+    "whale_weth_diff": weth_balance_diff_whale,
+    "tx_exit": tx_exit,
+    "tx_join": tx_join,
   }
 
 with TemporaryFork():
-  stats = deposit_withdrawal_test(200_000, True)
+  #stats = deposit_withdrawal_test(10, True)
+  stats = deposit_withdrawal_test(10, 0.8123, True)
 
 # plot results
 # import matplotlib.pyplot as plt

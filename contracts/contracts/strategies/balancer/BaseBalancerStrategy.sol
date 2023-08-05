@@ -121,32 +121,30 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         whenNotInVaultContext
         returns (uint256 amount)
     {
-        // Get the total balance of each of the Balancer pool assets
         (IERC20[] memory tokens, , ) = balancerVault.getPoolTokens(
             balancerPoolId
         );
 
         uint256 bptBalance = _getBalancerPoolTokens();
 
-        /* To calculate the worth of queried asset in accordance with pool token
-         *    rates (provided by asset rateProvider)
-         *  - convert complete balance of BPT to underlying tokens ETH denominated amount
-         *  - take in consideration pool's tokens and their exchangeRates. For the queried asset
-         *    deduce what a share of that asset should be in the pool in case of pool being
-         *    completely balanced. To get to this we are using inverted exchange rate accumulator
-         *    and queried asset inverted exchange rate.
-         *  - divide the amount of the previous step with assetRate to convert the ETH
-         *    denominated representation to asset denominated
+        /* To calculate the worth of queried asset:
+         *  - assume that all tokens normalized to their ETH value have an equal split balance
+         *    in the pool when it is balanced
+         *  - multiply the BPT amount with the bpt rate to get the ETH denominated amount
+         *    of strategy's holdings
+         *  - divide that by the number of tokens in the pool to get ETH denominated amount
+         *    that is applicable to each token in the pool
          */
         amount = (bptBalance.mulTruncate(
             IRateProvider(platformAddress).getRate()
         ) / tokens.length);
 
-        /* If pool asset is equals _asset it means a rate provider for that asset
-         * exists and that asset is not necessarily pegged to a unit (ETH).
+        /* If the pool asset is equal to (strategy )_asset it means that a rate
+         * provider for that asset exists and that asset is not necessarily
+         * pegged to a unit (ETH).
          *
-         * Because this function returns the balance of the asset not denominated in
-         * ETH units we need to convert the amount to asset amount.
+         * Because this function returns the balance of the asset and is not denominated in
+         * ETH units we need to convert the ETH denominated amount to asset amount.
          */
         if (toPoolAsset(_asset) == _asset) {
             amount = amount.divPrecisely(getRateProviderRate(_asset));

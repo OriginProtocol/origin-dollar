@@ -10,8 +10,6 @@ import { IERC20 } from "../utils/InitializableAbstractStrategy.sol";
 
 import { StableMath } from "../utils/StableMath.sol";
 
-import "hardhat/console.sol";
-
 contract MockEvilReentrantContract {
     using StableMath for uint256;
 
@@ -72,7 +70,6 @@ contract MockEvilReentrantContract {
         );
 
         uint256 bptTokenBalance = IERC20(poolAddress).balanceOf(address(this));
-        console.log("BPT Token balance: %s", bptTokenBalance);
 
         // 2. Redeem as ETH
         bytes memory exitUserData = abi.encode(
@@ -94,7 +91,6 @@ contract MockEvilReentrantContract {
             exitRequest
         );
         bptTokenBalance = IERC20(poolAddress).balanceOf(address(this));
-        console.log("BPT Token balance: %s", bptTokenBalance);
     }
 
     function getBPTExpected(address[] memory _assets, uint256[] memory _amounts)
@@ -131,11 +127,7 @@ contract MockEvilReentrantContract {
     }
 
     receive() external payable {
-        console.log("Received ETH");
-
         // 3. Try to mint OETH
         oethVault.mint(address(weth), 1 ether, 0.9 ether);
-
-        console.log("You shouldn't see me!!!");
     }
 }

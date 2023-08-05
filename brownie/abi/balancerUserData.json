@@ -48,5 +48,25 @@
     "payable": false,
     "stateMutability": "nonpayable",
     "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "joinKind",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "minBptAmountout",
+        "type": "uint256"
+      }
+    ],
+    "name": "userDataExactBPTinForTokensOut",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
   }
 ]
