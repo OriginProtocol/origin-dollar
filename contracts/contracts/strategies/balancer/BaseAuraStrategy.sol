@@ -134,7 +134,6 @@ abstract contract BaseAuraStrategy is BaseBalancerStrategy {
         super._approveBase();
 
         IERC20 pToken = IERC20(platformAddress);
-        pToken.safeApprove(auraRewardPoolAddress, 0);
         pToken.safeApprove(auraRewardPoolAddress, type(uint256).max);
     }
 }

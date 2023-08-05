@@ -460,7 +460,6 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
      */
     function _approveAsset(address _asset) internal {
         IERC20 asset = IERC20(_asset);
-        asset.safeApprove(address(balancerVault), 0);
         asset.safeApprove(address(balancerVault), type(uint256).max);
     }
 
