@@ -36,7 +36,6 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
     function deposit(address _asset, uint256 _amount)
         external
         override
-        whenNotInVaultContext
         onlyVault
         nonReentrant
     {
@@ -56,7 +55,6 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
      */
     function deposit(address[] memory _assets, uint256[] memory _amounts)
         external
-        whenNotInVaultContext
         onlyVault
         nonReentrant
     {
@@ -69,7 +67,6 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
     function depositAll()
         external
         override
-        whenNotInVaultContext
         onlyVault
         nonReentrant
     {
@@ -165,7 +162,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         address _recipient,
         address _asset,
         uint256 _amount
-    ) external override whenNotInVaultContext onlyVault nonReentrant {
+    ) external override onlyVault nonReentrant {
         address[] memory assets = new address[](1);
         uint256[] memory amounts = new uint256[](1);
         assets[0] = _asset;
@@ -184,7 +181,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         address _recipient,
         address[] memory _assets,
         uint256[] memory _amounts
-    ) external whenNotInVaultContext onlyVault nonReentrant {
+    ) external onlyVault nonReentrant {
         _withdraw(_recipient, _assets, _amounts);
     }
 
@@ -334,7 +331,6 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
     function withdrawAll()
         external
         override
-        whenNotInVaultContext
         onlyVaultOrGovernor
         nonReentrant
     {
@@ -445,9 +441,9 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
     function _abstractSetPToken(address _asset, address) internal override {
         address poolAsset = toPoolAsset(_asset);
         if (_asset == stETH) {
-            IERC20(stETH).safeApprove(wstETH, 1e50);
+            IERC20(stETH).approve(wstETH, 1e50);
         } else if (_asset == frxETH) {
-            IERC20(frxETH).safeApprove(sfrxETH, 1e50);
+            IERC20(frxETH).approve(sfrxETH, 1e50);
         }
         _approveAsset(poolAsset);
     }
@@ -460,7 +456,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
      */
     function _approveAsset(address _asset) internal {
         IERC20 asset = IERC20(_asset);
-        asset.safeApprove(address(balancerVault), type(uint256).max);
+        asset.approve(address(balancerVault), type(uint256).max);
     }
 
     /**
