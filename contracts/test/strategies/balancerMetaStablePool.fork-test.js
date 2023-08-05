@@ -574,13 +574,8 @@ forkOnlyDescribe(
 
     describe("Withdraw", function () {
       beforeEach(async () => {
-        const {
-          balancerWstEthStrategy,
-          oethVault,
-          strategist,
-          stETH,
-          weth,
-        } = fixture;
+        const { balancerWstEthStrategy, oethVault, strategist, stETH, weth } =
+          fixture;
 
         await oethVault
           .connect(strategist)
