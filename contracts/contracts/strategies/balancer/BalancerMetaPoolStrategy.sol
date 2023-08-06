@@ -12,6 +12,9 @@ import { IRateProvider } from "../../interfaces/balancer/IRateProvider.sol";
 import { IMetaStablePool } from "../../interfaces/balancer/IMetaStablePool.sol";
 import { IERC20, InitializableAbstractStrategy } from "../../utils/InitializableAbstractStrategy.sol";
 import { StableMath } from "../../utils/StableMath.sol";
+import { BalancerStableMath } from "../../utils/balancer/BalancerStableMath.sol";
+
+import "hardhat/console.sol";
 
 contract BalancerMetaPoolStrategy is BaseAuraStrategy {
     using SafeERC20 for IERC20;
@@ -197,27 +200,11 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
     ) internal {
         require(_assets.length == _amounts.length, "Invalid input arrays");
 
-        // STEP 1 - Calculate the max about of Balancer Pool Tokens (BPT) to withdraw
 
-        // Estimate the required amount of Balancer Pool Tokens (BPT) for the assets
-        uint256 maxBPTtoWithdraw = getBPTExpected(_assets, _amounts);
-        // Increase BPTs by the max allowed slippage
-        // Any excess BPTs will be left in this strategy contract
-        maxBPTtoWithdraw = maxBPTtoWithdraw.mulTruncate(
-            1e18 + maxWithdrawalSlippage
-        );
-
-        // STEP 2  - Withdraw the Balancer Pool Tokens (BPT) from Aura to this strategy contract
-
-        // Withdraw BPT from Aura allowing for BPTs left in this strategy contract from previous withdrawals
-        _lpWithdraw(
-            maxBPTtoWithdraw - IERC20(platformAddress).balanceOf(address(this))
-        );
-
-        // STEP 3 - Calculate the Balancer pool assets and amounts from the vault collateral assets
+        // STEP 1 - Calculate the Balancer pool assets and amounts from the vault collateral assets
 
         // Get all the supported balancer pool assets
-        (IERC20[] memory tokens, , ) = balancerVault.getPoolTokens(
+        (IERC20[] memory tokens, uint256[] memory balances, ) = balancerVault.getPoolTokens(
             balancerPoolId
         );
         // Calculate the balancer pool assets and amounts to withdraw
@@ -259,6 +246,30 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
                 }
             }
         }
+
+        // STEP 2 - Calculate the max about of Balancer Pool Tokens (BPT) to withdraw
+
+        // Estimate the required amount of Balancer Pool Tokens (BPT) for the assets
+        uint256 maxBPTtoWithdraw = getBPTExpected(_assets, _amounts);
+        uint256 maxBPTtoWithdraw2 = calcBptInGivenExactTokensOut(balances, poolAmountsOut);
+
+        console.log("maxBPTtoWithdraw");
+        console.log(maxBPTtoWithdraw);
+        console.log("maxBPTtoWithdraw2");
+        console.log(maxBPTtoWithdraw2);
+
+        // Increase BPTs by the max allowed slippage
+        // Any excess BPTs will be left in this strategy contract
+        maxBPTtoWithdraw = maxBPTtoWithdraw.mulTruncate(
+            1e18 + maxWithdrawalSlippage
+        );
+
+        // STEP 3 - Withdraw the Balancer Pool Tokens (BPT) from Aura to this strategy contract
+
+        // Withdraw BPT from Aura allowing for BPTs left in this strategy contract from previous withdrawals
+        _lpWithdraw(
+            maxBPTtoWithdraw - IERC20(platformAddress).balanceOf(address(this))
+        );
 
         // STEP 4 - Withdraw the balancer pool assets from the pool
 
@@ -319,6 +330,24 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
                 emit Withdrawal(_assets[i], platformAddress, _amounts[i]);
             }
         }
+    }
+
+    /**
+     * @dev use Balancer's internal math to derive the required BPT tokens. This function
+     * operates with Balancer's internal pool state only and is thus susceptible to 
+     * manipulation.
+     */
+    function calcBptInGivenExactTokensOut(uint256[] memory balances, uint256[] memory amountsOut) internal view returns (uint256 bptExpected) {
+        (uint256 amp, ) = IMetaStablePool(platformAddress).getAmplificationParameter();
+
+        bptExpected = BalancerStableMath._calcBptInGivenExactTokensOut(
+            amp,
+            balances,
+            amountsOut, // from user data
+            IMetaStablePool(platformAddress).totalSupply(), // totalSupply() on the pool
+            IMetaStablePool(platformAddress).getSwapFeePercentage()
+        );
+
     }
 
     /**

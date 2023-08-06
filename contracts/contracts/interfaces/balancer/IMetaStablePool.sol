@@ -8,4 +8,16 @@ interface IMetaStablePool {
         external
         view
         returns (IRateProvider[] memory providers);
+
+    function getAmplificationParameter()
+        external
+        view
+        returns (
+            uint256 value,
+            bool isUpdating
+        );
+
+    function getSwapFeePercentage() external view returns (uint256);
+
+    function totalSupply() external view returns (uint256);
 }

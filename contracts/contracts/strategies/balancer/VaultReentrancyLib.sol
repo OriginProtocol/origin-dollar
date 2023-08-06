@@ -14,7 +14,7 @@
 
 pragma solidity >=0.7.0 <0.9.0;
 
-import "../../utils/BalancerErrors.sol";
+import "../../utils/balancer/BalancerErrors.sol";
 import { IBalancerVault } from "../../interfaces/balancer/IBalancerVault.sol";
 
 library VaultReentrancyLib {
