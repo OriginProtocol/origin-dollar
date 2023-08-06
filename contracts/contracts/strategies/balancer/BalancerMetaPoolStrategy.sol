@@ -94,7 +94,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
             address asset = _assets[i];
             uint256 amount = _amounts[i];
 
-            require(supportsAsset(asset), "Unsupported asset");
+            require(assetToPToken[asset] != address(0), "Unsupported asset");
             mappedAssets[i] = toPoolAsset(_assets[i]);
 
             if (amount > 0) {
