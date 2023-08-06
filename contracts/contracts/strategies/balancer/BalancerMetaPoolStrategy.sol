@@ -64,12 +64,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
     /**
      * @notice Deposits all supported assets in this strategy contract to the Balancer pool.
      */
-    function depositAll()
-        external
-        override
-        onlyVault
-        nonReentrant
-    {
+    function depositAll() external override onlyVault nonReentrant {
         uint256 assetsLength = assetsMapped.length;
         address[] memory assets = new address[](assetsLength);
         uint256[] memory amounts = new uint256[](assetsLength);
@@ -86,15 +81,20 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
     function _deposit(address[] memory _assets, uint256[] memory _amounts)
         internal
     {
+        require(_assets.length == _amounts.length, "Array length missmatch");
+
         (IERC20[] memory tokens, , ) = balancerVault.getPoolTokens(
             balancerPoolId
         );
 
         uint256[] memory mappedAmounts = new uint256[](tokens.length);
         address[] memory mappedAssets = new address[](tokens.length);
+
         for (uint256 i = 0; i < _assets.length; ++i) {
             address asset = _assets[i];
             uint256 amount = _amounts[i];
+
+            require(supportsAsset(asset), "Unsupported asset");
             mappedAssets[i] = toPoolAsset(_assets[i]);
 
             if (amount > 0) {
@@ -105,7 +105,6 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
             }
         }
 
-        // TODO move this loop into the previous loop
         uint256[] memory amountsIn = new uint256[](tokens.length);
         address[] memory poolAssets = new address[](tokens.length);
         for (uint256 i = 0; i < tokens.length; ++i) {
@@ -328,12 +327,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
      *
      * Is only executable by the OToken's Vault or the Governor.
      */
-    function withdrawAll()
-        external
-        override
-        onlyVaultOrGovernor
-        nonReentrant
-    {
+    function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
         // STEP 1 - Withdraw all Balancer Pool Tokens (BPT) from Aura to this strategy contract
 
         _lpWithdrawAll();
@@ -437,12 +431,14 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         _approveBase();
     }
 
-    // solhin t-disable-next-line no-unused-vars
+    // solhint-disable-next-line no-unused-vars
     function _abstractSetPToken(address _asset, address) internal override {
         address poolAsset = toPoolAsset(_asset);
         if (_asset == stETH) {
+            // slither-disable-next-line unused-return
             IERC20(stETH).approve(wstETH, 1e50);
         } else if (_asset == frxETH) {
+            // slither-disable-next-line unused-return
             IERC20(frxETH).approve(sfrxETH, 1e50);
         }
         _approveAsset(poolAsset);
@@ -456,6 +452,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
      */
     function _approveAsset(address _asset) internal {
         IERC20 asset = IERC20(_asset);
+        // slither-disable-next-line unused-return
         asset.approve(address(balancerVault), type(uint256).max);
     }
 

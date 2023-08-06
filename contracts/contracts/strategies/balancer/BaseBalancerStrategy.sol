@@ -37,7 +37,7 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
     // Max deposit slippage denominated in 1e18 (1e18 == 100%)
     uint256 public maxDepositSlippage;
 
-    int256[50] private __reserved;
+    int256[48] private __reserved;
 
     struct BaseBalancerConfig {
         address rEthAddress; // Address of the rETH token
@@ -58,6 +58,22 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         uint256 _newMaxSlippagePercentage
     );
 
+    /**
+     * @dev Ensure we are not in a Vault context when this function is called, by attempting a no-op internal
+     * balance operation. If we are already in a Vault transaction (e.g., a swap, join, or exit), the Vault's
+     * reentrancy protection will cause this function to revert.
+     *
+     * Use this modifier with any function that can cause a state change in a pool and is either public itself,
+     * or called by a public function *outside* a Vault operation (e.g., join, exit, or swap).
+     *
+     * This is to protect against Balancer's read-only re-entrancy vulnerability:
+     * https://www.notion.so/originprotocol/Balancer-read-only-reentrancy-c686e72c82414ef18fa34312bb02e11b
+     */
+    modifier whenNotInBalancerVaultContext() {
+        VaultReentrancyLib.ensureNotInVaultContext(balancerVault);
+        _;
+    }
+
     constructor(BaseBalancerConfig memory _balancerConfig) {
         rETH = _balancerConfig.rEthAddress;
         stETH = _balancerConfig.stEthAddress;
@@ -70,19 +86,38 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @dev Ensure we are not in a Vault context when this function is called, by attempting a no-op internal
-     * balance operation. If we are already in a Vault transaction (e.g., a swap, join, or exit), the Vault's
-     * reentrancy protection will cause this function to revert.
-     *
-     * Use this modifier with any function that can cause a state change in a pool and is either public itself,
-     * or called by a public function *outside* a Vault operation (e.g., join, exit, or swap).
-     * 
-     * This is to protect against Balancer's read-only re-entrancy vulnerability: 
-     * https://www.notion.so/originprotocol/Balancer-read-only-reentrancy-c686e72c82414ef18fa34312bb02e11b
+     * Initializer for setting up strategy internal state. This overrides the
+     * InitializableAbstractStrategy initializer as Balancer's strategies don't fit
+     * well within that abstraction.
+     * @param _rewardTokenAddresses Address of BAL & AURA
+     * @param _assets Addresses of supported assets. MUST be passed in the same
+     *                order as returned by coins on the pool contract, i.e.
+     *                WETH, stETH
+     * @param _pTokens Platform Token corresponding addresses
      */
-    modifier whenNotInBalancerVaultContext() {
-        VaultReentrancyLib.ensureNotInVaultContext(balancerVault);
-        _;
+    function initialize(
+        address[] calldata _rewardTokenAddresses, // BAL & AURA
+        address[] calldata _assets,
+        address[] calldata _pTokens
+    ) external override onlyGovernor initializer {
+        maxWithdrawalSlippage = 1e15;
+        maxDepositSlippage = 1e15;
+
+        emit MaxWithdrawalSlippageUpdated(0, maxWithdrawalSlippage);
+        emit MaxDepositSlippageUpdated(0, maxDepositSlippage);
+
+        IERC20[] memory poolAssets = getPoolAssets();
+        require(
+            poolAssets.length == _assets.length,
+            "Pool assets length mismatch"
+        );
+        for (uint256 i = 0; i < _assets.length; ++i) {
+            (address asset, ) = fromPoolAsset(address(poolAssets[i]), 0);
+            require(_assets[i] == asset, "Pool assets mismatch");
+        }
+
+        super._initialize(_rewardTokenAddresses, _assets, _pTokens);
+        _approveBase();
     }
 
     /**
@@ -124,10 +159,6 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         whenNotInBalancerVaultContext
         returns (uint256 amount)
     {
-        (IERC20[] memory tokens, , ) = balancerVault.getPoolTokens(
-            balancerPoolId
-        );
-
         uint256 bptBalance = _getBalancerPoolTokens();
 
         /* To calculate the worth of queried asset:
@@ -135,12 +166,17 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
          *    in the pool when it is balanced
          *  - multiply the BPT amount with the bpt rate to get the ETH denominated amount
          *    of strategy's holdings
-         *  - divide that by the number of tokens in the pool to get ETH denominated amount
-         *    that is applicable to each token in the pool
+         *  - divide that by the number of tokens we support in the pool to get ETH denominated
+         *    amount that is applicable to each supported token in the pool.
+         *
+         *    It would be possible to support only 1 asset in the pool (and be exposed to all
+         *    the assets while holding BPT tokens) and deposit/withdraw/checkBalance using only
+         *    that asset. TBD: changes to other functions still required if we ever decide to
+         *    go with such configuration.
          */
         amount = (bptBalance.mulTruncate(
             IRateProvider(platformAddress).getRate()
-        ) / tokens.length);
+        ) / assetsMapped.length);
 
         /* If the pool asset is equal to (strategy )_asset it means that a rate
          * provider for that asset exists and that asset is not necessarily
@@ -277,7 +313,6 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         view
         returns (address poolAsset, uint256 poolAmount)
     {
-        poolAmount = 0;
         if (asset == stETH) {
             poolAsset = wstETH;
             if (amount > 0) {
@@ -340,18 +375,18 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
      */
     function unwrapPoolAsset(address asset, uint256 amount)
         internal
-        returns (uint256 wrappedAmount)
+        returns (uint256 unwrappedAmount)
     {
         if (asset == stETH) {
-            wrappedAmount = IWstETH(wstETH).unwrap(amount);
+            unwrappedAmount = IWstETH(wstETH).unwrap(amount);
         } else if (asset == frxETH) {
-            wrappedAmount = IERC4626(sfrxETH).withdraw(
+            unwrappedAmount = IERC4626(sfrxETH).withdraw(
                 amount,
                 address(this),
                 address(this)
             );
         } else {
-            wrappedAmount = amount;
+            unwrappedAmount = amount;
         }
     }
 

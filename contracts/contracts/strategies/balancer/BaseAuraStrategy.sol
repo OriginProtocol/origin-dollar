@@ -22,42 +22,10 @@ abstract contract BaseAuraStrategy is BaseBalancerStrategy {
     address public immutable auraRewardPoolAddress;
 
     // renamed from __reserved to not shadow BaseBalancerStrategy.__reserved,
-    int256[50] private __reserved_2;
+    int256[50] private __reserved_baseAuraStrategy;
 
     constructor(address _auraRewardPoolAddress) {
         auraRewardPoolAddress = _auraRewardPoolAddress;
-    }
-
-    /**
-     * Initializer for setting up strategy internal state. This overrides the
-     * InitializableAbstractStrategy initializer as Balancer's strategies don't fit
-     * well within that abstraction.
-     * @param _rewardTokenAddresses Address of BAL & AURA
-     * @param _assets Addresses of supported assets. MUST be passed in the same
-     *                order as returned by coins on the pool contract, i.e.
-     *                WETH, stETH
-     * @param _pTokens Platform Token corresponding addresses
-     */
-    function initialize(
-        address[] calldata _rewardTokenAddresses, // BAL & AURA
-        address[] calldata _assets,
-        address[] calldata _pTokens
-    ) external override onlyGovernor initializer {
-        maxWithdrawalSlippage = 1e15;
-        maxDepositSlippage = 1e15;
-
-        IERC20[] memory poolAssets = getPoolAssets();
-        require(
-            poolAssets.length == _assets.length,
-            "Pool assets length mismatch"
-        );
-        for (uint256 i = 0; i < _assets.length; ++i) {
-            (address asset, ) = fromPoolAsset(address(poolAssets[i]), 0);
-            require(_assets[i] == asset, "Pool assets mismatch");
-        }
-
-        super._initialize(_rewardTokenAddresses, _assets, _pTokens);
-        _approveBase();
     }
 
     /**
