@@ -299,7 +299,15 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
             request
         );
 
-        // STEP 5 - Unswap balancer pool assets to vault collateral assets and sent to the vault.
+        // STEP 5 - Re-deposit any left over BPT tokens back into Aura
+        /* When concluding how much of BPT we need to withdraw from Aura we rely on Oracle prices
+         * and those can be stale (most ETH based have 24 hour heartbeat & 2% price change trigger)
+         * After exiting the pool strategy could have left over BPT tokens that are not earning
+         * boosted yield. We re-deploy those back in.
+         */
+        _lpDepositAll();
+
+        // STEP 6 - Unswap balancer pool assets to vault collateral assets and sent to the vault.
 
         // For each of the specified assets
         for (uint256 i = 0; i < _assets.length; ++i) {
