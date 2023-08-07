@@ -43,9 +43,9 @@
 <polyline fill="none" stroke="black" points="0,-498.9 74.81,-498.9 "/>
 <text text-anchor="middle" x="37.4" y="-482.3" font-family="Courier New" font-size="14.00">158</text>
 <polyline fill="none" stroke="black" points="0,-474.1 74.81,-474.1 "/>
-<text text-anchor="middle" x="37.4" y="-457.5" font-family="Courier New" font-size="14.00">159&#45;208</text>
+<text text-anchor="middle" x="37.4" y="-457.5" font-family="Courier New" font-size="14.00">159&#45;206</text>
 <polyline fill="none" stroke="black" points="0,-449.3 74.81,-449.3 "/>
-<text text-anchor="middle" x="37.4" y="-432.7" font-family="Courier New" font-size="14.00">209&#45;258</text>
+<text text-anchor="middle" x="37.4" y="-432.7" font-family="Courier New" font-size="14.00">207&#45;256</text>
 <polyline fill="none" stroke="black" points="74.81,-424.5 74.81,-821.3 "/>
 <text text-anchor="middle" x="468.87" y="-804.7" font-family="Courier New" font-size="14.00">type: &lt;inherited contract&gt;.variable (bytes)</text>
 <polyline fill="none" stroke="black" points="74.81,-796.5 862.93,-796.5 "/>
@@ -87,9 +87,9 @@
 <polyline fill="none" stroke="black" points="74.81,-498.9 862.93,-498.9 "/>
 <text text-anchor="middle" x="468.45" y="-482.3" font-family="Courier New" font-size="14.00">uint256: BaseBalancerStrategy.maxDepositSlippage (32)</text>
 <polyline fill="none" stroke="black" points="74.81,-474.1 862.93,-474.1 "/>
-<text text-anchor="middle" x="468.84" y="-457.5" font-family="Courier New" font-size="14.00">int256[50]: BaseBalancerStrategy.__reserved (1600)</text>
+<text text-anchor="middle" x="468.84" y="-457.5" font-family="Courier New" font-size="14.00">int256[48]: BaseBalancerStrategy.__reserved (1536)</text>
 <polyline fill="none" stroke="black" points="74.81,-449.3 862.93,-449.3 "/>
-<text text-anchor="middle" x="468.44" y="-432.7" font-family="Courier New" font-size="14.00">int256[50]: BaseAuraStrategy.__reserved_2 (1600)</text>
+<text text-anchor="middle" x="468.45" y="-432.7" font-family="Courier New" font-size="14.00">int256[50]: BaseAuraStrategy.__reserved_baseAuraStrategy (1600)</text>
 </g>
 <!-- 1 -->
 <g id="node2" class="node">
@@ -213,7 +213,7 @@
 <g id="node6" class="node">
 <title>5</title>
 <polygon fill="#f2f2f2" stroke="black" points="1041.76,-193.5 1041.76,-367.1 1326.6,-367.1 1326.6,-193.5 1041.76,-193.5"/>
-<text text-anchor="middle" x="1184.18" y="-350.5" font-family="Courier New" font-size="14.00">int256[50]: __reserved &lt;&lt;Array&gt;&gt;</text>
+<text text-anchor="middle" x="1184.18" y="-350.5" font-family="Courier New" font-size="14.00">int256[48]: __reserved &lt;&lt;Array&gt;&gt;</text>
 <polyline fill="none" stroke="black" points="1041.76,-342.3 1326.6,-342.3 "/>
 <text text-anchor="middle" x="1081.16" y="-325.7" font-family="Courier New" font-size="14.00">slot</text>
 <polyline fill="none" stroke="black" points="1041.76,-317.5 1120.57,-317.5 "/>
@@ -221,11 +221,11 @@
 <polyline fill="none" stroke="black" points="1041.76,-292.7 1120.57,-292.7 "/>
 <text text-anchor="middle" x="1081.16" y="-276.1" font-family="Courier New" font-size="14.00">160</text>
 <polyline fill="none" stroke="black" points="1041.76,-267.9 1120.57,-267.9 "/>
-<text text-anchor="middle" x="1081.16" y="-251.3" font-family="Courier New" font-size="14.00">161&#45;206</text>
+<text text-anchor="middle" x="1081.16" y="-251.3" font-family="Courier New" font-size="14.00">161&#45;204</text>
 <polyline fill="none" stroke="black" points="1041.76,-243.1 1120.57,-243.1 "/>
-<text text-anchor="middle" x="1081.16" y="-226.5" font-family="Courier New" font-size="14.00">207</text>
+<text text-anchor="middle" x="1081.16" y="-226.5" font-family="Courier New" font-size="14.00">205</text>
 <polyline fill="none" stroke="black" points="1041.76,-218.3 1120.57,-218.3 "/>
-<text text-anchor="middle" x="1081.16" y="-201.7" font-family="Courier New" font-size="14.00">208</text>
+<text text-anchor="middle" x="1081.16" y="-201.7" font-family="Courier New" font-size="14.00">206</text>
 <polyline fill="none" stroke="black" points="1120.57,-193.5 1120.57,-342.3 "/>
 <text text-anchor="middle" x="1223.48" y="-325.7" font-family="Courier New" font-size="14.00">type: variable (bytes)</text>
 <polyline fill="none" stroke="black" points="1120.57,-317.5 1326.4,-317.5 "/>
@@ -233,7 +233,7 @@
 <polyline fill="none" stroke="black" points="1120.57,-292.7 1326.4,-292.7 "/>
 <text text-anchor="middle" x="1223.27" y="-276.1" font-family="Courier New" font-size="14.00">int256 (32)</text>
 <polyline fill="none" stroke="black" points="1120.57,-267.9 1326.4,-267.9 "/>
-<text text-anchor="middle" x="1223.27" y="-251.3" font-family="Courier New" font-size="14.00">&#45;&#45;&#45;&#45; (1472)</text>
+<text text-anchor="middle" x="1223.27" y="-251.3" font-family="Courier New" font-size="14.00">&#45;&#45;&#45;&#45; (1408)</text>
 <polyline fill="none" stroke="black" points="1120.57,-243.1 1326.4,-243.1 "/>
 <text text-anchor="middle" x="1223.27" y="-226.5" font-family="Courier New" font-size="14.00">int256 (32)</text>
 <polyline fill="none" stroke="black" points="1120.57,-218.3 1326.4,-218.3 "/>
@@ -248,38 +248,38 @@
 <!-- 6 -->
 <g id="node7" class="node">
 <title>6</title>
-<polygon fill="#f2f2f2" stroke="black" points="1033.35,-0.5 1033.35,-174.1 1335,-174.1 1335,-0.5 1033.35,-0.5"/>
-<text text-anchor="middle" x="1184.18" y="-157.5" font-family="Courier New" font-size="14.00">int256[50]: __reserved_2 &lt;&lt;Array&gt;&gt;</text>
-<polyline fill="none" stroke="black" points="1033.35,-149.3 1335,-149.3 "/>
-<text text-anchor="middle" x="1077.26" y="-132.7" font-family="Courier New" font-size="14.00">slot</text>
-<polyline fill="none" stroke="black" points="1033.35,-124.5 1121.16,-124.5 "/>
-<text text-anchor="middle" x="1077.26" y="-107.9" font-family="Courier New" font-size="14.00">209</text>
-<polyline fill="none" stroke="black" points="1033.35,-99.7 1121.16,-99.7 "/>
-<text text-anchor="middle" x="1077.26" y="-83.1" font-family="Courier New" font-size="14.00">210</text>
-<polyline fill="none" stroke="black" points="1033.35,-74.9 1121.16,-74.9 "/>
-<text text-anchor="middle" x="1077.26" y="-58.3" font-family="Courier New" font-size="14.00">211&#45;256</text>
-<polyline fill="none" stroke="black" points="1033.35,-50.1 1121.16,-50.1 "/>
-<text text-anchor="middle" x="1077.26" y="-33.5" font-family="Courier New" font-size="14.00">257</text>
-<polyline fill="none" stroke="black" points="1033.35,-25.3 1121.16,-25.3 "/>
-<text text-anchor="middle" x="1077.26" y="-8.7" font-family="Courier New" font-size="14.00">258</text>
-<polyline fill="none" stroke="black" points="1121.16,-0.5 1121.16,-149.3 "/>
-<text text-anchor="middle" x="1228.08" y="-132.7" font-family="Courier New" font-size="14.00">type: variable (bytes)</text>
-<polyline fill="none" stroke="black" points="1121.16,-124.5 1334.99,-124.5 "/>
-<text text-anchor="middle" x="1227.87" y="-107.9" font-family="Courier New" font-size="14.00">int256 (32)</text>
-<polyline fill="none" stroke="black" points="1121.16,-99.7 1334.99,-99.7 "/>
-<text text-anchor="middle" x="1227.87" y="-83.1" font-family="Courier New" font-size="14.00">int256 (32)</text>
-<polyline fill="none" stroke="black" points="1121.16,-74.9 1334.99,-74.9 "/>
-<text text-anchor="middle" x="1227.87" y="-58.3" font-family="Courier New" font-size="14.00">&#45;&#45;&#45;&#45; (1472)</text>
-<polyline fill="none" stroke="black" points="1121.16,-50.1 1334.99,-50.1 "/>
-<text text-anchor="middle" x="1227.87" y="-33.5" font-family="Courier New" font-size="14.00">int256 (32)</text>
-<polyline fill="none" stroke="black" points="1121.16,-25.3 1334.99,-25.3 "/>
-<text text-anchor="middle" x="1227.87" y="-8.7" font-family="Courier New" font-size="14.00">int256 (32)</text>
+<polygon fill="#f2f2f2" stroke="black" points="970.34,-0.5 970.34,-174.1 1398.01,-174.1 1398.01,-0.5 970.34,-0.5"/>
+<text text-anchor="middle" x="1184.18" y="-157.5" font-family="Courier New" font-size="14.00">int256[50]: __reserved_baseAuraStrategy &lt;&lt;Array&gt;&gt;</text>
+<polyline fill="none" stroke="black" points="970.34,-149.3 1398.01,-149.3 "/>
+<text text-anchor="middle" x="1045.75" y="-132.7" font-family="Courier New" font-size="14.00">slot</text>
+<polyline fill="none" stroke="black" points="970.34,-124.5 1121.15,-124.5 "/>
+<text text-anchor="middle" x="1045.75" y="-107.9" font-family="Courier New" font-size="14.00">207</text>
+<polyline fill="none" stroke="black" points="970.34,-99.7 1121.15,-99.7 "/>
+<text text-anchor="middle" x="1045.75" y="-83.1" font-family="Courier New" font-size="14.00">208</text>
+<polyline fill="none" stroke="black" points="970.34,-74.9 1121.15,-74.9 "/>
+<text text-anchor="middle" x="1045.75" y="-58.3" font-family="Courier New" font-size="14.00">209&#45;254</text>
+<polyline fill="none" stroke="black" points="970.34,-50.1 1121.15,-50.1 "/>
+<text text-anchor="middle" x="1045.75" y="-33.5" font-family="Courier New" font-size="14.00">255</text>
+<polyline fill="none" stroke="black" points="970.34,-25.3 1121.15,-25.3 "/>
+<text text-anchor="middle" x="1045.75" y="-8.7" font-family="Courier New" font-size="14.00">256</text>
+<polyline fill="none" stroke="black" points="1121.15,-0.5 1121.15,-149.3 "/>
+<text text-anchor="middle" x="1259.57" y="-132.7" font-family="Courier New" font-size="14.00">type: variable (bytes)</text>
+<polyline fill="none" stroke="black" points="1121.15,-124.5 1397.98,-124.5 "/>
+<text text-anchor="middle" x="1259.36" y="-107.9" font-family="Courier New" font-size="14.00">int256 (32)</text>
+<polyline fill="none" stroke="black" points="1121.15,-99.7 1397.98,-99.7 "/>
+<text text-anchor="middle" x="1259.36" y="-83.1" font-family="Courier New" font-size="14.00">int256 (32)</text>
+<polyline fill="none" stroke="black" points="1121.15,-74.9 1397.98,-74.9 "/>
+<text text-anchor="middle" x="1259.36" y="-58.3" font-family="Courier New" font-size="14.00">&#45;&#45;&#45;&#45; (1472)</text>
+<polyline fill="none" stroke="black" points="1121.15,-50.1 1397.98,-50.1 "/>
+<text text-anchor="middle" x="1259.36" y="-33.5" font-family="Courier New" font-size="14.00">int256 (32)</text>
+<polyline fill="none" stroke="black" points="1121.15,-25.3 1397.98,-25.3 "/>
+<text text-anchor="middle" x="1259.36" y="-8.7" font-family="Courier New" font-size="14.00">int256 (32)</text>
 </g>
 <!-- 7&#45;&gt;6 -->
 <g id="edge6" class="edge">
 <title>7:38&#45;&gt;6</title>
-<path fill="none" stroke="black" d="M862.93,-437.3C919.72,-437.3 862.71,-228.04 898.93,-184.3 930.28,-146.45 977.08,-123.32 1023.7,-109.2"/>
-<polygon fill="black" stroke="black" points="1024.69,-112.56 1033.32,-106.41 1022.74,-105.83 1024.69,-112.56"/>
+<path fill="none" stroke="black" d="M862.93,-437.3C919.72,-437.3 862.71,-228.04 898.93,-184.3 915.89,-163.82 937.37,-147.66 960.89,-134.89"/>
+<polygon fill="black" stroke="black" points="962.74,-137.88 970,-130.17 959.51,-131.66 962.74,-137.88"/>
 </g>
 </g>
 </svg>
