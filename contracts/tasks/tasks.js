@@ -41,12 +41,17 @@ const {
 } = require("./vault");
 const { checkDelta, getDelta, takeSnapshot } = require("./valueChecker");
 const {
-  amoStrategyTask,
   curveAddTask,
   curveRemoveTask,
   curveSwapTask,
   curvePoolTask,
 } = require("./curve");
+const {
+  amoStrategyTask,
+  mintAndAddOTokensTask,
+  removeAndBurnOTokensTask,
+  removeOnlyAssetsTask,
+} = require("./amoStrategy");
 
 // Environment tasks.
 task("env", "Check env vars are properly set for a Mainnet deployment", env);
@@ -594,6 +599,65 @@ subtask("curveSwap", "Swap Metapool tokens")
   .addOptionalParam("min", "Min tokens out.", 0, types.float)
   .setAction(curveSwapTask);
 task("curveSwap").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+// AMO peg keeping
+subtask(
+  "amoMint",
+  "AMO strategy mints OTokens and one-sided add to the Metapool"
+)
+  .addOptionalParam(
+    "symbol",
+    "Symbol of the OToken. eg OETH or OUSD",
+    "OETH",
+    types.string
+  )
+  .addParam("amount", "Amount of OTokens to mint", 0, types.float)
+  .setAction(mintAndAddOTokensTask);
+task("amoMint").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "amoBurn",
+  "AMO strategy does a one-sided remove of OTokens from the Metapool which are then burned."
+)
+  .addOptionalParam(
+    "symbol",
+    "Symbol of the OToken. eg OETH or OUSD",
+    "OETH",
+    types.string
+  )
+  .addParam(
+    "amount",
+    "Amount of Metapool LP tokens to burn for removed OTokens",
+    0,
+    types.float
+  )
+  .setAction(removeAndBurnOTokensTask);
+task("amoBurn").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "amoRemove",
+  "AMO strategy does a one-sided remove of ETH from the Metapool and adds the asset to the vault"
+)
+  .addOptionalParam(
+    "symbol",
+    "Symbol of the OToken. eg OETH or OUSD",
+    "OETH",
+    types.string
+  )
+  .addParam(
+    "amount",
+    "Amount of Metapool LP tokens to burn for removed assets",
+    0,
+    types.float
+  )
+  .setAction(removeOnlyAssetsTask);
+task("amoRemove").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
