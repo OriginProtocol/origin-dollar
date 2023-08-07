@@ -31,10 +31,7 @@ module.exports = deploymentWithGovernanceProposal(
 
     const dMakerDsrStrategyImpl = await deployWithConfirmation(
       "Generalized4626Strategy",
-      [
-        [addresses.mainnet.SavingsDAI, cVaultProxy.address],
-        addresses.mainnet.DAI,
-      ],
+      [[addresses.mainnet.sDAI, cVaultProxy.address], addresses.mainnet.DAI],
       undefined,
       true // storage slots have changed since FRAX strategy deployment so force a new deployment
     );

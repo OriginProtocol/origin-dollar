@@ -24,7 +24,7 @@ addresses.mainnet.WhaleAddresses =
   "0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0,0xf04a5cc80b1e94c69b48f5ee68a08cd2f09a7c3e,0xac3e018457b222d93114458476f3e3416abbe38f,0xc6424e862f1462281b0a5fac078e4b63006bdebf,0xba12222222228d8ba445958a75a0704d566bf2c8";
 
 // Native stablecoins
-addresses.mainnet.DAI = "0x6b175474e89094c44da98b954eedeac495271d0f";
+addresses.mainnet.DAI = "0x6B175474E89094C44Da98b954EedeAC495271d0F";
 addresses.mainnet.USDC = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
 addresses.mainnet.USDT = "0xdAC17F958D2ee523a2206206994597C13D831ec7";
 addresses.mainnet.TUSD = "0x0000000000085d4780B73119b644AE5ecd22b376";
@@ -59,7 +59,7 @@ addresses.mainnet.CVXRewardsPool = "0x7D536a737C13561e0D2Decf1152a653B4e615158";
 addresses.mainnet.CVXETHRewardsPool =
   "0x24b65DC1cf053A8D96872c323d29e86ec43eB33A";
 // Maker Dai Savings Rate
-addresses.mainnet.SavingsDAI = "0x83F20F44975D03b1b09e64809B757c47f942BEeA"
+addresses.mainnet.sDAI = "0x83F20F44975D03b1b09e64809B757c47f942BEeA";
 // Open Oracle
 addresses.mainnet.openOracle = "0x922018674c12a7f0d394ebeef9b58f186cde13c1";
 // OGN

@@ -17,6 +17,7 @@ const erc20Abi = require("./abi/erc20.json");
 const morphoAbi = require("./abi/morpho.json");
 const morphoLensAbi = require("./abi/morphoLens.json");
 const crvMinterAbi = require("./abi/crvMinter.json");
+const sdaiAbi = require("./abi/sDAI.json");
 
 // const curveFactoryAbi = require("./abi/curveFactory.json")
 const ousdMetapoolAbi = require("./abi/ousdMetapool.json");
@@ -145,6 +146,7 @@ const defaultFixture = deployments.createFixture(async () => {
     stETH,
     frxETH,
     sfrxETH,
+    sDAI,
     mockNonRebasing,
     mockNonRebasingTwo,
     LUSD;
@@ -162,6 +164,7 @@ const defaultFixture = deployments.createFixture(async () => {
     morpho,
     morphoCompoundStrategy,
     fraxEthStrategy,
+    makerDsrStrategy,
     morphoAaveStrategy,
     oethMorphoAaveStrategy,
     morphoLens,
@@ -207,6 +210,7 @@ const defaultFixture = deployments.createFixture(async () => {
     stETH = await ethers.getContractAt(erc20Abi, addresses.mainnet.stETH);
     frxETH = await ethers.getContractAt(erc20Abi, addresses.mainnet.frxETH);
     sfrxETH = await ethers.getContractAt(sfrxETHAbi, addresses.mainnet.sfrxETH);
+    sDAI = await ethers.getContractAt(sdaiAbi, addresses.mainnet.sDAI);
     reth = await ethers.getContractAt(erc20Abi, addresses.mainnet.rETH);
     stETH = await ethers.getContractAt(erc20Abi, addresses.mainnet.stETH);
     morpho = await ethers.getContractAt(morphoAbi, addresses.mainnet.Morpho);
@@ -231,6 +235,14 @@ const defaultFixture = deployments.createFixture(async () => {
     cvxRewardPool = await ethers.getContractAt(
       "IRewardStaking",
       addresses.mainnet.CVXRewardsPool
+    );
+
+    const makerDsrStrategyProxy = await ethers.getContract(
+      "MakerDsrStrategyProxy"
+    );
+    makerDsrStrategy = await ethers.getContractAt(
+      "Generalized4626Strategy",
+      makerDsrStrategyProxy.address
     );
 
     const morphoCompoundStrategyProxy = await ethers.getContract(
@@ -310,6 +322,7 @@ const defaultFixture = deployments.createFixture(async () => {
     reth = await ethers.getContract("MockRETH");
     frxETH = await ethers.getContract("MockfrxETH");
     sfrxETH = await ethers.getContract("MocksfrxETH");
+    sDAI = await ethers.getContract("MocksDAI");
     stETH = await ethers.getContract("MockstETH");
     nonStandardToken = await ethers.getContract("MockNonStandardToken");
 
@@ -517,6 +530,7 @@ const defaultFixture = deployments.createFixture(async () => {
     convexStrategy,
     OUSDmetaStrategy,
     LUSDMetaStrategy,
+    makerDsrStrategy,
     morphoCompoundStrategy,
     morphoAaveStrategy,
     cvx,
@@ -539,6 +553,7 @@ const defaultFixture = deployments.createFixture(async () => {
     oeth,
     frxETH,
     sfrxETH,
+    sDAI,
     fraxEthStrategy,
     oethMorphoAaveStrategy,
     woeth,
@@ -909,6 +924,58 @@ async function convexMetaVaultFixture() {
         fixture.usdc.address,
         fixture.OUSDmetaStrategy.address
       );
+  }
+
+  return fixture;
+}
+
+/**
+ * Configure a Vault with default DAI strategy to the Maker DSR strategy.
+ */
+
+async function makerDsrFixture(
+  config = {
+    daiMintAmount: 0,
+    depositToStrategy: false,
+  }
+) {
+  const fixture = await defaultFixture();
+
+  if (isFork) {
+    const { dai, josh, makerDsrStrategy, strategist, vault } = fixture;
+
+    // Impersonate the OUSD Vault
+    fixture.vaultSigner = await impersonateAndFundContract(vault.address);
+
+    // mint some OUSD using DAI if configured
+    if (config?.daiMintAmount > 0) {
+      const daiMintAmount = parseUnits(config.daiMintAmount.toString());
+      await vault.connect(josh).rebase();
+      await vault.connect(josh).allocate();
+
+      // Approve the Vault to transfer DAI
+      await dai.connect(josh).approve(vault.address, daiMintAmount);
+
+      // Mint OUSD with DAI
+      // This will sit in the vault, not the strategy
+      await vault.connect(josh).mint(dai.address, daiMintAmount, 0);
+
+      // Add DAI to the Maker DSR Strategy
+      if (config?.depositToStrategy) {
+        // The strategist deposits the WETH to the AMO strategy
+        await vault
+          .connect(strategist)
+          .depositToStrategy(
+            makerDsrStrategy.address,
+            [dai.address],
+            [daiMintAmount]
+          );
+      }
+    }
+  } else {
+    throw new Error(
+      "Maker DSR strategy only supported in forked test environment"
+    );
   }
 
   return fixture;
@@ -1590,7 +1657,14 @@ async function replaceContractAt(targetAddress, mockContract) {
   });
 }
 
+function createFixture(fixture, config) {
+  return deployments.createFixture(async () => {
+    return await fixture(config);
+  });
+}
+
 module.exports = {
+  createFixture,
   fundWith3Crv,
   resetAllowance,
   defaultFixture,
@@ -1607,6 +1681,7 @@ module.exports = {
   convexOETHMetaVaultFixture,
   convexGeneralizedMetaForkedFixture,
   convexLUSDMetaVaultFixture,
+  makerDsrFixture,
   morphoCompoundFixture,
   morphoAaveFixture,
   aaveVaultFixture,
