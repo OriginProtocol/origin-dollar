@@ -1,18 +1,23 @@
 const { expect } = require("chai");
 const { utils, BigNumber } = require("ethers");
 
-const { defaultFixture } = require("../_fixture");
-const { ousdUnits, usdcUnits, loadFixture } = require("../helpers");
+const { createFixture, defaultFixture } = require("../_fixture");
+const { ousdUnits, usdcUnits } = require("../helpers");
 
 describe("OGV Buyback", function () {
+  let fixture;
+  const fixtureSetup = createFixture(defaultFixture);
+  beforeEach(async () => {
+    fixture = await fixtureSetup();
+  });
   it("Should allow Governor to set Trustee address", async () => {
-    const { vault, governor, ousd } = await loadFixture(defaultFixture);
+    const { vault, governor, ousd } = fixture;
     // Pretend OUSD is trustee
     await vault.connect(governor).setTrusteeAddress(ousd.address);
   });
 
   it("Should not allow non-Governor to set Trustee address", async () => {
-    const { vault, anna, ousd } = await loadFixture(defaultFixture);
+    const { vault, anna, ousd } = fixture;
     // Pretend OUSD is trustee
     await expect(
       vault.connect(anna).setTrusteeAddress(ousd.address)
@@ -20,14 +25,14 @@ describe("OGV Buyback", function () {
   });
 
   it("Should allow Governor to set Uniswap address", async () => {
-    const { buyback, governor, ousd } = await loadFixture(defaultFixture);
+    const { buyback, governor, ousd } = fixture;
     // Pretend OUSD is a uniswap
     await buyback.connect(governor).setUniswapAddr(ousd.address);
     expect(await buyback.uniswapAddr()).to.be.equal(ousd.address);
   });
 
   it("Should not allow non-Governor to set Uniswap address", async () => {
-    const { buyback, anna, ousd } = await loadFixture(defaultFixture);
+    const { buyback, anna, ousd } = fixture;
     // Pretend OUSD is uniswap
     await expect(
       buyback.connect(anna).setUniswapAddr(ousd.address)
@@ -35,14 +40,14 @@ describe("OGV Buyback", function () {
   });
 
   it("Should allow Governor to set Strategist address", async () => {
-    const { buyback, governor, ousd } = await loadFixture(defaultFixture);
+    const { buyback, governor, ousd } = fixture;
     // Pretend OUSD is a Strategist
     await buyback.connect(governor).setStrategistAddr(ousd.address);
     expect(await buyback.strategistAddr()).to.be.equal(ousd.address);
   });
 
   it("Should not allow non-Governor to set Strategist address", async () => {
-    const { buyback, anna, ousd } = await loadFixture(defaultFixture);
+    const { buyback, anna, ousd } = fixture;
     // Pretend OUSD is Strategist
     await expect(
       buyback.connect(anna).setStrategistAddr(ousd.address)
@@ -50,7 +55,6 @@ describe("OGV Buyback", function () {
   });
 
   it("Should NOT swap OUSD balance for OGV when called by vault", async () => {
-    const fixture = await loadFixture(defaultFixture);
     const { ousd, ogn, ogv, governor, buyback, vault, rewardsSource } = fixture;
     await fundBuybackAndUniswap(fixture);
 
@@ -66,7 +70,6 @@ describe("OGV Buyback", function () {
   });
 
   it("Should distribute and swap OUSD when called by strategist", async () => {
-    const fixture = await loadFixture(defaultFixture);
     const { ousd, ogn, ogv, strategist, governor, buyback, rewardsSource } =
       fixture;
     await fundBuybackAndUniswap(fixture);
@@ -89,7 +92,6 @@ describe("OGV Buyback", function () {
   });
 
   it("Should just distribute when treasuryBps is 100%", async () => {
-    const fixture = await loadFixture(defaultFixture);
     const { ousd, ogn, ogv, strategist, governor, buyback, rewardsSource } =
       fixture;
     await fundBuybackAndUniswap(fixture);
@@ -112,7 +114,6 @@ describe("OGV Buyback", function () {
   });
 
   it("Should just swap when treasuryBps is 0%", async () => {
-    const fixture = await loadFixture(defaultFixture);
     const { ousd, ogn, ogv, strategist, governor, buyback, rewardsSource } =
       fixture;
     await fundBuybackAndUniswap(fixture);
@@ -135,7 +136,6 @@ describe("OGV Buyback", function () {
   });
 
   it("Should NOT distribute/swap when called by someone else", async () => {
-    const fixture = await loadFixture(defaultFixture);
     const { ousd, ogn, ogv, anna, buyback, rewardsSource } = fixture;
     await fundBuybackAndUniswap(fixture);
 
@@ -155,7 +155,6 @@ describe("OGV Buyback", function () {
   });
 
   it("Should NOT distribute/swap when uniswap address isn't set", async () => {
-    const fixture = await loadFixture(defaultFixture);
     const { ousd, ogn, ogv, governor, buyback, rewardsSource } = fixture;
     await fundBuybackAndUniswap(fixture);
 
@@ -183,7 +182,6 @@ describe("OGV Buyback", function () {
   });
 
   it("Should NOT distribute/swap when min expected is zero", async () => {
-    const fixture = await loadFixture(defaultFixture);
     const { ousd, ogn, ogv, governor, buyback, rewardsSource } = fixture;
     await fundBuybackAndUniswap(fixture);
 
@@ -203,9 +201,7 @@ describe("OGV Buyback", function () {
   });
 
   it("Should allow withdrawal of arbitrary token by Governor", async () => {
-    const { vault, ousd, usdc, matt, governor, buyback } = await loadFixture(
-      defaultFixture
-    );
+    const { vault, ousd, usdc, matt, governor, buyback } = fixture;
     // Matt deposits USDC, 6 decimals
     await usdc.connect(matt).approve(vault.address, usdcUnits("8.0"));
     await vault.connect(matt).mint(usdc.address, usdcUnits("8.0"), 0);
@@ -219,9 +215,7 @@ describe("OGV Buyback", function () {
   });
 
   it("Should not allow withdrawal of arbitrary token by non-Governor", async () => {
-    const { buyback, ousd, matt, strategist } = await loadFixture(
-      defaultFixture
-    );
+    const { buyback, ousd, matt, strategist } = fixture;
     // Naughty Matt
     await expect(
       buyback.connect(matt).transferToken(ousd.address, ousdUnits("8.0"))
@@ -234,7 +228,7 @@ describe("OGV Buyback", function () {
   });
 
   it("Should allow Governor to change RewardsSource address", async () => {
-    const { buyback, governor, matt } = await loadFixture(defaultFixture);
+    const { buyback, governor, matt } = fixture;
 
     await buyback.connect(governor).setRewardsSource(matt.address);
 
@@ -242,9 +236,7 @@ describe("OGV Buyback", function () {
   });
 
   it("Should not allow anyone else to change RewardsSource address", async () => {
-    const { buyback, strategist, matt, josh } = await loadFixture(
-      defaultFixture
-    );
+    const { buyback, strategist, matt, josh } = fixture;
 
     for (const user of [strategist, josh]) {
       expect(
@@ -254,7 +246,7 @@ describe("OGV Buyback", function () {
   });
 
   it("Should not allow setting RewardsSource address to address(0)", async () => {
-    const { buyback, governor } = await loadFixture(defaultFixture);
+    const { buyback, governor } = fixture;
 
     expect(
       buyback
@@ -264,7 +256,7 @@ describe("OGV Buyback", function () {
   });
 
   it("Should allow Governor to change Treasury manager address", async () => {
-    const { buyback, governor, matt } = await loadFixture(defaultFixture);
+    const { buyback, governor, matt } = fixture;
 
     await buyback.connect(governor).setTreasuryManager(matt.address);
 
@@ -272,7 +264,7 @@ describe("OGV Buyback", function () {
   });
 
   it("Should not allow setting Treasury manager address to address(0)", async () => {
-    const { buyback, governor } = await loadFixture(defaultFixture);
+    const { buyback, governor } = fixture;
 
     expect(
       buyback
@@ -282,9 +274,7 @@ describe("OGV Buyback", function () {
   });
 
   it("Should not allow anyone else to change Treasury manager address", async () => {
-    const { buyback, strategist, matt, josh } = await loadFixture(
-      defaultFixture
-    );
+    const { buyback, strategist, matt, josh } = fixture;
 
     for (const user of [strategist, josh]) {
       expect(
@@ -294,7 +284,7 @@ describe("OGV Buyback", function () {
   });
 
   it("Should allow Governor to change Treasury Bips", async () => {
-    const { buyback, governor } = await loadFixture(defaultFixture);
+    const { buyback, governor } = fixture;
 
     await buyback.connect(governor).setTreasuryBps("1234");
 
@@ -302,7 +292,7 @@ describe("OGV Buyback", function () {
   });
 
   it("Should not allow anyone else to change Treasury Bips", async () => {
-    const { buyback, strategist, franck } = await loadFixture(defaultFixture);
+    const { buyback, strategist, franck } = fixture;
 
     for (const user of [strategist, franck]) {
       await expect(

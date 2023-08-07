@@ -740,10 +740,7 @@ const deployDripper = async () => {
  */
 const deployFraxEthStrategy = async () => {
   const assetAddresses = await getAssetAddresses(deployments);
-  const { deployerAddr, governorAddr } = await getNamedAccounts();
-  // Signers
-  const sDeployer = await ethers.provider.getSigner(deployerAddr);
-  const sGovernor = await ethers.provider.getSigner(governorAddr);
+  const { governorAddr } = await getNamedAccounts();
 
   const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
 
