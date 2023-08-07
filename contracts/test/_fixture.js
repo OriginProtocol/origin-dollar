@@ -322,7 +322,7 @@ const defaultFixture = deployments.createFixture(async () => {
     reth = await ethers.getContract("MockRETH");
     frxETH = await ethers.getContract("MockfrxETH");
     sfrxETH = await ethers.getContract("MocksfrxETH");
-    sDAI = await ethers.getContract("MocksDAI");
+    sDAI = await ethers.getContract("MocksfrxETH");
     stETH = await ethers.getContract("MockstETH");
     nonStandardToken = await ethers.getContract("MockNonStandardToken");
 

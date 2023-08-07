@@ -113,14 +113,8 @@ contract Generalized4626Strategy is InitializableAbstractStrategy {
 
     /**
      * @dev Internal method to respond to the addition of new asset / share tokens
-     * @param _asset Address of the asset to approve
-     * @param _pToken The pToken for the approval
      */
-    function _abstractSetPToken(address _asset, address _pToken)
-        internal
-        virtual
-        override
-    {
+    function _abstractSetPToken(address, address) internal virtual override {
         _approveBase();
     }
 
