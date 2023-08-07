@@ -5,7 +5,7 @@ const addresses = require("../../utils/addresses");
 const { units, forkOnlyDescribe } = require("../helpers");
 
 const {
-  createFixture,
+  createFixtureLoader,
   makerDsrFixture,
   defaultFixtureSetup,
 } = require("../_fixture");
@@ -28,9 +28,9 @@ forkOnlyDescribe("ForkTest: Maker DSR Strategy", function () {
   });
 
   describe("post deployment", () => {
-    const fixtureSetup = createFixture(makerDsrFixture);
+    const loadFixture = createFixtureLoader(makerDsrFixture);
     beforeEach(async () => {
-      fixture = await fixtureSetup();
+      fixture = await loadFixture();
     });
     it("Should have constants and immutables set", async () => {
       const { vault, makerDsrStrategy } = fixture;
@@ -101,12 +101,12 @@ forkOnlyDescribe("ForkTest: Maker DSR Strategy", function () {
   });
 
   describe("with some DAI in the vault", () => {
-    const fixtureSetup = createFixture(makerDsrFixture, {
+    const loadFixture = createFixtureLoader(makerDsrFixture, {
       daiMintAmount: 12000,
       depositToStrategy: false,
     });
     beforeEach(async () => {
-      fixture = await fixtureSetup();
+      fixture = await loadFixture();
     });
     it("Vault should deposit some DAI to strategy", async function () {
       const { dai, ousd, sDAI, makerDsrStrategy, vaultSigner } = fixture;
@@ -196,12 +196,12 @@ forkOnlyDescribe("ForkTest: Maker DSR Strategy", function () {
   });
 
   describe("with the strategy having some DAI in Maker DSR Strategy", () => {
-    const fixtureSetup = createFixture(makerDsrFixture, {
+    const loadFixture = createFixtureLoader(makerDsrFixture, {
       daiMintAmount: 12000,
       depositToStrategy: true,
     });
     beforeEach(async () => {
-      fixture = await fixtureSetup();
+      fixture = await loadFixture();
     });
     it("Vault should be able to withdraw all", async () => {
       const { dai, sDAI, makerDsrStrategy, ousd, vault, vaultSigner } = fixture;

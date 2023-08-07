@@ -1657,14 +1657,20 @@ async function replaceContractAt(targetAddress, mockContract) {
   });
 }
 
-function createFixture(fixture, config) {
+/**
+ *
+ * @param {*} fixture function that creates a fixture
+ * @param {*} config optional config object passed to the fixture function
+ * @returns an async function that loads a fixture
+ */
+function createFixtureLoader(fixture, config) {
   return deployments.createFixture(async () => {
     return await fixture(config);
   });
 }
 
 module.exports = {
-  createFixture,
+  createFixtureLoader,
   fundWith3Crv,
   resetAllowance,
   defaultFixture,
