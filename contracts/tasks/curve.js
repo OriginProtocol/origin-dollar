@@ -1,4 +1,5 @@
-const { BigNumber, formatUnits, parseUnits } = require("ethers/lib/utils");
+const { BigNumber } = require("ethers");
+const { formatUnits, parseUnits } = require("ethers/lib/utils");
 
 const ousdPoolAbi = require("../test/abi/ousdMetapool.json");
 const oethPoolAbi = require("../test/abi/oethMetapool.json");
@@ -430,6 +431,7 @@ module.exports = {
   curveAddTask,
   curveRemoveTask,
   curveSwapTask,
+  curveContracts,
   displayDiff,
   displayProperty,
   displayPortion,
