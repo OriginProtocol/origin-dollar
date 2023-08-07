@@ -156,3 +156,10 @@ contract BuybackProxy is InitializeGovernedUpgradeabilityProxy {
 contract OETHMorphoAaveStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
+
+/**
+ * @notice MakerDsrStrategyProxy delegates calls to a Generalized4626Strategy implementation
+ */
+contract MakerDsrStrategyProxy is InitializeGovernedUpgradeabilityProxy {
+
+}

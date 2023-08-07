@@ -2,8 +2,8 @@
 pragma solidity ^0.8.0;
 
 /**
- * @title OETH Generalized 4626 Strategy
- * @notice Investment strategy for vaults supporting ERC4626
+ * @title Generalized 4626 Strategy
+ * @notice Investment strategy for ERC-4626 Tokenized Vaults
  * @author Origin Protocol Inc
  */
 import { IERC4626 } from "../../lib/openzeppelin/interfaces/IERC4626.sol";
@@ -13,15 +13,45 @@ import { IERC20, InitializableAbstractStrategy } from "../utils/InitializableAbs
 contract Generalized4626Strategy is InitializableAbstractStrategy {
     using SafeERC20 for IERC20;
 
-    IERC20 internal shareToken;
-    IERC20 internal assetToken;
+    /// @dev Replaced with an immutable variable
+    // slither-disable-next-line constable-states
+    address private _deprecate_shareToken;
+    /// @dev Replaced with an immutable variable
+    // slither-disable-next-line constable-states
+    address private _deprecate_assetToken;
+
+    IERC20 public immutable shareToken;
+    IERC20 public immutable assetToken;
 
     // For future use
     uint256[50] private __gap;
 
-    constructor(BaseStrategyConfig memory _stratConfig)
-        InitializableAbstractStrategy(_stratConfig)
-    {}
+    /**
+     * @param _baseConfig Base strategy config with platformAddress (ERC-4626 Vault contract), eg sfrxETH or sDAI,
+     * and vaultAddress (OToken Vault contract), eg VaultProxy or OETHVaultProxy
+     * @param _assetToken Address of the ERC-4626 asset token. eg frxETH or DAI
+     */
+    constructor(BaseStrategyConfig memory _baseConfig, address _assetToken)
+        InitializableAbstractStrategy(_baseConfig)
+    {
+        shareToken = IERC20(_baseConfig.platformAddress);
+        assetToken = IERC20(_assetToken);
+    }
+
+    function initialize() external virtual onlyGovernor initializer {
+        address[] memory rewardTokens = new address[](0);
+        address[] memory assets = new address[](1);
+        address[] memory pTokens = new address[](1);
+
+        assets[0] = address(assetToken);
+        pTokens[0] = address(platformAddress);
+
+        InitializableAbstractStrategy._initialize(
+            rewardTokens,
+            assets,
+            pTokens
+        );
+    }
 
     /**
      * @dev Deposit assets by converting them to shares
@@ -91,12 +121,7 @@ contract Generalized4626Strategy is InitializableAbstractStrategy {
         virtual
         override
     {
-        shareToken = IERC20(_pToken);
-        assetToken = IERC20(_asset);
-
-        // Safe approval
-        shareToken.safeApprove(platformAddress, type(uint256).max);
-        assetToken.safeApprove(platformAddress, type(uint256).max);
+        _approveBase();
     }
 
     /**
@@ -144,8 +169,14 @@ contract Generalized4626Strategy is InitializableAbstractStrategy {
      *      if for some reason is it necessary.
      */
     function safeApproveAllTokens() external override {
-        assetToken.safeApprove(platformAddress, type(uint256).max);
-        shareToken.safeApprove(platformAddress, type(uint256).max);
+        _approveBase();
+    }
+
+    function _approveBase() internal virtual {
+        // Approval the asset to be trasferred to the ERC-4626 Tokenized Vualt.
+        // Used by the ERC-4626 deposit() and mint() functions
+        // slither-disable-next-line unused-return
+        assetToken.approve(platformAddress, type(uint256).max);
     }
 
     /**

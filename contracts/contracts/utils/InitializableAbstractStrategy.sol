@@ -100,7 +100,7 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
     }
 
     function _initialize(
-        address[] calldata _rewardTokenAddresses,
+        address[] memory _rewardTokenAddresses,
         address[] memory _assets,
         address[] memory _pTokens
     ) internal {
@@ -108,7 +108,7 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
 
         uint256 assetCount = _assets.length;
         require(assetCount == _pTokens.length, "Invalid input arrays");
-        for (uint256 i = 0; i < assetCount; i++) {
+        for (uint256 i = 0; i < assetCount; ++i) {
             _setPTokenAddress(_assets[i], _pTokens[i]);
         }
     }
