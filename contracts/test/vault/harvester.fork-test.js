@@ -1,9 +1,8 @@
 const { expect } = require("chai");
-
-const { defaultFixture } = require("./../_fixture");
 const { utils } = require("ethers");
 
-const { loadFixture, forkOnlyDescribe } = require("./../helpers");
+const { loadDefaultFixture } = require("./../_fixture");
+const { forkOnlyDescribe } = require("./../helpers");
 const { MAX_UINT256 } = require("../../utils/constants");
 const { parseUnits } = require("ethers").utils;
 
@@ -14,7 +13,7 @@ forkOnlyDescribe("ForkTest: Harvester", function () {
 
   let fixture;
   beforeEach(async () => {
-    fixture = await loadFixture(defaultFixture);
+    fixture = await loadDefaultFixture();
   });
 
   describe("Rewards Config", () => {

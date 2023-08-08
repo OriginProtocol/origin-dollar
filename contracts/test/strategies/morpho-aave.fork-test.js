@@ -1,6 +1,5 @@
 const { expect } = require("chai");
 
-const { loadFixture } = require("ethereum-waffle");
 const {
   units,
   ousdUnits,
@@ -9,6 +8,7 @@ const {
   advanceTime,
 } = require("../helpers");
 const {
+  createFixtureLoader,
   morphoAaveFixture,
   impersonateAndFundContract,
 } = require("../_fixture");
@@ -19,8 +19,9 @@ forkOnlyDescribe("ForkTest: Morpho Aave Strategy", function () {
   this.retries(3);
 
   let fixture;
+  const loadFixture = createFixtureLoader(morphoAaveFixture);
   beforeEach(async () => {
-    fixture = await loadFixture(morphoAaveFixture);
+    fixture = await loadFixture();
   });
 
   describe("Mint", function () {

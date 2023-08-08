@@ -2,13 +2,12 @@ const { expect } = require("chai");
 const { utils } = require("ethers");
 const { MAX_UINT256 } = require("../../utils/constants");
 
-const { threepoolVaultFixture } = require("../_fixture");
+const { createFixtureLoader, threepoolVaultFixture } = require("../_fixture");
 const {
   daiUnits,
   usdtUnits,
   ousdUnits,
   units,
-  loadFixture,
   expectApproxSupply,
   isFork,
 } = require("../helpers");
@@ -42,8 +41,9 @@ describe("3Pool Strategy", function () {
       .mint(asset.address, await units(amount, asset), 0);
   };
 
+  const loadFixture = createFixtureLoader(threepoolVaultFixture);
   beforeEach(async function () {
-    const fixture = await loadFixture(threepoolVaultFixture);
+    const fixture = await loadFixture();
     anna = fixture.anna;
     vault = fixture.vault;
     harvester = fixture.harvester;

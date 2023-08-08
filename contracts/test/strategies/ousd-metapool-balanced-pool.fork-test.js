@@ -1,7 +1,7 @@
 const { expect } = require("chai");
 
-const { loadFixture } = require("ethereum-waffle");
 const { units, ousdUnits, forkOnlyDescribe } = require("../helpers");
+const { createFixtureLoader } = require("../_fixture");
 const { withBalancedOUSDMetaPool } = require("../_metastrategies-fixtures");
 
 forkOnlyDescribe(
@@ -11,21 +11,24 @@ forkOnlyDescribe(
     // due to hardhat forked mode timeouts - retry failed tests up to 3 times
     this.retries(3);
 
+    let fixture;
+    const loadFixture = createFixtureLoader(withBalancedOUSDMetaPool);
+    beforeEach(async () => {
+      fixture = await loadFixture();
+    });
+
     describe("Mint", function () {
-      it("Should stake USDT in Curve guage via metapool", async function () {
-        const fixture = await loadFixture(withBalancedOUSDMetaPool);
+      it("Should stake USDT in Curve gauge via metapool", async function () {
         const { josh, usdt } = fixture;
         await mintTest(fixture, josh, usdt, "100000");
       });
 
-      it("Should stake USDC in Curve guage via metapool", async function () {
-        const fixture = await loadFixture(withBalancedOUSDMetaPool);
+      it("Should stake USDC in Curve gauge via metapool", async function () {
         const { matt, usdc } = fixture;
         await mintTest(fixture, matt, usdc, "120000");
       });
 
-      it("Should NOT stake DAI in Curve guage via metapool", async function () {
-        const fixture = await loadFixture(withBalancedOUSDMetaPool);
+      it("Should NOT stake DAI in Curve gauge via metapool", async function () {
         const { anna, dai } = fixture;
         await mintTest(fixture, anna, dai, "110000");
       });
@@ -33,8 +36,7 @@ forkOnlyDescribe(
 
     describe("Redeem", function () {
       it("Should redeem", async () => {
-        const { vault, ousd, usdt, usdc, dai, anna, OUSDmetaStrategy } =
-          await loadFixture(withBalancedOUSDMetaPool);
+        const { vault, ousd, usdt, usdc, dai, anna, OUSDmetaStrategy } = fixture
 
         await vault.connect(anna).allocate();
 

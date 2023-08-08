@@ -2,9 +2,9 @@ const { expect } = require("chai");
 const { parseUnits, formatUnits } = require("ethers/lib/utils");
 
 const {
-  defaultFixtureSetup,
-  oethDefaultFixtureSetup,
-  oethCollateralSwapFixtureSetup,
+  createFixtureLoader,
+  oethDefaultFixture,
+  oethCollateralSwapFixture,
   impersonateAccount,
 } = require("./../_fixture");
 const { getIInchSwapData, recodeSwapData } = require("../../utils/1Inch");
@@ -13,9 +13,6 @@ const { forkOnlyDescribe } = require("../helpers");
 const { resolveAsset } = require("../../utils/assets");
 
 const log = require("../../utils/logger")("test:fork:oeth:vault");
-
-const defaultFixture = oethDefaultFixtureSetup();
-const collateralSwapFixture = oethCollateralSwapFixtureSetup();
 
 const oethWhaleAddress = "0xEADB3840596cabF312F2bC88A4Bb0b93A4E1FF5F";
 
@@ -26,19 +23,12 @@ forkOnlyDescribe("ForkTest: OETH Vault", function () {
 
   let fixture;
 
-  after(async () => {
-    // This is needed to revert fixtures
-    // The other tests as of now don't use proper fixtures
-    // Rel: https://github.com/OriginProtocol/origin-dollar/issues/1259
-    const f = defaultFixtureSetup();
-    await f();
-  });
-
   describe("OETH Vault", () => {
     describe("user operations", () => {
       let oethWhaleSigner;
+      const loadFixture = createFixtureLoader(oethCollateralSwapFixture);
       beforeEach(async () => {
-        fixture = await collateralSwapFixture();
+        fixture = await loadFixture();
 
         await impersonateAccount(oethWhaleAddress);
         oethWhaleSigner = await ethers.provider.getSigner(oethWhaleAddress);
@@ -126,8 +116,9 @@ forkOnlyDescribe("ForkTest: OETH Vault", function () {
       });
     });
     describe("post swap deployment", () => {
+      const loadFixture = createFixtureLoader(oethDefaultFixture);
       beforeEach(async () => {
-        fixture = await defaultFixture();
+        fixture = await loadFixture();
       });
 
       it("Should have the correct governor address set", async () => {
@@ -298,8 +289,9 @@ forkOnlyDescribe("ForkTest: OETH Vault", function () {
     };
 
     describe("Collateral swaps", async () => {
+      const loadFixture = createFixtureLoader(oethCollateralSwapFixture);
       beforeEach(async () => {
-        fixture = await collateralSwapFixture();
+        fixture = await loadFixture();
       });
 
       const tests = [
@@ -398,8 +390,8 @@ forkOnlyDescribe("ForkTest: OETH Vault", function () {
         {
           from: "WETH",
           to: "rETH",
-          fromAmount: 100,
-          minToAssetAmount: 90,
+          fromAmount: 10,
+          minToAssetAmount: 9,
           protocols: "ROCKET_POOL",
         },
         {
@@ -449,8 +441,9 @@ forkOnlyDescribe("ForkTest: OETH Vault", function () {
     });
 
     describe("Collateral swaps", async () => {
+      const loadFixture = createFixtureLoader(oethCollateralSwapFixture);
       beforeEach(async () => {
-        fixture = await collateralSwapFixture();
+        fixture = await loadFixture();
       });
 
       const tests = [

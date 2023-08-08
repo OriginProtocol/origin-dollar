@@ -1,6 +1,5 @@
 const hre = require("hardhat");
 const { ethers } = hre;
-const { loadFixture } = require("ethereum-waffle");
 const { ousdUnits } = require("./helpers");
 const {
   convexMetaVaultFixture,
@@ -16,7 +15,7 @@ const erc20Abi = require("./abi/erc20.json");
 // in vault.fork-test.js, so this should be fine.
 
 async function withDefaultOUSDMetapoolStrategiesSet() {
-  const fixture = await loadFixture(convexMetaVaultFixture);
+  const fixture = await convexMetaVaultFixture();
 
   const { vault, timelock, usdt, usdc, OUSDmetaStrategy } = fixture;
 
@@ -37,7 +36,7 @@ async function withDefaultOUSDMetapoolStrategiesSet() {
 }
 
 async function withBalancedOUSDMetaPool() {
-  const fixture = await loadFixture(withDefaultOUSDMetapoolStrategiesSet);
+  const fixture = await withDefaultOUSDMetapoolStrategiesSet();
 
   await balanceOUSDMetaPool(fixture);
 
@@ -113,7 +112,7 @@ async function _balanceMetaPool(fixture, metapool) {
 }
 
 async function withCRV3TitledOUSDMetapool() {
-  const fixture = await loadFixture(withDefaultOUSDMetapoolStrategiesSet);
+  const fixture = await withDefaultOUSDMetapoolStrategiesSet();
 
   await tiltTo3CRV_OUSDMetapool(fixture);
 
@@ -205,7 +204,7 @@ async function tiltTo3CRV_Metapool(fixture, metapool, amount) {
 }
 
 async function withOUSDTitledMetapool() {
-  const fixture = await loadFixture(withDefaultOUSDMetapoolStrategiesSet);
+  const fixture = await withDefaultOUSDMetapoolStrategiesSet();
 
   await tiltToOUSD_OUSDMetapool(fixture);
 

@@ -1,9 +1,9 @@
 const { expect } = require("chai");
 const { formatUnits, parseUnits } = require("ethers/lib/utils");
-const { loadFixture } = require("ethereum-waffle");
 
 const { units, oethUnits, forkOnlyDescribe } = require("../helpers");
 const {
+  createFixtureLoader,
   convexOETHMetaVaultFixture,
   impersonateAndFundContract,
 } = require("../_fixture");
@@ -16,6 +16,12 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
   // due to hardhat forked mode timeouts - retry failed tests up to 3 times
   this.retries(3);
 
+  let fixture;
+  const loadFixture = createFixtureLoader(convexOETHMetaVaultFixture);
+  beforeEach(async () => {
+    fixture = await loadFixture();
+  });
+
   it("Should rebalance Metapool", async () => {
     const {
       oeth,
@@ -24,7 +30,7 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
       timelock,
       ConvexEthMetaStrategy,
       weth,
-    } = await loadFixture(convexOETHMetaVaultFixture);
+    } = fixture;
 
     // STEP 1 - rebase
     await oethVault.rebase();
@@ -107,16 +113,13 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
 
   it("Should deposit to Metapool", async function () {
     // TODO: should have differently balanced metapools
-    const fixture = await loadFixture(convexOETHMetaVaultFixture);
-
     const { josh, weth } = fixture;
 
     await mintTest(fixture, josh, weth, "5000");
   });
 
   it("Should be able to withdraw all", async () => {
-    const { oethVault, oeth, weth, josh, ConvexEthMetaStrategy } =
-      await loadFixture(convexOETHMetaVaultFixture);
+    const { oethVault, oeth, weth, josh, ConvexEthMetaStrategy } = fixture;
 
     await oethVault.connect(josh).allocate();
     const supplyBeforeMint = await oeth.totalSupply();
@@ -151,8 +154,7 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
   });
 
   it("Should redeem", async () => {
-    const { oethVault, oeth, weth, josh, ConvexEthMetaStrategy } =
-      await loadFixture(convexOETHMetaVaultFixture);
+    const { oethVault, oeth, weth, josh, ConvexEthMetaStrategy } = fixture;
 
     await oethVault.connect(josh).allocate();
     const supplyBeforeMint = await oeth.totalSupply();
@@ -195,8 +197,6 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
   });
 
   it("Should be able to harvest the rewards", async function () {
-    const fixture = await loadFixture(convexOETHMetaVaultFixture);
-
     const {
       josh,
       weth,

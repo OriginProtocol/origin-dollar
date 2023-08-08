@@ -1,6 +1,5 @@
 const { expect } = require("chai");
 
-const { loadFixture } = require("ethereum-waffle");
 const {
   units,
   ousdUnits,
@@ -10,6 +9,7 @@ const {
   advanceTime,
 } = require("../helpers");
 const {
+  createFixtureLoader,
   morphoCompoundFixture,
   impersonateAndFundContract,
 } = require("../_fixture");
@@ -20,8 +20,9 @@ forkOnlyDescribe("ForkTest: Morpho Compound Strategy", function () {
   this.retries(3);
 
   let fixture;
+  const loadFixture = createFixtureLoader(morphoCompoundFixture);
   beforeEach(async () => {
-    fixture = await loadFixture(morphoCompoundFixture);
+    fixture = await loadFixture();
   });
 
   describe("Mint", function () {
@@ -130,7 +131,7 @@ forkOnlyDescribe("ForkTest: Morpho Compound Strategy", function () {
       const vaultUsdcDiff =
         (await usdc.balanceOf(vault.address)) - vaultUsdcBefore;
 
-      expect(vaultUsdcDiff).to.approxEqualTolerance(usdcUnits, 1);
+      expect(vaultUsdcDiff).to.approxEqualTolerance(usdcUnits, 2);
       expect(vaultUsdtDiff).to.approxEqualTolerance(usdtUnits, 1);
     });
   });

@@ -1,10 +1,11 @@
 const { expect } = require("chai");
-
-const { defaultFixture, impersonateAndFundContract } = require("./../_fixture");
 const { utils } = require("ethers");
 
 const {
-  loadFixture,
+  loadDefaultFixture,
+  impersonateAndFundContract,
+} = require("./../_fixture");
+const {
   forkOnlyDescribe,
   ousdUnits,
   usdtUnits,
@@ -35,7 +36,7 @@ forkOnlyDescribe("ForkTest: Vault", function () {
 
   let fixture;
   beforeEach(async () => {
-    fixture = await loadFixture(defaultFixture);
+    fixture = await loadDefaultFixture();
   });
 
   describe("Admin", () => {
