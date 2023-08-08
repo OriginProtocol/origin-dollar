@@ -3,7 +3,6 @@ const { utils, BigNumber } = require("ethers");
 
 const {
   createFixtureLoader,
-  defaultFixture,
   oethCollateralSwapFixture,
   oeth1InchSwapperFixture,
   impersonateAndFundContract,
@@ -17,10 +16,6 @@ const {
 const log = require("../../utils/logger")("test:oeth:swapper");
 
 describe("OETH Vault - Swapper", () => {
-  after(async () => {
-    await defaultFixture();
-  });
-
   describe("Swap Collateral", () => {
     let fixture;
     const loadFixture = createFixtureLoader(oethCollateralSwapFixture);

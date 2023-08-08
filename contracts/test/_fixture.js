@@ -556,10 +556,6 @@ const defaultFixture = deployments.createFixture(async () => {
   };
 });
 
-async function loadDefaultFixture() {
-  return await defaultFixture();
-}
-
 async function oethDefaultFixture() {
   // TODO: Trim it down to only do OETH things
   const fixture = await defaultFixture();
@@ -1609,6 +1605,18 @@ function createFixtureLoader(fixture, config) {
   return deployments.createFixture(async () => {
     return await fixture(config);
   });
+}
+
+/**
+ * An async function that loads the default fixture for unit or fork tests
+ * @example
+ *   let fixture;
+ *   beforeEach(async () => {
+ *     fixture = await loadDefaultFixture();
+ *   });
+ */
+async function loadDefaultFixture() {
+  return await defaultFixture();
 }
 
 module.exports = {
