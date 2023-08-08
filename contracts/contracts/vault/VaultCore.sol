@@ -118,12 +118,6 @@ contract VaultCore is VaultStorage {
 
         emit Mint(msg.sender, _amount);
 
-        // Rebase must happen before any transfers occur.
-        // TODO: double check the relevance of this
-        if (_amount >= rebaseThreshold && !rebasePaused) {
-            _rebase();
-        }
-
         // safe to cast because of the require check at the beginning of the function
         netOusdMintedForStrategy += int256(_amount);
 
@@ -253,14 +247,6 @@ contract VaultCore is VaultStorage {
 
         // Burn OTokens
         oUSD.burn(msg.sender, _amount);
-
-        // Until we can prove that we won't affect the prices of our assets
-        // by withdrawing them, this should be here.
-        // It's possible that a strategy was off on its asset total, perhaps
-        // a reward token sold for more or for less than anticipated.
-        if (_amount >= rebaseThreshold && !rebasePaused) {
-            _rebase();
-        }
     }
 
     /**
