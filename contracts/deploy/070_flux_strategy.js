@@ -99,11 +99,6 @@ module.exports = deploymentWithGovernanceProposal(
           signature: "setSupportedStrategy(address,bool)",
           args: [cFluxStrategyProxy.address, true],
         },
-        // {
-        //   contract: cFluxStrategy,
-        //   signature: "setHarvesterAddress(address)",
-        //   args: [cHarvesterProxy.address],
-        // },
       ],
     };
   }
