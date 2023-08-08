@@ -1,6 +1,4 @@
 const { deploymentWithGovernanceProposal } = require("../utils/deploy");
-const addresses = require("../utils/addresses");
-const { isMainnet } = require("../test/helpers.js");
 
 module.exports = deploymentWithGovernanceProposal(
   {
@@ -9,31 +7,22 @@ module.exports = deploymentWithGovernanceProposal(
     onlyOnFork: true, // this is only executed in forked environment
     //proposalId: "40434364243407050666554191388123037800510237271029051418887027936281231737485"
   },
-  async ({
-    assetAddresses,
-    deployWithConfirmation,
-    ethers,
-    getTxOpts,
-    withConfirmation,
-  }) => {
-    const { deployerAddr, governorAddr } = await getNamedAccounts();
-    const sDeployer = await ethers.provider.getSigner(deployerAddr);
-
+  async ({ deployWithConfirmation, ethers }) => {
     // Current contracts
     const cVaultProxy = await ethers.getContract("VaultProxy");
     // const cHarvester = await ethers.getContract("Harvester");
 
     const dVaultCore = await deployWithConfirmation("VaultCore");
-    const dVaultAdmin = await deployWithConfirmation("VaultAdmin");
+    // const dVaultAdmin = await deployWithConfirmation("VaultAdmin");
 
-    const cVaultCore = await ethers.getContract(
-      "VaultCore",
-      cVaultProxy.address
-    );
-    const cVaultAdmin = await ethers.getContract(
-      "VaultAdmin",
-      cVaultProxy.address
-    );
+    // const cVaultCore = await ethers.getContract(
+    //   "VaultCore",
+    //   cVaultProxy.address
+    // );
+    // const cVaultAdmin = await ethers.getContract(
+    //   "VaultAdmin",
+    //   cVaultProxy.address
+    // );
 
     // Governance Actions
     // ----------------

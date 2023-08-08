@@ -70,21 +70,21 @@ const trustee = async (hre) => {
     await withConfirmation(
       cVaultProxy
         .connect(sGovernor)
-        .upgradeTo(dVaultCore.address, await getTxOpts(gasLimit))
+        .upgradeTo(dVaultCore.address, await getTxOpts())
     );
     log("Upgraded VaultCore to new implementation");
 
     await withConfirmation(
       cvaultAdmin
         .connect(sGovernor)
-        .setTrusteeAddress(trusteeAddress, await getTxOpts(gasLimit))
+        .setTrusteeAddress(trusteeAddress, await getTxOpts())
     );
     log("Trustee address set");
 
     await withConfirmation(
       cvaultAdmin
         .connect(sGovernor)
-        .setTrusteeFeeBps(trusteeFeeBps, await getTxOpts(gasLimit))
+        .setTrusteeFeeBps(trusteeFeeBps, await getTxOpts())
     );
     log("Trustee fee bps set");
   }

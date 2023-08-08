@@ -3,9 +3,15 @@ import classnames from 'classnames'
 import { fbt } from 'fbt-runtime'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { useAccount } from 'wagmi'
-import analytics from 'utils/analytics'
+import { event } from '../../lib/gtm'
 
-const CustomConnectButton = ({ id, className, onClick, style }) => {
+const CustomConnectButton = ({
+  id,
+  containerClassName = '',
+  className,
+  onClick,
+  style,
+}) => {
   return (
     <ConnectButton.Custom>
       {({
@@ -28,6 +34,7 @@ const CustomConnectButton = ({ id, className, onClick, style }) => {
 
         return (
           <div
+            className={containerClassName}
             {...(!ready && {
               'aria-hidden': true,
               style: {
@@ -93,34 +100,10 @@ const CustomConnectButton = ({ id, className, onClick, style }) => {
   )
 }
 
-const GetOUSD = ({
-  id,
-  className,
-  style,
-  dark,
-  light,
-  primary,
-  showLogin,
-  trackSource,
-  light2,
-  zIndex2,
-  navMarble,
-}) => {
-  const { isConnected: active } = useAccount()
-
+const GetOUSD = ({ id, className, containerClassName, style, trackSource }) => {
+  const { isConnected: active, address, connector } = useAccount()
   const [userAlreadyConnectedWallet, setUserAlreadyConnectedWallet] =
     useState(false)
-
-  const classList = classnames(
-    'btn d-flex align-items-center justify-content-center',
-    className,
-    dark && 'btn-dark',
-    light && 'btn-light',
-    light2 && 'btn-light2',
-    primary && 'btn-primary',
-    zIndex2 && 'zIndex2',
-    navMarble && 'nav-marble'
-  )
 
   useEffect(() => {
     if (
@@ -132,6 +115,11 @@ const GetOUSD = ({
 
     if (!userAlreadyConnectedWallet && active) {
       localStorage.setItem('userConnectedWallet', 'true')
+      event({
+        event: 'connect',
+        connect_address: address?.slice(2),
+        connect_wallet: connector?.name.toLowerCase(),
+      })
     }
   }, [active])
 
@@ -139,14 +127,12 @@ const GetOUSD = ({
     <>
       <CustomConnectButton
         id={id}
-        className={classList}
+        containerClassName={containerClassName}
+        className={className}
         style={style}
         onClick={() => {
           if (process.browser) {
-            analytics.track('On Connect', {
-              category: 'general',
-              label: trackSource,
-            })
+            event({ event: 'connect_click' })
           }
         }}
       />

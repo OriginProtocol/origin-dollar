@@ -95,15 +95,10 @@ module.exports = deploymentWithProposal(
       dCompoundStrategyProxy.address
     );
     await withConfirmation(
-      cCompoundStrategy
-        .connect(sDeployer)
-        ["initialize(address,address,address,address[],address[])"](
-          addresses.dead,
-          cVaultProxy.address,
-          assetAddresses.COMP,
-          [assetAddresses.USDC, assetAddresses.USDT],
-          [assetAddresses.cUSDC, assetAddresses.cUSDT]
-        )
+      cCompoundStrategy.connect(sDeployer)[
+        // eslint-disable-next-line no-unexpected-multiline
+        "initialize(address,address,address,address[],address[])"
+      ](addresses.dead, cVaultProxy.address, assetAddresses.COMP, [assetAddresses.USDC, assetAddresses.USDT], [assetAddresses.cUSDC, assetAddresses.cUSDT])
     );
     log("Initialized CompoundStrategy...");
     // Transfer CompoundStrategy governance to governor
@@ -131,13 +126,10 @@ module.exports = deploymentWithProposal(
       dAaveStrategyProxy.address
     );
     await withConfirmation(
-      cAaveStrategyProxy
-        .connect(sDeployer)
-        ["initialize(address,address,bytes)"](
-          dAaveStrategy.address,
-          deployerAddr,
-          []
-        )
+      cAaveStrategyProxy.connect(sDeployer)[
+        // eslint-disable-next-line no-unexpected-multiline
+        "initialize(address,address,bytes)"
+      ](dAaveStrategy.address, deployerAddr, [])
     );
     log("Initialized AaveStrategyProxy...");
     const initFunction =

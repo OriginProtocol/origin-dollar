@@ -41,14 +41,10 @@ module.exports = deploymentWithProposal(
 
     // 3. Init the proxy to point at the implementation
     await withConfirmation(
-      cConvexStrategyProxy
-        .connect(sDeployer)
-        ["initialize(address,address,bytes)"](
-          dConvexStrategyImpl.address,
-          deployerAddr,
-          [],
-          await getTxOpts()
-        )
+      cConvexStrategyProxy.connect(sDeployer)[
+        // eslint-disable-next-line no-unexpected-multiline
+        "initialize(address,address,bytes)"
+      ](dConvexStrategyImpl.address, deployerAddr, [], await getTxOpts())
     );
     // 4. Init and configure new Convex strategy
     const initFunction =

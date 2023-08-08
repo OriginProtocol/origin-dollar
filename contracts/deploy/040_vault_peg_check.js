@@ -4,7 +4,6 @@ module.exports = deploymentWithProposal(
   { deployName: "040_vault_peg_check", forceDeploy: false },
   async ({ deployWithConfirmation }) => {
     // Current contracts
-    const cOUSDProxy = await ethers.getContract("OUSDProxy");
     const cVaultProxy = await ethers.getContract("VaultProxy");
     const cVaultCore = await ethers.getContractAt(
       "VaultCore",

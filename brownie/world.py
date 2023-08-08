@@ -405,7 +405,57 @@ def show_governance_action(i, to, sig, data):
       print(" >> ", nice_contract_address(v))
     else:
       print(" >> ", ORANGE+str(v)+ENDC)
-  
+
+def to_gnosis_json(txs):
+    main = {
+        "version": "1.0",
+        "chainId": "1",
+        "createdAt": int(time.time()),
+        "meta": {
+            "name": "Transactions Batch",
+            "description": "",
+            "txBuilderVersion": "1.16.1",
+            "createdFromSafeAddress": "0xF14BBdf064E3F67f51cd9BD646aE3716aD938FDC",
+            "createdFromOwnerAddress": "",
+            # "checksum": "0x"
+        },
+        "transactions": [],
+    }
+    for tx in txs:
+        main["transactions"].append(
+            {
+                "to": tx.receiver,
+                "value": "0",
+                "data": tx.input,
+                "contractMethod": None,
+                "contractInputsValues": None,
+            }
+        )
+    return json.dumps(main)
+
+
+def show_txs_data(txs):
+    print("Schedule the following transactions on Gnosis Safe")
+    for idx, item in enumerate(txs):
+        print("Transaction ", idx)
+        print("To: ", item.receiver)
+        print("Data (Hex encoded): ", item.input, "\n")
+
+
+class TemporaryForkForReallocations:
+    def __enter__(self):
+        self.txs = []
+        brownie.chain.snapshot()
+        return self.txs
+
+    def __exit__(self, *args, **kwargs):
+        brownie.chain.revert()
+        print("----")
+        print("Gnosis json:")
+        print(to_gnosis_json(self.txs))
+        print("----")
+        print("Est Gas Max: {:,}".format(1.10 * sum([x.gas_used for x in self.txs])))
+
 
 def show_governor_four_proposal_actions(proposal_id):
   actions = governor.getActions(proposal_id)
