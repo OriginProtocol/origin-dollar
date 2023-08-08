@@ -215,6 +215,7 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
      */
     function setPTokenAddress(address _asset, address _pToken)
         external
+        virtual
         onlyGovernor
     {
         _setPTokenAddress(_asset, _pToken);

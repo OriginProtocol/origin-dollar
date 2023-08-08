@@ -185,4 +185,14 @@ contract Generalized4626Strategy is InitializableAbstractStrategy {
     {
         return _asset == address(assetToken);
     }
+
+    /**
+     * @notice is not supported for this strategy as the asset and
+     * ERC-4626 Tokenized Vault are set at deploy time.
+     * @dev If the ERC-4626 Tokenized Vault needed to be changed, a new
+     * contract would need to be deployed and the proxy updated.
+     */
+    function setPTokenAddress(address, address) external override {
+        revert("unsupported function");
+    }
 }
