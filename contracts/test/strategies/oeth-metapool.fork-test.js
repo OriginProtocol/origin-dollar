@@ -6,7 +6,7 @@ const addresses = require("../../utils/addresses");
 const { oethPoolLpPID } = require("../../utils/constants");
 const { units, oethUnits, forkOnlyDescribe } = require("../helpers");
 const {
-  createFixture,
+  createFixtureLoader,
   defaultFixtureSetup,
   convexOETHMetaVaultFixture,
 } = require("../_fixture");
@@ -28,9 +28,9 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
   });
 
   describe("with mainnet data", () => {
-    const fixturePromise = createFixture(convexOETHMetaVaultFixture);
+    const loadFixture = createFixtureLoader(convexOETHMetaVaultFixture);
     beforeEach(async () => {
-      fixture = await fixturePromise();
+      fixture = await loadFixture();
     });
     it("Should have constants and immutables set", async () => {
       const { convexEthMetaStrategy } = fixture;
@@ -132,12 +132,12 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
   });
 
   describe("with some WETH in the vault", () => {
-    const fixturePromise = createFixture(convexOETHMetaVaultFixture, {
+    const loadFixture = createFixtureLoader(convexOETHMetaVaultFixture, {
       wethMintAmount: 5000,
       depositToStrategy: false,
     });
     beforeEach(async () => {
-      fixture = await fixturePromise();
+      fixture = await loadFixture();
     });
     it("Vault should deposit some WETH to AMO strategy", async function () {
       const {
@@ -253,15 +253,12 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
   });
 
   describe("with the strategy having some OETH and ETH in the Metapool", () => {
-    const depositOethAmoFixturePromise = createFixture(
-      convexOETHMetaVaultFixture,
-      {
-        wethMintAmount: 5000,
-        depositToStrategy: true,
-      }
-    );
+    const loadFixture = createFixtureLoader(convexOETHMetaVaultFixture, {
+      wethMintAmount: 5000,
+      depositToStrategy: true,
+    });
     beforeEach(async () => {
-      fixture = await depositOethAmoFixturePromise();
+      fixture = await loadFixture();
     });
     it("Vault should be able to withdraw all", async () => {
       const {
@@ -422,19 +419,19 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
   });
 
   describe("with a lot more OETH in the Metapool", () => {
-    const fixturePromise = createFixture(convexOETHMetaVaultFixture, {
+    const loadFixture = createFixtureLoader(convexOETHMetaVaultFixture, {
       wethMintAmount: 5000,
       depositToStrategy: false,
-      poolAddOethAmount: 5000,
+      poolAddOethAmount: 4000,
     });
     beforeEach(async () => {
-      fixture = await fixturePromise();
+      fixture = await loadFixture();
     });
     it("Strategist should remove a little OETH from the Metapool", async () => {
       await assertRemoveAndBurn(parseUnits("3"), fixture);
     });
     it("Strategist should remove a lot of OETH from the Metapool", async () => {
-      await assertRemoveAndBurn(parseUnits("5000"), fixture);
+      await assertRemoveAndBurn(parseUnits("4000"), fixture);
     });
     it("Strategist should fail to add even more OETH to the Metapool", async () => {
       const { convexEthMetaStrategy, strategist } = fixture;
@@ -459,13 +456,13 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
   });
 
   describe("with a lot more ETH in the Metapool", () => {
-    const fixturePromise = createFixture(convexOETHMetaVaultFixture, {
+    const loadFixture = createFixtureLoader(convexOETHMetaVaultFixture, {
       wethMintAmount: 5000,
       depositToStrategy: false,
       poolAddEthAmount: 200000,
     });
     beforeEach(async () => {
-      fixture = await fixturePromise();
+      fixture = await loadFixture();
     });
     it("Strategist should add a little OETH to the Metapool", async () => {
       const oethMintAmount = oethUnits("3");
@@ -497,13 +494,13 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
   });
 
   describe("with a little more ETH in the Metapool", () => {
-    const fixturePromise = createFixture(convexOETHMetaVaultFixture, {
+    const loadFixture = createFixtureLoader(convexOETHMetaVaultFixture, {
       wethMintAmount: 5000,
       depositToStrategy: false,
-      poolAddEthAmount: 3000,
+      poolAddEthAmount: 4000,
     });
     beforeEach(async () => {
-      fixture = await fixturePromise();
+      fixture = await loadFixture();
     });
     it("Strategist should remove ETH to balance the Metapool", async () => {
       const { oethMetaPool } = fixture;
@@ -513,6 +510,7 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
         // reduce by 0.1%
         .mul(999)
         .div(1000);
+      expect(lpAmount).to.be.gt(0);
 
       await assertRemoveOnlyAssets(lpAmount, fixture);
     });
@@ -549,13 +547,13 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
   });
 
   describe("with a little more OETH in the Metapool", () => {
-    const fixturePromise = createFixture(convexOETHMetaVaultFixture, {
+    const loadFixture = createFixtureLoader(convexOETHMetaVaultFixture, {
       wethMintAmount: 5000,
       depositToStrategy: false,
-      poolAddOethAmount: 3000,
+      poolAddOethAmount: 100,
     });
     beforeEach(async () => {
-      fixture = await fixturePromise();
+      fixture = await loadFixture();
     });
     it("Strategist should fail to remove too much OETH from the Metapool", async () => {
       const { convexEthMetaStrategy, strategist } = fixture;
@@ -683,7 +681,9 @@ async function assertRemoveOnlyAssets(lpAmount, fixture) {
     weth,
   } = fixture;
 
+  log(`Removing ${formatUnits(lpAmount)} ETH from the Metapool`);
   const ethRemoveAmount = await calcEthRemoveAmount(fixture, lpAmount);
+  log("After calc ETH remove amount");
   const curveBalancesBefore = await oethMetaPool.get_balances();
   const oethSupplyBefore = await oeth.totalSupply();
   const vaultWethBalanceBefore = await weth.balanceOf(oethVault.address);

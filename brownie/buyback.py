@@ -44,14 +44,13 @@ def build_buyback_tx(max_dollars=5000, max_slippage=2.0, with_fork=True):
     """
     buyback = BUYBACK_CONTRACT
     treasuryBps = BUYBACK_CONTRACT.treasuryBps()
-    ousd_for_treasury = max_dollars * treasuryBps / 10**4
-    ousd_to_swap = max_dollars - ousd_for_treasury
-
-
 
     # Calculate buyback amount
     ousd_available = ousd.balanceOf(buyback)
     buyback_amount = min(ousd_available, int(max_dollars * 10**18))
+
+    ousd_for_treasury = buyback_amount * treasuryBps / 10**4
+    ousd_to_swap = buyback_amount - ousd_for_treasury
 
     # Calculate returned OGV
     no_slippage_ogv = sim_buyback_ogv(10**18) * buyback_amount / 10**18
