@@ -46,7 +46,7 @@ describe("Aave Strategy", function () {
       .mint(asset.address, await units(amount, asset), 0);
   };
 
-  let fixture
+  let fixture;
   const loadFixture = createFixtureLoader(aaveVaultFixture);
   beforeEach(async function () {
     fixture = await loadFixture();
