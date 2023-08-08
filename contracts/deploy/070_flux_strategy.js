@@ -32,9 +32,7 @@ module.exports = deploymentWithGovernanceProposal(
       cHarvesterProxy.address
     );
 
-    const dFluxStrategyProxy = await deployWithConfirmation(
-      "FluxStrategyProxy"
-    );
+    await deployWithConfirmation("FluxStrategyProxy");
     const cFluxStrategyProxy = await ethers.getContract("FluxStrategyProxy");
 
     const dFluxStrategy = await deployWithConfirmation(
@@ -53,10 +51,6 @@ module.exports = deploymentWithGovernanceProposal(
       "CompoundStrategy",
       dFluxStrategy.address
     );
-    const cFluxStrategy = await ethers.getContractAt(
-      "CompoundStrategy",
-      dFluxStrategyProxy.address
-    );
 
     // Construct initialize call data to init and configure the new strategy
     const initData = cFluxStrategyImpl.interface.encodeFunctionData(
@@ -72,10 +66,10 @@ module.exports = deploymentWithGovernanceProposal(
       ]
     );
 
+    // prettier-ignore
     await withConfirmation(
       cFluxStrategyProxy
-        .connect(sDeployer)
-        ["initialize(address,address,bytes)"](
+        .connect(sDeployer)["initialize(address,address,bytes)"](
           dFluxStrategy.address,
           governorAddr,
           initData,
