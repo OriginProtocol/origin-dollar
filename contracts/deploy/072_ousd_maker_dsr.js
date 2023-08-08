@@ -23,12 +23,13 @@ module.exports = deploymentWithGovernanceProposal(
     const { deployerAddr } = await getNamedAccounts();
     const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
-    // 1. Deploy new Generalized4626Strategy as there has been a number of gas optimizations since it was first deployed
+    // 1. Deploy new Maker DSR Strategy proxy
     const dMakerDsrProxy = await deployWithConfirmation(
       "MakerDsrStrategyProxy"
     );
     const cMakerDsrProxy = await ethers.getContract("MakerDsrStrategyProxy");
 
+    // 2. Deploy new Generalized4626Strategy contract as there has been a number of gas optimizations since it was first deployed
     const dMakerDsrStrategyImpl = await deployWithConfirmation(
       "Generalized4626Strategy",
       [[addresses.mainnet.sDAI, cVaultProxy.address], addresses.mainnet.DAI],
@@ -40,7 +41,7 @@ module.exports = deploymentWithGovernanceProposal(
       dMakerDsrProxy.address
     );
 
-    // 3. Construct initialize call data to init and configure the new Maker DRS strategy
+    // 3. Construct initialize call data to initialize and configure the new strategy
     const initData = cMakerDsr.interface.encodeFunctionData("initialize()", []);
 
     // 4. Init the proxy to point at the implementation, set the governor, and call initialize
@@ -49,7 +50,7 @@ module.exports = deploymentWithGovernanceProposal(
       cMakerDsrProxy.connect(sDeployer)[initFunction](
         dMakerDsrStrategyImpl.address,
         addresses.mainnet.Timelock, // governor
-        initData, // data for call to the initialize function on the Morpho strategy
+        initData, // data for delegate call to the initialize function on the strategy
         await getTxOpts()
       )
     );
@@ -65,7 +66,6 @@ module.exports = deploymentWithGovernanceProposal(
           signature: "approveStrategy(address)",
           args: [cMakerDsr.address],
         },
-        // Add a the default strategy for DAI assets?
       ],
     };
   }

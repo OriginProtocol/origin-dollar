@@ -1658,10 +1658,25 @@ async function replaceContractAt(targetAddress, mockContract) {
 }
 
 /**
- *
- * @param {*} fixture function that creates a fixture
+ * A fixture is a setup function that is run only the first time it's invoked. On subsequent invocations,
+ * Hardhat will reset the state of the network to what it was at the point after the fixture was initially executed.
+ * The returned `loadFixture` function is typically inlcuded in the beforeEach().
+ * @example
+ *   const loadFixture = createFixtureLoader(convexOETHMetaVaultFixture);
+ *   beforeEach(async () => {
+ *     fixture = await loadFixture();
+ *   });
+ * @example
+ *   const loadFixture = createFixtureLoader(convexOETHMetaVaultFixture, {
+ *     wethMintAmount: 5000,
+ *     depositToStrategy: false,
+ *   });
+ *   beforeEach(async () => {
+ *     fixture = await loadFixture();
+ *   });
+ * @param {*} fixture async function that sets up test data. eg users, contracts and protocols
  * @param {*} config optional config object passed to the fixture function
- * @returns an async function that loads a fixture
+ * @returns loadFixture an async function that loads a fixture
  */
 function createFixtureLoader(fixture, config) {
   return deployments.createFixture(async () => {
