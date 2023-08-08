@@ -37,7 +37,18 @@ module.exports = deploymentWithGovernanceProposal(
     );
     const cFluxStrategyProxy = await ethers.getContract("FluxStrategyProxy");
 
-    const dFluxStrategy = await deployWithConfirmation("CompoundStrategy");
+    const dFluxStrategy = await deployWithConfirmation(
+      "CompoundStrategy",
+      [
+        {
+          platformAddress: addresses.dead,
+          vaultAddress: cVaultProxy.address,
+        },
+      ],
+      null,
+      // Skipping storage checks since the CompoundStrategy contract has changed
+      true
+    );
     const cFluxStrategyImpl = await ethers.getContractAt(
       "CompoundStrategy",
       dFluxStrategy.address
@@ -49,10 +60,8 @@ module.exports = deploymentWithGovernanceProposal(
 
     // Construct initialize call data to init and configure the new strategy
     const initData = cFluxStrategyImpl.interface.encodeFunctionData(
-      "initialize(address,address,address[],address[],address[])",
+      "initialize(address[],address[],address[])",
       [
-        addresses.dead,
-        cVaultProxy.address,
         [], // reward token addresses
         [addresses.mainnet.DAI, addresses.mainnet.USDC, addresses.mainnet.USDT],
         [
