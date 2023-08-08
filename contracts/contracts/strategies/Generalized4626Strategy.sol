@@ -192,7 +192,17 @@ contract Generalized4626Strategy is InitializableAbstractStrategy {
      * @dev If the ERC-4626 Tokenized Vault needed to be changed, a new
      * contract would need to be deployed and the proxy updated.
      */
-    function setPTokenAddress(address, address) external override {
+    function setPTokenAddress(address, address) external override onlyGovernor {
+        revert("unsupported function");
+    }
+
+    /**
+     * @notice is not supported for this strategy as the asset and
+     * ERC-4626 Tokenized Vault are set at deploy time.
+     * @dev If the ERC-4626 Tokenized Vault needed to be changed, a new
+     * contract would need to be deployed and the proxy updated.
+     */
+    function removePToken(uint256) external override onlyGovernor {
         revert("unsupported function");
     }
 }

@@ -51,6 +51,9 @@ forkOnlyDescribe("ForkTest: Maker DSR Strategy", function () {
       expect(
         await makerDsrStrategy.assetToPToken(addresses.mainnet.DAI)
       ).to.equal(addresses.mainnet.sDAI);
+      expect(await makerDsrStrategy.governor()).to.equal(
+        addresses.mainnet.Timelock
+      );
     });
     it("Should be able to check balance", async () => {
       const { dai, josh, makerDsrStrategy } = fixture;
@@ -311,6 +314,27 @@ forkOnlyDescribe("ForkTest: Maker DSR Strategy", function () {
       // Governor can withdraw all
       const tx = makerDsrStrategy.connect(timelock).withdrawAll();
       await expect(tx).to.emit(makerDsrStrategy, "Withdrawal");
+    });
+  });
+
+  describe("administration", () => {
+    const loadFixture = createFixtureLoader(makerDsrFixture);
+    beforeEach(async () => {
+      fixture = await loadFixture();
+    });
+    it("Governor should not be able to set the platform token", () => {
+      const { frxETH, sfrxETH, makerDsrStrategy, timelock } = fixture;
+
+      const tx = makerDsrStrategy
+        .connect(timelock)
+        .setPTokenAddress(frxETH.address, sfrxETH.address);
+      expect(tx).to.be.revertedWith("unsupported function");
+    });
+    it("Governor should not be able to remove the platform token", () => {
+      const { makerDsrStrategy, timelock } = fixture;
+
+      const tx = makerDsrStrategy.connect(timelock).removePToken(0);
+      expect(tx).to.be.revertedWith("unsupported function");
     });
   });
 });

@@ -226,7 +226,7 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
      *      This method can only be called by the system Governor
      * @param _assetIndex Index of the asset to be removed
      */
-    function removePToken(uint256 _assetIndex) external onlyGovernor {
+    function removePToken(uint256 _assetIndex) external virtual onlyGovernor {
         require(_assetIndex < assetsMapped.length, "Invalid index");
         address asset = assetsMapped[_assetIndex];
         address pToken = assetToPToken[asset];
