@@ -178,10 +178,13 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
         fromBlock: receipt.blockNumber - 1,
       });
 
-      // Check emitted event
+      // Check emitted events
       await expect(tx)
         .to.emit(convexEthMetaStrategy, "Deposit")
         .withArgs(weth.address, oethMetaPool.address, wethDepositAmount);
+      await expect(tx)
+        .to.emit(convexEthMetaStrategy, "Deposit")
+        .withArgs(oeth.address, oethMetaPool.address, oethMintAmount);
 
       // Check the ETH and OETH balances in the Curve Metapool
       const curveBalancesAfter = await oethMetaPool.get_balances();
@@ -227,6 +230,7 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
     it("Only vault can deposit all WETH to AMO strategy", async function () {
       const {
         convexEthMetaStrategy,
+        oethMetaPool,
         oethVaultSigner,
         strategist,
         timelock,
@@ -248,7 +252,9 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
       const tx = await convexEthMetaStrategy
         .connect(oethVaultSigner)
         .depositAll();
-      await expect(tx).to.emit(convexEthMetaStrategy, "Deposit");
+      await expect(tx)
+        .to.emit(convexEthMetaStrategy, "Deposit")
+        .withNamedArgs({ _asset: weth.address, _pToken: oethMetaPool.address });
     });
   });
 
@@ -297,10 +303,13 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
         fromBlock: receipt.blockNumber - 1,
       });
 
-      // Check emitted event
+      // Check emitted events
       await expect(tx)
         .to.emit(convexEthMetaStrategy, "Withdrawal")
         .withArgs(weth.address, oethMetaPool.address, ethWithdrawAmount);
+      await expect(tx)
+        .to.emit(convexEthMetaStrategy, "Withdrawal")
+        .withArgs(oeth.address, oethMetaPool.address, oethBurnAmount);
 
       // Check the ETH and OETH balances in the Curve Metapool
       const curveBalancesAfter = await oethMetaPool.get_balances();
@@ -357,10 +366,13 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
         fromBlock: receipt.blockNumber - 1,
       });
 
-      // Check emitted event
+      // Check emitted events
       await expect(tx)
         .to.emit(convexEthMetaStrategy, "Withdrawal")
         .withArgs(weth.address, oethMetaPool.address, withdrawAmount);
+      await expect(tx)
+        .to.emit(convexEthMetaStrategy, "Withdrawal")
+        .withNamedArgs({ _asset: oeth.address, _pToken: oethMetaPool.address });
 
       // Check the ETH and OETH balances in the Curve Metapool
       const curveBalancesAfter = await oethMetaPool.get_balances();

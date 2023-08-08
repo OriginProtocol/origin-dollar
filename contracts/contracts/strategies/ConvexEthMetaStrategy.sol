@@ -199,6 +199,8 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
          */
         IVault(vaultAddress).mintForStrategy(oethToAdd);
 
+        emit Deposit(address(oeth), address(lpToken), oethToAdd);
+
         uint256[2] memory _amounts;
         _amounts[ethCoinIndex] = _wethAmount;
         _amounts[oethCoinIndex] = oethToAdd;
@@ -272,7 +274,11 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         curvePool.remove_liquidity(requiredLpTokens, _minWithdrawalAmounts);
 
         // Burn all the removed OETH and any that was left in the strategy
-        IVault(vaultAddress).burnForStrategy(oeth.balanceOf(address(this)));
+        uint256 oethToBurn = oeth.balanceOf(address(this));
+        IVault(vaultAddress).burnForStrategy(oethToBurn);
+
+        emit Withdrawal(address(oeth), address(lpToken), oethToBurn);
+
         // Transfer WETH to the recipient
         weth.deposit{ value: _amount }();
         require(
@@ -331,8 +337,8 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         );
 
         // Burn all OETH
-        uint256 oethBalance = oeth.balanceOf(address(this));
-        IVault(vaultAddress).burnForStrategy(oethBalance);
+        uint256 oethToBurn = oeth.balanceOf(address(this));
+        IVault(vaultAddress).burnForStrategy(oethToBurn);
 
         // Get the strategy contract's ether balance.
         // This includes all that was removed from the Metapool and
@@ -346,6 +352,7 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         );
 
         emit Withdrawal(address(weth), address(lpToken), ethBalance);
+        emit Withdrawal(address(oeth), address(lpToken), oethToBurn);
     }
 
     /***************************************
@@ -378,7 +385,7 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         );
 
         // Remove just the OTokens from the Metapool
-        uint256 oTokens = curvePool.remove_liquidity_one_coin(
+        uint256 oethToBurn = curvePool.remove_liquidity_one_coin(
             _lpTokens,
             int128(oethCoinIndex),
             minOethAmount,
@@ -386,9 +393,9 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         );
 
         // The vault burns the OTokens from this strategy
-        IVault(vaultAddress).burnForStrategy(oTokens);
+        IVault(vaultAddress).burnForStrategy(oethToBurn);
 
-        emit Withdrawal(address(oeth), address(lpToken), oTokens);
+        emit Withdrawal(address(oeth), address(lpToken), oethToBurn);
     }
 
     /**
