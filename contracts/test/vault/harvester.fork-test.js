@@ -2,14 +2,15 @@ const { expect } = require("chai");
 const { utils } = require("ethers");
 
 const { loadDefaultFixture } = require("./../_fixture");
-const { forkOnlyDescribe } = require("./../helpers");
+const { forkOnlyDescribe, isCI } = require("./../helpers");
 const { MAX_UINT256 } = require("../../utils/constants");
 const { parseUnits } = require("ethers").utils;
 
 forkOnlyDescribe("ForkTest: Harvester", function () {
   this.timeout(0);
-  // due to hardhat forked mode timeouts - retry failed tests up to 3 times
-  this.retries(3);
+
+  // Retry up to 3 times on CI
+  this.retries(isCI ? 3 : 0);
 
   let fixture;
   beforeEach(async () => {

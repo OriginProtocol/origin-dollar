@@ -286,6 +286,7 @@ const isSmokeTest = process.env.SMOKE_TEST === "true";
 const isMainnetOrFork = isMainnet || isFork;
 const isForkTest = isFork && isTest;
 const isForkWithLocalNode = isFork && process.env.LOCAL_PROVIDER_URL;
+const isCI = process.env.GITHUB_ACTIONS;
 
 /// Advances the EVM time by the given number of seconds
 const advanceTime = async (seconds) => {
@@ -732,6 +733,7 @@ module.exports = {
   isMainnetOrFork,
   isForkTest,
   isForkWithLocalNode,
+  isCI,
   getOracleAddress,
   setOracleTokenPriceUsd,
   getOracleAddresses,

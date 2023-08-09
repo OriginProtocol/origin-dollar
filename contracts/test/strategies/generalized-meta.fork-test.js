@@ -2,7 +2,7 @@ const { expect } = require("chai");
 const hre = require("hardhat");
 const { ethers } = hre;
 
-const { units, ousdUnits, forkOnlyDescribe } = require("../helpers");
+const { units, ousdUnits, forkOnlyDescribe, isCI } = require("../helpers");
 const {
   createFixtureLoader,
   convexGeneralizedMetaForkedFixture,
@@ -28,8 +28,10 @@ metastrategies.forEach((config) => {
     `ForkTest: Convex 3pool/${config.token} Meta Strategy`,
     function () {
       this.timeout(0);
-      // due to hardhat forked mode timeouts - retry failed tests up to 3 times
-      this.retries(3);
+
+      // Retry up to 3 times on CI
+      this.retries(isCI ? 3 : 0);
+
       let fixture;
       const loadFixture = createFixtureLoader(
         convexGeneralizedMetaForkedFixture,
