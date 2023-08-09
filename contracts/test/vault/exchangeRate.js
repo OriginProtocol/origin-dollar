@@ -1,10 +1,9 @@
-const { defaultFixture } = require("../_fixture");
 const { expect } = require("chai");
 
+const { loadDefaultFixture } = require("../_fixture");
 const {
   ousdUnits,
   daiUnits,
-  loadFixture,
   setOracleTokenPriceUsd,
   isFork,
 } = require("../helpers");
@@ -15,9 +14,8 @@ describe("Vault Redeem", function () {
   }
 
   let fixture;
-
   beforeEach(async function () {
-    fixture = await loadFixture(defaultFixture);
+    fixture = await loadDefaultFixture();
     const { vault, reth, governor } = fixture;
     await vault.connect(governor).supportAsset(reth.address, 1);
     await setOracleTokenPriceUsd("RETHETH", "1.2");

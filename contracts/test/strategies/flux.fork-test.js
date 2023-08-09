@@ -2,28 +2,22 @@ const { expect } = require("chai");
 
 const addresses = require("../../utils/addresses");
 const {
-  fluxStrategyFixtureSetup,
+  fluxStrategyFixture,
   impersonateAndFundContract,
-  defaultFixtureSetup,
+  createFixtureLoader,
 } = require("../_fixture");
-const { units, ousdUnits, forkOnlyDescribe } = require("../helpers");
-
-const fluxStrategyFixture = fluxStrategyFixtureSetup();
+const { units, ousdUnits, forkOnlyDescribe, isCI } = require("../helpers");
 
 forkOnlyDescribe("Flux strategy", function () {
   this.timeout(0);
 
-  let fixture;
-  beforeEach(async () => {
-    fixture = await fluxStrategyFixture();
-  });
+  // Retry up to 3 times on CI
+  this.retries(isCI ? 3 : 0);
 
-  after(async () => {
-    // This is needed to revert fixtures
-    // The other tests as of now don't use proper fixtures
-    // Rel: https://github.com/OriginProtocol/origin-dollar/issues/1259
-    const f = defaultFixtureSetup();
-    await f();
+  let fixture;
+  const loadFixture = createFixtureLoader(fluxStrategyFixture);
+  beforeEach(async () => {
+    fixture = await loadFixture();
   });
 
   describe("Post deployment", () => {

@@ -1,7 +1,8 @@
-const { defaultFixture } = require("../_fixture");
 const { expect } = require("chai");
 const { utils } = require("ethers");
-const { ognUnits, advanceTime, loadFixture, isFork } = require("../helpers");
+
+const { loadDefaultFixture } = require("../_fixture");
+const { ognUnits, advanceTime, isFork } = require("../helpers");
 
 const day = 24 * 60 * 60;
 const threeMonth = 90 * day;
@@ -17,10 +18,13 @@ describe.skip("Single Asset Staking", function () {
     this.timeout(0);
   }
 
+  let fixture;
+  beforeEach(async () => {
+    fixture = await loadDefaultFixture();
+  });
+
   it("Staking can be paused and unpaused appropriately", async () => {
-    const { ogn, anna, governor, ognStaking } = await loadFixture(
-      defaultFixture
-    );
+    const { ogn, anna, governor, ognStaking } = fixture;
 
     expect(await ognStaking.paused()).to.equal(false);
 
@@ -48,7 +52,8 @@ describe.skip("Single Asset Staking", function () {
   });
 
   it("Invalid durations not allowed", async () => {
-    const { ogn, anna, ognStaking } = await loadFixture(defaultFixture);
+    const { ogn, anna, ognStaking } = fixture;
+
     const stakeAmount = ognUnits("1");
     await ogn.connect(anna).approve(ognStaking.address, stakeAmount);
 
@@ -58,7 +63,7 @@ describe.skip("Single Asset Staking", function () {
   });
 
   it("Stake then exit for three months with correct rewards", async () => {
-    const { ogn, anna, ognStaking } = await loadFixture(defaultFixture);
+    const { ogn, anna, ognStaking } = fixture;
 
     const annaStartBalance = await ogn.balanceOf(anna.address);
 
@@ -142,7 +147,7 @@ describe.skip("Single Asset Staking", function () {
   });
 
   it("Stake using WithSender with correct rewards", async () => {
-    const { ogn, anna, ognStaking } = await loadFixture(defaultFixture);
+    const { ogn, anna, ognStaking } = fixture;
 
     const annaStartBalance = await ogn.balanceOf(anna.address);
 
@@ -198,7 +203,7 @@ describe.skip("Single Asset Staking", function () {
   });
 
   it("Multiple stakes with overlapping time periods", async () => {
-    const { ogn, anna, ognStaking } = await loadFixture(defaultFixture);
+    const { ogn, anna, ognStaking } = fixture;
 
     const annaStartBalance = await ogn.balanceOf(anna.address);
 
@@ -304,9 +309,7 @@ describe.skip("Single Asset Staking", function () {
   });
 
   it("Change rates does not effect existing stake", async () => {
-    const { ogn, anna, governor, ognStaking } = await loadFixture(
-      defaultFixture
-    );
+    const { ogn, anna, governor, ognStaking } = fixture;
 
     const annaStartBalance = await ogn.balanceOf(anna.address);
 
@@ -354,7 +357,7 @@ describe.skip("Single Asset Staking", function () {
   });
 
   it("Don't allow stake if we can't pay it off", async () => {
-    const { ogn, anna, ognStaking } = await loadFixture(defaultFixture);
+    const { ogn, anna, ognStaking } = fixture;
 
     const stakeAmount = ognUnits("1000");
     await ogn.connect(anna).approve(ognStaking.address, stakeAmount);
@@ -387,7 +390,7 @@ describe.skip("Single Asset Staking", function () {
   });
 
   it("Allows stake if we can just pay it off", async () => {
-    const { ogn, anna, ognStaking } = await loadFixture(defaultFixture);
+    const { ogn, anna, ognStaking } = fixture;
 
     const stakeAmount = ognUnits("996");
     await ogn.connect(anna).approve(ognStaking.address, stakeAmount);
@@ -400,7 +403,7 @@ describe.skip("Single Asset Staking", function () {
   });
 
   it("Stake then exit and then stake again", async () => {
-    const { ogn, anna, ognStaking } = await loadFixture(defaultFixture);
+    const { ogn, anna, ognStaking } = fixture;
 
     const annaStartBalance = await ogn.balanceOf(anna.address);
 
@@ -441,9 +444,7 @@ describe.skip("Single Asset Staking", function () {
   });
 
   it("Stake, transfer then exit and then stake again", async () => {
-    const { ogn, anna, matt, governor, ognStaking } = await loadFixture(
-      defaultFixture
-    );
+    const { ogn, anna, matt, governor, ognStaking } = fixture;
 
     // use signer 8 as the the agent
     const transferAgent = await ethers.getSigner(8);
@@ -517,7 +518,7 @@ describe.skip("Single Asset Staking", function () {
   if (process.env.TEST_MAX_STAKES) {
     this.timeout(0);
     it("Stake up to max stakes and then exit", async () => {
-      const { ogn, anna, ognStaking } = await loadFixture(defaultFixture);
+      const { ogn, anna, ognStaking } = fixture;
 
       const annaStartBalance = await ogn.balanceOf(anna.address);
 

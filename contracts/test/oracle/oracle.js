@@ -1,11 +1,7 @@
-const { defaultFixture } = require("../_fixture");
-
-const {
-  ousdUnits,
-  setOracleTokenPriceUsd,
-  loadFixture,
-} = require("../helpers");
 const { expect } = require("chai");
+
+const { loadDefaultFixture } = require("../_fixture");
+const { ousdUnits, setOracleTokenPriceUsd } = require("../helpers");
 
 /*
  * Because the oracle code is so tightly intergrated into the vault,
@@ -13,9 +9,13 @@ const { expect } = require("chai");
  */
 
 describe("Oracle", async () => {
+  let fixture;
+  beforeEach(async () => {
+    fixture = await loadDefaultFixture();
+  });
   describe("Oracle read methods for DAPP", () => {
     it("should read the mint price", async () => {
-      const { vault, usdt } = await loadFixture(defaultFixture);
+      const { vault, usdt } = fixture;
       const tests = [
         ["0.998", "0.998"],
         ["1.00", "1.00"],
@@ -31,7 +31,7 @@ describe("Oracle", async () => {
     });
 
     it("should fail below peg on the mint price", async () => {
-      const { vault, usdt } = await loadFixture(defaultFixture);
+      const { vault, usdt } = fixture;
       const prices = ["0.85", "0.997"];
       for (const price of prices) {
         await setOracleTokenPriceUsd("USDT", price);
@@ -42,7 +42,7 @@ describe("Oracle", async () => {
     });
 
     it("should read the redeem price", async () => {
-      const { vault, usdt } = await loadFixture(defaultFixture);
+      const { vault, usdt } = fixture;
       const tests = [
         ["0.80", "1.00"],
         ["1.00", "1.00"],
@@ -76,7 +76,7 @@ describe("Oracle", async () => {
       const revertLabel = expectedRevert ? "revert" : "not revert";
       const label = `Should ${revertLabel} because of drift at $${price}`;
       it(label, async () => {
-        const { vault, usdt } = await loadFixture(defaultFixture);
+        const { vault, usdt } = fixture;
         await setOracleTokenPriceUsd("USDT", price);
         if (expectedRevert) {
           const tx = vault.priceUnitRedeem(usdt.address);

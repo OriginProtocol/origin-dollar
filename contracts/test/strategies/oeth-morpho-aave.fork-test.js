@@ -8,30 +8,21 @@ const {
   advanceTime,
 } = require("../helpers");
 const {
-  defaultFixtureSetup,
-  oethMorphoAaveFixtureSetup,
+  createFixtureLoader,
+  oethMorphoAaveFixture,
   impersonateAndFundContract,
 } = require("../_fixture");
 
 forkOnlyDescribe("ForkTest: Morpho Aave OETH Strategy", function () {
-  const oethMorphoAaveFixture = oethMorphoAaveFixtureSetup();
-
-  after(async () => {
-    // This is needed to revert fixtures
-    // The other tests as of now don't use proper fixtures
-    // Rel: https://github.com/OriginProtocol/origin-dollar/issues/1259
-    const f = defaultFixtureSetup();
-    await f();
-  });
-
   this.timeout(0);
 
   // Retry up to 3 times on CI
   this.retries(process.env.GITHUB_ACTIONS ? 3 : 0);
 
   let fixture;
+  const loadFixture = createFixtureLoader(oethMorphoAaveFixture);
   beforeEach(async () => {
-    fixture = await oethMorphoAaveFixture();
+    fixture = await loadFixture();
   });
 
   describe("Mint", function () {

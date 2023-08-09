@@ -1,12 +1,12 @@
 const { expect } = require("chai");
-const { defaultFixture, impersonateAccount } = require("../_fixture");
-const { loadFixture } = require("../helpers");
+
+const { loadDefaultFixture, impersonateAccount } = require("../_fixture");
 
 describe("Check vault value", () => {
   let vault, ousd, matt, dai, checker, vaultSigner;
 
   beforeEach(async () => {
-    const fixture = await loadFixture(defaultFixture);
+    const fixture = await loadDefaultFixture();
     vault = fixture.vault;
     ousd = fixture.ousd;
     matt = fixture.matt;

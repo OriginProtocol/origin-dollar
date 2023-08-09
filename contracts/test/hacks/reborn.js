@@ -1,7 +1,7 @@
 const { expect } = require("chai");
 
-const { rebornFixture } = require("../_fixture");
-const { loadFixture, isFork, daiUnits, ousdUnits } = require("../helpers");
+const { createFixtureLoader, rebornFixture } = require("../_fixture");
+const { isFork, daiUnits, ousdUnits } = require("../helpers");
 
 describe("Reborn Attack Protection", function () {
   if (isFork) {
@@ -9,8 +9,12 @@ describe("Reborn Attack Protection", function () {
   }
 
   describe("Vault", function () {
+    let fixture;
+    const loadFixture = createFixtureLoader(rebornFixture);
+    beforeEach(async () => {
+      fixture = await loadFixture();
+    });
     it("Should correctly do accounting when reborn calls mint as different types of addresses", async function () {
-      const fixture = await loadFixture(rebornFixture);
       const { dai, ousd, matt, reborner, rebornAttack } = fixture;
       await dai.connect(matt).transfer(reborner.address, daiUnits("4"));
       await reborner.mint();
@@ -21,7 +25,6 @@ describe("Reborn Attack Protection", function () {
     });
 
     it("Should correctly do accounting when reborn calls burn as different types of addresses", async function () {
-      const fixture = await loadFixture(rebornFixture);
       const { dai, ousd, matt, reborner, rebornAttack } = fixture;
       await dai.connect(matt).transfer(reborner.address, daiUnits("4"));
       await reborner.mint();
@@ -32,7 +35,6 @@ describe("Reborn Attack Protection", function () {
     });
 
     it("Should correctly do accounting when reborn calls transfer as different types of addresses", async function () {
-      const fixture = await loadFixture(rebornFixture);
       const { dai, ousd, matt, reborner, rebornAttack } = fixture;
       await dai.connect(matt).transfer(reborner.address, daiUnits("4"));
       await reborner.mint();
@@ -44,9 +46,7 @@ describe("Reborn Attack Protection", function () {
     });
 
     it("Should have correct balance even after recreating", async function () {
-      const { dai, matt, reborner, rebornAttack, ousd } = await loadFixture(
-        rebornFixture
-      );
+      const { dai, matt, reborner, rebornAttack, ousd } = fixture;
 
       // Mint one OUSD and self-destruct
       await dai.connect(matt).transfer(reborner.address, daiUnits("4"));

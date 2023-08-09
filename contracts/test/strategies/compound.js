@@ -1,18 +1,22 @@
 const { expect } = require("chai");
 const { utils } = require("ethers");
 
-const { compoundFixture } = require("../_fixture");
-const { usdcUnits, loadFixture, isFork } = require("../helpers");
+const { createFixtureLoader, compoundFixture } = require("../_fixture");
+const { usdcUnits, isFork } = require("../helpers");
 
 describe("Compound strategy", function () {
   if (isFork) {
     this.timeout(0);
   }
 
+  let fixture;
+  const loadFixture = createFixtureLoader(compoundFixture);
+  beforeEach(async function () {
+    fixture = await loadFixture();
+  });
+
   it("Should allow a withdraw", async () => {
-    const { cStandalone, governor, usdc, cusdc } = await loadFixture(
-      compoundFixture
-    );
+    const { cStandalone, governor, usdc, cusdc } = fixture;
 
     const governorAddress = await governor.getAddress();
     const fakeVault = governor;
@@ -70,8 +74,8 @@ describe("Compound strategy", function () {
   });
 
   it("Should collect rewards", async () => {
-    const { cStandalone, vault, governor, harvester, usdc, comp } =
-      await loadFixture(compoundFixture);
+    const { cStandalone, vault, governor, harvester, usdc, comp } = fixture;
+
     const governorAddress = await governor.getAddress();
     const fakeVault = governor;
     const fakeVaultAddress = governorAddress;
@@ -124,7 +128,8 @@ describe("Compound strategy", function () {
   });
 
   it("Should allow Governor to set reward token address", async () => {
-    const { cStandalone, governor, comp } = await loadFixture(compoundFixture);
+    const { cStandalone, governor, comp } = fixture;
+
     await expect(
       cStandalone
         .connect(governor)
@@ -138,7 +143,7 @@ describe("Compound strategy", function () {
   });
 
   it("Should not allow non-Governor to set reward token address", async () => {
-    const { cStandalone, anna } = await loadFixture(compoundFixture);
+    const { cStandalone, anna } = fixture;
     await expect(
       cStandalone.connect(anna).setRewardTokenAddresses([cStandalone.address])
     ).to.be.revertedWith("Caller is not the Governor");

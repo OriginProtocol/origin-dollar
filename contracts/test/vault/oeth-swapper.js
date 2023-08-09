@@ -2,9 +2,9 @@ const { expect } = require("chai");
 const { utils, BigNumber } = require("ethers");
 
 const {
-  defaultFixture,
-  oethCollateralSwapFixtureSetup,
-  oeth1InchSwapperFixtureSetup,
+  createFixtureLoader,
+  oethCollateralSwapFixture,
+  oeth1InchSwapperFixture,
   impersonateAndFundContract,
 } = require("../_fixture");
 const {
@@ -13,21 +13,14 @@ const {
   UNISWAPV3_SELECTOR,
 } = require("../../utils/1Inch");
 
-const runFixture = oethCollateralSwapFixtureSetup();
-const run1InchFixture = oeth1InchSwapperFixtureSetup();
-
 const log = require("../../utils/logger")("test:oeth:swapper");
 
 describe("OETH Vault - Swapper", () => {
-  after(async () => {
-    await defaultFixture();
-  });
-
   describe("Swap Collateral", () => {
     let fixture;
-
+    const loadFixture = createFixtureLoader(oethCollateralSwapFixture);
     beforeEach(async () => {
-      fixture = await runFixture();
+      fixture = await loadFixture();
     });
 
     it("Should allow Governor to set slippage for assets", async () => {
@@ -330,9 +323,9 @@ describe("OETH Vault - Swapper", () => {
 
   describe("1inch Swapper", () => {
     let fixture;
-
+    const loadFixture = createFixtureLoader(oeth1InchSwapperFixture);
     beforeEach(async () => {
-      fixture = await run1InchFixture();
+      fixture = await loadFixture();
     });
 
     it("Should swap assets using 1inch router", async () => {
