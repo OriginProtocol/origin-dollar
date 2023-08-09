@@ -32,7 +32,9 @@ module.exports = deploymentWithGovernanceProposal(
       cHarvesterProxy.address
     );
 
-    const dFluxStrategyProxy = await deployWithConfirmation("FluxStrategyProxy");
+    const dFluxStrategyProxy = await deployWithConfirmation(
+      "FluxStrategyProxy"
+    );
     const cFluxStrategyProxy = await ethers.getContract("FluxStrategyProxy");
 
     const dFluxStrategy = await deployWithConfirmation(
