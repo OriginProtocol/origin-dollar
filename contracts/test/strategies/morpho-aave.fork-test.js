@@ -45,9 +45,11 @@ forkOnlyDescribe("ForkTest: Morpho Aave Strategy", function () {
     it("Should redeem from Morpho", async () => {
       const { vault, ousd, usdt, usdc, dai, anna } = fixture;
 
+      await vault.connect(anna).rebase();
+
       const supplyBeforeMint = await ousd.totalSupply();
 
-      const amount = "10000";
+      const amount = "10010";
 
       // Mint with all three assets
       for (const asset of [usdt, usdc, dai]) {
@@ -99,6 +101,9 @@ forkOnlyDescribe("ForkTest: Morpho Aave Strategy", function () {
       const { matt, usdc, vault, usdt, morphoAaveStrategy } = fixture;
       const vaultSigner = await impersonateAndFundContract(vault.address);
       const amount = "110000";
+
+      await vault.connect(matt).rebase();
+      await vault.connect(matt).allocate();
 
       const removeFundsFromVault = async () => {
         await usdc
@@ -155,6 +160,7 @@ forkOnlyDescribe("ForkTest: Morpho Aave Strategy", function () {
 async function mintTest(fixture, user, asset, amount = "30000") {
   const { vault, ousd, morphoAaveStrategy } = fixture;
 
+  await vault.connect(user).rebase();
   await vault.connect(user).allocate();
 
   const unitAmount = await units(amount, asset);
@@ -175,7 +181,7 @@ async function mintTest(fixture, user, asset, amount = "30000") {
 
   const balanceDiff = newBalance.sub(currentBalance);
   // Ensure user has correct balance (w/ 1% slippage tolerance)
-  expect(balanceDiff).to.approxEqualTolerance(ousdUnits(amount), 2);
+  expect(balanceDiff).to.approxEqualTolerance(ousdUnits(amount), 1);
 
   // Supply checks
   const supplyDiff = newSupply.sub(currentSupply);

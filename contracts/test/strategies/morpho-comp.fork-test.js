@@ -46,9 +46,11 @@ forkOnlyDescribe("ForkTest: Morpho Compound Strategy", function () {
     it("Should redeem from Morpho", async () => {
       const { vault, ousd, usdt, usdc, dai, domen } = fixture;
 
+      await vault.connect(domen).rebase();
+
       const supplyBeforeMint = await ousd.totalSupply();
 
-      const amount = "10000";
+      const amount = "10010";
 
       // Mint with all three assets
       for (const asset of [usdt, usdc, dai]) {
@@ -182,6 +184,7 @@ forkOnlyDescribe("ForkTest: Morpho Compound Strategy", function () {
 async function mintTest(fixture, user, asset, amount = "30000") {
   const { vault, ousd, morphoCompoundStrategy } = fixture;
 
+  await vault.connect(user).rebase();
   await vault.connect(user).allocate();
 
   const unitAmount = await units(amount, asset);
