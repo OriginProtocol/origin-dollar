@@ -1,6 +1,6 @@
 const hre = require("hardhat");
-
 const { ethers } = hre;
+const { formatUnits } = require("ethers/lib/utils");
 
 const addresses = require("../utils/addresses");
 const {
@@ -31,7 +31,22 @@ const sfrxETHAbi = require("./abi/sfrxETH.json");
 const { deployWithConfirmation } = require("../utils/deploy");
 const { defaultAbiCoder, parseUnits, parseEther } = require("ethers/lib/utils");
 
+const log = require("../utils/logger")("test:fixtures");
+
 const defaultFixture = deployments.createFixture(async () => {
+  log(`Forked from block: ${await hre.ethers.provider.getBlockNumber()}`);
+
+  log(
+    `Before deployments with param "${
+      isFork
+        ? undefined
+        : process.env.FORKED_LOCAL_TEST
+        ? ["none"]
+        : ["unit_tests"]
+    }"`
+  );
+
+  // Run the contract deployments
   await deployments.fixture(
     isFork
       ? undefined
@@ -42,6 +57,8 @@ const defaultFixture = deployments.createFixture(async () => {
       keepExistingDeployments: true,
     }
   );
+
+  log(`Block after deployments: ${await hre.ethers.provider.getBlockNumber()}`);
 
   const { governorAddr, strategistAddr, timelockAddr } =
     await getNamedAccounts();
@@ -847,6 +864,10 @@ async function convexMetaVaultFixture() {
       addresses.mainnet.ThreePool
     );
     // const curveFactory = await ethers.getContractAt(curveFactoryAbi, curveFactoryAddress)
+
+    const balances = await ousdMetaPool.get_balances();
+    log(`Metapool balance 0: ${formatUnits(balances[0])}`);
+    log(`Metapool balance 1: ${formatUnits(balances[1])}`);
 
     // Domen is loaded with 3CRV
     await fundWith3Crv(domen.getAddress(), ethers.BigNumber.from("0"));
