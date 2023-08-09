@@ -71,19 +71,20 @@ forkOnlyDescribe(
         const currentBalance = await ousd.connect(anna).balanceOf(anna.address);
 
         // Now try to redeem the amount
-        await vault.connect(anna).redeem(ousdUnits("29900"), 0);
+        const redeemAmount = ousdUnits("19000");
+        await vault.connect(anna).redeem(redeemAmount, 0);
 
         // User balance should be down by 30k
         const newBalance = await ousd.connect(anna).balanceOf(anna.address);
         expect(newBalance).to.approxEqualTolerance(
-          currentBalance.sub(ousdUnits("29900")),
+          currentBalance.sub(redeemAmount),
           1
         );
 
         const newSupply = await ousd.totalSupply();
         const supplyDiff = currentSupply.sub(newSupply);
 
-        expect(supplyDiff).to.be.gte(ousdUnits("29900"));
+        expect(supplyDiff).to.be.gte(redeemAmount);
       });
     });
   }

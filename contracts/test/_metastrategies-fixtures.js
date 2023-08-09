@@ -272,13 +272,6 @@ async function _getCoinLiquidity(pool, value) {
   return value.div(vPrice).mul(ousdUnits("1"));
 }
 
-// Convert Pool LP tokens to pool value, eg USD or 3CRV
-async function _getCoinValue(pool, lpAmount) {
-  const vPrice = await pool.get_virtual_price();
-  // value = LP tokens * virtual price / 1e18
-  return lpAmount.mul(vPrice).div(ousdUnits("1"));
-}
-
 module.exports = {
   convexMetaVaultFixture,
   withDefaultOUSDMetapoolStrategiesSet,
