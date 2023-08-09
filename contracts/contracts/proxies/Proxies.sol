@@ -156,3 +156,10 @@ contract BuybackProxy is InitializeGovernedUpgradeabilityProxy {
 contract OETHMorphoAaveStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
+
+/**
+ * @notice FluxStrategyProxy delegates calls to a CompoundStrategy implementation
+ */
+contract FluxStrategyProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
