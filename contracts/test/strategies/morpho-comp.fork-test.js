@@ -137,8 +137,12 @@ forkOnlyDescribe("ForkTest: Morpho Compound Strategy", function () {
       expect(vaultUsdcDiff).to.approxEqualTolerance(stratBalUsdc, 1);
       expect(vaultUsdtDiff).to.approxEqualTolerance(stratBalUsdt, 1);
 
-      expect(await morphoCompoundStrategy.checkBalance(usdc.address)).to.equal("0");
-      expect(await morphoCompoundStrategy.checkBalance(usdt.address)).to.equal("0");
+      expect(await morphoCompoundStrategy.checkBalance(usdc.address)).to.equal(
+        "0"
+      );
+      expect(await morphoCompoundStrategy.checkBalance(usdt.address)).to.equal(
+        "0"
+      );
     });
   });
 
