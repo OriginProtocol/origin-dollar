@@ -26,6 +26,7 @@ contract CompoundStrategy is BaseCompoundStrategy {
      */
     function collectRewardTokens()
         external
+        virtual
         override
         onlyHarvester
         nonReentrant

@@ -13,7 +13,7 @@ module.exports = deploymentWithGovernanceProposal(
     deployerIsProposer: true,
   },
   async ({ ethers }) => {
-    const { deployerAddr } = await getNamedAccounts();
+    const { deployerAddr, timelockAddr } = await getNamedAccounts();
 
     const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
@@ -32,11 +32,11 @@ module.exports = deploymentWithGovernanceProposal(
       cHarvesterProxy.address
     );
 
-    await deployWithConfirmation("FluxStrategyProxy");
+    const dFluxStrategyProxy = await deployWithConfirmation("FluxStrategyProxy");
     const cFluxStrategyProxy = await ethers.getContract("FluxStrategyProxy");
 
     const dFluxStrategy = await deployWithConfirmation(
-      "CompoundStrategy",
+      "FluxStrategy",
       [
         {
           platformAddress: addresses.dead,
@@ -48,8 +48,13 @@ module.exports = deploymentWithGovernanceProposal(
       true
     );
     const cFluxStrategyImpl = await ethers.getContractAt(
-      "CompoundStrategy",
+      "FluxStrategy",
       dFluxStrategy.address
+    );
+
+    const cFluxStrategy = await ethers.getContractAt(
+      "FluxStrategy",
+      dFluxStrategyProxy.address
     );
 
     // Construct initialize call data to init and configure the new strategy
@@ -71,7 +76,7 @@ module.exports = deploymentWithGovernanceProposal(
       cFluxStrategyProxy
         .connect(sDeployer)["initialize(address,address,bytes)"](
           dFluxStrategy.address,
-          addresses.mainnet.Timelock,
+          timelockAddr,
           initData,
           await getTxOpts()
         )
@@ -92,6 +97,11 @@ module.exports = deploymentWithGovernanceProposal(
           contract: cHarvester,
           signature: "setSupportedStrategy(address,bool)",
           args: [cFluxStrategyProxy.address, true],
+        },
+        {
+          contract: cFluxStrategy,
+          signature: "setHarvesterAddress(address)",
+          args: [cHarvesterProxy.address],
         },
       ],
     };
