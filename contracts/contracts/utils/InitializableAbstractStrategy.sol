@@ -120,16 +120,23 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
         _collectRewardTokens();
     }
 
-    function _collectRewardTokens() internal {
-        for (uint256 i = 0; i < rewardTokenAddresses.length; i++) {
+    /**
+     * @dev Default implementation that transfers reward tokens to the Vault.
+     * Implementing strategies need to add custom logic to collect the rewards.
+     */
+    function _collectRewardTokens() internal virtual {
+        uint256 rewardTokenCount = rewardTokenAddresses.length;
+        for (uint256 i = 0; i < rewardTokenCount; ++i) {
             IERC20 rewardToken = IERC20(rewardTokenAddresses[i]);
             uint256 balance = rewardToken.balanceOf(address(this));
-            emit RewardTokenCollected(
-                harvesterAddress,
-                rewardTokenAddresses[i],
-                balance
-            );
-            rewardToken.safeTransfer(harvesterAddress, balance);
+            if (balance > 0) {
+                emit RewardTokenCollected(
+                    harvesterAddress,
+                    address(rewardToken),
+                    balance
+                );
+                rewardToken.safeTransfer(harvesterAddress, balance);
+            }
         }
     }
 
@@ -181,7 +188,8 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
         external
         onlyGovernor
     {
-        for (uint256 i = 0; i < _rewardTokenAddresses.length; i++) {
+        uint256 rewardTokenCount = rewardTokenAddresses.length;
+        for (uint256 i = 0; i < rewardTokenCount; ++i) {
             require(
                 _rewardTokenAddresses[i] != address(0),
                 "Can not set an empty address as a reward token"
