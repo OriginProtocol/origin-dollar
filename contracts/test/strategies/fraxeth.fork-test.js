@@ -1,6 +1,6 @@
 const { expect } = require("chai");
 
-const { units, oethUnits, forkOnlyDescribe } = require("../helpers");
+const { units, oethUnits, forkOnlyDescribe, isCI } = require("../helpers");
 
 const {
   createFixtureLoader,
@@ -11,8 +11,9 @@ const {
 
 forkOnlyDescribe("ForkTest: FraxETH Strategy", function () {
   this.timeout(0);
-  // due to hardhat forked mode timeouts - retry failed tests up to 3 times
-  this.retries(3);
+
+  // Retry up to 3 times on CI
+  this.retries(isCI ? 3 : 0);
 
   let fixture;
   const loadFixture = createFixtureLoader(fraxETHStrategyFixture);

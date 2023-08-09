@@ -9,7 +9,7 @@ const {
 } = require("./../_fixture");
 const { getIInchSwapData, recodeSwapData } = require("../../utils/1Inch");
 const addresses = require("../../utils/addresses");
-const { forkOnlyDescribe } = require("../helpers");
+const { forkOnlyDescribe, isCI } = require("../helpers");
 const { resolveAsset } = require("../../utils/assets");
 
 const log = require("../../utils/logger")("test:fork:oeth:vault");
@@ -18,8 +18,9 @@ const oethWhaleAddress = "0xEADB3840596cabF312F2bC88A4Bb0b93A4E1FF5F";
 
 forkOnlyDescribe("ForkTest: OETH Vault", function () {
   this.timeout(0);
-  // due to hardhat forked mode timeouts - retry failed tests up to 3 times
-  // this.retries(3);
+
+  // Retry up to 3 times on CI
+  this.retries(isCI ? 3 : 0);
 
   let fixture;
 
