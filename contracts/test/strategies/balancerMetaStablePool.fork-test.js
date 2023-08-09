@@ -4,44 +4,41 @@ const { BigNumber } = require("ethers");
 
 const addresses = require("../../utils/addresses");
 const { balancer_rETH_WETH_PID } = require("../../utils/constants");
-const { units, oethUnits, forkOnlyDescribe } = require("../helpers");
+const { units, oethUnits, forkOnlyDescribe, isCI } = require("../helpers");
 const {
-  balancerREthFixtureSetup,
-  balancerWstEthFixtureSetup,
+  balancerREthFixture,
+  balancerWstEthFixture,
   impersonateAndFundContract,
-  defaultFixtureSetup,
+  createFixtureLoader,
 } = require("../_fixture");
 
 const log = require("../../utils/logger")("test:fork:strategy:balancer");
 
-const balancerREthFixture = balancerREthFixtureSetup({
-  defaultStrategy: true,
-});
-const noDefaultBalancerREthFixture = balancerREthFixtureSetup({
-  defaultStrategy: false,
-});
-const balancerWstEthFixture = balancerWstEthFixtureSetup();
+const loadBalancerREthFixtureDefault = createFixtureLoader(
+  balancerREthFixture, {
+    defaultStrategy: true,
+  }
+);
+
+const loadBalancerREthFixtureNotDefault = createFixtureLoader(
+  balancerREthFixture, {
+    defaultStrategy: false,
+  }
+);
+
+const loadBalancerWstEthFixture = createFixtureLoader(balancerWstEthFixture);
 
 forkOnlyDescribe(
   "ForkTest: Balancer MetaStablePool rETH/WETH Strategy",
   function () {
     this.timeout(0);
-    // due to hardhat forked mode timeouts - retry failed tests up to 3 times
-    // this.retries(3);
+    this.retries(isCI ? 3 : 0);
 
     let fixture;
 
-    after(async () => {
-      // This is needed to revert fixtures
-      // The other tests as of now don't use proper fixtures
-      // Rel: https://github.com/OriginProtocol/origin-dollar/issues/1259
-      const f = defaultFixtureSetup();
-      await f();
-    });
-
-    describe("Post deployment", () => {
+    describe.only("Post deployment", () => {
       beforeEach(async () => {
-        fixture = await balancerREthFixture();
+        fixture = await loadBalancerREthFixtureDefault();
       });
       it("Should have the correct initial state", async function () {
         const { balancerREthStrategy, oethVault } = fixture;
@@ -91,9 +88,9 @@ forkOnlyDescribe(
       });
     });
 
-    describe("Deposit", function () {
+    describe.only("Deposit", function () {
       beforeEach(async () => {
-        fixture = await noDefaultBalancerREthFixture();
+        fixture = await loadBalancerREthFixtureNotDefault();
       });
       it("Should deposit 5 WETH and 5 rETH in Balancer MetaStablePool strategy", async function () {
         const { reth, rEthBPT, weth } = fixture;
@@ -169,9 +166,9 @@ forkOnlyDescribe(
       });
     });
 
-    describe("Withdraw", function () {
+    describe.only("Withdraw", function () {
       beforeEach(async () => {
-        fixture = await noDefaultBalancerREthFixture();
+        fixture = await loadBalancerREthFixtureNotDefault();
         const { balancerREthStrategy, oethVault, strategist, reth, weth } =
           fixture;
 
@@ -295,11 +292,11 @@ forkOnlyDescribe(
       it("Should be able to withdraw with higher withdrawal slippage", async function () {});
     });
 
-    describe("Large withdraw", function () {
+    describe.only("Large withdraw", function () {
       const depositAmount = 30000;
       let depositAmountUnits, oethVaultSigner;
       beforeEach(async () => {
-        fixture = await noDefaultBalancerREthFixture();
+        fixture = await loadBalancerREthFixtureNotDefault();
         const {
           balancerREthStrategy,
           balancerREthPID,
@@ -503,9 +500,9 @@ forkOnlyDescribe(
       });
     });
 
-    describe("Harvest rewards", function () {
+    describe.only("Harvest rewards", function () {
       beforeEach(async () => {
-        fixture = await balancerREthFixture();
+        fixture = await loadBalancerREthFixtureDefault();
       });
       it("Should be able to collect reward tokens", async function () {
         const { josh, balancerREthStrategy, oethHarvester } = fixture;
@@ -522,21 +519,11 @@ forkOnlyDescribe(
 forkOnlyDescribe(
   "ForkTest: Balancer MetaStablePool wstETH/WETH Strategy",
   function () {
-    let fixture;
-    beforeEach(async () => {
-      fixture = await balancerWstEthFixture();
-    });
+    describe.only("Deposit", function () {
+      let fixture;
 
-    after(async () => {
-      // This is needed to revert fixtures
-      // The other tests as of now don't use proper fixtures
-      // Rel: https://github.com/OriginProtocol/origin-dollar/issues/1259
-      const f = defaultFixtureSetup();
-      await f();
-    });
-
-    describe("Deposit", function () {
       beforeEach(async () => {
+        fixture = await loadBalancerWstEthFixture();
         const { timelock, stETH, weth, oethVault } = fixture;
         await oethVault
           .connect(timelock)
@@ -572,8 +559,11 @@ forkOnlyDescribe(
       });
     });
 
-    describe("Withdraw", function () {
+    describe.only("Withdraw", function () {
+      let fixture;
+
       beforeEach(async () => {
+        fixture = await loadBalancerWstEthFixture(); 
         const { balancerWstEthStrategy, oethVault, strategist, stETH, weth } =
           fixture;
 
@@ -705,9 +695,10 @@ forkOnlyDescribe(
       });
     });
 
-    describe("Harvest rewards", function () {
+    describe.only("Harvest rewards", function () {
       it("Should be able to collect reward tokens", async function () {
-        const { josh, balancerWstEthStrategy, oethHarvester } = fixture;
+        const { josh, balancerWstEthStrategy, oethHarvester } =
+          await loadBalancerWstEthFixture();
 
         await oethHarvester.connect(josh)[
           // eslint-disable-next-line

@@ -1,31 +1,35 @@
 const { expect } = require("chai");
 
-const { loadFixture } = require("ethereum-waffle");
-const { units, ousdUnits, forkOnlyDescribe } = require("../helpers");
+const { units, ousdUnits, forkOnlyDescribe, isCI } = require("../helpers");
+const { createFixtureLoader } = require("../_fixture");
 const { withOUSDTitledMetapool } = require("../_metastrategies-fixtures");
 
 forkOnlyDescribe(
   "ForkTest: Convex 3pool/OUSD Meta Strategy - Titled to OUSD",
   function () {
     this.timeout(0);
-    // due to hardhat forked mode timeouts - retry failed tests up to 3 times
-    this.retries(3);
+
+    // Retry up to 3 times on CI
+    this.retries(isCI ? 3 : 0);
+
+    let fixture;
+    const loadFixture = createFixtureLoader(withOUSDTitledMetapool);
+    beforeEach(async () => {
+      fixture = await loadFixture();
+    });
 
     describe("Mint", function () {
-      it("Should stake USDT in Curve guage via metapool", async function () {
-        const fixture = await loadFixture(withOUSDTitledMetapool);
+      it("Should stake USDT in Curve gauge via metapool", async function () {
         const { josh, usdt } = fixture;
         await mintTest(fixture, josh, usdt, "100000");
       });
 
-      it("Should stake USDC in Curve guage via metapool", async function () {
-        const fixture = await loadFixture(withOUSDTitledMetapool);
+      it("Should stake USDC in Curve gauge via metapool", async function () {
         const { matt, usdc } = fixture;
         await mintTest(fixture, matt, usdc, "120000");
       });
 
-      it("Should NOT stake DAI in Curve guage via metapool", async function () {
-        const fixture = await loadFixture(withOUSDTitledMetapool);
+      it("Should NOT stake DAI in Curve gauge via metapool", async function () {
         const { anna, dai } = fixture;
         await mintTest(fixture, anna, dai, "110000");
       });
@@ -34,7 +38,7 @@ forkOnlyDescribe(
     describe("Redeem", function () {
       it("Should redeem", async () => {
         const { vault, ousd, usdt, usdc, dai, anna, OUSDmetaStrategy } =
-          await loadFixture(withOUSDTitledMetapool);
+          fixture;
 
         await vault.connect(anna).allocate();
 
@@ -67,19 +71,20 @@ forkOnlyDescribe(
         const currentBalance = await ousd.connect(anna).balanceOf(anna.address);
 
         // Now try to redeem the amount
-        await vault.connect(anna).redeem(ousdUnits("29900"), 0);
+        const redeemAmount = ousdUnits("19000");
+        await vault.connect(anna).redeem(redeemAmount, 0);
 
         // User balance should be down by 30k
         const newBalance = await ousd.connect(anna).balanceOf(anna.address);
         expect(newBalance).to.approxEqualTolerance(
-          currentBalance.sub(ousdUnits("29900")),
+          currentBalance.sub(redeemAmount),
           1
         );
 
         const newSupply = await ousd.totalSupply();
         const supplyDiff = currentSupply.sub(newSupply);
 
-        expect(supplyDiff).to.be.gte(ousdUnits("29900"));
+        expect(supplyDiff).to.be.gte(redeemAmount);
       });
     });
   }

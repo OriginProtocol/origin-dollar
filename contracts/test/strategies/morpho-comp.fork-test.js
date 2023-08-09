@@ -1,6 +1,5 @@
 const { expect } = require("chai");
 
-const { loadFixture } = require("ethereum-waffle");
 const {
   units,
   ousdUnits,
@@ -8,20 +7,24 @@ const {
   differenceInErc20TokenBalance,
   advanceBlocks,
   advanceTime,
+  isCI,
 } = require("../helpers");
 const {
+  createFixtureLoader,
   morphoCompoundFixture,
   impersonateAndFundContract,
 } = require("../_fixture");
 
 forkOnlyDescribe("ForkTest: Morpho Compound Strategy", function () {
   this.timeout(0);
-  // due to hardhat forked mode timeouts - retry failed tests up to 3 times
-  this.retries(3);
+
+  // Retry up to 3 times on CI
+  this.retries(isCI ? 3 : 0);
 
   let fixture;
+  const loadFixture = createFixtureLoader(morphoCompoundFixture);
   beforeEach(async () => {
-    fixture = await loadFixture(morphoCompoundFixture);
+    fixture = await loadFixture();
   });
 
   describe("Mint", function () {
@@ -45,9 +48,11 @@ forkOnlyDescribe("ForkTest: Morpho Compound Strategy", function () {
     it("Should redeem from Morpho", async () => {
       const { vault, ousd, usdt, usdc, dai, domen } = fixture;
 
+      await vault.connect(domen).rebase();
+
       const supplyBeforeMint = await ousd.totalSupply();
 
-      const amount = "10000";
+      const amount = "10010";
 
       // Mint with all three assets
       for (const asset of [usdt, usdc, dai]) {
@@ -103,25 +108,24 @@ forkOnlyDescribe("ForkTest: Morpho Compound Strategy", function () {
       const vaultSigner = await impersonateAndFundContract(vault.address);
       const amount = "110000";
 
-      const removeFundsFromVault = async () => {
-        await usdc
-          .connect(vaultSigner)
-          .transfer(matt.address, usdc.balanceOf(vault.address));
-        await usdt
-          .connect(vaultSigner)
-          .transfer(matt.address, usdt.balanceOf(vault.address));
-      };
-
-      // remove funds so no residual funds get allocated
-      await removeFundsFromVault();
-
-      await mintTest(fixture, matt, usdc, amount);
-      await mintTest(fixture, matt, usdt, amount);
-
       const usdcUnits = await units(amount, usdc);
       const usdtUnits = await units(amount, usdt);
+
+      await vault.connect(matt).mint(usdt.address, usdtUnits, 0);
+      await vault.connect(matt).mint(usdc.address, usdcUnits, 0);
+
+      await vault.connect(matt).rebase();
+      await vault.connect(matt).allocate();
+
       const vaultUsdtBefore = await usdt.balanceOf(vault.address);
       const vaultUsdcBefore = await usdc.balanceOf(vault.address);
+
+      const stratBalUsdc = await morphoCompoundStrategy.checkBalance(
+        usdc.address
+      );
+      const stratBalUsdt = await morphoCompoundStrategy.checkBalance(
+        usdt.address
+      );
 
       await morphoCompoundStrategy.connect(vaultSigner).withdrawAll();
 
@@ -130,8 +134,15 @@ forkOnlyDescribe("ForkTest: Morpho Compound Strategy", function () {
       const vaultUsdcDiff =
         (await usdc.balanceOf(vault.address)) - vaultUsdcBefore;
 
-      expect(vaultUsdcDiff).to.approxEqualTolerance(usdcUnits, 1);
-      expect(vaultUsdtDiff).to.approxEqualTolerance(usdtUnits, 1);
+      expect(vaultUsdcDiff).to.approxEqualTolerance(stratBalUsdc, 1);
+      expect(vaultUsdtDiff).to.approxEqualTolerance(stratBalUsdt, 1);
+
+      expect(await morphoCompoundStrategy.checkBalance(usdc.address)).to.equal(
+        "0"
+      );
+      expect(await morphoCompoundStrategy.checkBalance(usdt.address)).to.equal(
+        "0"
+      );
     });
   });
 
@@ -181,6 +192,7 @@ forkOnlyDescribe("ForkTest: Morpho Compound Strategy", function () {
 async function mintTest(fixture, user, asset, amount = "30000") {
   const { vault, ousd, morphoCompoundStrategy } = fixture;
 
+  await vault.connect(user).rebase();
   await vault.connect(user).allocate();
 
   const unitAmount = await units(amount, asset);

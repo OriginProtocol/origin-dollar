@@ -1,7 +1,8 @@
-const { defaultFixture } = require("../_fixture");
 const { expect } = require("chai");
 const { BigNumber } = require("ethers");
-const { advanceTime, loadFixture, isFork } = require("../helpers");
+
+const { loadDefaultFixture } = require("../_fixture");
+const { advanceTime, isFork } = require("../helpers");
 
 const day = 24 * 60 * 60;
 const year = 360 * day;
@@ -14,9 +15,13 @@ describe.skip("Airdropped Staking", function () {
     this.timeout(0);
   }
 
+  let fixture;
+  beforeEach(async () => {
+    fixture = await loadDefaultFixture();
+  });
+
   it("Can stake a signed entry", async () => {
-    const { ogn, anna, governor, ognStaking, signedPayouts } =
-      await loadFixture(defaultFixture);
+    const { ogn, anna, governor, ognStaking, signedPayouts } = fixture;
 
     const annaStartBalance = await ogn.balanceOf(anna.address);
 
@@ -85,9 +90,7 @@ describe.skip("Airdropped Staking", function () {
   });
 
   it("Can stake multiple signed entries", async () => {
-    const { anna, josh, matt, ognStaking, signedPayouts } = await loadFixture(
-      defaultFixture
-    );
+    const { anna, josh, matt, ognStaking, signedPayouts } = fixture;
 
     let totalAmount = BigNumber.from(0);
 
@@ -116,9 +119,7 @@ describe.skip("Airdropped Staking", function () {
   });
 
   it("Invalid proof not allowed", async () => {
-    const { anna, ognStaking, signedPayouts } = await loadFixture(
-      defaultFixture
-    );
+    const { anna, ognStaking, signedPayouts } = fixture;
 
     const payoutEntry = signedPayouts[anna.address];
 
@@ -139,9 +140,7 @@ describe.skip("Airdropped Staking", function () {
   });
 
   it("Invalid and double staking not allowed", async () => {
-    const { anna, ognStaking, signedPayouts } = await loadFixture(
-      defaultFixture
-    );
+    const { anna, ognStaking, signedPayouts } = fixture;
 
     const payoutEntry = signedPayouts[anna.address];
 

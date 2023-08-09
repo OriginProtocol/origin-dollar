@@ -1,12 +1,11 @@
 const { expect } = require("chai");
 const { utils } = require("ethers");
 
-const { aaveVaultFixture } = require("../_fixture");
+const { createFixtureLoader, aaveVaultFixture } = require("../_fixture");
 const {
   daiUnits,
   ousdUnits,
   units,
-  loadFixture,
   expectApproxSupply,
   getBlockTimestamp,
   isFork,
@@ -47,8 +46,10 @@ describe("Aave Strategy", function () {
       .mint(asset.address, await units(amount, asset), 0);
   };
 
+  let fixture;
+  const loadFixture = createFixtureLoader(aaveVaultFixture);
   beforeEach(async function () {
-    const fixture = await loadFixture(aaveVaultFixture);
+    fixture = await loadFixture();
     anna = fixture.anna;
     matt = fixture.matt;
     josh = fixture.josh;
@@ -155,7 +156,6 @@ describe("Aave Strategy", function () {
       return async function () {
         let currentTimestamp;
 
-        const fixture = await loadFixture(aaveVaultFixture);
         const aaveStrategy = fixture.aaveStrategy;
         const aaveIncentives = fixture.aaveIncentivesController;
         const aave = fixture.aaveToken;

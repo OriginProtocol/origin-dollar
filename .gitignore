@@ -58,6 +58,7 @@ contracts/deployments/hardhat*
 contracts/coverage/
 contracts/coverage.json
 contracts/build/
+contracts/dist/
 dapp/network.json
 dapp/keys/
 dapp/ganache-network.json

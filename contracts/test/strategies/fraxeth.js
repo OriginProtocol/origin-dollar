@@ -3,26 +3,17 @@ const { expect } = require("chai");
 const { oethUnits, units } = require("../helpers");
 
 const {
-  fraxETHStrategyFixtureSetup,
-  defaultFixtureSetup,
+  createFixtureLoader,
+  fraxETHStrategyFixture,
   impersonateAndFundContract,
 } = require("./../_fixture");
 const { BigNumber } = require("ethers");
 
-const fraxETHFixture = fraxETHStrategyFixtureSetup();
-
 describe("FraxETH Strategy", function () {
   let fixture;
+  const loadFixture = createFixtureLoader(fraxETHStrategyFixture);
   beforeEach(async () => {
-    fixture = await fraxETHFixture();
-  });
-
-  after(async () => {
-    // This is needed to revert fixtures
-    // The other tests as of now don't use proper fixtures
-    // Rel: https://github.com/OriginProtocol/origin-dollar/issues/1259
-    const f = defaultFixtureSetup();
-    await f();
+    fixture = await loadFixture();
   });
 
   describe("Mint", function () {

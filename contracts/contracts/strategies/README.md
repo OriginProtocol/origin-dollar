@@ -42,6 +42,20 @@
 
 ![Convex ETH Metapool Strategy Storage](../../docs/ConvexEthMetaStrategyStorage.svg) -->
 
+## Flux Strategy
+
+### Hierarchy
+
+![Flux Strategy Hierarchy](../../docs/FluxStrategyHierarchy.svg)
+
+### Squashed
+
+![Flux Strategy Squashed](../../docs/FluxStrategySquashed.svg)
+
+### Storage
+
+![Flux Strategy Storage](../../docs/FluxStrategyStorage.svg)
+
 ## Frax ETH Strategy
 
 ### Hierarchy

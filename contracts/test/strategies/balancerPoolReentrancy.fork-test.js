@@ -1,38 +1,38 @@
 const hre = require("hardhat");
 const { ethers } = hre;
 const { expect } = require("chai");
-const { forkOnlyDescribe } = require("../helpers");
+const { forkOnlyDescribe, isCI } = require("../helpers");
 const {
-  defaultFixtureSetup,
-  balancerREthFixtureSetup,
+  balancerREthFixture,
   mintWETH,
   impersonateAndFundContract,
+  createFixtureLoader,
 } = require("../_fixture");
 const { deployWithConfirmation } = require("../../utils/deploy");
 const { utils } = require("ethers");
 const { findBestMainnetTokenHolder } = require("../../utils/funding");
 const addresses = require("../../utils/addresses");
 
-const balancerREthFixture = balancerREthFixtureSetup({
-  defaultStrategy: true,
-});
-
 forkOnlyDescribe(
   "ForkTest: Balancer MetaStablePool - Read-only Reentrancy",
   function () {
     this.timeout(0);
+    // Retry up to 3 times on CI
+    this.retries(isCI ? 3 : 0);
 
-    after(async () => {
-      // This is needed to revert fixtures
-      // The other tests as of now don't use proper fixtures
-      // Rel: https://github.com/OriginProtocol/origin-dollar/issues/1259
-      const f = defaultFixtureSetup();
-      await f();
+    let fixture;
+    const loadFixture = createFixtureLoader(
+      balancerREthFixture, {
+        defaultStrategy: true,
+      }
+    );
+
+    beforeEach(async () => {
+      fixture = await loadFixture();
     });
 
-    it("Should not allow read-only reentrancy", async () => {
-      const { weth, reth, oethVault, rEthBPT, balancerREthPID, daniel } =
-        await balancerREthFixture();
+    it.only("Should not allow read-only reentrancy", async () => {
+      const { weth, reth, oethVault, rEthBPT, balancerREthPID, daniel } = fixture;
 
       // Deploy the attacking contract
       const dEvilContract = await deployWithConfirmation(

@@ -8,6 +8,8 @@
     "deploy:mainnet": "(npx hardhat deploy --network mainnet --verbose --export '../dapp/network.mainnet.json') && yarn run copy-interface-artifacts",
     "deploy:oeth": "(rm -rf deployments/hardhat && npx hardhat deploy --export '../dapp-oeth/network.json') && yarn run copy-interface-artifacts:oeth",
     "deploy:oeth:mainnet": "(npx hardhat deploy --network mainnet --verbose --export '../dapp-oeth/network.mainnet.json') && yarn run copy-interface-artifacts",
+    "abi:generate": "(rm -rf deployments/hardhat && mkdir -p dist/abi && npx hardhat deploy --export '../dist/network.json')",
+    "abi:dist": "find ./artifacts/contracts -name \"*.json\" -type f -exec cp {} ./dist/abi \\; && rm -rf dist/abi/*.dbg.json dist/abi/Mock*.json && cp ./abi.package.json dist/package.json && cp ./.npmrc.abi dist/.npmrc",
     "node": "yarn run node:fork",
     "node:fork": "./node.sh fork",
     "lint": "yarn run lint:js && yarn run lint:sol",

@@ -1,14 +1,13 @@
 const { expect } = require("chai");
 const { utils } = require("ethers");
-const { MAX_UINT256 } = require("../../utils/constants");
-const { convexVaultFixture } = require("../_fixture");
 
+const { MAX_UINT256 } = require("../../utils/constants");
+const { createFixtureLoader, convexVaultFixture } = require("../_fixture");
 const {
   daiUnits,
   usdtUnits,
   ousdUnits,
   units,
-  loadFixture,
   expectApproxSupply,
   isFork,
 } = require("../helpers");
@@ -42,8 +41,9 @@ describe("Convex Strategy", function () {
       .mint(asset.address, await units(amount, asset), 0);
   };
 
+  const loadFixture = createFixtureLoader(convexVaultFixture);
   beforeEach(async function () {
-    const fixture = await loadFixture(convexVaultFixture);
+    const fixture = await loadFixture();
     anna = fixture.anna;
     vault = fixture.vault;
     harvester = fixture.harvester;
