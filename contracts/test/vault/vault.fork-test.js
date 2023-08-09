@@ -305,7 +305,7 @@ forkOnlyDescribe("ForkTest: Vault", function () {
         "0x7A192DD9Cc4Ea9bdEdeC9992df74F1DA55e60a19", // LUSD MetaStrategy
         "0x79F2188EF9350A1dC11A062cca0abE90684b0197", // MorphoAaveStrategy
         // TODO: Hard-code these after deploy
-        //"0x7A192DD9Cc4Ea9bdEdeC9992df74F1DA55e60a19", // LUSD MetaStrategy
+        //"0x", // Flux Strategy
       ];
 
       for (const s of strategies) {
