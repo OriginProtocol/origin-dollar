@@ -13,7 +13,7 @@ module.exports = deploymentWithGovernanceProposal(
     deployerIsProposer: true,
   },
   async ({ ethers }) => {
-    const { deployerAddr, governorAddr } = await getNamedAccounts();
+    const { deployerAddr } = await getNamedAccounts();
 
     const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
@@ -71,7 +71,7 @@ module.exports = deploymentWithGovernanceProposal(
       cFluxStrategyProxy
         .connect(sDeployer)["initialize(address,address,bytes)"](
           dFluxStrategy.address,
-          governorAddr,
+          addresses.mainnet.Timelock,
           initData,
           await getTxOpts()
         )
