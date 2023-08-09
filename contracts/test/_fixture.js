@@ -149,7 +149,10 @@ const defaultFixture = deployments.createFixture(async () => {
     sDAI,
     mockNonRebasing,
     mockNonRebasingTwo,
-    LUSD;
+    LUSD,
+    fdai,
+    fusdt,
+    fusdc;
 
   let chainlinkOracleFeedDAI,
     chainlinkOracleFeedUSDT,
@@ -186,7 +189,8 @@ const defaultFixture = deployments.createFixture(async () => {
     swapper1Inch,
     mock1InchSwapRouter,
     ConvexEthMetaStrategyProxy,
-    ConvexEthMetaStrategy;
+    ConvexEthMetaStrategy,
+    fluxStrategy;
 
   if (isFork) {
     usdt = await ethers.getContractAt(usdtAbi, addresses.mainnet.USDT);
@@ -218,6 +222,9 @@ const defaultFixture = deployments.createFixture(async () => {
       morphoLensAbi,
       addresses.mainnet.MorphoLens
     );
+    fdai = await ethers.getContractAt(erc20Abi, addresses.mainnet.fDAI);
+    fusdc = await ethers.getContractAt(erc20Abi, addresses.mainnet.fUSDC);
+    fusdt = await ethers.getContractAt(erc20Abi, addresses.mainnet.fUSDT);
 
     crvMinter = await ethers.getContractAt(
       crvMinterAbi,
@@ -310,6 +317,12 @@ const defaultFixture = deployments.createFixture(async () => {
       dMockOETHOracleRouterNoStale
     );
     swapper = await ethers.getContract("Swapper1InchV5");
+
+    const fluxStrategyProxy = await ethers.getContract("FluxStrategyProxy");
+    fluxStrategy = await ethers.getContractAt(
+      "CompoundStrategy",
+      fluxStrategyProxy.address
+    );
   } else {
     usdt = await ethers.getContract("MockUSDT");
     dai = await ethers.getContract("MockDAI");
@@ -548,7 +561,14 @@ const defaultFixture = deployments.createFixture(async () => {
     flipper,
     buyback,
     wousd,
-    //OETH
+
+    // Flux strategy
+    fluxStrategy,
+    fdai,
+    fusdc,
+    fusdt,
+
+    // OETH
     oethVault,
     oeth,
     frxETH,
@@ -1657,6 +1677,33 @@ async function replaceContractAt(targetAddress, mockContract) {
   });
 }
 
+function fluxStrategyFixtureSetup() {
+  return deployments.createFixture(async () => {
+    const fixture = await defaultFixture();
+
+    const { fluxStrategy, timelock, vault, dai, usdt, usdc } = fixture;
+
+    await vault
+      .connect(timelock)
+      .setAssetDefaultStrategy(dai.address, fluxStrategy.address);
+
+    await vault
+      .connect(timelock)
+      .setAssetDefaultStrategy(usdt.address, fluxStrategy.address);
+
+    await vault
+      .connect(timelock)
+      .setAssetDefaultStrategy(usdc.address, fluxStrategy.address);
+
+    // Withdraw all from strategies and deposit it to Flux
+    await vault.connect(timelock).withdrawAllFromStrategies();
+
+    await vault.connect(timelock).rebase();
+
+    return fixture;
+  });
+}
+
 /**
  * A fixture is a setup function that is run only the first time it's invoked. On subsequent invocations,
  * Hardhat will reset the state of the network to what it was at the point after the fixture was initially executed.
@@ -1717,4 +1764,5 @@ module.exports = {
   replaceContractAt,
   oeth1InchSwapperFixtureSetup,
   oethCollateralSwapFixtureSetup,
+  fluxStrategyFixtureSetup,
 };

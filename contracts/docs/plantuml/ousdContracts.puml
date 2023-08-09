@@ -39,7 +39,7 @@ swap OUSD for OGV
 ' Strategies
 object "AaveStrategy" as aaveStrat <<Origin>><<Proxy>> #DeepSkyBlue {
     asset: DAI, USDC, USDT
-    aave tokens: aDAI, aUSDC, aUSDT
+    Aave tokens: aDAI, aUSDC, aUSDT
     ' rewards: AAVE
 }
 ' object "CompoundStrategy" as compStrat <<Origin>><<Proxy>> #DeepSkyBlue {
@@ -74,6 +74,11 @@ object "MorphoAaveStrategy" as morphAaveStrat <<Origin>><<Proxy>> #DeepSkyBlue {
     asset: DAI, USDC, USDT
     Aave tokens: aDAI, aUSDC, aUSDT
     ' rewards: AAVE
+}
+
+object "FluxStrategy" as fluxStrat <<Origin>><<Proxy>> #DeepSkyBlue {
+    asset: DAI, USDC, USDT
+    Flux tokens: fDAI, fUSDC, fUSDT
 }
 
 object "MakerDsrStrategy" as dsrStrat <<Origin>><<Proxy>> #DeepSkyBlue {
@@ -114,6 +119,7 @@ vault <...> amoStrat
 vault <...> cxvLusdStrat
 ' vault <...> morphCompStrat
 vault <...> morphAaveStrat
+vault <...> fluxStrat
 vault <...> dsrStrat
 
 drip <.. harv

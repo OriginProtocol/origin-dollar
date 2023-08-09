@@ -158,6 +158,13 @@ contract OETHMorphoAaveStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 }
 
 /**
+ * @notice FluxStrategyProxy delegates calls to a CompoundStrategy implementation
+ */
+contract FluxStrategyProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
+
+/**
  * @notice MakerDsrStrategyProxy delegates calls to a Generalized4626Strategy implementation
  */
 contract MakerDsrStrategyProxy is InitializeGovernedUpgradeabilityProxy {
