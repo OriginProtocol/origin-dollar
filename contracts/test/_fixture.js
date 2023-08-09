@@ -1677,31 +1677,29 @@ async function replaceContractAt(targetAddress, mockContract) {
   });
 }
 
-function fluxStrategyFixtureSetup() {
-  return deployments.createFixture(async () => {
-    const fixture = await defaultFixture();
+async function fluxStrategyFixture() {
+  const fixture = await defaultFixture();
 
-    const { fluxStrategy, timelock, vault, dai, usdt, usdc } = fixture;
+  const { fluxStrategy, timelock, vault, dai, usdt, usdc } = fixture;
 
-    await vault
-      .connect(timelock)
-      .setAssetDefaultStrategy(dai.address, fluxStrategy.address);
+  await vault
+    .connect(timelock)
+    .setAssetDefaultStrategy(dai.address, fluxStrategy.address);
 
-    await vault
-      .connect(timelock)
-      .setAssetDefaultStrategy(usdt.address, fluxStrategy.address);
+  await vault
+    .connect(timelock)
+    .setAssetDefaultStrategy(usdt.address, fluxStrategy.address);
 
-    await vault
-      .connect(timelock)
-      .setAssetDefaultStrategy(usdc.address, fluxStrategy.address);
+  await vault
+    .connect(timelock)
+    .setAssetDefaultStrategy(usdc.address, fluxStrategy.address);
 
-    // Withdraw all from strategies and deposit it to Flux
-    await vault.connect(timelock).withdrawAllFromStrategies();
+  // Withdraw all from strategies and deposit it to Flux
+  await vault.connect(timelock).withdrawAllFromStrategies();
 
-    await vault.connect(timelock).rebase();
+  await vault.connect(timelock).rebase();
 
-    return fixture;
-  });
+  return fixture;
 }
 
 /**
@@ -1764,5 +1762,5 @@ module.exports = {
   replaceContractAt,
   oeth1InchSwapperFixtureSetup,
   oethCollateralSwapFixtureSetup,
-  fluxStrategyFixtureSetup,
+  fluxStrategyFixture,
 };

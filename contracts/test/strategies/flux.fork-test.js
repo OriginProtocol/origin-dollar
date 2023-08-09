@@ -2,20 +2,20 @@ const { expect } = require("chai");
 
 const addresses = require("../../utils/addresses");
 const {
-  fluxStrategyFixtureSetup,
+  createFixtureLoader,
+  fluxStrategyFixture,
   impersonateAndFundContract,
   defaultFixtureSetup,
 } = require("../_fixture");
 const { units, ousdUnits, forkOnlyDescribe } = require("../helpers");
 
-const fluxStrategyFixture = fluxStrategyFixtureSetup();
-
 forkOnlyDescribe("Flux strategy", function () {
   this.timeout(0);
 
   let fixture;
+  const loadFixture = createFixtureLoader(fluxStrategyFixture);
   beforeEach(async () => {
-    fixture = await fluxStrategyFixture();
+    fixture = await loadFixture();
   });
 
   after(async () => {
