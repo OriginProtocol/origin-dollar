@@ -55,7 +55,7 @@ forkOnlyDescribe("Flux strategy", function () {
       expect(await fluxStrategy.vaultAddress()).to.equal(
         addresses.mainnet.VaultProxy
       );
-      expect(await fluxStrategy.harvesterAddress()).to.equal(addresses.zero);
+      expect(await fluxStrategy.harvesterAddress()).to.equal(addresses.mainnet.HarvesterProxy);
     });
   });
   describe("Mint", function () {
