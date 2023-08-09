@@ -1,5 +1,6 @@
 const { expect } = require("chai");
 
+const addresses = require("../../utils/addresses");
 const {
   fluxStrategyFixtureSetup,
   impersonateAndFundContract,
@@ -25,6 +26,38 @@ forkOnlyDescribe("Flux strategy", function () {
     await f();
   });
 
+  describe("Post deployment", () => {
+    it("Should be initialized", async () => {
+      const { fluxStrategy } = fixture;
+
+      expect(await fluxStrategy.supportsAsset(addresses.mainnet.DAI)).to.equal(
+        true
+      );
+      expect(await fluxStrategy.supportsAsset(addresses.mainnet.USDC)).to.equal(
+        true
+      );
+      expect(await fluxStrategy.supportsAsset(addresses.mainnet.USDT)).to.equal(
+        true
+      );
+      expect(await fluxStrategy.assetToPToken(addresses.mainnet.DAI)).to.equal(
+        addresses.mainnet.fDAI
+      );
+      expect(await fluxStrategy.assetToPToken(addresses.mainnet.USDC)).to.equal(
+        addresses.mainnet.fUSDC
+      );
+      expect(await fluxStrategy.assetToPToken(addresses.mainnet.USDT)).to.equal(
+        addresses.mainnet.fUSDT
+      );
+      expect(await fluxStrategy.governor()).to.equal(
+        addresses.mainnet.Timelock
+      );
+      expect(await fluxStrategy.platformAddress()).to.equal(addresses.dead);
+      expect(await fluxStrategy.vaultAddress()).to.equal(
+        addresses.mainnet.VaultProxy
+      );
+      expect(await fluxStrategy.harvesterAddress()).to.equal(addresses.zero);
+    });
+  });
   describe("Mint", function () {
     it("Should deploy USDC to Flux strategy", async function () {
       const { matt, usdc } = fixture;
@@ -92,6 +125,39 @@ forkOnlyDescribe("Flux strategy", function () {
 
       expect(vaultUsdcDiff).to.approxEqualTolerance(usdcUnits, 1);
       expect(vaultUsdtDiff).to.approxEqualTolerance(usdtUnits, 1);
+    });
+  });
+
+  describe("Administration", function () {
+    it("Anyone should be able to approve all assets", async function () {
+      const { dai, usdc, usdt, josh, fluxStrategy } = fixture;
+      const tx = await fluxStrategy.connect(josh).safeApproveAllTokens();
+      await expect(tx).to.emit(dai, "Approval");
+      await expect(tx).to.emit(usdc, "Approval");
+      await expect(tx).to.emit(usdt, "Approval");
+    });
+    it("Only governor should be able to remove a platform token", async function () {
+      const { dai, fdai, usdc, fusdc, usdt, fusdt, fluxStrategy, timelock } =
+        fixture;
+
+      const tx = await fluxStrategy.connect(timelock).removePToken(0);
+
+      await expect(tx)
+        .to.emit(fluxStrategy, "PTokenRemoved")
+        .withArgs(dai.address, fdai.address);
+
+      expect(await fluxStrategy.supportsAsset(dai.address)).to.equal(false);
+      expect(await fluxStrategy.supportsAsset(usdc.address)).to.equal(true);
+      expect(await fluxStrategy.supportsAsset(usdt.address)).to.equal(true);
+      expect(await fluxStrategy.assetToPToken(dai.address)).to.equal(
+        addresses.zero
+      );
+      expect(await fluxStrategy.assetToPToken(usdc.address)).to.equal(
+        fusdc.address
+      );
+      expect(await fluxStrategy.assetToPToken(usdt.address)).to.equal(
+        fusdt.address
+      );
     });
   });
 });
