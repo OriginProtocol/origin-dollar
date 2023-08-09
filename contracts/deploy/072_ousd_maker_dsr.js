@@ -17,6 +17,11 @@ module.exports = deploymentWithGovernanceProposal(
       "VaultAdmin",
       cVaultProxy.address
     );
+    const cHarvesterProxy = await ethers.getContract("HarvesterProxy");
+    const cHarvester = await ethers.getContractAt(
+      "Harvester",
+      cHarvesterProxy.address
+    );
 
     // Deployer Actions
     // ----------------
@@ -65,6 +70,18 @@ module.exports = deploymentWithGovernanceProposal(
           contract: cVaultAdmin,
           signature: "approveStrategy(address)",
           args: [cMakerDsr.address],
+        },
+        {
+          // Add the new strategy to the Harvester
+          contract: cHarvester,
+          signature: "setSupportedStrategy(address,bool)",
+          args: [cMakerDsr.address, true],
+        },
+        {
+          // Set the Harvester in the new strategy
+          contract: cMakerDsr,
+          signature: "setHarvesterAddress(address)",
+          args: [cHarvesterProxy.address],
         },
       ],
     };
