@@ -10,7 +10,7 @@ module.exports = deploymentWithGovernanceProposal(
   {
     deployName: "070_flux_strategy",
     forceDeploy: false,
-    forceSkip: true,
+    // forceSkip: true,
     deployerIsProposer: true,
     proposalId:
       "91660566454734065741871109032962399777954404025908021614421255240824728026045",
