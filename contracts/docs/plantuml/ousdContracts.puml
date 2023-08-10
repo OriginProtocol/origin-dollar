@@ -67,7 +67,7 @@ object "ConvexLUSDMetaStrategy" as cxvLusdStrat <<Origin>><<Proxy>> #DeepSkyBlue
 }
 ' object "MorphoCompoundStrategy" as morphCompStrat <<Origin>><<Proxy>> #DeepSkyBlue {
 '     asset: DAI, USDC, USDT
-'     compound tokens: cDAI, cUSDC, cUSDT
+'     Compound tokens: cDAI, cUSDC, cUSDT
     ' rewards: COMP
 ' }
 object "MorphoAaveStrategy" as morphAaveStrat <<Origin>><<Proxy>> #DeepSkyBlue {
@@ -79,6 +79,11 @@ object "MorphoAaveStrategy" as morphAaveStrat <<Origin>><<Proxy>> #DeepSkyBlue {
 object "FluxStrategy" as fluxStrat <<Origin>><<Proxy>> #DeepSkyBlue {
     asset: DAI, USDC, USDT
     Flux tokens: fDAI, fUSDC, fUSDT
+}
+
+object "MakerDsrStrategy" as dsrStrat <<Origin>><<Proxy>> #DeepSkyBlue {
+    asset: DAI
+    vault: sDAI
 }
 
 ' Oracle
@@ -115,6 +120,7 @@ vault <...> cxvLusdStrat
 ' vault <...> morphCompStrat
 vault <...> morphAaveStrat
 vault <...> fluxStrat
+vault <...> dsrStrat
 
 drip <.. harv
 harv <..> cvxStrat

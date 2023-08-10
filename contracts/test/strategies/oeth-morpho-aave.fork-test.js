@@ -6,6 +6,7 @@ const {
   forkOnlyDescribe,
   advanceBlocks,
   advanceTime,
+  isCI,
 } = require("../helpers");
 const {
   createFixtureLoader,
@@ -17,7 +18,7 @@ forkOnlyDescribe("ForkTest: Morpho Aave OETH Strategy", function () {
   this.timeout(0);
 
   // Retry up to 3 times on CI
-  this.retries(process.env.GITHUB_ACTIONS ? 3 : 0);
+  this.retries(isCI ? 3 : 0);
 
   let fixture;
   const loadFixture = createFixtureLoader(oethMorphoAaveFixture);
