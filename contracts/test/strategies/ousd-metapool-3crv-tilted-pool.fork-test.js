@@ -1,31 +1,35 @@
 const { expect } = require("chai");
 
-const { loadFixture } = require("ethereum-waffle");
-const { units, ousdUnits, forkOnlyDescribe } = require("../helpers");
+const { units, ousdUnits, forkOnlyDescribe, isCI } = require("../helpers");
+const { createFixtureLoader } = require("../_fixture");
 const { withCRV3TitledOUSDMetapool } = require("../_metastrategies-fixtures");
 
 forkOnlyDescribe(
   "ForkTest: Convex 3pool/OUSD Meta Strategy - Titled to 3CRV",
   function () {
     this.timeout(0);
-    // due to hardhat forked mode timeouts - retry failed tests up to 3 times
-    this.retries(3);
+
+    // Retry up to 3 times on CI
+    this.retries(isCI ? 3 : 0);
+
+    let fixture;
+    const loadFixture = createFixtureLoader(withCRV3TitledOUSDMetapool);
+    beforeEach(async () => {
+      fixture = await loadFixture();
+    });
 
     describe("Mint", function () {
-      it("Should stake USDT in Curve guage via metapool", async function () {
-        const fixture = await loadFixture(withCRV3TitledOUSDMetapool);
+      it("Should stake USDT in Curve gauge via metapool", async function () {
         const { josh, usdt } = fixture;
         await mintTest(fixture, josh, usdt, "200000");
       });
 
-      it("Should stake USDC in Curve guage via metapool", async function () {
-        const fixture = await loadFixture(withCRV3TitledOUSDMetapool);
+      it("Should stake USDC in Curve gauge via metapool", async function () {
         const { matt, usdc } = fixture;
         await mintTest(fixture, matt, usdc, "110000");
       });
 
-      it("Should NOT stake DAI in Curve guage via metapool", async function () {
-        const fixture = await loadFixture(withCRV3TitledOUSDMetapool);
+      it("Should NOT stake DAI in Curve gauge via metapool", async function () {
         const { anna, dai } = fixture;
         await mintTest(fixture, anna, dai, "110000");
       });
@@ -34,7 +38,7 @@ forkOnlyDescribe(
     describe("Redeem", function () {
       it("Should redeem", async () => {
         const { vault, ousd, usdt, usdc, dai, anna, OUSDmetaStrategy } =
-          await loadFixture(withCRV3TitledOUSDMetapool);
+          fixture;
 
         await vault.connect(anna).allocate();
 

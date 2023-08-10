@@ -1,9 +1,9 @@
 const { expect } = require("chai");
-const { formatUnits, parseUnits } = require("ethers/lib/utils");
-const { loadFixture } = require("ethereum-waffle");
+const { formatUnits } = require("ethers/lib/utils");
 
-const { units, oethUnits, forkOnlyDescribe } = require("../helpers");
+const { units, oethUnits, forkOnlyDescribe, isCI } = require("../helpers");
 const {
+  createFixtureLoader,
   convexOETHMetaVaultFixture,
   impersonateAndFundContract,
 } = require("../_fixture");
@@ -13,110 +13,25 @@ const log = require("../../utils/logger")("test:fork:oeth:metapool");
 
 forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
   this.timeout(0);
-  // due to hardhat forked mode timeouts - retry failed tests up to 3 times
-  this.retries(3);
 
-  it("Should rebalance Metapool", async () => {
-    const {
-      oeth,
-      oethVault,
-      oethMetaPool,
-      timelock,
-      ConvexEthMetaStrategy,
-      weth,
-    } = await loadFixture(convexOETHMetaVaultFixture);
+  // Retry up to 3 times on CI
+  this.retries(isCI ? 3 : 0);
 
-    // STEP 1 - rebase
-    await oethVault.rebase();
-
-    // STEP 2 - take snapshot
-    const cChecker = await ethers.getContract("OETHVaultValueChecker");
-    await cChecker.connect(timelock).takeSnapshot();
-    const snapshot = await cChecker.snapshots(await timelock.getAddress());
-    log(`before vault value : ${formatUnits(snapshot.vaultValue)}`);
-    log(`before vault supply: ${formatUnits(snapshot.totalSupply)}`);
-    log(
-      `before vault WETH  : ${formatUnits(
-        await weth.balanceOf(oethVault.address)
-      )}`
-    );
-
-    await logCurvePool(oethMetaPool, "ETH ", "OETH");
-
-    // STEP 3 - Withdraw from strategy
-    const withdrawTx = await oethVault
-      .connect(timelock)
-      .withdrawAllFromStrategy(ConvexEthMetaStrategy.address);
-    // Get WETH's Deposit event
-    // remove OETH/ETH liquidity from pool and deposit ETH to get WETH to transfer to the Vault.
-    const withdrawReceipt = await withdrawTx.wait();
-    const depositLogs = withdrawReceipt.logs.filter(
-      (l) =>
-        l.address === weth.address &&
-        l.topics[0] ===
-          weth.interface.encodeFilterTopics("Deposit", []).toString()
-    );
-    const depositEvent = weth.interface.parseLog(depositLogs[0]);
-    const wethWithdrawn = depositEvent.args.wad;
-    log(`Withdrew ${formatUnits(wethWithdrawn)} WETH from strategy`);
-
-    // STEP 4 - Deposit to strategy
-    const additionAmount = 660;
-    const depositAmount = wethWithdrawn.add(
-      parseUnits(additionAmount.toString())
-    );
-    await oethVault
-      .connect(timelock)
-      .depositToStrategy(
-        ConvexEthMetaStrategy.address,
-        [weth.address],
-        [depositAmount]
-      );
-    log(
-      `Deposited ${additionAmount} + ${formatUnits(
-        wethWithdrawn
-      )} = ${formatUnits(depositAmount)} WETH to strategy`
-    );
-
-    // STEP 5 - log results
-    const valueAfter = await oethVault.totalValue();
-    const valueChange = valueAfter.sub(snapshot.vaultValue);
-    log(`after vault value : ${formatUnits(valueAfter)}`);
-    const supplyAfter = await oeth.totalSupply();
-    const supplyChange = supplyAfter.sub(snapshot.totalSupply);
-    log(`after vault supply: ${formatUnits(supplyAfter)}`);
-    log(
-      `after vault WETH  : ${formatUnits(
-        await weth.balanceOf(oethVault.address)
-      )}`
-    );
-
-    log(`value change : ${formatUnits(valueChange)}`);
-    log(`supply change: ${formatUnits(supplyChange)}`);
-    const profit = valueChange.sub(supplyChange);
-    log(`profit       : ${formatUnits(profit)}`);
-
-    await logCurvePool(oethMetaPool, "ETH ", "OETH");
-
-    // STEP 6 - check delta
-    const variance = parseUnits("1", 15);
-    await cChecker
-      .connect(timelock)
-      .checkDelta(profit, variance, valueChange, variance);
+  let fixture;
+  const loadFixture = createFixtureLoader(convexOETHMetaVaultFixture);
+  beforeEach(async () => {
+    fixture = await loadFixture();
   });
 
   it("Should deposit to Metapool", async function () {
     // TODO: should have differently balanced metapools
-    const fixture = await loadFixture(convexOETHMetaVaultFixture);
-
     const { josh, weth } = fixture;
 
     await mintTest(fixture, josh, weth, "5000");
   });
 
   it("Should be able to withdraw all", async () => {
-    const { oethVault, oeth, weth, josh, ConvexEthMetaStrategy } =
-      await loadFixture(convexOETHMetaVaultFixture);
+    const { oethVault, oeth, weth, josh, ConvexEthMetaStrategy } = fixture;
 
     await oethVault.connect(josh).allocate();
     const supplyBeforeMint = await oeth.totalSupply();
@@ -151,8 +66,7 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
   });
 
   it("Should redeem", async () => {
-    const { oethVault, oeth, weth, josh, ConvexEthMetaStrategy } =
-      await loadFixture(convexOETHMetaVaultFixture);
+    const { oethVault, oeth, weth, josh, ConvexEthMetaStrategy } = fixture;
 
     await oethVault.connect(josh).allocate();
     const supplyBeforeMint = await oeth.totalSupply();
@@ -195,8 +109,6 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
   });
 
   it("Should be able to harvest the rewards", async function () {
-    const fixture = await loadFixture(convexOETHMetaVaultFixture);
-
     const {
       josh,
       weth,

@@ -1,15 +1,19 @@
 const hre = require("hardhat");
-
 const { ethers } = hre;
+const { formatUnits } = require("ethers/lib/utils");
 
 const addresses = require("../utils/addresses");
 const {
   fundAccounts,
   fundAccountsForOETHUnitTests,
 } = require("../utils/funding");
-const { getAssetAddresses, daiUnits, isFork, oethUnits } = require("./helpers");
-
-const { loadFixture, getOracleAddresses } = require("./helpers");
+const {
+  getAssetAddresses,
+  getOracleAddresses,
+  daiUnits,
+  isFork,
+  oethUnits,
+} = require("./helpers");
 
 const daiAbi = require("./abi/dai.json").abi;
 const usdtAbi = require("./abi/usdt.json").abi;
@@ -28,7 +32,22 @@ const sfrxETHAbi = require("./abi/sfrxETH.json");
 const { deployWithConfirmation } = require("../utils/deploy");
 const { defaultAbiCoder, parseUnits, parseEther } = require("ethers/lib/utils");
 
+const log = require("../utils/logger")("test:fixtures");
+
 const defaultFixture = deployments.createFixture(async () => {
+  log(`Forked from block: ${await hre.ethers.provider.getBlockNumber()}`);
+
+  log(
+    `Before deployments with param "${
+      isFork
+        ? undefined
+        : process.env.FORKED_LOCAL_TEST
+        ? ["none"]
+        : ["unit_tests"]
+    }"`
+  );
+
+  // Run the contract deployments
   await deployments.fixture(
     isFork
       ? undefined
@@ -39,6 +58,8 @@ const defaultFixture = deployments.createFixture(async () => {
       keepExistingDeployments: true,
     }
   );
+
+  log(`Block after deployments: ${await hre.ethers.provider.getBlockNumber()}`);
 
   const { governorAddr, strategistAddr, timelockAddr } =
     await getNamedAccounts();
@@ -587,12 +608,6 @@ const defaultFixture = deployments.createFixture(async () => {
   };
 });
 
-function defaultFixtureSetup() {
-  return deployments.createFixture(async () => {
-    return await defaultFixture();
-  });
-}
-
 async function oethDefaultFixture() {
   // TODO: Trim it down to only do OETH things
   const fixture = await defaultFixture();
@@ -649,65 +664,55 @@ async function oethDefaultFixture() {
   return fixture;
 }
 
-function oethDefaultFixtureSetup() {
-  return deployments.createFixture(async () => {
-    return await oethDefaultFixture();
-  });
-}
+async function oethCollateralSwapFixture() {
+  const fixture = await oethDefaultFixture();
 
-function oethCollateralSwapFixtureSetup() {
-  return deployments.createFixture(async () => {
-    const fixture = await oethDefaultFixture();
+  const { weth, reth, stETH, frxETH, matt, strategist, oethVault } = fixture;
 
-    const { weth, reth, stETH, frxETH, matt, strategist, oethVault } = fixture;
+  const bufferBps = await oethVault.vaultBuffer();
+  const shouldChangeBuffer = bufferBps.lt(oethUnits("1"));
 
-    const bufferBps = await oethVault.vaultBuffer();
-    const shouldChangeBuffer = bufferBps.lt(oethUnits("1"));
-
-    if (shouldChangeBuffer) {
-      // If it's not 100% already, set it to 100%
-      await oethVault.connect(strategist).setVaultBuffer(
-        oethUnits("1") // 100%
-      );
-    }
-
-    for (const token of [weth, reth, stETH, frxETH]) {
-      await token
-        .connect(matt)
-        .approve(
-          oethVault.address,
-          parseEther("100000000000000000000000000000000000").toString()
-        );
-
-      // Mint some tokens, so it ends up in Vault
-      await oethVault.connect(matt).mint(token.address, parseEther("200"), "0");
-    }
-
-    if (shouldChangeBuffer) {
-      // Set it back
-      await oethVault.connect(strategist).setVaultBuffer(bufferBps);
-    }
-
-    return fixture;
-  });
-}
-
-function oeth1InchSwapperFixtureSetup() {
-  return deployments.createFixture(async () => {
-    const fixture = await oethDefaultFixture();
-    const { mock1InchSwapRouter } = fixture;
-
-    const swapRouterAddr = "0x1111111254EEB25477B68fb85Ed929f73A960582";
-    await replaceContractAt(swapRouterAddr, mock1InchSwapRouter);
-
-    const stubbedRouterContract = await hre.ethers.getContractAt(
-      "Mock1InchSwapRouter",
-      swapRouterAddr
+  if (shouldChangeBuffer) {
+    // If it's not 100% already, set it to 100%
+    await oethVault.connect(strategist).setVaultBuffer(
+      oethUnits("1") // 100%
     );
-    fixture.mock1InchSwapRouter = stubbedRouterContract;
+  }
 
-    return fixture;
-  });
+  for (const token of [weth, reth, stETH, frxETH]) {
+    await token
+      .connect(matt)
+      .approve(
+        oethVault.address,
+        parseEther("100000000000000000000000000000000000").toString()
+      );
+
+    // Mint some tokens, so it ends up in Vault
+    await oethVault.connect(matt).mint(token.address, parseEther("200"), "0");
+  }
+
+  if (shouldChangeBuffer) {
+    // Set it back
+    await oethVault.connect(strategist).setVaultBuffer(bufferBps);
+  }
+
+  return fixture;
+}
+
+async function oeth1InchSwapperFixture() {
+  const fixture = await oethDefaultFixture();
+  const { mock1InchSwapRouter } = fixture;
+
+  const swapRouterAddr = "0x1111111254EEB25477B68fb85Ed929f73A960582";
+  await replaceContractAt(swapRouterAddr, mock1InchSwapRouter);
+
+  const stubbedRouterContract = await hre.ethers.getContractAt(
+    "Mock1InchSwapRouter",
+    swapRouterAddr
+  );
+  fixture.mock1InchSwapRouter = stubbedRouterContract;
+
+  return fixture;
 }
 
 /**
@@ -715,7 +720,7 @@ function oeth1InchSwapperFixtureSetup() {
  * assets and then upgrade the Vault implementation via VaultProxy.
  */
 async function mockVaultFixture() {
-  const fixture = await loadFixture(defaultFixture);
+  const fixture = await defaultFixture();
 
   const { governorAddr } = await getNamedAccounts();
   const sGovernor = ethers.provider.getSigner(governorAddr);
@@ -742,7 +747,7 @@ async function mockVaultFixture() {
  * Configure a Vault with only the Compound strategy.
  */
 async function compoundVaultFixture() {
-  const fixture = await loadFixture(defaultFixture);
+  const fixture = await defaultFixture();
 
   const { governorAddr } = await getNamedAccounts();
   const sGovernor = await ethers.provider.getSigner(governorAddr);
@@ -793,7 +798,7 @@ async function compoundVaultFixture() {
  * Configure a Vault with only the 3Pool strategy.
  */
 async function threepoolVaultFixture() {
-  const fixture = await loadFixture(defaultFixture);
+  const fixture = await defaultFixture();
 
   const { governorAddr } = await getNamedAccounts();
   const sGovernor = await ethers.provider.getSigner(governorAddr);
@@ -825,7 +830,7 @@ async function threepoolVaultFixture() {
  * Configure a Vault with only the Convex strategy.
  */
 async function convexVaultFixture() {
-  const fixture = await loadFixture(defaultFixture);
+  const fixture = await defaultFixture();
 
   const { governorAddr } = await getNamedAccounts();
   const sGovernor = await ethers.provider.getSigner(governorAddr);
@@ -874,7 +879,7 @@ async function fundWith3Crv(address, maxAmount) {
  * Configure a Vault with only the Meta strategy.
  */
 async function convexMetaVaultFixture() {
-  const fixture = await loadFixture(defaultFixture);
+  const fixture = await defaultFixture();
 
   if (isFork) {
     const { josh, matt, anna, domen, daniel, franck, ousd } = fixture;
@@ -894,6 +899,10 @@ async function convexMetaVaultFixture() {
       addresses.mainnet.ThreePool
     );
     // const curveFactory = await ethers.getContractAt(curveFactoryAbi, curveFactoryAddress)
+
+    const balances = await ousdMetaPool.get_balances();
+    log(`Metapool balance 0: ${formatUnits(balances[0])}`);
+    log(`Metapool balance 1: ${formatUnits(balances[1])}`);
 
     // Domen is loaded with 3CRV
     await fundWith3Crv(domen.getAddress(), ethers.BigNumber.from("0"));
@@ -1005,7 +1014,7 @@ async function makerDsrFixture(
  * Configure a Vault with only the Morpho strategy.
  */
 async function morphoCompoundFixture() {
-  const fixture = await loadFixture(defaultFixture);
+  const fixture = await defaultFixture();
 
   const { timelock } = fixture;
 
@@ -1043,7 +1052,7 @@ async function morphoCompoundFixture() {
  * Configure a Vault with only the Morpho strategy.
  */
 async function morphoAaveFixture() {
-  const fixture = await loadFixture(defaultFixture);
+  const fixture = await defaultFixture();
 
   const { timelock } = fixture;
 
@@ -1080,57 +1089,50 @@ async function morphoAaveFixture() {
 /**
  * Configure a Vault with only the Morpho strategy.
  */
-function oethMorphoAaveFixtureSetup() {
-  return deployments.createFixture(async () => {
-    const fixture = await oethDefaultFixture();
+async function oethMorphoAaveFixture() {
+  const fixture = await oethDefaultFixture();
 
-    if (isFork) {
-      const { oethVault, timelock, weth, oethMorphoAaveStrategy } = fixture;
+  if (isFork) {
+    const { oethVault, timelock, weth, oethMorphoAaveStrategy } = fixture;
 
-      await oethVault
-        .connect(timelock)
-        .setAssetDefaultStrategy(weth.address, oethMorphoAaveStrategy.address);
-    } else {
-      throw new Error(
-        "Morpho strategy only supported in forked test environment"
-      );
-    }
+    await oethVault
+      .connect(timelock)
+      .setAssetDefaultStrategy(weth.address, oethMorphoAaveStrategy.address);
+  } else {
+    throw new Error(
+      "Morpho strategy only supported in forked test environment"
+    );
+  }
 
-    return fixture;
-  });
+  return fixture;
 }
 
 /**
  * FraxETHStrategy fixture
- *
  */
-function fraxETHStrategyFixtureSetup() {
-  return deployments.createFixture(async () => {
-    const fixture = await oethDefaultFixture();
+async function fraxETHStrategyFixture() {
+  const fixture = await oethDefaultFixture();
 
-    if (isFork) {
-      const { oethVault, frxETH, fraxEthStrategy, timelock } = fixture;
-      await oethVault
-        .connect(timelock)
-        .setAssetDefaultStrategy(frxETH.address, fraxEthStrategy.address);
-    } else {
-      const { governorAddr } = await getNamedAccounts();
-      const { oethVault, frxETH, fraxEthStrategy } = fixture;
-      const sGovernor = await ethers.provider.getSigner(governorAddr);
+  if (isFork) {
+    const { oethVault, frxETH, fraxEthStrategy, timelock } = fixture;
+    await oethVault
+      .connect(timelock)
+      .setAssetDefaultStrategy(frxETH.address, fraxEthStrategy.address);
+  } else {
+    const { governorAddr } = await getNamedAccounts();
+    const { oethVault, frxETH, fraxEthStrategy } = fixture;
+    const sGovernor = await ethers.provider.getSigner(governorAddr);
 
-      // Approve Strategy
-      await oethVault
-        .connect(sGovernor)
-        .approveStrategy(fraxEthStrategy.address);
+    // Approve Strategy
+    await oethVault.connect(sGovernor).approveStrategy(fraxEthStrategy.address);
 
-      // Set as default
-      await oethVault
-        .connect(sGovernor)
-        .setAssetDefaultStrategy(frxETH.address, fraxEthStrategy.address);
-    }
+    // Set as default
+    await oethVault
+      .connect(sGovernor)
+      .setAssetDefaultStrategy(frxETH.address, fraxEthStrategy.address);
+  }
 
-    return fixture;
-  });
+  return fixture;
 }
 
 /**
@@ -1141,91 +1143,95 @@ function fraxETHStrategyFixtureSetup() {
  * @param metastrategyProxyName -> name of the generalizedMetastrategy proxy contract
  */
 async function convexGeneralizedMetaForkedFixture(
-  metapoolAddress,
-  rewardPoolAddress,
-  metastrategyProxyName,
-  lpTokenAddress
+  config = {
+    metapoolAddress: addresses.mainnet.CurveOUSDMetaPool,
+    rewardPoolAddress: addresses.mainnet.CVXRewardsPool,
+    metastrategyProxyName: addresses.mainnet.ConvexOUSDAMOStrategy,
+    lpTokenAddress: addresses.mainnet.ThreePoolToken,
+  }
 ) {
-  return async () => {
-    const fixture = await loadFixture(defaultFixture);
-    const { timelockAddr } = await getNamedAccounts();
-    const sGovernor = await ethers.provider.getSigner(timelockAddr);
-    const { josh, matt, anna, domen, daniel, franck } = fixture;
+  const {
+    metapoolAddress,
+    rewardPoolAddress,
+    metastrategyProxyName,
+    lpTokenAddress,
+  } = config;
+  const fixture = await defaultFixture();
 
-    const threepoolLP = await ethers.getContractAt(
-      threepoolLPAbi,
-      addresses.mainnet.ThreePoolToken
+  const { timelockAddr } = await getNamedAccounts();
+  const sGovernor = await ethers.provider.getSigner(timelockAddr);
+  const { josh, matt, anna, domen, daniel, franck } = fixture;
+
+  const threepoolLP = await ethers.getContractAt(
+    threepoolLPAbi,
+    addresses.mainnet.ThreePoolToken
+  );
+  const metapool = await ethers.getContractAt(ousdMetapoolAbi, metapoolAddress);
+
+  const primaryCoin = await ethers.getContractAt(
+    erc20Abi,
+    await metapool.coins(0)
+  );
+
+  const threepoolSwap = await ethers.getContractAt(
+    threepoolSwapAbi,
+    addresses.mainnet.ThreePool
+  );
+
+  const lpToken = await ethers.getContractAt(erc20Abi, lpTokenAddress);
+
+  for (const user of [josh, matt, anna, domen, daniel, franck]) {
+    // Approve Metapool contract to move funds
+    await resetAllowance(threepoolLP, user, metapoolAddress);
+    await resetAllowance(primaryCoin, user, metapoolAddress);
+  }
+
+  // Get some 3CRV from most loaded contracts/wallets
+  await impersonateAndFundAddress(
+    addresses.mainnet.ThreePoolToken,
+    [
+      "0xceaf7747579696a2f0bb206a14210e3c9e6fb269",
+      "0xd632f22692fac7611d2aa1c0d552930d43caed3b",
+      "0xbfcf63294ad7105dea65aa58f8ae5be2d9d0952a",
+      "0xed279fdd11ca84beef15af5d39bb4d4bee23f0ca",
+      "0x43b4fdfd4ff969587185cdb6f0bd875c5fc83f8c",
+    ],
+    // Domen is loaded with 3CRV
+    domen.getAddress()
+  );
+
+  fixture.metapoolCoin = primaryCoin;
+  fixture.metapool = metapool;
+  fixture.metapoolLpToken = lpToken;
+  fixture.threePoolToken = threepoolLP;
+  fixture.threepoolSwap = threepoolSwap;
+
+  fixture.metaStrategyProxy = await ethers.getContract(metastrategyProxyName);
+  fixture.metaStrategy = await ethers.getContractAt(
+    "ConvexGeneralizedMetaStrategy",
+    fixture.metaStrategyProxy.address
+  );
+
+  fixture.rewardPool = await ethers.getContractAt(
+    "IRewardStaking",
+    rewardPoolAddress
+  );
+
+  await fixture.vault
+    .connect(sGovernor)
+    .setAssetDefaultStrategy(
+      fixture.usdt.address,
+      fixture.metaStrategy.address
     );
-    const metapool = await ethers.getContractAt(
-      ousdMetapoolAbi,
-      metapoolAddress
+
+  await fixture.vault
+    .connect(sGovernor)
+    .setAssetDefaultStrategy(
+      fixture.usdc.address,
+      fixture.metaStrategy.address
     );
 
-    const primaryCoin = await ethers.getContractAt(
-      erc20Abi,
-      await metapool.coins(0)
-    );
-
-    const threepoolSwap = await ethers.getContractAt(
-      threepoolSwapAbi,
-      addresses.mainnet.ThreePool
-    );
-
-    const lpToken = await ethers.getContractAt(erc20Abi, lpTokenAddress);
-
-    for (const user of [josh, matt, anna, domen, daniel, franck]) {
-      // Approve Metapool contract to move funds
-      await resetAllowance(threepoolLP, user, metapoolAddress);
-      await resetAllowance(primaryCoin, user, metapoolAddress);
-    }
-
-    // Get some 3CRV from most loaded contracts/wallets
-    await impersonateAndFundAddress(
-      addresses.mainnet.ThreePoolToken,
-      [
-        "0xceaf7747579696a2f0bb206a14210e3c9e6fb269",
-        "0xd632f22692fac7611d2aa1c0d552930d43caed3b",
-        "0xbfcf63294ad7105dea65aa58f8ae5be2d9d0952a",
-        "0xed279fdd11ca84beef15af5d39bb4d4bee23f0ca",
-        "0x43b4fdfd4ff969587185cdb6f0bd875c5fc83f8c",
-      ],
-      // Domen is loaded with 3CRV
-      domen.getAddress()
-    );
-
-    fixture.metapoolCoin = primaryCoin;
-    fixture.metapool = metapool;
-    fixture.metapoolLpToken = lpToken;
-    fixture.threePoolToken = threepoolLP;
-    fixture.threepoolSwap = threepoolSwap;
-
-    fixture.metaStrategyProxy = await ethers.getContract(metastrategyProxyName);
-    fixture.metaStrategy = await ethers.getContractAt(
-      "ConvexGeneralizedMetaStrategy",
-      fixture.metaStrategyProxy.address
-    );
-
-    fixture.rewardPool = await ethers.getContractAt(
-      "IRewardStaking",
-      rewardPoolAddress
-    );
-
-    await fixture.vault
-      .connect(sGovernor)
-      .setAssetDefaultStrategy(
-        fixture.usdt.address,
-        fixture.metaStrategy.address
-      );
-
-    await fixture.vault
-      .connect(sGovernor)
-      .setAssetDefaultStrategy(
-        fixture.usdc.address,
-        fixture.metaStrategy.address
-      );
-
-    return fixture;
-  };
+  return fixture;
 }
 
 async function impersonateAccount(address) {
@@ -1330,7 +1336,7 @@ async function withImpersonatedAccount(address, cb) {
  * Configure a Vault with only the LUSD Generalized Meta strategy.
  */
 async function convexLUSDMetaVaultFixture() {
-  const fixture = await loadFixture(defaultFixture);
+  const fixture = await defaultFixture();
 
   const { governorAddr } = await getNamedAccounts();
   const sGovernor = await ethers.provider.getSigner(governorAddr);
@@ -1365,7 +1371,8 @@ async function convexLUSDMetaVaultFixture() {
  * Configure a Vault with only the OETH/(W)ETH Curve Metastrategy.
  */
 async function convexOETHMetaVaultFixture() {
-  const fixture = await loadFixture(defaultFixture);
+  const fixture = await defaultFixture();
+
   const { ConvexEthMetaStrategy, oethVault, josh, timelock, weth } = fixture;
 
   await impersonateAndFundAddress(
@@ -1423,7 +1430,7 @@ async function convexOETHMetaVaultFixture() {
  * Configure a Vault with only the Aave strategy.
  */
 async function aaveVaultFixture() {
-  const fixture = await loadFixture(defaultFixture);
+  const fixture = await defaultFixture();
 
   const { governorAddr } = await getNamedAccounts();
   const sGovernor = await ethers.provider.getSigner(governorAddr);
@@ -1447,7 +1454,8 @@ async function aaveVaultFixture() {
  * Configure a compound fixture with a false vault for testing
  */
 async function compoundFixture() {
-  const fixture = await loadFixture(defaultFixture);
+  const fixture = await defaultFixture();
+
   const assetAddresses = await getAssetAddresses(deployments);
   const { deploy } = deployments;
   const { governorAddr } = await getNamedAccounts();
@@ -1491,7 +1499,8 @@ async function compoundFixture() {
  * Configure a threepool fixture with the governer as vault for testing
  */
 async function threepoolFixture() {
-  const fixture = await loadFixture(defaultFixture);
+  const fixture = await defaultFixture();
+
   const assetAddresses = await getAssetAddresses(deployments);
   const { deploy } = deployments;
   const { governorAddr } = await getNamedAccounts();
@@ -1593,7 +1602,8 @@ async function multiStrategyVaultFixture() {
  * Configure a hacked Vault
  */
 async function hackedVaultFixture() {
-  const fixture = await loadFixture(defaultFixture);
+  const fixture = await defaultFixture();
+
   const assetAddresses = await getAssetAddresses(deployments);
   const { deploy } = deployments;
   const { vault, oracleRouter } = fixture;
@@ -1631,7 +1641,8 @@ async function hackedVaultFixture() {
  * Configure a reborn hack attack
  */
 async function rebornFixture() {
-  const fixture = await loadFixture(defaultFixture);
+  const fixture = await defaultFixture();
+
   const assetAddresses = await getAssetAddresses(deployments);
   const { deploy } = deployments;
   const { governorAddr } = await getNamedAccounts();
@@ -1667,16 +1678,6 @@ async function rebornFixture() {
   return fixture;
 }
 
-async function replaceContractAt(targetAddress, mockContract) {
-  const signer = (await hre.ethers.getSigners())[0];
-  const mockCode = await signer.provider.getCode(mockContract.address);
-
-  await hre.network.provider.request({
-    method: "hardhat_setCode",
-    params: [targetAddress, mockCode],
-  });
-}
-
 async function fluxStrategyFixture() {
   const fixture = await defaultFixture();
 
@@ -1700,6 +1701,16 @@ async function fluxStrategyFixture() {
   await vault.connect(timelock).rebase();
 
   return fixture;
+}
+
+async function replaceContractAt(targetAddress, mockContract) {
+  const signer = (await hre.ethers.getSigners())[0];
+  const mockCode = await signer.provider.getCode(mockContract.address);
+
+  await hre.network.provider.request({
+    method: "hardhat_setCode",
+    params: [targetAddress, mockCode],
+  });
 }
 
 /**
@@ -1729,13 +1740,25 @@ function createFixtureLoader(fixture, config) {
   });
 }
 
+/**
+ * An async function that loads the default fixture for unit or fork tests
+ * @example
+ *   let fixture;
+ *   beforeEach(async () => {
+ *     fixture = await loadDefaultFixture();
+ *   });
+ */
+async function loadDefaultFixture() {
+  return await defaultFixture();
+}
+
 module.exports = {
   createFixtureLoader,
+  loadDefaultFixture,
   fundWith3Crv,
   resetAllowance,
   defaultFixture,
-  defaultFixtureSetup,
-  oethDefaultFixtureSetup,
+  oethDefaultFixture,
   mockVaultFixture,
   compoundFixture,
   compoundVaultFixture,
@@ -1756,11 +1779,11 @@ module.exports = {
   withImpersonatedAccount,
   impersonateAndFundContract,
   impersonateAccount,
-  fraxETHStrategyFixtureSetup,
-  oethMorphoAaveFixtureSetup,
+  fraxETHStrategyFixture,
+  oethMorphoAaveFixture,
   mintWETH,
   replaceContractAt,
-  oeth1InchSwapperFixtureSetup,
-  oethCollateralSwapFixtureSetup,
+  oeth1InchSwapperFixture,
+  oethCollateralSwapFixture,
   fluxStrategyFixture,
 };

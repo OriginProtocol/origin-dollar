@@ -1,8 +1,8 @@
 const { expect } = require("chai");
-const { defaultFixture } = require("./_fixture");
+
+const { loadDefaultFixture } = require("./_fixture");
 const {
   isFork,
-  loadFixture,
   advanceTime,
   propose,
   proposeAndExecute,
@@ -15,7 +15,7 @@ describe("Governor's Timelock controls oracleRouter", function () {
   let oracle, governor, governorContract, fixture, proposalId, anna;
 
   before(async () => {
-    fixture = await loadFixture(defaultFixture);
+    fixture = await loadDefaultFixture();
     oracle = fixture.oracleRouter;
     governor = fixture.governor;
     governorContract = fixture.governorContract;
@@ -62,7 +62,7 @@ describe("Governor can instantly pause deposits", () => {
   let vault, governor, governorContract, anna;
 
   before(async () => {
-    const fixture = await loadFixture(defaultFixture);
+    const fixture = await loadDefaultFixture();
     vault = fixture.vault;
     governor = fixture.governor;
     governorContract = fixture.governorContract;

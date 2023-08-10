@@ -1,14 +1,13 @@
 const { expect } = require("chai");
 const { utils, BigNumber } = require("ethers");
 
-const { createFixtureLoader, defaultFixture } = require("../_fixture");
+const { loadDefaultFixture } = require("../_fixture");
 const { ousdUnits, usdcUnits } = require("../helpers");
 
 describe("OGV Buyback", function () {
   let fixture;
-  const loadFixture = createFixtureLoader(defaultFixture);
   beforeEach(async () => {
-    fixture = await loadFixture();
+    fixture = await loadDefaultFixture();
   });
   it("Should allow Governor to set Trustee address", async () => {
     const { vault, governor, ousd } = fixture;

@@ -1,10 +1,11 @@
 const { expect } = require("chai");
-
-const { defaultFixture, impersonateAndFundContract } = require("./../_fixture");
 const { utils } = require("ethers");
 
 const {
-  loadFixture,
+  loadDefaultFixture,
+  impersonateAndFundContract,
+} = require("./../_fixture");
+const {
   forkOnlyDescribe,
   ousdUnits,
   usdtUnits,
@@ -12,6 +13,7 @@ const {
   daiUnits,
   differenceInStrategyBalance,
   differenceInErc20TokenBalances,
+  isCI,
 } = require("./../helpers");
 
 /**
@@ -30,12 +32,13 @@ const {
 
 forkOnlyDescribe("ForkTest: Vault", function () {
   this.timeout(0);
-  // due to hardhat forked mode timeouts - retry failed tests up to 3 times
-  this.retries(3);
+
+  // Retry up to 3 times on CI
+  this.retries(isCI ? 3 : 0);
 
   let fixture;
   beforeEach(async () => {
-    fixture = await loadFixture(defaultFixture);
+    fixture = await loadDefaultFixture();
   });
 
   describe("Admin", () => {

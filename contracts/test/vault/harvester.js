@@ -1,9 +1,8 @@
-const { compoundVaultFixture } = require("./../_fixture");
 const { expect } = require("chai");
 const { utils, constants } = require("ethers");
 
+const { createFixtureLoader, compoundVaultFixture } = require("./../_fixture");
 const {
-  loadFixture,
   isFork,
   setOracleTokenPriceUsd,
   changeInBalance,
@@ -29,9 +28,9 @@ describe("Harvester", function () {
   };
 
   let fixture;
-
+  const loadFixture = createFixtureLoader(compoundVaultFixture);
   beforeEach(async function () {
-    fixture = await loadFixture(compoundVaultFixture);
+    fixture = await loadFixture();
 
     /* Ethereum Waffle caches fixtures and uses evm snapshot and evm revert:
      * https://github.com/TrueFiEng/Waffle/blob/f0d78cd5529684f2f377aaa0025c33aed52e268e/waffle-provider/src/fixtures.ts#L18-L32
