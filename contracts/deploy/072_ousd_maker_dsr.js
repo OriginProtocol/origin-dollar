@@ -7,7 +7,7 @@ module.exports = deploymentWithGovernanceProposal(
     forceDeploy: false,
     // forceSkip: false,
     reduceQueueTime: true,
-    deployerIsProposer: true,
+    deployerIsProposer: false,
     //proposalId: ,
   },
   async ({ deployWithConfirmation, getTxOpts, withConfirmation }) => {
