@@ -19,9 +19,6 @@ const useExpectedYield = (isWrapped = false) => {
   const expectedIncrease = useStoreState(YieldStore, (s) =>
     isWrapped ? s.expectedIncreaseWrapped : s.expectedIncrease
   )
-  const animatedExpectedIncrease = useStoreState(YieldStore, (s) =>
-    isWrapped ? s.animatedExpectedIncreaseWrapped : s.animatedExpectedIncrease
-  )
 
   const creditsBalanceOf = useStoreState(AccountStore, (s) =>
     isWrapped ? s.creditsWrapped : s.creditsBalanceOf
