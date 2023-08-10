@@ -60,8 +60,10 @@ forkOnlyDescribe(
         await impersonateAndFundContract(cEvilContract.address),
         "100000"
       );
+
       // ... and rETH
       const rethHolder = await findBestMainnetTokenHolder(reth, hre);
+      await impersonateAndFundContract(await rethHolder.getAddress());
       await reth
         .connect(rethHolder)
         .transfer(cEvilContract.address, utils.parseEther("1000"));
