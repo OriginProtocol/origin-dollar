@@ -20,8 +20,12 @@ contract FraxETHStrategy is Generalized4626Strategy {
     IFraxETHMinter public constant fraxETHMinter =
         IFraxETHMinter(0xbAFA44EFE7901E04E39Dad13167D089C559c1138);
 
-    constructor(BaseStrategyConfig memory _stratConfig)
-        Generalized4626Strategy(_stratConfig)
+    /**
+     * @param _baseConfig Base strategy config with platformAddress (sfrxETH) and vaultAddress (OETHVaultProxy)
+     * @param _assetToken Address of the ERC-4626 asset token (frxETH)
+     */
+    constructor(BaseStrategyConfig memory _baseConfig, address _assetToken)
+        Generalized4626Strategy(_baseConfig, _assetToken)
     {}
 
     function _deposit(address _asset, uint256 _amount) internal override {

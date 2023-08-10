@@ -4,10 +4,9 @@ const { run } = require("hardhat");
 
 const addresses = require("../../utils/addresses");
 const { oethPoolLpPID } = require("../../utils/constants");
-const { units, oethUnits, forkOnlyDescribe } = require("../helpers");
+const { units, oethUnits, forkOnlyDescribe, isCI } = require("../helpers");
 const {
   createFixtureLoader,
-  defaultFixtureSetup,
   convexOETHMetaVaultFixture,
 } = require("../_fixture");
 
@@ -15,17 +14,10 @@ const log = require("../../utils/logger")("test:fork:oeth:metapool");
 
 forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
   this.timeout(0);
-  // due to hardhat forked mode timeouts - retry failed tests up to 3 times
-  this.retries(0);
+  // Retry up to 3 times on CI
+  this.retries(isCI ? 3 : 0);
 
   let fixture;
-  after(async () => {
-    // This is needed to revert fixtures
-    // The other tests as of now don't use proper fixtures
-    // Rel: https://github.com/OriginProtocol/origin-dollar/issues/1259
-    const f = defaultFixtureSetup();
-    await f();
-  });
 
   describe("with mainnet data", () => {
     const loadFixture = createFixtureLoader(convexOETHMetaVaultFixture);

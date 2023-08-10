@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 /**
- * @title OUSD Base Compound Abstract Strategy
+ * @title Base Compound Abstract Strategy
  * @author Origin Protocol Inc
  */
 
