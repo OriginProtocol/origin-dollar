@@ -87,7 +87,7 @@ yarn test
 
 ### Fork Tests
 
-Set your `PROVIDER_URL` and desired `BLOCK_NUMBER` in your [.env](./.env) file. The can be copied from [dev.env](./dev.env).
+Set your `PROVIDER_URL` and desired `FORK_BLOCK_NUMBER` in your [.env](./.env) file. The can be copied from [dev.env](./dev.env). More details in [fork-test.md](./fork-test.md)
 
 ```
 # in one terminal
