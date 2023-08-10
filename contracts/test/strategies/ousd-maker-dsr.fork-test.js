@@ -2,30 +2,19 @@ const { expect } = require("chai");
 const { formatUnits, parseUnits } = require("ethers/lib/utils");
 
 const addresses = require("../../utils/addresses");
-const { units, forkOnlyDescribe } = require("../helpers");
+const { units, forkOnlyDescribe, isCI } = require("../helpers");
 
-const {
-  createFixtureLoader,
-  makerDsrFixture,
-  defaultFixtureSetup,
-} = require("../_fixture");
+const { createFixtureLoader, makerDsrFixture } = require("../_fixture");
 
 const log = require("../../utils/logger")("test:fork:ousd:makerDSR");
 
 forkOnlyDescribe("ForkTest: Maker DSR Strategy", function () {
   this.timeout(0);
-  // due to hardhat forked mode timeouts - retry failed tests up to 3 times
-  // this.retries(3);
+
+  // Retry up to 3 times on CI
+  this.retries(isCI ? 3 : 0);
 
   let fixture;
-
-  after(async () => {
-    // This is needed to revert fixtures
-    // The other tests as of now don't use proper fixtures
-    // Rel: https://github.com/OriginProtocol/origin-dollar/issues/1259
-    const f = defaultFixtureSetup();
-    await f();
-  });
 
   describe("post deployment", () => {
     const loadFixture = createFixtureLoader(makerDsrFixture);
