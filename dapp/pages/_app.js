@@ -22,7 +22,6 @@ import {
   lightTheme,
 } from '@rainbow-me/rainbowkit'
 import {
-  argentWallet,
   ledgerWallet,
   phantomWallet,
   safeWallet,
@@ -63,7 +62,6 @@ const connectors = connectorsForWallets([
   {
     groupName: 'Other',
     wallets: [
-      argentWallet({ projectId, chains }),
       mewWallet({ projectId, chains }),
       okxWallet({ projectId, chains }),
       ledgerWallet({ projectId, chains }),

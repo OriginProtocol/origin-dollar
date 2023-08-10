@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useStoreState } from 'pullstate'
-
 import { usePrevious } from 'utils/hooks'
-import analytics from 'utils/analytics'
+import { event } from '../../../lib/gtm'
 
 const DownCaret = ({ swapMode, disableRotation, color = '#8293a4' }) => {
   return (
@@ -57,6 +56,7 @@ const PillArrow = ({ swapMode, setSwapMode }) => {
           className="caret-background position-absolute d-flex align-items-center justify-content-center"
           onClick={() => {
             setSwapMode(swapMode === 'mint' ? 'redeem' : 'mint')
+            event({ event: 'change_input_output' })
           }}
         >
           <DownCaret disableRotation swapMode={swapMode} />

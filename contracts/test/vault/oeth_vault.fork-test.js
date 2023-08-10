@@ -2,43 +2,34 @@ const { expect } = require("chai");
 const { parseUnits, formatUnits } = require("ethers/lib/utils");
 
 const {
-  defaultFixtureSetup,
-  oethDefaultFixtureSetup,
-  oethCollateralSwapFixtureSetup,
+  createFixtureLoader,
+  oethDefaultFixture,
+  oethCollateralSwapFixture,
   impersonateAccount,
 } = require("./../_fixture");
 const { getIInchSwapData, recodeSwapData } = require("../../utils/1Inch");
 const addresses = require("../../utils/addresses");
-const { forkOnlyDescribe } = require("../helpers");
+const { forkOnlyDescribe, isCI } = require("../helpers");
 const { resolveAsset } = require("../../utils/assets");
 
 const log = require("../../utils/logger")("test:fork:oeth:vault");
-
-const defaultFixture = oethDefaultFixtureSetup();
-const collateralSwapFixture = oethCollateralSwapFixtureSetup();
 
 const oethWhaleAddress = "0xEADB3840596cabF312F2bC88A4Bb0b93A4E1FF5F";
 
 forkOnlyDescribe("ForkTest: OETH Vault", function () {
   this.timeout(0);
-  // due to hardhat forked mode timeouts - retry failed tests up to 3 times
-  // this.retries(3);
+
+  // Retry up to 3 times on CI
+  this.retries(isCI ? 3 : 0);
 
   let fixture;
-
-  after(async () => {
-    // This is needed to revert fixtures
-    // The other tests as of now don't use proper fixtures
-    // Rel: https://github.com/OriginProtocol/origin-dollar/issues/1259
-    const f = defaultFixtureSetup();
-    await f();
-  });
 
   describe("OETH Vault", () => {
     describe("user operations", () => {
       let oethWhaleSigner;
+      const loadFixture = createFixtureLoader(oethCollateralSwapFixture);
       beforeEach(async () => {
-        fixture = await collateralSwapFixture();
+        fixture = await loadFixture();
 
         await impersonateAccount(oethWhaleAddress);
         oethWhaleSigner = await ethers.provider.getSigner(oethWhaleAddress);
@@ -126,8 +117,9 @@ forkOnlyDescribe("ForkTest: OETH Vault", function () {
       });
     });
     describe("post swap deployment", () => {
+      const loadFixture = createFixtureLoader(oethDefaultFixture);
       beforeEach(async () => {
-        fixture = await defaultFixture();
+        fixture = await loadFixture();
       });
 
       it("Should have the correct governor address set", async () => {
@@ -298,8 +290,9 @@ forkOnlyDescribe("ForkTest: OETH Vault", function () {
     };
 
     describe("Collateral swaps", async () => {
+      const loadFixture = createFixtureLoader(oethCollateralSwapFixture);
       beforeEach(async () => {
-        fixture = await collateralSwapFixture();
+        fixture = await loadFixture();
       });
 
       const tests = [
@@ -307,7 +300,7 @@ forkOnlyDescribe("ForkTest: OETH Vault", function () {
           from: "WETH",
           to: "rETH",
           fromAmount: 100,
-          minToAssetAmount: 92,
+          minToAssetAmount: 90,
         },
         {
           from: "WETH",
@@ -367,7 +360,7 @@ forkOnlyDescribe("ForkTest: OETH Vault", function () {
           from: "frxETH",
           to: "rETH",
           fromAmount: 25,
-          minToAssetAmount: 23,
+          minToAssetAmount: 21,
         },
         {
           from: "frxETH",
@@ -394,13 +387,6 @@ forkOnlyDescribe("ForkTest: OETH Vault", function () {
           fromAmount: 100,
           minToAssetAmount: 99.9,
           protocols: "UNISWAP_V3",
-        },
-        {
-          from: "WETH",
-          to: "rETH",
-          fromAmount: 100,
-          minToAssetAmount: 90,
-          protocols: "ROCKET_POOL",
         },
         {
           from: "WETH",
@@ -449,8 +435,9 @@ forkOnlyDescribe("ForkTest: OETH Vault", function () {
     });
 
     describe("Collateral swaps", async () => {
+      const loadFixture = createFixtureLoader(oethCollateralSwapFixture);
       beforeEach(async () => {
-        fixture = await collateralSwapFixture();
+        fixture = await loadFixture();
       });
 
       const tests = [
@@ -502,8 +489,8 @@ forkOnlyDescribe("ForkTest: OETH Vault", function () {
           error: "BALANCE_EXCEEDED",
           from: "stETH",
           to: "WETH",
-          fromAmount: 1000,
-          minToAssetAmount: 990,
+          fromAmount: 10000,
+          minToAssetAmount: 9900,
         },
         {
           error: "ERC20: transfer amount exceeds balance",

@@ -1,10 +1,9 @@
 const { deploymentWithGuardianGovernor } = require("../utils/deploy");
 const addresses = require("../utils/addresses");
-const ethers = require("ethers");
 
 module.exports = deploymentWithGuardianGovernor(
   { deployName: "061_oeth_timelock_part_1" },
-  async ({ deployWithConfirmation, ethers, getTxOpts, withConfirmation }) => {
+  async ({ ethers }) => {
     const cFraxETHStrategyProxy = await ethers.getContract(
       "FraxETHStrategyProxy"
     );

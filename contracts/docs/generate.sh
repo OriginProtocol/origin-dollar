@@ -52,12 +52,21 @@ sol2uml storage .. -c CompoundStrategy -o CompStrategyStorage.svg
 
 sol2uml .. -v -hv -hf -he -hs -hl -b ConvexEthMetaStrategy -o ConvexEthMetaStrategyHierarchy.svg
 sol2uml .. -s -d 0 -b ConvexEthMetaStrategy -o ConvexEthMetaStrategySquashed.svg
+## TODO fix sol2uml "Failed to find user defined type "IERC20" in attribute "shareToken" of type "1"""
 sol2uml storage .. -c ConvexEthMetaStrategy -o ConvexEthMetaStrategyStorage.svg
+
+sol2uml .. -v -hv -hf -he -hs -hl -b FluxStrategy -o FluxStrategyHierarchy.svg
+sol2uml .. -s -d 0 -b FluxStrategy -o FluxStrategySquashed.svg
+sol2uml storage .. -c FluxStrategy -o FluxStrategyStorage.svg
 
 sol2uml .. -v -hv -hf -he -hs -hl -b FraxETHStrategy -o FraxETHStrategyHierarchy.svg
 sol2uml .. -s -d 0 -b FraxETHStrategy -o FraxETHStrategySquashed.svg
 ## TODO fix sol2uml "Failed to find user defined type "IERC20" in attribute "shareToken" of type "1"""
 sol2uml storage .. -c FraxETHStrategy -o FraxETHStrategyStorage.svg
+
+sol2uml .. -v -hv -hf -he -hs -hl -b Generalized4626Strategy -o Generalized4626StrategyHierarchy.svg
+sol2uml .. -s -d 0 -b Generalized4626Strategy -o Generalized4626StrategySquashed.svg
+sol2uml storage .. -c Generalized4626Strategy -o Generalized4626StrategyStorage.svg
 
 sol2uml .. -v -hv -hf -he -hs -hl -b MorphoAaveStrategy -o MorphoAaveStrategyHierarchy.svg
 sol2uml .. -s -d 0 -b MorphoAaveStrategy -o MorphoAaveStrategySquashed.svg
@@ -104,3 +113,15 @@ sol2uml .. -v -hv -hf -he -hs -hl -b OETHVaultCore -o OETHVaultHierarchy.svg
 sol2uml .. -s -d 0 -b OETHVaultCore -o OETHVaultCoreSquashed.svg
 sol2uml .. -s -d 0 -b OETHVaultAdmin -o OETHVaultAdminSquashed.svg
 sol2uml storage .. -c OETHVaultCore -o OETHVaultStorage.svg
+
+# contracts/utils
+sol2uml .. -v -hv -hf -he -hs -hl -b InitializableAbstractStrategy -o InitializableAbstractStrategyHierarchy.svg
+sol2uml .. -s -d 0 -b InitializableAbstractStrategy -o InitializableAbstractStrategySquashed.svg
+sol2uml storage .. -c InitializableAbstractStrategy -o InitializableAbstractStrategyStorage.svg
+
+sol2uml .. -v -hv -hf -he -hs -hl -b InitializableERC20Detailed -o InitializableERC20DetailedHierarchy.svg
+sol2uml .. -s -d 0 -b InitializableERC20Detailed -o InitializableERC20DetailedSquashed.svg
+sol2uml storage .. -c InitializableERC20Detailed -o InitializableERC20DetailedStorage.svg
+
+sol2uml .. -v -hv -hf -b StableMath -o StableMathHierarchy.svg
+sol2uml .. -s -d 0 -b StableMath -o StableMathSquashed.svg

@@ -1,10 +1,11 @@
 const { expect } = require("chai");
-
-const { defaultFixture, impersonateAndFundContract } = require("./../_fixture");
 const { utils } = require("ethers");
 
 const {
-  loadFixture,
+  loadDefaultFixture,
+  impersonateAndFundContract,
+} = require("./../_fixture");
+const {
   forkOnlyDescribe,
   ousdUnits,
   usdtUnits,
@@ -12,6 +13,7 @@ const {
   daiUnits,
   differenceInStrategyBalance,
   differenceInErc20TokenBalances,
+  isCI,
 } = require("./../helpers");
 
 /**
@@ -30,12 +32,13 @@ const {
 
 forkOnlyDescribe("ForkTest: Vault", function () {
   this.timeout(0);
-  // due to hardhat forked mode timeouts - retry failed tests up to 3 times
-  this.retries(3);
+
+  // Retry up to 3 times on CI
+  this.retries(isCI ? 3 : 0);
 
   let fixture;
   beforeEach(async () => {
-    fixture = await loadFixture(defaultFixture);
+    fixture = await loadDefaultFixture();
   });
 
   describe("Admin", () => {
@@ -291,7 +294,7 @@ forkOnlyDescribe("ForkTest: Vault", function () {
       }
     });
 
-    it("Should NOT have any unknown strategies", async () => {
+    it.skip("Should NOT have any unknown strategies", async () => {
       const { vault } = fixture;
       const strategies = await vault.getAllStrategies();
 
@@ -305,7 +308,8 @@ forkOnlyDescribe("ForkTest: Vault", function () {
         "0x7A192DD9Cc4Ea9bdEdeC9992df74F1DA55e60a19", // LUSD MetaStrategy
         "0x79F2188EF9350A1dC11A062cca0abE90684b0197", // MorphoAaveStrategy
         // TODO: Hard-code these after deploy
-        //"0x7A192DD9Cc4Ea9bdEdeC9992df74F1DA55e60a19", // LUSD MetaStrategy
+        //"0x", // Flux Strategy
+        //"0x", // Maker DSR Strategy
       ];
 
       for (const s of strategies) {

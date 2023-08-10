@@ -1,0 +1,46 @@
+name: DeFi
+on: 
+  push:
+    tags:
+      - v*
+
+concurrency:
+  cancel-in-progress: true
+  group: ${{ github.ref_name }}
+
+jobs:
+  abi-gen:
+    name: "Generate and publish ABI"
+    runs-on: ubuntu-latest
+    environment: master
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "16.x"
+          cache: "yarn"
+          cache-dependency-path: contracts/yarn.lock
+
+      - run: yarn install --frozen-lockfile
+        working-directory: ./contracts
+
+      - name: "Generate ABI files"
+        run: (yarn run abi:generate) && (yarn run abi:dist)
+        env:
+          CONTRACT_SIZE: true
+        working-directory: ./contracts
+
+      - name: Update version from tag
+        working-directory: ./contracts/dist
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+          echo "Version set to $VERSION"
+          sed -i -e "s/RELEASE_VERSION/$VERSION/g" package.json
+
+      - name: "Publish"
+        run: npm publish --access public
+        working-directory: ./contracts/dist
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN_ORIGIN_DEFI }}
