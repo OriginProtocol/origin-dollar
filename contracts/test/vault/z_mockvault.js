@@ -1,12 +1,12 @@
-const { mockVaultFixture } = require("../_fixture");
 const { expect } = require("chai");
 const { utils } = require("ethers");
 
-const { loadFixture } = require("../helpers");
+const { createFixtureLoader, mockVaultFixture } = require("../_fixture");
 
 describe("Vault mock with rebase", async () => {
   let mockVault, matt, ousd, josh, governor;
   beforeEach(async () => {
+    const loadFixture = createFixtureLoader(mockVaultFixture);
     const fixture = await loadFixture(mockVaultFixture);
     mockVault = fixture.mockVault;
     matt = fixture.matt;
