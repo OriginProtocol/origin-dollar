@@ -20,7 +20,7 @@ forkOnlyDescribe("Flux strategy", function () {
     fixture = await loadFixture();
   });
 
-  describe("Post deployment", () => {
+  describe.only("Post deployment", () => {
     it("Should be initialized", async () => {
       const { fluxStrategy } = fixture;
 
@@ -54,7 +54,7 @@ forkOnlyDescribe("Flux strategy", function () {
       );
     });
   });
-  describe("Mint", function () {
+  describe.only("Mint", function () {
     it("Should deploy USDC to Flux strategy", async function () {
       const { matt, usdc } = fixture;
       await mintTest(fixture, matt, usdc, "12000");
@@ -71,7 +71,7 @@ forkOnlyDescribe("Flux strategy", function () {
     });
   });
 
-  describe("Withdraw", function () {
+  describe.only("Withdraw", function () {
     it("Should be able to withdraw from DAI strategy", async function () {
       const { domen, dai } = fixture;
       await withdrawTest(fixture, domen, dai, "28000");
@@ -124,7 +124,7 @@ forkOnlyDescribe("Flux strategy", function () {
     });
   });
 
-  describe("Administration", function () {
+  describe.only("Administration", function () {
     it("Anyone should be able to approve all assets", async function () {
       const { dai, usdc, usdt, josh, fluxStrategy } = fixture;
       const tx = await fluxStrategy.connect(josh).safeApproveAllTokens();
