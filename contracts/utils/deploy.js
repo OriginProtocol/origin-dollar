@@ -571,7 +571,7 @@ const submitProposalToOgvGovernance = async (
   } else {
     log(
       `Setting back original values of required voting delay to 1 block and ` +
-        `voting period to 17280 blocks vote extension on late vote to 11520 and ` + 
+        `voting period to 17280 blocks vote extension on late vote to 11520 and ` +
         `timelock min delay to 172800 seconds`
     );
 
