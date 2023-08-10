@@ -48,6 +48,7 @@ main()
         cp -r deployments/mainnet deployments/hardhat
         if [[ -z "${FORK_BLOCK_NUMBER}" ]]; then
             echo "Env var FORK_BLOCK_NUMBER is not set tests will use latest block number and might perform slower"
+            export FORK_BLOCK_NUMBER=$BLOCK_NUMBER
         else
             echo "Running tests using block: $FORK_BLOCK_NUMBER"
         fi
