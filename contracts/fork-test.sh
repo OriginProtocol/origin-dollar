@@ -46,12 +46,6 @@ main()
 
     if [ -z "$LOCAL_PROVIDER_URL" ]; then
         cp -r deployments/mainnet deployments/hardhat
-        if [[ -z "${FORK_BLOCK_NUMBER}" ]]; then
-            echo "Env var FORK_BLOCK_NUMBER is not set tests will use latest block number and might perform slower"
-            export FORK_BLOCK_NUMBER=$BLOCK_NUMBER
-        else
-            echo "Running tests using block: $FORK_BLOCK_NUMBER"
-        fi
         echo "No running node detected spinning up a fresh one"
     else
         if ! command -v jq &> /dev/null
@@ -91,7 +85,7 @@ main()
         params+="$1"
     fi
 
-    if [[ $is_coverage == "true" ]]; then
+    if [ $is_coverage == "true" ]; then
         echo "Running tests and generating coverage reports..."
         FORK=true IS_TEST=true npx --no-install hardhat coverage --testfiles "test/**/*.fork-test.js"
     else
