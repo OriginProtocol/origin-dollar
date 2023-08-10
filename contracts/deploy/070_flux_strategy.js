@@ -11,6 +11,8 @@ module.exports = deploymentWithGovernanceProposal(
     deployName: "070_flux_strategy",
     forceDeploy: false,
     deployerIsProposer: true,
+    proposalId:
+      "91660566454734065741871109032962399777954404025908021614421255240824728026045",
   },
   async ({ ethers }) => {
     const { deployerAddr, timelockAddr } = await getNamedAccounts();
