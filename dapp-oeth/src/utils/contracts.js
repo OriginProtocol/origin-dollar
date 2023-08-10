@@ -412,6 +412,7 @@ export async function setupContracts(account, chainId, fetchId) {
       const credits = await oeth.creditsBalanceOf(account)
       const woethValue = await woeth.maxWithdraw(account)
       const creditsWrapped = woethValue.mul(credits[1])
+
       AccountStore.update((s) => {
         s.creditsBalanceOf = ethers.utils.formatUnits(credits[0], 18)
         s.creditsWrapped = ethers.utils.formatUnits(creditsWrapped, 36)
