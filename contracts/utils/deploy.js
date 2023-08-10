@@ -355,11 +355,11 @@ const executeGovernanceProposalOnFork = async ({
     const votingPeriod = Number((await governorFive.votingPeriod()).toString());
     log(
       `Advancing ${
-        votingPeriod + 1
+        votingPeriod * 2
       } blocks to make transaction for from Active to Succeeded`
     );
     // advance to the end of voting period
-    await advanceBlocks(votingPeriod + 1);
+    await advanceBlocks(votingPeriod * 2);
 
     proposalState = "Succeeded";
     let newState = await getProposalState(proposalIdBn);
