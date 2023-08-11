@@ -5,8 +5,7 @@ const { BigNumber } = require("ethers");
 module.exports = deploymentWithProposal(
   {
     deployName: "043_convex_OUSD_meta_strategy",
-    forceDeploy: false,
-    proposalId: 38,
+    forceDeploy: false
   },
   async ({
     assetAddresses,
@@ -17,12 +16,13 @@ module.exports = deploymentWithProposal(
   }) => {
     const { deployerAddr, governorAddr } = await getNamedAccounts();
     const sDeployer = await ethers.provider.getSigner(deployerAddr);
-
+    console.log("xxxxx");
     const dVaultAdmin = await deployWithConfirmation("VaultAdmin");
+    console.log("yyyyy");
     const dVaultCore = await deployWithConfirmation("VaultCore");
 
-    // Current contracts
-    const cVaultProxy = await ethers.getContract("VaultProxy");
+    // Deployer Actions
+    const cVaultProxy = await ethers.getContractAt("VaultProxy", addresses.mainnet.VaultProxy);
     const cVaultAdmin = await ethers.getContractAt(
       "VaultAdmin",
       cVaultProxy.address

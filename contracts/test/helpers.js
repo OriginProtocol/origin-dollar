@@ -679,6 +679,8 @@ async function proposeArgs(governorArgsArray) {
 
 async function propose(fixture, governorArgsArray, description) {
   const { governorContract, governor } = fixture;
+  console.log("FAILS HERE!!!");
+
   const lastProposalId = await governorContract.proposalCount();
   await governorContract
     .connect(governor)

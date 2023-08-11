@@ -78,10 +78,10 @@ main()
 
     if [[ $is_coverage == "true" ]]; then
         echo "Running tests and generating coverage reports..."
-        FORK=true IS_TEST=true npx --no-install hardhat coverage --testfiles "test/**/*.fork-test.js"
+        FORK=true IS_TEST=true npx --no-install hardhat coverage --network tenderly --testfiles "test/**/*.fork-test.js"
     else
         echo "Running fork tests..."
-        FORK=true IS_TEST=true npx --no-install hardhat test ${params[@]}
+        FORK=true IS_TEST=true npx --no-install hardhat test --network tenderly ${params[@]}
     fi
 
     if [ ! $? -eq 0 ] && $is_ci; then

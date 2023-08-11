@@ -27,6 +27,7 @@ const { getTxOpts } = require("../utils/tx");
 const { proposeArgs, proposeGovernanceArgs } = require("../utils/governor");
 const governorFiveAbi = require("../abi/governor_five.json");
 const timelockAbi = require("../abi/timelock.json");
+const { tenderly } = require("hardhat");
 
 // Wait for 3 blocks confirmation on Mainnet.
 const NUM_CONFIRMATIONS = isMainnet ? 3 : 0;
@@ -61,11 +62,14 @@ const deployWithConfirmation = async (
 
   const { deploy } = deployments;
   const { deployerAddr } = await getNamedAccounts();
+
+  console.log("deployerAddr", deployerAddr)
   if (!args) args = null;
   if (!contract) contract = contractName;
   const result = await withConfirmation(
     deploy(contractName, {
       from: deployerAddr,
+      //from: "0x35918cDE7233F2dD33fA41ae3Cb6aE0e42E0e69F",
       args,
       contract,
       fieldsToCompare: null,
@@ -76,6 +80,11 @@ const deployWithConfirmation = async (
   // if upgrade happened on the mainnet save the new storage slot layout to the repo
   if (isMainnet) {
     await storeStorageLayoutForContract(hre, contractName);
+  } else if (isFork) {
+    const what = await tenderly.verify({
+      address: result.address,
+      name: contractName,
+    });
   }
 
   log(`Deployed ${contractName}`, result);
@@ -765,6 +774,7 @@ const handlePossiblyActiveProposal = async (
   reduceQueueTime
 ) => {
   if (isFork && proposalId) {
+    //return true;
     const proposalCount = Number((await governor.proposalCount()).toString());
     // proposal has not yet been submitted on the forked node (with current block height)
     if (proposalCount < proposalId) {
@@ -1022,7 +1032,7 @@ function deploymentWithProposal(opts, fn) {
       oracleAddresses,
       assetAddresses,
       deployWithConfirmation,
-      ethers,
+      ethers: hre.ethers,
       getTxOpts,
       withConfirmation,
     };

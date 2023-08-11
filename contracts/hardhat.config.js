@@ -12,6 +12,9 @@ require("hardhat-deploy-ethers");
 require("hardhat-gas-reporter");
 require("solidity-coverage");
 require("@openzeppelin/hardhat-upgrades");
+const tenderly = require("@tenderly/hardhat-tenderly");
+
+tenderly.setup();
 
 require("./tasks/tasks");
 const { accounts } = require("./tasks/account");
@@ -138,6 +141,10 @@ module.exports = {
               : {}),
           }),
     },
+    tenderly: {
+      url: `${process.env.DEVNET_RPC_URL}`,
+      chainId: 1
+    },
     localhost: {
       timeout: 0,
     },
@@ -148,6 +155,10 @@ module.exports = {
         process.env.GOVERNOR_PK || privateKeys[0],
       ],
     },
+  },
+  tenderly: {
+    project: "sparrow-s-project",
+    username: "sparrowOrigin"
   },
   mocha: {
     bail: process.env.BAIL === "true",

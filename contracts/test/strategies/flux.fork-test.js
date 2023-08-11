@@ -54,7 +54,7 @@ forkOnlyDescribe("Flux strategy", function () {
       );
     });
   });
-  describe("Mint", function () {
+  describe.only("Mint", function () {
     it("Should deploy USDC to Flux strategy", async function () {
       const { matt, usdc } = fixture;
       await mintTest(fixture, matt, usdc, "12000");

@@ -43,6 +43,7 @@
     "@nomiclabs/hardhat-waffle": "^2.0.6",
     "@openzeppelin/contracts": "4.4.2",
     "@openzeppelin/hardhat-upgrades": "^1.10.0",
+    "@tenderly/hardhat-tenderly": "^1.7.7",
     "@uniswap/v3-core": "^1.0.0",
     "@uniswap/v3-periphery": "^1.1.1",
     "axios": "^1.4.0",

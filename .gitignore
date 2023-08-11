@@ -79,3 +79,6 @@ coverage
 coverage.json
 fork-coverage
 unit-coverage
+
+# hardhat-tenderly plugin
+contracts/deployments
