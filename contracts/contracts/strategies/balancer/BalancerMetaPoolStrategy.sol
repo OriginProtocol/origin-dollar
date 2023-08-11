@@ -270,7 +270,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
     /**
      * @notice Approves the Balancer pool to transfer all supported
      * assets from this strategy.
-     * Also approve any suppered assets that are wrapped in the Balancer pool
+     * Also approve any supported assets that are wrapped in the Balancer pool
      * like stETH and frxETH, to be transferred from this strategy to their
      * respective wrapper contracts. eg wstETH and sfrxETH.
      *
