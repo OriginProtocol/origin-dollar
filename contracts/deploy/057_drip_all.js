@@ -1,4 +1,5 @@
 const { deploymentWithGovernanceProposal } = require("../utils/deploy");
+const addresses = require("../utils/addresses");
 
 module.exports = deploymentWithGovernanceProposal(
   {
@@ -10,7 +11,7 @@ module.exports = deploymentWithGovernanceProposal(
   },
   async ({ deployWithConfirmation, ethers }) => {
     // Current contracts
-    const cVaultProxy = await ethers.getContract("VaultProxy");
+    const cVaultProxy = await ethers.getContractAt("VaultProxy", addresses.mainnet.VaultProxy);
     // const cHarvester = await ethers.getContract("Harvester");
 
     const dVaultCore = await deployWithConfirmation("VaultCore");

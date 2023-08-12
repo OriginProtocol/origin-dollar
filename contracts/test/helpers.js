@@ -287,6 +287,7 @@ const isMainnetOrFork = isMainnet || isFork;
 const isForkTest = isFork && isTest;
 const isForkWithLocalNode = isFork && process.env.LOCAL_PROVIDER_URL;
 const isCI = process.env.GITHUB_ACTIONS;
+const isTenderly = isFork && hre.network.name === "tenderly";
 
 /// Advances the EVM time by the given number of seconds
 const advanceTime = async (seconds) => {
@@ -736,6 +737,7 @@ module.exports = {
   isForkTest,
   isForkWithLocalNode,
   isCI,
+  isTenderly,
   getOracleAddress,
   setOracleTokenPriceUsd,
   getOracleAddresses,

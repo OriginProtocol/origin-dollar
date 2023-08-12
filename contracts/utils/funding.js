@@ -16,6 +16,7 @@ const {
   ognUnits,
   oethUnits,
   isFork,
+  isTenderly,
 } = require("../test/helpers");
 
 const log = require("./logger")("utils:funding");
@@ -170,27 +171,61 @@ const fundAccounts = async () => {
 
   for (const address of signerAddresses) {
     if (isFork) {
-      await hre.network.provider.send("hardhat_setBalance", [
-        address,
-        utils.parseEther("1000000").toHexString(),
-      ]);
+      if (isTenderly) {
+        await hre.network.provider.request({
+          "jsonrpc": "2.0",
+          "method": "tenderly_setBalance",
+          "params": [
+            [
+              address
+            ],
+            utils.parseEther("1000000").toHexString()
+          ],
+          "id": "1234"
+        });
 
-      for (const tokenContract of allCoins) {
-        const signer = await findBestMainnetTokenHolderAndImpersonate(
-          tokenContract,
-          hre
-        );
-        // If the token is USD, transfer 1M, otherwise 1K
-        const amount = ousdCoins.includes(tokenContract) ? "1000000" : "1000";
-        await tokenContract
-          .connect(signer)
-          .transfer(
-            address,
-            utils.parseUnits(amount, await tokenContract.decimals())
+        for (const tokenContract of allCoins) {
+          // If the token is USD, transfer 1M, otherwise 1K
+          const amount = ousdCoins.includes(tokenContract) ? "1000000" : "1000";
+
+          await hre.network.provider.request({
+            "jsonrpc":"2.0",
+            "method":"tenderly_setErc20Balance",
+            "params":[
+                tokenContract.address,
+                address,
+                utils.parseUnits(amount, await tokenContract.decimals())
+            ],
+            "id":"1234"
+          });
+          log(
+            `funded ${amount} ${await tokenContract.symbol()} from signer ${await signer.getAddress()} to ${address}`
           );
-        log(
-          `funded ${amount} ${await tokenContract.symbol()} from signer ${await signer.getAddress()} to ${address}`
-        );
+        }
+
+      } else {
+        await hre.network.provider.send("hardhat_setBalance", [
+          address,
+          utils.parseEther("1000000").toHexString(),
+        ]);
+
+        for (const tokenContract of allCoins) {
+          const signer = await findBestMainnetTokenHolderAndImpersonate(
+            tokenContract,
+            hre
+          );
+          // If the token is USD, transfer 1M, otherwise 1K
+          const amount = ousdCoins.includes(tokenContract) ? "1000000" : "1000";
+          await tokenContract
+            .connect(signer)
+            .transfer(
+              address,
+              utils.parseUnits(amount, await tokenContract.decimals())
+            );
+          log(
+            `funded ${amount} ${await tokenContract.symbol()} from signer ${await signer.getAddress()} to ${address}`
+          );
+        }
       }
     } else {
       const signer = await ethers.provider.getSigner(address);

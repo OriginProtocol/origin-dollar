@@ -19,12 +19,9 @@ module.exports = deploymentWithGovernanceProposal(
       throw new Error("Delete once sure to update OUSD contracts");
     }
 
-    console.log("11");
     // Deploy VaultAdmin and VaultCore contracts
     const cVaultProxy = await ethers.getContractAt("VaultProxy", addresses.mainnet.VaultProxy);
-    console.log("22");
     const dVaultAdmin = await deployWithConfirmation("VaultAdmin");
-    console.log("33");
     const dVaultCore = await deployWithConfirmation("VaultCore");
     const cVault = await ethers.getContractAt("Vault", cVaultProxy.address);
 
@@ -42,13 +39,13 @@ module.exports = deploymentWithGovernanceProposal(
     await cOracleRouter.cacheDecimals(addresses.mainnet.CVX);
 
     // Deploy Harvester
-    const cHarvesterProxy = await ethers.getContract("HarvesterProxy");
+    const cHarvesterProxy = await ethers.getContractAt("HarvesterProxy", addresses.mainnet.HarvesterProxy);
     const dHarvester = await deployWithConfirmation("Harvester", [
       cVaultProxy.address,
       assetAddresses.USDT,
     ]);
 
-    const cSwapper = await ethers.getContract("Swapper1InchV5");
+    const cSwapper = await ethers.getContractAt("Swapper1InchV5", addresses.mainnet.Swapper1InchV5);
 
     // Governance Actions
     // ----------------

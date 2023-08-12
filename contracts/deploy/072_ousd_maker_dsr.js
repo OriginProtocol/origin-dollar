@@ -12,12 +12,12 @@ module.exports = deploymentWithGovernanceProposal(
   },
   async ({ deployWithConfirmation, getTxOpts, withConfirmation }) => {
     // Current OUSD Vault contracts
-    const cVaultProxy = await ethers.getContract("VaultProxy");
+    const cVaultProxy = await ethers.getContractAt("VaultProxy", addresses.mainnet.VaultProxy);
     const cVaultAdmin = await ethers.getContractAt(
       "VaultAdmin",
       cVaultProxy.address
     );
-    const cHarvesterProxy = await ethers.getContract("HarvesterProxy");
+    const cHarvesterProxy = await ethers.getContractAt("HarvesterProxy", addresses.mainnet.HarvesterProxy);
     const cHarvester = await ethers.getContractAt(
       "Harvester",
       cHarvesterProxy.address
@@ -32,7 +32,7 @@ module.exports = deploymentWithGovernanceProposal(
     const dMakerDsrProxy = await deployWithConfirmation(
       "MakerDsrStrategyProxy"
     );
-    const cMakerDsrProxy = await ethers.getContract("MakerDsrStrategyProxy");
+    const cMakerDsrProxy = await ethers.getContractAt("MakerDsrStrategyProxy", addresses.mainnet.MakerDsrStrategyProxy);
 
     // 2. Deploy new Generalized4626Strategy contract as there has been a number of gas optimizations since it was first deployed
     const dMakerDsrStrategyImpl = await deployWithConfirmation(

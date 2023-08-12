@@ -170,6 +170,7 @@ module.exports = {
       default: 0,
       localhost: process.env.FORK === "true" ? MAINNET_DEPLOYER : 0,
       hardhat: process.env.FORK === "true" ? MAINNET_DEPLOYER : 0,
+      //tenderly: process.env.FORK === "true" ? MAINNET_DEPLOYER : 0,
       mainnet: MAINNET_DEPLOYER,
     },
     governorAddr: {
@@ -177,6 +178,7 @@ module.exports = {
       // On Mainnet and fork, the governor is the Governor contract.
       localhost: process.env.FORK === "true" ? MAINNET_GOVERNOR : 1,
       hardhat: process.env.FORK === "true" ? MAINNET_GOVERNOR : 1,
+      tenderly: process.env.FORK === "true" ? MAINNET_GOVERNOR : 1,
       mainnet: MAINNET_GOVERNOR,
     },
     /* Local node environment currently has no access to Decentralized governance
@@ -197,6 +199,10 @@ module.exports = {
         process.env.FORK === "true"
           ? MAINNET_GOVERNOR_FIVE
           : ethers.constants.AddressZero,
+      tenderly:
+        process.env.FORK === "true"
+          ? MAINNET_GOVERNOR_FIVE
+          : ethers.constants.AddressZero,
       mainnet: MAINNET_GOVERNOR_FIVE,
     },
     // above governorFiveAddr comment applies to timelock as well
@@ -208,6 +214,10 @@ module.exports = {
           ? MAINNET_TIMELOCK
           : ethers.constants.AddressZero,
       hardhat:
+        process.env.FORK === "true"
+          ? MAINNET_TIMELOCK
+          : ethers.constants.AddressZero,
+      tenderly:
         process.env.FORK === "true"
           ? MAINNET_TIMELOCK
           : ethers.constants.AddressZero,

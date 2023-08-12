@@ -64,19 +64,20 @@ const defaultFixture = deployments.createFixture(async () => {
   const { governorAddr, strategistAddr, timelockAddr } =
     await getNamedAccounts();
 
-  const ousdProxy = await ethers.getContract("OUSDProxy");
-  const vaultProxy = await ethers.getContract("VaultProxy");
+  const ousdProxy = await ethers.getContractAt("OUSDProxy", addresses.mainnet.OUSDProxy);
+  const vaultProxy = await ethers.getContractAt("VaultProxy", addresses.mainnet.VaultProxy);
 
-  const harvesterProxy = await ethers.getContract("HarvesterProxy");
+  const harvesterProxy = await ethers.getContractAt("HarvesterProxy", addresses.mainnet.HarvesterProxy);
 
-  const compoundStrategyProxy = await ethers.getContract(
-    "CompoundStrategyProxy"
+  const compoundStrategyProxy = await ethers.getContractAt(
+    "CompoundStrategyProxy",
+    addresses.mainnet.CompoundStrategyProxy
   );
 
   const ousd = await ethers.getContractAt("OUSD", ousdProxy.address);
   const vault = await ethers.getContractAt("IVault", vaultProxy.address);
-  const oethProxy = await ethers.getContract("OETHProxy");
-  const OETHVaultProxy = await ethers.getContract("OETHVaultProxy");
+  const oethProxy = await ethers.getContractAt("OETHProxy", addresses.mainnet.OETHProxy);
+  const OETHVaultProxy = await ethers.getContractAt("OETHVaultProxy", addresses.mainnet.OETHVaultProxy);
   const oethVault = await ethers.getContractAt(
     "IVault",
     OETHVaultProxy.address
@@ -86,7 +87,7 @@ const defaultFixture = deployments.createFixture(async () => {
   let woeth, woethProxy;
 
   if (isFork) {
-    woethProxy = await ethers.getContract("WOETHProxy");
+    woethProxy = await ethers.getContractAt("WOETHProxy", addresses.mainnet.WOETHProxy);
     woeth = await ethers.getContractAt("WOETH", woethProxy.address);
   }
 
@@ -95,11 +96,11 @@ const defaultFixture = deployments.createFixture(async () => {
     harvesterProxy.address
   );
 
-  const dripperProxy = await ethers.getContract("DripperProxy");
+  const dripperProxy = await ethers.getContractAt("DripperProxy", addresses.mainnet.DripperProxy);
   const dripper = await ethers.getContractAt("Dripper", dripperProxy.address);
-  const wousdProxy = await ethers.getContract("WrappedOUSDProxy");
+  const wousdProxy = await ethers.getContractAt("WrappedOUSDProxy", addresses.mainnet.WrappedOUSDProxy);
   const wousd = await ethers.getContractAt("WrappedOusd", wousdProxy.address);
-  const governorContract = await ethers.getContract("Governor");
+  const governorContract = await ethers.getContractAt("Governor", addresses.mainnet.OldTimelock);
   const CompoundStrategyFactory = await ethers.getContractFactory(
     "CompoundStrategy"
   );
@@ -108,39 +109,45 @@ const defaultFixture = deployments.createFixture(async () => {
     compoundStrategyProxy.address
   );
 
-  const threePoolStrategyProxy = await ethers.getContract(
-    "ThreePoolStrategyProxy"
+  const threePoolStrategyProxy = await ethers.getContractAt(
+    "ThreePoolStrategyProxy",
+    addresses.mainnet.ThreePoolStrategyProxy
   );
   const threePoolStrategy = await ethers.getContractAt(
     "ThreePoolStrategy",
     threePoolStrategyProxy.address
   );
-  const convexStrategyProxy = await ethers.getContract("ConvexStrategyProxy");
+  const convexStrategyProxy = await ethers.getContractAt("ConvexStrategyProxy", addresses.mainnet.ConvexStrategyProxy);
   const convexStrategy = await ethers.getContractAt(
     "ConvexStrategy",
     convexStrategyProxy.address
   );
 
-  const OUSDmetaStrategyProxy = await ethers.getContract(
-    "ConvexOUSDMetaStrategyProxy"
+  const OUSDmetaStrategyProxy = await ethers.getContractAt(
+    "ConvexOUSDMetaStrategyProxy",
+    addresses.mainnet.ConvexOUSDMetaStrategyProxy
   );
   const OUSDmetaStrategy = await ethers.getContractAt(
     "ConvexOUSDMetaStrategy",
     OUSDmetaStrategyProxy.address
   );
 
-  const aaveStrategyProxy = await ethers.getContract("AaveStrategyProxy");
+  const aaveStrategyProxy = await ethers.getContractAt("AaveStrategyProxy", addresses.mainnet.AaveStrategyProxy);
   const aaveStrategy = await ethers.getContractAt(
     "AaveStrategy",
     aaveStrategyProxy.address
   );
 
-  const oracleRouter = await ethers.getContract("OracleRouter");
-  const oethOracleRouter = await ethers.getContract(
-    isFork ? "OETHOracleRouter" : "OracleRouter"
-  );
+  const oracleRouter = await ethers.getContractAt("OracleRouter", addresses.mainnet.OracleRouter);
 
-  const buybackProxy = await ethers.getContract("BuybackProxy");
+  let oethOracleRouter;
+  if (isFork) {
+    oethOracleRouter = await ethers.getContractAt("OETHOracleRouter", addresses.mainnet.OETHOracleRouter);
+  } else {
+    oethOracleRouter = await ethers.getContractAt("OracleRouter", addresses.mainnet.OracleRouter);
+  }
+
+  const buybackProxy = await ethers.getContractAt("BuybackProxy", addresses.mainnet.BuybackProxy);
   const buyback = await ethers.getContractAt("Buyback", buybackProxy.address);
 
   let usdt,
@@ -265,61 +272,68 @@ const defaultFixture = deployments.createFixture(async () => {
       addresses.mainnet.CVXRewardsPool
     );
 
-    const makerDsrStrategyProxy = await ethers.getContract(
-      "MakerDsrStrategyProxy"
+    const makerDsrStrategyProxy = await ethers.getContractAt(
+      "MakerDsrStrategyProxy",
+      addresses.mainnet.MakerDsrStrategyProxy
     );
     makerDsrStrategy = await ethers.getContractAt(
       "Generalized4626Strategy",
       makerDsrStrategyProxy.address
     );
 
-    const morphoCompoundStrategyProxy = await ethers.getContract(
-      "MorphoCompoundStrategyProxy"
+    const morphoCompoundStrategyProxy = await ethers.getContractAt(
+      "MorphoCompoundStrategyProxy",
+      addresses.mainnet.MorphoCompoundStrategyProxy
     );
     morphoCompoundStrategy = await ethers.getContractAt(
       "MorphoCompoundStrategy",
       morphoCompoundStrategyProxy.address
     );
 
-    const morphoAaveStrategyProxy = await ethers.getContract(
-      "MorphoAaveStrategyProxy"
+    const morphoAaveStrategyProxy = await ethers.getContractAt(
+      "MorphoAaveStrategyProxy",
+      addresses.mainnet.MorphoAaveStrategyProxy
     );
     morphoAaveStrategy = await ethers.getContractAt(
       "MorphoAaveStrategy",
       morphoAaveStrategyProxy.address
     );
 
-    const oethMorphoAaveStrategyProxy = await ethers.getContract(
-      "OETHMorphoAaveStrategyProxy"
+    const oethMorphoAaveStrategyProxy = await ethers.getContractAt(
+      "OETHMorphoAaveStrategyProxy",
+      addresses.mainnet.OETHMorphoAaveStrategyProxy
     );
     oethMorphoAaveStrategy = await ethers.getContractAt(
       "MorphoAaveStrategy",
       oethMorphoAaveStrategyProxy.address
     );
 
-    const fraxEthStrategyProxy = await ethers.getContract(
-      "FraxETHStrategyProxy"
+    const fraxEthStrategyProxy = await ethers.getContractAt(
+      "FraxETHStrategyProxy",
+      addresses.mainnet.FraxETHStrategyProxy
     );
+
     fraxEthStrategy = await ethers.getContractAt(
       "FraxETHStrategy",
       fraxEthStrategyProxy.address
     );
 
-    const oethHarvesterProxy = await ethers.getContract("OETHHarvesterProxy");
+    const oethHarvesterProxy = await ethers.getContractAt("OETHHarvesterProxy", addresses.mainnet.OETHHarvesterProxy);
     oethHarvester = await ethers.getContractAt(
       "OETHHarvester",
       oethHarvesterProxy.address
     );
 
-    ConvexEthMetaStrategyProxy = await ethers.getContract(
-      "ConvexEthMetaStrategyProxy"
+    ConvexEthMetaStrategyProxy = await ethers.getContractAt(
+      "ConvexEthMetaStrategyProxy",
+      addresses.mainnet.ConvexEthMetaStrategyProxy
     );
     ConvexEthMetaStrategy = await ethers.getContractAt(
       "ConvexEthMetaStrategy",
       ConvexEthMetaStrategyProxy.address
     );
 
-    const oethDripperProxy = await ethers.getContract("OETHDripperProxy");
+    const oethDripperProxy = await ethers.getContractAt("OETHDripperProxy", addresses.mainnet.OETHDripperProxy);
     oethDripper = await ethers.getContractAt(
       "OETHDripper",
       oethDripperProxy.address
@@ -337,9 +351,11 @@ const defaultFixture = deployments.createFixture(async () => {
       oethOracleRouter.address,
       dMockOETHOracleRouterNoStale
     );
-    swapper = await ethers.getContract("Swapper1InchV5");
+    swapper = await ethers.getContractAt("Swapper1InchV5", addresses.mainnet.Swapper1InchV5);
 
-    const fluxStrategyProxy = await ethers.getContract("FluxStrategyProxy");
+    // TODO how to get this one from deployed addresses?!??
+    const fluxStrategyProxy = await ethers.getContractAt("FluxStrategyProxy", "0x76Bf500B6305Dc4ea851384D3d5502f1C7a0ED44");
+
     fluxStrategy = await ethers.getContractAt(
       "CompoundStrategy",
       fluxStrategyProxy.address

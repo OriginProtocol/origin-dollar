@@ -62,6 +62,10 @@ addresses.mainnet.CVXETHRewardsPool =
 addresses.mainnet.sDAI = "0x83F20F44975D03b1b09e64809B757c47f942BEeA";
 // Open Oracle
 addresses.mainnet.openOracle = "0x922018674c12a7f0d394ebeef9b58f186cde13c1";
+addresses.mainnet.OracleRouter = "0x06C7a36bfE715479C7f583785b7e9303dfcC89Ff";
+addresses.mainnet.OETHOracleRouter = "0x60fF8354e9C0E78e032B7daeA8da2c3265287dBd";
+addresses.mainnet.BuybackProxy = "0xD7B28d06365b85933c64E11e639EA0d3bC0e3BaB";
+
 // OGN
 addresses.mainnet.OGN = "0x8207c1ffc5b6804f6024322ccf34f29c3541ae26";
 // LUSD
@@ -115,12 +119,14 @@ addresses.mainnet.chainlinkcbETH_ETH =
 
 // WETH Token
 addresses.mainnet.WETH = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2";
+addresses.mainnet.DripperProxy = "0x80C898ae5e56f888365E235CeB8CEa3EB726CB58";
 // Deployed OUSD contracts
 addresses.mainnet.Guardian = "0xbe2AB3d3d8F6a32b96414ebbd865dBD276d3d899"; // ERC 20 owner multisig.
 addresses.mainnet.VaultProxy = "0xE75D77B1865Ae93c7eaa3040B038D7aA7BC02F70";
 addresses.mainnet.Vault = "0xf251Cb9129fdb7e9Ca5cad097dE3eA70caB9d8F9";
 addresses.mainnet.OUSDProxy = "0x2A8e1E676Ec238d8A992307B495b45B3fEAa5e86";
 addresses.mainnet.OUSD = "0xB72b3f5523851C2EB0cA14137803CA4ac7295f3F";
+addresses.mainnet.WrappedOUSDProxy = "0xD2af830E8CBdFed6CC11Bab697bB25496ed6FA62";
 addresses.mainnet.CompoundStrategyProxy =
   "0x12115A32a19e4994C2BA4A5437C22CEf5ABb59C3";
 addresses.mainnet.CompoundStrategy =
@@ -149,7 +155,17 @@ addresses.mainnet.MorphoStrategyProxy =
   "0x5A4eEe58744D1430876d5cA93cAB5CcB763C037D";
 addresses.mainnet.MorphoAaveStrategyProxy =
   "0x79F2188EF9350A1dC11A062cca0abE90684b0197";
+addresses.mainnet.AaveStrategyProxy =
+  "0x5e3646A1Db86993f73E6b74A57D8640B69F7e259";
+addresses.mainnet.MorphoCompoundStrategyProxy =
+  "0x5A4eEe58744D1430876d5cA93cAB5CcB763C037D";
+addresses.mainnet.OETHMorphoAaveStrategyProxy =
+  "0xc1fc9E5eC3058921eA5025D703CBE31764756319";
+addresses.mainnet.FraxETHStrategyProxy =
+  "0x3fF8654D633D4Ea0faE24c52Aec73B4A20D0d0e5";
+
 addresses.mainnet.HarvesterProxy = "0x21Fb5812D70B3396880D30e90D9e5C1202266c89";
+addresses.mainnet.MakerDsrStrategyProxy = "0x1ce298Ec5FE0B1E4B04fb78d275Da6280f6e82A3";
 
 addresses.mainnet.UniswapOracle = "0xc15169Bad17e676b3BaDb699DEe327423cE6178e";
 addresses.mainnet.CompensationClaims =
@@ -169,10 +185,17 @@ addresses.mainnet.OETHProxy = "0x856c4Efb76C1D1AE02e20CEB03A2A6a08b0b8dC3";
 addresses.mainnet.WOETHProxy = "0xDcEe70654261AF21C44c093C300eD3Bb97b78192";
 addresses.mainnet.OETHVaultProxy = "0x39254033945aa2e4809cc2977e7087bee48bd7ab";
 addresses.mainnet.OETHZapper = "0x9858e47BCbBe6fBAC040519B02d7cd4B2C470C66";
+addresses.mainnet.OETHDripperProxy = "0xc0F42F73b8f01849a2DD99753524d4ba14317EB3";
 addresses.mainnet.FraxETHStrategy =
   "0x3ff8654d633d4ea0fae24c52aec73b4a20d0d0e5";
 addresses.mainnet.OETHHarvesterProxy =
   "0x0D017aFA83EAce9F10A8EC5B6E13941664A6785C";
+addresses.mainnet.Swapper1InchV5 = "0xcD0fcF8a31Bc78ec07752e9CCD3960E936D18366";
+addresses.mainnet.ThreePoolStrategyProxy = "0x3c5fe0a3922777343CBD67D3732FCdc9f2Fa6f2F";
+addresses.mainnet.ConvexStrategyProxy = "0xEA2Ef2e2E5A749D4A66b41Db9aD85a38Aa264cb3";
+addresses.mainnet.ConvexOUSDMetaStrategyProxy = "0x89Eb88fEdc50FC77ae8a18aAD1cA0ac27f777a90";
+addresses.mainnet.ConvexEthMetaStrategyProxy = "0x1827F9eA98E0bf96550b2FC20F7233277FcD7E63";
+addresses.mainnet.MockFrxETHMinter = "0x1827F9eA98E0bf96550b2FC20F7233277FcD7E63";
 
 // Tokens
 addresses.mainnet.sfrxETH = "0xac3E018457B222d93114458476f3E3416Abbe38F";
