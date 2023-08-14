@@ -14,7 +14,7 @@ const { resolveAsset } = require("../../utils/assets");
 
 const log = require("../../utils/logger")("test:fork:oeth:vault");
 
-const oethWhaleAddress = "0xEADB3840596cabF312F2bC88A4Bb0b93A4E1FF5F";
+const { oethWhaleAddress } = addresses.mainnet;
 
 forkOnlyDescribe("ForkTest: OETH Vault", function () {
   this.timeout(0);

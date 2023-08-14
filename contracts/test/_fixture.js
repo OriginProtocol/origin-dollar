@@ -1481,7 +1481,7 @@ async function convexOETHMetaVaultFixture(
       });
   }
 
-  const oethWhaleAddress = "0xEADB3840596cabF312F2bC88A4Bb0b93A4E1FF5F";
+  const { oethWhaleAddress } = addresses.mainnet;
   fixture.oethWhale = await impersonateAndFundContract(oethWhaleAddress);
 
   // Add OETH to the Metapool
