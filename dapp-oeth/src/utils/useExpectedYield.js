@@ -1,8 +1,5 @@
-import React, { useState, useEffect } from 'react'
-import { fbt } from 'fbt-runtime'
+import React, { useEffect } from 'react'
 import { useStoreState } from 'pullstate'
-import { BigNumber } from 'ethers'
-
 import AccountStore from 'stores/AccountStore'
 import YieldStore from 'stores/YieldStore'
 import { animateValue } from 'utils/animation'
@@ -21,9 +18,6 @@ const useExpectedYield = (isWrapped = false) => {
   )
   const expectedIncrease = useStoreState(YieldStore, (s) =>
     isWrapped ? s.expectedIncreaseWrapped : s.expectedIncrease
-  )
-  const animatedExpectedIncrease = useStoreState(YieldStore, (s) =>
-    isWrapped ? s.animatedExpectedIncreaseWrapped : s.animatedExpectedIncrease
   )
 
   const creditsBalanceOf = useStoreState(AccountStore, (s) =>
@@ -99,7 +93,7 @@ const useExpectedYield = (isWrapped = false) => {
   }, [creditsBalanceOf, currentCreditsPerToken, nextCreditsPerToken])
 
   return {
-    animatedExpectedIncrease,
+    animatedExpectedIncrease: expectedIncrease,
   }
 }
 
