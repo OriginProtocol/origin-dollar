@@ -361,45 +361,6 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
     ****************************************/
 
     /**
-     * @notice One-sided remove of OTokens from the Metapool which are then burned.
-     * This is used when the Metapool has too many OTokens and not enough ETH.
-     * The amount of assets in the vault is unchanged.
-     * The total supply of OTokens is reduced.
-     * The asset value of the strategy and vault is reduced.
-     * @param _lpTokens The amount of Metapool LP tokens to be burned for OTokens.
-     */
-    function removeAndBurnOTokens(uint256 _lpTokens)
-        external
-        onlyStrategist
-        improveMetapoolBalance
-    {
-        // Withdraw Metapool LP tokens from Convex pool
-        _lpWithdraw(_lpTokens);
-
-        // Convert Metapool LP tokens to ETH value
-        uint256 valueInEth = _lpTokens.mulTruncate(
-            curvePool.get_virtual_price()
-        );
-        // Apply slippage to ETH value
-        uint256 minOethAmount = valueInEth.mulTruncate(
-            uint256(1e18) - MAX_SLIPPAGE
-        );
-
-        // Remove just the OTokens from the Metapool
-        uint256 oethToBurn = curvePool.remove_liquidity_one_coin(
-            _lpTokens,
-            int128(oethCoinIndex),
-            minOethAmount,
-            address(this)
-        );
-
-        // The vault burns the OTokens from this strategy
-        IVault(vaultAddress).burnForStrategy(oethToBurn);
-
-        emit Withdrawal(address(oeth), address(lpToken), oethToBurn);
-    }
-
-    /**
      * @notice Mint OTokens and one-sided add to the Metapool.
      * This is used when the Metapool does not have enough OTokens and too many ETH.
      * The OToken/Asset, eg OETH/ETH, price with increase.
@@ -444,6 +405,31 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
     }
 
     /**
+     * @notice One-sided remove of OTokens from the Metapool which are then burned.
+     * This is used when the Metapool has too many OTokens and not enough ETH.
+     * The amount of assets in the vault is unchanged.
+     * The total supply of OTokens is reduced.
+     * The asset value of the strategy and vault is reduced.
+     * @param _lpTokens The amount of Metapool LP tokens to be burned for OTokens.
+     */
+    function removeAndBurnOTokens(uint256 _lpTokens)
+        external
+        onlyStrategist
+        improveMetapoolBalance
+    {
+        // Withdraw Metapool LP tokens from Convex and remove OTokens from the Metapool
+        uint256 oethToBurn = _withdrawAndRemoveFromPool(
+            _lpTokens,
+            oethCoinIndex
+        );
+
+        // The vault burns the OTokens from this strategy
+        IVault(vaultAddress).burnForStrategy(oethToBurn);
+
+        emit Withdrawal(address(oeth), address(lpToken), oethToBurn);
+    }
+
+    /**
      * @notice One-sided remove of ETH from the Metapool, convert to WETH
      * and transfer to the vault.
      * This is used when the Metapool does not have enough OTokens and too many ETH.
@@ -465,25 +451,8 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         onlyStrategist
         improveMetapoolBalance
     {
-        // Withdraw Metapool LP tokens from Convex pool
-        _lpWithdraw(_lpTokens);
-
-        // Convert Metapool LP tokens to ETH value
-        uint256 valueInEth = _lpTokens.mulTruncate(
-            curvePool.get_virtual_price()
-        );
-        // Apply slippage to ETH value
-        uint256 minEthAmount = valueInEth.mulTruncate(
-            uint256(1e18) - MAX_SLIPPAGE
-        );
-
-        // Remove just the ETH from the Metapool
-        uint256 ethAmount = curvePool.remove_liquidity_one_coin(
-            _lpTokens,
-            int128(ethCoinIndex),
-            minEthAmount,
-            address(this)
-        );
+        // Withdraw Metapool LP tokens from Convex and remove ETH from the Metapool
+        uint256 ethAmount = _withdrawAndRemoveFromPool(_lpTokens, ethCoinIndex);
 
         // Convert ETH to WETH and transfer to the vault
         weth.deposit{ value: ethAmount }();
@@ -493,6 +462,38 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         );
 
         emit Withdrawal(address(weth), address(lpToken), ethAmount);
+    }
+
+    /**
+     * @dev Remove Metapool LP tokens from the Convex pool and
+     * do a one-sided remove of ETH or OETH from the Metapool.
+     * @param _lpTokens The amount of Metapool LP tokens to be removed from the Convex pool.
+     * @param coinIndex The index of the coin to be removed from the Metapool. 0 = ETH, 1 = OETH.
+     * @return coinsRemoved The amount of ETH or OETH removed from the Metapool.
+     */
+    function _withdrawAndRemoveFromPool(uint256 _lpTokens, uint128 coinIndex)
+        internal
+        returns (uint256 coinsRemoved)
+    {
+        // Withdraw Metapool LP tokens from Convex pool
+        _lpWithdraw(_lpTokens);
+
+        // Convert Metapool LP tokens to ETH value
+        uint256 valueInEth = _lpTokens.mulTruncate(
+            curvePool.get_virtual_price()
+        );
+        // Apply slippage to ETH value
+        uint256 minAmount = valueInEth.mulTruncate(
+            uint256(1e18) - MAX_SLIPPAGE
+        );
+
+        // Remove just the ETH from the Metapool
+        coinsRemoved = curvePool.remove_liquidity_one_coin(
+            _lpTokens,
+            int128(coinIndex),
+            minAmount,
+            address(this)
+        );
     }
 
     /***************************************
