@@ -6,7 +6,10 @@ module.exports = deploymentWithGovernanceProposal(
   {
     deployName: "073_oeth_amo_upgrade",
     forceDeploy: false,
+    // forceSkip: true,
+    reduceQueueTime: true,
     deployerIsProposer: true,
+    // proposalId: "",
   },
   async ({ ethers, deployWithConfirmation }) => {
     const cConvexEthMetaStrategyProxy = await ethers.getContract(
