@@ -222,3 +222,12 @@ with TemporaryForkWithVaultStats(votes=votes):
     print("Transaction ", idx)
     print("To: ", item.receiver)
     print("Data (Hex encoded): ", item.input, "\n")
+
+
+# -------------------------------
+# Aug 14, 2023 - Lock CVX
+# -------------------------------
+from convex import lock_cvx
+
+def main():
+  lock_cvx()
