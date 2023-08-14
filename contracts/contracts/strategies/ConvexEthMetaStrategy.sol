@@ -95,7 +95,8 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
             // we want to check that the pool is now more balanced
             require(diffAfter <= 0, "OTokens overshot peg");
             require(diffBefore < diffAfter, "OTokens balance worse");
-        } else {
+        }
+        if (diffBefore >= 0) {
             // If the pool was originally imbalanced in favor of ETH, then
             // we want to check that the pool is now more balanced
             require(diffAfter >= 0, "Assets overshot peg");
@@ -231,7 +232,7 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @notice Deposit the strategy's entire balance of any ETH or WETH into the Curve Metapool
+     * @notice Deposit the strategy's entire balance of WETH into the Curve Metapool
      */
     function depositAll() external override onlyVault nonReentrant {
         uint256 balance = weth.balanceOf(address(this));
@@ -400,7 +401,7 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
 
     /**
      * @notice Mint OTokens and one-sided add to the Metapool.
-     * This is used when the Metapool has not enough OTokens and too many ETH.
+     * This is used when the Metapool does not have enough OTokens and too many ETH.
      * The OToken/Asset, eg OETH/ETH, price with increase.
      * The amount of assets in the vault is unchanged.
      * The total supply of OTokens is increased.
@@ -445,7 +446,7 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
     /**
      * @notice One-sided remove of ETH from the Metapool, convert to WETH
      * and transfer to the vault.
-     * This is used when the Metapool has not enough OTokens and too many ETH.
+     * This is used when the Metapool does not have enough OTokens and too many ETH.
      * The OToken/Asset, eg OETH/ETH, price with decrease.
      * The amount of assets in the vault increases.
      * The total supply of OTokens does not change.
@@ -484,7 +485,7 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
             address(this)
         );
 
-        // Convert ETH to WETH and tansfer to the vault
+        // Convert ETH to WETH and transfer to the vault
         weth.deposit{ value: ethAmount }();
         require(
             weth.transfer(vaultAddress, ethAmount),
