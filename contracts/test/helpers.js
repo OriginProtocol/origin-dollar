@@ -703,6 +703,7 @@ const forkOnlyDescribe = (title, fn) =>
   isForkTest ? mocha.describe(title, fn) : mocha.describe.skip(title, fn);
 
 module.exports = {
+  decimalsFor,
   ousdUnits,
   oethUnits,
   usdtUnits,

@@ -716,13 +716,14 @@ async function ousdCollateralSwapFixture() {
     );
   }
 
+  await usdt.connect(matt).approve(vault.address, 0);
   for (const token of [dai, usdc, usdt]) {
     await token
       .connect(matt)
-      .approve(vault.address, await units("100000000", token));
+      .approve(vault.address, await units("10000", token));
 
     // Mint some tokens, so it ends up in Vault
-    await vault.connect(matt).mint(token.address, await units("300", token), 0);
+    await vault.connect(matt).mint(token.address, await units("500", token), 0);
   }
 
   if (shouldChangeBuffer) {
