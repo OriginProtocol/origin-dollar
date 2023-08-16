@@ -52,6 +52,7 @@ const {
   removeAndBurnOTokensTask,
   removeOnlyAssetsTask,
 } = require("./amoStrategy");
+const { proxyUpgrades } = require("./proxy");
 
 // Environment tasks.
 task("env", "Check env vars are properly set for a Mainnet deployment", env);
@@ -717,3 +718,24 @@ subtask("checkDelta", "Checks a vault's delta values")
 task("checkDelta").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
+
+task("proxyUpgrades", "Lists all proxy implementation changes")
+  .addParam(
+    "contract",
+    "Name, eg OETHVaultProxy, or address of the proxy contract",
+    undefined,
+    types.string
+  )
+  .addOptionalParam(
+    "from",
+    "Block to query transaction events from. (default: deployment block)",
+    10884563,
+    types.int
+  )
+  .addOptionalParam(
+    "to",
+    "Block to query transaction events to. (default: current block)",
+    0,
+    types.int
+  )
+  .setAction(proxyUpgrades);
