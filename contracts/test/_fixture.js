@@ -14,6 +14,8 @@ const {
   oethUnits,
   getOracleAddresses,
   isFork,
+  ousdUnits,
+  units,
 } = require("./helpers");
 
 const daiAbi = require("./abi/dai.json").abi;
@@ -685,7 +687,7 @@ async function oethCollateralSwapFixture() {
       .connect(matt)
       .approve(
         oethVault.address,
-        parseEther("100000000000000000000000000000000000").toString()
+        parseEther("100000000000000000000000000000000000")
       );
 
     // Mint some tokens, so it ends up in Vault
@@ -695,6 +697,39 @@ async function oethCollateralSwapFixture() {
   if (shouldChangeBuffer) {
     // Set it back
     await oethVault.connect(strategist).setVaultBuffer(bufferBps);
+  }
+
+  return fixture;
+}
+
+async function ousdCollateralSwapFixture() {
+  const fixture = await defaultFixture();
+
+  const { dai, usdc, usdt, matt, strategist, vault } = fixture;
+
+  const bufferBps = await vault.vaultBuffer();
+  const shouldChangeBuffer = bufferBps.lt(oethUnits("1"));
+
+  if (shouldChangeBuffer) {
+    // If it's not 100% already, set it to 100%
+    await vault.connect(strategist).setVaultBuffer(
+      ousdUnits("1") // 100%
+    );
+  }
+
+  await usdt.connect(matt).approve(vault.address, 0);
+  for (const token of [dai, usdc, usdt]) {
+    await token
+      .connect(matt)
+      .approve(vault.address, await units("10000", token));
+
+    // Mint some tokens, so it ends up in Vault
+    await vault.connect(matt).mint(token.address, await units("500", token), 0);
+  }
+
+  if (shouldChangeBuffer) {
+    // Set it back
+    await vault.connect(strategist).setVaultBuffer(bufferBps);
   }
 
   return fixture;
@@ -1865,5 +1900,6 @@ module.exports = {
   replaceContractAt,
   oeth1InchSwapperFixture,
   oethCollateralSwapFixture,
+  ousdCollateralSwapFixture,
   fluxStrategyFixture,
 };

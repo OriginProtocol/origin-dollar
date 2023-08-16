@@ -6,7 +6,7 @@ module.exports = deploymentWithGovernanceProposal(
     deployName: "072_ousd_maker_dsr",
     forceDeploy: false,
     // forceSkip: true,
-    reduceQueueTime: true,
+    // reduceQueueTime: true,
     deployerIsProposer: true,
     proposalId:
       "86061306850762468801715667296603291547349762903757061137093406662425139364009",
