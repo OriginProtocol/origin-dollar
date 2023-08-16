@@ -16,6 +16,7 @@ main()
     fi
 
     is_coverage=("$REPORT_COVERAGE" == "true");
+    is_tenderly=("$TENDERLY_NETWORK" == "true");
 
     if $is_local; then
         # When not running on CI/CD, make sure there's an env file
@@ -29,7 +30,6 @@ main()
     # There must be a provider URL in all cases
     if [ -z "$PROVIDER_URL" ]; then echo "Set PROVIDER_URL" && exit 1; fi
     
-    params=()
     if $is_local; then
         # Check if any node is running on port 8545
         defaultNodeUrl=http://localhost:8545
@@ -61,6 +61,11 @@ main()
         cp -r deployments/localhost deployments/hardhat
     fi
 
+    params=()
+    #if $is_tenderly; then
+    #    params+=" --network tenderly "
+    #fi
+
     if [ -z "$1" ] || [[ $1 == --* ]]; then
         # Run all files with `.fork-test.js` suffix when no file name param is given
         # pass all other params along
@@ -78,10 +83,13 @@ main()
 
     if [[ $is_coverage == "true" ]]; then
         echo "Running tests and generating coverage reports..."
-        FORK=true IS_TEST=true npx --no-install hardhat coverage --network tenderly --testfiles "test/**/*.fork-test.js"
+        FORK=true IS_TEST=true npx --no-install hardhat coverage --testfiles "test/**/*.fork-test.js"
+    elif $is_tenderly; then
+        echo "Running fork tests on Tenderly..."
+        FORK=true IS_TEST=true npx --no-install hardhat test --network tenderly ${params[@]}
     else
         echo "Running fork tests..."
-        FORK=true IS_TEST=true npx --no-install hardhat test --network tenderly ${params[@]}
+        FORK=true IS_TEST=true npx --no-install hardhat test ${params[@]}
     fi
 
     if [ ! $? -eq 0 ] && $is_ci; then

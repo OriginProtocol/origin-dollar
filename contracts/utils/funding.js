@@ -159,7 +159,9 @@ const fundAccounts = async () => {
   }
 
   const ousdCoins = [dai, usdc, usdt, tusd, ogn];
-  const oethCoins = [weth, rETH, stETH, frxETH];
+  //const oethCoins = [weth, rETH, stETH, frxETH];
+  // stETH set balance doesn't work with Tenderly
+  const oethCoins = [weth, rETH, frxETH];
   const allCoins = [...ousdCoins, ...oethCoins];
 
   const signers = await hre.ethers.getSigners();
@@ -194,12 +196,12 @@ const fundAccounts = async () => {
             "params":[
                 tokenContract.address,
                 address,
-                utils.parseUnits(amount, await tokenContract.decimals())
+                utils.parseUnits(amount, await tokenContract.decimals()).toHexString()
             ],
             "id":"1234"
           });
           log(
-            `funded ${amount} ${await tokenContract.symbol()} from signer ${await signer.getAddress()} to ${address}`
+            `funded ${amount} ${await tokenContract.symbol()} to ${address}`
           );
         }
 

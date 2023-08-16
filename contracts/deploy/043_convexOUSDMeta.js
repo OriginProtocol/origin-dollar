@@ -16,9 +16,7 @@ module.exports = deploymentWithProposal(
   }) => {
     const { deployerAddr, governorAddr } = await getNamedAccounts();
     const sDeployer = await ethers.provider.getSigner(deployerAddr);
-    console.log("xxxxx");
     const dVaultAdmin = await deployWithConfirmation("VaultAdmin");
-    console.log("yyyyy");
     const dVaultCore = await deployWithConfirmation("VaultCore");
 
     // Deployer Actions

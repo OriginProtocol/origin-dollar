@@ -10,9 +10,7 @@ module.exports = deploymentWithGovernanceProposal(
   {
     deployName: "070_flux_strategy",
     forceDeploy: false,
-    deployerIsProposer: true,
-    proposalId:
-      "91660566454734065741871109032962399777954404025908021614421255240824728026045",
+    deployerIsProposer: true
   },
   async ({ ethers }) => {
     const { deployerAddr, timelockAddr } = await getNamedAccounts();
@@ -28,7 +26,7 @@ module.exports = deploymentWithGovernanceProposal(
       addresses.mainnet.VaultProxy
     );
 
-    const cHarvesterProxy = await ethers.getContract("HarvesterProxy");
+    const cHarvesterProxy = await ethers.getContractAt("HarvesterProxy", addresses.mainnet.HarvesterProxy);
     const cHarvester = await ethers.getContractAt(
       "Harvester",
       cHarvesterProxy.address
@@ -37,7 +35,7 @@ module.exports = deploymentWithGovernanceProposal(
     const dFluxStrategyProxy = await deployWithConfirmation(
       "FluxStrategyProxy"
     );
-    const cFluxStrategyProxy = await ethers.getContract("FluxStrategyProxy");
+    const cFluxStrategyProxy = await ethers.getContractAt("FluxStrategyProxy", dFluxStrategyProxy.address);
 
     const dFluxStrategy = await deployWithConfirmation(
       "FluxStrategy",

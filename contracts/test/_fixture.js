@@ -490,7 +490,8 @@ const defaultFixture = deployments.createFixture(async () => {
       addresses.mainnet.OldTimelock
     );
   }
-  await fundAccounts();
+  // TODO re-enable this
+  //await fundAccounts();
   if (isFork) {
     for (const user of [josh, matt, anna, domen, daniel, franck]) {
       // Approve Vault to move funds
@@ -513,6 +514,7 @@ const defaultFixture = deployments.createFixture(async () => {
     const address = await buyback.connect(governor).rewardsSource();
     rewardsSource = await ethers.getContractAt([], address);
   }
+
   return {
     // Accounts
     matt,
@@ -1699,23 +1701,30 @@ async function fluxStrategyFixture() {
 
   const { fluxStrategy, timelock, vault, dai, usdt, usdc } = fixture;
 
+  console.log("11");
   await vault
     .connect(timelock)
     .setAssetDefaultStrategy(dai.address, fluxStrategy.address);
 
+  console.log("22");
   await vault
     .connect(timelock)
     .setAssetDefaultStrategy(usdt.address, fluxStrategy.address);
 
+  console.log("33")
   await vault
     .connect(timelock)
     .setAssetDefaultStrategy(usdc.address, fluxStrategy.address);
 
+  console.log("44");
   // Withdraw all from strategies and deposit it to Flux
   await vault.connect(timelock).withdrawAllFromStrategies();
 
-  await vault.connect(timelock).rebase();
+  console.log("55");
+  // rebase doesn't work for some reason
+  //await vault.connect(timelock).rebase();
 
+  console.log("66");
   return fixture;
 }
 

@@ -161,26 +161,37 @@ forkOnlyDescribe("Flux strategy", function () {
 async function mintTest(fixture, user, asset, amount = "30000") {
   const { vault, ousd, fluxStrategy } = fixture;
 
+  console.log("1");
   await vault.connect(user).allocate();
-
+  console.log("2");
   const unitAmount = await units(amount, asset);
 
+  console.log("3");
   const currentSupply = await ousd.totalSupply();
+  console.log("4");
   const currentBalance = await ousd.connect(user).balanceOf(user.address);
+  console.log("1");
   const currentStrategyBalance = await fluxStrategy.checkBalance(asset.address);
 
+  console.log("6");
   // Mint OUSD w/ asset
   await vault.connect(user).mint(asset.address, unitAmount, 0);
+  console.log("7");
   await vault.connect(user).allocate();
+  console.log("8");
 
   const newBalance = await ousd.connect(user).balanceOf(user.address);
+  console.log("9");
   const newSupply = await ousd.totalSupply();
+  console.log("10");
   const newStrategyBalance = await fluxStrategy.checkBalance(asset.address);
+  console.log("11");
 
   const balanceDiff = newBalance.sub(currentBalance);
+  console.log("12");
   // Ensure user has correct balance (w/ 1% slippage tolerance)
   expect(balanceDiff).to.approxEqualTolerance(ousdUnits(amount), 2);
-
+  
   // Supply checks
   const supplyDiff = newSupply.sub(currentSupply);
   const ousdUnitAmount = ousdUnits(amount);
