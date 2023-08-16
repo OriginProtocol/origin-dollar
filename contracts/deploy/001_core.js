@@ -7,15 +7,13 @@ const {
   isMainnet,
   isFork,
 } = require("../test/helpers.js");
-const {
-  log,
-  deployWithConfirmation,
-  withConfirmation,
-} = require("../utils/deploy");
+const { deployWithConfirmation, withConfirmation } = require("../utils/deploy");
 const {
   metapoolLPCRVPid,
   lusdMetapoolLPCRVPid,
 } = require("../utils/constants");
+
+const log = require("../utils/logger")("deploy:001_core");
 
 /**
  * Deploy AAVE Strategy which only supports DAI.
@@ -742,56 +740,38 @@ const deployDripper = async () => {
  */
 const deployFraxEthStrategy = async () => {
   const assetAddresses = await getAssetAddresses(deployments);
-  const { deployerAddr, governorAddr } = await getNamedAccounts();
-  // Signers
-  const sDeployer = await ethers.provider.getSigner(deployerAddr);
-  const sGovernor = await ethers.provider.getSigner(governorAddr);
+  const { governorAddr } = await getNamedAccounts();
 
   const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
 
+  log("Deploy FraxETHStrategyProxy");
   const dFraxETHStrategyProxy = await deployWithConfirmation(
     "FraxETHStrategyProxy"
   );
   const cFraxETHStrategyProxy = await ethers.getContract(
     "FraxETHStrategyProxy"
   );
+  log("Deploy FraxETHStrategy");
   const dFraxETHStrategy = await deployWithConfirmation("FraxETHStrategy", [
     [assetAddresses.sfrxETH, cOETHVaultProxy.address],
+    assetAddresses.frxETH,
   ]);
   const cFraxETHStrategy = await ethers.getContractAt(
     "FraxETHStrategy",
     dFraxETHStrategyProxy.address
   );
+  log("Initialize FraxETHStrategyProxy");
+  const initData = cFraxETHStrategy.interface.encodeFunctionData(
+    "initialize()",
+    []
+  );
   await withConfirmation(
     cFraxETHStrategyProxy["initialize(address,address,bytes)"](
       dFraxETHStrategy.address,
-      deployerAddr,
-      []
+      governorAddr,
+      initData
     )
   );
-  log("Initialized FraxETHStrategyProxy");
-  await withConfirmation(
-    cFraxETHStrategy
-      .connect(sDeployer)
-      .initialize([], [assetAddresses.frxETH], [assetAddresses.sfrxETH])
-  );
-  log("Initialized FraxETHStrategy");
-  await withConfirmation(
-    cFraxETHStrategy.connect(sDeployer).transferGovernance(governorAddr)
-  );
-  log(`FraxETHStrategy transferGovernance(${governorAddr} called`);
-
-  // On Mainnet the governance transfer gets executed separately, via the
-  // multi-sig wallet. On other networks, this migration script can claim
-  // governance by the governor.
-  if (!isMainnet) {
-    await withConfirmation(
-      cFraxETHStrategy
-        .connect(sGovernor) // Claim governance with governor
-        .claimGovernance()
-    );
-    log("Claimed governance for FraxETHStrategy");
-  }
   return cFraxETHStrategy;
 };
 
@@ -1202,6 +1182,36 @@ const deployOETHSwapper = async () => {
   await vault.connect(sGovernor).setOracleSlippage(assetAddresses.frxETH, 20);
 };
 
+const deployOUSDSwapper = async () => {
+  const { deployerAddr, governorAddr } = await getNamedAccounts();
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+  const sGovernor = await ethers.provider.getSigner(governorAddr);
+
+  const assetAddresses = await getAssetAddresses(deployments);
+
+  const vaultProxy = await ethers.getContract("VaultProxy");
+  const vault = await ethers.getContractAt("IVault", vaultProxy.address);
+
+  const mockSwapper = await ethers.getContract("MockSwapper");
+  // Assumes deployOETHSwapper has already been run
+  const cSwapper = await ethers.getContract("Swapper1InchV5");
+
+  cSwapper
+    .connect(sDeployer)
+    .approveAssets([
+      assetAddresses.DAI,
+      assetAddresses.USDC,
+      assetAddresses.USDT,
+    ]);
+
+  await vault.connect(sGovernor).setSwapper(mockSwapper.address);
+  await vault.connect(sGovernor).setSwapAllowedUndervalue(100);
+
+  await vault.connect(sGovernor).setOracleSlippage(assetAddresses.DAI, 50);
+  await vault.connect(sGovernor).setOracleSlippage(assetAddresses.USDC, 50);
+  await vault.connect(sGovernor).setOracleSlippage(assetAddresses.USDT, 50);
+};
+
 const main = async () => {
   console.log("Running 001_core deployment...");
   await deployOracles();
@@ -1226,6 +1236,7 @@ const main = async () => {
   await deployVaultValueChecker();
   await deployWOusd();
   await deployOETHSwapper();
+  await deployOUSDSwapper();
   console.log("001_core deploy done.");
   return true;
 };

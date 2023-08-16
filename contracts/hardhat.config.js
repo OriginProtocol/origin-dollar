@@ -1,5 +1,6 @@
 const ethers = require("ethers");
 const { task } = require("hardhat/config");
+const fetch = require("sync-fetch");
 
 require("@nomiclabs/hardhat-etherscan");
 require("@nomiclabs/hardhat-waffle");
@@ -47,6 +48,52 @@ task("accounts", "Prints the list of accounts", async (taskArguments, hre) => {
 
 const isForkTest =
   process.env.FORK === "true" && process.env.IS_TEST === "true";
+const providerUrl = `${
+  process.env.LOCAL_PROVIDER_URL || process.env.PROVIDER_URL
+}`;
+const standaloneLocalNodeRunning = !!process.env.LOCAL_PROVIDER_URL;
+
+let forkBlockNumber = Number(process.env.BLOCK_NUMBER) || undefined;
+if (isForkTest && standaloneLocalNodeRunning) {
+  const jsonResponse = fetch(providerUrl, {
+    method: "post",
+    body: JSON.stringify({
+      jsonrpc: "2.0",
+      method: "eth_blockNumber",
+      id: 1,
+    }),
+    headers: {
+      "Content-Type": "application/json",
+    },
+  }).json();
+
+  /*
+   * We source the block number from the hardhat context rather than from
+   * node-test.sh startup script, so that block number from an already
+   * running local node can be fetched after the deployments have already
+   * been applied.
+   *
+   */
+  forkBlockNumber = parseInt(jsonResponse.result, 16);
+
+  console.log(`Connecting to local node on block: ${forkBlockNumber}`);
+
+  // Mine 40 blocks so hardhat wont complain about block fork being too recent
+  fetch(providerUrl, {
+    method: "post",
+    body: JSON.stringify({
+      jsonrpc: "2.0",
+      method: "hardhat_mine",
+      params: ["0x28"], // 40
+      id: 1,
+    }),
+    headers: {
+      "Content-Type": "application/json",
+    },
+  }).json();
+} else if (isForkTest) {
+  console.log(`Starting a fresh node on block: ${forkBlockNumber}`);
+}
 
 module.exports = {
   solidity: {
@@ -68,10 +115,8 @@ module.exports = {
             timeout: 0,
             forking: {
               enabled: true,
-              url: `${
-                process.env.LOCAL_PROVIDER_URL || process.env.PROVIDER_URL
-              }`,
-              blockNumber: Number(process.env.FORK_BLOCK_NUMBER) || undefined,
+              url: providerUrl,
+              blockNumber: forkBlockNumber,
               timeout: 0,
             },
           }
@@ -85,11 +130,8 @@ module.exports = {
                   timeout: 0,
                   forking: {
                     enabled: true,
-                    url: `${
-                      process.env.LOCAL_PROVIDER_URL || process.env.PROVIDER_URL
-                    }`,
-                    blockNumber:
-                      Number(process.env.FORK_BLOCK_NUMBER) || undefined,
+                    url: providerUrl,
+                    blockNumber: forkBlockNumber,
                     timeout: 0,
                   },
                 }

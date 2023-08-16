@@ -307,8 +307,8 @@ forkOnlyDescribe("ForkTest: Vault", function () {
         "0x5A4eEe58744D1430876d5cA93cAB5CcB763C037D", // MorphoCompoundStrategy
         "0x7A192DD9Cc4Ea9bdEdeC9992df74F1DA55e60a19", // LUSD MetaStrategy
         "0x79F2188EF9350A1dC11A062cca0abE90684b0197", // MorphoAaveStrategy
-        // TODO: Hard-code these after deploy
-        //"0x", // Flux Strategy
+        "0x76Bf500B6305Dc4ea851384D3d5502f1C7a0ED44", // Flux Strategy
+        "0x6b69B755C629590eD59618A2712d8a2957CA98FC", // Maker DSR Strategy
       ];
 
       for (const s of strategies) {
