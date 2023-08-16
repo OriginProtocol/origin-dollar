@@ -12,7 +12,7 @@ module.exports = deploymentWithGovernanceProposal(
    * the "Should have correct Price Oracle address set" scenario.
    */
   {
-    deployName: "052_upgrade_ousd_vault",
+    deployName: "052_upgrade_ousd_vault_harvester",
     forceDeploy: false,
     onlyOnFork: true, // this is only executed in forked environment
     reduceQueueTime: true,
@@ -41,6 +41,13 @@ module.exports = deploymentWithGovernanceProposal(
     await cOracleRouter.cacheDecimals(addresses.mainnet.CRV);
     await cOracleRouter.cacheDecimals(addresses.mainnet.CVX);
 
+    // Deploy Harvester
+    const cHarvesterProxy = await ethers.getContract("HarvesterProxy");
+    const dHarvester = await deployWithConfirmation("Harvester", [
+      cVaultProxy.address,
+      assetAddresses.USDT,
+    ]);
+
     const cSwapper = await ethers.getContract("Swapper1InchV5");
 
     // The 1Inch Swapper contract approves the 1Inch Router to transfer OUSD collateral assets
@@ -58,6 +65,7 @@ module.exports = deploymentWithGovernanceProposal(
       name: "Upgrade OUSD Vault with new VaultCore and VaultAdmin contracts.\n\
 Set new Oracle router.\n\
 Configure OUSD Vault to perform collateral swaps.\n\
+Upgrade the OUSD Harvester\n\
 \n\
 Code PR: #",
       actions: [
@@ -122,6 +130,12 @@ Code PR: #",
           contract: cVault,
           signature: "setSwapAllowedUndervalue(uint16)",
           args: [50], // 0.5%
+        },
+        // 8. Upgrade the OUSD Harvester
+        {
+          contract: cHarvesterProxy,
+          signature: "upgradeTo(address)",
+          args: [dHarvester.address],
         },
       ],
     };
