@@ -1,6 +1,7 @@
 const { expect } = require("chai");
 const { utils } = require("ethers");
 
+const addresses = require("../../utils/addresses");
 const {
   loadDefaultFixture,
   impersonateAndFundContract,
@@ -15,6 +16,8 @@ const {
   differenceInErc20TokenBalances,
   isCI,
 } = require("./../helpers");
+
+const log = require("../../utils/logger")("test:fork:ousd:vault");
 
 /**
  * Regarding hardcoded addresses:
@@ -44,32 +47,34 @@ forkOnlyDescribe("ForkTest: Vault", function () {
   describe("Admin", () => {
     it("Should have the correct governor address set", async () => {
       const { vault } = fixture;
-      expect(await vault.governor()).to.equal(
-        "0x35918cDE7233F2dD33fA41ae3Cb6aE0e42E0e69F"
-      );
+      expect(await vault.governor()).to.equal(addresses.mainnet.Timelock);
     });
 
     it("Should have the correct strategist address set", async () => {
-      const { vault } = fixture;
+      const { strategist, vault } = fixture;
       expect(await vault.strategistAddr()).to.equal(
-        "0xF14BBdf064E3F67f51cd9BD646aE3716aD938FDC"
-      );
-    });
-
-    it("Should have the correct turstee address set", async () => {
-      const { vault } = fixture;
-      // This fails locally for now, since
-      // BuyBack contract is yet to be deployed
-      expect(await vault.strategistAddr()).to.equal(
-        "0xF14BBdf064E3F67f51cd9BD646aE3716aD938FDC"
+        await strategist.getAddress()
       );
     });
 
     it("Should have the correct OUSD MetaStrategy address set", async () => {
       const { vault } = fixture;
       expect(await vault.ousdMetaStrategy()).to.equal(
-        "0x89Eb88fEdc50FC77ae8a18aAD1cA0ac27f777a90"
+        addresses.mainnet.ConvexOUSDAMOStrategy
       );
+    });
+
+    it("Should have supported assets", async () => {
+      const { vault } = fixture;
+      const assets = await vault.getAllAssets();
+      expect(assets).to.have.length(3);
+      expect(assets).to.include(addresses.mainnet.USDT);
+      expect(assets).to.include(addresses.mainnet.USDC);
+      expect(assets).to.include(addresses.mainnet.DAI);
+
+      expect(await vault.isSupportedAsset(addresses.mainnet.USDT)).to.be.true;
+      expect(await vault.isSupportedAsset(addresses.mainnet.DAI)).to.be.true;
+      expect(await vault.isSupportedAsset(addresses.mainnet.USDT)).to.be.true;
     });
   });
 
@@ -232,44 +237,71 @@ forkOnlyDescribe("ForkTest: Vault", function () {
      * compatible with the latest codebase -> which is not yet deployed to
      * OUSD mainnet.
      */
-    it.skip("Should have correct Price Oracle address set", async () => {
+    it("Should have correct Price Oracle address set", async () => {
       const { vault } = fixture;
       expect(await vault.priceProvider()).to.equal(
-        "0x7533365d1b0D95380bc4e94D0bdEF5173E43f954"
+        "0xdF58F78cebbb2A60740eD2f86cDf0545a485102F"
       );
     });
 
     it("Should return a price for minting with USDT", async () => {
       const { vault, usdt } = fixture;
-      await vault.priceUnitMint(usdt.address);
+      const price = await vault.priceUnitMint(usdt.address);
+
+      log(`Price for minting with USDT: ${utils.formatEther(price, 6)}`);
+
+      expect(price).to.be.lte(utils.parseEther("1"));
+      expect(price).to.be.gt(utils.parseEther("0.998"));
     });
 
     it("Should return a price for minting with DAI", async () => {
       const { vault, dai } = fixture;
-      await vault.priceUnitMint(dai.address);
+      const price = await vault.priceUnitMint(dai.address);
+
+      log(`Price for minting with DAI: ${utils.formatEther(price, 18)}`);
+
+      expect(price).to.be.lte(utils.parseEther("1"));
+      expect(price).to.be.gt(utils.parseEther("0.999"));
     });
 
     it("Should return a price for minting with USDC", async () => {
       const { vault, usdc } = fixture;
-      await vault.priceUnitMint(usdc.address);
+      const price = await vault.priceUnitMint(usdc.address);
+
+      log(`Price for minting with USDC: ${utils.formatEther(price, 6)}`);
+
+      expect(price).to.be.lte(utils.parseEther("1"));
+      expect(price).to.be.gt(utils.parseEther("0.999"));
     });
 
     it("Should return a price for redeem with USDT", async () => {
       const { vault, usdt } = fixture;
       const price = await vault.priceUnitRedeem(usdt.address);
+
+      log(`Price for redeeming with USDT: ${utils.formatEther(price, 6)}`);
+
       expect(price).to.be.gte(utils.parseEther("1"));
+      expect(price).to.be.lt(utils.parseEther("1.001"));
     });
 
     it("Should return a price for redeem with DAI", async () => {
       const { vault, dai } = fixture;
       const price = await vault.priceUnitRedeem(dai.address);
+
+      log(`Price for redeeming with DAI: ${utils.formatEther(price, 18)}`);
+
       expect(price).to.be.gte(utils.parseEther("1"));
+      expect(price).to.be.lt(utils.parseEther("1.001"));
     });
 
     it("Should return a price for redeem with USDC", async () => {
       const { vault, usdc } = fixture;
       const price = await vault.priceUnitRedeem(usdc.address);
+
+      log(`Price for redeeming with USDC: ${utils.formatEther(price, 6)}`);
+
       expect(price).to.be.gte(utils.parseEther("1"));
+      expect(price).to.be.lt(utils.parseEther("1.001"));
     });
   });
 
