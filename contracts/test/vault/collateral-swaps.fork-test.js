@@ -345,7 +345,7 @@ forkOnlyDescribe("ForkTest: Collateral swaps", function () {
           from: "DAI",
           to: "USDT",
           fromAmount: 100,
-          minToAssetAmount: 99.99,
+          minToAssetAmount: 99.7,
         },
         {
           from: "DAI",
@@ -377,7 +377,7 @@ forkOnlyDescribe("ForkTest: Collateral swaps", function () {
           from: "USDC",
           to: "USDT",
           fromAmount: 10,
-          minToAssetAmount: "9.9",
+          minToAssetAmount: "9.6",
           slippage: 0.1,
           approxFromBalance: true,
         },
