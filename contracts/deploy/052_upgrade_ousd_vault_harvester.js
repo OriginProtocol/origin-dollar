@@ -1,4 +1,7 @@
-const { deploymentWithGovernanceProposal } = require("../utils/deploy");
+const {
+  deploymentWithGovernanceProposal,
+  withConfirmation,
+} = require("../utils/deploy");
 const addresses = require("../utils/addresses");
 const { isMainnet } = require("../test/helpers.js");
 
@@ -46,6 +49,15 @@ module.exports = deploymentWithGovernanceProposal(
     ]);
 
     const cSwapper = await ethers.getContract("Swapper1InchV5");
+
+    // The 1Inch Swapper contract approves the 1Inch Router to transfer OUSD collateral assets
+    await withConfirmation(
+      cSwapper.approveAssets([
+        assetAddresses.DAI,
+        assetAddresses.USDC,
+        assetAddresses.USDT,
+      ])
+    );
 
     // Governance Actions
     // ----------------

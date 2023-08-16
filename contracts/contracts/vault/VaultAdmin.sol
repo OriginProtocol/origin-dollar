@@ -12,10 +12,12 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { IOracle } from "../interfaces/IOracle.sol";
 import { ISwapper } from "../interfaces/ISwapper.sol";
 import { IVault } from "../interfaces/IVault.sol";
+import { StableMath } from "../utils/StableMath.sol";
 import "./VaultStorage.sol";
 
 contract VaultAdmin is VaultStorage {
     using SafeERC20 for IERC20;
+    using StableMath for uint256;
 
     /**
      * @dev Verifies that the caller is the Governor or Strategist.
@@ -218,18 +220,27 @@ contract VaultAdmin is VaultStorage {
             "Strategist slippage limit"
         );
 
-        // Check the slippage against the Oracle in case the strategist made a mistake or has become malicious.
-        // to asset amount = from asset amount * from asset price / to asset price
-        uint256 minOracleToAssetAmount = (_fromAssetAmount *
-            (1e4 - fromAssetConfig.allowedOracleSlippageBps) *
-            IOracle(priceProvider).price(_fromAsset)) /
-            (IOracle(priceProvider).price(_toAsset) *
-                (1e4 + toAssetConfig.allowedOracleSlippageBps));
+        // Scope a new block to remove minOracleToAssetAmount from the scope of swapCollateral.
+        // This avoids a stack too deep error.
+        {
+            // Check the slippage against the Oracle in case the strategist made a mistake or has become malicious.
+            // to asset amount = from asset amount * from asset price / to asset price
+            uint256 minOracleToAssetAmount = (_fromAssetAmount *
+                (1e4 - fromAssetConfig.allowedOracleSlippageBps) *
+                IOracle(priceProvider).price(_fromAsset)) /
+                (IOracle(priceProvider).price(_toAsset) *
+                    (1e4 + toAssetConfig.allowedOracleSlippageBps));
 
-        require(
-            toAssetAmount >= minOracleToAssetAmount,
-            "Oracle slippage limit exceeded"
-        );
+            // Scale both sides up to 18 decimals to compare
+            require(
+                toAssetAmount.scaleBy(18, toAssetConfig.decimals) >=
+                    minOracleToAssetAmount.scaleBy(
+                        18,
+                        fromAssetConfig.decimals
+                    ),
+                "Oracle slippage limit exceeded"
+            );
+        }
 
         // Check the vault's total value hasn't gone below the OToken total supply
         // by more than the allowed percentage.
