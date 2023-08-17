@@ -21,18 +21,17 @@ forkOnlyDescribe(
     this.retries(isCI ? 3 : 0);
 
     let fixture;
-    const loadFixture = createFixtureLoader(
-      balancerREthFixture, {
-        defaultStrategy: true,
-      }
-    );
+    const loadFixture = createFixtureLoader(balancerREthFixture, {
+      defaultStrategy: true,
+    });
 
     beforeEach(async () => {
       fixture = await loadFixture();
     });
 
     it.only("Should not allow read-only reentrancy", async () => {
-      const { weth, reth, oethVault, rEthBPT, balancerREthPID, daniel } = fixture;
+      const { weth, reth, oethVault, rEthBPT, balancerREthPID, daniel } =
+        fixture;
 
       // Deploy the attacking contract
       const dEvilContract = await deployWithConfirmation(

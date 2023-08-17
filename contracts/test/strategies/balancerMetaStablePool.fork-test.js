@@ -15,13 +15,15 @@ const {
 const log = require("../../utils/logger")("test:fork:strategy:balancer");
 
 const loadBalancerREthFixtureDefault = createFixtureLoader(
-  balancerREthFixture, {
+  balancerREthFixture,
+  {
     defaultStrategy: true,
   }
 );
 
 const loadBalancerREthFixtureNotDefault = createFixtureLoader(
-  balancerREthFixture, {
+  balancerREthFixture,
+  {
     defaultStrategy: false,
   }
 );
@@ -563,7 +565,7 @@ forkOnlyDescribe(
       let fixture;
 
       beforeEach(async () => {
-        fixture = await loadBalancerWstEthFixture(); 
+        fixture = await loadBalancerWstEthFixture();
         const { balancerWstEthStrategy, oethVault, strategist, stETH, weth } =
           fixture;
 
