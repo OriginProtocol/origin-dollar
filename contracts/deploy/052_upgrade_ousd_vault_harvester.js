@@ -62,7 +62,12 @@ module.exports = deploymentWithGovernanceProposal(
     // Governance Actions
     // ----------------
     return {
-      name: "Deploy new Vault contracts and cache the decimals of all supported assets",
+      name: "Upgrade OUSD Vault with new VaultCore and VaultAdmin contracts.\n\
+Set new Oracle router.\n\
+Configure OUSD Vault to perform collateral swaps.\n\
+Upgrade the OUSD Harvester\n\
+\n\
+Code PR: #",
       actions: [
         // 1. Upgrade the OUSD Vault proxy to the new core vault implementation
         {
@@ -126,7 +131,7 @@ module.exports = deploymentWithGovernanceProposal(
           signature: "setSwapAllowedUndervalue(uint16)",
           args: [50], // 0.5%
         },
-        // 8. Set the Harvester on the OUSD Vault
+        // 8. Upgrade the OUSD Harvester
         {
           contract: cHarvesterProxy,
           signature: "upgradeTo(address)",
