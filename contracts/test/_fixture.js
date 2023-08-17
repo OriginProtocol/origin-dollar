@@ -244,7 +244,6 @@ const defaultFixture = deployments.createFixture(async () => {
     frxETH = await ethers.getContractAt(erc20Abi, addresses.mainnet.frxETH);
     sfrxETH = await ethers.getContractAt(sfrxETHAbi, addresses.mainnet.sfrxETH);
     sDAI = await ethers.getContractAt(sdaiAbi, addresses.mainnet.sDAI);
-    reth = await ethers.getContractAt(erc20Abi, addresses.mainnet.rETH);
     morpho = await ethers.getContractAt(morphoAbi, addresses.mainnet.Morpho);
     morphoLens = await ethers.getContractAt(
       morphoLensAbi,
