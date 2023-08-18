@@ -14,8 +14,12 @@ module.exports = deploymentWithGovernanceProposal(
   {
     deployName: "052_upgrade_ousd_vault_harvester",
     forceDeploy: false,
+    forceSkip: false,
     onlyOnFork: true, // this is only executed in forked environment
     reduceQueueTime: true,
+    deployerIsProposer: false,
+    // proposalId:
+    //   "",
   },
   async ({ assetAddresses, deployWithConfirmation, ethers }) => {
     if (isMainnet) {
