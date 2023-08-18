@@ -1,6 +1,6 @@
 const {
   deploymentWithGovernanceProposal,
-  withConfirmation,
+  // withConfirmation,
 } = require("../utils/deploy");
 const addresses = require("../utils/addresses");
 const { isMainnet } = require("../test/helpers.js");
@@ -21,7 +21,11 @@ module.exports = deploymentWithGovernanceProposal(
     // proposalId:
     //   "",
   },
-  async ({ assetAddresses, deployWithConfirmation, ethers }) => {
+  async ({
+    assetAddresses,
+    // deployWithConfirmation,
+    ethers,
+  }) => {
     if (isMainnet) {
       throw new Error("Delete once sure to update OUSD contracts");
     }
