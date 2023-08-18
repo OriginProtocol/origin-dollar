@@ -7,7 +7,8 @@ module.exports = deploymentWithGovernanceProposal(
     // forceSkip: true,
     reduceQueueTime: true,
     deployerIsProposer: true,
-    // proposalId: "",
+    proposalId:
+      "30894412376194853647122581916496530536830189795097427662392821757029264128284",
   },
   async () => {
     // Current OUSD Vault contracts
