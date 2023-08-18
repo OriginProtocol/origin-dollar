@@ -71,7 +71,7 @@ Set new Oracle router.\n\
 Configure OUSD Vault to perform collateral swaps.\n\
 Upgrade the OUSD Harvester\n\
 \n\
-Code PR: #",
+Code PR: #1767",
       actions: [
         // 1. Upgrade the OUSD Vault proxy to the new core vault implementation
         {
