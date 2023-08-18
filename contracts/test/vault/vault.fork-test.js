@@ -44,6 +44,26 @@ forkOnlyDescribe("ForkTest: Vault", function () {
     fixture = await loadDefaultFixture();
   });
 
+  describe("View functions", () => {
+    // These tests use a transaction to call a view function so the gas usage can be reported.
+    it("Should get total value", async () => {
+      const { josh, vault } = fixture;
+
+      const tx = await vault.connect(josh).populateTransaction.totalValue();
+      await josh.sendTransaction(tx);
+    });
+    it("Should check asset balances", async () => {
+      const { dai, usdc, usdt, josh, vault } = fixture;
+
+      for (const asset of [dai, usdc, usdt]) {
+        const tx = await vault
+          .connect(josh)
+          .populateTransaction.checkBalance(asset.address);
+        await josh.sendTransaction(tx);
+      }
+    });
+  });
+
   describe("Admin", () => {
     it("Should have the correct governor address set", async () => {
       const { vault } = fixture;
@@ -163,7 +183,7 @@ forkOnlyDescribe("ForkTest: Vault", function () {
     });
 
     it("should withdraw from and deposit to strategy", async () => {
-      const { vault, josh, usdc, dai, compoundStrategy } = fixture;
+      const { vault, josh, usdc, dai, morphoCompoundStrategy } = fixture;
       await vault.connect(josh).mint(usdc.address, usdcUnits("90"), 0);
       await vault.connect(josh).mint(dai.address, daiUnits("50"), 0);
       const strategistSigner = await impersonateAndFundContract(
@@ -178,12 +198,12 @@ forkOnlyDescribe("ForkTest: Vault", function () {
         async () => {
           [daiStratDiff, usdcStratDiff] = await differenceInStrategyBalance(
             [dai.address, usdc.address],
-            [compoundStrategy, compoundStrategy],
+            [morphoCompoundStrategy, morphoCompoundStrategy],
             async () => {
               await vault
                 .connect(strategistSigner)
                 .depositToStrategy(
-                  compoundStrategy.address,
+                  morphoCompoundStrategy.address,
                   [dai.address, usdc.address],
                   [daiUnits("50"), usdcUnits("90")]
                 );
@@ -204,12 +224,12 @@ forkOnlyDescribe("ForkTest: Vault", function () {
         async () => {
           [daiStratDiff, usdcStratDiff] = await differenceInStrategyBalance(
             [dai.address, usdc.address],
-            [compoundStrategy, compoundStrategy],
+            [morphoCompoundStrategy, morphoCompoundStrategy],
             async () => {
               await vault
                 .connect(strategistSigner)
                 .withdrawFromStrategy(
-                  compoundStrategy.address,
+                  morphoCompoundStrategy.address,
                   [dai.address, usdc.address],
                   [daiUnits("50"), usdcUnits("90")]
                 );
@@ -332,12 +352,9 @@ forkOnlyDescribe("ForkTest: Vault", function () {
 
       const knownStrategies = [
         // Update this every time a new strategy is added. Below are mainnet addresses
-        "0x9c459eeb3FA179a40329b81C1635525e9A0Ef094", // Compound
         "0x5e3646A1Db86993f73E6b74A57D8640B69F7e259", // Aave
-        "0xEA2Ef2e2E5A749D4A66b41Db9aD85a38Aa264cb3", // Convex
         "0x89Eb88fEdc50FC77ae8a18aAD1cA0ac27f777a90", // OUSD MetaStrategy
         "0x5A4eEe58744D1430876d5cA93cAB5CcB763C037D", // MorphoCompoundStrategy
-        "0x7A192DD9Cc4Ea9bdEdeC9992df74F1DA55e60a19", // LUSD MetaStrategy
         "0x79F2188EF9350A1dC11A062cca0abE90684b0197", // MorphoAaveStrategy
         "0x76Bf500B6305Dc4ea851384D3d5502f1C7a0ED44", // Flux Strategy
         "0x6b69B755C629590eD59618A2712d8a2957CA98FC", // Maker DSR Strategy
