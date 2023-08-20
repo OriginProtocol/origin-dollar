@@ -33,6 +33,17 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
         address _newHarvesterAddress
     );
 
+    /* @notice Defines how the bytes _depositData is encoded in
+     * depositAll function. Encoding types:
+     *
+     * BPT_EXPECTED_DEPOSIT_ALL:
+     * (uint256, uint256)
+     * (BPT_EXPECTED_DEPOSIT_ALL, uint256 minBptExpected)
+     */
+    enum DepositDataType {
+        BPT_EXPECTED_DEPOSIT_ALL
+    }
+
     /// @notice Address of the underlying platform
     address public immutable platformAddress;
     /// @notice Address of the OToken vault
@@ -321,6 +332,14 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
      * @notice Deposit all supported assets in this strategy contract to the platform
      */
     function depositAll() external virtual;
+
+    /**
+     * @notice Deposit all supported assets in this strategy contract to the platform
+     * @param _depositData       Encoded deposit data providing additional information
+     *                           depending on the strategy in question. E.g. for Balancer
+     *                           strategy it holds minBPTexpected information.
+     */
+    function depositAll(bytes calldata _depositData) external virtual;
 
     /**
      * @notice Withdraw an `amount` of assets from the platform and

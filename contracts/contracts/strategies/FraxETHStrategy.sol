@@ -105,6 +105,15 @@ contract FraxETHStrategy is Generalized4626Strategy {
         }
     }
 
+    function depositAll(bytes calldata _depositData)
+        external
+        override
+        onlyVault
+        nonReentrant
+    {
+        require(false, "Not supported");
+    }
+
     /**
      * @dev Accept ETH
      */

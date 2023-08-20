@@ -39,12 +39,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         onlyVault
         nonReentrant
     {
-        address[] memory assets = new address[](1);
-        uint256[] memory amounts = new uint256[](1);
-        assets[0] = _asset;
-        amounts[0] = _amount;
-
-        _deposit(assets, amounts);
+        require(false, "Not supported");
     }
 
     /**
@@ -58,13 +53,25 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         onlyVault
         nonReentrant
     {
-        _deposit(_assets, _amounts);
+        require(false, "Not supported");
     }
 
     /**
      * @notice Deposits all supported assets in this strategy contract to the Balancer pool.
      */
     function depositAll() external override onlyVault nonReentrant {
+        require(false, "Not supported");
+    }
+
+    /**
+     * @notice Deposits all supported assets in this strategy contract to the Balancer pool.
+     */
+    function depositAll(bytes calldata _depositData)
+        external
+        override
+        onlyVault
+        nonReentrant
+    {
         uint256 assetsLength = assetsMapped.length;
         address[] memory assets = new address[](assetsLength);
         uint256[] memory amounts = new uint256[](assetsLength);
@@ -75,12 +82,27 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
             // Get the asset balance in this strategy contract
             amounts[i] = IERC20(assets[i]).balanceOf(address(this));
         }
-        _deposit(assets, amounts);
+
+        DepositDataType dataType = abi.decode(_depositData, (DepositDataType));
+        require(
+            dataType == DepositDataType.BPT_EXPECTED_DEPOSIT_ALL,
+            "DepositDataType not supported"
+        );
+
+        uint256 minBptExpected = 0;
+        (dataType, minBptExpected) = abi.decode(
+            _depositData,
+            (DepositDataType, uint256)
+        );
+
+        _deposit(assets, amounts, minBptExpected);
     }
 
-    function _deposit(address[] memory _assets, uint256[] memory _amounts)
-        internal
-    {
+    function _deposit(
+        address[] memory _assets,
+        uint256[] memory _amounts,
+        uint256 minBptExpected
+    ) internal {
         require(_assets.length == _amounts.length, "Array length missmatch");
 
         (IERC20[] memory tokens, , ) = balancerVault.getPoolTokens(
@@ -120,9 +142,6 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
             }
         }
 
-        uint256 minBPT = getBPTExpected(_assets, _amounts);
-        uint256 minBPTwSlippage = minBPT.mulTruncate(1e18 - maxDepositSlippage);
-
         /* EXACT_TOKENS_IN_FOR_BPT_OUT:
          * User sends precise quantities of tokens, and receives an
          * estimated but unknown (computed at run time) quantity of BPT.
@@ -133,7 +152,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         bytes memory userData = abi.encode(
             IBalancerVault.WeightedPoolJoinKind.EXACT_TOKENS_IN_FOR_BPT_OUT,
             amountsIn,
-            minBPTwSlippage
+            minBptExpected
         );
 
         IBalancerVault.JoinPoolRequest memory request = IBalancerVault

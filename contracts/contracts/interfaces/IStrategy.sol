@@ -19,6 +19,12 @@ interface IStrategy {
     function depositAll() external;
 
     /**
+     * @dev Deposit the entire balance of all supported assets in the Strategy
+     *      to the platform. Pass along _userData for custom / per strategy checks.
+     */
+    function depositAll(bytes calldata _userData) external;
+
+    /**
      * @dev Withdraw given asset from Lending platform
      */
     function withdraw(

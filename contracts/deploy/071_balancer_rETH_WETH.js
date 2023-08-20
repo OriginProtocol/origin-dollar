@@ -16,8 +16,15 @@ module.exports = deploymentWithGovernanceProposal(
     const { deployerAddr } = await getNamedAccounts();
     const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
-    // Current contracts
+    // Deploy VaultAdmin
     const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
+    const dOETHVaultAdmin = await deployWithConfirmation("OETHVaultAdmin");
+    const cOETHVault = await ethers.getContractAt(
+      "OETHVault",
+      cOETHVaultProxy.address
+    );
+
+    // Current contracts
     const cOETHVaultAdmin = await ethers.getContractAt(
       "OETHVaultAdmin",
       cOETHVaultProxy.address
@@ -97,19 +104,25 @@ module.exports = deploymentWithGovernanceProposal(
     return {
       name: "Deploy new Balancer MetaPool strategy",
       actions: [
-        // 1. Add new strategy to the vault
+        // 1. set new VaultAdmin implementation
+        {
+          contract: cOETHVault,
+          signature: "setAdminImpl(address)",
+          args: [dOETHVaultAdmin.address],
+        },
+        // 2. Add new strategy to the vault
         {
           contract: cOETHVaultAdmin,
           signature: "approveStrategy(address)",
           args: [cOETHBalancerMetaPoolStrategy.address],
         },
-        // 2. Set supported strategy on Harvester
+        // 3. Set supported strategy on Harvester
         {
           contract: cOETHHarvester,
           signature: "setSupportedStrategy(address,bool)",
           args: [cOETHBalancerMetaPoolStrategy.address, true],
         },
-        // 3. Set harvester address
+        // 4. Set harvester address
         {
           contract: cOETHBalancerMetaPoolStrategy,
           signature: "setHarvesterAddress(address)",

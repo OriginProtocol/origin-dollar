@@ -91,6 +91,16 @@ contract Generalized4626Strategy is InitializableAbstractStrategy {
         }
     }
 
+    function depositAll(bytes calldata _depositData)
+        external
+        virtual
+        override
+        onlyVault
+        nonReentrant
+    {
+        require(false, "Not supported");
+    }
+
     /**
      * @dev Withdraw asset by burning shares
      * @param _recipient Address to receive withdrawn asset

@@ -1,6 +1,6 @@
 const { expect } = require("chai");
 const { formatUnits, parseUnits } = require("ethers").utils;
-const { BigNumber } = require("ethers");
+const { BigNumber, utils } = require("ethers");
 
 const addresses = require("../../utils/addresses");
 const { balancer_rETH_WETH_PID } = require("../../utils/constants");
@@ -38,7 +38,7 @@ forkOnlyDescribe(
 
     let fixture;
 
-    describe.only("Post deployment", () => {
+    describe("Post deployment", () => {
       beforeEach(async () => {
         fixture = await loadBalancerREthFixtureDefault();
       });
@@ -90,7 +90,7 @@ forkOnlyDescribe(
       });
     });
 
-    describe.only("Deposit", function () {
+    describe("Deposit", function () {
       beforeEach(async () => {
         fixture = await loadBalancerREthFixtureNotDefault();
       });
@@ -105,6 +105,23 @@ forkOnlyDescribe(
       it("Should deposit 30 rETH in Balancer MetaStablePool strategy", async function () {
         const { reth, rEthBPT, weth } = fixture;
         await depositTest(fixture, [0, 30], [weth, reth], rEthBPT);
+      });
+      it.only("Should deposit 5 WETH and 5 rETH in Balancer MetaStablePool strategy with user data", async function () {
+        const { reth, rEthBPT, weth } = fixture;
+        const minBpt = oethUnits("9");
+        await depositTest(fixture, [5, 5], [weth, reth], rEthBPT, minBpt);
+      });
+      it.only("Should revert on deposit of 5 WETH and 5 rETH in Balancer MetaStablePool strategy with user data with too high bpt expected", async function () {
+        const { reth, rEthBPT, weth } = fixture;
+        const minBpt = oethUnits("15");
+        await expect(
+          depositTest(fixture, [5, 5], [weth, reth], rEthBPT, minBpt)
+          /* Balancer error codes
+           * https://docs.balancer.fi/reference/contracts/error-codes.html#shared-pools
+           *
+           * 208 - Slippage/front-running protection check failed on a pool join
+           */
+        ).to.be.revertedWith("BAL#208");
       });
       it("Should deposit all WETH and rETH in strategy to pool", async function () {
         const { balancerREthStrategy, oethVault, reth, weth } = fixture;
@@ -146,16 +163,6 @@ forkOnlyDescribe(
 
       it("Should be able to deposit with higher deposit slippage", async function () {});
 
-      it("Should revert when read-only re-entrancy is triggered", async function () {
-        /* - needs to be an asset default strategy
-         * - needs pool that supports native ETH
-         * - attacker needs to try to deposit to Balancer pool and withdraw
-         * - while withdrawing and receiving ETH attacker should take over the execution flow
-         *   and try calling mint/redeem with the strategy default asset on the OethVault
-         * - transaction should revert because of the `whenNotInVaultContext` modifier
-         */
-      });
-
       it("Should check balance for gas usage", async () => {
         const { balancerREthStrategy, josh, weth } = fixture;
 
@@ -168,7 +175,7 @@ forkOnlyDescribe(
       });
     });
 
-    describe.only("Withdraw", function () {
+    describe("Withdraw", function () {
       beforeEach(async () => {
         fixture = await loadBalancerREthFixtureNotDefault();
         const { balancerREthStrategy, oethVault, strategist, reth, weth } =
@@ -294,7 +301,7 @@ forkOnlyDescribe(
       it("Should be able to withdraw with higher withdrawal slippage", async function () {});
     });
 
-    describe.only("Large withdraw", function () {
+    describe("Large withdraw", function () {
       const depositAmount = 30000;
       let depositAmountUnits, oethVaultSigner;
       beforeEach(async () => {
@@ -502,7 +509,7 @@ forkOnlyDescribe(
       });
     });
 
-    describe.only("Harvest rewards", function () {
+    describe("Harvest rewards", function () {
       beforeEach(async () => {
         fixture = await loadBalancerREthFixtureDefault();
       });
@@ -521,7 +528,7 @@ forkOnlyDescribe(
 forkOnlyDescribe(
   "ForkTest: Balancer MetaStablePool wstETH/WETH Strategy",
   function () {
-    describe.only("Deposit", function () {
+    describe("Deposit", function () {
       let fixture;
 
       beforeEach(async () => {
@@ -561,7 +568,7 @@ forkOnlyDescribe(
       });
     });
 
-    describe.only("Withdraw", function () {
+    describe("Withdraw", function () {
       let fixture;
 
       beforeEach(async () => {
@@ -697,7 +704,7 @@ forkOnlyDescribe(
       });
     });
 
-    describe.only("Harvest rewards", function () {
+    describe("Harvest rewards", function () {
       it("Should be able to collect reward tokens", async function () {
         const { josh, balancerWstEthStrategy, oethHarvester } =
           await loadBalancerWstEthFixture();
@@ -752,7 +759,7 @@ async function getPoolBalances(balancerVault, pid) {
   return result;
 }
 
-async function depositTest(fixture, amounts, allAssets, bpt) {
+async function depositTest(fixture, amounts, allAssets, bpt, minBpt = false) {
   const {
     oethVault,
     oeth,
@@ -788,11 +795,32 @@ async function depositTest(fixture, amounts, allAssets, bpt) {
 
   const before = await logBalances(logParams);
 
-  await oethVault.connect(strategist).depositToStrategy(
-    balancerREthStrategy.address,
-    allAssets.map((asset) => asset.address),
-    unitAmounts
-  );
+  if (minBpt) {
+    minBpt;
+
+    const userData = utils.defaultAbiCoder.encode(
+      ["uint256", "uint256"],
+      // BPT_EXPECTED_DEPOSIT_ALL, minBPTExpected
+      [0, minBpt]
+    );
+
+    await oethVault
+      .connect(strategist)
+      ["depositToStrategy(address,address[],uint256[],bytes)"](
+        balancerREthStrategy.address,
+        allAssets.map((asset) => asset.address),
+        unitAmounts,
+        userData
+      );
+  } else {
+    await oethVault
+      .connect(strategist)
+      ["depositToStrategy(address,address[],uint256[])"](
+        balancerREthStrategy.address,
+        allAssets.map((asset) => asset.address),
+        unitAmounts
+      );
+  }
 
   const after = await logBalances(logParams);
 

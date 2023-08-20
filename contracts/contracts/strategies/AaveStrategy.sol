@@ -94,6 +94,15 @@ contract AaveStrategy is InitializableAbstractStrategy {
         }
     }
 
+    function depositAll(bytes calldata _depositData)
+        external
+        override
+        onlyVault
+        nonReentrant
+    {
+        require(false, "Not supported");
+    }
+
     /**
      * @dev Withdraw asset from Aave
      * @param _recipient Address to receive withdrawn asset

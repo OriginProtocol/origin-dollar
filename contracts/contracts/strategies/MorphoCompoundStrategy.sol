@@ -176,6 +176,15 @@ contract MorphoCompoundStrategy is BaseCompoundStrategy {
         }
     }
 
+    function depositAll(bytes calldata _depositData)
+        external
+        override
+        onlyVault
+        nonReentrant
+    {
+        require(false, "Not supported");
+    }
+
     /**
      * @dev Withdraw asset from Morpho
      * @param _recipient Address to receive withdrawn asset

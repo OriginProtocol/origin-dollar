@@ -170,6 +170,15 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         }
     }
 
+    function depositAll(bytes calldata _depositData)
+        external
+        override
+        onlyVault
+        nonReentrant
+    {
+        require(false, "Not supported");
+    }
+
     /**
      * @dev Withdraw asset from Curve ETH pool
      * @param _recipient Address to receive withdrawn asset

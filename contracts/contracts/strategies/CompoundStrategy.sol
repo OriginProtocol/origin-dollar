@@ -96,6 +96,15 @@ contract CompoundStrategy is BaseCompoundStrategy {
         }
     }
 
+    function depositAll(bytes calldata _depositData)
+        external
+        override
+        onlyVault
+        nonReentrant
+    {
+        require(false, "Not supported");
+    }
+
     /**
      * @notice Withdraw an asset from the underlying platform
      * @param _recipient Address to receive withdrawn assets

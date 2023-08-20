@@ -100,6 +100,15 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         _lpDepositAll();
     }
 
+    function depositAll(bytes calldata _depositData)
+        external
+        override
+        onlyVault
+        nonReentrant
+    {
+        require(false, "Not supported");
+    }
+
     function _lpWithdraw(uint256 numCrvTokens) internal virtual;
 
     function _lpWithdrawAll() internal virtual;

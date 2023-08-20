@@ -423,13 +423,31 @@ contract VaultAdmin is VaultStorage {
         address[] calldata _assets,
         uint256[] calldata _amounts
     ) external onlyGovernorOrStrategist nonReentrant {
-        _depositToStrategy(_strategyToAddress, _assets, _amounts);
+        bytes memory empty = "";
+        _depositToStrategy(_strategyToAddress, _assets, _amounts, empty);
+    }
+
+    /**
+     * @notice Deposit multiple assets from the vault into the strategy.
+     * @param _strategyToAddress Address of the Strategy to deposit assets into.
+     * @param _assets Array of asset address that will be deposited into the strategy.
+     * @param _amounts Array of amounts of each corresponding asset to deposit.
+     * @param _amounts Array of amounts of each corresponding asset to deposit.
+     */
+    function depositToStrategy(
+        address _strategyToAddress,
+        address[] calldata _assets,
+        uint256[] calldata _amounts,
+        bytes calldata _userData
+    ) external onlyGovernorOrStrategist nonReentrant {
+        _depositToStrategy(_strategyToAddress, _assets, _amounts, _userData);
     }
 
     function _depositToStrategy(
         address _strategyToAddress,
         address[] calldata _assets,
-        uint256[] calldata _amounts
+        uint256[] calldata _amounts,
+        bytes memory _userData
     ) internal {
         require(
             strategies[_strategyToAddress].isSupported,
@@ -448,8 +466,13 @@ contract VaultAdmin is VaultStorage {
             IERC20(assetAddr).safeTransfer(_strategyToAddress, _amounts[i]);
         }
 
-        // Deposit all the funds that have been sent to the strategy
-        IStrategy(_strategyToAddress).depositAll();
+        if (_userData.length == 0) {
+            // Deposit all the funds that have been sent to the strategy
+            IStrategy(_strategyToAddress).depositAll();
+        } else {
+            // Deposit all the funds that have been sent to the strategy
+            IStrategy(_strategyToAddress).depositAll(_userData);
+        }
     }
 
     /**
