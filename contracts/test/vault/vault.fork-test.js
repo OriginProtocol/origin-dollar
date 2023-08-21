@@ -408,6 +408,7 @@ forkOnlyDescribe("ForkTest: Vault", function () {
         "0x9c459eeb3FA179a40329b81C1635525e9A0Ef094",
         "0x5A4eEe58744D1430876d5cA93cAB5CcB763C037D", // Morpho
         "0x79F2188EF9350A1dC11A062cca0abE90684b0197", // MorphoAave
+        "0x6b69B755C629590eD59618A2712d8a2957CA98FC", // Maker DSR
       ]).to.include(await vault.assetDefaultStrategies(dai.address));
     });
 
