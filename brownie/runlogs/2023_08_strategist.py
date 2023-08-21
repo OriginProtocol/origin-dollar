@@ -298,7 +298,7 @@ def main():
   build_buyback_tx(max_dollars=2625, max_slippage=2, with_fork=True)
 
 # -----------------------------------
-# Aug 18, 2023 - DSR Allocation
+# Aug 21, 2023 - DSR Allocation
 # -----------------------------------
 from world import *
 
