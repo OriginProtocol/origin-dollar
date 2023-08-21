@@ -290,3 +290,110 @@ def main():
       print("To: ", item.receiver)
       print("Data (Hex encoded): ", item.input, "\n")
 
+# -----------------------------------
+# Aug 17, 2023 - OGV and CVX Buyback
+# -----------------------------------
+from buyback import *
+def main():
+  build_buyback_tx(max_dollars=2625, max_slippage=2, with_fork=True)
+
+# -----------------------------------
+# Aug 21, 2023 - DSR Allocation
+# -----------------------------------
+from world import *
+
+txs = []
+
+def main():
+  with TemporaryFork():
+    # Before
+    txs.append(vault_core.rebase({'from':STRATEGIST}))
+    txs.append(vault_value_checker.takeSnapshot({'from':STRATEGIST}))
+
+    # Withdraw all DAI from Morpho Aave
+    txs.append(
+      vault_admin.withdrawFromStrategy(
+        MORPHO_AAVE_STRAT, 
+        [dai], 
+        [morpho_aave_strat.checkBalance(dai)], 
+        {'from': STRATEGIST}
+      )
+    )
+
+    # Deposit it all to DSR
+    txs.append(
+      vault_admin.depositToStrategy(
+        MAKER_DSR_STRAT, 
+        [dai], 
+        [dai.balanceOf(VAULT_PROXY_ADDRESS)], 
+        {'from': STRATEGIST}
+      )
+    )
+
+    # After
+    vault_change = vault_core.totalValue() - vault_value_checker.snapshots(STRATEGIST)[0]
+    supply_change = ousd.totalSupply() - vault_value_checker.snapshots(STRATEGIST)[1]
+    profit = vault_change - supply_change
+
+    txs.append(vault_value_checker.checkDelta(profit, (500 * 10**18), vault_change, (500 * 10**18), {'from': STRATEGIST}))
+    print("-----")
+    print("Profit", "{:.6f}".format(profit / 10**18), profit)
+    print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
+
+    print("Schedule the following transactions on Gnosis Safe")
+    for idx, item in enumerate(txs):
+      print("Transaction ", idx)
+      print("To: ", item.receiver)
+      print("Data (Hex encoded): ", item.input, "\n")
+
+# -----------------------------------
+# Aug 21, 2023 - DSR Allocation
+# -----------------------------------
+from world import *
+
+txs = []
+
+def main():
+  with TemporaryFork():
+    # Before
+    txs.append(vault_core.rebase({'from':STRATEGIST}))
+    txs.append(vault_value_checker.takeSnapshot({'from':STRATEGIST}))
+
+    # Withdraw all DAI from Morpho Aave
+    txs.append(
+      vault_admin.withdrawFromStrategy(
+        MORPHO_COMP_STRAT, 
+        [dai], 
+        [morpho_comp_strat.checkBalance(dai)], 
+        {'from': STRATEGIST}
+      )
+    )
+
+    # Deposit it all to DSR
+    txs.append(
+      vault_admin.depositToStrategy(
+        MAKER_DSR_STRAT, 
+        [dai], 
+        [dai.balanceOf(VAULT_PROXY_ADDRESS)], 
+        {'from': STRATEGIST}
+      )
+    )
+
+    # Make DSR default strategy for DAI
+    txs.append(vault_admin.setAssetDefaultStrategy(dai, MAKER_DSR_STRAT,{'from':STRATEGIST}))
+
+    # After
+    vault_change = vault_core.totalValue() - vault_value_checker.snapshots(STRATEGIST)[0]
+    supply_change = ousd.totalSupply() - vault_value_checker.snapshots(STRATEGIST)[1]
+    profit = vault_change - supply_change
+
+    txs.append(vault_value_checker.checkDelta(profit, (500 * 10**18), vault_change, (500 * 10**18), {'from': STRATEGIST}))
+    print("-----")
+    print("Profit", "{:.6f}".format(profit / 10**18), profit)
+    print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
+
+    print("Schedule the following transactions on Gnosis Safe")
+    for idx, item in enumerate(txs):
+      print("Transaction ", idx)
+      print("To: ", item.receiver)
+      print("Data (Hex encoded): ", item.input, "\n")
