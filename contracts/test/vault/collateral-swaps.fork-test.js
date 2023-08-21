@@ -12,7 +12,7 @@ const { getIInchSwapData, recodeSwapData } = require("../../utils/1Inch");
 const { decimalsFor, forkOnlyDescribe, isCI } = require("../helpers");
 const { resolveAsset } = require("../../utils/assets");
 
-const log = require("../../utils/logger")("test:fork:oeth:vault");
+const log = require("../../utils/logger")("test:fork:swaps");
 
 forkOnlyDescribe("ForkTest: Collateral swaps", function () {
   this.timeout(0);
