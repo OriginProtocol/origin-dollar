@@ -501,7 +501,7 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
     const loadFixture = createFixtureLoader(convexOETHMetaVaultFixture, {
       wethMintAmount: 5000,
       depositToStrategy: false,
-      poolAddEthAmount: 4000,
+      poolAddEthAmount: 8000,
     });
     beforeEach(async () => {
       fixture = await loadFixture();

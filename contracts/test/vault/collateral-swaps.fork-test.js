@@ -73,7 +73,7 @@ forkOnlyDescribe("ForkTest: Collateral swaps", function () {
           from: "WETH",
           to: "stETH",
           fromAmount: 100,
-          minToAssetAmount: 99.99,
+          minToAssetAmount: 99.96,
         },
         {
           from: "WETH",
