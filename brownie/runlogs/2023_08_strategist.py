@@ -290,3 +290,48 @@ def main():
       print("To: ", item.receiver)
       print("Data (Hex encoded): ", item.input, "\n")
 
+# -----------------------------------
+# Aug 17, 2023 - OGV and CVX Buyback
+# -----------------------------------
+from buyback import *
+def main():
+  build_buyback_tx(max_dollars=2625, max_slippage=2, with_fork=True)
+
+# -----------------------------------
+# Aug 18, 2023 - DSR Allocation
+# -----------------------------------
+from world import *
+
+txs = []
+
+def main():
+  with TemporaryFork():
+    # Before
+    txs.append(vault_core.rebase({'from':STRATEGIST}))
+    txs.append(vault_value_checker.takeSnapshot({'from':STRATEGIST}))
+
+    # Withdraw all DAI from Morpho Aave
+    txs.append(
+      vault_admin.withdrawFromStrategy(
+        MORPHO_AAVE_STRAT, 
+        [dai], 
+        [morpho_aave_strat.checkBalance(dai)], 
+        {'from': STRATEGIST}
+      )
+    )
+
+    # Deposit it all to DSR
+    txs.append(
+      vault_admin.depositToStrategy(
+        MAKER_DSR_STRAT, 
+        [dai], 
+        [dai.balanceOf(VAULT_PROXY_ADDRESS)], 
+        {'from': STRATEGIST}
+      )
+    )
+
+    print("Schedule the following transactions on Gnosis Safe")
+    for idx, item in enumerate(txs):
+      print("Transaction ", idx)
+      print("To: ", item.receiver)
+      print("Data (Hex encoded): ", item.input, "\n")
