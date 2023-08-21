@@ -11,7 +11,7 @@ module.exports = deploymentWithGovernanceProposal(
     forceDeploy: false,
     forceSkip: false,
     onlyOnFork: true, // this is only executed in forked environment
-    reduceQueueTime: true,
+    reduceQueueTime: false,
     deployerIsProposer: false,
     proposalId:
       "92067299921253167171731269251828366645465100428916088471428281989790584946916",
