@@ -5,7 +5,7 @@ module.exports = deploymentWithGovernanceProposal(
     deployName: "073_disable_strategies",
     forceDeploy: false,
     // forceSkip: true,
-    reduceQueueTime: true,
+    reduceQueueTime: false,
     deployerIsProposer: true,
     proposalId:
       "30894412376194853647122581916496530536830189795097427662392821757029264128284",
