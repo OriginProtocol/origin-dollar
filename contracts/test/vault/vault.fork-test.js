@@ -252,11 +252,6 @@ forkOnlyDescribe("ForkTest: Vault", function () {
   });
 
   describe("Oracle", () => {
-    /* NOTICE: update once the address is the updated on the mainnet.
-     * the fork tests require the 052 deploy to run in order to be
-     * compatible with the latest codebase -> which is not yet deployed to
-     * OUSD mainnet.
-     */
     it("Should have correct Price Oracle address set", async () => {
       const { vault } = fixture;
       expect(await vault.priceProvider()).to.equal(
