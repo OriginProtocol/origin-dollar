@@ -1,6 +1,6 @@
 const {
   deploymentWithGovernanceProposal,
-  // withConfirmation,
+  withConfirmation,
 } = require("../utils/deploy");
 const addresses = require("../utils/addresses");
 const { isMainnet } = require("../test/helpers.js");
@@ -21,38 +21,19 @@ module.exports = deploymentWithGovernanceProposal(
     // proposalId:
     //   "",
   },
-  async ({
-    assetAddresses,
-    // deployWithConfirmation,
-    ethers,
-  }) => {
+  async ({ assetAddresses, deployWithConfirmation, ethers }) => {
     if (isMainnet) {
       throw new Error("Delete once sure to update OUSD contracts");
     }
 
     // Deploy VaultAdmin and VaultCore contracts
     const cVaultProxy = await ethers.getContract("VaultProxy");
-    // const dVaultAdmin = await deployWithConfirmation("VaultAdmin");
-    // TODO uncomment the previous line and remove the following once the proposal has been created
-    const dVaultAdmin = await ethers.getContractAt(
-      "VaultAdmin",
-      "0x8b39590a49569dD5489E4186b8DD43069d4Ef0cC"
-    );
-    // const dVaultCore = await deployWithConfirmation("VaultCore");
-    // TODO uncomment the previous line and remove the following once the proposal has been created
-    const dVaultCore = await ethers.getContractAt(
-      "VaultCore",
-      "0x0adD23eCF2Ef9f4be557C52E75A5beDCdD070d34"
-    );
+    const dVaultAdmin = await deployWithConfirmation("VaultAdmin");
+    const dVaultCore = await deployWithConfirmation("VaultCore");
     const cVault = await ethers.getContractAt("Vault", cVaultProxy.address);
 
     // Deploy Oracle Router
-    // const dOracleRouter = await deployWithConfirmation("OracleRouter");
-    // TODO uncomment the previous line and remove the following once the proposal has been created
-    const dOracleRouter = await ethers.getContractAt(
-      "OracleRouter",
-      "0xe7fD05515A51509Ca373a42E81ae63A40AA4384b"
-    );
+    const dOracleRouter = await deployWithConfirmation("OracleRouter");
     const cOracleRouter = await ethers.getContract("OracleRouter");
 
     // Cache decimals of all vault assets and rewards
@@ -66,27 +47,29 @@ module.exports = deploymentWithGovernanceProposal(
 
     // Deploy Harvester
     const cHarvesterProxy = await ethers.getContract("HarvesterProxy");
-    // const dHarvester = await deployWithConfirmation("Harvester", [
-    //   cVaultProxy.address,
-    //   assetAddresses.USDT,
-    // ]);
-    // TODO uncomment the previous line and remove the following once the proposal has been created
-    const dHarvester = await ethers.getContractAt(
-      "Harvester",
-      "0x6aD90cB172001eE0096Bb758c617F5cba5163687"
-    );
+    const dHarvester = await deployWithConfirmation("Harvester", [
+      cVaultProxy.address,
+      assetAddresses.USDT,
+    ]);
 
     const cSwapper = await ethers.getContract("Swapper1InchV5");
 
-    // // The 1Inch Swapper contract approves the 1Inch Router to transfer OUSD collateral assets
-    // TODO uncomment the following once the proposal has been created
-    // await withConfirmation(
-    //   cSwapper.approveAssets([
-    //     assetAddresses.DAI,
-    //     assetAddresses.USDC,
-    //     assetAddresses.USDT,
-    //   ])
-    // );
+    // The 1Inch Swapper contract approves the 1Inch Router to transfer OUSD collateral assets
+    const dai = await ethers.getContractAt("IERC20", assetAddresses.DAI);
+    const daiSwapperAllowance = await dai.allowance(
+      cSwapper.address,
+      addresses.mainnet.oneInchRouterV5
+    );
+    if (daiSwapperAllowance.eq(0)) {
+      // Only approve if not already
+      await withConfirmation(
+        cSwapper.approveAssets([
+          assetAddresses.DAI,
+          assetAddresses.USDC,
+          assetAddresses.USDT,
+        ])
+      );
+    }
 
     // Governance Actions
     // ----------------
