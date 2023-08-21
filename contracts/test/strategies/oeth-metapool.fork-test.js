@@ -565,7 +565,7 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
       // Remove OETH from the Metapool
       const tx = convexEthMetaStrategy
         .connect(strategist)
-        .removeAndBurnOTokens(parseUnits("5000"));
+        .removeAndBurnOTokens(parseUnits("8000"));
 
       await expect(tx).to.be.revertedWith("OTokens overshot peg");
     });
