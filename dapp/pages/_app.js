@@ -29,6 +29,7 @@ import {
   zerionWallet,
   mewWallet,
   okxWallet,
+  coin98Wallet,
 } from '@rainbow-me/rainbowkit/wallets'
 import { WagmiConfig, createClient, configureChains, useAccount } from 'wagmi'
 import { mainnet, localhost } from 'wagmi/chains'
@@ -69,6 +70,7 @@ const connectors = connectorsForWallets([
       safeWallet({ chains }),
       trustWallet({ projectId, chains }),
       zerionWallet({ projectId, chains }),
+      coin98Wallet({ projectId, chains }),
     ],
   },
 ])
