@@ -171,7 +171,7 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
          *
          *    It would be possible to support only 1 asset in the pool (and be exposed to all
          *    the assets while holding BPT tokens) and deposit/withdraw/checkBalance using only
-         *    that asset. TBD: changes to other functions still required if we ever decide to
+         *    that asset. TODO: changes to other functions still required if we ever decide to
          *    go with such configuration.
          */
         amount = (bptBalance.mulTruncate(
@@ -184,6 +184,11 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
          *
          * Because this function returns the balance of the asset and is not denominated in
          * ETH units we need to convert the ETH denominated amount to asset amount.
+         * 
+         * example:
+         * - rETH: toPoolAsset(rETH) == rETH => YES CONVERT: ETH denominated amount to rETH
+         * - stETH: toPoolAsset(stETH) == wstETH => NO CONVERT: return eth denominated amount
+         * - WETH: toPoolAsset(WETH) == WETH => YES CONVERT: return eth denominated amount
          */
         if (toPoolAsset(_asset) == _asset) {
             amount = amount.divPrecisely(getRateProviderRate(_asset));
