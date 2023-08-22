@@ -54,6 +54,19 @@ def getStrategyBalances():
     unit_balance
   ]
 
+def getStrategyTokenBalances(): 
+  #reth_balance = balancer_reth_strat.checkBalance(reth) * reth.getExchangeRate() / 1e36
+  reth_balance = reth.balanceOf(balancer_reth_strat.address) / 1e18
+  weth_balance = weth.balanceOf(balancer_reth_strat.address) / 1e18
+  unit_balance = weth_balance + reth_balance * reth.getExchangeRate() / 1e18
+
+  return [
+    reth_balance,
+    weth_balance,
+    unit_balance
+  ]
+
+
 def deposit_reth(amount, from_acc):
   # Enter the pool
   ba_vault.joinPool(
@@ -92,10 +105,31 @@ def deposit_weth(amount, from_acc):
     {"from": from_acc}
   )
 
+def exit_pool():
+  bpt_in_aura = get_bpt_tokens_in_aura()
+  aura_reward_pool.withdrawAllAndUnwrap(True, {"from": balancer_reth_strat})
+
+  # Exit the pool
+  ba_vault.exitPool(
+    pool_id,
+    balancer_reth_strat.address, #sender
+    balancer_reth_strat.address, #recipient
+    [
+      # tokens need to be sorted numerically
+      # we should account for some slippage here since it comes down to balance amounts in the pool
+      [reth.address, weth.address], # assets
+      [0, 0], # min amounts out
+       # userData = balancerUserDataEncoder.userDataTokenInExactBPTOut.encode_input(0, bpt_balance, 0)
+      balancerUserDataEncoder.userDataExactBPTinForTokensOut.encode_input(1, bpt_in_aura)[10:],
+      False, #fromInternalBalance
+    ],
+    {"from": balancer_reth_strat}
+  )
+
 def print_metric(name, base_state, new_state):
   diff = new_state - base_state
   change = diff/base_state
-  print("{}: base: {:0.2f} change: {:0.3f}".format(name, base_state, change))
+  print("{}: base: {:0.4f} change: {:0.3f}%".format(name, base_state, change * 100))
 
 
 def print_pool_state():
@@ -122,10 +156,24 @@ def main_test_check_balance_tilt():
       print_metric("WETH", base_weth_balance, weth_balance)
       print_metric("UNIT", base_unit_balance, unit_balance)
 
+# test how accurate are the values reported by the checkBalance
+def main_test_check_balance_accuracy():
+  deposit_amounts = range (1, 100_000, 5_000)
+  base_reth_balance = 0
+  base_weth_balance = 0
 
-main_test_check_balance_tilt()
+  for amount in deposit_amounts:
+    with TemporaryFork():
+      deposit_weth(amount * 1e18, weth_whale)
+      (reth_balance_check_balance, weth_balance_check_balance, unit_balance_check_balance) = getStrategyBalances()
+      exit_pool()
+      (reth_balance_actual, weth_balance_actual, unit_balance_actual) = getStrategyTokenBalances()
+      print_metric("RETH", reth_balance_check_balance, reth_balance_actual)
+      print_metric("WETH", weth_balance_check_balance, weth_balance_actual)
+      print_metric("UNIT", unit_balance_check_balance, unit_balance_actual)
 
-
+#main_test_check_balance_tilt()
+main_test_check_balance_accuracy()
 
 # plot results
 # import matplotlib.pyplot as plt
