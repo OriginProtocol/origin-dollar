@@ -38,7 +38,7 @@ forkOnlyDescribe(
 
     let fixture;
 
-    describe.only("Post deployment", () => {
+    describe("Post deployment", () => {
       beforeEach(async () => {
         fixture = await loadBalancerREthFixtureDefault();
       });
@@ -90,7 +90,7 @@ forkOnlyDescribe(
       });
     });
 
-    describe.only("Deposit", function () {
+    describe("Deposit", function () {
       beforeEach(async () => {
         fixture = await loadBalancerREthFixtureNotDefault();
       });
@@ -168,7 +168,7 @@ forkOnlyDescribe(
       });
     });
 
-    describe.only("Withdraw", function () {
+    describe("Withdraw", function () {
       beforeEach(async () => {
         fixture = await loadBalancerREthFixtureNotDefault();
         const { balancerREthStrategy, oethVault, strategist, reth, weth } =
@@ -294,7 +294,7 @@ forkOnlyDescribe(
       it("Should be able to withdraw with higher withdrawal slippage", async function () {});
     });
 
-    describe.only("Large withdraw", function () {
+    describe("Large withdraw", function () {
       const depositAmount = 30000;
       let depositAmountUnits, oethVaultSigner;
       beforeEach(async () => {
@@ -502,7 +502,7 @@ forkOnlyDescribe(
       });
     });
 
-    describe.only("Harvest rewards", function () {
+    describe("Harvest rewards", function () {
       beforeEach(async () => {
         fixture = await loadBalancerREthFixtureDefault();
       });
@@ -521,7 +521,7 @@ forkOnlyDescribe(
 forkOnlyDescribe(
   "ForkTest: Balancer MetaStablePool wstETH/WETH Strategy",
   function () {
-    describe.only("Deposit", function () {
+    describe("Deposit", function () {
       let fixture;
 
       beforeEach(async () => {
@@ -561,7 +561,7 @@ forkOnlyDescribe(
       });
     });
 
-    describe.only("Withdraw", function () {
+    describe("Withdraw", function () {
       let fixture;
 
       beforeEach(async () => {
@@ -697,7 +697,7 @@ forkOnlyDescribe(
       });
     });
 
-    describe.only("Harvest rewards", function () {
+    describe("Harvest rewards", function () {
       it("Should be able to collect reward tokens", async function () {
         const { josh, balancerWstEthStrategy, oethHarvester } =
           await loadBalancerWstEthFixture();
