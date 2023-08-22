@@ -1,3 +1,11 @@
+# The purpose of this script is to find out:
+# - if check balance can be manipulated to return inflated / deflated 
+#   results upon tilting the Balancer pool.
+# - the accuracy of assets that check balance reports when pool is tilted.
+#   Meaning that we test the withdrawal and see if the amounts reported by 
+#   checkBalance are close to the actual ones.
+#
+
 from world import *
 import math
 
@@ -19,164 +27,105 @@ balancer_reth_strat = load_contract('balancer_strat', BALANCER_STRATEGY)
 ba_vault = Contract.from_explorer("0xBA12222222228d8Ba445958a75a0704d566BF2C8")
 balancerUserDataEncoder = load_contract('balancerUserData', vault_oeth_admin.address)
 pool = Contract.from_explorer("0x1e19cf2d73a72ef1332c882f20534b6519be0276")
+aura_reward_pool = Contract.from_explorer("0xDd1fE5AD401D4777cE89959b7fa587e569Bf125D")
+
 # rETH / WETH
 pool_id = "0x1e19cf2d73a72ef1332c882f20534b6519be0276000200000000000000000112"
 rewardPool = Contract.from_explorer("0xdd1fe5ad401d4777ce89959b7fa587e569bf125d")
 
 weth.approve(ba_vault, 10**50, WSTD)
 reth.approve(ba_vault, 10**50, WSTD)
+  
+balancer_reth_strat.setMaxDepositSlippage(1e16, std)
 vault_oeth_admin.depositToStrategy(BALANCER_STRATEGY, [weth], [1000 * 1e18], {'from': STRATEGIST})
 
-def print_state(state_name, print_states):
-  if not print_states:
-    return
+def get_bpt_tokens_in_aura():
+  return aura_reward_pool.maxRedeem(balancer_reth_strat)
 
-  [token,balances,last_change] = ba_vault.getPoolTokens(pool_id)
-  reth_balance = balancer_reth_strat.checkBalance(reth) * reth.getExchangeRate() / 1e36
+def getStrategyBalances(): 
+  #reth_balance = balancer_reth_strat.checkBalance(reth) * reth.getExchangeRate() / 1e36
+  reth_balance = balancer_reth_strat.checkBalance(reth) / 1e18
   weth_balance = balancer_reth_strat.checkBalance(weth) / 1e18
-  eth_balance = balancer_reth_strat.checkBalance() / 1e18
+  unit_balance = balancer_reth_strat.checkBalance() / 1e18
 
-  # reth_balance_2 = balancer_reth_strat.checkBalance2(reth) * reth.getExchangeRate() / 1e36
-  # weth_balance_2 = balancer_reth_strat.checkBalance2(weth) / 1e18
+  return [
+    reth_balance,
+    weth_balance,
+    unit_balance
+  ]
 
-  print("State: {0}".format(state_name))
-  print("")
-  print("Strategy:")
-  print("WETH balance: {:0.2f}".format(weth_balance))
-  print("RETH balance (normalized exhange rate): {:0.2f}".format(reth_balance))
-  print("Combined ETH balance: {:0.2f}".format(reth_balance + weth_balance))
-  print("ETH denominated balance: {:0.2f}".format(eth_balance))
-  # print("WETH balance 2: {:0.2f}".format(weth_balance_2))
-  # print("RETH balance 2(normalized exhange rate): {:0.2f}".format(reth_balance_2))
-  # print("Combined ETH balance 2: {:0.2f}".format(reth_balance_2 + weth_balance_2))
-  # print("Total asset balance: {:0.2f}".format(balancer_reth_strat.checkBalance() / 1e18))
-  print("BPT balance: {:0.2f}".format(rewardPool.balanceOf(balancer_reth_strat) / 1e18))
-  print("")
-  print("Pool:")
-  pool_reth = balances[0] * reth.getExchangeRate() / 1e36
-  pool_weth = balances[1] / 1e18
-  print("balances reth(normalized)/weth: {:0.2f}/{:0.2f}".format(pool_reth, pool_weth))
-  print("tvl: {:0.2f}".format(pool_reth + pool_weth))
-  print("")
-  print("Whale")
-  bpt_balance = pool.balanceOf(weth_whale)
-  print("bpt_balance: {:0.2f}".format(bpt_balance / 1e18))
-  print("WETH balance: {:0.2f}".format(weth.balanceOf(weth_whale) / 1e18))
-  print("")
-
-def mint(amount, asset=weth):
-  asset.approve(oeth_vault_core, 1e50, WSTD)
-  oeth_vault_admin.setAssetDefaultStrategy(asset, balancer_reth_strat, {"from": timelock})
-
-  oeth_vault_core.mint(asset.address, amount * math.pow(10, asset.decimals()), 0, WSTD)
-  oeth_vault_core.allocate(WSTD)
-  oeth_vault_core.rebase(WSTD)
-
-def redeem(amount):
-  oeth.approve(oeth_vault_core, 1e50, WSTD)
-  oeth_vault_core.redeem(amount*1e18, amount*1e18*0.95, WSTD)
-  oeth_vault_core.rebase(WSTD)
-
-def deposit_withdrawal_test(amount, _outputAmount, print_states = False): 
-  print_state("initial state", print_states)
-
-  # mint(400, weth)
-  # print_state("whale minted", print_states)
-
-  weth_balance_before_whale = weth.balanceOf(weth_whale)
+def deposit_reth(amount, from_acc):
   # Enter the pool
-  amountsIn = [amount * 10**18, amount * 10**18]
-  tx_join = ba_vault.joinPool(
+  ba_vault.joinPool(
     pool_id,
-    weth_whale, #sender
-    weth_whale, #recipient
+    from_acc, #sender
+    from_acc, #recipient
     [
       # tokens need to be sorted numerically
       [reth.address, weth.address], # assets
       # indexes match above assets
-      amountsIn, # min amounts in
-      balancerUserDataEncoder.userDataExactTokenInForBPTOut.encode_input(1, amountsIn, amount * 10**18 * 0.9)[10:],
+      [amount, 0], # min amounts in
+       # balancerUserDataEncoder.userDataTokenInExactBPTOut.encode_input(2, 36158323235261660260, 1)[10:]
+       # balancerUserDataEncoder.userDataTokenInExactBPTOut.encode_input(2, 123, 1)[10:]
+      balancerUserDataEncoder.userDataExactTokenInForBPTOut.encode_input(1, [amount, 0], 0)[10:],
       False, #fromInternalBalance
     ],
-    WSTD
+    {"from": from_acc}
   )
-  
-  print_state("after manipulation", print_states)
 
-  ## attempt to mint - fails with Bal208 -> BPT_OUT_MIN_AMOUNT (Slippage/front-running protection check failed on a pool join)
-  #mint(1, weth)
-  ## attempt to redeem
-  #redeem(400)
-
-  bpt_balance = pool.balanceOf(weth_whale)
-  pool.approve(ba_vault, 10**50, WSTD)
-
-  # EXACT_BPT_IN_FOR_ONE_TOKEN_OUT - single asset exit
-  # user data [EXACT_BPT_IN_FOR_ONE_TOKEN_OUT, bptAmountIn, exitTokenIndex]
-  # ba_vault.exitPool(
-  #   pool_id,
-  #   weth_whale, #sender
-  #   weth_whale, #recipient
-  #   [
-  #     # tokens need to be sorted numerically
-  #     # we should account for some slippage here since it comes down to balance amounts in the pool
-  #     [reth.address, weth.address], # assets
-  #     #[0, 177_972 * 10**18], # min amounts out
-  #     [0, 0], # min amounts out - no MEWS on local network no need to calculate exaclty
-  #     balancerUserDataEncoder.userDataTokenInExactBPTOut.encode_input(0, bpt_balance, 1)[10:],
-  #     False, #fromInternalBalance
-  #   ],
-  #   WSTD
-  # )
-
-  # BPT_IN_FOR_EXACT_TOKENS_OUT
-  # User sends an estimated but unknown (computed at run time) quantity of BPT, and receives precise quantities of specified tokens
-  # user data [BPT_IN_FOR_EXACT_TOKENS_OUT, amountsOut, maxBPTAmountIn]
-  # weth_exit_before = weth.balanceOf(weth_whale)
-  # reth_exit_before = reth.balanceOf(weth_whale)
-
-  # bpt_balance = 9742858928635020293
-  #outputAmounts = [_outputAmount * 10**18, _outputAmount * 10**18]
-  outputAmounts = [_outputAmount * 10**18, 0]
-  # print("OUTPUT amounts")
-  # print(outputAmounts[0])
-  # print(outputAmounts[1])
-  bpt_balance = _outputAmount * 10**18 * 1.15
-  tx_exit = ba_vault.exitPool(
+def deposit_weth(amount, from_acc):
+  # Enter the pool
+  ba_vault.joinPool(
     pool_id,
-    weth_whale, #sender
-    weth_whale, #recipient
+    from_acc, #sender
+    from_acc, #recipient
     [
       # tokens need to be sorted numerically
-      # we should account for some slippage here since it comes down to balance amounts in the pool
       [reth.address, weth.address], # assets
-      #[0, 177_972 * 10**18], # min amounts out
-      #outputAmounts, # min amounts out - no MEWS on local network no need to calculate exaclty
-      [_outputAmount * 10**18 - 10**9,0],
-      balancerUserDataEncoder.userDataExactTokenInForBPTOut.encode_input(2, outputAmounts, bpt_balance)[10:],
+      # indexes match above assets
+      [0, amount], # min amounts in
+       # balancerUserDataEncoder.userDataTokenInExactBPTOut.encode_input(2, 36158323235261660260, 1)[10:]
+       # balancerUserDataEncoder.userDataTokenInExactBPTOut.encode_input(2, 123, 1)[10:]
+      balancerUserDataEncoder.userDataExactTokenInForBPTOut.encode_input(1, [0, amount], 0)[10:],
       False, #fromInternalBalance
     ],
-    WSTD
+    {"from": from_acc}
   )
-  print("user data", balancerUserDataEncoder.userDataExactTokenInForBPTOut.encode_input(2, outputAmounts, bpt_balance)[10:])
 
-  weth_balance_diff_whale = (weth_balance_before_whale - weth.balanceOf(weth_whale))/weth_balance_before_whale
-  print_state("after exit", print_states)
-  print("weth_balance_diff_whale", weth_balance_diff_whale)
+def print_metric(name, base_state, new_state):
+  diff = new_state - base_state
+  change = diff/base_state
+  print("{}: base: {:0.2f} change: {:0.3f}".format(name, base_state, change))
 
-  # weth_exit_diff = weth.balanceOf(weth_whale) - weth_exit_before
-  # reth_exit_diff = reth.balanceOf(weth_whale) - reth_exit_before
-  # print("weth_exit_diff", weth_exit_diff)
-  # print("reth_exit_diff", reth_exit_diff)
-  return {
-    "whale_weth_diff": weth_balance_diff_whale,
-    "tx_exit": tx_exit,
-    "tx_join": tx_join,
-  }
 
-with TemporaryFork():
-  #stats = deposit_withdrawal_test(10, True)
-  stats = deposit_withdrawal_test(10, 0.8123, True)
+def print_pool_state():
+  [token,balances,last_change] = ba_vault.getPoolTokens(pool_id)
+  pool_reth_units = balances[0] * reth.getExchangeRate() / 1e36
+  pool_reth = balances[0] / 1e18
+  pool_weth = balances[1] / 1e18
+  print("Pool balances reth(in units)/reth/weth: {:0.2f}/{:0.2f}/{:0.2f}".format(pool_reth_units, pool_reth, pool_weth))
+
+# this test confirms that tilting the pool heavily towards a single asset doesn't affect
+# the amounts hat check balance is reporting
+def main_test_check_balance_tilt(): 
+  deposit_amounts = range (2_000, 100_000, 5_000)
+  (base_reth_balance, base_weth_balance, base_unit_balance) = getStrategyBalances()
+  bpt_in_aura = get_bpt_tokens_in_aura()
+  print("BPT in strategy: {:0.2f}".format(bpt_in_aura / 1e18))
+  for amount in deposit_amounts:
+    with TemporaryFork():
+      #stats = test_check_balance_tilt_manipulation(10, True)
+      deposit_weth(amount * 1e18, weth_whale)
+      print_pool_state()
+      (reth_balance, weth_balance, unit_balance) = getStrategyBalances()
+      print_metric("RETH", base_reth_balance, reth_balance)
+      print_metric("WETH", base_weth_balance, weth_balance)
+      print_metric("UNIT", base_unit_balance, unit_balance)
+
+
+main_test_check_balance_tilt()
+
+
 
 # plot results
 # import matplotlib.pyplot as plt
@@ -186,7 +135,7 @@ with TemporaryFork():
 # y = []
 # for amount in x:
 #   with TemporaryFork():
-#     stats = deposit_withdrawal_test(amount, True)
+#     stats = test_check_balance_tilt_manipulation(amount, True)
 #     y.append(stats["whale_weth_diff"])
 #     print("stats", stats["whale_weth_diff"])
 
