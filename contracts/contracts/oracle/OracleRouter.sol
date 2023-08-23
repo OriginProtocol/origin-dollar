@@ -235,9 +235,9 @@ contract OETHOracleRouter is OracleRouter {
             feedAddress = 0x86392dC19c0b719886221c78AB11eb8Cf5c52812;
             maxStaleness = 1 days + STALENESS_BUFFER;
         } else if (asset == 0x5E8422345238F34275888049021821E8E08CAa1f) {
-            // FIXED_PRICE: frxETH/ETH
-            feedAddress = FIXED_PRICE;
-            maxStaleness = 0;
+            // frxETH/ETH
+            feedAddress = 0xC58F3385FBc1C8AD2c0C9a061D7c13b141D7A5Df;
+            maxStaleness = 1 days;
         } else if (asset == 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2) {
             // FIXED_PRICE: WETH/ETH
             feedAddress = FIXED_PRICE;
