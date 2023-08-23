@@ -51,13 +51,21 @@ module.exports = deploymentWithGovernanceProposal(
     const cSwapper = await ethers.getContract("Swapper1InchV5");
 
     // The 1Inch Swapper contract approves the 1Inch Router to transfer OUSD collateral assets
-    await withConfirmation(
-      cSwapper.approveAssets([
-        assetAddresses.DAI,
-        assetAddresses.USDC,
-        assetAddresses.USDT,
-      ])
+    const dai = await ethers.getContractAt("IERC20", assetAddresses.DAI);
+    const daiSwapperAllowance = await dai.allowance(
+      cSwapper.address,
+      addresses.mainnet.oneInchRouterV5
     );
+    if (daiSwapperAllowance.eq(0)) {
+      // Only approve if not already
+      await withConfirmation(
+        cSwapper.approveAssets([
+          assetAddresses.DAI,
+          assetAddresses.USDC,
+          assetAddresses.USDT,
+        ])
+      );
+    }
 
     // Governance Actions
     // ----------------
