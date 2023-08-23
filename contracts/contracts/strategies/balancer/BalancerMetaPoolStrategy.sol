@@ -339,40 +339,29 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         // STEP 1 - Withdraw all Balancer Pool Tokens (BPT) from Aura to this strategy contract
 
         _lpWithdrawAll();
-
-        // STEP 2 - Calculate the minumum amount of pool assets to accept for the BPTs
-
         // Get the BPTs withdrawn from Aura plus any that were already in this strategy contract
         uint256 BPTtoWithdraw = IERC20(platformAddress).balanceOf(
             address(this)
         );
-
         // Get the balancer pool assets and their total balances
-        (IERC20[] memory tokens, uint256[] memory balances, ) = balancerVault
-            .getPoolTokens(balancerPoolId);
-
-        // the strategy's share of the pool assets
-        uint256 strategyShare = BPTtoWithdraw.divPrecisely(
-            IERC20(platformAddress).totalSupply()
-        );
-
+        (IERC20[] memory tokens, , ) = balancerVault.getPoolTokens(balancerPoolId);
         uint256[] memory minAmountsOut = new uint256[](tokens.length);
         address[] memory poolAssets = new address[](tokens.length);
         for (uint256 i = 0; i < tokens.length; ++i) {
             poolAssets[i] = address(tokens[i]);
-            minAmountsOut[i] = balances[i]
-                .mulTruncate(strategyShare)
-                .mulTruncate(1e18 - maxWithdrawalSlippage);
         }
 
-        // STEP 3 - Withdraw the Balancer pool assets from the pool
-
+        // STEP 2 - Withdraw the Balancer pool assets from the pool
         /* Proportional exit: EXACT_BPT_IN_FOR_TOKENS_OUT:
          * User sends a precise quantity of BPT, and receives an estimated but unknown
          * (computed at run time) quantity of a single token
          *
          * ['uint256', 'uint256']
          * [EXACT_BPT_IN_FOR_TOKENS_OUT, bptAmountIn]
+         *
+         * It is ok to pass an empty minAmountsOut since tilting the pool in any direction
+         * when doing a proportional exit can only be beneficial to the strategy. Since
+         * it will receive more of the underlying tokens for the BPT traded in.
          */
         bytes memory userData = abi.encode(
             IBalancerVault.WeightedPoolExitKind.EXACT_BPT_IN_FOR_TOKENS_OUT,
@@ -391,8 +380,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
             request
         );
 
-        // STEP 4 - Convert the balancer pool assets to the vault collateral assets and send to the vault
-
+        // STEP 3 - Convert the balancer pool assets to the vault collateral assets and send to the vault
         // For each of the Balancer pool assets
         for (uint256 i = 0; i < tokens.length; ++i) {
             address poolAsset = address(tokens[i]);
