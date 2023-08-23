@@ -189,6 +189,8 @@ const defaultFixture = deployments.createFixture(async () => {
     chainlinkOracleFeedETH,
     crv,
     crvMinter,
+    aura,
+    bal,
     threePool,
     threePoolToken,
     metapoolToken,
@@ -253,6 +255,8 @@ const defaultFixture = deployments.createFixture(async () => {
     fdai = await ethers.getContractAt(erc20Abi, addresses.mainnet.fDAI);
     fusdc = await ethers.getContractAt(erc20Abi, addresses.mainnet.fUSDC);
     fusdt = await ethers.getContractAt(erc20Abi, addresses.mainnet.fUSDT);
+    aura = await ethers.getContractAt(erc20Abi, addresses.mainnet.AURA);
+    bal = await ethers.getContractAt(erc20Abi, addresses.mainnet.BAL);
 
     crvMinter = await ethers.getContractAt(
       crvMinterAbi,
@@ -624,6 +628,8 @@ const defaultFixture = deployments.createFixture(async () => {
     mockSwapper,
     swapper1Inch,
     mock1InchSwapRouter,
+    aura,
+    bal,
   };
 });
 
@@ -1409,6 +1415,14 @@ async function impersonateAccount(address) {
   });
 }
 
+async function mineBlocks(blocksToMine) {
+  const hexBlocks = "0x" + Number(blocksToMine).toString(16);
+  await hre.network.provider.request({
+    method: "hardhat_mine",
+    params: [hexBlocks],
+  });
+}
+
 async function _hardhatSetBalance(address, amount = "10000") {
   await hre.network.provider.request({
     method: "hardhat_setBalance",
@@ -1425,7 +1439,9 @@ async function _hardhatSetBalance(address, amount = "10000") {
 async function impersonateAndFundContract(address, amount = "100000") {
   await impersonateAccount(address);
 
-  await _hardhatSetBalance(address, amount);
+  if (parseFloat(amount) > 0) {
+    await _hardhatSetBalance(address, amount);
+  }
 
   const signer = await ethers.provider.getSigner(address);
   signer.address = address;
@@ -1959,4 +1975,5 @@ module.exports = {
   oethCollateralSwapFixture,
   ousdCollateralSwapFixture,
   fluxStrategyFixture,
+  mineBlocks,
 };
