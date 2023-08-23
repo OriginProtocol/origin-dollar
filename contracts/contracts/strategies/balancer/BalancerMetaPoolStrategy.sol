@@ -444,10 +444,10 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         address poolAsset = toPoolAsset(_asset);
         if (_asset == stETH) {
             // slither-disable-next-line unused-return
-            IERC20(stETH).approve(wstETH, 1e50);
+            IERC20(stETH).approve(wstETH, type(uint256).max);
         } else if (_asset == frxETH) {
             // slither-disable-next-line unused-return
-            IERC20(frxETH).approve(sfrxETH, 1e50);
+            IERC20(frxETH).approve(sfrxETH, type(uint256).max);
         }
         _approveAsset(poolAsset);
     }
