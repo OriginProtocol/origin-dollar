@@ -8,17 +8,22 @@ const { units } = require("./helpers");
 const RETH_WHALE = "0xc6424e862f1462281b0a5fac078e4b63006bdebf";
 
 const addFundingFunctionsToFixture = async (_fixture) => {
-  const { impersonateAndFundContract, reth } = _fixture;
+  const {
+    impersonateAndFundContract,
+    reth
+  } = _fixture;
 
   // call using fundRETH(account, amount)
-  _fixture.fundRETH = fundERC20(_fixture, reth, RETH_WHALE);
+  _fixture.fundRETH = fundRETH(_fixture, reth, RETH_WHALE);
 
   return _fixture;
 };
 
 const fundERC20 = async (_fixture, erc20Token, whale) => {
   return async (account, amount) => {
-    const { impersonateAndFundContract } = _fixture;
+    const {
+      impersonateAndFundContract
+    } = _fixture;
 
     const decimals = erc20Token.decimals();
 
@@ -27,4 +32,4 @@ const fundERC20 = async (_fixture, erc20Token, whale) => {
       .connect(accountSigner)
       .transfer(account, await units(amount, erc20Token));
   };
-};
+}
