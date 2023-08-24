@@ -72,7 +72,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         for (uint256 i = 0; i < assetsLength; ++i) {
             strategyAssets[i] = assetsMapped[i];
             // Get the asset balance in this strategy contract
-            strategyAmounts[i] = IERC20(assets[i]).balanceOf(address(this));
+            strategyAmounts[i] = IERC20(strategyAssets[i]).balanceOf(address(this));
         }
         _deposit(strategyAssets, strategyAmounts);
     }
