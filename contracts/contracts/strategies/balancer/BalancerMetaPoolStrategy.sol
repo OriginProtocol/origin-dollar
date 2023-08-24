@@ -65,16 +65,16 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
      */
     function depositAll() external override onlyVault nonReentrant {
         uint256 assetsLength = assetsMapped.length;
-        address[] memory assets = new address[](assetsLength);
-        uint256[] memory amounts = new uint256[](assetsLength);
+        address[] memory strategyAssets = new address[](assetsLength);
+        uint256[] memory strategyAmounts = new uint256[](assetsLength);
 
         // For each vault collateral asset
         for (uint256 i = 0; i < assetsLength; ++i) {
-            assets[i] = assetsMapped[i];
+            strategyAssets[i] = assetsMapped[i];
             // Get the asset balance in this strategy contract
-            amounts[i] = IERC20(assets[i]).balanceOf(address(this));
+            strategyAmounts[i] = IERC20(assets[i]).balanceOf(address(this));
         }
-        _deposit(assets, amounts);
+        _deposit(strategyAssets, strategyAmounts);
     }
 
     function _deposit(
