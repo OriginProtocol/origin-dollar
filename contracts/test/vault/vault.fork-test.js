@@ -260,7 +260,7 @@ forkOnlyDescribe("ForkTest: Vault", function () {
     it("Should have correct Price Oracle address set", async () => {
       const { vault } = fixture;
       expect(await vault.priceProvider()).to.equal(
-        "0xdF58F78cebbb2A60740eD2f86cDf0545a485102F"
+        "0x85094b52754591A3dE0002AD97F433584389aea0"
       );
     });
 
