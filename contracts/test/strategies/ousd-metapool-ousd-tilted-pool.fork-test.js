@@ -29,7 +29,7 @@ forkOnlyDescribe(
         await mintTest(fixture, matt, usdc, "120000");
       });
 
-      it("Should NOT stake DAI in Curve gauge via metapool", async function () {
+      it("Should stake DAI in Curve gauge via metapool", async function () {
         const { anna, dai } = fixture;
         await mintTest(fixture, anna, dai, "110000");
       });
@@ -91,8 +91,7 @@ forkOnlyDescribe(
 );
 
 async function mintTest(fixture, user, asset, amount = "30000") {
-  const { vault, ousd, usdt, usdc, dai, OUSDmetaStrategy, cvxRewardPool } =
-    fixture;
+  const { vault, ousd, OUSDmetaStrategy, cvxRewardPool } = fixture;
   await vault.connect(user).allocate();
   await vault.connect(user).rebase();
 
@@ -117,16 +116,10 @@ async function mintTest(fixture, user, asset, amount = "30000") {
   const newSupply = await ousd.totalSupply();
   const supplyDiff = newSupply.sub(currentSupply);
 
-  // The pool is titled to 3CRV by a million
-  if ([usdt.address, usdc.address].includes(asset.address)) {
-    // It should have added 2 times the OUSD amount.
-    // 1x for 3poolLp tokens and 1x for minimum amount of OUSD printed
-    // (in case of USDT/USDC)
-    expect(supplyDiff).to.approxEqualTolerance(ousdUnits(amount).mul(2), 5);
-  } else {
-    // 1x for DAI
-    expect(supplyDiff).to.approxEqualTolerance(ousdUnits(amount), 2);
-  }
+  // The pool is titled to 3CRV by a millions
+  // It should have added 2 times the OUSD amount.
+  // 1x for 3poolLp tokens and 1x for minimum amount of OUSD printed
+  expect(supplyDiff).to.approxEqualTolerance(ousdUnits(amount).mul(2), 5);
 
   // Ensure some LP tokens got staked under OUSDMetaStrategy address
   const newRewardPoolBalance = await cvxRewardPool
@@ -135,14 +128,9 @@ async function mintTest(fixture, user, asset, amount = "30000") {
   const rewardPoolBalanceDiff = newRewardPoolBalance.sub(
     currentRewardPoolBalance
   );
-  if (asset.address === dai.address) {
-    // Should not have staked when minted with DAI
-    expect(rewardPoolBalanceDiff).to.equal("0");
-  } else {
-    // Should have staked the LP tokens for USDT and USDC
-    expect(rewardPoolBalanceDiff).to.approxEqualTolerance(
-      ousdUnits(amount).mul(2),
-      5
-    );
-  }
+  // Should have staked the LP tokens for USDT and USDC
+  expect(rewardPoolBalanceDiff).to.approxEqualTolerance(
+    ousdUnits(amount).mul(2),
+    5
+  );
 }
