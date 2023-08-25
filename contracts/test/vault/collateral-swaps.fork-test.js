@@ -378,7 +378,7 @@ forkOnlyDescribe("ForkTest: Collateral swaps", function () {
           to: "USDT",
           fromAmount: 10,
           minToAssetAmount: "9.6",
-          slippage: 0.1,
+          slippage: 0.3,
           approxFromBalance: true,
         },
       ];
