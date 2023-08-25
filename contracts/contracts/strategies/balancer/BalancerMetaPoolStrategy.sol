@@ -53,7 +53,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
      * @param _assets Address of the Vault collateral assets
      * @param _amounts The amount of each asset to deposit
      */
-    function deposit(address[] memory _assets, uint256[] memory _amounts)
+    function deposit(address[] calldata _assets, uint256[] calldata _amounts)
         external
         onlyVault
         nonReentrant
@@ -95,7 +95,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
             uint256 amount = _amounts[i];
 
             require(assetToPToken[asset] != address(0), "Unsupported asset");
-            mappedAssets[i] = toPoolAsset(_assets[i]);
+            mappedAssets[i] = toPoolAsset(asset);
 
             if (amount > 0) {
                 emit Deposit(asset, platformAddress, amount);
@@ -178,8 +178,8 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
      */
     function withdraw(
         address _recipient,
-        address[] memory _assets,
-        uint256[] memory _amounts
+        address[] calldata _assets,
+        uint256[] calldata _amounts
     ) external onlyVault nonReentrant {
         _withdraw(_recipient, _assets, _amounts);
     }
@@ -231,11 +231,11 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         for (uint256 i = 0; i < tokens.length; ++i) {
             poolAssets[i] = address(tokens[i]);
 
+            // Convert the Balancer pool asset back to a vault collateral asset
+            address vaultAsset = fromPoolAsset(poolAssets[i]);
+
             // for each of the vault assets
             for (uint256 j = 0; j < _assets.length; ++j) {
-                // Convert the Balancer pool asset back to a vault collateral asset
-                address vaultAsset = fromPoolAsset(poolAssets[i]);
-
                 // If the vault asset equals the vault asset mapped from the Balancer pool asset
                 if (_assets[j] == vaultAsset) {
                     (, poolAmountsOut[i]) = toPoolAsset(
@@ -312,9 +312,8 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         // For each of the specified assets
         for (uint256 i = 0; i < _assets.length; ++i) {
             // Unwrap assets like wstETH and sfrxETH to rebasing assets stETH and frxETH
-            uint256 assetAmount = 0;
             if (wrappedAssetAmounts[i] > 0) {
-                assetAmount = unwrapPoolAsset(
+                unwrapPoolAsset(
                     _assets[i],
                     wrappedAssetAmounts[i]
                 );

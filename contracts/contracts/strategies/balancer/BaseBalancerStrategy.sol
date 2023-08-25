@@ -112,7 +112,7 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
             "Pool assets length mismatch"
         );
         for (uint256 i = 0; i < _assets.length; ++i) {
-            (address asset, ) = fromPoolAsset(address(poolAssets[i]), 0);
+            address asset = fromPoolAsset(address(poolAssets[i]));
             require(_assets[i] == asset, "Pool assets mismatch");
         }
 
@@ -400,7 +400,6 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         view
         returns (address asset, uint256 amount)
     {
-        amount = 0;
         if (poolAsset == wstETH) {
             asset = stETH;
             if (poolAmount > 0) {
