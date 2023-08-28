@@ -757,7 +757,7 @@ const useSwapEstimator = ({
 
     try {
       // 18 decimals denominated BN exchange rate value
-      const oracleCoinPrice = await contracts.vault.priceUSDMint(
+      const oracleCoinPrice = await contracts.vault.priceUnitMint(
         coinToSwapContract.address
       )
       const amountReceived =

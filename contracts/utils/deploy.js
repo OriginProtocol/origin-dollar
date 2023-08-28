@@ -324,6 +324,7 @@ const executeProposalOnFork = async ({
 const executeGovernanceProposalOnFork = async ({
   proposalIdBn,
   proposalState,
+  reduceQueueTime,
   executeGasLimit = null,
 }) => {
   if (!isFork) throw new Error("Can only be used on Fork");
@@ -335,6 +336,8 @@ const executeGovernanceProposalOnFork = async ({
 
   const governorFive = await getGovernorFive();
   const timelock = await getTimelock();
+
+  await configureGovernanceContractDurations(reduceQueueTime);
 
   /* this should "almost" never happen since the votingDelay on the governor
    * contract is set to 1 block
@@ -499,34 +502,11 @@ const submitProposalGnosisSafe = async (
   process.exit();
 };
 
-/**
- * In forked environment simulated that 5/8 multisig has submitted an OGV
- * governance proposal
- *
- * @param {Array<Object>} proposalArgs
- * @param {string} description
- * @param {opts} Options
- *   reduceQueueTime: reduce queue proposal time to 60 seconds
- * @returns {Promise<void>}
- */
-const submitProposalToOgvGovernance = async (
-  proposalArgs,
-  description,
-  opts = {}
-) => {
-  if (!isFork && !isMainnet) {
-    throw new Error(
-      "submitProposalToOgvGovernance only works on Fork & Mainnet networks"
-    );
-  }
-
+const configureGovernanceContractDurations = async (reduceQueueTime) => {
   const governorFive = await getGovernorFive();
   const timelock = await getTimelock();
 
-  log(`Submitting proposal for ${description}`);
-  log(`Args: ${JSON.stringify(proposalArgs, null, 2)}`);
-
-  if (opts.reduceQueueTime) {
+  if (reduceQueueTime) {
     log(
       `Reducing required voting delay to 1 block and voting period to 60 blocks ` +
         `vote extension on late vote to 0 and timelock min delay to 5 seconds`
@@ -612,6 +592,35 @@ const submitProposalToOgvGovernance = async (
       ], // address, storageSlot, newValue
     });
   }
+};
+
+/**
+ * In forked environment simulated that 5/8 multisig has submitted an OGV
+ * governance proposal
+ *
+ * @param {Array<Object>} proposalArgs
+ * @param {string} description
+ * @param {opts} Options
+ *   reduceQueueTime: reduce queue proposal time to 60 seconds
+ * @returns {Promise<void>}
+ */
+const submitProposalToOgvGovernance = async (
+  proposalArgs,
+  description,
+  opts = {}
+) => {
+  if (!isFork && !isMainnet) {
+    throw new Error(
+      "submitProposalToOgvGovernance only works on Fork & Mainnet networks"
+    );
+  }
+
+  const governorFive = await getGovernorFive();
+
+  log(`Submitting proposal for ${description}`);
+  log(`Args: ${JSON.stringify(proposalArgs, null, 2)}`);
+
+  await configureGovernanceContractDurations(opts.reduceQueueTime);
 
   let signer;
   // we are submitting proposal using the deployer
@@ -721,6 +730,7 @@ const handlePossiblyActiveGovernanceProposal = async (
       await executeGovernanceProposalOnFork({
         proposalIdBn,
         proposalState,
+        reduceQueueTime,
       });
 
       // proposal executed skip deployment
@@ -751,7 +761,8 @@ const handlePossiblyActiveGovernanceProposal = async (
 const handlePossiblyActiveProposal = async (
   proposalId,
   deployName,
-  governor
+  governor,
+  reduceQueueTime
 ) => {
   if (isFork && proposalId) {
     const proposalCount = Number((await governor.proposalCount()).toString());
@@ -772,6 +783,8 @@ const handlePossiblyActiveProposal = async (
       console.log(
         `Found proposal id: ${proposalId} on forked network. Executing proposal containing deployment of: ${deployName}`
       );
+
+      await configureGovernanceContractDurations(reduceQueueTime);
 
       // skip queue if proposal is already queued
       await executeProposalOnFork({
@@ -904,6 +917,7 @@ function deploymentWithGovernanceProposal(opts, fn) {
       await executeGovernanceProposalOnFork({
         proposalIdBn,
         proposalState,
+        reduceQueueTime,
       });
       log("Proposal executed.");
     } else {
@@ -1017,7 +1031,14 @@ function deploymentWithProposal(opts, fn) {
 
     // proposal has either been already executed on forked node or just been executed
     // no use of running the deploy script to create another
-    if (await handlePossiblyActiveProposal(proposalId, deployName, governor)) {
+    if (
+      await handlePossiblyActiveProposal(
+        proposalId,
+        deployName,
+        governor,
+        reduceQueueTime
+      )
+    ) {
       return;
     }
 

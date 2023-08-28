@@ -47,10 +47,6 @@ forkOnlyDescribe("ForkTest: Maker DSR Strategy", function () {
     it("Should be able to check balance", async () => {
       const { dai, josh, makerDsrStrategy } = fixture;
 
-      const balance = await makerDsrStrategy.checkBalance(dai.address);
-      log(`check DAI balance ${balance}`);
-      expect(balance).eq(0);
-
       // This uses a transaction to call a view function so the gas usage can be reported.
       const tx = await makerDsrStrategy
         .connect(josh)

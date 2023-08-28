@@ -1182,6 +1182,36 @@ const deployOETHSwapper = async () => {
   await vault.connect(sGovernor).setOracleSlippage(assetAddresses.frxETH, 20);
 };
 
+const deployOUSDSwapper = async () => {
+  const { deployerAddr, governorAddr } = await getNamedAccounts();
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+  const sGovernor = await ethers.provider.getSigner(governorAddr);
+
+  const assetAddresses = await getAssetAddresses(deployments);
+
+  const vaultProxy = await ethers.getContract("VaultProxy");
+  const vault = await ethers.getContractAt("IVault", vaultProxy.address);
+
+  const mockSwapper = await ethers.getContract("MockSwapper");
+  // Assumes deployOETHSwapper has already been run
+  const cSwapper = await ethers.getContract("Swapper1InchV5");
+
+  cSwapper
+    .connect(sDeployer)
+    .approveAssets([
+      assetAddresses.DAI,
+      assetAddresses.USDC,
+      assetAddresses.USDT,
+    ]);
+
+  await vault.connect(sGovernor).setSwapper(mockSwapper.address);
+  await vault.connect(sGovernor).setSwapAllowedUndervalue(100);
+
+  await vault.connect(sGovernor).setOracleSlippage(assetAddresses.DAI, 50);
+  await vault.connect(sGovernor).setOracleSlippage(assetAddresses.USDC, 50);
+  await vault.connect(sGovernor).setOracleSlippage(assetAddresses.USDT, 50);
+};
+
 const main = async () => {
   console.log("Running 001_core deployment...");
   await deployOracles();
@@ -1206,6 +1236,7 @@ const main = async () => {
   await deployVaultValueChecker();
   await deployWOusd();
   await deployOETHSwapper();
+  await deployOUSDSwapper();
   console.log("001_core deploy done.");
   return true;
 };
