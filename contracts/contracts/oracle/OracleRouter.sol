@@ -209,7 +209,25 @@ contract OETHOracleRouter is OracleRouter {
         override
         returns (address feedAddress, uint256 maxStaleness)
     {
-        if (asset == 0xD533a949740bb3306d119CC777fa900bA034cd52) {
+        if (asset == 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2) {
+            // FIXED_PRICE: WETH/ETH
+            feedAddress = FIXED_PRICE;
+            maxStaleness = 0;
+        } else if (asset == 0x5E8422345238F34275888049021821E8E08CAa1f) {
+            // frxETH/ETH
+            feedAddress = 0xC58F3385FBc1C8AD2c0C9a061D7c13b141D7A5Df;
+            maxStaleness = 1 days;
+        } else if (asset == 0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84) {
+            // https://data.chain.link/ethereum/mainnet/crypto-eth/steth-eth
+            // Chainlink: stETH/ETH
+            feedAddress = 0x86392dC19c0b719886221c78AB11eb8Cf5c52812;
+            maxStaleness = 1 days + STALENESS_BUFFER;
+        } else if (asset == 0xae78736Cd615f374D3085123A210448E74Fc6393) {
+            // https://data.chain.link/ethereum/mainnet/crypto-eth/reth-eth
+            // Chainlink: rETH/ETH
+            feedAddress = 0x536218f9E9Eb48863970252233c8F271f554C2d0;
+            maxStaleness = 1 days + STALENESS_BUFFER;
+        } else if (asset == 0xD533a949740bb3306d119CC777fa900bA034cd52) {
             // https://data.chain.link/ethereum/mainnet/crypto-eth/crv-eth
             // Chainlink: CRV/ETH
             feedAddress = 0x8a12Be339B0cD1829b91Adc01977caa5E9ac121e;
@@ -219,29 +237,11 @@ contract OETHOracleRouter is OracleRouter {
             // Chainlink: CVX/ETH
             feedAddress = 0xC9CbF687f43176B302F03f5e58470b77D07c61c6;
             maxStaleness = 1 days + STALENESS_BUFFER;
-        } else if (asset == 0xae78736Cd615f374D3085123A210448E74Fc6393) {
-            // https://data.chain.link/ethereum/mainnet/crypto-eth/reth-eth
-            // Chainlink: rETH/ETH
-            feedAddress = 0x536218f9E9Eb48863970252233c8F271f554C2d0;
-            maxStaleness = 1 days + STALENESS_BUFFER;
         } else if (asset == 0xBe9895146f7AF43049ca1c1AE358B0541Ea49704) {
             // https://data.chain.link/ethereum/mainnet/crypto-eth/cbeth-eth
             // Chainlink: cbETH/ETH
             feedAddress = 0xF017fcB346A1885194689bA23Eff2fE6fA5C483b;
             maxStaleness = 1 days + STALENESS_BUFFER;
-        } else if (asset == 0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84) {
-            // https://data.chain.link/ethereum/mainnet/crypto-eth/steth-eth
-            // Chainlink: stETH/ETH
-            feedAddress = 0x86392dC19c0b719886221c78AB11eb8Cf5c52812;
-            maxStaleness = 1 days + STALENESS_BUFFER;
-        } else if (asset == 0x5E8422345238F34275888049021821E8E08CAa1f) {
-            // frxETH/ETH
-            feedAddress = 0xC58F3385FBc1C8AD2c0C9a061D7c13b141D7A5Df;
-            maxStaleness = 1 days;
-        } else if (asset == 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2) {
-            // FIXED_PRICE: WETH/ETH
-            feedAddress = FIXED_PRICE;
-            maxStaleness = 0;
         } else {
             revert("Asset not available");
         }
