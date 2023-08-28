@@ -106,6 +106,7 @@ const oraclePrices = async (tokens, contracts) => {
     sfrxeth: stakedFraxPrice.bind(null, contracts.sfrxeth),
   }
 
+  // Undefined token will return ratio 1:1 with eth
   const fetchTokenRatio = async (token) =>
     (await tokenToPricingMethod?.[token]?.()) || utils.parseEther('1')
 
