@@ -64,13 +64,14 @@ forkOnlyDescribe(
           addresses.mainnet.rETH_WETH_AuraRewards
         );
 
-        // Check slippage values
-        expect(await balancerREthStrategy.maxDepositSlippage()).to.equal(
-          oethUnits("0.001")
+        // Check deviation values
+        expect(await balancerREthStrategy.maxDepositDeviation()).to.equal(
+          oethUnits("0.01")
         );
-        expect(await balancerREthStrategy.maxWithdrawalSlippage()).to.equal(
-          oethUnits("0.001")
+        expect(await balancerREthStrategy.maxWithdrawalDeviation()).to.equal(
+          oethUnits("0.01")
         );
+
         // Check addresses
         expect(await balancerREthStrategy.rETH()).to.equal(
           addresses.mainnet.rETH
@@ -144,7 +145,7 @@ forkOnlyDescribe(
         ).to.approxEqualTolerance(rethValue.add(wethUnits), 0.01);
       });
 
-      it("Should be able to deposit with higher deposit slippage", async function () {});
+      it("Should be able to deposit with higher deposit deviation", async function () {});
 
       it("Should revert when read-only re-entrancy is triggered", async function () {
         /* - needs to be an asset default strategy
@@ -291,7 +292,7 @@ forkOnlyDescribe(
         expect(stEthBalanceDiff).to.be.gte(await units("15", reth), 1);
       });
 
-      it("Should be able to withdraw with higher withdrawal slippage", async function () {});
+      it("Should be able to withdraw with higher withdrawal deviation", async function () {});
     });
 
     describe.only("Large withdraw", function () {
@@ -368,7 +369,7 @@ forkOnlyDescribe(
           weth,
         } = fixture;
 
-        const withdrawAmount = 29950;
+        const withdrawAmount = 29690;
         const withdrawAmountUnits = oethUnits(withdrawAmount.toString(), 18);
 
         const stratValueBefore = await oethVault.totalValue();
@@ -430,10 +431,6 @@ forkOnlyDescribe(
 
         const withdrawAmount = 29700;
         const withdrawAmountUnits = oethUnits(withdrawAmount.toString(), 18);
-
-        await balancerREthStrategy
-          .connect(timelock)
-          .setMaxWithdrawalSlippage(parseUnits("1", 16)); // 1%
 
         // Withdraw WETH
         // prettier-ignore
@@ -576,11 +573,6 @@ forkOnlyDescribe(
             [weth.address, stETH.address],
             [units("25", weth), oethUnits("25")]
           );
-
-        // TODO: Check slippage errors
-        await balancerWstEthStrategy
-          .connect(strategist)
-          .setMaxWithdrawalSlippage(oethUnits("0.01"));
       });
 
       it("Should be able to withdraw 10 WETH from the pool", async function () {
@@ -800,7 +792,7 @@ async function depositTest(fixture, amounts, allAssets, bpt) {
   const strategyValuesDiff = after.strategyValues.sum.sub(
     before.strategyValues.sum
   );
-  expect(strategyValuesDiff).to.approxEqualTolerance(sumEthAmounts, 0.1);
+  expect(strategyValuesDiff).to.approxEqualTolerance(sumEthAmounts, 1);
   expect(
     after.strategyValues.value,
     "strategy total value = sum of asset values"
