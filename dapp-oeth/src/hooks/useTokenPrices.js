@@ -1,10 +1,21 @@
 import { useEffect, useState } from 'react'
+import { useStoreState } from 'pullstate'
+import ContractStore from 'stores/ContractStore'
+import { utils } from 'ethers'
 
 const tokenConfiguration = {
-  ethereum: {
+  eth: {
     id: 'ethereum',
     symbol: 'eth',
     name: 'Ethereum',
+  },
+  weth: {
+    id: 'weth',
+    symbol: 'weth',
+    name: 'WETH',
+    platforms: {
+      ethereum: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
+    },
   },
   oeth: {
     id: 'origin-ether',
@@ -20,13 +31,6 @@ const tokenConfiguration = {
     name: 'Frax Ether',
     platforms: {
       ethereum: '0x5e8422345238f34275888049021821e8e08caa1f',
-      'binance-smart-chain': '0x64048a7eecf3a2f1ba9e144aac3d7db6e58f555e',
-      'polygon-pos': '0xee327f889d5947c1dc1934bb208a1e792f953e96',
-      'arbitrum-one': '0x178412e79c25968a32e89b11f63b33f733770c2a',
-      'optimistic-ethereum': '0x6806411765af15bddd26f8f544a34cc40cb9838b',
-      'polygon-zkevm': '0xcf7ecee185f19e2e970a301ee37f93536ed66179',
-      moonbeam: '0x82bbd1b6f6de2b7bb63d3e1546e6b1553508be99',
-      fantom: '0x9e73f99ee061c8807f69f9c6ccc44ea3d8c373ee',
     },
   },
   sfrxeth: {
@@ -35,12 +39,6 @@ const tokenConfiguration = {
     name: 'Staked Frax Ether',
     platforms: {
       ethereum: '0xac3e018457b222d93114458476f3e3416abbe38f',
-      'binance-smart-chain': '0x3cd55356433c89e50dc51ab07ee0fa0a95623d53',
-      'polygon-pos': '0x6d1fdbb266fcc09a16a22016369210a15bb95761',
-      'arbitrum-one': '0x95ab45875cffdba1e5f451b950bc2e42c0053f39',
-      'optimistic-ethereum': '0x484c2d6e3cdd945a8b2df735e079178c1036578c',
-      moonbeam: '0xecf91116348af1cffe335e9807f0051332be128d',
-      fantom: '0xb90ccd563918ff900928dc529aa01046795ccb4a',
     },
   },
   steth: {
@@ -57,59 +55,130 @@ const tokenConfiguration = {
     name: 'Rocket Pool ETH',
     platforms: {
       ethereum: '0xae78736cd615f374d3085123a210448e74fc6393',
-      'polygon-pos': '0x0266f4f08d82372cf0fcbccc0ff74309089c74d1',
-      'arbitrum-one': '0xec70dcb4a1efa46b8f2d97c310c9c4790ba5ffa8',
-      'optimistic-ethereum': '0x9bcef72be871e61ed4fbbc7630889bee758eb81d',
     },
   },
 }
 
-const useTokenPrice = () => {
+const oethOraclePrice = async (contract, tokenAddress) => {
+  try {
+    return await contract.price(tokenAddress)
+  } catch (e) {
+    console.error(e)
+    return utils.parseEther('1')
+  }
+}
+
+const stakedFraxPrice = async (contract) => {
+  try {
+    return await contract.previewRedeem(utils.parseEther('1'))
+  } catch (e) {
+    console.error(e)
+    return utils.parseEther('1')
+  }
+}
+
+const oraclePrices = async (tokens, contracts) => {
+  if (!contracts.chainlinkEthAggregator || !contracts.oethOracleRouter) {
+    return {}
+  }
+
+  // Fetch baseline ETH price for conversion
+  const feed = await contracts.chainlinkEthAggregator.latestRoundData()
+  const ethPrice = Number(utils.formatUnits(feed?.answer, 8))
+
+  // Fetch token ratios
+  const tokenToPricingMethod = {
+    frxeth: oethOraclePrice.bind(
+      null,
+      contracts.oethOracleRouter,
+      tokenConfiguration.frxeth.platforms.ethereum
+    ),
+    steth: oethOraclePrice.bind(
+      null,
+      contracts.oethOracleRouter,
+      tokenConfiguration.steth.platforms.ethereum
+    ),
+    reth: oethOraclePrice.bind(
+      null,
+      contracts.oethOracleRouter,
+      tokenConfiguration.reth.platforms.ethereum
+    ),
+    sfrxeth: stakedFraxPrice.bind(null, contracts.sfrxeth),
+  }
+
+  const fetchTokenRatio = async (token) =>
+    (await tokenToPricingMethod?.[token]?.()) || utils.parseEther('1')
+
+  const generateTokenMapping = (data) =>
+    data.reduce(
+      (acc, weiRatio, index) => ({
+        ...acc,
+        [tokens[index]]: Number(utils.formatEther(weiRatio)) * ethPrice,
+      }),
+      {}
+    )
+
+  return Promise.all(tokens.map(fetchTokenRatio)).then(generateTokenMapping)
+}
+
+const coingeckoPrices = async (tokens) => {
+  const tokenIds = tokens.map((token) => tokenConfiguration[token].id)
+
+  const baseUri = `${
+    process.env.NEXT_PUBLIC_COINGECKO_API
+  }/simple/price?ids=${tokenIds.join(',')}&vs_currencies=usd`
+
+  const generateTokenMapping = (data) =>
+    tokens.reduce((acc, token) => {
+      const { id, symbol } = tokenConfiguration[token]
+      return {
+        ...acc,
+        [symbol]: data[id]?.usd || 0,
+      }
+    }, {})
+
+  return fetch(baseUri)
+    .then((res) => res.json())
+    .then(generateTokenMapping)
+}
+
+const useTokenPrices = ({ tokens = [] } = {}) => {
   const [error, setError] = useState(true)
   const [isLoading, setIsLoading] = useState(true)
   const [prices, setPrices] = useState(null)
+  const contracts = useStoreState(ContractStore, (s) => s.contracts)
+  const chainId = useStoreState(ContractStore, (s) => s.chainId)
 
-  const fetchTokenPricesFromCoinGecko = async () => {
+  const queryTokens =
+    tokens?.length > 0 ? tokens : Object.keys(tokenConfiguration)
+
+  const fetchTokenPrices = async () => {
     try {
       setIsLoading(true)
       setError(null)
 
-      const currencies = Object.keys(tokenConfiguration)
+      let prices
 
-      const tokenIds = currencies.map((token) => tokenConfiguration[token].id)
-
-      const prices = await fetch(
-        `${
-          process.env.NEXT_PUBLIC_COINGECKO_API
-        }/simple/price?ids=${tokenIds.join(',')}&vs_currencies=usd`
-      )
-        .then((res) => res.json())
-        // Map coin gecko token ids to our token registered setup
-        .then((data) =>
-          currencies.reduce((acc, token) => {
-            const { id, symbol } = tokenConfiguration[token]
-            acc[symbol] = data[id]
-            return acc
-          }, {})
-        )
+      if (chainId === 1) {
+        prices = await oraclePrices(queryTokens, contracts)
+      } else {
+        prices = await coingeckoPrices(queryTokens)
+      }
 
       setPrices(prices)
     } catch (e) {
       setError(e.message)
-      console.log(e)
+      console.error(e)
     } finally {
       setIsLoading(false)
     }
   }
 
   useEffect(() => {
-    fetchTokenPricesFromCoinGecko()
-  }, [])
+    fetchTokenPrices()
+  }, [chainId, contracts])
 
-  return [
-    { data: prices, isLoading, error },
-    { onRefresh: fetchTokenPricesFromCoinGecko },
-  ]
+  return [{ data: prices, isLoading, error }, { onRefresh: fetchTokenPrices }]
 }
 
-export default useTokenPrice
+export default useTokenPrices

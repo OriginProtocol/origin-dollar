@@ -194,7 +194,7 @@ const useSwapEstimator = ({
     })
     let usedGasPrice = gasPrice
 
-    const ethPrice = prices?.eth?.usd || 0
+    const ethPrice = prices?.eth || 0
 
     const [
       vaultResult,
@@ -292,7 +292,7 @@ const useSwapEstimator = ({
         estimation.costMinusGasFees = costWithGas
         estimation.costMinusGasFeesUsd = costWithGas * ethPrice
 
-        const swapTokenPrice = prices[estimation.coinToSwap || 'eth']?.usd || 0
+        const swapTokenPrice = prices?.[estimation.coinToSwap || 'eth'] || 0
 
         estimation.amountReceivedUsd = amountReceivedNumber * swapTokenPrice
       }

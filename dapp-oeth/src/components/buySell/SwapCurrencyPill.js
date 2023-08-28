@@ -628,7 +628,7 @@ const SwapCurrencyPill = ({
     onAmountChange(valueNoCommas)
   }
 
-  const usdPrice = tokenConversions?.[selectedCoin]?.usd || 0
+  const usdPrice = tokenConversions?.[selectedCoin] || 0
 
   return (
     <>
