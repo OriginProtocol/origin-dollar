@@ -972,6 +972,7 @@ async function balancerWstEthFixture() {
       deployName: "99999_balancer_wstETH_WETH",
       forceDeploy: true,
       deployerIsProposer: true,
+      reduceQueueTime: true,
     },
     proxyContractName: "OETHBalancerMetaPoolwstEthStrategyProxy",
 
