@@ -64,6 +64,13 @@ contract EchidnaTestSupply is EchidnaTestTransfer {
 
     /**
      * @notice Non-rebasing supply should not be larger than total supply
+     * @custom:error testNonRebasingSupplyVsTotalSupply(): failed!💥
+     *   Call sequence:
+     *     mint(0,2)
+     *     changeSupply(3)
+     *     burn(0,1)
+     *     optOut(0)
+     *     testNonRebasingSupplyVsTotalSupply()
      */
     function testNonRebasingSupplyVsTotalSupply() public hasKnownIssue {
         uint256 nonRebasingSupply = ousd.nonRebasingSupply();
