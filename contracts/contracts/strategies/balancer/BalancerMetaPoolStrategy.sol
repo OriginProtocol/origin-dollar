@@ -213,6 +213,10 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
             "Invalid input arrays"
         );
 
+        for (uint256 i = 0; i < _assets.length; ++i) {
+            require(assetToPToken[_assets] != address(0), "Unsupported asset");
+        }
+
         // STEP 1 - Calculate the max about of Balancer Pool Tokens (BPT) to withdraw
 
         // Estimate the required amount of Balancer Pool Tokens (BPT) for the assets
