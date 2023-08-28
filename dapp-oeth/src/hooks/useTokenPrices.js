@@ -78,7 +78,11 @@ const stakedFraxPrice = async (contract) => {
 }
 
 const oraclePrices = async (tokens, contracts) => {
-  if (!contracts.chainlinkEthAggregator || !contracts.oethOracleRouter) {
+  if (
+    !contracts.chainlinkEthAggregator ||
+    !contracts.oethOracleRouter ||
+    !contracts.sfrxeth
+  ) {
     return {}
   }
 
