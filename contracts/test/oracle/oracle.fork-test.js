@@ -4,8 +4,6 @@ const { parseUnits } = require("ethers/lib/utils");
 const { loadDefaultFixture } = require("../_fixture");
 const { forkOnlyDescribe, isCI } = require("../helpers");
 
-const log = require("../../utils/logger")("test:fork:oracle");
-
 forkOnlyDescribe("ForkTest: Oracle Routers", function () {
   this.timeout(0);
 
