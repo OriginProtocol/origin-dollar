@@ -63,5 +63,7 @@
   "066_oeth_vault_swaps": 1687744974,
   "067_ousd_vault_value_checker": 1687280260,
   "068_oeth_to_ogv_governance_p1": 1687795046,
-  "069_oeth_to_ogv_governance_p2": 1687955800
+  "069_oeth_to_ogv_governance_p2": 1687955800,
+  "070_flux_strategy": 1691586235,
+  "072_ousd_maker_dsr": 1691657795
 }

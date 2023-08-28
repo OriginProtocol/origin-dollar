@@ -44,6 +44,10 @@ main()
         fi
     fi
 
+    if [[ ! -z "${FORK_BLOCK_NUMBER}" ]]; then
+        echo "You shouldn't manually set FORK_BLOCK_NUMBER"
+    fi
+
     if [ -z "$LOCAL_PROVIDER_URL" ]; then
         cp -r deployments/mainnet deployments/hardhat
         echo "No running node detected spinning up a fresh one"
@@ -53,20 +57,7 @@ main()
             echo "jq could not be found try installing it"
             exit 1
         fi
-        # Fetch latest block number from hardhat instance
-        blockresp=$((curl -s -H "Content-Type: application/json" -X POST --data '{"id":1,"jsonrpc":"2.0","method":"eth_blockNumber"}' "$LOCAL_PROVIDER_URL") | jq -r '.result')
-        blocknum=$((16#${blockresp:2}))
-        export FORK_BLOCK_NUMBER=$blocknum
-
-        # Mine 40 blocks so hardhat wont complain about block fork being too recent
-        for run in {1..40}; do
-          response=$(curl -s -H "Content-Type: application/json" -X POST --data '{"id":1,"jsonrpc":"2.0","method":"evm_mine"}' "$LOCAL_PROVIDER_URL")
-        done
         
-        # Hardhat has the habit of not using blocks with less than 32 confirmations
-        # Force it to use the latest block
-        echo "Connecting to node $LOCAL_PROVIDER_URL using block number: $FORK_BLOCK_NUMBER"
-
         cp -r deployments/localhost deployments/hardhat
     fi
 
@@ -85,7 +76,7 @@ main()
         params+="$1"
     fi
 
-    if [ $is_coverage == "true" ]; then
+    if [[ $is_coverage == "true" ]]; then
         echo "Running tests and generating coverage reports..."
         FORK=true IS_TEST=true npx --no-install hardhat coverage --testfiles "test/**/*.fork-test.js"
     else

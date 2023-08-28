@@ -31,7 +31,7 @@ cd origin-dollar
 
 ## Description
 
-The `origin-dollar` project is a mono repo that hosts both the `smart contracts` and `dApp` code bases. In order to run this project locally, you will need to run both the `Eth node` and the `dapp` in separate processes or terminals.
+The `origin-dollar` project is a mono repo that hosts both the `smart contracts` and `dapp` code bases. In order to run this project locally, you will need to run both the `Eth node` and the `dapp` in separate processes or terminals.
 
 ### Eth Node
 
@@ -40,9 +40,9 @@ The `smart contracts` and all of their associated code are located in the `<proj
 A variety of Hardhat [tasks](https://hardhat.org/guides/create-task.html) are available to interact with the contracts. Additional information can be found by running `npx hardhat` from the `contracts/` directory.
 <br/><br/>
 
-### dApp(Decentralized Application)
+### dapp (Decentralized Application)
 
-The code for `dApp` is located under the `/dapp` directory.
+The code for `dapp` is located under the `/dapp` directory.
 <br/><br/>
 
 ---
@@ -80,11 +80,11 @@ npx hardhat fund --amount 1000 --network localhost
 ##### Requirements
 
 - You will need your web3 wallet configured before you can interact with the dapp. Make sure that you have one - refer to [this section](#configure-web3-wallet) for `Metamask` instructions.
-- You will also need the dApp to be running. Refer to [this section](#running-the-dapp-locally) for instructions.
+- You will also need the dapp to be running. Refer to [this section](#running-the-dapp-locally) for instructions.
 
 ### Configure Web3 Wallet
 
-You will need a web3 wallet to interact with the dApp and sign transactions. Below are the instructions to setup `Metamask` to interact with the dApp running locally.
+You will need a web3 wallet to interact with the dapp and sign transactions. Below are the instructions to setup `Metamask` to interact with the dapp running locally.
 
 - Install `Metamask` Chrome extension [HERE](https://metamask.io/)
 - Create/Open `Metamask` wallet
@@ -121,25 +121,27 @@ Note:
 If you want to add all the accounts via a new `Metamask` wallet and import the `mnemonic` it is located in `contracts/hardhat.config.js`. Make sure that you use Account 4 and up for test accounts as 0-3 are reserved.
 <br/><br/>
 
-### Running the dApp
+### Running the dapp
 
-Open a separate terminal to run the dApp in.
+Open a separate terminal to run the dapp in.
 
 ```bash
-# Enter the smart dApp dir
-cd dApp
+# Enter the smart dapp dir (or oeth-dapp)
+cd dapp
 
 # Install the dependencies
 yarn install
 
-# Start the dApp
+# Start the dapp
 yarn run start
 ```
 
 - Open http://localhost:3000 in your browser and connect your `Metamask` account. See [this section](#configure-web3-wallet) for instructions if you have not done that yet.
 - Open http://localhost:3000/swap and verify that you have stablecoins in your account. See [this section](#minting-stablecoins-via-hardhat-task) for instructions if you don't see a balance.
 
-If you see a `Runtime Error: underlying network changed`, then rename `dApp/dev.env` to `.env` and restart `yarn`
+If you see a `Runtime Error: underlying network changed`, then rename `dapp/dev.env` to `.env` and restart `yarn`
+
+If you see an error resembling `digital envelope routines::unsupported`, you are likely using an incompatible Node.js version. At last check, v16.20.2 is good.
 
 ### Troubleshooting
 
@@ -154,9 +156,9 @@ Go to root of the project and run `npx husky install`
 
 ---
 
-## (Core Contributors) Running dApp in Production/Staging Mode Locally
+## (Core Contributors) Running dapp in Production/Staging Mode Locally
 
-There may be a time that you will need to run the dApp in production/staging mode to test out a certain feature or do verification before a deploy. In this case there is no need for a local node as you will connect directly to the mainnet/testnet.
+There may be a time that you will need to run the dapp in production/staging mode to test out a certain feature or do verification before a deploy. In this case there is no need for a local node as you will connect directly to the mainnet/testnet.
 
 ### Requirements
 
@@ -176,7 +178,7 @@ gcloud auth login
 # Decrypt staging secrets to local
 yarn run decrypt-secrets:staging
 
-# Start local dApp in Staging mode
+# Start local dapp in Staging mode
 yarn run start:staging
 ```
 
@@ -186,7 +188,7 @@ yarn run start:staging
 # Decrypt staging secrets to local
 yarn run decrypt-secrets:production
 
-# Start local dApp in Production mode
+# Start local dapp in Production mode
 yarn run start:production
 ```
 

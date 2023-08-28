@@ -4,7 +4,9 @@ module.exports = deploymentWithGovernanceProposal(
   {
     deployName: "057_drip_all",
     forceDeploy: false,
-    onlyOnFork: true, // this is only executed in forked environment
+    forceSkip: true,
+    // onlyOnFork: true, // this is only executed in forked environment
+    // reduceQueueTime: true, // just to solve the issue of later active proposals failing
     //proposalId: "40434364243407050666554191388123037800510237271029051418887027936281231737485"
   },
   async ({ deployWithConfirmation, ethers }) => {
