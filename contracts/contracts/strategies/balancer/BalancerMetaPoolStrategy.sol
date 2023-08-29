@@ -32,7 +32,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
      * asset strategy. For that reason there is no need to support this
      * functionality.
      */
-    function deposit(address _strategyAsset, uint256 _strategyAmount)
+    function deposit(address, uint256)
         external
         override
         onlyVault
@@ -46,10 +46,11 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
      * asset strategy. For that reason there is no need to support this
      * functionality.
      */
-    function deposit(
-        address[] memory _strategyAssets,
-        uint256[] memory _strategyAmounts
-    ) external onlyVault nonReentrant {
+    function deposit(address[] memory, uint256[] memory)
+        external
+        onlyVault
+        nonReentrant
+    {
         revert("Not supported");
     }
 

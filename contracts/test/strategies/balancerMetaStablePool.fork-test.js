@@ -1,5 +1,5 @@
 const { expect } = require("chai");
-const { formatUnits, parseUnits } = require("ethers").utils;
+const { formatUnits } = require("ethers").utils;
 const { BigNumber } = require("ethers");
 
 const addresses = require("../../utils/addresses");
@@ -419,7 +419,6 @@ forkOnlyDescribe(
           balancerREthStrategy,
           rEthBPT,
           oethVault,
-          timelock,
           reth,
           weth,
           auraPool,
@@ -705,9 +704,10 @@ forkOnlyDescribe(
       });
     });
 
-    describe("Deposit in MEV environment", function () {
+    describe.only("Deposit in MEV environment", function () {
       let attackerAddress;
       let sAttacker;
+      let fixture;
 
       beforeEach(async () => {
         fixture = await loadBalancerREthFixtureNotDefault();
@@ -730,7 +730,7 @@ forkOnlyDescribe(
           balancerVault,
         } = fixture;
         let forkedStratBalance = 0;
-        const { vaultChange, supplyChange, profit } = await temporaryFork({
+        const { vaultChange, profit } = await temporaryFork({
           temporaryAction: async () => {
             await depositTest(fixture, [5, 5], [weth, reth], rEthBPT);
             forkedStratBalance = await balancerREthStrategy["checkBalance()"]();
@@ -775,6 +775,44 @@ forkOnlyDescribe(
 
         const profitDiff = profitWithTilt.sub(profit);
         expect(profitDiff).to.be.gte(oethUnits("0.3"), 1);
+      });
+
+      it("checkBalance with ~100 units should almost not be affected by heavy pool manipulation", async function () {
+        const {
+          balancerREthStrategy,
+          weth,
+          reth,
+          rEthBPT,
+          balancerVault,
+        } = fixture;
+
+        await depositTest(fixture, [50, 50], [weth, reth], rEthBPT);
+
+        const checkBalanceAmount = await balancerREthStrategy[
+          "checkBalance()"
+        ]();
+        expect(checkBalanceAmount).to.be.gte(oethUnits("0"), 1);
+
+        await tiltBalancerMetaStableWETHPool({
+          percentageOfTVLDeposit: 300, // 300%
+          attackerSigner: sAttacker,
+          balancerPoolId: await balancerREthStrategy.balancerPoolId(),
+          assetAddressArray: [reth.address, weth.address],
+          wethIndex: 1,
+          bptToken: rEthBPT,
+          balancerVault,
+          reth,
+          weth,
+        });
+
+        const checkBalanceAmountAfterTilt = await balancerREthStrategy[
+          "checkBalance()"
+        ]();
+        expect(checkBalanceAmountAfterTilt).to.be.gte(await oethUnits("0"), 1);
+        // ~100 units in pool liquidity should have less than 0.02 effect == 0.02%
+        expect(checkBalanceAmountAfterTilt.sub(checkBalanceAmount)).to.be.lte(
+          oethUnits("0.02")
+        );
       });
     });
   }
