@@ -1,67 +1,91 @@
 {
+  "solcVersion": "0.8.7",
   "storage": [
     {
-      "contract": "Harvester",
       "label": "rewardTokenConfigs",
-      "type": "t_mapping(t_address,t_struct(RewardTokenConfig)4250_storage)",
-      "src": "contracts/harvest/Harvester.sol:53"
+      "offset": 0,
+      "slot": "0",
+      "type": "t_mapping(t_address,t_struct(RewardTokenConfig)4979_storage)",
+      "contract": "BaseHarvester",
+      "src": "contracts/harvest/BaseHarvester.sol:53"
     },
     {
-      "contract": "Harvester",
       "label": "supportedStrategies",
+      "offset": 0,
+      "slot": "1",
       "type": "t_mapping(t_address,t_bool)",
-      "src": "contracts/harvest/Harvester.sol:54"
+      "contract": "BaseHarvester",
+      "src": "contracts/harvest/BaseHarvester.sol:54"
     },
     {
-      "contract": "Harvester",
       "label": "rewardProceedsAddress",
+      "offset": 0,
+      "slot": "2",
       "type": "t_address",
-      "src": "contracts/harvest/Harvester.sol:63"
+      "contract": "BaseHarvester",
+      "src": "contracts/harvest/BaseHarvester.sol:62"
     }
   ],
   "types": {
-    "t_mapping(t_address,t_struct(RewardTokenConfig)4250_storage)": {
-      "label": "mapping(address => struct Harvester.RewardTokenConfig)"
-    },
     "t_address": {
-      "label": "address"
+      "label": "address",
+      "numberOfBytes": "20"
     },
-    "t_struct(RewardTokenConfig)4250_storage": {
-      "label": "struct Harvester.RewardTokenConfig",
+    "t_bool": {
+      "label": "bool",
+      "numberOfBytes": "1"
+    },
+    "t_mapping(t_address,t_bool)": {
+      "label": "mapping(address => bool)",
+      "numberOfBytes": "32"
+    },
+    "t_mapping(t_address,t_struct(RewardTokenConfig)4979_storage)": {
+      "label": "mapping(address => struct BaseHarvester.RewardTokenConfig)",
+      "numberOfBytes": "32"
+    },
+    "t_struct(RewardTokenConfig)4979_storage": {
+      "label": "struct BaseHarvester.RewardTokenConfig",
       "members": [
         {
           "label": "allowedSlippageBps",
-          "type": "t_uint16"
+          "type": "t_uint16",
+          "offset": 0,
+          "slot": "0"
         },
         {
           "label": "harvestRewardBps",
-          "type": "t_uint16"
+          "type": "t_uint16",
+          "offset": 2,
+          "slot": "0"
         },
         {
           "label": "uniswapV2CompatibleAddr",
-          "type": "t_address"
+          "type": "t_address",
+          "offset": 4,
+          "slot": "0"
         },
         {
           "label": "doSwapRewardToken",
-          "type": "t_bool"
+          "type": "t_bool",
+          "offset": 24,
+          "slot": "0"
         },
         {
           "label": "liquidationLimit",
-          "type": "t_uint256"
+          "type": "t_uint256",
+          "offset": 0,
+          "slot": "1"
         }
-      ]
+      ],
+      "numberOfBytes": "64"
     },
     "t_uint16": {
-      "label": "uint16"
-    },
-    "t_bool": {
-      "label": "bool"
+      "label": "uint16",
+      "numberOfBytes": "2"
     },
     "t_uint256": {
-      "label": "uint256"
-    },
-    "t_mapping(t_address,t_bool)": {
-      "label": "mapping(address => bool)"
+      "label": "uint256",
+      "numberOfBytes": "32"
     }
   }
 }

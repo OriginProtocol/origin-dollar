@@ -587,7 +587,7 @@ describe("Vault", function () {
     ).to.be.revertedWith("Caller is not the Strategist or Governor");
   });
 
-  it("Should only allow Governor and Strategist to call withdrawAllFromStrategy", async () => {
+  it("Should only allow metastrategy to mint oTokens and revert when threshold is reached.", async () => {
     const { vault, ousd, governor, anna, josh } = fixture;
 
     await vault
