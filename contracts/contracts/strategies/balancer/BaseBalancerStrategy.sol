@@ -225,14 +225,22 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
 
     /* solhint-disable max-line-length */
     /**
-     * @notice BPT price is calculated assuming that the asset price is pegged to an ETH divided by
-     * rateProviderRate of that asset. To get BPT expected we need to multiply that by underlying
-     * asset amount divided by BPT token rate. BPT token rate is similar to Curve's virtual_price
-     * and expresses how much has the price of BPT appreciated in relation to the underlying assets.
+     * @notice BPT price is calculated by taking the rate from the rateProvider of the asset in 
+     * question. If one does not exist it defaults to 1e18. To get the final BPT expected that 
+     * is multiplied by the underlying asset amount divided by BPT token rate. BPT token rate is
+     * similar to Curve's virtual_price and expresses how much has the price of BPT appreciated
+     * (e.g. due to swap fees) in relation to the underlying assets
      *
-     * Using above approach does make the strategy by itself vulnerable to possible MEV attack using
-     * flash loan to manipulate the pool before a deposit/withdrawal. VaultValueChecker in conjunction
-     * with checkBalance will catch such attempts.
+     * Using the above approach makes the strategy vulnerable to a possible MEV attack using
+     * flash loan to manipulate the pool before a deposit/withdrawal since the function ignores
+     * market values of the assets being priced in BPT.
+     * 
+     * At the time of writing there is no safe on-chain approach to pricing BPT in a way that it 
+     * would make it invulnerable to MEV pool manipulation. See recent Balancer exploit: 
+     * https://www.notion.so/originprotocol/Balancer-OETH-strategy-9becdea132704e588782a919d7d471eb?pvs=4#1cf07de12fc64f1888072321e0644348
+     * 
+     * To mitigate MEV possibilities VaultValueChecker in conjunction with checkBalance will catch 
+     * such situations.
      *
      * @param _asset Address of the Balancer pool asset
      * @param _amount Amount of the Balancer pool asset
@@ -246,7 +254,7 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
      * bptExpected = 1e18 (asset peg) * pool_asset_rate * asset_amount / BPT_token_rate
      * bptExpected = asset_amount * pool_asset_rate / BPT_token_rate
      *
-     * more explanation here:
+     * further information available here:
      * https://www.notion.so/originprotocol/Balancer-OETH-strategy-9becdea132704e588782a919d7d471eb?pvs=4#ce01495ae70346d8971f5dced809fb83
      */
     /* solhint-enable max-line-length */
