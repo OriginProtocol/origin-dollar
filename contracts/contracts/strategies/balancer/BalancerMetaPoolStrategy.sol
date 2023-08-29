@@ -133,7 +133,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
             }
         }
 
-        uint256 minBPT = getBPTExpected(_strategyAssets, _strategyAmounts);
+        uint256 minBPT = _getBPTExpected(_strategyAssets, _strategyAmounts);
         uint256 minBPTwSlippage = minBPT.mulTruncate(1e18 - maxDepositSlippage);
 
         /* EXACT_TOKENS_IN_FOR_BPT_OUT:
@@ -220,7 +220,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         // STEP 1 - Calculate the max about of Balancer Pool Tokens (BPT) to withdraw
 
         // Estimate the required amount of Balancer Pool Tokens (BPT) for the assets
-        uint256 maxBPTtoWithdraw = getBPTExpected(
+        uint256 maxBPTtoWithdraw = _getBPTExpected(
             _strategyAssets,
             _strategyAmounts
         );
@@ -515,7 +515,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
      * @param _asset Address of the Balancer pool asset
      * @return rate of the corresponding asset
      */
-    function getRateProviderRate(address _asset)
+    function _getRateProviderRate(address _asset)
         internal
         view
         override
