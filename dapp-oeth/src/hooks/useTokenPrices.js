@@ -59,23 +59,10 @@ const tokenConfiguration = {
   },
 }
 
-const oethOraclePrice = async (contract, tokenAddress) => {
-  try {
-    return await contract.price(tokenAddress)
-  } catch (e) {
-    console.error(e)
-    return utils.parseEther('1')
-  }
-}
+const oethOraclePrice = (contract, tokenAddress) => contract.price(tokenAddress)
 
-const stakedFraxPrice = async (contract) => {
-  try {
-    return await contract.previewRedeem(utils.parseEther('1'))
-  } catch (e) {
-    console.error(e)
-    return utils.parseEther('1')
-  }
-}
+const stakedFraxPrice = (contract) =>
+  contract.previewRedeem(utils.parseEther('1'))
 
 const oraclePrices = async (tokens, contracts) => {
   if (
