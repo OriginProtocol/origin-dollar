@@ -2,7 +2,12 @@ import { warn, danger } from "danger";
 
 const MINIMUM_REVIEWERS = 2;
 
-const hasContractChanges = danger.git.modified_files.includes(".sol");
+const files = [
+  ...danger.git.modified_files,
+  ...danger.git.created_files,
+  ...danger.git.deleted_files,
+];
+const hasContractChanges = files.some((file) => file.endsWith(".sol"));
 
 if (hasContractChanges) {
   const reviewers = danger.github.reviews.length;
