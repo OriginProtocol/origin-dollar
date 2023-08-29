@@ -704,7 +704,7 @@ forkOnlyDescribe(
       });
     });
 
-    describe("Deposit in MEV environment", function () {
+    describe("work in MEV environment", function () {
       let attackerAddress;
       let sAttacker;
       let fixture;
@@ -717,7 +717,7 @@ forkOnlyDescribe(
         await mintWETH(fixture.weth, sAttacker, "500000");
       });
 
-      it("should fail if pool is being manipulated", async function () {
+      it("deposit should fail if pool is being manipulated", async function () {
         const {
           balancerREthStrategy,
           oethVault,
@@ -777,14 +777,142 @@ forkOnlyDescribe(
         expect(profitDiff).to.be.gte(oethUnits("0.3"), 1);
       });
 
-      it("checkBalance with ~100 units should almost not be affected by heavy pool manipulation", async function () {
+      it("withdrawal should fail if pool is being manipulated maxWithdrawalDeviation catching the issue", async function () {
         const {
           balancerREthStrategy,
+          oethVault,
+          oeth,
           weth,
           reth,
           rEthBPT,
           balancerVault,
         } = fixture;
+
+        const wethWithdrawAmount = oethUnits("0");
+        const rethWithdrawAmount = oethUnits("7");
+
+        const oethVaultSigner = await impersonateAndFundContract(
+          oethVault.address
+        );
+
+        await depositTest(fixture, [10, 10], [weth, reth], rEthBPT);
+
+        await temporaryFork({
+          temporaryAction: async () => {
+            await tiltBalancerMetaStableWETHPool({
+              percentageOfTVLDeposit: 300, // 300%
+              attackerSigner: sAttacker,
+              balancerPoolId: await balancerREthStrategy.balancerPoolId(),
+              assetAddressArray: [reth.address, weth.address],
+              wethIndex: 1,
+              bptToken: rEthBPT,
+              balancerVault,
+              reth,
+              weth,
+            });
+
+            // prettier-ignore
+            expect(
+              balancerREthStrategy
+                .connect(oethVaultSigner)["withdraw(address,address[],uint256[])"](
+                  oethVault.address,
+                  [reth.address, weth.address],
+                  [rethWithdrawAmount, wethWithdrawAmount]
+                )
+              // not enough BPT supplied
+            ).to.be.revertedWith("BAL#207");
+          },
+          vaultContract: oethVault,
+          oTokenContract: oeth,
+        });
+      });
+
+      it("withdrawal should fail if pool is being manipulated maxWithdrawalDeviation NOT catching the issue and Vault Value checker catching it", async function () {
+        const {
+          balancerREthStrategy,
+          oethVault,
+          oethVaultValueChecker,
+          oeth,
+          weth,
+          reth,
+          rEthBPT,
+          josh,
+          balancerVault,
+          strategist,
+        } = fixture;
+
+        const wethWithdrawAmount = oethUnits("0");
+        const rethWithdrawAmount = oethUnits("5");
+
+        const oethVaultSigner = await impersonateAndFundContract(
+          oethVault.address
+        );
+
+        await depositTest(fixture, [10, 10], [weth, reth], rEthBPT);
+
+        // set max withdrawal deviation to 100%
+        await balancerREthStrategy
+          .connect(strategist)
+          .setMaxWithdrawalDeviation(oethUnits("1")); // 100%
+
+        const { vaultChange, profit } = await temporaryFork({
+          temporaryAction: async () => {
+            // prettier-ignore
+            await balancerREthStrategy
+              .connect(oethVaultSigner)["withdraw(address,address[],uint256[])"](
+                oethVault.address,
+                [reth.address, weth.address],
+                [rethWithdrawAmount, wethWithdrawAmount]
+              );
+          },
+          vaultContract: oethVault,
+          oTokenContract: oeth,
+        });
+
+        const { profit: profitWithTilt } = await temporaryFork({
+          temporaryAction: async () => {
+            await tiltBalancerMetaStableWETHPool({
+              percentageOfTVLDeposit: 300, // 300%
+              attackerSigner: sAttacker,
+              balancerPoolId: await balancerREthStrategy.balancerPoolId(),
+              assetAddressArray: [reth.address, weth.address],
+              wethIndex: 1,
+              bptToken: rEthBPT,
+              balancerVault,
+              reth,
+              weth,
+            });
+
+            await oethVaultValueChecker.connect(josh).takeSnapshot();
+
+            // prettier-ignore
+            await balancerREthStrategy
+              .connect(oethVaultSigner)["withdraw(address,address[],uint256[])"](
+                oethVault.address,
+                [reth.address, weth.address],
+                [rethWithdrawAmount, wethWithdrawAmount]
+              );
+
+            await expect(
+              oethVaultValueChecker.connect(josh).checkDelta(
+                profit, // expected profit
+                oethUnits("0.1"), // profit variance
+                vaultChange, // expected vaultChange
+                oethUnits("0.1") // expected vaultChange variance
+              )
+            ).to.be.revertedWith("Profit too low");
+          },
+          vaultContract: oethVault,
+          oTokenContract: oeth,
+        });
+
+        const profitDiff = profitWithTilt.sub(profit);
+        expect(profitDiff).to.be.lte(oethUnits("-0.5"), 1);
+      });
+
+      it("checkBalance with ~100 units should almost not be affected by heavy pool manipulation", async function () {
+        const { balancerREthStrategy, weth, reth, rEthBPT, balancerVault } =
+          fixture;
 
         await depositTest(fixture, [50, 50], [weth, reth], rEthBPT);
 
