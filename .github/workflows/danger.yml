@@ -1,0 +1,21 @@
+name: Node CI
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, edited]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: Use Node.js 16x
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16.x
+          cache: "yarn"
+      - run: yarn install  --frozen-lockfile
+      - run: yarn danger ci
+        env:
+          DANGER_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
