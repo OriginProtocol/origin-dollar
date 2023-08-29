@@ -263,7 +263,7 @@ def build_swap_tx(from_token, to_token, from_amount, max_slippage, allow_partial
     quote_cmc = get_cmc_quote(from_token, to_token, from_amount)
 
     # subtract the max slippage from minimum slippage query
-    min_tokens_with_slippage = quote_1inch_min_swap_amount_price * (100 - max_slippage) / 100 * from_amount / 1e18
+    min_tokens_with_slippage = scale_amount(from_token, to_token, quote_1inch_min_swap_amount_price * (100 - max_slippage) / 100 * from_amount) / 1e18
     coingecko_to_1inch_diff = (quote_1inch - quote_coingecko) / quote_1inch
     oracle_to_1inch_diff = (quote_1inch - quote_oracles) / quote_1inch
     cmc_to_1inch_diff = (quote_1inch - quote_cmc) / quote_1inch
@@ -276,7 +276,7 @@ def build_swap_tx(from_token, to_token, from_amount, max_slippage, allow_partial
     print("Oracle expected tokens:                  {:.6f}".format(scale_amount(to_token, 'human', quote_oracles)))
     print("Coingecko expected tokens:               {:.6f}".format(scale_amount(to_token, 'human', quote_coingecko)))
     print("CoinmarketCap expected tokens:           {:.6f}".format(scale_amount(to_token, 'human', quote_cmc)))
-    print("Tokens expected (with {:.2f}% slippage)    {:.6f}".format(max_slippage, scale_amount(from_token, 'human', min_tokens_with_slippage)))
+    print("Tokens expected (with {:.2f}% slippage)    {:.6f}".format(max_slippage, scale_amount(to_token, 'human', min_tokens_with_slippage)))
     print("")
     print("------ Price Diffs -------")
     print("1Inch to Oracle Difference:              {:.6f}%".format(oracle_to_1inch_diff * 100))
