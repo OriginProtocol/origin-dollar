@@ -397,3 +397,55 @@ def main():
       print("Transaction ", idx)
       print("To: ", item.receiver)
       print("Data (Hex encoded): ", item.input, "\n")
+
+# -----------------------------------
+# Aug 29, 2023 - OUSD Collateral Swap
+# -----------------------------------
+from collateralSwap import *
+
+txs = []
+
+def main():
+  with TemporaryFork():
+    txs.append(vault_core.rebase({'from':STRATEGIST}))
+    txs.append(vault_value_checker.takeSnapshot({'from':STRATEGIST}))
+
+    txs.append(
+      vault_admin.withdrawFromStrategy(
+        MORPHO_AAVE_STRAT, 
+        [usdc], 
+        [80000*10**6], 
+        {'from': STRATEGIST}
+      )
+    )
+
+    txs.append(
+      build_swap_tx(
+        USDC,
+        DAI,
+        80000 * 10**6,
+        1,
+        False,
+        False
+      )
+    )
+
+    txs.append(
+      vault_admin.depositToStrategy(
+        MAKER_DSR_STRAT,
+        [dai],
+        [dai.balanceOf(VAULT_PROXY_ADDRESS)],
+        {'from': STRATEGIST}
+      )
+    )
+
+    vault_change = vault_core.totalValue() - vault_value_checker.snapshots(STRATEGIST)[0]
+    supply_change = ousd.totalSupply() - vault_value_checker.snapshots(STRATEGIST)[1]
+    profit = vault_change - supply_change
+    txs.append(vault_value_checker.checkDelta(profit, (500 * 10**18), vault_change, (500 * 10**18), {'from': STRATEGIST}))
+
+  print("Schedule the following transactions on Gnosis Safe")
+  for idx, item in enumerate(txs):
+    print("Transaction ", idx)
+    print("To: ", item.receiver)
+    print("Data (Hex encoded): ", item.input, "\n")
