@@ -11,7 +11,7 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { ICurveGauge } from "./ICurveGauge.sol";
 import { ICurvePool } from "./ICurvePool.sol";
 import { ICRVMinter } from "./ICRVMinter.sol";
-import { IERC20, BaseCurveStrategy } from "./BaseCurveStrategy.sol";
+import { IERC20, BaseCurveStrategy, InitializableAbstractStrategy } from "./BaseCurveStrategy.sol";
 import { StableMath } from "../utils/StableMath.sol";
 import { Helpers } from "../utils/Helpers.sol";
 
@@ -29,12 +29,14 @@ contract ThreePoolStrategy is BaseCurveStrategy {
     address internal crvGaugeAddress;
     address internal crvMinterAddress;
 
+    constructor(BaseStrategyConfig memory _stratConfig)
+        InitializableAbstractStrategy(_stratConfig)
+    {}
+
     /**
      * Initializer for setting up strategy internal state. This overrides the
      * InitializableAbstractStrategy initializer as Curve strategies don't fit
      * well within that abstraction.
-     * @param _platformAddress Address of the Curve 3pool
-     * @param _vaultAddress Address of the vault
      * @param _rewardTokenAddress Address of CRV
      * @param _assets Addresses of supported assets. MUST be passed in the same
      *                order as returned by coins on the pool contract, i.e.
@@ -44,8 +46,6 @@ contract ThreePoolStrategy is BaseCurveStrategy {
      * @param _crvMinterAddress Address of the CRV minter for rewards
      */
     function initialize(
-        address _platformAddress, // 3Pool address
-        address _vaultAddress,
         address[] calldata _rewardTokenAddress, // CRV
         address[] calldata _assets,
         address[] calldata _pTokens,
@@ -58,13 +58,7 @@ contract ThreePoolStrategy is BaseCurveStrategy {
         crvGaugeAddress = _crvGaugeAddress;
         crvMinterAddress = _crvMinterAddress;
         pTokenAddress = _pTokens[0];
-        super._initialize(
-            _platformAddress,
-            _vaultAddress,
-            _rewardTokenAddress,
-            _assets,
-            _pTokens
-        );
+        super._initialize(_rewardTokenAddress, _assets, _pTokens);
         _approveBase();
     }
 

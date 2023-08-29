@@ -2,23 +2,14 @@ const { deploymentWithGuardianGovernor } = require("../utils/deploy");
 const addresses = require("../utils/addresses");
 const hre = require("hardhat");
 const { BigNumber, utils } = require("ethers");
-const {
-  getAssetAddresses,
-  getOracleAddresses,
-  isMainnet,
-  isFork,
-  isMainnetOrFork,
-} = require("../test/helpers.js");
+const { getAssetAddresses } = require("../test/helpers.js");
 
 // 5/8 multisig
 const guardianAddr = addresses.mainnet.Guardian;
 
 module.exports = deploymentWithGuardianGovernor(
   { deployName: "053_oeth" },
-  async ({ deployWithConfirmation, ethers, getTxOpts, withConfirmation }) => {
-    const { deployerAddr, governorAddr } = await getNamedAccounts();
-    const sDeployer = await ethers.provider.getSigner(deployerAddr);
-
+  async ({ deployWithConfirmation, ethers, withConfirmation }) => {
     let actions = await deployCore({
       deployWithConfirmation,
       withConfirmation,
@@ -91,9 +82,10 @@ const deployCore = async ({
   // Need to call the initializer on the Vault then upgraded it to the actual
   // VaultCore implementation
   await withConfirmation(
-    cVaultProxy
-      .connect(sDeployer)
-      ["initialize(address,address,bytes)"](dVault.address, deployerAddr, [])
+    cVaultProxy.connect(sDeployer)[
+      // eslint-disable-next-line no-unexpected-multiline
+      "initialize(address,address,bytes)"
+    ](dVault.address, deployerAddr, [])
   );
   console.log("Initialized OETHVaultProxy");
 
@@ -232,24 +224,18 @@ const deployDripper = async ({
     cVaultProxy.address,
     assetAddresses.WETH,
   ]);
-  const dDripperProxy = await deployWithConfirmation("OETHDripperProxy");
+  await deployWithConfirmation("OETHDripperProxy");
   // Deploy Dripper Proxy
-  cDripperProxy = await ethers.getContract("OETHDripperProxy");
+  const cDripperProxy = await ethers.getContract("OETHDripperProxy");
   await withConfirmation(
-    cDripperProxy
-      .connect(sDeployer)
-      ["initialize(address,address,bytes)"](dDripper.address, guardianAddr, [])
+    cDripperProxy.connect(sDeployer)[
+      // eslint-disable-next-line no-unexpected-multiline
+      "initialize(address,address,bytes)"
+    ](dDripper.address, guardianAddr, [])
   );
 };
 
-const deployZapper = async ({
-  deployWithConfirmation,
-  withConfirmation,
-  ethers,
-}) => {
-  const { deployerAddr } = await getNamedAccounts();
-  const sDeployer = await ethers.provider.getSigner(deployerAddr);
-
+const deployZapper = async ({ deployWithConfirmation, ethers }) => {
   const cOETHProxy = await ethers.getContract("OETHProxy");
   const cVaultProxy = await ethers.getContract("OETHVaultProxy");
 
@@ -267,7 +253,6 @@ const deployFraxETHStrategy = async ({
   withConfirmation,
   ethers,
 }) => {
-  const assetAddresses = await getAssetAddresses(deployments);
   const { deployerAddr } = await getNamedAccounts();
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
   const cVaultProxy = await ethers.getContract("OETHVaultProxy");
@@ -287,13 +272,10 @@ const deployFraxETHStrategy = async ({
     dFraxETHStrategyProxy.address
   );
   await withConfirmation(
-    cFraxETHStrategyProxy
-      .connect(sDeployer)
-      ["initialize(address,address,bytes)"](
-        dFraxETHStrategy.address,
-        deployerAddr,
-        []
-      )
+    cFraxETHStrategyProxy.connect(sDeployer)[
+      // eslint-disable-next-line no-unexpected-multiline
+      "initialize(address,address,bytes)"
+    ](dFraxETHStrategy.address, deployerAddr, [])
   );
 
   console.log("Initialized FraxETHStrategyProxy");

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import Dropdown from 'components/Dropdown'
 import DownCaret from 'components/DownCaret'
+import { event } from '../../lib/gtm'
 
 const ApySelect = ({ apyDayOptions, apyDays, setApyDays, nav, homepage }) => {
   const [open, setOpen] = useState(false)
@@ -18,6 +19,10 @@ const ApySelect = ({ apyDayOptions, apyDays, setApyDays, nav, homepage }) => {
                     e.preventDefault()
                     setApyDays(days)
                     setOpen(false)
+                    event({
+                      event: 'change_apy',
+                      change_apy_to: days,
+                    })
                   }}
                 >
                   {`${days}${homepage ? ' days' : 'd'}`}

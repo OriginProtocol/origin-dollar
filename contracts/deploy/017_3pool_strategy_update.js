@@ -49,7 +49,7 @@ const runDeployment = async (hre) => {
     await withConfirmation(
       cThreePoolStrategyProxy
         .connect(sGovernor)
-        .upgradeTo(dThreePoolStrategy.address, await getTxOpts(gasLimit))
+        .upgradeTo(dThreePoolStrategy.address, await getTxOpts())
     );
     log("Switched implementation of ThreePoolStrategy");
   }

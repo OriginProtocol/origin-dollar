@@ -1,5 +1,4 @@
 const { deploymentWithGovernanceProposal } = require("../utils/deploy");
-const addresses = require("../utils/addresses");
 const { isMainnet } = require("../test/helpers.js");
 
 module.exports = deploymentWithGovernanceProposal(
@@ -8,15 +7,7 @@ module.exports = deploymentWithGovernanceProposal(
     forceDeploy: false,
     //proposalId: "40434364243407050666554191388123037800510237271029051418887027936281231737485"
   },
-  async ({
-    assetAddresses,
-    deployWithConfirmation,
-    ethers,
-    getTxOpts,
-    withConfirmation,
-  }) => {
-    const { deployerAddr, governorAddr } = await getNamedAccounts();
-    const sDeployer = await ethers.provider.getSigner(deployerAddr);
+  async ({ deployWithConfirmation, ethers }) => {
     let dVaultAdmin;
 
     // Current contracts

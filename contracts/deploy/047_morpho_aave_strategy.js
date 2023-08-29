@@ -53,14 +53,10 @@ module.exports = deploymentWithProposal(
 
     // 3. Init the proxy to point at the implementation
     await withConfirmation(
-      cMorphoAaveStrategyProxy
-        .connect(sDeployer)
-        ["initialize(address,address,bytes)"](
-          dMorphoAaveStrategyImpl.address,
-          deployerAddr,
-          [],
-          await getTxOpts()
-        )
+      cMorphoAaveStrategyProxy.connect(sDeployer)[
+        // eslint-disable-next-line no-unexpected-multiline
+        "initialize(address,address,bytes)"
+      ](dMorphoAaveStrategyImpl.address, deployerAddr, [], await getTxOpts())
     );
 
     // 4. Init and configure new Morpho strategy

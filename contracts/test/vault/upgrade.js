@@ -1,12 +1,12 @@
 const { expect } = require("chai");
-const { defaultFixture } = require("../_fixture");
-const { loadFixture } = require("../helpers");
+
+const { loadDefaultFixture } = require("../_fixture");
 
 describe("VaultAdmin Upgrades", async function () {
   let ousd, vault, vaultStorage, governor;
 
   beforeEach(async function () {
-    const fixture = await loadFixture(defaultFixture);
+    const fixture = await loadDefaultFixture();
     vault = fixture.vault;
     ousd = fixture.ousd;
     governor = fixture.governor;

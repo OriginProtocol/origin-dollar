@@ -2,13 +2,7 @@ const { deploymentWithProposal } = require("../utils/deploy");
 
 module.exports = deploymentWithProposal(
   { deployName: "035_reduce_collect_gas", forceDeploy: false },
-  async ({
-    assetAddresses,
-    deployWithConfirmation,
-    ethers,
-    getTxOpts,
-    withConfirmation,
-  }) => {
+  async ({ deployWithConfirmation, ethers }) => {
     // Current contracts
     const cCompStratProxy = await ethers.getContract("CompoundStrategyProxy");
 

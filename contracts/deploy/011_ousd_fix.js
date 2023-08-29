@@ -46,9 +46,7 @@ const fixOUSD = async (hre) => {
     log("Proposal executed.");
   } else {
     await withConfirmation(
-      cOUSDProxy
-        .connect(sGovernor)
-        .upgradeTo(dOUSD.address, await getTxOpts(gasLimit))
+      cOUSDProxy.connect(sGovernor).upgradeTo(dOUSD.address, await getTxOpts())
     );
     log("Upgraded OUSD to new implementation");
   }

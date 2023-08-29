@@ -23,11 +23,16 @@ contract AaveStrategy is InitializableAbstractStrategy {
     IAaveStakedToken public stkAave;
 
     /**
+     * @param _stratConfig The platform and OToken vault addresses
+     */
+    constructor(BaseStrategyConfig memory _stratConfig)
+        InitializableAbstractStrategy(_stratConfig)
+    {}
+
+    /**
      * Initializer for setting up strategy internal state. This overrides the
      * InitializableAbstractStrategy initializer as AAVE needs several extra
      * addresses for the rewards program.
-     * @param _platformAddress Address of the AAVE pool
-     * @param _vaultAddress Address of the vault
      * @param _rewardTokenAddresses Address of the AAVE token
      * @param _assets Addresses of supported assets
      * @param _pTokens Platform Token corresponding addresses
@@ -35,8 +40,6 @@ contract AaveStrategy is InitializableAbstractStrategy {
      * @param _stkAaveAddress Address of the stkAave contract
      */
     function initialize(
-        address _platformAddress, // AAVE pool
-        address _vaultAddress,
         address[] calldata _rewardTokenAddresses, // AAVE
         address[] calldata _assets,
         address[] calldata _pTokens,
@@ -46,8 +49,6 @@ contract AaveStrategy is InitializableAbstractStrategy {
         incentivesController = IAaveIncentivesController(_incentivesAddress);
         stkAave = IAaveStakedToken(_stkAaveAddress);
         InitializableAbstractStrategy._initialize(
-            _platformAddress,
-            _vaultAddress,
             _rewardTokenAddresses,
             _assets,
             _pTokens

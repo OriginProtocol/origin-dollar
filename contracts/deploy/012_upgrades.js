@@ -77,23 +77,21 @@ const upgrades = async (hre) => {
     log("Proposal executed.");
   } else {
     await withConfirmation(
-      cOUSDProxy
-        .connect(sGovernor)
-        .upgradeTo(dOUSD.address, await getTxOpts(gasLimit))
+      cOUSDProxy.connect(sGovernor).upgradeTo(dOUSD.address, await getTxOpts())
     );
     log("Upgraded OUSD to new implementation");
 
     await withConfirmation(
       cVaultCoreProxy
         .connect(sGovernor)
-        .setAdminImpl(dVaultAdmin.address, await getTxOpts(gasLimit))
+        .setAdminImpl(dVaultAdmin.address, await getTxOpts())
     );
     log("Upgraded VaultAdmin to new implementation");
 
     await withConfirmation(
       cCompoundStrategyProxy
         .connect(sGovernor)
-        .upgradeTo(dCompoundStrategy.address, await getTxOpts(gasLimit))
+        .upgradeTo(dCompoundStrategy.address, await getTxOpts())
     );
     log("Upgraded CompoundStrategy to new implementation");
   }

@@ -256,7 +256,7 @@ const enrichLayoutData = (layout) => {
       } else {
         const fixedArraySize = parseInt(arrayType);
         sItem.bits = [...Array(fixedArraySize).keys()].map(
-          (_) => itemToBytesMap[itemType]
+          () => itemToBytesMap[itemType]
         );
       }
     } else if (mappingRegex.test(sItem.type)) {
@@ -284,7 +284,7 @@ const enrichLayoutData = (layout) => {
   let currentSlot = 0;
   let currentSlotBits = 0;
   // assign slots to mappings
-  layout.storage = layout.storage.map((sItem, i) => {
+  layout.storage = layout.storage.map((sItem) => {
     // current slot is not empty and new slot is required
     if (sItem.newSlot && currentSlotBits !== 0) {
       currentSlot += 1;

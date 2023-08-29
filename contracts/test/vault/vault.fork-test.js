@@ -1,10 +1,12 @@
 const { expect } = require("chai");
-
-const { defaultFixture, impersonateAndFundContract } = require("./../_fixture");
 const { utils } = require("ethers");
 
+const addresses = require("../../utils/addresses");
 const {
-  loadFixture,
+  loadDefaultFixture,
+  impersonateAndFundContract,
+} = require("./../_fixture");
+const {
   forkOnlyDescribe,
   ousdUnits,
   usdtUnits,
@@ -12,7 +14,10 @@ const {
   daiUnits,
   differenceInStrategyBalance,
   differenceInErc20TokenBalances,
+  isCI,
 } = require("./../helpers");
+
+const log = require("../../utils/logger")("test:fork:ousd:vault");
 
 /**
  * Regarding hardcoded addresses:
@@ -30,43 +35,66 @@ const {
 
 forkOnlyDescribe("ForkTest: Vault", function () {
   this.timeout(0);
-  // due to hardhat forked mode timeouts - retry failed tests up to 3 times
-  this.retries(3);
+
+  // Retry up to 3 times on CI
+  this.retries(isCI ? 3 : 0);
 
   let fixture;
   beforeEach(async () => {
-    fixture = await loadFixture(defaultFixture);
+    fixture = await loadDefaultFixture();
+  });
+
+  describe("View functions", () => {
+    // These tests use a transaction to call a view function so the gas usage can be reported.
+    it("Should get total value", async () => {
+      const { josh, vault } = fixture;
+
+      const tx = await vault.connect(josh).populateTransaction.totalValue();
+      await josh.sendTransaction(tx);
+    });
+    it("Should check asset balances", async () => {
+      const { dai, usdc, usdt, josh, vault } = fixture;
+
+      for (const asset of [dai, usdc, usdt]) {
+        const tx = await vault
+          .connect(josh)
+          .populateTransaction.checkBalance(asset.address);
+        await josh.sendTransaction(tx);
+      }
+    });
   });
 
   describe("Admin", () => {
     it("Should have the correct governor address set", async () => {
       const { vault } = fixture;
-      expect(await vault.governor()).to.equal(
-        "0x35918cDE7233F2dD33fA41ae3Cb6aE0e42E0e69F"
-      );
+      expect(await vault.governor()).to.equal(addresses.mainnet.Timelock);
     });
 
     it("Should have the correct strategist address set", async () => {
-      const { vault } = fixture;
+      const { strategist, vault } = fixture;
       expect(await vault.strategistAddr()).to.equal(
-        "0xF14BBdf064E3F67f51cd9BD646aE3716aD938FDC"
-      );
-    });
-
-    it("Should have the correct turstee address set", async () => {
-      const { vault } = fixture;
-      // This fails locally for now, since
-      // BuyBack contract is yet to be deployed
-      expect(await vault.strategistAddr()).to.equal(
-        "0xF14BBdf064E3F67f51cd9BD646aE3716aD938FDC"
+        await strategist.getAddress()
       );
     });
 
     it("Should have the correct OUSD MetaStrategy address set", async () => {
       const { vault } = fixture;
       expect(await vault.ousdMetaStrategy()).to.equal(
-        "0x89Eb88fEdc50FC77ae8a18aAD1cA0ac27f777a90"
+        addresses.mainnet.ConvexOUSDAMOStrategy
       );
+    });
+
+    it("Should have supported assets", async () => {
+      const { vault } = fixture;
+      const assets = await vault.getAllAssets();
+      expect(assets).to.have.length(3);
+      expect(assets).to.include(addresses.mainnet.USDT);
+      expect(assets).to.include(addresses.mainnet.USDC);
+      expect(assets).to.include(addresses.mainnet.DAI);
+
+      expect(await vault.isSupportedAsset(addresses.mainnet.USDT)).to.be.true;
+      expect(await vault.isSupportedAsset(addresses.mainnet.DAI)).to.be.true;
+      expect(await vault.isSupportedAsset(addresses.mainnet.USDT)).to.be.true;
     });
   });
 
@@ -155,7 +183,7 @@ forkOnlyDescribe("ForkTest: Vault", function () {
     });
 
     it("should withdraw from and deposit to strategy", async () => {
-      const { vault, josh, usdc, dai, compoundStrategy } = fixture;
+      const { vault, josh, usdc, dai, morphoCompoundStrategy } = fixture;
       await vault.connect(josh).mint(usdc.address, usdcUnits("90"), 0);
       await vault.connect(josh).mint(dai.address, daiUnits("50"), 0);
       const strategistSigner = await impersonateAndFundContract(
@@ -170,12 +198,12 @@ forkOnlyDescribe("ForkTest: Vault", function () {
         async () => {
           [daiStratDiff, usdcStratDiff] = await differenceInStrategyBalance(
             [dai.address, usdc.address],
-            [compoundStrategy, compoundStrategy],
+            [morphoCompoundStrategy, morphoCompoundStrategy],
             async () => {
               await vault
                 .connect(strategistSigner)
                 .depositToStrategy(
-                  compoundStrategy.address,
+                  morphoCompoundStrategy.address,
                   [dai.address, usdc.address],
                   [daiUnits("50"), usdcUnits("90")]
                 );
@@ -196,12 +224,12 @@ forkOnlyDescribe("ForkTest: Vault", function () {
         async () => {
           [daiStratDiff, usdcStratDiff] = await differenceInStrategyBalance(
             [dai.address, usdc.address],
-            [compoundStrategy, compoundStrategy],
+            [morphoCompoundStrategy, morphoCompoundStrategy],
             async () => {
               await vault
                 .connect(strategistSigner)
                 .withdrawFromStrategy(
-                  compoundStrategy.address,
+                  morphoCompoundStrategy.address,
                   [dai.address, usdc.address],
                   [daiUnits("50"), usdcUnits("90")]
                 );
@@ -224,49 +252,71 @@ forkOnlyDescribe("ForkTest: Vault", function () {
   });
 
   describe("Oracle", () => {
-    /* NOTICE: update once the address is the updated on the mainnet.
-     * the fork tests require the 052 deploy to run in order to be
-     * compatible with the latest codebase -> which is not yet deployed to
-     * OUSD mainnet.
-     */
-    it.skip("Should have correct Price Oracle address set", async () => {
+    it("Should have correct Price Oracle address set", async () => {
       const { vault } = fixture;
       expect(await vault.priceProvider()).to.equal(
-        "0x7533365d1b0D95380bc4e94D0bdEF5173E43f954"
+        "0xe7fD05515A51509Ca373a42E81ae63A40AA4384b"
       );
     });
 
     it("Should return a price for minting with USDT", async () => {
       const { vault, usdt } = fixture;
-      await vault.priceUnitMint(usdt.address);
+      const price = await vault.priceUnitMint(usdt.address);
+
+      log(`Price for minting with USDT: ${utils.formatEther(price, 6)}`);
+
+      expect(price).to.be.lte(utils.parseEther("1"));
+      expect(price).to.be.gt(utils.parseEther("0.998"));
     });
 
     it("Should return a price for minting with DAI", async () => {
       const { vault, dai } = fixture;
-      await vault.priceUnitMint(dai.address);
+      const price = await vault.priceUnitMint(dai.address);
+
+      log(`Price for minting with DAI: ${utils.formatEther(price, 18)}`);
+
+      expect(price).to.be.lte(utils.parseEther("1"));
+      expect(price).to.be.gt(utils.parseEther("0.999"));
     });
 
     it("Should return a price for minting with USDC", async () => {
       const { vault, usdc } = fixture;
-      await vault.priceUnitMint(usdc.address);
+      const price = await vault.priceUnitMint(usdc.address);
+
+      log(`Price for minting with USDC: ${utils.formatEther(price, 6)}`);
+
+      expect(price).to.be.lte(utils.parseEther("1"));
+      expect(price).to.be.gt(utils.parseEther("0.999"));
     });
 
     it("Should return a price for redeem with USDT", async () => {
       const { vault, usdt } = fixture;
       const price = await vault.priceUnitRedeem(usdt.address);
+
+      log(`Price for redeeming with USDT: ${utils.formatEther(price, 6)}`);
+
       expect(price).to.be.gte(utils.parseEther("1"));
+      expect(price).to.be.lt(utils.parseEther("1.001"));
     });
 
     it("Should return a price for redeem with DAI", async () => {
       const { vault, dai } = fixture;
       const price = await vault.priceUnitRedeem(dai.address);
+
+      log(`Price for redeeming with DAI: ${utils.formatEther(price, 18)}`);
+
       expect(price).to.be.gte(utils.parseEther("1"));
+      expect(price).to.be.lt(utils.parseEther("1.001"));
     });
 
     it("Should return a price for redeem with USDC", async () => {
       const { vault, usdc } = fixture;
       const price = await vault.priceUnitRedeem(usdc.address);
+
+      log(`Price for redeeming with USDC: ${utils.formatEther(price, 6)}`);
+
       expect(price).to.be.gte(utils.parseEther("1"));
+      expect(price).to.be.lt(utils.parseEther("1.001"));
     });
   });
 
@@ -297,15 +347,12 @@ forkOnlyDescribe("ForkTest: Vault", function () {
 
       const knownStrategies = [
         // Update this every time a new strategy is added. Below are mainnet addresses
-        "0x9c459eeb3FA179a40329b81C1635525e9A0Ef094", // Compound
         "0x5e3646A1Db86993f73E6b74A57D8640B69F7e259", // Aave
-        "0xEA2Ef2e2E5A749D4A66b41Db9aD85a38Aa264cb3", // Convex
         "0x89Eb88fEdc50FC77ae8a18aAD1cA0ac27f777a90", // OUSD MetaStrategy
         "0x5A4eEe58744D1430876d5cA93cAB5CcB763C037D", // MorphoCompoundStrategy
-        "0x7A192DD9Cc4Ea9bdEdeC9992df74F1DA55e60a19", // LUSD MetaStrategy
         "0x79F2188EF9350A1dC11A062cca0abE90684b0197", // MorphoAaveStrategy
-        // TODO: Hard-code these after deploy
-        //"0x7A192DD9Cc4Ea9bdEdeC9992df74F1DA55e60a19", // LUSD MetaStrategy
+        "0x76Bf500B6305Dc4ea851384D3d5502f1C7a0ED44", // Flux Strategy
+        "0x6b69B755C629590eD59618A2712d8a2957CA98FC", // Maker DSR Strategy
       ];
 
       for (const s of strategies) {
@@ -356,6 +403,7 @@ forkOnlyDescribe("ForkTest: Vault", function () {
         "0x9c459eeb3FA179a40329b81C1635525e9A0Ef094",
         "0x5A4eEe58744D1430876d5cA93cAB5CcB763C037D", // Morpho
         "0x79F2188EF9350A1dC11A062cca0abE90684b0197", // MorphoAave
+        "0x6b69B755C629590eD59618A2712d8a2957CA98FC", // Maker DSR
       ]).to.include(await vault.assetDefaultStrategies(dai.address));
     });
 

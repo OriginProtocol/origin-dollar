@@ -8,6 +8,7 @@ import { assetRootPath } from 'utils/image'
 import ContractStore from 'stores/ContractStore'
 import ConfirmationModal from 'components/buySell/ConfirmationModal'
 import Dropdown from 'components/Dropdown'
+import { event } from '../../../lib/gtm'
 
 const Info = ({ contract }) => {
   const [infoOpen, setInfoOpen] = useState(false)
@@ -372,6 +373,10 @@ const ContractsTable = () => {
                   s.lastOverride = estimation.name
                 })
                 setUserSelectedRoute(estimation.name)
+                event({
+                  event: 'change_swap_route',
+                  change_route_to: estimation.name,
+                })
               }}
             >
               <div className="contract-cell contract-name">
@@ -430,6 +435,9 @@ const ContractsTable = () => {
             ContractStore.update((s) => {
               s.showAllContracts = !showAllContracts
             })
+            if (!showAllContracts) {
+              event({ event: 'show_swap_routes' })
+            }
           }}
         >
           {showAllContracts

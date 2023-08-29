@@ -7,6 +7,8 @@ import withRpcProvider from 'hoc/withRpcProvider'
 import { ethers } from 'ethers'
 import withIsMobile from 'hoc/withIsMobile'
 import ConfirmationModal from './ConfirmationModal'
+import { event } from '../../../lib/gtm'
+import GetOUSD from '../GetOUSD'
 
 const ApproveSwap = ({
   stableCoinToApprove,
@@ -223,6 +225,11 @@ const ApproveSwap = ({
 
   const startApprovalProcess = async () => {
     if (stage === 'approve' && contract) {
+      event({
+        event: 'approve_started',
+        approval_type: isWrapped ? 'wrap' : 'swap',
+        approval_token: stableCoinToApprove,
+      })
       setStage('waiting-user')
       try {
         const result = await contract
@@ -242,6 +249,11 @@ const ApproveSwap = ({
           coin: stableCoinToApprove,
         })
         await rpcProvider.waitForTransaction(result.hash)
+        event({
+          event: 'approve_complete',
+          approval_type: isWrapped ? 'wrap' : 'swap',
+          approval_token: stableCoinToApprove,
+        })
         setIsApproving({})
         setStage('done')
       } catch (e) {
@@ -250,6 +262,17 @@ const ApproveSwap = ({
         setStage('approve')
         if (e.code !== 4001) {
           await storeTransactionError('approve', stableCoinToApprove)
+          event({
+            event: 'approve_failed',
+            approval_type: isWrapped ? 'wrap' : 'swap',
+            approval_token: stableCoinToApprove,
+          })
+        } else {
+          event({
+            event: 'approve_rejected',
+            approval_type: isWrapped ? 'wrap' : 'swap',
+            approval_token: stableCoinToApprove,
+          })
         }
       }
     }
@@ -306,34 +329,46 @@ const ApproveSwap = ({
           </>
         )}
       </button>
-      <div className="d-flex flex-column align-items-center justify-content-center justify-content-md-between flex-md-row mt-md-3 mt-2">
-        <button
-          className={`btn-blue buy-button mt-2 mt-md-0 w-100`}
-          disabled={
-            (!selectedSwap ||
-              balanceError ||
-              swappingGloballyDisabled ||
-              (needsApproval && !coinApproved)) &&
-            active
-          }
-          onClick={() => {
-            if (lastOverride && lastOverride !== selectedSwap?.name) {
-              setVisibleConfirmationModal(2)
-            } else {
-              onSwap()
+      {active ? (
+        <div className="d-flex flex-column align-items-center justify-content-center justify-content-md-between flex-md-row mt-md-3 mt-2">
+          <button
+            className={`btn-blue buy-button mt-2 mt-md-0 w-100`}
+            disabled={
+              (!selectedSwap ||
+                balanceError ||
+                swappingGloballyDisabled ||
+                (needsApproval && !coinApproved)) &&
+              active
             }
-          }}
-        >
-          <SwapMessage
-            balanceError={balanceError}
-            stableCoinToApprove={stableCoinToApprove}
-            swapsLoaded={swapsLoaded}
-            selectedSwap={selectedSwap}
-            swappingGloballyDisabled={swappingGloballyDisabled}
-            active={active}
-          />
-        </button>
-      </div>
+            onClick={() => {
+              if (lastOverride && lastOverride !== selectedSwap?.name) {
+                setVisibleConfirmationModal(2)
+              } else {
+                onSwap()
+              }
+            }}
+          >
+            <SwapMessage
+              balanceError={balanceError}
+              stableCoinToApprove={stableCoinToApprove}
+              swapsLoaded={swapsLoaded}
+              selectedSwap={selectedSwap}
+              swappingGloballyDisabled={swappingGloballyDisabled}
+              active={active}
+            />
+          </button>
+        </div>
+      ) : (
+        <div className="d-flex flex-column align-items-center justify-content-center justify-content-md-between flex-md-row mt-md-3 mt-2">
+          <div className={`btn-blue buy-button mt-2 mt-md-0 w-100`}>
+            <GetOUSD
+              containerClassName="w-100 h-100 d-flex align-items-center justify-content-center"
+              className="w-100 h-100"
+              trackSource="Swap connect wallet"
+            />
+          </div>
+        </div>
+      )}
       <style jsx>{`
         .btn-blue:disabled {
           opacity: 0.4;

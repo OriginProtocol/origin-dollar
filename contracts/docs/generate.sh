@@ -44,28 +44,37 @@ sol2uml storage .. -c OUSDProxy -o OUSDProxyStorage.svg
 # contracts/strategies
 sol2uml .. -v -hv -hf -he -hs -hl -b AaveStrategy -o AaveStrategyHierarchy.svg
 sol2uml .. -s -d 0 -b AaveStrategy -o AaveStrategySquashed.svg
-sol2uml storage .. -c AaveStrategy -o AaveStrategyStorage.svg
+sol2uml storage .. -c AaveStrategy -o AaveStrategyStorage.svg --hideExpand ______gap,_reserved
 
 sol2uml .. -v -hv -hf -he -hs -hl -b CompoundStrategy -o CompStrategyHierarchy.svg
 sol2uml .. -s -d 0 -b CompoundStrategy -o CompStrategySquashed.svg
-sol2uml storage .. -c CompoundStrategy -o CompStrategyStorage.svg
+sol2uml storage .. -c CompoundStrategy -o CompStrategyStorage.svg --hideExpand ______gap,_reserved,__reserved
 
 sol2uml .. -v -hv -hf -he -hs -hl -b ConvexEthMetaStrategy -o ConvexEthMetaStrategyHierarchy.svg
 sol2uml .. -s -d 0 -b ConvexEthMetaStrategy -o ConvexEthMetaStrategySquashed.svg
+## TODO fix sol2uml "Failed to find user defined type "IERC20" in attribute "shareToken" of type "1"""
 sol2uml storage .. -c ConvexEthMetaStrategy -o ConvexEthMetaStrategyStorage.svg
+
+sol2uml .. -v -hv -hf -he -hs -hl -b FluxStrategy -o FluxStrategyHierarchy.svg
+sol2uml .. -s -d 0 -b FluxStrategy -o FluxStrategySquashed.svg
+sol2uml storage .. -c FluxStrategy -o FluxStrategyStorage.svg --hideExpand ______gap,_reserved,__reserved
 
 sol2uml .. -v -hv -hf -he -hs -hl -b FraxETHStrategy -o FraxETHStrategyHierarchy.svg
 sol2uml .. -s -d 0 -b FraxETHStrategy -o FraxETHStrategySquashed.svg
 ## TODO fix sol2uml "Failed to find user defined type "IERC20" in attribute "shareToken" of type "1"""
 sol2uml storage .. -c FraxETHStrategy -o FraxETHStrategyStorage.svg
 
+sol2uml .. -v -hv -hf -he -hs -hl -b Generalized4626Strategy -o Generalized4626StrategyHierarchy.svg
+sol2uml .. -s -d 0 -b Generalized4626Strategy -o Generalized4626StrategySquashed.svg
+sol2uml storage .. -c Generalized4626Strategy -o Generalized4626StrategyStorage.svg --hideExpand ______gap,_reserved,__gap
+
 sol2uml .. -v -hv -hf -he -hs -hl -b MorphoAaveStrategy -o MorphoAaveStrategyHierarchy.svg
 sol2uml .. -s -d 0 -b MorphoAaveStrategy -o MorphoAaveStrategySquashed.svg
-sol2uml storage .. -c MorphoAaveStrategy -o MorphoAaveStrategyStorage.svg
+sol2uml storage .. -c MorphoAaveStrategy -o MorphoAaveStrategyStorage.svg --hideExpand ______gap,_reserved
 
 sol2uml .. -v -hv -hf -he -hs -hl -b MorphoCompoundStrategy -o MorphoCompStrategyHierarchy.svg
 sol2uml .. -s -d 0 -b MorphoCompoundStrategy -o MorphoCompStrategySquashed.svg
-sol2uml storage .. -c MorphoCompoundStrategy -o MorphoCompStrategyStorage.svg
+sol2uml storage .. -c MorphoCompoundStrategy -o MorphoCompStrategyStorage.svg --hideExpand ______gap,_reserved,__reserved
 
 # contracts/swapper
 sol2uml .. -v -hv -hf -he -hs -hl -b Swapper1InchV5 -o Swapper1InchV5Hierarchy.svg
@@ -80,7 +89,7 @@ sol2uml storage .. -c Timelock -o TimelockStorage.svg
 # contracts/token
 sol2uml .. -v -hv -hf -he -hs -hl -b OUSD -o OUSDHierarchy.svg
 sol2uml .. -s -d 0 -b OUSD -o OUSDSquashed.svg
-sol2uml storage .. -c OUSD -o OUSDStorage.svg
+sol2uml storage .. -c OUSD -o OUSDStorage.svg --hideExpand _____gap,______gap
 
 sol2uml .. -v -hv -hf -he -hs -hl -b WrappedOusd -o WOUSDHierarchy.svg
 sol2uml .. -s -d 0 -b WrappedOusd -o WOUSDSquashed.svg
@@ -88,7 +97,7 @@ sol2uml storage .. -c WrappedOusd -o WOUSDStorage.svg
 
 sol2uml .. -v -hv -hf -he -hs -hl -b OETH -o OETHHierarchy.svg
 sol2uml .. -s -d 0 -b OETH -o OETHSquashed.svg
-sol2uml storage .. -c OETH -o OETHStorage.svg
+sol2uml storage .. -c OETH -o OETHStorage.svg --hideExpand _____gap,______gap
 
 sol2uml .. -v -hv -hf -he -hs -hl -b WOETH -o WOETHHierarchy.svg
 sol2uml .. -s -d 0 -b WOETH -o WOETHSquashed.svg
@@ -98,9 +107,21 @@ sol2uml storage .. -c WOETH -o WOETHStorage.svg
 sol2uml .. -v -hv -hf -he -hs -hl -b VaultCore,VaultAdmin -o VaultHierarchy.svg
 sol2uml .. -s -d 0 -b VaultCore -o VaultCoreSquashed.svg
 sol2uml .. -s -d 0 -b VaultAdmin -o VaultAdminSquashed.svg
-sol2uml storage .. -c VaultCore -o VaultStorage.svg
+sol2uml storage .. -c VaultCore -o VaultStorage.svg --hideExpand ______gap,_deprecated_swapTokens
 
 sol2uml .. -v -hv -hf -he -hs -hl -b OETHVaultCore -o OETHVaultHierarchy.svg
 sol2uml .. -s -d 0 -b OETHVaultCore -o OETHVaultCoreSquashed.svg
 sol2uml .. -s -d 0 -b OETHVaultAdmin -o OETHVaultAdminSquashed.svg
-sol2uml storage .. -c OETHVaultCore -o OETHVaultStorage.svg
+sol2uml storage .. -c OETHVaultCore -o OETHVaultStorage.svg --hideExpand ______gap,_deprecated_swapTokens
+
+# contracts/utils
+sol2uml .. -v -hv -hf -he -hs -hl -b InitializableAbstractStrategy -o InitializableAbstractStrategyHierarchy.svg
+sol2uml .. -s -d 0 -b InitializableAbstractStrategy -o InitializableAbstractStrategySquashed.svg
+sol2uml storage .. -c InitializableAbstractStrategy -o InitializableAbstractStrategyStorage.svg
+
+sol2uml .. -v -hv -hf -he -hs -hl -b InitializableERC20Detailed -o InitializableERC20DetailedHierarchy.svg
+sol2uml .. -s -d 0 -b InitializableERC20Detailed -o InitializableERC20DetailedSquashed.svg
+sol2uml storage .. -c InitializableERC20Detailed -o InitializableERC20DetailedStorage.svg
+
+sol2uml .. -v -hv -hf -b StableMath -o StableMathHierarchy.svg
+sol2uml .. -s -d 0 -b StableMath -o StableMathSquashed.svg

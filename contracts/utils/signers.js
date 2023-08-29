@@ -1,6 +1,53 @@
-const { parseEther } = require("ethers").utils;
+const { parseEther, Wallet } = require("ethers").utils;
+const { ethereumAddress, privateKey } = require("./regex");
 
 const log = require("./logger")("utils:signers");
+
+/**
+ * Signer factory that gets a signer for a hardhat test or task
+ * If address is passed, use that address as signer.
+ * If DEPLOYER_PK or GOVERNOR_PK is set, use that private key as signer.
+ * If a fork and IMPERSONATE is set, impersonate that account.
+ * else get the first signer from the hardhat node.
+ * @param {*} address optional address of the signer
+ * @returns
+ */
+async function getSigner(address) {
+  if (address) {
+    if (!address.match(ethereumAddress)) {
+      throw Error(`Invalid format of address`);
+    }
+    return await hre.ethers.provider.getSigner(address);
+  }
+  const pk = process.env.DEPLOYER_PK || process.env.GOVERNOR_PK;
+  if (pk) {
+    if (!pk.match(privateKey)) {
+      throw Error(`Invalid format of private key`);
+    }
+    const wallet = new Wallet(pk, hre.ethers.provider);
+    log(`Using signer ${await wallet.getAddress()} from private key`);
+    return wallet;
+  }
+
+  if (process.env.FORK === "true" && process.env.IMPERSONATE) {
+    let address = process.env.IMPERSONATE;
+    if (!address.match(ethereumAddress)) {
+      throw Error(
+        `Environment variable IMPERSONATE is an invalid Ethereum address or contract name`
+      );
+    }
+    log(
+      `Impersonating account ${address} from IMPERSONATE environment variable`
+    );
+    return await impersonateAndFund(address);
+  }
+
+  const signers = await hre.ethers.getSigners();
+  const signer = signers[0];
+  log(`Using signer ${await signer.getAddress()}`);
+
+  return signer;
+}
 
 /**
  * Impersonate an account when connecting to a forked node.
@@ -47,6 +94,7 @@ async function impersonateAndFund(account, amount = "100") {
 }
 
 module.exports = {
+  getSigner,
   impersonateAccount,
   impersonateAndFund,
 };

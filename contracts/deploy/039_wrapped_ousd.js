@@ -20,7 +20,7 @@ module.exports = deploymentWithProposal(
     ]);
 
     // 2. Deploy the new proxy
-    const dWrappedOUSDProxy = await deployWithConfirmation("WrappedOUSDProxy");
+    await deployWithConfirmation("WrappedOUSDProxy");
     const cWrappedOUSDProxy = await ethers.getContract("WrappedOUSDProxy");
     const cWrappedOUSD = await ethers.getContractAt(
       "WrappedOusd",
@@ -29,14 +29,10 @@ module.exports = deploymentWithProposal(
 
     // 3. Configure Proxy
     await withConfirmation(
-      cWrappedOUSDProxy
-        .connect(sDeployer)
-        ["initialize(address,address,bytes)"](
-          dWrappedOusdImpl.address,
-          deployerAddr,
-          [],
-          await getTxOpts()
-        )
+      cWrappedOUSDProxy.connect(sDeployer)[
+        // eslint-disable-next-line no-unexpected-multiline
+        "initialize(address,address,bytes)"
+      ](dWrappedOusdImpl.address, deployerAddr, [], await getTxOpts())
     );
 
     // 3. Initialize Wrapped OUSD

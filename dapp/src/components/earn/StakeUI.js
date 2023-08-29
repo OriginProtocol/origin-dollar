@@ -25,9 +25,7 @@ import { assetRootPath } from 'utils/image'
 import GetOUSD from 'components/GetOUSD'
 
 const StakeUI = ({ rpcProvider, isMobile }) => {
-  const { chain } = useNetwork()
-  const { address: account } = useAccount()
-  const chainId = chain?.id
+  const { isConnected: active } = useAccount()
   const { data: signer } = useSigner()
 
   const [showClaimModal, setShowClaimModal] = useState(false)

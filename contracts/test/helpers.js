@@ -2,8 +2,7 @@ const hre = require("hardhat");
 const chai = require("chai");
 const mocha = require("mocha");
 const { parseUnits, formatUnits, parseEther } = require("ethers").utils;
-const BigNumber = require("ethers").BigNumber;
-const { createFixtureLoader } = require("ethereum-waffle");
+const { BigNumber } = require("ethers");
 
 const addresses = require("../utils/addresses");
 
@@ -287,23 +286,7 @@ const isSmokeTest = process.env.SMOKE_TEST === "true";
 const isMainnetOrFork = isMainnet || isFork;
 const isForkTest = isFork && isTest;
 const isForkWithLocalNode = isFork && process.env.LOCAL_PROVIDER_URL;
-
-// Fixture loader that is compatible with Ganache
-const loadFixture = createFixtureLoader(
-  [
-    hre.ethers.provider.getSigner(0),
-    hre.ethers.provider.getSigner(1),
-    hre.ethers.provider.getSigner(2),
-    hre.ethers.provider.getSigner(3),
-    hre.ethers.provider.getSigner(4),
-    hre.ethers.provider.getSigner(5),
-    hre.ethers.provider.getSigner(6),
-    hre.ethers.provider.getSigner(7),
-    hre.ethers.provider.getSigner(8),
-    hre.ethers.provider.getSigner(9),
-  ],
-  hre.ethers.provider
-);
+const isCI = process.env.GITHUB_ACTIONS;
 
 /// Advances the EVM time by the given number of seconds
 const advanceTime = async (seconds) => {
@@ -720,6 +703,7 @@ const forkOnlyDescribe = (title, fn) =>
   isForkTest ? mocha.describe(title, fn) : mocha.describe.skip(title, fn);
 
 module.exports = {
+  decimalsFor,
   ousdUnits,
   oethUnits,
   usdtUnits,
@@ -750,7 +734,7 @@ module.exports = {
   isMainnetOrFork,
   isForkTest,
   isForkWithLocalNode,
-  loadFixture,
+  isCI,
   getOracleAddress,
   setOracleTokenPriceUsd,
   getOracleAddresses,

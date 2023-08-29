@@ -234,7 +234,7 @@ const WrapOETHPill = ({
           >
             {topItem && (
               <input
-                inputMode="numeric"
+                inputMode="decimal"
                 type="text"
                 value={truncateDecimals(coinValue, 18)}
                 placeholder="0.00"

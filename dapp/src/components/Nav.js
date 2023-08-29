@@ -160,17 +160,9 @@ const Nav = ({ locale, onLocale, page }) => {
             </div>
           </button>
           <IPFSDappLink css="d-lg-none" />
-          <AccountStatusDropdown />
-          {!active && !account && (
-            <div className="d-flex d-md-none">
-              <GetOUSD
-                navMarble
-                connect={true}
-                trackSource="Mobile navigation"
-                style={{ marginLeft: 10 }}
-              />
-            </div>
-          )}
+          <div className="d-lg-none ml-auto">
+            <AccountStatusDropdown />
+          </div>
           <div
             className="primarySidePanel dark-background collapse"
             data-toggle="collapse"
@@ -239,15 +231,15 @@ const Nav = ({ locale, onLocale, page }) => {
                 </ul>
               )}
               <IPFSDappLink css="d-none d-lg-block" />
-              <div className={`d-flex flex-column flex-lg-row-reverse`}>
-                <AccountStatusDropdown />
+              <div className="d-none d-lg-block">
+                {account && active ? (
+                  <AccountStatusDropdown />
+                ) : (
+                  <div className="not-logged-in">
+                    <GetOUSD trackSource="Connect button" />
+                  </div>
+                )}
               </div>
-              <GetOUSD
-                style={{ marginTop: 40 }}
-                className="mt-auto d-lg-none"
-                light2
-                trackSource="Mobile navigation menu"
-              />
             </div>
           </div>
         </div>
@@ -256,6 +248,14 @@ const Nav = ({ locale, onLocale, page }) => {
         </div>
       </nav>
       <style jsx>{`
+        .not-logged-in {
+          height: 30px;
+          line-height: 24px;
+          padding: 0 10px;
+          border-radius: 56px;
+          border: solid 1px white;
+        }
+
         .banner {
           background-color: transparent;
           font-size: 0.8125rem;

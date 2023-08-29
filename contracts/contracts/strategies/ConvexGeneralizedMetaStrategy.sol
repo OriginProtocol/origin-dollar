@@ -12,13 +12,17 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 import { IRewardStaking } from "./IRewardStaking.sol";
 import { IConvexDeposits } from "./IConvexDeposits.sol";
 import { ICurvePool } from "./ICurvePool.sol";
-import { IERC20 } from "./BaseCurveStrategy.sol";
+import { IERC20, InitializableAbstractStrategy } from "./BaseCurveStrategy.sol";
 import { BaseConvexMetaStrategy } from "./BaseConvexMetaStrategy.sol";
 import { StableMath } from "../utils/StableMath.sol";
 
 contract ConvexGeneralizedMetaStrategy is BaseConvexMetaStrategy {
     using StableMath for uint256;
     using SafeERC20 for IERC20;
+
+    constructor(BaseStrategyConfig memory _stratConfig)
+        InitializableAbstractStrategy(_stratConfig)
+    {}
 
     /* Take 3pool LP and deposit it to metapool. Take the LP from metapool
      * and deposit them to Convex.

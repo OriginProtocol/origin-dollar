@@ -29,10 +29,18 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
         address _newHarvesterAddress
     );
 
-    // Core address for the given platform
-    address public platformAddress;
+    /// @notice Address of the underlying platform
+    address public immutable platformAddress;
+    /// @notice Address of the OToken vault
+    address public immutable vaultAddress;
 
-    address public vaultAddress;
+    /// @dev Replaced with an immutable variable
+    // slither-disable-next-line constable-states
+    address private _deprecated_platformAddress;
+
+    /// @dev Replaced with an immutable
+    // slither-disable-next-line constable-states
+    address private _deprecated_vaultAddress;
 
     // asset => pToken (Platform Specific Token Address)
     mapping(address => address) public assetToPToken;
@@ -42,11 +50,11 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
 
     // Deprecated: Reward token address
     // slither-disable-next-line constable-states
-    address public _deprecated_rewardTokenAddress;
+    address private _deprecated_rewardTokenAddress;
 
     // Deprecated: now resides in Harvester's rewardTokenConfigs
     // slither-disable-next-line constable-states
-    uint256 public _deprecated_rewardLiquidationThreshold;
+    uint256 private _deprecated_rewardLiquidationThreshold;
 
     // Address of the one address allowed to collect reward tokens
     address public harvesterAddress;
@@ -60,24 +68,31 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
      */
     int256[98] private _reserved;
 
+    struct BaseStrategyConfig {
+        address platformAddress; // Address of the underlying platform
+        address vaultAddress; // Address of the OToken's Vault
+    }
+
     /**
-     * @dev Internal initialize function, to set up initial internal state
-     * @param _platformAddress Generic platform address
-     * @param _vaultAddress Address of the Vault
+     * @param _config The platform and OToken vault addresses
+     */
+    constructor(BaseStrategyConfig memory _config) {
+        platformAddress = _config.platformAddress;
+        vaultAddress = _config.vaultAddress;
+    }
+
+    /**
+     * @notice Internal initialize function, to set up initial internal state
      * @param _rewardTokenAddresses Address of reward token for platform
      * @param _assets Addresses of initial supported assets
      * @param _pTokens Platform Token corresponding addresses
      */
     function initialize(
-        address _platformAddress,
-        address _vaultAddress,
         address[] calldata _rewardTokenAddresses,
         address[] calldata _assets,
         address[] calldata _pTokens
-    ) external onlyGovernor initializer {
+    ) external virtual onlyGovernor initializer {
         InitializableAbstractStrategy._initialize(
-            _platformAddress,
-            _vaultAddress,
             _rewardTokenAddresses,
             _assets,
             _pTokens
@@ -85,19 +100,15 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
     }
 
     function _initialize(
-        address _platformAddress,
-        address _vaultAddress,
-        address[] calldata _rewardTokenAddresses,
+        address[] memory _rewardTokenAddresses,
         address[] memory _assets,
         address[] memory _pTokens
     ) internal {
-        platformAddress = _platformAddress;
-        vaultAddress = _vaultAddress;
         rewardTokenAddresses = _rewardTokenAddresses;
 
         uint256 assetCount = _assets.length;
         require(assetCount == _pTokens.length, "Invalid input arrays");
-        for (uint256 i = 0; i < assetCount; i++) {
+        for (uint256 i = 0; i < assetCount; ++i) {
             _setPTokenAddress(_assets[i], _pTokens[i]);
         }
     }
@@ -109,16 +120,23 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
         _collectRewardTokens();
     }
 
-    function _collectRewardTokens() internal {
-        for (uint256 i = 0; i < rewardTokenAddresses.length; i++) {
+    /**
+     * @dev Default implementation that transfers reward tokens to the Vault.
+     * Implementing strategies need to add custom logic to collect the rewards.
+     */
+    function _collectRewardTokens() internal virtual {
+        uint256 rewardTokenCount = rewardTokenAddresses.length;
+        for (uint256 i = 0; i < rewardTokenCount; ++i) {
             IERC20 rewardToken = IERC20(rewardTokenAddresses[i]);
             uint256 balance = rewardToken.balanceOf(address(this));
-            emit RewardTokenCollected(
-                harvesterAddress,
-                rewardTokenAddresses[i],
-                balance
-            );
-            rewardToken.safeTransfer(harvesterAddress, balance);
+            if (balance > 0) {
+                emit RewardTokenCollected(
+                    harvesterAddress,
+                    address(rewardToken),
+                    balance
+                );
+                rewardToken.safeTransfer(harvesterAddress, balance);
+            }
         }
     }
 
@@ -170,7 +188,8 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
         external
         onlyGovernor
     {
-        for (uint256 i = 0; i < _rewardTokenAddresses.length; i++) {
+        uint256 rewardTokenCount = rewardTokenAddresses.length;
+        for (uint256 i = 0; i < rewardTokenCount; ++i) {
             require(
                 _rewardTokenAddresses[i] != address(0),
                 "Can not set an empty address as a reward token"
@@ -204,6 +223,7 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
      */
     function setPTokenAddress(address _asset, address _pToken)
         external
+        virtual
         onlyGovernor
     {
         _setPTokenAddress(_asset, _pToken);
@@ -214,7 +234,7 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
      *      This method can only be called by the system Governor
      * @param _assetIndex Index of the asset to be removed
      */
-    function removePToken(uint256 _assetIndex) external onlyGovernor {
+    function removePToken(uint256 _assetIndex) external virtual onlyGovernor {
         require(_assetIndex < assetsMapped.length, "Invalid index");
         address asset = assetsMapped[_assetIndex];
         address pToken = assetToPToken[asset];

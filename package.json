@@ -9,9 +9,6 @@
     "build:oethdapp": "(cd dapp-oeth && NODE_ENV=development yarn install && yarn build)",
     "start": "bash devops/start-dapp.sh"
   },
-  "dependencies": {
-    "react-use": "^17.4.0"
-  },
   "engines": {
     "node": "16"
   }

@@ -1,9 +1,8 @@
 const { expect } = require("chai");
 const { parseUnits } = require("ethers").utils;
 
-const { loadFixture } = require("ethereum-waffle");
 const { forkOnlyDescribe, usdtUnits } = require("../helpers");
-const { defaultFixture } = require("../_fixture");
+const { loadDefaultFixture } = require("../_fixture");
 const { MAX_UINT256 } = require("../../utils/constants");
 
 forkOnlyDescribe("ForkTest: Harvest OUSD", function () {
@@ -11,7 +10,7 @@ forkOnlyDescribe("ForkTest: Harvest OUSD", function () {
 
   let fixture;
   beforeEach(async () => {
-    fixture = await loadFixture(defaultFixture);
+    fixture = await loadDefaultFixture();
   });
 
   describe.skip("deploy script CRV liquidation limit", function () {

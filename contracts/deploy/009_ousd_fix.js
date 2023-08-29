@@ -74,26 +74,24 @@ const fixOUSD = async () => {
     await withConfirmation(
       cOUSDProxy
         .connect(sGovernor)
-        .upgradeTo(dOUSDReset.address, await getTxOpts(gasLimit))
+        .upgradeTo(dOUSDReset.address, await getTxOpts())
     );
     log("Upgraded OUSD to reset implementation");
 
     await withConfirmation(
       cOUSDReset
         .connect(sGovernor)
-        .setVaultAddress(cVaultProxy.address, await getTxOpts(gasLimit))
+        .setVaultAddress(cVaultProxy.address, await getTxOpts())
     );
     log("Vault address set");
 
     await withConfirmation(
-      cOUSDReset.connect(sGovernor).reset(await getTxOpts(gasLimit))
+      cOUSDReset.connect(sGovernor).reset(await getTxOpts())
     );
     log("Called reset on OUSD");
 
     await withConfirmation(
-      cOUSDProxy
-        .connect(sGovernor)
-        .upgradeTo(dOUSD.address, await getTxOpts(gasLimit))
+      cOUSDProxy.connect(sGovernor).upgradeTo(dOUSD.address, await getTxOpts())
     );
     log("Upgraded OUSD to standard implementation");
   }

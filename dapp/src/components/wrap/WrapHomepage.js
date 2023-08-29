@@ -12,8 +12,8 @@ import withIsMobile from 'hoc/withIsMobile'
 import usePrevious from 'utils/usePrevious'
 import ApproveSwap from 'components/buySell/ApproveSwap'
 import { useAccount, useSigner } from 'wagmi'
-import analytics from 'utils/analytics'
 import { displayCurrency, calculateSwapAmounts } from '../../utils/math'
+import { event } from '../../../lib/gtm'
 
 const lastSelectedSwapModeKey = 'last_user_selected_wrap_mode'
 
@@ -151,14 +151,14 @@ const WrapHomepage = ({
   }
 
   const onWrapOusd = async () => {
-    analytics.track(
-      swapMode === 'mint' ? 'On Wrap to wOUSD' : 'On Unwrap from wOUSD',
-      {
-        category: 'wrap',
-        label: swapMetadata.coinUsed,
-        value: swapMetadata.swapAmount,
-      }
-    )
+    const wrapTokenUsed = swapMode === 'mint' ? 'wousd' : 'ousd'
+    const wrapTokenAmount = swapMode === 'mint' ? inputAmount : wrapEstimate
+    // mint = wrap
+    event({
+      event: 'wrap_started',
+      wrap_token: wrapTokenUsed,
+      wrap_amount: wrapTokenAmount,
+    })
 
     const metadata = swapMetadata()
 
@@ -190,23 +190,29 @@ const WrapHomepage = ({
       setInputAmount('')
 
       await rpcProvider.waitForTransaction(result.hash)
-      analytics.track('Wrap succeeded', {
-        category: 'wrap',
-        label: metadata.coinUsed,
-        value: metadata.swapAmount,
+      event({
+        event: 'wrap_complete',
+        wrap_type: swapMode,
+        wrap_token: wrapTokenUsed,
+        wrap_amount: wrapTokenAmount,
       })
     } catch (e) {
       const metadata = swapMetadata()
       // 4001 code happens when a user rejects the transaction
       if (e.code !== 4001) {
         await storeTransactionError(swapMode, 'ousd')
-        analytics.track('Wrap failed', {
-          category: 'wrap',
-          label: e.message,
+        event({
+          event: 'wrap_failed',
+          wrap_type: swapMode,
+          wrap_token: wrapTokenUsed,
+          wrap_amount: wrapTokenAmount,
         })
       } else {
-        analytics.track('Wrap canceled', {
-          category: 'wrap',
+        event({
+          event: 'wrap_rejected',
+          wrap_type: swapMode,
+          wrap_token: wrapTokenUsed,
+          wrap_amount: wrapTokenAmount,
         })
       }
 

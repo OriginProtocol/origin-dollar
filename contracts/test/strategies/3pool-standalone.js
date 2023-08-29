@@ -2,8 +2,8 @@ const { expect } = require("chai");
 const { utils } = require("ethers");
 
 const { BigNumber } = require("ethers");
-const { threepoolFixture } = require("../_fixture");
-const { loadFixture, units } = require("../helpers");
+const { createFixtureLoader, threepoolFixture } = require("../_fixture");
+const { units } = require("../helpers");
 
 describe("3Pool Strategy Standalone", function () {
   let governor,
@@ -16,6 +16,7 @@ describe("3Pool Strategy Standalone", function () {
     usdc,
     dai;
 
+  const loadFixture = createFixtureLoader(threepoolFixture);
   beforeEach(async function () {
     ({
       governor,
@@ -26,7 +27,7 @@ describe("3Pool Strategy Standalone", function () {
       usdt,
       usdc,
       dai,
-    } = await loadFixture(threepoolFixture));
+    } = await loadFixture());
     threePoolStrategy = tpStandalone.connect(governor);
   });
 

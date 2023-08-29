@@ -1,10 +1,8 @@
 const { deploymentWithProposal } = require("../utils/deploy");
-const addresses = require("../utils/addresses");
-const ethers = require("ethers");
 
 module.exports = deploymentWithProposal(
   { deployName: "062_oeth_timelock_part_2" },
-  async ({ deployWithConfirmation, ethers, getTxOpts, withConfirmation }) => {
+  async ({ ethers }) => {
     const cFraxETHStrategyProxy = await ethers.getContract(
       "FraxETHStrategyProxy"
     );

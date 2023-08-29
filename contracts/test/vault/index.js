@@ -1,9 +1,8 @@
-const { defaultFixture } = require("../_fixture");
-const chai = require("chai");
+const { expect } = require("chai");
 const hre = require("hardhat");
-const { solidity } = require("ethereum-waffle");
 const { utils } = require("ethers");
 
+const { loadDefaultFixture } = require("../_fixture");
 const {
   ousdUnits,
   daiUnits,
@@ -11,24 +10,22 @@ const {
   usdtUnits,
   tusdUnits,
   setOracleTokenPriceUsd,
-  loadFixture,
   getOracleAddresses,
   isFork,
 } = require("../helpers");
-
-// Support BigNumber and all that with ethereum-waffle
-chai.use(solidity);
-const expect = chai.expect;
 
 describe("Vault", function () {
   if (isFork) {
     this.timeout(0);
   }
+  let fixture;
+  beforeEach(async () => {
+    fixture = await loadDefaultFixture();
+  });
 
   it("Should support an asset", async () => {
-    const { vault, oracleRouter, ousd, governor } = await loadFixture(
-      defaultFixture
-    );
+    const { vault, oracleRouter, ousd, governor } = fixture;
+
     const oracleAddresses = await getOracleAddresses(hre.deployments);
     const origAssetCount = await vault.connect(governor).getAssetCount();
     expect(await vault.isSupportedAsset(ousd.address)).to.be.false;
@@ -57,7 +54,8 @@ describe("Vault", function () {
   });
 
   it("Should revert when adding an asset that is already supported", async function () {
-    const { vault, usdt, governor } = await loadFixture(defaultFixture);
+    const { vault, usdt, governor } = fixture;
+
     expect(await vault.isSupportedAsset(usdt.address)).to.be.true;
     await expect(
       vault.connect(governor).supportAsset(usdt.address, 0)
@@ -65,16 +63,15 @@ describe("Vault", function () {
   });
 
   it("Should revert when attempting to support an asset and not governor", async function () {
-    const { vault, usdt } = await loadFixture(defaultFixture);
+    const { vault, usdt } = fixture;
     await expect(vault.supportAsset(usdt.address, 0)).to.be.revertedWith(
       "Caller is not the Governor"
     );
   });
 
   it("Should revert when adding a strategy that is already approved", async function () {
-    const { vault, governor, compoundStrategy } = await loadFixture(
-      defaultFixture
-    );
+    const { vault, governor, compoundStrategy } = fixture;
+
     await vault.connect(governor).approveStrategy(compoundStrategy.address);
     await expect(
       vault.connect(governor).approveStrategy(compoundStrategy.address)
@@ -82,14 +79,15 @@ describe("Vault", function () {
   });
 
   it("Should revert when attempting to approve a strategy and not Governor", async function () {
-    const { vault, josh, compoundStrategy } = await loadFixture(defaultFixture);
+    const { vault, josh, compoundStrategy } = fixture;
+
     await expect(
       vault.connect(josh).approveStrategy(compoundStrategy.address)
     ).to.be.revertedWith("Caller is not the Governor");
   });
 
   it("Should correctly ratio deposited currencies of differing decimals", async function () {
-    const { ousd, vault, usdc, dai, matt } = await loadFixture(defaultFixture);
+    const { ousd, vault, usdc, dai, matt } = fixture;
 
     await expect(matt).has.a.balanceOf("100.00", ousd);
 
@@ -105,7 +103,8 @@ describe("Vault", function () {
   });
 
   it("Should correctly handle a deposit of DAI (18 decimals)", async function () {
-    const { ousd, vault, dai, anna } = await loadFixture(defaultFixture);
+    const { ousd, vault, dai, anna } = fixture;
+
     await expect(anna).has.a.balanceOf("0.00", ousd);
     // We limit to paying to $1 OUSD for for one stable coin,
     // so this will deposit at a rate of $1.
@@ -116,7 +115,8 @@ describe("Vault", function () {
   });
 
   it("Should correctly handle a deposit of USDC (6 decimals)", async function () {
-    const { ousd, vault, usdc, anna } = await loadFixture(defaultFixture);
+    const { ousd, vault, usdc, anna } = fixture;
+
     await expect(anna).has.a.balanceOf("0.00", ousd);
     await setOracleTokenPriceUsd("USDC", "0.998");
     await usdc.connect(anna).approve(vault.address, usdcUnits("50.0"));
@@ -125,7 +125,8 @@ describe("Vault", function () {
   });
 
   it("Should not allow a below peg deposit", async function () {
-    const { ousd, vault, usdc, anna } = await loadFixture(defaultFixture);
+    const { ousd, vault, usdc, anna } = fixture;
+
     await expect(anna).has.a.balanceOf("0.00", ousd);
     await setOracleTokenPriceUsd("USDC", "0.95");
     await usdc.connect(anna).approve(vault.address, usdcUnits("50.0"));
@@ -136,7 +137,7 @@ describe("Vault", function () {
 
   it("Should correctly handle a deposit failure of Non-Standard ERC20 Token", async function () {
     const { ousd, vault, anna, nonStandardToken, oracleRouter, governor } =
-      await loadFixture(defaultFixture);
+      fixture;
 
     await oracleRouter.cacheDecimals(nonStandardToken.address);
     await vault.connect(governor).supportAsset(nonStandardToken.address, 0);
@@ -168,7 +169,8 @@ describe("Vault", function () {
 
   it("Should correctly handle a deposit of Non-Standard ERC20 Token", async function () {
     const { ousd, vault, anna, nonStandardToken, oracleRouter, governor } =
-      await loadFixture(defaultFixture);
+      fixture;
+
     await oracleRouter.cacheDecimals(nonStandardToken.address);
     await vault.connect(governor).supportAsset(nonStandardToken.address, 0);
 
@@ -186,7 +188,8 @@ describe("Vault", function () {
   });
 
   it("Should calculate the balance correctly with DAI", async () => {
-    const { vault } = await loadFixture(defaultFixture);
+    const { vault } = fixture;
+
     // Vault already has DAI from default ficture
     await expect(await vault.totalValue()).to.equal(
       utils.parseUnits("200", 18)
@@ -194,7 +197,7 @@ describe("Vault", function () {
   });
 
   it("Should calculate the balance correctly with USDC", async () => {
-    const { vault, usdc, matt } = await loadFixture(defaultFixture);
+    const { vault, usdc, matt } = fixture;
 
     // Matt deposits USDC, 6 decimals
     await usdc.connect(matt).approve(vault.address, usdcUnits("2.0"));
@@ -206,7 +209,7 @@ describe("Vault", function () {
   });
 
   it("Should calculate the balance correctly with USDT", async () => {
-    const { vault, usdt, matt } = await loadFixture(defaultFixture);
+    const { vault, usdt, matt } = fixture;
 
     // Matt deposits USDT, 6 decimals
     await usdt.connect(matt).approve(vault.address, usdtUnits("5.0"));
@@ -218,7 +221,7 @@ describe("Vault", function () {
   });
 
   it("Should calculate the balance correctly with TUSD", async () => {
-    const { vault, tusd, matt } = await loadFixture(defaultFixture);
+    const { vault, tusd, matt } = fixture;
 
     // Matt deposits TUSD, 18 decimals
     await tusd.connect(matt).approve(vault.address, tusdUnits("9.0"));
@@ -230,7 +233,7 @@ describe("Vault", function () {
   });
 
   it("Should calculate the balance correctly with DAI, USDC, USDT, TUSD", async () => {
-    const { vault, usdc, usdt, tusd, matt } = await loadFixture(defaultFixture);
+    const { vault, usdc, usdt, tusd, matt } = fixture;
 
     // Matt deposits USDC, 6 decimals
     await usdc.connect(matt).approve(vault.address, usdcUnits("8.0"));
@@ -248,9 +251,8 @@ describe("Vault", function () {
   });
 
   it("Should allow transfer of arbitrary token by Governor", async () => {
-    const { vault, ousd, usdc, matt, governor } = await loadFixture(
-      defaultFixture
-    );
+    const { vault, ousd, usdc, matt, governor } = fixture;
+
     // Matt deposits USDC, 6 decimals
     await usdc.connect(matt).approve(vault.address, usdcUnits("8.0"));
     await vault.connect(matt).mint(usdc.address, usdcUnits("8.0"), 0);
@@ -262,7 +264,8 @@ describe("Vault", function () {
   });
 
   it("Should not allow transfer of arbitrary token by non-Governor", async () => {
-    const { vault, ousd, matt } = await loadFixture(defaultFixture);
+    const { vault, ousd, matt } = fixture;
+
     // Naughty Matt
     await expect(
       vault.connect(matt).transferToken(ousd.address, ousdUnits("8.0"))
@@ -270,7 +273,8 @@ describe("Vault", function () {
   });
 
   it("Should not allow transfer of supported token by governor", async () => {
-    const { vault, usdc, governor } = await loadFixture(defaultFixture);
+    const { vault, usdc, governor } = fixture;
+
     // Matt puts USDC in vault
     await usdc.transfer(vault.address, usdcUnits("8.0"));
     // Governor cannot move USDC because it is a supported token.
@@ -280,13 +284,15 @@ describe("Vault", function () {
   });
 
   it("Should allow Governor to add Strategy", async () => {
-    const { vault, governor, ousd } = await loadFixture(defaultFixture);
+    const { vault, governor, ousd } = fixture;
+
     // Pretend OUSD is a strategy and add its address
     await vault.connect(governor).approveStrategy(ousd.address);
   });
 
   it("Should revert when removing a Strategy that has not been added", async () => {
-    const { vault, governor, ousd } = await loadFixture(defaultFixture);
+    const { vault, governor, ousd } = fixture;
+
     // Pretend OUSD is a strategy and remove its address
     await expect(
       vault.connect(governor).removeStrategy(ousd.address)
@@ -294,7 +300,8 @@ describe("Vault", function () {
   });
 
   it("Should correctly handle a mint with auto rebase", async function () {
-    const { ousd, vault, usdc, matt, anna } = await loadFixture(defaultFixture);
+    const { ousd, vault, usdc, matt, anna } = fixture;
+
     await expect(anna).has.a.balanceOf("0.00", ousd);
     await expect(matt).has.a.balanceOf("100.00", ousd);
     await usdc.connect(anna).mint(usdcUnits("5000.0"));
@@ -305,7 +312,7 @@ describe("Vault", function () {
   });
 
   it("Should revert mint if minMintAmount check fails", async () => {
-    const { vault, matt, ousd, dai, usdt } = await loadFixture(defaultFixture);
+    const { vault, matt, ousd, dai, usdt } = fixture;
 
     await usdt.connect(matt).approve(vault.address, usdtUnits("50.0"));
     await dai.connect(matt).approve(vault.address, daiUnits("25.0"));
@@ -319,9 +326,8 @@ describe("Vault", function () {
   });
 
   it("Should allow transfer of arbitrary token by Governor", async () => {
-    const { vault, ousd, usdc, matt, governor } = await loadFixture(
-      defaultFixture
-    );
+    const { vault, ousd, usdc, matt, governor } = fixture;
+
     // Matt deposits USDC, 6 decimals
     await usdc.connect(matt).approve(vault.address, usdcUnits("8.0"));
     await vault.connect(matt).mint(usdc.address, usdcUnits("8.0"), 0);
@@ -333,7 +339,8 @@ describe("Vault", function () {
   });
 
   it("Should not allow transfer of arbitrary token by non-Governor", async () => {
-    const { vault, ousd, matt } = await loadFixture(defaultFixture);
+    const { vault, ousd, matt } = fixture;
+
     // Naughty Matt
     await expect(
       vault.connect(matt).transferToken(ousd.address, ousdUnits("8.0"))
@@ -341,33 +348,35 @@ describe("Vault", function () {
   });
 
   it("Should allow governor to change rebase threshold", async () => {
-    const { vault, governor } = await loadFixture(defaultFixture);
+    const { vault, governor } = fixture;
+
     await vault.connect(governor).setRebaseThreshold(ousdUnits("400"));
   });
 
   it("Should not allow non-governor to change rebase threshold", async () => {
-    const { vault } = await loadFixture(defaultFixture);
+    const { vault } = fixture;
+
     expect(vault.setRebaseThreshold(ousdUnits("400"))).to.be.revertedWith(
       "Caller is not the Governor"
     );
   });
 
   it("Should allow governor to change Strategist address", async () => {
-    const { vault, governor, josh } = await loadFixture(defaultFixture);
+    const { vault, governor, josh } = fixture;
+
     await vault.connect(governor).setStrategistAddr(await josh.getAddress());
   });
 
   it("Should not allow non-governor to change Strategist address", async () => {
-    const { vault, josh, matt } = await loadFixture(defaultFixture);
+    const { vault, josh, matt } = fixture;
+
     await expect(
       vault.connect(matt).setStrategistAddr(await josh.getAddress())
     ).to.be.revertedWith("Caller is not the Governor");
   });
 
   it("Should allow the Governor to call withdraw and then deposit", async () => {
-    const { vault, governor, dai, josh, compoundStrategy } = await loadFixture(
-      defaultFixture
-    );
+    const { vault, governor, dai, josh, compoundStrategy } = fixture;
 
     await vault.connect(governor).approveStrategy(compoundStrategy.address);
     // Send all DAI to Compound
@@ -397,7 +406,7 @@ describe("Vault", function () {
 
   it("Should allow the Strategist to call withdrawFromStrategy and then depositToStrategy", async () => {
     const { vault, governor, dai, josh, strategist, compoundStrategy } =
-      await loadFixture(defaultFixture);
+      fixture;
 
     await vault.connect(governor).approveStrategy(compoundStrategy.address);
     // Send all DAI to Compound
@@ -426,7 +435,7 @@ describe("Vault", function () {
   });
 
   it("Should not allow non-Governor and non-Strategist to call withdrawFromStrategy or depositToStrategy", async () => {
-    const { vault, dai, josh } = await loadFixture(defaultFixture);
+    const { vault, dai, josh } = fixture;
 
     await expect(
       vault.connect(josh).withdrawFromStrategy(
@@ -455,7 +464,7 @@ describe("Vault", function () {
       josh,
       strategist,
       compoundStrategy,
-    } = await loadFixture(defaultFixture);
+    } = fixture;
 
     await vault.connect(governor).approveStrategy(compoundStrategy.address);
     // Send all DAI to Compound
@@ -511,29 +520,28 @@ describe("Vault", function () {
   });
 
   it("Should allow Governor and Strategist to set vaultBuffer", async () => {
-    const { vault, governor, strategist } = await loadFixture(defaultFixture);
+    const { vault, governor, strategist } = fixture;
     await vault.connect(governor).setVaultBuffer(utils.parseUnits("5", 17));
     await vault.connect(strategist).setVaultBuffer(utils.parseUnits("5", 17));
   });
 
   it("Should not allow other to set vaultBuffer", async () => {
-    const { vault, josh } = await loadFixture(defaultFixture);
+    const { vault, josh } = fixture;
     await expect(
       vault.connect(josh).setVaultBuffer(utils.parseUnits("2", 19))
     ).to.be.revertedWith("Caller is not the Strategist or Governor");
   });
 
   it("Should not allow setting a vaultBuffer > 1e18", async () => {
-    const { vault, governor } = await loadFixture(defaultFixture);
+    const { vault, governor } = fixture;
     await expect(
       vault.connect(governor).setVaultBuffer(utils.parseUnits("2", 19))
     ).to.be.revertedWith("Invalid value");
   });
 
   it("Should only allow Governor and Strategist to call withdrawAllFromStrategies", async () => {
-    const { vault, governor, matt, strategist } = await loadFixture(
-      defaultFixture
-    );
+    const { vault, governor, matt, strategist } = fixture;
+
     await vault.connect(governor).withdrawAllFromStrategies();
     await vault.connect(strategist).withdrawAllFromStrategies();
     await expect(
@@ -543,7 +551,7 @@ describe("Vault", function () {
 
   it("Should only allow Governor and Strategist to call withdrawAllFromStrategy", async () => {
     const { vault, governor, strategist, compoundStrategy, matt, josh, dai } =
-      await loadFixture(defaultFixture);
+      fixture;
     await vault.connect(governor).approveStrategy(compoundStrategy.address);
 
     // Get the vault's initial DAI balance.
@@ -579,10 +587,8 @@ describe("Vault", function () {
     ).to.be.revertedWith("Caller is not the Strategist or Governor");
   });
 
-  it("Should only allow Governor and Strategist to call withdrawAllFromStrategy", async () => {
-    const { vault, ousd, governor, anna, josh } = await loadFixture(
-      defaultFixture
-    );
+  it("Should only allow metastrategy to mint oTokens and revert when threshold is reached.", async () => {
+    const { vault, ousd, governor, anna, josh } = fixture;
 
     await vault
       .connect(governor)
@@ -606,7 +612,7 @@ describe("Vault", function () {
   });
 
   it("Should reset netOusdMintedForStrategy when new threshold is set", async () => {
-    const { vault, governor, anna } = await loadFixture(defaultFixture);
+    const { vault, governor, anna } = fixture;
 
     await vault
       .connect(governor)
@@ -631,7 +637,7 @@ describe("Vault", function () {
     );
   });
   it("Should re-cache decimals", async () => {
-    const { vault, governor, usdc } = await loadFixture(defaultFixture);
+    const { vault, governor, usdc } = fixture;
 
     const beforeAssetConfig = await vault.getAssetConfig(usdc.address);
     expect(beforeAssetConfig.decimals).to.equal(6);

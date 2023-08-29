@@ -24,9 +24,11 @@ const Layout = ({
   storeTransactionError,
 }) => {
   const { data: signer } = useSigner()
+
   const oethContract = useStoreState(ContractStore, (s) =>
     get(s, 'contracts.oeth')
   )
+
   const rebaseOptedOut = useStoreState(AccountStore, (s) =>
     get(s, 'rebaseOptedOut')
   )

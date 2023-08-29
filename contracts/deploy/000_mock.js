@@ -18,11 +18,6 @@ const {
 } = require("@uniswap/v3-periphery/artifacts/contracts/NonfungiblePositionManager.sol/NonfungiblePositionManager.json");
 
 const {
-  abi: TOKEN_DESCRIPTOR_ABI,
-  bytecode: TOKEN_DESCRIPTOR_BYTECODE,
-} = require("@uniswap/v3-periphery/artifacts/contracts/NonfungibleTokenPositionDescriptor.sol/NonfungibleTokenPositionDescriptor.json");
-
-const {
   abi: QUOTER_ABI,
   bytecode: QUOTER_BYTECODE,
 } = require("@uniswap/v3-periphery/artifacts/contracts/lens/Quoter.sol/Quoter.json");

@@ -1,5 +1,7 @@
 const addresses = require("../utils/addresses");
 
+const log = require("../utils/logger")("task:assets");
+
 /**
  * Resolves a token symbol to a ERC20 token contract.
  * @param {string} symbol token symbol of the asset. eg OUSD, USDT, stETH, CRV...
@@ -19,7 +21,8 @@ const resolveAsset = async (symbol) => {
     if (!assetAddr) {
       throw Error(`Failed to resolve symbol "${symbol}" to an address`);
     }
-    const asset = await ethers.getContractAt("IERC20", assetAddr);
+    log(`Resolved ${symbol} to ${assetAddr}`);
+    const asset = await ethers.getContractAt("IERC20Metadata", assetAddr);
     return asset;
   }
   const asset = await ethers.getContract("Mock" + symbol);

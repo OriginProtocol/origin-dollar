@@ -1,6 +1,5 @@
 const { deploymentWithGovernanceProposal } = require("../utils/deploy");
 const { getTxOpts } = require("../utils/tx");
-// const addresses = require("../utils/addresses");
 
 module.exports = deploymentWithGovernanceProposal(
   {
@@ -61,14 +60,10 @@ module.exports = deploymentWithGovernanceProposal(
 
     // Initialize proxy contract
     await withConfirmation(
-      cBuybackProxy
-        .connect(sDeployer)
-        ["initialize(address,address,bytes)"](
-          dBuybackImpl.address,
-          deployerAddr,
-          [],
-          await getTxOpts()
-        )
+      cBuybackProxy.connect(sDeployer)[
+        // eslint-disable-next-line no-unexpected-multiline
+        "initialize(address,address,bytes)"
+      ](dBuybackImpl.address, deployerAddr, [], await getTxOpts())
     );
 
     const cBuyback = await ethers.getContractAt(

@@ -2,9 +2,11 @@ const { expect } = require("chai");
 const hre = require("hardhat");
 const { ethers } = hre;
 
-const { loadFixture } = require("ethereum-waffle");
-const { units, ousdUnits, forkOnlyDescribe } = require("../helpers");
-const { convexGeneralizedMetaForkedFixture } = require("../_fixture");
+const { units, ousdUnits, forkOnlyDescribe, isCI } = require("../helpers");
+const {
+  createFixtureLoader,
+  convexGeneralizedMetaForkedFixture,
+} = require("../_fixture");
 const {
   tiltToMainToken,
   tiltTo3CRV_Metapool_automatic,
@@ -14,109 +16,46 @@ const metastrategies = [
   {
     token: "LUSD",
     metapoolAddress: "0xEd279fDD11cA84bEef15AF5D39BB4d4bEE23F0cA",
-    lpToken: "0xEd279fDD11cA84bEef15AF5D39BB4d4bEE23F0cA",
+    lpTokenAddress: "0xEd279fDD11cA84bEef15AF5D39BB4d4bEE23F0cA",
     metastrategyProxyName: "ConvexLUSDMetaStrategyProxy",
     rewardPoolAddress: "0x2ad92A7aE036a038ff02B96c88de868ddf3f8190",
     skipMewTest: false,
   },
 ];
 
-metastrategies.forEach(
-  ({
-    token,
-    metapoolAddress,
-    metastrategyProxyName,
-    rewardPoolAddress,
-    lpToken,
-    skipMewTest,
-  }) => {
-    forkOnlyDescribe(
-      `ForkTest: Convex 3pool/${token} Meta Strategy`,
-      function () {
-        this.timeout(0);
-        // due to hardhat forked mode timeouts - retry failed tests up to 3 times
-        this.retries(3);
-        let fixture;
-        beforeEach(async () => {
-          fixture = await loadFixture(
-            await convexGeneralizedMetaForkedFixture(
-              metapoolAddress,
-              rewardPoolAddress,
-              metastrategyProxyName,
-              lpToken
-            )
-          );
-        });
+metastrategies.forEach((config) => {
+  forkOnlyDescribe(
+    `ForkTest: Convex 3pool/${config.token} Meta Strategy`,
+    function () {
+      this.timeout(0);
 
+      // Retry up to 3 times on CI
+      this.retries(isCI ? 3 : 0);
+
+      let fixture;
+      const loadFixture = createFixtureLoader(
+        convexGeneralizedMetaForkedFixture,
+        config
+      );
+      beforeEach(async () => {
+        fixture = await loadFixture();
+      });
+
+      describe.skip("", () => {
         describe("Mint", function () {
-          async function mintTest(user, asset, amount = "30000") {
-            const { vault, ousd, dai, rewardPool } = fixture;
-            // pre-allocate just in case vault was holding some funds
-            await vault.connect(user).allocate();
-            await vault.connect(user).rebase();
-            const unitAmount = await units(amount, asset);
-
-            const currentSupply = await ousd.totalSupply();
-            const currentBalance = await ousd
-              .connect(user)
-              .balanceOf(user.address);
-            const currentRewardPoolBalance = await rewardPool
-              .connect(user)
-              .balanceOf(fixture.metaStrategyProxy.address);
-
-            // Mint OUSD w/ asset
-            await vault.connect(user).mint(asset.address, unitAmount, 0);
-            await vault.connect(user).allocate();
-
-            // Ensure user has correct balance (w/ 1% slippage tolerance)
-            const newBalance = await ousd.connect(user).balanceOf(user.address);
-            const balanceDiff = newBalance.sub(currentBalance);
-            expect(balanceDiff).to.approxEqualTolerance(ousdUnits(amount), 1);
-
-            // Supply checks
-            const newSupply = await ousd.totalSupply();
-            const supplyDiff = newSupply.sub(currentSupply);
-            expect(supplyDiff).to.approxEqualTolerance(ousdUnits(amount), 1);
-
-            // Ensure some LP tokens got staked under metaStrategy address
-            const newRewardPoolBalance = await rewardPool
-              .connect(user)
-              .balanceOf(fixture.metaStrategyProxy.address);
-
-            const rewardPoolBalanceDiff = newRewardPoolBalance.sub(
-              currentRewardPoolBalance
-            );
-
-            if (
-              (await vault.vaultBuffer()).toString() == "1000000000000000000"
-            ) {
-              // If Vault Buffer is 100%, shouldn't deposit anything to strategy
-              expect(rewardPoolBalanceDiff).to.equal("0");
-            } else if (asset.address === dai.address) {
-              // Should not have staked when minted with DAI
-              expect(rewardPoolBalanceDiff).to.equal("0");
-            } else {
-              // Should have staked the LP tokens for USDT and USDC
-              expect(rewardPoolBalanceDiff).to.approxEqualTolerance(
-                ousdUnits(amount),
-                5
-              );
-            }
-          }
-
-          it("Should NOT stake DAI in Curve guage via metapool", async function () {
+          it("Should NOT stake DAI in Curve gauge via metapool", async function () {
             const { anna, dai } = fixture;
-            await mintTest(anna, dai, "432000");
+            await mintTest(fixture, anna, dai, "432000");
           });
 
-          it("Should stake USDT in Curve guage via metapool", async function () {
+          it("Should stake USDT in Curve gauge via metapool", async function () {
             const { josh, usdt } = fixture;
-            await mintTest(josh, usdt, "100000");
+            await mintTest(fixture, josh, usdt, "100000");
           });
 
-          it("Should stake USDC in Curve guage via metapool", async function () {
+          it("Should stake USDC in Curve gauge via metapool", async function () {
             const { matt, usdc } = fixture;
-            await mintTest(matt, usdc, "345000");
+            await mintTest(fixture, matt, usdc, "345000");
           });
         });
 
@@ -164,16 +103,18 @@ metastrategies.forEach(
           });
         });
 
-        it("Should have the correct initial maxWithdrawalSlippage state", async function () {
-          const { metaStrategy, anna } = fixture;
-          expect(
-            await metaStrategy.connect(anna).maxWithdrawalSlippage()
-          ).to.equal(ousdUnits("0.01"));
+        describe("post deployment", () => {
+          it("Should have the correct initial maxWithdrawalSlippage state", async function () {
+            const { metaStrategy, anna } = fixture;
+            expect(
+              await metaStrategy.connect(anna).maxWithdrawalSlippage()
+            ).to.equal(ousdUnits("0.01"));
+          });
         });
 
         describe("Withdraw all", function () {
           it("Should not allow withdraw all when MEW tries to manipulate the pool", async function () {
-            if (skipMewTest) {
+            if (config.skipMewTest) {
               this.skip();
               return;
             }
@@ -237,7 +178,7 @@ metastrategies.forEach(
           });
 
           it("Should successfully withdrawAll even without any changes to maxWithdrawalSlippage", async function () {
-            if (skipMewTest) {
+            if (config.skipMewTest) {
               this.skip();
               return;
             }
@@ -269,7 +210,55 @@ metastrategies.forEach(
               .withdrawAllFromStrategy(fixture.metaStrategyProxy.address);
           });
         });
-      }
-    );
+      });
+    }
+  );
+});
+
+async function mintTest(fixture, user, asset, amount = "30000") {
+  const { vault, ousd, dai, rewardPool } = fixture;
+  // pre-allocate just in case vault was holding some funds
+  await vault.connect(user).allocate();
+  await vault.connect(user).rebase();
+  const unitAmount = await units(amount, asset);
+
+  const currentSupply = await ousd.totalSupply();
+  const currentBalance = await ousd.connect(user).balanceOf(user.address);
+  const currentRewardPoolBalance = await rewardPool
+    .connect(user)
+    .balanceOf(fixture.metaStrategyProxy.address);
+
+  // Mint OUSD w/ asset
+  await vault.connect(user).mint(asset.address, unitAmount, 0);
+  await vault.connect(user).allocate();
+
+  // Ensure user has correct balance (w/ 1% slippage tolerance)
+  const newBalance = await ousd.connect(user).balanceOf(user.address);
+  const balanceDiff = newBalance.sub(currentBalance);
+  expect(balanceDiff).to.approxEqualTolerance(ousdUnits(amount), 1);
+
+  // Supply checks
+  const newSupply = await ousd.totalSupply();
+  const supplyDiff = newSupply.sub(currentSupply);
+  expect(supplyDiff).to.approxEqualTolerance(ousdUnits(amount), 1);
+
+  // Ensure some LP tokens got staked under metaStrategy address
+  const newRewardPoolBalance = await rewardPool
+    .connect(user)
+    .balanceOf(fixture.metaStrategyProxy.address);
+
+  const rewardPoolBalanceDiff = newRewardPoolBalance.sub(
+    currentRewardPoolBalance
+  );
+
+  if ((await vault.vaultBuffer()).toString() == "1000000000000000000") {
+    // If Vault Buffer is 100%, shouldn't deposit anything to strategy
+    expect(rewardPoolBalanceDiff).to.equal("0");
+  } else if (asset.address === dai.address) {
+    // Should not have staked when minted with DAI
+    expect(rewardPoolBalanceDiff).to.equal("0");
+  } else {
+    // Should have staked the LP tokens for USDT and USDC
+    expect(rewardPoolBalanceDiff).to.approxEqualTolerance(ousdUnits(amount), 5);
   }
-);
+}

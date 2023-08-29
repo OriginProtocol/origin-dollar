@@ -4,7 +4,7 @@ const addresses = require("../utils/addresses");
 module.exports = deploymentWithProposal(
   { deployName: "049_oeth_proxy", forceDeploy: false, forceSkip: true },
   async ({ deployWithConfirmation, ethers, getTxOpts, withConfirmation }) => {
-    const { deployerAddr, governorAddr } = await getNamedAccounts();
+    const { deployerAddr } = await getNamedAccounts();
     const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
     // Deployer Actions
@@ -23,14 +23,10 @@ module.exports = deploymentWithProposal(
 
     // 3. Init the proxy to point at the implementation
     await withConfirmation(
-      cOethProxy
-        .connect(sDeployer)
-        ["initialize(address,address,bytes)"](
-          dOETHImpl.address,
-          deployerAddr,
-          [],
-          await getTxOpts()
-        )
+      cOethProxy.connect(sDeployer)[
+        // eslint-disable-next-line no-unexpected-multiline
+        "initialize(address,address,bytes)"
+      ](dOETHImpl.address, deployerAddr, [], await getTxOpts())
     );
 
     // 5. Transfer governance

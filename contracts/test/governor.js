@@ -1,16 +1,16 @@
 const { expect } = require("chai");
-const { defaultFixture } = require("./_fixture");
-const {
-  loadFixture,
-  propose,
-  proposeAndExecute,
-  advanceTime,
-} = require("./helpers");
+
+const { loadDefaultFixture } = require("./_fixture");
+const { propose, proposeAndExecute, advanceTime } = require("./helpers");
 const { proposeArgs } = require("../utils/governor");
 
 describe("Can claim governance with Governor contract and govern", () => {
+  let fixture;
+  beforeEach(async () => {
+    fixture = await loadDefaultFixture();
+  });
+
   it("Can claim governance and call governance methods", async () => {
-    const fixture = await loadFixture(defaultFixture);
     const { vault, governor, governorContract } = fixture;
 
     //transfer governance
@@ -41,7 +41,6 @@ describe("Can claim governance with Governor contract and govern", () => {
   });
 
   it("Can claim governance and call governance methods in multiple calls", async () => {
-    const fixture = await loadFixture(defaultFixture);
     const { governorContract, vault, governor } = fixture;
 
     //transfer governance
@@ -78,7 +77,6 @@ describe("Can claim governance with Governor contract and govern", () => {
   });
 
   it("Should not allow anyone else to propose and queue", async () => {
-    const fixture = await loadFixture(defaultFixture);
     const { vault, governor, governorContract, anna } = fixture;
 
     await vault.connect(governor).transferGovernance(governorContract.address);
@@ -100,7 +98,6 @@ describe("Can claim governance with Governor contract and govern", () => {
   });
 
   it("Should be able to do one call to rule them all[Push simulation here]", async () => {
-    const fixture = await loadFixture(defaultFixture);
     const { compoundStrategy, vault, governor, governorContract, ousd } =
       fixture;
 
@@ -178,7 +175,6 @@ describe("Can claim governance with Governor contract and govern", () => {
   });
 
   it("Should be able transfer governance", async () => {
-    const fixture = await loadFixture(defaultFixture);
     const { governorContract, vault, governor } = fixture;
 
     await vault.connect(governor).transferGovernance(governorContract.address);
@@ -220,7 +216,6 @@ describe("Can claim governance with Governor contract and govern", () => {
   });
 
   it("Can cancel queued and pending transactions", async () => {
-    const fixture = await loadFixture(defaultFixture);
     const { vault, governor, governorContract } = fixture;
     //transfer governance
     await vault.connect(governor).transferGovernance(governorContract.address);
@@ -249,7 +244,6 @@ describe("Can claim governance with Governor contract and govern", () => {
   });
 
   it("Should not allow cancelled events to be queued/executed", async () => {
-    const fixture = await loadFixture(defaultFixture);
     const { vault, governor, governorContract } = fixture;
 
     //transfer governance
@@ -294,7 +288,6 @@ describe("Can claim governance with Governor contract and govern", () => {
   });
 
   it("Should not allow executing a proposal with a setPendingAdmin transaction", async () => {
-    const fixture = await loadFixture(defaultFixture);
     const { vault, governor, governorContract, anna } = fixture;
 
     await vault.connect(governor).transferGovernance(governorContract.address);
@@ -321,7 +314,6 @@ describe("Can claim governance with Governor contract and govern", () => {
   });
 
   it("Should allow admin to call setPendingAdmin", async () => {
-    const fixture = await loadFixture(defaultFixture);
     const { governor, governorContract, anna } = fixture;
 
     await governorContract

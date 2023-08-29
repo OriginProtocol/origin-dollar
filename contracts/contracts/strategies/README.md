@@ -42,6 +42,20 @@
 
 ![Convex ETH Metapool Strategy Storage](../../docs/ConvexEthMetaStrategyStorage.svg) -->
 
+## Flux Strategy
+
+### Hierarchy
+
+![Flux Strategy Hierarchy](../../docs/FluxStrategyHierarchy.svg)
+
+### Squashed
+
+![Flux Strategy Squashed](../../docs/FluxStrategySquashed.svg)
+
+### Storage
+
+![Flux Strategy Storage](../../docs/FluxStrategyStorage.svg)
+
 ## Frax ETH Strategy
 
 ### Hierarchy
@@ -55,6 +69,20 @@
 <!-- ### Storage
 
 ![Frax ETH Strategy Storage](../../docs/FraxETHStrategyStorage.svg) -->
+
+## Generalized ERC-4626 Strategy
+
+### Hierarchy
+
+![Generalized ERC-4626 Strategy Hierarchy](../../docs/Generalized4626StrategyHierarchy.svg)
+
+### Squashed
+
+![Generalized ERC-4626 Strategy Squashed](../../docs/Generalized4626StrategySquashed.svg)
+
+### Storage
+
+![Generalized ERC-4626 Strategy Storage](../../docs/Generalized4626StrategyStorage.svg)
 
 ## Morpho Aave Strategy
 

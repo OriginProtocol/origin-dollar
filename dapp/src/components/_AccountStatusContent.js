@@ -230,10 +230,6 @@ const AccountStatusContent = ({ className, onOpen }) => {
         }
 
         @media (max-width: 799px) {
-          .account-status-content {
-            height: 100%;
-          }
-
           .disconnect-box {
             margin-top: auto;
           }

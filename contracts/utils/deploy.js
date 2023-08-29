@@ -228,6 +228,21 @@ const executeProposal = async (proposalArgs, description, opts = {}) => {
         "0x000000000000000000000000000000000000000000000000000000000000003c", // 60 seconds
       ], // address, storageSlot, newValue
     });
+  } else {
+    log(`Setting queue time back to 172800 seconds`);
+    await hre.network.provider.request({
+      method: "hardhat_setStorageAt",
+      /* contracts/timelock/Timelock.sol storage slot layout:
+       * slot[0] address admin
+       * slot[1] address pendingAdmin
+       * slot[2] uint256 delay
+       */
+      params: [
+        governorContract.address,
+        "0x2",
+        "0x000000000000000000000000000000000000000000000000000000000002a300", // 172800 seconds
+      ], // address, storageSlot, newValue
+    });
   }
 
   const txOpts = await getTxOpts();
@@ -309,6 +324,7 @@ const executeProposalOnFork = async ({
 const executeGovernanceProposalOnFork = async ({
   proposalIdBn,
   proposalState,
+  reduceQueueTime,
   executeGasLimit = null,
 }) => {
   if (!isFork) throw new Error("Can only be used on Fork");
@@ -320,6 +336,8 @@ const executeGovernanceProposalOnFork = async ({
 
   const governorFive = await getGovernorFive();
   const timelock = await getTimelock();
+
+  await configureGovernanceContractDurations(reduceQueueTime);
 
   /* this should "almost" never happen since the votingDelay on the governor
    * contract is set to 1 block
@@ -484,34 +502,11 @@ const submitProposalGnosisSafe = async (
   process.exit();
 };
 
-/**
- * In forked environment simulated that 5/8 multisig has submitted an OGV
- * governance proposal
- *
- * @param {Array<Object>} proposalArgs
- * @param {string} description
- * @param {opts} Options
- *   reduceQueueTime: reduce queue proposal time to 60 seconds
- * @returns {Promise<void>}
- */
-const submitProposalToOgvGovernance = async (
-  proposalArgs,
-  description,
-  opts = {}
-) => {
-  if (!isFork && !isMainnet) {
-    throw new Error(
-      "submitProposalToOgvGovernance only works on Fork & Mainnet networks"
-    );
-  }
-
+const configureGovernanceContractDurations = async (reduceQueueTime) => {
   const governorFive = await getGovernorFive();
   const timelock = await getTimelock();
 
-  log(`Submitting proposal for ${description}`);
-  log(`Args: ${JSON.stringify(proposalArgs, null, 2)}`);
-
-  if (opts.reduceQueueTime) {
+  if (reduceQueueTime) {
     log(
       `Reducing required voting delay to 1 block and voting period to 60 blocks ` +
         `vote extension on late vote to 0 and timelock min delay to 5 seconds`
@@ -553,7 +548,79 @@ const submitProposalToOgvGovernance = async (
         "0x0000000000000000000000000000000000000000000000000000000000000005", // 5 seconds
       ], // address, storageSlot, newValue
     });
+  } else {
+    log(
+      `Setting back original values of required voting delay to 1 block and ` +
+        `voting period to 17280 blocks vote extension on late vote to 11520 and ` +
+        `timelock min delay to 172800 seconds`
+    );
+
+    // slot[4] uint256 votingDelay
+    await hre.network.provider.request({
+      method: "hardhat_setStorageAt",
+      params: [
+        governorFive.address,
+        "0x4",
+        "0x0000000000000000000000000000000000000000000000000000000000000001", // 1 block
+      ], // address, storageSlot, newValue
+    });
+    // slot[5] uint256 votingPeriod
+    await hre.network.provider.request({
+      method: "hardhat_setStorageAt",
+      params: [
+        governorFive.address,
+        "0x5",
+        "0x0000000000000000000000000000000000000000000000000000000000004380", // 17280 blocks
+      ], // address, storageSlot, newValue
+    });
+    // slot[11]uint256 lateQuoruVoteExtension
+    await hre.network.provider.request({
+      method: "hardhat_setStorageAt",
+      params: [
+        governorFive.address,
+        "0xB", // 11
+        "0x0000000000000000000000000000000000000000000000000000000000002d00", // 11520 blocks
+      ], // address, storageSlot, newValue
+    });
+    // slot[2]uint256 _minDelay
+    await hre.network.provider.request({
+      method: "hardhat_setStorageAt",
+      params: [
+        timelock.address,
+        "0x2",
+        "0x000000000000000000000000000000000000000000000000000000000002a300", // 172800 seconds
+      ], // address, storageSlot, newValue
+    });
   }
+};
+
+/**
+ * In forked environment simulated that 5/8 multisig has submitted an OGV
+ * governance proposal
+ *
+ * @param {Array<Object>} proposalArgs
+ * @param {string} description
+ * @param {opts} Options
+ *   reduceQueueTime: reduce queue proposal time to 60 seconds
+ * @returns {Promise<void>}
+ */
+const submitProposalToOgvGovernance = async (
+  proposalArgs,
+  description,
+  opts = {}
+) => {
+  if (!isFork && !isMainnet) {
+    throw new Error(
+      "submitProposalToOgvGovernance only works on Fork & Mainnet networks"
+    );
+  }
+
+  const governorFive = await getGovernorFive();
+
+  log(`Submitting proposal for ${description}`);
+  log(`Args: ${JSON.stringify(proposalArgs, null, 2)}`);
+
+  await configureGovernanceContractDurations(opts.reduceQueueTime);
 
   let signer;
   // we are submitting proposal using the deployer
@@ -663,6 +730,7 @@ const handlePossiblyActiveGovernanceProposal = async (
       await executeGovernanceProposalOnFork({
         proposalIdBn,
         proposalState,
+        reduceQueueTime,
       });
 
       // proposal executed skip deployment
@@ -693,7 +761,8 @@ const handlePossiblyActiveGovernanceProposal = async (
 const handlePossiblyActiveProposal = async (
   proposalId,
   deployName,
-  governor
+  governor,
+  reduceQueueTime
 ) => {
   if (isFork && proposalId) {
     const proposalCount = Number((await governor.proposalCount()).toString());
@@ -714,6 +783,8 @@ const handlePossiblyActiveProposal = async (
       console.log(
         `Found proposal id: ${proposalId} on forked network. Executing proposal containing deployment of: ${deployName}`
       );
+
+      await configureGovernanceContractDurations(reduceQueueTime);
 
       // skip queue if proposal is already queued
       await executeProposalOnFork({
@@ -846,6 +917,7 @@ function deploymentWithGovernanceProposal(opts, fn) {
       await executeGovernanceProposalOnFork({
         proposalIdBn,
         proposalState,
+        reduceQueueTime,
       });
       log("Proposal executed.");
     } else {
@@ -959,7 +1031,14 @@ function deploymentWithProposal(opts, fn) {
 
     // proposal has either been already executed on forked node or just been executed
     // no use of running the deploy script to create another
-    if (await handlePossiblyActiveProposal(proposalId, deployName, governor)) {
+    if (
+      await handlePossiblyActiveProposal(
+        proposalId,
+        deployName,
+        governor,
+        reduceQueueTime
+      )
+    ) {
       return;
     }
 

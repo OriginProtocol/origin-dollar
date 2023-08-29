@@ -1,4 +1,4 @@
-const { deploymentWithProposal, log } = require("../utils/deploy");
+const { deploymentWithProposal } = require("../utils/deploy");
 
 module.exports = deploymentWithProposal(
   { deployName: "037_dripper", forceDeploy: false },
@@ -11,7 +11,6 @@ module.exports = deploymentWithProposal(
   }) => {
     const { deployerAddr, governorAddr } = await getNamedAccounts();
     const sDeployer = await ethers.provider.getSigner(deployerAddr);
-    const sGovernor = await ethers.provider.getSigner(governorAddr);
 
     // Current contracts
     const cVaultProxy = await ethers.getContract("VaultProxy");
@@ -49,14 +48,10 @@ module.exports = deploymentWithProposal(
 
     // 3. Configure Proxy
     await withConfirmation(
-      cDripperProxy
-        .connect(sDeployer)
-        ["initialize(address,address,bytes)"](
-          cDripperImpl.address,
-          deployerAddr,
-          [],
-          await getTxOpts()
-        )
+      cDripperProxy.connect(sDeployer)[
+        // eslint-disable-next-line no-unexpected-multiline
+        "initialize(address,address,bytes)"
+      ](cDripperImpl.address, deployerAddr, [], await getTxOpts())
     );
 
     // 4. Configure Dripper to one week

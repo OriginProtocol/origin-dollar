@@ -49,14 +49,10 @@ module.exports = deploymentWithProposal(
 
     // 3. Init the proxy to point at the implementation
     await withConfirmation(
-      cMorphoCompoundStrategyProxy
-        .connect(sDeployer)
-        ["initialize(address,address,bytes)"](
-          dMorphoCompoundStrategyImpl.address,
-          deployerAddr,
-          [],
-          await getTxOpts()
-        )
+      cMorphoCompoundStrategyProxy.connect(sDeployer)[
+        // eslint-disable-next-line no-unexpected-multiline
+        "initialize(address,address,bytes)"
+      ](dMorphoCompoundStrategyImpl.address, deployerAddr, [], await getTxOpts())
     );
 
     // 4. Init and configure new Morpho strategy

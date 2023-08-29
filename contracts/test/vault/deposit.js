@@ -1,15 +1,20 @@
-const { compoundVaultFixture } = require("../_fixture");
 const { expect } = require("chai");
 
-const { usdcUnits, loadFixture, isFork } = require("../helpers");
+const { createFixtureLoader, compoundVaultFixture } = require("../_fixture");
+const { usdcUnits, isFork } = require("../helpers");
 
 describe("Vault deposit pausing", function () {
   if (isFork) {
     this.timeout(0);
   }
+  let fixture;
+  const loadFixture = createFixtureLoader(compoundVaultFixture);
+  beforeEach(async () => {
+    fixture = await loadFixture();
+  });
 
   it("Governor can pause and unpause", async () => {
-    const { anna, governor, vault } = await loadFixture(compoundVaultFixture);
+    const { anna, governor, vault } = fixture;
     await vault.connect(governor).pauseCapital();
     expect(await vault.connect(anna).capitalPaused()).to.be.true;
     await vault.connect(governor).unpauseCapital();
@@ -17,7 +22,7 @@ describe("Vault deposit pausing", function () {
   });
 
   it("Strategist can pause and unpause", async () => {
-    const { anna, strategist, vault } = await loadFixture(compoundVaultFixture);
+    const { anna, strategist, vault } = fixture;
     await vault.connect(strategist).pauseCapital();
     expect(await vault.connect(anna).capitalPaused()).to.be.true;
     await vault.connect(strategist).unpauseCapital();
@@ -25,7 +30,7 @@ describe("Vault deposit pausing", function () {
   });
 
   it("Other can not pause and unpause", async () => {
-    const { anna, vault } = await loadFixture(compoundVaultFixture);
+    const { anna, vault } = fixture;
     await expect(vault.connect(anna).pauseCapital()).to.be.revertedWith(
       "Caller is not the Strategist or Governor"
     );
@@ -35,9 +40,7 @@ describe("Vault deposit pausing", function () {
   });
 
   it("Pausing deposits stops mint", async () => {
-    const { anna, governor, vault, usdc } = await loadFixture(
-      compoundVaultFixture
-    );
+    const { anna, governor, vault, usdc } = fixture;
     await vault.connect(governor).pauseCapital();
     expect(await vault.connect(anna).capitalPaused()).to.be.true;
     await usdc.connect(anna).approve(vault.address, usdcUnits("50.0"));
@@ -46,9 +49,7 @@ describe("Vault deposit pausing", function () {
   });
 
   it("Unpausing deposits allows mint", async () => {
-    const { anna, governor, vault, usdc } = await loadFixture(
-      compoundVaultFixture
-    );
+    const { anna, governor, vault, usdc } = fixture;
     await vault.connect(governor).pauseCapital();
     expect(await vault.connect(anna).capitalPaused()).to.be.true;
     await vault.connect(governor).unpauseCapital();
@@ -58,7 +59,7 @@ describe("Vault deposit pausing", function () {
   });
 
   it("Deposit pause status can be read", async () => {
-    const { anna, vault } = await loadFixture(compoundVaultFixture);
+    const { anna, vault } = fixture;
     expect(await vault.connect(anna).capitalPaused()).to.be.false;
   });
 });

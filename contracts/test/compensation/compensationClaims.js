@@ -1,12 +1,11 @@
-const { defaultFixture } = require("../_fixture");
 const { expect } = require("chai");
-const { utils } = require("ethers");
-const parseUnits = utils.parseUnits;
+const { parseUnits } = require("ethers").utils;
+
+const { loadDefaultFixture } = require("../_fixture");
 const {
   ousdUnits,
   usdcUnits,
   advanceTime,
-  loadFixture,
   isGanacheFork,
 } = require("../helpers");
 
@@ -52,7 +51,7 @@ describe.skip("Compensation Claims", function () {
     let governor, adjuster, matt, josh, anna, ousd, compensationClaims;
 
     beforeEach(async () => {
-      fixture = await loadFixture(defaultFixture);
+      fixture = await loadDefaultFixture();
       governor = fixture.governor;
       adjuster = fixture.adjuster;
       matt = fixture.matt;
@@ -137,7 +136,7 @@ describe.skip("Compensation Claims", function () {
     let governor, adjuster, matt, anna, compensationClaims;
 
     beforeEach(async () => {
-      fixture = await loadFixture(defaultFixture);
+      fixture = await loadDefaultFixture();
       governor = fixture.governor;
       adjuster = fixture.adjuster;
       matt = fixture.matt;
@@ -235,7 +234,7 @@ describe.skip("Compensation Claims", function () {
   describe("Governor", async () => {
     let governor, adjuster, matt, josh, anna, ousd, usdc, compensationClaims;
     beforeEach(async () => {
-      fixture = await loadFixture(defaultFixture);
+      fixture = await loadDefaultFixture();
       governor = fixture.governor;
       adjuster = fixture.adjuster;
       matt = fixture.matt;

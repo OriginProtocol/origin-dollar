@@ -2,23 +2,7 @@ const { deploymentWithProposal } = require("../utils/deploy");
 
 module.exports = deploymentWithProposal(
   { deployName: "032_convex_rewards", forceDeploy: false },
-  async ({
-    assetAddresses,
-    deployWithConfirmation,
-    ethers,
-    getTxOpts,
-    withConfirmation,
-  }) => {
-    const { deployerAddr, governorAddr } = await getNamedAccounts();
-    const sDeployer = await ethers.provider.getSigner(deployerAddr);
-
-    // Current contracts
-    const cVaultProxy = await ethers.getContract("VaultProxy");
-    const cVaultAdmin = await ethers.getContractAt(
-      "VaultAdmin",
-      cVaultProxy.address
-    );
-
+  async ({ assetAddresses, deployWithConfirmation, ethers }) => {
     // Deployer Actions
     // ----------------
 
@@ -56,7 +40,7 @@ module.exports = deploymentWithProposal(
           signature: "setRewardTokenAddress(address)",
           args: [assetAddresses.CRV],
         },
-        // 3. Use correct CVX token addresss
+        // 3. Use correct CVX token address
         {
           contract: cConvexStrategy,
           signature: "setCvxRewardTokenAddress(address)",

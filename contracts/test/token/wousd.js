@@ -1,7 +1,7 @@
 const { expect } = require("chai");
-const { defaultFixture } = require("../_fixture");
 
-const { ousdUnits, daiUnits, isFork, loadFixture } = require("../helpers");
+const { loadDefaultFixture } = require("../_fixture");
+const { ousdUnits, daiUnits, isFork } = require("../helpers");
 
 describe("WOUSD", function () {
   if (isFork) {
@@ -11,7 +11,7 @@ describe("WOUSD", function () {
   let ousd, wousd, vault, dai, matt, josh, governor;
 
   beforeEach(async () => {
-    const fixture = await loadFixture(defaultFixture);
+    const fixture = await loadDefaultFixture();
     ousd = fixture.ousd;
     wousd = fixture.wousd;
     vault = fixture.vault;

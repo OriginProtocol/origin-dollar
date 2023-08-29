@@ -1,4 +1,4 @@
-const { deploymentWithProposal, log } = require("../utils/deploy");
+const { deploymentWithProposal } = require("../utils/deploy");
 
 // Deploy new staking implimentation contract with fix
 // Upgrade to using it

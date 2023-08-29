@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import dynamic from 'next/dynamic'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
 import { useCookies } from 'react-cookie'
@@ -20,7 +21,6 @@ import {
   darkTheme,
 } from '@rainbow-me/rainbowkit'
 import {
-  argentWallet,
   ledgerWallet,
   phantomWallet,
   safeWallet,
@@ -51,7 +51,7 @@ const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_V2_PROJECT_ID
 
 // Rainbow kit init
 const { wallets } = getDefaultWallets({
-  appName: 'OETH Dapp',
+  appName: 'OETH',
   projectId,
   chains,
 })
@@ -61,7 +61,6 @@ const connectors = connectorsForWallets([
   {
     groupName: 'Other',
     wallets: [
-      argentWallet({ projectId, chains }),
       mewWallet({ projectId, chains }),
       okxWallet({ projectId, chains }),
       ledgerWallet({ projectId, chains }),
@@ -77,6 +76,10 @@ const client = createClient({
   autoConnect: true,
   provider,
   connectors,
+})
+
+const GeoFenceCheck = dynamic(() => import('components/GeoFenceCheck'), {
+  ssr: false,
 })
 
 function App({ Component, pageProps, err }) {
@@ -125,6 +128,7 @@ function App({ Component, pageProps, err }) {
           <link rel="canonical" href={canonicalUrl} />
         </Head>
         <QueryClientProvider client={queryClient}>
+          <GeoFenceCheck />
           <AccountListener />
           <TransactionListener />
           <UserActivityListener />

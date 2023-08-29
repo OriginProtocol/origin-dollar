@@ -7,12 +7,10 @@ module.exports = deploymentWithProposal(
     assetAddresses,
     deployWithConfirmation,
     ethers,
-    getTxOpts,
     withConfirmation,
   }) => {
-    const { deployerAddr, governorAddr } = await getNamedAccounts();
+    const { deployerAddr } = await getNamedAccounts();
     const sDeployer = await ethers.provider.getSigner(deployerAddr);
-    const sGovernor = await ethers.provider.getSigner(governorAddr);
     const dVaultAdmin = await deployWithConfirmation(
       "VaultAdmin",
       undefined,
@@ -32,10 +30,6 @@ module.exports = deploymentWithProposal(
     const cVaultProxy = await ethers.getContract("VaultProxy");
     const cVaultAdmin = await ethers.getContractAt(
       "VaultAdmin",
-      cVaultProxy.address
-    );
-    const cVaultCore = await ethers.getContractAt(
-      "VaultCore",
       cVaultProxy.address
     );
     const cVault = await ethers.getContractAt("Vault", cVaultProxy.address);

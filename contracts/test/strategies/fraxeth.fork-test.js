@@ -1,32 +1,24 @@
 const { expect } = require("chai");
 
-const { units, oethUnits, forkOnlyDescribe } = require("../helpers");
+const { units, oethUnits, forkOnlyDescribe, isCI } = require("../helpers");
 
 const {
-  fraxETHStrategyFixtureSetup,
-  defaultFixtureSetup,
+  createFixtureLoader,
+  fraxETHStrategyFixture,
   mintWETH,
   impersonateAndFundContract,
 } = require("./../_fixture");
 
-const fraxETHFixture = fraxETHStrategyFixtureSetup();
-
 forkOnlyDescribe("ForkTest: FraxETH Strategy", function () {
   this.timeout(0);
-  // due to hardhat forked mode timeouts - retry failed tests up to 3 times
-  this.retries(3);
+
+  // Retry up to 3 times on CI
+  this.retries(isCI ? 3 : 0);
 
   let fixture;
+  const loadFixture = createFixtureLoader(fraxETHStrategyFixture);
   beforeEach(async () => {
-    fixture = await fraxETHFixture();
-  });
-
-  after(async () => {
-    // This is needed to revert fixtures
-    // The other tests as of now don't use proper fixtures
-    // Rel: https://github.com/OriginProtocol/origin-dollar/issues/1259
-    const f = defaultFixtureSetup();
-    await f();
+    fixture = await loadFixture();
   });
 
   describe("Mint", function () {

@@ -9,7 +9,6 @@ import Nav from 'components/Nav'
 import ClaimStakeModal from 'components/ClaimStakeModal'
 import { sleep } from 'utils/utils'
 import SpinningLoadingCircle from 'components/SpinningLoadingCircle'
-import { useAnalytics } from 'use-analytics'
 import useStake from 'hooks/useStake'
 import useCompensation from 'hooks/useCompensation'
 import { formatCurrency } from 'utils/math'
@@ -33,7 +32,7 @@ function Compensation({ locale, onLocale, rpcProvider }) {
     remainingOUSDCompensation,
     ognClaimed,
   } = useCompensation()
-  const { track } = useAnalytics()
+
   const { compensation: compensationContract } = useStoreState(
     ContractStore,
     (s) => {
@@ -43,14 +42,6 @@ function Compensation({ locale, onLocale, rpcProvider }) {
       return {}
     }
   )
-
-  const loginConnect = () => {
-    if (process.browser) {
-      track('Connect', {
-        source: 'Compensation page',
-      })
-    }
-  }
 
   useEffect(() => {
     setAccountConnected(active && account)
@@ -91,12 +82,6 @@ function Compensation({ locale, onLocale, rpcProvider }) {
                       'Connect a cryptowallet to see your compensation'
                     )}
                   </h3>
-                  <button
-                    className="btn btn-primary"
-                    onClick={async () => loginConnect()}
-                  >
-                    {fbt('Connect', 'Connect')}
-                  </button>
                 </div>
               ) : compensationData ? (
                 <>

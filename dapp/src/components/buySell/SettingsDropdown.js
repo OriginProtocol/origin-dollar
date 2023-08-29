@@ -2,11 +2,11 @@ import React, { useState, useEffect } from 'react'
 import { BigNumber } from 'ethers'
 import Dropdown from 'components/Dropdown'
 import { fbt } from 'fbt-runtime'
-import analytics from 'utils/analytics'
 import ContractStore from 'stores/ContractStore'
 import { useStoreState } from 'pullstate'
 import { assetRootPath } from 'utils/image'
 import { truncateDecimals } from 'utils/math'
+import { event } from '../../../lib/gtm'
 
 const SettingsDropdown = ({ setPriceToleranceValue, priceToleranceValue }) => {
   const [settingsOpen, setSettingsOpen] = useState(false)
@@ -102,6 +102,11 @@ const SettingsDropdown = ({ setPriceToleranceValue, priceToleranceValue }) => {
           onClick={(e) => {
             const newOpenState = !settingsOpen
             setSettingsOpen(newOpenState)
+            if (!settingsOpen) {
+              event({
+                event: 'open_settings',
+              })
+            }
           }}
         />
       </Dropdown>
