@@ -342,8 +342,8 @@ export async function setupContracts(account, chainId, fetchId) {
     for (const name in coins) {
       const coin = coins[name]
       try {
-        const priceBNMint = await vault.priceUSDMint(coin.address)
-        const priceBNRedeem = await vault.priceUSDRedeem(coin.address)
+        const priceBNMint = await vault.priceUnitMint(coin.address)
+        const priceBNRedeem = await vault.priceUnitRedeem(coin.address)
         // Oracle returns with 18 decimal places
         // Also, convert that to USD/<coin> format
         const priceMint = Number(priceBNMint.toString()) / 1000000000000000000
