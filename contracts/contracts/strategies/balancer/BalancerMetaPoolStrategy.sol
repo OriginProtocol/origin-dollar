@@ -334,7 +334,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
          */
         _lpDepositAll();
 
-        // STEP 6 - Unswap balancer pool assets to vault collateral assets and sent to the vault.
+        // STEP 6 - Unswap balancer pool assets to vault collateral assets and send to the vault.
 
         // For each of the specified assets
         for (uint256 i = 0; i < _strategyAssets.length; ++i) {
