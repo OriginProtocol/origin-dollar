@@ -10,7 +10,11 @@ const {
   balancerWstEthFixture,
   impersonateAndFundContract,
   createFixtureLoader,
+  mintWETH,
+  tiltBalancerMetaStableWETHPool,
 } = require("../_fixture");
+
+const temporaryFork = require("../../utils/temporaryFork");
 
 const log = require("../../utils/logger")("test:fork:strategy:balancer");
 
@@ -38,7 +42,7 @@ forkOnlyDescribe(
 
     let fixture;
 
-    describe.only("Post deployment", () => {
+    describe("Post deployment", () => {
       beforeEach(async () => {
         fixture = await loadBalancerREthFixtureDefault();
       });
@@ -91,7 +95,7 @@ forkOnlyDescribe(
       });
     });
 
-    describe.only("Deposit", function () {
+    describe("Deposit", function () {
       beforeEach(async () => {
         fixture = await loadBalancerREthFixtureNotDefault();
       });
@@ -169,7 +173,7 @@ forkOnlyDescribe(
       });
     });
 
-    describe.only("Withdraw", function () {
+    describe("Withdraw", function () {
       beforeEach(async () => {
         fixture = await loadBalancerREthFixtureNotDefault();
         const { balancerREthStrategy, oethVault, strategist, reth, weth } =
@@ -295,7 +299,7 @@ forkOnlyDescribe(
       it("Should be able to withdraw with higher withdrawal deviation", async function () {});
     });
 
-    describe.only("Large withdraw", function () {
+    describe("Large withdraw", function () {
       const depositAmount = 30000;
       let depositAmountUnits, oethVaultSigner;
       beforeEach(async () => {
@@ -499,7 +503,7 @@ forkOnlyDescribe(
       });
     });
 
-    describe.only("Harvest rewards", function () {
+    describe("Harvest rewards", function () {
       beforeEach(async () => {
         fixture = await loadBalancerREthFixtureDefault();
       });
@@ -518,7 +522,7 @@ forkOnlyDescribe(
 forkOnlyDescribe(
   "ForkTest: Balancer MetaStablePool wstETH/WETH Strategy",
   function () {
-    describe.only("Deposit", function () {
+    describe("Deposit", function () {
       let fixture;
 
       beforeEach(async () => {
@@ -558,7 +562,7 @@ forkOnlyDescribe(
       });
     });
 
-    describe.only("Withdraw", function () {
+    describe("Withdraw", function () {
       let fixture;
 
       beforeEach(async () => {
@@ -689,7 +693,7 @@ forkOnlyDescribe(
       });
     });
 
-    describe.only("Harvest rewards", function () {
+    describe("Harvest rewards", function () {
       it("Should be able to collect reward tokens", async function () {
         const { josh, balancerWstEthStrategy, oethHarvester } =
           await loadBalancerWstEthFixture();
@@ -698,6 +702,79 @@ forkOnlyDescribe(
           // eslint-disable-next-line
           "harvestAndSwap(address)"
         ](balancerWstEthStrategy.address);
+      });
+    });
+
+    describe("Deposit in MEV environment", function () {
+      let attackerAddress;
+      let sAttacker;
+
+      beforeEach(async () => {
+        fixture = await loadBalancerREthFixtureNotDefault();
+
+        attackerAddress = "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045";
+        sAttacker = await impersonateAndFundContract(attackerAddress);
+        await mintWETH(fixture.weth, sAttacker, "500000");
+      });
+
+      it("should fail if pool is being manipulated", async function () {
+        const {
+          balancerREthStrategy,
+          oethVault,
+          oethVaultValueChecker,
+          oeth,
+          weth,
+          reth,
+          rEthBPT,
+          josh,
+          balancerVault,
+        } = fixture;
+        let forkedStratBalance = 0;
+        const { vaultChange, supplyChange, profit } = await temporaryFork({
+          temporaryAction: async () => {
+            await depositTest(fixture, [5, 5], [weth, reth], rEthBPT);
+            forkedStratBalance = await balancerREthStrategy["checkBalance()"]();
+          },
+          vaultContract: oethVault,
+          oTokenContract: oeth,
+        });
+
+        expect(forkedStratBalance).to.be.gte(await oethUnits("0"), 1);
+        const stratBalance = await balancerREthStrategy["checkBalance()"]();
+        expect(stratBalance).to.equal(await oethUnits("0"), 1);
+
+        const { profit: profitWithTilt } = await temporaryFork({
+          temporaryAction: async () => {
+            await tiltBalancerMetaStableWETHPool({
+              percentageOfTVLDeposit: 300, // 300%
+              attackerSigner: sAttacker,
+              balancerPoolId: await balancerREthStrategy.balancerPoolId(),
+              assetAddressArray: [reth.address, weth.address],
+              wethIndex: 1,
+              bptToken: rEthBPT,
+              balancerVault,
+              reth,
+              weth,
+            });
+
+            await oethVaultValueChecker.connect(josh).takeSnapshot();
+            await depositTest(fixture, [5, 5], [weth, reth], rEthBPT, 20);
+
+            await expect(
+              oethVaultValueChecker.connect(josh).checkDelta(
+                profit, // expected profit
+                oethUnits("0.1"), // profit variance
+                vaultChange, // expected vaultChange
+                oethUnits("0.1") // expected vaultChange variance
+              )
+            ).to.be.revertedWith("Profit too high");
+          },
+          vaultContract: oethVault,
+          oTokenContract: oeth,
+        });
+
+        const profitDiff = profitWithTilt.sub(profit);
+        expect(profitDiff).to.be.gte(oethUnits("0.3"), 1);
       });
     });
   }
@@ -744,7 +821,13 @@ async function getPoolBalances(balancerVault, pid) {
   return result;
 }
 
-async function depositTest(fixture, amounts, allAssets, bpt) {
+async function depositTest(
+  fixture,
+  amounts,
+  allAssets,
+  bpt,
+  strategyValueDiffPct = 1
+) {
   const {
     oethVault,
     oeth,
@@ -792,7 +875,10 @@ async function depositTest(fixture, amounts, allAssets, bpt) {
   const strategyValuesDiff = after.strategyValues.sum.sub(
     before.strategyValues.sum
   );
-  expect(strategyValuesDiff).to.approxEqualTolerance(sumEthAmounts, 1);
+  expect(strategyValuesDiff).to.approxEqualTolerance(
+    sumEthAmounts,
+    strategyValueDiffPct
+  );
   expect(
     after.strategyValues.value,
     "strategy total value = sum of asset values"

@@ -1,5 +1,6 @@
 const hre = require("hardhat");
 const { ethers } = hre;
+const { BigNumber } = ethers;
 const { formatUnits } = require("ethers/lib/utils");
 
 const addresses = require("../utils/addresses");
@@ -82,6 +83,10 @@ const defaultFixture = deployments.createFixture(async () => {
 
   const ousd = await ethers.getContractAt("OUSD", ousdProxy.address);
   const vault = await ethers.getContractAt("IVault", vaultProxy.address);
+  const vaultValueChecker = await ethers.getContract("VaultValueChecker");
+  const oethVaultValueChecker = await ethers.getContract(
+    "OETHVaultValueChecker"
+  );
   const oethProxy = await ethers.getContract("OETHProxy");
   const OETHVaultProxy = await ethers.getContract("OETHVaultProxy");
   const oethVault = await ethers.getContractAt(
@@ -530,6 +535,7 @@ const defaultFixture = deployments.createFixture(async () => {
     // Contracts
     ousd,
     vault,
+    vaultValueChecker,
     harvester,
     dripper,
     mockNonRebasing,
@@ -608,6 +614,7 @@ const defaultFixture = deployments.createFixture(async () => {
 
     // OETH
     oethVault,
+    oethVaultValueChecker,
     oeth,
     frxETH,
     sfrxETH,
@@ -908,6 +915,62 @@ async function convexVaultFixture() {
       fixture.convexStrategy.address
     );
   return fixture;
+}
+
+/* Deposit WETH liquidity in Balancer metaStable WETH pool to simulate
+ * MEV attack.
+ */
+async function tiltBalancerMetaStableWETHPool({
+  // how much of pool TVL should be deposited. 100 == 100%
+  percentageOfTVLDeposit = 100,
+  attackerSigner,
+  balancerPoolId,
+  assetAddressArray,
+  wethIndex,
+  bptToken,
+  balancerVault,
+  reth,
+  weth,
+}) {
+  const amountsIn = Array(assetAddressArray.length).fill(BigNumber.from("0"));
+  // calculate the amount of WETH that should be deposited in relation to pool TVL
+  amountsIn[wethIndex] = (await bptToken.totalSupply())
+    .mul(BigNumber.from(percentageOfTVLDeposit))
+    .div(BigNumber.from("100"));
+
+  /* encode user data for pool joining
+   *
+   * EXACT_TOKENS_IN_FOR_BPT_OUT:
+   * User sends precise quantities of tokens, and receives an
+   * estimated but unknown (computed at run time) quantity of BPT.
+   *
+   * ['uint256', 'uint256[]', 'uint256']
+   * [EXACT_TOKENS_IN_FOR_BPT_OUT, amountsIn, minimumBPT]
+   */
+  const userData = ethers.utils.defaultAbiCoder.encode(
+    ["uint256", "uint256[]", "uint256"],
+    [1, amountsIn, BigNumber.from("0")]
+  );
+
+  await reth
+    .connect(attackerSigner)
+    .approve(balancerVault.address, oethUnits("1").mul(oethUnits("1"))); // 1e36
+  await weth
+    .connect(attackerSigner)
+    .approve(balancerVault.address, oethUnits("1").mul(oethUnits("1"))); // 1e36
+
+  await balancerVault.connect(attackerSigner).joinPool(
+    balancerPoolId, // poolId
+    attackerSigner.address, // sender
+    attackerSigner.address, // recipient
+    [
+      //JoinPoolRequest
+      assetAddressArray, // assets
+      amountsIn, // maxAmountsIn
+      userData, // userData
+      false, // fromInternalBalance
+    ]
+  );
 }
 
 /**
@@ -1407,6 +1470,20 @@ async function impersonateAccount(address) {
   await hre.network.provider.request({
     method: "hardhat_impersonateAccount",
     params: [address],
+  });
+}
+
+async function nodeSnapshot() {
+  return await hre.network.provider.request({
+    method: "evm_snapshot",
+    params: [],
+  });
+}
+
+async function nodeRevert(snapshotId) {
+  return await hre.network.provider.request({
+    method: "evm_revert",
+    params: [snapshotId],
   });
 }
 
@@ -1952,6 +2029,7 @@ module.exports = {
   impersonateAccount,
   balancerREthFixture,
   balancerWstEthFixture,
+  tiltBalancerMetaStableWETHPool,
   fraxETHStrategyFixture,
   oethMorphoAaveFixture,
   mintWETH,
@@ -1960,4 +2038,6 @@ module.exports = {
   oethCollateralSwapFixture,
   ousdCollateralSwapFixture,
   fluxStrategyFixture,
+  nodeSnapshot,
+  nodeRevert,
 };
