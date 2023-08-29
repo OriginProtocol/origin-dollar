@@ -72,7 +72,9 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         for (uint256 i = 0; i < assetsLength; ++i) {
             strategyAssets[i] = assetsMapped[i];
             // Get the asset balance in this strategy contract
-            strategyAmounts[i] = IERC20(strategyAssets[i]).balanceOf(address(this));
+            strategyAmounts[i] = IERC20(strategyAssets[i]).balanceOf(
+                address(this)
+            );
         }
         _deposit(strategyAssets, strategyAmounts);
     }
@@ -320,8 +322,9 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         balancerVault.exitPool(
             balancerPoolId,
             address(this),
-            // TODO: this is incorrect and should be altered when/if we intend to support
-            // pools that deal with native ETH
+            /* Payable keyword is required because of the IBalancerVault interface even though
+             * this strategy shall never be receiving native ETH
+             */
             payable(address(this)),
             request
         );
@@ -418,8 +421,9 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         balancerVault.exitPool(
             balancerPoolId,
             address(this),
-            // TODO: this is incorrect and should be altered when/if we intend to support
-            // pools that deal with native ETH
+            /* Payable keyword is required because of the IBalancerVault interface even though
+             * this strategy shall never be receiving native ETH
+             */
             payable(address(this)),
             request
         );
