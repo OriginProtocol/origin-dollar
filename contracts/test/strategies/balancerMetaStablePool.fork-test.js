@@ -704,7 +704,7 @@ forkOnlyDescribe(
       });
     });
 
-    describe.only("Deposit in MEV environment", function () {
+    describe("Deposit in MEV environment", function () {
       let attackerAddress;
       let sAttacker;
       let fixture;
