@@ -271,11 +271,11 @@ def build_swap_tx(from_token, to_token, from_amount, max_slippage, allow_partial
     actual_slippage = (quote_1inch_min_swap_amount - quote_1inch) / quote_1inch
 
     print("------ Price Quotes ------")
-    print("1Inch expected tokens:                   {:.6f}".format(quote_1inch / 10**18))
-    print("1Inch expected tokens (no slippage):     {:.6f}".format(quote_1inch_min_swap_amount / 10**18))
-    print("Oracle expected tokens:                  {:.6f}".format(quote_oracles / 10**18))
-    print("Coingecko expected tokens:               {:.6f}".format(quote_coingecko / 10**18))
-    print("CoinmarketCap expected tokens:           {:.6f}".format(quote_cmc / 10**18))
+    print("1Inch expected tokens:                   {:.6f}".format(scale_amount(to_token, 'human', quote_1inch)))
+    print("1Inch expected tokens (no slippage):     {:.6f}".format(scale_amount(to_token, 'human', quote_1inch_min_swap_amount)))
+    print("Oracle expected tokens:                  {:.6f}".format(scale_amount(to_token, 'human', quote_oracles)))
+    print("Coingecko expected tokens:               {:.6f}".format(scale_amount(to_token, 'human', quote_coingecko)))
+    print("CoinmarketCap expected tokens:           {:.6f}".format(scale_amount(to_token, 'human', quote_cmc)))
     print("Tokens expected (with {:.2f}% slippage)    {:.6f}".format(max_slippage, scale_amount(from_token, 'human', min_tokens_with_slippage)))
     print("")
     print("------ Price Diffs -------")
