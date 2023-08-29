@@ -23,7 +23,7 @@ swapper_address = SWAPPER_1INCH
 # 2 = 2%
 MAX_PRICE_DEVIATION = 2
 
-
+OUSD_ASSET_ADDRESSES = (DAI, USDT, USDC)
 
 @contextmanager
 def silent_tx():
@@ -49,7 +49,6 @@ def scale_amount(from_token, to_token, amount, decimals=0):
 
         'human': 0
     }
-
     scaled_amount = (amount * 10 ** decimalsMap[to_token]) / (10 ** decimalsMap[from_token])
 
     if decimals == 0:
@@ -155,8 +154,8 @@ def get_1inch_swap(
     allowPartialFill,
     min_expected_amount,
 ):
-    vault_addr = VAULT_PROXY_ADDRESS if from_token in (DAI, USDT, USDC) else VAULT_OETH_PROXY_ADDRESS
-    c_vault_core = vault_core if from_token in (DAI, USDT, USDC) else oeth_vault_core
+    vault_addr = VAULT_PROXY_ADDRESS if from_token in OUSD_ASSET_ADDRESSES else VAULT_OETH_PROXY_ADDRESS
+    c_vault_core = vault_core if from_token in OUSD_ASSET_ADDRESSES else oeth_vault_core
 
     router_1inch = load_contract('router_1inch_v5', ROUTER_1INCH_V5)
     SWAP_SELECTOR = "0x12aa3caf" #swap(address,(address,address,address,address,uint256,uint256,uint256),bytes,bytes)
@@ -165,10 +164,10 @@ def get_1inch_swap(
 
 
     req = requests.get('https://{}.1inch.io/v5.0/1/swap'.format(ONEINCH_SUBDOMAIN), params={
-        'fromTokenAddress': from_token,
-        'fromAddress': swapper_address,
-        'destReceiver': vault_addr,
-        'toTokenAddress': to_token,
+        'fromTokenAddress': from_token.lower(),
+        'fromAddress': swapper_address.lower(),
+        'destReceiver': vault_addr.lower(),
+        'toTokenAddress': to_token.lower(),
         'amount': str(from_amount),
         'allowPartialFill': allowPartialFill,
         'disableEstimate': 'true',
@@ -224,7 +223,7 @@ def get_1inch_swap(
 # using oracle router calculate what the expected `toTokenAmount` should be
 # this function fails if Oracle data is too stale    
 def get_oracle_router_quote(from_token, to_token, from_amount):
-    router = oracle_router if from_token in (DAI, USDT, USDC) else oeth_oracle_router
+    router = oracle_router if from_token in OUSD_ASSET_ADDRESSES else oeth_oracle_router
     
     # Oracles communicate the price of token to ETH so to derive the the price
     # of one token to another we should multiply 2 oracle prices: 
@@ -250,12 +249,11 @@ console_colors["WARNING"] = '\033[93m'
 #   - max_slippage -> allowed slippage when swapping expressed in percentage points
 #                 2 = 2%
 #   - partial_fill -> are partial fills allowed
-def build_swap_tx(from_token, to_token, from_amount, max_slippage, allow_partial_fill):
+#   - dry_run -> If set to True, doesn't run the tx against the active network
+def build_swap_tx(from_token, to_token, from_amount, max_slippage, allow_partial_fill, dry_run=True):
     if COINMARKETCAP_API_KEY is None:
         raise Exception("Set coinmarketcap api key by setting CMC_API_KEY variable. Free plan key will suffice: https://coinmarketcap.com/api/pricing/")
 
-    from_token = from_token.lower()
-    to_token = to_token.lower()
     min_slippage_amount = scale_amount(WETH, from_token, 10**18)
     quote_1inch = get_1inch_quote(from_token, to_token, from_amount)
     quote_1inch_min_swap_amount_price = get_1inch_quote(from_token, to_token, min_slippage_amount)
@@ -278,7 +276,7 @@ def build_swap_tx(from_token, to_token, from_amount, max_slippage, allow_partial
     print("Oracle expected tokens:                  {:.6f}".format(quote_oracles / 10**18))
     print("Coingecko expected tokens:               {:.6f}".format(quote_coingecko / 10**18))
     print("CoinmarketCap expected tokens:           {:.6f}".format(quote_cmc / 10**18))
-    print("Tokens expected (with {:.2f}% slippage)    {:.6f}".format(max_slippage, min_tokens_with_slippage / 10**18))
+    print("Tokens expected (with {:.2f}% slippage)    {:.6f}".format(max_slippage, scale_amount(from_token, 'human', min_tokens_with_slippage)))
     print("")
     print("------ Price Diffs -------")
     print("1Inch to Oracle Difference:              {:.6f}%".format(oracle_to_1inch_diff * 100))
@@ -308,8 +306,13 @@ def build_swap_tx(from_token, to_token, from_amount, max_slippage, allow_partial
 
     to, data = get_1inch_swap(from_token, to_token, from_amount, max_slippage, allow_partial_fill, min_tokens_with_slippage)
 
-    return to, data
+    if dry_run == True:
+        return to, data
+    
+    decoded_input = vault_core.swapCollateral.decode_input(data)
+    return vault_core.swapCollateral(*decoded_input, {'from':STRATEGIST})
 
-# from_token, to_token, from_token_amount, slippage, allow_partial_fill
+
+# from_token, to_token, from_token_amount, slippage, allow_partial_fill, dry_run
 #build_swap_tx(WETH, FRXETH, 300 * 10**18, 1, False)
 
