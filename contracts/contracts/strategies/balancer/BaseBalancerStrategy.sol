@@ -277,7 +277,7 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
     {
         require(
             _assets.length == _amounts.length,
-            "Assets & amounts length mismatch"
+            "Assets & amounts mismatch"
         );
 
         for (uint256 i = 0; i < _assets.length; ++i) {
