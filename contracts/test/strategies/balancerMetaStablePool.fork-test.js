@@ -202,14 +202,17 @@ forkOnlyDescribe(
         ["5.123452", "29.00123"],
         ["22.1232", "30.12342"],
       ];
-      
-      for (const [wethAmount, rethAmount] of withdrawalTestCases) {
 
+      for (const [wethAmount, rethAmount] of withdrawalTestCases) {
         it(`Should be able to withdraw ${wethAmount} WETH and ${rethAmount} RETH from the pool`, async function () {
           const { reth, balancerREthStrategy, oethVault, weth } = fixture;
 
-          const vaultWethBalanceBefore = await weth.balanceOf(oethVault.address);
-          const vaultRethBalanceBefore = await reth.balanceOf(oethVault.address);
+          const vaultWethBalanceBefore = await weth.balanceOf(
+            oethVault.address
+          );
+          const vaultRethBalanceBefore = await reth.balanceOf(
+            oethVault.address
+          );
           const wethWithdrawAmount = await units(wethAmount, weth);
           const rethWithdrawAmount = await units(rethAmount, reth);
 
@@ -226,10 +229,14 @@ forkOnlyDescribe(
             );
 
           expect(
-            (await weth.balanceOf(oethVault.address)).sub(vaultWethBalanceBefore)
+            (await weth.balanceOf(oethVault.address)).sub(
+              vaultWethBalanceBefore
+            )
           ).to.approxEqualTolerance(wethWithdrawAmount, 0.01);
           expect(
-            (await reth.balanceOf(oethVault.address)).sub(vaultRethBalanceBefore)
+            (await reth.balanceOf(oethVault.address)).sub(
+              vaultRethBalanceBefore
+            )
           ).to.approxEqualTolerance(rethWithdrawAmount, 0.01);
         });
       }
@@ -559,12 +566,12 @@ forkOnlyDescribe(
       ];
 
       for (const [wethAmount, stETHAmount] of withdrawalTestCases) {
-
         it(`Should be able to withdraw ${wethAmount} WETH and ${stETHAmount} stETH from the pool`, async function () {
-
           const { stETH, balancerWstEthStrategy, oethVault, weth } = fixture;
 
-          const vaultWethBalanceBefore = await weth.balanceOf(oethVault.address);
+          const vaultWethBalanceBefore = await weth.balanceOf(
+            oethVault.address
+          );
           const vaultstEthBalanceBefore = await stETH.balanceOf(
             oethVault.address
           );
@@ -584,7 +591,9 @@ forkOnlyDescribe(
             );
 
           expect(
-            (await weth.balanceOf(oethVault.address)).sub(vaultWethBalanceBefore)
+            (await weth.balanceOf(oethVault.address)).sub(
+              vaultWethBalanceBefore
+            )
           ).to.approxEqualTolerance(wethWithdrawAmount, 1);
           expect(
             (await stETH.balanceOf(oethVault.address)).sub(

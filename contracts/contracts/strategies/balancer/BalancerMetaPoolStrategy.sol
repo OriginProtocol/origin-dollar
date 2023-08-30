@@ -46,7 +46,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
      * asset strategy. For that reason there is no need to support this
      * functionality.
      */
-    function deposit(address[] memory, uint256[] memory)
+    function deposit(address[] calldata, uint256[] calldata)
         external
         onlyVault
         nonReentrant
@@ -101,7 +101,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
                 assetToPToken[strategyAsset] != address(0),
                 "Unsupported asset"
             );
-            strategyAssetsToPoolAssets[i] = toPoolAsset(_strategyAssets[i]);
+            strategyAssetsToPoolAssets[i] = toPoolAsset(strategyAsset);
 
             if (strategyAmount > 0) {
                 emit Deposit(strategyAsset, platformAddress, strategyAmount);
@@ -192,8 +192,8 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
      */
     function withdraw(
         address _recipient,
-        address[] memory _strategyAssets,
-        uint256[] memory _strategyAmounts
+        address[] calldata _strategyAssets,
+        uint256[] calldata _strategyAmounts
     ) external onlyVault nonReentrant {
         _withdraw(_recipient, _strategyAssets, _strategyAmounts);
     }
@@ -240,11 +240,11 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         for (uint256 i = 0; i < tokens.length; ++i) {
             poolAssets[i] = address(tokens[i]);
 
+            // Convert the Balancer pool asset back to a vault collateral asset
+            address strategyAsset = fromPoolAsset(poolAssets[i]);
+
             // for each of the vault assets
             for (uint256 j = 0; j < _strategyAssets.length; ++j) {
-                // Convert the Balancer pool asset back to a strategy asset
-                address strategyAsset = fromPoolAsset(poolAssets[i]);
-
                 // If the vault asset equals the vault asset mapped from the Balancer pool asset
                 if (_strategyAssets[j] == strategyAsset) {
                     (, poolAssetsAmountsOut[i]) = toPoolAsset(
