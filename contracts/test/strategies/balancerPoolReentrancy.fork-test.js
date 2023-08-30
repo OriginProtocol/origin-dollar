@@ -29,7 +29,7 @@ forkOnlyDescribe(
       fixture = await loadFixture();
     });
 
-    it.only("Should not allow read-only reentrancy", async () => {
+    it("Should not allow read-only reentrancy", async () => {
       const { weth, reth, oethVault, rEthBPT, balancerREthPID, daniel } =
         fixture;
 

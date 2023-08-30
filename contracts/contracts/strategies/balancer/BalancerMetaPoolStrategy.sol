@@ -28,37 +28,30 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
     {}
 
     /**
-     * @notice Deposits an `_amount` of vault collateral assets
-     * from the this strategy contract to the Balancer pool.
-     * @param _asset Address of the Vault collateral asset
-     * @param _amount The amount of Vault collateral assets to deposit
+     * @notice There are no plans to configure BalancerMetaPool as a default
+     * asset strategy. For that reason there is no need to support this
+     * functionality.
      */
-    function deposit(address _asset, uint256 _amount)
+    function deposit(address, uint256)
         external
         override
         onlyVault
         nonReentrant
     {
-        address[] memory assets = new address[](1);
-        uint256[] memory amounts = new uint256[](1);
-        assets[0] = _asset;
-        amounts[0] = _amount;
-
-        _deposit(assets, amounts);
+        revert("Not supported");
     }
 
     /**
-     * @notice Deposits specified vault collateral assets
-     * from the this strategy contract to the Balancer pool.
-     * @param _assets Address of the Vault collateral assets
-     * @param _amounts The amount of each asset to deposit
+     * @notice There are no plans to configure BalancerMetaPool as a default
+     * asset strategy. For that reason there is no need to support this
+     * functionality.
      */
-    function deposit(address[] memory _assets, uint256[] memory _amounts)
+    function deposit(address[] calldata, uint256[] calldata)
         external
         onlyVault
         nonReentrant
     {
-        _deposit(_assets, _amounts);
+        revert("Not supported");
     }
 
     /**
@@ -66,42 +59,58 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
      */
     function depositAll() external override onlyVault nonReentrant {
         uint256 assetsLength = assetsMapped.length;
-        address[] memory assets = new address[](assetsLength);
-        uint256[] memory amounts = new uint256[](assetsLength);
+        address[] memory strategyAssets = new address[](assetsLength);
+        uint256[] memory strategyAmounts = new uint256[](assetsLength);
 
         // For each vault collateral asset
         for (uint256 i = 0; i < assetsLength; ++i) {
-            assets[i] = assetsMapped[i];
+            strategyAssets[i] = assetsMapped[i];
             // Get the asset balance in this strategy contract
-            amounts[i] = IERC20(assets[i]).balanceOf(address(this));
+            strategyAmounts[i] = IERC20(strategyAssets[i]).balanceOf(
+                address(this)
+            );
         }
-        _deposit(assets, amounts);
+        _deposit(strategyAssets, strategyAmounts);
     }
 
-    function _deposit(address[] memory _assets, uint256[] memory _amounts)
-        internal
-    {
-        require(_assets.length == _amounts.length, "Array length missmatch");
+    function _deposit(
+        address[] memory _strategyAssets,
+        uint256[] memory _strategyAmounts
+    ) internal {
+        require(
+            _strategyAssets.length == _strategyAmounts.length,
+            "Array length missmatch"
+        );
 
         (IERC20[] memory tokens, , ) = balancerVault.getPoolTokens(
             balancerPoolId
         );
 
-        uint256[] memory mappedAmounts = new uint256[](tokens.length);
-        address[] memory mappedAssets = new address[](tokens.length);
+        uint256[] memory strategyAssetAmountsToPoolAssetAmounts = new uint256[](
+            _strategyAssets.length
+        );
+        address[] memory strategyAssetsToPoolAssets = new address[](
+            _strategyAssets.length
+        );
 
-        for (uint256 i = 0; i < _assets.length; ++i) {
-            address asset = _assets[i];
-            uint256 amount = _amounts[i];
+        for (uint256 i = 0; i < _strategyAssets.length; ++i) {
+            address strategyAsset = _strategyAssets[i];
+            uint256 strategyAmount = _strategyAmounts[i];
 
-            require(assetToPToken[asset] != address(0), "Unsupported asset");
-            mappedAssets[i] = toPoolAsset(_assets[i]);
+            require(
+                assetToPToken[strategyAsset] != address(0),
+                "Unsupported asset"
+            );
+            strategyAssetsToPoolAssets[i] = toPoolAsset(strategyAsset);
 
-            if (amount > 0) {
-                emit Deposit(asset, platformAddress, amount);
+            if (strategyAmount > 0) {
+                emit Deposit(strategyAsset, platformAddress, strategyAmount);
 
                 // wrap rebasing assets like stETH and frxETH to wstETH and sfrxETH
-                (, mappedAmounts[i]) = wrapPoolAsset(asset, amount);
+                (, strategyAssetAmountsToPoolAssetAmounts[i]) = wrapPoolAsset(
+                    strategyAsset,
+                    strategyAmount
+                );
             }
         }
 
@@ -112,16 +121,21 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
             poolAssets[i] = address(tokens[i]);
 
             // For each of the mapped assets
-            for (uint256 j = 0; j < mappedAssets.length; ++j) {
+            for (uint256 j = 0; j < strategyAssetsToPoolAssets.length; ++j) {
                 // If the pool asset is the same as the mapped asset
-                if (poolAssets[i] == mappedAssets[j]) {
-                    amountsIn[i] = mappedAmounts[j];
+                if (poolAssets[i] == strategyAssetsToPoolAssets[j]) {
+                    amountsIn[i] = strategyAssetAmountsToPoolAssetAmounts[j];
                 }
             }
         }
 
-        uint256 minBPT = getBPTExpected(_assets, _amounts);
-        uint256 minBPTwSlippage = minBPT.mulTruncate(1e18 - maxDepositSlippage);
+        uint256 minBPT = _getBPTExpected(
+            strategyAssetsToPoolAssets,
+            strategyAssetAmountsToPoolAssetAmounts
+        );
+        uint256 minBPTwDeviation = minBPT.mulTruncate(
+            1e18 - maxDepositDeviation
+        );
 
         /* EXACT_TOKENS_IN_FOR_BPT_OUT:
          * User sends precise quantities of tokens, and receives an
@@ -133,7 +147,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         bytes memory userData = abi.encode(
             IBalancerVault.WeightedPoolJoinKind.EXACT_TOKENS_IN_FOR_BPT_OUT,
             amountsIn,
-            minBPTwSlippage
+            minBPTwDeviation
         );
 
         IBalancerVault.JoinPoolRequest memory request = IBalancerVault
@@ -154,95 +168,92 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
     /**
      * @notice Withdraw a Vault collateral asset from the Balancer pool.
      * @param _recipient Address to receive the Vault collateral assets. Typically is the Vault.
-     * @param _asset Address of the Vault collateral asset
-     * @param _amount The amount of Vault collateral assets to withdraw
+     * @param _strategyAsset Address of the Vault collateral asset
+     * @param _strategyAmount The amount of Vault collateral assets to withdraw
      */
     function withdraw(
         address _recipient,
-        address _asset,
-        uint256 _amount
+        address _strategyAsset,
+        uint256 _strategyAmount
     ) external override onlyVault nonReentrant {
-        address[] memory assets = new address[](1);
-        uint256[] memory amounts = new uint256[](1);
-        assets[0] = _asset;
-        amounts[0] = _amount;
+        address[] memory strategyAssets = new address[](1);
+        uint256[] memory strategyAmounts = new uint256[](1);
+        strategyAssets[0] = _strategyAsset;
+        strategyAmounts[0] = _strategyAmount;
 
-        _withdraw(_recipient, assets, amounts);
+        _withdraw(_recipient, strategyAssets, strategyAmounts);
     }
 
     /**
      * @notice Withdraw multiple Vault collateral asset from the Balancer pool.
      * @param _recipient Address to receive the Vault collateral assets. Typically is the Vault.
-     * @param _assets Addresses of the Vault collateral assets
-     * @param _amounts The amounts of Vault collateral assets to withdraw
+     * @param _strategyAssets Addresses of the Vault collateral assets
+     * @param _strategyAmounts The amounts of Vault collateral assets to withdraw
      */
     function withdraw(
         address _recipient,
-        address[] memory _assets,
-        uint256[] memory _amounts
+        address[] calldata _strategyAssets,
+        uint256[] calldata _strategyAmounts
     ) external onlyVault nonReentrant {
-        _withdraw(_recipient, _assets, _amounts);
+        _withdraw(_recipient, _strategyAssets, _strategyAmounts);
     }
 
     /**
      * @dev Withdraw multiple Vault collateral asset from the Balancer pool.
      * @param _recipient Address to receive the Vault collateral assets. Typically is the Vault.
-     * @param _assets Addresses of the Vault collateral assets
-     * @param _amounts The amounts of Vault collateral assets to withdraw
+     * @param _strategyAssets Addresses of the Vault collateral assets
+     * @param _strategyAmounts The amounts of Vault collateral assets to withdraw
      */
     function _withdraw(
         address _recipient,
-        address[] memory _assets,
-        uint256[] memory _amounts
+        address[] memory _strategyAssets,
+        uint256[] memory _strategyAmounts
     ) internal {
-        require(_assets.length == _amounts.length, "Invalid input arrays");
-
-        // STEP 1 - Calculate the max about of Balancer Pool Tokens (BPT) to withdraw
-
-        // Estimate the required amount of Balancer Pool Tokens (BPT) for the assets
-        uint256 maxBPTtoWithdraw = getBPTExpected(_assets, _amounts);
-        // Increase BPTs by the max allowed slippage
-        // Any excess BPTs will be left in this strategy contract
-        maxBPTtoWithdraw = maxBPTtoWithdraw.mulTruncate(
-            1e18 + maxWithdrawalSlippage
+        require(
+            _strategyAssets.length == _strategyAmounts.length,
+            "Invalid input arrays"
         );
 
-        // STEP 2  - Withdraw the Balancer Pool Tokens (BPT) from Aura to this strategy contract
+        for (uint256 i = 0; i < _strategyAssets.length; ++i) {
+            require(
+                assetToPToken[_strategyAssets[i]] != address(0),
+                "Unsupported asset"
+            );
+        }
 
-        // Withdraw BPT from Aura allowing for BPTs left in this strategy contract from previous withdrawals
-        _lpWithdraw(
-            maxBPTtoWithdraw - IERC20(platformAddress).balanceOf(address(this))
-        );
-
-        // STEP 3 - Calculate the Balancer pool assets and amounts from the vault collateral assets
+        // STEP 1 - Calculate the Balancer pool assets and amounts from the vault collateral assets
 
         // Get all the supported balancer pool assets
         (IERC20[] memory tokens, , ) = balancerVault.getPoolTokens(
             balancerPoolId
         );
         // Calculate the balancer pool assets and amounts to withdraw
-        uint256[] memory poolAmountsOut = new uint256[](tokens.length);
+        uint256[] memory poolAssetsAmountsOut = new uint256[](tokens.length);
         address[] memory poolAssets = new address[](tokens.length);
         // Is the wrapped asset amount indexed by the assets array, not the order of the Balancer pool tokens
         // eg wstETH and sfrxETH amounts, not the stETH and frxETH amounts
-        uint256[] memory wrappedAssetAmounts = new uint256[](_assets.length);
+        uint256[] memory strategyAssetsToPoolAssetsAmounts = new uint256[](
+            _strategyAssets.length
+        );
 
         // For each of the Balancer pool assets
         for (uint256 i = 0; i < tokens.length; ++i) {
             poolAssets[i] = address(tokens[i]);
 
-            // for each of the vault assets
-            for (uint256 j = 0; j < _assets.length; ++j) {
-                // Convert the Balancer pool asset back to a vault collateral asset
-                address vaultAsset = fromPoolAsset(poolAssets[i]);
+            // Convert the Balancer pool asset back to a vault collateral asset
+            address strategyAsset = fromPoolAsset(poolAssets[i]);
 
+            // for each of the vault assets
+            for (uint256 j = 0; j < _strategyAssets.length; ++j) {
                 // If the vault asset equals the vault asset mapped from the Balancer pool asset
-                if (_assets[j] == vaultAsset) {
-                    (, poolAmountsOut[i]) = toPoolAsset(
-                        vaultAsset,
-                        _amounts[j]
+                if (_strategyAssets[j] == strategyAsset) {
+                    (, poolAssetsAmountsOut[i]) = toPoolAsset(
+                        strategyAsset,
+                        _strategyAmounts[j]
                     );
-                    wrappedAssetAmounts[j] = poolAmountsOut[i];
+                    strategyAssetsToPoolAssetsAmounts[j] = poolAssetsAmountsOut[
+                        i
+                    ];
 
                     /* Because of the potential Balancer rounding error mentioned below
                      * the contract might receive 1-2 WEI smaller amount than required
@@ -253,12 +264,35 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
                      * For that reason we `overshoot` the required tokens expected to
                      * circumvent the error
                      */
-                    if (poolAmountsOut[i] > 0) {
-                        poolAmountsOut[i] += 2;
+                    if (poolAssetsAmountsOut[i] > 0) {
+                        poolAssetsAmountsOut[i] += 2;
                     }
                 }
             }
         }
+
+        // STEP 2 - Calculate the max about of Balancer Pool Tokens (BPT) to withdraw
+
+        // Estimate the required amount of Balancer Pool Tokens (BPT) for the assets
+        uint256 maxBPTtoWithdraw = _getBPTExpected(
+            poolAssets,
+            /* all non 0 values are overshot by 2 WEI and with the expected mainnet
+             * ~1% withdrawal deviation, the 2 WEI aren't important
+             */
+            poolAssetsAmountsOut
+        );
+        // Increase BPTs by the max allowed deviation
+        // Any excess BPTs will be left in this strategy contract
+        maxBPTtoWithdraw = maxBPTtoWithdraw.mulTruncate(
+            1e18 + maxWithdrawalDeviation
+        );
+
+        // STEP 3  - Withdraw the Balancer Pool Tokens (BPT) from Aura to this strategy contract
+
+        // Withdraw BPT from Aura allowing for BPTs left in this strategy contract from previous withdrawals
+        _lpWithdraw(
+            maxBPTtoWithdraw - IERC20(platformAddress).balanceOf(address(this))
+        );
 
         // STEP 4 - Withdraw the balancer pool assets from the pool
 
@@ -271,7 +305,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
          */
         bytes memory userData = abi.encode(
             IBalancerVault.WeightedPoolExitKind.BPT_IN_FOR_EXACT_TOKENS_OUT,
-            poolAmountsOut,
+            poolAssetsAmountsOut,
             maxBPTtoWithdraw
         );
 
@@ -293,38 +327,45 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         balancerVault.exitPool(
             balancerPoolId,
             address(this),
-            // TODO: this is incorrect and should be altered when/if we intend to support
-            // pools that deal with native ETH
+            /* Payable keyword is required because of the IBalancerVault interface even though
+             * this strategy shall never be receiving native ETH
+             */
             payable(address(this)),
             request
         );
 
         // STEP 5 - Re-deposit any left over BPT tokens back into Aura
-        /* When concluding how much of BPT we need to withdraw from Aura we rely on Oracle prices
-         * and those can be stale (most ETH based have 24 hour heartbeat & 2% price change trigger)
-         * After exiting the pool strategy could have left over BPT tokens that are not earning
-         * boosted yield. We re-deploy those back in.
+        /* When concluding how much of BPT we need to withdraw from Aura we overshoot by
+         * roughly around 1% (initial mainnet setting of maxWithdrawalDeviation). After exiting
+         * the pool strategy could have left over BPT tokens that are not earning boosted yield.
+         * We re-deploy those back in.
          */
         _lpDepositAll();
 
-        // STEP 6 - Unswap balancer pool assets to vault collateral assets and sent to the vault.
+        // STEP 6 - Unswap balancer pool assets to vault collateral assets and send to the vault.
 
         // For each of the specified assets
-        for (uint256 i = 0; i < _assets.length; ++i) {
+        for (uint256 i = 0; i < _strategyAssets.length; ++i) {
             // Unwrap assets like wstETH and sfrxETH to rebasing assets stETH and frxETH
-            uint256 assetAmount = 0;
-            if (wrappedAssetAmounts[i] > 0) {
-                assetAmount = unwrapPoolAsset(
-                    _assets[i],
-                    wrappedAssetAmounts[i]
+            if (strategyAssetsToPoolAssetsAmounts[i] > 0) {
+                unwrapPoolAsset(
+                    _strategyAssets[i],
+                    strategyAssetsToPoolAssetsAmounts[i]
                 );
             }
 
             // Transfer the vault collateral assets to the recipient, which is typically the vault
-            if (_amounts[i] > 0) {
-                IERC20(_assets[i]).safeTransfer(_recipient, _amounts[i]);
+            if (_strategyAmounts[i] > 0) {
+                IERC20(_strategyAssets[i]).safeTransfer(
+                    _recipient,
+                    _strategyAmounts[i]
+                );
 
-                emit Withdrawal(_assets[i], platformAddress, _amounts[i]);
+                emit Withdrawal(
+                    _strategyAssets[i],
+                    platformAddress,
+                    _strategyAmounts[i]
+                );
             }
         }
     }
@@ -374,8 +415,9 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         balancerVault.exitPool(
             balancerPoolId,
             address(this),
-            // TODO: this is incorrect and should be altered when/if we intend to support
-            // pools that deal with native ETH
+            /* Payable keyword is required because of the IBalancerVault interface even though
+             * this strategy shall never be receiving native ETH
+             */
             payable(address(this)),
             request
         );
@@ -384,33 +426,47 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         // For each of the Balancer pool assets
         for (uint256 i = 0; i < tokens.length; ++i) {
             address poolAsset = address(tokens[i]);
-            // Convert the balancer pool asset to the vault collateral asset
-            address asset = fromPoolAsset(poolAsset);
+            // Convert the balancer pool asset to the strategy asset
+            address strategyAsset = fromPoolAsset(poolAsset);
             // Get the balancer pool assets withdraw from the pool plus any that were already in this strategy contract
             uint256 poolAssetAmount = IERC20(poolAsset).balanceOf(
                 address(this)
             );
 
             // Unwrap assets like wstETH and sfrxETH to rebasing assets stETH and frxETH
-            uint256 assetAmount = 0;
+            uint256 unwrappedAmount = 0;
             if (poolAssetAmount > 0) {
-                assetAmount = unwrapPoolAsset(asset, poolAssetAmount);
+                unwrappedAmount = unwrapPoolAsset(
+                    strategyAsset,
+                    poolAssetAmount
+                );
             }
 
             // Transfer the vault collateral assets to the vault
-            if (assetAmount > 0) {
-                IERC20(asset).safeTransfer(vaultAddress, assetAmount);
-                emit Withdrawal(asset, platformAddress, assetAmount);
+            if (unwrappedAmount > 0) {
+                IERC20(strategyAsset).safeTransfer(
+                    vaultAddress,
+                    unwrappedAmount
+                );
+                emit Withdrawal(
+                    strategyAsset,
+                    platformAddress,
+                    unwrappedAmount
+                );
             }
         }
     }
 
     /**
-     * @notice Approves the Balancer pool to transfer all supported
-     * assets from this strategy.
-     * Also approve any suppered assets that are wrapped in the Balancer pool
-     * like stETH and frxETH, to be transferred from this strategy to their
-     * respective wrapper contracts. eg wstETH and sfrxETH.
+     * @notice Approves the Balancer Vault to transfer poolAsset counterparts
+     * of all of the supported assets from this strategy. E.g. stETH is a supported
+     * strategy and Balancer Vault gets unlimited approval to transfer wstETH.
+     *
+     * If Balancer pool uses a wrapped version of a supported asset then also approve
+     * unlimited usage of an asset to the contract responsible for wrapping.
+     *
+     * Approve unlimited spending by Balancer Vault and Aura reward pool of the
+     * pool BPT tokens.
      *
      * Is only executable by the Governor.
      */
@@ -422,7 +478,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
     {
         uint256 assetCount = assetsMapped.length;
         for (uint256 i = 0; i < assetCount; ++i) {
-            _approveAsset(assetsMapped[i]);
+            _abstractSetPToken(assetsMapped[i], platformAddress);
         }
         _approveBase();
     }
@@ -432,10 +488,10 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         address poolAsset = toPoolAsset(_asset);
         if (_asset == stETH) {
             // slither-disable-next-line unused-return
-            IERC20(stETH).approve(wstETH, 1e50);
+            IERC20(stETH).approve(wstETH, type(uint256).max);
         } else if (_asset == frxETH) {
             // slither-disable-next-line unused-return
-            IERC20(frxETH).approve(sfrxETH, 1e50);
+            IERC20(frxETH).approve(sfrxETH, type(uint256).max);
         }
         _approveAsset(poolAsset);
     }
@@ -460,7 +516,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
      * @param _asset Address of the Balancer pool asset
      * @return rate of the corresponding asset
      */
-    function getRateProviderRate(address _asset)
+    function _getRateProviderRate(address _asset)
         internal
         view
         override
