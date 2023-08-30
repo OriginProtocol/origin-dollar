@@ -468,11 +468,15 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
     }
 
     /**
-     * @notice Approves the Balancer pool to transfer all supported
-     * assets from this strategy.
-     * Also approve any suppered assets that are wrapped in the Balancer pool
-     * like stETH and frxETH, to be transferred from this strategy to their
-     * respective wrapper contracts. eg wstETH and sfrxETH.
+     * @notice Approves the Balancer Vault to transfer poolAsset counterparts
+     * of all of the supported assets from this strategy. E.g. stETH is a supported
+     * strategy and Balancer Vault gets unlimited approval to transfer wstETH.
+     *
+     * If Balancer pool uses a wrapped version of a supported asset then also approve
+     * unlimited usage of an asset to the contract responsible for wrapping.
+     *
+     * Approve unlimited spending by Balancer Vault and Aura reward pool of the
+     * pool BPT tokens.
      *
      * Is only executable by the Governor.
      */
@@ -484,7 +488,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
     {
         uint256 assetCount = assetsMapped.length;
         for (uint256 i = 0; i < assetCount; ++i) {
-            _approveAsset(assetsMapped[i]);
+            _abstractSetPToken(assetsMapped[i], platformAddress);
         }
         _approveBase();
     }
