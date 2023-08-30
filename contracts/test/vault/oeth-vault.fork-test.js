@@ -89,17 +89,19 @@ forkOnlyDescribe("ForkTest: OETH Vault", function () {
         }
       });
       it("should partially redeem", async () => {
-        const { oeth, oethVault, matt } = fixture;
+        const { oeth, oethVault } = fixture;
 
-        expect(await oeth.balanceOf(matt.address)).to.gt(10);
+        expect(await oeth.balanceOf(oethWhaleAddress)).to.gt(10);
 
         const amount = parseUnits("10", 18);
         const minEth = parseUnits("9.94", 18);
 
-        const tx = await oethVault.connect(matt).redeem(amount, minEth);
+        const tx = await oethVault
+          .connect(oethWhaleSigner)
+          .redeem(amount, minEth);
         await expect(tx)
           .to.emit(oethVault, "Redeem")
-          .withNamedArgs({ _addr: matt.address });
+          .withNamedArgs({ _addr: oethWhaleAddress });
       });
       it("OETH whale can not full redeem due to liquidity", async () => {
         const { oeth, oethVault } = fixture;
