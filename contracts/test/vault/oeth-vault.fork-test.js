@@ -5,7 +5,6 @@ const addresses = require("../../utils/addresses");
 const {
   createFixtureLoader,
   oethDefaultFixture,
-  oethCollateralSwapFixture,
   impersonateAccount,
 } = require("../_fixture");
 const { forkOnlyDescribe, isCI } = require("../helpers");
@@ -57,7 +56,7 @@ forkOnlyDescribe("ForkTest: OETH Vault", function () {
     });
     describe("user operations", () => {
       let oethWhaleSigner;
-      const loadFixture = createFixtureLoader(oethCollateralSwapFixture);
+      const loadFixture = createFixtureLoader(oethDefaultFixture);
       beforeEach(async () => {
         fixture = await loadFixture();
 
@@ -120,7 +119,7 @@ forkOnlyDescribe("ForkTest: OETH Vault", function () {
 
         const oethWhaleBalance = await oeth.balanceOf(oethWhaleAddress);
         expect(oethWhaleBalance, "no longer an OETH whale").to.gt(
-          parseUnits("100", 18)
+          parseUnits("1000", 18)
         );
 
         await oethVault.connect(timelock).withdrawAllFromStrategies();
