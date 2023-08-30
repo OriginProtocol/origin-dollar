@@ -239,7 +239,7 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
      * would make it invulnerable to MEV pool manipulation. See recent Balancer exploit:
      * https://www.notion.so/originprotocol/Balancer-OETH-strategy-9becdea132704e588782a919d7d471eb?pvs=4#1cf07de12fc64f1888072321e0644348
      *
-     * To mitigate MEV possibilities during deposits and withdraws, the VaultValueChecker will use checkBalance before and after the move 
+     * To mitigate MEV possibilities during deposits and withdraws, the VaultValueChecker will use checkBalance before and after the move
      * to ensure the expected changes took place.
      *
      * @param _asset Address of the Balancer pool asset
@@ -461,8 +461,8 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
      * @param _maxDepositDeviation Max deposit deviation denominated in
      *        wad (number with 18 decimals): 1e18 == 100%, 1e16 == 1%
      *
-     * IMPORTANT Minimum maxDepositDeviation will default to 1% (1e16) 
-     * for production usage. Vault value checker in combination with 
+     * IMPORTANT Minimum maxDepositDeviation will default to 1% (1e16)
+     * for production usage. Vault value checker in combination with
      * checkBalance will catch any unexpected manipulation.
      */
     function setMaxDepositDeviation(uint256 _maxDepositDeviation)
