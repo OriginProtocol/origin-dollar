@@ -105,7 +105,7 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         emit MaxWithdrawalDeviationUpdated(0, maxWithdrawalDeviation);
         emit MaxDepositDeviationUpdated(0, maxDepositDeviation);
 
-        IERC20[] memory poolAssets = getPoolAssets();
+        IERC20[] memory poolAssets = _getPoolAssets();
         require(
             poolAssets.length == _assets.length,
             "Pool assets length mismatch"
@@ -185,7 +185,7 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
          * ETH units we need to convert the ETH denominated amount to asset amount.
          */
         if (toPoolAsset(_asset) == _asset) {
-            amount = amount.divPrecisely(getRateProviderRate(_asset));
+            amount = amount.divPrecisely(_getRateProviderRate(_asset));
         }
     }
 
@@ -258,7 +258,7 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
      * https://www.notion.so/originprotocol/Balancer-OETH-strategy-9becdea132704e588782a919d7d471eb?pvs=4#ce01495ae70346d8971f5dced809fb83
      */
     /* solhint-enable max-line-length */
-    function getBPTExpected(address _asset, uint256 _amount)
+    function _getBPTExpected(address _asset, uint256 _amount)
         internal
         view
         virtual
@@ -269,7 +269,7 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         bptExpected = _amount.mulTruncate(poolAssetRate).divPrecisely(bptRate);
     }
 
-    function getBPTExpected(address[] memory _assets, uint256[] memory _amounts)
+    function _getBPTExpected(address[] memory _assets, uint256[] memory _amounts)
         internal
         view
         virtual
@@ -298,7 +298,7 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
      * @notice Balancer returns assets and rateProviders for corresponding assets ordered
      * by numerical order.
      */
-    function getPoolAssets() internal view returns (IERC20[] memory assets) {
+    function _getPoolAssets() internal view returns (IERC20[] memory assets) {
         (assets, , ) = balancerVault.getPoolTokens(balancerPoolId);
     }
 
@@ -482,7 +482,7 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         pToken.safeApprove(address(balancerVault), type(uint256).max);
     }
 
-    function getRateProviderRate(address _asset)
+    function _getRateProviderRate(address _asset)
         internal
         view
         virtual
