@@ -131,6 +131,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
                 }
             }
 
+            // should never happen -> except if strategy is miss-configured
             require(matchingAssetFound, "Matching asset not found");
         }
 
