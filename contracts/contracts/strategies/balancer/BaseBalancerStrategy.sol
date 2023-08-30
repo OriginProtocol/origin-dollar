@@ -461,9 +461,9 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
      * @param _maxDepositDeviation Max deposit deviation denominated in
      *        wad (number with 18 decimals): 1e18 == 100%, 1e16 == 1%
      *
-     * IMPORTANT Minimum maxDepositDeviation will be 1% (1e16) for production
-     * usage. Vault value checker in combination with checkBalance will
-     * catch any unexpected manipulation.
+     * IMPORTANT Minimum maxDepositDeviation will default to 1% (1e16) 
+     * for production usage. Vault value checker in combination with 
+     * checkBalance will catch any unexpected manipulation.
      */
     function setMaxDepositDeviation(uint256 _maxDepositDeviation)
         external
