@@ -73,6 +73,13 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         _deposit(strategyAssets, strategyAmounts);
     }
 
+    /*
+     * _deposit doesn't require a read-only re-entrancy protection since during the deposit
+     * the function enters the Balancer Vault Context. If this function were called as part of
+     * the attacking contract (while intercepting execution flow upon receiving ETH) the read-only
+     * protection of the Balancer Vault would be triggered. Since the attacking contract would
+     * already be in the Balancer Vault context and wouldn't be able to enter it again.
+     */
     function _deposit(
         address[] memory _strategyAssets,
         uint256[] memory _strategyAmounts
@@ -203,6 +210,12 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
      * @param _recipient Address to receive the Vault collateral assets. Typically is the Vault.
      * @param _strategyAssets Addresses of the Vault collateral assets
      * @param _strategyAmounts The amounts of Vault collateral assets to withdraw
+     *
+     * _withdrawal doesn't require a read-only re-entrancy protection since during the withdrawal
+     * the function enters the Balancer Vault Context. If this function were called as part of
+     * the attacking contract (while intercepting execution flow upon receiving ETH) the read-only
+     * protection of the Balancer Vault would be triggered. Since the attacking contract would
+     * already be in the Balancer Vault context and wouldn't be able to enter it again.
      */
     function _withdraw(
         address _recipient,
