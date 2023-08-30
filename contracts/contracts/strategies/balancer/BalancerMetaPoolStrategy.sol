@@ -72,7 +72,9 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         for (uint256 i = 0; i < assetsLength; ++i) {
             strategyAssets[i] = assetsMapped[i];
             // Get the asset balance in this strategy contract
-            strategyAmounts[i] = IERC20(strategyAssets[i]).balanceOf(address(this));
+            strategyAmounts[i] = IERC20(strategyAssets[i]).balanceOf(
+                address(this)
+            );
         }
         _deposit(strategyAssets, strategyAmounts);
     }
@@ -214,7 +216,10 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         );
 
         for (uint256 i = 0; i < _strategyAssets.length; ++i) {
-            require(assetToPToken[_strategyAssets[i]] != address(0), "Unsupported asset");
+            require(
+                assetToPToken[_strategyAssets[i]] != address(0),
+                "Unsupported asset"
+            );
         }
 
         // STEP 1 - Calculate the max about of Balancer Pool Tokens (BPT) to withdraw
