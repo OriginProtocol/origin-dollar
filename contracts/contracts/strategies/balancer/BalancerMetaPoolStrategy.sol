@@ -327,8 +327,9 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         balancerVault.exitPool(
             balancerPoolId,
             address(this),
-            // TODO: this is incorrect and should be altered when/if we intend to support
-            // pools that deal with native ETH
+            /* Payable keyword is required because of the IBalancerVault interface even though
+             * this strategy shall never be receiving native ETH
+             */
             payable(address(this)),
             request
         );
@@ -425,8 +426,9 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         balancerVault.exitPool(
             balancerPoolId,
             address(this),
-            // TODO: this is incorrect and should be altered when/if we intend to support
-            // pools that deal with native ETH
+            /* Payable keyword is required because of the IBalancerVault interface even though
+             * this strategy shall never be receiving native ETH
+             */
             payable(address(this)),
             request
         );
