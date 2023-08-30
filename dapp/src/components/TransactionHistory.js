@@ -488,16 +488,16 @@ const TransactionHistory = ({ setWousdBalanceHeader, isMobile }) => {
                       ) || ''}
                     </div>
                     <div
-                      title={txTypeMap[tx.type].verboseName}
+                      title={txTypeMap[tx.type]?.verboseName}
                       className="col-3 col-md-2 d-flex"
                     >
                       <img
                         className="mr-2 mr-md-3 type-icon"
                         src={assetRootPath(
-                          `/images/history/${txTypeMap[tx.type].imageName}`
+                          `/images/history/${txTypeMap[tx.type]?.imageName}`
                         )}
                       />
-                      {txTypeMap[tx.type].name}
+                      {txTypeMap[tx.type]?.name}
                     </div>
                     <div
                       className={`d-none d-md-flex col-2 ${
