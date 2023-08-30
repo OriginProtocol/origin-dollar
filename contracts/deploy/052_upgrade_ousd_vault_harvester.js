@@ -6,16 +6,15 @@ const addresses = require("../utils/addresses");
 const { isMainnet } = require("../test/helpers.js");
 
 module.exports = deploymentWithGovernanceProposal(
-  /* IMPORTANT (!)
-   *
-   * Once this gets deployed undo the `skip` in the `vault.fork-test.js` under
-   * the "Should have correct Price Oracle address set" scenario.
-   */
   {
     deployName: "052_upgrade_ousd_vault_harvester",
     forceDeploy: false,
+    forceSkip: false,
     onlyOnFork: true, // this is only executed in forked environment
-    reduceQueueTime: true,
+    reduceQueueTime: false,
+    deployerIsProposer: false,
+    proposalId:
+      "92067299921253167171731269251828366645465100428916088471428281989790584946916",
   },
   async ({ assetAddresses, deployWithConfirmation, ethers }) => {
     if (isMainnet) {
@@ -75,7 +74,7 @@ Set new Oracle router.\n\
 Configure OUSD Vault to perform collateral swaps.\n\
 Upgrade the OUSD Harvester\n\
 \n\
-Code PR: #",
+Code PR: #1767",
       actions: [
         // 1. Upgrade the OUSD Vault proxy to the new core vault implementation
         {
