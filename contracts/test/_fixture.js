@@ -14,7 +14,6 @@ const {
   oethUnits,
   getOracleAddresses,
   isFork,
-  ousdUnits,
   units,
 } = require("./helpers");
 
@@ -328,7 +327,7 @@ const defaultFixture = deployments.createFixture(async () => {
       oethDripperProxy.address
     );
 
-    // Replace OracelRouter to disable staleness
+    // Replace OracleRouter to disable staleness
     const dMockOracleRouterNoStale = await deployWithConfirmation(
       "MockOracleRouterNoStale"
     );
@@ -670,34 +669,10 @@ async function oethDefaultFixture() {
 async function oethCollateralSwapFixture() {
   const fixture = await oethDefaultFixture();
 
-  const { weth, reth, stETH, frxETH, matt, strategist, oethVault } = fixture;
+  const { timelock, oethVault } = fixture;
 
-  const bufferBps = await oethVault.vaultBuffer();
-  const shouldChangeBuffer = bufferBps.lt(oethUnits("1"));
-
-  if (shouldChangeBuffer) {
-    // If it's not 100% already, set it to 100%
-    await oethVault.connect(strategist).setVaultBuffer(
-      oethUnits("1") // 100%
-    );
-  }
-
-  for (const token of [weth, reth, stETH, frxETH]) {
-    await token
-      .connect(matt)
-      .approve(
-        oethVault.address,
-        parseEther("100000000000000000000000000000000000")
-      );
-
-    // Mint some tokens, so it ends up in Vault
-    await oethVault.connect(matt).mint(token.address, parseEther("200"), "0");
-  }
-
-  if (shouldChangeBuffer) {
-    // Set it back
-    await oethVault.connect(strategist).setVaultBuffer(bufferBps);
-  }
+  // Withdraw all from strategies so we have assets to swap
+  await oethVault.connect(timelock).withdrawAllFromStrategies();
 
   return fixture;
 }
@@ -705,32 +680,10 @@ async function oethCollateralSwapFixture() {
 async function ousdCollateralSwapFixture() {
   const fixture = await defaultFixture();
 
-  const { dai, usdc, usdt, matt, strategist, vault } = fixture;
+  const { timelock, vault } = fixture;
 
-  const bufferBps = await vault.vaultBuffer();
-  const shouldChangeBuffer = bufferBps.lt(oethUnits("1"));
-
-  if (shouldChangeBuffer) {
-    // If it's not 100% already, set it to 100%
-    await vault.connect(strategist).setVaultBuffer(
-      ousdUnits("1") // 100%
-    );
-  }
-
-  await usdt.connect(matt).approve(vault.address, 0);
-  for (const token of [dai, usdc, usdt]) {
-    await token
-      .connect(matt)
-      .approve(vault.address, await units("10000", token));
-
-    // Mint some tokens, so it ends up in Vault
-    await vault.connect(matt).mint(token.address, await units("500", token), 0);
-  }
-
-  if (shouldChangeBuffer) {
-    // Set it back
-    await vault.connect(strategist).setVaultBuffer(bufferBps);
-  }
+  // Withdraw all from strategies so we have assets to swap
+  await vault.connect(timelock).withdrawAllFromStrategies();
 
   return fixture;
 }
