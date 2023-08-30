@@ -1,7 +1,5 @@
 const { expect } = require("chai");
 const { formatUnits, parseUnits } = require("ethers").utils;
-const hre = require("hardhat");
-const { ethers } = hre;
 const { BigNumber } = require("ethers");
 
 const addresses = require("../../utils/addresses");
@@ -113,9 +111,7 @@ forkOnlyDescribe(
             balancerREthStrategy.address,
             "10"
           );
-          const allowance = await asset
-            .connect(strategySigner)
-            .approve(spender, ZERO);
+          await asset.connect(strategySigner).approve(spender, ZERO);
         };
 
         await resetAllowance(reth, balancerVault);
@@ -596,7 +592,6 @@ forkOnlyDescribe(
 
       it("Should be able to collect reward tokens", async function () {
         const {
-          josh,
           weth,
           timelock,
           reth,
