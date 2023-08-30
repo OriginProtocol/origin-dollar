@@ -216,8 +216,7 @@ contract OETHOracleRouter is OracleRouter {
         } else if (asset == 0x5E8422345238F34275888049021821E8E08CAa1f) {
             // frxETH/ETH
             feedAddress = 0xC58F3385FBc1C8AD2c0C9a061D7c13b141D7A5Df;
-            // Is currently updated every 18 hours
-            maxStaleness = 1 days;
+            maxStaleness = 18 hours + STALENESS_BUFFER;
         } else if (asset == 0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84) {
             // https://data.chain.link/ethereum/mainnet/crypto-eth/steth-eth
             // Chainlink: stETH/ETH
