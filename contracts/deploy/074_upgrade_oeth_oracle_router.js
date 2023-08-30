@@ -10,7 +10,7 @@ module.exports = deploymentWithGovernanceProposal(
     deployName: "074_upgrade_oeth_oracle_router",
     forceDeploy: false,
     // forceSkip: true,
-    // reduceQueueTime: true,
+    reduceQueueTime: true,
     deployerIsProposer: true,
   },
   async () => {
