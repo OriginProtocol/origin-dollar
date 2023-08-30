@@ -80,7 +80,7 @@ abstract contract BaseAuraStrategy is BaseBalancerStrategy {
         onlyHarvester
         nonReentrant
     {
-        /* Similar to Convex calling this function collects both of the
+        /* Similar to Convex, calling this function collects both of the
          * accrued BAL and AURA tokens.
          */
         IRewardStaking(auraRewardPoolAddress).getReward();
