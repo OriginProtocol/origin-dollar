@@ -101,7 +101,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
                 assetToPToken[strategyAsset] != address(0),
                 "Unsupported asset"
             );
-            strategyAssetsToPoolAssets[i] = toPoolAsset(_strategyAssets[i]);
+            strategyAssetsToPoolAssets[i] = toPoolAsset(strategyAsset);
 
             if (strategyAmount > 0) {
                 emit Deposit(strategyAsset, platformAddress, strategyAmount);
@@ -241,13 +241,10 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
             poolAssets[i] = address(tokens[i]);
 
             // Convert the Balancer pool asset back to a vault collateral asset
-            address vaultAsset = fromPoolAsset(poolAssets[i]);
+            address strategyAsset = fromPoolAsset(poolAssets[i]);
 
             // for each of the vault assets
             for (uint256 j = 0; j < _strategyAssets.length; ++j) {
-                // Convert the Balancer pool asset back to a strategy asset
-                address strategyAsset = fromPoolAsset(poolAssets[i]);
-
                 // If the vault asset equals the vault asset mapped from the Balancer pool asset
                 if (_strategyAssets[j] == strategyAsset) {
                     (, poolAssetsAmountsOut[i]) = toPoolAsset(
