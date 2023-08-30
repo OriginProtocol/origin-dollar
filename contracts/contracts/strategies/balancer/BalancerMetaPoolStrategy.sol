@@ -93,10 +93,10 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         );
 
         uint256[] memory strategyAssetAmountsToPoolAssetAmounts = new uint256[](
-            tokens.length
+            _strategyAssets.length
         );
         address[] memory strategyAssetsToPoolAssets = new address[](
-            tokens.length
+            _strategyAssets.length
         );
 
         for (uint256 i = 0; i < _strategyAssets.length; ++i) {
