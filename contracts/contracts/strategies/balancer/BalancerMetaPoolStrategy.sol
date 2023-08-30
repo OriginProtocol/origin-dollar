@@ -120,13 +120,18 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
             // Convert IERC20 type to address
             poolAssets[i] = address(tokens[i]);
 
+            bool matchingAssetFound = false;
             // For each of the mapped assets
             for (uint256 j = 0; j < strategyAssetsToPoolAssets.length; ++j) {
                 // If the pool asset is the same as the mapped asset
                 if (poolAssets[i] == strategyAssetsToPoolAssets[j]) {
                     amountsIn[i] = strategyAssetAmountsToPoolAssetAmounts[j];
+                    matchingAssetFound = true;
+                    break;
                 }
             }
+
+            require(matchingAssetFound, "Matching asset not found");
         }
 
         uint256 minBPT = getBPTExpected(
