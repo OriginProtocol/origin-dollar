@@ -12,7 +12,6 @@ import { IRateProvider } from "../../interfaces/balancer/IRateProvider.sol";
 import { VaultReentrancyLib } from "./VaultReentrancyLib.sol";
 import { IOracle } from "../../interfaces/IOracle.sol";
 import { IVault } from "../../interfaces/IVault.sol";
-import { IRETH } from "../../interfaces/IRETH.sol";
 import { IWstETH } from "../../interfaces/IWstETH.sol";
 import { IERC4626 } from "../../../lib/openzeppelin/interfaces/IERC4626.sol";
 import { StableMath } from "../../utils/StableMath.sol";
@@ -32,10 +31,10 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
     /// @notice Balancer pool identifier
     bytes32 public immutable balancerPoolId;
 
-    // Max withdrawal slippage denominated in 1e18 (1e18 == 100%)
-    uint256 public maxWithdrawalSlippage;
-    // Max deposit slippage denominated in 1e18 (1e18 == 100%)
-    uint256 public maxDepositSlippage;
+    // Max withdrawal deviation denominated in 1e18 (1e18 == 100%)
+    uint256 public maxWithdrawalDeviation;
+    // Max deposit deviation denominated in 1e18 (1e18 == 100%)
+    uint256 public maxDepositDeviation;
 
     int256[48] private __reserved;
 
@@ -49,13 +48,13 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         bytes32 balancerPoolId; // Balancer pool identifier
     }
 
-    event MaxWithdrawalSlippageUpdated(
-        uint256 _prevMaxSlippagePercentage,
-        uint256 _newMaxSlippagePercentage
+    event MaxWithdrawalDeviationUpdated(
+        uint256 _prevMaxDeviationPercentage,
+        uint256 _newMaxDeviationPercentage
     );
-    event MaxDepositSlippageUpdated(
-        uint256 _prevMaxSlippagePercentage,
-        uint256 _newMaxSlippagePercentage
+    event MaxDepositDeviationUpdated(
+        uint256 _prevMaxDeviationPercentage,
+        uint256 _newMaxDeviationPercentage
     );
 
     /**
@@ -100,11 +99,11 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         address[] calldata _assets,
         address[] calldata _pTokens
     ) external override onlyGovernor initializer {
-        maxWithdrawalSlippage = 1e15;
-        maxDepositSlippage = 1e15;
+        maxWithdrawalDeviation = 1e16;
+        maxDepositDeviation = 1e16;
 
-        emit MaxWithdrawalSlippageUpdated(0, maxWithdrawalSlippage);
-        emit MaxDepositSlippageUpdated(0, maxDepositSlippage);
+        emit MaxWithdrawalDeviationUpdated(0, maxWithdrawalDeviation);
+        emit MaxDepositDeviationUpdated(0, maxDepositDeviation);
 
         IERC20[] memory poolAssets = getPoolAssets();
         require(
@@ -226,28 +225,37 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
 
     /* solhint-disable max-line-length */
     /**
-     * @notice BPT price is calculated by dividing the pool (sometimes wrapped) market price by the
-     * rateProviderRate of that asset. To get BPT expected we need to multiply that by underlying
-     * asset amount divided by BPT token rate. BPT token rate is similar to Curve's virtual_price
-     * and expresses how much has the price of BPT appreciated in relation to the underlying assets.
+     * @notice BPT price is calculated by taking the rate from the rateProvider of the asset in
+     * question. If one does not exist it defaults to 1e18. To get the final BPT expected that
+     * is multiplied by the underlying asset amount divided by BPT token rate. BPT token rate is
+     * similar to Curve's virtual_price and expresses how much has the price of BPT appreciated
+     * (e.g. due to swap fees) in relation to the underlying assets
+     *
+     * Using the above approach makes the strategy vulnerable to a possible MEV attack using
+     * flash loan to manipulate the pool before a deposit/withdrawal since the function ignores
+     * market values of the assets being priced in BPT.
+     *
+     * At the time of writing there is no safe on-chain approach to pricing BPT in a way that it
+     * would make it invulnerable to MEV pool manipulation. See recent Balancer exploit:
+     * https://www.notion.so/originprotocol/Balancer-OETH-strategy-9becdea132704e588782a919d7d471eb?pvs=4#1cf07de12fc64f1888072321e0644348
+     *
+     * To mitigate MEV possibilities during deposits and withdraws, the VaultValueChecker will use checkBalance before and after the move
+     * to ensure the expected changes took place.
+     *
+     * @param _asset Address of the Balancer pool asset
+     * @param _amount Amount of the Balancer pool asset
+     * @return bptExpected of BPT expected in exchange for the asset
      *
      * @dev
-     * bptPrice = pool_asset_oracle_price / pool_asset_rate
+     * bptAssetPrice = 1e18 (asset peg) * pool_asset_rate
      *
-     * Since we only have oracle prices for the unwrapped version of the assets the equation
-     * turns into:
+     * bptExpected = bptAssetPrice * asset_amount / BPT_token_rate
      *
-     * bptPrice = from_pool_token(asset_amount).amount * oracle_price / pool_asset_rate
+     * bptExpected = 1e18 (asset peg) * pool_asset_rate * asset_amount / BPT_token_rate
+     * bptExpected = asset_amount * pool_asset_rate / BPT_token_rate
      *
-     * bptExpected = bptPrice(in relation to specified asset) * asset_amount / BPT_token_rate
-     *
-     * and since from_pool_token(asset_amount).amount and pool_asset_rate cancel each-other out
-     * this makes the final equation:
-     *
-     * bptExpected = oracle_price * asset_amount / BPT_token_rate
-     *
-     * more explanation here:
-     * https://www.notion.so/originprotocol/Support-Balancer-OETH-strategy-9becdea132704e588782a919d7d471eb?pvs=4#382834f9815e46a7937f3acca0f637c5
+     * further information available here:
+     * https://www.notion.so/originprotocol/Balancer-OETH-strategy-9becdea132704e588782a919d7d471eb?pvs=4#ce01495ae70346d8971f5dced809fb83
      */
     /* solhint-enable max-line-length */
     function getBPTExpected(address _asset, uint256 _amount)
@@ -256,13 +264,9 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         virtual
         returns (uint256 bptExpected)
     {
-        address priceProvider = IVault(vaultAddress).priceProvider();
-        uint256 strategyAssetMarketPrice = IOracle(priceProvider).price(_asset);
         uint256 bptRate = IRateProvider(platformAddress).getRate();
-
-        bptExpected = _amount
-            .mulTruncate(strategyAssetMarketPrice)
-            .divPrecisely(bptRate);
+        uint256 poolAssetRate = getRateProviderRate(_asset);
+        bptExpected = _amount.mulTruncate(poolAssetRate).divPrecisely(bptRate);
     }
 
     function getBPTExpected(address[] memory _assets, uint256[] memory _amounts)
@@ -271,17 +275,12 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         virtual
         returns (uint256 bptExpected)
     {
-        // Get the oracle from the OETH Vault
-        address priceProvider = IVault(vaultAddress).priceProvider();
+        require(_assets.length == _amounts.length, "Assets & amounts mismatch");
 
         for (uint256 i = 0; i < _assets.length; ++i) {
-            uint256 strategyAssetMarketPrice = IOracle(priceProvider).price(
-                _assets[i]
-            );
+            uint256 poolAssetRate = getRateProviderRate(_assets[i]);
             // convert asset amount to ETH amount
-            bptExpected =
-                bptExpected +
-                _amounts[i].mulTruncate(strategyAssetMarketPrice);
+            bptExpected += _amounts[i].mulTruncate(poolAssetRate);
         }
 
         uint256 bptRate = IRateProvider(platformAddress).getRate();
@@ -431,50 +430,50 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @notice Sets max withdrawal slippage that is considered when removing
+     * @notice Sets max withdrawal deviation that is considered when removing
      * liquidity from Balancer pools.
-     * @param _maxWithdrawalSlippage Max withdrawal slippage denominated in
+     * @param _maxWithdrawalDeviation Max withdrawal deviation denominated in
      *        wad (number with 18 decimals): 1e18 == 100%, 1e16 == 1%
      *
-     * IMPORTANT Minimum maxWithdrawalSlippage should actually be 0.1% (1e15)
-     * for production usage. Contract allows as low value as 0% for confirming
-     * correct behavior in test suite.
+     * IMPORTANT Minimum maxWithdrawalDeviation will be 1% (1e16) for production
+     * usage. Vault value checker in combination with checkBalance will
+     * catch any unexpected manipulation.
      */
-    function setMaxWithdrawalSlippage(uint256 _maxWithdrawalSlippage)
+    function setMaxWithdrawalDeviation(uint256 _maxWithdrawalDeviation)
         external
         onlyVaultOrGovernorOrStrategist
     {
         require(
-            _maxWithdrawalSlippage <= 1e18,
-            "Max withdrawal slippage needs to be between 0% - 100%"
+            _maxWithdrawalDeviation <= 1e18,
+            "Withdrawal dev. out of bounds"
         );
-        emit MaxWithdrawalSlippageUpdated(
-            maxWithdrawalSlippage,
-            _maxWithdrawalSlippage
+        emit MaxWithdrawalDeviationUpdated(
+            maxWithdrawalDeviation,
+            _maxWithdrawalDeviation
         );
-        maxWithdrawalSlippage = _maxWithdrawalSlippage;
+        maxWithdrawalDeviation = _maxWithdrawalDeviation;
     }
 
     /**
-     * @notice Sets max deposit slippage that is considered when adding
+     * @notice Sets max deposit deviation that is considered when adding
      * liquidity to Balancer pools.
-     * @param _maxDepositSlippage Max deposit slippage denominated in
+     * @param _maxDepositDeviation Max deposit deviation denominated in
      *        wad (number with 18 decimals): 1e18 == 100%, 1e16 == 1%
      *
-     * IMPORTANT Minimum maxDepositSlippage should actually be 0.1% (1e15)
-     * for production usage. Contract allows as low value as 0% for confirming
-     * correct behavior in test suite.
+     * IMPORTANT Minimum maxDepositDeviation will default to 1% (1e16)
+     * for production usage. Vault value checker in combination with
+     * checkBalance will catch any unexpected manipulation.
      */
-    function setMaxDepositSlippage(uint256 _maxDepositSlippage)
+    function setMaxDepositDeviation(uint256 _maxDepositDeviation)
         external
         onlyVaultOrGovernorOrStrategist
     {
-        require(
-            _maxDepositSlippage <= 1e18,
-            "Max deposit slippage needs to be between 0% - 100%"
+        require(_maxDepositDeviation <= 1e18, "Deposit dev. out of bounds");
+        emit MaxDepositDeviationUpdated(
+            maxDepositDeviation,
+            _maxDepositDeviation
         );
-        emit MaxDepositSlippageUpdated(maxDepositSlippage, _maxDepositSlippage);
-        maxDepositSlippage = _maxDepositSlippage;
+        maxDepositDeviation = _maxDepositDeviation;
     }
 
     function _approveBase() internal virtual {
