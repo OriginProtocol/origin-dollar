@@ -1,5 +1,5 @@
 const { expect } = require("chai");
-const { parseUnits } = require("ethers/lib/utils");
+const { formatUnits, parseUnits } = require("ethers/lib/utils");
 
 const addresses = require("../../utils/addresses");
 const {
@@ -9,6 +9,8 @@ const {
   impersonateAccount,
 } = require("../_fixture");
 const { forkOnlyDescribe, isCI } = require("../helpers");
+
+const log = require("../../utils/logger")("test:fork:oeth:vault");
 
 const oethWhaleAddress = "0xEADB3840596cabF312F2bC88A4Bb0b93A4E1FF5F";
 
@@ -77,7 +79,7 @@ forkOnlyDescribe("ForkTest: OETH Vault", function () {
             .connect(josh)
             .mint(asset.address, amount, minOeth);
 
-          if (asset === weth || asset === frxETH) {
+          if (asset === weth) {
             await expect(tx)
               .to.emit(oethVault, "Mint")
               .withArgs(josh.address, amount);
@@ -119,6 +121,7 @@ forkOnlyDescribe("ForkTest: OETH Vault", function () {
         const { oeth, oethVault, timelock } = fixture;
 
         const oethWhaleBalance = await oeth.balanceOf(oethWhaleAddress);
+        log(`OETH whale balance: ${formatUnits(oethWhaleBalance)}`);
         expect(oethWhaleBalance, "no longer an OETH whale").to.gt(
           parseUnits("100", 18)
         );
