@@ -334,10 +334,10 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         );
 
         // STEP 5 - Re-deposit any left over BPT tokens back into Aura
-        /* When concluding how much of BPT we need to withdraw from Aura we rely on Oracle prices
-         * and those can be stale (most ETH based have 24 hour heartbeat & 2% price change trigger)
-         * After exiting the pool strategy could have left over BPT tokens that are not earning
-         * boosted yield. We re-deploy those back in.
+        /* When concluding how much of BPT we need to withdraw from Aura we overshoot by
+         * roughly around 1% (initial mainnet setting of maxWithdrawalDeviation). After exiting 
+         * the pool strategy could have left over BPT tokens that are not earning boosted yield. 
+         * We re-deploy those back in.
          */
         _lpDepositAll();
 

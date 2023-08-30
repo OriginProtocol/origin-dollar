@@ -239,8 +239,8 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
      * would make it invulnerable to MEV pool manipulation. See recent Balancer exploit:
      * https://www.notion.so/originprotocol/Balancer-OETH-strategy-9becdea132704e588782a919d7d471eb?pvs=4#1cf07de12fc64f1888072321e0644348
      *
-     * To mitigate MEV possibilities VaultValueChecker in conjunction with checkBalance will catch
-     * such situations.
+     * To mitigate MEV possibilities during deposits and withdraws, the VaultValueChecker will use checkBalance before and after the move 
+     * to ensure the expected changes took place.
      *
      * @param _asset Address of the Balancer pool asset
      * @param _amount Amount of the Balancer pool asset
