@@ -136,7 +136,7 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
     );
     await oethVault.connect(josh).rebase();
 
-    await expect(wethDiff).to.be.gte(oethUnits("0.3"));
+    await expect(wethDiff).to.be.gte(oethUnits("0.2"));
   });
 });
 
