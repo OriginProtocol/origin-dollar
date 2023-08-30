@@ -225,8 +225,8 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
 
     /* solhint-disable max-line-length */
     /**
-     * @notice BPT price is calculated by taking the rate from the rateProvider of the asset in 
-     * question. If one does not exist it defaults to 1e18. To get the final BPT expected that 
+     * @notice BPT price is calculated by taking the rate from the rateProvider of the asset in
+     * question. If one does not exist it defaults to 1e18. To get the final BPT expected that
      * is multiplied by the underlying asset amount divided by BPT token rate. BPT token rate is
      * similar to Curve's virtual_price and expresses how much has the price of BPT appreciated
      * (e.g. due to swap fees) in relation to the underlying assets
@@ -234,12 +234,12 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
      * Using the above approach makes the strategy vulnerable to a possible MEV attack using
      * flash loan to manipulate the pool before a deposit/withdrawal since the function ignores
      * market values of the assets being priced in BPT.
-     * 
-     * At the time of writing there is no safe on-chain approach to pricing BPT in a way that it 
-     * would make it invulnerable to MEV pool manipulation. See recent Balancer exploit: 
+     *
+     * At the time of writing there is no safe on-chain approach to pricing BPT in a way that it
+     * would make it invulnerable to MEV pool manipulation. See recent Balancer exploit:
      * https://www.notion.so/originprotocol/Balancer-OETH-strategy-9becdea132704e588782a919d7d471eb?pvs=4#1cf07de12fc64f1888072321e0644348
-     * 
-     * To mitigate MEV possibilities VaultValueChecker in conjunction with checkBalance will catch 
+     *
+     * To mitigate MEV possibilities VaultValueChecker in conjunction with checkBalance will catch
      * such situations.
      *
      * @param _asset Address of the Balancer pool asset
@@ -275,10 +275,7 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         virtual
         returns (uint256 bptExpected)
     {
-        require(
-            _assets.length == _amounts.length,
-            "Assets & amounts mismatch"
-        );
+        require(_assets.length == _amounts.length, "Assets & amounts mismatch");
 
         for (uint256 i = 0; i < _assets.length; ++i) {
             uint256 poolAssetRate = getRateProviderRate(_assets[i]);
