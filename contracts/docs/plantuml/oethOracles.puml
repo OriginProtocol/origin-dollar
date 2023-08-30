@@ -2,7 +2,7 @@
 
 skinparam tabSize 2
 
-title "Origin Ether Contract Dependencies"
+title "OETH Oracle Contract Dependencies"
 
 object "OETHVault" as vault <<Origin>> #DeepSkyBlue {
 assets:
@@ -21,6 +21,10 @@ pairs:
 }
 
 object "FrxEthFraxOracle" as fo <<Frax>> {
+pair: frxETH/ETH
+}
+
+object "FrxEthEthDualOracle" as fdo <<Frax>> {
 pair: frxETH/ETH
 }
 
@@ -56,10 +60,11 @@ vault ..> router : price(asset)
 router ...> clrETH : latestRoundData()
 router ...> clstETH : latestRoundData()
 router ..> fo : latestRoundData()
-fo ....> cp : price_oracle()
-fo ....> uso : quoteSpecificPoolsWithTimePeriod()
+fdo .> fo : addRoundData()
+fdo ....> cp : price_oracle()
+fdo ....> uso : quoteSpecificPoolsWithTimePeriod()
 uso .> up : observe()
-fo ..> cleth : latestRoundData()
-fo ..> clfrax : latestRoundData()
+fdo ..> cleth : latestRoundData()
+fdo ..> clfrax : latestRoundData()
 
 @enduml
