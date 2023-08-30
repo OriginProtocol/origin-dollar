@@ -9,12 +9,12 @@ const {
 } = require("../utils/funding");
 const {
   getAssetAddresses,
-  getOracleAddresses,
   daiUnits,
-  isFork,
+  getOracleAddresses,
   oethUnits,
   ousdUnits,
   units,
+  isFork,
 } = require("./helpers");
 
 const daiAbi = require("./abi/dai.json").abi;
@@ -327,7 +327,7 @@ const defaultFixture = deployments.createFixture(async () => {
       oethDripperProxy.address
     );
 
-    // Replace OracelRouter to disable staleness
+    // Replace OracleRouter to disable staleness
     const dMockOracleRouterNoStale = await deployWithConfirmation(
       "MockOracleRouterNoStale"
     );
@@ -475,6 +475,8 @@ const defaultFixture = deployments.createFixture(async () => {
     oldTimelock = await impersonateAndFundContract(
       addresses.mainnet.OldTimelock
     );
+  } else {
+    timelock = governor;
   }
   await fundAccounts();
   if (isFork) {
@@ -669,7 +671,9 @@ async function oethDefaultFixture() {
 async function oethCollateralSwapFixture() {
   const fixture = await oethDefaultFixture();
 
-  const { weth, reth, stETH, frxETH, matt, strategist, oethVault } = fixture;
+  // const { timelock, oethVault } = fixture;
+  const { weth, reth, stETH, frxETH, matt, strategist, timelock, oethVault } =
+    fixture;
 
   const bufferBps = await oethVault.vaultBuffer();
   const shouldChangeBuffer = bufferBps.lt(oethUnits("1"));
@@ -698,16 +702,19 @@ async function oethCollateralSwapFixture() {
     await oethVault.connect(strategist).setVaultBuffer(bufferBps);
   }
 
+  // Withdraw all from strategies so we have assets to swap
+  await oethVault.connect(timelock).withdrawAllFromStrategies();
+
   return fixture;
 }
 
 async function ousdCollateralSwapFixture() {
   const fixture = await defaultFixture();
 
-  const { dai, usdc, usdt, matt, strategist, vault } = fixture;
+  const { dai, usdc, usdt, matt, strategist, timelock, vault } = fixture;
 
   const bufferBps = await vault.vaultBuffer();
-  const shouldChangeBuffer = bufferBps.lt(oethUnits("1"));
+  const shouldChangeBuffer = bufferBps.lt(ousdUnits("1"));
 
   if (shouldChangeBuffer) {
     // If it's not 100% already, set it to 100%
@@ -730,6 +737,9 @@ async function ousdCollateralSwapFixture() {
     // Set it back
     await vault.connect(strategist).setVaultBuffer(bufferBps);
   }
+
+  // Withdraw all from strategies so we have assets to swap
+  await vault.connect(timelock).withdrawAllFromStrategies();
 
   return fixture;
 }
