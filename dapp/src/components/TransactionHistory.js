@@ -251,6 +251,18 @@ const TransactionHistory = ({ setWousdBalanceHeader, isMobile }) => {
       imageName: 'swap_icon.svg',
       filter: 'swap',
     },
+    swap_give_wousd: {
+      name: fbt('Swap', 'Swap history type'),
+      verboseName: 'Swap give WOUSD',
+      imageName: 'swap_icon.svg',
+      filter: 'swap',
+    },
+    swap_gain_wousd: {
+      name: fbt('Swap', 'Swap history type'),
+      verboseName: 'Swap gain WOUSD',
+      imageName: 'swap_icon.svg',
+      filter: 'swap',
+    },
     unknown_transfer: {
       name: fbt('Unknown transfer', 'Unknown transfer history type'),
       verboseName: 'Unknown transfer',
