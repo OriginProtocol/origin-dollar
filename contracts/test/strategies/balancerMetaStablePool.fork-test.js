@@ -584,10 +584,6 @@ forkOnlyDescribe(
           oethUnits("0")
         );
 
-        await balancerREthStrategy
-          .connect(timelock)
-          .setMaxDepositSlippage(utils.parseUnits("1", 16)); // 1%
-
         await depositTest(fixture, [5, 5], [weth, reth], rEthBPT);
         await mineBlocks(1000);
 
@@ -612,10 +608,6 @@ forkOnlyDescribe(
           rEthBPT,
           oethDripper,
         } = fixture;
-
-        await balancerREthStrategy
-          .connect(timelock)
-          .setMaxDepositSlippage(utils.parseUnits("1", 16)); // 1%
 
         await depositTest(fixture, [5, 5], [weth, reth], rEthBPT);
         await mineBlocks(1000);
