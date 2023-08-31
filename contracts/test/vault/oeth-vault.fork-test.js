@@ -1,14 +1,15 @@
 const { expect } = require("chai");
-const { parseUnits } = require("ethers/lib/utils");
+const { formatUnits, parseUnits } = require("ethers/lib/utils");
 
 const addresses = require("../../utils/addresses");
 const {
   createFixtureLoader,
   oethDefaultFixture,
-  oethCollateralSwapFixture,
   impersonateAccount,
 } = require("../_fixture");
 const { forkOnlyDescribe, isCI } = require("../helpers");
+
+const log = require("../../utils/logger")("test:fork:oeth:vault");
 
 const oethWhaleAddress = "0xEADB3840596cabF312F2bC88A4Bb0b93A4E1FF5F";
 
@@ -57,7 +58,7 @@ forkOnlyDescribe("ForkTest: OETH Vault", function () {
     });
     describe("user operations", () => {
       let oethWhaleSigner;
-      const loadFixture = createFixtureLoader(oethCollateralSwapFixture);
+      const loadFixture = createFixtureLoader(oethDefaultFixture);
       beforeEach(async () => {
         fixture = await loadFixture();
 
@@ -77,7 +78,7 @@ forkOnlyDescribe("ForkTest: OETH Vault", function () {
             .connect(josh)
             .mint(asset.address, amount, minOeth);
 
-          if (asset === weth || asset === frxETH) {
+          if (asset === weth) {
             await expect(tx)
               .to.emit(oethVault, "Mint")
               .withArgs(josh.address, amount);
@@ -90,17 +91,19 @@ forkOnlyDescribe("ForkTest: OETH Vault", function () {
         }
       });
       it("should partially redeem", async () => {
-        const { oeth, oethVault, matt } = fixture;
+        const { oeth, oethVault } = fixture;
 
-        expect(await oeth.balanceOf(matt.address)).to.gt(10);
+        expect(await oeth.balanceOf(oethWhaleAddress)).to.gt(10);
 
         const amount = parseUnits("10", 18);
         const minEth = parseUnits("9.94", 18);
 
-        const tx = await oethVault.connect(matt).redeem(amount, minEth);
+        const tx = await oethVault
+          .connect(oethWhaleSigner)
+          .redeem(amount, minEth);
         await expect(tx)
           .to.emit(oethVault, "Redeem")
-          .withNamedArgs({ _addr: matt.address });
+          .withNamedArgs({ _addr: oethWhaleAddress });
       });
       it("OETH whale can not full redeem due to liquidity", async () => {
         const { oeth, oethVault } = fixture;
@@ -119,8 +122,9 @@ forkOnlyDescribe("ForkTest: OETH Vault", function () {
         const { oeth, oethVault, timelock } = fixture;
 
         const oethWhaleBalance = await oeth.balanceOf(oethWhaleAddress);
+        log(`OETH whale balance: ${formatUnits(oethWhaleBalance)}`);
         expect(oethWhaleBalance, "no longer an OETH whale").to.gt(
-          parseUnits("100", 18)
+          parseUnits("1000", 18)
         );
 
         await oethVault.connect(timelock).withdrawAllFromStrategies();
