@@ -1039,11 +1039,6 @@ forkOnlyDescribe(
 
           const checkBalanceDiff =
             checkBalanceAmountAfterTilt.sub(checkBalanceAmount);
-          console.log(
-            `diff ${maxDiff} tilt ${tiltAmount} actual diff: ${
-              parseFloat(checkBalanceDiff.toString()) / 1e18
-            }`
-          );
           // ~100 units in pool liquidity should have less than 0.02 effect == 0.02%
           expect(checkBalanceDiff).to.be.lte(oethUnits(maxDiff));
         });
