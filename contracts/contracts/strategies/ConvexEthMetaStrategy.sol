@@ -139,6 +139,7 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         address[] calldata _assets // WETH
     ) external onlyGovernor initializer {
         require(_assets.length == 1, "Must have exactly one asset");
+        require(_assets[0] == address(weth), "Asset not WETH");
 
         address[] memory pTokens = new address[](1);
         pTokens[0] = address(curvePool);
