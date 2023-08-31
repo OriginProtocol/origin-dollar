@@ -985,38 +985,69 @@ forkOnlyDescribe(
         expect(profitDiff).to.be.lte(oethUnits("-0.5"), 1);
       });
 
-      it("checkBalance with ~100 units should almost not be affected by heavy pool manipulation", async function () {
-        const { balancerREthStrategy, weth, reth, rEthBPT, balancerVault } =
-          fixture;
+      // consists of test cases with variable tilt percentage and expected balance diff
+      const checkBalanceTestCases = [
+        /* +100% tilt & 0.012 expected change means:
+         *  - pool has been tilted using WETH deposit that equals 100% of pools current
+         *    liquidity. Meaning if pool has 10k WETH & 10k RETH the tilt action will be
+         *    depositing additional 20k WETH totaling pool to: 30k WETH & 10k RETH
+         *  - 0.012 expected change means 0.012 diff between pre-tilt checkBalance and after
+         *    tilt checkBalance call. Strategy has roughly ~100 units deposited so 0.012
+         *    change would equal 0.012/100 = 0.00012 change if 1 is a whole. Or 0.012%
+         */
+        [100, "0.012"],
+        [200, "0.016"],
+        [300, "0.018"],
+        [400, "0.02"],
+        [500, "0.02"],
+      ];
 
-        await depositTest(fixture, [50, 50], [weth, reth], rEthBPT);
+      for (const testCase of checkBalanceTestCases) {
+        const tiltAmount = testCase[0];
+        const maxDiff = testCase[1];
 
-        const checkBalanceAmount = await balancerREthStrategy[
-          "checkBalance()"
-        ]();
-        expect(checkBalanceAmount).to.be.gte(oethUnits("0"), 1);
+        it(`checkBalance with ~100 units should at most have ${maxDiff} absolute diff when performing WETH pool tilt at ${tiltAmount}% of pool's TVL`, async function () {
+          const { balancerREthStrategy, weth, reth, rEthBPT, balancerVault } =
+            fixture;
 
-        await tiltBalancerMetaStableWETHPool({
-          percentageOfTVLDeposit: 300, // 300%
-          attackerSigner: sAttacker,
-          balancerPoolId: await balancerREthStrategy.balancerPoolId(),
-          assetAddressArray: [reth.address, weth.address],
-          wethIndex: 1,
-          bptToken: rEthBPT,
-          balancerVault,
-          reth,
-          weth,
+          await depositTest(fixture, [50, 50], [weth, reth], rEthBPT);
+
+          const checkBalanceAmount = await balancerREthStrategy[
+            "checkBalance()"
+          ]();
+          expect(checkBalanceAmount).to.be.gte(oethUnits("0"), 1);
+
+          await tiltBalancerMetaStableWETHPool({
+            percentageOfTVLDeposit: tiltAmount,
+            attackerSigner: sAttacker,
+            balancerPoolId: await balancerREthStrategy.balancerPoolId(),
+            assetAddressArray: [reth.address, weth.address],
+            wethIndex: 1,
+            bptToken: rEthBPT,
+            balancerVault,
+            reth,
+            weth,
+          });
+
+          const checkBalanceAmountAfterTilt = await balancerREthStrategy[
+            "checkBalance()"
+          ]();
+          expect(checkBalanceAmountAfterTilt).to.be.gte(
+            await oethUnits("0"),
+            1
+          );
+
+          const checkBalanceDiff =
+            checkBalanceAmountAfterTilt.sub(checkBalanceAmount);
+          console.log(
+            `diff ${maxDiff} tilt ${tiltAmount} actual diff: ${
+              parseFloat(checkBalanceDiff.toString()) / 1e18
+            }`
+          );
+          // ~100 units in pool liquidity should have less than 0.02 effect == 0.02%
+          expect(checkBalanceDiff).to.be.lte(oethUnits(maxDiff));
         });
-
-        const checkBalanceAmountAfterTilt = await balancerREthStrategy[
-          "checkBalance()"
-        ]();
-        expect(checkBalanceAmountAfterTilt).to.be.gte(await oethUnits("0"), 1);
-        // ~100 units in pool liquidity should have less than 0.02 effect == 0.02%
-        expect(checkBalanceAmountAfterTilt.sub(checkBalanceAmount)).to.be.lte(
-          oethUnits("0.02")
-        );
-      });
+      }
     });
   }
 );

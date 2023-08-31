@@ -83,7 +83,7 @@ const defaultFixture = deployments.createFixture(async () => {
 
   const ousd = await ethers.getContractAt("OUSD", ousdProxy.address);
   const vault = await ethers.getContractAt("IVault", vaultProxy.address);
-  
+
   const oethProxy = await ethers.getContract("OETHProxy");
   const OETHVaultProxy = await ethers.getContract("OETHVaultProxy");
   const oethVault = await ethers.getContractAt(
@@ -371,10 +371,7 @@ const defaultFixture = deployments.createFixture(async () => {
     );
 
     vaultValueChecker = await ethers.getContract("VaultValueChecker");
-    oethVaultValueChecker = await ethers.getContract(
-      "OETHVaultValueChecker"
-    );
-
+    oethVaultValueChecker = await ethers.getContract("OETHVaultValueChecker");
   } else {
     usdt = await ethers.getContract("MockUSDT");
     dai = await ethers.getContract("MockDAI");
