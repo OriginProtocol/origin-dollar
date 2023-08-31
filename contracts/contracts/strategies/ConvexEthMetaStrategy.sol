@@ -534,7 +534,7 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         require(_asset == address(weth), "Unsupported asset");
 
         // Eth balance needed here for the balance check that happens from vault during depositing.
-        balance += address(this).balance;
+        balance = address(this).balance;
         uint256 lpTokens = cvxRewardStaker.balanceOf(address(this));
         if (lpTokens > 0) {
             balance += (lpTokens * curvePool.get_virtual_price()) / 1e18;
