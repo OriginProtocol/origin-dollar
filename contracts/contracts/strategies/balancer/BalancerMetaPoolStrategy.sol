@@ -398,7 +398,9 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
             address(this)
         );
         // Get the balancer pool assets and their total balances
-        (IERC20[] memory tokens, , ) = balancerVault.getPoolTokens(balancerPoolId);
+        (IERC20[] memory tokens, , ) = balancerVault.getPoolTokens(
+            balancerPoolId
+        );
         uint256[] memory minAmountsOut = new uint256[](tokens.length);
         address[] memory poolAssets = new address[](tokens.length);
         for (uint256 i = 0; i < tokens.length; ++i) {

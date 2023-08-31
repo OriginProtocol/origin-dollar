@@ -265,20 +265,18 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         returns (uint256 bptExpected)
     {
         uint256 bptRate = IRateProvider(platformAddress).getRate();
-        uint256 poolAssetRate = getRateProviderRate(_asset);
+        uint256 poolAssetRate = _getRateProviderRate(_asset);
         bptExpected = _amount.mulTruncate(poolAssetRate).divPrecisely(bptRate);
     }
 
-    function _getBPTExpected(address[] memory _assets, uint256[] memory _amounts)
-        internal
-        view
-        virtual
-        returns (uint256 bptExpected)
-    {
+    function _getBPTExpected(
+        address[] memory _assets,
+        uint256[] memory _amounts
+    ) internal view virtual returns (uint256 bptExpected) {
         require(_assets.length == _amounts.length, "Assets & amounts mismatch");
 
         for (uint256 i = 0; i < _assets.length; ++i) {
-            uint256 poolAssetRate = getRateProviderRate(_assets[i]);
+            uint256 poolAssetRate = _getRateProviderRate(_assets[i]);
             // convert asset amount to ETH amount
             bptExpected += _amounts[i].mulTruncate(poolAssetRate);
         }

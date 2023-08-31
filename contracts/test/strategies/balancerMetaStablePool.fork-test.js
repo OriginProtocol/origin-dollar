@@ -1,6 +1,6 @@
 const { expect } = require("chai");
 const { formatUnits } = require("ethers").utils;
-const { BigNumber } = require("ethers");
+const { BigNumber, utils } = require("ethers");
 
 const addresses = require("../../utils/addresses");
 const { balancer_rETH_WETH_PID } = require("../../utils/constants");
@@ -43,7 +43,7 @@ forkOnlyDescribe(
 
     let fixture;
 
-    describe("Post deployment", () => {
+    describe.only("Post deployment", () => {
       beforeEach(async () => {
         fixture = await loadBalancerREthFixtureDefault();
       });
@@ -178,7 +178,7 @@ forkOnlyDescribe(
       });
     });
 
-    describe("Deposit", function () {
+    describe.only("Deposit", function () {
       beforeEach(async () => {
         fixture = await loadBalancerREthFixtureNotDefault();
       });
@@ -256,7 +256,7 @@ forkOnlyDescribe(
       });
     });
 
-    describe("Withdraw", function () {
+    describe.only("Withdraw", function () {
       beforeEach(async () => {
         fixture = await loadBalancerREthFixtureNotDefault();
         const { balancerREthStrategy, oethVault, strategist, reth, weth } =
@@ -354,7 +354,7 @@ forkOnlyDescribe(
       it("Should be able to withdraw with higher withdrawal deviation", async function () {});
     });
 
-    describe("Large withdraw", function () {
+    describe.only("Large withdraw", function () {
       const depositAmount = 30000;
       let depositAmountUnits, oethVaultSigner;
       beforeEach(async () => {
@@ -557,7 +557,7 @@ forkOnlyDescribe(
       });
     });
 
-    describe("Harvest rewards", function () {
+    describe.only("Harvest rewards", function () {
       beforeEach(async () => {
         fixture = await loadBalancerREthFixtureDefault();
       });
@@ -586,7 +586,7 @@ forkOnlyDescribe(
 
         await balancerREthStrategy
           .connect(timelock)
-          .setMaxDepositSlippage(parseUnits("1", 16)); // 1%
+          .setMaxDepositSlippage(utils.parseUnits("1", 16)); // 1%
 
         await depositTest(fixture, [5, 5], [weth, reth], rEthBPT);
         await mineBlocks(1000);
@@ -615,7 +615,7 @@ forkOnlyDescribe(
 
         await balancerREthStrategy
           .connect(timelock)
-          .setMaxDepositSlippage(parseUnits("1", 16)); // 1%
+          .setMaxDepositSlippage(utils.parseUnits("1", 16)); // 1%
 
         await depositTest(fixture, [5, 5], [weth, reth], rEthBPT);
         await mineBlocks(1000);
@@ -639,7 +639,7 @@ forkOnlyDescribe(
 forkOnlyDescribe(
   "ForkTest: Balancer MetaStablePool wstETH/WETH Strategy",
   function () {
-    describe("Deposit", function () {
+    describe.only("Deposit", function () {
       let fixture;
 
       beforeEach(async () => {
@@ -679,7 +679,7 @@ forkOnlyDescribe(
       });
     });
 
-    describe("Withdraw", function () {
+    describe.only("Withdraw", function () {
       let fixture;
 
       beforeEach(async () => {
@@ -777,7 +777,7 @@ forkOnlyDescribe(
       });
     });
 
-    describe("Harvest rewards", function () {
+    describe.only("Harvest rewards", function () {
       it("Should be able to collect reward tokens", async function () {
         const { josh, balancerWstEthStrategy, oethHarvester } =
           await loadBalancerWstEthFixture();
@@ -789,7 +789,7 @@ forkOnlyDescribe(
       });
     });
 
-    describe("work in MEV environment", function () {
+    describe.only("work in MEV environment", function () {
       let attackerAddress;
       let sAttacker;
       let fixture;
