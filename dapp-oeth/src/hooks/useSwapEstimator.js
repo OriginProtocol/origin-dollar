@@ -44,7 +44,7 @@ const useSwapEstimator = ({
   )
   const gasPrice = useStoreState(ContractStore, (s) => s.gasPrice)
 
-  const [{ data: prices }] = useTokenPrices()
+  const { data: prices } = useTokenPrices()
 
   const previousGasPrice = usePrevious(gasPrice)
   const isGasPriceUserOverriden = useStoreState(

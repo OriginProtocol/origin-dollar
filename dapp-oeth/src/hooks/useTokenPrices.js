@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
+import { useQuery } from 'react-query'
 import { useStoreState } from 'pullstate'
 import ContractStore from 'stores/ContractStore'
 import { utils } from 'ethers'
+import { allowancesService } from '../services/allowances.service'
 
 const tokenConfiguration = {
   eth: {
@@ -135,42 +137,28 @@ const coingeckoPrices = async (tokens) => {
 }
 
 const useTokenPrices = ({ tokens = [] } = {}) => {
-  const [error, setError] = useState(true)
-  const [isLoading, setIsLoading] = useState(true)
-  const [prices, setPrices] = useState(null)
   const contracts = useStoreState(ContractStore, (s) => s.contracts)
   const chainId = useStoreState(ContractStore, (s) => s.chainId)
-
   const queryTokens =
     tokens?.length > 0 ? tokens : Object.keys(tokenConfiguration)
 
   const fetchTokenPrices = async () => {
-    try {
-      setIsLoading(true)
-      setError(null)
+    let prices
 
-      let prices
-
-      if (chainId === 1) {
-        prices = await oraclePrices(queryTokens, contracts)
-      } else {
-        prices = await coingeckoPrices(queryTokens)
-      }
-
-      setPrices(prices)
-    } catch (e) {
-      setError(e.message)
-      console.error(e)
-    } finally {
-      setIsLoading(false)
+    if (chainId === 1) {
+      prices = await oraclePrices(queryTokens, contracts)
+    } else {
+      prices = await coingeckoPrices(queryTokens)
     }
+
+    return prices
   }
 
-  useEffect(() => {
-    fetchTokenPrices()
-  }, [chainId, contracts])
-
-  return [{ data: prices, isLoading, error }, { onRefresh: fetchTokenPrices }]
+  return useQuery(queryTokens, fetchTokenPrices, {
+    enabled: contracts !== null,
+    refetchOnWindowFocus: true,
+    cacheTime: 300000,
+  })
 }
 
 export default useTokenPrices

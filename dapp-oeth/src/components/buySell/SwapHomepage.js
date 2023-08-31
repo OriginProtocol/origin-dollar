@@ -31,7 +31,7 @@ const SwapHomepage = ({
   const swapEstimations = useStoreState(ContractStore, (s) => s.swapEstimations)
   const swapsLoaded = swapEstimations && typeof swapEstimations === 'object'
   const selectedSwap = useStoreState(ContractStore, (s) => s.selectedSwap)
-  const [{ data: prices }] = useTokenPrices()
+  const { data: prices } = useTokenPrices()
 
   // mint / redeem
   const [swapMode, setSwapMode] = useState(
