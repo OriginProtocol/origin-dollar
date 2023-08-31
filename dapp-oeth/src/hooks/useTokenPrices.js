@@ -156,8 +156,6 @@ const useTokenPrices = ({ tokens = [] } = {}) => {
 
   return useQuery(queryTokens, fetchTokenPrices, {
     enabled: contracts !== null,
-    refetchOnWindowFocus: true,
-    cacheTime: 300000,
   })
 }
 
