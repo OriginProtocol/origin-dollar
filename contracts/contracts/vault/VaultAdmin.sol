@@ -13,9 +13,10 @@ import { IOracle } from "../interfaces/IOracle.sol";
 import { ISwapper } from "../interfaces/ISwapper.sol";
 import { IVault } from "../interfaces/IVault.sol";
 import { StableMath } from "../utils/StableMath.sol";
-import "./VaultStorage.sol";
 
-contract VaultAdmin is VaultStorage {
+import "./VaultInitializer.sol";
+
+contract VaultAdmin is VaultInitializer {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
 

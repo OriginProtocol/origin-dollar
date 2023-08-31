@@ -17,9 +17,9 @@ import { StableMath } from "../utils/StableMath.sol";
 import { IOracle } from "../interfaces/IOracle.sol";
 import { IGetExchangeRateToken } from "../interfaces/IGetExchangeRateToken.sol";
 
-import "./VaultStorage.sol";
+import "./VaultInitializer.sol";
 
-contract VaultCore is VaultStorage {
+contract VaultCore is VaultInitializer {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
     // max signed int

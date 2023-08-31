@@ -99,7 +99,7 @@ contract VaultStorage is Initializable, Governable {
     /// @notice OToken mints over this amount automatically allocate funds. 18 decimals.
     uint256 public autoAllocateThreshold;
     /// @notice OToken mints over this amount automatically rebase. 18 decimals.
-    uint256 public rebaseThreshold = 0;
+    uint256 public rebaseThreshold;
 
     /// @dev Address of the OToken token. eg OUSD or OETH.
     // slither-disable-next-line uninitialized-state
