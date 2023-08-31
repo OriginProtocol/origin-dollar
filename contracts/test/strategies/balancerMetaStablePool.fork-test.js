@@ -10,6 +10,7 @@ const {
   balancerWstEthFixture,
   impersonateAndFundContract,
   createFixtureLoader,
+  mineBlocks,
   mintWETH,
   tiltBalancerMetaStableWETHPool,
 } = require("../_fixture");
@@ -91,6 +92,88 @@ forkOnlyDescribe(
         );
         expect(await balancerREthStrategy.frxETH()).to.equal(
           addresses.mainnet.frxETH
+        );
+      });
+
+      it("Should safeApproveAllTokens", async function () {
+        const { reth, rEthBPT, weth, balancerREthStrategy, timelock } = fixture;
+        const balancerVault = await balancerREthStrategy.balancerVault();
+        const auraRewardPool =
+          await balancerREthStrategy.auraRewardPoolAddress();
+
+        const MAX = BigNumber.from(
+          "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+        );
+        const ZERO = BigNumber.from(0);
+        const expectAllowanceRaw = async (expected, asset, owner, spender) => {
+          const allowance = await asset.allowance(owner, spender);
+          await expect(allowance).to.eq(expected);
+        };
+
+        const resetAllowance = async (asset, spender) => {
+          // strategy needs some ETH so it can execute the transactions
+          const strategySigner = await impersonateAndFundContract(
+            balancerREthStrategy.address,
+            "10"
+          );
+          await asset.connect(strategySigner).approve(spender, ZERO);
+        };
+
+        await resetAllowance(reth, balancerVault);
+        await resetAllowance(weth, balancerVault);
+        await resetAllowance(rEthBPT, balancerVault);
+        await resetAllowance(rEthBPT, auraRewardPool);
+
+        await expectAllowanceRaw(
+          ZERO,
+          reth,
+          balancerREthStrategy.address,
+          balancerVault
+        );
+        await expectAllowanceRaw(
+          ZERO,
+          weth,
+          balancerREthStrategy.address,
+          balancerVault
+        );
+        await expectAllowanceRaw(
+          ZERO,
+          rEthBPT,
+          balancerREthStrategy.address,
+          balancerVault
+        );
+        await expectAllowanceRaw(
+          ZERO,
+          rEthBPT,
+          balancerREthStrategy.address,
+          auraRewardPool
+        );
+
+        await balancerREthStrategy.connect(timelock).safeApproveAllTokens();
+
+        await expectAllowanceRaw(
+          MAX,
+          reth,
+          balancerREthStrategy.address,
+          balancerVault
+        );
+        await expectAllowanceRaw(
+          MAX,
+          weth,
+          balancerREthStrategy.address,
+          balancerVault
+        );
+        await expectAllowanceRaw(
+          MAX,
+          rEthBPT,
+          balancerREthStrategy.address,
+          balancerVault
+        );
+        await expectAllowanceRaw(
+          MAX,
+          rEthBPT,
+          balancerREthStrategy.address,
+          auraRewardPool
         );
       });
     });
@@ -478,13 +561,76 @@ forkOnlyDescribe(
       beforeEach(async () => {
         fixture = await loadBalancerREthFixtureDefault();
       });
-      it("Should be able to collect reward tokens", async function () {
-        const { josh, balancerREthStrategy, oethHarvester } = fixture;
 
+      it("Should be able to collect reward tokens", async function () {
+        const {
+          weth,
+          timelock,
+          reth,
+          rEthBPT,
+          balancerREthStrategy,
+          oethHarvester,
+          bal,
+          aura,
+        } = fixture;
+
+        const sHarvester = await impersonateAndFundContract(
+          oethHarvester.address
+        );
+        expect(await bal.balanceOf(oethHarvester.address)).to.equal(
+          oethUnits("0")
+        );
+        expect(await aura.balanceOf(oethHarvester.address)).to.equal(
+          oethUnits("0")
+        );
+
+        await balancerREthStrategy
+          .connect(timelock)
+          .setMaxDepositSlippage(parseUnits("1", 16)); // 1%
+
+        await depositTest(fixture, [5, 5], [weth, reth], rEthBPT);
+        await mineBlocks(1000);
+
+        await balancerREthStrategy.connect(sHarvester).collectRewardTokens();
+
+        expect(await bal.balanceOf(oethHarvester.address)).to.be.gte(
+          oethUnits("0")
+        );
+        expect(await aura.balanceOf(oethHarvester.address)).to.be.gte(
+          oethUnits("0")
+        );
+      });
+
+      it("Should be able to collect and swap reward tokens", async function () {
+        const {
+          josh,
+          balancerREthStrategy,
+          timelock,
+          weth,
+          reth,
+          oethHarvester,
+          rEthBPT,
+          oethDripper,
+        } = fixture;
+
+        await balancerREthStrategy
+          .connect(timelock)
+          .setMaxDepositSlippage(parseUnits("1", 16)); // 1%
+
+        await depositTest(fixture, [5, 5], [weth, reth], rEthBPT);
+        await mineBlocks(1000);
+
+        const wethBalanceBefore = await weth.balanceOf(oethDripper.address);
         await oethHarvester.connect(josh)[
           // eslint-disable-next-line
           "harvestAndSwap(address)"
         ](balancerREthStrategy.address);
+
+        const wethBalanceDiff = wethBalanceBefore.sub(
+          await weth.balanceOf(oethDripper.address)
+        );
+
+        expect(wethBalanceDiff).to.be.gte(oethUnits("0"));
       });
     });
   }
