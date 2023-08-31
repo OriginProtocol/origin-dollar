@@ -1,6 +1,6 @@
 const { expect } = require("chai");
 const { formatUnits } = require("ethers").utils;
-const { BigNumber, utils } = require("ethers");
+const { BigNumber } = require("ethers");
 
 const addresses = require("../../utils/addresses");
 const { balancer_rETH_WETH_PID } = require("../../utils/constants");
@@ -565,7 +565,6 @@ forkOnlyDescribe(
       it("Should be able to collect reward tokens", async function () {
         const {
           weth,
-          timelock,
           reth,
           rEthBPT,
           balancerREthStrategy,
@@ -601,7 +600,6 @@ forkOnlyDescribe(
         const {
           josh,
           balancerREthStrategy,
-          timelock,
           weth,
           reth,
           oethHarvester,
