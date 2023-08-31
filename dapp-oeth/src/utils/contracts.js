@@ -160,6 +160,7 @@ export async function setupContracts(account, chainId, fetchId) {
     compensation,
     chainlinkEthAggregator,
     chainlinkFastGasAggregator,
+    oethOracleRouter,
     curveAddressProvider
 
   let iVaultJson,
@@ -176,6 +177,7 @@ export async function setupContracts(account, chainId, fetchId) {
     singleAssetStakingJson,
     compensationClaimsJson,
     chainlinkAggregatorV3Json,
+    oethOracleRouterJson,
     curveAddressProviderJson
 
   try {
@@ -192,6 +194,7 @@ export async function setupContracts(account, chainId, fetchId) {
     uniV2SwapRouterJson = require('../../abis/UniswapV2Router.json')
     uniV3SwapQuoterJson = require('../../abis/UniswapV3Quoter.json')
     chainlinkAggregatorV3Json = require('../../abis/ChainlinkAggregatorV3Interface.json')
+    oethOracleRouterJson = require('../../abis/OETHOracleRouter.json')
     curveAddressProviderJson = require('../../abis/CurveAddressProvider.json')
     wousdJSON = require('../../abis/WOUSD.json')
   } catch (e) {
@@ -277,6 +280,11 @@ export async function setupContracts(account, chainId, fetchId) {
   chainlinkFastGasAggregator = getContract(
     addresses.mainnet.chainlinkFAST_GAS,
     chainlinkAggregatorV3Json.abi
+  )
+
+  oethOracleRouter = getContract(
+    addresses.mainnet.oethOracleRouter,
+    oethOracleRouterJson.abi
   )
 
   curveAddressProvider = getContract(
@@ -490,6 +498,7 @@ export async function setupContracts(account, chainId, fetchId) {
     compensation,
     chainlinkEthAggregator,
     chainlinkFastGasAggregator,
+    oethOracleRouter,
     curveAddressProvider,
     curveRegistryExchange,
     curveOETHPool,

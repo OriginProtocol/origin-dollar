@@ -1,0 +1,70 @@
+@startuml
+
+skinparam tabSize 2
+
+title "OETH Oracle Contract Dependencies"
+
+object "OETHVault" as vault <<Origin>> #DeepSkyBlue {
+assets:
+    \tWETH
+    \tfrxETH
+    \trETH
+    \tstETH
+}
+
+object "OETHOracleRouter" as router <<Origin>> #DeepSkyBlue {
+pairs:
+    \tWETH/ETH
+    \tfrxETH/ETH
+    \tstETH/ETH
+    \trETH/ETH
+}
+
+object "FrxEthFraxOracle" as fo <<Frax>> {
+pair: frxETH/ETH
+}
+
+object "FrxEthEthDualOracle" as fdo <<Frax>> {
+pair: frxETH/ETH
+}
+
+object "External\nAccess\nControlled\nAggregator" as clrETH <<Chainlink>> {
+pair: rETH/ETH
+}
+
+object "External\nAccess\nControlled\nAggregator" as clstETH <<Chainlink>> {
+pair: stETH/ETH
+}
+
+object "External\nAccess\nControlled\nAggregator" as cleth <<Chainlink>> {
+pair: ETH/USD
+}
+
+object "External\nAccess\nControlled\nAggregator" as clfrax <<Chainlink>> {
+pair: FRAX/USD
+}
+
+object "frxETH/ETH Pool" as cp <<Curve>> {
+assets: frxETH, ETH
+}
+
+object "StaticOracle" as uso <<Uniswap>> {
+}
+
+object "frxETH/FRAX Pool" as up <<Uniswap>> {
+    assets: frxETH, FRAX
+}
+
+
+vault ..> router : price(asset)
+router ...> clrETH : latestRoundData()
+router ...> clstETH : latestRoundData()
+router ..> fo : latestRoundData()
+fdo .> fo : addRoundData()
+fdo ....> cp : price_oracle()
+fdo ....> uso : quoteSpecificPoolsWithTimePeriod()
+uso .> up : observe()
+fdo ..> cleth : latestRoundData()
+fdo ..> clfrax : latestRoundData()
+
+@enduml
