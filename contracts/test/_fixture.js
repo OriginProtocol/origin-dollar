@@ -991,6 +991,55 @@ async function tiltBalancerMetaStableWETHPool({
   );
 }
 
+/* Withdraw WETH liquidity in Balancer metaStable WETH pool to simulate
+ * second part of the MEV attack. All attacker WETH liquidity is withdrawn.
+ */
+async function untiltBalancerMetaStableWETHPool({
+  attackerSigner,
+  balancerPoolId,
+  assetAddressArray,
+  wethIndex,
+  bptToken,
+  balancerVault,
+}) {
+  const amountsOut = Array(assetAddressArray.length).fill(BigNumber.from("0"));
+
+  /* encode user data for pool joining
+   *
+   * EXACT_BPT_IN_FOR_ONE_TOKEN_OUT:
+   * User sends a precise quantity of BPT, and receives an estimated
+   * but unknown (computed at run time) quantity of a single token
+   *
+   * ['uint256', 'uint256', 'uint256']
+   * [EXACT_BPT_IN_FOR_ONE_TOKEN_OUT, bptAmountIn, exitTokenIndex]
+   */
+  const userData = ethers.utils.defaultAbiCoder.encode(
+    ["uint256", "uint256", "uint256"],
+    [
+      0,
+      await bptToken.balanceOf(attackerSigner.address),
+      BigNumber.from(wethIndex.toString()),
+    ]
+  );
+
+  await bptToken
+    .connect(attackerSigner)
+    .approve(balancerVault.address, oethUnits("1").mul(oethUnits("1"))); // 1e36
+
+  await balancerVault.connect(attackerSigner).exitPool(
+    balancerPoolId, // poolId
+    attackerSigner.address, // sender
+    attackerSigner.address, // recipient
+    [
+      //ExitPoolRequest
+      assetAddressArray, // assets
+      amountsOut, // minAmountsOut
+      userData, // userData
+      false, // fromInternalBalance
+    ]
+  );
+}
+
 /**
  * Configure a Vault with the balancerREthStrategy
  */
@@ -2058,6 +2107,7 @@ module.exports = {
   balancerREthFixture,
   balancerWstEthFixture,
   tiltBalancerMetaStableWETHPool,
+  untiltBalancerMetaStableWETHPool,
   fraxETHStrategyFixture,
   oethMorphoAaveFixture,
   mintWETH,

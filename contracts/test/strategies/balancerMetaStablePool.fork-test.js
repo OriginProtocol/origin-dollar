@@ -13,6 +13,7 @@ const {
   mineBlocks,
   mintWETH,
   tiltBalancerMetaStableWETHPool,
+  untiltBalancerMetaStableWETHPool,
 } = require("../_fixture");
 
 const temporaryFork = require("../../utils/temporaryFork");
@@ -1017,10 +1018,11 @@ forkOnlyDescribe(
           ]();
           expect(checkBalanceAmount).to.be.gte(oethUnits("0"), 1);
 
+          const poolId = await balancerREthStrategy.balancerPoolId();
           await tiltBalancerMetaStableWETHPool({
             percentageOfTVLDeposit: tiltAmount,
             attackerSigner: sAttacker,
-            balancerPoolId: await balancerREthStrategy.balancerPoolId(),
+            balancerPoolId: poolId,
             assetAddressArray: [reth.address, weth.address],
             wethIndex: 1,
             bptToken: rEthBPT,
@@ -1041,6 +1043,21 @@ forkOnlyDescribe(
             checkBalanceAmountAfterTilt.sub(checkBalanceAmount);
           // ~100 units in pool liquidity should have less than 0.02 effect == 0.02%
           expect(checkBalanceDiff).to.be.lte(oethUnits(maxDiff));
+
+          await untiltBalancerMetaStableWETHPool({
+            attackerSigner: sAttacker,
+            balancerPoolId: poolId,
+            assetAddressArray: [reth.address, weth.address],
+            wethIndex: 1,
+            bptToken: rEthBPT,
+            balancerVault,
+          });
+
+          // check balance should report an equal or larger balance after attack comparing
+          // to the middle of the attack.
+          expect(checkBalanceAmountAfterTilt).to.be.gte(
+            checkBalanceAmountAfterTilt
+          );
         });
       }
     });
