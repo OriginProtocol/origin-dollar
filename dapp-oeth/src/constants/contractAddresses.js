@@ -89,7 +89,7 @@ addresses.mainnet.chainlinkFAST_GAS =
   '0x169E633A2D1E6c10dD91238Ba11c4A708dfEF37C'
 
 addresses.mainnet.oethOracleRouter =
-  '0x3cCD26E82F7305B12742fBb36708B42f82B61dBa'
+  '0xbE19cC5654e30dAF04AD3B5E06213D70F4e882eE'
 
 // WETH Token
 addresses.mainnet.WETH = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'
