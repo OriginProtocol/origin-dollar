@@ -67,14 +67,6 @@ const stakedFraxPrice = (contract) =>
   contract.previewRedeem(utils.parseEther('1'))
 
 const oraclePrices = async (tokens, contracts) => {
-  if (
-    !contracts.chainlinkEthAggregator ||
-    !contracts.oethOracleRouter ||
-    !contracts.sfrxeth
-  ) {
-    return {}
-  }
-
   // Fetch baseline ETH price for conversion
   const feed = await contracts.chainlinkEthAggregator.latestRoundData()
   const ethPrice = Number(utils.formatUnits(feed?.answer, 8))
@@ -155,7 +147,10 @@ const useTokenPrices = ({ tokens = [] } = {}) => {
   }
 
   return useQuery(queryTokens, fetchTokenPrices, {
-    enabled: contracts !== null,
+    enabled:
+      !!contracts?.chainlinkEthAggregator &&
+      !!contracts?.oethOracleRouter &&
+      !!contracts?.sfrxeth,
   })
 }
 
