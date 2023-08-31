@@ -83,10 +83,7 @@ const defaultFixture = deployments.createFixture(async () => {
 
   const ousd = await ethers.getContractAt("OUSD", ousdProxy.address);
   const vault = await ethers.getContractAt("IVault", vaultProxy.address);
-  const vaultValueChecker = await ethers.getContract("VaultValueChecker");
-  const oethVaultValueChecker = await ethers.getContract(
-    "OETHVaultValueChecker"
-  );
+  
   const oethProxy = await ethers.getContract("OETHProxy");
   const OETHVaultProxy = await ethers.getContract("OETHVaultProxy");
   const oethVault = await ethers.getContractAt(
@@ -227,7 +224,9 @@ const defaultFixture = deployments.createFixture(async () => {
     mock1InchSwapRouter,
     ConvexEthMetaStrategyProxy,
     ConvexEthMetaStrategy,
-    fluxStrategy;
+    fluxStrategy,
+    vaultValueChecker,
+    oethVaultValueChecker;
 
   if (isFork) {
     usdt = await ethers.getContractAt(usdtAbi, addresses.mainnet.USDT);
@@ -370,6 +369,12 @@ const defaultFixture = deployments.createFixture(async () => {
       "CompoundStrategy",
       fluxStrategyProxy.address
     );
+
+    vaultValueChecker = await ethers.getContract("VaultValueChecker");
+    oethVaultValueChecker = await ethers.getContract(
+      "OETHVaultValueChecker"
+    );
+
   } else {
     usdt = await ethers.getContract("MockUSDT");
     dai = await ethers.getContract("MockDAI");
