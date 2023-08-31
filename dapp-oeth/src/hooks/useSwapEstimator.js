@@ -6,6 +6,7 @@ import AccountStore from 'stores/AccountStore'
 import { approveCoinGasLimits, max_price } from 'utils/constants'
 import { usePrevious } from 'utils/hooks'
 import useCurrencySwapper from 'hooks/useCurrencySwapper'
+import useTokenPrices from 'hooks/useTokenPrices'
 import ContractStore from 'stores/ContractStore'
 import { calculateSwapAmounts } from 'utils/math'
 import fetchWithTimeout from 'utils/fetchWithTimeout'
@@ -42,6 +43,9 @@ const useSwapEstimator = ({
     (s) => s.vaultRebaseThreshold
   )
   const gasPrice = useStoreState(ContractStore, (s) => s.gasPrice)
+
+  const { data: prices } = useTokenPrices()
+
   const previousGasPrice = usePrevious(gasPrice)
   const isGasPriceUserOverriden = useStoreState(
     ContractStore,
@@ -190,6 +194,8 @@ const useSwapEstimator = ({
     })
     let usedGasPrice = gasPrice
 
+    const ethPrice = prices?.eth || 0
+
     const [
       vaultResult,
       zapperResult,
@@ -197,14 +203,12 @@ const useSwapEstimator = ({
       // uniswapV2Result,
       // sushiswapResult,
       curveResult,
-      ethPrice,
     ] = await Promise.all([
       swapMode === 'mint'
         ? estimateMintSuitabilityVault()
         : estimateRedeemSuitabilityVault(),
       estimateSwapSuitabilityZapper(),
       estimateSwapSuitabilityCurve(),
-      fetchEthPrice(),
     ])
 
     if (!isGasPriceUserOverriden) {
@@ -287,7 +291,10 @@ const useSwapEstimator = ({
         const costWithGas = amountReceivedNumber + estimation.gasEstimateEth
         estimation.costMinusGasFees = costWithGas
         estimation.costMinusGasFeesUsd = costWithGas * ethPrice
-        estimation.amountReceivedUsd = amountReceivedNumber * ethPrice
+
+        const swapTokenPrice = prices?.[estimation.coinToSwap || 'eth'] || 0
+
+        estimation.amountReceivedUsd = amountReceivedNumber * swapTokenPrice
       }
     })
 
