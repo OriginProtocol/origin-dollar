@@ -2,8 +2,8 @@
 pragma solidity ^0.8.0;
 
 /**
- * @title Curve Metapool Strategy
- * @notice Investment strategy for investing ether in a Curve Metapool
+ * @title Convex Automated Market Maker (AMO) Strategy
+ * @notice AMO strategy for the Curve OETH/ETH pool
  * @author Origin Protocol Inc
  */
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -72,11 +72,11 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @dev Checks the Metapools balances have improved and the balances
+     * @dev Checks the Curve pool's balances have improved and the balances
      * have not tipped to the other side.
      */
-    modifier improveMetapoolBalance() {
-        // Get the asset and OToken balances in the Curve Metapool
+    modifier improvePoolBalance() {
+        // Get the asset and OToken balances in the Curve pool
         uint256[2] memory balancesBefore = curvePool.get_balances();
         // diff = ETH balance - OETH balance
         int256 diffBefore = int256(balancesBefore[ethCoinIndex]) -
@@ -84,7 +84,7 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
 
         _;
 
-        // Get the asset and OToken balances in the Curve Metapool
+        // Get the asset and OToken balances in the Curve pool
         uint256[2] memory balancesAfter = curvePool.get_balances();
         // diff = ETH balance - OETH balance
         int256 diffAfter = int256(balancesAfter[ethCoinIndex]) -
@@ -154,7 +154,7 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
     ****************************************/
 
     /**
-     * @notice Deposit WETH into the Curve ETH Metapool
+     * @notice Deposit WETH into the Curve pool
      * @param _weth Address of Wrapped ETH (WETH) contract.
      * @param _amount Amount of WETH to deposit.
      */
@@ -174,7 +174,7 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
 
         emit Deposit(_weth, address(lpToken), _wethAmount);
 
-        // Get the asset and OToken balances in the Curve Metapool
+        // Get the asset and OToken balances in the Curve pool
         uint256[2] memory balances = curvePool.get_balances();
         // safe to cast since min value is at least 0
         uint256 oethToAdd = uint256(
@@ -214,14 +214,14 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
             uint256(1e18) - MAX_SLIPPAGE
         );
 
-        // Do the deposit to the Curve Metapool
+        // Do the deposit to the Curve pool
         // slither-disable-next-line arbitrary-send
         uint256 lpDeposited = curvePool.add_liquidity{ value: _wethAmount }(
             _amounts,
             minMintAmount
         );
 
-        // Deposit the Metapool LP tokens to the Convex rewards pool
+        // Deposit the Curve pool's LP tokens into the Convex rewards pool
         require(
             IConvexDeposits(cvxDepositorAddress).deposit(
                 cvxDepositorPTokenId,
@@ -233,7 +233,7 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @notice Deposit the strategy's entire balance of WETH into the Curve Metapool
+     * @notice Deposit the strategy's entire balance of WETH into the Curve pool
      */
     function depositAll() external override onlyVault nonReentrant {
         uint256 balance = weth.balanceOf(address(this));
@@ -247,7 +247,7 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
     ****************************************/
 
     /**
-     * @notice Withdraw ETH and OETH from the Curve Metapool, burn the OETH,
+     * @notice Withdraw ETH and OETH from the Curve pool, burn the OETH,
      * convert the ETH to WETH and transfer to the recipient.
      * @param _recipient Address to receive withdrawn asset which is normally the Vault.
      * @param _weth Address of the Wrapped ETH (WETH) contract.
@@ -321,7 +321,7 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @notice Remove all ETH and OETH from the Metapool, burn the OETH,
+     * @notice Remove all ETH and OETH from the Curve pool, burn the OETH,
      * convert the ETH to WETH and transfer to the Vault contract.
      */
     function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
@@ -343,7 +343,7 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         IVault(vaultAddress).burnForStrategy(oethToBurn);
 
         // Get the strategy contract's ether balance.
-        // This includes all that was removed from the Metapool and
+        // This includes all that was removed from the Curve pool and
         // any ether that was sitting in the strategy contract before the removal.
         uint256 ethBalance = address(this).balance;
         // Convert all the strategy contract's ether to WETH and transfer to the vault.
@@ -358,12 +358,12 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
     }
 
     /***************************************
-            Metapool Rebalancing
+            Curve pool Rebalancing
     ****************************************/
 
     /**
-     * @notice Mint OTokens and one-sided add to the Metapool.
-     * This is used when the Metapool does not have enough OTokens and too many ETH.
+     * @notice Mint OTokens and one-sided add to the Curve pool.
+     * This is used when the Curve pool does not have enough OTokens and too many ETH.
      * The OToken/Asset, eg OETH/ETH, price with increase.
      * The amount of assets in the vault is unchanged.
      * The total supply of OTokens is increased.
@@ -374,11 +374,11 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         external
         onlyStrategist
         nonReentrant
-        improveMetapoolBalance
+        improvePoolBalance
     {
         IVault(vaultAddress).mintForStrategy(_oTokens);
 
-        // Convert OETH to Metapool LP tokens
+        // Convert OETH to Curve pool LP tokens
         uint256 valueInLpTokens = (_oTokens).divPrecisely(
             curvePool.get_virtual_price()
         );
@@ -387,13 +387,13 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
             uint256(1e18) - MAX_SLIPPAGE
         );
 
-        // Add the minted OTokens to the Curve Metapool
+        // Add the minted OTokens to the Curve pool
         uint256 lpDeposited = curvePool.add_liquidity(
             [0, _oTokens],
             minMintAmount
         );
 
-        // Deposit the Metapool LP tokens to the Convex rewards pool
+        // Deposit the Curve pool LP tokens to the Convex rewards pool
         require(
             IConvexDeposits(cvxDepositorAddress).deposit(
                 cvxDepositorPTokenId,
@@ -407,20 +407,20 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @notice One-sided remove of OTokens from the Metapool which are then burned.
-     * This is used when the Metapool has too many OTokens and not enough ETH.
+     * @notice One-sided remove of OTokens from the Curve pool which are then burned.
+     * This is used when the Curve pool has too many OTokens and not enough ETH.
      * The amount of assets in the vault is unchanged.
      * The total supply of OTokens is reduced.
      * The asset value of the strategy and vault is reduced.
-     * @param _lpTokens The amount of Metapool LP tokens to be burned for OTokens.
+     * @param _lpTokens The amount of Curve pool LP tokens to be burned for OTokens.
      */
     function removeAndBurnOTokens(uint256 _lpTokens)
         external
         onlyStrategist
         nonReentrant
-        improveMetapoolBalance
+        improvePoolBalance
     {
-        // Withdraw Metapool LP tokens from Convex and remove OTokens from the Metapool
+        // Withdraw Curve pool LP tokens from Convex and remove OTokens from the Curve pool
         uint256 oethToBurn = _withdrawAndRemoveFromPool(
             _lpTokens,
             oethCoinIndex
@@ -433,29 +433,29 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @notice One-sided remove of ETH from the Metapool, convert to WETH
+     * @notice One-sided remove of ETH from the Curve pool, convert to WETH
      * and transfer to the vault.
-     * This is used when the Metapool does not have enough OTokens and too many ETH.
+     * This is used when the Curve pool does not have enough OTokens and too many ETH.
      * The OToken/Asset, eg OETH/ETH, price with decrease.
      * The amount of assets in the vault increases.
      * The total supply of OTokens does not change.
      * The asset value of the strategy reduces.
      * The asset value of the vault should be close to the same.
-     * @param _lpTokens The amount of Metapool LP tokens to be burned for ETH.
-     * @dev Metapool LP tokens is used rather than WETH assets as Curve does not
+     * @param _lpTokens The amount of Curve pool LP tokens to be burned for ETH.
+     * @dev Curve pool LP tokens is used rather than WETH assets as Curve does not
      * have a way to accurately calculate the amount of LP tokens for a required
      * amount of ETH. Curve's `calc_token_amount` functioun does not include fees.
      * A 3rd party libary can be used that takes into account the fees, but this
      * is a gas intensive process. It's easier for the trusted strategist to
-     * caclulate the amount of Metapool LP tokens required off-chain.
+     * caclulate the amount of Curve pool LP tokens required off-chain.
      */
     function removeOnlyAssets(uint256 _lpTokens)
         external
         onlyStrategist
         nonReentrant
-        improveMetapoolBalance
+        improvePoolBalance
     {
-        // Withdraw Metapool LP tokens from Convex and remove ETH from the Metapool
+        // Withdraw Curve pool LP tokens from Convex and remove ETH from the Curve pool
         uint256 ethAmount = _withdrawAndRemoveFromPool(_lpTokens, ethCoinIndex);
 
         // Convert ETH to WETH and transfer to the vault
@@ -469,20 +469,20 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @dev Remove Metapool LP tokens from the Convex pool and
-     * do a one-sided remove of ETH or OETH from the Metapool.
-     * @param _lpTokens The amount of Metapool LP tokens to be removed from the Convex pool.
-     * @param coinIndex The index of the coin to be removed from the Metapool. 0 = ETH, 1 = OETH.
-     * @return coinsRemoved The amount of ETH or OETH removed from the Metapool.
+     * @dev Remove Curve pool LP tokens from the Convex pool and
+     * do a one-sided remove of ETH or OETH from the Curve pool.
+     * @param _lpTokens The amount of Curve pool LP tokens to be removed from the Convex pool.
+     * @param coinIndex The index of the coin to be removed from the Curve pool. 0 = ETH, 1 = OETH.
+     * @return coinsRemoved The amount of ETH or OETH removed from the Curve pool.
      */
     function _withdrawAndRemoveFromPool(uint256 _lpTokens, uint128 coinIndex)
         internal
         returns (uint256 coinsRemoved)
     {
-        // Withdraw Metapool LP tokens from Convex pool
+        // Withdraw Curve pool LP tokens from Convex pool
         _lpWithdraw(_lpTokens);
 
-        // Convert Metapool LP tokens to ETH value
+        // Convert Curve pool LP tokens to ETH value
         uint256 valueInEth = _lpTokens.mulTruncate(
             curvePool.get_virtual_price()
         );
@@ -491,7 +491,7 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
             uint256(1e18) - MAX_SLIPPAGE
         );
 
-        // Remove just the ETH from the Metapool
+        // Remove just the ETH from the Curve pool
         coinsRemoved = curvePool.remove_liquidity_one_coin(
             _lpTokens,
             int128(coinIndex),
@@ -594,13 +594,13 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
     {}
 
     function _approveBase() internal {
-        // Approve Curve Metapool for OETH (required for adding liquidity)
+        // Approve Curve pool for OETH (required for adding liquidity)
         // No approval is needed for ETH
         // slither-disable-next-line unused-return
         oeth.approve(platformAddress, type(uint256).max);
 
-        // Approve Convex deposit contract to transfer Curve Metapool LP tokens
-        // This is needed for deposits if Metapool LP tokens into the Convex rewards pool
+        // Approve Convex deposit contract to transfer Curve pool LP tokens
+        // This is needed for deposits if Curve pool LP tokens into the Convex rewards pool
         // slither-disable-next-line unused-return
         lpToken.approve(cvxDepositorAddress, type(uint256).max);
     }
