@@ -163,7 +163,6 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         override
         onlyVault
         nonReentrant
-        improveMetapoolBalance
     {
         _deposit(_weth, _amount);
     }
@@ -236,13 +235,7 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
     /**
      * @notice Deposit the strategy's entire balance of WETH into the Curve Metapool
      */
-    function depositAll()
-        external
-        override
-        onlyVault
-        nonReentrant
-        improveMetapoolBalance
-    {
+    function depositAll() external override onlyVault nonReentrant {
         uint256 balance = weth.balanceOf(address(this));
         if (balance > 0) {
             _deposit(address(weth), balance);
@@ -264,7 +257,7 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         address _recipient,
         address _weth,
         uint256 _amount
-    ) external override onlyVault nonReentrant improveMetapoolBalance {
+    ) external override onlyVault nonReentrant {
         require(_amount > 0, "Invalid amount");
         require(_weth == address(weth), "Can only withdraw WETH");
 
@@ -331,13 +324,7 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
      * @notice Remove all ETH and OETH from the Metapool, burn the OETH,
      * convert the ETH to WETH and transfer to the Vault contract.
      */
-    function withdrawAll()
-        external
-        override
-        onlyVaultOrGovernor
-        nonReentrant
-        improveMetapoolBalance
-    {
+    function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
         uint256 gaugeTokens = cvxRewardStaker.balanceOf(address(this));
         _lpWithdraw(gaugeTokens);
 
