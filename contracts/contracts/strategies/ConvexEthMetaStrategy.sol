@@ -43,9 +43,9 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
 
     // Ordered list of pool assets
     // slither-disable-next-line constable-states
-    uint128 private _deprecated_oethCoinIndex = 1;
+    uint128 private _deprecated_oethCoinIndex;
     // slither-disable-next-line constable-states
-    uint128 private _deprecated_ethCoinIndex = 0;
+    uint128 private _deprecated_ethCoinIndex;
 
     // New immutable variables that must be set in the constructor
     address public immutable cvxDepositorAddress;
