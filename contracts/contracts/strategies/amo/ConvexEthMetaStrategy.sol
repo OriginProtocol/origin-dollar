@@ -11,15 +11,9 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import "@openzeppelin/contracts/utils/math/Math.sol";
 
 import { BaseConvexAMOStrategy } from "./BaseConvexAMOStrategy.sol";
-import { ICurveETHPoolV1 } from "./ICurveETHPoolV1.sol";
-import { StableMath } from "../utils/StableMath.sol";
-import { IVault } from "../interfaces/IVault.sol";
-import { IWETH9 } from "../interfaces/IWETH9.sol";
-import { IConvexDeposits } from "./IConvexDeposits.sol";
-import { IRewardStaking } from "./IRewardStaking.sol";
+import { IWETH9 } from "../../interfaces/IWETH9.sol";
 
 contract ConvexEthMetaStrategy is BaseConvexAMOStrategy {
-    using StableMath for uint256;
     using SafeERC20 for IERC20;
 
     // Added for backward compatibility
@@ -31,19 +25,35 @@ contract ConvexEthMetaStrategy is BaseConvexAMOStrategy {
 
     constructor(
         BaseStrategyConfig memory _baseConfig,
-        ConvexEthAMOConfig memory _convexConfig
+        ConvexAMOConfig memory _convexConfig
     ) BaseConvexAMOStrategy(_baseConfig, _convexConfig) {
         oeth = IERC20(_convexConfig.oTokenAddress);
         weth = IWETH9(_convexConfig.assetAddress);
     }
 
     /***************************************
-                    Deposit
+        Vault to Pool Asset Conversions
     ****************************************/
 
     function _unwrapAsset(uint256 _amount) internal override {
         weth.withdraw(_amount);
     }
+
+    function _wrapAsset(uint256 amount) internal override {
+        // Convert ETH to WETH
+        weth.deposit{ value: amount }();
+    }
+
+    function _wrapAsset() internal override returns (uint256 assets) {
+        // Get ETH balance of this strategy contract
+        assets = address(this).balance;
+        // Convert ETH to WETH
+        weth.deposit{ value: assets }();
+    }
+
+    /***************************************
+                    Curve Pool
+    ****************************************/
 
     function _addLiquidityToPool(
         uint256[2] memory _amounts,
@@ -59,36 +69,6 @@ contract ConvexEthMetaStrategy is BaseConvexAMOStrategy {
     /***************************************
                     Withdraw
     ****************************************/
-
-    function _transferAsset(
-        address recipient,
-        uint256 amount
-    ) internal override {
-        // Convert ETH to WETH
-        weth.deposit{ value: amount }();
-
-        // Transfer WETH to the recipient
-        require(
-            weth.transfer(recipient, amount),
-            "Transfer of WETH not successful"
-        );
-    }
-
-    function _transferAssetBalance(
-        address recipient
-    ) internal override returns (uint256 assetBalance) {
-        // Get the strategy contract's ether balance.
-        // This includes all that was removed from the Curve pool and
-        // any ether that was sitting in the strategy contract before the removal.
-        assetBalance = address(this).balance;
-
-        // Convert all the strategy contract's ether to WETH and transfer to the vault.
-        weth.deposit{ value: assetBalance }();
-        require(
-            weth.transfer(recipient, assetBalance),
-            "Transfer of WETH not successful"
-        );
-    }
 
     /***************************************
                 Asset Balance

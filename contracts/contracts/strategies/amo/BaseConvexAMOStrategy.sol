@@ -9,12 +9,12 @@ pragma solidity ^0.8.0;
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 
-import { ICurveETHPoolV1 } from "./ICurveETHPoolV1.sol";
-import { IERC20, InitializableAbstractStrategy } from "../utils/InitializableAbstractStrategy.sol";
-import { StableMath } from "../utils/StableMath.sol";
-import { IVault } from "../interfaces/IVault.sol";
-import { IConvexDeposits } from "./IConvexDeposits.sol";
-import { IRewardStaking } from "./IRewardStaking.sol";
+import { ICurveETHPoolV1 } from "../ICurveETHPoolV1.sol";
+import { IERC20, InitializableAbstractStrategy } from "../../utils/InitializableAbstractStrategy.sol";
+import { StableMath } from "../../utils/StableMath.sol";
+import { IVault } from "../../interfaces/IVault.sol";
+import { IConvexDeposits } from "../IConvexDeposits.sol";
+import { IRewardStaking } from "../IRewardStaking.sol";
 
 abstract contract BaseConvexAMOStrategy is InitializableAbstractStrategy {
     using StableMath for uint256;
@@ -102,7 +102,7 @@ abstract contract BaseConvexAMOStrategy is InitializableAbstractStrategy {
     }
 
     // Used to circumvent the stack too deep issue
-    struct ConvexEthAMOConfig {
+    struct ConvexAMOConfig {
         address cvxDepositorAddress; // Address of the Convex depositor(AKA booster) for this pool
         address cvxRewardStakerAddress; // Address of the CVX rewards staker
         uint256 cvxDepositorPTokenId; // Pid of the pool referred to by Depositor and staker
@@ -112,7 +112,7 @@ abstract contract BaseConvexAMOStrategy is InitializableAbstractStrategy {
 
     constructor(
         BaseStrategyConfig memory _baseConfig,
-        ConvexEthAMOConfig memory _convexConfig
+        ConvexAMOConfig memory _convexConfig
     ) InitializableAbstractStrategy(_baseConfig) {
         lpToken = IERC20(_baseConfig.platformAddress);
         curvePool = ICurveETHPoolV1(_baseConfig.platformAddress);
@@ -146,6 +146,25 @@ abstract contract BaseConvexAMOStrategy is InitializableAbstractStrategy {
     }
 
     /***************************************
+        Vault to Pool Asset Conversions
+    ****************************************/
+
+    /// @dev Converts the Vault asset to a Curve pool asset
+    /// for WETH, it unwraps the ETH from WETH using a WETH withdraw
+    /// for frxETH, it doesn't need to do anything
+    function _unwrapAsset(uint256 _amount) internal virtual;
+
+    /// @dev Converts a Curve pool asset to the Vault asset
+    /// for WETH, it wraps the ETH in WETH using a WETH deposit
+    /// for frxETH, it doesn't need to do anything
+    function _wrapAsset(uint256 amount) internal virtual;
+
+    /// @dev Converts all the Curve pool assets in this strategy to the Vault asset.
+    /// for WETH, it get the ETH balance and wraps it in WETH using a WETH deposit
+    /// for frxETH, it just gets the frxETH balance of this strategy contract
+    function _wrapAsset() internal virtual returns (uint256 assets);
+
+    /***************************************
                     Deposit
     ****************************************/
 
@@ -154,10 +173,12 @@ abstract contract BaseConvexAMOStrategy is InitializableAbstractStrategy {
      * @param _asset Address of the asset token. eg WETH or frxETH
      * @param _amount Amount of asset tokens to deposit.
      */
-    function deposit(
-        address _asset,
-        uint256 _amount
-    ) external override onlyVault nonReentrant {
+    function deposit(address _asset, uint256 _amount)
+        external
+        override
+        onlyVault
+        nonReentrant
+    {
         _deposit(_asset, _amount);
     }
 
@@ -223,8 +244,6 @@ abstract contract BaseConvexAMOStrategy is InitializableAbstractStrategy {
         );
     }
 
-    function _unwrapAsset(uint256 _amount) internal virtual;
-
     function _addLiquidityToPool(
         uint256[2] memory _amounts,
         uint256 minMintAmount
@@ -279,14 +298,20 @@ abstract contract BaseConvexAMOStrategy is InitializableAbstractStrategy {
 
         emit Withdrawal(address(oToken), address(lpToken), oTokenToBurn);
 
-        _transferAsset(_recipient, _amount);
+        // Convert Curve pool asset to Vault asset
+        _wrapAsset(_amount);
+
+        // Transfer the requested number of assets to the recipient
+        // this may leave some assets in this strategy contract if
+        // more assets than expected were removed from the pool
+        asset.safeTransfer(_recipient, _amount);
     }
 
-    function _transferAsset(address recipient, uint256 amount) internal virtual;
-
-    function calcTokenToBurn(
-        uint256 _amount
-    ) internal view returns (uint256 lpToBurn) {
+    function calcTokenToBurn(uint256 _amount)
+        internal
+        view
+        returns (uint256 lpToBurn)
+    {
         /* The rate between coins in the pool determines the rate at which pool returns
          * tokens when doing balanced removal (remove_liquidity call). And by knowing how much assets
          * we want we can determine how much of OToken we receive by removing liquidity.
@@ -335,15 +360,14 @@ abstract contract BaseConvexAMOStrategy is InitializableAbstractStrategy {
         uint256 oTokenToBurn = oToken.balanceOf(address(this));
         IVault(vaultAddress).burnForStrategy(oTokenToBurn);
 
-        uint256 assetBalance = _transferAssetBalance(vaultAddress);
+        uint256 assetBalance = _wrapAsset();
+
+        // Transfer the asset to the Vault
+        asset.safeTransfer(vaultAddress, assetBalance);
 
         emit Withdrawal(address(asset), address(lpToken), assetBalance);
         emit Withdrawal(address(oToken), address(lpToken), oTokenToBurn);
     }
-
-    function _transferAssetBalance(
-        address recipient
-    ) internal virtual returns (uint256 assetBalance);
 
     /***************************************
             Curve Pool Rebalancing
@@ -358,9 +382,12 @@ abstract contract BaseConvexAMOStrategy is InitializableAbstractStrategy {
      * The asset value of the strategy and vault is increased.
      * @param _oTokens The amount of OTokens to be minted and added to the pool.
      */
-    function mintAndAddOTokens(
-        uint256 _oTokens
-    ) external onlyStrategist nonReentrant improvePoolBalance {
+    function mintAndAddOTokens(uint256 _oTokens)
+        external
+        onlyStrategist
+        nonReentrant
+        improvePoolBalance
+    {
         IVault(vaultAddress).mintForStrategy(_oTokens);
 
         // Convert OTokens, eg OETH, to Curve pool LP tokens
@@ -399,9 +426,12 @@ abstract contract BaseConvexAMOStrategy is InitializableAbstractStrategy {
      * The asset value of the strategy and vault is reduced.
      * @param _lpTokens The amount of Curve pool LP tokens to be burned for OTokens.
      */
-    function removeAndBurnOTokens(
-        uint256 _lpTokens
-    ) external onlyStrategist nonReentrant improvePoolBalance {
+    function removeAndBurnOTokens(uint256 _lpTokens)
+        external
+        onlyStrategist
+        nonReentrant
+        improvePoolBalance
+    {
         // Withdraw Curve pool LP tokens from Convex and remove OTokens from the Curve pool
         uint256 oTokenToBurn = _withdrawAndRemoveFromPool(
             _lpTokens,
@@ -431,16 +461,19 @@ abstract contract BaseConvexAMOStrategy is InitializableAbstractStrategy {
      * is a gas intensive process. It's easier for the trusted strategist to
      * caclulate the amount of Curve pool LP tokens required off-chain.
      */
-    function removeOnlyAssets(
-        uint256 _lpTokens
-    ) external onlyStrategist nonReentrant improvePoolBalance {
-        // Withdraw Curve pool LP tokens from Convex and remove ETH from the Curve pool
-        uint256 assetAmount = _withdrawAndRemoveFromPool(
-            _lpTokens,
-            assetCoinIndex
-        );
+    function removeOnlyAssets(uint256 _lpTokens)
+        external
+        onlyStrategist
+        nonReentrant
+        improvePoolBalance
+    {
+        // Withdraw Curve pool LP tokens from Convex and remove asset from the Curve pool
+        _withdrawAndRemoveFromPool(_lpTokens, assetCoinIndex);
 
-        _transferAsset(vaultAddress, assetAmount);
+        uint256 assetAmount = _wrapAsset();
+
+        // Transfer the asset to the Vault
+        asset.safeTransfer(vaultAddress, assetAmount);
 
         emit Withdrawal(address(asset), address(lpToken), assetAmount);
     }
@@ -452,10 +485,10 @@ abstract contract BaseConvexAMOStrategy is InitializableAbstractStrategy {
      * @param coinIndex The index of the coin to be removed from the Curve pool. eg 0 = ETH, 1 = OETH.
      * @return coinsRemoved The amount of assets or OTokens removed from the Curve pool.
      */
-    function _withdrawAndRemoveFromPool(
-        uint256 _lpTokens,
-        uint128 coinIndex
-    ) internal returns (uint256 coinsRemoved) {
+    function _withdrawAndRemoveFromPool(uint256 _lpTokens, uint128 coinIndex)
+        internal
+        returns (uint256 coinsRemoved)
+    {
         // Withdraw Curve pool LP tokens from Convex pool
         _lpWithdraw(_lpTokens);
 
@@ -505,9 +538,12 @@ abstract contract BaseConvexAMOStrategy is InitializableAbstractStrategy {
      * @notice Returns bool indicating whether asset is supported by strategy
      * @param _asset Address of the asset
      */
-    function supportsAsset(
-        address _asset
-    ) external view override returns (bool) {
+    function supportsAsset(address _asset)
+        external
+        view
+        override
+        returns (bool)
+    {
         return _asset == address(asset);
     }
 

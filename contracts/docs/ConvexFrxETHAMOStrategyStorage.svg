@@ -13,7 +13,7 @@
 <g id="node1" class="node">
 <title>3</title>
 <polygon fill="#f2f2f2" stroke="black" points="0,-0.5 0,-521.3 1114.97,-521.3 1114.97,-0.5 0,-0.5"/>
-<text text-anchor="middle" x="557.49" y="-504.7" font-family="Courier New" font-size="14.00">ConvexEthMetaStrategy &lt;&lt;Contract&gt;&gt;</text>
+<text text-anchor="middle" x="557.49" y="-504.7" font-family="Courier New" font-size="14.00">ConvexFrxETHAMOStrategy &lt;&lt;Contract&gt;&gt;</text>
 <polyline fill="none" stroke="black" points="0,-496.5 1114.97,-496.5 "/>
 <text text-anchor="middle" x="33.2" y="-479.9" font-family="Courier New" font-size="14.00">slot</text>
 <polyline fill="none" stroke="black" points="0,-471.7 66.41,-471.7 "/>

@@ -52,8 +52,11 @@ sol2uml storage .. -c CompoundStrategy -o CompStrategyStorage.svg --hideExpand _
 
 sol2uml .. -v -hv -hf -he -hs -hl -b ConvexEthMetaStrategy -o ConvexEthMetaStrategyHierarchy.svg
 sol2uml .. -s -d 0 -b ConvexEthMetaStrategy -o ConvexEthMetaStrategySquashed.svg
-## TODO fix sol2uml "Failed to find user defined type "IERC20" in attribute "shareToken" of type "1"""
-sol2uml storage .. -c ConvexEthMetaStrategy -o ConvexEthMetaStrategyStorage.svg
+sol2uml storage .. -c ConvexEthMetaStrategy -o ConvexEthMetaStrategyStorage.svg  --hideExpand ______gap,_reserved
+
+sol2uml .. -v -hv -hf -he -hs -hl -b ConvexFrxETHAMOStrategy -o ConvexFrxETHAMOStrategyHierarchy.svg
+sol2uml .. -s -d 0 -b ConvexFrxETHAMOStrategy -o ConvexFrxETHAMOStrategySquashed.svg
+sol2uml storage .. -c ConvexFrxETHAMOStrategy -o ConvexFrxETHAMOStrategyStorage.svg  --hideExpand ______gap,_reserved
 
 sol2uml .. -v -hv -hf -he -hs -hl -b FluxStrategy -o FluxStrategyHierarchy.svg
 sol2uml .. -s -d 0 -b FluxStrategy -o FluxStrategySquashed.svg

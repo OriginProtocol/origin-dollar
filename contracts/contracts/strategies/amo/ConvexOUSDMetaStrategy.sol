@@ -10,21 +10,21 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 
-import { IRewardStaking } from "./IRewardStaking.sol";
-import { IConvexDeposits } from "./IConvexDeposits.sol";
-import { ICurvePool } from "./ICurvePool.sol";
-import { IERC20, InitializableAbstractStrategy } from "./BaseCurveStrategy.sol";
-import { BaseConvexMetaStrategy } from "./BaseConvexMetaStrategy.sol";
-import { StableMath } from "../utils/StableMath.sol";
-import { IVault } from "../interfaces/IVault.sol";
+import { IRewardStaking } from "../IRewardStaking.sol";
+import { IConvexDeposits } from "../IConvexDeposits.sol";
+import { ICurvePool } from "../ICurvePool.sol";
+import { IERC20, InitializableAbstractStrategy } from "../BaseCurveStrategy.sol";
+import { BaseConvexMetaStrategy } from "../BaseConvexMetaStrategy.sol";
+import { StableMath } from "../../utils/StableMath.sol";
+import { IVault } from "../../interfaces/IVault.sol";
 
 contract ConvexOUSDMetaStrategy is BaseConvexMetaStrategy {
     using StableMath for uint256;
     using SafeERC20 for IERC20;
 
-    constructor(BaseStrategyConfig memory _stratConfig)
-        InitializableAbstractStrategy(_stratConfig)
-    {}
+    constructor(
+        BaseStrategyConfig memory _stratConfig
+    ) InitializableAbstractStrategy(_stratConfig) {}
 
     /* Take 3pool LP and mint the corresponding amount of ousd. Deposit and stake that to
      * ousd Curve Metapool. Take the LP from metapool and deposit them to Convex.
