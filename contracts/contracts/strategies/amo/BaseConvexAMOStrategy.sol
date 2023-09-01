@@ -48,9 +48,13 @@ abstract contract BaseConvexAMOStrategy is InitializableAbstractStrategy {
     address public immutable cvxDepositorAddress;
     IRewardStaking public immutable cvxRewardStaker;
     uint256 public immutable cvxDepositorPTokenId;
+    /// @notice The Curve pool that the strategy invests in
     ICurveETHPoolV1 public immutable curvePool;
+    /// @notice The Curve pool LP token that the strategy invests in
     IERC20 public immutable lpToken;
+    /// @notice The OToken that is used in the Curve pool. eg OETH or OUSD
     IERC20 public immutable oToken;
+    /// @notice The asset token that is used in the Curve pool. eg WETH, frxETH or 3CRV
     IERC20 public immutable asset;
 
     // Ordered list of pool assets
@@ -149,23 +153,25 @@ abstract contract BaseConvexAMOStrategy is InitializableAbstractStrategy {
         Vault to Pool Asset Conversions
     ****************************************/
 
-    /// @dev Converts the Vault asset to a Curve pool asset
-    /// for WETH, it unwraps the ETH from WETH using a WETH withdraw
-    /// for frxETH, it doesn't need to do anything
-    /// @param amount The amount of Curve pool assets to unwrap
-    function _unwrapAsset(uint256 amount) internal virtual;
+    /// @dev Converts Vault assets to a pool assets.
+    /// @param vaultAsset The address of the Vault asset to convert. eg WETH, frxETH, DAI
+    /// @param vaultAssetAmount The amount of vault assets to convert.
+    /// @return poolAssets The amount of pool assets. eg ETH, frxETH or 3CRV
+    function _toPoolAsset(address vaultAsset, uint256 vaultAssetAmount)
+        internal
+        virtual
+        returns (uint256 poolAssets);
 
-    /// @dev Converts a Curve pool asset to the Vault asset
-    /// for WETH, it wraps the ETH in WETH using a WETH deposit
-    /// for frxETH, it doesn't need to do anything
-    /// @param amount The amount of Curve pool assets to wrap
-    function _wrapAsset(uint256 amount) internal virtual;
+    /// @dev Converts pool assets to Vault assets.
+    /// @param vaultAsset The address of the required vault asset. eg WETH, frxETH, DAI
+    /// @param assetamount The required amount of vault assets.
+    function _toVaultAsset(address vaultAsset, uint256 assetamount)
+        internal
+        virtual;
 
-    /// @dev Converts all the Curve pool assets in this strategy to the Vault asset.
-    /// for WETH, it get the ETH balance and wraps it in WETH using a WETH deposit
-    /// for frxETH, it just gets the frxETH balance of this strategy contract
-    /// @return assets The amount of Vault assets
-    function _wrapAsset() internal virtual returns (uint256 assets);
+    /// @dev Converts all the pool assets in this strategy to the Vault asset.
+    /// @return vaultAssets The amount of Vault assets
+    function _toVaultAsset() internal virtual returns (uint256 vaultAssets);
 
     /***************************************
                     Curve Pool
@@ -200,9 +206,9 @@ abstract contract BaseConvexAMOStrategy is InitializableAbstractStrategy {
         require(_amount > 0, "Must deposit something");
         require(_asset == address(asset), "Unsupported asset");
 
-        _unwrapAsset(_amount);
-
         emit Deposit(_asset, address(lpToken), _amount);
+
+        uint256 poolAssets = _toPoolAsset(_asset, _amount);
 
         // Get the asset and OToken balances in the Curve pool
         uint256[2] memory balances = curvePool.get_balances();
@@ -211,7 +217,7 @@ abstract contract BaseConvexAMOStrategy is InitializableAbstractStrategy {
             _max(
                 0,
                 int256(balances[assetCoinIndex]) +
-                    int256(_amount) -
+                    int256(poolAssets) -
                     int256(balances[oTokenCoinIndex])
             )
         );
@@ -307,8 +313,8 @@ abstract contract BaseConvexAMOStrategy is InitializableAbstractStrategy {
 
         emit Withdrawal(address(oToken), address(lpToken), oTokenToBurn);
 
-        // Convert Curve pool asset to Vault asset
-        _wrapAsset(_amount);
+        // Convert pool assets to required amount of vault assets
+        _toVaultAsset(_asset, _amount);
 
         // Transfer the requested number of assets to the recipient
         // this may leave some assets in this strategy contract if
@@ -369,12 +375,13 @@ abstract contract BaseConvexAMOStrategy is InitializableAbstractStrategy {
         uint256 oTokenToBurn = oToken.balanceOf(address(this));
         IVault(vaultAddress).burnForStrategy(oTokenToBurn);
 
-        uint256 assetBalance = _wrapAsset();
+        // Convert all the pool assets in this strategy to Vault assets
+        uint256 vaultAssets = _toVaultAsset();
 
         // Transfer the asset to the Vault
-        asset.safeTransfer(vaultAddress, assetBalance);
+        asset.safeTransfer(vaultAddress, vaultAssets);
 
-        emit Withdrawal(address(asset), address(lpToken), assetBalance);
+        emit Withdrawal(address(asset), address(lpToken), vaultAssets);
         emit Withdrawal(address(oToken), address(lpToken), oTokenToBurn);
     }
 
@@ -479,12 +486,13 @@ abstract contract BaseConvexAMOStrategy is InitializableAbstractStrategy {
         // Withdraw Curve pool LP tokens from Convex and remove asset from the Curve pool
         _withdrawAndRemoveFromPool(_lpTokens, assetCoinIndex);
 
-        uint256 assetAmount = _wrapAsset();
+        // Convert all the pool assets in this strategy to Vault assets
+        uint256 vaultAssets = _toVaultAsset();
 
         // Transfer the asset to the Vault
-        asset.safeTransfer(vaultAddress, assetAmount);
+        asset.safeTransfer(vaultAddress, vaultAssets);
 
-        emit Withdrawal(address(asset), address(lpToken), assetAmount);
+        emit Withdrawal(address(asset), address(lpToken), vaultAssets);
     }
 
     /**

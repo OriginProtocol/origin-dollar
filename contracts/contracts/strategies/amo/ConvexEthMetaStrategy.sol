@@ -32,19 +32,24 @@ contract ConvexEthMetaStrategy is BaseConvexAMOStrategy {
     ****************************************/
 
     /// @dev Unwraps the ETH from WETH using WETH withdraw
-    function _unwrapAsset(uint256 amount) internal override {
+    function _toPoolAsset(address, uint256 amount)
+        internal
+        override
+        returns (uint256 poolAssets)
+    {
         IWETH9(address(asset)).withdraw(amount);
+        poolAssets = amount;
     }
 
-    /// @dev Wraps the ETH in WETH using WETH deposit
-    function _wrapAsset(uint256 amount) internal override {
+    /// @dev Converts ETH pool assets to WETH vault assets
+    function _toVaultAsset(address, uint256 amount) internal override {
         // Convert ETH to WETH
         IWETH9(address(asset)).deposit{ value: amount }();
     }
 
     /// @dev Gets the ETH balance of this strategy contract
-    /// and then wraps the ETH in WETH using WETH deposit
-    function _wrapAsset() internal override returns (uint256 assets) {
+    /// and then converts all the ETH to WETH
+    function _toVaultAsset() internal override returns (uint256 assets) {
         // Get ETH balance of this strategy contract
         assets = address(this).balance;
         // Convert ETH to WETH

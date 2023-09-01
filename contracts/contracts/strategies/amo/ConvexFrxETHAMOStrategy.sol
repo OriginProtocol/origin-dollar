@@ -23,14 +23,22 @@ contract ConvexFrxETHAMOStrategy is BaseConvexAMOStrategy {
         Vault to Pool Asset Conversions
     ****************************************/
 
-    /// @dev frxETH is the Vault asset and the Curve pool asset so nothing to do
-    function _unwrapAsset(uint256) internal override {}
+    /// @dev frxETH is the Vault asset and the Curve pool asset so
+    /// nothing to except return the vault asset amount
+    function _toPoolAsset(address, uint256 assets)
+        internal
+        pure
+        override
+        returns (uint256 poolAssets)
+    {
+        poolAssets = assets;
+    }
 
-    /// @dev frxETH is the Vault asset and the Curve pool asset so nothing to do
-    function _wrapAsset(uint256) internal override {}
+    /// @dev frxETH is the Vault asset and the pool asset so nothing to do
+    function _toVaultAsset(address, uint256) internal override {}
 
     /// @dev returns the frxETH balance of this strategy contract
-    function _wrapAsset() internal view override returns (uint256 assets) {
+    function _toVaultAsset() internal view override returns (uint256 assets) {
         assets = asset.balanceOf(address(this));
     }
 
