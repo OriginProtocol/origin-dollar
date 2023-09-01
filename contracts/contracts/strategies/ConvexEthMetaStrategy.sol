@@ -374,6 +374,7 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         external
         onlyStrategist
         improveMetapoolBalance
+        nonReentrant
     {
         IVault(vaultAddress).mintForStrategy(_oTokens);
 
@@ -417,6 +418,7 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         external
         onlyStrategist
         improveMetapoolBalance
+        nonReentrant
     {
         // Withdraw Metapool LP tokens from Convex and remove OTokens from the Metapool
         uint256 oethToBurn = _withdrawAndRemoveFromPool(
@@ -451,6 +453,7 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         external
         onlyStrategist
         improveMetapoolBalance
+        nonReentrant
     {
         // Withdraw Metapool LP tokens from Convex and remove ETH from the Metapool
         uint256 ethAmount = _withdrawAndRemoveFromPool(_lpTokens, ethCoinIndex);
