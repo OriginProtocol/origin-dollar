@@ -152,17 +152,31 @@ abstract contract BaseConvexAMOStrategy is InitializableAbstractStrategy {
     /// @dev Converts the Vault asset to a Curve pool asset
     /// for WETH, it unwraps the ETH from WETH using a WETH withdraw
     /// for frxETH, it doesn't need to do anything
-    function _unwrapAsset(uint256 _amount) internal virtual;
+    /// @param amount The amount of Curve pool assets to unwrap
+    function _unwrapAsset(uint256 amount) internal virtual;
 
     /// @dev Converts a Curve pool asset to the Vault asset
     /// for WETH, it wraps the ETH in WETH using a WETH deposit
     /// for frxETH, it doesn't need to do anything
+    /// @param amount The amount of Curve pool assets to wrap
     function _wrapAsset(uint256 amount) internal virtual;
 
     /// @dev Converts all the Curve pool assets in this strategy to the Vault asset.
     /// for WETH, it get the ETH balance and wraps it in WETH using a WETH deposit
     /// for frxETH, it just gets the frxETH balance of this strategy contract
+    /// @return assets The amount of Vault assets
     function _wrapAsset() internal virtual returns (uint256 assets);
+
+    /***************************************
+                    Curve Pool
+    ****************************************/
+
+    /// @dev Adds assets and/or OTokens to the Curve pool
+    /// @param amounts The amount of Curve pool assets and OTokens to add to the pool
+    function _addLiquidityToPool(
+        uint256[2] memory amounts,
+        uint256 minMintAmount
+    ) internal virtual returns (uint256 lpDeposited);
 
     /***************************************
                     Deposit
@@ -170,8 +184,8 @@ abstract contract BaseConvexAMOStrategy is InitializableAbstractStrategy {
 
     /**
      * @notice Deposit an asset into the Curve pool
-     * @param _asset Address of the asset token. eg WETH or frxETH
-     * @param _amount Amount of asset tokens to deposit.
+     * @param _asset Address of the Vault asset token. eg WETH or frxETH
+     * @param _amount Amount of Vault asset tokens to deposit.
      */
     function deposit(address _asset, uint256 _amount)
         external
@@ -243,11 +257,6 @@ abstract contract BaseConvexAMOStrategy is InitializableAbstractStrategy {
             "Depositing LP to Convex not successful"
         );
     }
-
-    function _addLiquidityToPool(
-        uint256[2] memory _amounts,
-        uint256 minMintAmount
-    ) internal virtual returns (uint256 lpDeposited);
 
     /**
      * @notice Deposit the strategy's entire balance of assets into the Curve pool

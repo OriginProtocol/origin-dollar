@@ -22,9 +22,9 @@ contract ConvexOUSDMetaStrategy is BaseConvexMetaStrategy {
     using StableMath for uint256;
     using SafeERC20 for IERC20;
 
-    constructor(
-        BaseStrategyConfig memory _stratConfig
-    ) InitializableAbstractStrategy(_stratConfig) {}
+    constructor(BaseStrategyConfig memory _stratConfig)
+        InitializableAbstractStrategy(_stratConfig)
+    {}
 
     /* Take 3pool LP and mint the corresponding amount of ousd. Deposit and stake that to
      * ousd Curve Metapool. Take the LP from metapool and deposit them to Convex.

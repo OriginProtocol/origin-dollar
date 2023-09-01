@@ -8,7 +8,6 @@ pragma solidity ^0.8.0;
  */
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/utils/math/Math.sol";
 
 import { BaseConvexAMOStrategy } from "./BaseConvexAMOStrategy.sol";
 
@@ -24,10 +23,13 @@ contract ConvexFrxETHAMOStrategy is BaseConvexAMOStrategy {
         Vault to Pool Asset Conversions
     ****************************************/
 
-    function _unwrapAsset(uint256 _amount) internal override {}
+    /// @dev frxETH is the Vault asset and the Curve pool asset so nothing to do
+    function _unwrapAsset(uint256) internal override {}
 
-    function _wrapAsset(uint256 _amount) internal override {}
+    /// @dev frxETH is the Vault asset and the Curve pool asset so nothing to do
+    function _wrapAsset(uint256) internal override {}
 
+    /// @dev returns the frxETH balance of this strategy contract
     function _wrapAsset() internal view override returns (uint256 assets) {
         assets = asset.balanceOf(address(this));
     }
@@ -36,13 +38,13 @@ contract ConvexFrxETHAMOStrategy is BaseConvexAMOStrategy {
                     Curve Pool
     ****************************************/
 
+    /// @dev Adds frxETH and/or OETH to the Curve pool
+    /// @param amounts The amount of Curve pool assets and OTokens to add to the pool
     function _addLiquidityToPool(
-        uint256[2] memory _amounts,
+        uint256[2] memory amounts,
         uint256 minMintAmount
     ) internal override returns (uint256 lpDeposited) {
-        // Do the deposit to the Curve pool
-        // slither-disable-next-line arbitrary-send
-        lpDeposited = curvePool.add_liquidity(_amounts, minMintAmount);
+        lpDeposited = curvePool.add_liquidity(amounts, minMintAmount);
     }
 
     /***************************************
@@ -54,9 +56,12 @@ contract ConvexFrxETHAMOStrategy is BaseConvexAMOStrategy {
      * @param _asset      Address of the asset
      * @return balance    Total value of the asset in the platform
      */
-    function checkBalance(
-        address _asset
-    ) public view override returns (uint256 balance) {
+    function checkBalance(address _asset)
+        public
+        view
+        override
+        returns (uint256 balance)
+    {
         require(_asset == address(asset), "Unsupported asset");
 
         // TODO - check for tokens in this strategy?
@@ -91,10 +96,10 @@ contract ConvexFrxETHAMOStrategy is BaseConvexAMOStrategy {
      * @param _pToken Address of the Curve LP token
      */
     // solhint-disable-next-line no-unused-vars
-    function _abstractSetPToken(
-        address _asset,
-        address _pToken
-    ) internal override {}
+    function _abstractSetPToken(address _asset, address _pToken)
+        internal
+        override
+    {}
 
     function _approveBase() internal override {
         // Approve Curve pool for frxETH and OETH (required for adding liquidity)

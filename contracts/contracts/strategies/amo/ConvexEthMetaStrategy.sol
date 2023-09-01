@@ -8,7 +8,6 @@ pragma solidity ^0.8.0;
  */
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/utils/math/Math.sol";
 
 import { BaseConvexAMOStrategy } from "./BaseConvexAMOStrategy.sol";
 import { IWETH9 } from "../../interfaces/IWETH9.sol";
@@ -17,58 +16,57 @@ contract ConvexEthMetaStrategy is BaseConvexAMOStrategy {
     using SafeERC20 for IERC20;
 
     // Added for backward compatibility
-    IERC20 public immutable oeth;
-    IWETH9 public immutable weth;
-    // Added for backward compatibility
-    uint128 public constant oethCoinIndex = 1;
-    uint128 public constant ethCoinIndex = 0;
+    address public immutable oeth;
+    address public immutable weth;
 
     constructor(
         BaseStrategyConfig memory _baseConfig,
         ConvexAMOConfig memory _convexConfig
     ) BaseConvexAMOStrategy(_baseConfig, _convexConfig) {
-        oeth = IERC20(_convexConfig.oTokenAddress);
-        weth = IWETH9(_convexConfig.assetAddress);
+        oeth = _convexConfig.oTokenAddress;
+        weth = _convexConfig.assetAddress;
     }
 
     /***************************************
         Vault to Pool Asset Conversions
     ****************************************/
 
-    function _unwrapAsset(uint256 _amount) internal override {
-        weth.withdraw(_amount);
+    /// @dev Unwraps the ETH from WETH using WETH withdraw
+    function _unwrapAsset(uint256 amount) internal override {
+        IWETH9(address(asset)).withdraw(amount);
     }
 
+    /// @dev Wraps the ETH in WETH using WETH deposit
     function _wrapAsset(uint256 amount) internal override {
         // Convert ETH to WETH
-        weth.deposit{ value: amount }();
+        IWETH9(address(asset)).deposit{ value: amount }();
     }
 
+    /// @dev Gets the ETH balance of this strategy contract
+    /// and then wraps the ETH in WETH using WETH deposit
     function _wrapAsset() internal override returns (uint256 assets) {
         // Get ETH balance of this strategy contract
         assets = address(this).balance;
         // Convert ETH to WETH
-        weth.deposit{ value: assets }();
+        IWETH9(address(asset)).deposit{ value: assets }();
     }
 
     /***************************************
                     Curve Pool
     ****************************************/
 
+    /// @dev Adds OETH and/or ETH to the Curve pool
+    /// @param amounts The amount of ETH and OETH to add to the pool
     function _addLiquidityToPool(
-        uint256[2] memory _amounts,
+        uint256[2] memory amounts,
         uint256 minMintAmount
     ) internal override returns (uint256 lpDeposited) {
-        // Do the deposit to the Curve pool
         // slither-disable-next-line arbitrary-send
-        lpDeposited = curvePool.add_liquidity{
-            value: _amounts[assetCoinIndex]
-        }(_amounts, minMintAmount);
+        lpDeposited = curvePool.add_liquidity{ value: amounts[assetCoinIndex] }(
+            amounts,
+            minMintAmount
+        );
     }
-
-    /***************************************
-                    Withdraw
-    ****************************************/
 
     /***************************************
                 Asset Balance
@@ -79,9 +77,12 @@ contract ConvexEthMetaStrategy is BaseConvexAMOStrategy {
      * @param _asset      Address of the asset
      * @return balance    Total value of the asset in the platform
      */
-    function checkBalance(
-        address _asset
-    ) public view override returns (uint256 balance) {
+    function checkBalance(address _asset)
+        public
+        view
+        override
+        returns (uint256 balance)
+    {
         require(_asset == address(asset), "Unsupported asset");
 
         // Eth balance needed here for the balance check that happens from vault during depositing.
@@ -122,16 +123,16 @@ contract ConvexEthMetaStrategy is BaseConvexAMOStrategy {
      * @param _pToken Address of the Curve LP token
      */
     // solhint-disable-next-line no-unused-vars
-    function _abstractSetPToken(
-        address _asset,
-        address _pToken
-    ) internal override {}
+    function _abstractSetPToken(address _asset, address _pToken)
+        internal
+        override
+    {}
 
     function _approveBase() internal override {
         // Approve Curve pool for OETH (required for adding liquidity)
         // No approval is needed for ETH
         // slither-disable-next-line unused-return
-        oeth.approve(platformAddress, type(uint256).max);
+        oToken.approve(platformAddress, type(uint256).max);
 
         // Approve Convex deposit contract to transfer Curve pool LP tokens
         // This is needed for deposits if Curve pool LP tokens into the Convex rewards pool
