@@ -15,6 +15,10 @@ abstract contract MockCurveAbstractMetapool is MintableERC20 {
     address[] public coins;
     uint256[2] public balances;
 
+    function get_balances() external view returns (uint256[2] memory) {
+        return balances;
+    }
+
     // Returns the same amount of LP tokens in 1e18 decimals
     function add_liquidity(uint256[2] calldata _amounts, uint256 _minAmount)
         external

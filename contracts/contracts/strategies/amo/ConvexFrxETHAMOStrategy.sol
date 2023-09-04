@@ -38,8 +38,13 @@ contract ConvexFrxETHAMOStrategy is BaseConvexAMOStrategy {
     function _toVaultAsset(address, uint256) internal override {}
 
     /// @dev returns the frxETH balance of this strategy contract
-    function _toVaultAsset() internal view override returns (uint256 assets) {
-        assets = asset.balanceOf(address(this));
+    function _withdrawAllAsset() internal override {
+        uint256 vaultAssets = asset.balanceOf(address(this));
+
+        // Transfer the WETH to the Vault
+        asset.safeTransfer(vaultAddress, vaultAssets);
+
+        emit Withdrawal(address(asset), address(lpToken), vaultAssets);
     }
 
     /***************************************

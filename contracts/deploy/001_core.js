@@ -388,10 +388,27 @@ const deployConvexOUSDMetaStrategy = async () => {
     "ConvexOUSDMetaStrategyProxy"
   );
 
+  // Initialize Strategies
+  const mockBooster = await ethers.getContract("MockBooster");
+  const mockRewardPool = await ethers.getContract("MockRewardPool");
+  const ousd = await ethers.getContract("OUSDProxy");
+
   const dConvexOUSDMetaStrategy = await deployWithConfirmation(
     "ConvexOUSDMetaStrategy",
-    [[assetAddresses.ThreePool, cVaultProxy.address]]
+    [
+      [assetAddresses.ThreePoolOUSDMetapool, cVaultProxy.address],
+      [
+        mockBooster.address, // cvxDepositorAddress,
+        mockRewardPool.address, // cvxRewardStakerAddress,
+        metapoolLPCRVPid, // cvxDepositorPTokenId
+        ousd.address, // oTokenAddress,
+        assetAddresses.ThreePoolToken, // assetAddress (3CRV)
+      ],
+      assetAddresses.ThreePool, // _curve3Pool
+      [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT], // _curve3PoolAssets
+    ]
   );
+
   const cConvexOUSDMetaStrategy = await ethers.getContractAt(
     "ConvexOUSDMetaStrategy",
     cConvexOUSDMetaStrategyProxy.address
@@ -406,32 +423,11 @@ const deployConvexOUSDMetaStrategy = async () => {
   );
   log("Initialized ConvexOUSDMetaStrategyProxy");
 
-  // Initialize Strategies
-  const mockBooster = await ethers.getContract("MockBooster");
-  const mockRewardPool = await ethers.getContract("MockRewardPool");
-  const ousd = await ethers.getContract("OUSDProxy");
-
   await withConfirmation(
     cConvexOUSDMetaStrategy.connect(sDeployer)[
       // eslint-disable-next-line no-unexpected-multiline
-      "initialize(address[],address[],address[],(address,address,address,address,address,uint256))"
-    ](
-      [assetAddresses.CVX, assetAddresses.CRV],
-      [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT],
-      [
-        assetAddresses.ThreePoolToken,
-        assetAddresses.ThreePoolToken,
-        assetAddresses.ThreePoolToken,
-      ],
-      [
-        mockBooster.address, // _cvxDepositorAddress,
-        assetAddresses.ThreePoolOUSDMetapool, // metapool address,
-        ousd.address, // _ousdAddress,
-        mockRewardPool.address, // _cvxRewardStakerAddress,
-        assetAddresses.ThreePoolOUSDMetapool, // metapoolLpToken (metapool address),
-        metapoolLPCRVPid, // _cvxDepositorPTokenId
-      ]
-    )
+      "initialize(address[])"
+    ]([assetAddresses.CVX, assetAddresses.CRV])
   );
   log("Initialized ConvexOUSDMetaStrategy");
 

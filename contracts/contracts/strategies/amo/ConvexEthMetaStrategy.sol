@@ -49,11 +49,16 @@ contract ConvexEthMetaStrategy is BaseConvexAMOStrategy {
 
     /// @dev Gets the ETH balance of this strategy contract
     /// and then converts all the ETH to WETH
-    function _toVaultAsset() internal override returns (uint256 assets) {
+    function _withdrawAllAsset() internal override {
         // Get ETH balance of this strategy contract
-        assets = address(this).balance;
+        uint256 ethBalance = address(this).balance;
         // Convert ETH to WETH
-        IWETH9(address(asset)).deposit{ value: assets }();
+        IWETH9(address(asset)).deposit{ value: ethBalance }();
+
+        // Transfer the WETH to the Vault
+        asset.safeTransfer(vaultAddress, ethBalance);
+
+        emit Withdrawal(address(asset), address(lpToken), ethBalance);
     }
 
     /***************************************

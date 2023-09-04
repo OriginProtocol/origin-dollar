@@ -17,44 +17,65 @@ contract ConvexOUSDMetaStrategy is BaseConvexAMOStrategy {
     using StableMath for uint256;
     using SafeERC20 for IERC20;
 
-    // Store 8 bit decimals for each asset in the Curve pool
-    // DAI at index 0 is 18 decimals (hex 12)
-    // USDC at index 1 is 6 decimals (hex 6)
-    // USDT at index 2 is 6 decimals (hex 6)
-    uint256 private constant assetDecimals = 0x060612;
-    address public constant DAI = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
-    address public constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
-    address public constant USDT = 0xdAC17F958D2ee523a2206206994597C13D831ec7;
+    uint256 internal constant THREEPOOL_ASSET_COUNT = 3;
+
+    address public immutable DAI;
+    address public immutable USDC;
+    address public immutable USDT;
+    ICurvePool public immutable curve3Pool;
 
     constructor(
         BaseStrategyConfig memory _baseConfig,
-        ConvexAMOConfig memory _convexConfig
-    ) BaseConvexAMOStrategy(_baseConfig, _convexConfig) {}
+        ConvexAMOConfig memory _convexConfig,
+        address _curve3Pool,
+        address[3] memory _curve3PoolAssets
+    ) BaseConvexAMOStrategy(_baseConfig, _convexConfig) {
+        DAI = _curve3PoolAssets[0];
+        USDC = _curve3PoolAssets[1];
+        USDT = _curve3PoolAssets[2];
+        curve3Pool = ICurvePool(_curve3Pool);
+    }
+
+    /***************************************
+            Vault Asset Validation
+    ****************************************/
+
+    function _isVaultAsset(address _vaultAsset)
+        internal
+        view
+        override
+        returns (bool supported)
+    {
+        supported =
+            _vaultAsset == DAI ||
+            _vaultAsset == USDC ||
+            _vaultAsset == USDT;
+    }
 
     /***************************************
         Vault to Pool Asset Conversions
     ****************************************/
 
-    /// @dev 3CRV is the Vault asset and the Curve pool asset so nothing to do
+    /// @dev DAI, USDC or USDC is the Vault asset and the Curve 3Pool lp token 3CRV is
+    /// is Curve's OUSD/3CRV Metapool asset
     function _toPoolAsset(address _asset, uint256 _amount)
         internal
         override
         returns (uint256 poolAssets)
     {
-        uint256 poolCoinIndex = _getCoinIndex(_asset);
+        (uint256 poolCoinIndex, uint256 decimals) = _coinIndexDecimals(_asset);
 
         // 3Pool requires passing deposit amounts for all 3 assets, set to 0 for all
         uint256[3] memory _amounts;
         // Set the amount on the asset we want to deposit
         _amounts[poolCoinIndex] = _amount;
-        uint256 depositValue = _amount
-            .scaleBy(18, _getDecimals(poolCoinIndex))
-            .divPrecisely(curvePool.get_virtual_price());
-        uint256 minMintAmount = depositValue.mulTruncate(
-            uint256(1e18) - MAX_SLIPPAGE
-        );
+        uint256 minMintAmount = _amount
+            .scaleBy(18, decimals)
+            .divPrecisely(curve3Pool.get_virtual_price())
+            .mulTruncate(uint256(1e18) - MAX_SLIPPAGE);
+
         // Do the deposit to 3pool
-        ICurvePool(address(curvePool)).add_liquidity(_amounts, minMintAmount);
+        curve3Pool.add_liquidity(_amounts, minMintAmount);
 
         poolAssets = asset.balanceOf(address(this));
     }
@@ -66,11 +87,10 @@ contract ConvexOUSDMetaStrategy is BaseConvexAMOStrategy {
     {
         uint256 contractCrv3Tokens = IERC20(asset).balanceOf(address(this));
 
-        uint256 coinIndex = _getCoinIndex(vaultAsset);
-        ICurvePool curvePool = ICurvePool(platformAddress);
+        (uint256 poolCoinIndex, ) = _coinIndexDecimals(vaultAsset);
 
         uint256 requiredCrv3Tokens = _calcCurveTokenAmount(
-            coinIndex,
+            poolCoinIndex,
             assetAmount
         );
 
@@ -80,21 +100,49 @@ contract ConvexOUSDMetaStrategy is BaseConvexAMOStrategy {
         }
 
         uint256[3] memory _amounts = [uint256(0), uint256(0), uint256(0)];
-        _amounts[coinIndex] = assetAmount;
+        _amounts[poolCoinIndex] = assetAmount;
 
-        curvePool.remove_liquidity_imbalance(_amounts, requiredCrv3Tokens);
+        curve3Pool.remove_liquidity_imbalance(_amounts, requiredCrv3Tokens);
     }
 
-    /// @dev Converts
-    function _toVaultAsset() internal view override returns (uint256 assets) {
-        assets = asset.balanceOf(address(this));
+    /// @dev Converts all 3CRV in this strategy to the Vault assets DAI, USDC and USDT
+    /// by removing liquidity from the Curve OUSD/3CRV Metapool.
+    /// Then transfers each vault asset to the vault.
+    function _withdrawAllAsset() internal override {
+        // Withdraws are proportional to assets held by 3Pool
+        uint256[3] memory minWithdrawAmounts = [
+            uint256(0),
+            uint256(0),
+            uint256(0)
+        ];
+
+        // Remove liquidity
+        curve3Pool.remove_liquidity(
+            IERC20(asset).balanceOf(address(this)),
+            minWithdrawAmounts
+        );
+
+        // Transfer assets to the Vault
+        // Note that Curve will provide all 3 of the assets in 3pool even if
+        // we have not set PToken addresses for all of them in this strategy
+        _transferAssetBalance(IERC20(DAI));
+        _transferAssetBalance(IERC20(USDC));
+        _transferAssetBalance(IERC20(USDT));
+    }
+
+    function _transferAssetBalance(IERC20 asset) internal {
+        uint256 assetBalance = asset.balanceOf(address(this));
+        if (assetBalance > 0) {
+            asset.safeTransfer(vaultAddress, assetBalance);
+            emit Withdrawal(address(asset), address(lpToken), assetBalance);
+        }
     }
 
     /***************************************
                     Curve Pool
     ****************************************/
 
-    /// @dev Adds frxETH and/or OETH to the Curve pool
+    /// @dev Adds 3CRV and/or OUSD to the Curve OUSD/3CRV Metapool
     /// @param amounts The amount of Curve pool assets and OTokens to add to the pool
     function _addLiquidityToPool(
         uint256[2] memory amounts,
@@ -104,25 +152,22 @@ contract ConvexOUSDMetaStrategy is BaseConvexAMOStrategy {
     }
 
     /**
-     * @dev Get the index of the coin
+     * @dev Get the asset token's index position in the Curve 3Pool
+     * and the token's decimals.
      */
-    function _getCoinIndex(address _asset) internal pure returns (uint256) {
+    function _coinIndexDecimals(address _asset)
+        internal
+        view
+        returns (uint256 index, uint256 decimals)
+    {
         if (_asset == DAI) {
-            return 0;
+            return (0, 18);
         } else if (_asset == USDC) {
-            return 1;
+            return (1, 6);
         } else if (_asset == USDT) {
-            return 2;
+            return (2, 6);
         }
         revert("Unsupported asset");
-    }
-
-    function _getDecimals(uint256 poolCoinIndex)
-        internal
-        pure
-        returns (uint8 decimals)
-    {
-        decimals = uint8(decimals >> poolCoinIndex);
     }
 
     /**
@@ -150,26 +195,27 @@ contract ConvexOUSDMetaStrategy is BaseConvexAMOStrategy {
         internal
         returns (uint256 required3Crv)
     {
-        ICurvePool curvePool = ICurvePool(platformAddress);
-
         uint256[3] memory _amounts = [uint256(0), uint256(0), uint256(0)];
         _amounts[_coinIndex] = _amount;
 
         // LP required when removing required asset ignoring fees
-        uint256 lpRequiredNoFees = curvePool.calc_token_amount(_amounts, false);
+        uint256 lpRequiredNoFees = curve3Pool.calc_token_amount(
+            _amounts,
+            false
+        );
         /* LP required if fees would apply to entirety of removed amount
          *
          * fee is 1e10 denominated number: https://curve.readthedocs.io/exchange-pools.html#StableSwap.fee
          */
         uint256 lpRequiredFullFees = lpRequiredNoFees.mulTruncateScale(
-            1e10 + curvePool.fee(),
+            1e10 + curve3Pool.fee(),
             1e10
         );
 
         /* asset received when withdrawing full fee applicable LP accounting for
          * slippage and fees
          */
-        uint256 assetReceivedForFullLPFees = curvePool.calc_withdraw_one_coin(
+        uint256 assetReceivedForFullLPFees = curve3Pool.calc_withdraw_one_coin(
             lpRequiredFullFees,
             int128(uint128(_coinIndex))
         );
@@ -178,6 +224,50 @@ contract ConvexOUSDMetaStrategy is BaseConvexAMOStrategy {
         required3Crv =
             (lpRequiredFullFees * _amount) /
             assetReceivedForFullLPFees;
+    }
+
+    function depositAll() external override onlyVault nonReentrant {
+        uint256[3] memory amounts = [uint256(0), uint256(0), uint256(0)];
+        uint256 depositValue = 0;
+        uint256 curve3PoolVirtualPrice = curve3Pool.get_virtual_price();
+
+        depositValue = _addAmount(amounts, DAI, curve3PoolVirtualPrice);
+        depositValue += _addAmount(amounts, USDC, curve3PoolVirtualPrice);
+        depositValue += _addAmount(amounts, USDT, curve3PoolVirtualPrice);
+
+        uint256 minMintAmount = depositValue.mulTruncate(
+            uint256(1e18) - MAX_SLIPPAGE
+        );
+
+        // deposit DAI, USDC and/or USDT to the Curve 3Pool
+        curve3Pool.add_liquidity(amounts, minMintAmount);
+
+        // Get the Curve OUSD/3CRV Metapool LP token balance of this strategy contract
+        uint256 threePoolLpBalance = asset.balanceOf(address(this));
+
+        // AMO deposit to the Curve Metapool
+        _deposit(threePoolLpBalance);
+    }
+
+    function _addAmount(
+        uint256[3] memory amounts,
+        address usdAsset,
+        uint256 curve3PoolVirtualPrice
+    ) internal returns (uint256 depositValue) {
+        uint256 balance = IERC20(usdAsset).balanceOf(address(this));
+        if (balance > 0) {
+            (uint256 poolCoinIndex, uint256 assetDecimals) = _coinIndexDecimals(
+                usdAsset
+            );
+            // Set the amount on the asset we want to deposit
+            amounts[poolCoinIndex] = balance;
+            // Get value of deposit in Curve LP token to later determine
+            // the minMintAmount argument for add_liquidity
+            depositValue = balance.scaleBy(18, assetDecimals).divPrecisely(
+                curve3PoolVirtualPrice
+            );
+            emit Deposit(usdAsset, address(lpToken), balance);
+        }
     }
 
     /***************************************
@@ -193,14 +283,36 @@ contract ConvexOUSDMetaStrategy is BaseConvexAMOStrategy {
         public
         view
         override
+        onlyAsset(_asset)
         returns (uint256 balance)
     {
-        require(_asset == address(asset), "Unsupported asset");
-
-        uint256 lpTokens = cvxRewardStaker.balanceOf(address(this));
-        if (lpTokens > 0) {
-            balance += (lpTokens * curvePool.get_virtual_price()) / 1e18;
+        // OUSD/3CRV Metapool LP tokens in this strategy contract.
+        // This should generally be nothing as we should always stake
+        // the full balance in the Gauge, but include for safety
+        uint256 metapoolLpTokens = IERC20(asset).balanceOf(address(this));
+        if (metapoolLpTokens > 0) {
+            balance = metapoolLpTokens.mulTruncate(
+                curvePool.get_virtual_price()
+            );
         }
+
+        /* We intentionally omit the metapoolLp tokens held by the metastrategyContract
+         * since the contract should never (except in the middle of deposit/withdrawal
+         * transaction) hold any amount of those tokens in normal operation. There
+         * could be tokens sent to it by a 3rd party and we decide to actively ignore
+         * those.
+         */
+        uint256 metapoolGaugePTokens = cvxRewardStaker.balanceOf(address(this));
+
+        if (metapoolGaugePTokens > 0) {
+            uint256 value = metapoolGaugePTokens.mulTruncate(
+                curvePool.get_virtual_price()
+            );
+            balance += value;
+        }
+
+        (, uint256 assetDecimals) = _coinIndexDecimals(_asset);
+        balance = balance.scaleBy(assetDecimals, 18) / THREEPOOL_ASSET_COUNT;
     }
 
     /***************************************
@@ -220,13 +332,6 @@ contract ConvexOUSDMetaStrategy is BaseConvexAMOStrategy {
         _approveBase();
     }
 
-    /**
-     * @dev Since we are unwrapping WETH before depositing it to Curve
-     *      there is no need to to set an approval for WETH on the Curve
-     *      pool
-     * @param _asset Address of the asset
-     * @param _pToken Address of the Curve LP token
-     */
     // solhint-disable-next-line no-unused-vars
     function _abstractSetPToken(address _asset, address _pToken)
         internal
@@ -234,11 +339,16 @@ contract ConvexOUSDMetaStrategy is BaseConvexAMOStrategy {
     {}
 
     function _approveBase() internal override {
-        // Approve Curve pool for frxETH and OETH (required for adding liquidity)
+        // Approve Curve 3Pool for DAI, USDC and USDT
+        IERC20(DAI).approve(address(curve3Pool), type(uint256).max);
+        IERC20(USDC).approve(address(curve3Pool), type(uint256).max);
+        IERC20(USDT).approve(address(curve3Pool), type(uint256).max);
+
+        // Approve Curve OUSD/3CRV Metapool for 3CRV and OUSD (required for adding liquidity)
         // slither-disable-next-line unused-return
-        oToken.approve(platformAddress, type(uint256).max);
+        oToken.approve(address(curvePool), type(uint256).max);
         // slither-disable-next-line unused-return
-        asset.approve(platformAddress, type(uint256).max);
+        asset.approve(address(curvePool), type(uint256).max);
 
         // Approve Convex deposit contract to transfer Curve pool LP tokens
         // This is needed for deposits if Curve pool LP tokens into the Convex rewards pool

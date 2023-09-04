@@ -61,6 +61,25 @@ abstract contract BaseConvexAMOStrategy is InitializableAbstractStrategy {
     uint128 public constant oTokenCoinIndex = 1;
     uint128 public constant assetCoinIndex = 0;
 
+    /// @notice Validates the vault asset is supported by this strategy.
+    modifier onlyAsset(address _vaultAsset) {
+        require(_isVaultAsset(_vaultAsset), "Unsupported asset");
+        _;
+    }
+
+    /// @dev Validates the vault asset is supported by this strategy.
+    /// Default implementation is the vault asset matches the pool asset.
+    /// This needs to be overriden for OUSD AMO as the vault assets are DAI, USDC and USDT
+    /// while the pool asset is 3CRV.
+    function _isVaultAsset(address _vaultAsset)
+        internal
+        view
+        virtual
+        returns (bool supported)
+    {
+        supported = _vaultAsset == address(asset);
+    }
+
     /**
      * @dev Verifies that the caller is the Strategist.
      */
@@ -111,15 +130,17 @@ abstract contract BaseConvexAMOStrategy is InitializableAbstractStrategy {
         address cvxRewardStakerAddress; // Address of the CVX rewards staker
         uint256 cvxDepositorPTokenId; // Pid of the pool referred to by Depositor and staker
         address oTokenAddress; // Address of the OToken. eg OETH or OUSD
-        address assetAddress; // Address of the asset token. eg WETH or frxETH
+        address assetAddress; // Address of the asset token. eg WETH, frxETH or 3CRV
     }
 
     constructor(
         BaseStrategyConfig memory _baseConfig,
         ConvexAMOConfig memory _convexConfig
     ) InitializableAbstractStrategy(_baseConfig) {
-        lpToken = IERC20(_baseConfig.platformAddress);
+        // Is the Curve pool the AMO is adding liquidity to. eg OETH/ETH, OUSD/3CRV or OETH/frxETH
         curvePool = ICurveETHPoolV1(_baseConfig.platformAddress);
+        // This assumes the Curve pool and LP token have the same address
+        lpToken = IERC20(_baseConfig.platformAddress);
 
         cvxDepositorAddress = _convexConfig.cvxDepositorAddress;
         cvxRewardStaker = IRewardStaking(_convexConfig.cvxRewardStakerAddress);
@@ -133,18 +154,19 @@ abstract contract BaseConvexAMOStrategy is InitializableAbstractStrategy {
      * InitializableAbstractStrategy initializer as Curve strategies don't fit
      * well within that abstraction.
      * @param _rewardTokenAddresses Address of CRV & CVX
-     * @param _assets Address of supported asset in an array. eg WETH or frxETH
      */
     function initialize(
-        address[] calldata _rewardTokenAddresses, // CRV + CVX
-        address[] calldata _assets
+        address[] calldata _rewardTokenAddresses // CRV + CVX
     ) external onlyGovernor initializer {
-        require(_assets.length == 1, "Must have exactly one asset");
-
+        address[] memory assets = new address[](1);
+        assets[0] = address(asset);
+        // pTokens are not used by this strategy
+        // it is only included for backward compatibility with the
+        // parent InitializableAbstractStrategy contract
         address[] memory pTokens = new address[](1);
         pTokens[0] = address(curvePool);
 
-        super._initialize(_rewardTokenAddresses, _assets, pTokens);
+        super._initialize(_rewardTokenAddresses, assets, pTokens);
 
         _approveBase();
     }
@@ -169,9 +191,9 @@ abstract contract BaseConvexAMOStrategy is InitializableAbstractStrategy {
         internal
         virtual;
 
-    /// @dev Converts all the pool assets in this strategy to the Vault asset.
-    /// @return vaultAssets The amount of Vault assets
-    function _toVaultAsset() internal virtual returns (uint256 vaultAssets);
+    /// @dev Converts all the pool assets in this strategy to the Vault assets.
+    /// and transfers them to the Vault.
+    function _withdrawAllAsset() internal virtual;
 
     /***************************************
                     Curve Pool
@@ -185,39 +207,55 @@ abstract contract BaseConvexAMOStrategy is InitializableAbstractStrategy {
     ) internal virtual returns (uint256 lpDeposited);
 
     /***************************************
+                Convex Reward Pool
+    ****************************************/
+
+    /// @dev Deposit the Curve pool LP tokens to the Convex rewards pool
+    function _stakeCurveLp(uint256 lpDeposited) internal virtual {
+        require(
+            IConvexDeposits(cvxDepositorAddress).deposit(
+                cvxDepositorPTokenId,
+                lpDeposited,
+                true // Deposit with staking
+            ),
+            "Failed to Deposit LP to Convex"
+        );
+    }
+
+    /***************************************
                     Deposit
     ****************************************/
 
     /**
      * @notice Deposit an asset into the Curve pool
-     * @param _asset Address of the Vault asset token. eg WETH or frxETH
+     * @param _vaultAsset Address of the Vault asset token. eg WETH or frxETH
      * @param _amount Amount of Vault asset tokens to deposit.
      */
-    function deposit(address _asset, uint256 _amount)
+    function deposit(address _vaultAsset, uint256 _amount)
         external
         override
         onlyVault
+        onlyAsset(_vaultAsset)
         nonReentrant
     {
-        _deposit(_asset, _amount);
+        emit Deposit(_vaultAsset, address(lpToken), _amount);
+
+        uint256 poolAssetAmount = _toPoolAsset(_vaultAsset, _amount);
+        _deposit(poolAssetAmount);
     }
 
-    function _deposit(address _asset, uint256 _amount) internal {
-        require(_amount > 0, "Must deposit something");
-        require(_asset == address(asset), "Unsupported asset");
-
-        emit Deposit(_asset, address(lpToken), _amount);
-
-        uint256 poolAssets = _toPoolAsset(_asset, _amount);
+    function _deposit(uint256 _poolAssetAmount) internal {
+        require(_poolAssetAmount > 0, "Must deposit something");
 
         // Get the asset and OToken balances in the Curve pool
         uint256[2] memory balances = curvePool.get_balances();
+
         // safe to cast since min value is at least 0
         uint256 oTokensToAdd = uint256(
             _max(
                 0,
                 int256(balances[assetCoinIndex]) +
-                    int256(poolAssets) -
+                    int256(_poolAssetAmount) -
                     int256(balances[oTokenCoinIndex])
             )
         );
@@ -225,8 +263,8 @@ abstract contract BaseConvexAMOStrategy is InitializableAbstractStrategy {
         /* Add so much OTokens so that the pool ends up being balanced. And at minimum
          * add as much OTokens as asset and at maximum twice as much OTokens.
          */
-        oTokensToAdd = Math.max(oTokensToAdd, _amount);
-        oTokensToAdd = Math.min(oTokensToAdd, _amount * 2);
+        oTokensToAdd = Math.max(oTokensToAdd, _poolAssetAmount);
+        oTokensToAdd = Math.min(oTokensToAdd, _poolAssetAmount * 2);
 
         /* Mint OTokens with a strategy that attempts to contribute to stability of pool. Try
          * to mint so much OTokens that after deployment of liquidity pool ends up being balanced.
@@ -240,37 +278,36 @@ abstract contract BaseConvexAMOStrategy is InitializableAbstractStrategy {
         emit Deposit(address(oToken), address(lpToken), oTokensToAdd);
 
         uint256[2] memory _amounts;
-        _amounts[assetCoinIndex] = _amount;
+        _amounts[assetCoinIndex] = _poolAssetAmount;
         _amounts[oTokenCoinIndex] = oTokensToAdd;
 
-        uint256 valueInLpTokens = (_amount + oTokensToAdd).divPrecisely(
-            curvePool.get_virtual_price()
-        );
+        uint256 valueInLpTokens = (_poolAssetAmount + oTokensToAdd)
+            .divPrecisely(curvePool.get_virtual_price());
         uint256 minMintAmount = valueInLpTokens.mulTruncate(
             uint256(1e18) - MAX_SLIPPAGE
         );
 
-        // Do the deposit to the Curve pool
+        // Deposit to the Curve pool and receive Curve pool LP tokens. eg OUSD/3CRV-f or OETH/ETH-f
         uint256 lpDeposited = _addLiquidityToPool(_amounts, minMintAmount);
 
         // Deposit the Curve pool LP tokens to the Convex rewards pool
-        require(
-            IConvexDeposits(cvxDepositorAddress).deposit(
-                cvxDepositorPTokenId,
-                lpDeposited,
-                true // Deposit with staking
-            ),
-            "Depositing LP to Convex not successful"
-        );
+        _stakeCurveLp(lpDeposited);
     }
 
     /**
      * @notice Deposit the strategy's entire balance of assets into the Curve pool
      */
-    function depositAll() external override onlyVault nonReentrant {
-        uint256 balance = asset.balanceOf(address(this));
-        if (balance > 0) {
-            _deposit(address(asset), balance);
+    function depositAll() external virtual override onlyVault nonReentrant {
+        uint256 vaultAssetBalance = asset.balanceOf(address(this));
+
+        emit Deposit(address(asset), address(lpToken), vaultAssetBalance);
+
+        uint256 poolAssetAmount = _toPoolAsset(
+            address(asset),
+            vaultAssetBalance
+        );
+        if (vaultAssetBalance > 0) {
+            _deposit(poolAssetAmount);
         }
     }
 
@@ -282,18 +319,17 @@ abstract contract BaseConvexAMOStrategy is InitializableAbstractStrategy {
      * @notice Withdraw asset and OToken from the Curve pool, burn the OTokens,
      * and transfer to the recipient.
      * @param _recipient Address to receive withdrawn asset which is normally the Vault.
-     * @param _asset Address of the asset token. eg WETH or frxETH
+     * @param _vaultAsset Address of the asset token. eg WETH or frxETH
      * @param _amount Amount of asset tokens to withdraw.
      */
     function withdraw(
         address _recipient,
-        address _asset,
+        address _vaultAsset,
         uint256 _amount
-    ) external override onlyVault nonReentrant {
+    ) external override onlyVault onlyAsset(_vaultAsset) nonReentrant {
         require(_amount > 0, "Invalid amount");
-        require(_asset == address(asset), "Unsupported asset");
 
-        emit Withdrawal(_asset, address(lpToken), _amount);
+        emit Withdrawal(_vaultAsset, address(lpToken), _amount);
 
         uint256 requiredLpTokens = calcTokenToBurn(_amount);
 
@@ -314,7 +350,7 @@ abstract contract BaseConvexAMOStrategy is InitializableAbstractStrategy {
         emit Withdrawal(address(oToken), address(lpToken), oTokenToBurn);
 
         // Convert pool assets to required amount of vault assets
-        _toVaultAsset(_asset, _amount);
+        _toVaultAsset(_vaultAsset, _amount);
 
         // Transfer the requested number of assets to the recipient
         // this may leave some assets in this strategy contract if
@@ -375,14 +411,11 @@ abstract contract BaseConvexAMOStrategy is InitializableAbstractStrategy {
         uint256 oTokenToBurn = oToken.balanceOf(address(this));
         IVault(vaultAddress).burnForStrategy(oTokenToBurn);
 
-        // Convert all the pool assets in this strategy to Vault assets
-        uint256 vaultAssets = _toVaultAsset();
-
-        // Transfer the asset to the Vault
-        asset.safeTransfer(vaultAddress, vaultAssets);
-
-        emit Withdrawal(address(asset), address(lpToken), vaultAssets);
         emit Withdrawal(address(oToken), address(lpToken), oTokenToBurn);
+
+        // Convert all the pool assets in this strategy to Vault assets
+        // and transfer them to the vault
+        _withdrawAllAsset();
     }
 
     /***************************************
@@ -416,20 +449,10 @@ abstract contract BaseConvexAMOStrategy is InitializableAbstractStrategy {
         );
 
         // Add the minted OTokens to the Curve pool
-        uint256 lpDeposited = curvePool.add_liquidity(
-            [0, _oTokens],
-            minMintAmount
-        );
+        uint256 lpDeposited = _addLiquidityToPool([0, _oTokens], minMintAmount);
 
         // Deposit the Curve pool LP tokens to the Convex rewards pool
-        require(
-            IConvexDeposits(cvxDepositorAddress).deposit(
-                cvxDepositorPTokenId,
-                lpDeposited,
-                true // Deposit with staking
-            ),
-            "Failed to Deposit LP to Convex"
-        );
+        _stakeCurveLp(lpDeposited);
 
         emit Deposit(address(oToken), address(lpToken), _oTokens);
     }
@@ -487,12 +510,8 @@ abstract contract BaseConvexAMOStrategy is InitializableAbstractStrategy {
         _withdrawAndRemoveFromPool(_lpTokens, assetCoinIndex);
 
         // Convert all the pool assets in this strategy to Vault assets
-        uint256 vaultAssets = _toVaultAsset();
-
-        // Transfer the asset to the Vault
-        asset.safeTransfer(vaultAddress, vaultAssets);
-
-        emit Withdrawal(address(asset), address(lpToken), vaultAssets);
+        // and transfer them to the vault
+        _withdrawAllAsset();
     }
 
     /**
@@ -553,15 +572,15 @@ abstract contract BaseConvexAMOStrategy is InitializableAbstractStrategy {
 
     /**
      * @notice Returns bool indicating whether asset is supported by strategy
-     * @param _asset Address of the asset
+     * @param _vaultAsset Address of the vault asset
      */
-    function supportsAsset(address _asset)
+    function supportsAsset(address _vaultAsset)
         external
         view
         override
         returns (bool)
     {
-        return _asset == address(asset);
+        return _isVaultAsset(_vaultAsset);
     }
 
     /***************************************
