@@ -27,3 +27,17 @@
 ### Storage
 
 ![Convex frxETH AMO Strategy Storage](../../../docs/ConvexFrxETHAMOStrategyStorage.svg)
+
+## Convex AMO Strategy for OUSD/3CRV
+
+### Hierarchy
+
+![Convex OUSD AMO Strategy Hierarchy](../../../docs/ConvexOUSDMetaStrategyHierarchy.svg)
+
+### Squashed
+
+![Convex OUSD AMO Strategy Squashed](../../../docs/ConvexOUSDMetaStrategySquashed.svg)
+
+### Storage
+
+![Convex OUSD AMO Strategy Storage](../../../docs/ConvexOUSDMetaStrategyStorage.svg)

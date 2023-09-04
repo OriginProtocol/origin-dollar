@@ -58,6 +58,10 @@ sol2uml .. -v -hv -hf -he -hs -hl -b ConvexFrxETHAMOStrategy -o ConvexFrxETHAMOS
 sol2uml .. -s -d 0 -b ConvexFrxETHAMOStrategy -o ConvexFrxETHAMOStrategySquashed.svg
 sol2uml storage .. -c ConvexFrxETHAMOStrategy -o ConvexFrxETHAMOStrategyStorage.svg  --hideExpand ______gap,_reserved
 
+sol2uml .. -v -hv -hf -he -hs -hl -b ConvexOUSDMetaStrategy -o ConvexOUSDMetaStrategyHierarchy.svg
+sol2uml .. -s -d 0 -b ConvexOUSDMetaStrategy -o ConvexOUSDMetaStrategySquashed.svg
+sol2uml storage .. -c ConvexOUSDMetaStrategy -o ConvexOUSDMetaStrategyStorage.svg  --hideExpand ______gap,_reserved
+
 sol2uml .. -v -hv -hf -he -hs -hl -b FluxStrategy -o FluxStrategyHierarchy.svg
 sol2uml .. -s -d 0 -b FluxStrategy -o FluxStrategySquashed.svg
 sol2uml storage .. -c FluxStrategy -o FluxStrategyStorage.svg --hideExpand ______gap,_reserved,__reserved

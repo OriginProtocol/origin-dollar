@@ -221,22 +221,6 @@ abstract contract BaseConvexAMOStrategy is InitializableAbstractStrategy {
     function _withdrawAllAsset(address recipient) internal virtual;
 
     /***************************************
-                Convex Reward Pool
-    ****************************************/
-
-    /// @dev Deposit the Curve pool LP tokens to the Convex rewards pool
-    function _stakeCurveLp(uint256 lpDeposited) internal virtual {
-        require(
-            IConvexDeposits(cvxDepositorAddress).deposit(
-                cvxDepositorPTokenId,
-                lpDeposited,
-                true // Deposit with staking
-            ),
-            "Failed to Deposit LP to Convex"
-        );
-    }
-
-    /***************************************
                     Deposit
     ****************************************/
 
@@ -416,8 +400,7 @@ abstract contract BaseConvexAMOStrategy is InitializableAbstractStrategy {
      * transfer the assets to the Vault contract.
      */
     function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
-        uint256 gaugeTokens = cvxRewardStaker.balanceOf(address(this));
-        _lpWithdraw(gaugeTokens);
+        _lpWithdrawAll();
 
         // Withdraws are proportional to assets held by 3Pool
         uint256[2] memory minWithdrawAmounts = [uint256(0), uint256(0)];
@@ -574,8 +557,20 @@ abstract contract BaseConvexAMOStrategy is InitializableAbstractStrategy {
     }
 
     /***************************************
-                Assets and Rewards
+                Convex Reward Pool
     ****************************************/
+
+    /// @dev Deposit the Curve pool LP tokens to the Convex rewards pool
+    function _stakeCurveLp(uint256 lpDeposited) internal virtual {
+        require(
+            IConvexDeposits(cvxDepositorAddress).deposit(
+                cvxDepositorPTokenId,
+                lpDeposited,
+                true // Deposit with staking
+            ),
+            "Failed to Deposit LP to Convex"
+        );
+    }
 
     /**
      * @notice Collect accumulated CRV and CVX rewards and send to the Harvester.
@@ -591,11 +586,24 @@ abstract contract BaseConvexAMOStrategy is InitializableAbstractStrategy {
         _collectRewardTokens();
     }
 
+    /// @dev Withdraw a specific amount of Curve pool LP tokens from the Convex rewards pool
     function _lpWithdraw(uint256 _lpAmount) internal {
         // withdraw and unwrap with claim takes back the lpTokens
         // and also collects the rewards for deposit
         cvxRewardStaker.withdrawAndUnwrap(_lpAmount, true);
     }
+
+    /// @dev Withdraw all Curve pool LP tokens from the Convex rewards pool
+    function _lpWithdrawAll() internal {
+        uint256 gaugeTokens = cvxRewardStaker.balanceOf(address(this));
+        // withdraw and unwrap with claim takes back the lpTokens
+        // and also collects the rewards for deposit
+        cvxRewardStaker.withdrawAndUnwrap(gaugeTokens, true);
+    }
+
+    /***************************************
+                Assets
+    ****************************************/
 
     /**
      * @notice Returns bool indicating whether asset is supported by strategy
@@ -609,10 +617,6 @@ abstract contract BaseConvexAMOStrategy is InitializableAbstractStrategy {
     {
         return _isVaultAsset(_vaultAsset);
     }
-
-    /***************************************
-                    Approvals
-    ****************************************/
 
     /**
      * @notice Approve the spending of all assets by their corresponding pool tokens,
