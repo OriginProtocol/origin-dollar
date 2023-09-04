@@ -176,6 +176,14 @@ abstract contract BaseConvexAMOStrategy is InitializableAbstractStrategy {
         virtual
         returns (uint256 poolAssets);
 
+    /// @dev Calculates the required amount of pool assets to be removed from
+    /// the pool in order to get the specified amount of vault assets.
+    /// For example, the amount of 3CRV to remove from the pool to withdraw USDT.
+    function _calcPoolAsset(address vaultAsset, uint256 vaultAssetAmount)
+        internal
+        virtual
+        returns (uint256 poolAssets);
+
     /// @dev Convert pool asset amount to an oToken amount.
     /// @param poolAssetAmount The amount of pool assets to convert. eg ETH, 3CRV or frxETH
     function _toOTokens(uint256 poolAssetAmount)
@@ -198,8 +206,18 @@ abstract contract BaseConvexAMOStrategy is InitializableAbstractStrategy {
             Curve Pool Withdrawals
     ****************************************/
 
-    /// @dev Converts all the pool assets in this strategy to the Vault assets.
+    /// @dev Converts all the pool assets in this strategy to a single Vault asset
     /// and transfers them to the Vault.
+    /// For OUSD, this converts 3CRV to either DAI, USDC or USDT.
+    function _withdrawAsset(
+        address vaultAsset,
+        uint256 vaultAssetAmount,
+        address recipient
+    ) internal virtual;
+
+    /// @dev Converts all the pool assets in this strategy to the Vault assets
+    /// and transfers them to the Vault.
+    /// For OUSD, this converts 3CRV to DAI, USDC and USDT.
     function _withdrawAllAsset(address recipient) internal virtual;
 
     /***************************************
@@ -322,18 +340,22 @@ abstract contract BaseConvexAMOStrategy is InitializableAbstractStrategy {
      * and transfer to the recipient.
      * @param _recipient Address to receive withdrawn asset which is normally the Vault.
      * @param _vaultAsset Address of the asset token. eg WETH or frxETH
-     * @param _amount Amount of asset tokens to withdraw.
+     * @param _vaultAssetAmount Amount of vault asset tokens to withdraw.
      */
     function withdraw(
         address _recipient,
         address _vaultAsset,
-        uint256 _amount
+        uint256 _vaultAssetAmount
     ) external override onlyVault onlyAsset(_vaultAsset) nonReentrant {
-        require(_amount > 0, "Invalid amount");
+        require(_vaultAssetAmount > 0, "Invalid amount");
 
-        emit Withdrawal(_vaultAsset, address(lpToken), _amount);
+        // Calc required number of pool assets for specified number of vault assets
+        uint256 poolAssetAmount = _calcPoolAsset(
+            _vaultAsset,
+            _vaultAssetAmount
+        );
 
-        uint256 requiredLpTokens = calcTokenToBurn(_amount);
+        uint256 requiredLpTokens = calcLpTokensToBurn(poolAssetAmount);
 
         // Withdraw pool LP tokens from Convex pool
         _lpWithdraw(requiredLpTokens);
@@ -342,7 +364,7 @@ abstract contract BaseConvexAMOStrategy is InitializableAbstractStrategy {
          * in that the strategy receives enough asset tokens on balanced removal
          */
         uint256[2] memory _minWithdrawalAmounts = [uint256(0), uint256(0)];
-        _minWithdrawalAmounts[assetCoinIndex] = _amount;
+        _minWithdrawalAmounts[assetCoinIndex] = poolAssetAmount;
         // slither-disable-next-line unused-return
         curvePool.remove_liquidity(requiredLpTokens, _minWithdrawalAmounts);
 
@@ -352,12 +374,13 @@ abstract contract BaseConvexAMOStrategy is InitializableAbstractStrategy {
 
         emit Withdrawal(address(oToken), address(lpToken), oTokenToBurn);
 
-        // Convert all the pool assets in this strategy to Vault assets
-        // and transfer them to the vault
-        _withdrawAllAsset(_recipient);
+        // Convert the pool assets in this strategy to the Vault asset
+        // and transfer them to the vault.
+        // Also emits the Withdraw event.
+        _withdrawAsset(_vaultAsset, _vaultAssetAmount, _recipient);
     }
 
-    function calcTokenToBurn(uint256 _amount)
+    function calcLpTokensToBurn(uint256 _vaultAssetAmount)
         internal
         view
         returns (uint256 lpToBurn)
@@ -384,7 +407,7 @@ abstract contract BaseConvexAMOStrategy is InitializableAbstractStrategy {
         uint256 k = (1e36 * lpToken.totalSupply()) / poolAssetBalance;
         // prettier-ignore
         // slither-disable-next-line divide-before-multiply
-        uint256 diff = (_amount + 1) * k;
+        uint256 diff = (_vaultAssetAmount + 1) * k;
         lpToBurn = diff / 1e36;
     }
 
@@ -413,7 +436,8 @@ abstract contract BaseConvexAMOStrategy is InitializableAbstractStrategy {
         emit Withdrawal(address(oToken), address(lpToken), oTokenToBurn);
 
         // Convert all the pool assets in this strategy to Vault assets
-        // and transfer them to the vault
+        // and transfer them to the vault.
+        // Also emits the Withdraw events for each vault asset.
         _withdrawAllAsset(vaultAddress);
     }
 

@@ -67,6 +67,8 @@ forkOnlyDescribe(
           fromBlock: beforeMintBlock,
         });
 
+        const afterMintBlock = await ethers.provider.getBlockNumber();
+
         // we multiply it by 3 because 1/3 of balance is represented by each of the assets
         const strategyBalance = (
           await OUSDmetaStrategy.checkBalance(dai.address)
@@ -86,6 +88,13 @@ forkOnlyDescribe(
         const redeemAmount = ousdUnits("29990");
         await vault.connect(anna).redeem(redeemAmount, 0);
 
+        log("After redeem");
+        await run("amoStrat", {
+          pool: "OUSD",
+          output: false,
+          fromBlock: afterMintBlock,
+        });
+
         // User balance should be down by 30k
         const newBalance = await ousd.connect(anna).balanceOf(anna.address);
         expect(newBalance).to.approxEqualTolerance(
@@ -95,7 +104,6 @@ forkOnlyDescribe(
 
         const newSupply = await ousd.totalSupply();
         const supplyDiff = currentSupply.sub(newSupply);
-
         expect(supplyDiff).to.be.gte(redeemAmount);
       });
     });

@@ -54,13 +54,22 @@ contract ConvexEthMetaStrategy is BaseConvexAMOStrategy {
     ****************************************/
 
     /// @dev Unwraps the ETH from WETH using WETH withdraw
-    function _toPoolAsset(address, uint256 amount)
+    function _toPoolAsset(address, uint256 wethAmount)
         internal
         override
-        returns (uint256 poolAssets)
+        returns (uint256 ethAmount)
     {
-        IWETH9(address(asset)).withdraw(amount);
-        poolAssets = amount;
+        IWETH9(address(asset)).withdraw(wethAmount);
+        ethAmount = wethAmount;
+    }
+
+    function _calcPoolAsset(address, uint256 wethAmount)
+        internal
+        pure
+        override
+        returns (uint256 ethAmount)
+    {
+        ethAmount = wethAmount;
     }
 
     /// @dev The OETH OToken is 1:1 to ETH so return the ETH amount
@@ -94,18 +103,26 @@ contract ConvexEthMetaStrategy is BaseConvexAMOStrategy {
             Curve Pool Withdrawals
     ****************************************/
 
-    /// @dev Gets the ETH balance of this strategy contract
-    /// and then converts all the ETH to WETH
-    function _withdrawAllAsset(address _recipient) internal override {
-        // Get ETH balance of this strategy contract
-        uint256 ethBalance = address(this).balance;
+    function _withdrawAsset(
+        address,
+        uint256 vaultAssetAmount,
+        address recipient
+    ) internal override {
         // Convert ETH to WETH
-        IWETH9(address(asset)).deposit{ value: ethBalance }();
+        IWETH9(address(asset)).deposit{ value: vaultAssetAmount }();
 
         // Transfer the WETH to the Vault
-        asset.safeTransfer(_recipient, ethBalance);
+        asset.safeTransfer(recipient, vaultAssetAmount);
 
-        emit Withdrawal(address(asset), address(lpToken), ethBalance);
+        emit Withdrawal(address(asset), address(lpToken), vaultAssetAmount);
+    }
+
+    /// @dev Gets the ETH balance of this strategy contract
+    /// and then converts all the ETH to WETH
+    function _withdrawAllAsset(address recipient) internal override {
+        // Get ETH balance of this strategy contract
+        uint256 ethBalance = address(this).balance;
+        _withdrawAsset(address(asset), ethBalance, recipient);
     }
 
     /***************************************

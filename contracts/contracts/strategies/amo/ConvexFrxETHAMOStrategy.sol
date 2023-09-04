@@ -34,6 +34,15 @@ contract ConvexFrxETHAMOStrategy is BaseConvexAMOStrategy {
         poolAssets = assets;
     }
 
+    function _calcPoolAsset(address, uint256 vaultAssetAmount)
+        internal
+        pure
+        override
+        returns (uint256 poolAssetAmount)
+    {
+        poolAssetAmount = vaultAssetAmount;
+    }
+
     /// @dev frxETH is the Vault asset and the pool asset so return the frxETH amount
     /// @param poolAssetAmount Amount of frxETH to convert to OETH
     function _toOTokens(uint256 poolAssetAmount)
@@ -63,14 +72,23 @@ contract ConvexFrxETHAMOStrategy is BaseConvexAMOStrategy {
             Curve Pool Withdrawals
     ****************************************/
 
-    /// @dev returns the frxETH balance of this strategy contract
+    /// @dev transfers the specified frxETH amount to the recipient
+    function _withdrawAsset(
+        address,
+        uint256 vaultAssetAmount,
+        address _recipient
+    ) internal override {
+        // Transfer the WETH to the Vault
+        asset.safeTransfer(_recipient, vaultAssetAmount);
+
+        emit Withdrawal(address(asset), address(lpToken), vaultAssetAmount);
+    }
+
+    /// @dev transfers the frxETH balance of this strategy contract to the recipient
     function _withdrawAllAsset(address _recipient) internal override {
         uint256 vaultAssets = asset.balanceOf(address(this));
 
-        // Transfer the WETH to the Vault
-        asset.safeTransfer(_recipient, vaultAssets);
-
-        emit Withdrawal(address(asset), address(lpToken), vaultAssets);
+        _withdrawAsset(address(asset), vaultAssets, _recipient);
     }
 
     /***************************************

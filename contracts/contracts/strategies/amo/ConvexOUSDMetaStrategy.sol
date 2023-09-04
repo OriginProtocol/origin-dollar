@@ -101,62 +101,6 @@ contract ConvexOUSDMetaStrategy is BaseConvexAMOStrategy {
         revert("Unsupported asset");
     }
 
-    /**
-     * @dev Calculate amount of LP required when withdrawing specific amount of one
-     * of the underlying assets accounting for fees and slippage.
-     *
-     * Curve pools unfortunately do not contain a calculation function for
-     * amount of LP required when withdrawing a specific amount of one of the
-     * underlying tokens and also accounting for fees (Curve's calc_token_amount
-     * does account for slippage but not fees).
-     *
-     * Steps taken to calculate the metric:
-     *  - get amount of LP required if fees wouldn't apply
-     *  - increase the LP amount as if fees would apply to the entirety of the underlying
-     *    asset withdrawal. (when withdrawing only one coin fees apply only to amounts
-     *    of other assets pool would return in case of balanced removal - since those need
-     *    to be swapped for the single underlying asset being withdrawn)
-     *  - get amount of underlying asset withdrawn (this Curve function does consider slippage
-     *    and fees) when using the increased LP amount. As LP amount is slightly over-increased
-     *    so is amount of underlying assets returned.
-     *  - since we know exactly how much asset we require take the rate of LP required for asset
-     *    withdrawn to get the exact amount of LP.
-     */
-    function _calcCurveTokenAmount(uint256 _coinIndex, uint256 _amount)
-        internal
-        returns (uint256 required3Crv)
-    {
-        uint256[3] memory _amounts = [uint256(0), uint256(0), uint256(0)];
-        _amounts[_coinIndex] = _amount;
-
-        // LP required when removing required asset ignoring fees
-        uint256 lpRequiredNoFees = curve3Pool.calc_token_amount(
-            _amounts,
-            false
-        );
-        /* LP required if fees would apply to entirety of removed amount
-         *
-         * fee is 1e10 denominated number: https://curve.readthedocs.io/exchange-pools.html#StableSwap.fee
-         */
-        uint256 lpRequiredFullFees = lpRequiredNoFees.mulTruncateScale(
-            1e10 + curve3Pool.fee(),
-            1e10
-        );
-
-        /* asset received when withdrawing full fee applicable LP accounting for
-         * slippage and fees
-         */
-        uint256 assetReceivedForFullLPFees = curve3Pool.calc_withdraw_one_coin(
-            lpRequiredFullFees,
-            int128(uint128(_coinIndex))
-        );
-
-        // exact amount of LP required
-        required3Crv =
-            (lpRequiredFullFees * _amount) /
-            assetReceivedForFullLPFees;
-    }
-
     /***************************************
         Vault to Pool Asset Conversions
     ****************************************/
@@ -183,6 +127,64 @@ contract ConvexOUSDMetaStrategy is BaseConvexAMOStrategy {
         curve3Pool.add_liquidity(_amounts, minMintAmount);
 
         poolAssets = asset.balanceOf(address(this));
+    }
+
+    /**
+     * @dev Calculate amount of LP required when withdrawing specific amount of one
+     * of the underlying assets accounting for fees and slippage.
+     *
+     * Curve pools unfortunately do not contain a calculation function for
+     * amount of LP required when withdrawing a specific amount of one of the
+     * underlying tokens and also accounting for fees (Curve's calc_token_amount
+     * does account for slippage but not fees).
+     *
+     * Steps taken to calculate the metric:
+     *  - get amount of LP required if fees wouldn't apply
+     *  - increase the LP amount as if fees would apply to the entirety of the underlying
+     *    asset withdrawal. (when withdrawing only one coin fees apply only to amounts
+     *    of other assets pool would return in case of balanced removal - since those need
+     *    to be swapped for the single underlying asset being withdrawn)
+     *  - get amount of underlying asset withdrawn (this Curve function does consider slippage
+     *    and fees) when using the increased LP amount. As LP amount is slightly over-increased
+     *    so is amount of underlying assets returned.
+     *  - since we know exactly how much asset we require take the rate of LP required for asset
+     *    withdrawn to get the exact amount of LP.
+     */
+    function _calcPoolAsset(address _vaultAsset, uint256 _vaultAssetAmount)
+        internal
+        override
+        returns (uint256 required3Crv)
+    {
+        (uint256 coinIndex, ) = _coinIndexDecimals(_vaultAsset);
+        uint256[3] memory _amounts = [uint256(0), uint256(0), uint256(0)];
+        _amounts[coinIndex] = _vaultAssetAmount;
+
+        // 3Pool LP required when removing reuiqred vault assets ignoring fees
+        uint256 lpRequiredNoFees = curve3Pool.calc_token_amount(
+            _amounts,
+            false
+        );
+        /* 3Pool LP required if fees would apply to entirety of removed amount
+         *
+         * fee is 1e10 denominated number: https://curve.readthedocs.io/exchange-pools.html#StableSwap.fee
+         */
+        uint256 lpRequiredFullFees = lpRequiredNoFees.mulTruncateScale(
+            1e10 + curve3Pool.fee(),
+            1e10
+        );
+
+        /* asset received when withdrawing full fee applicable LP accounting for
+         * slippage and fees
+         */
+        uint256 assetReceivedForFullLPFees = curve3Pool.calc_withdraw_one_coin(
+            lpRequiredFullFees,
+            int128(uint128(coinIndex))
+        );
+
+        // exact amount of LP required
+        required3Crv =
+            (lpRequiredFullFees * _vaultAssetAmount) /
+            assetReceivedForFullLPFees;
     }
 
     /// @dev Converts 3CRV to OUSD by using the 3Pool virtual price
@@ -260,7 +262,31 @@ contract ConvexOUSDMetaStrategy is BaseConvexAMOStrategy {
     /// @dev Converts all 3CRV in this strategy to the Vault assets DAI, USDC and USDT
     /// by removing liquidity from the Curve OUSD/3CRV Metapool.
     /// Then transfers each vault asset to the vault.
-    function _withdrawAllAsset(address _recipient) internal override {
+    function _withdrawAsset(
+        address vaultAsset,
+        uint256 vaultAssetAmount,
+        address recipient
+    ) internal override {
+        uint256[3] memory _amounts = [uint256(0), uint256(0), uint256(0)];
+        (uint256 coinIndex, ) = _coinIndexDecimals(vaultAsset);
+        _amounts[coinIndex] = vaultAssetAmount;
+
+        // Remove just the specified vault asset from the 3Pool
+        curve3Pool.remove_liquidity_imbalance(
+            _amounts,
+            IERC20(asset).balanceOf(address(this))
+        );
+
+        // Transfer assets to the Vault
+        // Note that Curve will provide all 3 of the assets in 3pool even if
+        // we have not set PToken addresses for all of them in this strategy
+        _transferAssetBalance(recipient, IERC20(vaultAsset));
+    }
+
+    /// @dev Converts all 3CRV in this strategy to the Vault assets DAI, USDC and USDT
+    /// by removing liquidity from the Curve OUSD/3CRV Metapool.
+    /// Then transfers each vault asset to the vault.
+    function _withdrawAllAsset(address recipient) internal override {
         // Withdraws are proportional to assets held by 3Pool
         uint256[3] memory minWithdrawAmounts = [
             uint256(0),
@@ -268,7 +294,7 @@ contract ConvexOUSDMetaStrategy is BaseConvexAMOStrategy {
             uint256(0)
         ];
 
-        // Remove liquidity
+        // Remove all liquidity from the 3Pool
         curve3Pool.remove_liquidity(
             IERC20(asset).balanceOf(address(this)),
             minWithdrawAmounts
@@ -277,9 +303,9 @@ contract ConvexOUSDMetaStrategy is BaseConvexAMOStrategy {
         // Transfer assets to the Vault
         // Note that Curve will provide all 3 of the assets in 3pool even if
         // we have not set PToken addresses for all of them in this strategy
-        _transferAssetBalance(_recipient, IERC20(DAI));
-        _transferAssetBalance(_recipient, IERC20(USDC));
-        _transferAssetBalance(_recipient, IERC20(USDT));
+        _transferAssetBalance(recipient, IERC20(DAI));
+        _transferAssetBalance(recipient, IERC20(USDC));
+        _transferAssetBalance(recipient, IERC20(USDT));
     }
 
     function _transferAssetBalance(address _recipient, IERC20 asset) internal {
