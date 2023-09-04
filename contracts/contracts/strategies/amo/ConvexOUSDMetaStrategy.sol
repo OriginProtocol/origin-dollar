@@ -24,6 +24,32 @@ contract ConvexOUSDMetaStrategy is BaseConvexAMOStrategy {
     address public immutable USDT;
     ICurvePool public immutable curve3Pool;
 
+    // The following slots have been deprecated with immutable variables
+    // slither-disable-next-line constable-states
+    address private _deprecated_pTokenAddresses;
+    // slither-disable-next-line constable-states
+    int256[49] private __reserved;
+    // slither-disable-next-line constable-states
+    address private _deprecated_cvxDepositorAddress;
+    // slither-disable-next-line constable-states
+    address private _deprecated_cvxRewardStakerAddress;
+    // slither-disable-next-line constable-states
+    uint256 private _deprecated_cvxDepositorPTokenId;
+    // slither-disable-next-line constable-states
+    address private _deprecated_metapool;
+    // slither-disable-next-line constable-states
+    address private _deprecated_metapoolMainToken;
+    // slither-disable-next-line constable-states
+    address private _deprecated_metapoolLPToken;
+    // slither-disable-next-line constable-states
+    address[] private _deprecated_metapoolAssets;
+    // slither-disable-next-line constable-states
+    uint256 private _deprecated_maxWithdrawalSlippage;
+    // slither-disable-next-line constable-states
+    uint128 private _deprecated_crvCoinIndex;
+    // slither-disable-next-line constable-states
+    uint128 private _deprecated_mainCoinIndex;
+
     constructor(
         BaseStrategyConfig memory _baseConfig,
         ConvexAMOConfig memory _convexConfig,
@@ -53,103 +79,8 @@ contract ConvexOUSDMetaStrategy is BaseConvexAMOStrategy {
     }
 
     /***************************************
-        Vault to Pool Asset Conversions
+                Curve Pool
     ****************************************/
-
-    /// @dev DAI, USDC or USDC is the Vault asset and the Curve 3Pool lp token 3CRV is
-    /// is Curve's OUSD/3CRV Metapool asset
-    function _toPoolAsset(address _asset, uint256 _amount)
-        internal
-        override
-        returns (uint256 poolAssets)
-    {
-        (uint256 poolCoinIndex, uint256 decimals) = _coinIndexDecimals(_asset);
-
-        // 3Pool requires passing deposit amounts for all 3 assets, set to 0 for all
-        uint256[3] memory _amounts;
-        // Set the amount on the asset we want to deposit
-        _amounts[poolCoinIndex] = _amount;
-        uint256 minMintAmount = _amount
-            .scaleBy(18, decimals)
-            .divPrecisely(curve3Pool.get_virtual_price())
-            .mulTruncate(uint256(1e18) - MAX_SLIPPAGE);
-
-        // Do the deposit to 3pool
-        curve3Pool.add_liquidity(_amounts, minMintAmount);
-
-        poolAssets = asset.balanceOf(address(this));
-    }
-
-    /// @dev Converts 3CRV pool assets to the required number of vault assets
-    function _toVaultAsset(address vaultAsset, uint256 assetAmount)
-        internal
-        override
-    {
-        uint256 contractCrv3Tokens = IERC20(asset).balanceOf(address(this));
-
-        (uint256 poolCoinIndex, ) = _coinIndexDecimals(vaultAsset);
-
-        uint256 requiredCrv3Tokens = _calcCurveTokenAmount(
-            poolCoinIndex,
-            assetAmount
-        );
-
-        // We have enough LP tokens, make sure they are all on this contract
-        if (contractCrv3Tokens < requiredCrv3Tokens) {
-            _lpWithdraw(requiredCrv3Tokens - contractCrv3Tokens);
-        }
-
-        uint256[3] memory _amounts = [uint256(0), uint256(0), uint256(0)];
-        _amounts[poolCoinIndex] = assetAmount;
-
-        curve3Pool.remove_liquidity_imbalance(_amounts, requiredCrv3Tokens);
-    }
-
-    /// @dev Converts all 3CRV in this strategy to the Vault assets DAI, USDC and USDT
-    /// by removing liquidity from the Curve OUSD/3CRV Metapool.
-    /// Then transfers each vault asset to the vault.
-    function _withdrawAllAsset() internal override {
-        // Withdraws are proportional to assets held by 3Pool
-        uint256[3] memory minWithdrawAmounts = [
-            uint256(0),
-            uint256(0),
-            uint256(0)
-        ];
-
-        // Remove liquidity
-        curve3Pool.remove_liquidity(
-            IERC20(asset).balanceOf(address(this)),
-            minWithdrawAmounts
-        );
-
-        // Transfer assets to the Vault
-        // Note that Curve will provide all 3 of the assets in 3pool even if
-        // we have not set PToken addresses for all of them in this strategy
-        _transferAssetBalance(IERC20(DAI));
-        _transferAssetBalance(IERC20(USDC));
-        _transferAssetBalance(IERC20(USDT));
-    }
-
-    function _transferAssetBalance(IERC20 asset) internal {
-        uint256 assetBalance = asset.balanceOf(address(this));
-        if (assetBalance > 0) {
-            asset.safeTransfer(vaultAddress, assetBalance);
-            emit Withdrawal(address(asset), address(lpToken), assetBalance);
-        }
-    }
-
-    /***************************************
-                    Curve Pool
-    ****************************************/
-
-    /// @dev Adds 3CRV and/or OUSD to the Curve OUSD/3CRV Metapool
-    /// @param amounts The amount of Curve pool assets and OTokens to add to the pool
-    function _addLiquidityToPool(
-        uint256[2] memory amounts,
-        uint256 minMintAmount
-    ) internal override returns (uint256 lpDeposited) {
-        lpDeposited = curvePool.add_liquidity(amounts, minMintAmount);
-    }
 
     /**
      * @dev Get the asset token's index position in the Curve 3Pool
@@ -226,6 +157,58 @@ contract ConvexOUSDMetaStrategy is BaseConvexAMOStrategy {
             assetReceivedForFullLPFees;
     }
 
+    /***************************************
+        Vault to Pool Asset Conversions
+    ****************************************/
+
+    /// @dev DAI, USDC or USDC is the Vault asset and the Curve 3Pool lp token 3CRV is
+    /// is Curve's OUSD/3CRV Metapool asset
+    function _toPoolAsset(address _asset, uint256 _amount)
+        internal
+        override
+        returns (uint256 poolAssets)
+    {
+        (uint256 poolCoinIndex, uint256 decimals) = _coinIndexDecimals(_asset);
+
+        // 3Pool requires passing deposit amounts for all 3 assets, set to 0 for all
+        uint256[3] memory _amounts;
+        // Set the amount on the asset we want to deposit
+        _amounts[poolCoinIndex] = _amount;
+        uint256 minMintAmount = _amount
+            .scaleBy(18, decimals)
+            .divPrecisely(curve3Pool.get_virtual_price())
+            .mulTruncate(uint256(1e18) - MAX_SLIPPAGE);
+
+        // Do the deposit to 3pool
+        curve3Pool.add_liquidity(_amounts, minMintAmount);
+
+        poolAssets = asset.balanceOf(address(this));
+    }
+
+    /// @dev Converts 3CRV to OUSD by using the 3Pool virtual price
+    function _toOTokens(uint256 threeCrvAmount)
+        internal
+        view
+        override
+        returns (uint256 ousdAmount)
+    {
+        uint256 virtualPrice = curve3Pool.get_virtual_price();
+        ousdAmount = threeCrvAmount.mulTruncate(virtualPrice);
+    }
+
+    /***************************************
+                Curve Pool Deposits
+    ****************************************/
+
+    /// @dev Adds 3CRV and/or OUSD to the Curve OUSD/3CRV Metapool
+    /// @param amounts The amount of Curve pool assets and OTokens to add to the pool
+    function _addLiquidityToPool(
+        uint256[2] memory amounts,
+        uint256 minMintAmount
+    ) internal override returns (uint256 lpDeposited) {
+        lpDeposited = curvePool.add_liquidity(amounts, minMintAmount);
+    }
+
     function depositAll() external override onlyVault nonReentrant {
         uint256[3] memory amounts = [uint256(0), uint256(0), uint256(0)];
         uint256 depositValue = 0;
@@ -267,6 +250,43 @@ contract ConvexOUSDMetaStrategy is BaseConvexAMOStrategy {
                 curve3PoolVirtualPrice
             );
             emit Deposit(usdAsset, address(lpToken), balance);
+        }
+    }
+
+    /***************************************
+                Curve Withdrawals
+    ****************************************/
+
+    /// @dev Converts all 3CRV in this strategy to the Vault assets DAI, USDC and USDT
+    /// by removing liquidity from the Curve OUSD/3CRV Metapool.
+    /// Then transfers each vault asset to the vault.
+    function _withdrawAllAsset(address _recipient) internal override {
+        // Withdraws are proportional to assets held by 3Pool
+        uint256[3] memory minWithdrawAmounts = [
+            uint256(0),
+            uint256(0),
+            uint256(0)
+        ];
+
+        // Remove liquidity
+        curve3Pool.remove_liquidity(
+            IERC20(asset).balanceOf(address(this)),
+            minWithdrawAmounts
+        );
+
+        // Transfer assets to the Vault
+        // Note that Curve will provide all 3 of the assets in 3pool even if
+        // we have not set PToken addresses for all of them in this strategy
+        _transferAssetBalance(_recipient, IERC20(DAI));
+        _transferAssetBalance(_recipient, IERC20(USDC));
+        _transferAssetBalance(_recipient, IERC20(USDT));
+    }
+
+    function _transferAssetBalance(address _recipient, IERC20 asset) internal {
+        uint256 assetBalance = asset.balanceOf(address(this));
+        if (assetBalance > 0) {
+            asset.safeTransfer(_recipient, assetBalance);
+            emit Withdrawal(address(asset), address(lpToken), assetBalance);
         }
     }
 
@@ -340,8 +360,11 @@ contract ConvexOUSDMetaStrategy is BaseConvexAMOStrategy {
 
     function _approveBase() internal override {
         // Approve Curve 3Pool for DAI, USDC and USDT
+        // slither-disable-next-line unused-return
         IERC20(DAI).approve(address(curve3Pool), type(uint256).max);
+        // slither-disable-next-line unused-return
         IERC20(USDC).approve(address(curve3Pool), type(uint256).max);
+        // slither-disable-next-line unused-return
         IERC20(USDT).approve(address(curve3Pool), type(uint256).max);
 
         // Approve Curve OUSD/3CRV Metapool for 3CRV and OUSD (required for adding liquidity)

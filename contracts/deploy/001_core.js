@@ -403,6 +403,8 @@ const deployConvexOUSDMetaStrategy = async () => {
         metapoolLPCRVPid, // cvxDepositorPTokenId
         ousd.address, // oTokenAddress,
         assetAddresses.ThreePoolToken, // assetAddress (3CRV)
+        0, // Curve pool index for OUSD
+        1, // Curve pool index for 3CRV
       ],
       assetAddresses.ThreePool, // _curve3Pool
       [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT], // _curve3PoolAssets

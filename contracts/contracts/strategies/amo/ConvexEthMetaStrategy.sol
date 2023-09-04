@@ -15,6 +15,28 @@ import { IWETH9 } from "../../interfaces/IWETH9.sol";
 contract ConvexEthMetaStrategy is BaseConvexAMOStrategy {
     using SafeERC20 for IERC20;
 
+    // The following slots have been deprecated with immutable variables
+    // slither-disable-next-line constable-states
+    address private _deprecated_cvxDepositorAddress;
+    // slither-disable-next-line constable-states
+    address private _deprecated_cvxRewardStaker;
+    // slither-disable-next-line constable-states
+    uint256 private _deprecated_cvxDepositorPTokenId;
+    // slither-disable-next-line constable-states
+    address private _deprecated_curvePool;
+    // slither-disable-next-line constable-states
+    address private _deprecated_lpToken;
+    // slither-disable-next-line constable-states
+    address private _deprecated_oeth;
+    // slither-disable-next-line constable-states
+    address private _deprecated_weth;
+
+    // Ordered list of pool assets
+    // slither-disable-next-line constable-states
+    uint128 private _deprecated_oethCoinIndex = 1;
+    // slither-disable-next-line constable-states
+    uint128 private _deprecated_ethCoinIndex = 0;
+
     // Added for backward compatibility
     address public immutable oeth;
     address public immutable weth;
@@ -41,28 +63,18 @@ contract ConvexEthMetaStrategy is BaseConvexAMOStrategy {
         poolAssets = amount;
     }
 
-    /// @dev Converts ETH pool assets to WETH vault assets
-    function _toVaultAsset(address, uint256 amount) internal override {
-        // Convert ETH to WETH
-        IWETH9(address(asset)).deposit{ value: amount }();
-    }
-
-    /// @dev Gets the ETH balance of this strategy contract
-    /// and then converts all the ETH to WETH
-    function _withdrawAllAsset() internal override {
-        // Get ETH balance of this strategy contract
-        uint256 ethBalance = address(this).balance;
-        // Convert ETH to WETH
-        IWETH9(address(asset)).deposit{ value: ethBalance }();
-
-        // Transfer the WETH to the Vault
-        asset.safeTransfer(vaultAddress, ethBalance);
-
-        emit Withdrawal(address(asset), address(lpToken), ethBalance);
+    /// @dev The OETH OToken is 1:1 to ETH so return the ETH amount
+    function _toOTokens(uint256 ethAmount)
+        internal
+        pure
+        override
+        returns (uint256 oethAmount)
+    {
+        oethAmount = ethAmount;
     }
 
     /***************************************
-                    Curve Pool
+                Curve Pool Deposits
     ****************************************/
 
     /// @dev Adds OETH and/or ETH to the Curve pool
@@ -76,6 +88,24 @@ contract ConvexEthMetaStrategy is BaseConvexAMOStrategy {
             amounts,
             minMintAmount
         );
+    }
+
+    /***************************************
+            Curve Pool Withdrawals
+    ****************************************/
+
+    /// @dev Gets the ETH balance of this strategy contract
+    /// and then converts all the ETH to WETH
+    function _withdrawAllAsset(address _recipient) internal override {
+        // Get ETH balance of this strategy contract
+        uint256 ethBalance = address(this).balance;
+        // Convert ETH to WETH
+        IWETH9(address(asset)).deposit{ value: ethBalance }();
+
+        // Transfer the WETH to the Vault
+        asset.safeTransfer(_recipient, ethBalance);
+
+        emit Withdrawal(address(asset), address(lpToken), ethBalance);
     }
 
     /***************************************

@@ -22,28 +22,6 @@ abstract contract BaseConvexAMOStrategy is InitializableAbstractStrategy {
 
     uint256 public constant MAX_SLIPPAGE = 1e16; // 1%, same as the Curve UI
 
-    // The following slots have been deprecated with immutable variables
-    // slither-disable-next-line constable-states
-    address private _deprecated_cvxDepositorAddress;
-    // slither-disable-next-line constable-states
-    address private _deprecated_cvxRewardStaker;
-    // slither-disable-next-line constable-states
-    uint256 private _deprecated_cvxDepositorPTokenId;
-    // slither-disable-next-line constable-states
-    address private _deprecated_curvePool;
-    // slither-disable-next-line constable-states
-    address private _deprecated_lpToken;
-    // slither-disable-next-line constable-states
-    address private _deprecated_oeth;
-    // slither-disable-next-line constable-states
-    address private _deprecated_weth;
-
-    // Ordered list of pool assets
-    // slither-disable-next-line constable-states
-    uint128 private _deprecated_oethCoinIndex = 1;
-    // slither-disable-next-line constable-states
-    uint128 private _deprecated_ethCoinIndex = 0;
-
     // New immutable variables that must be set in the constructor
     address public immutable cvxDepositorAddress;
     IRewardStaking public immutable cvxRewardStaker;
@@ -57,27 +35,19 @@ abstract contract BaseConvexAMOStrategy is InitializableAbstractStrategy {
     /// @notice The asset token that is used in the Curve pool. eg WETH, frxETH or 3CRV
     IERC20 public immutable asset;
 
-    // Ordered list of pool assets
-    uint128 public constant oTokenCoinIndex = 1;
-    uint128 public constant assetCoinIndex = 0;
+    // Index position of oToken in Curve pool. For example
+    // for OETH/ETH, OETH = 1
+    // for OUSD/3CRV, OUSD = 0
+    uint128 public immutable oTokenCoinIndex;
+    // Index position of asset in Curve pool. For example
+    // for OETH/ETH, ETH = 0
+    // for OUSD/3CRV, 3CRV = 1
+    uint128 public immutable assetCoinIndex;
 
     /// @notice Validates the vault asset is supported by this strategy.
     modifier onlyAsset(address _vaultAsset) {
         require(_isVaultAsset(_vaultAsset), "Unsupported asset");
         _;
-    }
-
-    /// @dev Validates the vault asset is supported by this strategy.
-    /// Default implementation is the vault asset matches the pool asset.
-    /// This needs to be overriden for OUSD AMO as the vault assets are DAI, USDC and USDT
-    /// while the pool asset is 3CRV.
-    function _isVaultAsset(address _vaultAsset)
-        internal
-        view
-        virtual
-        returns (bool supported)
-    {
-        supported = _vaultAsset == address(asset);
     }
 
     /**
@@ -131,6 +101,8 @@ abstract contract BaseConvexAMOStrategy is InitializableAbstractStrategy {
         uint256 cvxDepositorPTokenId; // Pid of the pool referred to by Depositor and staker
         address oTokenAddress; // Address of the OToken. eg OETH or OUSD
         address assetAddress; // Address of the asset token. eg WETH, frxETH or 3CRV
+        uint128 oTokenCoinIndex;
+        uint128 assetCoinIndex;
     }
 
     constructor(
@@ -147,6 +119,9 @@ abstract contract BaseConvexAMOStrategy is InitializableAbstractStrategy {
         cvxDepositorPTokenId = _convexConfig.cvxDepositorPTokenId;
         oToken = IERC20(_convexConfig.oTokenAddress);
         asset = IERC20(_convexConfig.assetAddress);
+
+        oTokenCoinIndex = _convexConfig.oTokenCoinIndex;
+        assetCoinIndex = _convexConfig.assetCoinIndex;
     }
 
     /**
@@ -172,6 +147,23 @@ abstract contract BaseConvexAMOStrategy is InitializableAbstractStrategy {
     }
 
     /***************************************
+            Vault Asset Validation
+    ****************************************/
+
+    /// @dev Validates the vault asset is supported by this strategy.
+    /// Default implementation is the vault asset matches the pool asset.
+    /// This needs to be overriden for OUSD AMO as the vault assets are DAI, USDC and USDT
+    /// while the pool asset is 3CRV.
+    function _isVaultAsset(address _vaultAsset)
+        internal
+        view
+        virtual
+        returns (bool supported)
+    {
+        supported = _vaultAsset == address(asset);
+    }
+
+    /***************************************
         Vault to Pool Asset Conversions
     ****************************************/
 
@@ -184,19 +176,15 @@ abstract contract BaseConvexAMOStrategy is InitializableAbstractStrategy {
         virtual
         returns (uint256 poolAssets);
 
-    /// @dev Converts pool assets to Vault assets.
-    /// @param vaultAsset The address of the required vault asset. eg WETH, frxETH, DAI
-    /// @param assetamount The required amount of vault assets.
-    function _toVaultAsset(address vaultAsset, uint256 assetamount)
+    /// @dev Convert pool asset amount to an oToken amount.
+    /// @param poolAssetAmount The amount of pool assets to convert. eg ETH, 3CRV or frxETH
+    function _toOTokens(uint256 poolAssetAmount)
         internal
-        virtual;
-
-    /// @dev Converts all the pool assets in this strategy to the Vault assets.
-    /// and transfers them to the Vault.
-    function _withdrawAllAsset() internal virtual;
+        virtual
+        returns (uint256 oTokenAmount);
 
     /***************************************
-                    Curve Pool
+                Curve Pool Deposits
     ****************************************/
 
     /// @dev Adds assets and/or OTokens to the Curve pool
@@ -205,6 +193,14 @@ abstract contract BaseConvexAMOStrategy is InitializableAbstractStrategy {
         uint256[2] memory amounts,
         uint256 minMintAmount
     ) internal virtual returns (uint256 lpDeposited);
+
+    /***************************************
+            Curve Pool Withdrawals
+    ****************************************/
+
+    /// @dev Converts all the pool assets in this strategy to the Vault assets.
+    /// and transfers them to the Vault.
+    function _withdrawAllAsset(address recipient) internal virtual;
 
     /***************************************
                 Convex Reward Pool
@@ -239,7 +235,6 @@ abstract contract BaseConvexAMOStrategy is InitializableAbstractStrategy {
         nonReentrant
     {
         emit Deposit(_vaultAsset, address(lpToken), _amount);
-
         uint256 poolAssetAmount = _toPoolAsset(_vaultAsset, _amount);
         _deposit(poolAssetAmount);
     }
@@ -250,12 +245,19 @@ abstract contract BaseConvexAMOStrategy is InitializableAbstractStrategy {
         // Get the asset and OToken balances in the Curve pool
         uint256[2] memory balances = curvePool.get_balances();
 
+        // Add the old balance with the new deposit amount
+        // and then convert to the pool asset value.
+        // For example, convert 3CRV to USD value
+        uint256 newAssetsValueInOTokens = _toOTokens(
+            balances[assetCoinIndex] + _poolAssetAmount
+        );
+
+        // Calculate the amount of OTokens to add to the pool
         // safe to cast since min value is at least 0
         uint256 oTokensToAdd = uint256(
             _max(
                 0,
-                int256(balances[assetCoinIndex]) +
-                    int256(_poolAssetAmount) -
+                int256(newAssetsValueInOTokens) -
                     int256(balances[oTokenCoinIndex])
             )
         );
@@ -333,6 +335,7 @@ abstract contract BaseConvexAMOStrategy is InitializableAbstractStrategy {
 
         uint256 requiredLpTokens = calcTokenToBurn(_amount);
 
+        // Withdraw pool LP tokens from Convex pool
         _lpWithdraw(requiredLpTokens);
 
         /* math in requiredLpTokens should correctly calculate the amount of LP to remove
@@ -349,13 +352,9 @@ abstract contract BaseConvexAMOStrategy is InitializableAbstractStrategy {
 
         emit Withdrawal(address(oToken), address(lpToken), oTokenToBurn);
 
-        // Convert pool assets to required amount of vault assets
-        _toVaultAsset(_vaultAsset, _amount);
-
-        // Transfer the requested number of assets to the recipient
-        // this may leave some assets in this strategy contract if
-        // more assets than expected were removed from the pool
-        asset.safeTransfer(_recipient, _amount);
+        // Convert all the pool assets in this strategy to Vault assets
+        // and transfer them to the vault
+        _withdrawAllAsset(_recipient);
     }
 
     function calcTokenToBurn(uint256 _amount)
@@ -415,7 +414,7 @@ abstract contract BaseConvexAMOStrategy is InitializableAbstractStrategy {
 
         // Convert all the pool assets in this strategy to Vault assets
         // and transfer them to the vault
-        _withdrawAllAsset();
+        _withdrawAllAsset(vaultAddress);
     }
 
     /***************************************
@@ -439,6 +438,10 @@ abstract contract BaseConvexAMOStrategy is InitializableAbstractStrategy {
     {
         IVault(vaultAddress).mintForStrategy(_oTokens);
 
+        uint256[2] memory _amounts;
+        _amounts[assetCoinIndex] = 0;
+        _amounts[oTokenCoinIndex] = _oTokens;
+
         // Convert OTokens, eg OETH, to Curve pool LP tokens
         uint256 valueInLpTokens = (_oTokens).divPrecisely(
             curvePool.get_virtual_price()
@@ -449,7 +452,7 @@ abstract contract BaseConvexAMOStrategy is InitializableAbstractStrategy {
         );
 
         // Add the minted OTokens to the Curve pool
-        uint256 lpDeposited = _addLiquidityToPool([0, _oTokens], minMintAmount);
+        uint256 lpDeposited = _addLiquidityToPool(_amounts, minMintAmount);
 
         // Deposit the Curve pool LP tokens to the Convex rewards pool
         _stakeCurveLp(lpDeposited);
@@ -511,7 +514,7 @@ abstract contract BaseConvexAMOStrategy is InitializableAbstractStrategy {
 
         // Convert all the pool assets in this strategy to Vault assets
         // and transfer them to the vault
-        _withdrawAllAsset();
+        _withdrawAllAsset(vaultAddress);
     }
 
     /**

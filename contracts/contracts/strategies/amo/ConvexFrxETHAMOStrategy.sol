@@ -34,21 +34,20 @@ contract ConvexFrxETHAMOStrategy is BaseConvexAMOStrategy {
         poolAssets = assets;
     }
 
-    /// @dev frxETH is the Vault asset and the pool asset so nothing to do
-    function _toVaultAsset(address, uint256) internal override {}
-
-    /// @dev returns the frxETH balance of this strategy contract
-    function _withdrawAllAsset() internal override {
-        uint256 vaultAssets = asset.balanceOf(address(this));
-
-        // Transfer the WETH to the Vault
-        asset.safeTransfer(vaultAddress, vaultAssets);
-
-        emit Withdrawal(address(asset), address(lpToken), vaultAssets);
+    /// @dev frxETH is the Vault asset and the pool asset so return the frxETH amount
+    /// @param poolAssetAmount Amount of frxETH to convert to OETH
+    function _toOTokens(uint256 poolAssetAmount)
+        internal
+        pure
+        override
+        returns (uint256 oethAmount)
+    {
+        // TODO - does this need to be converted to OETH amount using the Oracle?
+        oethAmount = poolAssetAmount;
     }
 
     /***************************************
-                    Curve Pool
+                Curve Pool Deposits
     ****************************************/
 
     /// @dev Adds frxETH and/or OETH to the Curve pool
@@ -58,6 +57,20 @@ contract ConvexFrxETHAMOStrategy is BaseConvexAMOStrategy {
         uint256 minMintAmount
     ) internal override returns (uint256 lpDeposited) {
         lpDeposited = curvePool.add_liquidity(amounts, minMintAmount);
+    }
+
+    /***************************************
+            Curve Pool Withdrawals
+    ****************************************/
+
+    /// @dev returns the frxETH balance of this strategy contract
+    function _withdrawAllAsset(address _recipient) internal override {
+        uint256 vaultAssets = asset.balanceOf(address(this));
+
+        // Transfer the WETH to the Vault
+        asset.safeTransfer(_recipient, vaultAssets);
+
+        emit Withdrawal(address(asset), address(lpToken), vaultAssets);
     }
 
     /***************************************
