@@ -54,6 +54,11 @@ object "MorphoAaveStrategy" as morphAaveStrat <<Origin>><<Proxy>> #DeepSkyBlue {
     asset: WETH
     Aave token: aWETH
 }
+object "ConvexFrxETHAMOStrategy" as frxAMOStrat <<Origin>><<Proxy>> #DeepSkyBlue {
+    asset: frxETH
+    Curve metapool: OETHfrxETH-f
+    Convex pool: cvxOETHfrxETH-f
+}
 
 ' Oracle
 object "OETHOracleRouter" as oracle <<Origin>> #DeepSkyBlue {
@@ -181,6 +186,10 @@ oethv ...> frxethstrat
 harv <..> cvxStrat
 oethv <...> cvxStrat
 oeth <... cvxStrat
+
+harv <..> frxAMOStrat
+oethv <...> frxAMOStrat
+oeth <... frxAMOStrat
 
 ' cvxStrat ..> crvPool
 ' cvxStrat ..> cvxPool
