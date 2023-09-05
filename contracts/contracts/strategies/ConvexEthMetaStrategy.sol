@@ -382,6 +382,9 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
     {
         IVault(vaultAddress).mintForStrategy(_oTokens);
 
+        uint256[2] memory amounts = [uint256(0), uint256(0)];
+        amounts[oethCoinIndex] = _oTokens;
+
         // Convert OETH to Curve pool LP tokens
         uint256 valueInLpTokens = (_oTokens).divPrecisely(
             curvePool.get_virtual_price()
@@ -392,10 +395,7 @@ contract ConvexEthMetaStrategy is InitializableAbstractStrategy {
         );
 
         // Add the minted OTokens to the Curve pool
-        uint256 lpDeposited = curvePool.add_liquidity(
-            [0, _oTokens],
-            minMintAmount
-        );
+        uint256 lpDeposited = curvePool.add_liquidity(amounts, minMintAmount);
 
         // Deposit the Curve pool LP tokens to the Convex rewards pool
         require(
