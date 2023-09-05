@@ -81,23 +81,6 @@ contract ConvexEthMetaStrategy is BaseConvexAMOStrategy {
     }
 
     /***************************************
-                Curve Pool Deposits
-    ****************************************/
-
-    /// @dev Adds OETH and/or ETH to the Curve pool
-    /// @param amounts The amount of ETH and OETH to add to the pool
-    function _addLiquidityToPool(
-        uint256[2] memory amounts,
-        uint256 minMintAmount
-    ) internal override returns (uint256 lpDeposited) {
-        // slither-disable-next-line arbitrary-send
-        lpDeposited = curvePool.add_liquidity{ value: amounts[assetCoinIndex] }(
-            amounts,
-            minMintAmount
-        );
-    }
-
-    /***************************************
             Curve Pool Withdrawals
     ****************************************/
 
@@ -110,7 +93,10 @@ contract ConvexEthMetaStrategy is BaseConvexAMOStrategy {
         IWETH9(address(asset)).deposit{ value: vaultAssetAmount }();
 
         // Transfer the WETH to the Vault
-        asset.transfer(recipient, vaultAssetAmount);
+        require(
+            asset.transfer(recipient, vaultAssetAmount),
+            "WETH transfer failed"
+        );
 
         emit Withdrawal(address(asset), address(lpToken), vaultAssetAmount);
     }

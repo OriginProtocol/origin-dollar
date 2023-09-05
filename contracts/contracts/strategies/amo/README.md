@@ -43,3 +43,17 @@
 ### Storage
 
 ![Convex OUSD AMO Strategy Storage](../../../docs/ConvexOUSDMetaStrategyStorage.svg)
+
+## Balancer AMO Strategy for OETH/WETH
+
+### Hierarchy
+
+![Balancer OETH AMO Strategy Hierarchy](../../../docs/BalancerEthAMOStrategyHierarchy.svg)
+
+### Squashed
+
+![Balancer OETH AMO Strategy Squashed](../../../docs/BalancerEthAMOStrategySquashed.svg)
+
+### Storage
+
+![Balancer OETH AMO Strategy Storage](../../../docs/BalancerEthAMOStrategyStorage.svg)

@@ -147,6 +147,17 @@ abstract contract BaseAMOStrategy is InitializableAbstractStrategy {
         virtual
         returns (uint256 oTokenAmount);
 
+    /// @dev Returns the index position of the coin in the AMO pool.
+    function _getCoinIndex(address _asset) internal view returns (uint128) {
+        if (_asset == address(oToken)) {
+            return oTokenCoinIndex;
+        } else if (_asset == address(asset)) {
+            return assetCoinIndex;
+        } else {
+            revert("Unsupported asset");
+        }
+    }
+
     /***************************************
                 AMO Pool Deposits
     ****************************************/
@@ -159,18 +170,26 @@ abstract contract BaseAMOStrategy is InitializableAbstractStrategy {
         uint256 minLpAmount
     ) internal virtual returns (uint256 lpDeposited);
 
-    /// @dev Removes pool assets and/or OTokens from the AMO pool
-    /// @param lpTokens The amount of AMO pool LP tokens to be burnt
-    /// @param minWithdrawalAmounts The minimum amount of AMO pool assets that are acceptable to receive
+    /// @dev Removes pool assets and/or OTokens from the AMO pool.
+    /// Curve will burn an exact amount of AMO LP tokens in exchange for a calculated amount of pool assets.
+    /// Balancer will withdraw and exact amount of pool assets in exchange for a calculated amount of AMO LP tokens.
+    /// @param lpTokens The maximum amount of AMO pool LP tokens to be burnt
+    /// @param poolAssetAmounts The minimum amount of AMO pool assets that are acceptable to receive
     function _removeLiquidityFromPool(
         uint256 lpTokens,
-        uint256[2] memory minWithdrawalAmounts
+        uint256[2] memory poolAssetAmounts
     ) internal virtual;
 
+    /// @dev Removes either pool assets or OTokens from the AMO pool.
+    /// Curve will burn an exact amount of AMO LP tokens in exchange for a calculated amount of pool assets.
+    /// Balancer will withdraw and exact amount of pool assets in exchange for a calculated amount of AMO LP tokens.
+    /// @param poolAsset The address of the AMO pool asset to be removed. eg OETH, OUSD, ETH, 3CRV, frxETH
+    /// @param lpTokens The maximum amount of AMO pool LP tokens to be burnt
+    /// @param poolAssetAmount The minimum amount of AMO pool assets that are acceptable to receive. eg OETH or ETH
     function _removeOneSidedLiquidityFromPool(
-        address removeAsset,
+        address poolAsset,
         uint256 lpTokens,
-        uint256 minPoolAssetAmount
+        uint256 poolAssetAmount
     ) internal virtual returns (uint256 coinsRemoved);
 
     /// @dev Returns the current balances of the AMO pool
@@ -218,11 +237,13 @@ abstract contract BaseAMOStrategy is InitializableAbstractStrategy {
 
     /// @dev Deposit the AMO pool LP tokens to the rewards pool.
     /// eg Curve LP tokens into Convex or Balancer LP tokens into Aura
-    function _stakeCurveLp(uint256 lpDeposited) internal virtual;
+    /// @param lpAmount the amount of AMO pool LP tokens to deposit
+    function _stakeCurveLp(uint256 lpAmount) internal virtual;
 
     /// @dev Withdraw a specific amount of AMO pool LP tokens from the rewards pool
     /// eg Curve LP tokens from Convex or Balancer LP tokens from Aura
-    function _unStakeLpTokens(uint256 _lpAmount) internal virtual;
+    /// @param lpAmount the amount of AMO pool LP tokens to withdraw
+    function _unStakeLpTokens(uint256 lpAmount) internal virtual;
 
     /// @dev Withdraw all AMO pool LP tokens from the rewards pool
     function _unStakeAllLpTokens() internal virtual;

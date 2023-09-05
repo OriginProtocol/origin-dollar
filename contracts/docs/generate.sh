@@ -72,7 +72,7 @@ sol2uml .. -s -d 0 -b MorphoCompoundStrategy -o MorphoCompStrategySquashed.svg
 sol2uml storage .. -c MorphoCompoundStrategy -o MorphoCompStrategyStorage.svg --hideExpand ______gap,_reserved,__reserved
 
 # contracts/strategies/amo
-sol2uml .. -v -hv -hf -he -hs -hl -hi -b ConvexEthMetaStrategy,ConvexFrxETHAMOStrategy,ConvexOUSDMetaStrategy -o AMOContractHierarchy.svg
+sol2uml .. -v -hv -hf -he -hs -hl -hi -b ConvexEthMetaStrategy,ConvexFrxETHAMOStrategy,ConvexOUSDMetaStrategy,BalancerEthAMOStrategy -o AMOContractHierarchy.svg
 
 sol2uml .. -v -hv -hf -he -hs -hl -b ConvexEthMetaStrategy -o ConvexEthMetaStrategyHierarchy.svg
 sol2uml .. -s -d 0 -b ConvexEthMetaStrategy -o ConvexEthMetaStrategySquashed.svg
@@ -85,6 +85,10 @@ sol2uml storage .. -c ConvexFrxETHAMOStrategy -o ConvexFrxETHAMOStrategyStorage.
 sol2uml .. -v -hv -hf -he -hs -hl -b ConvexOUSDMetaStrategy -o ConvexOUSDMetaStrategyHierarchy.svg
 sol2uml .. -s -d 0 -b ConvexOUSDMetaStrategy -o ConvexOUSDMetaStrategySquashed.svg
 sol2uml storage .. -c ConvexOUSDMetaStrategy -o ConvexOUSDMetaStrategyStorage.svg  --hideExpand ______gap,_reserved
+
+sol2uml .. -v -hv -hf -he -hs -hl -b BalancerEthAMOStrategy -o BalancerEthAMOStrategyHierarchy.svg
+sol2uml .. -s -d 0 -b BalancerEthAMOStrategy -o BalancerEthAMOStrategySquashed.svg
+sol2uml storage .. -c BalancerEthAMOStrategy -o BalancerEthAMOStrategyStorage.svg  --hideExpand ______gap,_reserved
 
 # contracts/swapper
 sol2uml .. -v -hv -hf -he -hs -hl -b Swapper1InchV5 -o Swapper1InchV5Hierarchy.svg

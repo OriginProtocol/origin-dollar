@@ -54,19 +54,6 @@ contract ConvexFrxETHAMOStrategy is BaseConvexAMOStrategy {
     }
 
     /***************************************
-                Curve Pool Deposits
-    ****************************************/
-
-    /// @dev Adds frxETH and/or OETH to the Curve pool
-    /// @param amounts The amount of Curve pool assets and OTokens to add to the pool
-    function _addLiquidityToPool(
-        uint256[2] memory amounts,
-        uint256 minMintAmount
-    ) internal override returns (uint256 lpDeposited) {
-        lpDeposited = curvePool.add_liquidity(amounts, minMintAmount);
-    }
-
-    /***************************************
             Curve Pool Withdrawals
     ****************************************/
 
@@ -77,7 +64,10 @@ contract ConvexFrxETHAMOStrategy is BaseConvexAMOStrategy {
         address _recipient
     ) internal override {
         // Transfer the frxETH to the Vault
-        asset.transfer(_recipient, vaultAssetAmount);
+        require(
+            asset.transfer(_recipient, vaultAssetAmount),
+            "frxETH transfer failed"
+        );
 
         emit Withdrawal(address(asset), address(lpToken), vaultAssetAmount);
     }

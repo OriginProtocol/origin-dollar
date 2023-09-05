@@ -62,28 +62,42 @@ abstract contract BaseConvexAMOStrategy is BaseAMOStrategy {
     }
 
     /***************************************
-                Curve Pool Deposits
+                Curve Pool
     ****************************************/
 
-    /// @dev Removes pool assets and/or OTokens from the AMO pool
-    /// @param lpTokens The amount of AMO pool LP tokens to be burnt
-    /// @param minWithdrawalAmounts The minimum amount of AMO pool assets that are acceptable to receive
-    function _removeLiquidityFromPool(
-        uint256 lpTokens,
-        uint256[2] memory minWithdrawalAmounts
-    ) internal override {
-        // slither-disable-next-line unused-return
-        curvePool.remove_liquidity(lpTokens, minWithdrawalAmounts);
+    /// @dev Adds pool assets (3CRV, frxETH or ETH) and/or OTokens (OUSD or OETH) to the Curve pool
+    /// @param poolAmounts The amount of Curve pool assets to add to the pool
+    /// @param minLpAmount The minimum amount of Curve pool LP tokens that is acceptable to receive
+    function _addLiquidityToPool(
+        uint256[2] memory poolAmounts,
+        uint256 minLpAmount
+    ) internal override returns (uint256 lpDeposited) {
+        lpDeposited = curvePool.add_liquidity(poolAmounts, minLpAmount);
     }
 
+    /// @dev Removes pool assets and/or OTokens from the Curve pool
+    /// @param lpTokens The amount of Curve pool LP tokens to be burnt
+    /// @param minPoolAssetAmounts The minimum amount of AMO pool assets that are acceptable to receive
+    function _removeLiquidityFromPool(
+        uint256 lpTokens,
+        uint256[2] memory minPoolAssetAmounts
+    ) internal override {
+        // slither-disable-next-line unused-return
+        curvePool.remove_liquidity(lpTokens, minPoolAssetAmounts);
+    }
+
+    /// @dev Removes either pool assets or OTokens from the Curve pool.
+    /// @param poolAsset The address of the Curve pool asset to be removed. eg OETH, OUSD, ETH, 3CRV, frxETH
+    /// @param lpTokens The amount of Curve pool LP tokens to be burnt
+    /// @param minPoolAssetAmount The minimum amount of Curve pool assets that are acceptable to receive. eg OETH or ETH
     function _removeOneSidedLiquidityFromPool(
-        address removeAsset,
+        address poolAsset,
         uint256 lpTokens,
         uint256 minPoolAssetAmount
     ) internal override returns (uint256 coinsRemoved) {
-        uint128 coinIndex = _getCoinIndex(removeAsset);
+        uint128 coinIndex = _getCoinIndex(poolAsset);
 
-        // Remove only one asset from the AMO pool
+        // Remove only one asset from the Curve pool
         coinsRemoved = curvePool.remove_liquidity_one_coin(
             lpTokens,
             int128(coinIndex),
@@ -92,7 +106,7 @@ abstract contract BaseConvexAMOStrategy is BaseAMOStrategy {
         );
     }
 
-    /// @dev Returns the current balances of the AMO pool
+    /// @dev Returns the current balances of the Curve pool
     function _getBalances()
         internal
         view
@@ -102,7 +116,7 @@ abstract contract BaseConvexAMOStrategy is BaseAMOStrategy {
         balances = curvePool.get_balances();
     }
 
-    /// @dev Returns the current balances of the AMO pool
+    /// @dev Returns the current balances of the Curve pool
     function _getBalance(address poolAsset)
         internal
         view
@@ -113,7 +127,7 @@ abstract contract BaseConvexAMOStrategy is BaseAMOStrategy {
         balance = curvePool.balances(uint128(coinIndex));
     }
 
-    /// @dev Returns the price of one AMO pool LP token in base asset terms.
+    /// @dev Returns the price of one Curve pool LP token in base asset terms.
     function _getVirtualPrice()
         internal
         view
@@ -121,16 +135,6 @@ abstract contract BaseConvexAMOStrategy is BaseAMOStrategy {
         returns (uint256 virtualPrice)
     {
         virtualPrice = curvePool.get_virtual_price();
-    }
-
-    function _getCoinIndex(address _asset) internal view returns (uint128) {
-        if (_asset == address(oToken)) {
-            return oTokenCoinIndex;
-        } else if (_asset == address(asset)) {
-            return assetCoinIndex;
-        } else {
-            revert("Unsupported asset");
-        }
     }
 
     /***************************************

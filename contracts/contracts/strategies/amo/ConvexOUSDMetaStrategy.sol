@@ -203,15 +203,6 @@ contract ConvexOUSDMetaStrategy is BaseConvexAMOStrategy {
                 Curve Pool Deposits
     ****************************************/
 
-    /// @dev Adds 3CRV and/or OUSD to the Curve OUSD/3CRV Metapool
-    /// @param amounts The amount of Curve pool assets and OTokens to add to the pool
-    function _addLiquidityToPool(
-        uint256[2] memory amounts,
-        uint256 minMintAmount
-    ) internal override returns (uint256 lpDeposited) {
-        lpDeposited = curvePool.add_liquidity(amounts, minMintAmount);
-    }
-
     function depositAll() external override onlyVault nonReentrant {
         uint256[3] memory amounts = [uint256(0), uint256(0), uint256(0)];
         uint256 depositValue = 0;

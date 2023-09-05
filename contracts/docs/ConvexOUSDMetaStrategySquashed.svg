@@ -9,9 +9,9 @@
 <g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 2280.2)">
 <title>UmlClassDiagram</title>
 <polygon fill="white" stroke="transparent" points="-4,4 -4,-2280.2 1135.65,-2280.2 1135.65,4 -4,4"/>
-<!-- 221 -->
+<!-- 232 -->
 <g id="node1" class="node">
-<title>221</title>
+<title>232</title>
 <polygon fill="#f2f2f2" stroke="black" points="0,-0.5 0,-2275.7 1131.65,-2275.7 1131.65,-0.5 0,-0.5"/>
 <text text-anchor="middle" x="565.82" y="-2259.1" font-family="Times,serif" font-size="14.00">ConvexOUSDMetaStrategy</text>
 <text text-anchor="middle" x="565.82" y="-2242.3" font-family="Times,serif" font-size="14.00">../contracts/strategies/amo/ConvexOUSDMetaStrategy.sol</text>
@@ -80,23 +80,23 @@
 <text text-anchor="start" x="8" y="-1201.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;_toPoolAsset(_asset: address, _amount: uint256): (poolAssets: uint256) &lt;&lt;ConvexOUSDMetaStrategy&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-1184.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;_calcPoolAsset(_vaultAsset: address, _vaultAssetAmount: uint256): (required3Crv: uint256) &lt;&lt;ConvexOUSDMetaStrategy&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-1167.9" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;_toOTokens(threeCrvAmount: uint256): (ousdAmount: uint256) &lt;&lt;ConvexOUSDMetaStrategy&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-1151.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;_addLiquidityToPool(amounts: uint256[2], minMintAmount: uint256): (lpDeposited: uint256) &lt;&lt;ConvexOUSDMetaStrategy&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-1134.3" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;_removeLiquidityFromPool(lpTokens: uint256, minWithdrawalAmounts: uint256[2]) &lt;&lt;BaseConvexAMOStrategy&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-1117.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;_removeOneSidedLiquidityFromPool(removeAsset: address, lpTokens: uint256, minPoolAssetAmount: uint256): (coinsRemoved: uint256) &lt;&lt;BaseConvexAMOStrategy&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-1100.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;_getBalances(): (balances: uint256[2]) &lt;&lt;BaseConvexAMOStrategy&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-1083.9" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;_getBalance(poolAsset: address): (balance: uint256) &lt;&lt;BaseConvexAMOStrategy&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-1067.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;_getVirtualPrice(): (virtualPrice: uint256) &lt;&lt;BaseConvexAMOStrategy&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-1050.3" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;_withdrawAsset(vaultAsset: address, vaultAssetAmount: uint256, recipient: address) &lt;&lt;ConvexOUSDMetaStrategy&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-1033.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;_withdrawAllAsset(recipient: address) &lt;&lt;ConvexOUSDMetaStrategy&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-1016.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;_stakeCurveLp(lpDeposited: uint256) &lt;&lt;BaseConvexAMOStrategy&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-999.9" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;_unStakeLpTokens(_lpAmount: uint256) &lt;&lt;BaseConvexAMOStrategy&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-983.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;_unStakeAllLpTokens() &lt;&lt;BaseConvexAMOStrategy&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-966.3" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;_deposit(_poolAssetAmount: uint256) &lt;&lt;BaseAMOStrategy&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-949.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;calcLpTokensToBurn(_vaultAssetAmount: uint256): (lpToBurn: uint256) &lt;&lt;BaseAMOStrategy&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-932.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;_withdrawAndRemoveFromPool(_lpTokens: uint256, removeAsset: address): (coinsRemoved: uint256) &lt;&lt;BaseAMOStrategy&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-915.9" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;_approveBase() &lt;&lt;ConvexOUSDMetaStrategy&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-899.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;_max(a: int256, b: int256): int256 &lt;&lt;BaseAMOStrategy&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-882.3" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;_getCoinIndex(_asset: address): uint128 &lt;&lt;BaseConvexAMOStrategy&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-1151.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;_getCoinIndex(_asset: address): uint128 &lt;&lt;BaseAMOStrategy&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-1134.3" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;_addLiquidityToPool(poolAmounts: uint256[2], minLpAmount: uint256): (lpDeposited: uint256) &lt;&lt;BaseConvexAMOStrategy&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-1117.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;_removeLiquidityFromPool(lpTokens: uint256, minPoolAssetAmounts: uint256[2]) &lt;&lt;BaseConvexAMOStrategy&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-1100.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;_removeOneSidedLiquidityFromPool(poolAsset: address, lpTokens: uint256, minPoolAssetAmount: uint256): (coinsRemoved: uint256) &lt;&lt;BaseConvexAMOStrategy&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-1083.9" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;_getBalances(): (balances: uint256[2]) &lt;&lt;BaseConvexAMOStrategy&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-1067.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;_getBalance(poolAsset: address): (balance: uint256) &lt;&lt;BaseConvexAMOStrategy&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-1050.3" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;_getVirtualPrice(): (virtualPrice: uint256) &lt;&lt;BaseConvexAMOStrategy&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-1033.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;_withdrawAsset(vaultAsset: address, vaultAssetAmount: uint256, recipient: address) &lt;&lt;ConvexOUSDMetaStrategy&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-1016.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;_withdrawAllAsset(recipient: address) &lt;&lt;ConvexOUSDMetaStrategy&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-999.9" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;_stakeCurveLp(lpDeposited: uint256) &lt;&lt;BaseConvexAMOStrategy&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-983.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;_unStakeLpTokens(_lpAmount: uint256) &lt;&lt;BaseConvexAMOStrategy&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-966.3" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;_unStakeAllLpTokens() &lt;&lt;BaseConvexAMOStrategy&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-949.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;_deposit(_poolAssetAmount: uint256) &lt;&lt;BaseAMOStrategy&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-932.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;calcLpTokensToBurn(_vaultAssetAmount: uint256): (lpToBurn: uint256) &lt;&lt;BaseAMOStrategy&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-915.9" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;_withdrawAndRemoveFromPool(_lpTokens: uint256, removeAsset: address): (coinsRemoved: uint256) &lt;&lt;BaseAMOStrategy&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-899.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;_approveBase() &lt;&lt;ConvexOUSDMetaStrategy&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-882.3" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;_max(a: int256, b: int256): int256 &lt;&lt;BaseAMOStrategy&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-865.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;_coinIndexDecimals(_asset: address): (index: uint256, decimals: uint256) &lt;&lt;ConvexOUSDMetaStrategy&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-848.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;_addAmount(amounts: uint256[3], usdAsset: address, curve3PoolVirtualPrice: uint256): (depositValue: uint256) &lt;&lt;ConvexOUSDMetaStrategy&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-831.9" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;_transferAssetBalance(_recipient: address, asset: IERC20) &lt;&lt;ConvexOUSDMetaStrategy&gt;&gt;</text>
