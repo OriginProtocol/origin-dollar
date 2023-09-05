@@ -7,17 +7,15 @@ pragma solidity ^0.8.0;
  * @author Origin Protocol Inc
  */
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import { BaseConvexAMOStrategy } from "./BaseConvexAMOStrategy.sol";
 
 contract ConvexFrxETHAMOStrategy is BaseConvexAMOStrategy {
-    using SafeERC20 for IERC20;
-
     constructor(
         BaseStrategyConfig memory _baseConfig,
-        ConvexAMOConfig memory _convexConfig
-    ) BaseConvexAMOStrategy(_baseConfig, _convexConfig) {}
+        AMOConfig memory _amoConfig,
+        ConvexConfig memory _convexConfig
+    ) BaseConvexAMOStrategy(_baseConfig, _amoConfig, _convexConfig) {}
 
     /***************************************
         Vault to Pool Asset Conversions
@@ -78,8 +76,8 @@ contract ConvexFrxETHAMOStrategy is BaseConvexAMOStrategy {
         uint256 vaultAssetAmount,
         address _recipient
     ) internal override {
-        // Transfer the WETH to the Vault
-        asset.safeTransfer(_recipient, vaultAssetAmount);
+        // Transfer the frxETH to the Vault
+        asset.transfer(_recipient, vaultAssetAmount);
 
         emit Withdrawal(address(asset), address(lpToken), vaultAssetAmount);
     }
@@ -118,19 +116,6 @@ contract ConvexFrxETHAMOStrategy is BaseConvexAMOStrategy {
     /***************************************
                     Approvals
     ****************************************/
-
-    /**
-     * @notice Approve the spending of all assets by their corresponding pool tokens,
-     *      if for some reason is it necessary.
-     */
-    function safeApproveAllTokens()
-        external
-        override
-        onlyGovernor
-        nonReentrant
-    {
-        _approveBase();
-    }
 
     /**
      * @dev Since we are unwrapping WETH before depositing it to Curve

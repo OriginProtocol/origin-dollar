@@ -22,13 +22,15 @@ module.exports = deploymentWithGovernanceProposal(
       [
         [addresses.mainnet.CurveOETHMetaPool, addresses.mainnet.OETHVaultProxy],
         [
-          addresses.mainnet.CVXBooster,
-          addresses.mainnet.CVXETHRewardsPool,
-          oethPoolLpPID,
           addresses.mainnet.OETHProxy,
           addresses.mainnet.WETH,
           1, // Curve pool index for OETH
           0, // Curve pool index for ETH
+        ],
+        [
+          addresses.mainnet.CVXBooster,
+          addresses.mainnet.CVXETHRewardsPool,
+          oethPoolLpPID,
         ],
       ],
       null,

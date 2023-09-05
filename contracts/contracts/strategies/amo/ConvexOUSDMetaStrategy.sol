@@ -52,10 +52,11 @@ contract ConvexOUSDMetaStrategy is BaseConvexAMOStrategy {
 
     constructor(
         BaseStrategyConfig memory _baseConfig,
-        ConvexAMOConfig memory _convexConfig,
+        AMOConfig memory _amoConfig,
+        ConvexConfig memory _convexConfig,
         address _curve3Pool,
         address[3] memory _curve3PoolAssets
-    ) BaseConvexAMOStrategy(_baseConfig, _convexConfig) {
+    ) BaseConvexAMOStrategy(_baseConfig, _amoConfig, _convexConfig) {
         DAI = _curve3PoolAssets[0];
         USDC = _curve3PoolAssets[1];
         USDT = _curve3PoolAssets[2];
@@ -364,19 +365,6 @@ contract ConvexOUSDMetaStrategy is BaseConvexAMOStrategy {
     /***************************************
                     Approvals
     ****************************************/
-
-    /**
-     * @notice Approve the spending of all assets by their corresponding pool tokens,
-     *      if for some reason is it necessary.
-     */
-    function safeApproveAllTokens()
-        external
-        override
-        onlyGovernor
-        nonReentrant
-    {
-        _approveBase();
-    }
 
     // solhint-disable-next-line no-unused-vars
     function _abstractSetPToken(address _asset, address _pToken)

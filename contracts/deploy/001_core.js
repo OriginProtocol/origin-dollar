@@ -398,13 +398,15 @@ const deployConvexOUSDMetaStrategy = async () => {
     [
       [assetAddresses.ThreePoolOUSDMetapool, cVaultProxy.address],
       [
-        mockBooster.address, // cvxDepositorAddress,
-        mockRewardPool.address, // cvxRewardStakerAddress,
-        metapoolLPCRVPid, // cvxDepositorPTokenId
         ousd.address, // oTokenAddress,
         assetAddresses.ThreePoolToken, // assetAddress (3CRV)
         0, // Curve pool index for OUSD
         1, // Curve pool index for 3CRV
+      ],
+      [
+        mockBooster.address, // cvxDepositorAddress,
+        mockRewardPool.address, // cvxRewardStakerAddress,
+        metapoolLPCRVPid, // cvxDepositorPTokenId
       ],
       assetAddresses.ThreePool, // _curve3Pool
       [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT], // _curve3PoolAssets

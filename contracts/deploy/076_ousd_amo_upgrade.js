@@ -22,13 +22,15 @@ module.exports = deploymentWithGovernanceProposal(
       [
         [addresses.mainnet.CurveOUSDMetaPool, addresses.mainnet.VaultProxy],
         [
-          addresses.mainnet.CVXBooster, // cvxDepositorAddress,
-          addresses.mainnet.CVXRewardsPool, // cvxRewardStakerAddress,
-          metapoolLPCRVPid, // cvxDepositorPTokenId
           addresses.mainnet.OUSDProxy, // oTokenAddress (OUSD),
           addresses.mainnet.ThreePoolToken, // assetAddress (3CRV)
           0, // Curve pool index for OUSD
           1, // Curve pool index for 3CRV
+        ],
+        [
+          addresses.mainnet.CVXBooster, // cvxDepositorAddress,
+          addresses.mainnet.CVXRewardsPool, // cvxRewardStakerAddress,
+          metapoolLPCRVPid, // cvxDepositorPTokenId
         ],
         addresses.mainnet.ThreePool, // _curve3Pool
         [addresses.mainnet.DAI, addresses.mainnet.USDC, addresses.mainnet.USDT], // _curve3PoolAssets

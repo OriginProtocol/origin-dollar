@@ -1,5 +1,7 @@
 # Diagrams
 
+![AMO Contracts](../../../docs/AMOContractHierarchy.svg)
+
 ## Convex AMO Strategy for OETH/ETH
 
 ### Hierarchy
