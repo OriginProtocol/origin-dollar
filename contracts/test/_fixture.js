@@ -530,6 +530,7 @@ const defaultFixture = deployments.createFixture(async () => {
     governorContract,
     compoundStrategy,
     oracleRouter,
+    oethOracleRouter,
     // Assets
     usdt,
     dai,
