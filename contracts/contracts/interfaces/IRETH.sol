@@ -6,6 +6,8 @@ interface IRETH {
 
     function getRethValue(uint256 _ethAmount) external view returns (uint256);
 
+    function getExchangeRate() external view returns (uint256);
+
     function totalSupply() external view returns (uint256);
 
     function balanceOf(address account) external view returns (uint256);

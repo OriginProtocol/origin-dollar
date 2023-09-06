@@ -1008,8 +1008,29 @@ forkOnlyDescribe(
         const maxDiff = testCase[1];
 
         it(`checkBalance with ~100 units should at most have ${maxDiff} absolute diff when performing WETH pool tilt at ${tiltAmount}% of pool's TVL`, async function () {
-          const { balancerREthStrategy, weth, reth, rEthBPT, balancerVault } =
-            fixture;
+          const {
+            oeth,
+            oethVault,
+            balancerREthPID,
+            balancerREthStrategy,
+            weth,
+            reth,
+            rEthBPT,
+            balancerVault,
+          } = fixture;
+
+          const logParams = {
+            oeth,
+            oethVault,
+            bpt: rEthBPT,
+            balancerVault,
+            strategy: balancerREthStrategy,
+            allAssets: [weth, reth],
+            pid: balancerREthPID,
+            reth,
+          };
+
+          const balancesBefore = await logBalances(logParams);
 
           await depositTest(fixture, [50, 50], [weth, reth], rEthBPT);
 
@@ -1053,11 +1074,38 @@ forkOnlyDescribe(
             balancerVault,
           });
 
-          // check balance should report an equal or larger balance after attack comparing
-          // to the middle of the attack.
-          expect(checkBalanceAmountAfterTilt).to.be.gte(
+          const checkBalanceAmountAfterAttack = await balancerREthStrategy[
+            "checkBalance()"
+          ]();
+
+          // check balance should report larger balance after attack comparing
+          // to the middle of the attack. Since the attacker has encountered
+          // fees with un-tilting.
+          expect(checkBalanceAmountAfterAttack).to.be.gt(
             checkBalanceAmountAfterTilt
           );
+
+          const oethVaultSigner = await impersonateAndFundContract(
+            oethVault.address
+          );
+          await balancerREthStrategy.connect(oethVaultSigner).withdrawAll();
+
+          const balancesAfter = await logBalances(logParams);
+
+          const rethDiff =
+            parseFloat(balancesAfter.vaultAssets.rETH.toString()) -
+            parseFloat(balancesBefore.vaultAssets.rETH.toString());
+          const wethDiff =
+            parseFloat(balancesAfter.vaultAssets.WETH.toString()) -
+            parseFloat(balancesBefore.vaultAssets.WETH.toString());
+          const rethExchangeRate =
+            parseFloat(await reth.getExchangeRate()) / 1e18;
+          const unitDiff = rethDiff * rethExchangeRate + wethDiff;
+
+          /* confirm that the profits gained by the attacker's pool tilt
+           * action can be extracted by withdrawing the funds.
+           */
+          expect(unitDiff / 1e18).to.be.gte(parseFloat(maxDiff));
         });
       }
     });
@@ -1234,9 +1282,12 @@ async function logBalances({
   log(`\nOETH total supply: ${formatUnits(oethSupply)}`);
   log(`BPT total supply : ${formatUnits(bptSupply)}`);
 
+  const vaultAssets = {};
   for (const asset of allAssets) {
-    const vaultAssets = await asset.balanceOf(oethVault.address);
-    log(`${await asset.symbol()} in vault ${formatUnits(vaultAssets)}`);
+    const vaultAssetAmount = await asset.balanceOf(oethVault.address);
+    const symbol = await asset.symbol();
+    log(`${symbol} in vault ${formatUnits(vaultAssetAmount)}`);
+    vaultAssets[symbol] = vaultAssetAmount;
   }
 
   const strategyValues = await getPoolValues(strategy, allAssets, reth);
@@ -1248,5 +1299,6 @@ async function logBalances({
     bptSupply,
     strategyValues,
     poolBalances,
+    vaultAssets,
   };
 }
