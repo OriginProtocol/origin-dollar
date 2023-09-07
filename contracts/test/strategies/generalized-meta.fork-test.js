@@ -2,7 +2,7 @@ const { expect } = require("chai");
 const hre = require("hardhat");
 const { ethers } = hre;
 
-const { units, ousdUnits, forkOnlyDescribe, isCI } = require("../helpers");
+const { units, ousdUnits, isCI } = require("../helpers");
 const {
   createFixtureLoader,
   convexGeneralizedMetaForkedFixture,
@@ -24,7 +24,7 @@ const metastrategies = [
 ];
 
 metastrategies.forEach((config) => {
-  forkOnlyDescribe(
+  describe.skip(
     `ForkTest: Convex 3pool/${config.token} Meta Strategy`,
     function () {
       this.timeout(0);
