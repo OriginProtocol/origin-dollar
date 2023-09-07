@@ -478,6 +478,7 @@ const SwapCurrencyPill = ({
   selectedCoin,
   selectedSwap,
   swapsLoading,
+  swapsError,
   priceToleranceValue,
   swapMode,
   onErrorChange,
@@ -667,13 +668,17 @@ const SwapCurrencyPill = ({
                   <span className="text-loading">
                     {fbt('Loading...', 'Swaps Loading...')}
                   </span>
+                ) : swapsError ? (
+                  <span className="text-error">{'Error'}</span>
                 ) : (
                   <span>{expectedAmount || '0.00'}</span>
                 )}
               </div>
             )}
             <div className="usd-balance mt-auto">
-              {bottomItem
+              {swapsError
+                ? swapsError
+                : bottomItem
                 ? `$${formatCurrency(
                     truncateDecimals(expectedAmount, 18) * usdPrice,
                     2

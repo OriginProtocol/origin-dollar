@@ -166,6 +166,7 @@ const useSwapEstimator = ({
     if (delay === 0) {
       ContractStore.update((s) => {
         s.swapEstimations = 'loading'
+        s.swapEstimationsError = null
       })
     }
     setEstimationCallback(
@@ -191,49 +192,58 @@ const useSwapEstimator = ({
   const runEstimations = async (mode, selectedCoin, amount) => {
     ContractStore.update((s) => {
       s.swapEstimations = 'loading'
+      s.swapEstimationsError = null
     })
     let usedGasPrice = gasPrice
 
     const ethPrice = prices?.eth || 0
 
-    const [
-      vaultResult,
-      zapperResult,
-      // uniswapResult,
-      // uniswapV2Result,
-      // sushiswapResult,
-      curveResult,
-    ] = await Promise.all([
-      swapMode === 'mint'
-        ? estimateMintSuitabilityVault()
-        : estimateRedeemSuitabilityVault(),
-      estimateSwapSuitabilityZapper(),
-      estimateSwapSuitabilityCurve(),
-    ])
+    try {
+      const [
+        vaultResult,
+        zapperResult,
+        // uniswapResult,
+        // uniswapV2Result,
+        // sushiswapResult,
+        curveResult,
+      ] = await Promise.all([
+        swapMode === 'mint'
+          ? estimateMintSuitabilityVault()
+          : estimateRedeemSuitabilityVault(),
+        estimateSwapSuitabilityZapper(),
+        estimateSwapSuitabilityCurve(),
+      ])
 
-    if (!isGasPriceUserOverriden) {
-      usedGasPrice = await fetchGasPrice()
+      if (!isGasPriceUserOverriden) {
+        usedGasPrice = await fetchGasPrice()
+      }
+
+      let estimations = {
+        vault: vaultResult,
+        zapper: zapperResult,
+        // uniswap: uniswapResult,
+        curve: curveResult,
+        // uniswapV2: uniswapV2Result,
+        // sushiswap: sushiswapResult,
+      }
+
+      estimations = enrichAndFindTheBest(
+        estimations,
+        usedGasPrice,
+        ethPrice,
+        amount
+      )
+
+      ContractStore.update((s) => {
+        s.swapEstimations = estimations
+      })
+    } catch (err) {
+      console.error(err)
+      ContractStore.update((s) => {
+        s.swapEstimations = 'error'
+        s.swapEstimationsError = err.reason ?? err.message
+      })
     }
-
-    let estimations = {
-      vault: vaultResult,
-      zapper: zapperResult,
-      // uniswap: uniswapResult,
-      curve: curveResult,
-      // uniswapV2: uniswapV2Result,
-      // sushiswap: sushiswapResult,
-    }
-
-    estimations = enrichAndFindTheBest(
-      estimations,
-      usedGasPrice,
-      ethPrice,
-      amount
-    )
-
-    ContractStore.update((s) => {
-      s.swapEstimations = estimations
-    })
   }
 
   const enrichAndFindTheBest = (
