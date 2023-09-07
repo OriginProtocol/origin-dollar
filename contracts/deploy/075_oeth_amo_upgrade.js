@@ -9,7 +9,8 @@ module.exports = deploymentWithGovernanceProposal(
     // forceSkip: true,
     reduceQueueTime: true,
     deployerIsProposer: true,
-    // proposalId: "",
+    proposalId:
+      "52754541240413220443859027907216814653548117220338896790750636626793224597926",
   },
   async ({ ethers, deployWithConfirmation }) => {
     const cConvexEthMetaStrategyProxy = await ethers.getContract(
