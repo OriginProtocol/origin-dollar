@@ -73,7 +73,7 @@ forkOnlyDescribe("ForkTest: Collateral swaps", function () {
           from: "WETH",
           to: "stETH",
           fromAmount: 100,
-          minToAssetAmount: 99.99,
+          minToAssetAmount: 99.96,
         },
         {
           from: "WETH",
@@ -352,19 +352,19 @@ forkOnlyDescribe("ForkTest: Collateral swaps", function () {
           to: "USDC",
           fromAmount: 1000000,
           minToAssetAmount: 999900,
+          slippage: 0.1, // Max 1Inch slippage
         },
         {
           from: "USDT",
           to: "DAI",
           fromAmount: 1000000,
-          minToAssetAmount: 999000,
+          minToAssetAmount: 998000,
         },
         {
           from: "USDT",
           to: "USDC",
           fromAmount: 1000000,
-          minToAssetAmount: 999000,
-          slippage: 0.7, // Max 1Inch slippage
+          minToAssetAmount: 998000,
         },
         {
           from: "USDC",

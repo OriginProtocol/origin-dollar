@@ -21,7 +21,11 @@ const log = require("../utils/logger")("test:fixtures:strategies:meta");
 async function withDefaultOUSDMetapoolStrategiesSet() {
   const fixture = await convexMetaVaultFixture();
 
-  const { vault, timelock, usdt, usdc, OUSDmetaStrategy } = fixture;
+  const { vault, timelock, dai, usdt, usdc, OUSDmetaStrategy } = fixture;
+
+  await vault
+    .connect(timelock)
+    .setAssetDefaultStrategy(dai.address, OUSDmetaStrategy.address);
 
   await vault
     .connect(timelock)

@@ -29,7 +29,7 @@ forkOnlyDescribe(
         await mintTest(fixture, matt, usdc, "110000");
       });
 
-      it("Should NOT stake DAI in Curve gauge via metapool", async function () {
+      it("Should stake DAI in Curve gauge via metapool", async function () {
         const { anna, dai } = fixture;
         await mintTest(fixture, anna, dai, "110000");
       });
@@ -90,8 +90,7 @@ forkOnlyDescribe(
 );
 
 async function mintTest(fixture, user, asset, amount = "30000") {
-  const { vault, ousd, usdt, usdc, dai, OUSDmetaStrategy, cvxRewardPool } =
-    fixture;
+  const { vault, ousd, OUSDmetaStrategy, cvxRewardPool } = fixture;
 
   await vault.connect(user).allocate();
   await vault.connect(user).rebase();
@@ -119,14 +118,8 @@ async function mintTest(fixture, user, asset, amount = "30000") {
   const ousdUnitAmount = ousdUnits(amount);
 
   // The pool is titled to 3CRV by a million
-  if ([usdt.address, usdc.address].includes(asset.address)) {
-    // It should have added amount*3 supply
-    // (in case of USDT/USDC)
-    expect(supplyDiff).to.approxEqualTolerance(ousdUnitAmount.mul(3), 5);
-  } else {
-    // 1x for DAI
-    expect(supplyDiff).to.approxEqualTolerance(ousdUnitAmount, 1);
-  }
+  // It should have added amount*3 supply
+  expect(supplyDiff).to.approxEqualTolerance(ousdUnitAmount.mul(3), 5);
 
   // Ensure some LP tokens got staked under OUSDMetaStrategy address
   const newRewardPoolBalance = await cvxRewardPool
@@ -135,11 +128,6 @@ async function mintTest(fixture, user, asset, amount = "30000") {
   const rewardPoolBalanceDiff = newRewardPoolBalance.sub(
     currentRewardPoolBalance
   );
-  if (asset.address === dai.address) {
-    // Should not have staked when minted with DAI
-    expect(rewardPoolBalanceDiff).to.equal("0");
-  } else {
-    // Should have staked the LP tokens for USDT and USDC
-    expect(rewardPoolBalanceDiff).to.be.gte(ousdUnits(amount).mul(3).div(2));
-  }
+  // Should have staked the LP tokens for USDT and USDC
+  expect(rewardPoolBalanceDiff).to.be.gte(ousdUnits(amount).mul(3).div(2));
 }
