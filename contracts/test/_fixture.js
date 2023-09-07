@@ -3,6 +3,7 @@ const { ethers } = hre;
 const { formatUnits } = require("ethers/lib/utils");
 
 const addresses = require("../utils/addresses");
+const { setFraxOraclePrice } = require("../utils/fraxOracle");
 const {
   fundAccounts,
   fundAccountsForOETHUnitTests,
@@ -686,6 +687,9 @@ async function oethCollateralSwapFixture() {
     );
   }
 
+  // Set frxETH/ETH price above 0.998 so we can mint OETH using frxETH
+  await setFraxOraclePrice(parseUnits("0.999", 18));
+
   for (const token of [weth, reth, stETH, frxETH]) {
     await token
       .connect(matt)
@@ -1164,6 +1168,9 @@ async function fraxETHStrategyFixture() {
     await oethVault
       .connect(timelock)
       .setAssetDefaultStrategy(frxETH.address, fraxEthStrategy.address);
+
+    // Set frxETH/ETH price above 0.998 so we can mint OETH using frxETH
+    await setFraxOraclePrice(parseUnits("0.999", 18));
   } else {
     const { governorAddr } = await getNamedAccounts();
     const { oethVault, frxETH, fraxEthStrategy } = fixture;
