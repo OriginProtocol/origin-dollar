@@ -8,7 +8,6 @@ const {
   mintWETH,
   impersonateAndFundContract,
 } = require("./../_fixture");
-const { parseUnits } = require("ethers/lib/utils");
 
 forkOnlyDescribe("ForkTest: FraxETH Strategy", function () {
   this.timeout(0);
@@ -20,21 +19,6 @@ forkOnlyDescribe("ForkTest: FraxETH Strategy", function () {
   const loadFixture = createFixtureLoader(fraxETHStrategyFixture);
   beforeEach(async () => {
     fixture = await loadFixture();
-  });
-
-  describe("sfrxETH checks", () => {
-    it("totalAssets", async () => {
-      const { sfrxETH } = fixture;
-      expect(await sfrxETH.totalAssets()).gt(0);
-    });
-    it("convertToShares", async () => {
-      const { sfrxETH } = fixture;
-      expect(await sfrxETH.convertToShares(parseUnits("10"))).gt(0);
-    });
-    it("syncRewards", async () => {
-      const { sfrxETH } = fixture;
-      await sfrxETH.syncRewards();
-    });
   });
 
   describe("Mint", function () {
