@@ -3,7 +3,7 @@ const { ethers } = hre;
 const { formatUnits } = require("ethers/lib/utils");
 
 const addresses = require("../utils/addresses");
-const { setFraxOraclePrice } = require("../utils/fraxOracle");
+const { setFraxOraclePrice } = require("../utils/frax");
 const {
   fundAccounts,
   fundAccountsForOETHUnitTests,
