@@ -36,9 +36,7 @@ module.exports = deploymentWithGovernanceProposal(
     // Governance Actions
     // ----------------
     return {
-      name: "Upgrade the OETH AMO strategy.\n\
-      \n\
-      Code PR: #",
+      name: "Upgrade the OETH AMO strategy with peg keeping functions.",
       actions: [
         // Upgrade the OETH AMO strategy proxy to the new strategy implementation
         {
