@@ -38,9 +38,9 @@
 
 ![Convex ETH Metapool Strategy Squashed](../../docs/ConvexEthMetaStrategySquashed.svg)
 
-<!-- ### Storage
+### Storage
 
-![Convex ETH Metapool Strategy Storage](../../docs/ConvexEthMetaStrategyStorage.svg) -->
+![Convex ETH Metapool Strategy Storage](../../docs/ConvexEthMetaStrategyStorage.svg)
 
 ## Flux Strategy
 

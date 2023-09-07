@@ -64,7 +64,7 @@ main()
     if [ -z "$1" ] || [[ $1 == --* ]]; then
         # Run all files with `.fork-test.js` suffix when no file name param is given
         # pass all other params along
-        if $is_coverage; then
+        if [ $is_coverage ]; then
             # TODO: Debug this later
             # params+="--testfiles 'test/**/*.fork-test.js'"
             params+=""
