@@ -108,13 +108,13 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
                 assetToPToken[strategyAsset] != address(0),
                 "Unsupported asset"
             );
-            strategyAssetsToPoolAssets[i] = toPoolAsset(strategyAsset);
+            strategyAssetsToPoolAssets[i] = _toPoolAsset(strategyAsset);
 
             if (strategyAmount > 0) {
                 emit Deposit(strategyAsset, platformAddress, strategyAmount);
 
                 // wrap rebasing assets like stETH and frxETH to wstETH and sfrxETH
-                (, strategyAssetAmountsToPoolAssetAmounts[i]) = wrapPoolAsset(
+                (, strategyAssetAmountsToPoolAssetAmounts[i]) = _wrapPoolAsset(
                     strategyAsset,
                     strategyAmount
                 );
@@ -254,13 +254,13 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
             poolAssets[i] = address(tokens[i]);
 
             // Convert the Balancer pool asset back to a vault collateral asset
-            address strategyAsset = fromPoolAsset(poolAssets[i]);
+            address strategyAsset = _fromPoolAsset(poolAssets[i]);
 
             // for each of the vault assets
             for (uint256 j = 0; j < _strategyAssets.length; ++j) {
                 // If the vault asset equals the vault asset mapped from the Balancer pool asset
                 if (_strategyAssets[j] == strategyAsset) {
-                    (, poolAssetsAmountsOut[i]) = toPoolAsset(
+                    (, poolAssetsAmountsOut[i]) = _toPoolAsset(
                         strategyAsset,
                         _strategyAmounts[j]
                     );
@@ -361,7 +361,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         for (uint256 i = 0; i < _strategyAssets.length; ++i) {
             // Unwrap assets like wstETH and sfrxETH to rebasing assets stETH and frxETH
             if (strategyAssetsToPoolAssetsAmounts[i] > 0) {
-                unwrapPoolAsset(
+                _unwrapPoolAsset(
                     _strategyAssets[i],
                     strategyAssetsToPoolAssetsAmounts[i]
                 );
@@ -442,7 +442,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         for (uint256 i = 0; i < tokens.length; ++i) {
             address poolAsset = address(tokens[i]);
             // Convert the balancer pool asset to the strategy asset
-            address strategyAsset = fromPoolAsset(poolAsset);
+            address strategyAsset = _fromPoolAsset(poolAsset);
             // Get the balancer pool assets withdraw from the pool plus any that were already in this strategy contract
             uint256 poolAssetAmount = IERC20(poolAsset).balanceOf(
                 address(this)
@@ -451,7 +451,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
             // Unwrap assets like wstETH and sfrxETH to rebasing assets stETH and frxETH
             uint256 unwrappedAmount = 0;
             if (poolAssetAmount > 0) {
-                unwrappedAmount = unwrapPoolAsset(
+                unwrappedAmount = _unwrapPoolAsset(
                     strategyAsset,
                     poolAssetAmount
                 );
@@ -500,7 +500,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
 
     // solhint-disable-next-line no-unused-vars
     function _abstractSetPToken(address _asset, address) internal override {
-        address poolAsset = toPoolAsset(_asset);
+        address poolAsset = _toPoolAsset(_asset);
         if (_asset == stETH) {
             // slither-disable-next-line unused-return
             IERC20(stETH).approve(wstETH, type(uint256).max);

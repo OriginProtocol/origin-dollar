@@ -111,7 +111,7 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
             "Pool assets length mismatch"
         );
         for (uint256 i = 0; i < _assets.length; ++i) {
-            address asset = fromPoolAsset(address(poolAssets[i]));
+            address asset = _fromPoolAsset(address(poolAssets[i]));
             require(_assets[i] == asset, "Pool assets mismatch");
         }
 
@@ -184,7 +184,7 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
          * Because this function returns the balance of the asset and is not denominated in
          * ETH units we need to convert the ETH denominated amount to asset amount.
          */
-        if (toPoolAsset(_asset) == _asset) {
+        if (_toPoolAsset(_asset) == _asset) {
             amount = amount.divPrecisely(_getRateProviderRate(_asset));
         }
     }
@@ -305,7 +305,7 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
      * that the strategy supports. This function converts the pool(wrapped) asset
      * and corresponding amount to strategy asset.
      */
-    function toPoolAsset(address asset, uint256 amount)
+    function _toPoolAsset(address asset, uint256 amount)
         internal
         view
         returns (address poolAsset, uint256 poolAmount)
@@ -332,7 +332,7 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
      * @param asset Address of the Vault collateral asset.
      * @return Address of the Balancer pool asset.
      */
-    function toPoolAsset(address asset) internal view returns (address) {
+    function _toPoolAsset(address asset) internal view returns (address) {
         if (asset == stETH) {
             return wstETH;
         } else if (asset == frxETH) {
@@ -344,7 +344,7 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
     /**
      * @dev Converts rebasing asset to its wrapped counterpart.
      */
-    function wrapPoolAsset(address asset, uint256 amount)
+    function _wrapPoolAsset(address asset, uint256 amount)
         internal
         returns (address wrappedAsset, uint256 wrappedAmount)
     {
@@ -370,7 +370,7 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
     /**
      * @dev Converts wrapped asset to its rebasing counterpart.
      */
-    function unwrapPoolAsset(address asset, uint256 amount)
+    function _unwrapPoolAsset(address asset, uint256 amount)
         internal
         returns (uint256 unwrappedAmount)
     {
@@ -392,7 +392,7 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
      * that the strategy supports. This function converts the rebasing strategy asset
      * and corresponding amount to wrapped(pool) asset.
      */
-    function fromPoolAsset(address poolAsset, uint256 poolAmount)
+    function _fromPoolAsset(address poolAsset, uint256 poolAmount)
         internal
         view
         returns (address asset, uint256 amount)
@@ -413,7 +413,7 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         }
     }
 
-    function fromPoolAsset(address poolAsset)
+    function _fromPoolAsset(address poolAsset)
         internal
         view
         returns (address asset)
