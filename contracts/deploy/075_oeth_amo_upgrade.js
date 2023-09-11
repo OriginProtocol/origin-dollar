@@ -7,7 +7,7 @@ module.exports = deploymentWithGovernanceProposal(
     deployName: "075_oeth_amo_upgrade",
     forceDeploy: false,
     // forceSkip: true,
-    reduceQueueTime: true,
+    reduceQueueTime: false,
     deployerIsProposer: true,
     proposalId:
       "52754541240413220443859027907216814653548117220338896790750636626793224597926",
