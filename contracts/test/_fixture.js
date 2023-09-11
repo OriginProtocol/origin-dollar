@@ -3,7 +3,6 @@ const { ethers } = hre;
 const { BigNumber } = ethers;
 const { expect } = require("chai");
 const { formatUnits } = require("ethers/lib/utils");
-const { ethers } = hre;
 
 const addresses = require("../utils/addresses");
 const { setFraxOraclePrice } = require("../utils/frax");
