@@ -65,6 +65,7 @@ object "BalancerMetaPoolStrategy" as balancerStrat <<Origin>><<Proxy>> #DeepSkyB
 ' Oracle
 object "OETHOracleRouter" as oracle <<Origin>> #DeepSkyBlue {
 pairs:
+    frxETH/ETH
     stETH/ETH
     rETH/ETH
     CRV/ETH

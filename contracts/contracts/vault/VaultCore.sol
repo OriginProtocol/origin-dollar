@@ -17,9 +17,9 @@ import { StableMath } from "../utils/StableMath.sol";
 import { IOracle } from "../interfaces/IOracle.sol";
 import { IGetExchangeRateToken } from "../interfaces/IGetExchangeRateToken.sol";
 
-import "./VaultStorage.sol";
+import "./VaultInitializer.sol";
 
-contract VaultCore is VaultStorage {
+contract VaultCore is VaultInitializer {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
     // max signed int
@@ -117,12 +117,6 @@ contract VaultCore is VaultStorage {
         require(_amount < MAX_INT, "Amount too high");
 
         emit Mint(msg.sender, _amount);
-
-        // Rebase must happen before any transfers occur.
-        // TODO: double check the relevance of this
-        if (_amount >= rebaseThreshold && !rebasePaused) {
-            _rebase();
-        }
 
         // safe to cast because of the require check at the beginning of the function
         netOusdMintedForStrategy += int256(_amount);
@@ -253,14 +247,6 @@ contract VaultCore is VaultStorage {
 
         // Burn OTokens
         oUSD.burn(msg.sender, _amount);
-
-        // Until we can prove that we won't affect the prices of our assets
-        // by withdrawing them, this should be here.
-        // It's possible that a strategy was off on its asset total, perhaps
-        // a reward token sold for more or for less than anticipated.
-        if (_amount >= rebaseThreshold && !rebasePaused) {
-            _rebase();
-        }
     }
 
     /**

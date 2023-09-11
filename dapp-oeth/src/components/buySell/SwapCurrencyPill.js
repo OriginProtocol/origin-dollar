@@ -478,11 +478,12 @@ const SwapCurrencyPill = ({
   selectedCoin,
   selectedSwap,
   swapsLoading,
+  swapsError,
   priceToleranceValue,
   swapMode,
   onErrorChange,
   coinValue,
-  ethPrice,
+  tokenConversions,
 }) => {
   const coinBalances = useStoreState(AccountStore, (s) => s.balances)
   const [error, setError] = useState(null)
@@ -628,6 +629,8 @@ const SwapCurrencyPill = ({
     onAmountChange(valueNoCommas)
   }
 
+  const usdPrice = tokenConversions?.[selectedCoin] || 0
+
   return (
     <>
       <div
@@ -665,19 +668,23 @@ const SwapCurrencyPill = ({
                   <span className="text-loading">
                     {fbt('Loading...', 'Swaps Loading...')}
                   </span>
+                ) : swapsError ? (
+                  <span className="text-error">{'Error'}</span>
                 ) : (
                   <span>{expectedAmount || '0.00'}</span>
                 )}
               </div>
             )}
             <div className="usd-balance mt-auto">
-              {bottomItem
+              {swapsError
+                ? swapsError
+                : bottomItem
                 ? `$${formatCurrency(
-                    truncateDecimals(expectedAmount, 18) * parseFloat(ethPrice),
+                    truncateDecimals(expectedAmount, 18) * usdPrice,
                     2
                   )}`
                 : `$${formatCurrency(
-                    truncateDecimals(coinValue, 18) * parseFloat(ethPrice),
+                    truncateDecimals(coinValue, 18) * usdPrice,
                     2
                   )}`}
             </div>
@@ -723,7 +730,7 @@ const SwapCurrencyPill = ({
                 }
               }}
               options={coinsSelectOptions}
-              conversion={ethPrice}
+              conversion={usdPrice}
               coinBalances={coinBalances}
             />
           </div>

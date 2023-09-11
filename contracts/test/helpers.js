@@ -5,6 +5,7 @@ const { parseUnits, formatUnits, parseEther } = require("ethers").utils;
 const { BigNumber } = require("ethers");
 
 const addresses = require("../utils/addresses");
+const { decimalsFor } = require("../utils/units");
 
 /**
  * Checks if the actual value is approximately equal to the expected value
@@ -150,24 +151,6 @@ chai.Assertion.addMethod("emittedEvent", async function (eventName, args) {
     }
   }
 });
-
-/**
- * Returns the number of decimal places used by the given token contract.
- * Uses a cache to avoid making unnecessary contract calls for the same contract address.
- * @param {Contract} contract - The token contract to get the decimal places for.
- */
-const DECIMAL_CACHE = {};
-async function decimalsFor(contract) {
-  if (DECIMAL_CACHE[contract.address] != undefined) {
-    return DECIMAL_CACHE[contract.address];
-  }
-  let decimals = await contract.decimals();
-  if (decimals.toNumber) {
-    decimals = decimals.toNumber();
-  }
-  DECIMAL_CACHE[contract.address] = decimals;
-  return decimals;
-}
 
 /**
  * Converts an amount in the base unit of a contract to the standard decimal unit for the contract.

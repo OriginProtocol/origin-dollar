@@ -11,7 +11,7 @@ const { forkOnlyDescribe, isCI } = require("../helpers");
 
 const log = require("../../utils/logger")("test:fork:oeth:vault");
 
-const oethWhaleAddress = "0xEADB3840596cabF312F2bC88A4Bb0b93A4E1FF5F";
+const { oethWhaleAddress } = addresses.mainnet;
 
 forkOnlyDescribe("ForkTest: OETH Vault", function () {
   this.timeout(0);
@@ -32,7 +32,7 @@ forkOnlyDescribe("ForkTest: OETH Vault", function () {
         const {
           oethVault,
           oethDripper,
-          ConvexEthMetaStrategy,
+          convexEthMetaStrategy,
           fraxEthStrategy,
           oeth,
           woeth,
@@ -42,7 +42,7 @@ forkOnlyDescribe("ForkTest: OETH Vault", function () {
         const oethContracts = [
           oethVault,
           oethDripper,
-          ConvexEthMetaStrategy,
+          convexEthMetaStrategy,
           fraxEthStrategy,
           oeth,
           woeth,
@@ -67,26 +67,36 @@ forkOnlyDescribe("ForkTest: OETH Vault", function () {
       });
 
       it("should mint using each asset", async () => {
-        const { oethVault, weth, frxETH, stETH, reth, josh } = fixture;
+        const { oethVault, oethOracleRouter, weth, frxETH, stETH, reth, josh } =
+          fixture;
 
         const amount = parseUnits("1", 18);
         const minOeth = parseUnits("0.8", 18);
 
         for (const asset of [weth, frxETH, stETH, reth]) {
           await asset.connect(josh).approve(oethVault.address, amount);
-          const tx = await oethVault
-            .connect(josh)
-            .mint(asset.address, amount, minOeth);
 
-          if (asset === weth) {
-            await expect(tx)
-              .to.emit(oethVault, "Mint")
-              .withArgs(josh.address, amount);
+          const price = await oethOracleRouter.price(asset.address);
+          if (price.gt(parseUnits("0.998"))) {
+            const tx = await oethVault
+              .connect(josh)
+              .mint(asset.address, amount, minOeth);
+
+            if (asset === weth) {
+              await expect(tx)
+                .to.emit(oethVault, "Mint")
+                .withArgs(josh.address, amount);
+            } else {
+              // Oracle price means 1 asset != 1 OETH
+              await expect(tx)
+                .to.emit(oethVault, "Mint")
+                .withNamedArgs({ _addr: josh.address });
+            }
           } else {
-            // Oracle price means 1 asset != 1 OETH
-            await expect(tx)
-              .to.emit(oethVault, "Mint")
-              .withNamedArgs({ _addr: josh.address });
+            const tx = oethVault
+              .connect(josh)
+              .mint(asset.address, amount, minOeth);
+            await expect(tx).to.revertedWith("Asset price below peg");
           }
         }
       });
