@@ -225,8 +225,8 @@ const defaultFixture = deployments.createFixture(async () => {
     mockSwapper,
     swapper1Inch,
     mock1InchSwapRouter,
-    ConvexEthMetaStrategyProxy,
-    ConvexEthMetaStrategy,
+    convexEthMetaStrategyProxy,
+    convexEthMetaStrategy,
     fluxStrategy,
     vaultValueChecker,
     oethVaultValueChecker;
@@ -337,7 +337,7 @@ const defaultFixture = deployments.createFixture(async () => {
       oethHarvesterProxy.address
     );
 
-    const convexEthMetaStrategyProxy = await ethers.getContract(
+    convexEthMetaStrategyProxy = await ethers.getContract(
       "ConvexEthMetaStrategyProxy"
     );
     convexEthMetaStrategy = await ethers.getContractAt(
