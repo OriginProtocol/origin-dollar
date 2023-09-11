@@ -68,5 +68,6 @@
   "070_flux_strategy": 1691586235,
   "072_ousd_maker_dsr": 1691657795,
   "073_disable_strategies": 1692278819,
-  "074_upgrade_oeth_oracle_router": 1693458035
+  "074_upgrade_oeth_oracle_router": 1693458035,
+  "075_oeth_amo_upgrade": 1694089115
 }
