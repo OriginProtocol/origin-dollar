@@ -120,6 +120,8 @@ interface IVault {
 
     function priceUnitRedeem(address asset) external view returns (uint256);
 
+    function price() external view returns (uint256);
+
     function withdrawAllFromStrategy(address _strategyAddr) external;
 
     function withdrawAllFromStrategies() external;

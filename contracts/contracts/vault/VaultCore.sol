@@ -566,6 +566,37 @@ contract VaultCore is VaultInitializer {
     ****************************************/
 
     /**
+     * @notice Value of 1 OToken if redeemed using the Vault.
+     * This includes any redeem fee.
+     * For example, USD value of 1 OUSD or ETH value of 1 OETH.
+     * @return price_ USD or ETH value of 1 OToken to 18 decimals
+     */
+    function price() external view returns (uint256 price_) {
+        uint256 totalAssetsValue = 0;
+        // For each asset
+        uint256 assetCount = allAssets.length;
+        for (uint256 i = 0; i < assetCount; ++i) {
+            // read the asset address into memory
+            address assetAddr = allAssets[i];
+
+            // Get the total amount of assets in the vault
+            uint256 balance = _checkBalance(assetAddr);
+
+            // total asset value = total asset value + (balance * price)
+            totalAssetsValue += (_toUnits(balance, assetAddr) *
+                _toUnitPrice(assetAddr, false));
+        }
+        price_ = totalAssetsValue / oUSD.totalSupply();
+
+        // adjust for redeem fee
+        uint256 redeemFeeBpsMem = redeemFeeBps;
+        // Calculate redeem fee
+        if (redeemFeeBpsMem > 0) {
+            price_ = price_ - price_.mulTruncateScale(redeemFeeBpsMem, 1e4);
+        }
+    }
+
+    /**
      * @notice Returns the total price in 18 digit units for a given asset.
      *      Never goes above 1, since that is how we price mints.
      * @param asset address of the asset
