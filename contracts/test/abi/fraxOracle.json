@@ -1,0 +1,366 @@
+[
+  {
+    "inputs": [
+      {
+        "components": [
+          {
+            "internalType": "address",
+            "name": "timelockAddress",
+            "type": "address"
+          },
+          { "internalType": "address", "name": "baseErc20", "type": "address" },
+          {
+            "internalType": "address",
+            "name": "quoteErc20",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "priceSource",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "maximumDeviation",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "maximumOracleDelay",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct ConstructorParams",
+        "name": "_params",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  { "inputs": [], "name": "CalledWithFutureTimestamp", "type": "error" },
+  {
+    "inputs": [],
+    "name": "CalledWithTimestampBeforePreviousRound",
+    "type": "error"
+  },
+  { "inputs": [], "name": "NoPriceData", "type": "error" },
+  { "inputs": [], "name": "OnlyPendingTimelock", "type": "error" },
+  { "inputs": [], "name": "OnlyPriceSource", "type": "error" },
+  { "inputs": [], "name": "OnlyTimelock", "type": "error" },
+  { "inputs": [], "name": "SameMaximumDeviation", "type": "error" },
+  { "inputs": [], "name": "SameMaximumOracleDelay", "type": "error" },
+  { "inputs": [], "name": "SamePriceSource", "type": "error" },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "oldMaxDeviation",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "newMaxDeviation",
+        "type": "uint256"
+      }
+    ],
+    "name": "SetMaximumDeviation",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "oldMaxOracleDelay",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "newMaxOracleDelay",
+        "type": "uint256"
+      }
+    ],
+    "name": "SetMaximumOracleDelay",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "oldPriceSource",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "newPriceSource",
+        "type": "address"
+      }
+    ],
+    "name": "SetPriceSource",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "previousTimelock",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "newTimelock",
+        "type": "address"
+      }
+    ],
+    "name": "TimelockTransferStarted",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "previousTimelock",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "newTimelock",
+        "type": "address"
+      }
+    ],
+    "name": "TimelockTransferred",
+    "type": "event"
+  },
+  {
+    "inputs": [],
+    "name": "BASE_TOKEN",
+    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "QUOTE_TOKEN",
+    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "acceptTransferTimelock",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "bool", "name": "_isBadData", "type": "bool" },
+      { "internalType": "uint104", "name": "_priceLow", "type": "uint104" },
+      { "internalType": "uint104", "name": "_priceHigh", "type": "uint104" },
+      { "internalType": "uint40", "name": "_timestamp", "type": "uint40" }
+    ],
+    "name": "addRoundData",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "decimals",
+    "outputs": [
+      { "internalType": "uint8", "name": "_decimals", "type": "uint8" }
+    ],
+    "stateMutability": "pure",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "description",
+    "outputs": [
+      { "internalType": "string", "name": "_description", "type": "string" }
+    ],
+    "stateMutability": "pure",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getPrices",
+    "outputs": [
+      { "internalType": "bool", "name": "_isBadData", "type": "bool" },
+      { "internalType": "uint256", "name": "_priceLow", "type": "uint256" },
+      { "internalType": "uint256", "name": "_priceHigh", "type": "uint256" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint80", "name": "_roundId", "type": "uint80" }
+    ],
+    "name": "getRoundData",
+    "outputs": [
+      { "internalType": "uint80", "name": "roundId", "type": "uint80" },
+      { "internalType": "int256", "name": "answer", "type": "int256" },
+      { "internalType": "uint256", "name": "startedAt", "type": "uint256" },
+      { "internalType": "uint256", "name": "updatedAt", "type": "uint256" },
+      { "internalType": "uint80", "name": "answeredInRound", "type": "uint80" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "lastCorrectRoundId",
+    "outputs": [{ "internalType": "uint80", "name": "", "type": "uint80" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "latestRoundData",
+    "outputs": [
+      { "internalType": "uint80", "name": "roundId", "type": "uint80" },
+      { "internalType": "int256", "name": "answer", "type": "int256" },
+      { "internalType": "uint256", "name": "startedAt", "type": "uint256" },
+      { "internalType": "uint256", "name": "updatedAt", "type": "uint256" },
+      { "internalType": "uint80", "name": "answeredInRound", "type": "uint80" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "maximumDeviation",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "maximumOracleDelay",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "pendingTimelockAddress",
+    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "priceSource",
+    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "renounceTimelock",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "name": "rounds",
+    "outputs": [
+      { "internalType": "uint104", "name": "priceLow", "type": "uint104" },
+      { "internalType": "uint104", "name": "priceHigh", "type": "uint104" },
+      { "internalType": "uint40", "name": "timestamp", "type": "uint40" },
+      { "internalType": "bool", "name": "isBadData", "type": "bool" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_newMaxDeviation",
+        "type": "uint256"
+      }
+    ],
+    "name": "setMaximumDeviation",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_newMaxOracleDelay",
+        "type": "uint256"
+      }
+    ],
+    "name": "setMaximumOracleDelay",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_newPriceSource",
+        "type": "address"
+      }
+    ],
+    "name": "setPriceSource",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "bytes4", "name": "interfaceId", "type": "bytes4" }
+    ],
+    "name": "supportsInterface",
+    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "timelockAddress",
+    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "address", "name": "_newTimelock", "type": "address" }
+    ],
+    "name": "transferTimelock",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "version",
+    "outputs": [
+      { "internalType": "uint256", "name": "_version", "type": "uint256" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  }
+]

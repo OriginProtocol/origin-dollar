@@ -6,6 +6,7 @@ import AccountStore from 'stores/AccountStore'
 import { approveCoinGasLimits, max_price } from 'utils/constants'
 import { usePrevious } from 'utils/hooks'
 import useCurrencySwapper from 'hooks/useCurrencySwapper'
+import useTokenPrices from 'hooks/useTokenPrices'
 import ContractStore from 'stores/ContractStore'
 import { calculateSwapAmounts } from 'utils/math'
 import fetchWithTimeout from 'utils/fetchWithTimeout'
@@ -42,6 +43,9 @@ const useSwapEstimator = ({
     (s) => s.vaultRebaseThreshold
   )
   const gasPrice = useStoreState(ContractStore, (s) => s.gasPrice)
+
+  const { data: prices } = useTokenPrices()
+
   const previousGasPrice = usePrevious(gasPrice)
   const isGasPriceUserOverriden = useStoreState(
     ContractStore,
@@ -162,6 +166,7 @@ const useSwapEstimator = ({
     if (delay === 0) {
       ContractStore.update((s) => {
         s.swapEstimations = 'loading'
+        s.swapEstimationsError = null
       })
     }
     setEstimationCallback(
@@ -187,49 +192,58 @@ const useSwapEstimator = ({
   const runEstimations = async (mode, selectedCoin, amount) => {
     ContractStore.update((s) => {
       s.swapEstimations = 'loading'
+      s.swapEstimationsError = null
     })
     let usedGasPrice = gasPrice
 
-    const [
-      vaultResult,
-      zapperResult,
-      // uniswapResult,
-      // uniswapV2Result,
-      // sushiswapResult,
-      curveResult,
-      ethPrice,
-    ] = await Promise.all([
-      swapMode === 'mint'
-        ? estimateMintSuitabilityVault()
-        : estimateRedeemSuitabilityVault(),
-      estimateSwapSuitabilityZapper(),
-      estimateSwapSuitabilityCurve(),
-      fetchEthPrice(),
-    ])
+    const ethPrice = prices?.eth || 0
 
-    if (!isGasPriceUserOverriden) {
-      usedGasPrice = await fetchGasPrice()
+    try {
+      const [
+        vaultResult,
+        zapperResult,
+        // uniswapResult,
+        // uniswapV2Result,
+        // sushiswapResult,
+        curveResult,
+      ] = await Promise.all([
+        swapMode === 'mint'
+          ? estimateMintSuitabilityVault()
+          : estimateRedeemSuitabilityVault(),
+        estimateSwapSuitabilityZapper(),
+        estimateSwapSuitabilityCurve(),
+      ])
+
+      if (!isGasPriceUserOverriden) {
+        usedGasPrice = await fetchGasPrice()
+      }
+
+      let estimations = {
+        vault: vaultResult,
+        zapper: zapperResult,
+        // uniswap: uniswapResult,
+        curve: curveResult,
+        // uniswapV2: uniswapV2Result,
+        // sushiswap: sushiswapResult,
+      }
+
+      estimations = enrichAndFindTheBest(
+        estimations,
+        usedGasPrice,
+        ethPrice,
+        amount
+      )
+
+      ContractStore.update((s) => {
+        s.swapEstimations = estimations
+      })
+    } catch (err) {
+      console.error(err)
+      ContractStore.update((s) => {
+        s.swapEstimations = 'error'
+        s.swapEstimationsError = err.reason ?? err.message
+      })
     }
-
-    let estimations = {
-      vault: vaultResult,
-      zapper: zapperResult,
-      // uniswap: uniswapResult,
-      curve: curveResult,
-      // uniswapV2: uniswapV2Result,
-      // sushiswap: sushiswapResult,
-    }
-
-    estimations = enrichAndFindTheBest(
-      estimations,
-      usedGasPrice,
-      ethPrice,
-      amount
-    )
-
-    ContractStore.update((s) => {
-      s.swapEstimations = estimations
-    })
   }
 
   const enrichAndFindTheBest = (
@@ -287,7 +301,10 @@ const useSwapEstimator = ({
         const costWithGas = amountReceivedNumber + estimation.gasEstimateEth
         estimation.costMinusGasFees = costWithGas
         estimation.costMinusGasFeesUsd = costWithGas * ethPrice
-        estimation.amountReceivedUsd = amountReceivedNumber * ethPrice
+
+        const swapTokenPrice = prices?.[estimation.coinToSwap || 'eth'] || 0
+
+        estimation.amountReceivedUsd = amountReceivedNumber * swapTokenPrice
       }
     })
 

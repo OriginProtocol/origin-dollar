@@ -25,6 +25,7 @@ const ContractStore = new Store({
   },
   // 'null' -> default zero state, 'loading' -> loading the estimates
   swapEstimations: null,
+  swapEstimationsError: null,
   selectedSwap: undefined,
   coinInfoList: {
     eth: {

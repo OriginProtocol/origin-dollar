@@ -11,5 +11,8 @@
   },
   "engines": {
     "node": "16"
+  },
+  "devDependencies": {
+    "danger": "^11.2.8"
   }
 }

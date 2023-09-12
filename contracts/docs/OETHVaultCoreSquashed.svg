@@ -9,9 +9,9 @@
 <g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 2145.8)">
 <title>UmlClassDiagram</title>
 <polygon fill="white" stroke="transparent" points="-4,4 -4,-2145.8 809.52,-2145.8 809.52,4 -4,4"/>
-<!-- 170 -->
+<!-- 174 -->
 <g id="node1" class="node">
-<title>170</title>
+<title>174</title>
 <polygon fill="#f2f2f2" stroke="black" points="0,-0.5 0,-2141.3 805.52,-2141.3 805.52,-0.5 0,-0.5"/>
 <text text-anchor="middle" x="402.76" y="-2124.7" font-family="Times,serif" font-size="14.00">OETHVaultCore</text>
 <text text-anchor="middle" x="402.76" y="-2107.9" font-family="Times,serif" font-size="14.00">../contracts/vault/OETHVaultCore.sol</text>
@@ -83,58 +83,58 @@
 <text text-anchor="start" x="8" y="-1016.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;transferGovernance(_newGovernor: address) &lt;&lt;onlyGovernor&gt;&gt; &lt;&lt;Governable&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-999.9" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;claimGovernance() &lt;&lt;Governable&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-983.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;setAdminImpl(newImpl: address) &lt;&lt;onlyGovernor&gt;&gt; &lt;&lt;VaultStorage&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-966.3" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;mint(_asset: address, _amount: uint256, _minimumOusdAmount: uint256) &lt;&lt;whenNotCapitalPaused, nonReentrant&gt;&gt; &lt;&lt;VaultCore&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-949.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;mintForStrategy(_amount: uint256) &lt;&lt;whenNotCapitalPaused, onlyOusdMetaStrategy&gt;&gt; &lt;&lt;VaultCore&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-932.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;redeem(_amount: uint256, _minimumUnitAmount: uint256) &lt;&lt;whenNotCapitalPaused, nonReentrant&gt;&gt; &lt;&lt;VaultCore&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-915.9" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;burnForStrategy(_amount: uint256) &lt;&lt;whenNotCapitalPaused, onlyOusdMetaStrategy&gt;&gt; &lt;&lt;VaultCore&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-899.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;redeemAll(_minimumUnitAmount: uint256) &lt;&lt;whenNotCapitalPaused, nonReentrant&gt;&gt; &lt;&lt;VaultCore&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-882.3" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;allocate() &lt;&lt;whenNotCapitalPaused, nonReentrant&gt;&gt; &lt;&lt;VaultCore&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-865.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;rebase() &lt;&lt;nonReentrant&gt;&gt; &lt;&lt;VaultCore&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-848.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;totalValue(): (value: uint256) &lt;&lt;VaultCore&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-831.9" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;checkBalance(_asset: address): uint256 &lt;&lt;VaultCore&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-815.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;calculateRedeemOutputs(_amount: uint256): uint256[] &lt;&lt;VaultCore&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-798.3" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;priceUnitMint(asset: address): (price: uint256) &lt;&lt;VaultCore&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-781.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;priceUnitRedeem(asset: address): (price: uint256) &lt;&lt;VaultCore&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-764.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;getAllAssets(): address[] &lt;&lt;VaultCore&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-747.9" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;getStrategyCount(): uint256 &lt;&lt;VaultCore&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-731.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;getAllStrategies(): address[] &lt;&lt;VaultCore&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-714.3" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;isSupportedAsset(_asset: address): bool &lt;&lt;VaultCore&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-697.5" font-family="Times,serif" font-size="14.00">Public:</text>
-<text text-anchor="start" x="8" y="-680.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; PendingGovernorshipTransfer(previousGovernor: address, newGovernor: address) &lt;&lt;Governable&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-663.9" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; GovernorshipTransferred(previousGovernor: address, newGovernor: address) &lt;&lt;Governable&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-647.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; AssetSupported(_asset: address) &lt;&lt;VaultStorage&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-630.3" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; AssetDefaultStrategyUpdated(_asset: address, _strategy: address) &lt;&lt;VaultStorage&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-613.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; AssetAllocated(_asset: address, _strategy: address, _amount: uint256) &lt;&lt;VaultStorage&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-596.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; StrategyApproved(_addr: address) &lt;&lt;VaultStorage&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-579.9" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; StrategyRemoved(_addr: address) &lt;&lt;VaultStorage&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-563.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; Mint(_addr: address, _value: uint256) &lt;&lt;VaultStorage&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-546.3" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; Redeem(_addr: address, _value: uint256) &lt;&lt;VaultStorage&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-529.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; CapitalPaused() &lt;&lt;VaultStorage&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-512.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; CapitalUnpaused() &lt;&lt;VaultStorage&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-495.9" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; RebasePaused() &lt;&lt;VaultStorage&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-479.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; RebaseUnpaused() &lt;&lt;VaultStorage&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-462.3" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; VaultBufferUpdated(_vaultBuffer: uint256) &lt;&lt;VaultStorage&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-445.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; OusdMetaStrategyUpdated(_ousdMetaStrategy: address) &lt;&lt;VaultStorage&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-428.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; RedeemFeeUpdated(_redeemFeeBps: uint256) &lt;&lt;VaultStorage&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-411.9" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; PriceProviderUpdated(_priceProvider: address) &lt;&lt;VaultStorage&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-395.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; AllocateThresholdUpdated(_threshold: uint256) &lt;&lt;VaultStorage&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-378.3" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; RebaseThresholdUpdated(_threshold: uint256) &lt;&lt;VaultStorage&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-361.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; StrategistUpdated(_address: address) &lt;&lt;VaultStorage&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-344.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; MaxSupplyDiffChanged(maxSupplyDiff: uint256) &lt;&lt;VaultStorage&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-327.9" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; YieldDistribution(_to: address, _yield: uint256, _fee: uint256) &lt;&lt;VaultStorage&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-311.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; TrusteeFeeBpsChanged(_basis: uint256) &lt;&lt;VaultStorage&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-294.3" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; TrusteeAddressChanged(_address: address) &lt;&lt;VaultStorage&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-277.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; NetOusdMintForStrategyThresholdChanged(_threshold: uint256) &lt;&lt;VaultStorage&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-260.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; SwapperChanged(_address: address) &lt;&lt;VaultStorage&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-243.9" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; SwapAllowedUndervalueChanged(_basis: uint256) &lt;&lt;VaultStorage&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-227.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; SwapSlippageChanged(_asset: address, _basis: uint256) &lt;&lt;VaultStorage&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-210.3" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; Swapped(_fromAsset: address, _toAsset: address, _fromAssetAmount: uint256, _toAssetAmount: uint256) &lt;&lt;VaultStorage&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-193.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;modifier&gt;&gt; initializer() &lt;&lt;Initializable&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-176.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;modifier&gt;&gt; onlyGovernor() &lt;&lt;Governable&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-159.9" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;modifier&gt;&gt; nonReentrant() &lt;&lt;Governable&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-143.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;modifier&gt;&gt; nonReentrantView() &lt;&lt;Governable&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-126.3" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;modifier&gt;&gt; whenNotCapitalPaused() &lt;&lt;VaultCore&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-109.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;modifier&gt;&gt; whenNotRebasePaused() &lt;&lt;VaultCore&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-966.3" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;initialize(_priceProvider: address, _oToken: address) &lt;&lt;onlyGovernor, initializer&gt;&gt; &lt;&lt;VaultInitializer&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-949.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;mint(_asset: address, _amount: uint256, _minimumOusdAmount: uint256) &lt;&lt;whenNotCapitalPaused, nonReentrant&gt;&gt; &lt;&lt;VaultCore&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-932.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;mintForStrategy(_amount: uint256) &lt;&lt;whenNotCapitalPaused, onlyOusdMetaStrategy&gt;&gt; &lt;&lt;VaultCore&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-915.9" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;redeem(_amount: uint256, _minimumUnitAmount: uint256) &lt;&lt;whenNotCapitalPaused, nonReentrant&gt;&gt; &lt;&lt;VaultCore&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-899.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;burnForStrategy(_amount: uint256) &lt;&lt;whenNotCapitalPaused, onlyOusdMetaStrategy&gt;&gt; &lt;&lt;VaultCore&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-882.3" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;redeemAll(_minimumUnitAmount: uint256) &lt;&lt;whenNotCapitalPaused, nonReentrant&gt;&gt; &lt;&lt;VaultCore&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-865.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;allocate() &lt;&lt;whenNotCapitalPaused, nonReentrant&gt;&gt; &lt;&lt;VaultCore&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-848.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;rebase() &lt;&lt;nonReentrant&gt;&gt; &lt;&lt;VaultCore&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-831.9" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;totalValue(): (value: uint256) &lt;&lt;VaultCore&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-815.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;checkBalance(_asset: address): uint256 &lt;&lt;VaultCore&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-798.3" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;calculateRedeemOutputs(_amount: uint256): uint256[] &lt;&lt;VaultCore&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-781.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;priceUnitMint(asset: address): (price: uint256) &lt;&lt;VaultCore&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-764.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;priceUnitRedeem(asset: address): (price: uint256) &lt;&lt;VaultCore&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-747.9" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;getAllAssets(): address[] &lt;&lt;VaultCore&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-731.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;getStrategyCount(): uint256 &lt;&lt;VaultCore&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-714.3" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;getAllStrategies(): address[] &lt;&lt;VaultCore&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-697.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;isSupportedAsset(_asset: address): bool &lt;&lt;VaultCore&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-680.7" font-family="Times,serif" font-size="14.00">Public:</text>
+<text text-anchor="start" x="8" y="-663.9" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; PendingGovernorshipTransfer(previousGovernor: address, newGovernor: address) &lt;&lt;Governable&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-647.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; GovernorshipTransferred(previousGovernor: address, newGovernor: address) &lt;&lt;Governable&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-630.3" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; AssetSupported(_asset: address) &lt;&lt;VaultStorage&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-613.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; AssetDefaultStrategyUpdated(_asset: address, _strategy: address) &lt;&lt;VaultStorage&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-596.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; AssetAllocated(_asset: address, _strategy: address, _amount: uint256) &lt;&lt;VaultStorage&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-579.9" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; StrategyApproved(_addr: address) &lt;&lt;VaultStorage&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-563.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; StrategyRemoved(_addr: address) &lt;&lt;VaultStorage&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-546.3" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; Mint(_addr: address, _value: uint256) &lt;&lt;VaultStorage&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-529.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; Redeem(_addr: address, _value: uint256) &lt;&lt;VaultStorage&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-512.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; CapitalPaused() &lt;&lt;VaultStorage&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-495.9" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; CapitalUnpaused() &lt;&lt;VaultStorage&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-479.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; RebasePaused() &lt;&lt;VaultStorage&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-462.3" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; RebaseUnpaused() &lt;&lt;VaultStorage&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-445.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; VaultBufferUpdated(_vaultBuffer: uint256) &lt;&lt;VaultStorage&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-428.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; OusdMetaStrategyUpdated(_ousdMetaStrategy: address) &lt;&lt;VaultStorage&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-411.9" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; RedeemFeeUpdated(_redeemFeeBps: uint256) &lt;&lt;VaultStorage&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-395.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; PriceProviderUpdated(_priceProvider: address) &lt;&lt;VaultStorage&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-378.3" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; AllocateThresholdUpdated(_threshold: uint256) &lt;&lt;VaultStorage&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-361.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; RebaseThresholdUpdated(_threshold: uint256) &lt;&lt;VaultStorage&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-344.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; StrategistUpdated(_address: address) &lt;&lt;VaultStorage&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-327.9" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; MaxSupplyDiffChanged(maxSupplyDiff: uint256) &lt;&lt;VaultStorage&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-311.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; YieldDistribution(_to: address, _yield: uint256, _fee: uint256) &lt;&lt;VaultStorage&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-294.3" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; TrusteeFeeBpsChanged(_basis: uint256) &lt;&lt;VaultStorage&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-277.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; TrusteeAddressChanged(_address: address) &lt;&lt;VaultStorage&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-260.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; NetOusdMintForStrategyThresholdChanged(_threshold: uint256) &lt;&lt;VaultStorage&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-243.9" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; SwapperChanged(_address: address) &lt;&lt;VaultStorage&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-227.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; SwapAllowedUndervalueChanged(_basis: uint256) &lt;&lt;VaultStorage&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-210.3" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; SwapSlippageChanged(_asset: address, _basis: uint256) &lt;&lt;VaultStorage&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-193.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;event&gt;&gt; Swapped(_fromAsset: address, _toAsset: address, _fromAssetAmount: uint256, _toAssetAmount: uint256) &lt;&lt;VaultStorage&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-176.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;modifier&gt;&gt; initializer() &lt;&lt;Initializable&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-159.9" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;modifier&gt;&gt; onlyGovernor() &lt;&lt;Governable&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-143.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;modifier&gt;&gt; nonReentrant() &lt;&lt;Governable&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-126.3" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;modifier&gt;&gt; whenNotRebasePaused() &lt;&lt;VaultCore&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-109.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;modifier&gt;&gt; whenNotCapitalPaused() &lt;&lt;VaultCore&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-92.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&lt;&lt;modifier&gt;&gt; onlyOusdMetaStrategy() &lt;&lt;VaultCore&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-75.9" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;constructor() &lt;&lt;Governable&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-59.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;governor(): address &lt;&lt;Governable&gt;&gt;</text>
