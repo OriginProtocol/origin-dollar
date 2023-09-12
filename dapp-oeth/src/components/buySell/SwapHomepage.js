@@ -359,7 +359,7 @@ const SwapHomepage = ({
               />
             </div>
           </div>
-          <ContractsTable />
+          <ContractsTable selectedBuyCoin={selectedBuyCoin} />
           <ApproveSwap
             inputAmount={
               swapMode === 'mint'
@@ -374,6 +374,7 @@ const SwapHomepage = ({
             allowancesLoaded={allowancesLoaded}
             onMintingError={onMintingError}
             balanceError={balanceError}
+            swapEstimationsError={swapEstimationsError}
             swapsLoaded={swapsLoaded}
             swappingGloballyDisabled={swappingGloballyDisabled}
           />
