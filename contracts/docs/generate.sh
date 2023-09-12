@@ -22,6 +22,11 @@ sol2uml .. -v -hv -hf -he -hs -hl -b OETHHarvester -o OETHHarvesterHierarchy.svg
 sol2uml .. -s -d 0 -b OETHHarvester -o OETHHarvesterSquashed.svg
 sol2uml storage .. -c OETHHarvester -o OETHHarvesterStorage.svg
 
+
+# contracts/interfaces/chainlink
+
+sol2uml .. -b AggregatorV3Interface -o AggregatorV3Interface.svg
+
 # contracts/governance
 sol2uml .. -v -hv -hf -he -hs -hl -b Governor -o GovernorHierarchy.svg
 sol2uml .. -s -d 0 -b Governor -o GovernorSquashed.svg
