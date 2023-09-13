@@ -77,15 +77,22 @@ forkOnlyDescribe("ForkTest: OETH Vault", function () {
       };
       for (const [symbol, { min, max }] of Object.entries(assetPriceRanges)) {
         it(`Should return a price for minting with ${symbol}`, async () => {
-          const { oethVault } = fixture;
+          const { oethVault, oethOracleRouter } = fixture;
 
           const asset = await resolveAsset(symbol);
-          const price = await oethVault.priceUnitMint(asset.address);
 
-          log(`Price for minting with ${symbol}: ${formatUnits(price, 18)}`);
+          const oraclePrice = await oethOracleRouter.price(asset.address);
+          if (oraclePrice.gt(parseUnits("0.998"))) {
+            const price = await oethVault.priceUnitMint(asset.address);
 
-          expect(price).to.be.gte(min);
-          expect(price).to.be.lte(max);
+            log(`Price for minting with ${symbol}: ${formatUnits(price, 18)}`);
+
+            expect(price).to.be.gte(min);
+            expect(price).to.be.lte(max);
+          } else {
+            const tx = oethVault.priceUnitMint(asset.address);
+            await expect(tx).to.revertedWith("Asset price below peg");
+          }
         });
         it(`Should return a price for redeeming with ${symbol}`, async () => {
           const { oethVault } = fixture;
