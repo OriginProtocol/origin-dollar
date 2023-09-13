@@ -603,12 +603,12 @@ contract VaultCore is VaultInitializer {
      * @notice Returns the total price in 18 digit units for a given asset.
      *      Never goes above 1, since that is how we price mints.
      * @param asset address of the asset
-     * @return price uint256: unit (USD / ETH) price for 1 unit of the asset, in 18 decimal fixed
+     * @return price_ uint256: unit (USD / ETH) price for 1 unit of the asset, in 18 decimal fixed
      */
     function priceUnitMint(address asset)
         external
         view
-        returns (uint256 price)
+        returns (uint256 price_)
     {
         /* need to supply 1 asset unit in asset's decimals and can not just hard-code
          * to 1e18 and ignore calling `_toUnits` since we need to consider assets
@@ -618,19 +618,19 @@ contract VaultCore is VaultInitializer {
             uint256(1e18).scaleBy(_getDecimals(asset), 18),
             asset
         );
-        price = (_toUnitPrice(asset, true) * units) / 1e18;
+        price_ = (_toUnitPrice(asset, true) * units) / 1e18;
     }
 
     /**
      * @notice Returns the total price in 18 digit unit for a given asset.
      *      Never goes below 1, since that is how we price redeems
      * @param asset Address of the asset
-     * @return price uint256: unit (USD / ETH) price for 1 unit of the asset, in 18 decimal fixed
+     * @return price_ uint256: unit (USD / ETH) price for 1 unit of the asset, in 18 decimal fixed
      */
     function priceUnitRedeem(address asset)
         external
         view
-        returns (uint256 price)
+        returns (uint256 price_)
     {
         /* need to supply 1 asset unit in asset's decimals and can not just hard-code
          * to 1e18 and ignore calling `_toUnits` since we need to consider assets
@@ -640,7 +640,7 @@ contract VaultCore is VaultInitializer {
             uint256(1e18).scaleBy(_getDecimals(asset), 18),
             asset
         );
-        price = (_toUnitPrice(asset, false) * units) / 1e18;
+        price_ = (_toUnitPrice(asset, false) * units) / 1e18;
     }
 
     /***************************************
@@ -696,15 +696,15 @@ contract VaultCore is VaultInitializer {
     function _toUnitPrice(address _asset, bool isMint)
         internal
         view
-        returns (uint256 price)
+        returns (uint256 price_)
     {
         UnitConversion conversion = assets[_asset].unitConversion;
-        price = IOracle(priceProvider).price(_asset);
+        price_ = IOracle(priceProvider).price(_asset);
 
         if (conversion == UnitConversion.GETEXCHANGERATE) {
             uint256 exchangeRate = IGetExchangeRateToken(_asset)
                 .getExchangeRate();
-            price = (price * 1e18) / exchangeRate;
+            price_ = (price_ * 1e18) / exchangeRate;
         } else if (conversion != UnitConversion.DECIMALS) {
             revert("Unsupported conversion type");
         }
@@ -713,23 +713,23 @@ contract VaultCore is VaultInitializer {
          * so the price checks are agnostic to underlying asset being
          * pegged to a USD or to an ETH or having a custom exchange rate.
          */
-        require(price <= MAX_UNIT_PRICE_DRIFT, "Vault: Price exceeds max");
-        require(price >= MIN_UNIT_PRICE_DRIFT, "Vault: Price under min");
+        require(price_ <= MAX_UNIT_PRICE_DRIFT, "Vault: Price exceeds max");
+        require(price_ >= MIN_UNIT_PRICE_DRIFT, "Vault: Price under min");
 
         if (isMint) {
             /* Never price a normalized unit price for more than one
              * unit of OETH/OUSD when minting.
              */
-            if (price > 1e18) {
-                price = 1e18;
+            if (price_ > 1e18) {
+                price_ = 1e18;
             }
-            require(price >= MINT_MINIMUM_UNIT_PRICE, "Asset price below peg");
+            require(price_ >= MINT_MINIMUM_UNIT_PRICE, "Asset price below peg");
         } else {
             /* Never give out more than 1 normalized unit amount of assets
              * for one unit of OETH/OUSD when redeeming.
              */
-            if (price < 1e18) {
-                price = 1e18;
+            if (price_ < 1e18) {
+                price_ = 1e18;
             }
         }
     }
