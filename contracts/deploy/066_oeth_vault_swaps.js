@@ -1,11 +1,11 @@
-const { deploymentWithProposal } = require("../utils/deploy");
+const { deploymentWithGovernanceProposal } = require("../utils/deploy");
 
-module.exports = deploymentWithProposal(
+module.exports = deploymentWithGovernanceProposal(
   {
     deployName: "066_oeth_vault_swaps",
     forceDeploy: false,
     reduceQueueTime: true,
-    proposalId: 54,
+    //proposalId: 54,
   },
   async ({ assetAddresses, deployWithConfirmation }) => {
     // Deployer Actions

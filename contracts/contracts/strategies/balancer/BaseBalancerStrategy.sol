@@ -441,10 +441,7 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         external
         onlyVaultOrGovernorOrStrategist
     {
-        require(
-            _maxWithdrawalDeviation <= 1e18,
-            "Withdrawal dev. out of bounds"
-        );
+        
         emit MaxWithdrawalDeviationUpdated(
             maxWithdrawalDeviation,
             _maxWithdrawalDeviation
@@ -466,7 +463,6 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         external
         onlyVaultOrGovernorOrStrategist
     {
-        require(_maxDepositDeviation <= 1e18, "Deposit dev. out of bounds");
         emit MaxDepositDeviationUpdated(
             maxDepositDeviation,
             _maxDepositDeviation

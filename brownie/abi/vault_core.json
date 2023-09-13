@@ -973,6 +973,19 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "totalValueInVault",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "value",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "address",
