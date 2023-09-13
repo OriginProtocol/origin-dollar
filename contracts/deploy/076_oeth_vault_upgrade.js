@@ -34,7 +34,6 @@ module.exports = deploymentWithGovernanceProposal(
     );
     const dOETHOracle = await deployWithConfirmation("OETHOracle", [
       dOETHOracleUpdater.address,
-      86400,
     ]);
     const cOETHOracle = await ethers.getContractAt(
       "OETHOracleUpdater",

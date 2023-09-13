@@ -61,9 +61,11 @@ forkOnlyDescribe("ForkTest: Oracles", function () {
   });
   describe("OETH Oracle", () => {
     it("Should add new OETH Oracle price", async () => {
-      const { josh, oethOracle, oethOracleUpdater } = fixture;
+      const { oethOracle, oethOracleUpdater } = fixture;
 
-      await oethOracleUpdater.addRoundData(oethOracle.address);
+      const tx = await oethOracleUpdater.addPrice(oethOracle.address);
+
+      await expect(tx).to.emit(oethOracleUpdater, "AddPrice");
 
       const data = await oethOracle.latestRoundData();
       log(`OETH price: ${formatUnits(data.answer, 18)}`);
@@ -71,20 +73,28 @@ forkOnlyDescribe("ForkTest: Oracles", function () {
       expect(data.answer).to.be.gte(parseUnits("0.99"));
       expect(data.answer).to.be.lte(parseUnits("1.01"));
       expect(data.roundId).to.be.eq(0);
+    });
+    it("Should get gas usage of latestRoundData", async () => {
+      const { josh, oethOracle, oethOracleUpdater } = fixture;
+
+      await oethOracleUpdater.addPrice(oethOracle.address);
 
       // This uses a transaction to call a view function so the gas usage can be reported.
-      const tx = await oethOracle
+      const tx2 = await oethOracle
         .connect(josh)
         .populateTransaction.latestRoundData();
-      await josh.sendTransaction(tx);
+      await josh.sendTransaction(tx2);
     });
     it("Should add OETH Oracle price twice", async () => {
       const { oethOracle, oethOracleUpdater } = fixture;
 
-      await oethOracleUpdater.addRoundData(oethOracle.address);
-      await oethOracleUpdater.addRoundData(oethOracle.address);
+      await oethOracleUpdater.addPrice(oethOracle.address);
+      await oethOracleUpdater.addPrice(oethOracle.address);
 
       const data = await oethOracle.latestRoundData();
+      log(`Oracle price: ${formatUnits(data.answer, 18)}`);
+      log(`Oracle round: ${data.roundId}`);
+      log(`Oracle answeredInRound: ${data.answeredInRound}`);
       expect(data.roundId).to.be.eq(1);
     });
   });

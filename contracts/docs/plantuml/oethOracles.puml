@@ -70,13 +70,13 @@ router ..> clrETH : latestRoundData()
 router ..> clstETH : latestRoundData()
 
 vault <.. oou : price()
-oetho <.. oou  : addRoundData()
+oetho <.. oou  : addPrice()
 oou ...> coep : price_oracle()
 oou ...> cfop : price_oracle()
 oou ...> boep : price_oracle()
 
 router ..> frxo  : latestRoundData()
-fou ..> frxo : addRoundData()
+fou ..> frxo : addPrice()
 fou ...> cfep : price_oracle()
 fou ...> cfwp : price_oracle()
 

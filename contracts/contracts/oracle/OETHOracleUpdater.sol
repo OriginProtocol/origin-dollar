@@ -21,6 +21,8 @@ contract OETHOracleUpdater is Governable {
         address curvePool;
     }
 
+    event AddPrice(uint256 answer, uint256 vaultPrice, uint256 marketPrice);
+
     constructor(address _vault, address _curvePool) Governable() {
         curvePool = ICurvePool(_curvePool);
         vault = IVault(_vault);
@@ -29,57 +31,55 @@ contract OETHOracleUpdater is Governable {
     /// @notice Adds new Oracle price to an Oracle
     /// @dev Callable by anyone as the prices are sourced and aggregated on-chain.
     /// @param oracle Address of the Oracle that has this contract set as its priceSource
-    function addRoundData(IOracleReceiver oracle) external {
-        (bool isBadData, uint256 answer, , ) = _getPrices();
+    function addPrice(IOracleReceiver oracle) external {
+        (
+            uint256 answer,
+            uint256 vaultPrice,
+            uint256 marketPrice
+        ) = _getPrices();
+
+        emit AddPrice(answer, vaultPrice, marketPrice);
 
         // Authorization is handled on Oracle side
-        oracle.addRoundData({
-            isBadData: isBadData,
-            answer: uint128(answer),
-            timestamp: uint40(block.timestamp)
-        });
+        oracle.addPrice(uint128(answer));
     }
 
     function _getPrices()
         internal
         view
         returns (
-            bool isBadData,
             uint256 answer,
             uint256 vaultPrice,
-            uint256 curvePrice
+            uint256 marketPrice
         )
     {
         // Get price from the Vault
         vaultPrice = vault.price();
 
         // Get price from the Curve pool
-        curvePrice = curvePool.price_oracle();
+        marketPrice = curvePool.price_oracle();
 
         // TODO check if the data is bad
-        isBadData = false;
 
-        // Return the Curve price with the Vault price as the floor price
-        if (curvePrice > vaultPrice) {
-            answer = curvePrice;
+        // Return the market price with the Vault price as the floor price
+        if (marketPrice > vaultPrice) {
+            answer = marketPrice;
         } else {
             answer = vaultPrice;
         }
     }
 
     /// @notice Get the latest price from the Vault and Curve pool
-    /// @return isBadData is true when data is stale or otherwise bad
     /// @return answer is the latest Oracle price
     function getPrices()
         external
         view
         returns (
-            bool isBadData,
             uint256 answer,
             uint256 vaultPrice,
-            uint256 curvePrice
+            uint256 marketPrice
         )
     {
-        (isBadData, answer, vaultPrice, curvePrice) = _getPrices();
+        (answer, vaultPrice, marketPrice) = _getPrices();
     }
 }

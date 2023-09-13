@@ -14,8 +14,5 @@ import { Governable } from "../governance/Governable.sol";
 contract OETHOracle is BaseOracle {
     string public constant override description = "OETH / ETH";
 
-    constructor(
-        address _oracleUpdater,
-        uint256 _maximumOracleDelay
-    ) BaseOracle(_oracleUpdater, _maximumOracleDelay) {}
+    constructor(address _oracleUpdater) BaseOracle(_oracleUpdater) {}
 }

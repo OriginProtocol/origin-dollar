@@ -24,41 +24,23 @@ abstract contract BaseOracle is
     /// @notice Historical Oracle prices
     Round[] public rounds;
 
-    /// @notice Time in seconds between updates before the price is considered stale
-    uint256 public heartbeatThreshold;
-
     /// @notice Packed Round data struct
-    /// @notice answer Oracle price
+    /// @notice price Oracle price to 18 decimals
     /// @notice timestamp timestamp in seconds of price
-    /// @notice isBadData If data is bad / should be used
     struct Round {
-        uint128 answer;
+        uint128 price;
         uint40 timestamp;
-        bool isBadData;
     }
 
-    event SetHeartbeatThreshold(uint256 heartbeatThreshold);
     event SetOracleUpdater(address oracleUpdater);
 
-
-    constructor(
-        address _oracleUpdater,
-        uint256 _maximumOracleDelay
-    ) Governable() {
+    constructor(address _oracleUpdater) Governable() {
         _setOracleUpdater(_oracleUpdater);
-        _setHeartbeatThreshold(_maximumOracleDelay);
     }
 
     /***************************************
                 Internal Setters
     ****************************************/
-
-    /// @notice Sets the max oracle delay to determine if data is stale
-    /// @param _heartbeatThreshold The time in seconds before the price is considered stale
-    function _setHeartbeatThreshold(uint256 _heartbeatThreshold) internal {
-        emit SetHeartbeatThreshold(_heartbeatThreshold);
-        heartbeatThreshold = _heartbeatThreshold;
-    }
 
     /// @notice Sets the contract or account that can add Oracle prices
     /// @param _oracleUpdater Address of the contract or account that can update the Oracle prices
@@ -70,14 +52,6 @@ abstract contract BaseOracle is
     /***************************************
                 External Setters
     ****************************************/
-
-    /// @notice Sets the max Oracle delay to determine if data is stale
-    /// @param _heartbeatThreshold The time in seconds before the price is considered stale
-    function setHeartbeatThreshold(
-        uint256 _heartbeatThreshold
-    ) external onlyGovernor {
-        _setHeartbeatThreshold(_heartbeatThreshold);
-    }
 
     /// @notice Sets the contract or account that can update the Oracle prices
     /// @param _oracleUpdater Address of the contract or account that can update the Oracle prices
@@ -117,35 +91,24 @@ abstract contract BaseOracle is
     ****************************************/
 
     /// @notice Adds a new Oracle price by the Oracle updater.
-    /// @param _isBadData Boolean representing if the data is bad
-    /// @param _answer is the Oracle price with 18 decimals
-    /// @param _timestamp The timestamp of the update
-    function addRoundData(
-        bool _isBadData,
-        uint128 _answer,
-        uint40 _timestamp
-    ) external override {
+    /// @param _price is the Oracle price with 18 decimals
+    function addPrice(uint128 _price) external override {
         if (msg.sender != oracleUpdater) revert OnlyOracleUpdater();
-        if (_timestamp > block.timestamp) revert CalledWithFutureTimestamp();
+        // TODO what is a sensible min?
+        if (_price == 0) revert NoPriceData();
 
         uint256 _roundsLength = rounds.length;
         if (
             _roundsLength > 0 &&
-            _timestamp <= rounds[_roundsLength - 1].timestamp
+            block.timestamp <= rounds[_roundsLength - 1].timestamp
         ) {
             revert CalledWithTimestampBeforePreviousRound();
         }
 
-        if (!_isBadData) {
-            lastCorrectRoundId = uint80(_roundsLength);
-        }
+        lastCorrectRoundId = uint80(_roundsLength);
 
         rounds.push(
-            Round({
-                isBadData: _isBadData,
-                answer: _answer,
-                timestamp: _timestamp
-            })
+            Round({ price: _price, timestamp: uint40(block.timestamp) })
         );
     }
 
@@ -153,9 +116,7 @@ abstract contract BaseOracle is
                 Prices
     ****************************************/
 
-    function _getRoundData(
-        uint80 _roundId
-    )
+    function _getRoundData(uint80 _roundId)
         internal
         view
         returns (
@@ -169,7 +130,7 @@ abstract contract BaseOracle is
         if (rounds.length <= _roundId) revert NoPriceData();
 
         Round memory _round = rounds[_roundId];
-        answer = int256(uint256(_round.answer));
+        answer = int256(uint256(_round.price));
 
         roundId = answeredInRound = _roundId;
         startedAt = updatedAt = _round.timestamp;
@@ -182,9 +143,7 @@ abstract contract BaseOracle is
     /// @return startedAt Timestamp of when the round started
     /// @return updatedAt Timestamp of when the round was updated
     /// @return answeredInRound The round ID in which the answer was computed
-    function getRoundData(
-        uint80 _roundId
-    )
+    function getRoundData(uint80 _roundId)
         external
         view
         override
@@ -236,7 +195,6 @@ abstract contract BaseOracle is
                 Errors
     ****************************************/
 
-    error CalledWithFutureTimestamp();
     error CalledWithTimestampBeforePreviousRound();
     error NoPriceData();
     error OnlyOracleUpdater();
