@@ -145,9 +145,6 @@ const defaultFixture = deployments.createFixture(async () => {
     isFork ? "OETHOracleRouter" : "OracleRouter"
   );
 
-  const oethOracle = await ethers.getContract("OETHOracle");
-  const oethOracleUpdater = await ethers.getContract("OETHOracleUpdater");
-
   const buybackProxy = await ethers.getContract("BuybackProxy");
   const buyback = await ethers.getContractAt("Buyback", buybackProxy.address);
 
@@ -218,7 +215,9 @@ const defaultFixture = deployments.createFixture(async () => {
     swapper1Inch,
     mock1InchSwapRouter,
     convexEthMetaStrategy,
-    fluxStrategy;
+    fluxStrategy,
+    oethOracleUpdater,
+    oethOracle;
 
   if (isFork) {
     usdt = await ethers.getContractAt(usdtAbi, addresses.mainnet.USDT);
@@ -351,6 +350,9 @@ const defaultFixture = deployments.createFixture(async () => {
       "CompoundStrategy",
       fluxStrategyProxy.address
     );
+
+    oethOracleUpdater = await ethers.getContract("OETHOracleUpdater");
+    oethOracle = await ethers.getContract("OETHOracle");
   } else {
     usdt = await ethers.getContract("MockUSDT");
     dai = await ethers.getContract("MockDAI");
