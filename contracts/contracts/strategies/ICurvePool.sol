@@ -36,4 +36,6 @@ interface ICurvePool {
         uint256[3] calldata _amounts,
         uint256 maxBurnAmount
     ) external;
+
+    function price_oracle() external view returns (uint256);
 }

@@ -1,21 +1,25 @@
 const { expect } = require("chai");
-const { parseUnits } = require("ethers/lib/utils");
+const { parseUnits, formatUnits } = require("ethers/lib/utils");
 
 const { loadDefaultFixture } = require("../_fixture");
 const { forkOnlyDescribe, isCI } = require("../helpers");
 
-forkOnlyDescribe("ForkTest: Oracle Routers", function () {
+const log = require("../../utils/logger")("test:fork:oracles");
+
+forkOnlyDescribe("ForkTest: Oracles", function () {
   this.timeout(0);
 
   // Retry up to 3 times on CI
   this.retries(isCI ? 3 : 0);
 
   let fixture;
+  beforeEach(async () => {
+    fixture = await loadDefaultFixture();
+  });
 
   describe("OETH Oracle Router", () => {
     let oethOracleRouter;
     beforeEach(async () => {
-      fixture = await loadDefaultFixture();
       oethOracleRouter = await ethers.getContract("OETHOracleRouter");
     });
     it("should get rETH price", async () => {
@@ -53,6 +57,35 @@ forkOnlyDescribe("ForkTest: Oracle Routers", function () {
           .populateTransaction.price(asset.address);
         await josh.sendTransaction(tx);
       }
+    });
+  });
+  describe("OETH Oracle", () => {
+    it("Should add new OETH Oracle price", async () => {
+      const { josh, oethOracle, oethOracleUpdater } = fixture;
+
+      await oethOracleUpdater.addRoundData(oethOracle.address);
+
+      const data = await oethOracle.latestRoundData();
+      log(`OETH price: ${formatUnits(data.answer, 18)}`);
+
+      expect(data.answer).to.be.gte(parseUnits("0.99"));
+      expect(data.answer).to.be.lte(parseUnits("1.01"));
+      expect(data.roundId).to.be.eq(0);
+
+      // This uses a transaction to call a view function so the gas usage can be reported.
+      const tx = await oethOracle
+        .connect(josh)
+        .populateTransaction.latestRoundData();
+      await josh.sendTransaction(tx);
+    });
+    it("Should add OETH Oracle price twice", async () => {
+      const { oethOracle, oethOracleUpdater } = fixture;
+
+      await oethOracleUpdater.addRoundData(oethOracle.address);
+      await oethOracleUpdater.addRoundData(oethOracle.address);
+
+      const data = await oethOracle.latestRoundData();
+      expect(data.roundId).to.be.eq(1);
     });
   });
 });

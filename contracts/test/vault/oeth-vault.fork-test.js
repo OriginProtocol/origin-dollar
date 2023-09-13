@@ -100,7 +100,7 @@ forkOnlyDescribe("ForkTest: OETH Vault", function () {
         });
       }
       it("Should return OETH Oracle price", async () => {
-        const { oethVault } = fixture;
+        const { oethVault, josh } = fixture;
 
         const price = await oethVault.price();
 
@@ -108,6 +108,10 @@ forkOnlyDescribe("ForkTest: OETH Vault", function () {
 
         expect(price).to.be.gte(parseUnits("0.99"));
         expect(price).to.be.lte(parseUnits("1"));
+
+        // This uses a transaction to call a view function so the gas usage can be reported.
+        const tx = await oethVault.connect(josh).populateTransaction.price();
+        await josh.sendTransaction(tx);
       });
     });
     describe("user operations", () => {

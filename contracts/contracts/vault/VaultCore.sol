@@ -572,7 +572,8 @@ contract VaultCore is VaultInitializer {
      * @return price_ USD or ETH value of 1 OToken to 18 decimals
      */
     function price() external view returns (uint256 price_) {
-        uint256 totalAssetsValue = 0;
+        // Sum of asset values scaled to 1e36
+        uint256 totalAssetsValueScaled = 0;
         // For each asset
         uint256 assetCount = allAssets.length;
         for (uint256 i = 0; i < assetCount; ++i) {
@@ -583,10 +584,12 @@ contract VaultCore is VaultInitializer {
             uint256 balance = _checkBalance(assetAddr);
 
             // total asset value = total asset value + (balance * price)
-            totalAssetsValue += (_toUnits(balance, assetAddr) *
+            // Both balance and price are scaled to 18 decimals so the result is 36 decmials
+            totalAssetsValueScaled += (_toUnits(balance, assetAddr) *
                 _toUnitPrice(assetAddr, false));
         }
-        price_ = totalAssetsValue / oUSD.totalSupply();
+        // The total supply is 18 decimals so the price is scaled down to 18 decimals
+        price_ = totalAssetsValueScaled / oUSD.totalSupply();
 
         // adjust for redeem fee
         uint256 redeemFeeBpsMem = redeemFeeBps;

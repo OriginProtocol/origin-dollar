@@ -1,4 +1,8 @@
-const { deploymentWithGovernanceProposal } = require("../utils/deploy");
+const addresses = require("../utils/addresses");
+const {
+  deploymentWithGovernanceProposal,
+  withConfirmation,
+} = require("../utils/deploy");
 
 module.exports = deploymentWithGovernanceProposal(
   {
@@ -10,13 +14,46 @@ module.exports = deploymentWithGovernanceProposal(
     // proposalId: "",
   },
   async ({ ethers, deployWithConfirmation }) => {
-    const dVaultCore = await deployWithConfirmation("OETHVaultCore");
+    const { deployerAddr } = await getNamedAccounts();
+    const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
-    // 2. Connect to the OETH Vault as its governor via the proxy
+    // 1. Connect to the OETH Vault as its governor via the proxy
     const cVaultProxy = await ethers.getContract("OETHVaultProxy");
 
-    // Governance Actions
-    // ----------------
+    // 2. Deploy the new Vault implementation
+    const dVaultCore = await deployWithConfirmation("OETHVaultCore");
+
+    // 3. Deploy the new Oracle contracts
+    const dOETHOracleUpdater = await deployWithConfirmation(
+      "OETHOracleUpdater",
+      [cVaultProxy.address, addresses.mainnet.CurveOETHMetaPool]
+    );
+    const cOETHOracleUpdater = await ethers.getContractAt(
+      "OETHOracleUpdater",
+      dOETHOracleUpdater.address
+    );
+    const dOETHOracle = await deployWithConfirmation("OETHOracle", [
+      dOETHOracleUpdater.address,
+      86400,
+    ]);
+    const cOETHOracle = await ethers.getContractAt(
+      "OETHOracleUpdater",
+      dOETHOracle.address
+    );
+
+    // 4. Transfer governance
+    await withConfirmation(
+      cOETHOracleUpdater
+        .connect(sDeployer)
+        .transferGovernance(addresses.mainnet.Timelock)
+    );
+    await withConfirmation(
+      cOETHOracle
+        .connect(sDeployer)
+        .transferGovernance(addresses.mainnet.Timelock)
+    );
+
+    // 4. Governance Actions
     return {
       name: "Upgrade the OETH Vault with price Oracle.",
       actions: [

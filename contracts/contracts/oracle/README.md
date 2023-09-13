@@ -14,16 +14,30 @@
 
 ![OETH Oracle Router Storage](../../docs/OETHOracleRouterStorage.svg)
 
-## Mix Oracle
+## OETH Oracle
 
 ### Hierarchy
 
-![Mix Oracle Hierarchy](../../docs/MixOracleHierarchy.svg)
+![OETH Oracle Hierarchy](../../docs/OETHOracleHierarchy.svg)
 
 ### Squashed
 
-![Mix Oracle Squashed](../../docs/MixOracleSquashed.svg)
+![OETH Oracle Squashed](../../docs/OETHOracleSquashed.svg)
 
 ### Storage
 
-![Mix Oracle Storage](../../docs/MixOracleStorage.svg)
+![OETH Oracle Storage](../../docs/OETHOracleStorage.svg)
+
+## OETH Oracle Updater
+
+### Hierarchy
+
+![OETH Oracle Updater Hierarchy](../../docs/OETHOracleUpdaterHierarchy.svg)
+
+### Squashed
+
+![OETH Oracle Updater Squashed](../../docs/OETHOracleUpdaterSquashed.svg)
+
+### Storage
+
+![OETH Oracle Updater Storage](../../docs/OETHOracleUpdaterStorage.svg)
