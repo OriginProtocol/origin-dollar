@@ -7,7 +7,7 @@ const { withBalancedOUSDMetaPool } = require("../_metastrategies-fixtures");
 
 const log = require("../../utils/logger")("test:fork:ousd:metapool");
 
-describe.skip("ForkTest: Convex 3pool/OUSD Meta Strategy - Balanced Metapool", function () {
+describe("ForkTest: Convex 3pool/OUSD Meta Strategy - Balanced Metapool", function () {
   this.timeout(0);
 
   // Retry up to 3 times on CI
