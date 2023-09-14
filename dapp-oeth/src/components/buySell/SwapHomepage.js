@@ -29,6 +29,10 @@ const SwapHomepage = ({
   isMobile,
 }) => {
   const swapEstimations = useStoreState(ContractStore, (s) => s.swapEstimations)
+  const swapEstimationsError = useStoreState(
+    ContractStore,
+    (s) => s.swapEstimationsError
+  )
   const swapsLoaded = swapEstimations && typeof swapEstimations === 'object'
   const selectedSwap = useStoreState(ContractStore, (s) => s.selectedSwap)
   const { data: prices } = useTokenPrices()
@@ -347,6 +351,7 @@ const SwapHomepage = ({
                 swapMode={swapMode}
                 selectedSwap={selectedSwap}
                 swapsLoading={swapEstimations === 'loading'}
+                swapsError={swapEstimations === 'error' && swapEstimationsError}
                 priceToleranceValue={priceToleranceValue}
                 selectedCoin={selectedRedeemCoin}
                 onSelectChange={userSelectsRedeemCoin}
@@ -354,7 +359,7 @@ const SwapHomepage = ({
               />
             </div>
           </div>
-          <ContractsTable />
+          <ContractsTable selectedBuyCoin={selectedBuyCoin} />
           <ApproveSwap
             inputAmount={
               swapMode === 'mint'
@@ -369,6 +374,7 @@ const SwapHomepage = ({
             allowancesLoaded={allowancesLoaded}
             onMintingError={onMintingError}
             balanceError={balanceError}
+            swapEstimationsError={swapEstimationsError}
             swapsLoaded={swapsLoaded}
             swappingGloballyDisabled={swappingGloballyDisabled}
           />

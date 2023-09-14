@@ -7,9 +7,10 @@ module.exports = deploymentWithGovernanceProposal(
     deployName: "075_oeth_amo_upgrade",
     forceDeploy: false,
     // forceSkip: true,
-    reduceQueueTime: true,
+    reduceQueueTime: false,
     deployerIsProposer: true,
-    // proposalId: "",
+    proposalId:
+      "52754541240413220443859027907216814653548117220338896790750636626793224597926",
   },
   async ({ ethers, deployWithConfirmation }) => {
     const cConvexEthMetaStrategyProxy = await ethers.getContract(
@@ -36,9 +37,7 @@ module.exports = deploymentWithGovernanceProposal(
     // Governance Actions
     // ----------------
     return {
-      name: "Upgrade the OETH AMO strategy.\n\
-      \n\
-      Code PR: #",
+      name: "Upgrade the OETH AMO strategy with peg keeping functions.",
       actions: [
         // Upgrade the OETH AMO strategy proxy to the new strategy implementation
         {
