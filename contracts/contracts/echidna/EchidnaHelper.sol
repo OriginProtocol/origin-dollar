@@ -68,6 +68,7 @@ contract EchidnaHelper is EchidnaSetup {
         address from = getAccount(fromAcc);
         address to = getAccount(toAcc);
         hevm.prank(from);
+        // slither-disable-next-line unchecked-transfer
         ousd.transfer(to, amount);
     }
 
@@ -88,6 +89,7 @@ contract EchidnaHelper is EchidnaSetup {
         address from = getAccount(fromAcc);
         address to = getAccount(toAcc);
         hevm.prank(authorized);
+        // slither-disable-next-line unchecked-transfer
         ousd.transferFrom(from, to, amount);
     }
 
@@ -125,6 +127,7 @@ contract EchidnaHelper is EchidnaSetup {
         address owner = getAccount(ownerAcc);
         address spender = getAccount(spenderAcc);
         hevm.prank(owner);
+        // slither-disable-next-line unused-return
         ousd.approve(spender, amount);
     }
 
@@ -142,6 +145,7 @@ contract EchidnaHelper is EchidnaSetup {
         address owner = getAccount(ownerAcc);
         address spender = getAccount(spenderAcc);
         hevm.prank(owner);
+        // slither-disable-next-line unused-return
         ousd.increaseAllowance(spender, amount);
     }
 
@@ -159,6 +163,7 @@ contract EchidnaHelper is EchidnaSetup {
         address owner = getAccount(ownerAcc);
         address spender = getAccount(spenderAcc);
         hevm.prank(owner);
+        // slither-disable-next-line unused-return
         ousd.decreaseAllowance(spender, amount);
     }
 

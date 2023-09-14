@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import "./EchidnaDebug.sol";
 import "./EchidnaTestTransfer.sol";
 
-import {StableMath} from "../utils/StableMath.sol";
+import { StableMath } from "../utils/StableMath.sol";
 
 /**
  * @title Mixin for testing supply related functions
@@ -16,7 +16,9 @@ contract EchidnaTestSupply is EchidnaTestTransfer {
     uint256 prevRebasingCreditsPerToken = type(uint256).max;
 
     /**
-     * @notice After a `changeSupply`, the total supply should exactly match the target total supply. (This is needed to ensure successive rebases are correct).
+     * @notice After a `changeSupply`, the total supply should exactly
+     * match the target total supply. (This is needed to ensure successive
+     * rebases are correct).
      * @param supply New total supply
      * @custom:error testChangeSupply(uint256): failed!💥
      *   Call sequence:
@@ -36,7 +38,8 @@ contract EchidnaTestSupply is EchidnaTestTransfer {
     }
 
     /**
-     * @notice The total supply must not be less than the sum of account balances. (The difference will go into future rebases)
+     * @notice The total supply must not be less than the sum of account balances.
+     * (The difference will go into future rebases)
      * @custom:error testTotalSupplyLessThanTotalBalance(): failed!💥
      *   Call sequence:
      *     mint(0,1)
@@ -110,7 +113,8 @@ contract EchidnaTestSupply is EchidnaTestTransfer {
     }
 
     /**
-     * @notice The sum of all non-rebasing balances should not be larger than non-rebasing supply
+     * @notice The sum of all non-rebasing balances should not be larger than
+     * non-rebasing supply
      * @custom:error testTotalNonRebasingSupplyLessThanTotalBalance(): failed!💥
      *   Call sequence
      *     mint(0,2)

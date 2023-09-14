@@ -30,6 +30,7 @@ contract EchidnaTestApproval is EchidnaTestMintBurn {
         require(amount <= ousd.allowance(from, authorized));
 
         hevm.prank(authorized);
+        // slither-disable-next-line unchecked-transfer
         try ousd.transferFrom(from, to, amount) {
             // pass
         } catch {
@@ -61,6 +62,7 @@ contract EchidnaTestApproval is EchidnaTestMintBurn {
         );
 
         hevm.prank(authorized);
+        // slither-disable-next-line unchecked-transfer
         try ousd.transferFrom(from, to, amount) {
             assert(false);
         } catch {
