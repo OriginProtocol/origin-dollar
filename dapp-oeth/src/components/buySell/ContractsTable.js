@@ -617,10 +617,16 @@ const Estimates = ({ estimates, selected, isLoading, isActive, onSelect }) => {
     </>
   )
 }
-const ContractsTable = () => {
+const ContractsTable = ({ selectedBuyCoin }) => {
   const { isConnected: active } = useAccount()
 
-  const swapEstimations = useStoreState(ContractStore, (s) => s.swapEstimations)
+  const { swapEstimations, swapEstimationsError } = useStoreState(
+    ContractStore,
+    (s) => ({
+      swapEstimations: s.swapEstimations,
+      swapEstimationsError: s.swapEstimationsError,
+    })
+  )
 
   const [alternateTxRouteConfirmed, setAlternateTxRouteConfirmed] =
     useState(false)
@@ -678,6 +684,126 @@ const ContractsTable = () => {
       s.lastOverride = estimation.name
     })
     setUserSelectedRoute(estimation.name)
+  }
+
+  const styles = (
+    <style jsx>{`
+      .contracts-wrapper {
+        margin-top: 12px;
+        border: solid 1px #141519;
+        border-radius: 10px;
+        background-color: #1e1f25;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .contracts-header {
+        display: flex;
+        align-center: center;
+        justify-content: space-between;
+        padding: 28px 40px;
+        width: 100%;
+      }
+
+      .contracts-header .title {
+        color: #fafbfb;
+        font-size: 14px;
+        margin-bottom: 0;
+      }
+
+      .contracts-main {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        height: 100%;
+        padding-bottom: 28px;
+      }
+
+      .show-more-less {
+        color: #fafbfb;
+        cursor: pointer;
+        margin-top: 10px;
+      }
+
+      .show-more-less:hover {
+        text-decoration: underline;
+      }
+
+      .contracts-error-box {
+        padding: 12px 16px;
+        color: #fafbfb;
+        background: #1e1f25;
+        border-radius: 3px;
+      }
+
+      .contracts-error-box > div {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .contracts-error-box-wrap {
+        margin: 0 40px;
+        background: linear-gradient(90deg, #b361e6 -28.99%, #6a36fc 144.97%);
+        padding: 1px;
+        border-radius: 3px;
+      }
+
+      @media (max-width: 799px) {
+        .contracts-header {
+          padding: 16px 12px;
+        }
+
+        .contracts-main {
+          padding-bottom: 16px;
+        }
+
+        .contracts-wrapper {
+          border-radius: 4px;
+        }
+
+        .contracts-error-box-wrap {
+          margin: 16px 12px;
+        }
+      }
+    `}</style>
+  )
+
+  console.log(selectedBuyCoin)
+
+  if (swapEstimations === 'error' && swapEstimationsError) {
+    return (
+      <div className="contracts-wrapper">
+        <div className="contracts-header">
+          <h2 className="title">{fbt('Swap Routes', 'Swap Routes')}</h2>
+        </div>
+        <div className="contracts-main">
+          <div className="contracts-error-box-wrap">
+            <div className="contracts-error-box">
+              <div style={{ fontSize: '90%', marginBottom: 6 }}>
+                <img
+                  width={16}
+                  height={16}
+                  src={assetRootPath('/images/warn.png')}
+                  alt="Warning icon"
+                />
+                Minting with{' '}
+                {selectedBuyCoin ? selectedBuyCoin : 'the selected currency'}{' '}
+                temporarily disabled
+              </div>
+              {/* Error comes from: contracts/contracts/vault/VaultCore.sol:692 */}
+              {swapEstimationsError === 'Asset price below peg' && (
+                <div style={{ color: '#828699', fontSize: '80%' }}>
+                  For security reasons, we disable minting for a given
+                  collateral type that is trading below peg.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+        {styles}
+      </div>
+    )
   }
 
   return (
@@ -739,62 +865,7 @@ const ContractsTable = () => {
           confirmBtnText={fbt('Yes', 'I confirm')}
         />
       )}
-      <style jsx>{`
-        .contracts-wrapper {
-          margin-top: 12px;
-          border: solid 1px #141519;
-          border-radius: 10px;
-          background-color: #1e1f25;
-          position: relative;
-          overflow: hidden;
-        }
-
-        .contracts-header {
-          display: flex;
-          align-center: center;
-          justify-content: space-between;
-          padding: 28px 40px;
-          width: 100%;
-        }
-
-        .contracts-header .title {
-          color: #fafbfb;
-          font-size: 14px;
-          margin-bottom: 0;
-        }
-
-        .contracts-main {
-          display: flex;
-          flex-direction: column;
-          width: 100%;
-          height: 100%;
-          padding-bottom: 28px;
-        }
-
-        .show-more-less {
-          color: #fafbfb;
-          cursor: pointer;
-          margin-top: 10px;
-        }
-
-        .show-more-less:hover {
-          text-decoration: underline;
-        }
-
-        @media (max-width: 799px) {
-          .contracts-header {
-            padding: 16px 12px;
-          }
-
-          .contracts-main {
-            padding-bottom: 16px;
-          }
-
-          .contracts-wrapper {
-            border-radius: 4px;
-          }
-        }
-      `}</style>
+      {styles}
     </div>
   )
 }
