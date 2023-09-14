@@ -112,9 +112,6 @@ forkOnlyDescribe("ForkTest: OETH Vault", function () {
         const price = await oethVault.floorPrice();
         log(`OETH price: ${formatUnits(price, 18)}`);
 
-        const price2 = await oethVault.floorPrice2();
-        log(`OETH price2: ${formatUnits(price2, 18)}`);
-
         expect(price).to.be.gte(parseUnits("0.99"));
         expect(price).to.be.lte(parseUnits("1"));
 
