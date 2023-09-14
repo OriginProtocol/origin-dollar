@@ -91,18 +91,19 @@ abstract contract BaseOracle is
     ****************************************/
 
     /// @notice Adds a new Oracle price by the Oracle updater.
+    /// Can not be run twice in the same block.
     /// @param _price is the Oracle price with 18 decimals
     function addPrice(uint128 _price) external override {
         if (msg.sender != oracleUpdater) revert OnlyOracleUpdater();
-        // TODO what is a sensible min?
         if (_price == 0) revert NoPriceData();
 
+        // Can not add price in the same or previous blocks
         uint256 _roundsLength = rounds.length;
         if (
             _roundsLength > 0 &&
             block.timestamp <= rounds[_roundsLength - 1].timestamp
         ) {
-            revert CalledWithTimestampBeforePreviousRound();
+            revert AddPriceSameBlock();
         }
 
         lastCorrectRoundId = uint80(_roundsLength);
@@ -195,7 +196,7 @@ abstract contract BaseOracle is
                 Errors
     ****************************************/
 
-    error CalledWithTimestampBeforePreviousRound();
+    error AddPriceSameBlock();
     error NoPriceData();
     error OnlyOracleUpdater();
 }

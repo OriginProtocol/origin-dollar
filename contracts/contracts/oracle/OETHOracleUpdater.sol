@@ -67,6 +67,11 @@ contract OETHOracleUpdater is Governable {
         } else {
             answer = vaultPrice;
         }
+
+        // Cap the OETH/ETH price at 1
+        if (answer > 1e18) {
+            answer = 1e18;
+        }
     }
 
     /// @notice Get the latest price from the Vault and Curve pool

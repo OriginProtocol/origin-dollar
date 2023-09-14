@@ -24,17 +24,17 @@ object "OETHOracleUpdater" as oou <<Origin>> #DeepSkyBlue {
 pair: OETH/ETH
 }
 
-object "frxETHOracleUpdater" as fou <<Origin>> #DeepSkyBlue {
-pair: frxETH/ETH
-}
-
 object "OETHOracle" as oetho <<Origin>> #DeepSkyBlue {
 pair: OETH/ETH
 }
 
-object "frxETHOracle" as frxo <<Origin>> #DeepSkyBlue {
-pair: frxETH/ETH
-}
+' object "frxETHOracleUpdater" as fou <<Origin>> #DeepSkyBlue {
+' pair: frxETH/ETH
+' }
+
+' object "frxETHOracle" as frxo <<Origin>> #DeepSkyBlue {
+' pair: frxETH/ETH
+' }
 
 object "External\nAccess\nControlled\nAggregator" as clrETH <<Chainlink>> {
 pair: rETH/ETH
@@ -44,41 +44,46 @@ object "External\nAccess\nControlled\nAggregator" as clstETH <<Chainlink>> {
 pair: stETH/ETH
 }
 
+object "FrxEthFraxOracle" as fefo <<Frax>> {
+pair: frxETH/ETH
+}
+
 object "OETH/ETH Pool" as coep <<Curve>> {
 assets: OETH, ETH
 }
 
-object "frxETH/OETH Pool" as cfop <<Curve>> {
-assets: frxETH, OETH
-}
+' object "frxETH/OETH Pool" as cfop <<Curve>> {
+' assets: frxETH, OETH
+' }
 
-object "frxETH/ETH Pool" as cfep <<Curve>> {
-assets: frxETH, ETH
-}
+' object "frxETH/ETH Pool" as cfep <<Curve>> {
+' assets: frxETH, ETH
+' }
 
-object "frxETH/WETH Pool" as cfwp <<Curve>> {
-assets: frxETH, WETH
-}
+' object "frxETH/WETH Pool" as cfwp <<Curve>> {
+' assets: frxETH, WETH
+' }
 
-object "OETH/ETH Pool" as boep <<Balancer>> {
-assets: OETH, ETH
-}
+' object "OETH/ETH Pool" as boep <<Balancer>> {
+' assets: OETH, ETH
+' }
 
 
 vault ..> router : price(asset)
 router ..> clrETH : latestRoundData()
 router ..> clstETH : latestRoundData()
+router ..> fefo : latestRoundData()
 
 vault <.. oou : price()
 oetho <.. oou  : addPrice()
-oou ...> coep : price_oracle()
-oou ...> cfop : price_oracle()
-oou ...> boep : price_oracle()
+oou ..> coep : price_oracle()
+' oou ...> cfop : price_oracle()
+' oou ...> boep : price_oracle()
 
-router ..> frxo  : latestRoundData()
-fou ..> frxo : addPrice()
-fou ...> cfep : price_oracle()
-fou ...> cfwp : price_oracle()
+' router ..> frxo  : latestRoundData()
+' fou ..> frxo : addPrice()
+' fou ...> cfep : price_oracle()
+' fou ...> cfwp : price_oracle()
 
 
 ' object "FrxEthFraxOracle" as fo <<Frax>> {
