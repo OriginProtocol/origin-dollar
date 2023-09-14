@@ -106,18 +106,22 @@ forkOnlyDescribe("ForkTest: OETH Vault", function () {
           expect(price).to.be.lte(max);
         });
       }
-      it("Should return OETH Oracle price", async () => {
+      it("Should return OETH floor price", async () => {
         const { oethVault, josh } = fixture;
 
-        const price = await oethVault.price();
-
+        const price = await oethVault.floorPrice();
         log(`OETH price: ${formatUnits(price, 18)}`);
+
+        const price2 = await oethVault.floorPrice2();
+        log(`OETH price2: ${formatUnits(price2, 18)}`);
 
         expect(price).to.be.gte(parseUnits("0.99"));
         expect(price).to.be.lte(parseUnits("1"));
 
         // This uses a transaction to call a view function so the gas usage can be reported.
-        const tx = await oethVault.connect(josh).populateTransaction.price();
+        const tx = await oethVault
+          .connect(josh)
+          .populateTransaction.floorPrice();
         await josh.sendTransaction(tx);
       });
     });

@@ -54,7 +54,7 @@ contract OETHOracleUpdater is Governable {
         )
     {
         // Get price from the Vault
-        vaultPrice = vault.price();
+        vaultPrice = vault.floorPrice();
 
         // Get price from the Curve pool
         marketPrice = curvePool.price_oracle();

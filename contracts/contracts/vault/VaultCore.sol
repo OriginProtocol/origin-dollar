@@ -11,13 +11,12 @@ pragma solidity ^0.8.0;
  * @author Origin Protocol Inc
  */
 
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { IERC20, SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import { StableMath } from "../utils/StableMath.sol";
 import { IOracle } from "../interfaces/IOracle.sol";
 import { IGetExchangeRateToken } from "../interfaces/IGetExchangeRateToken.sol";
-
-import "./VaultInitializer.sol";
+import { IStrategy, VaultInitializer } from "./VaultInitializer.sol";
 
 contract VaultCore is VaultInitializer {
     using SafeERC20 for IERC20;
@@ -566,12 +565,33 @@ contract VaultCore is VaultInitializer {
     ****************************************/
 
     /**
+     * @notice The amount of ETH value for redeeming 1 OETH.
+     * This is the minimum price for OETH. The better price is
+     * is usually achieved by swapping OETH for ETH
+     * with the Curve OETH/ETH pool.
+     */
+    function floorPrice() external view returns (uint256 price) {
+        // Get the assets for redeeming 1 OETH
+        // This has already had the redeem fee applied
+        uint256[] memory redeemAssets = _calculateRedeemOutputs(1e18);
+
+        // For each of the redeemed assets
+        for (uint256 i = 0; i < redeemAssets.length; ++i) {
+            // Sum the value of the asset in ETH = asset amount * oracle price
+            price +=
+                redeemAssets[i] *
+                IOracle(priceProvider).price(allAssets[i]);
+        }
+        price = price / 1e18;
+    }
+
+    /**
      * @notice Value of 1 OToken if redeemed using the Vault.
      * This includes any redeem fee.
      * For example, USD value of 1 OUSD or ETH value of 1 OETH.
      * @return price_ USD or ETH value of 1 OToken to 18 decimals
      */
-    function price() external view returns (uint256 price_) {
+    function floorPrice2() external view returns (uint256 price_) {
         // Sum of asset values scaled to 1e36
         uint256 totalAssetsValueScaled = 0;
         // For each asset
@@ -603,12 +623,12 @@ contract VaultCore is VaultInitializer {
      * @notice Returns the total price in 18 digit units for a given asset.
      *      Never goes above 1, since that is how we price mints.
      * @param asset address of the asset
-     * @return price_ uint256: unit (USD / ETH) price for 1 unit of the asset, in 18 decimal fixed
+     * @return price uint256: unit (USD / ETH) price for 1 unit of the asset, in 18 decimal fixed
      */
     function priceUnitMint(address asset)
         external
         view
-        returns (uint256 price_)
+        returns (uint256 price)
     {
         /* need to supply 1 asset unit in asset's decimals and can not just hard-code
          * to 1e18 and ignore calling `_toUnits` since we need to consider assets
@@ -618,19 +638,19 @@ contract VaultCore is VaultInitializer {
             uint256(1e18).scaleBy(_getDecimals(asset), 18),
             asset
         );
-        price_ = (_toUnitPrice(asset, true) * units) / 1e18;
+        price = (_toUnitPrice(asset, true) * units) / 1e18;
     }
 
     /**
      * @notice Returns the total price in 18 digit unit for a given asset.
      *      Never goes below 1, since that is how we price redeems
      * @param asset Address of the asset
-     * @return price_ uint256: unit (USD / ETH) price for 1 unit of the asset, in 18 decimal fixed
+     * @return price uint256: unit (USD / ETH) price for 1 unit of the asset, in 18 decimal fixed
      */
     function priceUnitRedeem(address asset)
         external
         view
-        returns (uint256 price_)
+        returns (uint256 price)
     {
         /* need to supply 1 asset unit in asset's decimals and can not just hard-code
          * to 1e18 and ignore calling `_toUnits` since we need to consider assets
@@ -640,7 +660,7 @@ contract VaultCore is VaultInitializer {
             uint256(1e18).scaleBy(_getDecimals(asset), 18),
             asset
         );
-        price_ = (_toUnitPrice(asset, false) * units) / 1e18;
+        price = (_toUnitPrice(asset, false) * units) / 1e18;
     }
 
     /***************************************
