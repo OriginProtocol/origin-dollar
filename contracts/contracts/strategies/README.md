@@ -28,6 +28,20 @@
 
 ![Compound Strategy Storage](../../docs/CompStrategyStorage.svg)
 
+## Convex ETH Metapool Strategy
+
+### Hierarchy
+
+![Convex ETH Metapool Strategy Hierarchy](../../docs/ConvexEthMetaStrategyHierarchy.svg)
+
+### Squashed
+
+![Convex ETH Metapool Strategy Squashed](../../docs/ConvexEthMetaStrategySquashed.svg)
+
+### Storage
+
+![Convex ETH Metapool Strategy Storage](../../docs/ConvexEthMetaStrategyStorage.svg)
+
 ## Flux Strategy
 
 ### Hierarchy

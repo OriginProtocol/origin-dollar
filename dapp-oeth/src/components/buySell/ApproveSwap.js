@@ -20,6 +20,7 @@ const ApproveSwap = ({
   allowancesLoaded,
   onMintingError,
   balanceError,
+  swapEstimationsError,
   swapsLoaded,
   swappingGloballyDisabled,
   storeTransaction,
@@ -46,6 +47,7 @@ const ApproveSwap = ({
   const approvalNeeded =
     (selectedSwap &&
       !balanceError &&
+      !swapEstimationsError &&
       !swappingGloballyDisabled &&
       allowancesLoaded &&
       needsApproval) ||
@@ -180,6 +182,7 @@ const ApproveSwap = ({
 
   const SwapMessage = ({
     balanceError,
+    swapEstimationsError,
     coinToApprove,
     swapsLoaded,
     selectedSwap,
@@ -191,6 +194,8 @@ const ApproveSwap = ({
     const noSwapRouteAvailable = swapsLoaded && !selectedSwap
     if (swappingGloballyDisabled) {
       return process.env.NEXT_PUBLIC_DISABLE_SWAP_BUTTON_MESSAGE
+    } else if (swapEstimationsError) {
+      return fbt(fbt.param('coin', coin) + ' disabled', 'Coin disabled')
     } else if (!active) {
       return fbt('Connect Wallet', 'Connect Wallet')
     } else if (balanceError) {
@@ -344,6 +349,7 @@ const ApproveSwap = ({
           >
             <SwapMessage
               balanceError={balanceError}
+              swapEstimationsError={swapEstimationsError}
               coinToApprove={coinToApprove}
               swapsLoaded={swapsLoaded}
               selectedSwap={selectedSwap}

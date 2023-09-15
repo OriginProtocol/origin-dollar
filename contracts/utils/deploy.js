@@ -265,8 +265,8 @@ const executeProposal = async (proposalArgs, description, opts = {}) => {
     log("Advancing time by 61 seconds for TimeLock delay.");
     await advanceTime(61);
   } else {
-    log("Advancing time by 48 hours + 1 second for TimeLock delay.");
-    await advanceTime(172801);
+    log("Advancing time by 3 days for TimeLock delay.");
+    await advanceTime(259200);
   }
 
   await withConfirmation(
@@ -303,8 +303,8 @@ const executeProposalOnFork = async ({
     log(`Proposal ${proposalId} queued`);
   }
 
-  log("Advancing time by 48 hours + 1 second for TimeLock delay.");
-  await advanceTime(172801);
+  log("Advancing time by 3 days for TimeLock delay.");
+  await advanceTime(259200);
 
   await withConfirmation(
     governor

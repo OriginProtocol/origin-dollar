@@ -42,6 +42,12 @@ yarn lint
 
 ## Slither
 
+### Install slither
+
+If you use the slither documented "pip3 install slither-analyzer" there might be problems
+with package collisions. Just use pipx that installs any package and all dependencies in 
+sandbox to circumvent the issue: `pipx install slither-analyzer`
+
 [Slither](https://github.com/crytic/slither#slither-the-solidity-source-analyzer) is used to for Solidity static analysis.
 
 The [Slither installation](https://github.com/crytic/slither#how-to-install) instruction.

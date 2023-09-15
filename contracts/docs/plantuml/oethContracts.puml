@@ -63,6 +63,7 @@ object "ConvexFrxETHAMOStrategy" as frxAMOStrat <<Origin>><<Proxy>> #DeepSkyBlue
 ' Oracle
 object "OETHOracleRouter" as oracle <<Origin>> #DeepSkyBlue {
 pairs:
+    frxETH/ETH
     stETH/ETH
     rETH/ETH
     CRV/ETH

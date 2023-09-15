@@ -30,6 +30,7 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
       expect(await convexEthMetaStrategy.MAX_SLIPPAGE()).to.equal(
         parseUnits("0.01", 18)
       );
+      expect(await convexEthMetaStrategy.ETH_ADDRESS()).to.equal(addresses.ETH);
 
       expect(await convexEthMetaStrategy.cvxDepositorAddress()).to.equal(
         addresses.mainnet.CVXBooster

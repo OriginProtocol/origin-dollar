@@ -462,37 +462,40 @@ class TemporaryForkForReallocations:
 
 
 def show_governor_four_proposal_actions(proposal_id):
-  actions = governor.getActions(proposal_id)
-  for i in range(0, len(actions[0])):
-    print("")
-    show_governance_action(i=i, to=actions[0][i], sig=actions[1][i], data=actions[2][i])
+    actions = governor.getActions(proposal_id)
+    for i in range(0, len(actions[0])):
+        print("")
+        show_governance_action(
+            i=i, to=actions[0][i], sig=actions[1][i], data=actions[2][i]
+        )
 
 
 def show_governor_five_proposal_actions(proposal_id):
-  actions = governor_five.getActions(proposal_id)
-  for i in range(0, len(actions[0])):
-    print("")
-    show_governance_action(i=i, to=actions[0][i], sig=actions[2][i], data=actions[3][i])
-    if actions[1][i] != 0:
-        print("    TRANSFERS ETH!!! %d !!!", actions[1][i])
+    actions = governor_five.getActions(proposal_id)
+    for i in range(0, len(actions[0])):
+        print("")
+        show_governance_action(
+            i=i, to=actions[0][i], sig=actions[2][i], data=actions[3][i]
+        )
+        if actions[1][i] != 0:
+            print("    TRANSFERS ETH!!! %d !!!", actions[1][i])
 
-# set as an asset default strategy
-def asset_default_strategy(strategy, asset):
-    tx = vault_admin.setAssetDefaultStrategy(asset.address, strategy.address, {'from': GOVERNOR})
-    tx.sig_string = 'setAssetDefaultStrategy(address,address)'
-    create_gov_proposal("Set comp strategy as default strategy for asset", [tx])
-    # execute latest proposal
-    sim_governor_execute(governor.proposalCount())
 
-# harvest rewards from all the strategies
-def harvest_all_strategies():
-    tx = harvester.harvestAndSwap({'from': GOVERNOR})
-    tx.sig_string = 'harvestAndSwap()'
-    create_gov_proposal("Harvest and swap all strategies", [tx])
-    # execute latest proposal
-    sim_governor_execute(governor.proposalCount())
+def sim_execute_governor_five(proposal_id):
+    """
+    Bypasses the actual timelock/voting and just calls each governance action
+    as if the timelock sent the transaction individualy.
 
-# withdraw funds from Comp strategy
-def withdrawFromComp(amount, asset):
-    comp_strat.withdraw(VAULT_PROXY_ADDRESS, asset.address, amount * math.pow(10, asset.decimals()), {'from': VAULT_PROXY_ADDRESS})
-    vault_core.rebase(OPTS)
+    This skips the governance process time and block delays.
+    """
+    actions = governor_five.getActions(proposal_id)
+    timelock = brownie.accounts.at(TIMELOCK, force=True)
+    for i in range(0, len(actions[0])):
+        show_governance_action(
+            i=i, to=actions[0][i], sig=actions[2][i], data=actions[3][i]
+        )
+        # Build actual data
+        sighash = brownie.web3.keccak(text=actions[2][i]).hex()[:10]
+        data = sighash + str(actions[3][i])[2:]
+        # Send it
+        timelock.transfer(to=actions[0][i], data=data, amount=actions[1][i])
