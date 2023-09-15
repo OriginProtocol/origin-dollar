@@ -1,6 +1,6 @@
 const { expect } = require("chai");
 
-const { units, ousdUnits, forkOnlyDescribe, isCI } = require("../helpers");
+const { forkOnlyDescribe, units, ousdUnits, isCI } = require("../helpers");
 const { createFixtureLoader } = require("../_fixture");
 const { withOUSDTitledMetapool } = require("../_metastrategies-fixtures");
 
@@ -24,12 +24,24 @@ forkOnlyDescribe(
         await mintTest(fixture, josh, usdt, "100000");
       });
 
-      it("Should stake USDC in Curve gauge via metapool", async function () {
-        const { matt, usdc } = fixture;
-        await mintTest(fixture, matt, usdc, "120000");
+      describe("Mint", function () {
+        it("Should stake USDT in Curve gauge via metapool", async function () {
+          const { josh, usdt } = fixture;
+          await mintTest(fixture, josh, usdt, "100000");
+        });
+
+        it("Should stake USDC in Curve gauge via metapool", async function () {
+          const { matt, usdc } = fixture;
+          await mintTest(fixture, matt, usdc, "120000");
+        });
+
+        it("Should stake DAI in Curve gauge via metapool", async function () {
+          const { anna, dai } = fixture;
+          await mintTest(fixture, anna, dai, "110000");
+        });
       });
 
-      it("Should stake DAI in Curve gauge via metapool", async function () {
+      it("Should NOT stake DAI in Curve gauge via metapool", async function () {
         const { anna, dai } = fixture;
         await mintTest(fixture, anna, dai, "110000");
       });
