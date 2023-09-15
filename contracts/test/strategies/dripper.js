@@ -36,7 +36,7 @@ describe("Dripper", async () => {
       await advanceTime(1000);
       expect(await dripper.availableFunds()).to.equal(0);
     });
-    it.only("returns a number after a duration has been set", async () => {
+    it("returns a number after a duration has been set", async () => {
       await dripper.connect(governor).setDripDuration("2000");
       await advanceTime(1000);
       /* sometimes this test fails with 0.1% deviation from the expected value. Somehow
