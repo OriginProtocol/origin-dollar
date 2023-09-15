@@ -4,10 +4,10 @@ const { deploymentWithGovernanceProposal } = require("../utils/deploy");
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "075_ousd_amo_upgrade",
+    deployName: "076_ousd_amo_upgrade",
     forceDeploy: false,
     // forceSkip: true,
-    reduceQueueTime: true,
+    reduceQueueTime: false,
     deployerIsProposer: true,
     // proposalId: "",
   },

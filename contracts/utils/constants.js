@@ -2,6 +2,7 @@ const threeCRVPid = 9;
 const metapoolLPCRVPid = 56;
 const lusdMetapoolLPCRVPid = 33;
 const oethPoolLpPID = 174;
+const frxEthPoolLpPID = 0; // TODO set once created
 const { BigNumber } = require("ethers");
 const MAX_UINT256 = BigNumber.from(
   "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
@@ -12,6 +13,7 @@ module.exports = {
   metapoolLPCRVPid,
   lusdMetapoolLPCRVPid,
   oethPoolLpPID,
+  frxEthPoolLpPID,
   MAX_UINT256,
 };
 
