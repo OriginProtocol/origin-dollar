@@ -11,7 +11,6 @@ import { IBalancerVault } from "../../interfaces/balancer/IBalancerVault.sol";
 import { IRateProvider } from "../../interfaces/balancer/IRateProvider.sol";
 import { VaultReentrancyLib } from "./VaultReentrancyLib.sol";
 import { IOracle } from "../../interfaces/IOracle.sol";
-import { IVault } from "../../interfaces/IVault.sol";
 import { IWstETH } from "../../interfaces/IWstETH.sol";
 import { IERC4626 } from "../../../lib/openzeppelin/interfaces/IERC4626.sol";
 import { StableMath } from "../../utils/StableMath.sol";
