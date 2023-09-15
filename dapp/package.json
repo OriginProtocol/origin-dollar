@@ -12,6 +12,7 @@
     "export": "yarn run build && next export",
     "ipfs-export": "DEPLOY_MODE=ipfs yarn run build && next export",
     "start": "per-env",
+    "test": "exit 0",
     "start:development": "NODE_ENV=development NEXT_PUBLIC_ETHEREUM_RPC_PROVIDER=http://localhost:8545 next dev",
     "start:production": "NODE_ENV=production next start -p $PORT",
     "fbt:manifest": "node -r @babel/register node_modules/babel-plugin-fbt/dist/bin/manifest --src src pages",
