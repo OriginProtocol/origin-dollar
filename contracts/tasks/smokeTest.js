@@ -9,8 +9,6 @@
  *    that the state change is ok
  */
 const { getDeployScripts, getFilesInFolder } = require("../utils/fileSystem");
-const readline = require("readline");
-readline.emitKeypressEvents(process.stdin);
 
 let lastKeyPressedRegister = null;
 process.stdin.on("keypress", (str, key) => {
