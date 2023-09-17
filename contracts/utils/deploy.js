@@ -620,7 +620,10 @@ const submitProposalToOgvGovernance = async (
   log(`Submitting proposal for ${description}`);
   log(`Args: ${JSON.stringify(proposalArgs, null, 2)}`);
 
-  await configureGovernanceContractDurations(opts.reduceQueueTime);
+  // overridig storage slots needs to/can only run in forked environment
+  if (!isMainnet) {
+    await configureGovernanceContractDurations(opts.reduceQueueTime);
+  }
 
   let signer;
   // we are submitting proposal using the deployer
