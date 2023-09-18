@@ -241,7 +241,7 @@ contract ConvexOUSDMetaStrategy is BaseConvexAMOStrategy {
         uint256 depositValue = 0;
         uint256 curve3PoolVirtualPrice = curve3Pool.get_virtual_price();
 
-        for (uint256 i; i < _vaultAssets.length; ++i) {
+        for (uint256 i = 0; i < _vaultAssets.length; ++i) {
             require(_isVaultAsset(_vaultAssets[i]), "Unsupported asset");
             if (_vaultAssetAmounts[i] > 0) {
                 depositValue += _addAmount(
