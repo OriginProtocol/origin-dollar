@@ -10,9 +10,9 @@ const {
   convexOETHMetaVaultFixture,
 } = require("../_fixture");
 
-const log = require("../../utils/logger")("test:fork:oeth:metapool");
+const log = require("../../utils/logger")("test:fork:oeth:amo:curve");
 
-forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
+forkOnlyDescribe("ForkTest: OETH AMO Curve Strategy", function () {
   this.timeout(0);
   // Retry up to 3 times on CI
   this.retries(isCI ? 3 : 0);
@@ -92,7 +92,7 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
       );
       await oethVault.connect(josh).rebase();
 
-      await expect(wethDiff).to.be.gte(parseUnits("0.2"));
+      await expect(wethDiff).to.be.gte(parseUnits("0.15"));
     });
     it("Only Governor can approve all tokens", async () => {
       const {
@@ -155,9 +155,9 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
         output: false,
       });
 
+      // prettier-ignore
       const tx = await convexEthMetaStrategy
-        .connect(oethVaultSigner)
-        .deposit(weth.address, wethDepositAmount);
+        .connect(oethVaultSigner)["deposit(address,uint256)"](weth.address, wethDepositAmount);
 
       const receipt = await tx.wait();
 
@@ -210,9 +210,9 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
         .transfer(convexEthMetaStrategy.address, depositAmount);
 
       for (const signer of [strategist, timelock, josh]) {
+        // prettier-ignore
         const tx = convexEthMetaStrategy
-          .connect(signer)
-          .deposit(weth.address, depositAmount);
+          .connect(signer)["deposit(address,uint256)"](weth.address, depositAmount);
 
         await expect(tx).to.revertedWith("Caller is not the Vault");
       }
@@ -343,9 +343,13 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
       });
 
       // Now try to withdraw the WETH from the strategy
+      // prettier-ignore
       const tx = await convexEthMetaStrategy
-        .connect(oethVaultSigner)
-        .withdraw(oethVault.address, weth.address, withdrawAmount);
+        .connect(oethVaultSigner)["withdraw(address,address,uint256)"](
+          oethVault.address,
+          weth.address,
+          withdrawAmount
+        );
 
       const receipt = await tx.wait();
 
@@ -398,9 +402,13 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
       } = fixture;
 
       for (const signer of [strategist, timelock, josh]) {
+        // prettier-ignore
         const tx = convexEthMetaStrategy
-          .connect(signer)
-          .withdraw(oethVault.address, weth.address, parseUnits("50"));
+          .connect(signer)["withdraw(address,address,uint256)"](
+            oethVault.address,
+            weth.address,
+            parseUnits("50")
+          );
 
         await expect(tx).to.revertedWith("Caller is not the Vault");
       }

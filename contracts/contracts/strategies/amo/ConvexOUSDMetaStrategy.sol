@@ -79,6 +79,31 @@ contract ConvexOUSDMetaStrategy is BaseConvexAMOStrategy {
             _vaultAsset == USDT;
     }
 
+    /// @dev Returns bool indicating whether all the assets are supported by this strategy.
+    /// For the OUSD AMO, this is DAI, USDC or USDT.
+    /// @param _vaultAssets Addresses of the vault assets
+    function _isVaultAssets(address[] memory _vaultAssets)
+        internal
+        view
+        override
+        returns (bool)
+    {
+        if (_vaultAssets.length == 1) {
+            return _isVaultAsset(_vaultAssets[0]);
+        } else if (_vaultAssets.length == 2) {
+            return
+                _isVaultAsset(_vaultAssets[0]) &&
+                _isVaultAsset(_vaultAssets[1]);
+        } else if (_vaultAssets.length == 2) {
+            return
+                _isVaultAsset(_vaultAssets[0]) &&
+                _isVaultAsset(_vaultAssets[1]) &&
+                _isVaultAsset(_vaultAssets[2]);
+        }
+        require(_vaultAssets.length > 0, "No asset");
+        revert("Only three assets supported");
+    }
+
     /***************************************
                 Curve Pool
     ****************************************/
@@ -203,14 +228,64 @@ contract ConvexOUSDMetaStrategy is BaseConvexAMOStrategy {
                 Curve Pool Deposits
     ****************************************/
 
+    /**
+     * @notice Deposit multiple vault assets into the AMO strategy.
+     * @param _vaultAssets Addresses of the vault asset tokens. eg DAI, USDC or USDT
+     * @param _vaultAssetAmounts Amounts of vault asset tokens to deposit.
+     */
+    function deposit(
+        address[] memory _vaultAssets,
+        uint256[] memory _vaultAssetAmounts
+    ) external override onlyVault nonReentrant {
+        uint256[3] memory amounts = [uint256(0), uint256(0), uint256(0)];
+        uint256 depositValue = 0;
+        uint256 curve3PoolVirtualPrice = curve3Pool.get_virtual_price();
+
+        for (uint256 i; i < _vaultAssets.length; ++i) {
+            require(_isVaultAsset(_vaultAssets[i]), "Unsupported asset");
+            if (_vaultAssetAmounts[i] > 0) {
+                depositValue += _addAmount(
+                    _vaultAssetAmounts[i],
+                    amounts,
+                    _vaultAssets[i],
+                    curve3PoolVirtualPrice
+                );
+            }
+        }
+        uint256 minMintAmount = depositValue.mulTruncate(
+            uint256(1e18) - MAX_SLIPPAGE
+        );
+
+        // deposit DAI, USDC and/or USDT to the Curve 3Pool
+        curve3Pool.add_liquidity(amounts, minMintAmount);
+
+        // Get the Curve OUSD/3CRV Metapool LP token balance of this strategy contract
+        uint256 threePoolLpBalance = asset.balanceOf(address(this));
+
+        // AMO deposit to the Curve Metapool
+        _deposit(threePoolLpBalance);
+    }
+
     function depositAll() external override onlyVault nonReentrant {
         uint256[3] memory amounts = [uint256(0), uint256(0), uint256(0)];
         uint256 depositValue = 0;
         uint256 curve3PoolVirtualPrice = curve3Pool.get_virtual_price();
 
-        depositValue = _addAmount(amounts, DAI, curve3PoolVirtualPrice);
-        depositValue += _addAmount(amounts, USDC, curve3PoolVirtualPrice);
-        depositValue += _addAmount(amounts, USDT, curve3PoolVirtualPrice);
+        depositValue = _addBalanceToAmounts(
+            amounts,
+            DAI,
+            curve3PoolVirtualPrice
+        );
+        depositValue += _addBalanceToAmounts(
+            amounts,
+            USDC,
+            curve3PoolVirtualPrice
+        );
+        depositValue += _addBalanceToAmounts(
+            amounts,
+            USDT,
+            curve3PoolVirtualPrice
+        );
 
         uint256 minMintAmount = depositValue.mulTruncate(
             uint256(1e18) - MAX_SLIPPAGE
@@ -226,30 +301,53 @@ contract ConvexOUSDMetaStrategy is BaseConvexAMOStrategy {
         _deposit(threePoolLpBalance);
     }
 
-    function _addAmount(
+    function _addBalanceToAmounts(
         uint256[3] memory amounts,
         address usdAsset,
         uint256 curve3PoolVirtualPrice
     ) internal returns (uint256 depositValue) {
         uint256 balance = IERC20(usdAsset).balanceOf(address(this));
         if (balance > 0) {
-            (uint256 poolCoinIndex, uint256 assetDecimals) = _coinIndexDecimals(
-                usdAsset
-            );
-            // Set the amount on the asset we want to deposit
-            amounts[poolCoinIndex] = balance;
-            // Get value of deposit in Curve LP token to later determine
-            // the minMintAmount argument for add_liquidity
-            depositValue = balance.scaleBy(18, assetDecimals).divPrecisely(
+            depositValue = _addAmount(
+                balance,
+                amounts,
+                usdAsset,
                 curve3PoolVirtualPrice
             );
-            emit Deposit(usdAsset, address(lpToken), balance);
         }
+    }
+
+    function _addAmount(
+        uint256 amount,
+        uint256[3] memory amounts,
+        address usdAsset,
+        uint256 curve3PoolVirtualPrice
+    ) internal returns (uint256 depositValue) {
+        (uint256 poolCoinIndex, uint256 assetDecimals) = _coinIndexDecimals(
+            usdAsset
+        );
+        // Set the amount on the asset we want to deposit
+        amounts[poolCoinIndex] = amount;
+        // Get value of deposit in Curve LP token to later determine
+        // the minMintAmount argument for add_liquidity
+        depositValue = amount.scaleBy(18, assetDecimals).divPrecisely(
+            curve3PoolVirtualPrice
+        );
+        emit Deposit(usdAsset, address(lpToken), amount);
     }
 
     /***************************************
                 Curve Withdrawals
     ****************************************/
+
+    function withdraw(
+        address,
+        address[] memory _vaultAssets,
+        uint256[] memory
+    ) external override onlyVault onlyAssets(_vaultAssets) nonReentrant {
+        // TODO add support for withdrawing multiple 3Pool assets
+        revert("Not supported");
+    }
 
     /// @dev Converts all 3CRV in this strategy to the Vault assets DAI, USDC and USDT
     /// by removing liquidity from the Curve OUSD/3CRV Metapool.
@@ -264,6 +362,7 @@ contract ConvexOUSDMetaStrategy is BaseConvexAMOStrategy {
         _amounts[coinIndex] = vaultAssetAmount;
 
         // Remove just the specified vault asset from the 3Pool
+        // using all the previously removed 3CRV assets from the AMO pool
         curve3Pool.remove_liquidity_imbalance(
             _amounts,
             IERC20(asset).balanceOf(address(this))

@@ -28,15 +28,23 @@ abstract contract BaseAMOStrategy is InitializableAbstractStrategy {
     // Index position of oToken in AMO pool. For example
     // for OETH/ETH, OETH = 1
     // for OUSD/3CRV, OUSD = 0
+    // for frxETH/OUSD, OETH = 1
     uint128 public immutable oTokenCoinIndex;
     // Index position of asset in AMO pool. For example
     // for OETH/ETH, ETH = 0
     // for OUSD/3CRV, 3CRV = 1
+    // for frxETH/OUSD, frxETH = 0
     uint128 public immutable assetCoinIndex;
 
     /// @notice Validates the vault asset is supported by this strategy.
     modifier onlyAsset(address _vaultAsset) {
         require(_isVaultAsset(_vaultAsset), "Unsupported asset");
+        _;
+    }
+
+    /// @notice Validates all the vault assets are supported by this strategy.
+    modifier onlyAssets(address[] memory _vaultAssets) {
+        require(_isVaultAssets(_vaultAssets), "Unsupported assets");
         _;
     }
 
@@ -107,9 +115,10 @@ abstract contract BaseAMOStrategy is InitializableAbstractStrategy {
     ****************************************/
 
     /// @dev Validates the vault asset is supported by this strategy.
-    /// Default implementation is the vault asset matches the pool asset.
+    /// The default implementation is the vault asset matches the pool asset.
     /// This needs to be overriden for OUSD AMO as the vault assets are DAI, USDC and USDT
     /// while the pool asset is 3CRV.
+    /// @param _vaultAsset Address of the vault asset
     function _isVaultAsset(address _vaultAsset)
         internal
         view
@@ -117,6 +126,21 @@ abstract contract BaseAMOStrategy is InitializableAbstractStrategy {
         returns (bool supported)
     {
         supported = _vaultAsset == address(asset);
+    }
+
+    /// @dev Returns bool indicating whether all the assets are supported by this strategy.
+    /// The default implementation is the vault asset matches the pool asset.
+    /// This needs to be overriden for OUSD AMO as the vault assets are DAI, USDC and USDT
+    /// while the pool asset is 3CRV.
+    /// @param _vaultAssets Addresses of the vault assets
+    function _isVaultAssets(address[] memory _vaultAssets)
+        internal
+        view
+        virtual
+        returns (bool)
+    {
+        require(_vaultAssets.length == 1, "Only one asset supported");
+        return _isVaultAsset(_vaultAssets[0]);
     }
 
     /***************************************
@@ -253,19 +277,44 @@ abstract contract BaseAMOStrategy is InitializableAbstractStrategy {
     ****************************************/
 
     /**
-     * @notice Deposit an asset into the AMO pool
-     * @param _vaultAsset Address of the Vault asset token. eg WETH or frxETH
-     * @param _amount Amount of Vault asset tokens to deposit.
+     * @notice Deposit a vault asset into the AMO strategy.
+     * @param _vaultAsset Address of the vault asset token. eg WETH, frxETH, DAI, USDC or USDT
+     * @param _vaultAssetAmount Amount of vault asset tokens to deposit.
      */
-    function deposit(address _vaultAsset, uint256 _amount)
+    function deposit(address _vaultAsset, uint256 _vaultAssetAmount)
         external
         override
         onlyVault
         onlyAsset(_vaultAsset)
         nonReentrant
     {
-        emit Deposit(_vaultAsset, address(lpToken), _amount);
-        uint256 poolAssetAmount = _toPoolAsset(_vaultAsset, _amount);
+        emit Deposit(_vaultAsset, address(lpToken), _vaultAssetAmount);
+        uint256 poolAssetAmount = _toPoolAsset(_vaultAsset, _vaultAssetAmount);
+        _deposit(poolAssetAmount);
+    }
+
+    /**
+     * @notice Deposit multiple vault assets into the AMO strategy.
+     * @param _vaultAssets Addresses of the vault asset tokens. eg WETH, frxETH, DAI, USDC or USDT
+     * @param _vaultAssetAmounts Amounts of vault asset tokens to deposit.
+     * @dev Only the OUSD Curve AMO supports depositing multiple assets in DAI, USDC and USDT.
+     * The default implementation only supports a single asset and must be overriden for the OUSD AMO.
+     */
+    function deposit(
+        address[] memory _vaultAssets,
+        uint256[] memory _vaultAssetAmounts
+    ) external virtual onlyVault onlyAssets(_vaultAssets) nonReentrant {
+        // validate the number of assets matches the number of amounts
+        // The onlyAssets modified ensures the correct number of assets are supported.
+        // Most AMOs will be just one asset but for OUSD's 3CRV AMO it will be 3 assets.
+        require(
+            _vaultAssets.length == _vaultAssetAmounts.length,
+            "Assets and amounts mismatch"
+        );
+        uint256 poolAssetAmount = _toPoolAsset(
+            _vaultAssets[0],
+            _vaultAssetAmounts[0]
+        );
         _deposit(poolAssetAmount);
     }
 
@@ -348,10 +397,10 @@ abstract contract BaseAMOStrategy is InitializableAbstractStrategy {
     ****************************************/
 
     /**
-     * @notice Withdraw asset and OToken from the AMO pool, burn the OTokens,
-     * and transfer to the recipient.
-     * @param _recipient Address to receive withdrawn asset which is normally the Vault.
-     * @param _vaultAsset Address of the asset token. eg WETH or frxETH
+     * @notice Withdraw pool asset and OToken from the AMO pool, burn the OTokens,
+     * convert pool asset to vault asset and transfer the vault asset to the recipient.
+     * @param _recipient Address to receive withdrawn asset which is normally the vault or redeemer.
+     * @param _vaultAsset Address of the vault asset token. eg WETH, frxETH, DAI, USDC or USDT
      * @param _vaultAssetAmount Amount of vault asset tokens to withdraw.
      */
     function withdraw(
@@ -359,6 +408,38 @@ abstract contract BaseAMOStrategy is InitializableAbstractStrategy {
         address _vaultAsset,
         uint256 _vaultAssetAmount
     ) external override onlyVault onlyAsset(_vaultAsset) nonReentrant {
+        _withdraw(_recipient, _vaultAsset, _vaultAssetAmount);
+    }
+
+    /**
+     * @notice Withdraw pool asset and OToken from the AMO pool, burn the OTokens,
+     * convert pool asset to vault assets and transfer the vault assets to the recipient.
+     * @dev Only the OUSD Curve AMO supports withdrawing multiple assets in DAI, USDC and USDT.
+     * The default implementation only supports a single asset and must be overriden for the OUSD AMO.
+     * @param _recipient Address to receive withdrawn asset which is normally the vault or redeemer.
+     * @param _vaultAssets Addresses of the vault asset tokens. eg WETH, frxETH, DAI, USDC or USDT
+     * @param _vaultAssetAmounts Amounts of vault asset tokens to withdraw.
+     */
+    function withdraw(
+        address _recipient,
+        address[] memory _vaultAssets,
+        uint256[] memory _vaultAssetAmounts
+    ) external virtual onlyVault onlyAssets(_vaultAssets) nonReentrant {
+        // validate the number of assets matches the number of amounts
+        // The onlyAssets modified ensures the correct number of assets are supported.
+        // Most AMOs will be just one asset but for OUSD's 3CRV AMO it will be 3 assets.
+        require(
+            _vaultAssets.length == _vaultAssetAmounts.length,
+            "Assets and amounts mismatch"
+        );
+        _withdraw(_recipient, _vaultAssets[0], _vaultAssetAmounts[0]);
+    }
+
+    function _withdraw(
+        address _recipient,
+        address _vaultAsset,
+        uint256 _vaultAssetAmount
+    ) internal {
         require(_vaultAssetAmount > 0, "Invalid amount");
 
         // Calc required number of pool assets for specified number of vault assets
@@ -581,7 +662,7 @@ abstract contract BaseAMOStrategy is InitializableAbstractStrategy {
     ****************************************/
 
     /**
-     * @notice Returns bool indicating whether asset is supported by strategy
+     * @notice Returns bool indicating whether asset is supported by this strategy
      * @param _vaultAsset Address of the vault asset
      */
     function supportsAsset(address _vaultAsset)
