@@ -18,11 +18,11 @@ module.exports = deploymentWithGovernanceProposal(
 
     const cVault = await ethers.getContractAt(
       "IVault",
-      addresses.mainnet.VaultProxy
+      addresses.mainnet.OETHVaultProxy
     );
     const cHarvester = await ethers.getContractAt(
-      "Harvester",
-      addresses.mainnet.HarvesterProxy
+      "OETHHarvester",
+      addresses.mainnet.OETHHarvesterProxy
     );
 
     // Deploy the new proxy
