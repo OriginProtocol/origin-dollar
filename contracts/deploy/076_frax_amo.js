@@ -65,9 +65,9 @@ module.exports = deploymentWithGovernanceProposal(
     const poolId = await cConvexBooster.poolLength();
     console.log(`Convex pool id before ${poolId}`);
     await withConfirmation(
+      // prettier-ignore
       cConvexPoolManager
-        .connect(convexOperatorSigner)
-        ["addPool(address)"](addresses.mainnet.CurveFrxETHOETHGauge)
+        .connect(convexOperatorSigner)["addPool(address)"](addresses.mainnet.CurveFrxETHOETHGauge)
     );
     console.log(
       `Convex pool length after ${await cConvexBooster.poolLength()}`
