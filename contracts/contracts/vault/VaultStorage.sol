@@ -32,7 +32,7 @@ contract VaultStorage is Initializable, Governable {
     event RebasePaused();
     event RebaseUnpaused();
     event VaultBufferUpdated(uint256 _vaultBuffer);
-    event OusdMetaStrategyUpdated(address _ousdMetaStrategy);
+    event AMOStrategyUpdated(address _addr, bool _isAMO);
     event RedeemFeeUpdated(uint256 _redeemFeeBps);
     event PriceProviderUpdated(address _priceProvider);
     event AllocateThresholdUpdated(uint256 _threshold);
@@ -74,10 +74,12 @@ contract VaultStorage is Initializable, Governable {
     /// @dev list of all assets supported by the vault.
     address[] internal allAssets;
 
-    // Strategies approved for use by the Vault
+    /// @param isSupported flag if strategy is approved for use by the Vault
+    /// @param isAMO flag if AMO strategy that can mint and burn OTokens
     struct Strategy {
         bool isSupported;
-        uint256 _deprecated; // Deprecated storage slot
+        bool isAMO;
+        // uint256 _deprecated; // Deprecated unused storage slot
     }
     /// @dev mapping of strategy contracts to their configiration
     mapping(address => Strategy) internal strategies;
@@ -137,8 +139,8 @@ contract VaultStorage is Initializable, Governable {
 
     uint256 constant MINT_MINIMUM_UNIT_PRICE = 0.998e18;
 
-    /// @notice Metapool strategy that is allowed to mint/burn OTokens without changing collateral
-    address public ousdMetaStrategy = address(0);
+    /// @dev Deprecated: AMO strategy that is allowed to mint/burn OTokens without changing collateral
+    address private _deprecatedOusdMetaStrategy = address(0);
 
     /// @notice How much OTokens are currently minted by the strategy
     int256 public netOusdMintedForStrategy = 0;

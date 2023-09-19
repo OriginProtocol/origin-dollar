@@ -193,7 +193,7 @@ interface IVault {
 
     function netOusdMintForStrategyThreshold() external view returns (uint256);
 
-    function setOusdMetaStrategy(address _ousdMetaStrategy) external;
+    function setAMOStrategy(address _address, bool _isAMO) external;
 
     function setNetOusdMintForStrategyThreshold(uint256 _threshold) external;
 

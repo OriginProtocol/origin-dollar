@@ -57,11 +57,13 @@ addresses.mainnet.ThreePoolGauge = "0xbFcF63294aD7105dEa65aA58F8AE5BE2D9d0952A";
 // CVX
 addresses.mainnet.CVX = "0x4e3fbd56cd56c3e72c1403e103b45db9da5b9d2b";
 addresses.mainnet.CVXBooster = "0xF403C135812408BFbE8713b5A23a04b3D48AAE31";
+addresses.mainnet.ConvexPoolManager =
+  "0xc461E1CE3795Ee30bA2EC59843d5fAe14d5782D5";
 addresses.mainnet.CVXRewardsPool = "0x7D536a737C13561e0D2Decf1152a653B4e615158";
 addresses.mainnet.CVXETHRewardsPool =
   "0x24b65DC1cf053A8D96872c323d29e86ec43eB33A";
 addresses.mainnet.CVXFrxETHRewardsPool =
-  "0x24b65DC1cf053A8D96872c323d29e86ec43eB33A"; // TODO set once created
+  "0x633D3B227696B3FacF628a197f982eF68d26c7b5"; // TODO set once created
 // Maker Dai Savings Rate
 addresses.mainnet.sDAI = "0x83F20F44975D03b1b09e64809B757c47f942BEeA";
 // Open Oracle
@@ -129,6 +131,10 @@ addresses.mainnet.CompoundStrategyProxy =
   "0x12115A32a19e4994C2BA4A5437C22CEf5ABb59C3";
 addresses.mainnet.CompoundStrategy =
   "0xFaf23Bd848126521064184282e8AD344490BA6f0";
+
+// Curve
+addresses.mainnet.CurveGaugeController =
+  "0x2F50D538606Fa9EDD2B11E2446BEb18C9D5846bB";
 addresses.mainnet.CurveUSDCStrategyProxy =
   "0x67023c56548BA15aD3542E65493311F19aDFdd6d";
 addresses.mainnet.CurveUSDCStrategy =

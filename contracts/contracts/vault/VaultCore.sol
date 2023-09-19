@@ -44,11 +44,8 @@ contract VaultCore is VaultInitializer {
         _;
     }
 
-    modifier onlyOusdMetaStrategy() {
-        require(
-            msg.sender == ousdMetaStrategy,
-            "Caller is not the OUSD meta strategy"
-        );
+    modifier onlyAMOStrategies() {
+        require(strategies[msg.sender].isAMO, "Caller is not an AMO strategy");
         _;
     }
 
@@ -112,7 +109,7 @@ contract VaultCore is VaultInitializer {
     function mintForStrategy(uint256 _amount)
         external
         whenNotCapitalPaused
-        onlyOusdMetaStrategy
+        onlyAMOStrategies
     {
         require(_amount < MAX_INT, "Amount too high");
 
@@ -231,7 +228,7 @@ contract VaultCore is VaultInitializer {
     function burnForStrategy(uint256 _amount)
         external
         whenNotCapitalPaused
-        onlyOusdMetaStrategy
+        onlyAMOStrategies
     {
         require(_amount < MAX_INT, "Amount too high");
 

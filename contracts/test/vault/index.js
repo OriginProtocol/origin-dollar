@@ -587,14 +587,14 @@ describe("Vault", function () {
     ).to.be.revertedWith("Caller is not the Strategist or Governor");
   });
 
-  it("Should only allow metastrategy to mint oTokens and revert when threshold is reached.", async () => {
+  it("Should only allow AMO to mint oTokens and revert when threshold is reached.", async () => {
     const { vault, ousd, governor, anna, josh } = fixture;
 
     await vault
       .connect(governor)
       .setNetOusdMintForStrategyThreshold(ousdUnits("10"));
     // Approve anna address as an address allowed to mint OUSD without backing
-    await vault.connect(governor).setOusdMetaStrategy(anna.address);
+    await vault.connect(governor).setAMOStrategy(anna.address, true);
 
     await expect(
       vault.connect(anna).mintForStrategy(ousdUnits("11"))
@@ -604,7 +604,7 @@ describe("Vault", function () {
 
     await expect(
       vault.connect(josh).mintForStrategy(ousdUnits("9"))
-    ).to.be.revertedWith("Caller is not the OUSD meta strategy");
+    ).to.be.revertedWith("Caller is not an AMO strategy");
 
     await vault.connect(anna).mintForStrategy(ousdUnits("9"));
 
@@ -619,7 +619,7 @@ describe("Vault", function () {
       .setNetOusdMintForStrategyThreshold(ousdUnits("10"));
 
     // Approve anna address as an address allowed to mint OUSD without backing
-    await vault.connect(governor).setOusdMetaStrategy(anna.address);
+    await vault.connect(governor).setAMOStrategy(anna.address, true);
     await vault.connect(anna).mintForStrategy(ousdUnits("9"));
 
     // netOusdMintedForStrategy should be equal to amount minted

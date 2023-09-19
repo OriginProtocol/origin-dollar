@@ -131,7 +131,7 @@ describe.skip("Convex 3pool/OUSD Meta Strategy", function () {
         "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
       );
 
-      await vault.connect(governor).setOusdMetaStrategy(anna.address);
+      await vault.connect(governor).setAMOStrategy(anna.address, true);
 
       await expect(
         vault.connect(anna).mintForStrategy(MAX_UINT)
@@ -149,7 +149,7 @@ describe.skip("Convex 3pool/OUSD Meta Strategy", function () {
         "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
       );
 
-      await vault.connect(governor).setOusdMetaStrategy(anna.address);
+      await vault.connect(governor).setAMOStrategy(anna.address, true);
 
       await expect(
         vault.connect(anna).burnForStrategy(MAX_UINT)

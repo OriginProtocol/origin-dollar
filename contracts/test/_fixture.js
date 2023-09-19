@@ -992,7 +992,7 @@ async function convexMetaVaultFixture() {
     // set meta strategy on vault so meta strategy is allowed to mint OUSD
     await fixture.vault
       .connect(sGovernor)
-      .setOusdMetaStrategy(fixture.OUSDmetaStrategy.address);
+      .setAMOStrategy(fixture.OUSDmetaStrategy.address, true);
 
     // set OUSD mint threshold to 50 million
     await fixture.vault
@@ -1590,6 +1590,7 @@ async function convexFrxEthAmoFixture(
     oeth,
     oethVault,
     josh,
+    matt,
     strategist,
     timelock,
   } = fixture;
@@ -1646,6 +1647,22 @@ async function convexFrxEthAmoFixture(
     curveOethEthPoolAbi,
     addresses.mainnet.CurveFrxETHOETHPool
   );
+
+  // Mint some OETH
+  const smallAmount = parseUnits("1");
+  await frxETH.connect(matt).approve(oethVault.address, smallAmount.mul(2));
+  await oethVault.connect(matt).mint(frxETH.address, smallAmount.mul(2), 0);
+
+  // Add some frxETH and OETH to the Curve pool
+  await frxETH
+    .connect(matt)
+    .approve(fixture.curveFrxEthOethPool.address, smallAmount);
+  await oeth
+    .connect(matt)
+    .approve(fixture.curveFrxEthOethPool.address, smallAmount);
+  // prettier-ignore
+  await fixture.curveFrxEthOethPool
+    .connect(matt)["add_liquidity(uint256[2],uint256)"]([smallAmount, smallAmount], 0);
 
   // mint some OETH using frxETH if configured
   if (config?.frxEthMintAmount > 0) {

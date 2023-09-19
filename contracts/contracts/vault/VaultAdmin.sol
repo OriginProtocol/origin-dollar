@@ -104,7 +104,7 @@ contract VaultAdmin is VaultInitializer {
      * @notice Set the default Strategy for an asset, i.e. the one which the asset
             will be automatically allocated to and withdrawn from
      * @param _asset Address of the asset
-     * @param _strategy Address of the Strategy
+     * @param _strategy Address of the strategy contract or zero address if removing
      */
     function setAssetDefaultStrategy(address _asset, address _strategy)
         external
@@ -362,7 +362,7 @@ contract VaultAdmin is VaultInitializer {
      */
     function approveStrategy(address _addr) external onlyGovernor {
         require(!strategies[_addr].isSupported, "Strategy already approved");
-        strategies[_addr] = Strategy({ isSupported: true, _deprecated: 0 });
+        strategies[_addr] = Strategy({ isSupported: true, isAMO: false });
         allStrategies.push(_addr);
         emit StrategyApproved(_addr);
     }
@@ -527,15 +527,16 @@ contract VaultAdmin is VaultInitializer {
     }
 
     /**
-     * @notice Set OToken Metapool strategy
-     * @param _ousdMetaStrategy Address of OToken metapool strategy
+     * @notice Flag if a strategy is an AMO that is allowed to mint/burn OTokens.
+     * @param _strategyAddress Address of the strategy
+     * @param _isAMO true if AMO strategy
      */
-    function setOusdMetaStrategy(address _ousdMetaStrategy)
+    function setAMOStrategy(address _strategyAddress, bool _isAMO)
         external
         onlyGovernor
     {
-        ousdMetaStrategy = _ousdMetaStrategy;
-        emit OusdMetaStrategyUpdated(_ousdMetaStrategy);
+        strategies[_strategyAddress].isAMO = _isAMO;
+        emit AMOStrategyUpdated(_strategyAddress, _isAMO);
     }
 
     /***************************************
