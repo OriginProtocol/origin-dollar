@@ -5,10 +5,7 @@ const { run } = require("hardhat");
 const addresses = require("../../utils/addresses");
 const { oethPoolLpPID } = require("../../utils/constants");
 const { units, oethUnits, forkOnlyDescribe, isCI } = require("../helpers");
-const {
-  createFixtureLoader,
-  convexOETHMetaVaultFixture,
-} = require("../_fixture");
+const { createFixtureLoader, convexOethAmoFixture } = require("../_fixture");
 
 const log = require("../../utils/logger")("test:fork:oeth:amo:curve");
 
@@ -20,7 +17,7 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Strategy", function () {
   let fixture;
 
   describe("with mainnet data", () => {
-    const loadFixture = createFixtureLoader(convexOETHMetaVaultFixture);
+    const loadFixture = createFixtureLoader(convexOethAmoFixture);
     beforeEach(async () => {
       fixture = await loadFixture();
     });
@@ -122,7 +119,7 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Strategy", function () {
   });
 
   describe("with some WETH in the vault", () => {
-    const loadFixture = createFixtureLoader(convexOETHMetaVaultFixture, {
+    const loadFixture = createFixtureLoader(convexOethAmoFixture, {
       wethMintAmount: 5000,
       depositToStrategy: false,
     });
@@ -249,7 +246,7 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Strategy", function () {
   });
 
   describe("with the strategy having some OETH and ETH in the Metapool", () => {
-    const loadFixture = createFixtureLoader(convexOETHMetaVaultFixture, {
+    const loadFixture = createFixtureLoader(convexOethAmoFixture, {
       wethMintAmount: 5000,
       depositToStrategy: true,
     });
@@ -429,7 +426,7 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Strategy", function () {
   });
 
   describe("with a lot more OETH in the Metapool", () => {
-    const loadFixture = createFixtureLoader(convexOETHMetaVaultFixture, {
+    const loadFixture = createFixtureLoader(convexOethAmoFixture, {
       wethMintAmount: 5000,
       depositToStrategy: false,
       poolAddOethAmount: 4000,
@@ -466,7 +463,7 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Strategy", function () {
   });
 
   describe("with a lot more ETH in the Metapool", () => {
-    const loadFixture = createFixtureLoader(convexOETHMetaVaultFixture, {
+    const loadFixture = createFixtureLoader(convexOethAmoFixture, {
       wethMintAmount: 5000,
       depositToStrategy: false,
       poolAddEthAmount: 200000,
@@ -504,7 +501,7 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Strategy", function () {
   });
 
   describe("with a little more ETH in the Metapool", () => {
-    const loadFixture = createFixtureLoader(convexOETHMetaVaultFixture, {
+    const loadFixture = createFixtureLoader(convexOethAmoFixture, {
       wethMintAmount: 5000,
       depositToStrategy: false,
       poolAddEthAmount: 8000,
@@ -557,7 +554,7 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Strategy", function () {
   });
 
   describe("with a little more OETH in the Metapool", () => {
-    const loadFixture = createFixtureLoader(convexOETHMetaVaultFixture, {
+    const loadFixture = createFixtureLoader(convexOethAmoFixture, {
       wethMintAmount: 5000,
       depositToStrategy: false,
       poolAddOethAmount: 100,

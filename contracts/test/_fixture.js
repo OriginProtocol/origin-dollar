@@ -1422,9 +1422,9 @@ async function convexLUSDMetaVaultFixture() {
 }
 
 /**
- * Configure a Vault with only the OETH/(W)ETH Curve Metastrategy.
+ * Configure a Vault with only the AMO strategy for the Curve OETH/ETH pool.
  */
-async function convexOETHMetaVaultFixture(
+async function convexOethAmoFixture(
   config = {
     wethMintAmount: 0,
     depositToStrategy: false,
@@ -1520,7 +1520,7 @@ async function convexOETHMetaVaultFixture(
     }
   }
 
-  // Add ETH to the Metapool
+  // Add ETH to the Curve pool
   if (config?.poolAddEthAmount > 0) {
     // Fund Josh with ETH plus some extra for gas fees
     const fundAmount = config.poolAddEthAmount + 1;
@@ -1537,7 +1537,7 @@ async function convexOETHMetaVaultFixture(
   const { oethWhaleAddress } = addresses.mainnet;
   fixture.oethWhale = await impersonateAndFundContract(oethWhaleAddress);
 
-  // Add OETH to the Metapool
+  // Add OETH to the Curve pool
   if (config?.poolAddOethAmount > 0) {
     const poolAddOethAmountUnits = parseUnits(
       config.poolAddOethAmount.toString()
@@ -1851,12 +1851,12 @@ async function replaceContractAt(targetAddress, mockContract) {
  * Hardhat will reset the state of the network to what it was at the point after the fixture was initially executed.
  * The returned `loadFixture` function is typically inlcuded in the beforeEach().
  * @example
- *   const loadFixture = createFixtureLoader(convexOETHMetaVaultFixture);
+ *   const loadFixture = createFixtureLoader(convexOethAmoFixture);
  *   beforeEach(async () => {
  *     fixture = await loadFixture();
  *   });
  * @example
- *   const loadFixture = createFixtureLoader(convexOETHMetaVaultFixture, {
+ *   const loadFixture = createFixtureLoader(convexOethAmoFixture, {
  *     wethMintAmount: 5000,
  *     depositToStrategy: false,
  *   });
@@ -1900,7 +1900,7 @@ module.exports = {
   threepoolVaultFixture,
   convexVaultFixture,
   convexMetaVaultFixture,
-  convexOETHMetaVaultFixture,
+  convexOethAmoFixture,
   convexGeneralizedMetaForkedFixture,
   convexLUSDMetaVaultFixture,
   makerDsrFixture,

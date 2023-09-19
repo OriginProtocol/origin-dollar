@@ -76,7 +76,7 @@ module.exports = deploymentWithGovernanceProposal(
                 await getTxOpts()
               )
           );
-    console.log("Initialized FluxStrategy");
+    console.log("Initialized Curve frxETH/ETH AMO Strategy");
 
     // Governance Actions
     // ----------------
