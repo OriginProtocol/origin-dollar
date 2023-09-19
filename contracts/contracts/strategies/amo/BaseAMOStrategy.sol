@@ -513,17 +513,18 @@ abstract contract BaseAMOStrategy is InitializableAbstractStrategy {
         // Withdraws are proportional to assets held by 3Pool
         uint256[2] memory minWithdrawAmounts = [uint256(0), uint256(0)];
 
-        // Remove liquidity
-        _removeLiquidityFromPool(
-            lpToken.balanceOf(address(this)),
-            minWithdrawAmounts
-        );
+        // Only withdraw from pool if the strategy has assets in the pool
+        uint256 poolLpTokens = lpToken.balanceOf(address(this));
+        if (poolLpTokens > 0) {
+            // Remove liquidity from the pool
+            _removeLiquidityFromPool(poolLpTokens, minWithdrawAmounts);
 
-        // Burn all the OTokens. eg OETH
-        uint256 oTokenToBurn = oToken.balanceOf(address(this));
-        IVault(vaultAddress).burnForStrategy(oTokenToBurn);
+            // Burn all the OTokens. eg OETH or OUSD
+            uint256 oTokenToBurn = oToken.balanceOf(address(this));
+            IVault(vaultAddress).burnForStrategy(oTokenToBurn);
 
-        emit Withdrawal(address(oToken), address(lpToken), oTokenToBurn);
+            emit Withdrawal(address(oToken), address(lpToken), oTokenToBurn);
+        }
 
         // Convert all the pool assets in this strategy to Vault assets
         // and transfer them to the vault.
