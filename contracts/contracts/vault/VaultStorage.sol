@@ -82,6 +82,7 @@ contract VaultStorage is Initializable, Governable {
         // uint256 _deprecated; // Deprecated unused storage slot
     }
     /// @dev mapping of strategy contracts to their configiration
+    // slither-disable-next-line uninitialized-state
     mapping(address => Strategy) internal strategies;
     /// @dev list of all vault strategies
     address[] internal allStrategies;
@@ -140,7 +141,8 @@ contract VaultStorage is Initializable, Governable {
     uint256 constant MINT_MINIMUM_UNIT_PRICE = 0.998e18;
 
     /// @dev Deprecated: AMO strategy that is allowed to mint/burn OTokens without changing collateral
-    address private _deprecatedOusdMetaStrategy = address(0);
+    // slither-disable-next-line constable-states
+    address private _deprecatedOusdMetaStrategy;
 
     /// @notice How much OTokens are currently minted by the strategy
     int256 public netOusdMintedForStrategy = 0;
