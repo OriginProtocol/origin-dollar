@@ -2,7 +2,7 @@ const { BigNumber } = require("ethers");
 const { formatUnits, parseUnits } = require("ethers/lib/utils");
 
 const ousdPoolAbi = require("../test/abi/ousdMetapool.json");
-const oethPoolAbi = require("../test/abi/oethMetapool.json");
+const oethPoolAbi = require("../test/abi/curveOethEthPool.json");
 const addresses = require("../utils/addresses");
 const { resolveAsset } = require("../utils/assets");
 const { getDiffBlocks } = require("./block");

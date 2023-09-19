@@ -157,9 +157,9 @@ addresses.mainnet.CurveOETHGauge = "0xd03BE91b1932715709e18021734fcB91BB431715";
 // OETH AMO for Curve frxETH/OETH pool
 addresses.mainnet.ConvexFraxAMOStrategy = ""; // TODO set once deployed
 addresses.mainnet.CurveFrxETHOETHPool =
-  "0xfa0bbb0a5815f6648241c9221027b70914dd8949";
+  "0xfa0BBB0A5815F6648241C9221027b70914dd8949";
 addresses.mainnet.CurveFrxETHOETHGauge =
-  "0x8584d7f7bf9803d45e8df75afe824f1ae83c6256";
+  "0x8584d7F7bf9803d45e8df75Afe824f1Ae83C6256";
 
 // Morpho
 addresses.mainnet.MorphoStrategyProxy =
