@@ -41,8 +41,8 @@ forkOnlyDescribe("ForkTest: Oracle Routers", function () {
       const { stETH } = fixture;
 
       const price = await oethOracleRouter.price(stETH.address);
-      expect(price).to.approxEqualTolerance(parseUnits("1", 18), 1);
-      expect(price).to.not.eq(parseUnits("1", 18));
+      expect(price).to.lte(parseUnits("1", 18));
+      expect(price).to.gt(parseUnits("0.99", 18));
     });
     it("should get gas costs of assets", async () => {
       const { reth, frxETH, stETH, weth, josh } = fixture;
