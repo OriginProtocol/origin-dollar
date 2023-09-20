@@ -826,12 +826,15 @@ async function calcOethWithdrawAmount(fixture, frxEthWithdrawAmount) {
 
 // Calculate the OETH and frxETH amounts from a withdrawAll
 async function calcWithdrawAllAmounts(fixture) {
-  const { convexFrxETHAMOStrategy, cvxRewardPool, curveFrxEthOethPool } =
-    fixture;
+  const {
+    convexFrxETHAMOStrategy,
+    convexFrxEthOethRewardsPool,
+    curveFrxEthOethPool,
+  } = fixture;
 
   // Get the frxETH and OETH balances in the Curve pool
   const curveBalances = await curveFrxEthOethPool.get_balances();
-  const strategyLpAmount = await cvxRewardPool.balanceOf(
+  const strategyLpAmount = await convexFrxEthOethRewardsPool.balanceOf(
     convexFrxETHAMOStrategy.address
   );
   const totalLpSupply = await curveFrxEthOethPool.totalSupply();

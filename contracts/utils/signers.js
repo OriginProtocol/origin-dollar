@@ -57,25 +57,35 @@ async function getSigner(address) {
 async function impersonateAccount(account) {
   log(`Impersonating account ${account}`);
 
-  await hre.network.provider.request({
-    method: "hardhat_impersonateAccount",
-    params: [account],
-  });
+  try {
+    await hre.network.provider.request({
+      method: "hardhat_impersonateAccount",
+      params: [account],
+    });
 
-  return await ethers.provider.getSigner(account);
+    return await ethers.provider.getSigner(account);
+  } catch (err) {
+    throw Error(`Failed to impersonate ${account}: ${err}`, { cause: err });
+  }
 }
 
 async function _hardhatSetBalance(address, amount = "10000") {
-  await hre.network.provider.request({
-    method: "hardhat_setBalance",
-    params: [
-      address,
-      parseEther(amount)
-        .toHexString()
-        .replace(/^0x0+/, "0x")
-        .replace(/0$/, "1"),
-    ],
-  });
+  try {
+    await hre.network.provider.request({
+      method: "hardhat_setBalance",
+      params: [
+        address,
+        parseEther(amount)
+          .toHexString()
+          .replace(/^0x0+/, "0x")
+          .replace(/0$/, "1"),
+      ],
+    });
+  } catch (err) {
+    throw Error(`Failed to fund ${address} with ${amount} ETH: ${err}`, {
+      cause: err,
+    });
+  }
 }
 
 /**

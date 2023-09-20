@@ -63,7 +63,7 @@ addresses.mainnet.CVXRewardsPool = "0x7D536a737C13561e0D2Decf1152a653B4e615158";
 addresses.mainnet.CVXETHRewardsPool =
   "0x24b65DC1cf053A8D96872c323d29e86ec43eB33A";
 addresses.mainnet.CVXFrxETHRewardsPool =
-  "0x633D3B227696B3FacF628a197f982eF68d26c7b5"; // TODO set once created
+  "0x890648e84780B94E1242CFF7912849240565FD4b"; // TODO set once created
 // Maker Dai Savings Rate
 addresses.mainnet.sDAI = "0x83F20F44975D03b1b09e64809B757c47f942BEeA";
 // Open Oracle
