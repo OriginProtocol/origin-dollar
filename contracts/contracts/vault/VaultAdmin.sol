@@ -128,7 +128,7 @@ contract VaultAdmin is VaultInitializer {
 
     /**
      * @notice Set maximum amount of OTokens that can at any point be minted and deployed
-     * to strategy (used only by ConvexOUSDMetaStrategy for now).
+     * to strategy (used by the AMO strategies for now).
      * @param _threshold OToken amount with 18 fixed decimals.
      */
     function setNetOusdMintForStrategyThreshold(uint256 _threshold)

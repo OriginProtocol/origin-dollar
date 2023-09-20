@@ -81,9 +81,9 @@ contract VaultStorage is Initializable, Governable {
         bool isAMO;
         // uint256 _deprecated; // Deprecated unused storage slot
     }
-    /// @dev mapping of strategy contracts to their configiration
+    /// @notice strategy configiration. ie is supported and is AMO
     // slither-disable-next-line uninitialized-state
-    mapping(address => Strategy) internal strategies;
+    mapping(address => Strategy) public strategies;
     /// @dev list of all vault strategies
     address[] internal allStrategies;
 

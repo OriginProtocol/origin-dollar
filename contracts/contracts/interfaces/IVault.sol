@@ -79,8 +79,6 @@ interface IVault {
 
     function trusteeFeeBps() external view returns (uint256);
 
-    function ousdMetaStrategy() external view returns (address);
-
     function setSwapper(address _swapperAddr) external;
 
     function setSwapAllowedUndervalue(uint16 _percentageBps) external;
@@ -188,6 +186,11 @@ interface IVault {
     function allowedSwapUndervalue() external view returns (uint256);
 
     function getAllStrategies() external view returns (address[] memory);
+
+    function strategies(address _addr)
+        external
+        view
+        returns (VaultStorage.Strategy memory);
 
     function isSupportedAsset(address _asset) external view returns (bool);
 

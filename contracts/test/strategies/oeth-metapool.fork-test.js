@@ -49,6 +49,15 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Strategy", function () {
         addresses.mainnet.WETH
       );
     });
+    it("Should have AMO strategy configured in the vault", async () => {
+      const { oethVault } = fixture;
+
+      const strategyConfig = await oethVault.strategies(
+        addresses.mainnet.ConvexOETHAMOStrategy
+      );
+      expect(strategyConfig.isSupported).to.be.true;
+      expect(strategyConfig.isAMO).to.be.true;
+    });
     it("Should be able to check balance", async () => {
       const { weth, josh, convexEthMetaStrategy } = fixture;
 
@@ -583,7 +592,9 @@ async function assertRemoveAndBurn(lpAmount, fixture) {
   const oethSupplyBefore = await oeth.totalSupply();
 
   log(
-    `Before remove and burn of ${formatUnits(lpAmount)} OETH from the Curve pool`
+    `Before remove and burn of ${formatUnits(
+      lpAmount
+    )} OETH from the Curve pool`
   );
   await run("amoStrat", {
     pool: "OETH",

@@ -77,11 +77,13 @@ forkOnlyDescribe("ForkTest: Vault", function () {
       );
     });
 
-    it("Should have the correct OUSD MetaStrategy address set", async () => {
+    it("Should have AMO strategy configured in the vault", async () => {
       const { vault } = fixture;
-      expect(await vault.ousdMetaStrategy()).to.equal(
+      const strategyConfig = await vault.strategies(
         addresses.mainnet.ConvexOUSDAMOStrategy
       );
+      expect(strategyConfig.isSupported).to.be.true;
+      expect(strategyConfig.isAMO).to.be.true;
     });
 
     it("Should have supported assets", async () => {

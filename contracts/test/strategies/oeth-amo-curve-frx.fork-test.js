@@ -49,6 +49,15 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve frxETH/OETH Strategy", function () {
         addresses.mainnet.frxETH
       );
     });
+    it("Should have AMO strategy configured in the vault", async () => {
+      const { oethVault, convexFrxETHAMOStrategy } = fixture;
+
+      const strategyConfig = await oethVault.strategies(
+        convexFrxETHAMOStrategy.address
+      );
+      expect(strategyConfig.isSupported).to.be.true;
+      expect(strategyConfig.isAMO).to.be.true;
+    });
     it("Should be able to check balance", async () => {
       const { frxETH, josh, convexFrxETHAMOStrategy } = fixture;
 

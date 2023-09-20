@@ -161,7 +161,8 @@ addresses.mainnet.CurveOETHMetaPool =
 addresses.mainnet.CurveOETHGauge = "0xd03BE91b1932715709e18021734fcB91BB431715";
 
 // OETH AMO for Curve frxETH/OETH pool
-addresses.mainnet.ConvexFraxAMOStrategy = ""; // TODO set once deployed
+addresses.mainnet.ConvexFraxAMOStrategy =
+  "0x1ce298Ec5FE0B1E4B04fb78d275Da6280f6e82A3"; // TODO set once deployed
 addresses.mainnet.CurveFrxETHOETHPool =
   "0xfa0BBB0A5815F6648241C9221027b70914dd8949";
 addresses.mainnet.CurveFrxETHOETHGauge =
