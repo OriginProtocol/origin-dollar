@@ -109,6 +109,53 @@ rewardPool.withdraw(10000000000000000000, oeth_vault_admin, oeth_vault_admin, ST
 
 
 # DEPOSIT INTO COMPOSABLE POOL
+# wstETH/sfrxETH/eETH Composable stable pool
+pool_id=0x42ed016f826165c2e5976fe5bc3df540c5ad0af700000000000000000000058b
+# BPT address
+platform_address="0x42ED016F826165C2e5976fe5bC3df540C5aD0Af7"
+amount=10
+amountsIn = [0,0,0, 10 * 10**18]
+# without BPT address
+amountsInBPT = [0, 0, 10 * 10**18]
+reth.approve(ba_vault.address, 10**50, STD)
+
+tx_join = ba_vault.joinPool(
+  pool_id,
+  oeth_vault_admin.address, #sender
+  oeth_vault_admin.address, #recipient
+  [
+    # tokens need to be sorted numerically
+    [platform_address, wsteth.address, sfrxeth.address, reth.address], # assets
+    # indexes match above assets
+    amountsIn, # min amounts in
+    balancerUserDataEncoder.userDataExactTokenInForBPTOut.encode_input(1, amountsInBPT, amount * 10**18 * 0.9)[10:],
+    False, #fromInternalBalance
+  ],
+  STD
+)
+
+# should be all 0 since user encoded data will already have min amounts, that
+# can because of the rounding error actually be smaller than min amounts encoded
+# in the user data. (1 wei off)
+amountsOut = [0,0,0, 0]
+# without BPT address
+amountsOutBPT = [0, 0, 8 * 10**18]
+tx_join = ba_vault.exitPool(
+  pool_id,
+  oeth_vault_admin.address, #sender
+  oeth_vault_admin.address, #recipient
+  [
+    # tokens need to be sorted numerically
+    [platform_address, wsteth.address, sfrxeth.address, reth.address], # assets
+    # indexes match above assets
+    amountsOut, # min amounts out
+    balancerUserDataEncoder.userDataBPTinForExactTokensOut.encode_input(2, amountsOutBPT, amount * 10**18 * 0.9)[10:],
+    False, #fromInternalBalance
+  ],
+  STD
+)
+
+
 
 
 

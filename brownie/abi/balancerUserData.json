@@ -68,5 +68,30 @@
     "payable": false,
     "stateMutability": "nonpayable",
     "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "joinKind",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256[]",
+        "name": "amountsOut",
+        "type": "uint256[]"
+      },
+      {
+        "internalType": "uint256",
+        "name": "maxBPTAmountIn",
+        "type": "uint256"
+      }
+    ],
+    "name": "userDataBPTinForExactTokensOut",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
   }
 ]
