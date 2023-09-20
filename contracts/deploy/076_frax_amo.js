@@ -63,7 +63,6 @@ module.exports = deploymentWithGovernanceProposal(
     );
 
     const poolId = await cConvexBooster.poolLength();
-    console.log(`Convex pool id before ${poolId}`);
     await withConfirmation(
       // prettier-ignore
       cConvexPoolManager
@@ -74,6 +73,7 @@ module.exports = deploymentWithGovernanceProposal(
     );
     console.log(`Convex pool info for frxETH/OETH pool:`);
     const info = await cConvexBooster.poolInfo(poolId);
+    console.log(`pool ID: ${poolId}`);
     console.log(`crvRewards: ${info.crvRewards}`);
     console.log(`lptoken: ${info.lptoken}`);
     console.log(`token: ${info.token}`);
@@ -188,16 +188,22 @@ module.exports = deploymentWithGovernanceProposal(
         // 4. Approve the new frxETH AMO strategy in the OETH Vault
         {
           contract: cVault,
-          signature: "approveStrategy(address,bool)",
+          signature: "approveStrategy(address)",
+          args: [cConvexFrxETHAMOStrategy.address],
+        },
+        // 5. Flag the new AMO strategy for Curve frxETH/OETH pool to be an AMO in the OETH Vault
+        {
+          contract: cVault,
+          signature: "setAMOStrategy(address,bool)",
           args: [cConvexFrxETHAMOStrategy.address, true],
         },
-        // 5. Add the new frxETH AMO strategy to the OETH Harvester
+        // 6. Add the new frxETH AMO strategy to the OETH Harvester
         {
           contract: cHarvester,
           signature: "setSupportedStrategy(address,bool)",
           args: [cConvexFrxETHAMOStrategy.address, true],
         },
-        // 6. Set the harvester address on the new frxETH AMO strategy
+        // 7. Set the harvester address on the new frxETH AMO strategy
         {
           contract: cConvexFrxETHAMOStrategy,
           signature: "setHarvesterAddress(address)",
