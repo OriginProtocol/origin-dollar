@@ -52,11 +52,13 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Strategy", function () {
     it("Should have AMO strategy configured in the vault", async () => {
       const { oethVault } = fixture;
 
-      const strategyConfig = await oethVault.strategies(
+      const config = await oethVault.getStrategyConfig(
         addresses.mainnet.ConvexOETHAMOStrategy
       );
-      expect(strategyConfig.isSupported).to.be.true;
-      expect(strategyConfig.isAMO).to.be.true;
+      expect(config.isSupported).to.be.true;
+      expect(config.isAMO).to.be.true;
+      expect(config.mintForStrategy).to.eq(0);
+      expect(config.mintForStrategyThreshold).to.be.eq(parseUnits("500", 21));
     });
     it("Should be able to check balance", async () => {
       const { weth, josh, convexEthMetaStrategy } = fixture;

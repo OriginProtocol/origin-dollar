@@ -1,3 +1,5 @@
+const { parseUnits } = require("ethers/lib/utils");
+
 const addresses = require("../utils/addresses");
 const { frxEthPoolLpPID } = require("../utils/constants");
 const { deploymentWithGovernanceProposal } = require("../utils/deploy");
@@ -185,25 +187,37 @@ module.exports = deploymentWithGovernanceProposal(
           signature: "setAMOStrategy(address,bool)",
           args: [cConvexEthMetaStrategy.address, true],
         },
-        // 4. Approve the new frxETH AMO strategy in the OETH Vault
+        // 4. Reset the mint threshold for the old AMO strategy as its storage has changed
+        {
+          contract: cVault,
+          signature: "setMintForStrategyThreshold(address,uint256)",
+          args: [cConvexEthMetaStrategy.address, parseUnits("25000")],
+        },
+        // 5. Approve the new frxETH AMO strategy in the OETH Vault
         {
           contract: cVault,
           signature: "approveStrategy(address)",
           args: [cConvexFrxETHAMOStrategy.address],
         },
-        // 5. Flag the new AMO strategy for Curve frxETH/OETH pool to be an AMO in the OETH Vault
+        // 6. Flag the new AMO strategy for Curve frxETH/OETH pool to be an AMO in the OETH Vault
         {
           contract: cVault,
           signature: "setAMOStrategy(address,bool)",
           args: [cConvexFrxETHAMOStrategy.address, true],
         },
-        // 6. Add the new frxETH AMO strategy to the OETH Harvester
+        // 7. Set the mint threshold for the new frxETH AMO strategy
+        {
+          contract: cVault,
+          signature: "setMintForStrategyThreshold(address,uint256)",
+          args: [cConvexFrxETHAMOStrategy.address, parseUnits("25000")],
+        },
+        // 8. Add the new frxETH AMO strategy to the OETH Harvester
         {
           contract: cHarvester,
           signature: "setSupportedStrategy(address,bool)",
           args: [cConvexFrxETHAMOStrategy.address, true],
         },
-        // 7. Set the harvester address on the new frxETH AMO strategy
+        // 9. Set the harvester address on the new frxETH AMO strategy
         {
           contract: cConvexFrxETHAMOStrategy,
           signature: "setHarvesterAddress(address)",

@@ -128,15 +128,16 @@ contract VaultAdmin is VaultInitializer {
 
     /**
      * @notice Set maximum amount of OTokens that can at any point be minted and deployed
-     * to strategy (used by the AMO strategies for now).
+     * to a strategy. This is only used by the AMO strategies for now.
+     * @param _strategy Address of the strategy contract
      * @param _threshold OToken amount with 18 fixed decimals.
      */
-    function setNetOusdMintForStrategyThreshold(uint256 _threshold)
+    function setMintForStrategyThreshold(address _strategy, uint256 _threshold)
         external
         onlyGovernor
     {
         /**
-         * Because `netOusdMintedForStrategy` check in vault core works both ways
+         * Because `mintedForStrategy` check in vault core works both ways
          * (positive and negative) the actual impact of the amount of OToken minted
          * could be double the threshold. E.g.:
          *  - contract has threshold set to 100
@@ -149,9 +150,14 @@ contract VaultAdmin is VaultInitializer {
          * amount and not have problems with current netOusdMinted being near
          * limits on either side.
          */
-        netOusdMintedForStrategy = 0;
-        netOusdMintForStrategyThreshold = _threshold;
-        emit NetOusdMintForStrategyThresholdChanged(_threshold);
+        // read from storage
+        Strategy memory strategyConfig = strategies[_strategy];
+        strategyConfig.mintForStrategy = int96(0);
+        strategyConfig.mintForStrategyThreshold = toInt96(_threshold);
+        // write back to storage
+        strategies[_strategy] = strategyConfig;
+
+        emit MintForStrategyThresholdChanged(_strategy, _threshold);
     }
 
     /***************************************
@@ -362,7 +368,12 @@ contract VaultAdmin is VaultInitializer {
      */
     function approveStrategy(address _addr) external onlyGovernor {
         require(!strategies[_addr].isSupported, "Strategy already approved");
-        strategies[_addr] = Strategy({ isSupported: true, isAMO: false });
+        strategies[_addr] = Strategy({
+            isSupported: true,
+            isAMO: false,
+            mintForStrategy: 0,
+            mintForStrategyThreshold: 0
+        });
         allStrategies.push(_addr);
         emit StrategyApproved(_addr);
     }

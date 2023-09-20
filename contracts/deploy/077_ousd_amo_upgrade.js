@@ -1,3 +1,5 @@
+const { parseUnits } = require("ethers/lib/utils");
+
 const addresses = require("../utils/addresses");
 const { metapoolLPCRVPid } = require("../utils/constants");
 const { deploymentWithGovernanceProposal } = require("../utils/deploy");
@@ -79,7 +81,13 @@ module.exports = deploymentWithGovernanceProposal(
         {
           contract: cVault,
           signature: "setAMOStrategy(address,bool)",
-          args: [dConvexOUSDMetaStrategy.address, true],
+          args: [cConvexOUSDMetaStrategyProxy.address, true],
+        },
+        // 4. Reset the mint threshold for the old AMO strategy as its storage has changed to 50m
+        {
+          contract: cVault,
+          signature: "setMintForStrategyThreshold(address,uint256)",
+          args: [cConvexOUSDMetaStrategyProxy.address, parseUnits("50", 24)],
         },
         // Upgrade the OUSD AMO strategy proxy to the new strategy implementation
         {

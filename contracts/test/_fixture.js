@@ -997,7 +997,10 @@ async function convexMetaVaultFixture() {
     // set OUSD mint threshold to 50 million
     await fixture.vault
       .connect(sGovernor)
-      .setNetOusdMintForStrategyThreshold(parseUnits("50", 24));
+      .setMintForStrategyThreshold(
+        fixture.OUSDmetaStrategy.address,
+        parseUnits("50", 24)
+      );
 
     await fixture.harvester
       .connect(sGovernor)
@@ -1486,7 +1489,10 @@ async function convexOethAmoFixture(
   // Update the strategy threshold to 500k ETH
   await oethVault
     .connect(timelock)
-    .setNetOusdMintForStrategyThreshold(parseUnits("500", 21));
+    .setMintForStrategyThreshold(
+      convexEthMetaStrategy.address,
+      parseUnits("500", 21)
+    );
 
   // Impersonate the OETH Vault
   fixture.oethVaultSigner = await impersonateAndFundContract(oethVault.address);
@@ -1628,7 +1634,10 @@ async function convexFrxEthAmoFixture(
   // Update the strategy threshold to 500k ETH
   await oethVault
     .connect(timelock)
-    .setNetOusdMintForStrategyThreshold(parseUnits("500", 21));
+    .setMintForStrategyThreshold(
+      convexFrxETHAMOStrategy.address,
+      parseUnits("500", 21)
+    );
 
   // Impersonate the OETH Vault
   fixture.oethVaultSigner = await impersonateAndFundContract(oethVault.address);

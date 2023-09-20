@@ -25,6 +25,10 @@ interface IVault {
     event YieldDistribution(address _to, uint256 _yield, uint256 _fee);
     event TrusteeFeeBpsChanged(uint256 _basis);
     event TrusteeAddressChanged(address _address);
+    event MintForStrategyThresholdChanged(
+        address _strategy,
+        uint256 _threshold
+    );
     event SwapperChanged(address _address);
     event SwapAllowedUndervalueChanged(uint256 _basis);
     event SwapSlippageChanged(address _asset, uint256 _basis);
@@ -187,18 +191,15 @@ interface IVault {
 
     function getAllStrategies() external view returns (address[] memory);
 
-    function strategies(address _addr)
+    function getStrategyConfig(address _addr)
         external
         view
         returns (VaultStorage.Strategy memory);
 
     function isSupportedAsset(address _asset) external view returns (bool);
 
-    function netOusdMintForStrategyThreshold() external view returns (uint256);
-
     function setAMOStrategy(address _address, bool _isAMO) external;
 
-    function setNetOusdMintForStrategyThreshold(uint256 _threshold) external;
-
-    function netOusdMintedForStrategy() external view returns (int256);
+    function setMintForStrategyThreshold(address _strategy, uint256 _threshold)
+        external;
 }

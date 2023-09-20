@@ -5,7 +5,11 @@ const { formatUnits, parseUnits } = require("ethers/lib/utils");
 const addresses = require("../../utils/addresses");
 const { frxEthPoolLpPID } = require("../../utils/constants");
 const { units, oethUnits, forkOnlyDescribe, isCI } = require("../helpers");
-const { createFixtureLoader, convexFrxEthAmoFixture } = require("../_fixture");
+const {
+  createFixtureLoader,
+  convexFrxEthAmoFixture,
+  loadDefaultFixture,
+} = require("../_fixture");
 
 const log = require("../../utils/logger")("test:fork:oeth:amo:curve:frxETH");
 
@@ -17,9 +21,8 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve frxETH/OETH Strategy", function () {
   let fixture;
 
   describe("with mainnet data", () => {
-    const loadFixture = createFixtureLoader(convexFrxEthAmoFixture);
     beforeEach(async () => {
-      fixture = await loadFixture();
+      fixture = await loadDefaultFixture();
     });
     it("Should have constants and immutables set", async () => {
       const { convexFrxETHAMOStrategy } = fixture;
@@ -52,11 +55,13 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve frxETH/OETH Strategy", function () {
     it("Should have AMO strategy configured in the vault", async () => {
       const { oethVault, convexFrxETHAMOStrategy } = fixture;
 
-      const strategyConfig = await oethVault.strategies(
+      const config = await oethVault.getStrategyConfig(
         convexFrxETHAMOStrategy.address
       );
-      expect(strategyConfig.isSupported).to.be.true;
-      expect(strategyConfig.isAMO).to.be.true;
+      expect(config.isSupported).to.be.true;
+      expect(config.isAMO).to.be.true;
+      expect(config.mintForStrategy).to.eq(0);
+      expect(config.mintForStrategyThreshold).to.be.eq(parseUnits("25", 21));
     });
     it("Should be able to check balance", async () => {
       const { frxETH, josh, convexFrxETHAMOStrategy } = fixture;
@@ -100,6 +105,13 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve frxETH/OETH Strategy", function () {
       await oethVault.connect(josh).rebase();
 
       await expect(wethDiff).to.be.gte(parseUnits("0.15"));
+    });
+  });
+
+  describe("with frxETH/ETH AMO fixture", () => {
+    const loadFixture = createFixtureLoader(convexFrxEthAmoFixture);
+    beforeEach(async () => {
+      fixture = await loadFixture();
     });
     it("Only Governor can approve all tokens", async () => {
       const {

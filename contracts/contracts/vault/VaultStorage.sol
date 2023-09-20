@@ -42,7 +42,10 @@ contract VaultStorage is Initializable, Governable {
     event YieldDistribution(address _to, uint256 _yield, uint256 _fee);
     event TrusteeFeeBpsChanged(uint256 _basis);
     event TrusteeAddressChanged(address _address);
-    event NetOusdMintForStrategyThresholdChanged(uint256 _threshold);
+    event MintForStrategyThresholdChanged(
+        address _strategy,
+        uint256 _threshold
+    );
     event SwapperChanged(address _address);
     event SwapAllowedUndervalueChanged(uint256 _basis);
     event SwapSlippageChanged(address _asset, uint256 _basis);
@@ -76,14 +79,19 @@ contract VaultStorage is Initializable, Governable {
 
     /// @param isSupported flag if strategy is approved for use by the Vault
     /// @param isAMO flag if AMO strategy that can mint and burn OTokens
+    /// @param mintForStrategy How much OTokens are currently minted by the strategy
+    /// @param mintForStrategyThreshold How much net total OTokens are allowed to be minted by the strategy
+    // 96 bits is capped at 39b for 18 decimal numbers
     struct Strategy {
         bool isSupported;
         bool isAMO;
+        int96 mintForStrategy;
+        int96 mintForStrategyThreshold;
         // uint256 _deprecated; // Deprecated unused storage slot
     }
-    /// @notice strategy configiration. ie is supported and is AMO
+    /// @dev strategy configiration. ie is supported and is AMO
     // slither-disable-next-line uninitialized-state
-    mapping(address => Strategy) public strategies;
+    mapping(address => Strategy) internal strategies;
     /// @dev list of all vault strategies
     address[] internal allStrategies;
 
@@ -144,11 +152,11 @@ contract VaultStorage is Initializable, Governable {
     // slither-disable-next-line constable-states
     address private _deprecatedOusdMetaStrategy;
 
-    /// @notice How much OTokens are currently minted by the strategy
-    int256 public netOusdMintedForStrategy = 0;
+    /// @dev Deprecated: How much OTokens are currently minted by the strategy
+    int256 private _deprecatedNetOusdMintedForStrategy = 0;
 
-    /// @notice How much net total OTokens are allowed to be minted by all strategies
-    uint256 public netOusdMintForStrategyThreshold = 0;
+    /// @dev Deprecated: How much net total OTokens are allowed to be minted by all strategies
+    uint256 private _deprecatedNetOusdMintForStrategyThreshold = 0;
 
     uint256 constant MIN_UNIT_PRICE_DRIFT = 0.7e18;
     uint256 constant MAX_UNIT_PRICE_DRIFT = 1.3e18;
@@ -178,5 +186,20 @@ contract VaultStorage is Initializable, Governable {
         assembly {
             sstore(position, newImpl)
         }
+    }
+
+    /**
+     * @dev Returns the downcasted int96 from uint256, reverting on
+     * overflow (when the input is greater than largest int96).
+     *
+     * Based off OZ's SafeCast but implemented here as the OZ version
+     * used doesn't support casting to int96.
+     */
+    function toInt96(uint256 value) internal pure returns (int96) {
+        require(
+            value <= uint96(type(int96).max),
+            "value doesn't fit in 96 bits"
+        );
+        return int96(uint96(value));
     }
 }

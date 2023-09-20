@@ -590,17 +590,15 @@ describe("Vault", function () {
   it("Should only allow AMO to mint oTokens and revert when threshold is reached.", async () => {
     const { vault, ousd, governor, anna, josh } = fixture;
 
-    await vault
-      .connect(governor)
-      .setNetOusdMintForStrategyThreshold(ousdUnits("10"));
     // Approve anna address as an address allowed to mint OUSD without backing
     await vault.connect(governor).setAMOStrategy(anna.address, true);
+    await vault
+      .connect(governor)
+      .setMintForStrategyThreshold(anna.address, ousdUnits("10"));
 
     await expect(
       vault.connect(anna).mintForStrategy(ousdUnits("11"))
-    ).to.be.revertedWith(
-      "Minted ousd surpassed netOusdMintForStrategyThreshold."
-    );
+    ).to.be.revertedWith("OToken mint passes threshold");
 
     await expect(
       vault.connect(josh).mintForStrategy(ousdUnits("9"))
@@ -611,31 +609,29 @@ describe("Vault", function () {
     await expect(await ousd.balanceOf(anna.address)).to.equal(ousdUnits("9"));
   });
 
-  it("Should reset netOusdMintedForStrategy when new threshold is set", async () => {
+  it("Should reset mintForStrategy when new threshold is set", async () => {
     const { vault, governor, anna } = fixture;
-
-    await vault
-      .connect(governor)
-      .setNetOusdMintForStrategyThreshold(ousdUnits("10"));
 
     // Approve anna address as an address allowed to mint OUSD without backing
     await vault.connect(governor).setAMOStrategy(anna.address, true);
+    await vault
+      .connect(governor)
+      .setMintForStrategyThreshold(anna.address, ousdUnits("10"));
     await vault.connect(anna).mintForStrategy(ousdUnits("9"));
 
-    // netOusdMintedForStrategy should be equal to amount minted
-    await expect(await vault.netOusdMintedForStrategy()).to.equal(
-      ousdUnits("9")
-    );
+    // mintForStrategy should be equal to amount minted
+    let strategyConfig = await vault.getStrategyConfig(anna.address);
+    await expect(strategyConfig.mintForStrategy).to.equal(ousdUnits("9"));
 
     await vault
       .connect(governor)
-      .setNetOusdMintForStrategyThreshold(ousdUnits("10"));
+      .setMintForStrategyThreshold(anna.address, ousdUnits("10"));
 
-    // netOusdMintedForStrategy should be reset back to 0
-    await expect(await vault.netOusdMintedForStrategy()).to.equal(
-      ousdUnits("0")
-    );
+    // mintForStrategy should be reset back to 0
+    strategyConfig = await vault.getStrategyConfig(anna.address);
+    await expect(strategyConfig.mintForStrategy).to.equal(ousdUnits("0"));
   });
+
   it("Should re-cache decimals", async () => {
     const { vault, governor, usdc } = fixture;
 
