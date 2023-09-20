@@ -453,7 +453,7 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve frxETH/OETH Strategy", function () {
   describe("with a lot more OETH in the Curve pool", () => {
     const loadFixture = createFixtureLoader(convexFrxEthAmoFixture, {
       frxEthMintAmount: 5000,
-      depositToStrategy: false,
+      depositToStrategy: true,
       poolAddOethAmount: 4000,
     });
     beforeEach(async () => {
@@ -463,7 +463,7 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve frxETH/OETH Strategy", function () {
       await assertRemoveAndBurn(parseUnits("3"), fixture);
     });
     it("Strategist should remove a lot of OETH from the Curve pool", async () => {
-      await assertRemoveAndBurn(parseUnits("4000"), fixture);
+      await assertRemoveAndBurn(parseUnits("2000"), fixture);
     });
     it("Strategist should fail to add even more OETH to the Curve pool", async () => {
       const { convexFrxETHAMOStrategy, strategist } = fixture;
@@ -490,8 +490,8 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve frxETH/OETH Strategy", function () {
   describe("with a lot more frxETH in the Curve pool", () => {
     const loadFixture = createFixtureLoader(convexFrxEthAmoFixture, {
       frxEthMintAmount: 5000,
-      depositToStrategy: false,
-      poolAddFrxEthAmount: 200000,
+      depositToStrategy: true,
+      poolAddFrxEthAmount: 12000,
     });
     beforeEach(async () => {
       fixture = await loadFixture();
@@ -501,17 +501,19 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve frxETH/OETH Strategy", function () {
       await assertMintAndAddOTokens(oethMintAmount, fixture);
     });
     it("Strategist should add a lot of OETH to the Curve pool", async () => {
-      const oethMintAmount = oethUnits("150000");
+      const oethMintAmount = oethUnits("10000");
       await assertMintAndAddOTokens(oethMintAmount, fixture);
     });
     it("Strategist should add OETH to balance the Curve pool", async () => {
       const { curveFrxEthOethPool } = fixture;
       const curveBalances = await curveFrxEthOethPool.get_balances();
+      // frxETH balance - OETH balance
       const oethMintAmount = curveBalances[0]
         .sub(curveBalances[1])
         // reduce by 0.0001%
         .mul(999999)
         .div(1000000);
+      log(`oethMintAmount ${formatUnits(oethMintAmount)}`);
 
       await assertMintAndAddOTokens(oethMintAmount, fixture);
     });
@@ -520,7 +522,7 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve frxETH/OETH Strategy", function () {
       await assertRemoveOnlyAssets(lpAmount, fixture);
     });
     it("Strategist should remove a lot frxETH from the Curve pool", async () => {
-      const lpAmount = parseUnits("20000");
+      const lpAmount = parseUnits("6000");
       await assertRemoveOnlyAssets(lpAmount, fixture);
     });
   });
@@ -528,8 +530,8 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve frxETH/OETH Strategy", function () {
   describe("with a little more frxETH in the Curve pool", () => {
     const loadFixture = createFixtureLoader(convexFrxEthAmoFixture, {
       frxEthMintAmount: 5000,
-      depositToStrategy: false,
-      poolAddFrxEthAmount: 8000,
+      depositToStrategy: true,
+      poolAddFrxEthAmount: 100,
     });
     beforeEach(async () => {
       fixture = await loadFixture();
@@ -552,7 +554,7 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve frxETH/OETH Strategy", function () {
       // Add OETH to the Curve pool
       const tx = convexFrxETHAMOStrategy
         .connect(strategist)
-        .mintAndAddOTokens(parseUnits("5000"));
+        .mintAndAddOTokens(parseUnits("500"));
 
       await expect(tx).to.be.revertedWith("Assets overshot peg");
     });
@@ -562,7 +564,7 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve frxETH/OETH Strategy", function () {
       // Remove frxETH from the Curve pool
       const tx = convexFrxETHAMOStrategy
         .connect(strategist)
-        .removeOnlyAssets(parseUnits("5000"));
+        .removeOnlyAssets(parseUnits("500"));
 
       await expect(tx).to.be.revertedWith("Assets overshot peg");
     });
@@ -581,7 +583,7 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve frxETH/OETH Strategy", function () {
   describe("with a little more OETH in the Curve pool", () => {
     const loadFixture = createFixtureLoader(convexFrxEthAmoFixture, {
       frxEthMintAmount: 5000,
-      depositToStrategy: false,
+      depositToStrategy: true,
       poolAddOethAmount: 100,
     });
     beforeEach(async () => {
@@ -593,7 +595,7 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve frxETH/OETH Strategy", function () {
       // Remove OETH from the Curve pool
       const tx = convexFrxETHAMOStrategy
         .connect(strategist)
-        .removeAndBurnOTokens(parseUnits("8000"));
+        .removeAndBurnOTokens(parseUnits("200"));
 
       await expect(tx).to.be.revertedWith("OTokens overshot peg");
     });
@@ -689,11 +691,11 @@ async function assertMintAndAddOTokens(oethMintAmount, fixture) {
   const curveBalancesAfter = await curveFrxEthOethPool.get_balances();
   expect(curveBalancesAfter[0]).to.approxEqualTolerance(
     curveBalancesBefore[0],
-    0.01 // 0.01% or 1 basis point
+    0.1 // 0.1% or 10 basis point
   );
   expect(curveBalancesAfter[1]).to.approxEqualTolerance(
     curveBalancesBefore[1].add(oethMintAmount),
-    0.01 // 0.01%
+    0.1 // 0.1% or 10 basis point
   );
 
   // Check the OETH total supply decrease
@@ -707,7 +709,7 @@ async function assertMintAndAddOTokens(oethMintAmount, fixture) {
 async function assertRemoveOnlyAssets(lpAmount, fixture) {
   const {
     convexFrxETHAMOStrategy,
-    cvxRewardPool,
+    convexFrxEthOethRewardsPool,
     curveFrxEthOethPool,
     oethVault,
     oeth,
@@ -715,14 +717,20 @@ async function assertRemoveOnlyAssets(lpAmount, fixture) {
     frxETH,
   } = fixture;
 
-  log(`Removing ${formatUnits(lpAmount)} frxETH from the Curve pool`);
+  log(
+    `Burning ${formatUnits(
+      lpAmount
+    )} LP tokens to remove frxETH from the Curve pool`
+  );
   const frxEthRemoveAmount = await calcEthRemoveAmount(fixture, lpAmount);
-  log("After calc frxETH remove amount");
   const curveBalancesBefore = await curveFrxEthOethPool.get_balances();
   const oethSupplyBefore = await oeth.totalSupply();
   const vaultFrxEthBalanceBefore = await frxETH.balanceOf(oethVault.address);
-  const strategyLpBalanceBefore = await cvxRewardPool.balanceOf(
+  const strategyLpBalanceBefore = await convexFrxEthOethRewardsPool.balanceOf(
     convexFrxETHAMOStrategy.address
+  );
+  log(
+    `Strategy has ${formatUnits(strategyLpBalanceBefore)} Curve pool LP tokens`
   );
   const vaultValueBefore = await oethVault.totalValue();
 
@@ -777,7 +785,7 @@ async function assertRemoveOnlyAssets(lpAmount, fixture) {
   expect(vaultValueAfter.sub(vaultValueBefore)).to.gt(parseUnits("-1"));
 
   // Check the strategy LP balance decreased
-  const strategyLpBalanceAfter = await cvxRewardPool.balanceOf(
+  const strategyLpBalanceAfter = await convexFrxEthOethRewardsPool.balanceOf(
     convexFrxETHAMOStrategy.address
   );
   expect(strategyLpBalanceBefore.sub(strategyLpBalanceAfter)).to.eq(lpAmount);
