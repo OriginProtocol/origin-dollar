@@ -153,10 +153,12 @@ contract VaultStorage is Initializable, Governable {
     address private _deprecatedOusdMetaStrategy;
 
     /// @dev Deprecated: How much OTokens are currently minted by the strategy
-    int256 private _deprecatedNetOusdMintedForStrategy = 0;
+    // slither-disable-next-line constable-states
+    int256 private _deprecatedNetOusdMintedForStrategy;
 
     /// @dev Deprecated: How much net total OTokens are allowed to be minted by all strategies
-    uint256 private _deprecatedNetOusdMintForStrategyThreshold = 0;
+    // slither-disable-next-line constable-states
+    uint256 private _deprecatedNetOusdMintForStrategyThreshold;
 
     uint256 constant MIN_UNIT_PRICE_DRIFT = 0.7e18;
     uint256 constant MAX_UNIT_PRICE_DRIFT = 1.3e18;
