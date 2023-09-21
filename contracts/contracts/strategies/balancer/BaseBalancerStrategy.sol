@@ -374,8 +374,13 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
     function _unwrapPoolAsset(address asset, uint256 amount)
         internal
         returns (uint256 unwrappedAmount)
-    {
+    {   
+        console.log("UNWRAPPING");
         if (asset == stETH) {
+            console.log("STETH");
+            console.log(IERC20(wstETH).balanceOf(address(this)));
+            console.log(amount);
+
             unwrappedAmount = IWstETH(wstETH).unwrap(amount);
         } else if (asset == frxETH) {
             unwrappedAmount = IERC4626(sfrxETH).withdraw(

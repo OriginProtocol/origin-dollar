@@ -11,6 +11,8 @@ import { IBalancerVault } from "../../interfaces/balancer/IBalancerVault.sol";
 import { IERC20, InitializableAbstractStrategy } from "../../utils/InitializableAbstractStrategy.sol";
 import { StableMath } from "../../utils/StableMath.sol";
 
+import "hardhat/console.sol";
+
 contract BalancerMetaPoolStrategy is BaseAuraStrategy {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
@@ -154,7 +156,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
 
         bytes memory userData = abi.encode(
             IBalancerVault.WeightedPoolJoinKind.EXACT_TOKENS_IN_FOR_BPT_OUT,
-            _getUserDataEncodedAmountsIn(amountsIn),
+            _getUserDataEncodedAmounts(amountsIn),
             minBPTwDeviation
         );
 
@@ -173,14 +175,24 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         _lpDepositAll();
     }
 
-    function _getUserDataEncodedAmountsIn(uint256[] memory _amountsIn)
+    function _getUserDataEncodedAmounts(uint256[] memory _amounts)
         internal
         view
         virtual
-        returns (uint256[] memory amountsIn)
+        returns (uint256[] memory amounts)
     {
         // metaStablePool requires no transformation of the array
-        amountsIn = _amountsIn;
+        amounts = _amounts;
+    }
+
+    function _getUserDataEncodedAssets(address[] memory _assets)
+        internal
+        view
+        virtual
+        returns (address[] memory assets)
+    {
+        // metaStablePool requires no transformation of the array
+        assets = _assets;
     }
 
     /**
@@ -299,11 +311,11 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
 
         // Estimate the required amount of Balancer Pool Tokens (BPT) for the assets
         uint256 maxBPTtoWithdraw = _getBPTExpected(
-            poolAssets,
+            _getUserDataEncodedAssets(poolAssets),
             /* all non 0 values are overshot by 2 WEI and with the expected mainnet
              * ~1% withdrawal deviation, the 2 WEI aren't important
              */
-            poolAssetsAmountsOut
+            _getUserDataEncodedAmounts(poolAssetsAmountsOut)
         );
         // Increase BPTs by the max allowed deviation
         // Any excess BPTs will be left in this strategy contract
@@ -329,7 +341,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
          */
         bytes memory userData = abi.encode(
             IBalancerVault.WeightedPoolExitKind.BPT_IN_FOR_EXACT_TOKENS_OUT,
-            poolAssetsAmountsOut,
+            _getUserDataEncodedAmounts(poolAssetsAmountsOut),
             maxBPTtoWithdraw
         );
 
@@ -370,8 +382,15 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
 
         // For each of the specified assets
         for (uint256 i = 0; i < _strategyAssets.length; ++i) {
+            console.log("UNWrapping pool asset AGAIN");
             // Unwrap assets like wstETH and sfrxETH to rebasing assets stETH and frxETH
             if (strategyAssetsToPoolAssetsAmounts[i] > 0) {
+                console.log("UNWrapping pool asset");
+                console.log(i);
+                console.log(_strategyAssets[i]);
+                console.log(strategyAssetsToPoolAssetsAmounts[i]);
+                console.log("TEST MAN JUST A TEST");
+
                 _unwrapPoolAsset(
                     _strategyAssets[i],
                     strategyAssetsToPoolAssetsAmounts[i]
