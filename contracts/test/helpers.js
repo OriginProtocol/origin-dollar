@@ -124,7 +124,7 @@ chai.Assertion.addMethod(
   async function (expected, asset, message) {
     const strategy = this._obj;
     const assetAddress = asset.address || asset.getAddress();
-    const actual = await strategy.checkBalance(assetAddress);
+    const actual = await strategy["checkBalance(address)"](assetAddress);
     if (!BigNumber.isBigNumber(expected)) {
       expected = parseUnits(expected, await decimalsFor(asset));
     }
@@ -620,7 +620,7 @@ async function differenceInStrategyBalance(
   const returnVals = Array(arrayLength);
 
   for (let i = 0; i < arrayLength; i++) {
-    balancesBefore[i] = await strategyContracts[i].checkBalance(
+    balancesBefore[i] = await strategyContracts[i]["checkBalance(address)"](
       assetAddresses[i]
     );
   }
@@ -628,7 +628,7 @@ async function differenceInStrategyBalance(
 
   for (let i = 0; i < arrayLength; i++) {
     returnVals[i] = (
-      await strategyContracts[i].checkBalance(assetAddresses[i])
+      await strategyContracts[i]["checkBalance(address)"](assetAddresses[i])
     ).sub(balancesBefore[i]);
   }
 
