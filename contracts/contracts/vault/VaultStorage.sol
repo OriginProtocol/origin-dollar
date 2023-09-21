@@ -81,7 +81,8 @@ contract VaultStorage is Initializable, Governable {
     /// @param isAMO flag if AMO strategy that can mint and burn OTokens
     /// @param mintForStrategy How much OTokens are currently minted by the strategy
     /// @param mintForStrategyThreshold How much net total OTokens are allowed to be minted by the strategy
-    // 96 bits is capped at 39b for 18 decimal numbers
+    /// @dev The Strategy struct has been packed to fit in a single storage slot
+    /// 96-bits, signed integer is capped at 39b for 18 decimal numbers
     struct Strategy {
         bool isSupported;
         bool isAMO;

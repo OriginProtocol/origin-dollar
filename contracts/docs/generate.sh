@@ -6,19 +6,23 @@ sol2uml .. -s -d 0 -b Flipper -o FlipperSquashed.svg
 sol2uml storage .. -c Flipper -o FlipperStorage.svg
 
 # contracts/harvest
-sol2uml .. -v -hv -hf -he -hs -hl -b Dripper -o DripperHierarchy.svg
+sol2uml .. -v -hv -hf -he -hs -hl -hi -b Dripper -o DripperHierarchy.svg
 sol2uml .. -s -d 0 -b Dripper -o DripperSquashed.svg
-sol2uml storage .. -c Dripper -o DripperStorage.svg
+sol2uml storage .. -c Dripper -o DripperStorage.svg \
+    --slotNames OUSD.governor,OUSD.pending.governor,OUSD.reentry.status,0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc \
+    --slotTypes address,address,bool,address
 
-sol2uml .. -v -hv -hf -he -hs -hl -b OETHDripper -o OETHDripperHierarchy.svg
+sol2uml .. -v -hv -hf -he -hs -hl -hi -b OETHDripper -o OETHDripperHierarchy.svg
 sol2uml .. -s -d 0 -b OETHDripper -o OETHDripperSquashed.svg
-sol2uml storage .. -c OETHDripper -o OETHDripperStorage.svg
+sol2uml storage .. -c OETHDripper -o OETHDripperStorage.svg \
+    --slotNames OUSD.governor,OUSD.pending.governor,OUSD.reentry.status,0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc \
+    --slotTypes address,address,bool,address
 
-sol2uml .. -v -hv -hf -he -hs -hl -b Harvester -o HarvesterHierarchy.svg
+sol2uml .. -v -hv -hf -he -hs -hl -hi -b Harvester -o HarvesterHierarchy.svg
 sol2uml .. -s -d 0 -b Harvester -o HarvesterSquashed.svg
 sol2uml storage .. -c Harvester -o HarvesterStorage.svg
 
-sol2uml .. -v -hv -hf -he -hs -hl -b OETHHarvester -o OETHHarvesterHierarchy.svg
+sol2uml .. -v -hv -hf -he -hs -hl -hi -b OETHHarvester -o OETHHarvesterHierarchy.svg
 sol2uml .. -s -d 0 -b OETHHarvester -o OETHHarvesterSquashed.svg
 sol2uml storage .. -c OETHHarvester -o OETHHarvesterStorage.svg
 
@@ -74,21 +78,33 @@ sol2uml storage .. -c MorphoCompoundStrategy -o MorphoCompStrategyStorage.svg --
 # contracts/strategies/amo
 sol2uml .. -v -hv -hf -he -hs -hl -hi -b ConvexEthMetaStrategy,ConvexFrxETHAMOStrategy,ConvexOUSDMetaStrategy,BalancerEthAMOStrategy -o AMOContractHierarchy.svg
 
-sol2uml .. -v -hv -hf -he -hs -hl -b ConvexEthMetaStrategy -o ConvexEthMetaStrategyHierarchy.svg
+sol2uml .. -v -hv -hf -he -hs -hl -hi -b ConvexEthMetaStrategy -o ConvexEthMetaStrategyHierarchy.svg
 sol2uml .. -s -d 0 -b ConvexEthMetaStrategy -o ConvexEthMetaStrategySquashed.svg
-sol2uml storage .. -c ConvexEthMetaStrategy -o ConvexEthMetaStrategyStorage.svg  --hideExpand ______gap,_reserved
+sol2uml storage .. -c ConvexEthMetaStrategy -o ConvexEthMetaStrategyStorage.svg  \
+    --hideExpand ______gap,_reserved \
+    --slotNames OUSD.governor,OUSD.pending.governor,OUSD.reentry.status,0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc \
+    --slotTypes address,address,bool,address
 
-sol2uml .. -v -hv -hf -he -hs -hl -b ConvexFrxETHAMOStrategy -o ConvexFrxETHAMOStrategyHierarchy.svg
+sol2uml .. -v -hv -hf -he -hs -hl -hi -b ConvexFrxETHAMOStrategy -o ConvexFrxETHAMOStrategyHierarchy.svg
 sol2uml .. -s -d 0 -b ConvexFrxETHAMOStrategy -o ConvexFrxETHAMOStrategySquashed.svg
-sol2uml storage .. -c ConvexFrxETHAMOStrategy -o ConvexFrxETHAMOStrategyStorage.svg  --hideExpand ______gap,_reserved
+sol2uml storage .. -c ConvexFrxETHAMOStrategy -o ConvexFrxETHAMOStrategyStorage.svg  \
+    --hideExpand ______gap,_reserved \
+    --slotNames OUSD.governor,OUSD.pending.governor,OUSD.reentry.status,0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc \
+    --slotTypes address,address,bool,address
 
-sol2uml .. -v -hv -hf -he -hs -hl -b ConvexOUSDMetaStrategy -o ConvexOUSDMetaStrategyHierarchy.svg
+sol2uml .. -v -hv -hf -he -hs -hl -hi -b ConvexOUSDMetaStrategy -o ConvexOUSDMetaStrategyHierarchy.svg
 sol2uml .. -s -d 0 -b ConvexOUSDMetaStrategy -o ConvexOUSDMetaStrategySquashed.svg
-sol2uml storage .. -c ConvexOUSDMetaStrategy -o ConvexOUSDMetaStrategyStorage.svg  --hideExpand ______gap,_reserved
+sol2uml storage .. -c ConvexOUSDMetaStrategy -o ConvexOUSDMetaStrategyStorage.svg  \
+    --hideExpand ______gap,_reserved \
+    --slotNames OUSD.governor,OUSD.pending.governor,OUSD.reentry.status,0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc \
+    --slotTypes address,address,bool,address
 
-sol2uml .. -v -hv -hf -he -hs -hl -b BalancerEthAMOStrategy -o BalancerEthAMOStrategyHierarchy.svg
+sol2uml .. -v -hv -hf -he -hs -hl -hi -b BalancerEthAMOStrategy -o BalancerEthAMOStrategyHierarchy.svg
 sol2uml .. -s -d 0 -b BalancerEthAMOStrategy -o BalancerEthAMOStrategySquashed.svg
-sol2uml storage .. -c BalancerEthAMOStrategy -o BalancerEthAMOStrategyStorage.svg  --hideExpand ______gap,_reserved
+sol2uml storage .. -c BalancerEthAMOStrategy -o BalancerEthAMOStrategyStorage.svg  \
+    --hideExpand ______gap,_reserved \
+    --slotNames OUSD.governor,OUSD.pending.governor,OUSD.reentry.status,0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc \
+    --slotTypes address,address,bool,address
 
 # contracts/swapper
 sol2uml .. -v -hv -hf -he -hs -hl -b Swapper1InchV5 -o Swapper1InchV5Hierarchy.svg
@@ -118,24 +134,34 @@ sol2uml .. -s -d 0 -b WOETH -o WOETHSquashed.svg
 sol2uml storage .. -c WOETH -o WOETHStorage.svg
 
 # contracts/vault
-sol2uml .. -v -hv -hf -he -hs -hl -b VaultCore,VaultAdmin -o VaultHierarchy.svg
+sol2uml .. -v -hv -hf -he -hs -hl -hi -b VaultCore,VaultAdmin -o VaultHierarchy.svg
 sol2uml .. -s -d 0 -b VaultCore -o VaultCoreSquashed.svg
 sol2uml .. -s -d 0 -b VaultAdmin -o VaultAdminSquashed.svg
-sol2uml storage .. -c VaultCore -o VaultStorage.svg --hideExpand ______gap,_deprecated_swapTokens
+sol2uml storage .. -c VaultCore -o VaultStorage.svg \
+    --hideExpand ______gap,_deprecated_swapTokens \
+    --slotNames OUSD.governor,OUSD.pending.governor,OUSD.reentry.status,OUSD.vault.governor.admin.impl,0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc \
+    --slotTypes address,address,bool,address,address
 
-sol2uml .. -v -hv -hf -he -hs -hl -b OETHVaultCore,OETHVaultAdmin -o OETHVaultHierarchy.svg
+sol2uml .. -v -hv -hf -he -hs -hl -hi -b OETHVaultCore,OETHVaultAdmin -o OETHVaultHierarchy.svg
 sol2uml .. -s -d 0 -b OETHVaultCore -o OETHVaultCoreSquashed.svg
 sol2uml .. -s -d 0 -b OETHVaultAdmin -o OETHVaultAdminSquashed.svg
-sol2uml storage .. -c OETHVaultCore -o OETHVaultStorage.svg --hideExpand ______gap,_deprecated_swapTokens
+sol2uml storage .. -c OETHVaultCore -o OETHVaultStorage.svg \
+    --hideExpand ______gap,_deprecated_swapTokens \
+    --slotNames OUSD.governor,OUSD.pending.governor,OUSD.reentry.status,OUSD.vault.governor.admin.impl,0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc \
+    --slotTypes address,address,bool,address,address
 
 # contracts/utils
 sol2uml .. -v -hv -hf -he -hs -hl -b InitializableAbstractStrategy -o InitializableAbstractStrategyHierarchy.svg
 sol2uml .. -s -d 0 -b InitializableAbstractStrategy -o InitializableAbstractStrategySquashed.svg
-sol2uml storage .. -c InitializableAbstractStrategy -o InitializableAbstractStrategyStorage.svg
+sol2uml storage .. -c InitializableAbstractStrategy -o InitializableAbstractStrategyStorage.svg \
+    --hideExpand ______gap,_reserved \
+    --slotNames OUSD.governor,OUSD.pending.governor,OUSD.reentry.status \
+    --slotTypes address,address,bool
 
 sol2uml .. -v -hv -hf -he -hs -hl -b InitializableERC20Detailed -o InitializableERC20DetailedHierarchy.svg
 sol2uml .. -s -d 0 -b InitializableERC20Detailed -o InitializableERC20DetailedSquashed.svg
-sol2uml storage .. -c InitializableERC20Detailed -o InitializableERC20DetailedStorage.svg
+sol2uml storage .. -c InitializableERC20Detailed -o InitializableERC20DetailedStorage.svg \
+    --hideExpand _____gap
 
 sol2uml .. -v -hv -hf -b StableMath -o StableMathHierarchy.svg
 sol2uml .. -s -d 0 -b StableMath -o StableMathSquashed.svg
