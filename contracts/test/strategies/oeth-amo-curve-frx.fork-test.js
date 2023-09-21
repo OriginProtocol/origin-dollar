@@ -512,7 +512,7 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve frxETH/OETH Strategy", function () {
     const loadFixture = createFixtureLoader(convexFrxEthAmoFixture, {
       frxEthMintAmount: 5000,
       depositToStrategy: true,
-      poolAddFrxEthAmount: 9000,
+      poolAddFrxEthAmount: 8000,
     });
     beforeEach(async () => {
       fixture = await loadFixture();
@@ -522,7 +522,7 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve frxETH/OETH Strategy", function () {
       await assertMintAndAddOTokens(oethMintAmount, fixture);
     });
     it("Strategist should add a lot of OETH to the Curve pool", async () => {
-      const oethMintAmount = oethUnits("8000");
+      const oethMintAmount = oethUnits("7000");
       await assertMintAndAddOTokens(oethMintAmount, fixture);
     });
     it("Strategist should add OETH to balance the Curve pool", async () => {

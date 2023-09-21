@@ -704,7 +704,7 @@ async function assertMintAndAddOTokens(oethMintAmount, fixture) {
 async function assertRemoveOnlyAssets(lpAmount, fixture) {
   const {
     convexEthMetaStrategy,
-    cvxRewardPool,
+    convexOethEthRewardsPool,
     oethMetaPool,
     oethVault,
     oeth,
@@ -718,7 +718,7 @@ async function assertRemoveOnlyAssets(lpAmount, fixture) {
   const curveBalancesBefore = await oethMetaPool.get_balances();
   const oethSupplyBefore = await oeth.totalSupply();
   const vaultWethBalanceBefore = await weth.balanceOf(oethVault.address);
-  const strategyLpBalanceBefore = await cvxRewardPool.balanceOf(
+  const strategyLpBalanceBefore = await convexOethEthRewardsPool.balanceOf(
     convexEthMetaStrategy.address
   );
   const vaultValueBefore = await oethVault.totalValue();
@@ -775,7 +775,7 @@ async function assertRemoveOnlyAssets(lpAmount, fixture) {
   expect(vaultValueAfter.sub(vaultValueBefore)).to.gt(parseUnits("-1"));
 
   // Check the strategy LP balance decreased
-  const strategyLpBalanceAfter = await cvxRewardPool.balanceOf(
+  const strategyLpBalanceAfter = await convexOethEthRewardsPool.balanceOf(
     convexEthMetaStrategy.address
   );
   expect(strategyLpBalanceBefore.sub(strategyLpBalanceAfter)).to.eq(lpAmount);
@@ -824,11 +824,11 @@ async function calcOethWithdrawAmount(fixture, wethWithdrawAmount) {
 
 // Calculate the OETH and ETH amounts from a withdrawAll
 async function calcWithdrawAllAmounts(fixture) {
-  const { convexEthMetaStrategy, cvxRewardPool, oethMetaPool } = fixture;
+  const { convexEthMetaStrategy, convexOethEthRewardsPool, oethMetaPool } = fixture;
 
   // Get the ETH and OETH balances in the Curve pool
   const curveBalances = await oethMetaPool.get_balances();
-  const strategyLpAmount = await cvxRewardPool.balanceOf(
+  const strategyLpAmount = await convexOethEthRewardsPool.balanceOf(
     convexEthMetaStrategy.address
   );
   const totalLpSupply = await oethMetaPool.totalSupply();

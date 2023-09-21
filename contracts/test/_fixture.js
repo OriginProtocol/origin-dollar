@@ -1502,7 +1502,7 @@ async function convexOethAmoFixture(
   );
 
   // Convex pool that records the deposited balances
-  fixture.cvxRewardPool = await ethers.getContractAt(
+  fixture.convexOethEthRewardsPool = await ethers.getContractAt(
     "IRewardStaking",
     addresses.mainnet.CVXETHRewardsPool
   );

@@ -2,7 +2,7 @@ const threeCRVPid = 9;
 const metapoolLPCRVPid = 56;
 const lusdMetapoolLPCRVPid = 33;
 const oethPoolLpPID = 174;
-const frxEthPoolLpPID = 232; // TODO needs to be updated once the Convex pool has been created on mainnet
+const frxEthPoolLpPID = 233; // TODO needs to be updated once the Convex pool has been created on mainnet
 const { BigNumber } = require("ethers");
 const MAX_UINT256 = BigNumber.from(
   "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
