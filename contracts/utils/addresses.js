@@ -203,9 +203,9 @@ addresses.mainnet.rETH_WETH_AuraRewards =
   "0xDd1fE5AD401D4777cE89959b7fa587e569Bf125D";
 // wstETH/sfrxETH/rETH
 addresses.mainnet.wstETH_sfrxETH_rETH_BPT =
-  "0x42ed016f826165c2e5976fe5bc3df540c5ad0af7";
+  "0x42ED016F826165C2e5976fe5bC3df540C5aD0Af7";
 addresses.mainnet.wstETH_sfrxETH_rETH_AuraRewards =
-  "0xd26948E7a0223700e3C3cdEA21cA2471abCb8d47";
+  "0x032b676d5d55e8ecbae88ebee0aa10fb5f72f6cb";
 
 // Aura
 addresses.mainnet.AURA = "0xC0c293ce456fF0ED870ADd98a0828Dd4d2903DBF";

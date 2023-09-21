@@ -8,14 +8,14 @@ pragma solidity ^0.8.0;
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { BaseAuraStrategy, BaseBalancerStrategy } from "./BaseAuraStrategy.sol";
 import { IBalancerVault } from "../../interfaces/balancer/IBalancerVault.sol";
-import { IRateProvider } from "../../interfaces/balancer/IRateProvider.sol";
-import { IMetaStablePool } from "../../interfaces/balancer/IMetaStablePool.sol";
 import { IERC20, InitializableAbstractStrategy } from "../../utils/InitializableAbstractStrategy.sol";
 import { StableMath } from "../../utils/StableMath.sol";
 
 contract BalancerMetaPoolStrategy is BaseAuraStrategy {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
+
+    int256[50] private ___reserved;
 
     constructor(
         BaseStrategyConfig memory _stratConfig,
@@ -151,9 +151,10 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
          * ['uint256', 'uint256[]', 'uint256']
          * [EXACT_TOKENS_IN_FOR_BPT_OUT, amountsIn, minimumBPT]
          */
+
         bytes memory userData = abi.encode(
             IBalancerVault.WeightedPoolJoinKind.EXACT_TOKENS_IN_FOR_BPT_OUT,
-            amountsIn,
+            _getUserDataEncodedAmountsIn(amountsIn),
             minBPTwDeviation
         );
 
@@ -170,6 +171,16 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
 
         // Deposit the Balancer Pool Tokens (BPT) into Aura
         _lpDepositAll();
+    }
+
+    function _getUserDataEncodedAmountsIn(uint256[] memory _amountsIn)
+        internal
+        view
+        virtual
+        returns (uint256[] memory amountsIn)
+    {
+        // metaStablePool requires no transformation of the array
+        amountsIn = _amountsIn;
     }
 
     /**
@@ -521,41 +532,5 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         IERC20 asset = IERC20(_asset);
         // slither-disable-next-line unused-return
         asset.approve(address(balancerVault), type(uint256).max);
-    }
-
-    /**
-     * @notice Returns the rate supplied by the Balancer configured rate
-     * provider. Rate is used to normalize the token to common underlying
-     * pool denominator. (ETH for ETH Liquid staking derivatives)
-     *
-     * @param _asset Address of the Balancer pool asset
-     * @return rate of the corresponding asset
-     */
-    function _getRateProviderRate(address _asset)
-        internal
-        view
-        override
-        returns (uint256)
-    {
-        IMetaStablePool pool = IMetaStablePool(platformAddress);
-        IRateProvider[] memory providers = pool.getRateProviders();
-        (IERC20[] memory tokens, , ) = balancerVault.getPoolTokens(
-            balancerPoolId
-        );
-
-        uint256 providersLength = providers.length;
-        for (uint256 i = 0; i < providersLength; ++i) {
-            // _assets and corresponding rate providers are all in the same order
-            if (address(tokens[i]) == _asset) {
-                // rate provider doesn't exist, defaults to 1e18
-                if (address(providers[i]) == address(0)) {
-                    return 1e18;
-                }
-                return providers[i].getRate();
-            }
-        }
-
-        // should never happen
-        assert(false);
     }
 }

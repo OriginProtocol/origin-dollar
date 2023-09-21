@@ -62,7 +62,6 @@ abstract contract BaseAuraStrategy is BaseBalancerStrategy {
         uint256 bptBalance = IERC4626(auraRewardPoolAddress).maxRedeem(
             address(this)
         );
-
         IRewardStaking(auraRewardPoolAddress).withdrawAndUnwrap(
             bptBalance,
             true // also claim reward tokens

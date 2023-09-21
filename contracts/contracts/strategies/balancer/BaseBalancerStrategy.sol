@@ -10,10 +10,12 @@ import { IERC20, InitializableAbstractStrategy } from "../../utils/Initializable
 import { IBalancerVault } from "../../interfaces/balancer/IBalancerVault.sol";
 import { IRateProvider } from "../../interfaces/balancer/IRateProvider.sol";
 import { VaultReentrancyLib } from "./VaultReentrancyLib.sol";
+import { IBalancerPool } from "../../interfaces/balancer/IBalancerPool.sol";
 import { IOracle } from "../../interfaces/IOracle.sol";
 import { IWstETH } from "../../interfaces/IWstETH.sol";
 import { IERC4626 } from "../../../lib/openzeppelin/interfaces/IERC4626.sol";
 import { StableMath } from "../../utils/StableMath.sol";
+import "hardhat/console.sol";
 
 abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
     using SafeERC20 for IERC20;
@@ -97,7 +99,7 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         address[] calldata _rewardTokenAddresses, // BAL & AURA
         address[] calldata _assets,
         address[] calldata _pTokens
-    ) external override onlyGovernor initializer {
+    ) external virtual override onlyGovernor initializer {
         maxWithdrawalDeviation = 1e16;
         maxDepositDeviation = 1e16;
 
@@ -475,13 +477,44 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
 
     function _approveBase() internal virtual {
         IERC20 pToken = IERC20(platformAddress);
+
         // Balancer vault for BPT token (required for removing liquidity)
-        pToken.safeApprove(address(balancerVault), type(uint256).max);
+        pToken.approve(address(balancerVault), 0);
+        pToken.approve(address(balancerVault), type(uint256).max);
     }
 
+    /**
+     * @notice Returns the rate supplied by the Balancer configured rate
+     * provider. Rate is used to normalize the token to common underlying
+     * pool denominator. (ETH for ETH Liquid staking derivatives)
+     *
+     * @param _asset Address of the Balancer pool asset
+     * @return rate of the corresponding asset
+     */
     function _getRateProviderRate(address _asset)
         internal
         view
         virtual
-        returns (uint256);
+        returns (uint256)
+    {
+        IBalancerPool pool = IBalancerPool(platformAddress);
+        IRateProvider[] memory providers = pool.getRateProviders();
+        (IERC20[] memory tokens, , ) = balancerVault.getPoolTokens(
+            balancerPoolId
+        );
+
+        for (uint256 i = 0; i < providers.length; ++i) {
+            // _assets and corresponding rate providers are all in the same order
+            if (address(tokens[i]) == _asset) {
+                // rate provider doesn't exist, defaults to 1e18
+                if (address(providers[i]) == address(0)) {
+                    return 1e18;
+                }
+                return providers[i].getRate();
+            }
+        }
+
+        // should never happen
+        assert(false);
+    }
 }

@@ -155,8 +155,4 @@ tx_join = ba_vault.exitPool(
   STD
 )
 
-
-
-
-
 # END DEPOSIT INTO COMPOSABLE POOL
