@@ -5,7 +5,7 @@ const { createFixtureLoader } = require("../_fixture");
 const { withOUSDTitledMetapool } = require("../_metastrategies-fixtures");
 
 forkOnlyDescribe(
-  "ForkTest: Convex 3pool/OUSD Meta Strategy - Titled to OUSD",
+  "ForkTest: Convex 3Pool/OUSD AMO Strategy - Titled to OUSD",
   function () {
     this.timeout(0);
 

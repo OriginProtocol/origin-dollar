@@ -1,7 +1,7 @@
 const { expect } = require("chai");
 const { utils, BigNumber } = require("ethers");
 
-const { convexMetaVaultFixture, createFixtureLoader } = require("../_fixture");
+const { convexOusdAmoFixture, createFixtureLoader } = require("../_fixture");
 const {
   daiUnits,
   ousdUnits,
@@ -39,7 +39,7 @@ describe.skip("Convex 3pool/OUSD Meta Strategy", function () {
       .mint(asset.address, await units(amount, asset), 0);
   };
 
-  const loadFixture = createFixtureLoader(convexMetaVaultFixture);
+  const loadFixture = createFixtureLoader(convexOusdAmoFixture);
   beforeEach(async function () {
     const fixture = await loadFixture();
     anna = fixture.anna;

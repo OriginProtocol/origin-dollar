@@ -4,7 +4,7 @@ const { formatUnits } = require("ethers/lib/utils");
 
 const { ousdUnits } = require("./helpers");
 const {
-  convexMetaVaultFixture,
+  convexOusdAmoFixture,
   resetAllowance,
   impersonateAndFundContract,
   fundWith3Crv,
@@ -19,7 +19,7 @@ const log = require("../utils/logger")("test:fixtures:strategies:meta");
 // in vault.fork-test.js, so this should be fine.
 
 async function withDefaultOUSDMetapoolStrategiesSet() {
-  const fixture = await convexMetaVaultFixture();
+  const fixture = await convexOusdAmoFixture();
 
   const { vault, timelock, dai, usdt, usdc, OUSDmetaStrategy } = fixture;
 
@@ -277,7 +277,7 @@ async function _getCoinLiquidity(pool, value) {
 }
 
 module.exports = {
-  convexMetaVaultFixture,
+  convexOusdAmoFixture,
   withDefaultOUSDMetapoolStrategiesSet,
 
   withBalancedOUSDMetaPool,

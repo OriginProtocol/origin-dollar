@@ -941,7 +941,7 @@ async function fundWith3Crv(address, maxAmount) {
 /**
  * Configure a Vault with only the Meta strategy.
  */
-async function convexMetaVaultFixture() {
+async function convexOusdAmoFixture() {
   const fixture = await defaultFixture();
 
   if (isFork) {
@@ -2072,39 +2072,39 @@ async function loadDefaultFixture() {
 }
 
 module.exports = {
-  createFixtureLoader,
-  loadDefaultFixture,
-  fundWith3Crv,
-  resetAllowance,
-  defaultFixture,
-  oethDefaultFixture,
-  mockVaultFixture,
+  aaveVaultFixture,
   compoundFixture,
   compoundVaultFixture,
-  multiStrategyVaultFixture,
-  threepoolFixture,
-  threepoolVaultFixture,
-  convexVaultFixture,
-  convexMetaVaultFixture,
-  convexOethAmoFixture,
   convexFrxEthAmoFixture,
   convexGeneralizedMetaForkedFixture,
   convexLUSDMetaVaultFixture,
-  makerDsrFixture,
-  morphoCompoundFixture,
-  morphoAaveFixture,
-  aaveVaultFixture,
-  hackedVaultFixture,
-  rebornFixture,
-  withImpersonatedAccount,
-  impersonateAndFundContract,
-  impersonateAccount,
+  convexOethAmoFixture,
+  convexOusdAmoFixture,
+  convexVaultFixture,
+  createFixtureLoader,
+  defaultFixture,
+  fluxStrategyFixture,
   fraxETHStrategyFixture,
-  oethMorphoAaveFixture,
+  fundWith3Crv,
+  hackedVaultFixture,
+  impersonateAccount,
+  impersonateAndFundContract,
+  loadDefaultFixture,
+  makerDsrFixture,
   mintWETH,
-  replaceContractAt,
+  mockVaultFixture,
+  morphoAaveFixture,
+  morphoCompoundFixture,
+  multiStrategyVaultFixture,
   oeth1InchSwapperFixture,
   oethCollateralSwapFixture,
+  oethDefaultFixture,
+  oethMorphoAaveFixture,
   ousdCollateralSwapFixture,
-  fluxStrategyFixture,
+  rebornFixture,
+  replaceContractAt,
+  resetAllowance,
+  threepoolFixture,
+  threepoolVaultFixture,
+  withImpersonatedAccount,
 };

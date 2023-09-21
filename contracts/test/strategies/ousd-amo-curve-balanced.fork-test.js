@@ -8,7 +8,7 @@ const { withBalancedOUSDMetaPool } = require("../_metastrategies-fixtures");
 const log = require("../../utils/logger")("test:fork:ousd:metapool");
 
 forkOnlyDescribe(
-  "ForkTest: Convex 3pool/OUSD Meta Strategy - Balanced Metapool",
+  "ForkTest: Convex 3Pool/OUSD AMO Strategy - Balanced",
   function () {
     this.timeout(0);
 
