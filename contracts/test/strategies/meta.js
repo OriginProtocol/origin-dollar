@@ -22,7 +22,7 @@ describe.skip("Convex 3pool/OUSD Meta Strategy", function () {
     governor,
     crv,
     cvx,
-    OUSDmetaStrategy,
+    convexOusdAMOStrategy,
     metapoolToken,
     cvxBooster,
     usdt,
@@ -49,7 +49,7 @@ describe.skip("Convex 3pool/OUSD Meta Strategy", function () {
     governor = fixture.governor;
     crv = fixture.crv;
     cvx = fixture.cvx;
-    OUSDmetaStrategy = fixture.OUSDmetaStrategy;
+    convexOusdAMOStrategy = fixture.convexOusdAMOStrategy;
     metapoolToken = fixture.metapoolToken;
     cvxBooster = fixture.cvxBooster;
     usdt = fixture.usdt;
@@ -107,22 +107,20 @@ describe.skip("Convex 3pool/OUSD Meta Strategy", function () {
       // Anna sends her OUSD directly to Strategy
       await ousd
         .connect(anna)
-        .transfer(OUSDmetaStrategy.address, ousdUnits("8.0"));
+        .transfer(convexOusdAMOStrategy.address, ousdUnits("8.0"));
       // Anna asks Governor for help
-      await OUSDmetaStrategy.connect(governor).transferToken(
-        ousd.address,
-        ousdUnits("8.0")
-      );
+      await convexOusdAMOStrategy
+        .connect(governor)
+        .transferToken(ousd.address, ousdUnits("8.0"));
       await expect(governor).has.a.balanceOf("8.0", ousd);
     });
 
     it("Should not allow transfer of arbitrary token by non-Governor", async () => {
       // Naughty Anna
       await expect(
-        OUSDmetaStrategy.connect(anna).transferToken(
-          ousd.address,
-          ousdUnits("8.0")
-        )
+        convexOusdAMOStrategy
+          .connect(anna)
+          .transferToken(ousd.address, ousdUnits("8.0"))
       ).to.be.revertedWith("Caller is not the Governor");
     });
 
@@ -165,7 +163,7 @@ describe.skip("Convex 3pool/OUSD Meta Strategy", function () {
     it("Should allow the strategist to call harvest for a specific strategy", async () => {
       // prettier-ignore
       await harvester
-        .connect(governor)["harvest(address)"](OUSDmetaStrategy.address);
+        .connect(governor)["harvest(address)"](convexOusdAMOStrategy.address);
     });
 
     it("Should collect reward tokens using collect rewards on all strategies", async () => {
@@ -190,7 +188,7 @@ describe.skip("Convex 3pool/OUSD Meta Strategy", function () {
       await harvester.connect(governor)[
         // eslint-disable-next-line
         "harvest(address)"
-      ](OUSDmetaStrategy.address);
+      ](convexOusdAMOStrategy.address);
 
       await expect(await crv.balanceOf(harvester.address)).to.be.equal(
         utils.parseUnits("2", 18)

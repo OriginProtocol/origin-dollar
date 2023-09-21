@@ -70,9 +70,6 @@ module.exports = deploymentWithGovernanceProposal(
       cConvexPoolManager
         .connect(convexOperatorSigner)["addPool(address)"](addresses.mainnet.CurveFrxETHOETHGauge)
     );
-    console.log(
-      `Convex pool length after ${await cConvexBooster.poolLength()}`
-    );
     console.log(`Convex pool info for frxETH/OETH pool:`);
     const info = await cConvexBooster.poolInfo(poolId);
     console.log(`pool ID: ${poolId}`);

@@ -126,12 +126,12 @@ const defaultFixture = deployments.createFixture(async () => {
     convexStrategyProxy.address
   );
 
-  const OUSDmetaStrategyProxy = await ethers.getContract(
+  const convexOusdAMOStrategyProxy = await ethers.getContract(
     "ConvexOUSDMetaStrategyProxy"
   );
-  const OUSDmetaStrategy = await ethers.getContractAt(
+  const convexOusdAMOStrategy = await ethers.getContractAt(
     "ConvexOUSDMetaStrategy",
-    OUSDmetaStrategyProxy.address
+    convexOusdAMOStrategyProxy.address
   );
 
   const aaveStrategyProxy = await ethers.getContract("AaveStrategyProxy");
@@ -580,7 +580,7 @@ const defaultFixture = deployments.createFixture(async () => {
     LUSDMetapoolToken,
     threePoolStrategy,
     convexStrategy,
-    OUSDmetaStrategy,
+    convexOusdAMOStrategy,
     LUSDMetaStrategy,
     makerDsrStrategy,
     morphoCompoundStrategy,
@@ -939,7 +939,7 @@ async function fundWith3Crv(address, maxAmount) {
 }
 
 /**
- * Configure a Vault with only the Meta strategy.
+ * Configure a Vault with only the OUSD AMO Strategy using the Curve OUSD/3CRV pool.
  */
 async function convexOusdAmoFixture() {
   const fixture = await defaultFixture();
@@ -947,13 +947,11 @@ async function convexOusdAmoFixture() {
   if (isFork) {
     const { josh, matt, anna, domen, daniel, franck, ousd } = fixture;
 
-    // const curveFactoryAddress = '0xB9fC157394Af804a3578134A6585C0dc9cc990d4'
-
     const threepoolLP = await ethers.getContractAt(
       threepoolLPAbi,
       addresses.mainnet.ThreePoolToken
     );
-    const ousdMetaPool = await ethers.getContractAt(
+    const curveOusd3CrvMetapool = await ethers.getContractAt(
       ousdMetapoolAbi,
       addresses.mainnet.CurveOUSDMetaPool
     );
@@ -963,7 +961,7 @@ async function convexOusdAmoFixture() {
     );
     // const curveFactory = await ethers.getContractAt(curveFactoryAbi, curveFactoryAddress)
 
-    const balances = await ousdMetaPool.get_balances();
+    const balances = await curveOusd3CrvMetapool.get_balances();
     log(`Metapool balance 0: ${formatUnits(balances[0])}`);
     log(`Metapool balance 1: ${formatUnits(balances[1])}`);
 
@@ -971,12 +969,12 @@ async function convexOusdAmoFixture() {
     await fundWith3Crv(domen.getAddress(), ethers.BigNumber.from("0"));
 
     for (const user of [josh, matt, anna, domen, daniel, franck]) {
-      // Approve OUSD MetaPool contract to move funds
-      await resetAllowance(threepoolLP, user, ousdMetaPool.address);
-      await resetAllowance(ousd, user, ousdMetaPool.address);
+      // Approve OUSD/3Crv Metapool contract to move funds
+      await resetAllowance(threepoolLP, user, curveOusd3CrvMetapool.address);
+      await resetAllowance(ousd, user, curveOusd3CrvMetapool.address);
     }
 
-    fixture.ousdMetaPool = ousdMetaPool;
+    fixture.curveOusd3CrvMetapool = curveOusd3CrvMetapool;
     fixture.threePoolToken = threepoolLP;
     fixture.threepoolSwap = threepoolSwap;
   } else {
@@ -987,37 +985,37 @@ async function convexOusdAmoFixture() {
     // Add Convex Meta strategy
     await fixture.vault
       .connect(sGovernor)
-      .approveStrategy(fixture.OUSDmetaStrategy.address);
+      .approveStrategy(fixture.convexOusdAMOStrategy.address);
 
     // set meta strategy on vault so meta strategy is allowed to mint OUSD
     await fixture.vault
       .connect(sGovernor)
-      .setAMOStrategy(fixture.OUSDmetaStrategy.address, true);
+      .setAMOStrategy(fixture.convexOusdAMOStrategy.address, true);
 
     // set OUSD mint threshold to 50 million
     await fixture.vault
       .connect(sGovernor)
       .setMintForStrategyThreshold(
-        fixture.OUSDmetaStrategy.address,
+        fixture.convexOusdAMOStrategy.address,
         parseUnits("50", 24)
       );
 
     await fixture.harvester
       .connect(sGovernor)
-      .setSupportedStrategy(fixture.OUSDmetaStrategy.address, true);
+      .setSupportedStrategy(fixture.convexOusdAMOStrategy.address, true);
 
     await fixture.vault
       .connect(sGovernor)
       .setAssetDefaultStrategy(
         fixture.usdt.address,
-        fixture.OUSDmetaStrategy.address
+        fixture.convexOusdAMOStrategy.address
       );
 
     await fixture.vault
       .connect(sGovernor)
       .setAssetDefaultStrategy(
         fixture.usdc.address,
-        fixture.OUSDmetaStrategy.address
+        fixture.convexOusdAMOStrategy.address
       );
   }
 
@@ -1439,7 +1437,7 @@ async function convexLUSDMetaVaultFixture() {
 /**
  * Configure a Vault with only the AMO strategy for the Curve OETH/ETH pool.
  */
-async function convexOethAmoFixture(
+async function convexOethEthAmoFixture(
   config = {
     wethMintAmount: 0,
     depositToStrategy: false,
@@ -2037,12 +2035,12 @@ async function replaceContractAt(targetAddress, mockContract) {
  * Hardhat will reset the state of the network to what it was at the point after the fixture was initially executed.
  * The returned `loadFixture` function is typically inlcuded in the beforeEach().
  * @example
- *   const loadFixture = createFixtureLoader(convexOethAmoFixture);
+ *   const loadFixture = createFixtureLoader(convexOethEthAmoFixture);
  *   beforeEach(async () => {
  *     fixture = await loadFixture();
  *   });
  * @example
- *   const loadFixture = createFixtureLoader(convexOethAmoFixture, {
+ *   const loadFixture = createFixtureLoader(convexOethEthAmoFixture, {
  *     wethMintAmount: 5000,
  *     depositToStrategy: false,
  *   });
@@ -2078,7 +2076,7 @@ module.exports = {
   convexFrxEthAmoFixture,
   convexGeneralizedMetaForkedFixture,
   convexLUSDMetaVaultFixture,
-  convexOethAmoFixture,
+  convexOethEthAmoFixture,
   convexOusdAmoFixture,
   convexVaultFixture,
   createFixtureLoader,

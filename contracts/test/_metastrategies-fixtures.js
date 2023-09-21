@@ -21,19 +21,19 @@ const log = require("../utils/logger")("test:fixtures:strategies:meta");
 async function withDefaultOUSDMetapoolStrategiesSet() {
   const fixture = await convexOusdAmoFixture();
 
-  const { vault, timelock, dai, usdt, usdc, OUSDmetaStrategy } = fixture;
+  const { vault, timelock, dai, usdt, usdc, convexOusdAMOStrategy } = fixture;
 
   await vault
     .connect(timelock)
-    .setAssetDefaultStrategy(dai.address, OUSDmetaStrategy.address);
+    .setAssetDefaultStrategy(dai.address, convexOusdAMOStrategy.address);
 
   await vault
     .connect(timelock)
-    .setAssetDefaultStrategy(usdt.address, OUSDmetaStrategy.address);
+    .setAssetDefaultStrategy(usdt.address, convexOusdAMOStrategy.address);
 
   await vault
     .connect(timelock)
-    .setAssetDefaultStrategy(usdc.address, OUSDmetaStrategy.address);
+    .setAssetDefaultStrategy(usdc.address, convexOusdAMOStrategy.address);
 
   fixture.cvxRewardPool = await ethers.getContractAt(
     "IRewardStaking",
@@ -52,10 +52,10 @@ async function withBalancedOUSDMetaPool() {
 }
 
 async function balanceOUSDMetaPool(fixture) {
-  const { ousdMetaPool } = fixture;
+  const { curveOusd3CrvMetapool } = fixture;
 
   log(`Metapool balances before being balanced`);
-  const balancesBefore = await fixture.ousdMetaPool.get_balances();
+  const balancesBefore = await fixture.curveOusd3CrvMetapool.get_balances();
   const coinOne3CrvValueBefore = await get3CRVLiquidity(
     fixture,
     balancesBefore[0]
@@ -67,10 +67,10 @@ async function balanceOUSDMetaPool(fixture) {
   );
   log(`Metapool balance 1: ${formatUnits(balancesBefore[1])} 3CRV`);
 
-  await _balanceMetaPool(fixture, ousdMetaPool);
+  await _balanceMetaPool(fixture, curveOusd3CrvMetapool);
 
   log(`Metapool balances after being balanced`);
-  const balancesAfter = await fixture.ousdMetaPool.get_balances();
+  const balancesAfter = await fixture.curveOusd3CrvMetapool.get_balances();
   const coinOne3CrvValueAfter = await get3CRVLiquidity(
     fixture,
     balancesAfter[0]
@@ -144,9 +144,9 @@ async function withCRV3TitledOUSDMetapool() {
 }
 
 async function tiltTo3CRV_OUSDMetapool(fixture, amount) {
-  const { ousdMetaPool } = fixture;
+  const { curveOusd3CrvMetapool } = fixture;
 
-  await tiltTo3CRV_Metapool(fixture, ousdMetaPool, amount);
+  await tiltTo3CRV_Metapool(fixture, curveOusd3CrvMetapool, amount);
 }
 
 /* Tilt towards 3CRV by checking liquidity
@@ -210,7 +210,7 @@ async function tiltToMainToken(fixture) {
 }
 
 async function tiltTo3CRV_Metapool(fixture, metapool, amount) {
-  const { vault, domen, ousdMetaPool } = fixture;
+  const { vault, domen, curveOusd3CrvMetapool } = fixture;
 
   // Balance metapool
   await _balanceMetaPool(fixture, metapool);
@@ -219,7 +219,9 @@ async function tiltTo3CRV_Metapool(fixture, metapool, amount) {
   // Tilt to 3CRV by a million
   const exchangeSign = "exchange(int128,int128,uint256,uint256)";
   // make metapool make exchange on itself. It should always have enough OUSD/3crv to do this
-  const metapoolSigner = await impersonateAndFundContract(ousdMetaPool.address);
+  const metapoolSigner = await impersonateAndFundContract(
+    curveOusd3CrvMetapool.address
+  );
 
   await metapool.connect(metapoolSigner)[exchangeSign](1, 0, amount.div(2), 0);
 
@@ -236,7 +238,7 @@ async function withOUSDTitledMetapool() {
 }
 
 async function tiltToOUSD_OUSDMetapool(fixture, amount) {
-  const { vault, domen, ousdMetaPool } = fixture;
+  const { vault, domen, curveOusd3CrvMetapool } = fixture;
 
   // Balance metapool
   await balanceOUSDMetaPool(fixture);
@@ -246,9 +248,11 @@ async function tiltToOUSD_OUSDMetapool(fixture, amount) {
   // Tilt to 3CRV by a million
   const exchangeSign = "exchange(int128,int128,uint256,uint256)";
   // make metapool make exchange on itself. It should always have enough OUSD/3crv to do this
-  const metapoolSigner = await impersonateAndFundContract(ousdMetaPool.address);
+  const metapoolSigner = await impersonateAndFundContract(
+    curveOusd3CrvMetapool.address
+  );
 
-  await ousdMetaPool
+  await curveOusd3CrvMetapool
     .connect(metapoolSigner)
     // eslint-disable-next-line
     [exchangeSign](0, 1, amount.div(2), 0);
@@ -259,8 +263,8 @@ async function tiltToOUSD_OUSDMetapool(fixture, amount) {
 
 // Convert 3CRV value to OUSD/3CRV Metapool LP tokens
 async function getOUSDLiquidity(fixture, crv3Amount) {
-  const { ousdMetaPool } = fixture;
-  return _getCoinLiquidity(ousdMetaPool, crv3Amount);
+  const { curveOusd3CrvMetapool } = fixture;
+  return _getCoinLiquidity(curveOusd3CrvMetapool, crv3Amount);
 }
 
 // Convert USD value to 3Pool LP tokens
