@@ -1497,7 +1497,7 @@ async function convexOethAmoFixture(
   // Impersonate the OETH Vault
   fixture.oethVaultSigner = await impersonateAndFundContract(oethVault.address);
   // Impersonate the Curve gauge that holds all the LP tokens
-  fixture.oethGaugeSigner = await impersonateAndFundContract(
+  fixture.curveOethEthGaugeSigner = await impersonateAndFundContract(
     addresses.mainnet.CurveOETHGauge
   );
 
@@ -1507,7 +1507,7 @@ async function convexOethAmoFixture(
     addresses.mainnet.CVXETHRewardsPool
   );
 
-  fixture.oethMetaPool = await ethers.getContractAt(
+  fixture.curveOethEthPool = await ethers.getContractAt(
     curveOethEthPoolAbi,
     addresses.mainnet.CurveOETHMetaPool
   );
@@ -1546,7 +1546,7 @@ async function convexOethAmoFixture(
 
     const ethAmount = parseUnits(config.poolAddEthAmount.toString(), 18);
     // prettier-ignore
-    await fixture.oethMetaPool
+    await fixture.curveOethEthPool
       .connect(josh)["add_liquidity(uint256[2],uint256)"]([ethAmount, 0], 0, {
         value: ethAmount,
       });
@@ -1567,10 +1567,10 @@ async function convexOethAmoFixture(
     expect(oethAmount).to.be.gte(poolAddOethAmountUnits);
     await oeth
       .connect(fixture.oethWhale)
-      .approve(fixture.oethMetaPool.address, poolAddOethAmountUnits);
+      .approve(fixture.curveOethEthPool.address, poolAddOethAmountUnits);
 
     // prettier-ignore
-    await fixture.oethMetaPool
+    await fixture.curveOethEthPool
       .connect(fixture.oethWhale)["add_liquidity(uint256[2],uint256)"]([0, poolAddOethAmountUnits], 0);
   }
 
