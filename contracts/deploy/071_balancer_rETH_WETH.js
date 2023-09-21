@@ -95,7 +95,11 @@ module.exports = deploymentWithGovernanceProposal(
     // Governance Actions
     // ----------------
     return {
-      name: "Deploy new Balancer MetaPool strategy",
+      name: "Deploy Balancer rETH/WETH MetaPool strategy\n\
+      \n\
+      This will enable OETH protocol to deploy liquidity to Balancer's eETH/WETH pool\n\
+      \n\
+      ",
       actions: [
         // 1. Add new strategy to the vault
         {
