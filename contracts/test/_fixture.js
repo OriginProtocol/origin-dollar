@@ -1707,6 +1707,13 @@ async function convexFrxEthAmoFixture(
     await frxETH
       .connect(josh)
       .approve(fixture.curveFrxEthOethPool.address, frxEthAmount);
+    log(
+      `Josh has ${formatUnits(
+        await frxETH.balanceOf(josh.address)
+      )} frxETH before adding ${formatUnits(
+        frxEthAmount
+      )} to the Curve frxETH/OETH pool`
+    );
 
     // prettier-ignore
     await fixture.curveFrxEthOethPool

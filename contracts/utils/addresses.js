@@ -59,11 +59,7 @@ addresses.mainnet.CVX = "0x4e3fbd56cd56c3e72c1403e103b45db9da5b9d2b";
 addresses.mainnet.CVXBooster = "0xF403C135812408BFbE8713b5A23a04b3D48AAE31";
 addresses.mainnet.ConvexPoolManager =
   "0xc461E1CE3795Ee30bA2EC59843d5fAe14d5782D5";
-addresses.mainnet.CVXRewardsPool = "0x7D536a737C13561e0D2Decf1152a653B4e615158";
-addresses.mainnet.CVXETHRewardsPool =
-  "0x24b65DC1cf053A8D96872c323d29e86ec43eB33A";
-addresses.mainnet.CVXFrxETHRewardsPool =
-  "0x890648e84780B94E1242CFF7912849240565FD4b"; // TODO set once created
+
 // Maker Dai Savings Rate
 addresses.mainnet.sDAI = "0x83F20F44975D03b1b09e64809B757c47f942BEeA";
 // Open Oracle
@@ -152,6 +148,7 @@ addresses.mainnet.CurveOUSDMetaPool =
 addresses.mainnet.ConvexOUSDAMOStrategy =
   "0x89Eb88fEdc50FC77ae8a18aAD1cA0ac27f777a90";
 addresses.mainnet.CurveOUSDGauge = "0x25f0cE4E2F8dbA112D9b115710AC297F816087CD";
+addresses.mainnet.CVXRewardsPool = "0x7D536a737C13561e0D2Decf1152a653B4e615158";
 
 // OETH AMO for Curve OETH/ETH pool
 addresses.mainnet.ConvexOETHAMOStrategy =
@@ -159,14 +156,18 @@ addresses.mainnet.ConvexOETHAMOStrategy =
 addresses.mainnet.CurveOETHMetaPool =
   "0x94B17476A93b3262d87B9a326965D1E91f9c13E7";
 addresses.mainnet.CurveOETHGauge = "0xd03BE91b1932715709e18021734fcB91BB431715";
+addresses.mainnet.CVXETHRewardsPool =
+  "0x24b65DC1cf053A8D96872c323d29e86ec43eB33A";
 
 // OETH AMO for Curve frxETH/OETH pool
 addresses.mainnet.ConvexFraxAMOStrategy =
-  "0x1ce298Ec5FE0B1E4B04fb78d275Da6280f6e82A3"; // TODO set once deployed
+  "0x85094b52754591A3dE0002AD97F433584389aea0"; // TODO set once deployed
 addresses.mainnet.CurveFrxETHOETHPool =
   "0xfa0BBB0A5815F6648241C9221027b70914dd8949";
 addresses.mainnet.CurveFrxETHOETHGauge =
   "0x8584d7F7bf9803d45e8df75Afe824f1Ae83C6256";
+addresses.mainnet.CVXFrxETHRewardsPool =
+  "0x399e111c7209a741B06F8F86Ef0Fdd88fC198D20"; // TODO set once created
 
 // Morpho
 addresses.mainnet.MorphoStrategyProxy =

@@ -535,10 +535,21 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Strategy", function () {
     it("Strategist should fail to add too much OETH to the Curve pool", async () => {
       const { convexEthMetaStrategy, strategist } = fixture;
 
+      const oethAmount = parseUnits("7000");
+      log(
+        `Before mint of ${formatUnits(
+          oethAmount
+        )} OETH and add to the Curve pool`
+      );
+      await run("amoStrat", {
+        pool: "OETH",
+        output: false,
+      });
+
       // Add OETH to the Curve pool
       const tx = convexEthMetaStrategy
         .connect(strategist)
-        .mintAndAddOTokens(parseUnits("5000"));
+        .mintAndAddOTokens(oethAmount);
 
       await expect(tx).to.be.revertedWith("Assets overshot peg");
     });
@@ -548,7 +559,7 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Strategy", function () {
       // Remove ETH from the Curve pool
       const tx = convexEthMetaStrategy
         .connect(strategist)
-        .removeOnlyAssets(parseUnits("5000"));
+        .removeOnlyAssets(parseUnits("8000"));
 
       await expect(tx).to.be.revertedWith("Assets overshot peg");
     });
