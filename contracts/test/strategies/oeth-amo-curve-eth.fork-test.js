@@ -250,12 +250,10 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Strategy", function () {
       const tx = await convexEthMetaStrategy
         .connect(oethVaultSigner)
         .depositAll();
-      await expect(tx)
-        .to.emit(convexEthMetaStrategy, "Deposit")
-        .withNamedArgs({
-          _asset: weth.address,
-          _pToken: curveOethEthPool.address,
-        });
+      await expect(tx).to.emit(convexEthMetaStrategy, "Deposit").withNamedArgs({
+        _asset: weth.address,
+        _pToken: curveOethEthPool.address,
+      });
     });
   });
 
