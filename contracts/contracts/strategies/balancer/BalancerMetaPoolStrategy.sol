@@ -163,7 +163,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         IBalancerVault.JoinPoolRequest memory request = IBalancerVault
             .JoinPoolRequest(poolAssets, amountsIn, userData, false);
 
-        // Add the pool assets in this strategy to the balancer pool
+        // Add the pool assets in this strategy to the Balancer pool
         balancerVault.joinPool(
             balancerPoolId,
             address(this),
@@ -183,6 +183,19 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
     {
         // metaStablePool requires no transformation of the array
         amounts = _amounts;
+    }
+
+    function _getExactBptInForTokensOutEnumValue()
+        internal
+        virtual
+        pure
+        returns (uint256 exitKind)
+    {
+        // for Meta stable pools using this enum is ok since the enum value should
+        // be "2" as it is in the IBalancerVault. From the Metastable pool codebase:
+        // 
+        // enum ExitKind { EXACT_BPT_IN_FOR_ONE_TOKEN_OUT, EXACT_BPT_IN_FOR_TOKENS_OUT, BPT_IN_FOR_EXACT_TOKENS_OUT }
+        exitKind = uint256(IBalancerVault.WeightedPoolExitKind.EXACT_BPT_IN_FOR_TOKENS_OUT);
     }
 
     function _getUserDataEncodedAssets(address[] memory _assets)
@@ -340,10 +353,16 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
          * [BPT_IN_FOR_EXACT_TOKENS_OUT, amountsOut, maxBPTAmountIn]
          */
         bytes memory userData = abi.encode(
-            IBalancerVault.WeightedPoolExitKind.BPT_IN_FOR_EXACT_TOKENS_OUT,
+            _getExactBptInForTokensOutEnumValue(),
             _getUserDataEncodedAmounts(poolAssetsAmountsOut),
             maxBPTtoWithdraw
         );
+
+        uint256[] memory temp = _getUserDataEncodedAmounts(poolAssetsAmountsOut);
+        console.log("POOl asset amounts out");
+        console.log("temp[0]", temp[0]);
+        console.log("temp[1]", temp[1]);
+        console.log("temp[2]", temp[2]);
 
         IBalancerVault.ExitPoolRequest memory request = IBalancerVault
             .ExitPoolRequest(
@@ -360,6 +379,9 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
                 false
             );
 
+        console.log("DEBUG");
+        uint256 rethBefore = IERC20(0xae78736Cd615f374D3085123A210448E74Fc6393).balanceOf(address(this));
+
         balancerVault.exitPool(
             balancerPoolId,
             address(this),
@@ -369,6 +391,10 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
             payable(address(this)),
             request
         );
+
+        uint256 rethAfter = IERC20(0xae78736Cd615f374D3085123A210448E74Fc6393).balanceOf(address(this));
+        console.log(rethBefore);
+        console.log(rethAfter);
 
         // STEP 5 - Re-deposit any left over BPT tokens back into Aura
         /* When concluding how much of BPT we need to withdraw from Aura we overshoot by
@@ -382,14 +408,13 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
 
         // For each of the specified assets
         for (uint256 i = 0; i < _strategyAssets.length; ++i) {
-            console.log("UNWrapping pool asset AGAIN");
+            console.log("UNWrapping pool asset prepare");
             // Unwrap assets like wstETH and sfrxETH to rebasing assets stETH and frxETH
             if (strategyAssetsToPoolAssetsAmounts[i] > 0) {
                 console.log("UNWrapping pool asset");
                 console.log(i);
                 console.log(_strategyAssets[i]);
                 console.log(strategyAssetsToPoolAssetsAmounts[i]);
-                console.log("TEST MAN JUST A TEST");
 
                 _unwrapPoolAsset(
                     _strategyAssets[i],

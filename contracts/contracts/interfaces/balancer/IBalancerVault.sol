@@ -13,10 +13,16 @@ interface IBalancerVault {
     }
 
     enum WeightedPoolExitKind {
-        EXACT_BPT_IN_FOR_ONE_TOKEN_OUT,
-        EXACT_BPT_IN_FOR_TOKENS_OUT,
-        BPT_IN_FOR_EXACT_TOKENS_OUT,
+        EXACT_BPT_IN_FOR_ONE_TOKEN_OUT, 
+        EXACT_BPT_IN_FOR_TOKENS_OUT,    
+        BPT_IN_FOR_EXACT_TOKENS_OUT,    
         REMOVE_TOKEN
+    }
+
+    enum ComposablePoolExitKind {
+        EXACT_BPT_IN_FOR_ONE_TOKEN_OUT,
+        BPT_IN_FOR_EXACT_TOKENS_OUT,
+        EXACT_BPT_IN_FOR_TOKENS_OUT
     }
 
     /**

@@ -84,6 +84,21 @@ contract BalancerComposablePoolStrategy is BalancerMetaPoolStrategy {
         }
     }
 
+    function _getExactBptInForTokensOutEnumValue()
+        internal
+        override
+        pure
+        returns (uint256 exitKind)
+    {
+        /* for Composable stable pools using IBalancerVault.WeightedPoolExitKind is not
+         * ok since the enum values are in different order as they are in MetaStable pools.
+         * From the pool code: 
+         * 
+         * enum ExitKind { EXACT_BPT_IN_FOR_ONE_TOKEN_OUT, BPT_IN_FOR_EXACT_TOKENS_OUT, EXACT_BPT_IN_FOR_ALL_TOKENS_OUT }
+         */
+        exitKind = uint256(IBalancerVault.ComposablePoolExitKind.BPT_IN_FOR_EXACT_TOKENS_OUT);
+    }
+
     function _getUserDataEncodedAssets(address[] memory _assets)
         internal
         view

@@ -139,8 +139,8 @@ tx_join = ba_vault.joinPool(
 # in the user data. (1 wei off)
 amountsOut = [0,0,0, 0]
 # without BPT address
-amountsOutBPT = [0, 0, 8 * 10**18]
-tx_join = ba_vault.exitPool(
+amountsOutBPT = [0, 0, 5 * 10**18]
+tx_exit = ba_vault.exitPool(
   pool_id,
   oeth_vault_admin.address, #sender
   oeth_vault_admin.address, #recipient
@@ -149,7 +149,12 @@ tx_join = ba_vault.exitPool(
     [platform_address, wsteth.address, sfrxeth.address, reth.address], # assets
     # indexes match above assets
     amountsOut, # min amounts out
-    balancerUserDataEncoder.userDataBPTinForExactTokensOut.encode_input(2, amountsOutBPT, amount * 10**18 * 0.9)[10:],
+    balancerUserDataEncoder.userDataBPTinForExactTokensOut.encode_input(2, amountsOutBPT, amount * 10**18 * 1.1)[10:],
+    #TODO for some reason Composable stable pools require "1" encoded for BPT_IN_FOR_EXACT_TOKENS_OUT and not 2
+    balancerUserDataEncoder.userDataBPTinForExactTokensOut.encode_input(1, amountsOutBPT, amount * 10**18 * 1.1)[10:],
+    # composable stable pool: 
+    # - needs enum to be encoded as number 1 (order of items reversed compared to meta stable pool)
+    # - needs 3 assets encoded in user data (omitting the BPT token)
     False, #fromInternalBalance
   ],
   STD
