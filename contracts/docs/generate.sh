@@ -106,6 +106,11 @@ sol2uml storage .. -c BalancerEthAMOStrategy -o BalancerEthAMOStrategyStorage.sv
     --slotNames OUSD.governor,OUSD.pending.governor,OUSD.reentry.status,0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc \
     --slotTypes address,address,bool,address
 
+# contracts/strategies/balancer
+sol2uml .. -v -hv -hf -he -hs -hl -b BalancerMetaPoolStrategy -o BalancerMetaPoolStrategyHierarchy.svg
+sol2uml .. -s -d 0 -b BalancerMetaPoolStrategy -o BalancerMetaPoolStrategySquashed.svg
+sol2uml storage .. -c BalancerMetaPoolStrategy -o BalancerMetaPoolStrategyStorage.svg --hideExpand ______gap,_reserved,__reserved,__reserved_baseAuraStrategy
+
 # contracts/swapper
 sol2uml .. -v -hv -hf -he -hs -hl -b Swapper1InchV5 -o Swapper1InchV5Hierarchy.svg
 sol2uml .. -s -d 0 -b Swapper1InchV5 -o Swapper1InchV5Squashed.svg

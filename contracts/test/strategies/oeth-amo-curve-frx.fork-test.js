@@ -146,7 +146,7 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve frxETH/OETH Strategy", function () {
 
   describe("with some frxETH in the vault", () => {
     const loadFixture = createFixtureLoader(convexFrxEthAmoFixture, {
-      frxEthMintAmount: 5000,
+      frxEthMintAmount: 5001,
       depositToStrategy: false,
     });
     beforeEach(async () => {

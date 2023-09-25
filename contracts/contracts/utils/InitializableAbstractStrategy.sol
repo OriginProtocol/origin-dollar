@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+/**
+ * @title Base contract for vault strategies.
+ * @author Origin Protocol Inc
+ */
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
@@ -42,10 +46,10 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
     // slither-disable-next-line constable-states
     address private _deprecated_vaultAddress;
 
-    // asset => pToken (Platform Specific Token Address)
+    /// @notice asset => pToken (Platform Specific Token Address)
     mapping(address => address) public assetToPToken;
 
-    // Full list of all assets supported here
+    /// @notice Full list of all assets supported by the strategy
     address[] internal assetsMapped;
 
     // Deprecated: Reward token address
@@ -56,11 +60,12 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
     // slither-disable-next-line constable-states
     uint256 private _deprecated_rewardLiquidationThreshold;
 
-    // Address of the one address allowed to collect reward tokens
+    /// @notice Address of the Harvester contract allowed to collect reward tokens
     address public harvesterAddress;
 
-    // Reward token addresses
+    /// @notice Address of the reward tokens. eg CRV, BAL, CVX, AURA
     address[] public rewardTokenAddresses;
+
     /* Reserved for future expansion. Used to be 100 storage slots
      * and has decreased to accommodate:
      * - harvesterAddress
@@ -114,7 +119,7 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
     }
 
     /**
-     * @dev Collect accumulated reward token and send to Vault.
+     * @notice Collect accumulated reward token and send to Vault.
      */
     function collectRewardTokens() external virtual onlyHarvester nonReentrant {
         _collectRewardTokens();
@@ -181,8 +186,8 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
     }
 
     /**
-     * @dev Set the reward token addresses.
-     * @param _rewardTokenAddresses Address array of the reward token
+     * @notice Set the reward token addresses. Any old addresses will be overwritten.
+     * @param _rewardTokenAddresses Array of reward token addresses
      */
     function setRewardTokenAddresses(address[] calldata _rewardTokenAddresses)
         external
@@ -204,7 +209,7 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
     }
 
     /**
-     * @dev Get the reward token addresses.
+     * @notice Get the reward token addresses.
      * @return address[] the reward token addresses.
      */
     function getRewardTokenAddresses()
@@ -216,7 +221,7 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
     }
 
     /**
-     * @dev Provide support for asset by passing its pToken address.
+     * @notice Provide support for asset by passing its pToken address.
      *      This method can only be called by the system Governor
      * @param _asset    Address for the asset
      * @param _pToken   Address for the corresponding platform token
@@ -230,7 +235,7 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
     }
 
     /**
-     * @dev Remove a supported asset by passing its index.
+     * @notice Remove a supported asset by passing its index.
      *      This method can only be called by the system Governor
      * @param _assetIndex Index of the asset to be removed
      */
@@ -249,7 +254,7 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
     }
 
     /**
-     * @dev Provide support for asset by passing its pToken address.
+     * @notice Provide support for asset by passing its pToken address.
      *      Add to internal mappings and execute the platform specific,
      * abstract method `_abstractSetPToken`
      * @param _asset    Address for the asset
@@ -271,7 +276,7 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
     }
 
     /**
-     * @dev Transfer token to governor. Intended for recovering tokens stuck in
+     * @notice Transfer token to governor. Intended for recovering tokens stuck in
      *      strategy contracts, i.e. mistaken sends.
      * @param _asset Address for the asset
      * @param _amount Amount of the asset to transfer
@@ -284,8 +289,8 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
     }
 
     /**
-     * @dev Set the reward token addresses.
-     * @param _harvesterAddress Address of the harvester
+     * @notice Set the Harvester contract that can collect rewards.
+     * @param _harvesterAddress Address of the harvester contract.
      */
     function setHarvesterAddress(address _harvesterAddress)
         external
@@ -306,19 +311,20 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
     function safeApproveAllTokens() external virtual;
 
     /**
-     * @dev Deposit an amount of asset into the platform
+     * @notice Deposit an amount of assets into the platform
      * @param _asset               Address for the asset
      * @param _amount              Units of asset to deposit
      */
     function deposit(address _asset, uint256 _amount) external virtual;
 
     /**
-     * @dev Deposit balance of all supported assets into the platform
+     * @notice Deposit all supported assets in this strategy contract to the platform
      */
     function depositAll() external virtual;
 
     /**
-     * @dev Withdraw an amount of asset from the platform.
+     * @notice Withdraw an `amount` of assets from the platform and
+     * send to the `_recipient`.
      * @param _recipient         Address to which the asset should be sent
      * @param _asset             Address of the asset
      * @param _amount            Units of asset to withdraw
@@ -330,12 +336,13 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
     ) external virtual;
 
     /**
-     * @dev Withdraw all assets from strategy sending assets to Vault.
+     * @notice Withdraw all supported assets from platform and
+     * sends to the OToken's Vault.
      */
     function withdrawAll() external virtual;
 
     /**
-     * @dev Get the total asset value held in the platform.
+     * @notice Get the total asset value held in the platform.
      *      This includes any interest that was generated since depositing.
      * @param _asset      Address of the asset
      * @return balance    Total value of the asset in the platform
@@ -347,7 +354,7 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
         returns (uint256 balance);
 
     /**
-     * @dev Check if an asset is supported.
+     * @notice Check if an asset is supported.
      * @param _asset    Address of the asset
      * @return bool     Whether asset is supported
      */

@@ -130,7 +130,7 @@ async function amoStrategyTask(taskArguments, hre) {
     const symbol = await asset.symbol();
     const strategyAssetsValueBefore =
       diffBlocks &&
-      (await amoStrategy.checkBalance(asset.address, {
+      (await amoStrategy["checkBalance(address)"](asset.address, {
         blockTag: fromBlockTag,
       }));
     const strategyAssetsValueBeforeScaled =
@@ -138,9 +138,12 @@ async function amoStrategyTask(taskArguments, hre) {
     totalStrategyAssetsValueBefore =
       diffBlocks &&
       totalStrategyAssetsValueBefore.add(strategyAssetsValueBeforeScaled);
-    const strategyAssetsValue = await amoStrategy.checkBalance(asset.address, {
-      blockTag,
-    });
+    const strategyAssetsValue = await amoStrategy["checkBalance(address)"](
+      asset.address,
+      {
+        blockTag,
+      }
+    );
     const strategyAssetsValueScaled = await scaleAmount(
       strategyAssetsValue,
       asset

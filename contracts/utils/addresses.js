@@ -161,13 +161,13 @@ addresses.mainnet.CVXETHRewardsPool =
 
 // OETH AMO for Curve frxETH/OETH pool
 addresses.mainnet.ConvexFraxAMOStrategy =
-  "0x85094b52754591A3dE0002AD97F433584389aea0"; // TODO set once deployed
+  "0xD2001BaF4E726dAfd6589D5c7bf8C74d59E48438"; // TODO set once deployed
 addresses.mainnet.CurveFrxETHOETHPool =
   "0xfa0BBB0A5815F6648241C9221027b70914dd8949";
 addresses.mainnet.CurveFrxETHOETHGauge =
   "0x8584d7F7bf9803d45e8df75Afe824f1Ae83C6256";
 addresses.mainnet.CVXFrxETHRewardsPool =
-  "0xe0EC41Afe8323045703a5a7C8e4FD3Be9D285bff"; // TODO set once created
+  "0x105fb5f119117853af8D7D57581a13dDeCa01e21"; // TODO set once created
 
 // Morpho
 addresses.mainnet.MorphoStrategyProxy =
@@ -181,6 +181,7 @@ addresses.mainnet.CompensationClaims =
   "0x9C94df9d594BA1eb94430C006c269C314B1A8281";
 addresses.mainnet.Flipper = "0xcecaD69d7D4Ed6D52eFcFA028aF8732F27e08F70";
 
+// Morpho
 addresses.mainnet.Morpho = "0x8888882f8f843896699869179fB6E4f7e3B58888";
 addresses.mainnet.MorphoLens = "0x930f1b46e1d081ec1524efd95752be3ece51ef67";
 
@@ -199,16 +200,38 @@ addresses.mainnet.FraxETHStrategy =
 addresses.mainnet.OETHHarvesterProxy =
   "0x0D017aFA83EAce9F10A8EC5B6E13941664A6785C";
 
-// Tokens
+// OETH Tokens
 addresses.mainnet.sfrxETH = "0xac3E018457B222d93114458476f3E3416Abbe38F";
 addresses.mainnet.frxETH = "0x5E8422345238F34275888049021821E8E08CAa1f";
 addresses.mainnet.rETH = "0xae78736Cd615f374D3085123A210448E74Fc6393";
 addresses.mainnet.stETH = "0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84";
+addresses.mainnet.wstETH = "0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0";
 addresses.mainnet.FraxETHMinter = "0xbAFA44EFE7901E04E39Dad13167D089C559c1138";
 
 // 1Inch
 addresses.mainnet.oneInchRouterV5 =
   "0x1111111254EEB25477B68fb85Ed929f73A960582";
+
+// Balancer
+addresses.mainnet.BAL = "0xba100000625a3754423978a60c9317c58a424e3D";
+addresses.mainnet.balancerVault = "0xBA12222222228d8Ba445958a75a0704d566BF2C8";
+// wstETH/WETH
+addresses.mainnet.wstETH_WETH_BPT =
+  "0x32296969Ef14EB0c6d29669C550D4a0449130230";
+addresses.mainnet.wstETH_WETH_AuraRewards =
+  "0x59D66C58E83A26d6a0E35114323f65c3945c89c1";
+// rETH/WETH
+addresses.mainnet.rETH_WETH_BPT = "0x1E19CF2D73a72Ef1332C882F20534B6519Be0276";
+addresses.mainnet.rETH_WETH_AuraRewards =
+  "0xDd1fE5AD401D4777cE89959b7fa587e569Bf125D";
+// wstETH/sfrxETH/rETH
+addresses.mainnet.wstETH_sfrxETH_rETH_BPT =
+  "0x42ed016f826165c2e5976fe5bc3df540c5ad0af7";
+addresses.mainnet.wstETH_sfrxETH_rETH_AuraRewards =
+  "0xd26948E7a0223700e3C3cdEA21cA2471abCb8d47";
+
+// Aura
+addresses.mainnet.AURA = "0xC0c293ce456fF0ED870ADd98a0828Dd4d2903DBF";
 
 // Flux Strategy
 addresses.mainnet.fDAI = "0xe2bA8693cE7474900A045757fe0efCa900F6530b";

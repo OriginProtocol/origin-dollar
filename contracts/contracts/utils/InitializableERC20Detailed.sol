@@ -6,6 +6,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 /**
  * @dev Optional functions from the ERC20 standard.
  * Converted from openzeppelin/contracts/token/ERC20/ERC20Detailed.sol
+ * @author Origin Protocol Inc
  */
 abstract contract InitializableERC20Detailed is IERC20 {
     // Storage gap to skip storage from prior to OUSD reset
@@ -32,14 +33,14 @@ abstract contract InitializableERC20Detailed is IERC20 {
     }
 
     /**
-     * @dev Returns the name of the token.
+     * @notice Returns the name of the token.
      */
     function name() public view returns (string memory) {
         return _name;
     }
 
     /**
-     * @dev Returns the symbol of the token, usually a shorter version of the
+     * @notice Returns the symbol of the token, usually a shorter version of the
      * name.
      */
     function symbol() public view returns (string memory) {
@@ -47,7 +48,7 @@ abstract contract InitializableERC20Detailed is IERC20 {
     }
 
     /**
-     * @dev Returns the number of decimals used to get its user representation.
+     * @notice Returns the number of decimals used to get its user representation.
      * For example, if `decimals` equals `2`, a balance of `505` tokens should
      * be displayed to a user as `5,05` (`505 / 10 ** 2`).
      *
