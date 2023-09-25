@@ -76,9 +76,9 @@ describe("Convex OUSD/3Pool AMO Strategy", function () {
           .transfer(convexOusdAMOStrategy.address, depositAmount);
 
         // deposit USDT to AMO
+        // prettier-ignore
         const tx = await convexOusdAMOStrategy
-          .connect(vaultSigner)
-          ["deposit(address,uint256)"](asset.address, depositAmount);
+          .connect(vaultSigner)["deposit(address,uint256)"](asset.address, depositAmount);
         // emit Deposit event for USDT
         await expect(tx)
           .to.emit(convexOusdAMOStrategy, "Deposit")
@@ -111,9 +111,9 @@ describe("Convex OUSD/3Pool AMO Strategy", function () {
         .transfer(convexOusdAMOStrategy.address, usdtAmount);
 
       // deposit USDT to AMO
+      // prettier-ignore
       const tx = await convexOusdAMOStrategy
-        .connect(vaultSigner)
-        ["deposit(address[],uint256[])"](
+        .connect(vaultSigner)["deposit(address[],uint256[])"](
           [dai.address, usdt.address],
           [daiAmount, usdtAmount]
         );
