@@ -10,7 +10,7 @@ const {
   isFork,
 } = require("../helpers");
 
-describe.skip("Convex 3pool/OUSD Meta Strategy", function () {
+describe("Convex OUSD/3Pool AMO Strategy", function () {
   if (isFork) {
     this.timeout(0);
   }
@@ -94,13 +94,30 @@ describe.skip("Convex 3pool/OUSD Meta Strategy", function () {
       await mint("10000.00", usdc);
       await mint("10000.00", usdt);
       await vault.connect(anna).redeem(ousdUnits("20000"), 0);
-      // Dai minted OUSD has not been deployed to Metastrategy for that reason the
+      // DAI minted OUSD has not been deployed to OUSD AMO strategy for that reason the
       // total supply of OUSD has not doubled
       await expectApproxSupply(ousd, ousdUnits("10200"));
     });
   });
 
   describe("Utilities", function () {
+    const MAX_UINT16 = BigNumber.from(
+      "0x0000000000000000000000000000000000000000ffffffffffffffffffffffff"
+    );
+    it("Should not allow initialize a second time", async () => {
+      await expect(
+        convexOusdAMOStrategy.connect(governor).initialize([])
+      ).to.revertedWith("Initializable: contract is already initialized");
+    });
+
+    it("Should have Governor set", async () => {
+      expect(await convexOusdAMOStrategy.connect(anna).isGovernor()).to.be
+        .false;
+      expect(await convexOusdAMOStrategy.connect(governor).isGovernor()).to.be
+        .true;
+      expect(await convexOusdAMOStrategy.governor()).to.eq(governor.address);
+    });
+
     it("Should allow transfer of arbitrary token by Governor", async () => {
       await dai.connect(anna).approve(vault.address, daiUnits("8.0"));
       await vault.connect(anna).mint(dai.address, daiUnits("8.0"), 0);
@@ -125,37 +142,39 @@ describe.skip("Convex 3pool/OUSD Meta Strategy", function () {
     });
 
     it("Should not allow too large mintForStrategy", async () => {
-      const MAX_UINT = BigNumber.from(
-        "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
-      );
-
       await vault.connect(governor).setAMOStrategy(anna.address, true);
 
       await expect(
-        vault.connect(anna).mintForStrategy(MAX_UINT)
-      ).to.be.revertedWith("Amount too high");
+        vault.connect(anna).mintForStrategy(MAX_UINT16)
+      ).to.be.revertedWith("value doesn't fit in 96 bits");
 
       await expect(
-        vault.connect(anna).mintForStrategy(MAX_UINT.div(2).sub(1))
-      ).to.be.revertedWith(
-        "Minted ousd surpassed netOusdMintForStrategyThreshold."
-      );
+        vault.connect(anna).mintForStrategy(MAX_UINT16.div(2))
+      ).to.be.revertedWith("OToken mint passes threshold");
     });
 
     it("Should not allow too large burnForStrategy", async () => {
-      const MAX_UINT = BigNumber.from(
-        "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
-      );
-
       await vault.connect(governor).setAMOStrategy(anna.address, true);
 
       await expect(
-        vault.connect(anna).burnForStrategy(MAX_UINT)
-      ).to.be.revertedWith("Amount too high");
+        vault.connect(anna).burnForStrategy(MAX_UINT16)
+      ).to.be.revertedWith("value doesn't fit in 96 bits");
 
       await expect(
-        vault.connect(anna).burnForStrategy(MAX_UINT.div(2).sub(1))
-      ).to.be.revertedWith("Attempting to burn too much OUSD.");
+        vault.connect(anna).burnForStrategy(MAX_UINT16.div(2))
+      ).to.be.revertedWith("OToken burn passes threshold");
+    });
+
+    it("Should allow Governor to reset allowances", async () => {
+      await expect(
+        convexOusdAMOStrategy.connect(governor).safeApproveAllTokens()
+      ).to.not.be.reverted;
+    });
+
+    it("Should not allow non-Governor to reset allowances", async () => {
+      await expect(
+        convexOusdAMOStrategy.connect(anna).safeApproveAllTokens()
+      ).to.be.revertedWith("Caller is not the Governor");
     });
   });
 
