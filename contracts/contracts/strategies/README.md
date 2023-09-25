@@ -52,9 +52,9 @@
 
 ![Frax ETH Strategy Squashed](../../docs/FraxETHStrategySquashed.svg)
 
-<!-- ### Storage
+### Storage
 
-![Frax ETH Strategy Storage](../../docs/FraxETHStrategyStorage.svg) -->
+![Frax ETH Strategy Storage](../../docs/FraxETHStrategyStorage.svg)
 
 ## Generalized ERC-4626 Strategy
 

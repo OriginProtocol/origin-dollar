@@ -16,78 +16,78 @@
 <text text-anchor="middle" x="117.43" y="-398.7" font-family="Times,serif" font-size="14.00">Governable</text>
 <text text-anchor="middle" x="117.43" y="-381.9" font-family="Times,serif" font-size="14.00">../contracts/governance/Governable.sol</text>
 </g>
-<!-- 236 -->
+<!-- 243 -->
 <g id="node2" class="node">
-<title>236</title>
+<title>243</title>
 <polygon fill="#f2f2f2" stroke="black" points="87.21,-174.5 87.21,-232.9 379.65,-232.9 379.65,-174.5 87.21,-174.5"/>
 <text text-anchor="middle" x="233.43" y="-216.3" font-family="Times,serif" font-size="14.00">&lt;&lt;Abstract&gt;&gt;</text>
 <text text-anchor="middle" x="233.43" y="-199.5" font-family="Times,serif" font-size="14.00">BaseAMOStrategy</text>
 <text text-anchor="middle" x="233.43" y="-182.7" font-family="Times,serif" font-size="14.00">../contracts/strategies/amo/BaseAMOStrategy.sol</text>
 </g>
-<!-- 177 -->
+<!-- 183 -->
 <g id="node6" class="node">
-<title>177</title>
+<title>183</title>
 <polygon fill="#f2f2f2" stroke="black" points="88.38,-269.9 88.38,-328.3 378.48,-328.3 378.48,-269.9 88.38,-269.9"/>
 <text text-anchor="middle" x="233.43" y="-311.7" font-family="Times,serif" font-size="14.00">&lt;&lt;Abstract&gt;&gt;</text>
 <text text-anchor="middle" x="233.43" y="-294.9" font-family="Times,serif" font-size="14.00">InitializableAbstractStrategy</text>
 <text text-anchor="middle" x="233.43" y="-278.1" font-family="Times,serif" font-size="14.00">../contracts/utils/InitializableAbstractStrategy.sol</text>
 </g>
-<!-- 236&#45;&gt;177 -->
+<!-- 243&#45;&gt;183 -->
 <g id="edge1" class="edge">
-<title>236&#45;&gt;177</title>
+<title>243&#45;&gt;183</title>
 <path fill="none" stroke="black" d="M233.43,-232.98C233.43,-235.06 233.43,-237.2 233.43,-239.38"/>
 <polygon fill="none" stroke="black" points="222.93,-239.6 233.43,-269.6 243.93,-239.6 222.93,-239.6"/>
 </g>
-<!-- 240 -->
+<!-- 247 -->
 <g id="node3" class="node">
-<title>240</title>
+<title>247</title>
 <polygon fill="#f2f2f2" stroke="black" points="65.43,-79.1 65.43,-137.5 401.42,-137.5 401.42,-79.1 65.43,-79.1"/>
 <text text-anchor="middle" x="233.43" y="-120.9" font-family="Times,serif" font-size="14.00">&lt;&lt;Abstract&gt;&gt;</text>
 <text text-anchor="middle" x="233.43" y="-104.1" font-family="Times,serif" font-size="14.00">BaseConvexAMOStrategy</text>
 <text text-anchor="middle" x="233.43" y="-87.3" font-family="Times,serif" font-size="14.00">../contracts/strategies/amo/BaseConvexAMOStrategy.sol</text>
 </g>
-<!-- 240&#45;&gt;236 -->
+<!-- 247&#45;&gt;243 -->
 <g id="edge2" class="edge">
-<title>240&#45;&gt;236</title>
+<title>247&#45;&gt;243</title>
 <path fill="none" stroke="black" d="M233.43,-137.58C233.43,-139.66 233.43,-141.8 233.43,-143.98"/>
 <polygon fill="none" stroke="black" points="222.93,-144.2 233.43,-174.2 243.93,-144.2 222.93,-144.2"/>
 </g>
-<!-- 244 -->
+<!-- 251 -->
 <g id="node4" class="node">
-<title>244</title>
+<title>251</title>
 <polygon fill="#f2f2f2" stroke="black" points="61.93,-0.5 61.93,-42.1 404.92,-42.1 404.92,-0.5 61.93,-0.5"/>
 <text text-anchor="middle" x="233.43" y="-25.5" font-family="Times,serif" font-size="14.00">ConvexOUSDMetaStrategy</text>
 <text text-anchor="middle" x="233.43" y="-8.7" font-family="Times,serif" font-size="14.00">../contracts/strategies/amo/ConvexOUSDMetaStrategy.sol</text>
 </g>
-<!-- 244&#45;&gt;240 -->
+<!-- 251&#45;&gt;247 -->
 <g id="edge3" class="edge">
-<title>244&#45;&gt;240</title>
+<title>251&#45;&gt;247</title>
 <path fill="none" stroke="black" d="M233.43,-42.44C233.43,-44.49 233.43,-46.63 233.43,-48.83"/>
 <polygon fill="none" stroke="black" points="222.93,-48.94 233.43,-78.94 243.93,-48.94 222.93,-48.94"/>
 </g>
-<!-- 176 -->
+<!-- 182 -->
 <g id="node5" class="node">
-<title>176</title>
+<title>182</title>
 <polygon fill="#f2f2f2" stroke="black" points="252.42,-365.3 252.42,-423.7 448.44,-423.7 448.44,-365.3 252.42,-365.3"/>
 <text text-anchor="middle" x="350.43" y="-407.1" font-family="Times,serif" font-size="14.00">&lt;&lt;Abstract&gt;&gt;</text>
 <text text-anchor="middle" x="350.43" y="-390.3" font-family="Times,serif" font-size="14.00">Initializable</text>
 <text text-anchor="middle" x="350.43" y="-373.5" font-family="Times,serif" font-size="14.00">../contracts/utils/Initializable.sol</text>
 </g>
-<!-- 177&#45;&gt;18 -->
+<!-- 183&#45;&gt;18 -->
 <g id="edge5" class="edge">
-<title>177&#45;&gt;18</title>
+<title>183&#45;&gt;18</title>
 <path fill="none" stroke="black" d="M198.31,-328.38C188.11,-336.59 176.78,-345.71 165.91,-354.46"/>
 <polygon fill="none" stroke="black" points="158.91,-346.62 142.13,-373.61 172.08,-362.98 158.91,-346.62"/>
 </g>
-<!-- 177&#45;&gt;176 -->
+<!-- 183&#45;&gt;182 -->
 <g id="edge4" class="edge">
-<title>177&#45;&gt;176</title>
+<title>183&#45;&gt;182</title>
 <path fill="none" stroke="black" d="M268.85,-328.38C275.89,-333.99 283.46,-340.04 291.04,-346.09"/>
 <polygon fill="none" stroke="black" points="284.73,-354.49 314.72,-365 297.83,-338.07 284.73,-354.49"/>
 </g>
-<!-- 177&#45;&gt;177 -->
+<!-- 183&#45;&gt;183 -->
 <g id="edge6" class="edge">
-<title>177&#45;&gt;177</title>
+<title>183&#45;&gt;183</title>
 <path fill="none" stroke="black" stroke-dasharray="5,2" d="M378.64,-285.88C389.68,-288.82 396.48,-293.22 396.48,-299.1 396.48,-302.96 393.55,-306.18 388.42,-308.77"/>
 <polygon fill="black" stroke="black" points="386.85,-305.62 378.64,-312.32 389.24,-312.2 386.85,-305.62"/>
 </g>

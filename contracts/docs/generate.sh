@@ -46,32 +46,31 @@ sol2uml .. -s -d 0 -b OUSDProxy -o OUSDProxySquashed.svg
 sol2uml storage .. -c OUSDProxy -o OUSDProxyStorage.svg
 
 # contracts/strategies
-sol2uml .. -v -hv -hf -he -hs -hl -b AaveStrategy -o AaveStrategyHierarchy.svg
+sol2uml .. -v -hv -hf -he -hs -hl -hi -b AaveStrategy -o AaveStrategyHierarchy.svg
 sol2uml .. -s -d 0 -b AaveStrategy -o AaveStrategySquashed.svg
 sol2uml storage .. -c AaveStrategy -o AaveStrategyStorage.svg --hideExpand ______gap,_reserved
 
-sol2uml .. -v -hv -hf -he -hs -hl -b CompoundStrategy -o CompStrategyHierarchy.svg
+sol2uml .. -v -hv -hf -he -hs -hl -hi -b CompoundStrategy -o CompStrategyHierarchy.svg
 sol2uml .. -s -d 0 -b CompoundStrategy -o CompStrategySquashed.svg
 sol2uml storage .. -c CompoundStrategy -o CompStrategyStorage.svg --hideExpand ______gap,_reserved,__reserved
 
-sol2uml .. -v -hv -hf -he -hs -hl -b FluxStrategy -o FluxStrategyHierarchy.svg
+sol2uml .. -v -hv -hf -he -hs -hl -hi -b FluxStrategy -o FluxStrategyHierarchy.svg
 sol2uml .. -s -d 0 -b FluxStrategy -o FluxStrategySquashed.svg
 sol2uml storage .. -c FluxStrategy -o FluxStrategyStorage.svg --hideExpand ______gap,_reserved,__reserved
 
-sol2uml .. -v -hv -hf -he -hs -hl -b FraxETHStrategy -o FraxETHStrategyHierarchy.svg
+sol2uml .. -v -hv -hf -he -hs -hl -hi -b FraxETHStrategy -o FraxETHStrategyHierarchy.svg
 sol2uml .. -s -d 0 -b FraxETHStrategy -o FraxETHStrategySquashed.svg
-## TODO fix sol2uml "Failed to find user defined type "IERC20" in attribute "shareToken" of type "1"""
-sol2uml storage .. -c FraxETHStrategy -o FraxETHStrategyStorage.svg
+sol2uml storage .. -c FraxETHStrategy -o FraxETHStrategyStorage.svg --hideExpand ______gap,__gap,_reserved
 
-sol2uml .. -v -hv -hf -he -hs -hl -b Generalized4626Strategy -o Generalized4626StrategyHierarchy.svg
+sol2uml .. -v -hv -hf -he -hs -hl -hi -b Generalized4626Strategy -o Generalized4626StrategyHierarchy.svg
 sol2uml .. -s -d 0 -b Generalized4626Strategy -o Generalized4626StrategySquashed.svg
 sol2uml storage .. -c Generalized4626Strategy -o Generalized4626StrategyStorage.svg --hideExpand ______gap,_reserved,__gap
 
-sol2uml .. -v -hv -hf -he -hs -hl -b MorphoAaveStrategy -o MorphoAaveStrategyHierarchy.svg
+sol2uml .. -v -hv -hf -he -hs -hl -hi -b MorphoAaveStrategy -o MorphoAaveStrategyHierarchy.svg
 sol2uml .. -s -d 0 -b MorphoAaveStrategy -o MorphoAaveStrategySquashed.svg
 sol2uml storage .. -c MorphoAaveStrategy -o MorphoAaveStrategyStorage.svg --hideExpand ______gap,_reserved
 
-sol2uml .. -v -hv -hf -he -hs -hl -b MorphoCompoundStrategy -o MorphoCompStrategyHierarchy.svg
+sol2uml .. -v -hv -hf -he -hs -hl -hi -b MorphoCompoundStrategy -o MorphoCompStrategyHierarchy.svg
 sol2uml .. -s -d 0 -b MorphoCompoundStrategy -o MorphoCompStrategySquashed.svg
 sol2uml storage .. -c MorphoCompoundStrategy -o MorphoCompStrategyStorage.svg --hideExpand ______gap,_reserved,__reserved
 

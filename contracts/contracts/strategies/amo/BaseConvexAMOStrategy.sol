@@ -6,7 +6,7 @@ pragma solidity ^0.8.0;
  * @notice Investment strategy for investing assets in Curve and Convex pools
  * @author Origin Protocol Inc
  */
-import { BaseAMOStrategy } from "./BaseAMOStrategy.sol";
+import { BaseAMOStrategy, InitializableAbstractStrategy } from "./BaseAMOStrategy.sol";
 import { ICurveETHPoolV1 } from "../ICurveETHPoolV1.sol";
 import { IConvexDeposits } from "../IConvexDeposits.sol";
 import { IRewardStaking } from "../IRewardStaking.sol";
@@ -56,7 +56,11 @@ abstract contract BaseConvexAMOStrategy is BaseAMOStrategy {
         address[] memory pTokens = new address[](1);
         pTokens[0] = address(curvePool);
 
-        super._initialize(_rewardTokenAddresses, assets, pTokens);
+        InitializableAbstractStrategy._initialize(
+            _rewardTokenAddresses,
+            assets,
+            pTokens
+        );
 
         _approveBase();
     }
