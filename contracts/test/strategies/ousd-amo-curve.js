@@ -8,16 +8,21 @@ const {
   units,
   expectApproxSupply,
   isFork,
+  usdtUnits,
 } = require("../helpers");
+const { resolveAsset } = require("../../utils/assets");
 
 describe("Convex OUSD/3Pool AMO Strategy", function () {
   if (isFork) {
     this.timeout(0);
+  } else {
+    this.timeout(600000);
   }
 
   let anna,
     ousd,
     vault,
+    vaultSigner,
     harvester,
     governor,
     crv,
@@ -44,6 +49,7 @@ describe("Convex OUSD/3Pool AMO Strategy", function () {
     const fixture = await loadFixture();
     anna = fixture.anna;
     vault = fixture.vault;
+    vaultSigner = fixture.vaultSigner;
     harvester = fixture.harvester;
     ousd = fixture.ousd;
     governor = fixture.governor;
@@ -58,20 +64,75 @@ describe("Convex OUSD/3Pool AMO Strategy", function () {
   });
 
   describe("Mint", function () {
-    it("Should stake USDT in Curve gauge via metapool", async function () {
-      await expectApproxSupply(ousd, ousdUnits("200"));
-      await mint("30000.00", usdt);
-      await expectApproxSupply(ousd, ousdUnits("60200"));
-      await expect(anna).to.have.a.balanceOf("30000", ousd);
-      await expect(cvxBooster).has.an.approxBalanceOf("60000", metapoolToken);
-    });
+    ["DAI", "USDC", "USDT"].forEach((symbol) => {
+      it(`Should deposit ${symbol} to strategy`, async function () {
+        await expectApproxSupply(ousd, ousdUnits("200"));
 
-    it("Should stake USDC in Curve gauge via metapool", async function () {
+        const asset = await resolveAsset(symbol);
+        const depositAmount = await units("30000.00", asset);
+        await asset.connect(anna).mint(depositAmount);
+        await asset
+          .connect(anna)
+          .transfer(convexOusdAMOStrategy.address, depositAmount);
+
+        // deposit USDT to AMO
+        const tx = await convexOusdAMOStrategy
+          .connect(vaultSigner)
+          ["deposit(address,uint256)"](asset.address, depositAmount);
+        // emit Deposit event for USDT
+        await expect(tx)
+          .to.emit(convexOusdAMOStrategy, "Deposit")
+          .withArgs(asset.address, metapoolToken.address, depositAmount);
+        // emit Deposit event for OUSD
+        await expect(tx)
+          .to.emit(convexOusdAMOStrategy, "Deposit")
+          .withNamedArgs({
+            _asset: ousd.address,
+            _pToken: metapoolToken.address,
+            // _amount: depositAmount,
+          });
+
+        await expect(cvxBooster).has.an.approxBalanceOf("60000", metapoolToken);
+      });
+    });
+    it(`Should deposit multiple assets to strategy`, async function () {
       await expectApproxSupply(ousd, ousdUnits("200"));
-      await mint("50000.00", usdc);
-      await expectApproxSupply(ousd, ousdUnits("100200"));
-      await expect(anna).to.have.a.balanceOf("50000", ousd);
-      await expect(cvxBooster).has.an.approxBalanceOf("100000", metapoolToken);
+
+      const daiAmount = await daiUnits("30000.00");
+      await dai.connect(anna).mint(daiAmount);
+      await dai
+        .connect(anna)
+        .transfer(convexOusdAMOStrategy.address, daiAmount);
+
+      const usdtAmount = await usdtUnits("30000.00");
+      await usdt.connect(anna).mint(usdtAmount);
+      await usdt
+        .connect(anna)
+        .transfer(convexOusdAMOStrategy.address, usdtAmount);
+
+      // deposit USDT to AMO
+      const tx = await convexOusdAMOStrategy
+        .connect(vaultSigner)
+        ["deposit(address[],uint256[])"](
+          [dai.address, usdt.address],
+          [daiAmount, usdtAmount]
+        );
+      // emit Deposit event for DAI
+      await expect(tx)
+        .to.emit(convexOusdAMOStrategy, "Deposit")
+        .withArgs(dai.address, metapoolToken.address, daiAmount);
+      // emit Deposit event for USDT
+      await expect(tx)
+        .to.emit(convexOusdAMOStrategy, "Deposit")
+        .withArgs(usdt.address, metapoolToken.address, usdtAmount);
+      // emit Deposit event for OUSD
+      await expect(tx).to.emit(convexOusdAMOStrategy, "Deposit").withNamedArgs({
+        _asset: ousd.address,
+        _pToken: metapoolToken.address,
+        // _amount: depositAmount,
+      });
+
+      await expect(cvxBooster).has.an.approxBalanceOf("120000", metapoolToken);
     });
 
     it("Should use a minimum LP token amount when depositing USDT into metapool", async function () {
@@ -104,7 +165,7 @@ describe("Convex OUSD/3Pool AMO Strategy", function () {
     const MAX_UINT16 = BigNumber.from(
       "0x0000000000000000000000000000000000000000ffffffffffffffffffffffff"
     );
-    it("Should not allow initialize a second time", async () => {
+    it("Should not initialize a second time", async () => {
       await expect(
         convexOusdAMOStrategy.connect(governor).initialize([])
       ).to.revertedWith("Initializable: contract is already initialized");

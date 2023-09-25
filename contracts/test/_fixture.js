@@ -1241,6 +1241,11 @@ async function convexOusdAmoFixture() {
       .connect(sGovernor)
       .approveStrategy(fixture.convexOusdAMOStrategy.address);
 
+    // Impersonate the OUSD Vault
+    fixture.vaultSigner = await impersonateAndFundContract(
+      fixture.vault.address
+    );
+
     // set meta strategy on vault so meta strategy is allowed to mint OUSD
     await fixture.vault
       .connect(sGovernor)
