@@ -157,6 +157,8 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         whenNotInBalancerVaultContext
         returns (uint256 amount)
     {
+        require(assetToPToken[_asset] != address(0), "Unsupported asset");
+
         uint256 bptBalance = _getBalancerPoolTokens();
 
         /* To calculate the worth of queried asset:

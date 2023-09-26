@@ -524,7 +524,7 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
       // Add OETH to the Metapool
       const tx = convexEthMetaStrategy
         .connect(strategist)
-        .mintAndAddOTokens(parseUnits("5000"));
+        .mintAndAddOTokens(parseUnits("10000"));
 
       await expect(tx).to.be.revertedWith("Assets overshot peg");
     });
@@ -534,7 +534,7 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
       // Remove ETH from the Metapool
       const tx = convexEthMetaStrategy
         .connect(strategist)
-        .removeOnlyAssets(parseUnits("5000"));
+        .removeOnlyAssets(parseUnits("10000"));
 
       await expect(tx).to.be.revertedWith("Assets overshot peg");
     });
