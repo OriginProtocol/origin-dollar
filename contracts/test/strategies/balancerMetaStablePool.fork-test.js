@@ -262,9 +262,11 @@ forkOnlyDescribe(
         await depositTest(fixture, [5, 5], [weth, reth], rEthBPT);
 
         // Check balance
-        const balance = await balancerREthStrategy["checkBalance(address)"](frxETH.address);
+        const balance = await balancerREthStrategy["checkBalance(address)"](
+          frxETH.address
+        );
 
-        expect(balance).to.equal("0")
+        expect(balance).to.equal("0");
       });
     });
 
