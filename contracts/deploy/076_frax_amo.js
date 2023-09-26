@@ -37,65 +37,61 @@ module.exports = deploymentWithGovernanceProposal(
     const cVaultProxy = await ethers.getContract("OETHVaultProxy");
     const cVault = await ethers.getContractAt("OETHVault", cVaultProxy.address);
 
-    // // 2. Deploy new frxETH/OETH AMO strategy
-    // // Deploy proxy
-    // const dConvexFrxETHAMOStrategyProxy = await deployWithConfirmation(
-    //   "ConvexFrxETHAMOStrategyProxy"
-    // );
-    // const cConvexFrxETHAMOStrategyProxy = await ethers.getContract(
-    //   "ConvexFrxETHAMOStrategyProxy"
-    // );
+    // 2. Deploy new frxETH/OETH AMO strategy
+    // Deploy proxy
+    const dConvexFrxETHAMOStrategyProxy = await deployWithConfirmation(
+      "ConvexFrxETHAMOStrategyProxy"
+    );
+    const cConvexFrxETHAMOStrategyProxy = await ethers.getContract(
+      "ConvexFrxETHAMOStrategyProxy"
+    );
 
-    // // Deploy and set the immutable variables of implementation
-    // const dConvexFrxETHAMOStrategy = await deployWithConfirmation(
-    //   "ConvexFrxETHAMOStrategy",
-    //   [
-    //     [
-    //       addresses.mainnet.CurveFrxETHOETHPool,
-    //       addresses.mainnet.OETHVaultProxy,
-    //     ],
-    //     [
-    //       addresses.mainnet.OETHProxy, // oTokenAddress (OETH),
-    //       addresses.mainnet.frxETH, // assetAddress (frxETH)
-    //       1, // Curve pool index for OToken OETH
-    //       0, // Curve pool index for asset frxETH
-    //     ],
-    //     [
-    //       addresses.mainnet.CVXBooster, // cvxDepositorAddress,
-    //       addresses.mainnet.CVXFrxETHRewardsPool, // cvxRewardStakerAddress,
-    //       frxEthPoolLpPID, // cvxDepositorPTokenId
-    //     ],
-    //   ]
-    // );
+    // Deploy and set the immutable variables of implementation
+    const dConvexFrxETHAMOStrategy = await deployWithConfirmation(
+      "ConvexFrxETHAMOStrategy",
+      [
+        [
+          addresses.mainnet.CurveFrxETHOETHPool,
+          addresses.mainnet.OETHVaultProxy,
+        ],
+        [
+          addresses.mainnet.CVXBooster, // cvxDepositorAddress,
+          addresses.mainnet.CVXFrxETHRewardsPool, // cvxRewardStakerAddress,
+          frxEthPoolLpPID, // cvxDepositorPTokenId
+          addresses.mainnet.OETHProxy, // oTokenAddress (OETH),
+          addresses.mainnet.frxETH, // assetAddress (frxETH)
+        ],
+      ]
+    );
 
-    // const cConvexFrxETHAMOStrategy = await ethers.getContractAt(
-    //   "ConvexFrxETHAMOStrategy",
-    //   dConvexFrxETHAMOStrategyProxy.address
-    // );
+    const cConvexFrxETHAMOStrategy = await ethers.getContractAt(
+      "ConvexFrxETHAMOStrategy",
+      dConvexFrxETHAMOStrategyProxy.address
+    );
 
-    // // 3. Initialize the new frxETH/OETH AMO strategy
-    // // Construct initialize call data to init and configure the new strategy
-    // const initData = cConvexFrxETHAMOStrategy.interface.encodeFunctionData(
-    //   "initialize(address[])",
-    //   [[addresses.mainnet.CRV, addresses.mainnet.CVX]]
-    // );
+    // 3. Initialize the new frxETH/OETH AMO strategy
+    // Construct initialize call data to init and configure the new strategy
+    const initData = cConvexFrxETHAMOStrategy.interface.encodeFunctionData(
+      "initialize(address[])",
+      [[addresses.mainnet.CRV, addresses.mainnet.CVX]]
+    );
 
-    // // prettier-ignore
-    // await withConfirmation(
-    //     cConvexFrxETHAMOStrategyProxy
-    //           .connect(sDeployer)["initialize(address,address,bytes)"](
-    //             dConvexFrxETHAMOStrategy.address,
-    //             timelockAddr,
-    //             initData,
-    //             await getTxOpts()
-    //           )
-    //       );
-    // console.log("Initialized Curve frxETH/ETH AMO Strategy");
+    // prettier-ignore
+    await withConfirmation(
+        cConvexFrxETHAMOStrategyProxy
+              .connect(sDeployer)["initialize(address,address,bytes)"](
+                dConvexFrxETHAMOStrategy.address,
+                timelockAddr,
+                initData,
+                await getTxOpts()
+              )
+          );
+    console.log("Initialized Curve frxETH/ETH AMO Strategy");
 
-    // const cHarvester = await ethers.getContractAt(
-    //   "OETHHarvester",
-    //   addresses.mainnet.OETHHarvesterProxy
-    // );
+    const cHarvester = await ethers.getContractAt(
+      "OETHHarvester",
+      addresses.mainnet.OETHHarvesterProxy
+    );
 
     const cConvexEthMetaStrategy = await ethers.getContractAt(
       "ConvexEthMetaStrategy",
@@ -131,36 +127,36 @@ module.exports = deploymentWithGovernanceProposal(
           signature: "setMintForStrategyThreshold(address,uint256)",
           args: [cConvexEthMetaStrategy.address, parseUnits("25000")],
         },
-        // // 5. Approve the new frxETH AMO strategy in the OETH Vault
-        // {
-        //   contract: cVault,
-        //   signature: "approveStrategy(address)",
-        //   args: [cConvexFrxETHAMOStrategy.address],
-        // },
-        // // 6. Flag the new AMO strategy for Curve frxETH/OETH pool to be an AMO in the OETH Vault
-        // {
-        //   contract: cVault,
-        //   signature: "setAMOStrategy(address,bool)",
-        //   args: [cConvexFrxETHAMOStrategy.address, true],
-        // },
-        // // 7. Set the mint threshold for the new frxETH AMO strategy
-        // {
-        //   contract: cVault,
-        //   signature: "setMintForStrategyThreshold(address,uint256)",
-        //   args: [cConvexFrxETHAMOStrategy.address, parseUnits("25000")],
-        // },
-        // // 8. Add the new frxETH AMO strategy to the OETH Harvester
-        // {
-        //   contract: cHarvester,
-        //   signature: "setSupportedStrategy(address,bool)",
-        //   args: [cConvexFrxETHAMOStrategy.address, true],
-        // },
-        // // 9. Set the harvester address on the new frxETH AMO strategy
-        // {
-        //   contract: cConvexFrxETHAMOStrategy,
-        //   signature: "setHarvesterAddress(address)",
-        //   args: [cHarvester.address],
-        // },
+        // 5. Approve the new frxETH AMO strategy in the OETH Vault
+        {
+          contract: cVault,
+          signature: "approveStrategy(address)",
+          args: [cConvexFrxETHAMOStrategy.address],
+        },
+        // 6. Flag the new AMO strategy for Curve frxETH/OETH pool to be an AMO in the OETH Vault
+        {
+          contract: cVault,
+          signature: "setAMOStrategy(address,bool)",
+          args: [cConvexFrxETHAMOStrategy.address, true],
+        },
+        // 7. Set the mint threshold for the new frxETH AMO strategy
+        {
+          contract: cVault,
+          signature: "setMintForStrategyThreshold(address,uint256)",
+          args: [cConvexFrxETHAMOStrategy.address, parseUnits("25000")],
+        },
+        // 8. Add the new frxETH AMO strategy to the OETH Harvester
+        {
+          contract: cHarvester,
+          signature: "setSupportedStrategy(address,bool)",
+          args: [cConvexFrxETHAMOStrategy.address, true],
+        },
+        // 9. Set the harvester address on the new frxETH AMO strategy
+        {
+          contract: cConvexFrxETHAMOStrategy,
+          signature: "setHarvesterAddress(address)",
+          args: [cHarvester.address],
+        },
       ],
     };
   }

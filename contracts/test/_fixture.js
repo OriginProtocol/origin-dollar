@@ -346,14 +346,14 @@ const defaultFixture = deployments.createFixture(async () => {
       convexEthMetaStrategyProxy.address
     );
 
-    // // AMO strategy for Curve frxETH/OETH pool
-    // const convexFrxETHAMOStrategyProxy = await ethers.getContract(
-    //   "ConvexFrxETHAMOStrategyProxy"
-    // );
-    // convexFrxETHAMOStrategy = await ethers.getContractAt(
-    //   "ConvexFrxETHAMOStrategy",
-    //   convexFrxETHAMOStrategyProxy.address
-    // );
+    // AMO strategy for Curve frxETH/OETH pool
+    const convexFrxETHAMOStrategyProxy = await ethers.getContract(
+      "ConvexFrxETHAMOStrategyProxy"
+    );
+    convexFrxETHAMOStrategy = await ethers.getContractAt(
+      "ConvexFrxETHAMOStrategy",
+      convexFrxETHAMOStrategyProxy.address
+    );
 
     const oethDripperProxy = await ethers.getContract("OETHDripperProxy");
     oethDripper = await ethers.getContractAt(
