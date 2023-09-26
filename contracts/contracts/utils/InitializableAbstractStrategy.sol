@@ -193,7 +193,7 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
         external
         onlyGovernor
     {
-        uint256 rewardTokenCount = rewardTokenAddresses.length;
+        uint256 rewardTokenCount = _rewardTokenAddresses.length;
         for (uint256 i = 0; i < rewardTokenCount; ++i) {
             require(
                 _rewardTokenAddresses[i] != address(0),
