@@ -20,13 +20,13 @@ forkOnlyDescribe("ForkTest: Harvest OUSD", function () {
       expect(crvTokenConfig.liquidationLimit).to.be.eq(parseUnits("4000", 18));
     });
     it("should harvest", async function () {
-      const { crv, timelock, harvester, OUSDmetaStrategy } = fixture;
+      const { crv, timelock, harvester, convexOusdAMOStrategy } = fixture;
 
       const balanceBeforeHarvest = await crv.balanceOf(harvester.address);
 
       // prettier-ignore
       await harvester
-        .connect(timelock)["harvest(address)"](OUSDmetaStrategy.address);
+        .connect(timelock)["harvest(address)"](convexOusdAMOStrategy.address);
 
       const balanceAfterHarvest = await crv.balanceOf(harvester.address);
 
@@ -34,13 +34,13 @@ forkOnlyDescribe("ForkTest: Harvest OUSD", function () {
       expect(crvHarvested).to.be.gt(parseUnits("20000", 18));
     });
     it("should harvest and swap", async function () {
-      const { anna, OUSDmetaStrategy, dripper, harvester, usdt } = fixture;
+      const { anna, convexOusdAMOStrategy, dripper, harvester, usdt } = fixture;
 
       const usdtBalanceBeforeDripper = await usdt.balanceOf(dripper.address);
 
       // prettier-ignore
       await harvester
-        .connect(anna)["harvestAndSwap(address)"](OUSDmetaStrategy.address);
+        .connect(anna)["harvestAndSwap(address)"](convexOusdAMOStrategy.address);
 
       const usdtBalanceAfterDripper = await usdt.balanceOf(dripper.address);
       const usdtSwapped = usdtBalanceAfterDripper.sub(usdtBalanceBeforeDripper);
@@ -72,11 +72,11 @@ forkOnlyDescribe("ForkTest: Harvest OUSD", function () {
      *    hitting the slippage limit.
      */
     it.skip("should not harvest and swap", async function () {
-      const { anna, OUSDmetaStrategy, harvester } = fixture;
+      const { anna, convexOusdAMOStrategy, harvester } = fixture;
 
       // prettier-ignore
       const tx = harvester
-        .connect(anna)["harvestAndSwap(address)"](OUSDmetaStrategy.address);
+        .connect(anna)["harvestAndSwap(address)"](convexOusdAMOStrategy.address);
       await expect(tx).to.be.revertedWith(
         "UniswapV2Router: INSUFFICIENT_OUTPUT_AMOUNT"
       );
@@ -106,14 +106,14 @@ forkOnlyDescribe("ForkTest: Harvest OUSD", function () {
      * harvested for the test to pass.
      */
     it.skip("should harvest and swap", async function () {
-      const { crv, OUSDmetaStrategy, dripper, harvester, timelock, usdt } =
+      const { crv, convexOusdAMOStrategy, dripper, harvester, timelock, usdt } =
         fixture;
 
       const balanceBeforeDripper = await usdt.balanceOf(dripper.address);
 
       // prettier-ignore
       await harvester
-        .connect(timelock)["harvest(address)"](OUSDmetaStrategy.address);
+        .connect(timelock)["harvest(address)"](convexOusdAMOStrategy.address);
       await harvester.connect(timelock).swapRewardToken(crv.address);
 
       const balanceAfterDripper = await usdt.balanceOf(dripper.address);

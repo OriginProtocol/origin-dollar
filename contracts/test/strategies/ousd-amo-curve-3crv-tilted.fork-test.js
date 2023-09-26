@@ -5,7 +5,7 @@ const { createFixtureLoader } = require("../_fixture");
 const { withCRV3TitledOUSDMetapool } = require("../_metastrategies-fixtures");
 
 forkOnlyDescribe(
-  "ForkTest: Convex 3pool/OUSD Meta Strategy - Titled to 3CRV",
+  "ForkTest: Convex 3Pool/OUSD AMO Strategy - Titled to 3CRV",
   function () {
     this.timeout(0);
 
@@ -41,7 +41,7 @@ forkOnlyDescribe(
         });
       });
 
-      it("Should NOT stake DAI in Curve gauge via metapool", async function () {
+      it("Should stake DAI in Curve gauge via metapool", async function () {
         const { anna, dai } = fixture;
         await mintTest(fixture, anna, dai, "110000");
       });
@@ -49,7 +49,7 @@ forkOnlyDescribe(
 
     describe("Redeem", function () {
       it("Should redeem", async () => {
-        const { vault, ousd, usdt, usdc, dai, anna, OUSDmetaStrategy } =
+        const { vault, ousd, usdt, usdc, dai, anna, convexOusdAMOStrategy } =
           fixture;
 
         await vault.connect(anna).allocate();
@@ -69,7 +69,7 @@ forkOnlyDescribe(
 
         // we multiply it by 3 because 1/3 of balance is represented by each of the assets
         const strategyBalance = (
-          await OUSDmetaStrategy.checkBalance(dai.address)
+          await convexOusdAMOStrategy.checkBalance(dai.address)
         ).mul(3);
 
         // min 1x 3crv + 1x printed OUSD: (10k + 10k) * (usdt + usdc) = 40k
@@ -102,7 +102,7 @@ forkOnlyDescribe(
 );
 
 async function mintTest(fixture, user, asset, amount = "30000") {
-  const { vault, ousd, OUSDmetaStrategy, cvxRewardPool } = fixture;
+  const { vault, ousd, convexOusdAMOStrategy, cvxRewardPool } = fixture;
 
   await vault.connect(user).allocate();
   await vault.connect(user).rebase();
@@ -113,7 +113,7 @@ async function mintTest(fixture, user, asset, amount = "30000") {
   const currentBalance = await ousd.connect(user).balanceOf(user.address);
   const currentRewardPoolBalance = await cvxRewardPool
     .connect(user)
-    .balanceOf(OUSDmetaStrategy.address);
+    .balanceOf(convexOusdAMOStrategy.address);
 
   // Mint OUSD w/ asset
   await vault.connect(user).mint(asset.address, unitAmount, 0);
@@ -133,10 +133,10 @@ async function mintTest(fixture, user, asset, amount = "30000") {
   // It should have added amount*3 supply
   expect(supplyDiff).to.approxEqualTolerance(ousdUnitAmount.mul(3), 5);
 
-  // Ensure some LP tokens got staked under OUSDMetaStrategy address
+  // Ensure some LP tokens got staked under convexOusdAMOStrategy address
   const newRewardPoolBalance = await cvxRewardPool
     .connect(user)
-    .balanceOf(OUSDmetaStrategy.address);
+    .balanceOf(convexOusdAMOStrategy.address);
   const rewardPoolBalanceDiff = newRewardPoolBalance.sub(
     currentRewardPoolBalance
   );
