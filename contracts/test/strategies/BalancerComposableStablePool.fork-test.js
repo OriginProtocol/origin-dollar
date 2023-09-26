@@ -10,7 +10,6 @@ const {
   impersonateAndFundContract,
   createFixtureLoader,
   mineBlocks,
-  mintWETH,
   tiltBalancerMetaStableWETHPool,
   untiltBalancerMetaStableWETHPool,
 } = require("../_fixture");
@@ -305,7 +304,7 @@ forkOnlyDescribe(
       });
     });
 
-    describe.only("Withdraw", function () {
+    describe("Withdraw", function () {
       beforeEach(async () => {
         fixture = await loadBalancerFrxWstrETHFixture();
         const {
@@ -407,8 +406,14 @@ forkOnlyDescribe(
       }
 
       it("Should be able to withdraw all of pool liquidity", async function () {
-        const { oethVault, stETH, frxETH, reth, weth, balancerSfrxWstRETHStrategy } =
-          fixture;
+        const {
+          oethVault,
+          stETH,
+          frxETH,
+          reth,
+          weth,
+          balancerSfrxWstRETHStrategy,
+        } = fixture;
 
         const stEthBalanceBefore = await balancerSfrxWstRETHStrategy[
           "checkBalance(address)"
@@ -451,61 +456,80 @@ forkOnlyDescribe(
     });
 
     describe("Large withdraw", function () {
-      const depositAmount = 30000;
+      const depositAmount = 21000;
       let depositAmountUnits, oethVaultSigner;
       beforeEach(async () => {
         fixture = await loadBalancerFrxWstrETHFixture();
+
         const {
-          balancerREthStrategy,
-          balancerREthPID,
+          balancerSfrxWstRETHStrategy,
+          sfrxETHwstETHrEthPID,
           balancerVault,
-          josh,
           oethVault,
-          oethZapper,
           strategist,
           reth,
-          weth,
+          stETH,
+          frxETH,
+          josh,
         } = fixture;
 
         oethVaultSigner = await impersonateAndFundContract(oethVault.address);
 
-        await getPoolBalances(balancerVault, balancerREthPID);
-
-        // Mint 100k oETH using WETH
+        await getPoolBalances(balancerVault, sfrxETHwstETHrEthPID);
         depositAmountUnits = oethUnits(depositAmount.toString());
-        await oethZapper.connect(josh).deposit({ value: depositAmountUnits });
 
-        // Mint 100k of oETH using RETH
+        // do not trigger allocate
+        await oethVault.connect(strategist).setVaultBuffer(oethUnits("1"));
+
+        // Mint 21k of oETH using rETH
         await reth.connect(josh).approve(oethVault.address, depositAmountUnits);
         await oethVault.connect(josh).mint(reth.address, depositAmountUnits, 0);
-
+        // Mint 21k of oETH using stETH
+        await stETH
+          .connect(josh)
+          .approve(oethVault.address, depositAmountUnits);
+        await oethVault
+          .connect(josh)
+          .mint(stETH.address, depositAmountUnits, 0);
+        // Mint 21k of oETH using frxETH
+        await frxETH
+          .connect(josh)
+          .approve(oethVault.address, depositAmountUnits);
+        await oethVault
+          .connect(josh)
+          .mint(frxETH.address, depositAmountUnits, 0);
         await oethVault
           .connect(strategist)
           .depositToStrategy(
-            balancerREthStrategy.address,
-            [weth.address, reth.address],
-            [depositAmountUnits, depositAmountUnits]
+            balancerSfrxWstRETHStrategy.address,
+            [stETH.address, reth.address, frxETH.address],
+            [depositAmountUnits, depositAmountUnits, depositAmountUnits]
           );
 
+        // reset allocate trigger
+        await oethVault.connect(strategist).setVaultBuffer(oethUnits("0"));
+
         log(
-          `Vault deposited ${depositAmount} WETH and ${depositAmount} RETH to Balancer strategy`
+          `Vault deposited ${depositAmount} RETH, ${depositAmount} STETH and ${depositAmount} FRXETH to Balancer strategy`
         );
       });
-      it(`withdraw all ${depositAmount} of both assets together using withdrawAll`, async () => {
-        const { balancerREthStrategy, oethVault } = fixture;
+      it(`withdraw all ${depositAmount} of all 3 assets together using withdrawAll`, async () => {
+        const { balancerSfrxWstRETHStrategy, oethVault } = fixture;
 
         const stratValueBefore = await oethVault.totalValue();
         log(`Vault total value before: ${formatUnits(stratValueBefore)}`);
 
         // Withdraw all
-        await balancerREthStrategy.connect(oethVaultSigner).withdrawAll();
+        await balancerSfrxWstRETHStrategy
+          .connect(oethVaultSigner)
+          .withdrawAll();
         log(`Vault withdraws all WETH and RETH`);
 
         const stratValueAfter = await oethVault.totalValue();
         log(`Vault total value after: ${formatUnits(stratValueAfter)}`);
 
         const diff = stratValueBefore.sub(stratValueAfter);
-        const baseUnits = depositAmountUnits.mul(2);
+        const baseUnits = depositAmountUnits.mul(3);
         const diffPercent = diff.mul(100000000).div(baseUnits);
         log(
           `Vault's ETH value change: ${formatUnits(diff)} ETH ${formatUnits(
@@ -514,17 +538,18 @@ forkOnlyDescribe(
           )}%`
         );
       });
-      it(`withdraw close to ${depositAmount} of both assets using multi asset withdraw`, async () => {
+      it(`withdraw close to ${depositAmount} of all three assets using multi asset withdraw`, async () => {
         const {
-          auraPool,
-          balancerREthStrategy,
-          rEthBPT,
+          sfrxETHwstETHrEthAuraPool,
+          balancerSfrxWstRETHStrategy,
+          sfrxETHwstETHrEthBPT,
           oethVault,
           reth,
-          weth,
+          frxETH,
+          stETH,
         } = fixture;
 
-        const withdrawAmount = 29690;
+        const withdrawAmount = depositAmount * 0.985;
         const withdrawAmountUnits = oethUnits(withdrawAmount.toString(), 18);
 
         const stratValueBefore = await oethVault.totalValue();
@@ -532,23 +557,25 @@ forkOnlyDescribe(
 
         // Withdraw all
         // prettier-ignore
-        await balancerREthStrategy
+        await balancerSfrxWstRETHStrategy
           .connect(oethVaultSigner)["withdraw(address,address[],uint256[])"](
             oethVault.address,
-            [weth.address, reth.address],
-            [withdrawAmountUnits, withdrawAmountUnits]
+            [frxETH.address, reth.address, stETH.address],
+            [withdrawAmountUnits, withdrawAmountUnits, withdrawAmountUnits]
           );
         log(
-          `Vault withdraws ${withdrawAmount} WETH and ${withdrawAmount} RETH together`
+          `Vault withdraws ${withdrawAmount} RETH, ${withdrawAmount} stETH and ${withdrawAmountUnits} frxETH together`
         );
 
-        const bptAfterReth = await auraPool.balanceOf(
-          balancerREthStrategy.address
+        const bptAfterReth = await sfrxETHwstETHrEthAuraPool.balanceOf(
+          balancerSfrxWstRETHStrategy.address
         );
         log(`Aura BPTs after withdraw: ${formatUnits(bptAfterReth)}`);
         log(
           `Strategy BPTs after withdraw: ${formatUnits(
-            await rEthBPT.balanceOf(balancerREthStrategy.address)
+            await sfrxETHwstETHrEthBPT.balanceOf(
+              balancerSfrxWstRETHStrategy.address
+            )
           )}`
         );
 
@@ -556,7 +583,7 @@ forkOnlyDescribe(
         log(`Vault total value after: ${formatUnits(stratValueAfter)}`);
 
         const diff = stratValueBefore.sub(stratValueAfter);
-        const baseUnits = withdrawAmountUnits.mul(2);
+        const baseUnits = withdrawAmountUnits.mul(3);
         const diffPercent = diff.mul(100000000).div(baseUnits);
         log(
           `Vault's ETH value change: ${formatUnits(diff)} ETH ${formatUnits(
@@ -567,55 +594,58 @@ forkOnlyDescribe(
       });
       it(`withdraw ${depositAmount} of each asset in separate calls`, async () => {
         const {
-          balancerREthStrategy,
-          rEthBPT,
+          balancerSfrxWstRETHStrategy,
+          sfrxETHwstETHrEthBPT,
           oethVault,
           reth,
-          weth,
-          auraPool,
+          frxETH,
+          stETH,
+          sfrxETHwstETHrEthAuraPool,
         } = fixture;
 
         const stratValueBefore = await oethVault.totalValue();
         log(`Vault total value before: ${formatUnits(stratValueBefore)}`);
 
-        const bptBefore = await auraPool.balanceOf(
-          balancerREthStrategy.address
+        const bptBefore = await sfrxETHwstETHrEthAuraPool.balanceOf(
+          balancerSfrxWstRETHStrategy.address
         );
         log(`Aura BPTs before: ${formatUnits(bptBefore)}`);
 
-        const withdrawAmount = 29700;
+        const withdrawAmount = depositAmount * 0.985;
         const withdrawAmountUnits = oethUnits(withdrawAmount.toString(), 18);
 
-        // Withdraw WETH
+        // Withdraw stETH
         // prettier-ignore
-        await balancerREthStrategy
+        await balancerSfrxWstRETHStrategy
           .connect(oethVaultSigner)["withdraw(address,address,uint256)"](
             oethVault.address,
-            weth.address,
+            stETH.address,
             withdrawAmountUnits
           );
 
-        log(`Vault withdraws ${withdrawAmount} WETH`);
+        log(`Vault withdraws ${withdrawAmount} stETH`);
 
-        const stratValueAfterWeth = await oethVault.totalValue();
+        const stratValueAfterStETH = await oethVault.totalValue();
         log(
-          `Vault total value after WETH withdraw: ${formatUnits(
-            stratValueAfterWeth
+          `Vault total value after stETH withdraw: ${formatUnits(
+            stratValueAfterStETH
           )}`
         );
-        const bptAfterWeth = await auraPool.balanceOf(
-          balancerREthStrategy.address
+        const bptAfterStETH = await sfrxETHwstETHrEthAuraPool.balanceOf(
+          balancerSfrxWstRETHStrategy.address
         );
-        log(`Aura BPTs after WETH withdraw: ${formatUnits(bptAfterWeth)}`);
+        log(`Aura BPTs after stETH withdraw: ${formatUnits(bptAfterStETH)}`);
         log(
-          `Strategy BPTs after WETH withdraw: ${formatUnits(
-            await rEthBPT.balanceOf(balancerREthStrategy.address)
+          `Strategy BPTs after stETH withdraw: ${formatUnits(
+            await sfrxETHwstETHrEthBPT.balanceOf(
+              balancerSfrxWstRETHStrategy.address
+            )
           )}`
         );
 
         // Withdraw RETH
         // prettier-ignore
-        await balancerREthStrategy
+        await balancerSfrxWstRETHStrategy
           .connect(oethVaultSigner)["withdraw(address,address,uint256)"](
             oethVault.address,
             reth.address,
@@ -624,13 +654,15 @@ forkOnlyDescribe(
 
         log(`Vault withdraws ${withdrawAmount} RETH`);
 
-        const bptAfterReth = await auraPool.balanceOf(
-          balancerREthStrategy.address
+        const bptAfterReth = await sfrxETHwstETHrEthAuraPool.balanceOf(
+          balancerSfrxWstRETHStrategy.address
         );
         log(`Aura BPTs after RETH withdraw: ${formatUnits(bptAfterReth)}`);
         log(
           `Strategy BPTs after RETH withdraw: ${formatUnits(
-            await rEthBPT.balanceOf(balancerREthStrategy.address)
+            await sfrxETHwstETHrEthBPT.balanceOf(
+              balancerSfrxWstRETHStrategy.address
+            )
           )}`
         );
 
@@ -641,8 +673,38 @@ forkOnlyDescribe(
           )}`
         );
 
-        const diff = stratValueBefore.sub(stratValueAfterReth);
-        const baseUnits = withdrawAmountUnits.mul(2);
+        // Withdraw frxETH
+        // prettier-ignore
+        await balancerSfrxWstRETHStrategy
+          .connect(oethVaultSigner)["withdraw(address,address,uint256)"](
+            oethVault.address,
+            frxETH.address,
+            withdrawAmountUnits
+          );
+
+        log(`Vault withdraws ${withdrawAmount} FRXETH`);
+
+        const bptAfterFrxETH = await sfrxETHwstETHrEthAuraPool.balanceOf(
+          balancerSfrxWstRETHStrategy.address
+        );
+        log(`Aura BPTs after frxETH withdraw: ${formatUnits(bptAfterFrxETH)}`);
+        log(
+          `Strategy BPTs after frxETH withdraw: ${formatUnits(
+            await sfrxETHwstETHrEthBPT.balanceOf(
+              balancerSfrxWstRETHStrategy.address
+            )
+          )}`
+        );
+
+        const stratValueAfterFrxETH = await oethVault.totalValue();
+        log(
+          `Vault total value after frxETH withdraw: ${formatUnits(
+            stratValueAfterFrxETH
+          )}`
+        );
+
+        const diff = stratValueBefore.sub(stratValueAfterFrxETH);
+        const baseUnits = withdrawAmountUnits.mul(3);
         const diffPercent = diff.mul(100000000).div(baseUnits);
         log(
           `Vault's ETH value change: ${formatUnits(diff)} ETH ${formatUnits(
@@ -656,14 +718,17 @@ forkOnlyDescribe(
     describe("Harvest rewards", function () {
       beforeEach(async () => {
         fixture = await loadBalancerFrxWstrETHFixture();
+        const { reth, frxETH, stETH, josh, oethVault } = fixture;
+        await fundAccount([reth, frxETH, stETH], josh, oethVault.address);
       });
 
       it("Should be able to collect reward tokens", async function () {
         const {
-          weth,
+          stETH,
+          frxETH,
           reth,
-          rEthBPT,
-          balancerREthStrategy,
+          sfrxETHwstETHrEthBPT,
+          balancerSfrxWstRETHStrategy,
           oethHarvester,
           bal,
           aura,
@@ -679,10 +744,17 @@ forkOnlyDescribe(
           oethUnits("0")
         );
 
-        await depositTest(fixture, [5, 5], [weth, reth], rEthBPT);
+        await depositTest(
+          fixture,
+          [5, 5, 5],
+          [stETH, frxETH, reth],
+          sfrxETHwstETHrEthBPT
+        );
         await mineBlocks(1000);
 
-        await balancerREthStrategy.connect(sHarvester).collectRewardTokens();
+        await balancerSfrxWstRETHStrategy
+          .connect(sHarvester)
+          .collectRewardTokens();
 
         expect(await bal.balanceOf(oethHarvester.address)).to.be.gte(
           oethUnits("0")
@@ -695,22 +767,29 @@ forkOnlyDescribe(
       it("Should be able to collect and swap reward tokens", async function () {
         const {
           josh,
-          balancerREthStrategy,
+          balancerSfrxWstRETHStrategy,
+          stETH,
           weth,
+          frxETH,
           reth,
           oethHarvester,
-          rEthBPT,
+          sfrxETHwstETHrEthBPT,
           oethDripper,
         } = fixture;
 
-        await depositTest(fixture, [5, 5], [weth, reth], rEthBPT);
+        await depositTest(
+          fixture,
+          [5, 5, 5],
+          [stETH, frxETH, reth],
+          sfrxETHwstETHrEthBPT
+        );
         await mineBlocks(1000);
 
         const wethBalanceBefore = await weth.balanceOf(oethDripper.address);
         await oethHarvester.connect(josh)[
           // eslint-disable-next-line
           "harvestAndSwap(address)"
-        ](balancerREthStrategy.address);
+        ](balancerSfrxWstRETHStrategy.address);
 
         const wethBalanceDiff = wethBalanceBefore.sub(
           await weth.balanceOf(oethDripper.address)

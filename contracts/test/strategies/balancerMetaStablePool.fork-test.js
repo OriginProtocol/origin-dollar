@@ -255,8 +255,6 @@ forkOnlyDescribe(
           .populateTransaction["checkBalance(address)"](weth.address);
         await josh.sendTransaction(tx);
       });
-<<<<<<< HEAD
-=======
 
       it("Should not return invalid balance of unsupported asset", async () => {
         // Deposit something
@@ -273,7 +271,6 @@ forkOnlyDescribe(
           ).to.be.revertedWith("Unsupported asset");
         }
       });
->>>>>>> origin/master
     });
 
     describe("Withdraw", function () {

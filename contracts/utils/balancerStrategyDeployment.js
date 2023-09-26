@@ -71,11 +71,18 @@ module.exports = ({
       );
 
       // 3. Encode the init data
-      const initFunction = "initialize(address[],address[],address[])";
+      const initFunction =
+        "initialize(address[],address[],address[],uint256,uint256)";
       const initData =
         cOETHBalancerMetaPoolStrategy.interface.encodeFunctionData(
           initFunction,
-          [rewardTokenAddresses, assets, [platformAddress, platformAddress]]
+          [
+            rewardTokenAddresses,
+            assets,
+            [platformAddress, platformAddress],
+            2, // WeightedPoolExitKind.BPT_IN_FOR_EXACT_TOKENS_OUT
+            1, // WeightedPoolExitKind.EXACT_BPT_IN_FOR_TOKENS_OUT
+          ]
         );
 
       // 4. Init the proxy to point at the implementation

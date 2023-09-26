@@ -104,7 +104,7 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         address[] calldata _rewardTokenAddresses, // BAL & AURA
         address[] calldata _assets,
         address[] calldata _pTokens
-    ) external virtual override onlyGovernor initializer {
+    ) public virtual override onlyGovernor initializer {
         maxWithdrawalDeviation = 1e16;
         maxDepositDeviation = 1e16;
 
