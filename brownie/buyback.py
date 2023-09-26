@@ -60,8 +60,8 @@ def build_buyback_tx(max_dollars=5000, max_slippage=2.0, with_fork=True):
     # Display buyback amounts
     print("OUSD available on contract:   {}".format(c18(ousd_available)))
     print("OUSD to use for transaction:  {}".format(c18(buyback_amount)))
-    print("OUSD send to treasury:        {}".format(c18(ousd_for_treasury * 10**18)))
-    print("OUSD to swap:                 {}".format(c18(ousd_to_swap * 10**18)))
+    print("OUSD to send to treasury:     {}".format(c18(ousd_for_treasury)))
+    print("OUSD to swap:                 {}".format(c18(ousd_to_swap)))
     print("----")
 
     x = no_slippage_ogv

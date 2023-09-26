@@ -48,43 +48,6 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
     {}
 
     /**
-     * Initializer for setting up strategy internal state. This overrides the
-     * InitializableAbstractStrategy initializer as Balancer's strategies don't fit
-     * well within that abstraction.
-     * @param _rewardTokenAddresses Address of BAL & AURA
-     * @param _assets Addresses of supported assets. MUST be passed in the same
-     *                order as returned by coins on the pool contract, i.e.
-     *                WETH, stETH
-     * @param _pTokens Platform Token corresponding addresses
-     * @param _pTokens _balancerBptInExactTokensOutIndex -> enum Value that represents
-     *        exit encoding where for min BPT in user can exactly specify the underlying assets
-     *        to be returned
-     * @param _pTokens _balancerExactBptInTokensOutIndex -> enum Value that represents
-     *        exit encoding where for exact amount of BPT in user can shall receive proportional
-     *        amount of underlying assets
-     */
-    function initialize(
-        address[] calldata _rewardTokenAddresses, // BAL & AURA
-        address[] calldata _assets,
-        address[] calldata _pTokens,
-        uint256 _balancerBptInExactTokensOutIndex,
-        uint256 _balancerExactBptInTokensOutIndex
-    ) external virtual onlyGovernor initializer {
-        /* IMPORTANT(!)
-         *
-         * existing Balancer rETH/WETH strategy doesn't have the `balancerBptInExactTokensOutIndex`
-         * or `balancerWithdrawAllExitKind` variable in the storage slot populated.
-         */
-        balancerBptInExactTokensOutIndex = _balancerBptInExactTokensOutIndex;
-        balancerExactBptInTokensOutIndex = _balancerExactBptInTokensOutIndex;
-        BaseBalancerStrategy.initialize(
-            _rewardTokenAddresses,
-            _assets,
-            _pTokens
-        );
-    }
-
-    /**
      * @notice There are no plans to configure BalancerMetaPool as a default
      * asset strategy. For that reason there is no need to support this
      * functionality.
@@ -208,7 +171,6 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
          * ['uint256', 'uint256[]', 'uint256']
          * [EXACT_TOKENS_IN_FOR_BPT_OUT, amountsIn, minimumBPT]
          */
-
         bytes memory userData = abi.encode(
             IBalancerVault.WeightedPoolJoinKind.EXACT_TOKENS_IN_FOR_BPT_OUT,
             _getUserDataEncodedAmounts(amountsIn),

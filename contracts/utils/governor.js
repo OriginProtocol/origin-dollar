@@ -30,6 +30,13 @@ async function proposeArgs(governorArgsArray) {
   return [targets, sigs, datas];
 }
 
+async function accountCanCreateProposal(governorContract, account) {
+  const block = await governorContract.provider.getBlock("latest");
+  const votes = await governorContract.getVotes(account, block.number - 1);
+  const votesThreshold = await governorContract.proposalThreshold();
+  return votes.gte(votesThreshold);
+}
+
 /**
  * Utility to build the arguments to pass to the OGV governor's propose method.
  * @param governorArgsArray
@@ -49,4 +56,5 @@ async function proposeGovernanceArgs(governorArgsArray) {
 module.exports = {
   proposeArgs,
   proposeGovernanceArgs,
+  accountCanCreateProposal,
 };

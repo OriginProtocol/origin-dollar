@@ -1,9 +1,13 @@
 from world import *
 import requests
 from types import SimpleNamespace
+import os
+
+ONEINCH_SUBDOMAIN = os.getenv('ONEINCH_SUBDOMAIN')
+ONEINCH_SUBDOMAIN = ONEINCH_SUBDOMAIN if len(ONEINCH_SUBDOMAIN) > 0 else 'api'
 
 def get_1inch_swap_data(from_token, to_token, swap_amount, slippage, from_address=STRATEGIST, to_address=STRATEGIST):
-  req = requests.get('https://api.1inch.io/v5.0/1/swap', params={
+  req = requests.get('https://{}.1inch.io/v5.0/1/swap'.format(ONEINCH_SUBDOMAIN), params={
     'fromTokenAddress': from_token,
     'fromAddress': from_address,
     'destReceiver': to_address,

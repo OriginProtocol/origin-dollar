@@ -104,7 +104,7 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         address[] calldata _rewardTokenAddresses, // BAL & AURA
         address[] calldata _assets,
         address[] calldata _pTokens
-    ) public virtual override onlyGovernor initializer {
+    ) external virtual override onlyGovernor initializer {
         maxWithdrawalDeviation = 1e16;
         maxDepositDeviation = 1e16;
 
@@ -172,6 +172,8 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         whenNotInBalancerVaultContext
         returns (uint256 amount)
     {
+        require(assetToPToken[_asset] != address(0), "Unsupported asset");
+
         uint256 bptBalance = _getBalancerPoolTokens();
 
         /* To calculate the worth of queried asset:
