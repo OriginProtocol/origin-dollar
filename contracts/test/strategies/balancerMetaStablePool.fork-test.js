@@ -258,15 +258,18 @@ forkOnlyDescribe(
 
       it("Should not return invalid balance of unsupported asset", async () => {
         // Deposit something
-        const { reth, rEthBPT, weth, balancerREthStrategy, frxETH } = fixture;
+        const { reth, rEthBPT, weth, balancerREthStrategy, frxETH, stETH } =
+          fixture;
         await depositTest(fixture, [5, 5], [weth, reth], rEthBPT);
 
         // Check balance
-        const balance = await balancerREthStrategy["checkBalance(address)"](
-          frxETH.address
-        );
-
-        expect(balance).to.equal("0");
+        for (const unsupportedAsset of [frxETH, stETH]) {
+          await expect(
+            balancerREthStrategy["checkBalance(address)"](
+              unsupportedAsset.address
+            )
+          ).to.be.revertedWith("Unsupported asset");
+        }
       });
     });
 
