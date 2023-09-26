@@ -255,6 +255,17 @@ forkOnlyDescribe(
           .populateTransaction["checkBalance(address)"](weth.address);
         await josh.sendTransaction(tx);
       });
+
+      it("Should not return invalid balance of unsupported asset", async () => {
+        // Deposit something
+        const { reth, rEthBPT, weth, balancerREthStrategy, frxETH } = fixture;
+        await depositTest(fixture, [5, 5], [weth, reth], rEthBPT);
+
+        // Check balance
+        const balance = await balancerREthStrategy["checkBalance(address)"](frxETH.address);
+
+        expect(balance).to.equal("0")
+      });
     });
 
     describe("Withdraw", function () {
