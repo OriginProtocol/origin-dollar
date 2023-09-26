@@ -34,14 +34,6 @@ module.exports = deploymentWithGovernanceProposal(
     const sGaugeControllerAdmin = await impersonateAndFund(
       gaugeControllerAdmin
     );
-    console.log("Before add_gauge");
-    await withConfirmation(
-      curveGaugeController.connect(sGaugeControllerAdmin)[
-        // eslint-disable-next-line no-unexpected-multiline
-        "add_gauge(address,int128)"
-      ](addresses.mainnet.CurveFrxETHOETHGauge, 0)
-    );
-    console.log("Before change_gauge_weight");
     await withConfirmation(
       curveGaugeController
         .connect(sGaugeControllerAdmin)
@@ -49,7 +41,6 @@ module.exports = deploymentWithGovernanceProposal(
           gasLimit: 2000000,
         })
     );
-    console.log("After change_gauge_weight");
 
     const convexOperatorAddress = "0xa3C5A1e09150B75ff251c1a7815A07182c3de2FB";
     const convexOperatorSigner = await impersonateAndFund(
