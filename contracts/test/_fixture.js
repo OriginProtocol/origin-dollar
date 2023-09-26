@@ -7,6 +7,7 @@ const { formatUnits } = require("ethers/lib/utils");
 const addresses = require("../utils/addresses");
 const { setFraxOraclePrice } = require("../utils/frax");
 const {
+  frxEthPoolLpPID,
   balancer_rETH_WETH_PID,
   balancer_stETH_WETH_PID,
 } = require("../utils/constants");
@@ -133,12 +134,22 @@ const defaultFixture = deployments.createFixture(async () => {
     convexStrategyProxy.address
   );
 
+  // AMO strategy for Curve OUSD/3Crv Metapool
   const convexOusdAMOStrategyProxy = await ethers.getContract(
     "ConvexOUSDMetaStrategyProxy"
   );
   const convexOusdAMOStrategy = await ethers.getContractAt(
     "ConvexOUSDMetaStrategy",
     convexOusdAMOStrategyProxy.address
+  );
+
+  // AMO strategy for Curve frxETH/OETH pool
+  const convexFrxETHAMOStrategyProxy = await ethers.getContract(
+    "ConvexFrxETHAMOStrategyProxy"
+  );
+  const convexFrxETHAMOStrategy = await ethers.getContractAt(
+    "ConvexFrxETHAMOStrategy",
+    convexFrxETHAMOStrategyProxy.address
   );
 
   const aaveStrategyProxy = await ethers.getContract("AaveStrategyProxy");
@@ -226,7 +237,6 @@ const defaultFixture = deployments.createFixture(async () => {
     swapper1Inch,
     mock1InchSwapRouter,
     convexEthMetaStrategy,
-    convexFrxETHAMOStrategy,
     fluxStrategy,
     vaultValueChecker,
     oethVaultValueChecker;
@@ -344,15 +354,6 @@ const defaultFixture = deployments.createFixture(async () => {
     convexEthMetaStrategy = await ethers.getContractAt(
       "ConvexEthMetaStrategy",
       convexEthMetaStrategyProxy.address
-    );
-
-    // AMO strategy for Curve frxETH/OETH pool
-    const convexFrxETHAMOStrategyProxy = await ethers.getContract(
-      "ConvexFrxETHAMOStrategyProxy"
-    );
-    convexFrxETHAMOStrategy = await ethers.getContractAt(
-      "ConvexFrxETHAMOStrategy",
-      convexFrxETHAMOStrategyProxy.address
     );
 
     const oethDripperProxy = await ethers.getContract("OETHDripperProxy");
@@ -1236,7 +1237,7 @@ async function convexOusdAmoFixture() {
     const { governorAddr } = await getNamedAccounts();
     const sGovernor = await ethers.provider.getSigner(governorAddr);
 
-    // Add Convex Meta strategy
+    // Add Convex OUSD AMO strategy
     await fixture.vault
       .connect(sGovernor)
       .approveStrategy(fixture.convexOusdAMOStrategy.address);
@@ -1246,7 +1247,7 @@ async function convexOusdAmoFixture() {
       fixture.vault.address
     );
 
-    // set meta strategy on vault so meta strategy is allowed to mint OUSD
+    // set as AMO strategy on vault so the strategy is allowed to mint OUSD
     await fixture.vault
       .connect(sGovernor)
       .setAMOStrategy(fixture.convexOusdAMOStrategy.address, true);
@@ -1884,30 +1885,89 @@ async function convexFrxEthAmoFixture(
     timelock,
   } = fixture;
 
-  await impersonateAndFundAddress(
-    frxETH.address,
-    [
-      "0xa1F8A6807c402E4A15ef4EBa36528A3FED24E577",
-      "0x9c3B46C0Ceb5B9e304FCd6D88Fc50f7DD24B31Bc",
-      "0x4d9f9D15101EEC665F77210cB999639f760F831E",
-    ],
-    // Josh is loaded with frxETH
-    josh.getAddress()
-  );
+  if (isFork) {
+    await impersonateAndFundAddress(
+      frxETH.address,
+      [
+        "0xa1F8A6807c402E4A15ef4EBa36528A3FED24E577",
+        "0x9c3B46C0Ceb5B9e304FCd6D88Fc50f7DD24B31Bc",
+        "0x4d9f9D15101EEC665F77210cB999639f760F831E",
+      ],
+      // Josh is loaded with frxETH
+      josh.getAddress()
+    );
 
-  // Get some CRV from most loaded contracts/wallets
-  await impersonateAndFundAddress(
-    addresses.mainnet.CRV,
-    [
-      "0x0A2634885B47F15064fB2B33A86733C614c9950A",
-      "0x34ea4138580435B5A521E460035edb19Df1938c1",
-      "0x28C6c06298d514Db089934071355E5743bf21d60",
-      "0xa6a4d3218BBf0E81B38390396f9EA7eb8B9c9820",
-      "0xb73D8dCE603155e231aAd4381a2F20071Ca4D55c",
-    ],
-    // Josh is loaded with CRV
-    josh.getAddress()
-  );
+    // Get some CRV from most loaded contracts/wallets
+    await impersonateAndFundAddress(
+      addresses.mainnet.CRV,
+      [
+        "0x0A2634885B47F15064fB2B33A86733C614c9950A",
+        "0x34ea4138580435B5A521E460035edb19Df1938c1",
+        "0x28C6c06298d514Db089934071355E5743bf21d60",
+        "0xa6a4d3218BBf0E81B38390396f9EA7eb8B9c9820",
+        "0xb73D8dCE603155e231aAd4381a2F20071Ca4D55c",
+      ],
+      // Josh is loaded with CRV
+      josh.getAddress()
+    );
+
+    // Impersonate the Curve frxETH/OETH gauge that holds all the LP tokens
+    fixture.curveFrxETHOETHGaugeSigner = await impersonateAndFundContract(
+      addresses.mainnet.CurveFrxETHOETHGauge
+    );
+
+    // Convex pool that records the deposited balances
+    fixture.convexFrxEthOethRewardsPool = await ethers.getContractAt(
+      "IRewardStaking",
+      addresses.mainnet.CVXFrxETHRewardsPool
+    );
+
+    fixture.curveFrxEthOethPool = await ethers.getContractAt(
+      curveOethEthPoolAbi,
+      addresses.mainnet.CurveFrxETHOETHPool
+    );
+  } else {
+    // Migrations should do these on fork
+    const { governorAddr } = await getNamedAccounts();
+    const sGovernor = await ethers.provider.getSigner(governorAddr);
+
+    // Add Convex FrxETH AMO strategy
+    await oethVault
+      .connect(sGovernor)
+      .approveStrategy(convexFrxETHAMOStrategy.address);
+
+    // set as AMO strategy on vault so the strategy is allowed to mint OETH
+    await oethVault
+      .connect(sGovernor)
+      .setAMOStrategy(convexFrxETHAMOStrategy.address, true);
+
+    // set OETH mint threshold to 25,000 ETH
+    await oethVault
+      .connect(sGovernor)
+      .setMintForStrategyThreshold(
+        convexFrxETHAMOStrategy.address,
+        parseUnits("25", 21)
+      );
+
+    await convexFrxETHAMOStrategy
+      .connect(sGovernor)
+      .setHarvesterAddress(fixture.harvester.address);
+
+    await fixture.harvester
+      .connect(sGovernor)
+      .setSupportedStrategy(convexFrxETHAMOStrategy.address, true);
+
+    const mockBooster = await ethers.getContract("MockBooster");
+    const poolInfo = await mockBooster.poolInfo(frxEthPoolLpPID);
+    fixture.convexFrxEthOethRewardsPool = await ethers.getContractAt(
+      "IRewardStaking",
+      poolInfo.crvRewards
+    );
+
+    fixture.curveFrxEthOethPool = await ethers.getContract(
+      "MockCurveFrxEthOethPool"
+    );
+  }
 
   // Disable default strategy for frxETH
   await oethVault
@@ -1924,21 +1984,6 @@ async function convexFrxEthAmoFixture(
 
   // Impersonate the OETH Vault
   fixture.oethVaultSigner = await impersonateAndFundContract(oethVault.address);
-  // Impersonate the Curve frxETH/OETH gauge that holds all the LP tokens
-  fixture.curveFrxETHOETHGaugeSigner = await impersonateAndFundContract(
-    addresses.mainnet.CurveFrxETHOETHGauge
-  );
-
-  // Convex pool that records the deposited balances
-  fixture.convexFrxEthOethRewardsPool = await ethers.getContractAt(
-    "IRewardStaking",
-    addresses.mainnet.CVXFrxETHRewardsPool
-  );
-
-  fixture.curveFrxEthOethPool = await ethers.getContractAt(
-    curveOethEthPoolAbi,
-    addresses.mainnet.CurveFrxETHOETHPool
-  );
 
   // Set frxETH/ETH price above 0.998 so we can mint OETH using frxETH
   await setFraxOraclePrice(parseUnits("0.999", 18));

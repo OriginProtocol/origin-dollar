@@ -10,6 +10,7 @@ const {
 const { deployWithConfirmation, withConfirmation } = require("../utils/deploy");
 const {
   metapoolLPCRVPid,
+  frxEthPoolLpPID,
   lusdMetapoolLPCRVPid,
 } = require("../utils/constants");
 
@@ -372,7 +373,7 @@ const deployConvexLUSDMetaStrategy = async () => {
 };
 
 /**
- * Deploys a Convex Meta Strategy which supports OUSD / 3Crv
+ * Deploy Convex AMO Strategy for the Curve OUSD/3Crv Metapool
  */
 const deployConvexOUSDMetaStrategy = async () => {
   const assetAddresses = await getAssetAddresses(deployments);
@@ -451,6 +452,69 @@ const deployConvexOUSDMetaStrategy = async () => {
     log("Claimed governance for ConvexOUSDMetaStrategy");
   }
   return cConvexOUSDMetaStrategy;
+};
+
+/**
+ * Deploy Convex AMO Strategy for the Curve frxETH/OETH pool
+ */
+const deployConvexFrxEthAMOStrategy = async () => {
+  const assetAddresses = await getAssetAddresses(deployments);
+  const { deployerAddr, governorAddr } = await getNamedAccounts();
+  // Signers
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+
+  const dConvexFrxETHAMOStrategyProxy = await deployWithConfirmation(
+    "ConvexFrxETHAMOStrategyProxy"
+  );
+  const cConvexFrxETHAMOStrategyProxy = await ethers.getContract(
+    "ConvexFrxETHAMOStrategyProxy"
+  );
+
+  // Deploy and set the immutable variables of implementation
+  const mockBooster = await ethers.getContract("MockBooster");
+  const poolInfo = await mockBooster.poolInfo(frxEthPoolLpPID);
+  const oeth = await ethers.getContract("OETHProxy");
+  const curvePool = await ethers.getContract("MockCurveFrxEthOethPool");
+  log(`Curve frxETH/OETH Pool ${curvePool.address}`);
+  const vault = await ethers.getContract("OETHVaultProxy");
+  const dConvexFrxETHAMOStrategy = await deployWithConfirmation(
+    "ConvexFrxETHAMOStrategy",
+    [
+      [curvePool.address, vault.address],
+      [
+        mockBooster.address, // cvxDepositorAddress,
+        poolInfo.crvRewards, // cvxRewardStakerAddress,
+        frxEthPoolLpPID, // cvxDepositorPTokenId
+        oeth.address, // oTokenAddress (OETH),
+        assetAddresses.frxETH, // assetAddress (frxETH)
+      ],
+    ]
+  );
+
+  const cConvexFrxETHAMOStrategy = await ethers.getContractAt(
+    "ConvexFrxETHAMOStrategy",
+    dConvexFrxETHAMOStrategyProxy.address
+  );
+
+  // 3. Initialize the new frxETH/OETH AMO strategy
+  // Construct initialize call data to init and configure the new strategy
+  const initData = cConvexFrxETHAMOStrategy.interface.encodeFunctionData(
+    "initialize(address[])",
+    [[assetAddresses.CRV, assetAddresses.CVX]]
+  );
+
+  // prettier-ignore
+  await withConfirmation(
+      cConvexFrxETHAMOStrategyProxy
+            .connect(sDeployer)["initialize(address,address,bytes)"](
+              dConvexFrxETHAMOStrategy.address,
+              governorAddr,
+              initData
+            )
+        );
+  log("Initialized Curve frxETH/ETH AMO Strategy");
+
+  return cConvexFrxETHAMOStrategy;
 };
 
 /**
@@ -970,7 +1034,7 @@ const deployCore = async () => {
   log("Initialized OETH");
 };
 
-// deploy curve metapool mocks
+// deploy Curve OUSD/3Crv Metapool mock
 const deployCurveMetapoolMocks = async () => {
   const ousd = await ethers.getContract("OUSDProxy");
   const { deployerAddr } = await hre.getNamedAccounts();
@@ -986,7 +1050,26 @@ const deployCurveMetapoolMocks = async () => {
   await mockBooster.setPool(metapoolLPCRVPid, metapoolToken.address);
 };
 
-// deploy curve metapool mocks
+// deploy Curve frxETH/OETH Pool mock
+const deployCurvefrxEthOethPoolMocks = async () => {
+  const oeth = await ethers.getContract("OETHProxy");
+  const { deployerAddr } = await hre.getNamedAccounts();
+  const assetAddresses = await getAssetAddresses(deployments);
+
+  // Deploy mock frxETH/OETH Curve pool
+  await hre.deployments.deploy("MockCurveFrxEthOethPool", {
+    from: deployerAddr,
+    args: [[assetAddresses.frxETH, oeth.address]],
+  });
+  const curveFrxEthOethToken = await ethers.getContract(
+    "MockCurveFrxEthOethPool"
+  );
+
+  const mockBooster = await ethers.getContract("MockBooster");
+  await mockBooster.setPool(frxEthPoolLpPID, curveFrxEthOethToken.address);
+};
+
+// deploy Curve LUSD/3Crv Metapool mock
 const deployCurveLUSDMetapoolMocks = async () => {
   const { deployerAddr } = await hre.getNamedAccounts();
   const assetAddresses = await getAssetAddresses(deployments);
@@ -1218,12 +1301,14 @@ const main = async () => {
   await deployCore();
   await deployCurveMetapoolMocks();
   await deployCurveLUSDMetapoolMocks();
+  await deployCurvefrxEthOethPoolMocks();
   await deployCompoundStrategy();
   await deployAaveStrategy();
   await deployThreePoolStrategy();
   await deployConvexStrategy();
   await deployConvexOUSDMetaStrategy();
   await deployConvexLUSDMetaStrategy();
+  await deployConvexFrxEthAMOStrategy();
   await deployFraxEthStrategy();
   const [harvesterProxy, oethHarvesterProxy] = await deployHarvesters();
   await configureVault();

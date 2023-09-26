@@ -9,6 +9,8 @@ import { IRewardStaking } from "../../strategies/IRewardStaking.sol";
 import { IMintableERC20, MintableERC20, ERC20 } from "../MintableERC20.sol";
 import { IBurnableERC20, BurnableERC20 } from "../BurnableERC20.sol";
 
+import "hardhat/console.sol";
+
 contract MockDepositToken is MintableERC20 {
     constructor() ERC20("DCVX", "CVX Deposit Token") {}
 }
@@ -22,7 +24,7 @@ contract MockBooster {
         address crvRewards;
     }
 
-    address public minter; // this is CVx for the booster on live
+    address public minter; // this is CVX for the booster on live
     address public crv; // Curve rewards token
     address public cvx; // Convex rewards token
     mapping(uint256 => PoolInfo) public poolInfo;
@@ -37,9 +39,12 @@ contract MockBooster {
         cvx = _cvx;
     }
 
-    function setPool(uint256 pid, address _lpToken) external returns (bool) {
+    function setPool(uint256 pid, address _lpToken)
+        external
+        returns (address rewards)
+    {
         address token = address(new MockDepositToken());
-        address rewards = address(
+        rewards = address(
             new MockRewardPool(pid, token, crv, cvx, address(this))
         );
 
@@ -69,6 +74,7 @@ contract MockBooster {
             address rewardContract = pool.crvRewards;
             IERC20(token).safeApprove(rewardContract, 0);
             IERC20(token).safeApprove(rewardContract, _amount);
+            console.log("deposit to reward contract %s", pool.crvRewards);
             IRewardStaking(rewardContract).stakeFor(msg.sender, _amount);
         } else {
             //add user balance directly

@@ -79,13 +79,8 @@ describe("Convex OUSD/3Pool AMO Strategy", function () {
 
         // deposit asset to AMO
         // prettier-ignore
-        const tx = await convexOusdAMOStrategy
+        await convexOusdAMOStrategy
           .connect(vaultSigner)["deposit(address,uint256)"](asset.address, depositAmount);
-        // emit Deposit event for asset
-        // TODO why is this failing?
-        // await expect(tx)
-        //   .to.emit(convexOusdAMOStrategy, "Deposit")
-        //   .withArgs(asset.address, metapoolToken.address, depositAmount);
 
         await expect(cvxBooster).has.an.approxBalanceOf("60000", metapoolToken);
       });

@@ -6,6 +6,8 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { IMintableERC20 } from "../MintableERC20.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
+import "hardhat/console.sol";
+
 interface IDeposit {
     function poolInfo(uint256)
         external
@@ -54,7 +56,7 @@ contract MockRewardPool {
         address _rewardTokenB,
         // solhint-disable-next-line no-unused-vars
         address _operator
-    ) public {
+    ) {
         pid = _pid;
         stakingToken = _stakingToken;
         rewardTokenA = _rewardTokenA;
@@ -76,6 +78,7 @@ contract MockRewardPool {
         _totalSupply = _totalSupply.add(_amount);
         _balances[_for] = _balances[_for].add(_amount);
 
+        console.log("stakingToken %s", stakingToken);
         //take away from sender
         IERC20(stakingToken).safeTransferFrom(
             msg.sender,
