@@ -6,10 +6,8 @@ pragma solidity ^0.8.0;
  * @author Origin Protocol Inc
  */
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { BaseAuraStrategy, BaseBalancerStrategy } from "./BaseAuraStrategy.sol";
 import { BalancerMetaPoolStrategy } from "./BalancerMetaPoolStrategy.sol";
-import { IBalancerVault } from "../../interfaces/balancer/IBalancerVault.sol";
-import { IERC20, InitializableAbstractStrategy } from "../../utils/InitializableAbstractStrategy.sol";
+import { IERC20 } from "../../utils/InitializableAbstractStrategy.sol";
 import { StableMath } from "../../utils/StableMath.sol";
 
 contract BalancerComposablePoolStrategy is BalancerMetaPoolStrategy {
