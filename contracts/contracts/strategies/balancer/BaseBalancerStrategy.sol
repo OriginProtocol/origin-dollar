@@ -398,8 +398,8 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
              * shares (sfrxETH) to be exchanged for assets (frxETH)
              */
             unwrappedAmount = IERC4626(sfrxETH).redeem(
-                /* adding + 1 here as because of a rounding error the
-                 * return value could be off by 1 WEI
+                /* adding + 1 here since a rounding error can 
+                 * return value that is off by 1 WEI
                  */
                 amount + FRX_ETH_REDEEM_CORRECTION,
                 address(this),
