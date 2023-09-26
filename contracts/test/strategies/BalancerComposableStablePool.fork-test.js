@@ -407,7 +407,7 @@ forkOnlyDescribe(
       }
 
       it("Should be able to withdraw all of pool liquidity", async function () {
-        const { oethVault, stETH, frxETH, reth, balancerSfrxWstRETHStrategy } =
+        const { oethVault, stETH, frxETH, reth, weth, balancerSfrxWstRETHStrategy } =
           fixture;
 
         const stEthBalanceBefore = await balancerSfrxWstRETHStrategy[

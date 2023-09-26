@@ -205,7 +205,7 @@ addresses.mainnet.rETH_WETH_AuraRewards =
 addresses.mainnet.wstETH_sfrxETH_rETH_BPT =
   "0x42ED016F826165C2e5976fe5bC3df540C5aD0Af7";
 addresses.mainnet.wstETH_sfrxETH_rETH_AuraRewards =
-  "0x032b676d5d55e8ecbae88ebee0aa10fb5f72f6cb";
+  "0x032B676d5D55e8ECbAe88ebEE0AA10fB5f72F6CB";
 
 // Aura
 addresses.mainnet.AURA = "0xC0c293ce456fF0ED870ADd98a0828Dd4d2903DBF";

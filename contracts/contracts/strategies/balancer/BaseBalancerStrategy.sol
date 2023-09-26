@@ -15,11 +15,16 @@ import { IOracle } from "../../interfaces/IOracle.sol";
 import { IWstETH } from "../../interfaces/IWstETH.sol";
 import { IERC4626 } from "../../../lib/openzeppelin/interfaces/IERC4626.sol";
 import { StableMath } from "../../utils/StableMath.sol";
-import "hardhat/console.sol";
 
 abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
+
+    /*
+     * When redeeming sfrxETH for frxETH there is usually a 1 WEI rounding
+     * error. To mitigate this issue we overshoot by 1 WEI when redeeming.
+     */
+    uint256 public constant FRX_ETH_REDEEM_CORRECTION = 1;
 
     address public immutable rETH;
     address public immutable stETH;
@@ -99,13 +104,24 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         address[] calldata _rewardTokenAddresses, // BAL & AURA
         address[] calldata _assets,
         address[] calldata _pTokens
-    ) external virtual override onlyGovernor initializer {
+    ) public virtual override onlyGovernor initializer {
         maxWithdrawalDeviation = 1e16;
         maxDepositDeviation = 1e16;
 
         emit MaxWithdrawalDeviationUpdated(0, maxWithdrawalDeviation);
         emit MaxDepositDeviationUpdated(0, maxDepositDeviation);
 
+        _assetConfigVerification(_assets);
+
+        super._initialize(_rewardTokenAddresses, _assets, _pTokens);
+        _approveBase();
+    }
+
+    function _assetConfigVerification(address[] calldata _assets)
+        internal
+        view
+        virtual
+    {
         IERC20[] memory poolAssets = _getPoolAssets();
         require(
             poolAssets.length == _assets.length,
@@ -115,9 +131,6 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
             address asset = _fromPoolAsset(address(poolAssets[i]));
             require(_assets[i] == asset, "Pool assets mismatch");
         }
-
-        super._initialize(_rewardTokenAddresses, _assets, _pTokens);
-        _approveBase();
     }
 
     /**
@@ -374,20 +387,19 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
     function _unwrapPoolAsset(address asset, uint256 amount)
         internal
         returns (uint256 unwrappedAmount)
-    {   
-        console.log("_unwrapPoolAsset asset");
-        console.log(IERC20(asset).balanceOf(address(this)));
-        console.log(amount);
-        if (asset == stETH) {
-            console.log("WSTETH");
-            console.log(IERC20(wstETH).balanceOf(address(this)));
-
+    {
+        if (asset == stETH && amount > 0) {
+            // amount is amount of wstETH to be unwrapped as stETH
             unwrappedAmount = IWstETH(wstETH).unwrap(amount);
-        } else if (asset == frxETH) {
-            console.log("SFRXETH");
-            console.log(IERC20(sfrxETH).balanceOf(address(this)));
-            unwrappedAmount = IERC4626(sfrxETH).withdraw(
-                amount,
+        } else if (asset == frxETH && amount > 0) {
+            /* redeem takes amount parameter that are the number of
+             * shares (sfrxETH) to be exchanged for assets (frxETH)
+             */
+            unwrappedAmount = IERC4626(sfrxETH).redeem(
+                /* adding + 1 here as because of a rounding error the
+                 * return value could be off by 1 WEI
+                 */
+                amount + FRX_ETH_REDEEM_CORRECTION,
                 address(this),
                 address(this)
             );

@@ -28,28 +28,13 @@ contract BalancerComposablePoolStrategy is BalancerMetaPoolStrategy {
         )
     {}
 
-    /**
-     * Initializer for setting up strategy internal state. This overrides the
-     * InitializableAbstractStrategy initializer as Balancer's strategies don't fit
-     * well within that abstraction.
-     * @param _rewardTokenAddresses Address of BAL & AURA
-     * @param _assets Addresses of supported assets. MUST be passed in the same
-     *                order as returned by coins on the pool contract, i.e.
-     *                WETH, stETH -> skipping the BPT token on the 0 position
-     * @param _pTokens Platform Token corresponding addresses
-     */
-    function initialize(
-        address[] calldata _rewardTokenAddresses, // BAL & AURA
-        address[] calldata _assets,
-        address[] calldata _pTokens
-    ) external virtual override onlyGovernor initializer {
-        maxWithdrawalDeviation = 1e16;
-        maxDepositDeviation = 1e16;
-
-        emit MaxWithdrawalDeviationUpdated(0, maxWithdrawalDeviation);
-        emit MaxDepositDeviationUpdated(0, maxDepositDeviation);
-
+    function _assetConfigVerification(address[] calldata _assets)
+        internal
+        view
+        override
+    {
         IERC20[] memory poolAssets = _getPoolAssets();
+
         require(
             // aside from BPT token all assets must be supported
             poolAssets.length - 1 == _assets.length,
@@ -59,13 +44,6 @@ contract BalancerComposablePoolStrategy is BalancerMetaPoolStrategy {
             address asset = _fromPoolAsset(address(poolAssets[i + 1]));
             require(_assets[i] == asset, "Pool assets mismatch");
         }
-
-        InitializableAbstractStrategy._initialize(
-            _rewardTokenAddresses,
-            _assets,
-            _pTokens
-        );
-        _approveBase();
     }
 
     function _getUserDataEncodedAmounts(uint256[] memory _amounts)
@@ -82,21 +60,6 @@ contract BalancerComposablePoolStrategy is BalancerMetaPoolStrategy {
         for (uint256 i = 0; i < _amounts.length - 1; ++i) {
             amounts[i] = _amounts[i + 1];
         }
-    }
-
-    function _getExactBptInForTokensOutEnumValue()
-        internal
-        override
-        pure
-        returns (uint256 exitKind)
-    {
-        /* for Composable stable pools using IBalancerVault.WeightedPoolExitKind is not
-         * ok since the enum values are in different order as they are in MetaStable pools.
-         * From the pool code: 
-         * 
-         * enum ExitKind { EXACT_BPT_IN_FOR_ONE_TOKEN_OUT, BPT_IN_FOR_EXACT_TOKENS_OUT, EXACT_BPT_IN_FOR_ALL_TOKENS_OUT }
-         */
-        exitKind = uint256(IBalancerVault.ComposablePoolExitKind.BPT_IN_FOR_EXACT_TOKENS_OUT);
     }
 
     function _getUserDataEncodedAssets(address[] memory _assets)

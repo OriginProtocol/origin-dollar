@@ -16,8 +16,26 @@ import "hardhat/console.sol";
 contract BalancerMetaPoolStrategy is BaseAuraStrategy {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
+    /* For Meta stable pools the enum value should be "2" as it is defined 
+     * in the IBalancerVault. From the Metastable pool codebase:
+     * 
+     * enum ExitKind { EXACT_BPT_IN_FOR_ONE_TOKEN_OUT, EXACT_BPT_IN_FOR_TOKENS_OUT, BPT_IN_FOR_EXACT_TOKENS_OUT }
 
-    int256[50] private ___reserved;
+     * For Composable stable pools using IBalancerVault.WeightedPoolExitKind is not
+     * ok since the enum values are in different order as they are in MetaStable pools.
+     * From the pool code: 
+     * 
+     * enum ExitKind { EXACT_BPT_IN_FOR_ONE_TOKEN_OUT, BPT_IN_FOR_EXACT_TOKENS_OUT, EXACT_BPT_IN_FOR_ALL_TOKENS_OUT }
+     */
+    uint256 internal balancerBptInExactTokensOutIndex;
+
+    /* we need to call EXACT_BPT_IN_FOR_TOKENS_OUT when doing withdrawAll.
+     * In meta stable pools that enum item with value 1 and for Composable stable pools
+     * that is enum item with value 2.
+     */
+    uint256 internal balancerExactBptInTokensOutIndex;
+
+    int256[48] private ___reserved;
 
     constructor(
         BaseStrategyConfig memory _stratConfig,
@@ -28,6 +46,43 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         BaseBalancerStrategy(_balancerConfig)
         BaseAuraStrategy(_auraRewardPoolAddress)
     {}
+
+    /**
+     * Initializer for setting up strategy internal state. This overrides the
+     * InitializableAbstractStrategy initializer as Balancer's strategies don't fit
+     * well within that abstraction.
+     * @param _rewardTokenAddresses Address of BAL & AURA
+     * @param _assets Addresses of supported assets. MUST be passed in the same
+     *                order as returned by coins on the pool contract, i.e.
+     *                WETH, stETH
+     * @param _pTokens Platform Token corresponding addresses
+     * @param _pTokens _balancerBptInExactTokensOutIndex -> enum Value that represents
+     *        exit encoding where for min BPT in user can exactly specify the underlying assets
+     *        to be returned
+     * @param _pTokens _balancerExactBptInTokensOutIndex -> enum Value that represents
+     *        exit encoding where for exact amount of BPT in user can shall receive proportional
+     *        amount of underlying assets
+     */
+    function initialize(
+        address[] calldata _rewardTokenAddresses, // BAL & AURA
+        address[] calldata _assets,
+        address[] calldata _pTokens,
+        uint256 _balancerBptInExactTokensOutIndex,
+        uint256 _balancerExactBptInTokensOutIndex
+    ) external virtual onlyGovernor initializer {
+        /* IMPORTANT(!)
+         *
+         * existing Balancer rETH/WETH strategy doesn't have the `balancerBptInExactTokensOutIndex`
+         * or `balancerWithdrawAllExitKind` variable in the storage slot populated.
+         */
+        balancerBptInExactTokensOutIndex = _balancerBptInExactTokensOutIndex;
+        balancerExactBptInTokensOutIndex = _balancerExactBptInTokensOutIndex;
+        BaseBalancerStrategy.initialize(
+            _rewardTokenAddresses,
+            _assets,
+            _pTokens
+        );
+    }
 
     /**
      * @notice There are no plans to configure BalancerMetaPool as a default
@@ -185,19 +240,6 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         amounts = _amounts;
     }
 
-    function _getExactBptInForTokensOutEnumValue()
-        internal
-        virtual
-        pure
-        returns (uint256 exitKind)
-    {
-        // for Meta stable pools using this enum is ok since the enum value should
-        // be "2" as it is in the IBalancerVault. From the Metastable pool codebase:
-        // 
-        // enum ExitKind { EXACT_BPT_IN_FOR_ONE_TOKEN_OUT, EXACT_BPT_IN_FOR_TOKENS_OUT, BPT_IN_FOR_EXACT_TOKENS_OUT }
-        exitKind = uint256(IBalancerVault.WeightedPoolExitKind.EXACT_BPT_IN_FOR_TOKENS_OUT);
-    }
-
     function _getUserDataEncodedAssets(address[] memory _assets)
         internal
         view
@@ -353,16 +395,14 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
          * [BPT_IN_FOR_EXACT_TOKENS_OUT, amountsOut, maxBPTAmountIn]
          */
         bytes memory userData = abi.encode(
-            _getExactBptInForTokensOutEnumValue(),
+            balancerBptInExactTokensOutIndex,
             _getUserDataEncodedAmounts(poolAssetsAmountsOut),
             maxBPTtoWithdraw
         );
 
-        uint256[] memory temp = _getUserDataEncodedAmounts(poolAssetsAmountsOut);
-        console.log("POOl asset amounts out");
-        console.log("temp[0]", temp[0]);
-        console.log("temp[1]", temp[1]);
-        console.log("temp[2]", temp[2]);
+        uint256[] memory temp = _getUserDataEncodedAmounts(
+            poolAssetsAmountsOut
+        );
 
         IBalancerVault.ExitPoolRequest memory request = IBalancerVault
             .ExitPoolRequest(
@@ -379,9 +419,6 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
                 false
             );
 
-        console.log("DEBUG");
-        uint256 rethBefore = IERC20(0xae78736Cd615f374D3085123A210448E74Fc6393).balanceOf(address(this));
-
         balancerVault.exitPool(
             balancerPoolId,
             address(this),
@@ -391,10 +428,6 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
             payable(address(this)),
             request
         );
-
-        uint256 rethAfter = IERC20(0xae78736Cd615f374D3085123A210448E74Fc6393).balanceOf(address(this));
-        console.log(rethBefore);
-        console.log(rethAfter);
 
         // STEP 5 - Re-deposit any left over BPT tokens back into Aura
         /* When concluding how much of BPT we need to withdraw from Aura we overshoot by
@@ -408,14 +441,11 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
 
         // For each of the specified assets
         for (uint256 i = 0; i < _strategyAssets.length; ++i) {
-            console.log("UNWrapping pool asset prepare");
             // Unwrap assets like wstETH and sfrxETH to rebasing assets stETH and frxETH
             if (strategyAssetsToPoolAssetsAmounts[i] > 0) {
-                console.log("UNWrapping pool asset");
-                console.log(i);
-                console.log(_strategyAssets[i]);
-                console.log(strategyAssetsToPoolAssetsAmounts[i]);
-
+                uint256 assetHolding = IERC20(_strategyAssets[i]).balanceOf(
+                    address(this)
+                );
                 _unwrapPoolAsset(
                     _strategyAssets[i],
                     strategyAssetsToPoolAssetsAmounts[i]
@@ -475,7 +505,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
          * it will receive more of the underlying tokens for the BPT traded in.
          */
         bytes memory userData = abi.encode(
-            IBalancerVault.WeightedPoolExitKind.EXACT_BPT_IN_FOR_TOKENS_OUT,
+            balancerExactBptInTokensOutIndex,
             BPTtoWithdraw
         );
 
@@ -502,6 +532,17 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
             uint256 poolAssetAmount = IERC20(poolAsset).balanceOf(
                 address(this)
             );
+
+            if (strategyAsset == frxETH && poolAssetAmount > 0) {
+                /* _unwrapPoolAsset internally increases the sfrxEth amount by 1 due to
+                 * rounding errors. Since this correction tries to redeem more sfrxETH than
+                 * available in withdrawAll case we deduct 2 WEI:
+                 *  - once to make up for overshooting in _unwrapPoolAsset
+                 *  - again to avoid internal arithmetic issues of sfrxETH. Fuzzy testing would
+                 *    help greatly here. 
+                 */
+                poolAssetAmount -= FRX_ETH_REDEEM_CORRECTION * 2;
+            }
 
             // Unwrap assets like wstETH and sfrxETH to rebasing assets stETH and frxETH
             uint256 unwrappedAmount = 0;

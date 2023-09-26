@@ -65,7 +65,8 @@ module.exports = deploymentWithGovernanceProposal(
     );
 
     // 3. Encode the init data
-    const initFunction = "initialize(address[],address[],address[])";
+    const initFunction =
+      "initialize(address[],address[],address[],uint256,uint256)";
     const initData =
       cOETHBalancerComposablePoolStrategy.interface.encodeFunctionData(
         initFunction,
@@ -77,6 +78,8 @@ module.exports = deploymentWithGovernanceProposal(
             addresses.mainnet.rETH,
           ],
           [platformAddress, platformAddress, platformAddress],
+          1, // ComposablePoolExitKind.BPT_IN_FOR_EXACT_TOKENS_OUT
+          2, // ComposablePoolExitKind.EXACT_BPT_IN_FOR_(ALL_)TOKENS_OUT
         ]
       );
 

@@ -6,12 +6,12 @@ require("@nomiclabs/hardhat-etherscan");
 require("@nomiclabs/hardhat-waffle");
 require("@nomiclabs/hardhat-solhint");
 require("hardhat-deploy");
-require("hardhat-tracer");
 require("hardhat-contract-sizer");
 require("hardhat-deploy-ethers");
 require("hardhat-gas-reporter");
 require("solidity-coverage");
 require("@openzeppelin/hardhat-upgrades");
+require("hardhat-tracer");
 
 require("./tasks/tasks");
 const { accounts } = require("./tasks/account");
