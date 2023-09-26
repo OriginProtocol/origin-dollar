@@ -188,3 +188,10 @@ contract FluxStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 contract MakerDsrStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
+
+/**
+ * @notice ConvexFrxETHAMOStrategyProxy delegates calls to a ConvexFrxETHAMOStrategy implementation
+ */
+contract ConvexFrxETHAMOStrategyProxy is InitializeGovernedUpgradeabilityProxy {
+
+}

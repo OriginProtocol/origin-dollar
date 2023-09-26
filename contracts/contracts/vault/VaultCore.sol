@@ -22,11 +22,6 @@ import "./VaultInitializer.sol";
 contract VaultCore is VaultInitializer {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
-    // max signed int
-    uint256 internal constant MAX_INT = 2**255 - 1;
-    // max un-signed int
-    uint256 internal constant MAX_UINT =
-        0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
 
     /**
      * @dev Verifies that the rebasing is not paused.
@@ -41,14 +36,6 @@ contract VaultCore is VaultInitializer {
      */
     modifier whenNotCapitalPaused() {
         require(!capitalPaused, "Capital paused");
-        _;
-    }
-
-    modifier onlyOusdMetaStrategy() {
-        require(
-            msg.sender == ousdMetaStrategy,
-            "Caller is not the OUSD meta strategy"
-        );
         _;
     }
 
@@ -97,7 +84,7 @@ contract VaultCore is VaultInitializer {
     }
 
     /**
-     * @notice Mint OTokens for a Metapool Strategy
+     * @notice Mint OTokens for an AMO strategy.
      * @param _amount Amount of the asset being deposited
      *
      * Notice: can't use `nonReentrant` modifier since the `mint` function can
@@ -109,22 +96,26 @@ contract VaultCore is VaultInitializer {
      * that are moving funds between the Vault and end user wallets can influence strategies
      * utilizing this function.
      */
-    function mintForStrategy(uint256 _amount)
-        external
-        whenNotCapitalPaused
-        onlyOusdMetaStrategy
-    {
-        require(_amount < MAX_INT, "Amount too high");
+    function mintForStrategy(uint256 _amount) external whenNotCapitalPaused {
+        // read from storage
+        Strategy memory strategyConfig = strategies[msg.sender];
+        // is AMO check done in here rather than a modifier to save a storage read (SLOAD)
+        require(strategyConfig.isAMO, "Caller is not an AMO strategy");
 
-        emit Mint(msg.sender, _amount);
-
-        // safe to cast because of the require check at the beginning of the function
-        netOusdMintedForStrategy += int256(_amount);
+        // toInt96 does a safe cast from uint256 to int96.
+        // the addition will revert if overflow of max int96
+        int96 newMintForStrategy = strategyConfig.mintForStrategy +
+            toInt96(_amount);
 
         require(
-            abs(netOusdMintedForStrategy) < netOusdMintForStrategyThreshold,
-            "Minted ousd surpassed netOusdMintForStrategyThreshold."
+            abs(newMintForStrategy) < strategyConfig.mintForStrategyThreshold,
+            "OToken mint passes threshold"
         );
+
+        // write back to storage
+        strategies[msg.sender].mintForStrategy = int96(newMintForStrategy);
+
+        emit Mint(msg.sender, _amount);
 
         // Mint matching amount of OTokens
         oUSD.mint(msg.sender, _amount);
@@ -216,7 +207,7 @@ contract VaultCore is VaultInitializer {
     }
 
     /**
-     * @notice Burn OTokens for Metapool Strategy
+     * @notice Burn OTokens for an AMO strategy
      * @param _amount Amount of OUSD to burn
      *
      * @dev Notice: can't use `nonReentrant` modifier since the `redeem` function could
@@ -228,22 +219,26 @@ contract VaultCore is VaultInitializer {
      * that are moving funds between the Vault and end user wallets can influence strategies
      * utilizing this function.
      */
-    function burnForStrategy(uint256 _amount)
-        external
-        whenNotCapitalPaused
-        onlyOusdMetaStrategy
-    {
-        require(_amount < MAX_INT, "Amount too high");
+    function burnForStrategy(uint256 _amount) external whenNotCapitalPaused {
+        // read from storage
+        Strategy memory strategyConfig = strategies[msg.sender];
+        // is AMO check done in here rather than a modifier to save a storage read (SLOAD)
+        require(strategyConfig.isAMO, "Caller is not an AMO strategy");
 
-        emit Redeem(msg.sender, _amount);
-
-        // safe to cast because of the require check at the beginning of the function
-        netOusdMintedForStrategy -= int256(_amount);
+        // toInt96 does a safe cast from uint256 to int96
+        // the subtraction will revert if underflow of min int96
+        int96 newMintForStrategy = strategyConfig.mintForStrategy -
+            toInt96(_amount);
 
         require(
-            abs(netOusdMintedForStrategy) < netOusdMintForStrategyThreshold,
-            "Attempting to burn too much OUSD."
+            abs(newMintForStrategy) < strategyConfig.mintForStrategyThreshold,
+            "OToken burn passes threshold"
         );
+
+        // write back to storage
+        strategies[msg.sender].mintForStrategy = newMintForStrategy;
+
+        emit Redeem(msg.sender, _amount);
 
         // Burn OTokens
         oUSD.burn(msg.sender, _amount);
@@ -749,6 +744,17 @@ contract VaultCore is VaultInitializer {
     }
 
     /**
+     * @notice Gets the vault configuration of a supported strategy.
+     */
+    function getStrategyConfig(address _strategy)
+        external
+        view
+        returns (VaultStorage.Strategy memory config)
+    {
+        config = strategies[_strategy];
+    }
+
+    /**
      * @notice Returns whether the vault supports the asset
      * @param _asset address of the asset
      * @return true if supported
@@ -796,8 +802,7 @@ contract VaultCore is VaultInitializer {
         }
     }
 
-    function abs(int256 x) private pure returns (uint256) {
-        require(x < int256(MAX_INT), "Amount too high");
-        return x >= 0 ? uint256(x) : uint256(-x);
+    function abs(int96 x) private pure returns (int96) {
+        return x >= 0 ? x : -x;
     }
 }

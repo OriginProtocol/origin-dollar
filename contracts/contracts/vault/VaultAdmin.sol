@@ -104,7 +104,7 @@ contract VaultAdmin is VaultStorage {
      * @notice Set the default Strategy for an asset, i.e. the one which the asset
             will be automatically allocated to and withdrawn from
      * @param _asset Address of the asset
-     * @param _strategy Address of the Strategy
+     * @param _strategy Address of the strategy contract or zero address if removing
      */
     function setAssetDefaultStrategy(address _asset, address _strategy)
         external
@@ -128,15 +128,16 @@ contract VaultAdmin is VaultStorage {
 
     /**
      * @notice Set maximum amount of OTokens that can at any point be minted and deployed
-     * to strategy (used only by ConvexOUSDMetaStrategy for now).
+     * to a strategy. This is only used by the AMO strategies for now.
+     * @param _strategy Address of the strategy contract
      * @param _threshold OToken amount with 18 fixed decimals.
      */
-    function setNetOusdMintForStrategyThreshold(uint256 _threshold)
+    function setMintForStrategyThreshold(address _strategy, uint256 _threshold)
         external
         onlyGovernor
     {
         /**
-         * Because `netOusdMintedForStrategy` check in vault core works both ways
+         * Because `mintedForStrategy` check in vault core works both ways
          * (positive and negative) the actual impact of the amount of OToken minted
          * could be double the threshold. E.g.:
          *  - contract has threshold set to 100
@@ -149,9 +150,14 @@ contract VaultAdmin is VaultStorage {
          * amount and not have problems with current netOusdMinted being near
          * limits on either side.
          */
-        netOusdMintedForStrategy = 0;
-        netOusdMintForStrategyThreshold = _threshold;
-        emit NetOusdMintForStrategyThresholdChanged(_threshold);
+        // read from storage
+        Strategy memory strategyConfig = strategies[_strategy];
+        strategyConfig.mintForStrategy = int96(0);
+        strategyConfig.mintForStrategyThreshold = toInt96(_threshold);
+        // write back to storage
+        strategies[_strategy] = strategyConfig;
+
+        emit MintForStrategyThresholdChanged(_strategy, _threshold);
     }
 
     /***************************************
@@ -362,7 +368,12 @@ contract VaultAdmin is VaultStorage {
      */
     function approveStrategy(address _addr) external onlyGovernor {
         require(!strategies[_addr].isSupported, "Strategy already approved");
-        strategies[_addr] = Strategy({ isSupported: true, _deprecated: 0 });
+        strategies[_addr] = Strategy({
+            isSupported: true,
+            isAMO: false,
+            mintForStrategy: 0,
+            mintForStrategyThreshold: 0
+        });
         allStrategies.push(_addr);
         emit StrategyApproved(_addr);
     }
@@ -527,15 +538,16 @@ contract VaultAdmin is VaultStorage {
     }
 
     /**
-     * @notice Set OToken Metapool strategy
-     * @param _ousdMetaStrategy Address of OToken metapool strategy
+     * @notice Flag if a strategy is an AMO that is allowed to mint/burn OTokens.
+     * @param _strategyAddress Address of the strategy
+     * @param _isAMO true if AMO strategy
      */
-    function setOusdMetaStrategy(address _ousdMetaStrategy)
+    function setAMOStrategy(address _strategyAddress, bool _isAMO)
         external
         onlyGovernor
     {
-        ousdMetaStrategy = _ousdMetaStrategy;
-        emit OusdMetaStrategyUpdated(_ousdMetaStrategy);
+        strategies[_strategyAddress].isAMO = _isAMO;
+        emit AMOStrategyUpdated(_strategyAddress, _isAMO);
     }
 
     /***************************************
