@@ -397,10 +397,6 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
             maxBPTtoWithdraw
         );
 
-        uint256[] memory temp = _getUserDataEncodedAmounts(
-            poolAssetsAmountsOut
-        );
-
         IBalancerVault.ExitPoolRequest memory request = IBalancerVault
             .ExitPoolRequest(
                 poolAssets,
@@ -440,9 +436,6 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         for (uint256 i = 0; i < _strategyAssets.length; ++i) {
             // Unwrap assets like wstETH and sfrxETH to rebasing assets stETH and frxETH
             if (strategyAssetsToPoolAssetsAmounts[i] > 0) {
-                uint256 assetHolding = IERC20(_strategyAssets[i]).balanceOf(
-                    address(this)
-                );
                 _unwrapPoolAsset(
                     _strategyAssets[i],
                     strategyAssetsToPoolAssetsAmounts[i]

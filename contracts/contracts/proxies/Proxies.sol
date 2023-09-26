@@ -176,7 +176,8 @@ contract OETHBalancerMetaPoolwstEthStrategyProxy is
 }
 
 /**
- * @notice OETHBalancerCompPoolSfrxEthWstETHrETHStrategyProxy delegates calls to a BalancerComposablePoolStrategy implementation
+ * @notice OETHBalancerCompPoolSfrxEthWstETHrETHStrategyProxy delegates calls to a 
+ * BalancerComposablePoolStrategy implementation
  */
 contract OETHBalancerCompPoolSfrxEthWstETHrETHStrategyProxy is
     InitializeGovernedUpgradeabilityProxy
