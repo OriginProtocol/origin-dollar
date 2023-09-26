@@ -4,11 +4,6 @@ const addresses = require("../utils/addresses");
 const { frxEthPoolLpPID } = require("../utils/constants");
 const { deploymentWithGovernanceProposal } = require("../utils/deploy");
 const { getTxOpts } = require("../utils/tx");
-const { impersonateAndFund } = require("../utils/signers");
-
-const CurveGaugeControllerAbi = require("../test/abi/CurveGaugeController.json");
-const ConvexPoolManagerAbi = require("../test/abi/ConvexPoolManager.json");
-const ConvexBoosterAbi = require("../test/abi/ConvexBooster.json");
 
 module.exports = deploymentWithGovernanceProposal(
   {
@@ -22,51 +17,6 @@ module.exports = deploymentWithGovernanceProposal(
   async ({ ethers, deployWithConfirmation, withConfirmation }) => {
     const { deployerAddr, timelockAddr } = await getNamedAccounts();
     const sDeployer = await ethers.provider.getSigner(deployerAddr);
-
-    // TODO this can be removed once the Curve pool is added to the Convex Pool Manager
-    // This requires Curve DAO governance to add CRV rewards to the Curve frxETH/OETH gauge
-    // 0. Add the Curve frxETH/OETH pool to the Convex Pool Manager
-    const curveGaugeController = await ethers.getContractAt(
-      CurveGaugeControllerAbi,
-      addresses.mainnet.CurveGaugeController
-    );
-    const gaugeControllerAdmin = "0x40907540d8a6C65c637785e8f8B742ae6b0b9968";
-    const sGaugeControllerAdmin = await impersonateAndFund(
-      gaugeControllerAdmin
-    );
-    await withConfirmation(
-      curveGaugeController
-        .connect(sGaugeControllerAdmin)
-        .change_gauge_weight(addresses.mainnet.CurveFrxETHOETHGauge, 100, {
-          gasLimit: 2000000,
-        })
-    );
-
-    const convexOperatorAddress = "0xa3C5A1e09150B75ff251c1a7815A07182c3de2FB";
-    const convexOperatorSigner = await impersonateAndFund(
-      convexOperatorAddress
-    );
-    const cConvexPoolManager = await ethers.getContractAt(
-      ConvexPoolManagerAbi,
-      addresses.mainnet.ConvexPoolManager
-    );
-    const cConvexBooster = await ethers.getContractAt(
-      ConvexBoosterAbi,
-      addresses.mainnet.CVXBooster
-    );
-
-    const poolId = await cConvexBooster.poolLength();
-    await withConfirmation(
-      // prettier-ignore
-      cConvexPoolManager
-        .connect(convexOperatorSigner)["addPool(address)"](addresses.mainnet.CurveFrxETHOETHGauge)
-    );
-    console.log(`Convex pool info for frxETH/OETH pool:`);
-    const info = await cConvexBooster.poolInfo(poolId);
-    console.log(`pool ID: ${poolId}`);
-    console.log(`crvRewards: ${info.crvRewards}`);
-    console.log(`lptoken: ${info.lptoken}`);
-    console.log(`token: ${info.token}`);
 
     // 1. Deploy new OETH Vault Core and Admin implementations
     // Need to override the storage safety check as we are changing the Strategy struct

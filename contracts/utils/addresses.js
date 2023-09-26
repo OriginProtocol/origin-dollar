@@ -167,7 +167,7 @@ addresses.mainnet.CurveFrxETHOETHPool =
 addresses.mainnet.CurveFrxETHOETHGauge =
   "0x8584d7F7bf9803d45e8df75Afe824f1Ae83C6256";
 addresses.mainnet.CVXFrxETHRewardsPool =
-  "0x105fb5f119117853af8D7D57581a13dDeCa01e21"; // TODO set once created
+  "0x105fb5f119117853af8D7D57581a13dDeCa01e21";
 
 // Morpho
 addresses.mainnet.MorphoStrategyProxy =

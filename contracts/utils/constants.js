@@ -7,7 +7,7 @@ const threeCRVPid = 9;
 const metapoolLPCRVPid = 56;
 const lusdMetapoolLPCRVPid = 33;
 const oethPoolLpPID = 174;
-const frxEthPoolLpPID = 237; // TODO needs to be updated once the Convex pool has been created on mainnet
+const frxEthPoolLpPID = 237;
 
 // stETH/WETH
 const aura_stETH_WETH_PID = 115;
