@@ -11,8 +11,6 @@ import { IBalancerVault } from "../../interfaces/balancer/IBalancerVault.sol";
 import { IERC20, InitializableAbstractStrategy } from "../../utils/InitializableAbstractStrategy.sol";
 import { StableMath } from "../../utils/StableMath.sol";
 
-import "hardhat/console.sol";
-
 contract BalancerMetaPoolStrategy is BaseAuraStrategy {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
