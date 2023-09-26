@@ -157,7 +157,7 @@ addresses.mainnet.CurveOETHMetaPool =
   "0x94B17476A93b3262d87B9a326965D1E91f9c13E7";
 addresses.mainnet.CurveOETHGauge = "0xd03BE91b1932715709e18021734fcB91BB431715";
 addresses.mainnet.CVXETHRewardsPool =
-  "0x105fb5f119117853af8D7D57581a13dDeCa01e21";
+  "0x24b65DC1cf053A8D96872c323d29e86ec43eB33A";
 
 // OETH AMO for Curve frxETH/OETH pool
 addresses.mainnet.ConvexFraxAMOStrategy =
