@@ -87,23 +87,11 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
     }
 
     /**
-     * @notice Internal initialize function, to set up initial internal state
+     * @dev Internal initialize function, to set up initial internal state
      * @param _rewardTokenAddresses Address of reward token for platform
      * @param _assets Addresses of initial supported assets
      * @param _pTokens Platform Token corresponding addresses
      */
-    function initialize(
-        address[] calldata _rewardTokenAddresses,
-        address[] calldata _assets,
-        address[] calldata _pTokens
-    ) external virtual onlyGovernor initializer {
-        InitializableAbstractStrategy._initialize(
-            _rewardTokenAddresses,
-            _assets,
-            _pTokens
-        );
-    }
-
     function _initialize(
         address[] memory _rewardTokenAddresses,
         address[] memory _assets,
