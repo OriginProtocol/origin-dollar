@@ -150,11 +150,8 @@ tx_exit = ba_vault.exitPool(
     # indexes match above assets
     amountsOut, # min amounts out
     balancerUserDataEncoder.userDataBPTinForExactTokensOut.encode_input(2, amountsOutBPT, amount * 10**18 * 1.1)[10:],
-    #TODO for some reason Composable stable pools require "1" encoded for BPT_IN_FOR_EXACT_TOKENS_OUT and not 2
+    #Composable stable pools require "1" encoded for BPT_IN_FOR_EXACT_TOKENS_OUT and not 2 because of different enum ordering 
     balancerUserDataEncoder.userDataBPTinForExactTokensOut.encode_input(1, amountsOutBPT, amount * 10**18 * 1.1)[10:],
-    # composable stable pool: 
-    # - needs enum to be encoded as number 1 (order of items reversed compared to meta stable pool)
-    # - needs 3 assets encoded in user data (omitting the BPT token)
     False, #fromInternalBalance
   ],
   STD
