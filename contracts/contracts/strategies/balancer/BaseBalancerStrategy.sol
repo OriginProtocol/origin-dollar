@@ -501,8 +501,7 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         IERC20 pToken = IERC20(platformAddress);
 
         // Balancer vault for BPT token (required for removing liquidity)
-        pToken.approve(address(balancerVault), 0);
-        pToken.approve(address(balancerVault), type(uint256).max);
+        pToken.safeApprove(address(balancerVault), type(uint256).max);
     }
 
     /**
