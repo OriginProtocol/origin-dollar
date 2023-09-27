@@ -10,7 +10,7 @@ module.exports = deploymentWithGovernanceProposal(
     forceDeploy: false,
     //forceSkip: true,
     deployerIsProposer: false,
-    //proposalId: ,
+    proposalId: "56592381723485287954592129736025898843308662712094761381994317989536511548227",
   },
   async ({ deployWithConfirmation, ethers }) => {
     // Current contracts
