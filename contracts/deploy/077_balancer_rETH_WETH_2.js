@@ -12,10 +12,7 @@ module.exports = deploymentWithGovernanceProposal(
     deployerIsProposer: false,
     //proposalId: ,
   },
-  async ({ deployWithConfirmation, ethers, getTxOpts, withConfirmation }) => {
-    const { deployerAddr } = await getNamedAccounts();
-    const sDeployer = await ethers.provider.getSigner(deployerAddr);
-
+  async ({ deployWithConfirmation, ethers }) => {
     // Current contracts
     const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
 
@@ -51,7 +48,11 @@ module.exports = deploymentWithGovernanceProposal(
     // Governance Actions
     // ----------------
     return {
-      name: "Deploy new Balancer MetaPool strategy",
+      name: "Deploy new implementation of Balancer rETH/WETH MetaPool strategy\n\
+      \n\
+      The new implementation of the Balancer rETH/WETH strategy pool fixes a medium vulnerability of the strategy's checkBalance function.\n\
+      \n\
+      ",
       actions: [
         // 1. Upgrade strategy implementation
         {
