@@ -70,26 +70,32 @@ contract ConvexTwoAssetStrategy is BaseTwoAssetCurveStrategy {
     }
 
     function _lpDepositAll() internal override {
-        IERC20 pToken = IERC20(platformAddress);
+        IERC20 curveLp = IERC20(platformAddress);
         // Deposit with staking
         bool success = IConvexDeposits(cvxDepositor).deposit(
             cvxDepositorPoolId,
-            pToken.balanceOf(address(this)),
+            curveLp.balanceOf(address(this)),
             true
         );
         require(success, "Failed to deposit to Convex");
     }
 
-    function _lpWithdraw(uint256 numCrvTokens) internal override {
-        uint256 gaugePTokens = IRewardStaking(cvxRewardStaker).balanceOf(
+    function _lpWithdraw(uint256 requiredLpTokens) internal override {
+        uint256 actualLpTokens = IRewardStaking(cvxRewardStaker).balanceOf(
             address(this)
         );
 
-        // Not enough in this contract or in the Gauge, can't proceed
-        require(numCrvTokens > gaugePTokens, "Insufficient 3CRV balance");
+        // Not enough Curve LP tokens in this contract or Convex pool, can't proceed
+        require(
+            requiredLpTokens < actualLpTokens,
+            "Insufficient Curve LP balance"
+        );
 
         // withdraw and unwrap with claim takes back the lpTokens and also collects the rewards to this
-        IRewardStaking(cvxRewardStaker).withdrawAndUnwrap(numCrvTokens, true);
+        IRewardStaking(cvxRewardStaker).withdrawAndUnwrap(
+            requiredLpTokens,
+            true
+        );
     }
 
     function _lpWithdrawAll() internal override {

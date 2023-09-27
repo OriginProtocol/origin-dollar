@@ -40,7 +40,8 @@ abstract contract BaseTwoAssetCurveStrategy is InitializableAbstractStrategy {
         emit Deposit(_asset, platformAddress, _amount);
 
         // Curve requires passing deposit amounts for all assets
-        uint256[CURVE_BASE_ASSETS] memory _amounts;
+        uint256[CURVE_BASE_ASSETS] memory _amounts = [uint256(0), 0];
+        // Validate the asset and get Curve pool index position
         uint256 poolCoinIndex = _getCoinIndex(_asset);
         // Set the amount on the asset we want to deposit
         _amounts[poolCoinIndex] = _amount;
@@ -52,6 +53,7 @@ abstract contract BaseTwoAssetCurveStrategy is InitializableAbstractStrategy {
             uint256(1e18) - MAX_SLIPPAGE
         );
         // Do the deposit to the Curve pool
+        // slither-disable-next-line unused-return
         curvePool.add_liquidity(_amounts, minMintAmount);
         _lpDepositAll();
     }
@@ -62,8 +64,7 @@ abstract contract BaseTwoAssetCurveStrategy is InitializableAbstractStrategy {
      * @dev Deposit the entire balance of any supported asset into the Curve pool
      */
     function depositAll() external override onlyVault nonReentrant {
-        // Create a fixed-sized array with all amounts defaulted to zero
-        uint256[CURVE_BASE_ASSETS] memory _amounts;
+        uint256[CURVE_BASE_ASSETS] memory _amounts = [uint256(0), 0];
         uint256 depositValue = 0;
         ICurveMetaPool curvePool = ICurveMetaPool(platformAddress);
         uint256 curveVirtualPrice = curvePool.get_virtual_price();
@@ -88,6 +89,7 @@ abstract contract BaseTwoAssetCurveStrategy is InitializableAbstractStrategy {
             uint256(1e18) - MAX_SLIPPAGE
         );
         // Do the deposit to the Curve pool
+        // slither-disable-next-line unused-return
         curvePool.add_liquidity(_amounts, minMintAmount);
 
         /* In case of Curve Strategy all assets are mapped to the same pToken (Curve pool). Let
@@ -130,10 +132,10 @@ abstract contract BaseTwoAssetCurveStrategy is InitializableAbstractStrategy {
             _lpWithdraw(requiredLpTokens - contractLpTokens);
         }
 
-        // Create a fixed-sized array with all amounts defaulted to zero
-        uint256[CURVE_BASE_ASSETS] memory _amounts;
+        uint256[CURVE_BASE_ASSETS] memory _amounts = [uint256(0), 0];
         _amounts[coinIndex] = _amount;
 
+        // slither-disable-next-line unused-return
         curvePool.remove_liquidity_imbalance(_amounts, requiredLpTokens);
         IERC20(_asset).safeTransfer(_recipient, _amount);
     }
@@ -166,8 +168,7 @@ abstract contract BaseTwoAssetCurveStrategy is InitializableAbstractStrategy {
     {
         ICurveMetaPool curvePool = ICurveMetaPool(platformAddress);
 
-        // Create a fixed-sized array with all amounts defaulted to zero
-        uint256[CURVE_BASE_ASSETS] memory _amounts;
+        uint256[CURVE_BASE_ASSETS] memory _amounts = [uint256(0), 0];
         _amounts[_coinIndex] = _amount;
 
         // LP required when removing required asset ignoring fees
@@ -202,12 +203,12 @@ abstract contract BaseTwoAssetCurveStrategy is InitializableAbstractStrategy {
         _lpWithdrawAll();
 
         // Withdraws are proportional to assets held by Curve pool
-        // Create a fixed-sized array with all amounts defaulted to zero
-        uint256[CURVE_BASE_ASSETS] memory minWithdrawAmounts;
+        uint256[CURVE_BASE_ASSETS] memory minWithdrawAmounts = [uint256(0), 0];
 
         // Remove liquidity
-        ICurveMetaPool threePool = ICurveMetaPool(platformAddress);
-        threePool.remove_liquidity(
+        ICurveMetaPool curvePool = ICurveMetaPool(platformAddress);
+        // slither-disable-next-line unused-return
+        curvePool.remove_liquidity(
             IERC20(platformAddress).balanceOf(address(this)),
             minWithdrawAmounts
         );
@@ -215,8 +216,11 @@ abstract contract BaseTwoAssetCurveStrategy is InitializableAbstractStrategy {
         // Note that Curve will provide all of the assets in the pool even if
         // we have not set PToken addresses for all of them in this strategy
         for (uint256 i = 0; i < assetsMapped.length; ++i) {
-            IERC20 asset = IERC20(threePool.coins(i));
+            IERC20 asset = IERC20(curvePool.coins(i));
+            uint256 balance = asset.balanceOf(address(this));
             asset.safeTransfer(vaultAddress, asset.balanceOf(address(this)));
+
+            emit Withdrawal(address(asset), platformAddress, balance);
         }
     }
 

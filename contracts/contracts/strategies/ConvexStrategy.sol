@@ -90,7 +90,7 @@ contract ConvexStrategy is BaseCurveStrategy {
         );
 
         // Not enough in this contract or in the Gauge, can't proceed
-        require(numCrvTokens > gaugePTokens, "Insufficient 3CRV balance");
+        require(numCrvTokens < gaugePTokens, "Insufficient 3CRV balance");
 
         // withdraw and unwrap with claim takes back the lpTokens and also collects the rewards to this
         IRewardStaking(cvxRewardStakerAddress).withdrawAndUnwrap(

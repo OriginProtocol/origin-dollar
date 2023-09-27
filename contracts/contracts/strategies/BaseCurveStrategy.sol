@@ -62,8 +62,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
      * @dev Deposit the entire balance of any supported asset into the Curve pool
      */
     function depositAll() external override onlyVault nonReentrant {
-        // Create a fixed-sized array with all amounts defaulted to zero
-        uint256[CURVE_BASE_ASSETS] memory _amounts;
+        uint256[CURVE_BASE_ASSETS] memory _amounts = [uint256(0), 0, 0];
         uint256 depositValue = 0;
         ICurvePool curvePool = ICurvePool(platformAddress);
         uint256 curveVirtualPrice = curvePool.get_virtual_price();
@@ -133,8 +132,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
             _lpWithdraw(requiredCrv3Tokens - contractCrv3Tokens);
         }
 
-        // Create a fixed-sized array with all amounts defaulted to zero
-        uint256[CURVE_BASE_ASSETS] memory _amounts;
+        uint256[CURVE_BASE_ASSETS] memory _amounts = [uint256(0), 0, 0];
         _amounts[coinIndex] = _amount;
 
         curvePool.remove_liquidity_imbalance(_amounts, requiredCrv3Tokens);
@@ -168,8 +166,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
     {
         ICurvePool curvePool = ICurvePool(platformAddress);
 
-        // Create a fixed-sized array with all amounts defaulted to zero
-        uint256[CURVE_BASE_ASSETS] memory _amounts;
+        uint256[CURVE_BASE_ASSETS] memory _amounts = [uint256(0), 0, 0];
         _amounts[_coinIndex] = _amount;
 
         // LP required when removing required asset ignoring fees
@@ -204,8 +201,11 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         _lpWithdrawAll();
 
         // Withdraws are proportional to assets held by Curve pool
-        // Create a fixed-sized array with all amounts defaulted to zero
-        uint256[CURVE_BASE_ASSETS] memory minWithdrawAmounts;
+        uint256[CURVE_BASE_ASSETS] memory minWithdrawAmounts = [
+            uint256(0),
+            0,
+            0
+        ];
 
         // Remove liquidity
         ICurvePool threePool = ICurvePool(platformAddress);

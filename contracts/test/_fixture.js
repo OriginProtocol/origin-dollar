@@ -216,7 +216,6 @@ const defaultFixture = deployments.createFixture(async () => {
     cvx,
     cvxBooster,
     cvxRewardPool,
-    LUSDMetaStrategyProxy,
     LUSDMetaStrategy,
     oethHarvester,
     oethDripper,
@@ -225,8 +224,8 @@ const defaultFixture = deployments.createFixture(async () => {
     mockSwapper,
     swapper1Inch,
     mock1InchSwapRouter,
-    convexEthMetaStrategyProxy,
     convexEthMetaStrategy,
+    convexFrxEthWethStrategy,
     fluxStrategy,
     vaultValueChecker,
     oethVaultValueChecker;
@@ -337,12 +336,20 @@ const defaultFixture = deployments.createFixture(async () => {
       oethHarvesterProxy.address
     );
 
-    convexEthMetaStrategyProxy = await ethers.getContract(
+    const convexEthMetaStrategyProxy = await ethers.getContract(
       "ConvexEthMetaStrategyProxy"
     );
     convexEthMetaStrategy = await ethers.getContractAt(
       "ConvexEthMetaStrategy",
       convexEthMetaStrategyProxy.address
+    );
+
+    const convexFrxEthWethStrategyProxy = await ethers.getContract(
+      "ConvexTwoAssetStrategyProxy"
+    );
+    convexFrxEthWethStrategy = await ethers.getContractAt(
+      "ConvexTwoAssetStrategy",
+      convexFrxEthWethStrategyProxy.address
     );
 
     const oethDripperProxy = await ethers.getContract("OETHDripperProxy");
@@ -452,7 +459,7 @@ const defaultFixture = deployments.createFixture(async () => {
 
     flipper = await ethers.getContract("Flipper");
 
-    LUSDMetaStrategyProxy = await ethers.getContract(
+    const LUSDMetaStrategyProxy = await ethers.getContract(
       "ConvexLUSDMetaStrategyProxy"
     );
     LUSDMetaStrategy = await ethers.getContractAt(
@@ -636,6 +643,7 @@ const defaultFixture = deployments.createFixture(async () => {
     oethMorphoAaveStrategy,
     woeth,
     convexEthMetaStrategy,
+    convexFrxEthWethStrategy,
     oethDripper,
     oethHarvester,
     oethZapper,
@@ -1841,6 +1849,92 @@ async function convexOETHMetaVaultFixture(
 }
 
 /**
+ * Configure the Curve frxETH/WETH pool strategy.
+ */
+async function convexFrxEthFixture(
+  config = {
+    wethMintAmount: 0,
+    frxEthMintAmount: 0,
+    depositToStrategy: false,
+  }
+) {
+  const fixture = await oethDefaultFixture();
+
+  const { convexFrxEthWethStrategy, oethVault, josh, strategist, weth } =
+    fixture;
+
+  // Get some WETH from most loaded contracts/wallets
+  await impersonateAndFundAddress(
+    weth.address,
+    [
+      "0x8EB8a3b98659Cce290402893d0123abb75E3ab28",
+      "0x741AA7CFB2c7bF2A1E7D4dA2e3Df6a56cA4131F3",
+      "0x57757E3D981446D585Af0D9Ae4d7DF6D64647806",
+      "0x2fEb1512183545f48f6b9C5b4EbfCaF49CfCa6F3",
+      "0x6B44ba0a126a2A1a8aa6cD1AdeeD002e141Bcd44",
+    ],
+    // Josh is loaded with weth
+    josh.getAddress()
+  );
+
+  // Get some CRV from most loaded contracts/wallets
+  await impersonateAndFundAddress(
+    addresses.mainnet.CRV,
+    [
+      "0x0A2634885B47F15064fB2B33A86733C614c9950A",
+      "0x34ea4138580435B5A521E460035edb19Df1938c1",
+      "0x28C6c06298d514Db089934071355E5743bf21d60",
+      "0xa6a4d3218BBf0E81B38390396f9EA7eb8B9c9820",
+      "0xb73D8dCE603155e231aAd4381a2F20071Ca4D55c",
+    ],
+    // Josh is loaded with CRV
+    josh.getAddress()
+  );
+
+  // Impersonate the OETH Vault
+  fixture.oethVaultSigner = await impersonateAndFundContract(oethVault.address);
+
+  // Convex pool that records the deposited balances
+  fixture.cvxFrxEthWethRewardPool = await ethers.getContractAt(
+    "IRewardStaking",
+    addresses.mainnet.ConvexFrxEthWethRewardsPool
+  );
+
+  fixture.curveFrxEthWethPool = await ethers.getContractAt(
+    oethMetapoolAbi,
+    addresses.mainnet.CurveFrxEthWethPool
+  );
+
+  // mint some OETH using WETH is configured
+  if (config?.wethMintAmount > 0) {
+    const wethAmount = parseUnits(config.wethMintAmount.toString());
+    await oethVault.connect(josh).rebase();
+    await oethVault.connect(josh).allocate();
+
+    // Approve the Vault to transfer WETH
+    await weth.connect(josh).approve(oethVault.address, wethAmount);
+
+    // Mint OETH with WETH
+    // This will sit in the vault, not the strategy
+    await oethVault.connect(josh).mint(weth.address, wethAmount, 0);
+
+    // Add WETH to the Curve pool
+    if (config?.depositToStrategy) {
+      // The strategist deposits the WETH to the strategy
+      await oethVault
+        .connect(strategist)
+        .depositToStrategy(
+          convexFrxEthWethStrategy.address,
+          [weth.address],
+          [wethAmount]
+        );
+    }
+  }
+
+  return fixture;
+}
+
+/**
  * Configure a Vault with only the Aave strategy.
  */
 async function aaveVaultFixture() {
@@ -2182,6 +2276,7 @@ module.exports = {
   convexVaultFixture,
   convexMetaVaultFixture,
   convexOETHMetaVaultFixture,
+  convexFrxEthFixture,
   convexGeneralizedMetaForkedFixture,
   convexLUSDMetaVaultFixture,
   makerDsrFixture,
