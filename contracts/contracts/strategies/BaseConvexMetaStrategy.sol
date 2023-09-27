@@ -66,7 +66,10 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
         address[] calldata _pTokens,
         InitConfig calldata initConfig
     ) external onlyGovernor initializer {
-        require(_assets.length == 3, "Must have exactly three assets");
+        require(
+            _assets.length == CURVE_BASE_ASSETS,
+            "Must have exactly three assets"
+        );
         // Should be set prior to abstract initialize call otherwise
         // abstractSetPToken calls will fail
         cvxDepositorAddress = initConfig.cvxDepositorAddress;
@@ -134,7 +137,7 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
         }
 
         uint256 assetDecimals = Helpers.getDecimals(_asset);
-        balance = balance.scaleBy(assetDecimals, 18) / THREEPOOL_ASSET_COUNT;
+        balance = balance.scaleBy(assetDecimals, 18) / CURVE_BASE_ASSETS;
     }
 
     /**

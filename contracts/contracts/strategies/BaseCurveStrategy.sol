@@ -2,8 +2,8 @@
 pragma solidity ^0.8.0;
 
 /**
- * @title Curve 3Pool Strategy
- * @notice Investment strategy for investing stablecoins via Curve 3Pool
+ * @title Curve Pool Strategy
+ * @notice Investment strategy for investing stablecoins via a Curve pool. eg 3Pool
  * @author Origin Protocol Inc
  */
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -17,15 +17,15 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
     using StableMath for uint256;
     using SafeERC20 for IERC20;
 
-    uint256 internal constant MAX_SLIPPAGE = 1e16; // 1%, same as the Curve UI
-    // number of assets in Curve 3Pool (USDC, DAI, USDT)
-    uint256 internal constant THREEPOOL_ASSET_COUNT = 3;
+    uint256 public constant MAX_SLIPPAGE = 1e16; // 1%, same as the Curve UI
+    /// @notice number of assets in base Curve pool. eg 3Pool
+    uint256 public constant CURVE_BASE_ASSETS = 3;
     address internal pTokenAddress;
 
     int256[49] private __reserved;
 
     /**
-     * @dev Deposit asset into the Curve 3Pool
+     * @dev Deposit asset into the Curve pool
      * @param _asset Address of asset to deposit
      * @param _amount Amount of asset to deposit
      */
@@ -38,9 +38,8 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         require(_amount > 0, "Must deposit something");
         emit Deposit(_asset, pTokenAddress, _amount);
 
-        // 3Pool requires passing deposit amounts for all 3 assets, set to 0 for
-        // all
-        uint256[3] memory _amounts;
+        // Curve requires passing deposit amounts for all assets
+        uint256[CURVE_BASE_ASSETS] memory _amounts;
         uint256 poolCoinIndex = _getCoinIndex(_asset);
         // Set the amount on the asset we want to deposit
         _amounts[poolCoinIndex] = _amount;
@@ -52,7 +51,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         uint256 minMintAmount = depositValue.mulTruncate(
             uint256(1e18) - MAX_SLIPPAGE
         );
-        // Do the deposit to 3pool
+        // Do the deposit to the Curve pool
         curvePool.add_liquidity(_amounts, minMintAmount);
         _lpDepositAll();
     }
@@ -60,15 +59,16 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
     function _lpDepositAll() internal virtual;
 
     /**
-     * @dev Deposit the entire balance of any supported asset into the Curve 3pool
+     * @dev Deposit the entire balance of any supported asset into the Curve pool
      */
     function depositAll() external override onlyVault nonReentrant {
-        uint256[3] memory _amounts = [uint256(0), uint256(0), uint256(0)];
+        // Create a fixed-sized array with all amounts defaulted to zero
+        uint256[CURVE_BASE_ASSETS] memory _amounts;
         uint256 depositValue = 0;
         ICurvePool curvePool = ICurvePool(platformAddress);
         uint256 curveVirtualPrice = curvePool.get_virtual_price();
 
-        for (uint256 i = 0; i < assetsMapped.length; i++) {
+        for (uint256 i = 0; i < assetsMapped.length; ++i) {
             address assetAddress = assetsMapped[i];
             uint256 balance = IERC20(assetAddress).balanceOf(address(this));
             if (balance > 0) {
@@ -90,7 +90,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         uint256 minMintAmount = depositValue.mulTruncate(
             uint256(1e18) - MAX_SLIPPAGE
         );
-        // Do the deposit to 3pool
+        // Do the deposit to the Curve pool
         curvePool.add_liquidity(_amounts, minMintAmount);
 
         /* In case of Curve Strategy all assets are mapped to the same pToken (3CrvLP). Let
@@ -105,7 +105,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
     function _lpWithdrawAll() internal virtual;
 
     /**
-     * @dev Withdraw asset from Curve 3Pool
+     * @dev Withdraw asset from the Curve pool
      * @param _recipient Address to receive withdrawn asset
      * @param _asset Address of asset to withdraw
      * @param _amount Amount of asset to withdraw
@@ -133,7 +133,8 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
             _lpWithdraw(requiredCrv3Tokens - contractCrv3Tokens);
         }
 
-        uint256[3] memory _amounts = [uint256(0), uint256(0), uint256(0)];
+        // Create a fixed-sized array with all amounts defaulted to zero
+        uint256[CURVE_BASE_ASSETS] memory _amounts;
         _amounts[coinIndex] = _amount;
 
         curvePool.remove_liquidity_imbalance(_amounts, requiredCrv3Tokens);
@@ -167,7 +168,8 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
     {
         ICurvePool curvePool = ICurvePool(platformAddress);
 
-        uint256[3] memory _amounts = [uint256(0), uint256(0), uint256(0)];
+        // Create a fixed-sized array with all amounts defaulted to zero
+        uint256[CURVE_BASE_ASSETS] memory _amounts;
         _amounts[_coinIndex] = _amount;
 
         // LP required when removing required asset ignoring fees
@@ -200,12 +202,10 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
      */
     function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
         _lpWithdrawAll();
-        // Withdraws are proportional to assets held by 3Pool
-        uint256[3] memory minWithdrawAmounts = [
-            uint256(0),
-            uint256(0),
-            uint256(0)
-        ];
+
+        // Withdraws are proportional to assets held by Curve pool
+        // Create a fixed-sized array with all amounts defaulted to zero
+        uint256[CURVE_BASE_ASSETS] memory minWithdrawAmounts;
 
         // Remove liquidity
         ICurvePool threePool = ICurvePool(platformAddress);
@@ -214,9 +214,9 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
             minWithdrawAmounts
         );
         // Transfer assets out of Vault
-        // Note that Curve will provide all 3 of the assets in 3pool even if
+        // Note that Curve will provide all of the assets in the pool even if
         // we have not set PToken addresses for all of them in this strategy
-        for (uint256 i = 0; i < assetsMapped.length; i++) {
+        for (uint256 i = 0; i < assetsMapped.length; ++i) {
             IERC20 asset = IERC20(threePool.coins(i));
             asset.safeTransfer(vaultAddress, asset.balanceOf(address(this)));
         }
@@ -244,7 +244,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
             uint256 virtual_price = curvePool.get_virtual_price();
             uint256 value = (totalPTokens * virtual_price) / 1e18;
             uint256 assetDecimals = Helpers.getDecimals(_asset);
-            balance = value.scaleBy(assetDecimals, 18) / THREEPOOL_ASSET_COUNT;
+            balance = value.scaleBy(assetDecimals, 18) / CURVE_BASE_ASSETS;
         }
     }
 
@@ -273,7 +273,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
     {
         _approveBase();
         // This strategy is a special case since it only supports one asset
-        for (uint256 i = 0; i < assetsMapped.length; i++) {
+        for (uint256 i = 0; i < assetsMapped.length; ++i) {
             _approveAsset(assetsMapped[i]);
         }
     }
@@ -288,7 +288,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
 
     function _approveAsset(address _asset) internal {
         IERC20 asset = IERC20(_asset);
-        // 3Pool for asset (required for adding liquidity)
+        // Approve the Curve pool, eg 3Pool, to transfer an asset (required for adding liquidity)
         asset.safeApprove(platformAddress, 0);
         asset.safeApprove(platformAddress, type(uint256).max);
     }
@@ -299,9 +299,9 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
      * @dev Get the index of the coin
      */
     function _getCoinIndex(address _asset) internal view returns (uint256) {
-        for (uint256 i = 0; i < 3; i++) {
+        for (uint256 i = 0; i < CURVE_BASE_ASSETS; ++i) {
             if (assetsMapped[i] == _asset) return i;
         }
-        revert("Invalid 3pool asset");
+        revert("Invalid asset");
     }
 }
