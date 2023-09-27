@@ -123,9 +123,10 @@ forkOnlyDescribe("ForkTest: Convex frxETH/WETH Strategy", function () {
     });
   });
 
-  describe("with some WETH in the vault", () => {
+  describe("with some WETH and frxETH in the vault", () => {
     const loadFixture = createFixtureLoader(convexFrxEthFixture, {
       wethMintAmount: 5000,
+      frxEthMintAmount: 4000,
       depositToStrategy: false,
     });
     beforeEach(async () => {
@@ -136,7 +137,6 @@ forkOnlyDescribe("ForkTest: Convex frxETH/WETH Strategy", function () {
         convexFrxEthWethStrategy,
         oeth,
         curveFrxEthWethPool,
-        oethVault,
         oethVaultSigner,
         weth,
       } = fixture;
@@ -145,12 +145,6 @@ forkOnlyDescribe("ForkTest: Convex frxETH/WETH Strategy", function () {
 
       const oethSupplyBefore = await oeth.totalSupply();
       const curveBalancesBefore = await curveFrxEthWethPool.get_balances();
-
-      log(
-        `Vault weth balance ${formatUnits(
-          await weth.balanceOf(oethVault.address)
-        )}`
-      );
 
       // Vault transfers WETH to strategy
       await weth
@@ -204,7 +198,7 @@ forkOnlyDescribe("ForkTest: Convex frxETH/WETH Strategy", function () {
         await expect(tx).to.revertedWith("Caller is not the Vault");
       }
     });
-    it("Only vault can deposit all WETH to strategy", async function () {
+    it("Only vault can deposit frxETH and WETH assets to the strategy", async function () {
       const {
         convexFrxEthWethStrategy,
         curveFrxEthWethPool,
@@ -212,17 +206,21 @@ forkOnlyDescribe("ForkTest: Convex frxETH/WETH Strategy", function () {
         strategist,
         timelock,
         josh,
+        frxETH,
         weth,
       } = fixture;
 
-      const depositAmount = parseUnits("50");
+      const wethDepositAmount = parseUnits("5000");
+      const frxEthDepositAmount = parseUnits("4000");
       await weth
         .connect(oethVaultSigner)
-        .transfer(convexFrxEthWethStrategy.address, depositAmount);
+        .transfer(convexFrxEthWethStrategy.address, wethDepositAmount);
+      await frxETH
+        .connect(oethVaultSigner)
+        .transfer(convexFrxEthWethStrategy.address, frxEthDepositAmount);
 
       for (const signer of [strategist, timelock, josh]) {
         const tx = convexFrxEthWethStrategy.connect(signer).depositAll();
-
         await expect(tx).to.revertedWith("Caller is not the Vault");
       }
 
@@ -233,6 +231,12 @@ forkOnlyDescribe("ForkTest: Convex frxETH/WETH Strategy", function () {
         .to.emit(convexFrxEthWethStrategy, "Deposit")
         .withNamedArgs({
           _asset: weth.address,
+          _pToken: curveFrxEthWethPool.address,
+        });
+      await expect(tx)
+        .to.emit(convexFrxEthWethStrategy, "Deposit")
+        .withNamedArgs({
+          _asset: frxETH.address,
           _pToken: curveFrxEthWethPool.address,
         });
     });

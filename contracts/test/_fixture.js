@@ -1733,18 +1733,8 @@ async function convexOETHMetaVaultFixture(
     weth,
   } = fixture;
 
-  await impersonateAndFundAddress(
-    weth.address,
-    [
-      "0x8EB8a3b98659Cce290402893d0123abb75E3ab28",
-      "0x741AA7CFB2c7bF2A1E7D4dA2e3Df6a56cA4131F3",
-      "0x57757E3D981446D585Af0D9Ae4d7DF6D64647806",
-      "0x2fEb1512183545f48f6b9C5b4EbfCaF49CfCa6F3",
-      "0x6B44ba0a126a2A1a8aa6cD1AdeeD002e141Bcd44",
-    ],
-    // Josh is loaded with weth
-    josh.getAddress()
-  );
+  // Load up josh with WETH
+  mintWETH(weth, josh, "1000000");
 
   // Get some CRV from most loaded contracts/wallets
   await impersonateAndFundAddress(
@@ -1860,22 +1850,31 @@ async function convexFrxEthFixture(
 ) {
   const fixture = await oethDefaultFixture();
 
-  const { convexFrxEthWethStrategy, oethVault, josh, strategist, weth } =
-    fixture;
+  const {
+    convexFrxEthWethStrategy,
+    oethVault,
+    josh,
+    strategist,
+    frxETH,
+    weth,
+  } = fixture;
 
-  // Get some WETH from most loaded contracts/wallets
+  // Get some frxETH from most loaded contracts/wallets
   await impersonateAndFundAddress(
-    weth.address,
+    frxETH.address,
     [
-      "0x8EB8a3b98659Cce290402893d0123abb75E3ab28",
-      "0x741AA7CFB2c7bF2A1E7D4dA2e3Df6a56cA4131F3",
-      "0x57757E3D981446D585Af0D9Ae4d7DF6D64647806",
-      "0x2fEb1512183545f48f6b9C5b4EbfCaF49CfCa6F3",
-      "0x6B44ba0a126a2A1a8aa6cD1AdeeD002e141Bcd44",
+      "0xa1F8A6807c402E4A15ef4EBa36528A3FED24E577",
+      "0x9c3B46C0Ceb5B9e304FCd6D88Fc50f7DD24B31Bc",
+      "0x4d9f9D15101EEC665F77210cB999639f760F831E",
+      "0x47D5E1679Fe5f0D9f0A657c6715924e33Ce05093",
+      "0x2F08F4645d2fA1fB12D2db8531c0c2EA0268BdE2",
     ],
-    // Josh is loaded with weth
+    // Josh is loaded with frxETH
     josh.getAddress()
   );
+
+  // Load up josh with WETH
+  mintWETH(weth, josh, "1000000");
 
   // Get some CRV from most loaded contracts/wallets
   await impersonateAndFundAddress(
@@ -1890,6 +1889,11 @@ async function convexFrxEthFixture(
     // Josh is loaded with CRV
     josh.getAddress()
   );
+
+  // Diabled default strategy for frxETH
+  await oethVault
+    .connect(strategist)
+    .setAssetDefaultStrategy(frxETH.address, addresses.zero);
 
   // Impersonate the OETH Vault
   fixture.oethVaultSigner = await impersonateAndFundContract(oethVault.address);
@@ -1914,8 +1918,7 @@ async function convexFrxEthFixture(
     // Approve the Vault to transfer WETH
     await weth.connect(josh).approve(oethVault.address, wethAmount);
 
-    // Mint OETH with WETH
-    // This will sit in the vault, not the strategy
+    // Mint OETH with WETH. This will sit in the vault, not the strategy
     await oethVault.connect(josh).mint(weth.address, wethAmount, 0);
 
     // Add WETH to the Curve pool
@@ -1927,6 +1930,31 @@ async function convexFrxEthFixture(
           convexFrxEthWethStrategy.address,
           [weth.address],
           [wethAmount]
+        );
+    }
+  }
+
+  // mint some OETH using frxETH is configured
+  if (config?.frxEthMintAmount > 0) {
+    const frxEthAmount = parseUnits(config.frxEthMintAmount.toString());
+    await oethVault.connect(josh).rebase();
+    await oethVault.connect(josh).allocate();
+
+    // Approve the Vault to transfer frxETH
+    await frxETH.connect(josh).approve(oethVault.address, frxEthAmount);
+
+    // Mint OETH with frxETH. This will sit in the vault, not the strategy
+    await oethVault.connect(josh).mint(frxETH.address, frxEthAmount, 0);
+
+    // Add frxETH to the Curve pool
+    if (config?.depositToStrategy) {
+      // The strategist deposits the frxETH to the strategy
+      await oethVault
+        .connect(strategist)
+        .depositToStrategy(
+          convexFrxEthWethStrategy.address,
+          [frxETH.address],
+          [frxEthAmount]
         );
     }
   }
