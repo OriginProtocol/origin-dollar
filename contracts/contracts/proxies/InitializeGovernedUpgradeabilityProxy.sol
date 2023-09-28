@@ -34,7 +34,7 @@ contract InitializeGovernedUpgradeabilityProxy is Governable {
     function initialize(
         address _logic,
         address _initGovernor,
-        bytes memory _data
+        bytes calldata _data
     ) public payable onlyGovernor {
         require(_implementation() == address(0));
         assert(
@@ -81,11 +81,10 @@ contract InitializeGovernedUpgradeabilityProxy is Governable {
      * It should include the signature and the parameters of the function to be called, as described in
      * https://solidity.readthedocs.io/en/v0.4.24/abi-spec.html#function-selector-and-argument-encoding.
      */
-    function upgradeToAndCall(address newImplementation, bytes calldata data)
-        external
-        payable
-        onlyGovernor
-    {
+    function upgradeToAndCall(
+        address newImplementation,
+        bytes calldata data
+    ) external payable onlyGovernor {
         _upgradeTo(newImplementation);
         (bool success, ) = newImplementation.delegatecall(data);
         require(success);
