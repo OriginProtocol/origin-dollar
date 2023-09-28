@@ -508,12 +508,11 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
     }
 
     function cacheRateProviders() public {
-        IBalancerPool pool = IBalancerPool(platformAddress);
         /* Rate providers haven't been cached yet. It is OK to not
          * expire the rate providers cache, since those are not
          * expected to ever change.
          */
-        IRateProvider[] memory providers = pool.getRateProviders();
+        IRateProvider[] memory providers = IBalancerPool(platformAddress).getRateProviders();
         poolRateProvidersCache = providers;
     }
 
