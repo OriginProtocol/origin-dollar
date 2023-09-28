@@ -10,14 +10,15 @@ interface ICurvePool {
 
     function calc_token_amount(uint256[3] calldata _amounts, bool _deposit)
         external
+        view
         returns (uint256);
 
     function fee() external view returns (uint256);
 
     function remove_liquidity_one_coin(
-        uint256 _amount,
+        uint256 _token_amount,
         int128 _index,
-        uint256 _minAmount
+        uint256 _min_amount
     ) external;
 
     function remove_liquidity(
@@ -34,12 +35,6 @@ interface ICurvePool {
 
     function remove_liquidity_imbalance(
         uint256[3] calldata _amounts,
-        uint256 maxBurnAmount
-    ) external;
-
-    function remove_liquidity_imbalance(
-        uint256[3] calldata _amounts,
-        uint256 maxBurnAmount,
-        address receiver
+        uint256 _max_burn_amount
     ) external;
 }

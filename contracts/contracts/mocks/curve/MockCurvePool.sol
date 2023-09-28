@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import { IMintableERC20 } from "../MintableERC20.sol";
-import { ICurvePool } from "../../strategies/ICurvePool.sol";
+import { ICurvePool } from "../../strategies/curve/ICurvePool.sol";
 import { StableMath } from "../../utils/StableMath.sol";
 import "../../utils/Helpers.sol";
 

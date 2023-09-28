@@ -8,9 +8,9 @@ pragma solidity ^0.8.0;
  */
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import { ICurveGauge } from "./ICurveGauge.sol";
-import { ICurvePool } from "./ICurvePool.sol";
-import { ICRVMinter } from "./ICRVMinter.sol";
+import { ICurveGauge } from "./curve/ICurveGauge.sol";
+import { ICurvePool } from "./curve/ICurvePool.sol";
+import { ICRVMinter } from "./curve/ICRVMinter.sol";
 import { IERC20, BaseCurveStrategy, InitializableAbstractStrategy } from "./BaseCurveStrategy.sol";
 import { StableMath } from "../utils/StableMath.sol";
 import { Helpers } from "../utils/Helpers.sol";
@@ -29,9 +29,10 @@ contract ThreePoolStrategy is BaseCurveStrategy {
     address internal crvGaugeAddress;
     address internal crvMinterAddress;
 
-    constructor(BaseStrategyConfig memory _stratConfig)
-        InitializableAbstractStrategy(_stratConfig)
-    {}
+    constructor(
+        BaseStrategyConfig memory _stratConfig,
+        CurveConfig memory _config
+    ) InitializableAbstractStrategy(_stratConfig) BaseCurveStrategy(_config) {}
 
     /**
      * Initializer for setting up strategy internal state. This overrides the
@@ -57,7 +58,6 @@ contract ThreePoolStrategy is BaseCurveStrategy {
         // abstractSetPToken calls will fail
         crvGaugeAddress = _crvGaugeAddress;
         crvMinterAddress = _crvMinterAddress;
-        pTokenAddress = _pTokens[0];
         InitializableAbstractStrategy._initialize(
             _rewardTokenAddress,
             _assets,
@@ -67,7 +67,7 @@ contract ThreePoolStrategy is BaseCurveStrategy {
     }
 
     function _lpDepositAll() internal override {
-        IERC20 pToken = IERC20(pTokenAddress);
+        IERC20 pToken = IERC20(CURVE_LP_TOKEN);
         // Deposit into Gauge
         ICurveGauge(crvGaugeAddress).deposit(
             pToken.balanceOf(address(this)),
@@ -102,7 +102,7 @@ contract ThreePoolStrategy is BaseCurveStrategy {
         // should always stake the full balance in the Gauge, but include for
         // safety
 
-        uint256 contractPTokens = IERC20(pTokenAddress).balanceOf(
+        uint256 contractPTokens = IERC20(CURVE_LP_TOKEN).balanceOf(
             address(this)
         );
         ICurveGauge gauge = ICurveGauge(crvGaugeAddress);
@@ -119,10 +119,10 @@ contract ThreePoolStrategy is BaseCurveStrategy {
     }
 
     function _approveBase() internal override {
-        IERC20 pToken = IERC20(pTokenAddress);
+        IERC20 pToken = IERC20(CURVE_LP_TOKEN);
         // 3Pool for LP token (required for removing liquidity)
-        pToken.safeApprove(platformAddress, 0);
-        pToken.safeApprove(platformAddress, type(uint256).max);
+        pToken.safeApprove(CURVE_POOL, 0);
+        pToken.safeApprove(CURVE_POOL, type(uint256).max);
         // Gauge for LP token
         pToken.safeApprove(crvGaugeAddress, 0);
         pToken.safeApprove(crvGaugeAddress, type(uint256).max);

@@ -11,25 +11,29 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 
 import { IRewardStaking } from "./IRewardStaking.sol";
 import { IConvexDeposits } from "./IConvexDeposits.sol";
-import { ICurvePool } from "./ICurvePool.sol";
+import { ICurvePool } from "./curve/ICurvePool.sol";
 import { IERC20, InitializableAbstractStrategy } from "./BaseCurveStrategy.sol";
-import { BaseConvexMetaStrategy } from "./BaseConvexMetaStrategy.sol";
+import { BaseConvexMetaStrategy, BaseCurveStrategy } from "./BaseConvexMetaStrategy.sol";
 import { StableMath } from "../utils/StableMath.sol";
 
 contract ConvexGeneralizedMetaStrategy is BaseConvexMetaStrategy {
     using StableMath for uint256;
     using SafeERC20 for IERC20;
 
-    constructor(BaseStrategyConfig memory _stratConfig)
+    constructor(
+        BaseStrategyConfig memory _stratConfig,
+        CurveConfig memory _curveConfig
+    )
         InitializableAbstractStrategy(_stratConfig)
+        BaseCurveStrategy(_curveConfig)
     {}
 
     /* Take 3pool LP and deposit it to metapool. Take the LP from metapool
      * and deposit them to Convex.
      */
     function _lpDepositAll() internal override {
-        IERC20 threePoolLp = IERC20(pTokenAddress);
-        ICurvePool curvePool = ICurvePool(platformAddress);
+        IERC20 threePoolLp = IERC20(CURVE_LP_TOKEN);
+        ICurvePool curvePool = ICurvePool(CURVE_POOL);
 
         uint256 threePoolLpBalance = threePoolLp.balanceOf(address(this));
         uint256 curve3PoolVirtualPrice = curvePool.get_virtual_price();

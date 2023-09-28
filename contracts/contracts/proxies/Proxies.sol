@@ -190,8 +190,10 @@ contract MakerDsrStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 }
 
 /**
- * @notice ConvexTwoAssetStrategyProxy delegates calls to a ConvexTwoAssetStrategy implementation
+ * @notice ConvexFrxEthWethStrategyProxy delegates calls to a ConvexStrategy implementation
  */
-contract ConvexTwoAssetStrategyProxy is InitializeGovernedUpgradeabilityProxy {
+contract ConvexFrxEthWethStrategyProxy is
+    InitializeGovernedUpgradeabilityProxy
+{
 
 }

@@ -29,7 +29,13 @@ forkOnlyDescribe("ForkTest: Convex frxETH/WETH Strategy", function () {
       expect(await convexFrxEthWethStrategy.MAX_SLIPPAGE()).to.equal(
         parseUnits("0.01", 18)
       );
-
+      expect(await convexFrxEthWethStrategy.CURVE_POOL()).to.equal(
+        addresses.mainnet.CurveFrxEthWethPool
+      );
+      expect(await convexFrxEthWethStrategy.CURVE_LP_TOKEN()).to.equal(
+        addresses.mainnet.CurveFrxEthWethPool
+      );
+      expect(await convexFrxEthWethStrategy.CURVE_BASE_ASSETS()).to.equal(2);
       expect(await convexFrxEthWethStrategy.cvxDepositor()).to.equal(
         addresses.mainnet.CVXBooster
       );
@@ -38,9 +44,6 @@ forkOnlyDescribe("ForkTest: Convex frxETH/WETH Strategy", function () {
       );
       expect(await convexFrxEthWethStrategy.cvxDepositorPoolId()).to.equal(
         frxEthWethPoolLpPID
-      );
-      expect(await convexFrxEthWethStrategy.platformAddress()).to.equal(
-        addresses.mainnet.CurveFrxEthWethPool
       );
     });
     it("Should be able to check balances", async () => {

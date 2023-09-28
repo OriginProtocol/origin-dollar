@@ -155,6 +155,14 @@ const deployCompoundStrategy = async () => {
 };
 
 /**
+ * Deploys a Curve wrapper library contracts used by the Curve strategies.
+ */
+const deployCurveLibraries = async () => {
+  await deployWithConfirmation("CurveTwoCoinLib", [], null, true);
+  await deployWithConfirmation("CurveThreeCoinLib", [], null, true);
+};
+
+/**
  * Deploys a 3pool Strategy which supports USDC, USDT and DAI.
  * Deploys a proxy, the actual strategy, initializes the proxy and initializes
  */
@@ -168,14 +176,26 @@ const deployThreePoolStrategy = async () => {
   // Initialize Strategies
   const cVaultProxy = await ethers.getContract("VaultProxy");
 
-  await deployWithConfirmation("ThreePoolStrategyProxy");
+  await deployWithConfirmation("ThreePoolStrategyProxy", [], null, true);
   const cThreePoolStrategyProxy = await ethers.getContract(
     "ThreePoolStrategyProxy"
   );
 
-  const dThreePoolStrategy = await deployWithConfirmation("ThreePoolStrategy", [
-    [assetAddresses.ThreePool, cVaultProxy.address],
-  ]);
+  const lCurveThreeCoinLib = await ethers.getContract("CurveThreeCoinLib");
+  const libraries = {
+    CurveThreeCoinLib: lCurveThreeCoinLib.address,
+  };
+
+  const dThreePoolStrategy = await deployWithConfirmation(
+    "ThreePoolStrategy",
+    [
+      [assetAddresses.ThreePool, cVaultProxy.address],
+      [3, assetAddresses.ThreePool, assetAddresses.ThreePoolToken],
+    ],
+    null,
+    true,
+    libraries
+  );
   const cThreePoolStrategy = await ethers.getContractAt(
     "ThreePoolStrategy",
     cThreePoolStrategyProxy.address
@@ -228,13 +248,36 @@ const deployConvexStrategy = async () => {
   const sGovernor = await ethers.provider.getSigner(governorAddr);
 
   const cVaultProxy = await ethers.getContract("VaultProxy");
+  const mockBooster = await ethers.getContract("MockBooster");
+  const mockRewardPool = await ethers.getContract("MockRewardPool");
 
-  await deployWithConfirmation("ConvexStrategyProxy");
+  await deployWithConfirmation("ConvexStrategyProxy", [], null, true);
   const cConvexStrategyProxy = await ethers.getContract("ConvexStrategyProxy");
 
-  const dConvexStrategy = await deployWithConfirmation("ConvexStrategy", [
-    [assetAddresses.ThreePool, cVaultProxy.address],
-  ]);
+  const lCurveThreeCoinLib = await ethers.getContract("CurveThreeCoinLib");
+  const libraries = {
+    CurveThreeCoinLib: lCurveThreeCoinLib.address,
+  };
+
+  const dConvexStrategy = await deployWithConfirmation(
+    "ConvexStrategy",
+    [
+      [assetAddresses.ThreePool, cVaultProxy.address],
+      [
+        3, // Number of 3Pool assets
+        assetAddresses.ThreePool,
+        assetAddresses.ThreePoolToken,
+      ],
+      [
+        mockBooster.address, // _cvxDepositorAddress,
+        mockRewardPool.address, // _cvxRewardStakerAddress,
+        9, // _cvxDepositorPTokenId
+      ],
+    ],
+    null,
+    true,
+    libraries
+  );
   const cConvexStrategy = await ethers.getContractAt(
     "ConvexStrategy",
     cConvexStrategyProxy.address
@@ -250,24 +293,11 @@ const deployConvexStrategy = async () => {
   log("Initialized ConvexStrategyProxy");
 
   // Initialize Strategies
-  const mockBooster = await ethers.getContract("MockBooster");
-  const mockRewardPool = await ethers.getContract("MockRewardPool");
   await withConfirmation(
     cConvexStrategy.connect(sDeployer)[
       // eslint-disable-next-line no-unexpected-multiline
-      "initialize(address[],address[],address[],address,address,uint256)"
-    ](
-      [assetAddresses.CRV, assetAddresses.CVX],
-      [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT],
-      [
-        assetAddresses.ThreePoolToken,
-        assetAddresses.ThreePoolToken,
-        assetAddresses.ThreePoolToken,
-      ],
-      mockBooster.address, // _cvxDepositorAddress,
-      mockRewardPool.address, // _cvxRewardStakerAddress,
-      9 // _cvxDepositorPTokenId
-    )
+      "initialize(address[],address[],address[])"
+    ]([assetAddresses.CRV, assetAddresses.CVX], [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT], [assetAddresses.ThreePoolToken, assetAddresses.ThreePoolToken, assetAddresses.ThreePoolToken])
   );
   log("Initialized ConvexStrategy");
 
@@ -306,9 +336,20 @@ const deployConvexLUSDMetaStrategy = async () => {
     "ConvexLUSDMetaStrategyProxy"
   );
 
+  const lCurveThreeCoinLib = await ethers.getContract("CurveThreeCoinLib");
+  const libraries = {
+    CurveThreeCoinLib: lCurveThreeCoinLib.address,
+  };
+
   const dConvexLUSDMetaStrategy = await deployWithConfirmation(
     "ConvexGeneralizedMetaStrategy",
-    [[assetAddresses.ThreePool, cVaultProxy.address]]
+    [
+      [assetAddresses.ThreePool, cVaultProxy.address],
+      [3, assetAddresses.ThreePool, assetAddresses.ThreePoolToken],
+    ],
+    null,
+    true,
+    libraries
   );
   const cConvexLUSDMetaStrategy = await ethers.getContractAt(
     "ConvexGeneralizedMetaStrategy",
@@ -383,14 +424,25 @@ const deployConvexOUSDMetaStrategy = async () => {
 
   const cVaultProxy = await ethers.getContract("VaultProxy");
 
-  await deployWithConfirmation("ConvexOUSDMetaStrategyProxy");
+  await deployWithConfirmation("ConvexOUSDMetaStrategyProxy", [], null, true);
   const cConvexOUSDMetaStrategyProxy = await ethers.getContract(
     "ConvexOUSDMetaStrategyProxy"
   );
 
+  const lCurveThreeCoinLib = await ethers.getContract("CurveThreeCoinLib");
+  const libraries = {
+    CurveThreeCoinLib: lCurveThreeCoinLib.address,
+  };
+
   const dConvexOUSDMetaStrategy = await deployWithConfirmation(
     "ConvexOUSDMetaStrategy",
-    [[assetAddresses.ThreePool, cVaultProxy.address]]
+    [
+      [assetAddresses.ThreePool, cVaultProxy.address],
+      [3, assetAddresses.ThreePool, assetAddresses.ThreePoolToken],
+    ],
+    null,
+    true,
+    libraries
   );
   const cConvexOUSDMetaStrategy = await ethers.getContractAt(
     "ConvexOUSDMetaStrategy",
@@ -1220,6 +1272,7 @@ const main = async () => {
   await deployCurveLUSDMetapoolMocks();
   await deployCompoundStrategy();
   await deployAaveStrategy();
+  await deployCurveLibraries();
   await deployThreePoolStrategy();
   await deployConvexStrategy();
   await deployConvexOUSDMetaStrategy();
