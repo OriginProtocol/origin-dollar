@@ -25,61 +25,41 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
      * 
      * enum ExitKind { EXACT_BPT_IN_FOR_ONE_TOKEN_OUT, BPT_IN_FOR_EXACT_TOKENS_OUT, EXACT_BPT_IN_FOR_ALL_TOKENS_OUT }
      */
-    uint256 internal balancerBptInExactTokensOutIndex;
+    uint256 internal immutable balancerBptInExactTokensOutIndex;
 
     /* we need to call EXACT_BPT_IN_FOR_TOKENS_OUT when doing withdrawAll.
      * In meta stable pools that enum item with value 1 and for Composable stable pools
      * that is enum item with value 2.
      */
-    uint256 internal balancerExactBptInTokensOutIndex;
+    uint256 internal immutable balancerExactBptInTokensOutIndex;
 
-    int256[48] private ___reserved;
+    int256[50] private ___reserved;
+
+    struct BaseMetaPoolConfig {
+        /* enum Value that represents exit encoding where for min BPT in
+         * user can exactly specify the underlying assets to be returned
+         */
+        uint256 balancerBptInExactTokensOutIndex;
+        /* enum Value that represents exit encoding where for exact amount
+         * of BPT in user can shall receive proportional amount of underlying assets
+         */
+        uint256 balancerExactBptInTokensOutIndex;
+    }
 
     constructor(
         BaseStrategyConfig memory _stratConfig,
         BaseBalancerConfig memory _balancerConfig,
+        BaseMetaPoolConfig memory _metapoolConfig,
         address _auraRewardPoolAddress
     )
         InitializableAbstractStrategy(_stratConfig)
         BaseBalancerStrategy(_balancerConfig)
         BaseAuraStrategy(_auraRewardPoolAddress)
-    {}
-
-    /**
-     * Initializer for setting up strategy internal state. This overrides the
-     * InitializableAbstractStrategy initializer as Balancer's strategies don't fit
-     * well within that abstraction.
-     * @param _rewardTokenAddresses Address of BAL & AURA
-     * @param _assets Addresses of supported assets. MUST be passed in the same
-     *                order as returned by coins on the pool contract, i.e.
-     *                WETH, stETH
-     * @param _pTokens Platform Token corresponding addresses
-     * @param _pTokens _balancerBptInExactTokensOutIndex -> enum Value that represents
-     *        exit encoding where for min BPT in user can exactly specify the underlying assets
-     *        to be returned
-     * @param _pTokens _balancerExactBptInTokensOutIndex -> enum Value that represents
-     *        exit encoding where for exact amount of BPT in user can shall receive proportional
-     *        amount of underlying assets
-     */
-    function initialize(
-        address[] calldata _rewardTokenAddresses, // BAL & AURA
-        address[] calldata _assets,
-        address[] calldata _pTokens,
-        uint256 _balancerBptInExactTokensOutIndex,
-        uint256 _balancerExactBptInTokensOutIndex
-    ) external virtual onlyGovernor initializer {
-        /* IMPORTANT(!)
-         *
-         * existing Balancer rETH/WETH strategy doesn't have the `balancerBptInExactTokensOutIndex`
-         * or `balancerWithdrawAllExitKind` variable in the storage slot populated.
-         */
-        balancerBptInExactTokensOutIndex = _balancerBptInExactTokensOutIndex;
-        balancerExactBptInTokensOutIndex = _balancerExactBptInTokensOutIndex;
-        BaseBalancerStrategy.initialize(
-            _rewardTokenAddresses,
-            _assets,
-            _pTokens
-        );
+    {
+        balancerBptInExactTokensOutIndex = _metapoolConfig
+            .balancerBptInExactTokensOutIndex;
+        balancerExactBptInTokensOutIndex = _metapoolConfig
+            .balancerExactBptInTokensOutIndex;
     }
 
     /**

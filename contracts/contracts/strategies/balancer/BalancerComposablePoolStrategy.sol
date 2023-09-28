@@ -17,11 +17,13 @@ contract BalancerComposablePoolStrategy is BalancerMetaPoolStrategy {
     constructor(
         BaseStrategyConfig memory _stratConfig,
         BaseBalancerConfig memory _balancerConfig,
+        BaseMetaPoolConfig memory _metapoolConfig,
         address _auraRewardPoolAddress
     )
         BalancerMetaPoolStrategy(
             _stratConfig,
             _balancerConfig,
+            _metapoolConfig,
             _auraRewardPoolAddress
         )
     {}

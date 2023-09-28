@@ -54,8 +54,14 @@ module.exports = ({
             addresses.mainnet.balancerVault, // Address of the Balancer vault
             poolId, // Pool ID of the Balancer pool
           ],
+          [
+            2, // WeightedPoolExitKind.BPT_IN_FOR_EXACT_TOKENS_OUT
+            1, // WeightedPoolExitKind.EXACT_BPT_IN_FOR_TOKENS_OUT
+          ],
           auraRewardsContractAddress,
-        ]
+        ],
+        null,
+        true // ignore storage slot check
       );
       const cOETHBalancerMetaPoolStrategy = await ethers.getContractAt(
         "BalancerMetaPoolStrategy",
@@ -71,18 +77,11 @@ module.exports = ({
       );
 
       // 3. Encode the init data
-      const initFunction =
-        "initialize(address[],address[],address[],uint256,uint256)";
+      const initFunction = "initialize(address[],address[],address[])";
       const initData =
         cOETHBalancerMetaPoolStrategy.interface.encodeFunctionData(
           initFunction,
-          [
-            rewardTokenAddresses,
-            assets,
-            [platformAddress, platformAddress],
-            2, // WeightedPoolExitKind.BPT_IN_FOR_EXACT_TOKENS_OUT
-            1, // WeightedPoolExitKind.EXACT_BPT_IN_FOR_TOKENS_OUT
-          ]
+          [rewardTokenAddresses, assets, [platformAddress, platformAddress]]
         );
 
       // 4. Init the proxy to point at the implementation
