@@ -135,8 +135,11 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         uint256[CURVE_BASE_ASSETS] memory _amounts = [uint256(0), 0, 0];
         _amounts[coinIndex] = _amount;
 
-        curvePool.remove_liquidity_imbalance(_amounts, requiredCrv3Tokens);
-        IERC20(_asset).safeTransfer(_recipient, _amount);
+        curvePool.remove_liquidity_imbalance(
+            _amounts,
+            requiredCrv3Tokens,
+            _recipient
+        );
     }
 
     /**
@@ -218,7 +221,10 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         // we have not set PToken addresses for all of them in this strategy
         for (uint256 i = 0; i < assetsMapped.length; ++i) {
             IERC20 asset = IERC20(threePool.coins(i));
+            uint256 balance = asset.balanceOf(address(this));
             asset.safeTransfer(vaultAddress, asset.balanceOf(address(this)));
+
+            emit Withdrawal(address(asset), platformAddress, balance);
         }
     }
 

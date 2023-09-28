@@ -136,8 +136,11 @@ abstract contract BaseTwoAssetCurveStrategy is InitializableAbstractStrategy {
         _amounts[coinIndex] = _amount;
 
         // slither-disable-next-line unused-return
-        curvePool.remove_liquidity_imbalance(_amounts, requiredLpTokens);
-        IERC20(_asset).safeTransfer(_recipient, _amount);
+        curvePool.remove_liquidity_imbalance(
+            _amounts,
+            requiredLpTokens,
+            _recipient
+        );
     }
 
     /**
@@ -218,7 +221,7 @@ abstract contract BaseTwoAssetCurveStrategy is InitializableAbstractStrategy {
         for (uint256 i = 0; i < assetsMapped.length; ++i) {
             IERC20 asset = IERC20(curvePool.coins(i));
             uint256 balance = asset.balanceOf(address(this));
-            asset.safeTransfer(vaultAddress, asset.balanceOf(address(this)));
+            asset.safeTransfer(vaultAddress, balance);
 
             emit Withdrawal(address(asset), platformAddress, balance);
         }
