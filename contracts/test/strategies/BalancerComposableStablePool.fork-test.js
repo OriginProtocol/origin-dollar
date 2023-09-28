@@ -278,7 +278,10 @@ forkOnlyDescribe(
         ]();
 
         expect(rethInVaultBefore.sub(rethInVaultAfter)).to.equal(rethUnits);
-        expect(stETHInVaultBefore.sub(stETHInVaultAfter)).to.equal(stethUnits);
+        // stETH has rounding issues
+        expect(
+          stETHInVaultBefore.sub(stETHInVaultAfter)
+        ).to.approxEqualTolerance(stethUnits, 0.01);
         expect(frxETHInVaultBefore.sub(frxETHInVaultAfter)).to.equal(
           frxethUnits
         );

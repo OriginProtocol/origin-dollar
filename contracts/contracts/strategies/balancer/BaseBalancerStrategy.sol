@@ -41,8 +41,10 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
     uint256 public maxWithdrawalDeviation;
     // Max deposit deviation denominated in 1e18 (1e18 == 100%)
     uint256 public maxDepositDeviation;
+    // Rate providers of the Balancer pool
+    IRateProvider[] public poolRateProvidersCache;
 
-    int256[48] private __reserved;
+    int256[47] private __reserved;
 
     struct BaseBalancerConfig {
         address rEthAddress; // Address of the rETH token
@@ -107,7 +109,7 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
     ) public virtual override onlyGovernor initializer {
         maxWithdrawalDeviation = 1e16;
         maxDepositDeviation = 1e16;
-
+        cacheRateProviders();
         emit MaxWithdrawalDeviationUpdated(0, maxWithdrawalDeviation);
         emit MaxDepositDeviationUpdated(0, maxDepositDeviation);
 
@@ -398,7 +400,7 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
              * shares (sfrxETH) to be exchanged for assets (frxETH)
              */
             unwrappedAmount = IERC4626(sfrxETH).redeem(
-                /* adding + 1 here since a rounding error can 
+                /* adding + 1 here since a rounding error can
                  * return value that is off by 1 WEI
                  */
                 amount + FRX_ETH_REDEEM_CORRECTION,
@@ -501,7 +503,18 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         IERC20 pToken = IERC20(platformAddress);
 
         // Balancer vault for BPT token (required for removing liquidity)
-        pToken.safeApprove(address(balancerVault), type(uint256).max);
+        pToken.approve(address(balancerVault), 0);
+        pToken.approve(address(balancerVault), type(uint256).max);
+    }
+
+    function cacheRateProviders() public {
+        IBalancerPool pool = IBalancerPool(platformAddress);
+        /* Rate providers haven't been cached yet. It is OK to not
+         * expire the rate providers cache, since those are not
+         * expected to ever change.
+         */
+        IRateProvider[] memory providers = pool.getRateProviders();
+        poolRateProvidersCache = providers;
     }
 
     /**
@@ -518,20 +531,18 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         virtual
         returns (uint256)
     {
-        IBalancerPool pool = IBalancerPool(platformAddress);
-        IRateProvider[] memory providers = pool.getRateProviders();
         (IERC20[] memory tokens, , ) = balancerVault.getPoolTokens(
             balancerPoolId
         );
 
-        for (uint256 i = 0; i < providers.length; ++i) {
+        for (uint256 i = 0; i < poolRateProvidersCache.length; ++i) {
             // _assets and corresponding rate providers are all in the same order
             if (address(tokens[i]) == _asset) {
                 // rate provider doesn't exist, defaults to 1e18
-                if (address(providers[i]) == address(0)) {
+                if (address(poolRateProvidersCache[i]) == address(0)) {
                     return 1e18;
                 }
-                return providers[i].getRate();
+                return poolRateProvidersCache[i].getRate();
             }
         }
 
