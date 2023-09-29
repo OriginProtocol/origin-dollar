@@ -84,6 +84,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
     /**
      * @notice Deposit an vault asset into the Curve pool.
      * @dev This assumes the vault has already transferred the asset to this strategy contract.
+     * @dev An invalid asset will fail in _getCoinIndex with "Unsupported asset".
      * @param _asset Address of asset to deposit
      * @param _amount Amount of asset to deposit
      */
@@ -91,7 +92,6 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         external
         override
         onlyVault
-        onlySupportsAsset(_asset)
         nonReentrant
     {
         require(_amount > 0, "Must deposit something");
@@ -117,12 +117,13 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @dev Deposit the Curve LP token to a Curve metapool, gauge or Convex pool.
+     * @dev Deposit all Curve LP tokens in the strategy to a
+     * Curve metapool, gauge or Convex pool.
      */
     function _lpDepositAll() internal virtual;
 
     /**
-     * @dev Deposit the entire balance of supported assets into the Curve pool
+     * @notice Deposit the entire balance of the Curve pool assets in this strategy contract.
      */
     function depositAll() external override onlyVault nonReentrant {
         uint256[] memory _amounts = new uint256[](CURVE_BASE_ASSETS);
@@ -132,9 +133,6 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         // For each of the Curve pool's assets
         for (uint256 i = 0; i < CURVE_BASE_ASSETS; ++i) {
             address assetAddress = _getAsset(i);
-            // Skip if the strategy is not currently supporting the asset
-            if (!_vaultSupportsAsset(assetAddress)) continue;
-
             uint256 balance = IERC20(assetAddress).balanceOf(address(this));
             if (balance > 0) {
                 // Set the amount on the asset we want to deposit
@@ -146,6 +144,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
                     balance
                         .scaleBy(18, _getAssetDecimals(assetAddress))
                         .divPrecisely(curveVirtualPrice);
+
                 emit Deposit(assetAddress, CURVE_POOL, balance);
             }
         }
@@ -165,12 +164,19 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         _lpDepositAll();
     }
 
-    function _lpWithdraw(uint256 numCrvTokens) internal virtual;
+    /**
+     * @dev Withdraw Curve LP tokens from a Curve metapool, gauge or Convex pool.
+     */
+    function _lpWithdraw(uint256 curveLpTokens) internal virtual;
 
+    /**
+     * @dev Withdraw all the strategy's Curve LP tokens from a Curve metapool, gauge or Convex pool.
+     */
     function _lpWithdrawAll() internal virtual;
 
     /**
-     * @dev Withdraw asset from the Curve pool
+     * @notice Withdraw an single asset from the Curve pool.
+     * @dev An invalid asset will fail in _getCoinIndex with "Unsupported asset".
      * @param _recipient Address to receive withdrawn asset
      * @param _asset Address of asset to withdraw
      * @param _amount Amount of asset to withdraw
@@ -179,7 +185,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         address _recipient,
         address _asset,
         uint256 _amount
-    ) external override onlyVault onlySupportsAsset(_asset) nonReentrant {
+    ) external override onlyVault nonReentrant {
         require(_amount > 0, "Invalid amount");
 
         emit Withdrawal(_asset, CURVE_POOL, _amount);
@@ -269,8 +275,8 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @dev Remove all assets from the Curve pool and send them to Vault contract.
-     * This will include any vault assets that are not currently supported by the strategy.
+     * @notice Remove all assets from the Curve pool and send them to Vault contract.
+     * This will include all assets in the Curve pool.
      */
     function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
         _lpWithdrawAll();
@@ -298,7 +304,8 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @dev Get the total asset value held in the platform
+     * @notice Get the total asset value held in the platform.
+     * @dev An invalid asset will fail in _getAssetDecimals with "Unsupported asset"
      * @param _asset      Address of the asset
      * @return balance    Total value of the asset in the platform
      */
@@ -307,7 +314,6 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         view
         virtual
         override
-        onlySupportsAsset(_asset)
         returns (uint256 balance)
     {
         // Curve LP tokens in this strategy contract.
@@ -325,7 +331,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @dev Approve the spending of all assets by their corresponding pool tokens,
+     * @notice Approve the spending of all assets by their corresponding pool tokens,
      *      if for some reason is it necessary.
      */
     function safeApproveAllTokens()
@@ -429,11 +435,6 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
             Asset/coin validation
     ****************************************/
 
-    modifier onlySupportsAsset(address _asset) {
-        require(_vaultSupportsAsset(_asset), "Unsupported asset");
-        _;
-    }
-
     /**
      * @notice Retuns bool indicating whether vault asset is supported by the strategy
      * @param _vaultAsset Address of the vault asset
@@ -444,15 +445,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         override
         returns (bool result)
     {
-        result = _vaultSupportsAsset(_vaultAsset);
-    }
-
-    function _vaultSupportsAsset(address _vaultAsset)
-        internal
-        view
-        returns (bool result)
-    {
-        result = assetToPToken[_vaultAsset] != address(0);
+        result = _curveSupportedCoin(_vaultAsset);
     }
 
     /**
@@ -479,5 +472,13 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
     {
         require(_curveSupportedCoin(_asset), "Not a Curve pool coin");
         InitializableAbstractStrategy._setPTokenAddress(_asset, _pToken);
+    }
+
+    /**
+     * @notice Can not remove an asset from the strategy as checkBalance
+     * assumes all assets are in the Curve pool are supported.
+     */
+    function removePToken(uint256) external pure override {
+        revert("Unsupported");
     }
 }

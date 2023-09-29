@@ -13,7 +13,6 @@ import { IRewardStaking } from "./IRewardStaking.sol";
 import { IConvexDeposits } from "./IConvexDeposits.sol";
 import { IERC20, BaseCurveStrategy, InitializableAbstractStrategy } from "./BaseCurveStrategy.sol";
 import { StableMath } from "../utils/StableMath.sol";
-import { Helpers } from "../utils/Helpers.sol";
 
 /*
  * IMPORTANT(!) If ConvexStrategy needs to be re-deployed, it requires new
@@ -35,13 +34,16 @@ contract ConvexStrategy is BaseCurveStrategy {
     // slither-disable-next-line constable-states
     uint256 private _deprecatedCvxDepositorPTokenId;
 
+    /// @notice Convex deposit contract
     address public immutable cvxDepositor;
+    /// @notice Convex contract that holds the staked Curve LP tokens
     address public immutable cvxRewardStaker;
+    /// @notice Convex pool identifier
     uint256 public immutable cvxDepositorPoolId;
 
     struct ConvexConfig {
-        address cvxDepositorAddress;
-        address cvxRewardStakerAddress;
+        address cvxDepositor;
+        address cvxRewardStaker;
         uint256 cvxDepositorPoolId;
     }
 
@@ -53,8 +55,8 @@ contract ConvexStrategy is BaseCurveStrategy {
         InitializableAbstractStrategy(_stratConfig)
         BaseCurveStrategy(_curveConfig)
     {
-        cvxDepositor = _convexConfig.cvxDepositorAddress;
-        cvxRewardStaker = _convexConfig.cvxRewardStakerAddress;
+        cvxDepositor = _convexConfig.cvxDepositor;
+        cvxRewardStaker = _convexConfig.cvxRewardStaker;
         cvxDepositorPoolId = _convexConfig.cvxDepositorPoolId;
     }
 
@@ -85,13 +87,15 @@ contract ConvexStrategy is BaseCurveStrategy {
     }
 
     function _lpDepositAll() internal override {
-        // Deposit with staking
-        bool success = IConvexDeposits(cvxDepositor).deposit(
-            cvxDepositorPoolId,
-            IERC20(CURVE_LP_TOKEN).balanceOf(address(this)),
-            true
+        // Deposit the Curve LP tokens into the Convex pool and stake
+        require(
+            IConvexDeposits(cvxDepositor).deposit(
+                cvxDepositorPoolId,
+                IERC20(CURVE_LP_TOKEN).balanceOf(address(this)),
+                true // stake
+            ),
+            "Failed to deposit to Convex"
         );
-        require(success, "Failed to deposit to Convex");
     }
 
     function _lpWithdraw(uint256 requiredLpTokens) internal override {
@@ -108,7 +112,7 @@ contract ConvexStrategy is BaseCurveStrategy {
         // withdraw and unwrap with claim takes back the lpTokens and also collects the rewards to this
         IRewardStaking(cvxRewardStaker).withdrawAndUnwrap(
             requiredLpTokens,
-            true
+            true // stake
         );
     }
 
@@ -116,7 +120,7 @@ contract ConvexStrategy is BaseCurveStrategy {
         // withdraw and unwrap with claim takes back the lpTokens and also collects the rewards to this
         IRewardStaking(cvxRewardStaker).withdrawAndUnwrap(
             IRewardStaking(cvxRewardStaker).balanceOf(address(this)),
-            true
+            true // stake
         );
     }
 
@@ -128,7 +132,9 @@ contract ConvexStrategy is BaseCurveStrategy {
     }
 
     /**
-     * @dev Get the total asset value held in the platform
+     * @notice Get the asset's share of value held in the strategy. This is the total value
+     * of the stategy's Curve LP tokens divided by the number of Curve pool assets.
+     * @dev An invalid asset will fail in _getAssetDecimals with "Unsupported asset"
      * @param _asset      Address of the asset
      * @return balance    Total value of the asset in the platform
      */
@@ -138,21 +144,29 @@ contract ConvexStrategy is BaseCurveStrategy {
         override
         returns (uint256 balance)
     {
-        require(assetToPToken[_asset] != address(0), "Unsupported asset");
-        // LP tokens in this contract. This should generally be nothing as we
+        // Curve LP tokens in this contract. This should generally be nothing as we
         // should always stake the full balance in the Gauge, but include for
         // safety
-        uint256 curveLpToken = IERC20(CURVE_LP_TOKEN).balanceOf(address(this));
-        uint256 stakedLpToken = IRewardStaking(cvxRewardStaker).balanceOf(
+        uint256 contractLpTokens = IERC20(CURVE_LP_TOKEN).balanceOf(
             address(this)
         );
-        uint256 totalCurveLpToken = curveLpToken + stakedLpToken;
 
-        if (totalCurveLpToken > 0) {
-            uint256 virtual_price = ICurvePool(CURVE_POOL).get_virtual_price();
-            uint256 value = (totalCurveLpToken * virtual_price) / 1e18;
-            uint256 assetDecimals = Helpers.getDecimals(_asset);
-            balance = value.scaleBy(assetDecimals, 18) / 3;
+        // Get the Curve LP tokens staked in the Convex pool.
+        uint256 convexLpTokens = IRewardStaking(cvxRewardStaker).balanceOf(
+            address(this)
+        );
+        uint256 totalLpToken = contractLpTokens + convexLpTokens;
+
+        if (totalLpToken > 0) {
+            // get_virtual_price is gas intensive, so only call it if we have LP tokens.
+            // Calculate the value of the Curve LP tokens in USD or ETH
+            uint256 value = (totalLpToken *
+                ICurvePool(CURVE_POOL).get_virtual_price()) / 1e18;
+
+            // Scale the value down if the asset has less than 18 decimals. eg USDC or USDT
+            balance =
+                value.scaleBy(_getAssetDecimals(_asset), 18) /
+                CURVE_BASE_ASSETS;
         }
     }
 

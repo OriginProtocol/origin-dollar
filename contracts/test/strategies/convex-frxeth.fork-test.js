@@ -9,6 +9,7 @@ const {
   convexFrxEthFixture,
   loadDefaultFixture,
 } = require("../_fixture");
+const { resolveAsset } = require("../../utils/assets");
 
 const log = require("../../utils/logger")("test:fork:convex:frxETH");
 
@@ -18,6 +19,8 @@ forkOnlyDescribe("ForkTest: Convex frxETH/WETH Strategy", function () {
   this.retries(isCI ? 3 : 0);
 
   let fixture;
+
+  const supportedAssets = ["frxETH", "WETH"];
 
   describe("with mainnet data", () => {
     beforeEach(async () => {
@@ -29,13 +32,13 @@ forkOnlyDescribe("ForkTest: Convex frxETH/WETH Strategy", function () {
       expect(await convexFrxEthWethStrategy.MAX_SLIPPAGE()).to.equal(
         parseUnits("0.01", 18)
       );
+      expect(await convexFrxEthWethStrategy.CURVE_BASE_ASSETS()).to.equal(2);
       expect(await convexFrxEthWethStrategy.CURVE_POOL()).to.equal(
         addresses.mainnet.CurveFrxEthWethPool
       );
       expect(await convexFrxEthWethStrategy.CURVE_LP_TOKEN()).to.equal(
         addresses.mainnet.CurveFrxEthWethPool
       );
-      expect(await convexFrxEthWethStrategy.CURVE_BASE_ASSETS()).to.equal(2);
       expect(await convexFrxEthWethStrategy.cvxDepositor()).to.equal(
         addresses.mainnet.CVXBooster
       );
@@ -46,20 +49,20 @@ forkOnlyDescribe("ForkTest: Convex frxETH/WETH Strategy", function () {
         frxEthWethPoolLpPID
       );
     });
-    it("Should be able to check balances", async () => {
-      const { frxETH, weth, josh, convexFrxEthWethStrategy } = fixture;
-
-      expect(await convexFrxEthWethStrategy.checkBalance(weth.address)).gte(0);
-
-      expect(await convexFrxEthWethStrategy.checkBalance(frxETH.address)).gte(
-        0
-      );
-
-      // This uses a transaction to call a view function so the gas usage can be reported.
-      const tx = await convexFrxEthWethStrategy
-        .connect(josh)
-        .populateTransaction.checkBalance(weth.address);
-      await josh.sendTransaction(tx);
+    supportedAssets.forEach((symbol) => {
+      it(`Should be able to check the ${symbol} balance`, async () => {
+        const { convexFrxEthWethStrategy } = fixture;
+        const asset = await resolveAsset(symbol, fixture);
+        expect(await convexFrxEthWethStrategy.checkBalance(asset.address)).gte(
+          0
+        );
+      });
+      it(`${symbol} should be supported`, async () => {
+        const { convexFrxEthWethStrategy } = fixture;
+        const asset = await resolveAsset(symbol, fixture);
+        expect(await convexFrxEthWethStrategy.supportsAsset(asset.address)).to
+          .be.true;
+      });
     });
   });
 
@@ -135,48 +138,78 @@ forkOnlyDescribe("ForkTest: Convex frxETH/WETH Strategy", function () {
     beforeEach(async () => {
       fixture = await loadFixture();
     });
-    it("Vault should deposit some WETH to strategy", async function () {
-      const {
-        convexFrxEthWethStrategy,
-        oeth,
-        curveFrxEthWethPool,
-        oethVaultSigner,
-        weth,
-      } = fixture;
+    supportedAssets.forEach((symbol) => {
+      it(`Vault should deposit some ${symbol} to the strategy`, async function () {
+        const {
+          convexFrxEthWethStrategy,
+          oeth,
+          curveFrxEthWethPool,
+          oethVaultSigner,
+          frxETH,
+          weth,
+        } = fixture;
 
-      const wethDepositAmount = await units("5000", weth);
+        const asset = await resolveAsset(symbol, fixture);
+        const depositAmount = await units("3000", asset);
 
-      const oethSupplyBefore = await oeth.totalSupply();
-      const curveBalancesBefore = await curveFrxEthWethPool.get_balances();
+        const oethSupplyBefore = await oeth.totalSupply();
+        const curveBalancesBefore = await curveFrxEthWethPool.get_balances();
+        const wethStrategyBalanceBefore =
+          await convexFrxEthWethStrategy.checkBalance(weth.address);
+        const frxEthStrategyBalanceBefore =
+          await convexFrxEthWethStrategy.checkBalance(frxETH.address);
 
-      // Vault transfers WETH to strategy
-      await weth
-        .connect(oethVaultSigner)
-        .transfer(convexFrxEthWethStrategy.address, wethDepositAmount);
+        // Vault transfers asset to the strategy
+        await asset
+          .connect(oethVaultSigner)
+          .transfer(convexFrxEthWethStrategy.address, depositAmount);
 
-      const tx = await convexFrxEthWethStrategy
-        .connect(oethVaultSigner)
-        .deposit(weth.address, wethDepositAmount);
+        const tx = await convexFrxEthWethStrategy
+          .connect(oethVaultSigner)
+          .deposit(asset.address, depositAmount);
 
-      // Check emitted events
-      await expect(tx)
-        .to.emit(convexFrxEthWethStrategy, "Deposit")
-        .withArgs(weth.address, curveFrxEthWethPool.address, wethDepositAmount);
+        // Check emitted events
+        await expect(tx)
+          .to.emit(convexFrxEthWethStrategy, "Deposit")
+          .withArgs(asset.address, curveFrxEthWethPool.address, depositAmount);
 
-      // Check the WETH balances in the Curve pool
-      const curveBalancesAfter = await curveFrxEthWethPool.get_balances();
-      expect(curveBalancesAfter[0]).to.approxEqualTolerance(
-        curveBalancesBefore[0].add(wethDepositAmount),
-        0.01 // 0.01% or 1 basis point
-      );
-      expect(curveBalancesAfter[1]).to.approxEqualTolerance(
-        curveBalancesBefore[1],
-        0.01
-      );
+        // Check the WETH balances in the Curve pool
+        const curveBalancesAfter = await curveFrxEthWethPool.get_balances();
+        const wethBalanceExpected =
+          symbol === "WETH"
+            ? curveBalancesBefore[0].add(depositAmount)
+            : curveBalancesBefore[0];
+        expect(curveBalancesAfter[0]).to.approxEqualTolerance(
+          wethBalanceExpected,
+          0.01 // 0.01% or 1 basis point
+        );
+        // Check the frxETH balances in the Curve pool has no gone up
+        const frxEthBalanceExpected =
+          symbol === "frxETH"
+            ? curveBalancesBefore[1].add(depositAmount)
+            : curveBalancesBefore[1];
+        expect(curveBalancesAfter[1]).to.approxEqualTolerance(
+          frxEthBalanceExpected,
+          0.01
+        );
 
-      // Check the OETH total supply has not increased
-      const oethSupplyAfter = await oeth.totalSupply();
-      expect(oethSupplyAfter).to.approxEqualTolerance(oethSupplyBefore, 0.01);
+        // Check the OETH total supply has not increased
+        const oethSupplyAfter = await oeth.totalSupply();
+        expect(oethSupplyAfter).to.approxEqualTolerance(oethSupplyBefore, 0.01);
+
+        // Check both the strategy's asset balances have gone up
+        const halfDepositAmount = depositAmount.div(2);
+        expect(
+          await convexFrxEthWethStrategy.checkBalance(weth.address)
+        ).to.approxEqualTolerance(
+          wethStrategyBalanceBefore.add(halfDepositAmount)
+        );
+        expect(
+          await convexFrxEthWethStrategy.checkBalance(frxETH.address)
+        ).to.approxEqualTolerance(
+          frxEthStrategyBalanceBefore.add(halfDepositAmount)
+        );
+      });
     });
     it("Only vault can deposit to strategy", async function () {
       const {
@@ -201,7 +234,7 @@ forkOnlyDescribe("ForkTest: Convex frxETH/WETH Strategy", function () {
         await expect(tx).to.revertedWith("Caller is not the Vault");
       }
     });
-    it("Only vault can deposit frxETH and WETH assets to the strategy", async function () {
+    it("Only vault can deposit all frxETH and WETH assets to the strategy", async function () {
       const {
         convexFrxEthWethStrategy,
         curveFrxEthWethPool,
@@ -252,6 +285,23 @@ forkOnlyDescribe("ForkTest: Convex frxETH/WETH Strategy", function () {
     });
     beforeEach(async () => {
       fixture = await loadFixture();
+    });
+    supportedAssets.forEach((symbol) => {
+      // frxETH will have a balance even though only WETH was deposited
+      it(`${symbol} should have a balance`, async () => {
+        const { josh, convexFrxEthWethStrategy } = fixture;
+
+        const asset = await resolveAsset(symbol, fixture);
+        expect(await convexFrxEthWethStrategy.checkBalance(asset.address)).gt(
+          0
+        );
+
+        // This uses a transaction to call a view function so the gas usage can be reported.
+        const tx = await convexFrxEthWethStrategy
+          .connect(josh)
+          .populateTransaction.checkBalance(asset.address);
+        await josh.sendTransaction(tx);
+      });
     });
     it("Vault should be able to withdraw all", async () => {
       const {
