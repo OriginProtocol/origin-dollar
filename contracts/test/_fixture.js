@@ -1202,11 +1202,17 @@ async function balancerFrxETHwstETHeETHFixture(
       //"0xac3E018457B222d93114458476f3E3416Abbe38F", sfrxETH -> dont't touch!
       "0xa1F8A6807c402E4A15ef4EBa36528A3FED24E577",
       "0x9c3B46C0Ceb5B9e304FCd6D88Fc50f7DD24B31Bc",
+      "0x8306300ffd616049FD7e4b0354a64Da835c1A81C",
       "0x4d9f9D15101EEC665F77210cB999639f760F831E",
       "0x2F08F4645d2fA1fB12D2db8531c0c2EA0268BdE2",
       "0x47D5E1679Fe5f0D9f0A657c6715924e33Ce05093",
+      "0xce4DbAF3fa72C962Ee1F371694109fc2a80B03f5",
+      "0x505603e2440b44C1602b44D0Eb8385399b3F7bab",
+      "0xfcc067EFb7bE2EEbD32615F14fC22195abB68e9B"
+
     ],
-    josh.getAddress()
+    josh.getAddress(),
+    60 // use 60% of the account balances
   );
 
   return fixture;
