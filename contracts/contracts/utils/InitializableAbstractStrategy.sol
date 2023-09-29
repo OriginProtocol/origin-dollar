@@ -248,7 +248,10 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
      * @param _asset    Address for the asset
      * @param _pToken   Address for the corresponding platform token
      */
-    function _setPTokenAddress(address _asset, address _pToken) internal {
+    function _setPTokenAddress(address _asset, address _pToken)
+        internal
+        virtual
+    {
         require(assetToPToken[_asset] == address(0), "pToken already set");
         require(
             _asset != address(0) && _pToken != address(0),

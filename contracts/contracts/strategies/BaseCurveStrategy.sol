@@ -24,6 +24,16 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
     address public immutable CURVE_POOL;
     address public immutable CURVE_LP_TOKEN;
 
+    // Only supporting up to 3 coins for now.
+    // The new Stableswap pools support up to 8 coins, but
+    // we'll add support for more than 3 pools later if needed.
+    address public immutable coin0;
+    address public immutable coin1;
+    address public immutable coin2;
+    uint256 public immutable decimals0;
+    uint256 public immutable decimals1;
+    uint256 public immutable decimals2;
+
     // slither-disable-next-line constable-states
     address private deprecated_pTokenAddress;
 
@@ -31,18 +41,49 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
 
     struct CurveConfig {
         uint256 curveBaseAssets;
-        address curvePoolAddress;
-        address curveLpTokenAddress;
+        address curvePool;
+        address curveLpToken;
     }
 
     constructor(CurveConfig memory _curveConfig) {
+        // Only support Curve pools with 2 or 3 coins for now.
+        require(
+            _curveConfig.curveBaseAssets == 2 ||
+                _curveConfig.curveBaseAssets == 3,
+            "Invalid Curve base assets"
+        );
+        require(_curveConfig.curvePool != address(0), "Invalid Curve pool");
+        require(
+            _curveConfig.curveLpToken != address(0) ||
+                Helpers.getDecimals(_curveConfig.curveLpToken) == 18,
+            "Invalid Curve LP token"
+        );
+
         CURVE_BASE_ASSETS = _curveConfig.curveBaseAssets;
-        CURVE_POOL = _curveConfig.curvePoolAddress;
-        CURVE_LP_TOKEN = _curveConfig.curveLpTokenAddress;
+        CURVE_POOL = _curveConfig.curvePool;
+        CURVE_LP_TOKEN = _curveConfig.curveLpToken;
+
+        address asset0 = ICurvePool(_curveConfig.curvePool).coins(0);
+        coin0 = asset0;
+        decimals0 = Helpers.getDecimals(asset0);
+
+        address asset1 = ICurvePool(_curveConfig.curvePool).coins(1);
+        coin1 = asset1;
+        decimals1 = Helpers.getDecimals(asset1);
+
+        // Only get the address of the third coin (index 2) if a three coin pool
+        address asset2 = _curveConfig.curveBaseAssets == 3
+            ? ICurvePool(_curveConfig.curvePool).coins(2)
+            : address(0);
+        coin2 = asset2;
+        decimals2 = _curveConfig.curveBaseAssets == 3
+            ? Helpers.getDecimals(asset1)
+            : 0;
     }
 
     /**
-     * @dev Deposit asset into the Curve pool
+     * @notice Deposit an vault asset into the Curve pool.
+     * @dev This assumes the vault has already transferred the asset to this strategy contract.
      * @param _asset Address of asset to deposit
      * @param _amount Amount of asset to deposit
      */
@@ -50,6 +91,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         external
         override
         onlyVault
+        onlySupportsAsset(_asset)
         nonReentrant
     {
         require(_amount > 0, "Must deposit something");
@@ -60,43 +102,50 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         uint256 poolCoinIndex = _getCoinIndex(_asset);
         // Set the amount on the asset we want to deposit
         _amounts[poolCoinIndex] = _amount;
-        uint256 assetDecimals = Helpers.getDecimals(_asset);
-        uint256 depositValue = _amount.scaleBy(18, assetDecimals).divPrecisely(
-            ICurvePool(CURVE_POOL).get_virtual_price()
-        );
+        uint256 depositValue = _amount
+            .scaleBy(18, _getAssetDecimals(_asset))
+            .divPrecisely(ICurvePool(CURVE_POOL).get_virtual_price());
         uint256 minMintAmount = depositValue.mulTruncate(
             uint256(1e18) - MAX_SLIPPAGE
         );
-        // Do the deposit to the Curve pool
+
+        // Do the deposit to the Curve pool using a Curve library that
+        // abstracts the number of coins in the Curve pool.
         CurveThreeCoinLib.add_liquidity(CURVE_POOL, _amounts, minMintAmount);
+
         _lpDepositAll();
     }
 
+    /**
+     * @dev Deposit the Curve LP token to a Curve metapool, gauge or Convex pool.
+     */
     function _lpDepositAll() internal virtual;
 
     /**
-     * @dev Deposit the entire balance of any supported asset into the Curve pool
+     * @dev Deposit the entire balance of supported assets into the Curve pool
      */
     function depositAll() external override onlyVault nonReentrant {
         uint256[] memory _amounts = new uint256[](CURVE_BASE_ASSETS);
         uint256 depositValue = 0;
         uint256 curveVirtualPrice = ICurvePool(CURVE_POOL).get_virtual_price();
 
-        for (uint256 i = 0; i < assetsMapped.length; ++i) {
-            address assetAddress = assetsMapped[i];
+        // For each of the Curve pool's assets
+        for (uint256 i = 0; i < CURVE_BASE_ASSETS; ++i) {
+            address assetAddress = _getAsset(i);
+            // Skip if the strategy is not currently supporting the asset
+            if (!_vaultSupportsAsset(assetAddress)) continue;
+
             uint256 balance = IERC20(assetAddress).balanceOf(address(this));
             if (balance > 0) {
-                uint256 poolCoinIndex = _getCoinIndex(assetAddress);
                 // Set the amount on the asset we want to deposit
-                _amounts[poolCoinIndex] = balance;
-                uint256 assetDecimals = Helpers.getDecimals(assetAddress);
-                // Get value of deposit in Curve LP token to later determine
+                _amounts[i] = balance;
+                // Get value of deposit in Curve LP tokens to later determine
                 // the minMintAmount argument for add_liquidity
                 depositValue =
                     depositValue +
-                    balance.scaleBy(18, assetDecimals).divPrecisely(
-                        curveVirtualPrice
-                    );
+                    balance
+                        .scaleBy(18, _getAssetDecimals(assetAddress))
+                        .divPrecisely(curveVirtualPrice);
                 emit Deposit(assetAddress, CURVE_POOL, balance);
             }
         }
@@ -104,12 +153,14 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         uint256 minMintAmount = depositValue.mulTruncate(
             uint256(1e18) - MAX_SLIPPAGE
         );
-        // Do the deposit to the Curve pool
+
+        // Do the deposit to the Curve pool using a Curve library that
+        // abstracts the number of coins in the Curve pool.
         CurveThreeCoinLib.add_liquidity(CURVE_POOL, _amounts, minMintAmount);
 
-        /* In case of Curve Strategy all assets are mapped to the same pToken (3CrvLP). Let
-         * descendants further handle the pToken. By either deploying it to the metapool and
-         * resulting tokens in Gauge. Or deploying pTokens directly to the Gauge.
+        /* In case of Curve Strategy all assets are mapped to the same Curve LP token, eg 3CRV.
+         * Let descendants further handle the Curve LP token by either deploying to a Curve Metapool,
+         * a Curve gauge or a Convex pool.
          */
         _lpDepositAll();
     }
@@ -128,7 +179,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         address _recipient,
         address _asset,
         uint256 _amount
-    ) external override onlyVault nonReentrant {
+    ) external override onlyVault onlySupportsAsset(_asset) nonReentrant {
         require(_amount > 0, "Invalid amount");
 
         emit Withdrawal(_asset, CURVE_POOL, _amount);
@@ -137,6 +188,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
             address(this)
         );
 
+        // This also validates the asset is supported by the strategy
         uint256 coinIndex = _getCoinIndex(_asset);
 
         uint256 maxCurveLpTokens = _calcCurveTokenAmount(coinIndex, _amount);
@@ -217,7 +269,8 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @dev Remove all assets from platform and send them to Vault contract.
+     * @dev Remove all assets from the Curve pool and send them to Vault contract.
+     * This will include any vault assets that are not currently supported by the strategy.
      */
     function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
         _lpWithdrawAll();
@@ -232,14 +285,13 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
             minWithdrawAmounts
         );
 
-        // Transfer assets out of Vault
+        // Transfer each asset out of the strategy to the Vault.
         // Note that Curve will provide all of the assets in the pool even if
         // we have not set PToken addresses for all of them in this strategy
-        for (uint256 i = 0; i < assetsMapped.length; ++i) {
-            // TODO replace this
-            IERC20 asset = IERC20(ICurvePool(CURVE_POOL).coins(i));
+        for (uint256 i = 0; i < CURVE_BASE_ASSETS; ++i) {
+            IERC20 asset = IERC20(_getAsset(i));
             uint256 balance = asset.balanceOf(address(this));
-            asset.safeTransfer(vaultAddress, asset.balanceOf(address(this)));
+            asset.safeTransfer(vaultAddress, balance);
 
             emit Withdrawal(address(asset), CURVE_POOL, balance);
         }
@@ -255,32 +307,21 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         view
         virtual
         override
+        onlySupportsAsset(_asset)
         returns (uint256 balance)
     {
-        require(assetToPToken[_asset] != address(0), "Unsupported asset");
-        // LP tokens in this contract. This should generally be nothing as we
-        // should always stake the full balance in the Gauge, but include for
-        // safety
-        uint256 totalPTokens = IERC20(CURVE_LP_TOKEN).balanceOf(address(this));
-        if (totalPTokens > 0) {
-            uint256 virtual_price = ICurvePool(CURVE_POOL).get_virtual_price();
-            uint256 value = (totalPTokens * virtual_price) / 1e18;
-            uint256 assetDecimals = Helpers.getDecimals(_asset);
-            balance = value.scaleBy(assetDecimals, 18) / CURVE_BASE_ASSETS;
-        }
-    }
+        // Curve LP tokens in this strategy contract.
+        // This should generally be nothing as the LP tokens will be staked
+        // in a Curve gauge, metapool or Convex pool, but include here for safety.
+        uint256 totalLpTokens = IERC20(CURVE_LP_TOKEN).balanceOf(address(this));
 
-    /**
-     * @dev Retuns bool indicating whether asset is supported by strategy
-     * @param _asset Address of the asset
-     */
-    function supportsAsset(address _asset)
-        external
-        view
-        override
-        returns (bool)
-    {
-        return assetToPToken[_asset] != address(0);
+        if (totalLpTokens > 0) {
+            uint256 value = (totalLpTokens *
+                ICurvePool(CURVE_POOL).get_virtual_price()) / 1e18;
+            balance =
+                value.scaleBy(_getAssetDecimals(_asset), 18) /
+                CURVE_BASE_ASSETS;
+        }
     }
 
     /**
@@ -294,9 +335,9 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         nonReentrant
     {
         _approveBase();
-        // This strategy is a special case since it only supports one asset
-        for (uint256 i = 0; i < assetsMapped.length; ++i) {
-            _approveAsset(assetsMapped[i]);
+        // Approve each of the strategy's assets
+        for (uint256 i = 0; i < CURVE_BASE_ASSETS; ++i) {
+            _approveAsset(_getAsset(i));
         }
     }
 
@@ -317,13 +358,126 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
 
     function _approveBase() internal virtual;
 
+    /***************************************
+                Curve pool helpers
+    ****************************************/
+
     /**
-     * @dev Get the index of the coin
+     * @dev Get the Curve pool index of the asset.
+     * This is reading from immutable variables to avoid costly storage reads.
      */
-    function _getCoinIndex(address _asset) internal view returns (uint256) {
-        for (uint256 i = 0; i < CURVE_BASE_ASSETS; ++i) {
-            if (assetsMapped[i] == _asset) return i;
+    function _getCoinIndex(address _asset)
+        internal
+        view
+        returns (uint256 coinIndex)
+    {
+        require(_asset != address(0), "Invalid asset");
+        if (_asset == coin0) {
+            return 0;
+        } else if (_asset == coin1) {
+            return 1;
+        } else if (_asset == coin2) {
+            return 2;
         }
-        revert("Invalid asset");
+        revert("Unsupported asset");
+    }
+
+    /**
+     * @dev Get the number of decimals of the asset token.
+     * This is reading from immutable variables to avoid costly storage reads.
+     */
+    function _getAssetDecimals(address _asset)
+        internal
+        view
+        returns (uint256 decimals)
+    {
+        // This check is needed for Curve pools with only two assets as
+        // coin2, the third coin, will be address(0)
+        require(_asset != address(0), "Invalid asset");
+
+        if (_asset == coin0) {
+            return decimals0;
+        } else if (_asset == coin1) {
+            return decimals1;
+        } else if (_asset == coin2) {
+            return decimals2;
+        }
+        revert("Unsupported asset");
+    }
+
+    /**
+     * @dev Get the asset token address for a given Curve pool index.
+     * @param _coinIndex Curve pool index
+     * This is reading from immutable variables to avoid costly storage reads.
+     */
+    function _getAsset(uint256 _coinIndex)
+        internal
+        view
+        returns (address asset)
+    {
+        if (_coinIndex == 0) {
+            return coin0;
+        } else if (_coinIndex == 1) {
+            return coin1;
+        } else if (_coinIndex == 2) {
+            return coin2;
+        }
+        revert("Invalid coin index");
+    }
+
+    /***************************************
+            Asset/coin validation
+    ****************************************/
+
+    modifier onlySupportsAsset(address _asset) {
+        require(_vaultSupportsAsset(_asset), "Unsupported asset");
+        _;
+    }
+
+    /**
+     * @notice Retuns bool indicating whether vault asset is supported by the strategy
+     * @param _vaultAsset Address of the vault asset
+     */
+    function supportsAsset(address _vaultAsset)
+        external
+        view
+        override
+        returns (bool result)
+    {
+        result = _vaultSupportsAsset(_vaultAsset);
+    }
+
+    function _vaultSupportsAsset(address _vaultAsset)
+        internal
+        view
+        returns (bool result)
+    {
+        result = assetToPToken[_vaultAsset] != address(0);
+    }
+
+    /**
+     * @dev validates that an asset is a coin in the Curve pool
+     * @param _coin Address of the coin in the Curve pool
+     */
+    function _curveSupportedCoin(address _coin)
+        internal
+        view
+        returns (bool result)
+    {
+        result =
+            _coin != address(0) &&
+            (_coin == coin0 || _coin == coin1 || _coin == coin2);
+    }
+
+    /***************************************
+            Abstract Strategy Overrides
+    ****************************************/
+
+    function _setPTokenAddress(address _asset, address _pToken)
+        internal
+        override
+    {
+        require(_curveSupportedCoin(_asset), "Not a Curve pool coin");
+        InitializableAbstractStrategy._setPTokenAddress(_asset, _pToken);
     }
 }
