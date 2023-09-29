@@ -11,7 +11,7 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { IRewardStaking } from "./IRewardStaking.sol";
 import { ICurvePool } from "./ICurvePool.sol";
 import { ICurveMetaPool } from "./ICurveMetaPool.sol";
-import { IERC20, BaseCurveStrategy } from "./BaseCurveStrategy.sol";
+import { IERC20, BaseCurveStrategy, InitializableAbstractStrategy } from "./BaseCurveStrategy.sol";
 import { StableMath } from "../utils/StableMath.sol";
 import { Helpers } from "../utils/Helpers.sol";
 
@@ -81,7 +81,11 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
         metapoolAssets = [metapool.coins(0), metapool.coins(1)];
         crvCoinIndex = _getMetapoolCoinIndex(pTokenAddress);
         mainCoinIndex = _getMetapoolCoinIndex(initConfig.metapoolMainToken);
-        super._initialize(_rewardTokenAddresses, _assets, _pTokens);
+        InitializableAbstractStrategy._initialize(
+            _rewardTokenAddresses,
+            _assets,
+            _pTokens
+        );
         _approveBase();
     }
 
