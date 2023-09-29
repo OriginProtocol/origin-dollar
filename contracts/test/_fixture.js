@@ -1208,8 +1208,7 @@ async function balancerFrxETHwstETHeETHFixture(
       "0x47D5E1679Fe5f0D9f0A657c6715924e33Ce05093",
       "0xce4DbAF3fa72C962Ee1F371694109fc2a80B03f5",
       "0x505603e2440b44C1602b44D0Eb8385399b3F7bab",
-      "0xfcc067EFb7bE2EEbD32615F14fC22195abB68e9B"
-
+      "0xfcc067EFb7bE2EEbD32615F14fC22195abB68e9B",
     ],
     josh.getAddress(),
     60 // use 60% of the account balances

@@ -514,7 +514,8 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
          * expire the rate providers cache, since those are not
          * expected to ever change.
          */
-        IRateProvider[] memory providers = IBalancerPool(platformAddress).getRateProviders();
+        IRateProvider[] memory providers = IBalancerPool(platformAddress)
+            .getRateProviders();
         poolRateProvidersCache = providers;
     }
 
