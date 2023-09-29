@@ -992,9 +992,6 @@ async function tiltBalancerMetaStableWETHPool({
     [1, amountsIn, BigNumber.from("0")]
   );
 
-  await reth
-    .connect(attackerSigner)
-    .approve(balancerVault.address, oethUnits("1").mul(oethUnits("1"))); // 1e36
   await weth
     .connect(attackerSigner)
     .approve(balancerVault.address, oethUnits("1").mul(oethUnits("1"))); // 1e36
