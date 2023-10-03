@@ -12,7 +12,7 @@ const {
   createFixtureLoader,
   morphoAaveFixture,
   impersonateAndFundContract,
-} = require("../_fixture");
+} = require("../fixture/_fixture");
 
 forkOnlyDescribe("ForkTest: Morpho Aave Strategy", function () {
   this.timeout(0);

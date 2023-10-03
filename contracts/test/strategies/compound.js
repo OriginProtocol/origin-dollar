@@ -1,7 +1,7 @@
 const { expect } = require("chai");
 const { utils } = require("ethers");
 
-const { createFixtureLoader, compoundFixture } = require("../_fixture");
+const { createFixtureLoader, compoundFixture } = require("../fixture/_fixture");
 const { usdcUnits, isFork } = require("../helpers");
 
 describe("Compound strategy", function () {

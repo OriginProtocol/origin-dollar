@@ -4,17 +4,17 @@ const { BigNumber } = ethers;
 const { expect } = require("chai");
 const { formatUnits } = require("ethers/lib/utils");
 
-const addresses = require("../utils/addresses");
-const { setFraxOraclePrice } = require("../utils/frax");
+const addresses = require("../../utils/addresses");
+const { setFraxOraclePrice } = require("../../utils/frax");
 const {
   balancer_rETH_WETH_PID,
   balancer_stETH_WETH_PID,
   balancer_wstETH_sfrxETH_rETH_PID,
-} = require("../utils/constants");
+} = require("../../utils/constants");
 const {
   fundAccounts,
   fundAccountsForOETHUnitTests,
-} = require("../utils/funding");
+} = require("../../utils/funding");
 const {
   getAssetAddresses,
   daiUnits,
@@ -23,28 +23,28 @@ const {
   ousdUnits,
   units,
   isFork,
-} = require("./helpers");
+} = require("../helpers");
 
-const daiAbi = require("./abi/dai.json").abi;
-const usdtAbi = require("./abi/usdt.json").abi;
-const erc20Abi = require("./abi/erc20.json");
-const morphoAbi = require("./abi/morpho.json");
-const morphoLensAbi = require("./abi/morphoLens.json");
-const crvMinterAbi = require("./abi/crvMinter.json");
-const sdaiAbi = require("./abi/sDAI.json");
+const daiAbi = require("../abi/dai.json").abi;
+const usdtAbi = require("../abi/usdt.json").abi;
+const erc20Abi = require("../abi/erc20.json");
+const morphoAbi = require("../abi/morpho.json");
+const morphoLensAbi = require("../abi/morphoLens.json");
+const crvMinterAbi = require("../abi/crvMinter.json");
+const sdaiAbi = require("../abi/sDAI.json");
 
-// const curveFactoryAbi = require("./abi/curveFactory.json")
-const ousdMetapoolAbi = require("./abi/ousdMetapool.json");
-const oethMetapoolAbi = require("./abi/oethMetapool.json");
-const threepoolLPAbi = require("./abi/threepoolLP.json");
-const threepoolSwapAbi = require("./abi/threepoolSwap.json");
+// const curveFactoryAbi = require("../abi/curveFactory.json")
+const ousdMetapoolAbi = require("../abi/ousdMetapool.json");
+const oethMetapoolAbi = require("../abi/oethMetapool.json");
+const threepoolLPAbi = require("../abi/threepoolLP.json");
+const threepoolSwapAbi = require("../abi/threepoolSwap.json");
 
-const sfrxETHAbi = require("./abi/sfrxETH.json");
-const { deployWithConfirmation } = require("../utils/deploy");
+const sfrxETHAbi = require("../abi/sfrxETH.json");
+const { deployWithConfirmation } = require("../../utils/deploy");
 const { defaultAbiCoder, parseUnits, parseEther } = require("ethers/lib/utils");
-const balancerStrategyDeployment = require("../utils/balancerStrategyDeployment");
+const balancerStrategyDeployment = require("../../utils/balancerStrategyDeployment");
 
-const log = require("../utils/logger")("test:fixtures");
+const log = require("../../utils/logger")("test:fixtures");
 
 const defaultFixture = deployments.createFixture(async () => {
   log(`Forked from block: ${await hre.ethers.provider.getBlockNumber()}`);
@@ -955,108 +955,6 @@ async function convexVaultFixture() {
       fixture.convexStrategy.address
     );
   return fixture;
-}
-
-/* Deposit WETH liquidity in Balancer metaStable WETH pool to simulate
- * MEV attack.
- */
-async function tiltBalancerMetaStableWETHPool({
-  // how much of pool TVL should be deposited. 100 == 100%
-  percentageOfTVLDeposit = 100,
-  attackerSigner,
-  balancerPoolId,
-  assetAddressArray,
-  wethIndex,
-  bptToken,
-  balancerVault,
-  reth,
-  weth,
-}) {
-  const amountsIn = Array(assetAddressArray.length).fill(BigNumber.from("0"));
-  // calculate the amount of WETH that should be deposited in relation to pool TVL
-  amountsIn[wethIndex] = (await bptToken.totalSupply())
-    .mul(BigNumber.from(percentageOfTVLDeposit))
-    .div(BigNumber.from("100"));
-
-  /* encode user data for pool joining
-   *
-   * EXACT_TOKENS_IN_FOR_BPT_OUT:
-   * User sends precise quantities of tokens, and receives an
-   * estimated but unknown (computed at run time) quantity of BPT.
-   *
-   * ['uint256', 'uint256[]', 'uint256']
-   * [EXACT_TOKENS_IN_FOR_BPT_OUT, amountsIn, minimumBPT]
-   */
-  const userData = ethers.utils.defaultAbiCoder.encode(
-    ["uint256", "uint256[]", "uint256"],
-    [1, amountsIn, BigNumber.from("0")]
-  );
-
-  await weth
-    .connect(attackerSigner)
-    .approve(balancerVault.address, oethUnits("1").mul(oethUnits("1"))); // 1e36
-
-  await balancerVault.connect(attackerSigner).joinPool(
-    balancerPoolId, // poolId
-    attackerSigner.address, // sender
-    attackerSigner.address, // recipient
-    [
-      //JoinPoolRequest
-      assetAddressArray, // assets
-      amountsIn, // maxAmountsIn
-      userData, // userData
-      false, // fromInternalBalance
-    ]
-  );
-}
-
-/* Withdraw WETH liquidity in Balancer metaStable WETH pool to simulate
- * second part of the MEV attack. All attacker WETH liquidity is withdrawn.
- */
-async function untiltBalancerMetaStableWETHPool({
-  attackerSigner,
-  balancerPoolId,
-  assetAddressArray,
-  wethIndex,
-  bptToken,
-  balancerVault,
-}) {
-  const amountsOut = Array(assetAddressArray.length).fill(BigNumber.from("0"));
-
-  /* encode user data for pool joining
-   *
-   * EXACT_BPT_IN_FOR_ONE_TOKEN_OUT:
-   * User sends a precise quantity of BPT, and receives an estimated
-   * but unknown (computed at run time) quantity of a single token
-   *
-   * ['uint256', 'uint256', 'uint256']
-   * [EXACT_BPT_IN_FOR_ONE_TOKEN_OUT, bptAmountIn, exitTokenIndex]
-   */
-  const userData = ethers.utils.defaultAbiCoder.encode(
-    ["uint256", "uint256", "uint256"],
-    [
-      0,
-      await bptToken.balanceOf(attackerSigner.address),
-      BigNumber.from(wethIndex.toString()),
-    ]
-  );
-
-  await bptToken
-    .connect(attackerSigner)
-    .approve(balancerVault.address, oethUnits("1").mul(oethUnits("1"))); // 1e36
-
-  await balancerVault.connect(attackerSigner).exitPool(
-    balancerPoolId, // poolId
-    attackerSigner.address, // sender
-    attackerSigner.address, // recipient
-    [
-      //ExitPoolRequest
-      assetAddressArray, // assets
-      amountsOut, // minAmountsOut
-      userData, // userData
-      false, // fromInternalBalance
-    ]
-  );
 }
 
 /**
@@ -2312,8 +2210,6 @@ module.exports = {
   balancerREthFixture,
   balancerFrxETHwstETHeETHFixture,
   balancerWstEthFixture,
-  tiltBalancerMetaStableWETHPool,
-  untiltBalancerMetaStableWETHPool,
   fraxETHStrategyFixture,
   oethMorphoAaveFixture,
   mintWETH,

@@ -1,0 +1,141 @@
+// used by the pool_tilt
+const { ethers } = hre;
+const { BigNumber } = ethers;
+const { oethUnits } = require("../helpers");
+const { expect } = require("chai");
+
+class Pool {
+  async verifyTiltAmounts(targetAmount) {
+    const postTiltTvl = await this.getTvl();
+    /* when tilting hard the bonding curve dictates the prices of assets to BPT token.
+     * are no longer 1:1. For that reason we are picking a more generous tolerance of
+     * 15% when verifying the pool amounts.
+     */
+    expect(postTiltTvl).to.approxEqualTolerance(targetAmount, 15);
+  }
+}
+
+class BalancerPool extends Pool {
+  constructor(poolId, poolType, assetAddressArray, bptToken, balancerVault) {
+    super();
+    this.poolId = poolId;
+    // these must be in correct order
+    this.assetAddressArray = assetAddressArray;
+    this.bptToken = bptToken;
+    this.balancerVault = balancerVault;
+    this.poolType = poolType;
+  }
+
+  async tiltPool(amount, asset, sAttacker) {
+    const amountsIn = Array(this.assetAddressArray.length).fill(
+      BigNumber.from("0")
+    );
+
+    amountsIn[await this.getAssetIndex(asset)] = amount;
+
+    const userData = ethers.utils.defaultAbiCoder.encode(
+      ["uint256", "uint256[]", "uint256"],
+      [1, amountsIn, BigNumber.from("0")]
+    );
+
+    await asset
+      .connect(sAttacker)
+      .approve(this.balancerVault.address, oethUnits("1").mul(oethUnits("1"))); // 1e36
+
+    this.preTiltTVL = await this.getTvl();
+    await this.balancerVault.connect(sAttacker).joinPool(
+      this.poolId,
+      sAttacker.address, // sender
+      sAttacker.address, // recipient
+      [
+        //JoinPoolRequest
+        this.assetAddressArray, // assets
+        amountsIn, // maxAmountsIn
+        userData, // userData
+        false, // fromInternalBalance
+      ]
+    );
+
+    const expectedAmount = this.preTiltTVL.add(amount);
+    await this.verifyTiltAmounts(expectedAmount);
+  }
+
+  async untiltPool(sAttacker, attackingAsset) {
+    const amountsOut = Array(this.assetAddressArray.length).fill(
+      BigNumber.from("0")
+    );
+
+    /* encode user data for pool joining
+     *
+     * EXACT_BPT_IN_FOR_ONE_TOKEN_OUT:
+     * User sends a precise quantity of BPT, and receives an estimated
+     * but unknown (computed at run time) quantity of a single token
+     *
+     * ['uint256', 'uint256', 'uint256']
+     * [EXACT_BPT_IN_FOR_ONE_TOKEN_OUT, bptAmountIn, exitTokenIndex]
+     */
+    const userData = ethers.utils.defaultAbiCoder.encode(
+      ["uint256", "uint256", "uint256"],
+      [
+        0,
+        await this.bptToken.balanceOf(sAttacker.address),
+        BigNumber.from((await this.getAssetIndex(attackingAsset)).toString()),
+      ]
+    );
+
+    await this.bptToken
+      .connect(sAttacker)
+      .approve(this.balancerVault.address, oethUnits("1").mul(oethUnits("1"))); // 1e36
+
+    await this.balancerVault.connect(sAttacker).exitPool(
+      this.poolId,
+      sAttacker.address, // sender
+      sAttacker.address, // recipient
+      [
+        //ExitPoolRequest
+        this.assetAddressArray, // assets
+        amountsOut, // minAmountsOut
+        userData, // userData
+        false, // fromInternalBalance
+      ]
+    );
+
+    if (this.preTiltTVL) {
+      await this.verifyTiltAmounts(this.preTiltTVL);
+    }
+  }
+
+  async getAssetIndex(asset) {
+    const tokens = (await this.balancerVault.getPoolTokens(this.poolId)).tokens;
+    for (let i = 0; i < tokens.length; i++) {
+      if (tokens[i].toLowerCase() === asset.address.toLowerCase()) {
+        return i;
+      }
+    }
+
+    throw new Error(
+      `Can not find the asset with address ${asset.address} in the pool id: ${this.poolId}`
+    );
+  }
+
+  async getTvl() {
+    return await this.bptToken.totalSupply();
+  }
+}
+
+async function factoryCreatePool(config) {
+  if (config.platform === "balancer") {
+    return new BalancerPool(
+      config.poolId,
+      config.poolType,
+      config.assetAddressArray,
+      config.bptToken,
+      config.balancerVault
+    );
+  }
+  // else if platform === "curve"...
+}
+
+module.exports = {
+  factoryCreatePool,
+};

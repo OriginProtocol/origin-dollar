@@ -5,7 +5,7 @@ const addresses = require("../../utils/addresses");
 const {
   loadDefaultFixture,
   impersonateAndFundContract,
-} = require("./../_fixture");
+} = require("./../fixture/_fixture");
 const {
   forkOnlyDescribe,
   ousdUnits,

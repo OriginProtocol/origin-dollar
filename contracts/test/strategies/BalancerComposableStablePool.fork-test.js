@@ -10,9 +10,9 @@ const {
   impersonateAndFundContract,
   createFixtureLoader,
   mineBlocks,
-  //tiltBalancerMetaStableWETHPool,
-  //untiltBalancerMetaStableWETHPool,
-} = require("../_fixture");
+} = require("../fixture/_fixture");
+
+const { tiltPool, unTiltPool } = require("../fixture/_pool_tilt");
 
 //const temporaryFork = require("../../utils/temporaryFork");
 

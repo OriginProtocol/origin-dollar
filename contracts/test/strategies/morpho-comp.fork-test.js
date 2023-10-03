@@ -13,7 +13,7 @@ const {
   createFixtureLoader,
   morphoCompoundFixture,
   impersonateAndFundContract,
-} = require("../_fixture");
+} = require("../fixture/_fixture");
 
 forkOnlyDescribe("ForkTest: Morpho Compound Strategy", function () {
   this.timeout(0);

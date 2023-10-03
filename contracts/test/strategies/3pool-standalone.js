@@ -2,7 +2,10 @@ const { expect } = require("chai");
 const { utils } = require("ethers");
 
 const { BigNumber } = require("ethers");
-const { createFixtureLoader, threepoolFixture } = require("../_fixture");
+const {
+  createFixtureLoader,
+  threepoolFixture,
+} = require("../fixture/_fixture");
 const { units } = require("../helpers");
 
 describe("3Pool Strategy Standalone", function () {

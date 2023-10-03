@@ -8,7 +8,7 @@ const {
   ousdCollateralSwapFixture,
   oeth1InchSwapperFixture,
   impersonateAndFundContract,
-} = require("../_fixture");
+} = require("../fixture/_fixture");
 const {
   SWAP_SELECTOR,
   UNISWAP_SELECTOR,

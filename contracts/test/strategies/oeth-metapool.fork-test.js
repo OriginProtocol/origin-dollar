@@ -8,7 +8,7 @@ const { units, oethUnits, forkOnlyDescribe, isCI } = require("../helpers");
 const {
   createFixtureLoader,
   convexOETHMetaVaultFixture,
-} = require("../_fixture");
+} = require("../fixture/_fixture");
 
 const log = require("../../utils/logger")("test:fork:oeth:metapool");
 
