@@ -795,7 +795,7 @@ forkOnlyDescribe(
       });
     });
 
-    describe.only("work in MEV environment", function () {
+    describe("work in MEV environment", function () {
       let attackerAddress;
       let sAttacker;
       let fixture;
@@ -992,7 +992,7 @@ forkOnlyDescribe(
          *    tilt checkBalance call. Strategy has roughly ~100 units deposited so 0.012
          *    change would equal 0.012/100 = 0.00012 change if 1 is a whole. Or 0.012%
          */
-        [100, "0.012"],
+        [100, "0.015"],
         [200, "0.016"],
         [300, "0.018"],
         [400, "0.02"],

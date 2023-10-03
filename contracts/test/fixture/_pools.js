@@ -27,14 +27,18 @@ class BalancerPool extends Pool {
   }
 
   async tiltPool(amount, asset, sAttacker) {
-    const amountsIn = Array(this.assetAddressArray.length).fill(
-      BigNumber.from("0")
-    );
+    // for composableStable pools do not encode the BPT token in the user data request
+    const assetIndexAdjustement = this.poolType == "composableStable" ? -1 : 0;
+    const amountsIn = Array(
+      this.assetAddressArray.length + assetIndexAdjustement
+    ).fill(BigNumber.from("0"));
 
-    amountsIn[await this.getAssetIndex(asset)] = amount;
+    amountsIn[(await this.getAssetIndex(asset)) + assetIndexAdjustement] =
+      amount;
 
     const userData = ethers.utils.defaultAbiCoder.encode(
       ["uint256", "uint256[]", "uint256"],
+      // EXACT_TOKENS_IN_FOR_BPT_OUT
       [1, amountsIn, BigNumber.from("0")]
     );
 
@@ -43,6 +47,12 @@ class BalancerPool extends Pool {
       .approve(this.balancerVault.address, oethUnits("1").mul(oethUnits("1"))); // 1e36
 
     this.preTiltTVL = await this.getTvl();
+
+    const maxAmountsIn = Array(this.assetAddressArray.length).fill(
+      BigNumber.from("0")
+    );
+    maxAmountsIn[await this.getAssetIndex(asset)] = amount;
+
     await this.balancerVault.connect(sAttacker).joinPool(
       this.poolId,
       sAttacker.address, // sender
@@ -50,7 +60,7 @@ class BalancerPool extends Pool {
       [
         //JoinPoolRequest
         this.assetAddressArray, // assets
-        amountsIn, // maxAmountsIn
+        maxAmountsIn, // maxAmountsIn
         userData, // userData
         false, // fromInternalBalance
       ]
@@ -61,9 +71,11 @@ class BalancerPool extends Pool {
   }
 
   async untiltPool(sAttacker, attackingAsset) {
-    const amountsOut = Array(this.assetAddressArray.length).fill(
-      BigNumber.from("0")
-    );
+    // for composableStable pools do not encode the BPT token in the user data request
+    const assetIndexAdjustement = this.poolType == "composableStable" ? -1 : 0;
+    const amountsOut = Array(
+      this.assetAddressArray.length + assetIndexAdjustement
+    ).fill(BigNumber.from("0"));
 
     /* encode user data for pool joining
      *
@@ -79,7 +91,11 @@ class BalancerPool extends Pool {
       [
         0,
         await this.bptToken.balanceOf(sAttacker.address),
-        BigNumber.from((await this.getAssetIndex(attackingAsset)).toString()),
+        BigNumber.from(
+          (
+            (await this.getAssetIndex(attackingAsset)) + assetIndexAdjustement
+          ).toString()
+        ),
       ]
     );
 
@@ -94,7 +110,7 @@ class BalancerPool extends Pool {
       [
         //ExitPoolRequest
         this.assetAddressArray, // assets
-        amountsOut, // minAmountsOut
+        Array(this.assetAddressArray.length).fill(BigNumber.from("0")), // minAmountsOut
         userData, // userData
         false, // fromInternalBalance
       ]
@@ -119,7 +135,11 @@ class BalancerPool extends Pool {
   }
 
   async getTvl() {
-    return await this.bptToken.totalSupply();
+    if (this.poolType == "composableStable") {
+      return await this.bptToken.getActualSupply();
+    } else {
+      return await this.bptToken.totalSupply();
+    }
   }
 }
 

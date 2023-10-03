@@ -37,6 +37,7 @@ const sdaiAbi = require("../abi/sDAI.json");
 const ousdMetapoolAbi = require("../abi/ousdMetapool.json");
 const oethMetapoolAbi = require("../abi/oethMetapool.json");
 const threepoolLPAbi = require("../abi/threepoolLP.json");
+const composableStablePoolBptAbi = require("../abi/composableStablePoolBpt.json");
 const threepoolSwapAbi = require("../abi/threepoolSwap.json");
 
 const sfrxETHAbi = require("../abi/sfrxETH.json");
@@ -1047,7 +1048,7 @@ async function balancerFrxETHwstETHeETHFixture(
   }
 
   fixture.sfrxETHwstETHrEthBPT = await ethers.getContractAt(
-    "IERC20Metadata",
+    composableStablePoolBptAbi,
     addresses.mainnet.wstETH_sfrxETH_rETH_BPT,
     josh
   );

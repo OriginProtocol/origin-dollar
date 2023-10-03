@@ -13,18 +13,39 @@ let sAttacker;
 let pool;
 
 async function getPoolConfiguration(fixture, pool) {
-  const { rEthBPT } = fixture;
+  const { rEthBPT, sfrxETHwstETHrEthBPT } = fixture;
 
-  if (pool.address == rEthBPT.address) {
+  if (!!rEthBPT && pool.address == rEthBPT.address) {
     return {
       config: {
         platform: "balancer",
-        poolType: "metaStablePool",
+        poolType: "metaStable",
         poolId: await fixture.balancerREthStrategy.balancerPoolId(),
         pool: rEthBPT,
         // important for Balancer type pools order of these must match the Balancer pool
         assetAddressArray: [fixture.reth.address, fixture.weth.address],
         bptToken: rEthBPT,
+        balancerVault: fixture.balancerVault,
+      },
+    };
+  } else if (
+    !!sfrxETHwstETHrEthBPT &&
+    pool.address == sfrxETHwstETHrEthBPT.address
+  ) {
+    return {
+      config: {
+        platform: "balancer",
+        poolType: "composableStable",
+        poolId: await fixture.balancerSfrxWstRETHStrategy.balancerPoolId(),
+        pool: sfrxETHwstETHrEthBPT,
+        // important for Balancer type pools order of these must match the Balancer pool
+        assetAddressArray: [
+          sfrxETHwstETHrEthBPT.address,
+          addresses.mainnet.wstETH,
+          addresses.mainnet.sfrxETH,
+          addresses.mainnet.rETH,
+        ],
+        bptToken: sfrxETHwstETHrEthBPT,
         balancerVault: fixture.balancerVault,
       },
     };
@@ -104,7 +125,7 @@ async function unTiltPool({
   attackAsset, // asset used to tilt the pool
   poolContract,
 }) {
-  if (!!pool) {
+  if (!pool) {
     throw new Error(
       "Pool variable not set. You should tilt the pool before calling unTilt"
     );
@@ -112,54 +133,6 @@ async function unTiltPool({
 
   await pool.untiltPool(sAttacker, attackAsset);
 }
-
-/* Withdraw WETH liquidity in Balancer metaStable WETH pool to simulate
- * second part of the MEV attack. All attacker WETH liquidity is withdrawn.
- */
-// async function untiltBalancerMetaStableWETHPool({
-//   balancerPoolId,
-//   assetAddressArray,
-//   wethIndex,
-//   bptToken,
-//   balancerVault,
-// }) {
-//   const amountsOut = Array(assetAddressArray.length).fill(BigNumber.from("0"));
-//
-//   /* encode user data for pool joining
-//    *
-//    * EXACT_BPT_IN_FOR_ONE_TOKEN_OUT:
-//    * User sends a precise quantity of BPT, and receives an estimated
-//    * but unknown (computed at run time) quantity of a single token
-//    *
-//    * ['uint256', 'uint256', 'uint256']
-//    * [EXACT_BPT_IN_FOR_ONE_TOKEN_OUT, bptAmountIn, exitTokenIndex]
-//    */
-//   const userData = ethers.utils.defaultAbiCoder.encode(
-//     ["uint256", "uint256", "uint256"],
-//     [
-//       0,
-//       await bptToken.balanceOf(sAttacker.address),
-//       BigNumber.from(wethIndex.toString()),
-//     ]
-//   );
-//
-//   await bptToken
-//     .connect(sAttacker)
-//     .approve(balancerVault.address, oethUnits("1").mul(oethUnits("1"))); // 1e36
-//
-//   await balancerVault.connect(sAttacker).exitPool(
-//     balancerPoolId, // poolId
-//     sAttacker.address, // sender
-//     sAttacker.address, // recipient
-//     [
-//       //ExitPoolRequest
-//       assetAddressArray, // assets
-//       amountsOut, // minAmountsOut
-//       userData, // userData
-//       false, // fromInternalBalance
-//     ]
-//   );
-// }
 
 module.exports = {
   tiltPool,

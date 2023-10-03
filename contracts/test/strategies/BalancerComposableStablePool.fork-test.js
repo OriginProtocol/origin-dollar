@@ -14,7 +14,7 @@ const {
 
 const { tiltPool, unTiltPool } = require("../fixture/_pool_tilt");
 
-//const temporaryFork = require("../../utils/temporaryFork");
+const temporaryFork = require("../../utils/temporaryFork");
 
 const log = require("../../utils/logger")(
   "test:fork:strategy:balancer:composable"
@@ -28,7 +28,7 @@ const loadBalancerFrxWstrETHFixture = createFixtureLoader(
 );
 
 forkOnlyDescribe(
-  "ForkTest: Balancer MetaStablePool rETH/WETH Strategy",
+  "ForkTest: Balancer ComposableStablePool stETH/rEth/frxETH Strategy",
   function () {
     this.timeout(0);
     this.retries(isCI ? 3 : 0);
@@ -331,7 +331,7 @@ forkOnlyDescribe(
           );
       });
 
-      // a list of WETH/RETH pairs
+      // a list of RETH/stETH/frxETH pairs
       const withdrawalTestCases = [
         ["10", "0", "0"],
         ["0", "8", "0"],
@@ -409,14 +409,8 @@ forkOnlyDescribe(
       }
 
       it("Should be able to withdraw all of pool liquidity", async function () {
-        const {
-          oethVault,
-          stETH,
-          frxETH,
-          reth,
-          weth,
-          balancerSfrxWstRETHStrategy,
-        } = fixture;
+        const { oethVault, stETH, frxETH, reth, balancerSfrxWstRETHStrategy } =
+          fixture;
 
         const stEthBalanceBefore = await balancerSfrxWstRETHStrategy[
           "checkBalance(address)"
@@ -452,9 +446,9 @@ forkOnlyDescribe(
           )
         );
 
-        expect(stEthBalanceDiff).to.be.gte(await units("15", reth), 1);
+        expect(stEthBalanceDiff).to.be.gte(await units("15", stETH), 1);
         expect(rethBalanceDiff).to.be.gte(await units("15", reth), 1);
-        expect(frxEthBalanceDiff).to.be.gte(await units("15", weth), 1);
+        expect(frxEthBalanceDiff).to.be.gte(await units("15", frxETH), 1);
       });
     });
 
@@ -526,7 +520,7 @@ forkOnlyDescribe(
         await balancerSfrxWstRETHStrategy
           .connect(oethVaultSigner)
           .withdrawAll();
-        log(`Vault withdraws all WETH and RETH`);
+        log(`Vault withdraws all RETH, stETh & frxETH`);
 
         const stratValueAfter = await oethVault.totalValue();
         log(`Vault total value after: ${formatUnits(stratValueAfter)}`);
@@ -801,6 +795,349 @@ forkOnlyDescribe(
         expect(wethBalanceDiff).to.be.gte(oethUnits("0"));
       });
     });
+
+    describe("work in MEV environment", function () {
+      let attackerAddress;
+      let sAttacker;
+      let fixture;
+
+      beforeEach(async () => {
+        fixture = await loadBalancerFrxWstrETHFixture();
+      });
+
+      it("deposit should fail if pool is being manipulated", async function () {
+        const {
+          balancerSfrxWstRETHStrategy,
+          oethVault,
+          oethVaultValueChecker,
+          oeth,
+          stETH,
+          frxETH,
+          sfrxETH,
+          reth,
+          sfrxETHwstETHrEthBPT,
+          josh,
+          balancerVault,
+        } = fixture;
+        let forkedStratBalance = 0;
+        const { vaultChange, profit } = await temporaryFork({
+          temporaryAction: async () => {
+            await depositTest(
+              fixture,
+              [5, 5, 5],
+              [stETH, frxETH, reth],
+              sfrxETHwstETHrEthBPT
+            );
+            forkedStratBalance = await balancerSfrxWstRETHStrategy[
+              "checkBalance()"
+            ]();
+          },
+          vaultContract: oethVault,
+          oTokenContract: oeth,
+        });
+
+        expect(forkedStratBalance).to.be.gte(await oethUnits("0"), 1);
+        const stratBalance = await balancerSfrxWstRETHStrategy[
+          "checkBalance()"
+        ]();
+        expect(stratBalance).to.equal(await oethUnits("0"), 1);
+
+        const { profit: profitWithTilt } = await temporaryFork({
+          temporaryAction: async () => {
+            await tiltPool({
+              fixture,
+              tiltTvlFactor: 300,
+              attackAsset: sfrxETH, // asset used to tilt the pool
+              poolContract: sfrxETHwstETHrEthBPT,
+            });
+
+            await oethVaultValueChecker.connect(josh).takeSnapshot();
+            await depositTest(
+              fixture,
+              [5, 5, 5],
+              [stETH, frxETH, reth],
+              sfrxETHwstETHrEthBPT,
+              20
+            );
+
+            await expect(
+              oethVaultValueChecker.connect(josh).checkDelta(
+                profit, // expected profit
+                oethUnits("0.1"), // profit variance
+                vaultChange, // expected vaultChange
+                oethUnits("0.1") // expected vaultChange variance
+              )
+            ).to.be.revertedWith("Profit too high");
+          },
+          vaultContract: oethVault,
+          oTokenContract: oeth,
+        });
+
+        const profitDiff = profitWithTilt.sub(profit);
+        expect(profitDiff).to.be.gte(oethUnits("0.3"), 1);
+      });
+
+      it("withdrawal should fail if pool is being manipulated maxWithdrawalDeviation catching the issue", async function () {
+        const {
+          balancerSfrxWstRETHStrategy,
+          oethVault,
+          oeth,
+          stETH,
+          frxETH,
+          sfrxETH,
+          reth,
+          sfrxETHwstETHrEthBPT,
+          balancerVault,
+        } = fixture;
+
+        const rethWithdrawAmount = oethUnits("7");
+
+        const oethVaultSigner = await impersonateAndFundContract(
+          oethVault.address
+        );
+
+        await depositTest(
+          fixture,
+          [10, 10, 10],
+          [stETH, frxETH, reth],
+          sfrxETHwstETHrEthBPT
+        );
+
+        await temporaryFork({
+          temporaryAction: async () => {
+            await tiltPool({
+              fixture,
+              tiltTvlFactor: 300,
+              attackAsset: sfrxETH, // asset used to tilt the pool
+              poolContract: sfrxETHwstETHrEthBPT,
+            });
+
+            // prettier-ignore
+            expect(
+              balancerSfrxWstRETHStrategy
+                .connect(oethVaultSigner)["withdraw(address,address[],uint256[])"](
+                  oethVault.address,
+                  [reth.address],
+                  [rethWithdrawAmount]
+                )
+              // not enough BPT supplied
+            ).to.be.revertedWith("BAL#207");
+          },
+          vaultContract: oethVault,
+          oTokenContract: oeth,
+        });
+      });
+
+      it("withdrawal should fail if pool is being manipulated maxWithdrawalDeviation NOT catching the issue and Vault Value checker catching it", async function () {
+        const {
+          balancerSfrxWstRETHStrategy,
+          oethVault,
+          oethVaultValueChecker,
+          oeth,
+          stETH,
+          frxETH,
+          sfrxETH,
+          reth,
+          sfrxETHwstETHrEthBPT,
+          josh,
+          balancerVault,
+          strategist,
+        } = fixture;
+
+        const rethWithdrawAmount = oethUnits("5");
+
+        const oethVaultSigner = await impersonateAndFundContract(
+          oethVault.address
+        );
+
+        await depositTest(
+          fixture,
+          [10, 10, 10],
+          [stETH, frxETH, reth],
+          sfrxETHwstETHrEthBPT
+        );
+
+        // set max withdrawal deviation to 100%
+        await balancerSfrxWstRETHStrategy
+          .connect(strategist)
+          .setMaxWithdrawalDeviation(oethUnits("1")); // 100%
+
+        const { vaultChange, profit } = await temporaryFork({
+          temporaryAction: async () => {
+            // prettier-ignore
+            await balancerSfrxWstRETHStrategy
+              .connect(oethVaultSigner)["withdraw(address,address[],uint256[])"](
+                oethVault.address,
+                [reth.address],
+                [rethWithdrawAmount]
+              );
+          },
+          vaultContract: oethVault,
+          oTokenContract: oeth,
+        });
+
+        const { profit: profitWithTilt } = await temporaryFork({
+          temporaryAction: async () => {
+            await tiltPool({
+              fixture,
+              tiltTvlFactor: 300,
+              attackAsset: sfrxETH, // asset used to tilt the pool
+              poolContract: sfrxETHwstETHrEthBPT,
+            });
+
+            await oethVaultValueChecker.connect(josh).takeSnapshot();
+
+            // prettier-ignore
+            await balancerSfrxWstRETHStrategy
+              .connect(oethVaultSigner)["withdraw(address,address[],uint256[])"](
+                oethVault.address,
+                [reth.address],
+                [rethWithdrawAmount]
+              );
+
+            await expect(
+              oethVaultValueChecker.connect(josh).checkDelta(
+                profit, // expected profit
+                oethUnits("0.1"), // profit variance
+                vaultChange, // expected vaultChange
+                oethUnits("0.1") // expected vaultChange variance
+              )
+            ).to.be.revertedWith("Profit too low");
+          },
+          vaultContract: oethVault,
+          oTokenContract: oeth,
+        });
+
+        const profitDiff = profitWithTilt.sub(profit);
+        expect(profitDiff).to.be.lte(oethUnits("-0.5"), 1);
+      });
+
+      // consists of test cases with variable tilt percentage and expected balance diff
+      const checkBalanceTestCases = [
+        /* +100% tilt & 0.012 expected change means:
+         *  - pool has been tilted using RETH deposit that equals 100% of pools current
+         *    liquidity. Meaning if pool has 7k stETH & 7k RETH & 7k frxETH the tilt action
+         *    will be depositing additional 20k RETH totaling pool to: 27k RETH 7k stETH & 7k frxETH
+         *  - 0.012 expected change means 0.012 diff between pre-tilt checkBalance and after
+         *    tilt checkBalance call. Strategy has roughly ~100 units deposited so 0.012
+         *    change would equal 0.012/100 = 0.00012 change if 1 is a whole. Or 0.012%
+         */
+        [100, "0.015"],
+        [200, "0.016"],
+        [300, "0.018"],
+        [400, "0.02"],
+        [500, "0.02"],
+      ];
+
+      for (const testCase of checkBalanceTestCases) {
+        const tiltAmount = testCase[0];
+        const maxDiff = testCase[1];
+
+        it(`checkBalance with ~100 units should at most have ${maxDiff} absolute diff when performing RETH pool tilt at ${tiltAmount}% of pool's TVL`, async function () {
+          const {
+            oeth,
+            oethVault,
+            sfrxETHwstETHrEthPID,
+            balancerSfrxWstRETHStrategy,
+            stETH,
+            frxETH,
+            sfrxETH,
+            reth,
+            sfrxETHwstETHrEthBPT,
+            balancerVault,
+          } = fixture;
+
+          const logParams = {
+            oeth,
+            oethVault,
+            bpt: sfrxETHwstETHrEthBPT,
+            balancerVault,
+            strategy: balancerSfrxWstRETHStrategy,
+            allAssets: [stETH, frxETH, reth],
+            pid: sfrxETHwstETHrEthPID,
+            reth,
+          };
+
+          const balancesBefore = await logBalances(logParams);
+
+          await depositTest(
+            fixture,
+            [50, 50, 50],
+            [stETH, frxETH, reth],
+            sfrxETHwstETHrEthBPT
+          );
+
+          const checkBalanceAmount = await balancerSfrxWstRETHStrategy[
+            "checkBalance()"
+          ]();
+          expect(checkBalanceAmount).to.be.gte(oethUnits("0"), 1);
+
+          const poolId = await balancerSfrxWstRETHStrategy.balancerPoolId();
+          await tiltPool({
+            fixture,
+            tiltTvlFactor: 300,
+            attackAsset: sfrxETH, // asset used to tilt the pool
+            poolContract: sfrxETHwstETHrEthBPT,
+          });
+
+          const checkBalanceAmountAfterTilt = await balancerSfrxWstRETHStrategy[
+            "checkBalance()"
+          ]();
+          expect(checkBalanceAmountAfterTilt).to.be.gte(
+            await oethUnits("0"),
+            1
+          );
+
+          const checkBalanceDiff =
+            checkBalanceAmountAfterTilt.sub(checkBalanceAmount);
+          // ~100 units in pool liquidity should have less than 0.02 effect == 0.02%
+          expect(checkBalanceDiff).to.be.lte(oethUnits(maxDiff));
+
+          await unTiltPool({
+            fixture,
+            attackAsset: sfrxETH, // asset used to tilt the pool
+            poolContract: sfrxETHwstETHrEthBPT,
+          });
+
+          const checkBalanceAmountAfterAttack =
+            await balancerSfrxWstRETHStrategy["checkBalance()"]();
+
+          // check balance should report larger balance after attack comparing
+          // to the middle of the attack. Since the attacker has encountered
+          // fees with un-tilting.
+          expect(checkBalanceAmountAfterAttack).to.be.gt(
+            checkBalanceAmountAfterTilt
+          );
+
+          const oethVaultSigner = await impersonateAndFundContract(
+            oethVault.address
+          );
+          await balancerSfrxWstRETHStrategy
+            .connect(oethVaultSigner)
+            .withdrawAll();
+
+          const balancesAfter = await logBalances(logParams);
+
+          const rethDiff =
+            parseFloat(balancesAfter.vaultAssets.rETH.toString()) -
+            parseFloat(balancesBefore.vaultAssets.rETH.toString());
+          const stETHDiff =
+            parseFloat(balancesAfter.vaultAssets.stETH.toString()) -
+            parseFloat(balancesBefore.vaultAssets.stETH.toString());
+          const frxETHDiff =
+            parseFloat(balancesAfter.vaultAssets.frxETH.toString()) -
+            parseFloat(balancesBefore.vaultAssets.frxETH.toString());
+          const rethExchangeRate =
+            parseFloat(await reth.getExchangeRate()) / 1e18;
+          const unitDiff = rethDiff * rethExchangeRate + stETHDiff + frxETHDiff;
+
+          /* confirm that the profits gained by the attacker's pool tilt
+           * action can be extracted by withdrawing the funds.
+           */
+          expect(unitDiff / 1e18).to.be.gte(parseFloat(maxDiff));
+        });
+      }
+    });
   }
 );
 
@@ -890,6 +1227,13 @@ async function depositTest(
     (a, b) => a.add(b),
     BigNumber.from(0)
   );
+
+  for (let i = 0; i < allAssets.length; i++) {
+    // fund the Vault
+    await allAssets[i]
+      .connect(fixture.josh)
+      .transfer(oethVault.address, unitAmounts[i]);
+  }
 
   const before = await logBalances(logParams);
 
