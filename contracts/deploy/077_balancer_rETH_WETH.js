@@ -10,7 +10,8 @@ module.exports = deploymentWithGovernanceProposal(
     forceDeploy: false,
     //forceSkip: true,
     deployerIsProposer: false,
-    //proposalId: ,
+    proposalId:
+      "74218378193341950599723121963495928807921066995654503883276572108846598568193",
   },
   async ({ deployWithConfirmation, ethers }) => {
     // Current contracts
@@ -50,7 +51,7 @@ module.exports = deploymentWithGovernanceProposal(
     return {
       name: "Deploy new implementation of Balancer rETH/WETH MetaPool strategy\n\
       \n\
-      The new implementation of the Balancer rETH/WETH strategy pool fixes a medium vulnerability of the strategy's checkBalance function.\n\
+      The new implementation of the Balancer rETH/WETH strategy fixes the checkBalance function that could report confusing information - even though it had no impact on the operations of the protocol.\n\
       \n\
       ",
       actions: [
