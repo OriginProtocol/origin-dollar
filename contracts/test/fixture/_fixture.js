@@ -1226,7 +1226,7 @@ async function convexMetaVaultFixture() {
     log(`Metapool balance 1: ${formatUnits(balances[1])}`);
 
     // Domen is loaded with 3CRV
-    await fundWith3Crv(domen.getAddress(), ethers.BigNumber.from("0"));
+    await fundWith3Crv(domen.getAddress(), BigNumber.from("0"));
 
     for (const user of [josh, matt, anna, domen, daniel, franck]) {
       // Approve OUSD MetaPool contract to move funds
@@ -1617,13 +1617,13 @@ async function impersonateAndFundAddress(
   contractAddresses,
   toAddress,
   balanceToUse = 30, // 30%
-  maxAmount = ethers.BigNumber.from(0)
+  maxAmount = BigNumber.from(0)
 ) {
   if (!Array.isArray(contractAddresses)) {
     contractAddresses = [contractAddresses];
   }
 
-  let amountTransfered = ethers.BigNumber.from("0");
+  let amountTransfered = BigNumber.from("0");
   for (const contractAddress of contractAddresses) {
     const impersonatedSigner = await impersonateAndFundContract(
       contractAddress
@@ -1637,7 +1637,7 @@ async function impersonateAndFundAddress(
 
     const amount = balance.mul(balanceToUse).div(100);
     // consider max amount
-    if (maxAmount.gt(ethers.BigNumber.from("0"))) {
+    if (maxAmount.gt(BigNumber.from("0"))) {
       if (amountTransfered.add(amount).gt(maxAmount)) {
         await tokenContract
           .connect(impersonatedSigner)

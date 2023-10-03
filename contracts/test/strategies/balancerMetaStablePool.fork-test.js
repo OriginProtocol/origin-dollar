@@ -796,8 +796,6 @@ forkOnlyDescribe(
     });
 
     describe("work in MEV environment", function () {
-      let attackerAddress;
-      let sAttacker;
       let fixture;
 
       beforeEach(async () => {
@@ -814,7 +812,6 @@ forkOnlyDescribe(
           reth,
           rEthBPT,
           josh,
-          balancerVault,
         } = fixture;
         let forkedStratBalance = 0;
         const { vaultChange, profit } = await temporaryFork({
@@ -860,15 +857,8 @@ forkOnlyDescribe(
       });
 
       it("withdrawal should fail if pool is being manipulated maxWithdrawalDeviation catching the issue", async function () {
-        const {
-          balancerREthStrategy,
-          oethVault,
-          oeth,
-          weth,
-          reth,
-          rEthBPT,
-          balancerVault,
-        } = fixture;
+        const { balancerREthStrategy, oethVault, oeth, weth, reth, rEthBPT } =
+          fixture;
 
         const wethWithdrawAmount = oethUnits("0");
         const rethWithdrawAmount = oethUnits("7");
@@ -914,7 +904,6 @@ forkOnlyDescribe(
           reth,
           rEthBPT,
           josh,
-          balancerVault,
           strategist,
         } = fixture;
 
@@ -1035,7 +1024,6 @@ forkOnlyDescribe(
           ]();
           expect(checkBalanceAmount).to.be.gte(oethUnits("0"), 1);
 
-          const poolId = await balancerREthStrategy.balancerPoolId();
           await tiltPool({
             fixture,
             tiltTvlFactor: 300,

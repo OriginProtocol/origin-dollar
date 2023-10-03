@@ -121,8 +121,10 @@ async function tiltPool({
  *
  */
 async function unTiltPool({
+  // eslint-disable-next-line no-unused-vars
   fixture,
   attackAsset, // asset used to tilt the pool
+  // eslint-disable-next-line no-unused-vars
   poolContract,
 }) {
   if (!pool) {

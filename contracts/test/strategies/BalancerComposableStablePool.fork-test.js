@@ -797,8 +797,6 @@ forkOnlyDescribe(
     });
 
     describe("work in MEV environment", function () {
-      let attackerAddress;
-      let sAttacker;
       let fixture;
 
       beforeEach(async () => {
@@ -817,7 +815,6 @@ forkOnlyDescribe(
           reth,
           sfrxETHwstETHrEthBPT,
           josh,
-          balancerVault,
         } = fixture;
         let forkedStratBalance = 0;
         const { vaultChange, profit } = await temporaryFork({
@@ -887,7 +884,6 @@ forkOnlyDescribe(
           sfrxETH,
           reth,
           sfrxETHwstETHrEthBPT,
-          balancerVault,
         } = fixture;
 
         const rethWithdrawAmount = oethUnits("7");
@@ -940,7 +936,6 @@ forkOnlyDescribe(
           reth,
           sfrxETHwstETHrEthBPT,
           josh,
-          balancerVault,
           strategist,
         } = fixture;
 
@@ -1072,7 +1067,6 @@ forkOnlyDescribe(
           ]();
           expect(checkBalanceAmount).to.be.gte(oethUnits("0"), 1);
 
-          const poolId = await balancerSfrxWstRETHStrategy.balancerPoolId();
           await tiltPool({
             fixture,
             tiltTvlFactor: 300,
