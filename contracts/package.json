@@ -31,7 +31,7 @@
     "slither": "yarn run clean && slither . --filter-paths \"crytic|mocks|openzeppelin|@openzeppelin\" --exclude-low --exclude-informational --exclude conformance-to-solidity-naming-conventions,different-pragma-directives-are-used,external-function,assembly,incorrect-equality",
     "slither:triage": "yarn run clean && slither . --triage --filter-paths \"crytic|mocks|openzeppelin|@openzeppelin\" --exclude-low --exclude-informational --exclude conformance-to-solidity-naming-conventions,different-pragma-directives-are-used,external-function,assembly,incorrect-equality",
     "clean": "rm -rf build crytic-export artifacts cache deployments/local*",
-    "cache-clean:light": "rm -rf cache/hardhat-network-fork/network-1337/*",
+    "cache-clean:light": "rm -rf cache/hardhat-network-fork/network-1337/",
     "test:coverage": "IS_TEST=true npx hardhat coverage",
     "test:coverage:fork": "REPORT_COVERAGE=true ./fork-test.sh"
   },
