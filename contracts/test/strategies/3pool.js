@@ -148,7 +148,7 @@ describe("3Pool Strategy", function () {
       // Mint of MockCRVMinter mints a fixed 2e18
       await crvMinter.connect(governor).mint(threePoolStrategy.address);
       await harvester.connect(governor)["harvest()"]();
-      await expect(await crv.balanceOf(harvester.address)).to.be.equal(
+      expect(await crv.balanceOf(harvester.address)).to.be.equal(
         utils.parseUnits("2", 18)
       );
     });
@@ -160,11 +160,11 @@ describe("3Pool Strategy", function () {
         // eslint-disable-next-line
         "harvest(address)"
       ](threePoolStrategy.address);
-      await expect(await crv.balanceOf(harvester.address)).to.be.equal(
+      expect(await crv.balanceOf(harvester.address)).to.be.equal(
         utils.parseUnits("2", 18)
       );
       await crvMinter.connect(governor).mint(threePoolStrategy.address);
-      await expect(await crv.balanceOf(harvester.address)).to.be.equal(
+      expect(await crv.balanceOf(harvester.address)).to.be.equal(
         utils.parseUnits("2", 18)
       );
     });
@@ -187,10 +187,10 @@ describe("3Pool Strategy", function () {
 
       // Make sure the Strategy has CRV balance
       await crvMinter.connect(governor).mint(threePoolStrategy.address);
-      await expect(
+      expect(
         await crv.balanceOf(await governor.getAddress())
       ).to.be.equal("0");
-      await expect(await crv.balanceOf(threePoolStrategy.address)).to.be.equal(
+      expect(await crv.balanceOf(threePoolStrategy.address)).to.be.equal(
         utils.parseUnits("2", 18)
       );
       // Give Uniswap mock some USDT so it can give it back in CRV liquidation
@@ -206,13 +206,13 @@ describe("3Pool Strategy", function () {
 
       // Make sure Vault has 100 USDT balance (the Uniswap mock converts at 1:1)
       await expect(vault).has.a.balanceOf("1.98", usdt);
-      await expect(balanceAfterAnna - balanceBeforeAnna).to.be.equal(
+      expect(balanceAfterAnna - balanceBeforeAnna).to.be.equal(
         utils.parseUnits("0.02", 6)
       );
 
       // No CRV in Vault or Compound strategy
       await expect(harvester).has.a.balanceOf("0", crv);
-      await expect(await crv.balanceOf(threePoolStrategy.address)).to.be.equal(
+      expect(await crv.balanceOf(threePoolStrategy.address)).to.be.equal(
         "0"
       );
     });

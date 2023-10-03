@@ -134,10 +134,10 @@ describe("Convex Strategy", function () {
     it("Should collect reward tokens using collect rewards on all strategies", async () => {
       // Mint of MockCRVMinter mints a fixed 2e18
       await harvester.connect(governor)["harvest()"]();
-      await expect(await crv.balanceOf(harvester.address)).to.be.equal(
+      expect(await crv.balanceOf(harvester.address)).to.be.equal(
         utils.parseUnits("2", 18)
       );
-      await expect(await cvx.balanceOf(harvester.address)).to.be.equal(
+      expect(await cvx.balanceOf(harvester.address)).to.be.equal(
         utils.parseUnits("3", 18)
       );
     });
@@ -191,10 +191,10 @@ describe("Convex Strategy", function () {
 
       // Mint of MockCRVMinter mints a fixed 2e18
       await harvester.connect(governor)["harvest()"]();
-      await expect(await crv.balanceOf(harvester.address)).to.be.equal(
+      expect(await crv.balanceOf(harvester.address)).to.be.equal(
         utils.parseUnits("2", 18)
       );
-      await expect(await cvx.balanceOf(harvester.address)).to.be.equal(
+      expect(await cvx.balanceOf(harvester.address)).to.be.equal(
         utils.parseUnits("3", 18)
       );
     });
@@ -205,10 +205,10 @@ describe("Convex Strategy", function () {
         "harvest(address)"
       ](convexStrategy.address);
 
-      await expect(await crv.balanceOf(harvester.address)).to.be.equal(
+      expect(await crv.balanceOf(harvester.address)).to.be.equal(
         utils.parseUnits("2", 18)
       );
-      await expect(await cvx.balanceOf(harvester.address)).to.be.equal(
+      expect(await cvx.balanceOf(harvester.address)).to.be.equal(
         utils.parseUnits("3", 18)
       );
     });
@@ -263,10 +263,10 @@ describe("Convex Strategy", function () {
       // No CRV in Vault or Compound strategy
       await expect(harvester).has.a.balanceOf("0", crv);
       await expect(harvester).has.a.balanceOf("0", cvx);
-      await expect(await crv.balanceOf(convexStrategy.address)).to.be.equal(
+      expect(await crv.balanceOf(convexStrategy.address)).to.be.equal(
         "0"
       );
-      await expect(await cvx.balanceOf(convexStrategy.address)).to.be.equal(
+      expect(await cvx.balanceOf(convexStrategy.address)).to.be.equal(
         "0"
       );
     });
@@ -333,7 +333,7 @@ describe("Convex Strategy", function () {
 
         await expect(vault).has.a.balanceOf("2.277", usdt); // (0.8 + 1.5) - 1%
         const balanceAfterAnna = await usdt.balanceOf(anna.address);
-        await expect(balanceAfterAnna - balanceBeforeAnna).to.be.equal(
+        expect(balanceAfterAnna - balanceBeforeAnna).to.be.equal(
           utils.parseUnits("0.023", 6)
         );
       } else {
@@ -345,10 +345,10 @@ describe("Convex Strategy", function () {
 
       await expect(harvester).has.a.balanceOf("1.2", crv);
       await expect(harvester).has.a.balanceOf("1.5", cvx);
-      await expect(await crv.balanceOf(convexStrategy.address)).to.be.equal(
+      expect(await crv.balanceOf(convexStrategy.address)).to.be.equal(
         "0"
       );
-      await expect(await cvx.balanceOf(convexStrategy.address)).to.be.equal(
+      expect(await cvx.balanceOf(convexStrategy.address)).to.be.equal(
         "0"
       );
     };
