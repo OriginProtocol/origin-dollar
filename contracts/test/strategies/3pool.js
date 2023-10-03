@@ -4,13 +4,13 @@ const { MAX_UINT256 } = require("../../utils/constants");
 
 const { createFixtureLoader, threepoolVaultFixture } = require("../_fixture");
 const {
-  daiUnits,
   usdtUnits,
   ousdUnits,
   units,
   expectApproxSupply,
   isFork,
 } = require("../helpers");
+const { shouldBehaveLikeGovernable } = require("../behaviour/governable");
 
 describe("3Pool Strategy", function () {
   if (isFork) {
@@ -42,8 +42,9 @@ describe("3Pool Strategy", function () {
   };
 
   const loadFixture = createFixtureLoader(threepoolVaultFixture);
+  let fixture;
   beforeEach(async function () {
-    const fixture = await loadFixture();
+    fixture = await loadFixture();
     anna = fixture.anna;
     vault = fixture.vault;
     harvester = fixture.harvester;
@@ -65,6 +66,11 @@ describe("3Pool Strategy", function () {
       .connect(governor)
       .setAssetDefaultStrategy(usdt.address, threePoolStrategy.address);
   });
+
+  shouldBehaveLikeGovernable(() => ({
+    ...fixture,
+    strategy: fixture.threePoolStrategy,
+  }));
 
   describe("Mint", function () {
     it("Should stake USDT in Curve gauge via 3pool", async function () {
@@ -114,29 +120,6 @@ describe("3Pool Strategy", function () {
   });
 
   describe("Utilities", function () {
-    it("Should allow transfer of arbitrary token by Governor", async () => {
-      await dai.connect(anna).approve(vault.address, daiUnits("8.0"));
-      await vault.connect(anna).mint(dai.address, daiUnits("8.0"), 0);
-      // Anna sends her OUSD directly to Strategy
-      await ousd
-        .connect(anna)
-        .transfer(threePoolStrategy.address, ousdUnits("8.0"));
-      // Anna asks Governor for help
-      await threePoolStrategy
-        .connect(governor)
-        .transferToken(ousd.address, ousdUnits("8.0"));
-      await expect(governor).has.a.balanceOf("8.0", ousd);
-    });
-
-    it("Should not allow transfer of arbitrary token by non-Governor", async () => {
-      // Naughty Anna
-      await expect(
-        threePoolStrategy
-          .connect(anna)
-          .transferToken(ousd.address, ousdUnits("8.0"))
-      ).to.be.revertedWith("Caller is not the Governor");
-    });
-
     it("Should allow the governor to call harvest for a specific strategy", async () => {
       // Mint of MockCRVMinter mints a fixed 2e18
       // prettier-ignore

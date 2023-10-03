@@ -3,6 +3,7 @@ const { utils } = require("ethers");
 
 const { createFixtureLoader, compoundFixture } = require("../_fixture");
 const { usdcUnits, isFork } = require("../helpers");
+const { shouldBehaveLikeGovernable } = require("../behaviour/governable");
 
 describe("Compound strategy", function () {
   if (isFork) {
@@ -14,6 +15,11 @@ describe("Compound strategy", function () {
   beforeEach(async function () {
     fixture = await loadFixture();
   });
+
+  shouldBehaveLikeGovernable(() => ({
+    ...fixture,
+    strategy: fixture.cStandalone,
+  }));
 
   it("Should allow a withdraw", async () => {
     const { cStandalone, governor, usdc, cusdc } = fixture;

@@ -3,8 +3,9 @@ const { utils } = require("ethers");
 
 const { MAX_UINT256 } = require("../../utils/constants");
 const { createFixtureLoader, convexVaultFixture } = require("../_fixture");
+const { shouldBehaveLikeGovernable } = require("../behaviour/governable");
+
 const {
-  daiUnits,
   usdtUnits,
   ousdUnits,
   units,
@@ -42,8 +43,9 @@ describe("Convex Strategy", function () {
   };
 
   const loadFixture = createFixtureLoader(convexVaultFixture);
+  let fixture;
   beforeEach(async function () {
-    const fixture = await loadFixture();
+    fixture = await loadFixture();
     anna = fixture.anna;
     vault = fixture.vault;
     harvester = fixture.harvester;
@@ -58,6 +60,11 @@ describe("Convex Strategy", function () {
     usdc = fixture.usdc;
     dai = fixture.dai;
   });
+
+  shouldBehaveLikeGovernable(() => ({
+    ...fixture,
+    strategy: fixture.convexStrategy,
+  }));
 
   describe("Mint", function () {
     it("Should stake USDT in Curve gauge via 3pool", async function () {
@@ -101,29 +108,6 @@ describe("Convex Strategy", function () {
   });
 
   describe("Utilities", function () {
-    it("Should allow transfer of arbitrary token by Governor", async () => {
-      await dai.connect(anna).approve(vault.address, daiUnits("8.0"));
-      await vault.connect(anna).mint(dai.address, daiUnits("8.0"), 0);
-      // Anna sends her OUSD directly to Strategy
-      await ousd
-        .connect(anna)
-        .transfer(convexStrategy.address, ousdUnits("8.0"));
-      // Anna asks Governor for help
-      await convexStrategy
-        .connect(governor)
-        .transferToken(ousd.address, ousdUnits("8.0"));
-      await expect(governor).has.a.balanceOf("8.0", ousd);
-    });
-
-    it("Should not allow transfer of arbitrary token by non-Governor", async () => {
-      // Naughty Anna
-      await expect(
-        convexStrategy
-          .connect(anna)
-          .transferToken(ousd.address, ousdUnits("8.0"))
-      ).to.be.revertedWith("Caller is not the Governor");
-    });
-
     it("Should allow the strategist to call harvest for a specific strategy", async () => {
       // Mint of MockCRVMinter mints a fixed 2e18
       // prettier-ignore

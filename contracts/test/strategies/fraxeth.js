@@ -1,6 +1,7 @@
 const { expect } = require("chai");
 
 const { oethUnits, units } = require("../helpers");
+const { shouldBehaveLikeGovernable } = require("../behaviour/governable");
 
 const {
   createFixtureLoader,
@@ -15,6 +16,11 @@ describe("FraxETH Strategy", function () {
   beforeEach(async () => {
     fixture = await loadFixture();
   });
+
+  shouldBehaveLikeGovernable(() => ({
+    ...fixture,
+    strategy: fixture.fraxEthStrategy,
+  }));
 
   describe("Mint", function () {
     it("Should allow minting with frxETH", async () => {

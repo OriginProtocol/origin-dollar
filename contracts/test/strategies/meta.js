@@ -2,13 +2,8 @@ const { expect } = require("chai");
 const { utils, BigNumber } = require("ethers");
 
 const { convexMetaVaultFixture, createFixtureLoader } = require("../_fixture");
-const {
-  daiUnits,
-  ousdUnits,
-  units,
-  expectApproxSupply,
-  isFork,
-} = require("../helpers");
+const { ousdUnits, units, expectApproxSupply, isFork } = require("../helpers");
+const { shouldBehaveLikeGovernable } = require("../behaviour/governable");
 
 describe.skip("Convex 3pool/OUSD Meta Strategy", function () {
   if (isFork) {
@@ -40,8 +35,9 @@ describe.skip("Convex 3pool/OUSD Meta Strategy", function () {
   };
 
   const loadFixture = createFixtureLoader(convexMetaVaultFixture);
+  let fixture;
   beforeEach(async function () {
-    const fixture = await loadFixture();
+    fixture = await loadFixture();
     anna = fixture.anna;
     vault = fixture.vault;
     harvester = fixture.harvester;
@@ -56,6 +52,11 @@ describe.skip("Convex 3pool/OUSD Meta Strategy", function () {
     usdc = fixture.usdc;
     dai = fixture.dai;
   });
+
+  shouldBehaveLikeGovernable(() => ({
+    ...fixture,
+    strategy: fixture.OUSDmetaStrategy,
+  }));
 
   describe("Mint", function () {
     it("Should stake USDT in Curve gauge via metapool", async function () {
@@ -101,31 +102,6 @@ describe.skip("Convex 3pool/OUSD Meta Strategy", function () {
   });
 
   describe("Utilities", function () {
-    it("Should allow transfer of arbitrary token by Governor", async () => {
-      await dai.connect(anna).approve(vault.address, daiUnits("8.0"));
-      await vault.connect(anna).mint(dai.address, daiUnits("8.0"), 0);
-      // Anna sends her OUSD directly to Strategy
-      await ousd
-        .connect(anna)
-        .transfer(OUSDmetaStrategy.address, ousdUnits("8.0"));
-      // Anna asks Governor for help
-      await OUSDmetaStrategy.connect(governor).transferToken(
-        ousd.address,
-        ousdUnits("8.0")
-      );
-      await expect(governor).has.a.balanceOf("8.0", ousd);
-    });
-
-    it("Should not allow transfer of arbitrary token by non-Governor", async () => {
-      // Naughty Anna
-      await expect(
-        OUSDmetaStrategy.connect(anna).transferToken(
-          ousd.address,
-          ousdUnits("8.0")
-        )
-      ).to.be.revertedWith("Caller is not the Governor");
-    });
-
     it("Should not allow too large mintForStrategy", async () => {
       const MAX_UINT = BigNumber.from(
         "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
