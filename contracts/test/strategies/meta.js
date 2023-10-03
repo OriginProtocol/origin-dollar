@@ -5,7 +5,7 @@ const { parseUnits } = require("ethers/lib/utils");
 const { convexMetaVaultFixture, createFixtureLoader } = require("../_fixture");
 const { ousdUnits, units, expectApproxSupply, isFork } = require("../helpers");
 const { shouldBehaveLikeGovernable } = require("../behaviour/governable");
-const { shouldBehaveLikeHarvestable } = require("../behaviour/harvestable");
+const { shouldBehaveLikeHarvester } = require("../behaviour/harvester");
 
 describe("OUSD AMO strategy using Curve OUSD/3CRV pool", function () {
   if (isFork) {
@@ -23,7 +23,7 @@ describe("OUSD AMO strategy using Curve OUSD/3CRV pool", function () {
     strategy: fixture.OUSDmetaStrategy,
   }));
 
-  shouldBehaveLikeHarvestable(() => ({
+  shouldBehaveLikeHarvester(() => ({
     ...fixture,
     strategy: fixture.OUSDmetaStrategy,
     rewards: [

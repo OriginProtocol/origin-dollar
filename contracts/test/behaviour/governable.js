@@ -12,7 +12,7 @@ const { daiUnits } = require("../helpers");
     }));
  */
 const shouldBehaveLikeGovernable = (context) => {
-  describe("Governable", () => {
+  describe("Governable behaviour", () => {
     it("Should have governor set", async () => {
       const { governor, strategy } = context();
       expect(await strategy.governor()).to.equal(governor.address);

@@ -9,7 +9,7 @@ const { usdtUnits } = require("../helpers");
  * - strategy: the strategy to test
  * - rewards: array of objects with asset and expected properties
  * @example
-    shouldBehaveLikeHarvestable(() => ({
+    shouldBehaveLikeHarvester(() => ({
         ...fixture,
         strategy: fixture.convexStrategy,
         rewards: [
@@ -18,8 +18,8 @@ const { usdtUnits } = require("../helpers");
         ],
     }));
  */
-const shouldBehaveLikeHarvestable = (context) => {
-  describe("Harvestable", () => {
+const shouldBehaveLikeHarvester = (context) => {
+  describe("Harvester behaviour", () => {
     it("Should allow the governor to call harvest for a specific strategy", async () => {
       const { harvester, governor, strategy } = context();
       // prettier-ignore
@@ -237,5 +237,5 @@ const shouldBehaveLikeHarvestable = (context) => {
 };
 
 module.exports = {
-  shouldBehaveLikeHarvestable,
+  shouldBehaveLikeHarvester,
 };

@@ -4,7 +4,7 @@ const { parseUnits } = require("ethers/lib/utils");
 const { createFixtureLoader, threepoolVaultFixture } = require("../_fixture");
 const { ousdUnits, units, expectApproxSupply, isFork } = require("../helpers");
 const { shouldBehaveLikeGovernable } = require("../behaviour/governable");
-const { shouldBehaveLikeHarvestable } = require("../behaviour/harvestable");
+const { shouldBehaveLikeHarvester } = require("../behaviour/harvester");
 
 describe("3Pool Strategy", function () {
   if (isFork) {
@@ -34,7 +34,7 @@ describe("3Pool Strategy", function () {
     strategy: fixture.threePoolStrategy,
   }));
 
-  shouldBehaveLikeHarvestable(() => ({
+  shouldBehaveLikeHarvester(() => ({
     ...fixture,
     strategy: fixture.threePoolStrategy,
     rewards: [{ asset: fixture.crv, expected: parseUnits("2") }],
