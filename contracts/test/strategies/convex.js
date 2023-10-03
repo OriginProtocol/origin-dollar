@@ -4,6 +4,7 @@ const { parseUnits } = require("ethers/lib/utils");
 const { createFixtureLoader, convexVaultFixture } = require("../_fixture");
 const { shouldBehaveLikeGovernable } = require("../behaviour/governable");
 const { shouldBehaveLikeHarvestable } = require("../behaviour/harvestable");
+const { shouldBehaveLikeStrategy } = require("../behaviour/strategy");
 
 const { ousdUnits, units, expectApproxSupply, isFork } = require("../helpers");
 
@@ -32,6 +33,13 @@ describe("Convex Strategy", function () {
     ],
   }));
 
+  shouldBehaveLikeStrategy(() => ({
+    ...fixture,
+    strategy: fixture.convexStrategy,
+    assets: [fixture.dai, fixture.usdc, fixture.usdt],
+    vault: fixture.vault,
+  }));
+
   const mint = async (amount, asset) => {
     const { anna, vault } = fixture;
     await asset.connect(anna).mint(await units(amount, asset));
@@ -42,6 +50,19 @@ describe("Convex Strategy", function () {
       .connect(anna)
       .mint(asset.address, await units(amount, asset), 0);
   };
+
+  describe("Setup", () => {
+    it("Should have immutables set", async () => {
+      const { dai, usdc, usdt, convexStrategy } = fixture;
+      expect(await convexStrategy.CURVE_BASE_ASSETS()).to.equal(3);
+      expect(await convexStrategy.coin0()).to.equal(dai.address);
+      expect(await convexStrategy.coin1()).to.equal(usdc.address);
+      expect(await convexStrategy.coin2()).to.equal(usdt.address);
+      expect(await convexStrategy.decimals0()).to.equal(18);
+      expect(await convexStrategy.decimals1()).to.equal(6);
+      expect(await convexStrategy.decimals2()).to.equal(6);
+    });
+  });
 
   describe("Mint", function () {
     it("Should stake USDT in Curve gauge via 3pool", async function () {
