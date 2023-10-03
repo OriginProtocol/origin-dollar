@@ -195,7 +195,7 @@ def get_1inch_swap(
     else: 
         raise Exception("Unrecognized 1Inch swap selector {}".format(selector))
 
-    swap_collateral_data = vault_core.swapCollateral.encode_input(
+    swap_collateral_data = c_vault_core.swapCollateral.encode_input(
         result['fromToken']['address'],
         result['toToken']['address'],
         result['fromTokenAmount'],
@@ -254,16 +254,16 @@ def build_swap_tx(from_token, to_token, from_amount, max_slippage, allow_partial
     if COINMARKETCAP_API_KEY is None:
         raise Exception("Set coinmarketcap api key by setting CMC_API_KEY variable. Free plan key will suffice: https://coinmarketcap.com/api/pricing/")
 
-    min_slippage_amount = scale_amount(WETH, from_token, 10**18)
+    min_slippage_amount = scale_amount(WETH, from_token, 10**18) # 1 token of from_token (like 1WETH, 1DAI or 1USDT)
     quote_1inch = get_1inch_quote(from_token, to_token, from_amount)
     quote_1inch_min_swap_amount_price = get_1inch_quote(from_token, to_token, min_slippage_amount)
-    quote_1inch_min_swap_amount = quote_1inch_min_swap_amount_price / min_slippage_amount * from_amount
+    quote_1inch_min_swap_amount = from_amount * quote_1inch_min_swap_amount_price / min_slippage_amount
     quote_oracles = get_oracle_router_quote(from_token, to_token, from_amount)
     quote_coingecko = get_coingecko_quote(from_token, to_token, from_amount)
     quote_cmc = get_cmc_quote(from_token, to_token, from_amount)
 
     # subtract the max slippage from minimum slippage query
-    min_tokens_with_slippage = scale_amount(from_token, to_token, quote_1inch_min_swap_amount_price * (100 - max_slippage) / 100 * from_amount) / 1e18
+    min_tokens_with_slippage = scale_amount(from_token, to_token, from_amount * quote_1inch_min_swap_amount_price * (100 - max_slippage) / 100 / min_slippage_amount)
     coingecko_to_1inch_diff = (quote_1inch - quote_coingecko) / quote_1inch
     oracle_to_1inch_diff = (quote_1inch - quote_oracles) / quote_1inch
     cmc_to_1inch_diff = (quote_1inch - quote_cmc) / quote_1inch
