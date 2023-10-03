@@ -1,30 +1,39 @@
 const { expect } = require("chai");
-const { utils, BigNumber } = require("ethers");
+const { BigNumber } = require("ethers");
+const { parseUnits } = require("ethers/lib/utils");
 
 const { convexMetaVaultFixture, createFixtureLoader } = require("../_fixture");
 const { ousdUnits, units, expectApproxSupply, isFork } = require("../helpers");
 const { shouldBehaveLikeGovernable } = require("../behaviour/governable");
+const { shouldBehaveLikeHarvestable } = require("../behaviour/harvestable");
 
-describe.skip("Convex 3pool/OUSD Meta Strategy", function () {
+describe("OUSD AMO strategy using Curve OUSD/3CRV pool", function () {
   if (isFork) {
     this.timeout(0);
   }
 
-  let anna,
-    ousd,
-    vault,
-    harvester,
-    governor,
-    crv,
-    cvx,
-    OUSDmetaStrategy,
-    metapoolToken,
-    cvxBooster,
-    usdt,
-    usdc,
-    dai;
+  const loadFixture = createFixtureLoader(convexMetaVaultFixture);
+  let fixture;
+  beforeEach(async function () {
+    fixture = await loadFixture();
+  });
+
+  shouldBehaveLikeGovernable(() => ({
+    ...fixture,
+    strategy: fixture.OUSDmetaStrategy,
+  }));
+
+  shouldBehaveLikeHarvestable(() => ({
+    ...fixture,
+    strategy: fixture.OUSDmetaStrategy,
+    rewards: [
+      { asset: fixture.crv, expected: parseUnits("2") },
+      { asset: fixture.cvx, expected: parseUnits("3") },
+    ],
+  }));
 
   const mint = async (amount, asset) => {
+    const { anna, vault } = fixture;
     await asset.connect(anna).mint(await units(amount, asset));
     await asset
       .connect(anna)
@@ -34,32 +43,9 @@ describe.skip("Convex 3pool/OUSD Meta Strategy", function () {
       .mint(asset.address, await units(amount, asset), 0);
   };
 
-  const loadFixture = createFixtureLoader(convexMetaVaultFixture);
-  let fixture;
-  beforeEach(async function () {
-    fixture = await loadFixture();
-    anna = fixture.anna;
-    vault = fixture.vault;
-    harvester = fixture.harvester;
-    ousd = fixture.ousd;
-    governor = fixture.governor;
-    crv = fixture.crv;
-    cvx = fixture.cvx;
-    OUSDmetaStrategy = fixture.OUSDmetaStrategy;
-    metapoolToken = fixture.metapoolToken;
-    cvxBooster = fixture.cvxBooster;
-    usdt = fixture.usdt;
-    usdc = fixture.usdc;
-    dai = fixture.dai;
-  });
-
-  shouldBehaveLikeGovernable(() => ({
-    ...fixture,
-    strategy: fixture.OUSDmetaStrategy,
-  }));
-
   describe("Mint", function () {
     it("Should stake USDT in Curve gauge via metapool", async function () {
+      const { anna, cvxBooster, ousd, metapoolToken, usdt } = fixture;
       await expectApproxSupply(ousd, ousdUnits("200"));
       await mint("30000.00", usdt);
       await expectApproxSupply(ousd, ousdUnits("60200"));
@@ -68,6 +54,7 @@ describe.skip("Convex 3pool/OUSD Meta Strategy", function () {
     });
 
     it("Should stake USDC in Curve gauge via metapool", async function () {
+      const { anna, cvxBooster, ousd, metapoolToken, usdc } = fixture;
       await expectApproxSupply(ousd, ousdUnits("200"));
       await mint("50000.00", usdc);
       await expectApproxSupply(ousd, ousdUnits("100200"));
@@ -76,12 +63,14 @@ describe.skip("Convex 3pool/OUSD Meta Strategy", function () {
     });
 
     it("Should use a minimum LP token amount when depositing USDT into metapool", async function () {
+      const { usdt } = fixture;
       await expect(mint("29000", usdt)).to.be.revertedWith(
         "Slippage ruined your day"
       );
     });
 
     it("Should use a minimum LP token amount when depositing USDC into metapool", async function () {
+      const { usdc } = fixture;
       await expect(mint("29000", usdc)).to.be.revertedWith(
         "Slippage ruined your day"
       );
@@ -90,6 +79,7 @@ describe.skip("Convex 3pool/OUSD Meta Strategy", function () {
 
   describe("Redeem", function () {
     it("Should be able to unstake from gauge and return USDT", async function () {
+      const { dai, usdc, usdt, ousd, anna, vault } = fixture;
       await expectApproxSupply(ousd, ousdUnits("200"));
       await mint("10000.00", dai);
       await mint("10000.00", usdc);
@@ -101,8 +91,9 @@ describe.skip("Convex 3pool/OUSD Meta Strategy", function () {
     });
   });
 
-  describe("Utilities", function () {
+  describe("AMO", function () {
     it("Should not allow too large mintForStrategy", async () => {
+      const { vault, governor, anna } = fixture;
       const MAX_UINT = BigNumber.from(
         "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
       );
@@ -121,6 +112,7 @@ describe.skip("Convex 3pool/OUSD Meta Strategy", function () {
     });
 
     it("Should not allow too large burnForStrategy", async () => {
+      const { vault, governor, anna } = fixture;
       const MAX_UINT = BigNumber.from(
         "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
       );
@@ -134,46 +126,6 @@ describe.skip("Convex 3pool/OUSD Meta Strategy", function () {
       await expect(
         vault.connect(anna).burnForStrategy(MAX_UINT.div(2).sub(1))
       ).to.be.revertedWith("Attempting to burn too much OUSD.");
-    });
-  });
-
-  describe("Harvest", function () {
-    it("Should allow the strategist to call harvest for a specific strategy", async () => {
-      // prettier-ignore
-      await harvester
-        .connect(governor)["harvest(address)"](OUSDmetaStrategy.address);
-    });
-
-    it("Should collect reward tokens using collect rewards on all strategies", async () => {
-      // Mint of MockCRVMinter mints a fixed 2e18
-      await harvester.connect(governor)["harvest()"]();
-      await expect(await crv.balanceOf(harvester.address)).to.be.equal(
-        utils.parseUnits("2", 18)
-      );
-      await expect(await cvx.balanceOf(harvester.address)).to.be.equal(
-        utils.parseUnits("3", 18)
-      );
-    });
-
-    it("Should collect reward tokens using collect rewards on a specific strategy", async () => {
-      await expect(await crv.balanceOf(harvester.address)).to.be.equal(
-        utils.parseUnits("0", 18)
-      );
-      await expect(await cvx.balanceOf(harvester.address)).to.be.equal(
-        utils.parseUnits("0", 18)
-      );
-
-      await harvester.connect(governor)[
-        // eslint-disable-next-line
-        "harvest(address)"
-      ](OUSDmetaStrategy.address);
-
-      await expect(await crv.balanceOf(harvester.address)).to.be.equal(
-        utils.parseUnits("2", 18)
-      );
-      await expect(await cvx.balanceOf(harvester.address)).to.be.equal(
-        utils.parseUnits("3", 18)
-      );
     });
   });
 });
