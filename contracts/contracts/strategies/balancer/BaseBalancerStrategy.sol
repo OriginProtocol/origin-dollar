@@ -526,7 +526,6 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
      * @notice Returns the rate supplied by the Balancer configured rate
      * provider. Rate is used to normalize the token to common underlying
      * pool denominator. (ETH for ETH Liquid staking derivatives).
-     * Reverts if Rate provider isn't cached for the asset.
      *
      * @param _asset Address of the Balancer pool asset
      * @return rate of the corresponding asset
@@ -537,7 +536,15 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         virtual
         returns (uint256)
     {
-        return poolRateProvidersCache[poolAssetIndex[_asset]].getRate();
+        IRateProvider rateProvider = poolRateProvidersCache[
+            poolAssetIndex[_asset]
+        ];
+
+        if (address(rateProvider) == address(0)) {
+            return 1 ether;
+        }
+
+        return rateProvider.getRate();
     }
 
     function cachePoolAssets() public {
