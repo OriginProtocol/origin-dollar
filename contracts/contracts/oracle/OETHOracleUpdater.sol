@@ -13,6 +13,11 @@ import { ICurvePool } from "../strategies/ICurvePool.sol";
  * @author Origin Protocol Inc
  */
 contract OETHOracleUpdater is Governable {
+    /// @notice Max OETH price when redeeming via the vault
+    /// The vault charges a 0.5% withdraw fee and the oracle prices
+    /// of the collateral assets are capped at 1 so the max price is 0.995
+    uint256 public constant MAX_VAULT_PRICE = 995e15;
+
     ICurvePool public immutable curvePool;
     IVault public immutable vault;
 
@@ -53,20 +58,28 @@ contract OETHOracleUpdater is Governable {
             uint256 marketPrice
         )
     {
-        // Get price from the Vault
-        vaultPrice = vault.floorPrice();
-
         // Get price from the Curve pool
         marketPrice = curvePool.price_oracle();
 
-        // TODO check if the data is bad
-
-        // Return the market price with the Vault price as the floor price
-        if (marketPrice > vaultPrice) {
+        // If market price is about the 0.5% redeem fee
+        if (marketPrice > MAX_VAULT_PRICE) {
             answer = marketPrice;
+            // Avoid getting the vault price as this is gas intensive
+            // its not going to be higher than 0.995 with a 0.5% withdraw fee
+            vaultPrice = MAX_VAULT_PRICE;
         } else {
-            answer = vaultPrice;
+            // Get price from the Vault
+            vaultPrice = vault.floorPrice();
+
+            // Return the market price with the Vault price as the floor price
+            if (marketPrice > vaultPrice) {
+                answer = marketPrice;
+            } else {
+                answer = vaultPrice;
+            }
         }
+
+        // TODO check if the data is bad
 
         // Cap the OETH/ETH price at 1
         if (answer > 1e18) {
