@@ -274,13 +274,6 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
             "Invalid input arrays"
         );
 
-        for (uint256 i = 0; i < _strategyAssets.length; ++i) {
-            require(
-                assetToPToken[_strategyAssets[i]] != address(0),
-                "Unsupported asset"
-            );
-        }
-
         // STEP 1 - Calculate the Balancer pool assets and amounts from the vault collateral assets
 
         // Calculate the balancer pool assets and amounts to withdraw
@@ -294,6 +287,11 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         );
 
         for (uint256 i = 0; i < _strategyAssets.length; ++i) {
+            require(
+                assetToPToken[_strategyAssets[i]] != address(0),
+                "Unsupported asset"
+            );
+
             (address poolAsset, uint256 poolAssetAmount) = _toPoolAsset(
                 _strategyAssets[i],
                 _strategyAmounts[i]
