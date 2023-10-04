@@ -24,6 +24,8 @@ contract MocksfrxETH is MintableERC20 {
 
         assetBalance[receiver] += assets;
 
+        _mint(receiver, assets);
+
         return assets;
     }
 
@@ -46,6 +48,8 @@ contract MocksfrxETH is MintableERC20 {
 
         ERC20(frxETH).transfer(receiver, shares);
 
+        _burn(owner, shares);
+
         assets = shares;
     }
 
@@ -57,6 +61,8 @@ contract MocksfrxETH is MintableERC20 {
         assetBalance[owner] -= shares;
 
         ERC20(frxETH).transfer(receiver, shares);
+
+        _burn(owner, shares);
 
         assets = shares;
     }

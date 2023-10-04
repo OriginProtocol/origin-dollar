@@ -2,6 +2,7 @@ const { expect } = require("chai");
 
 const { oethUnits, units } = require("../helpers");
 const { shouldBehaveLikeGovernable } = require("../behaviour/governable");
+const { shouldBehaveLikeStrategy } = require("../behaviour/strategy");
 
 const {
   createFixtureLoader,
@@ -20,6 +21,13 @@ describe("FraxETH Strategy", function () {
   shouldBehaveLikeGovernable(() => ({
     ...fixture,
     strategy: fixture.fraxEthStrategy,
+  }));
+
+  shouldBehaveLikeStrategy(() => ({
+    ...fixture,
+    strategy: fixture.fraxEthStrategy,
+    assets: [fixture.frxETH],
+    vault: fixture.oethVault,
   }));
 
   describe("Mint", function () {
