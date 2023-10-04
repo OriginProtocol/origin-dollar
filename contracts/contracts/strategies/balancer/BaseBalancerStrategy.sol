@@ -547,6 +547,11 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         return rateProvider.getRate();
     }
 
+    /**
+     * @notice Caches Pool Assets and their index. These will never change 
+     * in a strategy. It's `public` because we already have one strategy 
+     * initialized without this, would make it easier when upgrading it
+     */
     function cachePoolAssets() public {
         (IERC20[] memory tokens, , ) = balancerVault.getPoolTokens(
             balancerPoolId
