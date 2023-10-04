@@ -134,11 +134,12 @@ contract AaveStrategy is InitializableAbstractStrategy {
                     address(this)
                 );
                 require(actual == balance, "Did not withdraw enough");
+
+                uint256 assetBalance = asset.balanceOf(address(this));
                 // Transfer entire balance to Vault
-                asset.safeTransfer(
-                    vaultAddress,
-                    asset.balanceOf(address(this))
-                );
+                asset.safeTransfer(vaultAddress, assetBalance);
+
+                emit Withdrawal(address(asset), aToken, assetBalance);
             }
         }
     }

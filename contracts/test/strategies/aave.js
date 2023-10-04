@@ -10,6 +10,7 @@ const {
   isFork,
 } = require("../helpers");
 const { shouldBehaveLikeGovernable } = require("../behaviour/governable");
+const { shouldBehaveLikeStrategy } = require("../behaviour/strategy");
 
 describe("Aave Strategy", function () {
   if (isFork) {
@@ -69,6 +70,13 @@ describe("Aave Strategy", function () {
   shouldBehaveLikeGovernable(() => ({
     ...fixture,
     strategy: fixture.aaveStrategy,
+  }));
+
+  shouldBehaveLikeStrategy(() => ({
+    ...fixture,
+    strategy: fixture.aaveStrategy,
+    assets: [fixture.dai],
+    vault: fixture.vault,
   }));
 
   describe("Mint", function () {
