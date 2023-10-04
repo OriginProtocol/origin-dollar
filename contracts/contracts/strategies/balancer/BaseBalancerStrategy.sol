@@ -47,7 +47,7 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
     address[] public poolAssets;
     mapping(address => uint256) public poolAssetIndex;
 
-    int256[46] private __reserved;
+    int256[45] private __reserved;
 
     struct BaseBalancerConfig {
         address rEthAddress; // Address of the rETH token
@@ -315,14 +315,6 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
     function _lpWithdrawAll() internal virtual;
 
     /**
-     * @notice Balancer returns assets and rateProviders for corresponding assets ordered
-     * by numerical order.
-     */
-    function _getPoolAssets() internal view returns (IERC20[] memory assets) {
-        (assets, , ) = balancerVault.getPoolTokens(balancerPoolId);
-    }
-
-    /**
      * @dev If an asset is rebasing the Balancer pools have a wrapped versions of assets
      * that the strategy supports. This function converts the pool(wrapped) asset
      * and corresponding amount to strategy asset.
@@ -541,13 +533,13 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         return poolRateProvidersCache[poolAssetIndex[_asset]].getRate();
     }
 
-    function cachePoolAssets() public onlyGovernor {
+    function cachePoolAssets() public {
         (IERC20[] memory tokens, , ) = balancerVault.getPoolTokens(
             balancerPoolId
         );
 
         for (uint256 i = 0; i < tokens.length; ++i) {
-            poolAssets[i] = address(tokens[i]);
+            poolAssets.push(address(tokens[i]));
             poolAssetIndex[address(tokens[i])] = i;
         }
     }
