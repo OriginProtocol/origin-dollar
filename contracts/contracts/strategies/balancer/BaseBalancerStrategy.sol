@@ -44,7 +44,10 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
     // Rate providers of the Balancer pool
     IRateProvider[] public poolRateProvidersCache;
 
-    int256[47] private __reserved;
+    address[] public poolAssets;
+    mapping(address => uint256) public poolAssetIndex;
+
+    int256[46] private __reserved;
 
     struct BaseBalancerConfig {
         address rEthAddress; // Address of the rETH token
@@ -109,7 +112,10 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
     ) public virtual override onlyGovernor initializer {
         maxWithdrawalDeviation = 1e16;
         maxDepositDeviation = 1e16;
+        
+        cachePoolAssets();
         cacheRateProviders();
+
         emit MaxWithdrawalDeviationUpdated(0, maxWithdrawalDeviation);
         emit MaxDepositDeviationUpdated(0, maxDepositDeviation);
 
@@ -124,14 +130,12 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         view
         virtual
     {
-        IERC20[] memory poolAssets = _getPoolAssets();
         require(
             poolAssets.length == _assets.length,
             "Pool assets length mismatch"
         );
         for (uint256 i = 0; i < _assets.length; ++i) {
-            address asset = _fromPoolAsset(address(poolAssets[i]));
-            require(_assets[i] == asset, "Pool assets mismatch");
+            require(_assets[i] == _fromPoolAsset(poolAssets[i]), "Pool assets mismatch");
         }
     }
 
@@ -522,7 +526,8 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
     /**
      * @notice Returns the rate supplied by the Balancer configured rate
      * provider. Rate is used to normalize the token to common underlying
-     * pool denominator. (ETH for ETH Liquid staking derivatives)
+     * pool denominator. (ETH for ETH Liquid staking derivatives).
+     * Reverts if Rate provider isn't cached for the asset.
      *
      * @param _asset Address of the Balancer pool asset
      * @return rate of the corresponding asset
@@ -533,22 +538,17 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         virtual
         returns (uint256)
     {
+        return poolRateProvidersCache[poolAssetIndex[_asset]].getRate();
+    }
+
+    function cachePoolAssets() public onlyGovernor {
         (IERC20[] memory tokens, , ) = balancerVault.getPoolTokens(
             balancerPoolId
         );
 
-        for (uint256 i = 0; i < poolRateProvidersCache.length; ++i) {
-            // _assets and corresponding rate providers are all in the same order
-            if (address(tokens[i]) == _asset) {
-                // rate provider doesn't exist, defaults to 1e18
-                if (address(poolRateProvidersCache[i]) == address(0)) {
-                    return 1e18;
-                }
-                return poolRateProvidersCache[i].getRate();
-            }
+        for (uint256 i = 0; i < tokens.length; ++i) {
+            poolAssets[i] = address(tokens[i]);
+            poolAssetIndex[address(tokens[i])] = i;
         }
-
-        // should never happen
-        assert(false);
     }
 }

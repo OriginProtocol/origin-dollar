@@ -33,16 +33,13 @@ contract BalancerComposablePoolStrategy is BalancerMetaPoolStrategy {
         view
         override
     {
-        IERC20[] memory poolAssets = _getPoolAssets();
-
         require(
             // aside from BPT token all assets must be supported
             poolAssets.length - 1 == _assets.length,
             "Pool assets length mismatch"
         );
         for (uint256 i = 0; i < _assets.length; ++i) {
-            address asset = _fromPoolAsset(address(poolAssets[i + 1]));
-            require(_assets[i] == asset, "Pool assets mismatch");
+            require(_assets[i] == _fromPoolAsset(poolAssets[i + 1]), "Pool assets mismatch");
         }
     }
 

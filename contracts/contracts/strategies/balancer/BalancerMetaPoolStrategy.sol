@@ -124,9 +124,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
             "Array length missmatch"
         );
 
-        (IERC20[] memory tokens, , ) = balancerVault.getPoolTokens(
-            balancerPoolId
-        );
+        uint256[] memory amountsIn = new uint256[](poolAssets.length);
 
         uint256[] memory strategyAssetAmountsToPoolAssetAmounts = new uint256[](
             _strategyAssets.length
@@ -143,9 +141,12 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
                 assetToPToken[strategyAsset] != address(0),
                 "Unsupported asset"
             );
+
             strategyAssetsToPoolAssets[i] = _toPoolAsset(strategyAsset);
 
             if (strategyAmount > 0) {
+                uint256 assetIndex = poolAssetIndex[strategyAssetsToPoolAssets[i]];
+
                 emit Deposit(strategyAsset, platformAddress, strategyAmount);
 
                 // wrap rebasing assets like stETH and frxETH to wstETH and sfrxETH
@@ -153,21 +154,8 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
                     strategyAsset,
                     strategyAmount
                 );
-            }
-        }
 
-        uint256[] memory amountsIn = new uint256[](tokens.length);
-        address[] memory poolAssets = new address[](tokens.length);
-        for (uint256 i = 0; i < tokens.length; ++i) {
-            // Convert IERC20 type to address
-            poolAssets[i] = address(tokens[i]);
-
-            // For each of the mapped assets
-            for (uint256 j = 0; j < strategyAssetsToPoolAssets.length; ++j) {
-                // If the pool asset is the same as the mapped asset
-                if (poolAssets[i] == strategyAssetsToPoolAssets[j]) {
-                    amountsIn[i] = strategyAssetAmountsToPoolAssetAmounts[j];
-                }
+                amountsIn[assetIndex] = strategyAssetAmountsToPoolAssetAmounts[i];
             }
         }
 
@@ -291,51 +279,33 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
 
         // STEP 1 - Calculate the Balancer pool assets and amounts from the vault collateral assets
 
-        // Get all the supported balancer pool assets
-        (IERC20[] memory tokens, , ) = balancerVault.getPoolTokens(
-            balancerPoolId
-        );
         // Calculate the balancer pool assets and amounts to withdraw
-        uint256[] memory poolAssetsAmountsOut = new uint256[](tokens.length);
-        address[] memory poolAssets = new address[](tokens.length);
+        uint256[] memory poolAssetsAmountsOut = new uint256[](poolAssets.length);
         // Is the wrapped asset amount indexed by the assets array, not the order of the Balancer pool tokens
         // eg wstETH and sfrxETH amounts, not the stETH and frxETH amounts
         uint256[] memory strategyAssetsToPoolAssetsAmounts = new uint256[](
             _strategyAssets.length
         );
 
-        // For each of the Balancer pool assets
-        for (uint256 i = 0; i < tokens.length; ++i) {
-            poolAssets[i] = address(tokens[i]);
+        for (uint256 i = 0; i < _strategyAssets.length; ++i) {
+            (address poolAsset, uint256 poolAssetAmount) = _toPoolAsset(
+                _strategyAssets[i],
+                _strategyAmounts[i]
+            );
 
-            // Convert the Balancer pool asset back to a vault collateral asset
-            address strategyAsset = _fromPoolAsset(poolAssets[i]);
+            if (poolAssetAmount > 0) {
+                strategyAssetsToPoolAssetsAmounts[i] = poolAssetAmount;
 
-            // for each of the vault assets
-            for (uint256 j = 0; j < _strategyAssets.length; ++j) {
-                // If the vault asset equals the vault asset mapped from the Balancer pool asset
-                if (_strategyAssets[j] == strategyAsset) {
-                    (, poolAssetsAmountsOut[i]) = _toPoolAsset(
-                        strategyAsset,
-                        _strategyAmounts[j]
-                    );
-                    strategyAssetsToPoolAssetsAmounts[j] = poolAssetsAmountsOut[
-                        i
-                    ];
-
-                    /* Because of the potential Balancer rounding error mentioned below
-                     * the contract might receive 1-2 WEI smaller amount than required
-                     * in the withdraw user data encoding. If slightly lesser token amount
-                     * is received the strategy can not unwrap the pool asset as it is
-                     * smaller than expected.
-                     *
-                     * For that reason we `overshoot` the required tokens expected to
-                     * circumvent the error
-                     */
-                    if (poolAssetsAmountsOut[i] > 0) {
-                        poolAssetsAmountsOut[i] += 2;
-                    }
-                }
+                /* Because of the potential Balancer rounding error mentioned below
+                    * the contract might receive 1-2 WEI smaller amount than required
+                    * in the withdraw user data encoding. If slightly lesser token amount
+                    * is received the strategy can not unwrap the pool asset as it is
+                    * smaller than expected.
+                    *
+                    * For that reason we `overshoot` the required tokens expected to
+                    * circumvent the error
+                    */
+                poolAssetsAmountsOut[poolAssetIndex[poolAsset]] = poolAssetAmount + 2;
             }
         }
 
@@ -387,7 +357,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
                  * https://github.com/balancer/balancer-v2-monorepo/issues/2541
                  * which is an extra reason why this field is empty.
                  */
-                new uint256[](tokens.length),
+                new uint256[](poolAssets.length),
                 userData,
                 false
             );
@@ -452,15 +422,7 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         uint256 BPTtoWithdraw = IERC20(platformAddress).balanceOf(
             address(this)
         );
-        // Get the balancer pool assets and their total balances
-        (IERC20[] memory tokens, , ) = balancerVault.getPoolTokens(
-            balancerPoolId
-        );
-        uint256[] memory minAmountsOut = new uint256[](tokens.length);
-        address[] memory poolAssets = new address[](tokens.length);
-        for (uint256 i = 0; i < tokens.length; ++i) {
-            poolAssets[i] = address(tokens[i]);
-        }
+        uint256[] memory minAmountsOut = new uint256[](poolAssets.length);
 
         // STEP 2 - Withdraw the Balancer pool assets from the pool
         /* Proportional exit: EXACT_BPT_IN_FOR_TOKENS_OUT:
@@ -494,8 +456,8 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
 
         // STEP 3 - Convert the balancer pool assets to the vault collateral assets and send to the vault
         // For each of the Balancer pool assets
-        for (uint256 i = 0; i < tokens.length; ++i) {
-            address poolAsset = address(tokens[i]);
+        for (uint256 i = 0; i < poolAssets.length; ++i) {
+            address poolAsset = poolAssets[i];
             // Convert the balancer pool asset to the strategy asset
             address strategyAsset = _fromPoolAsset(poolAsset);
             // Get the balancer pool assets withdraw from the pool plus any that were already in this strategy contract
