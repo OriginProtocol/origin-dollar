@@ -2003,12 +2003,7 @@ async function compoundFixture() {
   await deploy("StandaloneCompound", {
     from: governorAddr,
     contract: "CompoundStrategy",
-    args: [
-      [
-        addresses.dead,
-        governorAddr, // Using Governor in place of Vault here
-      ],
-    ],
+    args: [[addresses.dead, fixture.vault.address]],
   });
 
   fixture.cStandalone = await ethers.getContract("StandaloneCompound");
@@ -2025,6 +2020,12 @@ async function compoundFixture() {
   await fixture.cStandalone
     .connect(sGovernor)
     .setHarvesterAddress(fixture.harvester.address);
+
+  // impersonate the vault and strategy
+  fixture.vaultSigner = await impersonateAndFundContract(fixture.vault.address);
+  fixture.strategySigner = await impersonateAndFundContract(
+    fixture.cStandalone.address
+  );
 
   await fixture.usdc.transfer(
     await fixture.matt.getAddress(),

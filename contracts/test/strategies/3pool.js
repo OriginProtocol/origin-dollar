@@ -5,6 +5,7 @@ const { createFixtureLoader, threepoolVaultFixture } = require("../_fixture");
 const { ousdUnits, units, expectApproxSupply, isFork } = require("../helpers");
 const { shouldBehaveLikeGovernable } = require("../behaviour/governable");
 const { shouldBehaveLikeHarvester } = require("../behaviour/harvester");
+const { shouldBehaveLikeStrategy } = require("../behaviour/strategy");
 
 describe("3Pool Strategy", function () {
   if (isFork) {
@@ -38,6 +39,13 @@ describe("3Pool Strategy", function () {
     ...fixture,
     strategy: fixture.threePoolStrategy,
     rewards: [{ asset: fixture.crv, expected: parseUnits("2") }],
+  }));
+
+  shouldBehaveLikeStrategy(() => ({
+    ...fixture,
+    strategy: fixture.threePoolStrategy,
+    assets: [fixture.dai, fixture.usdc, fixture.usdt],
+    vault: fixture.vault,
   }));
 
   const mint = async (amount, asset) => {

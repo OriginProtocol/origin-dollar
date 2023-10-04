@@ -215,7 +215,7 @@ const deployThreePoolStrategy = async () => {
     cThreePoolStrategy.connect(sDeployer)[
       // eslint-disable-next-line no-unexpected-multiline
       "initialize(address[],address[],address[],address,address)"
-    ]([assetAddresses.CRV], [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT], [assetAddresses.ThreePoolToken, assetAddresses.ThreePoolToken, assetAddresses.ThreePoolToken], assetAddresses.ThreePoolGauge, assetAddresses.CRVMinter)
+    ]([assetAddresses.CRV], [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT], [assetAddresses.ThreePool, assetAddresses.ThreePool, assetAddresses.ThreePool], assetAddresses.ThreePoolGauge, assetAddresses.CRVMinter)
   );
   log("Initialized ThreePoolStrategy");
 
@@ -304,7 +304,7 @@ const deployConvexStrategy = async () => {
     cConvexStrategy.connect(sDeployer)[
       // eslint-disable-next-line no-unexpected-multiline
       "initialize(address[],address[],address[])"
-    ]([assetAddresses.CRV, assetAddresses.CVX], [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT], [assetAddresses.ThreePoolToken, assetAddresses.ThreePoolToken, assetAddresses.ThreePoolToken])
+    ]([assetAddresses.CRV, assetAddresses.CVX], [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT], [assetAddresses.ThreePool, assetAddresses.ThreePool, assetAddresses.ThreePool])
   );
   log("Initialized ConvexStrategy");
 
