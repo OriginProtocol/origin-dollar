@@ -44,7 +44,13 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
     // Rate providers of the Balancer pool
     IRateProvider[] public poolRateProvidersCache;
 
+    // all the pool assets as returned by the balancerVault.getPoolTokens() function
     address[] public poolAssets;
+    /* A mapping of pool asset address to asset index. With Balancer the
+     * configured order of the pool assets is important and never changes.
+     * For those reasons these assets are cached as they greatly simplify the
+     * code and make it more gas efficient.
+     */
     mapping(address => uint256) public poolAssetIndex;
 
     int256[45] private __reserved;
@@ -548,8 +554,8 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @notice Caches Pool Assets and their index. These will never change 
-     * in a strategy. It's `public` because we already have one strategy 
+     * @notice Caches Pool Assets and their index. These will never change
+     * in a strategy. It's `public` because we already have one strategy
      * initialized without this, would make it easier when upgrading it
      */
     function cachePoolAssets() public {
