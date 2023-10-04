@@ -44,7 +44,10 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
     // Rate providers of the Balancer pool
     IRateProvider[] public poolRateProvidersCache;
 
-    int256[47] private __reserved;
+    address[] public poolAssets;
+    mapping(address => uint256) public poolAssetIndex;
+
+    int256[45] private __reserved;
 
     struct BaseBalancerConfig {
         address rEthAddress; // Address of the rETH token
@@ -109,7 +112,10 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
     ) external onlyGovernor initializer {
         maxWithdrawalDeviation = 1e16;
         maxDepositDeviation = 1e16;
+
+        cachePoolAssets();
         cacheRateProviders();
+
         emit MaxWithdrawalDeviationUpdated(0, maxWithdrawalDeviation);
         emit MaxDepositDeviationUpdated(0, maxDepositDeviation);
 
@@ -128,14 +134,15 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         view
         virtual
     {
-        IERC20[] memory poolAssets = _getPoolAssets();
         require(
             poolAssets.length == _assets.length,
             "Pool assets length mismatch"
         );
         for (uint256 i = 0; i < _assets.length; ++i) {
-            address asset = _fromPoolAsset(address(poolAssets[i]));
-            require(_assets[i] == asset, "Pool assets mismatch");
+            require(
+                _assets[i] == _fromPoolAsset(poolAssets[i]),
+                "Pool assets mismatch"
+            );
         }
     }
 
@@ -313,14 +320,6 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
     function _lpWithdraw(uint256 numBPTTokens) internal virtual;
 
     function _lpWithdrawAll() internal virtual;
-
-    /**
-     * @notice Balancer returns assets and rateProviders for corresponding assets ordered
-     * by numerical order.
-     */
-    function _getPoolAssets() internal view returns (IERC20[] memory assets) {
-        (assets, , ) = balancerVault.getPoolTokens(balancerPoolId);
-    }
 
     /**
      * @dev If an asset is rebasing the Balancer pools have a wrapped versions of assets
@@ -526,7 +525,7 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
     /**
      * @notice Returns the rate supplied by the Balancer configured rate
      * provider. Rate is used to normalize the token to common underlying
-     * pool denominator. (ETH for ETH Liquid staking derivatives)
+     * pool denominator. (ETH for ETH Liquid staking derivatives).
      *
      * @param _asset Address of the Balancer pool asset
      * @return rate of the corresponding asset
@@ -537,22 +536,30 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         virtual
         returns (uint256)
     {
+        IRateProvider rateProvider = poolRateProvidersCache[
+            poolAssetIndex[_asset]
+        ];
+
+        if (address(rateProvider) == address(0)) {
+            return 1 ether;
+        }
+
+        return rateProvider.getRate();
+    }
+
+    /**
+     * @notice Caches Pool Assets and their index. These will never change 
+     * in a strategy. It's `public` because we already have one strategy 
+     * initialized without this, would make it easier when upgrading it
+     */
+    function cachePoolAssets() public {
         (IERC20[] memory tokens, , ) = balancerVault.getPoolTokens(
             balancerPoolId
         );
 
-        for (uint256 i = 0; i < poolRateProvidersCache.length; ++i) {
-            // _assets and corresponding rate providers are all in the same order
-            if (address(tokens[i]) == _asset) {
-                // rate provider doesn't exist, defaults to 1e18
-                if (address(poolRateProvidersCache[i]) == address(0)) {
-                    return 1e18;
-                }
-                return poolRateProvidersCache[i].getRate();
-            }
+        for (uint256 i = 0; i < tokens.length; ++i) {
+            poolAssets.push(address(tokens[i]));
+            poolAssetIndex[address(tokens[i])] = i;
         }
-
-        // should never happen
-        assert(false);
     }
 }
