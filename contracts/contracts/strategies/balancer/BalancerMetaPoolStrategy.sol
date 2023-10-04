@@ -145,7 +145,9 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
             strategyAssetsToPoolAssets[i] = _toPoolAsset(strategyAsset);
 
             if (strategyAmount > 0) {
-                uint256 assetIndex = poolAssetIndex[strategyAssetsToPoolAssets[i]];
+                uint256 assetIndex = poolAssetIndex[
+                    strategyAssetsToPoolAssets[i]
+                ];
 
                 emit Deposit(strategyAsset, platformAddress, strategyAmount);
 
@@ -155,7 +157,9 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
                     strategyAmount
                 );
 
-                amountsIn[assetIndex] = strategyAssetAmountsToPoolAssetAmounts[i];
+                amountsIn[assetIndex] = strategyAssetAmountsToPoolAssetAmounts[
+                    i
+                ];
             }
         }
 
@@ -280,7 +284,9 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
         // STEP 1 - Calculate the Balancer pool assets and amounts from the vault collateral assets
 
         // Calculate the balancer pool assets and amounts to withdraw
-        uint256[] memory poolAssetsAmountsOut = new uint256[](poolAssets.length);
+        uint256[] memory poolAssetsAmountsOut = new uint256[](
+            poolAssets.length
+        );
         // Is the wrapped asset amount indexed by the assets array, not the order of the Balancer pool tokens
         // eg wstETH and sfrxETH amounts, not the stETH and frxETH amounts
         uint256[] memory strategyAssetsToPoolAssetsAmounts = new uint256[](
@@ -297,15 +303,17 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
                 strategyAssetsToPoolAssetsAmounts[i] = poolAssetAmount;
 
                 /* Because of the potential Balancer rounding error mentioned below
-                    * the contract might receive 1-2 WEI smaller amount than required
-                    * in the withdraw user data encoding. If slightly lesser token amount
-                    * is received the strategy can not unwrap the pool asset as it is
-                    * smaller than expected.
-                    *
-                    * For that reason we `overshoot` the required tokens expected to
-                    * circumvent the error
-                    */
-                poolAssetsAmountsOut[poolAssetIndex[poolAsset]] = poolAssetAmount + 2;
+                 * the contract might receive 1-2 WEI smaller amount than required
+                 * in the withdraw user data encoding. If slightly lesser token amount
+                 * is received the strategy can not unwrap the pool asset as it is
+                 * smaller than expected.
+                 *
+                 * For that reason we `overshoot` the required tokens expected to
+                 * circumvent the error
+                 */
+                poolAssetsAmountsOut[poolAssetIndex[poolAsset]] =
+                    poolAssetAmount +
+                    2;
             }
         }
 

@@ -112,7 +112,7 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
     ) public virtual override onlyGovernor initializer {
         maxWithdrawalDeviation = 1e16;
         maxDepositDeviation = 1e16;
-        
+
         cachePoolAssets();
         cacheRateProviders();
 
@@ -135,7 +135,10 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
             "Pool assets length mismatch"
         );
         for (uint256 i = 0; i < _assets.length; ++i) {
-            require(_assets[i] == _fromPoolAsset(poolAssets[i]), "Pool assets mismatch");
+            require(
+                _assets[i] == _fromPoolAsset(poolAssets[i]),
+                "Pool assets mismatch"
+            );
         }
     }
 

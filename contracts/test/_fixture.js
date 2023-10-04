@@ -969,7 +969,6 @@ async function tiltBalancerMetaStableWETHPool({
   wethIndex,
   bptToken,
   balancerVault,
-  reth,
   weth,
 }) {
   const amountsIn = Array(assetAddressArray.length).fill(BigNumber.from("0"));

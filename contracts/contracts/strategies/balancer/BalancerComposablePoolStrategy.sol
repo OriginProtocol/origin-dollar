@@ -39,7 +39,10 @@ contract BalancerComposablePoolStrategy is BalancerMetaPoolStrategy {
             "Pool assets length mismatch"
         );
         for (uint256 i = 0; i < _assets.length; ++i) {
-            require(_assets[i] == _fromPoolAsset(poolAssets[i + 1]), "Pool assets mismatch");
+            require(
+                _assets[i] == _fromPoolAsset(poolAssets[i + 1]),
+                "Pool assets mismatch"
+            );
         }
     }
 
