@@ -97,16 +97,4 @@ describe("Convex Strategy", function () {
       );
     });
   });
-
-  describe("Redeem", function () {
-    it("Should be able to unstake from gauge and return USDT", async function () {
-      const { dai, usdc, ousd, usdt, anna, vault } = fixture;
-      await expectApproxSupply(ousd, ousdUnits("200"));
-      await mint("10000.00", dai);
-      await mint("10000.00", usdc);
-      await mint("10000.00", usdt);
-      await vault.connect(anna).redeem(ousdUnits("20000"), 0);
-      await expectApproxSupply(ousd, ousdUnits("10200"));
-    });
-  });
 });

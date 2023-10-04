@@ -9,6 +9,7 @@ const {
 } = require("../test/helpers.js");
 const { deployWithConfirmation, withConfirmation } = require("../utils/deploy");
 const {
+  threeCRVPid,
   metapoolLPCRVPid,
   lusdMetapoolLPCRVPid,
 } = require("../utils/constants");
@@ -249,7 +250,13 @@ const deployConvexStrategy = async () => {
 
   const cVaultProxy = await ethers.getContract("VaultProxy");
   const mockBooster = await ethers.getContract("MockBooster");
-  const mockRewardPool = await ethers.getContract("MockRewardPool");
+  await mockBooster.setPool(threeCRVPid, assetAddresses.ThreePoolToken);
+  // Get the convex rewards pool created in the previous setPool call
+  const poolInfo = await mockBooster.poolInfo(threeCRVPid);
+  const mockRewardPool = await ethers.getContractAt(
+    "MockRewardPool",
+    poolInfo.crvRewards
+  );
 
   await deployWithConfirmation("ConvexStrategyProxy", [], null, true);
   const cConvexStrategyProxy = await ethers.getContract("ConvexStrategyProxy");
@@ -271,7 +278,7 @@ const deployConvexStrategy = async () => {
       [
         mockBooster.address, // _cvxDepositorAddress,
         mockRewardPool.address, // _cvxRewardStakerAddress,
-        9, // _cvxDepositorPTokenId
+        threeCRVPid, // _cvxDepositorPTokenId
       ],
     ],
     null,

@@ -52,13 +52,13 @@ contract MockRewardPool {
         address _stakingToken,
         address _rewardTokenA,
         address _rewardTokenB,
-        // solhint-disable-next-line no-unused-vars
         address _operator
     ) public {
         pid = _pid;
         stakingToken = _stakingToken;
         rewardTokenA = _rewardTokenA;
         rewardTokenB = _rewardTokenB;
+        operator = _operator;
     }
 
     function totalSupply() public view returns (uint256) {

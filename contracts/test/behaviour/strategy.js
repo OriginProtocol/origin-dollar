@@ -18,17 +18,6 @@ const { impersonateAndFund } = require("../../utils/signers");
     }));
  */
 const shouldBehaveLikeStrategy = (context) => {
-  const mint = async (amount, asset) => {
-    const { anna, vault } = context();
-    await asset.connect(anna).mint(await units(amount, asset));
-    await asset
-      .connect(anna)
-      .approve(vault.address, await units(amount, asset));
-    return await vault
-      .connect(anna)
-      .mint(asset.address, await units(amount, asset), 0);
-  };
-
   describe("Strategy behaviour", () => {
     it("Should be a supported asset", async () => {
       const { assets, strategy } = await context();
@@ -80,27 +69,51 @@ const shouldBehaveLikeStrategy = (context) => {
           .withArgs(asset.address, platformAddress, depositAmount.mul(i + 1));
       }
     });
-    it.skip("Should be able to withdraw each asset", async () => {
-      const { dai, usdc, usdt, assets, strategy, vault } = await context();
+    describe("With assets in the strategy", () => {
+      beforeEach(async () => {
+        const { assets, strategy, vault } = await context();
+        const strategySigner = await impersonateAndFund(strategy.address);
+        const vaultSigner = await impersonateAndFund(vault.address);
 
-      await mint("10000", dai);
-      await mint("20000", usdc);
-      await mint("30000", usdt);
+        // deposit some assets into the strategy so we can withdraw them
+        for (const asset of assets) {
+          const depositAmount = await units("10000", asset);
+          // mint some test assets directly into the strategy contract
+          await asset.connect(strategySigner).mint(depositAmount);
+        }
+        await strategy.connect(vaultSigner).depositAll();
+      });
+      it("Should be able to withdraw each asset", async () => {
+        const { assets, strategy, vault } = await context();
+        const platformAddress = await strategy.platformAddress();
+        const vaultSigner = await impersonateAndFund(vault.address);
 
-      const platformAddress = await strategy.platformAddress();
-      const vaultSigner = await impersonateAndFund(vault.address);
+        for (const asset of assets) {
+          const withdrawAmount = await units("8000", asset);
 
-      for (const [i, asset] of Object.entries(assets)) {
-        const withdrawAmount = (await units("10000", asset)).mul(i + 1);
+          const tx = await strategy
+            .connect(vaultSigner)
+            .withdraw(vault.address, asset.address, withdrawAmount);
 
-        const tx = await strategy
-          .connect(vaultSigner)
-          .withdraw(vault.address, asset.address, withdrawAmount);
+          await expect(tx)
+            .to.emit(strategy, "Withdrawal")
+            .withArgs(asset.address, platformAddress, withdrawAmount);
+        }
+      });
+      it("Should be able to withdraw all assets", async () => {
+        const { assets, strategy, vault } = await context();
+        const platformAddress = await strategy.platformAddress();
+        const vaultSigner = await impersonateAndFund(vault.address);
 
-        await expect(tx)
-          .to.emit(strategy, "Withdraw")
-          .withArgs(asset.address, platformAddress, withdrawAmount);
-      }
+        const tx = await strategy.connect(vaultSigner).withdrawAll();
+
+        for (const asset of assets) {
+          const withdrawAmount = await units("10000", asset);
+          await expect(tx)
+            .to.emit(strategy, "Withdrawal")
+            .withArgs(asset.address, platformAddress, withdrawAmount);
+        }
+      });
     });
   });
 };

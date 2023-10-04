@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { IBurnableERC20 } from "../BurnableERC20.sol";
 
 import { IMintableERC20 } from "../MintableERC20.sol";
 import { ICurvePool } from "../../strategies/curve/ICurvePool.sol";
@@ -62,7 +63,8 @@ contract MockCurvePool {
         // solhint-disable-next-line no-unused-vars
         uint256 _minAmount
     ) external {
-        IERC20(lpToken).transferFrom(msg.sender, address(this), _amount);
+        // Burn the Curve LP tokens
+        IBurnableERC20(lpToken).burnFrom(msg.sender, _amount);
         uint256[] memory amounts = new uint256[](coins.length);
         amounts[uint128(_index)] = _amount;
         uint256 amount = calc_withdraw_one_coin(_amount, _index);
@@ -76,17 +78,20 @@ contract MockCurvePool {
     }
 
     // solhint-disable-next-line no-unused-vars
-    function remove_liquidity(uint256 _amount, uint256[3] memory _min_amounts)
+    function remove_liquidity(uint256 _lpAmount, uint256[3] memory _min_amounts)
         public
     {
-        IERC20(lpToken).transferFrom(msg.sender, address(this), _amount);
+        // Burn the Curve LP tokens
+        IBurnableERC20(lpToken).burnFrom(msg.sender, _lpAmount);
         uint256 totalSupply = IERC20(lpToken).totalSupply();
         for (uint256 i = 0; i < 3; i++) {
-            uint256 amount = (_amount / totalSupply) *
-                IERC20(coins[i]).balanceOf(address(this));
-            IERC20(coins[i]).transfer(msg.sender, amount);
+            uint256 coinAmount = totalSupply > 0
+                ? (_lpAmount / totalSupply) *
+                    IERC20(coins[i]).balanceOf(address(this))
+                : IERC20(coins[i]).balanceOf(address(this));
+            IERC20(coins[i]).transfer(msg.sender, coinAmount);
             // solhint-disable-next-line reentrancy
-            balances[i] = balances[i] - amount;
+            balances[i] = balances[i] - coinAmount;
         }
     }
 
@@ -94,15 +99,29 @@ contract MockCurvePool {
         uint256[3] memory _amounts,
         uint256 _max_burned_tokens
     ) public {
-        IERC20(lpToken).transferFrom(
-            msg.sender,
-            address(this),
-            _max_burned_tokens
-        );
+        // Burn the Curve LP tokens
+        IBurnableERC20(lpToken).burnFrom(msg.sender, _max_burned_tokens);
+        // For each coin, transfer to the caller
         for (uint256 i = 0; i < _amounts.length; i++) {
             IERC20(coins[i]).transfer(msg.sender, _amounts[i]);
-            // solhint-disable-next-line reentrancy
             balances[i] = balances[i] - _amounts[i];
         }
+    }
+
+    // Dumb implementation that sums the scaled amounts
+    function calc_token_amount(uint256[3] memory _amounts, bool)
+        public
+        view
+        returns (uint256 lpTokens)
+    {
+        for (uint256 i = 0; i < _amounts.length; i++) {
+            uint256 assetDecimals = Helpers.getDecimals(coins[i]);
+            // Convert to 1e18 and add to lpTokens
+            lpTokens += _amounts[i].scaleBy(18, assetDecimals);
+        }
+    }
+
+    function fee() external pure returns (uint256) {
+        return 1000000;
     }
 }
