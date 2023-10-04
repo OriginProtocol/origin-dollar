@@ -67,10 +67,9 @@ contract MockCurvePool {
         IBurnableERC20(lpToken).burnFrom(msg.sender, _amount);
         uint256[] memory amounts = new uint256[](coins.length);
         amounts[uint128(_index)] = _amount;
-        uint256 amount = calc_withdraw_one_coin(_amount, _index);
-        IERC20(coins[uint128(_index)]).transfer(msg.sender, amount);
-        // solhint-disable-next-line reentrancy
-        balances[uint128(_index)] = balances[uint128(_index)] - amount;
+        uint256 coinAmount = calc_withdraw_one_coin(_amount, _index);
+        balances[uint128(_index)] -= coinAmount;
+        IERC20(coins[uint128(_index)]).transfer(msg.sender, coinAmount);
     }
 
     function get_virtual_price() external pure returns (uint256) {
@@ -89,9 +88,8 @@ contract MockCurvePool {
                 ? (_lpAmount / totalSupply) *
                     IERC20(coins[i]).balanceOf(address(this))
                 : IERC20(coins[i]).balanceOf(address(this));
+            balances[i] -= coinAmount;
             IERC20(coins[i]).transfer(msg.sender, coinAmount);
-            // solhint-disable-next-line reentrancy
-            balances[i] = balances[i] - coinAmount;
         }
     }
 
@@ -103,8 +101,8 @@ contract MockCurvePool {
         IBurnableERC20(lpToken).burnFrom(msg.sender, _max_burned_tokens);
         // For each coin, transfer to the caller
         for (uint256 i = 0; i < _amounts.length; i++) {
+            balances[i] -= _amounts[i];
             IERC20(coins[i]).transfer(msg.sender, _amounts[i]);
-            balances[i] = balances[i] - _amounts[i];
         }
     }
 
