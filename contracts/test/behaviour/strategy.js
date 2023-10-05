@@ -1,7 +1,9 @@
 const { expect } = require("chai");
+const { Wallet } = require("ethers");
 
-const { units } = require("../helpers");
+const { units, usdcUnits } = require("../helpers");
 const { impersonateAndFund } = require("../../utils/signers");
+const { parseUnits } = require("ethers/lib/utils");
 
 /**
  *
@@ -28,6 +30,22 @@ const shouldBehaveLikeStrategy = (context) => {
 
       for (const asset of assets) {
         expect(await strategy.supportsAsset(asset.address)).to.be.true;
+      }
+    });
+    it("Should check asset balances", async () => {
+      const { assets, josh, strategy } = context();
+
+      for (const asset of assets) {
+        // assume there are no assets already in the strategy
+        expect(
+          await strategy.connect(josh).checkBalance(asset.address)
+        ).to.equal(0);
+
+        // This uses a transaction to call a view function so the gas usage can be reported.
+        const tx = await strategy
+          .connect(josh)
+          .populateTransaction.checkBalance(asset.address);
+        await josh.sendTransaction(tx);
       }
     });
     it("Should be able to deposit each asset", async () => {
@@ -82,7 +100,7 @@ const shouldBehaveLikeStrategy = (context) => {
           .withArgs(asset.address, platformAddress, depositAmount.mul(i + 1));
       }
     });
-    describe("With assets in the strategy", () => {
+    describe("with assets in the strategy", () => {
       beforeEach(async () => {
         const { assets, strategy, vault } = await context();
         const strategySigner = await impersonateAndFund(strategy.address);
@@ -127,6 +145,69 @@ const shouldBehaveLikeStrategy = (context) => {
             .withArgs(asset.address, platformAddress, withdrawAmount);
         }
       });
+    });
+    it("Should allow transfer of arbitrary tokens by Governor", async () => {
+      const { strategy, usdc, weth, governor } = context();
+
+      const strategySigner = await impersonateAndFund(strategy.address);
+
+      // Add some USDC to the strategy
+      const usdcAmount = usdcUnits("987");
+      await usdc.connect(strategySigner).mint(usdcAmount);
+      // Governor can take the USDC from the strategy
+      const usdcTx = await strategy
+        .connect(governor)
+        .transferToken(usdc.address, usdcAmount);
+      await expect(usdcTx)
+        .to.emit(usdc, "Transfer")
+        .withArgs(strategy.address, governor.address, usdcAmount);
+
+      // Add some WETH to the strategy
+      const wethAmount = parseUnits("123");
+      await weth.connect(strategySigner).mint(wethAmount);
+      // Governor can take the WETH from the strategy
+      const wethTx = await strategy
+        .connect(governor)
+        .transferToken(weth.address, wethAmount);
+      await expect(wethTx)
+        .to.emit(weth, "Transfer")
+        .withArgs(strategy.address, governor.address, wethAmount);
+    });
+    it("Should not allow transfer of arbitrary token by non-Governor", async () => {
+      const { strategy, weth, strategist, matt, harvester, vault } = context();
+
+      const vaultSigner = await impersonateAndFund(vault.address);
+      const harvesterSigner = await impersonateAndFund(harvester.address);
+
+      for (const signer of [strategist, matt, harvesterSigner, vaultSigner]) {
+        await expect(
+          strategy.connect(signer).transferToken(weth.address, parseUnits("8"))
+        ).to.be.revertedWith("Caller is not the Governor");
+      }
+    });
+    it("Should allow the harvester to be set by the governor", async () => {
+      const { governor, harvester, strategy } = context();
+      const randomAddress = Wallet.createRandom().address;
+
+      const tx = await strategy
+        .connect(governor)
+        .setHarvesterAddress(randomAddress);
+      await expect(tx)
+        .to.emit(strategy, "HarvesterAddressesUpdated")
+        .withArgs(harvester.address, randomAddress);
+    });
+    it("Should not allow the harvester to be set by non-governor", async () => {
+      const { strategy, strategist, matt, harvester, vault } = context();
+      const randomAddress = Wallet.createRandom().address;
+
+      const vaultSigner = await impersonateAndFund(vault.address);
+      const harvesterSigner = await impersonateAndFund(harvester.address);
+
+      for (const signer of [strategist, matt, harvesterSigner, vaultSigner]) {
+        await expect(
+          strategy.connect(signer).setHarvesterAddress(randomAddress)
+        ).to.revertedWith("Caller is not the Governor");
+      }
     });
   });
 };

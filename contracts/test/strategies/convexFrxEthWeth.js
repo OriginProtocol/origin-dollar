@@ -38,6 +38,7 @@ describe("Convex frxETH/ETH Strategy", function () {
     strategy: fixture.convexFrxEthWethStrategy,
     assets: [fixture.weth, fixture.frxETH],
     vault: fixture.oethVault,
+    harvester: fixture.oethHarvester,
   }));
 
   describe("Setup", () => {
