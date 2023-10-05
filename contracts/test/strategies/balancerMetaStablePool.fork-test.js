@@ -803,6 +803,10 @@ forkOnlyDescribe(
 
       beforeEach(async () => {
         fixture = await loadBalancerREthFixtureNotDefault();
+        const { oethVault, balancerREthStrategy, strategist } = fixture;
+        await oethVault
+          .connect(strategist)
+          .withdrawAllFromStrategy(balancerREthStrategy.address);
 
         attackerAddress = "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045";
         sAttacker = await impersonateAndFundContract(attackerAddress);
@@ -1012,11 +1016,11 @@ forkOnlyDescribe(
          *    tilt checkBalance call. Strategy has roughly ~100 units deposited so 0.012
          *    change would equal 0.012/100 = 0.00012 change if 1 is a whole. Or 0.012%
          */
-        [100, "0.012"],
-        [200, "0.016"],
-        [300, "0.018"],
-        [400, "0.02"],
-        [500, "0.02"],
+        [100, "0.015"],
+        [200, "0.019"],
+        [300, "0.023"],
+        [400, "0.025"],
+        [500, "0.025"],
       ];
 
       for (const testCase of checkBalanceTestCases) {

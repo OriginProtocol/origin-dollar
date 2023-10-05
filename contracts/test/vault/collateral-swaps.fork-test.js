@@ -435,8 +435,8 @@ forkOnlyDescribe("ForkTest: Collateral swaps", function () {
           error: "Dai/insufficient-balance",
           from: "DAI",
           to: "USDC",
-          fromAmount: 5000000,
-          minToAssetAmount: 2900000,
+          fromAmount: 30000000,
+          minToAssetAmount: 29000000,
         },
         {
           error: "SafeERC20: low-level call failed",
@@ -449,8 +449,8 @@ forkOnlyDescribe("ForkTest: Collateral swaps", function () {
           error: "ERC20: transfer amount exceeds balance",
           from: "USDC",
           to: "DAI",
-          fromAmount: 50000000,
-          minToAssetAmount: 2990000,
+          fromAmount: 30000000,
+          minToAssetAmount: 29900000,
         },
       ];
 
