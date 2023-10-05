@@ -635,8 +635,6 @@ describe("1Inch Swapper", () => {
         .connect(strategist)
         .mintTo(mock1InchSwapRouter.address, toAmount.mul(2));
 
-      await swapper1Inch.approveAssets([weth.address]);
-
       const tx = swapper1Inch
         .connect(strategist)
         .swap(weth.address, frxETH.address, fromAmount, toAmount, data);
@@ -689,8 +687,6 @@ describe("1Inch Swapper", () => {
       await frxETH
         .connect(strategist)
         .mintTo(swapper1Inch.address, toAmount.mul(2));
-
-      await swapper1Inch.approveAssets([weth.address]);
 
       const tx = swapper1Inch
         .connect(strategist)
