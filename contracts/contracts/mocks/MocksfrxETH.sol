@@ -45,9 +45,9 @@ contract MocksfrxETH is MintableERC20 {
         address receiver,
         address owner
     ) external returns (uint256 assets) {
-        ERC20(frxETH).transfer(receiver, shares);
-
         _burn(owner, shares);
+
+        ERC20(frxETH).transfer(receiver, shares);
 
         assets = shares;
     }
@@ -57,9 +57,9 @@ contract MocksfrxETH is MintableERC20 {
         address receiver,
         address owner
     ) external returns (uint256 shares) {
-        ERC20(frxETH).transfer(receiver, assets);
-
         _burn(owner, assets);
+
+        ERC20(frxETH).transfer(receiver, assets);
 
         shares = assets;
     }
