@@ -39,8 +39,7 @@ describe("FraxETH Strategy", function () {
   });
 
   describe("Redeem", function () {
-    // TODO: Debug and fix this test
-    it.skip("Should allow redeem", async () => {
+    it("Should allow redeem", async () => {
       const {
         daniel,
         domen,
