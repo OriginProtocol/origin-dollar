@@ -12,6 +12,7 @@ const {
   threeCRVPid,
   metapoolLPCRVPid,
   lusdMetapoolLPCRVPid,
+  frxEthWethPoolLpPID,
 } = require("../utils/constants");
 
 const log = require("../utils/logger")("deploy:001_core");
@@ -305,6 +306,101 @@ const deployConvexStrategy = async () => {
       // eslint-disable-next-line no-unexpected-multiline
       "initialize(address[],address[],address[])"
     ]([assetAddresses.CRV, assetAddresses.CVX], [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT], [assetAddresses.ThreePool, assetAddresses.ThreePool, assetAddresses.ThreePool])
+  );
+  log("Initialized ConvexStrategy");
+
+  await withConfirmation(
+    cConvexStrategy.connect(sDeployer).transferGovernance(governorAddr)
+  );
+  log(`ConvexStrategy transferGovernance(${governorAddr}) called`);
+  // On Mainnet the governance transfer gets executed separately, via the
+  // multi-sig wallet. On other networks, this migration script can claim
+  // governance by the governor.
+  if (!isMainnet) {
+    await withConfirmation(
+      cConvexStrategy
+        .connect(sGovernor) // Claim governance with governor
+        .claimGovernance()
+    );
+    log("Claimed governance for ConvexStrategy");
+  }
+  return cConvexStrategy;
+};
+
+/**
+ * Deploys a Convex Strategy for the Curve frxETH/WETH pool
+ */
+const deployConvexFrxEthWethStrategy = async () => {
+  const assetAddresses = await getAssetAddresses(deployments);
+  const { deployerAddr, governorAddr } = await getNamedAccounts();
+  // Signers
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+  const sGovernor = await ethers.provider.getSigner(governorAddr);
+
+  const cVaultProxy = await ethers.getContract("OETHVaultProxy");
+  const mockBooster = await ethers.getContract("MockBooster");
+  await mockBooster.setPool(
+    frxEthWethPoolLpPID,
+    assetAddresses.CurveFrxEthWethPool
+  );
+  // Get the convex rewards pool created in the previous setPool call
+  const poolInfo = await mockBooster.poolInfo(frxEthWethPoolLpPID);
+  const mockRewardPool = await ethers.getContractAt(
+    "MockRewardPool",
+    poolInfo.crvRewards
+  );
+
+  await deployWithConfirmation("ConvexFrxEthWethStrategyProxy", [], null, true);
+  const cConvexFrxEthWethStrategyProxy = await ethers.getContract(
+    "ConvexFrxEthWethStrategyProxy"
+  );
+
+  const lCurveTwoCoinLib = await ethers.getContract("CurveTwoCoinLib");
+  const libraries = {
+    // We are intentionally assigning the two coin lib to the three coin lib
+    // they have the same ABI
+    CurveThreeCoinLib: lCurveTwoCoinLib.address,
+  };
+
+  const dConvexStrategy = await deployWithConfirmation(
+    "ConvexStrategy",
+    [
+      [assetAddresses.CurveFrxEthWethPool, cVaultProxy.address],
+      [
+        2, // Number of coins in the Curve pool
+        assetAddresses.CurveFrxEthWethPool,
+        assetAddresses.CurveFrxEthWethPool,
+      ],
+      [
+        mockBooster.address, // _cvxDepositorAddress,
+        mockRewardPool.address, // _cvxRewardStakerAddress,
+        frxEthWethPoolLpPID, // _cvxDepositorPTokenId
+      ],
+    ],
+    null,
+    true,
+    libraries
+  );
+  const cConvexStrategy = await ethers.getContractAt(
+    "ConvexStrategy",
+    cConvexFrxEthWethStrategyProxy.address
+  );
+
+  await withConfirmation(
+    cConvexFrxEthWethStrategyProxy["initialize(address,address,bytes)"](
+      dConvexStrategy.address,
+      deployerAddr,
+      []
+    )
+  );
+  log("Initialized ConvexFrxEthWethStrategyProxy");
+
+  // Initialize Strategies
+  await withConfirmation(
+    cConvexStrategy.connect(sDeployer)[
+      // eslint-disable-next-line no-unexpected-multiline
+      "initialize(address[],address[],address[])"
+    ]([assetAddresses.CRV, assetAddresses.CVX], [assetAddresses.WETH, assetAddresses.frxETH], [assetAddresses.CurveFrxEthWethPool, assetAddresses.CurveFrxEthWethPool])
   );
   log("Initialized ConvexStrategy");
 
@@ -1284,6 +1380,7 @@ const main = async () => {
   await deployConvexStrategy();
   await deployConvexOUSDMetaStrategy();
   await deployConvexLUSDMetaStrategy();
+  await deployConvexFrxEthWethStrategy();
   await deployFraxEthStrategy();
   const [harvesterProxy, oethHarvesterProxy] = await deployHarvesters();
   await configureVault();

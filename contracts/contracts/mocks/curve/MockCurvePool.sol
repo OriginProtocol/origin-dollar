@@ -102,7 +102,9 @@ contract MockCurvePool {
         // For each coin, transfer to the caller
         for (uint256 i = 0; i < _amounts.length; i++) {
             balances[i] -= _amounts[i];
-            IERC20(coins[i]).transfer(msg.sender, _amounts[i]);
+            if (_amounts[i] > 0) {
+                IERC20(coins[i]).transfer(msg.sender, _amounts[i]);
+            }
         }
     }
 

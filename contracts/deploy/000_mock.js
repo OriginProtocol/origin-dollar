@@ -1,6 +1,8 @@
 const { parseUnits } = require("ethers").utils;
 const { isMainnetOrFork } = require("../test/helpers");
+const addresses = require("../utils/addresses");
 const { threeCRVPid } = require("../utils/constants");
+const { replaceContractAt, hardhatSetBalance } = require("../utils/hardhat");
 
 const {
   abi: FACTORY_ABI,
@@ -37,7 +39,6 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     "MockUSDC",
     "MockDAI",
     "MockNonStandardToken",
-    "MockWETH",
     "MockOGV",
     "MockAave",
     "MockRETH",
@@ -47,6 +48,12 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
   for (const contract of assetContracts) {
     await deploy(contract, { from: deployerAddr });
   }
+
+  await deploy("MockWETH", { from: deployerAddr });
+  const mockWETH = await ethers.getContract("MockWETH");
+  // Replace WETH contract with MockWETH as some contracts have the WETH address hardcoded.
+  await replaceContractAt(addresses.mainnet.WETH, mockWETH);
+  await hardhatSetBalance(addresses.mainnet.WETH, "999999999999999");
 
   await deploy("MocksfrxETH", {
     from: deployerAddr,
@@ -259,6 +266,12 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     from: deployerAddr,
   });
 
+  const frxETH = await ethers.getContract("MockfrxETH");
+  await deploy("MockCurveFrxEthWethPool", {
+    from: deployerAddr,
+    args: [[addresses.mainnet.WETH, frxETH.address]],
+  });
+
   // Mock CVX token
   await deploy("MockCVX", {
     from: deployerAddr,
@@ -320,7 +333,7 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     },
   });
 
-  const weth = await ethers.getContract("MockWETH");
+  const weth = await ethers.getContractAt("MockWETH", addresses.mainnet.WETH);
   await deploy("MockUniswapV3Router", {
     from: deployerAddr,
     contract: {
