@@ -50,10 +50,11 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
   }
 
   await deploy("MockWETH", { from: deployerAddr });
-  const mockWETH = await ethers.getContract("MockWETH");
   // Replace WETH contract with MockWETH as some contracts have the WETH address hardcoded.
+  const mockWETH = await ethers.getContract("MockWETH");
   await replaceContractAt(addresses.mainnet.WETH, mockWETH);
   await hardhatSetBalance(addresses.mainnet.WETH, "999999999999999");
+  const weth = await ethers.getContractAt("MockWETH", addresses.mainnet.WETH);
 
   await deploy("MocksfrxETH", {
     from: deployerAddr,
@@ -333,7 +334,6 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     },
   });
 
-  const weth = await ethers.getContractAt("MockWETH", addresses.mainnet.WETH);
   await deploy("MockUniswapV3Router", {
     from: deployerAddr,
     contract: {
