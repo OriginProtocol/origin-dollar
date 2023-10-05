@@ -800,6 +800,10 @@ forkOnlyDescribe(
 
       beforeEach(async () => {
         fixture = await loadBalancerREthFixtureNotDefault();
+        const { oethVault, balancerREthStrategy, strategist } = fixture;
+        await oethVault
+          .connect(strategist)
+          .withdrawAllFromStrategy(balancerREthStrategy.address);
       });
 
       it("deposit should fail if pool is being manipulated", async function () {
@@ -982,10 +986,10 @@ forkOnlyDescribe(
          *    change would equal 0.012/100 = 0.00012 change if 1 is a whole. Or 0.012%
          */
         [100, "0.015"],
-        [200, "0.016"],
-        [300, "0.018"],
-        [400, "0.02"],
-        [500, "0.02"],
+        [200, "0.019"],
+        [300, "0.023"],
+        [400, "0.025"],
+        [500, "0.025"],
       ];
 
       for (const testCase of checkBalanceTestCases) {

@@ -16,6 +16,7 @@ main()
     fi
 
     is_coverage=("$REPORT_COVERAGE" == "true");
+    is_trace=("$TRACE" == "true");
 
     if $is_local; then
         # When not running on CI/CD, make sure there's an env file
@@ -74,6 +75,10 @@ main()
     else
         # Run specifc files when a param is given
         params+="$1"
+    fi
+
+    if [[ $is_trace == "true" ]]; then
+        params+=" --trace"
     fi
 
     if [[ $is_coverage == "true" ]]; then

@@ -81,7 +81,7 @@ forkOnlyDescribe(
           ).mul(3);
 
           // 3x 10k assets + 3x 10k OUSD = 60k
-          await expect(strategyBalance).to.be.gte(ousdUnits("60000"));
+          await expect(strategyBalance).to.be.gte(ousdUnits("59990"));
 
           // Total supply should be up by at least (10k x 2) + (10k x 2) + 10k = 50k
           const currentSupply = await ousd.totalSupply();

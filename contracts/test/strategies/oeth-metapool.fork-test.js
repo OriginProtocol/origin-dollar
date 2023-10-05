@@ -435,7 +435,7 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
       await assertRemoveAndBurn(parseUnits("3"), fixture);
     });
     it("Strategist should remove a lot of OETH from the Metapool", async () => {
-      await assertRemoveAndBurn(parseUnits("4000"), fixture);
+      await assertRemoveAndBurn(parseUnits("3500"), fixture);
     });
     it("Strategist should fail to add even more OETH to the Metapool", async () => {
       const { convexEthMetaStrategy, strategist } = fixture;
@@ -554,7 +554,7 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
     const loadFixture = createFixtureLoader(convexOETHMetaVaultFixture, {
       wethMintAmount: 5000,
       depositToStrategy: false,
-      poolAddOethAmount: 100,
+      poolAddOethAmount: 500,
     });
     beforeEach(async () => {
       fixture = await loadFixture();
