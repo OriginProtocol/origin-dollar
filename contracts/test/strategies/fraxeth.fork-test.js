@@ -96,7 +96,8 @@ forkOnlyDescribe("ForkTest: FraxETH Strategy", function () {
           .withdraw(weth.address, weth.address, oethUnits("12"))
       ).to.be.revertedWith("Unexpected asset address");
     });
-    it("Should allow withdrawAll twice", async () => {
+    // TODO: Reenable this after FraxETH strategy has been upgraded
+    it.skip("Should allow withdrawAll twice", async () => {
       const { oethVault, fraxEthStrategy } = fixture;
       const fakeVaultSigner = await impersonateAndFundContract(
         oethVault.address

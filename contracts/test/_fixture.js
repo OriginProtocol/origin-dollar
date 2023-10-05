@@ -2307,7 +2307,6 @@ module.exports = {
   fraxETHStrategyFixture,
   oethMorphoAaveFixture,
   mintWETH,
-  replaceContractAt,
   oeth1InchSwapperFixture,
   oethCollateralSwapFixture,
   ousdCollateralSwapFixture,

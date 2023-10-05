@@ -53,8 +53,7 @@ describe("FraxETH Strategy", function () {
   });
 
   describe("Redeem", function () {
-    // TODO: Debug and fix this test
-    it.skip("Should allow redeem", async () => {
+    it("Should allow redeem", async () => {
       const {
         daniel,
         domen,
@@ -72,9 +71,6 @@ describe("FraxETH Strategy", function () {
       const assets = [frxETH, weth, reth, stETH];
       const mintAmounts = ["10.2333", "20.45", "23.456", "15.3434"];
 
-      // Just assuming a 1:1 for all assets for simplicity of tests
-      await reth.connect(daniel).setExchangeRate(oethUnits("1"));
-
       // Rebase & Allocate
       await oethVault.connect(daniel).rebase();
       await oethVault.connect(daniel).allocate();
@@ -85,10 +81,6 @@ describe("FraxETH Strategy", function () {
           .connect(users[i])
           .mint(assets[i].address, oethUnits(mintAmounts[i]), "0");
       }
-
-      // Rebase & Allocate
-      await oethVault.connect(daniel).rebase();
-      await oethVault.connect(daniel).allocate();
 
       // Now try redeeming
       const supplyBeforeRedeem = await oeth.totalSupply();
@@ -122,8 +114,12 @@ describe("FraxETH Strategy", function () {
       // User should have got other assets
       let netGainedAssetValue = BigNumber.from(0);
       for (let i = 0; i < assets.length; i++) {
+        const redeemPrice = await oethVault.priceUnitRedeem(assets[i].address);
         netGainedAssetValue = netGainedAssetValue.add(
-          userAssetBalanceAfterRedeem[i].sub(userAssetBalanceBeforeRedeem[i])
+          userAssetBalanceAfterRedeem[i]
+            .sub(userAssetBalanceBeforeRedeem[i])
+            .mul(redeemPrice)
+            .div(oethUnits("1"))
         );
       }
       expect(netGainedAssetValue).to.approxEqualTolerance(
