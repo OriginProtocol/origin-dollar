@@ -121,16 +121,16 @@ jobs:
       - run: yarn install --frozen-lockfile
         working-directory: ./contracts
 
-      - run: yarn run test:coverage:fork
+      - run: yarn run test:fork
         working-directory: ./contracts
 
-      - uses: actions/upload-artifact@v3
-        with:
-          name: fork-test-coverage-${{ github.sha }}
-          path: | 
-            ./contracts/coverage.json
-            ./contracts/coverage/**/*
-          retention-days: 1
+      # - uses: actions/upload-artifact@v3
+      #   with:
+      #     name: fork-test-coverage-${{ github.sha }}
+      #     path: | 
+      #       ./contracts/coverage.json
+      #       ./contracts/coverage/**/*
+      #     retention-days: 1
 
   coverage-uploader:
     name: "Upload Coverage Reports"

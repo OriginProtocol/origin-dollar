@@ -51,12 +51,6 @@ main()
         cp -r deployments/mainnet deployments/hardhat
         echo "No running node detected spinning up a fresh one"
     else
-        if ! command -v jq &> /dev/null
-        then
-            echo "jq could not be found try installing it"
-            exit 1
-        fi
-        
         cp -r deployments/localhost deployments/hardhat
     fi
 
@@ -77,6 +71,8 @@ main()
         # Run specifc files when a param is given
         params+="$@"
     fi
+
+    echo "hardhat test ${params[@]}"
 
     if [[ $is_coverage == "true" ]]; then
         echo "Running tests and generating coverage reports..."
