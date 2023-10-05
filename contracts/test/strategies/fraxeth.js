@@ -27,6 +27,7 @@ describe("FraxETH Strategy", function () {
     ...fixture,
     strategy: fixture.fraxEthStrategy,
     assets: [fixture.frxETH],
+    harvester: fixture.oethHarvester,
     vault: fixture.oethVault,
   }));
 

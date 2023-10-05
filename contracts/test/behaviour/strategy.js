@@ -10,13 +10,15 @@ const { parseUnits } = require("ethers/lib/utils");
  * @param {*} context a function that returns a fixture with the additional properties:
  * - strategy: the strategy to test
  * - assets: array of tokens to test
- * - vault: 
+ * - vault: Vault or OETHVault contract
+ * - harvester: Harvester or OETHHarvester contract
  * @example
     shouldBehaveLikeStrategy(() => ({
-        ...fixture,
-        strategy: fixture.convexStrategy,
-        assets: [fixture.dai, fixture.usdc, fixture.usdt],
-        vault: fixture.vault,
+      ...fixture,
+      strategy: fixture.convexFrxEthWethStrategy,
+      assets: [fixture.weth, fixture.frxETH],
+      vault: fixture.oethVault,
+      harvester: fixture.oethHarvester,
     }));
  */
 const shouldBehaveLikeStrategy = (context) => {
@@ -32,73 +34,95 @@ const shouldBehaveLikeStrategy = (context) => {
         expect(await strategy.supportsAsset(asset.address)).to.be.true;
       }
     });
-    it("Should check asset balances", async () => {
-      const { assets, josh, strategy } = context();
+    describe("with no assets in the strategy", () => {
+      it("Should check asset balances", async () => {
+        const { assets, josh, strategy } = context();
 
-      for (const asset of assets) {
-        // assume there are no assets already in the strategy
-        expect(
-          await strategy.connect(josh).checkBalance(asset.address)
-        ).to.equal(0);
+        for (const asset of assets) {
+          // assume there are no assets already in the strategy
+          expect(
+            await strategy.connect(josh).checkBalance(asset.address)
+          ).to.equal(0);
 
-        // This uses a transaction to call a view function so the gas usage can be reported.
-        const tx = await strategy
-          .connect(josh)
-          .populateTransaction.checkBalance(asset.address);
-        await josh.sendTransaction(tx);
-      }
-    });
-    it("Should be able to deposit each asset", async () => {
-      const { assets, strategy, vault } = await context();
+          // This uses a transaction to call a view function so the gas usage can be reported.
+          const tx = await strategy
+            .connect(josh)
+            .populateTransaction.checkBalance(asset.address);
+          await josh.sendTransaction(tx);
+        }
+      });
+      it("Should be able to deposit each asset", async () => {
+        const { assets, strategy, vault } = await context();
 
-      const strategySigner = await impersonateAndFund(strategy.address);
-      const vaultSigner = await impersonateAndFund(vault.address);
+        const strategySigner = await impersonateAndFund(strategy.address);
+        const vaultSigner = await impersonateAndFund(vault.address);
 
-      for (const asset of assets) {
-        const depositAmount = await units("1000", asset);
-        // mint some test assets directly into the strategy contract
-        await asset.connect(strategySigner).mint(depositAmount);
+        for (const asset of assets) {
+          const depositAmount = await units("1000", asset);
+          // mint some test assets directly into the strategy contract
+          await asset.connect(strategySigner).mint(depositAmount);
 
-        const tx = await strategy
-          .connect(vaultSigner)
-          .deposit(asset.address, depositAmount);
+          const tx = await strategy
+            .connect(vaultSigner)
+            .deposit(asset.address, depositAmount);
 
-        const platformAddress = await strategy.assetToPToken(asset.address);
-        await expect(tx)
-          .to.emit(strategy, "Deposit")
-          .withArgs(asset.address, platformAddress, depositAmount);
-      }
+          const platformAddress = await strategy.assetToPToken(asset.address);
+          await expect(tx)
+            .to.emit(strategy, "Deposit")
+            .withArgs(asset.address, platformAddress, depositAmount);
+        }
 
-      // Have to do this after all assets have been added as pool strategies
-      // spread the value equally across all assets
-      for (const asset of assets) {
-        // Has to be >= as AMOs will add extra OTokens to the strategy
-        expect(await strategy.checkBalance(asset.address)).to.be.gte(
-          await units("1000", asset)
-        );
-      }
-    });
-    it("Should be able to deposit all asset together", async () => {
-      const { assets, strategy, vault } = await context();
+        // Have to do this after all assets have been added as pool strategies
+        // spread the value equally across all assets
+        for (const asset of assets) {
+          // Has to be >= as AMOs will add extra OTokens to the strategy
+          expect(await strategy.checkBalance(asset.address)).to.be.gte(
+            await units("1000", asset)
+          );
+        }
+      });
+      it("Should be able to deposit all asset together", async () => {
+        const { assets, strategy, vault } = await context();
 
-      const strategySigner = await impersonateAndFund(strategy.address);
-      const vaultSigner = await impersonateAndFund(vault.address);
+        const strategySigner = await impersonateAndFund(strategy.address);
+        const vaultSigner = await impersonateAndFund(vault.address);
 
-      for (const [i, asset] of assets.entries()) {
-        const depositAmount = await units("1000", asset);
-        // mint some test assets directly into the strategy contract
-        await asset.connect(strategySigner).mint(depositAmount.mul(i + 1));
-      }
+        for (const [i, asset] of assets.entries()) {
+          const depositAmount = await units("1000", asset);
+          // mint some test assets directly into the strategy contract
+          await asset.connect(strategySigner).mint(depositAmount.mul(i + 1));
+        }
 
-      const tx = await strategy.connect(vaultSigner).depositAll();
+        const tx = await strategy.connect(vaultSigner).depositAll();
 
-      for (const [i, asset] of assets.entries()) {
-        const platformAddress = await strategy.assetToPToken(asset.address);
-        const depositAmount = await units("1000", asset);
-        await expect(tx)
-          .to.emit(strategy, "Deposit")
-          .withArgs(asset.address, platformAddress, depositAmount.mul(i + 1));
-      }
+        for (const [i, asset] of assets.entries()) {
+          const platformAddress = await strategy.assetToPToken(asset.address);
+          const depositAmount = await units("1000", asset);
+          await expect(tx)
+            .to.emit(strategy, "Deposit")
+            .withArgs(asset.address, platformAddress, depositAmount.mul(i + 1));
+        }
+      });
+      it("Should not be able to withdraw zero asset amount", async () => {
+        const { assets, strategy, vault } = await context();
+        const vaultSigner = await impersonateAndFund(vault.address);
+
+        for (const asset of assets) {
+          await expect(
+            strategy
+              .connect(vaultSigner)
+              .withdraw(vault.address, asset.address, 0)
+          ).to.be.revertedWith("Must withdraw something");
+        }
+      });
+      it("Should be able to call withdraw all", async () => {
+        const { strategy, vault } = await context();
+        const vaultSigner = await impersonateAndFund(vault.address);
+
+        const tx = await strategy.connect(vaultSigner).withdrawAll();
+
+        await expect(tx).to.not.emit(strategy, "Withdrawal");
+      });
     });
     describe("with assets in the strategy", () => {
       beforeEach(async () => {
@@ -114,7 +138,23 @@ const shouldBehaveLikeStrategy = (context) => {
         }
         await strategy.connect(vaultSigner).depositAll();
       });
-      it("Should be able to withdraw each asset", async () => {
+      it("Should check asset balances", async () => {
+        const { assets, josh, strategy } = context();
+
+        for (const asset of assets) {
+          // assume there are no assets already in the strategy
+          expect(
+            await strategy.connect(josh).checkBalance(asset.address)
+          ).to.gt(0);
+
+          // This uses a transaction to call a view function so the gas usage can be reported.
+          const tx = await strategy
+            .connect(josh)
+            .populateTransaction.checkBalance(asset.address);
+          await josh.sendTransaction(tx);
+        }
+      });
+      it("Should be able to withdraw each asset to the vault", async () => {
         const { assets, strategy, vault } = await context();
         const vaultSigner = await impersonateAndFund(vault.address);
 
@@ -129,6 +169,10 @@ const shouldBehaveLikeStrategy = (context) => {
           await expect(tx)
             .to.emit(strategy, "Withdrawal")
             .withArgs(asset.address, platformAddress, withdrawAmount);
+          // the transfer does not have to come from the strategy. It can come directly from the platform
+          await expect(tx)
+            .to.emit(asset, "Transfer")
+            .withNamedArgs({ to: vault.address, value: withdrawAmount });
         }
       });
       it("Should be able to withdraw all assets", async () => {
@@ -143,6 +187,9 @@ const shouldBehaveLikeStrategy = (context) => {
           await expect(tx)
             .to.emit(strategy, "Withdrawal")
             .withArgs(asset.address, platformAddress, withdrawAmount);
+          await expect(tx)
+            .to.emit(asset, "Transfer")
+            .withNamedArgs({ from: strategy.address, to: vault.address });
         }
       });
     });

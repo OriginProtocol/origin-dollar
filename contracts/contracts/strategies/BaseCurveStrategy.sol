@@ -186,7 +186,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         address _asset,
         uint256 _amount
     ) external override onlyVault nonReentrant {
-        require(_amount > 0, "Invalid amount");
+        require(_amount > 0, "Must withdraw something");
 
         emit Withdrawal(_asset, CURVE_POOL, _amount);
 
@@ -297,9 +297,11 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         for (uint256 i = 0; i < CURVE_BASE_ASSETS; ++i) {
             IERC20 asset = IERC20(_getAsset(i));
             uint256 balance = asset.balanceOf(address(this));
-            asset.safeTransfer(vaultAddress, balance);
+            if (balance > 0) {
+                asset.safeTransfer(vaultAddress, balance);
 
-            emit Withdrawal(address(asset), CURVE_POOL, balance);
+                emit Withdrawal(address(asset), CURVE_POOL, balance);
+            }
         }
     }
 
