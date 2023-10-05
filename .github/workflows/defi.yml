@@ -62,7 +62,7 @@ jobs:
       - name: Run Unit Tests
         env:
           REPORT_GAS: true
-        run: yarn run test
+        run: yarn run test:parallel
         working-directory: ./contracts
 
   contracts-unit-coverage:

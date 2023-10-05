@@ -29,7 +29,6 @@ main()
     # There must be a provider URL in all cases
     if [ -z "$PROVIDER_URL" ]; then echo "Set PROVIDER_URL" && exit 1; fi
     
-    params=()
     if $is_local; then
         # Check if any node is running on port 8545
         defaultNodeUrl=http://localhost:8545
@@ -61,19 +60,22 @@ main()
         cp -r deployments/localhost deployments/hardhat
     fi
 
-    if [ -z "$1" ] || [[ $1 == --* ]]; then
+    params=()
+    if $is_ci; then
+        params+="--deploy-fixture --parallel "
+    fi
+
+    if [ -z "$1" ]; then
         # Run all files with `.fork-test.js` suffix when no file name param is given
         # pass all other params along
-        if [ $is_coverage ]; then
-            # TODO: Debug this later
-            # params+="--testfiles 'test/**/*.fork-test.js'"
-            params+=""
+        if $is_coverage; then
+            params+="--testfiles test/**/*.fork-test.js"
         else
             params+="test/**/*.fork-test.js"
         fi
     else
         # Run specifc files when a param is given
-        params+="$1"
+        params+="$@"
     fi
 
     if [[ $is_coverage == "true" ]]; then
