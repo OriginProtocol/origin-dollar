@@ -1820,7 +1820,6 @@ async function convexFrxEthFixture(
   const fixture = await oethDefaultFixture();
 
   const {
-    isFork,
     convexFrxEthWethStrategy,
     governor,
     oethHarvester,
@@ -1878,11 +1877,9 @@ async function convexFrxEthFixture(
     await oethVault
       .connect(governor)
       .approveStrategy(convexFrxEthWethStrategy.address);
-
     await convexFrxEthWethStrategy
       .connect(governor)
       .setHarvesterAddress(oethHarvester.address);
-
     await oethHarvester
       .connect(governor)
       .setSupportedStrategy(convexFrxEthWethStrategy.address, true);
