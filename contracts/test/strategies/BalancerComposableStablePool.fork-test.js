@@ -202,6 +202,20 @@ forkOnlyDescribe(
         const { reth, frxETH, stETH, josh, oethVault } = fixture;
         await fundAccount([reth, frxETH, stETH], josh, oethVault.address);
       });
+      it("Should fail when depositing with an unsupported asset", async function () {
+        const { sfrxETH, oethVault, strategist, balancerSfrxWstRETHStrategy } =
+          fixture;
+
+        await expect(
+          oethVault
+            .connect(strategist)
+            .depositToStrategy(
+              balancerSfrxWstRETHStrategy.address,
+              [sfrxETH.address],
+              [oethUnits("1")]
+            )
+        ).to.be.revertedWith("Asset unsupported");
+      });
       it("Should deposit 5 stETH, 5 frxETH and 5 rETH in Balancer Composable Stable Pool strategy", async function () {
         const { reth, frxETH, stETH, sfrxETHwstETHrEthBPT } = fixture;
         await depositTest(
