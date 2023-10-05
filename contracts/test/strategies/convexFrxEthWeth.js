@@ -51,5 +51,14 @@ describe("Convex frxETH/ETH Strategy", function () {
       expect(await convexFrxEthWethStrategy.decimals1()).to.equal(18);
       expect(await convexFrxEthWethStrategy.decimals2()).to.equal(0);
     });
+    it("Should not be able to remove platform tokens", async () => {
+      const { frxETH, weth, convexFrxEthWethStrategy } = fixture;
+      await expect(
+        convexFrxEthWethStrategy.removePToken(weth.address)
+      ).to.be.revertedWith("Unsupported");
+      await expect(
+        convexFrxEthWethStrategy.removePToken(frxETH.address)
+      ).to.be.revertedWith("Unsupported");
+    });
   });
 });
