@@ -103,6 +103,16 @@ const shouldBehaveLikeStrategy = (context) => {
             .withArgs(asset.address, platformAddress, depositAmount.mul(i + 1));
         }
       });
+      it("Should not be able to deposit zero asset amount", async () => {
+        const { assets, strategy, vault } = await context();
+        const vaultSigner = await impersonateAndFund(vault.address);
+
+        for (const asset of assets) {
+          await expect(
+            strategy.connect(vaultSigner).deposit(asset.address, 0)
+          ).to.be.revertedWith("Must deposit something");
+        }
+      });
       it("Should not be able to withdraw zero asset amount", async () => {
         const { assets, strategy, vault } = await context();
         const vaultSigner = await impersonateAndFund(vault.address);
@@ -187,9 +197,11 @@ const shouldBehaveLikeStrategy = (context) => {
           await expect(tx)
             .to.emit(strategy, "Withdrawal")
             .withArgs(asset.address, platformAddress, withdrawAmount);
-          await expect(tx)
-            .to.emit(asset, "Transfer")
-            .withNamedArgs({ from: strategy.address, to: vault.address });
+          await expect(tx).to.emit(asset, "Transfer").withNamedArgs({
+            to: vault.address,
+            // FraxETHStrategy withdraws directly from the sfrxETH vault and not the strategy
+            // from: strategy.address,
+          });
         }
       });
     });
