@@ -81,3 +81,5 @@ coverage
 coverage.json
 fork-coverage
 unit-coverage
+
+.VSCodeCounter
