@@ -796,7 +796,7 @@ forkOnlyDescribe(
       });
     });
 
-    describe.skip("work in MEV environment", function () {
+    describe("work in MEV environment", function () {
       let attackerAddress;
       let sAttacker;
       let fixture;
