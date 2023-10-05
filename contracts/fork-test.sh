@@ -15,7 +15,8 @@ main()
         is_local=false
     fi
 
-    is_coverage=("$REPORT_COVERAGE" == "true");
+    is_coverage=false # TODO: Temporary test, undo it later
+    # is_coverage=("$REPORT_COVERAGE" == "true");
 
     if $is_local; then
         # When not running on CI/CD, make sure there's an env file
