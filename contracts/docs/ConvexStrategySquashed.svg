@@ -84,7 +84,7 @@
 <text text-anchor="start" x="8" y="-630.3" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;collectRewardTokens() &lt;&lt;onlyHarvester, nonReentrant&gt;&gt; &lt;&lt;ConvexStrategy&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-613.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;setRewardTokenAddresses(_rewardTokenAddresses: address[]) &lt;&lt;onlyGovernor&gt;&gt; &lt;&lt;InitializableAbstractStrategy&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-596.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;getRewardTokenAddresses(): address[] &lt;&lt;InitializableAbstractStrategy&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-579.9" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;setPTokenAddress(_asset: address, _pToken: address) &lt;&lt;onlyGovernor&gt;&gt; &lt;&lt;InitializableAbstractStrategy&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-579.9" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;setPTokenAddress(address, address) &lt;&lt;BaseCurveStrategy&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-563.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;removePToken(uint256) &lt;&lt;BaseCurveStrategy&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-546.3" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;setHarvesterAddress(_harvesterAddress: address) &lt;&lt;onlyGovernor&gt;&gt; &lt;&lt;InitializableAbstractStrategy&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-529.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;safeApproveAllTokens() &lt;&lt;onlyGovernor, nonReentrant&gt;&gt; &lt;&lt;BaseCurveStrategy&gt;&gt;</text>
