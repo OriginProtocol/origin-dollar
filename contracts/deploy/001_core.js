@@ -567,9 +567,7 @@ const configureOETHVault = async () => {
  */
 const deployHarvesters = async () => {
   const assetAddresses = await getAssetAddresses(deployments);
-  const { governorAddr, deployerAddr } = await getNamedAccounts();
-  // Signers
-  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+  const { governorAddr } = await getNamedAccounts();
   const sGovernor = await ethers.provider.getSigner(governorAddr);
 
   const cVaultProxy = await ethers.getContract("VaultProxy");
@@ -1115,7 +1113,6 @@ const deployVaultValueChecker = async () => {
 const deployWOusd = async () => {
   const { deployerAddr, governorAddr } = await getNamedAccounts();
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
-  const sGovernor = await ethers.provider.getSigner(governorAddr);
 
   const ousd = await ethers.getContract("OUSDProxy");
   const dWrappedOusdImpl = await deployWithConfirmation("WrappedOusd", [
@@ -1127,13 +1124,12 @@ const deployWOusd = async () => {
   const wousdProxy = await ethers.getContract("WrappedOUSDProxy");
   const wousd = await ethers.getContractAt("WrappedOusd", wousdProxy.address);
 
+  const initData = wousd.interface.encodeFunctionData("initialize()", []);
+
   await wousdProxy.connect(sDeployer)[
     // eslint-disable-next-line no-unexpected-multiline
     "initialize(address,address,bytes)"
-  ](dWrappedOusdImpl.address, deployerAddr, []);
-  await wousd.connect(sDeployer)["initialize()"]();
-  await wousd.connect(sDeployer).transferGovernance(governorAddr);
-  await wousd.connect(sGovernor).claimGovernance();
+  ](dWrappedOusdImpl.address, governorAddr, initData);
 };
 
 const deployOETHSwapper = async () => {
