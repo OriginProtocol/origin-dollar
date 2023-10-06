@@ -81,6 +81,19 @@ const shouldBehaveLikeStrategy = (context) => {
           );
         }
       });
+      it("Should not allow deposit by non-vault", async () => {
+        const { assets, strategy, harvester, governor, strategist, matt } =
+          context();
+
+        const harvesterSigner = await impersonateAndFund(harvester.address);
+        for (const signer of [harvesterSigner, governor, strategist, matt]) {
+          await expect(
+            strategy
+              .connect(signer)
+              .deposit(assets[0].address, parseUnits("10"))
+          ).to.revertedWith("Caller is not the Vault");
+        }
+      });
       it("Should be able to deposit all asset together", async () => {
         const { assets, strategy, vault } = await context();
 
@@ -113,6 +126,16 @@ const shouldBehaveLikeStrategy = (context) => {
           ).to.be.revertedWith("Must deposit something");
         }
       });
+      it("Should not allow deposit all by non-vault", async () => {
+        const { strategy, harvester, governor, strategist, matt } = context();
+
+        const harvesterSigner = await impersonateAndFund(harvester.address);
+        for (const signer of [harvesterSigner, governor, strategist, matt]) {
+          await expect(strategy.connect(signer).depositAll()).to.revertedWith(
+            "Caller is not the Vault"
+          );
+        }
+      });
       it("Should not be able to withdraw zero asset amount", async () => {
         const { assets, strategy, vault } = await context();
         const vaultSigner = await impersonateAndFund(vault.address);
@@ -125,13 +148,50 @@ const shouldBehaveLikeStrategy = (context) => {
           ).to.be.revertedWith("Must withdraw something");
         }
       });
-      it("Should be able to call withdraw all", async () => {
+      it("Should not allow withdraw by non-vault", async () => {
+        const {
+          assets,
+          vault,
+          strategy,
+          harvester,
+          governor,
+          strategist,
+          matt,
+        } = context();
+
+        const harvesterSigner = await impersonateAndFund(harvester.address);
+        for (const signer of [harvesterSigner, governor, strategist, matt]) {
+          await expect(
+            strategy
+              .connect(signer)
+              .withdraw(vault.address, assets[0].address, parseUnits("10"))
+          ).to.revertedWith("Caller is not the Vault");
+        }
+      });
+      it("Should be able to call withdraw all by vault", async () => {
         const { strategy, vault } = await context();
         const vaultSigner = await impersonateAndFund(vault.address);
 
         const tx = await strategy.connect(vaultSigner).withdrawAll();
 
         await expect(tx).to.not.emit(strategy, "Withdrawal");
+      });
+      it("Should be able to call withdraw all by governor", async () => {
+        const { strategy, governor } = await context();
+
+        const tx = await strategy.connect(governor).withdrawAll();
+
+        await expect(tx).to.not.emit(strategy, "Withdrawal");
+      });
+      it("Should not allow withdraw all by non-vault or non-governor", async () => {
+        const { strategy, harvester, strategist, matt } = context();
+
+        const harvesterSigner = await impersonateAndFund(harvester.address);
+        for (const signer of [harvesterSigner, strategist, matt]) {
+          await expect(strategy.connect(signer).withdrawAll()).to.revertedWith(
+            "Caller is not the Vault or Governor"
+          );
+        }
       });
     });
     describe("with assets in the strategy", () => {
