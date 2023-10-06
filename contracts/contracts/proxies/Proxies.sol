@@ -188,3 +188,10 @@ contract FluxStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 contract MakerDsrStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
+
+/**
+ * @notice OriginLensProxy delegates calls to a OriginLens implementation
+ */
+contract OriginLensProxy is InitializeGovernedUpgradeabilityProxy {
+
+}

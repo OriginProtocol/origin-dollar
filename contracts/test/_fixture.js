@@ -2106,6 +2106,25 @@ async function fluxStrategyFixture() {
   return fixture;
 }
 
+async function lensFixture() {
+  log(`Forked from block: ${await hre.ethers.provider.getBlockNumber()}`);
+
+  // Run the contract deployments
+  await deployments.fixture(undefined, {
+    keepExistingDeployments: true,
+  });
+
+  const lensProxy = await ethers.getContract("OriginLensProxy");
+  const lens = await ethers.getContractAt("OriginLens", lensProxy.address);
+
+  log(`Block after deployments: ${await hre.ethers.provider.getBlockNumber()}`);
+
+  return {
+    lensProxy,
+    lens,
+  };
+}
+
 /**
  * A fixture is a setup function that is run only the first time it's invoked. On subsequent invocations,
  * Hardhat will reset the state of the network to what it was at the point after the fixture was initially executed.
@@ -2183,6 +2202,7 @@ module.exports = {
   oethCollateralSwapFixture,
   ousdCollateralSwapFixture,
   fluxStrategyFixture,
+  lensFixture,
   mineBlocks,
   nodeSnapshot,
   nodeRevert,

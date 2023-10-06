@@ -41,6 +41,11 @@ interface IStrategy {
         returns (uint256 balance);
 
     /**
+     * @dev Returns the sum of balance of all supported assets.
+     */
+    function checkBalance() external view returns (uint256 balance);
+
+    /**
      * @dev Returns bool indicating whether strategy supports asset.
      */
     function supportsAsset(address _asset) external view returns (bool);
@@ -54,4 +59,14 @@ interface IStrategy {
      * @dev The address array of the reward tokens for the Strategy.
      */
     function getRewardTokenAddresses() external view returns (address[] memory);
+
+    /**
+     * @dev Address of the underlying platform
+     */
+    function platformAddress() external view returns (address);
+
+    // Balancer strategy specific methods:
+    function balancerPoolId() external view returns (bytes32);
+
+    function balancerVault() external view returns (address);
 }
