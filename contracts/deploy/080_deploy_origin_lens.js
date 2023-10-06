@@ -58,18 +58,7 @@ module.exports = deploymentWithGovernanceProposal(
     // ----------------
     return {
       name: "Configure OriginLens",
-      actions: [
-        // {
-        //   contract: cOriginLens,
-        //   signature: "setStrategyKind(address,uint8)",
-        //   args: [addresses.mainnet.ConvexOETHAMOStrategy, 1],
-        // },
-        // {
-        //   contract: cOriginLens,
-        //   signature: "setStrategyKind(address,uint8)",
-        //   args: [addresses.mainnet.BalancerRETHStrategyProxy, 2],
-        // },
-      ],
+      actions: [],
     };
   }
 );

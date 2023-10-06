@@ -1,0 +1,135 @@
+{
+  "solcVersion": "0.8.7",
+  "storage": [
+    {
+      "label": "initialized",
+      "offset": 0,
+      "slot": "0",
+      "type": "t_bool",
+      "contract": "Initializable",
+      "src": "contracts/utils/Initializable.sol:12"
+    },
+    {
+      "label": "initializing",
+      "offset": 1,
+      "slot": "0",
+      "type": "t_bool",
+      "contract": "Initializable",
+      "src": "contracts/utils/Initializable.sol:17"
+    },
+    {
+      "label": "______gap",
+      "offset": 0,
+      "slot": "1",
+      "type": "t_array(t_uint256)50_storage",
+      "contract": "Initializable",
+      "src": "contracts/utils/Initializable.sol:41"
+    },
+    {
+      "label": "strategistAddr",
+      "offset": 0,
+      "slot": "51",
+      "type": "t_address",
+      "contract": "Strategizable",
+      "src": "contracts/governance/Strategizable.sol:10"
+    },
+    {
+      "label": "__gap",
+      "offset": 0,
+      "slot": "52",
+      "type": "t_array(t_uint256)50_storage",
+      "contract": "Strategizable",
+      "src": "contracts/governance/Strategizable.sol:13"
+    },
+    {
+      "label": "strategies",
+      "offset": 0,
+      "slot": "102",
+      "type": "t_array(t_address)dyn_storage",
+      "contract": "OriginLens",
+      "src": "contracts/utils/OriginLens.sol:39"
+    },
+    {
+      "label": "assets",
+      "offset": 0,
+      "slot": "103",
+      "type": "t_array(t_address)dyn_storage",
+      "contract": "OriginLens",
+      "src": "contracts/utils/OriginLens.sol:40"
+    },
+    {
+      "label": "strategyConfig",
+      "offset": 0,
+      "slot": "104",
+      "type": "t_mapping(t_address,t_struct(StrategyConfig)4424_storage)",
+      "contract": "OriginLens",
+      "src": "contracts/utils/OriginLens.sol:42"
+    },
+    {
+      "label": "curvePoolCoinCount",
+      "offset": 0,
+      "slot": "105",
+      "type": "t_mapping(t_address,t_uint256)",
+      "contract": "OriginLens",
+      "src": "contracts/utils/OriginLens.sol:43"
+    }
+  ],
+  "types": {
+    "t_address": {
+      "label": "address",
+      "numberOfBytes": "20"
+    },
+    "t_array(t_address)dyn_storage": {
+      "label": "address[]",
+      "numberOfBytes": "32"
+    },
+    "t_array(t_uint256)50_storage": {
+      "label": "uint256[50]",
+      "numberOfBytes": "1600"
+    },
+    "t_bool": {
+      "label": "bool",
+      "numberOfBytes": "1"
+    },
+    "t_enum(StrategyKinds)4418": {
+      "label": "enum OriginLens.StrategyKinds",
+      "members": [
+        "Generic",
+        "CurveAMO",
+        "BalancerMetaStablePool",
+        "BalancerComposableStablePool"
+      ],
+      "numberOfBytes": "1"
+    },
+    "t_mapping(t_address,t_struct(StrategyConfig)4424_storage)": {
+      "label": "mapping(address => struct OriginLens.StrategyConfig)",
+      "numberOfBytes": "32"
+    },
+    "t_mapping(t_address,t_uint256)": {
+      "label": "mapping(address => uint256)",
+      "numberOfBytes": "32"
+    },
+    "t_struct(StrategyConfig)4424_storage": {
+      "label": "struct OriginLens.StrategyConfig",
+      "members": [
+        {
+          "label": "supported",
+          "type": "t_bool",
+          "offset": 0,
+          "slot": "0"
+        },
+        {
+          "label": "kind",
+          "type": "t_enum(StrategyKinds)4418",
+          "offset": 1,
+          "slot": "0"
+        }
+      ],
+      "numberOfBytes": "32"
+    },
+    "t_uint256": {
+      "label": "uint256",
+      "numberOfBytes": "32"
+    }
+  }
+}
