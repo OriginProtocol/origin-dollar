@@ -8,6 +8,8 @@ interface ICurvePool {
 
     function balances(uint256) external view returns (uint256);
 
+    function get_balances() external view returns (uint256[] memory);
+
     function calc_token_amount(uint256[3] calldata _amounts, bool _deposit)
         external
         returns (uint256);

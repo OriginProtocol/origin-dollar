@@ -19,4 +19,14 @@ forkOnlyDescribe("Fork Test: OriginLens", () => {
       balances.map((x) => x.toString())
     );
   });
+  it("Should return Curve AMO strategy balance", async () => {
+    const { lens } = fixture;
+    const [assets, balances] = await lens.getStrategyBalances(
+      "0x1827F9eA98E0bf96550b2FC20F7233277FcD7E63"
+    );
+    console.log(
+      assets,
+      balances.map((x) => x.toString())
+    );
+  });
 });

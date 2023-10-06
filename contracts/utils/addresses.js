@@ -176,6 +176,8 @@ addresses.mainnet.FraxETHStrategy =
   "0x3ff8654d633d4ea0fae24c52aec73b4a20d0d0e5";
 addresses.mainnet.OETHHarvesterProxy =
   "0x0D017aFA83EAce9F10A8EC5B6E13941664A6785C";
+addresses.mainnet.BalancerRETHStrategyProxy =
+  "0x49109629aC1deB03F2e9b2fe2aC4a623E0e7dfDC";
 
 // OETH Tokens
 addresses.mainnet.sfrxETH = "0xac3E018457B222d93114458476f3E3416Abbe38F";

@@ -30,8 +30,12 @@ module.exports = deploymentWithGovernanceProposal(
 
     // Construct initialize call data to init and configure the new contract
     const initData = cOriginLens.interface.encodeFunctionData(
-      "initialize(address)",
-      [strategistAddr]
+      "initialize(address,address[],uint8[])",
+      [
+        strategistAddr,
+        [addresses.mainnet.ConvexOETHAMOStrategy, addresses.mainnet.BalancerRETHStrategyProxy],
+        [1, 2]
+      ]
     );
 
     // prettier-ignore
@@ -50,7 +54,19 @@ module.exports = deploymentWithGovernanceProposal(
     // Governance Actions
     // ----------------
     return {
-      actions: [],
+      name: "Configure OriginLens",
+      actions: [
+        // {
+        //   contract: cOriginLens,
+        //   signature: "setStrategyKind(address,uint8)",
+        //   args: [addresses.mainnet.ConvexOETHAMOStrategy, 1],
+        // },
+        // {
+        //   contract: cOriginLens,
+        //   signature: "setStrategyKind(address,uint8)",
+        //   args: [addresses.mainnet.BalancerRETHStrategyProxy, 2],
+        // },
+      ],
     };
   }
 );

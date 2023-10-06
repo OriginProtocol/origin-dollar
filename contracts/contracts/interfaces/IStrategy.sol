@@ -69,4 +69,9 @@ interface IStrategy {
     function balancerPoolId() external view returns (bytes32);
 
     function balancerVault() external view returns (address);
+
+    // Curve strategy specific methods:
+    function cvxRewardStaker() external view returns (address);
+
+    function assetToPToken(address asset) external view returns (address);
 }
