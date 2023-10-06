@@ -95,6 +95,7 @@ if (isForkTest && standaloneLocalNodeRunning) {
   console.log(`Starting a fresh node on block: ${forkBlockNumber}`);
 }
 
+
 module.exports = {
   solidity: {
     version: "0.8.7",
@@ -102,6 +103,11 @@ module.exports = {
       optimizer: {
         enabled: true,
       },
+    },
+  },
+  tracer: {
+    nameTags: {
+      "0xba12222222228d8ba445958a75a0704d566bf2c8": "Balancer vault",
     },
   },
   networks: {
