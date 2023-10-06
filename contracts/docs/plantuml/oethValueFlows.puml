@@ -16,10 +16,15 @@ participant "FRAX ETH" as frxETH <<FRAX>><<frxETH>>
 participant "Staked\nFRAX ETH" as sfrxETH <<FRAX>><<sfrxETH>>
 
 participant "Curve AMO\nStrategy" as crvStrat <<Origin>> #DeepSkyBlue
-participant "OETH-ETH\nMetapool" as oethCrv <<Curve>>
+participant "OETH-ETH\nPool" as oethCrv <<Curve>>
 participant "OETH-ETH\nPool" as oethCvx <<Convex>>
-participant "Rewards\nPool" as cvxRewards <<Convex>>
+participant "OETH-ETH\nRewards" as cvxRewards <<Convex>>
 participant "Locked CVX" as icvx <<Convex>>
+
+participant "Convex\nfrxETH/WTH\nStrategy" as cvxFrxStrat <<Origin>> #DeepSkyBlue
+participant "frxETH-WETH\nPool" as frxCrv <<Curve>>
+participant "frxETH-WETH\nPool" as frxCvx <<Convex>>
+participant "frxETH-WETH\nRewards" as cvxFrxRewards <<Convex>>
 
 participant "Morpho Aave\nStrategy" as morphAaveStrat <<Origin>> #DeepSkyBlue
 participant "Morpho\nAave V2" as morpho <<Morpho>>
@@ -114,7 +119,7 @@ sfrxETH o-> frxStrat : sfrxETH
 end
 
 ' Curve AMO Strategy
-group Deposit to Curve AMO Strategy [unallocated WETH in vault]
+group Deposit WETH to Curve AMO Strategy [unallocated WETH in vault]
 vault -> crvStrat : WETH
 note left : Vault transfers\nWETH to strategy
 crvStrat -x weth : WETH
@@ -125,13 +130,43 @@ note left : ETH is withdrawn
 vault o-> crvStrat : OETH
 note left : Vault mints OETH
 crvStrat -> oethCrv : ETH, OETH
-note left : add liquidity to the Metapool
+note left : add liquidity to the Curve pool
 oethCrv o-> crvStrat : OETHCRV-f
-note left: strategy gets Metapool LP tokens
+note left: strategy gets Curve pool LP tokens
 
 crvStrat -> oethCvx : OETHCRV-f
-note left : deposit Metapool LP to Convex
+note left : deposit Curve pool LP to Convex
 oethCvx o-> cvxRewards : cvxOETHCRV-f
+note left : stake Convex LP tokens
+end
+
+' Convex strategy for the Curve frxETH/WETH pool
+group Deposit WETH to Convex frxETH/WETH Strategy [unallocated WETH in vault]
+vault -> cvxFrxStrat : WETH
+note left : Vault transfers\nWETH to strategy
+cvxFrxStrat -> frxCrv : WETH
+note left : add liquidity to the Curve pool
+frxCrv o-> cvxFrxStrat : frxeth-ng-f
+note left: strategy gets Curve pool LP tokens
+
+cvxFrxStrat -> frxCvx : frxeth-ng-f
+note left : deposit Curve pool LP to Convex
+frxCvx o-> cvxFrxRewards : cvxfrxeth-ng-f
+note left : stake Convex LP tokens
+end
+
+' Convex strategy for the Curve frxETH/WETH pool
+group Deposit frxETH to Convex frxETH/WETH Strategy [unallocated frxETH in vault]
+vault -> cvxFrxStrat : frxETH
+note left : Vault transfers\nfrxETH to strategy
+cvxFrxStrat -> frxCrv : frxETH
+note left : add liquidity to the Curve pool
+frxCrv o-> cvxFrxStrat : frxeth-ng-f
+note left: strategy gets Curve pool LP tokens
+
+cvxFrxStrat -> frxCvx : frxeth-ng-f
+note left : deposit Curve pool LP to Convex
+frxCvx o-> cvxFrxRewards : cvxfrxeth-ng-f
 note left : stake Convex LP tokens
 end
 
@@ -181,12 +216,12 @@ group Withdraw from Curve AMO Strategy [not enough WETH in vault]
 cvxRewards -x oethCvx : cvxOETHCRV-f
 note left : unstake and burn Convex LP tokens
 oethCvx -> crvStrat : OETHCRV-f
-note left : withdraw Metapool LP tokens
+note left : withdraw Curve pool LP tokens
 
 crvStrat -x oethCrv : OETHCRV-f
-note left : burn Metapool LP tokens
+note left : burn Curve pool LP tokens
 oethCrv -> crvStrat : ETH, OETH
-note left : remove liquidity from the Metapool
+note left : remove liquidity from the Curve pool
 
 crvStrat -x crvStrat : OETH
 note left : burn OETH withdrawn from Curve
@@ -221,48 +256,48 @@ vault -> user : rETH
 end
 
 ' Curve AMO Strategy - mint and add oTokens
-group Strategist mints and adds oTokens to Metapool [too much ETH in Metapool]
+group Strategist mints and adds oTokens to Curve pool [too much ETH in Curve pool]
 vault o-> crvStrat : OETH
 note left : Vault mints OETH
 crvStrat -> oethCrv : OETH
-note left : one-sided add liquidity to the Metapool
+note left : one-sided add liquidity to the Curve pool
 oethCrv o-> crvStrat : OETHCRV-f
-note left: strategy gets Metapool LP tokens
+note left: strategy gets Curve pool LP tokens
 
 crvStrat -> oethCvx : OETHCRV-f
-note left : deposit Metapool LP to Convex
+note left : deposit Curve pool LP to Convex
 oethCvx o-> cvxRewards : cvxOETHCRV-f
 note left : stake Convex LP tokens
 end
 
 
 ' Curve AMO Strategy - remove and burn OETH
-group Strategist removes and burns oTokens from Metapool [too much OETH in Metapool]
+group Strategist removes and burns oTokens from Curve pool [too much OETH in Curve pool]
 cvxRewards -x oethCvx : cvxOETHCRV-f
 note left : unstake and burn Convex LP tokens
 oethCvx -> crvStrat : OETHCRV-f
-note left : withdraw Metapool LP tokens
+note left : withdraw Curve pool LP tokens
 
 crvStrat -x oethCrv : OETHCRV-f
-note left : burn Metapool LP tokens
+note left : burn Curve pool LP tokens
 oethCrv -> crvStrat : OETH
-note left : on-sided remove liquidity from the Metapool
+note left : on-sided remove liquidity from the Curve pool
 
 crvStrat -x crvStrat : OETH
 note left : burn OETH withdrawn from Curve
 end
 
 ' Curve AMO Strategy - remove ETH
-group Strategist removes ETH from Metapool [too much ETH in Metapool]
+group Strategist removes ETH from Curve pool [too much ETH in Curve pool]
 cvxRewards -x oethCvx : cvxOETHCRV-f
 note left : unstake and burn Convex LP tokens
 oethCvx -> crvStrat : OETHCRV-f
-note left : withdraw Metapool LP tokens
+note left : withdraw Curve pool LP tokens
 
 crvStrat -x oethCrv : OETHCRV-f
-note left : burn Metapool LP tokens
+note left : burn Curve pool LP tokens
 oethCrv -> crvStrat : ETH
-note left : on-sided remove liquidity from the Metapool
+note left : on-sided remove liquidity from the Curve pool
 
 crvStrat -> weth : ETH
 note left : deposit ETH into Wrapped ETH
