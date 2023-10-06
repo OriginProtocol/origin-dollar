@@ -99,9 +99,9 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
 
         // Curve requires passing deposit amounts for all assets
         uint256[] memory _amounts = new uint256[](CURVE_BASE_ASSETS);
-        uint256 poolCoinIndex = _getCoinIndex(_asset);
+
         // Set the amount on the asset we want to deposit
-        _amounts[poolCoinIndex] = _amount;
+        _amounts[_getCoinIndex(_asset)] = _amount;
         uint256 depositValue = _amount
             .scaleBy(18, _getAssetDecimals(_asset))
             .divPrecisely(ICurvePool(CURVE_POOL).get_virtual_price());
@@ -112,6 +112,57 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         // Do the deposit to the Curve pool using a Curve library that
         // abstracts the number of coins in the Curve pool.
         CurveThreeCoinLib.add_liquidity(CURVE_POOL, _amounts, minMintAmount);
+
+        _lpDepositAll();
+    }
+
+    /**
+     * @notice Deposit multiple vault assets into the Curve pool.
+     * @dev This assumes the vault has already transferred the asset to this strategy contract.
+     * @dev The assets can be a subset of the Curve pool assets and in a different order.
+     * An invalid asset will fail in _getCoinIndex with "Unsupported asset".
+     * @param _assets Addresses of the assets to deposit
+     * @param _amounts Amounts of the assets to deposit
+     */
+    function deposit(address[] calldata _assets, uint256[] calldata _amounts)
+        external
+        onlyVault
+        nonReentrant
+    {
+        require(_assets.length != 0, "Must deposit something");
+        require(_assets.length == _amounts.length, "Invalid input arrays");
+
+        // Curve requires passing deposit amounts for all assets
+        uint256[] memory _poolAmounts = new uint256[](CURVE_BASE_ASSETS);
+        uint256 depositValue = 0;
+
+        // Get the virtual price of the Curve pool outside the loop as this is gas intensive
+        uint256 curvePoolVirtualPrice = ICurvePool(CURVE_POOL)
+            .get_virtual_price();
+
+        // For each asset param
+        for (uint256 i = 0; i < _assets.length; i++) {
+            require(_amounts[i] > 0, "Must deposit something");
+            emit Deposit(_assets[i], CURVE_POOL, _amounts[i]);
+
+            // Set the amount on the asset we want to deposit
+            _poolAmounts[_getCoinIndex(_assets[i])] = _amounts[i];
+            depositValue += _amounts[i]
+                .scaleBy(18, _getAssetDecimals(_assets[i]))
+                .divPrecisely(curvePoolVirtualPrice);
+        }
+
+        uint256 minMintAmount = depositValue.mulTruncate(
+            uint256(1e18) - MAX_SLIPPAGE
+        );
+
+        // Do the deposit to the Curve pool using a Curve library that
+        // abstracts the number of coins in the Curve pool.
+        CurveThreeCoinLib.add_liquidity(
+            CURVE_POOL,
+            _poolAmounts,
+            minMintAmount
+        );
 
         _lpDepositAll();
     }

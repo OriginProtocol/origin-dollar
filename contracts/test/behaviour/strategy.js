@@ -62,9 +62,9 @@ const shouldBehaveLikeStrategy = (context) => {
           // mint some test assets directly into the strategy contract
           await asset.connect(strategySigner).mint(depositAmount);
 
+          // prettier-ignore
           const tx = await strategy
-            .connect(vaultSigner)
-            .deposit(asset.address, depositAmount);
+            .connect(vaultSigner)["deposit(address,uint256)"](asset.address, depositAmount);
 
           const platformAddress = await strategy.assetToPToken(asset.address);
           await expect(tx)
@@ -108,8 +108,10 @@ const shouldBehaveLikeStrategy = (context) => {
         const vaultSigner = await impersonateAndFund(vault.address);
 
         for (const asset of assets) {
+          // prettier-ignore
           await expect(
-            strategy.connect(vaultSigner).deposit(asset.address, 0)
+            strategy
+              .connect(vaultSigner)["deposit(address,uint256)"](asset.address, 0)
           ).to.be.revertedWith("Must deposit something");
         }
       });
