@@ -77,7 +77,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
             : address(0);
         coin2 = asset2;
         decimals2 = _curveConfig.curveBaseAssets == 3
-            ? Helpers.getDecimals(asset1)
+            ? Helpers.getDecimals(asset2)
             : 0;
     }
 
