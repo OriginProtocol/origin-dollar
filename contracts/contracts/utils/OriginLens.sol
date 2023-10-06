@@ -16,7 +16,8 @@ import { IERC4626 } from "../../lib/openzeppelin/interfaces/IERC4626.sol";
 import { IOracle } from "../interfaces/IOracle.sol";
 import { IMetaStablePool } from "../interfaces/balancer/IMetaStablePool.sol";
 import { StableMath } from "./StableMath.sol";
-import { console } from "hardhat/console.sol";
+
+// import { console } from "hardhat/console.sol";
 
 contract OriginLens is Initializable, Strategizable {
     using StableMath for uint256;
@@ -39,6 +40,7 @@ contract OriginLens is Initializable, Strategizable {
     address[] public assets;
 
     mapping(address => StrategyConfig) public strategyConfig;
+    mapping(address => uint256) public curvePoolCoinCount;
 
     IVault public immutable vault;
     IOUSD public immutable oToken;
@@ -47,6 +49,8 @@ contract OriginLens is Initializable, Strategizable {
 
     address public constant ETH_ADDR =
         0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
+    address public constant WETH_ADDR =
+        0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
 
     constructor(address _oToken) {
         require(_oToken != address(0), "Invalid OToken address");
@@ -61,11 +65,11 @@ contract OriginLens is Initializable, Strategizable {
         _setGovernor(address(0));
     }
 
-    function initialize(address _strategistAddr, address[] calldata _strategies, uint8[] calldata strategyKinds)
-        external
-        onlyGovernor
-        initializer
-    {
+    function initialize(
+        address _strategistAddr,
+        address[] calldata _strategies,
+        uint8[] calldata strategyKinds
+    ) external onlyGovernor initializer {
         require(_strategistAddr != address(0), "Invalid strategist address");
         _setStrategistAddr(_strategistAddr);
 
@@ -85,13 +89,15 @@ contract OriginLens is Initializable, Strategizable {
         _setStrategyKind(strategy, kind);
     }
 
-    function _setStrategyKind(address strategy, StrategyKinds kind)
-        internal
-    {
+    function _setStrategyKind(address strategy, StrategyKinds kind) internal {
         StrategyConfig storage config = strategyConfig[strategy];
         require(config.supported, "Unsupported strategy");
 
         config.kind = kind;
+
+        if (kind == StrategyKinds.CurveAMO) {
+            _cacheCurvePoolCoinCount(IStrategy(strategy).platformAddress());
+        }
 
         emit StrategyTypeChanged(strategy, kind);
     }
@@ -200,38 +206,39 @@ contract OriginLens is Initializable, Strategizable {
         )
     {
         ICurvePool pool = ICurvePool(strategy.platformAddress());
-        console.log(">>>>>>>>>> %s", address(pool));
+        uint256 coinCount = curvePoolCoinCount[address(pool)];
 
-        uint256[] memory poolCoinBalance = pool.get_balances(); // Balance in pool
-
-        console.log(">>>>>>>>>> %s", poolCoinBalance.length);
-
-        supportedAssets = new address[](poolCoinBalance.length);
-        assetBalances =  new uint256[](poolCoinBalance.length);
-
-        console.log(">>>>>>>>>> %s", strategy.cvxRewardStaker());
+        supportedAssets = new address[](coinCount);
+        assetBalances = new uint256[](coinCount);
 
         // Staked LP tokens balance
         uint256 strategyBalance = IRewardStaking(strategy.cvxRewardStaker())
             .balanceOf(address(strategy));
 
-        console.log(">>>>>>>>>> %s", strategyBalance);
-
         uint256 totalPoolValue;
-        for (uint256 i = 0; i < poolCoinBalance.length; ++i) {
+        for (uint256 i = 0; i < coinCount; ++i) {
             address asset = pool.coins(i);
+            uint256 balance = pool.balances(i);
+
             supportedAssets[i] = asset;
+            assetBalances[i] = balance;
             // TODO: Assuming 18 decimals always, which might not be true for OUSD
-            totalPoolValue += poolCoinBalance[i];
+            totalPoolValue += balance;
 
             // Unstaked LP tokens balance
             if (asset != address(oToken)) {
                 address pToken = strategy.assetToPToken(asset);
-                strategyBalance += IERC20(pToken).balanceOf(address(strategy));
 
-                // Always return ETH as WETH
                 if (asset == ETH_ADDR) {
-                    supportedAssets[i] = pToken;
+                    // Always return as WETH
+                    supportedAssets[i] = WETH_ADDR;
+                    strategyBalance += IERC20(WETH_ADDR).balanceOf(
+                        address(strategy)
+                    );
+                } else if (pToken != address(0)) {
+                    strategyBalance += IERC20(pToken).balanceOf(
+                        address(strategy)
+                    );
                 }
             }
         }
@@ -245,7 +252,7 @@ contract OriginLens is Initializable, Strategizable {
         // Compute split owned by strategy
         for (uint256 i = 0; i < supportedAssets.length; ++i) {
             assetBalances[i] = strategyBalance.mulTruncateScale(
-                (1e8 * poolCoinBalance[i]) / totalPoolValue, // Split of asset scaled to 1e8 for accuracy
+                (1e8 * assetBalances[i]) / totalPoolValue, // Split of asset scaled to 1e8 for accuracy
                 1e8
             );
         }
@@ -348,5 +355,19 @@ contract OriginLens is Initializable, Strategizable {
     {
         // TODO: After that strategy is deployed
         require(false, "Not implemented");
+    }
+
+    function _cacheCurvePoolCoinCount(address pool) internal {
+        // Assuming Curve pools will have only 2 to 4 coins
+        for (uint256 i = 1; i < 4; ++i) {
+            (bool success, ) = address(pool).staticcall(
+                abi.encodeWithSelector(ICurvePool.coins.selector, i)
+            );
+
+            if (success == false) {
+                curvePoolCoinCount[address(pool)] = i;
+                break;
+            }
+        }
     }
 }

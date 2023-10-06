@@ -33,8 +33,11 @@ module.exports = deploymentWithGovernanceProposal(
       "initialize(address,address[],uint8[])",
       [
         strategistAddr,
-        [addresses.mainnet.ConvexOETHAMOStrategy, addresses.mainnet.BalancerRETHStrategyProxy],
-        [1, 2]
+        [
+          addresses.mainnet.ConvexOETHAMOStrategy,
+          addresses.mainnet.BalancerRETHStrategyProxy,
+        ],
+        [1, 2],
       ]
     );
 
