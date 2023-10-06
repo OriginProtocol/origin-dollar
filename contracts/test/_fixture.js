@@ -1883,6 +1883,12 @@ async function convexFrxEthFixture(
     await oethHarvester
       .connect(governor)
       .setSupportedStrategy(convexFrxEthWethStrategy.address, true);
+
+    const assetAddresses = await getAssetAddresses(deployments);
+    fixture.curveFrxEthWethPool = await ethers.getContractAt(
+      oethMetapoolAbi,
+      assetAddresses.CurveFrxEthWethPool
+    );
   }
 
   // Diabled default strategy for frxETH

@@ -477,6 +477,13 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
     }
 
     /**
+     * @notice Can not add a new asset after the strategy has been initialized.
+     */
+    function setPTokenAddress(address, address) external pure override {
+        revert("Unsupported");
+    }
+
+    /**
      * @notice Can not remove an asset from the strategy as checkBalance
      * assumes all assets are in the Curve pool are supported.
      */
