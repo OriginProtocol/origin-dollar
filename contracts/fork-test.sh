@@ -16,6 +16,7 @@ main()
     fi
 
     is_coverage=("$REPORT_COVERAGE" == "true");
+    is_trace=("$TRACE" == "true");
 
     if $is_local; then
         # When not running on CI/CD, make sure there's an env file
@@ -76,6 +77,10 @@ main()
         params+="$1"
     fi
 
+    if [[ $is_trace == "true" ]]; then
+        params+=" --trace"
+    fi
+    
     if [[ $is_coverage == "true" ]]; then
         echo "Running tests and generating coverage reports..."
         FORK=true IS_TEST=true npx --no-install hardhat coverage --testfiles "test/**/*.fork-test.js"
