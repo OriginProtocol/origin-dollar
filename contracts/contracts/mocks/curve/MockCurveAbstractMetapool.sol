@@ -75,8 +75,8 @@ abstract contract MockCurveAbstractMetapool is MintableERC20 {
         uint256 totalSupply = totalSupply();
         for (uint256 i = 0; i < 2; i++) {
             amounts[i] = totalSupply > 0
-                ? (_amount / totalSupply) *
-                    IERC20(coins[i]).balanceOf(address(this))
+                ? (_amount * IERC20(coins[i]).balanceOf(address(this))) /
+                    totalSupply
                 : IERC20(coins[i]).balanceOf(address(this));
             balances[i] -= amounts[i];
             IERC20(coins[i]).transfer(msg.sender, amounts[i]);
