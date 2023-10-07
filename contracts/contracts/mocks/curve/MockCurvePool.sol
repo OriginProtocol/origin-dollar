@@ -73,7 +73,7 @@ contract MockCurvePool {
     }
 
     function get_virtual_price() external pure returns (uint256) {
-        return 1 * 10**18;
+        return 1e18;
     }
 
     // solhint-disable-next-line no-unused-vars
