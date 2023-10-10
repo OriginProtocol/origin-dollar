@@ -95,7 +95,6 @@ if (isForkTest && standaloneLocalNodeRunning) {
   console.log(`Starting a fresh node on block: ${forkBlockNumber}`);
 }
 
-
 module.exports = {
   solidity: {
     version: "0.8.7",
