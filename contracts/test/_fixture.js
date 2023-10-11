@@ -24,6 +24,7 @@ const {
   units,
   isFork,
 } = require("./helpers");
+const { hardhatSetBalance } = require("./_fund");
 
 const daiAbi = require("./abi/dai.json").abi;
 const usdtAbi = require("./abi/usdt.json").abi;
@@ -677,7 +678,7 @@ async function oethDefaultFixture() {
     await mockedMinter.connect(franck).setAssetAddress(fixture.sfrxETH.address);
 
     // Fund WETH contract
-    _hardhatSetBalance(weth.address, "999999999999999");
+    hardhatSetBalance(weth.address, "999999999999999");
 
     // Fund all with mockTokens
     await fundAccountsForOETHUnitTests();
@@ -1561,24 +1562,11 @@ async function nodeRevert(snapshotId) {
   });
 }
 
-async function _hardhatSetBalance(address, amount = "10000") {
-  await hre.network.provider.request({
-    method: "hardhat_setBalance",
-    params: [
-      address,
-      parseEther(amount)
-        .toHexString()
-        .replace(/^0x0+/, "0x")
-        .replace(/0$/, "1"),
-    ],
-  });
-}
-
 async function impersonateAndFundContract(address, amount = "100000") {
   await impersonateAccount(address);
 
   if (parseFloat(amount) > 0) {
-    await _hardhatSetBalance(address, amount);
+    await hardhatSetBalance(address, amount);
   }
 
   const signer = await ethers.provider.getSigner(address);
@@ -1639,7 +1627,7 @@ async function resetAllowance(
 }
 
 async function mintWETH(weth, recipient, amount = "100") {
-  await _hardhatSetBalance(recipient.address, (Number(amount) * 2).toString());
+  await hardhatSetBalance(recipient.address, (Number(amount) * 2).toString());
   await weth.connect(recipient).deposit({
     value: parseEther(amount),
   });
@@ -1794,7 +1782,7 @@ async function convexOETHMetaVaultFixture(
   if (config?.poolAddEthAmount > 0) {
     // Fund Josh with ETH plus some extra for gas fees
     const fundAmount = config.poolAddEthAmount + 1;
-    await _hardhatSetBalance(await josh.getAddress(), fundAmount.toString());
+    await hardhatSetBalance(await josh.getAddress(), fundAmount.toString());
 
     const ethAmount = parseUnits(config.poolAddEthAmount.toString(), 18);
     // prettier-ignore

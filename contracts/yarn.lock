@@ -839,6 +839,13 @@
     mcl-wasm "^0.7.1"
     rustbn.js "~0.2.0"
 
+"@nomicfoundation/hardhat-network-helpers@^1.0.9":
+  version "1.0.9"
+  resolved "https://registry.yarnpkg.com/@nomicfoundation/hardhat-network-helpers/-/hardhat-network-helpers-1.0.9.tgz#767449e8a2acda79306ac84626117583d95d25aa"
+  integrity sha512-OXWCv0cHpwLUO2u7bFxBna6dQtCC2Gg/aN/KtJLO7gmuuA28vgmVKYFRCDUqrbjujzgfwQ2aKyZ9Y3vSmDqS7Q==
+  dependencies:
+    ethereumjs-util "^7.1.4"
+
 "@nomicfoundation/solidity-analyzer-darwin-arm64@0.1.1":
   version "0.1.1"
   resolved "https://registry.yarnpkg.com/@nomicfoundation/solidity-analyzer-darwin-arm64/-/solidity-analyzer-darwin-arm64-0.1.1.tgz#4c858096b1c17fe58a474fe81b46815f93645c15"
@@ -3616,6 +3623,11 @@ hardhat-gas-reporter@^1.0.9:
     array-uniq "1.0.3"
     eth-gas-reporter "^0.2.25"
     sha1 "^1.1.1"
+
+hardhat-network-helpers@^0.0.1:
+  version "0.0.1"
+  resolved "https://registry.yarnpkg.com/hardhat-network-helpers/-/hardhat-network-helpers-0.0.1.tgz#332b022dce826f79c7b4c93edea55a3fcb4493e4"
+  integrity sha512-EFL22264VV+Pj2CmPuse3Gz3eoWDq5XgsM0H6YKSPs/Kp/7YOZI1m00V38Nlyi154SUn2E11Pf4EBwBE6eslMQ==
 
 hardhat-tracer@^2.3.2:
   version "2.4.0"
