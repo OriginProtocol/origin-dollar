@@ -7,6 +7,7 @@ const { units, oethUnits, forkOnlyDescribe, isCI } = require("../helpers");
 const {
   createFixtureLoader,
   convexFrxEthFixture,
+  impersonateAndFundContract,
   loadDefaultFixture,
 } = require("../_fixture");
 const { resolveAsset } = require("../../utils/assets");
@@ -442,6 +443,78 @@ forkOnlyDescribe("ForkTest: Convex frxETH/WETH Strategy", function () {
       // Governor can withdraw all
       const tx = convexFrxEthWethStrategy.connect(timelock).withdrawAll();
       await expect(tx).to.emit(convexFrxEthWethStrategy, "Withdrawal");
+    });
+    it("Should calculate Curve LP tokens for withdrawing frxETH amount", async () => {
+      const { convexFrxEthWethStrategy, curveFrxEthWethPool, josh } = fixture;
+      const frxETHAmount = parseUnits("1000");
+      const expectedLpAmount = await convexFrxEthWethStrategy.calcCurveLpAmount(
+        1,
+        frxETHAmount
+      );
+      log(`expected LP amount: ${formatUnits(expectedLpAmount)}`);
+
+      const curveGaugeSigner = await impersonateAndFundContract(
+        addresses.mainnet.CurveFrxEthWethGauge
+      );
+      const actualLpAmount = await curveFrxEthWethPool
+        .connect(curveGaugeSigner)
+        .callStatic["remove_liquidity_imbalance(uint256[2],uint256)"](
+          [0, frxETHAmount],
+          parseUnits("1100")
+        );
+      const percDiff = expectedLpAmount
+        .sub(actualLpAmount)
+        .mul(100000000)
+        .div(parseUnits("1"));
+      log(
+        `actual LP amount  : ${formatUnits(actualLpAmount)} diff ${formatUnits(
+          percDiff,
+          4
+        )} bps`
+      );
+      expect(expectedLpAmount).to.approxEqualTolerance(actualLpAmount, 0.01);
+
+      // This uses a transaction to call a view function so the gas usage can be reported.
+      const tx = await convexFrxEthWethStrategy
+        .connect(josh)
+        .populateTransaction.calcCurveLpAmount(1, frxETHAmount);
+      await josh.sendTransaction(tx);
+    });
+    it("Should calculate Curve LP tokens for withdrawing WETH amount", async () => {
+      const { convexFrxEthWethStrategy, curveFrxEthWethPool, josh } = fixture;
+      const wethAmount = parseUnits("2000");
+      const expectedLpAmount = await convexFrxEthWethStrategy.calcCurveLpAmount(
+        0,
+        wethAmount
+      );
+      log(`expected LP amount: ${formatUnits(expectedLpAmount)}`);
+
+      const curveGaugeSigner = await impersonateAndFundContract(
+        addresses.mainnet.CurveFrxEthWethGauge
+      );
+      const actualLpAmount = await curveFrxEthWethPool
+        .connect(curveGaugeSigner)
+        .callStatic["remove_liquidity_imbalance(uint256[2],uint256)"](
+          [wethAmount, 0],
+          parseUnits("2200")
+        );
+      const percDiff = expectedLpAmount
+        .sub(actualLpAmount)
+        .mul(100000000)
+        .div(parseUnits("1"));
+      log(
+        `actual LP amount  : ${formatUnits(actualLpAmount)} diff ${formatUnits(
+          percDiff,
+          4
+        )} bps`
+      );
+      expect(expectedLpAmount).to.approxEqualTolerance(actualLpAmount, 0.01);
+
+      // This uses a transaction to call a view function so the gas usage can be reported.
+      const tx = await convexFrxEthWethStrategy
+        .connect(josh)
+        .populateTransaction.calcCurveLpAmount(1, wethAmount);
+      await josh.sendTransaction(tx);
     });
   });
 });
