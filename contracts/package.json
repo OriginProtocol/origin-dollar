@@ -22,7 +22,7 @@
     "test": "IS_TEST=true npx hardhat test",
     "test:parallel": "IS_TEST=true npx hardhat test --deploy-fixture --parallel",
     "test:fork": "./fork-test.sh",
-    "test:fork:parallel": "./fork-test.sh --deploy-fixture --parallel",
+    "test:fork:parallel": "./parallel-test.sh",
     "test:fork:w_trace": "TRACE=true ./fork-test.sh",
     "fund": "FORK=true npx hardhat fund --network localhost",
     "copy-interface-artifacts": "mkdir -p ../dapp/abis && cp artifacts/contracts/interfaces/IVault.sol/IVault.json ../dapp/abis/IVault.json && cp artifacts/contracts/liquidity/LiquidityReward.sol/LiquidityReward.json ../dapp/abis/LiquidityReward.json && cp artifacts/contracts/interfaces/uniswap/IUniswapV2Pair.sol/IUniswapV2Pair.json ../dapp/abis/IUniswapV2Pair.json && cp artifacts/contracts/staking/SingleAssetStaking.sol/SingleAssetStaking.json ../dapp/abis/SingleAssetStaking.json && cp artifacts/contracts/compensation/CompensationClaims.sol/CompensationClaims.json ../dapp/abis/CompensationClaims.json && cp artifacts/contracts/flipper/Flipper.sol/Flipper.json ../dapp/abis/Flipper.json",

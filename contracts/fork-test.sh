@@ -15,8 +15,8 @@ main()
         is_local=false
     fi
 
-    is_coverage=false # TODO: Temporary test, undo it later
-    # is_coverage=("$REPORT_COVERAGE" == "true");
+    # is_coverage=false # TODO: Temporary test, undo it later
+    is_coverage=("$REPORT_COVERAGE" == "true");
     is_trace=("$TRACE" == "true");
 
     if $is_local; then
@@ -57,9 +57,9 @@ main()
     fi
 
     params=()
-    if $is_ci; then
-        params+="--deploy-fixture --parallel "
-    fi
+    # if $is_ci; then
+    #     params+="--deploy-fixture --parallel "
+    # fi
 
     if [ -z "$1" ]; then
         # Run all files with `.fork-test.js` suffix when no file name param is given
@@ -82,7 +82,7 @@ main()
 
     if [[ $is_coverage == "true" ]]; then
         echo "Running tests and generating coverage reports..."
-        FORK=true IS_TEST=true npx --no-install hardhat coverage --testfiles "test/**/*.fork-test.js"
+        FORK=true IS_TEST=true npx --no-install hardhat coverage --testfiles "${params[@]}"
     else
         echo "Running fork tests..."
         FORK=true IS_TEST=true npx --no-install hardhat test ${params[@]}
