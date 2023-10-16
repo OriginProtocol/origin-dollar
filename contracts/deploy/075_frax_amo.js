@@ -7,7 +7,7 @@ const { getTxOpts } = require("../utils/tx");
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "076_frax_amo",
+    deployName: "075_frax_amo",
     forceDeploy: false,
     // forceSkip: true,
     reduceQueueTime: false,
