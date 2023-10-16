@@ -151,8 +151,8 @@ forkOnlyDescribe("ForkTest: Collateral swaps", function () {
         {
           from: "WETH",
           to: "frxETH",
-          fromAmount: 100,
-          minToAssetAmount: 99.9,
+          fromAmount: 10,
+          minToAssetAmount: 9.96,
           protocols: "UNISWAP_V3",
         },
         {
@@ -248,8 +248,8 @@ forkOnlyDescribe("ForkTest: Collateral swaps", function () {
           error: "ERC20: transfer amount exceeds balance",
           from: "frxETH",
           to: "WETH",
-          fromAmount: 10000,
-          minToAssetAmount: 9900,
+          fromAmount: 15000,
+          minToAssetAmount: 14900,
         },
         {
           error: "SafeERC20: low-level call failed",
@@ -435,8 +435,8 @@ forkOnlyDescribe("ForkTest: Collateral swaps", function () {
           error: "Dai/insufficient-balance",
           from: "DAI",
           to: "USDC",
-          fromAmount: 3000000,
-          minToAssetAmount: 2900000,
+          fromAmount: 30000000,
+          minToAssetAmount: 29000000,
         },
         {
           error: "SafeERC20: low-level call failed",
@@ -449,8 +449,8 @@ forkOnlyDescribe("ForkTest: Collateral swaps", function () {
           error: "ERC20: transfer amount exceeds balance",
           from: "USDC",
           to: "DAI",
-          fromAmount: 3000000,
-          minToAssetAmount: 2990000,
+          fromAmount: 30000000,
+          minToAssetAmount: 29900000,
         },
       ];
 

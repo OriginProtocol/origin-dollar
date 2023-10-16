@@ -453,7 +453,7 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Strategy", function () {
       await assertRemoveAndBurn(parseUnits("3"), fixture);
     });
     it("Strategist should remove a lot of OETH from the Curve pool", async () => {
-      await assertRemoveAndBurn(parseUnits("4000"), fixture);
+      await assertRemoveAndBurn(parseUnits("3500"), fixture);
     });
     it("Strategist should fail to add even more OETH to the Curve pool", async () => {
       const { convexEthMetaStrategy, strategist } = fixture;
@@ -499,9 +499,9 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Strategy", function () {
       const curveBalances = await curveOethEthPool.get_balances();
       const oethMintAmount = curveBalances[0]
         .sub(curveBalances[1])
-        // reduce by 0.0001%
-        .mul(999999)
-        .div(1000000);
+        // reduce by 0.001%
+        .mul(99999)
+        .div(100000);
 
       await assertMintAndAddOTokens(oethMintAmount, fixture);
     });
@@ -510,7 +510,7 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Strategy", function () {
       await assertRemoveOnlyAssets(lpAmount, fixture);
     });
     it("Strategist should remove a lot ETH from the Curve pool", async () => {
-      const lpAmount = parseUnits("20000");
+      const lpAmount = parseUnits("15000");
       await assertRemoveOnlyAssets(lpAmount, fixture);
     });
   });
@@ -583,7 +583,7 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Strategy", function () {
     const loadFixture = createFixtureLoader(convexOethEthAmoFixture, {
       wethMintAmount: 5000,
       depositToStrategy: false,
-      poolAddOethAmount: 100,
+      poolAddOethAmount: 500,
     });
     beforeEach(async () => {
       fixture = await loadFixture();

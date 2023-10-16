@@ -96,6 +96,32 @@ forkOnlyDescribe("ForkTest: FraxETH Strategy", function () {
           .withdraw(weth.address, weth.address, oethUnits("12"))
       ).to.be.revertedWith("Unexpected asset address");
     });
+    // TODO: Reenable this after FraxETH strategy has been upgraded
+    it.skip("Should allow withdrawAll twice", async () => {
+      const { oethVault, fraxEthStrategy } = fixture;
+      const fakeVaultSigner = await impersonateAndFundContract(
+        oethVault.address
+      );
+
+      // Do a withdrawAll with impersonated Vault
+      await fraxEthStrategy.connect(fakeVaultSigner).withdrawAll();
+
+      // Do a second withdrawAll, both should work.
+      await fraxEthStrategy.connect(fakeVaultSigner).withdrawAll();
+    });
+
+    it("Should not allow withdrawing WETH", async () => {
+      const { oethVault, fraxEthStrategy, weth } = fixture;
+      const fakeVaultSigner = await impersonateAndFundContract(
+        oethVault.address
+      );
+
+      await expect(
+        fraxEthStrategy
+          .connect(fakeVaultSigner)
+          .withdraw(weth.address, weth.address, oethUnits("12"))
+      ).to.be.revertedWith("Unexpected asset address");
+    });
   });
 
   describe("Balance/Assets", function () {

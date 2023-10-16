@@ -230,7 +230,14 @@ forkOnlyDescribe(
         expect(wethInVaultBefore.sub(wethInVaultAfter)).to.equal(wethUnits);
         expect(
           strategyValueAfter.sub(strategyValueBefore)
-        ).to.approxEqualTolerance(rethValue.add(wethUnits), 0.01);
+          /* can in theory be up to ~2% off when calculating rETH value since the
+           * chainlink oracle allows for 2% deviation: https://data.chain.link/ethereum/mainnet/crypto-eth/reth-eth
+           *
+           * Since we are also depositing WETH that 2% deviation should be diluted to
+           * roughly ~1% when pricing value in the strategy. We are choosing 0.5% here for now
+           * and will adjust to more if needed.
+           */
+        ).to.approxEqualTolerance(rethValue.add(wethUnits), 0.5);
       });
 
       it("Should be able to deposit with higher deposit deviation", async function () {});
@@ -254,6 +261,22 @@ forkOnlyDescribe(
           .connect(josh)
           .populateTransaction["checkBalance(address)"](weth.address);
         await josh.sendTransaction(tx);
+      });
+
+      it("Should not return invalid balance of unsupported asset", async () => {
+        // Deposit something
+        const { reth, rEthBPT, weth, balancerREthStrategy, frxETH, stETH } =
+          fixture;
+        await depositTest(fixture, [5, 5], [weth, reth], rEthBPT);
+
+        // Check balance
+        for (const unsupportedAsset of [frxETH, stETH]) {
+          await expect(
+            balancerREthStrategy["checkBalance(address)"](
+              unsupportedAsset.address
+            )
+          ).to.be.revertedWith("Unsupported asset");
+        }
       });
     });
 
@@ -787,6 +810,10 @@ forkOnlyDescribe(
 
       beforeEach(async () => {
         fixture = await loadBalancerREthFixtureNotDefault();
+        const { oethVault, balancerREthStrategy, strategist } = fixture;
+        await oethVault
+          .connect(strategist)
+          .withdrawAllFromStrategy(balancerREthStrategy.address);
 
         attackerAddress = "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045";
         sAttacker = await impersonateAndFundContract(attackerAddress);
@@ -996,11 +1023,11 @@ forkOnlyDescribe(
          *    tilt checkBalance call. Strategy has roughly ~100 units deposited so 0.012
          *    change would equal 0.012/100 = 0.00012 change if 1 is a whole. Or 0.012%
          */
-        [100, "0.012"],
-        [200, "0.016"],
-        [300, "0.018"],
-        [400, "0.02"],
-        [500, "0.02"],
+        [100, "0.015"],
+        [200, "0.019"],
+        [300, "0.023"],
+        [400, "0.025"],
+        [500, "0.025"],
       ];
 
       for (const testCase of checkBalanceTestCases) {

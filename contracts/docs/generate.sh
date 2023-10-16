@@ -106,7 +106,7 @@ sol2uml storage .. -c BalancerEthAMOStrategy -o BalancerEthAMOStrategyStorage.sv
     --slotTypes address,address,bool,address
 
 # contracts/strategies/balancer
-sol2uml .. -v -hv -hf -he -hs -hl -b BalancerMetaPoolStrategy -o BalancerMetaPoolStrategyHierarchy.svg
+sol2uml .. -v -hv -hf -he -hs -hl -hi -b BalancerMetaPoolStrategy -o BalancerMetaPoolStrategyHierarchy.svg
 sol2uml .. -s -d 0 -b BalancerMetaPoolStrategy -o BalancerMetaPoolStrategySquashed.svg
 sol2uml storage .. -c BalancerMetaPoolStrategy -o BalancerMetaPoolStrategyStorage.svg --hideExpand ______gap,_reserved,__reserved,__reserved_baseAuraStrategy
 

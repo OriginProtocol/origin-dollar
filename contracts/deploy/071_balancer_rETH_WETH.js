@@ -10,7 +10,8 @@ module.exports = deploymentWithGovernanceProposal(
     forceDeploy: false,
     //forceSkip: true,
     deployerIsProposer: true,
-    //proposalId: ,
+    proposalId:
+      "17043959540932214305975227536301311223058634629252956083518973246707438400299",
   },
   async ({ deployWithConfirmation, ethers, getTxOpts, withConfirmation }) => {
     const { deployerAddr } = await getNamedAccounts();
@@ -95,7 +96,11 @@ module.exports = deploymentWithGovernanceProposal(
     // Governance Actions
     // ----------------
     return {
-      name: "Deploy new Balancer MetaPool strategy",
+      name: "Deploy Balancer rETH/WETH MetaPool strategy\n\
+      \n\
+      This will enable OETH protocol to deploy liquidity to Balancer's rETH/WETH pool\n\
+      \n\
+      ",
       actions: [
         // 1. Add new strategy to the vault
         {

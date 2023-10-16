@@ -6,6 +6,7 @@ const { formatUnits } = require("ethers/lib/utils");
 
 const addresses = require("../utils/addresses");
 const { setFraxOraclePrice } = require("../utils/frax");
+const { replaceContractAt } = require("../utils/deploy");
 const {
   balancer_rETH_WETH_PID,
   balancer_stETH_WETH_PID,
@@ -390,7 +391,7 @@ const defaultFixture = deployments.createFixture(async () => {
     dai = await ethers.getContract("MockDAI");
     tusd = await ethers.getContract("MockTUSD");
     usdc = await ethers.getContract("MockUSDC");
-    weth = await ethers.getContract("MockWETH");
+    weth = await ethers.getContractAt("MockWETH", addresses.mainnet.WETH);
     ogn = await ethers.getContract("MockOGN");
     LUSD = await ethers.getContract("MockLUSD");
     ogv = await ethers.getContract("MockOGV");
@@ -664,7 +665,7 @@ async function oethDefaultFixture() {
   const fixture = await defaultFixture();
 
   const { weth, reth, stETH, frxETH, sfrxETH } = fixture;
-  const { matt, josh, domen, daniel, franck, governor, oethVault } = fixture;
+  const { matt, josh, domen, daniel, franck, oethVault } = fixture;
 
   if (isFork) {
     for (const user of [matt, josh, domen, daniel, franck]) {
@@ -686,27 +687,15 @@ async function oethDefaultFixture() {
     );
     await mockedMinter.connect(franck).setAssetAddress(fixture.sfrxETH.address);
 
-    // Replace WETH contract with MockWETH
-    const mockWETH = await ethers.getContract("MockWETH");
-    await replaceContractAt(addresses.mainnet.WETH, mockWETH);
-    const stubbedWETH = await ethers.getContractAt(
-      "MockWETH",
-      addresses.mainnet.WETH
-    );
-    fixture.weth = stubbedWETH;
-
-    // And Fund it
-    _hardhatSetBalance(stubbedWETH.address, "999999999999999");
-
-    // And make sure vault knows about it
-    await oethVault.connect(governor).supportAsset(addresses.mainnet.WETH, 0);
+    // Fund WETH contract
+    _hardhatSetBalance(weth.address, "999999999999999");
 
     // Fund all with mockTokens
     await fundAccountsForOETHUnitTests();
 
     // Reset allowances
     for (const user of [matt, josh, domen, daniel, franck]) {
-      for (const asset of [stubbedWETH, reth, stETH, frxETH, sfrxETH]) {
+      for (const asset of [weth, reth, stETH, frxETH, sfrxETH]) {
         await resetAllowance(asset, user, oethVault.address);
       }
     }
@@ -2306,16 +2295,6 @@ async function fluxStrategyFixture() {
   await vault.connect(timelock).rebase();
 
   return fixture;
-}
-
-async function replaceContractAt(targetAddress, mockContract) {
-  const signer = (await hre.ethers.getSigners())[0];
-  const mockCode = await signer.provider.getCode(mockContract.address);
-
-  await hre.network.provider.request({
-    method: "hardhat_setCode",
-    params: [targetAddress, mockCode],
-  });
 }
 
 /**
