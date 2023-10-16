@@ -198,7 +198,11 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         uint256 coinIndex = _getCoinIndex(_asset);
 
         // Calculate the amount of LP tokens required to withdraw the asset
-        uint256 maxCurveLpTokens = _calcCurveTokenAmount(coinIndex, _amount);
+        uint256 maxCurveLpTokens = CurveThreeCoinLib.calcWithdrawLpAmount(
+            CURVE_POOL,
+            coinIndex,
+            _amount
+        );
 
         // We have enough LP tokens, make sure they are all on this contract
         if (curveLpTokensInStrategy < maxCurveLpTokens) {
@@ -214,83 +218,6 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
             _asset,
             _recipient
         );
-    }
-
-    /**
-     * @dev Calculate amount of LP required when withdrawing specific amount of one
-     * of the underlying assets accounting for fees and slippage.
-     *
-     * Curve pools unfortunately do not contain a calculation function for
-     * amount of LP required when withdrawing a specific amount of one of the
-     * underlying tokens and also accounting for fees (Curve's calc_token_amount
-     * does account for slippage but not fees).
-     *
-     * Steps taken to calculate the metric:
-     *  - get amount of LP required if fees wouldn't apply
-     *  - increase the LP amount as if fees would apply to the entirety of the underlying
-     *    asset withdrawal. (when withdrawing only one coin fees apply only to amounts
-     *    of other assets pool would return in case of balanced removal - since those need
-     *    to be swapped for the single underlying asset being withdrawn)
-     *  - get amount of underlying asset withdrawn (this Curve function does consider slippage
-     *    and fees) when using the increased LP amount. As LP amount is slightly over-increased
-     *    so is amount of underlying assets returned.
-     *  - the required amount of Curve LP tokens including fees is calculated by reducing the full fee LP amount
-     *    by the ratio of required assets to assets received for full fee LP amount.
-     * @param _coinIndex index of the coin in the Curve pool that is to be withdrawn
-     * @param _assetAmount amount of an asset that is required to be withdrawn
-     */
-    function _calcCurveTokenAmount(uint256 _coinIndex, uint256 _assetAmount)
-        internal
-        view
-        returns (uint256 lpRequired)
-    {
-        uint256[] memory _amounts = new uint256[](CURVE_BASE_ASSETS);
-        _amounts[_coinIndex] = _assetAmount;
-
-        // LP required when removing required asset including slippage but ignoring fees
-        uint256 lpRequiredNoFees = CurveThreeCoinLib.calc_token_amount(
-            CURVE_POOL,
-            _amounts,
-            false
-        );
-        /* LP required if fees would apply to entirety of removed amount
-         *
-         * fee is 1e10 denominated number: https://curve.readthedocs.io/exchange-pools.html#StableSwap.fee
-         */
-        uint256 lpRequiredFullFees = lpRequiredNoFees.mulTruncateScale(
-            1e10 + ICurvePool(CURVE_POOL).fee(),
-            1e10
-        );
-
-        /* Asset received when withdrawing full fee applicable LP accounting for slippage and fees.
-         * Unlike calc_token_amount which does not include fees, calc_withdraw_one_coin includes fees.
-         */
-        uint256 assetReceivedForFullLPFees = ICurvePool(CURVE_POOL)
-            .calc_withdraw_one_coin(
-                lpRequiredFullFees,
-                int128(uint128(_coinIndex))
-            );
-
-        // The required amount of Curve LP tokens including fees is calculated by reducing the full fee LP amount
-        // by the ratio of required assets to assets received from the full fee LP amount.
-        // required LP tokens = full fee LP tokens * (required asset amount / asset received for full fee LP tokens)
-        lpRequired =
-            (lpRequiredFullFees * _assetAmount) /
-            assetReceivedForFullLPFees;
-    }
-
-    /**
-     * @notice Calculate amount of LP required to withdraw an exact amount of a Curve pool asset.
-     * @dev This external function is not used by the Vault. It's only here for testing purposes.
-     * @param _coinIndex index of the coin in the Curve pool that is to be withdrawn
-     * @param _assetAmount amount of an asset that is required to be withdrawn
-     */
-    function calcCurveLpAmount(uint256 _coinIndex, uint256 _assetAmount)
-        external
-        view
-        returns (uint256 lpRequired)
-    {
-        lpRequired = _calcCurveTokenAmount(_coinIndex, _assetAmount);
     }
 
     /**
