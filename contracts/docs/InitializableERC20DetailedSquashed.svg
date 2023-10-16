@@ -9,9 +9,9 @@
 <g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 398.6)">
 <title>UmlClassDiagram</title>
 <polygon fill="white" stroke="transparent" points="-4,4 -4,-398.6 605.24,-398.6 605.24,4 -4,4"/>
-<!-- 168 -->
+<!-- 185 -->
 <g id="node1" class="node">
-<title>168</title>
+<title>185</title>
 <polygon fill="#f2f2f2" stroke="black" points="0,-0.5 0,-394.1 601.24,-394.1 601.24,-0.5 0,-0.5"/>
 <text text-anchor="middle" x="300.62" y="-377.5" font-family="Times,serif" font-size="14.00">InitializableERC20Detailed</text>
 <text text-anchor="middle" x="300.62" y="-360.7" font-family="Times,serif" font-size="14.00">../contracts/utils/InitializableERC20Detailed.sol</text>

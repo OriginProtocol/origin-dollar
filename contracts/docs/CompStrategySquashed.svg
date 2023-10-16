@@ -9,12 +9,12 @@
 <g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 1356.2)">
 <title>UmlClassDiagram</title>
 <polygon fill="white" stroke="transparent" points="-4,4 -4,-1356.2 834.68,-1356.2 834.68,4 -4,4"/>
-<!-- 149 -->
+<!-- 146 -->
 <g id="node1" class="node">
-<title>149</title>
+<title>146</title>
 <polygon fill="#f2f2f2" stroke="black" points="0,-0.5 0,-1351.7 830.68,-1351.7 830.68,-0.5 0,-0.5"/>
-<text text-anchor="middle" x="415.34" y="-1335.1" font-family="Times,serif" font-size="14.00">FluxStrategy</text>
-<text text-anchor="middle" x="415.34" y="-1318.3" font-family="Times,serif" font-size="14.00">../contracts/strategies/FluxStrategy.sol</text>
+<text text-anchor="middle" x="415.34" y="-1335.1" font-family="Times,serif" font-size="14.00">CompoundStrategy</text>
+<text text-anchor="middle" x="415.34" y="-1318.3" font-family="Times,serif" font-size="14.00">../contracts/strategies/CompoundStrategy.sol</text>
 <polyline fill="none" stroke="black" points="0,-1310.1 830.68,-1310.1 "/>
 <text text-anchor="start" x="8" y="-1293.5" font-family="Times,serif" font-size="14.00">Private:</text>
 <text text-anchor="start" x="8" y="-1276.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;initialized: bool &lt;&lt;Initializable&gt;&gt;</text>
@@ -57,7 +57,7 @@
 <text text-anchor="start" x="8" y="-663.9" font-family="Times,serif" font-size="14.00">External:</text>
 <text text-anchor="start" x="8" y="-647.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;transferGovernance(_newGovernor: address) &lt;&lt;onlyGovernor&gt;&gt; &lt;&lt;Governable&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-630.3" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;claimGovernance() &lt;&lt;Governable&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-613.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;collectRewardTokens() &lt;&lt;FluxStrategy&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-613.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;collectRewardTokens() &lt;&lt;onlyHarvester, nonReentrant&gt;&gt; &lt;&lt;CompoundStrategy&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-596.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;setRewardTokenAddresses(_rewardTokenAddresses: address[]) &lt;&lt;onlyGovernor&gt;&gt; &lt;&lt;InitializableAbstractStrategy&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-579.9" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;getRewardTokenAddresses(): address[] &lt;&lt;InitializableAbstractStrategy&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-563.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;setPTokenAddress(_asset: address, _pToken: address) &lt;&lt;onlyGovernor&gt;&gt; &lt;&lt;InitializableAbstractStrategy&gt;&gt;</text>
@@ -92,7 +92,7 @@
 <text text-anchor="start" x="8" y="-75.9" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;constructor() &lt;&lt;Governable&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-59.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;governor(): address &lt;&lt;Governable&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-42.3" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;isGovernor(): bool &lt;&lt;Governable&gt;&gt;</text>
-<text text-anchor="start" x="8" y="-25.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;constructor(_stratConfig: BaseStrategyConfig) &lt;&lt;FluxStrategy&gt;&gt;</text>
+<text text-anchor="start" x="8" y="-25.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;constructor(_stratConfig: BaseStrategyConfig) &lt;&lt;CompoundStrategy&gt;&gt;</text>
 <text text-anchor="start" x="8" y="-8.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;transferToken(_asset: address, _amount: uint256) &lt;&lt;onlyGovernor&gt;&gt; &lt;&lt;InitializableAbstractStrategy&gt;&gt;</text>
 </g>
 </g>
