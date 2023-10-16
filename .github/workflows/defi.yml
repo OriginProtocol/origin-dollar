@@ -98,7 +98,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        chunk_id: [0,1,2]
+        chunk_id: [0,1,2,3]
     env:
       HARDHAT_CACHE_DIR: ./cache
       PROVIDER_URL: ${{ secrets.PROVIDER_URL }}
@@ -128,52 +128,13 @@ jobs:
       - run: yarn run test:fork:parallel
         working-directory: ./contracts
 
-      # - uses: actions/upload-artifact@v3
-      #   with:
-      #     name: fork-test-coverage-${{ github.sha }}
-      #     path: | 
-      #       ./contracts/coverage.json
-      #       ./contracts/coverage/**/*
-      #     retention-days: 1
-
-  # contracts-forktest:
-  #   name: "Contracts Fork Tests"
-  #   runs-on: ubuntu-latest
-  #   env:
-  #     HARDHAT_CACHE_DIR: ./cache
-  #     PROVIDER_URL: ${{ secrets.PROVIDER_URL }}
-  #     ONEINCH_API: ${{ secrets.ONEINCH_API }}
-  #   steps:
-  #     - uses: actions/checkout@v3
-
-  #     - name: Use Node.js
-  #       uses: actions/setup-node@v3
-  #       with:
-  #         node-version: "16.x"
-  #         cache: "yarn"
-  #         cache-dependency-path: contracts/yarn.lock
-
-  #     - uses: actions/cache@v3
-  #       id: hardhat-cache
-  #       with:
-  #         path: contracts/cache
-  #         key: ${{ runner.os }}-hardhat-${{ hashFiles('contracts/cache/*.json') }}
-  #         restore-keys: |
-  #           ${{ runner.os }}-hardhat-cache
-
-  #     - run: yarn install --frozen-lockfile
-  #       working-directory: ./contracts
-
-  #     - run: yarn run test:fork
-  #       working-directory: ./contracts
-
-  #     # - uses: actions/upload-artifact@v3
-  #     #   with:
-  #     #     name: fork-test-coverage-${{ github.sha }}
-  #     #     path: | 
-  #     #       ./contracts/coverage.json
-  #     #       ./contracts/coverage/**/*
-  #     #     retention-days: 1
+      - uses: actions/upload-artifact@v3
+        with:
+          name: fork-test-coverage-${{ github.sha }}
+          path: | 
+            ./contracts/coverage.json
+            ./contracts/coverage/**/*
+          retention-days: 1
 
   coverage-uploader:
     name: "Upload Coverage Reports"
