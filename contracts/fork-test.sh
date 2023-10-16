@@ -17,6 +17,7 @@ main()
 
     is_coverage=false # TODO: Temporary test, undo it later
     # is_coverage=("$REPORT_COVERAGE" == "true");
+    is_trace=("$TRACE" == "true");
 
     if $is_local; then
         # When not running on CI/CD, make sure there's an env file
@@ -73,6 +74,10 @@ main()
         params+="$@"
     fi
 
+    if [[ $is_trace == "true" ]]; then
+        params+=" --trace"
+    fi
+    
     echo "hardhat test ${params[@]}"
 
     if [[ $is_coverage == "true" ]]; then
