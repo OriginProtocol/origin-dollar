@@ -230,7 +230,14 @@ forkOnlyDescribe(
         expect(wethInVaultBefore.sub(wethInVaultAfter)).to.equal(wethUnits);
         expect(
           strategyValueAfter.sub(strategyValueBefore)
-        ).to.approxEqualTolerance(rethValue.add(wethUnits), 0.01);
+          /* can in theory be up to ~2% off when calculating rETH value since the
+           * chainlink oracle allows for 2% deviation: https://data.chain.link/ethereum/mainnet/crypto-eth/reth-eth
+           *
+           * Since we are also depositing WETH that 2% deviation should be diluted to
+           * roughly ~1% when pricing value in the strategy. We are choosing 0.5% here for now
+           * and will adjust to more if needed.
+           */
+        ).to.approxEqualTolerance(rethValue.add(wethUnits), 0.5);
       });
 
       it("Should be able to deposit with higher deposit deviation", async function () {});
