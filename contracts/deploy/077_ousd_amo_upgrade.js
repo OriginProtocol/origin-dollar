@@ -89,17 +89,11 @@ module.exports = deploymentWithGovernanceProposal(
           signature: "setMintForStrategyThreshold(address,uint256)",
           args: [cConvexOUSDMetaStrategyProxy.address, parseUnits("50", 24)],
         },
-        // Upgrade the OUSD AMO strategy proxy to the new strategy implementation
+        // 5. Upgrade the OUSD AMO strategy proxy to the new strategy implementation
         {
           contract: cConvexOUSDMetaStrategyProxy,
           signature: "upgradeTo(address)",
           args: [dConvexOUSDMetaStrategy.address],
-        },
-        // Set the strategy using the Curve OUSD/3CRV pool to be an AMO
-        {
-          contract: cVault,
-          signature: "setAMOStrategy(address,bool)",
-          args: [cConvexOUSDMetaStrategyProxy.address, true],
         },
       ],
     };
