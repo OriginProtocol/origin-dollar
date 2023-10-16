@@ -98,7 +98,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        chunk_id: [0,1,2,3]
+        chunk_id: [0,1,2]
     env:
       HARDHAT_CACHE_DIR: ./cache
       PROVIDER_URL: ${{ secrets.PROVIDER_URL }}

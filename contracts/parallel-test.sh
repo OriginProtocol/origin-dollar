@@ -11,7 +11,8 @@ main()
   files_chunk=()
 
   for i in "${!testfiles[@]}"; do
-    if [ "$(($i%4))" == "$CHUNK_ID" ]; then
+    # Total chunks hardcoded to 3
+    if [ "$(($i%3))" == "$CHUNK_ID" ]; then
       files_chunk+=("${testfiles[$i]}")
     fi
   done
