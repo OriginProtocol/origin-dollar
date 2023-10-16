@@ -65,7 +65,7 @@ main()
         # Run all files with `.fork-test.js` suffix when no file name param is given
         # pass all other params along
         if $is_coverage; then
-            params+="--testfiles test/**/*.fork-test.js"
+            params+="test/**/*.fork-test.js"
         else
             params+="test/**/*.fork-test.js"
         fi
@@ -82,7 +82,7 @@ main()
 
     if [[ $is_coverage == "true" ]]; then
         echo "Running tests and generating coverage reports..."
-        FORK=true IS_TEST=true npx --no-install hardhat coverage "${params[@]}"
+        FORK=true IS_TEST=true npx --no-install hardhat coverage --testfiles "${params[@]}"
     else
         echo "Running fork tests..."
         FORK=true IS_TEST=true npx --no-install hardhat test ${params[@]}
