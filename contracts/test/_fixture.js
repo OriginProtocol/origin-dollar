@@ -1876,6 +1876,7 @@ async function convexFrxEthAmoFixture(
   await impersonateAndFundAddress(
     frxETH.address,
     [
+      "0x8306300ffd616049FD7e4b0354a64Da835c1A81C",
       "0xa1F8A6807c402E4A15ef4EBa36528A3FED24E577",
       "0x9c3B46C0Ceb5B9e304FCd6D88Fc50f7DD24B31Bc",
       "0x4d9f9D15101EEC665F77210cB999639f760F831E",
