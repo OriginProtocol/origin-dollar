@@ -25,9 +25,9 @@ yarn run start
 - go to "/dashboard" page and find "Staking" section
 - Click on "Mint hella OGN" to supply your account with OGN
 - click on "Supply staking contract with OGN" to supply staking contract with 10k OGN. If staking contract runs out of OGN or more OGN is staked by users than the contract owns an error is thrown(At the step when user tries to stake OGN).
-- click on the "Approve staking contract to move OGN" to approve ognStaking to move ogn around. On mainnet this is not necessary since the OGN contract has ogn staking contract whiteslited.
+- click on the "Approve staking contract to move OGN" to approve ognStaking to move ogn around. On mainnet this is not necessary since the OGN contract has ogn staking contract whitelisted.
 
-Good to know: In local environment there is a staking option where users stake OGN for only 10 minutes. This will not happen in production or forked environment. The purpose of it is to easen the testing / development.
+Good to know: In local environment there is a staking option where users stake OGN for only 10 minutes. This will not happen in production or forked environment. The purpose of it is to ease the testing / development.
 
 ### Translations
 
