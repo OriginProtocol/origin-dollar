@@ -200,7 +200,7 @@ async function mintTest(fixture, user, asset, amount = "10.34") {
   if (asset.address == frxETH.address) {
     // Should deposit if it's frxETH
 
-    // Ensrue WETH balance is 0
+    // Ensure WETH balance is 0
     expect(newStrategyWETHBal).to.equal(
       "0",
       "Should not have any leftover WETH"

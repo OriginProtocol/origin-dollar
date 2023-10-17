@@ -59,6 +59,7 @@ addresses.mainnet.CVX = "0x4e3fbd56cd56c3e72c1403e103b45db9da5b9d2b";
 addresses.mainnet.CVXBooster = "0xF403C135812408BFbE8713b5A23a04b3D48AAE31";
 addresses.mainnet.ConvexPoolManager =
   "0xc461E1CE3795Ee30bA2EC59843d5fAe14d5782D5";
+addresses.mainnet.CVXRewardsPool = "0x7D536a737C13561e0D2Decf1152a653B4e615158";
 
 // Maker Dai Savings Rate
 addresses.mainnet.sDAI = "0x83F20F44975D03b1b09e64809B757c47f942BEeA";
@@ -168,6 +169,16 @@ addresses.mainnet.CurveFrxETHOETHGauge =
   "0x8584d7F7bf9803d45e8df75Afe824f1Ae83C6256";
 addresses.mainnet.CVXFrxETHRewardsPool =
   "0x105fb5f119117853af8D7D57581a13dDeCa01e21";
+
+// Curve frxETH/WETH pool
+addresses.mainnet.ConvexFrxEthWethStrategy =
+  "0x1ce298Ec5FE0B1E4B04fb78d275Da6280f6e82A3"; // TODO set after deployment
+addresses.mainnet.CurveFrxEthWethPool =
+  "0x9c3B46C0Ceb5B9e304FCd6D88Fc50f7DD24B31Bc";
+addresses.mainnet.CurveFrxEthWethGauge =
+  "0x4e21418095d32d15c6e2b96a9910772613a50d50";
+addresses.mainnet.ConvexFrxEthWethRewardsPool =
+  "0xFafDE12dC476C4913e29F47B4747860C148c5E4f";
 
 // Morpho
 addresses.mainnet.MorphoStrategyProxy =

@@ -9,7 +9,6 @@ pragma solidity ^0.8.0;
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import { BaseAMOStrategy, InitializableAbstractStrategy } from "./BaseAMOStrategy.sol";
-import { ICurveETHPoolV1 } from "../ICurveETHPoolV1.sol";
 import { IConvexDeposits } from "../IConvexDeposits.sol";
 import { IRewardStaking } from "../IRewardStaking.sol";
 import { IBalancerVault } from "../../interfaces/balancer/IBalancerVault.sol";

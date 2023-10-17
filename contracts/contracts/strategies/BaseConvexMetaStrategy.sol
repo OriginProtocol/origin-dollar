@@ -9,8 +9,8 @@ pragma solidity ^0.8.0;
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import { IRewardStaking } from "./IRewardStaking.sol";
-import { ICurvePool } from "./ICurvePool.sol";
-import { ICurveMetaPool } from "./ICurveMetaPool.sol";
+import { ICurvePool } from "./curve/ICurvePool.sol";
+import { ICurveMetaPool } from "./curve/ICurveMetaPool.sol";
 import { IERC20, BaseCurveStrategy, InitializableAbstractStrategy } from "./BaseCurveStrategy.sol";
 import { StableMath } from "../utils/StableMath.sol";
 import { Helpers } from "../utils/Helpers.sol";
@@ -66,11 +66,13 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
         address[] calldata _pTokens,
         InitConfig calldata initConfig
     ) external onlyGovernor initializer {
-        require(_assets.length == 3, "Must have exactly three assets");
+        require(
+            _assets.length == CURVE_BASE_ASSETS,
+            "Must have exactly three assets"
+        );
         // Should be set prior to abstract initialize call otherwise
         // abstractSetPToken calls will fail
         cvxDepositorAddress = initConfig.cvxDepositorAddress;
-        pTokenAddress = _pTokens[0];
         metapool = ICurveMetaPool(initConfig.metapoolAddress);
         metapoolMainToken = IERC20(initConfig.metapoolMainToken);
         cvxRewardStakerAddress = initConfig.cvxRewardStakerAddress;
@@ -79,7 +81,7 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
         maxWithdrawalSlippage = 1e16;
 
         metapoolAssets = [metapool.coins(0), metapool.coins(1)];
-        crvCoinIndex = _getMetapoolCoinIndex(pTokenAddress);
+        crvCoinIndex = _getMetapoolCoinIndex(CURVE_LP_TOKEN);
         mainCoinIndex = _getMetapoolCoinIndex(initConfig.metapoolMainToken);
         InitializableAbstractStrategy._initialize(
             _rewardTokenAddresses,
@@ -107,7 +109,7 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
         // LP tokens in this contract. This should generally be nothing as we
         // should always stake the full balance in the Gauge, but include for
         // safety
-        uint256 contractPTokens = IERC20(pTokenAddress).balanceOf(
+        uint256 contractPTokens = IERC20(CURVE_LP_TOKEN).balanceOf(
             address(this)
         );
         ICurvePool curvePool = ICurvePool(platformAddress);
@@ -134,7 +136,7 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
         }
 
         uint256 assetDecimals = Helpers.getDecimals(_asset);
-        balance = balance.scaleBy(assetDecimals, 18) / THREEPOOL_ASSET_COUNT;
+        balance = balance.scaleBy(assetDecimals, 18) / CURVE_BASE_ASSETS;
     }
 
     /**
@@ -174,10 +176,10 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
     }
 
     function _approveBase() internal override {
-        IERC20 pToken = IERC20(pTokenAddress);
+        IERC20 pToken = IERC20(CURVE_LP_TOKEN);
         // 3Pool for LP token (required for removing liquidity)
-        pToken.safeApprove(platformAddress, 0);
-        pToken.safeApprove(platformAddress, type(uint256).max);
+        pToken.safeApprove(CURVE_POOL, 0);
+        pToken.safeApprove(CURVE_POOL, type(uint256).max);
         // Gauge for LP token
         metapoolLPToken.safeApprove(cvxDepositorAddress, 0);
         metapoolLPToken.safeApprove(cvxDepositorAddress, type(uint256).max);

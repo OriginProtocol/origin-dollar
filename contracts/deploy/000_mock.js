@@ -1,9 +1,8 @@
 const { parseUnits } = require("ethers").utils;
 const { isMainnetOrFork } = require("../test/helpers");
-const { threeCRVPid } = require("../utils/constants");
-const { replaceContractAt } = require("../utils/deploy");
-
 const addresses = require("../utils/addresses");
+const { threeCRVPid } = require("../utils/constants");
+const { replaceContractAt, hardhatSetBalance } = require("../utils/hardhat");
 
 const {
   abi: FACTORY_ABI,
@@ -40,7 +39,6 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     "MockUSDC",
     "MockDAI",
     "MockNonStandardToken",
-    "MockWETH",
     "MockOGV",
     "MockAave",
     "MockRETH",
@@ -50,6 +48,13 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
   for (const contract of assetContracts) {
     await deploy(contract, { from: deployerAddr });
   }
+
+  await deploy("MockWETH", { from: deployerAddr });
+  // Replace WETH contract with MockWETH as some contracts have the WETH address hardcoded.
+  const mockWETH = await ethers.getContract("MockWETH");
+  await replaceContractAt(addresses.mainnet.WETH, mockWETH);
+  await hardhatSetBalance(addresses.mainnet.WETH, "999999999999999");
+  const weth = await ethers.getContractAt("MockWETH", addresses.mainnet.WETH);
 
   await deploy("MocksfrxETH", {
     from: deployerAddr,
@@ -107,11 +112,6 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
   const dai = await ethers.getContract("MockDAI");
   const usdc = await ethers.getContract("MockUSDC");
   const usdt = await ethers.getContract("MockUSDT");
-
-  // Replace WETH
-  const mockWETH = await ethers.getContract("MockWETH");
-  await replaceContractAt(addresses.mainnet.WETH, mockWETH);
-  const weth = await ethers.getContractAt("MockWETH", addresses.mainnet.WETH);
 
   // Deploy mock aTokens (Aave)
   // MockAave is the mock lendingPool
@@ -265,6 +265,12 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
 
   await deploy("MockLUSD", {
     from: deployerAddr,
+  });
+
+  const frxETH = await ethers.getContract("MockfrxETH");
+  await deploy("MockCurveFrxEthWethPool", {
+    from: deployerAddr,
+    args: [[addresses.mainnet.WETH, frxETH.address]],
   });
 
   // Mock CVX token

@@ -7,7 +7,7 @@ pragma solidity ^0.8.0;
  * @author Origin Protocol Inc
  */
 import { BaseAMOStrategy, InitializableAbstractStrategy } from "./BaseAMOStrategy.sol";
-import { ICurveETHPoolV1 } from "../ICurveETHPoolV1.sol";
+import { ICurveETHPoolV1 } from "../curve/ICurveETHPoolV1.sol";
 import { IConvexDeposits } from "../IConvexDeposits.sol";
 import { IRewardStaking } from "../IRewardStaking.sol";
 

@@ -14,6 +14,20 @@
 
 ![Aave Strategy Storage](../../docs/AaveStrategyStorage.svg)
 
+## Convex Strategy
+
+### Hierarchy
+
+![Convex Strategy Hierarchy](../../docs/ConvexStrategyHierarchy.svg)
+
+### Squashed
+
+![Convex Strategy Squashed](../../docs/ConvexStrategySquashed.svg)
+
+### Storage
+
+![Convex Strategy Storage](../../docs/ConvexStrategyStorage.svg)
+
 ## Convex ETH AMO Strategy
 
 ### Hierarchy

@@ -53,7 +53,8 @@ const deployWithConfirmation = async (
   contractName,
   args,
   contract,
-  skipUpgradeSafety = false
+  skipUpgradeSafety = false,
+  libraries = {}
 ) => {
   // check that upgrade doesn't corrupt the storage slots
   if (!skipUpgradeSafety) {
@@ -73,6 +74,7 @@ const deployWithConfirmation = async (
       args,
       contract,
       fieldsToCompare: null,
+      libraries,
       ...(await getTxOpts()),
     })
   );
@@ -1248,16 +1250,6 @@ function deploymentWithGuardianGovernor(opts, fn) {
   return main;
 }
 
-async function replaceContractAt(targetAddress, mockContract) {
-  const signer = (await hre.ethers.getSigners())[0];
-  const mockCode = await signer.provider.getCode(mockContract.address);
-
-  await hre.network.provider.request({
-    method: "hardhat_setCode",
-    params: [targetAddress, mockCode],
-  });
-}
-
 module.exports = {
   log,
   sleep,
@@ -1271,5 +1263,4 @@ module.exports = {
   deploymentWithProposal,
   deploymentWithGovernanceProposal,
   deploymentWithGuardianGovernor,
-  replaceContractAt,
 };

@@ -9,7 +9,7 @@ import { IRewardStaking } from "../../strategies/IRewardStaking.sol";
 import { IMintableERC20, MintableERC20, ERC20 } from "../MintableERC20.sol";
 import { IBurnableERC20, BurnableERC20 } from "../BurnableERC20.sol";
 
-contract MockDepositToken is MintableERC20 {
+contract MockDepositToken is MintableERC20, BurnableERC20 {
     constructor() ERC20("DCVX", "CVX Deposit Token") {}
 }
 
@@ -37,9 +37,13 @@ contract MockBooster {
         cvx = _cvx;
     }
 
-    function setPool(uint256 pid, address _lpToken) external returns (bool) {
+    function setPool(uint256 pid, address _lpToken)
+        external
+        returns (address rewards)
+    {
         address token = address(new MockDepositToken());
-        address rewards = address(
+        // Deploy a new Convex Rewards Pool
+        rewards = address(
             new MockRewardPool(pid, token, crv, cvx, address(this))
         );
 
@@ -59,26 +63,26 @@ contract MockBooster {
 
         address lptoken = pool.lptoken;
 
-        // hold on to the lptokens
+        // hold on to the Curve LP tokens
         IERC20(lptoken).safeTransferFrom(msg.sender, address(this), _amount);
 
         address token = pool.token;
         if (_stake) {
-            //mint here and send to rewards on user behalf
+            // mint Convex pool LP tokens and stake in rewards contract on user behalf
             IMintableERC20(token).mint(_amount);
             address rewardContract = pool.crvRewards;
             IERC20(token).safeApprove(rewardContract, 0);
             IERC20(token).safeApprove(rewardContract, _amount);
             IRewardStaking(rewardContract).stakeFor(msg.sender, _amount);
         } else {
-            //add user balance directly
+            // mint Convex pool LP tokens and send to user
             IMintableERC20(token).mint(_amount);
             IERC20(token).transfer(msg.sender, _amount);
         }
         return true;
     }
 
-    //deposit all lp tokens and stake
+    // Deposit all Curve LP tokens and stake
     function depositAll(uint256 _pid, bool _stake) external returns (bool) {
         address lptoken = poolInfo[_pid].lptoken;
         uint256 balance = IERC20(lptoken).balanceOf(msg.sender);
@@ -86,7 +90,7 @@ contract MockBooster {
         return true;
     }
 
-    //withdraw lp tokens
+    // withdraw Curve LP tokens
     function _withdraw(
         uint256 _pid,
         uint256 _amount,
@@ -94,23 +98,21 @@ contract MockBooster {
         address _to
     ) internal {
         PoolInfo storage pool = poolInfo[_pid];
-        address lptoken = pool.lptoken;
-        address token = pool.token;
 
-        //remove lp balance
-        IBurnableERC20(token).burnFrom(_from, _amount);
+        // burn the Convex pool LP tokens
+        IBurnableERC20(pool.token).burnFrom(_from, _amount);
 
-        //return lp tokens
-        IERC20(lptoken).safeTransfer(_to, _amount);
+        // return the Curve LP tokens
+        IERC20(pool.lptoken).safeTransfer(_to, _amount);
     }
 
-    //withdraw lp tokens
+    // withdraw Curve LP tokens
     function withdraw(uint256 _pid, uint256 _amount) public returns (bool) {
         _withdraw(_pid, _amount, msg.sender, msg.sender);
         return true;
     }
 
-    //withdraw all lp tokens
+    // withdraw all Curve LP tokens
     function withdrawAll(uint256 _pid) public returns (bool) {
         address token = poolInfo[_pid].token;
         uint256 userBal = IERC20(token).balanceOf(msg.sender);
@@ -118,7 +120,7 @@ contract MockBooster {
         return true;
     }
 
-    //allow reward contracts to send here and withdraw to user
+    // allow reward contracts to send here and withdraw to user
     function withdrawTo(
         uint256 _pid,
         uint256 _amount,
@@ -131,7 +133,7 @@ contract MockBooster {
         return true;
     }
 
-    //callback from reward contract when crv is received.
+    // callback from reward contract when crv is received.
     function rewardClaimed(
         uint256 _pid,
         // solhint-disable-next-line no-unused-vars

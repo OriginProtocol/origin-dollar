@@ -8,6 +8,7 @@ const metapoolLPCRVPid = 56;
 const lusdMetapoolLPCRVPid = 33;
 const oethPoolLpPID = 174;
 const frxEthPoolLpPID = 237;
+const frxEthWethPoolLpPID = 219;
 
 // stETH/WETH
 const aura_stETH_WETH_PID = 115;
@@ -30,6 +31,7 @@ module.exports = {
   lusdMetapoolLPCRVPid,
   oethPoolLpPID,
   frxEthPoolLpPID,
+  frxEthWethPoolLpPID,
   MAX_UINT256,
   aura_stETH_WETH_PID,
   balancer_stETH_WETH_PID,

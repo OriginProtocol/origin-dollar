@@ -42,12 +42,12 @@ object "OETHHarvester" as harv <<Origin>><<Proxy>> #DeepSkyBlue {
 
 ' Strategies
 object "FraxETHStrategy" as frxethstrat <<Origin>><<Proxy>> #DeepSkyBlue {
-    asset: frxETH, WETH
+    assets: frxETH, WETH
     vault: sfrxETH
 }
 object "ConvexEthMetaStrategy" as cvxStrat <<Origin>><<Proxy>> #DeepSkyBlue {
     asset: WETH
-    Curve metapool: OETHCRV-f
+    Curve pool: OETHCRV-f
     Convex pool: cvxOETHCRV-f
     Rewards: CRV, CVX
 }
@@ -62,10 +62,18 @@ object "ConvexFrxETHAMOStrategy" as frxAMOStrat <<Origin>><<Proxy>> #DeepSkyBlue
 }
 
 object "BalancerMetaPoolStrategy" as balancerStrat <<Origin>><<Proxy>> #DeepSkyBlue {
-    asset: rETH, WETH
+    assets: rETH, WETH
     Balancer Pool Token: B-rETH-STABLE
     Rewards: BAL, AURA
 }
+
+object "ConvexStrategy" as convexFrxEthWethStrat <<Origin>><<Proxy>> #DeepSkyBlue {
+    assets: frxETH, WETH
+    Curve pool: frxeth-ng-f
+    Convex pool: cvxfrxeth-ng-f
+    Rewards: CRV, CVX
+}
+
 
 ' Oracle
 object "OETHOracleRouter" as oracle <<Origin>> #DeepSkyBlue {
@@ -223,6 +231,10 @@ oeth <... morphAaveStrat
 oethv <...> balancerStrat
 oeth <... balancerStrat
 harv <..> balancerStrat
+
+' Convex Strategy for frxETH/WETH pool
+oethv <...> convexFrxEthWethStrat
+harv <..> convexFrxEthWethStrat
 
 ' ' Vault to Assets
 ' oethv .....> frxeth
