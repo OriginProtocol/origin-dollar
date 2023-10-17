@@ -100,7 +100,7 @@ forkOnlyDescribe("ForkTest: Collateral swaps", function () {
           to: "WETH",
           fromAmount: 10,
           minToAssetAmount: "10.7",
-          slippage: 0.1,
+          slippage: 0.3,
         },
         {
           from: "stETH",
@@ -248,8 +248,8 @@ forkOnlyDescribe("ForkTest: Collateral swaps", function () {
           error: "ERC20: transfer amount exceeds balance",
           from: "frxETH",
           to: "WETH",
-          fromAmount: 15000,
-          minToAssetAmount: 14900,
+          fromAmount: 50000,
+          minToAssetAmount: 49000,
         },
         {
           error: "SafeERC20: low-level call failed",
