@@ -45,6 +45,8 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
       oethOracleRouter.address,
       dMockOETHOracleRouterNoStale
     );
+
+    return
   }
 
   const { deploy } = deployments;
