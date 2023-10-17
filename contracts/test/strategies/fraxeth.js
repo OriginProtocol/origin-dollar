@@ -26,7 +26,8 @@ describe("FraxETH Strategy", function () {
   shouldBehaveLikeStrategy(() => ({
     ...fixture,
     strategy: fixture.fraxEthStrategy,
-    assets: [fixture.frxETH],
+    assets: [fixture.frxETH, fixture.weth],
+    valueAssets: [fixture.frxETH],
     harvester: fixture.oethHarvester,
     vault: fixture.oethVault,
   }));
@@ -367,9 +368,9 @@ describe("FraxETH Strategy", function () {
     });
 
     it("Should not have pToken set for WETH", async () => {
-      const { fraxEthStrategy, weth } = fixture;
+      const { fraxEthStrategy, sfrxETH, weth } = fixture;
       expect(await fraxEthStrategy.assetToPToken(weth.address)).to.equal(
-        "0x0000000000000000000000000000000000000000"
+        sfrxETH.address
       );
     });
 

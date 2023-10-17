@@ -660,17 +660,6 @@ async function oethDefaultFixture() {
       await resetAllowance(weth, user, oethVault.address);
     }
   } else {
-    // Replace frxETHMinter
-    await replaceContractAt(
-      addresses.mainnet.FraxETHMinter,
-      await ethers.getContract("MockFrxETHMinter")
-    );
-    const mockedMinter = await ethers.getContractAt(
-      "MockFrxETHMinter",
-      addresses.mainnet.FraxETHMinter
-    );
-    await mockedMinter.connect(franck).setAssetAddress(fixture.sfrxETH.address);
-
     // Fund all with mockTokens
     await fundAccountsForOETHUnitTests();
 

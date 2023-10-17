@@ -10,15 +10,17 @@ const { parseUnits } = require("ethers/lib/utils");
  * @param {*} context a function that returns a fixture with the additional properties:
  * - strategy: the strategy to test
  * - assets: array of tokens to test
+ * - valueAssets: optional array of assets that work for checkBalance and withdraw. defaults to assets
  * - vault: Vault or OETHVault contract
  * - harvester: Harvester or OETHHarvester contract
  * @example
     shouldBehaveLikeStrategy(() => ({
       ...fixture,
-      strategy: fixture.convexFrxEthWethStrategy,
-      assets: [fixture.weth, fixture.frxETH],
-      vault: fixture.oethVault,
+      strategy: fixture.fraxEthStrategy,
+      assets: [fixture.frxETH, fixture.weth],
+      valueAssets: [fixture.frxETH],
       harvester: fixture.oethHarvester,
+      vault: fixture.oethVault,
     }));
  */
 const shouldBehaveLikeStrategy = (context) => {
@@ -28,13 +30,42 @@ const shouldBehaveLikeStrategy = (context) => {
       expect(await strategy.vaultAddress()).to.equal(vault.address);
     });
     it("Should be a supported asset", async () => {
-      const { assets, strategy, crv, cvx } = await context();
+      const { assets, strategy } = await context();
 
       for (const asset of assets) {
         expect(await strategy.supportsAsset(asset.address)).to.be.true;
       }
-      const unsupportedAssets = [crv, cvx];
-      for (const asset of unsupportedAssets) {
+    });
+    it("Should NOT be a supported asset", async () => {
+      const {
+        assets,
+        strategy,
+        usdt,
+        usdc,
+        dai,
+        weth,
+        reth,
+        stETH,
+        frxETH,
+        crv,
+        cvx,
+      } = await context();
+
+      const randomAssets = [
+        usdt,
+        usdc,
+        dai,
+        weth,
+        reth,
+        stETH,
+        frxETH,
+        cvx,
+        crv,
+      ];
+      for (const asset of randomAssets) {
+        if (assets.includes(asset)) {
+          continue; // Since `assets` already has a list of supported assets
+        }
         expect(await strategy.supportsAsset(asset.address)).to.be.false;
       }
     });
@@ -56,7 +87,7 @@ const shouldBehaveLikeStrategy = (context) => {
         }
       });
       it("Should be able to deposit each asset", async () => {
-        const { assets, strategy, vault } = await context();
+        const { assets, valueAssets, strategy, vault } = await context();
 
         const strategySigner = await impersonateAndFund(strategy.address);
         const vaultSigner = await impersonateAndFund(vault.address);
@@ -78,7 +109,7 @@ const shouldBehaveLikeStrategy = (context) => {
 
         // Have to do this after all assets have been added as pool strategies
         // spread the value equally across all assets
-        for (const asset of assets) {
+        for (const asset of valueAssets || assets) {
           // Has to be >= as AMOs will add extra OTokens to the strategy
           expect(await strategy.checkBalance(asset.address)).to.be.gte(
             await units("1000", asset)
@@ -205,17 +236,17 @@ const shouldBehaveLikeStrategy = (context) => {
         const vaultSigner = await impersonateAndFund(vault.address);
 
         // deposit some assets into the strategy so we can withdraw them
-        for (const asset of assets) {
+        for (const [i, asset] of assets.entries()) {
           const depositAmount = await units("10000", asset);
           // mint some test assets directly into the strategy contract
-          await asset.connect(strategySigner).mint(depositAmount);
+          await asset.connect(strategySigner).mint(depositAmount.mul(i + 1));
         }
         await strategy.connect(vaultSigner).depositAll();
       });
       it("Should check asset balances", async () => {
-        const { assets, josh, strategy } = context();
+        const { assets, valueAssets, josh, strategy } = context();
 
-        for (const asset of assets) {
+        for (const asset of valueAssets || assets) {
           // assume there are no assets already in the strategy
           expect(
             await strategy.connect(josh).checkBalance(asset.address)
@@ -229,12 +260,13 @@ const shouldBehaveLikeStrategy = (context) => {
         }
       });
       it("Should be able to withdraw each asset to the vault", async () => {
-        const { assets, strategy, vault } = await context();
+        const { assets, valueAssets, strategy, vault } = await context();
         const vaultSigner = await impersonateAndFund(vault.address);
 
-        for (const asset of assets) {
+        const withdrawAssets = valueAssets || assets;
+        for (const [i, asset] of withdrawAssets.entries()) {
           const platformAddress = await strategy.assetToPToken(asset.address);
-          const withdrawAmount = await units("8000", asset);
+          const withdrawAmount = (await units("8000", asset)).mul(i + 1);
 
           const tx = await strategy
             .connect(vaultSigner)
@@ -250,22 +282,50 @@ const shouldBehaveLikeStrategy = (context) => {
         }
       });
       it("Should be able to withdraw all assets", async () => {
-        const { assets, strategy, vault } = await context();
+        const {
+          assets,
+          valueAssets,
+          strategy,
+          vault,
+          fraxEthStrategy,
+          sfrxETH,
+        } = await context();
         const vaultSigner = await impersonateAndFund(vault.address);
 
         const tx = await strategy.connect(vaultSigner).withdrawAll();
 
-        for (const asset of assets) {
+        const withdrawAssets = valueAssets || assets;
+        for (const [i, asset] of withdrawAssets.entries()) {
           const platformAddress = await strategy.assetToPToken(asset.address);
           const withdrawAmount = await units("10000", asset);
-          await expect(tx)
-            .to.emit(strategy, "Withdrawal")
-            .withArgs(asset.address, platformAddress, withdrawAmount);
-          await expect(tx).to.emit(asset, "Transfer").withNamedArgs({
-            to: vault.address,
-            // FraxETHStrategy withdraws directly from the sfrxETH vault and not the strategy
-            // from: strategy.address,
-          });
+
+          // Its not nice having strategy specific logic here but it'll have to do for now
+          if (strategy == fraxEthStrategy) {
+            await expect(tx)
+              .to.emit(strategy, "Withdrawal")
+              .withArgs(asset.address, platformAddress, withdrawAmount.mul(3));
+            await expect(tx).to.emit(asset, "Transfer").withArgs(
+              // FraxETHStrategy withdraws directly from the sfrxETH vault and not the strategy
+              sfrxETH.address,
+              vault.address,
+              withdrawAmount.mul(3)
+            );
+          } else {
+            await expect(tx)
+              .to.emit(strategy, "Withdrawal")
+              .withArgs(
+                asset.address,
+                platformAddress,
+                withdrawAmount.mul(i + 1)
+              );
+            await expect(tx)
+              .to.emit(asset, "Transfer")
+              .withArgs(
+                strategy.address,
+                vault.address,
+                withdrawAmount.mul(i + 1)
+              );
+          }
         }
       });
     });
