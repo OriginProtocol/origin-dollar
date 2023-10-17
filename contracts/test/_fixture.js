@@ -527,6 +527,7 @@ const defaultFixture = async () => {
   //   }
   // } else {
   if (!isFork) {
+    fundAccounts()
     // Matt and Josh each have $100 OUSD
     for (const user of [matt, josh]) {
       await dai.connect(user).approve(vault.address, daiUnits("100"));

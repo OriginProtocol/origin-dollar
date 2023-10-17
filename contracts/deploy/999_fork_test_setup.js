@@ -40,87 +40,90 @@ const main = async (hre) => {
     });
   }
 
-async function impersonateAndFundContract(address, amount = "100000") {
-  await impersonateAccount(address);
+  async function impersonateAndFundContract(address, amount = "100000") {
+    await impersonateAccount(address);
 
-  if (parseFloat(amount) > 0) {
-    await _hardhatSetBalance(address, amount);
+    if (parseFloat(amount) > 0) {
+      await _hardhatSetBalance(address, amount);
+    }
+
+    const signer = await ethers.provider.getSigner(address);
+    signer.address = address;
+    return signer;
   }
 
-  const signer = await ethers.provider.getSigner(address);
-  signer.address = address;
-  return signer;
-}
+  const { deployerAddr, timelockAddr, governorAddr } = await getNamedAccounts();
 
-  const { deployerAddr, timelockAddr } = await getNamedAccounts();
-  if (isFork) {
-    await hre.network.provider.request({
-      method: "hardhat_setBalance",
-      params: [deployerAddr, utils.parseEther("1000000").toHexString()],
-    });
+  await hre.network.provider.request({
+    method: "hardhat_setBalance",
+    params: [deployerAddr, utils.parseEther("1000000").toHexString()],
+  });
+
+  const oracleRouter = await ethers.getContract("OracleRouter");
+  const oethOracleRouter = await ethers.getContract(
+    isFork ? "OETHOracleRouter" : "OracleRouter"
+  );
   
-    const oracleRouter = await ethers.getContract("OracleRouter");
-    const oethOracleRouter = await ethers.getContract(
-      isFork ? "OETHOracleRouter" : "OracleRouter"
-    );
-    
-    // Replace OracleRouter to disable staleness
-    const dMockOracleRouterNoStale = await deployWithConfirmation(
-      "MockOracleRouterNoStale"
-    );
-    const dMockOETHOracleRouterNoStale = await deployWithConfirmation(
-      "MockOETHOracleRouterNoStale"
-    );
-    console.log("Deployed MockOracleRouterNoStale and MockOETHOracleRouterNoStale")
-    await replaceContractAt(oracleRouter.address, dMockOracleRouterNoStale);
-    await replaceContractAt(
-      oethOracleRouter.address,
-      dMockOETHOracleRouterNoStale
-    );
+  // Replace OracleRouter to disable staleness
+  const dMockOracleRouterNoStale = await deployWithConfirmation(
+    "MockOracleRouterNoStale"
+  );
+  const dMockOETHOracleRouterNoStale = await deployWithConfirmation(
+    "MockOETHOracleRouterNoStale"
+  );
+  console.log("Deployed MockOracleRouterNoStale and MockOETHOracleRouterNoStale")
+  await replaceContractAt(oracleRouter.address, dMockOracleRouterNoStale);
+  await replaceContractAt(
+    oethOracleRouter.address,
+    dMockOETHOracleRouterNoStale
+  );
 
-    console.log("Replaced Oracle contracts for fork test")
+  console.log("Replaced Oracle contracts for fork test")
 
-    const signers = await hre.ethers.getSigners();
-    
-    await _hardhatSetBalance(signers[1].address);
-    await _hardhatSetBalance(signers[0].address);
-    await impersonateAndFundContract(timelockAddr);
-    await impersonateAndFundContract(
-      addresses.mainnet.OldTimelock
-    );
-    console.log("Unlocked and funded named accounts")
-
-    const [matt, josh, anna, domen, daniel, franck] = signers.slice(4);
+  const signers = await hre.ethers.getSigners();
   
-    const vaultProxy = await ethers.getContract("VaultProxy");
-    const vault = await ethers.getContractAt("IVault", vaultProxy.address);
-  
-    const OETHVaultProxy = await ethers.getContract("OETHVaultProxy");
-    const oethVault = await ethers.getContractAt(
-      "IVault",
-      OETHVaultProxy.address
-    );
-  
-    const ousdProxy = await ethers.getContract("OUSDProxy");
-    const ousd = await ethers.getContractAt("OUSD", ousdProxy.address);
-  
-    const oethProxy = await ethers.getContract("OETHProxy");
-    const oeth = await ethers.getContractAt("OETH", oethProxy.address);
+  await _hardhatSetBalance(signers[0].address);
+  await _hardhatSetBalance(signers[1].address);
+  await _hardhatSetBalance(signers[2].address);
+  await _hardhatSetBalance(signers[3].address);
+  await impersonateAndFundContract(timelockAddr);
+  await impersonateAndFundContract(deployerAddr);
+  await impersonateAndFundContract(governorAddr);
+  await impersonateAndFundContract(
+    addresses.mainnet.OldTimelock
+  );
+  console.log("Unlocked and funded named accounts")
 
-    const usdt = await ethers.getContractAt(daiAbi, addresses.mainnet.USDT);
-    const dai = await ethers.getContractAt(daiAbi, addresses.mainnet.DAI);
-    const usdc = await ethers.getContractAt(daiAbi, addresses.mainnet.USDC);
-    const frxETH = await ethers.getContractAt(daiAbi, addresses.mainnet.frxETH);
+  const [matt, josh, anna, domen, daniel, franck] = signers.slice(4);
 
-    for (const user of [josh, matt, anna, domen, daniel, franck]) {
-      // Approve Vault to move funds
-      for (const asset of [ousd, usdt, usdc, dai]) {
-        await resetAllowance(asset, user, vault.address);
-      }
+  const vaultProxy = await ethers.getContract("VaultProxy");
+  const vault = await ethers.getContractAt("IVault", vaultProxy.address);
 
-      for (const asset of [oeth, frxETH]) {
-        await resetAllowance(asset, user, oethVault.address);
-      }
+  const OETHVaultProxy = await ethers.getContract("OETHVaultProxy");
+  const oethVault = await ethers.getContractAt(
+    "IVault",
+    OETHVaultProxy.address
+  );
+
+  const ousdProxy = await ethers.getContract("OUSDProxy");
+  const ousd = await ethers.getContractAt("OUSD", ousdProxy.address);
+
+  const oethProxy = await ethers.getContract("OETHProxy");
+  const oeth = await ethers.getContractAt("OETH", oethProxy.address);
+
+  const usdt = await ethers.getContractAt(daiAbi, addresses.mainnet.USDT);
+  const dai = await ethers.getContractAt(daiAbi, addresses.mainnet.DAI);
+  const usdc = await ethers.getContractAt(daiAbi, addresses.mainnet.USDC);
+  const frxETH = await ethers.getContractAt(daiAbi, addresses.mainnet.frxETH);
+
+  for (const user of [josh, matt, anna, domen, daniel, franck]) {
+    // Approve Vault to move funds
+    for (const asset of [ousd, usdt, usdc, dai]) {
+      await resetAllowance(asset, user, vault.address);
+    }
+
+    for (const asset of [oeth, frxETH]) {
+      await resetAllowance(asset, user, oethVault.address);
     }
   }
 
@@ -131,6 +134,6 @@ async function impersonateAndFundContract(address, amount = "100000") {
 }
 
 main.id = "999_no_stale_oracles"
-main.skip = () => isMainnet
+main.skip = () => !isFork
 
 module.exports = main;
