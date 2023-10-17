@@ -28,10 +28,14 @@ const shouldBehaveLikeStrategy = (context) => {
       expect(await strategy.vaultAddress()).to.equal(vault.address);
     });
     it("Should be a supported asset", async () => {
-      const { assets, strategy } = await context();
+      const { assets, strategy, crv, cvx } = await context();
 
       for (const asset of assets) {
         expect(await strategy.supportsAsset(asset.address)).to.be.true;
+      }
+      const unsupportedAssets = [crv, cvx];
+      for (const asset of unsupportedAssets) {
+        expect(await strategy.supportsAsset(asset.address)).to.be.false;
       }
     });
     describe("with no assets in the strategy", () => {
@@ -314,6 +318,7 @@ const shouldBehaveLikeStrategy = (context) => {
       await expect(tx)
         .to.emit(strategy, "HarvesterAddressesUpdated")
         .withArgs(harvester.address, randomAddress);
+      expect(await strategy.harvesterAddress()).to.equal(randomAddress);
     });
     it("Should not allow the harvester to be set by non-governor", async () => {
       const { strategy, strategist, matt, harvester, vault } = context();
