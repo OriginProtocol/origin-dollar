@@ -4,7 +4,7 @@ const { deploymentWithGovernanceProposal } = require("../utils/deploy");
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "078_oeth_amo_upgrade",
+    deployName: "075_oeth_amo_upgrade",
     forceDeploy: false,
     // forceSkip: true,
     reduceQueueTime: false,
