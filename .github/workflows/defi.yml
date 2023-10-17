@@ -62,7 +62,7 @@ jobs:
       - name: Run Unit Tests
         env:
           REPORT_GAS: true
-        run: yarn run test:parallel
+        run: yarn run test
         working-directory: ./contracts
 
   contracts-unit-coverage:
@@ -104,6 +104,7 @@ jobs:
       PROVIDER_URL: ${{ secrets.PROVIDER_URL }}
       ONEINCH_API: ${{ secrets.ONEINCH_API }}
       CHUNK_ID: "${{matrix.chunk_id}}"
+      MAX_CHUNKS: "4"
     steps:
       - uses: actions/checkout@v3
 
@@ -125,7 +126,7 @@ jobs:
       - run: yarn install --frozen-lockfile
         working-directory: ./contracts
 
-      - run: yarn run test:fork:parallel
+      - run: yarn run test:fork
         working-directory: ./contracts
 
       - uses: actions/upload-artifact@v3

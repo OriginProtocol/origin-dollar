@@ -20,7 +20,6 @@
     "prettier:js": "prettier --write \"*.js\" \"deploy/**/*.js\"  \"scripts/**/*.js\" \"smoke/**/*.js\" \"scripts/**/*.js\" \"tasks/**/*.js\" \"test/**/*.js\" \"utils/**/*.js\"",
     "prettier:sol": "prettier --write \"contracts/**/*.sol\"",
     "test": "IS_TEST=true npx hardhat test",
-    "test:parallel": "IS_TEST=true npx hardhat test --deploy-fixture --parallel",
     "test:fork": "./fork-test.sh",
     "test:fork:parallel": "./parallel-test.sh",
     "test:fork:w_trace": "TRACE=true ./fork-test.sh",

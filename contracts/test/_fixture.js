@@ -4,6 +4,8 @@ const { BigNumber } = ethers;
 const { expect } = require("chai");
 const { formatUnits } = require("ethers/lib/utils");
 
+require("./_global-hooks");
+
 const addresses = require("../utils/addresses");
 const { setFraxOraclePrice } = require("../utils/frax");
 const { replaceContractAt } = require("../utils/deploy");
