@@ -11,13 +11,8 @@ mocha.beforeEach(function () {
     return;
   }
 
-  let root = this.runnable().parent
-  while (root.parent) {
-    root = root.parent
-  }
-
   if (!currentBatchTestCases.includes(
-    `${root.file}||||||${root.fullTitle()}`
+    this.currentTest?.id
   )) {
     this.currentTest?.skip()
   }
@@ -34,34 +29,33 @@ mocha.before(function () {
     root = root.parent
   }
 
-  const findTestCaseCount = (suite) => {
+  const findAllTestCaseIds = (suite) => {
     if (!suite.suites?.length) {
-      return suite.tests?.length || 0
+      return suite.tests.map(t => t.id)
     }
 
-    return suite.suites.reduce((count, currSuite) => {
-      return count + findTestCaseCount(currSuite)
-    }, suite.tests?.length || 0)
+    return suite.suites.reduce((ids, currSuite) => {
+      return [...ids, ...findAllTestCaseIds(currSuite)]
+    }, suite.tests.map(t => t.id))
   }
 
-  // const batches = new Array(_maxChunks)
+  const flattenedTestCases = root.suites.reduce((all, currSuite) => {
+    return [
+      ...all,
+      currSuite.tests.map(t => t.id), // Current suite tests
+      ...currSuite.suites?.map(nestedSuite => findAllTestCaseIds(nestedSuite)) // Nested suite tests
+    ]
+  }, []).filter(x => x.length)
+
   const batchWeights = new Array(_maxChunks).fill(0)
-
-  for (let suite of root.suites) {
-    const testCaseCount = findTestCaseCount(suite)
-
+  for (let testCases of flattenedTestCases) {
     const targetBatchIndex = Object.keys(batchWeights).slice(1).reduce((lastIndex, currIndex) => {
       return (batchWeights[lastIndex] == 0 || batchWeights[lastIndex] < batchWeights[currIndex]) ? lastIndex : currIndex
     }, 0)
 
-    // if (!batches[targetBatchIndex]) {
-    //   batches[targetBatchIndex] = []
-    // }
-    // batches[targetBatchIndex].push(suite.fullTitle())
-    batchWeights[targetBatchIndex] += testCaseCount
-
+    batchWeights[targetBatchIndex] += testCases.length
     if (targetBatchIndex == _chunkId) {
-      currentBatchTestCases.push(`${suite.file}||||||${suite.fullTitle()}`)
+      currentBatchTestCases.push(...testCases)
     }
   }
 })
