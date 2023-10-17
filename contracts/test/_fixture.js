@@ -8,7 +8,10 @@ require("./_global-hooks");
 
 const addresses = require("../utils/addresses");
 const { setFraxOraclePrice } = require("../utils/frax");
-const { replaceContractAt } = require("../utils/deploy");
+const {
+  replaceContractAt,
+  deployWithConfirmation,
+} = require("../utils/deploy");
 const {
   balancer_rETH_WETH_PID,
   balancer_stETH_WETH_PID,
@@ -340,6 +343,19 @@ const defaultFixture = async () => {
     );
 
     oethZapper = await ethers.getContract("OETHZapper");
+
+    // Replace OracleRouter to disable staleness
+    const dMockOracleRouterNoStale = await deployWithConfirmation(
+      "MockOracleRouterNoStale"
+    );
+    const dMockOETHOracleRouterNoStale = await deployWithConfirmation(
+      "MockOETHOracleRouterNoStale"
+    );
+    await replaceContractAt(oracleRouter.address, dMockOracleRouterNoStale);
+    await replaceContractAt(
+      oethOracleRouter.address,
+      dMockOETHOracleRouterNoStale
+    );
 
     swapper = await ethers.getContract("Swapper1InchV5");
 

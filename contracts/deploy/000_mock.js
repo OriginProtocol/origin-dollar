@@ -1,10 +1,7 @@
 const { parseUnits } = require("ethers").utils;
-const { isMainnet, isFork } = require("../test/helpers");
+const { isMainnetOrFork } = require("../test/helpers");
 const { threeCRVPid } = require("../utils/constants");
-const {
-  replaceContractAt,
-  deployWithConfirmation,
-} = require("../utils/deploy");
+const { replaceContractAt } = require("../utils/deploy");
 
 const addresses = require("../utils/addresses");
 
@@ -29,26 +26,6 @@ const {
 } = require("@uniswap/v3-periphery/artifacts/contracts/lens/Quoter.sol/Quoter.json");
 
 const deployMocks = async ({ getNamedAccounts, deployments }) => {
-  if (isFork) {
-    const oracleRouter = await ethers.getContract("OracleRouter");
-    const oethOracleRouter = await ethers.getContract("OETHOracleRouter");
-
-    // Replace OracleRouter to disable staleness
-    const dMockOracleRouterNoStale = await deployWithConfirmation(
-      "MockOracleRouterNoStale"
-    );
-    const dMockOETHOracleRouterNoStale = await deployWithConfirmation(
-      "MockOETHOracleRouterNoStale"
-    );
-    await replaceContractAt(oracleRouter.address, dMockOracleRouterNoStale);
-    await replaceContractAt(
-      oethOracleRouter.address,
-      dMockOETHOracleRouterNoStale
-    );
-
-    return
-  }
-
   const { deploy } = deployments;
   const { deployerAddr, governorAddr } = await getNamedAccounts();
 
@@ -403,6 +380,6 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
 
 deployMocks.id = "000_mock";
 deployMocks.tags = ["mocks", "unit_tests"];
-deployMocks.skip = () => isMainnet;
+deployMocks.skip = () => isMainnetOrFork;
 
 module.exports = deployMocks;
