@@ -231,7 +231,7 @@ const deployConvexStrategy = async () => {
     cConvexStrategyProxy.address
   );
 
-  // 4. Initialize the new Curve frxETH/WETH strategy
+  // 4. Initialize the Convex strategy using the Curve 3Pool
   // Construct initialize call data to init and configure the new strategy
   const initData = cConvexStrategy.interface.encodeFunctionData(
     "initialize(address[],address[],address[])",
