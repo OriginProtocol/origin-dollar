@@ -284,8 +284,8 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
         external
         onlyGovernor
     {
-        harvesterAddress = _harvesterAddress;
         emit HarvesterAddressesUpdated(harvesterAddress, _harvesterAddress);
+        harvesterAddress = _harvesterAddress;
     }
 
     /***************************************
