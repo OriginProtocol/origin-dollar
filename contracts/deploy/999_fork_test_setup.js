@@ -81,8 +81,8 @@ async function impersonateAndFundContract(address, amount = "100000") {
   if (isFork) {
     const signers = await hre.ethers.getSigners();
     
-    await impersonateAndFundContract(signers[1]);
-    await impersonateAndFundContract(signers[0]);
+    await _hardhatSetBalance(signers[1].address);
+    await _hardhatSetBalance(signers[0].address);
     await impersonateAndFundContract(timelockAddr);
     await impersonateAndFundContract(
       addresses.mainnet.OldTimelock
