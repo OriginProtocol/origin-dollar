@@ -308,6 +308,14 @@ const shouldBehaveLikeStrategy = (context) => {
         ).to.be.revertedWith("Caller is not the Governor");
       }
     });
+    it("Should not allow transfer of supported token", async () => {
+      const { strategy, governor, assets } = context();
+      await expect(
+        strategy
+          .connect(governor)
+          .transferToken(assets[0].address, parseUnits("8"))
+      ).to.be.revertedWith("Cannot transfer supported asset");
+    });
     it("Should allow the harvester to be set by the governor", async () => {
       const { governor, harvester, strategy } = context();
       const randomAddress = Wallet.createRandom().address;

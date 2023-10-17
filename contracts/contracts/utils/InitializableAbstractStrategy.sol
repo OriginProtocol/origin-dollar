@@ -273,6 +273,10 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
         public
         onlyGovernor
     {
+        require(
+            !InitializableAbstractStrategy(address(this)).supportsAsset(_asset),
+            "Cannot transfer supported asset"
+        );
         IERC20(_asset).safeTransfer(governor(), _amount);
     }
 
