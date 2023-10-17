@@ -29,7 +29,7 @@ mocha.before(function () {
   const flattenedSuites = root.suites
     .reduce((all, currSuite) => {
       const nestedSuites = [...currSuite.suites].map((s) => {
-        s.title = `${currSuite.fullTitle()} > ${s.fullTitle()}`;
+        s.title = s.fullTitle();
         return s;
       });
       currSuite.suites = [];

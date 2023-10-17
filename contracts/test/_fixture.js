@@ -344,19 +344,6 @@ const defaultFixture = deployments.createFixture(async () => {
 
     oethZapper = await ethers.getContract("OETHZapper");
 
-    // // Replace OracleRouter to disable staleness
-    // const dMockOracleRouterNoStale = await deployWithConfirmation(
-    //   "MockOracleRouterNoStale"
-    // );
-    // const dMockOETHOracleRouterNoStale = await deployWithConfirmation(
-    //   "MockOETHOracleRouterNoStale"
-    // );
-    // await replaceContractAt(oracleRouter.address, dMockOracleRouterNoStale);
-    // await replaceContractAt(
-    //   oethOracleRouter.address,
-    //   dMockOETHOracleRouterNoStale
-    // );
-
     swapper = await ethers.getContract("Swapper1InchV5");
 
     const fluxStrategyProxy = await ethers.getContract("FluxStrategyProxy");
@@ -496,38 +483,13 @@ const defaultFixture = deployments.createFixture(async () => {
     oldTimelock = await ethers.provider.getSigner(
       addresses.mainnet.OldTimelock
     );
-    // strategist = strategistAddr;
-    // timelock = timelockAddr;
-    // oldTimelock = addresses.mainnet.OldTimelock
   } else {
     timelock = governor;
   }
 
-  // if (isFork) {
-  //   governor = await impersonateAndFundContract(governorAddr);
-  //   strategist = await impersonateAndFundContract(strategistAddr);
-  //   timelock = await impersonateAndFundContract(timelockAddr);
-  //   oldTimelock = await impersonateAndFundContract(
-  //     addresses.mainnet.OldTimelock
-  //   );
-  // } else {
-  //   timelock = governor;
-  // }
-  // await fundAccounts();
-  // if (isFork) {
-  //   for (const user of [josh, matt, anna, domen, daniel, franck]) {
-  //     // Approve Vault to move funds
-  //     for (const asset of [ousd, usdt, usdc, dai]) {
-  //       await resetAllowance(asset, user, vault.address);
-  //     }
-
-  //     for (const asset of [oeth, frxETH]) {
-  //       await resetAllowance(asset, user, oethVault.address);
-  //     }
-  //   }
-  // } else {
   if (!isFork) {
-    fundAccounts();
+    await fundAccounts();
+
     // Matt and Josh each have $100 OUSD
     for (const user of [matt, josh]) {
       await dai.connect(user).approve(vault.address, daiUnits("100"));
