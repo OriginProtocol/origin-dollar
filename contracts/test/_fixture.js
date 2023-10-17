@@ -10,14 +10,14 @@ const addresses = require("../utils/addresses");
 const { setFraxOraclePrice } = require("../utils/frax");
 const {
   replaceContractAt,
-  deployWithConfirmation,
+  // deployWithConfirmation,
 } = require("../utils/deploy");
 const {
   balancer_rETH_WETH_PID,
   balancer_stETH_WETH_PID,
 } = require("../utils/constants");
 const {
-  fundAccounts,
+  // fundAccounts,
   fundAccountsForOETHUnitTests,
 } = require("../utils/funding");
 const {
@@ -344,18 +344,18 @@ const defaultFixture = async () => {
 
     oethZapper = await ethers.getContract("OETHZapper");
 
-    // Replace OracleRouter to disable staleness
-    const dMockOracleRouterNoStale = await deployWithConfirmation(
-      "MockOracleRouterNoStale"
-    );
-    const dMockOETHOracleRouterNoStale = await deployWithConfirmation(
-      "MockOETHOracleRouterNoStale"
-    );
-    await replaceContractAt(oracleRouter.address, dMockOracleRouterNoStale);
-    await replaceContractAt(
-      oethOracleRouter.address,
-      dMockOETHOracleRouterNoStale
-    );
+    // // Replace OracleRouter to disable staleness
+    // const dMockOracleRouterNoStale = await deployWithConfirmation(
+    //   "MockOracleRouterNoStale"
+    // );
+    // const dMockOETHOracleRouterNoStale = await deployWithConfirmation(
+    //   "MockOETHOracleRouterNoStale"
+    // );
+    // await replaceContractAt(oracleRouter.address, dMockOracleRouterNoStale);
+    // await replaceContractAt(
+    //   oethOracleRouter.address,
+    //   dMockOETHOracleRouterNoStale
+    // );
 
     swapper = await ethers.getContract("Swapper1InchV5");
 
@@ -490,28 +490,43 @@ const defaultFixture = async () => {
   const [matt, josh, anna, domen, daniel, franck] = signers.slice(4);
 
   if (isFork) {
-    governor = await impersonateAndFundContract(governorAddr);
-    strategist = await impersonateAndFundContract(strategistAddr);
-    timelock = await impersonateAndFundContract(timelockAddr);
-    oldTimelock = await impersonateAndFundContract(
+    governor = await ethers.provider.getSigner(governorAddr);
+    strategist = await ethers.provider.getSigner(strategistAddr);
+    timelock = await ethers.provider.getSigner(timelockAddr);
+    oldTimelock = await ethers.provider.getSigner(
       addresses.mainnet.OldTimelock
-    );
+    )
+    // strategist = strategistAddr;
+    // timelock = timelockAddr;
+    // oldTimelock = addresses.mainnet.OldTimelock
   } else {
     timelock = governor;
   }
-  await fundAccounts();
-  if (isFork) {
-    for (const user of [josh, matt, anna, domen, daniel, franck]) {
-      // Approve Vault to move funds
-      for (const asset of [ousd, usdt, usdc, dai]) {
-        await resetAllowance(asset, user, vault.address);
-      }
 
-      for (const asset of [oeth, frxETH]) {
-        await resetAllowance(asset, user, oethVault.address);
-      }
-    }
-  } else {
+  // if (isFork) {
+  //   governor = await impersonateAndFundContract(governorAddr);
+  //   strategist = await impersonateAndFundContract(strategistAddr);
+  //   timelock = await impersonateAndFundContract(timelockAddr);
+  //   oldTimelock = await impersonateAndFundContract(
+  //     addresses.mainnet.OldTimelock
+  //   );
+  // } else {
+  //   timelock = governor;
+  // }
+  // await fundAccounts();
+  // if (isFork) {
+  //   for (const user of [josh, matt, anna, domen, daniel, franck]) {
+  //     // Approve Vault to move funds
+  //     for (const asset of [ousd, usdt, usdc, dai]) {
+  //       await resetAllowance(asset, user, vault.address);
+  //     }
+
+  //     for (const asset of [oeth, frxETH]) {
+  //       await resetAllowance(asset, user, oethVault.address);
+  //     }
+  //   }
+  // } else {
+  if (!isFork) {
     // Matt and Josh each have $100 OUSD
     for (const user of [matt, josh]) {
       await dai.connect(user).approve(vault.address, daiUnits("100"));
@@ -638,7 +653,7 @@ const defaultFixture = async () => {
     aura,
     bal,
   };
-};
+}
 
 async function oethDefaultFixture() {
   // TODO: Trim it down to only do OETH things
