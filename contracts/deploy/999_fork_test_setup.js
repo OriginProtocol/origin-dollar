@@ -1,14 +1,15 @@
 const { utils } = require("ethers");
 const { isFork, isMainnet } = require("../test/helpers");
-const { replaceContractAt, deployWithConfirmation } = require("../utils/deploy");
+const {
+  replaceContractAt,
+  deployWithConfirmation,
+} = require("../utils/deploy");
 const { fundAccounts } = require("../utils/funding");
 const addresses = require("../utils/addresses");
 const daiAbi = require("../test/abi/dai.json").abi;
 
 const main = async (hre) => {
   console.log(`Running 999_fork_test_setup deployment...`);
-
-  await fundAccounts();
 
   async function resetAllowance(
     tokenContract,
@@ -32,7 +33,8 @@ const main = async (hre) => {
       method: "hardhat_setBalance",
       params: [
         address,
-        utils.parseEther(amount)
+        utils
+          .parseEther(amount)
           .toHexString()
           .replace(/^0x0+/, "0x")
           .replace(/0$/, "1"),
@@ -52,7 +54,8 @@ const main = async (hre) => {
     return signer;
   }
 
-  const { deployerAddr, timelockAddr, governorAddr } = await getNamedAccounts();
+  const { deployerAddr, timelockAddr, governorAddr, strategistAddr } =
+    await getNamedAccounts();
 
   await hre.network.provider.request({
     method: "hardhat_setBalance",
@@ -63,7 +66,7 @@ const main = async (hre) => {
   const oethOracleRouter = await ethers.getContract(
     isFork ? "OETHOracleRouter" : "OracleRouter"
   );
-  
+
   // Replace OracleRouter to disable staleness
   const dMockOracleRouterNoStale = await deployWithConfirmation(
     "MockOracleRouterNoStale"
@@ -71,30 +74,31 @@ const main = async (hre) => {
   const dMockOETHOracleRouterNoStale = await deployWithConfirmation(
     "MockOETHOracleRouterNoStale"
   );
-  console.log("Deployed MockOracleRouterNoStale and MockOETHOracleRouterNoStale")
+  console.log(
+    "Deployed MockOracleRouterNoStale and MockOETHOracleRouterNoStale"
+  );
   await replaceContractAt(oracleRouter.address, dMockOracleRouterNoStale);
   await replaceContractAt(
     oethOracleRouter.address,
     dMockOETHOracleRouterNoStale
   );
 
-  console.log("Replaced Oracle contracts for fork test")
+  console.log("Replaced Oracle contracts for fork test");
 
   const signers = await hre.ethers.getSigners();
-  
-  await _hardhatSetBalance(signers[0].address);
-  await _hardhatSetBalance(signers[1].address);
-  await _hardhatSetBalance(signers[2].address);
-  await _hardhatSetBalance(signers[3].address);
+
+  for (const signer of signers.slice(0, 4)) {
+    await _hardhatSetBalance(signer.address);
+  }
   await impersonateAndFundContract(timelockAddr);
   await impersonateAndFundContract(deployerAddr);
   await impersonateAndFundContract(governorAddr);
-  await impersonateAndFundContract(
-    addresses.mainnet.OldTimelock
-  );
-  console.log("Unlocked and funded named accounts")
+  await impersonateAndFundContract(strategistAddr);
+  await impersonateAndFundContract(addresses.mainnet.OldTimelock);
+  console.log("Unlocked and funded named accounts with ETH");
 
-  const [matt, josh, anna, domen, daniel, franck] = signers.slice(4);
+  await fundAccounts();
+  console.log("Funded accounts with other tokens");
 
   const vaultProxy = await ethers.getContract("VaultProxy");
   const vault = await ethers.getContractAt("IVault", vaultProxy.address);
@@ -116,6 +120,7 @@ const main = async (hre) => {
   const usdc = await ethers.getContractAt(daiAbi, addresses.mainnet.USDC);
   const frxETH = await ethers.getContractAt(daiAbi, addresses.mainnet.frxETH);
 
+  const [matt, josh, anna, domen, daniel, franck] = signers.slice(4);
   for (const user of [josh, matt, anna, domen, daniel, franck]) {
     // Approve Vault to move funds
     for (const asset of [ousd, usdt, usdc, dai]) {
@@ -127,13 +132,12 @@ const main = async (hre) => {
     }
   }
 
-  console.log("Funded and allowance reset for all signers")
+  console.log("Funded and allowance reset for all signers");
 
   console.log(`999_fork_test_setup deployment done!`);
+};
 
-}
-
-main.id = "999_no_stale_oracles"
-main.skip = () => !isFork
+main.id = "999_no_stale_oracles";
+main.skip = () => !isFork;
 
 module.exports = main;

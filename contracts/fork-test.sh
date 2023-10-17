@@ -15,7 +15,6 @@ main()
         is_local=false
     fi
 
-    # is_coverage=false # TODO: Temporary test, undo it later
     is_coverage=("$REPORT_COVERAGE" == "true");
     is_trace=("$TRACE" == "true");
 
@@ -57,18 +56,10 @@ main()
     fi
 
     params=()
-    # if $is_ci; then
-    #     params+="--deploy-fixture --parallel "
-    # fi
-
     if [ -z "$1" ]; then
         # Run all files with `.fork-test.js` suffix when no file name param is given
         # pass all other params along
-        if $is_coverage; then
-            params+="test/**/*.fork-test.js"
-        else
-            params+="test/**/*.fork-test.js"
-        fi
+        params+="test/**/*.fork-test.js"
     else
         # Run specifc files when a param is given
         params+="$@"

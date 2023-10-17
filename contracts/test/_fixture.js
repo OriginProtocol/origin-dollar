@@ -50,7 +50,7 @@ const balancerStrategyDeployment = require("../utils/balancerStrategyDeployment"
 
 const log = require("../utils/logger")("test:fixtures");
 
-const defaultFixture = async () => {
+const defaultFixture = deployments.createFixture(async () => {
   log(`Forked from block: ${await hre.ethers.provider.getBlockNumber()}`);
 
   log(`Before deployments with param "${isFork ? undefined : ["unit_tests"]}"`);
@@ -495,7 +495,7 @@ const defaultFixture = async () => {
     timelock = await ethers.provider.getSigner(timelockAddr);
     oldTimelock = await ethers.provider.getSigner(
       addresses.mainnet.OldTimelock
-    )
+    );
     // strategist = strategistAddr;
     // timelock = timelockAddr;
     // oldTimelock = addresses.mainnet.OldTimelock
@@ -527,7 +527,7 @@ const defaultFixture = async () => {
   //   }
   // } else {
   if (!isFork) {
-    fundAccounts()
+    fundAccounts();
     // Matt and Josh each have $100 OUSD
     for (const user of [matt, josh]) {
       await dai.connect(user).approve(vault.address, daiUnits("100"));
@@ -654,7 +654,7 @@ const defaultFixture = async () => {
     aura,
     bal,
   };
-}
+});
 
 async function oethDefaultFixture() {
   // TODO: Trim it down to only do OETH things
@@ -2149,7 +2149,7 @@ function createFixtureLoader(fixture, config) {
  *   });
  */
 async function loadDefaultFixture() {
-  return createFixtureLoader(defaultFixture)();
+  await defaultFixture();
 }
 
 module.exports = {
