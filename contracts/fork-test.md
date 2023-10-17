@@ -9,7 +9,7 @@ Fork tests are similar to unit tests, except that it is run on a mainnet fork ag
 - Set `PROVIDER_URL` in `.env` file
 - Run `yarn test:fork` (or `yarn test:fork -- filename.fork-test.js`)
 
-This forks the blockchain (using `PROVIDER_URL`) everytime you run the command, might take a lot of time.
+This forks the blockchain (using `PROVIDER_URL`) every time you run the command, might take a lot of time.
 
 ```mermaid
 gitGraph
@@ -65,6 +65,6 @@ gitGraph
 
 #### Things to know
 - Hardhat always runs the test under the default `hardhat` network
-- When `forking.url` is set for a network in `hardhat.config.js` file, hardhat internally spins up its own node (aka Hardhat Runtime Enviroment or HRE) with the network name `hardhat`, forks the network and snapshots it to run the tests against. 
+- When `forking.url` is set for a network in `hardhat.config.js` file, hardhat internally spins up its own node (aka Hardhat Runtime Environment or HRE) with the network name `hardhat`, forks the network and snapshots it to run the tests against. 
 - No changes are persisted to the actual node. All deployments and contract calls are only made on the forked node, not the actual node
 
