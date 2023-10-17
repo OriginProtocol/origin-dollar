@@ -136,8 +136,12 @@ contract Generalized4626Strategy is InitializableAbstractStrategy {
                 vaultAddress,
                 address(this)
             );
+            emit Withdrawal(
+                address(assetToken),
+                address(shareToken),
+                assetAmount
+            );
         }
-        emit Withdrawal(address(assetToken), address(shareToken), assetAmount);
     }
 
     /**
