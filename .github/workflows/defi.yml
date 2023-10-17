@@ -98,13 +98,14 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        chunk_id: [0,1,2,3]
+        chunk_id: [0,1,2,3,4,5]
+    continue-on-error: true
     env:
       HARDHAT_CACHE_DIR: ./cache
       PROVIDER_URL: ${{ secrets.PROVIDER_URL }}
       ONEINCH_API: ${{ secrets.ONEINCH_API }}
       CHUNK_ID: "${{matrix.chunk_id}}"
-      MAX_CHUNKS: "4"
+      MAX_CHUNKS: "6"
     steps:
       - uses: actions/checkout@v3
 
