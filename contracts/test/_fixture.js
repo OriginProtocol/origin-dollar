@@ -42,36 +42,21 @@ const threepoolLPAbi = require("./abi/threepoolLP.json");
 const threepoolSwapAbi = require("./abi/threepoolSwap.json");
 
 const sfrxETHAbi = require("./abi/sfrxETH.json");
-const { deployWithConfirmation } = require("../utils/deploy");
 const { defaultAbiCoder, parseUnits, parseEther } = require("ethers/lib/utils");
 const balancerStrategyDeployment = require("../utils/balancerStrategyDeployment");
 
 const log = require("../utils/logger")("test:fixtures");
 
-const defaultFixture = deployments.createFixture(async () => {
+const defaultFixture = async () => {
   log(`Forked from block: ${await hre.ethers.provider.getBlockNumber()}`);
 
-  log(
-    `Before deployments with param "${
-      isFork
-        ? undefined
-        : process.env.FORKED_LOCAL_TEST
-        ? ["none"]
-        : ["unit_tests"]
-    }"`
-  );
+  log(`Before deployments with param "${isFork ? undefined : ["unit_tests"]}"`);
 
   // Run the contract deployments
-  await deployments.fixture(
-    isFork
-      ? undefined
-      : process.env.FORKED_LOCAL_TEST
-      ? ["none"]
-      : ["unit_tests"],
-    {
-      keepExistingDeployments: true,
-    }
-  );
+  await deployments.fixture(isFork ? undefined : ["unit_tests"], {
+    keepExistingDeployments: true,
+    fallbackToGlobal: true,
+  });
 
   log(`Block after deployments: ${await hre.ethers.provider.getBlockNumber()}`);
 
@@ -356,18 +341,6 @@ const defaultFixture = deployments.createFixture(async () => {
 
     oethZapper = await ethers.getContract("OETHZapper");
 
-    // Replace OracleRouter to disable staleness
-    const dMockOracleRouterNoStale = await deployWithConfirmation(
-      "MockOracleRouterNoStale"
-    );
-    const dMockOETHOracleRouterNoStale = await deployWithConfirmation(
-      "MockOETHOracleRouterNoStale"
-    );
-    await replaceContractAt(oracleRouter.address, dMockOracleRouterNoStale);
-    await replaceContractAt(
-      oethOracleRouter.address,
-      dMockOETHOracleRouterNoStale
-    );
     swapper = await ethers.getContract("Swapper1InchV5");
 
     const fluxStrategyProxy = await ethers.getContract("FluxStrategyProxy");
@@ -649,7 +622,7 @@ const defaultFixture = deployments.createFixture(async () => {
     aura,
     bal,
   };
-});
+};
 
 async function oethDefaultFixture() {
   // TODO: Trim it down to only do OETH things
@@ -2144,7 +2117,7 @@ function createFixtureLoader(fixture, config) {
  *   });
  */
 async function loadDefaultFixture() {
-  return await defaultFixture();
+  return createFixtureLoader(defaultFixture);
 }
 
 module.exports = {
