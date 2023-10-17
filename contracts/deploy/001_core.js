@@ -9,10 +9,8 @@ const {
 } = require("../test/helpers.js");
 const { deployWithConfirmation, withConfirmation } = require("../utils/deploy");
 const {
-  threeCRVPid,
   metapoolLPCRVPid,
   lusdMetapoolLPCRVPid,
-  frxEthWethPoolLpPID,
 } = require("../utils/constants");
 
 const log = require("../utils/logger")("deploy:001_core");
