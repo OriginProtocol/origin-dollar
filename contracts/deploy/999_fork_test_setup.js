@@ -32,7 +32,7 @@ const main = async (hre) => {
       method: "hardhat_setBalance",
       params: [
         address,
-        parseEther(amount)
+        utils.parseEther(amount)
           .toHexString()
           .replace(/^0x0+/, "0x")
           .replace(/0$/, "1"),
@@ -71,14 +71,15 @@ async function impersonateAndFundContract(address, amount = "100000") {
     const dMockOETHOracleRouterNoStale = await deployWithConfirmation(
       "MockOETHOracleRouterNoStale"
     );
+    console.log("Deployed MockOracleRouterNoStale and MockOETHOracleRouterNoStale")
     await replaceContractAt(oracleRouter.address, dMockOracleRouterNoStale);
     await replaceContractAt(
       oethOracleRouter.address,
       dMockOETHOracleRouterNoStale
     );
-  }
-  
-  if (isFork) {
+
+    console.log("Replaced Oracle contracts for fork test")
+
     const signers = await hre.ethers.getSigners();
     
     await _hardhatSetBalance(signers[1].address);
@@ -87,6 +88,7 @@ async function impersonateAndFundContract(address, amount = "100000") {
     await impersonateAndFundContract(
       addresses.mainnet.OldTimelock
     );
+    console.log("Unlocked and funded named accounts")
 
     const [matt, josh, anna, domen, daniel, franck] = signers.slice(4);
   
@@ -121,6 +123,8 @@ async function impersonateAndFundContract(address, amount = "100000") {
       }
     }
   }
+
+  console.log("Funded and allowance reset for all signers")
 
   console.log(`999_fork_test_setup deployment done!`);
 
