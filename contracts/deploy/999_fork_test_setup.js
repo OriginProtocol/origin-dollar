@@ -1,5 +1,5 @@
 const { utils } = require("ethers");
-const { isFork, isMainnet } = require("../test/helpers");
+const { isFork } = require("../test/helpers");
 const {
   replaceContractAt,
   deployWithConfirmation,

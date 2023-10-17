@@ -17,7 +17,7 @@ const {
   balancer_stETH_WETH_PID,
 } = require("../utils/constants");
 const {
-  // fundAccounts,
+  fundAccounts,
   fundAccountsForOETHUnitTests,
 } = require("../utils/funding");
 const {
