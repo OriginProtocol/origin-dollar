@@ -2133,7 +2133,7 @@ function createFixtureLoader(fixture, config) {
  *   });
  */
 async function loadDefaultFixture() {
-  return createFixtureLoader(defaultFixture);
+  return createFixtureLoader(defaultFixture)();
 }
 
 module.exports = {
