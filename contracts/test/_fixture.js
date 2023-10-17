@@ -6,7 +6,6 @@ const { formatUnits } = require("ethers/lib/utils");
 
 const addresses = require("../utils/addresses");
 const { setFraxOraclePrice } = require("../utils/frax");
-const { replaceContractAt } = require("../utils/deploy");
 const {
   balancer_rETH_WETH_PID,
   balancer_stETH_WETH_PID,
@@ -15,6 +14,7 @@ const {
   fundAccounts,
   fundAccountsForOETHUnitTests,
 } = require("../utils/funding");
+const { replaceContractAt, hardhatSetBalance } = require("../utils/hardhat");
 const {
   getAssetAddresses,
   daiUnits,
@@ -79,8 +79,6 @@ const defaultFixture = deployments.createFixture(async () => {
   const ousdProxy = await ethers.getContract("OUSDProxy");
   const vaultProxy = await ethers.getContract("VaultProxy");
 
-  const harvesterProxy = await ethers.getContract("HarvesterProxy");
-
   const compoundStrategyProxy = await ethers.getContract(
     "CompoundStrategyProxy"
   );
@@ -103,9 +101,15 @@ const defaultFixture = deployments.createFixture(async () => {
     woeth = await ethers.getContractAt("WOETH", woethProxy.address);
   }
 
+  const harvesterProxy = await ethers.getContract("HarvesterProxy");
   const harvester = await ethers.getContractAt(
     "Harvester",
     harvesterProxy.address
+  );
+  const oethHarvesterProxy = await ethers.getContract("OETHHarvesterProxy");
+  const oethHarvester = await ethers.getContractAt(
+    "OETHHarvester",
+    oethHarvesterProxy.address
   );
 
   const dripperProxy = await ethers.getContract("DripperProxy");
@@ -217,16 +221,13 @@ const defaultFixture = deployments.createFixture(async () => {
     cvx,
     cvxBooster,
     cvxRewardPool,
-    LUSDMetaStrategyProxy,
     LUSDMetaStrategy,
-    oethHarvester,
     oethDripper,
     oethZapper,
     swapper,
     mockSwapper,
     swapper1Inch,
     mock1InchSwapRouter,
-    convexEthMetaStrategyProxy,
     convexEthMetaStrategy,
     fluxStrategy,
     vaultValueChecker,
@@ -332,13 +333,7 @@ const defaultFixture = deployments.createFixture(async () => {
       balancerRethStrategyProxy.address
     );
 
-    const oethHarvesterProxy = await ethers.getContract("OETHHarvesterProxy");
-    oethHarvester = await ethers.getContractAt(
-      "OETHHarvester",
-      oethHarvesterProxy.address
-    );
-
-    convexEthMetaStrategyProxy = await ethers.getContract(
+    const convexEthMetaStrategyProxy = await ethers.getContract(
       "ConvexEthMetaStrategyProxy"
     );
     convexEthMetaStrategy = await ethers.getContractAt(
@@ -453,7 +448,7 @@ const defaultFixture = deployments.createFixture(async () => {
 
     flipper = await ethers.getContract("Flipper");
 
-    LUSDMetaStrategyProxy = await ethers.getContract(
+    const LUSDMetaStrategyProxy = await ethers.getContract(
       "ConvexLUSDMetaStrategyProxy"
     );
     LUSDMetaStrategy = await ethers.getContractAt(
@@ -675,9 +670,6 @@ async function oethDefaultFixture() {
       addresses.mainnet.FraxETHMinter
     );
     await mockedMinter.connect(franck).setAssetAddress(fixture.sfrxETH.address);
-
-    // Fund WETH contract
-    _hardhatSetBalance(weth.address, "999999999999999");
 
     // Fund all with mockTokens
     await fundAccountsForOETHUnitTests();
@@ -1561,24 +1553,11 @@ async function nodeRevert(snapshotId) {
   });
 }
 
-async function _hardhatSetBalance(address, amount = "10000") {
-  await hre.network.provider.request({
-    method: "hardhat_setBalance",
-    params: [
-      address,
-      parseEther(amount)
-        .toHexString()
-        .replace(/^0x0+/, "0x")
-        .replace(/0$/, "1"),
-    ],
-  });
-}
-
 async function impersonateAndFundContract(address, amount = "100000") {
   await impersonateAccount(address);
 
   if (parseFloat(amount) > 0) {
-    await _hardhatSetBalance(address, amount);
+    await hardhatSetBalance(address, amount);
   }
 
   const signer = await ethers.provider.getSigner(address);
@@ -1639,7 +1618,7 @@ async function resetAllowance(
 }
 
 async function mintWETH(weth, recipient, amount = "100") {
-  await _hardhatSetBalance(recipient.address, (Number(amount) * 2).toString());
+  await hardhatSetBalance(recipient.address, (Number(amount) * 2).toString());
   await weth.connect(recipient).deposit({
     value: parseEther(amount),
   });
@@ -1714,18 +1693,8 @@ async function convexOETHMetaVaultFixture(
     weth,
   } = fixture;
 
-  await impersonateAndFundAddress(
-    weth.address,
-    [
-      "0x8EB8a3b98659Cce290402893d0123abb75E3ab28",
-      "0x741AA7CFB2c7bF2A1E7D4dA2e3Df6a56cA4131F3",
-      "0x57757E3D981446D585Af0D9Ae4d7DF6D64647806",
-      "0x2fEb1512183545f48f6b9C5b4EbfCaF49CfCa6F3",
-      "0x6B44ba0a126a2A1a8aa6cD1AdeeD002e141Bcd44",
-    ],
-    // Josh is loaded with weth
-    josh.getAddress()
-  );
+  // Load up josh with WETH
+  mintWETH(weth, josh, "1000000");
 
   // Get some CRV from most loaded contracts/wallets
   await impersonateAndFundAddress(
@@ -1794,7 +1763,7 @@ async function convexOETHMetaVaultFixture(
   if (config?.poolAddEthAmount > 0) {
     // Fund Josh with ETH plus some extra for gas fees
     const fundAmount = config.poolAddEthAmount + 1;
-    await _hardhatSetBalance(await josh.getAddress(), fundAmount.toString());
+    await hardhatSetBalance(await josh.getAddress(), fundAmount.toString());
 
     const ethAmount = parseUnits(config.poolAddEthAmount.toString(), 18);
     // prettier-ignore
@@ -1867,12 +1836,7 @@ async function compoundFixture() {
   await deploy("StandaloneCompound", {
     from: governorAddr,
     contract: "CompoundStrategy",
-    args: [
-      [
-        addresses.dead,
-        governorAddr, // Using Governor in place of Vault here
-      ],
-    ],
+    args: [[addresses.dead, fixture.vault.address]],
   });
 
   fixture.cStandalone = await ethers.getContract("StandaloneCompound");
@@ -1889,6 +1853,12 @@ async function compoundFixture() {
   await fixture.cStandalone
     .connect(sGovernor)
     .setHarvesterAddress(fixture.harvester.address);
+
+  // impersonate the vault and strategy
+  fixture.vaultSigner = await impersonateAndFundContract(fixture.vault.address);
+  fixture.strategySigner = await impersonateAndFundContract(
+    fixture.cStandalone.address
+  );
 
   await fixture.usdc.transfer(
     await fixture.matt.getAddress(),
