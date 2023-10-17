@@ -157,7 +157,6 @@ module.exports = {
   mocha: {
     bail: process.env.BAIL === "true",
     timeout: parseInt(process.env.MOCHA_TIMEOUT) || 40000,
-    // requires: "test/_global-fixture.js",
   },
   throwOnTransactionFailures: true,
   namedAccounts: {
