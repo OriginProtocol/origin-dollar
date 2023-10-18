@@ -368,10 +368,17 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     args: [factory.address, weth.address],
   });
 
+  const sfrxETH = await ethers.getContract("MocksfrxETH");
   await deploy("MockFrxETHMinter", {
     from: deployerAddr,
-    args: [(await ethers.getContract("MocksfrxETH")).address],
+    args: [frxETH.address, sfrxETH.address],
   });
+  // Replace frxETHMinter
+  await replaceContractAt(
+    addresses.mainnet.FraxETHMinter,
+    await ethers.getContract("MockFrxETHMinter")
+  );
+
   await deploy("MockSwapper", {
     from: deployerAddr,
   });
