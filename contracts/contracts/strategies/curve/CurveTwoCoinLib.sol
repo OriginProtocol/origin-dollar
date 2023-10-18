@@ -2,9 +2,11 @@
 pragma solidity ^0.8.0;
 
 import { ICurveMetaPool } from "./ICurveMetaPool.sol";
+import { StableMath } from "../../utils/StableMath.sol";
 
 library CurveTwoCoinLib {
     uint256 public constant CURVE_BASE_ASSETS = 2;
+    using StableMath for uint256;
 
     /**
      * @notice Deposit coins into a Curve pool
@@ -143,7 +145,7 @@ library CurveTwoCoinLib {
      * @dev This calculation accounts for slippage, but not fees.
      * Needed to prevent front-running, not for precise calculations!
      * @param _pool Address of the Curve pool
-     * @param _amounts Amount of each coin being deposited
+     * @param _amounts Amount of each coin being deposited or withdrawn
      * @param _is_deposit set True for deposits, False for withdrawals
      * @return lpTokens Expected amount of LP tokens received
      */
@@ -162,5 +164,30 @@ library CurveTwoCoinLib {
             amounts,
             _is_deposit
         );
+    }
+
+    /**
+     * @notice Calculate amount of LP required when withdrawing specific amount of one
+     * of the underlying assets accounting for fees and slippage.
+     *
+     * This implementation assumes a newer Curve pool is used which includes fees in the
+     * calc_token_amount functinon.
+     *
+     * @param _pool Address of the Curve pool
+     * @param _coinIndex index of the coin in the Curve pool that is to be withdrawn
+     * @param _assetAmount Amount of of the indexed coin to withdraw
+     * @return lpAmount Curve LP tokens required to remove the coin amounts
+     */
+    function calcWithdrawLpAmount(
+        address _pool,
+        uint256 _coinIndex,
+        uint256 _assetAmount
+    ) external view returns (uint256 lpAmount) {
+        uint256[CURVE_BASE_ASSETS] memory amounts = [uint256(0), 0];
+        amounts[_coinIndex] = _assetAmount;
+
+        // LP required when removing required asset including slippage and fees.
+        // Need to add 1 to account for rounding up in the remove_liquidity_imbalance implementation.
+        lpAmount = ICurveMetaPool(_pool).calc_token_amount(amounts, false) + 1;
     }
 }

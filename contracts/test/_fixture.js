@@ -2020,6 +2020,7 @@ async function convexFrxEthFixture(
       curveOethEthPoolAbi,
       addresses.mainnet.CurveFrxEthWethPool
     );
+    fixture.curveTwoCoinLib = await ethers.getContract("CurveTwoCoinLib");
   } else {
     // Approve strategy for unit tests
     await oethVault
