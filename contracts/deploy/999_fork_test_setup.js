@@ -1,15 +1,15 @@
-const { utils } = require("ethers");
 const { isFork } = require("../test/helpers");
-const {
-  replaceContractAt,
-  deployWithConfirmation,
-} = require("../utils/deploy");
-const { fundAccounts } = require("../utils/funding");
 const addresses = require("../utils/addresses");
+const { deployWithConfirmation } = require("../utils/deploy");
+const { fundAccounts } = require("../utils/funding");
+const { hardhatSetBalance, replaceContractAt } = require("../utils/hardhat");
+const { impersonateAndFund } = require("../utils/signers");
 const daiAbi = require("../test/abi/dai.json").abi;
 
+const log = require("../utils/logger")("deploy:999_fork_test_setup");
+
 const main = async (hre) => {
-  console.log(`Running 999_fork_test_setup deployment...`);
+  log(`Running 999_fork_test_setup deployment...`);
 
   async function resetAllowance(
     tokenContract,
@@ -21,46 +21,8 @@ const main = async (hre) => {
     await tokenContract.connect(signer).approve(toAddress, allowance);
   }
 
-  async function impersonateAccount(address) {
-    await hre.network.provider.request({
-      method: "hardhat_impersonateAccount",
-      params: [address],
-    });
-  }
-
-  async function _hardhatSetBalance(address, amount = "10000") {
-    await hre.network.provider.request({
-      method: "hardhat_setBalance",
-      params: [
-        address,
-        utils
-          .parseEther(amount)
-          .toHexString()
-          .replace(/^0x0+/, "0x")
-          .replace(/0$/, "1"),
-      ],
-    });
-  }
-
-  async function impersonateAndFundContract(address, amount = "100000") {
-    await impersonateAccount(address);
-
-    if (parseFloat(amount) > 0) {
-      await _hardhatSetBalance(address, amount);
-    }
-
-    const signer = await ethers.provider.getSigner(address);
-    signer.address = address;
-    return signer;
-  }
-
   const { deployerAddr, timelockAddr, governorAddr, strategistAddr } =
     await getNamedAccounts();
-
-  await hre.network.provider.request({
-    method: "hardhat_setBalance",
-    params: [deployerAddr, utils.parseEther("1000000").toHexString()],
-  });
 
   const oracleRouter = await ethers.getContract("OracleRouter");
   const oethOracleRouter = await ethers.getContract(
@@ -74,31 +36,29 @@ const main = async (hre) => {
   const dMockOETHOracleRouterNoStale = await deployWithConfirmation(
     "MockOETHOracleRouterNoStale"
   );
-  console.log(
-    "Deployed MockOracleRouterNoStale and MockOETHOracleRouterNoStale"
-  );
+  log("Deployed MockOracleRouterNoStale and MockOETHOracleRouterNoStale");
   await replaceContractAt(oracleRouter.address, dMockOracleRouterNoStale);
   await replaceContractAt(
     oethOracleRouter.address,
     dMockOETHOracleRouterNoStale
   );
 
-  console.log("Replaced Oracle contracts for fork test");
+  log("Replaced Oracle contracts for fork test");
 
   const signers = await hre.ethers.getSigners();
 
   for (const signer of signers.slice(0, 4)) {
-    await _hardhatSetBalance(signer.address);
+    await hardhatSetBalance(signer.address);
   }
-  await impersonateAndFundContract(timelockAddr);
-  await impersonateAndFundContract(deployerAddr);
-  await impersonateAndFundContract(governorAddr);
-  await impersonateAndFundContract(strategistAddr);
-  await impersonateAndFundContract(addresses.mainnet.OldTimelock);
-  console.log("Unlocked and funded named accounts with ETH");
+  await impersonateAndFund(timelockAddr);
+  await impersonateAndFund(deployerAddr);
+  await impersonateAndFund(governorAddr);
+  await impersonateAndFund(strategistAddr);
+  await impersonateAndFund(addresses.mainnet.OldTimelock);
+  log("Unlocked and funded named accounts with ETH");
 
   await fundAccounts();
-  console.log("Funded accounts with other tokens");
+  log("Funded accounts with other tokens");
 
   const vaultProxy = await ethers.getContract("VaultProxy");
   const vault = await ethers.getContractAt("IVault", vaultProxy.address);
@@ -132,9 +92,9 @@ const main = async (hre) => {
     }
   }
 
-  console.log("Funded and allowance reset for all signers");
+  log("Funded and allowance reset for all signers");
 
-  console.log(`999_fork_test_setup deployment done!`);
+  log(`999_fork_test_setup deployment done!`);
 };
 
 main.id = "999_no_stale_oracles";
