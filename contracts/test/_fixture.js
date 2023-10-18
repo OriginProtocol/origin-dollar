@@ -1827,6 +1827,7 @@ async function convexFrxEthFixture(
       oethMetapoolAbi,
       addresses.mainnet.CurveFrxEthWethPool
     );
+    fixture.curveTwoCoinLib = await ethers.getContract("CurveTwoCoinLib");
   } else {
     // Approve strategy for unit tests
     await oethVault

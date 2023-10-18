@@ -153,6 +153,8 @@ addresses.mainnet.CVXETHRewardsPool =
 // Curve frxETH/WETH pool
 addresses.mainnet.ConvexFrxEthWethStrategy =
   "0x1ce298Ec5FE0B1E4B04fb78d275Da6280f6e82A3"; // TODO set after deployment
+addresses.mainnet.CurveTwoCoinLib =
+  "0x85094b52754591A3dE0002AD97F433584389aea0"; // TODO set after deployment
 addresses.mainnet.CurveFrxEthWethPool =
   "0x9c3B46C0Ceb5B9e304FCd6D88Fc50f7DD24B31Bc";
 addresses.mainnet.CurveFrxEthWethGauge =

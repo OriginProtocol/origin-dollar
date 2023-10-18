@@ -7,6 +7,7 @@ const { units, oethUnits, forkOnlyDescribe, isCI } = require("../helpers");
 const {
   createFixtureLoader,
   convexFrxEthFixture,
+  impersonateAndFundContract,
   loadDefaultFixture,
 } = require("../_fixture");
 const { resolveAsset } = require("../../utils/assets");
@@ -442,6 +443,53 @@ forkOnlyDescribe("ForkTest: Convex frxETH/WETH Strategy", function () {
       // Governor can withdraw all
       const tx = convexFrxEthWethStrategy.connect(timelock).withdrawAll();
       await expect(tx).to.emit(convexFrxEthWethStrategy, "Withdrawal");
+    });
+    [0, 1].forEach((coinIndex) => {
+      it(`Should calculate Curve LP tokens for withdrawing coin index ${coinIndex}`, async () => {
+        const { curveFrxEthWethPool, curveTwoCoinLib, josh } = fixture;
+        const coinIndex = 1;
+        const withdrawAmount = "1000";
+        const withdrawAmountScaled = parseUnits(withdrawAmount);
+        const expectedLpAmount = await curveTwoCoinLib.calcWithdrawLpAmount(
+          curveFrxEthWethPool.address,
+          coinIndex,
+          withdrawAmountScaled
+        );
+        log(`expected LP amount: ${formatUnits(expectedLpAmount)}`);
+
+        const curveGaugeSigner = await impersonateAndFundContract(
+          addresses.mainnet.CurveFrxEthWethGauge
+        );
+        const amounts = [0, 0];
+        amounts[coinIndex] = withdrawAmountScaled;
+        const maxLpAmount = withdrawAmountScaled.mul(11).div(10);
+        const actualLpAmount = await curveFrxEthWethPool
+          .connect(curveGaugeSigner)
+          .callStatic["remove_liquidity_imbalance(uint256[2],uint256)"](
+            amounts,
+            maxLpAmount
+          );
+        const percDiff = expectedLpAmount
+          .sub(actualLpAmount)
+          .mul(100000000)
+          .div(parseUnits("1"));
+        log(
+          `actual LP amount  : ${formatUnits(
+            actualLpAmount
+          )} diff ${formatUnits(percDiff, 4)} bps`
+        );
+        expect(expectedLpAmount).to.eq(actualLpAmount);
+
+        // This uses a transaction to call a view function so the gas usage can be reported.
+        const tx = await curveTwoCoinLib
+          .connect(josh)
+          .populateTransaction.calcWithdrawLpAmount(
+            curveFrxEthWethPool.address,
+            coinIndex,
+            withdrawAmountScaled
+          );
+        await josh.sendTransaction(tx);
+      });
     });
   });
 });
