@@ -43,11 +43,13 @@ abstract contract BaseBalancerAMOStrategy is BaseAMOStrategy {
      * Initializer for setting up strategy internal state. This overrides the
      * InitializableAbstractStrategy initializer as Curve strategies don't fit
      * well within that abstraction.
-     * @param _rewardTokenAddresses Address of CRV & CVX
+     * @param _rewardTokenAddresses Addresses of BAL & AURA tokens
      */
-    function initialize(
-        address[] calldata _rewardTokenAddresses // CRV + CVX
-    ) external onlyGovernor initializer {
+    function initialize(address[] calldata _rewardTokenAddresses)
+        external
+        onlyGovernor
+        initializer
+    {
         address[] memory assets = new address[](1);
         assets[0] = address(asset);
         // pTokens are not used by this strategy
@@ -293,7 +295,7 @@ abstract contract BaseBalancerAMOStrategy is BaseAMOStrategy {
     }
 
     /**
-     * @notice Collect accumulated CRV and CVX rewards and send to the Harvester.
+     * @notice Collect accumulated BAL and AURA rewards and send to the Harvester.
      */
     function collectRewardTokens()
         external
