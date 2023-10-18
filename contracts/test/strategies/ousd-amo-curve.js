@@ -1,5 +1,6 @@
 const { expect } = require("chai");
 const { utils, BigNumber } = require("ethers");
+const { parseUnits } = require("ethers/lib/utils");
 
 const { convexOusdAmoFixture, createFixtureLoader } = require("../_fixture");
 const {
@@ -11,6 +12,9 @@ const {
   usdtUnits,
 } = require("../helpers");
 const { resolveAsset } = require("../../utils/assets");
+const { shouldBehaveLikeGovernable } = require("../behaviour/governable");
+const { shouldBehaveLikeHarvester } = require("../behaviour/harvester");
+const { shouldBehaveLikeStrategy } = require("../behaviour/strategy");
 
 describe("Convex OUSD/3Pool AMO Strategy", function () {
   if (isFork) {
@@ -19,22 +23,8 @@ describe("Convex OUSD/3Pool AMO Strategy", function () {
     this.timeout(600000);
   }
 
-  let anna,
-    ousd,
-    vault,
-    vaultSigner,
-    harvester,
-    governor,
-    crv,
-    cvx,
-    convexOusdAMOStrategy,
-    metapoolToken,
-    cvxBooster,
-    usdt,
-    usdc,
-    dai;
-
   const mint = async (amount, asset) => {
+    const { anna, vault } = fixture;
     await asset.connect(anna).mint(await units(amount, asset));
     await asset
       .connect(anna)
@@ -45,27 +35,44 @@ describe("Convex OUSD/3Pool AMO Strategy", function () {
   };
 
   const loadFixture = createFixtureLoader(convexOusdAmoFixture);
+  let fixture;
   beforeEach(async function () {
-    const fixture = await loadFixture();
-    anna = fixture.anna;
-    vault = fixture.vault;
-    vaultSigner = fixture.vaultSigner;
-    harvester = fixture.harvester;
-    ousd = fixture.ousd;
-    governor = fixture.governor;
-    crv = fixture.crv;
-    cvx = fixture.cvx;
-    convexOusdAMOStrategy = fixture.convexOusdAMOStrategy;
-    metapoolToken = fixture.metapoolToken;
-    cvxBooster = fixture.cvxBooster;
-    usdt = fixture.usdt;
-    usdc = fixture.usdc;
-    dai = fixture.dai;
+    fixture = await loadFixture();
   });
+
+  shouldBehaveLikeGovernable(() => ({
+    ...fixture,
+    strategy: fixture.convexOusdAMOStrategy,
+  }));
+
+  shouldBehaveLikeHarvester(() => ({
+    ...fixture,
+    strategy: fixture.convexOusdAMOStrategy,
+    rewards: [
+      { asset: fixture.crv, expected: parseUnits("2") },
+      { asset: fixture.cvx, expected: parseUnits("3") },
+    ],
+  }));
+
+  shouldBehaveLikeStrategy(() => ({
+    ...fixture,
+    strategy: fixture.convexOusdAMOStrategy,
+    assets: [fixture.dai, fixture.usdc, fixture.usdt],
+    harvester: fixture.harvester,
+    vault: fixture.vault,
+  }));
 
   describe("Mint", function () {
     ["DAI", "USDC", "USDT"].forEach((symbol) => {
       it(`Should deposit ${symbol} to strategy`, async function () {
+        const {
+          anna,
+          cvxBooster,
+          ousd,
+          metapoolToken,
+          convexOusdAMOStrategy,
+          vaultSigner,
+        } = fixture;
         await expectApproxSupply(ousd, ousdUnits("200"));
 
         const asset = await resolveAsset(symbol);
@@ -96,6 +103,16 @@ describe("Convex OUSD/3Pool AMO Strategy", function () {
       });
     });
     it(`Should deposit multiple assets to strategy`, async function () {
+      const {
+        anna,
+        cvxBooster,
+        dai,
+        ousd,
+        usdt,
+        metapoolToken,
+        convexOusdAMOStrategy,
+        vaultSigner,
+      } = fixture;
       await expectApproxSupply(ousd, ousdUnits("200"));
 
       const daiAmount = await daiUnits("30000.00");
@@ -136,12 +153,14 @@ describe("Convex OUSD/3Pool AMO Strategy", function () {
     });
 
     it("Should use a minimum LP token amount when depositing USDT into metapool", async function () {
+      const { usdt } = fixture;
       await expect(mint("29000", usdt)).to.be.revertedWith(
         "Slippage ruined your day"
       );
     });
 
     it("Should use a minimum LP token amount when depositing USDC into metapool", async function () {
+      const { usdc } = fixture;
       await expect(mint("29000", usdc)).to.be.revertedWith(
         "Slippage ruined your day"
       );
@@ -150,6 +169,7 @@ describe("Convex OUSD/3Pool AMO Strategy", function () {
 
   describe("Redeem", function () {
     it("Should be able to unstake from gauge and return USDT", async function () {
+      const { anna, dai, ousd, usdc, usdt, vault } = fixture;
       await expectApproxSupply(ousd, ousdUnits("200"));
       await mint("10000.00", dai);
       await mint("10000.00", usdc);
@@ -166,12 +186,14 @@ describe("Convex OUSD/3Pool AMO Strategy", function () {
       "0x0000000000000000000000000000000000000000ffffffffffffffffffffffff"
     );
     it("Should not initialize a second time", async () => {
+      const { convexOusdAMOStrategy, governor } = fixture;
       await expect(
-        convexOusdAMOStrategy.connect(governor).initialize([])
+        convexOusdAMOStrategy.connect(governor).initialize([], [], [])
       ).to.revertedWith("Initializable: contract is already initialized");
     });
 
     it("Should have Governor set", async () => {
+      const { anna, convexOusdAMOStrategy, governor } = fixture;
       expect(await convexOusdAMOStrategy.connect(anna).isGovernor()).to.be
         .false;
       expect(await convexOusdAMOStrategy.connect(governor).isGovernor()).to.be
@@ -180,6 +202,8 @@ describe("Convex OUSD/3Pool AMO Strategy", function () {
     });
 
     it("Should allow transfer of arbitrary token by Governor", async () => {
+      const { anna, convexOusdAMOStrategy, dai, ousd, governor, vault } =
+        fixture;
       await dai.connect(anna).approve(vault.address, daiUnits("8.0"));
       await vault.connect(anna).mint(dai.address, daiUnits("8.0"), 0);
       // Anna sends her OUSD directly to Strategy
@@ -194,6 +218,7 @@ describe("Convex OUSD/3Pool AMO Strategy", function () {
     });
 
     it("Should not allow transfer of arbitrary token by non-Governor", async () => {
+      const { anna, convexOusdAMOStrategy, ousd } = fixture;
       // Naughty Anna
       await expect(
         convexOusdAMOStrategy
@@ -203,6 +228,7 @@ describe("Convex OUSD/3Pool AMO Strategy", function () {
     });
 
     it("Should not allow too large mintForStrategy", async () => {
+      const { anna, governor, vault } = fixture;
       await vault.connect(governor).setAMOStrategy(anna.address, true);
 
       await expect(
@@ -215,6 +241,7 @@ describe("Convex OUSD/3Pool AMO Strategy", function () {
     });
 
     it("Should not allow too large burnForStrategy", async () => {
+      const { anna, governor, vault } = fixture;
       await vault.connect(governor).setAMOStrategy(anna.address, true);
 
       await expect(
@@ -227,12 +254,14 @@ describe("Convex OUSD/3Pool AMO Strategy", function () {
     });
 
     it("Should allow Governor to reset allowances", async () => {
+      const { convexOusdAMOStrategy, governor } = fixture;
       await expect(
         convexOusdAMOStrategy.connect(governor).safeApproveAllTokens()
       ).to.not.be.reverted;
     });
 
     it("Should not allow non-Governor to reset allowances", async () => {
+      const { anna, convexOusdAMOStrategy } = fixture;
       await expect(
         convexOusdAMOStrategy.connect(anna).safeApproveAllTokens()
       ).to.be.revertedWith("Caller is not the Governor");
@@ -241,12 +270,14 @@ describe("Convex OUSD/3Pool AMO Strategy", function () {
 
   describe("Harvest", function () {
     it("Should allow the strategist to call harvest for a specific strategy", async () => {
+      const { harvester, governor, convexOusdAMOStrategy } = fixture;
       // prettier-ignore
       await harvester
         .connect(governor)["harvest(address)"](convexOusdAMOStrategy.address);
     });
 
     it("Should collect reward tokens using collect rewards on all strategies", async () => {
+      const { harvester, governor, crv, cvx } = fixture;
       // Mint of MockCRVMinter mints a fixed 2e18
       await harvester.connect(governor)["harvest()"]();
       await expect(await crv.balanceOf(harvester.address)).to.be.equal(
@@ -258,6 +289,7 @@ describe("Convex OUSD/3Pool AMO Strategy", function () {
     });
 
     it("Should collect reward tokens using collect rewards on a specific strategy", async () => {
+      const { convexOusdAMOStrategy, harvester, governor, crv, cvx } = fixture;
       await expect(await crv.balanceOf(harvester.address)).to.be.equal(
         utils.parseUnits("0", 18)
       );

@@ -425,7 +425,16 @@ const deployConvexOUSDMetaStrategy = async () => {
   );
 
   const mockBooster = await ethers.getContract("MockBooster");
-  const mockRewardPool = await ethers.getContract("MockRewardPool");
+  await mockBooster.setPool(
+    metapoolLPCRVPid,
+    assetAddresses.ThreePoolOUSDMetapool
+  );
+  // Get the convex rewards pool created in the previous setPool call
+  const poolInfo = await mockBooster.poolInfo(metapoolLPCRVPid);
+  const mockRewardPool = await ethers.getContractAt(
+    "MockRewardPool",
+    poolInfo.crvRewards
+  );
   const ousd = await ethers.getContract("OUSDProxy");
 
   const lCurveThreeCoinLib = await ethers.getContract("CurveThreeCoinLib");
@@ -463,8 +472,16 @@ const deployConvexOUSDMetaStrategy = async () => {
 
   // Initialize Strategies
   const initData = cConvexOUSDMetaStrategy.interface.encodeFunctionData(
-    "initialize(address[])",
-    [[assetAddresses.CVX, assetAddresses.CRV]]
+    "initialize(address[],address[],address[])",
+    [
+      [assetAddresses.CVX, assetAddresses.CRV],
+      [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT],
+      [
+        assetAddresses.ThreePoolOUSDMetapool,
+        assetAddresses.ThreePoolOUSDMetapool,
+        assetAddresses.ThreePoolOUSDMetapool,
+      ],
+    ]
   );
 
   await withConfirmation(

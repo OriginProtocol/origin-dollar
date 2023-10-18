@@ -349,8 +349,8 @@ contract ConvexOUSDMetaStrategy is BaseConvexAMOStrategy {
         revert("Not supported");
     }
 
-    /// @dev Converts all 3CRV in this strategy to the Vault assets DAI, USDC and USDT
-    /// by removing liquidity from the Curve OUSD/3CRV Metapool.
+    /// @dev Converts all 3CRV in this strategy to the Vault asset DAI, USDC or USDT
+    /// by removing liquidity from the Curve 3Pool.
     /// Then transfers each vault asset to the vault.
     function _withdrawAsset(
         address vaultAsset,
@@ -426,12 +426,7 @@ contract ConvexOUSDMetaStrategy is BaseConvexAMOStrategy {
         // OUSD/3CRV Metapool LP tokens in this strategy contract.
         // This should generally be nothing as we should always stake
         // the full balance in the Gauge, but include for safety
-        uint256 metapoolLpTokens = IERC20(asset).balanceOf(address(this));
-        if (metapoolLpTokens > 0) {
-            balance = metapoolLpTokens.mulTruncate(
-                curvePool.get_virtual_price()
-            );
-        }
+        uint256 curveLpTokens = IERC20(asset).balanceOf(address(this));
 
         /* We intentionally omit the metapoolLp tokens held by the metastrategyContract
          * since the contract should never (except in the middle of deposit/withdrawal
@@ -439,13 +434,11 @@ contract ConvexOUSDMetaStrategy is BaseConvexAMOStrategy {
          * could be tokens sent to it by a 3rd party and we decide to actively ignore
          * those.
          */
-        uint256 metapoolGaugePTokens = cvxRewardStaker.balanceOf(address(this));
+        curveLpTokens += cvxRewardStaker.balanceOf(address(this));
 
-        if (metapoolGaugePTokens > 0) {
-            uint256 value = metapoolGaugePTokens.mulTruncate(
-                curvePool.get_virtual_price()
-            );
-            balance += value;
+        if (curveLpTokens > 0) {
+            // Getting the virtual price is gas expensive so only do if we have Cuve LP tokens
+            balance = curveLpTokens.mulTruncate(curvePool.get_virtual_price());
         }
 
         (, uint256 assetDecimals) = _coinIndexDecimals(_asset);

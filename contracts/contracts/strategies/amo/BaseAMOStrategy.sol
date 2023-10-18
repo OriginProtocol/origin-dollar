@@ -440,7 +440,7 @@ abstract contract BaseAMOStrategy is InitializableAbstractStrategy {
         address _vaultAsset,
         uint256 _vaultAssetAmount
     ) internal {
-        require(_vaultAssetAmount > 0, "Invalid amount");
+        require(_vaultAssetAmount > 0, "Must withdraw something");
 
         // Calc required number of pool assets for specified number of vault assets
         uint256 poolAssetAmount = _calcPoolAsset(
@@ -453,8 +453,8 @@ abstract contract BaseAMOStrategy is InitializableAbstractStrategy {
         // Withdraw AMO pool LP tokens from the rewards pool
         _unStakeLpTokens(requiredLpTokens);
 
-        /* math in requiredLpTokens should correctly calculate the amount of LP to remove
-         * in that the strategy receives enough asset tokens on balanced removal
+        /* math in calcLpTokensToBurn should correctly calculate the amount of Curve LP tokens
+         * to burn so the strategy receives enough asset tokens on balanced removal
          */
         uint256[2] memory _minWithdrawalAmounts = [uint256(0), uint256(0)];
         _minWithdrawalAmounts[assetCoinIndex] = poolAssetAmount;

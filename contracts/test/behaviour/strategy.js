@@ -97,9 +97,9 @@ const shouldBehaveLikeStrategy = (context) => {
           // mint some test assets directly into the strategy contract
           await asset.connect(strategySigner).mint(depositAmount);
 
+          // prettier-ignore
           const tx = await strategy
-            .connect(vaultSigner)
-            .deposit(asset.address, depositAmount);
+            .connect(vaultSigner)["deposit(address,uint256)"](asset.address, depositAmount);
 
           const platformAddress = await strategy.assetToPToken(asset.address);
           await expect(tx)
@@ -122,10 +122,10 @@ const shouldBehaveLikeStrategy = (context) => {
 
         const harvesterSigner = await impersonateAndFund(harvester.address);
         for (const signer of [harvesterSigner, governor, strategist, matt]) {
+          // prettier-ignore
           await expect(
             strategy
-              .connect(signer)
-              .deposit(assets[0].address, parseUnits("10"))
+              .connect(signer)["deposit(address,uint256)"](assets[0].address, parseUnits("10"))
           ).to.revertedWith("Caller is not the Vault");
         }
       });
@@ -157,7 +157,9 @@ const shouldBehaveLikeStrategy = (context) => {
 
         for (const asset of assets) {
           await expect(
-            strategy.connect(vaultSigner).deposit(asset.address, 0)
+            // prettier-ignore
+            strategy
+              .connect(vaultSigner)["deposit(address,uint256)"](asset.address, 0)
           ).to.be.revertedWith("Must deposit something");
         }
       });
@@ -177,9 +179,13 @@ const shouldBehaveLikeStrategy = (context) => {
 
         for (const asset of assets) {
           await expect(
+            // prettier-ignore
             strategy
-              .connect(vaultSigner)
-              .withdraw(vault.address, asset.address, 0)
+              .connect(vaultSigner)["withdraw(address,address,uint256)"](
+                vault.address,
+                asset.address,
+                0
+              )
           ).to.be.revertedWith("Must withdraw something");
         }
       });
@@ -197,9 +203,13 @@ const shouldBehaveLikeStrategy = (context) => {
         const harvesterSigner = await impersonateAndFund(harvester.address);
         for (const signer of [harvesterSigner, governor, strategist, matt]) {
           await expect(
+            // prettier-ignore
             strategy
-              .connect(signer)
-              .withdraw(vault.address, assets[0].address, parseUnits("10"))
+              .connect(signer)["withdraw(address,address,uint256)"](
+                vault.address,
+                assets[0].address,
+                parseUnits("10")
+              )
           ).to.revertedWith("Caller is not the Vault");
         }
       });
@@ -268,9 +278,13 @@ const shouldBehaveLikeStrategy = (context) => {
           const platformAddress = await strategy.assetToPToken(asset.address);
           const withdrawAmount = (await units("8000", asset)).mul(i + 1);
 
+          // prettier-ignore
           const tx = await strategy
-            .connect(vaultSigner)
-            .withdraw(vault.address, asset.address, withdrawAmount);
+            .connect(vaultSigner)["withdraw(address,address,uint256)"](
+              vault.address,
+              asset.address,
+              withdrawAmount
+            );
 
           await expect(tx)
             .to.emit(strategy, "Withdrawal")

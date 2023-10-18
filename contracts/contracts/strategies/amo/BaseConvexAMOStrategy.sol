@@ -43,23 +43,17 @@ abstract contract BaseConvexAMOStrategy is BaseAMOStrategy {
      * Initializer for setting up strategy internal state. This overrides the
      * InitializableAbstractStrategy initializer as Curve strategies don't fit
      * well within that abstraction.
-     * @param _rewardTokenAddresses Address of CRV & CVX
+     * @param _rewardTokenAddresses Address of reward tokens CRV & CVX
      */
     function initialize(
-        address[] calldata _rewardTokenAddresses // CRV + CVX
+        address[] calldata _rewardTokenAddresses,
+        address[] calldata _assets,
+        address[] calldata _pTokens
     ) external onlyGovernor initializer {
-        address[] memory assets = new address[](1);
-        assets[0] = address(asset);
-        // pTokens are not used by this strategy
-        // it is only included for backward compatibility with the
-        // parent InitializableAbstractStrategy contract
-        address[] memory pTokens = new address[](1);
-        pTokens[0] = address(curvePool);
-
         InitializableAbstractStrategy._initialize(
             _rewardTokenAddresses,
-            assets,
-            pTokens
+            _assets,
+            _pTokens
         );
 
         _approveBase();
