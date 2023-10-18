@@ -76,8 +76,12 @@ module.exports = deploymentWithGovernanceProposal(
     // 3. Initialize the new frxETH/OETH AMO strategy
     // Construct initialize call data to init and configure the new strategy
     const initData = cConvexFrxETHAMOStrategy.interface.encodeFunctionData(
-      "initialize(address[])",
-      [[addresses.mainnet.CRV, addresses.mainnet.CVX]]
+      "initialize(address[],address[],address[])",
+      [
+        [addresses.mainnet.CRV, addresses.mainnet.CVX],
+        [addresses.mainnet.frxETH],
+        [addresses.mainnet.CurveFrxETHOETHPool],
+      ]
     );
 
     // prettier-ignore
