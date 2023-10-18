@@ -32,9 +32,7 @@ const shouldBehaveLikeHarvester = (context) => {
 
       // No rewards in the harvester before harvest
       for (const reward of rewards) {
-        await expect(
-          await reward.asset.balanceOf(harvester.address)
-        ).to.be.equal(0);
+        await expect(harvester).to.have.balanceOf("0", reward.asset);
       }
 
       // Harvest rewards from all strategies
