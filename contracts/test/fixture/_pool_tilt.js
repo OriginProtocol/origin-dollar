@@ -26,9 +26,7 @@ async function getPoolConfiguration(fixture, pool) {
         balancerVault: fixture.balancerVault,
       },
     };
-  } else if (
-    pool.address == sfrxETHwstETHrEthBPT?.address
-  ) {
+  } else if (pool.address == sfrxETHwstETHrEthBPT?.address) {
     return {
       config: {
         platform: "balancer",
