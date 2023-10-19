@@ -159,3 +159,157 @@ with TemporaryForkForReallocations() as txs:
   print("Profit", "{:.6f}".format(profit / 10**18), profit)
   print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
   print("-----")
+
+# -------------------------------------
+# Oct 03, 2023 - OETH Balancer rETH allocation
+# -------------------------------------
+from world import *
+
+with TemporaryForkForReallocations() as txs:
+  # Before
+  txs.append(vault_oeth_core.rebase({'from': STRATEGIST}))
+  txs.append(oeth_vault_value_checker.takeSnapshot({'from': STRATEGIST}))
+
+  # Deposit 32 rETH to BalancerRethStrategy
+  txs.append(
+    vault_oeth_admin.depositToStrategy(
+      BALANCER_RETH_STRATEGY, 
+      [reth], 
+      [32 * 10**18], 
+      {'from': STRATEGIST}
+    )
+  )
+
+  # After
+  vault_change = vault_oeth_core.totalValue() - oeth_vault_value_checker.snapshots(STRATEGIST)[0]
+  supply_change = oeth.totalSupply() - oeth_vault_value_checker.snapshots(STRATEGIST)[1]
+  profit = vault_change - supply_change
+  txs.append(oeth_vault_value_checker.checkDelta(profit, (0.1 * 10**18), vault_change, (0.1 * 10**18), {'from': STRATEGIST}))
+  print("-----")
+  print("Profit", "{:.6f}".format(profit / 10**18), profit)
+  print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
+  print("-----")
+
+# -------------------------------------
+# Oct 05, 2023 - OETH Balancer rETH allocation
+# -------------------------------------
+from world import *
+
+with TemporaryForkForReallocations() as txs:
+  # Before
+  txs.append(vault_oeth_core.rebase({'from': STRATEGIST}))
+  txs.append(oeth_vault_value_checker.takeSnapshot({'from': STRATEGIST}))
+
+  # Deposit 32 rETH to BalancerRethStrategy
+  txs.append(
+    vault_oeth_admin.depositToStrategy(
+      BALANCER_RETH_STRATEGY, 
+      [reth, weth], 
+      [32 * 10**18, 36.57 * 10**18], 
+      {'from': STRATEGIST}
+    )
+  )
+
+  # After
+  vault_change = vault_oeth_core.totalValue() - oeth_vault_value_checker.snapshots(STRATEGIST)[0]
+  supply_change = oeth.totalSupply() - oeth_vault_value_checker.snapshots(STRATEGIST)[1]
+  profit = vault_change - supply_change
+  txs.append(oeth_vault_value_checker.checkDelta(profit, (0.1 * 10**18), vault_change, (0.1 * 10**18), {'from': STRATEGIST}))
+  print("-----")
+  print("Profit", "{:.6f}".format(profit / 10**18), profit)
+  print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
+  print("-----")
+
+# -------------------------------------
+# Oct 09, 2023 - FraxETH allocation
+# -------------------------------------
+from world import *
+
+with TemporaryForkForReallocations() as txs:
+  # Before
+  txs.append(vault_oeth_core.rebase({'from': STRATEGIST}))
+  txs.append(oeth_vault_value_checker.takeSnapshot({'from': STRATEGIST}))
+
+  # Remove 3356.52 WETH from strategy
+  txs.append(
+    vault_oeth_admin.withdrawFromStrategy(
+      OETH_CONVEX_OETH_ETH_STRAT, 
+      [weth], 
+      [3356.52 * 10**18],
+      {'from': STRATEGIST}
+    )
+  )
+  
+  # Deposit 3937.88 WETH to FraxETHStrategy
+  txs.append(
+    vault_oeth_admin.depositToStrategy(
+      FRAX_ETH_STRATEGY, 
+      [weth], 
+      [3937.88 * 10**18], 
+      {'from': STRATEGIST}
+    )
+  )
+
+  # After
+  vault_change = vault_oeth_core.totalValue() - oeth_vault_value_checker.snapshots(STRATEGIST)[0]
+  supply_change = oeth.totalSupply() - oeth_vault_value_checker.snapshots(STRATEGIST)[1]
+  profit = vault_change - supply_change
+  txs.append(oeth_vault_value_checker.checkDelta(profit, (0.1 * 10**18), vault_change, (0.1 * 10**18), {'from': STRATEGIST}))
+  print("-----")
+  print("Profit", "{:.6f}".format(profit / 10**18), profit)
+  print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
+  print("-----")
+
+# -------------------------------------
+# Oct 11, 2023 - OGV Buyback
+# ------------------------------------
+from buyback import *
+
+def main():
+  build_buyback_tx(max_dollars=10000, max_slippage=1)
+
+# -------------------------------------
+# Oct 11, 2023 - Buy CVX
+# ------------------------------------
+from convex import *
+
+def main():
+  build_cvx_buyback_tx(slippage=1)
+
+# -------------------------------------
+# Oct 11, 2023 - Lock CVX
+# ------------------------------------
+from convex import *
+
+def main():
+  lock_cvx()
+
+# -------------------------------------
+# Oct 16, 2023 - FraxETH allocation
+# -------------------------------------
+from world import *
+
+with TemporaryForkForReallocations() as txs:
+  # Before
+  txs.append(vault_oeth_core.rebase({'from': STRATEGIST}))
+  txs.append(oeth_vault_value_checker.takeSnapshot({'from': STRATEGIST}))
+
+  # Deposit 725.71 WETH to FraxETHStrategy
+  txs.append(
+    vault_oeth_admin.depositToStrategy(
+      FRAX_ETH_STRATEGY, 
+      [weth], 
+      [725.71 * 10**18], 
+      {'from': STRATEGIST}
+    )
+  )
+
+  # After
+  vault_change = vault_oeth_core.totalValue() - oeth_vault_value_checker.snapshots(STRATEGIST)[0]
+  supply_change = oeth.totalSupply() - oeth_vault_value_checker.snapshots(STRATEGIST)[1]
+  profit = vault_change - supply_change
+  txs.append(oeth_vault_value_checker.checkDelta(profit, (0.1 * 10**18), vault_change, (0.1 * 10**18), {'from': STRATEGIST}))
+  print("-----")
+  print("Profit", "{:.6f}".format(profit / 10**18), profit)
+  print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
+  print("-----")

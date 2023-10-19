@@ -182,6 +182,19 @@ forkOnlyDescribe(
       beforeEach(async () => {
         fixture = await loadBalancerREthFixtureNotDefault();
       });
+      it("Should fail when depositing with an unsupported asset", async function () {
+        const { frxETH, oethVault, strategist, balancerREthStrategy } = fixture;
+
+        await expect(
+          oethVault
+            .connect(strategist)
+            .depositToStrategy(
+              balancerREthStrategy.address,
+              [frxETH.address],
+              [oethUnits("1")]
+            )
+        ).to.be.revertedWith("Asset unsupported");
+      });
       it("Should deposit 5 WETH and 5 rETH in Balancer MetaStablePool strategy", async function () {
         const { reth, rEthBPT, weth } = fixture;
         await depositTest(fixture, [5, 5], [weth, reth], rEthBPT);
@@ -229,7 +242,14 @@ forkOnlyDescribe(
         expect(wethInVaultBefore.sub(wethInVaultAfter)).to.equal(wethUnits);
         expect(
           strategyValueAfter.sub(strategyValueBefore)
-        ).to.approxEqualTolerance(rethValue.add(wethUnits), 0.01);
+          /* can in theory be up to ~2% off when calculating rETH value since the
+           * chainlink oracle allows for 2% deviation: https://data.chain.link/ethereum/mainnet/crypto-eth/reth-eth
+           *
+           * Since we are also depositing WETH that 2% deviation should be diluted to
+           * roughly ~1% when pricing value in the strategy. We are choosing 0.5% here for now
+           * and will adjust to more if needed.
+           */
+        ).to.approxEqualTolerance(rethValue.add(wethUnits), 0.5);
       });
 
       it("Should be able to deposit with higher deposit deviation", async function () {});
@@ -659,6 +679,20 @@ forkOnlyDescribe(
           .setAssetDefaultStrategy(weth.address, addresses.zero);
       });
 
+      it("Should fail when depositing with an unsupported asset", async function () {
+        const { frxETH, oethVault, strategist, balancerWstEthStrategy } =
+          fixture;
+
+        await expect(
+          oethVault
+            .connect(strategist)
+            .depositToStrategy(
+              balancerWstEthStrategy.address,
+              [frxETH.address],
+              [oethUnits("1")]
+            )
+        ).to.be.revertedWith("Asset unsupported");
+      });
       it("Should deposit 5 WETH and 5 stETH in Balancer MetaStablePool strategy", async function () {
         const { stETH, stEthBPT, weth } = fixture;
         await wstETHDepositTest(fixture, [5, 5], [weth, stETH], stEthBPT);
@@ -700,6 +734,21 @@ forkOnlyDescribe(
             [weth.address, stETH.address],
             [units("35", weth), oethUnits("35")]
           );
+      });
+
+      it("Should fail when withdrawing with an unsupported asset", async function () {
+        const { frxETH, oethVault, strategist, balancerWstEthStrategy } =
+          fixture;
+
+        await expect(
+          oethVault
+            .connect(strategist)
+            ["withdrawFromStrategy(address,address[],uint256[])"](
+              balancerWstEthStrategy.address,
+              [frxETH.address],
+              [oethUnits("1")]
+            )
+        ).to.be.revertedWith("Unsupported asset");
       });
 
       // a list of WETH/STeth pairs

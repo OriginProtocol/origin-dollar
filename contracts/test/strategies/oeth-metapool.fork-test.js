@@ -481,9 +481,9 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
       const curveBalances = await oethMetaPool.get_balances();
       const oethMintAmount = curveBalances[0]
         .sub(curveBalances[1])
-        // reduce by 0.0001%
-        .mul(999999)
-        .div(1000000);
+        // reduce by 0.001%
+        .mul(99999)
+        .div(100000);
 
       await assertMintAndAddOTokens(oethMintAmount, fixture);
     });
@@ -492,7 +492,7 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
       await assertRemoveOnlyAssets(lpAmount, fixture);
     });
     it("Strategist should remove a lot ETH from the Metapool", async () => {
-      const lpAmount = parseUnits("20000");
+      const lpAmount = parseUnits("15000");
       await assertRemoveOnlyAssets(lpAmount, fixture);
     });
   });

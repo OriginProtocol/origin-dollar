@@ -66,18 +66,13 @@ module.exports = deploymentWithGovernanceProposal(
     );
 
     // 3. Encode the init data
-    // TODO change back
-    const initFunction =
-      "initialize(address[],address[],address[],uint256,uint256)";
+    const initFunction = "initialize(address[],address[],address[])";
     const initData = cOETHBalancerMetaPoolStrategy.interface.encodeFunctionData(
       initFunction,
       [
         [addresses.mainnet.BAL, addresses.mainnet.AURA],
         [addresses.mainnet.rETH, addresses.mainnet.WETH],
         [platformAddress, platformAddress],
-        //TODO: delete this:
-        2, // WeightedPoolExitKind.BPT_IN_FOR_EXACT_TOKENS_OUT
-        1, // WeightedPoolExitKind.EXACT_BPT_IN_FOR_TOKENS_OUT
       ]
     );
 
