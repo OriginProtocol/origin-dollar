@@ -740,9 +740,11 @@ forkOnlyDescribe(
         const { frxETH, oethVault, strategist, balancerWstEthStrategy } =
           fixture;
 
+        // prettier-ignore
         await expect(
           oethVault
             .connect(strategist)
+            // eslint-disable-next-line
             ["withdrawFromStrategy(address,address[],uint256[])"](
               balancerWstEthStrategy.address,
               [frxETH.address],
