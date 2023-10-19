@@ -9,8 +9,6 @@ const { ousdUnits } = require("../helpers");
 const { factoryCreatePool } = require("./_pools");
 
 const attackerAddress = "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045";
-let sAttacker;
-let pool;
 
 async function getPoolConfiguration(fixture, pool) {
   const { rEthBPT, sfrxETHwstETHrEthBPT } = fixture;
@@ -68,7 +66,10 @@ async function _fundAttackerOption({
     return;
   }
 
-  sAttacker = await impersonateAndFundContract(attackerAddress, "1000000"); // 1m ETH
+  const sAttacker = await impersonateAndFundContract(
+    attackerAddress,
+    "1000000"
+  ); // 1m ETH
 
   if (asset.address == fixture.weth.address) {
     await mintWETH(fixture.weth, sAttacker, "500000");
@@ -82,6 +83,8 @@ async function _fundAttackerOption({
       .connect(sAttacker)
       .submitAndDeposit(attackerAddress, { value: assetAmount });
   }
+
+  return sAttacker;
 }
 
 /* Generic tilt pool function
@@ -97,7 +100,7 @@ async function tiltPool({
   poolContract,
 }) {
   const poolConfig = await getPoolConfiguration(fixture, poolContract);
-  pool = await factoryCreatePool(poolConfig.config);
+  const pool = await factoryCreatePool(poolConfig.config);
 
   const tvl = await pool.getTvl();
   const tiltAmount = tvl
@@ -105,7 +108,7 @@ async function tiltPool({
     .div(BigNumber.from("100"));
 
   // fund the attacker
-  await _fundAttackerOption({
+  const sAttacker = await _fundAttackerOption({
     asset: attackAsset,
     // fund with some 20% extra funds
     assetAmount: tiltAmount
@@ -115,12 +118,18 @@ async function tiltPool({
   });
 
   await pool.tiltPool(tiltAmount, attackAsset, sAttacker);
+
+  return {
+    sAttacker,
+    pool,
+  };
 }
 
 /* Generic tilt pool function
  *
  */
 async function unTiltPool({
+  context,
   attackAsset, // asset used to tilt the pool
 }) {
   if (!pool) {
@@ -129,7 +138,7 @@ async function unTiltPool({
     );
   }
 
-  await pool.untiltPool(sAttacker, attackAsset);
+  await context.pool.untiltPool(sAttacker, attackAsset);
 }
 
 module.exports = {

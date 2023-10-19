@@ -1067,7 +1067,7 @@ forkOnlyDescribe(
           ]();
           expect(checkBalanceAmount).to.be.gte(oethUnits("0"), 1);
 
-          await tiltPool({
+          const context = await tiltPool({
             fixture,
             tiltTvlFactor: 300,
             attackAsset: sfrxETH, // asset used to tilt the pool
@@ -1089,6 +1089,7 @@ forkOnlyDescribe(
 
           await unTiltPool({
             fixture,
+            context,
             attackAsset: sfrxETH, // asset used to tilt the pool
             poolContract: sfrxETHwstETHrEthBPT,
           });

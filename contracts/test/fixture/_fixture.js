@@ -1,4 +1,4 @@
-<const hre = require("hardhat");
+const hre = require("hardhat");
 const { ethers } = hre;
 const { BigNumber } = ethers;
 const { expect } = require("chai");
