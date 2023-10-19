@@ -2,7 +2,7 @@
 
 ## Prettier
 
-Both Solidity and JavaScript code is formatted using [Prettier](https://prettier.io/).
+Both Solidity and JavaScript code are formatted using [Prettier](https://prettier.io/).
 
 The configuration for Prettier is in [.prettierrc](./.prettierrc).
 This should already be configured in the VS Code settings file [.vscode/settings.json](../.vscode/settings.json). [.prettierignore](./.prettierignore) is used to ignore files from being formatted.

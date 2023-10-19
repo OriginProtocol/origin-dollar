@@ -4,9 +4,14 @@ const { BigNumber } = ethers;
 const { expect } = require("chai");
 const { formatUnits } = require("ethers/lib/utils");
 
+require("./_global-hooks");
+
 const addresses = require("../utils/addresses");
 const { setFraxOraclePrice } = require("../utils/frax");
-const { replaceContractAt } = require("../utils/deploy");
+const {
+  replaceContractAt,
+  // deployWithConfirmation,
+} = require("../utils/deploy");
 const {
   balancer_rETH_WETH_PID,
   balancer_stETH_WETH_PID,
@@ -41,7 +46,6 @@ const threepoolLPAbi = require("./abi/threepoolLP.json");
 const threepoolSwapAbi = require("./abi/threepoolSwap.json");
 
 const sfrxETHAbi = require("./abi/sfrxETH.json");
-const { deployWithConfirmation } = require("../utils/deploy");
 const { defaultAbiCoder, parseUnits, parseEther } = require("ethers/lib/utils");
 const balancerStrategyDeployment = require("../utils/balancerStrategyDeployment");
 
@@ -50,27 +54,13 @@ const log = require("../utils/logger")("test:fixtures");
 const defaultFixture = deployments.createFixture(async () => {
   log(`Forked from block: ${await hre.ethers.provider.getBlockNumber()}`);
 
-  log(
-    `Before deployments with param "${
-      isFork
-        ? undefined
-        : process.env.FORKED_LOCAL_TEST
-        ? ["none"]
-        : ["unit_tests"]
-    }"`
-  );
+  log(`Before deployments with param "${isFork ? undefined : ["unit_tests"]}"`);
 
   // Run the contract deployments
-  await deployments.fixture(
-    isFork
-      ? undefined
-      : process.env.FORKED_LOCAL_TEST
-      ? ["none"]
-      : ["unit_tests"],
-    {
-      keepExistingDeployments: true,
-    }
-  );
+  await deployments.fixture(isFork ? undefined : ["unit_tests"], {
+    keepExistingDeployments: true,
+    fallbackToGlobal: true,
+  });
 
   log(`Block after deployments: ${await hre.ethers.provider.getBlockNumber()}`);
 
@@ -355,18 +345,6 @@ const defaultFixture = deployments.createFixture(async () => {
 
     oethZapper = await ethers.getContract("OETHZapper");
 
-    // Replace OracleRouter to disable staleness
-    const dMockOracleRouterNoStale = await deployWithConfirmation(
-      "MockOracleRouterNoStale"
-    );
-    const dMockOETHOracleRouterNoStale = await deployWithConfirmation(
-      "MockOETHOracleRouterNoStale"
-    );
-    await replaceContractAt(oracleRouter.address, dMockOracleRouterNoStale);
-    await replaceContractAt(
-      oethOracleRouter.address,
-      dMockOETHOracleRouterNoStale
-    );
     swapper = await ethers.getContract("Swapper1InchV5");
 
     const fluxStrategyProxy = await ethers.getContract("FluxStrategyProxy");
@@ -500,28 +478,19 @@ const defaultFixture = deployments.createFixture(async () => {
   const [matt, josh, anna, domen, daniel, franck] = signers.slice(4);
 
   if (isFork) {
-    governor = await impersonateAndFundContract(governorAddr);
-    strategist = await impersonateAndFundContract(strategistAddr);
-    timelock = await impersonateAndFundContract(timelockAddr);
-    oldTimelock = await impersonateAndFundContract(
+    governor = await ethers.provider.getSigner(governorAddr);
+    strategist = await ethers.provider.getSigner(strategistAddr);
+    timelock = await ethers.provider.getSigner(timelockAddr);
+    oldTimelock = await ethers.provider.getSigner(
       addresses.mainnet.OldTimelock
     );
   } else {
     timelock = governor;
   }
-  await fundAccounts();
-  if (isFork) {
-    for (const user of [josh, matt, anna, domen, daniel, franck]) {
-      // Approve Vault to move funds
-      for (const asset of [ousd, usdt, usdc, dai]) {
-        await resetAllowance(asset, user, vault.address);
-      }
 
-      for (const asset of [oeth, frxETH]) {
-        await resetAllowance(asset, user, oethVault.address);
-      }
-    }
-  } else {
+  if (!isFork) {
+    await fundAccounts();
+
     // Matt and Josh each have $100 OUSD
     for (const user of [matt, josh]) {
       await dai.connect(user).approve(vault.address, daiUnits("100"));
