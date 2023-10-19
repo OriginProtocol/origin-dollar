@@ -1,6 +1,6 @@
 const { parseEther, Wallet } = require("ethers").utils;
 const { ethereumAddress, privateKey } = require("./regex");
-
+const { hardhatSetBalance } = require("../test/_fund");
 const log = require("./logger")("utils:signers");
 
 /**
@@ -65,19 +65,6 @@ async function impersonateAccount(account) {
   return await ethers.provider.getSigner(account);
 }
 
-async function _hardhatSetBalance(address, amount = "10000") {
-  await hre.network.provider.request({
-    method: "hardhat_setBalance",
-    params: [
-      address,
-      parseEther(amount)
-        .toHexString()
-        .replace(/^0x0+/, "0x")
-        .replace(/0$/, "1"),
-    ],
-  });
-}
-
 /**
  * Impersonate an account and fund it with Ether when connecting to a forked node.
  * @param {*} account the address of the contract or externally owned account to impersonate
@@ -88,7 +75,7 @@ async function impersonateAndFund(account, amount = "100") {
   const signer = await impersonateAccount(account);
 
   log(`Funding account ${account} with ${amount} ETH`);
-  await _hardhatSetBalance(account, amount);
+  await hardhatSetBalance(account, hre, amount);
 
   return signer;
 }

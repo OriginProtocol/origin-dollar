@@ -109,7 +109,7 @@ const setTokenBalance = async (
  * @param {Account} account to set balance
  * @param {number} [amount=10000] Amount of ETH to set
  */
-async function hardhatSetBalance(address, amount = "10000", hre) {
+async function hardhatSetBalance(address, hre, amount = "10000") {
   await hre.network.provider.request({
     method: "hardhat_setBalance",
     params: [
@@ -131,7 +131,8 @@ async function hardhatSetBalance(address, amount = "10000", hre) {
  */
 const setERC20TokenBalance = async (account, token, amount = "10000", hre) => {
   const config = {
-    //addresses.mainnet.WETH.toLowerCase(): "0xa9b759fed45888fb7af7fd8c229074535d6dd9f041494f8276fb277331ee6b1a"
+    //addresses.mainnet.DAI.toLowerCase(): "0x7f3c26fbd6adc962614e3a1c1175130c9fdb3345a58040fe57aba7ab778e242f",
+    //addresses.mainnet.USDT.toLowerCase(): "0x7f3c26fbd6adc962614e3a1c1175130c9fdb3345a58040fe57aba7ab778e242f"
   };
 
   // Set balance directly by manipulating the contract storage

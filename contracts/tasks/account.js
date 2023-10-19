@@ -130,7 +130,7 @@ async function fund(taskArguments, hre) {
         const usedFundAmount = token !== null ? fundAmount : "100";
 
         if (!token) {
-          await hardhatSetBalance(currentAccount, usedFundAmount, hre);
+          await hardhatSetBalance(currentAccount, hre, usedFundAmount);
         } else {
           await setERC20TokenBalance(
             currentAccount,

@@ -7,6 +7,7 @@ const {
 const { fundAccounts } = require("../utils/funding");
 const addresses = require("../utils/addresses");
 const daiAbi = require("../test/abi/dai.json").abi;
+const { hardhatSetBalance } = require("../test/_fund");
 
 const main = async (hre) => {
   console.log(`Running 999_fork_test_setup deployment...`);
@@ -28,25 +29,11 @@ const main = async (hre) => {
     });
   }
 
-  async function _hardhatSetBalance(address, amount = "10000") {
-    await hre.network.provider.request({
-      method: "hardhat_setBalance",
-      params: [
-        address,
-        utils
-          .parseEther(amount)
-          .toHexString()
-          .replace(/^0x0+/, "0x")
-          .replace(/0$/, "1"),
-      ],
-    });
-  }
-
   async function impersonateAndFundContract(address, amount = "100000") {
     await impersonateAccount(address);
 
     if (parseFloat(amount) > 0) {
-      await _hardhatSetBalance(address, amount);
+      await hardhatSetBalance(address, hre, amount);
     }
 
     const signer = await ethers.provider.getSigner(address);
@@ -88,7 +75,7 @@ const main = async (hre) => {
   const signers = await hre.ethers.getSigners();
 
   for (const signer of signers.slice(0, 4)) {
-    await _hardhatSetBalance(signer.address);
+    await hardhatSetBalance(signer.address, hre);
   }
   await impersonateAndFundContract(timelockAddr);
   await impersonateAndFundContract(deployerAddr);
