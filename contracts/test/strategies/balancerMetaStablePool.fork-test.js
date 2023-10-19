@@ -742,13 +742,9 @@ forkOnlyDescribe(
           fixture;
 
         await expect(
-          oethVault
-            .connect(strategist)
-            ["withdrawFromStrategy(address,address[],uint256[])"](
-              balancerWstEthStrategy.address,
-              [frxETH.address],
-              [oethUnits("1")]
-            )
+          oethVault.connect(strategist)[
+            "withdrawFromStrategy(address,address[],uint256[])"
+          ](balancerWstEthStrategy.address, [frxETH.address], [oethUnits("1")])
         ).to.be.revertedWith("Unsupported asset");
       });
 
