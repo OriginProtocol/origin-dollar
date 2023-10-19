@@ -13,7 +13,7 @@ const attackerAddress = "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045";
 async function getPoolConfiguration(fixture, pool) {
   const { rEthBPT, sfrxETHwstETHrEthBPT } = fixture;
 
-  if (!!rEthBPT && pool.address == rEthBPT.address) {
+  if (pool.address == rEthBPT?.address) {
     return {
       config: {
         platform: "balancer",
@@ -27,8 +27,7 @@ async function getPoolConfiguration(fixture, pool) {
       },
     };
   } else if (
-    !!sfrxETHwstETHrEthBPT &&
-    pool.address == sfrxETHwstETHrEthBPT.address
+    pool.address == sfrxETHwstETHrEthBPT?.address
   ) {
     return {
       config: {
@@ -61,7 +60,7 @@ async function _fundAttackerOption({
   const assetBalance = await asset.balanceOf(attackerAddress);
 
   if (
-    attackerEthBalance.gte(ousdUnits("100000")) ||
+    attackerEthBalance.gte(ousdUnits("100000")) &&
     assetBalance.gte(assetAmount)
   ) {
     // attacker sufficiently funded
