@@ -4,8 +4,14 @@ const { BigNumber } = ethers;
 const { expect } = require("chai");
 const { formatUnits } = require("ethers/lib/utils");
 
+require("./_global-hooks");
+
 const addresses = require("../utils/addresses");
 const { setFraxOraclePrice } = require("../utils/frax");
+const {
+  replaceContractAt,
+  // deployWithConfirmation,
+} = require("../utils/deploy");
 const {
   balancer_rETH_WETH_PID,
   balancer_stETH_WETH_PID,
@@ -40,7 +46,6 @@ const threepoolLPAbi = require("./abi/threepoolLP.json");
 const threepoolSwapAbi = require("./abi/threepoolSwap.json");
 
 const sfrxETHAbi = require("./abi/sfrxETH.json");
-const { deployWithConfirmation } = require("../utils/deploy");
 const { defaultAbiCoder, parseUnits, parseEther } = require("ethers/lib/utils");
 const balancerStrategyDeployment = require("../utils/balancerStrategyDeployment");
 
@@ -49,27 +54,13 @@ const log = require("../utils/logger")("test:fixtures");
 const defaultFixture = deployments.createFixture(async () => {
   log(`Forked from block: ${await hre.ethers.provider.getBlockNumber()}`);
 
-  log(
-    `Before deployments with param "${
-      isFork
-        ? undefined
-        : process.env.FORKED_LOCAL_TEST
-        ? ["none"]
-        : ["unit_tests"]
-    }"`
-  );
+  log(`Before deployments with param "${isFork ? undefined : ["unit_tests"]}"`);
 
   // Run the contract deployments
-  await deployments.fixture(
-    isFork
-      ? undefined
-      : process.env.FORKED_LOCAL_TEST
-      ? ["none"]
-      : ["unit_tests"],
-    {
-      keepExistingDeployments: true,
-    }
-  );
+  await deployments.fixture(isFork ? undefined : ["unit_tests"], {
+    keepExistingDeployments: true,
+    fallbackToGlobal: true,
+  });
 
   log(`Block after deployments: ${await hre.ethers.provider.getBlockNumber()}`);
 
@@ -365,18 +356,6 @@ const defaultFixture = deployments.createFixture(async () => {
 
     oethZapper = await ethers.getContract("OETHZapper");
 
-    // Replace OracleRouter to disable staleness
-    const dMockOracleRouterNoStale = await deployWithConfirmation(
-      "MockOracleRouterNoStale"
-    );
-    const dMockOETHOracleRouterNoStale = await deployWithConfirmation(
-      "MockOETHOracleRouterNoStale"
-    );
-    await replaceContractAt(oracleRouter.address, dMockOracleRouterNoStale);
-    await replaceContractAt(
-      oethOracleRouter.address,
-      dMockOETHOracleRouterNoStale
-    );
     swapper = await ethers.getContract("Swapper1InchV5");
 
     const fluxStrategyProxy = await ethers.getContract("FluxStrategyProxy");
@@ -392,7 +371,7 @@ const defaultFixture = deployments.createFixture(async () => {
     dai = await ethers.getContract("MockDAI");
     tusd = await ethers.getContract("MockTUSD");
     usdc = await ethers.getContract("MockUSDC");
-    weth = await ethers.getContract("MockWETH");
+    weth = await ethers.getContractAt("MockWETH", addresses.mainnet.WETH);
     ogn = await ethers.getContract("MockOGN");
     LUSD = await ethers.getContract("MockLUSD");
     ogv = await ethers.getContract("MockOGV");
@@ -511,28 +490,19 @@ const defaultFixture = deployments.createFixture(async () => {
   const [matt, josh, anna, domen, daniel, franck] = signers.slice(4);
 
   if (isFork) {
-    governor = await impersonateAndFundContract(governorAddr);
-    strategist = await impersonateAndFundContract(strategistAddr);
-    timelock = await impersonateAndFundContract(timelockAddr);
-    oldTimelock = await impersonateAndFundContract(
+    governor = await ethers.provider.getSigner(governorAddr);
+    strategist = await ethers.provider.getSigner(strategistAddr);
+    timelock = await ethers.provider.getSigner(timelockAddr);
+    oldTimelock = await ethers.provider.getSigner(
       addresses.mainnet.OldTimelock
     );
   } else {
     timelock = governor;
   }
-  await fundAccounts();
-  if (isFork) {
-    for (const user of [josh, matt, anna, domen, daniel, franck]) {
-      // Approve Vault to move funds
-      for (const asset of [ousd, usdt, usdc, dai]) {
-        await resetAllowance(asset, user, vault.address);
-      }
 
-      for (const asset of [oeth, frxETH]) {
-        await resetAllowance(asset, user, oethVault.address);
-      }
-    }
-  } else {
+  if (!isFork) {
+    await fundAccounts();
+
     // Matt and Josh each have $100 OUSD
     for (const user of [matt, josh]) {
       await dai.connect(user).approve(vault.address, daiUnits("100"));
@@ -668,7 +638,7 @@ async function oethDefaultFixture() {
   const fixture = await defaultFixture();
 
   const { weth, reth, stETH, frxETH, sfrxETH } = fixture;
-  const { matt, josh, domen, daniel, franck, governor, oethVault } = fixture;
+  const { matt, josh, domen, daniel, franck, oethVault } = fixture;
 
   if (isFork) {
     for (const user of [matt, josh, domen, daniel, franck]) {
@@ -690,27 +660,15 @@ async function oethDefaultFixture() {
     );
     await mockedMinter.connect(franck).setAssetAddress(fixture.sfrxETH.address);
 
-    // Replace WETH contract with MockWETH
-    const mockWETH = await ethers.getContract("MockWETH");
-    await replaceContractAt(addresses.mainnet.WETH, mockWETH);
-    const stubbedWETH = await ethers.getContractAt(
-      "MockWETH",
-      addresses.mainnet.WETH
-    );
-    fixture.weth = stubbedWETH;
-
-    // And Fund it
-    _hardhatSetBalance(stubbedWETH.address, "999999999999999");
-
-    // And make sure vault knows about it
-    await oethVault.connect(governor).supportAsset(addresses.mainnet.WETH, 0);
+    // Fund WETH contract
+    _hardhatSetBalance(weth.address, "999999999999999");
 
     // Fund all with mockTokens
     await fundAccountsForOETHUnitTests();
 
     // Reset allowances
     for (const user of [matt, josh, domen, daniel, franck]) {
-      for (const asset of [stubbedWETH, reth, stETH, frxETH, sfrxETH]) {
+      for (const asset of [weth, reth, stETH, frxETH, sfrxETH]) {
         await resetAllowance(asset, user, oethVault.address);
       }
     }
@@ -2232,16 +2190,6 @@ async function fluxStrategyFixture() {
   return fixture;
 }
 
-async function replaceContractAt(targetAddress, mockContract) {
-  const signer = (await hre.ethers.getSigners())[0];
-  const mockCode = await signer.provider.getCode(mockContract.address);
-
-  await hre.network.provider.request({
-    method: "hardhat_setCode",
-    params: [targetAddress, mockCode],
-  });
-}
-
 /**
  * A fixture is a setup function that is run only the first time it's invoked. On subsequent invocations,
  * Hardhat will reset the state of the network to what it was at the point after the fixture was initially executed.
@@ -2316,7 +2264,6 @@ module.exports = {
   fraxETHStrategyFixture,
   oethMorphoAaveFixture,
   mintWETH,
-  replaceContractAt,
   oeth1InchSwapperFixture,
   oethCollateralSwapFixture,
   ousdCollateralSwapFixture,

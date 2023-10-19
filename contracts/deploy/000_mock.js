@@ -1,6 +1,9 @@
 const { parseUnits } = require("ethers").utils;
 const { isMainnetOrFork } = require("../test/helpers");
 const { threeCRVPid } = require("../utils/constants");
+const { replaceContractAt } = require("../utils/deploy");
+
+const addresses = require("../utils/addresses");
 
 const {
   abi: FACTORY_ABI,
@@ -105,6 +108,11 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
   const dai = await ethers.getContract("MockDAI");
   const usdc = await ethers.getContract("MockUSDC");
   const usdt = await ethers.getContract("MockUSDT");
+
+  // Replace WETH
+  const mockWETH = await ethers.getContract("MockWETH");
+  await replaceContractAt(addresses.mainnet.WETH, mockWETH);
+  const weth = await ethers.getContractAt("MockWETH", addresses.mainnet.WETH);
 
   // Deploy mock aTokens (Aave)
   // MockAave is the mock lendingPool
@@ -321,7 +329,6 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     },
   });
 
-  const weth = await ethers.getContract("MockWETH");
   await deploy("MockUniswapV3Router", {
     from: deployerAddr,
     contract: {

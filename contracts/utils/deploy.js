@@ -1248,6 +1248,16 @@ function deploymentWithGuardianGovernor(opts, fn) {
   return main;
 }
 
+async function replaceContractAt(targetAddress, mockContract) {
+  const signer = (await hre.ethers.getSigners())[0];
+  const mockCode = await signer.provider.getCode(mockContract.address);
+
+  await hre.network.provider.request({
+    method: "hardhat_setCode",
+    params: [targetAddress, mockCode],
+  });
+}
+
 module.exports = {
   log,
   sleep,
@@ -1261,4 +1271,5 @@ module.exports = {
   deploymentWithProposal,
   deploymentWithGovernanceProposal,
   deploymentWithGuardianGovernor,
+  replaceContractAt,
 };
