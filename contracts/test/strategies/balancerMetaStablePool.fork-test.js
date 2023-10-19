@@ -736,6 +736,7 @@ forkOnlyDescribe(
 
           // prettier-ignore
           await balancerWstEthStrategy
+            // eslint-disable-next-line
             .connect(oethVaultSigner)["withdraw(address,address[],uint256[])"](
               oethVault.address,
               [weth.address, stETH.address],
