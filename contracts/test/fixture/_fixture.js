@@ -10,7 +10,7 @@ require("./_global-hooks");
 
 const {
   replaceContractAt,
-} = require("../utils/deploy");
+} = require("../../utils/deploy");
 const {
   balancer_rETH_WETH_PID,
   balancer_stETH_WETH_PID,
