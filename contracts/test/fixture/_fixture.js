@@ -8,9 +8,7 @@ const addresses = require("../../utils/addresses");
 const { setFraxOraclePrice } = require("../../utils/frax");
 require("./_global-hooks");
 
-const {
-  replaceContractAt,
-} = require("../../utils/deploy");
+const { replaceContractAt } = require("../../utils/deploy");
 const {
   balancer_rETH_WETH_PID,
   balancer_stETH_WETH_PID,
