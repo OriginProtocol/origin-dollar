@@ -741,10 +741,16 @@ forkOnlyDescribe(
         const { frxETH, oethVault, strategist, balancerWstEthStrategy } =
           fixture;
 
+        // prettier-ignore
         await expect(
-          oethVault.connect(strategist)[
-            "withdrawFromStrategy(address,address[],uint256[])"
-          ](balancerWstEthStrategy.address, [frxETH.address], [oethUnits("1")])
+          oethVault
+            .connect(strategist)
+            // eslint-disable-next-line
+            ["withdrawFromStrategy(address,address[],uint256[])"](
+              balancerWstEthStrategy.address,
+              [frxETH.address],
+              [oethUnits("1")]
+            )
         ).to.be.revertedWith("Unsupported asset");
       });
 
