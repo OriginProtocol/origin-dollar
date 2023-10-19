@@ -55,7 +55,9 @@ async function _fundAttackerOption({
   assetAmount, // required funded asset amount to perform tilt
   fixture,
 }) {
-  const attackerEthBalance = await hre.ethers.provider.getBalance(attackerAddress);
+  const attackerEthBalance = await hre.ethers.provider.getBalance(
+    attackerAddress
+  );
   const assetBalance = await asset.balanceOf(attackerAddress);
 
   if (

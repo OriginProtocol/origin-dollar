@@ -149,8 +149,9 @@ async function factoryCreatePool(config) {
       config.bptToken,
       config.balancerVault
     );
+  } else {
+    throw new Error(`Unsupported platform: ${config.platform}`);
   }
-  // else if platform === "curve"...
 }
 
 module.exports = {
