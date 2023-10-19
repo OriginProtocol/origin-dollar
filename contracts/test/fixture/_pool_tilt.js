@@ -1,5 +1,5 @@
 const hre = require("hardhat");
-const { ethers, waffle } = hre;
+const { ethers } = hre;
 const { BigNumber } = ethers;
 const { impersonateAndFundContract, mintWETH } = require("./_fixture");
 const addresses = require("../../utils/addresses");
@@ -55,7 +55,7 @@ async function _fundAttackerOption({
   assetAmount, // required funded asset amount to perform tilt
   fixture,
 }) {
-  const attackerEthBalance = await waffle.provider.getBalance(attackerAddress);
+  const attackerEthBalance = await hre.ethers.provider.getBalance(attackerAddress);
   const assetBalance = await asset.balanceOf(attackerAddress);
 
   if (
@@ -132,13 +132,13 @@ async function unTiltPool({
   context,
   attackAsset, // asset used to tilt the pool
 }) {
-  if (!pool) {
+  if (!context.pool) {
     throw new Error(
       "Pool variable not set. You should tilt the pool before calling unTilt"
     );
   }
 
-  await context.pool.untiltPool(sAttacker, attackAsset);
+  await context.pool.untiltPool(context.sAttacker, attackAsset);
 }
 
 module.exports = {
