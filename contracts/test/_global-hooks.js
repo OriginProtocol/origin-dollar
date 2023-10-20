@@ -7,7 +7,7 @@ const _maxChunks = Number(process.env.MAX_CHUNKS);
 
 // MAX_CHUNKS is only set on CI for fork-tests 
 // when running tests parallely
-const runForkTestsParallely = !_maxChunks;
+const runForkTestsParallely = Boolean(_maxChunks);
 
 /**
  * Recursively find the number of test cases the suite
