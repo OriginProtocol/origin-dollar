@@ -6,7 +6,7 @@ const {
   createFixtureLoader,
   oethDefaultFixture,
   impersonateAccount,
-} = require("../_fixture");
+} = require("../fixture/_fixture");
 const { forkOnlyDescribe, isCI } = require("../helpers");
 
 const log = require("../../utils/logger")("test:fork:oeth:vault");

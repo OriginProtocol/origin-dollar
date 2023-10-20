@@ -6,11 +6,11 @@ const { units, ousdUnits, isCI } = require("../helpers");
 const {
   createFixtureLoader,
   convexGeneralizedMetaForkedFixture,
-} = require("../_fixture");
+} = require("../fixture/_fixture");
 const {
   tiltToMainToken,
   tiltTo3CRV_Metapool_automatic,
-} = require("../_metastrategies-fixtures");
+} = require("../fixture/_metastrategies-fixtures");
 
 const metastrategies = [
   {

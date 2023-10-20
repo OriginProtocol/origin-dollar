@@ -2,7 +2,10 @@ const { expect } = require("chai");
 const { utils } = require("ethers");
 
 const { MAX_UINT256 } = require("../../utils/constants");
-const { createFixtureLoader, convexVaultFixture } = require("../_fixture");
+const {
+  createFixtureLoader,
+  convexVaultFixture,
+} = require("../fixture/_fixture");
 const {
   daiUnits,
   usdtUnits,

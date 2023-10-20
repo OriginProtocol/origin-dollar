@@ -7,7 +7,7 @@ const {
   fraxETHStrategyFixture,
   mintWETH,
   impersonateAndFundContract,
-} = require("./../_fixture");
+} = require("./../fixture/_fixture");
 
 forkOnlyDescribe("ForkTest: FraxETH Strategy", function () {
   this.timeout(0);

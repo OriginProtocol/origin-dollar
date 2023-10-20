@@ -6,7 +6,7 @@ const {
   createFixtureLoader,
   fraxETHStrategyFixture,
   impersonateAndFundContract,
-} = require("./../_fixture");
+} = require("./../fixture/_fixture");
 const { BigNumber } = require("ethers");
 
 describe("FraxETH Strategy", function () {

@@ -1,8 +1,10 @@
 const { expect } = require("chai");
 
 const { forkOnlyDescribe, units, ousdUnits, isCI } = require("../helpers");
-const { createFixtureLoader } = require("../_fixture");
-const { withOUSDTitledMetapool } = require("../_metastrategies-fixtures");
+const { createFixtureLoader } = require("../fixture/_fixture");
+const {
+  withOUSDTitledMetapool,
+} = require("../fixture/_metastrategies-fixtures");
 
 forkOnlyDescribe(
   "ForkTest: Convex 3pool/OUSD Meta Strategy - Titled to OUSD",

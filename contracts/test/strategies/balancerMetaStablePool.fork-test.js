@@ -11,10 +11,9 @@ const {
   impersonateAndFundContract,
   createFixtureLoader,
   mineBlocks,
-  mintWETH,
-  tiltBalancerMetaStableWETHPool,
-  untiltBalancerMetaStableWETHPool,
-} = require("../_fixture");
+} = require("../fixture/_fixture");
+
+const { tiltPool, unTiltPool } = require("../fixture/_pool_tilt");
 
 const temporaryFork = require("../../utils/temporaryFork");
 
@@ -788,6 +787,7 @@ forkOnlyDescribe(
 
           // prettier-ignore
           await balancerWstEthStrategy
+            // eslint-disable-next-line
             .connect(oethVaultSigner)["withdraw(address,address[],uint256[])"](
               oethVault.address,
               [weth.address, stETH.address],
@@ -848,8 +848,6 @@ forkOnlyDescribe(
     });
 
     describe("work in MEV environment", function () {
-      let attackerAddress;
-      let sAttacker;
       let fixture;
 
       beforeEach(async () => {
@@ -858,10 +856,6 @@ forkOnlyDescribe(
         await oethVault
           .connect(strategist)
           .withdrawAllFromStrategy(balancerREthStrategy.address);
-
-        attackerAddress = "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045";
-        sAttacker = await impersonateAndFundContract(attackerAddress);
-        await mintWETH(fixture.weth, sAttacker, "500000");
       });
 
       it("deposit should fail if pool is being manipulated", async function () {
@@ -874,7 +868,6 @@ forkOnlyDescribe(
           reth,
           rEthBPT,
           josh,
-          balancerVault,
         } = fixture;
         let forkedStratBalance = 0;
         const { vaultChange, profit } = await temporaryFork({
@@ -892,16 +885,11 @@ forkOnlyDescribe(
 
         const { profit: profitWithTilt } = await temporaryFork({
           temporaryAction: async () => {
-            await tiltBalancerMetaStableWETHPool({
-              percentageOfTVLDeposit: 300, // 300%
-              attackerSigner: sAttacker,
-              balancerPoolId: await balancerREthStrategy.balancerPoolId(),
-              assetAddressArray: [reth.address, weth.address],
-              wethIndex: 1,
-              bptToken: rEthBPT,
-              balancerVault,
-              reth,
-              weth,
+            await tiltPool({
+              fixture,
+              tiltTvlFactor: 300,
+              attackAsset: weth, // asset used to tilt the pool
+              poolContract: rEthBPT,
             });
 
             await oethVaultValueChecker.connect(josh).takeSnapshot();
@@ -925,15 +913,8 @@ forkOnlyDescribe(
       });
 
       it("withdrawal should fail if pool is being manipulated maxWithdrawalDeviation catching the issue", async function () {
-        const {
-          balancerREthStrategy,
-          oethVault,
-          oeth,
-          weth,
-          reth,
-          rEthBPT,
-          balancerVault,
-        } = fixture;
+        const { balancerREthStrategy, oethVault, oeth, weth, reth, rEthBPT } =
+          fixture;
 
         const wethWithdrawAmount = oethUnits("0");
         const rethWithdrawAmount = oethUnits("7");
@@ -946,16 +927,11 @@ forkOnlyDescribe(
 
         await temporaryFork({
           temporaryAction: async () => {
-            await tiltBalancerMetaStableWETHPool({
-              percentageOfTVLDeposit: 300, // 300%
-              attackerSigner: sAttacker,
-              balancerPoolId: await balancerREthStrategy.balancerPoolId(),
-              assetAddressArray: [reth.address, weth.address],
-              wethIndex: 1,
-              bptToken: rEthBPT,
-              balancerVault,
-              reth,
-              weth,
+            await tiltPool({
+              fixture,
+              tiltTvlFactor: 300,
+              attackAsset: weth, // asset used to tilt the pool
+              poolContract: rEthBPT,
             });
 
             // prettier-ignore
@@ -984,7 +960,6 @@ forkOnlyDescribe(
           reth,
           rEthBPT,
           josh,
-          balancerVault,
           strategist,
         } = fixture;
 
@@ -1018,16 +993,11 @@ forkOnlyDescribe(
 
         const { profit: profitWithTilt } = await temporaryFork({
           temporaryAction: async () => {
-            await tiltBalancerMetaStableWETHPool({
-              percentageOfTVLDeposit: 300, // 300%
-              attackerSigner: sAttacker,
-              balancerPoolId: await balancerREthStrategy.balancerPoolId(),
-              assetAddressArray: [reth.address, weth.address],
-              wethIndex: 1,
-              bptToken: rEthBPT,
-              balancerVault,
-              reth,
-              weth,
+            await tiltPool({
+              fixture,
+              tiltTvlFactor: 300,
+              attackAsset: weth, // asset used to tilt the pool
+              poolContract: rEthBPT,
             });
 
             await oethVaultValueChecker.connect(josh).takeSnapshot();
@@ -1110,17 +1080,11 @@ forkOnlyDescribe(
           ]();
           expect(checkBalanceAmount).to.be.gte(oethUnits("0"), 1);
 
-          const poolId = await balancerREthStrategy.balancerPoolId();
-          await tiltBalancerMetaStableWETHPool({
-            percentageOfTVLDeposit: tiltAmount,
-            attackerSigner: sAttacker,
-            balancerPoolId: poolId,
-            assetAddressArray: [reth.address, weth.address],
-            wethIndex: 1,
-            bptToken: rEthBPT,
-            balancerVault,
-            reth,
-            weth,
+          const context = await tiltPool({
+            fixture,
+            tiltTvlFactor: 300,
+            attackAsset: weth, // asset used to tilt the pool
+            poolContract: rEthBPT,
           });
 
           const checkBalanceAmountAfterTilt = await balancerREthStrategy[
@@ -1136,13 +1100,11 @@ forkOnlyDescribe(
           // ~100 units in pool liquidity should have less than 0.02 effect == 0.02%
           expect(checkBalanceDiff).to.be.lte(oethUnits(maxDiff));
 
-          await untiltBalancerMetaStableWETHPool({
-            attackerSigner: sAttacker,
-            balancerPoolId: poolId,
-            assetAddressArray: [reth.address, weth.address],
-            wethIndex: 1,
-            bptToken: rEthBPT,
-            balancerVault,
+          await unTiltPool({
+            fixture,
+            context,
+            attackAsset: weth, // asset used to tilt the pool
+            poolContract: rEthBPT,
           });
 
           const checkBalanceAmountAfterAttack = await balancerREthStrategy[

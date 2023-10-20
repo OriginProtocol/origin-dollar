@@ -1,6 +1,6 @@
 const { expect } = require("chai");
 
-const { loadDefaultFixture } = require("../_fixture");
+const { loadDefaultFixture } = require("../fixture/_fixture");
 const { ousdUnits, daiUnits, isFork } = require("../helpers");
 
 describe("WOUSD", function () {

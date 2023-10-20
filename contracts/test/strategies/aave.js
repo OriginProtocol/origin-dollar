@@ -1,7 +1,10 @@
 const { expect } = require("chai");
 const { utils } = require("ethers");
 
-const { createFixtureLoader, aaveVaultFixture } = require("../_fixture");
+const {
+  createFixtureLoader,
+  aaveVaultFixture,
+} = require("../fixture/_fixture");
 const {
   daiUnits,
   ousdUnits,

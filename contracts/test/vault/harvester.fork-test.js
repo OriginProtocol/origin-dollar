@@ -1,7 +1,7 @@
 const { expect } = require("chai");
 const { utils } = require("ethers");
 
-const { loadDefaultFixture } = require("./../_fixture");
+const { loadDefaultFixture } = require("./../fixture/_fixture");
 const { forkOnlyDescribe, isCI } = require("./../helpers");
 const { MAX_UINT256 } = require("../../utils/constants");
 const { parseUnits } = require("ethers").utils;

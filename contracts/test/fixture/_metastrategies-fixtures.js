@@ -2,17 +2,17 @@ const hre = require("hardhat");
 const { ethers } = hre;
 const { formatUnits } = require("ethers/lib/utils");
 
-const { ousdUnits } = require("./helpers");
+const { ousdUnits } = require("../helpers");
 const {
   convexMetaVaultFixture,
   resetAllowance,
   impersonateAndFundContract,
   fundWith3Crv,
 } = require("./_fixture");
-const addresses = require("../utils/addresses");
-const erc20Abi = require("./abi/erc20.json");
+const addresses = require("../../utils/addresses");
+const erc20Abi = require("../abi/erc20.json");
 
-const log = require("../utils/logger")("test:fixtures:strategies:meta");
+const log = require("../../utils/logger")("test:fixtures:strategies:meta");
 
 // NOTE: This can cause a change in setup from mainnet.
 // However, mint/redeem tests, without any changes, are tested

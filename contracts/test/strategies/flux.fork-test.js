@@ -5,7 +5,7 @@ const {
   fluxStrategyFixture,
   impersonateAndFundContract,
   createFixtureLoader,
-} = require("../_fixture");
+} = require("../fixture/_fixture");
 const { units, ousdUnits, forkOnlyDescribe, isCI } = require("../helpers");
 
 forkOnlyDescribe("Flux strategy", function () {

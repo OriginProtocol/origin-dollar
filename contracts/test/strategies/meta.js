@@ -1,7 +1,10 @@
 const { expect } = require("chai");
 const { utils, BigNumber } = require("ethers");
 
-const { convexMetaVaultFixture, createFixtureLoader } = require("../_fixture");
+const {
+  convexMetaVaultFixture,
+  createFixtureLoader,
+} = require("../fixture/_fixture");
 const {
   daiUnits,
   ousdUnits,

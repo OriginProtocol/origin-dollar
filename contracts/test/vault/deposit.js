@@ -1,6 +1,9 @@
 const { expect } = require("chai");
 
-const { createFixtureLoader, compoundVaultFixture } = require("../_fixture");
+const {
+  createFixtureLoader,
+  compoundVaultFixture,
+} = require("../fixture/_fixture");
 const { usdcUnits, isFork } = require("../helpers");
 
 describe("Vault deposit pausing", function () {
