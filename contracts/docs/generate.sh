@@ -78,7 +78,11 @@ sol2uml storage .. -c MorphoCompoundStrategy -o MorphoCompStrategyStorage.svg --
 # contracts/strategies/balancer
 sol2uml .. -v -hv -hf -he -hs -hl -hi -b BalancerMetaPoolStrategy -o BalancerMetaPoolStrategyHierarchy.svg
 sol2uml .. -s -d 0 -b BalancerMetaPoolStrategy -o BalancerMetaPoolStrategySquashed.svg
-sol2uml storage .. -c BalancerMetaPoolStrategy -o BalancerMetaPoolStrategyStorage.svg --hideExpand ______gap,_reserved,__reserved,__reserved_baseAuraStrategy
+sol2uml storage .. -c BalancerMetaPoolStrategy -o BalancerMetaPoolStrategyStorage.svg --hideExpand ______gap,_reserved,__reserved,___reserved,__reserved_baseAuraStrategy
+
+sol2uml .. -v -hv -hf -he -hs -hl -hi -b BalancerComposablePoolStrategy -o BalancerComposablePoolStrategyHierarchy.svg
+sol2uml .. -s -d 0 -b BalancerComposablePoolStrategy -o BalancerComposablePoolStrategySquashed.svg
+sol2uml storage .. -c BalancerComposablePoolStrategy -o BalancerComposablePoolStrategyStorage.svg --hideExpand ______gap,_reserved,__reserved,___reserved,__reserved_baseAuraStrategy
 
 # contracts/swapper
 sol2uml .. -v -hv -hf -he -hs -hl -b Swapper1InchV5 -o Swapper1InchV5Hierarchy.svg
