@@ -1,6 +1,5 @@
 const hre = require("hardhat");
 const chai = require("chai");
-const mocha = require("mocha");
 const { parseUnits, formatUnits, parseEther } = require("ethers").utils;
 const { BigNumber } = require("ethers");
 
