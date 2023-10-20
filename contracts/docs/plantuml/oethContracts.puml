@@ -56,9 +56,15 @@ object "MorphoAaveStrategy" as morphAaveStrat <<Origin>><<Proxy>> #DeepSkyBlue {
     Aave token: aWETH
 }
 
-object "BalancerMetaPoolStrategy" as balancerStrat <<Origin>><<Proxy>> #DeepSkyBlue {
+object "BalancerMetaPoolStrategy" as balMetapoolStrat <<Origin>><<Proxy>> #DeepSkyBlue {
     asset: rETH, WETH
     Balancer Pool Token: B-rETH-STABLE
+    Rewards: BAL, AURA
+}
+
+object "BalancerComposablePoolStrategy" as balCompStrat <<Origin>><<Proxy>> #DeepSkyBlue {
+    asset: wstETH, sfrxETH, rETH
+    Balancer Pool Token: wstETH-rETH-sfrxETH-BPT
     Rewards: BAL, AURA
 }
 
@@ -210,10 +216,15 @@ oeth <... morphAaveStrat
 ' morphoV2 ..> aweth
 ' morphoV2 ..> vdweth
 
-' Balancer Strategy
-oethv <...> balancerStrat
-oeth <... balancerStrat
-harv <..> balancerStrat
+' Balancer Metapool Strategy
+oethv <...> balMetapoolStrat
+oeth <... balMetapoolStrat
+harv <..> balMetapoolStrat
+
+' Balancer Composable Pool Strategy
+oethv <...> balCompStrat
+oeth <... balCompStrat
+harv <..> balCompStrat
 
 ' ' Vault to Assets
 ' oethv .....> frxeth
