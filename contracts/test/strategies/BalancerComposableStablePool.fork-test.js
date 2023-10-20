@@ -10,6 +10,7 @@ const {
   impersonateAndFundContract,
   createFixtureLoader,
   mineBlocks,
+  balancerSfrxETHRETHWstETHExposeFunctionFixture,
 } = require("../fixture/_fixture");
 
 const { tiltPool, unTiltPool } = require("../fixture/_pool_tilt");
@@ -1146,6 +1147,47 @@ forkOnlyDescribe(
           expect(unitDiff / 1e18).to.be.gte(parseFloat(maxDiff));
         });
       }
+    });
+
+    describe("return correct rate provider rates", function () {
+      beforeEach(async () => {
+        fixture = await balancerSfrxETHRETHWstETHExposeFunctionFixture();
+      });
+
+      it("should throw an exception for an unsupported asset", async function () {
+        const { balancerSfrxWstRETHStrategy } = fixture;
+
+        await expect(
+          balancerSfrxWstRETHStrategy.getRateProviderRate(addresses.mainnet.DAI)
+        ).to.be.revertedWith("Asset unsupported");
+      });
+
+      it("should return a valid rate for rEth", async function () {
+        const { balancerSfrxWstRETHStrategy } = fixture;
+
+        const rate = await balancerSfrxWstRETHStrategy.getRateProviderRate(
+          addresses.mainnet.rETH
+        );
+        expect(rate).to.be.gte(await oethUnits("1.01"));
+      });
+
+      it("should return a valid rate for wstETH", async function () {
+        const { balancerSfrxWstRETHStrategy } = fixture;
+
+        const rate = await balancerSfrxWstRETHStrategy.getRateProviderRate(
+          addresses.mainnet.wstETH
+        );
+        expect(rate).to.be.gte(await oethUnits("1"));
+      });
+
+      it("should return a valid rate for sfrxETH", async function () {
+        const { balancerSfrxWstRETHStrategy } = fixture;
+
+        const rate = await balancerSfrxWstRETHStrategy.getRateProviderRate(
+          addresses.mainnet.sfrxETH
+        );
+        expect(rate).to.be.gte(await oethUnits("1"));
+      });
     });
   }
 );

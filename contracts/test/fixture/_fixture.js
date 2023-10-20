@@ -8,7 +8,10 @@ const addresses = require("../../utils/addresses");
 const { setFraxOraclePrice } = require("../../utils/frax");
 require("./_global-hooks");
 
-const { hotDeployBalancerRethWETHStrategy } = require("./_hot-deploy");
+const {
+  hotDeployBalancerRethWETHStrategy,
+  hotDeployBalancerFrxEethRethWstEThStrategy,
+} = require("./_hot-deploy");
 const { replaceContractAt } = require("../../utils/deploy");
 const {
   balancer_rETH_WETH_PID,
@@ -975,8 +978,8 @@ async function balancerFrxETHwstETHeETHFixture(
   const {
     oethVault,
     timelock,
-    frxEth,
-    stEth,
+    frxETH,
+    stETH,
     reth,
     balancerSfrxWstRETHStrategy,
     josh,
@@ -992,13 +995,13 @@ async function balancerFrxETHwstETHeETHFixture(
     await oethVault
       .connect(timelock)
       .setAssetDefaultStrategy(
-        stEth.address,
+        stETH.address,
         balancerSfrxWstRETHStrategy.address
       );
     await oethVault
       .connect(timelock)
       .setAssetDefaultStrategy(
-        frxEth.address,
+        frxETH.address,
         balancerSfrxWstRETHStrategy.address
       );
   }
@@ -1081,6 +1084,18 @@ async function balancerRethWETHExposeFunctionFixture() {
   await balancerREthStrategy.connect(josh).cachePoolAssets();
   // IMPORTANT also remove this one
   await balancerREthStrategy.connect(josh).cacheRateProviders();
+
+  return fixture;
+}
+
+/**
+ * Configure a Vault with the Balancer strategy for frxEth/Reth/wstEth pool and
+ * replace the byte code with the one that exposes internal functions
+ */
+async function balancerSfrxETHRETHWstETHExposeFunctionFixture() {
+  const fixture = await hotDeployBalancerFrxEethRethWstEThStrategy(
+    balancerFrxETHwstETHeETHFixture
+  );
 
   return fixture;
 }
@@ -2180,6 +2195,7 @@ module.exports = {
   oethCollateralSwapFixture,
   ousdCollateralSwapFixture,
   balancerRethWETHExposeFunctionFixture,
+  balancerSfrxETHRETHWstETHExposeFunctionFixture,
   fluxStrategyFixture,
   mineBlocks,
   nodeSnapshot,

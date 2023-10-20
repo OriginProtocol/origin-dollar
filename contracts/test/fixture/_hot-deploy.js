@@ -4,7 +4,10 @@
  */
 const { replaceContractAt } = require("../../utils/deploy");
 const addresses = require("../../utils/addresses");
-const { balancer_rETH_WETH_PID } = require("../../utils/constants");
+const {
+  balancer_rETH_WETH_PID,
+  balancer_wstETH_sfrxETH_rETH_PID,
+} = require("../../utils/constants");
 const { ethers } = hre;
 
 async function hotDeployBalancerRethWETHStrategy(balancerREthFixture) {
@@ -48,6 +51,56 @@ async function hotDeployBalancerRethWETHStrategy(balancerREthFixture) {
   return fixture;
 }
 
+async function hotDeployBalancerFrxEethRethWstEThStrategy(
+  balancerFrxETHwstETHeETHFixture
+) {
+  const { deploy } = deployments;
+
+  // deploy this contract that exposes internal function
+  await deploy("BalancerComposablePoolTestStrategy", {
+    from: addresses.mainnet.Timelock, // doesn't matter which address deploys it
+    contract: "BalancerComposablePoolTestStrategy",
+    args: [
+      [
+        addresses.mainnet.wstETH_sfrxETH_rETH_BPT,
+        addresses.mainnet.OETHVaultProxy,
+      ],
+      [
+        addresses.mainnet.rETH,
+        addresses.mainnet.stETH,
+        addresses.mainnet.wstETH,
+        addresses.mainnet.frxETH,
+        addresses.mainnet.sfrxETH,
+        addresses.mainnet.balancerVault, // Address of the Balancer vault
+        balancer_wstETH_sfrxETH_rETH_PID, // Pool ID of the Balancer pool
+      ],
+      [
+        1, // ComposablePoolExitKind.BPT_IN_FOR_EXACT_TOKENS_OUT
+        2, // ComposablePoolExitKind.EXACT_BPT_IN_FOR_(ALL_)TOKENS_OUT
+      ],
+      addresses.mainnet.wstETH_sfrxETH_rETH_AuraRewards, // Address of the Aura rewards contract
+    ],
+  });
+
+  const fixture = await balancerFrxETHwstETHeETHFixture();
+  const { balancerSfrxWstRETHStrategy, josh } = fixture;
+
+  await replaceContractAt(
+    balancerSfrxWstRETHStrategy.address,
+    await ethers.getContract("BalancerComposablePoolTestStrategy")
+  );
+
+  // add additional contract functions present in the byte code while keeping
+  // the existing storage slots.
+  fixture.balancerSfrxWstRETHStrategy = await ethers.getContractAt(
+    "BalancerComposablePoolTestStrategy",
+    balancerSfrxWstRETHStrategy.address
+  );
+
+  return fixture;
+}
+
 module.exports = {
   hotDeployBalancerRethWETHStrategy,
+  hotDeployBalancerFrxEethRethWstEThStrategy,
 };
