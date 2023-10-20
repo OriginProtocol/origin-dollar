@@ -11,7 +11,6 @@ module.exports = deploymentWithGovernanceProposal(
     // proposalId: "",
   },
   async ({ deployWithConfirmation, ethers }) => {
-    const { strategistAddr } = await getNamedAccounts();
     // Current contracts
     const cBuybackProxy = await ethers.getContract("BuybackProxy");
     const cOETHVaultAdmin = await ethers.getContractAt(
