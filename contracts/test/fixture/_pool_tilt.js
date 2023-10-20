@@ -56,31 +56,26 @@ async function _fundAttackerOption({
     attackerAddress
   );
   const assetBalance = await asset.balanceOf(attackerAddress);
+  const ethToFund = 1000000;
+  const sAttacker = await hre.ethers.provider.getSigner(address);
 
-  if (
-    attackerEthBalance.gte(ousdUnits("100000")) &&
-    assetBalance.gte(assetAmount)
-  ) {
-    // attacker sufficiently funded
-    return;
+  if (attackerEthBalance.lte(ousdUnits(`${ethToFund - 100}`))) {
+    await impersonateAndFundContract(attackerAddress, `${ethToFund}`); // 1m ETH
   }
 
-  const sAttacker = await impersonateAndFundContract(
-    attackerAddress,
-    "1000000"
-  ); // 1m ETH
-
-  if (asset.address == fixture.weth.address) {
-    await mintWETH(fixture.weth, sAttacker, "500000");
-  } else if (asset.address == fixture.sfrxETH.address) {
-    const abi = require("../abi/fraxEthMinter.json");
-    const minter = await ethers.getContractAt(
-      abi,
-      addresses.mainnet.FraxETHMinter
-    );
-    await minter
-      .connect(sAttacker)
-      .submitAndDeposit(attackerAddress, { value: assetAmount });
+  if (assetBalance.lte(assetAmount)) {
+    if (asset.address == fixture.weth.address) {
+      await mintWETH(fixture.weth, sAttacker, "500000");
+    } else if (asset.address == fixture.sfrxETH.address) {
+      const abi = require("../abi/fraxEthMinter.json");
+      const minter = await ethers.getContractAt(
+        abi,
+        addresses.mainnet.FraxETHMinter
+      );
+      await minter
+        .connect(sAttacker)
+        .submitAndDeposit(attackerAddress, { value: assetAmount });
+    }
   }
 
   return sAttacker;
