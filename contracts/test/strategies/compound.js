@@ -2,7 +2,7 @@ const { expect } = require("chai");
 const { utils } = require("ethers");
 
 const { impersonateAndFund } = require("../../utils/signers");
-const { createFixtureLoader, compoundFixture } = require("../_fixture");
+const { createFixtureLoader, compoundFixture } = require("../fixture/_fixture");
 const { usdcUnits, isFork } = require("../helpers");
 const { shouldBehaveLikeGovernable } = require("../behaviour/governable");
 const { shouldBehaveLikeStrategy } = require("../behaviour/strategy");

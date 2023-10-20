@@ -1,13 +1,16 @@
 const { expect } = require("chai");
 const { parseUnits } = require("ethers/lib/utils");
 
-const { convexFrxEthAmoFixture, createFixtureLoader } = require("../_fixture");
+const {
+  convexFrxEthAmoFixture,
+  createFixtureLoader,
+} = require("../fixture/_fixture");
 const { isFork } = require("../helpers");
 const { shouldBehaveLikeGovernable } = require("../behaviour/governable");
 const { shouldBehaveLikeHarvester } = require("../behaviour/harvester");
 const { shouldBehaveLikeStrategy } = require("../behaviour/strategy");
 
-describe("Convex frcETH/OETH AMO Strategy", function () {
+describe("Convex frxETH/OETH AMO Strategy", function () {
   if (isFork) {
     this.timeout(0);
   } else {

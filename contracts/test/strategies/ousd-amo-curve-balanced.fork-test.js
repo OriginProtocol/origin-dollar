@@ -2,8 +2,8 @@ const { expect } = require("chai");
 const { run } = require("hardhat");
 
 const { forkOnlyDescribe, units, ousdUnits, isCI } = require("../helpers");
-const { createFixtureLoader } = require("../_fixture");
-const { withBalancedOUSDMetaPool } = require("../_metastrategies-fixtures");
+const { createFixtureLoader } = require("../fixture/_fixture");
+const { withBalancedOUSDMetaPool } = require("../fixture/_metastrategies-fixtures");
 
 const log = require("../../utils/logger")("test:fork:ousd:metapool");
 

@@ -2,7 +2,10 @@ const { expect } = require("chai");
 const { utils, BigNumber } = require("ethers");
 const { parseUnits } = require("ethers/lib/utils");
 
-const { convexOusdAmoFixture, createFixtureLoader } = require("../_fixture");
+const {
+  convexOusdAmoFixture,
+  createFixtureLoader,
+} = require("../fixture/_fixture");
 const {
   daiUnits,
   ousdUnits,

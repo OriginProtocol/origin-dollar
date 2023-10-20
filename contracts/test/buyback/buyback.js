@@ -1,7 +1,7 @@
 const { expect } = require("chai");
 const { utils, BigNumber } = require("ethers");
 
-const { loadDefaultFixture } = require("../_fixture");
+const { loadDefaultFixture } = require("../fixture/_fixture");
 const { ousdUnits, usdcUnits } = require("../helpers");
 
 describe("OGV Buyback", function () {

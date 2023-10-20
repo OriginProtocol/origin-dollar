@@ -1,6 +1,6 @@
 const { expect } = require("chai");
 
-const { loadDefaultFixture, impersonateAccount } = require("../_fixture");
+const { loadDefaultFixture, impersonateAccount } = require("../fixture/_fixture");
 
 describe("Check vault value", () => {
   let vault, ousd, matt, dai, checker, vaultSigner;

@@ -14,7 +14,7 @@ const {
   mintWETH,
   tiltBalancerMetaStableWETHPool,
   untiltBalancerMetaStableWETHPool,
-} = require("../_fixture");
+} = require("../fixture/_fixture");
 
 const temporaryFork = require("../../utils/temporaryFork");
 

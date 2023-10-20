@@ -1,7 +1,7 @@
 const { expect } = require("chai");
 const { parseUnits } = require("ethers/lib/utils");
 
-const { createFixtureLoader, threepoolVaultFixture } = require("../_fixture");
+const { createFixtureLoader, threepoolVaultFixture } = require("../fixture/_fixture");
 const { ousdUnits, units, expectApproxSupply, isFork } = require("../helpers");
 const { shouldBehaveLikeGovernable } = require("../behaviour/governable");
 const { shouldBehaveLikeHarvester } = require("../behaviour/harvester");

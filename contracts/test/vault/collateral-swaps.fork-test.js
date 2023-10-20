@@ -7,7 +7,7 @@ const {
   oethDefaultFixture,
   oethCollateralSwapFixture,
   ousdCollateralSwapFixture,
-} = require("../_fixture");
+} = require("../fixture/_fixture");
 const { getIInchSwapData, recodeSwapData } = require("../../utils/1Inch");
 const { decimalsFor, forkOnlyDescribe, isCI } = require("../helpers");
 const { resolveAsset } = require("../../utils/assets");

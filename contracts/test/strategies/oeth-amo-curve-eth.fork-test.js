@@ -5,7 +5,7 @@ const { run } = require("hardhat");
 const addresses = require("../../utils/addresses");
 const { convex_OETH_ETH_PID } = require("../../utils/constants");
 const { units, oethUnits, forkOnlyDescribe, isCI } = require("../helpers");
-const { createFixtureLoader, convexOethEthAmoFixture } = require("../_fixture");
+const { createFixtureLoader, convexOethEthAmoFixture } = require("../fixture/_fixture");
 
 const log = require("../../utils/logger")("test:fork:oeth:amo:curve");
 

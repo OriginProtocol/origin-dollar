@@ -9,7 +9,7 @@ const {
   convexFrxEthFixture,
   impersonateAndFundContract,
   loadDefaultFixture,
-} = require("../_fixture");
+} = require("../fixture/_fixture");
 const { resolveAsset } = require("../../utils/assets");
 
 const log = require("../../utils/logger")("test:fork:convex:frxETH");

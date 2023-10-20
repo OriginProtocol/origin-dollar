@@ -4,7 +4,7 @@ const { formatUnits, parseUnits } = require("ethers/lib/utils");
 const addresses = require("../../utils/addresses");
 const { units, forkOnlyDescribe, isCI } = require("../helpers");
 
-const { createFixtureLoader, makerDsrFixture } = require("../_fixture");
+const { createFixtureLoader, makerDsrFixture } = require("../fixture/_fixture");
 
 const log = require("../../utils/logger")("test:fork:ousd:makerDSR");
 

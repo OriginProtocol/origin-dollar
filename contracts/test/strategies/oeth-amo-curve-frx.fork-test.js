@@ -9,7 +9,7 @@ const {
   createFixtureLoader,
   convexFrxEthAmoFixture,
   loadDefaultFixture,
-} = require("../_fixture");
+} = require("../fixture/_fixture");
 
 const log = require("../../utils/logger")("test:fork:oeth:amo:curve:frxETH");
 

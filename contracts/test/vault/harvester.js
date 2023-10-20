@@ -1,7 +1,7 @@
 const { expect } = require("chai");
 const { utils, constants } = require("ethers");
 
-const { createFixtureLoader, compoundVaultFixture } = require("./../_fixture");
+const { createFixtureLoader, compoundVaultFixture } = require("../fixture/_fixture");
 const {
   isFork,
   setOracleTokenPriceUsd,

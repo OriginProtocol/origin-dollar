@@ -7,7 +7,7 @@ const {
   mintWETH,
   impersonateAndFundContract,
   createFixtureLoader,
-} = require("../_fixture");
+} = require("../fixture/_fixture");
 const { deployWithConfirmation } = require("../../utils/deploy");
 const { utils } = require("ethers");
 const { findBestMainnetTokenHolder } = require("../../utils/funding");
