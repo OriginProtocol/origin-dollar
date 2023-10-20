@@ -1,5 +1,5 @@
 const { utils } = require("ethers");
-const { isFork } = require("../test/helpers");
+const { isFork, isForkWithLocalNode } = require("../test/helpers");
 const {
   replaceContractAt,
   deployWithConfirmation,
@@ -138,6 +138,6 @@ const main = async (hre) => {
 };
 
 main.id = "999_no_stale_oracles";
-main.skip = () => !isFork;
+main.skip = () => isForkWithLocalNode || !isFork;
 
 module.exports = main;

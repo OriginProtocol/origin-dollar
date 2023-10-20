@@ -1050,6 +1050,7 @@ const deployBuyback = async () => {
 
   const assetAddresses = await getAssetAddresses(deployments);
   const ousd = await ethers.getContract("OUSDProxy");
+  const oeth = await ethers.getContract("OETHProxy");
   const cVault = await ethers.getContractAt(
     "VaultAdmin",
     (
@@ -1059,7 +1060,15 @@ const deployBuyback = async () => {
 
   // Deploy proxy and implementation
   const dBuybackProxy = await deployWithConfirmation("BuybackProxy");
-  const dBuybackImpl = await deployWithConfirmation("Buyback");
+  const dBuybackImpl = await deployWithConfirmation("Buyback", [
+    oeth.address,
+    ousd.address,
+    assetAddresses.OGV,
+    assetAddresses.USDT,
+    assetAddresses.WETH,
+    assetAddresses.CVX,
+    assetAddresses.CVXLocker,
+  ]);
 
   const cBuybackProxy = await ethers.getContractAt(
     "BuybackProxy",
@@ -1077,19 +1086,13 @@ const deployBuyback = async () => {
   const cBuyback = await ethers.getContractAt("Buyback", cBuybackProxy.address);
 
   // Initialize implementation contract
-  const initFunction =
-    "initialize(address,address,address,address,address,address,address,address,uint256)";
+  const initFunction = "initialize(address,address,address,address)";
   await withConfirmation(
     cBuyback.connect(sDeployer)[initFunction](
-      assetAddresses.uniswapRouter,
+      assetAddresses.uniswapUniversalRouter,
       strategistAddr,
       strategistAddr, // Treasury manager
-      ousd.address,
-      assetAddresses.OGV,
-      assetAddresses.USDT,
-      assetAddresses.WETH,
-      assetAddresses.RewardsSource,
-      "5000" // 50%
+      assetAddresses.RewardsSource
     )
   );
 

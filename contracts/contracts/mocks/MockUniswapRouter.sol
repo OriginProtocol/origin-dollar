@@ -121,4 +121,50 @@ contract MockUniswapRouter is IUniswapV2Router {
     function WETH() external pure override returns (address) {
         return address(0);
     }
+
+    // Universal router mock
+    function execute(
+        bytes calldata,
+        bytes[] calldata inputs,
+        uint256
+    ) external payable {
+        uint256 inLen = inputs.length;
+        for (uint256 i = 0; i < inLen; ++i) {
+            (
+                address recipient,
+                ,
+                uint256 amountOutMinimum,
+                bytes memory path,
+
+            ) = abi.decode(inputs[i], (address, uint256, uint256, bytes, bool));
+
+            (address token0, address token1) = _getFirstAndLastToken(path);
+
+            amountOutMinimum = amountOutMinimum.scaleBy(
+                Helpers.getDecimals(token0),
+                Helpers.getDecimals(token1)
+            );
+
+            IERC20(token1).transfer(recipient, amountOutMinimum);
+        }
+    }
+
+    function _getFirstAndLastToken(bytes memory path)
+        internal
+        pure
+        returns (address token0, address token1)
+    {
+        bytes memory tok0Bytes = new bytes(20);
+        for (uint256 j = 0; j < 20; ++j) {
+            tok0Bytes[j] = path[j];
+        }
+        token0 = address(bytes20(tok0Bytes));
+
+        bytes memory tok1Bytes = new bytes(20);
+        uint256 tok1Offset = path.length - 20;
+        for (uint256 j = 0; j < 20; ++j) {
+            tok1Bytes[j] = path[j + tok1Offset];
+        }
+        token1 = address(bytes20(tok1Bytes));
+    }
 }

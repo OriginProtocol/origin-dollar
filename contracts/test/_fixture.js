@@ -153,7 +153,6 @@ const defaultFixture = deployments.createFixture(async () => {
     weth,
     ogn,
     ogv,
-    rewardsSource,
     nonStandardToken,
     cusdt,
     cdai,
@@ -255,6 +254,7 @@ const defaultFixture = deployments.createFixture(async () => {
     fusdt = await ethers.getContractAt(erc20Abi, addresses.mainnet.fUSDT);
     aura = await ethers.getContractAt(erc20Abi, addresses.mainnet.AURA);
     bal = await ethers.getContractAt(erc20Abi, addresses.mainnet.BAL);
+    ogv = await ethers.getContractAt(erc20Abi, addresses.mainnet.OGV);
 
     crvMinter = await ethers.getContractAt(
       crvMinterAbi,
@@ -264,7 +264,6 @@ const defaultFixture = deployments.createFixture(async () => {
       "ILendingPoolAddressesProvider",
       addresses.mainnet.AAVE_ADDRESS_PROVIDER
     );
-    rewardsSource = addresses.mainnet.RewardsSource;
     cvxBooster = await ethers.getContractAt(
       "MockBooster",
       addresses.mainnet.CVXBooster
@@ -496,10 +495,6 @@ const defaultFixture = deployments.createFixture(async () => {
       await vault.connect(user).mint(dai.address, daiUnits("100"), 0);
     }
   }
-  if (!rewardsSource && !isFork) {
-    const address = await buyback.connect(governor).rewardsSource();
-    rewardsSource = await ethers.getContractAt([], address);
-  }
   return {
     // Accounts
     matt,
@@ -542,7 +537,6 @@ const defaultFixture = deployments.createFixture(async () => {
     ogv,
     reth,
     stETH,
-    rewardsSource,
     nonStandardToken,
     // cTokens
     cdai,
@@ -2075,6 +2069,65 @@ async function fluxStrategyFixture() {
   return fixture;
 }
 
+async function buybackFixture() {
+  const fixture = await defaultFixture();
+
+  const { buyback, cvx, ogv, ousd, oeth, oethVault, vault, weth, dai, josh } =
+    fixture;
+
+  const rewardsSourceAddress = await buyback.connect(josh).rewardsSource();
+  fixture.rewardsSource = await ethers.getContractAt([], rewardsSourceAddress);
+
+  if (isFork) {
+    fixture.cvxLocker = await ethers.getContractAt(
+      "ICVXLocker",
+      addresses.mainnet.CVXLocker
+    );
+    fixture.uniswapRouter = await ethers.getContractAt(
+      "IUniswapUniversalRouter",
+      addresses.mainnet.uniswapUniversalRouter
+    );
+
+    // Mint some OUSD & OETH and send it to buyback contract
+    await weth.connect(josh).approve(oethVault.address, oethUnits("3"));
+    await dai.connect(josh).approve(vault.address, oethUnits("1000"));
+    await oethVault.connect(josh).mint(weth.address, oethUnits("3"), "0");
+    await vault.connect(josh).mint(dai.address, oethUnits("1000"), "0");
+    await oeth.connect(josh).transfer(buyback.address, oethUnits("3"));
+    await ousd.connect(josh).transfer(buyback.address, oethUnits("800"));
+  } else {
+    fixture.uniswapRouter = await ethers.getContract("MockUniswapRouter");
+    fixture.cvxLocker = await ethers.getContract("MockCVXLocker");
+
+    // Mint some OUSD
+    await dai.connect(josh).mint(ousdUnits("3000"));
+    await dai.connect(josh).approve(vault.address, ousdUnits("3000"));
+    await vault.connect(josh).mint(dai.address, ousdUnits("3000"), "0");
+
+    // Mint some OETH
+    await weth.connect(josh).mint(oethUnits("3"));
+    await weth.connect(josh).approve(oethVault.address, oethUnits("3"));
+    await oethVault.connect(josh).mint(weth.address, oethUnits("3"), "0");
+
+    // Transfer those to the buyback contract
+    await oeth.connect(josh).transfer(buyback.address, oethUnits("3"));
+    await ousd.connect(josh).transfer(buyback.address, ousdUnits("3000"));
+
+    // Mint some CVX and OGV for the Uniswap Rotuer
+    const routerSigner = await impersonateAndFundContract(
+      fixture.uniswapRouter.address
+    );
+    const buybackSigner = await impersonateAndFundContract(buyback.address);
+    await ogv.connect(routerSigner).mint(ousdUnits("10000000000"));
+    await cvx.connect(routerSigner).mint(ousdUnits("10000000000"));
+    await cvx
+      .connect(buybackSigner)
+      .approve(fixture.cvxLocker.address, oethUnits("999999999999999999999"));
+  }
+
+  return fixture;
+}
+
 /**
  * A fixture is a setup function that is run only the first time it's invoked. On subsequent invocations,
  * Hardhat will reset the state of the network to what it was at the point after the fixture was initially executed.
@@ -2152,6 +2205,7 @@ module.exports = {
   oethCollateralSwapFixture,
   ousdCollateralSwapFixture,
   fluxStrategyFixture,
+  buybackFixture,
   mineBlocks,
   nodeSnapshot,
   nodeRevert,

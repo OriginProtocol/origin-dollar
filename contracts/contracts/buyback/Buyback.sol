@@ -5,107 +5,125 @@ import { Strategizable } from "../governance/Strategizable.sol";
 import "../interfaces/chainlink/AggregatorV3Interface.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { UniswapV3Router } from "../interfaces/UniswapV3Router.sol";
+import { IUniswapUniversalRouter } from "../interfaces/IUniswapUniversalRouter.sol";
+import { ICVXLocker } from "../interfaces/ICVXLocker.sol";
 
 import { Initializable } from "../utils/Initializable.sol";
 
 contract Buyback is Initializable, Strategizable {
     using SafeERC20 for IERC20;
 
-    event UniswapUpdated(address indexed _address);
+    event UniswapUniversalRouterUpdated(address indexed _address);
+
     event RewardsSourceUpdated(address indexed _address);
     event TreasuryManagerUpdated(address indexed _address);
-    event TreasuryBpsUpdated(uint256 _bps);
+
+    // Deprecated in favour of `OTokenBuyback` but not removed as to not break analytics backend
     event OUSDSwapped(
         address indexed token,
         uint256 swapAmountIn,
         uint256 swapAmountOut
     );
-    event OUSDTransferred(address indexed receiver, uint256 amountSent);
 
-    // Address of Uniswap
-    address public uniswapAddr;
+    // Emitted whenever OUSD/OETH is swapped for OGV/CVX or any other token
+    event OTokenBuyback(
+        address indexed oToken,
+        address indexed swappedFor,
+        uint256 swapAmountIn,
+        uint256 minExpected
+    );
 
-    // Swap from OUSD
-    IERC20 public ousd;
+    // Address of Uniswap Universal Router
+    address public universalRouter;
 
-    // Swap to OGV
-    IERC20 public ogv;
+    // slither-disable-next-line constable-states
+    address private __deprecated_ousd;
+    // slither-disable-next-line constable-states
+    address private __deprecated_ogv;
+    // slither-disable-next-line constable-states
+    address private __deprecated_usdt;
+    // slither-disable-next-line constable-states
+    address private __deprecated_weth9;
 
-    // USDT for Uniswap path
-    IERC20 public usdt;
-
-    // WETH for Uniswap path
-    IERC20 public weth9;
-
-    // Address that receives rewards
+    // Address that receives OGV after swaps
     address public rewardsSource;
 
-    // Address that receives the treasury's share of OUSD
+    // Address that receives all other tokens after swaps
     address public treasuryManager;
 
-    // Treasury's share of OUSD fee
-    uint256 public treasuryBps;
+    // slither-disable-next-line constable-states
+    uint256 private __deprecated_treasuryBps;
 
-    constructor() {
-        // Make sure nobody owns the implementation contract
-        _setGovernor(address(0));
-    }
+    address public immutable oeth;
+    address public immutable ousd;
+    address public immutable ogv;
+    address public immutable usdt;
+    address public immutable weth9;
+    address public immutable cvx;
+    address public immutable cvxLocker;
 
-    /**
-     * @param _uniswapAddr Address of Uniswap
-     * @param _strategistAddr Address of Strategist multi-sig wallet
-     * @param _treasuryManagerAddr Address that receives the treasury's share of OUSD
-     * @param _ousd OUSD Proxy Contract Address
-     * @param _ogv OGV Proxy Contract Address
-     * @param _usdt USDT Address
-     * @param _weth9 WETH Address
-     * @param _rewardsSource Address of RewardsSource contract
-     * @param _treasuryBps Percentage of OUSD balance to be sent to treasury
-     */
-    function initialize(
-        address _uniswapAddr,
-        address _strategistAddr,
-        address _treasuryManagerAddr,
+    constructor(
+        address _oeth,
         address _ousd,
         address _ogv,
         address _usdt,
-        address _weth9,
-        address _rewardsSource,
-        uint256 _treasuryBps
-    ) external onlyGovernor initializer {
-        ousd = IERC20(_ousd);
-        ogv = IERC20(_ogv);
-        usdt = IERC20(_usdt);
-        weth9 = IERC20(_weth9);
+        address _weth,
+        address _cvx,
+        address _cvxLocker
+    ) {
+        // Make sure nobody owns the implementation contract
+        _setGovernor(address(0));
 
-        _setStrategistAddr(_strategistAddr);
+        oeth = _oeth;
+        ousd = _ousd;
+        ogv = _ogv;
+        usdt = _usdt;
+        weth9 = _weth;
+        cvx = _cvx;
 
-        _setUniswapAddr(_uniswapAddr);
-        _setRewardsSource(_rewardsSource);
-
-        _setTreasuryManager(_treasuryManagerAddr);
-        _setTreasuryBps(_treasuryBps);
+        cvxLocker = _cvxLocker;
     }
 
     /**
-     * @dev Set address of Uniswap for performing liquidation of strategy reward
-     * tokens. Setting to 0x0 will pause swaps.
-     * @param _address Address of Uniswap
+     * @param _uniswapUniversalRouter Address of Uniswap V3 Router
+     * @param _strategistAddr Address of Strategist multi-sig wallet
+     * @param _treasuryManagerAddr Address that receives the treasury's share of OUSD
+     * @param _rewardsSource Address of RewardsSource contract
      */
-    function setUniswapAddr(address _address) external onlyGovernor {
-        _setUniswapAddr(_address);
+    function initialize(
+        address _uniswapUniversalRouter,
+        address _strategistAddr,
+        address _treasuryManagerAddr,
+        address _rewardsSource
+    ) external onlyGovernor initializer {
+        _setStrategistAddr(_strategistAddr);
+
+        _setUniswapUniversalRouter(_uniswapUniversalRouter);
+        _setRewardsSource(_rewardsSource);
+
+        _setTreasuryManager(_treasuryManagerAddr);
     }
 
-    function _setUniswapAddr(address _address) internal {
-        uniswapAddr = _address;
+    /**
+     * @dev Set address of Uniswap Universal Router for performing liquidation
+     * of platform fee tokens. Setting to 0x0 will pause swaps.
+     *
+     * @param _router Address of the Uniswap Universal router
+     */
+    function setUniswapUniversalRouter(address _router) external onlyGovernor {
+        _setUniswapUniversalRouter(_router);
+    }
 
-        if (uniswapAddr != address(0)) {
-            // Give Uniswap unlimited OUSD allowance
-            ousd.safeApprove(uniswapAddr, type(uint256).max);
+    function _setUniswapUniversalRouter(address _router) internal {
+        if (universalRouter != address(0)) {
+            // Remove previous router's allowance
+            IERC20(ousd).approve(universalRouter, 0);
+            IERC20(oeth).approve(universalRouter, 0);
         }
 
-        emit UniswapUpdated(_address);
+        universalRouter = _router;
+
+        emit UniswapUniversalRouterUpdated(_router);
     }
 
     /**
@@ -137,76 +155,208 @@ contract Buyback is Initializable, Strategizable {
     }
 
     /**
-     * @dev Set the Treasury's share of OUSD
-     * @param _bps Percentage of OUSD balance to be sent to treasury
+     * @dev Swaps half of `oethAmount` to OGV
+     *      and the rest to CVX and finally lock CVX up
+     * @param oethAmount Amount of OETH to swap
+     * @param minOGV Minimum OGV to receive for oethAmount/2
+     * @param minCVX Minimum CVX to receive for oethAmount/2
      */
-    function setTreasuryBps(uint256 _bps) external onlyGovernor {
-        _setTreasuryBps(_bps);
-    }
-
-    function _setTreasuryBps(uint256 _bps) internal {
-        require(_bps <= 10000, "Invalid treasury bips value");
-        treasuryBps = _bps;
-        emit TreasuryBpsUpdated(_bps);
-    }
-
-    /**
-     * @dev Execute a swap of OGV for OUSD via Uniswap or Uniswap compatible
-     * protocol (e.g. Sushiswap)
-     **/
-    function swap() external {
-        // Disabled for now, will be manually swapped by
-        // `strategistAddr` using `distributeAndSwap()` method
-        return;
+    function swapOETH(
+        uint256 oethAmount,
+        uint256 minOGV,
+        uint256 minCVX
+    ) external onlyGovernorOrStrategist nonReentrant {
+        require(oethAmount > 0, "Invalid Swap Amount");
+        _swap(oethAmount, minOGV, minCVX, 0, 0, 0);
     }
 
     /**
-     * @dev Computes the split of OUSD for treasury and transfers it. And
-     *      then execute a swap of OUSD for OGV with the remaining amount
-     *      via Uniswap or Uniswap compatible protocol (e.g. Sushiswap).
-     *
-     * @param ousdAmount OUSD Amount to use from the balance
-     * @param minOGVExpected Mininum amount of OGV to receive when swapping
-     **/
-    function distributeAndSwap(uint256 ousdAmount, uint256 minOGVExpected)
-        external
-        onlyGovernorOrStrategist
-        nonReentrant
-    {
-        require(uniswapAddr != address(0), "Exchange address not set");
+     * @dev Swaps half of `ousdAmount` to OGV
+     *      and the rest to CVX and finally lock CVX up
+     * @param ousdAmount Amount of OUSD to swap
+     * @param minOGV Minimum OGV to receive for ousdAmount/2
+     * @param minCVX Minimum CVX to receive for ousdAmount/2
+     */
+    function swapOUSD(
+        uint256 ousdAmount,
+        uint256 minOGV,
+        uint256 minCVX
+    ) external onlyGovernorOrStrategist nonReentrant {
+        require(ousdAmount > 0, "Invalid Swap Amount");
+        _swap(0, 0, 0, ousdAmount, minOGV, minCVX);
+    }
 
-        uint256 amountToTransfer = (ousdAmount * treasuryBps) / 10000;
-        uint256 swapAmountIn = ousdAmount - amountToTransfer;
+    /**
+     * @dev Swaps half of `oethAmount` to OGV
+     *      and the rest to CVX and finally lock up CVX
+     * @param oethAmount Amount of OETH to swap
+     * @param minOGVForOETH Minimum OGV to receive for oethAmount/2
+     * @param minCVXForOETH Minimum CVX to receive for oethAmount/2
+     * @param ousdAmount Amount of OUSD to swap
+     * @param minOGVForOUSD Minimum OGV to receive for ousdAmount/2
+     * @param minCVXForOUSD Minimum CVX to receive for ousdAmount/2
+     */
+    function swap(
+        uint256 oethAmount,
+        uint256 minOGVForOETH,
+        uint256 minCVXForOETH,
+        uint256 ousdAmount,
+        uint256 minOGVForOUSD,
+        uint256 minCVXForOUSD
+    ) external onlyGovernorOrStrategist nonReentrant {
+        require(oethAmount > 0 && ousdAmount > 0, "Invalid Swap Amounts");
+        _swap(
+            oethAmount,
+            minOGVForOETH,
+            minCVXForOETH,
+            ousdAmount,
+            minOGVForOUSD,
+            minCVXForOUSD
+        );
+    }
 
-        if (swapAmountIn > 0) {
-            require(minOGVExpected > 0, "Invalid minOGVExpected value");
+    function _swap(
+        uint256 oethAmount,
+        uint256 minOGVForOETH,
+        uint256 minCVXForOETH,
+        uint256 ousdAmount,
+        uint256 minOGVForOUSD,
+        uint256 minCVXForOUSD
+    ) internal {
+        require(universalRouter != address(0), "Uniswap Router not set");
+        require(rewardsSource != address(0), "RewardsSource contract not set");
 
-            UniswapV3Router.ExactInputParams memory params = UniswapV3Router
-                .ExactInputParams({
-                    path: abi.encodePacked(
-                        ousd,
-                        uint24(500), // Pool fee, ousd -> usdt
-                        usdt,
-                        uint24(500), // Pool fee, usdt -> weth9
-                        weth9,
-                        uint24(3000), // Pool fee, weth9 -> ogv
-                        ogv
-                    ),
-                    recipient: rewardsSource,
-                    deadline: block.timestamp,
-                    amountIn: swapAmountIn,
-                    amountOutMinimum: minOGVExpected
-                });
+        bool swapAll = oethAmount > 0 && ousdAmount > 0;
+        uint256 swapCount;
+        bytes memory commands;
 
-            uint256 amountOut = UniswapV3Router(uniswapAddr).exactInput(params);
-
-            emit OUSDSwapped(address(ogv), swapAmountIn, amountOut);
+        if (swapAll) {
+            commands = hex"00000000";
+            swapCount = 4;
+        } else {
+            commands = hex"0000";
+            swapCount = 2;
         }
 
-        if (amountToTransfer > 0) {
-            ousd.safeTransfer(treasuryManager, amountToTransfer);
-            emit OUSDTransferred(treasuryManager, amountToTransfer);
+        bytes[] memory inputs = new bytes[](swapCount);
+
+        if (oethAmount > 0) {
+            require(minOGVForOETH > 0, "Invalid minAmount for OETH>OGV");
+            require(minCVXForOETH > 0, "Invalid minAmount for OETH>CVX");
+
+            // OETH to OGV
+            inputs[0] = abi.encode(
+                rewardsSource,
+                oethAmount / 2,
+                minOGVForOETH,
+                abi.encodePacked(
+                    oeth,
+                    uint24(500), // 0.05% Pool fee, oeth -> weth9
+                    weth9,
+                    uint24(3000), // 0.3% Pool fee, weth9 -> ogv
+                    ogv
+                ),
+                false
+            );
+
+            // OETH to CVX
+            inputs[1] = abi.encode(
+                address(this),
+                oethAmount / 2,
+                minCVXForOETH,
+                abi.encodePacked(
+                    oeth,
+                    uint24(500), // 0.05% Pool fee, oeth -> weth9
+                    weth9,
+                    uint24(10000), // 1% Pool fee, weth9 -> CVX
+                    cvx
+                ),
+                false
+            );
+
+            // Transfer OETH to UniversalRouter for swapping
+            IERC20(oeth).safeTransfer(universalRouter, oethAmount);
+
+            // Uniswap's Universal Router doesn't return the `amountOut` values
+            // So, the events just emit the minExpected param
+            emit OTokenBuyback(oeth, ogv, oethAmount / 2, minOGVForOETH);
+            emit OTokenBuyback(oeth, cvx, oethAmount / 2, minCVXForOETH);
         }
+
+        if (ousdAmount > 0) {
+            require(minOGVForOUSD > 0, "Invalid minAmount for OUSD>OGV");
+            require(minCVXForOUSD > 0, "Invalid minAmount for OUSD>CVX");
+
+            // OUSD to OGV
+            inputs[swapCount - 2] = abi.encode(
+                rewardsSource,
+                ousdAmount / 2,
+                minOGVForOUSD,
+                abi.encodePacked(
+                    ousd,
+                    uint24(500), // 0.05% Pool fee, ousd -> usdt
+                    usdt,
+                    uint24(500), // 0.05% Pool fee, usdt -> weth9
+                    weth9,
+                    uint24(3000), // 0.3% Pool fee, weth9 -> ogv
+                    ogv
+                ),
+                false
+            );
+
+            // OUSD to CVX
+            inputs[swapCount - 1] = abi.encode(
+                address(this),
+                ousdAmount / 2,
+                minCVXForOUSD,
+                abi.encodePacked(
+                    ousd,
+                    uint24(500), // 0.05% Pool fee, ousd -> usdt
+                    usdt,
+                    uint24(500), // 0.05% Pool fee, usdt -> weth9
+                    weth9,
+                    uint24(10000), // 1% Pool fee, weth9 -> CVX
+                    cvx
+                ),
+                false
+            );
+
+            // Transfer OUSD to UniversalRouter for swapping
+            IERC20(ousd).safeTransfer(universalRouter, ousdAmount);
+
+            // Uniswap's Universal Router doesn't return the `amountOut` values
+            // So, the events just emit the minExpected param
+            emit OTokenBuyback(ousd, ogv, ousdAmount / 2, minOGVForOUSD);
+            emit OTokenBuyback(ousd, cvx, ousdAmount / 2, minCVXForOUSD);
+        }
+
+        // Execute the swap
+        IUniswapUniversalRouter(universalRouter).execute(
+            commands,
+            inputs,
+            block.timestamp
+        );
+
+        // Lock all CVX
+        _lockAllCVX();
+    }
+
+    function _lockAllCVX() internal {
+        require(
+            treasuryManager != address(0),
+            "Treasury manager address not set"
+        );
+
+        // Lock all available CVX on behalf of `treasuryManager`
+        ICVXLocker(cvxLocker).lock(
+            treasuryManager,
+            IERC20(cvx).balanceOf(address(this)),
+            0
+        );
+    }
+
+    function safeApproveAllTokens() external onlyGovernorOrStrategist {
+        IERC20(cvx).safeApprove(cvxLocker, type(uint256).max);
     }
 
     /**
