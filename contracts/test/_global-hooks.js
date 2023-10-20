@@ -5,15 +5,15 @@ const { isForkTest } = require("./helpers");
 const _chunkId = Number(process.env.CHUNK_ID);
 const _maxChunks = Number(process.env.MAX_CHUNKS);
 
-// MAX_CHUNKS is only set on CI for fork-tests 
+// MAX_CHUNKS is only set on CI for fork-tests
 // when running tests parallely
-const runForkTestsParallely = Boolean(_maxChunks);
+const runTestsParallely = Boolean(_maxChunks);
 
 /**
  * Recursively find the number of test cases the suite
  * has (including the count from nested suites).
- * 
- * @param {mocha.Suite} suite 
+ *
+ * @param {mocha.Suite} suite
  * @returns {Number} Total number of test cases the suite has
  */
 const _findAllTestCaseCount = (suite) => {
@@ -32,13 +32,14 @@ mocha.before(function () {
     root = root.parent;
   }
 
-  if (!runForkTestsParallely) {
+  // If you are running unit tests, scrape out all fork tests.
+  // For fork tests, scrape out all unit tests.
+  root.suites = root.suites.filter(
+    (s) => s.file.endsWith(".fork-test.js") == isForkTest
+  );
+
+  if (!runTestsParallely) {
     // When running serially
-    if (!isForkTest) {
-      // If you are running unit tests,
-      // Scrape out all fork tests
-      root.suites = root.suites.filter(s => !s.file.endsWith('.fork-test.js'))
-    }
     return;
   }
 
