@@ -32,6 +32,8 @@ describe("Convex frxETH/OETH AMO Strategy", function () {
     ...fixture,
     strategy: fixture.convexFrxETHAMOStrategy,
     harvester: fixture.oethHarvester,
+    vault: fixture.oethVault,
+    dripAsset: fixture.weth,
     rewards: [
       { asset: fixture.crv, expected: parseUnits("2") },
       { asset: fixture.cvx, expected: parseUnits("3") },

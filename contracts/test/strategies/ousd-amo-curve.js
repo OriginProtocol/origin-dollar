@@ -51,6 +51,7 @@ describe("Convex OUSD/3Pool AMO Strategy", function () {
   shouldBehaveLikeHarvester(() => ({
     ...fixture,
     strategy: fixture.convexOusdAMOStrategy,
+    dripAsset: fixture.usdt,
     rewards: [
       { asset: fixture.crv, expected: parseUnits("2") },
       { asset: fixture.cvx, expected: parseUnits("3") },
