@@ -57,7 +57,7 @@ async function _fundAttackerOption({
   );
   const assetBalance = await asset.balanceOf(attackerAddress);
   const ethToFund = 1000000;
-  const sAttacker = await hre.ethers.provider.getSigner(address);
+  const sAttacker = await hre.ethers.provider.getSigner(attackerAddress);
 
   if (attackerEthBalance.lte(ousdUnits(`${ethToFund - 100}`))) {
     await impersonateAndFundContract(attackerAddress, `${ethToFund}`); // 1m ETH

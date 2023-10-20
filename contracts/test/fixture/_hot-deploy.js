@@ -34,7 +34,7 @@ async function hotDeployBalancerRethWETHStrategy(balancerREthFixture) {
   });
 
   const fixture = await balancerREthFixture();
-  const { balancerREthStrategy, josh } = fixture;
+  const { balancerREthStrategy } = fixture;
 
   await replaceContractAt(
     balancerREthStrategy.address,
@@ -83,7 +83,7 @@ async function hotDeployBalancerFrxEethRethWstEThStrategy(
   });
 
   const fixture = await balancerFrxETHwstETHeETHFixture();
-  const { balancerSfrxWstRETHStrategy, josh } = fixture;
+  const { balancerSfrxWstRETHStrategy } = fixture;
 
   await replaceContractAt(
     balancerSfrxWstRETHStrategy.address,

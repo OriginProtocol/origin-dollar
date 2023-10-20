@@ -1145,6 +1145,7 @@ forkOnlyDescribe(
     });
 
     describe("return correct rate provider rates", function () {
+      let fixture;
       beforeEach(async () => {
         fixture = await balancerRethWETHExposeFunctionFixture();
       });
