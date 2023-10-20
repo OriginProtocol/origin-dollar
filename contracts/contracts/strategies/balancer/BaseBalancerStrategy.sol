@@ -25,6 +25,9 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
      * error. To mitigate this issue we overshoot by 1 WEI when redeeming.
      */
     uint256 public constant FRX_ETH_REDEEM_CORRECTION = 1;
+    // A constant representing a rate provider with a fixed 1e18 rate
+    address public constant FIXED_RATE_PROVIDER =
+        0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
 
     address public immutable rETH;
     address public immutable stETH;
@@ -41,8 +44,8 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
     uint256 public maxWithdrawalDeviation;
     // Max deposit deviation denominated in 1e18 (1e18 == 100%)
     uint256 public maxDepositDeviation;
-    // Rate providers of the Balancer pool
-    IRateProvider[] public poolRateProvidersCache;
+    // Cache of asset => rateProvider
+    mapping(address => address) public assetToRateProviderCache;
 
     // all the pool assets as returned by the balancerVault.getPoolTokens() function
     address[] public poolAssets;
@@ -518,14 +521,30 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         pToken.approve(address(balancerVault), type(uint256).max);
     }
 
+    /* @notice populate pool asset => rate provider mapping. If assets map
+     * to:
+     *  - zero address then the asset is not supported
+     *  - FIXED_RATE_PROVIDER address then this is a fixed rate provider (1e18)
+     *  - an address then it is an address of the rate provider for that asset
+     *
+     * This function is public since it needs to be called for pools that have already
+     * been deployed and not have this function ran in the initialize method. At the time
+     * of writing this is the rETH/WETH pool.
+     */
     function cacheRateProviders() public {
-        /* Rate providers haven't been cached yet. It is OK to not
-         * expire the rate providers cache, since those are not
-         * expected to ever change.
-         */
         IRateProvider[] memory providers = IBalancerPool(platformAddress)
             .getRateProviders();
-        poolRateProvidersCache = providers;
+        uint256 poolAssetsLength = poolAssets.length;
+
+        require(poolAssetsLength == providers.length, "Asset length mismatch");
+
+        for (uint256 i = 0; i < poolAssetsLength; i++) {
+            if (address(providers[i]) == address(0)) {
+                assetToRateProviderCache[poolAssets[i]] = FIXED_RATE_PROVIDER;
+            } else {
+                assetToRateProviderCache[poolAssets[i]] = address(providers[i]);
+            }
+        }
     }
 
     /**
@@ -542,15 +561,14 @@ abstract contract BaseBalancerStrategy is InitializableAbstractStrategy {
         virtual
         returns (uint256)
     {
-        IRateProvider rateProvider = poolRateProvidersCache[
-            poolAssetIndex[_asset]
-        ];
+        address rateProvider = assetToRateProviderCache[_asset];
+        require(address(0) != rateProvider, "Asset unsupported");
 
-        if (address(rateProvider) == address(0)) {
+        if (rateProvider == FIXED_RATE_PROVIDER) {
             return 1 ether;
         }
 
-        return rateProvider.getRate();
+        return IRateProvider(rateProvider).getRate();
     }
 
     /**

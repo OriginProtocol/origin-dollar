@@ -8,6 +8,7 @@ const { units, oethUnits, forkOnlyDescribe, isCI } = require("../helpers");
 const {
   balancerREthFixture,
   balancerWstEthFixture,
+  balancerRethWETHExposeFunctionFixture,
   impersonateAndFundContract,
   createFixtureLoader,
   mineBlocks,
@@ -1141,6 +1142,38 @@ forkOnlyDescribe(
           expect(unitDiff / 1e18).to.be.gte(parseFloat(maxDiff));
         });
       }
+    });
+
+    describe("return correct rate provider rates", function () {
+      beforeEach(async () => {
+        fixture = await balancerRethWETHExposeFunctionFixture();
+      });
+
+      it("should throw an exception for an unsupported asset", async function () {
+        const { balancerREthStrategy } = fixture;
+
+        await expect(
+          balancerREthStrategy.getRateProviderRate(addresses.mainnet.DAI)
+        ).to.be.revertedWith("Asset unsupported");
+      });
+
+      it("should return a fixed rate for WETH", async function () {
+        const { balancerREthStrategy } = fixture;
+
+        const rate = await balancerREthStrategy.getRateProviderRate(
+          addresses.mainnet.WETH
+        );
+        expect(rate).to.equal(await oethUnits("1"));
+      });
+
+      it("should return a valid rate for rEth", async function () {
+        const { balancerREthStrategy } = fixture;
+
+        const rate = await balancerREthStrategy.getRateProviderRate(
+          addresses.mainnet.rETH
+        );
+        expect(rate).to.be.gte(await oethUnits("1.01"));
+      });
     });
   }
 );
