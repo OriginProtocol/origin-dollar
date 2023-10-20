@@ -13,7 +13,7 @@
 <g id="node1" class="node">
 <title>5</title>
 <polygon fill="#f2f2f2" stroke="black" points="0,-24.7 0,-545.5 862.93,-545.5 862.93,-24.7 0,-24.7"/>
-<text text-anchor="middle" x="431.47" y="-528.9" font-family="Courier New" font-size="14.00">BalancerMetaPoolStrategy &lt;&lt;Contract&gt;&gt;</text>
+<text text-anchor="middle" x="431.47" y="-528.9" font-family="Courier New" font-size="14.00">BalancerComposablePoolStrategy &lt;&lt;Contract&gt;&gt;</text>
 <polyline fill="none" stroke="black" points="0,-520.7 862.93,-520.7 "/>
 <text text-anchor="middle" x="37.4" y="-504.1" font-family="Courier New" font-size="14.00">slot</text>
 <polyline fill="none" stroke="black" points="0,-495.9 74.81,-495.9 "/>
@@ -105,7 +105,7 @@
 <polyline fill="none" stroke="black" points="74.81,-74.3 862.93,-74.3 "/>
 <text text-anchor="middle" x="468.45" y="-57.7" font-family="Courier New" font-size="14.00">int256[50]: BaseAuraStrategy.__reserved_baseAuraStrategy (1600)</text>
 <polyline fill="none" stroke="black" points="74.81,-49.5 862.93,-49.5 "/>
-<text text-anchor="middle" x="468.83" y="-32.9" font-family="Courier New" font-size="14.00">int256[50]: ___reserved (1600)</text>
+<text text-anchor="middle" x="468.85" y="-32.9" font-family="Courier New" font-size="14.00">int256[50]: BalancerMetaPoolStrategy.___reserved (1600)</text>
 </g>
 <!-- 1 -->
 <g id="node2" class="node">
