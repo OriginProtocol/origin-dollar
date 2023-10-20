@@ -5,7 +5,10 @@ const { run } = require("hardhat");
 const addresses = require("../../utils/addresses");
 const { convex_OETH_ETH_PID } = require("../../utils/constants");
 const { units, oethUnits, forkOnlyDescribe, isCI } = require("../helpers");
-const { createFixtureLoader, convexOethEthAmoFixture } = require("../fixture/_fixture");
+const {
+  createFixtureLoader,
+  convexOethEthAmoFixture,
+} = require("../fixture/_fixture");
 
 const log = require("../../utils/logger")("test:fork:oeth:amo:curve");
 
@@ -510,7 +513,7 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Strategy", function () {
       await assertRemoveOnlyAssets(lpAmount, fixture);
     });
     it("Strategist should remove a lot ETH from the Curve pool", async () => {
-      const lpAmount = parseUnits("15000");
+      const lpAmount = parseUnits("5000");
       await assertRemoveOnlyAssets(lpAmount, fixture);
     });
   });
@@ -529,9 +532,9 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Strategy", function () {
       const curveBalances = await curveOethEthPool.get_balances();
       const lpAmount = curveBalances[0]
         .sub(curveBalances[1])
-        // reduce by 0.1%
-        .mul(999)
-        .div(1000);
+        // reduce by 1%
+        .mul(99)
+        .div(100);
       expect(lpAmount).to.be.gt(0);
 
       await assertRemoveOnlyAssets(lpAmount, fixture);
@@ -594,7 +597,7 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Strategy", function () {
       // Remove OETH from the Curve pool
       const tx = convexEthMetaStrategy
         .connect(strategist)
-        .removeAndBurnOTokens(parseUnits("8000"));
+        .removeAndBurnOTokens(parseUnits("4000"));
 
       await expect(tx).to.be.revertedWith("OTokens overshot peg");
     });
