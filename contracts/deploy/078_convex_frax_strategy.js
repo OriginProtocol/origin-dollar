@@ -1,5 +1,5 @@
 const addresses = require("../utils/addresses");
-const { frxEthWethPoolLpPID } = require("../utils/constants");
+const { convex_frxETH_WETH_PID } = require("../utils/constants");
 const { deploymentWithGovernanceProposal } = require("../utils/deploy");
 
 module.exports = deploymentWithGovernanceProposal(
@@ -59,7 +59,7 @@ module.exports = deploymentWithGovernanceProposal(
         [
           addresses.mainnet.CVXBooster,
           addresses.mainnet.ConvexFrxEthWethRewardsPool,
-          frxEthWethPoolLpPID,
+          convex_frxETH_WETH_PID,
         ],
       ],
       null,

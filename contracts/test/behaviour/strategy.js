@@ -407,6 +407,23 @@ const shouldBehaveLikeStrategy = (context) => {
         ).to.revertedWith("Caller is not the Governor");
       }
     });
+    it("Should allow governor to reset allowances", async () => {
+      const { strategy, governor } = context();
+      await expect(strategy.connect(governor).safeApproveAllTokens()).to.not.be
+        .reverted;
+    });
+    it("Should not allow non-governor to reset allowances", async () => {
+      const { anna, strategist, strategy, harvester, vault } = context();
+
+      const vaultSigner = await impersonateAndFund(vault.address);
+      const harvesterSigner = await impersonateAndFund(harvester.address);
+
+      for (const signer of [anna, strategist, harvesterSigner, vaultSigner]) {
+        await expect(
+          strategy.connect(signer).safeApproveAllTokens()
+        ).to.be.revertedWith("Caller is not the Governor");
+      }
+    });
   });
 };
 

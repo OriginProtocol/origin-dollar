@@ -192,41 +192,6 @@ describe("Convex OUSD/3Pool AMO Strategy", function () {
       ).to.revertedWith("Initializable: contract is already initialized");
     });
 
-    it("Should have Governor set", async () => {
-      const { anna, convexOusdAMOStrategy, governor } = fixture;
-      expect(await convexOusdAMOStrategy.connect(anna).isGovernor()).to.be
-        .false;
-      expect(await convexOusdAMOStrategy.connect(governor).isGovernor()).to.be
-        .true;
-      expect(await convexOusdAMOStrategy.governor()).to.eq(governor.address);
-    });
-
-    it("Should allow transfer of arbitrary token by Governor", async () => {
-      const { anna, convexOusdAMOStrategy, dai, ousd, governor, vault } =
-        fixture;
-      await dai.connect(anna).approve(vault.address, daiUnits("8.0"));
-      await vault.connect(anna).mint(dai.address, daiUnits("8.0"), 0);
-      // Anna sends her OUSD directly to Strategy
-      await ousd
-        .connect(anna)
-        .transfer(convexOusdAMOStrategy.address, ousdUnits("8.0"));
-      // Anna asks Governor for help
-      await convexOusdAMOStrategy
-        .connect(governor)
-        .transferToken(ousd.address, ousdUnits("8.0"));
-      await expect(governor).has.a.balanceOf("8.0", ousd);
-    });
-
-    it("Should not allow transfer of arbitrary token by non-Governor", async () => {
-      const { anna, convexOusdAMOStrategy, ousd } = fixture;
-      // Naughty Anna
-      await expect(
-        convexOusdAMOStrategy
-          .connect(anna)
-          .transferToken(ousd.address, ousdUnits("8.0"))
-      ).to.be.revertedWith("Caller is not the Governor");
-    });
-
     it("Should not allow too large mintForStrategy", async () => {
       const { anna, governor, vault } = fixture;
       await vault.connect(governor).setAMOStrategy(anna.address, true);

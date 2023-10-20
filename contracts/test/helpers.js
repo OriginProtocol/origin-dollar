@@ -415,6 +415,7 @@ const getAssetAddresses = async (deployments) => {
       STKAAVE: addresses.mainnet.STKAAVE,
       OGN: addresses.mainnet.OGN,
       OGV: addresses.mainnet.OGV,
+      LUSD: addresses.mainnet.LUSD,
       RewardsSource: addresses.mainnet.RewardsSource,
       RETH: addresses.mainnet.rETH,
       frxETH: addresses.mainnet.frxETH,
@@ -453,6 +454,7 @@ const getAssetAddresses = async (deployments) => {
       STKAAVE: (await deployments.get("MockStkAave")).address,
       OGN: (await deployments.get("MockOGN")).address,
       OGV: (await deployments.get("MockOGV")).address,
+      LUSD: (await ethers.getContract("MockLUSD")).address,
       RETH: (await deployments.get("MockRETH")).address,
       stETH: (await deployments.get("MockstETH")).address,
       frxETH: (await deployments.get("MockfrxETH")).address,
@@ -492,6 +494,28 @@ const getAssetAddresses = async (deployments) => {
       // token is implemented by the same contract as the metapool
       addressMap.LUSDMetapoolToken = (
         await deployments.get("MockCurveLUSDMetapool")
+      ).address;
+    } catch (e) {
+      // do nothing
+    }
+
+    try {
+      /* This pool gets deployed in 001_core instead of 000_mocks as it contains OETH.
+       * Just return without the Curve pool info if it is not yet available.
+       */
+      addressMap.curveOethEthPool = (
+        await deployments.get("MockCurveOethEthPool")
+      ).address;
+    } catch (e) {
+      // do nothing
+    }
+
+    try {
+      /* This pool gets deployed in 001_core instead of 000_mocks as it contains OETH.
+       * Just return without the Curve pool info if it is not yet available.
+       */
+      addressMap.curveFrxEthOethPool = (
+        await deployments.get("MockCurveFrxEthOethPool")
       ).address;
     } catch (e) {
       // do nothing

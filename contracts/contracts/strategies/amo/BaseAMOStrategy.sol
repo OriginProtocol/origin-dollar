@@ -462,9 +462,11 @@ abstract contract BaseAMOStrategy is InitializableAbstractStrategy {
 
         // Burn all the removed OTokens and any that was left in the strategy
         uint256 oTokenToBurn = oToken.balanceOf(address(this));
-        IVault(vaultAddress).burnForStrategy(oTokenToBurn);
+        if (oTokenToBurn > 0) {
+            IVault(vaultAddress).burnForStrategy(oTokenToBurn);
 
-        emit Withdrawal(address(oToken), address(lpToken), oTokenToBurn);
+            emit Withdrawal(address(oToken), address(lpToken), oTokenToBurn);
+        }
 
         // Convert the pool assets in this strategy to the Vault asset
         // and transfer them to the vault.
@@ -510,7 +512,7 @@ abstract contract BaseAMOStrategy is InitializableAbstractStrategy {
     function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
         _unStakeAllLpTokens();
 
-        // Withdraws are proportional to assets held by 3Pool
+        // Withdraws are proportional to assets held by the Curve pool
         uint256[2] memory minWithdrawAmounts = [uint256(0), uint256(0)];
 
         // Only withdraw from pool if the strategy has assets in the pool

@@ -106,7 +106,9 @@ contract ConvexEthMetaStrategy is BaseConvexAMOStrategy {
     function _withdrawAllAsset(address recipient) internal override {
         // Get ETH balance of this strategy contract
         uint256 ethBalance = address(this).balance;
-        _withdrawAsset(address(asset), ethBalance, recipient);
+        if (ethBalance > 0) {
+            _withdrawAsset(address(asset), ethBalance, recipient);
+        }
     }
 
     /***************************************
@@ -116,16 +118,15 @@ contract ConvexEthMetaStrategy is BaseConvexAMOStrategy {
     /**
      * @notice Get the total asset value held in the platform
      * @param _asset      Address of the asset
-     * @return balance    Total value of the asset in the platform
+     * @return balance    ETH value of both OETH and ETH in the Curve pool
      */
     function checkBalance(address _asset)
         public
         view
         override
+        onlyAsset(_asset)
         returns (uint256 balance)
     {
-        require(_asset == address(asset), "Unsupported asset");
-
         // Eth balance needed here for the balance check that happens from vault during depositing.
         balance = address(this).balance;
         uint256 lpTokens = cvxRewardStaker.balanceOf(address(this));

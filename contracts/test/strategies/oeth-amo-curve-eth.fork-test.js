@@ -3,7 +3,7 @@ const { formatUnits, parseUnits } = require("ethers/lib/utils");
 const { run } = require("hardhat");
 
 const addresses = require("../../utils/addresses");
-const { oethPoolLpPID } = require("../../utils/constants");
+const { convex_OETH_ETH_PID } = require("../../utils/constants");
 const { units, oethUnits, forkOnlyDescribe, isCI } = require("../helpers");
 const { createFixtureLoader, convexOethEthAmoFixture } = require("../_fixture");
 
@@ -34,7 +34,7 @@ forkOnlyDescribe("ForkTest: OETH AMO Curve Strategy", function () {
         addresses.mainnet.CVXETHRewardsPool
       );
       expect(await convexEthMetaStrategy.cvxDepositorPTokenId()).to.equal(
-        oethPoolLpPID
+        convex_OETH_ETH_PID
       );
       expect(await convexEthMetaStrategy.curvePool()).to.equal(
         addresses.mainnet.CurveOETHMetaPool

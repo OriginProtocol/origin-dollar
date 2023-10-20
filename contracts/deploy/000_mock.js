@@ -1,7 +1,7 @@
 const { parseUnits } = require("ethers").utils;
 const { isMainnetOrFork } = require("../test/helpers");
 const addresses = require("../utils/addresses");
-const { threeCRVPid } = require("../utils/constants");
+const { convex_3CRV_PID } = require("../utils/constants");
 const { replaceContractAt, hardhatSetBalance } = require("../utils/hardhat");
 
 const {
@@ -285,12 +285,12 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     args: [mockCVX.address, mockCRV.address, mockCVX.address],
   });
   const mockBooster = await ethers.getContract("MockBooster");
-  await mockBooster.setPool(threeCRVPid, threePoolToken.address);
+  await mockBooster.setPool(convex_3CRV_PID, threePoolToken.address);
 
   await deploy("MockRewardPool", {
     from: deployerAddr,
     args: [
-      threeCRVPid,
+      convex_3CRV_PID,
       threePoolToken.address,
       mockCRV.address,
       mockCVX.address,

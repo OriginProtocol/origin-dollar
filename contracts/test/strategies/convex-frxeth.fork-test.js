@@ -2,7 +2,7 @@ const { expect } = require("chai");
 const { formatUnits, parseUnits } = require("ethers/lib/utils");
 
 const addresses = require("../../utils/addresses");
-const { frxEthWethPoolLpPID } = require("../../utils/constants");
+const { convex_frxETH_WETH_PID } = require("../../utils/constants");
 const { units, oethUnits, forkOnlyDescribe, isCI } = require("../helpers");
 const {
   createFixtureLoader,
@@ -47,7 +47,7 @@ forkOnlyDescribe("ForkTest: Convex frxETH/WETH Strategy", function () {
         addresses.mainnet.ConvexFrxEthWethRewardsPool
       );
       expect(await convexFrxEthWethStrategy.cvxDepositorPoolId()).to.equal(
-        frxEthWethPoolLpPID
+        convex_frxETH_WETH_PID
       );
     });
     supportedAssets.forEach((symbol) => {

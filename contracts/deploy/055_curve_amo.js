@@ -6,7 +6,7 @@ const addresses = require("../utils/addresses");
 const hre = require("hardhat");
 const { utils, Contract } = require("ethers");
 const { getAssetAddresses, isMainnet } = require("../test/helpers.js");
-const { MAX_UINT256, oethPoolLpPID } = require("../utils/constants");
+const { MAX_UINT256, convex_OETH_ETH_PID } = require("../utils/constants");
 const crvRewards = "0x24b65DC1cf053A8D96872c323d29e86ec43eB33A";
 const poolAddress = "0x94b17476a93b3262d87b9a326965d1e91f9c13e7";
 const tokenAddress = "0x94b17476a93b3262d87b9a326965d1e91f9c13e7";
@@ -149,7 +149,7 @@ const deployConvexETHMetaStrategy = async ({
           addresses.mainnet.OETHProxy,
           crvRewards,
           tokenAddress,
-          oethPoolLpPID,
+          convex_OETH_ETH_PID,
         ]
       )
   );

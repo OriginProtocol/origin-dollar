@@ -1,7 +1,7 @@
 const { parseUnits } = require("ethers/lib/utils");
 
 const addresses = require("../utils/addresses");
-const { metapoolLPCRVPid } = require("../utils/constants");
+const { convex_OUSD_3CRV_PID } = require("../utils/constants");
 const { deploymentWithGovernanceProposal } = require("../utils/deploy");
 
 module.exports = deploymentWithGovernanceProposal(
@@ -51,7 +51,7 @@ module.exports = deploymentWithGovernanceProposal(
         [
           addresses.mainnet.CVXBooster, // cvxDepositorAddress,
           addresses.mainnet.CVXRewardsPool, // cvxRewardStakerAddress,
-          metapoolLPCRVPid, // cvxDepositorPTokenId
+          convex_OUSD_3CRV_PID, // cvxDepositorPTokenId
         ],
         addresses.mainnet.ThreePool, // _curve3Pool
         [addresses.mainnet.DAI, addresses.mainnet.USDC, addresses.mainnet.USDT], // _curve3PoolAssets

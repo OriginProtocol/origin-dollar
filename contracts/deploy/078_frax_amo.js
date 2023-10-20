@@ -1,7 +1,7 @@
 const { parseUnits } = require("ethers/lib/utils");
 
 const addresses = require("../utils/addresses");
-const { frxEthPoolLpPID } = require("../utils/constants");
+const { convex_frxETH_OETH_PID } = require("../utils/constants");
 const { deploymentWithGovernanceProposal } = require("../utils/deploy");
 const { getTxOpts } = require("../utils/tx");
 
@@ -63,7 +63,7 @@ module.exports = deploymentWithGovernanceProposal(
         [
           addresses.mainnet.CVXBooster, // cvxDepositorAddress,
           addresses.mainnet.CVXFrxETHRewardsPool, // cvxRewardStakerAddress,
-          frxEthPoolLpPID, // cvxDepositorPTokenId
+          convex_frxETH_OETH_PID, // cvxDepositorPTokenId
         ],
       ]
     );

@@ -3,12 +3,12 @@ const { BigNumber } = require("ethers");
 const MAX_UINT256 = BigNumber.from(
   "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
 );
-const threeCRVPid = 9;
-const metapoolLPCRVPid = 56;
-const lusdMetapoolLPCRVPid = 33;
-const oethPoolLpPID = 174;
-const frxEthPoolLpPID = 237;
-const frxEthWethPoolLpPID = 219;
+const convex_3CRV_PID = 9;
+const convex_OUSD_3CRV_PID = 56;
+const convex_LUSD_3CRV_PID = 33;
+const convex_OETH_ETH_PID = 174;
+const convex_frxETH_OETH_PID = 237;
+const convex_frxETH_WETH_PID = 219;
 
 // stETH/WETH
 const aura_stETH_WETH_PID = 115;
@@ -26,12 +26,12 @@ const balancer_rETH_WETH_PID =
   "0x1e19cf2d73a72ef1332c882f20534b6519be0276000200000000000000000112";
 
 module.exports = {
-  threeCRVPid,
-  metapoolLPCRVPid,
-  lusdMetapoolLPCRVPid,
-  oethPoolLpPID,
-  frxEthPoolLpPID,
-  frxEthWethPoolLpPID,
+  convex_3CRV_PID,
+  convex_OUSD_3CRV_PID,
+  convex_LUSD_3CRV_PID,
+  convex_OETH_ETH_PID,
+  convex_frxETH_OETH_PID,
+  convex_frxETH_WETH_PID,
   MAX_UINT256,
   aura_stETH_WETH_PID,
   balancer_stETH_WETH_PID,

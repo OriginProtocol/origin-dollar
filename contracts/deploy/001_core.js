@@ -9,10 +9,12 @@ const {
 } = require("../test/helpers.js");
 const { deployWithConfirmation, withConfirmation } = require("../utils/deploy");
 const {
-  threeCRVPid,
-  metapoolLPCRVPid,
-  lusdMetapoolLPCRVPid,
-  frxEthWethPoolLpPID,
+  convex_3CRV_PID,
+  convex_OUSD_3CRV_PID,
+  convex_LUSD_3CRV_PID,
+  convex_frxETH_WETH_PID,
+  convex_OETH_ETH_PID,
+  convex_frxETH_OETH_PID,
 } = require("../utils/constants");
 
 const log = require("../utils/logger")("deploy:001_core");
@@ -191,9 +193,9 @@ const deployConvexStrategy = async () => {
 
   const cVaultProxy = await ethers.getContract("VaultProxy");
   const mockBooster = await ethers.getContract("MockBooster");
-  await mockBooster.setPool(threeCRVPid, assetAddresses.ThreePoolToken);
+  await mockBooster.setPool(convex_3CRV_PID, assetAddresses.ThreePoolToken);
   // Get the convex rewards pool created in the previous setPool call
-  const poolInfo = await mockBooster.poolInfo(threeCRVPid);
+  const poolInfo = await mockBooster.poolInfo(convex_3CRV_PID);
   const mockRewardPool = await ethers.getContractAt(
     "MockRewardPool",
     poolInfo.crvRewards
@@ -219,7 +221,7 @@ const deployConvexStrategy = async () => {
       [
         mockBooster.address, // _cvxDepositorAddress,
         mockRewardPool.address, // _cvxRewardStakerAddress,
-        threeCRVPid, // _cvxDepositorPTokenId
+        convex_3CRV_PID, // _cvxDepositorPTokenId
       ],
     ],
     null,
@@ -268,11 +270,11 @@ const deployConvexFrxEthWethStrategy = async () => {
   const cVaultProxy = await ethers.getContract("OETHVaultProxy");
   const mockBooster = await ethers.getContract("MockBooster");
   await mockBooster.setPool(
-    frxEthWethPoolLpPID,
+    convex_frxETH_WETH_PID,
     assetAddresses.CurveFrxEthWethPool
   );
   // Get the convex rewards pool created in the previous setPool call
-  const poolInfo = await mockBooster.poolInfo(frxEthWethPoolLpPID);
+  const poolInfo = await mockBooster.poolInfo(convex_frxETH_WETH_PID);
   const mockRewardPool = await ethers.getContractAt(
     "MockRewardPool",
     poolInfo.crvRewards
@@ -302,7 +304,7 @@ const deployConvexFrxEthWethStrategy = async () => {
       [
         mockBooster.address, // _cvxDepositorAddress,
         mockRewardPool.address, // _cvxRewardStakerAddress,
-        frxEthWethPoolLpPID, // _cvxDepositorPTokenId
+        convex_frxETH_WETH_PID, // _cvxDepositorPTokenId
       ],
     ],
     null,
@@ -393,7 +395,7 @@ const deployConvexLUSDMetaStrategy = async () => {
         LUSD.address, // LUSD
         mockRewardPool.address, // _cvxRewardStakerAddress,
         assetAddresses.LUSDMetapoolToken, // metapoolLpToken
-        lusdMetapoolLPCRVPid, // _cvxDepositorPTokenId
+        convex_LUSD_3CRV_PID, // _cvxDepositorPTokenId
       ],
     ]
   );
@@ -425,12 +427,8 @@ const deployConvexOUSDMetaStrategy = async () => {
   );
 
   const mockBooster = await ethers.getContract("MockBooster");
-  await mockBooster.setPool(
-    metapoolLPCRVPid,
-    assetAddresses.ThreePoolOUSDMetapool
-  );
-  // Get the convex rewards pool created in the previous setPool call
-  const poolInfo = await mockBooster.poolInfo(metapoolLPCRVPid);
+  // Get the Convex rewards pool contract
+  const poolInfo = await mockBooster.poolInfo(convex_OUSD_3CRV_PID);
   const mockRewardPool = await ethers.getContractAt(
     "MockRewardPool",
     poolInfo.crvRewards
@@ -455,7 +453,7 @@ const deployConvexOUSDMetaStrategy = async () => {
       [
         mockBooster.address, // cvxDepositorAddress,
         mockRewardPool.address, // cvxRewardStakerAddress,
-        metapoolLPCRVPid, // cvxDepositorPTokenId
+        convex_OUSD_3CRV_PID, // cvxDepositorPTokenId
       ],
       assetAddresses.ThreePool, // _curve3Pool
       [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT], // _curve3PoolAssets
@@ -494,6 +492,134 @@ const deployConvexOUSDMetaStrategy = async () => {
   log("Initialized ConvexOUSDMetaStrategyProxy");
 
   return cConvexOUSDMetaStrategy;
+};
+
+/**
+ * Deploys a Convex AMO Strategy for the Curve OETH/ETH pool
+ */
+const deployConvexOethEthAMOStrategy = async () => {
+  const assetAddresses = await getAssetAddresses(deployments);
+  const { governorAddr } = await getNamedAccounts();
+
+  const cVaultProxy = await ethers.getContract("OETHVaultProxy");
+
+  await deployWithConfirmation("ConvexEthMetaStrategyProxy", [], null, true);
+  const cConvexEthMetaStrategyProxy = await ethers.getContract(
+    "ConvexEthMetaStrategyProxy"
+  );
+
+  const mockBooster = await ethers.getContract("MockBooster");
+  // Get the Convex rewards pool contract
+  const poolInfo = await mockBooster.poolInfo(convex_OETH_ETH_PID);
+
+  const oeth = await ethers.getContract("OETHProxy");
+
+  const dConvexEthMetaStrategy = await deployWithConfirmation(
+    "ConvexEthMetaStrategy",
+    [
+      [assetAddresses.curveOethEthPool, cVaultProxy.address],
+      [
+        oeth.address, // oTokenAddress,
+        assetAddresses.WETH, // assetAddress (WETH)
+        0, // Curve pool index for OToken OETH
+        1, // Curve pool index for asset ETH
+      ],
+      [
+        mockBooster.address, // cvxDepositorAddress,
+        poolInfo.crvRewards, // cvxRewardStakerAddress,
+        convex_OETH_ETH_PID, // cvxDepositorPTokenId
+      ],
+    ]
+  );
+  const cConvexEthMetaStrategy = await ethers.getContractAt(
+    "ConvexEthMetaStrategy",
+    cConvexEthMetaStrategyProxy.address
+  );
+
+  // Initialize Strategies
+  const initData = cConvexEthMetaStrategy.interface.encodeFunctionData(
+    "initialize(address[],address[],address[])",
+    [
+      [assetAddresses.CVX, assetAddresses.CRV],
+      [assetAddresses.WETH],
+      [assetAddresses.curveOethEthPool],
+    ]
+  );
+
+  await withConfirmation(
+    cConvexEthMetaStrategyProxy["initialize(address,address,bytes)"](
+      dConvexEthMetaStrategy.address,
+      governorAddr,
+      initData
+    )
+  );
+  log("Initialized ConvexEthMetaStrategyProxy");
+
+  return cConvexEthMetaStrategy;
+};
+
+/**
+ * Deploys a Convex AMO Strategy for the Curve frxETH/OETH pool
+ */
+const deployConvexFrxETHAMOStrategy = async () => {
+  const assetAddresses = await getAssetAddresses(deployments);
+  const { governorAddr } = await getNamedAccounts();
+
+  const cVaultProxy = await ethers.getContract("OETHVaultProxy");
+
+  await deployWithConfirmation("ConvexFrxETHAMOStrategyProxy", [], null, true);
+  const cConvexFrxETHAMOStrategyProxy = await ethers.getContract(
+    "ConvexFrxETHAMOStrategyProxy"
+  );
+
+  const mockBooster = await ethers.getContract("MockBooster");
+  // Get the Convex rewards pool contract
+  const poolInfo = await mockBooster.poolInfo(convex_frxETH_OETH_PID);
+
+  const oeth = await ethers.getContract("OETHProxy");
+
+  const dConvexFrxETHAMOStrategy = await deployWithConfirmation(
+    "ConvexFrxETHAMOStrategy",
+    [
+      [assetAddresses.curveFrxEthOethPool, cVaultProxy.address],
+      [
+        oeth.address, // oTokenAddress,
+        assetAddresses.frxETH, // assetAddress (frxETH)
+        1, // Curve pool index for OToken OETH
+        0, // Curve pool index for asset frxETH
+      ],
+      [
+        mockBooster.address, // cvxDepositorAddress,
+        poolInfo.crvRewards, // cvxRewardStakerAddress,
+        convex_frxETH_OETH_PID, // cvxDepositorPTokenId
+      ],
+    ]
+  );
+  const cConvexFrxETHAMOStrategy = await ethers.getContractAt(
+    "ConvexFrxETHAMOStrategy",
+    cConvexFrxETHAMOStrategyProxy.address
+  );
+
+  // Initialize Strategies
+  const initData = cConvexFrxETHAMOStrategy.interface.encodeFunctionData(
+    "initialize(address[],address[],address[])",
+    [
+      [assetAddresses.CVX, assetAddresses.CRV],
+      [assetAddresses.frxETH],
+      [assetAddresses.curveFrxEthOethPool],
+    ]
+  );
+
+  await withConfirmation(
+    cConvexFrxETHAMOStrategyProxy["initialize(address,address,bytes)"](
+      dConvexFrxETHAMOStrategy.address,
+      governorAddr,
+      initData
+    )
+  );
+  log("Initialized cConvexFrxETHAMOStrategyProxy");
+
+  return cConvexFrxETHAMOStrategy;
 };
 
 /**
@@ -540,7 +666,7 @@ const configureVault = async () => {
 };
 
 /**
- * Configure OETH Vault by adding supported assets and Strategies.
+ * Configure OETH Vault by adding supported assets, unpause capital and set strategist.
  */
 const configureOETHVault = async () => {
   const assetAddresses = await getAssetAddresses(deployments);
@@ -986,37 +1112,71 @@ const deployCore = async () => {
   log("Initialized OETH");
 };
 
-// deploy curve metapool mocks
+// deploy Curve OUSD/3Crv Metapool mocks
 const deployCurveMetapoolMocks = async () => {
-  const ousd = await ethers.getContract("OUSDProxy");
   const { deployerAddr } = await hre.getNamedAccounts();
   const assetAddresses = await getAssetAddresses(deployments);
+
+  const ousd = await ethers.getContract("OUSDProxy");
 
   await hre.deployments.deploy("MockCurveMetapool", {
     from: deployerAddr,
     args: [[ousd.address, assetAddresses.ThreePoolToken]],
   });
 
-  const metapoolToken = await ethers.getContract("MockCurveMetapool");
+  const curveLpToken = await ethers.getContract("MockCurveMetapool");
   const mockBooster = await ethers.getContract("MockBooster");
-  await mockBooster.setPool(metapoolLPCRVPid, metapoolToken.address);
+  await mockBooster.setPool(convex_OUSD_3CRV_PID, curveLpToken.address);
 };
 
-// deploy curve metapool mocks
+// deploy Curve LUSD/3Crv Metapool mocks
 const deployCurveLUSDMetapoolMocks = async () => {
   const { deployerAddr } = await hre.getNamedAccounts();
   const assetAddresses = await getAssetAddresses(deployments);
 
-  const LUSD = await ethers.getContract("MockLUSD");
-
   await hre.deployments.deploy("MockCurveLUSDMetapool", {
     from: deployerAddr,
-    args: [[LUSD.address, assetAddresses.ThreePoolToken]],
+    args: [[assetAddresses.LUSD, assetAddresses.ThreePoolToken]],
   });
 
-  const LUSDMetapoolToken = await ethers.getContract("MockCurveLUSDMetapool");
+  const curveLpToken = await ethers.getContract("MockCurveLUSDMetapool");
   const mockBooster = await ethers.getContract("MockBooster");
-  await mockBooster.setPool(lusdMetapoolLPCRVPid, LUSDMetapoolToken.address);
+  await mockBooster.setPool(convex_LUSD_3CRV_PID, curveLpToken.address);
+};
+
+// deploy Curve OETH/ETH Pool mocks
+const deployCurveOethEthPoolMocks = async () => {
+  const { deployerAddr } = await hre.getNamedAccounts();
+  const assetAddresses = await getAssetAddresses(deployments);
+
+  const oeth = await ethers.getContract("OETHProxy");
+
+  await hre.deployments.deploy("MockCurveOethEthPool", {
+    from: deployerAddr,
+    // TODO WETH needs to be ETH
+    args: [[oeth.address, assetAddresses.WETH]],
+  });
+
+  const curveLpToken = await ethers.getContract("MockCurveOethEthPool");
+  const mockBooster = await ethers.getContract("MockBooster");
+  await mockBooster.setPool(convex_OETH_ETH_PID, curveLpToken.address);
+};
+
+// deploy Curve frxETH/OETH Pool mocks
+const deployCurvefrxEthOethPoolMocks = async () => {
+  const { deployerAddr } = await hre.getNamedAccounts();
+  const assetAddresses = await getAssetAddresses(deployments);
+
+  const oeth = await ethers.getContract("OETHProxy");
+
+  await hre.deployments.deploy("MockCurveFrxEthOethPool", {
+    from: deployerAddr,
+    args: [[assetAddresses.frxETH, oeth.address]],
+  });
+
+  const curveLpToken = await ethers.getContract("MockCurveFrxEthOethPool");
+  const mockBooster = await ethers.getContract("MockBooster");
+  await mockBooster.setPool(convex_frxETH_OETH_PID, curveLpToken.address);
 };
 
 // Deploy the Flipper trading contract
@@ -1215,6 +1375,8 @@ const main = async () => {
   await deployCore();
   await deployCurveMetapoolMocks();
   await deployCurveLUSDMetapoolMocks();
+  await deployCurveOethEthPoolMocks();
+  await deployCurvefrxEthOethPoolMocks();
   await deployCompoundStrategy();
   await deployAaveStrategy();
   await deployCurveLibraries();
@@ -1222,6 +1384,8 @@ const main = async () => {
   await deployConvexStrategy();
   await deployConvexOUSDMetaStrategy();
   await deployConvexLUSDMetaStrategy();
+  await deployConvexOethEthAMOStrategy();
+  await deployConvexFrxETHAMOStrategy();
   await deployConvexFrxEthWethStrategy();
   await deployFraxEthStrategy();
   const [harvesterProxy, oethHarvesterProxy] = await deployHarvesters();

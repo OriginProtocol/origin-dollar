@@ -423,24 +423,33 @@ contract ConvexOUSDMetaStrategy is BaseConvexAMOStrategy {
         onlyAsset(_asset)
         returns (uint256 balance)
     {
-        // OUSD/3CRV Metapool LP tokens in this strategy contract.
+        // 3Pool LP tokens (3Crv) in this strategy contract.
         // This should generally be nothing as we should always stake
         // the full balance in the Gauge, but include for safety
-        uint256 curveLpTokens = IERC20(asset).balanceOf(address(this));
+        uint256 threePoolTokens = IERC20(asset).balanceOf(address(this));
+        if (threePoolTokens > 0) {
+            // Getting the virtual price is gas expensive so only do if we have Cuve LP tokens
+            balance = threePoolTokens.mulTruncate(
+                curve3Pool.get_virtual_price()
+            );
+        }
 
-        /* We intentionally omit the metapoolLp tokens held by the metastrategyContract
+        /* We intentionally omit the Curve Metapool LP tokens held by this strategy
          * since the contract should never (except in the middle of deposit/withdrawal
          * transaction) hold any amount of those tokens in normal operation. There
          * could be tokens sent to it by a 3rd party and we decide to actively ignore
          * those.
          */
-        curveLpTokens += cvxRewardStaker.balanceOf(address(this));
+
+        // Curve LP tokens in the Convex rewards pool
+        uint256 curveLpTokens = cvxRewardStaker.balanceOf(address(this));
 
         if (curveLpTokens > 0) {
             // Getting the virtual price is gas expensive so only do if we have Cuve LP tokens
-            balance = curveLpTokens.mulTruncate(curvePool.get_virtual_price());
+            balance += curveLpTokens.mulTruncate(curvePool.get_virtual_price());
         }
 
+        // Scale down from 18 decimals used by 3Crv to asset decimals. eg 6 for USDC or USDT
         (, uint256 assetDecimals) = _coinIndexDecimals(_asset);
         balance = balance.scaleBy(assetDecimals, 18) / THREEPOOL_ASSET_COUNT;
     }

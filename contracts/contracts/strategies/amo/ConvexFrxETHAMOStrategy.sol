@@ -76,7 +76,9 @@ contract ConvexFrxETHAMOStrategy is BaseConvexAMOStrategy {
     function _withdrawAllAsset(address _recipient) internal override {
         uint256 vaultAssets = asset.balanceOf(address(this));
 
-        _withdrawAsset(address(asset), vaultAssets, _recipient);
+        if (vaultAssets > 0) {
+            _withdrawAsset(address(asset), vaultAssets, _recipient);
+        }
     }
 
     /***************************************
@@ -92,14 +94,23 @@ contract ConvexFrxETHAMOStrategy is BaseConvexAMOStrategy {
         public
         view
         override
+        onlyAsset(_asset)
         returns (uint256 balance)
     {
-        require(_asset == address(asset), "Unsupported asset");
+        // Get the Curve LP tokens staked in the Convex pool
+        uint256 curveLpTokens = cvxRewardStaker.balanceOf(address(this));
 
-        // TODO - check for tokens in this strategy?
-        uint256 lpTokens = cvxRewardStaker.balanceOf(address(this));
-        if (lpTokens > 0) {
-            balance += (lpTokens * curvePool.get_virtual_price()) / 1e18;
+        /* We intentionally omit any Curve LP tokens held by this strategy that
+         * may have been left by a withdraw as this should be dust amounts.
+         * Under normal operation, there should not be any frxETH assets in this strategy so it is also ignore.
+         * We also ignore any assets accedentally sent to this contract by a 3rd party. eg ETH.
+         */
+
+        if (curveLpTokens > 0) {
+            balance = (curveLpTokens * curvePool.get_virtual_price()) / 1e18;
+
+            // Unlike the OUSD Vault assets, the OETH Vault assets do not need to be scaled down from 18 decimals
+            // as they are all 18 decimals
         }
     }
 
