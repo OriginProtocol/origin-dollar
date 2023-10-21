@@ -32,7 +32,7 @@ class BalancerPool extends Pool {
     const amountsIn = Array(
       this.assetAddressArray.length + assetIndexAdjustement
     ).fill(BigNumber.from("0"));
-    const attackerAddress = sAttacker.address || sAttacker._address
+    const attackerAddress = sAttacker.address || sAttacker._address;
 
     amountsIn[(await this.getAssetIndex(asset)) + assetIndexAdjustement] =
       amount;
@@ -74,7 +74,7 @@ class BalancerPool extends Pool {
   async untiltPool(sAttacker, attackingAsset) {
     // for composableStable pools do not encode the BPT token in the user data request
     const assetIndexAdjustement = this.poolType == "composableStable" ? -1 : 0;
-    const attackerAddress = sAttacker.address || sAttacker._address
+    const attackerAddress = sAttacker.address || sAttacker._address;
 
     /* encode user data for pool joining
      *
