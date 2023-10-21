@@ -32,6 +32,7 @@ class BalancerPool extends Pool {
     const amountsIn = Array(
       this.assetAddressArray.length + assetIndexAdjustement
     ).fill(BigNumber.from("0"));
+    const attackerAddress = sAttacker.address || sAttacker._address
 
     amountsIn[(await this.getAssetIndex(asset)) + assetIndexAdjustement] =
       amount;
@@ -55,8 +56,8 @@ class BalancerPool extends Pool {
 
     await this.balancerVault.connect(sAttacker).joinPool(
       this.poolId,
-      sAttacker.address, // sender
-      sAttacker.address, // recipient
+      attackerAddress, // sender
+      attackerAddress, // recipient
       [
         //JoinPoolRequest
         this.assetAddressArray, // assets
@@ -73,6 +74,7 @@ class BalancerPool extends Pool {
   async untiltPool(sAttacker, attackingAsset) {
     // for composableStable pools do not encode the BPT token in the user data request
     const assetIndexAdjustement = this.poolType == "composableStable" ? -1 : 0;
+    const attackerAddress = sAttacker.address || sAttacker._address
 
     /* encode user data for pool joining
      *
@@ -87,7 +89,7 @@ class BalancerPool extends Pool {
       ["uint256", "uint256", "uint256"],
       [
         0,
-        await this.bptToken.balanceOf(sAttacker.address),
+        await this.bptToken.balanceOf(attackerAddress),
         BigNumber.from(
           (
             (await this.getAssetIndex(attackingAsset)) + assetIndexAdjustement
@@ -102,8 +104,8 @@ class BalancerPool extends Pool {
 
     await this.balancerVault.connect(sAttacker).exitPool(
       this.poolId,
-      sAttacker.address, // sender
-      sAttacker.address, // recipient
+      attackerAddress, // sender
+      attackerAddress, // recipient
       [
         //ExitPoolRequest
         this.assetAddressArray, // assets
