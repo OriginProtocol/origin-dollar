@@ -11,6 +11,13 @@ const {
 const { ethers } = hre;
 
 async function hotDeployBalancerRethWETHStrategy(balancerREthFixture) {
+  /* Because of the way hardhat fixture caching works it is vital that
+   * the fixtures are loaded before the hot-deployment of contracts. If the
+   * contracts are hot-deployed and fixture load happens afterwards the deployed
+   * contract is not visible in deployments.
+   */
+  const fixture = await balancerREthFixture();
+  const { balancerREthStrategy } = fixture;
   const { deploy } = deployments;
 
   // deploy this contract that exposes internal function
@@ -33,9 +40,6 @@ async function hotDeployBalancerRethWETHStrategy(balancerREthFixture) {
     ],
   });
 
-  const fixture = await balancerREthFixture();
-  const { balancerREthStrategy } = fixture;
-
   await replaceContractAt(
     balancerREthStrategy.address,
     await ethers.getContract("BalancerMetaPoolTestStrategy")
@@ -54,6 +58,13 @@ async function hotDeployBalancerRethWETHStrategy(balancerREthFixture) {
 async function hotDeployBalancerFrxEethRethWstEThStrategy(
   balancerFrxETHwstETHeETHFixture
 ) {
+  /* Because of the way hardhat fixture caching works it is vital that
+   * the fixtures are loaded before the hot-deployment of contracts. If the
+   * contracts are hot-deployed and fixture load happens afterwards the deployed
+   * contract is not visible in deployments.
+   */
+  const fixture = await balancerFrxETHwstETHeETHFixture();
+  const { balancerSfrxWstRETHStrategy } = fixture;
   const { deploy } = deployments;
 
   // deploy this contract that exposes internal function
@@ -81,9 +92,6 @@ async function hotDeployBalancerFrxEethRethWstEThStrategy(
       addresses.mainnet.wstETH_sfrxETH_rETH_AuraRewards, // Address of the Aura rewards contract
     ],
   });
-
-  const fixture = await balancerFrxETHwstETHeETHFixture();
-  const { balancerSfrxWstRETHStrategy } = fixture;
 
   await replaceContractAt(
     balancerSfrxWstRETHStrategy.address,
