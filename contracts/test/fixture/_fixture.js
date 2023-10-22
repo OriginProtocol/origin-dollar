@@ -8,6 +8,10 @@ const addresses = require("../../utils/addresses");
 const { setFraxOraclePrice } = require("../../utils/frax");
 require("./_global-hooks");
 
+const {
+  hotDeployBalancerRethWETHStrategy,
+  hotDeployBalancerFrxEethRethWstEThStrategy,
+} = require("./_hot-deploy");
 const { replaceContractAt } = require("../../utils/deploy");
 const {
   balancer_rETH_WETH_PID,
@@ -974,8 +978,8 @@ async function balancerFrxETHwstETHeETHFixture(
   const {
     oethVault,
     timelock,
-    frxEth,
-    stEth,
+    frxETH,
+    stETH,
     reth,
     balancerSfrxWstRETHStrategy,
     josh,
@@ -991,13 +995,13 @@ async function balancerFrxETHwstETHeETHFixture(
     await oethVault
       .connect(timelock)
       .setAssetDefaultStrategy(
-        stEth.address,
+        stETH.address,
         balancerSfrxWstRETHStrategy.address
       );
     await oethVault
       .connect(timelock)
       .setAssetDefaultStrategy(
-        frxEth.address,
+        frxETH.address,
         balancerSfrxWstRETHStrategy.address
       );
   }
@@ -1063,6 +1067,34 @@ async function balancerFrxETHwstETHeETHFixture(
     ],
     josh.getAddress(),
     60 // use 60% of the account balances
+  );
+
+  return fixture;
+}
+
+/**
+ * Configure a Vault with the Balancer strategy for rETH/WETH pool and
+ * replace the byte code with the one that exposes internal functions
+ */
+async function balancerRethWETHExposeFunctionFixture() {
+  const fixture = await hotDeployBalancerRethWETHStrategy(balancerREthFixture);
+  const { balancerREthStrategy, josh } = fixture;
+
+  // IMPORTANT: remove once rETH/WETH is redeployed with the new code base
+  await balancerREthStrategy.connect(josh).cachePoolAssets();
+  // IMPORTANT also remove this one
+  await balancerREthStrategy.connect(josh).cacheRateProviders();
+
+  return fixture;
+}
+
+/**
+ * Configure a Vault with the Balancer strategy for frxEth/Reth/wstEth pool and
+ * replace the byte code with the one that exposes internal functions
+ */
+async function balancerSfrxETHRETHWstETHExposeFunctionFixture() {
+  const fixture = await hotDeployBalancerFrxEethRethWstEThStrategy(
+    balancerFrxETHwstETHeETHFixture
   );
 
   return fixture;
@@ -1620,7 +1652,10 @@ async function resetAllowance(
 }
 
 async function mintWETH(weth, recipient, amount = "100") {
-  await _hardhatSetBalance(recipient.address, (Number(amount) * 2).toString());
+  await _hardhatSetBalance(
+    recipient.address || recipient._address,
+    (Number(amount) * 2).toString()
+  );
   await weth.connect(recipient).deposit({
     value: parseEther(amount),
   });
@@ -2162,6 +2197,8 @@ module.exports = {
   oeth1InchSwapperFixture,
   oethCollateralSwapFixture,
   ousdCollateralSwapFixture,
+  balancerRethWETHExposeFunctionFixture,
+  balancerSfrxETHRETHWstETHExposeFunctionFixture,
   fluxStrategyFixture,
   mineBlocks,
   nodeSnapshot,
