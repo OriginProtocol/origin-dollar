@@ -21,17 +21,17 @@ contract BalancerMetaPoolStrategy is BaseAuraStrategy {
 
      * For Composable stable pools using IBalancerVault.WeightedPoolExitKind is not
      * ok since the enum values are in different order as they are in MetaStable pools.
-     * From the pool code: 
+     * Value should be "1". From the pool code:
      * 
      * enum ExitKind { EXACT_BPT_IN_FOR_ONE_TOKEN_OUT, BPT_IN_FOR_EXACT_TOKENS_OUT, EXACT_BPT_IN_FOR_ALL_TOKENS_OUT }
      */
-    uint256 internal immutable balancerBptInExactTokensOutIndex;
+    uint256 public immutable balancerBptInExactTokensOutIndex;
 
     /* we need to call EXACT_BPT_IN_FOR_TOKENS_OUT when doing withdrawAll.
      * In meta stable pools that enum item with value 1 and for Composable stable pools
      * that is enum item with value 2.
      */
-    uint256 internal immutable balancerExactBptInTokensOutIndex;
+    uint256 public immutable balancerExactBptInTokensOutIndex;
 
     int256[50] private ___reserved;
 
