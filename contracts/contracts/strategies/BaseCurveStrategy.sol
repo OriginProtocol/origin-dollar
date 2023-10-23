@@ -3,7 +3,18 @@ pragma solidity ^0.8.0;
 
 /**
  * @title Curve Pool Strategy
- * @notice Investment strategy for investing stablecoins via a Curve pool. eg 3Pool
+ * @notice Investment strategy for investing in a Curve pool. eg 3Pool
+ * @dev This strategy can NOT be set as the Vault's default strategy for an asset.
+ * This is because deposits and withdraws can be sandwich attacked if not protected
+ * by the `VaultValueChecker`. Only the trusted `Strategist` or `Governor` can call
+ * the Vault deposit and withdraw functions for a strategy. When they do, they must call
+ * `VaultValueChecker.takeSnapshot` before and `VaultValueChecker.checkDelta` afterwards.
+ *
+ * When implementing for a new Curve pool, read-only reentrancy needs to be checked.
+ * This is possible in some Curve pools when using native ETH or a token that has hooks
+ * that can hijack execution. For example, the Curve ETH/stETH pool is vulnerable to
+ * read-only reentry.
+ * https://x.com/danielvf/status/1657019677544001536
  * @author Origin Protocol Inc
  */
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -82,8 +93,12 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
 
     /**
      * @notice Deposit a vault asset into the Curve pool.
-     * @dev This assumes the vault has already transferred the asset to this strategy contract.
-     * @dev An invalid asset will fail in _getCoinIndex with "Unsupported asset".
+     * This assumes the vault has already transferred the asset to this strategy contract.
+     *
+     * `deposit` must be protected by the `VaultValueChecker` when the `Strategist` or `Governor`
+     * calls `depositToStrategy` on the `Vault`.
+     *
+     * @dev An invalid `_asset` will fail in `_getCoinIndex` with "Unsupported asset".
      * @param _asset Address of asset to deposit
      * @param _amount Amount of asset to deposit
      */
@@ -177,7 +192,11 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
 
     /**
      * @notice Withdraw a single asset from the Curve pool.
-     * @dev An invalid asset will fail in _getCoinIndex with "Unsupported asset".
+     *
+     * `withdraw` must be protected by the `VaultValueChecker` when the `Strategist` or `Governor`
+     * calls `withdrawFromStrategy` on the `Vault`.
+     *
+     * @dev An invalid `_asset` will fail in `_getCoinIndex` with "Unsupported asset".
      * @param _recipient Address to receive withdrawn asset
      * @param _asset Address of asset to withdraw
      * @param _amount Amount of asset to withdraw
@@ -198,7 +217,10 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         // This also validates the asset is supported by the strategy
         uint256 coinIndex = _getCoinIndex(_asset);
 
-        // Calculate the amount of LP tokens required to withdraw the asset
+        // Calculate the amount of Curve LP tokens required to withdraw the asset.
+        // Depending on the implementation, this may be a little more than
+        // what's required which will leave a small amount of Curve LP tokens
+        // in this strategy contract. This will be picked up on the next deposit or withdraw.
         uint256 maxCurveLpTokens = CurveThreeCoinLib.calcWithdrawLpAmount(
             CURVE_POOL,
             coinIndex,
@@ -223,6 +245,8 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
 
     /**
      * @notice Remove all assets from the Curve pool and send them to Vault contract.
+     * @dev This must be protected by the `VaultValueChecker` when the `Strategist` or `Governor`
+     * calls `withdrawAllFromStrategy` or `withdrawAllFromStrategies` on the `Vault`.
      * This will include all assets in the Curve pool.
      */
     function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
@@ -255,8 +279,10 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @notice Get the total asset value held in the platform.
-     * @dev An invalid asset will fail in _getAssetDecimals with "Unsupported asset"
+     * @notice Get the asset's share of value held in this strategy. This is the total value
+     * of the stategy's Curve LP tokens divided by the number of Curve pool assets.
+     * The average is taken prevent the asset balances being manipulated by tilting the Curve pool.
+     * @dev An invalid `_asset` will fail in `_getAssetDecimals` with "Unsupported asset"
      * @param _asset      Address of the asset
      * @return balance    Total value of the asset in the platform
      */
@@ -273,8 +299,16 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         uint256 totalLpTokens = IERC20(CURVE_LP_TOKEN).balanceOf(address(this));
 
         if (totalLpTokens > 0) {
+            // Convert the Curve LP tokens controlled by this strategy to a value in USD or ETH
             uint256 value = (totalLpTokens *
                 ICurvePool(CURVE_POOL).get_virtual_price()) / 1e18;
+
+            // Scale the value down if the asset has less than 18 decimals. eg USDC or USDT
+            // and divide by the number of assets in the Curve pool. eg 3 for the 3Pool
+            // An average is taken to prevent the balances being manipulated by tilting the Curve pool.
+            // No matter what the balance of the asset in the Curve pool is, the value of each asset will
+            // be the average of the Curve pool's total value.
+            // _getAssetDecimals will revert if _asset is an invalid asset.
             balance =
                 value.scaleBy(_getAssetDecimals(_asset), 18) /
                 CURVE_POOL_ASSETS_COUNT;
@@ -322,6 +356,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
     /**
      * @dev Get the Curve pool index of the asset.
      * This is reading from immutable variables to avoid costly storage reads.
+     * Revert if the `_asset` is not supported by the Curve pool.
      */
     function _getCoinIndex(address _asset)
         internal
@@ -342,6 +377,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
     /**
      * @dev Get the number of decimals of the asset token.
      * This is reading from immutable variables to avoid costly storage reads.
+     * Revert if the `_asset` is not supported by the Curve pool.
      */
     function _getAssetDecimals(address _asset)
         internal
@@ -366,6 +402,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
      * @dev Get the token address for a given index value in a Curve pool.
      * @param _coinIndex Index value of the coin in the Curve pool
      * This is reading from immutable variables to avoid costly storage reads.
+     * Revert if the `_coinIndex` is not supported by the Curve pool.
      */
     function _getAsset(uint256 _coinIndex)
         internal
