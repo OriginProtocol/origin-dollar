@@ -131,7 +131,8 @@ contract ConvexStrategy is BaseCurveStrategy {
      * the Harvester collects more rewards and swaps them for a vault asset.
      */
     function _lpWithdrawAll() internal override {
-        // Unstake all the Convex LP token and withdraw all the Curve LP tokens from the Convex pool to this strategy contract.
+        // Unstake all the Convex LP token and withdraw all the Curve LP tokens
+        // from the Convex pool to this strategy contract.
         IRewardStaking(cvxRewardStaker).withdrawAndUnwrap(
             IRewardStaking(cvxRewardStaker).balanceOf(address(this)),
             false // do not claim Convex token rewards
