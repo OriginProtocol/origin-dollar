@@ -81,7 +81,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @notice Deposit an vault asset into the Curve pool.
+     * @notice Deposit a vault asset into the Curve pool.
      * @dev This assumes the vault has already transferred the asset to this strategy contract.
      * @dev An invalid asset will fail in _getCoinIndex with "Unsupported asset".
      * @param _asset Address of asset to deposit
@@ -176,7 +176,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
     function _lpWithdrawAll() internal virtual;
 
     /**
-     * @notice Withdraw an single asset from the Curve pool.
+     * @notice Withdraw a single asset from the Curve pool.
      * @dev An invalid asset will fail in _getCoinIndex with "Unsupported asset".
      * @param _recipient Address to receive withdrawn asset
      * @param _asset Address of asset to withdraw
