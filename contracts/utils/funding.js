@@ -159,8 +159,15 @@ const fundAccounts = async () => {
 
   const ousdCoins = [dai, usdc, usdt, tusd, ogn];
   const oethCoins = [weth, rETH, stETH, frxETH];
-  const allCoins = [...ousdCoins, ...oethCoins];
-
+  const skipOUSDCoins = process.env.SKIP_OUSD_COINS == "true";
+  const skipOETHCoins = process.env.SKIP_OETH_COINS == "true";
+  let allCoins = [];
+  if (!skipOUSDCoins) {
+    allCoins = [...allCoins, ...ousdCoins];
+  }
+  if (!skipOETHCoins) {
+    allCoins = [...allCoins, ...oethCoins];
+  }
   const signers = await hre.ethers.getSigners();
 
   const addressPromises = new Array(10)

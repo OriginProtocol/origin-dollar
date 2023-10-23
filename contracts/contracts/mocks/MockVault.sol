@@ -6,7 +6,7 @@ import { StableMath } from "../utils/StableMath.sol";
 import { VaultInitializer } from "../vault/VaultInitializer.sol";
 import "../utils/Helpers.sol";
 
-contract MockVault is VaultCore, VaultInitializer {
+contract MockVault is VaultCore {
     using StableMath for uint256;
 
     uint256 storedTotalValue;

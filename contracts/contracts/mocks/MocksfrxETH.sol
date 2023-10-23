@@ -5,8 +5,6 @@ import "./MintableERC20.sol";
 
 contract MocksfrxETH is MintableERC20 {
     address public frxETH;
-    address public sfrxETH;
-    mapping(address => uint256) public assetBalance;
 
     constructor(address _frxETH) ERC20("sfrxETH", "sfrxETH") {
         frxETH = _frxETH;
@@ -22,19 +20,24 @@ contract MocksfrxETH is MintableERC20 {
     {
         ERC20(frxETH).transferFrom(msg.sender, address(this), assets);
 
-        assetBalance[receiver] += assets;
+        _mint(receiver, assets);
 
         return assets;
     }
 
     function maxWithdraw(address owner) external view returns (uint256) {
-        return assetBalance[owner];
+        return balanceOf(owner);
     }
 
     function setMaxWithdrawableBalance(address owner, uint256 balance)
         external
     {
-        assetBalance[owner] = balance;
+        uint256 currentBalance = balanceOf(owner);
+        if (currentBalance > balance) {
+            _burn(owner, currentBalance - balance);
+        } else if (balance > currentBalance) {
+            _mint(owner, balance - currentBalance);
+        }
     }
 
     function redeem(
@@ -42,7 +45,7 @@ contract MocksfrxETH is MintableERC20 {
         address receiver,
         address owner
     ) external returns (uint256 assets) {
-        assetBalance[owner] -= shares;
+        _burn(owner, shares);
 
         ERC20(frxETH).transfer(receiver, shares);
 
@@ -54,7 +57,7 @@ contract MocksfrxETH is MintableERC20 {
         address receiver,
         address owner
     ) external returns (uint256 shares) {
-        assetBalance[owner] -= shares;
+        _burn(owner, shares);
 
         ERC20(frxETH).transfer(receiver, shares);
 
@@ -66,8 +69,7 @@ contract MocksfrxETH is MintableERC20 {
         payable
         returns (uint256 shares)
     {
-        assetBalance[recipient] += msg.value;
-
+        _mint(recipient, msg.value);
         shares = msg.value;
     }
 }

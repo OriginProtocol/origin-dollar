@@ -24,7 +24,11 @@ const {
 
 const addresses = require("../utils/addresses.js");
 const { getTxOpts } = require("../utils/tx");
-const { proposeArgs, proposeGovernanceArgs } = require("../utils/governor");
+const {
+  proposeArgs,
+  proposeGovernanceArgs,
+  accountCanCreateProposal,
+} = require("../utils/governor");
 const governorFiveAbi = require("../abi/governor_five.json");
 const timelockAbi = require("../abi/timelock.json");
 
@@ -265,8 +269,8 @@ const executeProposal = async (proposalArgs, description, opts = {}) => {
     log("Advancing time by 61 seconds for TimeLock delay.");
     await advanceTime(61);
   } else {
-    log("Advancing time by 48 hours + 1 second for TimeLock delay.");
-    await advanceTime(172801);
+    log("Advancing time by 3 days for TimeLock delay.");
+    await advanceTime(259200);
   }
 
   await withConfirmation(
@@ -303,8 +307,8 @@ const executeProposalOnFork = async ({
     log(`Proposal ${proposalId} queued`);
   }
 
-  log("Advancing time by 48 hours + 1 second for TimeLock delay.");
-  await advanceTime(172801);
+  log("Advancing time by 3 days for TimeLock delay.");
+  await advanceTime(259200);
 
   await withConfirmation(
     governor
@@ -620,7 +624,10 @@ const submitProposalToOgvGovernance = async (
   log(`Submitting proposal for ${description}`);
   log(`Args: ${JSON.stringify(proposalArgs, null, 2)}`);
 
-  await configureGovernanceContractDurations(opts.reduceQueueTime);
+  // overridig storage slots needs to/can only run in forked environment
+  if (!isMainnet) {
+    await configureGovernanceContractDurations(opts.reduceQueueTime);
+  }
 
   let signer;
   // we are submitting proposal using the deployer
@@ -661,8 +668,19 @@ const submitProposalToOgvGovernance = async (
 /**
  * Sanity checks to perform before running the deploy
  */
-const sanityCheckOgvGovernance = async () => {
+const sanityCheckOgvGovernance = async ({ deployerIsProposer = false }) => {
   if (isMainnet) {
+    // only applicable when OGV governance is the governor
+    if (deployerIsProposer) {
+      const governorFive = await getGovernorFive();
+      const { deployerAddr } = await getNamedAccounts();
+      if (!(await accountCanCreateProposal(governorFive, deployerAddr))) {
+        throw new Error(
+          `Deployer ${deployerAddr} doesn't have enough voting power to create a proposal.`
+        );
+      }
+    }
+
     const VaultProxy = await ethers.getContract("VaultProxy");
     const VaultAdmin = await ethers.getContractAt(
       "VaultAdmin",
@@ -883,7 +901,7 @@ function deploymentWithGovernanceProposal(opts, fn) {
       return;
     }
 
-    await sanityCheckOgvGovernance();
+    await sanityCheckOgvGovernance({ deployerIsProposer });
 
     const proposal = await fn(tools);
     const propDescription = proposal.name;
@@ -1230,6 +1248,16 @@ function deploymentWithGuardianGovernor(opts, fn) {
   return main;
 }
 
+async function replaceContractAt(targetAddress, mockContract) {
+  const signer = (await hre.ethers.getSigners())[0];
+  const mockCode = await signer.provider.getCode(mockContract.address);
+
+  await hre.network.provider.request({
+    method: "hardhat_setCode",
+    params: [targetAddress, mockCode],
+  });
+}
+
 module.exports = {
   log,
   sleep,
@@ -1243,4 +1271,5 @@ module.exports = {
   deploymentWithProposal,
   deploymentWithGovernanceProposal,
   deploymentWithGuardianGovernor,
+  replaceContractAt,
 };

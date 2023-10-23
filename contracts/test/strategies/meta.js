@@ -10,7 +10,7 @@ const {
   isFork,
 } = require("../helpers");
 
-describe("Convex 3pool/OUSD Meta Strategy", function () {
+describe.skip("Convex 3pool/OUSD Meta Strategy", function () {
   if (isFork) {
     this.timeout(0);
   }

@@ -1,11 +1,27 @@
+const { BigNumber } = require("ethers");
+
+const MAX_UINT256 = BigNumber.from(
+  "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+);
 const threeCRVPid = 9;
 const metapoolLPCRVPid = 56;
 const lusdMetapoolLPCRVPid = 33;
 const oethPoolLpPID = 174;
-const { BigNumber } = require("ethers");
-const MAX_UINT256 = BigNumber.from(
-  "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
-);
+
+// stETH/WETH
+const aura_stETH_WETH_PID = 115;
+const balancer_stETH_WETH_PID =
+  "0x32296969ef14eb0c6d29669c550d4a0449130230000200000000000000000080";
+
+// wstETH/sfrcETH/rETH
+const aura_wstETH_sfrxETH_rETH_PID = 50;
+const balancer_wstETH_sfrxETH_rETH_PID =
+  "0x42ed016f826165c2e5976fe5bc3df540c5ad0af700000000000000000000058b";
+
+// rETH/WETH
+const aura_rETH_WETH_PID = 109;
+const balancer_rETH_WETH_PID =
+  "0x1e19cf2d73a72ef1332c882f20534b6519be0276000200000000000000000112";
 
 module.exports = {
   threeCRVPid,
@@ -13,6 +29,12 @@ module.exports = {
   lusdMetapoolLPCRVPid,
   oethPoolLpPID,
   MAX_UINT256,
+  aura_stETH_WETH_PID,
+  balancer_stETH_WETH_PID,
+  aura_wstETH_sfrxETH_rETH_PID,
+  balancer_wstETH_sfrxETH_rETH_PID,
+  aura_rETH_WETH_PID,
+  balancer_rETH_WETH_PID,
 };
 
 // These are all the metapool ids. For easier future reference

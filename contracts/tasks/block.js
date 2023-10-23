@@ -9,11 +9,13 @@ async function getBlock(block) {
 }
 
 async function getDiffBlocks(taskArguments, hre) {
+  const output = taskArguments.output ? console.log : log;
+
   // Get the block to get all the data from
   const blockTag = !taskArguments.block
     ? await hre.ethers.provider.getBlockNumber()
     : taskArguments.block;
-  console.log(`block: ${blockTag}`);
+  output(`block: ${blockTag}`);
   const fromBlockTag = taskArguments.fromBlock || 0;
   const diffBlocks = fromBlockTag > 0;
 
