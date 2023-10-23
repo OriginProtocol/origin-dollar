@@ -347,7 +347,10 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         IERC20 asset = IERC20(_asset);
         // Approve the Curve pool, eg 3Pool, to transfer an asset (required for adding liquidity)
         // Need to handle USDT so have to set to zero first
+
+        // slither-disable-next-line unused-return
         asset.approve(CURVE_POOL, 0);
+        // slither-disable-next-line unused-return
         asset.approve(CURVE_POOL, type(uint256).max);
     }
 
