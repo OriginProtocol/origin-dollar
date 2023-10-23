@@ -1069,6 +1069,8 @@ async function balancerFrxETHwstETHeETHFixture(
     60 // use 60% of the account balances
   );
 
+  // set the price to an acceptable level so that fork tests don't fail
+  // even when it de-pegs. 
   await setFraxOraclePrice(parseUnits("0.999", 18));
   return fixture;
 }
