@@ -33,7 +33,9 @@ forkOnlyDescribe("ForkTest: Convex frxETH/WETH Strategy", function () {
       expect(await convexFrxEthWethStrategy.MAX_SLIPPAGE()).to.equal(
         parseUnits("0.01", 18)
       );
-      expect(await convexFrxEthWethStrategy.CURVE_POOL_ASSETS_COUNT()).to.equal(2);
+      expect(await convexFrxEthWethStrategy.CURVE_POOL_ASSETS_COUNT()).to.equal(
+        2
+      );
       expect(await convexFrxEthWethStrategy.CURVE_POOL()).to.equal(
         addresses.mainnet.CurveFrxEthWethPool
       );
