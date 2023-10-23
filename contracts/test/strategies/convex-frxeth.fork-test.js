@@ -107,6 +107,37 @@ forkOnlyDescribe("ForkTest: Convex frxETH/WETH Strategy", function () {
           .be.true;
       });
     });
+    it("Should be able to re-approve tokens by Governor", async () => {
+      const { convexFrxEthWethStrategy, frxETH, weth, timelock } = fixture;
+      await convexFrxEthWethStrategy.connect(timelock).safeApproveAllTokens();
+      expect(
+        await frxETH.allowance(
+          convexFrxEthWethStrategy.address,
+          addresses.mainnet.CurveFrxEthWethPool
+        )
+      ).to.eq(MAX_UINT256);
+      expect(
+        await weth.allowance(
+          convexFrxEthWethStrategy.address,
+          addresses.mainnet.CurveFrxEthWethPool
+        )
+      ).to.eq(MAX_UINT256);
+
+      // Strategy approves the Convex Booster to stake Curve Pool LP tokens
+      const curvePoolLpToken = await ethers.getContractAt(
+        "IERC20",
+        addresses.mainnet.CurveFrxEthWethPool
+      );
+      expect(
+        await curvePoolLpToken.allowance(
+          convexFrxEthWethStrategy.address,
+          addresses.mainnet.CVXBooster
+        )
+      ).to.eq(MAX_UINT256);
+
+      // Run a second time
+      await convexFrxEthWethStrategy.connect(timelock).safeApproveAllTokens();
+    });
   });
 
   describe("with no assets in the vault", () => {
