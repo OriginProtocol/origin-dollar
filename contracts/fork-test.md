@@ -68,3 +68,6 @@ gitGraph
 - When `forking.url` is set for a network in `hardhat.config.js` file, hardhat internally spins up its own node (aka Hardhat Runtime Environment or HRE) with the network name `hardhat`, forks the network and snapshots it to run the tests against. 
 - No changes are persisted to the actual node. All deployments and contract calls are only made on the forked node, not the actual node
 
+### Environment Variables used on CI
+- `MAX_CHUNKS` - The number of runners to use to run fork tests parallely on CI, hardcoded to 4 in defi.yml file
+- `CHUNK_ID` - Current runner ID (will be set by Github Actions), see defi.yml for the definition
