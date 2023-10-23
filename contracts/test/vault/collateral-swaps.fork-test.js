@@ -9,12 +9,12 @@ const {
   ousdCollateralSwapFixture,
 } = require("../_fixture");
 const { getIInchSwapData, recodeSwapData } = require("../../utils/1Inch");
-const { decimalsFor, forkOnlyDescribe, isCI } = require("../helpers");
+const { decimalsFor, isCI } = require("../helpers");
 const { resolveAsset } = require("../../utils/assets");
 
 const log = require("../../utils/logger")("test:fork:swaps");
 
-forkOnlyDescribe("ForkTest: Collateral swaps", function () {
+describe("ForkTest: Collateral swaps", function () {
   this.timeout(0);
 
   // Retry up to 3 times on CI
