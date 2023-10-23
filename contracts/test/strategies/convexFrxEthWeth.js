@@ -44,7 +44,9 @@ describe("Convex frxETH/ETH Strategy", function () {
   describe("Setup", () => {
     it("Should have immutables set", async () => {
       const { frxETH, weth, convexFrxEthWethStrategy } = fixture;
-      expect(await convexFrxEthWethStrategy.CURVE_BASE_ASSETS()).to.equal(2);
+      expect(await convexFrxEthWethStrategy.CURVE_POOL_ASSETS_COUNT()).to.equal(
+        2
+      );
       expect(await convexFrxEthWethStrategy.coin0()).to.equal(weth.address);
       expect(await convexFrxEthWethStrategy.coin1()).to.equal(frxETH.address);
       expect(await convexFrxEthWethStrategy.coin2()).to.equal(addresses.zero);

@@ -67,7 +67,7 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
         InitConfig calldata initConfig
     ) external onlyGovernor initializer {
         require(
-            _assets.length == CURVE_BASE_ASSETS,
+            _assets.length == CURVE_POOL_ASSETS_COUNT,
             "Must have exactly three assets"
         );
         // Should be set prior to abstract initialize call otherwise
@@ -136,7 +136,7 @@ abstract contract BaseConvexMetaStrategy is BaseCurveStrategy {
         }
 
         uint256 assetDecimals = Helpers.getDecimals(_asset);
-        balance = balance.scaleBy(assetDecimals, 18) / CURVE_BASE_ASSETS;
+        balance = balance.scaleBy(assetDecimals, 18) / CURVE_POOL_ASSETS_COUNT;
     }
 
     /**
