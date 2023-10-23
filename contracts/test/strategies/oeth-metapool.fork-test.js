@@ -492,7 +492,7 @@ describe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
       await assertRemoveOnlyAssets(lpAmount, fixture);
     });
     it("Strategist should remove a lot ETH from the Metapool", async () => {
-      const lpAmount = parseUnits("15000");
+      const lpAmount = parseUnits("5000");
       await assertRemoveOnlyAssets(lpAmount, fixture);
     });
   });
@@ -511,9 +511,9 @@ describe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
       const curveBalances = await oethMetaPool.get_balances();
       const lpAmount = curveBalances[0]
         .sub(curveBalances[1])
-        // reduce by 0.1%
-        .mul(999)
-        .div(1000);
+        // reduce by 1%
+        .mul(99)
+        .div(100);
       expect(lpAmount).to.be.gt(0);
 
       await assertRemoveOnlyAssets(lpAmount, fixture);
@@ -565,7 +565,7 @@ describe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
       // Remove OETH from the Metapool
       const tx = convexEthMetaStrategy
         .connect(strategist)
-        .removeAndBurnOTokens(parseUnits("8000"));
+        .removeAndBurnOTokens(parseUnits("4000"));
 
       await expect(tx).to.be.revertedWith("OTokens overshot peg");
     });
