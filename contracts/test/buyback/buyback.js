@@ -11,62 +11,23 @@ describe("Buyback", function () {
     fixture = await loadFixture();
   });
 
-  it("Should swap OETH and OUSD for OGV and CVX", async () => {
-    const {
-      oeth,
-      ousd,
-      cvx,
-      ogv,
-      buyback,
-      strategist,
-      cvxLocker,
-      rewardsSource,
-    } = fixture;
-
-    await buyback
-      .connect(strategist)
-      .swap(
-        oethUnits("1"),
-        oethUnits("100000"),
-        oethUnits("100"),
-        oethUnits("1000"),
-        oethUnits("80000"),
-        oethUnits("80")
-      );
-
-    // Check balance after swap
-    await expect(buyback).to.have.a.balanceOf(oethUnits("2"), oeth);
-    await expect(buyback).to.have.a.balanceOf(oethUnits("2000"), ousd);
-
-    // Ensure OGV went to RewardsSource contract
-    await expect(rewardsSource).to.have.balanceOf(oethUnits("180000"), ogv);
-
-    // Ensure it locked CVX
-    expect(await cvxLocker.lockedBalanceOf(strategist.address)).to.equal(
-      ousdUnits("180")
-    );
-    await expect(cvxLocker).to.have.balanceOf(ousdUnits("180"), cvx);
-  });
-
   it("Should swap OETH for OGV and CVX", async () => {
     const {
       oeth,
-      ousd,
       cvx,
       ogv,
-      buyback,
+      oethBuyback,
       strategist,
       cvxLocker,
       rewardsSource,
     } = fixture;
 
-    await buyback
+    await oethBuyback
       .connect(strategist)
-      .swapOETH(oethUnits("1"), oethUnits("100000"), oethUnits("100"));
+      .swap(oethUnits("1"), oethUnits("100000"), oethUnits("100"));
 
     // Check balance after swap
-    await expect(buyback).to.have.a.balanceOf(oethUnits("2"), oeth);
-    await expect(buyback).to.have.a.balanceOf(oethUnits("3000"), ousd);
+    await expect(oethBuyback).to.have.a.balanceOf(oethUnits("2"), oeth);
 
     // Ensure OGV went to RewardsSource contract
     await expect(rewardsSource).to.have.balanceOf(oethUnits("100000"), ogv);
@@ -80,23 +41,21 @@ describe("Buyback", function () {
 
   it("Should swap OUSD for OGV and CVX", async () => {
     const {
-      oeth,
       ousd,
       cvx,
       ogv,
-      buyback,
+      ousdBuyback,
       strategist,
       cvxLocker,
       rewardsSource,
     } = fixture;
 
-    await buyback
+    await ousdBuyback
       .connect(strategist)
-      .swapOUSD(oethUnits("1000"), oethUnits("80000"), oethUnits("80"));
+      .swap(oethUnits("1000"), oethUnits("80000"), oethUnits("80"));
 
     // Check balance after swap
-    await expect(buyback).to.have.a.balanceOf(oethUnits("3"), oeth);
-    await expect(buyback).to.have.a.balanceOf(oethUnits("2000"), ousd);
+    await expect(ousdBuyback).to.have.a.balanceOf(oethUnits("2000"), ousd);
 
     // Ensure OGV went to RewardsSource contract
     await expect(rewardsSource).to.have.balanceOf(oethUnits("80000"), ogv);
@@ -109,32 +68,20 @@ describe("Buyback", function () {
   });
 
   it("Should NOT swap when called by someone else", async () => {
-    const { anna, buyback } = fixture;
+    const { anna, ousdBuyback } = fixture;
 
     const ousdAmount = ousdUnits("1000");
 
     await expect(
-      buyback.connect(anna).swap(ousdAmount, 0, 0, 0, 0, 0)
-    ).to.be.revertedWith("Caller is not the Strategist or Governor");
-    await expect(
-      buyback.connect(anna).swapOETH(ousdAmount, 1, 1)
-    ).to.be.revertedWith("Caller is not the Strategist or Governor");
-    await expect(
-      buyback.connect(anna).swapOUSD(ousdAmount, 1, 1)
+      ousdBuyback.connect(anna).swap(ousdAmount, 1, 1)
     ).to.be.revertedWith("Caller is not the Strategist or Governor");
   });
 
   it("Should NOT swap when swap amount is invalid", async () => {
-    const { buyback, strategist } = fixture;
+    const { ousdBuyback, strategist } = fixture;
 
     await expect(
-      buyback.connect(strategist).swap(0, 0, 0, 0, 0, 0)
-    ).to.be.revertedWith("Invalid Swap Amounts");
-    await expect(
-      buyback.connect(strategist).swapOETH(0, 0, 0)
-    ).to.be.revertedWith("Invalid Swap Amount");
-    await expect(
-      buyback.connect(strategist).swapOUSD(0, 0, 0)
+      ousdBuyback.connect(strategist).swap(0, 0, 0)
     ).to.be.revertedWith("Invalid Swap Amount");
   });
 
@@ -153,160 +100,146 @@ describe("Buyback", function () {
   });
 
   it("Should allow Governor to set Uniswap Router address", async () => {
-    const { buyback, governor, ousd } = fixture;
+    const { ousdBuyback, governor, ousd } = fixture;
     // Pretend OUSD is a uniswap
-    await buyback.connect(governor).setUniswapUniversalRouter(ousd.address);
-    expect(await buyback.universalRouter()).to.be.equal(ousd.address);
+    await ousdBuyback.connect(governor).setUniswapUniversalRouter(ousd.address);
+    expect(await ousdBuyback.universalRouter()).to.be.equal(ousd.address);
   });
 
   it("Should not allow non-Governor to set Uniswap Router address", async () => {
-    const { buyback, anna, ousd } = fixture;
+    const { ousdBuyback, anna, ousd } = fixture;
     // Pretend OUSD is uniswap
     await expect(
-      buyback.connect(anna).setUniswapUniversalRouter(ousd.address)
+      ousdBuyback.connect(anna).setUniswapUniversalRouter(ousd.address)
     ).to.be.revertedWith("Caller is not the Governor");
   });
 
   it("Should allow Governor to set Strategist address", async () => {
-    const { buyback, governor, ousd } = fixture;
+    const { ousdBuyback, governor, ousd } = fixture;
     // Pretend OUSD is a Strategist
-    await buyback.connect(governor).setStrategistAddr(ousd.address);
-    expect(await buyback.strategistAddr()).to.be.equal(ousd.address);
+    await ousdBuyback.connect(governor).setStrategistAddr(ousd.address);
+    expect(await ousdBuyback.strategistAddr()).to.be.equal(ousd.address);
   });
 
   it("Should not allow non-Governor to set Strategist address", async () => {
-    const { buyback, anna, ousd } = fixture;
+    const { ousdBuyback, anna, ousd } = fixture;
     // Pretend OUSD is Strategist
     await expect(
-      buyback.connect(anna).setStrategistAddr(ousd.address)
+      ousdBuyback.connect(anna).setStrategistAddr(ousd.address)
     ).to.be.revertedWith("Caller is not the Governor");
   });
 
   it("Should NOT swap when uniswap address isn't set", async () => {
-    const { governor, buyback } = fixture;
+    const { governor, ousdBuyback } = fixture;
     // await fundBuybackAndUniswap(fixture);
 
     // Set Uniswap Address to 0x0
-    await buyback
+    await ousdBuyback
       .connect(governor)
       .setUniswapUniversalRouter("0x0000000000000000000000000000000000000000");
-    expect(await buyback.universalRouter()).to.be.equal(
+    expect(await ousdBuyback.universalRouter()).to.be.equal(
       "0x0000000000000000000000000000000000000000"
     );
 
     const ousdAmount = ousdUnits("1000");
 
     await expect(
-      buyback.connect(governor).swap(ousdAmount, 10, 10, ousdAmount, 10, 10)
-    ).to.be.revertedWith("Uniswap Router not set");
-
-    await expect(
-      buyback.connect(governor).swapOUSD(ousdAmount, 10, 10)
-    ).to.be.revertedWith("Uniswap Router not set");
-
-    await expect(
-      buyback.connect(governor).swapOETH(ousdAmount, 10, 10)
+      ousdBuyback.connect(governor).swap(ousdAmount, 10, 10)
     ).to.be.revertedWith("Uniswap Router not set");
   });
 
   it("Should NOT swap when min expected is zero", async () => {
-    const { governor, buyback } = fixture;
+    const { governor, ousdBuyback } = fixture;
     await expect(
-      buyback.connect(governor).swap(10, 0, 10, 10, 10, 10)
-    ).to.be.revertedWith("Invalid minAmount for OETH>OGV");
+      ousdBuyback.connect(governor).swap(10, 0, 10)
+    ).to.be.revertedWith("Invalid minAmount for OGV");
 
     await expect(
-      buyback.connect(governor).swap(10, 10, 0, 10, 10, 10)
-    ).to.be.revertedWith("Invalid minAmount for OETH>CVX");
-
-    await expect(
-      buyback.connect(governor).swap(10, 10, 10, 10, 0, 10)
-    ).to.be.revertedWith("Invalid minAmount for OUSD>OGV");
-
-    await expect(
-      buyback.connect(governor).swap(10, 10, 10, 10, 10, 0)
-    ).to.be.revertedWith("Invalid minAmount for OUSD>CVX");
+      ousdBuyback.connect(governor).swap(10, 10, 0)
+    ).to.be.revertedWith("Invalid minAmount for CVX");
   });
 
   it("Should allow withdrawal of arbitrary token by Governor", async () => {
-    const { vault, ousd, usdc, matt, governor, buyback } = fixture;
+    const { vault, ousd, usdc, matt, governor, ousdBuyback } = fixture;
     // Matt deposits USDC, 6 decimals
     await usdc.connect(matt).approve(vault.address, usdcUnits("8.0"));
     await vault.connect(matt).mint(usdc.address, usdcUnits("8.0"), 0);
     // Matt sends his OUSD directly to Vault
-    await ousd.connect(matt).transfer(buyback.address, ousdUnits("8.0"));
+    await ousd.connect(matt).transfer(ousdBuyback.address, ousdUnits("8.0"));
     // Matt asks Governor for help
-    await buyback
+    await ousdBuyback
       .connect(governor)
       .transferToken(ousd.address, ousdUnits("8.0"));
     await expect(governor).has.a.balanceOf("8.0", ousd);
   });
 
   it("Should not allow withdrawal of arbitrary token by non-Governor", async () => {
-    const { buyback, ousd, matt, strategist } = fixture;
+    const { ousdBuyback, ousd, matt, strategist } = fixture;
     // Naughty Matt
     await expect(
-      buyback.connect(matt).transferToken(ousd.address, ousdUnits("8.0"))
+      ousdBuyback.connect(matt).transferToken(ousd.address, ousdUnits("8.0"))
     ).to.be.revertedWith("Caller is not the Governor");
 
     // Make sure strategist can't do that either
     await expect(
-      buyback.connect(strategist).transferToken(ousd.address, ousdUnits("8.0"))
+      ousdBuyback
+        .connect(strategist)
+        .transferToken(ousd.address, ousdUnits("8.0"))
     ).to.be.revertedWith("Caller is not the Governor");
   });
 
   it("Should allow Governor to change RewardsSource address", async () => {
-    const { buyback, governor, matt } = fixture;
+    const { ousdBuyback, governor, matt } = fixture;
 
-    await buyback.connect(governor).setRewardsSource(matt.address);
+    await ousdBuyback.connect(governor).setRewardsSource(matt.address);
 
-    expect(await buyback.rewardsSource()).to.equal(matt.address);
+    expect(await ousdBuyback.rewardsSource()).to.equal(matt.address);
   });
 
   it("Should not allow anyone else to change RewardsSource address", async () => {
-    const { buyback, strategist, matt, josh } = fixture;
+    const { ousdBuyback, strategist, matt, josh } = fixture;
 
     for (const user of [strategist, josh]) {
       await expect(
-        buyback.connect(user).setRewardsSource(matt.address)
+        ousdBuyback.connect(user).setRewardsSource(matt.address)
       ).to.be.revertedWith("Caller is not the Governor");
     }
   });
 
   it("Should not allow setting RewardsSource address to address(0)", async () => {
-    const { buyback, governor } = fixture;
+    const { ousdBuyback, governor } = fixture;
 
     await expect(
-      buyback
+      ousdBuyback
         .connect(governor)
         .setRewardsSource("0x0000000000000000000000000000000000000000")
     ).to.be.revertedWith("Address not set");
   });
 
   it("Should allow Governor to change Treasury manager address", async () => {
-    const { buyback, governor, matt } = fixture;
+    const { ousdBuyback, governor, matt } = fixture;
 
-    await buyback.connect(governor).setTreasuryManager(matt.address);
+    await ousdBuyback.connect(governor).setTreasuryManager(matt.address);
 
-    expect(await buyback.treasuryManager()).to.equal(matt.address);
+    expect(await ousdBuyback.treasuryManager()).to.equal(matt.address);
   });
 
   it("Should not allow setting Treasury manager address to address(0)", async () => {
-    const { buyback, governor } = fixture;
+    const { ousdBuyback, governor } = fixture;
 
     expect(
-      buyback
+      ousdBuyback
         .connect(governor)
         .setTreasuryManager("0x0000000000000000000000000000000000000000")
     ).to.be.revertedWith("Address not set");
   });
 
   it("Should not allow anyone else to change Treasury manager address", async () => {
-    const { buyback, strategist, matt, josh } = fixture;
+    const { ousdBuyback, strategist, matt, josh } = fixture;
 
     for (const user of [strategist, josh]) {
       await expect(
-        buyback.connect(user).setTreasuryManager(matt.address)
+        ousdBuyback.connect(user).setTreasuryManager(matt.address)
       ).to.be.revertedWith("Caller is not the Governor");
     }
   });

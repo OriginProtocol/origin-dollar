@@ -143,9 +143,6 @@ const defaultFixture = deployments.createFixture(async () => {
     isFork ? "OETHOracleRouter" : "OracleRouter"
   );
 
-  const buybackProxy = await ethers.getContract("BuybackProxy");
-  const buyback = await ethers.getContractAt("Buyback", buybackProxy.address);
-
   let usdt,
     dai,
     tusd,
@@ -461,9 +458,6 @@ const defaultFixture = deployments.createFixture(async () => {
 
     // Enable capital movement
     await vault.connect(sGovernor).unpauseCapital();
-
-    // Add Buyback contract as trustee
-    await vault.connect(sGovernor).setTrusteeAddress(buyback.address);
   }
 
   const signers = await hre.ethers.getSigners();
@@ -579,7 +573,6 @@ const defaultFixture = deployments.createFixture(async () => {
     uniswapPairOUSD_USDT,
     liquidityRewardOUSD_USDT,
     flipper,
-    buyback,
     wousd,
 
     // Flux strategy
@@ -2072,10 +2065,24 @@ async function fluxStrategyFixture() {
 async function buybackFixture() {
   const fixture = await defaultFixture();
 
-  const { buyback, cvx, ogv, ousd, oeth, oethVault, vault, weth, dai, josh } =
-    fixture;
+  const { cvx, ogv, ousd, oeth, oethVault, vault, weth, dai, josh } = fixture;
 
-  const rewardsSourceAddress = await buyback.connect(josh).rewardsSource();
+  const ousdBuybackProxy = await ethers.getContract("BuybackProxy");
+  const ousdBuyback = await ethers.getContractAt(
+    "OUSDBuyback",
+    ousdBuybackProxy.address
+  );
+
+  const oethBuybackProxy = await ethers.getContract("OETHBuybackProxy");
+  const oethBuyback = await ethers.getContractAt(
+    "OETHBuyback",
+    oethBuybackProxy.address
+  );
+
+  fixture.ousdBuyback = ousdBuyback;
+  fixture.oethBuyback = oethBuyback;
+
+  const rewardsSourceAddress = await ousdBuyback.connect(josh).rewardsSource();
   fixture.rewardsSource = await ethers.getContractAt([], rewardsSourceAddress);
 
   if (isFork) {
@@ -2088,13 +2095,13 @@ async function buybackFixture() {
       addresses.mainnet.uniswapUniversalRouter
     );
 
-    // Mint some OUSD & OETH and send it to buyback contract
+    // Mint some OUSD & OETH and send it to buyback contracts
     await weth.connect(josh).approve(oethVault.address, oethUnits("3"));
-    await dai.connect(josh).approve(vault.address, oethUnits("1000"));
     await oethVault.connect(josh).mint(weth.address, oethUnits("3"), "0");
+    await oeth.connect(josh).transfer(oethBuyback.address, oethUnits("3"));
+    await dai.connect(josh).approve(vault.address, oethUnits("1000"));
     await vault.connect(josh).mint(dai.address, oethUnits("1000"), "0");
-    await oeth.connect(josh).transfer(buyback.address, oethUnits("3"));
-    await ousd.connect(josh).transfer(buyback.address, oethUnits("800"));
+    await ousd.connect(josh).transfer(ousdBuyback.address, oethUnits("800"));
   } else {
     fixture.uniswapRouter = await ethers.getContract("MockUniswapRouter");
     fixture.cvxLocker = await ethers.getContract("MockCVXLocker");
@@ -2110,19 +2117,15 @@ async function buybackFixture() {
     await oethVault.connect(josh).mint(weth.address, oethUnits("3"), "0");
 
     // Transfer those to the buyback contract
-    await oeth.connect(josh).transfer(buyback.address, oethUnits("3"));
-    await ousd.connect(josh).transfer(buyback.address, ousdUnits("3000"));
+    await oeth.connect(josh).transfer(oethBuyback.address, oethUnits("3"));
+    await ousd.connect(josh).transfer(ousdBuyback.address, ousdUnits("3000"));
 
     // Mint some CVX and OGV for the Uniswap Rotuer
     const routerSigner = await impersonateAndFundContract(
       fixture.uniswapRouter.address
     );
-    const buybackSigner = await impersonateAndFundContract(buyback.address);
     await ogv.connect(routerSigner).mint(ousdUnits("10000000000"));
     await cvx.connect(routerSigner).mint(ousdUnits("10000000000"));
-    await cvx
-      .connect(buybackSigner)
-      .approve(fixture.cvxLocker.address, oethUnits("999999999999999999999"));
   }
 
   return fixture;

@@ -10,63 +10,18 @@ describe("ForkTest: Buyback", function () {
     fixture = await loadFixture();
   });
 
-  it("Should swap OETH and OUSD for OGV and CVX", async () => {
-    const { buyback, ousd, oeth, ogv, cvxLocker, rewardsSource, strategist } =
-      fixture;
-
-    const ousdBalanceBefore = await ousd.balanceOf(buyback.address);
-    const oethBalanceBefore = await oeth.balanceOf(buyback.address);
-    const ogvBalanceBefore = await ogv.balanceOf(rewardsSource.address);
-    const strategistAddr = await strategist.getAddress();
-    const lockedCVXBalanceBefore = await cvxLocker.lockedBalanceOf(
-      strategistAddr
-    );
-
-    await buyback.connect(strategist).swap(
-      // 1 OETH
-      oethUnits("1"),
-      oethUnits("50"),
-      oethUnits("5"),
-      // 800 OUSD
-      ousdUnits("800"),
-      ousdUnits("50"),
-      ousdUnits("5")
-    );
-
-    // Make sure right amounts were swapped
-    await expect(buyback).to.have.a.balanceOf(
-      oethBalanceBefore.sub(oethUnits("1")),
-      oeth
-    );
-    await expect(buyback).to.have.a.balanceOf(
-      ousdBalanceBefore.sub(ousdUnits("800")),
-      ousd
-    );
-
-    // Check if OGV went to RewardsSource
-    expect(await ogv.balanceOf(rewardsSource.address)).to.be.gt(
-      ogvBalanceBefore
-    );
-
-    // Check if CVX has been locked
-    expect(await cvxLocker.lockedBalanceOf(strategistAddr)).to.be.gte(
-      lockedCVXBalanceBefore
-    );
-  });
-
   it("Should swap OETH for OGV and CVX", async () => {
-    const { buyback, ousd, oeth, ogv, cvxLocker, rewardsSource, strategist } =
+    const { oethBuyback, oeth, ogv, cvxLocker, rewardsSource, strategist } =
       fixture;
 
-    const ousdBalanceBefore = await ousd.balanceOf(buyback.address);
-    const oethBalanceBefore = await oeth.balanceOf(buyback.address);
+    const oethBalanceBefore = await oeth.balanceOf(oethBuyback.address);
     const ogvBalanceBefore = await ogv.balanceOf(rewardsSource.address);
     const strategistAddr = await strategist.getAddress();
     const lockedCVXBalanceBefore = await cvxLocker.lockedBalanceOf(
       strategistAddr
     );
 
-    await buyback.connect(strategist).swapOETH(
+    await oethBuyback.connect(strategist).swap(
       // 1 OETH
       oethUnits("1"),
       oethUnits("50"),
@@ -74,11 +29,10 @@ describe("ForkTest: Buyback", function () {
     );
 
     // Make sure right amounts were swapped
-    await expect(buyback).to.have.a.balanceOf(
+    await expect(oethBuyback).to.have.a.balanceOf(
       oethBalanceBefore.sub(oethUnits("1")),
       oeth
     );
-    await expect(buyback).to.have.a.balanceOf(ousdBalanceBefore, ousd);
 
     // Check if OGV went to RewardsSource
     expect(await ogv.balanceOf(rewardsSource.address)).to.be.gt(
@@ -92,18 +46,17 @@ describe("ForkTest: Buyback", function () {
   });
 
   it("Should swap OUSD for OGV and CVX", async () => {
-    const { buyback, ousd, oeth, ogv, cvxLocker, rewardsSource, strategist } =
+    const { ousdBuyback, ousd, ogv, cvxLocker, rewardsSource, strategist } =
       fixture;
 
-    const ousdBalanceBefore = await ousd.balanceOf(buyback.address);
-    const oethBalanceBefore = await oeth.balanceOf(buyback.address);
+    const ousdBalanceBefore = await ousd.balanceOf(ousdBuyback.address);
     const ogvBalanceBefore = await ogv.balanceOf(rewardsSource.address);
     const strategistAddr = await strategist.getAddress();
     const lockedCVXBalanceBefore = await cvxLocker.lockedBalanceOf(
       strategistAddr
     );
 
-    await buyback.connect(strategist).swapOUSD(
+    await ousdBuyback.connect(strategist).swap(
       // 800 OUSD
       ousdUnits("800"),
       ousdUnits("50"),
@@ -111,8 +64,7 @@ describe("ForkTest: Buyback", function () {
     );
 
     // Make sure right amounts were swapped
-    await expect(buyback).to.have.a.balanceOf(oethBalanceBefore, oeth);
-    await expect(buyback).to.have.a.balanceOf(
+    await expect(ousdBuyback).to.have.a.balanceOf(
       ousdBalanceBefore.sub(ousdUnits("800")),
       ousd
     );

@@ -1,4 +1,7 @@
-const { deploymentWithGovernanceProposal } = require("../utils/deploy");
+const {
+  deploymentWithGovernanceProposal,
+  withConfirmation,
+} = require("../utils/deploy");
 const addresses = require("../utils/addresses");
 
 module.exports = deploymentWithGovernanceProposal(
@@ -10,9 +13,12 @@ module.exports = deploymentWithGovernanceProposal(
     deployerIsProposer: true,
     // proposalId: "",
   },
-  async ({ deployWithConfirmation, ethers }) => {
+  async ({ deployWithConfirmation, ethers, getTxOpts }) => {
+    const { deployerAddr, strategistAddr } = await getNamedAccounts();
+    const sDeployer = await ethers.provider.getSigner(deployerAddr);
+
     // Current contracts
-    const cBuybackProxy = await ethers.getContract("BuybackProxy");
+    const cOUSDBuybackProxy = await ethers.getContract("BuybackProxy");
     const cOETHVaultAdmin = await ethers.getContractAt(
       "VaultAdmin",
       addresses.mainnet.OETHVaultProxy
@@ -39,48 +45,98 @@ module.exports = deploymentWithGovernanceProposal(
     // Deployer Actions
     // ----------------
 
-    // 1. Deploy new implementation
-    const dBuybackImpl = await deployWithConfirmation(
-      "Buyback",
+    // 1. Deploy new implementation for OUSD
+    const dOUSDBuybackImpl = await deployWithConfirmation(
+      "OUSDBuyback",
       [
-        addresses.mainnet.OETHProxy,
         addresses.mainnet.OUSDProxy,
         addresses.mainnet.OGV,
-        addresses.mainnet.USDT,
-        addresses.mainnet.WETH,
         addresses.mainnet.CVX,
         addresses.mainnet.CVXLocker,
       ],
       undefined,
       true
     );
-    const cBuyback = await ethers.getContractAt(
-      "Buyback",
-      cBuybackProxy.address
+    const cOUSDBuyback = await ethers.getContractAt(
+      "OUSDBuyback",
+      cOUSDBuybackProxy.address
     );
 
-    console.log("New Buyback implementation address: ", dBuybackImpl.address);
+    console.log(
+      "New OUSDBuyback implementation address: ",
+      dOUSDBuybackImpl.address
+    );
+
+    // 2. Deploy new proxy and implementation for OETH
+    const dOETHBuybackProxy = await deployWithConfirmation("OETHBuybackProxy");
+    console.log(
+      "Deployed OETHBuybackProxy address: ",
+      dOETHBuybackProxy.address
+    );
+    const dOETHBuybackImpl = await deployWithConfirmation(
+      "OETHBuyback",
+      [
+        addresses.mainnet.OETHProxy,
+        addresses.mainnet.OGV,
+        addresses.mainnet.CVX,
+        addresses.mainnet.CVXLocker,
+      ],
+      undefined,
+      true
+    );
+    console.log(
+      "Deployed OETHBuyback implementation address: ",
+      dOETHBuybackImpl.address
+    );
+    const cOETHBuybackProxy = await ethers.getContract("OETHBuybackProxy");
+    const cOETHBuyback = await ethers.getContractAt(
+      "OETHBuyback",
+      cOETHBuybackProxy.address
+    );
+
+    // 3. Prepare implementation intialization data
+    const initData = cOETHBuyback.interface.encodeFunctionData(
+      "initialize(address,address,address,address)",
+      [
+        addresses.mainnet.uniswapUniversalRouter,
+        strategistAddr,
+        strategistAddr,
+        addresses.mainnet.RewardsSource,
+      ]
+    );
+
+    // 4. Init the proxy to point at the implementation, set the governor, and call initialize
+    const initFunction = "initialize(address,address,bytes)";
+    await withConfirmation(
+      cOETHBuybackProxy.connect(sDeployer)[initFunction](
+        dOETHBuybackImpl.address,
+        addresses.mainnet.Timelock, // Governor
+        initData, // data for delegate call to the initialize function on the implementation
+        await getTxOpts()
+      )
+    );
+    console.log("Initialized OETHBuyback proxy and implementation");
 
     // Governance Actions
     // ----------------
     return {
       name: "Upgrade Buyback contract",
       actions: [
-        // 1. Upgrade to new implementation
+        // 1. Upgrade OUSD Buyback to new implementation
         {
-          contract: cBuybackProxy,
+          contract: cOUSDBuybackProxy,
           signature: "upgradeTo(address)",
-          args: [dBuybackImpl.address],
+          args: [dOUSDBuybackImpl.address],
         },
-        // 2. Update universal router address
+        // 2. Update universal router address on OUSD Buyback
         {
-          contract: cBuyback,
+          contract: cOUSDBuyback,
           signature: "setUniswapUniversalRouter(address)",
           args: [addresses.mainnet.uniswapUniversalRouter],
         },
-        // 3. Reset allowance
+        // 3. Reset allowance for OUSD Buyback
         {
-          contract: cBuyback,
+          contract: cOUSDBuyback,
           signature: "safeApproveAllTokens()",
           args: [],
         },
@@ -88,25 +144,31 @@ module.exports = deploymentWithGovernanceProposal(
         {
           contract: cOETHVaultAdmin,
           signature: "setTrusteeAddress(address)",
-          args: [cBuybackProxy.address],
+          args: [cOETHBuybackProxy.address],
         },
+        // 5. Reset allowance for OETH Buyback
         {
-          // 5. Transfer left-over balance to Governor from old contract #1
+          contract: cOETHBuyback,
+          signature: "safeApproveAllTokens()",
+          args: [],
+        },
+        // 6. Transfer left-over balance to Governor from old contract #1
+        {
           contract: cOldBuyback1,
           signature: "transferToken(address,uint256)",
           args: [cOUSD.address, ousdBalance1],
         },
+        // 7. Transfer left-over balance to Governor from old contract #2
         {
-          // 6. Transfer left-over balance to Governor from old contract #2
           contract: cOldBuyback2,
           signature: "transferToken(address,uint256)",
           args: [cOUSD.address, ousdBalance2],
         },
+        // 8. Transfer OUSD balance from Governor to the Buyback contract
         {
-          // 7. Transfer OUSD balance from Governor to the Buyback contract
           contract: cOUSD,
           signature: "transfer(address,uint256)",
-          args: [cBuybackProxy.address, ousdBalance1.add(ousdBalance2)],
+          args: [cOUSDBuybackProxy.address, ousdBalance1.add(ousdBalance2)],
         },
       ],
     };
