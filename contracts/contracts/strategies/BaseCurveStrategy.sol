@@ -126,8 +126,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
      */
     function depositAll() external override onlyVault nonReentrant {
         uint256[] memory _amounts = new uint256[](CURVE_POOL_ASSETS_COUNT);
-        uint256 depositValue = 0;
-        uint256 curveVirtualPrice = ICurvePool(CURVE_POOL).get_virtual_price();
+        uint256 totalScaledAmount = 0;
 
         // For each of the Curve pool's assets
         for (uint256 i = 0; i < CURVE_POOL_ASSETS_COUNT; ++i) {
@@ -136,21 +135,24 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
             if (balance > 0) {
                 // Set the amount on the asset we want to deposit
                 _amounts[i] = balance;
-                // Get value of deposit in Curve LP tokens to later determine
-                // the minMintAmount argument for add_liquidity
-                depositValue =
-                    depositValue +
-                    balance
-                        .scaleBy(18, _getAssetDecimals(assetAddress))
-                        .divPrecisely(curveVirtualPrice);
+                // Scale the asset amount up to 18 decimals and add to the token deposit amount
+                totalScaledAmount += balance.scaleBy(
+                    18,
+                    _getAssetDecimals(assetAddress)
+                );
 
                 emit Deposit(assetAddress, CURVE_POOL, balance);
             }
         }
 
-        uint256 minMintAmount = depositValue.mulTruncate(
-            uint256(1e18) - MAX_SLIPPAGE
-        );
+        // Get the Curve pool's virtual price
+        uint256 curveVirtualPrice = ICurvePool(CURVE_POOL).get_virtual_price();
+
+        // Reduce the deposit amount by the max allowed slippage
+        // and convert the deposit amount to Curve LP tokens
+        uint256 minMintAmount = totalScaledAmount
+            .mulTruncate(uint256(1e18) - MAX_SLIPPAGE)
+            .divPrecisely(curveVirtualPrice);
 
         // Do the deposit to the Curve pool using a Curve library that
         // abstracts the number of coins in the Curve pool.
