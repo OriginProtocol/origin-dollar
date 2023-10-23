@@ -26,13 +26,13 @@ contract ConvexStrategy is BaseCurveStrategy {
     using SafeERC20 for IERC20;
 
     // slither-disable-next-line constable-states
-    address private _deprecatedCvxDepositorAddress;
+    address private _deprecated_CvxDepositorAddress;
     // slither-disable-next-line constable-states
-    address private _deprecatedCvxRewardStakerAddress;
+    address private _deprecated_CvxRewardStakerAddress;
     // slither-disable-next-line constable-states
     address private _deprecated_cvxRewardTokenAddress;
     // slither-disable-next-line constable-states
-    uint256 private _deprecatedCvxDepositorPTokenId;
+    uint256 private _deprecated_CvxDepositorPTokenId;
 
     /// @notice Convex deposit contract
     address public immutable cvxDepositor;
@@ -74,7 +74,7 @@ contract ConvexStrategy is BaseCurveStrategy {
         address[] calldata _pTokens
     ) external onlyGovernor initializer {
         require(
-            _assets.length == CURVE_BASE_ASSETS,
+            _assets.length == CURVE_POOL_ASSETS_COUNT,
             "Incorrect number of assets"
         );
 
@@ -166,7 +166,7 @@ contract ConvexStrategy is BaseCurveStrategy {
             // Scale the value down if the asset has less than 18 decimals. eg USDC or USDT
             balance =
                 value.scaleBy(_getAssetDecimals(_asset), 18) /
-                CURVE_BASE_ASSETS;
+                CURVE_POOL_ASSETS_COUNT;
         }
     }
 

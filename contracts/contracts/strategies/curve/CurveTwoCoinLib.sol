@@ -5,7 +5,7 @@ import { ICurveMetaPool } from "./ICurveMetaPool.sol";
 import { StableMath } from "../../utils/StableMath.sol";
 
 library CurveTwoCoinLib {
-    uint256 public constant CURVE_BASE_ASSETS = 2;
+    uint256 public constant CURVE_POOL_ASSETS_COUNT = 2;
     using StableMath for uint256;
 
     /**
@@ -20,10 +20,13 @@ library CurveTwoCoinLib {
         uint256 _min_mint_amount
     ) external {
         require(
-            _amounts.length == CURVE_BASE_ASSETS,
+            _amounts.length == CURVE_POOL_ASSETS_COUNT,
             "Invalid number of amounts"
         );
-        uint256[CURVE_BASE_ASSETS] memory amount = [_amounts[0], _amounts[1]];
+        uint256[CURVE_POOL_ASSETS_COUNT] memory amount = [
+            _amounts[0],
+            _amounts[1]
+        ];
 
         // slither-disable-next-line unused-return
         ICurveMetaPool(_pool).add_liquidity(amount, _min_mint_amount);
@@ -42,10 +45,10 @@ library CurveTwoCoinLib {
         uint256[] calldata _min_amounts
     ) external {
         require(
-            _min_amounts.length == CURVE_BASE_ASSETS,
+            _min_amounts.length == CURVE_POOL_ASSETS_COUNT,
             "Invalid number of min amounts"
         );
-        uint256[CURVE_BASE_ASSETS] memory min_amounts = [
+        uint256[CURVE_POOL_ASSETS_COUNT] memory min_amounts = [
             _min_amounts[0],
             _min_amounts[1]
         ];
@@ -70,10 +73,10 @@ library CurveTwoCoinLib {
         address _receiver
     ) external returns (bool wasTransfer) {
         require(
-            _min_amounts.length == CURVE_BASE_ASSETS,
+            _min_amounts.length == CURVE_POOL_ASSETS_COUNT,
             "Invalid number of min amounts"
         );
-        uint256[CURVE_BASE_ASSETS] memory min_amounts = [
+        uint256[CURVE_POOL_ASSETS_COUNT] memory min_amounts = [
             _min_amounts[0],
             _min_amounts[1]
         ];
@@ -100,10 +103,13 @@ library CurveTwoCoinLib {
         uint256 _max_burn_amount
     ) external {
         require(
-            _amounts.length == CURVE_BASE_ASSETS,
+            _amounts.length == CURVE_POOL_ASSETS_COUNT,
             "Invalid number of amounts"
         );
-        uint256[CURVE_BASE_ASSETS] memory amounts = [_amounts[0], _amounts[1]];
+        uint256[CURVE_POOL_ASSETS_COUNT] memory amounts = [
+            _amounts[0],
+            _amounts[1]
+        ];
 
         // slither-disable-next-line unused-return
         ICurveMetaPool(_pool).remove_liquidity_imbalance(
@@ -129,7 +135,7 @@ library CurveTwoCoinLib {
         address,
         address _receiver
     ) external {
-        uint256[CURVE_BASE_ASSETS] memory amounts = [uint256(0), 0];
+        uint256[CURVE_POOL_ASSETS_COUNT] memory amounts = [uint256(0), 0];
         amounts[_coin_index] = _amount;
 
         // slither-disable-next-line unused-return
@@ -155,10 +161,13 @@ library CurveTwoCoinLib {
         bool _is_deposit
     ) external view returns (uint256 lpTokens) {
         require(
-            _amounts.length == CURVE_BASE_ASSETS,
+            _amounts.length == CURVE_POOL_ASSETS_COUNT,
             "Invalid number of amounts"
         );
-        uint256[CURVE_BASE_ASSETS] memory amounts = [_amounts[0], _amounts[1]];
+        uint256[CURVE_POOL_ASSETS_COUNT] memory amounts = [
+            _amounts[0],
+            _amounts[1]
+        ];
 
         lpTokens = ICurveMetaPool(_pool).calc_token_amount(
             amounts,
@@ -183,7 +192,7 @@ library CurveTwoCoinLib {
         uint256 _coinIndex,
         uint256 _assetAmount
     ) external view returns (uint256 lpAmount) {
-        uint256[CURVE_BASE_ASSETS] memory amounts = [uint256(0), 0];
+        uint256[CURVE_POOL_ASSETS_COUNT] memory amounts = [uint256(0), 0];
         amounts[_coinIndex] = _assetAmount;
 
         // LP required when removing required asset including slippage and fees.
