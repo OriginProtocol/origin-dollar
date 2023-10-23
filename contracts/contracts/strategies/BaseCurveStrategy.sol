@@ -361,8 +361,8 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @dev Get the asset token address for a given Curve pool index.
-     * @param _coinIndex Curve pool index
+     * @dev Get the token address for a given index value in a Curve pool.
+     * @param _coinIndex Index value of the coin in the Curve pool
      * This is reading from immutable variables to avoid costly storage reads.
      */
     function _getAsset(uint256 _coinIndex)
