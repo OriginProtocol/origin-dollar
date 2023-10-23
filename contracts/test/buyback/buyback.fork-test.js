@@ -5,6 +5,8 @@ const { ousdUnits, oethUnits } = require("../helpers");
 const loadFixture = createFixtureLoader(buybackFixture);
 
 describe("ForkTest: Buyback", function () {
+  this.timeout(0);
+
   let fixture;
   beforeEach(async () => {
     fixture = await loadFixture();
