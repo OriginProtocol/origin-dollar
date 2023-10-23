@@ -3,7 +3,18 @@ pragma solidity ^0.8.0;
 
 /**
  * @title Curve Convex Strategy
- * @notice Investment strategy for investing Curve Liquidity Provider (LP) tokens in Convex pools
+ * @notice Investment strategy for investing Curve Liquidity Provider (LP) tokens in Convex pools.
+ * @dev This strategy can NOT be set as the Vault's default strategy for an asset.
+ * This is because deposits and withdraws can be sandwich attacked if not protected
+ * by the `VaultValueChecker`. Only the trusted `Strategist` or `Governor` can call
+ * the Vault deposit and withdraw functions for a strategy. When they do, they must call
+ * `VaultValueChecker.takeSnapshot` before and `VaultValueChecker.checkDelta` afterwards.
+ *
+ * When implementing for a new Curve pool, read-only reentrancy needs to be checked.
+ * This is possible in some Curve pools when using native ETH or a token that has hooks
+ * that can hijack execution. For example, the Curve ETH/stETH pool is vulnerable to
+ * read-only reentry.
+ * https://x.com/danielvf/status/1657019677544001536
  * @author Origin Protocol Inc
  */
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -86,8 +97,14 @@ contract ConvexStrategy is BaseCurveStrategy {
         _approveBase();
     }
 
+    /**
+     * @dev deposit the Curve LP tokens into the Convex pool and
+     * stake the Convex LP tokens.
+     *
+     * This will revert if the Convex pool has been shut down.
+     */
     function _lpDepositAll() internal override {
-        // Deposit the Curve LP tokens into the Convex pool and stake
+        // Deposit the Curve LP tokens into the Convex pool and stake.
         require(
             IConvexDeposits(cvxDepositor).deposit(
                 cvxDepositorPoolId,
@@ -104,6 +121,8 @@ contract ConvexStrategy is BaseCurveStrategy {
      * Do not collect Convex token rewards (CRV and CVX) as that's done via the Harvester.
      * Collecting token rewards now just adds extra gas as they will sit in the strategy until
      * the Harvester collects more rewards and swaps them for a vault asset.
+     *
+     * This will NOT revert if the Convex pool has been shut down.
      */
     function _lpWithdraw(uint256 requiredLpTokens) internal override {
         // Get the actual amount of Convex LP tokens staked.
@@ -129,6 +148,8 @@ contract ConvexStrategy is BaseCurveStrategy {
      * Do not collect Convex token rewards (CRV and CVX) as that's done via the Harvester.
      * Collecting token rewards now just adds extra gas as they will sit in the strategy until
      * the Harvester collects more rewards and swaps them for a vault asset.
+     *
+     * This will NOT revert if the Convex pool has been shut down.
      */
     function _lpWithdrawAll() internal override {
         // Unstake all the Convex LP token and withdraw all the Curve LP tokens
@@ -147,9 +168,11 @@ contract ConvexStrategy is BaseCurveStrategy {
     }
 
     /**
-     * @notice Get the asset's share of value held in the strategy. This is the total value
-     * of the stategy's Curve LP tokens divided by the number of Curve pool assets.
-     * @dev An invalid asset will fail in _getAssetDecimals with "Unsupported asset"
+     * @notice Get the asset's share of Curve LP value controlled by this strategy. This is the total value
+     * of the Curve LP tokens staked in Convex and held in this strategy contract
+     * divided by the number of Curve pool assets.
+     * The average is taken prevent the asset balances being manipulated by tilting the Curve pool.
+     * @dev An invalid `_asset` will fail in `_getAssetDecimals` with "Unsupported asset"
      * @param _asset      Address of the asset
      * @return balance    Total value of the asset in the platform
      */
@@ -174,11 +197,16 @@ contract ConvexStrategy is BaseCurveStrategy {
 
         if (totalLpToken > 0) {
             // get_virtual_price is gas intensive, so only call it if we have LP tokens.
-            // Calculate the value of the Curve LP tokens in USD or ETH
+            // Convert the Curve LP tokens controlled by this strategy to a value in USD or ETH
             uint256 value = (totalLpToken *
                 ICurvePool(CURVE_POOL).get_virtual_price()) / 1e18;
 
             // Scale the value down if the asset has less than 18 decimals. eg USDC or USDT
+            // and divide by the number of assets in the Curve pool. eg 3 for the 3Pool
+            // An average is taken to prevent the balances being manipulated by tilting the Curve pool.
+            // No matter what the balance of the asset in the Curve pool is, the value of each asset will
+            // be the average of the Curve pool's total value.
+            // _getAssetDecimals will revert if _asset is an invalid asset.
             balance =
                 value.scaleBy(_getAssetDecimals(_asset), 18) /
                 CURVE_POOL_ASSETS_COUNT;
