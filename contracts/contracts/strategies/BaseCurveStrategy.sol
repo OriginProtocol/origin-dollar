@@ -346,8 +346,9 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
     function _approveAsset(address _asset) internal {
         IERC20 asset = IERC20(_asset);
         // Approve the Curve pool, eg 3Pool, to transfer an asset (required for adding liquidity)
-        asset.safeApprove(CURVE_POOL, 0);
-        asset.safeApprove(CURVE_POOL, type(uint256).max);
+        // Need to handle USDT so have to set to zero first
+        asset.approve(CURVE_POOL, 0);
+        asset.approve(CURVE_POOL, type(uint256).max);
     }
 
     function _approveBase() internal virtual;
