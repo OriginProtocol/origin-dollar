@@ -1,10 +1,10 @@
 const hre = require("hardhat");
 const chai = require("chai");
-const mocha = require("mocha");
 const { parseUnits, formatUnits, parseEther } = require("ethers").utils;
 const { BigNumber } = require("ethers");
 
 const addresses = require("../utils/addresses");
+const { decimalsFor } = require("../utils/units");
 
 /**
  * Checks if the actual value is approximately equal to the expected value
@@ -123,7 +123,7 @@ chai.Assertion.addMethod(
   async function (expected, asset, message) {
     const strategy = this._obj;
     const assetAddress = asset.address || asset.getAddress();
-    const actual = await strategy.checkBalance(assetAddress);
+    const actual = await strategy["checkBalance(address)"](assetAddress);
     if (!BigNumber.isBigNumber(expected)) {
       expected = parseUnits(expected, await decimalsFor(asset));
     }
@@ -150,24 +150,6 @@ chai.Assertion.addMethod("emittedEvent", async function (eventName, args) {
     }
   }
 });
-
-/**
- * Returns the number of decimal places used by the given token contract.
- * Uses a cache to avoid making unnecessary contract calls for the same contract address.
- * @param {Contract} contract - The token contract to get the decimal places for.
- */
-const DECIMAL_CACHE = {};
-async function decimalsFor(contract) {
-  if (DECIMAL_CACHE[contract.address] != undefined) {
-    return DECIMAL_CACHE[contract.address];
-  }
-  let decimals = await contract.decimals();
-  if (decimals.toNumber) {
-    decimals = decimals.toNumber();
-  }
-  DECIMAL_CACHE[contract.address] = decimals;
-  return decimals;
-}
 
 /**
  * Converts an amount in the base unit of a contract to the standard decimal unit for the contract.
@@ -450,7 +432,7 @@ const getAssetAddresses = async (deployments) => {
       cUSDC: (await deployments.get("MockCUSDC")).address,
       cUSDT: (await deployments.get("MockCUSDT")).address,
       NonStandardToken: (await deployments.get("MockNonStandardToken")).address,
-      WETH: (await deployments.get("MockWETH")).address,
+      WETH: addresses.mainnet.WETH,
       COMP: (await deployments.get("MockCOMP")).address,
       ThreePool: (await deployments.get("MockCurvePool")).address,
       ThreePoolToken: (await deployments.get("Mock3CRV")).address,
@@ -637,7 +619,7 @@ async function differenceInStrategyBalance(
   const returnVals = Array(arrayLength);
 
   for (let i = 0; i < arrayLength; i++) {
-    balancesBefore[i] = await strategyContracts[i].checkBalance(
+    balancesBefore[i] = await strategyContracts[i]["checkBalance(address)"](
       assetAddresses[i]
     );
   }
@@ -645,7 +627,7 @@ async function differenceInStrategyBalance(
 
   for (let i = 0; i < arrayLength; i++) {
     returnVals[i] = (
-      await strategyContracts[i].checkBalance(assetAddresses[i])
+      await strategyContracts[i]["checkBalance(address)"](assetAddresses[i])
     ).sub(balancesBefore[i]);
   }
 
@@ -697,11 +679,6 @@ async function proposeAndExecute(fixture, governorArgsArray, description) {
   await governorContract.connect(governor).execute(proposalId);
 }
 
-// Ugly hack to avoid running these tests when running `npx hardhat test` directly.
-// A right way would be to add suffix to files and use patterns to filter
-const forkOnlyDescribe = (title, fn) =>
-  isForkTest ? mocha.describe(title, fn) : mocha.describe.skip(title, fn);
-
 module.exports = {
   decimalsFor,
   ousdUnits,
@@ -746,7 +723,6 @@ module.exports = {
   advanceBlocks,
   isWithinTolerance,
   changeInBalance,
-  forkOnlyDescribe,
   differenceInErc20TokenBalance,
   differenceInErc20TokenBalances,
   differenceInStrategyBalance,

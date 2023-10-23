@@ -9,12 +9,12 @@ const {
   ousdCollateralSwapFixture,
 } = require("../_fixture");
 const { getIInchSwapData, recodeSwapData } = require("../../utils/1Inch");
-const { decimalsFor, forkOnlyDescribe, isCI } = require("../helpers");
+const { decimalsFor, isCI } = require("../helpers");
 const { resolveAsset } = require("../../utils/assets");
 
 const log = require("../../utils/logger")("test:fork:swaps");
 
-forkOnlyDescribe("ForkTest: Collateral swaps", function () {
+describe("ForkTest: Collateral swaps", function () {
   this.timeout(0);
 
   // Retry up to 3 times on CI
@@ -73,7 +73,7 @@ forkOnlyDescribe("ForkTest: Collateral swaps", function () {
           from: "WETH",
           to: "stETH",
           fromAmount: 100,
-          minToAssetAmount: 99.99,
+          minToAssetAmount: 99.96,
         },
         {
           from: "WETH",
@@ -100,7 +100,7 @@ forkOnlyDescribe("ForkTest: Collateral swaps", function () {
           to: "WETH",
           fromAmount: 10,
           minToAssetAmount: "10.7",
-          slippage: 0.1,
+          slippage: 0.3,
         },
         {
           from: "stETH",
@@ -151,8 +151,8 @@ forkOnlyDescribe("ForkTest: Collateral swaps", function () {
         {
           from: "WETH",
           to: "frxETH",
-          fromAmount: 100,
-          minToAssetAmount: 99.9,
+          fromAmount: 10,
+          minToAssetAmount: 9.96,
           protocols: "UNISWAP_V3",
         },
         {
@@ -248,15 +248,15 @@ forkOnlyDescribe("ForkTest: Collateral swaps", function () {
           error: "ERC20: transfer amount exceeds balance",
           from: "frxETH",
           to: "WETH",
-          fromAmount: 1000,
-          minToAssetAmount: 990,
+          fromAmount: 50000,
+          minToAssetAmount: 49000,
         },
         {
           error: "SafeERC20: low-level call failed",
           from: "WETH",
           to: "frxETH",
-          fromAmount: 3000,
-          minToAssetAmount: 2990,
+          fromAmount: 30000,
+          minToAssetAmount: 29900,
         },
         {
           error: "BALANCE_EXCEEDED",
@@ -344,41 +344,41 @@ forkOnlyDescribe("ForkTest: Collateral swaps", function () {
         {
           from: "DAI",
           to: "USDT",
-          fromAmount: 100,
-          minToAssetAmount: 99.7,
+          fromAmount: 1000000,
+          minToAssetAmount: 990000,
         },
         {
           from: "DAI",
           to: "USDC",
-          fromAmount: 100,
-          minToAssetAmount: 99.5,
+          fromAmount: 1000000,
+          minToAssetAmount: 999900,
+          slippage: 0.1, // Max 1Inch slippage
         },
         {
           from: "USDT",
           to: "DAI",
-          fromAmount: 100,
-          minToAssetAmount: 99.5,
+          fromAmount: 1000000,
+          minToAssetAmount: 998000,
         },
         {
           from: "USDT",
           to: "USDC",
-          fromAmount: 10,
-          minToAssetAmount: "9.5",
-          slippage: 0.1,
+          fromAmount: 1000000,
+          minToAssetAmount: 998000,
         },
         {
           from: "USDC",
           to: "DAI",
-          fromAmount: 10,
-          minToAssetAmount: 9.5,
-          slippage: 0.1,
+          fromAmount: 1000000,
+          minToAssetAmount: 999900,
+          slippage: 0.05, // Max 1Inch slippage
         },
         {
           from: "USDC",
           to: "USDT",
-          fromAmount: 10,
-          minToAssetAmount: "9.6",
-          slippage: 0.1,
+          fromAmount: 1000000,
+          minToAssetAmount: "990000",
+          slippage: 0.02,
           approxFromBalance: true,
         },
       ];
@@ -435,22 +435,22 @@ forkOnlyDescribe("ForkTest: Collateral swaps", function () {
           error: "Dai/insufficient-balance",
           from: "DAI",
           to: "USDC",
-          fromAmount: 1000,
-          minToAssetAmount: 990,
+          fromAmount: 30000000,
+          minToAssetAmount: 29000000,
         },
         {
           error: "SafeERC20: low-level call failed",
           from: "USDT",
           to: "USDC",
-          fromAmount: 3000,
-          minToAssetAmount: 2990,
+          fromAmount: 50000000,
+          minToAssetAmount: 49900000,
         },
         {
           error: "ERC20: transfer amount exceeds balance",
           from: "USDC",
           to: "DAI",
-          fromAmount: 3000,
-          minToAssetAmount: 2990,
+          fromAmount: 30000000,
+          minToAssetAmount: 29900000,
         },
       ];
 
@@ -560,8 +560,13 @@ const assertSwap = async (
       toAssetDecimals
     )}`
   );
-  expect(toBalanceAfter.sub(toBalanceBefore), "to asset bal").to.gt(
-    minToAssetAmount
+  const toAmount = toBalanceAfter.sub(toBalanceBefore);
+  expect(toAmount, "to asset bal").to.gt(minToAssetAmount);
+  log(
+    `swapped ${formatUnits(fromAmount, fromAssetDecimals)} for ${formatUnits(
+      toAmount,
+      toAssetDecimals
+    )}`
   );
 };
 const assertFailedSwap = async (

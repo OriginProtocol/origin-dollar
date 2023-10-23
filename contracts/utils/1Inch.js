@@ -103,6 +103,7 @@ const getIInchSwapData = async ({
     const response = await axios.get(ONE_INCH_API, { params });
 
     if (!response.data.tx || !response.data.tx.data) {
+      console.error(response.data);
       throw Error("response is missing tx.data");
     }
 

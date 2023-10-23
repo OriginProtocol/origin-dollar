@@ -14,33 +14,33 @@
 
 ![Aave Strategy Storage](../../docs/AaveStrategyStorage.svg)
 
-## Compound Strategy
+## Convex ETH AMO Strategy
 
 ### Hierarchy
 
-![Compound Strategy Hierarchy](../../docs/CompStrategyHierarchy.svg)
+![Convex ETH AMO Strategy Hierarchy](../../docs/ConvexEthMetaStrategyHierarchy.svg)
 
 ### Squashed
 
-![Compound Strategy Squashed](../../docs/CompStrategySquashed.svg)
+![Convex ETH AMO Strategy Squashed](../../docs/ConvexEthMetaStrategySquashed.svg)
 
 ### Storage
 
-![Compound Strategy Storage](../../docs/CompStrategyStorage.svg)
+![Convex ETH AMO Strategy Storage](../../docs/ConvexEthMetaStrategyStorage.svg)
 
-## Convex ETH Metapool Strategy
+## Convex OUSD AMO Strategy
 
 ### Hierarchy
 
-![Convex ETH Metapool Strategy Hierarchy](../../docs/ConvexEthMetaStrategyHierarchy.svg)
+![Convex OUSD AMO Strategy Hierarchy](../../docs/ConvexOUSDMetaStrategyHierarchy.svg)
 
 ### Squashed
 
-![Convex ETH Metapool Strategy Squashed](../../docs/ConvexEthMetaStrategySquashed.svg)
+![Convex OUSD AMO Strategy Squashed](../../docs/ConvexOUSDMetaStrategySquashed.svg)
 
 <!-- ### Storage
 
-![Convex ETH Metapool Strategy Storage](../../docs/ConvexEthMetaStrategyStorage.svg) -->
+![Convex OUSD AMO Strategy Storage](../../docs/ConvexOUSDMetaStrategyStorage.svg) -->
 
 ## Flux Strategy
 

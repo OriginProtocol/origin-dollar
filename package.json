@@ -7,9 +7,13 @@
     "build:dapp": "(cd dapp && NODE_ENV=development yarn install && yarn build)",
     "build:contracts": "(cd contracts && NODE_ENV=development yarn install && yarn run deploy)",
     "build:oethdapp": "(cd dapp-oeth && NODE_ENV=development yarn install && yarn build)",
-    "start": "bash devops/start-dapp.sh"
+    "start": "bash devops/start-dapp.sh",
+    "test": "exit 0"
   },
   "engines": {
     "node": "16"
+  },
+  "devDependencies": {
+    "danger": "^11.2.8"
   }
 }

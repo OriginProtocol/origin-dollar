@@ -37,7 +37,7 @@ object "Swapper1InchV5" as swap <<Origin>> #DeepSkyBlue {
 }
 
 object "OETHHarvester" as harv <<Origin>><<Proxy>> #DeepSkyBlue {
-    rewards: CRV, CVX
+    rewards: CRV, CVX, BAL, AURA
 }
 
 ' Strategies
@@ -49,15 +49,23 @@ object "ConvexEthMetaStrategy" as cvxStrat <<Origin>><<Proxy>> #DeepSkyBlue {
     asset: WETH
     Curve metapool: OETHCRV-f
     Convex pool: cvxOETHCRV-f
+    Rewards: CRV, CVX
 }
 object "MorphoAaveStrategy" as morphAaveStrat <<Origin>><<Proxy>> #DeepSkyBlue {
     asset: WETH
     Aave token: aWETH
 }
 
+object "BalancerMetaPoolStrategy" as balancerStrat <<Origin>><<Proxy>> #DeepSkyBlue {
+    asset: rETH, WETH
+    Balancer Pool Token: B-rETH-STABLE
+    Rewards: BAL, AURA
+}
+
 ' Oracle
 object "OETHOracleRouter" as oracle <<Origin>> #DeepSkyBlue {
 pairs:
+    frxETH/ETH
     stETH/ETH
     rETH/ETH
     CRV/ETH
@@ -201,6 +209,11 @@ oeth <... morphAaveStrat
 ' morphoLens .> morphoV2
 ' morphoV2 ..> aweth
 ' morphoV2 ..> vdweth
+
+' Balancer Strategy
+oethv <...> balancerStrat
+oeth <... balancerStrat
+harv <..> balancerStrat
 
 ' ' Vault to Assets
 ' oethv .....> frxeth

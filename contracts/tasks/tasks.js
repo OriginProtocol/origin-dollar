@@ -41,12 +41,18 @@ const {
 } = require("./vault");
 const { checkDelta, getDelta, takeSnapshot } = require("./valueChecker");
 const {
-  amoStrategyTask,
   curveAddTask,
   curveRemoveTask,
   curveSwapTask,
   curvePoolTask,
 } = require("./curve");
+const {
+  amoStrategyTask,
+  mintAndAddOTokensTask,
+  removeAndBurnOTokensTask,
+  removeOnlyAssetsTask,
+} = require("./amoStrategy");
+const { proxyUpgrades } = require("./proxy");
 
 // Environment tasks.
 task("env", "Check env vars are properly set for a Mainnet deployment", env);
@@ -494,6 +500,12 @@ subtask("curvePool", "Dumps the current state of a Curve pool")
     undefined,
     types.string
   )
+  .addOptionalParam(
+    "output",
+    "true will output to the console. false will use debug logs.",
+    true,
+    types.boolean
+  )
   .setAction(curvePoolTask);
 task("curvePool").setAction(async (_, __, runSuper) => {
   return runSuper();
@@ -515,10 +527,10 @@ subtask("amoStrat", "Dumps the current state of a AMO strategy")
     types.int
   )
   .addOptionalParam(
-    "user",
-    "Address of user adding, removing or swapping tokens. (default: no user)",
-    undefined,
-    types.string
+    "output",
+    "true will output to the console. false will use debug logs.",
+    true,
+    types.boolean
   )
   .setAction(amoStrategyTask);
 task("amoStrat").setAction(async (_, __, runSuper) => {
@@ -591,6 +603,65 @@ task("curveSwap").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
+// AMO peg keeping
+subtask(
+  "amoMint",
+  "AMO strategy mints OTokens and one-sided add to the Metapool"
+)
+  .addOptionalParam(
+    "symbol",
+    "Symbol of the OToken. eg OETH or OUSD",
+    "OETH",
+    types.string
+  )
+  .addParam("amount", "Amount of OTokens to mint", 0, types.float)
+  .setAction(mintAndAddOTokensTask);
+task("amoMint").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "amoBurn",
+  "AMO strategy does a one-sided remove of OTokens from the Metapool which are then burned."
+)
+  .addOptionalParam(
+    "symbol",
+    "Symbol of the OToken. eg OETH or OUSD",
+    "OETH",
+    types.string
+  )
+  .addParam(
+    "amount",
+    "Amount of Metapool LP tokens to burn for removed OTokens",
+    0,
+    types.float
+  )
+  .setAction(removeAndBurnOTokensTask);
+task("amoBurn").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "amoRemove",
+  "AMO strategy does a one-sided remove of ETH from the Metapool and adds the asset to the vault"
+)
+  .addOptionalParam(
+    "symbol",
+    "Symbol of the OToken. eg OETH or OUSD",
+    "OETH",
+    types.string
+  )
+  .addParam(
+    "amount",
+    "Amount of Metapool LP tokens to burn for removed assets",
+    0,
+    types.float
+  )
+  .setAction(removeOnlyAssetsTask);
+task("amoRemove").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
 // Vault Value Checker
 subtask("vaultDelta", "Get a vaults's delta values")
   .addOptionalParam(
@@ -647,3 +718,24 @@ subtask("checkDelta", "Checks a vault's delta values")
 task("checkDelta").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
+
+task("proxyUpgrades", "Lists all proxy implementation changes")
+  .addParam(
+    "contract",
+    "Name, eg OETHVaultProxy, or address of the proxy contract",
+    undefined,
+    types.string
+  )
+  .addOptionalParam(
+    "from",
+    "Block to query transaction events from. (default: deployment block)",
+    10884563,
+    types.int
+  )
+  .addOptionalParam(
+    "to",
+    "Block to query transaction events to. (default: current block)",
+    0,
+    types.int
+  )
+  .setAction(proxyUpgrades);

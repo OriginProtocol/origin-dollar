@@ -15,7 +15,7 @@ module.exports = deploymentWithProposal(
     getTxOpts,
     withConfirmation,
   }) => {
-    const { deployerAddr, governorAddr } = await getNamedAccounts();
+    const { deployerAddr } = await getNamedAccounts();
     const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
     const dVaultAdmin = await deployWithConfirmation("VaultAdmin");
@@ -95,7 +95,7 @@ module.exports = deploymentWithProposal(
     await withConfirmation(
       cConvexOUSDMetaStrategy
         .connect(sDeployer)
-        .transferGovernance(governorAddr, await getTxOpts())
+        .transferGovernance(addresses.mainnet.Timelock, await getTxOpts())
     );
 
     console.log(

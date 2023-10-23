@@ -8,7 +8,7 @@ import { currencies } from 'constants/Contract'
 import withRpcProvider from 'hoc/withRpcProvider'
 import usePriceTolerance from 'hooks/usePriceTolerance'
 import useCurrencySwapper from 'hooks/useCurrencySwapper'
-import useEthPrice from 'hooks/useEthPrice'
+import useTokenPrices from 'hooks/useTokenPrices'
 import SwapCurrencyPill from 'components/buySell/SwapCurrencyPill'
 import PillArrow from 'components/buySell/_PillArrow'
 import SettingsDropdown from 'components/buySell/SettingsDropdown'
@@ -29,9 +29,13 @@ const SwapHomepage = ({
   isMobile,
 }) => {
   const swapEstimations = useStoreState(ContractStore, (s) => s.swapEstimations)
+  const swapEstimationsError = useStoreState(
+    ContractStore,
+    (s) => s.swapEstimationsError
+  )
   const swapsLoaded = swapEstimations && typeof swapEstimations === 'object'
   const selectedSwap = useStoreState(ContractStore, (s) => s.selectedSwap)
-  const ethPrice = useEthPrice()
+  const { data: prices } = useTokenPrices()
 
   // mint / redeem
   const [swapMode, setSwapMode] = useState(
@@ -218,6 +222,7 @@ const SwapHomepage = ({
 
     event({
       event: 'swap_started',
+      swap_route: selectedSwap.name,
       swap_token: swapTokenUsed,
       swap_amount: swapTokenAmount,
     })
@@ -262,6 +267,7 @@ const SwapHomepage = ({
       event({
         event: 'swap_complete',
         swap_type: swapMode,
+        swap_route: selectedSwap.name,
         swap_token: swapTokenUsed,
         swap_amount: swapTokenAmount,
       })
@@ -340,21 +346,22 @@ const SwapHomepage = ({
                 onSelectChange={userSelectsBuyCoin}
                 topItem
                 onErrorChange={setBalanceError}
-                ethPrice={ethPrice}
+                tokenConversions={prices}
               />
               <PillArrow swapMode={swapMode} setSwapMode={setSwapMode} />
               <SwapCurrencyPill
                 swapMode={swapMode}
                 selectedSwap={selectedSwap}
                 swapsLoading={swapEstimations === 'loading'}
+                swapsError={swapEstimations === 'error' && swapEstimationsError}
                 priceToleranceValue={priceToleranceValue}
                 selectedCoin={selectedRedeemCoin}
                 onSelectChange={userSelectsRedeemCoin}
-                ethPrice={ethPrice}
+                tokenConversions={prices}
               />
             </div>
           </div>
-          <ContractsTable />
+          <ContractsTable selectedBuyCoin={selectedBuyCoin} />
           <ApproveSwap
             inputAmount={
               swapMode === 'mint'
@@ -369,6 +376,7 @@ const SwapHomepage = ({
             allowancesLoaded={allowancesLoaded}
             onMintingError={onMintingError}
             balanceError={balanceError}
+            swapEstimationsError={swapEstimationsError}
             swapsLoaded={swapsLoaded}
             swappingGloballyDisabled={swappingGloballyDisabled}
           />

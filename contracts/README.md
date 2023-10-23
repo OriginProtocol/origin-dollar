@@ -2,7 +2,7 @@
 
 ## Prettier
 
-Both Solidity and JavaScript code is formatted using [Prettier](https://prettier.io/).
+Both Solidity and JavaScript code are formatted using [Prettier](https://prettier.io/).
 
 The configuration for Prettier is in [.prettierrc](./.prettierrc).
 This should already be configured in the VS Code settings file [.vscode/settings.json](../.vscode/settings.json). [.prettierignore](./.prettierignore) is used to ignore files from being formatted.
@@ -41,6 +41,12 @@ yarn lint
 ```
 
 ## Slither
+
+### Install slither
+
+If you use the slither documented "pip3 install slither-analyzer" there might be problems
+with package collisions. Just use pipx that installs any package and all dependencies in 
+sandbox to circumvent the issue: `pipx install slither-analyzer`
 
 [Slither](https://github.com/crytic/slither#slither-the-solidity-source-analyzer) is used to for Solidity static analysis.
 

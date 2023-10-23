@@ -58,7 +58,11 @@ contract ThreePoolStrategy is BaseCurveStrategy {
         crvGaugeAddress = _crvGaugeAddress;
         crvMinterAddress = _crvMinterAddress;
         pTokenAddress = _pTokens[0];
-        super._initialize(_rewardTokenAddress, _assets, _pTokens);
+        InitializableAbstractStrategy._initialize(
+            _rewardTokenAddress,
+            _assets,
+            _pTokens
+        );
         _approveBase();
     }
 

@@ -33,8 +33,12 @@ contract MorphoAaveStrategy is InitializableAbstractStrategy {
         address[] calldata _rewardTokenAddresses,
         address[] calldata _assets,
         address[] calldata _pTokens
-    ) external override onlyGovernor initializer {
-        super._initialize(_rewardTokenAddresses, _assets, _pTokens);
+    ) external onlyGovernor initializer {
+        InitializableAbstractStrategy._initialize(
+            _rewardTokenAddresses,
+            _assets,
+            _pTokens
+        );
     }
 
     /**

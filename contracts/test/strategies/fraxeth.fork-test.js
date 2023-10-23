@@ -1,6 +1,6 @@
 const { expect } = require("chai");
 
-const { units, oethUnits, forkOnlyDescribe, isCI } = require("../helpers");
+const { units, oethUnits, isCI } = require("../helpers");
 
 const {
   createFixtureLoader,
@@ -9,7 +9,7 @@ const {
   impersonateAndFundContract,
 } = require("./../_fixture");
 
-forkOnlyDescribe("ForkTest: FraxETH Strategy", function () {
+describe("ForkTest: FraxETH Strategy", function () {
   this.timeout(0);
 
   // Retry up to 3 times on CI
@@ -82,6 +82,32 @@ forkOnlyDescribe("ForkTest: FraxETH Strategy", function () {
       expect(balanceBefore.sub(balanceAfter)).to.approxEqualTolerance(
         oethUnits("12")
       );
+    });
+
+    it("Should not allow withdrawing WETH", async () => {
+      const { oethVault, fraxEthStrategy, weth } = fixture;
+      const fakeVaultSigner = await impersonateAndFundContract(
+        oethVault.address
+      );
+
+      await expect(
+        fraxEthStrategy
+          .connect(fakeVaultSigner)
+          .withdraw(weth.address, weth.address, oethUnits("12"))
+      ).to.be.revertedWith("Unexpected asset address");
+    });
+    // TODO: Reenable this after FraxETH strategy has been upgraded
+    it.skip("Should allow withdrawAll twice", async () => {
+      const { oethVault, fraxEthStrategy } = fixture;
+      const fakeVaultSigner = await impersonateAndFundContract(
+        oethVault.address
+      );
+
+      // Do a withdrawAll with impersonated Vault
+      await fraxEthStrategy.connect(fakeVaultSigner).withdrawAll();
+
+      // Do a second withdrawAll, both should work.
+      await fraxEthStrategy.connect(fakeVaultSigner).withdrawAll();
     });
 
     it("Should not allow withdrawing WETH", async () => {
