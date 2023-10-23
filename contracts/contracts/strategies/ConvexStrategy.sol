@@ -163,8 +163,8 @@ contract ConvexStrategy is BaseCurveStrategy {
     function _approveBase() internal override {
         IERC20 curveLpToken = IERC20(CURVE_LP_TOKEN);
         // Approve the Convex deposit contract to transfer the Curve pool's LP token
-        curveLpToken.safeApprove(cvxDepositor, 0);
-        curveLpToken.safeApprove(cvxDepositor, type(uint256).max);
+        // slither-disable-next-line unused-return
+        curveLpToken.approve(cvxDepositor, type(uint256).max);
     }
 
     /**
