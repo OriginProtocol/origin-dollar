@@ -54,8 +54,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         );
         require(_curveConfig.curvePool != address(0), "Invalid Curve pool");
         require(
-            _curveConfig.curveLpToken != address(0) ||
-                Helpers.getDecimals(_curveConfig.curveLpToken) == 18,
+            Helpers.getDecimals(_curveConfig.curveLpToken) == 18,
             "Invalid Curve LP token"
         );
 
