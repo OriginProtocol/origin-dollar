@@ -23,13 +23,13 @@ library CurveTwoCoinLib {
             _amounts.length == CURVE_POOL_ASSETS_COUNT,
             "Invalid number of amounts"
         );
-        uint256[CURVE_POOL_ASSETS_COUNT] memory amount = [
+        uint256[CURVE_POOL_ASSETS_COUNT] memory amounts = [
             _amounts[0],
             _amounts[1]
         ];
 
         // slither-disable-next-line unused-return
-        ICurveMetaPool(_pool).add_liquidity(amount, _min_mint_amount);
+        ICurveMetaPool(_pool).add_liquidity(amounts, _min_mint_amount);
     }
 
     /**
