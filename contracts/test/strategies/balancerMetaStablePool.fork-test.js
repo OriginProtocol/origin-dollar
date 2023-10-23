@@ -177,6 +177,15 @@ forkOnlyDescribe(
           auraRewardPool
         );
       });
+
+      // Un-skip once we re-deploy the strategy
+      it.skip("Shouldn't be able to cache assets twice", async function () {
+        const { balancerREthStrategy, josh } = fixture;
+
+        await expect(
+          balancerREthStrategy.connect(josh).cachePoolAssets()
+        ).to.be.revertedWith("Assets already cached");
+      });
     });
 
     describe("Deposit", function () {
