@@ -49,13 +49,13 @@ addresses.mainnet.cDAI = "0x5d3a536e4d6dbd6114cc1ead35777bab948e3643";
 addresses.mainnet.cUSDC = "0x39aa39c021dfbae8fac545936693ac917d5e7563";
 addresses.mainnet.cUSDT = "0xf650c3d88d12db855b8bf7d11be6c55a4e07dcc9";
 // Curve
-addresses.mainnet.CRV = "0xd533a949740bb3306d119cc777fa900ba034cd52";
+addresses.mainnet.CRV = "0xD533a949740bb3306d119CC777fa900bA034cd52";
 addresses.mainnet.CRVMinter = "0xd061D61a4d941c39E5453435B6345Dc261C2fcE0";
 addresses.mainnet.ThreePool = "0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7";
 addresses.mainnet.ThreePoolToken = "0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490";
 addresses.mainnet.ThreePoolGauge = "0xbFcF63294aD7105dEa65aA58F8AE5BE2D9d0952A";
 // CVX
-addresses.mainnet.CVX = "0x4e3fbd56cd56c3e72c1403e103b45db9da5b9d2b";
+addresses.mainnet.CVX = "0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B";
 addresses.mainnet.CVXBooster = "0xF403C135812408BFbE8713b5A23a04b3D48AAE31";
 addresses.mainnet.CVXRewardsPool = "0x7D536a737C13561e0D2Decf1152a653B4e615158";
 // Maker Dai Savings Rate
@@ -186,7 +186,7 @@ addresses.mainnet.OldTimelock = "0x72426BA137DEC62657306b12B1E869d43FeC6eC7";
 // OETH
 addresses.mainnet.OETHProxy = "0x856c4Efb76C1D1AE02e20CEB03A2A6a08b0b8dC3";
 addresses.mainnet.WOETHProxy = "0xDcEe70654261AF21C44c093C300eD3Bb97b78192";
-addresses.mainnet.OETHVaultProxy = "0x39254033945aa2e4809cc2977e7087bee48bd7ab";
+addresses.mainnet.OETHVaultProxy = "0x39254033945AA2E4809Cc2977E7087BEE48bd7Ab";
 addresses.mainnet.OETHZapper = "0x9858e47BCbBe6fBAC040519B02d7cd4B2C470C66";
 addresses.mainnet.FraxETHStrategy =
   "0x3ff8654d633d4ea0fae24c52aec73b4a20d0d0e5";
