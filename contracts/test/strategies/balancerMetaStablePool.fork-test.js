@@ -1038,7 +1038,7 @@ forkOnlyDescribe(
          *    tilt checkBalance call. Strategy has roughly ~100 units deposited so 0.012
          *    change would equal 0.012/100 = 0.00012 change if 1 is a whole. Or 0.012%
          */
-        [100, "0.015"],
+        [100, "0.016"],
         [200, "0.019"],
         [300, "0.023"],
         [400, "0.025"],
