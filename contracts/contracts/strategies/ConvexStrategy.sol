@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 /**
  * @title Curve Convex Strategy
- * @notice Investment strategy for investing stablecoins via Curve 3Pool
+ * @notice Investment strategy for investing Curve Liquidity Provider (LP) tokens in Convex pools
  * @author Origin Protocol Inc
  */
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
