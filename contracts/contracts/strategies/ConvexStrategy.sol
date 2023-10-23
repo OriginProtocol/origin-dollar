@@ -98,7 +98,15 @@ contract ConvexStrategy is BaseCurveStrategy {
         );
     }
 
+    /**
+     * @dev Unstake a required amount of Convex LP token and withdraw the Curve LP tokens from the Convex pool.
+     * This assumes 1 Convex LP token equals 1 Curve LP token.
+     * Do not collect Convex token rewards (CRV and CVX) as that's done via the Harvester.
+     * Collecting token rewards now just adds extra gas as they will sit in the strategy until
+     * the Harvester collects more rewards and swaps them for a vault asset.
+     */
     function _lpWithdraw(uint256 requiredLpTokens) internal override {
+        // Get the actual amount of Convex LP tokens staked.
         uint256 actualLpTokens = IRewardStaking(cvxRewardStaker).balanceOf(
             address(this)
         );
@@ -109,18 +117,25 @@ contract ConvexStrategy is BaseCurveStrategy {
             "Insufficient Curve LP balance"
         );
 
-        // withdraw and unwrap with claim takes back the lpTokens and also collects the rewards to this
+        // Unstake the Convex LP token and withdraw the Curve LP tokens from the Convex pool to this strategy contract.
         IRewardStaking(cvxRewardStaker).withdrawAndUnwrap(
             requiredLpTokens,
-            true // stake
+            false // do not claim Convex token rewards
         );
     }
 
+    /**
+     * @dev Unstake all the Convex LP tokens and withdraw all the Curve LP tokens from the Convex pool.
+     * Do not collect Convex token rewards (CRV and CVX) as that's done via the Harvester.
+     * Collecting token rewards now just adds extra gas as they will sit in the strategy until
+     * the Harvester collects more rewards and swaps them for a vault asset.
+     */
     function _lpWithdrawAll() internal override {
-        // withdraw and unwrap with claim takes back the lpTokens and also collects the rewards to this
+        // Unstake all the Convex LP token and withdraw all the Curve LP tokens
+        // from the Convex pool to this strategy contract.
         IRewardStaking(cvxRewardStaker).withdrawAndUnwrap(
             IRewardStaking(cvxRewardStaker).balanceOf(address(this)),
-            true // stake
+            false // do not claim Convex token rewards
         );
     }
 
