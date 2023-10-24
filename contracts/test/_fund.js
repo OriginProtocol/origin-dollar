@@ -16,8 +16,8 @@ const {
 const { units } = require("../utils/units");
 const erc20Abi = require("./abi/erc20.json");
 
-const mappedSlots = {};
-
+const mappedFundingSlots = {};
+const balancesContractSlotCache = {};
 /**
  *
  * Based on https://blog.euler.finance/brute-force-storage-layout-discovery-in-erc20-contracts-with-hardhat-7ff9342143ed
@@ -26,6 +26,12 @@ const mappedSlots = {};
  * @return {*}  {Promise<number>}
  */
 const findBalancesSlot = async (tokenAddress) => {
+  // need to check for undefined since a "0" is a valid value that defaults to false 
+  // in the if statement
+  if (balancesContractSlotCache[tokenAddress] !== undefined) {
+    return balancesContractSlotCache[tokenAddress];
+  }
+
   const { ethers } = (await import("hardhat")).default;
 
   const encode = (types, values) => defaultAbiCoder.encode(types, values);
@@ -56,7 +62,10 @@ const findBalancesSlot = async (tokenAddress) => {
     // reset to previous value
     await setStorageAt(tokenAddress, probedSlot, prev);
 
-    if (balance.eq(ethrs.BigNumber.from(probe))) return i;
+    if (balance.eq(ethrs.BigNumber.from(probe))) {
+      balancesContractSlotCache[tokenAddress] = i;
+      return i;
+    }
   }
   throw new Error("Balances slot not found!");
 };
@@ -89,10 +98,10 @@ const setTokenBalance = async (
       [userAddress, balanceSlot]
     );
 
-    if (!mappedSlots[tokenContract.address])
-      mappedSlots[tokenContract.address] = {};
+    if (!mappedFundingSlots[tokenContract.address])
+      mappedFundingSlots[tokenContract.address] = {};
 
-    mappedSlots[tokenContract.address][userAddress] = index;
+    mappedFundingSlots[tokenContract.address][userAddress] = index;
   }
 
   console.log(
@@ -179,7 +188,7 @@ const setERC20TokenBalance = async (account, token, amount = "10000", hre) => {
   );
 
   // Print out mapped slots and add them to config above
-  //console.log(mappedSlots);
+  //console.log(mappedFundingSlots);
 };
 
 module.exports = {
