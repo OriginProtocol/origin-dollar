@@ -39,12 +39,16 @@
   "license": "MIT",
   "devDependencies": {
     "@nomicfoundation/hardhat-chai-matchers": "1",
+    "@nomicfoundation/hardhat-ethers": "^3.0.4",
     "@nomicfoundation/hardhat-network-helpers": "^1.0.9",
     "@nomicfoundation/hardhat-toolbox": "^3.0.0",
+    "@nomicfoundation/hardhat-verify": "^1.1.1",
+    "@nomiclabs/hardhat-ethers": "^2.2.3",
     "@openzeppelin/contracts": "4.4.2",
     "@openzeppelin/hardhat-upgrades": "^1.10.0",
     "@typechain/ethers-v6": "^0.5.1",
     "@typechain/hardhat": "^9.1.0",
+    "@types/mocha": "^10.0.3",
     "@uniswap/v3-core": "^1.0.0",
     "@uniswap/v3-periphery": "^1.1.1",
     "axios": "^1.4.0",
@@ -79,9 +83,5 @@
     }
   },
   "dependencies": {
-    "@nomicfoundation/hardhat-ethers": "^3.0.4",
-    "@nomicfoundation/hardhat-verify": "^1.1.1",
-    "@nomiclabs/hardhat-ethers": "^2.2.3",
-    "@types/mocha": "^10.0.3"
   }
 }
