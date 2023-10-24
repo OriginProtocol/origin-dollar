@@ -3,7 +3,6 @@ const { expect } = require("chai");
 const {
   units,
   oethUnits,
-  forkOnlyDescribe,
   advanceBlocks,
   advanceTime,
   isCI,
@@ -14,7 +13,7 @@ const {
   impersonateAndFundContract,
 } = require("../fixture/_fixture");
 
-forkOnlyDescribe("ForkTest: Morpho Aave OETH Strategy", function () {
+describe("ForkTest: Morpho Aave OETH Strategy", function () {
   this.timeout(0);
 
   // Retry up to 3 times on CI

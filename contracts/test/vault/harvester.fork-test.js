@@ -2,11 +2,11 @@ const { expect } = require("chai");
 const { utils } = require("ethers");
 
 const { loadDefaultFixture } = require("./../fixture/_fixture");
-const { forkOnlyDescribe, isCI } = require("./../helpers");
+const { isCI } = require("./../helpers");
 const { MAX_UINT256 } = require("../../utils/constants");
 const { parseUnits } = require("ethers").utils;
 
-forkOnlyDescribe("ForkTest: Harvester", function () {
+describe("ForkTest: Harvester", function () {
   this.timeout(0);
 
   // Retry up to 3 times on CI

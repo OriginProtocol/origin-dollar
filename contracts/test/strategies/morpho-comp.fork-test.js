@@ -3,7 +3,6 @@ const { expect } = require("chai");
 const {
   units,
   ousdUnits,
-  forkOnlyDescribe,
   differenceInErc20TokenBalance,
   advanceBlocks,
   advanceTime,
@@ -15,7 +14,7 @@ const {
   impersonateAndFundContract,
 } = require("../fixture/_fixture");
 
-forkOnlyDescribe("ForkTest: Morpho Compound Strategy", function () {
+describe("ForkTest: Morpho Compound Strategy", function () {
   this.timeout(0);
 
   // Retry up to 3 times on CI
