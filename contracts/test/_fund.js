@@ -1,6 +1,7 @@
 const {
   setBalance,
   setStorageAt,
+  getStorageAt,
 } = require("@nomicfoundation/hardhat-network-helpers");
 const ethrs = require("ethers");
 const addresses = require("../utils/addresses");
@@ -15,6 +16,8 @@ const {
 const { units } = require("../utils/units");
 const erc20Abi = require("./abi/erc20.json");
 
+const mappedSlots = {};
+
 /**
  *
  * Based on https://blog.euler.finance/brute-force-storage-layout-discovery-in-erc20-contracts-with-hardhat-7ff9342143ed
@@ -23,7 +26,7 @@ const erc20Abi = require("./abi/erc20.json");
  * @return {*}  {Promise<number>}
  */
 const findBalancesSlot = async (tokenAddress) => {
-  const { ethers, network } = (await import("hardhat")).default;
+  const { ethers } = (await import("hardhat")).default;
 
   const encode = (types, values) => defaultAbiCoder.encode(types, values);
 
@@ -41,11 +44,8 @@ const findBalancesSlot = async (tokenAddress) => {
     //     probedSlot = `0x${probedSlot.slice(3)}`
     // }
 
-    const prev = await network.provider.send("eth_getStorageAt", [
-      tokenAddress,
-      probedSlot,
-      "latest",
-    ]);
+    const prev = await getStorageAt(tokenAddress, probedSlot, "latest");
+
     // make sure the probe will change the slot value
     const probe = prev === probeA ? probeB : probeA;
 
@@ -88,13 +88,15 @@ const setTokenBalance = async (
       ["uint256", "uint256"],
       [userAddress, balanceSlot]
     );
-    console.log(
-      `slotIndex: ${index} for tokenAddress: ${tokenContract.address}, userAddress: ${userAddress}`
-    );
+
+    if (!mappedSlots[tokenContract.address])
+      mappedSlots[tokenContract.address] = {};
+
+    mappedSlots[tokenContract.address][userAddress] = index;
   }
 
   console.log(
-    `Setting balance of user  ${userAddress} with token ${tokenContract.address} at index ${index}`
+    `Setting balance of user ${userAddress} with token ${tokenContract.address}`
   );
   await setStorageAt(
     tokenContract.address,
@@ -130,9 +132,39 @@ async function hardhatSetBalance(address, hre, amount = "10000") {
  * @param {number} [amount=10000] Amount of tokens to set
  */
 const setERC20TokenBalance = async (account, token, amount = "10000", hre) => {
+  /* Format:
+   * config = {
+   *   tokenContract.address1: {
+   *     userAddress1: slotIndex1,
+   *     userAddress2: slotIndex2
+   *   }
+   * },
+   *   tokenContract.address1: {...}
+   *
+   */
   const config = {
-    //addresses.mainnet.DAI.toLowerCase(): "0x7f3c26fbd6adc962614e3a1c1175130c9fdb3345a58040fe57aba7ab778e242f",
-    //addresses.mainnet.USDT.toLowerCase(): "0x7f3c26fbd6adc962614e3a1c1175130c9fdb3345a58040fe57aba7ab778e242f"
+    "0x6B175474E89094C44Da98b954EedeAC495271d0F": {
+      "0x1974f84881Af4204a21f18c43D7c4d9Dee331Bb5":
+        "0x69b24394dd5fcb36e2323a72fa862921f86bb0b4a80e3cb9dcb0c57a59c9bdf9",
+      "0x8e097ed5FC6B357Ff15a9a7f3D41cDF5B4a05553":
+        "0xd109c2b690fc11f278729dca2fbda42000bf7dbdfe3e71e42ca94d1022236be2",
+      "0xFc1850fDd03F596867318EbD303d6256150d657e":
+        "0xe66d2125d91fcfc00d713020bf264edffb947787b8184b8a4acadcf7a8170a60",
+    },
+    "0xdAC17F958D2ee523a2206206994597C13D831ec7": {
+      "0x1974f84881Af4204a21f18c43D7c4d9Dee331Bb5":
+        "0x69b24394dd5fcb36e2323a72fa862921f86bb0b4a80e3cb9dcb0c57a59c9bdf9",
+      "0x8e097ed5FC6B357Ff15a9a7f3D41cDF5B4a05553":
+        "0xd109c2b690fc11f278729dca2fbda42000bf7dbdfe3e71e42ca94d1022236be2",
+      "0xFc1850fDd03F596867318EbD303d6256150d657e":
+        "0xe66d2125d91fcfc00d713020bf264edffb947787b8184b8a4acadcf7a8170a60",
+    },
+    "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48": {
+      "0x1974f84881Af4204a21f18c43D7c4d9Dee331Bb5":
+        "0xf60c83e9a7db0106e80d1a4ade9d8823b6302c5b429ac7ab1c1626fb3145cc57",
+      "0x8e097ed5FC6B357Ff15a9a7f3D41cDF5B4a05553":
+        "0xb440dfcd6fa4d87862365c517b4c9011a5db4d027c7bfe1fbba53769e3340de1",
+    },
   };
 
   // Set balance directly by manipulating the contract storage
@@ -140,9 +172,14 @@ const setERC20TokenBalance = async (account, token, amount = "10000", hre) => {
     account,
     token,
     amount,
-    config[token.address.toLowerCase()],
+    config[token.address.toLowerCase()]
+      ? config[token.address][account]
+      : undefined,
     hre
   );
+
+  // Print out mapped slots and add them to config above
+  //console.log(mappedSlots);
 };
 
 module.exports = {
