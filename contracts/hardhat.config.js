@@ -2,14 +2,22 @@ const ethers = require("ethers");
 const { task } = require("hardhat/config");
 const fetch = require("sync-fetch");
 
-require("@nomicfoundation/hardhat-toolbox")
+require("@nomicfoundation/hardhat-toolbox");
+
+// require('@nomicfoundation/hardhat-chai-matchers');
+require('@nomicfoundation/hardhat-ethers');
+// require('@typechain/hardhat');
+// require('hardhat-gas-reporter');
+// require('solidity-coverage');
+
 require("hardhat-deploy");
-require("hardhat-tracer");
+// require("hardhat-tracer");
 require("hardhat-contract-sizer");
 require("hardhat-deploy-ethers");
-require("hardhat-gas-reporter");
-require("solidity-coverage");
 require("@openzeppelin/hardhat-upgrades");
+require("@nomicfoundation/hardhat-chai-matchers");
+require("@nomicfoundation/hardhat-network-helpers");
+
 
 require("./tasks/tasks");
 const { accounts } = require("./tasks/account");
