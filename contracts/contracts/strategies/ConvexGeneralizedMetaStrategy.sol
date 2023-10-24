@@ -12,11 +12,15 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 import { IRewardStaking } from "./IRewardStaking.sol";
 import { IConvexDeposits } from "./IConvexDeposits.sol";
 import { ICurvePool } from "./curve/ICurvePool.sol";
+import { CurveThreeCoin } from "./curve/CurveThreeCoin.sol";
 import { IERC20, InitializableAbstractStrategy } from "./BaseCurveStrategy.sol";
 import { BaseConvexMetaStrategy, BaseCurveStrategy } from "./BaseConvexMetaStrategy.sol";
 import { StableMath } from "../utils/StableMath.sol";
 
-contract ConvexGeneralizedMetaStrategy is BaseConvexMetaStrategy {
+contract ConvexGeneralizedMetaStrategy is
+    BaseConvexMetaStrategy,
+    CurveThreeCoin
+{
     using StableMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -134,5 +138,82 @@ contract ConvexGeneralizedMetaStrategy is BaseConvexMetaStrategy {
                     curve3PoolExpected.mulTruncate(maxWithdrawalSlippage)
             );
         }
+    }
+
+    /**
+     * @notice Deposit coins into a Curve pool
+     * @param _pool Address of the Curve pool
+     * @param _amounts List of amounts of coins to deposit
+     * @param _min_mint_amount Minimum amount of LP tokens to mint from the deposit
+     */
+    function _curve_add_liquidity(
+        address _pool,
+        uint256[] memory _amounts,
+        uint256 _min_mint_amount
+    ) internal override(BaseCurveStrategy, CurveThreeCoin) {
+        _curve_add_liquidity(_pool, _amounts, _min_mint_amount);
+    }
+
+    /**
+     * @notice Calculate amount of LP required when withdrawing specific amount of one
+     * of the underlying assets accounting for fees and slippage.
+     * @param _pool Address of the Curve pool
+     * @param _coinIndex index of the coin in the Curve pool that is to be withdrawn
+     * @param _assetAmount Amount of of the indexed coin to withdraw
+     * @return lpAmount Curve LP tokens required to remove the coin amounts
+     */
+    function _curveCalcWithdrawLpAmount(
+        address _pool,
+        uint256 _coinIndex,
+        uint256 _assetAmount
+    )
+        internal
+        view
+        override(BaseCurveStrategy, CurveThreeCoin)
+        returns (uint256 lpAmount)
+    {
+        lpAmount = _curveCalcWithdrawLpAmount(_pool, _coinIndex, _assetAmount);
+    }
+
+    /**
+     * @notice Withdraws a single asset from the pool
+     * @param _pool Address of the Curve pool
+     * @param _amount The amount of underlying coin to withdraw
+     * @param _coin_index Curve pool index of the coin to withdraw
+     * @param _max_burn_amount Maximum amount of LP token to burn in the withdrawal
+     * @param _asset The token address of the coin being withdrawn
+     * @param _receiver Address that receives the withdrawn coins
+     */
+    function _curve_remove_liquidity_imbalance(
+        address _pool,
+        uint256 _amount,
+        uint256 _coin_index,
+        uint256 _max_burn_amount,
+        address _asset,
+        address _receiver
+    ) internal override(BaseCurveStrategy, CurveThreeCoin) {
+        _curve_remove_liquidity_imbalance(
+            _pool,
+            _amount,
+            _coin_index,
+            _max_burn_amount,
+            _asset,
+            _receiver
+        );
+    }
+
+    /**
+     * @notice Withdraw coins from the pool
+     * @dev Withdrawal amounts are based on current deposit ratios
+     * @param _pool Address of the Curve pool
+     * @param _burn_amount Quantity of LP tokens to burn in the withdrawal
+     * @param _min_amounts Minimum amounts of underlying coins to receive
+     */
+    function _curve_remove_liquidity(
+        address _pool,
+        uint256 _burn_amount,
+        uint256[] memory _min_amounts
+    ) internal override(BaseCurveStrategy, CurveThreeCoin) {
+        _curve_remove_liquidity(_pool, _burn_amount, _min_amounts);
     }
 }

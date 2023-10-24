@@ -32,7 +32,7 @@ import { StableMath } from "../utils/StableMath.sol";
  *
  * Remove this notice if ConvexStrategy is re-deployed
  */
-contract ConvexStrategy is BaseCurveStrategy {
+abstract contract ConvexStrategy is BaseCurveStrategy {
     using StableMath for uint256;
     using SafeERC20 for IERC20;
 
