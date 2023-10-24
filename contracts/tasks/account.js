@@ -44,13 +44,7 @@ async function accounts(taskArguments, hre, privateKeys) {
 async function fund(taskArguments, hre) {
   const { findBestMainnetTokenHolder } = require("../utils/funding");
   const addresses = require("../utils/addresses");
-  const {
-    usdtUnits,
-    daiUnits,
-    usdcUnits,
-    isFork,
-    isLocalhost,
-  } = require("../test/helpers");
+  const { isFork, isLocalhost } = require("../test/helpers");
 
   if (!isFork && !isLocalhost) {
     throw new Error("Task can only be used on local or fork");
@@ -126,7 +120,7 @@ async function fund(taskArguments, hre) {
     const currentAccount = accountsToFund[i];
     await Promise.all(
       contractDataList.map(async (contractData) => {
-        const { token, unitsFn, forkSigner, name } = contractData;
+        const { token, name } = contractData;
         const usedFundAmount = token !== null ? fundAmount : "100";
 
         if (!token) {

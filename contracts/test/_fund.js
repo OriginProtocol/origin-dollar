@@ -4,7 +4,6 @@ const {
   getStorageAt,
 } = require("@nomicfoundation/hardhat-network-helpers");
 const ethrs = require("ethers");
-const addresses = require("../utils/addresses");
 const {
   parseEther,
   defaultAbiCoder,
@@ -26,7 +25,7 @@ const balancesContractSlotCache = {};
  * @return {*}  {Promise<number>}
  */
 const findBalancesSlot = async (tokenAddress) => {
-  // need to check for undefined since a "0" is a valid value that defaults to false 
+  // need to check for undefined since a "0" is a valid value that defaults to false
   // in the if statement
   if (balancesContractSlotCache[tokenAddress] !== undefined) {
     return balancesContractSlotCache[tokenAddress];
@@ -85,8 +84,7 @@ const setTokenBalance = async (
   userAddress,
   tokenContract,
   amount,
-  slotIndex = undefined,
-  hre
+  slotIndex = undefined
 ) => {
   const amountBn = await units(amount, tokenContract);
   let index = slotIndex;
@@ -121,16 +119,7 @@ const setTokenBalance = async (
  * @param {number} [amount=10000] Amount of ETH to set
  */
 async function hardhatSetBalance(address, hre, amount = "10000") {
-  await hre.network.provider.request({
-    method: "hardhat_setBalance",
-    params: [
-      address,
-      parseEther(amount)
-        .toHexString()
-        .replace(/^0x0+/, "0x")
-        .replace(/0$/, "1"),
-    ],
-  });
+  await setBalance(address, parseEther(amount));
 }
 
 /**
