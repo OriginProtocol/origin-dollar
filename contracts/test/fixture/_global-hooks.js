@@ -1,6 +1,6 @@
 const mocha = require("mocha");
 
-const { isForkTest } = require("./helpers");
+const { isForkTest } = require("../helpers");
 
 const _chunkId = Number(process.env.CHUNK_ID);
 const _maxChunks = Number(process.env.MAX_CHUNKS);
