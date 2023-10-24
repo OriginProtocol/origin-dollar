@@ -9,9 +9,9 @@
 <g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 975)">
 <title>UmlClassDiagram</title>
 <polygon fill="white" stroke="transparent" points="-4,4 -4,-975 1102.14,-975 1102.14,4 -4,4"/>
-<!-- 250 -->
+<!-- 252 -->
 <g id="node1" class="node">
-<title>250</title>
+<title>252</title>
 <polygon fill="#f2f2f2" stroke="black" points="199.5,-0.5 199.5,-242.9 1040.94,-242.9 1040.94,-0.5 199.5,-0.5"/>
 <text text-anchor="middle" x="620.22" y="-226.3" font-family="Times,serif" font-size="14.00">&lt;&lt;Library&gt;&gt;</text>
 <text text-anchor="middle" x="620.22" y="-209.5" font-family="Times,serif" font-size="14.00">CurveTwoCoinLib</text>
@@ -20,7 +20,7 @@
 <text text-anchor="start" x="207.5" y="-167.9" font-family="Times,serif" font-size="14.00">Public:</text>
 <text text-anchor="start" x="207.5" y="-151.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;CURVE_POOL_ASSETS_COUNT: uint256</text>
 <polyline fill="none" stroke="black" points="199.5,-142.9 1040.94,-142.9 "/>
-<text text-anchor="start" x="207.5" y="-126.3" font-family="Times,serif" font-size="14.00">External:</text>
+<text text-anchor="start" x="207.5" y="-126.3" font-family="Times,serif" font-size="14.00">Internal:</text>
 <text text-anchor="start" x="207.5" y="-109.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;add_liquidity(_pool: address, _amounts: uint256[], _min_mint_amount: uint256)</text>
 <text text-anchor="start" x="207.5" y="-92.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;remove_liquidity(_pool: address, _burn_amount: uint256, _min_amounts: uint256[])</text>
 <text text-anchor="start" x="207.5" y="-75.9" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;remove_liquidity(_pool: address, _burn_amount: uint256, _min_amounts: uint256[], _receiver: address): (wasTransfer: bool)</text>
@@ -29,9 +29,9 @@
 <text text-anchor="start" x="207.5" y="-25.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;calc_token_amount(_pool: address, _amounts: uint256[], _is_deposit: bool): (lpTokens: uint256)</text>
 <text text-anchor="start" x="207.5" y="-8.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;calcWithdrawLpAmount(_pool: address, _coinIndex: uint256, _assetAmount: uint256): (lpAmount: uint256)</text>
 </g>
-<!-- 254 -->
+<!-- 256 -->
 <g id="node2" class="node">
-<title>254</title>
+<title>256</title>
 <polygon fill="#f2f2f2" stroke="black" points="0,-279.9 0,-631.9 682.45,-631.9 682.45,-279.9 0,-279.9"/>
 <text text-anchor="middle" x="341.22" y="-615.3" font-family="Times,serif" font-size="14.00">&lt;&lt;Interface&gt;&gt;</text>
 <text text-anchor="middle" x="341.22" y="-598.5" font-family="Times,serif" font-size="14.00">ICurveMetaPool</text>
@@ -55,15 +55,15 @@
 <text text-anchor="start" x="8" y="-304.9" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&#160;exchange(i: int128, j: int128, dx: uint256, min_dy: uint256): uint256</text>
 <text text-anchor="start" x="8" y="-288.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;&#160;get_dy(i: int128, j: int128, dx: uint256): uint256</text>
 </g>
-<!-- 250&#45;&gt;254 -->
+<!-- 252&#45;&gt;256 -->
 <g id="edge2" class="edge">
-<title>250&#45;&gt;254</title>
+<title>252&#45;&gt;256</title>
 <path fill="none" stroke="black" stroke-dasharray="5,2" d="M519.1,-243.1C511.17,-252.55 503.05,-262.22 494.87,-271.96"/>
 <polygon fill="black" stroke="black" points="492.05,-269.88 488.3,-279.79 497.41,-274.38 492.05,-269.88"/>
 </g>
-<!-- 187 -->
+<!-- 189 -->
 <g id="node3" class="node">
-<title>187</title>
+<title>189</title>
 <polygon fill="#f2f2f2" stroke="black" points="700.31,-351.5 700.31,-560.3 1098.14,-560.3 1098.14,-351.5 700.31,-351.5"/>
 <text text-anchor="middle" x="899.22" y="-543.7" font-family="Times,serif" font-size="14.00">&lt;&lt;Library&gt;&gt;</text>
 <text text-anchor="middle" x="899.22" y="-526.9" font-family="Times,serif" font-size="14.00">StableMath</text>
@@ -79,15 +79,15 @@
 <text text-anchor="start" x="708.31" y="-376.5" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;mulTruncateCeil(x: uint256, y: uint256): uint256</text>
 <text text-anchor="start" x="708.31" y="-359.7" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;divPrecisely(x: uint256, y: uint256): uint256</text>
 </g>
-<!-- 250&#45;&gt;187 -->
+<!-- 252&#45;&gt;189 -->
 <g id="edge1" class="edge">
-<title>250&#45;&gt;187</title>
+<title>252&#45;&gt;189</title>
 <path fill="none" stroke="black" stroke-dasharray="5,2" d="M721.34,-243.1C748.92,-275.93 778.66,-311.35 805.79,-343.65"/>
 <polygon fill="black" stroke="black" points="803.15,-345.95 812.26,-351.36 808.51,-341.45 803.15,-345.95"/>
 </g>
-<!-- 406 -->
+<!-- 408 -->
 <g id="node4" class="node">
-<title>406</title>
+<title>408</title>
 <polygon fill="#f2f2f2" stroke="black" points="703.01,-668.9 703.01,-970.5 1095.44,-970.5 1095.44,-668.9 703.01,-668.9"/>
 <text text-anchor="middle" x="899.22" y="-953.9" font-family="Times,serif" font-size="14.00">&lt;&lt;Library&gt;&gt;</text>
 <text text-anchor="middle" x="899.22" y="-937.1" font-family="Times,serif" font-size="14.00">SafeMath</text>
@@ -108,9 +108,9 @@
 <text text-anchor="start" x="711.01" y="-693.9" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;div(a: uint256, b: uint256, errorMessage: string): uint256</text>
 <text text-anchor="start" x="711.01" y="-677.1" font-family="Times,serif" font-size="14.00"> &#160;&#160;&#160;mod(a: uint256, b: uint256, errorMessage: string): uint256</text>
 </g>
-<!-- 187&#45;&gt;406 -->
+<!-- 189&#45;&gt;408 -->
 <g id="edge3" class="edge">
-<title>187&#45;&gt;406</title>
+<title>189&#45;&gt;408</title>
 <path fill="none" stroke="black" stroke-dasharray="5,2" d="M899.22,-560.58C899.22,-591.14 899.22,-625.32 899.22,-658.55"/>
 <polygon fill="black" stroke="black" points="895.72,-658.83 899.22,-668.83 902.72,-658.83 895.72,-658.83"/>
 </g>

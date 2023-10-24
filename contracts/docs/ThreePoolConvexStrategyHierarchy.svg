@@ -16,27 +16,13 @@
 <text text-anchor="middle" x="117.43" y="-398.7" font-family="Times,serif" font-size="14.00">Governable</text>
 <text text-anchor="middle" x="117.43" y="-381.9" font-family="Times,serif" font-size="14.00">../contracts/governance/Governable.sol</text>
 </g>
-<!-- 144 -->
-<g id="node2" class="node">
-<title>144</title>
-<polygon fill="#f2f2f2" stroke="black" points="81.38,-79.1 81.38,-137.5 385.48,-137.5 385.48,-79.1 81.38,-79.1"/>
-<text text-anchor="middle" x="233.43" y="-120.9" font-family="Times,serif" font-size="14.00">&lt;&lt;Abstract&gt;&gt;</text>
-<text text-anchor="middle" x="233.43" y="-104.1" font-family="Times,serif" font-size="14.00">BaseConvexMetaStrategy</text>
-<text text-anchor="middle" x="233.43" y="-87.3" font-family="Times,serif" font-size="14.00">../contracts/strategies/BaseConvexMetaStrategy.sol</text>
-</g>
 <!-- 146 -->
-<g id="node3" class="node">
+<g id="node2" class="node">
 <title>146</title>
 <polygon fill="#f2f2f2" stroke="black" points="100.43,-174.5 100.43,-232.9 366.42,-232.9 366.42,-174.5 100.43,-174.5"/>
 <text text-anchor="middle" x="233.43" y="-216.3" font-family="Times,serif" font-size="14.00">&lt;&lt;Abstract&gt;&gt;</text>
 <text text-anchor="middle" x="233.43" y="-199.5" font-family="Times,serif" font-size="14.00">BaseCurveStrategy</text>
 <text text-anchor="middle" x="233.43" y="-182.7" font-family="Times,serif" font-size="14.00">../contracts/strategies/BaseCurveStrategy.sol</text>
-</g>
-<!-- 144&#45;&gt;146 -->
-<g id="edge1" class="edge">
-<title>144&#45;&gt;146</title>
-<path fill="none" stroke="black" d="M233.43,-137.58C233.43,-139.66 233.43,-141.8 233.43,-143.98"/>
-<polygon fill="none" stroke="black" points="222.93,-144.2 233.43,-174.2 243.93,-144.2 222.93,-144.2"/>
 </g>
 <!-- 186 -->
 <g id="node6" class="node">
@@ -47,21 +33,35 @@
 <text text-anchor="middle" x="233.43" y="-278.1" font-family="Times,serif" font-size="14.00">../contracts/utils/InitializableAbstractStrategy.sol</text>
 </g>
 <!-- 146&#45;&gt;186 -->
-<g id="edge2" class="edge">
+<g id="edge1" class="edge">
 <title>146&#45;&gt;186</title>
 <path fill="none" stroke="black" d="M233.43,-232.98C233.43,-235.06 233.43,-237.2 233.43,-239.38"/>
 <polygon fill="none" stroke="black" points="222.93,-239.6 233.43,-269.6 243.93,-239.6 222.93,-239.6"/>
 </g>
-<!-- 152 -->
-<g id="node4" class="node">
-<title>152</title>
-<polygon fill="#f2f2f2" stroke="black" points="75.93,-0.5 75.93,-42.1 390.93,-42.1 390.93,-0.5 75.93,-0.5"/>
-<text text-anchor="middle" x="233.43" y="-25.5" font-family="Times,serif" font-size="14.00">ConvexOUSDMetaStrategy</text>
-<text text-anchor="middle" x="233.43" y="-8.7" font-family="Times,serif" font-size="14.00">../contracts/strategies/ConvexOUSDMetaStrategy.sol</text>
+<!-- 153 -->
+<g id="node3" class="node">
+<title>153</title>
+<polygon fill="#f2f2f2" stroke="black" points="109.37,-79.1 109.37,-137.5 357.49,-137.5 357.49,-79.1 109.37,-79.1"/>
+<text text-anchor="middle" x="233.43" y="-120.9" font-family="Times,serif" font-size="14.00">&lt;&lt;Abstract&gt;&gt;</text>
+<text text-anchor="middle" x="233.43" y="-104.1" font-family="Times,serif" font-size="14.00">ConvexStrategy</text>
+<text text-anchor="middle" x="233.43" y="-87.3" font-family="Times,serif" font-size="14.00">../contracts/strategies/ConvexStrategy.sol</text>
 </g>
-<!-- 152&#45;&gt;144 -->
+<!-- 153&#45;&gt;146 -->
+<g id="edge2" class="edge">
+<title>153&#45;&gt;146</title>
+<path fill="none" stroke="black" d="M233.43,-137.58C233.43,-139.66 233.43,-141.8 233.43,-143.98"/>
+<polygon fill="none" stroke="black" points="222.93,-144.2 233.43,-174.2 243.93,-144.2 222.93,-144.2"/>
+</g>
+<!-- 167 -->
+<g id="node4" class="node">
+<title>167</title>
+<polygon fill="#f2f2f2" stroke="black" points="80.21,-0.5 80.21,-42.1 386.65,-42.1 386.65,-0.5 80.21,-0.5"/>
+<text text-anchor="middle" x="233.43" y="-25.5" font-family="Times,serif" font-size="14.00">ThreePoolConvexStrategy</text>
+<text text-anchor="middle" x="233.43" y="-8.7" font-family="Times,serif" font-size="14.00">../contracts/strategies/ThreePoolConvexStrategy.sol</text>
+</g>
+<!-- 167&#45;&gt;153 -->
 <g id="edge3" class="edge">
-<title>152&#45;&gt;144</title>
+<title>167&#45;&gt;153</title>
 <path fill="none" stroke="black" d="M233.43,-42.44C233.43,-44.49 233.43,-46.63 233.43,-48.83"/>
 <polygon fill="none" stroke="black" points="222.93,-48.94 233.43,-78.94 243.93,-48.94 222.93,-48.94"/>
 </g>

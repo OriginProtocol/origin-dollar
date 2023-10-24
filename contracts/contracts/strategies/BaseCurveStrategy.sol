@@ -23,7 +23,6 @@ import { ICurvePool } from "./curve/ICurvePool.sol";
 import { IERC20, InitializableAbstractStrategy } from "../utils/InitializableAbstractStrategy.sol";
 import { StableMath } from "../utils/StableMath.sol";
 import { Helpers } from "../utils/Helpers.sol";
-import { CurveThreeCoinLib } from "./curve/CurveThreeCoinLib.sol";
 
 abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
     using StableMath for uint256;
@@ -128,7 +127,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
 
         // Do the deposit to the Curve pool using a Curve library that
         // abstracts the number of coins in the Curve pool.
-        CurveThreeCoinLib.add_liquidity(CURVE_POOL, _amounts, minMintAmount);
+        _curve_add_liquidity(CURVE_POOL, _amounts, minMintAmount);
 
         _lpDepositAll();
     }
@@ -174,7 +173,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
 
         // Do the deposit to the Curve pool using a Curve library that
         // abstracts the number of coins in the Curve pool.
-        CurveThreeCoinLib.add_liquidity(CURVE_POOL, _amounts, minMintAmount);
+        _curve_add_liquidity(CURVE_POOL, _amounts, minMintAmount);
 
         /* In case of Curve Strategy all assets are mapped to the same Curve LP token, eg 3CRV.
          * Let descendants further handle the Curve LP token by either deploying to a Curve Metapool,
@@ -192,6 +191,25 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
      * @dev Withdraw all the strategy's Curve LP tokens from a Curve metapool, gauge or Convex pool.
      */
     function _lpWithdrawAll() internal virtual;
+
+    /**
+     * @notice Calculate amount of LP required when withdrawing specific amount of one
+     * of the underlying assets accounting for fees and slippage.
+     * @param _coinIndex index of the coin in the Curve pool that is to be withdrawn
+     * @param _assetAmount Amount of of the indexed coin to withdraw
+     * @return lpAmount Curve LP tokens required to remove the coin amounts
+     */
+    function curveCalcWithdrawLpAmount(uint256 _coinIndex, uint256 _assetAmount)
+        external
+        view
+        returns (uint256 lpAmount)
+    {
+        lpAmount = _curveCalcWithdrawLpAmount(
+            CURVE_POOL,
+            _coinIndex,
+            _assetAmount
+        );
+    }
 
     /**
      * @notice Withdraw a single asset from the Curve pool.
@@ -224,7 +242,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         // Depending on the implementation, this may be a little more than
         // what's required which will leave a small amount of Curve LP tokens
         // in this strategy contract. This will be picked up on the next deposit or withdraw.
-        uint256 maxCurveLpTokens = CurveThreeCoinLib.calcWithdrawLpAmount(
+        uint256 maxCurveLpTokens = _curveCalcWithdrawLpAmount(
             CURVE_POOL,
             coinIndex,
             _amount
@@ -236,7 +254,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         }
 
         // Withdraw asset from the Curve pool and transfer to the recipient
-        CurveThreeCoinLib.remove_liquidity_imbalance(
+        _curve_remove_liquidity_imbalance(
             CURVE_POOL,
             _amount,
             coinIndex,
@@ -261,7 +279,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         );
 
         // Remove liquidity
-        CurveThreeCoinLib.remove_liquidity(
+        _curve_remove_liquidity(
             CURVE_POOL,
             IERC20(CURVE_LP_TOKEN).balanceOf(address(this)),
             minWithdrawAmounts
@@ -483,4 +501,65 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
     function removePToken(uint256) external pure override {
         revert("Unsupported");
     }
+
+    /***************************************
+            Virtual Curve pool functions
+    ****************************************/
+
+    /**
+     * @dev Deposit coins into a Curve pool
+     * @param _pool Address of the Curve pool
+     * @param _amounts List of amounts of coins to deposit
+     * @param _min_mint_amount Minimum amount of LP tokens to mint from the deposit
+     */
+    function _curve_add_liquidity(
+        address _pool,
+        uint256[] memory _amounts,
+        uint256 _min_mint_amount
+    ) internal virtual;
+
+    /**
+     * @dev Calculate amount of LP required when withdrawing specific amount of one
+     * of the underlying assets accounting for fees and slippage.
+     * @param _pool Address of the Curve pool
+     * @param _coinIndex index of the coin in the Curve pool that is to be withdrawn
+     * @param _assetAmount Amount of of the indexed coin to withdraw
+     * @return lpAmount Curve LP tokens required to remove the coin amounts
+     */
+    function _curveCalcWithdrawLpAmount(
+        address _pool,
+        uint256 _coinIndex,
+        uint256 _assetAmount
+    ) internal view virtual returns (uint256 lpAmount);
+
+    /**
+     * @dev Withdraws a single asset from the pool
+     * @param _pool Address of the Curve pool
+     * @param _amount The amount of underlying coin to withdraw
+     * @param _coin_index Curve pool index of the coin to withdraw
+     * @param _max_burn_amount Maximum amount of LP token to burn in the withdrawal
+     * @param _asset The token address of the coin being withdrawn
+     * @param _receiver Address that receives the withdrawn coins
+     */
+    function _curve_remove_liquidity_imbalance(
+        address _pool,
+        uint256 _amount,
+        uint256 _coin_index,
+        uint256 _max_burn_amount,
+        address _asset,
+        address _receiver
+    ) internal virtual;
+
+    /**
+     * @dev Withdraw coins from the pool
+     * @dev Withdrawal amounts are based on current deposit ratios
+     * @param _pool Address of the Curve pool
+     * @param _burn_amount Quantity of LP tokens to burn in the withdrawal
+     * @param _min_amounts Minimum amounts of underlying coins to receive
+     */
+    function _curve_remove_liquidity(
+        address _pool,
+        uint256 _burn_amount,
+        uint256[] memory _min_amounts
+    ) internal virtual;
 }

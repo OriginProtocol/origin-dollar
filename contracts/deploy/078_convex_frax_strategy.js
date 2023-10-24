@@ -33,19 +33,9 @@ module.exports = deploymentWithGovernanceProposal(
       "ConvexFrxEthWethStrategyProxy"
     );
 
-    // 2. Deploy the Curve library for two assets in the pool
-    await deployWithConfirmation("CurveTwoCoinLib");
-    const lCurveTwoCoinLib = await ethers.getContract("CurveTwoCoinLib");
-    // A bit of trickery here. Although we deployed CurveTwoCoinLib, we are linking to
-    // CurveThreeCoinLib as that is what the ConvexStrategy contract is compiled to.
-    // CurveTwoCoinLib and CurveThreeCoinLib have the same ABI so they are compatible.
-    const libraries = {
-      CurveThreeCoinLib: lCurveTwoCoinLib.address,
-    };
-
     // 3. Deploy linking to the library and set the immutable variables
     const dConvexFrxEthWethStrategy = await deployWithConfirmation(
-      "ConvexStrategy",
+      "TwoPoolConvexStrategy",
       [
         [
           addresses.mainnet.CurveFrxEthWethPool,
@@ -57,13 +47,10 @@ module.exports = deploymentWithGovernanceProposal(
           addresses.mainnet.CurveFrxEthWethPool, // Curve LP token
         ],
         [addresses.mainnet.CVXBooster, frxEthWethPoolLpPID],
-      ],
-      null,
-      true, // assertUpgradeIsSafe does not support libraries so need to skip it
-      libraries
+      ]
     );
     const cConvexFrxEthWethStrategy = await ethers.getContractAt(
-      "ConvexStrategy",
+      "TwoPoolConvexStrategy",
       dConvexFrxEthWethStrategyProxy.address
     );
 

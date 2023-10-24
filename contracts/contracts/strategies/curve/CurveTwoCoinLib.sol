@@ -16,9 +16,9 @@ library CurveTwoCoinLib {
      */
     function add_liquidity(
         address _pool,
-        uint256[] calldata _amounts,
+        uint256[] memory _amounts,
         uint256 _min_mint_amount
-    ) external {
+    ) internal {
         require(
             _amounts.length == CURVE_POOL_ASSETS_COUNT,
             "Invalid number of amounts"
@@ -42,8 +42,8 @@ library CurveTwoCoinLib {
     function remove_liquidity(
         address _pool,
         uint256 _burn_amount,
-        uint256[] calldata _min_amounts
-    ) external {
+        uint256[] memory _min_amounts
+    ) internal {
         require(
             _min_amounts.length == CURVE_POOL_ASSETS_COUNT,
             "Invalid number of min amounts"
@@ -69,9 +69,9 @@ library CurveTwoCoinLib {
     function remove_liquidity(
         address _pool,
         uint256 _burn_amount,
-        uint256[] calldata _min_amounts,
+        uint256[] memory _min_amounts,
         address _receiver
-    ) external returns (bool wasTransfer) {
+    ) internal returns (bool wasTransfer) {
         require(
             _min_amounts.length == CURVE_POOL_ASSETS_COUNT,
             "Invalid number of min amounts"
@@ -99,9 +99,9 @@ library CurveTwoCoinLib {
      */
     function remove_liquidity_imbalance(
         address _pool,
-        uint256[] calldata _amounts,
+        uint256[] memory _amounts,
         uint256 _max_burn_amount
-    ) external {
+    ) internal {
         require(
             _amounts.length == CURVE_POOL_ASSETS_COUNT,
             "Invalid number of amounts"
@@ -134,7 +134,7 @@ library CurveTwoCoinLib {
         uint256 _max_burn_amount,
         address,
         address _receiver
-    ) external {
+    ) internal {
         uint256[CURVE_POOL_ASSETS_COUNT] memory amounts = [uint256(0), 0];
         amounts[_coin_index] = _amount;
 
@@ -157,9 +157,9 @@ library CurveTwoCoinLib {
      */
     function calc_token_amount(
         address _pool,
-        uint256[] calldata _amounts,
+        uint256[] memory _amounts,
         bool _is_deposit
-    ) external view returns (uint256 lpTokens) {
+    ) internal view returns (uint256 lpTokens) {
         require(
             _amounts.length == CURVE_POOL_ASSETS_COUNT,
             "Invalid number of amounts"
@@ -191,7 +191,7 @@ library CurveTwoCoinLib {
         address _pool,
         uint256 _coinIndex,
         uint256 _assetAmount
-    ) external view returns (uint256 lpAmount) {
+    ) internal view returns (uint256 lpAmount) {
         uint256[CURVE_POOL_ASSETS_COUNT] memory amounts = [uint256(0), 0];
         amounts[_coinIndex] = _assetAmount;
 

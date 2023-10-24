@@ -13,7 +13,7 @@
 <g id="node1" class="node">
 <title>3</title>
 <polygon fill="#f2f2f2" stroke="black" points="0,-0.5 0,-471.7 862.93,-471.7 862.93,-0.5 0,-0.5"/>
-<text text-anchor="middle" x="431.47" y="-455.1" font-family="Courier New" font-size="14.00">ConvexStrategy &lt;&lt;Contract&gt;&gt;</text>
+<text text-anchor="middle" x="431.47" y="-455.1" font-family="Courier New" font-size="14.00">TwoPoolConvexStrategy &lt;&lt;Contract&gt;&gt;</text>
 <polyline fill="none" stroke="black" points="0,-446.9 862.93,-446.9 "/>
 <text text-anchor="middle" x="37.4" y="-430.3" font-family="Courier New" font-size="14.00">slot</text>
 <polyline fill="none" stroke="black" points="0,-422.1 74.81,-422.1 "/>
@@ -93,19 +93,19 @@
 <polyline fill="none" stroke="black" points="74.81,-124.5 862.93,-124.5 "/>
 <text text-anchor="middle" x="468.74" y="-107.9" font-family="Courier New" font-size="14.00">int256[49]: BaseCurveStrategy.__reserved (1568)</text>
 <polyline fill="none" stroke="black" points="74.81,-99.7 862.93,-99.7 "/>
-<text text-anchor="middle" x="210.52" y="-83.1" font-family="Courier New" font-size="14.00">unallocated (12)</text>
-<polyline fill="none" stroke="black" points="346.23,-74.9 346.23,-99.7 "/>
-<text text-anchor="middle" x="604.26" y="-83.1" font-family="Courier New" font-size="14.00">address: _deprecated_CvxDepositorAddress (20)</text>
+<text text-anchor="middle" x="179.02" y="-83.1" font-family="Courier New" font-size="14.00">unallocated (12)</text>
+<polyline fill="none" stroke="black" points="283.23,-74.9 283.23,-99.7 "/>
+<text text-anchor="middle" x="572.77" y="-83.1" font-family="Courier New" font-size="14.00">address: ConvexStrategy._deprecated_CvxDepositorAddress (20)</text>
 <polyline fill="none" stroke="black" points="74.81,-74.9 862.93,-74.9 "/>
-<text text-anchor="middle" x="204.52" y="-58.3" font-family="Courier New" font-size="14.00">unallocated (12)</text>
-<polyline fill="none" stroke="black" points="334.23,-50.1 334.23,-74.9 "/>
-<text text-anchor="middle" x="598.36" y="-58.3" font-family="Courier New" font-size="14.00">address: _deprecated_CvxRewardStakerAddress (20)</text>
+<text text-anchor="middle" x="173.02" y="-58.3" font-family="Courier New" font-size="14.00">unallocated (12)</text>
+<polyline fill="none" stroke="black" points="271.23,-50.1 271.23,-74.9 "/>
+<text text-anchor="middle" x="566.87" y="-58.3" font-family="Courier New" font-size="14.00">address: ConvexStrategy._deprecated_CvxRewardStakerAddress (20)</text>
 <polyline fill="none" stroke="black" points="74.81,-50.1 862.93,-50.1 "/>
-<text text-anchor="middle" x="206.52" y="-33.5" font-family="Courier New" font-size="14.00">unallocated (12)</text>
-<polyline fill="none" stroke="black" points="338.23,-25.3 338.23,-50.1 "/>
-<text text-anchor="middle" x="600.16" y="-33.5" font-family="Courier New" font-size="14.00">address: _deprecated_cvxRewardTokenAddress (20)</text>
+<text text-anchor="middle" x="175.02" y="-33.5" font-family="Courier New" font-size="14.00">unallocated (12)</text>
+<polyline fill="none" stroke="black" points="275.23,-25.3 275.23,-50.1 "/>
+<text text-anchor="middle" x="568.67" y="-33.5" font-family="Courier New" font-size="14.00">address: ConvexStrategy._deprecated_cvxRewardTokenAddress (20)</text>
 <polyline fill="none" stroke="black" points="74.81,-25.3 862.93,-25.3 "/>
-<text text-anchor="middle" x="468.54" y="-8.7" font-family="Courier New" font-size="14.00">uint256: _deprecated_CvxDepositorPTokenId (32)</text>
+<text text-anchor="middle" x="468.55" y="-8.7" font-family="Courier New" font-size="14.00">uint256: ConvexStrategy._deprecated_CvxDepositorPTokenId (32)</text>
 </g>
 <!-- 1 -->
 <g id="node2" class="node">

@@ -448,15 +448,15 @@ forkOnlyDescribe("ForkTest: Convex frxETH/WETH Strategy", function () {
     });
     [0, 1].forEach((coinIndex) => {
       it(`Should calculate Curve LP tokens for withdrawing coin index ${coinIndex}`, async () => {
-        const { curveFrxEthWethPool, curveTwoCoinLib, josh } = fixture;
+        const { curveFrxEthWethPool, convexFrxEthWethStrategy, josh } = fixture;
         const coinIndex = 1;
         const withdrawAmount = "1000";
         const withdrawAmountScaled = parseUnits(withdrawAmount);
-        const expectedLpAmount = await curveTwoCoinLib.calcWithdrawLpAmount(
-          curveFrxEthWethPool.address,
-          coinIndex,
-          withdrawAmountScaled
-        );
+        const expectedLpAmount =
+          await convexFrxEthWethStrategy.curveCalcWithdrawLpAmount(
+            coinIndex,
+            withdrawAmountScaled
+          );
         log(`expected LP amount: ${formatUnits(expectedLpAmount)}`);
 
         const curveGaugeSigner = await impersonateAndFundContract(
@@ -483,10 +483,9 @@ forkOnlyDescribe("ForkTest: Convex frxETH/WETH Strategy", function () {
         expect(expectedLpAmount).to.eq(actualLpAmount);
 
         // This uses a transaction to call a view function so the gas usage can be reported.
-        const tx = await curveTwoCoinLib
+        const tx = await convexFrxEthWethStrategy
           .connect(josh)
-          .populateTransaction.calcWithdrawLpAmount(
-            curveFrxEthWethPool.address,
+          .populateTransaction.curveCalcWithdrawLpAmount(
             coinIndex,
             withdrawAmountScaled
           );
