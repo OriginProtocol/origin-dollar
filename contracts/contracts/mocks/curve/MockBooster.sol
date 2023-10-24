@@ -25,7 +25,7 @@ contract MockBooster {
     address public minter; // this is CVx for the booster on live
     address public crv; // Curve rewards token
     address public cvx; // Convex rewards token
-    mapping(uint256 => PoolInfo) public poolInfo;
+    mapping(uint256 => PoolInfo) internal _poolInfo;
 
     constructor(
         address _rewardsMinter,
@@ -47,11 +47,34 @@ contract MockBooster {
             new MockRewardPool(pid, token, crv, cvx, address(this))
         );
 
-        poolInfo[pid] = PoolInfo({
+        _poolInfo[pid] = PoolInfo({
             lptoken: _lpToken,
             token: token,
             crvRewards: rewards
         });
+    }
+
+    function poolInfo(uint256 _pid)
+        external
+        view
+        returns (
+            address lptoken,
+            address token,
+            address gauge,
+            address crvRewards,
+            address stash,
+            bool shutdown
+        )
+    {
+        PoolInfo memory pool = _poolInfo[_pid];
+        return (
+            pool.lptoken,
+            pool.token,
+            address(0),
+            pool.crvRewards,
+            address(0),
+            false
+        );
     }
 
     function deposit(
@@ -59,7 +82,7 @@ contract MockBooster {
         uint256 _amount,
         bool _stake
     ) public returns (bool) {
-        PoolInfo storage pool = poolInfo[_pid];
+        PoolInfo storage pool = _poolInfo[_pid];
 
         address lptoken = pool.lptoken;
 
@@ -84,7 +107,7 @@ contract MockBooster {
 
     // Deposit all Curve LP tokens and stake
     function depositAll(uint256 _pid, bool _stake) external returns (bool) {
-        address lptoken = poolInfo[_pid].lptoken;
+        address lptoken = _poolInfo[_pid].lptoken;
         uint256 balance = IERC20(lptoken).balanceOf(msg.sender);
         deposit(_pid, balance, _stake);
         return true;
@@ -97,7 +120,7 @@ contract MockBooster {
         address _from,
         address _to
     ) internal {
-        PoolInfo storage pool = poolInfo[_pid];
+        PoolInfo storage pool = _poolInfo[_pid];
 
         // burn the Convex pool LP tokens
         IBurnableERC20(pool.token).burnFrom(_from, _amount);
@@ -114,7 +137,7 @@ contract MockBooster {
 
     // withdraw all Curve LP tokens
     function withdrawAll(uint256 _pid) public returns (bool) {
-        address token = poolInfo[_pid].token;
+        address token = _poolInfo[_pid].token;
         uint256 userBal = IERC20(token).balanceOf(msg.sender);
         withdraw(_pid, userBal);
         return true;
@@ -126,7 +149,7 @@ contract MockBooster {
         uint256 _amount,
         address _to
     ) external returns (bool) {
-        address rewardContract = poolInfo[_pid].crvRewards;
+        address rewardContract = _poolInfo[_pid].crvRewards;
         require(msg.sender == rewardContract, "!auth");
 
         _withdraw(_pid, _amount, msg.sender, _to);
@@ -140,7 +163,7 @@ contract MockBooster {
         address _address,
         uint256 _amount
     ) external returns (bool) {
-        address rewardContract = poolInfo[_pid].crvRewards;
+        address rewardContract = _poolInfo[_pid].crvRewards;
         require(msg.sender == rewardContract, "!auth");
 
         //mint reward tokens

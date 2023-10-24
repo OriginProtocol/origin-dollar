@@ -54,7 +54,6 @@ contract ConvexStrategy is BaseCurveStrategy {
 
     struct ConvexConfig {
         address cvxDepositor;
-        address cvxRewardStaker;
         uint256 cvxDepositorPoolId;
     }
 
@@ -67,8 +66,12 @@ contract ConvexStrategy is BaseCurveStrategy {
         BaseCurveStrategy(_curveConfig)
     {
         cvxDepositor = _convexConfig.cvxDepositor;
-        cvxRewardStaker = _convexConfig.cvxRewardStaker;
         cvxDepositorPoolId = _convexConfig.cvxDepositorPoolId;
+
+        // Get the Convex Rewards contract for the Convex pool
+        (, , , cvxRewardStaker, , ) = IConvexDeposits(
+            _convexConfig.cvxDepositor
+        ).poolInfo(_convexConfig.cvxDepositorPoolId);
     }
 
     /**
