@@ -2,9 +2,7 @@ const ethers = require("ethers");
 const { task } = require("hardhat/config");
 const fetch = require("sync-fetch");
 
-require("@nomiclabs/hardhat-etherscan");
-require("@nomiclabs/hardhat-waffle");
-require("@nomiclabs/hardhat-solhint");
+require("@nomicfoundation/hardhat-toolbox")
 require("hardhat-deploy");
 require("hardhat-tracer");
 require("hardhat-contract-sizer");

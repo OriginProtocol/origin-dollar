@@ -32,28 +32,28 @@ describe("Harvester", function () {
   beforeEach(async function () {
     fixture = await loadFixture();
 
-    /* Ethereum Waffle caches fixtures and uses evm snapshot and evm revert:
-     * https://github.com/TrueFiEng/Waffle/blob/f0d78cd5529684f2f377aaa0025c33aed52e268e/waffle-provider/src/fixtures.ts#L18-L32
-     *
-     * to optimize the speed of test execution. Somewhere in the caching
-     * there is a bug where Harvester tests fail if they are ran within the whole
-     * unit test suite and succeed if they are ran by themselves. This is a bit
-     * of a nasty workaround.
-     */
-    const { governorAddr } = await getNamedAccounts();
-    const sGovernor = await ethers.provider.getSigner(governorAddr);
+    // /* Ethereum Waffle caches fixtures and uses evm snapshot and evm revert:
+    //  * https://github.com/TrueFiEng/Waffle/blob/f0d78cd5529684f2f377aaa0025c33aed52e268e/waffle-provider/src/fixtures.ts#L18-L32
+    //  *
+    //  * to optimize the speed of test execution. Somewhere in the caching
+    //  * there is a bug where Harvester tests fail if they are ran within the whole
+    //  * unit test suite and succeed if they are ran by themselves. This is a bit
+    //  * of a nasty workaround.
+    //  */
+    // const { governorAddr } = await getNamedAccounts();
+    // const sGovernor = await ethers.provider.getSigner(governorAddr);
 
-    try {
-      await fixture.vault
-        .connect(sGovernor)
-        .approveStrategy(fixture.compoundStrategy.address);
-    } catch (e) {
-      // ignore the strategy already approved exception
-    }
+    // try {
+    //   await fixture.vault
+    //     .connect(sGovernor)
+    //     .approveStrategy(fixture.compoundStrategy.address);
+    // } catch (e) {
+    //   // ignore the strategy already approved exception
+    // }
 
-    await fixture.harvester
-      .connect(sGovernor)
-      .setSupportedStrategy(fixture.compoundStrategy.address, true);
+    // await fixture.harvester
+    //   .connect(sGovernor)
+    //   .setSupportedStrategy(fixture.compoundStrategy.address, true);
   });
 
   it("Should correctly set reward token config and have correct allowances set for Uniswap like routers", async () => {

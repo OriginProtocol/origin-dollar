@@ -12,7 +12,6 @@ module.exports = {
     sourceType: "module",
   },
   globals: {
-    waffle: "readable",
     ethers: "readable",
     deployments: "readable",
     getNamedAccounts: "readable",
