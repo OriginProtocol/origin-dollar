@@ -59,7 +59,6 @@
     "hardhat-deploy": "^0.11.30",
     "hardhat-deploy-ethers": "^0.3.0-beta.13",
     "hardhat-gas-reporter": "^1.0.9",
-    "hardhat-network-helpers": "^0.0.1",
     "hardhat-tracer": "^2.3.2",
     "husky": "^7.0.2",
     "lodash": "^4.17.21",
