@@ -2,6 +2,7 @@ const hre = require("hardhat");
 const { expect } = require("chai");
 const { formatUnits } = require("ethers").utils;
 const { BigNumber } = require("ethers");
+const { mine } = require("@nomicfoundation/hardhat-network-helpers");
 
 const addresses = require("../../utils/addresses");
 const { balancer_rETH_WETH_PID } = require("../../utils/constants");
@@ -10,7 +11,6 @@ const {
   balancerREthFixture,
   balancerWstEthFixture,
   createFixtureLoader,
-  mineBlocks,
   tiltBalancerMetaStableWETHPool,
   untiltBalancerMetaStableWETHPool,
 } = require("../_fixture");
@@ -574,7 +574,7 @@ describe("ForkTest: Balancer MetaStablePool rETH/WETH Strategy", function () {
       );
 
       await depositTest(fixture, [5, 5], [weth, reth], rEthBPT);
-      await mineBlocks(1000);
+      await mine(1000);
 
       await balancerREthStrategy.connect(sHarvester).collectRewardTokens();
 
@@ -598,7 +598,7 @@ describe("ForkTest: Balancer MetaStablePool rETH/WETH Strategy", function () {
       } = fixture;
 
       await depositTest(fixture, [5, 5], [weth, reth], rEthBPT);
-      await mineBlocks(1000);
+      await mine(1000);
 
       const wethBalanceBefore = await weth.balanceOf(oethDripper.address);
       await oethHarvester.connect(josh)[

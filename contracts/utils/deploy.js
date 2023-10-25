@@ -33,6 +33,10 @@ const governorFiveAbi = require("../abi/governor_five.json");
 const timelockAbi = require("../abi/timelock.json");
 const { impersonateAndFund } = require("./signers.js");
 const { hardhatSetBalance } = require("../test/_fund.js");
+const {
+  setStorageAt,
+  setCode,
+} = require("@nomicfoundation/hardhat-network-helpers");
 
 // Wait for 3 blocks confirmation on Mainnet.
 const NUM_CONFIRMATIONS = isMainnet ? 3 : 0;
@@ -193,34 +197,29 @@ const executeProposal = async (proposalArgs, description, opts = {}) => {
   // only works on hardhat network that supports `hardhat_setStorageAt`
   if (opts.reduceQueueTime) {
     log(`Reducing required queue time to 60 seconds`);
-    await hre.network.provider.request({
-      method: "hardhat_setStorageAt",
-      /* contracts/timelock/Timelock.sol storage slot layout:
-       * slot[0] address admin
-       * slot[1] address pendingAdmin
-       * slot[2] uint256 delay
-       */
-      params: [
-        governorContract.address,
-        "0x2",
-        "0x000000000000000000000000000000000000000000000000000000000000003c", // 60 seconds
-      ], // address, storageSlot, newValue
-    });
+    /* contracts/timelock/Timelock.sol storage slot layout:
+     * slot[0] address admin
+     * slot[1] address pendingAdmin
+     * slot[2] uint256 delay
+     */
+    await setStorageAt(
+      governorContract.address,
+      "0x2",
+      "0x000000000000000000000000000000000000000000000000000000000000003c" // 60 seconds
+    );
   } else {
     log(`Setting queue time back to 172800 seconds`);
-    await hre.network.provider.request({
-      method: "hardhat_setStorageAt",
-      /* contracts/timelock/Timelock.sol storage slot layout:
-       * slot[0] address admin
-       * slot[1] address pendingAdmin
-       * slot[2] uint256 delay
-       */
-      params: [
-        governorContract.address,
-        "0x2",
-        "0x000000000000000000000000000000000000000000000000000000000002a300", // 172800 seconds
-      ], // address, storageSlot, newValue
-    });
+
+    /* contracts/timelock/Timelock.sol storage slot layout:
+     * slot[0] address admin
+     * slot[1] address pendingAdmin
+     * slot[2] uint256 delay
+     */
+    await setStorageAt(
+      governorContract.address,
+      "0x2",
+      "0x000000000000000000000000000000000000000000000000000000000002a300" // 172800 seconds
+    );
   }
 
   const txOpts = await getTxOpts();
@@ -491,41 +490,29 @@ const configureGovernanceContractDurations = async (reduceQueueTime) => {
     );
 
     // slot[4] uint256 votingDelay
-    await hre.network.provider.request({
-      method: "hardhat_setStorageAt",
-      params: [
-        governorFive.address,
-        "0x4",
-        "0x0000000000000000000000000000000000000000000000000000000000000001", // 1 block
-      ], // address, storageSlot, newValue
-    });
+    await setStorageAt(
+      governorFive.address,
+      "0x4",
+      "0x0000000000000000000000000000000000000000000000000000000000000001" // 1 block
+    );
     // slot[5] uint256 votingPeriod
-    await hre.network.provider.request({
-      method: "hardhat_setStorageAt",
-      params: [
-        governorFive.address,
-        "0x5",
-        "0x000000000000000000000000000000000000000000000000000000000000003c", // 60 blocks
-      ], // address, storageSlot, newValue
-    });
+    await setStorageAt(
+      governorFive.address,
+      "0x5",
+      "0x000000000000000000000000000000000000000000000000000000000000003c" // 60 blocks
+    );
     // slot[11]uint256 lateQuoruVoteExtension
-    await hre.network.provider.request({
-      method: "hardhat_setStorageAt",
-      params: [
-        governorFive.address,
-        "0xB", // 11
-        "0x0000000000000000000000000000000000000000000000000000000000000000", // 0 blocks
-      ], // address, storageSlot, newValue
-    });
+    await setStorageAt(
+      governorFive.address,
+      "0xB", // 11
+      "0x0000000000000000000000000000000000000000000000000000000000000000" // 0 blocks
+    );
     // slot[2]uint256 _minDelay
-    await hre.network.provider.request({
-      method: "hardhat_setStorageAt",
-      params: [
-        timelock.address,
-        "0x2",
-        "0x0000000000000000000000000000000000000000000000000000000000000005", // 5 seconds
-      ], // address, storageSlot, newValue
-    });
+    await setStorageAt(
+      timelock.address,
+      "0x2",
+      "0x0000000000000000000000000000000000000000000000000000000000000005" // 5 seconds
+    );
   } else {
     log(
       `Setting back original values of required voting delay to 1 block and ` +
@@ -534,41 +521,29 @@ const configureGovernanceContractDurations = async (reduceQueueTime) => {
     );
 
     // slot[4] uint256 votingDelay
-    await hre.network.provider.request({
-      method: "hardhat_setStorageAt",
-      params: [
-        governorFive.address,
-        "0x4",
-        "0x0000000000000000000000000000000000000000000000000000000000000001", // 1 block
-      ], // address, storageSlot, newValue
-    });
+    await setStorageAt(
+      governorFive.address,
+      "0x4",
+      "0x0000000000000000000000000000000000000000000000000000000000000001" // 1 block
+    );
     // slot[5] uint256 votingPeriod
-    await hre.network.provider.request({
-      method: "hardhat_setStorageAt",
-      params: [
-        governorFive.address,
-        "0x5",
-        "0x0000000000000000000000000000000000000000000000000000000000004380", // 17280 blocks
-      ], // address, storageSlot, newValue
-    });
+    await setStorageAt(
+      governorFive.address,
+      "0x5",
+      "0x0000000000000000000000000000000000000000000000000000000000004380" // 17280 blocks
+    );
     // slot[11]uint256 lateQuoruVoteExtension
-    await hre.network.provider.request({
-      method: "hardhat_setStorageAt",
-      params: [
-        governorFive.address,
-        "0xB", // 11
-        "0x0000000000000000000000000000000000000000000000000000000000002d00", // 11520 blocks
-      ], // address, storageSlot, newValue
-    });
+    await setStorageAt(
+      governorFive.address,
+      "0xB", // 11
+      "0x0000000000000000000000000000000000000000000000000000000000002d00" // 11520 blocks
+    );
     // slot[2]uint256 _minDelay
-    await hre.network.provider.request({
-      method: "hardhat_setStorageAt",
-      params: [
-        timelock.address,
-        "0x2",
-        "0x000000000000000000000000000000000000000000000000000000000002a300", // 172800 seconds
-      ], // address, storageSlot, newValue
-    });
+    await setStorageAt(
+      timelock.address,
+      "0x2",
+      "0x000000000000000000000000000000000000000000000000000000000002a300" // 172800 seconds
+    );
   }
 };
 
@@ -1223,10 +1198,7 @@ async function replaceContractAt(targetAddress, mockContract) {
   const signer = (await hre.ethers.getSigners())[0];
   const mockCode = await signer.provider.getCode(mockContract.address);
 
-  await hre.network.provider.request({
-    method: "hardhat_setCode",
-    params: [targetAddress, mockCode],
-  });
+  await setCode(targetAddress, mockCode);
 }
 
 module.exports = {

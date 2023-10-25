@@ -1472,14 +1472,6 @@ async function convexGeneralizedMetaForkedFixture(
   return fixture;
 }
 
-async function mineBlocks(blocksToMine) {
-  const hexBlocks = "0x" + Number(blocksToMine).toString(16);
-  await hre.network.provider.request({
-    method: "hardhat_mine",
-    params: [hexBlocks],
-  });
-}
-
 async function nodeSnapshot() {
   return await hre.network.provider.request({
     method: "evm_snapshot",
@@ -2004,7 +1996,6 @@ module.exports = {
   oethCollateralSwapFixture,
   ousdCollateralSwapFixture,
   fluxStrategyFixture,
-  mineBlocks,
   nodeSnapshot,
   nodeRevert,
 };
