@@ -3,7 +3,7 @@
 //
 
 const hre = require("hardhat");
-const { BigNumber, utils } = require("ethers");
+const { BigNumber } = require("ethers");
 
 const {
   advanceTime,
@@ -33,10 +33,7 @@ const governorFiveAbi = require("../abi/governor_five.json");
 const timelockAbi = require("../abi/timelock.json");
 const { impersonateAndFund } = require("./signers.js");
 const { hardhatSetBalance } = require("../test/_fund.js");
-const {
-  setStorageAt,
-  setCode,
-} = require("@nomicfoundation/hardhat-network-helpers");
+const { setStorageAt } = require("@nomicfoundation/hardhat-network-helpers");
 
 // Wait for 3 blocks confirmation on Mainnet.
 const NUM_CONFIRMATIONS = isMainnet ? 3 : 0;
