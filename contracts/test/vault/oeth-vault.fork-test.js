@@ -7,13 +7,13 @@ const {
   oethDefaultFixture,
   impersonateAccount,
 } = require("../_fixture");
-const { forkOnlyDescribe, isCI } = require("../helpers");
+const { isCI } = require("../helpers");
 
 const log = require("../../utils/logger")("test:fork:oeth:vault");
 
 const { oethWhaleAddress } = addresses.mainnet;
 
-forkOnlyDescribe("ForkTest: OETH Vault", function () {
+describe("ForkTest: OETH Vault", function () {
   this.timeout(0);
 
   // Retry up to 3 times on CI
